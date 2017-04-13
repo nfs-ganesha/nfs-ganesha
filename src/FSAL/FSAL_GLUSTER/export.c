@@ -464,8 +464,6 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
-	struct glusterfs_export *glfs_export =
-	    container_of(exp_hdl, struct glusterfs_export, export);
 	attrmask_t supported_mask;
 
 	info = gluster_staticinfo(exp_hdl->fsal);
@@ -809,8 +807,6 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->saveduid = geteuid();
 	glfsexport->savedgid = getegid();
 	glfsexport->export.fsal = fsal_hdl;
-	glfsexport->acl_enable =
-		!op_ctx_export_has_option(EXPORT_OPTION_DISABLE_ACL);
 
 	op_ctx->fsal_export = &glfsexport->export;
 
