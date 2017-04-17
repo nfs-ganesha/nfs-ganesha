@@ -108,6 +108,8 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->rename_changes_key;
 	case fso_compute_readdir_cookie:
 		return !!info->compute_readdir_cookie;
+	case fso_whence_is_name:
+		return !!info->whence_is_name;
 	default:
 		return false;	/* whatever I don't know about,
 				 * you can't do

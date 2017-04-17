@@ -641,6 +641,7 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_link_supports_permission_checks,
 	fso_rename_changes_key,
 	fso_compute_readdir_cookie,
+	fso_whence_is_name,
 } fsal_fsinfo_options_t;
 
 /* The largest maxread and maxwrite value */
@@ -693,6 +694,7 @@ typedef struct fsal_staticfsinfo_t {
 	bool link_supports_permission_checks;
 	bool rename_changes_key;/*< Handle key is changed across rename */
 	bool compute_readdir_cookie;
+	bool whence_is_name;
 } fsal_staticfsinfo_t;
 
 /**
