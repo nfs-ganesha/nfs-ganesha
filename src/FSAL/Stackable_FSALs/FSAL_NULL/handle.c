@@ -343,8 +343,7 @@ static enum fsal_dir_result nullfs_readdir_cb(
 					const char *name,
 					struct fsal_obj_handle *sub_handle,
 					struct attrlist *attrs,
-					void *dir_state, fsal_cookie_t cookie,
-					fsal_cookie_t *ret_cookie)
+					void *dir_state, fsal_cookie_t cookie)
 {
 	struct nullfs_readdir_state *state =
 		(struct nullfs_readdir_state *) dir_state;
@@ -357,8 +356,7 @@ static enum fsal_dir_result nullfs_readdir_cb(
 
 	op_ctx->fsal_export = &state->exp->export;
 	enum fsal_dir_result result = state->cb(name, new_obj, attrs,
-						state->dir_state, cookie,
-						ret_cookie);
+						state->dir_state, cookie);
 
 	op_ctx->fsal_export = state->exp->export.sub_export;
 
@@ -403,33 +401,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	op_ctx->fsal_export = &export->export;
 
 	return status;
-}
-
-/**
- * @brief Release a cached cookie.
- *
- * Pass this call through to the underlying FSAL.
- *
- * @param[in]  dir_hdl   Directory cookie belongs to
- * @param[in]  cookie    The cookie to be released.
- */
-
-void release_readdir_cookie(struct fsal_obj_handle *dir_hdl,
-			    fsal_cookie_t *cookie)
-{
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(dir_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
-
-	/* calling subfsal method */
-	op_ctx->fsal_export = export->export.sub_export;
-	handle->sub_handle->obj_ops.release_readdir_cookie(handle->sub_handle,
-							   cookie);
-	op_ctx->fsal_export = &export->export;
 }
 
 /**
@@ -723,7 +694,6 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->release = release;
 	ops->lookup = lookup;
 	ops->readdir = read_dirents;
-	ops->release_readdir_cookie = release_readdir_cookie,
 	ops->compute_readdir_cookie = compute_readdir_cookie,
 	ops->dirent_cmp = dirent_cmp,
 	ops->create = create;

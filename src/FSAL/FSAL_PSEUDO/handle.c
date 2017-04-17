@@ -487,7 +487,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		fsal_copy_attrs(&attrs, &hdl->attributes, false);
 
 		cb_rc = cb(hdl->name, &hdl->obj_handle, &attrs,
-			   dir_state, hdl->index + 1, NULL);
+			   dir_state, hdl->index + 1);
 
 		fsal_release_attrs(&attrs);
 

@@ -649,7 +649,7 @@ static fsal_status_t tank_readdir(struct fsal_obj_handle *dir_hdl,
 
 			/* callback to cache inode */
 			cb_rc = cb(dirents[index].psz_filename, obj, &attrs,
-				   dir_state, (fsal_cookie_t) index, NULL);
+				   dir_state, (fsal_cookie_t) index);
 
 			fsal_release_attrs(&attrs);
 

@@ -1615,7 +1615,7 @@ struct mdcache_populate_cb_state {
 static enum fsal_dir_result
 mdc_readdir_uncached_cb(const char *name, struct fsal_obj_handle *sub_handle,
 			struct attrlist *attrs, void *dir_state,
-			fsal_cookie_t cookie, fsal_cookie_t *ret_cookie)
+			fsal_cookie_t cookie)
 {
 	struct mdcache_populate_cb_state *state = dir_state;
 	fsal_status_t status = { 0, 0 };
@@ -1647,7 +1647,7 @@ mdc_readdir_uncached_cb(const char *name, struct fsal_obj_handle *sub_handle,
 	/* Call up the stack.  Do a supercall */
 	supercall_raw(state->export,
 		      rv = state->cb(name, &new_entry->obj_handle, attrs,
-				     state->dir_state, cookie, ret_cookie)
+				     state->dir_state, cookie)
 	);
 
 	return rv;
@@ -1993,7 +1993,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 static enum fsal_dir_result
 mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			 struct attrlist *attrs_in, void *dir_state,
-			 fsal_cookie_t cookie, fsal_cookie_t *ret_cookie)
+			 fsal_cookie_t cookie)
 {
 	struct mdcache_populate_cb_state *state = dir_state;
 	struct dir_chunk *chunk = state->dir_state;
@@ -2187,16 +2187,10 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		 * we allocated above has been freed we don't need to do any
 		 * cleanup.
 		 *
-		 * Don't allow readahead in this case.
+		 * Don't allow readahead in this case just indicate this
+		 * directory is terminated.
 		 */
-		if (ret_cookie != NULL) {
-			/* Caller cares about marking cookies. */
-			new_dir_entry->flags |= DIR_ENTRY_COOKIE_MARKED;
-			result = DIR_TERMINATE_MARK;
-		} else {
-			/* Just indicate this directory is terminated. */
-			result = DIR_TERMINATE;
-		}
+		result = DIR_TERMINATE;
 	} else if (chunk->num_entries == mdcache_param.dir.avl_chunk) {
 		/* Chunk is full. Since dirent is pointing to the existing
 		 * dirent and the one we allocated above has been freed we don't
@@ -2204,14 +2198,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		 *
 		 * Allow readahead.
 		 */
-		if (ret_cookie != NULL) {
-			/* Caller cares about marking cookies. */
-			new_dir_entry->flags |= DIR_ENTRY_COOKIE_MARKED;
-			result = DIR_READAHEAD_MARK;
-		} else {
-			/* Just indicate this directory is terminated. */
-			result = DIR_READAHEAD;
-		}
+		result = DIR_READAHEAD;
 	}
 
 	if (new_entry->obj_handle.type == DIRECTORY) {
@@ -2247,7 +2234,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 static enum fsal_dir_result
 mdc_readdir_chunked_cb(const char *name, struct fsal_obj_handle *sub_handle,
 		       struct attrlist *attrs, void *dir_state,
-		       fsal_cookie_t cookie, fsal_cookie_t *ret_cookie)
+		       fsal_cookie_t cookie)
 {
 	struct mdcache_populate_cb_state *state = dir_state;
 	enum fsal_dir_result result;
@@ -2255,8 +2242,7 @@ mdc_readdir_chunked_cb(const char *name, struct fsal_obj_handle *sub_handle,
 	/* This is in the middle of a subcall. Do a supercall */
 	supercall_raw(state->export,
 		result = mdc_readdir_chunk_object(name, sub_handle, attrs,
-						  dir_state, cookie,
-						  ret_cookie)
+						  dir_state, cookie)
 	);
 
 	return result;
@@ -2590,7 +2576,7 @@ again:
 		}
 
 		cb_result = cb(dirent->name, &entry->obj_handle, &entry->attrs,
-			       dir_state, next_ck, NULL);
+			       dir_state, next_ck);
 
 		fsal_release_attrs(&attrs);
 
@@ -2602,8 +2588,7 @@ again:
 
 			/* If cb_result is DIR_TERMINATE, the callback did
 			 * not consume this entry, so we can not have reached
-			 * end of directory (for DIR_TERMINATE_MARK, we expect
-			 * the callback DID consume the last entry).
+			 * end of directory.
 			 */
 			*eod_met = cb_result != DIR_TERMINATE && dirent->eod;
 
@@ -2615,8 +2600,6 @@ again:
 
 			return status;
 		}
-
-
 	}
 
 	if (chunk->next_ck != 0) {
@@ -2684,7 +2667,7 @@ again:
 static enum fsal_dir_result
 mdc_populate_dirent(const char *name, struct fsal_obj_handle *sub_handle,
 		    struct attrlist *attrs, void *dir_state,
-		    fsal_cookie_t cookie, fsal_cookie_t *ret_cookie)
+		    fsal_cookie_t cookie)
 {
 	struct mdcache_populate_cb_state *state = dir_state;
 	fsal_status_t status = { 0, 0 };

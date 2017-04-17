@@ -557,7 +557,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 			/* callback to cache inode */
 			cb_rc = cb(dentry->d_name, hdl, &attrs, dir_state,
-				   (fsal_cookie_t) dentry->d_off, NULL);
+				   (fsal_cookie_t) dentry->d_off);
 
 			fsal_release_attrs(&attrs);
 

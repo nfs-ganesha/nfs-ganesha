@@ -1652,7 +1652,7 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 		if (FSAL_IS_ERROR(st))
 			break;
 
-		cb_rc = cb(name, handle, &attrs, cbarg, e4->cookie, NULL);
+		cb_rc = cb(name, handle, &attrs, cbarg, e4->cookie);
 
 		fsal_release_attrs(&attrs);
 

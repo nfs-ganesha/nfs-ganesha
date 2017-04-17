@@ -766,7 +766,7 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 		}
 
 		cb_result = cb(dirent->name, &entry->obj_handle, &attrs,
-			       dir_state, dirent->hk.k, NULL);
+			       dir_state, dirent->hk.k);
 
 		fsal_release_attrs(&attrs);
 

@@ -205,7 +205,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				goto out;
 
 			cb_rc = cb(de.d_name, obj, &attrs,
-				   dir_state, glfs_telldir(glfd), NULL);
+				   dir_state, glfs_telldir(glfd));
 
 			fsal_release_attrs(&attrs);
 

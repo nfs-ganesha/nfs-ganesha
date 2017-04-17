@@ -1241,7 +1241,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 			/* callback to cache inode */
 			cb_rc = cb(dentryp->vd_name, hdl, &attrs, dir_state,
-				(fsal_cookie_t) dentryp->vd_offset, NULL);
+				(fsal_cookie_t) dentryp->vd_offset);
 
 			fsal_release_attrs(&attrs);
 

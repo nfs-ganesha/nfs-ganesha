@@ -151,8 +151,7 @@ static bool rgw_cb(const char *name, void *arg, uint64_t offset)
 	/** @todo FSF - when rgw gains mark capability, need to change this
 	 *              code...
 	 */
-	cb_rc = rgw_cb_arg->cb(name, obj, &attrs, rgw_cb_arg->fsal_arg, offset,
-			       NULL);
+	cb_rc = rgw_cb_arg->cb(name, obj, &attrs, rgw_cb_arg->fsal_arg, offset);
 
 	fsal_release_attrs(&attrs);
 

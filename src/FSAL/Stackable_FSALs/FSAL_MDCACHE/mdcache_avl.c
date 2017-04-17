@@ -169,14 +169,6 @@ void unchunk_dirent(mdcache_dir_entry_t *dirent)
 	 * up.
 	 */
 
-	/* Check if we need to release a marked cookie. */
-	if (dirent->flags & DIR_ENTRY_COOKIE_MARKED) {
-		struct fsal_obj_handle *obj;
-
-		obj = &parent->obj_handle;
-		obj->obj_ops.release_readdir_cookie(obj, &dirent->ck);
-	}
-
 	/* Remove from chunk */
 	glist_del(&dirent->chunk_list);
 
