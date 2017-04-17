@@ -307,8 +307,6 @@ struct dir_chunk {
 	struct glist_head dirents;
 	/** Directory this chunk belongs to */
 	struct mdcache_fsal_obj_handle *parent;
-	/** AVL tree for sorted dirents */
-	struct avltree dirents_avl;
 	/** The previous chunk, this pointer is only de-referenced during
 	 *  chunk population (where the content_lock prevents the previous
 	 *  chunk from going invalid), or used to double check but not

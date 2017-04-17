@@ -2174,6 +2174,11 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		if (chunk->num_entries == 0 && chunk->prev_chunk != NULL) {
 			/* Link the first dirent in a new chunk to the previous
 			 * chunk so linkage across chunks works.
+			 *
+			 * This could be linking readahead chunks, or we
+			 * could have had to read another chunk to satisfy
+			 * readdir request, in which case prev_chunk had been
+			 * passed into mdcache_populate_dir_chunk.
 			 */
 			chunk->prev_chunk->next_ck = cookie;
 		}
@@ -2191,12 +2196,20 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		 * directory is terminated.
 		 */
 		result = DIR_TERMINATE;
+
+		/* Since the chunk we were working on collides with a previously
+		 * used chunk, we should link our chunk into that other chunk.
+		 */
+		chunk->next_ck = cookie;
 	} else if (chunk->num_entries == mdcache_param.dir.avl_chunk) {
 		/* Chunk is full. Since dirent is pointing to the existing
 		 * dirent and the one we allocated above has been freed we don't
 		 * need to do any cleanup.
 		 *
 		 * Allow readahead.
+		 *
+		 * If there's actually any readahead, chunk->next_ck will get
+		 * filled in.
 		 */
 		result = DIR_READAHEAD;
 	}
@@ -2496,7 +2509,7 @@ again:
 		chunk = dirent->chunk;
 	}
 
-	/* dirent WILL be non-NULL, emember the chunk we are in. */
+	/* dirent WILL be non-NULL, remember the chunk we are in. */
 	chunk = dirent->chunk;
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
