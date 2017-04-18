@@ -93,6 +93,11 @@ class RetrieveExportStats():
         else:
             stats_dict[export_id] = stats_op(int(export_id))
             return PNFSStats(stats_dict)
+    # Reset the statistics counters for all
+    def reset_stats(self):
+        stats_state = self.exportmgrobj.get_dbus_method("ResetStats",
+                                  self.dbus_exportstats_name)
+        return StatsReset(stats_state())
 
 class RetrieveClientStats():
     def __init__(self):
@@ -336,4 +341,11 @@ class PNFSStats():
                 output += "\t" + stat
         return output
 
-
+class StatsReset():
+    def __init__(self, status):
+        self.status = status
+    def __str__(self):
+        if self.status[1] != "OK":
+            return "Failed to reset statistics, GANESHA RESPONSE STATUS: " + self.status[1]
+        else:
+            return "Successfully resetted statistics counters"

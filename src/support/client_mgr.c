@@ -557,6 +557,25 @@ static struct gsh_dbus_method cltmgr_show_clients = {
 		 END_ARG_LIST}
 };
 
+/* Reset Client specific stats counters
+ */
+void reset_client_stats(void)
+{
+	struct avltree_node *client_node;
+	struct gsh_client *cl;
+	struct server_stats *clnt;
+
+	PTHREAD_RWLOCK_rdlock(&client_by_ip.lock);
+	for (client_node = avltree_first(&client_by_ip.t); client_node != NULL;
+	     client_node = avltree_next(client_node)) {
+		cl = avltree_container_of(client_node, struct gsh_client,
+					  node_k);
+		clnt = container_of(cl, struct server_stats, client);
+		reset_gsh_stats(&clnt->st);
+	}
+	PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
+}
+
 static struct gsh_dbus_method *cltmgr_client_methods[] = {
 	&cltmgr_add_client,
 	&cltmgr_remove_client,

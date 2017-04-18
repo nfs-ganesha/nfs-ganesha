@@ -1255,6 +1255,24 @@ static struct gsh_dbus_method export_show_exports = {
 };
 
 /**
+ * @brief Reset stat counters for all exports
+ */
+void reset_export_stats(void)
+{
+	struct glist_head *glist;
+	struct gsh_export *export;
+	struct export_stats *exp;
+
+	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	glist_for_each(glist, &exportlist) {
+		export = glist_entry(glist, struct gsh_export, exp_list);
+		exp = container_of(export, struct export_stats, export);
+		reset_gsh_stats(&exp->st);
+	}
+	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+}
+
+/**
  * @brief Update an export
  *
  * This method passes a pathname in the server's local filesystem
@@ -1717,6 +1735,34 @@ static struct gsh_dbus_method export_show_v41_layouts = {
 		 END_ARG_LIST}
 };
 
+/**
+ * DBUS method to reset all ops statistics
+ *
+ */
+static bool stats_reset(DBusMessageIter *args,
+			DBusMessage *reply,
+			DBusError *error)
+{
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	dbus_status_reply(&iter, success, errormsg);
+
+	server_reset_stats(&iter);
+
+	return true;
+}
+
+static struct gsh_dbus_method reset_statistics = {
+	.name = "ResetStats",
+	.method = stats_reset,
+	.args = {STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 END_ARG_LIST}
+};
+
 #ifdef _USE_9P
 /**
  * DBUS method to report 9p I/O statistics
@@ -1917,6 +1963,7 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&global_show_fast_ops,
 	&cache_inode_show,
 	&export_show_all_io,
+	&reset_statistics,
 	NULL
 };
 

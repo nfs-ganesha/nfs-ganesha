@@ -16,7 +16,9 @@ def usage():
     message = "Command gives global stats by default.\n"
     message += "%s [list_clients | deleg <ip address> | " % (sys.argv[0])
     message += "inode | iov3 [export id] | iov4 [export id] | export |"
-    message += " total [export id] | fast | pnfs [export id] ]"
+    message += " total [export id] | fast | pnfs [export id] ]\n"
+    message += "To reset stat counters use \n"
+    message += "%s reset " % (sys.argv[0])
     sys.exit(message)
 
 if len(sys.argv) < 2:
@@ -26,7 +28,7 @@ else:
 
 # check arguments
 commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
-           'export', 'total', 'fast', 'pnfs')
+           'export', 'total', 'fast', 'pnfs', 'reset')
 if command not in commands:
     print "Option \"%s\" is not correct." % (command)
     usage()
@@ -70,3 +72,5 @@ elif command == "total":
     print exp_interface.total_stats(command_arg)
 elif command == "pnfs":
     print exp_interface.pnfs_stats(command_arg)
+elif command == "reset":
+    print exp_interface.reset_stats()

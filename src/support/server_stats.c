@@ -697,6 +697,180 @@ static void record_op(struct proto_op *op, nsecs_elapsed_t request_time,
 }
 
 /**
+ *  @brief reset the counts for protocol operation
+ *  Use atomic ops to avoid locks.
+ *  @param op           [IN] pointer to specific protocol struct
+ */
+
+static void reset_op(struct proto_op *op)
+{
+	(void)atomic_store_uint64_t(&op->total, 0);
+	(void)atomic_store_uint64_t(&op->errors, 0);
+	(void)atomic_store_uint64_t(&op->dups, 0);
+	/* reset latency related counters */
+	(void)atomic_store_uint64_t(&op->latency.latency, 0);
+	(void)atomic_store_uint64_t(&op->latency.min, 0);
+	(void)atomic_store_uint64_t(&op->latency.max, 0);
+	(void)atomic_store_uint64_t(&op->dup_latency.latency, 0);
+	(void)atomic_store_uint64_t(&op->dup_latency.min, 0);
+	(void)atomic_store_uint64_t(&op->dup_latency.max, 0);
+	(void)atomic_store_uint64_t(&op->queue_latency.latency, 0);
+	(void)atomic_store_uint64_t(&op->queue_latency.min, 0);
+	(void)atomic_store_uint64_t(&op->queue_latency.max, 0);
+}
+
+/**
+ *  @brief reset the counts for xfer protocol operation
+ *  Use atomic ops to avoid locks.
+ *  @param xfer           [IN] pointer to specific xfer protocol struct
+ */
+
+static void reset_xfer_op(struct xfer_op *xfer)
+{
+	reset_op(&xfer->cmd);
+	(void)atomic_store_uint64_t(&xfer->requested, 0);
+	(void)atomic_store_uint64_t(&xfer->transferred, 0);
+}
+
+/**
+ * @brief reset the counts related to layout
+ * Use atomic ops to avoid locks.
+ * @param lo           [IN] pointer to specific layout struct
+ */
+
+static void reset_layout_op(struct layout_op *lo)
+{
+	(void)atomic_store_uint64_t(&lo->total, 0);
+	(void)atomic_store_uint64_t(&lo->errors, 0);
+	(void)atomic_store_uint64_t(&lo->delays, 0);
+}
+
+/**
+ * @brief reset the counts nfsv3_stats
+ * Use atomic ops to avoid locks.
+ * @param nfsv3           [IN] pointer to nfsv3_stats struct
+ */
+
+static void reset_nfsv3_stats(struct nfsv3_stats *nfsv3)
+{
+	/* Reset stats counter for nfsv3 protocol */
+	reset_op(&nfsv3->cmds);
+	reset_xfer_op(&nfsv3->read);
+	reset_xfer_op(&nfsv3->write);
+}
+
+/**
+ * @brief reset the counts nfsv40_stats
+ * Use atomic ops to avoid locks.
+ * @param nfsv40           [IN] pointer to nfsv40_stats struct
+ */
+
+static void reset_nfsv40_stats(struct nfsv40_stats *nfsv40)
+{
+	/* Reset stats counter for nfsv4 protocol */
+	reset_op(&nfsv40->compounds);
+	(void)atomic_store_uint64_t(&nfsv40->ops_per_compound, 0);
+	reset_xfer_op(&nfsv40->read);
+	reset_xfer_op(&nfsv40->write);
+}
+
+
+/**
+ * @brief reset the counts nfsv41_stats
+ * Use atomic ops to avoid locks.
+ * @param nfsv41           [IN] pointer to nfsv41_stats struct
+ */
+
+static void reset_nfsv41_stats(struct nfsv41_stats *nfsv41)
+{
+	/* Reset stats counter for nfsv41 protocol */
+	reset_op(&nfsv41->compounds);
+	(void)atomic_store_uint64_t(&nfsv41->ops_per_compound, 0);
+	reset_xfer_op(&nfsv41->read);
+	reset_xfer_op(&nfsv41->write);
+	reset_layout_op(&nfsv41->getdevinfo);
+	reset_layout_op(&nfsv41->layout_get);
+	reset_layout_op(&nfsv41->layout_commit);
+	reset_layout_op(&nfsv41->layout_return);
+	reset_layout_op(&nfsv41->recall);
+}
+
+
+/**
+ * @brief reset the counts mnt_stats
+ * Use atomic ops to avoid locks.
+ * @param mnt           [IN] pointer to mnt_stats struct
+ */
+
+static void reset_mnt_stats(struct mnt_stats *mnt)
+{
+	/* Reset stats counter for mount protocol */
+	reset_op(&mnt->v1_ops);
+	reset_op(&mnt->v3_ops);
+}
+
+/**
+ * @brief reset the counts rquota_stats
+ * Use atomic ops to avoid locks.
+ * @param rquota           [IN] pointer to rquota_stats struct
+ */
+
+static void reset_rquota_stats(struct rquota_stats *rquota)
+{
+	/* Reset stats counter for quota */
+	reset_op(&rquota->ops);
+	reset_op(&rquota->ext_ops);
+}
+
+/**
+ * @brief reset the counts nlmv4_stats
+ * Use atomic ops to avoid locks.
+ * @param nlmv4           [IN] pointer to nlmv4_stats struct
+ */
+
+static void reset_nlmv4_stats(struct nlmv4_stats *nlmv4)
+{
+	/* Reset stats counter for nlmv4 */
+	reset_op(&nlmv4->ops);
+}
+
+/**
+ * @brief reset the counts nlmv4_stats
+ * Use atomic ops to avoid locks.
+ * @param nlmv4           [IN] pointer to nlmv4_stats struct
+ */
+
+static void reset_deleg_stats(struct deleg_stats *deleg)
+{
+	/* Reset stats counter for deleg */
+	(void)atomic_store_uint32_t(&deleg->curr_deleg_grants, 0);
+	(void)atomic_store_uint32_t(&deleg->tot_recalls, 0);
+	(void)atomic_store_uint32_t(&deleg->failed_recalls, 0);
+	(void)atomic_store_uint32_t(&deleg->num_revokes, 0);
+}
+
+#ifdef _USE_9P
+static void reset__9P_stats(struct _9p_stats *_9p)
+{
+	u8 opc;
+
+	reset_op(&_9p->cmds);
+	reset_xfer_op(&_9p->read);
+	reset_xfer_op(&_9p->write);
+	(void)atomic_store_uint64_t(&_9p->trans.rx_bytes, 0);
+	(void)atomic_store_uint64_t(&_9p->trans.rx_pkt, 0);
+	(void)atomic_store_uint64_t(&_9p->trans.rx_err, 0);
+	(void)atomic_store_uint64_t(&_9p->trans.tx_bytes, 0);
+	(void)atomic_store_uint64_t(&_9p->trans.tx_pkt, 0);
+	(void)atomic_store_uint64_t(&_9p->trans.tx_err, 0);
+	for (opc = 0; opc <= _9P_RWSTAT; opc++) {
+		if (_9p->opcodes[opc] != NULL)
+			reset_op(_9p->opcodes[opc]);
+	}
+}
+#endif
+
+/**
  * @brief record V4.1 layout op stats
  *
  * @param sp       [IN] stats block to update
@@ -1681,6 +1855,69 @@ void server_dbus_all_iostats(struct export_stats *export_statistics,
 	}
 }
 
+void reset_gsh_stats(struct gsh_stats *st)
+{
+	if (st->nfsv3)
+		reset_nfsv3_stats(st->nfsv3);
+	if (st->nfsv40)
+		reset_nfsv40_stats(st->nfsv40);
+	if (st->nfsv41)
+		reset_nfsv41_stats(st->nfsv41);
+	if (st->nfsv42)
+		reset_nfsv41_stats(st->nfsv42); /* Uses v41 stats */
+	if (st->mnt)
+		reset_mnt_stats(st->mnt);
+	if (st->rquota)
+		reset_rquota_stats(st->rquota);
+	if (st->nlm4)
+		reset_nlmv4_stats(st->nlm4);
+	if (st->deleg)
+		reset_deleg_stats(st->deleg);
+#ifdef _USE_9P
+	if (st->_9p)
+		reset__9P_stats(st->_9p);
+#endif
+}
+
+void reset_global_stats(void)
+{
+	int i;
+	/* Reset all ops counters of nfsv3 */
+	for (i = 0; i < NFSPROC3_COMMIT; i++) {
+		(void)atomic_store_uint64_t(&global_st.v3.op[i], 0);
+	}
+	/* Reset all ops counters of nfsv4 */
+	for (i = 0; i < NFS4_OP_LAST_ONE; i++) {
+		(void)atomic_store_uint64_t(&global_st.v4.op[i], 0);
+	}
+	/* Reset all ops counters of lock manager */
+	for (i = 0; i < NLM4_FAILED; i++) {
+		(void)atomic_store_uint64_t(&global_st.lm.op[i], 0);
+	}
+	/* Reset all ops counters of mountd */
+	for (i = 0; i < MOUNTPROC3_EXPORT; i++) {
+		(void)atomic_store_uint64_t(&global_st.mn.op[i], 0);
+	}
+	/* Reset all ops counters of rquotad */
+	for (i = 0; i < RQUOTAPROC_SETACTIVEQUOTA; i++) {
+		(void)atomic_store_uint64_t(&global_st.qt.op[i], 0);
+	}
+	reset_nfsv3_stats(&global_st.nfsv3);
+	reset_nfsv40_stats(&global_st.nfsv40);
+	reset_nfsv41_stats(&global_st.nfsv41);
+	reset_nfsv41_stats(&global_st.nfsv42);  /* Uses v41 stats */
+	reset_mnt_stats(&global_st.mnt);
+	reset_rquota_stats(&global_st.rquota);
+	reset_nlmv4_stats(&global_st.nlm4);
+}
+
+void global_dbus_reset_stats(DBusMessageIter *iter)
+{
+	reset_global_stats();
+	reset_export_stats();
+	reset_client_stats();
+}
+
 void server_dbus_total_ops(struct export_stats *export_st,
 			   DBusMessageIter *iter)
 {
@@ -1709,6 +1946,14 @@ void global_dbus_total_ops(DBusMessageIter *iter)
 	global_dbus_total(iter);
 }
 
+void server_reset_stats(DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	global_dbus_reset_stats(iter);
+}
 
 #ifdef _USE_9P
 void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter)
