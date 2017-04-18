@@ -500,8 +500,8 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 	}
 
 	status = fsal_internal_get_handle_at(gpfs_fs->root_fd,
-					     gpfs_fs->fs->path, &fh, 0,
-					     &gpfs_fs->root_fd);
+					     gpfs_fs->fs->path, &fh,
+					     gpfs_fs->root_fd);
 
 	if (FSAL_IS_ERROR(status)) {
 		retval = status.minor;

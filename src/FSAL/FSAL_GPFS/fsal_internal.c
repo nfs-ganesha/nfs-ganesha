@@ -160,7 +160,7 @@ fsal_internal_handle2fd(int dirfd, struct gpfs_file_handle *gpfs_fh,
 fsal_status_t
 fsal_internal_get_handle_at(int dfd, const char *fs_name,
 			    struct gpfs_file_handle *gpfs_fh,
-			    int expfd, int *expfdP)
+			    int expfd)
 {
 	struct name_handle_arg harg;
 	int rc;
@@ -190,8 +190,6 @@ fsal_internal_get_handle_at(int dfd, const char *fs_name,
 		return fsalstat(posix2fsal_error(errsv), errsv);
 	}
 	LogFullDebug(COMPONENT_FSAL, "Lookup fd %d for %s", rc, fs_name);
-	if (expfdP)
-		*expfdP = rc;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -248,7 +246,7 @@ fsal_internal_get_fh(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *  @return status of operation
  */
 fsal_status_t
-fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh, int *expfdP)
+fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh)
 {
 	struct name_handle_arg harg = {0};
 	int rc;
@@ -262,9 +260,6 @@ fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh, int *expfdP)
 	harg.handle->handle_version = OPENHANDLE_VERSION;
 	harg.dfd = fd;
 
-	if (expfdP)
-		harg.expfd = *expfdP;
-
 	LogFullDebug(COMPONENT_FSAL, "Lookup handle by fd for %d", fd);
 
 	rc = gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg);
@@ -277,8 +272,6 @@ fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh, int *expfdP)
 		return fsalstat(posix2fsal_error(errsv), errsv);
 	}
 	LogFullDebug(COMPONENT_FSAL, "get expfd in %d out %d", fd, rc);
-	if (expfdP)
-		*expfdP = rc;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

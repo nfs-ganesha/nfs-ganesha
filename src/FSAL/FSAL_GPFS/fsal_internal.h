@@ -117,7 +117,7 @@ int fsal_internal_version(void);
 fsal_status_t fsal_internal_get_handle_at(int dfd,
 				const char *p_fsalname,
 				struct gpfs_file_handle *p_handle,
-				int expfd, int *expfdP);
+				int expfd);
 
 fsal_status_t gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 		struct attrlist *fsal_attr, gpfs_acl_t *acl_buf, bool use_acl);
@@ -143,7 +143,7 @@ fsal_status_t fsal_readlink_by_handle(int dirfd,
  * Get the handle for a path (posix or fid path)
  */
 fsal_status_t fsal_internal_fd2handle(int fd,
-				struct gpfs_file_handle *p_handle, int *expfdP);
+				struct gpfs_file_handle *p_handle);
 
 fsal_status_t fsal_internal_link_at(int srcfd, int dfd, char *name);
 
