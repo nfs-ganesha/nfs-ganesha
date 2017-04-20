@@ -462,6 +462,8 @@ struct cache_entry_t {
 	time_t change_time;
 	/** Time at which we last refreshed attributes. */
 	time_t attr_time;
+	/** Time at which we last invalidated dirent cache. */
+	time_t dirent_time;
 	/** New style LRU link */
 	cache_inode_lru_t lru;
 	/** There is one export root reference counted for each export
@@ -943,6 +945,8 @@ cache_inode_is_attrs_valid(const cache_entry_t *entry)
  *
  * Load the FSAL attributes as specified in the configuration into
  * this entry, mark them as trustable and update the entry metadata.
+ * Invalidate the dirent cache if it is expired.
+ *
  * Note that the caller must hold the write lock on the attributes.
  *
  * @todo Possibly not really necessary?
@@ -967,6 +971,32 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
 				 acl_status);
 		}
 		entry->obj_handle->attrs->acl = NULL;
+	}
+
+	if ((entry->type == DIRECTORY) &&
+		(entry->obj_handle->attrs->expire_time_attr > 0)) {
+		time_t current_time = time(NULL);
+
+		if (current_time - entry->dirent_time >
+			entry->obj_handle->attrs->expire_time_attr) {
+			PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+			current_time = time(NULL);
+			if (current_time - entry->dirent_time >
+				entry->obj_handle->attrs->expire_time_attr) {
+				cache_status =
+				  cache_inode_invalidate_all_cached_dirent(
+								entry);
+				if (cache_status != CACHE_INODE_SUCCESS) {
+					LogDebug(COMPONENT_CACHE_INODE,
+					"cache_inode_invalidate_all_cached_dirent returned %d (%s)",
+					cache_status,
+					cache_inode_err_str(cache_status));
+					goto out;
+				}
+				entry->dirent_time = current_time;
+			}
+			PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		}
 	}
 
 	fsal_status =

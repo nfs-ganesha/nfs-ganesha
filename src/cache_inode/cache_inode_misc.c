@@ -845,7 +845,6 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
 			     bool need_wr_lock)
 {
 	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
-	time_t oldmtime = 0;
 
 	if (need_wr_lock)
 		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
@@ -865,28 +864,9 @@ cache_inode_lock_trust_attrs(cache_entry_t *entry,
 			goto out;
 	}
 
-	oldmtime = entry->obj_handle->attrs->mtime.tv_sec;
-
 	cache_status = cache_inode_refresh_attrs(entry);
 	if (cache_status != CACHE_INODE_SUCCESS)
 		goto unlock;
-
-	if ((entry->type == DIRECTORY)
-	    && (oldmtime < entry->obj_handle->attrs->mtime.tv_sec)) {
-		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-
-		cache_status = cache_inode_invalidate_all_cached_dirent(entry);
-
-		PTHREAD_RWLOCK_unlock(&entry->content_lock);
-
-		if (cache_status != CACHE_INODE_SUCCESS) {
-			LogCrit(COMPONENT_CACHE_INODE,
-				"cache_inode_invalidate_all_cached_dirent returned %d (%s)",
-				cache_status,
-				cache_inode_err_str(cache_status));
-			goto unlock;
-		}
-	}
 
  out:
 	return cache_status;
