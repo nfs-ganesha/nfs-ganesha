@@ -906,6 +906,60 @@ cache_inode_fixup_md(cache_entry_t *entry)
 }
 
 /**
+ * @brief Invalidates the directory entries.
+ *
+ * @param[in] entry   The entry to check
+ */
+
+	static inline cache_inode_status_t
+cache_inode_invalidate_dirent(cache_entry_t *entry)
+{
+	cache_inode_status_t cache_status = CACHE_INODE_SUCCESS;
+
+	if (entry->type != DIRECTORY)
+		return cache_status;
+
+	PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+	cache_status =
+		cache_inode_invalidate_all_cached_dirent(entry);
+	if (cache_status != CACHE_INODE_SUCCESS) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "cache_inode_invalidate_all_cached_dirent returned %d (%s)",
+			 cache_status, cache_inode_err_str(cache_status));
+	} else {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "cache_inode_invalidate_all_cached_dirent returned success");
+		entry->dirent_time = time(NULL);
+	}
+	PTHREAD_RWLOCK_unlock(&entry->content_lock);
+
+	return cache_status;
+}
+
+/**
+ * @brief Check if dirent cache is expired
+ *
+ * @param[in] entry   The entry to check
+ */
+
+	static inline bool
+cache_inode_is_dirent_valid(const cache_entry_t *entry)
+{
+	if (entry->type != DIRECTORY)
+		return true;
+
+	if (entry->obj_handle->attrs->expire_time_attr > 0) {
+		time_t current_time = time(NULL);
+
+		if (current_time - entry->dirent_time <
+		    entry->obj_handle->attrs->expire_time_attr)
+			return true;
+	}
+
+	return false;
+}
+
+/**
  * @brief Check if attributes are valid
  *
  * The caller must hold the read lock on the attributes.
@@ -971,32 +1025,6 @@ cache_inode_refresh_attrs(cache_entry_t *entry)
 				 acl_status);
 		}
 		entry->obj_handle->attrs->acl = NULL;
-	}
-
-	if ((entry->type == DIRECTORY) &&
-		(entry->obj_handle->attrs->expire_time_attr > 0)) {
-		time_t current_time = time(NULL);
-
-		if (current_time - entry->dirent_time >
-			entry->obj_handle->attrs->expire_time_attr) {
-			PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-			current_time = time(NULL);
-			if (current_time - entry->dirent_time >
-				entry->obj_handle->attrs->expire_time_attr) {
-				cache_status =
-				  cache_inode_invalidate_all_cached_dirent(
-								entry);
-				if (cache_status != CACHE_INODE_SUCCESS) {
-					LogDebug(COMPONENT_CACHE_INODE,
-					"cache_inode_invalidate_all_cached_dirent returned %d (%s)",
-					cache_status,
-					cache_inode_err_str(cache_status));
-					goto out;
-				}
-				entry->dirent_time = current_time;
-			}
-			PTHREAD_RWLOCK_unlock(&entry->content_lock);
-		}
 	}
 
 	fsal_status =
