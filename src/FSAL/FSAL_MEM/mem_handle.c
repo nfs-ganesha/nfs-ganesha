@@ -655,7 +655,7 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 		fsal_copy_attrs(&attrs, &hdl->attrs, false);
 
 		cb_rc = cb(hdl->m_name, &hdl->obj_handle, &attrs,
-			   dir_state, hdl->index + 1, NULL);
+			   dir_state, hdl->index + 1);
 
 		fsal_release_attrs(&attrs);
 
