@@ -27,6 +27,13 @@
  * -------------
  */
 
+/* _FILE_OFFSET_BITS macro causes F_GETLK/SETLK/SETLKW to be defined to
+ * F_GETLK64/SETLK64/SETLKW64. Currently GPFS kernel module doesn't work
+ * with these 64 bit macro values through ganesha interface. Undefine it
+ * here to use plain F_GETLK/SETLK/SETLKW values.
+ */
+#undef _FILE_OFFSET_BITS
+
 #include <assert.h>
 #include "fsal.h"
 #include "FSAL/access_check.h"
