@@ -799,7 +799,6 @@ void dec_nsm_client_ref(state_nsm_client_t *client)
 	hash_error_t rc;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc old_value;
-	struct gsh_buffdesc old_key;
 	int32_t refcount;
 
 	if (isDebug(COMPONENT_STATE)) {
@@ -824,14 +823,25 @@ void dec_nsm_client_ref(state_nsm_client_t *client)
 	buffkey.addr = client;
 	buffkey.len = sizeof(*client);
 
-	/* Get the hash table entry and hold latch */
+	/* Since the refcnt is zero, another thread that needs this
+	 * entry may delete this nsm client to insert its own.
+	 * So expect not to find this nsm client or find someone
+	 * else's nsm client!
+	 */
 	rc = hashtable_getlatch(ht_nsm_client, &buffkey, &old_value, true,
 				&latch);
+	switch (rc) {
+	case HASHTABLE_SUCCESS:
+		if (old_value.addr == client) { /* our nsm client */
+			hashtable_deletelatched(ht_nsm_client, &buffkey,
+						&latch, NULL, NULL);
+		}
+		break;
 
-	if (rc != HASHTABLE_SUCCESS) {
-		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			hashtable_releaselatched(ht_nsm_client, &latch);
+	case HASHTABLE_ERROR_NO_SUCH_KEY:
+		break;
 
+	default:
 		if (!str_valid)
 			display_nsm_client(&dspbuf, client);
 
@@ -841,30 +851,12 @@ void dec_nsm_client_ref(state_nsm_client_t *client)
 		return;
 	}
 
-	refcount = atomic_fetch_int32_t(&client->ssc_refcount);
-
-	if (refcount > 0) {
-		if (str_valid)
-			LogDebug(COMPONENT_STATE,
-				 "Did not release refcount now=%"PRId32" {%s}",
-				 refcount, str);
-
-		hashtable_releaselatched(ht_nsm_client, &latch);
-
-		return;
-	}
-
-	/* use the key to delete the entry */
-	hashtable_deletelatched(ht_nsm_client, &buffkey, &latch, &old_key,
-				&old_value);
-
-	/* Release the latch */
 	hashtable_releaselatched(ht_nsm_client, &latch);
 
 	LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
 
-	nsm_unmonitor(old_value.addr);
-	free_nsm_client(old_value.addr);
+	nsm_unmonitor(client);
+	free_nsm_client(client);
 }
 
 /**
@@ -922,9 +914,18 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 	rc = hashtable_getlatch(ht_nsm_client, &buffkey, &buffval, true,
 				&latch);
 
-	/* If we found it, return it */
-	if (rc == HASHTABLE_SUCCESS) {
+	switch (rc) {
+	case HASHTABLE_SUCCESS:
 		pclient = buffval.addr;
+		if (atomic_fetch_int32_t(&pclient->ssc_refcount) == 0) {
+			/* This nsm client is in the process of getting
+			 * deleted. Delete it from the hash table and
+			 * pretend as though we didn't find it.
+			 */
+			hashtable_deletelatched(ht_nsm_client, &buffkey,
+						&latch, NULL, NULL);
+			break;
+		}
 
 		/* Return the found NSM Client */
 		if (isFullDebug(COMPONENT_STATE)) {
@@ -946,10 +947,11 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 		}
 
 		return pclient;
-	}
 
-	/* An error occurred, return NULL */
-	if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
+	case HASHTABLE_ERROR_NO_SUCH_KEY:
+		break;
+
+	default:
 		display_nsm_client(&dspbuf, &key);
 
 		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
