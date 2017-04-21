@@ -897,7 +897,6 @@ void dec_state_owner_ref(state_owner_t *owner)
 	hash_error_t rc;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc old_value;
-	struct gsh_buffdesc old_key;
 	int32_t refcount;
 	hash_table_t *ht_owner;
 
@@ -928,24 +927,30 @@ void dec_state_owner_ref(state_owner_t *owner)
 		LogCrit(COMPONENT_STATE, "Unexpected owner {%s}, type {%d}",
 			str, owner->so_type);
 
-		/** @todo: we need to understand how this situation occurs and
-		 * either prevent it from happening or provide an explanation
-		 * why this is ok.
-		 */
-
 		return;
 	}
 
 	buffkey.addr = owner;
 	buffkey.len = sizeof(*owner);
 
-	/* Get the hash table entry and hold latch */
+	/* Since the refcount is zero, another thread that needs this
+	 * owner might have deleted ours, so expect not to find one or
+	 * find someone else's owner!
+	 */
 	rc = hashtable_getlatch(ht_owner, &buffkey, &old_value, true, &latch);
+	switch (rc) {
+	case HASHTABLE_SUCCESS:
+		/* If ours, delete from hash table */
+		if (old_value.addr == owner) {
+			hashtable_deletelatched(ht_owner, &buffkey, &latch,
+						NULL, NULL);
+		}
+		break;
 
-	if (rc != HASHTABLE_SUCCESS) {
-		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
-			hashtable_releaselatched(ht_owner, &latch);
+	case HASHTABLE_ERROR_NO_SUCH_KEY:
+		break;
 
+	default:
 		if (!str_valid)
 			display_printf(&dspbuf, "Invalid owner %p", owner);
 
@@ -954,10 +959,6 @@ void dec_state_owner_ref(state_owner_t *owner)
 
 		return;
 	}
-
-	/* use the key to delete the entry */
-	hashtable_deletelatched(ht_owner, &buffkey, &latch, &old_key,
-				&old_value);
 
 	/* Release the latch */
 	hashtable_releaselatched(ht_owner, &latch);
@@ -1053,6 +1054,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
 	hash_table_t *ht_owner;
+	int32_t refcount;
 
 	if (isnew != NULL)
 		*isnew = false;
@@ -1078,16 +1080,20 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 
 	buffkey.addr = key;
 	buffkey.len = sizeof(*key);
-
- again:
-
 	rc = hashtable_getlatch(ht_owner, &buffkey, &buffval, true, &latch);
 
-	/* If we found it, return it */
-	if (rc == HASHTABLE_SUCCESS) {
-		int32_t refcount;
-
+	switch (rc) {
+	case HASHTABLE_SUCCESS:
 		owner = buffval.addr;
+		if (atomic_fetch_int32_t(&owner->so_refcount) == 0) {
+			/* This owner is in the process of getting freed.
+			 * Delete from the hash table and pretend as
+			 * though we didn't find it!
+			 */
+			hashtable_deletelatched(ht_owner, &buffkey, &latch,
+						NULL, NULL);
+			goto not_found;
+		}
 
 		/* Return the found NSM Client */
 		if (isFullDebug(COMPONENT_STATE)) {
@@ -1095,68 +1101,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 			str_valid = true;
 		}
 
-		/* Increment refcount under hash latch. This protects against
-		 * a race with dec_state_owner_ref removing the final
-		 * reference. If we have that race however, we defer to
-		 * the other thread and pretend we did NOT find the owner.
-		 */
 		refcount = atomic_inc_int32_t(&owner->so_refcount);
-
-		if (refcount == 1) {
-			/* This owner is in the process of being freed.
-			 * If care is not CARE_NOT, we will go back and
-			 * retry, otherwise we will return NULL.
-			 *
-			 * If we care, the retry may cycle a time or two
-			 * until the old owner manages to get out of the
-			 * table, and then if multiple get_state_owner
-			 * calls are racing, one of them will get the
-			 * latch, not find the owner, and create it, the
-			 * rest will then in turn find that new owner.
-			 */
-			if (isDebug(COMPONENT_STATE)) {
-				if (!str_valid) {
-					/* Since we still hold the latch,
-					 * owner MUST still be valid,
-					 * dec_state_owner_ref has not even
-					 * removed from the hash table yet,
-					 * let alone destroyed the object.
-					 */
-					display_owner(&dspbuf, owner);
-				}
-
-				LogDebug(COMPONENT_STATE,
-					 "Found owner in process of deconstruction, will %s {%s}",
-					 care == CARE_NOT
-						? "return NULL (CARE_NOT)"
-						: "retry",
-					 str);
-			}
-
-			/* Drop the reference we just got. */
-			refcount = atomic_dec_int32_t(&owner->so_refcount);
-
-			/* Just for kicks, validate the refcount */
-			if (refcount != 0) {
-				display_owner(&dspbuf, owner);
-				LogCrit(COMPONENT_STATE,
-					"Deconstructed state owner has gained a reference {%s}",
-					str);
-			}
-
-			/* Now drop the hash table latch and try again or exit.
-			 */
-			hashtable_releaselatched(ht_owner, &latch);
-
-			/* If we don't care, return NULL at this point,
-			 * otherwise retry.
-			 */
-			/** @todo should we nanosleep before retry? */
-			if (care == CARE_NOT)
-				return NULL;
-			else
-				goto again;
-		}
 
 		hashtable_releaselatched(ht_owner, &latch);
 
@@ -1173,12 +1118,12 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 				     "Found {%s} refcount now=%" PRId32,
 				     str, refcount);
 		}
-
 		return owner;
-	}
 
-	/* An error occurred, return NULL */
-	if (rc != HASHTABLE_ERROR_NO_SUCH_KEY) {
+	case HASHTABLE_ERROR_NO_SUCH_KEY:
+		goto not_found;
+
+	default:
 		if (!str_valid)
 			display_owner(&dspbuf, key);
 
@@ -1188,6 +1133,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 		return NULL;
 	}
 
+not_found:
 	/* Not found, but we don't care, return NULL */
 	if (care == CARE_NOT) {
 		if (str_valid)

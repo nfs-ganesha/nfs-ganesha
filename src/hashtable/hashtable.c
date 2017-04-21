@@ -683,7 +683,7 @@ hashtable_setlatched(struct hash_table *ht,
  * This function removes a value from the a hash store, the value
  * already having been looked up with GetLatched. In all cases, the
  * lock is retained. hashtable_getlatch must have been called with
- * may_read true.
+ * may_write true.
  *
  * @param[in,out] ht      The hash store to be modified
  * @param[in]     key     A buffer descriptore locating the key to remove
