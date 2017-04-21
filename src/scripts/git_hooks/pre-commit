@@ -1,4 +1,15 @@
 #!/bin/bash
+# Ganesha pre-commit hook
+#
+# 1. Run checkpatch on the commit
+# 2. Check to see if a submodule is not being updated
+
+
+# define colors for use in output
+green='\033[0;32m'
+no_color='\033[0m'
+grey='\033[0;90m'
+
 
 if git rev-parse --verify HEAD 2>/dev/null >/dev/null
 then
@@ -9,5 +20,47 @@ else
 fi
 
 topdir=$(git rev-parse --show-toplevel)
-exec git diff --cached  $against | $topdir/src/scripts/checkpatch.pl \
+git diff --cached  $against | $topdir/src/scripts/checkpatch.pl \
 	      --no-signoff -q -
+if [ $? != 0 ]; then
+	exit 1
+fi
+
+# Check whether any submodule is about to be updated with the
+# commit. Ask the user for confirmation.
+
+echo -e "Checking submodules ${grey}(pre-commit hook)${no_color} "
+
+# Jump to the current project's root directory (the one containing
+# .git/)
+ROOT_DIR=$(git rev-parse --show-cdup)
+
+SUBMODULES=$(grep path ${ROOT_DIR}.gitmodules | sed 's/^.*path = //')
+
+# Finding the submodules that have been modified
+MOD_SUBMODULES=$(git diff --cached --name-only | grep -F "$SUBMODULES")
+
+# If no modified submodules, exit with status code 0, else prompt the
+# user and exit accordingly
+if [[ -n "$MOD_SUBMODULES" ]]; then
+    echo "Submodules to be committed:"
+    echo "  (use \"git reset HEAD <file>...\" to unstage)"
+    echo
+
+    for SUB in $MOD_SUBMODULES
+    do
+        echo -e "\t${green}modified:\t$SUB${no_color}"
+    done
+    echo
+    echo -n -e "Continue with commit? ${grey}[N|y]${no_color} "
+    read -n 1 reply </dev/tty
+    echo
+    if [[ "$reply" == "y" || "$reply" == "Y" ]]; then
+        echo "Permitting submodules to be committed..."
+        exit 0
+    else
+        echo "Aborting commit due to submodule update."
+        exit 1
+    fi
+fi
+exit 0
