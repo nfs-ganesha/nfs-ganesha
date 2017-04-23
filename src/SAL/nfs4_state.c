@@ -802,10 +802,12 @@ void release_openstate(state_owner_t *owner)
 
 		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 
-		if (state->state_type == STATE_TYPE_SHARE) {
-			op_ctx->ctx_export = export;
-			op_ctx->fsal_export = export->fsal_export;
+		/* op_ctx may be used by state_del_locked and others */
+		op_ctx->ctx_export = export;
+		op_ctx->fsal_export = export->fsal_export;
 
+		if (state->state_type == STATE_TYPE_SHARE &&
+		    !obj->fsal->m_ops.support_ex(obj)) {
 			state_status = state_share_remove(obj, owner, state);
 
 			if (!state_unlock_err_ok(state_status)) {
@@ -1075,7 +1077,8 @@ void state_export_release_nfs4_state(void)
 
 		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 
-		if (state->state_type == STATE_TYPE_SHARE) {
+		if (state->state_type == STATE_TYPE_SHARE &&
+		    !obj->fsal->m_ops.support_ex(obj)) {
 			state_status = state_share_remove(obj, owner, state);
 
 			if (!state_unlock_err_ok(state_status)) {
