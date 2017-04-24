@@ -443,7 +443,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 		}
 
 		status =
-		    GPFSFSAL_readlink(obj_hdl, op_ctx, link_buff, &retlink);
+		    GPFSFSAL_readlink(obj_hdl, op_ctx, link_buff, retlink);
 		if (FSAL_IS_ERROR(status))
 			return status;
 
@@ -1224,7 +1224,7 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 	struct gpfs_file_handle *fh;
 	struct attrlist attrib;
 	char *link_content = NULL;
-	ssize_t retlink = PATH_MAX - 1;
+	ssize_t retlink = PATH_MAX;
 	char link_buff[PATH_MAX];
 	struct fsal_fsid__ fsid;
 	struct fsal_filesystem *fs;
@@ -1271,7 +1271,7 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 	if (attrib.type == SYMBOLIC_LINK) {	/* I could lazy eval this... */
 
 		status = fsal_readlink_by_handle(gpfs_fs->root_fd, fh,
-						 link_buff, &retlink);
+						 link_buff, retlink);
 		if (FSAL_IS_ERROR(status))
 			return status;
 

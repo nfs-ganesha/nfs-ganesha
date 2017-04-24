@@ -51,7 +51,7 @@
 fsal_status_t
 GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,
 		  const struct req_op_context *op_ctx, char *link_content,
-		  size_t *link_len)
+		  size_t link_len)
 {
 	struct gpfs_fsal_obj_handle *gpfs_hdl;
 	struct gpfs_filesystem *gpfs_fs;

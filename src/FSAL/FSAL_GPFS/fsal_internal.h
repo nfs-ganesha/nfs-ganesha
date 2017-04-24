@@ -137,7 +137,7 @@ fsal_status_t fsal_internal_get_fh(int dirfd,
  */
 fsal_status_t fsal_readlink_by_handle(int dirfd,
 				      struct gpfs_file_handle *p_handle,
-				      char *__buf, size_t *maxlen);
+				      char *__buf, size_t maxlen);
 
 /**
  * Get the handle for a path (posix or fid path)
@@ -312,7 +312,7 @@ fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,
 fsal_status_t GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,
 				const struct req_op_context *p_context,
 				char *p_link_content,
-				size_t *link_len);
+				size_t link_len);
 
 fsal_status_t GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl,
 			       const char *p_linkname,
