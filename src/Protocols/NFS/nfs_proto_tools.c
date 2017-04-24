@@ -1229,7 +1229,7 @@ void nfs4_pathname4_alloc(pathname4 *pathname4, char *path)
 				i++;
 			}
 		}
-		LogDebug(COMPONENT_NFSPROTO, "%s has %d tokens", path, i);
+		LogDebug(COMPONENT_NFS_V4, "%s has %d tokens", path, i);
 		/* reset content of path_sav */
 		strcpy(path_sav, path);
 		path_work = path_sav;
@@ -1239,7 +1239,7 @@ void nfs4_pathname4_alloc(pathname4 *pathname4, char *path)
 		i = 0;
 		while ((token = strsep(&path_work, "/")) != NULL) {
 			if (strlen(token) > 0) {
-				LogDebug(COMPONENT_NFSPROTO,
+				LogDebug(COMPONENT_NFS_V4,
 					 "token %d is %s", i, token);
 				pathname4->pathname4_val[i].utf8string_val =
 					gsh_strdup(token);
@@ -1265,7 +1265,7 @@ void nfs4_pathname4_free(pathname4 *pathname4)
 		return;
 
 	i = pathname4->pathname4_len;
-	LogFullDebug(COMPONENT_NFSPROTO,
+	LogFullDebug(COMPONENT_NFS_V4,
 		     "number of pathname components to free: %d", i);
 
 	if (pathname4->pathname4_val == NULL)
@@ -1273,7 +1273,7 @@ void nfs4_pathname4_free(pathname4 *pathname4)
 
 	while (i-- > 0) {
 		if (pathname4->pathname4_val[i].utf8string_val != NULL) {
-			LogFullDebug(COMPONENT_NFSPROTO,
+			LogFullDebug(COMPONENT_NFS_V4,
 				     "freeing component %d: %s",
 				     i+1,
 				     pathname4->pathname4_val[i].
@@ -1334,7 +1334,7 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 			strlen(fs_loc.rootpath.pathname4_val->utf8string_val);
 		fs_server.utf8string_len = strlen(server);
 
-		LogEvent(COMPONENT_NFSPROTO,
+		LogEvent(COMPONENT_NFS_V4,
 			 "encode_fs_locations obj_ops.fs_locations failed %s, %s, %s",
 			 fs_locs.fs_root.pathname4_val->utf8string_val,
 			 fs_loc.rootpath.pathname4_val->utf8string_val,
@@ -1343,7 +1343,7 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	}
 
 	if (!xdr_fs_locations4(xdr, &fs_locs)) {
-		LogEvent(COMPONENT_NFSPROTO,
+		LogEvent(COMPONENT_NFS_V4,
 			 "encode_fs_locations xdr_fs_locations failed %s, %s, %s",
 			 fs_locs.fs_root.pathname4_val->utf8string_val,
 			 fs_loc.rootpath.pathname4_val->utf8string_val,
@@ -1654,7 +1654,7 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 	ownerdesc.addr = xdr_inline(xdr, len);
 
 	if (!ownerdesc.addr) {
-		LogMajor(COMPONENT_NFSPROTO,
+		LogMajor(COMPONENT_NFS_V4,
 			 "xdr_inline on xdrmem stream failed!");
 		return FATTR_XDR_FAILED;
 	}
@@ -1703,7 +1703,7 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 	groupdesc.addr = xdr_inline(xdr, len);
 
 	if (!groupdesc.addr) {
-		LogMajor(COMPONENT_NFSPROTO,
+		LogMajor(COMPONENT_NFS_V4,
 			 "xdr_inline on xdrmem stream failed!");
 		return FATTR_XDR_FAILED;
 	}
