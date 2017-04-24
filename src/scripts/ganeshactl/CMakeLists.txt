@@ -26,7 +26,7 @@ set(SCRIPT_SRC
   purge_gids.py
   ganesha_mgr.py
   ganesha_stats.py
-  ganesha_conf
+  ganesha_conf.py
   )
 
 set(GUI_SCRIPT_SRC
