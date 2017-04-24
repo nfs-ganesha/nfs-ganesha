@@ -735,7 +735,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	glusterfs_fsal_xstat_t buffxstat;
+	glusterfs_fsal_xstat_t buffxstat = { 0 };
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *objhandle =
