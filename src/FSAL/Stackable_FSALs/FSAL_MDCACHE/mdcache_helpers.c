@@ -1792,6 +1792,8 @@ mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t *whence,
  * active dirent chunk, nothing happens. The dirent may still be inserted
  * into the by name lookup.
  *
+ * @note parent_dir MUST have it's content_lock held for writing
+ *
  * @param[in] parent_dir     The directory this dir entry is part of
  * @param[in] new_dir_entry  The dirent to add.
  *
@@ -1806,6 +1808,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 	struct avltree_node *node, *parent, *unbalanced, *other;
 	int is_left, code;
 	fsal_cookie_t ck, nck;
+	struct dir_chunk *chunk;
 
 	subcall(
 		ck = parent_dir->sub_handle->obj_ops.compute_readdir_cookie(
@@ -1983,10 +1986,10 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 	/* Set up to add to chunk and by cookie AVL tree. */
 	if (right == NULL) {
 		/* Will go at end of left chunk. */
-		new_dir_entry->chunk = left->chunk;
+		chunk = new_dir_entry->chunk = left->chunk;
 	} else {
 		/* Will go at begin of right chunk. */
-		new_dir_entry->chunk = right->chunk;
+		chunk = new_dir_entry->chunk = right->chunk;
 	}
 
 	code = mdcache_avl_insert_ck(parent_dir, new_dir_entry);
@@ -2050,15 +2053,61 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 				     new_dir_entry->ck);
 			parent_dir->fsobj.fsdir.first_ck = new_dir_entry->ck;
 		}
-
-		/** @todo FSF - split chunk if desired... */
 	}
 
 	/* And now increment the number of entries in the chunk. */
-	new_dir_entry->chunk->num_entries++;
+	chunk->num_entries++;
 
 	/* And bump the chunk in the LRU */
-	lru_bump_chunk(new_dir_entry->chunk);
+	lru_bump_chunk(chunk);
+
+	if (chunk->num_entries == mdcache_param.dir.avl_chunk_split) {
+		/* Create a new chunk */
+		struct dir_chunk *split;
+		struct glist_head *glist;
+		mdcache_dir_entry_t *here = NULL;
+		int i = 0;
+		uint32_t split_count = mdcache_param.dir.avl_chunk_split / 2;
+
+		split = mdcache_get_chunk(parent_dir);
+		split->prev_chunk = chunk;
+		split->next_ck = chunk->next_ck;
+
+		glist_add_tail(&chunk->parent->fsobj.fsdir.chunks,
+			       &split->chunks);
+
+		/* Make sure this chunk is in the MRU of L1 */
+		lru_bump_chunk(split);
+
+		/* Scan the list to find what will be the first dirent in the
+		 * new split chunk.
+		 */
+		glist_for_each(glist, &chunk->dirents) {
+			if (++i > (split_count)) {
+				/* Got past the halfway point. */
+				here = glist_entry(glist,
+						   mdcache_dir_entry_t,
+						   chunk_list);
+				break;
+			}
+		}
+
+		assert(here != NULL);
+
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Splitting chunk %p for directory %p at %s",
+			     chunk, parent_dir, here->name);
+
+		/* Split chunk->dirents into split->dirents at here */
+		glist_split(&chunk->dirents, &split->dirents, glist);
+		chunk->num_entries = split_count;
+		split->num_entries = split_count;
+
+		/* Fill in the first chunk's next_ck to be the cookie of the
+		 * first dirent in the new split chunk.
+		 */
+		chunk->next_ck = here->ck;
+	}
 
 	new_dir_entry->flags |= DIR_ENTRY_SORTED;
 

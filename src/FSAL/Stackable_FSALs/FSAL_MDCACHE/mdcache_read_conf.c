@@ -123,6 +123,12 @@ int mdcache_set_param_from_conf(config_file_t parse_tree,
 		return -1;
 	}
 
+	/* Compute avl_chunk_split after reading config, make sure it's a
+	 * multiple of two.
+	 */
+	mdcache_param.dir.avl_chunk_split =
+		((mdcache_param.dir.avl_chunk * 3) / 2) & (UINT32_MAX - 1);
+
 	return 0;
 }
 
