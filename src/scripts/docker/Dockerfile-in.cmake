@@ -17,7 +17,7 @@ RUN dnf install -y libcap libblkid libuuid dbus nfs-utils rpcbind libnfsidmap li
 
 #install ganesha
 ADD root/ /
-RUN mkdir -p @CMAKE_INSTALL_PREFIX@/var/log
+RUN mkdir -p @CMAKE_INSTALL_PREFIX@/var/log/ganesha
 
 ADD entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]

@@ -98,7 +98,7 @@ LOG {
 	  # Any higher level than this is not reported to this facility
 #	  max_level = FULL_DEBUG;
 	  # This can be stdout, stderr, or a file path
-#	  destination = /var/log/nfs-ganesha.log;
+#	  destination = /var/log/ganesha/nfs-ganesha.log;
 	  # facility state. Can be idle, active, or default
 	  # An idle facility just sits there
 	  # An active facility will accept log messages

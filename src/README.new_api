@@ -107,7 +107,7 @@ FSAL
 
 	# maximum number of simultaneous calls
 	# to the filesystem.
-	# ( 0 = no limit ).  
+	# ( 0 = no limit ).
 	max_FS_calls = 0;
   }
 

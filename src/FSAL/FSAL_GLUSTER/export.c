@@ -46,7 +46,7 @@
 /* The default location of gfapi log
  * if glfs_log param is not defined in
  * the export file */
-#define GFAPI_LOG_LOCATION "/var/log/ganesha-gfapi.log"
+#define GFAPI_LOG_LOCATION "/var/log/ganesha/ganesha-gfapi.log"
 
 /**
  * @brief Implements GLUSTER FSAL exportoperation release

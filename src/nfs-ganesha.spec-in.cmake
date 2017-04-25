@@ -145,6 +145,7 @@ Requires(postun): systemd
 BuildRequires:	initscripts
 %endif
 Requires(post): psmisc
+Requires(pre): shadow-utils
 
 # Use CMake variables
 
@@ -390,6 +391,11 @@ install -m 644 scripts/systemd/nfs-ganesha.service	%{buildroot}%{_unitdir}/nfs-g
 install -m 644 scripts/systemd/nfs-ganesha-lock.service	%{buildroot}%{_unitdir}/nfs-ganesha-lock.service
 install -m 644 scripts/systemd/nfs-ganesha-config.service %{buildroot}%{_unitdir}/nfs-ganesha-config.service
 install -m 644 scripts/systemd/sysconfig/nfs-ganesha	%{buildroot}%{_sysconfdir}/sysconfig/ganesha
+%if 0%{?_tmpfilesdir:1}
+mkdir -p %{buildroot}%{_tmpfilesdir}
+install -m 644 scripts/systemd/tmpfiles.d/ganesha.conf	%{buildroot}%{_tmpfilesdir}
+%endif
+mkdir -p %{buildroot}%{_localstatedir}/log/ganesha
 %else
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 scripts/init.d/nfs-ganesha.el6		%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
@@ -448,6 +454,11 @@ make DESTDIR=%{buildroot} install
 %endif
 killall -SIGHUP dbus-daemon >/dev/null 2>&1 || :
 
+%pre
+getent group ganesha > /dev/null || groupadd -r ganesha
+getent passwd ganesha > /dev/null || useradd -r -g ganesha -d /var/run/ganesha -s /sbin/nologin -c "NFS-Ganesha Daemon" ganesha
+exit 0
+
 %preun
 %if ( 0%{?suse_version} )
 %service_del_preun nfs-ganesha-lock.service
@@ -486,11 +497,15 @@ killall -SIGHUP dbus-daemon >/dev/null 2>&1 || :
 %dir %{_localstatedir}/run/ganesha
 %dir %{_libexecdir}/ganesha
 %{_libexecdir}/ganesha/nfs-ganesha-config.sh
+%dir %attr(0755,ganesha,ganesha) %{_localstatedir}/log/ganesha
 
 %if %{with_systemd}
 %{_unitdir}/nfs-ganesha.service
 %{_unitdir}/nfs-ganesha-lock.service
 %{_unitdir}/nfs-ganesha-config.service
+%if 0%{?_tmpfilesdir:1}
+%{_tmpfilesdir}/ganesha.conf
+%endif
 %else
 %{_sysconfdir}/init.d/nfs-ganesha
 %endif
