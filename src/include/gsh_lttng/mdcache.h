@@ -132,6 +132,11 @@ TRACEPOINT_EVENT(
 	)
 )
 
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	mdc_lru_reap,
+	TRACE_INFO)
+
 /**
  * @brief Trace a alloc of a new entry
  *
@@ -154,7 +159,7 @@ TRACEPOINT_EVENT(
 
 TRACEPOINT_LOGLEVEL(
 	mdcache,
-	mdc_lru_alloc,
+	mdc_lru_get,
 	TRACE_INFO)
 
 /**
