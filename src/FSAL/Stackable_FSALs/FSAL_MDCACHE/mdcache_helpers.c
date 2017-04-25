@@ -281,21 +281,7 @@ mdc_get_parent_handle(struct mdcache_fsal_export *export,
 	/* Get a wire handle that can be used with create_handle() */
 	subcall_raw(export,
 		    status = sub_parent->obj_ops.handle_digest(sub_parent,
-					FSAL_DIGEST_NFSV4, &fh_desc);
-		   );
-	if (FSAL_IS_ERROR(status))
-		return status;
-
-	/* Make sure wire handle is usable */
-	subcall_raw(export,
-		    status = sub_export->exp_ops.extract_handle(sub_export,
-					FSAL_DIGEST_NFSV4, &fh_desc,
-#if (BYTE_ORDER == BIG_ENDIAN)
-					FH_FSAL_BIG_ENDIAN
-#else
-					0
-#endif
-					);
+					FSAL_DIGEST_NFSV4, &fh_desc)
 		   );
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -482,7 +468,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	/* Get FSAL-specific key */
 	subcall_raw(export,
-		    sub_handle->obj_ops.handle_to_key(sub_handle, &fh_desc);
+		    sub_handle->obj_ops.handle_to_key(sub_handle, &fh_desc)
 		   );
 
 	(void) cih_hash_key(&key, export->export.sub_export->fsal, &fh_desc,
@@ -850,17 +836,35 @@ mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry)
  * @return Status
  */
 fsal_status_t
-mdcache_locate_keyed(mdcache_key_t *key,
+mdcache_locate_handle(struct gsh_buffdesc *fh_desc,
 		     struct mdcache_fsal_export *export,
 		     mdcache_entry_t **entry,
 		     struct attrlist *attrs_out)
 {
-	fsal_status_t status;
+	struct fsal_export *sub_export = export->export.sub_export;
+	mdcache_key_t key;
 	struct fsal_obj_handle *sub_handle;
-	struct fsal_export *sub_export;
 	struct attrlist attrs;
+	fsal_status_t status;
 
-	status = mdcache_find_keyed(key, entry);
+	/* Copy the fh_desc into key, todo: is there a function for this? */
+	/* We want to save fh_desc */
+	key.kv.len = fh_desc->len;
+	key.kv.addr = alloca(key.kv.len);
+	memcpy(key.kv.addr, fh_desc->addr, key.kv.len);
+	subcall_raw(export,
+		    status = sub_export->exp_ops.handle_to_key(sub_export,
+							       &key.kv)
+	       );
+
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	(void)cih_hash_key(&key, sub_export->fsal, &key.kv,
+			    CIH_HASH_KEY_PROTOTYPE);
+
+
+	status = mdcache_find_keyed(&key, entry);
 
 	if (!FSAL_IS_ERROR(status)) {
 		status = get_optional_attrs(&(*entry)->obj_handle, attrs_out);
@@ -882,7 +886,7 @@ mdcache_locate_keyed(mdcache_key_t *key,
 
 	subcall_raw(export,
 		    status = sub_export->exp_ops.create_handle(sub_export,
-							       &key->kv,
+							       fh_desc,
 							       &sub_handle,
 							       &attrs)
 	       );
@@ -1082,8 +1086,9 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Lookup parent (..) of %p", mdc_parent);
 		/* ".." doesn't end up in the cache */
-		status =  mdcache_locate_keyed(&mdc_parent->fsobj.fsdir.parent,
-					       export, new_entry, attrs_out);
+		status =  mdcache_locate_handle(
+				&mdc_parent->fsobj.fsdir.parent.kv,
+				export, new_entry, attrs_out);
 		goto out;
 	}
 

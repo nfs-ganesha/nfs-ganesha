@@ -311,6 +311,16 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
+/* exp_handle_to_key  Produce handle-key from host-handle
+ *
+ * default case is that "handle-key" is same as host-handle!
+ */
+static fsal_status_t exp_handle_to_key(struct fsal_export *exp_hdl,
+				       struct gsh_buffdesc *fh_desc)
+{
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 /* create_handle
  * default case is not supported
  */
@@ -612,6 +622,7 @@ struct export_ops def_export_ops = {
 	.lookup_path = lookup_path,
 	.lookup_junction = lookup_junction,
 	.extract_handle = extract_handle,
+	.handle_to_key = exp_handle_to_key,
 	.create_handle = create_handle,
 	.get_fs_dynamic_info = get_dynamic_info,
 	.fs_supports = fs_supports,

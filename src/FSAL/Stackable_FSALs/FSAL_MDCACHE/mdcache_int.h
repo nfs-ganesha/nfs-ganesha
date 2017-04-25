@@ -409,7 +409,7 @@ fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *export,
 				mdcache_entry_t **entry,
 				struct state_t *state);
 fsal_status_t mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry);
-fsal_status_t mdcache_locate_keyed(mdcache_key_t *key,
+fsal_status_t mdcache_locate_handle(struct gsh_buffdesc *fh_desc,
 				   struct mdcache_fsal_export *export,
 				   mdcache_entry_t **entry,
 				   struct attrlist *attrs_out);

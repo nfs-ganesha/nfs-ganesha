@@ -722,6 +722,29 @@ static fsal_status_t mdcache_extract_handle(struct fsal_export *exp_hdl,
 }
 
 /**
+ * @brief Produce handle-key from host-handle
+ *
+ * delegated to the underlying FSAL.
+ *
+ * @param[in] exp_hdl	Export to operate on
+ * @param[in,out] fh_desc	Source/dest for extracted digest
+ * @return FSAL status
+ */
+static fsal_status_t mdcache_handle_to_key(struct fsal_export *exp_hdl,
+					    struct gsh_buffdesc *fh_desc)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->export.sub_export;
+	fsal_status_t status;
+
+	subcall_raw(exp,
+		status = sub_export->exp_ops.handle_to_key(sub_export, fh_desc)
+	       );
+
+	return status;
+}
+
+/**
  * @brief Allocate state_t structure
  *
  * @param[in] exp_hdl	Export to operate on
@@ -800,6 +823,7 @@ void mdcache_export_ops_init(struct export_ops *ops)
 	ops->lookup_path = mdcache_lookup_path;
 	/* lookup_junction unimplemented because deprecated */
 	ops->extract_handle = mdcache_extract_handle;
+	ops->handle_to_key = mdcache_handle_to_key;
 	ops->create_handle = mdcache_create_handle;
 	ops->get_fs_dynamic_info = mdcache_get_dynamic_info;
 	ops->fs_supports = mdcache_fs_supports;

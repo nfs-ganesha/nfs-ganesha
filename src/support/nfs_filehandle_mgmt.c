@@ -88,7 +88,7 @@ struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	fh_desc.len = v3_handle->fs_len;
 	fh_desc.addr = &v3_handle->fsopaque;
 
-	/* adjust the handle opaque into a cache key */
+	/* adjust the wire handle opaque into a host-handle */
 	fsal_status =
 	    export->exp_ops.extract_handle(export, FSAL_DIGEST_NFSV3,
 					   &fh_desc,

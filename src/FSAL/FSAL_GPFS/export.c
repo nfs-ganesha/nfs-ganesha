@@ -384,6 +384,25 @@ gpfs_extract_handle(struct fsal_export *exp_hdl, fsal_digesttype_t in_type,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+/* Produce handle-key from a host-handle */
+static fsal_status_t
+gpfs_handle_to_key(struct fsal_export *exp_hdl,
+		   struct gsh_buffdesc *fh_desc)
+{
+	struct gpfs_file_handle *hdl;
+
+	hdl = (struct gpfs_file_handle *)fh_desc->addr;
+	fh_desc->len = hdl->handle_key_size;	/* pass back the key size */
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "size %d type %d ver %d key_size %d FSID 0x%X:%X",
+		     hdl->handle_size, hdl->handle_type, hdl->handle_version,
+		     hdl->handle_key_size, hdl->handle_fsid[0],
+		     hdl->handle_fsid[1]);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 /**
  * @brief Allocate a state_t structure
  *
@@ -439,6 +458,7 @@ void gpfs_export_ops_init(struct export_ops *ops)
 	ops->release = release;
 	ops->lookup_path = gpfs_lookup_path;
 	ops->extract_handle = gpfs_extract_handle;
+	ops->handle_to_key = gpfs_handle_to_key;
 	ops->create_handle = gpfs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;

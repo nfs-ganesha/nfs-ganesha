@@ -1848,37 +1848,30 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 }
 
 /**
- * @brief Find or create a cache entry from a key
+ * @brief Find or create a cache entry from a host-handle
  *
  * This is the equivalent of mdcache_get().  It returns a ref'd entry that
  * must be put using obj_ops.release().
  *
  * @param[in]     exp_hdl   The export in which to create the handle
- * @param[in]     hdl_desc  Buffer descriptor for the "wire" handle
+ * @param[in]     hdl_desc  Buffer descriptor for the host handle
  * @param[out]    handle    FSAL object handle
  * @param[in,out] attrs_out Optional attributes for newly created object
  *
  * @return FSAL status
  */
 fsal_status_t mdcache_create_handle(struct fsal_export *exp_hdl,
-				   struct gsh_buffdesc *hdl_desc,
+				   struct gsh_buffdesc *fh_desc,
 				   struct fsal_obj_handle **handle,
 				   struct attrlist *attrs_out)
 {
 	struct mdcache_fsal_export *export =
 		container_of(exp_hdl, struct mdcache_fsal_export, export);
-	struct fsal_export *sub_export = export->export.sub_export;
-	mdcache_key_t key;
 	mdcache_entry_t *entry;
 	fsal_status_t status;
 
 	*handle = NULL;
-	key.fsal = sub_export->fsal;
-
-	(void) cih_hash_key(&key, sub_export->fsal, hdl_desc,
-			    CIH_HASH_KEY_PROTOTYPE);
-
-	status = mdcache_locate_keyed(&key, export, &entry, attrs_out);
+	status = mdcache_locate_handle(fh_desc, export, &entry, attrs_out);
 	if (FSAL_IS_ERROR(status))
 		return status;
 

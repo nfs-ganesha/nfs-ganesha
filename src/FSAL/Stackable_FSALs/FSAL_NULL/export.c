@@ -382,6 +382,21 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 	return result;
 }
 
+static fsal_status_t nullfs_handle_to_key(struct fsal_export *exp_hdl,
+					  struct gsh_buffdesc *fh_desc)
+{
+	struct nullfs_fsal_export *exp =
+		container_of(exp_hdl, struct nullfs_fsal_export, export);
+
+	op_ctx->fsal_export = exp->export.sub_export;
+	fsal_status_t result =
+		exp->export.sub_export->exp_ops.handle_to_key(
+			exp->export.sub_export, fh_desc);
+	op_ctx->fsal_export = &exp->export;
+
+	return result;
+}
+
 /* nullfs_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -391,6 +406,7 @@ void nullfs_export_ops_init(struct export_ops *ops)
 	ops->release = release;
 	ops->lookup_path = nullfs_lookup_path;
 	ops->extract_handle = extract_handle;
+	ops->handle_to_key = nullfs_handle_to_key;
 	ops->create_handle = nullfs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;
