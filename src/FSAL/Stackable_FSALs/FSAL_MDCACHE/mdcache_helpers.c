@@ -188,7 +188,7 @@ void mdc_clean_entry(mdcache_entry_t *entry)
 		/* Clean up dirents */
 		(void) mdcache_dirent_invalidate_all(entry);
 		/* Clean up parent key */
-		mdcache_key_delete(&entry->fsobj.fsdir.parent);
+		mdcache_free_fh(&entry->fsobj.fsdir.parent);
 
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
 	}
@@ -275,7 +275,6 @@ mdc_get_parent_handle(struct mdcache_fsal_export *export,
 {
 	char buf[NFS4_FHSIZE];
 	struct gsh_buffdesc fh_desc = { buf, NFS4_FHSIZE };
-	struct fsal_export *sub_export = export->export.sub_export;
 	fsal_status_t status;
 
 	/* Get a wire handle that can be used with create_handle() */
@@ -286,9 +285,8 @@ mdc_get_parent_handle(struct mdcache_fsal_export *export,
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-	/* And store in the parent pointer */
-	cih_hash_key(&entry->fsobj.fsdir.parent, sub_export->fsal, &fh_desc,
-		     CIH_HASH_NONE);
+	/* And store in the parent host-handle */
+	mdcache_copy_fh(&entry->fsobj.fsdir.parent, &fh_desc);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -304,7 +302,7 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
 		return;
 	}
 
-	if (entry->fsobj.fsdir.parent.kv.len != 0) {
+	if (entry->fsobj.fsdir.parent.len != 0) {
 		/* Already has a parent pointer */
 		return;
 	}
@@ -1087,7 +1085,7 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 			     "Lookup parent (..) of %p", mdc_parent);
 		/* ".." doesn't end up in the cache */
 		status =  mdcache_locate_host(
-				&mdc_parent->fsobj.fsdir.parent.kv,
+				&mdc_parent->fsobj.fsdir.parent,
 				export, new_entry, attrs_out);
 		goto out;
 	}

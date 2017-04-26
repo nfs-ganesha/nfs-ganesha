@@ -1034,7 +1034,7 @@ unlock:
 	if (mdc_olddir != mdc_newdir && obj_hdl->type == DIRECTORY) {
 		PTHREAD_RWLOCK_wrlock(&mdc_obj->content_lock);
 
-		mdcache_key_delete(&mdc_obj->fsobj.fsdir.parent);
+		mdcache_free_fh(&mdc_obj->fsobj.fsdir.parent);
 		mdc_dir_add_parent(mdc_obj, mdc_newdir);
 
 		PTHREAD_RWLOCK_unlock(&mdc_obj->content_lock);
@@ -1384,7 +1384,7 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 					   MDCACHE_TRUST_ATTRS);
 
 		if (entry->obj_handle.type == DIRECTORY)
-			mdcache_key_delete(&entry->fsobj.fsdir.parent);
+			mdcache_free_fh(&entry->fsobj.fsdir.parent);
 
 		mdc_unreachable(entry);
 	}
