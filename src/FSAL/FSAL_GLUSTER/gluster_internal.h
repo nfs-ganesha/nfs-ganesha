@@ -92,7 +92,7 @@ typedef enum {
 	lat_lookup,
 	lat_create,
 	lat_getattrs,
-	lat_handle_digest,
+	lat_handle_to_wire,
 	lat_handle_to_key,
 	lat_extract_handle,
 	lat_create_handle,

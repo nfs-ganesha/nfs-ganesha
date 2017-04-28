@@ -929,16 +929,16 @@ static fsal_status_t tank_unlink(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(fsal_error, retval);
 }
 
-/* handle_digest
+/* handle_to_wire
  * fill in the opaque f/s file handle part.
  * we zero the buffer to length first.  This MAY already be done above
  * at which point, remove memset here because the caller is zeroing
  * the whole struct.
  */
 
-static fsal_status_t tank_handle_digest(const struct fsal_obj_handle *obj_hdl,
-					fsal_digesttype_t output_type,
-					struct gsh_buffdesc *fh_desc)
+static fsal_status_t tank_handle_to_wire(const struct fsal_obj_handle *obj_hdl,
+					 fsal_digesttype_t output_type,
+					 struct gsh_buffdesc *fh_desc)
 {
 	const struct zfs_fsal_obj_handle *myself;
 	struct zfs_file_handle *fh;
@@ -1043,7 +1043,7 @@ void zfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = tank_commit;
 	ops->lock_op = tank_lock_op;
 	ops->close = tank_close;
-	ops->handle_digest = tank_handle_digest;
+	ops->handle_to_wire = tank_handle_to_wire;
 	ops->handle_to_key = tank_handle_to_key;
 
 	/* xattr related functions */

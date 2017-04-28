@@ -361,10 +361,10 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
  * anyway, it's up to us to get it right elsewhere).
  */
 
-static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
-				    fsal_digesttype_t in_type,
-				    struct gsh_buffdesc *fh_desc,
-				    int flags)
+static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
+				  fsal_digesttype_t in_type,
+				  struct gsh_buffdesc *fh_desc,
+				  int flags)
 {
 	struct fsal_filesystem *fs;
 	bool dummy;
@@ -383,7 +383,7 @@ void vfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
 	ops->lookup_path = vfs_lookup_path;
-	ops->extract_handle = extract_handle;
+	ops->wire_to_host = wire_to_host;
 	ops->create_handle = vfs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;

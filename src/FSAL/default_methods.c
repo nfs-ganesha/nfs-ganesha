@@ -297,25 +297,25 @@ static fsal_status_t lookup_junction(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* extract_handle
+/* wire_to_host
  * default case is not supported
  */
 
-static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
-				    fsal_digesttype_t in_type,
-				    struct gsh_buffdesc *fh_desc,
-				    int flags)
+static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
+				  fsal_digesttype_t in_type,
+				  struct gsh_buffdesc *fh_desc,
+				  int flags)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-/* exp_handle_to_key  Produce handle-key from host-handle
+/* exp_host_to_key  Produce handle-key from host-handle
  *
  * default case is that "handle-key" is same as host-handle!
  */
-static fsal_status_t exp_handle_to_key(struct fsal_export *exp_hdl,
+static fsal_status_t exp_host_to_key(struct fsal_export *exp_hdl,
 				       struct gsh_buffdesc *fh_desc)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -621,8 +621,8 @@ struct export_ops def_export_ops = {
 	.release = export_release,
 	.lookup_path = lookup_path,
 	.lookup_junction = lookup_junction,
-	.extract_handle = extract_handle,
-	.handle_to_key = exp_handle_to_key,
+	.wire_to_host = wire_to_host,
+	.host_to_key = exp_host_to_key,
 	.create_handle = create_handle,
 	.get_fs_dynamic_info = get_dynamic_info,
 	.fs_supports = fs_supports,
@@ -1245,13 +1245,13 @@ static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-/* handle_digest
+/* handle_to_wire
  * default case server fault
  */
 
-static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
-				   fsal_digesttype_t output_type,
-				   struct gsh_buffdesc *fh_desc)
+static fsal_status_t handle_to_wire(const struct fsal_obj_handle *obj_hdl,
+				    fsal_digesttype_t output_type,
+				    struct gsh_buffdesc *fh_desc)
 {
 	return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 }
@@ -1610,7 +1610,7 @@ struct fsal_obj_ops def_handle_ops = {
 	.remove_extattr_by_id = remove_extattr_by_id,
 	.remove_extattr_by_name = remove_extattr_by_name,
 	.handle_is = handle_is,
-	.handle_digest = handle_digest,
+	.handle_to_wire = handle_to_wire,
 	.handle_cmp = handle_cmp,
 	.handle_to_key = handle_to_key,
 	.layoutget = layoutget,

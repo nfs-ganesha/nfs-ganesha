@@ -2120,9 +2120,9 @@ fsal_status_t ceph_close2(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-static fsal_status_t handle_digest(const struct fsal_obj_handle *handle_pub,
-				   uint32_t output_type,
-				   struct gsh_buffdesc *fh_desc)
+static fsal_status_t handle_to_wire(const struct fsal_obj_handle *handle_pub,
+				    uint32_t output_type,
+				    struct gsh_buffdesc *fh_desc)
 {
 	/* The private 'full' object handle */
 	const struct handle *handle =
@@ -2193,7 +2193,7 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->rename = ceph_fsal_rename;
 	ops->unlink = ceph_fsal_unlink;
 	ops->close = ceph_fsal_close;
-	ops->handle_digest = handle_digest;
+	ops->handle_to_wire = handle_to_wire;
 	ops->handle_to_key = handle_to_key;
 	ops->open2 = ceph_open2;
 	ops->status2 = ceph_status2;

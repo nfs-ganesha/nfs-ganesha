@@ -1,5 +1,5 @@
 /*
- * vim:expandtab:shiftwidth=8:tabstop=8:
+ * vim:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) Panasas Inc., 2011
  * Author: Jim Lieb jlieb@panasas.com
@@ -242,10 +242,10 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
  * common behavior, done here is to just reset the length.
  */
 
-static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
-				    fsal_digesttype_t in_type,
-				    struct gsh_buffdesc *fh_desc,
-				    int flags)
+static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
+				  fsal_digesttype_t in_type,
+				  struct gsh_buffdesc *fh_desc,
+				  int flags)
 {
 	size_t fh_min;
 	uint64_t *hashkey;
@@ -283,7 +283,7 @@ void pseudofs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
 	ops->lookup_path = pseudofs_lookup_path;
-	ops->extract_handle = extract_handle;
+	ops->wire_to_host = wire_to_host;
 	ops->create_handle = pseudofs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;

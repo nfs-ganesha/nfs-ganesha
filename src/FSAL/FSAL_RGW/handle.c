@@ -1512,9 +1512,9 @@ static fsal_status_t rgw_fsal_close(struct fsal_obj_handle *handle_pub)
  * @return FSAL status.
  */
 
-static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
-				   uint32_t output_type,
-				   struct gsh_buffdesc *fh_desc)
+static fsal_status_t handle_to_wire(const struct fsal_obj_handle *obj_hdl,
+				    uint32_t output_type,
+				    struct gsh_buffdesc *fh_desc)
 {
 	/* The private 'full' object handle */
 	const struct rgw_handle *handle =
@@ -1584,7 +1584,7 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->rename = rgw_fsal_rename;
 	ops->unlink = rgw_fsal_unlink;
 	ops->close = rgw_fsal_close;
-	ops->handle_digest = handle_digest;
+	ops->handle_to_wire = handle_to_wire;
 	ops->handle_to_key = handle_to_key;
 	ops->open2 = rgw_fsal_open2;
 	ops->status2 = rgw_fsal_status2;

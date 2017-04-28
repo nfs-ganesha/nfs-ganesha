@@ -1648,7 +1648,7 @@ fsal_status_t mem_close2(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Get the digest for a handle
+ * @brief Get the wire version of a handle
  *
  * fill in the opaque f/s file handle part.
  * we zero the buffer to length first.  This MAY already be done above
@@ -1660,9 +1660,9 @@ fsal_status_t mem_close2(struct fsal_obj_handle *obj_hdl,
  * @param[out] fh_desc	Buffer to write digest into
  * @return FSAL status
  */
-static fsal_status_t mem_handle_digest(const struct fsal_obj_handle *obj_hdl,
-				   fsal_digesttype_t output_type,
-				   struct gsh_buffdesc *fh_desc)
+static fsal_status_t mem_handle_to_wire(const struct fsal_obj_handle *obj_hdl,
+					fsal_digesttype_t output_type,
+					struct gsh_buffdesc *fh_desc)
 {
 	const struct mem_fsal_obj_handle *myself;
 
@@ -1792,7 +1792,7 @@ void mem_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit2 = mem_commit2;
 	ops->lock_op2 = mem_lock_op2;
 	ops->close2 = mem_close2;
-	ops->handle_digest = mem_handle_digest;
+	ops->handle_to_wire = mem_handle_to_wire;
 	ops->handle_to_key = mem_handle_to_key;
 }
 

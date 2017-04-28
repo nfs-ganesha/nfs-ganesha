@@ -163,13 +163,13 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 }
 
 /**
- * @brief Implements GLUSTER FSAL exportoperation extract_handle
+ * @brief Implements GLUSTER FSAL exportoperation wire_to_host
  */
 
-static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
-				    fsal_digesttype_t in_type,
-				    struct gsh_buffdesc *fh_desc,
-				    int flags)
+static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
+				  fsal_digesttype_t in_type,
+				  struct gsh_buffdesc *fh_desc,
+				  int flags)
 {
 	size_t fh_size;
 #ifdef GLTIMING
@@ -194,7 +194,7 @@ static fsal_status_t extract_handle(struct fsal_export *exp_hdl,
 
 #ifdef GLTIMING
 	now(&e_time);
-	latency_update(&s_time, &e_time, lat_extract_handle);
+	latency_update(&s_time, &e_time, lat_wire_to_host);
 #endif
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -550,7 +550,7 @@ void export_ops_init(struct export_ops *ops)
 {
 	ops->release = export_release;
 	ops->lookup_path = lookup_path;
-	ops->extract_handle = extract_handle;
+	ops->wire_to_host = wire_to_host;
 	ops->create_handle = create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;

@@ -704,18 +704,18 @@ static void mdcache_get_write_verifier(struct fsal_export *exp_hdl,
  * @param[in] flags	Related flages (currently endian)
  * @return FSAL status
  */
-static fsal_status_t mdcache_extract_handle(struct fsal_export *exp_hdl,
-					    fsal_digesttype_t in_type,
-					    struct gsh_buffdesc *fh_desc,
-					    int flags)
+static fsal_status_t mdcache_wire_to_host(struct fsal_export *exp_hdl,
+					  fsal_digesttype_t in_type,
+					  struct gsh_buffdesc *fh_desc,
+					  int flags)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
 	struct fsal_export *sub_export = exp->export.sub_export;
 	fsal_status_t status;
 
 	subcall_raw(exp,
-		status = sub_export->exp_ops.extract_handle(sub_export, in_type,
-							    fh_desc, flags)
+		status = sub_export->exp_ops.wire_to_host(sub_export, in_type,
+							  fh_desc, flags)
 	       );
 
 	return status;
@@ -730,7 +730,7 @@ static fsal_status_t mdcache_extract_handle(struct fsal_export *exp_hdl,
  * @param[in,out] fh_desc	Source/dest for extracted digest
  * @return FSAL status
  */
-static fsal_status_t mdcache_handle_to_key(struct fsal_export *exp_hdl,
+static fsal_status_t mdcache_host_to_key(struct fsal_export *exp_hdl,
 					    struct gsh_buffdesc *fh_desc)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
@@ -738,7 +738,7 @@ static fsal_status_t mdcache_handle_to_key(struct fsal_export *exp_hdl,
 	fsal_status_t status;
 
 	subcall_raw(exp,
-		status = sub_export->exp_ops.handle_to_key(sub_export, fh_desc)
+		status = sub_export->exp_ops.host_to_key(sub_export, fh_desc)
 	       );
 
 	return status;
@@ -822,8 +822,8 @@ void mdcache_export_ops_init(struct export_ops *ops)
 	ops->release = mdcache_exp_release;
 	ops->lookup_path = mdcache_lookup_path;
 	/* lookup_junction unimplemented because deprecated */
-	ops->extract_handle = mdcache_extract_handle;
-	ops->handle_to_key = mdcache_handle_to_key;
+	ops->wire_to_host = mdcache_wire_to_host;
+	ops->host_to_key = mdcache_host_to_key;
 	ops->create_handle = mdcache_create_handle;
 	ops->get_fs_dynamic_info = mdcache_get_dynamic_info;
 	ops->fs_supports = mdcache_fs_supports;

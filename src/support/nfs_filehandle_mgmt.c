@@ -90,9 +90,9 @@ struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
 
 	/* adjust the wire handle opaque into a host-handle */
 	fsal_status =
-	    export->exp_ops.extract_handle(export, FSAL_DIGEST_NFSV3,
-					   &fh_desc,
-					   v3_handle->fhflags1);
+	    export->exp_ops.wire_to_host(export, FSAL_DIGEST_NFSV3,
+					 &fh_desc,
+					 v3_handle->fhflags1);
 
 	if (!FSAL_IS_ERROR(fsal_status))
 		fsal_status = export->exp_ops.create_handle(export, &fh_desc,
@@ -140,11 +140,11 @@ bool nfs4_FSALToFhandle(bool allocate,
 	fh_desc.addr = &file_handle->fsopaque;
 	fh_desc.len = fh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
 
-	if (FSAL_IS_ERROR(fsalhandle->obj_ops.handle_digest(fsalhandle,
+	if (FSAL_IS_ERROR(fsalhandle->obj_ops.handle_to_wire(fsalhandle,
 							    FSAL_DIGEST_NFSV4,
 							    &fh_desc))) {
 		LogDebug(COMPONENT_FILEHANDLE,
-			 "handle_digest FSAL_DIGEST_NFSV4 failed");
+			 "handle_to_wire FSAL_DIGEST_NFSV4 failed");
 		if (allocate)
 			nfs4_freeFH(fh4);
 		return false;
@@ -204,11 +204,11 @@ bool nfs3_FSALToFhandle(bool allocate,
 	fh_desc.addr = &file_handle->fsopaque;
 	fh_desc.len = NFS3_FHSIZE - offsetof(file_handle_v3_t, fsopaque);
 
-	if (FSAL_IS_ERROR(fsalhandle->obj_ops.handle_digest(fsalhandle,
+	if (FSAL_IS_ERROR(fsalhandle->obj_ops.handle_to_wire(fsalhandle,
 							    FSAL_DIGEST_NFSV3,
 							    &fh_desc))) {
 		LogDebug(COMPONENT_FILEHANDLE,
-			 "handle_digest FSAL_DIGEST_NFSV3 failed");
+			 "handle_to_wire FSAL_DIGEST_NFSV3 failed");
 		if (allocate)
 			nfs3_freeFH(fh3);
 		return false;

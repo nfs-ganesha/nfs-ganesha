@@ -1875,9 +1875,9 @@ static fsal_status_t pxy_unlink(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t pxy_handle_digest(const struct fsal_obj_handle *obj_hdl,
-				       fsal_digesttype_t output_type,
-				       struct gsh_buffdesc *fh_desc)
+static fsal_status_t pxy_handle_to_wire(const struct fsal_obj_handle *obj_hdl,
+					fsal_digesttype_t output_type,
+					struct gsh_buffdesc *fh_desc)
 {
 	struct pxy_obj_handle *ph =
 	    container_of(obj_hdl, struct pxy_obj_handle, obj);
@@ -2640,7 +2640,7 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit = pxy_commit;
 	ops->close = pxy_close;
 	ops->handle_is = pxy_handle_is;
-	ops->handle_digest = pxy_handle_digest;
+	ops->handle_to_wire = pxy_handle_to_wire;
 	ops->handle_to_key = pxy_handle_to_key;
 	ops->open2 = pxy_open2;
 	ops->read2 = pxy_read2;
@@ -2804,7 +2804,7 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 /*
  * Create an FSAL 'object' from the handle - used
  * to construct objects from a handle which has been
- * 'extracted' by .extract_handle.
+ * 'extracted' by .wire_to_host.
  */
 fsal_status_t pxy_create_handle(struct fsal_export *exp_hdl,
 				struct gsh_buffdesc *hdl_desc,
@@ -2883,10 +2883,10 @@ fsal_status_t pxy_get_dynamic_info(struct fsal_export *exp_hdl,
 
 /* Convert of-the-wire digest into unique 'handle' which
  * can be used to identify the object */
-fsal_status_t pxy_extract_handle(struct fsal_export *exp_hdl,
-				 fsal_digesttype_t in_type,
-				 struct gsh_buffdesc *fh_desc,
-				 int flags)
+fsal_status_t pxy_wire_to_host(struct fsal_export *exp_hdl,
+			       fsal_digesttype_t in_type,
+			       struct gsh_buffdesc *fh_desc,
+			       int flags)
 {
 	struct pxy_handle_blob *pxyblob;
 	size_t fh_size;

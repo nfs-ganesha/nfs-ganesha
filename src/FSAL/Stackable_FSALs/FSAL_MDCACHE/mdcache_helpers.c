@@ -280,7 +280,7 @@ mdc_get_parent_handle(struct mdcache_fsal_export *export,
 
 	/* Get a wire handle that can be used with create_handle() */
 	subcall_raw(export,
-		    status = sub_parent->obj_ops.handle_digest(sub_parent,
+		    status = sub_parent->obj_ops.handle_to_wire(sub_parent,
 					FSAL_DIGEST_NFSV4, &fh_desc)
 		   );
 	if (FSAL_IS_ERROR(status))
@@ -821,10 +821,10 @@ mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry)
 }
 
 /**
- * @brief Find or create a cache entry by it's key
+ * @brief Find or create a cache entry by it's host-handle
  *
- * Locate a cache entry by key.  If it is not in the cache, an attempt will be
- * made to create it and insert it in the cache.
+ * Locate a cache entry by host-handle.  If it is not in the cache, an attempt
+ * will be made to create it and insert it in the cache.
  *
  * @param[in]     key       Cache key to use for lookup
  * @param[in]     export    Export for this cache
@@ -836,10 +836,10 @@ mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry)
  * @return Status
  */
 fsal_status_t
-mdcache_locate_handle(struct gsh_buffdesc *fh_desc,
-		     struct mdcache_fsal_export *export,
-		     mdcache_entry_t **entry,
-		     struct attrlist *attrs_out)
+mdcache_locate_host(struct gsh_buffdesc *fh_desc,
+		    struct mdcache_fsal_export *export,
+		    mdcache_entry_t **entry,
+		    struct attrlist *attrs_out)
 {
 	struct fsal_export *sub_export = export->export.sub_export;
 	mdcache_key_t key;
@@ -853,8 +853,8 @@ mdcache_locate_handle(struct gsh_buffdesc *fh_desc,
 	key.kv.addr = alloca(key.kv.len);
 	memcpy(key.kv.addr, fh_desc->addr, key.kv.len);
 	subcall_raw(export,
-		    status = sub_export->exp_ops.handle_to_key(sub_export,
-							       &key.kv)
+		    status = sub_export->exp_ops.host_to_key(sub_export,
+							     &key.kv)
 	       );
 
 	if (FSAL_IS_ERROR(status))
@@ -1086,7 +1086,7 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Lookup parent (..) of %p", mdc_parent);
 		/* ".." doesn't end up in the cache */
-		status =  mdcache_locate_handle(
+		status =  mdcache_locate_host(
 				&mdc_parent->fsobj.fsdir.parent.kv,
 				export, new_entry, attrs_out);
 		goto out;

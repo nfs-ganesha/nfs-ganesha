@@ -191,7 +191,7 @@ struct state_t;
  * Overview
  * ========
  *
- * In the FSAL, file handles can take three forms.  There is the full,
+ * In the FSAL, file handles can take four forms.  There is the full,
  * internal handle structure, compose of the @c fsal_obj_handle and
  * the FSAL-private structure that contains it.
  *
@@ -201,18 +201,20 @@ struct state_t;
  * to find and use the file even if the file has been completely
  * purged from cache or Ganesha has restarted from nothing.  There may
  * be multiple wire-handles per @c fsal_obj_handle.  The wire-handle
- * is produced by the @c handle_digest method on @c fsal_obj_handle.
+ * is produced by the @c handle_to_wire method on @c fsal_obj_handle.
  * FSALs can produce big endian or little endian wire-handles depending
- * on the architecture. A host-handle is a handle produced from
- * wire-handle by extract_method() to the host's native endian type!
- * The @c create_handle on @c fsal_export produces a new
- * @c fsal_obj_handle from a host-handle.
+ * on the architecture.
  *
- * There is also the handle-key, a portion of the handle that contains
+ * A host-handle is a verion of the wire handle in host endian format.  It is
+ * produced from wire-handle by @c wire_to_host to the host's native endian
+ * type.  @c fsal_export operation @c create_handle produces a new @c
+ * fsal_obj_handle from a host-handle.
+ *
+ * Finally, there is the handle-key, a portion of the handle that contains
  * all and only information that uniquely identifies the object within
  * the entire FSAL (it is insufficient if it only identifies it within
  * the export or within a filesystem.)  There are two functions that
- * generate a handle-key, one is the @c handle_to_key method on @c
+ * generate a handle-key, one is the @c host_to_key method on @c
  * fsal_export.  It is used to get the key from a host-handle so that
  * it can be looked up in the cache.  The other is @c handle_to_key on
  * @c fsal_obj_handle.  This is used after lookup or some other
@@ -220,7 +222,7 @@ struct state_t;
  * stored or looked up in the cache.
  *
  * The invariant to be maintained is that given an @c fsal_obj_handle,
- * obj_hdl, exp_ops.handle_to_key(extract_handle(digest_handle(obj_hdl)))
+ * obj_hdl, exp_ops.host_to_key(wire_to_host(handle_to_wire(obj_hdl)))
  * is equal to obj_ops.handle_to_key(obj_hdl).
  *
  * History and Details
@@ -246,12 +248,12 @@ struct state_t;
  *
  * 2. The purpose of the @c export_id in the protocol "handle" is to
  *    locate the FSAL that knows what is inside the opaque.  The @c
- *    extract_handle is an export method for that purpose.  It should
+ *    wire_to_host is an export method for that purpose.  It should
  *    be able to take the wire-handle opaque and translate it into
- *    a host-handle. handle-key shout be derived from handle_to_key
- *    that @c cache_inode_get can use to find an entry.
+ *    a host-handle. handle-key should be derived from @c host_to_key
+ *    that MDCACHE can use to find an entry.
  *
- * 3. cache_inode_get takes an fh_desc argument which is not a
+ * 3. OBSOLETE - cache_inode_get takes an fh_desc argument which is not a
  *    handle but a _key_.  It is used to generate the hash and to do
  *    the secondary key compares.  That is all it is used for.  The
  *    end result _must_ be a cache entry and its associated
@@ -259,14 +261,14 @@ struct state_t;
  *    cache_inode_new to see how this works.
  *
  * 4. The @c handle_to_key method, a @c fsal_obj_handle method,
- *    generates a key for the cache inode hash table from the contents
+ *    generates a key for the MDCACHE hash table from the contents
  *    of the @c fsal_obj_handle.  It is an analogue of fsal export
- *    handle_to_key method. Note where it is called to see why it is
+ *    @c host_to_key method. Note where it is called to see why it is
  *    there.
  *
- * 5. The digest method is similar in scope but it is the inverse of
- *    @c extract_handle.  It's job is to fill in the opaque part of a
- *    protocol handle.  Note that it gets passed a @c gsh_buffdesc
+ * 5. The @c handle_to_wire method is similar in scope but it is the
+ *    inverse of @c wire_to_host.  It's job is to fill in the opaque
+ *    part of a protocol handle.  Note that it gets passed a @c gsh_buffdesc
  *    that describes the full opaque storage in whatever protocol
  *    specific structure is used.  It's job is to put whatever it
  *    takes into the opaque so the second and third items in this list
@@ -294,15 +296,6 @@ struct state_t;
  * obvious case is what you describe in @c nfs[34]_FhandleToCache.  These
  * various methods make that happen.
  *
- * The linkage between a @c cache_entry_t and a @c fsal_obj_handle is
- * 1-to-1 so we should really think of them as one, single object.  In
- * fact, there should never be a cache_entry without its associated @c
- * fsal_obj_handle.  The @c cache_entry_t is the cache inode part
- * where things like locks and object type stuff (the AVL tree for
- * dirs) are kept.  The @c fsal_obj_handle part that it points to
- * holds the FSAL specific part where the FD (or its backend's equiv),
- * open state, and anything needed for talking to the system or
- * libraries.
  */
 
 /**
@@ -751,9 +744,9 @@ struct export_ops {
 					  struct fsal_obj_handle *junction,
 					  struct fsal_obj_handle **handle);
 /**
- * @brief Extract a host handle
+ * @brief Convert a wire handle to a host handle
  *
- * This function extracts a host handle from a "wire" handle.  That
+ * This function extracts a host handle from a wire handle.  That
  * is, when given a handle as passed to a client, this method will
  * extract the handle to create objects.
  *
@@ -770,7 +763,7 @@ struct export_ops {
  *
  * @return FSAL type.
  */
-	 fsal_status_t (*extract_handle)(struct fsal_export *exp_hdl,
+	 fsal_status_t (*wire_to_host)(struct fsal_export *exp_hdl,
 					 fsal_digesttype_t in_type,
 					 struct gsh_buffdesc *fh_desc,
 					 int flags);
@@ -779,7 +772,7 @@ struct export_ops {
  * @brief extract "key" from a host handle
  *
  * This function extracts a "key" from a host handle.  That is, when
- * given a handle that is extracted from extract_handle() above, this
+ * given a handle that is extracted from wire_to_host() above, this
  * method will extract the unique bits used to index the inode cache.
  *
  * @param[in]     exp_hdl Export handle
@@ -791,8 +784,8 @@ struct export_ops {
  *                        size. In other words, the key has to be placed
  *                        at the beginning of the buffer!
  */
-	 fsal_status_t (*handle_to_key)(struct fsal_export *exp_hdl,
-					struct gsh_buffdesc *fh_desc);
+	 fsal_status_t (*host_to_key)(struct fsal_export *exp_hdl,
+				      struct gsh_buffdesc *fh_desc);
 
 /**
  * @brief Create a FSAL object handle from a host handle
@@ -2213,9 +2206,9 @@ struct fsal_obj_ops {
  *
  * @return FSAL status
  */
-	 fsal_status_t (*handle_digest)(const struct fsal_obj_handle *obj_hdl,
-					fsal_digesttype_t output_type,
-					struct gsh_buffdesc *fh_desc);
+	 fsal_status_t (*handle_to_wire)(const struct fsal_obj_handle *obj_hdl,
+					 fsal_digesttype_t output_type,
+					 struct gsh_buffdesc *fh_desc);
 /**
  * @brief Get key for handle
  *

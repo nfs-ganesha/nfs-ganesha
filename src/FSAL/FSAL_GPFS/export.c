@@ -337,8 +337,8 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
  */
 
 static fsal_status_t
-gpfs_extract_handle(struct fsal_export *exp_hdl, fsal_digesttype_t in_type,
-		    struct gsh_buffdesc *fh_desc, int flags)
+gpfs_wire_to_host(struct fsal_export *exp_hdl, fsal_digesttype_t in_type,
+		  struct gsh_buffdesc *fh_desc, int flags)
 {
 	struct gpfs_file_handle *hdl;
 	size_t fh_size;
@@ -386,7 +386,7 @@ gpfs_extract_handle(struct fsal_export *exp_hdl, fsal_digesttype_t in_type,
 
 /* Produce handle-key from a host-handle */
 static fsal_status_t
-gpfs_handle_to_key(struct fsal_export *exp_hdl,
+gpfs_host_to_key(struct fsal_export *exp_hdl,
 		   struct gsh_buffdesc *fh_desc)
 {
 	struct gpfs_file_handle *hdl;
@@ -457,8 +457,8 @@ void gpfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
 	ops->lookup_path = gpfs_lookup_path;
-	ops->extract_handle = gpfs_extract_handle;
-	ops->handle_to_key = gpfs_handle_to_key;
+	ops->wire_to_host = gpfs_wire_to_host;
+	ops->host_to_key = gpfs_host_to_key;
 	ops->create_handle = gpfs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;

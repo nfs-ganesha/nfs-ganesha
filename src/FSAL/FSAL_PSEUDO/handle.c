@@ -585,16 +585,16 @@ unlock:
 	return fsalstat(error, 0);
 }
 
-/* handle_digest
+/* handle_to_wire
  * fill in the opaque f/s file handle part.
  * we zero the buffer to length first.  This MAY already be done above
  * at which point, remove memset here because the caller is zeroing
  * the whole struct.
  */
 
-static fsal_status_t handle_digest(const struct fsal_obj_handle *obj_hdl,
-				   fsal_digesttype_t output_type,
-				   struct gsh_buffdesc *fh_desc)
+static fsal_status_t handle_to_wire(const struct fsal_obj_handle *obj_hdl,
+				    fsal_digesttype_t output_type,
+				    struct gsh_buffdesc *fh_desc)
 {
 	const struct pseudo_fsal_obj_handle *myself;
 
@@ -685,7 +685,7 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->mkdir = makedir;
 	ops->getattrs = getattrs;
 	ops->unlink = file_unlink;
-	ops->handle_digest = handle_digest;
+	ops->handle_to_wire = handle_to_wire;
 	ops->handle_to_key = handle_to_key;
 }
 

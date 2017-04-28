@@ -133,7 +133,7 @@ void pxy_export_ops_init(struct export_ops *ops)
 {
 	ops->release = pxy_release;
 	ops->lookup_path = pxy_lookup_path;
-	ops->extract_handle = pxy_extract_handle;
+	ops->wire_to_host = pxy_wire_to_host;
 	ops->create_handle = pxy_create_handle;
 	ops->get_fs_dynamic_info = pxy_get_dynamic_info;
 	ops->fs_supports = pxy_get_supports;

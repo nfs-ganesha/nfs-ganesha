@@ -216,10 +216,10 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
  * common behavior, done here is to just reset the length.
  */
 
-static fsal_status_t tank_extract_handle(struct fsal_export *exp_hdl,
-					 fsal_digesttype_t in_type,
-					 struct gsh_buffdesc *fh_desc,
-					 int flags)
+static fsal_status_t tank_wire_to_host(struct fsal_export *exp_hdl,
+				       fsal_digesttype_t in_type,
+				       struct gsh_buffdesc *fh_desc,
+				       int flags)
 {
 	struct zfs_file_handle *hdl;
 	size_t fh_size;
@@ -249,7 +249,7 @@ void zfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
 	ops->lookup_path = tank_lookup_path;
-	ops->extract_handle = tank_extract_handle;
+	ops->wire_to_host = tank_wire_to_host;
 	ops->create_handle = tank_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;

@@ -1449,7 +1449,7 @@ static bool mdcache_handle_is(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Get the digest for a handle
+ * @brief Get the wire version of a handle
  *
  * Just pass through to the underlying FSAL
  *
@@ -1458,7 +1458,7 @@ static bool mdcache_handle_is(struct fsal_obj_handle *obj_hdl,
  * @param[out] fh_desc	Buffer to write digest into
  * @return FSAL status
  */
-static fsal_status_t mdcache_handle_digest(
+static fsal_status_t mdcache_handle_to_wire(
 				const struct fsal_obj_handle *obj_hdl,
 				fsal_digesttype_t out_type,
 				struct gsh_buffdesc *fh_desc)
@@ -1468,7 +1468,7 @@ static fsal_status_t mdcache_handle_digest(
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.handle_digest(
+		status = entry->sub_handle->obj_ops.handle_to_wire(
 			entry->sub_handle, out_type, fh_desc)
 	       );
 
@@ -1732,7 +1732,7 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->share_op = mdcache_share_op;
 	ops->close = mdcache_close;
 	ops->handle_is = mdcache_handle_is;
-	ops->handle_digest = mdcache_handle_digest;
+	ops->handle_to_wire = mdcache_handle_to_wire;
 	ops->handle_to_key = mdcache_handle_to_key;
 	ops->handle_cmp = mdcache_handle_cmp;
 
@@ -1871,7 +1871,7 @@ fsal_status_t mdcache_create_handle(struct fsal_export *exp_hdl,
 	fsal_status_t status;
 
 	*handle = NULL;
-	status = mdcache_locate_handle(fh_desc, export, &entry, attrs_out);
+	status = mdcache_locate_host(fh_desc, export, &entry, attrs_out);
 	if (FSAL_IS_ERROR(status))
 		return status;
 

@@ -197,13 +197,13 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	fh_desc.addr = &v4_handle->fsopaque;
 
 	/* adjust the handle opaque into a cache key */
-	fsal_status = export->exp_ops.extract_handle(export,
-						     FSAL_DIGEST_NFSV4,
-						     &fh_desc,
-						     v4_handle->fhflags1);
+	fsal_status = export->exp_ops.wire_to_host(export,
+						   FSAL_DIGEST_NFSV4,
+						   &fh_desc,
+						   v4_handle->fhflags1);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogFullDebug(COMPONENT_FILEHANDLE,
-			     "extract_handle failed %s",
+			     "wire_to_host failed %s",
 			     msg_fsal_err(fsal_status.major));
 		return nfs4_Errno_status(fsal_status);
 	}
