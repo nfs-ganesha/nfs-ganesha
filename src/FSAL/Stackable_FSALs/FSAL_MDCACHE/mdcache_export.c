@@ -97,11 +97,6 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 	fsal_status_t status;
 	bool rc;
 
-	/* First unexport for the sub-FSAL */
-	subcall_raw(exp,
-		sub_export->exp_ops.unexport(sub_export, root_entry->sub_handle)
-	);
-
 	/* Indicate this export is going away so we don't create any new
 	 * export map entries.
 	 */
@@ -129,7 +124,6 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 			continue;
 		}
 
-
 		/* Must get attr_lock before mdc_exp_lock */
 		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 		PTHREAD_RWLOCK_wrlock(&exp->mdc_exp_lock);
@@ -140,8 +134,6 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 					   struct entry_export_map,
 					   export_per_entry);
 		if (expmap == NULL) {
-			/* Clear out first export pointer */
-			atomic_store_voidptr(&entry->first_export, NULL);
 			/* We must not hold entry->attr_lock across
 			 * try_cleanup_push (LRU lane lock order) */
 			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
@@ -152,8 +144,9 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 			mdcache_lru_cleanup_try_push(entry);
 		} else {
 			/* Make sure first export pointer is still valid */
-			atomic_store_voidptr(&entry->first_export,
-					     expmap->export);
+			atomic_store_int32_t(
+				&entry->first_export_id,
+				(int32_t) expmap->export->export.export_id);
 
 			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
@@ -162,6 +155,11 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 		/* Release above ref */
 		mdcache_put(entry);
 	};
+
+	/* Last unexport for the sub-FSAL */
+	subcall_raw(exp,
+		sub_export->exp_ops.unexport(sub_export, root_entry->sub_handle)
+	);
 
 	/* Unhash the root object */
 	rc = cih_remove_checked(root_entry);

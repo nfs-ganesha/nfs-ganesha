@@ -252,8 +252,11 @@ struct mdcache_fsal_obj_handle {
 	mdcache_lru_t lru;
 	/** Exports per entry (protected by attr_lock) */
 	struct glist_head export_list;
-	/** Atomic pointer to the first mapped export for fast path */
-	void *first_export;
+	/** ID of the first mapped export for fast path
+	 *  This is an int32_t because we need it to be -1 to indicate
+	 *  no mapped export.
+	 */
+	int32_t first_export_id;
 	/** Lock on type-specific cached content.  See locking
 	    discipline for details. */
 	pthread_rwlock_t content_lock;

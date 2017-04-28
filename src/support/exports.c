@@ -2307,20 +2307,6 @@ out:
 	return my_status;
 }
 
-static inline void clean_up_export(struct gsh_export *export,
-				   struct fsal_obj_handle *root_obj)
-{
-	/* Make export unreachable */
-	pseudo_unmount_export(export);
-	remove_gsh_export(export->export_id);
-
-	/* Release state belonging to this export */
-	state_release_export(export);
-
-	/* Flush FSAL-specific state */
-	export->fsal_export->exp_ops.unexport(export->fsal_export, root_obj);
-}
-
 /**
  * @brief Release all the export state, including the root object
  *
@@ -2362,7 +2348,21 @@ static void release_export(struct gsh_export *export)
 		 "Released root obj %p for path %s on export_id=%d",
 		 obj, export->fullpath, export->export_id);
 
-	clean_up_export(export, obj);
+	/* Make export unreachable via pseudo fs.
+	 * We keep the export in the export hash table through the following
+	 * so that the underlying FSALs have access to the export while
+	 * performing the various cleanup operations.
+	 */
+	pseudo_unmount_export(export);
+
+	/* Release state belonging to this export */
+	state_release_export(export);
+
+	/* Flush FSAL-specific state */
+	export->fsal_export->exp_ops.unexport(export->fsal_export, obj);
+
+	/* Remove the mapping to the export now that cleanup is complete. */
+	remove_gsh_export(export->export_id);
 
 	/* Release ref taken above */
 	obj->obj_ops.put_ref(obj);

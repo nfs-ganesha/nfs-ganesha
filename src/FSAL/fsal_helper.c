@@ -1660,8 +1660,13 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 	}
 
 out:
-	if (lookup_src)
+	if (lookup_src) {
+		/* Note that even with a junction, this object is in the same
+		 * export since that would be the junction node, NOT the export
+		 * root node on the other side of the junction.
+		 */
 		lookup_src->obj_ops.put_ref(lookup_src);
+	}
 
 	return fsal_status;
 }

@@ -369,7 +369,102 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 
 	/* Free SubFSAL resources */
 	if (entry->sub_handle) {
-		/* Make sure any FSAL global file descriptor is closed. */
+		/* There are four basic paths to get here.
+		 *
+		 * One path is that this cache entry is being reaped. In that
+		 * case, if an unexport is in progress removing the last export
+		 * this entry was mapped to, in the process of being completely
+		 * detached from an export, it also became unreapable (placed on
+		 * the LRU_ENTRY_CLEANUP queue not L1 or L2). Therefore, if we
+		 * get here with a reaped entry, it MUST still be attached to
+		 * an export.
+		 *
+		 * Another path to get here is the export is still valid, and
+		 * this entry is being killed. In that case, all the export
+		 * stuff is fine.
+		 *
+		 * Another path is that we have removed the final export, and
+		 * unexport is releasing the last reference. In that case,
+		 * the unexport process has the export in question in the op_ctx
+		 * so we are fine.
+		 *
+		 * The final case is that this entry was referenced by a thread
+		 * other than the unexport, and the operational thread is the
+		 * one releasing the last LRU reference. In that case, the
+		 * caller's op_ctx must have the correct export.
+		 *
+		 * This is true even for operations that require two handles.
+		 * NFS v3 checks for xdev before converting from a handle to an
+		 * LRU reference. NFS v4 holds an LRU reference for the saved FH
+		 * so the last reference can only be dropped when the saved FH
+		 * is cleaned up, which will be done with the correct op_ctx. 9P
+		 * also assures that LRU references are released with the proper
+		 * op_ctx.
+		 *
+		 * So in all cases, we can either trust the current export, or
+		 * we can use the first_export_id to get a valid export for
+		 * a reaping case.
+		 */
+		struct root_op_context ctx;
+		struct req_op_context *saved_ctx = op_ctx;
+		int32_t export_id;
+		struct gsh_export *export;
+
+		/* Find the first export id. */
+		export_id = atomic_fetch_int32_t(&entry->first_export_id);
+
+		if (export_id >= 0 && op_ctx != NULL &&
+		    op_ctx->ctx_export != NULL &&
+		    op_ctx->ctx_export->export_id != export_id) {
+			/* We can't be sure the op_ctx has a valid export_id for
+			 * this entry, so we'll use the first export_id and set
+			 * up a new op_ctx.
+			 *
+			 * Get a reference to the first_export_id.
+			 */
+			export = get_gsh_export(export_id);
+
+			if (export == NULL) {
+				/* This really should not happen, if an unexport
+				 * is in progress, the export_id is now not
+				 * removed until after mdcache has detached all
+				 * entries from the export. An entry that is
+				 * actually in the process of being detached has
+				 * an LRU reference which prevents it from being
+				 * reaped, so there is no path to get into
+				 * mdcache_lru_clean without the export still
+				 * being valid.
+				 */
+				LogFatal(COMPONENT_CACHE_INODE,
+					 "An entry (%p) having an unmappable export_id (%"
+					 PRIi32") is unexpected",
+					 entry, export_id);
+			}
+
+			LogFullDebug(COMPONENT_CACHE_INODE,
+				     "Creating a new context with export id%"
+				     PRIi32,
+				     export_id);
+
+			init_root_op_context(&ctx, export, export->fsal_export,
+					     0, 0, UNKNOWN_REQUEST);
+		} else {
+			/* We MUST have a valid op_ctx based on the conditions
+			 * we could get here. first_export_id coild be -1 or it
+			 * could match the current op_ctx export. In either case
+			 * we will trust the current op_ctx.
+			 */
+			assert(op_ctx);
+			assert(op_ctx->ctx_export);
+			LogFullDebug(COMPONENT_CACHE_INODE,
+				     "Trusting op_ctx export id %"PRIu16,
+				     op_ctx->ctx_export->export_id);
+		}
+
+		/* Make sure any FSAL global file descriptor is closed.
+		 * Don't bother with the content_lock since we have exclusive
+		 * ownership of this entry.
+		 */
 		status = fsal_close(&entry->obj_handle);
 
 		if (FSAL_IS_ERROR(status)) {
@@ -382,6 +477,14 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 			entry->sub_handle->obj_ops.release(entry->sub_handle)
 		       );
 		entry->sub_handle = NULL;
+
+		if (op_ctx != saved_ctx) {
+			/* We had to use our own op_ctx, clean it up and revert
+			 * to the saved op_ctx.
+			 */
+			put_gsh_export(op_ctx->ctx_export);
+			op_ctx = saved_ctx;
+		}
 	}
 
 	/* Done with the attrs */
@@ -602,6 +705,11 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 			/* Note: we didn't take a ref here, so the only ref left
 			 * is the one owned by mdcache_unexport().  When it
 			 * unref's, that will free this object. */
+
+			/* Now we can safely clean out the first_export_id to
+			 * indicate this entry is unmapped.
+			 */
+			atomic_store_int32_t(&entry->first_export_id, -1);
 		}
 
 		QUNLOCK(qlane);
@@ -636,13 +744,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 	struct lru_q_lane *qlane = &LRU[lane];
 	/* entry refcnt */
 	uint32_t refcnt;
-	struct req_op_context ctx = {0};
-	struct req_op_context *saved_ctx = op_ctx;
-	struct mdcache_fsal_export *exp;
-	struct fsal_export *export;
 	bool not_support_ex;
-
-	op_ctx = &ctx;
 
 	q = &qlane->L1;
 
@@ -659,6 +761,10 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 	 * the iteration also adjusts glist and (in particular) glistn */
 	glist_for_each_safe(qlane->iter.glist, qlane->iter.glistn, &q->q) {
 		struct lru_q *q;
+		struct root_op_context ctx;
+		struct req_op_context *saved_ctx = op_ctx;
+		int32_t export_id;
+		struct gsh_export *export;
 
 		/* check per-lane work */
 		if (workdone >= lru_state.per_lane_work)
@@ -672,6 +778,11 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 
 		/* check refcnt in range */
 		if (unlikely(refcnt > 2)) {
+			/* This unref is ok to be done without a valid op_ctx
+			 * because we always map a new entry to an export before
+			 * we could possibly release references in
+			 * mdcache_new_entry.
+			 */
 			mdcache_lru_unref(entry, LRU_UNREF_QLOCKED);
 			/* but count it */
 			workdone++;
@@ -687,17 +798,50 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		lru_insert(lru, q, LRU_MRU);
 		++(q->size);
 
+		/* Get a reference to the first export and build an op context
+		 * with it. By holding the QLANE lock while we get the export
+		 * reference we assure that the entry doesn't get detached from
+		 * the export before we get an export reference, which
+		 * guarantees the export is good for the length of time we need
+		 * it to perform sub_fsal operations.
+		 */
+		export_id = atomic_fetch_int32_t(&entry->first_export_id);
+
+		if (export_id < 0) {
+			/* This should never happen, since any entry that only
+			 * had a sentinel reference must either have a mapped
+			 * export or be in the LRU_ENTRY_CLEANUP queue and thus
+			 * not eligible for lru_run_lane.
+			 */
+			LogFatal(COMPONENT_CACHE_INODE,
+				 "No first_export for entry %p is unexpected.",
+				 entry);
+		}
+
+		export = get_gsh_export(export_id);
+
+		if (export == NULL) {
+			/* This really should not happen, if an unexport is in
+			 * progress, the export_id is now not removed until
+			 * after mdcache has detached all entries from the
+			 * export. An entry that is actually in the process of
+			 * being detached has an LRU reference which prevents it
+			 * from being processed by lru_run_lane, so there is no
+			 * path to get here without the export still being
+			 * valid.
+			 */
+			LogFatal(COMPONENT_CACHE_INODE,
+				 "An entry (%p) having an unmappable export_id (%"
+				 PRIi32") is unexpected",
+				 entry, export_id);
+		}
+
+		init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
+				     UNKNOWN_REQUEST);
+
 		/* Drop the lane lock while performing (slow) operations on
 		 * entry */
 		QUNLOCK(qlane);
-
-		/** @todo FSF: hmm, this looks hairy, we need a reference
-		 *             to the export somehow?
-		 */
-		exp = atomic_fetch_voidptr(&entry->first_export);
-		export = &exp->export;
-		op_ctx->fsal_export = export;
-		op_ctx->ctx_export = NULL;
 
 		not_support_ex = !entry->obj_handle.fsal->m_ops.support_ex(
 							&entry->obj_handle);
@@ -725,6 +869,9 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 			++closed;
 		}
 
+		put_gsh_export(export);
+		op_ctx = saved_ctx;
+
 		QLOCK(qlane); /* QLOCKED */
 		mdcache_lru_unref(entry, LRU_UNREF_QLOCKED);
 		++workdone;
@@ -736,8 +883,6 @@ next_lane:
 	LogDebug(COMPONENT_CACHE_INODE_LRU,
 		 "Actually processed %zd entries on lane %zd closing %zd descriptors",
 		 workdone, lane, closed);
-
-	op_ctx = saved_ctx;
 
 	return workdone;
 }

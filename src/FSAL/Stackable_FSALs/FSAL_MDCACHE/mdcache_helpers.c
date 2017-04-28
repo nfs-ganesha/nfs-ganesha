@@ -149,6 +149,7 @@ static mdcache_entry_t *mdcache_alloc_handle(
 	result->mde_flags = 0;
 	result->icreate_refcnt = 0;
 	glist_init(&result->export_list);
+	atomic_store_int32_t(&result->first_export_id, -1);
 
 	/* Map the export before we put this entry into the LRU, but after it's
 	 * well enough set up to be able to be unrefed by unexport should there
@@ -161,8 +162,9 @@ static mdcache_entry_t *mdcache_alloc_handle(
 		 * create new mdcache entries.
 		 */
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "Trying to allocate a new entry %p for export %p that is in the process of being unexported",
-			 result, mdc_cur_export());
+			 "Trying to allocate a new entry %p for export id %"
+			 PRIi16" that is in the process of being unexported",
+			 result, op_ctx->ctx_export->export_id);
 		mdcache_put(result);
 		mdcache_kill_entry(result);
 		return NULL;
@@ -203,10 +205,10 @@ void mdc_clean_entry(mdcache_entry_t *entry)
 		PTHREAD_RWLOCK_unlock(&export->mdc_exp_lock);
 	}
 
-	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
 	/* Clear out first_export */
-	atomic_store_voidptr(&entry->first_export, NULL);
+	atomic_store_int32_t(&entry->first_export_id, -1);
+
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 	if (entry->obj_handle.type == DIRECTORY) {
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
@@ -252,7 +254,8 @@ fsal_status_t mdc_check_mapping(mdcache_entry_t *entry)
 	}
 
 	/* Fast path check to see if this export is already mapped */
-	if (atomic_fetch_voidptr(&entry->first_export) == export)
+	if (atomic_fetch_int32_t(&entry->first_export_id) ==
+	    (int32_t) op_ctx->ctx_export->export_id)
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
@@ -304,8 +307,10 @@ again:
 	expmap = gsh_calloc(1, sizeof(*expmap));
 
 	/* If export_list is empty, store this export as first */
-	if (glist_empty(&entry->export_list))
-		atomic_store_voidptr(&entry->first_export, export);
+	if (glist_empty(&entry->export_list)) {
+		atomic_store_int32_t(&entry->first_export_id,
+				     (int32_t) op_ctx->ctx_export->export_id);
+	}
 
 	expmap->export = export;
 	expmap->entry = entry;

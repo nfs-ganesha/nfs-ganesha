@@ -3046,6 +3046,8 @@ struct fsal_export {
 	struct export_ops exp_ops;	/*< Vector of operations */
 	struct fsal_export *sub_export;	/*< Sub export for stacking */
 	struct fsal_export *super_export;/*< Super export for stacking */
+	uint16_t export_id; /*< Export ID copied from gsh_export, initialized
+				by  fsal_export_init */
 };
 
 /**
