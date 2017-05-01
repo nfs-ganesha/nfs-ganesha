@@ -1147,7 +1147,10 @@ mdcache_entry_t *alloc_cache_entry(void)
  * this function always returns an entry with two references (one for the
  * sentinel, one to allow the caller's use.)
  *
- * @return a usable entry
+ * The caller MUST call mdcache_lru_insert when the entry is sufficiently
+ * constructed.
+ *
+ * @return a usable entry or NULL if unexport is in progress.
  */
 mdcache_entry_t *mdcache_lru_get(void)
 {
@@ -1177,10 +1180,21 @@ mdcache_entry_t *mdcache_lru_get(void)
 	tracepoint(mdcache, mdc_lru_get,
 		   __func__, __LINE__, nentry, nentry->lru.refcnt);
 #endif
-	/* Enqueue. */
-	lru_insert_entry(nentry, &LRU[nentry->lru.lane].L1, LRU_LRU);
 
 	return nentry;
+}
+
+/**
+ * @brief Insert a new entry into the LRU.
+ *
+ * Entry is inserted into LRU of L1 queue.
+ *
+ * @param [in] ntry  Entry to insert.
+ */
+void mdcache_lru_insert(mdcache_entry_t *entry)
+{
+	/* Enqueue. */
+	lru_insert_entry(entry, &LRU[entry->lru.lane].L1, LRU_LRU);
 }
 
 /**

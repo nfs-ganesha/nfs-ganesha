@@ -108,7 +108,7 @@ fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
  * @param[in] sub_handle The handle used by the subfsal.
  * @param[in] fs The filesystem of the new handle.
  *
- * @return The new handle, or NULL if the allocation failed.
+ * @return The new handle, or NULL if the unexport in progress.
  */
 static mdcache_entry_t *mdcache_alloc_handle(
 		struct mdcache_fsal_export *export,
@@ -116,8 +116,14 @@ static mdcache_entry_t *mdcache_alloc_handle(
 		struct fsal_filesystem *fs)
 {
 	mdcache_entry_t *result;
+	fsal_status_t status;
 
 	result = mdcache_lru_get();
+
+	if (result == NULL) {
+		/* Should never happen, but our caller will handle... */
+		return NULL;
+	}
 
 	/* Base data */
 	result->sub_handle = sub_handle;
@@ -143,6 +149,26 @@ static mdcache_entry_t *mdcache_alloc_handle(
 	result->mde_flags = 0;
 	result->icreate_refcnt = 0;
 	glist_init(&result->export_list);
+
+	/* Map the export before we put this entry into the LRU, but after it's
+	 * well enough set up to be able to be unrefed by unexport should there
+	 * be a race.
+	 */
+	status = mdc_check_mapping(result);
+
+	if (unlikely(FSAL_IS_ERROR(status))) {
+		/* The current export is in process to be unexported, don't
+		 * create new mdcache entries.
+		 */
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Trying to allocate a new entry %p for export %p that is in the process of being unexported",
+			 result, mdc_cur_export());
+		mdcache_put(result);
+		mdcache_kill_entry(result);
+		return NULL;
+	}
+
+	mdcache_lru_insert(result);
 
 	return result;
 }
@@ -202,24 +228,32 @@ void mdc_clean_entry(mdcache_entry_t *entry)
  *
  * If the entry does not have a mapping for the active export, add one.
  *
+ * If an unexport is in progress, return ERR_FSAL_STALE to prevent the caller
+ * from proceeding.
+ *
  * @param[in]  entry     The cache inode
- * @param[in]  export    The active export
  *
  * @return FSAL Status
  *
  */
 
-static void
-mdc_check_mapping(mdcache_entry_t *entry)
+fsal_status_t mdc_check_mapping(mdcache_entry_t *entry)
 {
 	struct mdcache_fsal_export *export = mdc_cur_export();
 	struct glist_head *glist;
 	struct entry_export_map *expmap;
 	bool try_write = false;
 
+	if (atomic_fetch_uint8_t(&export->flags) & MDC_UNEXPORT) {
+		/* In the process of unexporting, don't check export mapping.
+		 * Return a stale error.
+		 */
+		return fsalstat(ERR_FSAL_STALE, ESTALE);
+	}
+
 	/* Fast path check to see if this export is already mapped */
 	if (atomic_fetch_voidptr(&entry->first_export) == export)
-		return;
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 
@@ -233,7 +267,7 @@ again:
 		/* Found active export on list */
 		if (expmap->export == export) {
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-			return;
+			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
 	}
 
@@ -250,9 +284,24 @@ again:
 	/* We have the write lock and did not find
 	 * this export on the list, add it.
 	 */
-	expmap = gsh_calloc(1, sizeof(*expmap));
-
 	PTHREAD_RWLOCK_wrlock(&export->mdc_exp_lock);
+
+	/* Check for unexport again, this prevents an interlock issue where
+	 * we passed above, but now unexport is in progress. This is required
+	 * because the various locks are acquired, dropped, and re-acquired
+	 * in such a way that unexport may have started after we made the
+	 * check at the top.
+	 */
+	if (atomic_fetch_uint8_t(&export->flags) & MDC_UNEXPORT) {
+		/* In the process of unexporting, don't allow creating a new
+		 * export mapping. Return a stale error.
+		 */
+		PTHREAD_RWLOCK_unlock(&export->mdc_exp_lock);
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		return fsalstat(ERR_FSAL_STALE, ESTALE);
+	}
+
+	expmap = gsh_calloc(1, sizeof(*expmap));
 
 	/* If export_list is empty, store this export as first */
 	if (glist_empty(&entry->export_list))
@@ -266,6 +315,7 @@ again:
 
 	PTHREAD_RWLOCK_unlock(&export->mdc_exp_lock);
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t
@@ -494,8 +544,18 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	/* !LATCHED */
 
-	/* We did not find the object.  Pull an entry off the LRU. */
+	/* We did not find the object.  Pull an entry off the LRU. The entry
+	 * will already be mapped.
+	 */
 	nentry = mdcache_alloc_handle(export, sub_handle, sub_handle->fs);
+
+	if (nentry == NULL) {
+		/* We didn't get an entry because of unexport in progress,
+		 * go ahead and bail out now.
+		 */
+		status = fsalstat(ERR_FSAL_STALE, 0);
+		goto out_release_new_entry;
+	}
 
 	/* See if someone raced us. */
 	oentry = cih_get_by_key_latch(&key, &latch, CIH_GET_WLOCK, __func__,
@@ -635,9 +695,6 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		}
 		goto out_release_new_entry;
 	}
-
-	/* Map this new entry and the active export */
-	mdc_check_mapping(nentry);
 
 	if (isFullDebug(COMPONENT_CACHE_INODE)) {
 		char str[LOG_BUFF_LEN] = "\0";
@@ -791,12 +848,24 @@ mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry)
 			return status;
 		}
 
+		status = mdc_check_mapping(*entry);
+
+		if (unlikely(FSAL_IS_ERROR(status))) {
+			/* Export is in the process of being removed, don't
+			 * add this entry to the export, and bail out of the
+			 * operation sooner than later.
+			 */
+			mdcache_put(*entry);
+			*entry = NULL;
+			return status;
+		}
+
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Found entry %p",
 			     entry);
 
-		mdc_check_mapping(*entry);
 		(void)atomic_inc_uint64_t(&cache_stp->inode_hit);
+
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 

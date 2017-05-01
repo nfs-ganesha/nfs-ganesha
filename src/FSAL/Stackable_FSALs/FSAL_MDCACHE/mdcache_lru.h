@@ -139,6 +139,7 @@ fsal_status_t mdcache_lru_pkgshutdown(void);
 extern size_t open_fd_count;
 
 mdcache_entry_t *mdcache_lru_get(void);
+void mdcache_lru_insert(mdcache_entry_t *entry);
 #define mdcache_lru_ref(e, f) _mdcache_lru_ref(e, f, __func__, __LINE__)
 fsal_status_t _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags,
 			       const char *func, int line);

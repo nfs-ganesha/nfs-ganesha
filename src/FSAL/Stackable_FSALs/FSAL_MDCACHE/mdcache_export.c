@@ -102,6 +102,11 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 		sub_export->exp_ops.unexport(sub_export, root_entry->sub_handle)
 	);
 
+	/* Indicate this export is going away so we don't create any new
+	 * export map entries.
+	 */
+	atomic_set_uint8_t_bits(&exp->flags, MDC_UNEXPORT);
+
 	/* Next, clean up our cache entries on the export */
 	while (true) {
 		PTHREAD_RWLOCK_rdlock(&exp->mdc_exp_lock);
