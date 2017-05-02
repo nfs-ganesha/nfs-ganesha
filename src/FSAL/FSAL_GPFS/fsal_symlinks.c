@@ -121,7 +121,7 @@ GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl, const char *linkname,
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 
 	status = fsal_internal_handle2fd(gpfs_fs->root_fd, gpfs_hdl->handle,
-					 &fd, O_RDONLY | O_DIRECTORY, 0);
+					 &fd, O_RDONLY | O_DIRECTORY);
 
 	if (FSAL_IS_ERROR(status))
 		return status;

@@ -503,7 +503,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	gpfs_fs = dir_hdl->fs->private_data;
 
 	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
-					 &dirfd, O_RDONLY | O_DIRECTORY, 0);
+					 &dirfd, O_RDONLY | O_DIRECTORY);
 
 	if (dirfd < 0)
 		return status;

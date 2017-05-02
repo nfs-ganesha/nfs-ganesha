@@ -37,7 +37,7 @@
  *       GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
  *                     const struct req_op_context *op_ctx,
  *                     fsal_openflags_t openflags, int *file_desc,
- *                     struct attrlist *fsal_attr, bool reopen)
+ *                     struct attrlist *fsal_attr)
  *
  *  @brief Open a regular file for reading/writing its data content.
  *
@@ -58,7 +58,7 @@
 fsal_status_t
 GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 	      const struct req_op_context *op_ctx, int posix_flags,
-	      int *file_desc, bool reopen)
+	      int *file_desc)
 {
 	struct gpfs_fsal_obj_handle *myself;
 	struct gpfs_filesystem *gpfs_fs;
@@ -75,7 +75,7 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 
 	fsal_set_credentials(op_ctx->creds);
 	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
-					 file_desc, posix_flags, reopen);
+					 file_desc, posix_flags);
 	fsal_restore_ganesha_credentials();
 
 	if (FSAL_IS_ERROR(status)) {
@@ -84,8 +84,7 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 		 */
 		status = fsal_internal_handle2fd(gpfs_fs->root_fd,
 						 myself->handle,
-						 file_desc, posix_flags,
-						 reopen);
+						 file_desc, posix_flags);
 	}
 
 	return status;

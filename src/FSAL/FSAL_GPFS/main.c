@@ -80,7 +80,6 @@ static struct fsal_staticfsinfo_t default_gpfs_info = {
 	.pnfs_mds = true,
 	.pnfs_ds = true,
 	.fsal_trace = true,
-	.reopen_method = true,
 	.fsal_grace = false,
 	.link_supports_permission_checks = true,
 };

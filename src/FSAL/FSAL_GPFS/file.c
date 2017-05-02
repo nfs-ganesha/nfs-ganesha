@@ -53,7 +53,7 @@ gpfs_open_func(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd->fd, false);
+	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd->fd);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -188,7 +188,7 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		gpfs_hdl->u.file.fd.openflags = openflags;
 	}
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, fd, false);
+	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, fd);
 	if (FSAL_IS_ERROR(status)) {
 		if (state == NULL)
 			goto out;
@@ -615,7 +615,7 @@ gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd, false);
+	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd);
 	if (!FSAL_IS_ERROR(status)) {
 		/* Close the existing file descriptor and copy the new
 		 * one over.

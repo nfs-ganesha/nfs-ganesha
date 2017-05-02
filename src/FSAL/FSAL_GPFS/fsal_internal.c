@@ -88,51 +88,28 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
  *  @param gpfs_fh Opaque filehandle
  *  @param fd File descriptor openned by the function
  *  @param oflags Flags to open the file with
- *  @param reopen Bool specifying whether a reopen is wanted
  *
  *  @return status of operation
  */
 fsal_status_t
 fsal_internal_handle2fd(int dirfd, struct gpfs_file_handle *gpfs_fh,
-			int *fd, int oflags, bool reopen)
+			int *fd, int oflags)
 {
-	if (!gpfs_fh || !fd)
-		return fsalstat(ERR_FSAL_FAULT, 0);
+	struct open_arg oarg = {0};
+	int rc;
 
-	if (reopen) {
-		struct open_share_arg sarg = {0};
+	if (op_ctx && op_ctx->client && op_ctx->client->hostaddr_str)
+		oarg.cli_ip = op_ctx->client->hostaddr_str;
 
-		sarg.mountdirfd = dirfd;
-		sarg.handle = gpfs_fh;
-		sarg.flags = oflags;
-		sarg.openfd = *fd;
-		/* share_access and share_deny are unused by REOPEN */
+	oarg.mountdirfd = dirfd;
+	oarg.handle = gpfs_fh;
+	oarg.flags = oflags;
 
-		if (unlikely(gpfs_ganesha(OPENHANDLE_REOPEN_BY_FD, &sarg) < 0))
-			return FSAL_INTERNAL_ERROR(errno,
-						   "OPENHANDLE_REOPEN_BY_FD");
-	} else {
-		struct open_arg oarg = {0};
-		int rc;
+	rc = gpfs_ganesha(OPENHANDLE_OPEN_BY_HANDLE, &oarg);
+	if (unlikely(rc < 0))
+		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_OPEN_BY_HANDLE");
 
-		if (op_ctx && op_ctx->client && op_ctx->client->hostaddr_str)
-			oarg.cli_ip = op_ctx->client->hostaddr_str;
-
-		oarg.mountdirfd = dirfd;
-		oarg.handle = gpfs_fh;
-		oarg.flags = oflags;
-
-		rc = gpfs_ganesha(OPENHANDLE_OPEN_BY_HANDLE, &oarg);
-		if (unlikely(rc < 0))
-			return FSAL_INTERNAL_ERROR(errno,
-						   "OPENHANDLE_OPEN_BY_HANDLE");
-
-		/* gpfs_open returns fd number for OPENHANDLE_OPEN_BY_HANDLE,
-		 * but only returns 0 for success for OPENHANDLE_REOPEN_BY_FD
-		 * operation. We already have correct (*fd) in reopen case!
-		 */
-		*fd = rc;
-	}
+	*fd = rc;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
