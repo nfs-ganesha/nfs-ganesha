@@ -574,7 +574,7 @@ mdc_dir_add_parent(mdcache_entry_t *entry, mdcache_entry_t *mdc_parent)
 /**
  * @brief Delete a cache key.
  *
- * Delete a cache key.
+ * Delete a cache key. Safe to call even if key was not allocated.
  *
  * @param key [in] The key to delete
  *

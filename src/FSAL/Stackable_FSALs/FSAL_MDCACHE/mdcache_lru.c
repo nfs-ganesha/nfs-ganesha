@@ -393,7 +393,9 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 	/* Clean out the export mapping before deconstruction */
 	mdc_clean_entry(entry);
 
-	/* Finalize last bits of the cache entry */
+	/* Finalize last bits of the cache entry, delete the key if any and
+	 * destroy the rw locks.
+	 */
 	mdcache_key_delete(&entry->fh_hk.key);
 	PTHREAD_RWLOCK_destroy(&entry->content_lock);
 	PTHREAD_RWLOCK_destroy(&entry->attr_lock);

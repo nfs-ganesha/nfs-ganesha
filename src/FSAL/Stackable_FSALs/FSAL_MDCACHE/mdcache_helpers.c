@@ -486,10 +486,10 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 					 MDCACHE_UNREACHABLE);
 
 		/* Don't need a new sub_handle ref */
-		goto out_release;
+		goto out_no_new_entry_yet;
 	} else if (status.major != ERR_FSAL_NOENT) {
 		/* Real error , don't need a new sub_handle ref */
-		goto out_release;
+		goto out_no_new_entry_yet;
 	}
 
 	/* !LATCHED */
@@ -524,7 +524,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		/* Release the subtree hash table lock */
 		cih_hash_release(&latch);
 
-		goto out;
+		goto out_release_new_entry;
 	}
 
 	/* We won the race. */
@@ -540,7 +540,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		LogCrit(COMPONENT_CACHE_INODE,
 			"Could not hash new entry");
 		status = fsalstat(ERR_FSAL_NOMEM, 0);
-		goto out;
+		goto out_release_new_entry;
 	}
 
 	switch (nentry->obj_handle.type) {
@@ -592,7 +592,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		status = fsalstat(ERR_FSAL_INVAL, 0);
 		LogMajor(COMPONENT_CACHE_INODE, "unknown type %u provided",
 			 nentry->obj_handle.type);
-		goto out;
+		goto out_release_new_entry;
 	}
 
 	/* nentry not reachable yet; no need to lock */
@@ -633,7 +633,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 			/* Release the attrs we just copied. */
 			fsal_release_attrs(attrs_out);
 		}
-		goto out;
+		goto out_release_new_entry;
 	}
 
 	/* Map this new entry and the active export */
@@ -655,31 +655,16 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	(void)atomic_inc_uint64_t(&cache_stp->inode_added);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
- out:
+ out_release_new_entry:
 
-	if (nentry != NULL) {
-		/* We raced or failed, deconstruct the new entry, release
-		 * the attributes, we may not have copied yet, in which case
-		 * mask and acl are 0/NULL.
-		 */
-		fsal_release_attrs(&nentry->attrs);
+	/* We raced or failed, release the new entry we acquired, this will
+	 * result in inline deconstruction. This will release the attributes, we
+	 * may not have copied yet, in which case mask and acl are 0/NULL.
+	 */
+	mdcache_put(nentry);
+	mdcache_kill_entry(nentry);
 
-		/* Destroy the export mapping if any */
-		mdc_clean_entry(nentry);
-
-		/* Destroy the locks */
-		PTHREAD_RWLOCK_destroy(&nentry->attr_lock);
-		PTHREAD_RWLOCK_destroy(&nentry->content_lock);
-
-		if (has_hashkey)
-			mdcache_key_delete(&nentry->fh_hk.key);
-
-		/* Release the new entry we acquired. */
-		mdcache_put(nentry);
-		mdcache_kill_entry(nentry);
-	}
-
- out_release:
+ out_no_new_entry_yet:
 
 	/* If attributes were requested, fetch them now if we still have a
 	 * success return since we did not actually create a new object and
