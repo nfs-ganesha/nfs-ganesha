@@ -111,7 +111,7 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 				next =  glist_next_entry(&chunk->dirents,
 							 mdcache_dir_entry_t,
 							 chunk_list,
-							 &v->chunk_list);
+							 &next->chunk_list);
 
 				if (next != NULL) {
 					/* Evaluate it in the while condition.
