@@ -1073,6 +1073,9 @@ struct nfs4_recovery_backend {
 };
 
 void fs_backend_init(struct nfs4_recovery_backend **);
+#ifdef USE_RADOS_RECOV
+void rados_kv_backend_init(struct nfs4_recovery_backend **);
+#endif
 
 #endif				/* SAL_FUNCTIONS_H */
 
