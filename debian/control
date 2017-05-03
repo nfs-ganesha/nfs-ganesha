@@ -1,0 +1,79 @@
+Source: nfs-ganesha
+Section: net
+Priority: optional
+Maintainer: IBM Corp. <gpfs@us.ibm.com>
+Standards-Version: 3.9.7
+Homepage: http://nfs-ganesha.sourceforge.net
+Build-Depends: debhelper (>= 9),
+               quilt,
+               bison,
+               flex,
+               cmake,
+               libdbus-1-dev,
+               libnfsidmap-dev,
+               libkrb5-dev,
+               libblkid-dev,
+               libattr1-dev,
+               libacl1-dev,
+               xfslibs-dev,
+               uuid-dev,
+               libcap-dev,
+               gpfs.base (>= 4.2.4-0),
+               gpfs.smb (>=4.5.4),
+               gpfs.smb-dev (>=4.5.4),
+               python-dev,
+               dh-python,
+               python-qt4,
+               pyqt4-dev-tools,
+               pkgconf
+Vcs-Git: https://github.com/nfs-ganesha/nfs-ganesha.git
+
+Package: nfs-ganesha
+Architecture: any
+Depends: dbus, nfs-common, rpcbind,
+         ${shlibs:Depends}, daemon
+Description: nfs-ganesha is a NFS server in User Space
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. Supported name spaces are POSIX, PROXY, SNMP, FUSE-like,
+ HPSS, LUSTRE, XFS and ZFS.
+
+Package: nfs-ganesha-fsal
+Multi-Arch: same
+Architecture: any
+Section: libs
+Depends: nfs-ganesha (=${binary:Version}), ${shlibs:Depends}
+Description: nfs-ganesha fsal libraries
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. Supported name spaces are POSIX, PROXY, SNMP, FUSE-like,
+ HPSS, LUSTRE, XFS and ZFS.
+
+Package: python-nfs-ganesha
+Pre-Depends: ${misc:Pre-Depends}
+Architecture: all
+Section: python
+Provides: ${python:Provides}
+Depends: python-dbus,
+         python-gobjects,
+         python-qt4,
+         ${python:Depends}
+Description: Python bindings for nfs-ganesha
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. Supported name spaces are POSIX, PROXY, SNMP, FUSE-like,
+ HPSS, LUSTRE, XFS and ZFS.
+ .
+ This package contains Python bindings for nfs-ganesha admin
+
+Package: nfs-ganesha-doc
+Architecture: all
+Section: doc
+Description: Documentation for nfs-ganesha
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. Supported name spaces are POSIX, PROXY, SNMP, FUSE-like,
+ HPSS, LUSTRE, XFS and ZFS.
+ .
+ This package contains documentation and examples for nfs-ganesha
+

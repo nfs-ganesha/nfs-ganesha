@@ -1,0 +1,9 @@
+etc/ganesha/*
+etc/logrotate.d/ganesha
+etc/sysconfig/ganesha
+etc/dbus-1/system.d/nfs-ganesha-dbus.conf
+lib/systemd/system/nfs-ganesha*
+usr/libexec/ganesha/*
+usr/bin/*
+usr/lib/libntirpc*
+

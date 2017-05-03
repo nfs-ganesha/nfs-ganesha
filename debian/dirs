@@ -1,0 +1,6 @@
+usr/bin
+usr/sbin
+usr/lib
+usr/lib/pkgconfig
+usr/include
+etc/ganesha
