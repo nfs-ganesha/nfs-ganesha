@@ -187,6 +187,7 @@ NFSV4 {}
 
 	Delegations(bool, default false)
 
+	RecoveryBackend(path, default "fs")
 
 EXPORT_DEFAULTS {}
 ------------------

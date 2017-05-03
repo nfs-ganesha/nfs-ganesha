@@ -32,8 +32,19 @@ if(USE_9P)
     )
 endif(USE_9P)
 
+if(USE_RADOS_RECOV)
+  set(sal_STAT_SRCS
+    ${sal_STAT_SRCS}
+    recovery/recovery_rados_kv.c
+    )
+endif(USE_RADOS_RECOV)
+
 add_library(sal STATIC ${sal_STAT_SRCS})
 add_sanitizers(sal)
 
+if(USE_RADOS_RECOV)
+  include_directories(${RADOS_INCLUDE_DIR})
+  target_link_libraries(sal ${RADOS_LIBRARIES})
+endif(USE_RADOS_RECOV)
 
 ########### install files ###############

@@ -288,6 +288,21 @@ void nfs4_recovery_load_clids(nfs_grace_start_t *gsp)
 	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
 
+static int load_backend(const char *name)
+{
+	if (!strcmp(name, "fs")) {
+		fs_backend_init(&recovery_backend);
+		return 0;
+	}
+#ifdef USE_RADOS_RECOV
+	if (!strcmp(name, "rados_kv")) {
+		rados_kv_backend_init(&recovery_backend);
+		return 0;
+	}
+#endif
+	return -1;
+}
+
 /**
  * @brief Create the recovery directory
  *
@@ -297,7 +312,10 @@ void nfs4_recovery_load_clids(nfs_grace_start_t *gsp)
  */
 void nfs4_recovery_init(void)
 {
-	fs_backend_init(&recovery_backend);
+	if (load_backend(nfs_param.nfsv4_param.recovery_backend)) {
+		LogCrit(COMPONENT_CLIENTID, "Unknown recovery backend");
+		return;
+	}
 	recovery_backend->recovery_init();
 }
 

@@ -265,6 +265,9 @@ static struct config_item version4_params[] = {
 		       nfs_version4_parameter, pnfs_mds),
 	CONF_ITEM_BOOL("PNFS_DS", true,
 		       nfs_version4_parameter, pnfs_ds),
+	CONF_ITEM_STR("RecoveryBackend", 1, MAXPATHLEN,
+		      RECOVERY_BACKEND_DEFAULT,
+		      nfs_version4_parameter, recovery_backend),
 	CONFIG_EOL
 };
 

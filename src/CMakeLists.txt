@@ -336,6 +336,9 @@ option(USE_LTTNG "Enable LTTng tracing" OFF)
 # Build man page.
 option(USE_MAN_PAGE "Build MAN page" OFF) 
 
+# Enable Rados KV store for recovery
+option(USE_RADOS_RECOV "Enable Rados KV Recovery" ON)
+
 #
 # End build options
 #
@@ -729,6 +732,18 @@ if(USE_LTTNG)
   endif(LTTNG_FOUND)
 endif(USE_LTTNG)
 
+if(USE_RADOS_RECOV)
+  find_package(RADOS)
+  if(NOT RADOS_FOUND)
+    if(STRICT_PACKAGE)
+      message(FATAL_ERROR "STRICT_PACKAGE : Rados libraries not found.")
+    else(STRICT_PACKAGE)
+      message(WARNING "Rados libraries not found.")
+      set(USE_RADOS_RECOV OFF)
+    endif(STRICT_PACKAGE)
+  endif(NOT RADOS_FOUND)
+endif(USE_RADOS_RECOV)
+
 # Cmake 2.6 has issue in managing BISON and FLEX
 if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
    message( status "CMake 2.6 detected, using portability hooks" )
@@ -1048,6 +1063,7 @@ message(STATUS "USE_BLKIN = ${USE_BLKIN}")
 message(STATUS "USE_VSOCK = ${USE_VSOCK}")
 message(STATUS "USE_TOOL_MULTILOCK = ${USE_TOOL_MULTILOCK}")
 message(STATUS "USE_MAN_PAGE = ${USE_MAN_PAGE}")
+message(STATUS "USE_RADOS_RECOV = ${USE_RADOS_RECOV}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}
@@ -1210,6 +1226,11 @@ set(_USE_NFS_RDMA ${USE_NFS_RDMA}
   "enable nfs RDMA in config"
   FORCE)
 
+set(USE_RADOS_RECOV ${USE_RADOS_RECOV}
+  CACHE BOOL
+  "enable rados recovery"
+  FORCE)
+
 # Now create a useable config.h
 configure_file(
   "${PROJECT_SOURCE_DIR}/include/config-h.in.cmake"
@@ -1322,6 +1343,12 @@ if (USE_MAN_PAGE)
 else(USE_MAN_PAGE)
   set(BCOND_MAN_PAGE "%bcond_with")
 endif(USE_MAN_PAGE)
+
+if(USE_RADOS_RECOV)
+    set(BCOND_RADOS_RECOV "%bcond_without")
+else(USE_RADOS_RECOV)
+    set(BCOND_RADOS_RECOV "%bcond_with")
+endif(USE_RADOS_RECOV)
 
 # Now create a useable specfile
 configure_file(
