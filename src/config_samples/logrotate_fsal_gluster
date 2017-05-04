@@ -1,4 +1,6 @@
 /var/log/ganesha/ganesha-gfapi.log {
+    weekly
+    rotate 52
     copytruncate
     dateext
     compress
