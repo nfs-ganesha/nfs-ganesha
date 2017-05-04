@@ -85,6 +85,13 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_LINK4->status != NFS4_OK)
 		goto out;
 
+	/* Check that both handles are in the same export. */
+	if (op_ctx->ctx_export != NULL && data->saved_export != NULL &&
+	    op_ctx->ctx_export->export_id != data->saved_export->export_id) {
+		res_LINK4->status = NFS4ERR_XDEV;
+		goto out;
+	}
+
 	/*
 	 * This operation creates a hard link, for the file
 	 * represented by the saved FH, in directory represented by

@@ -90,8 +90,17 @@ int _9p_rename(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	/* Check that it is a valid fid */
 	if (pdfid == NULL || pdfid->pentry == NULL) {
-		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
+		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *dfid);
 		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
+	}
+
+	/* Check that pfid and pdfid are in the same export. */
+	if (pfid->export != NULL && pdfid->export != NULL &&
+	    pfid->export->export_id != pdfid->export->export_id) {
+		LogDebug(COMPONENT_9P,
+			 "request on fid=%u and dfid=%u crosses exports",
+			 *fid, *dfid);
+		return _9p_rerror(req9p, msgtag, EXDEV, plenout, preply);
 	}
 
 	if (*name_len >= sizeof(newname)) {

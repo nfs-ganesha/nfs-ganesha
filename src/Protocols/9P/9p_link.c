@@ -96,6 +96,15 @@ int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
+	/* Check that pfid and pdfid are in the same export. */
+	if (ptargetfid->export != NULL && pdfid->export != NULL &&
+	    ptargetfid->export->export_id != pdfid->export->export_id) {
+		LogDebug(COMPONENT_9P,
+			 "request on targetfid=%u and dfid=%u crosses exports",
+			 *targetfid, *dfid);
+		return _9p_rerror(req9p, msgtag, EXDEV, plenout, preply);
+	}
+
 	/* Let's do the job */
 	if (*name_len >= sizeof(link_name)) {
 		LogDebug(COMPONENT_9P, "request with name too long (%u)",

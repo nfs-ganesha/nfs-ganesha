@@ -98,6 +98,15 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 
+	/* Check that poldfid and pnewfid are in the same export. */
+	if (poldfid->export != NULL && pnewfid->export != NULL &&
+	    poldfid->export->export_id != pnewfid->export->export_id) {
+		LogDebug(COMPONENT_9P,
+			 "request on oldfid=%u and newfid=%u crosses exports",
+			 *oldfid, *newfid);
+		return _9p_rerror(req9p, msgtag, EXDEV, plenout, preply);
+	}
+
 	if ((op_ctx->export_perms->options &
 				 EXPORT_OPTION_WRITE_ACCESS) == 0)
 		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
