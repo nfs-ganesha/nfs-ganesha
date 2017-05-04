@@ -25,6 +25,7 @@ XFS {}
 ZFS {}
 PROXY {}
 PROXY { Remote_Server {} }
+RADOS_KV {}
 
 Notably the following FSALs do not have a global config block:
 
@@ -731,3 +732,12 @@ PROXY { Remote_Server {} }
 	HandleMap_DB_Count(uint32, range 1 to 16, default 8)
 
 	HandleMap_HashTable_Size(uint32, range 1 to 127, default 103)
+
+RADOS_KV {}
+--------
+
+	ceph_conf(string, no default)
+
+	userid(path, no default)
+
+	pool(string, no default)
