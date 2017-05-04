@@ -445,6 +445,11 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	if (mdcache_set_param_from_conf(parse_tree, err_type) < 0)
 		return -1;
 
+#ifdef USE_RADOS_RECOV
+	if (rados_kv_set_param_from_conf(parse_tree, err_type) < 0)
+		return -1;
+#endif
+
 	LogEvent(COMPONENT_INIT, "Configuration file successfully parsed");
 
 	return 0;

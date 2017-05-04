@@ -26,6 +26,42 @@ static char myobject_old[NI_MAXHOST];
 static char myobject_recov[NI_MAXHOST];
 static char object_takeover[NI_MAXHOST];
 
+static struct rados_kv_parameter {
+	/** Connection to ceph cluster */
+	char *ceph_conf;
+	/** User ID to ceph cluster */
+	char *userid;
+	/** Pool for client info */
+	char *pool;
+} rados_kv_param;
+
+static struct config_item rados_kv_params[] = {
+	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL,
+		       rados_kv_parameter, ceph_conf),
+	CONF_ITEM_STR("userid", 1, MAXPATHLEN, NULL,
+		       rados_kv_parameter, userid),
+	CONF_ITEM_STR("pool", 1, MAXPATHLEN, NULL,
+		       rados_kv_parameter, pool),
+	CONFIG_EOL
+};
+
+static void *rados_kv_param_init(void *link_mem, void *self_struct)
+{
+	if (self_struct == NULL)
+		return &rados_kv_param;
+	else
+		return NULL;
+}
+
+struct config_block rados_kv_param_blk = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.rados_kv",
+	.blk_desc.name = "RADOS_KV",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = rados_kv_param_init,
+	.blk_desc.u.blk.params = rados_kv_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
 static int convert_opaque_val(struct display_buffer *dspbuf,
 			      void *value,
 			      int len,
@@ -298,14 +334,12 @@ void rados_kv_init(void)
 		snprintf(myobject_old, NI_MAXHOST, "node%d_old", g_nodeid);
 		snprintf(myobject_recov, NI_MAXHOST, "node%d_recov", g_nodeid);
 	}
-	/* TODO: to fix up in config block */
-	ret = rados_create(&cluster, "");
+	ret = rados_create(&cluster, rados_kv_param.userid);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to rados create");
 		return;
 	}
-	/* TODO: to fix up in config block */
-	ret = rados_conf_read_file(cluster, "");
+	ret = rados_conf_read_file(cluster, rados_kv_param.ceph_conf);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to read ceph_conf");
 		rados_shutdown(cluster);
@@ -317,15 +351,13 @@ void rados_kv_init(void)
 		rados_shutdown(cluster);
 		return;
 	}
-	/* TODO: to fix up in config block */
-	ret = rados_pool_create(cluster, "");
+	ret = rados_pool_create(cluster, rados_kv_param.pool);
 	if (ret < 0 && ret != -EEXIST) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to create pool");
 		rados_shutdown(cluster);
 		return;
 	}
-	/* TODO: to fix up in config block */
-	ret = rados_ioctx_create(cluster, "", &io_ctx);
+	ret = rados_ioctx_create(cluster, rados_kv_param.pool, &io_ctx);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to create ioctx");
 		rados_shutdown(cluster);

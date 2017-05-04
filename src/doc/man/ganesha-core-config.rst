@@ -280,3 +280,20 @@ pnfs_mds(book, default false)
 
 pnfs_ds(book, default false)
     Whether this a pNFS DS server.
+
+RecoveryBackend(path, default "fs")
+    Use different backend for client info:
+    - fs : shared filesystem
+    - rados_kv : rados key-value
+
+RADOS_KV {}
+--------------------------------------------------------------------------------
+
+ceph_conf(string, no default)
+    Connection to ceph cluster, should be file path for ceph configuration.
+
+userid(path, no default)
+    User ID to ceph cluster.
+
+pool(string, no default)
+    Pool for client info.
