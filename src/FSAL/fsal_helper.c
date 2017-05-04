@@ -47,6 +47,7 @@
 #include "nfs_exports.h"
 #include "nfs4_acls.h"
 #include "sal_data.h"
+#include "sal_functions.h"
 #include "FSAL/fsal_commonlib.h"
 
 /**
@@ -1508,9 +1509,6 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 {
 	struct fsal_obj_handle *to_remove_obj = NULL;
 	fsal_status_t status = { 0, 0 };
-#ifdef ENABLE_RFC_ACL
-	bool isdir = false;
-#endif /* ENABLE_RFC_ACL */
 
 	if (parent->type != DIRECTORY) {
 		status = fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -1526,26 +1524,10 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 	}
 
 	/* Do not remove a junction node or an export root. */
-	if (to_remove_obj->type == DIRECTORY) {
-#ifdef ENABLE_RFC_ACL
-		isdir = true;
-#endif /* ENABLE_RFC_ACL */
-
-		PTHREAD_RWLOCK_rdlock(&to_remove_obj->state_hdl->state_lock);
-		if (to_remove_obj->state_hdl->dir.junction_export != NULL ||
-		    atomic_fetch_int32_t(
-			&to_remove_obj->state_hdl->dir.exp_root_refcount)
-		    != 0) {
-			/* Trying to remove an export mount point */
-			LogCrit(COMPONENT_FSAL, "Attempt to remove export %s",
-				name);
-
-			PTHREAD_RWLOCK_unlock(
-					&to_remove_obj->state_hdl->state_lock);
-			status = fsalstat(ERR_FSAL_NOTEMPTY, 0);
-			goto out;
-		}
-		PTHREAD_RWLOCK_unlock(&to_remove_obj->state_hdl->state_lock);
+	if (obj_is_junction(to_remove_obj)) {
+		LogCrit(COMPONENT_FSAL, "Attempt to remove export %s", name);
+		status = fsalstat(ERR_FSAL_NOTEMPTY, 0);
+		goto out;
 	}
 
 	LogFullDebug(COMPONENT_FSAL, "%s", name);
@@ -1563,7 +1545,8 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 	}
 
 #ifdef ENABLE_RFC_ACL
-	status = fsal_remove_access(parent, to_remove_obj, isdir);
+	status = fsal_remove_access(parent, to_remove_obj,
+				    (to_remove_obj->type == DIRECTORY));
 	if (FSAL_IS_ERROR(status))
 		goto out;
 #endif /* ENABLE_RFC_ACL */
@@ -1626,21 +1609,10 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 	}
 
 	/* Do not rename a junction node or an export root. */
-	if (lookup_src->type == DIRECTORY) {
-		PTHREAD_RWLOCK_rdlock(&lookup_src->state_hdl->state_lock);
-
-		if ((lookup_src->state_hdl->dir.junction_export != NULL ||
-		     atomic_fetch_int32_t(
-			&lookup_src->state_hdl->dir.exp_root_refcount) != 0)) {
-			/* Trying to rename an export mount point */
-			PTHREAD_RWLOCK_unlock(
-					&lookup_src->state_hdl->state_lock);
-			LogCrit(COMPONENT_FSAL, "Attempt to rename export %s",
-				oldname);
-			fsal_status = fsalstat(ERR_FSAL_NOTEMPTY, 0);
-			goto out;
-		}
-		PTHREAD_RWLOCK_unlock(&lookup_src->state_hdl->state_lock);
+	if (obj_is_junction(lookup_src)) {
+		LogCrit(COMPONENT_FSAL, "Attempt to rename export %s", oldname);
+		fsal_status = fsalstat(ERR_FSAL_NOTEMPTY, 0);
+		goto out;
 	}
 
 	LogFullDebug(COMPONENT_FSAL, "about to call FSAL rename");
