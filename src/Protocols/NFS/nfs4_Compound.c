@@ -921,24 +921,8 @@ void nfs4_Compound_Free(nfs_res_t *res)
 void compound_data_Free(compound_data_t *data)
 {
 	/* Release refcounted cache entries */
-	if (data->current_obj) {
-		set_current_entry(data, NULL);
-		data->current_obj = NULL;
-	}
-	if (data->saved_obj) {
-		set_saved_entry(data, NULL);
-		data->saved_obj = NULL;
-	}
-
-	if (data->current_ds) {
-		ds_handle_put(data->current_ds);
-		data->current_ds = NULL;
-	}
-
-	if (data->saved_ds) {
-		ds_handle_put(data->saved_ds);
-		data->saved_ds = NULL;
-	}
+	set_current_entry(data, NULL);
+	set_saved_entry(data, NULL);
 
 	if (data->session) {
 		dec_session_ref(data->session);

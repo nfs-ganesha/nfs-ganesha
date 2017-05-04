@@ -352,9 +352,10 @@ static inline void set_current_entry(compound_data_t *data,
 		data->current_ds = NULL;
 	}
 
-	if (data->current_obj)
+	if (data->current_obj) {
 		/* Release ref on old object */
 		data->current_obj->obj_ops.put_ref(data->current_obj);
+	}
 
 	data->current_obj = obj;
 
@@ -383,6 +384,20 @@ static inline void set_current_entry(compound_data_t *data,
 static inline void set_saved_entry(compound_data_t *data,
 				   struct fsal_obj_handle *obj)
 {
+	struct gsh_export *current_export = op_ctx->ctx_export;
+	struct export_perms current_export_perms = *op_ctx->export_perms;
+	bool restore_op_ctx = false;
+
+	if (data->saved_ds != NULL || data->saved_obj != NULL) {
+		/* Setup correct op_ctx for releasing old saved */
+		op_ctx->ctx_export = data->saved_export;
+		op_ctx->fsal_export = data->saved_export
+					? data->saved_export->fsal_export
+					: NULL;
+		*op_ctx->export_perms = data->saved_export_perms;
+		restore_op_ctx = true;
+	}
+
 	/* Mark saved_stateid as invalid */
 	data->saved_stateid_valid = false;
 
@@ -392,9 +407,19 @@ static inline void set_saved_entry(compound_data_t *data,
 		data->saved_ds = NULL;
 	}
 
-	if (data->saved_obj)
+	if (data->saved_obj) {
 		/* Release ref on old object */
 		data->saved_obj->obj_ops.put_ref(data->saved_obj);
+	}
+
+	if (restore_op_ctx) {
+		/* Restore op_ctx */
+		op_ctx->ctx_export = current_export;
+		op_ctx->fsal_export = current_export
+					? current_export->fsal_export
+					: NULL;
+		*op_ctx->export_perms = current_export_perms;
+	}
 
 	data->saved_obj = obj;
 
