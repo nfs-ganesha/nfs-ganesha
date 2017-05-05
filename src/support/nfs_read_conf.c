@@ -268,6 +268,10 @@ static struct config_item version4_params[] = {
 	CONF_ITEM_STR("RecoveryBackend", 1, MAXPATHLEN,
 		      RECOVERY_BACKEND_DEFAULT,
 		      nfs_version4_parameter, recovery_backend),
+	CONF_ITEM_BOOL("UseUnixSocket", false,
+		      nfs_version4_parameter,use_unix_socket),
+	CONF_ITEM_STR("UnixSocketPath", 1, MAXPATHLEN, UNIXSOCKETPATH_DEFAULT,
+		      nfs_version4_parameter, unix_socket_path),
 	CONFIG_EOL
 };
 
