@@ -1756,51 +1756,56 @@ static inline void free_nfs_request(request_data_t *reqdata)
  *
  * @return True if the request is valid, false otherwise.
  */
-static bool is_rpc_call_valid(struct svc_req *req)
-{
-	/* This function is only ever called from one point, and the
-	   read-lock is always held at that call.  If this changes,
-	   we'll have to pass in the value of rlocked. */
-	int lo_vers, hi_vers;
+enum rpcv_stat {
+	RPCV_OK = 0,
+	RPCV_PROGVERS,
+	RPCV_NOPROG,
+	RPCV_NOPROC,
+	RPCV_UNKNOWN
+};
 
+static enum rpcv_stat is_rpc_call_valid(struct svc_req *req,
+					uint32_t *lo_vers,
+					uint32_t *hi_vers)
+{
 	if (req->rq_msg.cb_prog == NFS_program[P_NFS]) {
 		if (req->rq_msg.cb_vers == NFS_V3) {
 #ifdef _USE_NFS3
 			if ((NFS_options & CORE_OPTION_NFSV3)
 			    && req->rq_msg.cb_proc <= NFSPROC3_COMMIT)
-				return true;
+				return RPCV_OK;
 			else
 #endif /* _USE_NFS3 */
-				goto noproc_err;
+				return RPCV_NOPROC;
 		} else if (req->rq_msg.cb_vers == NFS_V4) {
 			if ((NFS_options & CORE_OPTION_NFSV4)
 			    && req->rq_msg.cb_proc <= NFSPROC4_COMPOUND)
-				return true;
+				return RPCV_OK;
 			else
-				goto noproc_err;
+				return RPCV_NOPROC;
 		} else { /* version error, set the range and throw the error */
-			lo_vers = NFS_V4;
-			hi_vers = NFS_V3;
+			*lo_vers = NFS_V4;
+			*hi_vers = NFS_V3;
 #ifdef _USE_NFS3
 			if ((NFS_options & CORE_OPTION_NFSV3) != 0)
-				lo_vers = NFS_V3;
+				*lo_vers = NFS_V3;
 #endif /* _USE_NFS3 */
 			if ((NFS_options & CORE_OPTION_NFSV4) != 0)
-				hi_vers = NFS_V4;
-			goto progvers_err;
+				*hi_vers = NFS_V4;
+			return RPCV_PROGVERS;
 		}
 #ifdef _USE_NLM
 	} else if (req->rq_msg.cb_prog == NFS_program[P_NLM]
 		   && ((NFS_options & CORE_OPTION_NFSV3) != 0)) {
 		if (req->rq_msg.cb_vers == NLM4_VERS) {
 			if (req->rq_msg.cb_proc <= NLMPROC4_FREE_ALL)
-				return true;
+				return RPCV_OK;
 			else
-				goto noproc_err;
+				return RPCV_NOPROC;
 		} else {
-			lo_vers = NLM4_VERS;
-			hi_vers = NLM4_VERS;
-			goto progvers_err;
+			*lo_vers = NLM4_VERS;
+			*hi_vers = NLM4_VERS;
+			return RPCV_PROGVERS;
 		}
 #endif /* _USE_NLM */
 	} else if (req->rq_msg.cb_prog == NFS_program[P_MNT]
@@ -1813,68 +1818,55 @@ static bool is_rpc_call_valid(struct svc_req *req)
 		 */
 		if (req->rq_msg.cb_vers == MOUNT_V3) {
 			if (req->rq_msg.cb_proc <= MOUNTPROC3_EXPORT)
-				return true;
+				return RPCV_OK;
 			else
-				goto noproc_err;
+				return RPCV_NOPROC;
 		} else if (req->rq_msg.cb_vers == MOUNT_V1) {
 			if (req->rq_msg.cb_proc <= MOUNTPROC2_EXPORT
 			    && req->rq_msg.cb_proc != MOUNTPROC2_MNT)
-				return true;
+				return RPCV_OK;
 			else
-				goto noproc_err;
+				return RPCV_NOPROC;
 		} else {
-			lo_vers = MOUNT_V1;
-			hi_vers = MOUNT_V3;
-			goto progvers_err;
+			*lo_vers = MOUNT_V1;
+			*hi_vers = MOUNT_V3;
+			return RPCV_PROGVERS;
 		}
 	} else if (req->rq_msg.cb_prog == NFS_program[P_RQUOTA]) {
 		if (req->rq_msg.cb_vers == RQUOTAVERS) {
 			if (req->rq_msg.cb_proc <= RQUOTAPROC_SETACTIVEQUOTA)
-				return true;
+				return RPCV_OK;
 			else
-				goto noproc_err;
+				return RPCV_NOPROC;
 		} else if (req->rq_msg.cb_vers == EXT_RQUOTAVERS) {
 			if (req->rq_msg.cb_proc <= RQUOTAPROC_SETACTIVEQUOTA)
-				return true;
-			else
-				goto noproc_err;
+				return RPCV_OK;
+			else {
+
+				return RPCV_NOPROC;
+			}
 		} else {
-			lo_vers = RQUOTAVERS;
-			hi_vers = EXT_RQUOTAVERS;
-			goto progvers_err;
+			*lo_vers = RQUOTAVERS;
+			*hi_vers = EXT_RQUOTAVERS;
+			return RPCV_PROGVERS;
 		}
 	} else {		/* No such program */
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Invalid Program number %" PRIu32,
-			     req->rq_msg.cb_prog);
-		svcerr_noprog(req);
-		return false;
+		return RPCV_NOPROG;
 	}
 
- progvers_err:
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "Invalid protocol Version %" PRIu32
-		     " for program number %" PRIu32,
-		     req->rq_msg.cb_vers,
-		     req->rq_msg.cb_prog);
-	svcerr_progvers(req, lo_vers, hi_vers);
-	return false;
-
- noproc_err:
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "Invalid protocol program number %" PRIu32,
-		     req->rq_msg.cb_prog);
-	svcerr_noproc(req);
-	return false;
+	return RPCV_UNKNOWN;
 }				/* is_rpc_call_valid */
 
 enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 {
 	request_data_t *reqdata;
+	struct svc_req *req;
 	enum auth_stat why;
 	enum xprt_stat stat = XPRT_IDLE;
+	enum rpcv_stat vstat = RPCV_OK;
 	bool no_dispatch = false;
 	bool enqueued = false;
+	uint32_t lo_vers, hi_vers;
 	bool recv_status;
 
 	if (!xprt) {
@@ -1887,6 +1879,7 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 		 xprt, context);
 
 	reqdata = alloc_nfs_request(xprt);	/* ! NULL */
+	req = &reqdata->r_u.req.svc;
 #if HAVE_BLKIN
 	blkin_init_new_trace(&reqdata->r_u.req.svc.bl_trace, "nfs-ganesha",
 			&xprt->blkin.endp);
@@ -1971,7 +1964,8 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 	/* XXX so long as nfs_rpc_get_funcdesc calls is_rpc_call_valid
 	 * and fails if that call fails, there is no reason to call that
 	 * function again, below */
-	if (!is_rpc_call_valid(&reqdata->r_u.req.svc))
+	vstat = is_rpc_call_valid(req, &lo_vers, &hi_vers);
+	if (unlikely(vstat != RPCV_OK))
 		goto finish;
 
 	reqdata->r_u.req.funcdesc = nfs_rpc_get_funcdesc(&reqdata->r_u.req);
@@ -2064,7 +2058,35 @@ enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt)
 
  finish:
 	stat = SVC_STAT(xprt);
-
+	switch (vstat) {
+	case RPCV_OK:
+		break;
+	case RPCV_PROGVERS:
+		LogDebug(COMPONENT_DISPATCH,
+			"Invalid protocol Version %" PRIu32
+			" for program number %" PRIu32,
+			req->rq_msg.cb_vers,
+			req->rq_msg.cb_prog);
+		svcerr_progvers(req, lo_vers, hi_vers);
+		break;
+	case RPCV_NOPROG:
+		LogDebug(COMPONENT_DISPATCH,
+			"Invalid Program number %" PRIu32,
+			req->rq_msg.cb_prog);
+		svcerr_noprog(req);
+		break;
+	case RPCV_NOPROC:
+		LogDebug(COMPONENT_DISPATCH,
+			"Invalid protocol program number %" PRIu32,
+			req->rq_msg.cb_prog);
+		svcerr_noproc(req);
+		break;
+	case RPCV_UNKNOWN:
+		/* NOT REACHED */
+		LogCrit(COMPONENT_DISPATCH,
+			"Unknown RPC type check");
+		break;
+	};
  done:
 	/* if recv failed, request is not enqueued */
 	if (!enqueued)
