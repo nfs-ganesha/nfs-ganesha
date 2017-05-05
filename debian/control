@@ -55,7 +55,7 @@ Architecture: all
 Section: python
 Provides: ${python:Provides}
 Depends: python-dbus,
-         python-gobjects,
+         python-gobject,
          python-qt4,
          ${python:Depends}
 Description: Python bindings for nfs-ganesha
