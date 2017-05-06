@@ -104,6 +104,11 @@ class ShowExports():
         print "Remove Export with id %d" % int(exp_id)
         self.exportmgr.RemoveExport(exp_id)
 
+    def updateexport(self, conf_path, exp_expr):
+        print "Update Export in %s" % conf_path
+	status, msg = self.exportmgr.UpdateExport(conf_path, exp_expr)
+	self.status_message(status, msg)
+
     def displayexport(self, exp_id):
         print "Display export with id %d" % int(exp_id)
         status, msg, reply = self.exportmgr.DisplayExport(exp_id)
@@ -228,6 +233,11 @@ if __name__ == '__main__':
        "      Example: \n"                                                   \
        "      add_export /etc/ganesha/gpfs.conf \"EXPORT(Export_ID=77)\"\n\n"\
        "   remove_export id: Removes the export with the given id    \n\n"   \
+       "   update_export conf expr:\n"                                       \
+       "      Updates an export from the given config file that contains\n"  \
+       "      the given expression\n"                                        \
+       "      Example: \n"                                                   \
+       "      update_export /etc/ganesha/gpfs.conf \"EXPORT(Export_ID=77)\"\n\n"\
        "   shutdown: Shuts down the ganesha nfs server\n\n"                  \
        "   purge netgroups: Purges netgroups cache\n\n"                      \
        "   grace ipaddr: Begins grace for the given IP\n\n"                  \
@@ -267,6 +277,12 @@ if __name__ == '__main__':
                  " Try \"ganesha_mgr.py help\" for more info"
            sys.exit(1)
         exportmgr.removeexport(sys.argv[2])
+    elif sys.argv[1] == "update_export":
+        if len(sys.argv) < 4:
+           print "update_export requires a config file and an expression."\
+                 " Try \"ganesha_mgr.py help\" for more info"
+           sys.exit(1)
+        exportmgr.updateexport(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "display_export":
         if len(sys.argv) < 3:
            print "display_export requires an export ID."\
