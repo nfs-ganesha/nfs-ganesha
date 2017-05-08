@@ -696,6 +696,7 @@ static void record_op(struct proto_op *op, nsecs_elapsed_t request_time,
 	record_latency(op, request_time, qwait_time, dup);
 }
 
+#ifdef USE_DBUS
 /**
  *  @brief reset the counts for protocol operation
  *  Use atomic ops to avoid locks.
@@ -869,6 +870,7 @@ static void reset__9P_stats(struct _9p_stats *_9p)
 	}
 }
 #endif
+#endif		/* USE_DBUS */
 
 /**
  * @brief record V4.1 layout op stats
