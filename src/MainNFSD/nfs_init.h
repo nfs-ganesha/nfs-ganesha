@@ -46,7 +46,7 @@ typedef struct __nfs_start_info {
  * Initialize NFSd prerequisites: memory management, logging, ...
  */
 void nfs_prereq_init(char *program_name, char *host_name, int debug_level,
-		     char *log_path);
+		     char *log_path, bool dump_trace);
 
 /**
  * nfs_set_param_from_conf:

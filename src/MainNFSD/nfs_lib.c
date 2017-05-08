@@ -125,7 +125,7 @@ int nfs_libmain(const char *ganesha_conf,
 	}
 
 	/* initialize memory and logging */
-	nfs_prereq_init(exec_name, host_name, debug_level, log_path);
+	nfs_prereq_init(exec_name, host_name, debug_level, log_path, false);
 	LogEvent(COMPONENT_MAIN,
 		 "%s Starting: %s",
 		 exec_name,

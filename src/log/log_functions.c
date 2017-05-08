@@ -40,7 +40,6 @@
 #include <string.h>
 #include <signal.h>
 #include <libgen.h>
-#include <execinfo.h>
 #include <sys/resource.h>
 
 #include "log.h"

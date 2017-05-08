@@ -82,10 +82,11 @@ char *exec_name = "nfs-ganesha";
 char *host_name = "localhost";
 int debug_level = -1;
 int detach_flag = true;
+bool dump_trace;
 
 /* command line syntax */
 
-char options[] = "v@L:N:f:p:FRTE:h";
+char options[] = "v@L:N:f:p:FRTE:Ch";
 char usage[] =
 	"Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
 	"\t[-v]                display version information\n"
@@ -97,6 +98,7 @@ char usage[] =
 	"\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
 	"\t[-T]                dump the default configuration on stdout\n"
 	"\t[-E] <epoch<]       overrides ServerBootTime for ServerEpoch\n"
+	"\t[-C]                dump trace when segfault\n"
 	"\t[-h]                display this help\n"
 	"----------------- Signals ----------------\n"
 	"SIGUSR1    : Enable/Disable File Content Cache forced flush\n"
@@ -231,6 +233,10 @@ int main(int argc, char *argv[])
 			my_nfs_start_info.dump_default_config = true;
 			break;
 
+		case 'C':
+			dump_trace = true;
+			break;
+
 		case 'E':
 			ServerEpoch = (time_t) atoll(optarg);
 			break;
@@ -246,7 +252,8 @@ int main(int argc, char *argv[])
 	}
 
 	/* initialize memory and logging */
-	nfs_prereq_init(exec_name, host_name, debug_level, log_path);
+	nfs_prereq_init(exec_name, host_name, debug_level, log_path,
+			dump_trace);
 #if GANESHA_BUILD_RELEASE
 	LogEvent(COMPONENT_MAIN, "%s Starting: Ganesha Version %s",
 		 exec_name, GANESHA_VERSION);
