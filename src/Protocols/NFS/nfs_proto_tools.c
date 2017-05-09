@@ -1334,7 +1334,7 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 			strlen(fs_loc.rootpath.pathname4_val->utf8string_val);
 		fs_server.utf8string_len = strlen(server);
 
-		LogEvent(COMPONENT_NFS_V4,
+		LogDebug(COMPONENT_NFS_V4,
 			 "encode_fs_locations obj_ops.fs_locations failed %s, %s, %s",
 			 fs_locs.fs_root.pathname4_val->utf8string_val,
 			 fs_loc.rootpath.pathname4_val->utf8string_val,
