@@ -99,11 +99,13 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	struct dsread_arg rarg;
 	unsigned int *fh;
 	int errsv = 0;
-
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	fh = (int *)&(gpfs_handle->f_handle);
 
-	rarg.mountdirfd = ds->gpfs_fs->root_fd;
+	rarg.mountdirfd = export_fd;
 	rarg.handle = gpfs_handle;
 	rarg.bufP = buffer;
 	rarg.offset = offset;
@@ -170,10 +172,13 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 	unsigned int *fh;
 	uint64_t filesize;
 	int errsv = 0;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	fh = (int *)&(gpfs_handle->f_handle);
 
-	rarg.mountdirfd = ds->gpfs_fs->root_fd;
+	rarg.mountdirfd = export_fd;
 	rarg.handle = gpfs_handle;
 	rarg.bufP = buffer;
 	rarg.offset = offset;
@@ -262,12 +267,15 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	unsigned int *fh;
 	struct gsh_buffdesc key;
 	int errsv = 0;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	fh = (int *)&(gpfs_handle->f_handle);
 
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
-	warg.mountdirfd = ds->gpfs_fs->root_fd;
+	warg.mountdirfd = export_fd;
 	warg.handle = gpfs_handle;
 	warg.bufP = (char *)buffer;
 	warg.offset = offset;
@@ -348,12 +356,15 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
 	unsigned int *fh;
 	struct gsh_buffdesc key;
 	int errsv = 0;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	fh = (int *)&(gpfs_handle->f_handle);
 
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
-	warg.mountdirfd = ds->gpfs_fs->root_fd;
+	warg.mountdirfd = export_fd;
 	warg.handle = gpfs_handle;
 	warg.bufP = (char *)buffer;
 	warg.offset = offset;

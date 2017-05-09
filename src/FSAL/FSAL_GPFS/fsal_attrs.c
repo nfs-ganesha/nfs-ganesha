@@ -61,6 +61,9 @@ GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 {
 	int errsv, rc;
 	struct fs_loc_arg fs_loc;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	fs_loc.fs_path_len = fs_locs->fs_root.pathname4_val->utf8string_len;
 	fs_loc.fs_path = fs_locs->fs_root.pathname4_val->utf8string_val;
@@ -72,7 +75,7 @@ GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 					rootpath.pathname4_val->utf8string_len;
 	fs_loc.fs_root = fs_locs->locations.locations_val->
 					rootpath.pathname4_val->utf8string_val;
-	fs_loc.mountdirfd = gpfs_fs->root_fd;
+	fs_loc.mountdirfd = export_fd;
 	fs_loc.handle = gpfs_fh;
 
 	rc = gpfs_ganesha(OPENHANDLE_FS_LOCATIONS, &fs_loc);
@@ -121,6 +124,9 @@ GPFSFSAL_getattrs(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 	unsigned int acl_buflen;
 	bool use_acl;
 	int retry;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	/* Initialize fsal_fsid to 0.0 in case older GPFS */
 	buffxstat.fsal_fsid.major = 0;
@@ -153,7 +159,7 @@ GPFSFSAL_getattrs(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 			break;
 		}
 
-		st = fsal_get_xstat_by_handle(gpfs_fs->root_fd, gpfs_fh,
+		st = fsal_get_xstat_by_handle(export_fd, gpfs_fh,
 				&buffxstat, acl_buf, acl_buflen,
 				&expire_time_attr, expire, use_acl);
 
@@ -260,11 +266,13 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *myself;
 	gpfsfsal_xstat_t buffxstat;
-	struct gpfs_filesystem *gpfs_fs;
 	struct gpfs_fsal_export *gpfs_export;
 	gpfs_acl_t *acl_buf = NULL;
 	unsigned int acl_buflen = 0;
 	bool use_acl;
+	struct gpfs_fsal_export *exp = container_of(ro_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	/* Indicate if stat or acl or both should be changed. */
 	int attr_valid = 0;
@@ -279,7 +287,6 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	gpfs_fs = dir_hdl->fs->private_data;
 	gpfs_export = container_of(ro_ctx->fsal_export,
 				   struct gpfs_fsal_export, export);
 	use_acl = gpfs_export->use_acl;
@@ -434,7 +441,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 
 	/* If there is any change in stat or acl or both, send it down to fs. */
 	if (attr_valid != 0) {
-		status = fsal_set_xstat_by_handle(gpfs_fs->root_fd, ro_ctx,
+		status = fsal_set_xstat_by_handle(export_fd, ro_ctx,
 						  myself->handle, attr_valid,
 						  attr_changed, &buffxstat,
 						  acl_buf);

@@ -328,13 +328,15 @@ fsal_internal_create(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 		     mode_t mode, int posix_flags, struct gpfs_file_handle *fh,
 		     struct stat *buf)
 {
-	const struct gpfs_filesystem *gpfs_fs = dir_hdl->fs->private_data;
 	struct create_name_arg crarg = {0};
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	if (!stat_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	crarg.mountdirfd = gpfs_fs->root_fd;
+	crarg.mountdirfd = export_fd;
 	crarg.mode = mode;
 	crarg.dev = posix_flags;
 	crarg.len = strlen(stat_name);
@@ -358,13 +360,15 @@ fsal_internal_mknode(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 		     mode_t mode, dev_t dev, struct gpfs_file_handle *fh,
 		     struct stat *buf)
 {
-	const struct gpfs_filesystem *gpfs_fs = dir_hdl->fs->private_data;
 	struct create_name_arg crarg = {0};
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	if (!stat_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	crarg.mountdirfd = gpfs_fs->root_fd;
+	crarg.mountdirfd = export_fd;
 	crarg.mode = mode;
 	crarg.dev = dev;
 	crarg.len = strlen(stat_name);

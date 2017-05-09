@@ -61,20 +61,22 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 	      int *file_desc)
 {
 	struct gpfs_fsal_obj_handle *myself;
-	struct gpfs_filesystem *gpfs_fs;
 	fsal_status_t status;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	/* sanity checks. */
 	if (!obj_hdl || !file_desc)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	gpfs_fs = obj_hdl->fs->private_data;
-
-	LogFullDebug(COMPONENT_FSAL, "posix_flags 0x%X", posix_flags);
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
+								obj_handle);
+	LogFullDebug(COMPONENT_FSAL, "posix_flags 0x%X export_fd %d",
+						posix_flags, export_fd);
 
 	fsal_set_credentials(op_ctx->creds);
-	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
+	status = fsal_internal_handle2fd(export_fd, myself->handle,
 					 file_desc, posix_flags);
 	fsal_restore_ganesha_credentials();
 
@@ -82,7 +84,7 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 		/** Try open as root access if the above call fails,
 		 * permission will be checked somewhere else in the code.
 		 */
-		status = fsal_internal_handle2fd(gpfs_fs->root_fd,
+		status = fsal_internal_handle2fd(export_fd,
 						 myself->handle,
 						 file_desc, posix_flags);
 	}

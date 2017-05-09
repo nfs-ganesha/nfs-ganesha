@@ -494,15 +494,15 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	int bpos, cnt, nread;
 	struct dirent64 *dentry;
 	char buf[BUF_SIZE];
-	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	if (whence != NULL)
 		seekloc = (off_t) *whence;
 
 	myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	gpfs_fs = dir_hdl->fs->private_data;
-
-	status = fsal_internal_handle2fd(gpfs_fs->root_fd, myself->handle,
+	status = fsal_internal_handle2fd(export_fd, myself->handle,
 					 &dirfd, O_RDONLY | O_DIRECTORY);
 
 	if (dirfd < 0)
@@ -607,12 +607,14 @@ static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
 	int errsv;
 	struct getxattr_arg gxarg;
 	struct gpfs_fsal_obj_handle *myself;
-	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 				obj_handle);
 
-	gxarg.mountdirfd = gpfs_fs->root_fd;
+	gxarg.mountdirfd = export_fd;
 	gxarg.handle = myself->handle;
 	gxarg.name_len = xa_name->utf8string_len;
 	gxarg.name = xa_name->utf8string_val;
@@ -648,12 +650,14 @@ static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
 	int errsv;
 	struct setxattr_arg sxarg;
 	struct gpfs_fsal_obj_handle *myself;
-	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 				obj_handle);
 
-	sxarg.mountdirfd = gpfs_fs->root_fd;
+	sxarg.mountdirfd = export_fd;
 	sxarg.handle = myself->handle;
 	sxarg.name_len = xa_name->utf8string_len;
 	sxarg.name = xa_name->utf8string_val;
@@ -678,12 +682,14 @@ static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
 	int errsv;
 	struct removexattr_arg rxarg;
 	struct gpfs_fsal_obj_handle *myself;
-	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 				obj_handle);
 
-	rxarg.mountdirfd = gpfs_fs->root_fd;
+	rxarg.mountdirfd = export_fd;
 	rxarg.handle = myself->handle;
 	rxarg.name_len = xa_name->utf8string_len;
 	rxarg.name = xa_name->utf8string_val;
@@ -713,8 +719,10 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 	char *buf = NULL;
 	struct listxattr_arg lxarg;
 	struct gpfs_fsal_obj_handle *myself;
-	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
 	component4 *entry = lr_names->entries;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	val = (char *)entry + la_maxcount;
 	valstart = val;
@@ -724,7 +732,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 	#define MAXCOUNT (1024*64)
 	buf = gsh_malloc(MAXCOUNT);
 
-	lxarg.mountdirfd = gpfs_fs->root_fd;
+	lxarg.mountdirfd = export_fd;
 	lxarg.handle = myself->handle;
 	lxarg.cookie = 0; /* For now gpfs doesn't support cookie */
 	lxarg.verifier = *((uint64_t *)la_cookieverf);
@@ -1213,6 +1221,9 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 	struct fsal_fsid__ fsid;
 	struct fsal_filesystem *fs;
 	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	*handle = NULL;		/* poison it first */
 	if ((hdl_desc->len > (sizeof(struct gpfs_file_handle))))
@@ -1253,7 +1264,7 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 		return status;
 
 	if (attrib.type == SYMBOLIC_LINK) {	/* I could lazy eval this... */
-		status = fsal_readlink_by_handle(gpfs_fs->root_fd, fh,
+		status = fsal_readlink_by_handle(export_fd, fh,
 						 link_buff, sizeof(link_buff));
 		if (FSAL_IS_ERROR(status))
 			return status;

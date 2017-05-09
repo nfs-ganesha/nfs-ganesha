@@ -69,15 +69,15 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	fsal_status_t status;
 	struct statfs buffstatgpfs;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	if (!infop) {
 		fsal_error = ERR_FSAL_FAULT;
 		goto out;
 	}
-	gpfs_fs = obj_hdl->fs->private_data;
-
-	status = GPFSFSAL_statfs(gpfs_fs->root_fd, obj_hdl, &buffstatgpfs);
+	status = GPFSFSAL_statfs(export_fd, obj_hdl, &buffstatgpfs);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -518,6 +518,8 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 			 gpfs_fs->fs->path, strerror(retval), retval);
 		return retval;
 	}
+	LogFullDebug(COMPONENT_FSAL, "root export_fd %d path %s",
+				gpfs_fs->root_fd, gpfs_fs->fs->path);
 
 	status = fsal_internal_get_handle_at(gpfs_fs->root_fd,
 					     gpfs_fs->fs->path, &fh,
@@ -635,6 +637,18 @@ already_claimed:
 	map = gsh_calloc(1, sizeof(*map));
 	map->fs = gpfs_fs;
 	map->exp = container_of(exp, struct gpfs_fsal_export, export);
+	map->exp->export_fd = open(op_ctx->ctx_export->fullpath,
+						O_RDONLY | O_DIRECTORY);
+	LogFullDebug(COMPONENT_FSAL, "export_fd %d path %s",
+			map->exp->export_fd, op_ctx->ctx_export->fullpath);
+	if (map->exp->export_fd < 0) {
+		retval = errno;
+		gsh_free(map);
+		LogMajor(COMPONENT_FSAL,
+			"Could not open GPFS export point %s: rc = %s (%d)",
+			op_ctx->ctx_export->fullpath, strerror(retval), retval);
+		return retval;
+	}
 	glist_add_tail(&gpfs_fs->exports, &map->on_exports);
 	glist_add_tail(&map->exp->filesystems, &map->on_filesystems);
 

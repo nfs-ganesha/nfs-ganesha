@@ -53,17 +53,18 @@ GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl, const char *object_name,
 	fsal_status_t status;
 	gpfsfsal_xstat_t buffxstat;
 	struct gpfs_fsal_obj_handle *gpfs_hdl;
-	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+					struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
 
 	if (!dir_hdl || !op_ctx || !object_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	gpfs_fs = dir_hdl->fs->private_data;
 
 	/* get file metadata */
-	status = fsal_internal_stat_name(gpfs_fs->root_fd, gpfs_hdl->handle,
+	status = fsal_internal_stat_name(export_fd, gpfs_hdl->handle,
 					 object_name, &buffxstat.buffstat);
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -73,7 +74,7 @@ GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl, const char *object_name,
    ******************************/
 	fsal_set_credentials(op_ctx->creds);
 
-	status = fsal_internal_unlink(gpfs_fs->root_fd, gpfs_hdl->handle,
+	status = fsal_internal_unlink(export_fd, gpfs_hdl->handle,
 				      object_name, &buffxstat.buffstat);
 
 	fsal_restore_ganesha_credentials();
