@@ -559,7 +559,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		 * go ahead and bail out now.
 		 */
 		status = fsalstat(ERR_FSAL_STALE, 0);
-		goto out_release_new_entry;
+		goto out_no_new_entry_yet;
 	}
 
 	/* See if someone raced us. */
