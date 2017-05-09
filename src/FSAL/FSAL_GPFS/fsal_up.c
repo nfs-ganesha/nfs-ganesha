@@ -57,6 +57,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	uint32_t upflags = 0;
 	int errsv = 0;
 	fsal_status_t fsal_status = {0,};
+	struct req_op_context req_ctx = {0};
 
 #ifdef _VALGRIND_MEMCHECK
 		memset(&handle, 0, sizeof(handle));
@@ -73,12 +74,10 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	/* Set the FSAL UP functions that will be used to process events. */
 	event_func = gpfs_fs->up_ops;
 
-	if (event_func == NULL) {
-		LogFatal(COMPONENT_FSAL_UP,
-			 "FSAL up vector does not exist. Can not continue.");
-		gsh_free(Arg);
-		return NULL;
-	}
+	/* Set up op_ctx for this thread */
+	req_ctx.fsal_export = event_func->up_fsal_export;
+	req_ctx.ctx_export = event_func->up_gsh_export;
+	op_ctx = &req_ctx;
 
 	LogFullDebug(COMPONENT_FSAL_UP,
 		     "Initializing FSAL Callback context for %d.",
