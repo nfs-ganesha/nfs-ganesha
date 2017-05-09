@@ -59,9 +59,11 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	status = mdcache_find_keyed(&key, &entry);
 	if (status.major == ERR_FSAL_NOENT) {
 		/* Not cached, so invalidate is a success */
+		op_ctx = save_ctx;
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	} else if (FSAL_IS_ERROR(status)) {
 		/* Real error */
+		op_ctx = save_ctx;
 		return status;
 	}
 
@@ -129,9 +131,11 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	status = mdcache_find_keyed(&key, &entry);
 	if (status.major != ERR_FSAL_NOENT) {
 		/* Not cached, so invalidate is a success */
+		op_ctx = save_ctx;
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	} else if (FSAL_IS_ERROR(status)) {
 		/* Real error */
+		op_ctx = save_ctx;
 		return status;
 	}
 
@@ -280,7 +284,7 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
- out:
+out:
 	mdcache_put(entry);
 	op_ctx = save_ctx;
 	return status;
