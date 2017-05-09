@@ -87,7 +87,7 @@ void rgw_fs_invalidate(void *handle, struct rgw_fh_hk fh_hk)
 		FSAL_UP_INVALIDATE_CONTENT;
 
 	/* invalidate me, my man */
-	status = up_ops->invalidate(up_ops->up_export, &fh_desc,
+	status = up_ops->invalidate(up_ops->up_fsal_export, &fh_desc,
 				upflags);
 	if (FSAL_IS_ERROR(status)) {
 		LogMajor(COMPONENT_FSAL_UP,

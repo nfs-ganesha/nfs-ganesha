@@ -254,7 +254,8 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 
 	myself->super_up_ops = *super_up_ops; /* Struct copy */
 	mdcache_export_up_ops_init(&myself->up_ops, super_up_ops);
-	myself->up_ops.up_export = &myself->export;
+	myself->up_ops.up_gsh_export = op_ctx->ctx_export;
+	myself->up_ops.up_fsal_export = &myself->export;
 	myself->export.up_ops = &myself->up_ops;
 	myself->export.fsal = &MDCACHE.fsal;
 

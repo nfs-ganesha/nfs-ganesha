@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -39,21 +39,21 @@
 #include "mdcache_int.h"
 
 static fsal_status_t
-mdc_up_invalidate(struct fsal_export *export, struct gsh_buffdesc *handle,
+mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		  uint32_t flags)
 {
 	mdcache_entry_t *entry;
 	fsal_status_t status;
 	struct req_op_context *save_ctx, req_ctx = {0};
 	mdcache_key_t key;
-	struct mdcache_fsal_export *myself = mdc_export(export);
 
-	req_ctx.fsal_export = &myself->export;
+	req_ctx.ctx_export = vec->up_gsh_export;
+	req_ctx.fsal_export = vec->up_fsal_export;
 	save_ctx = op_ctx;
 	op_ctx = &req_ctx;
 
-	key.fsal = export->sub_export->fsal;
-	(void) cih_hash_key(&key, export->sub_export->fsal, handle,
+	key.fsal = vec->up_fsal_export->sub_export->fsal;
+	(void) cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
 			    CIH_HASH_KEY_PROTOTYPE);
 
 	status = mdcache_find_keyed(&key, &entry);
@@ -79,7 +79,7 @@ mdc_up_invalidate(struct fsal_export *export, struct gsh_buffdesc *handle,
 /**
  * @brief Update cached attributes
  *
- * @param[in] export MDCACHE Export containing object
+ * @param[in] vec    Up ops vector
  * @param[in] handle Export containing object
  * @param[in] attr   New attributes
  * @param[in] flags  Flags to govern update
@@ -88,7 +88,7 @@ mdc_up_invalidate(struct fsal_export *export, struct gsh_buffdesc *handle,
  */
 
 static fsal_status_t
-mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
+mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	      struct attrlist *attr, uint32_t flags)
 {
 	mdcache_entry_t *entry;
@@ -97,7 +97,6 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 	bool mutatis_mutandis = false;
 	struct req_op_context *save_ctx, req_ctx = {0};
 	mdcache_key_t key;
-	struct mdcache_fsal_export *myself = mdc_export(export);
 
 	/* These cannot be updated, changing any of them is
 	   tantamount to destroying and recreating the file. */
@@ -118,12 +117,13 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	req_ctx.fsal_export = &myself->export;
+	req_ctx.ctx_export = vec->up_gsh_export;
+	req_ctx.fsal_export = vec->up_fsal_export;
 	save_ctx = op_ctx;
 	op_ctx = &req_ctx;
 
-	key.fsal = export->sub_export->fsal;
-	(void) cih_hash_key(&key, export->sub_export->fsal, handle,
+	key.fsal = vec->up_fsal_export->sub_export->fsal;
+	(void) cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
 			    CIH_HASH_KEY_PROTOTYPE);
 
 	status = mdcache_find_keyed(&key, &entry);
@@ -291,7 +291,7 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
  *
  * @note doesn't need op_ctx, handled in mdc_up_invalidate
  *
- * @param[in] export Export owning ops
+ * @param[in] vec    Up ops vector
  * @param[in] key    Key to specify object
  * @param[in] flags  FSAL_UP_INVALIDATE*
  *
@@ -299,12 +299,12 @@ mdc_up_update(struct fsal_export *export, struct gsh_buffdesc *handle,
  */
 
 static fsal_status_t
-mdc_up_invalidate_close(struct fsal_export *export,
+mdc_up_invalidate_close(const struct fsal_up_vector *vec,
 			struct gsh_buffdesc *key, uint32_t flags)
 {
 	fsal_status_t status;
 
-	status = up_async_invalidate(general_fridge, export, key,
+	status = up_async_invalidate(general_fridge, vec, key,
 				     flags | FSAL_UP_INVALIDATE_CLOSE,
 				     NULL, NULL);
 	return status;
@@ -314,26 +314,27 @@ mdc_up_invalidate_close(struct fsal_export *export,
  *
  * Pass up to upper layer
  *
- * @param[in] export	MDCACHE export owning ops
+ * @param[in] vec	Up ops vector
  * @param[in] file      The file in question
  * @param[in] owner     The lock owner
  * @param[in] lock_param   A description of the lock
  *
  */
-state_status_t mdc_up_lock_grant(struct fsal_export *export,
+state_status_t mdc_up_lock_grant(const struct fsal_up_vector *vec,
 				 struct gsh_buffdesc *file,
 				 void *owner,
 				 fsal_lock_param_t *lock_param)
 {
-	struct mdcache_fsal_export *myself = mdc_export(export);
+	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;
 	struct req_op_context *save_ctx, req_ctx = {0};
 
-	req_ctx.fsal_export = &myself->export;
+	req_ctx.ctx_export = vec->up_gsh_export;
+	req_ctx.fsal_export = vec->up_fsal_export;
 	save_ctx = op_ctx;
 	op_ctx = &req_ctx;
 
-	rc = myself->super_up_ops.lock_grant(export, file, owner,
+	rc = myself->super_up_ops.lock_grant(vec, file, owner,
 					     lock_param);
 
 	op_ctx = save_ctx;
@@ -345,26 +346,27 @@ state_status_t mdc_up_lock_grant(struct fsal_export *export,
  *
  * Pass up to upper layer
  *
- * @param[in] export	MDCACHE export owning ops
+ * @param[in] vec	   Up ops vector
  * @param[in] file         The file in question
  * @param[in] owner        The lock owner
  * @param[in] lock_param   A description of the lock
  *
  */
-state_status_t mdc_up_lock_avail(struct fsal_export *export,
+state_status_t mdc_up_lock_avail(const struct fsal_up_vector *vec,
 				 struct gsh_buffdesc *file,
 				 void *owner,
 				 fsal_lock_param_t *lock_param)
 {
-	struct mdcache_fsal_export *myself = mdc_export(export);
+	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;
 	struct req_op_context *save_ctx, req_ctx = {0};
 
-	req_ctx.fsal_export = &myself->export;
+	req_ctx.ctx_export = vec->up_gsh_export;
+	req_ctx.fsal_export = vec->up_fsal_export;
 	save_ctx = op_ctx;
 	op_ctx = &req_ctx;
 
-	rc = myself->super_up_ops.lock_avail(export, file, owner,
+	rc = myself->super_up_ops.lock_avail(vec, file, owner,
 					     lock_param);
 
 	op_ctx = save_ctx;
@@ -376,7 +378,7 @@ state_status_t mdc_up_lock_avail(struct fsal_export *export,
  *
  * Pass to upper layer
  *
- * @param[in] export	MDCACHE export owning ops
+ * @param[in] vec	   Up ops vector
  * @param[in] handle       Handle on which the layout is held
  * @param[in] layout_type  The type of layout to recall
  * @param[in] changed      Whether the layout has changed and the
@@ -388,7 +390,7 @@ state_status_t mdc_up_lock_avail(struct fsal_export *export,
  *                         to. May beNULL.
  *
  */
-state_status_t mdc_up_layoutrecall(struct fsal_export *export,
+state_status_t mdc_up_layoutrecall(const struct fsal_up_vector *vec,
 				   struct gsh_buffdesc *handle,
 				   layouttype4 layout_type,
 				   bool changed,
@@ -396,15 +398,16 @@ state_status_t mdc_up_layoutrecall(struct fsal_export *export,
 				   void *cookie,
 				   struct layoutrecall_spec *spec)
 {
-	struct mdcache_fsal_export *myself = mdc_export(export);
+	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;
 	struct req_op_context *save_ctx, req_ctx = {0};
 
-	req_ctx.fsal_export = &myself->export;
+	req_ctx.ctx_export = vec->up_gsh_export;
+	req_ctx.fsal_export = vec->up_fsal_export;
 	save_ctx = op_ctx;
 	op_ctx = &req_ctx;
 
-	rc = myself->super_up_ops.layoutrecall(export, handle, layout_type,
+	rc = myself->super_up_ops.layoutrecall(vec, handle, layout_type,
 					       changed, segment, cookie, spec);
 
 	op_ctx = save_ctx;
@@ -416,21 +419,22 @@ state_status_t mdc_up_layoutrecall(struct fsal_export *export,
  *
  * Pass to upper layer
  *
- * @param[in] export	MDCACHE export owning ops
+ * @param[in] vec	Up ops vector
  * @param[in] handle Handle on which the delegation is held
  */
-state_status_t mdc_up_delegrecall(struct fsal_export *export,
+state_status_t mdc_up_delegrecall(const struct fsal_up_vector *vec,
 				  struct gsh_buffdesc *handle)
 {
-	struct mdcache_fsal_export *myself = mdc_export(export);
+	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;
 	struct req_op_context *save_ctx, req_ctx = {0};
 
-	req_ctx.fsal_export = &myself->export;
+	req_ctx.ctx_export = vec->up_gsh_export;
+	req_ctx.fsal_export = vec->up_fsal_export;
 	save_ctx = op_ctx;
 	op_ctx = &req_ctx;
 
-	rc = myself->super_up_ops.delegrecall(export, handle);
+	rc = myself->super_up_ops.delegrecall(vec, handle);
 
 	op_ctx = save_ctx;
 

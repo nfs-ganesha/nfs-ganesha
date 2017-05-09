@@ -72,7 +72,7 @@ static int schedule_delegrecall_task(struct delegrecall_context *ctx,
  * operations, instead, the FSAL may directly close the file as
  * necessary.
  *
- * @param[in] export The export
+ * @param[in] vec    Up ops vector
  * @param[in] handle Handle being invalidated
  * @param[in] flags  Flags governing invalidation
  *
@@ -80,7 +80,7 @@ static int schedule_delegrecall_task(struct delegrecall_context *ctx,
  *
  */
 
-static fsal_status_t invalidate_close(struct fsal_export *export,
+static fsal_status_t invalidate_close(const struct fsal_up_vector *vec,
 				      struct gsh_buffdesc *handle,
 				      uint32_t flags)
 {
@@ -89,7 +89,7 @@ static fsal_status_t invalidate_close(struct fsal_export *export,
 
 /** Invalidate some or all of a cache entry
  *
- * @param[in] export The export
+ * @param[in] vec    Up ops vector
  * @param[in] handle Handle being invalidated
  * @param[in] flags  Flags governing invalidation
  *
@@ -97,7 +97,7 @@ static fsal_status_t invalidate_close(struct fsal_export *export,
  *
  */
 
-fsal_status_t invalidate(struct fsal_export *export,
+fsal_status_t invalidate(const struct fsal_up_vector *vec,
 			 struct gsh_buffdesc *handle,
 			 uint32_t flags)
 {
@@ -108,7 +108,7 @@ fsal_status_t invalidate(struct fsal_export *export,
 /**
  * @brief Update cached attributes
  *
- * @param[in] export The export
+ * @param[in] vec    Up ops vector
  * @param[in] obj    Key to specify object
  * @param[in] attr   New attributes
  * @param[in] flags  Flags to govern update
@@ -116,7 +116,7 @@ fsal_status_t invalidate(struct fsal_export *export,
  * @return FSAL status
  */
 
-static fsal_status_t update(struct fsal_export *export,
+static fsal_status_t update(const struct fsal_up_vector *vec,
 			    struct gsh_buffdesc *obj,
 			    struct attrlist *attr, uint32_t flags)
 {
@@ -134,13 +134,14 @@ static fsal_status_t update(struct fsal_export *export,
  * @return STATE_SUCCESS or errors.
  */
 
-static state_status_t lock_grant(struct fsal_export *export,
+static state_status_t lock_grant(const struct fsal_up_vector *vec,
 				 struct gsh_buffdesc *file,
 				 void *owner,
 				 fsal_lock_param_t *lock_param)
 {
 	struct fsal_obj_handle *obj;
 	fsal_status_t status;
+	struct fsal_export *export = vec->up_fsal_export;
 
 	status = export->exp_ops.create_handle(export, file, &obj, NULL);
 	if (FSAL_IS_ERROR(status))
@@ -161,13 +162,14 @@ static state_status_t lock_grant(struct fsal_export *export,
  * @return STATE_SUCCESS or errors.
  */
 
-static state_status_t lock_avail(struct fsal_export *export,
+static state_status_t lock_avail(const struct fsal_up_vector *vec,
 				 struct gsh_buffdesc *file,
 				 void *owner,
 				 fsal_lock_param_t *lock_param)
 {
 	struct fsal_obj_handle *obj;
 	fsal_status_t status;
+	struct fsal_export *export = vec->up_fsal_export;
 
 	status = export->exp_ops.create_handle(export, file, &obj, NULL);
 	if (FSAL_IS_ERROR(status))
@@ -388,7 +390,7 @@ struct layoutrecall_cb_data {
  * @retval STATE_MALLOC_ERROR if there was insufficient memory to construct the
  *         recall state.
  */
-state_status_t layoutrecall(struct fsal_export *export,
+state_status_t layoutrecall(const struct fsal_up_vector *vec,
 			    struct gsh_buffdesc *handle,
 			    layouttype4 layout_type, bool changed,
 			    const struct pnfs_segment *segment, void *cookie,
@@ -404,6 +406,7 @@ state_status_t layoutrecall(struct fsal_export *export,
 	struct glist_head *wi = NULL;
 	struct gsh_export *exp = NULL;
 	state_owner_t *owner = NULL;
+	struct fsal_export *export = vec->up_fsal_export;
 
 	rc = state_error_convert(export->exp_ops.create_handle(export, handle,
 							       &obj, NULL));
@@ -1573,9 +1576,10 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
  *
  * @return STATE_SUCCESS or errors.
  */
-state_status_t delegrecall(struct fsal_export *export,
+state_status_t delegrecall(const struct fsal_up_vector *vec,
 			   struct gsh_buffdesc *handle)
 {
+	struct fsal_export *export = vec->up_fsal_export;
 	struct fsal_obj_handle *obj = NULL;
 	state_status_t rc = 0;
 
@@ -1611,7 +1615,8 @@ state_status_t delegrecall(struct fsal_export *export,
  */
 
 struct fsal_up_vector fsal_up_top = {
-	.up_export = NULL,
+	.up_gsh_export = NULL,
+	.up_fsal_export = NULL,
 	.lock_grant = lock_grant,
 	.lock_avail = lock_avail,
 	.invalidate = invalidate,

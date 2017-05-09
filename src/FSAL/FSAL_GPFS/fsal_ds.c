@@ -297,7 +297,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	key.addr = gpfs_handle;
 	key.len = gpfs_handle->handle_key_size;
 	req_ctx->fsal_export->up_ops->invalidate(
-			req_ctx->fsal_export, &key,
+			req_ctx->fsal_export->up_ops, &key,
 			FSAL_UP_INVALIDATE_CACHE);
 
 	*written_length = amount_written;
@@ -386,7 +386,7 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
 	key.addr = gpfs_handle;
 	key.len = gpfs_handle->handle_key_size;
 	req_ctx->fsal_export->up_ops->invalidate(
-			req_ctx->fsal_export, &key,
+			req_ctx->fsal_export->up_ops, &key,
 			FSAL_UP_INVALIDATE_CACHE);
 
 	*written_length = amount_written;

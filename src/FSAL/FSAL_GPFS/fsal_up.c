@@ -202,14 +202,14 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				if (reason == INODE_LOCK_AGAIN)
 					fsal_status = up_async_lock_avail(
 							 general_fridge,
-							 event_func->up_export,
+							 event_func,
 							 &key,
 							 fl.lock_owner,
 							 &lockdesc, NULL, NULL);
 				else
 					fsal_status = up_async_lock_grant(
 							 general_fridge,
-							 event_func->up_export,
+							 event_func,
 							 &key,
 							 fl.lock_owner,
 							 &lockdesc, NULL, NULL);
@@ -221,7 +221,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				 "delegation recall: flags:%x ino %" PRId64,
 				 flags, callback.buf->st_ino);
 			fsal_status = up_async_delegrecall(general_fridge,
-						  event_func->up_export,
+						  event_func,
 						  &key, NULL, NULL);
 			break;
 
@@ -238,7 +238,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 				fsal_status = up_async_layoutrecall(
 							general_fridge,
-							event_func->up_export,
+							event_func,
 							&key,
 							LAYOUT4_NFSV4_1_FILES,
 							false, &segment,
@@ -276,7 +276,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			devid.fsal_id = FSAL_ID_GPFS;
 
 			fsal_status = up_async_notify_device(general_fridge,
-						event_func->up_export,
+						event_func,
 						NOTIFY_DEVICEID4_DELETE_MASK,
 						LAYOUT4_NFSV4_1_FILES,
 						&devid,
@@ -316,7 +316,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				 */
 				if (flags & (UP_SIZE | UP_SIZE_BIG)) {
 					fsal_status = event_func->invalidate(
-						event_func->up_export, &key,
+						event_func, &key,
 						FSAL_UP_INVALIDATE_CACHE);
 					break;
 				}
@@ -327,7 +327,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				    ~(UP_SIZE | UP_NLINK | UP_MODE | UP_OWN |
 				     UP_TIMES | UP_ATIME | UP_SIZE_BIG)) {
 					fsal_status = event_func->invalidate(
-						event_func->up_export, &key,
+						event_func, &key,
 						FSAL_UP_INVALIDATE_CACHE);
 				} else {
 					/* buf may not have all attributes set.
@@ -376,7 +376,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					    expire_time_attr;
 
 					fsal_status = event_func->
-					    update(event_func->up_export,
+					    update(event_func,
 						   &key, &attr, upflags);
 
 					if ((flags & UP_NLINK)
@@ -386,7 +386,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						attr.valid_mask = 0;
 						fsal_status = up_async_update
 						    (general_fridge,
-						     event_func->up_export,
+						     event_func,
 						     &key, &attr,
 						     upflags, NULL, NULL);
 					}
@@ -407,7 +407,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 			upflags = FSAL_UP_INVALIDATE_CACHE;
 			fsal_status = event_func->invalidate_close(
-						event_func->up_export,
+						event_func,
 						&key,
 						upflags);
 			break;

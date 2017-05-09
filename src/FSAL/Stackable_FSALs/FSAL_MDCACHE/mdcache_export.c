@@ -916,7 +916,8 @@ mdc_init_export(struct fsal_module *fsal_hdl,
 	mdcache_export_ops_init(&myself->export.exp_ops);
 	myself->super_up_ops = *super_up_ops; /* Struct copy */
 	myself->up_ops = *mdc_up_ops; /* Struct copy */
-	myself->up_ops.up_export = &myself->export;
+	myself->up_ops.up_gsh_export = op_ctx->ctx_export;
+	myself->up_ops.up_fsal_export = &myself->export;
 	myself->export.up_ops = &myself->up_ops;
 	myself->export.fsal = fsal_hdl;
 	status.minor = fsal_attach_export(fsal_hdl, &myself->export.exports);
