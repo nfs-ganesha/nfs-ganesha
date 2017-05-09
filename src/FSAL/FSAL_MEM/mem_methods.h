@@ -67,10 +67,12 @@ struct mem_fd {
  * MEM internal object handle
  */
 
+#define V4_FH_OPAQUE_SIZE 58 /* Size of state_obj digest */
+
 struct mem_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
 	struct attrlist attrs;
-	char *handle;
+	char handle[V4_FH_OPAQUE_SIZE];
 	struct mem_fsal_obj_handle *parent;
 	union {
 		struct {
@@ -97,6 +99,8 @@ struct mem_fsal_obj_handle {
 	uint32_t next_i; /* next child index */
 	char *m_name;
 	bool inavl;
+	uint32_t datasize;
+	char data[0]; /* Allocated data */
 };
 
 static inline bool mem_unopenable_type(object_file_type_t type)
@@ -141,3 +145,11 @@ static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl,
 }
 
 void mem_clean_dir_tree(struct mem_fsal_obj_handle *parent);
+
+struct mem_fsal_module {
+	struct fsal_module fsal;
+	struct fsal_staticfsinfo_t fs_info;
+	uint32_t inode_size;
+};
+
+extern struct mem_fsal_module MEM;

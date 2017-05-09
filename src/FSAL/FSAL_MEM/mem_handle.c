@@ -47,8 +47,6 @@ static void mem_release(struct fsal_obj_handle *obj_hdl);
 /* Atomic uint64_t that is used to generate inode numbers in the mem FS */
 uint64_t mem_inode_number = 1;
 
-#define V4_FH_OPAQUE_SIZE 58 /* Size of state_obj digest */
-
 /* helpers
  */
 
@@ -328,22 +326,20 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 	char path[MAXPATHLEN];
 	struct display_buffer pathbuf = {sizeof(path), path, path};
 	int rc;
+	size_t isize;
 
-	hdl = gsh_calloc(1, sizeof(struct mem_fsal_obj_handle) +
-			    V4_FH_OPAQUE_SIZE);
+	isize = sizeof(struct mem_fsal_obj_handle);
+	if (type == REGULAR_FILE) {
+		/* Regular files need space to read/write */
+		isize += MEM.inode_size;
+	}
+
+	hdl = gsh_calloc(1, isize);
 
 	/* Establish tree details for this directory */
 	hdl->m_name = gsh_strdup(name);
 	hdl->parent = parent;
-
-	if (hdl->m_name == NULL) {
-		LogDebug(COMPONENT_FSAL,
-			 "Could not name");
-		goto spcerr;
-	}
-
-	/* Create the handle */
-	hdl->handle = (char *) &hdl[1];
+	hdl->datasize = MEM.inode_size;
 
 	/* Create the full path */
 	rc = fullpath(&pathbuf, hdl);
@@ -403,31 +399,29 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 	hdl->attrs.change =
 		timespec_to_nsecs(&hdl->attrs.chgtime);
 
-	if ((attrs && attrs->valid_mask & ATTR_SIZE) != 0) {
-		hdl->attrs.filesize = attrs->filesize;
-		hdl->attrs.spaceused = attrs->filesize;
-	} else {
-		hdl->attrs.filesize = 0;
-		hdl->attrs.spaceused = 0;
-	}
-
-	if ((attrs && attrs->valid_mask & ATTR_RAWDEV) != 0) {
-		hdl->attrs.rawdev.major = attrs->rawdev.major;
-		hdl->attrs.rawdev.minor = attrs->rawdev.minor;
-	} else {
-		hdl->attrs.rawdev.major = 0;
-		hdl->attrs.rawdev.minor = 0;
-	}
-
-
-	/* Set the mask at the end. */
-	hdl->attrs.valid_mask = ATTRS_POSIX;
-	hdl->attrs.supported = ATTRS_POSIX;
-
-	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, type);
-	mem_handle_ops_init(&hdl->obj_handle.obj_ops);
-
 	switch (type) {
+	case REGULAR_FILE:
+		if ((attrs && attrs->valid_mask & ATTR_SIZE) != 0) {
+			hdl->attrs.filesize = attrs->filesize;
+			hdl->attrs.spaceused = attrs->filesize;
+		} else {
+			hdl->attrs.filesize = 0;
+			hdl->attrs.spaceused = 0;
+		}
+		hdl->mh_file.length = hdl->attrs.filesize;
+		hdl->attrs.numlinks = 1;
+		break;
+	case BLOCK_FILE:
+	case CHARACTER_FILE:
+		if ((attrs && attrs->valid_mask & ATTR_RAWDEV) != 0) {
+			hdl->attrs.rawdev.major = attrs->rawdev.major;
+			hdl->attrs.rawdev.minor = attrs->rawdev.minor;
+		} else {
+			hdl->attrs.rawdev.major = 0;
+			hdl->attrs.rawdev.minor = 0;
+		}
+		hdl->attrs.numlinks = 1;
+		break;
 	case DIRECTORY:
 		avltree_init(&hdl->mh_dir.avl_name, mem_n_cmpf, 0);
 		avltree_init(&hdl->mh_dir.avl_index, mem_i_cmpf, 0);
@@ -439,6 +433,15 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		hdl->attrs.numlinks = 1;
 		break;
 	}
+
+
+
+	/* Set the mask at the end. */
+	hdl->attrs.valid_mask = ATTRS_POSIX;
+	hdl->attrs.supported = ATTRS_POSIX;
+
+	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, type);
+	mem_handle_ops_init(&hdl->obj_handle.obj_ops);
 
 	if (parent != NULL) {
 		/* Attach myself to my parent */
@@ -1467,7 +1470,18 @@ fsal_status_t mem_read2(struct fsal_obj_handle *obj_hdl,
 		buffer_size = myself->mh_file.length - offset;
 	}
 
-	memset(buffer, 'a', buffer_size);
+	if (offset < myself->datasize) {
+		size_t readsize;
+
+		/* Data to read */
+		readsize = MIN(buffer_size, myself->datasize - offset);
+		memcpy(buffer, myself->data + offset, readsize);
+		if (readsize < buffer_size)
+			memset(buffer + readsize, 'a', buffer_size - readsize);
+	} else {
+		memset(buffer, 'a', buffer_size);
+	}
+
 	*read_amount = buffer_size;
 	*end_of_file = (buffer_size == 0);
 	now(&myself->attrs.atime);
@@ -1539,6 +1553,14 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 	if (offset + buffer_size > myself->mh_file.length) {
 		myself->attrs.filesize = myself->mh_file.length = offset +
 			buffer_size;
+	}
+
+	if (offset < myself->datasize) {
+		size_t writesize;
+
+		/* Space to write */
+		writesize = MIN(buffer_size, myself->datasize - offset);
+		memcpy(myself->data + offset, buffer, writesize);
 	}
 
 	/* Update change stats */

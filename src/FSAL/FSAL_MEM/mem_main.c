@@ -50,11 +50,9 @@
 	ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    |	\
 	ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | ATTR_CHGTIME)
 
-struct mem_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-	/* mem_specific_initinfo_t specific_info;  placeholder */
-};
+/* my module private storage */
+
+struct mem_fsal_module MEM;
 
 const char memname[] = "MEM";
 
@@ -89,7 +87,8 @@ static struct fsal_staticfsinfo_t default_mem_info = {
 };
 
 static struct config_item mem_items[] = {
-	CONF_ITEM_NOOP("placeholder"),
+	CONF_ITEM_UI32("Inode_Size", 0, 0x200000, 0,
+		       mem_fsal_module, inode_size),
 	CONFIG_EOL
 };
 
@@ -168,11 +167,6 @@ bool mem_support_ex(struct fsal_obj_handle *obj)
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself
  */
-
-/* my module private storage
- */
-
-static struct mem_fsal_module MEM;
 
 /* linkage to the exports and handle ops initializers
  */
