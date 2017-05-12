@@ -59,6 +59,8 @@ struct mdcache_fsal_export {
 	struct glist_head entry_list;
 	/** Lock protecting entry_list */
 	pthread_rwlock_t mdc_exp_lock;
+	/** Lock protecting initialization from UP calls */
+	pthread_rwlock_t mdc_init_lock;
 	/** Flags for the export. */
 	uint8_t flags;
 };
