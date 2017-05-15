@@ -42,14 +42,10 @@ static fsal_status_t
 mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		  uint32_t flags)
 {
-	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	mdcache_entry_t *entry;
 	fsal_status_t status;
 	struct req_op_context *save_ctx, req_ctx = {0};
 	mdcache_key_t key;
-
-	/* Don't process UP calls while initialization */
-	PTHREAD_RWLOCK_rdlock(&myself->mdc_init_lock);
 
 	req_ctx.ctx_export = vec->up_gsh_export;
 	req_ctx.fsal_export = vec->up_fsal_export;
@@ -80,7 +76,6 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 
 out:
 	op_ctx = save_ctx;
-	PTHREAD_RWLOCK_unlock(&myself->mdc_init_lock);
 	return status;
 }
 
@@ -99,7 +94,6 @@ static fsal_status_t
 mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	      struct attrlist *attr, uint32_t flags)
 {
-	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	mdcache_entry_t *entry;
 	fsal_status_t status;
 	/* Have necessary changes been made? */
@@ -125,9 +119,6 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	      fsal_up_update_spaceused_inc | fsal_up_nlink)) {
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
-
-	/* Don't process UP calls while initialization */
-	PTHREAD_RWLOCK_rdlock(&myself->mdc_init_lock);
 
 	req_ctx.ctx_export = vec->up_gsh_export;
 	req_ctx.fsal_export = vec->up_fsal_export;
@@ -297,7 +288,6 @@ put:
 	mdcache_put(entry);
 out:
 	op_ctx = save_ctx;
-	PTHREAD_RWLOCK_unlock(&myself->mdc_init_lock);
 	return status;
 }
 
@@ -344,9 +334,6 @@ state_status_t mdc_up_lock_grant(const struct fsal_up_vector *vec,
 	state_status_t rc;
 	struct req_op_context *save_ctx, req_ctx = {0};
 
-	/* Don't process UP calls while initialization */
-	PTHREAD_RWLOCK_rdlock(&myself->mdc_init_lock);
-
 	req_ctx.ctx_export = vec->up_gsh_export;
 	req_ctx.fsal_export = vec->up_fsal_export;
 	save_ctx = op_ctx;
@@ -356,7 +343,6 @@ state_status_t mdc_up_lock_grant(const struct fsal_up_vector *vec,
 					     lock_param);
 
 	op_ctx = save_ctx;
-	PTHREAD_RWLOCK_unlock(&myself->mdc_init_lock);
 
 	return rc;
 }
@@ -380,9 +366,6 @@ state_status_t mdc_up_lock_avail(const struct fsal_up_vector *vec,
 	state_status_t rc;
 	struct req_op_context *save_ctx, req_ctx = {0};
 
-	/* Don't process UP calls while initialization */
-	PTHREAD_RWLOCK_rdlock(&myself->mdc_init_lock);
-
 	req_ctx.ctx_export = vec->up_gsh_export;
 	req_ctx.fsal_export = vec->up_fsal_export;
 	save_ctx = op_ctx;
@@ -392,7 +375,6 @@ state_status_t mdc_up_lock_avail(const struct fsal_up_vector *vec,
 					     lock_param);
 
 	op_ctx = save_ctx;
-	PTHREAD_RWLOCK_unlock(&myself->mdc_init_lock);
 
 	return rc;
 }
@@ -425,9 +407,6 @@ state_status_t mdc_up_layoutrecall(const struct fsal_up_vector *vec,
 	state_status_t rc;
 	struct req_op_context *save_ctx, req_ctx = {0};
 
-	/* Don't process UP calls while initialization */
-	PTHREAD_RWLOCK_rdlock(&myself->mdc_init_lock);
-
 	req_ctx.ctx_export = vec->up_gsh_export;
 	req_ctx.fsal_export = vec->up_fsal_export;
 	save_ctx = op_ctx;
@@ -437,7 +416,6 @@ state_status_t mdc_up_layoutrecall(const struct fsal_up_vector *vec,
 					       changed, segment, cookie, spec);
 
 	op_ctx = save_ctx;
-	PTHREAD_RWLOCK_unlock(&myself->mdc_init_lock);
 
 	return rc;
 }
@@ -456,9 +434,6 @@ state_status_t mdc_up_delegrecall(const struct fsal_up_vector *vec,
 	state_status_t rc;
 	struct req_op_context *save_ctx, req_ctx = {0};
 
-	/* Don't process UP calls while initialization */
-	PTHREAD_RWLOCK_rdlock(&myself->mdc_init_lock);
-
 	req_ctx.ctx_export = vec->up_gsh_export;
 	req_ctx.fsal_export = vec->up_fsal_export;
 	save_ctx = op_ctx;
@@ -467,7 +442,6 @@ state_status_t mdc_up_delegrecall(const struct fsal_up_vector *vec,
 	rc = myself->super_up_ops.delegrecall(vec, handle);
 
 	op_ctx = save_ctx;
-	PTHREAD_RWLOCK_unlock(&myself->mdc_init_lock);
 
 	return rc;
 }
@@ -478,6 +452,8 @@ mdcache_export_up_ops_init(struct fsal_up_vector *my_up_ops,
 {
 	/* Init with super ops. Struct copy */
 	*my_up_ops = *super_up_ops;
+
+	up_ready_init(my_up_ops);
 
 	/* Replace cache-related calls */
 	my_up_ops->invalidate = mdc_up_invalidate;

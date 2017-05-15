@@ -266,12 +266,6 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 	PTHREAD_RWLOCK_init(&myself->mdc_exp_lock, &attrs);
-	PTHREAD_RWLOCK_init(&myself->mdc_init_lock, &attrs);
-
-	/* Create export for the sub-FSAL can result in UP calls being sent.
-	 * However, we're not completely set up yet, so we can't handle them
-	 * yet.  Take the lock, to delay any UP calls until we're ready */
-	PTHREAD_RWLOCK_wrlock(&myself->mdc_init_lock);
 
 	status = sub_fsal->m_ops.create_export(sub_fsal,
 						 parse_node,
@@ -281,7 +275,6 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 		LogMajor(COMPONENT_FSAL,
 			 "Failed to call create_export on underlying FSAL %s",
 			 sub_fsal->name);
-		PTHREAD_RWLOCK_unlock(&myself->mdc_init_lock);
 		gsh_free(myself->name);
 		gsh_free(myself);
 		return status;
@@ -296,8 +289,8 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	op_ctx->fsal_export = &myself->export;
 	op_ctx->fsal_module = &MDCACHE.fsal;
 
-	/* Ready to rock and roll */
-	PTHREAD_RWLOCK_unlock(&myself->mdc_init_lock);
+	/* Stacking is setup and ready to take upcalls now */
+	up_ready_set(&myself->up_ops);
 
 	return status;
 }

@@ -1604,7 +1604,30 @@ state_status_t delegrecall(const struct fsal_up_vector *vec,
 	return rc;
 }
 
+void up_ready_init(struct fsal_up_vector *up_ops)
+{
+	up_ops->up_ready = false;
+	PTHREAD_MUTEX_init(&up_ops->up_mutex, NULL);
+	PTHREAD_COND_init(&up_ops->up_cond, NULL);
+}
 
+/* This should be called when a module is ready to take upcalls */
+void up_ready_set(struct fsal_up_vector *up_ops)
+{
+	PTHREAD_MUTEX_lock(&up_ops->up_mutex);
+	up_ops->up_ready = true;
+	pthread_cond_broadcast(&up_ops->up_cond);
+	PTHREAD_MUTEX_unlock(&up_ops->up_mutex);
+}
+
+/* Upcall threads should call this to wait for upcall readiness */
+void up_ready_wait(struct fsal_up_vector *up_ops)
+{
+	PTHREAD_MUTEX_lock(&up_ops->up_mutex);
+	while (!up_ops->up_ready)
+		pthread_cond_wait(&up_ops->up_cond, &up_ops->up_mutex);
+	PTHREAD_MUTEX_unlock(&up_ops->up_mutex);
+}
 
 /**
  * @brief The top level vector of operations

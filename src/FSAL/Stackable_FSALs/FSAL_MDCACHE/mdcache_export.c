@@ -934,7 +934,6 @@ mdc_init_export(struct fsal_module *fsal_hdl,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 	PTHREAD_RWLOCK_init(&myself->mdc_exp_lock, &attrs);
-	PTHREAD_RWLOCK_init(&myself->mdc_init_lock, &attrs);
 
 	op_ctx->fsal_export = &myself->export;
 	op_ctx->fsal_module = fsal_hdl;
