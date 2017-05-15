@@ -281,6 +281,7 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 		LogMajor(COMPONENT_FSAL,
 			 "Failed to call create_export on underlying FSAL %s",
 			 sub_fsal->name);
+		PTHREAD_RWLOCK_unlock(&myself->mdc_init_lock);
 		gsh_free(myself->name);
 		gsh_free(myself);
 		return status;
