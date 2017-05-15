@@ -310,8 +310,7 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 			openflags = O_DIRECTORY;
 			break;
 		case SYMBOLIC_LINK:
-			openflags = O_RDWR|O_PATH;
-			break;
+			return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 		default:
 			openflags = O_RDWR;
 		}
@@ -407,6 +406,7 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 	struct vfs_fsal_obj_handle *obj_handle = NULL;
 	int fd = -1;
 	int rc = 0;
+	int openflags;
 	unsigned int index;
 	fsal_errors_t fe;
 
@@ -431,9 +431,16 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	fd = (obj_hdl->type == DIRECTORY) ?
-	    vfs_fsal_open(obj_handle, O_DIRECTORY, &fe) :
-	    vfs_fsal_open(obj_handle, O_RDWR, &fe);
+	switch (obj_hdl->type) {
+	case DIRECTORY:
+		openflags = O_DIRECTORY;
+		break;
+	case SYMBOLIC_LINK:
+		return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+	default:
+		openflags = O_RDWR;
+	}
+	fd = vfs_fsal_open(obj_handle, openflags, &fe);
 	if (fd < 0)
 		return fsalstat(fe, -fd);
 

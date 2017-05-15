@@ -104,8 +104,14 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	size = *count;
 
 	if (pfid->specdata.xattr.xattr_content != NULL) {
-		memcpy(pfid->specdata.xattr.xattr_content + (*offset),
-		       databuffer, size);
+		if (*offset > pfid->specdata.xattr.xattr_size)
+			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
+					  preply);
+		written_size = MIN(*count,
+				   pfid->specdata.xattr.xattr_size - *offset);
+
+		memcpy(pfid->specdata.xattr.xattr_content + *offset,
+		       databuffer, written_size);
 		pfid->specdata.xattr.xattr_offset += size;
 		pfid->specdata.xattr.xattr_write = true;
 
@@ -124,7 +130,7 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					  preply);
 #endif
 
-		outcount = *count;
+		outcount = written_size;
 	} else {
 		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
 			/* Call the new fsal_write */

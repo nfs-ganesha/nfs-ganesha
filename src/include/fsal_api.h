@@ -2076,6 +2076,13 @@ struct fsal_obj_ops {
  * This function returns the value of an extended attribute as
  * specified by name.
  *
+ * As a special rule, because it is implemented that way in the linux
+ * getxattr call, giving a buffer_size of 0 is allowed and should set
+ * output_size appropriately to fit the xattr.
+ *
+ * Please note that the xattr could change between the query-size call
+ * and that actual fetch, so this is not fail-proof.
+ *
  * @param[in]  obj_hdl     File to interrogate
  * @param[in]  xattr_name  Name of attribute
  * @param[out] buffer_addr Buffer to store content

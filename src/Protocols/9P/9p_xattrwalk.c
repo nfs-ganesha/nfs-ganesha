@@ -154,46 +154,26 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		xattr_cursor = pxattrfid->specdata.xattr.xattr_content;
 		attrsize = 0;
 		for (i = 0; i < nb_xattrs_read; i++) {
-			tmplen =
-			    snprintf(xattr_cursor, MAXNAMLEN, "%s",
-				     xattrs_arr[i].xattr_name);
-			xattr_cursor[tmplen] = '\0';	/* Just to be sure */
-			/* +1 for trailing '\0' */
-			xattr_cursor += tmplen + 1;
-			attrsize += tmplen + 1;
-
-			/* Make sure not to go beyond the buffer */
-			if (attrsize > XATTR_BUFFERSIZE) {
+			tmplen = strnlen(xattrs_arr[i].xattr_name, MAXNAMLEN);
+			/* Make sure not to go beyond the buffer
+			 * @todo realloc here too */
+			if (attrsize + tmplen + 1 > XATTR_BUFFERSIZE) {
 				gsh_free(pxattrfid->specdata.xattr.
 					 xattr_content);
 				gsh_free(pxattrfid);
 				return _9p_rerror(req9p, msgtag, ERANGE,
 						  plenout, preply);
 			}
+
+			memcpy(xattr_cursor, xattrs_arr[i].xattr_name, tmplen);
+			xattr_cursor[tmplen] = '\0';
+			/* +1 for trailing '\0' */
+			xattr_cursor += tmplen + 1;
+			attrsize += tmplen + 1;
+
 		}
 	} else {
-		/* xattrwalk has a non-empty name, use regular setxattr */
-		fsal_status =
-		    pxattrfid->pentry->obj_ops.getextattr_id_by_name(
-					  pxattrfid->pentry,
-					  name,
-					  &pxattrfid->specdata.xattr.xattr_id);
-
-
-		if (FSAL_IS_ERROR(fsal_status)) {
-			gsh_free(pxattrfid->specdata.xattr.xattr_content);
-			gsh_free(pxattrfid);
-
-			/* ENOENT for xattr is ENOATTR */
-			if (fsal_status.major == ERR_FSAL_NOENT)
-				return _9p_rerror(req9p, msgtag, ENOATTR,
-						  plenout, preply);
-			else
-				return _9p_rerror(req9p, msgtag,
-						  _9p_tools_errno(fsal_status),
-						  plenout, preply);
-		}
-
+		/* xattrwalk has a non-empty name, use regular getxattr */
 		fsal_status =
 		    pxattrfid->pentry->obj_ops.getextattr_value_by_name(
 					     pxattrfid->pentry,
@@ -202,15 +182,65 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					     xattr_content, XATTR_BUFFERSIZE,
 					     &attrsize);
 
+		if (fsal_status.minor == ERANGE) {
+			/* we need a bigger buffer, do one more request with
+			 * 0-size to get length and reallocate/try again */
+			fsal_status =
+			   pxattrfid->pentry->obj_ops.getextattr_value_by_name(
+					     pxattrfid->pentry,
+					     name,
+					     pxattrfid->specdata.xattr.
+					     xattr_content, 0,
+					     &attrsize);
+			if (FSAL_IS_ERROR(fsal_status)) {
+				gsh_free(
+				    pxattrfid->specdata.xattr.xattr_content);
+				gsh_free(pxattrfid);
+
+				/* fsal_status.minor is a valid errno code */
+				return _9p_rerror(req9p, msgtag,
+						  fsal_status.minor, plenout,
+						  preply);
+			}
+
+			/* Check our own limit too before reallocating */
+			if (attrsize > _9P_XATTR_MAX_SIZE) {
+				gsh_free(
+				    pxattrfid->specdata.xattr.xattr_content);
+				gsh_free(pxattrfid);
+
+				return _9p_rerror(req9p, msgtag, E2BIG,
+						  plenout, preply);
+			}
+
+			pxattrfid->specdata.xattr.xattr_content =
+			    gsh_realloc(
+				pxattrfid->specdata.xattr.xattr_content,
+				attrsize);
+
+			fsal_status =
+			   pxattrfid->pentry->obj_ops.getextattr_value_by_name(
+					     pxattrfid->pentry,
+					     name,
+					     pxattrfid->specdata.xattr.
+					     xattr_content, attrsize,
+					     &attrsize);
+		}
 		if (FSAL_IS_ERROR(fsal_status)) {
 			gsh_free(pxattrfid->specdata.xattr.xattr_content);
 			gsh_free(pxattrfid);
+
+			/* ENOENT for xattr is ENOATTR */
+			if (fsal_status.major == ERR_FSAL_NOENT)
+				return _9p_rerror(req9p, msgtag, ENOATTR,
+						  plenout, preply);
 
 			/* fsal_status.minor is a valid errno code */
 			return _9p_rerror(req9p, msgtag,
 					  fsal_status.minor, plenout, preply);
 		}
 	}
+	pxattrfid->specdata.xattr.xattr_size = attrsize;
 
 	req9p->pconn->fids[*attrfid] = pxattrfid;
 

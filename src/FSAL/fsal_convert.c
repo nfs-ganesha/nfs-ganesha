@@ -201,6 +201,9 @@ int posix2fsal_error(int posix_errorcode)
 		return ERR_FSAL_NO_DATA;
 #endif
 
+	case ERANGE:
+		return ERR_FSAL_BAD_RANGE;
+
 	default:
 		LogCrit(COMPONENT_FSAL,
 			"Mapping %d(default) to ERR_FSAL_SERVERFAULT",

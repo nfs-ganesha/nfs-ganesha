@@ -77,6 +77,9 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
+	if (*size > _9P_XATTR_MAX_SIZE)
+		return _9p_rerror(req9p, msgtag, ENOSPC, plenout, preply);
+
 	pfid = req9p->pconn->fids[*fid];
 
 	/* Check that it is a valid fid */
@@ -125,7 +128,9 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		/* Create the xattr at the FSAL level and cache result */
 		pfid->specdata.xattr.xattr_content =
-		     gsh_malloc(XATTR_BUFFERSIZE);
+			gsh_malloc(XATTR_BUFFERSIZE);
+		pfid->specdata.xattr.xattr_size = XATTR_BUFFERSIZE;
+
 		/* Special Value */
 		pfid->specdata.xattr.xattr_id = ACL_ACCESS_XATTR_ID;
 	} else {
@@ -133,7 +138,8 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		/* Create the xattr at the FSAL level and cache result */
 		pfid->specdata.xattr.xattr_content =
-		     gsh_malloc(XATTR_BUFFERSIZE);
+		     gsh_malloc(*size);
+		pfid->specdata.xattr.xattr_size = *size;
 
 		/* try to create if flag doesn't have REPLACE bit */
 		if ((*flag & XATTR_REPLACE) == 0)

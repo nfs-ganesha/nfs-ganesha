@@ -197,6 +197,9 @@ enum _9p_msg_t {
  */
 #define ACL_ACCESS_XATTR_ID 0xFFFFFFFF
 
+/* Arbitrary max xattr size, 64k is the limit for VFS given in man xattr(7) */
+#define _9P_XATTR_MAX_SIZE 65535
+
 /**
  * enum _9p_qid_t - QID types
  * @_9P_QTDIR: directory
