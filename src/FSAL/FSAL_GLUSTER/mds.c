@@ -308,6 +308,7 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 	/* Mask to determine exactly what gets set */
 	int   mask                           = 0;
 	int   rc                             = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 
 	if (arg->type != LAYOUT4_NFSV4_1_FILES) {
 		LogMajor(COMPONENT_PNFS, "Unsupported layout type: %x",
@@ -351,11 +352,19 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 
 	mask |= GLAPI_SET_ATTR_MTIME;
 
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
+			  &op_ctx->creds->caller_gid,
+			  op_ctx->creds->caller_glen,
+			  op_ctx->creds->caller_garray);
+
 	rc = glfs_h_setattrs(glfs_export->gl_fs->fs,
 			     objhandle->glhandle,
 			     &new_stat,
 			     mask);
-	if (rc != 0) {
+
+	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
+
+	if ((rc != 0) || (status.major != ERR_FSAL_NO_ERROR)) {
 		LogMajor(COMPONENT_PNFS,
 			 "commit layout, setattr unsucessflly completed");
 		return NFS4ERR_INVAL;

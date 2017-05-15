@@ -200,6 +200,7 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 	struct glfs_ds_handle *ds =
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 	int rc = 0;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 
 	if (ds->stability_got == FILE_SYNC4) {
 		struct glusterfs_export *glfs_export =
@@ -207,20 +208,36 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 				     struct glusterfs_export, export);
 		struct glfs_fd *glfd = NULL;
 
+		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
+				  &op_ctx->creds->caller_gid,
+				  op_ctx->creds->caller_glen,
+				  op_ctx->creds->caller_garray);
+
 		glfd = glfs_h_open(glfs_export->gl_fs->fs, ds->glhandle,
 				   O_RDWR);
 		if (glfd == NULL) {
 			LogDebug(COMPONENT_PNFS, "glfd in ds_handle is NULL");
 			return NFS4ERR_SERVERFAULT;
 		}
+
+		SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
+
+		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
+				  &op_ctx->creds->caller_gid,
+				  op_ctx->creds->caller_glen,
+				  op_ctx->creds->caller_garray);
+
 		rc = glfs_fsync(glfd);
 		if (rc != 0)
 			LogMajor(COMPONENT_PNFS, "ds_commit() failed  %d", -rc);
 		rc = glfs_close(glfd);
 		if (rc != 0)
 			LogDebug(COMPONENT_PNFS, "status after close %d", -rc);
+
+		SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
 	}
-	if (rc < 0)
+
+	if ((rc != 0) || (status.major != ERR_FSAL_NO_ERROR))
 		return NFS4ERR_INVAL;
 
 	return NFS4_OK;

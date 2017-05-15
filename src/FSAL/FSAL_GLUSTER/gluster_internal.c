@@ -216,8 +216,9 @@ bool fs_specific_has(const char *fs_specific, const char *key, char *val,
 	return ret;
 }
 
-int setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
-		    gid_t *gid, unsigned int ngrps, gid_t *groups)
+void setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
+		     gid_t *gid, unsigned int ngrps, gid_t *groups,
+		     char *file, int line, char *function)
 {
 	int rc = 0;
 
@@ -245,7 +246,12 @@ int setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
 		rc = glfs_setfsgroups(0, NULL);
 
  out:
-	return rc;
+	if (rc != 0) {
+		DisplayLogComponentLevel(COMPONENT_FSAL, file, line, function,
+			 NIV_FATAL,
+			"Could not set Gluster credentials - uid(%d), gid(%d)",
+			*uid, *gid);
+	}
 }
 
 /*

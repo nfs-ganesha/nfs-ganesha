@@ -213,6 +213,16 @@ struct glusterfs_state_fd {
 	struct glusterfs_fd glusterfs_fd;
 };
 
+void setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
+		     gid_t *gid, unsigned int ngrps, gid_t *groups,
+		     char *file, int line, char *function);
+
+#define SET_GLUSTER_CREDS(glfs_export, uid, gid, glen, garray)		    \
+		((void) setglustercreds(glfs_export, uid, gid, glen,	    \
+				       garray, (char *) __FILE__,	    \
+				       __LINE__, (char *) __func__))	    \
+									    \
+
 #ifdef GLTIMING
 struct latency_data glfsal_latencies[LATENCY_SLOTS];
 
@@ -245,9 +255,6 @@ void gluster_cleanup_vars(struct glfs_object *glhandle);
 
 bool fs_specific_has(const char *fs_specific, const char *key, char *val,
 		     int *max_val_bytes);
-
-int setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
-		    gid_t *gid, unsigned int ngrps, gid_t *groups);
 
 fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 				 struct glfs_object *objhandle,
@@ -291,5 +298,6 @@ void *GLUSTERFSAL_UP_Thread(void *Arg);
 int initiate_up_thread(struct glusterfs_fs *gl_fs);
 int upcall_inode_invalidate(struct glusterfs_fs *gl_fs,
 			    struct glfs_object *object);
+fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd);
 
 #endif				/* GLUSTER_INTERNAL */
