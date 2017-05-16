@@ -18,6 +18,7 @@ LOG { FORMAT {} }
 CACHEINODE
 CEPH {}
 GPFS {}
+MEM {}
 RGW {}
 VFS {}
 XFS {}
@@ -553,6 +554,13 @@ GPFS {}
 	fsal_trace(bool, default true)
 
 	fsal_grace(bool, default false)
+
+MEM {}
+-------
+
+	Inode_Size(uint32, range 0 to 2097152, default 0)
+
+	Up_Test_Interval(uint32, range 0 to UINT32_MAX, default 0)
 
 RGW {}
 -------

@@ -34,7 +34,7 @@
 #include "fsal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
-#include "mem_methods.h"
+#include "mem_int.h"
 #include "city.h"
 #include "nfs_file_handle.h"
 #include "display.h"
@@ -310,7 +310,7 @@ static fsal_status_t mem_close_my_fd(struct mem_fd *my_fd)
  * @param[in] parent	Parent directory handle
  * @param[in] name	Name of handle to allocate
  * @param[in] type	Type of handle to allocate
- * @param[in] exp_hdl	Export owning new handle
+ * @param[in] mfe	MEM Export owning new handle
  * @param[in] attrs	Attributes of new handle
  * @return Handle on success, NULL on failure
  */
@@ -318,7 +318,7 @@ static struct mem_fsal_obj_handle *
 _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		  const char *name,
 		  object_file_type_t type,
-		  struct fsal_export *exp_hdl,
+		  struct mem_fsal_export *mfe,
 		  struct attrlist *attrs,
 		  const char *func, int line)
 {
@@ -350,6 +350,7 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		goto spcerr;
 	}
 
+	glist_add_tail(&mfe->mfe_objs, &hdl->mfo_exp_entry);
 	package_mem_handle(hdl->handle, &pathbuf);
 
 	/* Fills the output struct */
@@ -440,7 +441,7 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 	hdl->attrs.valid_mask = ATTRS_POSIX;
 	hdl->attrs.supported = ATTRS_POSIX;
 
-	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, type);
+	fsal_obj_handle_init(&hdl->obj_handle, &mfe->export, type);
 	mem_handle_ops_init(&hdl->obj_handle.obj_ops);
 
 	if (parent != NULL) {
@@ -506,6 +507,9 @@ static fsal_status_t mem_create_obj(struct mem_fsal_obj_handle *parent,
 				    struct fsal_obj_handle **new_obj,
 				    struct attrlist *attrs_out)
 {
+	struct mem_fsal_export *mfe = container_of(op_ctx->fsal_export,
+						   struct mem_fsal_export,
+						   export);
 	struct mem_fsal_obj_handle *hdl;
 	fsal_status_t status;
 
@@ -531,7 +535,7 @@ static fsal_status_t mem_create_obj(struct mem_fsal_obj_handle *parent,
 	hdl = mem_alloc_handle(parent,
 			       name,
 			       type,
-			       op_ctx->fsal_export,
+			       mfe,
 			       attrs_in);
 	if (!hdl)
 		return fsalstat(ERR_FSAL_NOMEM, 0);
@@ -1831,12 +1835,12 @@ fsal_status_t mem_lookup_path(struct fsal_export *exp_hdl,
 			      struct fsal_obj_handle **obj_hdl,
 			      struct attrlist *attrs_out)
 {
-	struct mem_fsal_export *myself;
+	struct mem_fsal_export *mfe;
 	struct attrlist attrs;
 
-	myself = container_of(exp_hdl, struct mem_fsal_export, export);
+	mfe = container_of(exp_hdl, struct mem_fsal_export, export);
 
-	if (strcmp(path, myself->export_path) != 0) {
+	if (strcmp(path, mfe->export_path) != 0) {
 		/* Lookup of a path other than the export's root. */
 		LogCrit(COMPONENT_FSAL,
 			"Attempt to lookup non-root path %s",
@@ -1847,19 +1851,18 @@ fsal_status_t mem_lookup_path(struct fsal_export *exp_hdl,
 	attrs.valid_mask = ATTR_MODE;
 	attrs.mode = 0755;
 
-	if (myself->root_handle == NULL) {
-		myself->root_handle =
-			mem_alloc_handle(NULL,
-					 myself->export_path,
-					 DIRECTORY,
-					 exp_hdl,
-					 &attrs);
+	if (mfe->root_handle == NULL) {
+		mfe->root_handle = mem_alloc_handle(NULL,
+						    mfe->export_path,
+						    DIRECTORY,
+						    mfe,
+						    &attrs);
 	}
 
-	*obj_hdl = &myself->root_handle->obj_handle;
+	*obj_hdl = &mfe->root_handle->obj_handle;
 
 	if (attrs_out != NULL)
-		fsal_copy_attrs(attrs_out, &myself->root_handle->attrs, false);
+		fsal_copy_attrs(attrs_out, &mfe->root_handle->attrs, false);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

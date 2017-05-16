@@ -8,10 +8,11 @@ set( LIB_PREFIX 64)
 ########### next target ###############
 
 SET(fsalmem_LIB_SRCS
-   mem_handle.c
-   mem_methods.h
-   mem_main.c
    mem_export.c
+   mem_handle.c
+   mem_int.h
+   mem_main.c
+   mem_up.c
 )
 
 add_library(fsalmem SHARED ${fsalmem_LIB_SRCS})

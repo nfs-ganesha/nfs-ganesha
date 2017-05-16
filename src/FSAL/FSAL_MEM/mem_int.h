@@ -37,13 +37,20 @@
 
 struct mem_fsal_obj_handle;
 
-/*
+/**
  * MEM internal export
  */
 struct mem_fsal_export {
+	/** Export this wraps */
 	struct fsal_export export;
+	/** The path for this export */
 	char *export_path;
+	/** Root object for this export */
 	struct mem_fsal_obj_handle *root_handle;
+	/** Entry into list of exports */
+	struct glist_head export_entry;
+	/** List of all the objects in this export */
+	struct glist_head mfe_objs;
 };
 
 fsal_status_t mem_lookup_path(struct fsal_export *exp_hdl,
@@ -95,6 +102,7 @@ struct mem_fsal_obj_handle {
 	};
 	struct avltree_node avl_n;
 	struct avltree_node avl_i;
+	struct glist_head mfo_exp_entry;
 	uint32_t index; /* index in parent */
 	uint32_t next_i; /* next child index */
 	char *m_name;
@@ -136,6 +144,9 @@ static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl,
 #ifdef USE_LTTNG
 	tracepoint(fsalmem, mem_free, func, line, hdl);
 #endif
+
+	glist_del(&hdl->mfo_exp_entry);
+
 	if (hdl->m_name != NULL) {
 		gsh_free(hdl->m_name);
 		hdl->m_name = NULL;
@@ -146,10 +157,25 @@ static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl,
 
 void mem_clean_dir_tree(struct mem_fsal_obj_handle *parent);
 
+/**
+ * @brief FSAL Module wrapper for MEM
+ */
 struct mem_fsal_module {
+	/** Module we're wrapping */
 	struct fsal_module fsal;
+	/** Our FS INFO */
 	struct fsal_staticfsinfo_t fs_info;
+	/** List of MEM exports. TODO Locking when we care */
+	struct glist_head mem_exports;
+	/** Config - size of data in inode */
 	uint32_t inode_size;
+	/** Config - Interval for UP call thread */
+	uint32_t up_interval;
 };
+
+
+/* UP testing */
+fsal_status_t mem_up_pkginit(void);
+fsal_status_t mem_up_pkgshutdown(void);
 
 extern struct mem_fsal_module MEM;
