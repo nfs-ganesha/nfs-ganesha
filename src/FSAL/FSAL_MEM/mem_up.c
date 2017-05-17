@@ -46,8 +46,9 @@ static struct fridgethr *mem_up_fridge;
  * really deleted, since there's no way to get it back, but it should allow
  * testing of the invalidate UP call.
  *
+ * @param[in] mfe	MEM export owning handle
+ * @param[in] hdl	Handle to invalidate
  */
-
 static void
 mem_invalidate(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
 {
@@ -59,11 +60,82 @@ mem_invalidate(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
 
 	hdl->obj_handle.obj_ops.handle_to_key(&hdl->obj_handle, &fh_desc);
 
-	/* invalidate me, my man */
 	status = up_ops->invalidate(up_ops, &fh_desc, FSAL_UP_INVALIDATE_CACHE);
 	if (FSAL_IS_ERROR(status)) {
-		LogMajor(COMPONENT_FSAL_UP, "error invalidating %s",
-			 hdl->m_name);
+		LogMajor(COMPONENT_FSAL_UP, "error invalidating %s: %s",
+			 hdl->m_name, fsal_err_txt(status));
+	}
+}
+
+/**
+ * @brief Invalidate and close an object
+ *
+ * This function sends an invalidate_close for an object.  The object itself is
+ * not really deleted, since there's no way to get it back, but it should allow
+ * testing of the invalidate_close UP call.
+ *
+ * @param[in] mfe	MEM export owning handle
+ * @param[in] hdl	Handle to invalidate
+ */
+static void
+mem_invalidate_close(struct mem_fsal_export *mfe,
+		     struct mem_fsal_obj_handle *hdl)
+{
+	const struct fsal_up_vector *up_ops = mfe->export.up_ops;
+	fsal_status_t status;
+	struct gsh_buffdesc fh_desc;
+
+	LogEvent(COMPONENT_FSAL_UP, "invalidate_closing %s", hdl->m_name);
+
+	hdl->obj_handle.obj_ops.handle_to_key(&hdl->obj_handle, &fh_desc);
+
+	status = up_ops->invalidate_close(up_ops, &fh_desc,
+					  FSAL_UP_INVALIDATE_CACHE);
+	if (FSAL_IS_ERROR(status)) {
+		LogMajor(COMPONENT_FSAL_UP, "error invalidate_closing %s: %s",
+			 hdl->m_name, fsal_err_txt(status));
+	}
+}
+
+/**
+ * @brief Update an object
+ *
+ * This function sends an update for an object.  In this case, we update some of
+ * the times, just so something changed.
+ *
+ * @param[in] mfe	MEM export owning handle
+ * @param[in] hdl	Handle to update
+ */
+static void
+mem_update(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
+{
+	const struct fsal_up_vector *up_ops = mfe->export.up_ops;
+	fsal_status_t status;
+	struct gsh_buffdesc fh_desc;
+	struct attrlist attrs;
+
+	LogFullDebug(COMPONENT_FSAL_UP, "updating %s", hdl->m_name);
+
+	hdl->obj_handle.obj_ops.handle_to_key(&hdl->obj_handle, &fh_desc);
+
+	fsal_prepare_attrs(&attrs, 0);
+	/* Set CTIME */
+	now(&hdl->attrs.ctime);
+	attrs.ctime = hdl->attrs.ctime; /* struct copy */
+	FSAL_SET_MASK(attrs.valid_mask, ATTR_CTIME);
+
+	/* Set change and chgtime */
+	hdl->attrs.chgtime = attrs.ctime; /* struct copy */
+	attrs.chgtime = hdl->attrs.chgtime; /* struct copy */
+	FSAL_SET_MASK(attrs.valid_mask, ATTR_CHGTIME);
+	hdl->attrs.change++;
+	attrs.change = hdl->attrs.change;
+	FSAL_SET_MASK(attrs.valid_mask, ATTR_CHANGE);
+
+	status = up_ops->update(up_ops, &fh_desc, &attrs, fsal_up_update_null);
+	if (FSAL_IS_ERROR(status)) {
+		LogMajor(COMPONENT_FSAL_UP, "error updating %s: %s",
+			 hdl->m_name, fsal_err_txt(status));
 	}
 }
 
@@ -123,9 +195,21 @@ mem_up_run(struct fridgethr_context *ctx)
 		struct mem_fsal_obj_handle *hdl;
 
 		mfe = glist_entry(glist, struct mem_fsal_export, export_entry);
+
+		/* Update a handle */
+		hdl = mem_rand_obj(mfe);
+		if (hdl)
+			mem_update(mfe, hdl);
+
+		/* Invalidate a handle */
 		hdl = mem_rand_obj(mfe);
 		if (hdl)
 			mem_invalidate(mfe, hdl);
+
+		/* Invalidate and close a handle */
+		hdl = mem_rand_obj(mfe);
+		if (hdl)
+			mem_invalidate_close(mfe, hdl);
 	}
 }
 
