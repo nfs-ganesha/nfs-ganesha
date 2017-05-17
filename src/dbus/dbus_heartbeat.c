@@ -45,31 +45,35 @@
 #include "gsh_intrinsic.h"
 
 struct _ganesha_health {
-	int old_enqueue;
-	int old_dequeue;
-	int enqueue_diff;
-	int dequeue_diff;
+	uint32_t old_enqueue;
+	uint32_t old_dequeue;
 };
 
 struct _ganesha_health healthstats;
 
 bool get_ganesha_health(struct _ganesha_health *hstats)
 {
-	int newenq, newdeq;
+	uint32_t newenq, newdeq;
+	int32_t enqueue_diff, dequeue_diff;
 
 	newenq = get_enqueue_count();
 	newdeq = get_dequeue_count();
-	hstats->enqueue_diff = newenq - hstats->old_enqueue;
-	hstats->dequeue_diff = newdeq - hstats->old_dequeue;
+	enqueue_diff = newenq - hstats->old_enqueue;
+	dequeue_diff = newdeq - hstats->old_dequeue;
 	hstats->old_enqueue = newenq;
 	hstats->old_dequeue = newdeq;
+
+	/* enqueue_diff can be -ve due to having newenq reached
+	 * max value and restarted from 0. So make it 0 */
+	if (enqueue_diff < 0)
+		enqueue_diff = 0;
 
 	/*
 	 * health state indicates if we are making progress draining the
 	 * request queue.
 	 */
-	return (hstats->enqueue_diff > 0 && hstats->dequeue_diff > 0) ||
-		(hstats->enqueue_diff == 0);
+	return (enqueue_diff > 0 && dequeue_diff > 0) ||
+		(enqueue_diff == 0);
 }
 
 int dbus_heartbeat_cb(void *arg)
