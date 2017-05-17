@@ -58,6 +58,7 @@ static void release(struct fsal_export *exp_hdl)
 	gpfs_unexport_filesystems(myself);
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
+	close(myself->export_fd);
 
 	gsh_free(myself);		/* elvis has left the building */
 }
