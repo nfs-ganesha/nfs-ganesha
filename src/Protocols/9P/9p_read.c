@@ -97,19 +97,19 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	databuffer = _9p_getbuffertofill(cursor);
 
 	/* Do the job */
-	if (pfid->specdata.xattr.xattr_content != NULL) {
+	if (pfid->xattr != NULL) {
 		/* Copy the value cached during xattrwalk */
-		if (*offset > pfid->specdata.xattr.xattr_size)
+		if (*offset > pfid->xattr->xattr_size)
 			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
 					  preply);
-		if (pfid->specdata.xattr.xattr_write != _9P_XATTR_READ_ONLY)
+		if (pfid->xattr->xattr_write != _9P_XATTR_READ_ONLY)
 			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
 					  preply);
 
 		read_size = MIN(*count,
-				pfid->specdata.xattr.xattr_size - *offset);
+				pfid->xattr->xattr_size - *offset);
 		memcpy(databuffer,
-		       pfid->specdata.xattr.xattr_content + *offset,
+		       pfid->xattr->xattr_content + *offset,
 		       read_size);
 
 		outcount = read_size;

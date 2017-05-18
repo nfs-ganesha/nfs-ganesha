@@ -100,15 +100,12 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		atomic_inc_uint32_t(&pfid->opens);
 	}
 
-	/* iounit = 0 by default */
-	pfid->specdata.iounit = _9P_IOUNIT;
-
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RLOPEN);
 	_9p_setptr(cursor, msgtag, u16);
 
 	_9p_setqid(cursor, pfid->qid);
-	_9p_setptr(cursor, &pfid->specdata.iounit, u32);
+	_9p_setvalue(cursor, _9P_IOUNIT, u32);
 
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
@@ -116,7 +113,7 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	LogDebug(COMPONENT_9P,
 		 "RLOPEN: tag=%u fid=%u qid=(type=%u,version=%u,path=%llu) iounit=%u",
 		 *msgtag, *fid, (u32) pfid->qid.type, pfid->qid.version,
-		 (unsigned long long)pfid->qid.path, pfid->specdata.iounit);
+		 (unsigned long long)pfid->qid.path, _9P_IOUNIT);
 
 	return 1;
 }

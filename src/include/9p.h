@@ -192,11 +192,6 @@ enum _9p_msg_t {
 	_9P_RWSTAT,
 };
 
-/**
- * This constant is used to use system.posix_acl_access pseudo xattr
- */
-#define ACL_ACCESS_XATTR_ID 0xFFFFFFFF
-
 /* Arbitrary max xattr size, 64k is the limit for VFS given in man xattr(7) */
 #define _9P_XATTR_MAX_SIZE 65535
 
@@ -307,6 +302,21 @@ struct _9p_user_cred {
 			   * creds field). */
 };
 
+/**
+ *
+ * @brief Internal 9P structure for xattr operations, linked in fid
+ *
+ * This structure is allocated as needed (xattrwalk/create) and freed
+ * on clunk
+ */
+struct _9p_xattr_desc {
+	char xattr_name[MAXNAMLEN];
+	u64 xattr_size;
+	u64 xattr_offset;
+	enum _9p_xattr_write xattr_write;
+	char xattr_content[];
+};
+
 struct _9p_fid {
 	u32 fid;
 	/** Ganesha export of the file (refcounted). */
@@ -319,17 +329,7 @@ struct _9p_fid {
 	struct fsal_obj_handle *ppentry;
 	char name[MAXNAMLEN+1];
 	u32 opens;
-	union {
-		u32 iounit;
-		struct _9p_xattr_desc {
-			unsigned int xattr_id;
-			caddr_t xattr_content;
-			u64 xattr_size;
-			u64 xattr_offset;
-			enum _9p_xattr_write xattr_write;
-		} xattr;
-
-	} specdata;
+	struct _9p_xattr_desc *xattr;
 };
 
 enum _9p_trans_type {

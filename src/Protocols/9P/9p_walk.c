@@ -156,8 +156,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		pnewfid->qid.version = 0;
 		pnewfid->qid.path = pnewfid->pentry->fileid;
 
-		pnewfid->specdata.xattr.xattr_id = 0;
-		pnewfid->specdata.xattr.xattr_content = NULL;
+		pnewfid->xattr = NULL;
 
 		switch (pnewfid->pentry->type) {
 		case REGULAR_FILE:

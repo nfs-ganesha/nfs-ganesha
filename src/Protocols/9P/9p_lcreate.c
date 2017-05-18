@@ -189,13 +189,10 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	qid_newfile.version = 0;
 	qid_newfile.path = pentry_newfile->fileid;
 
-	iounit = 0;		/* default value */
-
 	/* The fid will represent the new file now - we can't fail anymore */
 	pfid->pentry = pentry_newfile;
 	pfid->qid = qid_newfile;
-	pfid->specdata.xattr.xattr_id = 0;
-	pfid->specdata.xattr.xattr_content = NULL;
+	pfid->xattr = NULL;
 	pfid->opens = 1;
 
 	/* Build the reply */

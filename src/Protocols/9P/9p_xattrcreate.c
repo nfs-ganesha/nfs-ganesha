@@ -59,7 +59,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	struct _9p_fid *pfid = NULL;
 
-	fsal_status_t fsal_status;
+	fsal_status_t fsal_status = { .major = ERR_FSAL_NO_ERROR, .minor = 0 };
 	char name[MAXNAMLEN+1];
 
 	/* Get data */
@@ -117,29 +117,25 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status), plenout,
 					  preply);
-	} else if (!strncmp(name, "system.posix_acl_access", MAXNAMLEN)) {
+	} else {
+		/* Size != 0 , this is a creation/replacement of xattr */
+
+		/* Create the xattr at the FSAL level and cache result */
+		pfid->xattr = gsh_malloc(sizeof(*pfid->xattr) + *size);
+		pfid->xattr->xattr_size = *size;
+		pfid->xattr->xattr_offset = 0LL;
+		pfid->xattr->xattr_write = _9P_XATTR_CAN_WRITE;
+
+
+		strncpy(pfid->xattr->xattr_name, name, MAXNAMLEN);
+
 		/* /!\  POSIX_ACL RELATED HOOK
 		 * Setting a POSIX ACL (using setfacl for example) means
 		 * settings a xattr named system.posix_acl_access BUT this
 		 * attribute is to be used and should not be created
 		 * (it exists already since acl feature is on) */
-		fsal_status.major = ERR_FSAL_NO_ERROR;
-		fsal_status.minor = 0;
-
-		/* Create the xattr at the FSAL level and cache result */
-		pfid->specdata.xattr.xattr_content =
-			gsh_malloc(XATTR_BUFFERSIZE);
-		pfid->specdata.xattr.xattr_size = XATTR_BUFFERSIZE;
-
-		/* Special Value */
-		pfid->specdata.xattr.xattr_id = ACL_ACCESS_XATTR_ID;
-	} else {
-		/* Size != 0 , this is a creation/replacement of xattr */
-
-		/* Create the xattr at the FSAL level and cache result */
-		pfid->specdata.xattr.xattr_content =
-		     gsh_malloc(*size);
-		pfid->specdata.xattr.xattr_size = *size;
+		if (!strncmp(name, "system.posix_acl_access", MAXNAMLEN))
+			goto skip_create;
 
 		/* try to create if flag doesn't have REPLACE bit */
 		if ((*flag & XATTR_REPLACE) == 0)
@@ -149,7 +145,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		fsal_status =
 		    pfid->pentry->obj_ops.setextattr_value(pfid->pentry, name,
-				pfid->specdata.xattr.xattr_content,
+				pfid->xattr->xattr_content,
 				*size, create);
 
 		/* Try again with create = false if flag was set to 0
@@ -159,32 +155,19 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			fsal_status =
 			    pfid->pentry->obj_ops.setextattr_value(pfid->pentry,
 					     name,
-					     pfid->specdata.xattr.xattr_content,
+					     pfid->xattr->xattr_content,
 					     *size, false);
 		}
 
-		if (FSAL_IS_ERROR(fsal_status))
+		if (FSAL_IS_ERROR(fsal_status)) {
+			gsh_free(pfid->xattr);
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status), plenout,
 					  preply);
-
-		fsal_status =
-		    pfid->pentry->obj_ops.getextattr_id_by_name(pfid->pentry,
-			name,
-			&pfid->specdata.xattr.xattr_id);
-
-		if (FSAL_IS_ERROR(fsal_status))
-			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status), plenout,
-					  preply);
+		}
 	}
 
-	/* Remember the size of the xattr to be written,
-	 * in order to check at TCLUNK */
-	pfid->specdata.xattr.xattr_size = *size;
-	pfid->specdata.xattr.xattr_offset = 0LL;
-	pfid->specdata.xattr.xattr_write = _9P_XATTR_CAN_WRITE;
-
+skip_create:
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RXATTRCREATE);
 	_9p_setptr(cursor, msgtag, u16);

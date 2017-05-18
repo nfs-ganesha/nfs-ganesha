@@ -120,7 +120,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	snprintf(name, sizeof(name), "%.*s", *name_len, name_str);
 
-	pxattrfid->specdata.xattr.xattr_content = gsh_malloc(XATTR_BUFFERSIZE);
+	pxattrfid->xattr = gsh_malloc(sizeof(*pxattrfid->xattr) +
+				      XATTR_BUFFERSIZE);
 
 	if (*name_len == 0) {
 		/* xattrwalk is used with an empty name,
@@ -135,7 +136,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			 &eod_met);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
-			gsh_free(pxattrfid->specdata.xattr.xattr_content);
+			gsh_free(pxattrfid->xattr);
 			gsh_free(pxattrfid);
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status), plenout,
@@ -145,21 +146,20 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* if all xattrent are not read,
 		 * returns ERANGE as listxattr does */
 		if (eod_met != true) {
-			gsh_free(pxattrfid->specdata.xattr.xattr_content);
+			gsh_free(pxattrfid->xattr);
 			gsh_free(pxattrfid);
 			return _9p_rerror(req9p, msgtag, ERANGE,
 					  plenout, preply);
 		}
 
-		xattr_cursor = pxattrfid->specdata.xattr.xattr_content;
+		xattr_cursor = pxattrfid->xattr->xattr_content;
 		attrsize = 0;
 		for (i = 0; i < nb_xattrs_read; i++) {
 			tmplen = strnlen(xattrs_arr[i].xattr_name, MAXNAMLEN);
 			/* Make sure not to go beyond the buffer
 			 * @todo realloc here too */
 			if (attrsize + tmplen + 1 > XATTR_BUFFERSIZE) {
-				gsh_free(pxattrfid->specdata.xattr.
-					 xattr_content);
+				gsh_free(pxattrfid->xattr);
 				gsh_free(pxattrfid);
 				return _9p_rerror(req9p, msgtag, ERANGE,
 						  plenout, preply);
@@ -176,10 +176,9 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* xattrwalk has a non-empty name, use regular getxattr */
 		fsal_status =
 		    pxattrfid->pentry->obj_ops.getextattr_value_by_name(
-					     pxattrfid->pentry,
-					     name,
-					     pxattrfid->specdata.xattr.
-					     xattr_content, XATTR_BUFFERSIZE,
+					     pxattrfid->pentry, name,
+					     pxattrfid->xattr->xattr_content,
+					     XATTR_BUFFERSIZE,
 					     &attrsize);
 
 		if (fsal_status.minor == ERANGE) {
@@ -187,14 +186,11 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			 * 0-size to get length and reallocate/try again */
 			fsal_status =
 			   pxattrfid->pentry->obj_ops.getextattr_value_by_name(
-					     pxattrfid->pentry,
-					     name,
-					     pxattrfid->specdata.xattr.
-					     xattr_content, 0,
-					     &attrsize);
+					     pxattrfid->pentry, name,
+					     pxattrfid->xattr->xattr_content,
+					     0, &attrsize);
 			if (FSAL_IS_ERROR(fsal_status)) {
-				gsh_free(
-				    pxattrfid->specdata.xattr.xattr_content);
+				gsh_free(pxattrfid->xattr);
 				gsh_free(pxattrfid);
 
 				/* fsal_status.minor is a valid errno code */
@@ -205,29 +201,24 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 			/* Check our own limit too before reallocating */
 			if (attrsize > _9P_XATTR_MAX_SIZE) {
-				gsh_free(
-				    pxattrfid->specdata.xattr.xattr_content);
+				gsh_free(pxattrfid->xattr);
 				gsh_free(pxattrfid);
 
 				return _9p_rerror(req9p, msgtag, E2BIG,
 						  plenout, preply);
 			}
 
-			pxattrfid->specdata.xattr.xattr_content =
-			    gsh_realloc(
-				pxattrfid->specdata.xattr.xattr_content,
-				attrsize);
+			pxattrfid->xattr = gsh_realloc(pxattrfid->xattr,
+					sizeof(*pxattrfid->xattr) + attrsize);
 
 			fsal_status =
 			   pxattrfid->pentry->obj_ops.getextattr_value_by_name(
-					     pxattrfid->pentry,
-					     name,
-					     pxattrfid->specdata.xattr.
-					     xattr_content, attrsize,
-					     &attrsize);
+					     pxattrfid->pentry, name,
+					     pxattrfid->xattr->xattr_content,
+					     attrsize, &attrsize);
 		}
 		if (FSAL_IS_ERROR(fsal_status)) {
-			gsh_free(pxattrfid->specdata.xattr.xattr_content);
+			gsh_free(pxattrfid->xattr);
 			gsh_free(pxattrfid);
 
 			/* ENOENT for xattr is ENOATTR */
@@ -240,8 +231,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					  fsal_status.minor, plenout, preply);
 		}
 	}
-	pxattrfid->specdata.xattr.xattr_size = attrsize;
-	pxattrfid->specdata.xattr.xattr_write = _9P_XATTR_READ_ONLY;
+	pxattrfid->xattr->xattr_size = attrsize;
+	pxattrfid->xattr->xattr_write = _9P_XATTR_READ_ONLY;
 
 	req9p->pconn->fids[*attrfid] = pxattrfid;
 

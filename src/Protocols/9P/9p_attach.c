@@ -232,6 +232,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	pfid->qid.version = 0;	/* No cache, we want the client
 				 * to stay synchronous with the server */
 	pfid->qid.path = pfid->pentry->fileid;
+	pfid->xattr = NULL;
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RATTACH);

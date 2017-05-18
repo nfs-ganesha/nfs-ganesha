@@ -349,7 +349,7 @@ void free_fid(struct _9p_fid *pfid)
 	if (pfid->ucred != NULL)
 		release_9p_user_cred_ref(pfid->ucred);
 
-	gsh_free(pfid->specdata.xattr.xattr_content);
+	gsh_free(pfid->xattr);
 	gsh_free(pfid);
 }
 
@@ -370,41 +370,25 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 	uid2grp_unref(pfid->gdata);
 
 	/* If the fid is related to a xattr, free the related memory */
-	if (pfid->specdata.xattr.xattr_content != NULL &&
-	    pfid->specdata.xattr.xattr_write == _9P_XATTR_DID_WRITE) {
+	if (pfid->xattr != NULL &&
+	    pfid->xattr->xattr_write == _9P_XATTR_DID_WRITE) {
 		/* Check size give at TXATTRCREATE with
 		 * the one resulting from the writes */
-		if (pfid->specdata.xattr.xattr_size !=
-		    pfid->specdata.xattr.xattr_offset) {
+		if (pfid->xattr->xattr_size != pfid->xattr->xattr_offset) {
 			free_fid(pfid);
 			return EINVAL;
 		}
 
-		/* Do we handle system.posix_acl_access */
-		if (pfid->specdata.xattr.xattr_id == ACL_ACCESS_XATTR_ID) {
-			fsal_status =
-			    pfid->pentry->obj_ops.setextattr_value(
-					pfid->pentry,
-					"system.posix_acl_access",
-					pfid->specdata.xattr.xattr_content,
-					pfid->specdata.xattr.xattr_size,
-					false);
-			if (FSAL_IS_ERROR(fsal_status)) {
-				free_fid(pfid);
-				return _9p_tools_errno(fsal_status);
-			}
-		} else {
-			/* Write the xattr content */
-			fsal_status =
-				pfid->pentry->obj_ops.setextattr_value_by_id(
-					pfid->pentry,
-					pfid->specdata.xattr.xattr_id,
-					pfid->specdata.xattr.xattr_content,
-					pfid->specdata.xattr.xattr_size);
-			if (FSAL_IS_ERROR(fsal_status)) {
-				free_fid(pfid);
-				return _9p_tools_errno(fsal_status);
-			}
+		fsal_status =
+		    pfid->pentry->obj_ops.setextattr_value(
+				pfid->pentry,
+				pfid->xattr->xattr_name,
+				pfid->xattr->xattr_content,
+				pfid->xattr->xattr_size,
+				false);
+		if (FSAL_IS_ERROR(fsal_status)) {
+			free_fid(pfid);
+			return _9p_tools_errno(fsal_status);
 		}
 	}
 
