@@ -183,6 +183,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	 * in order to check at TCLUNK */
 	pfid->specdata.xattr.xattr_size = *size;
 	pfid->specdata.xattr.xattr_offset = 0LL;
+	pfid->specdata.xattr.xattr_write = _9P_XATTR_CAN_WRITE;
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RXATTRCREATE);

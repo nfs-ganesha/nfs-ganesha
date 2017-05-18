@@ -371,7 +371,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 
 	/* If the fid is related to a xattr, free the related memory */
 	if (pfid->specdata.xattr.xattr_content != NULL &&
-	    pfid->specdata.xattr.xattr_write == true) {
+	    pfid->specdata.xattr.xattr_write == _9P_XATTR_DID_WRITE) {
 		/* Check size give at TXATTRCREATE with
 		 * the one resulting from the writes */
 		if (pfid->specdata.xattr.xattr_size !=

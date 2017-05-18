@@ -201,6 +201,16 @@ enum _9p_msg_t {
 #define _9P_XATTR_MAX_SIZE 65535
 
 /**
+ * 9p internal flags for xattrs: set as guard for read/write and actual
+ * setxattr "flush" call
+ */
+enum _9p_xattr_write {
+	_9P_XATTR_READ_ONLY,
+	_9P_XATTR_CAN_WRITE,
+	_9P_XATTR_DID_WRITE
+};
+
+/**
  * enum _9p_qid_t - QID types
  * @_9P_QTDIR: directory
  * @_9P_QTAPPEND: append-only
@@ -316,7 +326,7 @@ struct _9p_fid {
 			caddr_t xattr_content;
 			u64 xattr_size;
 			u64 xattr_offset;
-			bool xattr_write;
+			enum _9p_xattr_write xattr_write;
 		} xattr;
 
 	} specdata;

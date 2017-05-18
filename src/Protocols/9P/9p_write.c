@@ -107,13 +107,18 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		if (*offset > pfid->specdata.xattr.xattr_size)
 			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
 					  preply);
+		if (pfid->specdata.xattr.xattr_write != _9P_XATTR_CAN_WRITE &&
+		    pfid->specdata.xattr.xattr_write != _9P_XATTR_DID_WRITE)
+			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
+					  preply);
+
 		written_size = MIN(*count,
 				   pfid->specdata.xattr.xattr_size - *offset);
 
 		memcpy(pfid->specdata.xattr.xattr_content + *offset,
 		       databuffer, written_size);
 		pfid->specdata.xattr.xattr_offset += size;
-		pfid->specdata.xattr.xattr_write = true;
+		pfid->specdata.xattr.xattr_write = _9P_XATTR_DID_WRITE;
 
 		/* ADD CODE TO DETECT GAP */
 #if 0

@@ -241,6 +241,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		}
 	}
 	pxattrfid->specdata.xattr.xattr_size = attrsize;
+	pxattrfid->specdata.xattr.xattr_write = _9P_XATTR_READ_ONLY;
 
 	req9p->pconn->fids[*attrfid] = pxattrfid;
 
