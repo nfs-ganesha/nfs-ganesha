@@ -42,6 +42,17 @@
  * @param[out] res
  */
 
+/* Only windows NFS clients use NLM_SHARE, the NLM SHARE code is largely
+ * untested and we know windows NFS clients crash ganesha in this
+ * version (see upstream fix commit
+ * 0ded6158ac10d20cee1b217312565f692cb1e19f)
+ *
+ * We don't support MS windows NFS clients, so disable this for good to
+ * avoid anyone accidentally using windows NFS client and crashing
+ * ganesha!
+ */
+bool disable_nlm_share = true;
+
 int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 {
 	nlm4_shareargs *arg = &args->arg_nlm4_share;
@@ -54,6 +65,13 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	state_t *nlm_state;
 	int rc;
 	bool grace_ref = false;
+
+	if (disable_nlm_share) {
+		res->res_nlm4share.stat = NLM4_FAILED;
+		LogEvent(COMPONENT_NLM,
+			 "NLM4_SHARE call detected, failing it");
+		return NFS_REQ_OK;
+	}
 
 	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
 	 * responding to an NLM_*_MSG call, so we check here if the export is

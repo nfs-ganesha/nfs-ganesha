@@ -53,6 +53,14 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	state_owner_t *nlm_owner;
 	state_t *nlm_state;
 	int rc;
+	extern bool disable_nlm_share;
+
+	if (disable_nlm_share) {
+		res->res_nlm4share.stat = NLM4_FAILED;
+		LogEvent(COMPONENT_NLM,
+			 "NLM4_UNSHARE call detected, failing it");
+		return NFS_REQ_OK;
+	}
 
 	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
 	 * responding to an NLM_*_MSG call, so we check here if the export is
