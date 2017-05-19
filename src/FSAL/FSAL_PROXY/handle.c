@@ -246,7 +246,8 @@ static fsal_status_t nfsstat4_to_fsal(nfsstat4 nfsstatus)
 
 static struct bitmap4 pxy_bitmap_getattr = {
 	.map[0] =
-	    (PXY_ATTR_BIT(FATTR4_TYPE) | PXY_ATTR_BIT(FATTR4_CHANGE) |
+	    (PXY_ATTR_BIT(FATTR4_SUPPORTED_ATTRS) |
+	     PXY_ATTR_BIT(FATTR4_TYPE) | PXY_ATTR_BIT(FATTR4_CHANGE) |
 	     PXY_ATTR_BIT(FATTR4_SIZE) | PXY_ATTR_BIT(FATTR4_FSID) |
 	     PXY_ATTR_BIT(FATTR4_FILEID)),
 	.map[1] =

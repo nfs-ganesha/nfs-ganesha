@@ -378,7 +378,37 @@ static fattr_xdr_result encode_supported_attrs(XDR *xdr,
 static fattr_xdr_result decode_supported_attrs(XDR *xdr,
 					       struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+	struct bitmap4 bits;
+	int attr, offset;
+	int max_attr_idx;
+
+	max_attr_idx = nfs4_max_attr_index(args->data);
+
+	if (!inline_xdr_u_int32_t(xdr, &bits.bitmap4_len))
+		return FATTR_XDR_FAILED;
+
+	if (bits.bitmap4_len > BITMAP4_MAPLEN) {
+		LogWarn(COMPONENT_NFS_V4,
+			"Decoded a too long bitmap : %d is more than %d",
+			bits.bitmap4_len, BITMAP4_MAPLEN);
+		return FATTR_XDR_FAILED;
+	}
+
+	for (offset = 0; offset < bits.bitmap4_len; offset++) {
+		if (!inline_xdr_u_int32_t(xdr, &bits.map[offset]))
+			return FATTR_XDR_FAILED;
+	}
+
+	FSAL_CLEAR_MASK(args->attrs->supported);
+	for (attr = FATTR4_SUPPORTED_ATTRS;
+	     attr < bits.bitmap4_len*32 && attr <= max_attr_idx;
+	     attr++) {
+		if (attribute_is_set(&bits, attr) && fattr4tab[attr].attrmask)
+			FSAL_SET_MASK(args->attrs->supported,
+				      fattr4tab[attr].attrmask);
+	}
+
+	return FATTR_XDR_SUCCESS;
 }
 
 /*
