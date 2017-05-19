@@ -374,6 +374,8 @@ typedef struct nfs_core_param {
 	/** Whether to support the Network Lock Manager protocol.
 	    Defaults to true and is settable with Enable_NLM. */
 	bool enable_NLM;
+	/** Whether to disable NLM_SHARE and NLM_UNSHARE */
+	bool disable_NLM_SHARE;
 	/** Whether to use the supplied name rather than the IP
 	    address in NSM operations.  Settable with
 	    NSM_Use_Caller_Name. */

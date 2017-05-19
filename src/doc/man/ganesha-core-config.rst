@@ -128,6 +128,11 @@ heartbeat_freq(uint32, range 0 to 5000 default 1000)
 Enable_NLM(bool, default true)
     Whether to support the Network Lock Manager protocol.
 
+Disable_NLM_SHARE(bool, default false)
+    This option allows disabling support for the NLM4PROC_SHARE and
+    NLM4PROC_UNSHARE RPC procedures that implement share reservations for
+    NFSv3 via NLM. With this set to true, these procedures will fail.
+
 Blocked_Lock_Poller_Interval(int64, range 0 to 180, default 10)
     Polling interval for blocked lock polling thread
 

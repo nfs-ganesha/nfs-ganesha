@@ -56,6 +56,13 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	int rc;
 	bool grace_ref = false;
 
+	if (nfs_param.core_param.disable_NLM_SHARE) {
+		res->res_nlm4share.stat = NLM4_FAILED;
+		LogEvent(COMPONENT_NLM,
+			 "NLM4_SHARE call detected, failing it");
+		return NFS_REQ_OK;
+	}
+
 	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
 	 * responding to an NLM_*_MSG call, so we check here if the export is
 	 * NULL and if so, handle the response.

@@ -254,6 +254,8 @@ static struct config_item core_params[] = {
 #ifdef _USE_NLM
 	CONF_ITEM_BOOL("Enable_NLM", true,
 		       nfs_core_param, enable_NLM),
+	CONF_ITEM_BOOL("Disable_NLM_SHARE", false,
+		       nfs_core_param, disable_NLM_SHARE),
 	CONF_ITEM_BOOL("NSM_Use_Caller_Name", false,
 		       nfs_core_param, nsm_use_caller_name),
 #endif

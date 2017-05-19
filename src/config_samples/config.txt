@@ -137,6 +137,8 @@ NFS_CORE_PARAM {}
 
 	Enable_NLM(bool, default true)
 
+	Disable_NLM_SHARE(bool, default false)
+
 	Enable_RQUOTA(bool, default true)
 
 	Enable_NFSACL(bool, default false)
