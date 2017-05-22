@@ -1,0 +1,20 @@
+machine:
+  post:
+    - sudo curl -L -o /usr/bin/docker https://get.docker.com/builds/Linux/x86_64/docker-1.9.1
+    - sudo container=yes docker daemon: { background: true }
+
+checkout:
+  post:
+    - git submodule update --init
+
+dependencies:
+  post:
+    - mkdir logs conf
+    - docker build -t scality/nfsd .
+#    - docker run -d --name scality-nfsd --privileged \
+#                 -v $PWD/logs:/logs \
+#                 -v $PWD/conf:/conf \
+#                 --net=host scality/nfsd
+test:
+  override:
+    - /bin/true
