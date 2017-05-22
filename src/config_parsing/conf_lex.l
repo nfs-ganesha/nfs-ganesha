@@ -108,6 +108,7 @@ WILDCARD     ({WC}*{WP})+{WC}*
 
 COMMENTEXT	 #.*$
 ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
+NETGROUP_CHARS [a-zA-Z_][a-zA-Z0-9_.\-]*
 
 /* INCLUDE state is used for picking the name of the include file */
 %START YY_INIT DEFINITION TERM INCLUDE
@@ -298,7 +299,7 @@ ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 		return TOK_V6CIDR;
 }
 
-<TERM>{AT}{ID_CHARS} { /* a netgroup used for clients */
+<TERM>{AT}{NETGROUP_CHARS} { /* a netgroup used for clients */
 	DEBUG_LEX(" netgroup :%s", yytext);
 	yylval->token = save_token(yytext, false, stp);
 	return TOK_NETGROUP;
