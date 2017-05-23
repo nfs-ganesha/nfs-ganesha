@@ -162,11 +162,6 @@ GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
-	/* note : fsal_attr is optional.
-	 */
-	if (!dir_hdl || !gpfs_fh || !op_ctx || !linkname)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	dest_dir =
 		container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 

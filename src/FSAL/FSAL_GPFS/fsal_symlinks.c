@@ -58,10 +58,6 @@ GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
-	/* note : link_attr is optional. */
-	if (!dir_hdl || !op_ctx || !link_content)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
@@ -106,11 +102,6 @@ GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl, const char *linkname,
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
-
-	/* note : link_attr is optional. */
-	if (!dir_hdl || !op_ctx || !gpfs_fh || !linkname
-	    || !linkcontent)
-		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);

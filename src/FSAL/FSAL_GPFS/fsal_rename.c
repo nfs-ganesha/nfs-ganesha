@@ -59,12 +59,6 @@ GPFSFSAL_rename(struct fsal_obj_handle *old_hdl, const char *old_name,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
-	/* sanity checks.
-	 * note : src/tgt_dir_attributes are optional.
-	 */
-	if (!old_hdl || !new_hdl || !old_name || !new_name || !op_ctx)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	old_gpfs_hdl =
 	    container_of(old_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	new_gpfs_hdl =

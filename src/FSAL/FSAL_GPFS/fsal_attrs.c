@@ -280,12 +280,6 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 	/* Indicate which attribute in stat should be changed. */
 	int attr_changed = 0;
 
-	/* sanity checks.
-	 * note : object_attributes is optional.
-	 */
-	if (!dir_hdl || !ro_ctx || !obj_attr)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	gpfs_export = container_of(ro_ctx->fsal_export,
 				   struct gpfs_fsal_export, export);

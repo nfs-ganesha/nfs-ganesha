@@ -57,9 +57,6 @@ GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl, const char *object_name,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
-	if (!dir_hdl || !op_ctx || !object_name)
-		return fsalstat(ERR_FSAL_FAULT, 0);
-
 	gpfs_hdl =
 	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
