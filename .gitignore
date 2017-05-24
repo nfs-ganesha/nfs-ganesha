@@ -39,6 +39,7 @@ nfs-ganesha*.tar.bz2
 patch-for-HPSS-nfs-ganesha-*
 *.diff
 *.patch
+!debian/patches/*.patch
 core.*
 *cmake_install.cmake
 libfsal*.so*
