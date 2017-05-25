@@ -147,8 +147,8 @@ void deconstruct_handle(struct rgw_handle *obj);
 fsal_status_t rgw2fsal_error(const int errorcode);
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
-struct state_t *alloc_state(struct fsal_export *exp_hdl,
-			enum state_type state_type,
-			struct state_t *related_state);
+struct state_t *rgw_alloc_state(struct fsal_export *exp_hdl,
+				enum state_type state_type,
+				struct state_t *related_state);
 void rgw_fs_invalidate(void *handle, struct rgw_fh_hk fh_hk);
 #endif				/* !FSAL_RGW_INTERNAL_INTERNAL */

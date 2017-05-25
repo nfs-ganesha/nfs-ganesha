@@ -1414,9 +1414,9 @@ fsal_status_t rgw_fsal_commit2(struct fsal_obj_handle *obj_hdl,
  * @returns a state structure.
  */
 
-struct state_t *alloc_state(struct fsal_export *exp_hdl,
-			enum state_type state_type,
-			struct state_t *related_state)
+struct state_t *rgw_alloc_state(struct fsal_export *exp_hdl,
+				enum state_type state_type,
+				struct state_t *related_state)
 {
 	return init_state(gsh_calloc(1, sizeof(struct rgw_open_state)),
 			exp_hdl, state_type, related_state);

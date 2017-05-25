@@ -504,5 +504,5 @@ void export_ops_init(struct export_ops *ops)
 	ops->fs_supported_attrs = fs_supported_attrs;
 	ops->fs_umask = fs_umask;
 	ops->fs_xattr_access_rights = fs_xattr_access_rights;
-	ops->alloc_state = alloc_state;
+	ops->alloc_state = rgw_alloc_state;
 }
