@@ -90,7 +90,6 @@ struct mem_fsal_obj_handle {
 		struct {
 			struct fsal_share share;
 			struct mem_fd fd;
-			off_t length;
 		} mh_file;
 		struct {
 			object_file_type_t nodetype;
@@ -142,7 +141,7 @@ static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl,
 				    const char *func, int line)
 {
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_free, func, line, hdl);
+	tracepoint(fsalmem, mem_free, func, line, hdl, hdl->m_name);
 #endif
 
 	glist_del(&hdl->mfo_exp_entry);

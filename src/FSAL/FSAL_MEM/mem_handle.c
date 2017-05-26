@@ -257,33 +257,55 @@ static void mem_copy_attrs_mask(struct attrlist *attrs_in,
 	/* Use full timer resolution */
 	now(&attrs_out->ctime);
 
-	if ((attrs_in->valid_mask & ATTR_SIZE) != 0)
+	if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_SIZE)) {
 		attrs_out->filesize = attrs_in->filesize;
-	if ((attrs_in->valid_mask & ATTR_MODE) != 0)
+	}
+
+	if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_MODE)) {
 		attrs_out->mode = attrs_in->mode & (~S_IFMT & 0xFFFF) &
 			~op_ctx->fsal_export->exp_ops.fs_umask(
 						op_ctx->fsal_export);
-	if ((attrs_in->valid_mask & ATTR_OWNER) != 0)
+	}
+
+	if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_OWNER)) {
 		attrs_out->owner = attrs_in->owner;
+	}
 
-	if ((attrs_in->valid_mask & ATTR_GROUP) != 0)
+	if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_GROUP)) {
 		attrs_out->group = attrs_in->group;
+	}
 
-	if ((attrs_in->valid_mask & ATTR_ATIME) != 0)
-		attrs_out->atime = attrs_in->atime;
-	else
-		attrs_out->atime = attrs_out->ctime;
+	if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTRS_SET_TIME)) {
+		if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_ATIME_SERVER)) {
+			attrs_out->atime.tv_sec = 0;
+			attrs_out->atime.tv_nsec = UTIME_NOW;
+		} else if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_ATIME)) {
+			attrs_out->atime = attrs_in->atime;
+		} else {
+			attrs_out->mtime = attrs_out->ctime;
+		}
 
-	if ((attrs_in->valid_mask & ATTR_CREATION) != 0)
+		if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_MTIME_SERVER)) {
+			attrs_out->mtime.tv_sec = 0;
+			attrs_out->mtime.tv_nsec = UTIME_NOW;
+		} else if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_MTIME)) {
+			attrs_out->mtime = attrs_in->mtime;
+		} else {
+			attrs_out->mtime = attrs_out->ctime;
+		}
+	}
+
+	if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_CREATION)) {
 		attrs_out->creation = attrs_in->creation;
+	}
 
-	if ((attrs_in->valid_mask & ATTR_MTIME) != 0)
-		attrs_out->mtime = attrs_in->mtime;
-	else
-		attrs_out->mtime = attrs_out->ctime;
-
-	if ((attrs_in->valid_mask & ATTR_SPACEUSED) != 0)
+	if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_SPACEUSED)) {
 		attrs_out->spaceused = attrs_in->spaceused;
+	} else {
+		attrs_out->spaceused = attrs_out->filesize;
+	}
+
+	/* XXX TODO copy ACL */
 
 	attrs_out->chgtime = attrs_out->ctime;
 	attrs_out->change = timespec_to_nsecs(&attrs_out->chgtime);
@@ -409,7 +431,6 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 			hdl->attrs.filesize = 0;
 			hdl->attrs.spaceused = 0;
 		}
-		hdl->mh_file.length = hdl->attrs.filesize;
 		hdl->attrs.numlinks = 1;
 		break;
 	case BLOCK_FILE:
@@ -449,7 +470,7 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		mem_insert_obj(parent, hdl);
 	}
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_alloc, func, line, hdl);
+	tracepoint(fsalmem, mem_alloc, func, line, hdl, name);
 #endif
 	return hdl;
 
@@ -917,45 +938,13 @@ fsal_status_t mem_setattr2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 	}
 
-	/** TRUNCATE **/
-	if (FSAL_TEST_MASK(attrs_set->valid_mask, ATTR_SIZE)) {
-		myself->attrs.filesize = attrs_set->filesize;
-	}
+	mem_copy_attrs_mask(attrs_set, &myself->attrs);
 
-	/** CHMOD **/
-	if (FSAL_TEST_MASK(attrs_set->valid_mask, ATTR_MODE)) {
-		myself->attrs.mode = attrs_set->mode;
-	}
-
-	/**  CHOWN  **/
-	if (FSAL_TEST_MASK(attrs_set->valid_mask, ATTR_OWNER)) {
-		myself->attrs.owner = attrs_set->owner;
-	}
-	if (FSAL_TEST_MASK(attrs_set->valid_mask, ATTR_GROUP)) {
-		myself->attrs.group = attrs_set->group;
-	}
-
-	/**  UTIME  **/
-	if (FSAL_TEST_MASK(attrs_set->valid_mask, ATTRS_SET_TIME)) {
-		if (FSAL_TEST_MASK(attrs_set->valid_mask, ATTR_ATIME_SERVER)) {
-			myself->attrs.atime.tv_sec = 0;
-			myself->attrs.atime.tv_nsec = UTIME_NOW;
-		} else if (FSAL_TEST_MASK(attrs_set->valid_mask, ATTR_ATIME)) {
-			myself->attrs.atime = attrs_set->atime;
-		}
-
-		/* Mtime */
-		if (FSAL_TEST_MASK(attrs_set->valid_mask, ATTR_MTIME_SERVER)) {
-			myself->attrs.mtime.tv_sec = 0;
-			myself->attrs.mtime.tv_nsec = UTIME_NOW;
-		} else if (FSAL_TEST_MASK(attrs_set->valid_mask, ATTR_MTIME)) {
-			myself->attrs.mtime = attrs_set->mtime;
-		}
-	}
-
-	/** ACL **/
-	/* XXX TODO */
-
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_setattrs, __func__, __LINE__, myself,
+			   myself->m_name, myself->attrs.filesize,
+			   myself->attrs.numlinks, myself->attrs.change);
+#endif
 	return fsalstat(ERR_FSAL_NO_ERROR, EINVAL);
 }
 
@@ -1176,6 +1165,11 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 	LogFullDebug(COMPONENT_FSAL,
 		     truncated ? "Truncate" : "No truncate");
 
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_open, __func__, __LINE__, myself,
+			   myself->m_name, truncated, setattrs);
+#endif
+
 	/* Now fixup attrs for verifier if exclusive create */
 	if (createmode >= FSAL_EXCLUSIVE) {
 		if (!setattrs) {
@@ -1384,6 +1378,11 @@ fsal_status_t mem_reopen2(struct fsal_obj_handle *obj_hdl,
 	struct mem_fd *my_fd = (struct mem_fd *)(state + 1);
 	fsal_openflags_t old_openflags;
 
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_open, __func__, __LINE__, myself,
+			   myself->m_name, openflags & FSAL_O_TRUNC, false);
+#endif
+
 	old_openflags = my_fd->openflags;
 
 	/* This can block over an I/O operation. */
@@ -1468,10 +1467,10 @@ fsal_status_t mem_read2(struct fsal_obj_handle *obj_hdl,
 		return status;
 	}
 
-	if (offset > myself->mh_file.length) {
+	if (offset > myself->attrs.filesize) {
 		buffer_size = 0;
-	} else if (offset + buffer_size > myself->mh_file.length) {
-		buffer_size = myself->mh_file.length - offset;
+	} else if (offset + buffer_size > myself->attrs.filesize) {
+		buffer_size = myself->attrs.filesize - offset;
 	}
 
 	if (offset < myself->datasize) {
@@ -1554,9 +1553,9 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	if (offset + buffer_size > myself->mh_file.length) {
-		myself->attrs.filesize = myself->mh_file.length = offset +
-			buffer_size;
+	if (offset + buffer_size > myself->attrs.filesize) {
+		myself->attrs.filesize = myself->attrs.spaceused =
+			offset + buffer_size;
 	}
 
 	if (offset < myself->datasize) {
@@ -1566,6 +1565,12 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 		writesize = MIN(buffer_size, myself->datasize - offset);
 		memcpy(myself->data + offset, buffer, writesize);
 	}
+
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_write, __func__, __LINE__, myself,
+			   myself->m_name, myself->attrs.filesize,
+			   myself->attrs.spaceused);
+#endif
 
 	/* Update change stats */
 	now(&myself->attrs.mtime);

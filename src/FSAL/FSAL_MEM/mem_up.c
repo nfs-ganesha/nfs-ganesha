@@ -85,7 +85,7 @@ mem_invalidate_close(struct mem_fsal_export *mfe,
 	fsal_status_t status;
 	struct gsh_buffdesc fh_desc;
 
-	LogEvent(COMPONENT_FSAL_UP, "invalidate_closing %s", hdl->m_name);
+	LogFullDebug(COMPONENT_FSAL_UP, "invalidate_closing %s", hdl->m_name);
 
 	hdl->obj_handle.obj_ops.handle_to_key(&hdl->obj_handle, &fh_desc);
 

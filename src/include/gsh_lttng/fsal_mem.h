@@ -14,17 +14,20 @@
  * @param[in] function	Name of function taking ref
  * @param[in] line	Line number of call
  * @param[in] obj	Address of obj
+ * @param[in] name	File name
  */
 TRACEPOINT_EVENT(
 	fsalmem,
 	mem_alloc,
 	TP_ARGS(const char *, function,
 		int, line,
-		void *, obj),
+		void *, obj,
+		const char *, name),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, obj, obj)
+		ctf_string(name, name)
 	)
 )
 
@@ -39,17 +42,20 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] function	Name of function releasing ref
  * @param[in] line	Line number of call
  * @param[in] obj	Address of obj
+ * @param[in] name	File name
  */
 TRACEPOINT_EVENT(
 	fsalmem,
 	mem_free,
 	TP_ARGS(const char *, function,
 		int, line,
-		void *, obj),
+		void *, obj,
+		const char *, name),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, obj, obj)
+		ctf_string(name, name)
 	)
 )
 
@@ -89,7 +95,7 @@ TRACEPOINT_LOGLEVEL(
 /**
  * @brief Trace a getattrs call
  *
- * @param[in] function	Name of function releasing ref
+ * @param[in] function	Name of function
  * @param[in] line	Line number of call
  * @param[in] obj	Address of obj
  * @param[in] name	File name
@@ -121,6 +127,114 @@ TRACEPOINT_EVENT(
 TRACEPOINT_LOGLEVEL(
 	fsalmem,
 	mem_getattrs,
+	TRACE_INFO)
+
+
+/**
+ * @brief Trace a setattrs call
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] obj	Address of obj
+ * @param[in] name	File name
+ * @param[in] size	Size of file
+ * @param[in] numlinks	Number of links
+ * @param[in] chg	Change counter
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_setattrs,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, obj,
+		const char *, name,
+		uint64_t, size,
+		uint32_t, numlinks,
+		uint64_t, chg),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, obj, obj)
+		ctf_string(name, name)
+		ctf_integer(uint64_t, size, size)
+		ctf_integer(uint32_t, numlinks, numlinks)
+		ctf_integer(uint64_t, chg, chg)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_setattrs,
+	TRACE_INFO)
+
+
+/**
+ * @brief Trace a write call
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] obj	Address of obj
+ * @param[in] name	File name
+ * @param[in] size	Size of file
+ * @param[in] dsize	Data size of file
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_write,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, obj,
+		const char *, name,
+		uint64_t, size,
+		uint64_t, dsize),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, obj, obj)
+		ctf_string(name, name)
+		ctf_integer(uint64_t, size, size)
+		ctf_integer(uint64_t, dsize, dsize)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_write,
+	TRACE_INFO)
+
+
+/**
+ * @brief Trace an open call
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] obj	Address of obj
+ * @param[in] name	File name
+ * @param[in] truncated	True if truncated
+ * @param[in] setattrs	Pointer of setattrs
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_open,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, obj,
+		const char *, name,
+		uint32_t, truncated,
+		uint32_t, setattrs),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, obj, obj)
+		ctf_string(name, name)
+		ctf_integer(uint32_t, truncated, truncated)
+		ctf_integer(uint32_t, setattrs, setattrs)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_open,
 	TRACE_INFO)
 
 
