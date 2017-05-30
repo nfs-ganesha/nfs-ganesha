@@ -631,6 +631,10 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 	if (dest_dir->type != DIRECTORY)
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
+	/* Must be the same FS */
+	if (obj->fs != dest_dir->fs)
+		return fsalstat(ERR_FSAL_XDEV, 0);
+
 	if (!op_ctx->fsal_export->exp_ops.fs_supports(
 			op_ctx->fsal_export,
 			fso_link_supports_permission_checks)) {

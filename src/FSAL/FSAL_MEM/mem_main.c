@@ -207,6 +207,7 @@ MODULE_INIT void init(void)
 	myself->m_ops.init_config = mem_init_config;
 	myself->m_ops.support_ex = mem_support_ex;
 	glist_init(&MEM.mem_exports);
+	MEM.next_inode = 0xc0ffee;
 }
 
 MODULE_FINI void finish(void)
