@@ -87,11 +87,6 @@ enum {
 };
 
 /**
- * Close any open file.
- */
-static const uint32_t fsal_up_close = 0x0100;
-
-/**
  * @brief Optional stuff for layoutreturn
  * @{
  */

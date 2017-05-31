@@ -54,7 +54,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	int retry = 0;
 	struct gsh_buffdesc key;
 	uint32_t expire_time_attr = 0;
-	uint32_t upflags = 0;
+	uint32_t upflags;
 	int errsv = 0;
 	fsal_status_t fsal_status = {0,};
 	struct req_op_context req_ctx = {0};
@@ -341,6 +341,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					posix2fsal_attributes(&buf, &attr);
 					/* Set the mask to what is changed */
 					attr.valid_mask = 0;
+					upflags = 0;
 					if (flags & UP_SIZE)
 						attr.valid_mask |=
 						   ATTR_CHGTIME | ATTR_CHANGE |
@@ -380,8 +381,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 					if ((flags & UP_NLINK)
 					    && (attr.numlinks == 0)) {
-						upflags = fsal_up_nlink |
-							  fsal_up_close;
+						upflags = fsal_up_nlink;
 						attr.valid_mask = 0;
 						fsal_status = up_async_update
 						    (general_fridge,
