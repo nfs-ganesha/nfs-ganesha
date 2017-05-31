@@ -2823,7 +2823,6 @@ again:
 			/* Caller is done, or we have reached the end of
 			 * the directory, no need to get another dirent.
 			 */
-			PTHREAD_RWLOCK_unlock(&directory->content_lock);
 
 			/* If cb_result is DIR_TERMINATE, the callback did
 			 * not consume this entry, so we can not have reached
@@ -2836,6 +2835,8 @@ again:
 				 dirent, dirent->name,
 				 fsal_dir_result_str(cb_result),
 				 *eod_met ? "true" : "false");
+
+			PTHREAD_RWLOCK_unlock(&directory->content_lock);
 
 			return status;
 		}
