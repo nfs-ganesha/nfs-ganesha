@@ -54,6 +54,9 @@
 #define bswap_64(x)     bswap64((x))
 #endif
 
+#ifdef USE_LTTNG
+#include "gsh_lttng/fsal_mem.h"
+#endif
 /* helpers to/from other MEM objects
  */
 
@@ -268,6 +271,9 @@ static struct state_t *mem_alloc_state(struct fsal_export *exp_hdl,
 	state = init_state(gsh_calloc(1, sizeof(struct state_t)
 				      + sizeof(struct mem_fd)),
 			   exp_hdl, state_type, related_state);
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_alloc_state, __func__, __LINE__, state);
+#endif
 	return state;
 }
 

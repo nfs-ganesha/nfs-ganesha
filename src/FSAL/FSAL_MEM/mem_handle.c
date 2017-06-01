@@ -1149,6 +1149,11 @@ static fsal_status_t mem_rename(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_rename, __func__, __LINE__, mem_obj,
+		   mem_olddir->m_name, old_name, mem_newdir->m_name, new_name);
+#endif
+
 	/* Remove from old dir */
 	mem_remove_dirent(mem_olddir, old_name);
 
@@ -1212,11 +1217,6 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 	LogFullDebug(COMPONENT_FSAL,
 		     truncated ? "Truncate" : "No truncate");
 
-#ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_open, __func__, __LINE__, myself,
-			   myself->m_name, truncated, setattrs);
-#endif
-
 	/* Now fixup attrs for verifier if exclusive create */
 	if (createmode >= FSAL_EXCLUSIVE) {
 		if (!setattrs) {
@@ -1230,6 +1230,10 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (name == NULL) {
 		/* This is an open by handle */
+#ifdef USE_LTTNG
+		tracepoint(fsalmem, mem_open, __func__, __LINE__, myself,
+			   myself->m_name, state, truncated, setattrs);
+#endif
 		if (state != NULL) {
 			/* Prepare to take the share reservation, but only if we
 			 * are called with a valid state (if state is NULL the
@@ -1341,6 +1345,10 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 				   obj_handle);
 		created = true;
 	}
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_open, __func__, __LINE__, hdl,
+		   hdl->m_name, state, truncated, setattrs);
+#endif
 
 	*caller_perm_check = !created;
 
@@ -1427,7 +1435,8 @@ fsal_status_t mem_reopen2(struct fsal_obj_handle *obj_hdl,
 
 #ifdef USE_LTTNG
 	tracepoint(fsalmem, mem_open, __func__, __LINE__, myself,
-			   myself->m_name, openflags & FSAL_O_TRUNC, false);
+			   myself->m_name, state, openflags & FSAL_O_TRUNC,
+			   false);
 #endif
 
 	old_openflags = my_fd->openflags;
@@ -1532,6 +1541,12 @@ fsal_status_t mem_read2(struct fsal_obj_handle *obj_hdl,
 		memset(buffer, 'a', buffer_size);
 	}
 
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_read, __func__, __LINE__, myself,
+		   myself->m_name, state, myself->attrs.filesize,
+		   myself->attrs.spaceused);
+#endif
+
 	*read_amount = buffer_size;
 	*end_of_file = (buffer_size == 0);
 	now(&myself->attrs.atime);
@@ -1615,7 +1630,7 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 
 #ifdef USE_LTTNG
 	tracepoint(fsalmem, mem_write, __func__, __LINE__, myself,
-			   myself->m_name, myself->attrs.filesize,
+			   myself->m_name, state, myself->attrs.filesize,
 			   myself->attrs.spaceused);
 #endif
 
@@ -1966,6 +1981,10 @@ fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
 				 "Found hdl=%p name=%s",
 				 my_hdl, my_hdl->m_name);
 
+#ifdef USE_LTTNG
+			tracepoint(fsalmem, mem_create_handle, __func__,
+				   __LINE__, hdl, my_hdl->m_name);
+#endif
 			*obj_hdl = hdl;
 
 			PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
