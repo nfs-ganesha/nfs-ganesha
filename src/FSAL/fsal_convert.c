@@ -415,52 +415,84 @@ const char *object_file_type_to_str(object_file_type_t type)
 	return "unexpected type";
 }
 
+void posix2fsal_attributes_all(const struct stat *buffstat,
+			       struct attrlist *fsalattr)
+{
+	fsalattr->valid_mask |= ATTRS_POSIX;
+	posix2fsal_attributes(buffstat, fsalattr);
+}
+
+/* fsalattr->valid_mask should be set to POSIX attributes that need to
+ * be filled in. buffstat is expected to have those attributes filled in
+ * correctly for converting the attributes from POSIX to FSAL.
+ */
 void posix2fsal_attributes(const struct stat *buffstat,
 			   struct attrlist *fsalattr)
 {
-	/* Indicate which atrributes we have set without affecting the
-	 * other bits in the mask.
-	 */
-	fsalattr->valid_mask |= ATTRS_POSIX;
 	fsalattr->supported = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
 							op_ctx->fsal_export);
 
 	/* Fills the output struct */
-	fsalattr->type = posix2fsal_type(buffstat->st_mode);
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_TYPE))
+		fsalattr->type = posix2fsal_type(buffstat->st_mode);
 
-	fsalattr->filesize = buffstat->st_size;
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_SIZE))
+		fsalattr->filesize = buffstat->st_size;
 
-	fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_FSID))
+		fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
 
-	fsalattr->fileid = buffstat->st_ino;
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_FILEID))
+		fsalattr->fileid = (uint64_t)buffstat->st_ino;
 
-	fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_MODE))
+		fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
 
-	fsalattr->numlinks = buffstat->st_nlink;
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_NUMLINKS))
+		fsalattr->numlinks = buffstat->st_nlink;
 
-	fsalattr->owner = buffstat->st_uid;
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_OWNER))
+		fsalattr->owner = buffstat->st_uid;
 
-	fsalattr->group = buffstat->st_gid;
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_GROUP))
+		fsalattr->group = buffstat->st_gid;
 
-	/* Use full timer resolution */
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_ATIME)) {
 #ifdef FREEBSD
-	fsalattr->atime = buffstat->st_atimespec;
-	fsalattr->ctime = buffstat->st_ctimespec;
-	fsalattr->mtime = buffstat->st_mtimespec;
+		fsalattr->atime = buffstat->st_atimespec;
 #else
-	fsalattr->atime = buffstat->st_atim;
-	fsalattr->ctime = buffstat->st_ctim;
-	fsalattr->mtime = buffstat->st_mtim;
+		fsalattr->atime = buffstat->st_atim;
 #endif
-	fsalattr->chgtime =
-	    (gsh_time_cmp(&fsalattr->mtime, &fsalattr->ctime) > 0) ?
-		fsalattr->mtime : fsalattr->ctime;
+	}
 
-	fsalattr->change = timespec_to_nsecs(&fsalattr->chgtime);
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_CTIME)) {
+#ifdef FREEBSD
+		fsalattr->ctime = buffstat->st_ctimespec;
+#else
+		fsalattr->ctime = buffstat->st_ctim;
+#endif
+	}
 
-	fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_MTIME)) {
+#ifdef FREEBSD
+		fsalattr->mtime = buffstat->st_mtimespec;
+#else
+		fsalattr->mtime = buffstat->st_mtim;
+#endif
+	}
 
-	fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_CHGTIME)) {
+		fsalattr->chgtime =
+			gsh_time_cmp(&fsalattr->mtime, &fsalattr->ctime) > 0 ?
+			fsalattr->mtime : fsalattr->ctime;
+		fsalattr->change = timespec_to_nsecs(&fsalattr->chgtime);
+	}
+
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_SPACEUSED))
+		fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
+
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_RAWDEV))
+		fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
 }
 
 /** @} */

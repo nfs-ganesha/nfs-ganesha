@@ -62,6 +62,8 @@ int fsal2posix_testperm(fsal_accessflags_t testperm);
  */
 void posix2fsal_attributes(const struct stat *buffstat,
 			   struct attrlist *fsalattr_out);
+void posix2fsal_attributes_all(const struct stat *buffstat,
+			       struct attrlist *fsalattr_out);
 
 /** converts FSAL access mode to unix mode. */
 mode_t fsal2unix_mode(uint32_t fsal_mode);

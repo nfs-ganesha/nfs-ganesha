@@ -231,7 +231,7 @@ static fsal_status_t tank_lookup(struct fsal_obj_handle *parent,
 	hdl = alloc_handle(&fh, &stat, link_content, op_ctx->fsal_export);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&stat, attrs_out);
+		posix2fsal_attributes_all(&stat, attrs_out);
 	}
 
 	*handle = &hdl->obj_handle;
@@ -280,7 +280,7 @@ fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
 	hdl = alloc_handle(&fh, &stat, NULL, exp_hdl);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&stat, attrs_out);
+		posix2fsal_attributes_all(&stat, attrs_out);
 	}
 
 	*handle = &hdl->obj_handle;
@@ -332,7 +332,7 @@ static fsal_status_t tank_create(struct fsal_obj_handle *dir_hdl,
 	hdl = alloc_handle(&fh, &stat, NULL, op_ctx->fsal_export);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&stat, attrs_out);
+		posix2fsal_attributes_all(&stat, attrs_out);
 	}
 
 	/* >> set output handle << */
@@ -387,7 +387,7 @@ static fsal_status_t tank_mkdir(struct fsal_obj_handle *dir_hdl,
 	hdl = alloc_handle(&fh, &stat, NULL, op_ctx->fsal_export);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&stat, attrs_out);
+		posix2fsal_attributes_all(&stat, attrs_out);
 	}
 
 	/* >> set output handle << */
@@ -461,7 +461,7 @@ static fsal_status_t tank_makesymlink(struct fsal_obj_handle *dir_hdl,
 	hdl = alloc_handle(&fh, &stat, link_path, op_ctx->fsal_export);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&stat, attrs_out);
+		posix2fsal_attributes_all(&stat, attrs_out);
 	}
 
 	*handle = &hdl->obj_handle;
@@ -774,7 +774,7 @@ static fsal_status_t tank_getattrs(struct fsal_obj_handle *obj_hdl,
 	/* convert attributes */
  ok_file_opened_and_deleted:
 
-	posix2fsal_attributes(&stat, attrs);
+	posix2fsal_attributes_all(&stat, attrs);
 
 	goto out;
 
@@ -1113,7 +1113,7 @@ fsal_status_t tank_create_handle(struct fsal_export *exp_hdl,
 	hdl = alloc_handle(&fh, &stat, link_content, exp_hdl);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&stat, attrs_out);
+		posix2fsal_attributes_all(&stat, attrs_out);
 	}
 
 	*handle = &hdl->obj_handle;

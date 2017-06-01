@@ -742,7 +742,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * on create (if we even created), just use the stat results
 		 * we used to create the fsal_obj_handle.
 		 */
-		posix2fsal_attributes(&stat, attrs_out);
+		posix2fsal_attributes_all(&stat, attrs_out);
 	}
 
 	close(dir_fd);
@@ -1445,7 +1445,7 @@ fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
 
-	posix2fsal_attributes(&stat, attrs);
+	posix2fsal_attributes_all(&stat, attrs);
 	attrs->fsid = myself->obj_handle.fs->fsid;
 
 	if (myself->sub_ops && myself->sub_ops->getattrs) {

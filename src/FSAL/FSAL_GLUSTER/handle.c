@@ -134,7 +134,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&sb, attrs_out);
+		posix2fsal_attributes_all(&sb, attrs_out);
 	}
 
 	*handle = &objhandle->handle;
@@ -301,7 +301,7 @@ static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&sb, attrs_out);
+		posix2fsal_attributes_all(&sb, attrs_out);
 	}
 
 	*handle = &objhandle->handle;
@@ -387,7 +387,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&sb, attrs_out);
+		posix2fsal_attributes_all(&sb, attrs_out);
 	}
 
 	*handle = &objhandle->handle;
@@ -523,7 +523,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&sb, attrs_out);
+		posix2fsal_attributes_all(&sb, attrs_out);
 	}
 
 	*handle = &objhandle->handle;
@@ -634,7 +634,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&sb, attrs_out);
+		posix2fsal_attributes_all(&sb, attrs_out);
 	}
 
 	*handle = &objhandle->handle;
@@ -1653,7 +1653,7 @@ open:
 		 * on create (if we even created), just use the stat results
 		 * we used to create the fsal_obj_handle.
 		 */
-		posix2fsal_attributes(&sb, attrs_out);
+		posix2fsal_attributes_all(&sb, attrs_out);
 	}
 
 

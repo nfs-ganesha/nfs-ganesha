@@ -111,7 +111,7 @@ static fsal_status_t lookup_int(struct fsal_obj_handle *dir_hdl,
 	*obj_hdl = &obj->handle;
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&st, attrs_out);
+		posix2fsal_attributes_all(&st, attrs_out);
 	}
 
 
@@ -263,7 +263,7 @@ static fsal_status_t rgw_fsal_create(struct fsal_obj_handle *dir_hdl,
 	*obj_hdl = &obj->handle;
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&st, attrs_out);
+		posix2fsal_attributes_all(&st, attrs_out);
 	}
 
 
@@ -331,7 +331,7 @@ static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 	*obj_hdl = &obj->handle;
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&st, attrs_out);
+		posix2fsal_attributes_all(&st, attrs_out);
 	}
 
 
@@ -374,7 +374,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		return rgw2fsal_error(rc);
 	}
 
-	posix2fsal_attributes(&st, attrs);
+	posix2fsal_attributes_all(&st, attrs);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1076,7 +1076,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		 * on create (if we even created), just use the stat results
 		 * we used to create the fsal_obj_handle.
 		 */
-		posix2fsal_attributes(&st, attrs_out);
+		posix2fsal_attributes_all(&st, attrs_out);
 	}
 
 	if (state != NULL) {

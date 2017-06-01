@@ -147,7 +147,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&sb, attrs_out);
+		posix2fsal_attributes_all(&sb, attrs_out);
 	}
 
 	*pub_handle = &objhandle->handle;
@@ -253,7 +253,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&sb, attrs_out);
+		posix2fsal_attributes_all(&sb, attrs_out);
 	}
 
 	*pub_handle = &objhandle->handle;

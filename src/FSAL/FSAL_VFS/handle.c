@@ -267,7 +267,7 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 	}
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&stat, attrs_out);
+		posix2fsal_attributes_all(&stat, attrs_out);
 	}
 
 	/* if it is a directory and the sticky bit is set
@@ -598,7 +598,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			 * was set on create, just use the stat results we used
 			 * to create the fsal_obj_handle.
 			 */
-			posix2fsal_attributes(&stat, attrs_out);
+			posix2fsal_attributes_all(&stat, attrs_out);
 		}
 	}
 
@@ -802,7 +802,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			 * was set on create, just use the stat results we used
 			 * to create the fsal_obj_handle.
 			 */
-			posix2fsal_attributes(&stat, attrs_out);
+			posix2fsal_attributes_all(&stat, attrs_out);
 		}
 	}
 
@@ -988,7 +988,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 			 * was set on create, just use the stat results we used
 			 * to create the fsal_obj_handle.
 			 */
-			posix2fsal_attributes(&stat, attrs_out);
+			posix2fsal_attributes_all(&stat, attrs_out);
 		}
 	}
 
@@ -1826,7 +1826,7 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 	close(dir_fd);
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&stat, attrs_out);
+		posix2fsal_attributes_all(&stat, attrs_out);
 	}
 
 	*handle = &hdl->obj_handle;
@@ -1977,7 +1977,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 	}
 
 	if (attrs_out != NULL) {
-		posix2fsal_attributes(&obj_stat, attrs_out);
+		posix2fsal_attributes_all(&obj_stat, attrs_out);
 	}
 
 	*handle = &hdl->obj_handle;
