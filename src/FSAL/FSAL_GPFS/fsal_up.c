@@ -333,11 +333,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 						FSAL_UP_INVALIDATE_CACHE);
 				} else {
 					/* buf may not have all attributes set.
-					 * Since posix2fsal_attributes()
-					 * assumes all attributes being set, we
-					 * can't use it.
+					 * Set the mask to what is changed
 					 */
-					/* Set the mask to what is changed */
 					attr.valid_mask = 0;
 					attr.acl = NULL;
 					upflags = 0;

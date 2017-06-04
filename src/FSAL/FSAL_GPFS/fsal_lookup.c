@@ -105,7 +105,7 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 	}
 
 	/* In order to check XDEV, we need to get the fsid from the handle.
-	 * We need to do this before getting attributes in order to have tthe
+	 * We need to do this before getting attributes in order to have the
 	 * correct gpfs_fs to pass to GPFSFSAL_getattrs. We also return
 	 * the correct fs to the caller.
 	 */
