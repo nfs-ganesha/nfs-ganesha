@@ -12,6 +12,7 @@ export DESTDIR=$(CURDIR)/debian/tmp
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
+CFLAGS += -g -O0 -Wno-error=date-time
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
 %:
@@ -22,7 +23,7 @@ override_dh_auto_configure:
 	 cd src && dh_auto_configure -- \
 		-DBUILD_CONFIG=debian \
 		-DFSAL_DESTINATION=/usr/lib/${DEB_HOST_MULTIARCH}/ganesha \
-		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_BUILD_TYPE=Debug \
 		-DUSE_FSAL_NULL=YES \
 		-DUSE_FSAL_ZFS=NO \
 		-DUSE_FSAL_XFS=NO \
@@ -74,3 +75,6 @@ override_dh_install:
 	cp src/scripts/systemd/sysconfig/nfs-ganesha debian/tmp/etc/sysconfig/ganesha
 	cp src/scripts/ganeshactl/org.ganesha.nfsd.conf debian/tmp/etc/dbus-1/system.d/nfs-ganesha-dbus.conf
 	make -C src/obj-*-linux-gnu* install && dh_install --sourcedir=./src
+
+override_dh_strip:
+	dh_strip -a --dbg-package=nfs-ganesha-dbgsym

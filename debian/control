@@ -77,3 +77,14 @@ Description: Documentation for nfs-ganesha
  .
  This package contains documentation and examples for nfs-ganesha
 
+Package: nfs-ganesha-dbgsym
+Architecture: any
+Section: debug
+Priority: extra
+Depends: nfs-ganesha (=${binary:Version}),
+         ${misc:Depends}
+Description: Debugging symbols for nfs-ganesha
+ NFS-GANESHA is a NFS Server running in user space with a large cache.
+ It comes with various backend modules to support different file systems
+ and namespaces. Supported name spaces are POSIX, PROXY, SNMP, FUSE-like,
+ This package contains the debugging symbols for nfs-ganesha.
