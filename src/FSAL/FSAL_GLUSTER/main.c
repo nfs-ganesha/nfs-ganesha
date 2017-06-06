@@ -177,8 +177,8 @@ MODULE_FINI void glusterfs_unload(void)
 
 	/* All the shares should have been unexported */
 	if (!glist_empty(&GlusterFS.fs_obj)) {
-		LogFatal(COMPONENT_FSAL,
-			"FSAL Gluster still contains active shares. Dying.. ");
+		LogWarn(COMPONENT_FSAL,
+			"FSAL Gluster still contains active shares.");
 	}
 	PTHREAD_MUTEX_destroy(&GlusterFS.lock);
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster unloaded");
