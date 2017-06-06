@@ -482,7 +482,7 @@ exit 0
 %{_bindir}/ganesha.nfsd
 %if ! %{with system_ntirpc}
 %{_libdir}/libntirpc.so.@NTIRPC_VERSION_EMBED@
-%{_libdir}/libntirpc.so.1.4
+%{_libdir}/libntirpc.so.1.5
 %{_libdir}/libntirpc.so
 %{_libdir}/pkgconfig/libntirpc.pc
 %{_includedir}/ntirpc/
