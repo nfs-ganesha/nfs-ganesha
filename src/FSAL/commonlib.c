@@ -2644,7 +2644,7 @@ again:
  *
  * @param[in,out] out_fd         File descriptor that is to be used
  * @param[in]     obj_hdl        File on which to operate
- * @param[in]     my_fd          The file descriptor associated with the object
+ * @param[in]     obj_fd         The file descriptor associated with the object
  * @param[in]     bypass         If state doesn't indicate a share reservation,
  *                               bypass any deny read
  * @param[in]     state          state_t to use for this operation

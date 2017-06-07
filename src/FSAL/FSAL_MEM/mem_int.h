@@ -63,13 +63,6 @@ fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
 				  struct fsal_obj_handle **handle,
 				  struct attrlist *attrs_out);
 
-struct mem_fd {
-	/** The open and share mode etc. */
-	fsal_openflags_t openflags;
-	/** Current file offset location */
-	off_t offset;
-};
-
 /*
  * MEM internal object handle
  */
@@ -91,7 +84,7 @@ struct mem_fsal_obj_handle {
 		} mh_dir;
 		struct {
 			struct fsal_share share;
-			struct mem_fd fd;
+			struct fsal_fd fd;
 		} mh_file;
 		struct {
 			object_file_type_t nodetype;

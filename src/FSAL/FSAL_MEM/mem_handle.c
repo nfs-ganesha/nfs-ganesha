@@ -336,16 +336,60 @@ static void mem_copy_attrs_mask(struct attrlist *attrs_in,
 }
 
 /**
- * @brief Close a FD
+ * @brief Open an FD
  *
- * @param[in] my_fd	FD to close
+ * @param[in] fd	FD to close
  * @return FSAL status
  */
-static fsal_status_t mem_close_my_fd(struct mem_fd *my_fd)
+static fsal_status_t mem_open_my_fd(struct fsal_fd *fd,
+				    fsal_openflags_t openflags)
 {
-	my_fd->openflags = FSAL_O_CLOSED;
+	fd->openflags = openflags;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * @brief Close an FD
+ *
+ * @param[in] fd	FD to close
+ * @return FSAL status
+ */
+static fsal_status_t mem_close_my_fd(struct fsal_fd *fd)
+{
+	fd->openflags = FSAL_O_CLOSED;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * @brief Function to open an fsal_obj_handle's global file descriptor.
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  openflags   Mode for open
+ * @param[out] fd          File descriptor that is to be used
+ *
+ * @return FSAL status.
+ */
+
+static fsal_status_t mem_open_func(struct fsal_obj_handle *obj_hdl,
+				   fsal_openflags_t openflags,
+				   struct fsal_fd *fd)
+{
+	return mem_open_my_fd(fd, openflags);
+}
+
+/**
+ * @brief Close a global FD
+ *
+ * @param[in] obj_hdl	Object owning FD to close
+ * @param[in] fd	FD to close
+ * @return FSAL status
+ */
+static fsal_status_t mem_close_func(struct fsal_obj_handle *obj_hdl,
+				    struct fsal_fd *fd)
+{
+	return mem_close_my_fd(fd);
 }
 
 #define mem_alloc_handle(p, n, t, e, a) \
@@ -1197,7 +1241,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 			bool *caller_perm_check)
 {
 	fsal_status_t status = {0, 0};
-	struct mem_fd *my_fd = NULL;
+	struct fsal_fd *my_fd = NULL;
 	struct mem_fsal_obj_handle *myself, *hdl = NULL;
 	bool truncated;
 	bool setattrs = attrs_set != NULL;
@@ -1205,7 +1249,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 	struct attrlist verifier_attr;
 
 	if (state != NULL)
-		my_fd = (struct mem_fd *)(state + 1);
+		my_fd = (struct fsal_fd *)(state + 1);
 
 	myself = container_of(obj_hdl, struct mem_fsal_obj_handle, obj_handle);
 
@@ -1269,10 +1313,10 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 		}
 
-		my_fd->openflags = openflags;
-		if (my_fd->openflags & FSAL_O_WRITE)
-			my_fd->openflags |= FSAL_O_READ;
-		my_fd->offset = 0;
+		if (openflags & FSAL_O_WRITE)
+			openflags |= FSAL_O_READ;
+		mem_open_my_fd(my_fd, openflags);
+
 		if (truncated)
 			myself->attrs.filesize = myself->attrs.spaceused = 0;
 
@@ -1361,9 +1405,9 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 	if (my_fd == NULL)
 		my_fd = &hdl->mh_file.fd;
 
-	my_fd->openflags = openflags;
-	if (my_fd->openflags & FSAL_O_WRITE)
-		my_fd->openflags |= FSAL_O_READ;
+	if (openflags & FSAL_O_WRITE)
+		openflags |= FSAL_O_READ;
+	mem_open_my_fd(my_fd, openflags);
 
 	*new_obj = &hdl->obj_handle;
 
@@ -1430,7 +1474,7 @@ fsal_status_t mem_reopen2(struct fsal_obj_handle *obj_hdl,
 	struct mem_fsal_obj_handle *myself =
 		container_of(obj_hdl, struct mem_fsal_obj_handle, obj_handle);
 	fsal_status_t status = {0, 0};
-	struct mem_fd *my_fd = (struct mem_fd *)(state + 1);
+	struct fsal_fd *my_fd = (struct fsal_fd *)(state + 1);
 	fsal_openflags_t old_openflags;
 
 #ifdef USE_LTTNG
@@ -1458,8 +1502,7 @@ fsal_status_t mem_reopen2(struct fsal_obj_handle *obj_hdl,
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	my_fd->openflags = openflags;
-	my_fd->offset = 0;
+	mem_open_my_fd(my_fd, openflags);
 	if (openflags & FSAL_O_TRUNC)
 		myself->attrs.filesize = myself->attrs.spaceused = 0;
 
@@ -1499,7 +1542,8 @@ fsal_status_t mem_read2(struct fsal_obj_handle *obj_hdl,
 {
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
-	struct mem_fd *my_fd = NULL;
+	struct fsal_fd *fsal_fd;
+	bool has_lock, closefd = false;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 
 	if (info != NULL) {
@@ -1508,17 +1552,10 @@ fsal_status_t mem_read2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* Find an FD */
-	if (state) {
-		my_fd = (struct mem_fd *)(state + 1);
-		if (!open_correct(my_fd->openflags, FSAL_O_READ)) {
-			return fsalstat(ERR_FSAL_NOT_OPENED, 0);
-		}
-	} else {
-		my_fd = &myself->mh_file.fd;
-	}
-
-	status = check_share_conflict(&myself->mh_file.share, FSAL_O_READ,
-				      bypass);
+	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
+			      &myself->mh_file.share, bypass, state,
+			      FSAL_O_READ, mem_open_func, mem_close_func,
+			      &has_lock, &closefd, false);
 	if (FSAL_IS_ERROR(status)) {
 		return status;
 	}
@@ -1550,6 +1587,9 @@ fsal_status_t mem_read2(struct fsal_obj_handle *obj_hdl,
 	*read_amount = buffer_size;
 	*end_of_file = (buffer_size == 0);
 	now(&myself->attrs.atime);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1591,7 +1631,8 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 {
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
-	struct mem_fd *my_fd = NULL;
+	struct fsal_fd *fsal_fd;
+	bool has_lock, closefd = false;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 
 	if (info != NULL) {
@@ -1599,20 +1640,18 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
+	if (obj_hdl->type != REGULAR_FILE) {
+		/* Currently can only write to a file */
+		return fsalstat(ERR_FSAL_INVAL, 0);
+	}
+
 	/* Find an FD */
-	if (state) {
-		my_fd = (struct mem_fd *)(state + 1);
-		if (!open_correct(my_fd->openflags, FSAL_O_WRITE)) {
-			return fsalstat(ERR_FSAL_NOT_OPENED, 0);
-		}
-	} else {
-		my_fd = &myself->mh_file.fd;
-		status = check_share_conflict(&myself->mh_file.share,
-					      FSAL_O_WRITE,
-					      bypass);
-		if (FSAL_IS_ERROR(status)) {
-			return status;
-		}
+	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
+			      &myself->mh_file.share, bypass, state,
+			      FSAL_O_WRITE, mem_open_func, mem_close_func,
+			      &has_lock, &closefd, false);
+	if (FSAL_IS_ERROR(status)) {
+		return status;
 	}
 
 	if (offset + buffer_size > myself->attrs.filesize) {
@@ -1641,6 +1680,9 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 		timespec_to_nsecs(&myself->attrs.chgtime);
 
 	*wrote_amount = buffer_size;
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1694,8 +1736,54 @@ fsal_status_t mem_lock_op2(struct fsal_obj_handle *obj_hdl,
 			   fsal_lock_param_t *request_lock,
 			   fsal_lock_param_t *conflicting_lock)
 {
-	/* Stub out for now */
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
+				  struct mem_fsal_obj_handle, obj_handle);
+	struct fsal_fd *fsal_fd;
+	bool has_lock, closefd = false;
+	bool bypass = false;
+	fsal_openflags_t openflags;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+
+	if (obj_hdl->type != REGULAR_FILE) {
+		/* Currently can only lock a file */
+		return fsalstat(ERR_FSAL_INVAL, 0);
+	}
+
+	switch (lock_op) {
+	case FSAL_OP_LOCKT:
+		/* We may end up using global fd, don't fail on a deny mode */
+		bypass = true;
+		openflags = FSAL_O_ANY;
+		break;
+	case FSAL_OP_LOCK:
+		if (request_lock->lock_type == FSAL_LOCK_R)
+			openflags = FSAL_O_READ;
+		else if (request_lock->lock_type == FSAL_LOCK_W)
+			openflags = FSAL_O_WRITE;
+		else
+			openflags = FSAL_O_RDWR;
+		break;
+	case FSAL_OP_UNLOCK:
+		openflags = FSAL_O_ANY;
+		break;
+	default:
+		LogDebug(COMPONENT_FSAL,
+			 "ERROR: The requested lock type was not read or write.");
+		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
+
+	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
+			      &myself->mh_file.share, bypass, state,
+			      openflags, mem_open_func, mem_close_func,
+			      &has_lock, &closefd, true);
+	if (FSAL_IS_ERROR(status)) {
+		return status;
+	}
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	return status;
 }
 
 /**
@@ -1715,7 +1803,7 @@ fsal_status_t mem_lock_op2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mem_close2(struct fsal_obj_handle *obj_hdl,
 			 struct state_t *state)
 {
-	struct mem_fd *my_fd = (struct mem_fd *)(state + 1);
+	struct fsal_fd *my_fd = (struct fsal_fd *)(state + 1);
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
