@@ -129,6 +129,7 @@ TRACEPOINT_LOGLEVEL(
  * @param op_num  - Op number within compound
  * @param op_code  - Numerical opcode of op
  * @param op_name  - Text name of op
+ * @param status  - Result of op
  */
 
 TRACEPOINT_EVENT(
@@ -136,11 +137,13 @@ TRACEPOINT_EVENT(
 	v4op_end,
 	TP_ARGS(int, op_num,
 		int, op_code,
-		const char *, op_name),
+		const char *, op_name,
+		const char *, status),
 	TP_FIELDS(
 		ctf_integer(int, op_num, op_num)
 		ctf_integer(int, op_code, op_code)
 		ctf_string(op_name, op_name)
+		ctf_string(status, status)
 	)
 )
 

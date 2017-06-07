@@ -746,7 +746,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 #ifdef USE_LTTNG
 		tracepoint(nfs_rpc, v4op_end, i, argarray[i].argop,
-			   optabv4[opcode].name);
+			   optabv4[opcode].name, nfsstat4_to_str(status));
 #endif
 
 		LogCompoundFH(&data);
