@@ -77,6 +77,9 @@ Requires: sles-release >= 12
 @BCOND_NTIRPC@ system_ntirpc
 %global use_system_ntirpc %{on_off_switch system_ntirpc}
 
+@BCOND_MAN_PAGE@ man_page
+%global use_man_page %{on_off_switch man_page}
+
 %global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '%-', '.'); print(extraver) }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -143,6 +146,9 @@ Requires(preun): systemd
 Requires(postun): systemd
 %else
 BuildRequires:	initscripts
+%endif
+%if %{with man_page}
+BuildRequires: python-sphinx
 %endif
 Requires(post): psmisc
 Requires(pre): shadow-utils
@@ -361,6 +367,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_DBUS=ON					\
 	-DUSE_9P=ON					\
 	-DDISTNAME_HAS_GIT_DATA=OFF			\
+	-DUSE_MAN_PAGE=%{use_man_page}                  \
 %if %{with jemalloc}
 	-DALLOCATOR=jemalloc
 %endif
@@ -400,6 +407,14 @@ mkdir -p %{buildroot}%{_localstatedir}/log/ganesha
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 scripts/init.d/nfs-ganesha.el6		%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
 install -m 644 scripts/init.d/sysconfig/ganesha		%{buildroot}%{_sysconfdir}/sysconfig/ganesha
+%endif
+
+%if %{with man_page}
+%{_mandir}/*/ganesha-config.8.gz
+%{_mandir}/*/ganesha-core-config.8.gz
+%{_mandir}/*/ganesha-export-config.8.gz
+%{_mandir}/*/ganesha-cache-config.8.gz
+%{_mandir}/*/ganesha-log-config.8.gz
 %endif
 
 %if %{with pt}
@@ -514,17 +529,25 @@ exit 0
 %files mount-9P
 %defattr(-,root,root,-)
 %{_sbindir}/mount.9P
-
+%if %{with man_page}
+%{_mandir}/*/ganesha-9p-config.8.gz
+%endif
 
 %files vfs
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalvfs*
 %config(noreplace) %{_sysconfdir}/ganesha/vfs.conf
+%if %{with man_page}
+%{_mandir}/*/ganesha-vfs-config.8.gz
+%endif
 
 
 %files proxy
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalproxy*
+%if %{with man_page}
+%{_mandir}/*/ganesha-proxy-config.8.gz
+%endif
 
 # Optional packages
 %if %{with nullfs}
@@ -552,6 +575,9 @@ exit 0
 %if ! %{with_systemd}
 %{_sysconfdir}/init.d/nfs-ganesha-gpfs
 %endif
+%if %{with man_page}
+%{_mandir}/*/ganesha-gpfs-config.8.gz
+%endif
 %endif
 
 %if %{with zfs}
@@ -559,6 +585,9 @@ exit 0
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalzfs*
 %config(noreplace) %{_sysconfdir}/ganesha/zfs.conf
+%if %{with man_page}
+%{_mandir}/*/ganesha-zfs-config.8.gz
+%endif
 %endif
 
 %if %{with xfs}
@@ -566,6 +595,9 @@ exit 0
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalxfs*
 %config(noreplace) %{_sysconfdir}/ganesha/xfs.conf
+%if %{with man_page}
+%{_mandir}/*/ganesha-xfs-config.8.gz
+%endif
 %endif
 
 %if %{with ceph}
@@ -573,6 +605,9 @@ exit 0
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalceph*
 %config(noreplace) %{_sysconfdir}/ganesha/ceph.conf
+%if %{with man_page}
+%{_mandir}/*/ganesha-ceph-config.8.gz
+%endif
 %endif
 
 %if %{with rgw}
@@ -581,6 +616,9 @@ exit 0
 %{_libdir}/ganesha/libfsalrgw*
 %config(noreplace) %{_sysconfdir}/ganesha/rgw.conf
 %config(noreplace) %{_sysconfdir}/ganesha/rgw_bucket.conf
+%if %{with man_page}
+%{_mandir}/*/ganesha-rgw-config.8.gz
+%endif
 %endif
 
 %if %{with gluster}
@@ -588,6 +626,9 @@ exit 0
 %defattr(-,root,root,-)
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha-gfapi
 %{_libdir}/ganesha/libfsalgluster*
+%if %{with man_page}
+%{_mandir}/*/ganesha-gluster-config.8.gz
+%endif
 %endif
 
 %if %{with panfs}
@@ -636,7 +677,7 @@ exit 0
 %{_bindir}/sm_notify.ganesha
 %{_bindir}/ganesha_mgr
 %{_bindir}/ganesha_conf
-%{_mandir}/*/*
+%{_mandir}/*/ganesha_conf.8.gz
 %endif
 
 %changelog

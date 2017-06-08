@@ -2,20 +2,55 @@ set(sphinx_output_dir ${CMAKE_BINARY_DIR}/doc)
 
 set(man_srcs
     ganesha-config.rst
-    ganesha-9p-config.rst
-    ganesha-ceph-config.rst
     ganesha-log-config.rst
-    ganesha-gluster-config.rst
-    ganesha-gpfs-config.rst
-    ganesha-gpfs-config.rst
-    ganesha-proxy-config.rst
-    ganesha-rgw-config.rst
-    ganesha-vfs-config.rst
-    ganesha-xfs-config.rst
-    ganesha-zfs-config.rst
     ganesha-cache-config.rst
     ganesha-export-config.rst
     ganesha-core-config.rst)
+
+if(USE_9P)
+   list(APPEND man_srcs
+        ganesha-9p-config.rst)
+endif()
+
+if(USE_FSAL_CEPH)
+   list(APPEND man_srcs
+        ganesha-ceph-config.rst)
+endif()
+
+if(USE_FSAL_RGW)
+   list(APPEND man_srcs
+        ganesha-rgw-config.rst)
+endif()
+
+if(USE_FSAL_XFS)
+   list(APPEND man_srcs
+        ganesha-xfs-config.rst)
+endif()
+
+if(USE_FSAL_GLUSTER)
+   list(APPEND man_srcs
+        ganesha-gluster-config.rst)
+endif()
+
+if(USE_FSAL_ZFS)
+   list(APPEND man_srcs
+        ganesha-zfs-config.rst)
+endif()
+
+if(USE_FSAL_VFS)
+   list(APPEND man_srcs
+        ganesha-vfs-config.rst)
+endif()
+
+if(USE_FSAL_PROXY)
+   list(APPEND man_srcs
+        ganesha-proxy-config.rst)
+endif()
+
+if(USE_FSAL_GPFS)
+   list(APPEND man_srcs
+        ganesha-gpfs-config.rst)
+endif()
 
 foreach(man ${man_srcs})
   list(APPEND sphinx_input ${CMAKE_CURRENT_SOURCE_DIR}/${man})

@@ -1301,6 +1301,12 @@ else(USE_SYSTEM_NTIRPC)
   set(BCOND_NTIRPC "%bcond_with")
 endif(USE_SYSTEM_NTIRPC)
 
+if (USE_MAN_PAGE)
+  set(BCOND_MAN_PAGE "%bcond_without")
+else(USE_MAN_PAGE)
+  set(BCOND_MAN_PAGE "%bcond_with")
+endif(USE_MAN_PAGE)
+
 # Now create a useable specfile
 configure_file(
   "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"
