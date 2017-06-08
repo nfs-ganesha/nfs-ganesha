@@ -43,12 +43,7 @@
  */
 
 /* defined the set of attributes supported with POSIX */
-#define MEM_SUPPORTED_ATTRIBUTES (				\
-	ATTR_TYPE     | ATTR_SIZE     |				\
-	ATTR_FSID     | ATTR_FILEID   |				\
-	ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     |	\
-	ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    |	\
-	ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED | ATTR_CHGTIME)
+#define MEM_SUPPORTED_ATTRIBUTES (ATTRS_POSIX)
 
 /* my module private storage */
 
@@ -66,8 +61,8 @@ static struct fsal_staticfsinfo_t default_mem_info = {
 	.chown_restricted = true,
 	.case_insensitive = false,
 	.case_preserving = true,
-	.link_support = false,
-	.symlink_support = false,
+	.link_support = true,
+	.symlink_support = true,
 	.lock_support = true,
 	.lock_support_owner = true,
 	.lock_support_async_block = false,
