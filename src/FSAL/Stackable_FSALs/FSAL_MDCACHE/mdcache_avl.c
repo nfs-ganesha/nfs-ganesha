@@ -525,12 +525,10 @@ again:
 			 * up twice. Will prefer existing entry.
 			 */
 			if (v->ck == v2->ck) {
-				/* This is odd, a completely duplicate entry,
-				 * ignore it.
-				 */
-				LogWarn(COMPONENT_CACHE_INODE,
-					"Duplicate filename %s insert into chunk %p, existing was in chunk %p, ignoring",
-					v->name, v->chunk, v2->chunk);
+				/* completely a duplicate entry, ignore it */
+				LogDebug(COMPONENT_CACHE_INODE,
+					 "Duplicate filename %s insert into chunk %p, existing was in chunk %p, ignoring",
+					 v->name, v->chunk, v2->chunk);
 				code = 0;
 			} else {
 				/* This is an odd case, lets treat it as an
