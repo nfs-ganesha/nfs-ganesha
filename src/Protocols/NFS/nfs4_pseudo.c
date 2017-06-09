@@ -142,9 +142,16 @@ void cleanup_pseudofs_node(char *pseudopath,
 	fsal_status = fsal_remove(parent_obj, name);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogCrit(COMPONENT_EXPORT,
-			"Removing pseudo node %s failed with %s",
-			pseudopath, msg_fsal_err(fsal_status.major));
+		/* Bailout if we get directory not empty error */
+		if (fsal_status.major == ERR_FSAL_NOTEMPTY) {
+			LogDebug(COMPONENT_EXPORT,
+				 "PseudoFS parent directory %s is not empty",
+				 pseudopath);
+		} else {
+			LogCrit(COMPONENT_EXPORT,
+				"Removing pseudo node %s failed with %s",
+				pseudopath, msg_fsal_err(fsal_status.major));
+		}
 		goto out;
 	}
 
