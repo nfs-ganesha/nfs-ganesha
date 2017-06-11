@@ -121,6 +121,8 @@ typedef struct request_data {
 		struct _9p_request_data _9p;
 #endif
 	} r_u;
+
+	uint32_t r_d_refs;	/* handle reference count */
 } request_data_t;
 
 extern pool_t *request_pool;
@@ -158,7 +160,6 @@ void _9p_rdma_cleanup_conn(msk_trans_t *trans);
 
 void Clean_RPC(void);
 void nfs_Init_svc(void);
-void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr);
 void nfs_rpc_dispatch_stop(void);
 
 request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker);
@@ -167,9 +168,6 @@ uint32_t get_dequeue_count(void);
 uint32_t get_enqueue_count(void);
 
 /* in nfs_worker_thread.c */
-
-void nfs_rpc_execute(request_data_t *req);
-const nfs_function_desc_t *nfs_rpc_get_funcdesc(nfs_request_t *);
 
 int worker_init(void);
 int worker_shutdown(void);

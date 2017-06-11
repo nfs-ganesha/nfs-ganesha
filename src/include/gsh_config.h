@@ -59,6 +59,7 @@ typedef enum protos {
 	P_NLM,			/*< NLM (for v3) */
 	P_RQUOTA,		/*< RQUOTA (for v3) */
 	P_NFS_VSOCK,		/*< NFS over vmware, qemu vmci sockets */
+	P_NFS_RDMA,		/*< NFS over RPC/RDMA */
 	P_COUNT			/*< Number of protocols */
 } protos;
 
@@ -180,6 +181,11 @@ typedef enum protos {
 #define CORE_OPTION_NFS_VSOCK 0x00000008 /*< AF_VSOCK NFS listener */
 
 /**
+ * @brief Support RPC/RDMA v1
+ */
+#define CORE_OPTION_NFS_RDMA 0x00000010 /*< RPC/RDMA v1 NFS listener */
+
+/**
  * @brief Support NFSv3 and NFSv4.
  */
 #define CORE_OPTION_ALL_NFS_VERS (CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4)
@@ -190,6 +196,7 @@ typedef enum protos {
 #define CORE_OPTION_ALL_VERS (CORE_OPTION_NFSV3 |			\
 				CORE_OPTION_NFSV4 |			\
 				CORE_OPTION_NFS_VSOCK |			\
+				CORE_OPTION_NFS_RDMA |			\
 				CORE_OPTION_9P)
 
 typedef struct nfs_core_param {

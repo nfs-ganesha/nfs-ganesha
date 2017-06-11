@@ -329,6 +329,7 @@ static inline unsigned int get_ipproto_by_xprt(SVCXPRT *xprt)
 {
 	switch (xprt->xp_type) {
 	case XPRT_UDP:
+	case XPRT_UDP_RENDEZVOUS:
 		return IPPROTO_UDP;
 	case XPRT_TCP:
 	case XPRT_TCP_RENDEZVOUS:
@@ -1351,7 +1352,7 @@ void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func)
  out:
 	/* dispose RPC header */
 	if (req->rq_auth)
-		SVCAUTH_RELEASE(req->rq_auth, req);
+		SVCAUTH_RELEASE(req);
 }
 
 /**

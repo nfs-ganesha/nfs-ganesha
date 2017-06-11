@@ -532,9 +532,6 @@ static void nfs_Start_threads(void)
 			 errno);
 	}
 
-	/* Start event channel service threads */
-	nfs_rpc_dispatch_threads(&attr_thr);
-
 #ifdef _USE_9P
 	/* Starting the 9P/TCP dispatcher thread */
 	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
@@ -563,20 +560,6 @@ static void nfs_Start_threads(void)
 		LogEvent(COMPONENT_THREAD,
 			 "9P/RDMA dispatcher thread was started successfully");
 	}
-#endif
-
-#ifdef _USE_NFS_RDMA
-	/* Starting the NFS/RDMA dispatcher thread */
-	rc = pthread_create(&nfs_rdma_dispatcher_thrid, &attr_thr,
-			    nfs_rdma_dispatcher_thread, NULL);
-
-	if (rc != 0) {
-		LogFatal(COMPONENT_THREAD,
-			 "Could not create NFS/RDMA dispatcher, error = %d (%s)",
-			 errno, strerror(errno));
-	}
-	LogEvent(COMPONENT_THREAD,
-		 "NFS/RDMA dispatcher thread was started successfully");
 #endif
 
 #ifdef USE_DBUS
