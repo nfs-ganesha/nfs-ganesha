@@ -56,7 +56,6 @@
 #include "rquota.h"
 #include "nfs_init.h"
 #include "nfs_core.h"
-#include "nfs_convert.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_req_queue.h"
@@ -1778,95 +1777,4 @@ static enum xprt_stat nfs_rpc_decode_request(SVCXPRT *xprt, XDR *xdrs)
 	stat = SVC_STAT(xprt);
 	free_nfs_request(reqdata);
 	return stat;
-}
-
-enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
-{
-	const nfs_function_desc_t *reqdesc = reqdata->r_u.req.funcdesc;
-	nfs_arg_t *arg_nfs = &reqdata->r_u.req.arg_nfs;
-	SVCXPRT *xprt = reqdata->r_u.req.svc.rq_xprt;
-	XDR *xdrs = reqdata->r_u.req.svc.rq_xdrs;
-	enum auth_stat why;
-	bool no_dispatch = false;
-
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "About to authenticate Prog=%" PRIu32
-		     ", vers=%" PRIu32
-		     ", proc=%" PRIu32
-		     ", xid=%" PRIu32
-		     ", SVCXPRT=%p, fd=%d",
-		     reqdata->r_u.req.svc.rq_msg.cb_prog,
-		     reqdata->r_u.req.svc.rq_msg.cb_vers,
-		     reqdata->r_u.req.svc.rq_msg.cb_proc,
-		     reqdata->r_u.req.svc.rq_msg.rm_xid,
-		     xprt, xprt->xp_fd);
-
-	/* If authentication is AUTH_NONE or AUTH_UNIX, then the value of
-	 * no_dispatch remains false and the request proceeds normally.
-	 *
-	 * If authentication is RPCSEC_GSS, no_dispatch may have value true,
-	 * this means that gc->gc_proc != RPCSEC_GSS_DATA and that the message
-	 * is in fact an internal negotiation message from RPCSEC_GSS using
-	 * GSSAPI. It should not be processed by the worker and SVC_STAT
-	 * should be returned to the dispatcher.
-	 */
-	why = svc_auth_authenticate(&reqdata->r_u.req.svc, &no_dispatch);
-	if (why != AUTH_OK) {
-		LogInfo(COMPONENT_DISPATCH,
-			"Could not authenticate request... rejecting with AUTH_STAT=%s",
-			auth_stat2str(why));
-		return svcerr_auth(&reqdata->r_u.req.svc, why);
-#ifdef _HAVE_GSSAPI
-	} else if (reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_verf.oa_flavor
-		   == RPCSEC_GSS) {
-		struct rpc_gss_cred *gc = (struct rpc_gss_cred *)
-			reqdata->r_u.req.svc.rq_msg.rq_cred_body;
-
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "RPCSEC_GSS no_dispatch=%d"
-			     " gc->gc_proc=(%" PRIu32 ") %s",
-			     no_dispatch, gc->gc_proc,
-			     str_gc_proc(gc->gc_proc));
-		if (no_dispatch)
-			return SVC_STAT(xprt);
-#endif
-	}
-
-	/*
-	 * Extract RPC argument.
-	 */
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "Before SVCAUTH_CHECKSUM on SVCXPRT %p fd %d",
-		     xprt, xprt->xp_fd);
-
-	memset(arg_nfs, 0, sizeof(nfs_arg_t));
-	reqdata->r_u.req.svc.rq_msg.rm_xdr.where = (caddr_t) arg_nfs;
-	reqdata->r_u.req.svc.rq_msg.rm_xdr.proc = reqdesc->xdr_decode_func;
-	xdrs->x_public = &reqdata->r_u.req.lookahead;
-
-	if (!SVCAUTH_CHECKSUM(&reqdata->r_u.req.svc)) {
-		LogInfo(COMPONENT_DISPATCH,
-			"SVCAUTH_CHECKSUM failed for Program %" PRIu32
-			", Version %" PRIu32
-			", Function %" PRIu32
-			", xid=%" PRIu32
-			", SVCXPRT=%p, fd=%d",
-			reqdata->r_u.req.svc.rq_msg.cb_prog,
-			reqdata->r_u.req.svc.rq_msg.cb_vers,
-			reqdata->r_u.req.svc.rq_msg.cb_proc,
-			reqdata->r_u.req.svc.rq_msg.rm_xid,
-			xprt, xprt->xp_fd);
-
-		if (!xdr_free(reqdesc->xdr_decode_func, (caddr_t) arg_nfs)) {
-			LogCrit(COMPONENT_DISPATCH,
-				"%s FAILURE: Bad xdr_free for %s",
-				__func__,
-				reqdesc->funcname);
-		}
-		return svcerr_decode(&reqdata->r_u.req.svc);
-	}
-
-	atomic_inc_uint32_t(&reqdata->r_d_refs);
-	nfs_rpc_enqueue_req(reqdata);
-	return SVC_STAT(xprt);
 }

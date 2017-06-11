@@ -74,7 +74,7 @@ int nlm4_Granted_Res(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		return NFS_REQ_OK;
 	}
 
-	/* Fill in op_ctx, nfs_rpc_execute will release the export ref.
+	/* Fill in op_ctx, nfs_rpc_process_request will release the export ref.
 	 * We take an export reference even if the export is stale because
 	 * we want to properly clean up the cookie_entry.
 	 */

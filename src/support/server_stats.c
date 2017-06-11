@@ -1184,7 +1184,7 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 /**
  * @brief record NFS op finished
  *
- * Called from nfs_rpc_execute at operation/command completion
+ * Called from nfs_rpc_process_request at operation/command completion
  */
 
 void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)

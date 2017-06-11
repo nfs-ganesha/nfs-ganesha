@@ -48,6 +48,7 @@
 #include "fsal.h"
 #include "rquota.h"
 #include "nfs_init.h"
+#include "nfs_convert.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"
@@ -671,13 +672,14 @@ const nfs_function_desc_t rquota2_func_desc[] = {
  * @param[in,out] reqdata	NFS request
  *
  */
-void nfs_rpc_execute(request_data_t *reqdata)
+static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 {
 	const char *client_ip = "<unknown client>";
 	const char *progname = "unknown";
 	const nfs_function_desc_t *reqdesc = reqdata->r_u.req.funcdesc;
 	nfs_arg_t *arg_nfs = &reqdata->r_u.req.arg_nfs;
 	SVCXPRT *xprt = reqdata->r_u.req.svc.rq_xprt;
+	XDR *xdrs = reqdata->r_u.req.svc.rq_xdrs;
 	nfs_res_t *res_nfs;
 	struct export_perms export_perms;
 	struct user_cred user_credentials;
@@ -691,6 +693,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 #ifdef _USE_NFS3
 	int exportid = -1;
 #endif /* _USE_NFS3 */
+	bool no_dispatch = false;
 
 #ifdef USE_LTTNG
 	tracepoint(nfs_rpc, start, reqdata);
@@ -700,8 +703,85 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	BLKIN_TIMESTAMP(
 		&reqdata->r_u.req.svc.bl_trace,
 		&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
-		"rpc_execute-start");
+		"nfs_rpc_process_request-start");
 #endif
+
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "About to authenticate Prog=%" PRIu32
+		     ", vers=%" PRIu32
+		     ", proc=%" PRIu32
+		     ", xid=%" PRIu32
+		     ", SVCXPRT=%p, fd=%d",
+		     reqdata->r_u.req.svc.rq_msg.cb_prog,
+		     reqdata->r_u.req.svc.rq_msg.cb_vers,
+		     reqdata->r_u.req.svc.rq_msg.cb_proc,
+		     reqdata->r_u.req.svc.rq_msg.rm_xid,
+		     xprt, xprt->xp_fd);
+
+	/* If authentication is AUTH_NONE or AUTH_UNIX, then the value of
+	 * no_dispatch remains false and the request proceeds normally.
+	 *
+	 * If authentication is RPCSEC_GSS, no_dispatch may have value true,
+	 * this means that gc->gc_proc != RPCSEC_GSS_DATA and that the message
+	 * is in fact an internal negotiation message from RPCSEC_GSS using
+	 * GSSAPI. It should not be processed by the worker and SVC_STAT
+	 * should be returned to the dispatcher.
+	 */
+	auth_rc = svc_auth_authenticate(&reqdata->r_u.req.svc, &no_dispatch);
+	if (auth_rc != AUTH_OK) {
+		LogInfo(COMPONENT_DISPATCH,
+			"Could not authenticate request... rejecting with AUTH_STAT=%s",
+			auth_stat2str(auth_rc));
+		return svcerr_auth(&reqdata->r_u.req.svc, auth_rc);
+#ifdef _HAVE_GSSAPI
+	} else if (reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_verf.oa_flavor
+		   == RPCSEC_GSS) {
+		struct rpc_gss_cred *gc = (struct rpc_gss_cred *)
+			reqdata->r_u.req.svc.rq_msg.rq_cred_body;
+
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "RPCSEC_GSS no_dispatch=%d"
+			     " gc->gc_proc=(%" PRIu32 ") %s",
+			     no_dispatch, gc->gc_proc,
+			     str_gc_proc(gc->gc_proc));
+		if (no_dispatch)
+			return SVC_STAT(xprt);
+#endif
+	}
+
+	/*
+	 * Extract RPC argument.
+	 */
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "Before SVCAUTH_CHECKSUM on SVCXPRT %p fd %d",
+		     xprt, xprt->xp_fd);
+
+	memset(arg_nfs, 0, sizeof(nfs_arg_t));
+	reqdata->r_u.req.svc.rq_msg.rm_xdr.where = (caddr_t) arg_nfs;
+	reqdata->r_u.req.svc.rq_msg.rm_xdr.proc = reqdesc->xdr_decode_func;
+	xdrs->x_public = &reqdata->r_u.req.lookahead;
+
+	if (!SVCAUTH_CHECKSUM(&reqdata->r_u.req.svc)) {
+		LogInfo(COMPONENT_DISPATCH,
+			"SVCAUTH_CHECKSUM failed for Program %" PRIu32
+			", Version %" PRIu32
+			", Function %" PRIu32
+			", xid=%" PRIu32
+			", SVCXPRT=%p, fd=%d",
+			reqdata->r_u.req.svc.rq_msg.cb_prog,
+			reqdata->r_u.req.svc.rq_msg.cb_vers,
+			reqdata->r_u.req.svc.rq_msg.cb_proc,
+			reqdata->r_u.req.svc.rq_msg.rm_xid,
+			xprt, xprt->xp_fd);
+
+		if (!xdr_free(reqdesc->xdr_decode_func, (caddr_t) arg_nfs)) {
+			LogCrit(COMPONENT_DISPATCH,
+				"%s FAILURE: Bad xdr_free for %s",
+				__func__,
+				reqdesc->funcname);
+		}
+		return svcerr_decode(&reqdata->r_u.req.svc);
+	}
 
 	/* set up the request context
 	 */
@@ -769,7 +849,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	BLKIN_TIMESTAMP(
 		&reqdata->r_u.req.svc.bl_trace,
 		&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
-		"rpc_execute-have-clientid");
+		"nfs_rpc_process_request-have-clientid");
 #endif
 	/* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
 	 * nothing but allocate a result object and mark the request (ie, the
@@ -1019,8 +1099,8 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		xprt_type_t xprt_type = svc_get_xprt_type(xprt);
 
 		LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-			    "nfs_rpc_execute about to call nfs_export_check_access for client %s",
-			    client_ip);
+			    "%s about to call nfs_export_check_access for client %s",
+			    __func__, client_ip);
 
 		export_check_access();
 
@@ -1238,7 +1318,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		BLKIN_TIMESTAMP(
 			&reqdata->r_u.req.svc.bl_trace,
 			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
-			"rpc_execute-pre-service");
+			"nfs_rpc_process_request-pre-service");
 
 		BLKIN_KEYVAL_STRING(
 			&reqdata->r_u.req.svc.bl_trace,
@@ -1265,7 +1345,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 		BLKIN_TIMESTAMP(
 			&reqdata->r_u.req.svc.bl_trace,
 			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
-			"rpc_execute-post-service");
+			"nfs_rpc_process_request-post-service");
 #endif
 	}
 
@@ -1400,6 +1480,7 @@ void nfs_rpc_execute(request_data_t *reqdata)
 #ifdef USE_LTTNG
 	tracepoint(nfs_rpc, end, reqdata);
 #endif
+	return SVC_STAT(xprt);
 }
 
 #ifdef _USE_9P
@@ -1502,30 +1583,11 @@ static void worker_run(struct fridgethr_context *ctx)
 		if (!reqdata)
 			continue;
 
-/* need to do a getpeername(2) on the socket fd before we dive into the
- * rpc_execute.  9p is messy but we do have the fd....
- */
-
 		switch (reqdata->rtype) {
 		case UNKNOWN_REQUEST:
+		case NFS_REQUEST:
 			LogCrit(COMPONENT_DISPATCH,
 				"Unexpected unknown request");
-			break;
-		case NFS_REQUEST:
-			/* check for destroyed xprts */
-			if (reqdata->r_u.req.svc.rq_xprt->
-			    xp_flags & SVC_XPRT_FLAG_DESTROYED) {
-				/* Idempotent: once set, the DESTROYED flag
-				 * is never cleared. No lock needed.
-				 */
-				goto finalize_req;
-			}
-
-			LogDebug(COMPONENT_DISPATCH,
-				 "NFS protocol request, reqdata=%p xprt=%p",
-				 reqdata,
-				 reqdata->r_u.req.svc.rq_xprt);
-			nfs_rpc_execute(reqdata);
 			break;
 
 		case NFS_CALL:
@@ -1536,27 +1598,9 @@ static void worker_run(struct fridgethr_context *ctx)
 #ifdef _USE_9P
 		case _9P_REQUEST:
 			_9p_execute(reqdata);
-			break;
-#endif
-		}
-
- finalize_req:
-		/* XXX needed? */
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Signaling completion of request");
-
-		switch (reqdata->rtype) {
-		case NFS_REQUEST:
-			break;
-		case NFS_CALL:
-			break;
-#ifdef _USE_9P
-		case _9P_REQUEST:
 			_9p_free_reqdata(&reqdata->r_u._9p);
 			break;
 #endif
-		default:
-			break;
 		}
 
 		/* Free the req by releasing the entry */

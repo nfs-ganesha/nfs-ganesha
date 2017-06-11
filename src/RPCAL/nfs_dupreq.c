@@ -1257,8 +1257,8 @@ dq_again:
  *
  * @brief Remove an entry (request) from a duplicate request cache.
  *
- * The expected pattern is that nfs_rpc_execute shall delete requests only
- * in error conditions.  The refcnt of the corresponding duplicate request
+ * The expected pattern is that nfs_rpc_process_request shall delete requests
+ * only in error conditions.  The refcnt of the corresponding duplicate request
  * entry is unchanged (ie., the caller must still call nfs_dupreq_rele).
  *
  * We assert req->rq_u1 now points to the corresonding duplicate request
