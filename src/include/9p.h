@@ -310,7 +310,7 @@ struct _9p_user_cred {
  * on clunk
  */
 struct _9p_xattr_desc {
-	char xattr_name[MAXNAMLEN];
+	char xattr_name[MAXNAMLEN + 1];
 	u64 xattr_size;
 	u64 xattr_offset;
 	enum _9p_xattr_write xattr_write;
