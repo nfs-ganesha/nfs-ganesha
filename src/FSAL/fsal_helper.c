@@ -231,7 +231,12 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 				    "Change OWNER requires FSAL_ACE_PERM_WRITE_OWNER");
 		}
 	}
-	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_GROUP)) {
+	/* Check if we are changing the owner_group, if owner_group is passed,
+	 * but is the current owner_group, then that will be considered a
+	 * NO-OP and allowed IF the caller is the owner of the file.
+	 */
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_GROUP) &&
+	    (attr->group != current->group || not_owner)) {
 		/* non-root is only allowed to change group_owner to a group
 		 * user is a member of. */
 		int not_in_group = fsal_not_in_group_list(attr->group);
