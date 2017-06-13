@@ -484,6 +484,7 @@ static void free_gpfs_filesystem(struct gpfs_filesystem *gpfs_fs)
 {
 	if (gpfs_fs->root_fd >= 0)
 		close(gpfs_fs->root_fd);
+	PTHREAD_MUTEX_destroy(&gpfs_fs->upvector_mutex);
 	gsh_free(gpfs_fs);
 }
 
@@ -567,36 +568,59 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	struct gpfs_filesystem_export_map *map;
 	pthread_attr_t attr_thr;
 
-	if (strcmp(fs->type, "gpfs") != 0) {
-		LogInfo(COMPONENT_FSAL,
+	if (strcmp(fs->type, "gpfs") != 0)
+		LogFatal(COMPONENT_FSAL,
 			"Attempt to claim non-GPFS filesystem %s", fs->path);
-		return ENXIO;
-	}
 
-	if (fs->fsal != NULL) {
-		gpfs_fs = fs->private_data;
-		if (gpfs_fs)
-			goto already_claimed;
-
-		LogCrit(COMPONENT_FSAL,
+	if (fs->fsal != NULL && fs->private_data == NULL)
+		LogFatal(COMPONENT_FSAL,
 			"Something wrong with export, fs %s appears already claimed but doesn't have private data",
 			fs->path);
-		return EINVAL;
-	}
 
-	if (fs->private_data != NULL)
-		LogCrit(COMPONENT_FSAL,
+	if (fs->fsal == NULL && fs->private_data != NULL)
+		LogFatal(COMPONENT_FSAL,
 			"Something wrong with export, fs %s was not claimed but had non-NULL private",
 			fs->path);
 
-	gpfs_fs = gsh_calloc(1, sizeof(*gpfs_fs));
+	gpfs_fs = fs->private_data;
+	if (!gpfs_fs) { /* first export */
+		gpfs_fs = gsh_calloc(1, sizeof(*gpfs_fs));
+		glist_init(&gpfs_fs->exports);
+		gpfs_fs->root_fd = -1;
+		gpfs_fs->fs = fs;
+		PTHREAD_MUTEX_init(&gpfs_fs->upvector_mutex, NULL);
+	}
 
-	glist_init(&gpfs_fs->exports);
-	gpfs_fs->root_fd = -1;
-	gpfs_fs->fs = fs;
+	/* Now map the file system and export */
+	map = gsh_calloc(1, sizeof(*map));
+	map->fs = gpfs_fs;
+	map->exp = container_of(exp, struct gpfs_fsal_export, export);
+	PTHREAD_MUTEX_lock(&gpfs_fs->upvector_mutex);
+	glist_add_tail(&gpfs_fs->exports, &map->on_exports);
+	glist_add_tail(&map->exp->filesystems, &map->on_filesystems);
+	PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 
+	map->exp->export_fd = open(op_ctx->ctx_export->fullpath,
+						O_RDONLY | O_DIRECTORY);
+	if (map->exp->export_fd < 0) {
+		retval = errno;
+		LogMajor(COMPONENT_FSAL,
+			"Could not open GPFS export point %s: rc = %s (%d)",
+			op_ctx->ctx_export->fullpath, strerror(retval), retval);
+		goto errout;
+	}
+
+	LogFullDebug(COMPONENT_FSAL, "export_fd %d path %s",
+			map->exp->export_fd, op_ctx->ctx_export->fullpath);
+
+	/* We have set up the export. If the file system is already claimed,
+	 * we are done.
+	 */
+	if (fs->private_data) /* file system is already claimed */
+		return 0;
+
+	/* Get an fd for the root and create an upcall thread */
 	retval = open_root_fd(gpfs_fs);
-
 	if (retval != 0) {
 		if (retval == ENOTTY) {
 			LogInfo(COMPONENT_FSAL,
@@ -620,8 +644,6 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	if (pthread_attr_setstacksize(&attr_thr, 2116488) != 0)
 		LogCrit(COMPONENT_THREAD, "can't set pthread's stack size");
 
-	gpfs_fs->up_ops = exp->up_ops;
-
 	if (pthread_create(&gpfs_fs->up_thread, &attr_thr, GPFSFSAL_UP_Thread,
 			   gpfs_fs)) {
 		retval = errno;
@@ -633,30 +655,20 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 
 	fs->private_data = gpfs_fs;
 
-already_claimed:
-	/* Now map the file system and export */
-	map = gsh_calloc(1, sizeof(*map));
-	map->fs = gpfs_fs;
-	map->exp = container_of(exp, struct gpfs_fsal_export, export);
-	map->exp->export_fd = open(op_ctx->ctx_export->fullpath,
-						O_RDONLY | O_DIRECTORY);
-	LogFullDebug(COMPONENT_FSAL, "export_fd %d path %s",
-			map->exp->export_fd, op_ctx->ctx_export->fullpath);
-	if (map->exp->export_fd < 0) {
-		retval = errno;
-		gsh_free(map);
-		LogMajor(COMPONENT_FSAL,
-			"Could not open GPFS export point %s: rc = %s (%d)",
-			op_ctx->ctx_export->fullpath, strerror(retval), retval);
-		return retval;
-	}
-	glist_add_tail(&gpfs_fs->exports, &map->on_exports);
-	glist_add_tail(&map->exp->filesystems, &map->on_filesystems);
-
 	return 0;
 
 errout:
-	free_gpfs_filesystem(gpfs_fs);
+	if (map->exp->export_fd >= 0) {
+		close(map->exp->export_fd);
+		map->exp->export_fd = -1;
+	}
+	PTHREAD_MUTEX_lock(&gpfs_fs->upvector_mutex);
+	glist_del(&map->on_filesystems);
+	glist_del(&map->on_exports);
+	PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
+	gsh_free(map);
+	if (!fs->private_data)
+		free_gpfs_filesystem(gpfs_fs);
 
 	return retval;
 }
@@ -681,8 +693,10 @@ void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 				  on_exports);
 
 		/* Remove this file system from mapping */
+		PTHREAD_MUTEX_lock(&map->fs->upvector_mutex);
 		glist_del(&map->on_filesystems);
 		glist_del(&map->on_exports);
+		PTHREAD_MUTEX_unlock(&map->fs->upvector_mutex);
 
 		if (map->exp->root_fs == fs)
 			LogInfo(COMPONENT_FSAL,
@@ -728,8 +742,10 @@ void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp)
 				  on_filesystems);
 
 		/* Remove this export from mapping */
+		PTHREAD_MUTEX_lock(&map->fs->upvector_mutex);
 		glist_del(&map->on_filesystems);
 		glist_del(&map->on_exports);
+		PTHREAD_MUTEX_unlock(&map->fs->upvector_mutex);
 
 		if (glist_empty(&map->fs->exports)) {
 			LogInfo(COMPONENT_FSAL,
