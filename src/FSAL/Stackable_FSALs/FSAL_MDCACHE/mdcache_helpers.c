@@ -414,9 +414,6 @@ void mdcache_clean_dirent_chunk(struct dir_chunk *chunk)
 		if (dirent->ckey.kv.len)
 			mdcache_key_delete(&dirent->ckey);
 		gsh_free(dirent);
-
-		/* Don't count this dirent anymore. */
-		parent->fsobj.fsdir.nbactive--;
 	}
 
 	/* Remove chunk from directory. */
@@ -472,7 +469,6 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
 
 	/* First the active tree */
 	mdcache_avl_clean_tree(&entry->fsobj.fsdir.avl.t);
-	entry->fsobj.fsdir.nbactive = 0;
 	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_DIR_POPULATED);
 
 	/* Next the inactive tree */
@@ -1411,7 +1407,7 @@ fsal_status_t mdcache_dirent_find(mdcache_entry_t *dir, const char *name,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
 	/* If no active entry, do nothing */
-	if (dir->fsobj.fsdir.nbactive == 0) {
+	if (avltree_size(&dir->fsobj.fsdir.avl.t) == 0) {
 		if (mdc_dircache_trusted(dir))
 			return fsalstat(ERR_FSAL_NOENT, 0);
 		else
@@ -1493,29 +1489,21 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 	}
 
 	/* we're going to succeed */
-	if (new_dir_entry == allocated_dir_entry) {
-		/* We only want to count this entry if we did indeed add a new
-		 * one.
-		 */
-		parent->fsobj.fsdir.nbactive++;
+	if (new_dir_entry == allocated_dir_entry &&
+	    mdcache_param.dir.avl_chunk > 0) {
+		/* If chunking, try and add this entry to a chunk. */
+		bool chunked = add_dirent_to_chunk(parent, new_dir_entry);
 
-		if (mdcache_param.dir.avl_chunk > 0) {
-			/* If chunking, try and add this entry to a chunk. */
-			bool chunked = add_dirent_to_chunk(parent,
-							   new_dir_entry);
-
-			if (!chunked && *invalidate) {
-				/* If chunking and invalidating parent, and
-				 * chunking this entry failed, invalidate
-				 * parent.
-				 */
-				mdcache_dirent_invalidate_all(parent);
-			} else if (chunked && *invalidate) {
-				/* We succeeded in adding to chunk, don't
-				 * invalidate the parent directory.
-				 */
-				*invalidate = false;
-			}
+		if (!chunked && *invalidate) {
+			/* If chunking and invalidating parent, and chunking
+			 * this entry failed, invalidate parent.
+			 */
+			mdcache_dirent_invalidate_all(parent);
+		} else if (chunked && *invalidate) {
+			/* We succeeded in adding to chunk, don't invalidate the
+			 * parent directory.
+			 */
+			*invalidate = false;
 		}
 	}
 
@@ -1553,7 +1541,6 @@ mdcache_dirent_remove(mdcache_entry_t *parent, const char *name)
 		return status;
 
 	avl_dirent_set_deleted(parent, dirent);
-	parent->fsobj.fsdir.nbactive--;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -2249,14 +2236,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 	 * The existing dirent might or might not be part of a chunk already.
 	 */
 
-	if (new_dir_entry == allocated_dir_entry) {
-		/* We didn't have a swaparoo, so go ahead count it against this
-		 * directorie's max number of active dirents, otherwise we don't
-		 * want to double count entries that were in the dirent cache
-		 * already due to being put there by create or lookup.
-		 */
-		mdc_parent->fsobj.fsdir.nbactive++;
-	} else {
+	if (new_dir_entry != allocated_dir_entry) {
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Swapped using %p instead of %p, new_dir_entry->chunk=%p",
 			     new_dir_entry, allocated_dir_entry,

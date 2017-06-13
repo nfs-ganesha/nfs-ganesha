@@ -283,8 +283,6 @@ struct mdcache_fsal_obj_handle {
 			 * crisper interface.
 			 */
 			struct state_hdl dhdl; /**< Storage for dir state */
-			/** Number of known active children */
-			uint32_t nbactive;
 			/** The parent host-handle of this directory ('..') */
 			struct gsh_buffdesc parent;
 			/** The first dirent cookie in this directory.
