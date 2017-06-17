@@ -230,7 +230,7 @@ static inline bool nfs_protocol_enabled(protos p)
 }
 
 /**
- * @brief Close file descriptors used for RPC services.
+ * @brief Close transports and file descriptors used for RPC services.
  *
  * So that restarting the NFS server wont encounter issues of "Address
  * Already In Use" - this has occurred even though we set the
@@ -250,8 +250,7 @@ static void close_rpc_fd(void)
 		if (tcp_socket[p] != -1)
 			close(tcp_socket[p]);
 	}
-	if (vsock)
-		close(tcp_socket[P_NFS_VSOCK]);
+	/* no need for special tcp_xprt[P_NFS_VSOCK] treatment */
 }
 
 void Create_udp(protos prot)
@@ -756,6 +755,10 @@ static int allocate_socket_vsock(void)
 		return -1;
 	}
 
+	LogDebug(COMPONENT_DISPATCH,
+		"Socket numbers are: %s tcp=%u",
+		tags[P_NFS_VSOCK],
+		tcp_socket[P_NFS_VSOCK]);
 	return 0;
 }
 #endif /* RPC_VSOCK */
@@ -771,12 +774,12 @@ static void Allocate_sockets(void)
 	LogFullDebug(COMPONENT_DISPATCH, "Allocation of the sockets");
 
 	for (p = P_NFS; p < P_COUNT; p++) {
-		if (nfs_protocol_enabled(p)) {
-			/* Initialize all the sockets to -1 because
-			 * it makes some code later easier */
-			udp_socket[p] = -1;
-			tcp_socket[p] = -1;
+		/* Initialize all the sockets to -1 because
+		 * it makes some code later easier */
+		udp_socket[p] = -1;
+		tcp_socket[p] = -1;
 
+		if (nfs_protocol_enabled(p)) {
 			if (v6disabled)
 				goto try_V4;
 
@@ -839,6 +842,11 @@ try_V4:
 					 "Error setting socket option for proto %d, %s",
 					 p, tags[p]);
 			}
+			LogDebug(COMPONENT_DISPATCH,
+				"Socket numbers are: %s tcp=%u udp=%u",
+				tags[p],
+				tcp_socket[p],
+				udp_socket[p]);
 		}
 	}
 #ifdef RPC_VSOCK
@@ -1031,34 +1039,6 @@ void nfs_Init_svc(void)
 
 	/* Allocate the UDP and TCP sockets for the RPC */
 	Allocate_sockets();
-
-	if ((NFS_options & CORE_OPTION_NFSV3) != 0) {
-		/* Some log that can be useful when debug ONC/RPC
-		 * and RPCSEC_GSS matter */
-		LogDebug(COMPONENT_DISPATCH,
-			"Socket numbers are: nfs_udp=%u nfs_tcp=%u nfs_vsock=%u mnt_udp=%u mnt_tcp=%u nlm_tcp=%u nlm_udp=%u",
-			udp_socket[P_NFS],
-			tcp_socket[P_NFS],
-			tcp_socket[P_NFS_VSOCK],
-			udp_socket[P_MNT],
-			tcp_socket[P_MNT],
-			udp_socket[P_NLM],
-			tcp_socket[P_NLM]);
-	} else {
-		/* Some log that can be useful when debug ONC/RPC
-		 * and RPCSEC_GSS matter */
-		LogDebug(COMPONENT_DISPATCH,
-			 "Socket numbers are: nfs_udp=%u nfs_tcp=%u nfs_vsock=%u",
-			udp_socket[P_NFS],
-			tcp_socket[P_NFS],
-			tcp_socket[P_NFS_VSOCK]);
-	}
-
-	/* Some log that can be useful when debug ONC/RPC
-	 * and RPCSEC_GSS matter */
-	LogDebug(COMPONENT_DISPATCH,
-		 "Socket numbers are: rquota_udp=%u  rquota_tcp=%u",
-		 udp_socket[P_RQUOTA], tcp_socket[P_RQUOTA]);
 
 	if ((NFS_options & CORE_OPTION_ALL_NFS_VERS) != 0) {
 		/* Bind the tcp and udp sockets */
