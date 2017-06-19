@@ -3613,6 +3613,7 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
 	fsal_dynamicfsinfo_t dynamicinfo;
 	XDR attr_body;
 	fattr_xdr_result xdr_res;
+	uint32_t attrvals_buflen;
 
 	/* basic init */
 	memset(Fattr, 0, sizeof(*Fattr));
@@ -3620,7 +3621,20 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
 	if (Bitmap->bitmap4_len == 0)
 		return 0;	/* they ask for nothing, they get nothing */
 
-	Fattr->attr_vals.attrlist4_val = gsh_malloc(NFS4_ATTRVALS_BUFFLEN);
+	attrvals_buflen = NFS4_ATTRVALS_BUFFLEN;
+	if (attribute_is_set(Bitmap, FATTR4_ACL) && args->attrs->acl) {
+		/* Calculating an exact needed xdr buffer size is laborious
+		 * and time consuming, so making a rough estimate
+		 */
+		attrvals_buflen += (sizeof(fsal_ace_t) + NFS4_MAX_DOMAIN_LEN)
+			* args->attrs->acl->naces;
+	}
+
+	/* Check if the calculated len is less than the max send buffer size */
+	if (attrvals_buflen > nfs_param.core_param.rpc.max_send_buffer_size)
+		attrvals_buflen = nfs_param.core_param.rpc.max_send_buffer_size;
+
+	Fattr->attr_vals.attrlist4_val = gsh_malloc(attrvals_buflen);
 
 	max_attr_idx = nfs4_max_attr_index(args->data);
 	LogFullDebug(COMPONENT_NFS_V4, "Maximum allowed attr index = %d",
@@ -3629,7 +3643,7 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
 	LastOffset = 0;
 	memset(&attr_body, 0, sizeof(attr_body));
 	xdrmem_create(&attr_body, Fattr->attr_vals.attrlist4_val,
-		      NFS4_ATTRVALS_BUFFLEN, XDR_ENCODE);
+		      attrvals_buflen, XDR_ENCODE);
 
 	if (args->dynamicinfo == NULL)
 		args->dynamicinfo = &dynamicinfo;
