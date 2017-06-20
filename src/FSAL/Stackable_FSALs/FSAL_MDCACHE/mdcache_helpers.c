@@ -58,7 +58,7 @@ static inline bool trust_negative_cache(mdcache_entry_t *parent)
 	return op_ctx_export_has_option(
 				  EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE) &&
 		parent->icreate_refcnt == 0 &&
-		(parent->mde_flags & MDCACHE_DIR_POPULATED) != 0;
+		test_mde_flags(parent, MDCACHE_DIR_POPULATED);
 }
 
 /**
@@ -1065,17 +1065,17 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Look in cache %s, trust content %s",
 		     name,
-		     mdc_parent->mde_flags & MDCACHE_TRUST_CONTENT
+		     test_mde_flags(mdc_parent, MDCACHE_TRUST_CONTENT)
 				? "yes" : "no");
 
 	*entry = NULL;
 
 	/* If parent isn't caching, return stale */
-	if (mdc_parent->mde_flags & MDCACHE_BYPASS_DIRCACHE)
+	if (test_mde_flags(mdc_parent, MDCACHE_BYPASS_DIRCACHE))
 		return fsalstat(ERR_FSAL_STALE, 0);
 
 	/* If the dirent cache is untrustworthy, don't even ask it */
-	if (!(mdc_parent->mde_flags & MDCACHE_TRUST_CONTENT))
+	if (!test_mde_flags(mdc_parent, MDCACHE_TRUST_CONTENT))
 		return fsalstat(ERR_FSAL_STALE, 0);
 
 	dirent = mdcache_avl_qp_lookup_s(mdc_parent, name, 1);
@@ -1154,7 +1154,7 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 		goto out;
 	}
 
-	if (mdc_parent->mde_flags & MDCACHE_BYPASS_DIRCACHE) {
+	if (test_mde_flags(mdc_parent, MDCACHE_BYPASS_DIRCACHE)) {
 		/* Parent isn't caching dirents; call directly */
 		goto uncached;
 	}
@@ -1206,7 +1206,7 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 	}
 
 	/* Need to look up. */
-	if (!(mdc_parent->mde_flags & MDCACHE_TRUST_CONTENT)) {
+	if (!test_mde_flags(mdc_parent, MDCACHE_TRUST_CONTENT)) {
 		/* We have the write lock and the content is
 		 * still invalid.  Empty it out and mark it
 		 * valid in preparation for caching the result of this lookup.
@@ -1465,7 +1465,7 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
 	/* Don't cache if parent is not being cached */
-	if (parent->mde_flags & MDCACHE_BYPASS_DIRCACHE)
+	if (test_mde_flags(parent, MDCACHE_BYPASS_DIRCACHE))
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	/* in cache avl, we always insert on pentry_parent */
@@ -1526,7 +1526,7 @@ mdcache_dirent_remove(mdcache_entry_t *parent, const char *name)
 	fsal_status_t status;
 
 	/* Don't remove if parent is not being cached */
-	if (parent->mde_flags & MDCACHE_BYPASS_DIRCACHE)
+	if (test_mde_flags(parent, MDCACHE_BYPASS_DIRCACHE))
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	LogFullDebug(COMPONENT_CACHE_INODE, "Remove dir entry %s", name);
@@ -1570,7 +1570,7 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 		     oldname, newname);
 
 	/* Don't rename if parent is not being cached */
-	if (parent->mde_flags & MDCACHE_BYPASS_DIRCACHE)
+	if (test_mde_flags(parent, MDCACHE_BYPASS_DIRCACHE))
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	/* Don't rename if chunking. */
@@ -1592,7 +1592,7 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 
 	if (dirent2) {
 		/* rename would cause a collision */
-		if (parent->mde_flags & MDCACHE_TRUST_CONTENT) {
+		if (test_mde_flags(parent, MDCACHE_TRUST_CONTENT)) {
 			/* overwrite, replace entry and expire the old */
 			mdcache_entry_t *oldentry;
 
@@ -2637,7 +2637,7 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 	bool first_pass = true;
 
 	/* Dirent's are being chunked; check to see if it needs updating */
-	if ((directory->mde_flags & MDCACHE_TRUST_CONTENT) == 0) {
+	if (!test_mde_flags(directory, MDCACHE_TRUST_CONTENT)) {
 		/* Clean out the existing entries in the directory. */
 		PTHREAD_RWLOCK_wrlock(&directory->content_lock);
 		mdcache_dirent_invalidate_all(directory);
@@ -3016,8 +3016,8 @@ mdcache_dirent_populate(mdcache_entry_t *dir)
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 
-	if ((dir->mde_flags & MDCACHE_DIR_POPULATED)
-	    && (dir->mde_flags & MDCACHE_TRUST_CONTENT)) {
+	if (test_mde_flags(dir, MDCACHE_DIR_POPULATED |
+				MDCACHE_TRUST_CONTENT)) {
 		LogFullDebug(COMPONENT_NFS_READDIR,
 			     "MDCACHE_DIR_POPULATED and MDCACHE_TRUST_CONTENT");
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);

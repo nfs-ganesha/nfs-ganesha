@@ -460,10 +460,25 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 void mdc_get_parent(struct mdcache_fsal_export *export,
 		    mdcache_entry_t *entry);
 
+
+/**
+ * @brief Atomically test the bits in mde_flags.
+ *
+ * @param[in]  entry The mdcache entry to test
+ * @param[in]  bits  The bits to test if set
+ *
+ * @returns true if all the bits are set.
+ *
+ */
+static inline bool test_mde_flags(mdcache_entry_t *entry, uint32_t bits)
+{
+	return (atomic_fetch_int32_t(&entry->mde_flags) & bits) == bits;
+}
+
 static inline bool mdc_dircache_trusted(mdcache_entry_t *dir)
 {
-	return ((dir->mde_flags & MDCACHE_TRUST_CONTENT) &&
-		(dir->mde_flags & MDCACHE_DIR_POPULATED));
+	return test_mde_flags(dir, MDCACHE_TRUST_CONTENT |
+				   MDCACHE_DIR_POPULATED);
 }
 
 static inline struct mdcache_fsal_export *mdc_export(
@@ -687,7 +702,7 @@ mdc_fixup_md(mdcache_entry_t *entry, struct attrlist *attrs)
  */
 
 static inline bool
-mdcache_is_attrs_valid(const mdcache_entry_t *entry, attrmask_t mask)
+mdcache_is_attrs_valid(mdcache_entry_t *entry, attrmask_t mask)
 {
 	uint32_t flags = 0;
 
@@ -699,7 +714,7 @@ mdcache_is_attrs_valid(const mdcache_entry_t *entry, attrmask_t mask)
 		flags |= MDCACHE_TRUST_ATTRS;
 
 	/* If any of the requested attributes are not valid, return. */
-	if ((entry->mde_flags & flags) != flags)
+	if (!test_mde_flags(entry, flags))
 		return false;
 
 	if (entry->attrs.valid_mask == ATTR_RDATTR_ERR)

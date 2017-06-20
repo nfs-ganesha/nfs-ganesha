@@ -514,7 +514,7 @@ static fsal_status_t mdcache_readlink(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	PTHREAD_RWLOCK_rdlock(&entry->content_lock);
-	if (!refresh && !(entry->mde_flags & MDCACHE_TRUST_CONTENT)) {
+	if (!refresh && !test_mde_flags(entry, MDCACHE_TRUST_CONTENT)) {
 		/* Our data are stale.  Drop the lock, get a
 		   write-lock, load in new data, and copy it out to
 		   the caller. */
@@ -522,7 +522,7 @@ static fsal_status_t mdcache_readlink(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 		/* Make sure nobody updated the content while we were
 		   waiting. */
-		refresh = !(entry->mde_flags & MDCACHE_TRUST_CONTENT);
+		refresh = !test_mde_flags(entry, MDCACHE_TRUST_CONTENT);
 	}
 
 	subcall(
@@ -636,7 +636,7 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 	if (!(directory->obj_handle.type == DIRECTORY))
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
-	if (directory->mde_flags & MDCACHE_BYPASS_DIRCACHE) {
+	if (test_mde_flags(directory, MDCACHE_BYPASS_DIRCACHE)) {
 		/* Not caching dirents; pass through directly to FSAL */
 		return mdcache_readdir_uncached(directory, whence, dir_state,
 						cb, attrmask, eod_met);
@@ -1009,7 +1009,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 		}
 
 		/* Don't rename dirents if newdir is not being cached */
-		if (mdc_newdir->mde_flags & MDCACHE_BYPASS_DIRCACHE)
+		if (test_mde_flags(mdc_newdir, MDCACHE_BYPASS_DIRCACHE))
 			goto unlock;
 
 		/* We may have a cache entry for the destination
