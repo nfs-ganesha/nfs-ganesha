@@ -145,12 +145,6 @@ static inline void release_root_op_context(void)
 	op_ctx = ctx->old_op_ctx;
 }
 
-/**
- * @brief init_complete used to indicate if ganesha is during
- * startup or not
- */
-extern bool init_complete;
-
 /******************************************************
  *                Structure used to define a fsal
  ******************************************************/

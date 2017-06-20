@@ -72,7 +72,14 @@
 #include "pnfs_utils.h"
 #include "mdcache.h"
 #include <execinfo.h>
+#include "common_utils.h"
+#include "nfs_init.h"
 
+/**
+ * @brief init_complete used to indicate if ganesha is during
+ * startup or not
+ */
+struct nfs_init nfs_init;
 
 /* global information exported to all layers (as extern vars) */
 nfs_parameter_t nfs_param;
@@ -938,7 +945,7 @@ void nfs_start(nfs_start_info_t *p_start_info)
 
 	/* Initialize all layers and service threads */
 	nfs_Init(p_start_info);
-	init_complete = true;
+	nfs_init_complete();
 
 	/* Spawns service threads */
 	nfs_Start_threads();
@@ -970,4 +977,28 @@ void nfs_start(nfs_start_info_t *p_start_info)
 	Cleanup();
 
 	/* let main return 0 to exit */
+}
+
+void nfs_init_init(void)
+{
+	PTHREAD_MUTEX_init(&nfs_init.init_mutex, NULL);
+	PTHREAD_COND_init(&nfs_init.init_cond, NULL);
+	nfs_init.init_complete = false;
+}
+
+void nfs_init_complete(void)
+{
+	PTHREAD_MUTEX_lock(&nfs_init.init_mutex);
+	nfs_init.init_complete = true;
+	pthread_cond_broadcast(&nfs_init.init_cond);
+	PTHREAD_MUTEX_unlock(&nfs_init.init_mutex);
+}
+
+void nfs_init_wait(void)
+{
+	PTHREAD_MUTEX_lock(&nfs_init.init_mutex);
+	while (!nfs_init.init_complete) {
+		pthread_cond_wait(&nfs_init.init_cond, &nfs_init.init_mutex);
+	}
+	PTHREAD_MUTEX_unlock(&nfs_init.init_mutex);
 }

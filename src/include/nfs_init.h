@@ -41,6 +41,18 @@ typedef struct __nfs_start_info {
 	int lw_mark_trigger;
 } nfs_start_info_t;
 
+struct nfs_init {
+	pthread_mutex_t init_mutex;
+	pthread_cond_t init_cond;
+	bool init_complete;
+};
+
+extern struct nfs_init nfs_init;
+
+void nfs_init_init(void);
+void nfs_init_complete(void);
+void nfs_init_wait(void);
+
 /**
  * nfs_prereq_init:
  * Initialize NFSd prerequisites: memory management, logging, ...

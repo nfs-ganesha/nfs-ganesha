@@ -264,6 +264,8 @@ int main(int argc, char *argv[])
 		 __DATE__ " " __TIME__ " on " BUILD_HOST);
 #endif
 
+	/* initialize nfs_init */
+	nfs_init_init();
 
 	nfs_check_malloc();
 

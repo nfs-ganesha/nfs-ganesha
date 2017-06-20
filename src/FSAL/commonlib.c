@@ -78,12 +78,11 @@
 #include "fsal_convert.h"
 #include "nfs4_acls.h"
 #include "sal_data.h"
+#include "nfs_init.h"
 
 #ifdef USE_BLKID
 static struct blkid_struct_cache *cache;
 #endif
-
-bool init_complete;
 
 /* fsal_attach_export
  * called from the FSAL's create_export method with a reference on the fsal.
@@ -1320,7 +1319,7 @@ int resolve_posix_filesystem(const char *path,
 	/* second attempt to resolve file system with force option in case of
 	 * ganesha isn't during startup.
 	 */
-	if (!init_complete || retval != EAGAIN)
+	if (!nfs_init.init_complete || retval != EAGAIN)
 		return retval;
 
 	LogDebug(COMPONENT_FSAL,
