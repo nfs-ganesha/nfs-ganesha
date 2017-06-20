@@ -798,7 +798,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	status.minor = fsal_attach_export(fsal_hdl, &exp->exports);
 	if (status.minor != 0) {
 		status.major = posix2fsal_error(status.minor);
-		goto errout;	/* seriously bad */
+		goto free;	/* seriously bad */
 	}
 
 	exp->fsal = fsal_hdl;
@@ -817,7 +817,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 			op_ctx->ctx_export->fullpath,
 			strerror(status.minor), status.minor);
 		status.major = posix2fsal_error(status.minor);
-		goto uninit;
+		goto detach;
 	}
 
 	/* if the nodeid has not been obtained, get it now */
@@ -851,7 +851,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 						      &pds);
 
 		if (status.major != ERR_FSAL_NO_ERROR)
-			goto uninit;
+			goto unexport;
 
 		/* special case: server_id matches export_id */
 		pds->id_servers = op_ctx->ctx_export->export_id;
@@ -865,7 +865,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 			status.major = ERR_FSAL_EXIST;
 			fsal_pnfs_ds_fini(pds);
 			gsh_free(pds);
-			goto uninit;
+			goto unexport;
 		}
 
 		LogInfo(COMPONENT_FSAL,
@@ -878,9 +878,11 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 
 	return status;
 
-uninit:
+unexport:
+	gpfs_unexport_filesystems(gpfs_exp);
+detach:
 	fsal_detach_export(fsal_hdl, &exp->exports);
-errout:
+free:
 	free_export_ops(exp);
 	gsh_free(gpfs_exp);
 	return status;
