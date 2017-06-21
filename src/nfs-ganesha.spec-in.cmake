@@ -13,8 +13,14 @@
 %endif
 
 %if ( 0%{?suse_version} )
+BuildRequires: distribution-release
+%if ( ! 0%{?is_opensuse} )
 BuildRequires: sles-release >= 12
 Requires: sles-release >= 12
+%else
+BuildRequires: openSUSE-release
+Requires: openSUSE-release
+%endif
 
 %global with_systemd 1
 %global with_nfsidmap 1
