@@ -75,7 +75,7 @@ NFS_RecvSize(uint32, default MAX_READ_WRITE_SIZE + SEND_RECV_HEADER_SPACE)
 
 **NFS_Port(uint16, range 0 to UINT16_MAX, default 2049)**
 
-**Use_Privileged_Client_Port(bool, default false)**
+**Use_Privileged_Client_Port(bool, default true)**
 
 **RPC_Client_Timeout(uint32, range 1 to 60*4, default 60)**
 

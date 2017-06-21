@@ -89,7 +89,7 @@ static struct config_item proxy_remote_params[] = {
 		       pxy_client_params, srv_recvsize),
 	CONF_ITEM_UI16("NFS_Port", 0, UINT16_MAX, 2049,
 		       pxy_client_params, srv_port),
-	CONF_ITEM_BOOL("Use_Privileged_Client_Port", false,
+	CONF_ITEM_BOOL("Use_Privileged_Client_Port", true,
 		       pxy_client_params, use_privileged_client_port),
 	CONF_ITEM_UI32("RPC_Client_Timeout", 1, 60*4, 60,
 		       pxy_client_params, srv_timeout),
