@@ -51,7 +51,7 @@ ceph_conf
     "-c /path/to/ceph.conf" to any Ceph binary
 
 name
-    optional instance name (equivalent to passing "--name ceph.rgw.foohost" to
+    optional instance name (equivalent to passing "--name client.rgw.foohost" to
     the radosgw binary);  the value provided here should be the same as the
     section name (sans brackets) of the radosgw facility in the Ceph
     configuration file (which must exist)
