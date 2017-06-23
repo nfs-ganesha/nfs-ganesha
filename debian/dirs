@@ -4,3 +4,4 @@ usr/lib
 usr/lib/pkgconfig
 usr/include
 etc/ganesha
+var/log/ganesha
