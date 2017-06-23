@@ -1244,12 +1244,18 @@ fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl)
 
 	assert(obj_hdl->type == REGULAR_FILE);
 
+	/* Take write lock on object to protect file descriptor.
+	 */
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
 	if (myself->u.file.fd.fd >= 0 &&
 	    myself->u.file.fd.openflags != FSAL_O_CLOSED) {
 		status = fsal_internal_close(myself->u.file.fd.fd, NULL, 0);
 		myself->u.file.fd.fd = -1;
 		myself->u.file.fd.openflags = FSAL_O_CLOSED;
 	}
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }
