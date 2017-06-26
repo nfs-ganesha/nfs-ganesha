@@ -806,8 +806,12 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 					   entry, chunk);
 #endif
 
-			/* Clean the chunk out. */
+			/* Clean the chunk out and indicate the directory is no
+			 * longer completely populated.
+			 */
 			mdcache_clean_dirent_chunk(chunk);
+			atomic_clear_uint32_t_bits(&entry->mde_flags,
+						   MDCACHE_DIR_POPULATED);
 
 			/* Clean out the fields not touched by the cleanup. */
 			chunk->parent = NULL;

@@ -214,7 +214,7 @@ void mdc_clean_entry(mdcache_entry_t *entry)
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
 		/* Clean up dirents */
-		(void) mdcache_dirent_invalidate_all(entry);
+		mdcache_dirent_invalidate_all(entry);
 		/* Clean up parent key */
 		mdcache_free_fh(&entry->fsobj.fsdir.parent);
 
@@ -475,7 +475,8 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
 	mdcache_avl_clean_tree(&entry->fsobj.fsdir.avl.c);
 
 	/* Now we can trust the content */
-	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_CONTENT);
+	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_CONTENT |
+						    MDCACHE_TRUST_DIR_CHUNKS);
 }
 
 /**
@@ -1386,6 +1387,8 @@ mdcache_src_dest_unlock(mdcache_entry_t *src, mdcache_entry_t *dest)
  * Look up the entry in the cache.  Success is if found (obviously), or if the
  * cache isn't trusted.  NOENT is only retrned if both not found and trusted.
  *
+ * Note that only if we are not chunking will we return ERR_FSAL_NOENT.
+ *
  * @note Caller MUST hold the content_lock for read
  *
  * @param[in] dir	Directory to search
@@ -1492,19 +1495,23 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 	if (new_dir_entry == allocated_dir_entry &&
 	    mdcache_param.dir.avl_chunk > 0) {
 		/* If chunking, try and add this entry to a chunk. */
-		bool chunked = add_dirent_to_chunk(parent, new_dir_entry);
-
-		if (!chunked && *invalidate) {
-			/* If chunking and invalidating parent, and chunking
-			 * this entry failed, invalidate parent.
+		if (!add_dirent_to_chunk(parent, new_dir_entry)) {
+			/* add_dirent_to_chunk indicated we should not longer
+			 * trust the chunk cache.
 			 */
-			mdcache_dirent_invalidate_all(parent);
-		} else if (chunked && *invalidate) {
-			/* We succeeded in adding to chunk, don't invalidate the
-			 * parent directory.
-			 */
-			*invalidate = false;
+			LogFullDebug(COMPONENT_CACHE_INODE,
+				     "Invalidating chunk cache");
+			atomic_clear_uint32_t_bits(&parent->mde_flags,
+						   MDCACHE_DIR_POPULATED |
+						   MDCACHE_TRUST_DIR_CHUNKS);
 		}
+
+		/* Since we are chunking, we can preserve the dirent cache for
+		 * the purposes of lookups even if we could not add the new
+		 * dirent to a chunk, so we don't want to invalidate the parent
+		 * directory.
+		 */
+		*invalidate = false;
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1581,8 +1588,14 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 	}
 
 	status = mdcache_dirent_find(parent, oldname, &dirent);
+
+	/* If not chunking, and the directory was fully populated, and we did
+	 * not find the entry, we will return error, and the caller will
+	 * invalidate the directory. With chunking there can be no failure.
+	 */
 	if (FSAL_IS_ERROR(status))
 		return status;
+
 	if (!dirent)
 		return status;
 
@@ -1784,7 +1797,14 @@ mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t *whence,
  * @param[in] parent_dir     The directory this dir entry is part of
  * @param[in] new_dir_entry  The dirent to add.
  *
- * @returns true if successefull
+ * @returns true if we can still trust the chunk cache.
+ *
+ * Note that if we can't insert the dirent into a chunk because we can't figure
+ * out which chunk it belongs to, we can still trust the chunks, the new dirent
+ * is not within their range, and if inserted between two non-adjacent chunks,
+ * a subsequent readdir that enumerates that part of the directory will pick up
+ * the new dirent since it will have to populate at least one new chunk in the
+ * gap.
  *
  */
 bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
@@ -1804,7 +1824,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 
 	if (ck == 0) {
 		/* FSAL does not support computing readdir cookie, so we can't
-		 * add this entry to a chunk.
+		 * add this entry to a chunk, nor can we trust the chunks.
 		 */
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			      "Could not add %s to chunk for directory %p, compute_readdir_cookie failed",
@@ -1854,7 +1874,9 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 			       );
 
 			if (nck == 0) {
-				/* Coops, could not compute new cookie... */
+				/* Oops, could not compute new cookie...
+				 * We can no longer trust the chunks.
+				 */
 				LogCrit(COMPONENT_CACHE_INODE,
 					"Could not compute new cookie for %s in directory %p",
 					right->name, parent_dir);
@@ -1867,7 +1889,9 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 			 */
 			right->ck = nck;
 		} else {
-			/* This should not happen... */
+			/* This should not happen... Let's no longer trust the
+			 * chunks.
+			 */
 			LogCrit(COMPONENT_CACHE_INODE,
 				"Could not add %s to chunk for directory %p, node %s found withck=%"
 				PRIx64,
@@ -1879,7 +1903,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 
 	if (parent == NULL) {
 		/* The tree must be empty, there are no chunks to add this
-		 * entry to.
+		 * entry to. There are no chunks to trust...
 		 */
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			      "Could not add %s to chunk for directory %p, tree was empty",
@@ -1914,12 +1938,17 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 				/* The right entry is not the first entry in
 				 * the directory, so the key is a dirent
 				 * somewhere before the first chunked dirent.
-				 * we can't insert this key into a chunk.
+				 * we can't insert this key into a chunk,
+				 * however, we can still trust the chunks since
+				 * the new entry is part of the directory we
+				 * don't have cached, a readdir that wants that
+				 * part of the directory will populate a new
+				 * chunk.
 				 */
 				LogFullDebug(COMPONENT_CACHE_INODE,
 					      "Could not add %s to chunk for directory %p, somewhere before first chunk",
 					      new_dir_entry->name, parent_dir);
-				return false;
+				return true;
 			}
 		}
 	} else {
@@ -1949,12 +1978,17 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 				/* The left entry is not the last entry in
 				 * the directory, so the key is a dirent
 				 * somewhere after the last chunked dirent.
-				 * we can't insert this key into a chunk.
+				 * we can't insert this key into a chunk,
+				 * however, we can still trust the chunks since
+				 * the new entry is part of the directory we
+				 * don't have cached, a readdir that wants that
+				 * part of the directory will populate a new
+				 * chunk.
 				 */
 				LogFullDebug(COMPONENT_CACHE_INODE,
 					      "Could not add %s to chunk for directory %p, somewhere after last chunk",
 					      new_dir_entry->name, parent_dir);
-				return false;
+				return true;
 			}
 		}
 	}
@@ -1965,9 +1999,12 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 	if (left != NULL && right != NULL &&
 	    left->chunk != right->chunk &&
 	    left->chunk != right->chunk->prev_chunk) {
-		/* left and right are in different non-adjacent chunks.
+		/* left and right are in different non-adjacent chunks, however,
+		 * we can still trust the chunks since the new entry is part of
+		 * the directory we don't have cached, a readdir that wants that
+		 * part of the directory will populate a new chunk.
 		 */
-		return false;
+		return true;
 	}
 
 	/* Set up to add to chunk and by cookie AVL tree. */
@@ -1984,7 +2021,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 	if (code < 0) {
 		/* We failed to insert into FSAL cookie AVL tree, will fail.
 		 * Nothing to clean up since we haven't done anything
-		 * unreversible.
+		 * unreversible, and we no longer trust the chunks.
 		 */
 		return false;
 	}
@@ -2420,6 +2457,8 @@ static struct dir_chunk *mdcache_skip_chunks(mdcache_entry_t *directory,
  * @param[in] directory   The directory to read
  * @param[in] whence      Where to start (next)
  * @param[in,out] dirent  The first dirent of the chunk
+ * @param[in] prev_chunk  The previous chunk populated
+ * @param[in,out] eod_met The end of directory has been hit.
  *
  * @return FSAL status
  */
@@ -2427,7 +2466,8 @@ static struct dir_chunk *mdcache_skip_chunks(mdcache_entry_t *directory,
 fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 					 fsal_cookie_t whence,
 					 mdcache_dir_entry_t **dirent,
-					 struct dir_chunk *prev_chunk)
+					 struct dir_chunk *prev_chunk,
+					 bool *eod_met)
 {
 	fsal_status_t status = {0, 0};
 	fsal_status_t readdir_status = {0, 0};
@@ -2435,7 +2475,6 @@ fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 	struct dir_chunk *first_chunk = mdcache_get_chunk(directory);
 	struct dir_chunk *chunk = first_chunk;
 	attrmask_t attrmask;
-	bool eod = false;
 	fsal_cookie_t *whence_ptr = &whence;
 
 	attrmask = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
@@ -2483,7 +2522,7 @@ again:
 	subcall(
 		readdir_status = directory->sub_handle->obj_ops.readdir(
 			directory->sub_handle, whence_ptr, &state,
-			mdc_readdir_chunked_cb, attrmask, &eod)
+			mdc_readdir_chunked_cb, attrmask, eod_met)
 	       );
 
 	if (FSAL_IS_ERROR(readdir_status)) {
@@ -2536,7 +2575,7 @@ again:
 		/* Retain this chunk and if end of directory, mark last
 		 * dirent of current chunk as eod.
 		 */
-		if (eod) {
+		if (*eod_met) {
 			/* If end of directory, mark last dirent as eod. */
 			mdcache_dir_entry_t *last;
 
@@ -2549,7 +2588,7 @@ again:
 		LogFullDebug(COMPONENT_NFS_READDIR,
 			     "Chunk first entry %s%s",
 			     *dirent != NULL ? (*dirent)->name : "<NONE>",
-			     eod ? " EOD" : "");
+			     *eod_met ? " EOD" : "");
 
 		/* Now add this chunk to the list of chunks for the directory.
 		 */
@@ -2635,10 +2674,17 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 	fsal_cookie_t next_ck = whence, look_ck = whence;
 	struct dir_chunk *chunk = NULL;
 	bool first_pass = true;
+	bool eod = false;
 
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Starting chunked READDIR");
 	/* Dirent's are being chunked; check to see if it needs updating */
-	if (!test_mde_flags(directory, MDCACHE_TRUST_CONTENT)) {
+	if (!test_mde_flags(directory, MDCACHE_TRUST_CONTENT |
+				       MDCACHE_DIR_POPULATED |
+				       MDCACHE_TRUST_DIR_CHUNKS)) {
 		/* Clean out the existing entries in the directory. */
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Flushing invalid dirent cache");
 		PTHREAD_RWLOCK_wrlock(&directory->content_lock);
 		mdcache_dirent_invalidate_all(directory);
 		has_write = true;
@@ -2726,9 +2772,12 @@ again:
 		 *
 		 * NOTE: empty directory can result in dirent being NULL, and
 		 *       we will ALWAYS re-read an empty directory every time.
+		 *       Although we do end up setting MDCACHE_DIR_POPULATED on
+		 *       an empty directory, we don't consider that here, and
+		 *       will re-read the directory.
 		 */
 		status = mdcache_populate_dir_chunk(directory, next_ck,
-						    &dirent, chunk);
+						    &dirent, chunk, &eod);
 
 		if (FSAL_IS_ERROR(status)) {
 			PTHREAD_RWLOCK_unlock(&directory->content_lock);
@@ -2749,11 +2798,37 @@ again:
 			 * chunk or dirent.
 			 */
 			*eod_met = true;
+			if (whence == 0) {
+				/* Since eod is true and whence is 0, we know
+				 * the entire directory is populated. This can
+				 * indicate that an empty directory may be
+				 * considered "populated."
+				 */
+				atomic_set_uint32_t_bits(&directory->mde_flags,
+							 MDCACHE_DIR_POPULATED);
+			}
 			PTHREAD_RWLOCK_unlock(&directory->content_lock);
 			return status;
 		}
 
+		if ((whence == 0) && eod) {
+			/* We started at the beginning of the directory and
+			 * populated through to end of directory, thus we can
+			 * indicate the directory is fully populated.
+			 */
+			atomic_set_uint32_t_bits(&directory->mde_flags,
+						 MDCACHE_DIR_POPULATED);
+		} else {
+			/* Since we just populated a chunk and have not
+			 * determined that we read the entire directory, make
+			 * sure the MDCACHE_DIR_POPULATED is cleared.
+			 */
+			atomic_clear_uint32_t_bits(&directory->mde_flags,
+						   MDCACHE_DIR_POPULATED);
+		}
+
 		chunk = dirent->chunk;
+
 		if (set_first_ck) {
 			/* We just populated the first dirent in the directory,
 			 * save it's cookie as first_ck.
@@ -2869,6 +2944,14 @@ again:
 			 * end of directory.
 			 */
 			*eod_met = cb_result != DIR_TERMINATE && dirent->eod;
+
+			if (*eod_met && whence == 0) {
+				/* Since eod is true and whence is 0, we know
+				 * the entire directory is populated.
+				 */
+				atomic_set_uint32_t_bits(&directory->mde_flags,
+							 MDCACHE_DIR_POPULATED);
+			}
 
 			LogDebug(COMPONENT_NFS_READDIR,
 				 "dirent = %p %s, cb_result = %s, eod = %s",

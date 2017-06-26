@@ -110,6 +110,14 @@ fsal_status_t mdcache_alloc_and_check_handle(
 		     tag, new_entry, new_entry->sub_handle->fsal->name,
 		     name);
 
+	if (*invalidate) {
+		/* This function is called after a create, so go ahead
+		 * and invalidate the parent directory attributes.
+		 */
+		atomic_clear_uint32_t_bits(&parent->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+	}
+
 	/* Add this entry to the directory (also takes an internal ref)
 	 */
 	status = mdcache_dirent_add(parent, name, new_entry, invalidate);
@@ -121,7 +129,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 
 		mdcache_put(new_entry);
 		*new_obj = NULL;
-		goto out;
+		return status;
 	}
 
 	if (new_entry->obj_handle.type == DIRECTORY) {
@@ -134,16 +142,6 @@ fsal_status_t mdcache_alloc_and_check_handle(
 	if (attrs_out != NULL) {
 		LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
 			    tag, attrs_out, true);
-	}
-
-out:
-
-	if (*invalidate) {
-		/* This function is called after a create, so go ahead
-		 * and invalidate the parent directory attributes.
-		 */
-		atomic_clear_uint32_t_bits(&parent->mde_flags,
-					   MDCACHE_TRUST_ATTRS);
 	}
 
 	return status;
@@ -589,11 +587,8 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
 
 	/* Invalidate attributes, so refresh will be forced */
 	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_ATTRS);
-	if (invalidate) {
-		/* Invalidate attributes of destination directory. */
-		atomic_clear_uint32_t_bits(&dest->mde_flags,
-					   MDCACHE_TRUST_ATTRS);
-	} else {
+
+	if (!invalidate) {
 		/* Refresh destination directory attributes without
 		 * invalidating dirents.
 		 */
@@ -959,6 +954,13 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			mdcache_dirent_invalidate_all(mdc_olddir);
 		}
 
+		/** @todo: With chunking and compute cookie, we can actually
+		 *         figure out which chunk the new dirent belongs to
+		 *         without a lookup, so we could just invalidate that
+		 *         chunk and the rest of the directory can remain
+		 *         cached.
+		 */
+
 		/* Now new directory.  Here, we just need to invalidate dirents,
 		 * since we have a known missing dirent */
 		mdcache_dirent_invalidate_all(mdc_newdir);
@@ -966,7 +968,13 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 		/* Handle key is changing.  This means the old handle is
 		 * useless.  Mark it unreachable, forcing a lookup next time */
 		mdc_unreachable(mdc_obj);
-	} else if (mdc_olddir == mdc_newdir) {
+	} else if (mdc_olddir == mdc_newdir &&
+		   mdcache_param.dir.avl_chunk == 0) {
+		/** @todo: This code really doesn't accomplish anything
+		 *         different than the code below, and actually the
+		 *         code below has better invalidation characteristics
+		 *         for chunking, so we will remove it later.
+		 */
 		/* if the rename operation is made within the same dir, then we
 		 * use an optimization: mdcache_rename_dirent is used
 		 * instead of adding/removing dirent. This limits the use of

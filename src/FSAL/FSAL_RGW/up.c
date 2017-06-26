@@ -82,12 +82,8 @@ void rgw_fs_invalidate(void *handle, struct rgw_fh_hk fh_hk)
 	fh_desc.addr = &fh_hk;
 	fh_desc.len = sizeof(struct rgw_fh_hk);
 
-	uint32_t upflags =
-		FSAL_UP_INVALIDATE_ATTRS |
-		FSAL_UP_INVALIDATE_CONTENT;
-
 	/* invalidate me, my man */
-	status = up_ops->invalidate(up_ops, &fh_desc, upflags);
+	status = up_ops->invalidate(up_ops, &fh_desc, FSAL_UP_INVALIDATE_CACHE);
 	if (FSAL_IS_ERROR(status)) {
 		LogMajor(COMPONENT_FSAL_UP,
 			"up/invalidate: error invalidating fh_hk %"

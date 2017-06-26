@@ -177,6 +177,8 @@ struct entry_export_map {
 #define MDCACHE_TRUST_CONTENT FSAL_UP_INVALIDATE_CONTENT
 /** The directory has been populated (negative lookups are meaningful) */
 #define MDCACHE_DIR_POPULATED FSAL_UP_INVALIDATE_DIR_POPULATED
+/** The directory chunks are considered valid */
+#define MDCACHE_TRUST_DIR_CHUNKS FSAL_UP_INVALIDATE_DIR_CHUNKS
 /** The entry has been removed, but not unhashed due to state */
 static const uint32_t MDCACHE_UNREACHABLE = 0x100;
 /** The directory is too big; skip the dirent cache */
@@ -477,8 +479,14 @@ static inline bool test_mde_flags(mdcache_entry_t *entry, uint32_t bits)
 
 static inline bool mdc_dircache_trusted(mdcache_entry_t *dir)
 {
-	return test_mde_flags(dir, MDCACHE_TRUST_CONTENT |
-				   MDCACHE_DIR_POPULATED);
+	/* This function returns false if chunking is enabled, the only caller
+	 * that matters for chunking, mdcache_dirent_find will thus return
+	 * ERR_FSAL_NO_ERROR if an entry is not found, and it's callers will
+	 * do the right thing...
+	 */
+	return ((mdcache_param.dir.avl_chunk == 0) &&
+		test_mde_flags(dir, MDCACHE_TRUST_CONTENT |
+				    MDCACHE_DIR_POPULATED));
 }
 
 static inline struct mdcache_fsal_export *mdc_export(
