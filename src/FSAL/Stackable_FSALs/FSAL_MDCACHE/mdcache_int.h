@@ -693,16 +693,8 @@ mdc_fixup_md(mdcache_entry_t *entry, struct attrlist *attrs)
 	atomic_set_uint32_t_bits(&entry->mde_flags, flags);
 }
 
-/**
- * @brief Check if attributes are valid
- *
- * @note the caller MUST hold attr_lock for read
- *
- * @param[in] entry     The entry to check
- */
-
 static inline bool
-mdcache_is_attrs_valid(mdcache_entry_t *entry, attrmask_t mask)
+mdcache_test_attrs_trust(mdcache_entry_t *entry, attrmask_t mask)
 {
 	uint32_t flags = 0;
 
@@ -715,6 +707,23 @@ mdcache_is_attrs_valid(mdcache_entry_t *entry, attrmask_t mask)
 
 	/* If any of the requested attributes are not valid, return. */
 	if (!test_mde_flags(entry, flags))
+		return false;
+
+	return true;
+}
+
+/**
+ * @brief Check if attributes are valid
+ *
+ * @note the caller MUST hold attr_lock for read
+ *
+ * @param[in] entry     The entry to check
+ */
+
+static inline bool
+mdcache_is_attrs_valid(mdcache_entry_t *entry, attrmask_t mask)
+{
+	if (!mdcache_test_attrs_trust(entry, mask))
 		return false;
 
 	if (entry->attrs.valid_mask == ATTR_RDATTR_ERR)

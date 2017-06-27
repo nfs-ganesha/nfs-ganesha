@@ -158,6 +158,12 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		goto put;
 	}
 
+	/* If the attributes are invalid, we can't update a subset.  Just bail,
+	 * and update them on demand */
+	if (!mdcache_test_attrs_trust(entry, attr->valid_mask)) {
+		goto put;
+	}
+
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
 	if (attr->expire_time_attr != 0)
