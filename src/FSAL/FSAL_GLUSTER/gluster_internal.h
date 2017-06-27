@@ -158,6 +158,7 @@ struct glusterfs_fd {
 
 	/** Gluster file descriptor. */
 	struct glfs_fd *glfd;
+	struct user_cred creds; /* user creds opening fd*/
 };
 
 struct glusterfs_handle {
@@ -299,5 +300,4 @@ int initiate_up_thread(struct glusterfs_fs *gl_fs);
 int upcall_inode_invalidate(struct glusterfs_fs *gl_fs,
 			    struct glfs_object *object);
 fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd);
-
 #endif				/* GLUSTER_INTERNAL */

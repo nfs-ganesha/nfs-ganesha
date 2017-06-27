@@ -217,15 +217,9 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 				   O_RDWR);
 		if (glfd == NULL) {
 			LogDebug(COMPONENT_PNFS, "glfd in ds_handle is NULL");
+			SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
 			return NFS4ERR_SERVERFAULT;
 		}
-
-		SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
-
-		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-				  &op_ctx->creds->caller_gid,
-				  op_ctx->creds->caller_glen,
-				  op_ctx->creds->caller_garray);
 
 		rc = glfs_fsync(glfd);
 		if (rc != 0)

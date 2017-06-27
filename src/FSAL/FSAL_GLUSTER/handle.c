@@ -981,6 +981,7 @@ fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
 	struct glfs_fd *glfd = NULL;
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
+	gid_t **garray_copy = NULL;
 #ifdef GLTIMING
 	struct timespec s_time, e_time;
 
@@ -1016,6 +1017,22 @@ fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
 
 	my_fd->glfd = glfd;
 	my_fd->openflags = openflags;
+	my_fd->creds.caller_uid = op_ctx->creds->caller_uid;
+	my_fd->creds.caller_gid = op_ctx->creds->caller_gid;
+	my_fd->creds.caller_glen = op_ctx->creds->caller_glen;
+	garray_copy = &my_fd->creds.caller_garray;
+
+	if ((*garray_copy) != NULL) {
+		/* Replace old creds */
+		gsh_free(*garray_copy);
+	}
+
+	if (op_ctx->creds->caller_glen) {
+		(*garray_copy) = gsh_malloc(op_ctx->creds->caller_glen
+					    * sizeof(gid_t));
+		memcpy((*garray_copy), op_ctx->creds->caller_garray,
+			op_ctx->creds->caller_glen * sizeof(gid_t));
+	}
 
 out:
 #ifdef GLTIMING
@@ -1040,10 +1057,11 @@ fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd)
 
 	if (my_fd->glfd && my_fd->openflags != FSAL_O_CLOSED) {
 
-		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-				  &op_ctx->creds->caller_gid,
-				  op_ctx->creds->caller_glen,
-				  op_ctx->creds->caller_garray);
+		/* Use the same credentials which opened up the fd */
+		SET_GLUSTER_CREDS(glfs_export, &my_fd->creds.caller_uid,
+				  &my_fd->creds.caller_gid,
+				  my_fd->creds.caller_glen,
+				  my_fd->creds.caller_garray);
 
 		rc = glfs_close(my_fd->glfd);
 
@@ -1060,6 +1078,13 @@ fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd)
 
 	my_fd->glfd = NULL;
 	my_fd->openflags = FSAL_O_CLOSED;
+	my_fd->creds.caller_uid = 0;
+	my_fd->creds.caller_gid = 0;
+	my_fd->creds.caller_glen = 0;
+	if (my_fd->creds.caller_garray) {
+		gsh_free(my_fd->creds.caller_garray);
+		my_fd->creds.caller_garray = NULL;
+	}
 
 #ifdef GLTIMING
 	now(&e_time);
@@ -1174,8 +1199,18 @@ fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 			      glusterfs_close_func,
 			      has_lock, closefd, open_for_locks);
 
+	/* since tmp2_fd is not accessed/closed outside
+	 * this routine, its safe to copy its variables into my_fd
+	 * without taking extra reference or allocating extra
+	 * memory.
+	 */
 	my_fd->glfd = tmp2_fd->glfd;
 	my_fd->openflags = tmp2_fd->openflags;
+	my_fd->creds.caller_uid = tmp2_fd->creds.caller_uid;
+	my_fd->creds.caller_gid = tmp2_fd->creds.caller_gid;
+	my_fd->creds.caller_glen = tmp2_fd->creds.caller_glen;
+	my_fd->creds.caller_garray = tmp2_fd->creds.caller_garray;
+
 	return status;
 }
 
@@ -1241,7 +1276,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *myself, *parenthandle = NULL;
-	struct glusterfs_fd *my_fd = NULL, tmp_fd = {0};
+	struct glusterfs_fd *my_fd = NULL;
 	struct stat sb = {0};
 	struct glfs_object *glhandle = NULL;
 	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
@@ -1326,7 +1361,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 
 		/* truncate is set in p_flags */
 		status = glusterfs_open_my_fd(myself, openflags, p_flags,
-					       &tmp_fd);
+					      my_fd);
 
 		if (FSAL_IS_ERROR(status)) {
 			status = gluster2fsal_error(errno);
@@ -1341,9 +1376,6 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 				goto undo_share;
 			}
 		}
-
-		my_fd->glfd = tmp_fd.glfd;
-		my_fd->openflags = tmp_fd.openflags;
 
 		if (createmode >= FSAL_EXCLUSIVE || truncated) {
 			/* Fetch the attributes to check against the
