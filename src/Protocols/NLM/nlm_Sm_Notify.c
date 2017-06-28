@@ -25,12 +25,109 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <arpa/inet.h>
 #include "log.h"
 #include "gsh_rpc.h"
 #include "nlm4.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nlm_util.h"
+
+#define IN4_LOCALHOST_STRING "127.0.0.1"
+#define IN6_LOCALHOST_STRING "::1"
+#define IN6_ENCAPSULATED_IN4_LOCALHOST_STRING "::ffff:127.0.0.1"
+
+static void check_use_caller_name_ipv4(char *name)
+{
+	unsigned char addrbuf[4];
+	sockaddr_t name_addr;
+	struct gsh_client *name_client;
+
+	if (strcmp(op_ctx->client->hostaddr_str,
+		IN4_LOCALHOST_STRING) != 0)
+		return;
+
+	/* get the gsh_client for the caller name */
+	if (inet_pton(AF_INET, name, addrbuf) != 1)
+		return;
+
+	memcpy(&(((struct sockaddr_in *)&name_addr)->sin_addr),
+		addrbuf, 4);
+	name_addr.ss_family = AF_INET;
+	name_client = get_gsh_client(&name_addr, false);
+
+	/* Check if localhost has sent SM NOTIFY request on behalf of a client
+	 * with name as caller name
+	 * If yes, then we can use the client IP instead of localhost IP
+	 */
+	if (name_client != NULL &&
+		(strcmp(name_client->hostaddr_str,
+		op_ctx->client->hostaddr_str) != 0)) {
+
+		LogDebug(COMPONENT_NLM,
+			"SM_NOTIFY request using host address: %s",
+			name_client->hostaddr_str);
+		memcpy(&(((struct sockaddr_in *)op_ctx->caller_addr)
+			->sin_addr), addrbuf, 4);
+		SetClientIP(name_client->hostaddr_str);
+		op_ctx->client = name_client;
+	}
+}
+
+static void check_use_caller_name_ipv6(char *name)
+{
+	unsigned char addrbuf[16];
+	sockaddr_t name_addr;
+	struct gsh_client *name_client;
+
+	if ((strcmp(op_ctx->client->hostaddr_str,
+		IN6_LOCALHOST_STRING) != 0) &&
+		(strcmp(op_ctx->client->hostaddr_str,
+		IN6_ENCAPSULATED_IN4_LOCALHOST_STRING) != 0))
+		return;
+
+	/* get the gsh_client for the caller name */
+	if (inet_pton(AF_INET6, name, addrbuf) != 1)
+		return;
+
+	memcpy(&(((struct sockaddr_in6 *)&name_addr)->sin6_addr),
+		addrbuf, 16);
+	name_addr.ss_family = AF_INET6;
+	name_client = get_gsh_client(&name_addr, false);
+
+	/* Check if localhost has sent SM NOTIFY request on behalf of a client
+	 * with name as caller name
+	 * If yes, then we can use the client IP instead of localhost IP
+	 */
+	if (name_client != NULL &&
+		(strcmp(name_client->hostaddr_str,
+		op_ctx->client->hostaddr_str) != 0)) {
+
+		LogDebug(COMPONENT_NLM,
+			"SM_NOTIFY request using host address: %s",
+			name_client->hostaddr_str);
+		memcpy(&(((struct sockaddr_in6 *)op_ctx->caller_addr)
+			->sin6_addr), addrbuf, 16);
+		SetClientIP(name_client->hostaddr_str);
+		op_ctx->client = name_client;
+	}
+}
+
+/*
+ * Check if a SM_NOTIFY request is given by the 'localhost'
+ * If that is the case check the caller name, if it is not same as 'localhost'
+ * then a 'localhost' has formed a NLM_SM_NOTIFY request for a client which
+ * has held lock(s) but not available to release the lock(s). The client is
+ * specified with the caller name in the request. Use the client's caller
+ * name to get the client IP and use it instead of the 'localhost' IP.
+ */
+static void check_use_caller_name_ip(char *name)
+{
+	if (op_ctx->caller_addr->ss_family == AF_INET)
+		check_use_caller_name_ipv4(name);
+	else
+		check_use_caller_name_ipv6(name);
+}
 
 /**
  * @brief NSM notification
@@ -49,6 +146,9 @@ int nlm4_Sm_Notify(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST PROCESSING: Calling nlm4_sm_notify for %s",
 		 arg->name);
+
+	/* Check if the SM_NOTIFY request is from the 'localhost' */
+	check_use_caller_name_ip(arg->name);
 
 	nsm_client = get_nsm_client(CARE_NOT, NULL, arg->name);
 
