@@ -270,6 +270,12 @@ struct mdcache_fsal_obj_handle {
 		struct {
 			/** List of chunks in this directory, not ordered */
 			struct glist_head chunks;
+			/** List of detached directory entries. */
+			struct glist_head detached;
+			/** Spin lock to protect the detached list. */
+			pthread_spinlock_t spin;
+			/** Count of detached directory entries. */
+			int detached_count;
 			/** @todo FSF
 			 *
 			 * This is somewhat fragile, however, a reorganization
@@ -374,6 +380,46 @@ typedef struct mdcache_dir_entry__ {
 	char name[];
 } mdcache_dir_entry_t;
 
+/**
+ * @brief Move a detached dirent to MRU postion in LRU list.
+ *
+ * @param[in]     parent  Parent entry
+ * @param[in]     dirent  Dirent to move to MRU
+ */
+
+static inline void bump_detached_dirent(mdcache_entry_t *parent,
+					mdcache_dir_entry_t *dirent)
+{
+	pthread_spin_lock(&parent->fsobj.fsdir.spin);
+	if (glist_first_entry(&parent->fsobj.fsdir.detached,
+			      mdcache_dir_entry_t, chunk_list) != dirent) {
+		glist_del(&dirent->chunk_list);
+		glist_add(&parent->fsobj.fsdir.detached, &dirent->chunk_list);
+	}
+	pthread_spin_unlock(&parent->fsobj.fsdir.spin);
+}
+
+/**
+ * @brief Remove a detached dirent from the LRU list.
+ *
+ * @param[in]     parent  Parent entry
+ * @param[in]     dirent  Dirent to remove
+ */
+
+static inline void rmv_detached_dirent(mdcache_entry_t *parent,
+				       mdcache_dir_entry_t *dirent)
+{
+	pthread_spin_lock(&parent->fsobj.fsdir.spin);
+	/* Note that the dirent might not be on the detached list if it
+	 * was being reaped by another thread. All is well here...
+	 */
+	if (!glist_null(&dirent->chunk_list)) {
+		glist_del(&dirent->chunk_list);
+		parent->fsobj.fsdir.detached_count--;
+	}
+	pthread_spin_unlock(&parent->fsobj.fsdir.spin);
+}
+
 /* Helpers */
 fsal_status_t mdcache_alloc_and_check_handle(
 		struct mdcache_fsal_export *export,
@@ -450,8 +496,8 @@ fsal_status_t mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t
 				       fsal_readdir_cb cb, attrmask_t attrmask,
 				       bool *eod_met);
 void mdcache_clean_dirent_chunk(struct dir_chunk *chunk);
-bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
-			 mdcache_dir_entry_t *new_dir_entry);
+void place_new_dirent(mdcache_entry_t *parent_dir,
+		      mdcache_dir_entry_t *new_dir_entry);
 fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 				      fsal_cookie_t whence,
 				      void *dir_state,

@@ -40,6 +40,10 @@ Dir_Chunk(uint32, range 0 to UINT32_MAX, default 128)
     Size of per-directory dirent cache chunks, 0 means directory chunking is not
     enabled.
 
+Detached_Mult(uint32, range 1 to UINT32_MAX, default 1)
+    Max number of detached directory entries expressed as a multiple of the
+    chunk size.
+
 Entries_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
     High water mark for cache entries.
 

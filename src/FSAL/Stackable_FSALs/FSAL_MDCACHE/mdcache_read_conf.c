@@ -64,6 +64,8 @@ static struct config_item mdcache_params[] = {
 	CONF_ITEM_UI32("Dir_Max", 1, UINT32_MAX, 65536,
 		       mdcache_parameter, dir.avl_max),
 	CONF_ITEM_UI32("Dir_Chunk", 0, UINT32_MAX, 128,
+		       mdcache_parameter, dir.avl_detached_mult),
+	CONF_ITEM_UI32("Detached_Mult", 1, UINT32_MAX, 1,
 		       mdcache_parameter, dir.avl_chunk),
 	CONF_ITEM_UI32("Entries_HWMark", 1, UINT32_MAX, 100000,
 		       mdcache_parameter, entries_hwmark),
@@ -128,6 +130,10 @@ int mdcache_set_param_from_conf(config_file_t parse_tree,
 	 */
 	mdcache_param.dir.avl_chunk_split =
 		((mdcache_param.dir.avl_chunk * 3) / 2) & (UINT32_MAX - 1);
+
+	/* Compute avl_detached_max from avl_chunk and avl_detached_mult */
+	mdcache_param.dir.avl_detached_max =
+	    mdcache_param.dir.avl_chunk * mdcache_param.dir.avl_detached_mult;
 
 	return 0;
 }

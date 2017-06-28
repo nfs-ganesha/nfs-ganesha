@@ -483,6 +483,8 @@ CACHEINODE
 
 	Dir_Chunk(uint32, range 0 to UINT32_MAX, default 128)
 
+	Detached_Mult(uint32, range 1 to UINT32_MAX, default 1)
+
 	Chunks_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
 
 	Entries_HWMark(uint32, range 1 to UINT32_MAX, default 100000)

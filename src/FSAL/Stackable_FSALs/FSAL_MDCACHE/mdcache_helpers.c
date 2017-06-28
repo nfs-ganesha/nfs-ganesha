@@ -62,6 +62,52 @@ static inline bool trust_negative_cache(mdcache_entry_t *parent)
 }
 
 /**
+ * @brief Add a detached dirent to the LRU list (in the MRU position).
+ *
+ * If rhe maximum number of detached dirents would be exceeded, remove the
+ * LRU dirent.
+ *
+ * @note mdc_parent MUST have it's content_lock held for writing
+ *
+ * @param[in]     parent  Parent entry
+ * @param[in]     dirent  Dirent to move to MRU
+ */
+
+static inline void add_detached_dirent(mdcache_entry_t *parent,
+				       mdcache_dir_entry_t *dirent)
+{
+	if (parent->fsobj.fsdir.detached_count ==
+	    mdcache_param.dir.avl_detached_max) {
+		/* Need to age out oldest detached dirent. */
+		mdcache_dir_entry_t *removed;
+
+		/* Find the oldest detached dirent and remove it.
+		 * We just hold the spin lock for the list operation.
+		 * Technically we don't need it since the content lock is held
+		 * for write, there can be no conflicting threads. Since we
+		 * don't have a racing thread, it's ok that the list is
+		 * unprotected by spin lock while we make the AVL call.
+		 */
+		pthread_spin_lock(&parent->fsobj.fsdir.spin);
+
+		removed = glist_last_entry(&parent->fsobj.fsdir.detached,
+					   mdcache_dir_entry_t,
+					   chunk_list);
+
+		pthread_spin_unlock(&parent->fsobj.fsdir.spin);
+
+		/* Remove from active names tree */
+		mdcache_avl_remove(parent, removed);
+	}
+
+	/* Add new entry to MRU (head) of list */
+	pthread_spin_lock(&parent->fsobj.fsdir.spin);
+	glist_add(&parent->fsobj.fsdir.detached, &dirent->chunk_list);
+	parent->fsobj.fsdir.detached_count++;
+	pthread_spin_unlock(&parent->fsobj.fsdir.spin);
+}
+
+/**
  * @brief Fetch optional attributes
  *
  * The mask should be set in attrs_out indicating which attributes are
@@ -399,21 +445,8 @@ void mdcache_clean_dirent_chunk(struct dir_chunk *chunk)
 
 		dirent = glist_entry(glist, mdcache_dir_entry_t, chunk_list);
 
-		unchunk_dirent(dirent);
-
-		if (dirent->flags & DIR_ENTRY_FLAG_DELETED) {
-			/* Remove from deleted names tree */
-			avltree_remove(&dirent->node_hk,
-				       &parent->fsobj.fsdir.avl.c);
-		} else {
-			/* Remove from active names tree */
-			avltree_remove(&dirent->node_hk,
-				       &parent->fsobj.fsdir.avl.t);
-		}
-
-		if (dirent->ckey.kv.len)
-			mdcache_key_delete(&dirent->ckey);
-		gsh_free(dirent);
+		/* Remove from deleted or active names tree */
+		mdcache_avl_remove(parent, dirent);
 	}
 
 	/* Remove chunk from directory. */
@@ -467,14 +500,11 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
 	 */
 	mdcache_clean_dirent_chunks(entry);
 
-	/* First the active tree */
-	mdcache_avl_clean_tree(&entry->fsobj.fsdir.avl.t);
+	/* Clean the active and deleted trees */
+	mdcache_avl_clean_trees(entry);
+
 	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_DIR_POPULATED);
 
-	/* Next the inactive tree */
-	mdcache_avl_clean_tree(&entry->fsobj.fsdir.avl.c);
-
-	/* Now we can trust the content */
 	atomic_set_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_CONTENT |
 						    MDCACHE_TRUST_DIR_CHUNKS);
 }
@@ -639,8 +669,11 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		/* init avl tree */
 		mdcache_avl_init(nentry);
 
-		/* init chunk list */
+		/* init chunk list and detached dirents list */
 		glist_init(&nentry->fsobj.fsdir.chunks);
+		glist_init(&nentry->fsobj.fsdir.detached);
+		(void) pthread_spin_init(&nentry->fsobj.fsdir.spin,
+					 PTHREAD_PROCESS_PRIVATE);
 		break;
 
 	case SYMBOLIC_LINK:
@@ -1084,6 +1117,9 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 		if (dirent->chunk != NULL) {
 			/* Bump the chunk in the LRU */
 			lru_bump_chunk(dirent->chunk);
+		} else {
+			/* Bump the detached dirent. */
+			bump_detached_dirent(mdc_parent, dirent);
 		}
 		status = mdcache_find_keyed(&dirent->ckey, entry);
 		if (!FSAL_IS_ERROR(status))
@@ -1494,17 +1530,8 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 	/* we're going to succeed */
 	if (new_dir_entry == allocated_dir_entry &&
 	    mdcache_param.dir.avl_chunk > 0) {
-		/* If chunking, try and add this entry to a chunk. */
-		if (!add_dirent_to_chunk(parent, new_dir_entry)) {
-			/* add_dirent_to_chunk indicated we should not longer
-			 * trust the chunk cache.
-			 */
-			LogFullDebug(COMPONENT_CACHE_INODE,
-				     "Invalidating chunk cache");
-			atomic_clear_uint32_t_bits(&parent->mde_flags,
-						   MDCACHE_DIR_POPULATED |
-						   MDCACHE_TRUST_DIR_CHUNKS);
-		}
+		/* Place new dirent into a chunk or as detached. */
+		place_new_dirent(parent, new_dir_entry);
 
 		/* Since we are chunking, we can preserve the dirent cache for
 		 * the purposes of lookups even if we could not add the new
@@ -1786,29 +1813,28 @@ mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t *whence,
 }
 
 /**
- * @brief Add a dirent from create, lookup, or rename to a chunk if possible.
+ * @brief Place a new dirent from create, lookup, or rename into a chunk if
+ * possible, otherwise place as a detached dirent.
  *
  * If addition is not possible because the entry does not belong to an
  * active dirent chunk, nothing happens. The dirent may still be inserted
- * into the by name lookup.
+ * into the by name lookup as a detached dirent.
  *
- * @note parent_dir MUST have it's content_lock held for writing
- *
- * @param[in] parent_dir     The directory this dir entry is part of
- * @param[in] new_dir_entry  The dirent to add.
- *
- * @returns true if we can still trust the chunk cache.
- *
- * Note that if we can't insert the dirent into a chunk because we can't figure
+ * @note If we can't insert the dirent into a chunk because we can't figure
  * out which chunk it belongs to, we can still trust the chunks, the new dirent
  * is not within their range, and if inserted between two non-adjacent chunks,
  * a subsequent readdir that enumerates that part of the directory will pick up
  * the new dirent since it will have to populate at least one new chunk in the
  * gap.
  *
+ * @note parent_dir MUST have it's content_lock held for writing
+ *
+ * @param[in] parent_dir     The directory this dir entry is part of
+ * @param[in] new_dir_entry  The dirent to add.
+ *
  */
-bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
-			 mdcache_dir_entry_t *new_dir_entry)
+void place_new_dirent(mdcache_entry_t *parent_dir,
+		      mdcache_dir_entry_t *new_dir_entry)
 {
 	mdcache_dir_entry_t *left;
 	mdcache_dir_entry_t *right;
@@ -1816,6 +1842,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 	int is_left, code;
 	fsal_cookie_t ck, nck;
 	struct dir_chunk *chunk;
+	bool invalidate_chunks = true;
 
 	subcall(
 		ck = parent_dir->sub_handle->obj_ops.compute_readdir_cookie(
@@ -1829,7 +1856,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			      "Could not add %s to chunk for directory %p, compute_readdir_cookie failed",
 			      new_dir_entry->name, parent_dir);
-		return false;
+		goto out;
 	}
 
 	new_dir_entry->ck = ck;
@@ -1880,7 +1907,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 				LogCrit(COMPONENT_CACHE_INODE,
 					"Could not compute new cookie for %s in directory %p",
 					right->name, parent_dir);
-				return false;
+				goto out;
 			}
 
 			/* Just change up the old first entries cookie, which
@@ -1897,7 +1924,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 				PRIx64,
 				new_dir_entry->name, parent_dir,
 				right->name, right->ck);
-			return false;
+			goto out;
 		}
 	}
 
@@ -1908,7 +1935,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			      "Could not add %s to chunk for directory %p, tree was empty",
 			      new_dir_entry->name, parent_dir);
-		return false;
+		goto out;
 	}
 
 	if (is_left) {
@@ -1948,7 +1975,9 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 				LogFullDebug(COMPONENT_CACHE_INODE,
 					      "Could not add %s to chunk for directory %p, somewhere before first chunk",
 					      new_dir_entry->name, parent_dir);
-				return true;
+
+				invalidate_chunks = false;
+				goto out;
 			}
 		}
 	} else {
@@ -1988,7 +2017,9 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 				LogFullDebug(COMPONENT_CACHE_INODE,
 					      "Could not add %s to chunk for directory %p, somewhere after last chunk",
 					      new_dir_entry->name, parent_dir);
-				return true;
+
+				invalidate_chunks = false;
+				goto out;
 			}
 		}
 	}
@@ -2004,7 +2035,9 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 		 * the directory we don't have cached, a readdir that wants that
 		 * part of the directory will populate a new chunk.
 		 */
-		return true;
+
+		invalidate_chunks = false;
+		goto out;
 	}
 
 	/* Set up to add to chunk and by cookie AVL tree. */
@@ -2023,7 +2056,7 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 		 * Nothing to clean up since we haven't done anything
 		 * unreversible, and we no longer trust the chunks.
 		 */
-		return false;
+		goto out;
 	}
 
 	/* Get the node into the actual tree... */
@@ -2134,8 +2167,24 @@ bool add_dirent_to_chunk(mdcache_entry_t *parent_dir,
 	}
 
 	new_dir_entry->flags |= DIR_ENTRY_SORTED;
+	invalidate_chunks = false;
 
-	return true;
+out:
+
+	if (invalidate_chunks) {
+		/* Indicate we not longer trust the chunk cache. */
+		atomic_clear_uint32_t_bits(&parent_dir->mde_flags,
+					   MDCACHE_DIR_POPULATED |
+					   MDCACHE_TRUST_DIR_CHUNKS);
+	}
+
+	if (new_dir_entry->chunk == NULL) {
+		/* This is a detached directory entry, add it to the LRU list of
+		 * detached directory entries. This is the one and only place a
+		 * detached dirent can be added.
+		 */
+		add_detached_dirent(parent_dir, new_dir_entry);
+	}
 }
 
 /**
