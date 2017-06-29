@@ -212,8 +212,13 @@ BuildRequires:	PyQt4-devel
 Requires:	PyQt4
 %endif
 %endif
+%if ( 0%{?suse_version} )
+BuildRequires:  python-devel
+Requires: nfs-ganesha = %{version}-%{release}, python
+%else
 BuildRequires:  python2-devel
 Requires: nfs-ganesha = %{version}-%{release}, python2
+%endif
 
 %description utils
 This package contains utility scripts for managing the NFS-GANESHA server
