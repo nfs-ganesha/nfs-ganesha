@@ -1393,6 +1393,9 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 			PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 			mdcache_dirent_invalidate_all(entry);
 			PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		} else {
+			/* Some real error.  Bail. */
+			return status;
 		}
 	} else {
 		PTHREAD_RWLOCK_wrlock(&parent->content_lock);
