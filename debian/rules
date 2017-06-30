@@ -24,7 +24,7 @@ override_dh_auto_configure:
 		-DBUILD_CONFIG=debian \
 		-DFSAL_DESTINATION=/usr/lib/${DEB_HOST_MULTIARCH}/ganesha \
 		-DCMAKE_BUILD_TYPE=Debug \
-		-DUSE_FSAL_NULL=YES \
+		-DUSE_FSAL_NULL=NO \
 		-DUSE_FSAL_ZFS=NO \
 		-DUSE_FSAL_XFS=NO \
 		-DUSE_FSAL_CEPH=NO \
@@ -36,11 +36,11 @@ override_dh_auto_configure:
 		-DUSE_9P_RDMA=NO \
 		-DUSE_LTTNG=NO \
 		-DUSE_ADMIN_TOOLS=YES \
-		-DUSE_GUI_ADMIN_TOOLS=YES \
-		-DUSE_FSAL_VFS=ON \
-		-DUSE_FSAL_PROXY=ON \
+		-DUSE_GUI_ADMIN_TOOLS=NO \
+		-DUSE_FSAL_VFS=NO \
+		-DUSE_FSAL_PROXY=NO \
 		-DUSE_DBUS=ON \
-		-DUSE_9P=ON \
+		-DUSE_9P=NO \
 		-DDISTNAME_HAS_GIT_DATA=OFF	\
 		-D_MSPAC_SUPPORT=ON                                             \
 		-DWBCLIENT_INCLUDE_DIR=/usr/lpp/mmfs/include/samba-4.0          \
