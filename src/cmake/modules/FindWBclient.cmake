@@ -24,18 +24,9 @@ find_library(WBCLIENT_LIBRARIES NAMES wbclient
   ${_WBCLIENT_PC_LIBDIR}
   )
 
-check_library_exists(
-  wbclient
-  wbcLookupSids
-  ${WBCLIENT_LIBRARIES}
-  WBCLIENT_LIB_OK
-  )
-
 # the stdint and stdbool includes are required (silly Cmake)
-if(WBCLIENT_LIB_OK)
-  LIST(APPEND CMAKE_REQUIRED_INCLUDES ${WBCLIENT_INCLUDE_DIR})
-  check_include_files("stdint.h;stdbool.h;wbclient.h" WBCLIENT_H)
-endif(WBCLIENT_LIB_OK)
+LIST(APPEND CMAKE_REQUIRED_INCLUDES ${WBCLIENT_INCLUDE_DIR})
+check_include_files("stdint.h;stdbool.h;wbclient.h" WBCLIENT_H)
 
 # now see if this is a winbind 4 header
 if(WBCLIENT_H)
@@ -55,7 +46,7 @@ endif(WBCLIENT_H)
 
 if(WBCLIENT4_H)
   set(WBCLIENT_FOUND 1)
-  message(STATUS "Found Winbind4 client: ${WBCLIENT_LIB}")
+  message(STATUS "Found Winbind4 client: ${WBCLIENT_LIBRARIES}")
 else(WBCLIENT4_H)
   if(WBclient_FIND_REQUIRED)
     message(FATAL_ERROR "Winbind4 client not found ${SAMBA4_PREFIX}/lib")
