@@ -41,7 +41,8 @@ Package: nfs-ganesha-fsal
 Multi-Arch: same
 Architecture: any
 Section: libs
-Depends: nfs-ganesha (=${binary:Version}), ${shlibs:Depends}
+Depends: nfs-ganesha (=${binary:Version}), ${shlibs:Depends},
+         gpfs.base (>=4.2.3-0)
 Description: nfs-ganesha fsal libraries
  NFS-GANESHA is a NFS Server running in user space with a large cache.
  It comes with various backend modules to support different file systems
