@@ -89,13 +89,13 @@ Requires: openSUSE-release
 @BCOND_RADOS_RECOV@ rados_recov
 %global use_rados_recov %{on_off_switch rados_recov}
 
-%global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '%-', '.'); print(extraver) }
+%global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); print(extraver) }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
 
 Name:		nfs-ganesha
 Version:	@GANESHA_BASE_VERSION@
-Release:	0%{dev_version}%{?dist}
+Release:	%{dev_version}%{?dist}
 Summary:	NFS-Ganesha is a NFS Server running in user space
 Group:		Applications/System
 License:	LGPLv3+
