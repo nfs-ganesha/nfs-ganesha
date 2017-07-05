@@ -26,6 +26,7 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "gpfs_methods.h"
+#include "nfs_init.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <utime.h>
@@ -96,6 +97,11 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	LogFullDebug(COMPONENT_FSAL_UP,
 		     "Initializing FSAL Callback context for %d.",
 		     gpfs_fs->root_fd);
+
+	/* wait for nfs init completion to get general_fridge
+	 * initialized which is needed for processing some upcall events
+	 */
+	nfs_init_wait();
 
 	/* Start querying for events and processing. */
 	while (1) {

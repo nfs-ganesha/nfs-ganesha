@@ -45,7 +45,6 @@
 #include "delayed_exec.h"
 #include "export_mgr.h"
 #include "server_stats.h"
-#include "nfs_init.h"
 
 struct delegrecall_context {
 	/* Reserve lease during delegation recall */
@@ -1628,11 +1627,6 @@ void up_ready_wait(struct fsal_up_vector *up_ops)
 	while (!up_ops->up_ready)
 		pthread_cond_wait(&up_ops->up_cond, &up_ops->up_mutex);
 	PTHREAD_MUTEX_unlock(&up_ops->up_mutex);
-
-	/* wait for nfs init completion to get general_fridge
-	 * initialized which is needed for processing some upcall events
-	 */
-	nfs_init_wait();
 }
 
 /**
