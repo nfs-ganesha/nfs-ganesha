@@ -827,7 +827,6 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 	    size_t *wrote_amount, bool *fsal_stable, struct io_info *info)
 {
 	fsal_status_t status;
-	int retval = 0;
 	int my_fd = -1;
 	bool has_lock = false;
 	bool closefd = false;
@@ -859,19 +858,6 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 		status = GPFSFSAL_write(my_fd, offset, buffer_size, buffer,
 				wrote_amount, fsal_stable, op_ctx,
 				export_fd);
-
-
-	if (FSAL_IS_ERROR(status))
-		goto out;
-
-	/* attempt stability if we aren't using an O_SYNC fd */
-	if (!*fsal_stable) {
-		retval = fsync(my_fd);
-		if (retval == -1) {
-			retval = errno;
-			status = fsalstat(posix2fsal_error(retval), retval);
-		}
-	}
 
  out:
 
