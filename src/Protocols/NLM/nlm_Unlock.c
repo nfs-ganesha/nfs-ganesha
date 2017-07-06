@@ -83,7 +83,7 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	/* unlock doesn't care if owner is found */
 	rc = nlm_process_parameters(req,
-				    false,	/* exlcusive doesn't matter */
+				    false,
 				    &arg->alock,
 				    &lock,
 				    &obj,
@@ -92,7 +92,6 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				    &nlm_client,
 				    &nlm_owner,
 				    NULL,
-				    false,
 				    0,
 				    &state);
 

@@ -92,7 +92,6 @@ int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				    &nlm_client,
 				    &nlm_owner,
 				    NULL,
-				    false,
 				    0,
 				    NULL);
 

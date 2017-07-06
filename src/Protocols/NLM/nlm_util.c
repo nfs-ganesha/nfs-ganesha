@@ -255,7 +255,6 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			   state_nlm_client_t **ppnlm_client,
 			   state_owner_t **ppowner,
 			   state_block_data_t **block_data,
-			   bool nsm_state_applies,
 			   int32_t nsm_state,
 			   state_t **state)
 {
@@ -332,7 +331,7 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		rc = get_nlm_state(STATE_TYPE_NLM_LOCK,
 				   *ppobj,
 				   *ppowner,
-				   nsm_state_applies,
+				   care,
 				   nsm_state,
 				   state);
 
@@ -469,7 +468,7 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 		rc = get_nlm_state(STATE_TYPE_NLM_SHARE,
 				   *ppobj,
 				   *ppowner,
-				   false,
+				   care,
 				   0,
 				   state);
 

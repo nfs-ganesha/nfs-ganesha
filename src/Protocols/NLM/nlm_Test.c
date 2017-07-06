@@ -98,12 +98,11 @@ int nlm4_Test(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				    &arg->alock,
 				    &lock,
 				    &obj,
-				    CARE_NO_MONITOR,
+				    CARE_OWNER,
 				    &nsm_client,
 				    &nlm_client,
 				    &nlm_owner,
 				    NULL,
-				    false,
 				    0,
 				    &state);
 

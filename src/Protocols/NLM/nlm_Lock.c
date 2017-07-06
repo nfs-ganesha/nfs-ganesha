@@ -119,7 +119,6 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				    &nlm_client,
 				    &nlm_owner,
 				    &pblock_data,
-				    req->rq_msg.cb_proc != NLMPROC4_NM_LOCK,
 				    arg->state,
 				    &nlm_state);
 

@@ -456,6 +456,8 @@ typedef enum state_owner_type_t {
 
 typedef enum care_t {
 	CARE_NOT,		/*< Do not care about client's status */
+	CARE_OWNER,             /*< Don't care about nsm state but do need an
+				    owner. */
 	CARE_ALWAYS,		/*< Always care about client's status */
 	CARE_NO_MONITOR,	/*< Care, but will not actively monitor */
 	CARE_MONITOR		/*< Will actively monitor client status */

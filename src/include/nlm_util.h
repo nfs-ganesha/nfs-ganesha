@@ -63,7 +63,6 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			   state_nlm_client_t **ppnlm_client,
 			   state_owner_t **ppowner,
 			   state_block_data_t **block_data,
-			   bool nsm_state_applies,
 			   int32_t nsm_state,
 			   state_t **state);
 
