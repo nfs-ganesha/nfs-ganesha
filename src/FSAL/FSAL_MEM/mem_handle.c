@@ -229,6 +229,7 @@ static void mem_remove_dirent_locked(struct mem_fsal_obj_handle *parent,
 		     numkids);
 
 	/* Free dirent */
+	gsh_free((char *)dirent->d_name);
 	gsh_free(dirent);
 
 	if (release && empty)
