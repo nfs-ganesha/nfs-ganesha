@@ -588,7 +588,7 @@ endif(USE_FSAL_CEPH)
 
 if(USE_FSAL_RGW)
   # require RGW w/API version 1.1.x
-  find_package(RGW 1.1.2)
+  find_package(RGW 1.1.4)
   if(NOT RGW_FOUND)
     if(STRICT_PACKAGE)
       message(FATAL_ERROR "STRICT_PACKAGE : Cannot find RGW runtime.  Disabling RGW fsal build")
