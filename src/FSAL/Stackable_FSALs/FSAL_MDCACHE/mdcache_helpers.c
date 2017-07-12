@@ -76,6 +76,9 @@ static inline bool trust_negative_cache(mdcache_entry_t *parent)
 static inline void add_detached_dirent(mdcache_entry_t *parent,
 				       mdcache_dir_entry_t *dirent)
 {
+#ifdef DEBUG_MDCACHE
+	assert(parent->content_lock.__data.__writer != 0);
+#endif
 	if (parent->fsobj.fsdir.detached_count ==
 	    mdcache_param.dir.avl_detached_max) {
 		/* Need to age out oldest detached dirent. */
@@ -1034,6 +1037,9 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 	mdcache_entry_t *new_entry = NULL;
 	bool invalidate = false;
 
+#ifdef DEBUG_MDCACHE
+	assert(mdc_parent->content_lock.__data.__writer != 0);
+#endif
 	if (avltree_size(&mdc_parent->fsobj.fsdir.avl.t) >
 	    mdcache_param.dir.avl_max) {
 		LogFullDebug(COMPONENT_CACHE_INODE, "Parent %p at max",
@@ -1102,6 +1108,10 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 		     test_mde_flags(mdc_parent, MDCACHE_TRUST_CONTENT)
 				? "yes" : "no");
 
+#ifdef DEBUG_MDCACHE
+	assert(mdc_parent->content_lock.__data.__nr_readers ||
+	       mdc_parent->content_lock.__data.__writer);
+#endif
 	*entry = NULL;
 
 	/* If parent isn't caching, return stale */
@@ -1499,6 +1509,9 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 
 	LogFullDebug(COMPONENT_CACHE_INODE, "Add dir entry %s", name);
 
+#ifdef DEBUG_MDCACHE
+	assert(parent->content_lock.__data.__writer != 0);
+#endif
 	/* Sanity check */
 	if (parent->obj_handle.type != DIRECTORY)
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -1559,6 +1572,9 @@ mdcache_dirent_remove(mdcache_entry_t *parent, const char *name)
 	mdcache_dir_entry_t *dirent;
 	fsal_status_t status;
 
+#ifdef DEBUG_MDCACHE
+	assert(parent->content_lock.__data.__writer != 0);
+#endif
 	/* Don't remove if parent is not being cached */
 	if (test_mde_flags(parent, MDCACHE_BYPASS_DIRCACHE))
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1598,11 +1614,13 @@ mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
 	fsal_status_t status;
 	int code = 0;
 
-
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Rename dir entry %s to %s",
 		     oldname, newname);
 
+#ifdef DEBUG_MDCACHE
+	assert(parent->content_lock.__data.__writer != 0);
+#endif
 	/* Don't rename if parent is not being cached */
 	if (test_mde_flags(parent, MDCACHE_BYPASS_DIRCACHE))
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1844,6 +1862,9 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 	struct dir_chunk *chunk;
 	bool invalidate_chunks = true;
 
+#ifdef DEBUG_MDCACHE
+	assert(parent_dir->content_lock.__data.__writer != 0);
+#endif
 	subcall(
 		ck = parent_dir->sub_handle->obj_ops.compute_readdir_cookie(
 				parent_dir->sub_handle, new_dir_entry->name)
@@ -3140,6 +3161,10 @@ mdcache_dirent_populate(mdcache_entry_t *dir)
 	attrmask_t attrmask;
 
 	struct mdcache_populate_cb_state state;
+
+#ifdef DEBUG_MDCACHE
+	assert(dir->content_lock.__data.__writer != 0);
+#endif
 
 	/* Only DIRECTORY entries are concerned */
 	if (dir->obj_handle.type != DIRECTORY) {

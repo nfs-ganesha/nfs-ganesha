@@ -83,6 +83,9 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 		     "Delete dir entry %p %s",
 		     v, v->name);
 
+#ifdef DEBUG_MDCACHE
+	assert(entry->content_lock.__data.__writer);
+#endif
 	assert(!(v->flags & DIR_ENTRY_FLAG_DELETED));
 
 	node = avltree_inline_lookup_hk(&v->node_hk, &entry->fsobj.fsdir.avl.t);
@@ -164,6 +167,10 @@ void unchunk_dirent(mdcache_dir_entry_t *dirent)
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Unchunking %p %s",
 		     dirent, dirent->name);
+
+#ifdef DEBUG_MDCACHE
+	assert(parent->content_lock.__data.__writer);
+#endif
 
 	/* Dirent is part of a chunk, must do additional clean
 	 * up.
@@ -251,7 +258,9 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Insert dir entry %p %s j=%d j2=%d",
 		     v, v->name, j, j2);
-
+#ifdef DEBUG_MDCACHE
+	assert(entry->content_lock.__data.__writer);
+#endif
 	/* first check for a previously-deleted entry */
 	node = avltree_inline_lookup_hk(&v->node_hk, c);
 
@@ -326,11 +335,13 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
 int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 {
 	struct avltree_node *node;
-
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Insert dirent %p for %s on entry=%p FSAL cookie=%"PRIx64,
 		     v, v->name, entry, v->ck);
 
+#ifdef DEBUG_MDCACHE
+	assert(entry->content_lock.__data.__writer);
+#endif
 	node = avltree_inline_insert(&v->node_ck, &entry->fsobj.fsdir.avl.ck,
 				     avl_dirent_ck_cmpf);
 
@@ -392,7 +403,9 @@ mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent)
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Insert dir entry %p %s",
 		     v, v->name);
-
+#ifdef DEBUG_MDCACHE
+	assert(entry->content_lock.__data.__writer);
+#endif
 	/* don't permit illegal cookies */
 #if AVL_HASH_MURMUR3
 	MurmurHash3_x64_128(v->name, strlen(v->name), 67, hk);
@@ -783,6 +796,10 @@ void mdcache_avl_clean_trees(mdcache_entry_t *parent)
 {
 	struct avltree_node *dirent_node;
 	mdcache_dir_entry_t *dirent;
+
+#ifdef DEBUG_MDCACHE
+	assert(parent->content_lock.__data.__writer);
+#endif
 
 	while ((dirent_node = avltree_first(&parent->fsobj.fsdir.avl.t))) {
 		dirent = avltree_container_of(dirent_node, mdcache_dir_entry_t,

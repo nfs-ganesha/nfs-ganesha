@@ -61,6 +61,7 @@
 #cmakedefine USE_FSAL_CEPH_STATX 1
 #cmakedefine ENABLE_LOCKTRACE 1
 #cmakedefine SANITIZE_ADDRESS 1
+#cmakedefine DEBUG_MDCACHE 1
 
 #define NFS_GANESHA 1
 
