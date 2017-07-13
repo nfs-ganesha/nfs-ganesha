@@ -703,12 +703,9 @@ void hashtable_deletelatched(struct hash_table *ht,
 			     struct gsh_buffdesc *stored_val)
 {
 	/* The pair of buffer descriptors comprising the stored entry */
-	struct hash_data *data = NULL;
+	struct hash_data *data;
 	/* Its partition */
 	struct hash_partition *partition = &ht->partitions[latch->index];
-
-	if (!latch->locator)
-		return;
 
 	data = RBT_OPAQ(latch->locator);
 
@@ -772,6 +769,12 @@ void hashtable_deletelatched(struct hash_table *ht,
 	pool_free(ht->data_pool, data);
 	pool_free(ht->node_pool, latch->locator);
 	--ht->partitions[latch->index].count;
+
+	/* Some callers re-use the latch to insert a record after this call,
+	 * so reset latch locator to avoid hashtable_setlatched() using the
+	 * invalid latch->locator
+	 */
+	latch->locator = NULL;
 }
 
 /**
