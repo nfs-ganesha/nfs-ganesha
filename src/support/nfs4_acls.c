@@ -160,8 +160,7 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *acldata,
 	value.len = sizeof(fsal_acl_t);
 
 	rc = hashtable_setlatched(fsal_acl_hash, &key, &value, &latch,
-				  HASHTABLE_SET_HOW_SET_NO_OVERWRITE, NULL,
-				  NULL);
+				  false, NULL, NULL);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		/* Put the entry back in its pool */

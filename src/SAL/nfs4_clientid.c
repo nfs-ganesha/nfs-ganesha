@@ -1699,8 +1699,7 @@ nfs_client_record_t *get_client_record(const char *const value,
 	buffval.len = sizeof(nfs_client_record_t) + len;
 
 	rc = hashtable_setlatched(ht_client_record, &buffkey, &buffval, &latch,
-				  HASHTABLE_SET_HOW_SET_NO_OVERWRITE, NULL,
-				  NULL);
+				  false, NULL, NULL);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		LogFatal(COMPONENT_CLIENTID,
