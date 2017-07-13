@@ -1216,7 +1216,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 			 * delete this entry will not find it in the
 			 * hash table but will free its nlm client.
 			 */
-			hashtable_deletelatched(ht_nsm_client, &buffkey,
+			hashtable_deletelatched(ht_nlm_client, &buffkey,
 						&latch, NULL, NULL);
 			goto not_found;
 		}
@@ -1266,12 +1266,6 @@ not_found:
 
 	/* Take a reference to the NSM Client */
 	inc_nsm_client_ref(nsm_client);
-
-	if (pclient->slc_nlm_caller_name == NULL) {
-		/* Discard the created client */
-		free_nlm_client(pclient);
-		return NULL;
-	}
 
 	pclient->slc_refcount = 1;
 
