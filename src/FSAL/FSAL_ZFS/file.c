@@ -198,6 +198,9 @@ fsal_status_t tank_close(struct fsal_obj_handle *obj_hdl)
 
 	myself = container_of(obj_hdl, struct zfs_fsal_obj_handle, obj_handle);
 
+	if (myself->u.file.openflags == FSAL_O_CLOSED)
+		return fsalstat(ERR_FSAL_NOT_OPENED, 0);
+
 	retval =
 	    libzfswrap_close(ZFSFSAL_GetVFS(myself->handle),
 			     &myself->u.file.cred, myself->u.file.p_vnode,

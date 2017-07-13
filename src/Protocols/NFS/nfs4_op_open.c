@@ -254,8 +254,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 					       (openflags & FSAL_O_RECLAIM));
 
 		if (state_status != STATE_SUCCESS) {
-			status = data->current_obj->obj_ops.close(
-						data->current_obj);
+			status = fsal_close(data->current_obj);
 			if (FSAL_IS_ERROR(status))
 				/* Log bad close and continue. */
 				LogEvent(COMPONENT_STATE,
@@ -275,8 +274,7 @@ static nfsstat4 open4_do_open(struct nfs_argop4 *op, compound_data_t *data,
 						   openflags & FSAL_O_RECLAIM);
 
 		if (state_status != STATE_SUCCESS) {
-			status = data->current_obj->obj_ops.close(
-						data->current_obj);
+			status = fsal_close(data->current_obj);
 			if (FSAL_IS_ERROR(status))
 				/* Log bad close and continue. */
 				LogEvent(COMPONENT_STATE,

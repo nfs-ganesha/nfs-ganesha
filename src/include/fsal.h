@@ -409,7 +409,6 @@ fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
  * @param[in] obj	File to close
  * @return FSAL status
  */
-
 static inline fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl)
 {
 	bool support_ex;
@@ -430,8 +429,12 @@ static inline fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl)
 	/* Otherwise, return the result of close method. */
 	fsal_status_t status = obj_hdl->obj_ops.close(obj_hdl);
 
-	if (!FSAL_IS_ERROR(status) && !support_ex)
+	if (!FSAL_IS_ERROR(status)) {
 		(void) atomic_dec_size_t(&open_fd_count);
+	} else if (status.major == ERR_FSAL_NOT_OPENED) {
+		/* Wasn't open.  Not an error, but shouldn't decrement */
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
 
 	return status;
 }

@@ -422,6 +422,10 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 		return status;
 	}
 
+	if (!state) {
+		(void) atomic_inc_size_t(&open_fd_count);
+	}
+
 	LogFullDebug(COMPONENT_FSAL,
 		     "Created entry %p FSAL %s for %s",
 		     *obj, (*obj)->fsal->name, name);
@@ -443,7 +447,7 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 	if (state != NULL)
 		close_status = (*obj)->obj_ops.close2(*obj, state);
 	else
-		close_status = (*obj)->obj_ops.close(*obj);
+		close_status = fsal_close(*obj);
 
 	if (FSAL_IS_ERROR(close_status)) {
 		/* Just log but don't return this error (we want to
@@ -1691,8 +1695,9 @@ fsal_status_t fsal_open(struct fsal_obj_handle *obj_hdl,
 		if (FSAL_IS_ERROR(status)
 		    && (status.major != ERR_FSAL_NOT_OPENED))
 			return status;
-		if (!FSAL_IS_ERROR(status) && closed)
+		if (!FSAL_IS_ERROR(status) && closed) {
 			(void) atomic_dec_size_t(&open_fd_count);
+		}
 
 		/* Potentially force re-openning */
 		current_flags = obj_hdl->obj_ops.status(obj_hdl);

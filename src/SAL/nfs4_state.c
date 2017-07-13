@@ -917,7 +917,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 
 		if (!obj->fsal->m_ops.support_ex(obj)) {
 			/* Close the file in FSAL */
-			obj->obj_ops.close(obj);
+			fsal_close(obj);
 		}
 
 		/* Since we dropped so_mutex, we must restart the loop. */

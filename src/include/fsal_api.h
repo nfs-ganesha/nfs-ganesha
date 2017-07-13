@@ -2019,7 +2019,8 @@ struct fsal_obj_ops {
  * @brief Close a file
  *
  * This function closes a file.  It is protected by the Cache inode
- * content lock.
+ * content lock.  This should return ERR_FSAL_NOT_OPENED if the global FD for
+ * this obj was not open.
  *
  * @param[in] obj_hdl File to close
  *

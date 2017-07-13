@@ -358,6 +358,9 @@ static fsal_status_t mem_open_my_fd(struct fsal_fd *fd,
  */
 static fsal_status_t mem_close_my_fd(struct fsal_fd *fd)
 {
+	if (fd->openflags == FSAL_O_CLOSED)
+		return fsalstat(ERR_FSAL_NOT_OPENED, 0);
+
 	fd->openflags = FSAL_O_CLOSED;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

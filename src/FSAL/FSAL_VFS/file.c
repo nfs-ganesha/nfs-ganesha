@@ -161,6 +161,9 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
 	}
 
+	if (myself->u.file.fd.openflags == FSAL_O_CLOSED)
+		return fsalstat(ERR_FSAL_NOT_OPENED, 0);
+
 	/* Take write lock on object to protect file descriptor.
 	 * This can block over an I/O operation.
 	 */
