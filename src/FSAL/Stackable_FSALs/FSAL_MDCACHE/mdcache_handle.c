@@ -733,6 +733,11 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 		status = mdc_try_get_cached(directory, dirent->name, &entry);
 
 		if (status.major == ERR_FSAL_STALE) {
+			/* NOTE: We're supposed to hold the content_lock for
+			 *       write here, but to drop the lock we would then
+			 *       have to resume the readdir, which would mean
+			 *       adjusting whence from dirent->ck.
+			 */
 			status = mdc_lookup_uncached(directory, dirent->name,
 						     &entry, NULL);
 		}
