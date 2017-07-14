@@ -1218,12 +1218,10 @@ void nfs_rpc_execute(request_data_t *reqdata)
 	} else {
 		/* Get user credentials */
 		if (reqdesc->dispatch_behaviour & NEEDS_CRED) {
-			if (!(reqdesc->dispatch_behaviour & NEEDS_EXPORT)) {
-				/* If NEEDS_CRED and not NEEDS_EXPORT,
-				 * don't squash
-				 */
-				export_perms.options = EXPORT_OPTION_ROOT;
-			}
+			/* If NEEDS_CRED and we don't have an export, don't
+			 * squash.
+			 */
+			export_perms.options = EXPORT_OPTION_ROOT;
 
 			if (nfs_req_creds(&reqdata->r_u.req.svc) != NFS4_OK) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
