@@ -169,7 +169,6 @@ typedef union nfs_res__ {
 				   RPCSEC_GSS */
 #define MAKES_IO	0x0010	/* Request may do I/O
 				   (not allowed on MD ONLY exports */
-#define NEEDS_EXPORT	0x0020	/* Request needs an export */
 
 typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
 					struct svc_req *,
