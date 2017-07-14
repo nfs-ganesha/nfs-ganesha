@@ -7,11 +7,18 @@
 #
 
 CONFIGFILE=/etc/sysconfig/ganesha
-if test -r ${CONFIGFILE}; then
+RUNCONFIG=/run/sysconfig/ganesha
+if [ ! -e $(command dirname ${CONFIGFILE} 2>/dev/null) ]; then
+	# Debian/Ubuntu
+	CONFIGFILE=/etc/ganesha/nfs-ganesha
+	RUNCONFIG=/etc/default/nfs-ganesha
+fi
+
+if [ -r ${CONFIGFILE} ]; then
 	. ${CONFIGFILE}
 	[ -x ${EPOCH_EXEC} ] &&  EPOCHVALUE=`${EPOCH_EXEC}`
 
-	mkdir -p /run/sysconfig
+	mkdir -p $(command dirname ${RUNCONFIG} 2>/dev/null)
 	{
 		cat ${CONFIGFILE}
 		[ -n "${EPOCHVALUE}" ] && echo EPOCH=\"-E $EPOCHVALUE\"
@@ -19,8 +26,8 @@ if test -r ${CONFIGFILE}; then
 		# Set NUMA options if numactl is present
 		NUMACTL=$(command -v numactl 2>/dev/null)
 		if [ -n "${NUMACTL}" ]; then
-			echo NUMACTL=$NUMACTL
+			echo NUMACTL=${NUMACTL}
 			echo NUMAOPTS=--interleave=all
 		fi
-	} > /run/sysconfig/ganesha
+	} > ${RUNCONFIG}
 fi
