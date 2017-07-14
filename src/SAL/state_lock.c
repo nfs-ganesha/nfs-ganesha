@@ -3525,6 +3525,12 @@ void state_export_unlock_all(void)
 		 */
 		status = state_unlock(obj, state, owner, false, 0, &lock);
 
+		/* call state_del regardless of status as we're killing
+		 * the export
+		 */
+		if (owner->so_type == STATE_LOCK_OWNER_NFSV4)
+			state_del(state);
+
 		/* Release the refcounts we took above. */
 		dec_state_t_ref(state);
 		dec_state_owner_ref(owner);
