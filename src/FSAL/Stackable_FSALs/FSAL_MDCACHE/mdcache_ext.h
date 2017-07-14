@@ -71,7 +71,7 @@ struct mdcache_parameter {
 	    settable by Entries_HWMark. */
 	uint32_t entries_hwmark;
 	/** High water mark for chunks.  Defaults to 100000,
-	    settable by Entries_HWMark. */
+	    settable by Chunks_HWMark. */
 	uint32_t chunks_hwmark;
 	/** Base interval in seconds between runs of the LRU cleaner
 	    thread. Defaults to 60, settable with LRU_Run_Interval. */
