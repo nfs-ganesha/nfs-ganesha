@@ -35,6 +35,7 @@
 #include "FSAL/fsal_commonlib.h"
 #include "mdcache_int.h"
 #include "mdcache_lru.h"
+#include "mdcache.h"
 
 /**
  *
@@ -612,6 +613,13 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 		    "attrs_in ", attrs_in, false);
 
 	if (name) {
+		if (!state && !mdcache_lru_fds_available()) {
+			/* This seems the best idea, let the
+			 * client try again later after the reap.
+			 */
+			return fsalstat(ERR_FSAL_DELAY, 0);
+		}
+
 		/* Check if we have the file already cached, in which case
 		 * we can open by object instead of by name.
 		 */

@@ -190,31 +190,6 @@ static inline void mdcache_put(mdcache_entry_t *entry)
 }
 
 /**
- * Return true if there are FDs available to serve open requests,
- * false otherwise.  This function also wakes the LRU thread if the
- * current FD count is above the high water mark.
- */
-
-static inline bool mdcache_lru_fds_available(void)
-{
-	if ((atomic_fetch_size_t(&open_fd_count) >= lru_state.fds_hard_limit)
-	    && lru_state.caching_fds) {
-		LogCrit(COMPONENT_CACHE_INODE_LRU,
-			"FD Hard Limit Exceeded.  Disabling FD Cache and waking LRU thread.");
-		lru_state.caching_fds = false;
-		lru_wake_thread();
-		return false;
-	}
-	if (atomic_fetch_size_t(&open_fd_count) >= lru_state.fds_hiwat) {
-		LogInfo(COMPONENT_CACHE_INODE_LRU,
-			"FDs above high water mark, waking LRU thread.");
-		lru_wake_thread();
-	}
-
-	return true;
-}
-
-/**
  * Return true if we are currently caching file descriptors.
  */
 

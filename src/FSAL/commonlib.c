@@ -79,6 +79,8 @@
 #include "nfs4_acls.h"
 #include "sal_data.h"
 #include "nfs_init.h"
+#include "mdcache.h"
+
 
 #ifdef USE_BLKID
 static struct blkid_struct_cache *cache;
@@ -2583,6 +2585,16 @@ again:
 			LogFullDebug(COMPONENT_FSAL,
 				     "try_openflags = %x",
 				     try_openflags);
+
+			if (!mdcache_lru_fds_available()) {
+				PTHREAD_RWLOCK_unlock(
+						&obj_hdl->obj_lock);
+				*has_lock = false;
+				/* This seems the best idea, let the
+				 * client try again later after the reap.
+				 */
+				return fsalstat(ERR_FSAL_DELAY, 0);
+			}
 
 			/* Actually open the file */
 			status = open_func(obj_hdl, try_openflags, my_fd);
