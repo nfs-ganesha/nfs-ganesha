@@ -721,13 +721,40 @@ void _state_del_locked(state_t *state, const char *func, int line);
 
 void state_del(state_t *state);
 
+/**
+ * @brief Get a reference to the obj owning a state
+ *
+ * @note state_mutex MUST be held
+ *
+ * @param[in] state	State to get from
+ * @return obj handle on success
+ */
+static inline struct fsal_obj_handle *get_state_obj_ref_locked(state_t *state)
+{
+	if (state->state_obj) {
+		state->state_obj->obj_ops.get_ref(state->state_obj);
+	}
+
+	return state->state_obj;
+}
+
+/**
+ * @brief Get a reference to the obj owning a state
+ *
+ * Takes state_mutex, so it should not be held.
+ *
+ * @param[in] state	State to get from
+ * @return obj handle on success
+ */
 static inline struct fsal_obj_handle *get_state_obj_ref(state_t *state)
 {
-	if (!state->state_obj)
-		return NULL;
+	struct fsal_obj_handle *obj;
 
-	state->state_obj->obj_ops.get_ref(state->state_obj);
-	return state->state_obj;
+	PTHREAD_MUTEX_lock(&state->state_mutex);
+	obj = get_state_obj_ref_locked(state);
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
+
+	return obj;
 }
 
 static inline struct gsh_export *get_state_export_ref(state_t *state)

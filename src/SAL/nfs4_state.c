@@ -355,10 +355,11 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	 * this far, and thus if the refereces were non-NULL, they must still
 	 * be good. Holding the mutex is not strictly necessary for this
 	 * reason, however, static and dynamic code analysis have no way of
-	 * knowing this reference is safe.
+	 * knowing this reference is safe.  In addition, get_state_obj_ref()
+	 * would have taken the mutex anyway.
 	 */
 	PTHREAD_MUTEX_lock(&state->state_mutex);
-	obj = get_state_obj_ref(state);
+	obj = get_state_obj_ref_locked(state);
 
 	if (obj == NULL) {
 		LogDebug(COMPONENT_STATE,
@@ -567,7 +568,7 @@ bool get_state_obj_export_owner_refs(state_t *state,
 		     state->state_owner);
 
 	if (obj != NULL) {
-		*obj = get_state_obj_ref(state);
+		*obj = get_state_obj_ref_locked(state);
 		if ((*obj) == NULL)
 			goto fail;
 	}
