@@ -26,6 +26,7 @@ ZFS {}
 PROXY {}
 PROXY { Remote_Server {} }
 RADOS_KV {}
+RADOS_URLS {}
 
 Notably the following FSALs do not have a global config block:
 
@@ -741,3 +742,10 @@ RADOS_KV {}
 	userid(path, no default)
 
 	pool(string, no default)
+
+RADOS_URLS {}
+--------
+
+	ceph_conf(string, no default)
+
+	userid(path, no default)
