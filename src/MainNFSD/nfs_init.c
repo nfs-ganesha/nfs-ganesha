@@ -450,6 +450,11 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 		return -1;
 #endif
 
+#ifdef RADOS_URLS
+	if (rados_urls_set_param_from_conf(parse_tree, err_type) < 0)
+		return -1;
+#endif
+
 	LogEvent(COMPONENT_INIT, "Configuration file successfully parsed");
 
 	return 0;

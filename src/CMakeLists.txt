@@ -339,6 +339,9 @@ option(USE_MAN_PAGE "Build MAN page" OFF)
 # Enable Rados KV store for recovery
 option(USE_RADOS_RECOV "Enable Rados KV Recovery" ON)
 
+# Enable RADOS URL config file sections
+option(RADOS_URLS "Enable config file inclusion from RADOS objects" OFF)
+
 #
 # End build options
 #
@@ -732,7 +735,7 @@ if(USE_LTTNG)
   endif(LTTNG_FOUND)
 endif(USE_LTTNG)
 
-if(USE_RADOS_RECOV)
+if(USE_RADOS_RECOV OR RADOS_URLS)
   find_package(RADOS)
   if(NOT RADOS_FOUND)
     if(STRICT_PACKAGE)
@@ -740,9 +743,10 @@ if(USE_RADOS_RECOV)
     else(STRICT_PACKAGE)
       message(WARNING "Rados libraries not found.")
       set(USE_RADOS_RECOV OFF)
+      set(RADOS_URLS OFF)
     endif(STRICT_PACKAGE)
   endif(NOT RADOS_FOUND)
-endif(USE_RADOS_RECOV)
+endif(USE_RADOS_RECOV OR RADOS_URLS)
 
 # Cmake 2.6 has issue in managing BISON and FLEX
 if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )

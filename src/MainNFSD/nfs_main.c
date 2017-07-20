@@ -42,6 +42,8 @@
 #include "nfs_init.h"
 #include "nfs_exports.h"
 #include "pnfs_utils.h"
+#include "config_parsing.h"
+#include "conf_url.h"
 
 /**
  * @brief LTTng trace enabling magic
@@ -398,6 +400,9 @@ int main(int argc, char *argv[])
 	if (pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL) != 0)
 		LogFatal(COMPONENT_MAIN,
 			 "Could not start nfs daemon, pthread_sigmask failed");
+
+	/* init URL package */
+	config_url_init();
 
 	/* Create a memstream for parser+processing error messages */
 	if (!init_error_type(&err_type))

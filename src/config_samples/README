@@ -41,10 +41,10 @@ user_date_format = "%D #";  # The '#' in the quoted string is just another chara
 
 Including Other files
 ---------------------
-Additional files can be referenced in a configuration.  The included file
-is inserted into the configuration text in place of this line.  The configuration
-following this line is resumed after the end of the included files.  File inclusion
-can be to any depth.
+Additional files can be referenced in a configuration, using %include or %url
+directives.  An included file is inserted into the configuration text in place
+of the %include or %url line.  The configuration following the inclusion is
+resumed after the end of the included files. File inclusion can be to any depth.
 
 %include <filename>
 This line replaces the line with the contents of the file <filename>.
@@ -56,7 +56,17 @@ or
 
 %include "base.conf"
 
-The quotes are optional for backward compatibility.
+The quotes are optional.
+
+%url <url, e.g., rados://mypool/myobject>
+
+%url rados://mypool/myobject
+
+or
+
+%url "rados://mypool/myobject"
+
+The quotes are optional.
 
 Symbols
 -------

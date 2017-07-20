@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "config_parsing.h"
+#include "conf_url.h"
 #include "analyse.h"
 #include "abstract_mem.h"
 #include "conf_yacc.h"
@@ -39,17 +40,22 @@ do { \
 #define DEBUG_LEX(...) (void)0
 #endif
 
+#define BS_FLAG_NONE  0
+#define BS_FLAG_URL   1
+
 struct bufstack {
 	struct bufstack *prev;
 	YY_BUFFER_STATE bs;
 	int lineno;
 	char *filename;
 	FILE *f;
+	char *fbuf;
+	uint32_t flags;
 };
 
 static char *filter_string(char *src, int esc);
-static int new_file(char *filename,
-	     struct parser_state *st);
+static int new_file(char *filename, struct parser_state *st);
+static int fetch_url(char *name_tok, struct parser_state *st);
 static int pop_file(struct parser_state *st);
 
 %}
@@ -110,8 +116,12 @@ COMMENTEXT	 #.*$
 ID_CHARS [a-zA-Z_][a-zA-Z0-9_\-]*
 NETGROUP_CHARS [a-zA-Z_][a-zA-Z0-9_.\-]*
 
+/* URL types, e.g., (rados|http|ftp) */
+URLTYPES     (rados)
+INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
+
 /* INCLUDE state is used for picking the name of the include file */
-%START YY_INIT DEFINITION TERM INCLUDE
+%START YY_INIT DEFINITION TERM INCLUDE URL
 
 %%
 %{
@@ -144,6 +154,39 @@ NETGROUP_CHARS [a-zA-Z_][a-zA-Z0-9_.\-]*
 
 		DEBUG_LEX("Calling new_file with quoted %s\n", yytext);
 		c = new_file(yytext, stp);
+		if (c == ENOMEM)
+			yyterminate();
+		BEGIN YY_INIT;
+		DEBUG_LEX("done new file\n");
+	}
+}
+
+<YY_INIT>"%url" { /* URL include file start */
+	DEBUG_LEX("URL\n");
+	BEGIN URL;
+	/* not a token, return nothing */
+}
+
+<URL>{INCLUDE_URL} {
+
+	{
+		int c;
+
+		DEBUG_LEX("Calling new_file with unquoted %s\n", yytext);
+		c = fetch_url(yytext, stp);
+		if (c == ENOMEM)
+			yyterminate();
+		BEGIN YY_INIT;
+		DEBUG_LEX("done new file\n");
+	}
+}
+
+<URL>\"{INCLUDE_URL}\" {
+	{
+		int c;
+
+		DEBUG_LEX("Calling new_file with quoted %s\n", yytext);
+		c = fetch_url(yytext, stp);
 		if (c == ENOMEM)
 			yyterminate();
 		BEGIN YY_INIT;
@@ -475,6 +518,67 @@ errout:
 	return rc;
 }
 
+/* fetch_url */
+static int fetch_url(char *name_tok, struct parser_state *st)
+{
+	struct bufstack *bs = NULL;
+	YY_BUFFER_STATE inbuf;
+	struct file_list *flist = NULL;
+	struct file_list *fp;
+	void *yyscanner = st->scanner;
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	struct config_root *confroot = st->root_node;
+	char *filename = NULL;
+	int rc = ENOMEM;
+
+#ifdef NO_URL_RECURSION
+	/* forbid URL chasing */
+	if (st->curbs && (st->curbs->flags & BS_FLAG_URL)) {
+		config_parse_error(yylloc, st,
+			"new url (%s) transitive fetch from (%s), ignored",
+			name_tok, st->curbs->filename);
+		goto errout;
+	}
+#endif
+	filename = gsh_strdup(name_tok);
+
+	bs = gsh_calloc(1, sizeof(struct bufstack));
+	flist = gsh_calloc(1, sizeof(struct file_list));
+
+	rc = config_url_fetch(filename, &bs->f, &bs->fbuf);
+	if (bs->f == NULL) {
+		config_parse_error(yylloc, st,
+			"new url (%s) open error (%s), ignored",
+			filename, strerror(rc));
+		goto errout;
+	}
+	bs->bs = ganeshun_yy_create_buffer(bs->f, YY_BUF_SIZE, yyscanner);
+	if (st->curbs)
+		st->curbs->lineno = yylineno;
+	bs->prev = st->curbs;
+	bs->filename = filename;
+	bs->flags = BS_FLAG_URL;
+	ganeshun_yy_switch_to_buffer(bs->bs, yyscanner);
+	st->current_file = gsh_strdup(bs->filename);
+	st->curbs = bs;
+	flist->pathname = gsh_strdup(bs->filename); /* XXX */
+	flist->next = confroot->files;
+	confroot->files = flist;
+	return 0;
+
+errout:
+	if (rc == ENOMEM)
+		st->err_type->resource = true;
+	else
+		st->err_type->scan = true;
+
+	gsh_free(flist);
+	gsh_free(bs);
+	gsh_free(filename);
+
+	return rc;
+} /* fetch_url() */
+
 static int pop_file(struct parser_state *st)
 {
 	struct bufstack *bs = st->curbs;
@@ -484,7 +588,11 @@ static int pop_file(struct parser_state *st)
 
 	if (bs == NULL)
 		return 0;
-	fclose(bs->f);
+	if (bs->flags & BS_FLAG_URL) {
+		config_url_release(bs->f, bs->fbuf);
+	} else {
+		fclose(bs->f);
+	}
 	ganeshun_yy_delete_buffer(bs->bs, yyscanner);
 	prevbs = bs->prev;
 	st->curbs = prevbs;
