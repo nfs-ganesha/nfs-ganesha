@@ -555,15 +555,6 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
 		container_of(destdir_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
 	bool invalidate = true;
-	mdcache_entry_t *mdc_lookup_dst = NULL;
-
-	status = mdc_try_get_cached(dest, name, &mdc_lookup_dst);
-
-	if (!FSAL_IS_ERROR(status) &&
-	    obj_is_junction(&mdc_lookup_dst->obj_handle)) {
-		/* Cannot link to a junction */
-		return fsalstat(ERR_FSAL_XDEV, 0);
-	}
 
 	subcall(
 		status = entry->sub_handle->obj_ops.link(
