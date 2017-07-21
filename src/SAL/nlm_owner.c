@@ -917,11 +917,12 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 	switch (rc) {
 	case HASHTABLE_SUCCESS:
 		pclient = buffval.addr;
-		if (atomic_fetch_int32_t(&pclient->ssc_refcount) == 0) {
+		if (atomic_inc_int32_t(&pclient->ssc_refcount) == 1) {
 			/* This nsm client is in the process of getting
 			 * deleted. Delete it from the hash table and
 			 * pretend as though we didn't find it.
 			 */
+			(void)atomic_dec_int32_t(&pclient->ssc_refcount);
 			hashtable_deletelatched(ht_nsm_client, &buffkey,
 						&latch, NULL, NULL);
 			break;
@@ -932,12 +933,6 @@ state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 			display_nsm_client(&dspbuf, pclient);
 			LogFullDebug(COMPONENT_STATE, "Found {%s}", str);
 		}
-
-		/* Increment refcount under hash latch.
-		 * This prevents dec ref from removing this entry from hash
-		 * if a race occurs.
-		 */
-		inc_nsm_client_ref(pclient);
 
 		hashtable_releaselatched(ht_nsm_client, &latch);
 
@@ -1207,8 +1202,8 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 			LogFullDebug(COMPONENT_STATE, "Found {%s}", str);
 		}
 
-		refcount = atomic_fetch_int32_t(&pclient->slc_refcount);
-		if (refcount == 0) {
+		refcount = atomic_inc_int32_t(&pclient->slc_refcount);
+		if (refcount == 1) {
 			/* This nlm client is in the process of getting
 			 * deleted. Let us delete it from the hash table
 			 * and pretend as though it isn't found in the
@@ -1216,12 +1211,12 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 			 * delete this entry will not find it in the
 			 * hash table but will free its nlm client.
 			 */
+			(void)atomic_dec_int32_t(&pclient->slc_refcount);
 			hashtable_deletelatched(ht_nlm_client, &buffkey,
 						&latch, NULL, NULL);
 			goto not_found;
 		}
 
-		atomic_inc_int32_t(&pclient->slc_refcount);
 		hashtable_releaselatched(ht_nlm_client, &latch);
 
 		if (care == CARE_MONITOR && !nsm_monitor(nsm_client)) {

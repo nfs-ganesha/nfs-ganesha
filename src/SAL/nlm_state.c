@@ -401,20 +401,25 @@ int get_nlm_state(enum state_type state_type,
 	switch (rc) {
 	case HASHTABLE_SUCCESS:
 		state = buffval.addr;
-
-		if (care == CARE_MONITOR &&
-		    (state->state_seqid != nsm_state ||
-		     atomic_fetch_int32_t(&state->state_refcount) == 0)) {
+		if (care == CARE_MONITOR && state->state_seqid != nsm_state) {
 			/* We are getting new locks before the old ones
-			 * are gone or the state is in the process of
-			 * getting deleted. We need to unhash this
-			 * state_t and create a new one.
+			 * are gone. We need to unhash this state_t and
+			 * create a new one.
 			 *
 			 * Keep the latch after the delete to proceed with
 			 * the new insert.
 			 */
+			hashtable_deletelatched(ht_nlm_states, &buffkey,
+						&latch, NULL, NULL);
+			break;
+		}
 
-			/* use the key to delete the entry */
+		if (atomic_inc_int32_t(&state->state_refcount) == 1) {
+			/* The state is in the process of getting
+			 * deleted. Delete from the hashtable and
+			 * pretend as though we didn't find it.
+			 */
+			(void)atomic_dec_int32_t(&state->state_refcount);
 			hashtable_deletelatched(ht_nlm_states, &buffkey,
 						&latch, NULL, NULL);
 			break;
@@ -425,12 +430,6 @@ int get_nlm_state(enum state_type state_type,
 			display_nlm_state(&dspbuf, state);
 			LogFullDebug(COMPONENT_STATE, "Found {%s}", str);
 		}
-
-		/* Increment refcount under hash latch.
-		 * This prevents dec ref from removing this entry from hash
-		 * if a race occurs.
-		 */
-		inc_state_t_ref(state);
 
 		hashtable_releaselatched(ht_nlm_states, &latch);
 
