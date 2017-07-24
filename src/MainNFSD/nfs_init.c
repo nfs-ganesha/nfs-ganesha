@@ -945,10 +945,9 @@ void nfs_start(nfs_start_info_t *p_start_info)
 
 	/* Initialize all layers and service threads */
 	nfs_Init(p_start_info);
-	nfs_init_complete();
+	nfs_Start_threads(); /* Spawns service threads */
 
-	/* Spawns service threads */
-	nfs_Start_threads();
+	nfs_init_complete();
 
 #ifdef _USE_NLM
 	if (nfs_param.core_param.enable_NLM) {
