@@ -1025,6 +1025,7 @@ fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
 	if ((*garray_copy) != NULL) {
 		/* Replace old creds */
 		gsh_free(*garray_copy);
+		*garray_copy = NULL;
 	}
 
 	if (op_ctx->creds->caller_glen) {
