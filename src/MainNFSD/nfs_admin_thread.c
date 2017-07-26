@@ -44,6 +44,7 @@
 #include "netgroup_cache.h"
 #ifdef USE_DBUS
 #include "gsh_dbus.h"
+#include "mdcache.h"
 #endif
 
 /**
@@ -285,12 +286,50 @@ static struct gsh_dbus_method method_purge_netgroups = {
 		 END_ARG_LIST}
 };
 
+/**
+ * @brief Dbus method for updating open fd limit
+ *
+ * @param[in]  args
+ * @param[out] reply
+ */
+static bool admin_dbus_init_fds_limit(DBusMessageIter *args,
+				       DBusMessage *reply,
+				       DBusError *error)
+{
+	char *errormsg = "Init fds limit";
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (args != NULL) {
+		errormsg = "Init fds limit takes no arguments.";
+		success = false;
+		LogWarn(COMPONENT_DBUS, "%s", errormsg);
+		goto out;
+	}
+
+	init_fds_limit();
+
+ out:
+	dbus_status_reply(&iter, success, errormsg);
+	return success;
+}
+
+static struct gsh_dbus_method method_init_fds_limit = {
+	.name = "init_fds_limit",
+	.method = admin_dbus_init_fds_limit,
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
+
 static struct gsh_dbus_method *admin_methods[] = {
 	&method_shutdown,
 	&method_grace_period,
 	&method_get_grace,
 	&method_purge_gids,
 	&method_purge_netgroups,
+	&method_init_fds_limit,
 	NULL
 };
 
