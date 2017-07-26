@@ -184,6 +184,12 @@ void export_revert(struct gsh_export *export)
 	glist_del(&export->exp_work);
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
+	if (export->has_pnfs_ds) {
+		/* once-only, so no need for lock here */
+		export->has_pnfs_ds = false;
+		pnfs_ds_remove(export->export_id, true);
+	}
 	put_gsh_export(export); /* Release sentinel ref */
 }
 
@@ -704,12 +710,12 @@ void remove_gsh_export(uint16_t export_id)
 bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 			void *state)
 {
-	struct glist_head *glist;
+	struct glist_head *glist, *glistn;
 	struct gsh_export *export;
 	int rc = true;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
-	glist_for_each(glist, &exportlist) {
+	glist_for_each_safe(glist, glistn, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
 		rc = cb(export, state);
 		if (!rc)
