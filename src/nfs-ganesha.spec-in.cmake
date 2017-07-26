@@ -123,6 +123,8 @@ BuildRequires:	libuuid-devel
 BuildRequires:	gcc-c++
 %if %{with system_ntirpc}
 BuildRequires: libntirpc-devel >= @NTIRPC_MIN_VERSION@
+%else
+Requires: libntirpc = @NTIRPC_VERSION_EMBED@
 %endif
 Requires:	nfs-utils
 %if ( 0%{?fedora} ) || ( 0%{?rhel} && 0%{?rhel} >= 6 ) || ( 0%{?suse_version} )
@@ -353,6 +355,44 @@ This package contains a FSAL shared object to
 be used with NFS-Ganesha to support Gluster
 %endif
 
+# NTIRPC (if built-in)
+%if ! %{with system_ntirpc}
+%package -n libntirpc
+Summary:	New Transport Independent RPC Library
+Group:		System Environment/Libraries
+License:	BSD
+Version:	@NTIRPC_VERSION_EMBED@
+Url:		https://github.com/nfs-ganesha/ntirpc
+
+# libtirpc has /etc/netconfig, most machines probably have it anyway
+# for NFS client
+Requires:	libtirpc
+
+%description -n libntirpc
+This package contains a new implementation of the original libtirpc,
+transport-independent RPC (TI-RPC) library for NFS-Ganesha. It has
+the following features not found in libtirpc:
+ 1. Bi-directional operation
+ 2. Full-duplex operation on the TCP (vc) transport
+ 3. Thread-safe operating modes
+ 3.1 new locking primitives and lock callouts (interface change)
+ 3.2 stateless send/recv on the TCP transport (interface change)
+ 4. Flexible server integration support
+ 5. Event channels (remove static arrays of xprt handles, new EPOLL/KEVENT
+    integration)
+
+%package -n libntirpc-devel
+Summary:	Development headers for libntirpc
+Requires:	libntirpc = @NTIRPC_VERSION_EMBED@
+Group:		System Environment/Libraries
+License:	BSD
+Version:	@NTIRPC_VERSION_EMBED@
+Url:		https://github.com/nfs-ganesha/ntirpc
+
+%description -n libntirpc-devel
+Development headers and auxiliary files for developing with %{name}.
+%endif
+
 %prep
 %setup -q -n %{sourcename}
 
@@ -499,13 +539,6 @@ exit 0
 %files
 %defattr(-,root,root,-)
 %{_bindir}/ganesha.nfsd
-%if ! %{with system_ntirpc}
-%{_libdir}/libntirpc.so.@NTIRPC_VERSION_EMBED@
-%{_libdir}/libntirpc.so.1.5
-%{_libdir}/libntirpc.so
-%{_libdir}/pkgconfig/libntirpc.pc
-%{_includedir}/ntirpc/
-%endif
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
@@ -640,6 +673,21 @@ exit 0
 %if %{with man_page}
 %{_mandir}/*/ganesha-gluster-config.8.gz
 %endif
+%endif
+
+%if ! %{with system_ntirpc}
+%files -n libntirpc
+%defattr(-,root,root,-)
+%{_libdir}/libntirpc.so.@NTIRPC_VERSION_EMBED@
+%{_libdir}/libntirpc.so.1.5
+%{_libdir}/libntirpc.so
+%{!?_licensedir:%global license %%doc}
+%license libntirpc/COPYING
+%doc libntirpc/NEWS libntirpc/README
+%files -n libntirpc-devel
+%{_libdir}/pkgconfig/libntirpc.pc
+%dir %{_includedir}/ntirpc
+%{_includedir}/ntirpc/*
 %endif
 
 %if %{with panfs}
