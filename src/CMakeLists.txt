@@ -1215,7 +1215,7 @@ configure_file(
 
 ########### add a "make dist" and a "make rpm"  ###############
 
-set( PKG_NAME "${CPACK_PACKAGE_FILE_NAME}.tar.gz")
+set( PKG_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}.tar.gz")
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
 # Tweak the "%bcond_<with|without> in the specfile for every
