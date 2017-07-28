@@ -860,6 +860,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *mdc_obj =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	mdcache_entry_t *mdc_lookup_dst = NULL;
+	bool refresh = false;
 	fsal_status_t status;
 
 	/* Now update cached dirents.  Must take locks in the correct order */
@@ -1042,7 +1043,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			/* Refresh destination directory attributes without
 			 * invalidating dirents.
 			 */
-			mdcache_refresh_attrs_no_invalidate(mdc_newdir);
+			refresh = true;
 		}
 	}
 
@@ -1050,6 +1051,10 @@ unlock:
 
 	/* unlock entries */
 	mdcache_src_dest_unlock(mdc_olddir, mdc_newdir);
+
+	/* Refresh, if necessary.  Must be done without lock held */
+	if (refresh)
+		mdcache_refresh_attrs_no_invalidate(mdc_newdir);
 
 	/* If we're moving a directory out, update parent hash */
 	if (mdc_olddir != mdc_newdir && obj_hdl->type == DIRECTORY) {
