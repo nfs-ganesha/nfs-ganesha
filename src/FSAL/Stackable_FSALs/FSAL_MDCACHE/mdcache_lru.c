@@ -635,14 +635,17 @@ lru_reap_impl(enum lru_q_id qid)
 
 		QLOCK(qlane);
 		lru = glist_first_entry(&lq->q, mdcache_lru_t, q);
-		if (!lru)
-			goto next_lane;
+		if (!lru) {
+			QUNLOCK(qlane);
+			continue;
+		}
 		refcnt = atomic_inc_int32_t(&lru->refcnt);
 		entry = container_of(lru, mdcache_entry_t, lru);
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
 			/* cant use it. */
-			mdcache_lru_unref(entry, LRU_UNREF_QLOCKED);
-			goto next_lane;
+			QUNLOCK(qlane);
+			mdcache_put(entry);
+			continue;
 		}
 		/* potentially reclaimable */
 		QUNLOCK(qlane);
@@ -690,7 +693,7 @@ lru_reap_impl(enum lru_q_id qid)
 			mdcache_lru_unref(entry, LRU_FLAG_NONE);
 			continue;
 		}
- next_lane:
+
 		QUNLOCK(qlane);
 	}			/* foreach lane */
 
@@ -763,8 +766,10 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 		QLOCK(qlane);
 		lru = glist_first_entry(&lq->q, mdcache_lru_t, q);
 
-		if (!lru)
-			goto next_lane;
+		if (!lru) {
+			QUNLOCK(qlane);
+			continue;
+		}
 
 		/* Get the chunk and parent entry that owns the chunk, all of
 		 * this is valid because we hold the QLANE lock, the chunk was
@@ -834,7 +839,6 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 		 * doing something with dirents... This chunk is not
 		 * eligible for reaping. Try the next lane...
 		 */
- next_lane:
 		QUNLOCK(qlane);
 	}			/* foreach lane */
 
