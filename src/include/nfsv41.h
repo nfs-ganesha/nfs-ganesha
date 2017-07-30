@@ -834,7 +834,7 @@ extern "C" {
 #define FATTR4_SEC_LABEL 80
 
 /* NFSv4.3 */
-#define FATTR4_XATTR_SUPPORT 81
+#define FATTR4_XATTR_SUPPORT 82
 
 	struct fattr4 {
 		struct bitmap4 attrmask;
