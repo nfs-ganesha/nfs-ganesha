@@ -1,4 +1,4 @@
-/var/log/ganesha/ganesha.log {
+/var/log/ganesha.log {
     weekly
     rotate 52
     copytruncate
