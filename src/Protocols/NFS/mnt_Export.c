@@ -182,7 +182,7 @@ int mnt_Export(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	memset(res, 0, sizeof(nfs_res_t));
 	memset(&proc_state, 0, sizeof(proc_state));
 
-	(void)foreach_gsh_export(proc_export, &proc_state);
+	(void)foreach_gsh_export(proc_export, false, &proc_state);
 	if (proc_state.retval != 0) {
 		LogCrit(COMPONENT_NFSPROTO,
 			"Processing exports failed. error = \"%s\" (%d)",

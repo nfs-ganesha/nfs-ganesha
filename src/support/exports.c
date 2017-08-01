@@ -2143,7 +2143,7 @@ void exports_pkginit(void)
 	struct gsh_export *export;
 
 	glist_init(&errlist);
-	foreach_gsh_export(init_export_cb, &errlist);
+	foreach_gsh_export(init_export_cb, true, &errlist);
 
 	glist_for_each_safe(glist, glistn, &errlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
