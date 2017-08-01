@@ -175,7 +175,7 @@ bool mount_gsh_export(struct gsh_export *exp);
 void put_gsh_export(struct gsh_export *a_export);
 void remove_gsh_export(uint16_t export_id);
 bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
-			void *state);
+			bool wrlock, void *state);
 
 /**
  * @brief Advisory check of export readiness.

@@ -708,13 +708,17 @@ void remove_gsh_export(uint16_t export_id)
  */
 
 bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
-			void *state)
+			bool wrlock, void *state)
 {
 	struct glist_head *glist, *glistn;
 	struct gsh_export *export;
 	int rc = true;
 
-	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	if (wrlock)
+		PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+	else
+		PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+
 	glist_for_each_safe(glist, glistn, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
 		rc = cb(export, state);
@@ -761,7 +765,7 @@ void remove_all_exports(void)
 	/* Put all exports on the unexport work list.
 	 * Ignore return since remove_one_export can't fail.
 	 */
-	(void) foreach_gsh_export(remove_one_export, NULL);
+	(void) foreach_gsh_export(remove_one_export, true, NULL);
 
 	/* Now process all the unexports */
 	while (true) {
@@ -1243,7 +1247,7 @@ static bool gsh_export_showexports(DBusMessageIter *args,
 					 "(qsbbbbbbbb(tt))",
 					 &iter_state.export_iter);
 
-	(void)foreach_gsh_export(export_to_dbus, (void *)&iter_state);
+	(void)foreach_gsh_export(export_to_dbus, false, (void *)&iter_state);
 
 	dbus_message_iter_close_container(&iter, &iter_state.export_iter);
 	return true;
@@ -1940,7 +1944,8 @@ static bool get_nfs_io(DBusMessageIter *args,
 	dbus_message_iter_open_container(&reply_iter, DBUS_TYPE_ARRAY,
 					 NFS_ALL_IO_REPLY_ARRAY_TYPE,
 					 &array_iter);
-	(void) foreach_gsh_export(&get_all_export_io, (void *) &array_iter);
+	(void) foreach_gsh_export(&get_all_export_io, false,
+				  (void *) &array_iter);
 	dbus_message_iter_close_container(&reply_iter, &array_iter);
 
 	return true;
