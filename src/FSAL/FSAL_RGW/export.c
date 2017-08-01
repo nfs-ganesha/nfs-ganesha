@@ -97,7 +97,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	/* FSAL status structure */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The buffer in which to store stat info */
-	struct stat st, st_root;
+	struct stat st;
 	/* Return code from Ceph */
 	int rc;
 	/* temp filehandle */
@@ -105,6 +105,13 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	*pub_handle = NULL;
 
+	/* should only be "/" or "bucket_name" */
+	if (strcmp(path, "/") && strchr(path, '/')) {
+		status.major = ERR_FSAL_INVAL;
+		return status;
+	}
+
+#ifndef USE_FSAL_RGW_MOUNT2
 	/* XXX in FSAL_CEPH, the equivalent code here looks for path == "/"
 	 * and returns the root handle with no extra ref.  That seems
 	 * suspicious, so let RGW figure it out (hopefully, that does not
@@ -114,12 +121,19 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 			&rgw_fh, RGW_LOOKUP_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
+#else
+	rgw_fh = export->rgw_fs->root_fh;
+#endif
 
 	/* get Unix attrs */
-	rc = rgw_getattr(export->rgw_fs, rgw_fh, &st, RGW_GETATTR_FLAG_NONE);
+	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh,
+			 &st, RGW_GETATTR_FLAG_NONE);
 	if (rc < 0) {
 		return rgw2fsal_error(rc);
 	}
+
+#ifndef USE_FSAL_RGW_MOUNT2
+	struct stat st_root;
 
 	/* fixup export fsid */
 	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh,
@@ -128,7 +142,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		return rgw2fsal_error(rc);
 	}
 	st.st_dev = st_root.st_dev;
-
+#endif
 	rc = construct_handle(export, rgw_fh, &st, &handle);
 	if (rc < 0) {
 		return rgw2fsal_error(rc);
