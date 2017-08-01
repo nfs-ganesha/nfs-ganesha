@@ -1624,8 +1624,15 @@ err_open:
 	     lru_state.fds_system_imposed) / 100;
 	lru_state.futility = 0;
 
-	lru_state.per_lane_work =
-	    (mdcache_param.reaper_work + LRU_N_Q_LANES - 1) / LRU_N_Q_LANES;
+	if (mdcache_param.reaper_work) {
+		/* Backwards compatibility */
+		lru_state.per_lane_work = (mdcache_param.reaper_work +
+					   LRU_N_Q_LANES - 1) / LRU_N_Q_LANES;
+	} else {
+		/* New parameter */
+		lru_state.per_lane_work = mdcache_param.reaper_work_per_lane;
+	}
+
 	lru_state.biggest_window =
 	    (mdcache_param.biggest_window *
 	     lru_state.fds_system_imposed) / 100;
