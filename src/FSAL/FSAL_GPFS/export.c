@@ -33,6 +33,7 @@
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
+#include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <mntent.h>
 #include <sys/statfs.h>
