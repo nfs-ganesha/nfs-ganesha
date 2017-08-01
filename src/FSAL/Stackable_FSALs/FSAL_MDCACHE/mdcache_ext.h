@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2016 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -102,6 +102,9 @@ struct mdcache_parameter {
 	    the number of lanes.)  Defaults to 1000, settable with
 	    Reaper_Work. */
 	uint32_t reaper_work;
+	/** The amount of work for the reaper thread to do per-lane
+	    under normal conditions. Settable with Repaper_Work_Per_Thread */
+	uint32_t reaper_work_per_lane;
 	/** The largest window (as a percentage of the system-imposed
 	    limit on FDs) of work that we will do in extremis.
 	    Defaults to 40, settable with Biggest_Window */

@@ -499,7 +499,9 @@ CACHEINODE
 
 	FD_LWMark_Percent(uint32, range 0 to 100, default 50)
 
-	Reaper_Work(uint32, range 1 to 2000, default 1000)
+	Reaper_Work(uint32, range 1 to 2000, default 0)
+
+	Reaper_Work_Per_Lane(uint32, range 1 to 2000, default 50)
 
 	Biggest_Window(uint32, range 1 to 100, default 40)
 

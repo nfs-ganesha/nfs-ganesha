@@ -65,9 +65,14 @@ FD_LWMark_Percent(uint32, range 0 to 100, default 50)
     The percentage of the system-imposed maximum of file descriptors below which
     Ganesha will not reap file descriptonot reap file descriptors.
 
-Reaper_Work(uint32, range 1 to 2000, default 1000)
+Reaper_Work(uint32, range 1 to 2000, default 0)
     Roughly, the amount of work to do on each pass through the thread under
-    normal conditions.  (Ideally, a multiple of the number of lanes.)
+    normal conditions.  (Ideally, a multiple of the number of lanes.)  *This
+    setting is deprecated.  Please use Reaper_Work_Per_Lane*
+
+Reaper_Work_Per_Lane(uint32, range 1 to 2000, default 50)
+    This is the numer of handles per lane to scan when performing LRU
+    maintenance.  This task is performed by the Reaper thread.
 
 Biggest_Window(uint32, range 1 to 100, default 40)
     The largest window (as a percentage of the system-imposed limit on FDs) of
