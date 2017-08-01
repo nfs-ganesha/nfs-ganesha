@@ -291,12 +291,22 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	initialized = true;
 
+#ifndef USE_FSAL_RGW_MOUNT2
 	rgw_status = rgw_mount(RGWFSM.rgw,
-			export->rgw_user_id,
-			export->rgw_access_key_id,
-			export->rgw_secret_access_key,
-			&export->rgw_fs,
-			RGW_MOUNT_FLAG_NONE);
+			       export->rgw_user_id,
+			       export->rgw_access_key_id,
+			       export->rgw_secret_access_key,
+			       &export->rgw_fs,
+			       RGW_MOUNT_FLAG_NONE);
+#else
+	rgw_status = rgw_mount2(RGWFSM.rgw,
+				export->rgw_user_id,
+				export->rgw_access_key_id,
+				export->rgw_secret_access_key,
+				op_ctx->ctx_export->fullpath,
+				&export->rgw_fs,
+				RGW_MOUNT_FLAG_NONE);
+#endif
 	if (rgw_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
