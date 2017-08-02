@@ -691,7 +691,7 @@ struct nfs_client_id_t {
 	time_t first_path_down_resp_time;  /* Time when the server first sent
 					       NFS4ERR_CB_PATH_DOWN */
 	unsigned int cid_nb_session;	/*< Number of sessions stored */
-	nfs41_session_slot_t cid_create_session_slot; /*< Cached response to
+	CREATE_SESSION4res cid_create_session_slot; /*< Cached response to
 							  last CREATE_SESSION */
 	unsigned cid_create_session_sequence;	/*< Sequence number for session
 						   creation. */
