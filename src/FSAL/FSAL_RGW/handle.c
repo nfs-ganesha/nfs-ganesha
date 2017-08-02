@@ -1420,19 +1420,45 @@ fsal_status_t rgw_fsal_write2(struct fsal_obj_handle *obj_hdl,
 		/* Currently we don't support WRITE_PLUS */
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
+	// make sure rgw seq-write
+	LogFullDebug(COMPONENT_FSAL, "FSAL WRITE operation prepare. now_off:%lu req_off:%lu size:%lu goto correct[%d]",
+			obj_hdl->rgw_write_offset , offset, buffer_size,
+			(obj_hdl->rgw_write_offset > offset && buffer_size > (obj_hdl->rgw_write_offset - offset)));
+	void* write_buff = buffer;
+	size_t write_io_size = buffer_size;
+        if (obj_hdl->rgw_write_offset > offset && buffer_size >= (obj_hdl->rgw_write_offset - offset)) {
+                LogFullDebug(COMPONENT_FSAL,
+                                "FSAL WRITE operation corrected! now_off:%lu req_off:%lu size:%lu, then size:%lu skip:%lu",
+                                obj_hdl->rgw_write_offset , offset, buffer_size, buffer_size - (obj_hdl->rgw_write_offset - offset),
+				obj_hdl->rgw_write_offset - offset);
+                if (buffer_size == (obj_hdl->rgw_write_offset - offset)) {
+                        *wrote_amount = buffer_size;
+                        return fsalstat(ERR_FSAL_NO_ERROR, 0);
+                } else {
+                        write_io_size = buffer_size - (obj_hdl->rgw_write_offset - offset);
+                        write_buff = &((char*)buffer)[obj_hdl->rgw_write_offset - offset];
+                        offset = obj_hdl->rgw_write_offset;
+                }
+        }
 
 	/* XXX note no call to fsal_find_fd (or wrapper) */
 
 	int rc = rgw_write(export->rgw_fs, handle->rgw_fh, offset,
-			buffer_size, wrote_amount, buffer,
+			write_io_size, wrote_amount, write_buff,
 			RGW_WRITE_FLAG_NONE);
 
 	LogFullDebug(COMPONENT_FSAL,
-		"%s post obj_hdl %p state %p returned %d", __func__, obj_hdl,
-		state, rc);
+		"%s post obj_hdl %p state %p returned %d asked_size=%lu, effective_size=%lu offset:%ld sync:%d",
+		__func__, obj_hdl, state, rc, buffer_size, *wrote_amount, offset, *fsal_stable);
 
-	if (rc < 0)
+	if (rc < 0) {
 		return rgw2fsal_error(rc);
+	}
+	else {
+		assert (write_io_size == *wrote_amount);
+		obj_hdl->rgw_write_offset += *wrote_amount;
+		*wrote_amount = buffer_size;
+	}
 
 	if (*fsal_stable) {
 		rc = rgw_fsync(export->rgw_fs, handle->rgw_fh,
