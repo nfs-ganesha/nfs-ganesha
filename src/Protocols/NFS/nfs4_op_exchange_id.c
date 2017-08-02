@@ -305,6 +305,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	unconf->cid_create_session_sequence = 1;
+	unconf->cid_create_session_slot.csr_status = NFS4ERR_SEQ_MISORDERED;
 
 	glist_init(&unconf->cid_cb.v41.cb_session_list);
 

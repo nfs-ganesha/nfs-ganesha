@@ -190,39 +190,21 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 
 	data->use_drc = false;
 
-	if (data->oppos == 0) {
-		/* Special case : the request is used without use of
-		 * OP_SEQUENCE
-		 */
-		if ((arg_CREATE_SESSION4->csa_sequence + 1 ==
-		     found->cid_create_session_sequence)
-		    && (found->cid_create_session_slot.cache_used)) {
-			data->use_drc = true;
-			data->cached_res =
-			    &found->cid_create_session_slot.cached_result;
+	if ((arg_CREATE_SESSION4->csa_sequence + 1) ==
+	     found->cid_create_session_sequence) {
+		*res_CREATE_SESSION4 = found->cid_create_session_slot;
 
-			res_CREATE_SESSION4->csr_status = NFS4_OK;
+		LogDebug(component,
+			 "CREATE_SESSION replay=%p special case",
+			 data->cached_res);
+		goto out;
+	} else if (arg_CREATE_SESSION4->csa_sequence !=
+		   found->cid_create_session_sequence) {
+		res_CREATE_SESSION4->csr_status = NFS4ERR_SEQ_MISORDERED;
 
-			dec_client_id_ref(found);
-
-			LogDebug(component,
-				 "CREATE_SESSION replay=%p special case",
-				 data->cached_res);
-
-			goto out;
-		} else if (arg_CREATE_SESSION4->csa_sequence !=
-			   found->cid_create_session_sequence) {
-			res_CREATE_SESSION4->csr_status =
-			    NFS4ERR_SEQ_MISORDERED;
-
-			dec_client_id_ref(found);
-
-			LogDebug(component,
-				 "CREATE_SESSION returning NFS4ERR_SEQ_MISORDERED");
-
-			goto out;
-		}
-
+		LogDebug(component,
+			 "CREATE_SESSION returning NFS4ERR_SEQ_MISORDERED");
+		goto out;
 	}
 
 	if (unconf != NULL) {
@@ -243,7 +225,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 					 unconfirmed_addr);
 			}
 
-			dec_client_id_ref(unconf);
 			res_CREATE_SESSION4->csr_status = NFS4ERR_CLID_INUSE;
 			goto out;
 		}
@@ -269,8 +250,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 					 str_client_addr, confirmed_addr);
 			}
 
-			/* Release our reference to the confirmed clientid. */
-			dec_client_id_ref(conf);
 			res_CREATE_SESSION4->csr_status = NFS4ERR_CLID_INUSE;
 			goto out;
 		}
@@ -297,7 +276,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		LogDebug(component,
 			 "Invalid create session flags %" PRIu32,
 			 arg_CREATE_SESSION4->csa_flags);
-		dec_client_id_ref(found);
 		res_CREATE_SESSION4->csr_status = NFS4ERR_INVAL;
 		goto out;
 	}
@@ -307,7 +285,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (nfs41_session == NULL) {
 		LogCrit(component, "Could not allocate memory for a session");
-		dec_client_id_ref(found);
 		res_CREATE_SESSION4->csr_status = NFS4ERR_SERVERFAULT;
 		goto out;
 	}
@@ -355,23 +332,15 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	       nfs41_session->session_id,
 	       NFS4_SESSIONID_SIZE);
 
-	/* Create Session replay cache */
-	data->cached_res = &found->cid_create_session_slot.cached_result;
-	found->cid_create_session_slot.cache_used = true;
-
 	LogDebug(component, "CREATE_SESSION replay=%p", data->cached_res);
 
 	if (!nfs41_Session_Set(nfs41_session)) {
 		LogDebug(component, "Could not insert session into table");
 
-		/* Release the session resources by dropping our reference
-		 * and the sentinel reference.
+		/* Release the sentinel session resource (our reference will
+		 * be dropped on exit.
 		 */
 		dec_session_ref(nfs41_session);
-		dec_session_ref(nfs41_session);
-
-		/* Decrement our reference to the clientid record */
-		dec_client_id_ref(found);
 
 		/* Maybe a more precise status would be better */
 		res_CREATE_SESSION4->csr_status = NFS4ERR_SERVERFAULT;
@@ -387,8 +356,13 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 			display_clientid_name(&dspbuf_client, conf);
 
 		/* Need a reference to the confirmed record for below */
-		if (conf != NULL)
+		if (conf != NULL) {
+			/* This is the only point at which we have BOTH an
+			 * unconfirmed AND confirmed record. found MUST be
+			 * the unconfirmed record.
+			 */
 			inc_client_id_ref(conf);
+		}
 	}
 
 	if (conf != NULL && conf->cid_clientid != clientid) {
@@ -401,7 +375,10 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 			LogDebug(component, "Expiring %s", str);
 		}
 
-		/* Expire clientid and release our reference. */
+		/* Expire clientid and release our reference.
+		 * NOTE: found MUST NOT BE conf (otherwise clientid would have
+		 *       matched).
+		 */
 		nfs_client_id_expire(conf, false);
 		dec_client_id_ref(conf);
 		conf = NULL;
@@ -419,10 +396,19 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 			 arg_CREATE_SESSION4->csa_cb_program);
 
 		if (unconf != NULL) {
-			/* unhash the unconfirmed clientid record */
+			/* Deal with the ONLY situation where we have both a
+			 * confirmed and unconfirmed record by unhashing
+			 * the unconfirmed clientid record
+			 */
 			remove_unconfirmed_client_id(unconf);
+
 			/* Release our reference to the unconfirmed entry */
 			dec_client_id_ref(unconf);
+
+			/* And now to keep code simple, set found to the
+			 * confirmed record.
+			 */
+			found = conf;
 		}
 
 		if (isDebug(component)) {
@@ -453,8 +439,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 				LogDebug(component,
 					 "Oops nfs41_Session_Del failed");
 
-			/* Release our reference to the unconfirmed record */
-			dec_client_id_ref(unconf);
 			goto out;
 		}
 		nfs4_chk_clid(unconf);
@@ -474,9 +458,6 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Bump the lease timer */
 	conf->cid_last_renew = time(NULL);
-
-	/* Release our reference to the confirmed record */
-	dec_client_id_ref(conf);
 
 	if (isFullDebug(component)) {
 		char str[LOG_BUFF_LEN] = "\0";
@@ -517,13 +498,27 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 			  res_CREATE_SESSION4ok->csr_flags);
 	}
 
-	/* Release our reference to the session */
-	dec_session_ref(nfs41_session);
-
 	/* Successful exit */
 	res_CREATE_SESSION4->csr_status = NFS4_OK;
 
+	/* Cache response */
+	/** @todo: Warning, if we ever have ca_rdma_ird_len == 1, we need to be
+	 *         more careful since there would be allocated memory attached
+	 *         to the response.
+	 */
+	conf->cid_create_session_slot = *res_CREATE_SESSION4;
+
  out:
+
+	/* Release our reference to the found record (confirmed or unconfirmed)
+	 */
+	dec_client_id_ref(found);
+
+	if (nfs41_session != NULL) {
+		/* Release our reference to the session */
+		dec_session_ref(nfs41_session);
+	}
+
 	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
 	/* Release our reference to the client record and return */
 	dec_client_record_ref(client_record);
