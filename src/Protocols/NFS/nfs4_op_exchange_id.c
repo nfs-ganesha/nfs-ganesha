@@ -112,8 +112,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 			   EXCHGID4_FLAG_USE_NON_PNFS |
 			   EXCHGID4_FLAG_USE_PNFS_MDS |
 			   EXCHGID4_FLAG_USE_PNFS_DS |
-			   EXCHGID4_FLAG_UPD_CONFIRMED_REC_A |
-			   EXCHGID4_FLAG_CONFIRMED_R)) != 0)
+			   EXCHGID4_FLAG_UPD_CONFIRMED_REC_A)) != 0)
 		return res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
 
 	/* If client did not ask for pNFS related server roles than just set
@@ -248,12 +247,16 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 				res_EXCHANGE_ID4->eir_status = NFS4ERR_PERM;
 			} else {
 				/* CASE 6, Update */
-				/** @todo: this is not implemented,
-				    the things it updates aren't even
-				    tracked */
-				LogMajor(COMPONENT_CLIENTID,
-					 "EXCHANGE_ID Update not supported");
-				res_EXCHANGE_ID4->eir_status = NFS4ERR_NOTSUPP;
+				/** @todo: we don't track or handle the things
+				 *         that are updated, but we can still
+				 *         allow the update.
+				 */
+				LogDebug(COMPONENT_CLIENTID,
+					 "EXCHANGE_ID Update ignored");
+				unconf = conf;
+				res_EXCHANGE_ID4_ok->eir_flags |=
+				    EXCHGID4_FLAG_CONFIRMED_R;
+				goto return_ok;
 			}
 		} else {
 			/* CASE 8, Update but wrong verifier */
@@ -265,6 +268,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 
 		goto out;
 	} else if (conf == NULL && update) {
+		/* CASE 7, Update but No Confirmed Record */
 		res_EXCHANGE_ID4->eir_status = NFS4ERR_NOENT;
 		goto out;
 	}
@@ -364,6 +368,13 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	res_EXCHANGE_ID4_ok->eir_server_impl_id.eir_server_impl_id_val = NULL;
 
 	res_EXCHANGE_ID4->eir_status = NFS4_OK;
+
+	if (unconf == conf) {
+		/* We just updated a confirmed clientid, release the refcount
+		 * now.
+		 */
+		dec_client_id_ref(conf);
+	}
 
  out:
 
