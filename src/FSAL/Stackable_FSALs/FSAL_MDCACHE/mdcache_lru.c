@@ -118,6 +118,8 @@ struct lru_q_lane {
 	 CACHE_PAD(0);
 };
 
+/* The queue lock and the partition lock interact.  The partition lock must
+ * always be taken before the queue lock to avoid deadlock */
 #ifdef USE_LTTNG
 #define QLOCK(qlane) \
 	do { \
@@ -641,14 +643,14 @@ lru_reap_impl(enum lru_q_id qid)
 		}
 		refcnt = atomic_inc_int32_t(&lru->refcnt);
 		entry = container_of(lru, mdcache_entry_t, lru);
+		QUNLOCK(qlane);
+
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
 			/* cant use it. */
-			QUNLOCK(qlane);
 			mdcache_put(entry);
 			continue;
 		}
 		/* potentially reclaimable */
-		QUNLOCK(qlane);
 		/* entry must be unreachable from CIH when recycled */
 		if (cih_latch_entry(&entry->fh_hk.key, &latch, CIH_GET_WLOCK,
 				    __func__, __LINE__)) {
@@ -669,12 +671,11 @@ lru_reap_impl(enum lru_q_id qid)
 					   __LINE__, entry,
 					   entry->lru.refcnt);
 #endif
-				cih_remove_latched(entry, &latch,
-						   CIH_REMOVE_QLOCKED);
 				LRU_DQ_SAFE(lru, q);
 				entry->lru.qid = LRU_ENTRY_NONE;
 				QUNLOCK(qlane);
-				cih_hash_release(&latch);
+				cih_remove_latched(entry, &latch,
+						   CIH_REMOVE_UNLOCK);
 				/* Note, we're not releasing our ref here.
 				 * cih_remove_latched() called
 				 * mdcache_lru_unref(), which released the
@@ -685,16 +686,15 @@ lru_reap_impl(enum lru_q_id qid)
 				goto out;
 			}
 			cih_hash_release(&latch);
+			QUNLOCK(qlane);
 			/* return the ref we took above--unref deals
 			 * correctly with reclaim case */
-			mdcache_lru_unref(entry, LRU_UNREF_QLOCKED);
+			mdcache_lru_unref(entry);
 		} else {
 			/* ! QLOCKED but needs to be Unref'ed */
-			mdcache_lru_unref(entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(entry);
 			continue;
 		}
-
-		QUNLOCK(qlane);
 	}			/* foreach lane */
 
 	/* ! reclaimable */
@@ -988,8 +988,6 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 			/* it worked */
 			struct lru_q *q = lru_queue_of(entry);
 
-			cih_remove_latched(entry, &latch,
-					   CIH_REMOVE_QLOCKED);
 			LRU_DQ_SAFE(lru, q);
 			entry->lru.qid = LRU_ENTRY_CLEANUP;
 			atomic_set_uint32_t_bits(&entry->lru.flags,
@@ -1002,9 +1000,12 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 			 * indicate this entry is unmapped.
 			 */
 			atomic_store_int32_t(&entry->first_export_id, -1);
-		}
 
-		QUNLOCK(qlane);
+			QUNLOCK(qlane);
+			cih_remove_latched(entry, &latch, CIH_REMOVE_NONE);
+		} else {
+			QUNLOCK(qlane);
+		}
 
 		cih_hash_release(&latch);
 	}
@@ -1075,7 +1076,9 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 			 * we could possibly release references in
 			 * mdcache_new_entry.
 			 */
-			mdcache_lru_unref(entry, LRU_UNREF_QLOCKED);
+			QUNLOCK(qlane);
+			mdcache_lru_unref(entry);
+			QLOCK(qlane);
 			/* but count it */
 			workdone++;
 			/* qlane LOCKED, lru refcnt is restored */
@@ -1164,8 +1167,8 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		put_gsh_export(export);
 		op_ctx = saved_ctx;
 
+		mdcache_lru_unref(entry);
 		QLOCK(qlane); /* QLOCKED */
-		mdcache_lru_unref(entry, LRU_UNREF_QLOCKED);
 		++workdone;
 	} /* for_each_safe lru */
 
@@ -1875,11 +1878,10 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 	bool do_cleanup = false;
 	uint32_t lane = entry->lru.lane;
 	struct lru_q_lane *qlane = &LRU[lane];
-	bool qlocked = flags & LRU_UNREF_QLOCKED;
 	bool other_lock_held = entry->fsobj.hdl.no_cleanup;
 	bool freed = false;
 
-	if (!qlocked && !other_lock_held) {
+	if (!other_lock_held) {
 		QLOCK(qlane);
 		if (((entry->lru.flags & LRU_CLEANED) == 0) &&
 		    (entry->lru.qid == LRU_ENTRY_CLEANUP)) {
@@ -1909,14 +1911,11 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		struct lru_q *q;
 
 		/* we MUST recheck that refcount is still 0 */
-		if (!qlocked) {
-			QLOCK(qlane);
-			refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
-		}
+		QLOCK(qlane);
+		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 
 		if (unlikely(refcnt > 0)) {
-			if (!qlocked)
-				QUNLOCK(qlane);
+			QUNLOCK(qlane);
 			goto out;
 		}
 
@@ -1928,8 +1927,7 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 			LRU_DQ_SAFE(&entry->lru, q);
 		}
 
-		if (!qlocked)
-			QUNLOCK(qlane);
+		QUNLOCK(qlane);
 
 		mdcache_lru_clean(entry);
 		pool_free(mdcache_entry_pool, entry);
