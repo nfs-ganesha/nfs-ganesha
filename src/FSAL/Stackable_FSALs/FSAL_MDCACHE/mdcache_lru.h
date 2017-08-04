@@ -151,7 +151,8 @@ void mdcache_lru_kill(mdcache_entry_t *entry);
 void mdcache_lru_cleanup_push(mdcache_entry_t *entry);
 void mdcache_lru_cleanup_try_push(mdcache_entry_t *entry);
 
-#define mdcache_lru_unref(e, f) _mdcache_lru_unref(e, f, __func__, __LINE__)
+#define mdcache_lru_unref(e) _mdcache_lru_unref(e, LRU_FLAG_NONE, \
+						__func__, __LINE__)
 bool _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags,
 			const char *func, int line);
 void lru_wake_thread(void);
@@ -186,7 +187,7 @@ static inline fsal_status_t mdcache_get(mdcache_entry_t *entry)
  */
 static inline void mdcache_put(mdcache_entry_t *entry)
 {
-	mdcache_lru_unref(entry, LRU_FLAG_NONE);
+	mdcache_lru_unref(entry);
 }
 
 /**

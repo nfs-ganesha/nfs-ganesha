@@ -403,7 +403,7 @@ cih_remove_checked(mdcache_entry_t *entry)
 					     entry->fh_hk.key.hk)] = NULL;
 		entry->fh_hk.inavl = false;
 		/* return sentinel ref */
-		freed = mdcache_lru_unref(entry, LRU_FLAG_NONE);
+		freed = mdcache_lru_unref(entry);
 	}
 	PTHREAD_RWLOCK_unlock(&cp->lock);
 
@@ -415,20 +415,20 @@ cih_remove_checked(mdcache_entry_t *entry)
  *
  * Remove cache entry.
  *
+ * @note Must NOT be called with qlane lock held.
+ *
  * @param entry [in] Entry to be removed.0
  *
  * @return true if entry is invalid
  */
 #define CIH_REMOVE_NONE    0x0000
 #define CIH_REMOVE_UNLOCK  0x0001
-#define CIH_REMOVE_QLOCKED 0x0002
 
 static inline bool
 cih_remove_latched(mdcache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
 {
 	cih_partition_t *cp =
 	    cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
-	uint32_t lflags = LRU_FLAG_NONE;
 
 	if (entry->fh_hk.inavl) {
 #ifdef USE_LTTNG
@@ -439,9 +439,7 @@ cih_remove_latched(mdcache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
 		cp->cache[cih_cache_offsetof(&cih_fhcache,
 					     entry->fh_hk.key.hk)] = NULL;
 		entry->fh_hk.inavl = false;
-		if (flags & CIH_REMOVE_QLOCKED)
-			lflags |= LRU_UNREF_QLOCKED;
-		mdcache_lru_unref(entry, lflags);
+		mdcache_lru_unref(entry);
 		if (flags & CIH_REMOVE_UNLOCK)
 			cih_hash_release(latch);
 		return true;
