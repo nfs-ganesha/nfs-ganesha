@@ -4466,8 +4466,8 @@ nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
 	if (input->utf8string_val == NULL || input->utf8string_len == 0)
 		return NFS4ERR_INVAL;
 
-	if ((scan == UTF8_SCAN_SYMLINK && input->utf8string_len > MAXPATHLEN) ||
-	    (scan != UTF8_SCAN_SYMLINK && input->utf8string_len > MAXNAMLEN))
+	if (((scan & UTF8_SCAN_PATH) && input->utf8string_len > MAXPATHLEN) ||
+	    (!(scan & UTF8_SCAN_PATH) && input->utf8string_len > MAXNAMLEN))
 		return NFS4ERR_NAMETOOLONG;
 
 	char *name = gsh_malloc(input->utf8string_len + 1);
