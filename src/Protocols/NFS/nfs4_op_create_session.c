@@ -45,6 +45,22 @@
 #include "gsh_lttng/nfs4.h"
 #endif
 
+#define log_channel_attributes(component, chan_attrs, name) \
+	LogFullDebug(component,					\
+		     "%s attributes ca_headerpadsize %"PRIu32	\
+		     " ca_maxrequestsize %"PRIu32		\
+		     " ca_maxresponsesize %"PRIu32		\
+		     " ca_maxresponsesize_cached %"PRIu32	\
+		     " ca_maxoperations %"PRIu32		\
+		     " ca_maxrequests %"PRIu32,			\
+		     name,					\
+		     (chan_attrs)->ca_headerpadsize,		\
+		     (chan_attrs)->ca_maxrequestsize,		\
+		     (chan_attrs)->ca_maxresponsesize,		\
+		     (chan_attrs)->ca_maxresponsesize_cached,	\
+		     (chan_attrs)->ca_maxoperations,		\
+		     (chan_attrs)->ca_maxrequests)
+
 /**
  *
  * @brief The NFS4_OP_CREATE_SESSION operation
@@ -280,6 +296,34 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 			 "Invalid create session flags %" PRIu32,
 			 arg_CREATE_SESSION4->csa_flags);
 		res_CREATE_SESSION4->csr_status = NFS4ERR_INVAL;
+		goto out;
+	}
+
+	log_channel_attributes(component,
+			       &arg_CREATE_SESSION4->csa_fore_chan_attrs,
+			       "Fore Channel");
+	log_channel_attributes(component,
+			       &arg_CREATE_SESSION4->csa_back_chan_attrs,
+			       "Back Channel");
+
+	/* Let's verify the channel attributes for the session first. */
+	if (arg_CREATE_SESSION4->csa_fore_chan_attrs.ca_maxrequestsize <
+						NFS41_MIN_REQUEST_SIZE ||
+	    arg_CREATE_SESSION4->csa_fore_chan_attrs.ca_maxresponsesize <
+						NFS41_MIN_RESPONSE_SIZE ||
+	    arg_CREATE_SESSION4->csa_fore_chan_attrs.ca_maxoperations <
+						NFS41_MIN_OPERATIONS ||
+	    arg_CREATE_SESSION4->csa_fore_chan_attrs.ca_maxrequests == 0 ||
+	    arg_CREATE_SESSION4->csa_back_chan_attrs.ca_maxrequestsize <
+						NFS41_MIN_REQUEST_SIZE ||
+	    arg_CREATE_SESSION4->csa_back_chan_attrs.ca_maxresponsesize <
+						NFS41_MIN_RESPONSE_SIZE ||
+	    arg_CREATE_SESSION4->csa_back_chan_attrs.ca_maxoperations <
+						NFS41_MIN_OPERATIONS ||
+	    arg_CREATE_SESSION4->csa_back_chan_attrs.ca_maxrequests == 0) {
+		LogWarn(component,
+			"Invalid channel attributes");
+		res_CREATE_SESSION4->csr_status = NFS4ERR_TOOSMALL;
 		goto out;
 	}
 

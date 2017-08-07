@@ -154,6 +154,13 @@ enum {
 };
 
 /**
+ * @brief minimum values for channel attributes
+ */
+#define NFS41_MIN_REQUEST_SIZE 256
+#define NFS41_MIN_RESPONSE_SIZE 256
+#define NFS41_MIN_OPERATIONS 2
+
+/**
  * @brief Structure representing an NFSv4.1 session
  */
 
