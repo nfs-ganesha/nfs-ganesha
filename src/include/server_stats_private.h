@@ -174,6 +174,13 @@ struct export_stats {
 	.direction = "out"   \
 }
 
+#define FSAL_OPS_REPLY      \
+{                            \
+	.name = "op",        \
+	.type = "(qa(sq(tdtt)))",     \
+	.direction = "out"   \
+}
+
 #define LAYOUTS_REPLY		\
 {				\
 	.name = "getdevinfo",	\
@@ -264,6 +271,8 @@ void server_dbus_9p_rdmastats(struct _9p_stats *_9pp, DBusMessageIter *iter);
 void server_dbus_9p_opstats(struct _9p_stats *_9pp, u8 opcode,
 			    DBusMessageIter *iter);
 #endif
+
+extern struct glist_head fsal_list;
 
 #endif				/* USE_DBUS */
 

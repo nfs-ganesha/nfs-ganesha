@@ -618,5 +618,22 @@ static inline bool open_correct(fsal_openflags_t fd_openflags,
 					== (to_openflags & FSAL_O_RDWR));
 }
 
+/**
+ * @brief "fsal_op_stats" struct useful for all the fsals which are going to
+ * implement support for FSAL specific statistics
+ */
+struct fsal_op_stats {
+	uint16_t op_code;
+	uint64_t resp_time;
+	uint64_t num_ops;
+	uint64_t resp_time_max;
+	uint64_t resp_time_min;
+};
+
+struct fsal_stats {
+	uint16_t total_ops;
+	struct fsal_op_stats *op_stats;
+};
+
 #endif				/* !FSAL_H */
 /** @} */

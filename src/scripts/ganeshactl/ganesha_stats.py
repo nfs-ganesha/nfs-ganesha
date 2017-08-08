@@ -16,7 +16,8 @@ def usage():
     message = "Command gives global stats by default.\n"
     message += "%s [list_clients | deleg <ip address> | " % (sys.argv[0])
     message += "inode | iov3 [export id] | iov4 [export id] | export |"
-    message += " total [export id] | fast | pnfs [export id] ]\n"
+    message += " total [export id] | fast | pnfs [export id] |"
+    message += " fsal <fsal name> ] \n"
     message += "To reset stat counters use \n"
     message += "%s reset " % (sys.argv[0])
     sys.exit(message)
@@ -28,7 +29,7 @@ else:
 
 # check arguments
 commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
-           'export', 'total', 'fast', 'pnfs', 'reset')
+	    'export', 'total', 'fast', 'pnfs', 'fsal', 'reset')
 if command not in commands:
     print "Option \"%s\" is not correct." % (command)
     usage()
@@ -48,6 +49,12 @@ elif command in ('iov3', 'iov4', 'total', 'pnfs'):
         usage()
 elif command == "help":
     usage()
+# requires fsal name
+elif command in ('fsal'):
+    if not len(sys.argv) == 3:
+	print "Option \"%s\" must be followed by fsal name." % (command)
+	usage()
+    command_arg = sys.argv[2]
 
 # retrieve and print stats
 exp_interface = Ganesha.glib_dbus_stats.RetrieveExportStats()
@@ -74,3 +81,5 @@ elif command == "pnfs":
     print exp_interface.pnfs_stats(command_arg)
 elif command == "reset":
     print exp_interface.reset_stats()
+elif command == "fsal":
+    print exp_interface.fsal_stats(command_arg)
