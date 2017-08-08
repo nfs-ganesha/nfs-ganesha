@@ -123,6 +123,13 @@
 	.direction = "in"	\
 }
 
+#define FSAL_ARG		\
+{				\
+	.name = "fsal",		\
+	.type = "s",		\
+	.direction = "in"	\
+}
+
 /* Properties list helper macros
  */
 

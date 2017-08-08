@@ -231,6 +231,29 @@ static bool support_ex(struct fsal_obj_handle *obj)
 	return false;
 }
 
+/**
+ * @brief Provides function to extract FSAL stats
+ *
+ * @param[in] fsal_hdl          FSAL module
+ * @param[in] iter              opaque pointer to DBusMessageIter
+ */
+static void fsal_extract_stats(struct fsal_module *const fsal_hdl, void *iter)
+{
+	LogDebug(COMPONENT_FSAL,
+		"Invoking unsupported FSAL operation");
+}
+
+/**
+ * @brief FSAL function to reset FSAL stats
+ *
+ * @param[in] fsal_hdl          FSAL module
+ */
+static void fsal_reset_stats(struct fsal_module *const fsal_hdl)
+{
+	LogDebug(COMPONENT_FSAL,
+		"Invoking unsupported FSAL operation");
+}
+
 /* Default fsal module method vector.
  * copied to allocated vector at register time
  */
@@ -246,6 +269,8 @@ struct fsal_ops def_fsal_ops = {
 	.fsal_pnfs_ds = fsal_pnfs_ds,
 	.fsal_pnfs_ds_ops = fsal_pnfs_ds_ops,
 	.support_ex = support_ex,
+	.fsal_extract_stats = fsal_extract_stats,
+	.fsal_reset_stats = fsal_reset_stats,
 };
 
 /* get_name
