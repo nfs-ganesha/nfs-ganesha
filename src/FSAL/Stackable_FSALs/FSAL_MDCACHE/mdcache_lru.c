@@ -1418,7 +1418,7 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 
 	q = &qlane->L1;
 
-	LogDebug(COMPONENT_CACHE_INODE_LRU,
+	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 		 "Reaping up to %d chunks from lane %zd",
 		 lru_state.per_lane_work, lane);
 
@@ -1452,7 +1452,7 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 next_lane:
 	qlane->iter.active = false; /* !ACTIVE */
 	QUNLOCK(qlane);
-	LogDebug(COMPONENT_CACHE_INODE_LRU,
+	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 		 "Actually processed %zd chunks on lane %zd",
 		 workdone, lane);
 
@@ -1492,7 +1492,7 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 
 	/* Total chunks demoted to L2 between all lanes and all current runs. */
 	for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-		LogDebug(COMPONENT_CACHE_INODE_LRU,
+		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 			 "Reaping up to %d chunks from lane %zd totalwork=%zd",
 			 lru_state.per_lane_work, lane, totalwork);
 
