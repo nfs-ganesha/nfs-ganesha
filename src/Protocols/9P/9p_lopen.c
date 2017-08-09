@@ -83,14 +83,11 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (pfid->pentry->type == REGULAR_FILE) {
 		/** @todo: Maybe other types (FIFO, SOCKET,...) require
 		 * to be opened too */
-		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
-			if (*flags & 0x10)
-				openflags |= FSAL_O_TRUNC;
+		if (*flags & 0x10)
+			openflags |= FSAL_O_TRUNC;
 
-			fsal_status = fsal_reopen2(pfid->pentry, pfid->state,
-						   openflags, true);
-		} else
-			fsal_status = fsal_open(pfid->pentry, openflags);
+		fsal_status = fsal_reopen2(pfid->pentry, pfid->state,
+					   openflags, true);
 
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,

@@ -93,11 +93,8 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
 		pfid->opens = 0;	/* dead */
 
-		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry))
-			fsal_status = pfid->pentry->obj_ops.close2(pfid->pentry,
-								   pfid->state);
-		else
-			fsal_status = fsal_close(pfid->pentry);
+		fsal_status = pfid->pentry->obj_ops.close2(pfid->pentry,
+							   pfid->state);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			FREE_FID(pfid, fid, req9p);

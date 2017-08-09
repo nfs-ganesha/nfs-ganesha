@@ -64,6 +64,10 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	fsal_status_t fsal_status;
 	fsal_openflags_t openflags = 0;
 
+	struct attrlist sattr;
+	fsal_verifier_t verifier;
+	enum fsal_create_mode createmode = FSAL_UNCHECKED;
+
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 
@@ -106,80 +110,44 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	pfid->state->state_data.fid.share_access =
 		_9p_openflags_to_share_access(flags);
 
-	if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
-		struct attrlist sattr;
-		fsal_verifier_t verifier;
-		enum fsal_create_mode createmode = FSAL_UNCHECKED;
+	memset(&verifier, 0, sizeof(verifier));
 
-		memset(&verifier, 0, sizeof(verifier));
+	memset(&sattr, 0, sizeof(sattr));
+	sattr.valid_mask = ATTR_MODE | ATTR_GROUP;
+	sattr.mode = *mode;
+	sattr.group = *gid;
 
-		memset(&sattr, 0, sizeof(sattr));
-		sattr.valid_mask = ATTR_MODE | ATTR_GROUP;
-		sattr.mode = *mode;
-		sattr.group = *gid;
-
-		if (*flags & 0x10) {
-			/* Filesize is already 0. */
-			sattr.valid_mask |= ATTR_SIZE;
-		}
-
-		if (*flags & 0x1000) {
-			/* If OEXCL, use FSAL_EXCLUSIVE_9P create mode
-			 * so that we can pass the attributes specified
-			 * above. Verifier is ignored for this create mode
-			 * because we don't have to deal with retry.
-			 */
-			createmode = FSAL_EXCLUSIVE_9P;
-		}
-
-		fsal_status = fsal_open2(pfid->pentry,
-					 pfid->state,
-					 openflags,
-					 createmode,
-					 file_name,
-					 &sattr,
-					 verifier,
-					 &pentry_newfile,
-					 NULL);
-
-		/* Release the attributes (may release an inherited ACL) */
-		fsal_release_attrs(&sattr);
-
-		if (FSAL_IS_ERROR(fsal_status))
-			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
-					  plenout, preply);
-	} else {
-		/* Create the file */
-		struct attrlist sattr;
-
-		fsal_prepare_attrs(&sattr, ATTR_MODE | ATTR_GROUP);
-
-		sattr.mode = *mode;
-		sattr.group = *gid;
-
-		/* BUGAZOMEU: @todo : the gid parameter is not used yet,
-		 * flags is not yet used
-		 */
-		fsal_status = fsal_create(pfid->pentry, file_name, REGULAR_FILE,
-					  &sattr, NULL, &pentry_newfile, NULL);
-
-		/* Release the attributes (may release an inherited ACL) */
-		fsal_release_attrs(&sattr);
-
-		if (FSAL_IS_ERROR(fsal_status))
-			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
-					  plenout, preply);
-
-		fsal_status = fsal_open(pentry_newfile, openflags);
-		if (FSAL_IS_ERROR(fsal_status)) {
-			pentry_newfile->obj_ops.put_ref(pentry_newfile);
-			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
-					  plenout, preply);
-		}
+	if (*flags & 0x10) {
+		/* Filesize is already 0. */
+		sattr.valid_mask |= ATTR_SIZE;
 	}
+
+	if (*flags & 0x1000) {
+		/* If OEXCL, use FSAL_EXCLUSIVE_9P create mode
+		 * so that we can pass the attributes specified
+		 * above. Verifier is ignored for this create mode
+		 * because we don't have to deal with retry.
+		 */
+		createmode = FSAL_EXCLUSIVE_9P;
+	}
+
+	fsal_status = fsal_open2(pfid->pentry,
+				 pfid->state,
+				 openflags,
+				 createmode,
+				 file_name,
+				 &sattr,
+				 verifier,
+				 &pentry_newfile,
+				 NULL);
+
+	/* Release the attributes (may release an inherited ACL) */
+	fsal_release_attrs(&sattr);
+
+	if (FSAL_IS_ERROR(fsal_status))
+		return _9p_rerror(req9p, msgtag,
+				  _9p_tools_errno(fsal_status),
+				  plenout, preply);
 
 	/* put parent directory entry */
 	pfid->pentry->obj_ops.put_ref(pfid->pentry);

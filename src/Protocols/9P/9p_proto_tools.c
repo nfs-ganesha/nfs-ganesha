@@ -324,8 +324,7 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 void free_fid(struct _9p_fid *pfid)
 {
 	if (pfid->state != NULL) {
-		if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens &&
-		    pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
+		if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
 			/* We need to close the state before freeing the state.
 			 */
 			(void) pfid->pentry->obj_ops.close2(
@@ -401,22 +400,12 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 			 object_file_type_to_str(pfid->pentry->type),
 			 pfid->pentry);
 
-		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
-			fsal_status =
-			    pfid->pentry->obj_ops.close2(pfid->pentry,
-							 pfid->state);
+		fsal_status = pfid->pentry->obj_ops.close2(pfid->pentry,
+							   pfid->state);
 
-			if (FSAL_IS_ERROR(fsal_status)) {
-				free_fid(pfid);
-				return _9p_tools_errno(fsal_status);
-			}
-		} else {
-			/* Under this flag, pin ref is still checked */
-			fsal_status = fsal_close(pfid->pentry);
-			if (FSAL_IS_ERROR(fsal_status)) {
-				free_fid(pfid);
-				return _9p_tools_errno(fsal_status);
-			}
+		if (FSAL_IS_ERROR(fsal_status)) {
+			free_fid(pfid);
+			return _9p_tools_errno(fsal_status);
 		}
 	}
 

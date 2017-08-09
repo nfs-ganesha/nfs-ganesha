@@ -60,8 +60,6 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	size_t read_size = 0;
 	bool eof_met;
 	fsal_status_t fsal_status;
-	/* uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS; */
-	bool sync = false;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -114,29 +112,16 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		outcount = read_size;
 	} else {
-		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
-			/* Call the new fsal_read */
-			fsal_status = fsal_read2(pfid->pentry,
-						false,
-						pfid->state,
-						*offset,
-						*count,
-						&read_size,
-						databuffer,
-						&eof_met,
-						NULL);
-		} else {
-			/* Call legacy fsal_rdwr */
-			fsal_status = fsal_rdwr(pfid->pentry,
-						 FSAL_IO_READ,
-						 *offset,
-						 *count,
-						 &read_size,
-						 databuffer,
-						 &eof_met,
-						 &sync,
-						 NULL);
-		}
+		/* Call the new fsal_read */
+		fsal_status = fsal_read2(pfid->pentry,
+					false,
+					pfid->state,
+					*offset,
+					*count,
+					&read_size,
+					databuffer,
+					&eof_met,
+					NULL);
 
 		/* Get the handle, for stats */
 		struct gsh_client *client = req9p->pconn->client;

@@ -59,7 +59,6 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	size_t size;
 	size_t written_size = 0;
-	bool eof_met;
 	fsal_status_t fsal_status;
 	/* bool sync = true; */
 	bool sync = false;
@@ -137,29 +136,16 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		outcount = written_size;
 	} else {
-		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
-			/* Call the new fsal_write */
-			fsal_status = fsal_write2(pfid->pentry,
-						 false,
-						 pfid->state,
-						 *offset,
-						 size,
-						 &written_size,
-						 databuffer,
-						 &sync,
-						 NULL);
-		} else {
-			/* Call legacy fsal_rdwr */
-			fsal_status = fsal_rdwr(pfid->pentry,
-						FSAL_IO_WRITE,
-						*offset,
-						size,
-						&written_size,
-						databuffer,
-						&eof_met,
-						&sync,
-						NULL);
-		}
+		/* Call the new fsal_write */
+		fsal_status = fsal_write2(pfid->pentry,
+					 false,
+					 pfid->state,
+					 *offset,
+					 size,
+					 &written_size,
+					 databuffer,
+					 &sync,
+					 NULL);
 
 		/* Get the handle, for stats */
 		struct gsh_client *client = req9p->pconn->client;
