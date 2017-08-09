@@ -74,7 +74,6 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	size_t written_size = 0;
 	uint64_t offset = 0;
 	void *data = NULL;
-	bool eof_met = false;
 	bool sync = false;
 	int rc = NFS_REQ_OK;
 	uint64_t MaxWrite =
@@ -228,30 +227,17 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	if (obj->fsal->m_ops.support_ex(obj)) {
-		/* Call the new fsal_write */
-		/** @todo for now pass NULL state */
-		fsal_status = fsal_write2(obj,
-					  true,
-					  NULL,
-					  offset,
-					  size,
-					  &written_size,
-					  data,
-					  &sync,
-					  NULL);
-	} else {
-		/* Call legacy fsal_rdwr */
-		fsal_status = fsal_rdwr(obj,
-					FSAL_IO_WRITE,
-					offset,
-					size,
-					&written_size,
-					data,
-					&eof_met,
-					&sync,
-					NULL);
-	}
+	/* Call the new fsal_write */
+	/** @todo for now pass NULL state */
+	fsal_status = fsal_write2(obj,
+				  true,
+				  NULL,
+				  offset,
+				  size,
+				  &written_size,
+				  data,
+				  &sync,
+				  NULL);
 
 	state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_WRITE);
 

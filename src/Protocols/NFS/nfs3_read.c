@@ -94,7 +94,6 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	void *data = NULL;
 	bool eof_met = false;
 	int rc = NFS_REQ_OK;
-	bool sync = false;
 	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
 	uint64_t MaxOffsetRead =
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetRead);
@@ -218,30 +217,17 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out;
 		}
 
-		if (obj->fsal->m_ops.support_ex(obj)) {
-			/* Call the new fsal_read2 */
-			/** @todo for now pass NULL state */
-			fsal_status = fsal_read2(obj,
-						  true,
-						  NULL,
-						  offset,
-						  size,
-						  &read_size,
-						  data,
-						  &eof_met,
-						  NULL);
-		} else {
-			/* Call legacy fsal_rdwr */
-			fsal_status = fsal_rdwr(obj,
-						FSAL_IO_READ,
-						offset,
-						size,
-						&read_size,
-						data,
-						&eof_met,
-						&sync,
-						NULL);
-		}
+		/* Call the new fsal_read2 */
+		/** @todo for now pass NULL state */
+		fsal_status = fsal_read2(obj,
+					  true,
+					  NULL,
+					  offset,
+					  size,
+					  &read_size,
+					  data,
+					  &eof_met,
+					  NULL);
 
 		state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_READ);
 

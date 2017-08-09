@@ -73,8 +73,8 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct attrlist sattr, attrs;
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
-	/* Client provided verifier, split into two pieces */
-	uint32_t verf_hi = 0, verf_lo = 0;
+	fsal_verifier_t verifier;
+	enum fsal_create_mode createmode;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
@@ -155,52 +155,14 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		sattr.valid_mask |= ATTR_MODE;
 	}
 
-	if (parent_obj->fsal->m_ops.support_ex(parent_obj)) {
-		fsal_verifier_t verifier;
-		enum fsal_create_mode createmode;
+	/* Set the createmode */
+	createmode = nfs3_createmode_to_fsal(arg->arg_create3.how.mode);
 
-		/* Set the createmode */
-		createmode = nfs3_createmode_to_fsal(arg->arg_create3.how.mode);
-
-		if (createmode == FSAL_EXCLUSIVE) {
-			/* Set the verifier if EXCLUSIVE */
-			memcpy(verifier,
-			       &arg->arg_create3.how.createhow3_u.verf,
-			       sizeof(fsal_verifier_t));
-		}
-
-		/* If owner or owner_group are set, and the credential was
-		 * squashed, then we must squash the set owner and owner_group.
-		 */
-		squash_setattr(&sattr);
-
-		/* Stateless open, assume Read/Write. */
-		fsal_status = fsal_open2(parent_obj,
-					 NULL,
-					 FSAL_O_RDWR,
-					 createmode,
-					 file_name,
-					 &sattr,
-					 verifier,
-					 &file_obj,
-					 &attrs);
-
-		if (FSAL_IS_ERROR(fsal_status))
-			goto out_fail;
-
-		goto make_handle;
-	}
-
-	if (arg->arg_create3.how.mode == EXCLUSIVE) {
-		const char *verf =
-		    (const char *)&(arg->arg_create3.how.createhow3_u.verf);
-		/* If we knew all our FSALs could store a 64 bit
-		   atime, we could just use that and there would be
-		   no need to split the verifier up. */
-		memcpy(&verf_hi, verf, sizeof(uint32_t));
-		memcpy(&verf_lo, verf + sizeof(uint32_t), sizeof(uint32_t));
-
-		fsal_create_set_verifier(&sattr, verf_hi, verf_lo);
+	if (createmode == FSAL_EXCLUSIVE) {
+		/* Set the verifier if EXCLUSIVE */
+		memcpy(verifier,
+		       &arg->arg_create3.how.createhow3_u.verf,
+		       sizeof(fsal_verifier_t));
 	}
 
 	/* If owner or owner_group are set, and the credential was
@@ -208,28 +170,19 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 */
 	squash_setattr(&sattr);
 
-	fsal_status = fsal_create(parent_obj, file_name, REGULAR_FILE, &sattr,
-				  NULL, &file_obj, &attrs);
+	/* Stateless open, assume Read/Write. */
+	fsal_status = fsal_open2(parent_obj,
+				 NULL,
+				 FSAL_O_RDWR,
+				 createmode,
+				 file_name,
+				 &sattr,
+				 verifier,
+				 &file_obj,
+				 &attrs);
 
-	/* Complete failure */
-	if ((FSAL_IS_ERROR(fsal_status) && fsal_status.major != ERR_FSAL_EXIST)
-	    || (file_obj == NULL)) {
+	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
-	}
-
-	if (fsal_status.major == ERR_FSAL_EXIST) {
-		if (arg->arg_create3.how.mode == GUARDED) {
-			goto out_fail;
-		} else if (arg->arg_create3.how.mode == EXCLUSIVE
-			   && !fsal_create_verify(file_obj, verf_hi, verf_lo)) {
-			goto out_fail;
-		}
-
-		/* Clear error code */
-		fsal_status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
- make_handle:
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
