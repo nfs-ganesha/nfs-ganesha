@@ -209,7 +209,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
 	struct fsal_obj_handle *obj = NULL;
-	bool sync = false;
 	bool anonymous_started = false;
 	state_owner_t *owner = NULL;
 	bool bypass = false;
@@ -458,16 +457,9 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	if (obj->fsal->m_ops.support_ex(obj)) {
-		/* Call the new fsal_read2 */
-		fsal_status = fsal_read2(obj, bypass, state_found, offset, size,
-					 &read_size, bufferdata, &eof_met,
-					 info);
-	} else {
-		/* Call legacy fsal_rdwr */
-		fsal_status = fsal_rdwr(obj, io, offset, size, &read_size,
-					bufferdata, &eof_met, &sync, info);
-	}
+	/* Call the new fsal_read2 */
+	fsal_status = fsal_read2(obj, bypass, state_found, offset, size,
+				 &read_size, bufferdata, &eof_met, info);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_READ4->status = nfs4_Errno_status(fsal_status);

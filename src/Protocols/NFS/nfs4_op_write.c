@@ -155,7 +155,6 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	uint64_t size = 0;
 	size_t written_size = 0;
 	uint64_t offset;
-	bool eof_met;
 	bool sync = false;
 	void *bufferdata;
 	stable_how4 stable_how;
@@ -402,16 +401,9 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	if (obj->fsal->m_ops.support_ex(obj)) {
-		/* Call the new fsal_write */
-		fsal_status = fsal_write2(obj, false, state_found, offset, size,
-					  &written_size, bufferdata, &sync,
-					  info);
-	} else {
-		/* Call legacy fsal_rdwr */
-		fsal_status = fsal_rdwr(obj, io, offset, size, &written_size,
-					bufferdata, &eof_met, &sync, info);
-	}
+	/* Call the new fsal_write */
+	fsal_status = fsal_write2(obj, false, state_found, offset, size,
+				  &written_size, bufferdata, &sync, info);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_NFS_V4, "write returned %s",

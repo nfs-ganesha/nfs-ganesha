@@ -153,10 +153,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	nfsstat4 nfs_status = NFS4_OK;
 	/* The state for the open to be closed */
 	state_t *state_found = NULL;
-	/* Status for FSAL operations */
-	fsal_status_t fsal_status = { 0, 0 };
-	/* Status for state operations */
-	state_status_t state_status = STATE_SUCCESS;
 	/* The open owner of the open state being closed */
 	state_owner_t *open_owner = NULL;
 	/* Iterator over the state list */
@@ -286,23 +282,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		state_del_locked(lock_state);
 	}
 
-	/* File is closed, release the share state */
-	if (state_found->state_type == STATE_TYPE_SHARE &&
-	    !data->current_obj->fsal->m_ops.support_ex(data->current_obj)) {
-		/* Only need to call state_share_remove if extended ops support
-		 * is not enabled for the FSAL.
-		 */
-		state_status = state_share_remove(data->current_obj,
-						  open_owner,
-						  state_found);
-
-		if (state_status != STATE_SUCCESS) {
-			LogEvent(COMPONENT_STATE,
-				 "CLOSE failed to release share state error: %s",
-				 state_err_str(state_status));
-		}
-	}
-
 	/* File is closed, release the corresponding state. If the FSAL
 	 * supports extended ops, this will result in closing any open files
 	 * the FSAL has for this state.
@@ -319,22 +298,6 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->minorversion == 0) {
 		op_ctx->clientid =
 		    &open_owner->so_owner.so_nfs4_owner.so_clientid;
-	}
-
-	/* Close the file in FSAL through the cache inode */
-	if (!data->current_obj->fsal->m_ops.support_ex(data->current_obj)) {
-		/* Only need to call cache_inode_close if extended ops support
-		 * is not enabled for the FSAL.
-		 */
-		/* Close the file in FSAL */
-		fsal_status = fsal_close(data->current_obj);
-		if (FSAL_IS_ERROR(fsal_status)
-		    && (fsal_status.major != ERR_FSAL_NOT_OPENED)) {
-			res_CLOSE4->status = nfs4_Errno_status(fsal_status);
-			PTHREAD_RWLOCK_unlock(
-				&data->current_obj->state_hdl->state_lock);
-			goto out;
-		}
 	}
 
 	if (data->minorversion == 0)
