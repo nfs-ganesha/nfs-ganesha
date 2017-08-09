@@ -32,11 +32,6 @@ if(USE_FSAL_GLUSTER)
         ganesha-gluster-config.rst)
 endif()
 
-if(USE_FSAL_ZFS)
-   list(APPEND man_srcs
-        ganesha-zfs-config.rst)
-endif()
-
 if(USE_FSAL_VFS)
    list(APPEND man_srcs
         ganesha-vfs-config.rst)

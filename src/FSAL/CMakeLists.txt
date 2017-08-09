@@ -23,10 +23,6 @@ if(USE_FSAL_GPFS)
   add_subdirectory(FSAL_GPFS)
 endif(USE_FSAL_GPFS)
 
-if(USE_FSAL_ZFS)
-  add_subdirectory(FSAL_ZFS)
-endif(USE_FSAL_ZFS)
-
 if(USE_FSAL_VFS)
   add_subdirectory(FSAL_VFS)
 endif(USE_FSAL_VFS)

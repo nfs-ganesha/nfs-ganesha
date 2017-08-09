@@ -185,7 +185,6 @@ option(USE_FSAL_PROXY "build PROXY FSAL shared library" ON)
 option(USE_FSAL_VFS "build VFS FSAL shared library" ON)
 option(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 option(USE_FSAL_GPFS "build GPFS FSAL" ON)
-option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" OFF)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
@@ -377,19 +376,6 @@ IF(USE_FSAL_GLUSTER)
     LIST(APPEND CMAKE_REQUIRED_INCLUDES "${GLUSTER_PREFIX}/include")
   ELSE()
     set(GLUSTER_PREFIX "/usr" CACHE PATH "Path to Gluster installation")
-  ENDIF()
-ENDIF()
-
-IF(USE_FSAL_ZFS)
-  IF(ZFS_PREFIX)
-    set(ZFS_PREFIX ${ZFS_PREFIX} CACHE PATH "Path to ZFS installation")
-    LIST(APPEND CMAKE_PREFIX_PATH "${ZFS_PREFIX}")
-    LIST(APPEND CMAKE_LIBRARY_PATH "${ZFS_PREFIX}/lib")
-    LIST(APPEND CMAKE_LIBRARY_PATH "${ZFS_PREFIX}/local/lib")
-    LIST(APPEND CMAKE_LIBRARY_PATH "${ZFS_PREFIX}/local/lib64")
-    LIST(APPEND CMAKE_REQUIRED_INCLUDES "${ZFS_PREFIX}/include")
-  ELSE()
-    set(ZFS_PREFIX "" CACHE PATH "Path to ZFS installation")
   ENDIF()
 ENDIF()
 
@@ -637,24 +623,6 @@ if(USE_FSAL_XFS)
     endif(STRICT_PACKAGE)
   endif((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
 endif(USE_FSAL_XFS)
-
-if(USE_FSAL_ZFS)
-  check_library_exists(
-    zfswrap
-    libzfswrap_init
-    ${ZFS_PREFIX}/lib
-    HAVE_ZFS_LIB
-    )
-  check_include_files("unistd.h;libzfswrap.h" HAVE_LIBZFSWRAP_H)
-  if((NOT HAVE_ZFS_LIB) OR (NOT HAVE_LIBZFSWRAP_H))
-   if(STRICT_PACKAGE)
-      message(FATAL_ERROR "STRICT_PACKAGE: Cannot find ZFS runtime. Disabling ZFS build")
-   else(STRICT_PACKAGE)
-      message(WARNING "Cannot find ZFS runtime. Disabling ZFS build")
-      set(USE_FSAL_ZFS OFF)
-    endif(STRICT_PACKAGE)
-  endif((NOT HAVE_ZFS_LIB) OR (NOT HAVE_LIBZFSWRAP_H))
-endif(USE_FSAL_ZFS)
 
 # sort out which allocator to use
 if(${ALLOCATOR} STREQUAL "jemalloc")
@@ -1011,7 +979,6 @@ message(STATUS "USE_FSAL_RGW = ${USE_FSAL_RGW}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
 message(STATUS "USE_FSAL_PANFS = ${USE_FSAL_PANFS}")
 message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
-message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
 message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
 message(STATUS "USE_FSAL_NULL = ${USE_FSAL_NULL}")
 message(STATUS "USE_FSAL_MEM = ${USE_FSAL_MEM}")
@@ -1053,7 +1020,6 @@ message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
 message(STATUS "RGW_PREFIX = ${RGW_PREFIX}")
 message(STATUS "GLUSTER_PREFIX = ${GLUSTER_PREFIX}")
-message(STATUS "ZFS_PREFIX = ${ZFS_PREFIX}")
 message(STATUS "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 message(STATUS "_GIT_HEAD_COMMIT = ${_GIT_HEAD_COMMIT}")
 message(STATUS "_GIT_HEAD_COMMIT_ABBREV = ${_GIT_HEAD_COMMIT_ABBREV}")
@@ -1107,11 +1073,6 @@ set(USE_FSAL_PANFS ${USE_FSAL_PANFS}
 set(USE_FSAL_GPFS ${USE_FSAL_GPFS}
   CACHE BOOL
    "build GPFS FSAL"
-   FORCE)
-
-set(USE_FSAL_ZFS ${USE_FSAL_ZFS}
-  CACHE BOOL
-   "build ZFS FSAL"
    FORCE)
 
 set(USE_FSAL_GLUSTER ${USE_FSAL_GLUSTER}
@@ -1250,11 +1211,6 @@ configure_file(
 # %bcond_with means you add a "--with" option, default is "without this feature"
 # %bcond_without adds a"--without" so the feature is enabled by default
 # This has to be coherent with chosen FSALs
-if(USE_FSAL_ZFS)
-    set(BCOND_ZFS "%bcond_without")
-else(USE_FSAL_ZFS)
-    set(BCOND_ZFS "%bcond_with")
-endif(USE_FSAL_ZFS)
 
 if(USE_FSAL_XFS)
     set(BCOND_XFS "%bcond_without")

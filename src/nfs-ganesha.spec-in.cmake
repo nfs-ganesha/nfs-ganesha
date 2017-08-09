@@ -48,9 +48,6 @@ Requires: openSUSE-release
 @BCOND_GPFS@ gpfs
 %global use_fsal_gpfs %{on_off_switch gpfs}
 
-@BCOND_ZFS@ zfs
-%global use_fsal_zfs %{on_off_switch zfs}
-
 @BCOND_XFS@ xfs
 %global use_fsal_xfs %{on_off_switch xfs}
 
@@ -292,19 +289,6 @@ This package contains a FSAL shared object to
 be used with NFS-Ganesha to support GPFS backend
 %endif
 
-# ZFS
-%if %{with zfs}
-%package zfs
-Summary: The NFS-GANESHA's ZFS FSAL
-Group: Applications/System
-Requires:	nfs-ganesha = %{version}-%{release}
-BuildRequires:	libzfswrap-devel
-
-%description zfs
-This package contains a FSAL shared object to
-be used with NFS-Ganesha to support ZFS
-%endif
-
 # CEPH
 %if %{with ceph}
 %package ceph
@@ -415,8 +399,7 @@ Development headers and auxiliary files for developing with %{name}.
 cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
 	-DUSE_FSAL_NULL=%{use_fsal_null}		\
-	-DUSE_FSAL_MEM=%{use_fsal_mem}		\
-	-DUSE_FSAL_ZFS=%{use_fsal_zfs}			\
+	-DUSE_FSAL_MEM=%{use_fsal_mem}			\
 	-DUSE_FSAL_XFS=%{use_fsal_xfs}			\
 	-DUSE_FSAL_CEPH=%{use_fsal_ceph}		\
 	-DUSE_FSAL_RGW=%{use_fsal_rgw}			\
@@ -482,10 +465,6 @@ install -m 644 config_samples/pt.conf %{buildroot}%{_sysconfdir}/ganesha
 
 %if %{with xfs}
 install -m 644 config_samples/xfs.conf %{buildroot}%{_sysconfdir}/ganesha
-%endif
-
-%if %{with zfs}
-install -m 644 config_samples/zfs.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
 %if %{with ceph}
@@ -637,16 +616,6 @@ exit 0
 %endif
 %if %{with man_page}
 %{_mandir}/*/ganesha-gpfs-config.8.gz
-%endif
-%endif
-
-%if %{with zfs}
-%files zfs
-%defattr(-,root,root,-)
-%{_libdir}/ganesha/libfsalzfs*
-%config(noreplace) %{_sysconfdir}/ganesha/zfs.conf
-%if %{with man_page}
-%{_mandir}/*/ganesha-zfs-config.8.gz
 %endif
 %endif
 

@@ -140,7 +140,6 @@ NFS-Ganesha supports the following FSALs:
 **Proxy**
 **RGW**
 **VFS**
-**ZFS**
 
 Refer to individual FSAL config file for list of config options.
 
@@ -162,7 +161,6 @@ See also
 :doc:`ganesha-rgw-config <ganesha-rgw-config>`\(8)
 :doc:`ganesha-vfs-config <ganesha-vfs-config>`\(8)
 :doc:`ganesha-xfs-config <ganesha-xfs-config>`\(8)
-:doc:`ganesha-zfs-config <ganesha-zfs-config>`\(8)
 :doc:`ganesha-gpfs-config <ganesha-gpfs-config>`\(8)
 :doc:`ganesha-9p-config <ganesha-9p-config>`\(8)
 :doc:`ganesha-proxy-config <ganesha-proxy-config>`\(8)

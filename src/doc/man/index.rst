@@ -12,7 +12,6 @@
    ganesha-rgw-config
    ganesha-vfs-config
    ganesha-xfs-config
-   ganesha-zfs-config
    ganesha-cache-config
    ganesha-export-config
    ganesha-core-config

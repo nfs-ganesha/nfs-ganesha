@@ -22,7 +22,6 @@ MEM {}
 RGW {}
 VFS {}
 XFS {}
-ZFS {}
 PROXY {}
 PROXY { Remote_Server {} }
 RADOS_KV {}
@@ -356,11 +355,6 @@ EXPORT { FSAL {} }
 	fsid_type(enum, values [None, One64, Major64, Two64, uuid, Two32, Dev,
 			        Device], no default)
 
-	FSAL_ZFS:
-	---------
-
-	zpool(string, default "tank", must be supplied)
-
 	EXPORT { FSAL { PNFS { } } }
 	---------------------------
 		Stripe_Unit(uint32, range 1024 to 1024*1024, default 8192)
@@ -625,25 +619,6 @@ VFS {}
 	xattr_access_rights(mode, range 0 to 0777, default 0400)
 
 XFS {}
-------
-
-	link_support(bool, default true)
-
-	symlink_support(bool, default true)
-
-	cansettime(bool, default true)
-
-	maxread(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
-
-	maxwrite(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
-
-	umask(mode, range 0 to 0777, default 0)
-
-	auth_xdev_export(bool, default false)
-
-	xattr_access_rights(mode, range 0 to 0777, default 0400)
-
-ZFS {}
 ------
 
 	link_support(bool, default true)
