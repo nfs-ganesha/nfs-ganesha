@@ -140,9 +140,6 @@ ENDIF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
 
 STRING(SUBSTRING ${_GIT_HEAD_COMMIT} 0  7 _GIT_HEAD_COMMIT_ABBREV )
 
-# Using git related information, build PACKNAME
-set( PACKNAME "${GANESHA_VERSION}" )
-
 if (FREEBSD)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
     set(PLATFORM "FREEBSD")
@@ -763,7 +760,7 @@ endif(USE_CB_SIMULATOR)
 
 ########### add a "make dist" and a "make rpm"  ###############
 
-set( PKG_NAME "${CPACK_PACKAGE_FILE_NAME}.tar.gz")
+set( PKG_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}.tar.gz")
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
 # Find misc system libs

@@ -1,5 +1,6 @@
 # A few CPack related variables
-set(CPACK_PACKAGE_NAME "nfs-ganesha-${PACKNAME}" )
+set(CPACK_PACKAGE_NAME "nfs-ganesha" )
+set(CPACK_PACKAGE_VERSION "${GANESHA_VERSION}" )
 set(CPACK_PACKAGE_VENDOR "NFS-Ganesha Project")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "NFS-Ganesha - A NFS Server runnning in user space")
 
@@ -16,4 +17,4 @@ set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_SOURCE_IGNORE_FILES
   "/.git/;/.gitignore/;/.bzr/;~$;${CPACK_SOURCE_IGNORE_FILES}")
 
-
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}")
