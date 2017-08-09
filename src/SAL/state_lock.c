@@ -3082,11 +3082,13 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			/* Remove all shares held by this NSM Client and
 			 * Owner on the file (on all exports)
 			 */
-			status = state_nlm_unshare(obj,
-						   OPEN4_SHARE_ACCESS_NONE,
-						   OPEN4_SHARE_DENY_NONE,
-						   owner,
-						   found_share);
+			status = state_nlm_share(obj,
+						 OPEN4_SHARE_ACCESS_NONE,
+						 OPEN4_SHARE_DENY_NONE,
+						 owner,
+						 found_share,
+						 false,
+						 true);
 		} else {
 			/* The export is being removed, we didn't bother
 			 * calling state_unlock() because export cleanup

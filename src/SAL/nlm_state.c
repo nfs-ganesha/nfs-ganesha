@@ -335,10 +335,8 @@ void dec_nlm_state_ref(state_t *state)
 		return;
 	}
 
-	if (obj->fsal->m_ops.support_ex(obj)) {
-		/* We need to close the state before freeing the state. */
-		(void) obj->obj_ops.close2(obj, state);
-	}
+	/* We need to close the state before freeing the state. */
+	(void) obj->obj_ops.close2(obj, state);
 
 	state->state_exp->exp_ops.free_state(state->state_exp, state);
 
