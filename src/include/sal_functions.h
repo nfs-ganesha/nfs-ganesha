@@ -682,14 +682,6 @@ bool state_lock_wipe(struct state_hdl *hstate);
 
 void cancel_all_nlm_blocked(void);
 
-static inline void *convert_lock_owner(struct fsal_export *fsal_export,
-				       state_owner_t *owner)
-{
-	return fsal_export->exp_ops.fs_supports(fsal_export,
-						fso_lock_support_owner)
-			? owner : NULL;
-}
-
 /******************************************************************************
  *
  * NFSv4 State Management functions
