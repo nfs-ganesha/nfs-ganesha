@@ -915,31 +915,6 @@ void revoke_owner_layouts(state_owner_t *client_owner);
 
 #define OPEN4_SHARE_ACCESS_NONE 0
 
-state_status_t state_share_add(struct fsal_obj_handle *obj,
-			       state_owner_t *owner,
-			       /* state that holds share bits to be added */
-			       state_t *state, bool reclaim);
-
-state_status_t state_share_remove(struct fsal_obj_handle *obj,
-				  state_owner_t *owner,
-				  /* state that holds share bits to be removed
-				   */
-				  state_t *state);
-
-state_status_t state_share_upgrade(struct fsal_obj_handle *obj,
-				   /* new share bits */
-				   union state_data *state_data,
-				   state_owner_t *owner,
-				   /* state that holds current share bits */
-				   state_t *state, bool reclaim);
-
-state_status_t state_share_downgrade(struct fsal_obj_handle *obj,
-				     /* new share bits */
-				     union state_data *state_data,
-				     state_owner_t *owner,
-				     /* state that holds current share bits */
-				     state_t *state);
-
 state_status_t state_share_set_prev(state_t *state,
 				    union state_data *state_data);
 
