@@ -915,28 +915,14 @@ void revoke_owner_layouts(state_owner_t *client_owner);
 
 #define OPEN4_SHARE_ACCESS_NONE 0
 
-state_status_t state_share_set_prev(state_t *state,
-				    union state_data *state_data);
-
 enum share_bypass_modes {
 	SHARE_BYPASS_NONE,
 	SHARE_BYPASS_READ,
 	SHARE_BYPASS_V3_WRITE
 };
 
-state_status_t state_share_check_conflict(struct state_hdl *ostate,
-					  int share_acccess,
-					  int share_deny,
-					  enum share_bypass_modes bypass);
 bool state_open_deleg_conflict(struct state_hdl *ostate,
 			       const state_t *open_state);
-
-state_status_t state_share_anonymous_io_start(struct fsal_obj_handle *obj,
-					      int share_access,
-					      enum share_bypass_modes bypass);
-
-void state_share_anonymous_io_done(struct fsal_obj_handle *obj,
-				   int share_access);
 
 state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 			       int share_access,

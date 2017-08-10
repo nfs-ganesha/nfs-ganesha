@@ -302,17 +302,11 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		state_open = NULL;
 
-		/* Special stateid, no open state, check to see if any share
-		 * conflicts The stateid is all-0 or all-1
-		 */
-		res_WRITE4->status = nfs4_Errno_state(
-				state_share_anonymous_io_start(
-					obj,
-					OPEN4_SHARE_ACCESS_WRITE,
-					SHARE_BYPASS_NONE));
-
-		if (res_WRITE4->status != NFS4_OK)
+		/* Check for delegation conflict. */
+		if (state_deleg_conflict(obj, true)) {
+			res_WRITE4->status = NFS4ERR_DELAY;
 			goto out;
+		}
 
 		anonymous_started = true;
 	}
@@ -431,9 +425,6 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	res_WRITE4->status = NFS4_OK;
 
  done:
-
-	if (anonymous_started)
-		state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_WRITE);
 
 	server_stats_io_done(size, written_size,
 			     (res_WRITE4->status == NFS4_OK) ? true : false,

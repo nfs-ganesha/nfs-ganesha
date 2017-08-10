@@ -163,13 +163,9 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		squash_setattr(&setattr);
 
 		if (arg->arg_setattr3.new_attributes.size.set_it) {
-			res->res_setattr3.status = nfs3_Errno_state(
-					state_share_anonymous_io_start(
-						obj,
-						OPEN4_SHARE_ACCESS_WRITE,
-						SHARE_BYPASS_V3_WRITE));
-
-			if (res->res_setattr3.status != NFS3_OK) {
+			/* Check for delegation conflict. */
+			if (state_deleg_conflict(obj, true)) {
+				res->res_setattr3.status = NFS3ERR_JUKEBOX;
 				LogFullDebug(COMPONENT_NFSPROTO,
 					     "state_share_anonymous_io_start failed");
 				goto out_fail;
@@ -180,10 +176,6 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		 * we will get through an NLM_SHARE with deny.
 		 */
 		fsal_status = fsal_setattr(obj, true, NULL, &setattr);
-
-		if (arg->arg_setattr3.new_attributes.size.set_it)
-			state_share_anonymous_io_done(obj,
-						      OPEN4_SHARE_ACCESS_WRITE);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res->res_setattr3.status =

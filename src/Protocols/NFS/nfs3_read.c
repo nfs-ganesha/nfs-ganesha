@@ -205,13 +205,9 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	} else {
 		data = gsh_malloc(size);
 
-		res->res_read3.status = nfs3_Errno_state(
-				state_share_anonymous_io_start(
-					obj,
-					OPEN4_SHARE_ACCESS_READ,
-					SHARE_BYPASS_READ));
-
-		if (res->res_read3.status != NFS3_OK) {
+		/* Check for delegation conflict. */
+		if (state_deleg_conflict(obj, false)) {
+			res->res_read3.status = NFS3ERR_JUKEBOX;
 			rc = NFS_REQ_OK;
 			gsh_free(data);
 			goto out;
@@ -228,8 +224,6 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 					  data,
 					  &eof_met,
 					  NULL);
-
-		state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_READ);
 
 		if (!FSAL_IS_ERROR(fsal_status)) {
 			nfs_read_ok(req, res, data, read_size, obj, eof_met);

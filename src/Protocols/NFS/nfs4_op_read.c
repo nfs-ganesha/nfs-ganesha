@@ -367,16 +367,12 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		 * conflicts The stateid is all-0 or all-1
 		 */
 		bypass = arg_READ4->stateid.seqid != 0;
-		res_READ4->status = nfs4_Errno_state(
-				state_share_anonymous_io_start(
-					obj,
-					OPEN4_SHARE_ACCESS_READ,
-					arg_READ4->stateid.seqid != 0
-						? SHARE_BYPASS_READ
-						: SHARE_BYPASS_NONE));
 
-		if (res_READ4->status != NFS4_OK)
+		/* Check for delegation conflict. */
+		if (state_deleg_conflict(obj, false)) {
+			res_READ4->status = NFS4ERR_DELAY;
 			goto out;
+		}
 
 		anonymous_started = true;
 	}
@@ -500,9 +496,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	res_READ4->status = NFS4_OK;
 
  done:
-
-	if (anonymous_started)
-		state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_READ);
 
 	server_stats_io_done(size, read_size,
 			     (res_READ4->status == NFS4_OK) ? true : false,

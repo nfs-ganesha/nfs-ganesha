@@ -216,13 +216,9 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* An actual write is to be made, prepare it */
 
-	res->res_write3.status = nfs3_Errno_state(
-			state_share_anonymous_io_start(
-				obj,
-				OPEN4_SHARE_ACCESS_WRITE,
-				SHARE_BYPASS_V3_WRITE));
-
-	if (res->res_write3.status != NFS3_OK) {
+	/* Check for delegation conflict. */
+	if (state_deleg_conflict(obj, true)) {
+		res->res_write3.status = NFS3ERR_JUKEBOX;
 		rc = NFS_REQ_OK;
 		goto out;
 	}
@@ -238,8 +234,6 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				  data,
 				  &sync,
 				  NULL);
-
-	state_share_anonymous_io_done(obj, OPEN4_SHARE_ACCESS_WRITE);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		/* If we are here, there was an error */
