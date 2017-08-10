@@ -62,19 +62,6 @@
 
 size_t open_fd_count = 0;
 
-/* XXX dang locking
- * - FD locking (open, close, is_open) - was content lock
- *   will be fixed in conversion to support_ex
- */
-
-
-bool fsal_is_open(struct fsal_obj_handle *obj)
-{
-	if ((obj == NULL) || (obj->type != REGULAR_FILE))
-		return false;
-	return (obj->obj_ops.status(obj) != FSAL_O_CLOSED);
-}
-
 static bool fsal_not_in_group_list(gid_t gid)
 {
 	const struct user_cred *creds = op_ctx->creds;
@@ -567,24 +554,13 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 		attr->mode &= ~S_ISGID;
 	}
 
-	if (obj->fsal->m_ops.support_ex(obj)) {
-		status = obj->obj_ops.setattr2(obj, bypass, state, attr);
-		if (FSAL_IS_ERROR(status)) {
-			if (status.major == ERR_FSAL_STALE) {
-				LogEvent(COMPONENT_FSAL,
-					 "FSAL returned STALE from setattr2");
-			}
-			return status;
+	status = obj->obj_ops.setattr2(obj, bypass, state, attr);
+	if (FSAL_IS_ERROR(status)) {
+		if (status.major == ERR_FSAL_STALE) {
+			LogEvent(COMPONENT_FSAL,
+				 "FSAL returned STALE from setattr2");
 		}
-	} else {
-		status = obj->obj_ops.setattrs(obj, attr);
-		if (FSAL_IS_ERROR(status)) {
-			if (status.major == ERR_FSAL_STALE) {
-				LogEvent(COMPONENT_FSAL,
-					 "FSAL returned STALE from setattrs");
-			}
-			return status;
-		}
+		return status;
 	}
 
 	if (!is_superuser)  {
@@ -815,9 +791,6 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 {
 	fsal_status_t status = { 0, 0 };
 	attrmask_t orig_mask = attrs->valid_mask;
-	uint64_t owner = attrs->owner;
-	uint64_t group = attrs->group;
-	bool support_ex = parent->fsal->m_ops.support_ex(parent);
 
 	if ((type != REGULAR_FILE) && (type != DIRECTORY)
 	    && (type != SYMBOLIC_LINK) && (type != SOCKET_FILE)
@@ -831,22 +804,16 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 		goto out;
 	}
 
-	if (!support_ex) {
-		/* For old API, make sure owner/group attr matches op_ctx */
-		attrs->valid_mask |= ATTR_OWNER | ATTR_GROUP;
-		attrs->owner = op_ctx->creds->caller_uid;
-		attrs->group = op_ctx->creds->caller_gid;
-	} else {
-		/* For support_ex API, turn off owner and/or group attr
-		 * if they are the same as the credentials.
-		 */
-		if ((attrs->valid_mask & ATTR_OWNER) &&
-		    attrs->owner == op_ctx->creds->caller_uid)
-			FSAL_UNSET_MASK(attrs->valid_mask, ATTR_OWNER);
-		if ((attrs->valid_mask & ATTR_GROUP) &&
-		    attrs->group == op_ctx->creds->caller_gid)
-			FSAL_UNSET_MASK(attrs->valid_mask, ATTR_GROUP);
-	}
+	/* For support_ex API, turn off owner and/or group attr
+	 * if they are the same as the credentials.
+	 */
+	if ((attrs->valid_mask & ATTR_OWNER) &&
+	    attrs->owner == op_ctx->creds->caller_uid)
+		FSAL_UNSET_MASK(attrs->valid_mask, ATTR_OWNER);
+
+	if ((attrs->valid_mask & ATTR_GROUP) &&
+	    attrs->group == op_ctx->creds->caller_gid)
+		FSAL_UNSET_MASK(attrs->valid_mask, ATTR_GROUP);
 
 	/* Permission checking will be done by the FSAL operation. */
 
@@ -854,9 +821,9 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 
 	switch (type) {
 	case REGULAR_FILE:
-		/* NOTE: will not be called here if support_ex */
-		status = parent->obj_ops.create(parent, name, attrs,
-						obj, attrs_out);
+		LogFatal(COMPONENT_FSAL,
+			 "Attempt to use fsal_create to create REGULAR_FILE %s",
+			 name);
 		break;
 
 	case DIRECTORY:
@@ -909,51 +876,13 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 				    (attrs->valid_mask & ATTR_SIZE) &&
 				    attrs->filesize == 0) {
 					attrs->valid_mask &= ATTR_SIZE;
-					goto setattrs;
+					goto out;
 				}
 			}
 		} else {
 			*obj = NULL;
 		}
 		goto out;
-	}
-
-setattrs:
-	if (!support_ex) {
-		/* Handle setattr for old API */
-		attrs->valid_mask = orig_mask;
-		attrs->owner = owner;
-		attrs->group = group;
-
-		/* We already handled mode */
-		FSAL_UNSET_MASK(attrs->valid_mask, ATTR_MODE);
-
-		/* Check if attrs->owner was same as creds */
-		if ((attrs->valid_mask & ATTR_OWNER) &&
-		    (op_ctx->creds->caller_uid == attrs->owner))
-			FSAL_UNSET_MASK(attrs->valid_mask, ATTR_OWNER);
-
-		/* Check if attrs->group was same as creds */
-		if ((attrs->valid_mask & ATTR_GROUP) &&
-		    (op_ctx->creds->caller_gid == attrs->group))
-			FSAL_UNSET_MASK(attrs->valid_mask, ATTR_GROUP);
-
-		/* Setting uid/gid works only for root. AIX or Irix NFS
-                 * clients send gid on create if the parent directory has
-                 * setgid bit. Clear the OWNER and GROUP attributes for
-                 * create requests for non-root users.
-		 */
-		if (type != SYMBOLIC_LINK &&
-		    !op_ctx->fsal_export->exp_ops.is_superuser(
-					op_ctx->fsal_export, op_ctx->creds)) {
-			FSAL_UNSET_MASK(attrs->valid_mask,
-					ATTR_OWNER|ATTR_GROUP);
-		}
-
-		if (attrs->valid_mask) {
-			/* If any attributes were left to set, set them now. */
-			status = fsal_setattr(*obj, false, NULL, attrs);
-		}
 	}
 
  out:
@@ -1119,164 +1048,6 @@ fsal_status_t fsal_write2(struct fsal_obj_handle *obj,
 		     PRIu64, io_size, *bytes_moved, offset);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
- * @brief Read/Write
- *
- * @param[in]     obj          File to be read or written
- * @param[in]     io_direction Whether this is a read or a write
- * @param[in]     offset       Absolute file position for I/O
- * @param[in]     io_size      Amount of data to be read or written
- * @param[out]    bytes_moved  The length of data successfuly read or written
- * @param[in,out] buffer       Where in memory to read or write data
- * @param[out]    eof          Whether a READ encountered the end of file.  May
- *                             be NULL for writes.
- * @param[in]     sync         Whether the write is synchronous or not
- *
- * @return FSAL status
- */
-
-fsal_status_t fsal_rdwr(struct fsal_obj_handle *obj,
-		      fsal_io_direction_t io_direction,
-		      uint64_t offset, size_t io_size,
-		      size_t *bytes_moved, void *buffer,
-		      bool *eof,
-		      bool *sync, struct io_info *info)
-{
-	/* Error return from FSAL calls */
-	fsal_status_t fsal_status = { 0, 0 };
-	/* Required open mode to successfully read or write */
-	fsal_openflags_t openflags = FSAL_O_CLOSED;
-	fsal_openflags_t loflags;
-	/* TRUE if we opened a previously closed FD */
-	bool opened = false;
-
-	/* Set flags for a read or write, as appropriate */
-	if (io_direction == FSAL_IO_READ ||
-	    io_direction == FSAL_IO_READ_PLUS) {
-		openflags = FSAL_O_READ;
-	} else {
-		/* Pretent that the caller requested sync (stable write)
-		 * if the export has COMMIT option.
-		 */
-		if (op_ctx->export_perms->options & EXPORT_OPTION_COMMIT)
-			*sync = true;
-		openflags = FSAL_O_WRITE;
-	}
-
-	assert(obj != NULL);
-
-	/* IO is done only on REGULAR_FILEs */
-	if (obj->type != REGULAR_FILE) {
-		fsal_status = fsalstat(
-		    obj->type ==
-		    DIRECTORY ? ERR_FSAL_ISDIR :
-		    ERR_FSAL_BADTYPE, 0);
-		goto out;
-	}
-
-	loflags = obj->obj_ops.status(obj);
-	while ((!fsal_is_open(obj))
-	       || (loflags && loflags != FSAL_O_RDWR && loflags != openflags)) {
-		loflags = obj->obj_ops.status(obj);
-		if ((!fsal_is_open(obj))
-		    || (loflags && loflags != FSAL_O_RDWR
-			&& loflags != openflags)) {
-			fsal_status = fsal_open(obj, openflags);
-			if (FSAL_IS_ERROR(fsal_status))
-				goto out;
-			opened = true;
-		}
-		loflags = obj->obj_ops.status(obj);
-	}
-
-	/* Call FSAL_read or FSAL_write */
-	if (io_direction == FSAL_IO_READ) {
-		fsal_status = obj->obj_ops.read(obj, offset, io_size, buffer,
-						bytes_moved, eof);
-	} else if (io_direction == FSAL_IO_READ_PLUS) {
-		fsal_status = obj->obj_ops.read_plus(obj, offset, io_size,
-						     buffer, bytes_moved, eof,
-						     info);
-	} else {
-		bool fsal_sync = *sync;
-
-		if (io_direction == FSAL_IO_WRITE)
-			fsal_status = obj->obj_ops.write(obj, offset, io_size,
-							 buffer, bytes_moved,
-							 &fsal_sync);
-		else
-			fsal_status = obj->obj_ops.write_plus(obj, offset,
-							      io_size, buffer,
-							      bytes_moved,
-							      &fsal_sync, info);
-		/* Alright, the unstable write is complete. Now if it was
-		   supposed to be a stable write we can sync to the hard
-		   drive. */
-
-		if (*sync && !fsal_sync && !FSAL_IS_ERROR(fsal_status)) {
-			fsal_status = obj->obj_ops.commit(obj, offset, io_size);
-		} else {
-			*sync = fsal_sync;
-		}
-	}
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "fsal_rdwr_plus: FSAL IO operation returned %s, asked_size=%zu, effective_size=%zu",
-		     fsal_err_txt(fsal_status), io_size, *bytes_moved);
-
-	if (FSAL_IS_ERROR(fsal_status)) {
-		if (fsal_status.major == ERR_FSAL_DELAY) {
-			LogEvent(COMPONENT_FSAL,
-				 "fsal_rdwr_plus: FSAL_write  returned EBUSY");
-		} else {
-			LogDebug(COMPONENT_FSAL,
-				 "fsal_rdwr_plus: fsal_status = %s",
-				 fsal_err_txt(fsal_status));
-		}
-
-		*bytes_moved = 0;
-
-		if (fsal_status.major == ERR_FSAL_STALE)
-			goto out;
-
-		if ((fsal_status.major != ERR_FSAL_NOT_OPENED)
-		    && (obj->obj_ops.status(obj) != FSAL_O_CLOSED)) {
-			LogFullDebug(COMPONENT_FSAL,
-				     "fsal_rdwr_plus: CLOSING file %p",
-				     obj);
-
-			fsal_status = obj->obj_ops.close(obj);
-			if (FSAL_IS_ERROR(fsal_status)) {
-				LogCrit(COMPONENT_FSAL,
-					"Error closing file in fsal_rdwr_plus: %s.",
-					fsal_err_txt(fsal_status));
-			}
-		}
-
-		goto out;
-	}
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "fsal_rdwr_plus: inode/direct: io_size=%zu, bytes_moved=%zu, offset=%"
-		     PRIu64, io_size, *bytes_moved, offset);
-
-	if (opened) {
-		fsal_status = obj->obj_ops.close(obj);
-		if (FSAL_IS_ERROR(fsal_status)) {
-			LogEvent(COMPONENT_FSAL,
-				 "fsal_rdwr_plus: close = %s",
-				 fsal_err_txt(fsal_status));
-			goto out;
-		}
-	}
-
-	fsal_status = fsalstat(0, 0);
-
- out:
-
-	return fsal_status;
 }
 
 struct fsal_populate_cb_state {
@@ -1657,70 +1428,6 @@ out:
 }
 
 /**
- * @brief Open a file
- *
- * @param[in] obj	File to open
- * @param[in] openflags	The type of access for which to open
- * @return FSAL status
- */
-fsal_status_t fsal_open(struct fsal_obj_handle *obj_hdl,
-			fsal_openflags_t openflags)
-{
-	fsal_openflags_t current_flags;
-	fsal_status_t status = {0, 0};
-
-	if (obj_hdl->type != REGULAR_FILE)
-		return fsalstat(ERR_FSAL_BADTYPE, 0);
-
-	current_flags = obj_hdl->obj_ops.status(obj_hdl);
-
-	/* Filter out overloaded FSAL_O_RECLAIM */
-	openflags &= ~FSAL_O_RECLAIM;
-
-	/* Make sure current state meet requirements */
-	if ((current_flags != FSAL_O_RDWR) && (current_flags != FSAL_O_CLOSED)
-	    && (current_flags != openflags)) {
-		bool closed;
-		/* Flags are insufficient; need to re-open */
-		if (op_ctx->fsal_export->exp_ops.fs_supports(
-			op_ctx->fsal_export, fso_reopen_method)) {
-			/* FSAL has re-open; use that */
-			status = obj_hdl->obj_ops.reopen(obj_hdl,
-							   openflags);
-			closed = false;
-		} else {
-			status = obj_hdl->obj_ops.close(obj_hdl);
-			closed = true;
-		}
-		if (FSAL_IS_ERROR(status)
-		    && (status.major != ERR_FSAL_NOT_OPENED))
-			return status;
-		if (!FSAL_IS_ERROR(status) && closed) {
-			(void) atomic_dec_size_t(&open_fd_count);
-		}
-
-		/* Potentially force re-openning */
-		current_flags = obj_hdl->obj_ops.status(obj_hdl);
-	}
-
-	if (current_flags == FSAL_O_CLOSED) {
-		status = obj_hdl->obj_ops.open(obj_hdl, openflags);
-		if (FSAL_IS_ERROR(status))
-			return status;
-
-		(void) atomic_inc_size_t(&open_fd_count);
-
-		LogDebug(COMPONENT_FSAL,
-			 "obj %p: openflags = %d, open_fd_count = %zd",
-			 obj_hdl, openflags,
-			 atomic_fetch_size_t(&open_fd_count));
-	}
-	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-	return status;
-}
-
-/**
  * @brief Opens a file by name or by handle.
  *
  * This function accomplishes both a LOOKUP if necessary and an open.
@@ -1899,43 +1606,6 @@ fsal_status_t fsal_statfs(struct fsal_obj_handle *obj,
 		     dynamicinfo->free_bytes, dynamicinfo->avail_bytes,
 		     dynamicinfo->total_files, dynamicinfo->free_files,
 		     dynamicinfo->avail_files);
-	return fsal_status;
-}
-
-/**
- * @brief Commit a section of a file to storage
- *
- * @param[in] obj	File to commit
- * @param[in] offset	Offset for start of commit
- * @param[in] len	Length of commit
- * @return FSAL status
- */
-fsal_status_t fsal_commit(struct fsal_obj_handle *obj, off_t offset,
-			 size_t len)
-{
-	/* Error return from FSAL calls */
-	fsal_status_t fsal_status = { 0, 0 };
-	bool opened = false;
-
-	if ((uint64_t) len > ~(uint64_t) offset)
-		return fsalstat(ERR_FSAL_INVAL, 0);
-
-	if (obj->fsal->m_ops.support_ex(obj))
-		return obj->obj_ops.commit2(obj, offset, len);
-
-	if (!fsal_is_open(obj)) {
-		LogFullDebug(COMPONENT_FSAL, "need to open");
-		fsal_status = fsal_open(obj, FSAL_O_WRITE);
-		if (FSAL_IS_ERROR(fsal_status))
-			return fsal_status;
-		opened = true;
-	}
-
-	fsal_status = obj->obj_ops.commit(obj, offset, len);
-
-	if (opened)
-		obj->obj_ops.close(obj);
-
 	return fsal_status;
 }
 

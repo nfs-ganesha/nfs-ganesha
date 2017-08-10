@@ -366,12 +366,6 @@ fsal_status_t fsal_write2(struct fsal_obj_handle *obj,
 			  void *buffer,
 			  bool *sync,
 			  struct io_info *info);
-fsal_status_t fsal_rdwr(struct fsal_obj_handle *obj,
-		      fsal_io_direction_t io_direction,
-		      uint64_t offset, size_t io_size,
-		      size_t *bytes_moved, void *buffer,
-		      bool *eof,
-		      bool *sync, struct io_info *info);
 fsal_status_t fsal_readdir(struct fsal_obj_handle *directory, uint64_t cookie,
 			   unsigned int *nbfound, bool *eod_met,
 			   attrmask_t attrmask, helper_readdir_cb cb,
@@ -381,8 +375,6 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 			  const char *oldname,
 			  struct fsal_obj_handle *dir_dest,
 			  const char *newname);
-fsal_status_t fsal_open(struct fsal_obj_handle *obj_hdl,
-			fsal_openflags_t openflags);
 fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 			 struct state_t *state,
 			 fsal_openflags_t openflags,
@@ -411,22 +403,12 @@ fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
  */
 static inline fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl)
 {
-	bool support_ex;
-
 	if (obj_hdl->type != REGULAR_FILE) {
 		/* Can only close a regular file */
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
-	support_ex = obj_hdl->fsal->m_ops.support_ex(obj_hdl);
-
-	if (!support_ex && obj_hdl->obj_ops.status(obj_hdl) == FSAL_O_CLOSED) {
-		/* If not support_ex and the file isn't open, return no error.
-		 */
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-	/* Otherwise, return the result of close method. */
+	/* Return the result of close method. */
 	fsal_status_t status = obj_hdl->obj_ops.close(obj_hdl);
 
 	if (status.major != ERR_FSAL_NOT_OPENED) {
@@ -441,11 +423,26 @@ static inline fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl)
 
 fsal_status_t fsal_statfs(struct fsal_obj_handle *obj,
 			  fsal_dynamicfsinfo_t *dynamicinfo);
-fsal_status_t fsal_commit(struct fsal_obj_handle *obj_hdl, off_t offset,
-			 size_t len);
+
+/**
+ * @brief Commit a section of a file to storage
+ *
+ * @param[in] obj	File to commit
+ * @param[in] offset	Offset for start of commit
+ * @param[in] len	Length of commit
+ * @return FSAL status
+ */
+static inline
+fsal_status_t fsal_commit(struct fsal_obj_handle *obj, off_t offset,
+			 size_t len)
+{
+	if ((uint64_t) len > ~(uint64_t) offset)
+		return fsalstat(ERR_FSAL_INVAL, 0);
+
+	return obj->obj_ops.commit2(obj, offset, len);
+}
 fsal_status_t fsal_verify2(struct fsal_obj_handle *obj,
 			   fsal_verifier_t verifier);
-bool fsal_is_open(struct fsal_obj_handle *obj);
 
 /**
  * @brief Pepare an attrlist for fetching attributes.
