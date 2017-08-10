@@ -228,6 +228,11 @@ mem_up_pkginit(void)
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
+	if (mem_up_fridge) {
+		/* Already initialized */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+
 	memset(&frp, 0, sizeof(struct fridgethr_params));
 	frp.thr_max = 1;
 	frp.thr_min = 1;
@@ -261,6 +266,11 @@ mem_up_pkginit(void)
 fsal_status_t
 mem_up_pkgshutdown(void)
 {
+	if (!mem_up_fridge) {
+		/* Interval wasn't configured */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+
 	int rc = fridgethr_sync_command(mem_up_fridge,
 					fridgethr_comm_stop,
 					120);
