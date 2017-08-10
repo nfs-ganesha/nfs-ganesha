@@ -220,18 +220,6 @@ static void fsal_pnfs_ds_ops(struct fsal_pnfs_ds_ops *ops)
 }
 
 /**
- * @brief Indicate support for extended operations.
- *
- * @param[in]  obj	Object being operated on
- *
- * @retval true if extended operations are supported.
- */
-static bool support_ex(struct fsal_obj_handle *obj)
-{
-	return false;
-}
-
-/**
  * @brief Provides function to extract FSAL stats
  *
  * @param[in] fsal_hdl          FSAL module
@@ -268,7 +256,6 @@ struct fsal_ops def_fsal_ops = {
 	.fs_da_addr_size = fs_da_addr_size,
 	.fsal_pnfs_ds = fsal_pnfs_ds,
 	.fsal_pnfs_ds_ops = fsal_pnfs_ds_ops,
-	.support_ex = support_ex,
 	.fsal_extract_stats = fsal_extract_stats,
 	.fsal_reset_stats = fsal_reset_stats,
 };

@@ -118,17 +118,6 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/**
- * @brief Indicate support for extended operations.
- *
- * @retval true if extended operations are supported.
- */
-
-bool glusterfs_support_ex(struct fsal_obj_handle *obj)
-{
-	return true;
-}
-
 /* Module methods
  */
 
@@ -151,9 +140,6 @@ MODULE_INIT void glusterfs_init(void)
 
 	/* setup global handle internals */
 	myself->m_ops.init_config = init_config;
-
-	/* Enable extended fop support */
-	myself->m_ops.support_ex = glusterfs_support_ex;
 	/*
 	 * Following inits needed for pNFS support
 	 * get device info will used by pnfs meta data server

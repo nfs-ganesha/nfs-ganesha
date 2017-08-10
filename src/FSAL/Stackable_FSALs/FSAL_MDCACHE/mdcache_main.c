@@ -330,23 +330,6 @@ mdcache_fsal_unload(struct fsal_module *fsal_hdl)
 	return retval;
 }
 
- /**
- * @brief Get the support_ex for the handle
- *
- * Just pass through to the underlying FSAL
- *
- * @param[in] obj_hdl	Handle to digest
- * @param[out] fh_desc	Buffer to write key into
- * @return True if supported, false otherwise
- */
-static bool mdcache_support_ex(struct fsal_obj_handle *obj_hdl)
-{
-	mdcache_entry_t *entry =
-		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-
-	return entry->sub_handle->fsal->m_ops.support_ex(entry->sub_handle);
-}
-
 void mdcache_fsal_init(void)
 {
 	int retval;
@@ -361,7 +344,6 @@ void mdcache_fsal_init(void)
 	/*myself->m_ops.create_export = mdcache_fsal_create_export;*/
 	myself->m_ops.init_config = mdcache_fsal_init_config;
 	myself->m_ops.unload = mdcache_fsal_unload;
-	myself->m_ops.support_ex = mdcache_support_ex;
 }
 
 /**

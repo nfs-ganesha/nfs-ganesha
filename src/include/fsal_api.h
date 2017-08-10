@@ -622,13 +622,6 @@ struct fsal_ops {
 	 void (*fsal_pnfs_ds_ops)(struct fsal_pnfs_ds_ops *ops);
 
 /**
- * @brief Indicate support for extended operations.
- *
- * @retval true if extended operations are supported.
- */
-	 bool (*support_ex)(struct fsal_obj_handle *obj);
-
-/**
  * @brief Provides function to extract FSAL stats
  *
  * @param[in] fsal_hdl		FSAL module

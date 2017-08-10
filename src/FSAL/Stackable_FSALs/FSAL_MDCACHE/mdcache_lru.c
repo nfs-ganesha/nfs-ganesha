@@ -1036,7 +1036,6 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 	struct lru_q_lane *qlane = &LRU[lane];
 	/* entry refcnt */
 	uint32_t refcnt;
-	bool not_support_ex;
 
 	q = &qlane->L1;
 
@@ -1136,23 +1135,8 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		 * entry */
 		QUNLOCK(qlane);
 
-		not_support_ex = !entry->obj_handle.fsal->m_ops.support_ex(
-							&entry->obj_handle);
-
-		if (not_support_ex) {
-			/* Acquire the content lock first; we may need to look
-			 * at fds and close it.
-			 */
-			PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-		}
-
 		/* Make sure any FSAL global file descriptor is closed. */
 		status = fsal_close(&entry->obj_handle);
-
-		if (not_support_ex) {
-			/* Release the content lock. */
-			PTHREAD_RWLOCK_unlock(&entry->content_lock);
-		}
 
 		if (FSAL_IS_ERROR(status)) {
 			LogCrit(COMPONENT_CACHE_INODE_LRU,

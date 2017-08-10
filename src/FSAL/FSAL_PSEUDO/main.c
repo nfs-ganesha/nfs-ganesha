@@ -114,17 +114,6 @@ static void init_config(struct fsal_module *fsal_hdl)
 		 pseudofs_me->fs_info.supported_attrs);
 }
 
-/**
- * @brief Indicate support for extended operations.
- *
- * @retval true if extended operations are supported.
- */
-
-bool pseudofs_support_ex(struct fsal_obj_handle *obj)
-{
-	return true;
-}
-
 /* Module initialization.
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself
@@ -162,7 +151,6 @@ void pseudo_fsal_init(void)
 	}
 	myself->m_ops.create_export = pseudofs_create_export;
 	myself->m_ops.unload = unload_pseudo_fsal;
-	myself->m_ops.support_ex = pseudofs_support_ex;
 
 	/* initialize our config */
 	init_config(myself);

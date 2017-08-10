@@ -125,17 +125,6 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
- /**
- * @brief Indicate support for extended operations.
- *
- * @retval true if extended operations are supported.
- */
-
-bool support_ex(struct fsal_obj_handle *obj)
-{
-	return true;
-}
-
 /**
  * @brief Create a new export under this FSAL
  *
@@ -402,7 +391,6 @@ MODULE_INIT void init(void)
 	/* Set up module operations */
 	myself->m_ops.create_export = create_export;
 	myself->m_ops.init_config = init_config;
-	myself->m_ops.support_ex = support_ex;
 }
 
 /**

@@ -209,17 +209,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				const struct fsal_up_vector *up_ops);
 
 
-/**
- * @brief Indicate support for extended operations.
- *
- * @retval true if extended operations are supported.
- */
-
-bool vfs_support_ex(struct fsal_obj_handle *obj)
-{
-	return true;
-}
-
 /* Module initialization.
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself
@@ -246,7 +235,6 @@ MODULE_INIT void vfs_init(void)
 	}
 	myself->m_ops.create_export = vfs_create_export;
 	myself->m_ops.init_config = init_config;
-	myself->m_ops.support_ex = vfs_support_ex;
 }
 
 MODULE_FINI void vfs_unload(void)

@@ -227,17 +227,6 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	return fsalstat(ERR_FSAL_INVAL, 0);
 }
 
-/**
- * @brief Indicate support for extended operations.
- *
- * @retval true if extended operations are supported.
- */
-
-bool gpfs_support_ex(struct fsal_obj_handle *obj)
-{
-	return true;
-}
-
 /** @fn MODULE_INIT void gpfs_init(void)
  *  @brief  Module initialization.
  *
@@ -258,7 +247,6 @@ MODULE_INIT void gpfs_init(void)
 	myself->m_ops.fsal_pnfs_ds_ops = pnfs_ds_ops_init;
 	myself->m_ops.create_export = gpfs_create_export;
 	myself->m_ops.init_config = init_config;
-	myself->m_ops.support_ex = gpfs_support_ex;
 	myself->m_ops.getdeviceinfo = getdeviceinfo;
 	myself->m_ops.fs_da_addr_size = fs_da_addr_size;
 }
