@@ -841,25 +841,6 @@ struct state_lock_entry_t {
 };
 
 /**
- * @brief The ref counted share reservation state.
- *
- * Each field represents the count of instances of that flag being present
- * in a v3 or v4 share reservation.
- *
- * There is a separate count of v4 deny write flags so that they can be
- * enforced against v3 writes (v3 deny writes can not be enforced against
- * v3 writes because there is no connection between the share reservation
- * and the write operation). v3 reads will always be allowed.
- */
-typedef struct sal_share__ {
-	unsigned int share_access_read;
-	unsigned int share_access_write;
-	unsigned int share_deny_read;
-	unsigned int share_deny_write;
-	unsigned int share_deny_write_v4; /**< Count of v4 share deny write */
-} sal_share_t;
-
-/**
  * @brief Stats for file-specific and client-file delegation heuristics
  */
 
@@ -892,9 +873,8 @@ struct state_file {
 	struct glist_head lock_list;
 	/** Pointers for NLM share list. Protected by state_lock */
 	struct glist_head nlm_share_list;
-	/** Share reservation state for this file. Protected by state_lock */
-	sal_share_t share_state;
-	bool write_delegated; /* true iff write delegated */
+	/** true iff write delegated */
+	bool write_delegated;
 	/** Delegation statistics. Protected by state_lock */
 	struct file_deleg_stats fdeleg_stats;
 	uint32_t anon_ops;   /* number of anonymous operations

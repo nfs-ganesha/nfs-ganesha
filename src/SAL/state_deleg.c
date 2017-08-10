@@ -70,6 +70,10 @@
 bool state_open_deleg_conflict(struct state_hdl *ostate,
 			       const state_t *open_state)
 {
+#if DO_DELEGATION
+/** @todo The counters this checks have been moved into the FSAL, so
+ *        this function can't actually check anything.
+ */
 	const struct state_share *share = &open_state->state_data.share;
 
 	assert(open_state->state_type == STATE_TYPE_SHARE);
@@ -104,7 +108,7 @@ bool state_open_deleg_conflict(struct state_hdl *ostate,
 			return false;
 		break;
 	}
-
+#endif
 	return true;
 }
 
