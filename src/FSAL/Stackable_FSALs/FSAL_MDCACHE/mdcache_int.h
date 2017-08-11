@@ -948,11 +948,6 @@ fsal_status_t mdcache_io_advise(struct fsal_obj_handle *obj_hdl,
 				struct io_hints *hints);
 fsal_status_t mdcache_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			    off_t offset, size_t len);
-fsal_status_t mdcache_lock_op(struct fsal_obj_handle *obj_hdl,
-			     void *p_owner,
-			     fsal_lock_op_t lock_op,
-			     fsal_lock_param_t *request_lock,
-			     fsal_lock_param_t *conflicting_lock);
 fsal_status_t mdcache_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			      fsal_share_param_t param);
 fsal_status_t mdcache_close(struct fsal_obj_handle *obj_hdl);

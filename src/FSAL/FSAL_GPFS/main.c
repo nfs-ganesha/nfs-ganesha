@@ -60,7 +60,6 @@ static struct fsal_staticfsinfo_t default_gpfs_info = {
 	.link_support = true,
 	.symlink_support = true,
 	.lock_support = true,
-	.lock_support_owner = true,
 	.lock_support_async_block = true,
 	.named_attr = true,
 	.unique_handles = true,

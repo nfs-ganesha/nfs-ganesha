@@ -623,7 +623,6 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_link_support,
 	fso_symlink_support,
 	fso_lock_support,
-	fso_lock_support_owner,
 	fso_lock_support_async_block,
 	fso_named_attr,
 	fso_unique_handles,
@@ -659,7 +658,6 @@ typedef struct fsal_staticfsinfo_t {
 	bool link_support;	/*< FS supports hardlinks? */
 	bool symlink_support;	/*< FS supports symlinks? */
 	bool lock_support;	/*< FS supports file locking? */
-	bool lock_support_owner;	/*< FS supports lock owners? */
 	bool lock_support_async_block;	/*< FS supports blocking locks? */
 	bool named_attr;	/*< FS supports named attributes. */
 	bool unique_handles;	/*< Handles are unique and persistent. */

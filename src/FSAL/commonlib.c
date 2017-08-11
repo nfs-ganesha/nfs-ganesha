@@ -418,8 +418,6 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info)
 	LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
 		 info->symlink_support);
 	LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ", info->lock_support);
-	LogDebug(COMPONENT_FSAL, "  lock_support_owner  = %d  ",
-		 info->lock_support_owner);
 	LogDebug(COMPONENT_FSAL, "  lock_support_async_block  = %d  ",
 		 info->lock_support_async_block);
 	LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ", info->named_attr);

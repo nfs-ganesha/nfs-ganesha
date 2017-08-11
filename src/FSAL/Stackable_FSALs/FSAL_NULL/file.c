@@ -113,39 +113,6 @@ fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 	return status;
 }
 
-/* nullfs_lock_op
- * lock a region of the file
- * throw an error if the fd is not open.  The old fsal didn't
- * check this.
- */
-
-fsal_status_t nullfs_lock_op(struct fsal_obj_handle *obj_hdl,
-			     void *p_owner,
-			     fsal_lock_op_t lock_op,
-			     fsal_lock_param_t *request_lock,
-			     fsal_lock_param_t *conflicting_lock)
-{
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
-
-	/* calling subfsal method */
-	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops.lock_op(handle->sub_handle,
-						    p_owner,
-						    lock_op,
-						    request_lock,
-						    conflicting_lock);
-	op_ctx->fsal_export = &export->export;
-
-	return status;
-}
-
 /* nullfs_close
  * Close the file if it is still open.
  * Yes, we ignor lock status.  Closing a file in POSIX

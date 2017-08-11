@@ -73,7 +73,6 @@ static fsal_staticfsinfo_t default_ceph_info = {
 	.case_preserving = true,
 #ifdef USE_FSAL_CEPH_SETLK
 	.lock_support = true,
-	.lock_support_owner = true,
 	.lock_support_async_block = false,
 #endif
 	.unique_handles = true,

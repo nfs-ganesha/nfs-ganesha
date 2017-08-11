@@ -64,7 +64,6 @@ static struct fsal_staticfsinfo_t default_mem_info = {
 	.link_support = true,
 	.symlink_support = true,
 	.lock_support = true,
-	.lock_support_owner = true,
 	.lock_support_async_block = false,
 	.named_attr = false,
 	.unique_handles = true,

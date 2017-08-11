@@ -90,11 +90,6 @@ fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
 fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			    off_t offset, size_t len);
-fsal_status_t nullfs_lock_op(struct fsal_obj_handle *obj_hdl,
-			     void *p_owner,
-			     fsal_lock_op_t lock_op,
-			     fsal_lock_param_t *request_lock,
-			     fsal_lock_param_t *conflicting_lock);
 fsal_status_t nullfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			      fsal_share_param_t request_share);
 fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl);

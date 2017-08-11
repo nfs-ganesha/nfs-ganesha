@@ -63,7 +63,6 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.link_support = false,
 	.symlink_support = false,
 	.lock_support = false,
-	.lock_support_owner = false,
 	.lock_support_async_block = false,
 	.named_attr = false,
 	.unique_handles = true,

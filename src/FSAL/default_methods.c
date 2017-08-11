@@ -1025,21 +1025,6 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-/* lock_op
- * default case not supported
- */
-
-static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
-			     void *p_owner,
-			     fsal_lock_op_t lock_op,
-			     fsal_lock_param_t *request_lock,
-			     fsal_lock_param_t *conflicting_lock)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
 /* share_op
  * default case not supported
  */
@@ -1522,7 +1507,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.seek = file_seek,
 	.io_advise = file_io_advise,
 	.commit = commit,
-	.lock_op = lock_op,
 	.share_op = share_op,
 	.close = file_close,
 	.list_ext_attrs = list_ext_attrs,

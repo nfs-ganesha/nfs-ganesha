@@ -228,36 +228,6 @@ fsal_status_t mdcache_commit(struct fsal_obj_handle *obj_hdl, off_t offset,
 }
 
 /**
- * @brief Lock/unlock a range in a file
- *
- * Delegate to sub-FSAL
- *
- * @param[in] obj_hdl	File to lock
- * @param[in] p_owner	Private data for lock
- * @param[in] lock_op	Lock operation
- * @param[in] req_lock	Parameters for requested lock
- * @param[in] conflicting_lock	Description of existing conflicting lock
- * @return FSAL status
- */
-fsal_status_t mdcache_lock_op(struct fsal_obj_handle *obj_hdl,
-			      void *p_owner, fsal_lock_op_t lock_op,
-			      fsal_lock_param_t *req_lock,
-			      fsal_lock_param_t *conflicting_lock)
-{
-	mdcache_entry_t *entry =
-		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-	fsal_status_t status;
-
-	subcall(
-		status = entry->sub_handle->obj_ops.lock_op(
-			entry->sub_handle, p_owner, lock_op, req_lock,
-			conflicting_lock)
-	       );
-
-	return status;
-}
-
-/**
  * @brief Handle a share request
  *
  * Delegate to sub-FSAL

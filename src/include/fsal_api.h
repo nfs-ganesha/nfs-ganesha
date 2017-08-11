@@ -1831,26 +1831,6 @@ struct fsal_obj_ops {
 				 off_t offset, size_t len);
 
 /**
- * @brief Perform a lock operation
- *
- * This function performs a lock operation (lock, unlock, test) on a
- * file.
- *
- * @param[in]  obj_hdl          File on which to operate
- * @param[in]  owner            Lock owner (Not yet implemented)
- * @param[in]  lock_op          Operation to perform
- * @param[in]  request_lock     Lock to take/release/test
- * @param[out] conflicting_lock Conflicting lock
- *
- * @return FSAL status.
- */
-	 fsal_status_t (*lock_op)(struct fsal_obj_handle *obj_hdl,
-				  void *owner,
-				  fsal_lock_op_t lock_op,
-				  fsal_lock_param_t *request_lock,
-				  fsal_lock_param_t *conflicting_lock);
-
-/**
  * @brief Handle share reservations
  *
  * This function handles acquiring and releasing Microsoft share
