@@ -1754,10 +1754,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->reopen = mdcache_reopen;
 	ops->fs_locations = mdcache_fs_locations;
 	ops->status = mdcache_status;
-	ops->read = mdcache_read;
-	ops->read_plus = mdcache_read_plus;
-	ops->write = mdcache_write;
-	ops->write_plus = mdcache_write_plus;
 	ops->seek = mdcache_seek;
 	ops->io_advise = mdcache_io_advise;
 	ops->commit = mdcache_commit;

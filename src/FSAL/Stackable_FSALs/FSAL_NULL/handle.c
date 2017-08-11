@@ -708,8 +708,6 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->unlink = file_unlink;
 	ops->open = nullfs_open;
 	ops->status = nullfs_status;
-	ops->read = nullfs_read;
-	ops->write = nullfs_write;
 	ops->commit = nullfs_commit;
 	ops->lock_op = nullfs_lock_op;
 	ops->close = nullfs_close;

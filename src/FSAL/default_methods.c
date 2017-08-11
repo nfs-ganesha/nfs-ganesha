@@ -1015,62 +1015,6 @@ static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
 	return FSAL_O_CLOSED;
 }
 
-/* file_read
- * default case not supported
- */
-
-static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
-			       uint64_t seek_descriptor, size_t buffer_size,
-			       void *buffer, size_t *read_amount,
-			       bool *end_of_file)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
-/* file_read_plus
- * default case not supported
- */
-
-static fsal_status_t file_read_plus(struct fsal_obj_handle *obj_hdl,
-			       uint64_t seek_descriptor, size_t buffer_size,
-			       void *buffer, size_t *read_amount,
-			       bool *end_of_file, struct io_info *info)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
-/* file_write
- * default case not supported
- */
-
-static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
-				uint64_t seek_descriptor, size_t buffer_size,
-				void *buffer, size_t *write_amount,
-				bool *fsal_stable)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
-/* file_write_plus
- * default case not supported
- */
-
-static fsal_status_t file_write_plus(struct fsal_obj_handle *obj_hdl,
-				uint64_t seek_descriptor, size_t buffer_size,
-				void *buffer, size_t *write_amount,
-				bool *fsal_stable, struct io_info *info)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
 /* seek
  * default case not supported
  */
@@ -1603,10 +1547,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.reopen = file_reopen,
 	.fs_locations = fs_locations,
 	.status = file_status,
-	.read = file_read,
-	.read_plus = file_read_plus,
-	.write = file_write,
-	.write_plus = file_write_plus,
 	.seek = file_seek,
 	.io_advise = file_io_advise,
 	.commit = commit,

@@ -2192,112 +2192,6 @@ static fsal_openflags_t pxy_status(struct fsal_obj_handle *obj_hdl)
 	return ph->openflags;
 }
 
-static fsal_status_t pxy_read(struct fsal_obj_handle *obj_hdl,
-			      uint64_t offset, size_t buffer_size, void *buffer,
-			      size_t *read_amount, bool *end_of_file)
-{
-	int mr;
-	int rc;
-	int opcnt = 0;
-	struct pxy_obj_handle *ph;
-	sessionid4 sid;
-#define FSAL_READ_NB_OP_ALLOC 3 /* SEQUENCE PUTFH READ */
-	nfs_argop4 argoparray[FSAL_READ_NB_OP_ALLOC];
-	nfs_resop4 resoparray[FSAL_READ_NB_OP_ALLOC];
-	READ4resok *rok;
-
-	if (!buffer_size) {
-		*read_amount = 0;
-		*end_of_file = false;
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
-#if 0
-	if ((ph->openflags & (FSAL_O_RDONLY | FSAL_O_RDWR)) == 0)
-		return fsalstat(ERR_FSAL_FILE_OPEN, EBADF);
-#endif
-
-	mr = op_ctx->fsal_export->exp_ops.fs_maxread(op_ctx->fsal_export);
-	if (buffer_size > mr)
-		buffer_size = mr;
-
-	/* SEQUENCE */
-	pxy_get_client_sessionid(sid);
-	COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, argoparray, sid, NB_RPC_SLOT);
-	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
-	rok = &resoparray[opcnt].nfs_resop4_u.opread.READ4res_u.resok4;
-	rok->data.data_val = buffer;
-	rok->data.data_len = buffer_size;
-	COMPOUNDV4_ARG_ADD_OP_READ(opcnt, argoparray, offset, buffer_size);
-
-	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
-			    opcnt, argoparray, resoparray);
-	if (rc != NFS4_OK)
-		return nfsstat4_to_fsal(rc);
-
-	*end_of_file = rok->eof;
-	*read_amount = rok->data.data_len;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-static fsal_status_t pxy_write(struct fsal_obj_handle *obj_hdl,
-			       uint64_t offset, size_t size, void *buffer,
-			       size_t *write_amount, bool *fsal_stable)
-{
-	int mw;
-	int rc;
-	int opcnt = 0;
-	sessionid4 sid;
-#define FSAL_WRITE_NB_OP_ALLOC 3 /* SEQUENCE PUTFH WRITE */
-	nfs_argop4 argoparray[FSAL_WRITE_NB_OP_ALLOC];
-	nfs_resop4 resoparray[FSAL_WRITE_NB_OP_ALLOC];
-	WRITE4resok *wok;
-	struct pxy_obj_handle *ph;
-
-	if (!size) {
-		*write_amount = 0;
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
-#if 0
-	if ((ph->openflags & (FSAL_O_WRONLY | FSAL_O_RDWR | FSAL_O_APPEND)) ==
-	    0) {
-		return fsalstat(ERR_FSAL_FILE_OPEN, EBADF);
-	}
-#endif
-
-	mw = op_ctx->fsal_export->exp_ops.fs_maxwrite(op_ctx->fsal_export);
-	if (size > mw)
-		size = mw;
-
-	/* SEQUENCE */
-	pxy_get_client_sessionid(sid);
-	COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, argoparray, sid, NB_RPC_SLOT);
-	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
-	wok = &resoparray[opcnt].nfs_resop4_u.opwrite.WRITE4res_u.resok4;
-	if (*fsal_stable)
-		COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, offset, buffer,
-					    size, DATA_SYNC4);
-	else
-		COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, offset, buffer,
-					    size, UNSTABLE4);
-
-	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
-			    opcnt, argoparray, resoparray);
-	if (rc != NFS4_OK)
-		return nfsstat4_to_fsal(rc);
-
-	*write_amount = wok->count;
-	if (wok->committed == UNSTABLE4)
-		*fsal_stable = false;
-	else
-		*fsal_stable = true;
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
 /* We send all out writes as DATA_SYNC, commit becomes a NO-OP */
 static fsal_status_t pxy_commit(struct fsal_obj_handle *obj_hdl,
 				off_t offset,
@@ -2943,8 +2837,6 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->unlink = pxy_unlink;
 	ops->open = pxy_open;
 	ops->status = pxy_status;
-	ops->read = pxy_read;
-	ops->write = pxy_write;
 	ops->commit = pxy_commit;
 	ops->close = pxy_close;
 	ops->handle_is = pxy_handle_is;

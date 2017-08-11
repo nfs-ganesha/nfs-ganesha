@@ -942,22 +942,6 @@ fsal_status_t mdcache_open(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mdcache_reopen(struct fsal_obj_handle *obj_hdl,
 			     fsal_openflags_t openflags);
 fsal_openflags_t mdcache_status(struct fsal_obj_handle *obj_hdl);
-fsal_status_t mdcache_read(struct fsal_obj_handle *obj_hdl,
-			  uint64_t offset,
-			  size_t buffer_size, void *buffer,
-			  size_t *read_amount, bool *eof);
-fsal_status_t mdcache_read_plus(struct fsal_obj_handle *obj_hdl,
-				uint64_t offset, size_t buf_size,
-				void *buffer, size_t *read_amount,
-				bool *eof, struct io_info *info);
-fsal_status_t mdcache_write(struct fsal_obj_handle *obj_hdl,
-			   uint64_t offset,
-			   size_t buffer_size, void *buffer,
-			   size_t *write_amount, bool *fsal_stable);
-fsal_status_t mdcache_write_plus(struct fsal_obj_handle *obj_hdl,
-				 uint64_t offset, size_t buf_size,
-				 void *buffer, size_t *write_amount,
-				 bool *fsal_stable, struct io_info *info);
 fsal_status_t mdcache_seek(struct fsal_obj_handle *obj_hdl,
 			   struct io_info *info);
 fsal_status_t mdcache_io_advise(struct fsal_obj_handle *obj_hdl,

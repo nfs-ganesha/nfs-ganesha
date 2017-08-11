@@ -87,66 +87,6 @@ fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl)
 	return status;
 }
 
-/* nullfs_read
- * concurrency (locks) is managed in cache_inode_*
- */
-
-fsal_status_t nullfs_read(struct fsal_obj_handle *obj_hdl,
-			  uint64_t offset,
-			  size_t buffer_size, void *buffer,
-			  size_t *read_amount,
-			  bool *end_of_file)
-{
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
-
-	/* calling subfsal method */
-	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops.read(handle->sub_handle, offset,
-						 buffer_size, buffer,
-						 read_amount, end_of_file);
-	op_ctx->fsal_export = &export->export;
-
-	return status;
-}
-
-/* nullfs_write
- * concurrency (locks) is managed in cache_inode_*
- */
-
-fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
-			   uint64_t offset,
-			   size_t buffer_size, void *buffer,
-			   size_t *write_amount, bool *fsal_stable)
-{
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
-
-	/* calling subfsal method */
-	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops.write(handle->sub_handle,
-						  offset,
-						  buffer_size,
-						  buffer,
-						  write_amount,
-						  fsal_stable);
-	op_ctx->fsal_export = &export->export;
-
-	return status;
-}
-
 /* nullfs_commit
  * Commit a file range to storage.
  * for right now, fsync will have to do.

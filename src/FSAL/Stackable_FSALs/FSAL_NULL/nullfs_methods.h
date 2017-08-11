@@ -88,14 +88,6 @@ static inline bool nullfs_unopenable_type(object_file_type_t type)
 fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
 			  fsal_openflags_t openflags);
 fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl);
-fsal_status_t nullfs_read(struct fsal_obj_handle *obj_hdl,
-			  uint64_t offset,
-			  size_t buffer_size, void *buffer,
-			  size_t *read_amount, bool *end_of_file);
-fsal_status_t nullfs_write(struct fsal_obj_handle *obj_hdl,
-			   uint64_t offset,
-			   size_t buffer_size, void *buffer,
-			   size_t *write_amount, bool *fsal_stable);
 fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			    off_t offset, size_t len);
 fsal_status_t nullfs_lock_op(struct fsal_obj_handle *obj_hdl,
