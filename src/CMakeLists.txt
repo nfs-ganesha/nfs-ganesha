@@ -912,7 +912,7 @@ set(SYSTEM_LIBRARIES
 
 # Config file; make sure it doesn't clobber an existing one
 include(${CMAKE_SOURCE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
-InstallPackageConfigFile(${CMAKE_SOURCE_DIR}/config_samples/vfs.conf ${SYSCONFDIR}/ganesha ganesha.conf)
+InstallPackageConfigFile(${CMAKE_SOURCE_DIR}/config_samples/ganesha.conf.example ${SYSCONFDIR}/ganesha ganesha.conf)
 # Sample config files
 if( ${DISTRO} MATCHES "SLES" )
   install(DIRECTORY config_samples DESTINATION share/doc/packages/ganesha)
