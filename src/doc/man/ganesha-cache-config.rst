@@ -45,7 +45,7 @@ Detached_Mult(uint32, range 1 to UINT32_MAX, default 1)
     chunk size.
 
 Entries_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
-    High water mark for cache entries.
+    The point at which object cache entries will start being reused.
 
 LRU_Run_Interval(uint32, range 1 to 24 * 3600, default 90)
     Base interval in seconds between runs of the LRU cleaner thread.
@@ -63,7 +63,7 @@ FD_HWMark_Percent(uint32, range 0 to 100, default 90)
 
 FD_LWMark_Percent(uint32, range 0 to 100, default 50)
     The percentage of the system-imposed maximum of file descriptors below which
-    Ganesha will not reap file descriptonot reap file descriptors.
+    Ganesha will not reap file descriptors.
 
 Reaper_Work(uint32, range 1 to 2000, default 0)
     Roughly, the amount of work to do on each pass through the thread under
