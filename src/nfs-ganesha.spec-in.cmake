@@ -420,14 +420,6 @@ install -m 755 scripts/init.d/nfs-ganesha.el6		%{buildroot}%{_sysconfdir}/init.d
 install -m 644 scripts/init.d/sysconfig/ganesha		%{buildroot}%{_sysconfdir}/sysconfig/ganesha
 %endif
 
-%if %{with man_page}
-%{_mandir}/*/ganesha-config.8.gz
-%{_mandir}/*/ganesha-core-config.8.gz
-%{_mandir}/*/ganesha-export-config.8.gz
-%{_mandir}/*/ganesha-cache-config.8.gz
-%{_mandir}/*/ganesha-log-config.8.gz
-%endif
-
 %if %{with pt}
 install -m 644 config_samples/pt.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
@@ -535,6 +527,14 @@ exit 0
 %endif
 %else
 %{_sysconfdir}/init.d/nfs-ganesha
+%endif
+
+%if %{with man_page}
+%{_mandir}/*/ganesha-config.8.gz
+%{_mandir}/*/ganesha-core-config.8.gz
+%{_mandir}/*/ganesha-export-config.8.gz
+%{_mandir}/*/ganesha-cache-config.8.gz
+%{_mandir}/*/ganesha-log-config.8.gz
 %endif
 
 %files mount-9P

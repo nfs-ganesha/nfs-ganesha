@@ -96,7 +96,10 @@ Decoder_Fridge_Block_Timeout(int64, range 0 to 7200, default 600)
 Blocked_Lock_Poller_Interval(int64, range 0 to 180, default 10)
     Polling interval for blocked lock polling thread
 
-**NFS_Protocols(list, valid values [3, 4], default 3,4)**
+Protocols(enum list, values [3, 4, NFS3, NFS4, V3, V4, NFSv3, NFSv4, 9P], default [3, 4, 9P])
+    The protocols that Ganesha will listen for.  This is a hard limit, as this
+    list determines which sockets are opened.  This list can be restricted per
+    export, but cannot be expanded.
 
 NSM_Use_Caller_Name(bool, default false)
     Whether to use the supplied name rather than the IP address in NSM
