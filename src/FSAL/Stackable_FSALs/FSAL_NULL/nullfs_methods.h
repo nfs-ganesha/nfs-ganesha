@@ -90,8 +90,6 @@ fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
 fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 			    off_t offset, size_t len);
-fsal_status_t nullfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
-			      fsal_share_param_t request_share);
 fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl);
 
 /* Multi-FD */

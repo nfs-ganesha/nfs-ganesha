@@ -17,7 +17,6 @@ SET(fsalgpfs_LIB_SRCS
   fsal_fileop.c
   fsal_attrs.c
   fsal_lock.c
-  fsal_share.c
   fsal_lookup.c
   fsal_convert.c
   fsal_internal.c

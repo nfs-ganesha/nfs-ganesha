@@ -1831,21 +1831,6 @@ struct fsal_obj_ops {
 				 off_t offset, size_t len);
 
 /**
- * @brief Handle share reservations
- *
- * This function handles acquiring and releasing Microsoft share
- * reservations.
- *
- * @param[in] obj_hdl       Handle on which to operate
- * @param[in] owner         Share owner
- * @param[in] request_share Share reservation requested
- *
- * @return FSAL status.
- */
-	 fsal_status_t (*share_op)(struct fsal_obj_handle *obj_hdl,
-				   void *owner,
-				   fsal_share_param_t request_share);
-/**
  * @brief Close a file
  *
  * This function closes a file.  It is protected by the Cache inode

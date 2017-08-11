@@ -296,11 +296,6 @@ fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
 			       fsal_lock_param_t *confl_lock,
 			       struct set_get_lock_arg *sg_lock_arg);
 
-fsal_status_t GPFSFSAL_share_op(int mntfd,
-				int fd,
-				void *p_owner,
-				fsal_share_param_t request_share);
-
 fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,
 			      const char *p_old_name,
 			      struct fsal_obj_handle *new_hdl,

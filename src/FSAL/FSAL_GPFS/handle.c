@@ -902,24 +902,6 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	gsh_free(myself);
 }
 
-/* gpfs_share_op
- */
-static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
-			      void *p_owner,
-			      fsal_share_param_t request_share)
-{
-	fsal_status_t status;
-	int fd, mntfd;
-	struct gpfs_fsal_obj_handle *myself;
-
-	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	mntfd = fd = myself->u.file.fd.fd;
-
-	status = GPFSFSAL_share_op(mntfd, fd, p_owner, request_share);
-
-	return status;
-}
-
 /* gpfs_fs_locations
  */
 static fsal_status_t gpfs_fs_locations(struct fsal_obj_handle *obj_hdl,
@@ -960,7 +942,6 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->status = gpfs_status;
 	ops->seek = gpfs_seek;
 	ops->io_advise = gpfs_io_advise;
-	ops->share_op = share_op;
 	ops->close = gpfs_close;
 	ops->handle_to_wire = handle_to_wire;
 	ops->handle_to_key = handle_to_key;

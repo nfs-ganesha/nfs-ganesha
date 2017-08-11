@@ -435,10 +435,6 @@ void display_fsinfo(struct fsal_staticfsinfo_t *info)
 		 info->auth_exportpath_xdev);
 	LogDebug(COMPONENT_FSAL, "  xattr_access_rights = %#o ",
 		 info->xattr_access_rights);
-	LogDebug(COMPONENT_FSAL, "  share_support  = %d  ",
-		 info->share_support);
-	LogDebug(COMPONENT_FSAL, "  share_support_owner  = %d  ",
-		 info->share_support_owner);
 	LogDebug(COMPONENT_FSAL, "  delegations = %d  ",
 		 info->delegations);
 	LogDebug(COMPONENT_FSAL, "  pnfs_mds = %d  ",

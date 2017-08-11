@@ -1025,19 +1025,6 @@ static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-/* share_op
- * default case not supported
- */
-
-static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
-			      void *p_owner,
-			      fsal_share_param_t request_share)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
 /* file_close
  * default case not supported
  */
@@ -1507,7 +1494,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.seek = file_seek,
 	.io_advise = file_io_advise,
 	.commit = commit,
-	.share_op = share_op,
 	.close = file_close,
 	.list_ext_attrs = list_ext_attrs,
 	.getextattr_id_by_name = getextattr_id_by_name,

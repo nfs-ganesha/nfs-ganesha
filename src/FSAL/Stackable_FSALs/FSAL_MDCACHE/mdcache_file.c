@@ -228,31 +228,6 @@ fsal_status_t mdcache_commit(struct fsal_obj_handle *obj_hdl, off_t offset,
 }
 
 /**
- * @brief Handle a share request
- *
- * Delegate to sub-FSAL
- *
- * @param[in] obj_hdl	File to share
- * @param[in] p_owner	Private data for share
- * @param[in] param	Share request parameters
- * @return FSAL status
- */
-fsal_status_t mdcache_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
-			       fsal_share_param_t param)
-{
-	mdcache_entry_t *entry =
-		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-	fsal_status_t status;
-
-	subcall(
-		status = entry->sub_handle->obj_ops.share_op(
-			entry->sub_handle, p_owner, param)
-	       );
-
-	return status;
-}
-
-/**
  * @brief Close a file
  *
  * @param[in] obj_hdl	File to close

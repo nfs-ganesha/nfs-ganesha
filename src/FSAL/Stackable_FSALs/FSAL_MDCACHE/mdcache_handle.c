@@ -1621,7 +1621,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->seek = mdcache_seek;
 	ops->io_advise = mdcache_io_advise;
 	ops->commit = mdcache_commit;
-	ops->share_op = mdcache_share_op;
 	ops->close = mdcache_close;
 	ops->handle_is = mdcache_handle_is;
 	ops->handle_to_wire = mdcache_handle_to_wire;
