@@ -1,0 +1,86 @@
+###################################################
+#
+# Ganesha Config Example
+#
+# This is a commented example configuration file for Ganesha.  It is not
+# complete, but only has some common configuration options.  See the man pages
+# for complete documentation.
+#
+###################################################
+
+## These are core parameters that affect Ganesha as a whole.
+#NFS_CORE_PARAM {
+	## Allow NFSv3 to mount paths with the Pseudo path, the same as NFSv4,
+	## instead of using the physical paths.
+	#mount_path_pseudo = true;
+
+	## Configure the protocols that Ganesha will listen for.  This is a hard
+	## limit, as this list determines which sockets are opened.  This list
+	## can be restricted per export, but cannot be expanded.
+	#Protocols = 3,4,9P;
+#}
+
+## These are defaults for exports.  They can be overridden per-export.
+#EXPORT_DEFAULTS {
+	## Access type for clients.  Default is None, so some access must be
+	## given either here or in the export itself.
+	#Access_Type = RW;
+#}
+
+## Configure settings for the object handle cache
+#CACHEINODE {
+	## The point at which object cache entries will start being reused.
+	#Entries_HWMark = 100000;
+#}
+
+## Configure an export for some file tree
+#EXPORT
+#{
+	## Export Id (mandatory, each EXPORT must have a unique Export_Id)
+	#Export_Id = 12345;
+
+	## Exported path (mandatory)
+	#Path = /nonexistant;
+
+	## Pseudo Path (required for NFSv4 or if mount_path_pseudo = true)
+	#Pseudo = /nonexistant;
+
+	## Restrict the protocols that may use this export.  This cannot allow
+	## access that is denied in NFS_CORE_PARAM.
+	#Protocols = 3,4;
+
+	## Access type for clients.  Default is None, so some access must be
+	## given. It can be here, in the EXPORT_DEFAULTS, or in a CLIENT block
+	#Access_Type = RW;
+
+	## Whether to squash various users.
+	#Squash = root_squash;
+
+	## Allowed security types for this export
+	#Sectype = sys,krb5,krb5i,krb5p;
+
+	## Exporting FSAL
+	#FSAL {
+		#Name = VFS;
+	#}
+#}
+
+## Configure logging.  Default is to log to Syslog.  Basic logging can also be
+## configured from the command line
+#LOG {
+	## Default log level for all components
+	#Default_Log_Level = WARN;
+
+	## Configure per-component log levels.
+	#Components {
+		#FSAL = INFO;
+		#NFS4 = EVENT;
+	#}
+
+	## Where to log
+	#Facility {
+		#name = FILE;
+		#destination = "/var/log/ganesha.log";
+		#enable = active;
+	#}
+#}
