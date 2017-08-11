@@ -1285,7 +1285,7 @@ fsal_status_t rgw_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	/* perform a provider open iff not already open */
-	if (!fsal_is_open(obj_hdl)) {
+	if (true) {
 
 		/* XXX also, how do we know the ULP tracks opens?
 		 * 9P does, V3 does not */
