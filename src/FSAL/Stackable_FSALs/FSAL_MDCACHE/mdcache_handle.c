@@ -1239,64 +1239,6 @@ unlock_no_attrs:
 }
 
 /**
- * @brief Set attributes on an object
- *
- * @param[in] obj_hdl	Object to set attributes on
- * @param[in] attrs	Attributes to set
- * @return FSAL status
- */
-static fsal_status_t mdcache_setattrs(struct fsal_obj_handle *obj_hdl,
-				      struct attrlist *attrs)
-{
-	mdcache_entry_t *entry =
-		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-	fsal_status_t status;
-	uint64_t change;
-
-	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-
-	change = entry->attrs.change;
-
-	subcall(
-		status = entry->sub_handle->obj_ops.setattrs(
-			entry->sub_handle, attrs)
-	       );
-
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_CACHE_INODE,
-			 "sub_handle setattrs returned %s",
-			 fsal_err_txt(status));
-		goto unlock;
-	}
-
-	status = mdcache_refresh_attrs(
-			entry, (attrs->valid_mask & ATTR_ACL) != 0, false);
-
-	if (!FSAL_IS_ERROR(status) && change == entry->attrs.change) {
-		LogDebug(COMPONENT_CACHE_INODE,
-			 "setattrs did not change change attribute before %lld after = %lld",
-			 (long long int) change,
-			 (long long int) entry->attrs.change);
-		entry->attrs.change = change + 1;
-	}
-
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_CACHE_INODE,
-			 "sub_handle getattrs returned %s",
-			 fsal_err_txt(status));
-	}
-
-unlock:
-
-	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
-	if (FSAL_IS_ERROR(status) && (status.major == ERR_FSAL_STALE))
-		mdcache_kill_entry(entry);
-
-	return status;
-}
-
-/**
  * @brief Set attributes on an object (new style)
  *
  * @param[in] obj_hdl	Object owning state
@@ -1746,7 +1688,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->readlink = mdcache_readlink;
 	ops->test_access = mdcache_test_access;
 	ops->getattrs = mdcache_getattrs;
-	ops->setattrs = mdcache_setattrs;
 	ops->link = mdcache_link;
 	ops->rename = mdcache_rename;
 	ops->unlink = mdcache_unlink;

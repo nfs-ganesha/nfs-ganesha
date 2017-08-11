@@ -1720,28 +1720,6 @@ struct fsal_obj_ops {
 				   struct attrlist *attrs_out);
 
 /**
- * @brief Set attributes on an object
- *
- * This function sets attributes on an object.  Which attributes are
- * set is determined by @c attrib_set->mask.
- *
- * The caller is expected to invoke fsal_release_attrs to release any
- * resources held by the set attributes. The FSAL layer MAY have added an
- * inherited ACL.
- *
- * Due to differences between protocols (9P, NFSv3 and NFSv4) and backends,
- * FSALs may ignore request for modifying the ctime attribute without returning
- * EINVAL or any error status.
- *
- * @param[in] obj_hdl    The object to modify
- * @param[in] attrib_set Attributes to set
- *
- * @return FSAL status.
- */
-	 fsal_status_t (*setattrs)(struct fsal_obj_handle *obj_hdl,
-				   struct attrlist *attrib_set);
-
-/**
  * @brief Create a new link
  *
  * This function creates a new name for an existing object.

@@ -1981,83 +1981,6 @@ static fsal_status_t pxy_getattrs(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/*
- * Couple of things to note:
- * 1. We assume that checks for things like cansettime are done
- *    by the caller.
- * 2. attrs can be modified in this function but caller cannot
- *    assume that the attributes are up-to-date
- */
-static fsal_status_t pxy_setattrs(struct fsal_obj_handle *obj_hdl,
-				  struct attrlist *attrs)
-{
-	int rc;
-	fattr4 input_attr;
-	uint32_t opcnt = 0;
-	struct pxy_obj_handle *ph;
-#if GETATTR_AFTER
-	char fattr_blob[FATTR_BLOB_SZ];
-	GETATTR4resok *atok;
-	struct attrlist attrs_after;
-#endif
-	sessionid4 sid;
-#define FSAL_SETATTR_NB_OP_ALLOC 4 /* SEQUENCE PUTFH SETATTR GETATTR */
-	nfs_argop4 argoparray[FSAL_SETATTR_NB_OP_ALLOC];
-	nfs_resop4 resoparray[FSAL_SETATTR_NB_OP_ALLOC];
-
-	/*
-	* No way to update CTIME using a NFSv4 SETATTR.
-	* Server will return NFS4ERR_INVAL (22).
-	* time_metadata is a readonly attribute in NFSv4 and NFSv4.1.
-	* (section 5.7 in RFC7530 or RFC5651)
-	* Nevermind : this update is useless, we prevent it.
-	*/
-	FSAL_UNSET_MASK(attrs->valid_mask, ATTR_CTIME);
-
-	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MODE))
-		attrs->mode &= ~op_ctx->fsal_export->exp_ops.
-				fs_umask(op_ctx->fsal_export);
-
-	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
-
-	if (pxy_fsalattr_to_fattr4(attrs, &input_attr) == -1)
-		return fsalstat(ERR_FSAL_INVAL, EINVAL);
-
-	/* SEQUENCE */
-	pxy_get_client_sessionid(sid);
-	COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, argoparray, sid, NB_RPC_SLOT);
-	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
-
-	resoparray[opcnt].nfs_resop4_u.opsetattr.attrsset = empty_bitmap;
-	COMPOUNDV4_ARG_ADD_OP_SETATTR(opcnt, argoparray, input_attr);
-
-#if GETATTR_AFTER
-	atok =
-	    pxy_fill_getattr_reply(resoparray + opcnt, fattr_blob,
-				   sizeof(fattr_blob));
-	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
-#endif
-
-	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
-			    opcnt, argoparray, resoparray);
-	nfs4_Fattr_Free(&input_attr);
-	if (rc != NFS4_OK)
-		return nfsstat4_to_fsal(rc);
-
-#if GETATTR_AFTER
-	rc = nfs4_Fattr_To_FSAL_attr(&attrs_after, &atok->obj_attributes, NULL);
-	if (rc != NFS4_OK) {
-		LogWarn(COMPONENT_FSAL,
-			"Attribute conversion fails with %d, ignoring attibutes after making changes",
-			rc);
-	} else {
-		ph->attributes = attrs_after;
-	}
-#endif
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
 static bool pxy_handle_is(struct fsal_obj_handle *obj_hdl,
 			  object_file_type_t type)
 {
@@ -2831,7 +2754,6 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->symlink = pxy_symlink;
 	ops->readlink = pxy_readlink;
 	ops->getattrs = pxy_getattrs;
-	ops->setattrs = pxy_setattrs;
 	ops->link = pxy_link;
 	ops->rename = pxy_rename;
 	ops->unlink = pxy_unlink;

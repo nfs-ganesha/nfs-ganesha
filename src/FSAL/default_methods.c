@@ -919,18 +919,6 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-/* setattrs
- * default case not supported
- */
-
-static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
 /* linkfile
  * default case not supported
  */
@@ -1539,7 +1527,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.readlink = readsymlink,
 	.test_access = fsal_test_access,	/* default is use common test */
 	.getattrs = getattrs,
-	.setattrs = setattrs,
 	.link = linkfile,
 	.rename = renamefile,
 	.unlink = file_unlink,

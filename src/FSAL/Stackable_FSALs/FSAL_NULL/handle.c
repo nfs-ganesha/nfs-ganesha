@@ -538,31 +538,6 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-/*
- * NOTE: this is done under protection of the
- * attributes rwlock in the cache entry.
- */
-
-static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
-{
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
-
-	/* calling subfsal method */
-	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status = handle->sub_handle->obj_ops.setattrs(
-		handle->sub_handle, attrs);
-	op_ctx->fsal_export = &export->export;
-
-	return status;
-}
-
 static fsal_status_t nullfs_setattr2(struct fsal_obj_handle *obj_hdl,
 				     bool bypass,
 				     struct state_t *state,
@@ -702,7 +677,6 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->symlink = makesymlink;
 	ops->readlink = readsymlink;
 	ops->getattrs = getattrs;
-	ops->setattrs = setattrs;
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
