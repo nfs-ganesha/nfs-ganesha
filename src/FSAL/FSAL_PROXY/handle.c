@@ -2012,35 +2012,6 @@ static void pxy_hdl_release(struct fsal_obj_handle *obj_hdl)
 }
 
 /*
- * Without name the 'open' for NFSv4 makes no sense - we could
- * send a getattr to the backend server but it's not going to
- * do anything useful anyway, so just save the openflags to record
- * the fact that file has been 'opened' and be done.
- */
-static fsal_status_t pxy_open(struct fsal_obj_handle *obj_hdl,
-			      fsal_openflags_t openflags)
-{
-	struct pxy_obj_handle *ph;
-
-	if (!obj_hdl)
-		return fsalstat(ERR_FSAL_FAULT, EINVAL);
-
-	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
-	if ((ph->openflags != FSAL_O_CLOSED) && (ph->openflags != openflags))
-		return fsalstat(ERR_FSAL_FILE_OPEN, EBADF);
-	ph->openflags = openflags;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-static fsal_openflags_t pxy_status(struct fsal_obj_handle *obj_hdl)
-{
-	struct pxy_obj_handle *ph;
-
-	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
-	return ph->openflags;
-}
-
-/*
  * In this first FSAL_PROXY support_ex version without state
  * nothing to do on close.
  */
@@ -2648,8 +2619,6 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = pxy_link;
 	ops->rename = pxy_rename;
 	ops->unlink = pxy_unlink;
-	ops->open = pxy_open;
-	ops->status = pxy_status;
 	ops->close = pxy_close;
 	ops->handle_is = pxy_handle_is;
 	ops->handle_to_wire = pxy_handle_to_wire;

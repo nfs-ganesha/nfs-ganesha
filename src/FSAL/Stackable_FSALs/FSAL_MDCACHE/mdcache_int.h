@@ -936,12 +936,7 @@ static inline bool mdcache_unopenable_type(object_file_type_t type)
 	}
 }
 
-	/* I/O management */
-fsal_status_t mdcache_open(struct fsal_obj_handle *obj_hdl,
-			  fsal_openflags_t openflags);
-fsal_status_t mdcache_reopen(struct fsal_obj_handle *obj_hdl,
-			     fsal_openflags_t openflags);
-fsal_openflags_t mdcache_status(struct fsal_obj_handle *obj_hdl);
+/* I/O management */
 fsal_status_t mdcache_seek(struct fsal_obj_handle *obj_hdl,
 			   struct io_info *info);
 fsal_status_t mdcache_io_advise(struct fsal_obj_handle *obj_hdl,

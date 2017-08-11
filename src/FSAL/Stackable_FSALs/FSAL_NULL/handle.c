@@ -649,8 +649,6 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
-	ops->open = nullfs_open;
-	ops->status = nullfs_status;
 	ops->close = nullfs_close;
 	ops->handle_to_wire = handle_to_wire;
 	ops->handle_to_key = handle_to_key;

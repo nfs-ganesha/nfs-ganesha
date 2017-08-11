@@ -122,22 +122,6 @@ fsal_status_t gpfs_merge(struct fsal_obj_handle *orig_hdl,
 	return status;
 }
 
-/**
- * @brief get GPFS status
- *
- * @param obj_hdl FSAL object handle
- * @return FSAL status
- *
- * Let the caller peek into the file's open/close state.
- */
-fsal_openflags_t gpfs_status(struct fsal_obj_handle *obj_hdl)
-{
-	struct gpfs_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-
-	return myself->u.file.fd.openflags;
-}
-
 static fsal_status_t
 open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	       fsal_openflags_t openflags, int posix_flags,

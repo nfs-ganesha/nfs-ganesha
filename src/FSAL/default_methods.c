@@ -946,30 +946,6 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-/* file_open
- * default case not supported
- */
-
-static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
-			       fsal_openflags_t openflags)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
-/* file_reopen
- * default case not supported
- */
-
-static fsal_status_t file_reopen(struct fsal_obj_handle *obj_hdl,
-				 fsal_openflags_t openflags)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
 /* fs_locations
  * default case not supported
  */
@@ -978,15 +954,6 @@ static fsal_status_t fs_locations(struct fsal_obj_handle *obj_hdl,
 				 struct fs_locations4 *fs_locs)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
-/* file_status
- * default case file always closed
- */
-
-static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
-{
-	return FSAL_O_CLOSED;
 }
 
 /* seek
@@ -1475,10 +1442,7 @@ struct fsal_obj_ops def_handle_ops = {
 	.link = linkfile,
 	.rename = renamefile,
 	.unlink = file_unlink,
-	.open = file_open,
-	.reopen = file_reopen,
 	.fs_locations = fs_locations,
-	.status = file_status,
 	.seek = file_seek,
 	.io_advise = file_io_advise,
 	.close = file_close,

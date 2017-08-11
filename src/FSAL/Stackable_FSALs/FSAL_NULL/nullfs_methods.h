@@ -84,10 +84,7 @@ static inline bool nullfs_unopenable_type(object_file_type_t type)
 	}
 }
 
-	/* I/O management */
-fsal_status_t nullfs_open(struct fsal_obj_handle *obj_hdl,
-			  fsal_openflags_t openflags);
-fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl);
+/* I/O management */
 fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl);
 
 /* Multi-FD */

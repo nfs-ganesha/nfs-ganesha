@@ -1752,47 +1752,6 @@ struct fsal_obj_ops {
  */
 
 /**
- * @brief Open a file for read or write
- *
- * This function opens a file for read or write.  The file should not
- * already be opened when this function is called.  The thread calling
- * this function will have hold the Cache inode content lock
- * exclusively and the FSAL may assume whatever private state it uses
- * to manage open/close status is protected.
- *
- * @param[in] obj_hdl   File to open
- * @param[in] openflags Mode for open
- *
- * @return FSAL status.
- */
-	 fsal_status_t (*open)(struct fsal_obj_handle *obj_hdl,
-			       fsal_openflags_t openflags);
-
-/**
- * @brief Re-open a file that may be already opened
- *
- * This function reopens the file with the given open flags. You can
- * atomically go from read only flag to readwrite or vice versa.
- * This is used to reopen a file for readwrite, if the file is already
- * opened for readonly. This will not lose any file locks that are
- * already placed. May not be supported by all FSALs.
- */
-	 fsal_status_t (*reopen)(struct fsal_obj_handle *obj_hdl,
-				 fsal_openflags_t openflags);
-
-/**
- * @brief Return open status
- *
- * This function returns open flags representing the current open
- * status.
- *
- * @param[in] obj_hdl File to interrogate
- *
- * @retval Flags representing current open status
- */
-	 fsal_openflags_t (*status)(struct fsal_obj_handle *obj_hdl);
-
-/**
  * @brief Seek to data or hole
  *
  * This function seek to data or hole in a file.

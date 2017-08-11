@@ -159,7 +159,6 @@ fsal_status_t gpfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			    bool bypass,
 			    struct state_t *state,
 			    struct attrlist *attrib_set);
-fsal_openflags_t gpfs_status(struct fsal_obj_handle *obj_hdl);
 fsal_status_t gpfs_read_plus_fd(int my_fs,
 			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,
