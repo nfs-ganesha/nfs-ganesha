@@ -1013,18 +1013,6 @@ static fsal_status_t file_io_advise(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* commit
- * default case not supported
- */
-
-static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    off_t offset, size_t len)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
 /* file_close
  * default case not supported
  */
@@ -1493,7 +1481,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.status = file_status,
 	.seek = file_seek,
 	.io_advise = file_io_advise,
-	.commit = commit,
 	.close = file_close,
 	.list_ext_attrs = list_ext_attrs,
 	.getextattr_id_by_name = getextattr_id_by_name,

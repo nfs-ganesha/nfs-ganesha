@@ -197,37 +197,6 @@ fsal_status_t mdcache_io_advise(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Commit to a file
- *
- * Delegate to sub-FSAL
- *
- * @param[in] obj_hdl	Object to commit
- * @param[in] offset	Offset into file
- * @param[in] len	Length of commit
- * @return FSAL status
- */
-fsal_status_t mdcache_commit(struct fsal_obj_handle *obj_hdl, off_t offset,
-			     size_t len)
-{
-	mdcache_entry_t *entry =
-		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-	fsal_status_t status;
-
-	subcall(
-		status = entry->sub_handle->obj_ops.commit(
-			entry->sub_handle, offset, len)
-	       );
-
-	if (status.major == ERR_FSAL_STALE)
-		mdcache_kill_entry(entry);
-	else
-		atomic_clear_uint32_t_bits(&entry->mde_flags,
-					   MDCACHE_TRUST_ATTRS);
-
-	return status;
-}
-
-/**
  * @brief Close a file
  *
  * @param[in] obj_hdl	File to close

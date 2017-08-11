@@ -1816,19 +1816,6 @@ struct fsal_obj_ops {
  */
 	 fsal_status_t (*io_advise)(struct fsal_obj_handle *obj_hdl,
 				    struct io_hints *hints);
-/**
- * @brief Commit written data
- *
- * This function flushes possibly buffered data to a file.
- *
- * @param[in] obj_hdl File to commit
- * @param[in] offset  Start of range to commit
- * @param[in] len     Length of range to commit
- *
- * @return FSAL status.
- */
-	 fsal_status_t (*commit)(struct fsal_obj_handle *obj_hdl,  /* sync */
-				 off_t offset, size_t len);
 
 /**
  * @brief Close a file

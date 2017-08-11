@@ -87,32 +87,6 @@ fsal_openflags_t nullfs_status(struct fsal_obj_handle *obj_hdl)
 	return status;
 }
 
-/* nullfs_commit
- * Commit a file range to storage.
- * for right now, fsync will have to do.
- */
-
-fsal_status_t nullfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    off_t offset, size_t len)
-{
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
-
-	/* calling subfsal method */
-	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops.commit(handle->sub_handle,
-						   offset, len);
-	op_ctx->fsal_export = &export->export;
-
-	return status;
-}
-
 /* nullfs_close
  * Close the file if it is still open.
  * Yes, we ignor lock status.  Closing a file in POSIX

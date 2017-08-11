@@ -2040,39 +2040,6 @@ static fsal_openflags_t pxy_status(struct fsal_obj_handle *obj_hdl)
 	return ph->openflags;
 }
 
-/* We send all out writes as DATA_SYNC, commit becomes a NO-OP */
-static fsal_status_t pxy_commit(struct fsal_obj_handle *obj_hdl,
-				off_t offset,
-				size_t len)
-{
-	struct pxy_obj_handle *ph;
-	int rc; /* return code of nfs call */
-	int opcnt = 0; /* nfs arg counter */
-	sessionid4 sid;
-#define FSAL_COMMIT_NB_OP 3 /* SEQUENCE PUTFH COMMIT */
-	nfs_argop4 argoparray[FSAL_COMMIT_NB_OP];
-	nfs_resop4 resoparray[FSAL_COMMIT_NB_OP];
-
-	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
-
-	/* SEQUENCE */
-	pxy_get_client_sessionid(sid);
-	COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, argoparray, sid, NB_RPC_SLOT);
-	/* prepare PUTFH */
-	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
-
-	/* prepare SETATTR */
-	COMPOUNDV4_ARG_ADD_OP_COMMIT(opcnt, argoparray, offset, len);
-
-	/* nfs call */
-	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
-			    opcnt, argoparray, resoparray);
-	if (rc != NFS4_OK)
-		return nfsstat4_to_fsal(rc);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
 /*
  * In this first FSAL_PROXY support_ex version without state
  * nothing to do on close.
@@ -2683,7 +2650,6 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->unlink = pxy_unlink;
 	ops->open = pxy_open;
 	ops->status = pxy_status;
-	ops->commit = pxy_commit;
 	ops->close = pxy_close;
 	ops->handle_is = pxy_handle_is;
 	ops->handle_to_wire = pxy_handle_to_wire;

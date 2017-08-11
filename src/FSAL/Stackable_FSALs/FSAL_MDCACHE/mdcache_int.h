@@ -946,8 +946,6 @@ fsal_status_t mdcache_seek(struct fsal_obj_handle *obj_hdl,
 			   struct io_info *info);
 fsal_status_t mdcache_io_advise(struct fsal_obj_handle *obj_hdl,
 				struct io_hints *hints);
-fsal_status_t mdcache_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    off_t offset, size_t len);
 fsal_status_t mdcache_close(struct fsal_obj_handle *obj_hdl);
 fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 			   struct state_t *state,
