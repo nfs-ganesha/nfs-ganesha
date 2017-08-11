@@ -151,6 +151,7 @@ state_status_t do_lease_op(struct fsal_obj_handle *obj,
 			  state_owner_t *owner,
 			  fsal_lock_param_t *lock)
 {
+#if DO_DELEGATION
 	fsal_status_t fsal_status;
 	state_status_t status;
 
@@ -162,7 +163,7 @@ state_status_t do_lease_op(struct fsal_obj_handle *obj,
 
 	fsal_status = obj->obj_ops.lock_op(
 				obj,
-				convert_lock_owner(op_ctx->fsal_export, owner),
+				owner,
 				lock_op,
 				lock,
 				NULL);
@@ -173,6 +174,9 @@ state_status_t do_lease_op(struct fsal_obj_handle *obj,
 		     state_err_str(status));
 
 	return status;
+#else
+	return STATE_NOT_SUPPORTED;
+#endif
 }
 
 /**
