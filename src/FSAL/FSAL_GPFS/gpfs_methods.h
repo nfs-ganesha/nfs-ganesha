@@ -113,10 +113,6 @@ struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 					  struct attrlist *attributes,
 					  const char *link_content,
 					  struct fsal_export *exp_hdl);
-fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-		     const char *name, struct attrlist *attr_in,
-		     struct fsal_obj_handle **handle,
-		     struct attrlist *attrs_out);
 fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 			 struct state_t *state,
 			 fsal_openflags_t openflags,

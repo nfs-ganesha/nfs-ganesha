@@ -152,56 +152,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	return fsalstat(fsal_error, retval);
 }
 
-/* create
- * create a regular file and set its attributes
- */
-fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-		     const char *name, struct attrlist *attr_in,
-		     struct fsal_obj_handle **handle,
-		     struct attrlist *attrs_out)
-{
-	struct gpfs_fsal_obj_handle *hdl;
-	fsal_status_t status;
-	/* Use a separate attrlist to getch the actual attributes into */
-	struct attrlist attrib;
-
-	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
-
-	*handle = NULL;		/* poison it */
-	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
-		LogCrit(COMPONENT_FSAL,
-			"Parent handle is not a directory. hdl = 0x%p",
-			dir_hdl);
-		return fsalstat(ERR_FSAL_NOTDIR, 0);
-	}
-	memset(fh, 0, sizeof(struct gpfs_file_handle));
-	fh->handle_size = GPFS_MAX_FH_SIZE;
-
-	fsal_prepare_attrs(&attrib, ATTR_GPFS_ALLOC_HANDLE);
-
-	if (attrs_out != NULL)
-		attrib.request_mask |= attrs_out->request_mask;
-
-	status =
-	    GPFSFSAL_create(dir_hdl, name, op_ctx, attr_in->mode, fh, &attrib);
-	if (FSAL_IS_ERROR(status))
-		return status;
-
-	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(fh, dir_hdl->fs, &attrib, NULL, op_ctx->fsal_export);
-
-	if (attrs_out != NULL) {
-		/* Copy the attributes to caller, passing ACL ref. */
-		fsal_copy_attrs(attrs_out, &attrib, true);
-	} else {
-		/* Done with the attrs */
-		fsal_release_attrs(&attrib);
-	}
-
-	*handle = &hdl->obj_handle;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name, struct attrlist *attr_in,
 			     struct fsal_obj_handle **handle,
@@ -998,7 +948,6 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->release = release;
 	ops->lookup = lookup;
 	ops->readdir = read_dirents;
-	ops->create = create;
 	ops->mkdir = makedir;
 	ops->mknode = makenode;
 	ops->symlink = makesymlink;

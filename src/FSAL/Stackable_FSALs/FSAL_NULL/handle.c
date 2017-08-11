@@ -154,36 +154,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 					     handle, status);
 }
 
-static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-			    const char *name, struct attrlist *attrs_in,
-			    struct fsal_obj_handle **new_obj,
-			    struct attrlist *attrs_out)
-{
-	/** Parent directory nullfs handle. */
-	struct nullfs_fsal_obj_handle *nullfs_dir =
-		container_of(dir_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-	/** Current nullfs export. */
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
-
-	/** Subfsal handle of the new file.*/
-	struct fsal_obj_handle *sub_handle;
-
-	*new_obj = NULL;
-
-	/* creating the file with a subfsal handle. */
-	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status = nullfs_dir->sub_handle->obj_ops.create(
-		nullfs_dir->sub_handle, name, attrs_in, &sub_handle, attrs_out);
-	op_ctx->fsal_export = &export->export;
-
-	/* wraping the subfsal handle in a nullfs handle. */
-	return nullfs_alloc_and_check_handle(export, sub_handle, dir_hdl->fs,
-					     new_obj, status);
-}
-
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name, struct attrlist *attrs_in,
 			     struct fsal_obj_handle **new_obj,
@@ -671,7 +641,6 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->readdir = read_dirents;
 	ops->compute_readdir_cookie = compute_readdir_cookie,
 	ops->dirent_cmp = dirent_cmp,
-	ops->create = create;
 	ops->mkdir = makedir;
 	ops->mknode = makenode;
 	ops->symlink = makesymlink;

@@ -781,20 +781,6 @@ int dirent_cmp(struct fsal_obj_handle *parent,
 	return 0;
 }
 
-/* create
- * default case not supported
- */
-
-static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-			    const char *name, struct attrlist *attrib,
-			    struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
 /* makedir
  * default case not supported
  */
@@ -1520,7 +1506,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.readdir = read_dirents,
 	.compute_readdir_cookie = compute_readdir_cookie,
 	.dirent_cmp = dirent_cmp,
-	.create = create,
 	.mkdir = makedir,
 	.mknode = makenode,
 	.symlink = makesymlink,

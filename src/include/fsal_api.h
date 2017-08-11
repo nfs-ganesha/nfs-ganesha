@@ -1476,43 +1476,6 @@ struct fsal_obj_ops {
  */
 
 /**
- * @brief Create a regular file
- *
- * This function creates a new regular file.
- *
- * This method is obsolete with support_ex.
- *
- * The caller is expected to invoke fsal_release_attrs to release any
- * resources held by the set attributes. The FSAL layer MAY have added an
- * inherited ACL.
- *
- * The caller will set the request_mask in attrs_out to indicate the attributes
- * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
- * not all the requested attributes can be provided, this method MUST return
- * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
- *
- * Since this method instantiates a new fsal_obj_handle, it will be forced
- * to fetch at least some attributes in order to even know what the object
- * type is (as well as it's fileid and fsid). For this reason, the operation
- * as a whole can be expected to fail if the attributes were not able to be
- * fetched.
- *
- * @param[in]     dir_hdl   Directory in which to create the file
- * @param[in]     name      Name of file to create
- * @param[in]     attrs_in  Attributes to set on newly created object
- * @param[out]    new_obj   Newly created object
- * @param[in,out] attrs_out Optional attributes for newly created object
- *
- * @note On success, @a new_obj has been ref'd
- *
- * @return FSAL status.
- */
-	 fsal_status_t (*create)(struct fsal_obj_handle *dir_hdl,
-				 const char *name, struct attrlist *attrs_in,
-				 struct fsal_obj_handle **new_obj,
-				 struct attrlist *attrs_out);
-
-/**
  * @brief Create a directory
  *
  * This function creates a new directory.

@@ -311,83 +311,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 }
 
 /**
- * @brief Implements GLUSTER FSAL objectoperation create
- */
-
-static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-			    const char *name, struct attrlist *attrib,
-			    struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
-{
-	int rc = 0;
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct stat sb;
-	struct glfs_object *glhandle = NULL;
-	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
-	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
-	struct glusterfs_handle *objhandle = NULL;
-	struct glusterfs_export *glfs_export =
-	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
-	struct glusterfs_handle *parenthandle =
-	    container_of(dir_hdl, struct glusterfs_handle, handle);
-#ifdef GLTIMING
-	struct timespec s_time, e_time;
-
-	now(&s_time);
-#endif
-
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray);
-
-	/* FIXME: what else from attrib should we use? */
-	glhandle =
-	    glfs_h_creat(glfs_export->gl_fs->fs, parenthandle->glhandle, name,
-			 O_CREAT | O_EXCL, fsal2unix_mode(attrib->mode), &sb);
-
-	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
-
-	if (glhandle == NULL) {
-		status = gluster2fsal_error(errno);
-		goto out;
-	}
-
-	rc = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
-	if (rc < 0) {
-		status = gluster2fsal_error(errno);
-		goto out;
-	}
-
-	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
-			       GLAPI_UUID_LENGTH);
-	if (rc < 0) {
-		status = gluster2fsal_error(rc);
-		goto out;
-	}
-
-	construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
-
-	if (attrs_out != NULL) {
-		posix2fsal_attributes_all(&sb, attrs_out);
-	}
-
-	*handle = &objhandle->handle;
-
- out:
-	if (status.major != ERR_FSAL_NO_ERROR)
-		gluster_cleanup_vars(glhandle);
-
-#ifdef GLTIMING
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_create);
-#endif
-
-	return status;
-}
-
-/**
  * @brief Implements GLUSTER FSAL objectoperation mkdir
  */
 
@@ -2702,7 +2625,6 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->release = handle_release;
 	ops->merge = glusterfs_merge;
 	ops->lookup = lookup;
-	ops->create = create;
 	ops->mkdir = makedir;
 	ops->mknode = makenode;
 	ops->readdir = read_dirents;

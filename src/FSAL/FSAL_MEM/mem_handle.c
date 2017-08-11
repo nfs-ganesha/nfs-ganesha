@@ -752,31 +752,6 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 }
 
 /**
- * @brief Create a file
- *
- * @param[in] dir_hdl	Handle of parent directory
- * @param[in] name	Name of file to create
- * @param[in] attrs_in	Attributes to set on new file
- * @param[out] new_obj	Newly created file
- * @param[out] attrs_out Attributes of newlys created object
- *
- * @return FSAL status
- */
-static fsal_status_t mem_create(struct fsal_obj_handle *dir_hdl,
-				    const char *name, struct attrlist *attrs_in,
-				    struct fsal_obj_handle **new_obj,
-				    struct attrlist *attrs_out)
-{
-	struct mem_fsal_obj_handle *parent =
-		container_of(dir_hdl, struct mem_fsal_obj_handle, obj_handle);
-
-	LogDebug(COMPONENT_FSAL, "create %s", name);
-
-	return mem_create_obj(parent, REGULAR_FILE, name, attrs_in, new_obj,
-			      attrs_out);
-}
-
-/**
  * @brief Create a directory
  *
  * This function creates a new directory.
@@ -1958,7 +1933,6 @@ void mem_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->release = mem_release;
 	ops->lookup = mem_lookup;
 	ops->readdir = mem_readdir;
-	ops->create = mem_create;
 	ops->mkdir = mem_mkdir;
 	ops->mknode = mem_mknode;
 	ops->symlink = mem_symlink;

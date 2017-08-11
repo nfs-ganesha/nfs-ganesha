@@ -180,82 +180,6 @@ static fsal_status_t mdcache_lookup(struct fsal_obj_handle *parent,
 }
 
 /**
- * @brief Create a file
- *
- * @param[in] dir_hdl	Handle of parent directory
- * @param[in] name	Name of file to create
- * @param[in] attrib	Attributes to set on new file
- * @param[out] handle	Newly created file
- *
- * @note This returns an INITIAL ref'd entry on success
- * @return FSAL status
- */
-static fsal_status_t mdcache_create(struct fsal_obj_handle *dir_hdl,
-				    const char *name, struct attrlist *attrs_in,
-				    struct fsal_obj_handle **new_obj,
-				    struct attrlist *attrs_out)
-{
-	mdcache_entry_t *parent =
-		container_of(dir_hdl, mdcache_entry_t,
-			     obj_handle);
-	struct mdcache_fsal_export *export = mdc_cur_export();
-	struct fsal_obj_handle *sub_handle;
-	fsal_status_t status;
-	struct attrlist attrs;
-	bool invalidate = true;
-
-	/* Ask for all supported attributes except ACL (we defer fetching ACL
-	 * until asked for it (including a permission check).
-	 */
-	fsal_prepare_attrs(&attrs,
-			   op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export)
-				   & ~ATTR_ACL);
-
-	subcall_raw(export,
-		status = parent->sub_handle->obj_ops.create(
-			parent->sub_handle, name, attrs_in, &sub_handle, &attrs)
-	       );
-
-	if (unlikely(FSAL_IS_ERROR(status))) {
-		LogDebug(COMPONENT_CACHE_INODE,
-			 "create %s failed with %s",
-			 name, fsal_err_txt(status));
-		if (status.major == ERR_FSAL_STALE) {
-			/* If we got ERR_FSAL_STALE, the previous FSAL call
-			 * must have failed with a bad parent.
-			 */
-			LogEvent(COMPONENT_CACHE_INODE,
-				 "FSAL returned STALE on create");
-			mdcache_kill_entry(parent);
-		}
-		*new_obj = NULL;
-		fsal_release_attrs(&attrs);
-		return status;
-	}
-
-	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
-
-	status = mdcache_alloc_and_check_handle(export, sub_handle, new_obj,
-						false, &attrs, attrs_out,
-						"create ", parent, name,
-						&invalidate, NULL);
-
-	PTHREAD_RWLOCK_unlock(&parent->content_lock);
-
-	fsal_release_attrs(&attrs);
-
-	if (!invalidate) {
-		/* Refresh destination directory attributes without
-		 * invalidating dirents.
-		 */
-		mdcache_refresh_attrs_no_invalidate(parent);
-	}
-
-	return status;
-}
-
-/**
  * @brief Make a directory
  *
  * @param[in] dir_hdl	Parent directory handle
@@ -1681,7 +1605,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->merge = mdcache_merge;
 	ops->lookup = mdcache_lookup;
 	ops->readdir = mdcache_readdir;
-	ops->create = mdcache_create;
 	ops->mkdir = mdcache_mkdir;
 	ops->mknode = mdcache_mknode;
 	ops->symlink = mdcache_symlink;

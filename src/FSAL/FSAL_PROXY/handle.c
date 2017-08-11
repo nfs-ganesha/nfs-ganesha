@@ -1399,81 +1399,6 @@ static fsal_status_t pxy_do_close_4_1(const struct user_cred *creds,
 /* TODO: make this per-export */
 static uint64_t fcnt;
 
-static fsal_status_t pxy_create(struct fsal_obj_handle *dir_hdl,
-				const char *name, struct attrlist *attrib,
-				struct fsal_obj_handle **handle,
-				struct attrlist *attrs_out)
-{
-	int rc;
-	int opcnt = 0;
-	fattr4 input_attr;
-	char padfilehandle[NFS4_FHSIZE];
-	char fattr_blob[FATTR_BLOB_SZ];
-	sessionid4 sid;
-#define FSAL_CREATE_NB_OP_ALLOC 5 /* SEQUENCE PUTFH OPEN GETFH GETATTR */
-	nfs_argop4 argoparray[FSAL_CREATE_NB_OP_ALLOC];
-	nfs_resop4 resoparray[FSAL_CREATE_NB_OP_ALLOC];
-	char owner_val[128];
-	unsigned int owner_len = 0;
-	GETFH4resok *fhok;
-	GETATTR4resok *atok;
-	OPEN4resok *opok;
-	struct pxy_obj_handle *ph;
-	fsal_status_t st;
-	clientid4 cid;
-
-	/* Create the owner */
-	snprintf(owner_val, sizeof(owner_val), "GANESHA/PROXY: pid=%u %" PRIu64,
-		 getpid(), atomic_inc_uint64_t(&fcnt));
-	owner_len = strnlen(owner_val, sizeof(owner_val));
-
-	attrib->valid_mask &= ATTR_MODE | ATTR_OWNER | ATTR_GROUP;
-	if (pxy_fsalattr_to_fattr4(attrib, &input_attr) == -1)
-		return fsalstat(ERR_FSAL_INVAL, -1);
-
-	ph = container_of(dir_hdl, struct pxy_obj_handle, obj);
-	/* SEQUENCE */
-	pxy_get_client_sessionid(sid);
-	COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, argoparray, sid, NB_RPC_SLOT);
-	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
-
-	opok = &resoparray[opcnt].nfs_resop4_u.opopen.OPEN4res_u.resok4;
-	opok->attrset = empty_bitmap;
-	pxy_get_clientid(&cid);
-	COMPOUNDV4_ARG_ADD_OP_OPEN_CREATE(opcnt, argoparray, (char *)name,
-					  input_attr, cid, owner_val,
-					  owner_len);
-
-	fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
-	fhok->object.nfs_fh4_val = padfilehandle;
-	fhok->object.nfs_fh4_len = sizeof(padfilehandle);
-	COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
-
-	atok =
-	    pxy_fill_getattr_reply(resoparray + opcnt, fattr_blob,
-				   sizeof(fattr_blob));
-	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, pxy_bitmap_getattr);
-
-	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
-			    opcnt, argoparray, resoparray);
-	nfs4_Fattr_Free(&input_attr);
-	if (rc != NFS4_OK)
-		return nfsstat4_to_fsal(rc);
-
-	/* The created file is still opened, to preserve the correct
-	 * seqid for later use, we close it */
-	st = pxy_do_close_4_1(op_ctx->creds, &fhok->object, &opok->stateid,
-			  op_ctx->fsal_export);
-	if (FSAL_IS_ERROR(st))
-		return st;
-	st = pxy_make_object(op_ctx->fsal_export, &atok->obj_attributes,
-			     &fhok->object, handle, attrs_out);
-	if (FSAL_IS_ERROR(st))
-		return st;
-
-	return (*handle)->obj_ops.getattrs(*handle, attrib);
-}
-
 static fsal_status_t pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 			       const char *name, struct attrlist *attrib,
 			       struct fsal_obj_handle **handle,
@@ -2748,7 +2673,6 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->release = pxy_hdl_release;
 	ops->lookup = pxy_lookup;
 	ops->readdir = pxy_readdir;
-	ops->create = pxy_create;
 	ops->mkdir = pxy_mkdir;
 	ops->mknode = pxy_mknod;
 	ops->symlink = pxy_symlink;
