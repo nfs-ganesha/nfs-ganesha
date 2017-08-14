@@ -395,6 +395,11 @@ static void do_shutdown(void)
 
 	LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
 
+#ifdef USE_DBUS
+	/* DBUS shutdown */
+	gsh_dbus_pkgshutdown();
+#endif
+
 	LogEvent(COMPONENT_MAIN, "Stopping delayed executor.");
 	delayed_shutdown();
 	LogEvent(COMPONENT_MAIN, "Delayed executor stopped.");
