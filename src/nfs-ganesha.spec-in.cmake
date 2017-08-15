@@ -86,7 +86,7 @@ Requires: openSUSE-release
 @BCOND_MAN_PAGE@ man_page
 %global use_man_page %{on_off_switch man_page}
 
-%global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); print(extraver) }
+%global dev_version %{lua: s = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); s2 = string.gsub(s, '%-', '.'); print(s2) }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
 
