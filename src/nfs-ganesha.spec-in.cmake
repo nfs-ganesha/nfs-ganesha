@@ -89,7 +89,7 @@ Requires: openSUSE-release
 @BCOND_RADOS_RECOV@ rados_recov
 %global use_rados_recov %{on_off_switch rados_recov}
 
-%global dev_version %{lua: extraver = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); print(extraver) }
+%global dev_version %{lua: s = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); s2 = string.gsub(s, '%-', '.'); print(s2) }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
 
