@@ -1,1 +1,0 @@
-../../../libsolcompat/include/atomic.h
