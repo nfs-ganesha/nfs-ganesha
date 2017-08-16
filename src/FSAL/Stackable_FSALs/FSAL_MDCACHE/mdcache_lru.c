@@ -941,7 +941,6 @@ mdcache_lru_cleanup_push(mdcache_entry_t *entry)
 		/* in with the new */
 		q = &qlane->cleanup;
 		lru_insert(lru, q, LRU_LRU);
-		++(q->size);
 	}
 
 	QUNLOCK(qlane);
@@ -1091,7 +1090,6 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		lru->qid = LRU_ENTRY_L2;
 		q = &qlane->L2;
 		lru_insert(lru, q, LRU_MRU);
-		++(q->size);
 
 		/* Get a reference to the first export and build an op context
 		 * with it. By holding the QLANE lock while we get the export
@@ -1444,7 +1442,6 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 		lru->qid = LRU_ENTRY_L2;
 		q = &qlane->L2;
 		lru_insert(lru, q, LRU_MRU);
-		++(q->size);
 
 		++workdone;
 	} /* for_each_safe lru */
@@ -1834,7 +1831,6 @@ _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 			/* advance entry to MRU (of L1) */
 			LRU_DQ_SAFE(lru, q);
 			lru_insert(lru, q, LRU_MRU);
-			++(q->size);
 			break;
 		case LRU_ENTRY_L2:
 			q = lru_queue_of(entry);
@@ -1843,7 +1839,6 @@ _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 			--(q->size);
 			q = &qlane->L1;
 			lru_insert(lru, q, LRU_LRU);
-			++(q->size);
 			break;
 		default:
 			/* do nothing */
@@ -1989,7 +1984,6 @@ void lru_bump_chunk(struct dir_chunk *chunk)
 		/* advance chunk to MRU (of L1) */
 		LRU_DQ_SAFE(lru, q);
 		lru_insert(lru, q, LRU_MRU);
-		++(q->size);
 		break;
 	case LRU_ENTRY_L2:
 		/* move chunk to LRU of L1 */
@@ -1997,7 +1991,6 @@ void lru_bump_chunk(struct dir_chunk *chunk)
 		--(q->size);
 		q = &qlane->L1;
 		lru_insert(lru, q, LRU_LRU);
-		++(q->size);
 		break;
 	default:
 		/* do nothing */
