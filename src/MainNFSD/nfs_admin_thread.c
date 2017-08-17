@@ -287,6 +287,40 @@ static struct gsh_dbus_method method_purge_netgroups = {
 };
 
 /**
+ * @brief Dbus method for flushing idmapper cache
+ *
+ * @param[in]  args
+ * @param[out] reply
+ */
+static bool admin_dbus_purge_idmapper_cache(DBusMessageIter *args,
+					    DBusMessage *reply,
+					    DBusError *error)
+{
+	char *errormsg = "Purge idmapper cache";
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (args != NULL) {
+		errormsg = "Purge idmapper takes no arguments.";
+		success = false;
+		LogWarn(COMPONENT_DBUS, "%s", errormsg);
+		goto out;
+	}
+	idmapper_clear_cache();
+ out:
+	dbus_status_reply(&iter, success, errormsg);
+	return success;
+}
+
+static struct gsh_dbus_method method_purge_idmapper_cache = {
+	.name = "purge_idmapper_cache",
+	.method = admin_dbus_purge_idmapper_cache,
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
+/**
  * @brief Dbus method for updating open fd limit
  *
  * @param[in]  args
@@ -330,6 +364,7 @@ static struct gsh_dbus_method *admin_methods[] = {
 	&method_purge_gids,
 	&method_purge_netgroups,
 	&method_init_fds_limit,
+	&method_purge_idmapper_cache,
 	NULL
 };
 
