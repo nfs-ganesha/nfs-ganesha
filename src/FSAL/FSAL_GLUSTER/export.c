@@ -272,11 +272,11 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
  * FSAL to use.
  */
 
-fsal_status_t create_handle2(struct glusterfs_export *glfs_export,
-				   struct glfs_object *glhandle,
-				   struct fsal_obj_handle **pub_handle,
-				   struct stat *sb,
-				   struct attrlist *attrs_out)
+fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
+			       struct glfs_object *glhandle,
+			       struct fsal_obj_handle **pub_handle,
+			       struct stat *sb,
+			       struct attrlist *attrs_out)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -317,8 +317,6 @@ fsal_status_t create_handle2(struct glusterfs_export *glfs_export,
 
 	*pub_handle = &objhandle->handle;
  out:
-	if (status.major != ERR_FSAL_NO_ERROR)
-		gluster_cleanup_vars(glhandle);
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_create_handle);
