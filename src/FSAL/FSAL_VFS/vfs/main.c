@@ -80,6 +80,8 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 	.supported_attrs = VFS_SUPPORTED_ATTRIBUTES,
 	.maxread = FSAL_MAXIOSIZE,
 	.maxwrite = FSAL_MAXIOSIZE,
+	.pnfs_mds = true,
+	.pnfs_ds = true,
 	.link_supports_permission_checks = false,
 };
 
@@ -100,6 +102,10 @@ static struct config_item vfs_params[] = {
 		       fsal_staticfsinfo_t, auth_exportpath_xdev),
 	CONF_ITEM_MODE("xattr_access_rights", 0400,
 		       fsal_staticfsinfo_t, xattr_access_rights),
+	CONF_ITEM_BOOL("PNFS_MDS", true,
+	               fsal_staticfsinfo_t, pnfs_mds),
+	CONF_ITEM_BOOL("PNFS_DS", true,
+	               fsal_staticfsinfo_t, pnfs_ds),
 	CONFIG_EOL
 };
 
@@ -220,6 +226,19 @@ bool vfs_support_ex(struct fsal_obj_handle *obj)
 	return true;
 }
 
+/* Methods for pNFS
+ */
+nfsstat4 vfs_getdeviceinfo(struct fsal_module *fsal_hdl,
+                              XDR *da_addr_body,
+                              const layouttype4 type,
+                              const struct pnfs_deviceid *deviceid);
+
+size_t vfs_fs_da_addr_size(struct fsal_module *fsal_hdl);
+void export_ops_pnfs(struct export_ops *ops);
+void handle_ops_pnfs(struct fsal_obj_ops *ops);
+void vfs_pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops);
+
+
 /* Module initialization.
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself
@@ -247,6 +266,12 @@ MODULE_INIT void vfs_init(void)
 	myself->m_ops.create_export = vfs_create_export;
 	myself->m_ops.init_config = init_config;
 	myself->m_ops.support_ex = vfs_support_ex;
+	/*
+	 * Following inits needed for pNFS support
+	 * get device info will used by pnfs meta data server
+	 */
+	myself->m_ops.getdeviceinfo = vfs_getdeviceinfo;
+	myself->m_ops.fsal_pnfs_ds_ops = vfs_pnfs_ds_ops_init;
 }
 
 MODULE_FINI void vfs_unload(void)
