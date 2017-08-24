@@ -1007,12 +1007,19 @@ static int pxy_setclientid(clientid4 *new_clientid, sequenceid4 *new_seqid)
 						&eir_server_impl_id_val;
 
 	rc = pxy_compoundv4_execute(__func__, NULL, 1, arg, res);
-	if (rc != NFS4_OK)
+	if (rc != NFS4_OK) {
+		LogDebug(COMPONENT_FSAL,
+			 "Compound setclientid res request returned %d",
+			 rc);
 		return -1;
+	}
 
 	/* Keep the confirmed client id and sequence id*/
-	if (ei_res->eir_status != NFS4_OK)
+	if (ei_res->eir_status != NFS4_OK) {
+		LogDebug(COMPONENT_FSAL, "EXCHANGE_ID res status is %d",
+			 ei_res->eir_status);
 		return -1;
+	}
 	*new_clientid = ei_resok->eir_clientid;
 	*new_seqid = ei_resok->eir_sequenceid;
 
