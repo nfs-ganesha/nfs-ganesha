@@ -183,7 +183,7 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 			fsal_prepare_attrs(&attrs, attrmask);
 			ceph2fsal_attributes(&stx, &attrs);
 
-			cb_rc = cb(de.d_name, &obj->handle, &attrs, dir_state,
+			cb_rc = cb(de.d_name, &obj->handles, &attrs, dir_state,
 					de.d_off);
 
 			fsal_release_attrs(&attrs);
