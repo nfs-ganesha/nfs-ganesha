@@ -1920,6 +1920,18 @@ static fsal_status_t pxy_rename(struct fsal_obj_handle *obj_hdl,
 	return nfsstat4_to_fsal(rc);
 }
 
+static inline int nfs4_Fattr_To_FSAL_attr_savreqmask(struct attrlist *FSAL_attr,
+						     fattr4 *Fattr,
+						     compound_data_t *data)
+{
+	int rc = 0;
+	attrmask_t saved_request_mask = FSAL_attr->request_mask;
+
+	rc = nfs4_Fattr_To_FSAL_attr(FSAL_attr, Fattr, data);
+	FSAL_attr->request_mask = saved_request_mask;
+	return rc;
+}
+
 static fsal_status_t pxy_getattrs(struct fsal_obj_handle *obj_hdl,
 				  struct attrlist *attrs)
 {
@@ -1955,8 +1967,8 @@ static fsal_status_t pxy_getattrs(struct fsal_obj_handle *obj_hdl,
 		return nfsstat4_to_fsal(rc);
 	}
 
-	if (nfs4_Fattr_To_FSAL_attr(attrs, &atok->obj_attributes, NULL) !=
-	    NFS4_OK)
+	if (nfs4_Fattr_To_FSAL_attr_savreqmask(attrs, &atok->obj_attributes,
+					       NULL) != NFS4_OK)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
