@@ -159,6 +159,7 @@ enum {
 #define NFS41_MIN_REQUEST_SIZE 256
 #define NFS41_MIN_RESPONSE_SIZE 256
 #define NFS41_MIN_OPERATIONS 2
+#define NFS41_MAX_CONNECTIONS 16
 
 /**
  * @brief Structure representing an NFSv4.1 session
@@ -181,7 +182,10 @@ struct nfs41_session {
 				   and on which we signal when we
 				   free an entry. */
 
-	SVCXPRT *xprt;		/*< Referenced pointer to transport */
+	pthread_rwlock_t conn_lock;
+	int num_conn;
+	sockaddr_t connections[NFS41_MAX_CONNECTIONS];
+
 	nfs_client_id_t *clientid_record;	/*< Client record
 						   correspinding to ID */
 	clientid4 clientid;	/*< Clientid owning this session */

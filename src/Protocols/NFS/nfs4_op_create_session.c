@@ -336,6 +336,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
+	copy_xprt_addr(&nfs41_session->connections[0], data->req->rq_xprt);
+	nfs41_session->num_conn = 1;
 	nfs41_session->clientid = clientid;
 	nfs41_session->clientid_record = found;
 	nfs41_session->refcount = 2;	/* sentinel ref + call path ref */
@@ -343,11 +345,11 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	    arg_CREATE_SESSION4->csa_fore_chan_attrs;
 	nfs41_session->back_channel_attrs =
 	    arg_CREATE_SESSION4->csa_back_chan_attrs;
-	nfs41_session->xprt = data->req->rq_xprt;
 	nfs41_session->flags = false;
 	nfs41_session->cb_program = 0;
 	PTHREAD_MUTEX_init(&nfs41_session->cb_mutex, NULL);
 	PTHREAD_COND_init(&nfs41_session->cb_cond, NULL);
+	PTHREAD_RWLOCK_init(&nfs41_session->conn_lock, NULL);
 	nfs41_session->nb_slots = MIN(nfs_param.nfsv4_param.nb_slots,
 			nfs41_session->fore_channel_attrs.ca_maxrequests);
 	nfs41_session->fc_slots = gsh_calloc(nfs41_session->nb_slots,
@@ -534,7 +536,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	    CREATE_SESSION4_FLAG_CONN_BACK_CHAN) {
 		nfs41_session->cb_program = arg_CREATE_SESSION4->csa_cb_program;
 		if (nfs_rpc_create_chan_v41(
-			nfs41_session,
+			data->req->rq_xprt, nfs41_session,
 			arg_CREATE_SESSION4->csa_sec_parms.csa_sec_parms_len,
 			arg_CREATE_SESSION4->csa_sec_parms.csa_sec_parms_val)
 		    == 0) {

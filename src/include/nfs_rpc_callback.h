@@ -116,8 +116,8 @@ void nfs_rpc_cb_pkginit(void);
 void nfs_rpc_cb_pkgshutdown(void);
 int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid, uint32_t flags);
 
-int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
-			    callback_sec_parms4 *sec_parms);
+int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
+			    int num_sec_parms, callback_sec_parms4 *sec_parms);
 
 #define NFS_RPC_CALL_NONE 0x0000
 

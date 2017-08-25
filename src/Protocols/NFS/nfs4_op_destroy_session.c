@@ -59,9 +59,6 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t *data,
 	    &op->nfs_argop4_u.opdestroy_session;
 	DESTROY_SESSION4res * const res_DESTROY_SESSION4 =
 	    &resp->nfs_resop4_u.opdestroy_session;
-
-	sockaddr_t nw_addr;
-	sockaddr_t client_addr;
 	nfs41_session_t *session;
 
 	resp->resop = NFS4_OP_DESTROY_SESSION;
@@ -81,15 +78,7 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t *data,
 	/* DESTROY_SESSION MUST be invoked on a connection that is associated
 	 * with the session being destroyed
 	 */
-
-	/* Copy the address coming over the wire. */
-	copy_xprt_addr(&nw_addr, data->req->rq_xprt);
-
-	/* Copy the address recorded in the session. */
-	copy_xprt_addr(&client_addr, session->xprt);
-
-	/* Compare these fields. */
-	if (!cmp_sockaddr(&nw_addr, &client_addr, false)) {
+	if (!check_session_conn(session, data, false)) {
 		res_DESTROY_SESSION4->dsr_status =
 		    NFS4ERR_CONN_NOT_BOUND_TO_SESSION;
 		dec_session_ref(session);

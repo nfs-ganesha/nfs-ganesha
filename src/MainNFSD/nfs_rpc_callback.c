@@ -689,8 +689,8 @@ static enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, bool locked)
  * @return 0 or POSIX error code.
  */
 
-int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
-			    callback_sec_parms4 *sec_parms)
+int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
+			    int num_sec_parms, callback_sec_parms4 *sec_parms)
 {
 	rpc_call_channel_t *chan = &session->cb_chan;
 	char *err;
@@ -709,9 +709,9 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 	chan->type = RPC_CHAN_V41;
 	chan->source.session = session;
 
-	assert(session->xprt);
+	assert(xprt);
 
-	if (svc_get_xprt_type(session->xprt) == XPRT_RDMA) {
+	if (svc_get_xprt_type(xprt) == XPRT_RDMA) {
 		LogWarn(COMPONENT_NFS_CB,
 			"refusing to create back channel over RDMA for now");
 		code = EINVAL;
@@ -721,7 +721,7 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 	/* connect an RPC client
 	 * Use version 1 per errata ID 2291 for RFC 5661
 	 */
-	chan->clnt = clnt_vc_ncreate_svc(session->xprt, session->cb_program,
+	chan->clnt = clnt_vc_ncreate_svc(xprt, session->cb_program,
 					 NFS_CB /* Errata ID: 2291 */,
 					 CLNT_CREATE_FLAG_NONE);
 

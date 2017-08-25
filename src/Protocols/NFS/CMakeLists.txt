@@ -11,6 +11,7 @@ SET(nfsproto_STAT_SRCS
    nfs_null.c
    nfs4_Compound.c
    nfs4_op_access.c
+   nfs4_op_bind_conn.c
    nfs4_op_close.c
    nfs4_op_commit.c
    nfs4_op_create.c

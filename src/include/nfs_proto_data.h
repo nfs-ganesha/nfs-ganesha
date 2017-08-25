@@ -318,6 +318,7 @@ typedef struct compound_data {
 	bool use_drc;		/*< Set to true if session DRC is to be used */
 	uint32_t oppos;		/*< Position of the operation within the
 				    request processed  */
+	const char *opname;	/*< Name of the operation */
 	nfs41_session_t *session;	/*< Related session
 					   (found by OP_SEQUENCE) */
 	sequenceid4 sequence;	/*< Sequence ID of the current compound

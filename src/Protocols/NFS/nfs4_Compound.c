@@ -270,8 +270,8 @@ static const struct nfs4_op_desc optabv4[] = {
 		.exp_perm_flags = 0	/* tbd */},
 	[NFS4_OP_BIND_CONN_TO_SESSION] = {
 		.name = "OP_BIND_CONN_TO_SESSION",
-		.funct = nfs4_op_illegal,
-		.free_res = nfs4_op_illegal_Free,
+		.funct = nfs4_op_bind_conn,
+		.free_res = nfs4_op_nfs4_op_bind_conn_Free,
 		.exp_perm_flags = 0	/* tbd */},
 	[NFS4_OP_EXCHANGE_ID] = {
 		.name = "OP_EXCHANGE_ID",
@@ -653,8 +653,10 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		if (opcode > LastOpcode[compound4_minor])
 			opcode = 0;
 
+		data.opname = optabv4[opcode].name;
+
 		LogDebug(COMPONENT_NFS_V4, "Request %d: opcode %d is %s", i,
-			 argarray[i].argop, optabv4[opcode].name);
+			 argarray[i].argop, data.opname);
 
 		/* Verify BIND_CONN_TO_SESSION is not used in a compound
 		 * with length > 1. This check is NOT redundant with the
@@ -759,7 +761,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 				LogDebugAlt(COMPONENT_NFS_V4, alt_component,
 					    "Status of %s in position %d due to %s is %s",
-					    optabv4[opcode].name, i,
+					    data.opname, i,
 					    bad_op_state_reason,
 					    nfsstat4_to_str(status));
 
@@ -784,7 +786,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		 **************************************************************/
 #ifdef USE_LTTNG
 		tracepoint(nfs_rpc, v4op_start, i, argarray[i].argop,
-			   optabv4[opcode].name);
+			   data.opname);
 #endif
 
 		status = (optabv4[opcode].funct) (&argarray[i],
@@ -793,7 +795,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 #ifdef USE_LTTNG
 		tracepoint(nfs_rpc, v4op_end, i, argarray[i].argop,
-			   optabv4[opcode].name, nfsstat4_to_str(status));
+			   data.opname, nfsstat4_to_str(status));
 #endif
 
 		LogCompoundFH(&data);
@@ -806,7 +808,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		server_stats_nfsv4_op_done(opcode, op_start_time, status);
 
 		LogDebug(COMPONENT_NFS_V4, "Status of %s in position %d = %s",
-			 optabv4[opcode].name, i, nfsstat4_to_str(status));
+			 data.opname, i, nfsstat4_to_str(status));
 
 		if (status != NFS4_OK) {
 			/* An error occured, we do not manage the other requests

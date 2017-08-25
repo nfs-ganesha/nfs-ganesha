@@ -216,6 +216,8 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	op_ctx->clientid = &data->session->clientid;
 
+	(void) check_session_conn(session, data, true);
+
 	res_SEQUENCE4->sr_status = NFS4_OK;
 	return res_SEQUENCE4->sr_status;
 }				/* nfs41_op_sequence */
