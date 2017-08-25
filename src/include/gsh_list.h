@@ -286,7 +286,7 @@ static inline void glist_insert_sorted(struct glist_head *head,
 		return;
 	}
 	glist_for_each(next, head) {
-		if (compare(next, elt) >= 0)
+		if (compare(next, elt) > 0)
 			break;
 	}
 
