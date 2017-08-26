@@ -654,23 +654,7 @@ find_fd(int *fd, struct fsal_obj_handle *obj_hdl, bool bypass,
 	LogFullDebug(COMPONENT_FSAL, "openflags 0x%X posix_flags 0x%X",
 			openflags, posix_flags);
 
-	/* Handle nom-regular files */
 	switch (obj_hdl->type) {
-	case SOCKET_FILE:
-	case CHARACTER_FILE:
-	case BLOCK_FILE:
-		status = gpfs_open_func(obj_hdl, openflags,
-					(struct fsal_fd *)out_fd);
-		if (FSAL_IS_ERROR(status)) {
-			LogDebug(COMPONENT_FSAL,
-				 "Failed with openflags 0x%08x",
-				  openflags);
-			return status;
-		}
-		*fd = out_fd->fd;
-		*closefd = true;
-		return status;
-
 	case REGULAR_FILE:
 		status = fsal_find_fd((struct fsal_fd **)&out_fd, obj_hdl,
 				      (struct fsal_fd *)&myself->u.file.fd,
@@ -682,6 +666,9 @@ find_fd(int *fd, struct fsal_obj_handle *obj_hdl, bool bypass,
 		*fd = out_fd->fd;
 		return status;
 
+	case SOCKET_FILE:
+	case CHARACTER_FILE:
+	case BLOCK_FILE:
 	case SYMBOLIC_LINK:
 	case FIFO_FILE:
 	case DIRECTORY:
