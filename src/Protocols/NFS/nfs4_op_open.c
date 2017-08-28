@@ -446,7 +446,7 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 				   NULL,
 				   0,
 				   &isnew,
-				   CARE_ALWAYS);
+				   CARE_ALWAYS, data->minorversion != 0);
 
 	LogStateOwner("Open: ", *owner);
 
@@ -1978,10 +1978,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* If server use OPEN_CONFIRM4, set the correct flag,
 	 * but not for 4.1 */
-	if (data->minorversion == 0
-	    && owner->so_owner.so_nfs4_owner.so_confirmed == false) {
+	if (owner->so_owner.so_nfs4_owner.so_confirmed == false)
 		res_OPEN4->OPEN4res_u.resok4.rflags |= OPEN4_RESULT_CONFIRM;
-	}
 
 	res_OPEN4->OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
 

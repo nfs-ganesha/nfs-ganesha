@@ -342,8 +342,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		switch (state_found->state_type) {
 		case STATE_TYPE_SHARE:
-			if (data->minorversion == 0 &&
-			    !state_owner_confirmed(state_found)) {
+			if (!state_owner_confirmed(state_found)) {
 				res_READ4->status = NFS4ERR_BAD_STATEID;
 				goto out;
 			}

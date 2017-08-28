@@ -111,7 +111,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t *data,
 				       NULL,
 				       0,
 				       NULL,
-				       CARE_NOT);
+				       CARE_NOT, true);
 
 	if (lock_owner == NULL) {
 		/* the owner doesn't exist, we are done */
