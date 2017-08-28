@@ -74,6 +74,7 @@ static int rpc_sock = -1;
 static uint32_t rpc_xid;
 static pthread_mutex_t listlock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t sockless = PTHREAD_COND_INITIALIZER;
+static bool close_thread;
 
 /*
  * context_lock protects free_contexts list and need_context condition.
@@ -536,12 +537,17 @@ static void *pxy_rpc_recv(void *arg)
 	memcpy(&addr_rpc.sin_addr, &info_sock->sin_addr,
 	       sizeof(struct in_addr));
 
-	for (;;) {
+	while (!close_thread) {
 		int nsleeps = 0;
 
 		PTHREAD_MUTEX_lock(&listlock);
 		do {
 			rpc_sock = pxy_connect(info, &addr_rpc);
+			/* early stop test */
+			if (close_thread) {
+				PTHREAD_MUTEX_unlock(&listlock);
+				return NULL;
+			}
 			if (rpc_sock < 0) {
 				if (nsleeps == 0)
 					LogCrit(COMPONENT_FSAL,
@@ -560,8 +566,11 @@ static void *pxy_rpc_recv(void *arg)
 					 "Connected after %d sleeps, resending outstanding calls",
 					 nsleeps);
 			}
-		} while (rpc_sock < 0);
+		} while (rpc_sock < 0 && !close_thread);
 		PTHREAD_MUTEX_unlock(&listlock);
+		/* early stop test */
+		if (close_thread)
+			return NULL;
 
 		pfd.fd = rpc_sock;
 		pfd.events = POLLIN | POLLRDHUP;
@@ -685,12 +694,13 @@ static enum clnt_stat pxy_process_reply(struct pxy_rpc_io_context *ctx,
 	return rc;
 }
 
-static void pxy_rpc_need_sock(void)
+static int pxy_rpc_need_sock(void)
 {
 	PTHREAD_MUTEX_lock(&listlock);
-	while (rpc_sock < 0)
+	while (rpc_sock < 0 && !close_thread)
 		pthread_cond_wait(&sockless, &listlock);
 	PTHREAD_MUTEX_unlock(&listlock);
+	return close_thread;
 }
 
 static int pxy_rpc_renewer_wait(int timeout)
@@ -837,7 +847,8 @@ int pxy_compoundv4_execute(const char *caller, const struct user_cred *creds,
 			LogDebug(COMPONENT_FSAL, "%s failed with %d", caller,
 				 rc);
 		if (rc == RPC_CANTSEND)
-			pxy_rpc_need_sock();
+			if (pxy_rpc_need_sock())
+				return -1;
 	} while ((rc == RPC_CANTRECV && (ctx->ioresult == -EAGAIN))
 		 || (rc == RPC_CANTSEND));
 
@@ -1033,7 +1044,7 @@ static void *pxy_clientid_renewer(void *arg)
 	int sessionid_needed = 1;
 	uint32_t lease_time = 60;
 
-	while (1) {
+	while (!close_thread) {
 		clientid4 newcid = 0;
 		sequenceid4 newseqid = 0;
 
@@ -1077,9 +1088,15 @@ static void *pxy_clientid_renewer(void *arg)
 			}
 		}
 
+		/* early stop test */
+		if (close_thread)
+			return NULL;
+
 		/* We've either failed to renew or rpc socket has been
 		 * reconnected and we need new clientid or sessionid. */
-		pxy_rpc_need_sock();
+		if (pxy_rpc_need_sock())
+			/* early stop test */
+			return NULL;
 
 		/* We need a new session_id */
 		if (!clientid_needed) {
@@ -1116,6 +1133,7 @@ static void *pxy_clientid_renewer(void *arg)
 			PTHREAD_MUTEX_unlock(&pxy_clientid_mutex);
 		}
 	}
+
 	return NULL;
 }
 
@@ -1130,6 +1148,36 @@ static void free_io_contexts(void)
 		glist_del(cur);
 		gsh_free(c);
 	}
+}
+
+int pxy_close_thread(void)
+{
+	int rc;
+
+	/* setting boolean to stop thread */
+	close_thread = true;
+
+	/* waiting threads ends */
+	/* pxy_clientid_renewer is usually waiting on sockless cond : wake up */
+	/* pxy_rpc_recv is usually polling rpc_sock : wake up by closing it */
+	PTHREAD_MUTEX_lock(&listlock);
+	pthread_cond_broadcast(&sockless);
+	close(rpc_sock);
+	PTHREAD_MUTEX_unlock(&listlock);
+	rc = pthread_join(pxy_renewer_thread, NULL);
+	if (rc) {
+		LogWarn(COMPONENT_FSAL,
+			"Error on waiting the pxy_renewer_thread end : %d", rc);
+		return rc;
+	}
+	rc = pthread_join(pxy_recv_thread, NULL);
+	if (rc) {
+		LogWarn(COMPONENT_FSAL,
+			"Error on waiting the pxy_recv_thread end : %d", rc);
+		return rc;
+	}
+
+	return 0;
 }
 
 int pxy_init_rpc(const struct pxy_fsal_module *pm)
