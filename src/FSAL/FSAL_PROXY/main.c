@@ -242,8 +242,17 @@ MODULE_FINI void pxy_unload(void)
 	int retval;
 
 	retval = unregister_fsal(&PROXY.module);
+
 	if (retval != 0) {
-		fprintf(stderr, "PROXY module failed to unregister");
+		fprintf(stderr, "PROXY module failed to unregister : %d",
+			retval);
+		return;
+	}
+
+	retval = pxy_close_thread();
+	if (retval != 0) {
+		fprintf(stderr, "PROXY module failed to wait threads : %d",
+			retval);
 		return;
 	}
 }
