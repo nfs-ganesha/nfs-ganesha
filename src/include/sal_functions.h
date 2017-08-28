@@ -533,7 +533,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 				 state_owner_type_t type,
 				 state_owner_t *related_owner,
 				 unsigned int init_seqid, bool_t *pisnew,
-				 care_t care);
+				 care_t care, bool_t confirm);
 
 int Init_nfs4_owner(void);
 

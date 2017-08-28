@@ -425,6 +425,7 @@ void nfs4_owner_PrintAll(void)
  * @param[in]  init_seqid    The starting seqid (for NFSv4.0)
  * @param[out] pisnew        Whether the owner actually is new
  * @param[in]  care          Care flag (to unify v3/v4 owners?)
+ * @param[in]  confirm       Create with it already confirmed?
  *
  * @return A new state owner or NULL.
  */
@@ -433,7 +434,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 				 state_owner_type_t type,
 				 state_owner_t *related_owner,
 				 unsigned int init_seqid, bool_t *pisnew,
-				 care_t care)
+				 care_t care, bool_t confirm)
 {
 	state_owner_t key;
 	state_owner_t *owner;
@@ -452,12 +453,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 	key.so_owner.so_nfs4_owner.so_resp.resop = NFS4_OP_ILLEGAL;
 	key.so_owner.so_nfs4_owner.so_args.argop = NFS4_OP_ILLEGAL;
 	key.so_refcount = 1;
-#if 0
-	/* WAITING FOR COMMUNITY FIX */
-	/* setting lock owner confirmed */
-	if (type == STATE_LOCK_OWNER_NFSV4)
-		key.so_owner.so_nfs4_owner.so_confirmed = 1;
-#endif
+	key.so_owner.so_nfs4_owner.so_confirmed = confirm;
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		char str[LOG_BUFF_LEN] = "\0";

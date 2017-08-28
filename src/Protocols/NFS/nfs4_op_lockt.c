@@ -175,7 +175,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 				       NULL,
 				       0,
 				       NULL,
-				       CARE_ALWAYS);
+				       CARE_ALWAYS, true);
 
 	LogStateOwner("Lock: ", lock_owner);
 
