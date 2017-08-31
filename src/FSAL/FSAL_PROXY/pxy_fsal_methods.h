@@ -111,6 +111,12 @@ fsal_status_t pxy_get_dynamic_info(struct fsal_export *,
 fsal_status_t pxy_wire_to_host(struct fsal_export *, fsal_digesttype_t,
 				 struct gsh_buffdesc *, int);
 
+struct state_t *pxy_alloc_state(struct fsal_export *exp_hdl,
+				enum state_type state_type,
+				struct state_t *related_state);
+
+void pxy_free_state(struct fsal_export *exp_hdl, struct state_t *state);
+
 int pxy_close_thread(void);
 
 #endif

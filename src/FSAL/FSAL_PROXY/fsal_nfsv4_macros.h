@@ -166,35 +166,22 @@ do {  \
 	argcompound.argarray.argarray_len += 1;			\
 } while (0)
 
-#define COMPOUNDV4_ARG_ADD_OP_COMPOUND_CLOSE(opcnt, argarray, oo_seqid) \
-do { \
-	nfs_argop4 *op = argarray + opcnt; opcnt++;		\
-	op->argop = NFS4_OP_CLOSE;				\
-	op->nfs_argop4_u.opclose.seqid = oo_seqid;		\
-	op->nfs_argop4_u.opclose.open_stateid.seqid = 1;	\
-	memset(op->nfs_argop4_u.opclose.open_stateid.other, 0,\
-	       sizeof(op->nfs_argop4_u.opclose.open_stateid.other)); \
-} while (0)
-
 #define COMPOUNDV4_ARG_ADD_OP_CLOSE_4_1(opcnt, argarray, __stateid)	\
 do { \
 	nfs_argop4 *op = argarray + opcnt; opcnt++;		\
 	op->argop = NFS4_OP_CLOSE;				\
 	op->nfs_argop4_u.opclose.open_stateid.seqid		\
-		= __stateid->seqid;				\
+		= __stateid.seqid;				\
 	memcpy(op->nfs_argop4_u.opclose.open_stateid.other,	\
-	       __stateid->other, 12);				\
+	       __stateid.other, 12);				\
 } while (0)
 
-#define COMPOUNDV4_ARG_ADD_OP_CLOSE(opcnt, argarray, __stateid, oo_seqid) \
+#define COMPOUNDV4_ARG_ADD_OP_CLOSE_4_1_STATELESS(opcnt, argarray)\
 do { \
 	nfs_argop4 *op = argarray + opcnt; opcnt++;		\
 	op->argop = NFS4_OP_CLOSE;				\
-	op->nfs_argop4_u.opclose.seqid = oo_seqid;		\
-	op->nfs_argop4_u.opclose.open_stateid.seqid		\
-		= __stateid->seqid;				\
-	memcpy(op->nfs_argop4_u.opclose.open_stateid.other,	\
-	       __stateid->other, 12);				\
+	memset(&op->nfs_argop4_u.opclose.open_stateid, 0,	\
+	       sizeof(stateid4));				\
 } while (0)
 
 #define COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argarray, bitmap) \
@@ -204,19 +191,21 @@ do { \
 	op->nfs_argop4_u.opgetattr.attr_request = bitmap;	\
 } while (0)
 
-#define COMPOUNDV4_ARG_ADD_OP_SETATTR(opcnt, argarray, inattr) \
+#define COMPOUNDV4_ARG_ADD_OP_SETATTR(opcnt, argarray, inattr, __other)	\
+do { \
+	nfs_argop4 *op = argarray + opcnt; opcnt++;			\
+	op->argop = NFS4_OP_SETATTR;					\
+	op->nfs_argop4_u.opsetattr.stateid.seqid = 0;			\
+	memcpy(op->nfs_argop4_u.opsetattr.stateid.other, __other,	\
+	       sizeof(op->nfs_argop4_u.opsetattr.stateid.other));	\
+	op->nfs_argop4_u.opsetattr.obj_attributes = inattr;		\
+} while (0)
+
+#define COMPOUNDV4_ARG_ADD_OP_SETATTR_STATELESS(opcnt, argarray, inattr)\
 do { \
 	nfs_argop4 *op = argarray + opcnt; opcnt++;			\
 	op->argop = NFS4_OP_SETATTR;					\
 	memset(&op->nfs_argop4_u.opsetattr.stateid, 0, sizeof(stateid4)); \
-	op->nfs_argop4_u.opsetattr.obj_attributes = inattr;		\
-} while (0)
-
-#define COMPOUNDV4_ARG_ADD_OP_SETATTR_BYPASS(opcnt, argarray, inattr)	\
-do { \
-	nfs_argop4 *op = argarray + opcnt; opcnt++;			\
-	op->argop = NFS4_OP_SETATTR;					\
-	memset(&op->nfs_argop4_u.opsetattr.stateid, 0xff, sizeof(stateid4)); \
 	op->nfs_argop4_u.opsetattr.obj_attributes = inattr;		\
 } while (0)
 
@@ -435,7 +424,20 @@ do { \
 	argcompound.argarray.argarray_len += 1;				\
 } while (0)
 
-#define COMPOUNDV4_ARG_ADD_OP_READ(opcnt, argarray, inoffset, incount) \
+#define COMPOUNDV4_ARG_ADD_OP_READ(opcnt, argarray, inoffset, incount,	\
+				   __other)				\
+do { \
+	nfs_argop4 *op = argarray+opcnt; opcnt++;			\
+	op->argop = NFS4_OP_READ;					\
+	op->nfs_argop4_u.opread.stateid.seqid = 0;			\
+	memcpy(op->nfs_argop4_u.opread.stateid.other, __other,	\
+	       sizeof(op->nfs_argop4_u.opread.stateid.other));		\
+	op->nfs_argop4_u.opread.offset = inoffset;			\
+	op->nfs_argop4_u.opread.count  = incount;			\
+} while (0)
+
+#define COMPOUNDV4_ARG_ADD_OP_READ_STATELESS(opcnt, argarray, inoffset,	\
+					     incount)			\
 do { \
 	nfs_argop4 *op = argarray+opcnt; opcnt++;			\
 	op->argop = NFS4_OP_READ;					\
@@ -453,8 +455,22 @@ do { \
 	op->nfs_argop4_u.opread.count  = incount;			\
 } while (0)
 
-#define COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argarray, inoffset, inbuf, inlen, \
-				    instable) \
+#define COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argarray, inoffset, inbuf,	\
+				    inlen, instable, __other)		\
+do { \
+	nfs_argop4 *op = argarray+opcnt; opcnt++;			\
+	op->argop = NFS4_OP_WRITE;					\
+	op->nfs_argop4_u.opwrite.stable = instable;			\
+	op->nfs_argop4_u.opread.stateid.seqid = 0;			\
+	memcpy(op->nfs_argop4_u.opwrite.stateid.other, __other,		\
+	       sizeof(op->nfs_argop4_u.opwrite.stateid.other));		\
+	op->nfs_argop4_u.opwrite.offset = inoffset;			\
+	op->nfs_argop4_u.opwrite.data.data_val = inbuf;			\
+	op->nfs_argop4_u.opwrite.data.data_len = inlen;			\
+} while (0)
+
+#define COMPOUNDV4_ARG_ADD_OP_WRITE_STATELESS(opcnt, argarray, inoffset,\
+					      inbuf, inlen, instable)	\
 do { \
 	nfs_argop4 *op = argarray+opcnt; opcnt++;			\
 	op->argop = NFS4_OP_WRITE;					\

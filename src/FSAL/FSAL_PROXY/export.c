@@ -148,6 +148,8 @@ void pxy_export_ops_init(struct export_ops *ops)
 	ops->fs_supported_attrs = pxy_get_supported_attrs;
 	ops->fs_umask = pxy_get_umask;
 	ops->fs_xattr_access_rights = pxy_get_xattr_access_rights;
+	ops->alloc_state = pxy_alloc_state;
+	ops->free_state = pxy_free_state;
 };
 
 /* Here and not static because proxy.c needs this function
