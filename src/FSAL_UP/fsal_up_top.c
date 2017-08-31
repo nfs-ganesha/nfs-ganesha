@@ -458,7 +458,6 @@ state_status_t layoutrecall(const struct fsal_up_vector *vec,
 			/* The export, owner, or state_t has gone stale,
 			 * skip this entry
 			 */
-			gsh_free(layout->lor_fh.nfs_fh4_val);
 			gsh_free(cb_data);
 			continue;
 		}
@@ -819,6 +818,7 @@ static void layoutrecall_one_call(void *arg)
 						      circumstance_revoke,
 						      state, cb_data->segment,
 						      0, NULL, &deleted);
+				free_layoutrec(&cb_data->arg);
 				gsh_free(cb_data);
 			}
 		} else {
