@@ -179,6 +179,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	    container_of(fsal_hdl, struct gpfs_fsal_module, fsal);
 	int rc;
 
+	(void) prepare_for_stats(fsal_hdl);
 	gpfs_me->fs_info = default_gpfs_info;  /** get a copy of the defaults */
 
 	(void) load_config_from_parse(config_struct, &gpfs_param,
@@ -261,6 +262,8 @@ MODULE_INIT void gpfs_init(void)
 	myself->m_ops.support_ex = gpfs_support_ex;
 	myself->m_ops.getdeviceinfo = getdeviceinfo;
 	myself->m_ops.fs_da_addr_size = fs_da_addr_size;
+	myself->m_ops.fsal_extract_stats = fsal_gpfs_extract_stats;
+	myself->m_ops.fsal_reset_stats = fsal_gpfs_reset_stats;
 }
 
 /** @fn MODULE_FINI void gpfs_unload(void)

@@ -49,6 +49,9 @@ struct flock
 #define GPFS_DEVNAMEX "/dev/ss0"  /* Must be the same as GPFS_DEVNAME */
 #define kGanesha 140             /* Must be the same as Ganesha in enum kxOps */
 
+/* If any new op supported with value less than 100, update below */
+#define GPFS_MIN_OP_NUM           100
+
 #define OPENHANDLE_GET_VERSION    100
 #define OPENHANDLE_GET_VERSION2   1002
 #define OPENHANDLE_NAME_TO_HANDLE 101
@@ -100,6 +103,16 @@ struct flock
 #define OPENHANDLE_TRACE_ME       150
 #define OPENHANDLE_QUOTA          151
 #define OPENHANDLE_FS_LOCATIONS   152
+
+/* If there is any change in above constants, then update below values.
+ * Currently ignoring opcode 1002 */
+#define GPFS_MAX_OP_NUM           152
+#define GPFS_TOTAL_OPS             51 /* Total ops considered for stats */
+#define GPFS_STAT_NO_OP_1           3
+#define GPFS_STAT_NO_OP_2           4
+#define GPFS_STAT_NO_OP_3           5
+#define GPFS_STAT_MAX_OPS          54 /* Size of stats array 51+3 */
+#define GPFS_STAT_PH_OP            53 /* Placeholder for unaccounted stats */
 
 struct trace_arg
 {
@@ -742,5 +755,7 @@ struct quotactl_arg
 #ifdef __cplusplus
 }
 #endif
+
+extern struct fsal_stats gpfs_stats;
 
 #endif /* H_GPFS_NFS */
