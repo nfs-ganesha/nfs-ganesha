@@ -1114,7 +1114,6 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 					   rpc_call_hook hook, void *arg,
 					   uint32_t flags)
 {
-	char *fh = NULL;
 	enum recall_resp_action resp_act;
 	nfsstat4 rc = NFS4_OK;
 	struct delegrecall_context *deleg_ctx = arg;
@@ -1122,6 +1121,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	struct fsal_obj_handle *obj = NULL;
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
+	CB_RECALL4args *opcbrecall;
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
 		 (hook == RPC_CALL_COMPLETE) ? "Success" : "Failed");
@@ -1151,8 +1151,6 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	switch (hook) {
 	case RPC_CALL_COMPLETE:
 		LogMidDebug(COMPONENT_NFS_CB, "call result: %d", call->stat);
-		fh = call->cbt.v_u.v4.args.argarray.argarray_val->
-				nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
 		if (call->stat != RPC_SUCCESS) {
 			LogEvent(COMPONENT_NFS_CB,
 				 "Call stat: %d, marking CB channel down",
@@ -1215,10 +1213,14 @@ out_free_drc:
 	free_delegrecall_context(deleg_ctx);
 
 out_free:
+	if (deleg_ctx->drc_clid->cid_minorversion == 0)
+		opcbrecall = &call->cbt.v_u.v4.args.argarray.argarray_val[0]
+				.nfs_cb_argop4_u.opcbrecall;
+	else
+		opcbrecall = &call->cbt.v_u.v4.args.argarray.argarray_val[1]
+				.nfs_cb_argop4_u.opcbrecall;
 
-	fh = call->cbt.v_u.v4.args.argarray.argarray_val->
-				nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val;
-	gsh_free(fh);
+	nfs4_freeFH(&opcbrecall->fh);
 	free_rpc_call(call);
 
 	if (state != NULL)
@@ -1242,9 +1244,8 @@ void delegrecall_one(struct fsal_obj_handle *obj,
 		     struct state_t *state,
 		     struct delegrecall_context *p_cargs)
 {
-	rpc_call_channel_t *chan;
-	rpc_call_t *call = NULL;
-	nfs_cb_argop4 argop[1];
+	int ret;
+	nfs_cb_argop4 argop;
 	struct cf_deleg_stats *clfl_stats;
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -1266,66 +1267,26 @@ void delegrecall_one(struct fsal_obj_handle *obj,
 
 	inc_recalls(p_cargs->drc_clid->gsh_client);
 
-	/* Attempt a recall only if channel state is UP */
-	if (get_cb_chan_down(p_cargs->drc_clid)) {
-		LogCrit(COMPONENT_NFS_CB,
-			"Call back channel down, not issuing a recall");
-		goto out;
-	}
-
-	chan = nfs_rpc_get_chan(p_cargs->drc_clid, NFS_RPC_FLAG_NONE);
-	if (!chan) {
-		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
-		/* TODO: move this to nfs_rpc_get_chan ? */
-		set_cb_chan_down(p_cargs->drc_clid, true);
-		goto out;
-	}
-	if (!chan->clnt) {
-		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
-		set_cb_chan_down(p_cargs->drc_clid, true);
-		goto out;
-	}
-	/* allocate a new call--freed in completion hook */
-	call = alloc_rpc_call();
-
-	call->chan = chan;
-
-	/* setup a compound */
-	cb_compound_init_v4(&call->cbt, 1, 0,
-			    p_cargs->drc_clid->cid_cb.v40.cb_callback_ident,
-			    "brrring!!!", 10);
-
-	argop->argop = NFS4_OP_CB_RECALL;
-	COPY_STATEID(&argop->nfs_cb_argop4_u.opcbrecall.stateid, state);
-	argop->nfs_cb_argop4_u.opcbrecall.truncate = false;
+	argop.argop = NFS4_OP_CB_RECALL;
+	COPY_STATEID(&argop.nfs_cb_argop4_u.opcbrecall.stateid, state);
+	argop.nfs_cb_argop4_u.opcbrecall.truncate = false;
 
 	/* Convert it to a file handle */
-	if (!nfs4_FSALToFhandle(true, &argop->nfs_cb_argop4_u.opcbrecall.fh,
+	if (!nfs4_FSALToFhandle(true, &argop.nfs_cb_argop4_u.opcbrecall.fh,
 				obj, p_cargs->drc_exp)) {
 		LogCrit(COMPONENT_FSAL_UP,
 			"nfs4_FSALToFhandle failed, can not process recall");
 		goto out;
 	}
 
-	/* add ops, till finished */
-	cb_compound_add_op(&call->cbt, argop);
-
-	/* set completion hook */
-	call->call_hook = delegrecall_completion_func;
-
-	/* call it (here, in current thread context)
-	   ret is always 0 for async calls, might change in future */
-	if (nfs_rpc_submit_call(call, p_cargs, NFS_RPC_CALL_NONE) == 0)
+	ret = nfs_rpc_cb_single(p_cargs->drc_clid, &argop, &state->state_refer,
+				delegrecall_completion_func, p_cargs);
+	if (ret == 0)
 		return;
-
 out:
-
+	LogDebug(COMPONENT_FSAL_UP, "nfs_rpc_cb_single returned %d", ret);
 	inc_failed_recalls(p_cargs->drc_clid->gsh_client);
-
-	nfs4_freeFH(&argop->nfs_cb_argop4_u.opcbrecall.fh);
-
-	if (call)
-		free_rpc_call(call);
+	nfs4_freeFH(&argop.nfs_cb_argop4_u.opcbrecall.fh);
 
 	if (!eval_deleg_revoke(state) &&
 	    !schedule_delegrecall_task(p_cargs, 1)) {
@@ -1339,8 +1300,7 @@ out:
 	if (!str_valid)
 		display_stateid(&dspbuf, state);
 
-	LogCrit(COMPONENT_STATE, "Delegation will be revoked for %s",
-		str);
+	LogCrit(COMPONENT_STATE, "Delegation will be revoked for %s", str);
 
 	p_cargs->drc_clid->num_revokes++;
 	inc_revokes(p_cargs->drc_clid->gsh_client);
