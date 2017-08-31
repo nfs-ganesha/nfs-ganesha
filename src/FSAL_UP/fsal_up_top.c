@@ -777,7 +777,7 @@ static void layoutrecall_one_call(void *arg)
 		code = nfs_rpc_v41_single(cb_data->client, &cb_data->arg,
 					  &state->state_refer,
 					  layoutrec_completion,
-					  cb_data, free_layoutrec);
+					  cb_data);
 
 		if (code != 0) {
 			/**
@@ -938,7 +938,7 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 	       sizeof(arg->notify_del.ndd_deviceid));
 	code =
 	    nfs_rpc_v41_single(clientid, &arg->arg, NULL, notifydev_completion,
-			       &arg->arg, NULL);
+			       &arg->arg);
 	if (code != 0)
 		gsh_free(arg);
 

@@ -1202,10 +1202,6 @@ static void release_cb_slot(nfs41_session_t *session, slotid4 slot, bool sent)
  * @param[in] refer          Referral tracking info (or NULL)
  * @param[in] completion     Completion function for this operation
  * @param[in] completion_arg Argument provided to completion hook
- * @param[in] free_op        Function to free elements of the op (may be
- *                           NULL.) Only called on error, so it should
- *                           also be called explicitly from the completion
- *                           function.
  *
  * @return POSIX error codes.
  */
@@ -1213,8 +1209,7 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       struct state_refer *refer,
 		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
 					     void *arg, uint32_t flags),
-		       void *completion_arg,
-		       void (*free_op)(nfs_cb_argop4 *op))
+		       void *completion_arg)
 {
 	struct glist_head *glist;
 	nfs41_session_t *session;
