@@ -766,6 +766,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid, uint32_t flags)
 
 		if (session->flags & session_bc_up)
 			return &session->cb_chan;
+	/**@ todo ??? take reference to found chan */
 	/**@ todo ??? pthread_mutex_unlock(&found->cid_mutex); */
 	}
 
@@ -1182,30 +1183,7 @@ static void release_cb_slot(nfs41_session_t *session, slotid4 slot, bool sent)
 	PTHREAD_MUTEX_unlock(&session->cb_mutex);
 }
 
-/**
- * @brief Send v4.1 CB_COMPOUND with a single operation
- *
- * This actually sends two opearations, a CB_SEQUENCE and the supplied
- * operation.  It works as a convenience function to handle the
- * details of CB_SEQUENCE management, finding a connection with a
- * working back channel, and so forth.
- *
- * @note This should work for most practical purposes, but is not
- * ideal.  What we ought to have is a per-clientid queue that
- * operations can be submitted to that will be sent when a
- * back-channel is re-established, with a per-session queue for
- * operations that were sent but had the back-channel fail before the
- * response was received.
- *
- * @param[in] clientid       Client record
- * @param[in] op             The operation to perform
- * @param[in] refer          Referral tracking info (or NULL)
- * @param[in] completion     Completion function for this operation
- * @param[in] completion_arg Argument provided to completion hook
- *
- * @return POSIX error codes.
- */
-int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
+static int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       struct state_refer *refer,
 		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
 					     void *arg, uint32_t flags),
@@ -1214,9 +1192,6 @@ int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 	struct glist_head *glist;
 	nfs41_session_t *session;
 	int scan;
-
-	if (clientid->cid_minorversion == 0)
-		return EINVAL;
 
 	for (scan = 0; scan < 2; ++scan) {
 		/**@ todo ??? pthread_mutex_lock(&found->cid_mutex); */
@@ -1313,4 +1288,83 @@ enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *clientid)
 	}
 
 	return stat;
+}
+
+static int nfs_rpc_v40_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
+		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
+					     void *arg, uint32_t flags),
+		       void *completion_arg)
+{
+	int rc = ENOTCONN;
+	rpc_call_t *call = NULL;
+	rpc_call_channel_t *chan;
+
+	/* Attempt a recall only if channel state is UP */
+	if (get_cb_chan_down(clientid)) {
+		LogCrit(COMPONENT_NFS_CB,
+			"Call back channel down, not issuing a recall");
+		goto out;
+	}
+
+	chan = nfs_rpc_get_chan(clientid, NFS_RPC_FLAG_NONE);
+	if (!chan) {
+		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
+		/* TODO: move this to nfs_rpc_get_chan ? */
+		set_cb_chan_down(clientid, true);
+		goto out;
+	}
+	if (!chan->clnt) {
+		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
+		set_cb_chan_down(clientid, true);
+		goto out;
+	}
+
+	call = alloc_rpc_call();
+	call->chan = chan;
+	cb_compound_init_v4(&call->cbt, 1, 0,
+			    clientid->cid_cb.v40.cb_callback_ident, NULL, 0);
+	cb_compound_add_op(&call->cbt, op);
+	call->call_hook = completion;
+
+	rc = nfs_rpc_submit_call(call, completion_arg, NFS_RPC_CALL_NONE);
+	if (rc == 0)
+		return 0;
+out:
+	if (call)
+		free_rpc_call(call);
+	return rc;
+}
+
+/**
+ * @brief Send CB_COMPOUND with a single operation
+ *
+ * In the case of v4.1+, this actually sends two opearations, a CB_SEQUENCE
+ * and the supplied operation.  It works as a convenience function to handle
+ * the details of callback management, finding a connection with a working
+ * back channel, and so forth.
+ *
+ * @note This should work for most practical purposes, but is not
+ * ideal.  What we ought to have is a per-clientid queue that
+ * operations can be submitted to that will be sent when a
+ * back-channel is re-established, with a per-session queue for
+ * operations that were sent but had the back-channel fail before the
+ * response was received.
+ *
+ * @param[in] clientid       Client record
+ * @param[in] op             The operation to perform
+ * @param[in] refer          Referral tracking info (or NULL)
+ * @param[in] completion     Completion function for this operation
+ * @param[in] c_arg          Argument provided to completion hook
+ *
+ * @return POSIX error codes.
+ */
+int nfs_rpc_cb_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
+		       struct state_refer *refer,
+		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
+					     void *arg, uint32_t flags),
+		       void *c_arg)
+{
+	if (clientid->cid_minorversion == 0)
+		return nfs_rpc_v40_single(clientid, op, completion, c_arg);
+	return nfs_rpc_v41_single(clientid, op, refer, completion, c_arg);
 }

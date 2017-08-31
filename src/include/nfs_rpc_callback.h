@@ -148,7 +148,7 @@ int32_t nfs_rpc_submit_call(rpc_call_t *call, void *completion_arg,
 /* Dispatch method to process a (queued) call */
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
 
-int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
+int nfs_rpc_cb_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       struct state_refer *refer,
 		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
 					     void *arg, uint32_t flags),

@@ -774,7 +774,7 @@ static void layoutrecall_one_call(void *arg)
 		root_op_context.req_ctx.ctx_export = export;
 		root_op_context.req_ctx.fsal_export = export->fsal_export;
 
-		code = nfs_rpc_v41_single(cb_data->client, &cb_data->arg,
+		code = nfs_rpc_cb_single(cb_data->client, &cb_data->arg,
 					  &state->state_refer,
 					  layoutrec_completion,
 					  cb_data);
@@ -936,9 +936,8 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 	memcpy(arg->notify_del.ndd_deviceid,
 	       &devicenotify->devid,
 	       sizeof(arg->notify_del.ndd_deviceid));
-	code =
-	    nfs_rpc_v41_single(clientid, &arg->arg, NULL, notifydev_completion,
-			       &arg->arg);
+	code = nfs_rpc_cb_single(clientid, &arg->arg, NULL,
+				 notifydev_completion, &arg->arg);
 	if (code != 0)
 		gsh_free(arg);
 
