@@ -1063,7 +1063,7 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 	/* Get a usable file descriptor */
 	status = find_fd(&glock_args.lfd, obj_hdl, bypass, state,
-			 openflags, &has_lock, &closefd, false);
+			 openflags, &has_lock, &closefd, true);
 
 	glock_args.flock.l_len = req_lock->lock_length;
 	glock_args.flock.l_start = req_lock->lock_start;
