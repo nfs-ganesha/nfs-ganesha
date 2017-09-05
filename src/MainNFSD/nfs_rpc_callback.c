@@ -1239,8 +1239,7 @@ static int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
  * @brief Free information associated with any 'single' call
  */
 
-void nfs41_complete_single(rpc_call_t *call, rpc_call_hook hook, void *arg,
-			   uint32_t flags)
+void nfs41_release_single(rpc_call_t *call)
 {
 	release_cb_slot(call->chan->source.session,
 			call->cbt.v_u.v4.args.argarray.argarray_val[0]

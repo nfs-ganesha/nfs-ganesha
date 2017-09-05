@@ -153,8 +153,7 @@ int nfs_rpc_cb_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
 					     void *arg, uint32_t flags),
 		       void *completion_arg);
-void nfs41_complete_single(rpc_call_t *call, rpc_call_hook hook, void *arg,
-			   uint32_t flags);
+void nfs41_release_single(rpc_call_t *call);
 enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *);
 
 #endif /* !NFS_RPC_CALLBACK_H */

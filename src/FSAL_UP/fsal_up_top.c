@@ -565,7 +565,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		 * the clientid in cb_data.
 		 */
 		free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
-		nfs41_complete_single(call, hook, cb_data, flags);
+		nfs41_release_single(call);
 		gsh_free(cb_data);
 		goto out;
 	} else if (call->cbt.v_u.v4.res.status == NFS4ERR_DELAY) {
@@ -590,7 +590,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 
 		/* We don't free the argument here, because we'll be
 		   re-using that to make the queued call. */
-		nfs41_complete_single(call, hook, cb_data, flags);
+		nfs41_release_single(call);
 		delayed_submit(layoutrecall_one_call, cb_data, delay);
 		goto out;
 	}
@@ -651,7 +651,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 	}
 
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
-	nfs41_complete_single(call, hook, cb_data, flags);
+	nfs41_release_single(call);
 	gsh_free(cb_data);
 
 out:
