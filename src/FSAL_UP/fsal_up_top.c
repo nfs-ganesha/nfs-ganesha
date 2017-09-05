@@ -1213,15 +1213,17 @@ out_free_drc:
 	free_delegrecall_context(deleg_ctx);
 
 out_free:
-	if (deleg_ctx->drc_clid->cid_minorversion == 0)
+	if (deleg_ctx->drc_clid->cid_minorversion == 0) {
 		opcbrecall = &call->cbt.v_u.v4.args.argarray.argarray_val[0]
 				.nfs_cb_argop4_u.opcbrecall;
-	else
+		nfs4_freeFH(&opcbrecall->fh);
+		free_rpc_call(call);
+	} else {
 		opcbrecall = &call->cbt.v_u.v4.args.argarray.argarray_val[1]
 				.nfs_cb_argop4_u.opcbrecall;
-
-	nfs4_freeFH(&opcbrecall->fh);
-	free_rpc_call(call);
+		nfs4_freeFH(&opcbrecall->fh);
+		nfs41_release_single(call);
+	}
 
 	if (state != NULL)
 		dec_state_t_ref(state);
