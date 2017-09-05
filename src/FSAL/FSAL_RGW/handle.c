@@ -290,70 +290,6 @@ int rgw_fsal_dirent_cmp(
 }
 
 /**
- * @brief Create a regular file
- *
- * This function creates an empty, regular file.
- *
- * @param[in]     dir_hdl    Directory in which to create the file
- * @param[in]     name       Name of file to create
- * @param[in]     attrs_in   Attributes of newly created file
- * @param[in,out] obj_hdl    Handle for newly created file
- * @param[in,out] attrs_out  Optional attributes for newly created object
- *
- * @return FSAL status.
- */
-
-static fsal_status_t rgw_fsal_create(struct fsal_obj_handle *dir_hdl,
-				const char *name,
-				struct attrlist *attrs_in,
-				struct fsal_obj_handle **obj_hdl,
-				struct attrlist *attrs_out)
-{
-	int rc;
-	struct rgw_file_handle *rgw_fh;
-	struct rgw_handle *obj;
-	struct stat st;
-
-	struct rgw_export *export =
-	    container_of(op_ctx->fsal_export, struct rgw_export, export);
-
-	struct rgw_handle *dir = container_of(dir_hdl, struct rgw_handle,
-					      handle);
-
-	LogFullDebug(COMPONENT_FSAL,
-		"%s enter dir_hdl %p name %s", __func__, dir_hdl, name);
-
-	memset(&st, 0, sizeof(struct stat));
-
-	st.st_uid = op_ctx->creds->caller_uid;
-	st.st_gid = op_ctx->creds->caller_gid;
-	st.st_mode = fsal2unix_mode(attrs_in->mode)
-	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
-
-	uint32_t create_mask =
-		RGW_SETATTR_UID | RGW_SETATTR_GID | RGW_SETATTR_MODE;
-
-	rc = rgw_create(export->rgw_fs, dir->rgw_fh, name, &st, create_mask,
-			&rgw_fh, 0 /* posix flags */, RGW_CREATE_FLAG_NONE);
-	if (rc < 0)
-		return rgw2fsal_error(rc);
-
-	rc = construct_handle(export, rgw_fh, &st, &obj);
-	if (rc < 0) {
-		return rgw2fsal_error(rc);
-	}
-
-	*obj_hdl = &obj->handle;
-
-	if (attrs_out != NULL) {
-		posix2fsal_attributes_all(&st, attrs_out);
-	}
-
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
  * @brief Create a directory
  *
  * This function creates a new directory.
@@ -1662,7 +1598,6 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->release = release;
 	ops->merge = rgw_merge;
 	ops->lookup = lookup;
-	ops->create = rgw_fsal_create;
 	ops->mkdir = rgw_fsal_mkdir;
 	ops->readdir = rgw_fsal_readdir;
 #if HAVE_DIRENT_OFFSETOF
