@@ -1,0 +1,27 @@
+# This file is part of nfs-ganesha.
+#
+# rpc.statd is started by the nfs-lock.service, but that also loads the 'lockd'
+# kernel module in 'ExecStartPre'. The 'lockd' kernel module will register
+# itself as 'nlockmgr' which conflicts with the nfs-ganesha locking
+# implementation.
+#
+# This unit includes all the nfs-lock.service settings and details, but
+# overrides the 'ExecStartPre' and 'ExecStartPost' options.
+#
+# When this unit is started, the original nfs-lock.service is stopped (due to
+# the 'Conflicts' directive). With stopping the nfs-lock.service, 'lockd' gets
+# instructed to unregister 'nlockmgr' from the portmapper.
+#
+# The nfs-ganesha.service depends on this unit.
+#
+
+.include /lib/systemd/system/rpc-statd.service
+
+[Unit]
+Before=nfs-ganesha.service
+Conflicts=nfs-lock.service rpc-statd.service
+
+[Service]
+ExecStartPre=
+ExecStopPost=
+
