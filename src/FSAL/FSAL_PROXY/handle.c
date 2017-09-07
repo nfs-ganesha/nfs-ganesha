@@ -2779,10 +2779,6 @@ static unsigned int hash_nfs_fh4(const nfs_fh4 *fh, unsigned int cookie)
 }
 #endif
 
-/**
- *
- * @param[in] stateid If NULL, anonymous stateid will be set.
- */
 static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 					       const nfs_fh4 *fh,
 					       fattr4 *obj_attributes,
