@@ -414,6 +414,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	ostate = data->current_obj->state_hdl;
 	if (!ostate) {
 		LogFullDebug(COMPONENT_NFS_V4_LOCK, "Could not get file state");
+		resok->delegation.open_delegation4_u.
+			od_whynone.ond_why = WND4_RESOURCE;
 		return;
 	}
 
@@ -451,6 +453,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 		LogDebug(COMPONENT_NFS_V4_LOCK,
 			 "get_delegation call failed to add state with status %s",
 			 state_err_str(state_status));
+		resok->delegation.open_delegation4_u.
+			od_whynone.ond_why = WND4_RESOURCE;
 		return;
 	} else {
 		new_state->state_seqid++;
@@ -470,6 +474,12 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				 state_err_str(state_status));
 			state_del_locked(new_state);
 			dec_state_t_ref(new_state);
+			if (state_status == STATE_LOCK_CONFLICT)
+				resok->delegation.open_delegation4_u.
+					od_whynone.ond_why = WND4_CONTENTION;
+			else
+				resok->delegation.open_delegation4_u.
+					od_whynone.ond_why = WND4_RESOURCE;
 			return;
 		} else {
 			resok->delegation.delegation_type = deleg_type;
@@ -534,7 +544,10 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 	}
 
 	/* This will be updated later if we actually delegate */
-	resok->delegation.delegation_type = OPEN_DELEGATE_NONE;
+	if (clientid->cid_minorversion == 0)
+		resok->delegation.delegation_type = OPEN_DELEGATE_NONE;
+	else
+		resok->delegation.delegation_type = OPEN_DELEGATE_NONE_EXT;
 
 	/* Client doesn't want a delegation. */
 	if (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WANT_NO_DELEG) {
@@ -547,6 +560,8 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 	/* Check if delegations are supported */
 	if (!deleg_supported(data->current_obj, op_ctx->fsal_export,
 			     op_ctx->export_perms, arg_OPEN4->share_access)) {
+		resok->delegation.open_delegation4_u.
+			od_whynone.ond_why = WND4_NOT_SUPP_FTYPE;
 		LogFullDebug(COMPONENT_STATE, "Delegation type not supported.");
 		return;
 	}
@@ -554,7 +569,7 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 	/* Decide if we should delegate, then add it. */
 	if (can_we_grant_deleg(ostate, open_state) &&
 	    should_we_grant_deleg(ostate, clientid, open_state,
-				  arg_OPEN4, owner, &prerecall)) {
+				  arg_OPEN4, resok, owner, &prerecall)) {
 		/* Update delegation open stats */
 		if (ostate->file.fdeleg_stats.fds_num_opens == 0)
 			ostate->file.fdeleg_stats.fds_first_open = time(NULL);

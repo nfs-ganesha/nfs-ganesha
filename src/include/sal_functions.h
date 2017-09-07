@@ -874,7 +874,8 @@ bool deleg_supported(struct fsal_obj_handle *obj,
 bool can_we_grant_deleg(struct state_hdl *ostate, state_t *open_state);
 bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 			   state_t *open_state, OPEN4args *args,
-			   state_owner_t *owner, bool *prerecall);
+			   OPEN4resok *resok, state_owner_t *owner,
+			   bool *prerecall);
 void init_new_deleg_state(union state_data *deleg_state,
 			  open_delegation_type4 sd_type,
 			  nfs_client_id_t *clientid);

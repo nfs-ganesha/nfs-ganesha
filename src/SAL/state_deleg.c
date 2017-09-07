@@ -373,11 +373,14 @@ bool init_deleg_heuristics(struct fsal_obj_handle *obj)
  * @param[in] ostate File state the delegation will be on.
  * @param[in] client Client that would own the delegation.
  * @param[in] open_state The open state for the inode to be delegated.
+ * @param[in/out] resok pointer to resok (for setting ond_why, primarily)
+ * @param[in] owner state owner
  * @param[out] prerecall flag for reclaims.
  */
 bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 			   state_t *open_state, OPEN4args *args,
-			   state_owner_t *owner, bool *prerecall)
+			   OPEN4resok *resok, state_owner_t *owner,
+			   bool *prerecall)
 {
 	/* specific file, all clients, stats */
 	struct file_deleg_stats *file_stats = &ostate->file.fdeleg_stats;
@@ -396,8 +399,11 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	    || !(op_ctx->export_perms->options & EXPORT_OPTION_DELEGATIONS)
 	    || (!owner->so_owner.so_nfs4_owner.so_confirmed
 		&& claim == CLAIM_NULL)
-	    || claim == CLAIM_DELEGATE_CUR)
+	    || claim == CLAIM_DELEGATE_CUR) {
+		resok->delegation.open_delegation4_u.
+			od_whynone.ond_why = WND4_NOT_SUPP_FTYPE;
 		return false;
+	}
 
 	/* set the pre-recall flag for reclaims if the server does not want the
 	 * delegation to remain in force */
@@ -411,6 +417,8 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 			*prerecall = true;
 			return true;
 		default:
+			resok->delegation.open_delegation4_u.
+				od_whynone.ond_why = WND4_RESOURCE;
 			return false;
 		}
 	} else {
@@ -432,12 +440,18 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	 * the recall.
 	 */
 	if (file_stats->fds_last_recall != 0 &&
-	    time(NULL) - file_stats->fds_last_recall < RECALL2DELEG_TIME)
+	    time(NULL) - file_stats->fds_last_recall < RECALL2DELEG_TIME) {
+		resok->delegation.open_delegation4_u.
+			od_whynone.ond_why = WND4_CONTENTION;
 		return false;
+	}
 
 	/* Check if this is a misbehaving or unreliable client */
-	if (client->num_revokes > 2) /* more than 2 revokes */
+	if (client->num_revokes > 2) { /* more than 2 revokes */
+		resok->delegation.open_delegation4_u.
+			od_whynone.ond_why = WND4_RESOURCE;
 		return false;
+	}
 
 	LogDebug(COMPONENT_STATE, "Let's delegate!!");
 	return true;
