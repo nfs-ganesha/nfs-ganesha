@@ -1128,16 +1128,6 @@ void nfs_rpc_dispatch_threads(pthread_attr_t *attr_thr)
 		N_EVENT_CHAN);
 }
 
-void nfs_rpc_dispatch_stop(void)
-{
-	int ix;
-
-	for (ix = 0; ix < N_EVENT_CHAN; ++ix) {
-		svc_rqst_thrd_signal(rpc_evchan[ix].chan_id,
-				     SVC_RQST_SIGNAL_SHUTDOWN);
-	}
-}
-
 /**
  * @brief Rendezvous callout.  This routine will be called by TI-RPC
  *        after newxprt has been accepted.

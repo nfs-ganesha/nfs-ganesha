@@ -416,9 +416,6 @@ static void do_shutdown(void)
 			 "State asynchronous request system shut down.");
 	}
 
-	LogEvent(COMPONENT_MAIN, "Stopping request listener threads.");
-	nfs_rpc_dispatch_stop();
-
 	LogEvent(COMPONENT_MAIN, "Unregistering ports used by NFS service");
 	/* finalize RPC package */
 	Clean_RPC();
