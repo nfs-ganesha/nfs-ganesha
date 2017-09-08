@@ -1214,16 +1214,6 @@ void nfs_Init_svc(void)
 
 }
 
-void nfs_rpc_dispatch_stop(void)
-{
-	int ix;
-
-	for (ix = 0; ix < EVCHAN_SIZE; ++ix) {
-		svc_rqst_thrd_signal(rpc_evchan[ix].chan_id,
-				     SVC_RQST_SIGNAL_SHUTDOWN);
-	}
-}
-
 /**
  * @brief Rendezvous callout.  This routine will be called by TI-RPC
  *        after newxprt has been accepted.
