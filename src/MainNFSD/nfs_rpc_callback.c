@@ -1191,14 +1191,13 @@ static int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       void *completion_arg)
 {
 	struct glist_head *glist;
-	nfs41_session_t *scur, *session;
 	int ret = ENOTCONN;
 	bool wait = false;
 
 restart:
 	pthread_mutex_lock(&clientid->cid_mutex);
 	glist_for_each(glist, &clientid->cid_cb.v41.cb_session_list) {
-		rpc_call_channel_t *chan = &session->cb_chan;
+		nfs41_session_t *scur, *session;
 		slotid4 slot = 0;
 		slotid4 highest_slot = 0;
 		rpc_call_t *call = NULL;
@@ -1238,8 +1237,6 @@ restart:
 			continue;
 		}
 
-		LogDebug(COMPONENT_NFS_CB, "scur=0x%p session=0x%p",
-					scur, session);
 		assert(session == scur);
 
 		/* Drop mutex since we have a session ref */
@@ -1258,15 +1255,17 @@ restart:
 		 * Tear down channel since there is likely something
 		 * wrong with it.
 		 */
-		LogDebug(COMPONENT_NFS_CB, "nfs_rpc_submit_call_failed: %d",
+		LogDebug(COMPONENT_NFS_CB, "nfs_rpc_submit_call failed: %d",
 				ret);
-		free_single_call(call);
-		release_cb_slot(session, slot, false);
-		PTHREAD_MUTEX_lock(&chan->mtx);
-		_nfs_rpc_destroy_chan(chan);
-		/* session now unusable until bc is reestablished */
+		PTHREAD_MUTEX_lock(&session->cb_chan.mtx);
 		session->flags &= ~session_bc_up;
-		PTHREAD_MUTEX_unlock(&chan->mtx);
+		_nfs_rpc_destroy_chan(&session->cb_chan);
+		/* session now unusable until bc is reestablished */
+		PTHREAD_MUTEX_unlock(&session->cb_chan.mtx);
+
+		free_single_call(call);
+
+		release_cb_slot(session, slot, false);
 		dec_session_ref(session);
 		goto restart;
 	}
