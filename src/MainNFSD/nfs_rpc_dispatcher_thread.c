@@ -1043,17 +1043,6 @@ void Register_program(protos prot, int flag, int vers)
 	}
 }
 
-tirpc_pkg_params ntirpc_pp = {
-	0,
-	0,
-	(mem_format_t)rpc_warnx,
-	gsh_free_size,
-	gsh_malloc__,
-	gsh_malloc_aligned__,
-	gsh_calloc__,
-	gsh_realloc__,
-};
-
 /**
  * @brief Init the svc descriptors for the nfs daemon
  *
@@ -1081,13 +1070,6 @@ void nfs_Init_svc(void)
 #else
 	v6disabled = false;
 #endif
-
-	/* Set TIRPC debug flags */
-	ntirpc_pp.debug_flags = nfs_param.core_param.rpc.debug_flags;
-
-	/* Redirect TI-RPC allocators, log channel */
-	if (!tirpc_control(TIRPC_PUT_PARAMETERS, &ntirpc_pp))
-		LogCrit(COMPONENT_INIT, "Setting nTI-RPC parameters failed");
 #ifdef RPC_VSOCK
 	vsock = NFS_options & CORE_OPTION_NFS_VSOCK;
 #endif

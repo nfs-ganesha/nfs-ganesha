@@ -171,9 +171,6 @@ DRC_UDP_Checksum(bool, default true)
 Parameters affecting the relation with TIRPC:
 --------------------------------------------------------------------------------
 
-RPC_Debug_Flags(uint32, range 0 to UINT32_MAX, default 0)
-    Debug flags for TIRPC.
-
 RPC_Max_Connections(uint32, range 1 to 10000, default 1024)
     Maximum number of connections for TIRPC.
 

@@ -28,6 +28,9 @@ NULL, FATAL, MAJ, CRIT, WARN, EVENT,
 INFO, DEBUG, MID_DEBUG, M_DBG,
 FULL_DEBUG, F_DBG
 
+RPC_Debug_Flags(uint32, range 0 to UINT32_MAX, default 7)
+    Debug flags for TIRPC (default 7 matches log level default EVENT).
+
 LOG { COMPONENTS {} }
 --------------------------------------------------------------------------------
 **Default_log_level(token,default EVENT)**

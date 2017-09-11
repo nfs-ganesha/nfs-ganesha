@@ -92,8 +92,6 @@ NFS_CORE_PARAM {}
 
 	DRC_UDP_Checksum(bool, default true)
 
-	RPC_Debug_Flags(uint32, range 0 to UINT32_MAX, default 0)
-
 	RPC_Max_Connections(uint32, range 1 to 10000, default 1024)
 
 	RPC_Idle_Timeout_S(uint32, range 0 to 60*60, default 300)
@@ -374,6 +372,8 @@ LOG {}
 	Default_log_level(token, values [NULL, FATAL, MAJ, CRIT, WARN, EVENT,
 					 INFO, DEBUG, MID_DEBUG, M_DBG,
 					 FULL_DEBUG, F_DBG], default EVENT)
+
+	RPC_Debug_Flags(uint32, range 0 to UINT32_MAX, default 7)
 
 LOG { COMPONENTS {} }
 ---------------------

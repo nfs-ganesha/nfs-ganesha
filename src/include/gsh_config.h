@@ -145,11 +145,6 @@ typedef enum protos {
 #define DRC_UDP_CHECKSUM true
 
 /**
- * @brief Default value for core_param.rpc.debug_flags
- */
-#define TIRPC_DEBUG_FLAGS 0x0
-
-/**
  * Default value for core_param.rpc.max_send_buffer_size
  */
 #define NFS_DEFAULT_SEND_BUFFER_SIZE 1048576
@@ -312,10 +307,6 @@ typedef struct nfs_core_param {
 	} drc;
 	/** Parameters affecting the relation with TIRPC.   */
 	struct {
-		/** Debug flags for TIRPC.  Defaults to
-		    TIRPC_DEBUG_FLAGS and settable by
-		    RPC_Debug_Flags. */
-		uint32_t debug_flags;
 		/** Maximum number of connections for TIRPC.
 		    Defaults to 1024 and settable by
 		    RPC_Max_Connections. */
