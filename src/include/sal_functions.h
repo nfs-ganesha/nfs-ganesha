@@ -922,9 +922,6 @@ enum share_bypass_modes {
 	SHARE_BYPASS_V3_WRITE
 };
 
-bool state_open_deleg_conflict(struct state_hdl *ostate,
-			       const state_t *open_state);
-
 state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 			       int share_access,
 			       int share_deny,

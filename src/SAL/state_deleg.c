@@ -54,65 +54,6 @@
 #include "nfs_file_handle.h"
 
 /**
- * @brief Check if exiting OPENs would conflict granting a delegation.
- *
- * cache_entry_t state lock must be held at least in read mode while
- * calling this function.
- *
- * @note The state_lock MUST be held for read
- *
- * @param[in] ostate	File state
- * @param[in] state     Open state of current OPEN operation.
- *
- * @return true if granting delegation would conflict with outstanding
- * OPENs.
- */
-bool state_open_deleg_conflict(struct state_hdl *ostate,
-			       const state_t *open_state)
-{
-#if DO_DELEGATION
-/** @todo The counters this checks have been moved into the FSAL, so
- *        this function can't actually check anything.
- */
-	const struct state_share *share = &open_state->state_data.share;
-
-	assert(open_state->state_type == STATE_TYPE_SHARE);
-
-	switch (share->share_access & OPEN4_SHARE_ACCESS_BOTH) {
-	case OPEN4_SHARE_ACCESS_BOTH:
-		/* We would be granting a write delegation. If this is
-		 * the only outstanding OPEN, then we can grant
-		 * write delegation without a conflict.
-		 */
-		if (ostate->file.share_state.share_access_read == 1 &&
-		    ostate->file.share_state.share_access_write == 1) {
-			return false;
-		}
-		break;
-	case OPEN4_SHARE_ACCESS_WRITE:
-		/* We would be granting a write delegation. If this is
-		 * the only outstanding OPEN, then we can grant
-		 * write delegation without a conflict.
-		 */
-		if (ostate->file.share_state.share_access_read == 0 &&
-		    ostate->file.share_state.share_access_write == 1) {
-			return false;
-		}
-		break;
-	case OPEN4_SHARE_ACCESS_READ:
-		/* We would be granting a read delegation. If there is
-		 * no write OPEN, then we can grant read delegation
-		 * without a conflict.
-		 */
-		if (ostate->file.share_state.share_access_write == 0)
-			return false;
-		break;
-	}
-#endif
-	return true;
-}
-
-/**
  * @brief Initialize new delegation state as argument for state_add()
  *
  * Initialize delegation state struct. This is then given as an argument
@@ -155,7 +96,6 @@ state_status_t do_lease_op(struct fsal_obj_handle *obj,
 			  state_owner_t *owner,
 			  fsal_deleg_t deleg)
 {
-#if DO_DELEGATION
 	fsal_status_t fsal_status;
 	state_status_t status;
 
@@ -174,9 +114,6 @@ state_status_t do_lease_op(struct fsal_obj_handle *obj,
 		     state_err_str(status));
 
 	return status;
-#else
-	return STATE_NOT_SUPPORTED;
-#endif
 }
 
 /**
@@ -639,15 +576,6 @@ bool can_we_grant_deleg(struct state_hdl *ostate, state_t *open_state)
 	if (atomic_fetch_uint32_t(&ostate->file.anon_ops) != 0) {
 		LogFullDebug(COMPONENT_STATE,
 			     "Anonymous op in progress, not granting delegation");
-		return false;
-	}
-
-	/* Check for outstanding open state that may conflict with granting
-	 * the delegation
-	 */
-	if (state_open_deleg_conflict(ostate, open_state)) {
-		LogFullDebug(COMPONENT_STATE,
-			     "Conflicting exiting open state, not granting delegation");
 		return false;
 	}
 

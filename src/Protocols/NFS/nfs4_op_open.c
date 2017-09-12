@@ -380,7 +380,6 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 	return NFS4_OK;
 }
 
-#if DO_DELEGATION
 /**
  * @brief Create a new delegation state then get the delegation.
  *
@@ -418,10 +417,6 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 			od_whynone.ond_why = WND4_RESOURCE;
 		return;
 	}
-
-	/* Check if any prior OPENs conflict with granting a delegation */
-	if (state_open_deleg_conflict(ostate, open_state))
-		return;
 
 	/* Record the sequence info */
 	if (data->minorversion > 0) {
@@ -528,7 +523,6 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	dec_state_t_ref(new_state);
 }
 
-/** todo FSF: re-enable delegation when I get more figured out. */
 static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 			  compound_data_t *data, state_owner_t *owner,
 			  state_t *open_state, nfs_client_id_t *clientid)
@@ -580,7 +574,6 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 			       resok, prerecall);
 	}
 }
-#endif
 
 /**
  * @brief NFS4_OP_OPEN create processing for use with extended FSAL API
@@ -1126,11 +1119,7 @@ static void open4_ex(OPEN4args *arg,
 			     (*file_state)->state_data.share.share_deny_prev);
 	}
 
-#if DO_DELEGATION
-	/** todo FSF: re-enable delegation when I get more figured out. */
 	do_delegation(arg, res_OPEN4, data, owner, *file_state, clientid);
-#endif
-
  out:
 
 	/* Release the attributes (may release an inherited ACL) */
