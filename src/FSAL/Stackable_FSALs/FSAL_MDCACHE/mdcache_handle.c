@@ -1655,6 +1655,7 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->io_advise2 = mdcache_io_advise2;
 	ops->commit2 = mdcache_commit2;
 	ops->lock_op2 = mdcache_lock_op2;
+	ops->lease_op2 = mdcache_lease_op2;
 	ops->setattr2 = mdcache_setattr2;
 	ops->close2 = mdcache_close2;
 

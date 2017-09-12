@@ -1394,6 +1394,20 @@ static fsal_status_t lock_op2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
+/* lease_op2
+ * default case not supported
+ */
+
+static fsal_status_t lease_op2(struct fsal_obj_handle *obj_hdl,
+				  struct state_t *state,
+				  void *owner,
+				  fsal_deleg_t deleg)
+{
+	LogCrit(COMPONENT_FSAL,
+		"Invoking unsupported FSAL operation");
+	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+}
+
 /* setattr2
  * default case not supported
  */
@@ -1475,6 +1489,7 @@ struct fsal_obj_ops def_handle_ops = {
 	.io_advise2 = io_advise2,
 	.commit2 = commit2,
 	.lock_op2 = lock_op2,
+	.lease_op2 = lease_op2,
 	.setattr2 = setattr2,
 	.close2 = close2,
 };

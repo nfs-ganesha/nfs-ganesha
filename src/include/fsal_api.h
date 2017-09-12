@@ -2445,6 +2445,23 @@ struct fsal_obj_ops {
 				   fsal_lock_param_t *conflicting_lock);
 
 /**
+ * @brief Acquire or Release delegation
+ *
+ * This functions acquires/releases delegation/lease_lock.
+ *
+ * @param[in]  obj_hdl          File on which to operate
+ * @param[in]  state            state_t to use for this operation
+ * @param[in]  owner            Opaque state owner token
+ * @param[in]  deleg            Requested delegation state
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*lease_op2)(struct fsal_obj_handle *obj_hdl,
+				    struct state_t *state,
+				    void *owner,
+				    fsal_deleg_t deleg);
+
+/**
  * @brief Set attributes on an object
  *
  * This function sets attributes on an object.  Which attributes are
