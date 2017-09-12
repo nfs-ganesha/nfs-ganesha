@@ -1593,7 +1593,11 @@ static void worker_run(struct fridgethr_context *ctx)
 		case NFS_CALL:
 			/* NFSv4 rpc call (callback) */
 			nfs_rpc_dispatch_call(&reqdata->r_u.call, 0);
-			break;
+
+			/* Callback completion functions take care of
+			 * freeing rpc call & reqdata
+			 */
+			return;
 
 #ifdef _USE_9P
 		case _9P_REQUEST:

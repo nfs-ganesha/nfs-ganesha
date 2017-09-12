@@ -841,6 +841,9 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 	state_t *state, *first;
 	struct fsal_obj_handle *obj;
 	bool so_mutex_held;
+	struct gsh_export *export = NULL;
+	struct req_op_context *save_ctx, req_ctx = {0};
+	bool ok;
 
  again:
 	first = NULL;
@@ -878,9 +881,10 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		 * even after state_deleg_revoke releases the reference it
 		 * holds.
 		 */
-		obj = get_state_obj_ref(state);
+		ok = get_state_obj_export_owner_refs(state, &obj, &export,
+						     NULL);
 
-		if (obj == NULL) {
+		if (!ok || obj == NULL) {
 			LogDebug(COMPONENT_STATE,
 				 "Stale state or file");
 			continue;
@@ -893,7 +897,15 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		 * state_del_locked which is called from deleg_revoke.
 		 */
 		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+
+		/* op_ctx may be used by state_del_locked and others */
+		save_ctx = op_ctx;
+		op_ctx = &req_ctx;
+		op_ctx->ctx_export = export;
+		op_ctx->fsal_export = export->fsal_export;
+
 		state_deleg_revoke(obj, state);
+		op_ctx = save_ctx;
 		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 		/* Since we dropped so_mutex, we must restart the loop. */

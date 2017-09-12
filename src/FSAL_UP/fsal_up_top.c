@@ -1122,6 +1122,9 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	CB_RECALL4args *opcbrecall;
+	struct req_op_context *save_ctx = op_ctx, req_ctx = {0};
+	struct gsh_export *export = NULL;
+	bool ret = false;
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
 		 (hook == RPC_CALL_COMPLETE) ? "Success" : "Failed");
@@ -1133,12 +1136,18 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		goto out_free_drc;
 	}
 
-	obj = get_state_obj_ref(state);
+	ret = get_state_obj_export_owner_refs(state, &obj,
+					     &export,
+					     NULL);
 
-	if (obj == NULL) {
+	if (!ret || obj == NULL) {
 		LogDebug(COMPONENT_NFS_CB, "Stale file");
 		goto out_free_drc;
 	}
+
+	op_ctx = &req_ctx;
+	op_ctx->ctx_export = export;
+	op_ctx->fsal_export = export->fsal_export;
 
 	if (isDebug(COMPONENT_NFS_CB)) {
 		char str[LOG_BUFF_LEN] = "\0";
@@ -1228,6 +1237,7 @@ out_free:
 	if (state != NULL)
 		dec_state_t_ref(state);
 
+	op_ctx = save_ctx;
 	return 0; /*Always return zero, the delegation is recalled or revoked */
 }
 
@@ -1334,6 +1344,9 @@ static void delegrevoke_check(void *ctx)
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
+	struct req_op_context *save_ctx = op_ctx, req_ctx = {0};
+	struct gsh_export *export = NULL;
+	bool   ret = false;
 
 	state = nfs4_State_Get_Pointer(deleg_ctx->drc_stateid.other);
 
@@ -1347,12 +1360,19 @@ static void delegrevoke_check(void *ctx)
 		str_valid = true;
 	}
 
-	obj = get_state_obj_ref(state);
+	ret = get_state_obj_export_owner_refs(state, &obj,
+					     &export,
+					     NULL);
 
-	if (obj == NULL) {
+	if (!ret || obj == NULL) {
 		LogDebug(COMPONENT_NFS_CB, "Stale file");
 		goto out;
 	}
+
+	/* op_ctx may be used by state_del_locked and others */
+	op_ctx = &req_ctx;
+	op_ctx->ctx_export = export;
+	op_ctx->fsal_export = export->fsal_export;
 
 	if (eval_deleg_revoke(state)) {
 		if (str_valid)
@@ -1391,6 +1411,8 @@ static void delegrevoke_check(void *ctx)
 
 	if (state != NULL)
 		dec_state_t_ref(state);
+
+	op_ctx = save_ctx;
 }
 
 static void delegrecall_task(void *ctx)
@@ -1398,6 +1420,9 @@ static void delegrecall_task(void *ctx)
 	struct delegrecall_context *deleg_ctx = ctx;
 	struct state_t *state;
 	struct fsal_obj_handle *obj;
+	bool   ret = false;
+	struct req_op_context *save_ctx, req_ctx = {0};
+	struct gsh_export *export = NULL;
 
 	state = nfs4_State_Get_Pointer(deleg_ctx->drc_stateid.other);
 
@@ -1405,15 +1430,25 @@ static void delegrecall_task(void *ctx)
 		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
 		free_delegrecall_context(deleg_ctx);
 	} else {
-		obj = get_state_obj_ref(state);
+		ret = get_state_obj_export_owner_refs(state, &obj,
+						     &export,
+						     NULL);
 
-		if (obj != NULL) {
-			delegrecall_one(obj, state, deleg_ctx);
-
-		} else {
+		if (!ret || obj == NULL) {
 			LogDebug(COMPONENT_NFS_CB,
 				 "Delgation recall skipped due to stale file");
+			goto out;
 		}
+
+		/* op_ctx may be used by state_del_locked and others */
+		save_ctx = op_ctx;
+		op_ctx = &req_ctx;
+		op_ctx->ctx_export = export;
+		op_ctx->fsal_export = export->fsal_export;
+		delegrecall_one(obj, state, deleg_ctx);
+		op_ctx = save_ctx;
+
+out:
 		dec_state_t_ref(state);
 	}
 }
@@ -1456,6 +1491,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 	struct state_t *state;
 	state_owner_t *owner;
 	struct delegrecall_context *drc_ctx;
+	struct req_op_context *save_ctx = op_ctx, req_ctx = {0};
 
 	LogDebug(COMPONENT_FSAL_UP,
 		 "FSAL_UP_DELEG: obj %p type %u",
@@ -1501,6 +1537,11 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 			continue;
 		}
 
+		/* op_ctx may be used by state_del_locked and others */
+		op_ctx = &req_ctx;
+		op_ctx->ctx_export = drc_ctx->drc_exp;
+		op_ctx->fsal_export = drc_ctx->drc_exp->fsal_export;
+
 		drc_ctx->drc_clid = owner->so_owner.so_nfs4_owner.so_clientrec;
 		COPY_STATEID(&drc_ctx->drc_stateid, state);
 		inc_client_id_ref(drc_ctx->drc_clid);
@@ -1527,6 +1568,8 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 		delegrecall_one(obj, state, drc_ctx);
 	}
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+
+	op_ctx = save_ctx;
 	return rc;
 }
 
