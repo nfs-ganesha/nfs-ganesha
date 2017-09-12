@@ -744,8 +744,11 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 	status = find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
 			 &has_lock, &closefd, false);
 
-	if (FSAL_IS_ERROR(status))
-		goto out;
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL,
+			 "find_fd failed %s", msg_fsal_err(status.major));
+		return status;
+	}
 
 	if (info)
 		status = gpfs_read_plus_fd(my_fd, offset, buffer_size,
@@ -755,8 +758,6 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 		status = GPFSFSAL_read(my_fd, offset, buffer_size, buffer,
 					read_amount, end_of_file,
 					export_fd);
-
- out:
 
 	if (closefd)
 		status = fsal_internal_close(my_fd, NULL, 0);
@@ -819,8 +820,9 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
 			 "find_fd failed %s", msg_fsal_err(status.major));
-		goto out;
+		return status;
 	}
+
 	if (info)
 		status = gpfs_write_plus_fd(my_fd, offset,
 				buffer_size, buffer, wrote_amount,
@@ -829,8 +831,6 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 		status = GPFSFSAL_write(my_fd, offset, buffer_size, buffer,
 				wrote_amount, fsal_stable, op_ctx,
 				export_fd);
-
- out:
 
 	if (closefd)
 		fsal_internal_close(my_fd, NULL, 0);
@@ -1049,6 +1049,12 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	status = find_fd(&glock_args.lfd, obj_hdl, bypass, state,
 			 openflags, &has_lock, &closefd, true);
 
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL,
+			 "find_fd failed %s", msg_fsal_err(status.major));
+		return status;
+	}
+
 	glock_args.flock.l_len = req_lock->lock_length;
 	glock_args.flock.l_start = req_lock->lock_start;
 	glock_args.flock.l_whence = SEEK_SET;
@@ -1061,8 +1067,16 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	status = GPFSFSAL_lock_op(export, lock_op, req_lock, conflicting_lock,
 				  &gpfs_sg_arg);
 
-	if (closefd)
-		status = fsal_internal_close(glock_args.lfd, NULL, 0);
+	if (closefd) {
+		fsal_status_t status2;
+
+		status2 = fsal_internal_close(glock_args.lfd, NULL, 0);
+		if (FSAL_IS_ERROR(status2)) {
+			LogEvent(COMPONENT_FSAL,
+				 "fsal close failed, fd:%d, error: %s",
+				 glock_args.lfd, msg_fsal_err(status2.major));
+		}
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
