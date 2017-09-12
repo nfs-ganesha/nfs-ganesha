@@ -759,8 +759,16 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 					read_amount, end_of_file,
 					export_fd);
 
-	if (closefd)
-		status = fsal_internal_close(my_fd, NULL, 0);
+	if (closefd) {
+		fsal_status_t status2;
+
+		status2 = fsal_internal_close(my_fd, NULL, 0);
+		if (FSAL_IS_ERROR(status2)) {
+			LogEvent(COMPONENT_FSAL,
+				 "fsal close failed, fd:%d, error: %s",
+				 my_fd, msg_fsal_err(status2.major));
+		}
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -832,8 +840,16 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 				wrote_amount, fsal_stable, op_ctx,
 				export_fd);
 
-	if (closefd)
-		fsal_internal_close(my_fd, NULL, 0);
+	if (closefd) {
+		fsal_status_t status2;
+
+		status2 = fsal_internal_close(my_fd, NULL, 0);
+		if (FSAL_IS_ERROR(status2)) {
+			LogEvent(COMPONENT_FSAL,
+				 "fsal close failed, fd:%d, error: %s",
+				 my_fd, msg_fsal_err(status2.major));
+		}
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
