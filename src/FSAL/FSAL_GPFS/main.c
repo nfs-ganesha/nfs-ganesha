@@ -76,7 +76,10 @@ static struct fsal_staticfsinfo_t default_gpfs_info = {
 	.xattr_access_rights = 0,
 	.share_support = true,
 	.share_support_owner = false,
+	/* @todo Update lease handling to use new interfaces */
+#if 0
 	.delegations = FSAL_OPTION_FILE_READ_DELEG, /** not working with pNFS */
+#endif
 	.pnfs_mds = true,
 	.pnfs_ds = true,
 	.fsal_trace = true,
