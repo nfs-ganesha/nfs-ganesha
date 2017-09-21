@@ -143,6 +143,7 @@ struct fsal_up_vector {
 
 	/** ready to take upcalls condition */
 	bool up_ready;
+	bool up_cancel;
 	pthread_mutex_t up_mutex;
 	pthread_cond_t up_cond;
 
@@ -322,6 +323,7 @@ int async_delegrecall(struct fridgethr *fr, struct fsal_obj_handle *obj);
 void up_ready_init(struct fsal_up_vector *up_ops);
 void up_ready_set(struct fsal_up_vector *up_ops);
 void up_ready_wait(struct fsal_up_vector *up_ops);
+void up_ready_cancel(struct fsal_up_vector *up_ops);
 
 #endif /* FSAL_UP_H */
 /** @} */
