@@ -686,6 +686,9 @@ glusterfs_free_fs(struct glusterfs_fs *gl_fs)
 
 	atomic_inc_int8_t(&gl_fs->destroy_mode);
 
+	/* Cancel upcall readiness if not yet done */
+	up_ready_cancel((struct fsal_up_vector *)gl_fs->up_ops);
+
 	/* Wait for up_thread to exit */
 	err = pthread_join(gl_fs->up_thread, (void **)&retval);
 
@@ -921,6 +924,8 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		if (params.glvolpath)
 			gsh_free(params.glvolpath);
 
+		if (glfsexport->gl_fs)
+			glusterfs_free_fs(glfsexport->gl_fs);
 		if (glfsexport)
 			gsh_free(glfsexport);
 	}
