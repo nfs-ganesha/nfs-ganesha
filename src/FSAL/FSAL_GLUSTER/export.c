@@ -819,6 +819,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfsexport = NULL;
+	bool fsal_attached = false;
 	struct glexport_params params = {
 		.glvolname = NULL,
 		.glhostname = NULL,
@@ -861,6 +862,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 			op_ctx->ctx_export->fullpath);
 		goto out;
 	}
+	fsal_attached = true;
 
 	glfsexport->mount_path = op_ctx->ctx_export->fullpath;
 	glfsexport->export_path = params.glvolpath;
@@ -924,6 +926,9 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		if (params.glvolpath)
 			gsh_free(params.glvolpath);
 
+		if (fsal_attached)
+			fsal_detach_export(fsal_hdl,
+					   &glfsexport->export.exports);
 		if (glfsexport->gl_fs)
 			glusterfs_free_fs(glfsexport->gl_fs);
 		if (glfsexport)
