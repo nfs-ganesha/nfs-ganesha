@@ -1013,7 +1013,7 @@ void Register_program(protos prot, int flag, int vers)
 				 "Cannot register %s V%d on UDP", tags[prot],
 				 (int)vers);
 
-		if (netconfig_udpv6) {
+		if (!v6disabled && netconfig_udpv6) {
 			LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/UDPv6",
 				tags[prot], (int)vers);
 			if (!UDP_REGISTER(prot, vers, netconfig_udpv6))
@@ -1031,7 +1031,7 @@ void Register_program(protos prot, int flag, int vers)
 				 "Cannot register %s V%d on TCP", tags[prot],
 				 (int)vers);
 
-		if (netconfig_tcpv6) {
+		if (!v6disabled && netconfig_tcpv6) {
 			LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/TCPv6",
 				tags[prot], (int)vers);
 			if (!TCP_REGISTER(prot, vers, netconfig_tcpv6))
