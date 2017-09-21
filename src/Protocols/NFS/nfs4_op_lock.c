@@ -97,6 +97,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	/* Indicate if we let FSAL to handle requests during grace. */
 	bool_t fsal_grace = false;
 	int rc;
+	struct fsal_obj_handle *obj = data->current_obj;
+	bool state_lock_held = false;
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCK handler ----------------------");
@@ -157,7 +159,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		/* Check stateid correctness and get pointer to state */
 		nfs_status = nfs4_Check_Stateid(
 			&arg_LOCK4->locker.locker4_u.open_owner.open_stateid,
-			data->current_obj,
+			obj,
 			&state_open,
 			data,
 			STATEID_SPECIAL_FOR_LOCK,
@@ -204,7 +206,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 		LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
 			"LOCK New lock owner from open owner",
-			data->current_obj, open_owner, &lock_desc);
+			obj, open_owner, &lock_desc);
 
 		/* Check is the clientid is known or not */
 		rc = nfs_client_id_get_confirmed(
@@ -267,7 +269,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		nfs_status = nfs4_Check_Stateid(
 			&arg_LOCK4->locker.locker4_u.lock_owner.lock_stateid,
-			data->current_obj,
+			obj,
 			&lock_state,
 			data,
 			STATEID_SPECIAL_FOR_LOCK,
@@ -343,7 +345,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		seqid = arg_LOCK4->locker.locker4_u.lock_owner.lock_seqid;
 
 		LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
-			"LOCK Existing lock owner", data->current_obj,
+			"LOCK Existing lock owner", obj,
 			lock_owner, &lock_desc);
 
 		/* Get the client for this open owner */
@@ -358,7 +360,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		if (!Check_nfs4_seqid(resp_owner,
 				      seqid,
 				      op,
-				      data->current_obj,
+				      obj,
 				      resp,
 				      lock_tag)) {
 			/* Response is all setup for us and LogDebug
@@ -408,7 +410,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
 			"LOCK failed, SHARE doesn't allow access",
-			data->current_obj, lock_owner, &lock_desc);
+			obj, lock_owner, &lock_desc);
 
 		res_LOCK4->status = NFS4ERR_OPENMODE;
 
@@ -428,7 +430,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		if (!fsal_grace && !arg_LOCK4->reclaim) {
 			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
 			"LOCK failed, non-reclaim while in grace",
-				data->current_obj, resp_owner, &lock_desc);
+				obj, resp_owner, &lock_desc);
 			res_LOCK4->status = NFS4ERR_GRACE;
 			goto out;
 		}
@@ -436,7 +438,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		    && !clientid->cid_allow_reclaim) {
 			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
 				"LOCK failed, invalid reclaim while in grace",
-				data->current_obj, resp_owner, &lock_desc);
+				obj, resp_owner, &lock_desc);
 			res_LOCK4->status = NFS4ERR_NO_GRACE;
 			goto out;
 		}
@@ -444,7 +446,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		if (arg_LOCK4->reclaim) {
 			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
 				"LOCK failed, reclaim while not in grace",
-				data->current_obj, resp_owner, &lock_desc);
+				obj, resp_owner, &lock_desc);
 			res_LOCK4->status = NFS4ERR_NO_GRACE;
 			goto out;
 		}
@@ -474,7 +476,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			res_LOCK4->status = NFS4ERR_RESOURCE;
 			LogLock(COMPONENT_NFS_V4_LOCK, NIV_EVENT,
 				"LOCK failed to create new lock owner",
-				data->current_obj, open_owner, &lock_desc);
+				obj, open_owner, &lock_desc);
 			goto out2;
 		}
 
@@ -487,12 +489,12 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 						 arg_LOCK4->locker.locker4_u.
 						     open_owner.lock_seqid,
 						 op,
-						 data->current_obj,
+						 obj,
 						 resp,
 						 lock_tag)) {
 				LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
 					"LOCK failed to create new lock owner, re-use",
-					data->current_obj,
+					obj,
 					open_owner, &lock_desc);
 				dump_all_locks(
 					"All locks (re-use of lock owner)");
@@ -511,15 +513,18 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			 * there to be such a state if the lock owner was
 			 * previously unknown.
 			 * This handles 4.0 replay locks with an open stateid
-			 * and new_lock_owner == true. It's not required for
-			 * 4.1 (the replay will be caught by the SEQUENCE op),
-			 * and 4.1 can get a concurrent FREE STATEID call
-			 * which would false-positive here and mess it up.
+			 * and new_lock_owner == true. It also handles
+			 * situations where all locks have been released and
+			 * the client is claiming a new lock owner to get a
+			 * new stateid, we will attempt to recycle.
 			 */
-			if (data->minorversion == 0)
-				lock_state = nfs4_State_Get_Obj(
-						data->current_obj,
-						lock_owner);
+			PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+			state_lock_held = true;
+			lock_state = nfs4_State_Get_Obj(obj, lock_owner);
+		} else {
+			/* Take the state_lock now */
+			PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+			state_lock_held = true;
 		}
 
 		if (lock_state == NULL) {
@@ -528,20 +533,20 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			candidate_data.lock.openstate = state_open;
 
 			/* Add the lock state to the lock table */
-			state_status = state_add(data->current_obj,
-						 STATE_TYPE_LOCK,
-						 &candidate_data,
-						 lock_owner,
-						 &lock_state,
-						 data->minorversion > 0 ?
-							&refer : NULL);
+			state_status = state_add_impl(obj,
+						      STATE_TYPE_LOCK,
+						      &candidate_data,
+						      lock_owner,
+						      &lock_state,
+						      data->minorversion > 0 ?
+								&refer : NULL);
 
 			if (state_status != STATE_SUCCESS) {
 				res_LOCK4->status = NFS4ERR_RESOURCE;
 
 				LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
 					"LOCK failed to add new stateid",
-					data->current_obj, lock_owner,
+					obj, lock_owner,
 					&lock_desc);
 
 				goto out2;
@@ -556,6 +561,10 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 				&lock_state->state_data.lock.state_sharelist);
 
 		}
+	} else {
+		/* Take the state_lock now */
+		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+		state_lock_held = true;
 	}
 
 	if (data->minorversion == 0) {
@@ -565,7 +574,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	 * lock into SAL (and FSAL). */
-	state_status = state_lock(data->current_obj,
+	state_status = state_lock(obj,
 				  lock_owner,
 				  lock_state,
 				  blocking,
@@ -595,15 +604,16 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			Copy_nfs4_state_req(resp_owner,
 					    seqid,
 					    op,
-					    data->current_obj,
+					    obj,
 					    resp,
 					    lock_tag);
 		}
 
 		if (arg_LOCK4->locker.new_lock_owner) {
 			/* Need to destroy new state */
-			state_del(lock_state);
+			state_del_locked(lock_state);
 		}
+
 		goto out2;
 	}
 
@@ -624,7 +634,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 				    arg_LOCK4->locker.locker4_u.open_owner.
 				    lock_seqid,
 				    op,
-				    data->current_obj,
+				    obj,
 				    resp,
 				    lock_tag);
 
@@ -640,7 +650,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG, "LOCK applied",
-		data->current_obj, lock_owner, &lock_desc);
+		obj, lock_owner, &lock_desc);
 
  out:
 
@@ -649,12 +659,17 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		Copy_nfs4_state_req(resp_owner,
 				    seqid,
 				    op,
-				    data->current_obj,
+				    obj,
 				    resp,
 				    lock_tag);
 	}
 
  out2:
+
+	if (state_lock_held) {
+		/* Now release the state_lock */
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	}
 
 	if (state_open != NULL)
 		dec_state_t_ref(state_open);

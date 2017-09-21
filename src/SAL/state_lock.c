@@ -2483,6 +2483,8 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 /**
  * @brief Attempt to acquire a lock
  *
+ * Must hold the state_lock
+ *
  * @param[in]  obj        File to lock
  * @param[in]  owner      Lock owner
  * @param[in]  state      Associated state for the lock
@@ -2547,8 +2549,6 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		}
 	}
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
-
 	if (blocking != STATE_NON_BLOCKING) {
 		/* First search for a blocked request. Client can ignore the
 		 * blocked request and keep sending us new lock request again
@@ -2579,7 +2579,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 					"Found lock entry belonging to another export",
 					found_entry);
 				status = STATE_INVALID_ARGUMENT;
-				goto out_unlock;
+				return status;
 			}
 
 			if (found_entry->sle_blocked != blocking)
@@ -2594,7 +2594,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 			 */
 			LogEntry("Found blocked", found_entry);
 			status = STATE_LOCK_BLOCKED;
-			goto out_unlock;
+			return status;
 		}
 	}
 
@@ -2616,7 +2616,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 				 found_entry);
 
 			status = STATE_INVALID_ARGUMENT;
-			goto out_unlock;
+			return status;
 		}
 
 		/* Don't skip blocked locks for fairness */
@@ -2678,7 +2678,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 				LogEntry("Found existing", found_entry);
 
 				status = STATE_SUCCESS;
-				goto out_unlock;
+				return status;
 			}
 
 			/* Found a compatible lock with a different lock owner
@@ -2707,7 +2707,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		 * Return it.
 		 */
 		status = STATE_LOCK_CONFLICT;
-		goto out_unlock;
+		return status;
 	}
 
 	/* We have already returned if:
@@ -2855,9 +2855,6 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		/* Discard lock entry */
 		remove_from_locklist(found_entry);
 	}
-
- out_unlock:
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 	return status;
 }
