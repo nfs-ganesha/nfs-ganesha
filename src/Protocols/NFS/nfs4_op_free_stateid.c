@@ -71,6 +71,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 	    &resp->nfs_resop4_u.opfree_stateid;
 	state_t *state;
 	struct fsal_export *save_exp;
+	struct fsal_obj_handle *obj;
 
 	resp->resop = NFS4_OP_FREE_STATEID;
 	res_FREE_STATEID4->fsr_status = NFS4_OK;
@@ -83,7 +84,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 			       NULL,
 			       &state,
 			       data,
-			       STATEID_SPECIAL_FOR_FREE,
+			       STATEID_SPECIAL_CURRENT,
 			       0,
 			       false,
 			       "FREE_STATEID");
@@ -91,10 +92,35 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_FREE_STATEID4->fsr_status != NFS4_OK)
 		return res_FREE_STATEID4->fsr_status;
 
+	obj = get_state_obj_ref(state);
+
+	if (obj == NULL) {
+		/* This shouldn't really happen, but check anyway. */
+		res_FREE_STATEID4->fsr_status = NFS4ERR_BAD_STATEID;
+		return res_FREE_STATEID4->fsr_status;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+
+	if (state->state_type == STATE_TYPE_LOCK &&
+	    glist_empty(&state->state_data.lock.state_locklist)) {
+		/* At the moment, only return success for a lock stateid with
+		 * no locks.
+		 */
+		/** @todo: Do we also have to handle other kinds of stateids?
+		 */
+		res_FREE_STATEID4->fsr_status = NFS4_OK;
+	} else {
+		res_FREE_STATEID4->fsr_status = NFS4ERR_LOCKS_HELD;
+	}
+
 	save_exp = op_ctx->fsal_export;
 	op_ctx->fsal_export = state->state_exp;
 
-	state_del(state);
+	state_del_locked(state);
+
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+
 	dec_state_t_ref(state);
 
 	op_ctx->fsal_export = save_exp;

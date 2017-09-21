@@ -820,13 +820,12 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 		str_valid = true;
 	}
 
-	LogFullDebug(COMPONENT_STATE, "Check %s stateid flags%s%s%s%s%s%s%s",
+	LogFullDebug(COMPONENT_STATE, "Check %s stateid flags%s%s%s%s%s%s",
 		     tag, flags & STATEID_SPECIAL_ALL_0 ? " ALL_0" : "",
 		     flags & STATEID_SPECIAL_ALL_1 ? " ALL_1" : "",
 		     flags & STATEID_SPECIAL_CURRENT ? " CURRENT" : "",
 		     flags & STATEID_SPECIAL_CLOSE_40 ? " CLOSE_40" : "",
 		     flags & STATEID_SPECIAL_CLOSE_41 ? " CLOSE_41" : "",
-		     flags & STATEID_SPECIAL_FREE ? " FREE" : "",
 		     flags == 0 ? " NONE" : "");
 
 	/* Test for OTHER is all zeros */
@@ -1146,42 +1145,6 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 					 tag, str,
 					 state2->state_seqid);
 			status = NFS4ERR_BAD_STATEID;
-			goto failure;
-		}
-	}
-
-	if ((flags & STATEID_SPECIAL_FREE) != 0) {
-		switch (state2->state_type) {
-			bool empty;
-		case STATE_TYPE_LOCK:
-			PTHREAD_RWLOCK_rdlock(&obj2->state_hdl->state_lock);
-			empty = glist_empty(
-				&state2->state_data.lock.state_locklist);
-			PTHREAD_RWLOCK_unlock(&obj2->state_hdl->state_lock);
-			if (empty) {
-				if (str_valid)
-					LogFullDebug(COMPONENT_STATE,
-						     "Check %s stateid %s has no locks, ok to free",
-						     tag, str);
-				break;
-			}
-			/* Fall through for failure */
-
-		case STATE_TYPE_NLM_LOCK:
-		case STATE_TYPE_NLM_SHARE:
-		case STATE_TYPE_9P_FID:
-			/* Fall through - don't expect these types */
-
-		case STATE_TYPE_NONE:
-		case STATE_TYPE_SHARE:
-		case STATE_TYPE_DELEG:
-		case STATE_TYPE_LAYOUT:
-			if (str_valid)
-				LogDebug(COMPONENT_STATE,
-					 "Check %s stateid found stateid %s with locks held",
-					 tag, str);
-
-			status = NFS4ERR_LOCKS_HELD;
 			goto failure;
 		}
 	}
