@@ -90,6 +90,7 @@ fsal_status_t vfs_close_my_fd(struct vfs_fd *my_fd)
 	int retval = 0;
 
 	if (my_fd->fd >= 0 && my_fd->openflags != FSAL_O_CLOSED) {
+		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd->fd);
 		retval = close(my_fd->fd);
 		if (retval < 0) {
 			retval = errno;
@@ -624,6 +625,9 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		goto direrr;
 	}
 
+	LogFullDebug(COMPONENT_FSAL,
+		     "Opened fd=%d for file %s", fd, name);
+
 	/* Remember if we were responsible for creating the file.
 	 * Note that in an UNCHECKED retry we MIGHT have re-created the
 	 * file and won't remember that. Oh well, so in that rare case we
@@ -697,8 +701,10 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	 * handy since we can then call setattr2 which WILL take the lock
 	 * without a double locking deadlock.
 	 */
-	if (my_fd == NULL)
+	if (my_fd == NULL) {
+		LogFullDebug(COMPONENT_FSAL, "Using global fd");
 		my_fd = &hdl->u.file.fd;
+	}
 
 	my_fd->fd = fd;
 	my_fd->openflags = openflags;
@@ -748,6 +754,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		posix2fsal_attributes_all(&stat, attrs_out);
 	}
 
+	LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", dir_fd);
 	close(dir_fd);
 
 	if (state != NULL) {
@@ -771,6 +778,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
  fileerr:
 
+	LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", fd);
 	close(fd);
 
 	/* Delete the file if we actually created it. */
@@ -779,6 +787,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
  direrr:
 
+	LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", dir_fd);
 	close(dir_fd);
 	return fsalstat(posix2fsal_error(retval), retval);
 }
@@ -913,6 +922,10 @@ fsal_status_t find_fd(int *fd,
 		}
 		*fd = rc;
 		*closefd = true;
+		LogFullDebug(COMPONENT_FSAL,
+			     "Opened fd=%d for file %p of type %s",
+			     rc, myself,
+			     object_file_type_to_str(obj_hdl->type));
 		return status;
 
 	case REGULAR_FILE:
@@ -924,6 +937,10 @@ fsal_status_t find_fd(int *fd,
 				      has_lock, closefd, open_for_locks);
 
 		*fd = out_fd->fd;
+		LogFullDebug(COMPONENT_FSAL,
+			     "Found fd=%d for file %p of type %s",
+			     out_fd->fd, myself,
+			     object_file_type_to_str(obj_hdl->type));
 		return status;
 
 	case SYMBOLIC_LINK:
@@ -953,8 +970,8 @@ fsal_status_t find_fd(int *fd,
 	}
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "Opened fd=%d for file of type %s",
-		     rc, object_file_type_to_str(obj_hdl->type));
+		     "Opened fd=%d for file %p of type %s",
+		     rc, myself, object_file_type_to_str(obj_hdl->type));
 
 	*fd = rc;
 	*closefd = true;
@@ -1013,6 +1030,7 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* Get a usable file descriptor */
+	LogFullDebug(COMPONENT_FSAL, "Calling find_fd, state = %p", state);
 	status = find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
 			 &has_lock, &closefd, false);
 
@@ -1049,8 +1067,10 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 
  out:
 
-	if (closefd)
+	if (closefd) {
+		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd);
 		close(my_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -1114,6 +1134,7 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* Get a usable file descriptor */
+	LogFullDebug(COMPONENT_FSAL, "Calling find_fd, state = %p", state);
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
 			 &has_lock, &closefd, false);
 
@@ -1145,8 +1166,10 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 
  out:
 
-	if (closefd)
+	if (closefd) {
+		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd);
 		close(my_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -1209,8 +1232,11 @@ fsal_status_t vfs_commit2(struct fsal_obj_handle *obj_hdl,
 		fsal_restore_ganesha_credentials();
 	}
 
-	if (closefd)
+	if (closefd) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "Closing Opened fd %d", out_fd->fd);
 		close(out_fd->fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -1328,6 +1354,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* Get a usable file descriptor */
+	LogFullDebug(COMPONENT_FSAL, "Calling find_fd, state = %p", state);
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
 			 &has_lock, &closefd, true);
 
@@ -1385,8 +1412,10 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
  err:
 
-	if (closefd)
+	if (closefd) {
+		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd);
 		close(my_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -1502,8 +1531,12 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 	/* Get a usable file descriptor (don't need to bypass - FSAL_O_ANY
 	 * won't conflict with any share reservation).
 	 */
+	LogFullDebug(COMPONENT_FSAL, "Calling find_fd, state = NULL");
 	status = find_fd(&my_fd, obj_hdl, false, NULL, FSAL_O_ANY,
 			 &has_lock, &closefd, false);
+
+	LogFullDebug(COMPONENT_FSAL, "Got fd %d closefd = %s",
+		     my_fd, closefd ? "true" : "false");
 
 	if (FSAL_IS_ERROR(status)) {
 		if (obj_hdl->type == SYMBOLIC_LINK &&
@@ -1527,8 +1560,10 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 
  out:
 
-	if (closefd)
+	if (closefd) {
+		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd);
 		close(my_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -1639,6 +1674,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	/* Get a usable file descriptor. Share conflict is only possible if
 	 * size is being set.
 	 */
+	LogFullDebug(COMPONENT_FSAL, "Calling find_fd, state = %p", state);
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
 			 &has_lock, &closefd, false);
 
@@ -1801,8 +1837,10 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 
  out:
 
-	if (closefd)
+	if (closefd) {
+		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd);
 		close(my_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);

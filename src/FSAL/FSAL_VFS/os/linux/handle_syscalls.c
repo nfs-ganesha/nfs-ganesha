@@ -272,9 +272,9 @@ int vfs_open_by_handle(struct vfs_filesystem *vfs_fs,
 	int32_t i32;
 	int fd;
 
-	LogDebug(COMPONENT_FSAL,
-		 "vfs_fs = %s root_fd = %d",
-		 vfs_fs->fs->path, vfs_fs->root_fd);
+	LogFullDebug(COMPONENT_FSAL,
+		     "vfs_fs = %s root_fd = %d",
+		     vfs_fs->fs->path, vfs_fs->root_fd);
 
 	LogVFSHandle(fh);
 
@@ -322,7 +322,10 @@ out:
 		*fsal_error = posix2fsal_error(-fd);
 		LogDebug(COMPONENT_FSAL, "Failed with %s openflags 0x%08x",
 			 strerror(-fd), openflags);
+	} else {
+		LogFullDebug(COMPONENT_FSAL, "Opened fd %d", fd);
 	}
+
 	return fd;
 }
 

@@ -95,6 +95,10 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	hdl->up_ops = exp_hdl->up_ops;
 	hdl->obj_handle.fs = fs;
 
+	LogFullDebug(COMPONENT_FSAL,
+		     "Creating object %p for file %s of type %s",
+		     hdl, path, object_file_type_to_str(hdl->obj_handle.type));
+
 	if (hdl->obj_handle.type == REGULAR_FILE) {
 		hdl->u.file.fd.fd = -1;	/* no open on this yet */
 		hdl->u.file.fd.openflags = FSAL_O_CLOSED;
