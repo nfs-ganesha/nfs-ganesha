@@ -89,6 +89,9 @@ Requires: openSUSE-release
 @BCOND_RADOS_RECOV@ rados_recov
 %global use_rados_recov %{on_off_switch rados_recov}
 
+@BCOND_RADOS_URLS@ rados_urls
+%global use_rados_urls %{on_off_switch rados_urls}
+
 %global dev_version %{lua: s = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); s2 = string.gsub(s, '%-', '.'); print(s2) }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -429,6 +432,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_ADMIN_TOOLS=%{use_utils}			\
 	-DUSE_GUI_ADMIN_TOOLS=%{use_gui_utils}		\
 	-DUSE_RADOS_RECOV=%{use_rados_recov}		\
+	-DRADOS_URLS=%{use_rados_urls}			\
 	-DUSE_FSAL_VFS=ON				\
 	-DUSE_FSAL_PROXY=ON				\
 	-DUSE_DBUS=ON					\
