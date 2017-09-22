@@ -1042,6 +1042,7 @@ message(STATUS "USE_VSOCK = ${USE_VSOCK}")
 message(STATUS "USE_TOOL_MULTILOCK = ${USE_TOOL_MULTILOCK}")
 message(STATUS "USE_MAN_PAGE = ${USE_MAN_PAGE}")
 message(STATUS "USE_RADOS_RECOV = ${USE_RADOS_RECOV}")
+message(STATUS "RADOS_URLS = ${RADOS_URLS}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}
@@ -1204,6 +1205,11 @@ set(USE_RADOS_RECOV ${USE_RADOS_RECOV}
   "enable rados recovery"
   FORCE)
 
+set(RADOS_URLS ${RADOS_URLS}
+  CACHE BOOL
+  "enable rados url provider"
+  FORCE)
+
 # Now create a useable config.h
 configure_file(
   "${PROJECT_SOURCE_DIR}/include/config-h.in.cmake"
@@ -1311,6 +1317,12 @@ if(USE_RADOS_RECOV)
 else(USE_RADOS_RECOV)
     set(BCOND_RADOS_RECOV "%bcond_with")
 endif(USE_RADOS_RECOV)
+
+if(RADOS_URLS)
+    set(BCOND_RADOS_URLS "%bcond_without")
+else(RADOS_URLS)
+    set(BCOND_RADOS_URLS "%bcond_with")
+endif(RADOS_URLS)
 
 # Now create a useable specfile
 configure_file(
