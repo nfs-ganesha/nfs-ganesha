@@ -232,12 +232,18 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 	do {
 		int nread, wrt, nwrt;
 
+		nread = ret = rados_read(io_ctx, object_name, buf, 1024, off1);
+		if (ret < 0) {
+			LogEvent(COMPONENT_CONFIG,
+				"%s: Failed reading %s/%s %s", __func__,
+				pool_name, object_name, strerror(ret));
+			goto err;
+		}
+		off1 += nread;
 		if (!stream) {
 			streamsz = 1024;
 			stream = open_memstream(&streambuf, &streamsz);
 		}
-		nread = ret = rados_read(io_ctx, object_name, buf, 1024, off1);
-		off1 += nread;
 		do {
 			wrt = fwrite(buf+off2, nread, 1, stream);
 			if (wrt > 0) {
@@ -256,6 +262,7 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 		*fbuf = streambuf;
 	}
 
+err:
 	rados_ioctx_destroy(io_ctx);
 
 out:
