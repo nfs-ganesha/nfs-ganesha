@@ -36,7 +36,7 @@
 #define NFS_REQ_QUEUE_H
 
 #include "gsh_list.h"
-#include "wait_queue.h"
+#include "gsh_wait_queue.h"
 
 struct req_q {
 	pthread_spinlock_t sp;

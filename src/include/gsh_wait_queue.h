@@ -33,8 +33,8 @@
  * This module provides simple wait queues using pthreads primitives.
  */
 
-#ifndef WAIT_QUEUE_H
-#define WAIT_QUEUE_H
+#ifndef GSH_WAIT_QUEUE_H
+#define GSH_WAIT_QUEUE_H
 
 #include <errno.h>
 #include <pthread.h>
@@ -97,4 +97,4 @@ static inline void thread_delay_ms(time_t ms)
 	nanosleep(&then, NULL);
 }
 
-#endif /* WAIT_QUEUE_H */
+#endif /* GSH_WAIT_QUEUE_H */

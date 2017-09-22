@@ -48,7 +48,7 @@
 #include "city.h"
 #include "abstract_mem.h"
 #include "gsh_intrinsic.h"
-#include "wait_queue.h"
+#include "gsh_wait_queue.h"
 
 #define DUPREQ_BAD_ADDR1 0x01	/* safe for marked pointers, etc */
 #define DUPREQ_NOCACHE   0x02

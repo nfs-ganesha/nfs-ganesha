@@ -40,6 +40,7 @@
 
 #include "sal_data.h"
 #include "gsh_config.h"
+#include "gsh_wait_queue.h"
 
 #ifdef _USE_9P
 #include "9p.h"
@@ -90,7 +91,7 @@ struct _rpc_call {
 	rpc_call_channel_t *chan;
 	rpc_call_func call_hook;
 	nfs4_compound_t cbt;
-	struct wait_entry we;
+	wait_entry_t we;
 	enum clnt_stat stat;
 	uint32_t states;
 	uint32_t flags;

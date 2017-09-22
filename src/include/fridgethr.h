@@ -45,7 +45,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "gsh_list.h"
-#include "wait_queue.h"
+#include "gsh_wait_queue.h"
 
 struct fridgethr;
 
