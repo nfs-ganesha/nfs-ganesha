@@ -132,15 +132,13 @@ static void valgrind_kganesha(struct kxArgs *args)
 }
 #endif
 
-static inline int gpfs_op2index(int op)
+int gpfs_op2index(int op)
 {
-	int index;
-
-	if ((op >= GPFS_MIN_OP_NUM) && (op <= GPFS_MAX_OP_NUM))
-		index = op - GPFS_MIN_OP_NUM;
+	if ((op < GPFS_MIN_OP) || (op > GPFS_MAX_OP) ||
+	    (op == 103 || op == 104 || op == 105))
+		return GPFS_STAT_PH_INDEX;
 	else
-		index = GPFS_STAT_PH_OP;
-	return index;
+		return (op - GPFS_MIN_OP);
 }
 
 /**
