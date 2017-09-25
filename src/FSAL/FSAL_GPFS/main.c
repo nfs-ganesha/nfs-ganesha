@@ -250,7 +250,9 @@ MODULE_INIT void gpfs_init(void)
 	myself->m_ops.init_config = init_config;
 	myself->m_ops.getdeviceinfo = getdeviceinfo;
 	myself->m_ops.fs_da_addr_size = fs_da_addr_size;
+#ifdef USE_DBUS
 	myself->m_ops.fsal_extract_stats = fsal_gpfs_extract_stats;
+#endif
 	myself->m_ops.fsal_reset_stats = fsal_gpfs_reset_stats;
 }
 
