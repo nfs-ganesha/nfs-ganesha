@@ -336,8 +336,6 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 		/* seriously bad */
 		LogMajor(COMPONENT_FSAL,
 			 "Could not attach export");
-		gsh_free(myself->export_path);
-		gsh_free(myself->root_handle);
 		free_export_ops(&myself->export);
 		gsh_free(myself);	/* elvis has left the building */
 
