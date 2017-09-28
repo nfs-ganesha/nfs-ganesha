@@ -432,7 +432,9 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 	hdl->obj_handle.fileid = atomic_postinc_uint64_t(&mem_inode_number);
 	hdl->datasize = MEM.inode_size;
 	glist_init(&hdl->dirents);
+	PTHREAD_RWLOCK_wrlock(&mfe->mfe_exp_lock);
 	glist_add_tail(&mfe->mfe_objs, &hdl->mfo_exp_entry);
+	PTHREAD_RWLOCK_unlock(&mfe->mfe_exp_lock);
 	package_mem_handle(hdl);
 
 	/* Fills the output struct */
@@ -1882,11 +1884,13 @@ static void mem_handle_to_key(struct fsal_obj_handle *obj_hdl,
  */
 static void mem_release(struct fsal_obj_handle *obj_hdl)
 {
+	struct mem_fsal_export *mfe;
 	struct mem_fsal_obj_handle *myself;
 
 	myself = container_of(obj_hdl,
 			      struct mem_fsal_obj_handle,
 			      obj_handle);
+	mfe = container_of(op_ctx->fsal_export, struct mem_fsal_export, export);
 
 	if (myself->is_export || !glist_empty(&myself->dirents)) {
 		/* Entry is still live: it's either an export, or in a dir */
@@ -1925,7 +1929,9 @@ static void mem_release(struct fsal_obj_handle *obj_hdl)
 		break;
 	}
 
+	PTHREAD_RWLOCK_wrlock(&mfe->mfe_exp_lock);
 	mem_free_handle(myself);
+	PTHREAD_RWLOCK_unlock(&mfe->mfe_exp_lock);
 }
 
 void mem_handle_ops_init(struct fsal_obj_ops *ops)

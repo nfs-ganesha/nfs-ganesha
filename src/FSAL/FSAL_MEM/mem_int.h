@@ -49,6 +49,8 @@ struct mem_fsal_export {
 	struct mem_fsal_obj_handle *root_handle;
 	/** Entry into list of exports */
 	struct glist_head export_entry;
+	/** Lock protecting mfe_objs */
+	pthread_rwlock_t mfe_exp_lock;
 	/** List of all the objects in this export */
 	struct glist_head mfe_objs;
 };
@@ -140,6 +142,7 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 /**
  * @brief Free a MEM handle
  *
+ * @note mfe_exp_lock MUST be held for write
  * @param[in] hdl	Handle to free
  */
 static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl,

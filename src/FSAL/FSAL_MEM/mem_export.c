@@ -80,7 +80,9 @@ static void mem_release_export(struct fsal_export *exp_hdl)
 			 "Releasing hdl=%p, name=%s",
 			 myself->root_handle, myself->root_handle->m_name);
 
+		PTHREAD_RWLOCK_wrlock(&myself->mfe_exp_lock);
 		mem_free_handle(myself->root_handle);
+		PTHREAD_RWLOCK_unlock(&myself->mfe_exp_lock);
 
 		myself->root_handle = NULL;
 	}
@@ -317,6 +319,7 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 {
 	struct mem_fsal_export *myself;
 	int retval = 0;
+	pthread_rwlockattr_t attrs;
 
 	myself = gsh_calloc(1, sizeof(struct mem_fsal_export));
 
@@ -327,6 +330,12 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	glist_init(&myself->mfe_objs);
+	pthread_rwlockattr_init(&attrs);
+#ifdef GLIBC
+	pthread_rwlockattr_setkind_np(&attrs,
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+#endif
+	PTHREAD_RWLOCK_init(&myself->mfe_exp_lock, &attrs);
 	fsal_export_init(&myself->export);
 	mem_export_ops_init(&myself->export.exp_ops);
 

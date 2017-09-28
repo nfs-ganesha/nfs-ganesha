@@ -156,6 +156,8 @@ mem_rand_obj(struct mem_fsal_export *mfe)
 		return NULL;
 
 	srand(time(NULL));
+
+	PTHREAD_RWLOCK_rdlock(&mfe->mfe_exp_lock);
 	glist_for_each_safe(glist, glistn, &mfe->mfe_objs) {
 		if (res == NULL) {
 			/* Grab first entry */
@@ -168,9 +170,11 @@ mem_rand_obj(struct mem_fsal_export *mfe)
 			/* Replace with current */
 			res = glist_entry(glist, struct mem_fsal_obj_handle,
 					  mfo_exp_entry);
+			break;
 		}
 		n++;
 	}
+	PTHREAD_RWLOCK_unlock(&mfe->mfe_exp_lock);
 
 	return res;
 }
