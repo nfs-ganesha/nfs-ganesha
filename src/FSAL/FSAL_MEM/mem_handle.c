@@ -538,16 +538,20 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 	return hdl;
 }
 
-static fsal_status_t mem_int_lookup(struct mem_fsal_obj_handle *dir,
-				    const char *path,
-				    struct mem_fsal_obj_handle **entry)
+#define  mem_int_lookup(d, p, e) _mem_int_lookup(d, p, e, __func__, __LINE__)
+static fsal_status_t _mem_int_lookup(struct mem_fsal_obj_handle *dir,
+				     const char *path,
+				     struct mem_fsal_obj_handle **entry,
+				     const char *func, int line)
 {
-	struct mem_dirent key, *dirent;
-	struct avltree_node *node;
+	struct mem_dirent *dirent;
 
 	*entry = NULL;
 	LogFullDebug(COMPONENT_FSAL, "Lookup %s in %p", path, dir);
 
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_lookup, func, line, dir, path);
+#endif
 	if (strcmp(path, "..") == 0) {
 		/* lookup parent - lookupp */
 		if (dir->mh_dir.parent == NULL) {
@@ -564,14 +568,15 @@ static fsal_status_t mem_int_lookup(struct mem_fsal_obj_handle *dir,
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
-	key.d_name = (char *)path;
-	node = avltree_lookup(&key.avl_n, &dir->mh_dir.avl_name);
-	if (!node) {
+	dirent = mem_dirent_lookup(dir, path);
+	if (!dirent) {
 		return fsalstat(ERR_FSAL_NOENT, 0);
 	}
-	dirent = avltree_container_of(node, struct mem_dirent, avl_n);
 	*entry = dirent->hdl;
 
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_lookup, func, line, *entry, (*entry)->m_name);
+#endif
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

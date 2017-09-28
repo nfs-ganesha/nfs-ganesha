@@ -65,6 +65,34 @@ TRACEPOINT_LOGLEVEL(
 	TRACE_INFO)
 
 /**
+ * @brief Trace a lookup of an obj
+ *
+ * @param[in] function	Name of function releasing ref
+ * @param[in] line	Line number of call
+ * @param[in] obj	Address of obj
+ * @param[in] name	File name
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_lookup,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, obj,
+		const char *, name),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, obj, obj)
+		ctf_string(name, name)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_lookup,
+	TRACE_INFO)
+
+/**
  * @brief Trace a failed free of an obj
  *
  * @param[in] function	Name of function releasing ref
