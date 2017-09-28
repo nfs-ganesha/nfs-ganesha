@@ -98,7 +98,6 @@ nfs_start_info_t nfs_start_info;
 
 pthread_t admin_thrid;
 pthread_t sigmgr_thrid;
-pthread_t gsh_dbus_thrid;
 
 #ifdef _USE_9P
 pthread_t _9p_dispatcher_thrid;

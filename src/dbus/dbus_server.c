@@ -47,6 +47,7 @@
 #include "gsh_dbus.h"
 #include <os/memstream.h>
 #include "dbus_priv.h"
+#include "nfs_init.h"
 
 /**
  *
@@ -616,6 +617,10 @@ void gsh_dbus_pkgshutdown(void)
 
 	LogDebug(COMPONENT_DBUS, "shutdown");
 
+	/* Shutdown gsh_dbus_thread */
+	thread_state.flags |= GSH_DBUS_SHUTDOWN;
+	pthread_join(gsh_dbus_thrid, NULL);
+
 	/* remove and free handlers */
 	node = avltree_first(&thread_state.callouts);
 	while (node) {
@@ -655,9 +660,6 @@ void gsh_dbus_pkgshutdown(void)
 	 * but instead be unref'ed */
 	if (thread_state.dbus_conn)
 		dbus_connection_unref(thread_state.dbus_conn);
-
-	/* Shutdown gsh_dbus_thread */
-	thread_state.flags |= GSH_DBUS_SHUTDOWN;
 }
 
 void *gsh_dbus_thread(void *arg)
