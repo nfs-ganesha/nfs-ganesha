@@ -904,6 +904,7 @@ fsal_status_t find_fd(int *fd,
 	struct vfs_fd temp_fd = {0, -1}, *out_fd = &temp_fd;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	int rc, posix_flags;
+	bool reusing_open_state_fd = false;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	vfs_fs = myself->obj_handle.fs->private_data;
@@ -939,7 +940,8 @@ fsal_status_t find_fd(int *fd,
 				      &myself->u.file.share,
 				      bypass, state, openflags,
 				      vfs_open_func, vfs_close_func,
-				      has_lock, closefd, open_for_locks);
+				      has_lock, closefd, open_for_locks,
+				      &reusing_open_state_fd);
 
 		*fd = out_fd->fd;
 		LogFullDebug(COMPONENT_FSAL,

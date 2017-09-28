@@ -213,7 +213,8 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 			   fsal_close_func close_func,
 			   bool *has_lock,
 			   bool *closefd,
-			   bool open_for_locks);
+			   bool open_for_locks,
+			   bool *reusing_open_state_fd);
 
 /**
  * @brief Initialize a state_t structure

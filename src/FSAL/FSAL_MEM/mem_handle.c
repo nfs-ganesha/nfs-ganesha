@@ -1577,6 +1577,7 @@ fsal_status_t mem_read2(struct fsal_obj_handle *obj_hdl,
 	struct fsal_fd *fsal_fd;
 	bool has_lock, closefd = false;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	bool reusing_open_state_fd = false;
 
 	if (info != NULL) {
 		/* Currently we don't support READ_PLUS */
@@ -1587,7 +1588,8 @@ fsal_status_t mem_read2(struct fsal_obj_handle *obj_hdl,
 	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
 			      &myself->mh_file.share, bypass, state,
 			      FSAL_O_READ, mem_open_func, mem_close_func,
-			      &has_lock, &closefd, false);
+			      &has_lock, &closefd, false,
+			      &reusing_open_state_fd);
 	if (FSAL_IS_ERROR(status)) {
 		return status;
 	}
@@ -1666,6 +1668,7 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 	struct fsal_fd *fsal_fd;
 	bool has_lock, closefd = false;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	bool reusing_open_state_fd = false;
 
 	if (info != NULL) {
 		/* Currently we don't support WRITE_PLUS */
@@ -1681,7 +1684,8 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
 			      &myself->mh_file.share, bypass, state,
 			      FSAL_O_WRITE, mem_open_func, mem_close_func,
-			      &has_lock, &closefd, false);
+			      &has_lock, &closefd, false,
+			      &reusing_open_state_fd);
 	if (FSAL_IS_ERROR(status)) {
 		return status;
 	}
@@ -1775,6 +1779,7 @@ fsal_status_t mem_lock_op2(struct fsal_obj_handle *obj_hdl,
 	bool bypass = false;
 	fsal_openflags_t openflags;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	bool reusing_open_state_fd = false;
 
 	if (obj_hdl->type != REGULAR_FILE) {
 		/* Currently can only lock a file */
@@ -1807,7 +1812,8 @@ fsal_status_t mem_lock_op2(struct fsal_obj_handle *obj_hdl,
 	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
 			      &myself->mh_file.share, bypass, state,
 			      openflags, mem_open_func, mem_close_func,
-			      &has_lock, &closefd, true);
+			      &has_lock, &closefd, true,
+			      &reusing_open_state_fd);
 	if (FSAL_IS_ERROR(status)) {
 		return status;
 	}

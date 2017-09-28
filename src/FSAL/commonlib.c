@@ -2669,6 +2669,8 @@ again:
  * @param[out]    has_lock       Indicates that obj_hdl->obj_lock is held read
  * @param[out]    closefd        Indicates that file descriptor must be closed
  * @param[in]     open_for_locks Indicates file is open for locks
+ * @param[out]    reusing_open_state_fd Indicates whether already opened fd
+ *					can be reused
  *
  * @return FSAL status.
  */
@@ -2684,7 +2686,8 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 			   fsal_close_func close_func,
 			   bool *has_lock,
 			   bool *closefd,
-			   bool open_for_locks)
+			   bool open_for_locks,
+			   bool *reusing_open_state_fd)
 {
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	struct fsal_fd *state_fd;
@@ -2768,8 +2771,16 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 			 */
 			LogFullDebug(COMPONENT_FSAL,
 				     "Use related_fd %p", related_fd);
-			if (out_fd)
+			if (out_fd) {
 				*out_fd = related_fd;
+				/* The associated open state has an open fd,
+				 * however some FSALs can not use it and must
+				 * need to dup the fd into the lock state
+				 * instead. So to signal this to the caller
+				 * function the following flag
+				 */
+				*reusing_open_state_fd = true;
+			}
 
 			*has_lock = false;
 			return status;

@@ -1171,31 +1171,44 @@ fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 	struct glusterfs_handle *myself;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	struct glusterfs_fd  tmp_fd = {0}, *tmp2_fd = &tmp_fd;
+	bool reusing_open_state_fd = false;
 
 	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
 
 	/* Handle only regular files */
 	if (obj_hdl->type != REGULAR_FILE)
 		return fsalstat(posix2fsal_error(EINVAL), EINVAL);
-
 	status = fsal_find_fd((struct fsal_fd **)&tmp2_fd, obj_hdl,
-			      (struct fsal_fd *)&myself->globalfd,
-			      &myself->share, bypass, state,
-			      openflags, glusterfs_open_func,
-			      glusterfs_close_func,
-			      has_lock, closefd, open_for_locks);
-
+				(struct fsal_fd *)&myself->globalfd,
+				&myself->share, bypass, state,
+				openflags, glusterfs_open_func,
+				glusterfs_close_func,
+				has_lock, closefd, open_for_locks,
+				&reusing_open_state_fd);
 	/* since tmp2_fd is not accessed/closed outside
-	 * this routine, its safe to copy its variables into my_fd
-	 * without taking extra reference or allocating extra
-	 * memory.
-	 */
-	my_fd->glfd = tmp2_fd->glfd;
+	* this routine, its safe to copy its variables into my_fd
+	* without taking extra reference or allocating extra
+	* memory.
+	*/
+	if (reusing_open_state_fd) {
+		my_fd->glfd = glfs_dup(tmp2_fd->glfd);
+		my_fd->creds.caller_garray =
+			gsh_malloc(my_fd->creds.caller_glen *
+				   sizeof(gid_t));
+
+		memcpy(my_fd->creds.caller_garray,
+		       op_ctx->creds->caller_garray,
+		       op_ctx->creds->caller_glen *
+		       sizeof(gid_t));
+	} else {
+		my_fd->glfd = tmp2_fd->glfd;
+		my_fd->creds.caller_garray = tmp2_fd->creds.caller_garray;
+	}
+
 	my_fd->openflags = tmp2_fd->openflags;
 	my_fd->creds.caller_uid = tmp2_fd->creds.caller_uid;
 	my_fd->creds.caller_gid = tmp2_fd->creds.caller_gid;
 	my_fd->creds.caller_glen = tmp2_fd->creds.caller_glen;
-	my_fd->creds.caller_garray = tmp2_fd->creds.caller_garray;
 
 	return status;
 }
@@ -2111,7 +2124,10 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			 &has_lock, &closefd, true);
+			 &has_lock, &closefd,
+			 (state &&
+			  ((state->state_type == STATE_TYPE_NLM_LOCK) ||
+			  (state->state_type == STATE_TYPE_9P_FID))));
 
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");

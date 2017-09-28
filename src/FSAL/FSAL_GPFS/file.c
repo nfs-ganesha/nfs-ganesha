@@ -632,6 +632,7 @@ find_fd(int *fd, struct fsal_obj_handle *obj_hdl, bool bypass,
 	struct gpfs_fsal_obj_handle *myself;
 	struct gpfs_fd temp_fd = {0, -1}, *out_fd = &temp_fd;
 	int posix_flags;
+	bool reusing_open_state_fd = false;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
@@ -647,7 +648,8 @@ find_fd(int *fd, struct fsal_obj_handle *obj_hdl, bool bypass,
 				      &myself->u.file.share,
 				      bypass, state, openflags,
 				      gpfs_open_func, gpfs_close_func,
-				      has_lock, closefd, open_for_locks);
+				      has_lock, closefd, open_for_locks,
+				      &reusing_open_state_fd);
 
 		*fd = out_fd->fd;
 		return status;

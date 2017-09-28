@@ -427,6 +427,7 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	struct stat st;
 	/* Mask of attributes to set */
 	uint32_t mask = 0;
+	bool reusing_open_state_fd = false;
 
 	struct rgw_export *export =
 		container_of(op_ctx->fsal_export, struct rgw_export, export);
@@ -468,7 +469,8 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		 */
 		status = fsal_find_fd(NULL, obj_hdl, NULL, &handle->share,
 				bypass, state, FSAL_O_RDWR, NULL, NULL,
-				&has_lock, &closefd, false);
+				&has_lock, &closefd, false,
+				&reusing_open_state_fd);
 
 		if (FSAL_IS_ERROR(status)) {
 			LogFullDebug(COMPONENT_FSAL,

@@ -1478,12 +1478,14 @@ fsal_status_t ceph_find_fd(Fh **fd,
 	struct handle *myself = container_of(obj_hdl, struct handle, handle);
 	struct ceph_fd temp_fd = {0, NULL}, *out_fd = &temp_fd;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	bool reusing_open_state_fd = false;
 
 	status = fsal_find_fd((struct fsal_fd **)&out_fd, obj_hdl,
 			      (struct fsal_fd *)&myself->fd, &myself->share,
 			      bypass, state, openflags,
 			      ceph_open_func, ceph_close_func,
-			      has_lock, closefd, open_for_locks);
+			      has_lock, closefd, open_for_locks,
+			      &reusing_open_state_fd);
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "fd = %p", out_fd->fd);
@@ -1931,6 +1933,7 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 	struct ceph_statx stx;
 	/* Mask of attributes to set */
 	uint32_t mask = 0;
+	bool reusing_open_state_fd = false;
 
 	if (attrib_set->valid_mask & ~CEPH_SETTABLE_ATTRIBUTES) {
 		LogDebug(COMPONENT_FSAL,
@@ -1963,7 +1966,8 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 		 */
 		status = fsal_find_fd(NULL, obj_hdl, NULL, &myself->share,
 				      bypass, state, FSAL_O_RDWR, NULL, NULL,
-				      &has_lock, &closefd, false);
+				      &has_lock, &closefd, false,
+				      &reusing_open_state_fd);
 
 		if (FSAL_IS_ERROR(status)) {
 			LogFullDebug(COMPONENT_FSAL,
