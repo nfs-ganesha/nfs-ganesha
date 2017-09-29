@@ -667,7 +667,6 @@ void
 glusterfs_free_fs(struct glusterfs_fs *gl_fs)
 {
 	int64_t refcnt;
-	int *retval = NULL;
 	int err     = 0;
 
 	PTHREAD_MUTEX_lock(&GlusterFS.lock);
@@ -692,6 +691,8 @@ glusterfs_free_fs(struct glusterfs_fs *gl_fs)
 	/* Cancel upcall readiness if not yet done */
 	up_ready_cancel((struct fsal_up_vector *)gl_fs->up_ops);
 
+#ifndef USE_GLUSTER_UPCALL_REGISTER
+	int *retval = NULL;
 	/* Wait for up_thread to exit */
 	err = pthread_join(gl_fs->up_thread, (void **)&retval);
 
@@ -701,10 +702,20 @@ glusterfs_free_fs(struct glusterfs_fs *gl_fs)
 	}
 
 	if (err) {
-		LogCrit(COMPONENT_FSAL, "Up_thread join failed (%s)",
+		LogWarn(COMPONENT_FSAL, "Up_thread join failed (%s)",
 			strerror(err));
-		return;
 	}
+#else
+	err = glfs_upcall_unregister(gl_fs->fs, GLFS_EVENT_ANY);
+
+	if ((err < 0) || (!(err & GLFS_EVENT_INODE_INVALIDATE))) {
+		/* Or can we ignore the error like in case of single
+		 * node ganesha server. */
+		LogWarn(COMPONENT_FSAL,
+			"Unable to unregister for upcalls. Volume: %s",
+			gl_fs->volname);
+	}
+#endif
 
 	/* Gluster and memory cleanup */
 	glfs_fini(gl_fs->fs);
@@ -783,6 +794,8 @@ glusterfs_get_fs(struct glexport_params params,
 	gl_fs->up_poll_usec = params.up_poll_usec;
 
 	gl_fs->up_ops = up_ops;
+
+#ifndef USE_GLUSTER_UPCALL_REGISTER
 	rc = initiate_up_thread(gl_fs);
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -790,6 +803,22 @@ glusterfs_get_fs(struct glexport_params params,
 			params.glvolname);
 		goto out;
 	}
+#else
+	/* We are mainly interested in INODE_INVALIDATE for now. Still
+	 * register for all the events
+	 */
+	rc = glfs_upcall_register(fs, GLFS_EVENT_ANY, gluster_process_upcall,
+				  gl_fs);
+
+	if ((rc < 0) || (!(rc & GLFS_EVENT_INODE_INVALIDATE))) {
+		/* Or can we ignore the error like in case of single
+		 * node ganesha server. */
+		LogCrit(COMPONENT_FSAL,
+			"Unable to register for upcalls. Volume: %s",
+			params.glvolname);
+		goto out;
+	}
+#endif
 
 	glist_add(&GlusterFS.fs_obj, &gl_fs->fs_obj);
 

@@ -237,3 +237,71 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 out:
 	return NULL;
 }				/* GLUSTERFSFSAL_UP_Thread */
+
+void gluster_process_upcall(struct glfs_upcall *cbk, void *data)
+{
+	struct glusterfs_fs         *gl_fs              = data;
+	struct fsal_up_vector *event_func;
+	struct glfs_upcall_inode    *in_arg             = NULL;
+	enum glfs_upcall_reason     reason              = 0;
+	struct glfs_object          *object             = NULL;
+	struct glfs_object          *p_object           = NULL;
+	struct glfs_object          *oldp_object        = NULL;
+
+	if (!cbk) {
+		LogFatal(COMPONENT_FSAL_UP, "Upcall received with no data");
+		return;
+	}
+
+	/* Set the FSAL UP functions that will be used to process events. */
+	event_func = (struct fsal_up_vector *)gl_fs->up_ops;
+
+	if (!event_func) {
+		LogFatal(COMPONENT_FSAL_UP,
+			 "FSAL up vector does not exist. Can not continue.");
+		goto out;
+	}
+
+	if (!gl_fs->fs) {
+		LogCrit(COMPONENT_FSAL_UP,
+			"FSAL Callback interface - Null glfs context.");
+		goto out;
+	}
+
+	/* wait for upcall readiness */
+	up_ready_wait(event_func);
+
+	reason = glfs_upcall_get_reason(cbk);
+
+	/* Decide what type of event this is
+	 * inode update / invalidate? */
+	switch (reason) {
+	case GLFS_UPCALL_INODE_INVALIDATE:
+		in_arg = glfs_upcall_get_event(cbk);
+
+		if (!in_arg) {
+			/* Could be ENOMEM issues. continue */
+			LogWarn(COMPONENT_FSAL_UP,
+				"Received NULL upcall event arg");
+			break;
+		}
+
+		object = glfs_upcall_inode_get_object(in_arg);
+		if (object)
+			upcall_inode_invalidate(gl_fs, object);
+
+		p_object = glfs_upcall_inode_get_pobject(in_arg);
+		if (p_object)
+			upcall_inode_invalidate(gl_fs, p_object);
+
+		oldp_object = glfs_upcall_inode_get_oldpobject(in_arg);
+		if (oldp_object)
+			upcall_inode_invalidate(gl_fs, oldp_object);
+		break;
+	default:
+		LogWarn(COMPONENT_FSAL_UP, "Unknown event: %d", reason);
+	}
+
+out:
+	glfs_free(cbk);
+}
