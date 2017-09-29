@@ -352,6 +352,8 @@ EXPORT { FSAL {} }
         * up_poll_usec: The time interval (in micro-seconds) between any
           two consecutive upcall polls. By default set to 10us.
 
+	enable_upcall(bool, default true)
+
 	FSAL_VFS:
 	---------
 

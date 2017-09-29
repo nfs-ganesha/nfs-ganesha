@@ -33,6 +33,8 @@ Name(string, "GLUSTER")
 
 **up_poll_usec(uint64, range 1 to 60*1000*1000, default 10)**
 
+**enable_upcall(bool, default true)**
+
 See also
 ==============================
 :doc:`ganesha-log-config <ganesha-log-config>`\(8)
