@@ -335,7 +335,7 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 				   nsm_state,
 				   state);
 
-		if (rc > 0) {
+		if (rc > 0 || !(*state)) {
 			LogDebug(COMPONENT_NLM, "Could not get NLM State");
 			goto out_put;
 		}
