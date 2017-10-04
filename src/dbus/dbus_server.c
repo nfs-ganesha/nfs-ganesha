@@ -39,6 +39,7 @@
 #include <sys/timerfd.h>
 #include <errno.h>
 #include <dbus/dbus.h>
+#include <ctype.h>
 
 #include "fsal.h"
 #include "nfs_core.h"
@@ -105,6 +106,54 @@ static inline int dbus_callout_cmpf(const struct avltree_node *lhs,
 	rk = avltree_container_of(rhs, struct ganesha_dbus_handler, node_k);
 
 	return strcmp(lk->name, rk->name);
+}
+
+static inline bool is_valid_dbus_prefix(const char *prefix)
+{
+	if (prefix == NULL || *prefix == '\0')
+		return false;
+
+	if (!isalpha(*prefix) && *prefix != '_')
+		return false;
+
+	prefix++;
+	while (*prefix != '\0') {
+		if (!isalnum(*prefix) && *prefix != '_')
+			return false;
+		prefix++;
+	}
+
+	return true;
+}
+
+static inline void dbus_name_with_prefix(char *prefixed_dbus_name,
+			const char *default_name, const char *prefix)
+{
+	int prefix_len, total_len;
+
+	if (!is_valid_dbus_prefix(prefix)) {
+		if (prefix != NULL && prefix[0] != '\0') {
+			LogEvent(COMPONENT_DBUS,
+				"Dbus name prefix is invalid. Ignoring the prefix.");
+		}
+		strcpy(prefixed_dbus_name, default_name);
+		return;
+	}
+
+	prefix_len = strlen(prefix);
+
+	/* Additional length for separator (.) and null character */
+	total_len = strlen(default_name) + prefix_len + 2;
+	if (total_len > NAME_MAX) {
+		LogEvent(COMPONENT_DBUS,
+			"Dbus name prefix too long. Ignoring the prefix.");
+		strcpy(prefixed_dbus_name, default_name);
+		return;
+	}
+
+	strcpy(prefixed_dbus_name, prefix);
+	prefixed_dbus_name[prefix_len] = '.';
+	strcpy(prefixed_dbus_name + prefix_len + 1, default_name);
 }
 
 /*
@@ -208,6 +257,7 @@ void init_dbus_broadcast(void)
 void gsh_dbus_pkginit(void)
 {
 	int code = 0;
+	char prefixed_dbus_name[NAME_MAX];
 
 	LogDebug(COMPONENT_DBUS, "init");
 
@@ -224,13 +274,15 @@ void gsh_dbus_pkginit(void)
 		goto out;
 	}
 
+	dbus_name_with_prefix(prefixed_dbus_name, dbus_name,
+				nfs_param.core_param.dbus_name_prefix);
 	code =
-	    dbus_bus_request_name(thread_state.dbus_conn, dbus_name,
+	    dbus_bus_request_name(thread_state.dbus_conn, prefixed_dbus_name,
 				  DBUS_NAME_FLAG_REPLACE_EXISTING,
 				  &thread_state.dbus_err);
 	if (dbus_error_is_set(&thread_state.dbus_err)) {
 		LogCrit(COMPONENT_DBUS, "server bus reg failed (%s, %s)",
-			dbus_name, thread_state.dbus_err.message);
+			prefixed_dbus_name, thread_state.dbus_err.message);
 		dbus_error_free(&thread_state.dbus_err);
 		if (!code)
 			code = EINVAL;
@@ -239,7 +291,7 @@ void gsh_dbus_pkginit(void)
 	if (code != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER) {
 		LogCrit(COMPONENT_DBUS,
 			"server failed becoming primary bus owner (%s, %d)",
-			dbus_name, code);
+			prefixed_dbus_name, code);
 		goto out;
 	}
 
@@ -614,6 +666,7 @@ void gsh_dbus_pkgshutdown(void)
 	struct avltree_node *node, *next_node;
 	struct ganesha_dbus_handler *handler;
 	int code = 0;
+	char prefixed_dbus_name[NAME_MAX];
 
 	LogDebug(COMPONENT_DBUS, "shutdown");
 
@@ -645,8 +698,10 @@ void gsh_dbus_pkgshutdown(void)
 	avltree_init(&thread_state.callouts, dbus_callout_cmpf, 0);
 
 	/* Unassign the name from dbus connection */
+	dbus_name_with_prefix(prefixed_dbus_name, dbus_name,
+				nfs_param.core_param.dbus_name_prefix);
 	dbus_bus_release_name(thread_state.dbus_conn,
-			      dbus_name,
+			      prefixed_dbus_name,
 			      &thread_state.dbus_err);
 	if (dbus_error_is_set(&thread_state.dbus_err)) {
 		LogCrit(COMPONENT_DBUS, "err releasing name (%s, %s)",

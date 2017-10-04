@@ -115,6 +115,10 @@ fsid_device(bool, default false)
 mount_path_pseudo(bool, default false)
     Whether to use Pseudo (true) or Path (false) for NFS v3 and 9P mounts.
 
+Dbus_Name_Prefix
+    DBus name prefix. Required if one wants to run multiple ganesha instances on
+    single host. The prefix should be different for every ganesha instance. If
+    this is set, the dbus name will be <prefix>.org.ganesha.nfsd
 
 Parameters controlling TCP DRC behavior:
 ----------------------------------------
