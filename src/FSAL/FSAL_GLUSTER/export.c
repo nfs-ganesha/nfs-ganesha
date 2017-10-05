@@ -631,6 +631,7 @@ struct glexport_params {
 	char *glhostname;
 	char *glvolpath;
 	char *glfs_log;
+	uint64_t up_poll_usec;
 };
 
 static struct config_item export_params[] = {
@@ -643,6 +644,8 @@ static struct config_item export_params[] = {
 		      glexport_params, glvolpath),
 	CONF_ITEM_PATH("glfs_log", 1, MAXPATHLEN, GFAPI_LOG_LOCATION,
 		       glexport_params, glfs_log),
+	CONF_ITEM_UI64("up_poll_usec", 1, 60*1000*1000, 10,
+		       glexport_params, up_poll_usec),
 	CONFIG_EOL
 };
 
@@ -777,6 +780,7 @@ glusterfs_get_fs(struct glexport_params params,
 	gl_fs->fs = fs;
 	gl_fs->volname = strdup(params.glvolname);
 	gl_fs->destroy_mode = 0;
+	gl_fs->up_poll_usec = params.up_poll_usec;
 
 	gl_fs->up_ops = up_ops;
 	rc = initiate_up_thread(gl_fs);

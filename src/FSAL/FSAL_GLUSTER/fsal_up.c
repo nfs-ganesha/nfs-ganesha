@@ -193,7 +193,7 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 			     reason);
 
 		if (!cbk) {
-			usleep(10);
+			usleep(gl_fs->up_poll_usec);
 			continue;
 		}
 
@@ -202,7 +202,7 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 		 * inode update / invalidate? */
 		switch (reason) {
 		case GLFS_UPCALL_EVENT_NULL:
-			usleep(10);
+			usleep(gl_fs->up_poll_usec);
 			continue;
 		case GLFS_UPCALL_INODE_INVALIDATE:
 			in_arg = glfs_upcall_get_event(cbk);

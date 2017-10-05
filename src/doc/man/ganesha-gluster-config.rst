@@ -20,8 +20,8 @@ This file lists Gluster specific config options.
 
 EXPORT { FSAL {} }
 --------------------------------------------------------------------------------
-Name(string, "Gluster")
-    Name of FSAL should always be RGW.
+Name(string, "GLUSTER")
+    Name of FSAL should always be GLUSTER.
 
 **volume(string, no default, required)**
 
@@ -31,6 +31,7 @@ Name(string, "Gluster")
 
 **glfs_log(path, default "/tmp/gfapi.log")**
 
+**up_poll_usec(uint64, range 1 to 60*1000*1000, default 10)**
 
 See also
 ==============================

@@ -347,6 +347,11 @@ EXPORT { FSAL {} }
 
 	glfs_log(path, default "/tmp/gfapi.log")
 
+        up_poll_usec(uint64, range 1 to 60*1000*1000, default 10)
+
+        * up_poll_usec: The time interval (in micro-seconds) between any
+          two consecutive upcall polls. By default set to 10us.
+
 	FSAL_VFS:
 	---------
 
