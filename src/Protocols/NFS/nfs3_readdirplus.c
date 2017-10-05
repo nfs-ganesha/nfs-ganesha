@@ -468,11 +468,16 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 		tracker->mem_left -=
 		    ep3->name_handle.post_op_fh3_u.handle.data.data_len + 12;
 
-		ep3->name_attributes.attributes_follow = true;
-
-		nfs3_FSALattr_To_Fattr(
-			obj, attr,
-			&ep3->name_attributes.post_op_attr_u.attributes);
+		if (attr->valid_mask == ATTR_RDATTR_ERR) {
+			/* Indicate no attributes follow */
+			ep3->name_attributes.attributes_follow = false;
+		} else {
+			/* Place the attributes that follow */
+			ep3->name_attributes.attributes_follow = true;
+			nfs3_FSALattr_To_Fattr(
+				obj, attr, &ep3->name_attributes.
+				post_op_attr_u.attributes);
+		}
 	} else {
 		ep3->name_handle.handle_follows = false;
 		ep3->name_attributes.attributes_follow = false;
