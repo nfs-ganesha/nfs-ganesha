@@ -1854,23 +1854,22 @@ fsal_status_t ceph_lock_op2(struct fsal_obj_handle *obj_hdl,
 			 -retval, strerror(-retval));
 
 		if (conflicting_lock != NULL) {
+			int retval2;
+
 			/* Get the conflicting lock */
-			retval = ceph_ll_getlk(export->cmount, my_fd,
+			retval2 = ceph_ll_getlk(export->cmount, my_fd,
 					       &lock_args, (uint64_t) owner);
 
-			if (retval < 0) {
+			if (retval2 < 0) {
 				LogCrit(COMPONENT_FSAL,
 					"After failing a lock request, I couldn't even get the details of who owns the lock, error %d %s",
-					-retval, strerror(-retval));
+					-retval2, strerror(-retval2));
 				goto err;
 			}
 
-			if (conflicting_lock != NULL) {
-				conflicting_lock->lock_length = lock_args.l_len;
-				conflicting_lock->lock_start =
-				    lock_args.l_start;
-				conflicting_lock->lock_type = lock_args.l_type;
-			}
+			conflicting_lock->lock_length = lock_args.l_len;
+			conflicting_lock->lock_start = lock_args.l_start;
+			conflicting_lock->lock_type = lock_args.l_type;
 		}
 
 		goto err;
