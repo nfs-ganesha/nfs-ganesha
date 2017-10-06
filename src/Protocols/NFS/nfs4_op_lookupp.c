@@ -108,6 +108,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			/* lookupp on the root on the pseudofs should return
 			 * NFS4ERR_NOENT (RFC3530, page 166)
 			 */
+			root_obj->obj_ops.put_ref(root_obj);
 			PTHREAD_RWLOCK_unlock(&original_export->lock);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return res_LOOKUPP4->status;
@@ -141,6 +142,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 		if (dir_obj == NULL || parent_exp == NULL ||
 		    !export_ready(parent_exp)) {
 			/* Export is in the process of dying */
+			root_obj->obj_ops.put_ref(root_obj);
 			PTHREAD_RWLOCK_unlock(&original_export->lock);
 			LogCrit(COMPONENT_EXPORT,
 				"Reverse junction from Export_Id %d Pseudo %s Parent=%p is stale",
@@ -185,6 +187,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			 * have access to this export, return NFS4ERR_NOENT to
 			 * hide it. It was not visible in READDIR response.
 			 */
+			root_obj->obj_ops.put_ref(root_obj);
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
 				 parent_exp->export_id,
