@@ -2341,10 +2341,11 @@ static fsal_status_t pxy_open2(struct fsal_obj_handle *obj_hdl,
 		opcnt = 0;
 		/* SEQUENCE */
 		pxy_get_client_sessionid(sid);
-		COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, argoparray, sid,
+		COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, setattr_argoparray, sid,
 					       NB_RPC_SLOT);
 		/* PUTFH */
-		COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, setattr_argoparray, ph->fh4);
+		COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, setattr_argoparray,
+					    fhok->object);
 		/* SETATTR for truncate */
 		setattr_resoparray[opcnt].nfs_resop4_u.opsetattr.attrsset =
 								empty_bitmap;
