@@ -226,7 +226,9 @@ static mdcache_entry_t *mdcache_alloc_handle(
 			 PRIi16" that is in the process of being unexported",
 			 result, op_ctx->ctx_export->export_id);
 		mdcache_put(result);
-		mdcache_kill_entry(result);
+		/* Handle is not yet in hash / LRU, so just put the sentinal
+		 * ref */
+		mdcache_put(result);
 		return NULL;
 	}
 
@@ -783,10 +785,11 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	/* We raced or failed, release the new entry we acquired, this will
 	 * result in inline deconstruction. This will release the attributes, we
-	 * may not have copied yet, in which case mask and acl are 0/NULL.
+	 * may not have copied yet, in which case mask and acl are 0/NULL.  This
+	 * entry is not yet in the hash or LRU, so just put it's sentinal ref.
 	 */
 	mdcache_put(nentry);
-	mdcache_kill_entry(nentry);
+	mdcache_put(nentry);
 
  out_no_new_entry_yet:
 
