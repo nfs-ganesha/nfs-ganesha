@@ -504,10 +504,10 @@ make DESTDIR=%{buildroot} install
 %service_add_post nfs-ganesha.service nfs-ganesha-lock.service nfs-ganesha-config.service
 %else
 %if ( 0%{?fedora} || ( 0%{?rhel} && 0%{?rhel} > 6 ) )
-semanage fcontext -a -t ganesha_var_log_t %{_localstatedir}/log/ganesha
-semanage fcontext -a -t ganesha_var_log_t %{_localstatedir}/log/ganesha/ganesha.log
+semanage fcontext -a -t ganesha_var_log_t %{_localstatedir}/log/ganesha > /dev/null 2>&1 || :
+semanage fcontext -a -t ganesha_var_log_t %{_localstatedir}/log/ganesha/ganesha.log > /dev/null 2>&1 || :
 %if %{with gluster}
-semanage fcontext -a -t ganesha_var_log_t %{_localstatedir}/log/ganesha/ganesha-gfapi.log
+semanage fcontext -a -t ganesha_var_log_t %{_localstatedir}/log/ganesha/ganesha-gfapi.log > /dev/null 2>&1 || :
 %endif
 restorecon %{_localstatedir}/log/ganesha
 %endif
