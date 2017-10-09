@@ -106,11 +106,13 @@ TRACEPOINT_EVENT(
 	TP_ARGS(const char *, function,
 		int, line,
 		void *, obj,
+		int, numlinks,
 		int, inavl),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, obj, obj)
+		ctf_integer(int, numlinks, numlinks)
 		ctf_integer(int, inavl, inavl)
 	)
 )
@@ -308,6 +310,39 @@ TRACEPOINT_LOGLEVEL(
 	TRACE_INFO)
 
 /**
+ * @brief Trace a close call
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] obj	Address of obj
+ * @param[in] name	File name
+ * @param[in] state	Address of state
+ * @param[in] truncated	True if truncated
+ * @param[in] setattrs	Pointer of setattrs
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_close,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, obj,
+		const char *, name,
+		void *, state),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, obj, obj)
+		ctf_string(name, name)
+		ctf_integer_hex(void *, state, state)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_close,
+	TRACE_INFO)
+
+/**
  * @brief Trace an creat_handle
  *
  * @param[in] function	Name of function
@@ -397,6 +432,81 @@ TRACEPOINT_EVENT(
 TRACEPOINT_LOGLEVEL(
 	fsalmem,
 	mem_rename,
+	TRACE_INFO)
+
+/**
+ * @brief Trace a link
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] olddir	Name of old directory
+ * @param[in] oldname	Name of old file
+ * @param[in] newdir	Name of new directory
+ * @param[in] newname	Name of new file
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_link,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, dir,
+		const char *, dirname,
+		void *, file,
+		const char *, filename,
+		const char *, newname,
+		uint32_t, numlinks),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, dir, dir)
+		ctf_string(dirname, dirname)
+		ctf_integer_hex(void *, file, file)
+		ctf_string(filename, filename)
+		ctf_string(newname, newname)
+		ctf_integer(uint32_t, numlinks, numlinks)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_link,
+	TRACE_INFO)
+
+
+/**
+ * @brief Trace a unlink
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] olddir	Name of old directory
+ * @param[in] oldname	Name of old file
+ * @param[in] newdir	Name of new directory
+ * @param[in] newname	Name of new file
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_unlink,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, dir,
+		const char *, dirname,
+		void *, file,
+		const char *, filename,
+		uint32_t, numlinks),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, dir, dir)
+		ctf_string(dirname, dirname)
+		ctf_integer_hex(void *, file, file)
+		ctf_string(filename, filename)
+		ctf_integer(uint32_t, numlinks, numlinks)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_unlink,
 	TRACE_INFO)
 
 

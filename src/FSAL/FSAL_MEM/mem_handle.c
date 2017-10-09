@@ -1016,6 +1016,12 @@ fsal_status_t mem_link(struct fsal_obj_handle *obj_hdl,
 
 	myself->attrs.numlinks++;
 
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_link, __func__, __LINE__, dir,
+		   dir->m_name, myself, myself->m_name, name,
+		   myself->attrs.numlinks);
+#endif
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -1084,6 +1090,12 @@ static fsal_status_t mem_unlink(struct fsal_obj_handle *dir_hdl,
 
 unlock:
 	PTHREAD_RWLOCK_unlock(&dir_hdl->obj_lock);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_unlink, __func__, __LINE__, parent,
+		   parent->m_name, myself, myself->m_name,
+		   myself->attrs.numlinks);
+#endif
 
 	return status;
 }
@@ -1794,6 +1806,11 @@ fsal_status_t mem_close2(struct fsal_obj_handle *obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_close, __func__, __LINE__, myself,
+		   myself->m_name, state);
+#endif
+
 	if (state->state_type == STATE_TYPE_SHARE ||
 	    state->state_type == STATE_TYPE_NLM_SHARE ||
 	    state->state_type == STATE_TYPE_9P_FID) {
@@ -1901,7 +1918,7 @@ static void mem_release(struct fsal_obj_handle *obj_hdl)
 		/* Entry is still live: it's either an export, or in a dir */
 #ifdef USE_LTTNG
 		tracepoint(fsalmem, mem_inuse, __func__, __LINE__, myself,
-			   myself->is_export);
+			   myself->attrs.numlinks, myself->is_export);
 #endif
 		LogDebug(COMPONENT_FSAL,
 			 "Releasing live hdl=%p, name=%s, don't deconstruct it",
