@@ -2919,6 +2919,7 @@ struct fsal_obj_handle {
 				   stored */
 	uint64_t fileid;	/*< Unique identifier for this object within
 				   the scope of the fsid, (e.g. inode number) */
+	uint64_t rgw_write_offset;
 
 	struct state_hdl *state_hdl;	/*< State related to this handle */
 };
