@@ -385,7 +385,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					if (flags & UP_OWN)
 						attr.valid_mask |=
 						   ATTR_CHGTIME | ATTR_CHANGE |
-						   ATTR_OWNER;
+						   ATTR_OWNER | ATTR_GROUP |
+						   ATTR_MODE;
 					if (flags & UP_TIMES)
 						attr.valid_mask |=
 						   ATTR_CHGTIME | ATTR_CHANGE |
