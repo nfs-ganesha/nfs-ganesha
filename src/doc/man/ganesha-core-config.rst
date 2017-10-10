@@ -119,6 +119,10 @@ fsid_device(bool, default false)
 mount_path_pseudo(bool, default false)
     Whether to use Pseudo (true) or Path (false) for NFS v3 and 9P mounts.
 
+    This option defaults to false for backward compatibility, however, for
+    new setups, it's strongly recommended to be set true since it then means
+    the same server path for the mount is used for both v3 and v4.x.
+
 Dbus_Name_Prefix
     DBus name prefix. Required if one wants to run multiple ganesha instances on
     single host. The prefix should be different for every ganesha instance. If

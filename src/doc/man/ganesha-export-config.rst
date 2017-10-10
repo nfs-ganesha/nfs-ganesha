@@ -71,10 +71,30 @@ Path (required)
     The directory in the exported file system this export is rooted on
     (may be ignored for some FSALs). It need not be unique if Pseudo and/or Tag are specified.
 
+    Note that if it is not unique, and the core option mount_path_pseudo
+    is not set true, a v3 mount using the path will ONLY be able to
+    access the first export configured. To access other exports the
+    Tag option would need to be used.
+
 Pseudo (required v4)
     This option specifies the position in the Pseudo FS this export occupies if
     this is an NFS v4 export. It must be unique. By using different Pseudo options,
     the same Path may be exported multiple times.
+
+    This option is used to place the export within the NFS v4 Pseudo
+    Filesystem. This creates a single name space for NFS v4. Clients may
+    mount the root of the Pseudo Filesystem and navigate to exports.
+    Note that the Path and Tag options are not at all visible to NFS v4
+    clients.
+
+    Export id 0 is automatically created to provide the root and any
+    directories necessary to navigate to exports if there is no other
+    export specified with Pseudo = /;. Note that if an export is
+    specified with Pseudo = /;, it need not be export id 0. Specifying
+    such an export with FSAL { name = PSEUDO; } may be used to create a
+    Pseudo FS with specific options. Such an export may also use other
+    FSALs (though directories to reach exports will ONLY be
+    automatically created on FSAL PSEUDO exports).
 
 Tag (no default)
     This option allows an alternative access for NFS v3
