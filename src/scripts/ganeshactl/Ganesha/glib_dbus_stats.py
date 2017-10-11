@@ -103,6 +103,16 @@ class RetrieveExportStats():
 	stats_op = self.exportmgrobj.get_dbus_method("GetFSALStats",
 				  self.dbus_exportstats_name)
 	return DumpFSALStats(stats_op(fsal))
+    # enable stats
+    def enable_stats(self, stat_type):
+        stats_state = self.exportmgrobj.get_dbus_method("EnableStats",
+                                  self.dbus_exportstats_name)
+        return StatsEnable(stats_state(stat_type))
+    # disable stats
+    def disable_stats(self, stat_type):
+        stats_state = self.exportmgrobj.get_dbus_method("DisableStats",
+                                  self.dbus_exportstats_name)
+        return StatsDisable(stats_state(stat_type))
 
 class RetrieveClientStats():
     def __init__(self):
@@ -207,21 +217,26 @@ class ExportStats():
 
 class GlobalStats():
     def __init__(self, stats):
+	self.success = stats[0]
         self.status = stats[1]
-        if self.status == "OK":
+        if self.success:
             self.timestamp = (stats[2][0], stats[2][1])
             self.nfsv3_total = stats[3][1]
             self.nfsv40_total = stats[3][3]
             self.nfsv41_total = stats[3][5]
             self.nfsv42_total = stats[3][7]
     def __str__(self):
-        if self.status != "OK":
+	output = ""
+        if not self.success:
             return "No NFS activity, GANESHA RESPONSE STATUS: " + self.status
-        return ("Timestamp: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs" +
+	if self.status != "OK":
+	    output += self.status + "\n"
+	output += ("Timestamp: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs" +
                 "\nTotal NFSv3 ops: " + str(self.nfsv3_total) +
                 "\nTotal NFSv4.0 ops: " + str(self.nfsv40_total) +
                 "\nTotal NFSv4.1 ops: " + str(self.nfsv41_total) +
-                "\nTotal NFSv4.2 ops: " + str(self.nfsv42_total) )
+                "\nTotal NFSv4.2 ops: " + str(self.nfsv42_total))
+	return output
 
 class InodeStats():
     def __init__(self, stats):
@@ -250,10 +265,14 @@ class FastStats():
     def __init__(self, stats):
         self.stats = stats
     def __str__(self):
-        if self.stats[1] != "OK":
+	if not self.stats[0]:
             return "No NFS activity, GANESHA RESPONSE STATUS: " + self.stats[1]
         else:
-            output = ("Timestamp: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs" +
+            if self.stats[1] != "OK":
+		output = self.stats[1]+ "\n"
+	    else:
+		output = ""
+            output += ("Timestamp: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs" +
                       "\nGlobal ops:\n" )
             # NFSv3, NFSv4, NLM, MNT, QUOTA self.stats
             for i in range(0,len(self.stats[3])-1):
@@ -271,9 +290,11 @@ class ExportIOv3Stats():
     def __str__(self):
         output = ""
         for key in self.stats:
-            if self.stats[key][1] != "OK":
+            if not self.stats[key][0]:
                 output += "EXPORT %s: %s\n" % (key, self.stats[key][1])
                 continue
+	    if self.stats[key][1] != "OK":
+		output += self.stats[key][1] + "\n"
             output += ( "\nEXPORT %s:" % (key) +
                         "\n\t\trequested\ttransferred\t     total\t    errors\t   latency\tqueue wait" +
                         "\nREADv3: " )
@@ -290,9 +311,11 @@ class ExportIOv4Stats():
     def __str__(self):
         output = ""
         for key in self.stats:
-            if self.stats[key][1] != "OK":
+            if not self.stats[key][0]:
                 output += "\nEXPORT %s: %s\n" % (key, self.stats[key][1])
                 continue
+	    if self.stats[key][1] != "OK":
+		output += self.stats[key][1] + "\n"
             output += ("EXPORT %s:" % (key) +
                        "\n\t\trequested\ttransferred\t     total\t    errors\t   latency\tqueue wait" +
                        "\nREADv4: ")
@@ -308,10 +331,13 @@ class TotalStats():
     def __init__(self, stats):
         self.stats = stats
     def __str__(self):
+	output = ""
         for key in self.stats:
-            if self.stats[key][1] != "OK":
+            if not self.stats[key][0]:
                 return "No NFS activity, GANESHA RESPONSE STATUS: " + self.stats[key][1]
-            output = ("Total stats for export id: " + str(key) +
+            if self.stats[key][1] != "OK":
+		output += self.stats[key][1] + "\n"
+            output += ("Total stats for export id: " + str(key) +
                       "\nTimestamp: " + time.ctime(self.stats[key][2][0]) +
                       str(self.stats[key][2][1]) + " nsecs\n")
             for i in range(0,len(self.stats[key][3])-1, 2):
@@ -359,10 +385,13 @@ class DumpFSALStats():
     def __init__(self, stats):
 	self.stats = stats
     def __str__(self):
-	if self.stats[1] != "OK":
+	output = ""
+	if not self.stats[0]:
 	    return ("GANESHA RESPONSE STATUS: " + self.stats[1])
 	else:
-	    output = ("Timestamp: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs\n")
+	    if self.stats[1] != "OK":
+		output += self.stats[1] + "\n"
+	    output += ("Timestamp: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs\n")
 	    output += "FSAL Stats: \n Total Supported Ops : " +  "%s\n" % (str(self.stats[3][0]).rjust(8))
 	    output += "\t Op-Name    Op-Code   Total Res:Avg      Min      Max \n"
 	    i = 1
@@ -384,3 +413,21 @@ class DumpFSALStats():
 		else:
 		    break
 	    return output
+
+class StatsEnable():
+    def __init__(self, status):
+        self.status = status
+    def __str__(self):
+        if self.status[1] != "OK":
+            return "Failed to enable statistics counting, GANESHA RESPONSE STATUS: " + self.status[1]
+        else:
+            return "Successfully enabled statistics counting"
+
+class StatsDisable():
+    def __init__(self, status):
+        self.status = status
+    def __str__(self):
+        if self.status[1] != "OK":
+            return "Failed to disable statistics counting, GANESHA RESPONSE STATUS: " + self.status[1]
+        else:
+            return "Successfully disabled statistics counting"

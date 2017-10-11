@@ -628,6 +628,8 @@ static bool get_nfsv3_stats_io(DBusMessageIter *args,
 	DBusMessageIter iter;
 
 	dbus_message_iter_init_append(reply, &iter);
+	if (!nfs_param.core_param.enable_NFSSTATS)
+		errormsg = "NFS stat counting disabled";
 	client = lookup_client(args, &errormsg);
 	if (client == NULL) {
 		success = false;
@@ -675,6 +677,8 @@ static bool get_nfsv40_stats_io(DBusMessageIter *args,
 	DBusMessageIter iter;
 
 	dbus_message_iter_init_append(reply, &iter);
+	if (!nfs_param.core_param.enable_NFSSTATS)
+		errormsg = "NFS stat counting disabled";
 	client = lookup_client(args, &errormsg);
 	if (client == NULL) {
 		success = false;
@@ -722,6 +726,8 @@ static bool get_nfsv41_stats_io(DBusMessageIter *args,
 	DBusMessageIter iter;
 
 	dbus_message_iter_init_append(reply, &iter);
+	if (!nfs_param.core_param.enable_NFSSTATS)
+		errormsg = "NFS stat counting disabled";
 	client = lookup_client(args, &errormsg);
 	if (client == NULL) {
 		success = false;
@@ -770,6 +776,8 @@ static bool get_nfsv41_stats_layouts(DBusMessageIter *args,
 	DBusMessageIter iter;
 
 	dbus_message_iter_init_append(reply, &iter);
+	if (!nfs_param.core_param.enable_NFSSTATS)
+		errormsg = "NFS stat counting disabled";
 	client = lookup_client(args, &errormsg);
 	if (client == NULL) {
 		success = false;

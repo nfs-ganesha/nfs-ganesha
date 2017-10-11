@@ -13,13 +13,16 @@ import re
 import Ganesha.glib_dbus_stats
 
 def usage():
-    message = "Command gives global stats by default.\n"
+    message = "Command displays global stats by default.\n"
+    message += "To display stat counters use \n"
     message += "%s [list_clients | deleg <ip address> | " % (sys.argv[0])
     message += "inode | iov3 [export id] | iov4 [export id] | export |"
     message += " total [export id] | fast | pnfs [export id] |"
     message += " fsal <fsal name> ] \n"
     message += "To reset stat counters use \n"
-    message += "%s reset " % (sys.argv[0])
+    message += "%s reset \n" % (sys.argv[0])
+    message += "To enable/disable stat counters use \n"
+    message += "%s [enable | disable] [all | nfs | fsal] " % (sys.argv[0])
     sys.exit(message)
 
 if len(sys.argv) < 2:
@@ -29,7 +32,8 @@ else:
 
 # check arguments
 commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
-	    'export', 'total', 'fast', 'pnfs', 'fsal', 'reset')
+	    'export', 'total', 'fast', 'pnfs', 'fsal', 'reset', 'enable',
+	    'disable')
 if command not in commands:
     print "Option \"%s\" is not correct." % (command)
     usage()
@@ -55,6 +59,14 @@ elif command in ('fsal'):
 	print "Option \"%s\" must be followed by fsal name." % (command)
 	usage()
     command_arg = sys.argv[2]
+elif command in ('enable', 'disable'):
+    if not len(sys.argv) == 3:
+	print "Option \"%s\" must be followed by all/nfs/fsal." % (command)
+	usage()
+    command_arg = sys.argv[2]
+    if command_arg not in ('all', 'nfs', 'fsal'):
+	print "Option \"%s\" must be followed by all/nfs/fsal." % (command)
+	usage()
 
 # retrieve and print stats
 exp_interface = Ganesha.glib_dbus_stats.RetrieveExportStats()
@@ -83,3 +95,7 @@ elif command == "reset":
     print exp_interface.reset_stats()
 elif command == "fsal":
     print exp_interface.fsal_stats(command_arg)
+elif command == "enable":
+    print exp_interface.enable_stats(command_arg)
+elif command == "disable":
+    print exp_interface.disable_stats(command_arg)

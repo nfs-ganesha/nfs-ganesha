@@ -128,7 +128,11 @@ NFS_CORE_PARAM {}
 
 	TCP_KEEPINTVL(INT32, range 0 to 65535, default 0 -> use system defaults)
 
+	Enable_NFS_Stats(bool, default true)
+
 	Enable_Fast_Stats(bool, default false)
+
+	Enable_FSAL_Stats(bool, default false)
 
 	Short_File_Handle(bool, default false)
 

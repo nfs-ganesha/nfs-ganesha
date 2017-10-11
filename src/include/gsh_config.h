@@ -357,8 +357,12 @@ typedef struct nfs_core_param {
 	/** Whether to support the Remote Quota protocol.  Defaults
 	    to true and is settable with Enable_RQUOTA. */
 	bool enable_RQUOTA;
+	/** Whether to collect NFS stats.  Defaults to true. */
+	bool enable_NFSSTATS;
 	/** Whether to use fast stats.  Defaults to false. */
 	bool enable_FASTSTATS;
+	/** Whether to collect FSAL stats.  Defaults to false. */
+	bool enable_FSALSTATS;
 	/** Whether tcp sockets should use SO_KEEPALIVE */
 	bool enable_tcp_keepalive;
 	/** Maximum number of TCP probes before dropping the connection */

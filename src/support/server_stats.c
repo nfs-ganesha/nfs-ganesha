@@ -1196,6 +1196,8 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 	uint32_t proto_op = req->rq_msg.cb_proc;
 	uint32_t program_op = req->rq_msg.cb_prog;
 
+	if (!nfs_param.core_param.enable_NFSSTATS)
+		return;
 	if (program_op == NFS_PROGRAM && op_ctx->nfs_vers == NFS_V3)
 		global_st.v3.op[proto_op]++;
 	else if (program_op == NFS_program[P_NLM])
@@ -1247,6 +1249,8 @@ void server_stats_nfsv4_op_done(int proto_op,
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
 
+	if (!nfs_param.core_param.enable_NFSSTATS)
+		return;
 	if (op_ctx->nfs_vers == NFS_V4)
 		global_st.v4.op[proto_op]++;
 
@@ -1303,6 +1307,8 @@ void server_stats_compound_done(int num_ops, int status)
 	struct timespec current_time;
 	nsecs_elapsed_t stop_time;
 
+	if (!nfs_param.core_param.enable_NFSSTATS)
+		return;
 	now(&current_time);
 	stop_time = timespec_diff(&ServerBootTime, &current_time);
 	if (client != NULL) {
@@ -1340,6 +1346,8 @@ void server_stats_compound_done(int num_ops, int status)
 void server_stats_io_done(size_t requested,
 			  size_t transferred, bool success, bool is_write)
 {
+	if (!nfs_param.core_param.enable_NFSSTATS)
+		return;
 	if (op_ctx->client != NULL) {
 		struct server_stats *server_st;
 

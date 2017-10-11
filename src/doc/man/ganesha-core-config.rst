@@ -62,8 +62,18 @@ Drop_Delay_Errors(bool, default false)
 Plugins_Dir(path, default "/usr/lib64/ganesha")
     Path to the directory containing server specific modules
 
+Enable_NFS_Stats(bool, default true)
+    Whether to collect perfomance statistics. By default the perfomance
+    counting is enabled. Enable_NFS_Stats can be enabled or disabled
+    dynamically via ganesha_stats.
+
 Enable_Fast_Stats(bool, default false)
-    Whether to use fast stats.
+    Whether to use fast stats. If enabled this will skip statistics counters
+    collection for per client and per export.
+
+Enable_FSAL_Stats(bool, default false)
+    Whether to count and collect FSAL specific performance statistics.
+    Enable_FSAL_Stats can be enabled or disabled dynamically via ganesha_stats
 
 Short_File_Handle(bool, default false)
     Whether to use short NFS file handle to accommodate VMware NFS client.

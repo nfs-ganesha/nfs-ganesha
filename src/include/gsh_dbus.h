@@ -130,6 +130,13 @@
 	.direction = "in"	\
 }
 
+#define STAT_TYPE_ARG		\
+{				\
+	.name = "stat_type",		\
+	.type = "s",		\
+	.direction = "in"	\
+}
+
 /* Properties list helper macros
  */
 

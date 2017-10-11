@@ -32,6 +32,7 @@
 #include "fsal.h"
 
 #include "include/gpfs_nfs.h"
+#include "gsh_config.h"
 
 struct kxArgs {
 	signed long arg1;
@@ -184,21 +185,26 @@ int gpfs_ganesha(int op, void *oarg)
 #ifdef _VALGRIND_MEMCHECK
 	valgrind_kganesha(&args);
 #endif
-	now(&start_time);
-	rc = ioctl(gpfs_fd, kGanesha, &args);
-	now(&stop_time);
-	resp_time = timespec_diff(&start_time, &stop_time);
+	if (nfs_param.core_param.enable_FSALSTATS) {
+		/* Collect FSAL stats */
+		now(&start_time);
+		rc = ioctl(gpfs_fd, kGanesha, &args);
+		now(&stop_time);
+		resp_time = timespec_diff(&start_time, &stop_time);
 
-	/* record FSAL stats */
-	idx = gpfs_op2index(op);
-	(void)atomic_inc_uint64_t(&gpfs_stats.op_stats[idx].num_ops);
-	(void)atomic_add_uint64_t(&gpfs_stats.op_stats[idx].resp_time,
+		/* record FSAL stats */
+		idx = gpfs_op2index(op);
+		(void)atomic_inc_uint64_t(&gpfs_stats.op_stats[idx].num_ops);
+		(void)atomic_add_uint64_t(&gpfs_stats.op_stats[idx].resp_time,
 				  resp_time);
-	if (gpfs_stats.op_stats[idx].resp_time_max < resp_time)
-		gpfs_stats.op_stats[idx].resp_time_max = resp_time;
-	if (gpfs_stats.op_stats[idx].resp_time_min == 0 ||
-	    gpfs_stats.op_stats[idx].resp_time_min > resp_time)
-		gpfs_stats.op_stats[idx].resp_time_min = resp_time;
+		if (gpfs_stats.op_stats[idx].resp_time_max < resp_time)
+			gpfs_stats.op_stats[idx].resp_time_max = resp_time;
+		if (gpfs_stats.op_stats[idx].resp_time_min == 0 ||
+		    gpfs_stats.op_stats[idx].resp_time_min > resp_time)
+			gpfs_stats.op_stats[idx].resp_time_min = resp_time;
 
+	} else {
+		rc = ioctl(gpfs_fd, kGanesha, &args);
+	}
 	return rc;
 }
