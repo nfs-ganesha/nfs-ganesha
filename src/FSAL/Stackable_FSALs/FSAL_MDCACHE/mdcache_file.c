@@ -451,6 +451,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 				       enum fsal_create_mode createmode,
 				       const char *name,
 				       struct attrlist *attrib_set,
+				       struct attrlist *attrs_out,
 				       fsal_verifier_t verifier,
 				       mdcache_entry_t **new_entry,
 				       bool *caller_perm_check)
@@ -465,7 +466,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 	if (!name)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
-	status = mdc_lookup(mdc_parent, name, uncached, &entry, NULL);
+	status = mdc_lookup(mdc_parent, name, uncached, &entry, attrs_out);
 
 	if (FSAL_IS_ERROR(status)) {
 		/* Does not exist, or other error, return to open2 to
@@ -498,7 +499,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 		status = entry->sub_handle->obj_ops.open2(
 			entry->sub_handle, state, openflags, createmode,
 			NULL, attrib_set, verifier, &sub_handle,
-			NULL, caller_perm_check)
+			attrs_out, caller_perm_check)
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
@@ -515,6 +516,20 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 			/* Invalidate the attributes since we just truncated. */
 			atomic_clear_uint32_t_bits(&entry->mde_flags,
 						   MDCACHE_TRUST_ATTRS);
+
+			if (attrs_out &&
+			    (attrs_out->request_mask & ATTR_RDATTR_ERR) != 0) {
+				/* Ensure the attribute cache is valid. The
+				 * simplest way to do this is to call getattrs()
+				 */
+				status = entry->obj_handle.obj_ops.getattrs(
+					     &entry->obj_handle, attrs_out);
+				if (FSAL_IS_ERROR(status)) {
+					LogFullDebug(COMPONENT_CACHE_INODE,
+						"getattrs failed status=%s",
+						fsal_err_txt(status));
+				}
+			}
 		}
 		*new_entry = entry;
 	}
@@ -625,21 +640,12 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 		 */
 		status = mdc_open2_by_name(mdc_parent, state, openflags,
 					   createmode, name, attrs_in,
-					   verifier, &new_entry,
+					   attrs_out, verifier, &new_entry,
 					   caller_perm_check);
 
 		if (status.major == ERR_FSAL_NO_ERROR) {
 			/* Return the newly opened file. */
 			*new_obj = &new_entry->obj_handle;
-
-			if (openflags & FSAL_O_TRUNC) {
-				/* Mark the attributes as not-trusted, so we
-				 * will refresh the attributes on the next
-				 * getattrs.
-				 */
-				atomic_clear_uint32_t_bits(
-				    &new_entry->mde_flags, MDCACHE_TRUST_ATTRS);
-			}
 
 			return status;
 		}
