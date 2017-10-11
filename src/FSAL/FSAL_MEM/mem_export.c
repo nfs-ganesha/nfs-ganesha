@@ -45,6 +45,7 @@
 #include "FSAL/fsal_config.h"
 #include "mem_int.h"
 #include "nfs_exports.h"
+#include "nfs_core.h"
 #include "export_mgr.h"
 
 #ifdef __FreeBSD__
@@ -72,7 +73,7 @@ static void mem_release_export(struct fsal_export *exp_hdl)
 	myself = container_of(exp_hdl, struct mem_fsal_export, export);
 
 	if (myself->root_handle != NULL) {
-		mem_clean_dir_tree(myself->root_handle);
+		mem_clean_export(myself->root_handle);
 
 		fsal_obj_handle_fini(&myself->root_handle->obj_handle);
 

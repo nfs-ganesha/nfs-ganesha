@@ -257,11 +257,44 @@ static void mem_remove_dirent(struct mem_fsal_obj_handle *parent,
 }
 
 /**
+ * @brief Recursively clean all objs/dirents on an export
+ *
+ * @note Caller MUST hold export lock for write
+ *
+ * @param[in] root	Root to clean
+ * @return Return description
+ */
+void mem_clean_export(struct mem_fsal_obj_handle *root)
+{
+	struct mem_fsal_obj_handle *child;
+	struct avltree_node *node;
+	struct mem_dirent *dirent;
+
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_inuse, __func__, __LINE__, root,
+		   root->attrs.numlinks, root->is_export);
+#endif
+	while ((node = avltree_first(&root->mh_dir.avl_name))) {
+		dirent = avltree_container_of(node, struct mem_dirent, avl_n);
+
+		child = dirent->hdl;
+		if (child->obj_handle.type == DIRECTORY) {
+			mem_clean_export(child);
+		}
+
+		PTHREAD_RWLOCK_wrlock(&root->obj_handle.obj_lock);
+		mem_remove_dirent_locked(root, dirent, true);
+		PTHREAD_RWLOCK_unlock(&root->obj_handle.obj_lock);
+	}
+
+}
+
+/**
  * @brief Remove all children from a directory's tree
  *
  * @param[in] parent	Directroy to clean
  */
-void mem_clean_dir_tree(struct mem_fsal_obj_handle *parent)
+void mem_clean_all_dirents(struct mem_fsal_obj_handle *parent)
 {
 	struct avltree_node *node;
 	struct mem_dirent *dirent;
@@ -434,6 +467,7 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 	glist_init(&hdl->dirents);
 	PTHREAD_RWLOCK_wrlock(&mfe->mfe_exp_lock);
 	glist_add_tail(&mfe->mfe_objs, &hdl->mfo_exp_entry);
+	hdl->mfo_exp = mfe;
 	PTHREAD_RWLOCK_unlock(&mfe->mfe_exp_lock);
 	package_mem_handle(hdl);
 
@@ -1912,7 +1946,7 @@ static void mem_release(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl,
 			      struct mem_fsal_obj_handle,
 			      obj_handle);
-	mfe = container_of(op_ctx->fsal_export, struct mem_fsal_export, export);
+	mfe = myself->mfo_exp;
 
 	if (myself->is_export || !glist_empty(&myself->dirents)) {
 		/* Entry is still live: it's either an export, or in a dir */
@@ -1935,7 +1969,7 @@ static void mem_release(struct fsal_obj_handle *obj_hdl)
 	switch (obj_hdl->type) {
 	case DIRECTORY:
 		/* Empty directory */
-		mem_clean_dir_tree(myself);
+		mem_clean_all_dirents(myself);
 		break;
 	case REGULAR_FILE:
 		break;

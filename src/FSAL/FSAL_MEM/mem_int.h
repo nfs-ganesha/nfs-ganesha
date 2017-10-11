@@ -97,7 +97,8 @@ struct mem_fsal_obj_handle {
 		} mh_symlink;
 	};
 	struct glist_head dirents; /* List of dirents pointing to obj */
-	struct glist_head mfo_exp_entry;
+	struct glist_head mfo_exp_entry; /**< Link into mfs_objs */
+	struct mem_fsal_export *mfo_exp; /**< Export owning object */
 	char *m_name;	/**< Base name of obj, for debugging */
 	uint32_t datasize;
 	bool is_export;
@@ -153,6 +154,7 @@ static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl,
 #endif
 
 	glist_del(&hdl->mfo_exp_entry);
+	hdl->mfo_exp = NULL;
 
 	if (hdl->m_name != NULL) {
 		gsh_free(hdl->m_name);
@@ -162,7 +164,8 @@ static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl,
 	gsh_free(hdl);
 }
 
-void mem_clean_dir_tree(struct mem_fsal_obj_handle *parent);
+void mem_clean_export(struct mem_fsal_obj_handle *root);
+void mem_clean_all_dirents(struct mem_fsal_obj_handle *parent);
 
 /**
  * @brief FSAL Module wrapper for MEM
