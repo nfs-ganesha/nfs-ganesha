@@ -142,6 +142,9 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	/* Knock things out if the link count falls to 0. */
 
 	if ((flags & fsal_up_nlink) && (attr->numlinks == 0)) {
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Entry %p Clearing MDCACHE_TRUST_ATTRS, MDCACHE_TRUST_CONTENT, MDCACHE_DIR_POPULATED",
+			     entry);
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
 					   MDCACHE_TRUST_ATTRS |
 					   MDCACHE_TRUST_CONTENT |
@@ -277,6 +280,9 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		mdc_fixup_md(entry, attr);
 		/* If directory can not trust content anymore. */
 		if (entry->obj_handle.type == DIRECTORY) {
+			LogFullDebug(COMPONENT_CACHE_INODE,
+				     "Entry %p Clearing MDCACHE_TRUST_CONTENT, MDCACHE_DIR_POPULATED",
+				     entry);
 			atomic_clear_uint32_t_bits(&entry->mde_flags,
 						   MDCACHE_TRUST_CONTENT |
 						   MDCACHE_DIR_POPULATED);
