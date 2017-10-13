@@ -50,7 +50,6 @@
 #include "gsh_intrinsic.h"
 #include "gsh_wait_queue.h"
 
-#define DUPREQ_BAD_ADDR1 0x01	/* safe for marked pointers, etc */
 #define DUPREQ_NOCACHE   0x02
 #define DUPREQ_MAX_RETRIES 5
 
@@ -1157,10 +1156,6 @@ dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 	if (dv == (void *)DUPREQ_NOCACHE)
 		goto out;
 
-	/* do nothing if nfs_dupreq_start failed completely */
-	if (dv == (void *)DUPREQ_BAD_ADDR1)
-		goto out;
-
 	PTHREAD_MUTEX_lock(&dv->mtx);
 	dv->res = res_nfs;
 	dv->timestamp = time(NULL);
@@ -1274,10 +1269,6 @@ dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
 
 	/* do nothing if req is marked no-cache */
 	if (dv == (void *)DUPREQ_NOCACHE)
-		goto out;
-
-	/* do nothing if nfs_dupreq_start failed completely */
-	if (dv == (void *)DUPREQ_BAD_ADDR1)
 		goto out;
 
 	PTHREAD_MUTEX_lock(&dv->mtx);
