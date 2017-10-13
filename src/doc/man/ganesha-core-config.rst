@@ -59,12 +59,6 @@ Drop_Delay_Errors(bool, default false)
     For NFSv3, whether to drop rather than reply to requests yielding delay
     errors.  False by default and settable with Drop_Delay_Errors.
 
-Dispatch_Max_Reqs(uint32, range 1 to 10000, default 5000)
-    Total number of requests to allow into the dispatcher at once.
-
-Dispatch_Max_Reqs_Xprt(uint32, range 1 to 2048, default 512)
-    Number of requests to allow into the dispatcher from one specific transport.
-
 Plugins_Dir(path, default "/usr/lib64/ganesha")
     Path to the directory containing server specific modules
 

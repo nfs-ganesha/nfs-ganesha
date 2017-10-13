@@ -227,13 +227,6 @@ typedef struct nfs_core_param {
 	    retry and there is no NFSERR_DELAY, this seems like an
 	    excellent idea. */
 	bool drop_delay_errors;
-	/** Total number of requests to allow into the dispatcher at
-	    once.  Defaults to 5000 and settable by Dispatch_Max_Reqs */
-	uint32_t dispatch_max_reqs;
-	/** Number of requests to allow into the dispatcher from one
-	    specific transport.  Defaults to 512 and settable by
-	    Dispatch_Max_Reqs_Xprt. */
-	uint32_t dispatch_max_reqs_xprt;
 	/** Parameters controlling the Duplicate Request Cache.  */
 	struct {
 		/** Whether to disable the DRC entirely.  Defaults to
