@@ -585,6 +585,14 @@ retry:
 			t = rbtx_partition_of_scalar(&drc_st->tcp_drc_recycle_t,
 						     drc_k.d_u.tcp.hk);
 			DRC_ST_LOCK();
+
+			/* Avoid double reference of drc,
+			 * rechecking xp_u2 after DRC_ST_LOCK */
+			if (req->rq_xprt->xp_u2) {
+				DRC_ST_UNLOCK();
+				goto retry;
+			}
+
 			ndrc =
 			    opr_rbtree_lookup(&t->t, &drc_k.d_u.tcp.recycle_k);
 			if (ndrc) {
@@ -626,16 +634,18 @@ retry:
 				/* assign already-computed hash */
 				drc->d_u.tcp.hk = drc_k.d_u.tcp.hk;
 				PTHREAD_MUTEX_lock(&drc->mtx);	/* LOCKED */
-				/* xprt ref */
-				drc->refcnt = 1;
 				/* insert dict */
 				opr_rbtree_insert(&t->t,
 						  &drc->d_u.tcp.recycle_k);
 			}
+
+			/* Avoid double reference of drc,
+			 * setting xp_u2 under DRC_ST_LOCK */
+			req->rq_xprt->xp_u2 = (void *)drc;
+			(void)nfs_dupreq_ref_drc(drc);  /* xprt ref */
+
 			DRC_ST_UNLOCK();
 			drc->d_u.tcp.recycle_time = 0;
-
-			(void)nfs_dupreq_ref_drc(drc);	/* xprt ref */
 
 			/* try to expire unused DRCs somewhat in proportion to
 			 * new connection arrivals */
@@ -644,13 +654,6 @@ retry:
 			LogFullDebug(COMPONENT_DUPREQ,
 				     "after ref drc %p refcnt==%u ", drc,
 				     drc->refcnt);
-
-			/* Idempotent address, no need for lock;
-			 * set once here, never changes.
-			 * No other fields are modified.
-			 * Assumes address stores are atomic.
-			 */
-			req->rq_xprt->xp_u2 = (void *)drc;
 		}
 		break;
 	default:
