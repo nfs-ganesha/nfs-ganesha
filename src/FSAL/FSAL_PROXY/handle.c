@@ -1204,7 +1204,7 @@ int pxy_close_thread(void)
 int pxy_init_rpc(const struct pxy_fsal_module *pm)
 {
 	int rc;
-	int i = NB_RPC_SLOT;
+	int i = NB_RPC_SLOT-1;
 
 	PTHREAD_MUTEX_lock(&listlock);
 	glist_init(&rpc_calls);
@@ -1228,7 +1228,7 @@ int pxy_init_rpc(const struct pxy_fsal_module *pm)
 		strncpy(pxy_hostname, "NFS-GANESHA/Proxy",
 			sizeof(pxy_hostname));
 
-	for (i = NB_RPC_SLOT; i > 0; i--) {
+	for (i = NB_RPC_SLOT-1; i >= 0; i--) {
 		struct pxy_rpc_io_context *c =
 		    gsh_malloc(sizeof(*c) + pm->special.srv_sendsize +
 			       pm->special.srv_recvsize);

@@ -57,7 +57,7 @@ do {									\
 	op->argop = NFS4_OP_SEQUENCE;					\
 	memcpy(op->nfs_argop4_u.opsequence.sa_sessionid, sessionid,	\
 	       sizeof(sessionid4));					\
-	op->nfs_argop4_u.opsequence.sa_highest_slotid = nb_slot;	\
+	op->nfs_argop4_u.opsequence.sa_highest_slotid = nb_slot - 1;	\
 	op->nfs_argop4_u.opsequence.sa_cachethis = false;		\
 } while (0)
 
