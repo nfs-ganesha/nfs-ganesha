@@ -41,6 +41,15 @@
 
 static const char *module_name = "RGW";
 
+#if ((LIBRGW_FILE_VER_MAJOR > 1) || \
+	((LIBRGW_FILE_VER_MAJOR == 1) && \
+	 ((LIBRGW_FILE_VER_MINOR > 1) || \
+	  ((LIBRGW_FILE_VER_MINOR == 1) && (LIBRGW_FILE_VER_EXTRA >= 4)))))
+#define HAVE_DIRENT_OFFSETOF 1
+#else
+#define HAVE_DIRENT_OFFSETOF 0
+#endif
+
 /* filesystem info for RGW */
 static struct fsal_staticfsinfo_t default_rgw_info = {
 	.maxfilesize = UINT64_MAX,
@@ -67,6 +76,9 @@ static struct fsal_staticfsinfo_t default_rgw_info = {
 	.maxwrite = FSAL_MAXIOSIZE,
 	.umask = 0,
 	.rename_changes_key = true,
+#if HAVE_DIRENT_OFFSETOF
+	.compute_readdir_cookie = true,
+#endif
 };
 
 static struct config_item rgw_items[] = {
