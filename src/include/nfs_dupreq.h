@@ -138,7 +138,7 @@ void dupreq2_pkgshutdown(void);
 
 drc_t *drc_get_tcp_drc(struct svc_req *);
 void drc_release_tcp_drc(drc_t *);
-void nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags);
+void nfs_dupreq_put_drc(drc_t *drc, uint32_t flags);
 
 dupreq_status_t nfs_dupreq_start(nfs_request_t *,
 				 struct svc_req *);

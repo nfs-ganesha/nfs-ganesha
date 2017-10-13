@@ -1218,7 +1218,7 @@ static enum xprt_stat nfs_rpc_tcp_user_data(SVCXPRT *newxprt)
 static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *xprt)
 {
 	if (xprt->xp_u2) {
-		nfs_dupreq_put_drc(xprt, xprt->xp_u2, DRC_FLAG_RELEASE);
+		nfs_dupreq_put_drc(xprt->xp_u2, DRC_FLAG_RELEASE);
 		xprt->xp_u2 = NULL;
 	}
 	return XPRT_DESTROYED;

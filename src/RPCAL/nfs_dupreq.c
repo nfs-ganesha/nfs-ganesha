@@ -672,11 +672,10 @@ out:
  * Release previously-ref'd DRC.  If its refcnt drops to 0, the DRC
  * is queued for later recycling.
  *
- * @param[in] xprt  The SVCXPRT associated with DRC, if applicable
  * @param[in] drc   The DRC
  * @param[in] flags Control flags
  */
-void nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags)
+void nfs_dupreq_put_drc(drc_t *drc, uint32_t flags)
 {
 	if (!(flags & DRC_FLAG_LOCKED))
 		PTHREAD_MUTEX_lock(&drc->mtx);
@@ -1025,7 +1024,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 	case DRC_UDP_V234:
 		dk->hin.tcp.rq_xid = req->rq_msg.rm_xid;
 		if (unlikely(!copy_xprt_addr(&dk->hin.addr, req->rq_xprt))) {
-			nfs_dupreq_put_drc(req->rq_xprt, drc, DRC_FLAG_NONE);
+			nfs_dupreq_put_drc(drc, DRC_FLAG_NONE);
 			nfs_dupreq_free_dupreq(dk);
 			return DUPREQ_INSERT_MALLOC_ERROR;
 		}
@@ -1035,7 +1034,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 		break;
 	default:
 		/* @todo: should this be an assert? */
-		nfs_dupreq_put_drc(req->rq_xprt, drc, DRC_FLAG_NONE);
+		nfs_dupreq_put_drc(drc, DRC_FLAG_NONE);
 		nfs_dupreq_free_dupreq(dk);
 		return DUPREQ_INSERT_MALLOC_ERROR;
 	}
@@ -1211,7 +1210,7 @@ dq_again:
 			TAILQ_REMOVE(&drc->dupreq_q, ov, fifo_q);
 			--(drc->size);
 			/* release dv's ref */
-			nfs_dupreq_put_drc(NULL, drc, DRC_FLAG_LOCKED);
+			nfs_dupreq_put_drc(drc, DRC_FLAG_LOCKED);
 			/* drc->mtx gets unlocked in the above call! */
 
 			rbtree_x_cached_remove(&drc->xt, t, &ov->rbt_k, ov->hk);
@@ -1296,7 +1295,7 @@ dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
 	--(drc->size);
 
 	/* release dv's ref on drc and unlock */
-	nfs_dupreq_put_drc(req->rq_xprt, drc, DRC_FLAG_LOCKED);
+	nfs_dupreq_put_drc(drc, DRC_FLAG_LOCKED);
 	/* !LOCKED */
 
 	/* we removed the dupreq from hashtable, release a ref */
