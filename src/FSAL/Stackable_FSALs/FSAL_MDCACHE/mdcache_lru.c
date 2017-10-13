@@ -874,12 +874,14 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent)
 		 * The dirents list is effectively properly initialized.
 		 */
 		chunk = container_of(lru, struct dir_chunk, chunk_lru);
-		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Recycling chunk at %p.", chunk);
 	} else {
 		/* alloc chunk (if fails, aborts) */
 		chunk = gsh_calloc(1, sizeof(struct dir_chunk));
 		glist_init(&chunk->dirents);
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "New chunk %p.", chunk);
 		(void) atomic_inc_int64_t(&lru_state.chunks_used);
 	}
 
@@ -1927,6 +1929,8 @@ void lru_remove_chunk(struct dir_chunk *chunk)
 	struct lru_q_lane *qlane = &CHUNK_LRU[lane];
 	struct lru_q *lq;
 
+	LogFullDebug(COMPONENT_CACHE_INODE, "Removing chunk %p", chunk);
+
 	QLOCK(qlane);
 
 	/* Remove chunk and mark it as dead. */
@@ -1945,6 +1949,7 @@ void lru_remove_chunk(struct dir_chunk *chunk)
 	mdcache_clean_dirent_chunk(chunk);
 
 	/* And now we can free the chunk. */
+	LogFullDebug(COMPONENT_CACHE_INODE, "Freeing chunk %p", chunk);
 	gsh_free(chunk);
 }
 
