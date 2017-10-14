@@ -77,12 +77,6 @@ struct nfs_req_st {
 		uint32_t waiters;
 	} reqs;
 	GSH_CACHE_PAD(1);
-	struct {
-		pthread_mutex_t mtx;
-		struct glist_head q;
-		uint32_t stalled;
-		bool active;
-	} stallq;
 };
 
 extern struct nfs_req_st nfs_req_st;

@@ -138,52 +138,6 @@ void log_sperror_gss(char *, OM_uint32, OM_uint32);
 const char *str_gc_proc(rpc_gss_proc_t);
 #endif /* _HAVE_GSSAPI */
 
-/* Private data associated with a new TI-RPC (TCP) SVCXPRT (transport
- * connection), ie, xprt->xp_u1.
- */
-#define XPRT_PRIVATE_FLAG_NONE		SVC_XPRT_FLAG_NONE
-/* uint16_t actually used */
-#define XPRT_PRIVATE_FLAG_DECODING 0x0008
-#define XPRT_PRIVATE_FLAG_STALLED 0x0010	/* ie, -on stallq- */
-
-/* uint32_t instructions */
-#define XPRT_PRIVATE_FLAG_LOCKED	SVC_XPRT_FLAG_LOCKED
-#define XPRT_PRIVATE_FLAG_UNLOCK	SVC_XPRT_FLAG_UNLOCK
-#define XPRT_PRIVATE_FLAG_INCREQ	0x00040000
-#define XPRT_PRIVATE_FLAG_DECREQ	0x00080000
-
-typedef struct gsh_xprt_private {
-	SVCXPRT *xprt;
-	struct glist_head stallq;
-	uint16_t flags;
-} gsh_xprt_private_t;
-
-static inline gsh_xprt_private_t *alloc_gsh_xprt_private(SVCXPRT *xprt,
-							 uint32_t flags)
-{
-	gsh_xprt_private_t *xu = (gsh_xprt_private_t *)
-		gsh_malloc(sizeof(gsh_xprt_private_t));
-
-	xu->xprt = xprt;
-	xu->flags = flags;
-
-	return xu;
-}
-
-#ifndef DRC_FLAG_RELEASE
-#define DRC_FLAG_RELEASE 0x0040
-#endif
-
-static inline void free_gsh_xprt_private(SVCXPRT *xprt)
-{
-	gsh_xprt_private_t *xu = (gsh_xprt_private_t *)xprt->xp_u1;
-
-	if (xu) {
-		gsh_free(xu);
-		xprt->xp_u1 = NULL;
-	}
-}
-
 bool copy_xprt_addr(sockaddr_t *, SVCXPRT *);
 
 int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr);
