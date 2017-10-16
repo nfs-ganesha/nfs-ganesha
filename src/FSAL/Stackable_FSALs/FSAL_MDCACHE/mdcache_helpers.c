@@ -1216,12 +1216,20 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 
 	PTHREAD_RWLOCK_rdlock(&mdc_parent->content_lock);
 
+	/* ".." doesn't end up in the cache */
 	if (!strcmp(name, "..")) {
 		struct mdcache_fsal_export *export = mdc_cur_export();
 
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Lookup parent (..) of %p", mdc_parent);
-		/* ".." doesn't end up in the cache */
+
+		if (mdc_parent->fsobj.fsdir.parent.len == 0) {
+			/* we need write lock */
+			PTHREAD_RWLOCK_unlock(&mdc_parent->content_lock);
+			PTHREAD_RWLOCK_wrlock(&mdc_parent->content_lock);
+			mdc_get_parent(export, mdc_parent);
+		}
+
 		status =  mdcache_locate_host(
 				&mdc_parent->fsobj.fsdir.parent,
 				export, new_entry, attrs_out);
