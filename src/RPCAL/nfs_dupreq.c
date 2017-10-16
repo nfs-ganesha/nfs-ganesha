@@ -478,7 +478,10 @@ static inline void drc_free_expired(void)
 		drc = TAILQ_FIRST(&drc_st->tcp_drc_recycle_q);
 		if (drc && (drc->d_u.tcp.recycle_time > 0)
 		    && ((now - drc->d_u.tcp.recycle_time) >
-			drc_st->expire_delta) && (drc->refcnt == 0)) {
+			drc_st->expire_delta)) {
+
+			assert(drc->refcnt == 0);
+
 			LogFullDebug(COMPONENT_DUPREQ,
 				     "remove expired drc %p from recycle queue",
 				     drc);
@@ -497,16 +500,8 @@ static inline void drc_free_expired(void)
 			TAILQ_REMOVE(&drc_st->tcp_drc_recycle_q, drc,
 				     d_u.tcp.recycle_q);
 			--(drc_st->tcp_drc_recycle_qlen);
-			/* expect DRC to be reachable from some xprt(s) */
-			PTHREAD_MUTEX_lock(&drc->mtx);
-			drc->flags &= ~DRC_FLAG_RECYCLE;
-			/* but if not, dispose it */
-			if (drc->refcnt == 0) {
-				PTHREAD_MUTEX_unlock(&drc->mtx);
-				free_tcp_drc(drc);
-				continue;
-			}
-			PTHREAD_MUTEX_unlock(&drc->mtx);
+
+			free_tcp_drc(drc);
 		} else {
 			LogFullDebug(COMPONENT_DUPREQ,
 				     "unexpired drc %p in recycle queue expire check (nothing happens)",
