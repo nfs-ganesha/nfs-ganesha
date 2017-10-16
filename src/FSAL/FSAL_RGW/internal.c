@@ -213,6 +213,9 @@ int construct_handle(struct rgw_export *export,
 
 	constructing->export = export;
 
+	cache_init(&constructing->cache);
+	PTHREAD_MUTEX_init(&constructing->mutex, NULL);
+
 	*obj = constructing;
 
 	return 0;
@@ -220,6 +223,21 @@ int construct_handle(struct rgw_export *export,
 
 void deconstruct_handle(struct rgw_handle *obj)
 {
+	/* If cache is not empty, free all memory. */
+	struct glist_head *node = NULL;
+	struct glist_head *noden = NULL;
+
+	glist_for_each_safe(node, noden, &obj->cache.head) {
+		struct slice_t *slice = glist_entry(node, struct slice_t, node);
+
+		glist_del(&slice->node);
+		gsh_free(slice->data);
+		gsh_free(slice);
+	}
+
+	cache_destroy(&obj->cache);
+	PTHREAD_MUTEX_destroy(&obj->mutex);
+
 	fsal_obj_handle_fini(&obj->handle);
 	gsh_free(obj);
 }

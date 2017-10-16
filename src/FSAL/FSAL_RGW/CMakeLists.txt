@@ -3,6 +3,7 @@ add_definitions(
 )
 
 SET(fsalrgw_LIB_SRCS
+  cache.c
   up.c
   main.c
   export.c

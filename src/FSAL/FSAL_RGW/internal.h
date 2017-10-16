@@ -40,6 +40,7 @@
 #include "fsal_api.h"
 #include "fsal_convert.h"
 #include "sal_data.h"
+#include "cache.h"
 
 #include <include/rados/librgw.h>
 #include <include/rados/rgw_file.h>
@@ -97,6 +98,11 @@ struct rgw_handle {
 					 *< belongs to */
 	struct fsal_share share;
 	fsal_openflags_t openflags;
+
+	struct cache_t cache;
+
+	/* a mutex to make sure the call for rgw_write is consective. */
+	pthread_mutex_t mutex;
 };
 
 /**
