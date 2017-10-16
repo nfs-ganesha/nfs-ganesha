@@ -1592,6 +1592,8 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	construct_handle(glfs_export, &sb, glhandle, globjhdl,
 			 GLAPI_HANDLE_LENGTH, &myself, vol_uuid);
 
+	*new_obj = &myself->handle;
+
 	/* If we didn't have a state above, use the global fd. At this point,
 	 * since we just created the global fd, no one else can have a
 	 * reference to it, and thus we can mamnipulate unlocked which is
@@ -1608,8 +1610,6 @@ open:
 	if (FSAL_IS_ERROR(status))
 		goto direrr;
 
-	*new_obj = &myself->handle;
-
 	if (created && attrib_set->valid_mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
@@ -1623,14 +1623,8 @@ open:
 						      state,
 						      attrib_set);
 
-		if (FSAL_IS_ERROR(status)) {
-			/* Release the handle we just allocated. */
-			(*new_obj)->obj_ops.release(*new_obj);
-			/* We released handle at this point */
-			glhandle = NULL;
-			*new_obj = NULL;
+		if (FSAL_IS_ERROR(status))
 			goto fileerr;
-		}
 
 		if (attrs_out != NULL) {
 			status = (*new_obj)->obj_ops.getattrs(*new_obj,
@@ -1674,9 +1668,22 @@ open:
 
 
 fileerr:
+	/* Avoiding use after freed, make sure close my_fd before
+	 * obj_ops.release(), glfs_close is called depends on
+	 * FSAL_O_CLOSED flags, it's harmless of closing my_fd twice
+	 * in the floowing obj_ops.release().
+	 */
 	glusterfs_close_my_fd(my_fd);
 
 direrr:
+	/* Release the handle we just allocated. */
+	if (*new_obj) {
+		(*new_obj)->obj_ops.release(*new_obj);
+		/* We released handle at this point */
+		glhandle = NULL;
+		*new_obj = NULL;
+	}
+
 	/* Delete the file if we actually created it. */
 	if (created) {
 		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
@@ -1693,7 +1700,6 @@ direrr:
 
 	if (status.major != ERR_FSAL_NO_ERROR)
 		gluster_cleanup_vars(glhandle);
-	return fsalstat(posix2fsal_error(retval), retval);
 
  out:
 #ifdef GLTIMING
