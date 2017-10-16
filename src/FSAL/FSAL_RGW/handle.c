@@ -36,6 +36,9 @@
 #include "nfs_exports.h"
 #include "FSAL/fsal_commonlib.h"
 
+#define CACHE_MAX_TOTAL_LENGTH       (16 * 1024 * 1024 * 10)
+#define CACHE_MAX_CONSECUTIVE_LENGTH (16 * 1024 * 1024)
+
 /**
  * @brief Release an object
  *
@@ -836,6 +839,21 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 		}
 
+		/* Handle may be reused, just free all memory for potential
+		 * memory leak. */
+		struct glist_head *node = NULL;
+		struct glist_head *noden = NULL;
+
+		glist_for_each_safe(node, noden, &handle->cache.head) {
+			struct slice_t *slice =
+				glist_entry(node, struct slice_t, node);
+
+			glist_del(&slice->node);
+			gsh_free(slice->data);
+			gsh_free(slice);
+		}
+		cache_init(&handle->cache);
+
 		rc = rgw_open(export->rgw_fs, handle->rgw_fh, posix_flags,
 			(!state) ? RGW_OPEN_FLAG_V3 : RGW_OPEN_FLAG_NONE);
 
@@ -1357,24 +1375,76 @@ fsal_status_t rgw_fsal_write2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
-	/* XXX note no call to fsal_find_fd (or wrapper) */
+	struct slice_t *slice = gsh_calloc(1, sizeof(struct slice_t));
 
-	int rc = rgw_write(export->rgw_fs, handle->rgw_fh, offset,
-			buffer_size, wrote_amount, buffer,
-			RGW_WRITE_FLAG_NONE);
+	slice->offset = offset;
+	slice->length = buffer_size;
+	slice->data = gsh_calloc(buffer_size, 1);
+	memcpy(slice->data, buffer, buffer_size);
+	cache_put(&handle->cache, slice);
+	*wrote_amount = buffer_size;
 
-	LogFullDebug(COMPONENT_FSAL,
-		"%s post obj_hdl %p state %p returned %d", __func__, obj_hdl,
-		state, rc);
+	size_t total_length = cache_total_length(&handle->cache);
+	size_t consecutive_length = cache_consecutive_length(&handle->cache);
 
-	if (rc < 0)
-		return rgw2fsal_error(rc);
+	if (total_length > CACHE_MAX_TOTAL_LENGTH) {
+		LogFullDebug(COMPONENT_FSAL,
+				"%s obj_hdl %p state %p "
+				"total_length %zu consecutive_length %zu "
+				"exceed max allowed total length",
+				__func__, obj_hdl, state,
+				total_length, consecutive_length);
+		return fsalstat(ERR_FSAL_IO, 0);
+	}
 
-	if (*fsal_stable) {
-		rc = rgw_fsync(export->rgw_fs, handle->rgw_fh,
-			       RGW_WRITE_FLAG_NONE);
-		if (rc < 0)
-			return rgw2fsal_error(rc);
+	if (consecutive_length >= CACHE_MAX_CONSECUTIVE_LENGTH) {
+		PTHREAD_MUTEX_lock(&handle->mutex);
+		consecutive_length = cache_consecutive_length(&handle->cache);
+		if (consecutive_length >= CACHE_MAX_CONSECUTIVE_LENGTH) {
+			struct cache_t cache;
+			struct glist_head *node = NULL;
+			struct glist_head *noden = NULL;
+
+			cache_consecutive_get(&handle->cache, &cache);
+
+			glist_for_each_safe(node, noden, &cache.head) {
+				struct slice_t *slice =
+					glist_entry(node, struct slice_t, node);
+				/* XXX note no call to fsal_find_fd
+				 * (or wrapper) */
+				int rc = rgw_write(export->rgw_fs,
+						handle->rgw_fh,
+						slice->offset,
+						slice->length,
+						wrote_amount,
+						slice->data,
+						RGW_WRITE_FLAG_NONE);
+
+				glist_del(&slice->node);
+				gsh_free(slice->data);
+				gsh_free(slice);
+
+				LogFullDebug(COMPONENT_FSAL, "%s post obj_hdl "
+						"%p state %p returned %d",
+						__func__, obj_hdl, state, rc);
+
+				if (rc < 0) {
+					PTHREAD_MUTEX_unlock(&handle->mutex);
+					return rgw2fsal_error(rc);
+				}
+			}
+
+			if (*fsal_stable) {
+				int rc = rgw_fsync(export->rgw_fs,
+						handle->rgw_fh,
+						RGW_WRITE_FLAG_NONE);
+				if (rc < 0) {
+					PTHREAD_MUTEX_unlock(&handle->mutex);
+					return rgw2fsal_error(rc);
+				}
+			}
+		}
+		PTHREAD_MUTEX_unlock(&handle->mutex);
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1469,6 +1539,35 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 
 	LogFullDebug(COMPONENT_FSAL,
 		"%s enter obj_hdl %p state %p", __func__, obj_hdl, state);
+
+	PTHREAD_MUTEX_lock(&handle->mutex);
+
+	struct cache_t cache;
+	struct glist_head *node = NULL;
+	struct glist_head *noden = NULL;
+
+	cache_consecutive_get(&handle->cache, &cache);
+
+	glist_for_each_safe(node, noden, &cache.head) {
+		struct slice_t *slice = glist_entry(node, struct slice_t, node);
+		size_t wrote_amount = 0;
+		int rc = rgw_write(export->rgw_fs, handle->rgw_fh,
+				slice->offset, slice->length, &wrote_amount,
+				slice->data, RGW_WRITE_FLAG_NONE);
+		glist_del(node);
+		gsh_free(slice->data);
+		gsh_free(slice);
+
+		LogFullDebug(COMPONENT_FSAL,
+				"%s post obj_hdl %p state %p returned %d",
+				__func__, obj_hdl, state, rc);
+
+		if (rc < 0) {
+			PTHREAD_MUTEX_unlock(&handle->mutex);
+			return rgw2fsal_error(rc);
+		}
+	}
+	PTHREAD_MUTEX_unlock(&handle->mutex);
 
 	if (state) {
 		open_state = (struct rgw_open_state *) state;
