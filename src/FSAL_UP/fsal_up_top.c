@@ -1117,6 +1117,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	enum recall_resp_action resp_act;
 	nfsstat4 rc = NFS4_OK;
 	struct delegrecall_context *deleg_ctx = arg;
+	uint32_t minorversion = deleg_ctx->drc_clid->cid_minorversion;
 	struct state_t *state;
 	struct fsal_obj_handle *obj = NULL;
 	char str[LOG_BUFF_LEN] = "\0";
@@ -1222,7 +1223,7 @@ out_free_drc:
 	free_delegrecall_context(deleg_ctx);
 
 out_free:
-	if (deleg_ctx->drc_clid->cid_minorversion == 0) {
+	if (minorversion == 0) {
 		opcbrecall = &call->cbt.v_u.v4.args.argarray.argarray_val[0]
 				.nfs_cb_argop4_u.opcbrecall;
 		nfs4_freeFH(&opcbrecall->fh);
