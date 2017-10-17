@@ -1428,7 +1428,7 @@ fsal_status_t rgw_fsal_write2(struct fsal_obj_handle *obj_hdl,
 
 	int rc = rgw_write(export->rgw_fs, handle->rgw_fh, offset,
 			buffer_size, wrote_amount, buffer,
-			RGW_WRITE_FLAG_NONE);
+			(!state) ? RGW_OPEN_FLAG_V3 : RGW_OPEN_FLAG_NONE);
 
 	LogFullDebug(COMPONENT_FSAL,
 		"%s post obj_hdl %p state %p returned %d", __func__, obj_hdl,
