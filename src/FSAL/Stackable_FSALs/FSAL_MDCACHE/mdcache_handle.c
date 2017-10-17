@@ -1206,7 +1206,6 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	uint64_t change;
 	bool need_acl = false;
 
-	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
 	change = entry->attrs.change;
 
@@ -1216,7 +1215,7 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	       );
 
 	if (FSAL_IS_ERROR(status))
-		goto unlock;
+		goto out;
 
 	/* In case of ACL enabled, any of the below attribute changes
 	 * result in change of ACL set as well.
@@ -1227,8 +1226,8 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 		need_acl = true;
 	}
 
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 	status = mdcache_refresh_attrs(entry, need_acl, false);
-
 	if (!FSAL_IS_ERROR(status) && change == entry->attrs.change) {
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "setattr2 did not change change attribute before %lld after = %lld",
@@ -1236,11 +1235,8 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 			 (long long int) entry->attrs.change);
 		entry->attrs.change = change + 1;
 	}
-
-unlock:
-
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
+out:
 	if (FSAL_IS_ERROR(status) && (status.major == ERR_FSAL_STALE))
 		mdcache_kill_entry(entry);
 
