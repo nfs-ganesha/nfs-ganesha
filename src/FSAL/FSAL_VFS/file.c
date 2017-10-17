@@ -727,12 +727,8 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 						      state,
 						      attrib_set);
 
-		if (FSAL_IS_ERROR(status)) {
-			/* Release the handle we just allocated. */
-			(*new_obj)->obj_ops.release(*new_obj);
-			*new_obj = NULL;
+		if (FSAL_IS_ERROR(status))
 			goto fileerr;
-		}
 
 		if (attrs_out != NULL) {
 			status = (*new_obj)->obj_ops.getattrs(*new_obj,
@@ -778,8 +774,17 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
  fileerr:
 
-	LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", fd);
-	close(fd);
+	/* hdl->u.file.fd will be close in obj_ops.release */
+	if (my_fd == &hdl->u.file.fd) {
+		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", fd);
+		close(fd);
+	}
+
+	if (*new_obj) {
+		/* Release the handle we just allocated. */
+		(*new_obj)->obj_ops.release(*new_obj);
+		*new_obj = NULL;
+	}
 
 	/* Delete the file if we actually created it. */
 	if (created)
