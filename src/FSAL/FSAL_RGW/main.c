@@ -79,6 +79,7 @@ static struct fsal_staticfsinfo_t default_rgw_info = {
 #if HAVE_DIRENT_OFFSETOF
 	.compute_readdir_cookie = true,
 #endif
+	.whence_is_name = true,
 };
 
 static struct config_item rgw_items[] = {
