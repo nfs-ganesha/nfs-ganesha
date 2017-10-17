@@ -1758,6 +1758,9 @@ struct mdcache_populate_cb_state {
 	fsal_cookie_t cookie;
 	/** Indicates if FSAL expects whence to be a name. */
 	bool whence_is_name;
+	/** If whence_is_name, indicate if we are looking for caller's cookie.
+	 */
+	bool whence_search;
 };
 
 /**
@@ -2387,7 +2390,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 
 	assert(new_dir_entry->chunk);
 
-	if (state->whence_is_name && new_dir_entry->ck == state->cookie) {
+	if (state->whence_search && new_dir_entry->ck == state->cookie) {
 		/* We have found the dirent the caller is looking for. */
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 				"Found dirent %s caller is looking for cookie = %"
@@ -2600,6 +2603,17 @@ fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 	state.dirent = dirent;
 	state.whence_is_name = op_ctx->fsal_export->exp_ops.fs_supports(
 				op_ctx->fsal_export, fso_whence_is_name);
+	state.whence_search = state.whence_is_name && whence != 0 &&
+							prev_chunk == NULL;
+
+	if (state.whence_is_name) {
+		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+				"whence_is_name %s cookie %"
+				PRIx64,
+				state.whence_search ? "search" : "no search",
+				state.cookie);
+	}
+
 
 again:
 
@@ -2621,18 +2635,33 @@ again:
 						mdcache_dir_entry_t,
 						chunk_list);
 			whence_ptr = (fsal_cookie_t *)last->name;
-			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
-					"Calling FSAL readdir whence = %s, no search",
-					last->name);
+
+			if (state.whence_search) {
+				LogFullDebugAlt(COMPONENT_NFS_READDIR,
+						COMPONENT_CACHE_INODE,
+						"Calling FSAL readdir whence = %s, search %"
+						PRIx64,
+						last->name, state.cookie);
+			} else {
+				LogFullDebugAlt(COMPONENT_NFS_READDIR,
+						COMPONENT_CACHE_INODE,
+						"Calling FSAL readdir whence = %s, no search",
+						last->name);
+			}
 		} else {
 			/* Signal start from beginning by passing NULL pointer.
 			 */
 			whence_ptr = NULL;
-			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
-					"Calling FSAL readdir whence = NULL, search %"
-					PRIx64, state.cookie);
+			if (state.whence_search) {
+				LogFullDebugAlt(COMPONENT_NFS_READDIR,
+						COMPONENT_CACHE_INODE,
+						"Calling FSAL readdir whence = NULL, search %"
+						PRIx64, state.cookie);
+			} else {
+				LogFullDebugAlt(COMPONENT_NFS_READDIR,
+						COMPONENT_CACHE_INODE,
+						"Calling FSAL readdir whence = NULL, no search");
+			}
 		}
 	} else {
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
@@ -2724,7 +2753,17 @@ again:
 			       &chunk->chunks);
 	}
 
-	if (state.whence_is_name && *dirent == NULL) {
+	if (state.whence_search && *dirent == NULL) {
+		if (*eod_met) {
+			/* Did not find cookie. */
+			status = fsalstat(ERR_FSAL_BADCOOKIE, 0);
+			LogDebugAlt(COMPONENT_NFS_READDIR,
+				    COMPONENT_CACHE_INODE,
+				    "Could not find search cookie status=%s",
+				    fsal_err_txt(status));
+			return status;
+		}
+
 		/* We are re-scanning directory, and we have not found our
 		 * cookie yet, we either used up the FSAL's readdir (with any
 		 * readahead) or we collided with an already cached chunk,
@@ -2768,7 +2807,12 @@ again:
 		/* And we need to allocate a fresh chunk. */
 		chunk = mdcache_get_chunk(directory);
 
-		/* And go start a new FSAL readdir call. */
+		/* And switch over to new chunk. */
+		state.dir_state = chunk;
+
+		/* And go start a new FSAL readdir call.
+		 * chunk->prev_chunk will get set from prev_chunk.
+		 */
 		goto again;
 	}
 
