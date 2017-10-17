@@ -1138,12 +1138,8 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 						      state,
 						      attrib_set);
 
-		if (FSAL_IS_ERROR(status)) {
-			/* Release the handle we just allocated. */
-			(*new_obj)->obj_ops.release(*new_obj);
-			*new_obj = NULL;
+		if (FSAL_IS_ERROR(status))
 			goto fileerr;
-		}
 
 		if (attrs_out != NULL) {
 			status = (*new_obj)->obj_ops.getattrs(*new_obj,
@@ -1175,7 +1171,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_wrlock(&(*new_obj)->obj_lock);
 
 		/* Take the share reservation now by updating the counters. */
-		update_share_counters(&handle->share, FSAL_O_CLOSED, openflags);
+		update_share_counters(&obj->share, FSAL_O_CLOSED, openflags);
 
 		PTHREAD_RWLOCK_unlock(&(*new_obj)->obj_lock);
 	}
@@ -1185,14 +1181,18 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
  fileerr:
 
 	/* Close the file we just opened. */
-	(void) rgw_close(export->rgw_fs, handle->rgw_fh,
+	(void) rgw_close(export->rgw_fs, obj->rgw_fh,
 			RGW_CLOSE_FLAG_NONE);
 
 	if (created) {
 		/* Remove the file we just created */
-		(void) rgw_unlink(export->rgw_fs, handle->rgw_fh, name,
+		(void) rgw_unlink(export->rgw_fs, obj->rgw_fh, name,
 				RGW_UNLINK_FLAG_NONE);
 	}
+
+	/* Release the handle we just allocated. */
+	(*new_obj)->obj_ops.release(*new_obj);
+	*new_obj = NULL;
 
 	return status;
 }
