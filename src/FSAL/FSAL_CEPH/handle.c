@@ -1305,12 +1305,8 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 						      state,
 						      attrib_set);
 
-		if (FSAL_IS_ERROR(status)) {
-			/* Release the handle we just allocated. */
-			(*new_obj)->obj_ops.release(*new_obj);
-			*new_obj = NULL;
+		if (FSAL_IS_ERROR(status))
 			goto fileerr;
-		}
 
 		if (attrs_out != NULL) {
 			status = (*new_obj)->obj_ops.getattrs(*new_obj,
@@ -1354,6 +1350,10 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 	/* Close the file we just opened. */
 	(void) ceph_close_my_fd(container_of(*new_obj, struct handle, handle),
 				my_fd);
+
+	/* Release the handle we just allocated. */
+	(*new_obj)->obj_ops.release(*new_obj);
+	*new_obj = NULL;
 
 	if (created) {
 		/* Remove the file we just created */
