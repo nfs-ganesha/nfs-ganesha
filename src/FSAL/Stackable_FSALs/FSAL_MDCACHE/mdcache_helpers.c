@@ -473,6 +473,15 @@ void mdcache_clean_dirent_chunk(struct dir_chunk *chunk)
 	 *                                  glist_for_each_safe above
 	 * the other fields are untouched.
 	 */
+
+	/* This chunk is about to be freed or reused, clean up a few more
+	 * things.
+	 */
+
+	chunk->parent = NULL;
+	chunk->prev_chunk = NULL;
+	chunk->next_ck = 0;
+	chunk->num_entries = 0;
 }
 
 /**
