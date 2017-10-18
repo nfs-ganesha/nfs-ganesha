@@ -789,8 +789,8 @@ static inline fsal_status_t fsalstat(fsal_errors_t major, int minor)
  *     printf("ERROR status = %d, %d\n", status.major,status.minor);
  *  }
  */
-#define FSAL_IS_ERROR(_status_) \
-	(!((_status_).major == ERR_FSAL_NO_ERROR))
+#define FSAL_IS_SUCCESS(_status_) ((_status_).major == ERR_FSAL_NO_ERROR)
+#define FSAL_IS_ERROR(_status_) (!FSAL_IS_SUCCESS(_status_))
 
 /**
  * @brief File system dynamic info.
