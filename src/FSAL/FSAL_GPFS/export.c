@@ -393,6 +393,9 @@ gpfs_host_to_key(struct fsal_export *exp_hdl,
 {
 	struct gpfs_file_handle *hdl;
 
+	if (fh_desc->len < offsetof(struct gpfs_file_handle, f_handle))
+		return fsalstat(ERR_FSAL_INVAL, 0);
+
 	hdl = (struct gpfs_file_handle *)fh_desc->addr;
 	fh_desc->len = hdl->handle_key_size;	/* pass back the key size */
 
