@@ -347,9 +347,9 @@ not_junction:
 	fsal_status = obj->obj_ops.test_access(obj, access_mask_attr, NULL,
 					       NULL, false);
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "permission check for attributes status=%s",
-			     msg_fsal_err(fsal_status.major));
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "permission check for attributes status=%s",
+			 msg_fsal_err(fsal_status.major));
 
 		rdattr_error = nfs4_Errno_status(fsal_status);
 		LogDebug(COMPONENT_NFS_READDIR,
@@ -521,18 +521,17 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	estimated_num_entries = 50;
 	tracker.total_entries = estimated_num_entries;
 
-	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "dircount=%lu maxcount=%lu cookie=%" PRIu64
-		     " estimated_num_entries=%u",
-		     dircount, maxcount, cookie, estimated_num_entries);
+	LogDebug(COMPONENT_NFS_READDIR,
+		 "dircount=%lu maxcount=%lu cookie=%" PRIu64
+		 " estimated_num_entries=%u",
+		 dircount, maxcount, cookie, estimated_num_entries);
 
 	/* Since we never send a cookie of 1 or 2, we shouldn't ever get
 	 * them back.
 	 */
 	if (cookie == 1 || cookie == 2) {
 		res_READDIR4->status = NFS4ERR_BAD_COOKIE;
-		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "Bad cookie");
+		LogDebug(COMPONENT_NFS_READDIR, "Bad cookie");
 		goto out;
 	}
 
@@ -540,8 +539,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	if (!nfs4_Fattr_Check_Access_Bitmap
 	    (&arg_READDIR4->attr_request, FATTR4_ATTR_READ)) {
 		res_READDIR4->status = NFS4ERR_INVAL;
-		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "Requested invalid attributes");
+		LogDebug(COMPONENT_NFS_READDIR, "Requested invalid attributes");
 		goto out;
 	}
 
@@ -550,8 +548,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (maxcount < 14 || estimated_num_entries == 0) {
 		res_READDIR4->status = NFS4ERR_TOOSMALL;
-		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "Response too small");
+		LogDebug(COMPONENT_NFS_READDIR, "Response too small");
 		goto out;
 	}
 
@@ -573,9 +570,9 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_READDIR4->status = nfs4_Errno_status(fsal_status);
-			LogFullDebug(COMPONENT_NFS_READDIR,
-				     "getattrs returned %s",
-				     msg_fsal_err(fsal_status.major));
+			LogDebug(COMPONENT_NFS_READDIR,
+				 "getattrs returned %s",
+				 msg_fsal_err(fsal_status.major));
 			goto out;
 		}
 
@@ -602,8 +599,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 			   arg_READDIR4->cookieverf,
 			   NFS4_VERIFIER_SIZE) != 0) {
 			res_READDIR4->status = NFS4ERR_BAD_COOKIE;
-			LogFullDebug(COMPONENT_NFS_READDIR,
-				     "Bad cookie");
+			LogDebug(COMPONENT_NFS_READDIR, "Bad cookie");
 			goto out;
 		}
 	}
@@ -638,21 +634,20 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_READDIR4->status = nfs4_Errno_status(fsal_status);
-		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "fsal_readdir returned %s",
-			     msg_fsal_err(fsal_status.major));
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "fsal_readdir returned %s",
+			 msg_fsal_err(fsal_status.major));
 		goto out;
 	}
 
-	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "fsal_readdir returned %s",
-		     msg_fsal_err(fsal_status.major));
+	LogDebug(COMPONENT_NFS_READDIR,
+		 "fsal_readdir returned %s",
+		 msg_fsal_err(fsal_status.major));
 
 	res_READDIR4->status = tracker.error;
 
 	if (res_READDIR4->status != NFS4_OK) {
-		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "Tracker error");
+		LogDebug(COMPONENT_NFS_READDIR, "Tracker error");
 		goto out;
 	}
 
@@ -688,9 +683,9 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	if ((res_READDIR4->status != NFS4_OK) && (entries != NULL))
 		free_entries(entries);
 
-	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "Returning %s",
-		     nfsstat4_to_str(res_READDIR4->status));
+	LogDebug(COMPONENT_NFS_READDIR,
+		 "Returning %s",
+		 nfsstat4_to_str(res_READDIR4->status));
 
 	return res_READDIR4->status;
 }				/* nfs4_op_readdir */

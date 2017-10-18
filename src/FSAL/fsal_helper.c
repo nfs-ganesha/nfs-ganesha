@@ -1453,8 +1453,7 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 
 	/* readdir can be done only with a directory */
 	if (directory->type != DIRECTORY) {
-		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "Not a directory");
+		LogDebug(COMPONENT_NFS_READDIR, "Not a directory");
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 
@@ -1468,9 +1467,9 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 
 	fsal_status = fsal_access(directory, access_mask);
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "permission check for directory status=%s",
-			     fsal_err_txt(fsal_status));
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "permission check for directory status=%s",
+			 fsal_err_txt(fsal_status));
 		return fsal_status;
 	}
 	if (attrmask != 0) {
@@ -1478,9 +1477,9 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 		fsal_status_t attr_status = fsal_access(directory,
 							access_mask_attr);
 		if (FSAL_IS_ERROR(attr_status))
-			LogFullDebug(COMPONENT_NFS_READDIR,
-				     "permission check for attributes status=%s",
-				     fsal_err_txt(attr_status));
+			LogDebug(COMPONENT_NFS_READDIR,
+				 "permission check for attributes status=%s",
+				 fsal_err_txt(attr_status));
 		state.cb_parms.attr_allowed = !FSAL_IS_ERROR(attr_status);
 	} else {
 		/* No attributes requested. */
