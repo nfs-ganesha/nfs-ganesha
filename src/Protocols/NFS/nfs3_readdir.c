@@ -132,21 +132,15 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR)) {
 		char str[LEN_FH_STR];
-		log_components_t component;
 
 		nfs_FhandleToStr(req->rq_msg.cb_vers,
 				 &(arg->arg_readdir3.dir),
 				 NULL,
 				 str);
 
-		if (isDebug(COMPONENT_NFSPROTO))
-			component = COMPONENT_NFSPROTO;
-		else
-			component = COMPONENT_NFS_READDIR;
-
-		LogDebug(component,
-			 "REQUEST PROCESSING: Calling nfs_Readdir handle: %s",
-			 str);
+		LogDebugAlt(COMPONENT_NFSPROTO, COMPONENT_NFS_READDIR,
+			    "REQUEST PROCESSING: Calling nfs_Readdir handle: %s",
+			    str);
 	}
 
 	READDIR3resok * const RES_READDIR3_OK =
@@ -183,10 +177,10 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	cookie = arg->arg_readdir3.cookie;
 	estimated_num_entries =
 	    MIN(count / (sizeof(entry3) - sizeof(char *)), 120);
-	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "---> nfs3_readdir: count=%lu  cookie=%" PRIu64
-		     " estimated_num_entries=%lu",
-		     count, cookie, estimated_num_entries);
+	LogDebug(COMPONENT_NFS_READDIR,
+		 "---> nfs3_readdir: count=%lu  cookie=%" PRIu64
+		 " estimated_num_entries=%lu",
+		 count, cookie, estimated_num_entries);
 	if (estimated_num_entries == 0) {
 		res->res_readdir3.status = NFS3ERR_TOOSMALL;
 		rc = NFS_REQ_OK;
@@ -214,9 +208,9 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res->res_readdir3.status =
 						nfs3_Errno_status(fsal_status);
-			LogFullDebug(COMPONENT_NFS_READDIR,
-				     "getattrs returned %s",
-				     msg_fsal_err(fsal_status.major));
+			LogDebug(COMPONENT_NFS_READDIR,
+				 "getattrs returned %s",
+				 msg_fsal_err(fsal_status.major));
 			goto out;
 		}
 
@@ -319,10 +313,10 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "-- Readdir -> Call to fsal_readdir(cookie=%"
-		     PRIu64 ")",
-		     fsal_cookie);
+	LogDebug(COMPONENT_NFS_READDIR,
+		 "-- Readdir -> Call to fsal_readdir(cookie=%"
+		 PRIu64 ")",
+		 fsal_cookie);
 
 	if ((num_entries == 0) && (cookie > 1)) {
 		RES_READDIR3_OK->reply.entries = NULL;
