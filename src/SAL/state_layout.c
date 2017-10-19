@@ -166,6 +166,8 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 {
 	state_t *state, *first;
 	struct fsal_obj_handle *obj;
+	struct gsh_export *saved_export = op_ctx->ctx_export;
+	struct gsh_export *export;
 	int errcnt = 0;
 	struct glist_head *glist, *glistn;
 	bool so_mutex_held;
@@ -208,18 +210,18 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		if (state->state_type != STATE_TYPE_LAYOUT)
 			continue;
 
-		/* Safely access the cache inode associated with the state217.
-		 * This will get an LRU reference protecting our access
-		 * even after state_deleg_revoke releases the reference it
-		 * holds.
-		 */
-		obj = get_state_obj_ref(state);
-
-		if (obj == NULL) {
+		if (!get_state_obj_export_owner_refs(state, &obj,
+						     &export, NULL)) {
 			LogDebug(COMPONENT_STATE,
 				 "Stale state or file");
 			continue;
 		}
+
+		inc_state_t_ref(state);
+
+		/* Set up the op_context with the proper export */
+		op_ctx->ctx_export = export;
+		op_ctx->fsal_export = export->fsal_export;
 
 		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 		so_mutex_held = false;
@@ -242,6 +244,11 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		}
 
 		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+
+		/* Release the reference taken above */
+		obj->obj_ops.put_ref(obj);
+		put_gsh_export(export);
+		dec_state_t_ref(state);
 
 		if (errcnt < STATE_ERR_MAX) {
 			/* Loop again, but since we droped the so_mutex, we
@@ -267,6 +274,11 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 			 "Could not complete cleanup of layouts for client owner %s",
 			 str);
 	}
+
+	op_ctx->ctx_export = saved_export;
+
+	if (saved_export != NULL)
+		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 }
 
 /** @} */
