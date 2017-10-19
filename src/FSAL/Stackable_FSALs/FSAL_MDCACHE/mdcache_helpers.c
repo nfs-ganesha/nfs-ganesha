@@ -57,7 +57,6 @@ static inline bool trust_negative_cache(mdcache_entry_t *parent)
 {
 	bool trust = op_ctx_export_has_option(
 				  EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE) &&
-		parent->icreate_refcnt == 0 &&
 		test_mde_flags(parent, MDCACHE_DIR_POPULATED);
 
 	if (trust)
@@ -207,7 +206,6 @@ static mdcache_entry_t *mdcache_alloc_handle(
 
 	/* Initialize common fields */
 	result->mde_flags = 0;
-	result->icreate_refcnt = 0;
 	glist_init(&result->export_list);
 	atomic_store_int32_t(&result->first_export_id, -1);
 

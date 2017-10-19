@@ -244,8 +244,6 @@ struct mdcache_fsal_obj_handle {
 	} fh_hk;
 	/** Flags for this entry */
 	uint32_t mde_flags;
-	/** refcount for number of active icreate */
-	int32_t icreate_refcnt;
 	/** Time at which we last refreshed attributes. */
 	time_t attr_time;
 	/** Time at which we last refreshed acl. */
