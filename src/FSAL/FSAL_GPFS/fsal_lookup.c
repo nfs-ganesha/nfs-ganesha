@@ -163,6 +163,33 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 		}
 	}
 
+	/* Sometimes GPFS sends us the same object as its parent with
+	 * lookup of DOTDOT. This is incorrect and also results in ABBA
+	 * deadlock with content_lock and attr_lock (readdirplus holds
+	 * content_lock on the directory and then attr_lock on the
+	 * direntry (which happens to be the same object for DOTDOT
+	 * direntry with this bug). Other requests hold attr_lock
+	 * followed by content_lock.
+	 *
+	 * If we detect this error, send DELAY error and hope it goes
+	 * away on the retry!
+	 */
+	if (strcmp(filename, "..") == 0) {
+		struct gpfs_file_handle *gfh;
+		unsigned long long inode, pinode;
+
+		gfh = container_of(parent, struct gpfs_fsal_obj_handle,
+				       obj_handle)->handle;
+		inode = get_handle2inode(gfh);
+		pinode = get_handle2inode(fh);
+		if (inode == pinode && inode > 9) {
+			LogCrit(COMPONENT_FSAL,
+				"DOTDOT error, inode: %llu", inode);
+			fsal_internal_close(parent_fd, NULL, 0);
+			return fsalstat(ERR_FSAL_DELAY, 0);
+		}
+	}
+
 	/* In order to check XDEV, we need to get the fsid from the handle.
 	 * We need to do this before getting attributes in order to have the
 	 * correct gpfs_fs to pass to GPFSFSAL_getattrs. We also return
