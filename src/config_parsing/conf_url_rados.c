@@ -51,7 +51,7 @@ static struct config_item rados_url_params[] = {
 static void *rados_url_param_init(void *link_mem, void *self_struct)
 {
 	if (self_struct == NULL)
-		return &rados_url_params;
+		return &rados_url_param;
 	else
 		return NULL;
 }
@@ -70,14 +70,21 @@ int rados_urls_set_param_from_conf(config_file_t parse_tree,
 {
 	(void) load_config_from_parse(parse_tree,
 				&rados_url_param_blk,
-				      NULL,
-				      true,
-				      err_type);
+				NULL,
+				true,
+				err_type);
 	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing RADOS_URLS config block");
 		return -1;
 	}
+
+	LogFullDebug(COMPONENT_CONFIG,
+		"%s parsed RADOS_URLS block, have ceph_conf=%s "
+		" userid=%s",
+		__func__,
+		rados_url_param.ceph_conf,
+		rados_url_param.userid);
 
 	return 0;
 }
