@@ -35,6 +35,18 @@
 #include "fsal_convert.h"
 #include "gpfs_methods.h"
 
+uint64_t get_handle2inode(struct gpfs_file_handle *gfh)
+{
+	struct f_handle {
+		char unused1[8];
+		uint64_t inode;  /* inode for file */
+		char unused2[8];
+		uint64_t pinode; /* inode for parent */
+	} *f_handle = (struct f_handle *)gfh->f_handle;
+
+	return f_handle->inode;
+}
+
 /**
  *  @brief Looks up for an object into a directory.
  *
@@ -51,6 +63,7 @@
  *  @return - ERR_FSAL_NO_ERROR, if no error.
  *          - Another error code else.
  */
+#define GPFS_ROOT_INODE  3
 fsal_status_t
 GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 		struct fsal_obj_handle *parent, const char *filename,
@@ -105,8 +118,50 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 	 */
 	fsal_internal_close(parent_fd, NULL, 0);
 
+	if (status.major == ERR_FSAL_NOENT && strcmp(filename, "..") == 0) {
+		unsigned long long pinode;
+
+		pinode = get_handle2inode(parent_hdl->handle);
+		if (pinode == GPFS_ROOT_INODE) {
+			LogEvent(COMPONENT_FSAL,
+				 "Lookup of DOTDOT failed in ROOT dir");
+			*fh = *parent_hdl->handle;
+			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		} else {
+			LogEvent(COMPONENT_FSAL,
+				 "Lookup of DOTDOT failed in dirinode: %llu",
+				 pinode);
+		}
+	}
+
 	if (FSAL_IS_ERROR(status))
 		return status;
+
+	/* Sometimes GPFS sends us the same object as its parent with
+	 * lookup of DOTDOT. This is incorrect and also results in ABBA
+	 * deadlock with content_lock and attr_lock (readdirplus holds
+	 * content_lock on the directory and then attr_lock on the
+	 * direntry (which happens to be the same object for DOTDOT
+	 * direntry with this bug). Other requests hold attr_lock
+	 * followed by content_lock.
+	 *
+	 * If we detect this error, send DELAY error and hope it goes
+	 * away on the retry!
+	 */
+	if (strcmp(filename, "..") == 0) {
+		struct gpfs_file_handle *gfh;
+		unsigned long long inode;
+
+		gfh = parent_hdl->handle;
+		inode = get_handle2inode(gfh);
+		if (inode != GPFS_ROOT_INODE &&
+		    gfh->handle_size == fh->handle_size &&
+		    memcmp(gfh, fh, gfh->handle_size) == 0) {
+			LogCrit(COMPONENT_FSAL,
+				"DOTDOT error, inode: %llu", inode);
+			return fsalstat(ERR_FSAL_DELAY, 0);
+		}
+	}
 
 	/* In order to check XDEV, we need to get the fsid from the handle.
 	 * We need to do this before getting attributes in order to have the

@@ -92,18 +92,6 @@ struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 	return hdl;
 }
 
-uint64_t get_handle2inode(struct gpfs_file_handle *gfh)
-{
-	struct f_handle {
-		char unused1[8];
-		uint64_t inode;  /* inode for file */
-		char unused2[8];
-		uint64_t pinode; /* inode for parent */
-	} *f_handle = (struct f_handle *)gfh->f_handle;
-
-	return f_handle->inode;
-}
-
 /* lookup
  * deprecated NULL parent && NULL path implies root handle
  */
