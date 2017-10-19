@@ -2866,18 +2866,15 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 	bool eod = false;
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-			"Starting chunked READDIR for %p, MDCACHE_TRUST_CONTENT %s, MDCACHE_DIR_POPULATED %s, MDCACHE_TRUST_DIR_CHUNKS %s",
+			"Starting chunked READDIR for %p, MDCACHE_TRUST_CONTENT %s, MDCACHE_TRUST_DIR_CHUNKS %s",
 			directory,
 			test_mde_flags(directory, MDCACHE_TRUST_CONTENT)
-				? "true" : "false",
-			test_mde_flags(directory, MDCACHE_DIR_POPULATED)
 				? "true" : "false",
 			test_mde_flags(directory, MDCACHE_TRUST_DIR_CHUNKS)
 				? "true" : "false");
 
 	/* Dirent's are being chunked; check to see if it needs updating */
 	if (!test_mde_flags(directory, MDCACHE_TRUST_CONTENT |
-				       MDCACHE_DIR_POPULATED |
 				       MDCACHE_TRUST_DIR_CHUNKS)) {
 		/* Clean out the existing entries in the directory. */
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
