@@ -107,7 +107,8 @@ TEST(CI_HASH_DIST1, CREATE_ROOT)
   struct attrlist *attrs_out = nullptr;
 
   // create root directory for test
-  FSAL_SET_MASK(object_attributes.mask, ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
+  FSAL_SET_MASK(object_attributes.request_mask,
+		ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
   object_attributes.mode = 777; /* XXX */
   object_attributes.owner = 667;
   object_attributes.group = 766;

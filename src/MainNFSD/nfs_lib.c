@@ -63,8 +63,9 @@
 #define TRACEPOINT_PROBE_DYNAMIC_LINKAGE
 
 #include "gsh_lttng/logger.h"
-#include "gsh_lttng/nfs_rpc.h"
 #include "gsh_lttng/mdcache.h"
+#include "gsh_lttng/nfs_rpc.h"
+#include "gsh_lttng/state.h"
 #include "gsh_lttng/fsal_mem.h"
 #endif /* USE_LTTNG */
 
@@ -73,6 +74,17 @@
 nfs_start_info_t my_nfs_start_info = {
 	.dump_default_config = false,
 	.lw_mark_trigger = false
+};
+
+tirpc_pkg_params ntirpc_pp = {
+	TIRPC_DEBUG_FLAG_DEFAULT,
+	0,
+	(mem_format_t)rpc_warnx,
+	gsh_free_size,
+	gsh_malloc__,
+	gsh_malloc_aligned__,
+	gsh_calloc__,
+	gsh_realloc__,
 };
 
 config_file_t config_struct;

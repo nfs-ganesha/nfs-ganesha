@@ -10,9 +10,12 @@ set(test_example_SRCS
 )
 add_executable(test_example EXCLUDE_FROM_ALL
   ${test_example_SRCS})
+add_sanitizers(test_example)
+
 target_link_libraries(test_example
   ${CMAKE_THREAD_LIBS_INIT}
   ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
   pthread
   )
 set_target_properties(test_example PROPERTIES COMPILE_FLAGS
@@ -27,6 +30,7 @@ message( STATUS "fsal_CORE_SRCS: ${fsal_CORE_SRCS}" )
 
 add_executable(test_ci_hash_dist1
   ${test_ci_hash_dist1_SRCS})
+add_sanitizers(test_ci_hash_dist1)
 
 target_link_libraries(test_ci_hash_dist1
   MainServices
@@ -40,6 +44,7 @@ target_link_libraries(test_ci_hash_dist1
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
   )
 set_target_properties(test_ci_hash_dist1 PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
