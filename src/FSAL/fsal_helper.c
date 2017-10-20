@@ -1627,6 +1627,12 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 		goto out;
 	}
 
+	/* Don't allow rename of an object as parent of itself */
+	if (dir_dest == lookup_src) {
+		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
+		goto out;
+	}
+
 	LogFullDebug(COMPONENT_FSAL, "about to call FSAL rename");
 
 	fsal_status = dir_src->obj_ops.rename(lookup_src, dir_src, oldname,
