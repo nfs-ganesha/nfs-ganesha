@@ -67,7 +67,7 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 	    &resp->nfs_resop4_u.opsetclientid_confirm;
 	nfs_client_id_t *conf = NULL;
 	nfs_client_id_t *unconf = NULL;
-	nfs_client_record_t *client_record;
+	nfs_client_record_t *client_record = NULL;
 	clientid4 clientid = 0;
 	char str_verifier[OPAQUE_BYTES_SIZE(NFS4_VERIFIER_SIZE)];
 	const char *str_client_addr = "(unknown)";
@@ -123,7 +123,11 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 	rc = nfs_client_id_get_unconfirmed(clientid, &unconf);
 
 	if (rc == CLIENT_ID_SUCCESS) {
+		PTHREAD_MUTEX_lock(&unconf->cid_mutex);
 		client_record = unconf->cid_client_record;
+		if (client_record)
+			inc_client_record_ref(client_record);
+		PTHREAD_MUTEX_unlock(&unconf->cid_mutex);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
@@ -146,7 +150,11 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 			return NFS_REQ_ERROR;
 		}
 
+		PTHREAD_MUTEX_lock(&conf->cid_mutex);
 		client_record = conf->cid_client_record;
+		if (client_record)
+			inc_client_record_ref(client_record);
+		PTHREAD_MUTEX_unlock(&conf->cid_mutex);
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
@@ -157,9 +165,16 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		}
 	}
 
-	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
+	if (!client_record) {
+		res_SETCLIENTID_CONFIRM4->status = NFS4ERR_STALE_CLIENTID;
+		if (unconf)
+			dec_client_id_ref(unconf);
+		else
+			dec_client_id_ref(conf);
+		return res_SETCLIENTID_CONFIRM4->status;
+	}
 
-	inc_client_record_ref(client_record);
+	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
