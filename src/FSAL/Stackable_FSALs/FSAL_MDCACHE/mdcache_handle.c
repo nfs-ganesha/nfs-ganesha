@@ -1336,9 +1336,9 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 {
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-	fsal_status_t status;
+	fsal_status_t status, status2;
 	uint64_t change;
-	bool need_acl = false;
+	bool need_acl = false, kill_entry = false;
 
 
 	change = entry->attrs.change;
@@ -1348,8 +1348,11 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 			entry->sub_handle, bypass, state, attrs)
 	       );
 
-	if (FSAL_IS_ERROR(status))
+	if (FSAL_IS_ERROR(status)) {
+		if (status.major == ERR_FSAL_STALE)
+			kill_entry = true;
 		goto out;
+	}
 
 	/* In case of ACL enabled, any of the below attribute changes
 	 * result in change of ACL set as well.
@@ -1361,8 +1364,14 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	status = mdcache_refresh_attrs(entry, need_acl, false);
-	if (!FSAL_IS_ERROR(status) && change == entry->attrs.change) {
+	status2 = mdcache_refresh_attrs(entry, need_acl, false);
+	if (FSAL_IS_ERROR(status2)) {
+		/* Assume that the cache is bogus now */
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+				MDCACHE_TRUST_ATTRS | MDCACHE_TRUST_ACL);
+		if (status2.major == ERR_FSAL_STALE)
+			kill_entry = true;
+	} else if (change == entry->attrs.change) {
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "setattr2 did not change change attribute before %lld after = %lld",
 			 (long long int) change,
@@ -1371,7 +1380,7 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 out:
-	if (FSAL_IS_ERROR(status) && (status.major == ERR_FSAL_STALE))
+	if (kill_entry)
 		mdcache_kill_entry(entry);
 
 	return status;
