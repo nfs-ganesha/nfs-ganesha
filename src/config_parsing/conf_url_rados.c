@@ -114,6 +114,11 @@ static void init_url_regex(void)
 	}
 }
 
+static void cu_rados_url_early_init(void)
+{
+	init_url_regex();
+}
+
 static void cu_rados_url_init(void)
 {
 	int ret;
@@ -187,8 +192,9 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 	uint64_t off2 = 0;
 	int ret;
 
-	if (!initialized)
-		return -EIO;
+	if (!initialized) {
+		cu_rados_url_init();
+	}
 
 	ret = regexec(&url_regex, url, 3, match, 0);
 	if (likely(!ret)) {
@@ -283,7 +289,7 @@ out:
 
 static struct gsh_url_provider rados_url_provider = {
 	.name = "rados",
-	.url_init = cu_rados_url_init,
+	.url_init = cu_rados_url_early_init,
 	.url_shutdown = cu_rados_url_shutdown,
 	.url_fetch = cu_rados_url_fetch
 };
