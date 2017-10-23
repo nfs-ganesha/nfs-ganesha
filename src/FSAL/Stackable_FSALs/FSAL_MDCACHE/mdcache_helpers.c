@@ -1226,6 +1226,7 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 	/* ".." doesn't end up in the cache */
 	if (!strcmp(name, "..")) {
 		struct mdcache_fsal_export *export = mdc_cur_export();
+		struct gsh_buffdesc tmpfh;
 
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Lookup parent (..) of %p", mdc_parent);
@@ -1237,10 +1238,22 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 			mdc_get_parent(export, mdc_parent);
 		}
 
-		status =  mdcache_locate_host(
-				&mdc_parent->fsobj.fsdir.parent,
-				export, new_entry, attrs_out);
-		goto out;
+		/* We need to drop the content lock around the locate, as that
+		 * will try to take the attribute lock on the parent to refresh
+		 * it's attributes, which can cause an ABBA with lookup/readdir.
+		 * Copy the parent filehandle, so we can drop the lock.
+		 */
+		mdcache_copy_fh(&tmpfh, &mdc_parent->fsobj.fsdir.parent);
+		PTHREAD_RWLOCK_unlock(&mdc_parent->content_lock);
+
+		status =  mdcache_locate_host(&tmpfh, export, new_entry,
+					      attrs_out);
+
+		mdcache_free_fh(&tmpfh);
+
+		if (status.major == ERR_FSAL_STALE)
+			status.major = ERR_FSAL_NOENT;
+		return status;
 	}
 
 	if (test_mde_flags(mdc_parent, MDCACHE_BYPASS_DIRCACHE)) {
