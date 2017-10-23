@@ -206,7 +206,7 @@ static void reaper_run(struct fridgethr_context *ctx)
 
 	if (!rst->old_state_cleaned) {
 		/* if not in grace period, clean up the old state */
-		if (nfs_in_grace()) {
+		if (!nfs_in_grace()) {
 			nfs4_recovery_cleanup();
 			rst->old_state_cleaned = true;
 		}
