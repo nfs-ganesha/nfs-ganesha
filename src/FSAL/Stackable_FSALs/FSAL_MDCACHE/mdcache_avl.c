@@ -233,8 +233,8 @@ void mdcache_avl_remove(mdcache_entry_t *parent,
 	gsh_free(dirent);
 
 	LogFullDebug(COMPONENT_CACHE_INODE,
-		     "Just freed dirent %p from chunk %p parent %p",
-		     dirent, chunk, chunk->parent);
+		"Just freed dirent %p from chunk %p parent %p",
+		dirent, chunk, (chunk) ? chunk->parent : NULL);
 }
 
 /**
