@@ -129,12 +129,13 @@ char *pidfile_path = GANESHA_PIDFILE_PATH;
  *
  */
 
+struct config_error_type err_type;
+
 void reread_config(void)
 {
 	int status = 0;
 	int i;
 	config_file_t config_struct;
-	struct config_error_type err_type;
 
 	/* Clear out the flag indicating component was set from environment. */
 	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
@@ -446,11 +447,6 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 
 #ifdef USE_RADOS_RECOV
 	if (rados_kv_set_param_from_conf(parse_tree, err_type) < 0)
-		return -1;
-#endif
-
-#ifdef RADOS_URLS
-	if (rados_urls_set_param_from_conf(parse_tree, err_type) < 0)
 		return -1;
 #endif
 

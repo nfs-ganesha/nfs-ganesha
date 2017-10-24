@@ -47,6 +47,7 @@ enum  node_type { TYPE_ROOT = 1, TYPE_BLOCK, TYPE_STMT, TYPE_TERM};
 
 struct config_node {
 	struct glist_head node;
+	struct glist_head blocks;
 	char *filename;		/* pointer to filename in file list */
 	int linenumber;
 	bool found;		/* use accounting private in do_block_load */

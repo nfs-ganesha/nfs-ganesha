@@ -65,14 +65,15 @@ struct config_block rados_url_param_blk = {
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
-int rados_urls_set_param_from_conf(config_file_t parse_tree,
+int rados_urls_set_param_from_conf(void *tree_node,
 				struct config_error_type *err_type)
 {
-	(void) load_config_from_parse(parse_tree,
+	(void) load_config_from_node(tree_node,
 				&rados_url_param_blk,
 				NULL,
 				true,
 				err_type);
+
 	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing RADOS_URLS config block");
@@ -88,6 +89,7 @@ int rados_urls_set_param_from_conf(config_file_t parse_tree,
 
 	return 0;
 }
+
 
 /* decompose RADOS URL into (<pool>/)object
  *
@@ -119,9 +121,26 @@ static void cu_rados_url_early_init(void)
 	init_url_regex();
 }
 
+extern struct config_error_type err_type;
+
 static void cu_rados_url_init(void)
 {
 	int ret;
+	void *node;
+
+	node = config_GetBlockNode("RADOS_URLS");
+	if (!node) {
+		LogWarn(COMPONENT_CONFIG,
+			"%s: Failed to lookup RADOS_URLS config block",
+			__func__);
+		return;
+	}
+
+	ret = rados_urls_set_param_from_conf(node, &err_type);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CONFIG, "%s: Failed to parse RADOS_URLS %d",
+			__func__, ret);
+	}
 
 	ret = rados_create(&cluster, rados_url_param.userid);
 	if (ret < 0) {
