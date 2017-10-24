@@ -268,7 +268,7 @@ static int syslog_opened;
  * Variables specifiques aux threads.
  */
 
-__thread char thread_name[16];
+__thread char thread_name[32];
 __thread char log_buffer[LOG_BUFF_LEN + 1];
 __thread char *clientip = NULL;
 
