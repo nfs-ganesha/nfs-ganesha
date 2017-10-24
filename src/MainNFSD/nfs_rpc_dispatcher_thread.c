@@ -386,7 +386,9 @@ static int Bind_sockets_V6(void)
 			       sizeof(pdatap->sinaddr_udp6));
 			pdatap->sinaddr_udp6.sin6_family = AF_INET6;
 			/* all interfaces */
-			pdatap->sinaddr_udp6.sin6_addr = in6addr_any;
+			pdatap->sinaddr_udp6.sin6_addr =
+			    ((struct sockaddr_in6 *)
+			    &nfs_param.core_param.bind_addr)->sin6_addr;
 			pdatap->sinaddr_udp6.sin6_port =
 			    htons(nfs_param.core_param.port[p]);
 
@@ -420,7 +422,9 @@ static int Bind_sockets_V6(void)
 			       sizeof(pdatap->sinaddr_tcp6));
 			pdatap->sinaddr_tcp6.sin6_family = AF_INET6;
 			/* all interfaces */
-			pdatap->sinaddr_tcp6.sin6_addr = in6addr_any;
+			pdatap->sinaddr_tcp6.sin6_addr =
+			    ((struct sockaddr_in6 *)
+			    &nfs_param.core_param.bind_addr)->sin6_addr;
 			pdatap->sinaddr_tcp6.sin6_port =
 			    htons(nfs_param.core_param.port[p]);
 
@@ -474,7 +478,9 @@ static int Bind_sockets_V4(void)
 			       sizeof(pdatap->sinaddr_udp));
 			pdatap->sinaddr_udp.sin_family = AF_INET;
 			/* all interfaces */
-			pdatap->sinaddr_udp.sin_addr.s_addr = htonl(INADDR_ANY);
+			pdatap->sinaddr_udp.sin_addr.s_addr =
+			    ((struct sockaddr_in *)
+			    &nfs_param.core_param.bind_addr)->sin_addr.s_addr;
 			pdatap->sinaddr_udp.sin_port =
 			    htons(nfs_param.core_param.port[p]);
 
@@ -509,7 +515,9 @@ static int Bind_sockets_V4(void)
 			       sizeof(pdatap->sinaddr_tcp));
 			pdatap->sinaddr_tcp.sin_family = AF_INET;
 			/* all interfaces */
-			pdatap->sinaddr_tcp.sin_addr.s_addr = htonl(INADDR_ANY);
+			pdatap->sinaddr_udp.sin_addr.s_addr =
+			    ((struct sockaddr_in *)
+			    &nfs_param.core_param.bind_addr)->sin_addr.s_addr;
 			pdatap->sinaddr_tcp.sin_port =
 			    htons(nfs_param.core_param.port[p]);
 
