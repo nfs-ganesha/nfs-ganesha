@@ -383,6 +383,7 @@ again:
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+/* entry's content_lock must be held in exclusive mode */
 fsal_status_t
 mdc_get_parent_handle(struct mdcache_fsal_export *export,
 		      mdcache_entry_t *entry,
@@ -391,6 +392,10 @@ mdc_get_parent_handle(struct mdcache_fsal_export *export,
 	char buf[NFS4_FHSIZE];
 	struct gsh_buffdesc fh_desc = { buf, NFS4_FHSIZE };
 	fsal_status_t status;
+
+#ifdef DEBUG_MDCACHE
+	assert(entry->content_lock.__data.__writer != 0);
+#endif
 
 	/* Get a wire handle that can be used with create_handle() */
 	subcall_raw(export,
@@ -432,7 +437,9 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
 		return;
 	}
 
+	PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 	mdc_get_parent_handle(export, entry, sub_handle);
+	PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
 	/* Release parent handle */
 	subcall_raw(export,
@@ -1097,7 +1104,9 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 
 	if (!FSAL_IS_ERROR(status) && new_entry->obj_handle.type == DIRECTORY) {
 		/* Insert Parent's key */
+		PTHREAD_RWLOCK_wrlock(&new_entry->content_lock);
 		mdc_dir_add_parent(new_entry, mdc_parent);
+		PTHREAD_RWLOCK_unlock(&new_entry->content_lock);
 	}
 
 	mdcache_put(new_entry);
@@ -2497,7 +2506,9 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 
 	if (new_entry->obj_handle.type == DIRECTORY) {
 		/* Insert Parent's key */
+		PTHREAD_RWLOCK_wrlock(&new_entry->content_lock);
 		mdc_dir_add_parent(new_entry, mdc_parent);
+		PTHREAD_RWLOCK_unlock(&new_entry->content_lock);
 	}
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,

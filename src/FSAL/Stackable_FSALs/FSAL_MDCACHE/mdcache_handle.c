@@ -134,7 +134,9 @@ fsal_status_t mdcache_alloc_and_check_handle(
 
 	if (new_entry->obj_handle.type == DIRECTORY) {
 		/* Insert Parent's key */
+		PTHREAD_RWLOCK_wrlock(&new_entry->content_lock);
 		mdc_dir_add_parent(new_entry, parent);
+		PTHREAD_RWLOCK_unlock(&new_entry->content_lock);
 	}
 
 	*new_obj = &new_entry->obj_handle;
@@ -1312,8 +1314,11 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
 					   MDCACHE_TRUST_ATTRS);
 
-		if (entry->obj_handle.type == DIRECTORY)
+		if (entry->obj_handle.type == DIRECTORY) {
+			PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 			mdcache_free_fh(&entry->fsobj.fsdir.parent);
+			PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		}
 
 		mdc_unreachable(entry);
 	}
