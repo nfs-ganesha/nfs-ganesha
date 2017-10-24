@@ -818,6 +818,12 @@ config_file_t config_ParseFile(char *file_path,
 			       struct config_error_type *err_type);
 
 /**
+ *  Return the first node in the global config block list with
+ *  name == block_name
+ */
+void *config_GetBlockNode(const char *block_name);
+
+/**
  * config_Print:
  * Print the content of the syntax tree
  * to a file.
