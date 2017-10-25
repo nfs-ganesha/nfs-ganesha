@@ -2734,6 +2734,7 @@ again:
 	if (chunk->num_entries == 0) {
 		/* Save the previous chunk in case we need it. */
 		struct dir_chunk *prev_chunk = chunk->prev_chunk;
+		mdcache_dir_entry_t *last;
 
 		/* Chunk is empty - should only happen for an empty directory
 		 * but could happen if the FSAL failed to indicate end of
@@ -2744,6 +2745,19 @@ again:
 				"Empty chunk");
 
 		lru_remove_chunk(chunk);
+
+		if (prev_chunk != NULL) {
+			/* We need to mark the end of directory */
+			last = glist_last_entry(&prev_chunk->dirents,
+						mdcache_dir_entry_t,
+						chunk_list);
+			last->eod = true;
+
+			LogFullDebugAlt(COMPONENT_NFS_READDIR,
+					COMPONENT_CACHE_INODE,
+					"Setting last dirent %p %s of chunk %p as eod",
+					last, last->name, prev_chunk);
+		}
 
 		if (chunk == first_chunk) {
 			/* We really got nothing on this readdir, so don't
@@ -3029,6 +3043,7 @@ again:
 			 * chunk or dirent.
 			 */
 			*eod_met = true;
+
 			if (whence == 0) {
 				/* Since eod is true and whence is 0, we know
 				 * the entire directory is populated. This can
@@ -3038,11 +3053,14 @@ again:
 				atomic_set_uint32_t_bits(&directory->mde_flags,
 							 MDCACHE_DIR_POPULATED);
 			}
+
 			PTHREAD_RWLOCK_unlock(&directory->content_lock);
+
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
 					COMPONENT_CACHE_INODE,
-					"mdcache_populate_dir_chunk end of directory status=%s",
-					fsal_err_txt(status));
+					"readdir completed, eod = %s",
+					*eod_met ? "true" : "false");
+
 			return status;
 		}
 
@@ -3216,6 +3234,12 @@ again:
 
 		fsal_release_attrs(&attrs);
 
+		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+				"dirent = %p %s, cb_result = %s, eod = %s",
+				dirent, dirent->name,
+				fsal_dir_result_str(cb_result),
+				dirent->eod ? "true" : "false");
+
 		if (cb_result >= DIR_TERMINATE || dirent->eod) {
 			/* Caller is done, or we have reached the end of
 			 * the directory, no need to get another dirent.
@@ -3237,9 +3261,7 @@ again:
 
 			LogDebugAlt(COMPONENT_NFS_READDIR,
 				    COMPONENT_CACHE_INODE,
-				    "dirent = %p %s, cb_result = %s, eod = %s",
-				    dirent, dirent->name,
-				    fsal_dir_result_str(cb_result),
+				    "readdir completed, eod = %s",
 				    *eod_met ? "true" : "false");
 
 			PTHREAD_RWLOCK_unlock(&directory->content_lock);
