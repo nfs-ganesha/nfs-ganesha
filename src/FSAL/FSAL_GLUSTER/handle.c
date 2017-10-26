@@ -2189,12 +2189,19 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 		return status;
 	}
 
-	/** @todo: setlkowner as well */
 	errno = 0;
 	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray);
+
+	/* Convert lkowner ptr address to opaque string */
+	retval = glfs_fd_set_lkowner(my_fd.glfd, p_owner, sizeof(p_owner));
+	if (retval) {
+		LogCrit(COMPONENT_FSAL,
+			"Setting lkowner failed");
+		goto err;
+	}
 
 	retval = glfs_posix_lock(my_fd.glfd, fcntl_comm, &lock_args);
 
@@ -2208,6 +2215,16 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 		if (conflicting_lock != NULL) {
 			/* Get the conflicting lock */
+
+			rc = glfs_fd_set_lkowner(my_fd.glfd, p_owner,
+						 sizeof(p_owner));
+			if (rc) {
+				retval = errno; /* we losethe initial error */
+				LogCrit(COMPONENT_FSAL,
+					"Setting lkowner while trying to get conflicting lock failed");
+				goto err;
+			}
+
 			rc = glfs_posix_lock(my_fd.glfd, F_GETLK,
 						 &lock_args);
 
