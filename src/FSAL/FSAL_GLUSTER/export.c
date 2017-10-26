@@ -139,7 +139,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
 			       GLAPI_UUID_LENGTH);
 	if (rc < 0) {
-		status = gluster2fsal_error(rc);
+		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
@@ -245,7 +245,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
 			       GLAPI_UUID_LENGTH);
 	if (rc < 0) {
-		status = gluster2fsal_error(rc);
+		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
@@ -304,7 +304,7 @@ fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
 	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
 				 GLAPI_UUID_LENGTH);
 	if (rc < 0) {
-		status = gluster2fsal_error(rc);
+		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
@@ -341,7 +341,7 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	rc = glfs_statvfs(glfs_export->gl_fs->fs, glfs_export->export_path,
 			  &vfssb);
 	if (rc != 0)
-		return gluster2fsal_error(rc);
+		return gluster2fsal_error(errno);
 
 	memset(infop, 0, sizeof(fsal_dynamicfsinfo_t));
 	infop->total_bytes = vfssb.f_frsize * vfssb.f_blocks;
