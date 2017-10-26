@@ -130,7 +130,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
 			       GLAPI_UUID_LENGTH);
 	if (rc < 0) {
-		status = gluster2fsal_error(rc);
+		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
@@ -438,7 +438,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
 			       GLAPI_UUID_LENGTH);
 	if (rc < 0) {
-		status = gluster2fsal_error(rc);
+		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
@@ -564,7 +564,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
 			       GLAPI_UUID_LENGTH);
 	if (rc < 0) {
-		status = gluster2fsal_error(rc);
+		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
@@ -665,7 +665,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
 			       GLAPI_UUID_LENGTH);
 	if (rc < 0) {
-		status = gluster2fsal_error(rc);
+		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
@@ -1662,7 +1662,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	retval = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
 				   GLAPI_UUID_LENGTH);
 	if (retval < 0) {
-		status = gluster2fsal_error(retval);
+		status = gluster2fsal_error(errno);
 		goto direrr;
 	}
 

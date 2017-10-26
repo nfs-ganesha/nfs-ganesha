@@ -100,8 +100,9 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	rc = glfs_h_anonymous_read(glfs_export->gl_fs->fs, ds->glhandle,
 				   buffer, requested_length, offset);
 	if (rc < 0) {
+		rc = errno;
 		LogMajor(COMPONENT_PNFS, "Read failed on DS");
-		return posix2nfs4_error(-rc);
+		return posix2nfs4_error(rc);
 	}
 
 	*supplied_length = rc;
@@ -155,8 +156,9 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	rc = glfs_h_anonymous_write(glfs_export->gl_fs->fs, ds->glhandle,
 				    buffer, write_length, offset);
 	if (rc < 0) {
-		LogMajor(COMPONENT_PNFS, "status after write %d", -rc);
-		return posix2nfs4_error(-rc);
+		rc = errno;
+		LogMajor(COMPONENT_PNFS, "status after write %d", rc);
+		return posix2nfs4_error(rc);
 	}
 
 	/** @todo:Here DS is performing the write operation, so the MDS is not
@@ -223,10 +225,12 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 
 		rc = glfs_fsync(glfd);
 		if (rc != 0)
-			LogMajor(COMPONENT_PNFS, "ds_commit() failed  %d", -rc);
+			LogMajor(COMPONENT_PNFS,
+				 "ds_commit() failed %d", errno);
 		rc = glfs_close(glfd);
 		if (rc != 0)
-			LogDebug(COMPONENT_PNFS, "status after close %d", -rc);
+			LogDebug(COMPONENT_PNFS,
+				 "status after close %d", errno);
 
 		SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
 	}
