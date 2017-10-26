@@ -219,11 +219,13 @@ void setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
 		     gid_t *gid, unsigned int ngrps, gid_t *groups,
 		     char *file, int line, char *function);
 
-#define SET_GLUSTER_CREDS(glfs_export, uid, gid, glen, garray)		    \
-		((void) setglustercreds(glfs_export, uid, gid, glen,	    \
-				       garray, (char *) __FILE__,	    \
-				       __LINE__, (char *) __func__))	    \
-									    \
+#define SET_GLUSTER_CREDS(glfs_export, uid, gid, glen, garray) do {	\
+	int old_errno = errno;						\
+	((void) setglustercreds(glfs_export, uid, gid, glen,		\
+				garray, (char *) __FILE__,		\
+				__LINE__, (char *) __func__));		\
+	errno = old_errno;						\
+} while (0)
 
 #ifdef GLTIMING
 struct latency_data glfsal_latencies[LATENCY_SLOTS];

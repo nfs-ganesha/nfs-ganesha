@@ -1537,10 +1537,6 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	} else if (!errno)
                 created = true;
 
-       /* preserve errno */
-	retval = errno;
-
-
 	/* restore credentials */
 	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
 
