@@ -758,15 +758,13 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		server_stats_nfsv4_op_done(opcode, op_start_time, status);
 
+		LogDebug(COMPONENT_NFS_V4, "Status of %s in position %d = %s",
+			 optabv4[opcode].name, i, nfsstat4_to_str(status));
+
 		if (status != NFS4_OK) {
 			/* An error occured, we do not manage the other requests
 			 * in the COMPOUND, this may be a regular behavior
 			 */
-			LogDebug(COMPONENT_NFS_V4,
-				 "Status of %s in position %d = %s",
-				 optabv4[opcode].name, i,
-				 nfsstat4_to_str(status));
-
 			res->res_compound4.resarray.resarray_len = i + 1;
 
 			break;
