@@ -509,26 +509,41 @@ static void pxy_new_socket_ready(void)
 
 /* called with listlock */
 static int pxy_connect(struct pxy_client_params *info,
-		       struct sockaddr_in *dest)
+		       sockaddr_t *dest, uint16_t port)
 {
 	int sock;
+	int socklen;
 
 	if (info->use_privileged_client_port) {
 		int priv_port = 0;
 
-		sock = rresvport(&priv_port);
+		sock = rresvport_af(&priv_port, dest->ss_family);
 		if (sock < 0)
 			LogCrit(COMPONENT_FSAL,
 				"Cannot create TCP socket on privileged port");
 	} else {
-		sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		sock = socket(dest->ss_family, SOCK_STREAM, IPPROTO_TCP);
 		if (sock < 0)
 			LogCrit(COMPONENT_FSAL, "Cannot create TCP socket - %d",
 				errno);
 	}
 
+	switch (dest->ss_family) {
+	case AF_INET:
+		((struct sockaddr_in *)dest)->sin_port = htons(port);
+		socklen = sizeof(struct sockaddr_in);
+		break;
+	case AF_INET6:
+		((struct sockaddr_in6 *)dest)->sin6_port = htons(port);
+		socklen = sizeof(struct sockaddr_in6);
+		break;
+	default:
+		LogCrit(COMPONENT_FSAL, "Unknown address family %d",
+			dest->ss_family);
+	}
+
 	if (sock >= 0) {
-		if (connect(sock, (struct sockaddr *)dest, sizeof(*dest)) < 0) {
+		if (connect(sock, (struct sockaddr *)dest, socklen) < 0) {
 			close(sock);
 			sock = -1;
 		} else {
@@ -546,24 +561,17 @@ static int pxy_connect(struct pxy_client_params *info,
 static void *pxy_rpc_recv(void *arg)
 {
 	struct pxy_client_params *info = arg;
-	struct sockaddr_in addr_rpc;
-	struct sockaddr_in *info_sock = (struct sockaddr_in *)&info->srv_addr;
-	char addr[INET_ADDRSTRLEN];
+	char addr[INET6_ADDRSTRLEN];
 	struct pollfd pfd;
 	int millisec = info->srv_timeout * 1000;
-
-	memset(&addr_rpc, 0, sizeof(addr_rpc));
-	addr_rpc.sin_family = AF_INET;
-	addr_rpc.sin_port = htons(info->srv_port);
-	memcpy(&addr_rpc.sin_addr, &info_sock->sin_addr,
-	       sizeof(struct in_addr));
 
 	while (!close_thread) {
 		int nsleeps = 0;
 
 		PTHREAD_MUTEX_lock(&listlock);
 		do {
-			rpc_sock = pxy_connect(info, &addr_rpc);
+			rpc_sock = pxy_connect(info, &info->srv_addr,
+					       info->srv_port);
 			/* early stop test */
 			if (close_thread) {
 				PTHREAD_MUTEX_unlock(&listlock);
@@ -571,13 +579,11 @@ static void *pxy_rpc_recv(void *arg)
 			}
 			if (rpc_sock < 0) {
 				if (nsleeps == 0)
+					sprint_sockaddr(&info->srv_addr, addr,
+							sizeof(addr));
 					LogCrit(COMPONENT_FSAL,
 						"Cannot connect to server %s:%u",
-						inet_ntop(AF_INET,
-							  &addr_rpc.sin_addr,
-							  addr,
-							  sizeof(addr)),
-						info->srv_port);
+						addr, info->srv_port);
 				PTHREAD_MUTEX_unlock(&listlock);
 				sleep(info->retry_sleeptime);
 				nsleeps++;
