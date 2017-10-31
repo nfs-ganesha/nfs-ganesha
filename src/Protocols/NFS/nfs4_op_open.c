@@ -77,8 +77,11 @@ void nfs4_op_open_CopyRes(OPEN4res *res_dst, OPEN4res *res_src)
  */
 
 static nfsstat4 open4_create_fh(compound_data_t *data,
-				struct fsal_obj_handle *obj)
+				struct fsal_obj_handle *obj,
+				bool state_lock_held)
 {
+	bool set_no_cleanup = false;
+
 	/* Building a new fh */
 	if (!nfs4_FSALToFhandle(false, &data->currentFH, obj,
 					op_ctx->ctx_export)) {
@@ -89,8 +92,22 @@ static nfsstat4 open4_create_fh(compound_data_t *data,
 	/* Update the current entry */
 	set_current_entry(data, obj);
 
+	if (state_lock_held) {
+		/* Make sure we don't do cleanup holding the state_lock.
+		 * there will be an additional put_ref without the state_lock
+		 * being held.
+		 */
+		obj->state_hdl->no_cleanup = true;
+		set_no_cleanup = true;
+	}
+
 	/* Put our ref */
 	obj->obj_ops.put_ref(obj);
+
+	if (set_no_cleanup) {
+		/* And clear the no_cleanup we set above. */
+		obj->state_hdl->no_cleanup = false;
+	}
 
 	return NFS4_OK;
 }
@@ -285,7 +302,7 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 					return false;
 				}
 				res_OPEN4->status =
-				    open4_create_fh(data, obj_lookup);
+				    open4_create_fh(data, obj_lookup, false);
 			}
 
 			return false;
@@ -350,7 +367,7 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 	}
 	gsh_free(filename);
 
-	status = open4_create_fh(data, obj_lookup);
+	status = open4_create_fh(data, obj_lookup, false);
 	if (status != NFS4_OK) {
 		LogDebug(COMPONENT_NFS_V4, "open4_create_fh failed");
 		return status;
@@ -1055,7 +1072,7 @@ static void open4_ex(OPEN4args *arg,
 		glist_init(&(*file_state)->state_data.share.share_lockstates);
 	}
 
-	res_OPEN4->status = open4_create_fh(data, file_obj);
+	res_OPEN4->status = open4_create_fh(data, file_obj, true);
 
 	if (res_OPEN4->status != NFS4_OK) {
 		if (*new_state) {
@@ -1073,6 +1090,12 @@ static void open4_ex(OPEN4args *arg,
 					"Failed to allocate handle, reopen2 failed with %s",
 					fsal_err_txt(status));
 			}
+
+			/* Need to release the state_lock before the put_ref
+			 * call.
+			 */
+			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
+			state_lock_held = false;
 
 			/* Release the extra LRU reference on file_obj. */
 			file_obj->obj_ops.put_ref(file_obj);
