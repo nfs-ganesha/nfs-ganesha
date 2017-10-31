@@ -411,11 +411,16 @@ mdc_get_parent_handle(struct mdcache_fsal_export *export,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+/* entry's content_lock must be held in exclusive mode */
 void
 mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
 {
 	struct fsal_obj_handle *sub_handle;
 	fsal_status_t status;
+
+#ifdef DEBUG_MDCACHE
+	assert(entry->content_lock.__data.__writer != 0);
+#endif
 
 	if (entry->obj_handle.type != DIRECTORY) {
 		/* Parent pointer only for directories */
@@ -437,9 +442,7 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
 		return;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 	mdc_get_parent_handle(export, entry, sub_handle);
-	PTHREAD_RWLOCK_unlock(&entry->content_lock);
 
 	/* Release parent handle */
 	subcall_raw(export,
