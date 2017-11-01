@@ -1010,10 +1010,10 @@ unlock:
 /**
  * @brief Refresh the attributes for an mdcache entry.
  *
- * NOTE: Caller must hold the attribute lock.
- *
  *       The caller must also call mdcache_kill_entry after releasing the
  *       attr_lock if ERR_FSAL_STALE is returned.
+ *
+ * @note The caller must hold the attribute lock for WRITE
  *
  * @param[in] entry       The mdcache entry to refresh attributes for.
  * @param[in] need_acl    Indicates if the ACL needs updating.
@@ -1057,59 +1057,13 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 		return status;
 	}
 
-	if (entry->attrs.acl != NULL) {
-		/* We used to have an ACL... */
-		if (attrs.acl != NULL) {
-			/* We got an ACL from the sub FSAL whether we asked for
-			 * it or not, given that we had an ACL before, and we
-			 * got a new one, update the ACL, so release the old
-			 * one.
-			 */
-			nfs4_acl_release_entry(entry->attrs.acl);
-		} else {
-			/* A new ACL wasn't provided, so move the old one
-			 * into the new attributes so it will be preserved
-			 * by the fsal_copy_attrs.
-			 */
-			attrs.acl = entry->attrs.acl;
-			attrs.valid_mask |= ATTR_ACL;
-		}
-
-		/* NOTE: Because we already had an ACL,
-		 * entry->attrs.request_mask MUST have the ATTR_ACL bit set.
-		 * This will assure that fsal_copy_attrs below will copy the
-		 * selected ACL (old or new) into entry->attrs.
-		 */
-
-		/* ACL was released or moved to new attributes. */
-		entry->attrs.acl = NULL;
-	} else if (attrs.acl != NULL) {
-		/* We didn't have an ACL before, but we got a new one. We may
-		 * not have asked for it, but receive it anyway.
-		 */
-		entry->attrs.request_mask |= ATTR_ACL;
-	}
-
-	if (attrs.expire_time_attr == 0) {
-		/* FSAL did not set this, retain what was in the entry. */
-		attrs.expire_time_attr = entry->attrs.expire_time_attr;
-	}
-
-	/* Now move the new attributes into the entry. */
-	fsal_copy_attrs(&entry->attrs, &attrs, true);
+	mdc_update_attr_cache(entry, &attrs);
 
 	/* Done with the attrs (we didn't need to call this since the
 	 * fsal_copy_attrs preceding consumed all the references, but we
 	 * release them anyway to make it easy to scan the code for correctness.
 	 */
 	fsal_release_attrs(&attrs);
-
-	/* Note that we use &entry->attrs here in case attrs.request_mask was
-	 * modified by the FSAL. entry->attrs.request_mask reflects the
-	 * attributes we requested, and was updated to "request" ACL if the
-	 * FSAL provided one for us gratis.
-	 */
-	mdc_fixup_md(entry, &entry->attrs);
 
 	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
 		    "attrs ", &entry->attrs, true);
