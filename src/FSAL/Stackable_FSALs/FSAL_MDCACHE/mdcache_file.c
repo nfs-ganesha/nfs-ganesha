@@ -466,7 +466,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 	if (!name)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
-	status = mdc_lookup(mdc_parent, name, uncached, &entry, attrs_out);
+	status = mdc_lookup(mdc_parent, name, uncached, &entry, NULL);
 
 	if (FSAL_IS_ERROR(status)) {
 		/* Does not exist, or other error, return to open2 to
@@ -508,31 +508,50 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 			     "Open failed %s",
 			     msg_fsal_err(status.major));
 		mdcache_put(entry);
-	} else {
-		LogFullDebug(COMPONENT_CACHE_INODE,
-			     "Opened entry %p, sub_handle %p",
-			     entry, entry->sub_handle);
-		if (openflags & FSAL_O_TRUNC) {
-			/* Invalidate the attributes since we just truncated. */
-			atomic_clear_uint32_t_bits(&entry->mde_flags,
-						   MDCACHE_TRUST_ATTRS);
+		return status;
+	}
 
-			if (attrs_out &&
-			    (attrs_out->request_mask & ATTR_RDATTR_ERR) != 0) {
-				/* Ensure the attribute cache is valid. The
-				 * simplest way to do this is to call getattrs()
-				 */
-				status = entry->obj_handle.obj_ops.getattrs(
-					     &entry->obj_handle, attrs_out);
-				if (FSAL_IS_ERROR(status)) {
-					LogFullDebug(COMPONENT_CACHE_INODE,
-						"getattrs failed status=%s",
-						fsal_err_txt(status));
-				}
+	LogFullDebug(COMPONENT_CACHE_INODE,
+		     "Opened entry %p, sub_handle %p",
+		     entry, entry->sub_handle);
+
+	if (openflags & FSAL_O_TRUNC) {
+		/* Invalidate the attributes since we just truncated. */
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+	}
+
+	if (attrs_out) {
+		/* Handle attribute request */
+		if (!(attrs_out->valid_mask & ATTR_RDATTR_ERR)) {
+			struct attrlist attrs;
+
+			/* open2() gave us attributes.  Update the cache */
+			fsal_prepare_attrs(&attrs, op_ctx->fsal_export->exp_ops.
+				   fs_supported_attrs(op_ctx->fsal_export)
+				   | ATTR_RDATTR_ERR);
+			fsal_copy_attrs(&attrs, attrs_out, false);
+
+			PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+			mdc_update_attr_cache(entry, &attrs);
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+			/* mdc_update_attr_cache() consumes attrs; the release
+			 * is here only for code inspection. */
+			fsal_release_attrs(&attrs);
+		} else if (attrs_out->request_mask & ATTR_RDATTR_ERR) {
+			/* We didn't get attributes from open2, but the caller
+			 * wants them.  Try a full getattrs() */
+			status = entry->obj_handle.obj_ops.getattrs(
+					    &entry->obj_handle, attrs_out);
+			if (FSAL_IS_ERROR(status)) {
+				LogFullDebug(COMPONENT_CACHE_INODE,
+					     "getattrs failed status=%s",
+					     fsal_err_txt(status));
 			}
 		}
-		*new_entry = entry;
 	}
+	*new_entry = entry;
 
 	return status;
 }

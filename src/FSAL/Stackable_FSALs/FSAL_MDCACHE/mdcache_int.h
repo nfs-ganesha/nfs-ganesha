@@ -508,6 +508,7 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 void mdc_get_parent(struct mdcache_fsal_export *export,
 		    mdcache_entry_t *entry);
 
+void mdc_update_attr_cache(mdcache_entry_t *entry, struct attrlist *attrs);
 
 /**
  * @brief Atomically test the bits in mde_flags.
