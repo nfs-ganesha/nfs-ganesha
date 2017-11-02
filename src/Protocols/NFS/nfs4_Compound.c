@@ -505,6 +505,15 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		return NFS_REQ_OK;
 	}
 
+	if ((nfs_param.nfsv4_param.minor_versions &
+			(1 << compound4_minor)) == 0) {
+		LogInfo(COMPONENT_NFS_V4, "Unsupported minor version %d",
+			compound4_minor);
+		res->res_compound4.status = NFS4ERR_MINOR_VERS_MISMATCH;
+		res->res_compound4.resarray.resarray_len = 0;
+		return NFS_REQ_OK;
+	}
+
 	/* Keeping the same tag as in the arguments */
 	res->res_compound4.tag.utf8string_len =
 	    arg->arg_compound4.tag.utf8string_len;

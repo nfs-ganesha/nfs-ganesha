@@ -239,6 +239,12 @@ struct config_block krb5_param = {
  * @brief NFSv4 specific parameters
  */
 
+static struct config_item_list minor_versions[] = {
+	CONFIG_LIST_TOK("0", NFSV4_MINOR_VERSION_ZERO),
+	CONFIG_LIST_TOK("1", NFSV4_MINOR_VERSION_ONE),
+	CONFIG_LIST_TOK("2", NFSV4_MINOR_VERSION_TWO),
+	CONFIG_LIST_EOL
+};
 static struct config_item version4_params[] = {
 	CONF_ITEM_BOOL("Graceless", false,
 		       nfs_version4_parameter, graceless),
@@ -268,6 +274,8 @@ static struct config_item version4_params[] = {
 	CONF_ITEM_STR("RecoveryBackend", 1, MAXPATHLEN,
 		      RECOVERY_BACKEND_DEFAULT,
 		      nfs_version4_parameter, recovery_backend),
+	CONF_ITEM_LIST("minor_versions", NFSV4_MINOR_VERSION_ALL,
+		       minor_versions, nfs_version4_parameter, minor_versions),
 	CONFIG_EOL
 };
 

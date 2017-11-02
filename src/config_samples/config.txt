@@ -191,6 +191,8 @@ NFSV4 {}
 
 	RecoveryBackend(path, default "fs")
 
+	Minor_Versions(enum list, values [0, 1, 2], default [0, 1, 2])
+
 EXPORT_DEFAULTS {}
 ------------------
 
