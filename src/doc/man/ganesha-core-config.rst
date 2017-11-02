@@ -291,6 +291,9 @@ RecoveryBackend(path, default "fs")
     - fs : shared filesystem
     - rados_kv : rados key-value
 
+Minor_Versions(enum list, values [0, 1, 2], default [0, 1, 2])
+    List of supported NFSV4 minor version numbers.
+
 RADOS_KV {}
 --------------------------------------------------------------------------------
 
