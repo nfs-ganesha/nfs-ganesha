@@ -56,8 +56,6 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	exportlist_client_entry_t *client;
 	struct groupnode *group, *grp_tail = NULL;
 	const char *grp_name;
-	char addr_buf[INET6_ADDRSTRLEN + 1];
-	uint32_t naddr;
 
 	state->retval = 0;
 
@@ -101,21 +99,9 @@ static bool proc_export(struct gsh_export *export, void *arg)
 
 		grp_tail = group;
 		switch (client->type) {
-		case HOSTIF_CLIENT:
-			grp_name =
-			    inet_ntop(AF_INET,
-				      &client->client.hostif.clientaddr,
-				      addr_buf, INET6_ADDRSTRLEN);
-			if (grp_name == NULL) {
-				state->retval = errno;
-				grp_name = "Invalid Host Address";
-			}
-			break;
 		case NETWORK_CLIENT:
-			naddr = htonl(client->client.network.netaddr);
-			grp_name =
-			    inet_ntop(AF_INET, &naddr,
-				      addr_buf, INET6_ADDRSTRLEN);
+			grp_name = cidr_to_str(client->client.network.cidr,
+						CIDR_NOFLAGS);
 			if (grp_name == NULL) {
 				state->retval = errno;
 				grp_name = "Invalid Network Address";
@@ -132,16 +118,6 @@ static bool proc_export(struct gsh_export *export, void *arg)
 			break;
 		case WILDCARDHOST_CLIENT:
 			grp_name = client->client.wildcard.wildcard;
-			break;
-		case HOSTIF_CLIENT_V6:
-			grp_name =
-			    inet_ntop(AF_INET6,
-				      &client->client.hostif.clientaddr6,
-				      addr_buf, INET6_ADDRSTRLEN);
-			if (grp_name == NULL) {
-				state->retval = errno;
-				grp_name = "Invalid Host Address";
-			}
 			break;
 		default:
 			grp_name = "<unknown>";

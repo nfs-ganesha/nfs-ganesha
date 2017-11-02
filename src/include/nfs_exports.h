@@ -48,6 +48,7 @@
 #include "export_mgr.h"
 #include "fsal_types.h"
 #include "log.h"
+#include "cidr.h"
 
 /*
  * Export List structure
@@ -62,14 +63,12 @@
 
 typedef enum exportlist_client_type__ {
 	PROTO_CLIENT = 0,
-	HOSTIF_CLIENT = 1,
-	NETWORK_CLIENT = 2,
-	NETGROUP_CLIENT = 3,
-	WILDCARDHOST_CLIENT = 4,
-	GSSPRINCIPAL_CLIENT = 5,
-	HOSTIF_CLIENT_V6 = 6,
-	MATCH_ANY_CLIENT = 7,
-	BAD_CLIENT = 8
+	NETWORK_CLIENT = 1,
+	NETGROUP_CLIENT = 2,
+	WILDCARDHOST_CLIENT = 3,
+	GSSPRINCIPAL_CLIENT = 4,
+	MATCH_ANY_CLIENT = 5,
+	BAD_CLIENT = 6
 } exportlist_client_type_t;
 
 struct global_export_perms {
@@ -86,13 +85,8 @@ typedef struct exportlist_client_entry__ {
 	struct glist_head cle_list;
 	exportlist_client_type_t type;
 	union {
-		union {
-			uint32_t clientaddr; /* wrong! fix to be struct */
-			struct in6_addr clientaddr6;
-		} hostif;
 		struct {
-			unsigned int netaddr;
-			unsigned int netmask;
+			CIDR *cidr;
 		} network;
 		struct {
 			char *netgroupname;
