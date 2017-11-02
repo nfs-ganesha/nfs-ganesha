@@ -3750,8 +3750,9 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
 			     sattr->atime.set_atime_u.atime.tv_nsec);
 		if (sattr->atime.set_it == SET_TO_CLIENT_TIME) {
 			FSAL_attr->atime.tv_sec =
-			    sattr->atime.set_atime_u.atime.tv_sec;
-			FSAL_attr->atime.tv_nsec = 0;
+				sattr->atime.set_atime_u.atime.tv_sec;
+			FSAL_attr->atime.tv_nsec =
+				sattr->atime.set_atime_u.atime.tv_nsec;
 			FSAL_attr->valid_mask |= ATTR_ATIME;
 		} else if (sattr->atime.set_it == SET_TO_SERVER_TIME) {
 			/* Use the server's current time */
@@ -3772,8 +3773,9 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
 			     sattr->mtime.set_mtime_u.mtime.tv_sec);
 		if (sattr->mtime.set_it == SET_TO_CLIENT_TIME) {
 			FSAL_attr->mtime.tv_sec =
-			    sattr->mtime.set_mtime_u.mtime.tv_sec;
-			FSAL_attr->mtime.tv_nsec = 0;
+				sattr->mtime.set_mtime_u.mtime.tv_sec;
+			FSAL_attr->mtime.tv_nsec =
+				sattr->mtime.set_mtime_u.mtime.tv_nsec;
 			FSAL_attr->valid_mask |= ATTR_MTIME;
 		} else if (sattr->mtime.set_it == SET_TO_SERVER_TIME) {
 			/* Use the server's current time */
