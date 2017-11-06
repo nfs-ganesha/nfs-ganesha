@@ -565,6 +565,8 @@ static void *pxy_rpc_recv(void *arg)
 	struct pollfd pfd;
 	int millisec = info->srv_timeout * 1000;
 
+	SetNameFunction("pxy_rcv_thread");
+
 	while (!close_thread) {
 		int nsleeps = 0;
 
@@ -1070,6 +1072,8 @@ static void *pxy_clientid_renewer(void *arg)
 	int clientid_needed = 1;
 	int sessionid_needed = 1;
 	uint32_t lease_time = 60;
+
+	SetNameFunction("pxy_clientid_renewer");
 
 	while (!close_thread) {
 		clientid4 newcid = 0;
