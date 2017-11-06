@@ -164,10 +164,11 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			status = _9P_LOCK_GRACE;
 			break;
 		}
-
+		PTHREAD_RWLOCK_wrlock(&pfid->pentry->state_hdl->state_lock);
 		state_status = state_lock(pfid->pentry, powner, pfid->state,
 					  STATE_NON_BLOCKING, NULL, &lock,
 					  &holder, &conflict);
+		PTHREAD_RWLOCK_unlock(&pfid->pentry->state_hdl->state_lock);
 
 		if (state_status == STATE_SUCCESS)
 			status = _9P_LOCK_SUCCESS;
