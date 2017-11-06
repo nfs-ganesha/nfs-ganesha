@@ -1310,14 +1310,14 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 		tracepoint(fsalmem, mem_open, __func__, __LINE__, myself,
 			   myself->m_name, state, truncated, setattrs);
 #endif
+		/* Need a lock to protect the FD */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
 		if (state != NULL) {
 			/* Prepare to take the share reservation, but only if we
 			 * are called with a valid state (if state is NULL the
 			 * caller is a stateless create such as NFS v3 CREATE).
 			 */
-
-			/* This can block over an I/O operation. */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 			/* Check share reservation conflicts. */
 			status = check_share_conflict(&myself->mh_file.share,
@@ -1335,14 +1335,11 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 			update_share_counters(&myself->mh_file.share,
 					      FSAL_O_CLOSED,
 					      openflags);
-
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 		} else {
 			/* We need to use the global fd to continue, and take
 			 * the lock to protect it.
 			 */
 			my_fd = &hdl->mh_file.fd;
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 		}
 
 		if (openflags & FSAL_O_WRITE)
@@ -1362,6 +1359,22 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 			status = fsalstat(posix2fsal_error(EEXIST), EEXIST);
 		}
 
+		if (!FSAL_IS_ERROR(status)) {
+			/* Return success. */
+			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+			if (attrs_out != NULL)
+				/* Note, myself->attrs is usually protected by a
+				 * the attr_lock in MDCACHE.  It's not in this
+				 * case.  Since MEM is not a production FSAL,
+				 * this is deemed to be okay for the moment.
+				 */
+				fsal_copy_attrs(attrs_out, &myself->attrs,
+						false);
+			return status;
+		}
+
+		(void) mem_close_my_fd(my_fd);
+
 		if (state == NULL) {
 			/* If no state, release the lock taken above and return
 			 * status.
@@ -1370,28 +1383,17 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 			return status;
 		}
 
-		if (!FSAL_IS_ERROR(status)) {
-			/* Return success. */
-			return status;
-		}
-
-		(void) mem_close_my_fd(my_fd);
-
-
 		/* Can only get here with state not NULL and an error */
 
 		/* On error we need to release our share reservation
 		 * and undo the update of the share counters.
 		 * This can block over an I/O operation.
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
 		update_share_counters(&myself->mh_file.share,
 				      openflags,
 				      FSAL_O_CLOSED);
 
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
 		return status;
 	}
 
