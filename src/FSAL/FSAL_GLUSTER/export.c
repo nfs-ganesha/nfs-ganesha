@@ -875,6 +875,8 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	LogDebug(COMPONENT_FSAL, "In args: export path = %s",
 		 op_ctx->ctx_export->fullpath);
 
+	glfsexport = gsh_calloc(1, sizeof(struct glusterfs_export));
+
 	rc = load_config_from_node(parse_node,
 				   &export_param,
 				   &params,
@@ -889,8 +891,6 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	}
 	LogEvent(COMPONENT_FSAL, "Volume %s exported at : '%s'",
 		 params.glvolname, params.glvolpath);
-
-	glfsexport = gsh_calloc(1, sizeof(struct glusterfs_export));
 
 	fsal_export_init(&glfsexport->export);
 	export_ops_init(&glfsexport->export.exp_ops);
