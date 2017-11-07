@@ -59,7 +59,7 @@ override_dh_install:
 	mkdir -p debian/tmp/lib/systemd/system
 	mkdir -p debian/tmp/etc/logrotate.d/
 	mkdir -p debian/tmp/etc/dbus-1/system.d/
-	mkdir -p debian/tmp/usr/libexec/ganesha/
+	mkdir -p debian/tmp/usr/lib/ganesha/
 	mkdir -p debian/tmp/etc/sysconfig
 	chmod a+x src/scripts/nfs-ganesha-config.sh
 	cp src/config_samples/vfs.conf debian/tmp/etc/ganesha
@@ -69,8 +69,8 @@ override_dh_install:
 	cp src/config_samples/gpfs.ganesha.log.conf debian/tmp/etc/ganesha
 	cp src/config_samples/gpfs.ganesha.exports.conf debian/tmp/etc/ganesha
 	cp src/config_samples/logrotate_ganesha debian/tmp/etc/logrotate.d/ganesha
-	cp src/scripts/nfs-ganesha-config.sh debian/tmp/usr/libexec/ganesha/
-	cp src/scripts/gpfs-epoch debian/tmp/usr/libexec/ganesha/
+	cp src/scripts/nfs-ganesha-config.sh debian/tmp/usr/lib/ganesha/
+	cp src/scripts/gpfs-epoch debian/tmp/usr/lib/ganesha/
 	cp src/scripts/systemd/nfs-ganesha.service.debian8 debian/tmp/lib/systemd/system/nfs-ganesha.service
 	cp src/scripts/systemd/nfs-ganesha-lock.service.debian8 debian/tmp/lib/systemd/system/nfs-ganesha-lock.service
 	cp src/scripts/systemd/nfs-ganesha-config.service debian/tmp/lib/systemd/system/
