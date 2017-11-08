@@ -878,8 +878,15 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 						fsalstat(posix2fsal_error(
 							EEXIST),
 							EEXIST);
+				} else if (attrs_out) {
+					posix2fsal_attributes_all(&st,
+								  attrs_out);
 				}
 			}
+
+		} else if (attrs_out && attrs_out->request_mask &
+			   ATTR_RDATTR_ERR) {
+			attrs_out->valid_mask &= ATTR_RDATTR_ERR;
 		}
 
 		if (!state) {
