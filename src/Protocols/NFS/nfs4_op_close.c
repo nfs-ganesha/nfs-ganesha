@@ -263,11 +263,21 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	/* Handle stateid/seqid for success */
-	update_stateid(state_found,
-		       &res_CLOSE4->CLOSE4res_u.open_stateid,
-		       data,
-		       close_tag);
+	if (data->minorversion == 0) {
+		/* Handle stateid/seqid for success for v4.0 */
+		update_stateid(state_found,
+			       &res_CLOSE4->CLOSE4res_u.open_stateid,
+			       data,
+			       close_tag);
+	} else {
+		/* In NFS V4.1 and later, the server SHOULD return a special
+		 * invalid stateid to prevent re-use of a now closed stateid.
+		 */
+		memcpy(&res_CLOSE4->CLOSE4res_u.open_stateid.other,
+		       all_zero,
+		       sizeof(res_CLOSE4->CLOSE4res_u.open_stateid.other));
+		res_CLOSE4->CLOSE4res_u.open_stateid.seqid = UINT32_MAX;
+	}
 
 	/* File is closed, release the corresponding lock states */
 	glist_for_each_safe(glist, glistn,
