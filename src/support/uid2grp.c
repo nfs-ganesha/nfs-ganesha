@@ -226,8 +226,8 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 		return gdata;
 	}
 	if (pp == NULL) {
-		LogEvent(COMPONENT_IDMAPPER,
-			 "No matching password record found for uid %u", uid);
+		LogInfo(COMPONENT_IDMAPPER,
+			"No matching password record found for uid %u", uid);
 		return gdata;
 	}
 

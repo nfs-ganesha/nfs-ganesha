@@ -419,7 +419,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		    !uid2grp(op_ctx->original_creds.caller_uid,
 			     &op_ctx->caller_gdata)) {
 			/** @todo: do we really want to bail here? */
-			LogCrit(COMPONENT_DISPATCH,
+			LogInfo(COMPONENT_DISPATCH,
 				"Attempt to fetch managed_gids failed");
 			return NFS4ERR_ACCESS;
 		}
