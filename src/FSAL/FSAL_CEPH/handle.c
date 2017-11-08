@@ -1107,6 +1107,14 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 				status =
 				    fsalstat(posix2fsal_error(EEXIST), EEXIST);
 			}
+
+			if (attrs_out) {
+				/* Save out new attributes */
+				ceph2fsal_attributes(&stx, attrs_out);
+			}
+		} else if (attrs_out && attrs_out->request_mask &
+			   ATTR_RDATTR_ERR) {
+			attrs_out->valid_mask &= ATTR_RDATTR_ERR;
 		}
 
 		if (state == NULL) {
