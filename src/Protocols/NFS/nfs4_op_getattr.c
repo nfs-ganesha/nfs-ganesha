@@ -93,6 +93,8 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 	attrmask_t mask;
 	struct attrlist attrs;
 	bool current_obj_is_referral = false;
+	fattr4 *obj_attributes =
+		&res_GETATTR4->GETATTR4res_u.resok4.obj_attributes;
 
 	/* This is a NFS4_OP_GETTAR */
 	resp->resop = NFS4_OP_GETATTR;
@@ -133,7 +135,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_GETATTR4->status = file_To_Fattr(
 			data, mask, &attrs,
-			&res_GETATTR4->GETATTR4res_u.resok4.obj_attributes,
+			obj_attributes,
 			&arg_GETATTR4->attr_request);
 
 	current_obj_is_referral = data->current_obj->obj_ops.is_referral(
@@ -143,7 +145,9 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 	 * If it is a referral point, return the FATTR4_RDATTR_ERROR if
 	 * requested along with the requested restricted attrs.
 	 */
-	if (current_obj_is_referral && check_fs_locations(data->current_obj)) {
+	if (res_GETATTR4->status == NFS4_OK &&
+	    current_obj_is_referral &&
+	    check_fs_locations(data->current_obj)) {
 		bool fill_rdattr_error = true;
 		bool fslocations_requested = attribute_is_set(
 						&arg_GETATTR4->attr_request,
@@ -157,14 +161,22 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		if (fill_rdattr_error) {
-			if (nfs4_Fattr_Fill_Error(data,
-				&res_GETATTR4->GETATTR4res_u.resok4
-				.obj_attributes, NFS4ERR_MOVED,
-				&arg_GETATTR4->attr_request) != 0) {
+			if (nfs4_Fattr_Fill_Error(data, obj_attributes,
+						  NFS4ERR_MOVED,
+						  &arg_GETATTR4->attr_request)
+			    != 0) {
+				/* Report an error. */
 				res_GETATTR4->status = NFS4ERR_SERVERFAULT;
+				/* The attributes allocated will not be
+				 * consumed.
+				 */
+				nfs4_Fattr_Free(obj_attributes);
 			}
 		} else {
+			/* Report the referral. */
 			res_GETATTR4->status = NFS4ERR_MOVED;
+			/* The attributes allocated will not be consumed. */
+			nfs4_Fattr_Free(obj_attributes);
 		}
 	}
 

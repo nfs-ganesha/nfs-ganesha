@@ -3401,6 +3401,7 @@ void nfs4_Fattr_Free(fattr4 *fattr)
 	if (fattr->attr_vals.attrlist4_val != NULL) {
 		gsh_free(fattr->attr_vals.attrlist4_val);
 		fattr->attr_vals.attrlist4_val = NULL;
+		fattr->attr_vals.attrlist4_len = 0;
 	}
 }
 
@@ -3705,8 +3706,7 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
 	return 0;
 
  err:
-	gsh_free(Fattr->attr_vals.attrlist4_val);
-	Fattr->attr_vals.attrlist4_val = NULL;
+	nfs4_Fattr_Free(Fattr);
 	return -1;
 }
 
