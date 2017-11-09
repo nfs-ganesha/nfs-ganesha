@@ -60,6 +60,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   # Now detects the Linux's distro
   set(DISTRO "UNKNOWN")
   set(LIBEXECDIR "/usr/libexec")
+  set(SYS_RELEASE "UNKNOWN")
 
   EXECUTE_PROCESS(
       COMMAND awk -F=  "/^NAME=/ { print $2 }" /etc/os-release
