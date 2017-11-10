@@ -505,23 +505,13 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 			strcpy(build_clid, clid_str);
 		strncat(build_clid, dentp->d_name, segment_len);
 
-		if (tgtdir)
-			rc = fs_read_recov_clids_impl(sub_path,
-						      build_clid,
-						      new_path,
-						      takeover,
-						      add_clid_entry,
-						      add_rfh_entry);
-		else
-			rc = fs_read_recov_clids_impl(sub_path,
-						      build_clid,
-						      NULL,
-						      takeover,
-						      add_clid_entry,
-						      add_rfh_entry);
-
-		if (new_path)
-			gsh_free(new_path);
+		rc = fs_read_recov_clids_impl(sub_path,
+					      build_clid,
+					      new_path,
+					      takeover,
+					      add_clid_entry,
+					      add_rfh_entry);
+		gsh_free(new_path);
 
 		/* after recursion, if the subdir has no non-hidden
 		 * directory this is the end of this clientid str. Add
