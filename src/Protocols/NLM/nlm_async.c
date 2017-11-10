@@ -115,16 +115,17 @@ xdrproc_t nlm_reply_proc[] = {
 static void *resp_key;
 
 static const int MAX_ASYNC_RETRY = 2;
+static const struct timespec tout = { 0, 0 }; /* one-shot */
 
 /* Client routine  to send the asynchrnous response,
  * key is used to wait for a response
  */
 int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 {
-	struct timeval tout = { 0, 10 };
-	int retval, retry;
+	struct clnt_req *cc;
 	struct timeval start, now;
 	struct timespec timeout;
+	int retval, retry;
 
 	for (retry = 0; retry < MAX_ASYNC_RETRY; retry++) {
 		if (host->slc_callback_clnt == NULL) {
@@ -260,14 +261,17 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 
 		LogFullDebug(COMPONENT_NLM, "About to make clnt_call");
 
-		retval = clnt_call(host->slc_callback_clnt,
-				   host->slc_callback_auth,
-				   proc,
-				   nlm_reply_proc[proc],
-				   inarg,
-				   (xdrproc_t) xdr_void,
-				   NULL,
-				   tout);
+		cc = gsh_malloc(sizeof(*cc));
+		clnt_req_fill(cc, host->slc_callback_clnt,
+			      host->slc_callback_auth, proc,
+			      (xdrproc_t) nlm_reply_proc[proc], inarg,
+			      (xdrproc_t) xdr_void, NULL);
+		retval = RPC_TLIERROR;
+		if (clnt_req_setup(cc, tout)) {
+			cc->cc_refreshes = 0;
+			retval = CLNT_CALL_ONCE(cc);
+		}
+		clnt_req_release(cc);
 
 		LogFullDebug(COMPONENT_NLM, "Done with clnt_call");
 

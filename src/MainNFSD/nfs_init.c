@@ -99,6 +99,18 @@ nfs_start_info_t nfs_start_info;
 pthread_t admin_thrid;
 pthread_t sigmgr_thrid;
 
+tirpc_pkg_params ntirpc_pp = {
+	TIRPC_DEBUG_FLAG_DEFAULT,
+	0,
+	SetNameFunction,
+	(mem_format_t)rpc_warnx,
+	gsh_free_size,
+	gsh_malloc__,
+	gsh_malloc_aligned__,
+	gsh_calloc__,
+	gsh_realloc__,
+};
+
 #ifdef _USE_9P
 pthread_t _9p_dispatcher_thrid;
 #endif
@@ -297,6 +309,11 @@ void nfs_prereq_init(char *program_name, char *host_name, int debug_level,
 	init_logging(log_path, debug_level);
 	if (dump_trace) {
 		init_crash_handlers();
+	}
+
+	/* Redirect TI-RPC allocators, log channel */
+	if (!tirpc_control(TIRPC_PUT_PARAMETERS, &ntirpc_pp)) {
+		LogFatal(COMPONENT_INIT, "Setting nTI-RPC parameters failed");
 	}
 }
 

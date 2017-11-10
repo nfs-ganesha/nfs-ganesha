@@ -71,6 +71,9 @@ const struct __netid_nc_table netid_nc_table[9] = {
 	"udp", 3, _NC_UDP, AF_INET}, {
 	"udp6", 4, _NC_UDP6, AF_INET6},};
 
+/* retry timeout default to the moon and back */
+static const struct timespec tout = { 3, 0 };
+
 /**
  * @brief Initialize the callback credential cache
  *
@@ -803,6 +806,8 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, struct timeval timeout,
 			   bool locked)
 {
+	struct clnt_req *cc;
+	struct timespec tv;
 	enum clnt_stat stat;
 
 	/* XXX TI-RPC does the signal masking */
@@ -814,9 +819,18 @@ enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, struct timeval timeout,
 		goto unlock;
 	}
 
-	stat = clnt_call(chan->clnt, chan->auth,
-			 CB_NULL, (xdrproc_t) xdr_void,
-			 NULL, (xdrproc_t) xdr_void, NULL, timeout);
+	cc = gsh_malloc(sizeof(*cc));
+	clnt_req_fill(cc, chan->clnt, chan->auth, CB_NULL,
+		      (xdrproc_t) xdr_void, NULL,
+		      (xdrproc_t) xdr_void, NULL);
+	tv.tv_sec = timeout.tv_sec;
+	tv.tv_nsec = timeout.tv_usec * 1000;
+	stat = RPC_TLIERROR;
+	if (clnt_req_setup(cc, tv)) {
+		cc->cc_refreshes = 1;
+		stat = CLNT_CALL_WAIT(cc);
+	}
+	clnt_req_release(cc);
 
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
@@ -938,7 +952,7 @@ int32_t nfs_rpc_submit_call(rpc_call_t *call, void *completion_arg,
 
 int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 {
-	struct timeval CB_TIMEOUT = { 15, 0 };	/* XXX */
+	struct clnt_req *cc;
 	rpc_call_hook hook_status = RPC_CALL_COMPLETE;
 
 	/* send the call, set states, wake waiters, etc */
@@ -960,11 +974,16 @@ int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
 		goto unlock;
 	}
 
-	call->stat = clnt_call(call->chan->clnt, call->chan->auth, CB_COMPOUND,
-			       (xdrproc_t) xdr_CB_COMPOUND4args,
-			       &call->cbt.v_u.v4.args,
-			       (xdrproc_t) xdr_CB_COMPOUND4res,
-			       &call->cbt.v_u.v4.res, CB_TIMEOUT);
+	cc = gsh_malloc(sizeof(*cc));
+	clnt_req_fill(cc, call->chan->clnt, call->chan->auth, CB_COMPOUND,
+		      (xdrproc_t) xdr_CB_COMPOUND4args, &call->cbt.v_u.v4.args,
+		      (xdrproc_t) xdr_CB_COMPOUND4res, &call->cbt.v_u.v4.res);
+	call->stat = RPC_TLIERROR;
+	if (clnt_req_setup(cc, tout)) {
+		cc->cc_refreshes = 1;
+		call->stat = CLNT_CALL_WAIT(cc);
+	}
+	clnt_req_release(cc);
 
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */

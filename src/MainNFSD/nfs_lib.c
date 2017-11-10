@@ -76,17 +76,6 @@ nfs_start_info_t my_nfs_start_info = {
 	.lw_mark_trigger = false
 };
 
-tirpc_pkg_params ntirpc_pp = {
-	TIRPC_DEBUG_FLAG_DEFAULT,
-	0,
-	(mem_format_t)rpc_warnx,
-	gsh_free_size,
-	gsh_malloc__,
-	gsh_malloc_aligned__,
-	gsh_calloc__,
-	gsh_realloc__,
-};
-
 config_file_t config_struct;
 char *log_path = NULL;
 char *exec_name = "nfs-ganesha";

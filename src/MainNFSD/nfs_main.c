@@ -79,17 +79,6 @@ nfs_start_info_t my_nfs_start_info = {
 	.lw_mark_trigger = false
 };
 
-tirpc_pkg_params ntirpc_pp = {
-	TIRPC_DEBUG_FLAG_DEFAULT,
-	0,
-	(mem_format_t)rpc_warnx,
-	gsh_free_size,
-	gsh_malloc__,
-	gsh_malloc_aligned__,
-	gsh_calloc__,
-	gsh_realloc__,
-};
-
 config_file_t config_struct;
 char *log_path = NULL;
 char *exec_name = "nfs-ganesha";
@@ -445,12 +434,6 @@ int main(int argc, char *argv[])
 				config_path);
 		if (errstr != NULL)
 			gsh_free(errstr);
-	}
-
-	/* Redirect TI-RPC allocators, log channel */
-	if (!tirpc_control(TIRPC_PUT_PARAMETERS, &ntirpc_pp)) {
-		LogCrit(COMPONENT_INIT, "Setting nTI-RPC parameters failed");
-		goto fatal_die;
 	}
 
 	if (read_log_config(config_struct, &err_type) < 0) {

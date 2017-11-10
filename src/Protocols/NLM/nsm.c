@@ -36,6 +36,9 @@ AUTH *nsm_auth;
 unsigned long nsm_count;
 char *nodename;
 
+/* retry timeout default to the moon and back */
+static const struct timespec tout = { 3, 0 };
+
 bool nsm_connect(void)
 {
 	struct utsname utsname;
@@ -80,10 +83,10 @@ void nsm_disconnect(void)
 
 bool nsm_monitor(state_nsm_client_t *host)
 {
-	enum clnt_stat ret;
+	struct clnt_req *cc;
 	struct mon nsm_mon;
 	struct sm_stat_res res;
-	struct timeval tout = { 25, 0 };
+	enum clnt_stat ret;
 
 	if (host == NULL)
 		return true;
@@ -118,14 +121,15 @@ bool nsm_monitor(state_nsm_client_t *host)
 	/* Set this after we call nsm_connect() */
 	nsm_mon.mon_id.my_id.my_name = nodename;
 
-	ret = clnt_call(nsm_clnt,
-			nsm_auth,
-			SM_MON,
-			(xdrproc_t) xdr_mon,
-			&nsm_mon,
-			(xdrproc_t) xdr_sm_stat_res,
-			&res,
-			tout);
+	cc = gsh_malloc(sizeof(*cc));
+	clnt_req_fill(cc, nsm_clnt, nsm_auth, SM_MON,
+		      (xdrproc_t) xdr_mon, &nsm_mon,
+		      (xdrproc_t) xdr_sm_stat_res, &res);
+	ret = RPC_TLIERROR;
+	if (clnt_req_setup(cc, tout)) {
+		ret = CLNT_CALL_WAIT(cc);
+	}
+	clnt_req_release(cc);
 
 	if (ret != RPC_SUCCESS) {
 		LogCrit(COMPONENT_NLM,
@@ -165,10 +169,10 @@ bool nsm_monitor(state_nsm_client_t *host)
 
 bool nsm_unmonitor(state_nsm_client_t *host)
 {
-	enum clnt_stat ret;
+	struct clnt_req *cc;
 	struct sm_stat res;
 	struct mon_id nsm_mon_id;
-	struct timeval tout = { 25, 0 };
+	enum clnt_stat ret;
 
 	if (host == NULL)
 		return true;
@@ -200,14 +204,15 @@ bool nsm_unmonitor(state_nsm_client_t *host)
 	/* Set this after we call nsm_connect() */
 	nsm_mon_id.my_id.my_name = nodename;
 
-	ret = clnt_call(nsm_clnt,
-			nsm_auth,
-			SM_UNMON,
-			(xdrproc_t) xdr_mon_id,
-			&nsm_mon_id,
-			(xdrproc_t) xdr_sm_stat,
-			&res,
-			tout);
+	cc = gsh_malloc(sizeof(*cc));
+	clnt_req_fill(cc, nsm_clnt, nsm_auth, SM_UNMON,
+		      (xdrproc_t) xdr_mon_id, &nsm_mon_id,
+		      (xdrproc_t) xdr_sm_stat, &res);
+	ret = RPC_TLIERROR;
+	if (clnt_req_setup(cc, tout)) {
+		ret = CLNT_CALL_WAIT(cc);
+	}
+	clnt_req_release(cc);
 
 	if (ret != RPC_SUCCESS) {
 		LogCrit(COMPONENT_NLM,
@@ -237,10 +242,10 @@ bool nsm_unmonitor(state_nsm_client_t *host)
 
 void nsm_unmonitor_all(void)
 {
-	enum clnt_stat ret;
+	struct clnt_req *cc;
 	struct sm_stat res;
 	struct my_id nsm_id;
-	struct timeval tout = { 25, 0 };
+	enum clnt_stat ret;
 
 	nsm_id.my_prog = NLMPROG;
 	nsm_id.my_vers = NLM4_VERS;
@@ -259,14 +264,15 @@ void nsm_unmonitor_all(void)
 	/* Set this after we call nsm_connect() */
 	nsm_id.my_name = nodename;
 
-	ret = clnt_call(nsm_clnt,
-			nsm_auth,
-			SM_UNMON_ALL,
-			(xdrproc_t) xdr_my_id,
-			&nsm_id,
-			(xdrproc_t) xdr_sm_stat,
-			&res,
-			tout);
+	cc = gsh_malloc(sizeof(*cc));
+	clnt_req_fill(cc, nsm_clnt, nsm_auth, SM_UNMON_ALL,
+		      (xdrproc_t) xdr_my_id, &nsm_id,
+		      (xdrproc_t) xdr_sm_stat, &res);
+	ret = RPC_TLIERROR;
+	if (clnt_req_setup(cc, tout)) {
+		ret = CLNT_CALL_WAIT(cc);
+	}
+	clnt_req_release(cc);
 
 	if (ret != RPC_SUCCESS) {
 		LogCrit(COMPONENT_NLM,

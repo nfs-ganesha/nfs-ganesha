@@ -47,7 +47,6 @@
 #include "gsh_rpc.h"
 #include "common_utils.h"
 #include "abstract_mem.h"
-#include <rpc/work_pool.h>
 
 #ifdef USE_DBUS
 #include "gsh_dbus.h"
@@ -1416,7 +1415,6 @@ static int display_log_component(struct display_buffer *dsp_log,
 				 log_components_t component, const char *file,
 				 int line, const char *function, int level)
 {
-	char *name;
 	int b_left = display_start(dsp_log);
 
 	if (b_left <= 0 || max_headers < LH_COMPONENT)
@@ -1434,15 +1432,9 @@ static int display_log_component(struct display_buffer *dsp_log,
 		if (thread_name[0] != '\0')
 			b_left = display_printf(dsp_log, "[%s] ",
 						thread_name);
-		else {
-			name = work_pool_worker_name();
-			if (name && name[0] != '\0')
-				b_left = display_printf(dsp_log, "[%s] ",
-							name);
-			else
-				b_left = display_printf(dsp_log, "[%p] ",
-							thread_name);
-		}
+		else
+			b_left = display_printf(dsp_log, "[%p] ",
+						thread_name);
 	}
 
 	if (b_left > 0 && logfields->disp_filename) {
