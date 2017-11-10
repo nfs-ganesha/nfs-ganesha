@@ -656,9 +656,8 @@ struct nfs_client_id_t {
 	verifier4 cid_incoming_verifier; /*< Most recently supplied verifier */
 	time_t cid_last_renew;	/*< Time of last renewal */
 	nfs_clientid_confirm_state_t cid_confirmed; /*< Confirm/expire state */
+	bool cid_allow_reclaim;	/*< Can still reclaim state? */
 	nfs_client_cred_t cid_credential;	/*< Client credential */
-	int cid_allow_reclaim;	/*< Whether this client can still
-				   reclaim state */
 	char *cid_recov_tag;	/*< Recovery tag */
 	nfs_client_record_t *cid_client_record;	/*< Record for managing
 						   confirmation and
@@ -690,10 +689,10 @@ struct nfs_client_id_t {
 	time_t first_path_down_resp_time;  /* Time when the server first sent
 					       NFS4ERR_CB_PATH_DOWN */
 	unsigned int cid_nb_session;	/*< Number of sessions stored */
-	CREATE_SESSION4res cid_create_session_slot; /*< Cached response to
-							  last CREATE_SESSION */
 	unsigned cid_create_session_sequence;	/*< Sequence number for session
 						   creation. */
+	CREATE_SESSION4res cid_create_session_slot; /*< Cached response to
+							  last CREATE_SESSION */
 	state_owner_t cid_owner;	/*< Owner for per-client state */
 	int32_t cid_refcount;	/*< Reference count for lifecycle */
 	int cid_lease_reservations;	/*< Counted lease reservations, to spare
