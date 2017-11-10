@@ -177,7 +177,9 @@ int nfs_in_grace(void)
  */
 void nfs4_add_clid(nfs_client_id_t *clientid)
 {
+	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 	recovery_backend->add_clid(clientid);
+	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 }
 
 /**
@@ -188,20 +190,27 @@ void nfs4_add_clid(nfs_client_id_t *clientid)
  */
 void nfs4_rm_clid(nfs_client_id_t *clientid)
 {
+	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 	recovery_backend->rm_clid(clientid);
+	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 }
 
 static bool check_clid(nfs_client_id_t *clientid, clid_entry_t *clid_ent)
 {
+	bool ret = false;
+
+	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
+
 	LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
 		 clientid->cid_recov_tag, clid_ent->cl_name);
 
-	if (!clientid->cid_recov_tag)
-		return false;
-	if (!strncmp(clientid->cid_recov_tag,
+	if (clientid->cid_recov_tag &&
+	    !strncmp(clientid->cid_recov_tag,
 		     clid_ent->cl_name, PATH_MAX))
-		return true;
-	return false;
+		ret = true;
+
+	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+	return ret;
 }
 
 /**
@@ -362,9 +371,8 @@ void nfs4_record_revoke(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 		PTHREAD_MUTEX_unlock(&delr_clid->cid_mutex);
 		return;
 	}
-	PTHREAD_MUTEX_unlock(&delr_clid->cid_mutex);
-
 	recovery_backend->add_revoke_fh(delr_clid, delr_handle);
+	PTHREAD_MUTEX_unlock(&delr_clid->cid_mutex);
 }
 
 /**
