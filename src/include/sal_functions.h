@@ -1012,7 +1012,6 @@ struct nfs4_recovery_backend {
 	void (*add_clid)(nfs_client_id_t *);
 	void (*rm_clid)(nfs_client_id_t *);
 	void (*add_revoke_fh)(nfs_client_id_t *, nfs_fh4 *);
-	bool (*check_clid)(nfs_client_id_t *, clid_entry_t *);
 };
 
 void fs_backend_init(struct nfs4_recovery_backend **);

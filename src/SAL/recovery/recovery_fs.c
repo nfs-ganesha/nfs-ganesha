@@ -783,19 +783,6 @@ void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 	}
 }
 
-bool fs_check_clid(nfs_client_id_t *clientid, clid_entry_t *clid_ent)
-{
-	LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
-		 clientid->cid_recov_tag, clid_ent->cl_name);
-
-	if (!clientid->cid_recov_tag)
-		return false;
-	if (!strncmp(clientid->cid_recov_tag,
-		     clid_ent->cl_name, PATH_MAX))
-		return true;
-	return false;
-}
-
 struct nfs4_recovery_backend fs_backend = {
 	.recovery_init = fs_create_recov_dir,
 	.recovery_cleanup = fs_clean_old_recov_dir,
@@ -804,7 +791,6 @@ struct nfs4_recovery_backend fs_backend = {
 	.add_clid = fs_add_clid,
 	.rm_clid = fs_rm_clid,
 	.add_revoke_fh = fs_add_revoke_fh,
-	.check_clid = fs_check_clid,
 };
 
 void fs_backend_init(struct nfs4_recovery_backend **backend)

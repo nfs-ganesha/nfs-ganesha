@@ -571,19 +571,6 @@ out:
 	gsh_free(cval);
 }
 
-bool rados_kv_check_clid(nfs_client_id_t *clientid, clid_entry_t *clid_ent)
-{
-	LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
-		 clientid->cid_recov_tag, clid_ent->cl_name);
-
-	if (!clientid->cid_recov_tag)
-		return false;
-	if (!strncmp(clientid->cid_recov_tag,
-		     clid_ent->cl_name, PATH_MAX))
-		return true;
-	return false;
-}
-
 struct nfs4_recovery_backend rados_kv_backend = {
 	.recovery_init = rados_kv_init,
 	.recovery_cleanup = rados_kv_cleanup_old,
@@ -592,7 +579,6 @@ struct nfs4_recovery_backend rados_kv_backend = {
 	.add_clid = rados_kv_add_clid,
 	.rm_clid = rados_kv_rm_clid,
 	.add_revoke_fh = rados_kv_add_revoke_fh,
-	.check_clid = rados_kv_check_clid,
 };
 
 void rados_kv_backend_init(struct nfs4_recovery_backend **backend)
