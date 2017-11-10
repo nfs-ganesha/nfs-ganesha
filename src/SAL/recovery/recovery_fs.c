@@ -304,7 +304,11 @@ static void fs_rm_clid_impl(char *recov_dir, char *parent_path, int position)
 
 void fs_rm_clid(nfs_client_id_t *clientid)
 {
-	fs_rm_clid_impl(clientid->cid_recov_tag, v4_recov_dir, 0);
+	char *recov_tag = clientid->cid_recov_tag;
+
+	clientid->cid_recov_tag = NULL;
+	fs_rm_clid_impl(recov_tag, v4_recov_dir, 0);
+	gsh_free(recov_tag);
 }
 
 /**
