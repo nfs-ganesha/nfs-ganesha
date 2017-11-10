@@ -234,12 +234,23 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		return status;
 	}
 
+	/* Check our local cache first */
 	i = ceph_ll_get_inode(export->cmount, *vi);
-	if (!i)
-		return ceph2fsal_error(-ESTALE);
+	if (!i) {
+		/*
+		 * Try the slow way, may not be in cache now.
+		 *
+		 * Currently, there is no interface for looking up a snapped
+		 * inode, so we just bail here in that case.
+		 */
+		if (vi->snapid.val != CEPH_NOSNAP)
+			return ceph2fsal_error(-ESTALE);
 
-	/* The ceph_ll_connectable_m should have populated libceph's
-	   cache with all this anyway */
+		rc = ceph_ll_lookup_inode(export->cmount, vi->ino, &i);
+		if (rc)
+			return ceph2fsal_error(rc);
+	}
+
 	rc = fsal_ceph_ll_getattr(export->cmount, i, &stx,
 		attrs_out ? CEPH_STATX_ATTR_MASK : CEPH_STATX_HANDLE_MASK,
 		op_ctx->creds);
