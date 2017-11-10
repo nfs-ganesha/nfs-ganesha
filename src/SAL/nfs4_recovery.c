@@ -368,39 +368,37 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 	struct glist_head *node;
 	rdel_fh_t *rfh_entry;
 	clid_entry_t *clid_ent;
-	int retval;
+	int b64ret;
+	bool retval = true;
 
 	/* If we aren't in grace period, then reclaim is not possible */
 	if (!nfs_in_grace())
 		return false;
 
 	/* Convert nfs_fh4_val into base64 encoded string */
-	retval = base64url_encode(fhandle->nfs_fh4_val, fhandle->nfs_fh4_len,
+	b64ret = base64url_encode(fhandle->nfs_fh4_val, fhandle->nfs_fh4_len,
 				  rhdlstr, sizeof(rhdlstr));
-	assert(retval != -1);
+	assert(b64ret != -1);
 
 	PTHREAD_MUTEX_lock(&grace_mutex);
 	nfs4_chk_clid_impl(clid, &clid_ent);
-	if (clid_ent == NULL || glist_empty(&clid_ent->cl_rfh_list)) {
-		PTHREAD_MUTEX_unlock(&grace_mutex);
-		return true;
-	}
-
-	glist_for_each(node, &clid_ent->cl_rfh_list) {
-		rfh_entry = glist_entry(node, rdel_fh_t, rdfh_list);
-		assert(rfh_entry != NULL);
-		if (!strcmp(rhdlstr, rfh_entry->rdfh_handle_str)) {
-			PTHREAD_MUTEX_unlock(&grace_mutex);
-			LogFullDebug(COMPONENT_CLIENTID,
-				"Can't reclaim revoked fh:%s",
-				rfh_entry->rdfh_handle_str);
-			return false;
+	if (clid_ent) {
+		glist_for_each(node, &clid_ent->cl_rfh_list) {
+			rfh_entry = glist_entry(node, rdel_fh_t, rdfh_list);
+			assert(rfh_entry != NULL);
+			if (!strcmp(rhdlstr, rfh_entry->rdfh_handle_str)) {
+				LogFullDebug(COMPONENT_CLIENTID,
+					"Can't reclaim revoked fh:%s",
+					rfh_entry->rdfh_handle_str);
+				retval = false;
+				break;
+			}
 		}
 	}
-
 	PTHREAD_MUTEX_unlock(&grace_mutex);
-	LogFullDebug(COMPONENT_CLIENTID, "Returning TRUE");
-	return true;
+	LogFullDebug(COMPONENT_CLIENTID, "Returning %s" ,
+			retval ? "TRUE" : "FALSE");
+	return retval;
 }
 
 #ifdef _USE_NLM
