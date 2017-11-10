@@ -529,10 +529,10 @@ void dec_nfs4_state_ref(struct state_t *state)
  * @param[in] other stateid4.other
  * @param[in] state The state to add
  *
- * @retval 1 if ok.
- * @retval 0 if not ok.
+ * @retval STATE_SUCCESS if able to insert the new state.
+ * @retval STATE_ENTRY_EXISTS if state is already there.
  */
-int nfs4_State_Set(state_t *state)
+state_status_t nfs4_State_Set(state_t *state)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
@@ -549,17 +549,20 @@ int nfs4_State_Set(state_t *state)
 				     &buffval,
 				     HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
-	if (err != HASHTABLE_SUCCESS) {
+	switch (err) {
+	case HASHTABLE_SUCCESS:
+		break;
+	default:
 		LogCrit(COMPONENT_STATE,
-			"hashtable_test_and_set failed %s for key %p",
+			"ht_state_id hashtable_test_and_set failed %s for key %p",
 			hash_table_err_to_str(err), buffkey.addr);
-		return 0;
+		return STATE_ENTRY_EXISTS; /* likely reason */
 	}
 
 	/* If stateid is a LOCK or SHARE state, we also index by entry/owner */
 	if (state->state_type != STATE_TYPE_LOCK &&
 	    state->state_type != STATE_TYPE_SHARE)
-		return 1;
+		return STATE_SUCCESS;
 
 	buffkey.addr = state;
 	buffkey.len = sizeof(state_t);
@@ -567,23 +570,19 @@ int nfs4_State_Set(state_t *state)
 	buffval.addr = state;
 	buffval.len = sizeof(state_t);
 
-	/*
-	 * Allow overwrite here because we can get a new state with the
-	 * same file+owner if a FREE STATEID call comes in concurrently.
-	 */
 	err = hashtable_test_and_set(ht_state_obj,
 				     &buffkey,
 				     &buffval,
-				     HASHTABLE_SET_HOW_SET_OVERWRITE);
+				     HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
-	if (err != HASHTABLE_SUCCESS) {
-		struct gsh_buffdesc buffkey, old_key, old_value;
+	switch (err) {
+	case HASHTABLE_SUCCESS:
+		return STATE_SUCCESS;
 
-		buffkey.addr = state->stateid_other;
-		buffkey.len = OTHERSIZE;
-
+	case HASHTABLE_ERROR_KEY_ALREADY_EXISTS: /* buggy client? */
+	default: /* error case */
 		LogCrit(COMPONENT_STATE,
-			"hashtable_test_and_set failed %s for key %p",
+			"ht_state_obj hashtable_test_and_set failed %s for key %p",
 			hash_table_err_to_str(err), buffkey.addr);
 
 		if (isFullDebug(COMPONENT_STATE)) {
@@ -605,18 +604,17 @@ int nfs4_State_Set(state_t *state)
 			}
 		}
 
-		err = HashTable_Del(ht_state_id, &buffkey,
-				    &old_key, &old_value);
+		buffkey.addr = state->stateid_other;
+		buffkey.len = OTHERSIZE;
+		err = HashTable_Del(ht_state_id, &buffkey, NULL, NULL);
 
 		if (err != HASHTABLE_SUCCESS) {
-			LogDebug(COMPONENT_STATE,
+			LogCrit(COMPONENT_STATE,
 				 "Failure to delete stateid %s",
 				 hash_table_err_to_str(err));
 		}
-		return 0;
+		return STATE_ENTRY_EXISTS; /* likely reason */
 	}
-
-	return 1;
 }
 
 /**
