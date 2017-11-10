@@ -71,6 +71,7 @@ gpfs_close_func(struct fsal_obj_handle *obj_hdl, struct fsal_fd *fd)
 
 	status = fsal_internal_close(my_fd->fd, NULL, 0);
 	my_fd->fd = -1;
+	my_fd->openflags = FSAL_O_CLOSED;
 
 	return status;
 }
@@ -149,7 +150,7 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	struct gpfs_filesystem *gpfs_fs = obj_hdl->fs->private_data;
 	fsal_status_t status;
 	const bool truncated = (posix_flags & O_TRUNC) != 0;
-	int *fd;
+	struct gpfs_fd *my_fd;
 
 	/* This can block over an I/O operation. */
 	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
@@ -158,9 +159,9 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 				obj_handle);
 
 	if (state != NULL) {
-		struct gpfs_fd *my_fd = &container_of(state,
-						      struct gpfs_state_fd,
-						      state)->gpfs_fd;
+		my_fd = &container_of(state,
+				      struct gpfs_state_fd,
+				      state)->gpfs_fd;
 
 	       /* Prepare to take the share reservation, but only if we
 		* are called with a valid state (if state is NULL the
@@ -180,15 +181,14 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-		fd = &my_fd->fd;
 		my_fd->openflags = openflags;
 	} else {
 		/* We need to use the global fd to continue. */
-		fd = &gpfs_hdl->u.file.fd.fd;
+		my_fd = &gpfs_hdl->u.file.fd;
 		gpfs_hdl->u.file.fd.openflags = openflags;
 	}
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, fd);
+	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd->fd);
 	if (FSAL_IS_ERROR(status)) {
 		if (state == NULL)
 			goto out;
@@ -230,7 +230,9 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		return status;
 	}
 
-	(void) fsal_internal_close(*fd, state->state_owner, 0);
+	(void) fsal_internal_close(my_fd->fd, state->state_owner, 0);
+	my_fd->fd = -1;
+	my_fd->openflags = FSAL_O_CLOSED;
 
  undo_share:
 	/* On error we need to release our share reservation
@@ -1281,7 +1283,9 @@ gpfs_close2(struct fsal_obj_handle *obj_hdl, struct state_t *state)
 			     "state %p fd %d", state, my_fd->fd);
 		state_owner = state->state_owner;
 
-		return fsal_internal_close(my_fd->fd, state_owner, 0);
+		status = fsal_internal_close(my_fd->fd, state_owner, 0);
+		my_fd->fd = -1;
+		my_fd->openflags = FSAL_O_CLOSED;
 	}
 	return status;
 }
