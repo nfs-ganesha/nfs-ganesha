@@ -433,6 +433,7 @@ gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
 	my_fd = &container_of(state, struct gpfs_state_fd, state)->gpfs_fd;
 
 	my_fd->fd = -1;
+	my_fd->openflags = FSAL_O_CLOSED;
 
 	return state;
 }
