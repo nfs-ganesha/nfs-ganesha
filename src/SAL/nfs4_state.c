@@ -168,7 +168,11 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	pnew_state->state_obj = obj;
 
 	/* Add the state to the related hashtable */
-	if (!nfs4_State_Set(pnew_state)) {
+	status = nfs4_State_Set(pnew_state);
+	switch (status) {
+	case STATE_SUCCESS:
+		break;
+	default:
 		if (!str_valid)
 			display_stateid_other(&dspbuf,
 					      pnew_state->stateid_other);
@@ -177,10 +181,6 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 			"Can't create a new state id %s for the obj %p (F)",
 			str, obj);
 
-		/* Return STATE_MALLOC_ERROR since most likely the
-		 * nfs4_State_Set failed to allocate memory.
-		 */
-		status = STATE_MALLOC_ERROR;
 		goto errout;
 	}
 
