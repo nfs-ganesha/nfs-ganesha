@@ -216,6 +216,7 @@ typedef struct rdel_fh {
 typedef struct clid_entry {
 	struct glist_head cl_list;	/*< Link in the list */
 	struct glist_head cl_rfh_list;
+	bool cl_reclaim_complete;
 	char cl_name[PATH_MAX];	/*< Client name */
 } clid_entry_t;
 

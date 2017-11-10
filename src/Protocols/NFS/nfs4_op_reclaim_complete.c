@@ -49,6 +49,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
 #include "sal_data.h"
+#include "sal_functions.h"
 
 /**
  *
@@ -101,6 +102,7 @@ int nfs4_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t *data,
 	if (!arg_RECLAIM_COMPLETE4->rca_one_fs) {
 		data->session->clientid_record->cid_cb.v41.
 		    cid_reclaim_complete = true;
+		nfs4_recovery_reclaim_complete(data->session->clientid_record);
 	}
 
 	return res_RECLAIM_COMPLETE4->rcr_status;
