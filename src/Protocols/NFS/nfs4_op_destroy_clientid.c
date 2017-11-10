@@ -170,6 +170,9 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
 				 "Removing confirmed clientid %s", str);
 		}
 
+		/* remove stable-storage record (if any) */
+		nfs4_rm_clid(conf);
+
 		/* unhash the clientid record */
 		(void)remove_confirmed_client_id(conf);
 	}
