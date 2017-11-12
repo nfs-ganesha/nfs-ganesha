@@ -61,7 +61,6 @@
 #include "nfs_req_queue.h"
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
-#include "fridgethr.h"
 
 #define NFS_pcp nfs_param.core_param
 #define NFS_options NFS_pcp.core_options
@@ -90,7 +89,6 @@ enum evchan {
 
 static struct rpc_evchan rpc_evchan[EVCHAN_SIZE];
 
-struct fridgethr *req_fridge;	/*< Decoder thread pool */
 struct nfs_req_st nfs_req_st;	/*< Shared request queues */
 
 const char *req_q_s[N_REQ_QUEUES] = {
@@ -1262,28 +1260,8 @@ uint32_t nfs_rpc_outstanding_reqs_est(void)
 
 void nfs_rpc_queue_init(void)
 {
-	struct fridgethr_params reqparams;
 	struct req_q_pair *qpair;
-	int rc = 0;
 	int ix;
-
-	memset(&reqparams, 0, sizeof(struct fridgethr_params));
-    /**
-     * @todo Add a configuration parameter to set a max.
-     */
-	reqparams.thr_max = 0;
-	reqparams.thr_min = 1;
-	reqparams.thread_delay =
-		nfs_param.core_param.decoder_fridge_expiration_delay;
-	reqparams.deferment = fridgethr_defer_block;
-	reqparams.block_delay =
-		nfs_param.core_param.decoder_fridge_block_timeout;
-
-	/* decoder thread pool */
-	rc = fridgethr_init(&req_fridge, "decoder", &reqparams);
-	if (rc != 0)
-		LogFatal(COMPONENT_DISPATCH,
-			 "Unable to initialize decoder thread pool: %d", rc);
 
 	/* queues */
 	pthread_spin_init(&nfs_req_st.reqs.sp, PTHREAD_PROCESS_PRIVATE);

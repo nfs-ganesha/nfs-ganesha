@@ -90,13 +90,6 @@ heartbeat_freq(uint32, range 0 to 5000 default 1000)
 Enable_NLM(bool, default true)
     Whether to support the Network Lock Manager protocol.
 
-Decoder_Fridge_Expiration_Delay(int64, range 0 to 7200, default 600)
-    How long (in seconds) to let unused decoder threads wait before exiting.
-
-Decoder_Fridge_Block_Timeout(int64, range 0 to 7200, default 600)
-    How long (in seconds) to wait for the decoder fridge to accept a task
-    before erroring.
-
 Blocked_Lock_Poller_Interval(int64, range 0 to 180, default 10)
     Polling interval for blocked lock polling thread
 

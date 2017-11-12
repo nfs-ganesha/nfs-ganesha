@@ -330,13 +330,6 @@ typedef struct nfs_core_param {
 			uint32_t max_gc;
 		} gss;
 	} rpc;
-	/** How long (in seconds) to let unused decoder threads wait before
-	    exiting.  Settable with Decoder_Fridge_Expiration_Delay. */
-	time_t decoder_fridge_expiration_delay;
-	/** How long (in seconds) to wait for the decoder fridge to
-	    accept a task before erroring.  Settable with
-	    Decoder_Fridge_Block_Timeout. */
-	time_t decoder_fridge_block_timeout;
 	/** Polling interval for blocked lock polling thread. */
 	time_t blocked_lock_poller_interval;
 	/** Protocols to support.  Should probably be renamed.

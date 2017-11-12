@@ -455,23 +455,6 @@ static void do_shutdown(void)
 	/* finalize RPC package */
 	Clean_RPC();
 
-	LogEvent(COMPONENT_MAIN, "Stopping request decoder threads");
-	rc = fridgethr_sync_command(req_fridge, fridgethr_comm_stop, 120);
-
-	if (rc == ETIMEDOUT) {
-		LogMajor(COMPONENT_THREAD,
-			 "Shutdown timed out, cancelling threads!");
-		fridgethr_cancel(req_fridge);
-		disorderly = true;
-	} else if (rc != 0) {
-		LogMajor(COMPONENT_THREAD,
-			 "Failed to shut down the request thread fridge: %d!",
-			 rc);
-		disorderly = true;
-	} else {
-		LogEvent(COMPONENT_THREAD, "Request threads shut down.");
-	}
-
 	LogEvent(COMPONENT_MAIN, "Stopping worker threads");
 
 	rc = worker_shutdown();

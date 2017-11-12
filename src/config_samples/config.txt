@@ -104,10 +104,6 @@ NFS_CORE_PARAM {}
 
 	RPC_GSS_Max_Gc(uint32, range 1 to 1048576, default 200)
 
-	Decoder_Fridge_Expiration_Delay(int64, range 0 to 7200, default 600)
-
-	Decoder_Fridge_Block_Timeout(int64, range 0 to 7200, default 600)
-
 	Blocked_Lock_Poller_Interval(int64, range 0 to 180, default 10)
 
 	NFS_Protocols(list, valid values [3, 4], default 3,4)
