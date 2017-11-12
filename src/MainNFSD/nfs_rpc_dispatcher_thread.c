@@ -92,10 +92,8 @@ static struct rpc_evchan rpc_evchan[EVCHAN_SIZE];
 struct nfs_req_st nfs_req_st;	/*< Shared request queues */
 
 const char *req_q_s[N_REQ_QUEUES] = {
-	"REQ_Q_MOUNT",
 	"REQ_Q_CALL",
 	"REQ_Q_LOW_LATENCY",
-	"REQ_Q_HIGH_LATENCY"
 };
 
 static enum xprt_stat nfs_rpc_tcp_user_data(SVCXPRT *);
@@ -1307,20 +1305,6 @@ void nfs_rpc_enqueue_req(request_data_t *reqdata)
 	nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
 
 	switch (reqdata->rtype) {
-	case NFS_REQUEST:
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "enter rq_xid=%" PRIu32 " lookahead.flags=%u",
-			     reqdata->r_u.req.svc.rq_msg.rm_xid,
-			     reqdata->r_u.req.lookahead.flags);
-		if (reqdata->r_u.req.lookahead.flags & NFS_LOOKAHEAD_MOUNT) {
-			qpair = &(nfs_request_q->qset[REQ_Q_MOUNT]);
-			break;
-		}
-		if (NFS_LOOKAHEAD_HIGH_LATENCY(reqdata->r_u.req.lookahead))
-			qpair = &(nfs_request_q->qset[REQ_Q_HIGH_LATENCY]);
-		else
-			qpair = &(nfs_request_q->qset[REQ_Q_LOW_LATENCY]);
-		break;
 	case NFS_CALL:
 		qpair = &(nfs_request_q->qset[REQ_Q_CALL]);
 		break;
@@ -1331,6 +1315,7 @@ void nfs_rpc_enqueue_req(request_data_t *reqdata)
 		qpair = &(nfs_request_q->qset[REQ_Q_LOW_LATENCY]);
 		break;
 #endif
+	case NFS_REQUEST:
 	default:
 		goto out;
 	}
@@ -1472,32 +1457,10 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 	/* XXX: the following stands in for a more robust/flexible
 	 * weighting function */
 
-	/* slot in 1..4 */
  retry_deq:
-	slot = (nfs_rpc_q_next_slot() % 4);
-	for (ix = 0; ix < 4; ++ix) {
-		switch (slot) {
-		case 0:
-			/* MOUNT */
-			qpair = &(nfs_request_q->qset[REQ_Q_MOUNT]);
-			break;
-		case 1:
-			/* NFS_CALL */
-			qpair = &(nfs_request_q->qset[REQ_Q_CALL]);
-			break;
-		case 2:
-			/* LL */
-			qpair = &(nfs_request_q->qset[REQ_Q_LOW_LATENCY]);
-			break;
-		case 3:
-			/* HL */
-			qpair = &(nfs_request_q->qset[REQ_Q_HIGH_LATENCY]);
-			break;
-		default:
-			/* not here */
-			abort();
-			break;
-		}
+	slot = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr) % N_REQ_QUEUES;
+	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
+		qpair = &(nfs_request_q->qset[slot]);
 
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "dequeue_req try qpair %s %p:%p", qpair->s,
@@ -1511,7 +1474,7 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 		}
 
 		++slot;
-		slot = slot % 4;
+		slot = slot % N_REQ_QUEUES;
 
 	}			/* for */
 

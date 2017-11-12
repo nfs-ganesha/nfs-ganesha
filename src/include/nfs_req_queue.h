@@ -55,11 +55,11 @@ struct req_q_pair {
 	GSH_CACHE_PAD(2);
 };
 
-#define REQ_Q_MOUNT 0
-#define REQ_Q_CALL 1
-#define REQ_Q_LOW_LATENCY 2	/*< GETATTR, RENEW, etc */
-#define REQ_Q_HIGH_LATENCY 3	/*< READ, WRITE, COMMIT, etc */
-#define N_REQ_QUEUES 4
+enum req_q_e {
+	REQ_Q_CALL,
+	REQ_Q_LOW_LATENCY,	/*< GETATTR, RENEW, etc */
+	N_REQ_QUEUES
+};
 
 extern const char *req_q_s[N_REQ_QUEUES];	/* for debug prints */
 
@@ -89,15 +89,6 @@ static inline void nfs_rpc_q_init(struct req_q *q)
 	pthread_spin_init(&q->sp, PTHREAD_PROCESS_PRIVATE);
 	q->size = 0;
 	q->waiters = 0;
-}
-
-static inline uint32_t nfs_rpc_q_next_slot(void)
-{
-	uint32_t ix = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr);
-
-	if (!ix)
-		ix = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr);
-	return ix;
 }
 
 static inline void nfs_rpc_queue_awaken(void *arg)
