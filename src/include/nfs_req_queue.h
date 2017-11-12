@@ -2,6 +2,7 @@
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) 2012, The Linux Box Corporation
+ * Copyright (c) 2012-2017 Red Hat, Inc. and/or its affiliates.
  * Contributor : Matt Benjamin <matt@linuxbox.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +57,6 @@ struct req_q_pair {
 };
 
 enum req_q_e {
-	REQ_Q_CALL,
 	REQ_Q_LOW_LATENCY,	/*< GETATTR, RENEW, etc */
 	N_REQ_QUEUES
 };

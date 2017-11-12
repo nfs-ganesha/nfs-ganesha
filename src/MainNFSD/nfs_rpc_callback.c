@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2012, The Linux Box Corporation
+ * Copyright (c) 2012-2017 Red Hat, Inc. and/or its affiliates.
  * Contributor : Matt Benjamin <matt@linuxbox.com>
+ *               William Allen Simpson <william.allen.simpson@gmail.com>
  *
  * Some portions Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -620,6 +622,53 @@ static void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 }
 
 /**
+ * Call the NFSv4 client's CB_NULL procedure.
+ *
+ * @param[in] chan    Channel on which to call
+ * @param[in] timeout Timeout for client call
+ * @param[in] locked  True if the channel is already locked
+ *
+ * @return Client status.
+ */
+
+static enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, bool locked)
+{
+	struct clnt_req *cc;
+	enum clnt_stat stat;
+
+	/* XXX TI-RPC does the signal masking */
+	if (!locked)
+		PTHREAD_MUTEX_lock(&chan->mtx);
+
+	if (!chan->clnt) {
+		stat = RPC_INTR;
+		goto unlock;
+	}
+
+	cc = gsh_malloc(sizeof(*cc));
+	clnt_req_fill(cc, chan->clnt, chan->auth, CB_NULL,
+		      (xdrproc_t) xdr_void, NULL,
+		      (xdrproc_t) xdr_void, NULL);
+	stat = RPC_TLIERROR;
+	if (clnt_req_setup(cc, tout)) {
+		cc->cc_refreshes = 1;
+		stat = CLNT_CALL_WAIT(cc);
+	}
+	clnt_req_release(cc);
+
+	/* If a call fails, we have to assume path down, or equally fatal
+	 * error.  We may need back-off. */
+	if (stat != RPC_SUCCESS)
+		_nfs_rpc_destroy_chan(chan);
+
+ unlock:
+	if (!locked)
+		PTHREAD_MUTEX_unlock(&chan->mtx);
+
+	return stat;
+}
+
+/**
  * @brief Create a channel for an NFSv4.1 session
  *
  * This function creates a channel on an NFSv4.1 session, using the
@@ -641,7 +690,6 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 	rpc_call_channel_t *chan = &session->cb_chan;
 	int i;
 	bool authed = false;
-	struct timeval cb_timeout = { 15, 0 };
 
 	PTHREAD_MUTEX_lock(&chan->mtx);
 
@@ -715,7 +763,7 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 		goto out;
 	}
 
-	if (rpc_cb_null(chan, cb_timeout, true) != RPC_SUCCESS)
+	if (rpc_cb_null(chan, true) != RPC_SUCCESS)
 #ifdef EBADFD
 		code = EBADFD;
 #else				/* !EBADFD */
@@ -794,57 +842,6 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 }
 
 /**
- * Call the NFSv4 client's CB_NULL procedure.
- *
- * @param[in] chan    Channel on which to call
- * @param[in] timeout Timeout for client call
- * @param[in] locked  True if the channel is already locked
- *
- * @return Client status.
- */
-
-enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, struct timeval timeout,
-			   bool locked)
-{
-	struct clnt_req *cc;
-	struct timespec tv;
-	enum clnt_stat stat;
-
-	/* XXX TI-RPC does the signal masking */
-	if (!locked)
-		PTHREAD_MUTEX_lock(&chan->mtx);
-
-	if (!chan->clnt) {
-		stat = RPC_INTR;
-		goto unlock;
-	}
-
-	cc = gsh_malloc(sizeof(*cc));
-	clnt_req_fill(cc, chan->clnt, chan->auth, CB_NULL,
-		      (xdrproc_t) xdr_void, NULL,
-		      (xdrproc_t) xdr_void, NULL);
-	tv.tv_sec = timeout.tv_sec;
-	tv.tv_nsec = timeout.tv_usec * 1000;
-	stat = RPC_TLIERROR;
-	if (clnt_req_setup(cc, tv)) {
-		cc->cc_refreshes = 1;
-		stat = CLNT_CALL_WAIT(cc);
-	}
-	clnt_req_release(cc);
-
-	/* If a call fails, we have to assume path down, or equally fatal
-	 * error.  We may need back-off. */
-	if (stat != RPC_SUCCESS)
-		_nfs_rpc_destroy_chan(chan);
-
- unlock:
-	if (!locked)
-		PTHREAD_MUTEX_unlock(&chan->mtx);
-
-	return stat;
-}
-
-/**
  * @brief Free callback arguments
  *
  * @param[in] op The argop to free
@@ -889,56 +886,41 @@ void free_rpc_call(rpc_call_t *call)
 {
 	request_data_t *reqdata = container_of(call, request_data_t, r_u.call);
 
+	/* see clnt_req_release() */
+	clnt_req_reset(&call->call_req);
+	clnt_req_fini(&call->call_req);
+
 	free_argop(call->cbt.v_u.v4.args.argarray.argarray_val);
 	free_resop(call->cbt.v_u.v4.res.resarray.resarray_val);
 	pool_free(request_pool, reqdata);
 }
 
 /**
- * @brief Completion hook
+ * @brief Call response processing
  *
- * If a call has been supplied to handle the result, call the supplied
- * hook. Otherwise, a no-op.
- *
- * @param[in] call  The RPC call
- * @param[in] hook  The call hook
- * @param[in] arg   Supplied arguments
- * @param[in] flags Any flags
+ * @param[in] cc  The RPC call request context
  */
-static inline void RPC_CALL_HOOK(rpc_call_t *call, rpc_call_hook hook,
-				 void *arg, uint32_t flags)
+static void nfs_rpc_call_process(struct clnt_req *cc)
 {
-	if (call && call->call_hook)
-		call->call_hook(call, hook, arg, flags);
-}
+	rpc_call_t *call = container_of(cc, rpc_call_t, call_req);
 
-/**
- * @brief Fire off an RPC call
- *
- * @param[in] call           The constructed call
- * @param[in] completion_arg Argument to completion function
- * @param[in] flags          Control flags for call
- *
- * @return 0 or POSIX error codes.
- */
-int32_t nfs_rpc_submit_call(rpc_call_t *call, void *completion_arg,
-			    uint32_t flags)
-{
-	request_data_t *reqdata;
+	/* always TCP for retries, cc_refreshes only for AUTH_REFRESH()
+	 */
+	if (cc->cc_error.re_status == RPC_AUTHERROR
+	 && cc->cc_refreshes-- > 0
+	 && AUTH_REFRESH(cc->cc_auth, NULL)) {
+		if (clnt_req_refresh(cc)) {
+			cc->cc_error.re_status = CLNT_CALL_BACK(cc);
+			return;
+		}
+	}
 
-	assert(call->chan);
+	call->states |= NFS_CB_CALL_FINISHED;
 
-	call->completion_arg = completion_arg;
-	if (flags & NFS_RPC_CALL_INLINE)
-		return nfs_rpc_dispatch_call(call, NFS_RPC_CALL_NONE);
+	if (call->call_hook)
+		call->call_hook(call);
 
-	reqdata = container_of(call, request_data_t, r_u.call);
-	PTHREAD_MUTEX_lock(&call->we.mtx);
-	call->states = NFS_CB_CALL_QUEUED;
-	nfs_rpc_enqueue_req(reqdata);
-	PTHREAD_MUTEX_unlock(&call->we.mtx);
-
-	return 0;
+	free_rpc_call(call);
 }
 
 /**
@@ -947,68 +929,45 @@ int32_t nfs_rpc_submit_call(rpc_call_t *call, void *completion_arg,
  * @param[in,out] call  The call to dispatch
  * @param[in]     flags Flags governing call
  *
- * @return 0 or POSIX errors.
+ * @return enum clnt_stat.
  */
 
-int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags)
+enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 {
-	struct clnt_req *cc;
-	rpc_call_hook hook_status = RPC_CALL_COMPLETE;
-
-	/* send the call, set states, wake waiters, etc */
-	PTHREAD_MUTEX_lock(&call->we.mtx);
-
-	if ((call->states == NFS_CB_CALL_DISPATCH) ||
-	    (call->states == NFS_CB_CALL_FINISHED))
-		/* XXX invalid entry states for nfs_rpc_dispatch_call */
-		abort();
+	struct clnt_req *cc = &call->call_req;
 
 	call->states = NFS_CB_CALL_DISPATCH;
-	PTHREAD_MUTEX_unlock(&call->we.mtx);
 
 	/* XXX TI-RPC does the signal masking */
 	PTHREAD_MUTEX_lock(&call->chan->mtx);
 
-	if (!call->chan->clnt) {
-		call->stat = RPC_INTR;
-		goto unlock;
-	}
-
-	cc = gsh_malloc(sizeof(*cc));
 	clnt_req_fill(cc, call->chan->clnt, call->chan->auth, CB_COMPOUND,
 		      (xdrproc_t) xdr_CB_COMPOUND4args, &call->cbt.v_u.v4.args,
 		      (xdrproc_t) xdr_CB_COMPOUND4res, &call->cbt.v_u.v4.res);
-	call->stat = RPC_TLIERROR;
-	if (clnt_req_setup(cc, tout)) {
-		cc->cc_refreshes = 1;
-		call->stat = CLNT_CALL_WAIT(cc);
-	}
-	clnt_req_release(cc);
 
-	/* If a call fails, we have to assume path down, or equally fatal
-	 * error.  We may need back-off. */
-	if (call->stat != RPC_SUCCESS) {
-		_nfs_rpc_destroy_chan(call->chan);
-		hook_status = RPC_CALL_ABORT;
+	if (!call->chan->clnt) {
+		cc->cc_error.re_status = RPC_INTR;
+		goto unlock;
+	}
+	cc->cc_error.re_status = RPC_TLIERROR;
+	if (clnt_req_setup(cc, tout)) {
+		cc->cc_process_cb = nfs_rpc_call_process;
+		cc->cc_error.re_status = CLNT_CALL_BACK(cc);
+
+		/* If a call fails, we have to assume path down,
+		 * or equally fatal error.  We may need back-off.
+		 */
+		if (cc->cc_error.re_status != RPC_SUCCESS) {
+			_nfs_rpc_destroy_chan(call->chan);
+			call->states |= NFS_CB_CALL_ABORTED;
+		}
 	}
 
  unlock:
 	PTHREAD_MUTEX_unlock(&call->chan->mtx);
 
-	/* signal waiter(s) */
-	PTHREAD_MUTEX_lock(&call->we.mtx);
-	call->states |= NFS_CB_CALL_FINISHED;
-
-	/* broadcast will generally be inexpensive */
-	if (call->flags & NFS_RPC_CALL_BROADCAST)
-		pthread_cond_broadcast(&call->we.cv);
-	PTHREAD_MUTEX_unlock(&call->we.mtx);
-
-	/* call completion hook */
-	RPC_CALL_HOOK(call, hook_status, call->completion_arg,
-		      NFS_RPC_CALL_NONE);
-
-	return 0;
+	/* any broadcast or signalling done in completion function */
+	return cc->cc_error.re_status;
 }
 
 /**
@@ -1205,8 +1164,7 @@ static void release_cb_slot(nfs41_session_t *session, slotid4 slot, bool sent)
 
 static int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       struct state_refer *refer,
-		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
-					     void *arg, uint32_t flags),
+		       void (*completion)(rpc_call_t *),
 		       void *completion_arg)
 {
 	struct glist_head *glist;
@@ -1265,8 +1223,8 @@ restart:
 					     highest_slot);
 
 		call->call_hook = completion;
-		ret = nfs_rpc_submit_call(call, completion_arg,
-						NFS_RPC_FLAG_NONE);
+		call->call_arg = completion_arg;
+		ret = nfs_rpc_call(call, NFS_RPC_CALL_NONE);
 		if (ret == 0)
 			return 0;
 
@@ -1274,7 +1232,7 @@ restart:
 		 * Tear down channel since there is likely something
 		 * wrong with it.
 		 */
-		LogDebug(COMPONENT_NFS_CB, "nfs_rpc_submit_call failed: %d",
+		LogDebug(COMPONENT_NFS_CB, "nfs_rpc_call failed: %d",
 				ret);
 		PTHREAD_MUTEX_lock(&session->cb_chan.mtx);
 		session->flags &= ~session_bc_up;
@@ -1319,15 +1277,12 @@ void nfs41_release_single(rpc_call_t *call)
 
 enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *clientid)
 {
-	int32_t tries;
-	struct timeval CB_TIMEOUT = {15, 0};
 	rpc_call_channel_t *chan;
 	enum clnt_stat stat;
+	int retries = 1;
 
-	assert(clientid);
 	/* create (fix?) channel */
-	for (tries = 0; tries < 2; ++tries) {
-
+	do {
 		chan = nfs_rpc_get_chan(clientid, NFS_RPC_FLAG_NONE);
 		if (!chan) {
 			LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
@@ -1341,33 +1296,30 @@ enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *clientid)
 		}
 
 		/* try the CB_NULL proc -- inline here, should be ok-ish */
-		stat = rpc_cb_null(chan, CB_TIMEOUT, false);
+		stat = rpc_cb_null(chan, false);
 		LogDebug(COMPONENT_NFS_CB,
 			"rpc_cb_null on client %p returns %d", clientid, stat);
 
 		/* RPC_INTR indicates that we should refresh the
 		 * channel and retry */
-		if (stat != RPC_INTR)
-			break;
-	}
+	} while (stat == RPC_INTR && retries-- > 0);
 
 	return stat;
 }
 
 static int nfs_rpc_v40_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
-		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
-					     void *arg, uint32_t flags),
+		       void (*completion)(rpc_call_t *),
 		       void *completion_arg)
 {
-	int rc = ENOTCONN;
-	rpc_call_t *call = NULL;
 	rpc_call_channel_t *chan;
+	rpc_call_t *call;
+	int rc;
 
 	/* Attempt a recall only if channel state is UP */
 	if (get_cb_chan_down(clientid)) {
 		LogCrit(COMPONENT_NFS_CB,
 			"Call back channel down, not issuing a recall");
-		goto out;
+		return ENOTCONN;
 	}
 
 	chan = nfs_rpc_get_chan(clientid, NFS_RPC_FLAG_NONE);
@@ -1375,12 +1327,12 @@ static int nfs_rpc_v40_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
 		/* TODO: move this to nfs_rpc_get_chan ? */
 		set_cb_chan_down(clientid, true);
-		goto out;
+		return ENOTCONN;
 	}
 	if (!chan->clnt) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
 		set_cb_chan_down(clientid, true);
-		goto out;
+		return ENOTCONN;
 	}
 
 	call = alloc_rpc_call();
@@ -1389,12 +1341,10 @@ static int nfs_rpc_v40_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 			    clientid->cid_cb.v40.cb_callback_ident, NULL, 0);
 	cb_compound_add_op(&call->cbt, op);
 	call->call_hook = completion;
+	call->call_arg = completion_arg;
 
-	rc = nfs_rpc_submit_call(call, completion_arg, NFS_RPC_CALL_NONE);
-	if (rc == 0)
-		return 0;
-out:
-	if (call)
+	rc = nfs_rpc_call(call, NFS_RPC_CALL_NONE);
+	if (rc)
 		free_rpc_call(call);
 	return rc;
 }
@@ -1424,8 +1374,7 @@ out:
  */
 int nfs_rpc_cb_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       struct state_refer *refer,
-		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
-					     void *arg, uint32_t flags),
+		       void (*completion)(rpc_call_t *),
 		       void *c_arg)
 {
 	if (clientid->cid_minorversion == 0)

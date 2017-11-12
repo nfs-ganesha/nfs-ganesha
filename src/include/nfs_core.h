@@ -72,16 +72,9 @@ typedef struct __nfs4_compound {
 	} v_u;
 } nfs4_compound_t;
 
-/* RPC callback processing */
-typedef enum rpc_call_hook {
-	RPC_CALL_COMPLETE,
-	RPC_CALL_ABORT,
-} rpc_call_hook;
-
 typedef struct _rpc_call rpc_call_t;
 
-typedef int32_t(*rpc_call_func) (rpc_call_t *call, rpc_call_hook hook,
-				 void *arg, uint32_t flags);
+typedef void (*rpc_call_func) (rpc_call_t *call);
 
 #ifdef _HAVE_GSSAPI
 extern gss_OID_desc krb5oid;
@@ -90,13 +83,12 @@ extern gss_OID_desc krb5oid;
 struct _rpc_call {
 	rpc_call_channel_t *chan;
 	rpc_call_func call_hook;
+	void *call_arg;
+	void *call_user_data[2];
 	nfs4_compound_t cbt;
-	wait_entry_t we;
-	enum clnt_stat stat;
+	struct clnt_req call_req;
 	uint32_t states;
 	uint32_t flags;
-	void *u_data[2];
-	void *completion_arg;
 };
 
 typedef enum request_type {
@@ -202,7 +194,6 @@ unsigned int nfs_core_select_worker_queue(unsigned int avoid_index);
 int nfs_Init_ip_name(void);
 
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
-int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
 
 int reaper_init(void);
 int reaper_shutdown(void);

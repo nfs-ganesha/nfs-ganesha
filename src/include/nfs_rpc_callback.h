@@ -2,7 +2,9 @@
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) 2012, The Linux Box Corporation
+ * Copyright (c) 2012-2017 Red Hat, Inc. and/or its affiliates.
  * Contributor : Matt Benjamin <matt@linuxbox.com>
+ *               William Allen Simpson <william.allen.simpson@gmail.com>
  *
  * Some portions Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
@@ -69,12 +71,9 @@ void cb_compound_free(nfs4_compound_t *cbt);
 #define NFS_RPC_FLAG_NONE 0x0000
 
 enum nfs_cb_call_states {
-	NFS_CB_CALL_NONE,
-	NFS_CB_CALL_QUEUED,
 	NFS_CB_CALL_DISPATCH,
 	NFS_CB_CALL_FINISHED,
 	NFS_CB_CALL_ABORTED,
-	NFS_CB_CALL_TIMEDOUT
 };
 
 rpc_call_t *alloc_rpc_call();
@@ -113,17 +112,6 @@ static inline void set_cb_chan_down(struct nfs_client_id_t *clid, bool down)
 rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *pclientid,
 				     uint32_t flags);
 
-enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, struct timeval timeout,
-			   bool locked);
-
-static inline void nfs_rpc_init_call(void *ptr, void *parameters)
-{
-	rpc_call_t *call = (rpc_call_t *) ptr;
-
-	memset(call, 0, sizeof(rpc_call_t));
-	init_wait_entry(&call->we);
-}
-
 void nfs_rpc_cb_pkginit(void);
 void nfs_rpc_cb_pkgshutdown(void);
 int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid, uint32_t flags);
@@ -131,26 +119,13 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid, uint32_t flags);
 int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 			    callback_sec_parms4 *sec_parms);
 
-/* Dispose a channel. */
-void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
-
-int nfs_rpc_call_init(rpc_call_t call, uint32_t flags);
-
 #define NFS_RPC_CALL_NONE 0x0000
-#define NFS_RPC_CALL_INLINE 0x0001	/*< execute in current thread ctxt */
-#define NFS_RPC_CALL_BROADCAST 0x0002
 
-/* Submit rpc to be called on chan, optionally waiting for completion. */
-int32_t nfs_rpc_submit_call(rpc_call_t *call, void *completion_arg,
-			    uint32_t flags);
-
-/* Dispatch method to process a (queued) call */
-int32_t nfs_rpc_dispatch_call(rpc_call_t *call, uint32_t flags);
+enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags);
 
 int nfs_rpc_cb_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 		       struct state_refer *refer,
-		       int32_t (*completion)(rpc_call_t *, rpc_call_hook,
-					     void *arg, uint32_t flags),
+		       void (*completion)(rpc_call_t *),
 		       void *completion_arg);
 void nfs41_release_single(rpc_call_t *call);
 enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *);

@@ -520,17 +520,11 @@ static void free_layoutrec(nfs_cb_argop4 *op)
  * period of delay has surpassed the lease period.
  *
  * @param[in] call  The RPC call being completed
- * @param[in] hook  The hook itself
- * @param[in] arg   Supplied argument (the callback data)
- * @param[in] flags There are no flags.
- *
- * @return 0, constantly.
  */
 
-static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
-				    void *arg, uint32_t flags)
+static void layoutrec_completion(rpc_call_t *call)
 {
-	struct layoutrecall_cb_data *cb_data = arg;
+	struct layoutrecall_cb_data *cb_data = call->call_arg;
 	bool deleted = false;
 	state_t *state = NULL;
 	struct root_op_context root_op_context;
@@ -547,7 +541,7 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 		     call->cbt.v_u.v4.res.status, cb_data);
 
 	/* Get this out of the way up front */
-	if (hook != RPC_CALL_COMPLETE)
+	if (call->states & NFS_CB_CALL_ABORTED)
 		goto revoke;
 
 	if (call->cbt.v_u.v4.res.status == NFS4_OK) {
@@ -609,9 +603,8 @@ static int32_t layoutrec_completion(rpc_call_t *call, rpc_call_hook hook,
 	if (ok) {
 		enum fsal_layoutreturn_circumstance circumstance;
 
-		if (hook == RPC_CALL_COMPLETE &&
-		    call->cbt.v_u.v4.res.status ==
-		    NFS4ERR_NOMATCHING_LAYOUT)
+		if (!(call->states & NFS_CB_CALL_ABORTED)
+		 && call->cbt.v_u.v4.res.status == NFS4ERR_NOMATCHING_LAYOUT)
 			circumstance = circumstance_client;
 		else
 			circumstance = circumstance_revoke;
@@ -667,8 +660,6 @@ out:
 		/* Release the owner */
 		dec_state_owner_ref(owner);
 	}
-
-	return 0;
 }
 
 /**
@@ -865,20 +856,13 @@ struct cb_notify {
  * @brief Handle CB_NOTIFY_DEVICE response
  *
  * @param[in] call  The RPC call being completed
- * @param[in] hook  The hook itself
- * @param[in] arg   Supplied argument (the callback data)
- * @param[in] flags There are no flags.
- *
- * @return 0, constantly.
  */
 
-static int32_t notifydev_completion(rpc_call_t *call, rpc_call_hook hook,
-				    void *arg, uint32_t flags)
+static void notifydev_completion(rpc_call_t *call)
 {
 	LogFullDebug(COMPONENT_NFS_CB, "status %d arg %p",
-		     call->cbt.v_u.v4.res.status, arg);
-	gsh_free(arg);
-	return 0;
+		     call->cbt.v_u.v4.res.status, call->call_arg);
+	gsh_free(call->call_arg);
 }
 
 /**
@@ -1103,20 +1087,15 @@ free_delegrecall_context(struct delegrecall_context *deleg_ctx)
  * @brief Handle the reply to a CB_RECALL
  *
  * @param[in] call  The RPC call being completed
- * @param[in] hook  The hook itself
- * @param[in] arg   Supplied argument (the callback data)
- * @param[in] flags There are no flags.
  *
  * @return 0, constantly.
  */
 
-static int32_t delegrecall_completion_func(rpc_call_t *call,
-					   rpc_call_hook hook, void *arg,
-					   uint32_t flags)
+static void delegrecall_completion_func(rpc_call_t *call)
 {
 	enum recall_resp_action resp_act;
 	nfsstat4 rc = NFS4_OK;
-	struct delegrecall_context *deleg_ctx = arg;
+	struct delegrecall_context *deleg_ctx = call->call_arg;
 	uint32_t minorversion = deleg_ctx->drc_clid->cid_minorversion;
 	struct state_t *state;
 	struct fsal_obj_handle *obj = NULL;
@@ -1128,7 +1107,7 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 	bool ret = false;
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
-		 (hook == RPC_CALL_COMPLETE) ? "Success" : "Failed");
+		 !(call->states & NFS_CB_CALL_ABORTED) ? "Success" : "Failed");
 
 	state = nfs4_State_Get_Pointer(deleg_ctx->drc_stateid.other);
 
@@ -1158,27 +1137,26 @@ static int32_t delegrecall_completion_func(rpc_call_t *call,
 		LogDebug(COMPONENT_NFS_CB, "deleg_entry %s", str);
 	}
 
-	switch (hook) {
-	case RPC_CALL_COMPLETE:
-		LogMidDebug(COMPONENT_NFS_CB, "call result: %d", call->stat);
-		if (call->stat != RPC_SUCCESS) {
+	if (!(call->states & NFS_CB_CALL_ABORTED)) {
+		LogMidDebug(COMPONENT_NFS_CB, "call result: %d",
+			    call->call_req.cc_error.re_status);
+		if (call->call_req.cc_error.re_status != RPC_SUCCESS) {
 			LogEvent(COMPONENT_NFS_CB,
-				 "Call stat: %d, marking CB channel down",
-				 call->stat);
+				 "call result: %d, marking CB channel down",
+				 call->call_req.cc_error.re_status);
 			set_cb_chan_down(deleg_ctx->drc_clid, true);
 			resp_act = DELEG_RECALL_SCHED;
 		} else
 			resp_act = handle_recall_response(deleg_ctx,
 							  state,
 							  call);
-		break;
-	default:
+	} else {
 		LogEvent(COMPONENT_NFS_CB,
-			 "Unknown hook %d, marking CB channel down", hook);
+			 "Aborted: %d, marking CB channel down",
+			 call->call_req.cc_error.re_status);
 		set_cb_chan_down(deleg_ctx->drc_clid, true);
 		/* Mark the recall as failed */
 		resp_act = DELEG_RECALL_SCHED;
-		break;
 	}
 	switch (resp_act) {
 	case DELEG_RECALL_SCHED:
@@ -1239,7 +1217,6 @@ out_free:
 		dec_state_t_ref(state);
 
 	op_ctx = save_ctx;
-	return 0; /*Always return zero, the delegation is recalled or revoked */
 }
 
 /**

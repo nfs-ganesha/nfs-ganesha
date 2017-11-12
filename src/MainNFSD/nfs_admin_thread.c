@@ -457,6 +457,7 @@ static void do_shutdown(void)
 
 	LogEvent(COMPONENT_MAIN, "Stopping worker threads");
 
+#ifdef _USE_9P
 	rc = worker_shutdown();
 
 	if (rc != 0) {
@@ -467,6 +468,7 @@ static void do_shutdown(void)
 		LogEvent(COMPONENT_THREAD,
 			 "Worker threads successfully shut down.");
 	}
+#endif
 
 	rc = general_fridge_shutdown();
 	if (rc != 0) {

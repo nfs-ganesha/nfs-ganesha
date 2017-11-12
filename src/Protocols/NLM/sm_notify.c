@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 	/* free resources */
 	gsh_free(buf->buf);
 	gsh_free(buf);
-	clnt_destroy(clnt);
+	CLNT_DESTROY(clnt);
 
 	close(fd);
 

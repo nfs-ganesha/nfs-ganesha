@@ -4,6 +4,7 @@
  * Copyright CEA/DAM/DIF  (2008)
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *                William Allen Simpson <william.allen.simpson@gmail.com>
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -1586,18 +1587,10 @@ static void worker_run(struct fridgethr_context *ctx)
 		switch (reqdata->rtype) {
 		case UNKNOWN_REQUEST:
 		case NFS_REQUEST:
+		case NFS_CALL:
 			LogCrit(COMPONENT_DISPATCH,
 				"Unexpected unknown request");
 			break;
-
-		case NFS_CALL:
-			/* NFSv4 rpc call (callback) */
-			nfs_rpc_dispatch_call(&reqdata->r_u.call, 0);
-
-			/* Callback completion functions take care of
-			 * freeing rpc call & reqdata
-			 */
-			return;
 
 #ifdef _USE_9P
 		case _9P_REQUEST:

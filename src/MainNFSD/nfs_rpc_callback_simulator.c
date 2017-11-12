@@ -2,6 +2,7 @@
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright (C) 2010, The Linux Box Corporation
+ * Copyright (c) 2010-2017 Red Hat, Inc. and/or its affiliates.
  * Contributor : Matt Benjamin <matt@linuxbox.com>
  *
  * Some portions Copyright CEA/DAM/DIF  (2008)
@@ -72,7 +73,6 @@ static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
 					     DBusMessage *reply,
 					     DBusError *error)
 {
-	uint32_t i;
 	hash_table_t *ht = ht_confirmed_client_id;
 	struct rbt_head *head_rbt;
 	struct hash_data *pdata = NULL;
@@ -81,6 +81,7 @@ static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
 	uint64_t clientid;
 	DBusMessageIter iter, sub_iter;
 	struct timespec ts;
+	uint32_t i;
 
 	/* create a reply from the message */
 	now(&ts);
@@ -204,53 +205,21 @@ static struct gsh_dbus_method cbsim_get_session_ids = {
 		 }
 };
 
-static int32_t cbsim_test_bchan(clientid4 clientid)
+static int cbsim_test_bchan(clientid4 clientid)
 {
-	int32_t tries, code = 0;
 	nfs_client_id_t *pclientid = NULL;
-	struct timeval CB_TIMEOUT = { 15, 0 };
-	rpc_call_channel_t *chan;
-	enum clnt_stat stat;
+	int code;
 
 	code = nfs_client_id_get_confirmed(clientid, &pclientid);
 	if (code != CLIENT_ID_SUCCESS) {
 		LogCrit(COMPONENT_NFS_CB,
 			"No clid record for %" PRIx64 " (%d) code %d", clientid,
 			(int32_t) clientid, code);
-		code = EINVAL;
-		goto out;
+		return EINVAL;
 	}
 
-	assert(pclientid);
+	nfs_test_cb_chan(pclientid);
 
-	/* create (fix?) channel */
-	for (tries = 0; tries < 2; ++tries) {
-
-		chan = nfs_rpc_get_chan(pclientid, NFS_RPC_FLAG_NONE);
-		if (!chan) {
-			LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed");
-			goto out;
-		}
-
-		if (!chan->clnt) {
-			LogCrit(COMPONENT_NFS_CB,
-				"nfs_rpc_get_chan failed (no clnt)");
-			goto out;
-		}
-
-		/* try the CB_NULL proc -- inline here, should be ok-ish */
-		stat = rpc_cb_null(chan, CB_TIMEOUT, false);
-		LogDebug(COMPONENT_NFS_CB,
-			 "rpc_cb_null on client %" PRIx64 " returns %d",
-			 clientid, stat);
-
-		/* RPC_INTR indicates that we should refresh the
-		 * channel and retry */
-		if (stat != RPC_INTR)
-			break;
-	}
-
- out:
 	return code;
 }
 
@@ -283,33 +252,29 @@ static void cbsim_free_compound(nfs4_compound_t *cbt)
 	cb_compound_free(cbt);
 }
 
-static int32_t cbsim_completion_func(rpc_call_t *call, rpc_call_hook hook,
-				     void *arg, uint32_t flags)
+static void cbsim_completion_func(rpc_call_t *call)
 {
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
-		 (hook ==
-		  RPC_CALL_ABORT) ? "RPC_CALL_ABORT" : "RPC_CALL_COMPLETE");
-	switch (hook) {
-	case RPC_CALL_COMPLETE:
+		 !(call->states & NFS_CB_CALL_ABORTED) ? "Success" : "Failed");
+	if (!(call->states & NFS_CB_CALL_ABORTED)) {
 		/* potentially, do something more interesting here */
-		LogDebug(COMPONENT_NFS_CB, "call result: %d", call->stat);
+		LogMidDebug(COMPONENT_NFS_CB, "call result: %d",
+			    call->call_req.cc_error.re_status);
 		free_rpc_call(call);
-		break;
-	default:
-		LogDebug(COMPONENT_NFS_CB, "%p unknown hook %d", call, hook);
-		break;
+	} else {
+		LogDebug(COMPONENT_NFS_CB,
+			 "Aborted: %d",
+			 call->call_req.cc_error.re_status);
 	}
-
-	return 0;
 }
 
-static int32_t cbsim_fake_cbrecall(clientid4 clientid)
+static int cbsim_fake_cbrecall(clientid4 clientid)
 {
-	int32_t code = 0;
 	nfs_client_id_t *pclientid = NULL;
 	rpc_call_channel_t *chan = NULL;
 	nfs_cb_argop4 argop[1];
 	rpc_call_t *call;
+	int code;
 
 	LogDebug(COMPONENT_NFS_CB, "called with clientid %" PRIx64, clientid);
 
@@ -362,9 +327,10 @@ static int32_t cbsim_fake_cbrecall(clientid4 clientid)
 
 	/* set completion hook */
 	call->call_hook = cbsim_completion_func;
+	call->call_arg = NULL;
 
 	/* call it (here, in current thread context) */
-	code = nfs_rpc_submit_call(call, NULL, NFS_RPC_FLAG_NONE);
+	code = nfs_rpc_call(call, NFS_RPC_CALL_NONE);
 
  out:
 	return code;

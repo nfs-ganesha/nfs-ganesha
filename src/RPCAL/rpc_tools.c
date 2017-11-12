@@ -497,6 +497,6 @@ CLIENT *gsh_clnt_create(char *host, unsigned long prog, unsigned long vers,
 void gsh_clnt_destroy(CLIENT *clnt)
 {
 	PTHREAD_MUTEX_lock(&clnt_create_mutex);
-	clnt_destroy(clnt);
+	CLNT_DESTROY(clnt);
 	PTHREAD_MUTEX_unlock(&clnt_create_mutex);
 }
