@@ -1383,6 +1383,7 @@ static bool proc_block(struct config_node *node,
 
 err_out:
 	(void)item->u.blk.init(link_mem, param_struct);
+	err_type->dispose = false;
 	return false;
 }
 
