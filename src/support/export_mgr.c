@@ -258,8 +258,8 @@ void free_export(struct gsh_export *export)
 	free_export_resources(export);
 	export_st = container_of(export, struct export_stats, export);
 	server_stats_free(&export_st->st);
-	gsh_free(export_st);
 	PTHREAD_RWLOCK_destroy(&export->lock);
+	gsh_free(export_st);
 }
 
 
