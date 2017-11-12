@@ -1263,6 +1263,35 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		return errcnt;  /* have errors. don't init or load a fsal */
 	}
 
+	if (commit_type != initial_export) {
+		/* add_export or update_export with new export_id. */
+		int rc = init_export_root(export);
+
+		if (rc) {
+			switch (rc) {
+			case EINVAL:
+				err_type->invalid = true;
+				break;
+
+			case EFAULT:
+				err_type->internal = true;
+				break;
+
+			default:
+				err_type->resource = true;
+			}
+
+			errcnt++;
+			return errcnt;
+		}
+
+		if (!mount_gsh_export(export)) {
+			err_type->internal = true;
+			errcnt++;
+			return errcnt;
+		}
+	}
+
 	if (!insert_gsh_export(export)) {
 		LogCrit(COMPONENT_CONFIG,
 			"Export id %d already in use.",
@@ -1281,38 +1310,6 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	    export->export_perms.options & EXPORT_OPTION_NFSV4)
 		export_add_to_mount_work(export);
 
-	if (commit_type != initial_export) {
-		/* add_export or update_export with new export_id. */
-		int rc = init_export_root(export);
-
-		if (rc) {
-			export_revert(export);
-			errcnt++;
-
-			switch (rc) {
-			case EINVAL:
-				err_type->invalid = true;
-				break;
-
-			case EFAULT:
-				err_type->internal = true;
-				break;
-
-			default:
-				err_type->resource = true;
-			}
-
-			goto out;
-		}
-
-		if (!mount_gsh_export(export)) {
-			export_revert(export);
-			err_type->internal = true;
-			errcnt++;
-			goto out;
-		}
-	}
-
 	display_clients(export);
 
 success:
@@ -1330,7 +1327,6 @@ success:
 		"Export %d has %zd defined clients", export->export_id,
 		glist_length(&export->clients));
 
-out:
 	if (commit_type != update_export) {
 		/* For initial or add export, insert_gsh_export gave out
 		 * two references, a sentinel reference for the export's
