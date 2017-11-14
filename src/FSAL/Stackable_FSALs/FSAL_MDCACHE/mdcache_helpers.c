@@ -2401,9 +2401,22 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		 * treat a hash collision (which per current code we should
 		 * never actually see) the same.
 		 */
+		mdcache_put(new_entry);
+		/* Check for return code of -4. This indicates that its FSAL
+		 * cookie duplication / collision. This could happen due to
+		 * fast mutating directory. The already cached contents are
+		 * stale/invalid. Need to invalidate the cache and inform
+		 * client to re-read the directory.
+		 */
+		if (code == -4) {
+			atomic_clear_uint32_t_bits(&state->dir->mde_flags,
+						   MDCACHE_TRUST_CONTENT);
+			state->status->major = ERR_FSAL_DELAY;
+			state->status->minor = 0;
+			return DIR_TERMINATE;
+		}
 		LogCrit(COMPONENT_CACHE_INODE,
 			"Collision while adding dirent for %s", name);
-		mdcache_put(new_entry);
 		return DIR_CONTINUE;
 	}
 

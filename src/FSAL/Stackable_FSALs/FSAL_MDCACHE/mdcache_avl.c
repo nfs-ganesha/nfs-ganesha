@@ -394,6 +394,8 @@ int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
  * @retval 0   Success
  * @retval -1  Hash collision after 2^65 attempts
  * @retval -2  Name collision
+ * @retval -3  Duplicate file name but different cookie
+ * @retval -4  FSAL cookie collision
  *
  **/
 int
@@ -456,6 +458,7 @@ again:
 						       &entry
 							   ->fsobj.fsdir.avl.t);
 					v2 = NULL;
+					code = -4;
 					goto out;
 				}
 			}
@@ -532,6 +535,7 @@ again:
 				v2->chunk = NULL;
 				v2->ck = 0;
 				v2 = NULL;
+				code = -4;
 			} else {
 				if (isFullDebug(COMPONENT_CACHE_INODE)) {
 					char str[LOG_BUFF_LEN] = "\0";
