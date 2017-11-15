@@ -410,6 +410,43 @@ hashtable_destroy(struct hash_table *ht,
 }
 
 /**
+ * @brief acquire the partition lock for the given key
+ *
+ * This function acquires the partition write mode lock corresponding to
+ * the given key.
+ *
+ * @brief[in]  ht        The hash table to search
+ * @brief[in]  key       The key for which to acquire the partition lock
+ * @brief[out] latch     Opaque structure holding partition information
+ *
+ * @retval HASHTABLE_SUCCESS, the partition lock is acquired.
+ * @retval Others, failure, the partition lock is not acquired
+ *
+ * NOTES: fast path if the caller just needs to lock the partition and
+ * doesn't need to look for the entry. The lock needs to be released
+ * with hashtable_releaselatched()
+ */
+hash_error_t
+hashtable_acquire_latch(struct hash_table *ht,
+			const struct gsh_buffdesc *key,
+			struct hash_latch *latch)
+{
+	uint32_t index;
+	uint64_t rbt_hash;
+	hash_error_t rc = HASHTABLE_SUCCESS;
+
+	memset(latch, 0, sizeof(struct hash_latch));
+	rc = compute(ht, key, &index, &rbt_hash);
+	if (rc != HASHTABLE_SUCCESS)
+		return rc;
+
+	latch->index = index;
+	PTHREAD_RWLOCK_wrlock(&(ht->partitions[index].lock));
+
+	return HASHTABLE_SUCCESS;
+}
+
+/**
  * @brief Look up an entry, latching the table
  *
  * This function looks up an entry in the hash table and latches the
