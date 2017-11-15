@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <sched.h>
 #include "nfs4.h"
 #include "fsal.h"
 #include "sal_functions.h"
@@ -872,7 +873,7 @@ bool clientid_has_state(nfs_client_id_t *clientid)
  */
 bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 {
-	int rc;
+	int rc, held;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc old_key;
 	struct gsh_buffdesc old_value;
@@ -988,9 +989,18 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 			       &owner->so_owner.so_nfs4_owner.so_perclient);
 
 		/* Hold a reference to the owner while we drop the cid_mutex. */
-		inc_state_owner_ref(owner);
+		held = hold_state_owner(owner);
 
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+
+		/* If this owner is in the process of being freed, skip
+		 * and work on the next owner. We also do yield for the
+		 * other thread to complete freeing this owner!
+		 */
+		if (!held) {
+			sched_yield();
+			continue;
+		}
 
 		state_nfs4_owner_unlock_all(owner);
 
@@ -1045,9 +1055,18 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 			       &owner->so_owner.so_nfs4_owner.so_perclient);
 
 		/* Hold a reference to the owner while we drop the cid_mutex. */
-		inc_state_owner_ref(owner);
+		held = hold_state_owner(owner);
 
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+
+		/* If this owner is in the process of being freed, skip
+		 * and work on the next owner. We also do yield for the
+		 * other thread to complete freeing this owner!
+		 */
+		if (!held) {
+			sched_yield();
+			continue;
+		}
 
 		release_openstate(owner);
 
