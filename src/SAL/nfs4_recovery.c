@@ -360,17 +360,17 @@ void nfs4_recovery_load_clids(nfs_grace_start_t *gsp)
 
 static int load_backend(const char *name)
 {
-	if (!strcmp(name, "fs")) {
+	if (!strcmp(name, "fs"))
 		fs_backend_init(&recovery_backend);
-		return 0;
-	}
 #ifdef USE_RADOS_RECOV
-	if (!strcmp(name, "rados_kv")) {
+	else if (!strcmp(name, "rados_kv"))
 		rados_kv_backend_init(&recovery_backend);
-		return 0;
-	}
 #endif
-	return -1;
+	else if (!strcmp(name, "fs_ng"))
+		fs_ng_backend_init(&recovery_backend);
+	else
+		return -1;
+	return 0;
 }
 
 /**

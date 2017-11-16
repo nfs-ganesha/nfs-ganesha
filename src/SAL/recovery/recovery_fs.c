@@ -10,8 +10,8 @@
 #include "bsd-base64.h"
 #include "client_mgr.h"
 #include "fsal.h"
+#include "recovery_fs.h"
 
-#define NFS_V4_RECOV_DIR "v4recov"
 #define NFS_V4_OLD_DIR "v4old"
 
 char v4_recov_dir[PATH_MAX];
@@ -672,7 +672,7 @@ void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 	}
 }
 
-static void fs_clean_old_recov_dir_impl(char *parent_path)
+void fs_clean_old_recov_dir_impl(char *parent_path)
 {
 	DIR *dp;
 	struct dirent *dentp;
