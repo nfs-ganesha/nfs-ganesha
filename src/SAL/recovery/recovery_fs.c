@@ -495,16 +495,12 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 					 new_path, errno);
 			}
 		}
-		/* keep building the clientid str by cursively */
+		/* keep building the clientid str by recursively */
 		/* reading the directory structure */
+		total_clid_len = segment_len + 1;
 		if (clid_str)
-			total_clid_len = segment_len + 1 +
-					 strlen(clid_str);
-		else
-			total_clid_len = segment_len + 1;
-		build_clid = gsh_malloc(total_clid_len);
-
-		memset(build_clid, 0, total_clid_len);
+			total_clid_len += strlen(clid_str);
+		build_clid = gsh_calloc(1, total_clid_len);
 		if (clid_str)
 			strcpy(build_clid, clid_str);
 		strncat(build_clid, dentp->d_name, segment_len);
