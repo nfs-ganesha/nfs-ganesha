@@ -426,6 +426,8 @@ int main(int argc, char *argv[])
 				 "Error %s while parsing (%s)",
 				 errstr != NULL ? errstr : "unknown",
 				 config_path);
+			if (errstr != NULL)
+				gsh_free(errstr);
 			goto fatal_die;
 		} else
 			LogWarn(COMPONENT_INIT,

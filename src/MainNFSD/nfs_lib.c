@@ -42,6 +42,7 @@
 #include "nfs_init.h"
 #include "nfs_exports.h"
 #include "pnfs_utils.h"
+#include "conf_url.h"
 
 /**
  * @brief LTTng trace enabling magic
@@ -127,11 +128,18 @@ int nfs_libmain(const char *ganesha_conf,
 
 	/* initialize memory and logging */
 	nfs_prereq_init(exec_name, host_name, debug_level, log_path, false);
-	LogEvent(COMPONENT_MAIN,
-		 "%s Starting: %s",
+#if GANESHA_BUILD_RELEASE
+	LogEvent(COMPONENT_MAIN, "%s Starting: Ganesha Version %s",
+		 exec_name, GANESHA_VERSION);
+#else
+	LogEvent(COMPONENT_MAIN, "%s Starting: %s",
 		 exec_name,
 		 "Ganesha Version " _GIT_DESCRIBE ", built at "
 		 __DATE__ " " __TIME__ " on " BUILD_HOST);
+#endif
+
+	/* initialize nfs_init */
+	nfs_init_init();
 
 	nfs_check_malloc();
 
@@ -150,6 +158,9 @@ int nfs_libmain(const char *ganesha_conf,
 		LogFatal(COMPONENT_MAIN,
 			 "pthread_sigmask failed");
 
+	/* init URL package */
+	config_url_init();
+
 	/* Create a memstream for parser+processing error messages */
 	if (!init_error_type(&err_type))
 		goto fatal_die;
@@ -159,8 +170,7 @@ int nfs_libmain(const char *ganesha_conf,
 			"No configuration file named.");
 		config_struct = NULL;
 	} else
-		config_struct = config_ParseFile(config_path,
-						 &err_type);
+		config_struct = config_ParseFile(config_path, &err_type);
 
 	if (!config_error_no_error(&err_type)) {
 		char *errstr = err_type_str(&err_type);
