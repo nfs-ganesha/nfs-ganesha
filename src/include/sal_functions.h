@@ -1005,11 +1005,9 @@ typedef rdel_fh_t * (*add_rfh_entry_hook)(clid_entry_t *, char *);
 struct nfs4_recovery_backend {
 	void (*recovery_init)(void);
 	void (*recovery_cleanup)(void);
-	void (*recovery_read_clids_recover)(add_clid_entry_hook add_clid,
-					    add_rfh_entry_hook add_rfh);
-	void (*recovery_read_clids_takeover)(nfs_grace_start_t *gsp,
-					     add_clid_entry_hook add_clid,
-					     add_rfh_entry_hook add_rfh);
+	void (*recovery_read_clids)(nfs_grace_start_t *gsp,
+				    add_clid_entry_hook add_clid,
+				    add_rfh_entry_hook add_rfh);
 	void (*add_clid)(nfs_client_id_t *);
 	void (*rm_clid)(nfs_client_id_t *);
 	void (*add_revoke_fh)(nfs_client_id_t *, nfs_fh4 *);

@@ -333,29 +333,15 @@ void  nfs4_chk_clid(nfs_client_id_t *clientid)
 	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
 
-static void nfs4_recovery_read_clids_recover(void)
-{
-	recovery_backend->recovery_read_clids_recover(nfs4_add_clid_entry,
-						      nfs4_add_rfh_entry);
-}
-
-static void nfs4_recovery_read_clids_takeover(nfs_grace_start_t *gsp)
-{
-	recovery_backend->recovery_read_clids_takeover(gsp,
-						       nfs4_add_clid_entry,
-						       nfs4_add_rfh_entry);
-}
-
 static void nfs4_recovery_load_clids_nolock(nfs_grace_start_t *gsp)
 {
 	LogDebug(COMPONENT_STATE, "Load recovery cli %p", gsp);
 
-	if (gsp == NULL) {
+	/* A NULL gsp pointer indicates an initial startup grace period */
+	if (gsp == NULL)
 		nfs4_cleanup_clid_entrys();
-		nfs4_recovery_read_clids_recover();
-	} else {
-		nfs4_recovery_read_clids_takeover(gsp);
-	}
+	recovery_backend->recovery_read_clids(gsp, nfs4_add_clid_entry,
+						nfs4_add_rfh_entry);
 }
 
 /**

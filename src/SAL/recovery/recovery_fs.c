@@ -597,8 +597,8 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 	return num;
 }
 
-void fs_read_recov_clids_recover(add_clid_entry_hook add_clid_entry,
-				 add_rfh_entry_hook add_rfh_entry)
+static void fs_read_recov_clids_recover(add_clid_entry_hook add_clid_entry,
+					add_rfh_entry_hook add_rfh_entry)
 {
 	int rc;
 
@@ -634,6 +634,11 @@ void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 {
 	int rc;
 	char path[PATH_MAX];
+
+	if (!gsp) {
+		fs_read_recov_clids_recover(add_clid_entry, add_rfh_entry);
+		return;
+	}
 
 	switch (gsp->event) {
 	case EVENT_UPDATE_CLIENTS:
@@ -776,8 +781,7 @@ void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 struct nfs4_recovery_backend fs_backend = {
 	.recovery_init = fs_create_recov_dir,
 	.recovery_cleanup = fs_clean_old_recov_dir,
-	.recovery_read_clids_recover = fs_read_recov_clids_recover,
-	.recovery_read_clids_takeover = fs_read_recov_clids_takeover,
+	.recovery_read_clids = fs_read_recov_clids_takeover,
 	.add_clid = fs_add_clid,
 	.rm_clid = fs_rm_clid,
 	.add_revoke_fh = fs_add_revoke_fh,
