@@ -1245,7 +1245,6 @@ static fsal_status_t open2(struct fsal_obj_handle *obj_hdl,
 static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 			   fsal_verifier_t verifier)
 {
-	uint32_t verf_hi = 0, verf_lo = 0;
 	struct attrlist attrs;
 	bool result;
 
@@ -1254,22 +1253,7 @@ static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(obj_hdl->obj_ops.getattrs(obj_hdl, &attrs)))
 		return false;
 
-	memcpy(&verf_hi,
-	       verifier,
-	       sizeof(uint32_t));
-	memcpy(&verf_lo,
-	       verifier + sizeof(uint32_t),
-	       sizeof(uint32_t));
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "Passed verifier %"PRIx32" %"PRIx32
-		     " file verifier %"PRIx32" %"PRIx32,
-		     verf_hi, verf_lo,
-		     (uint32_t) attrs.atime.tv_sec,
-		     (uint32_t) attrs.mtime.tv_sec);
-
-	result = attrs.atime.tv_sec == verf_hi &&
-		 attrs.mtime.tv_sec == verf_lo;
+	result = check_verifier_attrlist(&attrs, verifier);
 
 	/* Done with the attrs */
 	fsal_release_attrs(&attrs);
