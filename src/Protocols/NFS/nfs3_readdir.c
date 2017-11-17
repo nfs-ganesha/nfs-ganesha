@@ -388,9 +388,8 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
 	/* Length of the current filename */
 	size_t namelen = strlen(cb_parms->name);
 	entry3 *e3 = tracker->entries + tracker->count;
-	size_t need =
-	    sizeof(entry3) + ((namelen + 3) & ~3) + 4 - sizeof(char *) -
-	    sizeof(entry3 *);
+	size_t need = sizeof(entry3) + RNDUP(namelen) + BYTES_PER_XDR_UNIT
+					- sizeof(char *) - sizeof(entry3 *);
 
 	if (tracker->count == tracker->total_entries) {
 		cb_parms->in_result = false;

@@ -440,7 +440,8 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 	ep3->cookie = cookie;
 
 	/* Account for file name + length + cookie */
-	tracker->mem_left -= sizeof(ep3->cookie) + ((namelen + 3) & ~3) + 4;
+	tracker->mem_left -= sizeof(ep3->cookie) + RNDUP(namelen) +
+							BYTES_PER_XDR_UNIT;
 
 	if (cb_parms->attr_allowed) {
 		ep3->name_handle.handle_follows = TRUE;
