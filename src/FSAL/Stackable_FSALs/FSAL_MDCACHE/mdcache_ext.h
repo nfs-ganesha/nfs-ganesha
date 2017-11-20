@@ -79,7 +79,7 @@ struct mdcache_parameter {
 	uint32_t chunks_hwmark;
 	/** Base interval in seconds between runs of the LRU cleaner
 	    thread. Defaults to 60, settable with LRU_Run_Interval. */
-	time_t lru_run_interval;
+	uint32_t lru_run_interval;
 	/** Whether to cache open files.  Defaults to true, settable
 	    with Cache_FDs. */
 	bool use_fd_cache;
