@@ -511,6 +511,11 @@ nfsstat4 nfs4_Errno_verbose(fsal_errors_t error, const char *where)
 	case ERR_FSAL_ALREADY_INIT:
 	case ERR_FSAL_BAD_INIT:
 	case ERR_FSAL_TIMEOUT:
+	case ERR_FSAL_IO:
+	case ERR_FSAL_NXIO:
+		LogCrit(COMPONENT_NFS_V4,
+			"Error %s in %s converted to NFS4ERR_IO but was set non-retryable",
+			msg_fsal_err(error), where);
 		nfserror = NFS4ERR_IO;
 		break;
 
@@ -533,11 +538,6 @@ nfsstat4 nfs4_Errno_verbose(fsal_errors_t error, const char *where)
 
 	case ERR_FSAL_ROFS:
 		nfserror = NFS4ERR_ROFS;
-		break;
-
-	case ERR_FSAL_IO:
-	case ERR_FSAL_NXIO:
-		nfserror = NFS4ERR_IO;
 		break;
 
 	case ERR_FSAL_NAMETOOLONG:
