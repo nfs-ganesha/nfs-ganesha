@@ -821,9 +821,12 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 
 	switch (type) {
 	case REGULAR_FILE:
-		LogFatal(COMPONENT_FSAL,
-			 "Attempt to use fsal_create to create REGULAR_FILE %s",
-			 name);
+		status = fsal_open2(parent, NULL, FSAL_O_RDWR, FSAL_UNCHECKED,
+				    name, attrs, NULL, obj, attrs_out);
+		if (FSAL_IS_SUCCESS(status)) {
+			/* Close it again; this is just a create */
+			(void)fsal_close(*obj);
+		}
 		break;
 
 	case DIRECTORY:
