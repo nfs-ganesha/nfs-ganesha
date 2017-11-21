@@ -39,6 +39,7 @@
 typedef struct __nfs_start_info {
 	int dump_default_config;
 	int lw_mark_trigger;
+	bool drop_caps;
 } nfs_start_info_t;
 
 struct nfs_init {

@@ -74,7 +74,8 @@
 
 nfs_start_info_t my_nfs_start_info = {
 	.dump_default_config = false,
-	.lw_mark_trigger = false
+	.lw_mark_trigger = false,
+	.drop_caps = false
 };
 
 config_file_t config_struct;

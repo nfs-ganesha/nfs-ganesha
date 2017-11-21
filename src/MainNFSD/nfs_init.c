@@ -857,6 +857,11 @@ static void lower_my_caps(void)
 	char *cap_text;
 	int capsz;
 
+	if (!nfs_start_info.drop_caps) {
+		/* Skip dropping caps by request */
+		return;
+	}
+
 	(void) capget(&caphdr, NULL);
 	switch (caphdr.version) {
 	case _LINUX_CAPABILITY_VERSION_1:
