@@ -675,7 +675,7 @@ fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 	if (strcmp(name, ".") == 0) {
 		parent->obj_ops.get_ref(parent);
 		*obj = parent;
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+		return get_optional_attrs(*obj, attrs_out);
 	} else if (strcmp(name, "..") == 0)
 		return fsal_lookupp(parent, obj, attrs_out);
 
@@ -1635,6 +1635,44 @@ fsal_status_t fsal_verify2(struct fsal_obj_handle *obj,
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * @brief Fetch optional attributes
+ *
+ * The request_mask should be set in attrs_out indicating which attributes
+ * are desired. If ATTR_RDATTR_ERR is set, and the getattrs fails,
+ * the error ERR_FSAL_NO_ERROR will be returned, however the attributes
+ * valid_mask will be set to ATTR_RDATTR_ERR. Otherwise, if
+ * ATTR_RDATTR_ERR is not set and the getattrs fails, the error returned
+ * by getattrs will be returned.
+ *
+ * @param[in]     obj_hdl   Object to get attributes for.
+ * @param[in,out] attrs_out Optional attributes for the object
+ *
+ * @return FSAL status.
+ **/
+fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
+				 struct attrlist *attrs_out)
+{
+	fsal_status_t status;
+
+	if (attrs_out == NULL)
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	status = obj_hdl->obj_ops.getattrs(obj_hdl, attrs_out);
+
+	if (FSAL_IS_ERROR(status)) {
+		if (attrs_out->request_mask & ATTR_RDATTR_ERR) {
+			/* Indicate the failure of requesting attributes by
+			 * marking the ATTR_RDATTR_ERR in the mask.
+			 */
+			attrs_out->valid_mask = ATTR_RDATTR_ERR;
+			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		} /* otherwise let the error stand. */
+	}
+
+	return status;
 }
 
 /** @} */

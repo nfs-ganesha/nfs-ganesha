@@ -388,6 +388,8 @@ fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
 			   struct state_t *state,
 			   fsal_openflags_t openflags,
 			   bool check_permission);
+fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
+				 struct attrlist *attrs_out);
 /**
  * @brief Close a file
  *

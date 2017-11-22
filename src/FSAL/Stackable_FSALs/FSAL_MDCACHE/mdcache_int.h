@@ -452,8 +452,6 @@ void mdcache_refresh_attrs_no_invalidate(mdcache_entry_t *entry)
 	}
 }
 
-fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
-				 struct attrlist *attrs_out);
 fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *export,
 				struct fsal_obj_handle *sub_handle,
 				struct attrlist *attrs_in,
