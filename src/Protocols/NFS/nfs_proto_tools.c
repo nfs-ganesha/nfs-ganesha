@@ -91,15 +91,9 @@ void nfs_SetPostOpAttr(struct fsal_obj_handle *obj,
 		(void) obj->obj_ops.getattrs(obj, pattrs);
 	}
 
-	if (pattrs->valid_mask == ATTR_RDATTR_ERR) {
-		/* Indicate no attributes follow */
-		Fattr->attributes_follow = false;
-	} else {
-		/* Place the following attributes */
-		nfs3_FSALattr_To_Fattr(obj, pattrs,
+	/* Check if attributes follow and place the following attributes */
+	Fattr->attributes_follow = nfs3_FSALattr_To_Fattr(obj, pattrs,
 				       &Fattr->post_op_attr_u.attributes);
-		Fattr->attributes_follow = true;
-	}
 
 	if (attrs == NULL) {
 		/* Release any attributes fetched. Caller MUST release any
@@ -3804,19 +3798,16 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
  *
  * Fill in the fields in the fattr3 structure.
  *
- * @param[in]    FSAL_attr  FSAL attributes.
- * @param[out]   mask       Attributes which have been copied
+ * @param[in]    obj        FSAL object.
+ * @param[in]    FSAL_attr  FSAL attributes related to the FSAL object.
  * @param[out]   Fattr      NFSv3 attributes.
  *
  */
 static void nfs3_FSALattr_To_PartialFattr(struct fsal_obj_handle *obj,
 					  const struct attrlist *FSAL_attr,
-					  attrmask_t *mask, fattr3 *Fattr)
+					  fattr3 *Fattr)
 {
-	*mask = 0;
-
 	if (FSAL_attr->valid_mask & ATTR_TYPE) {
-		*mask |= ATTR_TYPE;
 		switch (FSAL_attr->type) {
 		case FIFO_FILE:
 			Fattr->type = NF3FIFO;
@@ -3851,44 +3842,36 @@ static void nfs3_FSALattr_To_PartialFattr(struct fsal_obj_handle *obj,
 			LogEvent(COMPONENT_NFSPROTO,
 				 "nfs3_FSALattr_To_Fattr: Bogus type = %d",
 				 FSAL_attr->type);
-			*mask &= ~ATTR_TYPE;
 		}
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_MODE) {
 		Fattr->mode = fsal2unix_mode(FSAL_attr->mode);
-		*mask |= ATTR_MODE;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_NUMLINKS) {
 		Fattr->nlink = FSAL_attr->numlinks;
-		*mask |= ATTR_NUMLINKS;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_OWNER) {
 		Fattr->uid = FSAL_attr->owner;
-		*mask |= ATTR_OWNER;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_GROUP) {
 		Fattr->gid = FSAL_attr->group;
-		*mask |= ATTR_GROUP;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_SIZE) {
 		Fattr->size = FSAL_attr->filesize;
-		*mask |= ATTR_SIZE;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_SPACEUSED) {
 		Fattr->used = FSAL_attr->spaceused;
-		*mask |= ATTR_SPACEUSED;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_RAWDEV) {
 		Fattr->rdev.specdata1 = FSAL_attr->rawdev.major;
 		Fattr->rdev.specdata2 = FSAL_attr->rawdev.minor;
-		*mask |= ATTR_RAWDEV;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_FSID) {
@@ -3907,31 +3890,25 @@ static void nfs3_FSALattr_To_PartialFattr(struct fsal_obj_handle *obj,
 			     obj->fsid.minor,
 			     obj->fsid.minor,
 			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
-
-		*mask |= ATTR_FSID;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_FILEID) {
 		Fattr->fileid = obj->fileid;
-		*mask |= ATTR_FILEID;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_ATIME) {
 		Fattr->atime.tv_sec = FSAL_attr->atime.tv_sec;
 		Fattr->atime.tv_nsec = FSAL_attr->atime.tv_nsec;
-		*mask |= ATTR_ATIME;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_MTIME) {
 		Fattr->mtime.tv_sec = FSAL_attr->mtime.tv_sec;
 		Fattr->mtime.tv_nsec = FSAL_attr->mtime.tv_nsec;
-		*mask |= ATTR_MTIME;
 	}
 
 	if (FSAL_attr->valid_mask & ATTR_CTIME) {
 		Fattr->ctime.tv_sec = FSAL_attr->ctime.tv_sec;
 		Fattr->ctime.tv_nsec = FSAL_attr->ctime.tv_nsec;
-		*mask |= ATTR_CTIME;
 	}
 }				/* nfs3_FSALattr_To_PartialFattr */
 
@@ -3946,23 +3923,25 @@ static void nfs3_FSALattr_To_PartialFattr(struct fsal_obj_handle *obj,
  * @param FSAL_attr [IN]  pointer to FSAL attributes.
  * @param Fattr     [OUT] pointer to NFSv3 attributes.
  *
+ * @return true if successful, false otherwise.
+ *
  */
-void nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
+bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			    const struct attrlist *FSAL_attr,
 			    fattr3 *Fattr)
 {
 	/* We want to override the FSAL fsid with the export's configured fsid
 	 */
 	attrmask_t want = ATTRS_NFS3;
-	attrmask_t got = 0;
 
-	nfs3_FSALattr_To_PartialFattr(obj, FSAL_attr, &got, Fattr);
-	if (want & ~got) {
+	if ((want & FSAL_attr->valid_mask) != want) {
 		LogCrit(COMPONENT_NFSPROTO,
 			"Likely bug: FSAL did not fill in a standard NFSv3 attribute: missing %"
 			PRIx64,
-			want & ~got);
+			want & ~(FSAL_attr->valid_mask));
+		return false;
 	}
+	nfs3_FSALattr_To_PartialFattr(obj, FSAL_attr, Fattr);
 
 	if (op_ctx_export_has_option_set(EXPORT_OPTION_FSID_SET)) {
 		/* xor filesystem_id major and rotated minor to create unique
@@ -3982,6 +3961,7 @@ void nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			     op_ctx->ctx_export->filesystem_id.minor,
 			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
 	}
+	return true;
 }
 
 /**

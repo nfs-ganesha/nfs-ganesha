@@ -278,7 +278,7 @@ bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *, int);
 bool nfs4_Fattr_Supported(fattr4 *);
 int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
 
-void nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
+bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			    const struct attrlist *FSAL_attr,
 			    fattr3 *Fattr);
 
