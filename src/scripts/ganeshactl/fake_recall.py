@@ -28,7 +28,8 @@ def main():
         print cbsim.Introspect()
 
         # call method
-        fake_recall = cbsim.get_dbus_method('fake_recall')
+        fake_recall = cbsim.get_dbus_method('fake_recall',
+                                       'org.ganesha.nfsd.cbsim')
         print fake_recall(dbus.UInt64(clientid))
 
 
