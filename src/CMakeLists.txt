@@ -186,6 +186,26 @@ ELSE()
     set( FSAL_DESTINATION "${LIB_INSTALL_DIR}/ganesha")
 ENDIF()
 
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "unknown")
+  # uname -p is broken on this system.  Try uname -m
+  EXECUTE_PROCESS( COMMAND uname -m
+		   OUTPUT_STRIP_TRAILING_WHITESPACE
+		   ERROR_QUIET
+		   OUTPUT_VARIABLE ARCH)
+else (CMAKE_SYSTEM_PROCESSOR MATCHES "unknown")
+  set(ARCH ${CMAKE_SYSTEM_PROCESSOR})
+endif (CMAKE_SYSTEM_PROCESSOR MATCHES "unknown")
+
+if (ARCH MATCHES "x86_64")
+  # Nothing special to do for x86_64
+elseif (ARCH MATCHES "i386")
+  # Nothing special to do for i386
+elseif (ARCH MATCHES "mips")
+  set(SYSTEM_LIBRARIES "-latomic" ${SYSTEM_LIBRARIES})
+else()
+  message(WARNING "Unhandled architecture ${ARCH}")
+endif ()
+
 # FSAL selection
 # FSALs which are enabled by default but could be disabled
 # during the build
@@ -988,6 +1008,7 @@ add_subdirectory(doc)
 message(STATUS)
 message(STATUS "-------------------------------------------------------")
 message(STATUS "PLATFORM = ${PLATFORM}")
+message(STATUS "ARCH = ${ARCH}")
 message(STATUS "VERSION = ${GANESHA_VERSION}")
 message(STATUS "BUILD HOST = ${BUILD_HOST_NAME}")
 message(STATUS "-------------------------------------------------------")
