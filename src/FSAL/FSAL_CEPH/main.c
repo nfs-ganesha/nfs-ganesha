@@ -47,6 +47,7 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "statx_compat.h"
+#include "nfs_core.h"
 
 /**
  * Ceph global module object.
@@ -77,6 +78,9 @@ static fsal_staticfsinfo_t default_ceph_info = {
 #endif
 	.unique_handles = true,
 	.homogenous = true,
+#ifdef USE_FSAL_CEPH_LL_DELEGATION
+	.delegations = FSAL_OPTION_FILE_READ_DELEG,
+#endif
 };
 
 static struct config_item ceph_items[] = {
@@ -159,6 +163,44 @@ static struct config_block export_param_block = {
 	.blk_desc.u.blk.params = export_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
+
+#ifdef USE_FSAL_CEPH_LL_DELEGATION
+static void enable_delegations(struct export *export)
+{
+	struct export_perms *export_perms = &op_ctx->ctx_export->export_perms;
+
+	if (export_perms->options & EXPORT_OPTION_DELEGATIONS) {
+		/*
+		 * Ganesha will time out delegations when the recall fails
+		 * for two lease periods. We add just a little bit above that
+		 * as a scheduling fudge-factor.
+		 *
+		 * The idea here is to make this long enough to give ganesha
+		 * a chance to kick out a misbehaving client, but shorter
+		 * than ceph cluster-wide MDS session timeout.
+		 *
+		 * Exceeding the MDS session timeout may result in the client
+		 * (ganesha) being blacklisted in the cluster. Fixing that can
+		 * require a long wait and/or administrative intervention.
+		 */
+		unsigned int dt = nfs_param.nfsv4_param.lease_lifetime * 2 + 5;
+		int ceph_status;
+
+		LogDebug(COMPONENT_FSAL, "Setting deleg timeout to %u", dt);
+		ceph_status = ceph_set_deleg_timeout(export->cmount, dt);
+		if (ceph_status != 0) {
+			export_perms->options &= ~EXPORT_OPTION_DELEGATIONS;
+			LogWarn(COMPONENT_FSAL,
+				"Unable to set delegation timeout for %s. Disabling delegation support: %d",
+				op_ctx->ctx_export->fullpath, ceph_status);
+		}
+	}
+}
+#else /* !USE_FSAL_CEPH_LL_DELEGATION */
+static inline void enable_delegations(struct export *export)
+{
+}
+#endif /* USE_FSAL_CEPH_LL_DELEGATION */
 
 /**
  * @brief Create a new export under this FSAL
@@ -275,6 +317,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			op_ctx->ctx_export->fullpath);
 		goto error;
 	}
+
+	enable_delegations(export);
 
 	if (fsal_attach_export(module_in, &export->export.exports) != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
