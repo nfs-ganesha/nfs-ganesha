@@ -165,6 +165,7 @@ void *_9p_socket_thread(void *Arg)
 		/* XXX */
 		strncpy(strcaller, "(unresolved)", INET6_ADDRSTRLEN);
 		strcaller[12] = '\0';
+		goto end;
 	} else {
 		switch (_9p_conn.addrpeer.ss_family) {
 		case AF_INET:
