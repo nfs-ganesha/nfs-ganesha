@@ -260,7 +260,6 @@ static void cbsim_completion_func(rpc_call_t *call)
 		/* potentially, do something more interesting here */
 		LogMidDebug(COMPONENT_NFS_CB, "call result: %d",
 			    call->call_req.cc_error.re_status);
-		free_rpc_call(call);
 	} else {
 		LogDebug(COMPONENT_NFS_CB,
 			 "Aborted: %d",
@@ -331,6 +330,8 @@ static int cbsim_fake_cbrecall(clientid4 clientid)
 
 	/* call it (here, in current thread context) */
 	code = nfs_rpc_call(call, NFS_RPC_CALL_NONE);
+	if (code)
+		free_rpc_call(call);
 
  out:
 	return code;

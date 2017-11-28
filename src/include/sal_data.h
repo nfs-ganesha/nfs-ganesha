@@ -159,15 +159,9 @@ enum {
 
 struct nfs41_session {
 	char session_id[NFS4_SESSIONID_SIZE];	/*< Session ID */
-	int32_t refcount;
-	clientid4 clientid;	/*< Clientid owning this session */
-	nfs_client_id_t *clientid_record;	/*< Client record
-						   correspinding to ID */
 	struct glist_head session_link;	/*< Link in the list of
 					   sessions for this
 					   clientid */
-	uint32_t flags;		/*< Flags pertaining to this session */
-	SVCXPRT *xprt;		/*< Referenced pointer to transport */
 
 	channel_attrs4 fore_channel_attrs;	/*< Fore-channel attributes */
 	nfs41_session_slot_t slots[NFS41_NB_SLOTS];	/*< Slot table */
@@ -175,7 +169,6 @@ struct nfs41_session {
 	channel_attrs4 back_channel_attrs;	/*< Back-channel attributes */
 	nfs41_cb_session_slot_t cb_slots[NFS41_NB_SLOTS];	/*< Callback
 								   Slot table */
-	uint32_t cb_program;	/*< Callback program ID */
 	struct rpc_call_channel cb_chan;	/*< Back channel */
 	pthread_mutex_t cb_mutex;	/*< Protects the cb slot table,
 					   when searching for a free slot */
@@ -183,6 +176,14 @@ struct nfs41_session {
 				   wait if the slot table is full
 				   and on which we signal when we
 				   free an entry. */
+
+	SVCXPRT *xprt;		/*< Referenced pointer to transport */
+	nfs_client_id_t *clientid_record;	/*< Client record
+						   correspinding to ID */
+	clientid4 clientid;	/*< Clientid owning this session */
+	uint32_t cb_program;	/*< Callback program ID */
+	uint32_t flags;		/*< Flags pertaining to this session */
+	int32_t refcount;
 };
 
 /**

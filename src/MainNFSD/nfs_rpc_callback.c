@@ -770,7 +770,7 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 		code = EBADF;
 #endif				/* !EBADFD */
 	else
-		session->flags |= session_bc_up;
+		atomic_set_uint32_t_bits(&session->flags, session_bc_up);
 
  out:
 	if (code != 0) {
@@ -815,7 +815,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid, uint32_t flags)
 	pthread_mutex_lock(&clientid->cid_mutex);
 	glist_for_each(glist, &clientid->cid_cb.v41.cb_session_list) {
 		session = glist_entry(glist, nfs41_session_t, session_link);
-		if (session->flags & session_bc_up) {
+		if (atomic_fetch_uint32_t(&session->flags) & session_bc_up) {
 			chan = &session->cb_chan;
 			break;
 		}
@@ -884,14 +884,22 @@ rpc_call_t *alloc_rpc_call(void)
  */
 void free_rpc_call(rpc_call_t *call)
 {
-	request_data_t *reqdata = container_of(call, request_data_t, r_u.call);
-
-	/* see clnt_req_release() */
-	clnt_req_reset(&call->call_req);
-	clnt_req_fini(&call->call_req);
-
 	free_argop(call->cbt.v_u.v4.args.argarray.argarray_val);
 	free_resop(call->cbt.v_u.v4.res.resarray.resarray_val);
+
+	clnt_req_release(&call->call_req);
+}
+
+/**
+ * @brief Free the RPC call context
+ *
+ * @param[in] cc The call context to free
+ */
+static void nfs_rpc_call_free(struct clnt_req *cc, size_t unused)
+{
+	rpc_call_t *call = container_of(cc, rpc_call_t, call_req);
+	request_data_t *reqdata = container_of(call, request_data_t, r_u.call);
+
 	pool_free(request_pool, reqdata);
 }
 
@@ -944,6 +952,8 @@ enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 	clnt_req_fill(cc, call->chan->clnt, call->chan->auth, CB_COMPOUND,
 		      (xdrproc_t) xdr_CB_COMPOUND4args, &call->cbt.v_u.v4.args,
 		      (xdrproc_t) xdr_CB_COMPOUND4res, &call->cbt.v_u.v4.res);
+	cc->cc_size = sizeof(request_data_t);
+	cc->cc_free_cb = nfs_rpc_call_free;
 
 	if (!call->chan->clnt) {
 		cc->cc_error.re_status = RPC_INTR;
@@ -953,14 +963,13 @@ enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 	if (clnt_req_setup(cc, tout)) {
 		cc->cc_process_cb = nfs_rpc_call_process;
 		cc->cc_error.re_status = CLNT_CALL_BACK(cc);
+	}
 
-		/* If a call fails, we have to assume path down,
-		 * or equally fatal error.  We may need back-off.
-		 */
-		if (cc->cc_error.re_status != RPC_SUCCESS) {
-			_nfs_rpc_destroy_chan(call->chan);
-			call->states |= NFS_CB_CALL_ABORTED;
-		}
+	/* If a call fails, we have to assume path down, or equally fatal
+	 * error.  We may need back-off. */
+	if (cc->cc_error.re_status != RPC_SUCCESS) {
+		_nfs_rpc_destroy_chan(call->chan);
+		call->states |= NFS_CB_CALL_ABORTED;
 	}
 
  unlock:
@@ -998,10 +1007,10 @@ int32_t nfs_rpc_abort_call(rpc_call_t *call)
  *
  * @return The constructed call or NULL.
  */
-static rpc_call_t *construct_single_call(nfs41_session_t *session,
-					 nfs_cb_argop4 *op,
-					 struct state_refer *refer,
-					 slotid4 slot, slotid4 highest_slot)
+static rpc_call_t *construct_v41(nfs41_session_t *session,
+				 nfs_cb_argop4 *op,
+				 struct state_refer *refer,
+				 slotid4 slot, slotid4 highest_slot)
 {
 	rpc_call_t *call = alloc_rpc_call();
 	nfs_cb_argop4 sequenceop;
@@ -1053,13 +1062,11 @@ static rpc_call_t *construct_single_call(nfs41_session_t *session,
 }
 
 /**
- * @brief Free a CB call and sequence
+ * @brief Free a CB sequence for v41
  *
  * @param[in] call The call to free
- *
- * @return The constructed call or NULL.
  */
-static void free_single_call(rpc_call_t *call)
+static void release_v41(rpc_call_t *call)
 {
 	CB_SEQUENCE4args *sequence =
 	    (&call->cbt.v_u.v4.args.argarray.argarray_val[0].nfs_cb_argop4_u.
@@ -1072,7 +1079,6 @@ static void free_single_call(rpc_call_t *call)
 		gsh_free(sequence->csa_referring_call_lists.
 			 csa_referring_call_lists_val);
 	}
-	free_rpc_call(call);
 }
 
 /**
@@ -1214,8 +1220,7 @@ restart:
 		/* Drop mutex since we have a session ref */
 		pthread_mutex_unlock(&clientid->cid_mutex);
 
-		call = construct_single_call(session, op, refer, slot,
-					     highest_slot);
+		call = construct_v41(session, op, refer, slot, highest_slot);
 
 		call->call_hook = completion;
 		call->call_arg = completion_arg;
@@ -1229,13 +1234,10 @@ restart:
 		 */
 		LogDebug(COMPONENT_NFS_CB, "nfs_rpc_call failed: %d",
 				ret);
-		PTHREAD_MUTEX_lock(&session->cb_chan.mtx);
-		session->flags &= ~session_bc_up;
-		_nfs_rpc_destroy_chan(&session->cb_chan);
-		/* session now unusable until bc is reestablished */
-		PTHREAD_MUTEX_unlock(&session->cb_chan.mtx);
+		atomic_clear_uint32_t_bits(&session->flags, session_bc_up);
 
-		free_single_call(call);
+		release_v41(call);
+		free_rpc_call(call);
 
 		release_cb_slot(session, slot, false);
 		dec_session_ref(session);
@@ -1262,7 +1264,7 @@ void nfs41_release_single(rpc_call_t *call)
 			call->cbt.v_u.v4.args.argarray.argarray_val[0]
 			.nfs_cb_argop4_u.opcbsequence.csa_slotid, true);
 	dec_session_ref(call->chan->source.session);
-	free_single_call(call);
+	release_v41(call);
 }
 
 /**

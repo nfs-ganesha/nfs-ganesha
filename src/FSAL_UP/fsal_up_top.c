@@ -1205,7 +1205,6 @@ out_free:
 		opcbrecall = &call->cbt.v_u.v4.args.argarray.argarray_val[0]
 				.nfs_cb_argop4_u.opcbrecall;
 		nfs4_freeFH(&opcbrecall->fh);
-		free_rpc_call(call);
 	} else {
 		opcbrecall = &call->cbt.v_u.v4.args.argarray.argarray_val[1]
 				.nfs_cb_argop4_u.opcbrecall;

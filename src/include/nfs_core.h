@@ -81,12 +81,12 @@ extern gss_OID_desc krb5oid;
 #endif /* _HAVE_GSSAPI */
 
 struct _rpc_call {
+	struct clnt_req call_req;
 	rpc_call_channel_t *chan;
 	rpc_call_func call_hook;
 	void *call_arg;
 	void *call_user_data[2];
 	nfs4_compound_t cbt;
-	struct clnt_req call_req;
 	uint32_t states;
 	uint32_t flags;
 };
@@ -101,12 +101,6 @@ typedef enum request_type {
 } request_type_t;
 
 typedef struct request_data {
-	struct glist_head req_q;	/* chaining of pending requests */
-	struct timespec time_queued;	/*< The time at which a request was
-					 *  added to the worker thread queue.
-					 */
-	request_type_t rtype;
-
 	union request_content {
 		rpc_call_t call;
 		nfs_request_t req;
@@ -115,7 +109,11 @@ typedef struct request_data {
 #endif
 	} r_u;
 
-	uint32_t r_d_refs;	/* handle reference count */
+	struct glist_head req_q;	/* chaining of pending requests */
+	struct timespec time_queued;	/*< The time at which a request was
+					 *  added to the worker thread queue.
+					 */
+	request_type_t rtype;
 } request_data_t;
 
 extern pool_t *request_pool;

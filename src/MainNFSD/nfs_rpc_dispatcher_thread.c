@@ -1559,18 +1559,17 @@ static inline request_data_t *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 	SVC_REF(xprt, SVC_REF_FLAG_NONE);
 	reqdata->r_u.req.svc.rq_xprt = xprt;
 	reqdata->r_u.req.svc.rq_xdrs = xdrs;
-
-	reqdata->r_d_refs = 1;
+	reqdata->r_u.req.svc.rq_refs = 1;
 	return reqdata;
 }
 
 int free_nfs_request(request_data_t *reqdata)
 {
 	SVCXPRT *xprt = reqdata->r_u.req.svc.rq_xprt;
-	uint32_t refs = atomic_dec_uint32_t(&reqdata->r_d_refs);
+	uint32_t refs = atomic_dec_uint32_t(&reqdata->r_u.req.svc.rq_refs);
 
 	LogDebug(COMPONENT_DISPATCH,
-		 "%s: %p fd %d xp_refs %" PRIu32 " r_d_refs %" PRIu32,
+		 "%s: %p fd %d xp_refs %" PRIu32 " rq_refs %" PRIu32,
 		 __func__,
 		 xprt, xprt->xp_fd, xprt->xp_refs,
 		 refs);
