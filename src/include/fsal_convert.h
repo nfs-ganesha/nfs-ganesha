@@ -43,7 +43,7 @@
 #include "fsal_types.h"
 
 /* convert error codes */
-int posix2fsal_error(int posix_errorcode);
+fsal_errors_t posix2fsal_error(int posix_errorcode);
 
 static inline fsal_status_t posix2fsal_status(int posix_errorcode)
 {

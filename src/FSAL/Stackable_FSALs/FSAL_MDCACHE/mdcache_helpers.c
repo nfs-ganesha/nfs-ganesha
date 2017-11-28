@@ -155,7 +155,7 @@ static mdcache_entry_t *mdcache_alloc_handle(
 	result->obj_handle.fs = fs;
 
 	/* default handlers */
-	fsal_obj_handle_init(&result->obj_handle, &export->export,
+	fsal_obj_handle_init(&result->obj_handle, &export->mfe_exp,
 			     sub_handle->type);
 	/* mdcache handlers */
 	mdcache_handle_ops_init(&result->obj_handle.obj_ops);
@@ -219,7 +219,7 @@ void mdc_clean_entry(mdcache_entry_t *entry)
 		expmap = glist_entry(glist,
 				     struct entry_export_map,
 				     export_per_entry);
-		export = expmap->export;
+		export = expmap->exp;
 
 		PTHREAD_RWLOCK_wrlock(&export->mdc_exp_lock);
 
@@ -291,7 +291,7 @@ again:
 				     export_per_entry);
 
 		/* Found active export on list */
-		if (expmap->export == export) {
+		if (expmap->exp == export) {
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
@@ -335,7 +335,7 @@ again:
 				     (int32_t) op_ctx->ctx_export->export_id);
 	}
 
-	expmap->export = export;
+	expmap->exp = export;
 	expmap->entry = entry;
 
 	glist_add_tail(&entry->export_list, &expmap->export_per_entry);
@@ -553,7 +553,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		    sub_handle->obj_ops.handle_to_key(sub_handle, &fh_desc)
 		   );
 
-	(void) cih_hash_key(&key, export->export.sub_export->fsal, &fh_desc,
+	(void) cih_hash_key(&key, export->mfe_exp.sub_export->fsal, &fh_desc,
 			    CIH_HASH_KEY_PROTOTYPE);
 
 	/* Check if the entry already exists.  We allow the following race
@@ -626,7 +626,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	/* Set cache key */
 
 	has_hashkey = cih_hash_key(&nentry->fh_hk.key,
-				   export->export.sub_export->fsal,
+				   export->mfe_exp.sub_export->fsal,
 				   &fh_desc, CIH_HASH_NONE);
 
 	if (!has_hashkey) {
@@ -934,7 +934,7 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 		    mdcache_entry_t **entry,
 		    struct attrlist *attrs_out)
 {
-	struct fsal_export *sub_export = export->export.sub_export;
+	struct fsal_export *sub_export = export->mfe_exp.sub_export;
 	mdcache_key_t key;
 	struct fsal_obj_handle *sub_handle;
 	struct attrlist attrs;
@@ -975,7 +975,7 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 				   fs_supported_attrs(op_ctx->fsal_export)
 				   & ~ATTR_ACL);
 
-	sub_export = export->export.sub_export;
+	sub_export = export->mfe_exp.sub_export;
 
 	subcall_raw(export,
 		    status = sub_export->exp_ops.create_handle(sub_export,

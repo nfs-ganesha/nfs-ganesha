@@ -89,7 +89,7 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 			     struct fsal_obj_handle *root_obj)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	mdcache_entry_t *root_entry = container_of(root_obj, mdcache_entry_t,
 						   obj_handle);
 	mdcache_entry_t *entry;
@@ -146,7 +146,7 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 			/* Make sure first export pointer is still valid */
 			atomic_store_int32_t(
 				&entry->first_export_id,
-				(int32_t) expmap->export->export.export_id);
+				(int32_t) expmap->exp->mfe_exp.export_id);
 
 			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
@@ -174,7 +174,7 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 static void mdcache_exp_release(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	struct fsal_module *fsal_hdl;
 
 	fsal_hdl = sub_export->fsal;
@@ -211,7 +211,7 @@ static fsal_status_t mdcache_get_dynamic_info(struct fsal_export *exp_hdl,
 					      fsal_dynamicfsinfo_t *infop)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
@@ -238,7 +238,7 @@ static bool mdcache_fs_supports(struct fsal_export *exp_hdl,
 				fsal_fsinfo_options_t option)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	bool result;
 
 	subcall_raw(exp,
@@ -259,7 +259,7 @@ static bool mdcache_fs_supports(struct fsal_export *exp_hdl,
 static uint64_t mdcache_fs_maxfilesize(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	uint64_t result;
 
 	subcall_raw(exp,
@@ -280,7 +280,7 @@ static uint64_t mdcache_fs_maxfilesize(struct fsal_export *exp_hdl)
 static uint32_t mdcache_fs_maxread(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	uint32_t result;
 
 	subcall_raw(exp,
@@ -301,7 +301,7 @@ static uint32_t mdcache_fs_maxread(struct fsal_export *exp_hdl)
 static uint32_t mdcache_fs_maxwrite(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	uint32_t result;
 
 	subcall_raw(exp,
@@ -322,7 +322,7 @@ static uint32_t mdcache_fs_maxwrite(struct fsal_export *exp_hdl)
 static uint32_t mdcache_fs_maxlink(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	uint32_t result;
 
 	subcall_raw(exp,
@@ -343,7 +343,7 @@ static uint32_t mdcache_fs_maxlink(struct fsal_export *exp_hdl)
 static uint32_t mdcache_fs_maxnamelen(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	uint32_t result;
 
 	subcall_raw(exp,
@@ -364,7 +364,7 @@ static uint32_t mdcache_fs_maxnamelen(struct fsal_export *exp_hdl)
 static uint32_t mdcache_fs_maxpathlen(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	uint32_t result;
 
 	subcall_raw(exp,
@@ -385,7 +385,7 @@ static uint32_t mdcache_fs_maxpathlen(struct fsal_export *exp_hdl)
 static struct timespec mdcache_fs_lease_time(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	struct timespec result;
 
 	subcall_raw(exp,
@@ -406,7 +406,7 @@ static struct timespec mdcache_fs_lease_time(struct fsal_export *exp_hdl)
 static fsal_aclsupp_t mdcache_fs_acl_support(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	fsal_aclsupp_t result;
 
 	subcall_raw(exp,
@@ -427,7 +427,7 @@ static fsal_aclsupp_t mdcache_fs_acl_support(struct fsal_export *exp_hdl)
 static attrmask_t mdcache_fs_supported_attrs(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	attrmask_t result;
 
 	subcall_raw(exp,
@@ -448,7 +448,7 @@ static attrmask_t mdcache_fs_supported_attrs(struct fsal_export *exp_hdl)
 static uint32_t mdcache_fs_umask(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	uint32_t result;
 
 	subcall_raw(exp,
@@ -469,7 +469,7 @@ static uint32_t mdcache_fs_umask(struct fsal_export *exp_hdl)
 static uint32_t mdcache_fs_xattr_access_rights(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	uint32_t result;
 
 	subcall_raw(exp,
@@ -493,7 +493,7 @@ static fsal_status_t mdcache_check_quota(struct fsal_export *exp_hdl,
 					 const char *filepath, int quota_type)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	fsal_status_t status;
 
 	subcall_raw(exp,
@@ -522,7 +522,7 @@ static fsal_status_t mdcache_get_quota(struct fsal_export *exp_hdl,
 				       fsal_quota_t *pquota)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	fsal_status_t status;
 
 	subcall_raw(exp,
@@ -553,7 +553,7 @@ static fsal_status_t mdcache_set_quota(struct fsal_export *exp_hdl,
 				       fsal_quota_t *presquota)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	fsal_status_t status;
 
 	subcall_raw(exp,
@@ -582,7 +582,7 @@ static nfsstat4 mdcache_getdevicelist(struct fsal_export *exp_hdl,
 					   struct fsal_getdevicelist_res *res)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	nfsstat4 status;
 
 	subcall_raw(exp,
@@ -607,7 +607,7 @@ static void mdcache_fs_layouttypes(struct fsal_export *exp_hdl,
 					    const layouttype4 **types)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 
 	subcall_raw(exp,
 		sub_export->exp_ops.fs_layouttypes(sub_export, count, types)
@@ -625,7 +625,7 @@ static void mdcache_fs_layouttypes(struct fsal_export *exp_hdl,
 static uint32_t mdcache_fs_layout_blocksize(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	uint32_t status;
 
 	subcall_raw(exp,
@@ -646,7 +646,7 @@ static uint32_t mdcache_fs_layout_blocksize(struct fsal_export *exp_hdl)
 static uint32_t mdcache_fs_maximum_segments(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	uint32_t status;
 
 	subcall_raw(exp,
@@ -667,7 +667,7 @@ static uint32_t mdcache_fs_maximum_segments(struct fsal_export *exp_hdl)
 static size_t mdcache_fs_loc_body_size(struct fsal_export *exp_hdl)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	size_t status;
 
 	subcall_raw(exp,
@@ -689,7 +689,7 @@ static void mdcache_get_write_verifier(struct fsal_export *exp_hdl,
 				       struct gsh_buffdesc *verf_desc)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 
 	subcall_raw(exp,
 		sub_export->exp_ops.get_write_verifier(sub_export, verf_desc)
@@ -713,7 +713,7 @@ static fsal_status_t mdcache_wire_to_host(struct fsal_export *exp_hdl,
 					  int flags)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	fsal_status_t status;
 
 	subcall_raw(exp,
@@ -737,7 +737,7 @@ static fsal_status_t mdcache_host_to_key(struct fsal_export *exp_hdl,
 					    struct gsh_buffdesc *fh_desc)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	fsal_status_t status;
 
 	subcall_raw(exp,
@@ -760,7 +760,7 @@ static struct state_t *mdcache_alloc_state(struct fsal_export *exp_hdl,
 					   struct state_t *related_state)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	struct state_t *state;
 
 	subcall_raw(exp,
@@ -784,7 +784,7 @@ static void mdcache_free_state(struct fsal_export *exp_hdl,
 			       struct state_t *state)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 
 	subcall_raw(exp,
 		sub_export->exp_ops.free_state(sub_export, state)
@@ -804,7 +804,7 @@ static bool mdcache_is_superuser(struct fsal_export *exp_hdl,
 				 const struct user_cred *creds)
 {
 	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 	bool status;
 
 	subcall_raw(exp,
@@ -912,20 +912,20 @@ mdc_init_export(struct fsal_module *fsal_hdl,
 	snprintf(myself->name, namelen, "%s/MDC",
 		 op_ctx->fsal_export->fsal->name);
 
-	fsal_export_init(&myself->export);
-	mdcache_export_ops_init(&myself->export.exp_ops);
+	fsal_export_init(&myself->mfe_exp);
+	mdcache_export_ops_init(&myself->mfe_exp.exp_ops);
 	myself->super_up_ops = *super_up_ops; /* Struct copy */
 	myself->up_ops = *mdc_up_ops; /* Struct copy */
 	myself->up_ops.up_gsh_export = op_ctx->ctx_export;
-	myself->up_ops.up_fsal_export = &myself->export;
-	myself->export.up_ops = &myself->up_ops;
-	myself->export.fsal = fsal_hdl;
-	status.minor = fsal_attach_export(fsal_hdl, &myself->export.exports);
+	myself->up_ops.up_fsal_export = &myself->mfe_exp;
+	myself->mfe_exp.up_ops = &myself->up_ops;
+	myself->mfe_exp.fsal = fsal_hdl;
+	status.minor = fsal_attach_export(fsal_hdl, &myself->mfe_exp.exports);
 	if (status.minor != 0) {
 		status.major = posix2fsal_error(status.minor);
 		return status;
 	}
-	fsal_export_stack(op_ctx->fsal_export, &myself->export);
+	fsal_export_stack(op_ctx->fsal_export, &myself->mfe_exp);
 
 	glist_init(&myself->entry_list);
 	pthread_rwlockattr_init(&attrs);
@@ -935,7 +935,7 @@ mdc_init_export(struct fsal_module *fsal_hdl,
 #endif
 	PTHREAD_RWLOCK_init(&myself->mdc_exp_lock, &attrs);
 
-	op_ctx->fsal_export = &myself->export;
+	op_ctx->fsal_export = &myself->mfe_exp;
 	op_ctx->fsal_module = fsal_hdl;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

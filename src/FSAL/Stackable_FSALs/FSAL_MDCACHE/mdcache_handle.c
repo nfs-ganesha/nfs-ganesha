@@ -1672,8 +1672,8 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 {
 	struct fsal_obj_handle *sub_handle = NULL;
 	struct mdcache_fsal_export *export =
-		container_of(exp_hdl, struct mdcache_fsal_export, export);
-	struct fsal_export *sub_export = export->export.sub_export;
+		container_of(exp_hdl, struct mdcache_fsal_export, mfe_exp);
+	struct fsal_export *sub_export = export->mfe_exp.sub_export;
 	fsal_status_t status;
 	struct attrlist attrs;
 	mdcache_entry_t *new_entry;
@@ -1745,7 +1745,7 @@ fsal_status_t mdcache_create_handle(struct fsal_export *exp_hdl,
 				   struct attrlist *attrs_out)
 {
 	struct mdcache_fsal_export *export =
-		container_of(exp_hdl, struct mdcache_fsal_export, export);
+		container_of(exp_hdl, struct mdcache_fsal_export, mfe_exp);
 	mdcache_entry_t *entry;
 	fsal_status_t status;
 

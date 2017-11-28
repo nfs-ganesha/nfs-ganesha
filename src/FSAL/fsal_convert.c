@@ -34,7 +34,7 @@
  *         to posix_errorcode.
  *
  */
-int posix2fsal_error(int posix_errorcode)
+fsal_errors_t posix2fsal_error(int posix_errorcode)
 {
 	struct rlimit rlim = {
 		.rlim_cur = RLIM_INFINITY,

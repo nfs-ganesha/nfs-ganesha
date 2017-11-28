@@ -200,7 +200,7 @@ fsal_status_t mdcache_export_init(const struct fsal_up_vector *super_up_ops,
 void mdcache_export_uninit(void)
 {
 	struct mdcache_fsal_export *exp = mdc_cur_export();
-	struct fsal_export *sub_export = exp->export.sub_export;
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 
 	fsal_put(sub_export->fsal);
 
@@ -248,15 +248,15 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	myself->name = gsh_calloc(1, namelen);
 	snprintf(myself->name, namelen, "%s/MDC", sub_fsal->name);
 
-	fsal_export_init(&myself->export);
-	mdcache_export_ops_init(&myself->export.exp_ops);
+	fsal_export_init(&myself->mfe_exp);
+	mdcache_export_ops_init(&myself->mfe_exp.exp_ops);
 
 	myself->super_up_ops = *super_up_ops; /* Struct copy */
 	mdcache_export_up_ops_init(&myself->up_ops, super_up_ops);
 	myself->up_ops.up_gsh_export = op_ctx->ctx_export;
-	myself->up_ops.up_fsal_export = &myself->export;
-	myself->export.up_ops = &myself->up_ops;
-	myself->export.fsal = &MDCACHE.fsal;
+	myself->up_ops.up_fsal_export = &myself->mfe_exp;
+	myself->mfe_exp.up_ops = &myself->up_ops;
+	myself->mfe_exp.fsal = &MDCACHE.fsal;
 
 	glist_init(&myself->entry_list);
 	pthread_rwlockattr_init(&attrs);
@@ -280,12 +280,12 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	}
 
 	/* Get ref for sub-FSAL */
-	fsal_get(myself->export.fsal);
-	fsal_export_stack(op_ctx->fsal_export, &myself->export);
+	fsal_get(myself->mfe_exp.fsal);
+	fsal_export_stack(op_ctx->fsal_export, &myself->mfe_exp);
 
 
 	/* Set up op_ctx */
-	op_ctx->fsal_export = &myself->export;
+	op_ctx->fsal_export = &myself->mfe_exp;
 	op_ctx->fsal_module = &MDCACHE.fsal;
 
 	/* Stacking is setup and ready to take upcalls now */

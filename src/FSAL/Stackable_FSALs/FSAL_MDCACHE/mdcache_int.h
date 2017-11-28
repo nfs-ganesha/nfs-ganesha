@@ -49,7 +49,7 @@ typedef struct mdcache_fsal_obj_handle mdcache_entry_t;
  * MDCACHE internal export
  */
 struct mdcache_fsal_export {
-	struct fsal_export export;
+	struct fsal_export mfe_exp;
 	char *name;
 	/** My up_ops */
 	struct fsal_up_vector up_ops;
@@ -158,7 +158,7 @@ struct entry_export_map {
 	/** The relevant cache inode entry */
 	mdcache_entry_t *entry;
 	/** The export the entry belongs to */
-	struct mdcache_fsal_export *export;
+	struct mdcache_fsal_export *exp;
 	/** List of entries per export */
 	struct glist_head entry_per_export;
 	/** List of exports per entry */
@@ -420,7 +420,7 @@ static inline void rmv_detached_dirent(mdcache_entry_t *parent,
 
 /* Helpers */
 fsal_status_t mdcache_alloc_and_check_handle(
-		struct mdcache_fsal_export *export,
+		struct mdcache_fsal_export *exp,
 		struct fsal_obj_handle *sub_handle,
 		struct fsal_obj_handle **new_obj,
 		bool new_directory,
@@ -452,7 +452,7 @@ void mdcache_refresh_attrs_no_invalidate(mdcache_entry_t *entry)
 	}
 }
 
-fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *export,
+fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *exp,
 				struct fsal_obj_handle *sub_handle,
 				struct attrlist *attrs_in,
 				struct attrlist *attrs_out,
@@ -461,7 +461,7 @@ fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *export,
 				struct state_t *state);
 fsal_status_t mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry);
 fsal_status_t mdcache_locate_host(struct gsh_buffdesc *fh_desc,
-				  struct mdcache_fsal_export *export,
+				  struct mdcache_fsal_export *exp,
 				  mdcache_entry_t **entry,
 				  struct attrlist *attrs_out);
 fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent, const char *name,
@@ -501,7 +501,7 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 				      attrmask_t attrmask,
 				      bool *eod_met);
 
-void mdc_get_parent(struct mdcache_fsal_export *export,
+void mdc_get_parent(struct mdcache_fsal_export *exp,
 		    mdcache_entry_t *entry);
 
 void mdc_update_attr_cache(mdcache_entry_t *entry, struct attrlist *attrs);
@@ -517,7 +517,7 @@ void mdc_update_attr_cache(mdcache_entry_t *entry, struct attrlist *attrs);
  */
 static inline bool test_mde_flags(mdcache_entry_t *entry, uint32_t bits)
 {
-	return (atomic_fetch_int32_t(&entry->mde_flags) & bits) == bits;
+	return (atomic_fetch_uint32_t(&entry->mde_flags) & bits) == bits;
 }
 
 static inline bool mdc_dircache_trusted(mdcache_entry_t *dir)
@@ -535,7 +535,7 @@ static inline bool mdc_dircache_trusted(mdcache_entry_t *dir)
 static inline struct mdcache_fsal_export *mdc_export(
 					    struct fsal_export *fsal_export)
 {
-	return container_of(fsal_export, struct mdcache_fsal_export, export);
+	return container_of(fsal_export, struct mdcache_fsal_export, mfe_exp);
 }
 
 static inline struct mdcache_fsal_export *mdc_cur_export(void)
@@ -553,7 +553,7 @@ void _mdcache_kill_entry(mdcache_entry_t *entry,
 			    (char *) __FILE__, __LINE__, (char *) __func__)
 
 fsal_status_t
-mdc_get_parent_handle(struct mdcache_fsal_export *export,
+mdc_get_parent_handle(struct mdcache_fsal_export *exp,
 		      mdcache_entry_t *entry,
 		      struct fsal_obj_handle *sub_parent);
 
@@ -564,17 +564,17 @@ extern struct config_block mdcache_param_blk;
 /* Call a sub-FSAL function using it's export, safe for use during shutdown */
 #define subcall_shutdown_raw(myexp, call) do { \
 	if (op_ctx) \
-		op_ctx->fsal_export = (myexp)->export.sub_export; \
+		op_ctx->fsal_export = (myexp)->mfe_exp.sub_export; \
 	call; \
 	if (op_ctx) \
-		op_ctx->fsal_export = &(myexp)->export; \
+		op_ctx->fsal_export = &(myexp)->mfe_exp; \
 } while (0)
 
 /* Call a sub-FSAL function using it's export */
 #define subcall_raw(myexp, call) do { \
-	op_ctx->fsal_export = (myexp)->export.sub_export; \
+	op_ctx->fsal_export = (myexp)->mfe_exp.sub_export; \
 	call; \
-	op_ctx->fsal_export = &(myexp)->export; \
+	op_ctx->fsal_export = &(myexp)->mfe_exp; \
 } while (0)
 
 /* Call a sub-FSAL function using it's export */
@@ -586,9 +586,9 @@ extern struct config_block mdcache_param_blk;
 /* During a callback from a sub-FSAL, call using MDCACHE's export */
 #define supercall_raw(myexp, call) do { \
 	LogFullDebug(COMPONENT_CACHE_INODE, "supercall %s", myexp->name); \
-	op_ctx->fsal_export = &(myexp)->export; \
+	op_ctx->fsal_export = &(myexp)->mfe_exp; \
 	call; \
-	op_ctx->fsal_export = (myexp)->export.sub_export; \
+	op_ctx->fsal_export = (myexp)->mfe_exp.sub_export; \
 } while (0)
 
 /**
