@@ -366,6 +366,8 @@ static int load_backend(const char *name)
 #ifdef USE_RADOS_RECOV
 	else if (!strcmp(name, "rados_kv"))
 		rados_kv_backend_init(&recovery_backend);
+	else if (!strcmp(name, "rados_ng"))
+		rados_ng_backend_init(&recovery_backend);
 #endif
 	else if (!strcmp(name, "fs_ng"))
 		fs_ng_backend_init(&recovery_backend);

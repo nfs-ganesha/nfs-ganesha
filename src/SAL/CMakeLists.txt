@@ -37,6 +37,7 @@ if(USE_RADOS_RECOV)
   set(sal_STAT_SRCS
     ${sal_STAT_SRCS}
     recovery/recovery_rados_kv.c
+    recovery/recovery_rados_ng.c
     )
 endif(USE_RADOS_RECOV)
 
