@@ -13,6 +13,7 @@
 #include "netdb.h"
 #include <rados/librados.h>
 
+#define DEFAULT_POOL		"nfs-ganesha"
 #define KEY_MAX_LEN		NAME_MAX
 #define VAL_MAX_LEN		PATH_MAX
 
@@ -37,7 +38,7 @@ static struct config_item rados_kv_params[] = {
 		       rados_kv_parameter, ceph_conf),
 	CONF_ITEM_STR("userid", 1, MAXPATHLEN, NULL,
 		       rados_kv_parameter, userid),
-	CONF_ITEM_STR("pool", 1, MAXPATHLEN, NULL,
+	CONF_ITEM_STR("pool", 1, MAXPATHLEN, DEFAULT_POOL,
 		       rados_kv_parameter, pool),
 	CONFIG_EOL
 };
