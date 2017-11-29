@@ -155,8 +155,6 @@ mem_rand_obj(struct mem_fsal_export *mfe)
 	if (glist_empty(&mfe->mfe_objs))
 		return NULL;
 
-	srand(time(NULL));
-
 	PTHREAD_RWLOCK_rdlock(&mfe->mfe_exp_lock);
 	glist_for_each_safe(glist, glistn, &mfe->mfe_objs) {
 		if (res == NULL) {

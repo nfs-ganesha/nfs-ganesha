@@ -153,6 +153,7 @@ int main(int argc, char *argv[])
 	/* Set the server's boot time and epoch */
 	now(&ServerBootTime);
 	ServerEpoch = (time_t) ServerBootTime.tv_sec;
+	srand(ServerEpoch);
 
 	tempo_exec_name = strrchr(argv[0], '/');
 	if (tempo_exec_name != NULL)
