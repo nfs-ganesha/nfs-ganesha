@@ -181,11 +181,9 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-		my_fd->openflags = openflags;
 	} else {
 		/* We need to use the global fd to continue. */
 		my_fd = &gpfs_hdl->u.file.fd;
-		gpfs_hdl->u.file.fd.openflags = openflags;
 	}
 
 	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd->fd);
@@ -195,6 +193,7 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		else
 			goto undo_share;
 	}
+	my_fd->openflags = openflags;
 
 	if (attrs_out && (createmode >= FSAL_EXCLUSIVE || truncated)) {
 		/* Refresh the attributes */
