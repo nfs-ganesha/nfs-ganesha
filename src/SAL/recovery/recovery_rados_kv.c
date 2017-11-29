@@ -20,11 +20,8 @@
 
 static rados_t cluster;
 static rados_ioctx_t io_ctx;
-static bool clustered;
-static char myhostname[NI_MAXHOST];
 static char myobject_old[NI_MAXHOST];
 static char myobject_recov[NI_MAXHOST];
-static char object_takeover[NI_MAXHOST];
 
 static struct rados_kv_parameter {
 	/** Connection to ceph cluster */
@@ -320,20 +317,23 @@ int rados_kv_set_param_from_conf(config_file_t parse_tree,
 void rados_kv_init(void)
 {
 	int ret;
+	char host[NI_MAXHOST];
 
-	clustered = nfs_param.core_param.clustered;
-	if (!clustered) {
-		ret = gethostname(myhostname, sizeof(myhostname));
+	if (nfs_param.core_param.clustered) {
+		snprintf(host, sizeof(host), "node%d", g_nodeid);
+	} else {
+		ret = gethostname(host, sizeof(host));
 		if (ret) {
-			LogEvent(COMPONENT_CLIENTID, "Failed to gethostname");
+			LogEvent(COMPONENT_CLIENTID,
+				 "Failed to gethostname: %s",
+				 strerror(errno));
 			return;
 		}
-		snprintf(myobject_old, NI_MAXHOST, "%s_old", myhostname);
-		snprintf(myobject_recov, NI_MAXHOST, "%s_recov", myhostname);
-	} else {
-		snprintf(myobject_old, NI_MAXHOST, "node%d_old", g_nodeid);
-		snprintf(myobject_recov, NI_MAXHOST, "node%d_recov", g_nodeid);
 	}
+
+	snprintf(myobject_old, sizeof(myobject_old), "%s_old", host);
+	snprintf(myobject_recov, sizeof(myobject_recov), "%s_recov", host);
+
 	ret = rados_create(&cluster, rados_kv_param.userid);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to rados create");
@@ -512,6 +512,7 @@ void rados_kv_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 					add_rfh_entry_hook add_rfh_entry)
 {
 	int ret;
+	char object_takeover[NI_MAXHOST];
 	struct pop_args args = {
 		.add_clid_entry = add_clid_entry,
 		.add_rfh_entry = add_rfh_entry,
