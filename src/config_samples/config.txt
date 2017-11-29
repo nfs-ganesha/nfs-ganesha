@@ -354,6 +354,8 @@ EXPORT { FSAL {} }
 
 	enable_upcall(bool, default true)
 
+	transport(enum, values [tcp, rdma], default tcp)
+
 	FSAL_VFS:
 	---------
 
