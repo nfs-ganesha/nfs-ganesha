@@ -1242,10 +1242,6 @@ int pxy_init_rpc(const struct pxy_fsal_module *pm)
 		struct pxy_rpc_io_context *c =
 		    gsh_malloc(sizeof(*c) + pm->special.srv_sendsize +
 			       pm->special.srv_recvsize);
-		if (!c) {
-			free_io_contexts();
-			return ENOMEM;
-		}
 		PTHREAD_MUTEX_init(&c->iolock, NULL);
 		PTHREAD_COND_init(&c->iowait, NULL);
 		c->nfs_prog = pm->special.srv_prognum;
@@ -2802,53 +2798,52 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 	memset(&attributes, 0, sizeof(attributes));
 	memset(&data, 0, sizeof(data));
 
-	if (n) {
-		data.current_obj = &n->obj;
+	data.current_obj = &n->obj;
 
-		if (nfs4_Fattr_To_FSAL_attr(&attributes,
-					    obj_attributes,
-					    &data) != NFS4_OK) {
-			gsh_free(n);
-			return NULL;
-		}
+	if (nfs4_Fattr_To_FSAL_attr(&attributes,
+				    obj_attributes,
+				    &data) != NFS4_OK) {
+		gsh_free(n);
+		return NULL;
+	}
 
-		n->fh4 = *fh;
-		n->fh4.nfs_fh4_val = n->blob.bytes;
-		memcpy(n->blob.bytes, fh->nfs_fh4_val, fh->nfs_fh4_len);
-		n->blob.len = fh->nfs_fh4_len + sizeof(n->blob);
-		n->blob.type = attributes.type;
+	n->fh4 = *fh;
+	n->fh4.nfs_fh4_val = n->blob.bytes;
+	memcpy(n->blob.bytes, fh->nfs_fh4_val, fh->nfs_fh4_len);
+	n->blob.len = fh->nfs_fh4_len + sizeof(n->blob);
+	n->blob.type = attributes.type;
 #ifdef PROXY_HANDLE_MAPPING
-		int rc;
+	int rc;
 
-		memset(&n->h23, 0, sizeof(n->h23));
-		n->h23.len = sizeof(n->h23);
-		n->h23.type = PXY_HANDLE_MAPPED;
-		n->h23.object_id = n->obj.fileid;
-		n->h23.handle_hash = hash_nfs_fh4(fh, n->obj.fileid);
+	memset(&n->h23, 0, sizeof(n->h23));
+	n->h23.len = sizeof(n->h23);
+	n->h23.type = PXY_HANDLE_MAPPED;
+	n->h23.object_id = n->obj.fileid;
+	n->h23.handle_hash = hash_nfs_fh4(fh, n->obj.fileid);
 
-		rc = HandleMap_SetFH(&n->h23, &n->blob, n->blob.len);
-		if ((rc != HANDLEMAP_SUCCESS) && (rc != HANDLEMAP_EXISTS)) {
-			gsh_free(n);
-			return NULL;
-		}
+	rc = HandleMap_SetFH(&n->h23, &n->blob, n->blob.len);
+	if ((rc != HANDLEMAP_SUCCESS) && (rc != HANDLEMAP_EXISTS)) {
+		gsh_free(n);
+		return NULL;
+	}
 #endif
 
-		fsal_obj_handle_init(&n->obj, exp, attributes.type);
-		n->obj.fs = NULL;
-		n->obj.state_hdl = NULL;
-		n->obj.fsid = attributes.fsid;
-		n->obj.fileid = attributes.fileid;
-		pxy_handle_ops_init(&n->obj.obj_ops);
-		if (attrs_out != NULL) {
-			/* We aren't keeping ACL ref ourself, so pass it
-			 * to the caller.
-			 */
-			fsal_copy_attrs(attrs_out, &attributes, true);
-		} else {
-			/* Make sure we release the attributes. */
-			fsal_release_attrs(&attributes);
-		}
+	fsal_obj_handle_init(&n->obj, exp, attributes.type);
+	n->obj.fs = NULL;
+	n->obj.state_hdl = NULL;
+	n->obj.fsid = attributes.fsid;
+	n->obj.fileid = attributes.fileid;
+	pxy_handle_ops_init(&n->obj.obj_ops);
+	if (attrs_out != NULL) {
+		/* We aren't keeping ACL ref ourself, so pass it
+		 * to the caller.
+		 */
+		fsal_copy_attrs(attrs_out, &attributes, true);
+	} else {
+		/* Make sure we release the attributes. */
+		fsal_release_attrs(&attributes);
 	}
+
 	return n;
 }
 

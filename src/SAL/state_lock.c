@@ -576,12 +576,10 @@ static state_lock_entry_t *create_state_lock_entry(struct fsal_obj_handle *obj,
 {
 	state_lock_entry_t *new_entry;
 
-	new_entry = gsh_malloc(sizeof(*new_entry));
+	new_entry = gsh_calloc(1, sizeof(*new_entry));
 
 	LogFullDebug(COMPONENT_STATE, "new_entry = %p owner %p", new_entry,
 		     owner);
-
-	memset(new_entry, 0, sizeof(*new_entry));
 
 	PTHREAD_MUTEX_init(&new_entry->sle_mutex, NULL);
 
@@ -1417,9 +1415,7 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 		str_valid = true;
 	}
 
-	hash_entry = gsh_malloc(sizeof(*hash_entry));
-
-	memset(hash_entry, 0, sizeof(*hash_entry));
+	hash_entry = gsh_calloc(1, sizeof(*hash_entry));
 
 	buffkey.addr = gsh_malloc(cookie_size);
 
@@ -3565,9 +3561,7 @@ void cancel_all_nlm_blocked(void)
 
 		cancel_blocked_lock(found_entry->sle_obj, found_entry);
 
-		if (pblock->sbd_blocked_cookie != NULL)
-			gsh_free(pblock->sbd_blocked_cookie);
-
+		gsh_free(pblock->sbd_blocked_cookie);
 		gsh_free(found_entry->sle_block_data);
 		found_entry->sle_block_data = NULL;
 

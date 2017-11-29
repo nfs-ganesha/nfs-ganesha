@@ -573,9 +573,10 @@ void Process_nfs4_conflict(LOCK4denied *denied, state_owner_t *holder,
  */
 void Release_nfs4_denied(LOCK4denied *denied)
 {
-	if (denied->owner.owner.owner_val != unknown_owner.so_owner_val
-	    && denied->owner.owner.owner_val != NULL)
+	if (denied->owner.owner.owner_val != unknown_owner.so_owner_val) {
 		gsh_free(denied->owner.owner.owner_val);
+		denied->owner.owner.owner_val = NULL;
+	}
 }
 
 /**

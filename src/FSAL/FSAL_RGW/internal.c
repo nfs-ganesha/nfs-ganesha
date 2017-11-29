@@ -199,9 +199,6 @@ int construct_handle(struct rgw_export *export,
 	*obj = NULL;
 
 	constructing = gsh_calloc(1, sizeof(struct rgw_handle));
-	if (constructing == NULL)
-		return -ENOMEM;
-
 	constructing->rgw_fh = rgw_fh;
 	constructing->up_ops = export->export.up_ops; /* XXXX going away */
 

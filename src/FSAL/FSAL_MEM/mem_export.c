@@ -93,9 +93,7 @@ static void mem_release_export(struct fsal_export *exp_hdl)
 
 	glist_del(&myself->export_entry);
 
-	if (myself->export_path != NULL)
-		gsh_free(myself->export_path);
-
+	gsh_free(myself->export_path);
 	gsh_free(myself);
 }
 
@@ -323,12 +321,6 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 	pthread_rwlockattr_t attrs;
 
 	myself = gsh_calloc(1, sizeof(struct mem_fsal_export));
-
-	if (myself == NULL) {
-		LogMajor(COMPONENT_FSAL,
-			 "Could not allocate export");
-		return fsalstat(posix2fsal_error(errno), errno);
-	}
 
 	glist_init(&myself->mfe_objs);
 	pthread_rwlockattr_init(&attrs);

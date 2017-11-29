@@ -107,9 +107,6 @@ struct state_hdl *vfs_state_locate(struct fsal_obj_handle *obj)
 	}
 
 	fs_entry = gsh_calloc(sizeof(struct vfs_state_entry), 1);
-	if (!fs_entry)
-		return NULL;
-
 	fs_entry->fs_key = key;
 	node = avltree_insert(&fs_entry->fs_node, &vfs_state_tree);
 	if (unlikely(node)) {

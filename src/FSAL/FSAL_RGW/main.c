@@ -249,12 +249,9 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 					rc);
 			}
 
-			if (conf_path)
-				gsh_free(conf_path);
-			if (inst_name)
-				gsh_free(inst_name);
-			if (cluster)
-				gsh_free(cluster);
+			gsh_free(conf_path);
+			gsh_free(inst_name);
+			gsh_free(cluster);
 		}
 		PTHREAD_MUTEX_unlock(&init_mtx);
 	}
@@ -265,14 +262,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	}
 
 	export = gsh_calloc(1, sizeof(struct rgw_export));
-	if (export == NULL) {
-		status.major = ERR_FSAL_NOMEM;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to allocate export object for %s.",
-			op_ctx->ctx_export->fullpath);
-		goto error;
-	}
-
 	fsal_export_init(&export->export);
 	export_ops_init(&export->export.exp_ops);
 
@@ -363,9 +352,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	return status;
 
  error:
-	if (export) {
-		gsh_free(export);
-	}
+	gsh_free(export);
 
 	if (initialized)
 		initialized = false;

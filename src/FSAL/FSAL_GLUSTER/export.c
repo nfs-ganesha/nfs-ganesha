@@ -755,12 +755,6 @@ glusterfs_get_fs(struct glexport_params params,
 
 	gl_fs = gsh_calloc(1, sizeof(struct glusterfs_fs));
 
-	if (!gl_fs) {
-		LogCrit(COMPONENT_FSAL,
-			"Unable to allocate memory for glusterfs_fs object");
-		goto out;
-	}
-
 	glist_init(&gl_fs->fs_obj);
 
 	fs = glfs_new(params.glvolname);
@@ -961,24 +955,19 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->export.up_ops = up_ops;
 
  out:
-	if (params.glvolname)
-		gsh_free(params.glvolname);
-	if (params.glhostname)
-		gsh_free(params.glhostname);
-	if (params.glfs_log)
-		gsh_free(params.glfs_log);
+	gsh_free(params.glvolname);
+	gsh_free(params.glhostname);
+	gsh_free(params.glfs_log);
 
 	if (status.major != ERR_FSAL_NO_ERROR) {
-		if (params.glvolpath)
-			gsh_free(params.glvolpath);
+		gsh_free(params.glvolpath);
 
 		if (fsal_attached)
 			fsal_detach_export(fsal_hdl,
 					   &glfsexport->export.exports);
 		if (glfsexport->gl_fs)
 			glusterfs_free_fs(glfsexport->gl_fs);
-		if (glfsexport)
-			gsh_free(glfsexport);
+		gsh_free(glfsexport);
 	}
 
 	return status;

@@ -896,8 +896,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	fsal_obj_handle_fini(obj_hdl);
 
 	if (type == SYMBOLIC_LINK) {
-		if (myself->u.symlink.link_content != NULL)
-			gsh_free(myself->u.symlink.link_content);
+		gsh_free(myself->u.symlink.link_content);
 	}
 	gsh_free(myself);
 }

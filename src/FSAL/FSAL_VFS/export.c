@@ -468,8 +468,7 @@ already_claimed:
 
 errout:
 
-	if (map != NULL)
-		gsh_free(map);
+	gsh_free(map);
 
 	if (vfs_fs != NULL)
 		free_vfs_filesystem(vfs_fs);

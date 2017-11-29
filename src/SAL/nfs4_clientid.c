@@ -341,10 +341,8 @@ void free_client_id(nfs_client_id_t *clientid)
 		}
 	}
 
-	if (clientid->cid_recov_tag) {
-		gsh_free(clientid->cid_recov_tag);
-		clientid->cid_recov_tag = NULL;
-	}
+	gsh_free(clientid->cid_recov_tag);
+	clientid->cid_recov_tag = NULL;
 
 	PTHREAD_MUTEX_destroy(&clientid->cid_mutex);
 	PTHREAD_MUTEX_destroy(&clientid->cid_owner.so_mutex);
@@ -1747,8 +1745,7 @@ static void client_cb(struct fridgethr_context *ctx)
 	cb_arg = ctx->arg;
 	cb_arg->cb(cb_arg->pclientid, cb_arg->state);
 	dec_client_id_ref(cb_arg->pclientid);
-	if (cb_arg->state)
-		gsh_free(cb_arg->state);
+	gsh_free(cb_arg->state);
 	gsh_free(cb_arg);
 }
 

@@ -1066,14 +1066,9 @@ static void free_single_call(rpc_call_t *call)
 	     opcbsequence);
 
 	if (sequence->csa_referring_call_lists.csa_referring_call_lists_val) {
-		if (sequence->csa_referring_call_lists.
-		    csa_referring_call_lists_val->
-		    rcl_referring_calls.rcl_referring_calls_val) {
-			gsh_free(sequence->csa_referring_call_lists.
-				 csa_referring_call_lists_val->
-				 rcl_referring_calls.
-				 rcl_referring_calls_val);
-		}
+		gsh_free(sequence->csa_referring_call_lists.
+			 csa_referring_call_lists_val->
+			 rcl_referring_calls.rcl_referring_calls_val);
 		gsh_free(sequence->csa_referring_call_lists.
 			 csa_referring_call_lists_val);
 	}

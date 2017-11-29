@@ -837,8 +837,7 @@ void free_state_owner(state_owner_t *owner)
 		return;
 	}
 
-	if (owner->so_owner_val != NULL)
-		gsh_free(owner->so_owner_val);
+	gsh_free(owner->so_owner_val);
 
 	PTHREAD_MUTEX_destroy(&owner->so_mutex);
 

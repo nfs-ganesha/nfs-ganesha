@@ -774,8 +774,7 @@ void inc_nsm_client_ref(state_nsm_client_t *client)
  */
 void free_nsm_client(state_nsm_client_t *client)
 {
-	if (client->ssc_nlm_caller_name != NULL)
-		gsh_free(client->ssc_nlm_caller_name);
+	gsh_free(client->ssc_nlm_caller_name);
 
 	if (client->ssc_client != NULL)
 		put_gsh_client(client->ssc_client);
@@ -1039,9 +1038,7 @@ void free_nlm_client(state_nlm_client_t *client)
 	if (client->slc_nsm_client != NULL)
 		dec_nsm_client_ref(client->slc_nsm_client);
 
-	if (client->slc_nlm_caller_name != NULL)
-		gsh_free(client->slc_nlm_caller_name);
-
+	gsh_free(client->slc_nlm_caller_name);
 	gsh_free(client);
 }
 
