@@ -336,7 +336,6 @@ static void fs_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 	DIR *dp;
 	rdel_fh_t *new_ent;
 
-	glist_init(&clid_ent->cl_rfh_list);
 	/* Read the contents from recov dir of this clientid. */
 	dp = opendir(path);
 	if (dp == NULL) {
