@@ -120,6 +120,8 @@ struct vfs_subfsal_obj_ops {
 struct vfs_fd {
 	/** The open and share mode etc. */
 	fsal_openflags_t openflags;
+	/* rw lock to protect the file descriptor */
+	pthread_rwlock_t fdlock;
 	/** The kernel file descriptor. */
 	int fd;
 };

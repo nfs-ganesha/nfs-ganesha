@@ -203,6 +203,8 @@ struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,
 	my_fd = &container_of(state, struct vfs_state_fd, state)->vfs_fd;
 
 	my_fd->fd = -1;
+	my_fd->openflags = FSAL_O_CLOSED;
+	PTHREAD_RWLOCK_init(&my_fd->fdlock, NULL);
 
 	return state;
 }
@@ -218,6 +220,9 @@ void vfs_free_state(struct fsal_export *exp_hdl, struct state_t *state)
 {
 	struct vfs_state_fd *state_fd = container_of(state, struct vfs_state_fd,
 						     state);
+	struct vfs_fd *my_fd = &state_fd->vfs_fd;
+
+	PTHREAD_RWLOCK_destroy(&my_fd->fdlock);
 
 	gsh_free(state_fd);
 }
@@ -974,10 +979,16 @@ fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
 
 	if (!FSAL_IS_ERROR(status)) {
 		/* Close the existing file descriptor and copy the new
-		 * one over.
+		 * one over. Make sure no one is using the fd that we are
+		 * about to close!
 		 */
+		PTHREAD_RWLOCK_wrlock(&my_share_fd->fdlock);
+
 		vfs_close_my_fd(my_share_fd);
-		*my_share_fd = fd;
+		my_share_fd->fd = my_fd->fd;
+		my_share_fd->openflags = my_fd->openflags;
+
+		PTHREAD_RWLOCK_unlock(&my_share_fd->fdlock);
 	} else {
 		/* We had a failure on open - we need to revert the share.
 		 * This can block over an I/O operation.
@@ -1005,7 +1016,9 @@ fsal_status_t find_fd(int *fd,
 {
 	struct vfs_fsal_obj_handle *myself;
 	struct vfs_filesystem *vfs_fs;
-	struct vfs_fd temp_fd = {0, -1}, *out_fd = &temp_fd;
+	struct vfs_fd temp_fd = {
+			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, -1 };
+	struct vfs_fd *out_fd = &temp_fd;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	int rc, posix_flags;
 	bool reusing_open_state_fd = false;
@@ -1127,6 +1140,7 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 	int retval = 0;
 	bool has_lock = false;
 	bool closefd = false;
+	struct vfs_fd *vfs_fd = NULL;
 
 	if (info != NULL) {
 		/* Currently we don't support READ_PLUS */
@@ -1138,6 +1152,16 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
 		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		vfs_fd = &container_of(state, struct vfs_state_fd,
+				       state)->vfs_fd;
+
+		PTHREAD_RWLOCK_rdlock(&vfs_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
@@ -1231,6 +1255,7 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 	bool has_lock = false;
 	bool closefd = false;
 	fsal_openflags_t openflags = FSAL_O_WRITE;
+	struct vfs_fd *vfs_fd = NULL;
 
 	if (info != NULL) {
 		/* Currently we don't support WRITE_PLUS */
@@ -1242,6 +1267,16 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
 		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		vfs_fd = &container_of(state, struct vfs_state_fd,
+				       state)->vfs_fd;
+
+		PTHREAD_RWLOCK_rdlock(&vfs_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
@@ -1276,6 +1311,9 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 	}
 
  out:
+
+	if (vfs_fd)
+		PTHREAD_RWLOCK_unlock(&vfs_fd->fdlock);
 
 	if (closefd) {
 		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd);
@@ -1313,7 +1351,9 @@ fsal_status_t vfs_commit2(struct fsal_obj_handle *obj_hdl,
 	struct vfs_fsal_obj_handle *myself;
 	fsal_status_t status;
 	int retval;
-	struct vfs_fd temp_fd = {0, -1}, *out_fd = &temp_fd;
+	struct vfs_fd temp_fd = {
+			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, -1 };
+	struct vfs_fd *out_fd = &temp_fd;
 	bool has_lock = false;
 	bool closefd = false;
 
@@ -1393,6 +1433,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	bool closefd = false;
 	bool bypass = false;
 	fsal_openflags_t openflags = FSAL_O_RDWR;
+	struct vfs_fd *vfs_fd = NULL;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -1464,6 +1505,16 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_BAD_RANGE, 0);
 	}
 
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		vfs_fd = &container_of(state, struct vfs_state_fd,
+				       state)->vfs_fd;
+
+		PTHREAD_RWLOCK_rdlock(&vfs_fd->fdlock);
+	}
+
 	/* Get a usable file descriptor */
 	LogFullDebug(COMPONENT_FSAL, "Calling find_fd, state = %p", state);
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
@@ -1522,6 +1573,9 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	/* Fall through (retval == 0) */
 
  err:
+
+	if (vfs_fd)
+		PTHREAD_RWLOCK_unlock(&vfs_fd->fdlock);
 
 	if (closefd) {
 		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd);
@@ -1637,6 +1691,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	bool closefd = false;
 	int my_fd;
 	const char *func;
+	struct vfs_fd *vfs_fd = NULL;
 
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE))
@@ -1709,6 +1764,16 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			return fsalstat(ERR_FSAL_INVAL, EINVAL);
 		}
 		openflags = FSAL_O_RDWR;
+	}
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		vfs_fd = &container_of(state, struct vfs_state_fd,
+				       state)->vfs_fd;
+
+		PTHREAD_RWLOCK_rdlock(&vfs_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor. Share conflict is only possible if
@@ -1876,6 +1941,9 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	status = fsalstat(posix2fsal_error(retval), retval);
 
  out:
+
+	if (vfs_fd)
+		PTHREAD_RWLOCK_unlock(&vfs_fd->fdlock);
 
 	if (closefd) {
 		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd);

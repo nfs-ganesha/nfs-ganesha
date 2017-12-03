@@ -82,6 +82,8 @@ struct export {
 struct ceph_fd {
 	/** The open and share mode etc. */
 	fsal_openflags_t openflags;
+	/* rw lock to protect the file descriptor */
+	pthread_rwlock_t fdlock;
 	/** The cephfs file descriptor. */
 	Fh *fd;
 };

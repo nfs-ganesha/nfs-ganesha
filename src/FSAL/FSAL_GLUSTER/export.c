@@ -382,6 +382,8 @@ struct state_t *glusterfs_alloc_state(struct fsal_export *exp_hdl,
 			      state)->glusterfs_fd;
 
 	my_fd->glfd = NULL;
+	my_fd->openflags = FSAL_O_CLOSED;
+	PTHREAD_RWLOCK_init(&my_fd->fdlock, NULL);
 
 	return state;
 }
@@ -397,6 +399,9 @@ void glusterfs_free_state(struct fsal_export *exp_hdl, struct state_t *state)
 {
 	struct glusterfs_state_fd *state_fd =
 		container_of(state, struct glusterfs_state_fd, state);
+	struct glusterfs_fd *my_fd = &state_fd->glusterfs_fd;
+
+	PTHREAD_RWLOCK_destroy(&my_fd->fdlock);
 
 	gsh_free(state_fd);
 }

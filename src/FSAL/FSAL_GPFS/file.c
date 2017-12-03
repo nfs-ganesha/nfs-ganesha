@@ -43,6 +43,8 @@
 #include <fcntl.h>
 #include "gpfs_methods.h"
 
+#define STATE2FD(s) (&container_of(s, struct gpfs_state_fd, state)->gpfs_fd)
+
 static fsal_status_t
 gpfs_open_func(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 		struct fsal_fd *fd)
@@ -615,13 +617,19 @@ gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	fsal2posix_openflags(openflags, &posix_flags);
 
 	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd);
+
 	if (!FSAL_IS_ERROR(status)) {
 		/* Close the existing file descriptor and copy the new
-		 * one over.
+		 * one over. Make sure no one is using the fd that we are
+		 * about to close!
 		 */
+		PTHREAD_RWLOCK_wrlock(&my_share_fd->fdlock);
+
 		fsal_internal_close(my_share_fd->fd, NULL, 0);
 		my_share_fd->fd = my_fd;
 		my_share_fd->openflags = openflags;
+
+		PTHREAD_RWLOCK_unlock(&my_share_fd->fdlock);
 	} else {
 		/* We had a failure on open - we need to revert the share.
 		 * This can block over an I/O operation.
@@ -643,7 +651,9 @@ find_fd(int *fd, struct fsal_obj_handle *obj_hdl, bool bypass,
 {
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	struct gpfs_fsal_obj_handle *myself;
-	struct gpfs_fd temp_fd = {0, -1}, *out_fd = &temp_fd;
+	struct gpfs_fd temp_fd = {
+			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, -1 };
+	struct gpfs_fd *out_fd = &temp_fd;
 	int posix_flags;
 	bool reusing_open_state_fd = false;
 
@@ -749,12 +759,21 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
+	struct gpfs_fd *gpfs_fd = NULL;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
 		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		gpfs_fd = STATE2FD(state);
+		PTHREAD_RWLOCK_rdlock(&gpfs_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
@@ -764,6 +783,8 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
 			 "find_fd failed %s", msg_fsal_err(status.major));
+		if (gpfs_fd)
+			PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
 		return status;
 	}
 
@@ -775,6 +796,9 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 		status = GPFSFSAL_read(my_fd, offset, buffer_size, buffer,
 					read_amount, end_of_file,
 					export_fd);
+
+	if (gpfs_fd)
+		PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
 
 	if (closefd) {
 		fsal_status_t status2;
@@ -831,6 +855,7 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
+	struct gpfs_fd *gpfs_fd = NULL;
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -838,6 +863,15 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
 		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
 	}
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		gpfs_fd = STATE2FD(state);
+		PTHREAD_RWLOCK_rdlock(&gpfs_fd->fdlock);
+	}
+
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
 			 &has_lock, &closefd, false);
@@ -845,6 +879,8 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
 			 "find_fd failed %s", msg_fsal_err(status.major));
+		if (gpfs_fd)
+			PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
 		return status;
 	}
 
@@ -856,6 +892,9 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 		status = GPFSFSAL_write(my_fd, offset, buffer_size, buffer,
 				wrote_amount, fsal_stable, op_ctx,
 				export_fd);
+
+	if (gpfs_fd)
+		PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
 
 	if (closefd) {
 		fsal_status_t status2;
@@ -924,7 +963,9 @@ gpfs_commit2(struct fsal_obj_handle *obj_hdl, off_t offset, size_t len)
 {
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *myself;
-	struct gpfs_fd temp_fd = {0, -1}, *out_fd = &temp_fd;
+	struct gpfs_fd temp_fd = {
+			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, -1 };
+	struct gpfs_fd *out_fd = &temp_fd;
 	bool has_lock = false;
 	bool closefd = false;
 
@@ -994,6 +1035,7 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
+	struct gpfs_fd *gpfs_fd = NULL;
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Locking: op:%d sle_type:%d type:%d start:%llu length:%llu owner:%p",
@@ -1078,6 +1120,14 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		gpfs_fd = STATE2FD(state);
+		PTHREAD_RWLOCK_rdlock(&gpfs_fd->fdlock);
+	}
+
 	/* Get a usable file descriptor */
 	status = find_fd(&glock_args.lfd, obj_hdl, bypass, state,
 			 openflags, &has_lock, &closefd, true);
@@ -1085,6 +1135,8 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
 			 "find_fd failed %s", msg_fsal_err(status.major));
+		if (gpfs_fd)
+			PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
 		return status;
 	}
 
@@ -1099,6 +1151,9 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 	status = GPFSFSAL_lock_op(export, lock_op, req_lock, conflicting_lock,
 				  &gpfs_sg_arg);
+
+	if (gpfs_fd)
+		PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
 
 	if (closefd) {
 		fsal_status_t status2;

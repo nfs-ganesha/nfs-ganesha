@@ -158,6 +158,9 @@ struct glusterfs_fd {
 	 */
 	fsal_openflags_t openflags;
 
+	/* rw lock to protect the file descriptor */
+	pthread_rwlock_t fdlock;
+
 	/** Gluster file descriptor. */
 	struct glfs_fd *glfd;
 	struct user_cred creds; /* user creds opening fd*/

@@ -1812,10 +1812,16 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 
 	if (!FSAL_IS_ERROR(status)) {
 		/* Close the existing file descriptor and copy the new
-		 * one over.
+		 * one over. Make sure no one is using the fd that we are
+		 * about to close!
 		 */
+		PTHREAD_RWLOCK_wrlock(&my_share_fd->fdlock);
+
 		glusterfs_close_my_fd(my_share_fd);
-		*my_share_fd = fd;
+		my_share_fd->glfd = my_fd->glfd;
+		my_share_fd->openflags = my_fd->openflags;
+
+		PTHREAD_RWLOCK_unlock(&my_share_fd->fdlock);
 	} else {
 		/* We had a failure on open - we need to revert the share.
 		 * This can block over an I/O operation.
@@ -1852,6 +1858,7 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 	bool closefd = false;
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
+	struct glusterfs_fd *glusterfs_fd = NULL;
 
 	if (info != NULL) {
 		/* Currently we don't support READ_PLUS */
@@ -1867,6 +1874,16 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
 	}
 #endif
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		glusterfs_fd = &container_of(state, struct glusterfs_state_fd,
+					     state)->glusterfs_fd;
+
+		PTHREAD_RWLOCK_rdlock(&glusterfs_fd->fdlock);
+	}
 
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
@@ -1914,6 +1931,9 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 
  out:
 
+	if (glusterfs_fd)
+		PTHREAD_RWLOCK_unlock(&glusterfs_fd->fdlock);
+
 	if (closefd)
 		glusterfs_close_my_fd(&my_fd);
 
@@ -1946,7 +1966,7 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	fsal_openflags_t openflags = FSAL_O_WRITE;
 	struct glusterfs_export *glfs_export =
 	     container_of(op_ctx->fsal_export, struct glusterfs_export, export);
-
+	struct glusterfs_fd *glusterfs_fd = NULL;
 
 	if (info != NULL) {
 		/* Currently we don't support WRITE_PLUS */
@@ -1962,6 +1982,16 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
 	}
 #endif
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		glusterfs_fd = &container_of(state, struct glusterfs_state_fd,
+					     state)->glusterfs_fd;
+
+		PTHREAD_RWLOCK_rdlock(&glusterfs_fd->fdlock);
+	}
 
 	/* Get a usable file descriptor */
 	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
@@ -1991,6 +2021,9 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 
  out:
 
+	if (glusterfs_fd)
+		PTHREAD_RWLOCK_unlock(&glusterfs_fd->fdlock);
+
 	if (closefd)
 		glusterfs_close_my_fd(&my_fd);
 
@@ -2009,7 +2042,9 @@ static fsal_status_t glusterfs_commit2(struct fsal_obj_handle *obj_hdl,
 {
 	fsal_status_t status;
 	int retval;
-	struct glusterfs_fd tmp_fd = {0, NULL}, *out_fd = &tmp_fd;
+	struct glusterfs_fd tmp_fd = {
+			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, NULL };
+	struct glusterfs_fd *out_fd = &tmp_fd;
 	struct glusterfs_handle *myself = NULL;
 	bool has_lock = false;
 	bool closefd = false;
@@ -2078,6 +2113,7 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export,
 			 struct glusterfs_export, export);
+	struct glusterfs_fd *glusterfs_fd = NULL;
 
 #if 0
 	/** @todo: fsid work */
@@ -2150,6 +2186,16 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 			PRId64 "), request_lock_length(%" PRIu64 ")",
 			lock_args.l_len, request_lock->lock_length);
 		return fsalstat(ERR_FSAL_BAD_RANGE, 0);
+	}
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		glusterfs_fd = &container_of(state, struct glusterfs_state_fd,
+					     state)->glusterfs_fd;
+
+		PTHREAD_RWLOCK_rdlock(&glusterfs_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
@@ -2237,6 +2283,9 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
  err:
 	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
 
+	if (glusterfs_fd)
+		PTHREAD_RWLOCK_unlock(&glusterfs_fd->fdlock);
+
 	if (closefd)
 		glusterfs_close_my_fd(&my_fd);
 
@@ -2277,7 +2326,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	glusterfs_fsal_xstat_t buffxstat;
 	int attr_valid = 0;
 	int mask = 0;
-
+	struct glusterfs_fd *glusterfs_fd = NULL;
 
 	/** @todo: Handle special file symblic links etc */
 	/* apply umask, if mode attribute is to be changed */
@@ -2309,6 +2358,17 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	/** TRUNCATE **/
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE) &&
 	    (obj_hdl->type == REGULAR_FILE)) {
+		/* Acquire state's fdlock to prevent OPEN upgrade closing the
+		 * file descriptor while we use it.
+		 */
+		if (state) {
+			glusterfs_fd = &container_of(state,
+						     struct glusterfs_state_fd,
+						     state)->glusterfs_fd;
+
+			PTHREAD_RWLOCK_rdlock(&glusterfs_fd->fdlock);
+		}
+
 		/* Get a usable file descriptor. Share conflict is only
 		 * possible if size is being set. For special files,
 		 * handle via handle.
@@ -2453,6 +2513,9 @@ out:
 			 "setattrs failed with error %s",
 			 strerror(status.minor));
 	}
+
+	if (glusterfs_fd)
+		PTHREAD_RWLOCK_unlock(&glusterfs_fd->fdlock);
 
 	if (closefd)
 		glusterfs_close_my_fd(&my_fd);
