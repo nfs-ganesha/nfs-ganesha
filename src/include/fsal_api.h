@@ -2945,6 +2945,7 @@ enum pnfs_ds_status {
  * associated with an export (which represents an MDS).
  */
 struct fsal_pnfs_ds {
+	struct glist_head ds_list;	/**< Entry in list of all DSs */
 	struct glist_head server;	/**< Link in list of Data Servers under
 					   the same FSAL. */
 	struct glist_head ds_handles;	/**< Head of list of DS handles */

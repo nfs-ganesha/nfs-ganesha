@@ -48,6 +48,11 @@ struct server_by_id {
 
 static struct server_by_id server_by_id;
 
+/** List of all active data servers,
+  * protected by server_by_id.lock
+  */
+static struct glist_head dslist;
+
 /**
  * @brief Compute cache slot for an entry
  *
@@ -131,6 +136,7 @@ bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
 
 	/* update cache */
 	atomic_store_voidptr(cache_slot, &pds->ds_node);
+	glist_add_tail(&dslist, &pds->ds_list);
 
 	pnfs_ds_get_ref(pds);		/* == 2 */
 	if (pds->mds_export != NULL) {
@@ -249,6 +255,9 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
 
 		pds = avltree_container_of(node, struct fsal_pnfs_ds, ds_node);
 
+		/* Remove the DS from the DS list */
+		glist_del(&pds->ds_list);
+
 		/* Eliminate repeated locks during draining. Idempotent. */
 		pds->pnfs_ds_status = PNFS_DS_STALE;
 	}
@@ -279,6 +288,33 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
 			 */
 			pnfs_ds_put(pds);
 		}
+	}
+}
+
+/**
+ * @brief Remove all DSs left in the system
+ *
+ * Make sure all DSs are freed on shutdown.  This will catch all DSs not
+ * associated with an export.
+ *
+ */
+void remove_all_dss(void)
+{
+	struct glist_head tmplist, *glist, *glistn;
+	struct fsal_pnfs_ds *pds;
+
+	glist_init(&tmplist);
+
+	/* pnfs_ds_remove() take the lock, so move the entire list to a tmp head
+	 * under the lock, then process it outside the lock. */
+	PTHREAD_RWLOCK_wrlock(&server_by_id.lock);
+	glist_splice_tail(&tmplist, &dslist);
+	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+
+	/* Now we can safely process the list without the lock */
+	glist_for_each_safe(glist, glistn, &tmplist) {
+		pds = glist_entry(glist, struct fsal_pnfs_ds, ds_list);
+		pnfs_ds_remove(pds->id_servers, true);
 	}
 }
 
@@ -340,7 +376,14 @@ err:
 
 static void *pds_init(void *link_mem, void *self_struct)
 {
-	if (self_struct == NULL) {
+	static struct fsal_pnfs_ds special_ds;
+
+	if (link_mem == (void *)~0UL) {
+		/* This is the special case of no config.  We cannot malloc
+		 * this, as it's never committed, so it's leaked. */
+		memset(&special_ds, 0, sizeof(special_ds));
+		return &special_ds;
+	} else if (self_struct == NULL) {
 		return pnfs_ds_alloc();
 	} else { /* free resources case */
 		pnfs_ds_free(self_struct);
@@ -486,5 +529,6 @@ void server_pkginit(void)
 #endif
 	PTHREAD_RWLOCK_init(&server_by_id.lock, &rwlock_attr);
 	avltree_init(&server_by_id.t, server_id_cmpf, 0);
+	glist_init(&dslist);
 	memset(&server_by_id.cache, 0, sizeof(server_by_id.cache));
 }

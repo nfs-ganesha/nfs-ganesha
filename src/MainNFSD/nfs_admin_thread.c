@@ -40,6 +40,7 @@
 #include "idmapper.h"
 #include "delayed_exec.h"
 #include "export_mgr.h"
+#include "pnfs_utils.h"
 #include "fsal.h"
 #include "netgroup_cache.h"
 #ifdef USE_DBUS
@@ -490,6 +491,9 @@ static void do_shutdown(void)
 
 	LogEvent(COMPONENT_MAIN, "Removing all exports.");
 	remove_all_exports();
+
+	LogEvent(COMPONENT_MAIN, "Removing all DSs.");
+	remove_all_dss();
 
 	(void)svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
 

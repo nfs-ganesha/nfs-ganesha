@@ -247,6 +247,7 @@ void pnfs_ds_remove(uint16_t id_servers, bool final);
 
 int ReadDataServers(config_file_t in_config,
 		    struct config_error_type *err_type);
+void remove_all_dss(void);
 void server_pkginit(void);
 
 #endif				/* PNFS_UTILS_H */
