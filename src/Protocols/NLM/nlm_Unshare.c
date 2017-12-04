@@ -52,7 +52,7 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	state_owner_t *nlm_owner;
 	state_t *nlm_state;
 	int rc;
-	int grace = nfs_in_grace();
+	bool grace = nfs_in_grace();
 
 	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
 	 * responding to an NLM_*_MSG call, so we check here if the export is

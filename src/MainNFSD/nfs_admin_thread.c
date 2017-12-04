@@ -163,7 +163,7 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 		if (gsp.event == EVENT_TAKE_NODEID)
 			gsp.nodeid = atoi(gsp.ipaddr);
 	}
-	nfs4_start_grace(&gsp);
+	nfs_start_grace(&gsp);
  out:
 	dbus_status_reply(&iter, success, errormsg);
 	return success;

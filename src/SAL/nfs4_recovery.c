@@ -49,7 +49,7 @@ struct nfs4_recovery_backend *recovery_backend;
 static int clid_count; /* protected by grace_mutex */
 static int32_t reclaim_completes; /* atomic */
 
-static void nfs4_recovery_load_clids_nolock(nfs_grace_start_t *gsp);
+static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state(char *release_ip);
 static void nfs_release_v4_client(char *ip);
 
@@ -88,6 +88,27 @@ void nfs4_cleanup_clid_entrys(void)
 }
 
 /**
+ * Lift the grace period, if current_grace has not changed since we last
+ * checked it. If something has changed in the interim, then don't do
+ * anything. Either someone has set a new grace period, or someone else
+ * beat us to lifting this one.
+ */
+static void
+nfs_lift_grace_locked(time_t current)
+{
+	/*
+	 * Caller must hold grace_mutex. Only the thread that actually sets
+	 * the value to 0 gets to clean up the recovery db.
+	 */
+	if (atomic_fetch_time_t(&current_grace) == current) {
+		nfs4_recovery_cleanup();
+		__sync_synchronize();
+		atomic_store_time_t(&current_grace, (time_t)0);
+		LogEvent(COMPONENT_STATE, "NFS Server Now NOT IN GRACE");
+	}
+}
+
+/**
  * @brief Start grace period
  *
  * This routine can be called due to server start/restart or from
@@ -96,22 +117,31 @@ void nfs4_cleanup_clid_entrys(void)
  *
  * @param[in] gsp Grace period start information
  */
-void nfs4_start_grace(nfs_grace_start_t *gsp)
+void nfs_start_grace(nfs_grace_start_t *gsp)
 {
-	if (nfs_param.nfsv4_param.graceless) {
-		LogEvent(COMPONENT_STATE,
-			 "NFS Server skipping GRACE (Graceless is true)");
-		return;
-	}
+	bool was_grace;
 
 	PTHREAD_MUTEX_lock(&grace_mutex);
+
+	if (nfs_param.nfsv4_param.graceless) {
+		nfs_lift_grace_locked(atomic_fetch_time_t(&current_grace));
+		LogEvent(COMPONENT_STATE,
+			 "NFS Server skipping GRACE (Graceless is true)");
+		goto out;
+	}
 
 	/* grace should always be greater than or equal to lease time,
 	 * some clients are known to have problems with grace greater than 60
 	 * seconds Lease_Lifetime should be set to a smaller value for those
 	 * setups.
+	 *
+	 * Checks against the grace period are lockless, so we want to ensure
+	 * that the callers see the
+	 * Full barrier to ensure enforcement begins ASAP.
 	 */
+	was_grace = (bool)atomic_fetch_time_t(&current_grace);
 	atomic_store_time_t(&current_grace, time(NULL));
+	__sync_synchronize();
 
 	if ((int)nfs_param.nfsv4_param.grace_period <
 		(int)nfs_param.nfsv4_param.lease_lifetime) {
@@ -124,10 +154,18 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 	LogEvent(COMPONENT_STATE, "NFS Server Now IN GRACE, duration %d",
 		 (int)nfs_param.nfsv4_param.grace_period);
 	/*
-	 * if called from failover code and given a nodeid, then this node
-	 * is doing a take over.  read in the client ids from the failing node
+	 * If we're just starting the grace period, then load the
+	 * clid database. Don't load it however if we're extending the
+	 * existing grace period.
 	 */
-	if (gsp && gsp->event != EVENT_JUST_GRACE) {
+	if (!gsp && !was_grace) {
+		nfs4_recovery_load_clids(NULL);
+	} else if (gsp && gsp->event != EVENT_JUST_GRACE) {
+		/*
+		 * if called from failover code and given a nodeid, then this
+		 * node is doing a take over.  read in the client ids from the
+		 * failing node.
+		 */
 		LogEvent(COMPONENT_STATE,
 			 "NFS Server recovery event %d nodeid %d ip %s",
 			 gsp->event, gsp->nodeid, gsp->ipaddr);
@@ -139,9 +177,11 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
 			if (gsp->event == EVENT_RELEASE_IP)
 				nfs_release_v4_client(gsp->ipaddr);
 			else
-				nfs4_recovery_load_clids_nolock(gsp);
+				nfs4_recovery_load_clids(gsp);
 		}
 	}
+
+out:
 	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
 
@@ -151,17 +191,19 @@ void nfs4_start_grace(nfs_grace_start_t *gsp)
  * @retval true if so.
  * @retval false if not.
  */
-int nfs_in_grace(void)
+bool nfs_in_grace(void)
 {
-	int in_grace;
-	static int last_grace  = -1;
+	return atomic_fetch_time_t(&current_grace);
+}
+
+void nfs_try_lift_grace(void)
+{
+	bool in_grace = true;
 	int32_t rc_count = 0;
+	time_t current = atomic_fetch_time_t(&current_grace);
 
-	if (nfs_param.nfsv4_param.graceless)
-		return 0;
-
-
-	in_grace = 1;
+	if (!current)
+		return;
 
 	/*
 	 * If we know there are no NLM clients, then we can consider the grace
@@ -173,19 +215,18 @@ int nfs_in_grace(void)
 
 	/* Otherwise, wait for the timeout */
 	if (in_grace)
-		in_grace = ((atomic_fetch_time_t(&current_grace) +
-			     nfs_param.nfsv4_param.grace_period) > time(NULL));
+		in_grace = ((current + nfs_param.nfsv4_param.grace_period) >
+					time(NULL));
 
-	if (in_grace != last_grace) {
-		LogEvent(COMPONENT_STATE, "NFS Server Now %s ",
-			 in_grace ? "IN GRACE" : "NOT IN GRACE");
-		last_grace = in_grace;
-	} else if (in_grace) {
-		LogDebug(COMPONENT_STATE, "NFS Server IN GRACE (%d:%d)",
-				clid_count, rc_count);
+	/*
+	 * Can we lift the grace period now? If so, take the grace_mutex and
+	 * try to do it.
+	 */
+	if (!in_grace) {
+		PTHREAD_MUTEX_lock(&grace_mutex);
+		nfs_lift_grace_locked(current);
+		PTHREAD_MUTEX_unlock(&grace_mutex);
 	}
-
-	return in_grace;
 }
 
 /**
@@ -334,7 +375,14 @@ void  nfs4_chk_clid(nfs_client_id_t *clientid)
 	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
 
-static void nfs4_recovery_load_clids_nolock(nfs_grace_start_t *gsp)
+/**
+ * @brief Load clients for recovery
+ *
+ * @param[in] nodeid Node, on takeover
+ *
+ * Caller must hold grace_mutex.
+ */
+static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp)
 {
 	LogDebug(COMPONENT_STATE, "Load recovery cli %p", gsp);
 
@@ -343,20 +391,6 @@ static void nfs4_recovery_load_clids_nolock(nfs_grace_start_t *gsp)
 		nfs4_cleanup_clid_entrys();
 	recovery_backend->recovery_read_clids(gsp, nfs4_add_clid_entry,
 						nfs4_add_rfh_entry);
-}
-
-/**
- * @brief Load clients for recovery
- *
- * @param[in] nodeid Node, on takeover
- */
-void nfs4_recovery_load_clids(nfs_grace_start_t *gsp)
-{
-	PTHREAD_MUTEX_lock(&grace_mutex);
-
-	nfs4_recovery_load_clids_nolock(gsp);
-
-	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
 
 static int load_backend(const char *name)

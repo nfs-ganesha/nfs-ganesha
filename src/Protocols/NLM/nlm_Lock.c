@@ -53,7 +53,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	state_t *nlm_state;
 	fsal_lock_param_t lock, conflict;
 	int rc;
-	int grace = nfs_in_grace();
+	bool grace = nfs_in_grace();
 	state_block_data_t *pblock_data;
 	const char *proc_name = "nlm4_Lock";
 	care_t care = CARE_MONITOR;

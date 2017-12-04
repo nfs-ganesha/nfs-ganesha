@@ -52,7 +52,7 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	state_owner_t *nlm_owner;
 	state_t *nlm_state;
 	int rc;
-	int grace = nfs_in_grace();
+	bool grace = nfs_in_grace();
 	/* Indicate if we let FSAL to handle requests during grace. */
 	bool_t fsal_grace = false;
 

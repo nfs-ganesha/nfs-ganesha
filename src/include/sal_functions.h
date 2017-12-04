@@ -965,13 +965,13 @@ void blocked_lock_polling(struct fridgethr_context *ctx);
  *
  ******************************************************************************/
 
-void nfs4_start_grace(nfs_grace_start_t *gsp);
-int nfs_in_grace(void);
+void nfs_start_grace(nfs_grace_start_t *gsp);
+bool nfs_in_grace(void);
+void nfs_try_lift_grace(void);
 void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(nfs_client_id_t *);
 void nfs4_recovery_reclaim_complete(nfs_client_id_t *clientid);
 void nfs4_chk_clid(nfs_client_id_t *);
-void nfs4_recovery_load_clids(nfs_grace_start_t *gsp);
 void nfs4_recovery_cleanup(void);
 void nfs4_recovery_init(void);
 void nfs4_record_revoke(nfs_client_id_t *, nfs_fh4 *);

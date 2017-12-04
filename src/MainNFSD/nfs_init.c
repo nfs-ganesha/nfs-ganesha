@@ -823,11 +823,8 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	 */
 	nfs4_recovery_init();
 
-	/* read in the client IDs */
-	nfs4_recovery_load_clids(NULL);
-
 	/* Start grace period */
-	nfs4_start_grace(NULL);
+	nfs_start_grace(NULL);
 
 	/* callback dispatch */
 	nfs_rpc_cb_pkginit();
@@ -975,9 +972,8 @@ void nfs_start(nfs_start_info_t *p_start_info)
 	/* Regular exit */
 	LogEvent(COMPONENT_MAIN, "NFS EXIT: regular exit");
 
-	/* if not in grace period, clean up the old state directory */
-	if (!nfs_in_grace())
-		nfs4_recovery_cleanup();
+	/* Try to lift the grace period */
+	nfs_try_lift_grace();
 
 	Cleanup();
 
