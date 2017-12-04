@@ -2938,22 +2938,28 @@ enum pnfs_ds_status {
 	PNFS_DS_STALE,			/*< is no longer valid */
 };
 
+/**
+ * @brief PNFS Data Server
+ *
+ * This represents a Data Server for PNFS.  It may be stand-alone, or may be
+ * associated with an export (which represents an MDS).
+ */
 struct fsal_pnfs_ds {
-	struct glist_head server;	/*< Link in list of Data Servers under
+	struct glist_head server;	/**< Link in list of Data Servers under
 					   the same FSAL. */
-	struct glist_head ds_handles;	/*< Head of list of DS handles */
-	struct fsal_module *fsal;	/*< Link back to fsal module */
-	struct fsal_pnfs_ds_ops s_ops;	/*< Operations vector */
-	struct gsh_export *mds_export;	/*< related export */
-	struct fsal_export *mds_fsal_export;	/*< related FSAL export (avoids
+	struct glist_head ds_handles;	/**< Head of list of DS handles */
+	struct fsal_module *fsal;	/**< Link back to fsal module */
+	struct fsal_pnfs_ds_ops s_ops;	/**< Operations vector */
+	struct gsh_export *mds_export;	/**< related export */
+	struct fsal_export *mds_fsal_export;	/**< related FSAL export (avoids
 						  MDS stacking) */
 
-	struct avltree_node ds_node;	/*< Node in tree of all Data Servers. */
-	pthread_rwlock_t lock;		/*< Lock to be held when
+	struct avltree_node ds_node;	/**< Node in tree of all Data Servers */
+	pthread_rwlock_t lock;		/**< Lock to be held when
 					    manipulating its list (above). */
-	int32_t refcount;		/*< Reference count */
-	uint16_t id_servers;		/*< Identifier */
-	uint8_t pnfs_ds_status;		/*< current condition */
+	int32_t refcount;		/**< Reference count */
+	uint16_t id_servers;		/**< Identifier */
+	uint8_t pnfs_ds_status;		/**< current condition */
 };
 
 /**
