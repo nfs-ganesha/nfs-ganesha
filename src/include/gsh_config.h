@@ -482,6 +482,8 @@ typedef struct nfs_version4_parameter {
 	char *recovery_backend;
 	/** List of supported NFSV4 minor versions */
 	unsigned int minor_versions;
+	/** Number of allowed slots in the 4.1 slot table */
+	uint32_t nb_slots;
 } nfs_version4_parameter_t;
 
 /** @} */

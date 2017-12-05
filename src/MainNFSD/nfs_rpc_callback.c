@@ -1025,7 +1025,7 @@ static rpc_call_t *construct_v41(nfs41_session_t *session,
 
 	memcpy(sequence->csa_sessionid, session->session_id,
 	       NFS4_SESSIONID_SIZE);
-	sequence->csa_sequenceid = session->cb_slots[slot].sequence;
+	sequence->csa_sequenceid = session->bc_slots[slot].sequence;
 	sequence->csa_slotid = slot;
 	sequence->csa_highest_slotid = highest_slot;
 	sequence->csa_cachethis = false;
@@ -1106,16 +1106,16 @@ static bool find_cb_slot(nfs41_session_t *session, bool wait, slotid4 *slot,
  retry:
 	for (cur = 0;
 	     cur < MIN(session->back_channel_attrs.ca_maxrequests,
-		       NFS41_NB_SLOTS);
+		       session->nb_slots);
 	     ++cur) {
 
-		if (!(session->cb_slots[cur].in_use) && (!found)) {
+		if (!(session->bc_slots[cur].in_use) && (!found)) {
 			found = true;
 			*slot = cur;
 			*highest_slot = cur;
 		}
 
-		if (session->cb_slots[cur].in_use)
+		if (session->bc_slots[cur].in_use)
 			*highest_slot = cur;
 	}
 
@@ -1136,8 +1136,8 @@ static bool find_cb_slot(nfs41_session_t *session, bool wait, slotid4 *slot,
 	}
 
 	if (found) {
-		session->cb_slots[*slot].in_use = true;
-		++session->cb_slots[*slot].sequence;
+		session->bc_slots[*slot].in_use = true;
+		++session->bc_slots[*slot].sequence;
 		assert(*slot < session->back_channel_attrs.ca_maxrequests);
 	}
 
@@ -1156,9 +1156,9 @@ static bool find_cb_slot(nfs41_session_t *session, bool wait, slotid4 *slot,
 static void release_cb_slot(nfs41_session_t *session, slotid4 slot, bool sent)
 {
 	PTHREAD_MUTEX_lock(&session->cb_mutex);
-	session->cb_slots[slot].in_use = false;
+	session->bc_slots[slot].in_use = false;
 	if (!sent)
-		--session->cb_slots[slot].sequence;
+		--session->bc_slots[slot].sequence;
 	pthread_cond_broadcast(&session->cb_cond);
 	PTHREAD_MUTEX_unlock(&session->cb_mutex);
 }

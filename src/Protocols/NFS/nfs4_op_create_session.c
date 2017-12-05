@@ -301,8 +301,13 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	nfs41_session->cb_program = 0;
 	PTHREAD_MUTEX_init(&nfs41_session->cb_mutex, NULL);
 	PTHREAD_COND_init(&nfs41_session->cb_cond, NULL);
-	for (i = 0; i < NFS41_NB_SLOTS; i++)
-		PTHREAD_MUTEX_init(&nfs41_session->slots[i].lock, NULL);
+	nfs41_session->nb_slots = nfs_param.nfsv4_param.nb_slots;
+	nfs41_session->fc_slots = gsh_calloc(nfs41_session->nb_slots,
+					     sizeof(nfs41_session_slot_t));
+	nfs41_session->bc_slots = gsh_calloc(nfs41_session->nb_slots,
+					     sizeof(nfs41_cb_session_slot_t));
+	for (i = 0; i < nfs41_session->nb_slots; i++)
+		PTHREAD_MUTEX_init(&nfs41_session->fc_slots[i].lock, NULL);
 
 	/* Take reference to clientid record on behalf the session. */
 	inc_client_id_ref(found);
@@ -314,7 +319,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	PTHREAD_MUTEX_unlock(&found->cid_mutex);
 
 	/* Set ca_maxrequests */
-	nfs41_session->fore_channel_attrs.ca_maxrequests = NFS41_NB_SLOTS;
+	nfs41_session->fore_channel_attrs.ca_maxrequests =
+		nfs41_session->nb_slots;
 	nfs41_Build_sessionid(&clientid, nfs41_session->session_id);
 
 	res_CREATE_SESSION4ok->csr_sequence = arg_CREATE_SESSION4->csa_sequence;

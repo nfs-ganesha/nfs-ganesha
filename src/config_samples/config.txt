@@ -188,6 +188,8 @@ NFSV4 {}
 
 	Minor_Versions(enum list, values [0, 1, 2], default [0, 1, 2])
 
+	Slot_Table_Size(uint32, range 1 to 1024, default 64)
+
 EXPORT_DEFAULTS {}
 ------------------
 

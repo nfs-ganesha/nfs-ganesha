@@ -291,6 +291,9 @@ RecoveryBackend(path, default "fs")
 Minor_Versions(enum list, values [0, 1, 2], default [0, 1, 2])
     List of supported NFSV4 minor version numbers.
 
+Slot_Table_Size(uint32, range 1 to 1024, default 64)
+    Size of the NFSv4.1 slot table
+
 RADOS_KV {}
 --------------------------------------------------------------------------------
 

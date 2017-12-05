@@ -116,12 +116,12 @@ extern pool_t *nfs41_session_pool;
 extern hash_table_t *ht_session_id;
 
 /**
- * @brief Number of forechannel slots in a session
+ * @brief Default number of forechannel slots in a session
  *
  * This is also the maximum number of backchannel slots we'll use,
  * even if the client offers more.
  */
-#define NFS41_NB_SLOTS 3
+#define NFS41_NB_SLOTS_DEF 64
 
 /**
  * @brief Members in the slot table
@@ -164,11 +164,8 @@ struct nfs41_session {
 					   clientid */
 
 	channel_attrs4 fore_channel_attrs;	/*< Fore-channel attributes */
-	nfs41_session_slot_t slots[NFS41_NB_SLOTS];	/*< Slot table */
 
 	channel_attrs4 back_channel_attrs;	/*< Back-channel attributes */
-	nfs41_cb_session_slot_t cb_slots[NFS41_NB_SLOTS];	/*< Callback
-								   Slot table */
 	struct rpc_call_channel cb_chan;	/*< Back channel */
 	pthread_mutex_t cb_mutex;	/*< Protects the cb slot table,
 					   when searching for a free slot */
@@ -184,6 +181,9 @@ struct nfs41_session {
 	uint32_t cb_program;	/*< Callback program ID */
 	uint32_t flags;		/*< Flags pertaining to this session */
 	int32_t refcount;
+	uint32_t nb_slots;	/**< Number of slots in this session */
+	nfs41_session_slot_t *fc_slots;	/**< Forechannel slot table*/
+	nfs41_cb_session_slot_t *bc_slots;	/**< Backchannel slot table */
 };
 
 /**
