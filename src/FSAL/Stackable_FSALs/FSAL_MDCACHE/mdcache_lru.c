@@ -1818,10 +1818,6 @@ _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 	/* adjust LRU on initial refs */
 	if (flags & LRU_REQ_INITIAL) {
 
-		/* do it less */
-		if ((atomic_inc_int32_t(&entry->lru.cf) % 3) != 0)
-			goto out;
-
 		QLOCK(qlane);
 
 		switch (lru->qid) {
@@ -1845,7 +1841,7 @@ _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		}		/* switch qid */
 		QUNLOCK(qlane);
 	}			/* initial ref */
- out:
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
