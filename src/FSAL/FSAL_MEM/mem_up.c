@@ -285,5 +285,8 @@ mem_up_pkgshutdown(void)
 		LogMajor(COMPONENT_FSAL_UP,
 			 "Failed shutting down MEM_UP thread: %d", rc);
 	}
+
+	fridgethr_destroy(mem_up_fridge);
+	mem_up_fridge = NULL;
 	return fsalstat(posix2fsal_error(rc), rc);
 }
