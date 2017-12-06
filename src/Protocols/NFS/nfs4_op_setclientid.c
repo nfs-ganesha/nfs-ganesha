@@ -317,6 +317,8 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 		free_client_id(unconf);
 		res_SETCLIENTID4->status = NFS4ERR_INVAL;
 
+		free_client_id(unconf);
+
 		goto out;
 	}
 
