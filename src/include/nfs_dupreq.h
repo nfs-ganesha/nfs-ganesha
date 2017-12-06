@@ -70,11 +70,16 @@ typedef struct drc {
 	uint32_t flags;
 	uint32_t refcnt; /* call path refs */
 	uint32_t retwnd;
+	time_t   last_used;
 	union {
 		struct {
 			sockaddr_t addr;
 			struct opr_rbtree_node recycle_k;
 
+			/* drc_q holds all drcs that are active i.e. all drcs
+			 * excluding the one queued for recycling.
+			 */
+			TAILQ_ENTRY(drc) drc_q;
 			TAILQ_ENTRY(drc) recycle_q; /* XXX drc */
 			time_t recycle_time;
 			uint64_t hk; /* hash key */
@@ -138,7 +143,8 @@ void dupreq2_pkgshutdown(void);
 
 drc_t *drc_get_tcp_drc(struct svc_req *);
 void drc_release_tcp_drc(drc_t *);
-void nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags);
+void nfs_dupreq_put_drc(SVCXPRT *xprt, drc_t *drc);
+void nfs_dupreq_unref_drc(SVCXPRT *xprt, drc_t *drc, uint32_t flags);
 
 dupreq_status_t nfs_dupreq_start(nfs_request_t *,
 				 struct svc_req *);
