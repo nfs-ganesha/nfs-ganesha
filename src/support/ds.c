@@ -327,6 +327,8 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 
 err:
 	release_root_op_context();
+	/* Don't leak the FSAL block */
+	err_type->dispose = true;
 	return errcnt;
 }
 
