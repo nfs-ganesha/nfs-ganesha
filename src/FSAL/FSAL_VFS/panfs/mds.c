@@ -322,7 +322,7 @@ static void *callback_thread(void *callback_info)
 
 		if (err) {
 			LogDebug(COMPONENT_FSAL,
-				 "callback_thread: => %d (%s)", err,
+				 "callback thread: => %d (%s)", err,
 				 strerror(err));
 			break;
 		}

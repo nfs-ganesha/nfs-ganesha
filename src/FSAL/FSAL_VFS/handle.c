@@ -1069,8 +1069,8 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 
 	LogFullDebug(COMPONENT_FSAL, "link to %s", name);
 
-	if (!op_ctx->fsal_export->exp_ops.
-	    fs_supports(op_ctx->fsal_export, fso_link_support)) {
+	if (!op_ctx->fsal_export->exp_ops.fs_supports(
+				op_ctx->fsal_export, fso_link_support)) {
 		fsal_error = ERR_FSAL_NOTSUPP;
 		goto out;
 	}
@@ -1653,6 +1653,7 @@ static fsal_status_t vfs_fs_locations(struct fsal_obj_handle *obj_hdl,
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	struct vfs_filesystem *vfs_fs = myself->obj_handle.fs->private_data;
+	struct fs_location4 *loc_val = fs_locs->locations.locations_val;
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "vfs_fs = %s root_fd = %d major = %d minor = %d",
@@ -1682,16 +1683,11 @@ static fsal_status_t vfs_fs_locations(struct fsal_obj_handle *obj_hdl,
 		nfs4_pathname4_free(&fs_locs->fs_root);
 		nfs4_pathname4_alloc(&fs_locs->fs_root,
 				     myself->u.directory.path);
-		strncpy(fs_locs->locations.locations_val->
-			server.server_val->utf8string_val,
+		strncpy(loc_val->server.server_val->utf8string_val,
 			server, strlen(server));
-		fs_locs->locations.locations_val->
-			server.server_val->utf8string_len = strlen(server);
-		nfs4_pathname4_free(&fs_locs->
-				    locations.locations_val->rootpath);
-		nfs4_pathname4_alloc(&fs_locs->
-				     locations.locations_val->rootpath,
-				     path_work);
+		loc_val->server.server_val->utf8string_len = strlen(server);
+		nfs4_pathname4_free(&loc_val->rootpath);
+		nfs4_pathname4_alloc(&loc_val->rootpath, path_work);
 
 		gsh_free(path_sav);
 	} else {
