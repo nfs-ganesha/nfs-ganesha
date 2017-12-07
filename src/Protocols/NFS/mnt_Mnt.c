@@ -63,7 +63,7 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_obj_handle *obj = NULL;
 
 	LogDebug(COMPONENT_NFSPROTO,
-		 "REQUEST PROCESSING: Calling mnt_Mnt path=%s", arg->arg_mnt);
+		 "REQUEST PROCESSING: Calling MNT_MNT path=%s", arg->arg_mnt);
 
 	/* Paranoid command to clean the result struct. */
 	memset(res, 0, sizeof(nfs_res_t));
@@ -241,10 +241,10 @@ void mnt1_Mnt_Free(nfs_res_t *res)
 
 void mnt3_Mnt_Free(nfs_res_t *res)
 {
+	mountres3_ok *resok = &res->res_mnt3.mountres3_u.mountinfo;
+
 	if (res->res_mnt3.fhs_status == MNT3_OK) {
-		gsh_free(res->res_mnt3.mountres3_u.mountinfo.auth_flavors.
-			 auth_flavors_val);
-		gsh_free(res->res_mnt3.mountres3_u.mountinfo.fhandle.
-			 fhandle3_val);
+		gsh_free(resok->auth_flavors.auth_flavors_val);
+		gsh_free(resok->fhandle.fhandle3_val);
 	}
 }

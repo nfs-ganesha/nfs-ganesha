@@ -48,7 +48,7 @@
 int mnt_Umnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	LogDebug(COMPONENT_NFSPROTO,
-		 "REQUEST PROCESSING: Calling mnt_Umnt path %s", arg->arg_mnt);
+		 "REQUEST PROCESSING: Calling MNT_UMNT path %s", arg->arg_mnt);
 
 	/* Ganesha does not support the mount list so this is a NOOP */
 

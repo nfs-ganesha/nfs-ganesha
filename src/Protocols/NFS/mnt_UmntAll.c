@@ -47,7 +47,7 @@
 
 int mnt_UmntAll(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_UmntAll");
+	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling MNT_UMNTALL");
 
 	/* Ganesha does not support the mount list so this is a NOOP */
 
