@@ -72,6 +72,8 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	};
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
+	SETATTR3resfail *resfail = &res->res_setattr3.SETATTR3res_u.resfail;
+	SETATTR3resok *resok = &res->res_setattr3.SETATTR3res_u.resok;
 
 	memset(&setattr, 0, sizeof(setattr));
 
@@ -89,10 +91,8 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* to avoid setting it on each error case */
-	res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.before.
-	    attributes_follow = FALSE;
-	res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
-	    attributes_follow = FALSE;
+	resfail->obj_wcc.before.attributes_follow = FALSE;
+	resfail->obj_wcc.after.attributes_follow = FALSE;
 
 	obj = nfs3_FhandleToCache(&arg->arg_setattr3.object,
 				    &res->res_setattr3.status,
@@ -125,18 +125,16 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		 * feature of nfsv3 is used to avoid several setattr to occur
 		 * concurently on the same object, from different clients
 		 */
-		LogFullDebug(COMPONENT_NFSPROTO, "css=%d acs=%d csn=%d acn=%d",
-			     arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.
-			     tv_sec,
-			     pre_attr.pre_op_attr_u.attributes.ctime.tv_sec,
-			     arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.
-			     tv_nsec,
-			     pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec);
+		nfstime3 *obj_ctime =
+			&arg->arg_setattr3.guard.sattrguard3_u.obj_ctime;
+		nfstime3 *pre_ctime = &pre_attr.pre_op_attr_u.attributes.ctime;
 
-		if ((arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_sec !=
-		     pre_attr.pre_op_attr_u.attributes.ctime.tv_sec) ||
-		    (arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_nsec !=
-		     pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec)) {
+		LogFullDebug(COMPONENT_NFSPROTO, "css=%d acs=%d csn=%d acn=%d",
+			     obj_ctime->tv_sec, pre_ctime->tv_sec,
+			     obj_ctime->tv_nsec, pre_ctime->tv_nsec);
+
+		if (obj_ctime->tv_sec != pre_ctime->tv_sec ||
+		    obj_ctime->tv_nsec != pre_ctime->tv_nsec) {
 
 			res->res_setattr3.status = NFS3ERR_NOT_SYNC;
 			rc = NFS_REQ_OK;
@@ -191,13 +189,10 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_setattr3.status = NFS3_OK;
 	if (arg->arg_setattr3.new_attributes.size.set_it
 	    && !(setattr.valid_mask ^ (ATTR_SPACEUSED | ATTR_SIZE))) {
-		res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.before.
-		    attributes_follow = FALSE;
-		res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
-		    attributes_follow = FALSE;
+		resfail->obj_wcc.before.attributes_follow = FALSE;
+		resfail->obj_wcc.after.attributes_follow = FALSE;
 	} else {
-		nfs_SetWccData(&pre_attr, obj,
-			       &res->res_setattr3.SETATTR3res_u.resok.obj_wcc);
+		nfs_SetWccData(&pre_attr, obj, &resok->obj_wcc);
 	}
 
 	rc = NFS_REQ_OK;
@@ -220,8 +215,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out_fail:
 
-	nfs_SetWccData(&pre_attr, obj,
-		       &res->res_setattr3.SETATTR3res_u.resfail.obj_wcc);
+	nfs_SetWccData(&pre_attr, obj, &resfail->obj_wcc);
 
 	if (nfs_RetryableError(fsal_status.major)) {
 		/* Drop retryable request. */

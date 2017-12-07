@@ -76,7 +76,7 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 &(arg->arg_fsstat3.fsroot),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_fsstat handle: %s",
+			 "REQUEST PROCESSING: Calling NFS3_FSSTAT handle: %s",
 			 str);
 	}
 

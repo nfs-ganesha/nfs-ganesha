@@ -73,15 +73,15 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		sprint_fhandle3(str, &(arg->arg_commit3.file));
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_commit handle: %s",
+			 "REQUEST PROCESSING: Calling NFS3_COMMIT handle: %s",
 			 str);
 	}
 
 	/* To avoid setting it on each error case */
-	res->res_commit3.COMMIT3res_u.resfail.file_wcc.before.
-	    attributes_follow = FALSE;
-	res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow =
-	    FALSE;
+	res->res_commit3.COMMIT3res_u.resfail.file_wcc.before.attributes_follow
+		= FALSE;
+	res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow
+		= FALSE;
 
 	obj = nfs3_FhandleToCache(&arg->arg_commit3.file,
 				    &res->res_commit3.status,
@@ -99,8 +99,7 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_commit3.status = nfs3_Errno_status(fsal_status);
 
 		nfs_SetWccData(NULL, obj,
-			       &(res->res_commit3.COMMIT3res_u.resfail.
-				 file_wcc));
+			       &res->res_commit3.COMMIT3res_u.resfail.file_wcc);
 
 		rc = NFS_REQ_OK;
 		goto out;

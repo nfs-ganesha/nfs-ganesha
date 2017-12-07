@@ -83,7 +83,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 &(arg->arg_create3.where.dir),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_create handle: %s name: %s",
+			 "REQUEST PROCESSING: Calling NFS3_CREATE handle: %s name: %s",
 			 str, file_name ? file_name : "");
 	}
 
@@ -248,9 +248,11 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  */
 void nfs3_create_free(nfs_res_t *res)
 {
+	nfs_fh3 *handle =
+		&res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle;
+
 	if ((res->res_create3.status == NFS3_OK)
 	    && (res->res_create3.CREATE3res_u.resok.obj.handle_follows)) {
-		gsh_free(res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.
-			 handle.data.data_val);
+		gsh_free(handle->data.data_val);
 	}
 }

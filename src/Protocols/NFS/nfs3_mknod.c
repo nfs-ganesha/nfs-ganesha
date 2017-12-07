@@ -72,6 +72,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	int rc = NFS_REQ_OK;
 	fsal_status_t fsal_status;
 	struct attrlist sattr, attrs;
+	MKNOD3resfail *resfail = &res->res_mknod3.MKNOD3res_u.resfail;
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
@@ -87,15 +88,13 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			"<empty name>" : file_name;
 		sprint_fhandle3(str, &(arg->arg_mknod3.where.dir));
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_mknod handle: %s name: %s",
+			 "REQUEST PROCESSING: Calling NFS3_MKNOD handle: %s name: %s",
 			 str, fname);
 	}
 
 	/* to avoid setting them on each error case */
-	res->res_mknod3.MKNOD3res_u.resfail.dir_wcc.before.attributes_follow =
-	    FALSE;
-	res->res_mknod3.MKNOD3res_u.resfail.dir_wcc.after.attributes_follow =
-	    FALSE;
+	resfail->dir_wcc.before.attributes_follow = FALSE;
+	resfail->dir_wcc.after.attributes_follow = FALSE;
 
 	/* retrieve parent entry */
 	parent_obj = nfs3_FhandleToCache(&arg->arg_mknod3.where.dir,
@@ -127,9 +126,10 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	switch (arg->arg_mknod3.what.type) {
 	case NF3CHR:
 	case NF3BLK:
-		if (nfs3_Sattr_To_FSALattr(&sattr,
-					   &arg->arg_mknod3.what.mknoddata3_u.
-						device.dev_attributes) == 0) {
+		if (nfs3_Sattr_To_FSALattr(
+		       &sattr,
+		       &arg->arg_mknod3.what.mknoddata3_u.device.dev_attributes)
+		    == 0) {
 			res->res_mknod3.status = NFS3ERR_INVAL;
 			rc = NFS_REQ_OK;
 			goto out;
@@ -144,9 +144,10 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	case NF3FIFO:
 	case NF3SOCK:
-		if (nfs3_Sattr_To_FSALattr(&sattr,
-					   &arg->arg_mknod3.what.mknoddata3_u.
-						pipe_attributes) == 0) {
+		if (nfs3_Sattr_To_FSALattr(
+			&sattr,
+			&arg->arg_mknod3.what.mknoddata3_u.pipe_attributes)
+		    == 0) {
 			res->res_mknod3.status = NFS3ERR_INVAL;
 			rc = NFS_REQ_OK;
 			goto out;
@@ -236,8 +237,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out_fail:
 	res->res_mknod3.status = nfs3_Errno_status(fsal_status);
-	nfs_SetWccData(&pre_parent, parent_obj,
-		       &res->res_mknod3.MKNOD3res_u.resfail.dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &resfail->dir_wcc);
 
 	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
@@ -267,9 +267,11 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  */
 void nfs3_mknod_free(nfs_res_t *res)
 {
+	nfs_fh3 *handle =
+		&res->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle;
+
 	if ((res->res_mknod3.status == NFS3_OK)
 	    && (res->res_mknod3.MKNOD3res_u.resok.obj.handle_follows)) {
-		gsh_free(res->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.
-			 handle.data.data_val);
+		gsh_free(handle->data.data_val);
 	}
 }

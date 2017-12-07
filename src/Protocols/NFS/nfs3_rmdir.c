@@ -82,7 +82,7 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_rmdir handle: %s name: %s",
+			 "REQUEST PROCESSING: Calling NFS3_RMDIR handle: %s name: %s",
 			 str, name);
 	}
 

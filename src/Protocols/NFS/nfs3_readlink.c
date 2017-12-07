@@ -71,6 +71,8 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		.len = 0
 	};
 	int rc = NFS_REQ_OK;
+	READLINK3resfail *resfail = &res->res_readlink3.READLINK3res_u.resfail;
+	READLINK3resok *resok = &res->res_readlink3.READLINK3res_u.resok;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
@@ -85,12 +87,11 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* to avoid setting it on each error case */
-	res->res_readlink3.READLINK3res_u.resfail.symlink_attributes.
-	    attributes_follow = false;
+	resfail->symlink_attributes.attributes_follow = false;
 
 	obj = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
-				    &res->res_readlink3.status,
-				    &rc);
+				  &res->res_readlink3.status,
+				  &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -108,10 +109,7 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_readlink3.status = nfs3_Errno_status(fsal_status);
-		nfs_SetPostOpAttr(obj,
-				  &res->res_readlink3.READLINK3res_u.resfail.
-					symlink_attributes,
-				  NULL);
+		nfs_SetPostOpAttr(obj, &resfail->symlink_attributes, NULL);
 
 		if (nfs_RetryableError(fsal_status.major))
 			rc = NFS_REQ_DROP;
@@ -120,12 +118,9 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Reply to the client */
-	res->res_readlink3.READLINK3res_u.resok.data = link_buffer.addr;
+	resok->data = link_buffer.addr;
 
-	nfs_SetPostOpAttr(obj,
-			  &res->res_readlink3.READLINK3res_u.
-				resok.symlink_attributes,
-			  NULL);
+	nfs_SetPostOpAttr(obj, &resok->symlink_attributes, NULL);
 	res->res_readlink3.status = NFS3_OK;
 
 	rc = NFS_REQ_OK;

@@ -72,6 +72,8 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status;
 	int rc = NFS_REQ_OK;
 	struct attrlist sattr, attrs;
+	SYMLINK3resfail *resfail = &res->res_symlink3.SYMLINK3res_u.resfail;
+	SYMLINK3resok *resok = &res->res_symlink3.SYMLINK3res_u.resok;
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
@@ -93,10 +95,8 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* to avoid setting it on each error case */
-	res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc.before.
-	    attributes_follow = false;
-	res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc.after.
-	    attributes_follow = false;
+	resfail->dir_wcc.before.attributes_follow = false;
+	resfail->dir_wcc.after.attributes_follow = false;
 
 	parent_obj = nfs3_FhandleToCache(&arg->arg_symlink3.where.dir,
 					   &res->res_symlink3.status,
@@ -141,7 +141,7 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (!nfs3_Sattr_To_FSALattr(
 			&sattr,
 			&arg->arg_symlink3.symlink.symlink_attributes)) {
-		res->res_create3.status = NFS3ERR_INVAL;
+		res->res_symlink3.status = NFS3ERR_INVAL;
 		rc = NFS_REQ_OK;
 		goto out;
 	}
@@ -165,27 +165,20 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out_fail;
 
 
-	if (!nfs3_FSALToFhandle(
-	     true,
-	     &res->res_symlink3.SYMLINK3res_u.resok.obj.post_op_fh3_u.handle,
-	     symlink_obj,
-	     op_ctx->ctx_export)) {
+	if (!nfs3_FSALToFhandle(true, &resok->obj.post_op_fh3_u.handle,
+				symlink_obj, op_ctx->ctx_export)) {
 		res->res_symlink3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
 		goto out;
 	}
 
-	res->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows = TRUE;
+	resok->obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(symlink_obj,
-			  &res->res_symlink3.SYMLINK3res_u.resok.
-				obj_attributes,
-			  &attrs);
+	nfs_SetPostOpAttr(symlink_obj, &resok->obj_attributes, &attrs);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_obj,
-		       &res->res_symlink3.SYMLINK3res_u.resok.dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &resok->dir_wcc);
 
 	res->res_symlink3.status = NFS3_OK;
 	rc = NFS_REQ_OK;
@@ -195,8 +188,7 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  out_fail:
 	res->res_symlink3.status = nfs3_Errno_status(fsal_status);
 
-	nfs_SetWccData(&pre_parent, parent_obj,
-		       &res->res_symlink3.SYMLINK3res_u.resfail.dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &resfail->dir_wcc);
 
 	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
@@ -226,8 +218,8 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  */
 void nfs3_symlink_free(nfs_res_t *res)
 {
-	if ((res->res_symlink3.status == NFS3_OK)
-	    && (res->res_symlink3.SYMLINK3res_u.resok.obj.handle_follows))
-		gsh_free(res->res_symlink3.SYMLINK3res_u.resok.obj.
-			 post_op_fh3_u.handle.data.data_val);
+	SYMLINK3resok *resok = &res->res_symlink3.SYMLINK3res_u.resok;
+
+	if (res->res_symlink3.status == NFS3_OK && resok->obj.handle_follows)
+		gsh_free(resok->obj.post_op_fh3_u.handle.data.data_val);
 }

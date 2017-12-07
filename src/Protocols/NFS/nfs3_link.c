@@ -110,7 +110,7 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 NULL, strto);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_link handle: %s to handle: %s name: %s",
+			 "REQUEST PROCESSING: Calling NFS3_LINK handle: %s to handle: %s name: %s",
 			 strfrom, strto, link_name);
 	}
 

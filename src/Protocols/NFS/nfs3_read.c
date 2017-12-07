@@ -97,6 +97,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
 	uint64_t MaxOffsetRead =
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetRead);
+	READ3resfail *resfail = &res->res_read3.READ3res_u.resfail;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
@@ -113,8 +114,8 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* to avoid setting it on each error case */
-	res->res_read3.READ3res_u.resfail.file_attributes.attributes_follow =
-	    FALSE;
+	resfail->file_attributes.attributes_follow =  FALSE;
+
 	/* initialize for read of size 0 */
 	res->res_read3.READ3res_u.resok.eof = FALSE;
 	res->res_read3.READ3res_u.resok.count = 0;
@@ -179,10 +180,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 			res->res_read3.status = NFS3ERR_FBIG;
 
-			nfs_SetPostOpAttr(obj,
-					  &res->res_read3.READ3res_u.resfail.
-						file_attributes,
-					  NULL);
+			nfs_SetPostOpAttr(obj, &resfail->file_attributes, NULL);
 
 			rc = NFS_REQ_OK;
 			goto out;
@@ -241,9 +239,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	res->res_read3.status = nfs3_Errno_status(fsal_status);
 
-	nfs_SetPostOpAttr(obj,
-			  &res->res_read3.READ3res_u.resfail.file_attributes,
-			  NULL);
+	nfs_SetPostOpAttr(obj, &resfail->file_attributes, NULL);
 
 	rc = NFS_REQ_OK;
 

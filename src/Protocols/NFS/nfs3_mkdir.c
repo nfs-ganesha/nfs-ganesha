@@ -73,6 +73,8 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
 	struct attrlist sattr, attrs;
+	MKDIR3resfail *resfail = &res->res_mkdir3.MKDIR3res_u.resfail;
+	MKDIR3resok *resok = &res->res_mkdir3.MKDIR3res_u.resok;
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
@@ -88,15 +90,13 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 NULL, str);
 
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_mkdir handle: %s name: %s",
+			 "REQUEST PROCESSING: Calling NFS3_MKDIR handle: %s name: %s",
 			 str, dir_name);
 	}
 
 	/* to avoid setting it on each error case */
-	res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.before.attributes_follow =
-	    FALSE;
-	res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.after.attributes_follow =
-	    FALSE;
+	resfail->dir_wcc.before.attributes_follow = FALSE;
+	resfail->dir_wcc.after.attributes_follow = FALSE;
 
 	parent_obj = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
 					   &res->res_mkdir3.status,
@@ -157,11 +157,9 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
 
-	MKDIR3resok *d3ok = &res->res_mkdir3.MKDIR3res_u.resok;
-
 	/* Build file handle */
 	if (!nfs3_FSALToFhandle(true,
-				&d3ok->obj.post_op_fh3_u.handle,
+				&resok->obj.post_op_fh3_u.handle,
 				dir_obj,
 				op_ctx->ctx_export)) {
 		res->res_mkdir3.status = NFS3ERR_BADHANDLE;
@@ -170,13 +168,13 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Set Post Op Fh3 structure */
-	d3ok->obj.handle_follows = true;
+	resok->obj.handle_follows = true;
 
 	/* Build entry attributes */
-	nfs_SetPostOpAttr(dir_obj, &d3ok->obj_attributes, &attrs);
+	nfs_SetPostOpAttr(dir_obj, &resok->obj_attributes, &attrs);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_obj, &d3ok->dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &resok->dir_wcc);
 
 	res->res_mkdir3.status = NFS3_OK;
 	rc = NFS_REQ_OK;
@@ -185,8 +183,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out_fail:
 	res->res_mkdir3.status = nfs3_Errno_status(fsal_status);
-	nfs_SetWccData(&pre_parent, parent_obj,
-		       &res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &resfail->dir_wcc);
 
 	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
@@ -216,9 +213,11 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  */
 void nfs3_mkdir_free(nfs_res_t *res)
 {
+	nfs_fh3 *handle =
+		&res->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.handle;
+
 	if ((res->res_mkdir3.status == NFS3_OK)
 	    && (res->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows)) {
-		gsh_free(res->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-			 handle.data.data_val);
+		gsh_free(handle->data.data_val);
 	}
 }

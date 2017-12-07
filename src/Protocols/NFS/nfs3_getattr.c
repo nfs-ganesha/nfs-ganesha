@@ -74,7 +74,7 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 &(arg->arg_getattr3.object),
 				 NULL, str);
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_getattr handle: %s",
+			 "REQUEST PROCESSING: Calling NFS3_GETATTR handle: %s",
 			 str);
 	}
 

@@ -73,7 +73,7 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		sprint_fhandle3(str, &(arg->arg_access3.object));
 		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_access handle: %s",
+			 "REQUEST PROCESSING: Calling NFS3_ACCESS handle: %s",
 			 str);
 	}
 
@@ -99,10 +99,10 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (fsal_errors == ERR_FSAL_NO_ERROR ||
 	    fsal_errors == ERR_FSAL_ACCESS) {
 		/* Build Post Op Attributes */
-		nfs_SetPostOpAttr(entry,
-				  &res->res_access3.ACCESS3res_u.resok.
-				    obj_attributes,
-				  NULL);
+		nfs_SetPostOpAttr(
+			entry,
+			&res->res_access3.ACCESS3res_u.resok.obj_attributes,
+			NULL);
 
 		res->res_access3.status = NFS3_OK;
 		rc = NFS_REQ_OK;
@@ -117,8 +117,7 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	res->res_access3.status = nfs3_Errno(fsal_errors);
 	nfs_SetPostOpAttr(entry,
-			  &res->res_access3.ACCESS3res_u.resfail.
-			    obj_attributes,
+			  &res->res_access3.ACCESS3res_u.resfail.obj_attributes,
 			  NULL);
  out:
 

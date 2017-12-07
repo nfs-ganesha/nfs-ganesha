@@ -131,6 +131,10 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct attrlist attrs_dir, attrs_parent;
 	bool use_cookie_verifier = op_ctx_export_has_option(
 					EXPORT_OPTION_USE_COOKIE_VERIFIER);
+	READDIRPLUS3resfail *resfail =
+			&res->res_readdirplus3.READDIRPLUS3res_u.resfail;
+	READDIRPLUS3resok *resok =
+			&res->res_readdirplus3.READDIRPLUS3res_u.resok;
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
@@ -143,13 +147,13 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		sprint_fhandle3(str, &(arg->arg_readdirplus3.dir));
 
 		LogDebugAlt(COMPONENT_NFSPROTO, COMPONENT_NFS_READDIR,
-			    "REQUEST PROCESSING: Calling nfs3_readdirplus handle: %s",
+			    "REQUEST PROCESSING: Calling NFS3_READDIRPLUS handle: %s",
 			    str);
 	}
 
 	/* to avoid setting it on each error case */
-	res->res_readdir3.READDIR3res_u.resfail.dir_attributes.
-	    attributes_follow = FALSE;
+	res->res_readdir3.READDIR3res_u.resfail.dir_attributes.attributes_follow
+		= FALSE;
 
 	if (op_ctx_export_has_option(EXPORT_OPTION_NO_READDIR_PLUS)) {
 		res->res_readdirplus3.status = NFS3ERR_NOTSUPP;
@@ -173,7 +177,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	tracker.total_entries = estimated_num_entries;
 
 	LogDebug(COMPONENT_NFS_READDIR,
-		 "nfs3_readdirplus: dircount=%u begin_cookie=%" PRIu64
+		 "NFS3_READDIRPLUS: dircount=%u begin_cookie=%" PRIu64
 		 " estimated_num_entries=%lu, mem_left=%zd",
 		 arg->arg_readdirplus3.dircount, begin_cookie,
 		 estimated_num_entries, tracker.mem_left);
@@ -242,8 +246,8 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 	}
 
-	res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries = NULL;
-	res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = FALSE;
+	resok->reply.entries = NULL;
+	resok->reply.eof = FALSE;
 
 	/* Fudge cookie for "." and "..", if necessary */
 	if (begin_cookie > 2)
@@ -325,24 +329,16 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if ((num_entries == 0) && (begin_cookie > 1)) {
 		res->res_readdirplus3.status = NFS3_OK;
-		res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries =
-		    NULL;
-		res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof = TRUE;
+		resok->reply.entries = NULL;
+		resok->reply.eof = TRUE;
 	} else {
-		res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.entries =
-		    tracker.entries;
-		res->res_readdirplus3.READDIRPLUS3res_u.resok.reply.eof =
-		    eod_met;
+		resok->reply.entries = tracker.entries;
+		resok->reply.eof = eod_met;
 	}
 
-	nfs_SetPostOpAttr(dir_obj,
-			  &res->res_readdirplus3.READDIRPLUS3res_u.resok.
-				dir_attributes,
-			  &attrs_dir);
+	nfs_SetPostOpAttr(dir_obj, &resok->dir_attributes, &attrs_dir);
 
-	memcpy(res->res_readdirplus3.READDIRPLUS3res_u.resok.cookieverf,
-	       cookie_verifier,
-	       sizeof(cookieverf3));
+	memcpy(resok->cookieverf, cookie_verifier, sizeof(cookieverf3));
 
 	res->res_readdirplus3.status = NFS3_OK;
 
@@ -353,10 +349,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  out_fail:
 
 	/* Set the post op attributes as we have found them. */
-	nfs_SetPostOpAttr(dir_obj,
-			  &res->res_readdirplus3.READDIRPLUS3res_u.
-				resfail.dir_attributes,
-			  &attrs_dir);
+	nfs_SetPostOpAttr(dir_obj, &resfail->dir_attributes, &attrs_dir);
 
  out:
 
@@ -470,9 +463,8 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 		 * that follow
 		 */
 		ep3->name_attributes.attributes_follow = nfs3_FSALattr_To_Fattr(
-						obj, attr,
-						&ep3->name_attributes.
-						post_op_attr_u.attributes);
+			obj, attr,
+			&ep3->name_attributes.post_op_attr_u.attributes);
 	} else {
 		ep3->name_handle.handle_follows = false;
 		ep3->name_attributes.attributes_follow = false;

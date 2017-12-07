@@ -70,6 +70,8 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	int to_exportid = 0;
 	int from_exportid = 0;
 	int rc = NFS_REQ_OK;
+	RENAME3resfail *resfail = &res->res_rename3.RENAME3res_u.resfail;
+	RENAME3resok *resok = &res->res_rename3.RENAME3res_u.resok;
 
 	pre_op_attr pre_parent = {
 		.attributes_follow = false
@@ -97,14 +99,10 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* to avoid setting it on each error case */
-	res->res_rename3.RENAME3res_u.resfail.fromdir_wcc.before.
-	    attributes_follow = FALSE;
-	res->res_rename3.RENAME3res_u.resfail.fromdir_wcc.after.
-	    attributes_follow = FALSE;
-	res->res_rename3.RENAME3res_u.resfail.todir_wcc.before.
-	    attributes_follow = FALSE;
-	res->res_rename3.RENAME3res_u.resfail.todir_wcc.after.
-	    attributes_follow = FALSE;
+	resfail->fromdir_wcc.before.attributes_follow = FALSE;
+	resfail->fromdir_wcc.after.attributes_follow = FALSE;
+	resfail->todir_wcc.before.attributes_follow = FALSE;
+	resfail->todir_wcc.after.attributes_follow = FALSE;
 
 	/* Get the exportids for the two handles. */
 	to_exportid = nfs3_FhandleToExportId(&(arg->arg_rename3.to.dir));
@@ -132,7 +130,7 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Convert fromdir file handle into a FSAL obj */
 	parent_obj = nfs3_FhandleToCache(&arg->arg_rename3.from.dir,
-					   &res->res_create3.status,
+					   &res->res_rename3.status,
 					   &rc);
 
 	if (parent_obj == NULL) {
@@ -144,7 +142,7 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Convert todir file handle into a FSAL obj */
 	new_parent_obj = nfs3_FhandleToCache(&arg->arg_rename3.to.dir,
-					       &res->res_create3.status,
+					       &res->res_rename3.status,
 					       &rc);
 
 	if (new_parent_obj == NULL) {
@@ -168,11 +166,9 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	res->res_rename3.status = NFS3_OK;
 
-	nfs_SetWccData(&pre_parent, parent_obj,
-		       &res->res_rename3.RENAME3res_u.resok.fromdir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &resok->fromdir_wcc);
 
-	nfs_SetWccData(&pre_new_parent, new_parent_obj,
-		       &res->res_rename3.RENAME3res_u.resok.todir_wcc);
+	nfs_SetWccData(&pre_new_parent, new_parent_obj, &resok->todir_wcc);
 
 	rc = NFS_REQ_OK;
 
@@ -181,11 +177,9 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  out_fail:
 	res->res_rename3.status = nfs3_Errno_status(fsal_status);
 
-	nfs_SetWccData(&pre_parent, parent_obj,
-		       &res->res_rename3.RENAME3res_u.resfail.fromdir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &resfail->fromdir_wcc);
 
-	nfs_SetWccData(&pre_new_parent, new_parent_obj,
-		       &res->res_rename3.RENAME3res_u.resfail.todir_wcc);
+	nfs_SetWccData(&pre_new_parent, new_parent_obj, &resfail->todir_wcc);
 
 	/* If we are here, there was an error */
 	if (nfs_RetryableError(fsal_status.major))

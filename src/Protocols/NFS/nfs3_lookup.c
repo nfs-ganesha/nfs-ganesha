@@ -67,6 +67,8 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	char *name = NULL;
 	int rc = NFS_REQ_OK;
 	struct attrlist attrs;
+	LOOKUP3resfail *resfail = &res->res_lookup3.LOOKUP3res_u.resfail;
+	LOOKUP3resok *resok = &res->res_lookup3.LOOKUP3res_u.resok;
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
@@ -86,12 +88,11 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* to avoid setting it on each error case */
-	res->res_lookup3.LOOKUP3res_u.resfail.dir_attributes.attributes_follow =
-	    FALSE;
+	resfail->dir_attributes.attributes_follow = FALSE;
 
 	obj_dir = nfs3_FhandleToCache(&arg->arg_lookup3.what.dir,
-					&res->res_lookup3.status,
-					&rc);
+				      &res->res_lookup3.status,
+				      &rc);
 
 	if (obj_dir == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -110,27 +111,17 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 
 		res->res_lookup3.status = nfs3_Errno_status(fsal_status);
-		nfs_SetPostOpAttr(obj_dir,
-				  &res->res_lookup3.LOOKUP3res_u.resfail.
-					dir_attributes,
-				  NULL);
+		nfs_SetPostOpAttr(obj_dir, &resfail->dir_attributes, NULL);
 	} else {
 		/* Build FH */
-		if (nfs3_FSALToFhandle(
-			    true,
-			    &res->res_lookup3.LOOKUP3res_u.resok.object,
-			    obj_file,
-			    op_ctx->ctx_export)) {
+		if (nfs3_FSALToFhandle(true, &resok->object, obj_file,
+				       op_ctx->ctx_export)) {
 			/* Build entry attributes */
-			nfs_SetPostOpAttr(obj_file,
-					  &res->res_lookup3.LOOKUP3res_u.
-						resok.obj_attributes,
+			nfs_SetPostOpAttr(obj_file, &resok->obj_attributes,
 					  &attrs);
 
 			/* Build directory attributes */
-			nfs_SetPostOpAttr(obj_dir,
-					  &res->res_lookup3.
-					     LOOKUP3res_u.resok.dir_attributes,
+			nfs_SetPostOpAttr(obj_dir, &resok->dir_attributes,
 					  NULL);
 			res->res_lookup3.status = NFS3_OK;
 		} else {
@@ -166,7 +157,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 void nfs3_lookup_free(nfs_res_t *res)
 {
 	if (res->res_lookup3.status == NFS3_OK) {
-		gsh_free(res->res_lookup3.LOOKUP3res_u.resok.object.data.
-			 data_val);
+		gsh_free(
+		    res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val);
 	}
 }
