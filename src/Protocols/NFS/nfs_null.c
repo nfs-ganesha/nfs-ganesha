@@ -52,7 +52,7 @@
 
 int nfs_null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_null");
+	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling NFS_NULL");
 	return NFS3_OK;
 }
 
