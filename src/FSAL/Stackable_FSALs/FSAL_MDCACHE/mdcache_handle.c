@@ -212,9 +212,8 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 	 * until asked for it (including a permission check).
 	 */
 	fsal_prepare_attrs(&attrs,
-			   op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export)
-				   & ~ATTR_ACL);
+			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+					op_ctx->fsal_export) & ~ATTR_ACL);
 
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops.mkdir(
@@ -292,9 +291,8 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 	 * until asked for it (including a permission check).
 	 */
 	fsal_prepare_attrs(&attrs,
-			   op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export)
-				   & ~ATTR_ACL);
+			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+					op_ctx->fsal_export) & ~ATTR_ACL);
 
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops.mknode(
@@ -373,9 +371,8 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 	 * until asked for it (including a permission check).
 	 */
 	fsal_prepare_attrs(&attrs,
-			   op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export)
-				   & ~ATTR_ACL);
+			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+					op_ctx->fsal_export) & ~ATTR_ACL);
 
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops.symlink(
@@ -642,7 +639,7 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 	}
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-			"About to readdir in mdcache_readdir: directory=%p cookie=%"
+			"About to readdir directory=%p cookie=%"
 			PRIu64 " collisions %d",
 			directory, *whence,
 			directory->fsobj.fsdir.avl.collisions);
@@ -1034,8 +1031,9 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 	/* We always ask for all regular attributes, even if the caller was
 	 * only interested in the ACL.
 	 */
-	fsal_prepare_attrs(&attrs, op_ctx->fsal_export->exp_ops.
-		fs_supported_attrs(op_ctx->fsal_export) | ATTR_RDATTR_ERR);
+	fsal_prepare_attrs(&attrs,
+			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+					op_ctx->fsal_export) | ATTR_RDATTR_ERR);
 
 	if (!need_acl) {
 		/* Don't request the ACL if not necessary. */
@@ -1684,9 +1682,8 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 	 * until asked for it (including a permission check).
 	 */
 	fsal_prepare_attrs(&attrs,
-			   op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export)
-				   & ~ATTR_ACL);
+			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+					op_ctx->fsal_export) & ~ATTR_ACL);
 
 	subcall_raw(export,
 		status = sub_export->exp_ops.lookup_path(sub_export, path,

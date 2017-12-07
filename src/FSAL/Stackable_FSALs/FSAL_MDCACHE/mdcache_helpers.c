@@ -971,9 +971,8 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 	 * until asked for it (including a permission check).
 	 */
 	fsal_prepare_attrs(&attrs,
-			   op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export)
-				   & ~ATTR_ACL);
+			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+					op_ctx->fsal_export) & ~ATTR_ACL);
 
 	sub_export = export->mfe_exp.sub_export;
 
@@ -1332,9 +1331,8 @@ fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent,
 	 * until asked for it (including a permission check).
 	 */
 	fsal_prepare_attrs(&attrs,
-			   op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export)
-				   & ~ATTR_ACL);
+			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+					op_ctx->fsal_export) & ~ATTR_ACL);
 
 	subcall(
 		status = mdc_parent->sub_handle->obj_ops.lookup(

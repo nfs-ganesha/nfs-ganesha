@@ -215,9 +215,10 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 			struct attrlist attrs;
 
 			/* open2() gave us attributes.  Update the cache */
-			fsal_prepare_attrs(&attrs, op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export)
-				   | ATTR_RDATTR_ERR);
+			fsal_prepare_attrs(
+				&attrs,
+				op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+					op_ctx->fsal_export) | ATTR_RDATTR_ERR);
 			fsal_copy_attrs(&attrs, attrs_out, false);
 
 			PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
@@ -371,8 +372,8 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 	 * attributes.
 	 */
 	fsal_prepare_attrs(&attrs,
-			   (op_ctx->fsal_export->exp_ops.
-				   fs_supported_attrs(op_ctx->fsal_export)
+			   (op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+							op_ctx->fsal_export)
 				& ~ATTR_ACL) | ATTR_RDATTR_ERR);
 
 	subcall(

@@ -341,6 +341,7 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
 int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 {
 	struct avltree_node *node;
+
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Insert dirent %p for %s on entry=%p FSAL cookie=%"PRIx64,
 		     v, v->name, entry, v->ck);
