@@ -322,7 +322,7 @@ static enum fsal_dir_result nullfs_readdir_cb(
 	if (FSAL_IS_ERROR(nullfs_alloc_and_check_handle(state->exp, sub_handle,
 		sub_handle->fs, &new_obj, fsalstat(ERR_FSAL_NO_ERROR, 0)))) {
 		return false;
-	    }
+	}
 
 	op_ctx->fsal_export = &state->exp->export;
 	enum fsal_dir_result result = state->cb(name, new_obj, attrs,

@@ -486,7 +486,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	fsal_stack = lookup_fsal(nullfsal.subfsal.name);
 	if (fsal_stack == NULL) {
 		LogMajor(COMPONENT_FSAL,
-			 "nullfs_create_export: failed to lookup for FSAL %s",
+			 "nullfs create export failed to lookup for FSAL %s",
 			 nullfsal.subfsal.name);
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 	}
