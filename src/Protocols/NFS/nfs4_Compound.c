@@ -526,8 +526,8 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		       arg->arg_compound4.tag.utf8string_val,
 		       res->res_compound4.tag.utf8string_len);
 
-		res->res_compound4.tag.utf8string_val[res->res_compound4.tag.
-						      utf8string_len] = '\0';
+		res->res_compound4.tag.utf8string_val[
+			res->res_compound4.tag.utf8string_len] = '\0';
 
 		/* Check if the tag is a valid utf8 string */
 		status =
@@ -649,8 +649,8 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		if (argarray_len > 2 && argarray[0].argop == NFS4_OP_SEQUENCE
 		    && argarray[1].argop == NFS4_OP_DESTROY_SESSION
 		    && strncmp(argarray[0].nfs_argop4_u.opsequence.sa_sessionid,
-			       argarray[1].nfs_argop4_u.opdestroy_session.
-			       dsa_sessionid,
+			       argarray[1]
+				  .nfs_argop4_u.opdestroy_session.dsa_sessionid,
 			       NFS4_SESSIONID_SIZE) == 0) {
 			status = NFS4ERR_NOT_ONLY_OP;
 			res->res_compound4.status = status;
@@ -896,9 +896,8 @@ void nfs4_Compound_Free(nfs_res_t *res)
 	}
 
 	LogFullDebug(component,
-		     "nfs4_Compound_Free %p (resarraylen=%i)",
-		     res,
-		     res->res_compound4.resarray.resarray_len);
+		     "Compound Free %p (resarraylen=%i)",
+		     res, res->res_compound4.resarray.resarray_len);
 
 	for (i = 0; i < res->res_compound4.resarray.resarray_len; i++) {
 		nfs_resop4 *val = &res->res_compound4.resarray.resarray_val[i];
@@ -1099,7 +1098,7 @@ void nfs4_Compound_CopyResOne(nfs_resop4 *res_dst, nfs_resop4 *res_src)
 	}			/* switch */
 
 	LogFatal(COMPONENT_NFS_V4,
-		 "nfs4_Compound_CopyResOne not implemented for %d",
+		 "Copy one result not implemented for %d",
 		 res_src->resop);
 }
 
@@ -1118,7 +1117,7 @@ void nfs4_Compound_CopyRes(nfs_res_t *res_dst, nfs_res_t *res_src)
 	unsigned int i = 0;
 
 	LogFullDebug(COMPONENT_NFS_V4,
-		     "nfs4_Compound_CopyRes of %p to %p (resarraylen : %i)",
+		     "Copy result of %p to %p (resarraylen : %i)",
 		     res_src, res_dst,
 		     res_src->res_compound4.resarray.resarray_len);
 

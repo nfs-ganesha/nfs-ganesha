@@ -61,11 +61,13 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 			 struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
-	LAYOUTCOMMIT4args * const arg_LAYOUTCOMMIT4 =
-	    &op->nfs_argop4_u.oplayoutcommit;
+	LAYOUTCOMMIT4args * const args = &op->nfs_argop4_u.oplayoutcommit;
 	/* Convenience alias for response */
 	LAYOUTCOMMIT4res * const res_LAYOUTCOMMIT4 =
 	    &resp->nfs_resop4_u.oplayoutcommit;
+	/* Convenience alias for response */
+	LAYOUTCOMMIT4resok *resok =
+		&res_LAYOUTCOMMIT4->LAYOUTCOMMIT4res_u.locr_resok4;
 	/* NFS4 return code */
 	nfsstat4 nfs_status = 0;
 	/* State indicated by client */
@@ -104,35 +106,34 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 	memset(&res, 0, sizeof(struct fsal_layoutcommit_res));
 
 	/* Suggest a new size, if we have it */
-	if (arg_LAYOUTCOMMIT4->loca_last_write_offset.no_newoffset) {
+	if (args->loca_last_write_offset.no_newoffset) {
 		arg.new_offset = true;
-		arg.last_write = arg_LAYOUTCOMMIT4->loca_last_write_offset.
-					newoffset4_u.no_offset;
+		arg.last_write =
+			args->loca_last_write_offset.newoffset4_u.no_offset;
 	} else
 		arg.new_offset = false;
 
-	arg.reclaim = arg_LAYOUTCOMMIT4->loca_reclaim;
+	arg.reclaim = args->loca_reclaim;
 
 	xdrmem_create(&lou_body,
-		      arg_LAYOUTCOMMIT4->loca_layoutupdate.lou_body.
-		      lou_body_val,
-		      arg_LAYOUTCOMMIT4->loca_layoutupdate.lou_body.
-		      lou_body_len, XDR_DECODE);
+		      args->loca_layoutupdate.lou_body.lou_body_val,
+		      args->loca_layoutupdate.lou_body.lou_body_len,
+		      XDR_DECODE);
 
 	beginning = xdr_getpos(&lou_body);
 
 	/* Suggest a new modification time if we have it */
-	if (arg_LAYOUTCOMMIT4->loca_time_modify.nt_timechanged) {
+	if (args->loca_time_modify.nt_timechanged) {
 		arg.time_changed = true;
-		arg.new_time.seconds = arg_LAYOUTCOMMIT4->loca_time_modify.
-					newtime4_u.nt_time.seconds;
-		arg.new_time.nseconds = arg_LAYOUTCOMMIT4->loca_time_modify.
-					newtime4_u.nt_time.nseconds;
+		arg.new_time.seconds =
+			args->loca_time_modify.newtime4_u.nt_time.seconds;
+		arg.new_time.nseconds =
+			args->loca_time_modify.newtime4_u.nt_time.nseconds;
 	}
 
 	/* Retrieve state corresponding to supplied ID */
 
-	nfs_status = nfs4_Check_Stateid(&arg_LAYOUTCOMMIT4->loca_stateid,
+	nfs_status = nfs4_Check_Stateid(&args->loca_stateid,
 					data->current_obj,
 					&layout_state, data,
 					STATEID_SPECIAL_CURRENT,
@@ -177,12 +178,10 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 
 	PTHREAD_RWLOCK_unlock(&data->current_obj->state_hdl->state_lock);
 
-	res_LAYOUTCOMMIT4->LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.
-		ns_sizechanged = res.size_supplied;
+	resok->locr_newsize.ns_sizechanged = res.size_supplied;
 
 	if (res.size_supplied) {
-		(res_LAYOUTCOMMIT4->LAYOUTCOMMIT4res_u.locr_resok4.locr_newsize.
-		 newsize4_u.ns_size) = res.new_size;
+		resok->locr_newsize.newsize4_u.ns_size = res.new_size;
 	}
 
 	nfs_status = NFS4_OK;

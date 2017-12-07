@@ -353,6 +353,8 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 	LAYOUTGET4args * const arg_LAYOUTGET4 = &op->nfs_argop4_u.oplayoutget;
 	/* Convenience alias for response */
 	LAYOUTGET4res * const res_LAYOUTGET4 = &resp->nfs_resop4_u.oplayoutget;
+	/* Convenience alias for response */
+	LAYOUTGET4resok *resok = &res_LAYOUTGET4->LAYOUTGET4res_u.logr_resok4;
 	/* NFSv4.1 status code */
 	nfsstat4 nfs_status = 0;
 	/* Pointer to state governing layouts */
@@ -384,8 +386,8 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 
 	/* max_segment_count is also an indication of if fsal supports pnfs */
-	max_segment_count = op_ctx->fsal_export->exp_ops.
-			fs_maximum_segments(op_ctx->fsal_export);
+	max_segment_count = op_ctx->fsal_export->exp_ops.fs_maximum_segments(
+							op_ctx->fsal_export);
 
 	if (max_segment_count == 0) {
 		LogWarn(COMPONENT_PNFS,
@@ -461,18 +463,14 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 	} while (!res.last_segment);
 
 	/* Update stateid.seqid and copy to current */
-	update_stateid(layout_state,
-		       &res_LAYOUTGET4->LAYOUTGET4res_u.logr_resok4.
-		       logr_stateid, data, tag);
+	update_stateid(layout_state, &resok->logr_stateid, data, tag);
 
-	res_LAYOUTGET4->LAYOUTGET4res_u.logr_resok4.logr_return_on_close =
+	resok->logr_return_on_close =
 	    layout_state->state_data.layout.state_return_on_close;
 
 	/* Now the layout specific information */
-	res_LAYOUTGET4->LAYOUTGET4res_u.logr_resok4.logr_layout.
-	    logr_layout_len = numlayouts;
-	res_LAYOUTGET4->LAYOUTGET4res_u.logr_resok4.logr_layout.
-	    logr_layout_val = layouts;
+	resok->logr_layout.logr_layout_len = numlayouts;
+	resok->logr_layout.logr_layout_val = layouts;
 
 	nfs_status = NFS4_OK;
 
@@ -510,12 +508,11 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_layoutget_Free(nfs_resop4 *res)
 {
 	LAYOUTGET4res *resp = &res->nfs_resop4_u.oplayoutget;
+	LAYOUTGET4resok *resok = &resp->LAYOUTGET4res_u.logr_resok4;
 
 	if (resp->logr_status == NFS4_OK)
-		free_layouts(resp->LAYOUTGET4res_u.logr_resok4.
-					logr_layout.logr_layout_val,
-			     resp->LAYOUTGET4res_u.logr_resok4.logr_layout.
-					logr_layout_len);
+		free_layouts(resok->logr_layout.logr_layout_val,
+			     resok->logr_layout.logr_layout_len);
 
 }				/* nfs41_op_layoutget_Free */
 

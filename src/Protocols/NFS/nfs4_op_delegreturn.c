@@ -91,15 +91,10 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Check stateid correctness and get pointer to state */
-	res_DELEGRETURN4->status = nfs4_Check_Stateid(&arg_DELEGRETURN4->
-						      deleg_stateid,
-						      data->current_obj,
-						      &state_found,
-						      data,
-						      STATEID_SPECIAL_FOR_LOCK,
-						      0,
-						      false,
-						      tag);
+	res_DELEGRETURN4->status =
+		nfs4_Check_Stateid(&arg_DELEGRETURN4->deleg_stateid,
+				   data->current_obj, &state_found, data,
+				   STATEID_SPECIAL_FOR_LOCK, 0, false, tag);
 
 	if (res_DELEGRETURN4->status != NFS4_OK)
 		return res_DELEGRETURN4->status;

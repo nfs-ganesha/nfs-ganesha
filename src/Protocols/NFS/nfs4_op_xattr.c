@@ -139,9 +139,7 @@ void nfs4_op_getxattr_Free(nfs_resop4 *resp)
 {
 	GETXATTR4res * const res_GETXATTR4 = &resp->nfs_resop4_u.opgetxattr;
 
-	if (res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_val)
-		gsh_free(res_GETXATTR4->
-			     GETXATTR4res_u.resok4.gr_value.utf8string_val);
+	gsh_free(res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_val);
 }
 
 /**
@@ -313,11 +311,9 @@ int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
  */
 void nfs4_op_listxattr_Free(nfs_resop4 *resp)
 {
-	LISTXATTR4res * const res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
+	LISTXATTR4res *res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
 
-	if (res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_names.entries)
-		gsh_free(res_LISTXATTR4->
-			     LISTXATTR4res_u.resok4.lr_names.entries);
+	gsh_free(res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_names.entries);
 }
 
 /**

@@ -180,7 +180,6 @@ void cleanup_pseudofs_node(char *pseudopath,
 
 out:
 	parent_obj->obj_ops.put_ref(parent_obj);
-	return;
 }
 
 bool make_pseudofs_node(char *name, struct pseudofs_state *state)

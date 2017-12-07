@@ -100,8 +100,8 @@ int nfs4_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (!arg_RECLAIM_COMPLETE4->rca_one_fs) {
-		data->session->clientid_record->cid_cb.v41.
-		    cid_reclaim_complete = true;
+		data->session->clientid_record->cid_cb.v41.cid_reclaim_complete
+									= true;
 		nfs4_recovery_reclaim_complete(data->session->clientid_record);
 	}
 

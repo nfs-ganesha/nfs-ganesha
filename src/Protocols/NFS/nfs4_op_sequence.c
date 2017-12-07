@@ -52,8 +52,8 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 {
 	SEQUENCE4args * const arg_SEQUENCE4 = &op->nfs_argop4_u.opsequence;
 	SEQUENCE4res * const res_SEQUENCE4 = &resp->nfs_resop4_u.opsequence;
-
 	nfs41_session_t *session;
+	nfs41_session_slot_t *slot;
 
 	resp->resop = NFS4_OP_SEQUENCE;
 	res_SEQUENCE4->sr_status = NFS4_OK;
@@ -113,26 +113,22 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* By default, no DRC replay */
 	data->use_drc = false;
+	slot = &session->fc_slots[arg_SEQUENCE4->sa_slotid];
 
-	PTHREAD_MUTEX_lock(&session->fc_slots[arg_SEQUENCE4->sa_slotid].lock);
-	if (session->fc_slots[arg_SEQUENCE4->sa_slotid].sequence + 1 !=
-	    arg_SEQUENCE4->sa_sequenceid) {
-		if (session->fc_slots[arg_SEQUENCE4->sa_slotid].sequence ==
-		    arg_SEQUENCE4->sa_sequenceid) {
+	PTHREAD_MUTEX_lock(&slot->lock);
+	if (slot->sequence + 1 != arg_SEQUENCE4->sa_sequenceid) {
+		if (slot->sequence == arg_SEQUENCE4->sa_sequenceid) {
 #if IMPLEMENT_CACHETHIS
 			/** @todo
 			 *
 			 * Ganesha always caches result anyway so ignore
 			 * cachethis
 			 */
-			if (session->fc_slots[arg_SEQUENCE4->sa_slotid]
-			    .cache_used) {
+			if (slot->cache_used) {
 #endif
 				/* Replay operation through the DRC */
 				data->use_drc = true;
-				data->cached_res =
-				    &session->fc_slots[arg_SEQUENCE4->sa_slotid]
-				    .cached_result;
+				data->cached_res = &slot->cached_result;
 
 				LogFullDebugAlt(COMPONENT_SESSIONS,
 						COMPONENT_CLIENTID,
@@ -141,31 +137,28 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 						arg_SEQUENCE4->sa_slotid,
 						data->cached_res);
 
-				PTHREAD_MUTEX_unlock(&session->
-				     fc_slots[arg_SEQUENCE4->sa_slotid].lock);
+				PTHREAD_MUTEX_unlock(&slot->lock);
 				dec_session_ref(session);
 				res_SEQUENCE4->sr_status = NFS4_OK;
 				return res_SEQUENCE4->sr_status;
 #if IMPLEMENT_CACHETHIS
 			} else {
 				/* Illegal replay */
-				PTHREAD_MUTEX_unlock(&session->
-				     fc_slots[arg_SEQUENCE4->sa_slotid].lock);
+				PTHREAD_MUTEX_unlock(&slot->lock);
 				dec_session_ref(session);
 				res_SEQUENCE4->sr_status =
 				    NFS4ERR_RETRY_UNCACHED_REP;
 				LogDebugAlt(COMPONENT_SESSIONS,
 					    COMPONENT_CLIENTID,
 					    "SEQUENCE returning status %s",
-					    nfsstat4_to_str(res_SEQUENCE4->
-							    sr_status));
+					    nfsstat4_to_str(
+						res_SEQUENCE4->sr_status));
 				return res_SEQUENCE4->sr_status;
 			}
 #endif
 		}
 
-		PTHREAD_MUTEX_unlock(&session->
-			fc_slots[arg_SEQUENCE4->sa_slotid].lock);
+		PTHREAD_MUTEX_unlock(&slot->lock);
 		dec_session_ref(session);
 		res_SEQUENCE4->sr_status = NFS4ERR_SEQ_MISORDERED;
 		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
@@ -182,12 +175,11 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 	data->slot = arg_SEQUENCE4->sa_slotid;
 
 	/* Update the sequence id within the slot */
-	session->fc_slots[arg_SEQUENCE4->sa_slotid].sequence += 1;
+	slot->sequence += 1;
 
 	memcpy(res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_sessionid,
 	       arg_SEQUENCE4->sa_sessionid, NFS4_SESSIONID_SIZE);
-	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_sequenceid =
-	    session->fc_slots[arg_SEQUENCE4->sa_slotid].sequence;
+	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_sequenceid = slot->sequence;
 	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_slotid =
 	    arg_SEQUENCE4->sa_slotid;
 	res_SEQUENCE4->SEQUENCE4res_u.sr_resok4.sr_highest_slotid =
@@ -206,9 +198,8 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 /* Ganesha always caches result anyway so ignore cachethis */
 	if (arg_SEQUENCE4->sa_cachethis) {
 #endif
-		data->cached_res =
-		    &session->fc_slots[arg_SEQUENCE4->sa_slotid].cached_result;
-		session->fc_slots[arg_SEQUENCE4->sa_slotid].cache_used = true;
+		data->cached_res = &slot->cached_result;
+		slot->cache_used = true;
 
 		LogFullDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
 				"Use sesson slot %" PRIu32 "=%p for DRC",
@@ -216,7 +207,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 #if IMPLEMENT_CACHETHIS
 	} else {
 		data->cached_res = NULL;
-		session->fc_slots[arg_SEQUENCE4->sa_slotid].cache_used = false;
+		slot->cache_used = false;
 
 		LogFullDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
 				"Don't use sesson slot %" PRIu32
@@ -224,7 +215,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 	}
 #endif
 
-	PTHREAD_MUTEX_unlock(&session->fc_slots[arg_SEQUENCE4->sa_slotid].lock);
+	PTHREAD_MUTEX_unlock(&slot->lock);
 
 	/* If we were successful, stash the clientid in the request
 	 * context.

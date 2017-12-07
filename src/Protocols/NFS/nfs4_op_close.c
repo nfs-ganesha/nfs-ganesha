@@ -242,10 +242,9 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check is held locks remain */
 	glist_for_each(glist, &state_found->state_data.share.share_lockstates) {
-		state_t *lock_state = glist_entry(glist,
-						  state_t,
-						  state_data.lock.
-						  state_sharelist);
+		state_t *lock_state =
+				glist_entry(glist, state_t,
+					    state_data.lock.state_sharelist);
 
 		if (!glist_empty(&lock_state->state_data.lock.state_locklist)) {
 			/* Is this actually what we want to do, rather
@@ -282,9 +281,9 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	/* File is closed, release the corresponding lock states */
 	glist_for_each_safe(glist, glistn,
 			    &state_found->state_data.share.share_lockstates) {
-		state_t *lock_state = glist_entry(glist, state_t,
-						  state_data.lock.
-						  state_sharelist);
+		state_t *lock_state =
+				glist_entry(glist, state_t,
+					    state_data.lock.state_sharelist);
 
 		/* If the FSAL supports extended ops, this will result in
 		 * closing any open files the FSAL has for this lock state.

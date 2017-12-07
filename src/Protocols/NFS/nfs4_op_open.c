@@ -152,9 +152,9 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
 		if (data->minorversion == 0)
 			status = NFS4ERR_NOTSUPP;
 
-		if (op_ctx->fsal_export->exp_ops.
-			fs_supports(op_ctx->fsal_export, fso_grace_method))
-				fsal_grace = true;
+		if (op_ctx->fsal_export->exp_ops.fs_supports(
+					op_ctx->fsal_export, fso_grace_method))
+			fsal_grace = true;
 		if (!fsal_grace && nfs_in_grace())
 			status = NFS4ERR_GRACE;
 		break;
@@ -215,8 +215,6 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 	bool_t isnew;
 	/* Return value of FSAL operations */
 	fsal_status_t status = {0, 0};
-	/* The filename to create */
-	char *filename = NULL;
 	struct fsal_obj_handle *obj_lookup = NULL;
 
 	/* Is this open_owner known? If so, get it so we can use
@@ -250,66 +248,66 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 		LogDebug(COMPONENT_STATE,
 			 "Previously known open_owner is used with seqid=0, ask the client to confirm it again");
 		(*owner)->so_owner.so_nfs4_owner.so_confirmed = false;
-	} else {
-		/* Check for replay */
-		if (!Check_nfs4_seqid(*owner,
-				      arg_OPEN4->seqid,
-				      op,
-				      data->current_obj,
-				      res,
-				      open_tag)) {
-			/* Response is setup for us and LogDebug told what was
-			 * wrong.
-			 *
-			 * Or if this is a seqid replay, find the file entry
-			 * and update currentFH
-			 */
-			if (res_OPEN4->status == NFS4_OK) {
-				utf8string *utfile;
-				open_claim4 *oc = &arg_OPEN4->claim;
-
-				switch (oc->claim) {
-				case CLAIM_NULL:
-					utfile = &oc->open_claim4_u.file;
-					break;
-				case CLAIM_DELEGATE_CUR:
-					utfile = &oc->open_claim4_u.
-							delegate_cur_info.file;
-					break;
-				case CLAIM_DELEGATE_PREV:
-				default:
-					return false;
-				}
-				/* Check if filename is correct */
-				res_OPEN4->status = nfs4_utf8string2dynamic(
-				     utfile, UTF8_SCAN_ALL, &filename);
-
-				if (res_OPEN4->status != NFS4_OK)
-					return false;
-
-				status = fsal_lookup(data->current_obj,
-						     filename,
-						     &obj_lookup,
-						     NULL);
-				if (filename) {
-					gsh_free(filename);
-					filename = NULL;
-				}
-
-				if (obj_lookup == NULL) {
-					res_OPEN4->status =
-					    nfs4_Errno_status(status);
-					return false;
-				}
-				res_OPEN4->status =
-				    open4_create_fh(data, obj_lookup, false);
-			}
-
-			return false;
-		}
+		return true;
 	}
 
-	return true;
+	/* Check for replay */
+	if (Check_nfs4_seqid(*owner,
+			     arg_OPEN4->seqid,
+			     op,
+			     data->current_obj,
+			     res,
+			     open_tag)) {
+		/* No replay */
+		return true;
+	}
+
+	/* Response is setup for us and LogDebug told what was
+	 * wrong.
+	 *
+	 * Or if this is a seqid replay, find the file entry
+	 * and update currentFH
+	 */
+	if (res_OPEN4->status == NFS4_OK) {
+		utf8string *utfile;
+		open_claim4 *oc = &arg_OPEN4->claim;
+		char *filename;
+
+		/* Load up CLAIM_DELEGATE_CUR file */
+
+		switch (oc->claim) {
+		case CLAIM_NULL:
+			utfile = &oc->open_claim4_u.file;
+			break;
+		case CLAIM_DELEGATE_CUR:
+			utfile = &oc->open_claim4_u.delegate_cur_info.file;
+			break;
+		case CLAIM_DELEGATE_PREV:
+		default:
+			return false;
+		}
+		/* Check if filename is correct */
+		res_OPEN4->status = nfs4_utf8string2dynamic(
+					utfile, UTF8_SCAN_ALL, &filename);
+
+		if (res_OPEN4->status != NFS4_OK)
+			return false;
+
+		status = fsal_lookup(data->current_obj,
+				     filename,
+				     &obj_lookup,
+				     NULL);
+
+		gsh_free(filename);
+
+		if (obj_lookup == NULL) {
+			res_OPEN4->status = nfs4_Errno_status(status);
+			return false;
+		}
+		res_OPEN4->status = open4_create_fh(data, obj_lookup, false);
+	}
+
+	return false;
 }
 
 /**
@@ -331,10 +329,10 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 	nfsstat4 status;
 	state_t *found_state = NULL;
 
-	if (!(op_ctx->fsal_export->exp_ops.
-	      fs_supports(op_ctx->fsal_export, fso_delegations_w)
-	      || op_ctx->fsal_export->exp_ops.
-		 fs_supports(op_ctx->fsal_export, fso_delegations_r))
+	if (!(op_ctx->fsal_export->exp_ops.fs_supports(
+					op_ctx->fsal_export, fso_delegations_w)
+	      || op_ctx->fsal_export->exp_ops.fs_supports(
+					op_ctx->fsal_export, fso_delegations_r))
 	      ) {
 		LogDebug(COMPONENT_STATE,
 			 "NFS4 OPEN returning NFS4ERR_NOTSUPP for CLAIM_DELEGATE");
@@ -343,8 +341,8 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 
 	assert(claim == CLAIM_DELEGATE_CUR);
 	utfname = &arg->claim.open_claim4_u.delegate_cur_info.file;
-	rcurr_state = &arg->claim.open_claim4_u.
-			delegate_cur_info.delegate_stateid;
+	rcurr_state =
+		&arg->claim.open_claim4_u.delegate_cur_info.delegate_stateid;
 
 	LogDebug(COMPONENT_NFS_V4, "file name: %.*s",
 		 utfname->utf8string_len, utfname->utf8string_val);
@@ -426,12 +424,17 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	struct state_refer refer;
 	state_t *new_state = NULL;
 	struct state_hdl *ostate;
+	open_write_delegation4 *writeres =
+		&resok->delegation.open_delegation4_u.write;
+	open_read_delegation4 *readres =
+		&resok->delegation.open_delegation4_u.read;
+	open_none_delegation4 *whynone =
+		&resok->delegation.open_delegation4_u.od_whynone;
 
 	ostate = data->current_obj->state_hdl;
 	if (!ostate) {
 		LogFullDebug(COMPONENT_NFS_V4_LOCK, "Could not get file state");
-		resok->delegation.open_delegation4_u.
-			od_whynone.ond_why = WND4_RESOURCE;
+		whynone->ond_why = WND4_RESOURCE;
 		return;
 	}
 
@@ -463,18 +466,16 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 				      data->minorversion > 0 ? &refer : NULL);
 	if (state_status != STATE_SUCCESS) {
 		LogDebug(COMPONENT_NFS_V4_LOCK,
-			 "get_delegation call failed to add state with status %s",
+			 "get delegation call failed to add state with status %s",
 			 state_err_str(state_status));
-		resok->delegation.open_delegation4_u.
-			od_whynone.ond_why = WND4_RESOURCE;
+		whynone->ond_why = WND4_RESOURCE;
 		return;
 	} else {
 		new_state->state_seqid++;
 
 		LogFullDebugOpaque(COMPONENT_STATE,
 				   "delegation state added, stateid: %s",
-				   100, new_state->stateid_other,
-				   OTHERSIZE);
+				   100, new_state->stateid_other, OTHERSIZE);
 
 		/* acquire_lease_lock() gets the delegation from FSAL */
 		state_status = acquire_lease_lock(ostate,
@@ -482,43 +483,34 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 						  new_state);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NFS_V4_LOCK,
-				 "get_delegation call added state but failed to lock with status %s",
+				 "get delegation call added state but failed to lock with status %s",
 				 state_err_str(state_status));
 			state_del_locked(new_state);
 			dec_state_t_ref(new_state);
 			if (state_status == STATE_LOCK_CONFLICT)
-				resok->delegation.open_delegation4_u.
-					od_whynone.ond_why = WND4_CONTENTION;
+				whynone->ond_why = WND4_CONTENTION;
 			else
-				resok->delegation.open_delegation4_u.
-					od_whynone.ond_why = WND4_RESOURCE;
+				whynone->ond_why = WND4_RESOURCE;
 			return;
 		} else {
+			nfs_space_limit4 *space_limit = &writeres->space_limit;
+
 			resok->delegation.delegation_type = deleg_type;
+			ostate->file.fdeleg_stats.fds_deleg_type = deleg_type;
 			if (deleg_type == OPEN_DELEGATE_WRITE) {
-				open_write_delegation4 *writeres =
-				&resok->delegation.open_delegation4_u.write;
-				writeres->
-					space_limit.limitby = NFS_LIMIT_SIZE;
-				writeres->
-				space_limit.nfs_space_limit4_u.filesize =
+				space_limit->limitby = NFS_LIMIT_SIZE;
+				space_limit->nfs_space_limit4_u.filesize =
 						DELEG_SPACE_LIMIT_FILESZ;
 				COPY_STATEID(&writeres->stateid, new_state);
 				writeres->recall = prerecall;
 				get_deleg_perm(&writeres->permissions,
 					       deleg_type);
-				ostate->file.fdeleg_stats.fds_deleg_type =
-					OPEN_DELEGATE_WRITE;
 			} else {
 				assert(deleg_type == OPEN_DELEGATE_READ);
-				open_read_delegation4 *readres =
-				&resok->delegation.open_delegation4_u.read;
 				COPY_STATEID(&readres->stateid, new_state);
 				readres->recall = prerecall;
 				get_deleg_perm(&readres->permissions,
 					       deleg_type);
-				ostate->file.fdeleg_stats.fds_deleg_type =
-					OPEN_DELEGATE_READ;
 			}
 		}
 	}
@@ -533,7 +525,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 		display_nfs4_owner(&dspbuf2, clientowner);
 
 		LogDebug(COMPONENT_NFS_V4_LOCK,
-			 "get_delegation openowner %s clientowner %s status %s",
+			 "get delegation openowner %s clientowner %s status %s",
 			 str1, str2, state_err_str(state_status));
 	}
 
@@ -562,8 +554,8 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 
 	/* Client doesn't want a delegation. */
 	if (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WANT_NO_DELEG) {
-		resok->delegation.open_delegation4_u.
-			od_whynone.ond_why = WND4_NOT_WANTED;
+		resok->delegation.open_delegation4_u.od_whynone.ond_why =
+								WND4_NOT_WANTED;
 		LogFullDebug(COMPONENT_STATE, "Client didn't want delegation.");
 		return;
 	}
@@ -571,8 +563,8 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 	/* Check if delegations are supported */
 	if (!deleg_supported(data->current_obj, op_ctx->fsal_export,
 			     op_ctx->export_perms, arg_OPEN4->share_access)) {
-		resok->delegation.open_delegation4_u.
-			od_whynone.ond_why = WND4_NOT_SUPP_FTYPE;
+		resok->delegation.open_delegation4_u.od_whynone.ond_why =
+							WND4_NOT_SUPP_FTYPE;
 		LogFullDebug(COMPONENT_STATE, "Delegation type not supported.");
 		return;
 	}
@@ -1346,9 +1338,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	if (!(arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_BOTH)
 	    || (data->minorversion == 0
 		&& arg_OPEN4->share_access & ~OPEN4_SHARE_ACCESS_BOTH)
-	    || (arg_OPEN4->
-		share_access & (~OPEN4_SHARE_ACCESS_WANT_DELEG_MASK &
-				~OPEN4_SHARE_ACCESS_BOTH))
+	    || (arg_OPEN4->share_access & (~OPEN4_SHARE_ACCESS_WANT_DELEG_MASK &
+					   ~OPEN4_SHARE_ACCESS_BOTH))
 	    || (arg_OPEN4->share_deny & ~OPEN4_SHARE_DENY_BOTH)) {
 		res_OPEN4->status = NFS4ERR_INVAL;
 		LogDebug(COMPONENT_NFS_V4,

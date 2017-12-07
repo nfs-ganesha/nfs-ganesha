@@ -98,21 +98,21 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	EXCHANGE_ID4res * const res_EXCHANGE_ID4 =
 	    &resp->nfs_resop4_u.opexchange_id;
 	EXCHANGE_ID4resok * const res_EXCHANGE_ID4_ok =
-	    (&resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4);
+	    &resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4;
 
 	resp->resop = NFS4_OP_EXCHANGE_ID;
 
 	if (data->minorversion == 0)
 		return res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
 
-	if ((arg_EXCHANGE_ID4->
-	     eia_flags & ~(EXCHGID4_FLAG_SUPP_MOVED_REFER |
-			   EXCHGID4_FLAG_SUPP_MOVED_MIGR |
-			   EXCHGID4_FLAG_BIND_PRINC_STATEID |
-			   EXCHGID4_FLAG_USE_NON_PNFS |
-			   EXCHGID4_FLAG_USE_PNFS_MDS |
-			   EXCHGID4_FLAG_USE_PNFS_DS |
-			   EXCHGID4_FLAG_UPD_CONFIRMED_REC_A)) != 0)
+	if ((arg_EXCHANGE_ID4->eia_flags & ~(EXCHGID4_FLAG_SUPP_MOVED_REFER |
+					     EXCHGID4_FLAG_SUPP_MOVED_MIGR |
+					     EXCHGID4_FLAG_BIND_PRINC_STATEID |
+					     EXCHGID4_FLAG_USE_NON_PNFS |
+					     EXCHGID4_FLAG_USE_PNFS_MDS |
+					     EXCHGID4_FLAG_USE_PNFS_DS |
+					     EXCHGID4_FLAG_UPD_CONFIRMED_REC_A)
+	     ) != 0)
 		return res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
 
 	/* If client did not ask for pNFS related server roles than just set
@@ -148,13 +148,10 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	server_addr = get_raddr(data->req->rq_xprt);
 
 	/* Do we already have one or more records for client id (x)? */
-	client_record =
-	    get_client_record(arg_EXCHANGE_ID4->eia_clientowner.co_ownerid.
-			      co_ownerid_val,
-			      arg_EXCHANGE_ID4->eia_clientowner.co_ownerid.
-			      co_ownerid_len,
-			      pnfs_flags,
-			      server_addr);
+	client_record = get_client_record(
+		arg_EXCHANGE_ID4->eia_clientowner.co_ownerid.co_ownerid_val,
+		arg_EXCHANGE_ID4->eia_clientowner.co_ownerid. co_ownerid_len,
+		pnfs_flags, server_addr);
 
 	if (client_record == NULL) {
 		/* Some major failure */
@@ -395,19 +392,11 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_exchange_id_Free(nfs_resop4 *res)
 {
 	EXCHANGE_ID4res *resp = &res->nfs_resop4_u.opexchange_id;
+	EXCHANGE_ID4resok *resok = &resp->EXCHANGE_ID4res_u.eir_resok4;
 
 	if (resp->eir_status == NFS4_OK) {
-		if (resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_scope.
-		    eir_server_scope_val != NULL)
-			gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.
-				 eir_server_scope.eir_server_scope_val);
-		if (resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_owner.
-		    so_major_id.so_major_id_val != NULL)
-			gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.
-				 eir_server_owner.so_major_id.so_major_id_val);
-		if (resp->EXCHANGE_ID4res_u.eir_resok4.eir_server_impl_id.
-		    eir_server_impl_id_val != NULL)
-			gsh_free(resp->EXCHANGE_ID4res_u.eir_resok4.
-				 eir_server_impl_id.eir_server_impl_id_val);
+		gsh_free(resok->eir_server_scope.eir_server_scope_val);
+		gsh_free(resok->eir_server_owner.so_major_id.so_major_id_val);
+		gsh_free(resok->eir_server_impl_id.eir_server_impl_id_val);
 	}
 }

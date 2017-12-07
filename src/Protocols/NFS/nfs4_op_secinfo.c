@@ -58,6 +58,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 {
 	SECINFO4args * const arg_SECINFO4 = &op->nfs_argop4_u.opsecinfo;
 	SECINFO4res * const res_SECINFO4 = &resp->nfs_resop4_u.opsecinfo;
+	secinfo4 *resok_val;
 	char *secinfo_fh_name = NULL;
 	fsal_status_t fsal_status = {0, 0};
 	struct fsal_obj_handle *obj_src = NULL;
@@ -198,8 +199,8 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	    EXPORT_OPTION_RPCSEC_GSS_PRIV)
 		num_entry++;
 
-	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val =
-	     gsh_calloc(num_entry, sizeof(secinfo4));
+	resok_val = gsh_calloc(num_entry, sizeof(secinfo4));
+	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val = resok_val;
 
 	/**
 	 * @todo We have the opportunity to associate a preferred
@@ -212,48 +213,37 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 #ifdef _HAVE_GSSAPI
 	if (op_ctx->export_perms->options &
 	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .flavor = RPCSEC_GSS;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .secinfo4_u.flavor_info.oid = v5oid;
+		resok_val[idx].flavor = RPCSEC_GSS;
+		resok_val[idx].secinfo4_u.flavor_info.service =
+			RPCSEC_GSS_SVC_PRIVACY;
+		resok_val[idx].secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+		resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
 	}
 
 	if (op_ctx->export_perms->options &
 	    EXPORT_OPTION_RPCSEC_GSS_INTG) {
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].
-		    flavor = RPCSEC_GSS;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_INTEGRITY;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .secinfo4_u.flavor_info.oid = v5oid;
+		resok_val[idx].flavor = RPCSEC_GSS;
+		resok_val[idx].secinfo4_u.flavor_info.service =
+			RPCSEC_GSS_SVC_INTEGRITY;
+		resok_val[idx].secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+		resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
 	}
 
 	if (op_ctx->export_perms->options &
 	    EXPORT_OPTION_RPCSEC_GSS_NONE) {
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].
-		    flavor = RPCSEC_GSS;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .secinfo4_u.flavor_info.oid = v5oid;
+		resok_val[idx].flavor = RPCSEC_GSS;
+		resok_val[idx].secinfo4_u.flavor_info.service =
+			RPCSEC_GSS_SVC_NONE;
+		resok_val[idx].secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+		resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
 	}
 #endif /* _HAVE_GSSAPI */
 
 	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .flavor = AUTH_UNIX;
+		resok_val[idx++].flavor = AUTH_UNIX;
 
 	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .flavor = AUTH_NONE;
+		resok_val[idx++].flavor = AUTH_NONE;
 
 	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 

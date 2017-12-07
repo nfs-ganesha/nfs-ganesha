@@ -56,9 +56,11 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			 struct nfs_resop4 *resp)
 {
 	OPEN_CONFIRM4args * const arg_OPEN_CONFIRM4 =
-	    &op->nfs_argop4_u.opopen_confirm;
+		&op->nfs_argop4_u.opopen_confirm;
 	OPEN_CONFIRM4res * const res_OPEN_CONFIRM4 =
-	    &resp->nfs_resop4_u.opopen_confirm;
+		&resp->nfs_resop4_u.opopen_confirm;
+	OPEN_CONFIRM4resok *resok =
+		&res_OPEN_CONFIRM4->OPEN_CONFIRM4res_u.resok4;
 	int rc = 0;
 	state_t *state_found = NULL;
 	state_owner_t *open_owner;
@@ -134,9 +136,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 
 	/* Handle stateid/seqid for success */
-	update_stateid(state_found,
-		       &res_OPEN_CONFIRM4->OPEN_CONFIRM4res_u.resok4.
-		       open_stateid, data, tag);
+	update_stateid(state_found, &resok->open_stateid, data, tag);
 
 	/* Save the response in the open owner */
 	Copy_nfs4_state_req(open_owner,

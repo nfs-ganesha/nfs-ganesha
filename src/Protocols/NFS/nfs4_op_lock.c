@@ -60,6 +60,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 {
 	/* Shorter alias for arguments */
 	LOCK4args * const arg_LOCK4 = &op->nfs_argop4_u.oplock;
+	open_to_lock_owner4 *arg_open_owner =
+		&arg_LOCK4->locker.locker4_u.open_owner;
 	/* Shorter alias for response */
 	LOCK4res * const res_LOCK4 = &resp->nfs_resop4_u.oplock;
 	/* Status code from state calls */
@@ -158,12 +160,12 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	if (arg_LOCK4->locker.new_lock_owner) {
 		/* Check stateid correctness and get pointer to state */
 		nfs_status = nfs4_Check_Stateid(
-			&arg_LOCK4->locker.locker4_u.open_owner.open_stateid,
+			&arg_open_owner->open_stateid,
 			obj,
 			&state_open,
 			data,
 			STATEID_SPECIAL_FOR_LOCK,
-			arg_LOCK4->locker.locker4_u.open_owner.open_seqid,
+			arg_open_owner->open_seqid,
 			data->minorversion == 0,
 			lock_tag);
 
@@ -202,7 +204,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		lock_state = NULL;
 		lock_owner = NULL;
 		resp_owner = open_owner;
-		seqid = arg_LOCK4->locker.locker4_u.open_owner.open_seqid;
+		seqid = arg_open_owner->open_seqid;
 
 		LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG,
 			"LOCK New lock owner from open owner",
@@ -210,8 +212,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* Check is the clientid is known or not */
 		rc = nfs_client_id_get_confirmed(
-			data->minorversion == 0 ? arg_LOCK4->locker.
-				  locker4_u.open_owner.lock_owner.clientid
+			data->minorversion == 0
+				? arg_open_owner->lock_owner.clientid
 				: data->session->clientid,
 			&clientid);
 
@@ -252,8 +254,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		/* Is this lock_owner known ? */
-		convert_nfs4_lock_owner(&arg_LOCK4->locker.locker4_u.open_owner.
-					lock_owner, &owner_name);
+		convert_nfs4_lock_owner(&arg_open_owner->lock_owner,
+					&owner_name);
 		LogStateOwner("Lock: ", lock_owner);
 	} else {
 		/* Existing lock owner Find the lock stateid From
@@ -423,9 +425,9 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	 * the other and non-NULL at this point - so makes for a better log).
 	 */
 	if (nfs_in_grace()) {
-		if (op_ctx->fsal_export->exp_ops.
-			fs_supports(op_ctx->fsal_export, fso_grace_method))
-				fsal_grace = true;
+		if (op_ctx->fsal_export->exp_ops.fs_supports(
+					op_ctx->fsal_export, fso_grace_method))
+			fsal_grace = true;
 
 		if (!fsal_grace && !arg_LOCK4->reclaim) {
 			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
@@ -486,8 +488,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			if (!glist_empty(&lock_owner->so_lock_list)
 			    && (data->minorversion == 0)
 			    && !Check_nfs4_seqid(lock_owner,
-						 arg_LOCK4->locker.locker4_u.
-						     open_owner.lock_seqid,
+						 arg_open_owner->lock_seqid,
 						 op,
 						 obj,
 						 resp,
@@ -631,8 +632,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	if (arg_LOCK4->locker.new_lock_owner) {
 		/* Also save the response in the lock owner */
 		Copy_nfs4_state_req(lock_owner,
-				    arg_LOCK4->locker.locker4_u.open_owner.
-				    lock_seqid,
+				    arg_open_owner->lock_seqid,
 				    op,
 				    obj,
 				    resp,

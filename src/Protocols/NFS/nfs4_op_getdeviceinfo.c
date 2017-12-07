@@ -69,10 +69,13 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 {
 	/* Convenience alias for arguments */
 	GETDEVICEINFO4args * const arg_GETDEVICEINFO4 =
-	    &op->nfs_argop4_u.opgetdeviceinfo;
+		&op->nfs_argop4_u.opgetdeviceinfo;
 	/* Convenience alias for response */
 	GETDEVICEINFO4res * const res_GETDEVICEINFO4 =
-	    &resp->nfs_resop4_u.opgetdeviceinfo;
+		&resp->nfs_resop4_u.opgetdeviceinfo;
+	/* Convenience alias for response */
+	GETDEVICEINFO4resok *resok =
+		&res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4;
 	/* The separated deviceid passed to the FSAL */
 	struct pnfs_deviceid *deviceid;
 	/* NFS4 return code */
@@ -134,8 +137,8 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Set up the device_addr4 and get stream for FSAL to write into */
 
-	res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
-	    da_layout_type = arg_GETDEVICEINFO4->gdia_layout_type;
+	resok->gdir_device_addr.da_layout_type =
+					arg_GETDEVICEINFO4->gdia_layout_type;
 
 	da_buffer = gsh_malloc(da_addr_size);
 
@@ -156,15 +159,10 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 	if (nfs_status != NFS4_OK)
 		goto out;
 
-	memset(&res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4.
-	       gdir_notification, 0,
-	       sizeof(res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4.
-		      gdir_notification));
+	memset(&resok->gdir_notification, 0, sizeof(resok->gdir_notification));
 
-	res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
-	    da_addr_body.da_addr_body_len = da_length;
-	res_GETDEVICEINFO4->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
-	    da_addr_body.da_addr_body_val = da_buffer;
+	resok->gdir_device_addr.da_addr_body.da_addr_body_len = da_length;
+	resok->gdir_device_addr.da_addr_body.da_addr_body_val = da_buffer;
 
 	nfs_status = NFS4_OK;
 
@@ -190,13 +188,9 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_getdeviceinfo_Free(nfs_resop4 *res)
 {
 	GETDEVICEINFO4res *resp = &res->nfs_resop4_u.opgetdeviceinfo;
+	GETDEVICEINFO4resok *resok = &resp->GETDEVICEINFO4res_u.gdir_resok4;
 
 	if (resp->gdir_status == NFS4_OK) {
-		if (resp->GETDEVICEINFO4res_u.gdir_resok4.gdir_device_addr.
-		    da_addr_body.da_addr_body_val != NULL) {
-			gsh_free(resp->GETDEVICEINFO4res_u.gdir_resok4.
-				 gdir_device_addr.da_addr_body.
-				 da_addr_body_val);
-		}
+		gsh_free(resok->gdir_device_addr.da_addr_body.da_addr_body_val);
 	}
 }				/* nfs41_op_getdeviceinfo_Free */

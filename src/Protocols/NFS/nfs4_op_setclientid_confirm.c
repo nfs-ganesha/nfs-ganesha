@@ -267,10 +267,10 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			}
 
 			res_SETCLIENTID_CONFIRM4->status = NFS4ERR_CLID_INUSE;
-		} else
-		    if (memcmp(conf->cid_verifier,
-			       arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
-			       NFS4_VERIFIER_SIZE) == 0) {
+		} else if (memcmp(
+				conf->cid_verifier,
+				arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
+				NFS4_VERIFIER_SIZE) == 0) {
 			/* In this case, the record was confirmed and
 			 * we have received a retry
 			 */

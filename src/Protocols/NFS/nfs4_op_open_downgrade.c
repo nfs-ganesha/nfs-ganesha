@@ -61,9 +61,11 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 			   struct nfs_resop4 *resp)
 {
 	OPEN_DOWNGRADE4args * const arg_OPEN_DOWNGRADE4 =
-	    &op->nfs_argop4_u.opopen_downgrade;
+		&op->nfs_argop4_u.opopen_downgrade;
 	OPEN_DOWNGRADE4res * const res_OPEN_DOWNGRADE4 =
-	    &resp->nfs_resop4_u.opopen_downgrade;
+		&resp->nfs_resop4_u.opopen_downgrade;
+	OPEN_DOWNGRADE4resok *resok =
+		&res_OPEN_DOWNGRADE4->OPEN_DOWNGRADE4res_u.resok4;
 	state_t *state_found = NULL;
 	state_owner_t *open_owner;
 	int rc;
@@ -152,11 +154,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 	res_OPEN_DOWNGRADE4->status = NFS4_OK;
 
 	/* Handle stateid/seqid for success */
-	update_stateid(state_found,
-		       &res_OPEN_DOWNGRADE4->OPEN_DOWNGRADE4res_u.resok4.
-		       open_stateid,
-		       data,
-		       tag);
+	update_stateid(state_found, &resok->open_stateid, data, tag);
 
 	/* Save the response in the open owner */
 	if (data->minorversion == 0) {

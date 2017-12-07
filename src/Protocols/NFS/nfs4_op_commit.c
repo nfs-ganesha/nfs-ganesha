@@ -154,11 +154,11 @@ static int op_dscommit(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Call the commit operation */
 	nfs_status =
-	    data->current_ds->dsh_ops.commit(data->current_ds, op_ctx,
-					  arg_COMMIT4->offset,
-					  arg_COMMIT4->count,
-					  &res_COMMIT4->COMMIT4res_u.resok4.
-					  writeverf);
+	    data->current_ds->dsh_ops.commit(
+				data->current_ds, op_ctx,
+				arg_COMMIT4->offset,
+				arg_COMMIT4->count,
+				&res_COMMIT4->COMMIT4res_u.resok4.writeverf);
 
 	res_COMMIT4->status = nfs_status;
 	return res_COMMIT4->status;
