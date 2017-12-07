@@ -61,7 +61,7 @@ int rquota_setquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	setquota_rslt *qres = &res->res_rquota_setquota;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
-		     "REQUEST PROCESSING: Calling rquota_setquota");
+		     "REQUEST PROCESSING: Calling RQUOTA_SETQUOTA");
 
 	/* check rquota version and extract arguments */
 	if (req->rq_msg.cb_vers == EXT_RQUOTAVERS) {

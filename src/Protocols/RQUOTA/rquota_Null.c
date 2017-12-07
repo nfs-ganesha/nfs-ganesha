@@ -48,7 +48,7 @@
 int rquota_Null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	LogFullDebug(COMPONENT_NFSPROTO,
-		     "REQUEST PROCESSING: Calling rquota_Null");
+		     "REQUEST PROCESSING: Calling RQUOTA_NULL");
 	/* 0 is success */
 	return 0;
 }
