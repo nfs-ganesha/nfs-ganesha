@@ -491,9 +491,8 @@ static inline void drc_free_expired(void)
 				LogCrit(COMPONENT_DUPREQ,
 					"BUG: asked to dequeue DRC not on queue");
 			} else {
-				(void)opr_rbtree_remove(&t->t,
-							&drc->d_u.tcp.
-							recycle_k);
+				(void)opr_rbtree_remove(
+						&t->t, &drc->d_u.tcp.recycle_k);
 			}
 			TAILQ_REMOVE(&drc_st->tcp_drc_recycle_q, drc,
 				     d_u.tcp.recycle_q);
@@ -1105,8 +1104,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 
 			LogFullDebug(COMPONENT_DUPREQ,
 				     "starting dk=%p xid=%" PRIu32
-				     " on DRC=%p state=%s, status=%s, "
-				     "refcnt=%d, drc->size=%d",
+				     " on DRC=%p state=%s, status=%s, refcnt=%d, drc->size=%d",
 				     dk, dk->hin.tcp.rq_xid, drc,
 				     dupreq_state_table[dk->state],
 				     dupreq_status_table[status],

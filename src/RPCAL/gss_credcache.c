@@ -171,11 +171,11 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 				     struct gssd_k5_kt_princ *ple, int nocache)
 {
 #if HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ADDRESSLESS
-	krb5_get_init_creds_opt *init_opts = NULL;
+	krb5_get_init_creds_opt * init_opts = NULL;
 #else
 	krb5_get_init_creds_opt options;
 #endif
-	krb5_get_init_creds_opt *opts;
+	krb5_get_init_creds_opt * opts;
 	krb5_creds my_creds;
 	krb5_ccache ccache = NULL;
 	char kt_name[BUFSIZ];
