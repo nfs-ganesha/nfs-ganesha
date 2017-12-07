@@ -56,6 +56,7 @@ static void release(struct fsal_export *export_pub)
 	    container_of(export_pub, struct rgw_export, export);
 
 	int rc = rgw_umount(export->rgw_fs, RGW_UMOUNT_FLAG_NONE);
+
 	assert(rc == 0);
 	deconstruct_handle(export->root);
 	export->rgw_fs = NULL;
@@ -311,6 +312,7 @@ static bool fs_supports(struct fsal_export *export_pub,
 			fsal_fsinfo_options_t option)
 {
 	struct fsal_staticfsinfo_t *info = rgw_staticinfo(export_pub->fsal);
+
 	return fsal_supports(info, option);
 }
 

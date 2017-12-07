@@ -57,6 +57,7 @@ struct rgw_fsal_module RGWFSM;
 fsal_status_t rgw2fsal_error(const int rgw_errorcode)
 {
 	fsal_status_t status;
+
 	status.minor = -rgw_errorcode;
 
 	switch (-rgw_errorcode) {
