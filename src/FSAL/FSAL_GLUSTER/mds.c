@@ -397,9 +397,9 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	 * And whole file is provided to the DS, so the starting
 	 * index for that file is zero
 	 */
-	unsigned num_ds                  = 1;
-	uint32_t stripes                 = 1;
-	uint32_t stripe_ind              = 0;
+	unsigned int num_ds = 1;
+	uint32_t stripes = 1;
+	uint32_t stripe_ind = 0;
 
 
 	if (type != LAYOUT4_NFSV4_1_FILES) {

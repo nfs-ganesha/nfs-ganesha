@@ -200,7 +200,7 @@ bool fs_specific_has(const char *fs_specific, const char *key, char *val,
 		char *v = k;
 
 		strsep(&v, "=");
-		if (0 == strcmp(k, key)) {
+		if (strcmp(k, key) == 0) {
 			if (val)
 				strncpy(val, v, *max_val_bytes);
 			if (max_val_bytes)
@@ -510,8 +510,8 @@ void latency_dump(void)
 
 	for (; i < LATENCY_SLOTS; i++) {
 		LogCrit(COMPONENT_FSAL, "Op:%d:Count:%"PRIu64":nsecs:%"PRIu64,
-			i, glfsal_latencies[i].count, glfsal_latencies[i].
-			overall_time);
+			i, glfsal_latencies[i].count,
+			glfsal_latencies[i].overall_time);
 	}
 }
 #endif

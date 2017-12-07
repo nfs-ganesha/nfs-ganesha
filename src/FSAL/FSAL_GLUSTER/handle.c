@@ -1562,8 +1562,9 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 		glhandle =
 		    glfs_h_creat(glfs_export->gl_fs->fs, parenthandle->glhandle,
 				 name, p_flags, unix_mode, &sb);
-	} else if (!errno)
-                created = true;
+	} else if (!errno) {
+		created = true;
+	}
 
 	/* restore credentials */
 	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
@@ -1590,7 +1591,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	 * file with a mode that prevented the open this caller was attempting.
 	 */
 
-        /* Do a permission check if we were not attempting to create. If we
+	/* Do a permission check if we were not attempting to create. If we
 	 * were attempting any sort of create, then the openat call was made
 	 * with the caller's credentials active and as such was permission
 	 * checked.

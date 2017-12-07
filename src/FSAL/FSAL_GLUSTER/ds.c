@@ -95,7 +95,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 		     struct glusterfs_export, export);
 
 	if (ds->glhandle == NULL)
-		LogDebug(COMPONENT_PNFS, "ds_read glhandle NULL");
+		LogDebug(COMPONENT_PNFS, "glhandle NULL");
 
 	rc = glfs_h_anonymous_read(glfs_export->gl_fs->fs, ds->glhandle,
 				   buffer, requested_length, offset);
@@ -151,7 +151,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
 	if (ds->glhandle == NULL)
-		LogDebug(COMPONENT_PNFS, "ds_write glhandle NULL");
+		LogDebug(COMPONENT_PNFS, "glhandle NULL");
 
 	rc = glfs_h_anonymous_write(glfs_export->gl_fs->fs, ds->glhandle,
 				    buffer, write_length, offset);
@@ -226,7 +226,7 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 		rc = glfs_fsync(glfd);
 		if (rc != 0)
 			LogMajor(COMPONENT_PNFS,
-				 "ds_commit() failed %d", errno);
+				 "glfs_fsync failed %d", errno);
 		rc = glfs_close(glfd);
 		if (rc != 0)
 			LogDebug(COMPONENT_PNFS,

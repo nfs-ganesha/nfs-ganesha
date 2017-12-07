@@ -31,8 +31,8 @@
 #include "posix_acls.h"
 
 /* Checks whether ACE belongs to effective acl (ACCESS TYPE) */
-bool
-is_ace_valid_for_effective_acl_entry(fsal_ace_t *ace) {
+bool is_ace_valid_for_effective_acl_entry(fsal_ace_t *ace)
+{
 	bool ret;
 
 	if (IS_FSAL_ACE_HAS_INHERITANCE_FLAGS(*ace)) {
@@ -47,14 +47,14 @@ is_ace_valid_for_effective_acl_entry(fsal_ace_t *ace) {
 }
 
 /* Checks whether ACE belongs to inherited acl (DEFAULT TYPE) */
-bool
-is_ace_valid_for_inherited_acl_entry(fsal_ace_t *ace) {
+bool is_ace_valid_for_inherited_acl_entry(fsal_ace_t *ace)
+{
 
 	if (IS_FSAL_ACE_APPLICABLE_FOR_BOTH_ACL(*ace)
-		|| IS_FSAL_ACE_APPLICABLE_ONLY_FOR_INHERITED_ACL(*ace))
-			return  true;
-		else
-			return false;
+	    || IS_FSAL_ACE_APPLICABLE_ONLY_FOR_INHERITED_ACL(*ace))
+		return  true;
+	else
+		return false;
 
 }
 
@@ -62,8 +62,8 @@ is_ace_valid_for_inherited_acl_entry(fsal_ace_t *ace) {
  * Check whether given perm(ACL_READ, ACL_WRITE or ACL_EXECUTE) is allowed for
  * a permset, it depends on given ace and permset of @EVERYONE entry.
  */
-bool
-isallow(fsal_ace_t *ace, acl_permset_t everyone, acl_perm_t perm) {
+bool isallow(fsal_ace_t *ace, acl_permset_t everyone, acl_perm_t perm)
+{
 
 	bool ret = acl_get_perm(everyone, perm);
 
@@ -86,15 +86,15 @@ isallow(fsal_ace_t *ace, acl_permset_t everyone, acl_perm_t perm) {
  * Check whether given perm(ACL_READ, ACL_WRITE or ACL_EXECUTE) is denied for a
  * permset, it depends on permsets of deny entry of the acl and @EVERYONE entry.
  */
-bool
-isdeny(acl_permset_t deny, acl_permset_t everyone, acl_perm_t perm) {
+bool isdeny(acl_permset_t deny, acl_permset_t everyone, acl_perm_t perm)
+{
 
 	return acl_get_perm(deny, perm) || acl_get_perm(everyone, perm);
 }
 
 /* Returns no of possible fsal_ace entries from a given posix_acl */
-int
-ace_count(acl_t acl) {
+int ace_count(acl_t acl)
+{
 	int ret;
 
 	ret = acl_entries(acl);
@@ -114,8 +114,8 @@ ace_count(acl_t acl) {
  *
  * On success , it returns acl entry otherwise it returns NULL
  */
-acl_entry_t
-find_entry(acl_t acl, acl_tag_t tag,  unsigned int id) {
+acl_entry_t find_entry(acl_t acl, acl_tag_t tag,  unsigned int id)
+{
 	acl_entry_t entry;
 	acl_tag_t entryTag;
 	int ent, ret;
@@ -155,8 +155,8 @@ find_entry(acl_t acl, acl_tag_t tag,  unsigned int id) {
  *
  * On success , it returns acl entry otherwise it returns NULL
  */
-acl_entry_t
-get_entry(acl_t acl, acl_tag_t tag, unsigned int id) {
+acl_entry_t get_entry(acl_t acl, acl_tag_t tag, unsigned int id)
+{
 	acl_entry_t entry;
 	int ret;
 
@@ -191,9 +191,8 @@ get_entry(acl_t acl, acl_tag_t tag, unsigned int id) {
  * @returns no of entries on success and -1 on failure
  */
 
-int
-posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
-			fsal_ace_t **ace)
+int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
+			 fsal_ace_t **ace)
 {
 	int ret = 0, ent, d_ent, total = 0;
 	fsal_ace_t *pace_deny = NULL, *pace_allow = NULL;
@@ -463,8 +462,7 @@ posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
  *
  * @return acl_t structure
  */
-acl_t
-fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
+acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 {
 	int ret = 0, i;
 	fsal_ace_t *f_ace;
@@ -594,73 +592,69 @@ fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 	 * At last allow_acl is returned and deny_acl is ignored.
 	 */
 	for (f_ace = p_fsalacl->aces;
-		f_ace < p_fsalacl->aces + p_fsalacl->naces; f_ace++) {
-			if ((type == ACL_TYPE_ACCESS &&
-			!is_ace_valid_for_effective_acl_entry(f_ace))
-			|| (type == ACL_TYPE_DEFAULT &&
-			!is_ace_valid_for_inherited_acl_entry(f_ace)))
-				continue;
-			if (IS_FSAL_ACE_SPECIAL_ID(*f_ace)) {
-				id = 0;
-				if (IS_FSAL_ACE_SPECIAL_OWNER(*f_ace))
-					tag = ACL_USER_OBJ;
-				if (IS_FSAL_ACE_SPECIAL_GROUP(*f_ace))
-					tag = ACL_GROUP_OBJ;
-			} else {
-				id = GET_FSAL_ACE_WHO(*f_ace);
-				if (IS_FSAL_ACE_GROUP_ID(*f_ace))
-					tag = ACL_GROUP;
-				else
-					tag = ACL_USER;
-				/*
-				 * Mask entry will be created only if it
-				 * contains user or group entry
-				 */
-				mask = true;
-			}
+	     f_ace < p_fsalacl->aces + p_fsalacl->naces;
+	     f_ace++) {
+		if ((type == ACL_TYPE_ACCESS &&
+		    !is_ace_valid_for_effective_acl_entry(f_ace))
+		    || (type == ACL_TYPE_DEFAULT &&
+		    !is_ace_valid_for_inherited_acl_entry(f_ace)))
+			continue;
+		if (IS_FSAL_ACE_SPECIAL_ID(*f_ace)) {
+			id = 0;
+			if (IS_FSAL_ACE_SPECIAL_OWNER(*f_ace))
+				tag = ACL_USER_OBJ;
+			if (IS_FSAL_ACE_SPECIAL_GROUP(*f_ace))
+				tag = ACL_GROUP_OBJ;
+		} else {
+			id = GET_FSAL_ACE_WHO(*f_ace);
+			if (IS_FSAL_ACE_GROUP_ID(*f_ace))
+				tag = ACL_GROUP;
+			else
+				tag = ACL_USER;
+			/*
+			 * Mask entry will be created only if it
+			 * contains user or group entry
+			 */
+			mask = true;
+		}
 
-			if (IS_FSAL_ACE_SPECIAL_EVERYONE(*f_ace)) {
-				if (IS_FSAL_ACE_DENY(*f_ace)) {
-					if (deny_e_r)
-						acl_add_perm(e_d_permset,
-								ACL_READ);
-					if (deny_e_w)
-						acl_add_perm(e_d_permset,
-								ACL_WRITE);
-					if (deny_e_x)
-						acl_add_perm(e_d_permset,
-								ACL_EXECUTE);
-				}
-				continue;
-			}
-
-			a_entry = get_entry(allow_acl, tag, id);
-			d_entry = get_entry(deny_acl, tag, id);
-			ret = acl_get_permset(d_entry, &d_permset);
-
+		if (IS_FSAL_ACE_SPECIAL_EVERYONE(*f_ace)) {
 			if (IS_FSAL_ACE_DENY(*f_ace)) {
-				if (IS_FSAL_ACE_READ_DATA(*f_ace))
-					acl_add_perm(d_permset, ACL_READ);
-				if (IS_FSAL_ACE_WRITE_DATA(*f_ace))
-					acl_add_perm(d_permset, ACL_WRITE);
-				if (IS_FSAL_ACE_EXECUTE(*f_ace))
-					acl_add_perm(d_permset, ACL_EXECUTE);
+				if (deny_e_r)
+					acl_add_perm(e_d_permset, ACL_READ);
+				if (deny_e_w)
+					acl_add_perm(e_d_permset, ACL_WRITE);
+				if (deny_e_x)
+					acl_add_perm(e_d_permset, ACL_EXECUTE);
 			}
-			ret = acl_get_permset(a_entry, &a_permset);
+			continue;
+		}
 
-			if (isallow(f_ace, e_a_permset, ACL_READ)
-			&& !isdeny(d_permset, e_d_permset, ACL_READ))
-				acl_add_perm(a_permset, ACL_READ);
+		a_entry = get_entry(allow_acl, tag, id);
+		d_entry = get_entry(deny_acl, tag, id);
+		ret = acl_get_permset(d_entry, &d_permset);
 
-			if (isallow(f_ace, e_a_permset, ACL_WRITE)
-			&& !isdeny(d_permset, e_d_permset, ACL_WRITE))
-				acl_add_perm(a_permset, ACL_WRITE);
+		if (IS_FSAL_ACE_DENY(*f_ace)) {
+			if (IS_FSAL_ACE_READ_DATA(*f_ace))
+				acl_add_perm(d_permset, ACL_READ);
+			if (IS_FSAL_ACE_WRITE_DATA(*f_ace))
+				acl_add_perm(d_permset, ACL_WRITE);
+			if (IS_FSAL_ACE_EXECUTE(*f_ace))
+				acl_add_perm(d_permset, ACL_EXECUTE);
+		}
+		ret = acl_get_permset(a_entry, &a_permset);
 
-			if (isallow(f_ace, e_a_permset, ACL_EXECUTE)
-			&& !isdeny(d_permset, e_d_permset, ACL_EXECUTE))
-				acl_add_perm(a_permset, ACL_EXECUTE);
+		if (isallow(f_ace, e_a_permset, ACL_READ)
+		    && !isdeny(d_permset, e_d_permset, ACL_READ))
+			acl_add_perm(a_permset, ACL_READ);
 
+		if (isallow(f_ace, e_a_permset, ACL_WRITE)
+		    && !isdeny(d_permset, e_d_permset, ACL_WRITE))
+			acl_add_perm(a_permset, ACL_WRITE);
 
+		if (isallow(f_ace, e_a_permset, ACL_EXECUTE)
+		    && !isdeny(d_permset, e_d_permset, ACL_EXECUTE))
+			acl_add_perm(a_permset, ACL_EXECUTE);
 	}
 	if (mask) {
 		ret = acl_calc_mask(&allow_acl);
