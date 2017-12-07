@@ -79,7 +79,7 @@ nfs_start_info_t my_nfs_start_info = {
 };
 
 config_file_t config_struct;
-char *log_path = NULL;
+char *log_path;
 char *exec_name = "nfs-ganesha";
 char *host_name = "localhost";
 int debug_level = -1;

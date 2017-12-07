@@ -25,7 +25,8 @@
 
 /**
  * @file    nfs_rpc_tcp_socket_manager_thread.c
- * @brief   The file that contain the 'rpc_tcp_socket_manager_thread' routine for the nfsd.
+ * @brief   The file that contain the 'rpc_tcp_socket_manager_thread' routine
+ *          for the nfsd.
  *
  * nfs_rpc_dispatcher.c : The file that contain the
  * 'rpc_tcp_socket_manager_thread.c' routine for the nfsd (and all

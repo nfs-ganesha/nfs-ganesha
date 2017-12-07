@@ -236,10 +236,12 @@ static void cbsim_free_compound(nfs4_compound_t *cbt)
 	for (ix = 0; ix < cbt->v_u.v4.args.argarray.argarray_len; ++ix) {
 		argop = cbt->v_u.v4.args.argarray.argarray_val + ix;
 		if (argop) {
+			CB_RECALL4args *opcbrecall =
+				&argop->nfs_cb_argop4_u.opcbrecall;
+
 			switch (argop->argop) {
 			case NFS4_OP_CB_RECALL:
-				gsh_free(argop->nfs_cb_argop4_u.opcbrecall.fh.
-					 nfs_fh4_val);
+				gsh_free(opcbrecall->fh.nfs_fh4_val);
 				break;
 			default:
 				/* TODO:  ahem */
@@ -358,7 +360,7 @@ static bool nfs_rpc_cbsim_fake_recall(DBusMessageIter *args,
 	/* read the arguments */
 	if (args == NULL) {
 		LogDebug(COMPONENT_DBUS, "message has no arguments");
-	} else if (DBUS_TYPE_UINT64 != dbus_message_iter_get_arg_type(args)) {
+	} else if (dbus_message_iter_get_arg_type(args) != DBUS_TYPE_UINT64) {
 		LogDebug(COMPONENT_DBUS, "arg not uint64");
 	} else {
 		dbus_message_iter_get_basic(args, &clientid);

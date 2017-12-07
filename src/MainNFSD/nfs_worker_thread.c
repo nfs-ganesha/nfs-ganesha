@@ -266,8 +266,7 @@ const nfs_function_desc_t nfs3_func_desc[] = {
 	 .xdr_decode_func = (xdrproc_t) xdr_COMMIT3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_COMMIT3res,
 	 .funcname = "nfs3_commit",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | SUPPORTS_GSS)
+	 .dispatch_behaviour = (MAKES_WRITE | NEEDS_CRED | SUPPORTS_GSS)
 	 }
 };
 #endif /* _USE_NFS3 */
@@ -741,8 +740,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			reqdata->r_u.req.svc.rq_msg.rq_cred_body;
 
 		LogFullDebug(COMPONENT_DISPATCH,
-			     "RPCSEC_GSS no_dispatch=%d"
-			     " gc->gc_proc=(%" PRIu32 ") %s",
+			     "RPCSEC_GSS no_dispatch=%d gc->gc_proc=(%"
+			     PRIu32 ") %s",
 			     no_dispatch, gc->gc_proc,
 			     str_gc_proc(gc->gc_proc));
 		if (no_dispatch)
@@ -867,8 +866,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			/* Found the request in the dupreq cache.
 			 * Send cached reply. */
 			LogFullDebug(COMPONENT_DISPATCH,
-				     "DUP: DupReq Cache Hit: using previous reply,"
-				     " rpcxid=%" PRIu32,
+				     "DUP: DupReq Cache Hit: using previous reply, rpcxid=%"
+				     PRIu32,
 				     reqdata->r_u.req.svc.rq_msg.rm_xid);
 
 			LogFullDebug(COMPONENT_DISPATCH,
@@ -882,10 +881,10 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			xprt_rc = svc_sendreply(&reqdata->r_u.req.svc);
 			if (xprt_rc >= XPRT_DIED) {
 				LogDebug(COMPONENT_DISPATCH,
-					 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a duplicate request."
-					 " rpcxid=%" PRIu32
-					 " socket=%d function:%s client:%s"
-					 " program:%" PRIu32
+					 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a duplicate request. rpcxid=%"
+					 PRIu32
+					 " socket=%d function:%s client:%s program:%"
+					 PRIu32
 					 " nfs version:%" PRIu32
 					 " proc:%" PRIu32
 					 " errno: %d",
@@ -1107,9 +1106,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 		if ((export_perms.options & EXPORT_OPTION_ACCESS_MASK) == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				"Client %s is not allowed to access Export_Id %d %s"
-				", vers=%" PRIu32
-				", proc=%" PRIu32,
+				"Client %s is not allowed to access Export_Id %d %s, vers=%"
+				PRIu32 ", proc=%" PRIu32,
 				client_ip,
 				op_ctx->ctx_export->export_id,
 				op_ctx_export_path(op_ctx->ctx_export),
@@ -1254,9 +1252,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		       & (EXPORT_OPTION_READ_ACCESS
 			 | EXPORT_OPTION_MD_READ_ACCESS)) == 0) {
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-			"Client %s is not allowed to access Export_Id %d %s"
-			", vers=%" PRIu32
-			", proc=%" PRIu32,
+			"Client %s is not allowed to access Export_Id %d %s, vers=%"
+			PRIu32 ", proc=%" PRIu32,
 			client_ip, op_ctx->ctx_export->export_id,
 			op_ctx_export_path(op_ctx->ctx_export),
 			reqdata->r_u.req.svc.rq_msg.cb_vers,
@@ -1395,10 +1392,10 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		xprt_rc = svc_sendreply(&reqdata->r_u.req.svc);
 		if (xprt_rc >= XPRT_DIED) {
 			LogDebug(COMPONENT_DISPATCH,
-				 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a new request."
-				 " rpcxid=%" PRIu32
-				 " socket=%d function:%s client:%s"
-				 " program:%" PRIu32
+				 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a new request. rpcxid=%"
+				 PRIu32
+				 " socket=%d function:%s client:%s program:%"
+				 PRIu32
 				 " nfs version:%" PRIu32
 				 " proc:%" PRIu32
 				 " errno: %d",
@@ -1431,9 +1428,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 		sprint_fhandle3(dumpfh, (nfs_fh3 *) arg_nfs);
 		LogInfo(COMPONENT_DISPATCH,
-			"%s Request from host %s V3 not allowed on this export"
-			", proc=%" PRIu32
-			", FH=%s",
+			"%s Request from host %s V3 not allowed on this export, proc=%"
+			PRIu32 ", FH=%s",
 			progname, client_ip,
 			reqdata->r_u.req.svc.rq_msg.cb_proc, dumpfh);
 	}

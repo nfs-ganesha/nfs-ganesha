@@ -100,9 +100,9 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 
 	ccachesearch[0] = nfs_param.krb5_param.ccache_dir;
 
-	code = gssd_refresh_krb5_machine_credential(host_name, NULL,
-						    nfs_param.krb5_param.svc.
-						    principal);
+	code = gssd_refresh_krb5_machine_credential(
+			host_name, NULL, nfs_param.krb5_param.svc.principal);
+
 	if (code)
 		LogWarn(COMPONENT_INIT,
 			"gssd_refresh_krb5_machine_credential failed (%d:%d)",
@@ -588,7 +588,6 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 		break;
 	default:
 		return EINVAL;
-		break;
 	}
 
 	return 0;
@@ -1038,11 +1037,10 @@ static rpc_call_t *construct_v41(nfs41_session_t *session,
 
 		ref_call = gsh_malloc(sizeof(referring_call4));
 
-		sequence->
-		    csa_referring_call_lists.csa_referring_call_lists_len = 1;
-		sequence->
-		    csa_referring_call_lists.csa_referring_call_lists_val =
-		    list;
+		sequence->csa_referring_call_lists.csa_referring_call_lists_len
+			= 1;
+		sequence->csa_referring_call_lists.csa_referring_call_lists_val
+			= list;
 		memcpy(list->rcl_sessionid, refer->session,
 		       sizeof(NFS4_SESSIONID_SIZE));
 		list->rcl_referring_calls.rcl_referring_calls_len = 1;
@@ -1050,10 +1048,10 @@ static rpc_call_t *construct_v41(nfs41_session_t *session,
 		ref_call->rc_sequenceid = refer->sequence;
 		ref_call->rc_slotid = refer->slot;
 	} else {
-		sequence->csa_referring_call_lists.
-		    csa_referring_call_lists_len = 0;
-		sequence->csa_referring_call_lists.
-		    csa_referring_call_lists_val = NULL;
+		sequence->csa_referring_call_lists.csa_referring_call_lists_len
+			= 0;
+		sequence->csa_referring_call_lists.csa_referring_call_lists_val
+			= NULL;
 	}
 	cb_compound_add_op(&call->cbt, &sequenceop);
 	cb_compound_add_op(&call->cbt, op);
@@ -1068,17 +1066,18 @@ static rpc_call_t *construct_v41(nfs41_session_t *session,
  */
 static void release_v41(rpc_call_t *call)
 {
+	nfs_cb_argop4 *argarray_val =
+		call->cbt.v_u.v4.args.argarray.argarray_val;
 	CB_SEQUENCE4args *sequence =
-	    (&call->cbt.v_u.v4.args.argarray.argarray_val[0].nfs_cb_argop4_u.
-	     opcbsequence);
+		&argarray_val[0].nfs_cb_argop4_u.opcbsequence;
+	referring_call_list4 *call_lists =
+		sequence->csa_referring_call_lists.csa_referring_call_lists_val;
 
-	if (sequence->csa_referring_call_lists.csa_referring_call_lists_val) {
-		gsh_free(sequence->csa_referring_call_lists.
-			 csa_referring_call_lists_val->
-			 rcl_referring_calls.rcl_referring_calls_val);
-		gsh_free(sequence->csa_referring_call_lists.
-			 csa_referring_call_lists_val);
-	}
+	if (call_lists == NULL)
+		return;
+
+	gsh_free(call_lists->rcl_referring_calls.rcl_referring_calls_val);
+	gsh_free(call_lists);
 }
 
 /**

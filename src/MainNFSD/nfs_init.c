@@ -92,7 +92,7 @@ verifier4 NFS4_write_verifier;	/* NFS V4 write verifier */
 writeverf3 NFS3_write_verifier;	/* NFS V3 write verifier */
 
 /* node ID used to identify an individual node in a cluster */
-int g_nodeid = 0;
+int g_nodeid;
 
 nfs_start_info_t nfs_start_info;
 
@@ -664,10 +664,8 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		OM_uint32 gss_status = GSS_S_COMPLETE;
 
 		if (*nfs_param.krb5_param.keytab != '\0')
-			gss_status =
-			    krb5_gss_register_acceptor_identity(nfs_param.
-								krb5_param.
-								keytab);
+			gss_status = krb5_gss_register_acceptor_identity(
+						nfs_param.krb5_param.keytab);
 
 		if (gss_status != GSS_S_COMPLETE) {
 			log_sperror_gss(GssError, gss_status, 0);

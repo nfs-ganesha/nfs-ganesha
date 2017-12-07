@@ -137,7 +137,7 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 		success = false;
 		goto out;
 	}
-	if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(args)) {
+	if (dbus_message_iter_get_arg_type(args) != DBUS_TYPE_STRING) {
 		errormsg = "Grace period arg 1 not a string.";
 		success = false;
 		LogWarn(COMPONENT_DBUS, "%s", errormsg);

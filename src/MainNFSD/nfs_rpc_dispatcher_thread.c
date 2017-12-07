@@ -115,7 +115,8 @@ const char *xprt_stat_s[XPRT_DESTROYED + 1] = {
 void nfs_rpc_dispatch_dummy(struct svc_req *req)
 {
 	LogMajor(COMPONENT_DISPATCH,
-		 "NFS DISPATCH DUMMY: Possible error, function nfs_rpc_dispatch_dummy should never be called");
+		 "Possible error, function %s should never be called",
+		 __func__);
 }
 
 const char *tags[] = {
@@ -707,7 +708,7 @@ void Bind_sockets(void)
 	}
 #endif /* RPC_VSOCK */
 	LogInfo(COMPONENT_DISPATCH,
-		"Bind_sockets() successful, v6disabled = %d, vsock = %d, rdma = %d",
+		"Bind sockets successful, v6disabled = %d, vsock = %d, rdma = %d",
 		v6disabled, vsock, rdma);
 }
 
