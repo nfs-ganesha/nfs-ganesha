@@ -167,24 +167,26 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 	    &arg->state_async_data.state_nlm_async_data;
 	struct root_op_context root_op_context;
 	struct gsh_export *export;
+	nlm4_testargs *nlm_async_grant;
+
+	nlm_async_grant = &nlm_arg->nlm_async_args.nlm_async_grant;
 
 	if (isDebug(COMPONENT_NLM)) {
-		netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_grant.
-				 cookie, buffer, sizeof(buffer));
+		netobj_to_string(&nlm_async_grant->cookie,
+				 buffer, sizeof(buffer));
 
 		LogDebug(COMPONENT_NLM,
-			 "Sending GRANTED for arg=%p svid=%d start=%llx len=%llx cookie=%s",
+			 "Sending GRANTED for arg=%p svid=%d start=%" PRIx64
+			 " len=%" PRIx64 " cookie=%s",
 			 arg,
-			 nlm_arg->nlm_async_args.nlm_async_grant.alock.svid,
-			 (unsigned long long)nlm_arg->nlm_async_args.
-			 nlm_async_grant.alock.l_offset,
-			 (unsigned long long)nlm_arg->nlm_async_args.
-			 nlm_async_grant.alock.l_len, buffer);
+			 nlm_async_grant->alock.svid,
+			 nlm_async_grant->alock.l_offset,
+			 nlm_async_grant->alock.l_len, buffer);
 	}
 
 	retval = nlm_send_async(NLMPROC4_GRANTED_MSG,
 				nlm_arg->nlm_async_host,
-				&nlm_arg->nlm_async_args.nlm_async_grant,
+				nlm_async_grant,
 				nlm_arg->nlm_async_key);
 
 	dec_nlm_client_ref(nlm_arg->nlm_async_host);
@@ -202,8 +204,8 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 		 retval);
 
 	state_status = state_find_grant(
-			nlm_arg->nlm_async_args.nlm_async_grant.cookie.n_bytes,
-			nlm_arg->nlm_async_args.nlm_async_grant.cookie.n_len,
+			nlm_async_grant->cookie.n_bytes,
+			nlm_async_grant->cookie.n_len,
 			&cookie_entry);
 
 	if (state_status != STATE_SUCCESS) {
@@ -581,6 +583,7 @@ state_status_t nlm_granted_callback(struct fsal_obj_handle *obj,
 	state_cookie_entry_t *cookie_entry = NULL;
 	state_async_queue_t *arg;
 	nlm4_testargs *inarg;
+	state_nlm_async_data_t *nlm_async_data;
 	state_nlm_owner_t *nlm_grant_owner =
 	    &lock_entry->sle_owner->so_owner.so_nlm_owner;
 	state_nlm_client_t *nlm_grant_client = nlm_grant_owner->so_client;
@@ -589,6 +592,7 @@ state_status_t nlm_granted_callback(struct fsal_obj_handle *obj,
 	state_status_t state_status_int;
 
 	arg = gsh_calloc(1, sizeof(*arg));
+	nlm_async_data = &arg->state_async_data.state_nlm_async_data;
 
 	/* Get a cookie to use for this grant */
 	next_granted_cookie(&nlm_grant_cookie);
@@ -611,11 +615,9 @@ state_status_t nlm_granted_callback(struct fsal_obj_handle *obj,
 	/* Fill in the arguments for the NLMPROC4_GRANTED_MSG call */
 	inc_nlm_client_ref(nlm_grant_client);
 	arg->state_async_func = nlm4_send_grant_msg;
-	arg->state_async_data.state_nlm_async_data.nlm_async_host =
-	    nlm_grant_client;
-	arg->state_async_data.state_nlm_async_data.nlm_async_key = cookie_entry;
-	inarg = &arg->state_async_data.state_nlm_async_data.nlm_async_args.
-		nlm_async_grant;
+	nlm_async_data->nlm_async_host = nlm_grant_client;
+	nlm_async_data->nlm_async_key = cookie_entry;
+	inarg = &nlm_async_data->nlm_async_args.nlm_async_grant;
 
 	copy_netobj(&inarg->alock.fh, &nlm_block_data->sbd_nlm_fh);
 

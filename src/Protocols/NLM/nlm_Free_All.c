@@ -47,7 +47,7 @@ int nlm4_Free_All(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	state_nsm_client_t *nsm_client;
 
 	LogDebug(COMPONENT_NLM,
-		 "REQUEST PROCESSING: Calling nlm4_Free_All for %s",
+		 "REQUEST PROCESSING: Calling NLM4_FREE_ALL for %s",
 		 arg->name);
 
 	nsm_client = get_nsm_client(CARE_NOT, req->rq_xprt, arg->name);
@@ -72,7 +72,7 @@ int nlm4_Free_All(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		dec_nsm_client_ref(nsm_client);
 	}
 
-	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Free_All DONE");
+	LogDebug(COMPONENT_NLM, "REQUEST RESULT: NLM4_FREE_ALL DONE");
 
 	return NFS_REQ_OK;
 }

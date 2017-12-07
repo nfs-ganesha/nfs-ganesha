@@ -59,14 +59,14 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 */
 	if (op_ctx->ctx_export == NULL) {
 		res->res_nlm4.stat.stat = NLM4_STALE_FH;
-		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Unlock");
+		LogInfo(COMPONENT_NLM, "INVALID HANDLE: NLM4_UNLOCK");
 		return NFS_REQ_OK;
 	}
 
 	netobj_to_string(&arg->cookie, buffer, sizeof(buffer));
 
 	LogDebug(COMPONENT_NLM,
-		 "REQUEST PROCESSING: Calling nlm4_Unlock svid=%d off=%llx len=%llx cookie=%s",
+		 "REQUEST PROCESSING: Calling NLM4_UNLOCK svid=%d off=%llx len=%llx cookie=%s",
 		 (int)arg->alock.svid,
 		 (unsigned long long)arg->alock.l_offset,
 		 (unsigned long long)arg->alock.l_len, buffer);
@@ -76,7 +76,7 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	if (nfs_in_grace()) {
 		res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
 		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: nlm4_Unlock %s",
+			 "REQUEST RESULT: NLM4_UNLOCK %s",
 			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
@@ -99,7 +99,7 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		/* resent the error back to the client */
 		res->res_nlm4.stat.stat = (nlm4_stats) rc;
 		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: nlm4_Unlock %s",
+			 "REQUEST RESULT: NLM4_UNLOCK %s",
 			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
@@ -127,7 +127,7 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	dec_state_owner_ref(nlm_owner);
 	obj->obj_ops.put_ref(obj);
 
-	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
+	LogDebug(COMPONENT_NLM, "REQUEST RESULT: NLM4_UNLOCK %s",
 		 lock_result_str(res->res_nlm4.stat.stat));
 	return NFS_REQ_OK;
 }
@@ -136,24 +136,22 @@ static void nlm4_unlock_message_resp(state_async_queue_t *arg)
 {
 	state_nlm_async_data_t *nlm_arg =
 	    &arg->state_async_data.state_nlm_async_data;
+	nfs_res_t *res = &nlm_arg->nlm_async_args.nlm_async_res;
 
 	if (isFullDebug(COMPONENT_NLM)) {
 		char buffer[1024] = "\0";
 
-		netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_res.
-				 res_nlm4test.cookie, buffer, 1024);
+		netobj_to_string(&res->res_nlm4test.cookie, buffer, 1024);
 
 		LogFullDebug(COMPONENT_NLM,
 			     "Calling nlm_send_async cookie=%s status=%s",
 			     buffer,
-			     lock_result_str(nlm_arg->nlm_async_args.
-					     nlm_async_res.res_nlm4.stat.stat));
+			     lock_result_str(res->res_nlm4.stat.stat));
 	}
 
-	nlm_send_async(NLMPROC4_UNLOCK_RES, nlm_arg->nlm_async_host,
-		       &(nlm_arg->nlm_async_args.nlm_async_res), NULL);
+	nlm_send_async(NLMPROC4_UNLOCK_RES, nlm_arg->nlm_async_host, res, NULL);
 
-	nlm4_Unlock_Free(&nlm_arg->nlm_async_args.nlm_async_res);
+	nlm4_Unlock_Free(res);
 	dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
 	dec_nlm_client_ref(nlm_arg->nlm_async_host);
 	gsh_free(arg);

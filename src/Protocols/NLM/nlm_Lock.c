@@ -90,15 +90,15 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	if (grace) {
 		/* allow only reclaim lock request during recovery */
-		if (op_ctx->fsal_export->exp_ops.
-			fs_supports(op_ctx->fsal_export, fso_grace_method))
+		if (op_ctx->fsal_export->exp_ops.fs_supports(
+					op_ctx->fsal_export, fso_grace_method))
 			fsal_grace = true;
 		if (!fsal_grace && !arg->reclaim) {
 			res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
 			LogDebug(COMPONENT_NLM,
 				 "REQUEST RESULT: in grace %s %s",
-				 proc_name, lock_result_str(res->
-							res_nlm4.stat.stat));
+				 proc_name,
+				 lock_result_str(res->res_nlm4.stat.stat));
 			return NFS_REQ_OK;
 		}
 	} else if (arg->reclaim) { /* don't allow reclaim if not in recovery */
@@ -218,28 +218,21 @@ static void nlm4_lock_message_resp(state_async_queue_t *arg)
 {
 	state_nlm_async_data_t *nlm_arg =
 	    &arg->state_async_data.state_nlm_async_data;
+	nfs_res_t *res = &nlm_arg->nlm_async_args.nlm_async_res;
 
 	if (isFullDebug(COMPONENT_NLM)) {
 		char buffer[1024] = "\0";
 
-		netobj_to_string(&nlm_arg->nlm_async_args.nlm_async_res.
-				 res_nlm4test.cookie,
-				 buffer,
-				 1024);
+		netobj_to_string(&res->res_nlm4test.cookie, buffer, 1024);
 
 		LogFullDebug(COMPONENT_NLM,
 			     "Calling nlm_send_async cookie=%s status=%s",
-			     buffer,
-			     lock_result_str(nlm_arg->nlm_async_args.
-					     nlm_async_res.res_nlm4.stat.stat));
+			     buffer, lock_result_str(res->res_nlm4.stat.stat));
 	}
 
-	nlm_send_async(NLMPROC4_LOCK_RES,
-		       nlm_arg->nlm_async_host,
-		       &nlm_arg->nlm_async_args.nlm_async_res,
-		       NULL);
+	nlm_send_async(NLMPROC4_LOCK_RES, nlm_arg->nlm_async_host, res, NULL);
 
-	nlm4_Lock_Free(&nlm_arg->nlm_async_args.nlm_async_res);
+	nlm4_Lock_Free(res);
 	dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
 	dec_nlm_client_ref(nlm_arg->nlm_async_host);
 	gsh_free(arg);

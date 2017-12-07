@@ -44,7 +44,7 @@
 
 int nlm_Null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Null");
+	LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling NLM_NULL");
 
 	/* 0 is success */
 	return 0;

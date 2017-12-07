@@ -60,7 +60,7 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 */
 	if (op_ctx->ctx_export == NULL) {
 		res->res_nlm4share.stat = NLM4_STALE_FH;
-		LogInfo(COMPONENT_NLM, "INVALID HANDLE: nlm4_Unshare");
+		LogInfo(COMPONENT_NLM, "INVALID HANDLE: NLM4_UNSHARE");
 		return NFS_REQ_OK;
 	}
 
@@ -69,7 +69,7 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	netobj_to_string(&arg->cookie, buffer, 1024);
 
 	LogDebug(COMPONENT_NLM,
-		 "REQUEST PROCESSING: Calling nlm4_Unshare cookie=%s reclaim=%s",
+		 "REQUEST PROCESSING: Calling NLM4_UNSHARE cookie=%s reclaim=%s",
 		 buffer,
 		 arg->reclaim ? "yes" : "no");
 
@@ -84,7 +84,7 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	if ((grace && !arg->reclaim) || (!grace && arg->reclaim)) {
 		res->res_nlm4share.stat = NLM4_DENIED_GRACE_PERIOD;
 		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: nlm4_Unshare %s",
+			 "REQUEST RESULT: NLM4_UNSHARE %s",
 			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
@@ -103,7 +103,7 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		/* Present the error back to the client */
 		res->res_nlm4share.stat = (nlm4_stats) rc;
 		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: nlm4_Unshare %s",
+			 "REQUEST RESULT: NLM4_UNSHARE %s",
 			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
@@ -130,7 +130,7 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	obj->obj_ops.put_ref(obj);
 	dec_nlm_state_ref(nlm_state);
 
-	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unshare %s",
+	LogDebug(COMPONENT_NLM, "REQUEST RESULT: NLM4_UNSHARE %s",
 		 lock_result_str(res->res_nlm4share.stat));
 
 	return NFS_REQ_OK;
