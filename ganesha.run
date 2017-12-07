@@ -1,0 +1,132 @@
+#!/bin/bash
+# chkconfig: 2345 85 75
+# description: BingoCloud Services Management
+
+[ -z "${COLUMNS:-}" ] && COLUMNS=80
+CANCOLOR=1
+[ -c /dev/stdout ] || CANCOLOR=0
+LAST_MSG_LEN=0
+log_daemon_msg() {
+	local msg="$@"
+	LAST_MSG_LEN=${#msg}
+	echo -n "$msg"
+}
+log_end_msg() {
+	local col=$COLUMNS
+	[ "$col" -gt 60 ] && col=60
+	local moveToCol="\\033[${col}G"
+	local colorS='\033[32m'
+	local colorE='\033[0m'
+	local text='  OK  '
+	if [ "$1" != 0 ]; then
+		colorS='\033[31m'
+		text='FAILED'
+	fi
+	if [ $CANCOLOR -ne 1 ]; then
+		col=$((col-LAST_MSG_LEN-1))
+		moveToCol="%${col}s"
+		colorS=''
+		colorE=''
+	fi
+	printf "${moveToCol}[${colorS}${text}${colorE}]\r\n" ""
+}
+log_success_msg() {
+	log_daemon_msg "$@"
+	log_end_msg 0
+}
+log_failure_msg() {
+	log_daemon_msg "$@"
+	log_end_msg 1
+}
+
+PID_FILE=/dev/shm/ganesha.pid
+
+export PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
+export LANG=C
+
+proc_wait_stop() {
+	local PID=$1
+	[ -z "$PID" ] && return 1
+	local i=0
+	local MAX=$2
+	[ -z "$MAX" ] && MAX=90
+	sleep 0.5
+	while kill -0 "$PID" 2>/dev/null; do
+		[ $i = "$MAX" ] && return 2
+		sleep 1
+		i=$((i+1))
+	done
+	return 0
+}
+
+getstatus() {
+	local PID=`ps -ef|grep ganesha.nfsd|grep -v grep|awk {'print $2'}`
+	if [ -n "$PID" ]; then
+		if ps -o cmd -p "$PID" --no-headers | grep -q -F ganesha; then
+			echo "ganesha (pid $PID) is running..."
+			return 0
+		fi
+	fi
+	echo "ganesha was stopped."
+	return 1
+}
+
+start() {
+	if getstatus >/dev/null 2>&1; then
+		echo "ganesha (pid `cat $PID_FILE`) is running..."
+		return 0
+	fi
+	log_daemon_msg "Starting ganesha: "
+	gksu "ganesha.nfsd -L /tmp/ganesha.log -N NIV_DEBUG >/dev/null &"
+	sleep 0.5
+	local PID=`ps -ef|grep "ganesha.nfsd -L /tmp/ganesha.log -N NIV_DEBUG"|grep -v grep| awk '{print $2}' 2>/dev/null`
+#	[ -n "$PID" ] && echo -n "$PID" >$PID_FILE
+	local RET=0
+	proc_wait_stop "$PID" 2
+	if [ $? = 2 ]; then
+		log_end_msg 0
+	else
+		log_end_msg 1
+		rm -f "$PID_FILE"
+		RET=1
+	fi
+	return $RET
+}
+
+stop() {
+	log_daemon_msg "Stopping ganesha: "
+	local PID=`ps -ef|grep ganesha.nfsd|grep -v grep|awk {'print $2'}`
+	if [ -n "$PID" ]; then
+		if ps -o cmd -p "$PID" --no-headers | grep -q -F ganesha; then
+			gksu kill "$PID" 2>/dev/null
+			if proc_wait_stop "$PID"; then
+				log_end_msg 0
+				return 0
+			else
+				log_end_msg 1
+				return 1
+			fi
+		fi
+	else
+		log_end_msg 0
+		return 0
+	fi
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop && start
+		;;
+	status)
+		getstatus
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart|status}"
+		exit 1
+esac

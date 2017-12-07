@@ -378,7 +378,7 @@ static int Bind_sockets_V6(void)
 	int    rc = 0;
 
 	for (p = P_NFS; p < P_COUNT; p++) {
-		if (nfs_protocol_enabled(p)) {
+		if (nfs_protocol_enabled(p) && nfs_param.core_param.port[p] != 0) {
 
 			proto_data *pdatap = &pdata[p];
 
@@ -418,36 +418,69 @@ static int Bind_sockets_V6(void)
 				goto exit;
 			}
 
-			memset(&pdatap->sinaddr_tcp6, 0,
-			       sizeof(pdatap->sinaddr_tcp6));
-			pdatap->sinaddr_tcp6.sin6_family = AF_INET6;
-			/* all interfaces */
-			pdatap->sinaddr_tcp6.sin6_addr =
-			    ((struct sockaddr_in6 *)
-			    &nfs_param.core_param.bind_addr)->sin6_addr;
-			pdatap->sinaddr_tcp6.sin6_port =
-			    htons(nfs_param.core_param.port[p]);
+			if(p == P_NFS) {
+				unlink(nfs_param.nfsv4_param.unix_socket_path);	/* in case it already exists */
+				LogCrit(COMPONENT_DISPATCH,
+						"Change port nfs_param.core_param.port[p] to unix domain socket file %s.", nfs_param.nfsv4_param.unix_socket_path);
+				memset(&pdatap->sunaddr_tcp, 0,
+				sizeof(pdatap->sunaddr_tcp));
+				pdatap->sunaddr_tcp.sun_family = AF_UNIX;
+				memcpy(pdatap->sunaddr_tcp.sun_path, nfs_param.nfsv4_param.unix_socket_path, strlen(nfs_param.nfsv4_param.unix_socket_path) + 1);
+				socklen_t addrlen = (offsetof (struct sockaddr_un, sun_path)
+						  + strlen (pdatap->sunaddr_tcp.sun_path));
+				pdatap->netbuf_tcp6.maxlen =
+					sizeof(pdatap->sunaddr_tcp);
+				pdatap->netbuf_tcp6.len = addrlen;
+				pdatap->netbuf_tcp6.buf = &pdatap->sunaddr_tcp;
 
-			pdatap->netbuf_tcp6.maxlen =
-			    sizeof(pdatap->sinaddr_tcp6);
-			pdatap->netbuf_tcp6.len = sizeof(pdatap->sinaddr_tcp6);
-			pdatap->netbuf_tcp6.buf = &pdatap->sinaddr_tcp6;
+				pdatap->bindaddr_tcp6.qlen = SOMAXCONN;
+				pdatap->bindaddr_tcp6.addr = pdatap->netbuf_tcp6;
 
-			pdatap->bindaddr_tcp6.qlen = SOMAXCONN;
-			pdatap->bindaddr_tcp6.addr = pdatap->netbuf_tcp6;
+				if (!__rpc_fd2sockinfo(tcp_socket[p],
+					&pdatap->si_tcp6)) {
+					LogWarn(COMPONENT_DISPATCH,
+						 "Cannot get %s socket info for tcp6 socket errno=%d (%s)",
+						 tags[p], errno, strerror(errno));
+					return -1;
+				}
 
-			if (!__rpc_fd2sockinfo(tcp_socket[p],
-			    &pdatap->si_tcp6)) {
-				LogWarn(COMPONENT_DISPATCH,
-					 "Cannot get %s socket info for tcp6 socket errno=%d (%s)",
-					 tags[p], errno, strerror(errno));
-				return -1;
+				rc = bind(tcp_socket[p],
+					  (struct sockaddr *)
+					   pdatap->bindaddr_tcp6.addr.buf,
+					   addrlen);
+			} else {
+				memset(&pdatap->sinaddr_tcp6, 0,
+					   sizeof(pdatap->sinaddr_tcp6));
+				pdatap->sinaddr_tcp6.sin6_family = AF_INET6;
+				/* all interfaces */
+				pdatap->sinaddr_tcp6.sin6_addr = in6addr_any;
+				pdatap->sinaddr_tcp6.sin6_port =
+					htons(nfs_param.core_param.port[p]);
+
+				pdatap->netbuf_tcp6.maxlen =
+					sizeof(pdatap->sinaddr_tcp6);
+				pdatap->netbuf_tcp6.len = sizeof(pdatap->sinaddr_tcp6);
+				pdatap->netbuf_tcp6.buf = &pdatap->sinaddr_tcp6;
+
+				pdatap->bindaddr_tcp6.qlen = SOMAXCONN;
+				pdatap->bindaddr_tcp6.addr = pdatap->netbuf_tcp6;
+
+				if (!__rpc_fd2sockinfo(tcp_socket[p],
+					&pdatap->si_tcp6)) {
+					LogWarn(COMPONENT_DISPATCH,
+						 "Cannot get %s socket info for tcp6 socket errno=%d (%s)",
+						 tags[p], errno, strerror(errno));
+					return -1;
+				}
+				rc = bind(tcp_socket[p],
+					  (struct sockaddr *)
+					   pdatap->bindaddr_tcp6.addr.buf,
+					 (socklen_t) pdatap->si_tcp6.si_alen);
+				LogDebug(COMPONENT_DISPATCH,
+						"Binding args: %d %d", tcp_socket[p],
+						 (socklen_t) pdatap->si_tcp6.si_alen);
 			}
 
-			rc = bind(tcp_socket[p],
-				  (struct sockaddr *)
-				   pdatap->bindaddr_tcp6.addr.buf,
-				 (socklen_t) pdatap->si_tcp6.si_alen);
 			if (rc == -1) {
 				LogWarn(COMPONENT_DISPATCH,
 					"Cannot bind %s tcp6 socket, error %d (%s)",
@@ -470,7 +503,7 @@ static int Bind_sockets_V4(void)
 	int    rc = 0;
 
 	for (p = P_NFS; p < P_COUNT; p++) {
-		if (nfs_protocol_enabled(p)) {
+		if (nfs_protocol_enabled(p && nfs_param.core_param.port[p] != 0)) {
 
 			proto_data *pdatap = &pdata[p];
 
@@ -511,36 +544,68 @@ static int Bind_sockets_V4(void)
 				return -1;
 			}
 
-			memset(&pdatap->sinaddr_tcp, 0,
-			       sizeof(pdatap->sinaddr_tcp));
-			pdatap->sinaddr_tcp.sin_family = AF_INET;
-			/* all interfaces */
-			pdatap->sinaddr_udp.sin_addr.s_addr =
-			    ((struct sockaddr_in *)
-			    &nfs_param.core_param.bind_addr)->sin_addr.s_addr;
-			pdatap->sinaddr_tcp.sin_port =
-			    htons(nfs_param.core_param.port[p]);
+			if(p == P_NFS) {
+				unlink(nfs_param.nfsv4_param.unix_socket_path);	/* in case it already exists */
+				LogCrit(COMPONENT_DISPATCH,
+						"Change port nfs_param.core_param.port[p] to unix domain socket file %s.", nfs_param.nfsv4_param.unix_socket_path);
+				memset(&pdatap->sunaddr_tcp, 0,
+						sizeof(pdatap->sunaddr_tcp));
+				pdatap->sunaddr_tcp.sun_family = AF_UNIX;
+				memcpy(pdatap->sunaddr_tcp.sun_path, nfs_param.nfsv4_param.unix_socket_path, strlen(nfs_param.nfsv4_param.unix_socket_path) + 1);
+				socklen_t addrlen = (offsetof (struct sockaddr_un, sun_path)
+						  + strlen (pdatap->sunaddr_tcp.sun_path));
 
-			pdatap->netbuf_tcp6.maxlen =
-			    sizeof(pdatap->sinaddr_tcp);
-			pdatap->netbuf_tcp6.len = sizeof(pdatap->sinaddr_tcp);
-			pdatap->netbuf_tcp6.buf = &pdatap->sinaddr_tcp;
+				pdatap->netbuf_tcp6.maxlen =
+					sizeof(pdatap->sunaddr_tcp);
+				pdatap->netbuf_tcp6.len = addrlen;
+				pdatap->netbuf_tcp6.buf = &pdatap->sunaddr_tcp;
 
-			pdatap->bindaddr_tcp6.qlen = SOMAXCONN;
-			pdatap->bindaddr_tcp6.addr = pdatap->netbuf_tcp6;
+				pdatap->bindaddr_tcp6.qlen = SOMAXCONN;
+				pdatap->bindaddr_tcp6.addr = pdatap->netbuf_tcp6;
 
-			if (!__rpc_fd2sockinfo(tcp_socket[p],
-			    &pdatap->si_tcp6)) {
-				LogWarn(COMPONENT_DISPATCH,
-					"V4 : Cannot get %s socket info for tcp socket error %d(%s)",
-					tags[p], errno, strerror(errno));
-				return -1;
+				if (!__rpc_fd2sockinfo(tcp_socket[p],
+					&pdatap->si_tcp6)) {
+					LogWarn(COMPONENT_DISPATCH,
+						"V4 : Cannot get %s socket info for tcp socket error %d(%s)",
+						tags[p], errno, strerror(errno));
+					return -1;
+				}
+
+				rc = bind(tcp_socket[p],
+					  (struct sockaddr *)
+					  pdatap->bindaddr_tcp6.addr.buf,
+					  addrlen);
+			} else {
+				memset(&pdatap->sinaddr_tcp, 0,
+					   sizeof(pdatap->sinaddr_tcp));
+				pdatap->sinaddr_tcp.sin_family = AF_INET;
+				/* all interfaces */
+				pdatap->sinaddr_tcp.sin_addr.s_addr = htonl(INADDR_ANY);
+				pdatap->sinaddr_tcp.sin_port =
+					htons(nfs_param.core_param.port[p]);
+
+				pdatap->netbuf_tcp6.maxlen =
+					sizeof(pdatap->sinaddr_tcp);
+				pdatap->netbuf_tcp6.len = sizeof(pdatap->sinaddr_tcp);
+				pdatap->netbuf_tcp6.buf = &pdatap->sinaddr_tcp;
+
+				pdatap->bindaddr_tcp6.qlen = SOMAXCONN;
+				pdatap->bindaddr_tcp6.addr = pdatap->netbuf_tcp6;
+
+				if (!__rpc_fd2sockinfo(tcp_socket[p],
+					&pdatap->si_tcp6)) {
+					LogWarn(COMPONENT_DISPATCH,
+						"V4 : Cannot get %s socket info for tcp socket error %d(%s)",
+						tags[p], errno, strerror(errno));
+					return -1;
+				}
+
+				rc = bind(tcp_socket[p],
+					  (struct sockaddr *)
+					  pdatap->bindaddr_tcp6.addr.buf,
+					  (socklen_t) pdatap->si_tcp6.si_alen);
 			}
 
-			rc = bind(tcp_socket[p],
-				  (struct sockaddr *)
-				  pdatap->bindaddr_tcp6.addr.buf,
-				  (socklen_t) pdatap->si_tcp6.si_alen);
 			if (rc == -1) {
 				LogWarn(COMPONENT_DISPATCH,
 					"Cannot bind %s tcp socket, error %d(%s)",
@@ -723,9 +788,15 @@ static int Allocate_sockets_V4(int p)
 		return -1;
 	}
 
-	tcp_socket[p] = socket(AF_INET,
-			       SOCK_STREAM,
-			       IPPROTO_TCP);
+	if(p == P_NFS) {
+		tcp_socket[p] = socket(AF_UNIX,
+				   SOCK_STREAM,
+				   0);
+	} else {
+		tcp_socket[p] = socket(AF_INET,
+				   SOCK_STREAM,
+				   IPPROTO_TCP);
+	}
 
 	if (tcp_socket[p] == -1) {
 		LogWarn(COMPONENT_DISPATCH,
@@ -817,9 +888,15 @@ static void Allocate_sockets(void)
 					 tags[p], errno, strerror(errno));
 			}
 
-			tcp_socket[p] = socket(AF_INET6,
-					       SOCK_STREAM,
-					       IPPROTO_TCP);
+			if(p == P_NFS) {
+				tcp_socket[p] = socket(AF_UNIX,
+						   SOCK_STREAM,
+						   0);
+			} else {
+				tcp_socket[p] = socket(AF_INET6,
+						   SOCK_STREAM,
+						   IPPROTO_TCP);
+			}
 
 			/* We fail with LogFatal here on error because it
 			 * shouldn't be that we have managed to create a

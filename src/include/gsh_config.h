@@ -421,6 +421,11 @@ typedef struct nfs_core_param {
 #define DOMAINNAME_DEFAULT "localdomain"
 
 /**
+ * @brief Default value of use_unix_socket.
+ */
+#define UNIXSOCKETPATH_DEFAULT "/run/ganesha.sock"
+
+/**
  * @brief Default value of idmapconf.
  */
 #define IDMAPCONF_DEFAULT "/etc/idmapd.conf"
@@ -477,6 +482,10 @@ typedef struct nfs_version4_parameter {
 	bool pnfs_ds;
 	/** Recovery backend */
 	char *recovery_backend;
+	/** Whether use unix socket. Defaults to false */
+	bool use_unix_socket;
+	/** The path of unix socket which point to nfs port */
+	char *unix_socket_path;
 } nfs_version4_parameter_t;
 
 /** @} */
