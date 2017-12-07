@@ -100,9 +100,9 @@ void _9p_FlushFlushHook(struct _9p_conn *conn, int tag, unsigned long sequence)
 			 * so we can send the RFLUSH.
 			 * warning: this will unlock the bucket lock */
 			while (!fc.reply_sent)
-				pthread_cond_wait(&fc.condition,
-						  &conn->flush_buckets[bucket].
-						  lock);
+				pthread_cond_wait(
+					&fc.condition,
+					&conn->flush_buckets[bucket].lock);
 			break;
 		}
 	}

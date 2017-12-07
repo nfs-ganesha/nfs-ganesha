@@ -196,7 +196,6 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	default:
 		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
-		break;
 	}			/* switch( *type ) */
 
 	/* Build the reply */
