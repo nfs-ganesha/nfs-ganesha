@@ -618,7 +618,7 @@ static int dbop_push(flusher_queue_t *p_queue, db_op_item_t *p_op)
 
 	default:
 		LogCrit(COMPONENT_FSAL,
-			"ERROR in dbop_push: Invalid operation type %d",
+			"ERROR in dbop push: Invalid operation type %d",
 			p_op->op_type);
 	}
 
@@ -665,8 +665,8 @@ static void *database_worker_thread(void *arg)
 		       && p_info->work_queue.lowprio_first == NULL) {
 			to_be_done = NULL;
 			p_info->work_queue.status = IDLE;
-			pthread_cond_signal(&p_info->work_queue.
-					    work_done_condition);
+			pthread_cond_signal(
+				&p_info->work_queue.work_done_condition);
 
 			/* if termination is requested, exit */
 			if (do_terminate) {
@@ -677,9 +677,9 @@ static void *database_worker_thread(void *arg)
 			}
 
 			/* else, wait for something to do */
-			pthread_cond_wait(&p_info->work_queue.
-					  work_avail_condition,
-					  &p_info->work_queue.queues_mutex);
+			pthread_cond_wait(
+				&p_info->work_queue.work_avail_condition,
+				&p_info->work_queue.queues_mutex);
 
 		}
 
@@ -739,9 +739,9 @@ static void *database_worker_thread(void *arg)
 			break;
 
 		case DELETE:
-			db_delete_operation(p_info,
-					    &to_be_done->op_arg.fh_info.
-					    nfs23_digest);
+			db_delete_operation(
+				p_info,
+				&to_be_done->op_arg.fh_info.nfs23_digest);
 			break;
 
 		default:

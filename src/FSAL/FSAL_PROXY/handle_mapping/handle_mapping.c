@@ -307,7 +307,8 @@ int HandleMap_Init(const handle_map_param_t *p_param)
  * @note The caller must provide storage for nfs_fh4_val.
  *
  * @retval HANDLEMAP_SUCCESS if the handle is available
- * @retval HANDLEMAP_STALE if the disgest is unknown or the handle has been deleted
+ * @retval HANDLEMAP_STALE if the disgest is unknown or the handle has been
+ *                         deleted
  */
 int HandleMap_GetFH(const nfs23_map_handle_t *nfs23_digest,
 		    struct gsh_buffdesc *fsal_handle)

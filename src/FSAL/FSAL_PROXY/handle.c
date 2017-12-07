@@ -2633,8 +2633,9 @@ static fsal_status_t pxy_setattr2(struct fsal_obj_handle *obj_hdl,
 	FSAL_UNSET_MASK(attrib_set->valid_mask, ATTR_CTIME);
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE))
-		attrib_set->mode &= ~op_ctx->fsal_export->exp_ops.
-				fs_umask(op_ctx->fsal_export);
+		attrib_set->mode &=
+			~op_ctx->fsal_export->exp_ops.fs_umask(
+							op_ctx->fsal_export);
 
 	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
 
