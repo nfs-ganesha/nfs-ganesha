@@ -251,8 +251,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 				export->cmount,
 				&ds->wire.wire.vi,
 				ds->wire.wire.parent_ino,
-				ds->wire.wire.
-				parent_hash);
+				ds->wire.wire.parent_hash);
 			if (ceph_status != 0) {
 				LogMajor(COMPONENT_PNFS,
 					 "Filehandle connection failed with: %d\n",

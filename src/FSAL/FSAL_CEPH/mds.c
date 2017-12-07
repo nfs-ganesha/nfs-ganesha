@@ -100,7 +100,7 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
 	/* Full 'private' export */
 	struct export *export = container_of(export_pub, struct export, export);
 	/* The number of Ceph OSDs in the cluster */
-	unsigned num_osds = ceph_ll_num_osds(export->cmount);
+	unsigned int num_osds = ceph_ll_num_osds(export->cmount);
 	/* Minimal information needed to get layout info */
 	vinodeno_t vinode;
 	/* Structure containing the storage parameters of the file within
@@ -525,9 +525,9 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 
 #if 0
 	ceph_ll_return_rw(export->cmount, handle->wire.vi,
-			  res->segment.io_mode ==
-			  LAYOUTIOMODE4_READ ? handle->rd_serial : handle->
-			  rw_serial);
+			  res->segment.io_mode == LAYOUTIOMODE4_READ
+				? handle->rd_serial
+				: handle->rw_serial);
 #endif
 
 	PTHREAD_RWLOCK_unlock(&handle->handle.obj_lock);
@@ -582,9 +582,9 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
 
 #if 0
 		ceph_ll_return_rw(export->cmount, handle->wire.vi,
-				  arg->cur_segment.io_mode ==
-				  LAYOUTIOMODE4_READ ? handle->
-				  rd_serial : handle->rw_serial);
+				  arg->cur_segment.io_mode == LAYOUTIOMODE4_READ
+					? handle->rd_serial
+					: handle->rw_serial);
 #endif
 
 		PTHREAD_RWLOCK_unlock(&handle->handle.obj_lock);
