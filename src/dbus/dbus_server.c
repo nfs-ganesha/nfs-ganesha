@@ -745,9 +745,8 @@ void *gsh_dbus_thread(void *arg)
 							struct dbus_bcast_item,
 							dbus_bcast_q);
 			now(&current_time);
-			time_expired = gsh_time_cmp(&current_time,
-						    &bcast_item->
-						    next_bcast_time);
+			time_expired = gsh_time_cmp(
+				&current_time, &bcast_item->next_bcast_time);
 
 			/*
 			 * list is sorted by soonest to latest
@@ -784,8 +783,7 @@ void *gsh_dbus_thread(void *arg)
 			if (bcast_item->count > 0 ||
 			    bcast_item->count == BCAST_FOREVER) {
 				glist_insert_sorted(&dbus_broadcast_list,
-						    &(bcast_item->
-						      dbus_bcast_q),
+						    &bcast_item->dbus_bcast_q,
 						    &dbus_bcast_item_compare);
 			}
 		}
@@ -876,7 +874,7 @@ bool arg_9p_op(DBusMessageIter *args, u8 *opcode, char **errormsg)
 	if (args == NULL) {
 		success = false;
 		*errormsg = "message is missing argument";
-	} else if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(args)) {
+	} else if (dbus_message_iter_get_arg_type(args) != DBUS_TYPE_STRING) {
 		success = false;
 		*errormsg = "arg not a string";
 	} else {

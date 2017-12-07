@@ -69,8 +69,8 @@ bool get_ganesha_health(struct _ganesha_health *hstats)
 
 	if (!healthy) {
 		LogWarn(COMPONENT_DBUS,
-			"Health status is unhealthy.enq new: %u, old: %u, "
-			"deq new: %u, old: %u", newenq, hstats->old_enqueue,
+			"Health status is unhealthy.enq new: %u, old: %u, deq new: %u, old: %u",
+			newenq, hstats->old_enqueue,
 			newdeq, hstats->old_dequeue);
 	}
 
