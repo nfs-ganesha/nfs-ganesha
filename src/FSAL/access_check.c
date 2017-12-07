@@ -825,8 +825,8 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	fsal_prepare_attrs(&attrs,
-			   op_ctx->fsal_export->
-				exp_ops.fs_supported_attrs(op_ctx->fsal_export)
+			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+							op_ctx->fsal_export)
 			   & (ATTRS_CREDS | ATTR_MODE | ATTR_ACL));
 
 	status = obj_hdl->obj_ops.getattrs(obj_hdl, &attrs);
@@ -861,7 +861,7 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 uid_t ganesha_uid;
 gid_t ganesha_gid;
 int ganesha_ngroups;
-gid_t *ganesha_groups = NULL;
+gid_t *ganesha_groups;
 
 void fsal_set_credentials(const struct user_cred *creds)
 {

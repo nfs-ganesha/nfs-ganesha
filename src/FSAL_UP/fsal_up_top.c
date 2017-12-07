@@ -501,8 +501,10 @@ state_status_t layoutrecall(const struct fsal_up_vector *vec,
 
 static void free_layoutrec(nfs_cb_argop4 *op)
 {
-	gsh_free(op->nfs_cb_argop4_u.opcblayoutrecall.clora_recall.
-		 layoutrecall4_u.lor_layout.lor_fh.nfs_fh4_val);
+	layoutrecall4 *clora_recall =
+		&op->nfs_cb_argop4_u.opcblayoutrecall.clora_recall;
+
+	gsh_free(clora_recall->layoutrecall4_u.lor_layout.lor_fh.nfs_fh4_val);
 }
 
 /**

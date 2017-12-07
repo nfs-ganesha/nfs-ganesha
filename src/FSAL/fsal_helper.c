@@ -60,7 +60,7 @@
  * them as to usage or instruct them to close them.
  */
 
-size_t open_fd_count = 0;
+size_t open_fd_count;
 
 static bool fsal_not_in_group_list(gid_t gid)
 {
@@ -189,8 +189,8 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 	}
 
 	fsal_prepare_attrs(current,
-			   op_ctx->fsal_export->
-				exp_ops.fs_supported_attrs(op_ctx->fsal_export)
+			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+							op_ctx->fsal_export)
 			   & (ATTRS_CREDS | ATTR_MODE | ATTR_ACL));
 
 	status = obj->obj_ops.getattrs(obj, current);
@@ -703,7 +703,9 @@ fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
 		fsal_status_t status = {0, 0};
 		struct fsal_obj_handle *root_obj = NULL;
 
-		status = nfs_export_get_root_entry(op_ctx->ctx_export, &root_obj);
+		status = nfs_export_get_root_entry(op_ctx->ctx_export,
+						   &root_obj);
+
 		if (FSAL_IS_ERROR(status))
 			return status;
 
@@ -1608,7 +1610,7 @@ fsal_status_t fsal_statfs(struct fsal_obj_handle *obj,
 	fsal_status =
 	    export->exp_ops.get_fs_dynamic_info(export, obj, dynamicinfo);
 	LogFullDebug(COMPONENT_FSAL,
-		     "fsal_statfs: dynamicinfo: {total_bytes = %" PRIu64
+		     "dynamicinfo: {total_bytes = %" PRIu64
 		     ", free_bytes = %" PRIu64 ", avail_bytes = %" PRIu64
 		     ", total_files = %" PRIu64 ", free_files = %" PRIu64
 		     ", avail_files = %" PRIu64 "}", dynamicinfo->total_bytes,
