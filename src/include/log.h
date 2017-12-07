@@ -113,10 +113,10 @@ typedef enum log_components {
 
 /* previously at log_macros.h */
 typedef void (*cleanup_function) (void);
-typedef struct cleanup_list_element {
+struct cleanup_list_element {
 	struct cleanup_list_element *next;
 	cleanup_function clean;
-} cleanup_list_element;
+};
 
 /* Allocates buffer containing debug info to be printed.
  * Returned buffer needs to be freed. Returns number of
@@ -137,7 +137,7 @@ int ReturnLevelAscii(const char *LevelInAscii);
 char *ReturnLevelInt(int level);
 
 /* previously at log_macros.h */
-void RegisterCleanup(cleanup_list_element *clean);
+void RegisterCleanup(struct cleanup_list_element *clean);
 void Cleanup(void);
 void Fatal(void);
 
@@ -212,7 +212,7 @@ extern struct log_component_info LogComponents[COMPONENT_COUNT];
 	DisplayLogComponentLevel(component, __FILE__, \
 				 __LINE__, \
 				 __func__, \
-				 NIV_NULL, format, ## args); \
+				 NIV_NULL, format, ## args)
 
 #define LogTest(format, args...) \
 	DisplayLogComponentLevel(COMPONENT_ALL, __FILE__, \

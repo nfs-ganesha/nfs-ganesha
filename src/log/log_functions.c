@@ -286,9 +286,9 @@ __thread char *clientip = NULL;
 						 ## args); \
 	} while (0)
 
-cleanup_list_element *cleanup_list = NULL;
+struct cleanup_list_element *cleanup_list;
 
-void RegisterCleanup(cleanup_list_element *clean)
+void RegisterCleanup(struct cleanup_list_element *clean)
 {
 	clean->next = cleanup_list;
 	cleanup_list = clean;
@@ -296,7 +296,7 @@ void RegisterCleanup(cleanup_list_element *clean)
 
 void Cleanup(void)
 {
-	cleanup_list_element *c = cleanup_list;
+	struct cleanup_list_element *c = cleanup_list;
 
 	while (c != NULL) {
 		c->clean();
