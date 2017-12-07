@@ -179,6 +179,9 @@ static void mdcache_exp_release(struct fsal_export *exp_hdl)
 
 	fsal_hdl = sub_export->fsal;
 
+	LogInfo(COMPONENT_FSAL, "Releasing %s export for %s",
+		fsal_hdl->name, op_ctx->ctx_export->fullpath);
+
 	/* Release the sub_export */
 	subcall_shutdown_raw(exp,
 		sub_export->exp_ops.release(sub_export)
