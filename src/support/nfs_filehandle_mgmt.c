@@ -594,28 +594,26 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
 
 
 	/* Check for the correct file type */
-	if (required_type != NO_FILE_TYPE) {
-		if (data->current_filetype != required_type) {
-			LogDebug(COMPONENT_NFS_V4,
-				 "Wrong file type expected %s actual %s",
-				 object_file_type_to_str(required_type),
-				 object_file_type_to_str(data->
-							 current_filetype));
+	if (required_type != NO_FILE_TYPE &&
+	    data->current_filetype != required_type) {
+		LogDebug(COMPONENT_NFS_V4,
+			 "Wrong file type expected %s actual %s",
+			 object_file_type_to_str(required_type),
+			 object_file_type_to_str(data->current_filetype));
 
-			if (required_type == DIRECTORY) {
-				if (data->current_filetype == SYMBOLIC_LINK)
-					return NFS4ERR_SYMLINK;
-				else
-					return NFS4ERR_NOTDIR;
-			} else if (required_type == SYMBOLIC_LINK)
-				return NFS4ERR_INVAL;
+		if (required_type == DIRECTORY) {
+			if (data->current_filetype == SYMBOLIC_LINK)
+				return NFS4ERR_SYMLINK;
+			else
+				return NFS4ERR_NOTDIR;
+		} else if (required_type == SYMBOLIC_LINK)
+			return NFS4ERR_INVAL;
 
-			switch (data->current_filetype) {
-			case DIRECTORY:
-				return NFS4ERR_ISDIR;
-			default:
-				return NFS4ERR_INVAL;
-			}
+		switch (data->current_filetype) {
+		case DIRECTORY:
+			return NFS4ERR_ISDIR;
+		default:
+			return NFS4ERR_INVAL;
 		}
 	}
 
@@ -668,38 +666,36 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 		if (-required_type == data->saved_filetype) {
 			LogDebug(COMPONENT_NFS_V4,
 				 "Wrong file type expected not to be %s was %s",
-				 object_file_type_to_str((object_file_type_t) -
-							 required_type),
-				 object_file_type_to_str(data->
-							 current_filetype));
+				 object_file_type_to_str((object_file_type_t)
+							 -required_type),
+				 object_file_type_to_str(
+						data->current_filetype));
 			if (-required_type == DIRECTORY) {
 				return NFS4ERR_ISDIR;
 				return NFS4ERR_INVAL;
 			}
 		}
-	} else if (required_type != NO_FILE_TYPE) {
-		if (data->saved_filetype != required_type) {
-			LogDebug(COMPONENT_NFS_V4,
-				 "Wrong file type expected %s was %s",
-				 object_file_type_to_str((object_file_type_t)
-							 required_type),
-				 object_file_type_to_str(data->
-							 current_filetype));
+	} else if (required_type != NO_FILE_TYPE &&
+		   data->saved_filetype != required_type) {
+		LogDebug(COMPONENT_NFS_V4,
+			 "Wrong file type expected %s was %s",
+			 object_file_type_to_str((object_file_type_t)
+						 required_type),
+			 object_file_type_to_str(data->current_filetype));
 
-			if (required_type == DIRECTORY) {
-				if (data->current_filetype == SYMBOLIC_LINK)
-					return NFS4ERR_SYMLINK;
-				else
-					return NFS4ERR_NOTDIR;
-			} else if (required_type == SYMBOLIC_LINK)
-				return NFS4ERR_INVAL;
+		if (required_type == DIRECTORY) {
+			if (data->current_filetype == SYMBOLIC_LINK)
+				return NFS4ERR_SYMLINK;
+			else
+				return NFS4ERR_NOTDIR;
+		} else if (required_type == SYMBOLIC_LINK)
+			return NFS4ERR_INVAL;
 
-			switch (data->saved_filetype) {
-			case DIRECTORY:
-				return NFS4ERR_ISDIR;
-			default:
-				return NFS4ERR_INVAL;
-			}
+		switch (data->saved_filetype) {
+		case DIRECTORY:
+			return NFS4ERR_ISDIR;
+		default:
+			return NFS4ERR_INVAL;
 		}
 	}
 

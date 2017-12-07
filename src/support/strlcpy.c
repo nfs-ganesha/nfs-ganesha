@@ -46,8 +46,9 @@ size_t strlcpy(char *dst, const char *src, size_t siz)
 		}
 
 		/* Search for NUL in string */
-		while (*s++)
-			/* do nothing */;
+		while (*s++) {
+			/* do nothing */
+		}
 	}
 
 	/* count does not include NUL */

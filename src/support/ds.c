@@ -358,7 +358,7 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	}
 
 	LogEvent(COMPONENT_CONFIG,
-		 "DS %d fsal_cfg_commit at FSAL (%s) with path (%s)",
+		 "DS %d fsal config commit at FSAL (%s) with path (%s)",
 		 pds->id_servers, pds->fsal->name, pds->fsal->path);
 
 err:

@@ -34,8 +34,8 @@
 #include "common_utils.h"
 #include "log.h"
 
-int worker_delay_time = 0;
-int next_worker_delay_time = 0;
+int worker_delay_time;
+int next_worker_delay_time;
 
 /**
  * @TODO convert these to admin dbus methods

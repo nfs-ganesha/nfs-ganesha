@@ -552,7 +552,7 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 	int port = get_port(op_ctx->caller_addr);
 
 	LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
-		    "nfs4_export_check_access about to call export_check_access");
+		       "about to call export_check_access");
 	export_check_access();
 
 	/* Check if any access at all */

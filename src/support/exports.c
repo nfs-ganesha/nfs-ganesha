@@ -758,10 +758,10 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	/* We are connected up to the fsal side.  Now
 	 * validate maxread/write etc with fsal params
 	 */
-	MaxRead = export->fsal_export->
-		exp_ops.fs_maxread(export->fsal_export);
-	MaxWrite = export->fsal_export->
-		exp_ops.fs_maxwrite(export->fsal_export);
+	MaxRead =
+	    export->fsal_export->exp_ops.fs_maxread(export->fsal_export);
+	MaxWrite =
+	    export->fsal_export->exp_ops.fs_maxwrite(export->fsal_export);
 
 	if (export->MaxRead > MaxRead && MaxRead != 0) {
 		LogInfo(COMPONENT_CONFIG,
@@ -843,10 +843,10 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 	 * original export, which will then allow us to validate the
 	 * possibly changed values in the new export config.
 	 */
-	MaxRead = probe_exp->fsal_export->
-		exp_ops.fs_maxread(probe_exp->fsal_export);
-	MaxWrite = probe_exp->fsal_export->
-		exp_ops.fs_maxwrite(probe_exp->fsal_export);
+	MaxRead =
+	    probe_exp->fsal_export->exp_ops.fs_maxread(probe_exp->fsal_export);
+	MaxWrite =
+	    probe_exp->fsal_export->exp_ops.fs_maxwrite(probe_exp->fsal_export);
 
 	release_root_op_context();
 
@@ -2479,7 +2479,7 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 			}
 
 			if (rc != IP_NAME_SUCCESS)
-					break;
+				break;
 
 			/* At this point 'hostname' should contain the
 			 * name that was found
@@ -2866,8 +2866,8 @@ void export_check_access(void)
 		}
 
 		if (op_ctx->ctx_export != NULL) {
-			(void) StrExportOptions(&dspbuf,
-						&op_ctx->ctx_export->export_perms);
+			(void) StrExportOptions(
+				&dspbuf, &op_ctx->ctx_export->export_perms);
 			LogMidDebug(COMPONENT_EXPORT,
 				    "EXPORT          (%s)",
 				    perms);

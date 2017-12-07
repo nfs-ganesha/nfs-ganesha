@@ -828,7 +828,7 @@ static bool arg_export_id(DBusMessageIter *args, uint16_t *export_id,
 	if (args == NULL) {
 		success = false;
 		*errormsg = "message has no arguments";
-	} else if (DBUS_TYPE_UINT16 != dbus_message_iter_get_arg_type(args)) {
+	} else if (dbus_message_iter_get_arg_type(args) != DBUS_TYPE_UINT16) {
 		success = false;
 		*errormsg = "arg not a 16 bit integer";
 	} else {

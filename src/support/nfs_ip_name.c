@@ -137,12 +137,14 @@ int display_ip_name_val(struct gsh_buffdesc *pbuff, char *str)
  *
  * Adds an entry in the duplicate requests cache.
  *
- * @param ipaddr           [IN]    the ipaddr to be used as key
- * @param hostname         [OUT]    the hostname added (found by using getnameinfo)
+ * @param ipaddr[IN]       the ipaddr to be used as key
+ * @param hostname[OUT]    the hostname added (found by using getnameinfo)
  *
- * @return IP_NAME_SUCCESS if successfull\n.
- * @return IP_NAME_INSERT_MALLOC_ERROR if an error occured during the insertion process \n
- * @return IP_NAME_NETDB_ERROR if an error occured during the netdb query (via gethostbyaddr).
+ * @return IP_NAME_SUCCESS if successful
+ * @return IP_NAME_INSERT_MALLOC_ERROR if an error occurred during the insertion
+ *                                     process
+ * @return IP_NAME_NETDB_ERROR if an error occurred during the netdb query (via
+ *                             gethostbyaddr).
  *
  */
 

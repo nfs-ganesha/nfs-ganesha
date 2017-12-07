@@ -138,7 +138,7 @@ int b64_enc(u_char const *src, size_t srclength, char *target, size_t targsize,
 	u_char output[4];
 	int i;
 
-	while (2 < srclength) {
+	while (srclength > 2) {
 		input[0] = *src++;
 		input[1] = *src++;
 		input[2] = *src++;
@@ -162,7 +162,7 @@ int b64_enc(u_char const *src, size_t srclength, char *target, size_t targsize,
 	}
 
 	/* Now we worry about padding. */
-	if (0 != srclength) {
+	if (srclength != 0) {
 		/* Get what's left. */
 		input[0] = input[1] = input[2] = '\0';
 		for (i = 0; i < srclength; i++)

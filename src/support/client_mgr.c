@@ -318,8 +318,8 @@ int remove_gsh_client(sockaddr_t *client_ipaddr)
 			goto out;
 		}
 		cache_slot = (void **)
-		    &(client_by_ip.
-		      cache[eip_cache_offsetof(&client_by_ip, ipaddr)]);
+		    &(client_by_ip.cache[eip_cache_offsetof(
+						&client_by_ip, ipaddr)]);
 		cnode = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
 		if (node == cnode)
 			atomic_store_voidptr(cache_slot, NULL);
@@ -387,7 +387,7 @@ static bool arg_ipaddr(DBusMessageIter *args, sockaddr_t *sp, char **errormsg)
 	if (args == NULL) {
 		success = false;
 		*errormsg = "message has no arguments";
-	} else if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(args)) {
+	} else if (dbus_message_iter_get_arg_type(args) != DBUS_TYPE_STRING) {
 		success = false;
 		*errormsg = "arg not a string";
 	} else {
