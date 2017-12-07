@@ -76,6 +76,9 @@ static void release(struct fsal_export *exp_hdl)
 
 	myself = EXPORT_VFS_FROM_FSAL(exp_hdl);
 
+	LogDebug(COMPONENT_FSAL, "Releasing VFS export for %s",
+		 op_ctx->ctx_export->fullpath);
+
 	vfs_sub_fini(myself);
 
 	vfs_unexport_filesystems(myself);

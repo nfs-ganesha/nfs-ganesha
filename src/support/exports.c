@@ -2389,6 +2389,7 @@ void unexport(struct gsh_export *export)
 {
 	bool op_ctx_set = false;
 	struct root_op_context ctx;
+
 	/* Make the export unreachable */
 	LogDebug(COMPONENT_EXPORT,
 		 "Unexport %s, Pseduo %s",

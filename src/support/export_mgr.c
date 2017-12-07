@@ -1086,8 +1086,11 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 	struct gsh_export *export = NULL;
 	char *errormsg;
 	bool rc = true;
+	bool op_ctx_set = false;
+	struct root_op_context ctx;
 
 	export = lookup_export(args, &errormsg);
+
 	if (export == NULL) {
 		LogDebug(COMPONENT_EXPORT, "lookup_export failed with %s",
 			errormsg);
@@ -1096,22 +1099,35 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 			       errormsg);
 		rc = false;
 		goto out;
-	} else {
-		if (export->export_id == 0) {
-			LogDebug(COMPONENT_EXPORT,
-				"Cannot remove export with id 0");
-			put_gsh_export(export);
-			rc = false;
-			dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
-				       "Cannot remove export with id 0");
-			goto out;
-		}
-		unexport(export);
-		LogInfo(COMPONENT_EXPORT, "Removed export with id %d",
-			export->export_id);
-
-		put_gsh_export(export);
 	}
+
+	if (export->export_id == 0) {
+		LogDebug(COMPONENT_EXPORT,
+			"Cannot remove export with id 0");
+		put_gsh_export(export);
+		rc = false;
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "Cannot remove export with id 0");
+		goto out;
+	}
+
+	/* Lots of obj_ops may be called during cleanup; make sure that an
+	 * op_ctx exists */
+	if (!op_ctx) {
+		init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
+				UNKNOWN_REQUEST);
+		op_ctx_set = true;
+	}
+
+	unexport(export);
+
+	LogInfo(COMPONENT_EXPORT, "Removed export with id %d",
+		export->export_id);
+
+	put_gsh_export(export);
+
+	if (op_ctx_set)
+		release_root_op_context();
 
 out:
 	return rc;
