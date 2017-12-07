@@ -234,7 +234,7 @@ get_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	if (stat(filepath, &path_stat) < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
-			 "GPFS get_quota, fstat: root_path: %s, errno=(%d) %s",
+			 "GPFS get quota, stat: root_path: %s, errno=(%d) %s",
 			 fs->path, retval, strerror(retval));
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
@@ -242,7 +242,7 @@ get_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	if ((major(path_stat.st_dev) != fs->dev.major) ||
 	    (minor(path_stat.st_dev) != fs->dev.minor)) {
 		LogMajor(COMPONENT_FSAL,
-			 "GPFS get_quota: crossed mount boundary! root_path: %s, quota path: %s",
+			 "GPFS get quota: crossed mount boundary! root_path: %s, quota path: %s",
 			 fs->path, filepath);
 		return fsalstat(ERR_FSAL_FAULT, 0);  /* maybe a better error? */
 	}
@@ -292,7 +292,7 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	if (stat(filepath, &path_stat) < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
-			 "GPFS set_quota, fstat: root_path: %s, errno=(%d) %s",
+			 "GPFS set quota, stat: root_path: %s, errno=(%d) %s",
 			 fs->path, retval, strerror(retval));
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
@@ -300,7 +300,7 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	if ((major(path_stat.st_dev) != fs->dev.major) ||
 	    (minor(path_stat.st_dev) != fs->dev.minor)) {
 		LogMajor(COMPONENT_FSAL,
-			 "GPFS set_quota: crossed mount boundary! root_path: %s, quota path: %s",
+			 "GPFS set quota: crossed mount boundary! root_path: %s, quota path: %s",
 			 fs->path, filepath);
 		return fsalstat(ERR_FSAL_FAULT, 0);  /* maybe a better error? */
 	}

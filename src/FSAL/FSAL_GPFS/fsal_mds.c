@@ -61,7 +61,7 @@ static void fs_layouttypes(struct fsal_export *export_hdl, int32_t *count,
 	rc = gpfs_ganesha(OPENHANDLE_LAYOUT_TYPE, &arg);
 	errsv = errno;
 	if (rc < 0 || (rc != LAYOUT4_NFSV4_1_FILES)) {
-		LogDebug(COMPONENT_PNFS, "fs_layouttypes rc %d", rc);
+		LogDebug(COMPONENT_PNFS, "rc %d", rc);
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
 		*count = 0;
@@ -169,7 +169,7 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 			+ ((ds_buffer - da_beginning) / BYTES_PER_XDR_UNIT));
 
 	LogDebug(COMPONENT_PNFS,
-		"getdeviceinfo p %p end %p da_length %zu ds_buffer %zu seq %d fd %d fsid 0x%"
+		"p %p end %p da_length %zu ds_buffer %zu seq %d fd %d fsid 0x%"
 		PRIx64, darg.xdr.p, darg.xdr.end,
 		da_beginning, ds_buffer,
 		deviceid->device_id2,
@@ -180,7 +180,7 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	errsv = errno;
 	if (rc < 0) {
 
-		LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d", rc);
+		LogDebug(COMPONENT_PNFS, "rc %d", rc);
 		if (errsv == EUNATCH)
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
 		return NFS4ERR_RESOURCE;
@@ -188,7 +188,7 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	(void)xdr_inline(da_addr_body, rc);
 	da_length = xdr_getpos(da_addr_body) - da_beginning;
 
-	LogDebug(COMPONENT_PNFS, "getdeviceinfo rc %d da_length %zd",
+	LogDebug(COMPONENT_PNFS, "rc %d da_length %zd",
 		rc, da_length);
 
 	return NFS4_OK;
@@ -356,8 +356,8 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 				     &ds_desc);
 	if (nfs_status) {
 		if (arg->maxcount <=
-		    op_ctx->fsal_export->
-		    exp_ops.fs_loc_body_size(op_ctx->fsal_export)) {
+		    op_ctx->fsal_export->exp_ops.fs_loc_body_size(
+							op_ctx->fsal_export)) {
 			nfs_status = NFS4ERR_TOOSMALL;
 			LogDebug(COMPONENT_PNFS,
 				"Failed to encode nfsv4_1_file_layout.");

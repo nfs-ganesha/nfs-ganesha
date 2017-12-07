@@ -168,15 +168,13 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 		if (p_buffstat->st_mtime == p_buffstat->st_ctime) {
 			if (p_buffstat->st_mtim.tv_nsec >
 			    p_buffstat->st_ctim.tv_nsec)
-				fsal_attr->chgtime =
-				    posix2fsal_time(p_buffstat->st_mtime,
-						    p_buffstat->st_mtim.
-						    tv_nsec);
+				fsal_attr->chgtime = posix2fsal_time(
+						p_buffstat->st_mtime,
+						p_buffstat->st_mtim.tv_nsec);
 			else
-				fsal_attr->chgtime =
-				    posix2fsal_time(p_buffstat->st_ctime,
-						    p_buffstat->st_ctim.
-						    tv_nsec);
+				fsal_attr->chgtime = posix2fsal_time(
+						p_buffstat->st_ctime,
+						p_buffstat->st_ctim.tv_nsec);
 		} else if (p_buffstat->st_mtime > p_buffstat->st_ctime) {
 			fsal_attr->chgtime =
 			    posix2fsal_time(p_buffstat->st_mtime,
@@ -253,7 +251,7 @@ gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 		}
 
 		LogMidDebug(COMPONENT_FSAL,
-			 "gpfs_acl_2_fsal_acl: fsal ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
+			 "fsal ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
 			 pace->type, pace->flag, pace->perm,
 			 IS_FSAL_ACE_SPECIAL_ID(*pace),
 			 GET_FSAL_ACE_WHO_TYPE(*pace), GET_FSAL_ACE_WHO(*pace));
@@ -266,7 +264,7 @@ gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 
 	if (pacl == NULL) {
 		LogCrit(COMPONENT_FSAL,
-			"gpfs_acl_2_fsal_acl: failed to create a new acl entry");
+			"failed to create a new acl entry");
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	}
 
@@ -277,7 +275,8 @@ gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
 }
 
 /** @fn fsal_status_t
- *     fsal_acl_2_gpfs_acl(struct fsal_obj_handle *dir_hdl, fsal_acl_t *fsal_acl,
+ *     fsal_acl_2_gpfs_acl(struct fsal_obj_handle *dir_hdl,
+ *                         fsal_acl_t *fsal_acl,
  *                         gpfsfsal_xstat_t *gpfs_buf)
  *  @param dir_hdl Object handle
  *  @param fsal_acl GPFS access control list
@@ -317,14 +316,14 @@ fsal_acl_2_gpfs_acl(struct fsal_obj_handle *dir_hdl, fsal_acl_t *fsal_acl,
 		}
 
 		LogMidDebug(COMPONENT_FSAL,
-			 "fsal_acl_2_gpfs_acl: gpfs ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
+			 "gpfs ace: type = 0x%x, flag = 0x%x, perm = 0x%x, special = %d, %s = 0x%x",
 			 acl_buf->ace_v4[i].aceType,
 			 acl_buf->ace_v4[i].aceFlags,
 			 acl_buf->ace_v4[i].aceMask,
-			 (acl_buf->ace_v4[i].
-			  aceIFlags & FSAL_ACE_IFLAG_SPECIAL_ID) ? 1 : 0,
-			 (acl_buf->ace_v4[i].
-			  aceFlags & FSAL_ACE_FLAG_GROUP_ID) ? "gid" : "uid",
+			 (acl_buf->ace_v4[i].aceIFlags &
+					FSAL_ACE_IFLAG_SPECIAL_ID) ? 1 : 0,
+			 (acl_buf->ace_v4[i].aceFlags & FSAL_ACE_FLAG_GROUP_ID)
+				? "gid" : "uid",
 			 acl_buf->ace_v4[i].aceWho);
 
 		/* It is invalid to set inherit flags on non dir objects */

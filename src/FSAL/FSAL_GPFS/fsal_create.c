@@ -43,8 +43,8 @@ GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode = unix_mode & ~op_ctx->fsal_export->exp_ops.
-			fs_umask(op_ctx->fsal_export);
+	unix_mode = unix_mode &
+		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
@@ -146,7 +146,7 @@ GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
  *  @brief Create a hardlink.
  *
  *  @param dir_hdl Handle of the target object.
- *  @param gpfs_fh Pointer to the directory handle where hardlink is to be created.
+ *  @param gpfs_fh Pointer to the dire handle where hardlink is to be created.
  *  @param linkname Pointer to the name of the hardlink to be created.
  *  @param op_ctx Authentication context for the operation (user,...).
  *  @return ERR_FSAL_NO_ERROR on success, error otherwise
@@ -167,9 +167,8 @@ GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
 
 	/* Tests if hardlinking is allowed by configuration. */
 
-	if (!op_ctx->fsal_export->exp_ops.
-	    fs_supports(op_ctx->fsal_export,
-			fso_link_support))
+	if (!op_ctx->fsal_export->exp_ops.fs_supports(op_ctx->fsal_export,
+						      fso_link_support))
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 
 	/* Create the link on the filesystem */
@@ -214,8 +213,8 @@ GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
 	unix_mode = fsal2unix_mode(accessmode);
 
 	/* Apply umask */
-	unix_mode = unix_mode & ~op_ctx->fsal_export->exp_ops.
-			fs_umask(op_ctx->fsal_export);
+	unix_mode = unix_mode &
+		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	switch (nodetype) {
 	case BLOCK_FILE:

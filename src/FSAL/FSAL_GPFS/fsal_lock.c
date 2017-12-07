@@ -83,8 +83,7 @@ err_out:
 			int errsv2 = errno;
 
 			LogCrit(COMPONENT_FSAL,
-				"After failing a set lock request, "
-				"an attempt to get the current owner details also failed.");
+				"After failing a set lock request, an attempt to get the current owner details also failed.");
 			if (errsv2 == EUNATCH)
 				LogFatal(COMPONENT_FSAL,
 					 "GPFS Returned EUNATCH");

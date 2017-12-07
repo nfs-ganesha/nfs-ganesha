@@ -405,9 +405,9 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					    expire_time_attr;
 
 					posix2fsal_attributes(&buf, &attr);
-					fsal_status = event_func->
-					    update(event_func,
-						   &key, &attr, upflags);
+					fsal_status = event_func->update(
+							event_func, &key,
+							&attr, upflags);
 
 					if ((flags & UP_NLINK)
 					    && (attr.numlinks == 0)) {

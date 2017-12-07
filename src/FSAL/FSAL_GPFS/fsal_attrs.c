@@ -42,7 +42,8 @@ fsal_acl_2_gpfs_acl(struct fsal_obj_handle *, fsal_acl_t *, gpfsfsal_xstat_t *,
 		    gpfs_acl_t *acl_buf, unsigned int acl_buflen);
 
 /**
- *  @brief Get fs_locations attribute for the object specified by its filehandle.
+ *  @brief Get fs_locations attribute for the object specified by its
+ *         filehandle.
  *
  *  @param export FSAL export
  *  @param gpfs_fs GPFS filesystem
@@ -64,17 +65,14 @@ GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
+	struct fs_location4 *loc_val = fs_locs->locations.locations_val;
 
 	fs_loc.fs_path_len = fs_locs->fs_root.pathname4_val->utf8string_len;
 	fs_loc.fs_path = fs_locs->fs_root.pathname4_val->utf8string_val;
-	fs_loc.fs_server_len = fs_locs->locations.locations_val->
-					server.server_val->utf8string_len;
-	fs_loc.fs_server = fs_locs->locations.locations_val->
-					server.server_val->utf8string_val;
-	fs_loc.fs_root_len = fs_locs->locations.locations_val->
-					rootpath.pathname4_val->utf8string_len;
-	fs_loc.fs_root = fs_locs->locations.locations_val->
-					rootpath.pathname4_val->utf8string_val;
+	fs_loc.fs_server_len = loc_val->server.server_val->utf8string_len;
+	fs_loc.fs_server = loc_val->server.server_val->utf8string_val;
+	fs_loc.fs_root_len = loc_val->rootpath.pathname4_val->utf8string_len;
+	fs_loc.fs_root = loc_val->rootpath.pathname4_val->utf8string_val;
 	fs_loc.mountdirfd = export_fd;
 	fs_loc.handle = gpfs_fh;
 
@@ -88,10 +86,8 @@ GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 		return fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
 
 	fs_locs->fs_root.pathname4_val->utf8string_len = fs_loc.fs_path_len;
-	fs_locs->locations.locations_val->server.server_val->utf8string_len =
-					fs_loc.fs_server_len;
-	fs_locs->locations.locations_val->rootpath.pathname4_val->
-					utf8string_len = fs_loc.fs_root_len;
+	loc_val->server.server_val->utf8string_len = fs_loc.fs_server_len;
+	loc_val->rootpath.pathname4_val->utf8string_len = fs_loc.fs_root_len;
 
 	LogDebug(COMPONENT_FSAL,
 		 "gpfs_ganesha: FS_LOCATIONS root=%s path=%s server=%s",

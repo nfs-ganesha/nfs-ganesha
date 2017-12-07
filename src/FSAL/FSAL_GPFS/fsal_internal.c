@@ -1,7 +1,8 @@
 /*
  * @file  fsal_internal.c
  * @date  $Date: 2006/01/17 14:20:07 $
- * @brief Defines the datas that are to be accessed as extern by the fsal modules
+ * @brief Defines the datas that are to be accessed as extern by the fsal
+ *        modules
  *
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
@@ -521,7 +522,7 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
 	errsv = errno;
 	LogDebug(COMPONENT_FSAL,
-		 "gpfs_ganesha: GET_XSTAT returned, fd %d rc %d fh_size %d",
+		 "GET_XSTAT returned, fd %d rc %d fh_size %d",
 		 dirfd, rc, gpfs_fh->handle_size);
 
 	if (rc < 0) {
@@ -533,7 +534,7 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 			*/
 			buffxstat->attr_valid = XATTR_STAT;
 			LogFullDebug(COMPONENT_FSAL,
-				     "retrieved only stat, not acl");
+				     "GET_XSTAT retrieved only stat, not acl");
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 		case ENOSPC:
@@ -545,21 +546,21 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 			 */
 			if (use_acl && acl_buf->acl_len > acl_buflen) {
 				LogFullDebug(COMPONENT_FSAL,
-					"fsal_get_xstat_by_handle returned buffer too small, passed len: %u, required len: %u, ",
+					"GET_XSTAT returned buffer too small, passed len: %u, required len: %u, ",
 					acl_buflen, acl_buf->acl_len);
 				errno = 0;
 				break;
 			}
 
 			LogWarn(COMPONENT_FSAL,
-				"fsal_get_xstat_by_handle returned bogus ENOSPC, passed len: %u, required len: %u",
+				"GET_XSTAT returned bogus ENOSPC, passed len: %u, required len: %u",
 				acl_buflen, acl_buf->acl_len);
 			return fsalstat(ERR_FSAL_SERVERFAULT, errsv);
 
 		default:
 			/* Handle other errors. */
 			LogFullDebug(COMPONENT_FSAL,
-				     "fsal_get_xstat_by_handle returned errno:%d -- %s",
+				     "GET_XSTAT returned errno:%d -- %s",
 				     errsv, strerror(errsv));
 			if (errsv == EUNATCH)
 				LogFatal(COMPONENT_FSAL,
@@ -677,7 +678,8 @@ bool fsal_error_is_event(fsal_status_t status)
 }
 
 /**
- *  @brief Indicates if an FSAL error should be posted as an INFO level debug msg.
+ *  @brief Indicates if an FSAL error should be posted as an INFO level debug
+ *         message.
  *
  *  @param status(input): The fsal status whom event is to be tested.
  *  @return - true if the error event is to be posted.

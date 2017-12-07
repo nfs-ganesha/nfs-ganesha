@@ -93,17 +93,18 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 }
 
 /** @fn fsal_status_t
- *	GPFSFSAL_read(int fd, uint64_t offset, size_t buffer_size, caddr_t buffer,
- *		      size_t *p_read_amount, bool *p_end_of_file)
+ *	GPFSFSAL_read(int fd, uint64_t offset, size_t buffer_size,
+ *                    caddr_t buffer, size_t *p_read_amount,
+ *                    bool *p_end_of_file)
  *  @brief Perform a read operation on an opened file.
  *  @param fd The file descriptor returned by FSAL_open.
  *  @offset Offset
  *  @param buf_size Amount (in bytes) of data to be read.
  *  @param buf Address where the read data is to be stored in memory.
- *  @param read_amount Pointer to the amount of data (in bytes) that have been read
- *        during this call.
- *  @param end_of_file Pointer to a boolean that indicates whether the end of file
- *        has been reached during this call.
+ *  @param read_amount Pointer to the amount of data (in bytes) that have been
+ *                     read during this call.
+ *  @param end_of_file Pointer to a boolean that indicates whether the end of
+ *                     file has been reached during this call.
  *
  *  @return ERR_FSAL_NO_ERROR on success, error otherwise.
  */
@@ -163,8 +164,8 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
  *  @param fd The file descriptor returned by FSAL_open.
  *  @param buf_size Amount (in bytes) of data to be written.
  *  @param buf Address where the data is in memory.
- *  @param write_amount Pointer to the amount of data (in bytes) that have been written
- *        during this call.
+ *  @param write_amount Pointer to the amount of data (in bytes) that have been
+ *                      written during this call.
  *
  * @return ERR_FSAL_NO_ERROR on success, error otherwise
  */

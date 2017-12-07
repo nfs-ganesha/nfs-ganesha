@@ -110,9 +110,8 @@ GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl, const char *linkname,
 
 	/* Tests if symlinking is allowed by configuration. */
 
-	if (!op_ctx->fsal_export->exp_ops.
-	    fs_supports(op_ctx->fsal_export,
-			fso_symlink_support))
+	if (!op_ctx->fsal_export->exp_ops.fs_supports(op_ctx->fsal_export,
+						      fso_symlink_support))
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 
 	status = fsal_internal_handle2fd(export_fd, gpfs_hdl->handle,
