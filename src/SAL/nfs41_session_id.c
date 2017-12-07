@@ -41,7 +41,7 @@
 /**
  * @brief Pool for allocating session data
  */
-pool_t *nfs41_session_pool = NULL;
+pool_t *nfs41_session_pool;
 
 /**
  * @param Session ID hash
@@ -53,7 +53,7 @@ hash_table_t *ht_session_id;
  * @param counter for creating session IDs.
  */
 
-uint64_t global_sequence = 0;
+uint64_t global_sequence;
 
 /**
  * @brief Display a session ID

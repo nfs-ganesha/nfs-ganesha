@@ -323,6 +323,7 @@ void free_client_id(nfs_client_id_t *clientid)
 #ifdef _HAVE_GSSAPI
 	if (clientid->cid_credential.flavor == RPCSEC_GSS) {
 		struct svc_rpc_gss_data *gd;
+
 		gd = clientid->cid_credential.auth_union.auth_gss.gd;
 		unref_svc_rpc_gss_data(gd, 0);
 	}
@@ -559,6 +560,7 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 #ifdef _HAVE_GSSAPI
 	if (credential->flavor == RPCSEC_GSS) {
 		struct svc_rpc_gss_data *gd;
+
 		gd = credential->auth_union.auth_gss.gd;
 		(void)atomic_inc_uint32_t(&gd->refcnt);
 	}

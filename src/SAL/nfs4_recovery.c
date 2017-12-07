@@ -502,8 +502,8 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 		}
 	}
 	PTHREAD_MUTEX_unlock(&grace_mutex);
-	LogFullDebug(COMPONENT_CLIENTID, "Returning %s" ,
-			retval ? "TRUE" : "FALSE");
+	LogFullDebug(COMPONENT_CLIENTID, "Returning %s",
+		     retval ? "TRUE" : "FALSE");
 	return retval;
 }
 

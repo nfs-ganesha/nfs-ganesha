@@ -313,8 +313,8 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	    || (!owner->so_owner.so_nfs4_owner.so_confirmed
 		&& claim == CLAIM_NULL)
 	    || claim == CLAIM_DELEGATE_CUR) {
-		resok->delegation.open_delegation4_u.
-			od_whynone.ond_why = WND4_NOT_SUPP_FTYPE;
+		resok->delegation.open_delegation4_u.od_whynone.ond_why =
+							WND4_NOT_SUPP_FTYPE;
 		return false;
 	}
 
@@ -330,8 +330,8 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 			*prerecall = true;
 			return true;
 		default:
-			resok->delegation.open_delegation4_u.
-				od_whynone.ond_why = WND4_RESOURCE;
+			resok->delegation.open_delegation4_u.od_whynone.ond_why
+								= WND4_RESOURCE;
 			return false;
 		}
 	} else {
@@ -354,15 +354,15 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	 */
 	if (file_stats->fds_last_recall != 0 &&
 	    time(NULL) - file_stats->fds_last_recall < RECALL2DELEG_TIME) {
-		resok->delegation.open_delegation4_u.
-			od_whynone.ond_why = WND4_CONTENTION;
+		resok->delegation.open_delegation4_u.od_whynone.ond_why =
+								WND4_CONTENTION;
 		return false;
 	}
 
 	/* Check if this is a misbehaving or unreliable client */
 	if (client->num_revokes > 2) { /* more than 2 revokes */
-		resok->delegation.open_delegation4_u.
-			od_whynone.ond_why = WND4_RESOURCE;
+		resok->delegation.open_delegation4_u.od_whynone.ond_why =
+								WND4_RESOURCE;
 		return false;
 	}
 

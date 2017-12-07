@@ -134,8 +134,9 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	mutex_init = true;
 
 	/* Add the stateid.other, this will increment cid_stateid_counter */
-	nfs4_BuildStateId_Other(owner_input->so_owner.so_nfs4_owner.
-				so_clientrec, pnew_state->stateid_other);
+	nfs4_BuildStateId_Other(
+			owner_input->so_owner.so_nfs4_owner.so_clientrec,
+			pnew_state->stateid_other);
 
 	/* Set the type and data for this state */
 	memcpy(&(pnew_state->state_data), state_data, sizeof(*state_data));

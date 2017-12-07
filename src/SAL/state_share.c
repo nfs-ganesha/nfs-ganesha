@@ -245,9 +245,10 @@ void state_export_unshare_all(void)
 	while (errcnt < STATE_ERR_MAX) {
 		PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
 
-		state = glist_first_entry(&op_ctx->ctx_export->exp_nlm_share_list,
-					  state_t,
-					  state_export_list);
+		state = glist_first_entry(
+				&op_ctx->ctx_export->exp_nlm_share_list,
+				state_t,
+				state_export_list);
 
 		if (state == NULL) {
 			PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);

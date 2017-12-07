@@ -596,17 +596,16 @@ static state_lock_entry_t *create_state_lock_entry(struct fsal_obj_handle *obj,
 #ifdef _USE_NLM
 	if (owner->so_type == STATE_LOCK_OWNER_NLM) {
 		/* Add to list of locks owned by client that owner belongs to */
-		inc_nsm_client_ref(owner->so_owner.so_nlm_owner.so_client->
-				   slc_nsm_client);
+		state_nlm_client_t *client =
+			owner->so_owner.so_nlm_owner.so_client;
 
-		PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner.so_client
-				   ->slc_nsm_client->ssc_mutex);
-		glist_add_tail(&owner->so_owner.so_nlm_owner.so_client->
-			       slc_nsm_client->ssc_lock_list,
+		inc_nsm_client_ref(client->slc_nsm_client);
+
+		PTHREAD_MUTEX_lock(&client->slc_nsm_client->ssc_mutex);
+		glist_add_tail(&client->slc_nsm_client->ssc_lock_list,
 			       &new_entry->sle_client_locks);
 
-		PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner.so_client
-				     ->slc_nsm_client->ssc_mutex);
+		PTHREAD_MUTEX_unlock(&client->slc_nsm_client->ssc_mutex);
 	}
 #endif /* _USE_NLM */
 
@@ -734,18 +733,17 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 			/* Remove from list of locks owned
 			 * by client that owner belongs to
 			 */
-			PTHREAD_MUTEX_lock(&owner->so_owner.so_nlm_owner
-					   .so_client->slc_nsm_client
-					   ->ssc_mutex);
+			state_nlm_client_t *client =
+				owner->so_owner.so_nlm_owner.so_client;
+
+			PTHREAD_MUTEX_lock(&client->slc_nsm_client->ssc_mutex);
 
 			glist_del(&lock_entry->sle_client_locks);
 
-			PTHREAD_MUTEX_unlock(&owner->so_owner.so_nlm_owner
-					     .so_client->slc_nsm_client
-					     ->ssc_mutex);
+			PTHREAD_MUTEX_unlock(
+					&client->slc_nsm_client->ssc_mutex);
 
-			dec_nsm_client_ref(owner->so_owner.so_nlm_owner.
-					   so_client->slc_nsm_client);
+			dec_nsm_client_ref(client->slc_nsm_client);
 		}
 #endif /* _USE_NLM */
 
@@ -1352,6 +1350,7 @@ void free_cookie(state_cookie_entry_t *cookie_entry, bool unblock)
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
 	void *cookie = cookie_entry->sce_cookie;
+	state_lock_entry_t *lock_entry = cookie_entry->sce_lock_entry;
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		display_lock_cookie_entry(&dspbuf, cookie_entry);
@@ -1365,12 +1364,11 @@ void free_cookie(state_cookie_entry_t *cookie_entry, bool unblock)
 		LogFullDebug(COMPONENT_STATE, "Free Lock Cookie {%s}", str);
 
 	/* If block data is still attached to lock entry, remove it */
-	if (cookie_entry->sce_lock_entry != NULL && unblock) {
-		if (cookie_entry->sce_lock_entry->sle_block_data != NULL)
-			cookie_entry->sce_lock_entry->sle_block_data->
-			    sbd_blocked_cookie = NULL;
+	if (lock_entry != NULL && unblock) {
+		if (lock_entry->sle_block_data != NULL)
+			lock_entry->sle_block_data->sbd_blocked_cookie = NULL;
 
-		lock_entry_dec_ref(cookie_entry->sce_lock_entry);
+		lock_entry_dec_ref(lock_entry);
 	}
 
 	/* Free the memory for the cookie and the cookie entry */
@@ -2153,17 +2151,17 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 	 */
 	LogFullDebug(COMPONENT_STATE,
 		     "Reasons to quick exit fso_lock_support=%s fso_lock_support_async_block=%s overlap=%s",
-		     fsal_export->exp_ops.
-			fs_supports(fsal_export, fso_lock_support)
+		     fsal_export->exp_ops.fs_supports(
+				fsal_export, fso_lock_support)
 				? "yes" : "no",
-		     fsal_export->exp_ops.
-			fs_supports(fsal_export, fso_lock_support_async_block)
+		     fsal_export->exp_ops.fs_supports(
+				fsal_export, fso_lock_support_async_block)
 				? "yes" : "no",
 		     overlap ? "yes" : "no");
 	if (!fsal_export->exp_ops.fs_supports(fsal_export, fso_lock_support)
-	    || (!fsal_export->exp_ops.
-		fs_supports(fsal_export, fso_lock_support_async_block)
-		&& lock_op == FSAL_OP_CANCEL))
+	    || (!fsal_export->exp_ops.fs_supports(fsal_export,
+						  fso_lock_support_async_block)
+	    && lock_op == FSAL_OP_CANCEL))
 		return STATE_SUCCESS;
 
 	LogLock(COMPONENT_STATE, NIV_FULL_DEBUG, fsal_lock_op_str(lock_op),
@@ -2482,7 +2480,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 			/* Found a compatible lock with a different lock owner
 			 * that fully overlaps, set hint.
 			 */
-			LogEntry("state_lock Found overlapping", found_entry);
+			LogEntry("Found overlapping", found_entry);
 			overlap = true;
 		}
 	}
