@@ -306,12 +306,13 @@ void lookups_tree_1(void)
 
 		/* lookup mapping */
 		v2 = qp_avl_lookup_s(&avl_tree_1, v, 1);
-		if (!v2)
+		if (!v2) {
 			abort();
-		else
+		} else {
 			/*
 			printf("%d %d %s\n", ix, v2->hk.p, v2->name);
 			*/
+		}
 		++ix;
 	}
 
@@ -361,13 +362,15 @@ void lookups_tree_2(void)
 		sprintf(s, "file%d", ix);
 		v = avl_unit_new_val(s);
 		v2 = qp_avl_lookup_s(&avl_tree_1, v, 1);
-		if (!v2)
-			if (ix < 100000)
+		if (!v2) {
+			if (ix < 100000) {
 				abort();
-			else
+			} else {
 				/*
 				printf("%d %d %s\n", ix, v2->hk.p, v2->name);
 				*/
+			}
+		}
 	}
 
 	/* free v */
@@ -386,7 +389,7 @@ void deletes_tree_2(void)
 int main(int argc, char *argv[])
 {
 	/* initialize the CUnit test registry...  get this party started */
-	if (CUE_SUCCESS != CU_initialize_registry())
+	if (CU_initialize_registry() != CUE_SUCCESS)
 		return CU_get_error();
 
 	/* General avl_tree test. */

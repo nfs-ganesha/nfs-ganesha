@@ -833,7 +833,7 @@ void check_min_2(void)
 int main(int argc, char *argv[])
 {
 	/* initialize the CUnit test registry...  get this party started */
-	if (CUE_SUCCESS != CU_initialize_registry())
+	if (CU_initialize_registry() != CUE_SUCCESS)
 		return CU_get_error();
 
 	/* General avl_tree test. */

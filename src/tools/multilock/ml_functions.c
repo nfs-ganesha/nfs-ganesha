@@ -502,7 +502,7 @@ char *get_rdata(char *line, struct response *resp, int max,
 
 	assert(max < sizeof(resp->r_data));
 
-	c = SkipWhite(c, REQUIRES_MORE, "get_rdata 1");
+	c = SkipWhite(c, REQUIRES_MORE, "get rdata 1");
 
 	if (c == NULL)
 		return c;
@@ -550,7 +550,7 @@ char *get_rdata(char *line, struct response *resp, int max,
 	array_strncpy(resp->r_data, t, len);
 	c++;
 
-	return SkipWhite(c, requires_more, "get_rdata 2");
+	return SkipWhite(c, requires_more, "get rdata 2");
 }
 
 char *get_open_opts(char *line, long int *fpos, int *flags, int *mode,
