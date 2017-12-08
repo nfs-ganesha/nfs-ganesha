@@ -1216,6 +1216,8 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 				       DBUS_TYPE_STRING,
 				       &path);
 
+	put_gsh_export(export);
+
 out:
 	return rc;
 }

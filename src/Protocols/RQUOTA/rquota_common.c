@@ -40,9 +40,12 @@ char *check_handle_lead_slash(char *quota_path, char *temp_path,
 
 		exp = get_gsh_export(0);
 		pathlen = strlen(exp->fullpath);
-		if (pathlen >= temp_path_size)
+		if (pathlen >= temp_path_size) {
+			put_gsh_export(exp);
 			return NULL;
+		}
 		memcpy(temp_path, exp->fullpath, pathlen);
+		put_gsh_export(exp);
 
 		/* Add trailing slash if it is missing */
 		if ((pathlen > 0) &&

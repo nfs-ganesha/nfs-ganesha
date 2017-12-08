@@ -1118,6 +1118,7 @@ populate_dirent(const char *name,
 						 0, cookie, state->cb_state);
 				/* Protocol layers NEVER do readahead. */
 				retval = DIR_TERMINATE;
+				put_gsh_export(junction_export);
 				goto out;
 			}
 		} else {

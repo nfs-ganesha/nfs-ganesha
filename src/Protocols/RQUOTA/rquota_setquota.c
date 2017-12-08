@@ -87,7 +87,7 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	fsal_status_t fsal_status;
 	fsal_quota_t fsal_quota_in;
 	fsal_quota_t fsal_quota_out;
-	struct gsh_export *exp;
+	struct gsh_export *exp = NULL;
 	char *qpath;
 	char path[MAXPATHLEN];
 
@@ -176,6 +176,10 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	qres->status = Q_OK;
 
 out:
+
+	if (exp != NULL)
+		put_gsh_export(exp);
+
 	return NFS_REQ_OK;
 }				/* do_rquota_setquota */
 

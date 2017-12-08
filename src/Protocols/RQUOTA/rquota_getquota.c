@@ -52,7 +52,7 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status;
 	fsal_quota_t fsal_quota;
 	int quota_type = USRQUOTA;
-	struct gsh_export *exp;
+	struct gsh_export *exp = NULL;
 	char *quota_path;
 	getquota_rslt *qres = &res->res_rquota_getquota;
 	char path[MAXPATHLEN];
@@ -135,6 +135,10 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	qres->status = Q_OK;
 
  out:
+
+	if (exp != NULL)
+		put_gsh_export(exp);
+
 	return NFS_REQ_OK;
 }				/* rquota_getquota */
 
