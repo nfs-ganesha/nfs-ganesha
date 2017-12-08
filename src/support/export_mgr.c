@@ -632,9 +632,16 @@ bool mount_gsh_export(struct gsh_export *exp)
  * We are done with it, let it go.
  */
 
-void put_gsh_export(struct gsh_export *export)
+void _put_gsh_export(struct gsh_export *export,
+		     char *file, int line, char *function)
 {
 	int64_t refcount = atomic_dec_int64_t(&export->refcnt);
+
+	if (isFullDebug(COMPONENT_EXPORT)) {
+		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
+			NIV_FULL_DEBUG,
+			"put ref, refcount = %" PRIi64, refcount);
+	}
 
 	if (refcount != 0) {
 		assert(refcount > 0);

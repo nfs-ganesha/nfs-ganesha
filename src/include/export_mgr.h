@@ -172,7 +172,6 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 						   bool exact_match);
 struct gsh_export *get_gsh_export_by_tag(char *tag);
 bool mount_gsh_export(struct gsh_export *exp);
-void put_gsh_export(struct gsh_export *a_export);
 void remove_gsh_export(uint16_t export_id);
 bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 			bool wrlock, void *state);
@@ -195,10 +194,28 @@ static inline bool export_ready(struct gsh_export *a_export)
 	return a_export->export_status == EXPORT_READY;
 }
 
-static inline void get_gsh_export_ref(struct gsh_export *a_export)
+static inline void _get_gsh_export_ref(struct gsh_export *a_export,
+				       char *file, int line, char *function)
 {
-	(void) atomic_inc_int64_t(&a_export->refcnt);
+	int64_t refcount = atomic_inc_int64_t(&a_export->refcnt);
+
+	if (isFullDebug(COMPONENT_EXPORT)) {
+		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
+			NIV_FULL_DEBUG,
+			"get ref, refcount = %" PRIi64, refcount);
+	}
 }
+
+#define get_gsh_export_ref(a_export) \
+	_get_gsh_export_ref(a_export, \
+	(char *) __FILE__, __LINE__, (char *) __func__)
+
+void _put_gsh_export(struct gsh_export *a_export,
+		     char *file, int line, char *function);
+
+#define put_gsh_export(a_export) \
+	_put_gsh_export(a_export, \
+	(char *) __FILE__, __LINE__, (char *) __func__)
 
 void export_revert(struct gsh_export *a_export);
 void export_add_to_mount_work(struct gsh_export *a_export);
