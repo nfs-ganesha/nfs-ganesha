@@ -1064,6 +1064,9 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 		}
 
+		if (my_fd->openflags != FSAL_O_CLOSED) {
+			ceph_close_my_fd(myself, my_fd);
+		}
 		status = ceph_open_my_fd(myself, openflags, posix_flags, my_fd);
 
 		if (FSAL_IS_ERROR(status)) {

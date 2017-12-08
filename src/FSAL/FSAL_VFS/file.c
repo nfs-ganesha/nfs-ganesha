@@ -409,6 +409,10 @@ static fsal_status_t vfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 	}
 
+	/* Close if there was any proir fd */
+	if (my_fd->openflags != FSAL_O_CLOSED) {
+		vfs_close_my_fd(my_fd);
+	}
 	status = vfs_open_my_fd(myself, openflags, posix_flags, my_fd);
 
 	if (FSAL_IS_ERROR(status)) {
