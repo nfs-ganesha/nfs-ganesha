@@ -82,7 +82,11 @@
 struct nfs_init nfs_init;
 
 /* global information exported to all layers (as extern vars) */
+pool_t *request_pool;
 nfs_parameter_t nfs_param;
+struct _nfs_health health;
+
+static struct _nfs_health healthstats;
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
 struct timespec ServerBootTime;
@@ -301,6 +305,9 @@ static void init_crash_handlers(void)
 void nfs_prereq_init(char *program_name, char *host_name, int debug_level,
 		     char *log_path, bool dump_trace)
 {
+	healthstats.enqueued_reqs = health.enqueued_reqs = 0;
+	healthstats.enqueued_reqs = health.dequeued_reqs = 0;
+
 	/* Initialize logging */
 	SetNamePgm(program_name);
 	SetNameFunction("main");
@@ -545,7 +552,7 @@ static void nfs_Start_threads(void)
 	LogDebug(COMPONENT_THREAD, "sigmgr thread started");
 
 #ifdef _USE_9P
-	rc = worker_init();
+	rc = _9p_worker_init();
 	if (rc != 0) {
 		LogFatal(COMPONENT_THREAD, "Could not start worker threads: %d",
 			 errno);
@@ -1000,4 +1007,35 @@ void nfs_init_wait(void)
 		pthread_cond_wait(&nfs_init.init_cond, &nfs_init.init_mutex);
 	}
 	PTHREAD_MUTEX_unlock(&nfs_init.init_mutex);
+}
+
+bool nfs_health(void)
+{
+	uint64_t newenq, newdeq;
+	uint64_t dequeue_diff, enqueue_diff;
+	bool healthy;
+
+	newenq = health.enqueued_reqs;
+	newdeq = health.dequeued_reqs;
+	enqueue_diff = newenq - healthstats.enqueued_reqs;
+	dequeue_diff = newdeq - healthstats.dequeued_reqs;
+
+	/* Consider healthy and making progress if we have dequeued some
+	 * requests or there is nothing to dequeue.
+	 */
+	healthy = dequeue_diff > 0 || enqueue_diff == 0;
+
+	if (!healthy) {
+		LogWarn(COMPONENT_DBUS,
+			"Health status is unhealthy. "
+			"enq new: %" PRIu64 ", old: %" PRIu64 "; "
+			"deq new: %" PRIu64 ", old: %" PRIu64,
+			newenq, healthstats.enqueued_reqs,
+			newdeq, healthstats.dequeued_reqs);
+	}
+
+	healthstats.enqueued_reqs = newenq;
+	healthstats.dequeued_reqs = newdeq;
+
+	return healthy;
 }

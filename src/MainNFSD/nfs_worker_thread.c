@@ -54,10 +54,8 @@
 #include "nfs_exports.h"
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
-#include "nfs_req_queue.h"
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
-#include "fridgethr.h"
 #include "client_mgr.h"
 #include "export_mgr.h"
 #include "server_stats.h"
@@ -70,10 +68,6 @@
 #define NFS_pcp nfs_param.core_param
 #define NFS_options NFS_pcp.core_options
 #define NFS_program NFS_pcp.program
-
-pool_t *request_pool;
-
-static struct fridgethr *worker_fridge;
 
 const nfs_function_desc_t invalid_funcdesc = {
 	.service_function = nfs_null,
@@ -1478,178 +1472,6 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 	tracepoint(nfs_rpc, end, reqdata);
 #endif
 	return SVC_STAT(xprt);
-}
-
-#ifdef _USE_9P
-/**
- * @brief Execute a 9p request
- *
- * @param[in,out] req9p       9p request
- */
-static void _9p_execute(request_data_t *reqdata)
-{
-	struct _9p_request_data *req9p = &reqdata->r_u._9p;
-	struct req_op_context req_ctx;
-	struct export_perms export_perms;
-
-	memset(&req_ctx, 0, sizeof(struct req_op_context));
-	memset(&export_perms, 0, sizeof(struct export_perms));
-	op_ctx = &req_ctx;
-	op_ctx->caller_addr = (sockaddr_t *)&reqdata->r_u._9p.pconn->addrpeer;
-	op_ctx->req_type = reqdata->rtype;
-	op_ctx->export_perms = &export_perms;
-
-	if (req9p->pconn->trans_type == _9P_TCP)
-		_9p_tcp_process_request(req9p);
-#ifdef _USE_9P_RDMA
-	else if (req9p->pconn->trans_type == _9P_RDMA)
-		_9p_rdma_process_request(req9p);
-#endif
-	op_ctx = NULL;
-}				/* _9p_execute */
-
-/**
- * @brief Free resources allocated for a 9p request
- *
- * This does not free the request itself.
- *
- * @param[in] nfsreq 9p request
- */
-static void _9p_free_reqdata(struct _9p_request_data *req9p)
-{
-	if (req9p->pconn->trans_type == _9P_TCP)
-		gsh_free(req9p->_9pmsg);
-
-	/* decrease connection refcount */
-	(void) atomic_dec_uint32_t(&req9p->pconn->refcount);
-}
-#endif
-
-static uint32_t worker_indexer;
-
-/**
- * @brief Initialize a worker thread
- *
- * @param[in] ctx Thread fridge context
- */
-
-static void worker_thread_initializer(struct fridgethr_context *ctx)
-{
-	struct nfs_worker_data *wd = &ctx->wd;
-	char thr_name[32];
-
-	wd->worker_index = atomic_inc_uint32_t(&worker_indexer);
-	snprintf(thr_name, sizeof(thr_name), "work-%u", wd->worker_index);
-	SetNameFunction(thr_name);
-
-	/* Initalize thr waitq */
-	init_wait_q_entry(&wd->wqe);
-}
-
-/**
- * @brief Finalize a worker thread
- *
- * @param[in] ctx Thread fridge context
- */
-
-static void worker_thread_finalizer(struct fridgethr_context *ctx)
-{
-	ctx->thread_info = NULL;
-}
-
-/**
- * @brief The main function for a worker thread
- *
- * This is the body of the worker thread. Its starting arguments are
- * located in global array worker_data. The argument is no pointer but
- * the worker's index.  It then uses this index to address its own
- * worker data in the array.
- *
- * @param[in] ctx Fridge thread context
- */
-
-static void worker_run(struct fridgethr_context *ctx)
-{
-	struct nfs_worker_data *worker_data = &ctx->wd;
-	request_data_t *reqdata;
-
-	/* Worker's loop */
-	while (!fridgethr_you_should_break(ctx)) {
-		reqdata = nfs_rpc_dequeue_req(worker_data);
-
-		if (!reqdata)
-			continue;
-
-		switch (reqdata->rtype) {
-		case UNKNOWN_REQUEST:
-		case NFS_REQUEST:
-		case NFS_CALL:
-			LogCrit(COMPONENT_DISPATCH,
-				"Unexpected unknown request");
-			break;
-
-#ifdef _USE_9P
-		case _9P_REQUEST:
-			_9p_execute(reqdata);
-			_9p_free_reqdata(&reqdata->r_u._9p);
-			break;
-#endif
-		}
-
-		/* Free the req by releasing the entry */
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Invalidating processed entry");
-
-		free_nfs_request(reqdata);
-	}
-}
-
-int worker_init(void)
-{
-	struct fridgethr_params frp;
-	int rc = 0;
-
-	memset(&frp, 0, sizeof(struct fridgethr_params));
-	frp.thr_max = nfs_param.core_param.nb_worker;
-	frp.thr_min = nfs_param.core_param.nb_worker;
-	frp.flavor = fridgethr_flavor_looper;
-	frp.thread_initialize = worker_thread_initializer;
-	frp.thread_finalize = worker_thread_finalizer;
-	frp.wake_threads = nfs_rpc_queue_awaken;
-	frp.wake_threads_arg = &nfs_req_st;
-
-	rc = fridgethr_init(&worker_fridge, "Wrk", &frp);
-	if (rc != 0) {
-		LogMajor(COMPONENT_DISPATCH,
-			 "Unable to initialize worker fridge: %d", rc);
-		return rc;
-	}
-
-	rc = fridgethr_populate(worker_fridge, worker_run, NULL);
-
-	if (rc != 0) {
-		LogMajor(COMPONENT_DISPATCH,
-			 "Unable to populate worker fridge: %d", rc);
-	}
-
-	return rc;
-}
-
-int worker_shutdown(void)
-{
-	int rc = fridgethr_sync_command(worker_fridge,
-					fridgethr_comm_stop,
-					120);
-
-	if (rc == ETIMEDOUT) {
-		LogMajor(COMPONENT_DISPATCH,
-			 "Shutdown timed out, cancelling threads.");
-		fridgethr_cancel(worker_fridge);
-	} else if (rc != 0) {
-		LogMajor(COMPONENT_DISPATCH,
-			 "Failed shutting down worker threads: %d", rc);
-	}
-	return rc;
 }
 
 /**

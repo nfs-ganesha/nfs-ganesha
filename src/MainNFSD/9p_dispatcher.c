@@ -55,12 +55,478 @@
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "nfs_file_handle.h"
+#include "nfs_req_queue.h"
 #include "client_mgr.h"
 #include "server_stats.h"
 #include "9p.h"
 #include <stdbool.h>
 
 #define P_FAMILY AF_INET6
+
+static struct fridgethr *worker_fridge;
+
+static struct nfs_req_st nfs_req_st;	/*< Shared request queues */
+
+static const char *req_q_s[N_REQ_QUEUES] = {
+	"REQ_Q_LOW_LATENCY",
+};
+
+/* static */
+uint32_t _9p_outstanding_reqs_est(void)
+{
+	static uint32_t ctr;
+	static uint32_t nreqs;
+	struct req_q_pair *qpair;
+	uint32_t treqs;
+	int ix;
+
+	if ((atomic_inc_uint32_t(&ctr) % 10) != 0)
+		return atomic_fetch_uint32_t(&nreqs);
+
+	treqs = 0;
+	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
+		qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
+		treqs += atomic_fetch_uint32_t(&qpair->producer.size);
+		treqs += atomic_fetch_uint32_t(&qpair->consumer.size);
+	}
+
+	atomic_store_uint32_t(&nreqs, treqs);
+	return treqs;
+}
+
+static inline request_data_t *_9p_consume_req(struct req_q_pair *qpair)
+{
+	request_data_t *reqdata = NULL;
+
+	pthread_spin_lock(&qpair->consumer.sp);
+	if (qpair->consumer.size > 0) {
+		reqdata =
+		    glist_first_entry(&qpair->consumer.q, request_data_t,
+				      req_q);
+		glist_del(&reqdata->req_q);
+		--(qpair->consumer.size);
+		pthread_spin_unlock(&qpair->consumer.sp);
+		goto out;
+	} else {
+		char *s = NULL;
+		uint32_t csize = ~0U;
+		uint32_t psize = ~0U;
+
+		pthread_spin_lock(&qpair->producer.sp);
+		if (isFullDebug(COMPONENT_DISPATCH)) {
+			s = (char *)qpair->s;
+			csize = qpair->consumer.size;
+			psize = qpair->producer.size;
+		}
+		if (qpair->producer.size > 0) {
+			/* splice */
+			glist_splice_tail(&qpair->consumer.q,
+					  &qpair->producer.q);
+			qpair->consumer.size = qpair->producer.size;
+			qpair->producer.size = 0;
+			/* consumer.size > 0 */
+			pthread_spin_unlock(&qpair->producer.sp);
+			reqdata =
+			    glist_first_entry(&qpair->consumer.q,
+					      request_data_t, req_q);
+			glist_del(&reqdata->req_q);
+			--(qpair->consumer.size);
+			pthread_spin_unlock(&qpair->consumer.sp);
+			if (s)
+				LogFullDebug(COMPONENT_DISPATCH,
+					     "try splice, qpair %s consumer qsize=%u producer qsize=%u",
+					     s, csize, psize);
+			goto out;
+		}
+
+		pthread_spin_unlock(&qpair->producer.sp);
+		pthread_spin_unlock(&qpair->consumer.sp);
+
+		if (s)
+			LogFullDebug(COMPONENT_DISPATCH,
+				     "try splice, qpair %s consumer qsize=%u producer qsize=%u",
+				     s, csize, psize);
+	}
+ out:
+	return reqdata;
+}
+
+static request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
+{
+	request_data_t *reqdata = NULL;
+	struct req_q_set *nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
+	struct req_q_pair *qpair;
+	uint32_t ix, slot;
+	struct timespec timeout;
+
+	/* XXX: the following stands in for a more robust/flexible
+	 * weighting function */
+
+ retry_deq:
+	slot = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr) % N_REQ_QUEUES;
+	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
+		qpair = &(nfs_request_q->qset[slot]);
+
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "dequeue_req try qpair %s %p:%p", qpair->s,
+			     &qpair->producer, &qpair->consumer);
+
+		/* anything? */
+		reqdata = _9p_consume_req(qpair);
+		if (reqdata) {
+			break;
+		}
+
+		++slot;
+		slot = slot % N_REQ_QUEUES;
+
+	}			/* for */
+
+	/* wait */
+	if (!reqdata) {
+		struct fridgethr_context *ctx =
+			container_of(worker, struct fridgethr_context, wd);
+		wait_q_entry_t *wqe = &worker->wqe;
+
+		assert(wqe->waiters == 0); /* wqe is not on any wait queue */
+		PTHREAD_MUTEX_lock(&wqe->lwe.mtx);
+		wqe->flags = Wqe_LFlag_WaitSync;
+		wqe->waiters = 1;
+		/* XXX functionalize */
+		pthread_spin_lock(&nfs_req_st.reqs.sp);
+		glist_add_tail(&nfs_req_st.reqs.wait_list, &wqe->waitq);
+		++(nfs_req_st.reqs.waiters);
+		pthread_spin_unlock(&nfs_req_st.reqs.sp);
+		while (!(wqe->flags & Wqe_LFlag_SyncDone)) {
+			timeout.tv_sec = time(NULL) + 5;
+			timeout.tv_nsec = 0;
+			pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx,
+					       &timeout);
+			if (fridgethr_you_should_break(ctx)) {
+				/* We are returning;
+				 * so take us out of the waitq */
+				pthread_spin_lock(&nfs_req_st.reqs.sp);
+				if (wqe->waitq.next != NULL
+				    || wqe->waitq.prev != NULL) {
+					/* Element is still in wqitq,
+					 * remove it */
+					glist_del(&wqe->waitq);
+					--(nfs_req_st.reqs.waiters);
+					--(wqe->waiters);
+					wqe->flags &=
+					    ~(Wqe_LFlag_WaitSync |
+					      Wqe_LFlag_SyncDone);
+				}
+				pthread_spin_unlock(&nfs_req_st.reqs.sp);
+				PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
+				return NULL;
+			}
+		}
+
+		/* XXX wqe was removed from nfs_req_st.waitq
+		 * (by signalling thread) */
+		wqe->flags &= ~(Wqe_LFlag_WaitSync | Wqe_LFlag_SyncDone);
+		PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
+		LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", wqe);
+		goto retry_deq;
+	} /* !reqdata */
+
+#if defined(HAVE_BLKIN)
+	/* thread id */
+	BLKIN_KEYVAL_INTEGER(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"worker-id",
+		worker->worker_index
+		);
+
+	BLKIN_TIMESTAMP(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"dequeue-req");
+#endif
+	return reqdata;
+}
+
+static void nfs_rpc_enqueue_req(request_data_t *reqdata)
+{
+	struct req_q_set *nfs_request_q;
+	struct req_q_pair *qpair;
+	struct req_q *q;
+
+#if defined(HAVE_BLKIN)
+	BLKIN_TIMESTAMP(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"enqueue-enter");
+#endif
+
+	nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
+
+	switch (reqdata->rtype) {
+	case _9P_REQUEST:
+		/* XXX identify high-latency requests and allocate
+		 * to the high-latency queue, as above */
+		qpair = &(nfs_request_q->qset[REQ_Q_LOW_LATENCY]);
+		break;
+	case NFS_REQUEST:
+	case NFS_CALL:
+	default:
+		goto out;
+	}
+
+	/* this one is real, timestamp it
+	 */
+	now(&reqdata->time_queued);
+	/* always append to producer queue */
+	q = &qpair->producer;
+	pthread_spin_lock(&q->sp);
+	glist_add_tail(&q->q, &reqdata->req_q);
+	++(q->size);
+	pthread_spin_unlock(&q->sp);
+
+#if defined(HAVE_BLKIN)
+	/* log the queue depth */
+	BLKIN_KEYVAL_INTEGER(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"reqs-est",
+		_9p_outstanding_reqs_est()
+		);
+
+	BLKIN_TIMESTAMP(
+		&reqdata->r_u.req.svc.bl_trace,
+		&reqdata->r_u.req.xprt->blkin.endp,
+		"enqueue-exit");
+#endif
+	LogDebug(COMPONENT_DISPATCH,
+		 "enqueued req, q %p (%s %p:%p) size is %d (enq %"
+		 PRIu64 " deq %" PRIu64 ")",
+		 q, qpair->s, &qpair->producer, &qpair->consumer, q->size,
+		 health.enqueued_reqs, health.dequeued_reqs);
+
+	/* potentially wakeup some thread */
+
+	/* global waitq */
+	{
+		wait_q_entry_t *wqe;
+
+		/* SPIN LOCKED */
+		pthread_spin_lock(&nfs_req_st.reqs.sp);
+		if (nfs_req_st.reqs.waiters) {
+			wqe = glist_first_entry(&nfs_req_st.reqs.wait_list,
+						wait_q_entry_t, waitq);
+
+			LogFullDebug(COMPONENT_DISPATCH,
+				     "nfs_req_st.reqs.waiters %u signal wqe %p (for q %p)",
+				     nfs_req_st.reqs.waiters, wqe, q);
+
+			/* release 1 waiter */
+			glist_del(&wqe->waitq);
+			--(nfs_req_st.reqs.waiters);
+			--(wqe->waiters);
+			/* ! SPIN LOCKED */
+			pthread_spin_unlock(&nfs_req_st.reqs.sp);
+			PTHREAD_MUTEX_lock(&wqe->lwe.mtx);
+			/* XXX reliable handoff */
+			wqe->flags |= Wqe_LFlag_SyncDone;
+			if (wqe->flags & Wqe_LFlag_WaitSync)
+				pthread_cond_signal(&wqe->lwe.cv);
+			PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
+		} else
+			/* ! SPIN LOCKED */
+			pthread_spin_unlock(&nfs_req_st.reqs.sp);
+	}
+
+ out:
+	return;
+}
+
+/**
+ * @brief Execute a 9p request
+ *
+ * @param[in,out] req9p       9p request
+ */
+static void _9p_execute(request_data_t *reqdata)
+{
+	struct _9p_request_data *req9p = &reqdata->r_u._9p;
+	struct req_op_context req_ctx;
+	struct export_perms export_perms;
+
+	memset(&req_ctx, 0, sizeof(struct req_op_context));
+	memset(&export_perms, 0, sizeof(struct export_perms));
+	op_ctx = &req_ctx;
+	op_ctx->caller_addr = (sockaddr_t *)&reqdata->r_u._9p.pconn->addrpeer;
+	op_ctx->req_type = reqdata->rtype;
+	op_ctx->export_perms = &export_perms;
+
+	if (req9p->pconn->trans_type == _9P_TCP)
+		_9p_tcp_process_request(req9p);
+#ifdef _USE_9P_RDMA
+	else if (req9p->pconn->trans_type == _9P_RDMA)
+		_9p_rdma_process_request(req9p);
+#endif
+	op_ctx = NULL;
+}				/* _9p_execute */
+
+/**
+ * @brief Free resources allocated for a 9p request
+ *
+ * This does not free the request itself.
+ *
+ * @param[in] nfsreq 9p request
+ */
+static void _9p_free_reqdata(struct _9p_request_data *req9p)
+{
+	if (req9p->pconn->trans_type == _9P_TCP)
+		gsh_free(req9p->_9pmsg);
+
+	/* decrease connection refcount */
+	(void) atomic_dec_uint32_t(&req9p->pconn->refcount);
+}
+
+static uint32_t worker_indexer;
+
+/**
+ * @brief Initialize a worker thread
+ *
+ * @param[in] ctx Thread fridge context
+ */
+
+static void worker_thread_initializer(struct fridgethr_context *ctx)
+{
+	struct nfs_worker_data *wd = &ctx->wd;
+	char thr_name[32];
+
+	wd->worker_index = atomic_inc_uint32_t(&worker_indexer);
+	snprintf(thr_name, sizeof(thr_name), "work-%u", wd->worker_index);
+	SetNameFunction(thr_name);
+
+	/* Initialize thr waitq */
+	init_wait_q_entry(&wd->wqe);
+}
+
+/**
+ * @brief Finalize a worker thread
+ *
+ * @param[in] ctx Thread fridge context
+ */
+
+static void worker_thread_finalizer(struct fridgethr_context *ctx)
+{
+	ctx->thread_info = NULL;
+}
+
+/**
+ * @brief The main function for a worker thread
+ *
+ * This is the body of the worker thread. Its starting arguments are
+ * located in global array worker_data. The argument is no pointer but
+ * the worker's index.  It then uses this index to address its own
+ * worker data in the array.
+ *
+ * @param[in] ctx Fridge thread context
+ */
+
+static void worker_run(struct fridgethr_context *ctx)
+{
+	struct nfs_worker_data *worker_data = &ctx->wd;
+	request_data_t *reqdata;
+
+	/* Worker's loop */
+	while (!fridgethr_you_should_break(ctx)) {
+		reqdata = nfs_rpc_dequeue_req(worker_data);
+
+		if (!reqdata)
+			continue;
+
+		switch (reqdata->rtype) {
+		case _9P_REQUEST:
+			_9p_execute(reqdata);
+			_9p_free_reqdata(&reqdata->r_u._9p);
+			break;
+
+		case UNKNOWN_REQUEST:
+		case NFS_REQUEST:
+		case NFS_CALL:
+		default:
+			LogCrit(COMPONENT_DISPATCH,
+				"Unexpected unknown request");
+			break;
+		}
+
+		/* Free the req by releasing the entry */
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "Invalidating processed entry");
+
+		pool_free(request_pool, reqdata);
+		(void) atomic_inc_uint64_t(&health.dequeued_reqs);
+	}
+}
+
+int _9p_worker_init(void)
+{
+	struct fridgethr_params frp;
+	struct req_q_pair *qpair;
+	int ix;
+	int rc = 0;
+
+	/* Init request queue before workers */
+	pthread_spin_init(&nfs_req_st.reqs.sp, PTHREAD_PROCESS_PRIVATE);
+	nfs_req_st.reqs.size = 0;
+	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
+		qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
+		qpair->s = req_q_s[ix];
+		nfs_rpc_q_init(&qpair->producer);
+		nfs_rpc_q_init(&qpair->consumer);
+	}
+
+	/* waitq */
+	glist_init(&nfs_req_st.reqs.wait_list);
+	nfs_req_st.reqs.waiters = 0;
+
+	memset(&frp, 0, sizeof(struct fridgethr_params));
+	frp.thr_max = nfs_param.core_param.nb_worker;
+	frp.thr_min = nfs_param.core_param.nb_worker;
+	frp.flavor = fridgethr_flavor_looper;
+	frp.thread_initialize = worker_thread_initializer;
+	frp.thread_finalize = worker_thread_finalizer;
+	frp.wake_threads = nfs_rpc_queue_awaken;
+	frp.wake_threads_arg = &nfs_req_st;
+
+	rc = fridgethr_init(&worker_fridge, "9P", &frp);
+	if (rc != 0) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Unable to initialize worker fridge: %d", rc);
+		return rc;
+	}
+
+	rc = fridgethr_populate(worker_fridge, worker_run, NULL);
+
+	if (rc != 0) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Unable to populate worker fridge: %d", rc);
+	}
+
+	return rc;
+}
+
+int _9p_worker_shutdown(void)
+{
+	int rc = fridgethr_sync_command(worker_fridge,
+					fridgethr_comm_stop,
+					120);
+
+	if (rc == ETIMEDOUT) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Shutdown timed out, cancelling threads.");
+		fridgethr_cancel(worker_fridge);
+	} else if (rc != 0) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Failed shutting down worker threads: %d", rc);
+	}
+	return rc;
+}
 
 void DispatchWork9P(request_data_t *req)
 {
@@ -269,6 +735,7 @@ void *_9p_socket_thread(void *Arg)
 					    0, 0, 0);
 
 		/* Message is good. */
+		(void) atomic_inc_uint64_t(&health.enqueued_reqs);
 		req = pool_alloc(request_pool);
 
 		req->rtype = _9P_REQUEST;

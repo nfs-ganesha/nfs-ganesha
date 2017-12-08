@@ -61,8 +61,6 @@ enum req_q_e {
 	N_REQ_QUEUES
 };
 
-extern const char *req_q_s[N_REQ_QUEUES];	/* for debug prints */
-
 struct req_q_set {
 	struct req_q_pair qset[N_REQ_QUEUES];
 };
@@ -78,10 +76,6 @@ struct nfs_req_st {
 	} reqs;
 	GSH_CACHE_PAD(1);
 };
-
-extern struct nfs_req_st nfs_req_st;
-
-void nfs_rpc_queue_init(void);
 
 static inline void nfs_rpc_q_init(struct req_q *q)
 {

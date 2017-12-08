@@ -50,7 +50,6 @@
 #include <arpa/inet.h>
 #include "fsal.h"
 #include "nfs_core.h"
-#include "nfs_req_queue.h"
 #include "log.h"
 #include "nfs_rpc_callback.h"
 #include "nfs4.h"
@@ -872,6 +871,8 @@ rpc_call_t *alloc_rpc_call(void)
 {
 	request_data_t *reqdata = pool_alloc(request_pool);
 
+	(void) atomic_inc_uint64_t(&health.enqueued_reqs);
+
 	reqdata->rtype = NFS_CALL;
 	return &reqdata->r_u.call;
 }
@@ -900,6 +901,7 @@ static void nfs_rpc_call_free(struct clnt_req *cc, size_t unused)
 	request_data_t *reqdata = container_of(call, request_data_t, r_u.call);
 
 	pool_free(request_pool, reqdata);
+	(void) atomic_inc_uint64_t(&health.dequeued_reqs);
 }
 
 /**

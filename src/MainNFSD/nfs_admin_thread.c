@@ -459,7 +459,7 @@ static void do_shutdown(void)
 	LogEvent(COMPONENT_MAIN, "Stopping worker threads");
 
 #ifdef _USE_9P
-	rc = worker_shutdown();
+	rc = _9p_worker_shutdown();
 
 	if (rc != 0) {
 		LogMajor(COMPONENT_THREAD,

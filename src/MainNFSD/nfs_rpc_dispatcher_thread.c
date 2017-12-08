@@ -58,7 +58,6 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
-#include "nfs_req_queue.h"
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 
@@ -88,12 +87,6 @@ enum evchan {
 #define N_EVENT_CHAN (N_TCP_EVENT_CHAN + EVCHAN_SIZE)
 
 static struct rpc_evchan rpc_evchan[EVCHAN_SIZE];
-
-struct nfs_req_st nfs_req_st;	/*< Shared request queues */
-
-const char *req_q_s[N_REQ_QUEUES] = {
-	"REQ_Q_LOW_LATENCY",
-};
 
 static enum xprt_stat nfs_rpc_tcp_user_data(SVCXPRT *);
 static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *);
@@ -1047,9 +1040,6 @@ void nfs_Init_svc(void)
 	LogDebug(COMPONENT_DISPATCH, "NFS INIT: Core options = %d",
 		 NFS_options);
 
-	/* Init request queue before RPC stack */
-	nfs_rpc_queue_init();
-
 	LogInfo(COMPONENT_DISPATCH, "NFS INIT: using TIRPC");
 
 	memset(&svc_params, 0, sizeof(svc_params));
@@ -1234,313 +1224,6 @@ static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *xprt)
 	return XPRT_DESTROYED;
 }
 
-uint32_t nfs_rpc_outstanding_reqs_est(void)
-{
-	static uint32_t ctr;
-	static uint32_t nreqs;
-	struct req_q_pair *qpair;
-	uint32_t treqs;
-	int ix;
-
-	if ((atomic_inc_uint32_t(&ctr) % 10) != 0)
-		return atomic_fetch_uint32_t(&nreqs);
-
-	treqs = 0;
-	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
-		qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
-		treqs += atomic_fetch_uint32_t(&qpair->producer.size);
-		treqs += atomic_fetch_uint32_t(&qpair->consumer.size);
-	}
-
-	atomic_store_uint32_t(&nreqs, treqs);
-	return treqs;
-}
-
-void nfs_rpc_queue_init(void)
-{
-	struct req_q_pair *qpair;
-	int ix;
-
-	/* queues */
-	pthread_spin_init(&nfs_req_st.reqs.sp, PTHREAD_PROCESS_PRIVATE);
-	nfs_req_st.reqs.size = 0;
-	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
-		qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
-		qpair->s = req_q_s[ix];
-		nfs_rpc_q_init(&qpair->producer);
-		nfs_rpc_q_init(&qpair->consumer);
-	}
-
-	/* waitq */
-	glist_init(&nfs_req_st.reqs.wait_list);
-	nfs_req_st.reqs.waiters = 0;
-}
-
-static uint32_t enqueued_reqs;
-static uint32_t dequeued_reqs;
-
-uint32_t get_enqueue_count(void)
-{
-	return enqueued_reqs;
-}
-
-uint32_t get_dequeue_count(void)
-{
-	return dequeued_reqs;
-}
-
-void nfs_rpc_enqueue_req(request_data_t *reqdata)
-{
-	struct req_q_set *nfs_request_q;
-	struct req_q_pair *qpair;
-	struct req_q *q;
-
-#if defined(HAVE_BLKIN)
-	BLKIN_TIMESTAMP(
-		&reqdata->r_u.req.svc.bl_trace,
-		&reqdata->r_u.req.xprt->blkin.endp,
-		"enqueue-enter");
-#endif
-
-	nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
-
-	switch (reqdata->rtype) {
-#ifdef _USE_9P
-	case _9P_REQUEST:
-		/* XXX identify high-latency requests and allocate
-		 * to the high-latency queue, as above */
-		qpair = &(nfs_request_q->qset[REQ_Q_LOW_LATENCY]);
-		break;
-#endif
-	case NFS_REQUEST:
-	case NFS_CALL:
-	default:
-		goto out;
-	}
-
-	/* this one is real, timestamp it
-	 */
-	now(&reqdata->time_queued);
-	/* always append to producer queue */
-	q = &qpair->producer;
-	pthread_spin_lock(&q->sp);
-	glist_add_tail(&q->q, &reqdata->req_q);
-	++(q->size);
-	pthread_spin_unlock(&q->sp);
-
-	(void) atomic_inc_uint32_t(&enqueued_reqs);
-
-#if defined(HAVE_BLKIN)
-	/* log the queue depth */
-	BLKIN_KEYVAL_INTEGER(
-		&reqdata->r_u.req.svc.bl_trace,
-		&reqdata->r_u.req.xprt->blkin.endp,
-		"reqs-est",
-		nfs_rpc_outstanding_reqs_est()
-		);
-
-	BLKIN_TIMESTAMP(
-		&reqdata->r_u.req.svc.bl_trace,
-		&reqdata->r_u.req.xprt->blkin.endp,
-		"enqueue-exit");
-#endif
-	LogDebug(COMPONENT_DISPATCH,
-		 "enqueued req, q %p (%s %p:%p) size is %d (enq %u deq %u)",
-		 q, qpair->s, &qpair->producer, &qpair->consumer, q->size,
-		 enqueued_reqs, dequeued_reqs);
-
-	/* potentially wakeup some thread */
-
-	/* global waitq */
-	{
-		wait_q_entry_t *wqe;
-
-		/* SPIN LOCKED */
-		pthread_spin_lock(&nfs_req_st.reqs.sp);
-		if (nfs_req_st.reqs.waiters) {
-			wqe = glist_first_entry(&nfs_req_st.reqs.wait_list,
-						wait_q_entry_t, waitq);
-
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "nfs_req_st.reqs.waiters %u signal wqe %p (for q %p)",
-				     nfs_req_st.reqs.waiters, wqe, q);
-
-			/* release 1 waiter */
-			glist_del(&wqe->waitq);
-			--(nfs_req_st.reqs.waiters);
-			--(wqe->waiters);
-			/* ! SPIN LOCKED */
-			pthread_spin_unlock(&nfs_req_st.reqs.sp);
-			PTHREAD_MUTEX_lock(&wqe->lwe.mtx);
-			/* XXX reliable handoff */
-			wqe->flags |= Wqe_LFlag_SyncDone;
-			if (wqe->flags & Wqe_LFlag_WaitSync)
-				pthread_cond_signal(&wqe->lwe.cv);
-			PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
-		} else
-			/* ! SPIN LOCKED */
-			pthread_spin_unlock(&nfs_req_st.reqs.sp);
-	}
-
- out:
-	return;
-}
-
-/* static inline */
-request_data_t *nfs_rpc_consume_req(struct req_q_pair *qpair)
-{
-	request_data_t *reqdata = NULL;
-
-	pthread_spin_lock(&qpair->consumer.sp);
-	if (qpair->consumer.size > 0) {
-		reqdata =
-		    glist_first_entry(&qpair->consumer.q, request_data_t,
-				      req_q);
-		glist_del(&reqdata->req_q);
-		--(qpair->consumer.size);
-		pthread_spin_unlock(&qpair->consumer.sp);
-		goto out;
-	} else {
-		char *s = NULL;
-		uint32_t csize = ~0U;
-		uint32_t psize = ~0U;
-
-		pthread_spin_lock(&qpair->producer.sp);
-		if (isFullDebug(COMPONENT_DISPATCH)) {
-			s = (char *)qpair->s;
-			csize = qpair->consumer.size;
-			psize = qpair->producer.size;
-		}
-		if (qpair->producer.size > 0) {
-			/* splice */
-			glist_splice_tail(&qpair->consumer.q,
-					  &qpair->producer.q);
-			qpair->consumer.size = qpair->producer.size;
-			qpair->producer.size = 0;
-			/* consumer.size > 0 */
-			pthread_spin_unlock(&qpair->producer.sp);
-			reqdata =
-			    glist_first_entry(&qpair->consumer.q,
-					      request_data_t, req_q);
-			glist_del(&reqdata->req_q);
-			--(qpair->consumer.size);
-			pthread_spin_unlock(&qpair->consumer.sp);
-			if (s)
-				LogFullDebug(COMPONENT_DISPATCH,
-					     "try splice, qpair %s consumer qsize=%u producer qsize=%u",
-					     s, csize, psize);
-			goto out;
-		}
-
-		pthread_spin_unlock(&qpair->producer.sp);
-		pthread_spin_unlock(&qpair->consumer.sp);
-
-		if (s)
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "try splice, qpair %s consumer qsize=%u producer qsize=%u",
-				     s, csize, psize);
-	}
- out:
-	return reqdata;
-}
-
-request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
-{
-	request_data_t *reqdata = NULL;
-	struct req_q_set *nfs_request_q = &nfs_req_st.reqs.nfs_request_q;
-	struct req_q_pair *qpair;
-	uint32_t ix, slot;
-	struct timespec timeout;
-
-	/* XXX: the following stands in for a more robust/flexible
-	 * weighting function */
-
- retry_deq:
-	slot = atomic_inc_uint32_t(&nfs_req_st.reqs.ctr) % N_REQ_QUEUES;
-	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
-		qpair = &(nfs_request_q->qset[slot]);
-
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "dequeue_req try qpair %s %p:%p", qpair->s,
-			     &qpair->producer, &qpair->consumer);
-
-		/* anything? */
-		reqdata = nfs_rpc_consume_req(qpair);
-		if (reqdata) {
-			(void) atomic_inc_uint32_t(&dequeued_reqs);
-			break;
-		}
-
-		++slot;
-		slot = slot % N_REQ_QUEUES;
-
-	}			/* for */
-
-	/* wait */
-	if (!reqdata) {
-		struct fridgethr_context *ctx =
-			container_of(worker, struct fridgethr_context, wd);
-		wait_q_entry_t *wqe = &worker->wqe;
-
-		assert(wqe->waiters == 0); /* wqe is not on any wait queue */
-		PTHREAD_MUTEX_lock(&wqe->lwe.mtx);
-		wqe->flags = Wqe_LFlag_WaitSync;
-		wqe->waiters = 1;
-		/* XXX functionalize */
-		pthread_spin_lock(&nfs_req_st.reqs.sp);
-		glist_add_tail(&nfs_req_st.reqs.wait_list, &wqe->waitq);
-		++(nfs_req_st.reqs.waiters);
-		pthread_spin_unlock(&nfs_req_st.reqs.sp);
-		while (!(wqe->flags & Wqe_LFlag_SyncDone)) {
-			timeout.tv_sec = time(NULL) + 5;
-			timeout.tv_nsec = 0;
-			pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx,
-					       &timeout);
-			if (fridgethr_you_should_break(ctx)) {
-				/* We are returning;
-				 * so take us out of the waitq */
-				pthread_spin_lock(&nfs_req_st.reqs.sp);
-				if (wqe->waitq.next != NULL
-				    || wqe->waitq.prev != NULL) {
-					/* Element is still in wqitq,
-					 * remove it */
-					glist_del(&wqe->waitq);
-					--(nfs_req_st.reqs.waiters);
-					--(wqe->waiters);
-					wqe->flags &=
-					    ~(Wqe_LFlag_WaitSync |
-					      Wqe_LFlag_SyncDone);
-				}
-				pthread_spin_unlock(&nfs_req_st.reqs.sp);
-				PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
-				return NULL;
-			}
-		}
-
-		/* XXX wqe was removed from nfs_req_st.waitq
-		 * (by signalling thread) */
-		wqe->flags &= ~(Wqe_LFlag_WaitSync | Wqe_LFlag_SyncDone);
-		PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
-		LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", wqe);
-		goto retry_deq;
-	} /* !reqdata */
-
-#if defined(HAVE_BLKIN)
-	/* thread id */
-	BLKIN_KEYVAL_INTEGER(
-		&reqdata->r_u.req.svc.bl_trace,
-		&reqdata->r_u.req.xprt->blkin.endp,
-		"worker-id",
-		worker->worker_index
-		);
-
-	BLKIN_TIMESTAMP(
-		&reqdata->r_u.req.svc.bl_trace,
-		&reqdata->r_u.req.xprt->blkin.endp,
-		"dequeue-req");
-#endif
-	return reqdata;
-}
 
 /**
  * @brief Allocate a new request
@@ -1552,6 +1235,8 @@ request_data_t *nfs_rpc_dequeue_req(nfs_worker_data_t *worker)
 static inline request_data_t *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 {
 	request_data_t *reqdata = pool_alloc(request_pool);
+
+	(void) atomic_inc_uint64_t(&health.enqueued_reqs);
 
 	/* set the request as NFS already-read */
 	reqdata->rtype = NFS_REQUEST;
@@ -1590,6 +1275,7 @@ int free_nfs_request(request_data_t *reqdata)
 	}
 	SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
 	pool_free(request_pool, reqdata);
+	(void) atomic_inc_uint64_t(&health.dequeued_reqs);
 	return 0;
 }
 
