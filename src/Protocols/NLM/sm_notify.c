@@ -44,8 +44,8 @@ nsm_notify_1(notify *argp, CLIENT *clnt)
 	clnt_req_fill(cc, clnt, authnone_create(), SM_NOTIFY,
 		      (xdrproc_t) xdr_notify, argp,
 		      (xdrproc_t) xdr_void, &clnt_res);
-	ret = RPC_TLIERROR;
-	if (clnt_req_setup(cc, tout)) {
+	ret = clnt_req_setup(cc, tout);
+	if (ret == RPC_SUCCESS) {
 		cc->cc_refreshes = 1;
 		ret = CLNT_CALL_WAIT(cc);
 	}

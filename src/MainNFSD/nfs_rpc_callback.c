@@ -647,8 +647,8 @@ static enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, bool locked)
 	clnt_req_fill(cc, chan->clnt, chan->auth, CB_NULL,
 		      (xdrproc_t) xdr_void, NULL,
 		      (xdrproc_t) xdr_void, NULL);
-	stat = RPC_TLIERROR;
-	if (clnt_req_setup(cc, tout)) {
+	stat = clnt_req_setup(cc, tout);
+	if (stat == RPC_SUCCESS) {
 		cc->cc_refreshes = 1;
 		stat = CLNT_CALL_WAIT(cc);
 	}
@@ -918,7 +918,7 @@ static void nfs_rpc_call_process(struct clnt_req *cc)
 	if (cc->cc_error.re_status == RPC_AUTHERROR
 	 && cc->cc_refreshes-- > 0
 	 && AUTH_REFRESH(cc->cc_auth, NULL)) {
-		if (clnt_req_refresh(cc)) {
+		if (clnt_req_refresh(cc) == RPC_SUCCESS) {
 			cc->cc_error.re_status = CLNT_CALL_BACK(cc);
 			return;
 		}
@@ -960,8 +960,7 @@ enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 		cc->cc_error.re_status = RPC_INTR;
 		goto unlock;
 	}
-	cc->cc_error.re_status = RPC_TLIERROR;
-	if (clnt_req_setup(cc, tout)) {
+	if (clnt_req_setup(cc, tout) == RPC_SUCCESS) {
 		cc->cc_process_cb = nfs_rpc_call_process;
 		cc->cc_error.re_status = CLNT_CALL_BACK(cc);
 	}

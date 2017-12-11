@@ -117,6 +117,7 @@ static const struct timespec tout = { 0, 0 }; /* one-shot */
 int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 {
 	struct clnt_req *cc;
+	char *t;
 	struct timeval start, now;
 	struct timespec timeout;
 	int retval, retry;
@@ -251,25 +252,27 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 			      host->slc_callback_auth, proc,
 			      (xdrproc_t) nlm_reply_proc[proc], inarg,
 			      (xdrproc_t) xdr_void, NULL);
-		retval = RPC_TLIERROR;
-		if (clnt_req_setup(cc, tout)) {
+		retval = clnt_req_setup(cc, tout);
+		if (retval == RPC_SUCCESS) {
 			cc->cc_refreshes = 0;
 			retval = CLNT_CALL_ONCE(cc);
 		}
-		clnt_req_release(cc);
 
 		LogFullDebug(COMPONENT_NLM, "Done with clnt_call");
 
 		if (retval == RPC_TIMEDOUT || retval == RPC_SUCCESS) {
 			retval = RPC_SUCCESS;
+			clnt_req_release(cc);
 			break;
 		}
 
+		t = rpc_sperror(&cc->cc_error, "failed");
 		LogCrit(COMPONENT_NLM,
-			"NLM async Client procedure call %d failed with return code %d %s",
-			proc, retval,
-			clnt_sperror(host->slc_callback_clnt, ""));
+			"NLM async Client procedure call %d %s",
+			proc, t);
+		gsh_free(t);
 
+		clnt_req_release(cc);
 		gsh_clnt_destroy(host->slc_callback_clnt);
 		host->slc_callback_clnt = NULL;
 	}

@@ -486,9 +486,11 @@ CLIENT *gsh_clnt_create(char *host, unsigned long prog, unsigned long vers,
 	PTHREAD_MUTEX_lock(&clnt_create_mutex);
 	clnt = clnt_create(host, prog, vers, proto);
 	if (clnt == NULL) {
-		const char *err = clnt_spcreateerror("clnt_create failed");
+		char *err = rpc_sperror(&rpc_createerr.cf_error, "failed");
 
-		LogDebug(COMPONENT_RPC, "%s", err);
+		LogDebug(COMPONENT_RPC, "%s: %s %s",
+			 __func__, clnt_sperrno(rpc_createerr.cf_stat), err);
+		gsh_free(err);
 	}
 	PTHREAD_MUTEX_unlock(&clnt_create_mutex);
 	return clnt;
