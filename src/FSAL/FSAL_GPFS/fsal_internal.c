@@ -84,6 +84,8 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
 	if (unlikely(gpfs_ganesha(OPENHANDLE_CLOSE_FILE, &carg) < 0))
 		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_CLOSE_FILE");
 
+	(void)atomic_dec_size_t(&open_fd_count);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -115,6 +117,7 @@ fsal_internal_handle2fd(int dirfd, struct gpfs_file_handle *gpfs_fh,
 		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_OPEN_BY_HANDLE");
 
 	*fd = rc;
+	(void)atomic_inc_size_t(&open_fd_count);
 
 	/* Make sure the fd is not less than 3 */
 	assert(*fd >= 3);

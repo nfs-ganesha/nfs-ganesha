@@ -2784,8 +2784,6 @@ again:
 
 		if (not_open_usable(my_fd->openflags, openflags)) {
 			if (my_fd->openflags != FSAL_O_CLOSED) {
-				ssize_t count;
-
 				/* Add desired mode to existing mode. */
 				try_openflags = openflags | my_fd->openflags;
 
@@ -2800,12 +2798,6 @@ again:
 						 msg_fsal_err(status.major));
 					*has_lock = false;
 					return status;
-				}
-				count = atomic_dec_size_t(&open_fd_count);
-				if (count < 0) {
-					LogCrit(COMPONENT_FSAL,
-					    "open_fd_count is negative: %zd",
-					    count);
 				}
 			} else if (openflags == FSAL_O_ANY) {
 				try_openflags = FSAL_O_READ;
@@ -2838,8 +2830,6 @@ again:
 				*has_lock = false;
 				return status;
 			}
-
-			(void) atomic_inc_size_t(&open_fd_count);
 		}
 
 		/* Ok, now we should be in the correct mode.

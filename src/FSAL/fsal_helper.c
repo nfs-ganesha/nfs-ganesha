@@ -420,10 +420,6 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 		return status;
 	}
 
-	if (!state) {
-		(void) atomic_inc_size_t(&open_fd_count);
-	}
-
 	LogFullDebug(COMPONENT_FSAL,
 		     "Created entry %p FSAL %s for %s",
 		     *obj, (*obj)->fsal->name, name);
