@@ -790,7 +790,9 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *mdc_obj =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	mdcache_entry_t *mdc_lookup_dst = NULL;
+	struct fsal_export *sub_export = op_ctx->fsal_export->sub_export;
 	bool refresh = false;
+	bool rename_change_key;
 	fsal_status_t status;
 
 	/* Now update cached dirents.  Must take locks in the correct order */
@@ -863,8 +865,11 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	}
 
 
-	if (op_ctx->fsal_export->sub_export->exp_ops.fs_supports(
-		op_ctx->fsal_export->sub_export, fso_rename_changes_key)) {
+	subcall(
+		rename_change_key = sub_export->exp_ops.fs_supports(
+				sub_export, fso_rename_changes_key)
+	       );
+	if (rename_change_key) {
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Rename (%p,%s)->(%p,%s) : key changing", mdc_olddir,
 			 old_name, mdc_newdir, new_name);
@@ -1395,13 +1400,15 @@ static void mdcache_handle_to_key(struct fsal_obj_handle *obj_hdl,
 static bool mdcache_handle_cmp(struct fsal_obj_handle *obj_hdl1,
 			       struct fsal_obj_handle *obj_hdl2)
 {
-	mdcache_entry_t *entry =
+	mdcache_entry_t *entry1 =
 		container_of(obj_hdl1, mdcache_entry_t, obj_handle);
+	mdcache_entry_t *entry2 =
+		container_of(obj_hdl2, mdcache_entry_t, obj_handle);
 	bool status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.handle_cmp(
-			entry->sub_handle, obj_hdl2)
+		status = entry1->sub_handle->obj_ops.handle_cmp(
+			entry1->sub_handle, entry2->sub_handle)
 	       );
 
 	return status;
