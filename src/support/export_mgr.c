@@ -627,6 +627,26 @@ bool mount_gsh_export(struct gsh_export *exp)
 }
 
 /**
+ * @brief Take a reference to an export.
+ */
+
+void _get_gsh_export_ref(struct gsh_export *a_export,
+			 char *file, int line, char *function)
+{
+	int64_t refcount = atomic_inc_int64_t(&a_export->refcnt);
+
+	if (isFullDebug(COMPONENT_EXPORT)) {
+		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
+			NIV_FULL_DEBUG,
+			"get export ref for id %" PRIu16 " %s, refcount = %"
+			PRIi64,
+			a_export->export_id,
+			export_path(a_export),
+			refcount);
+	}
+}
+
+/**
  * @brief Release the export management struct
  *
  * We are done with it, let it go.
@@ -640,7 +660,11 @@ void _put_gsh_export(struct gsh_export *export,
 	if (isFullDebug(COMPONENT_EXPORT)) {
 		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
 			NIV_FULL_DEBUG,
-			"put ref, refcount = %" PRIi64, refcount);
+			"put export ref for id %" PRIu16 " %s, refcount = %"
+			PRIi64,
+			export->export_id,
+			export_path(export),
+			refcount);
 	}
 
 	if (refcount != 0) {
