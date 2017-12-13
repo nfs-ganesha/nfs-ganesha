@@ -51,6 +51,7 @@
 #include "mdcache_hash.h"
 #include "nfs_exports.h"
 #include "export_mgr.h"
+#include "gsh_config.h"
 
 /*
  * helpers to/from other NULL objects
@@ -179,8 +180,9 @@ static void mdcache_exp_release(struct fsal_export *exp_hdl)
 
 	fsal_hdl = sub_export->fsal;
 
-	LogInfo(COMPONENT_FSAL, "Releasing %s export for %s",
-		fsal_hdl->name, op_ctx->ctx_export->fullpath);
+	LogInfo(COMPONENT_FSAL, "Releasing %s export %" PRIu16 " for %s",
+		fsal_hdl->name, op_ctx->ctx_export->export_id,
+		export_path(op_ctx->ctx_export));
 
 	/* Release the sub_export */
 	subcall_shutdown_raw(exp,

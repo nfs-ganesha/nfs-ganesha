@@ -51,6 +51,7 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "subfsal.h"
+#include "gsh_config.h"
 
 /* helpers to/from other VFS objects
  */
@@ -76,8 +77,17 @@ static void release(struct fsal_export *exp_hdl)
 
 	myself = EXPORT_VFS_FROM_FSAL(exp_hdl);
 
-	LogDebug(COMPONENT_FSAL, "Releasing VFS export for %s",
-		 op_ctx->ctx_export->fullpath);
+	if (op_ctx != NULL && op_ctx->ctx_export != NULL) {
+		LogDebug(COMPONENT_FSAL, "Releasing VFS export %"PRIu16
+			 " for %s",
+			 exp_hdl->export_id,
+			 export_path(op_ctx->ctx_export));
+	} else {
+		LogDebug(COMPONENT_FSAL, "Releasing VFS export %"PRIu16
+			 " on filesystem %s",
+			 exp_hdl->export_id,
+			 myself->root_fs->path);
+	}
 
 	vfs_sub_fini(myself);
 
