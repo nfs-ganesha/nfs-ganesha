@@ -1217,6 +1217,13 @@ out_free:
 	if (state != NULL)
 		dec_state_t_ref(state);
 
+	/* Release the obj ref and export ref. */
+	if (obj != NULL)
+		obj->obj_ops.put_ref(obj);
+
+	if (export != NULL)
+		put_gsh_export(export);
+
 	op_ctx = save_ctx;
 }
 
@@ -1391,6 +1398,13 @@ static void delegrevoke_check(void *ctx)
 	if (state != NULL)
 		dec_state_t_ref(state);
 
+	/* Release the obj ref and export ref. */
+	if (obj != NULL)
+		obj->obj_ops.put_ref(obj);
+
+	if (export != NULL)
+		put_gsh_export(export);
+
 	op_ctx = save_ctx;
 }
 
@@ -1425,6 +1439,11 @@ static void delegrecall_task(void *ctx)
 		op_ctx->ctx_export = export;
 		op_ctx->fsal_export = export->fsal_export;
 		delegrecall_one(obj, state, deleg_ctx);
+
+		/* Release the obj ref and export ref. */
+		obj->obj_ops.put_ref(obj);
+		put_gsh_export(export);
+
 		op_ctx = save_ctx;
 
 out:

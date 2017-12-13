@@ -296,6 +296,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			if (return_fsid) {
 				if (!memcmp(&fsid, &data->current_obj->fsid,
 					    sizeof(fsid))) {
+					obj->obj_ops.put_ref(obj);
 					put_gsh_export(export);
 					dec_state_t_ref(layout_state);
 
@@ -331,6 +332,8 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			/* Since we had to drop so_mutex, the list may have
 			 * changed under us, we MUST start over.
 			 */
+			obj->obj_ops.put_ref(obj);
+			put_gsh_export(export);
 			goto again;
 		}
 
