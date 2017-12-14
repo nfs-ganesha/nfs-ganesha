@@ -4522,7 +4522,7 @@ uint32_t resp_room(compound_data_t *data)
 	room = data->session->fore_channel_attrs.ca_maxresponsesize;
 
 	/* If this request is cached and maxcachesize is smaller use it. */
-	if (data->use_drc && room >
+	if (data->use_slot_cached_result && room >
 	    data->session->fore_channel_attrs.ca_maxresponsesize_cached) {
 		room =
 		    data->session->fore_channel_attrs.ca_maxresponsesize_cached;
@@ -4558,7 +4558,7 @@ nfsstat4 check_resp_room(compound_data_t *data, uint32_t op_resp_size)
 		goto err;
 	}
 
-	if (!data->use_drc) {
+	if (!data->sa_cachethis) {
 		/* Response size is ok, and not cached. */
 		goto ok;
 	}

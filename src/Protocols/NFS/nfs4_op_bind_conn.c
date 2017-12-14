@@ -99,7 +99,7 @@ int nfs4_op_bind_conn(struct nfs_argop4 *op, compound_data_t *data,
 	PTHREAD_MUTEX_unlock(&session->clientid_record->cid_mutex);
 
 	/* By default, no DRC replay */
-	data->use_drc = false;
+	data->use_slot_cached_result = false;
 
 	/* Keep memory of the session in the COMPOUND's data */
 	data->session = session;

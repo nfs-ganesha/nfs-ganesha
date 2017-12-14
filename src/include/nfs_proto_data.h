@@ -312,10 +312,13 @@ typedef struct compound_data {
 	nfs_client_cred_t credential;	/*< Raw RPC credentials */
 	nfs_client_id_t *preserved_clientid;	/*< clientid that has lease
 						   reserved, if any */
-	struct COMPOUND4res_extended *cached_res;	/*< NFv41: pointer to
+	struct COMPOUND4res_extended *cached_result;	/*< NFv41: pointer to
 							   cached RPC result in
 							   a session's slot */
-	bool use_drc;		/*< Set to true if session DRC is to be used */
+	bool use_slot_cached_result;	/*< Set to true if session DRC is to be
+					    used */
+	bool sa_cachethis;	/*< True if cachethis was specified in
+				    SEQUENCE op. */
 	uint32_t oppos;		/*< Position of the operation within the
 				    request processed  */
 	const char *opname;	/*< Name of the operation */

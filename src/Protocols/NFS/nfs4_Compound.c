@@ -535,6 +535,25 @@ nfs_opnum4 LastOpcode[] = {
 	NFS4_OP_REMOVEXATTR
 };
 
+void copy_tag(utf8str_cs *dest, utf8str_cs *src)
+{
+	/* Keeping the same tag as in the arguments */
+	dest->utf8string_len = src->utf8string_len;
+
+	if (dest->utf8string_len > 0) {
+
+		dest->utf8string_val = gsh_malloc(dest->utf8string_len + 1);
+
+		memcpy(dest->utf8string_val,
+		       src->utf8string_val,
+		       dest->utf8string_len);
+
+		dest->utf8string_val[dest->utf8string_len] = '\0';
+	} else {
+		dest->utf8string_val = NULL;
+	}
+}
+
 /**
  * @brief The NFS PROC4 COMPOUND
  *
@@ -570,8 +589,8 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	nsecs_elapsed_t op_start_time;
 	struct timespec ts;
 	int perm_flags;
-	char *tagname = NULL;
 	char *notag = "NO TAG";
+	char *tagname = notag;
 	const char *bad_op_state_reason = "";
 	log_components_t alt_component = COMPONENT_NFS_V4;
 
@@ -594,33 +613,33 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Keeping the same tag as in the arguments */
-	res->res_compound4.tag.utf8string_len =
-	    arg->arg_compound4.tag.utf8string_len;
+	copy_tag(&res->res_compound4.tag, &arg->arg_compound4.tag);
+
 	if (res->res_compound4.tag.utf8string_len > 0) {
-
-		res->res_compound4.tag.utf8string_val =
-		    gsh_malloc(res->res_compound4.tag.utf8string_len + 1);
-
-		memcpy(res->res_compound4.tag.utf8string_val,
-		       arg->arg_compound4.tag.utf8string_val,
-		       res->res_compound4.tag.utf8string_len);
-
-		res->res_compound4.tag.utf8string_val[
-			res->res_compound4.tag.utf8string_len] = '\0';
-
 		/* Check if the tag is a valid utf8 string */
 		status =
 		    nfs4_utf8string2dynamic(&(res->res_compound4.tag),
 					    UTF8_SCAN_ALL, &tagname);
 		if (status != 0) {
+			char str[LOG_BUFF_LEN];
+			struct display_buffer dspbuf = {sizeof(str), str, str};
+
+			display_opaque_bytes(
+				&dspbuf,
+				res->res_compound4.tag.utf8string_val,
+				res->res_compound4.tag.utf8string_len);
+
+			LogCrit(COMPONENT_NFS_V4,
+				"COMPOUND: bad tag %p len %d bytes %s",
+				res->res_compound4.tag.utf8string_val,
+				res->res_compound4.tag.utf8string_len,
+				str);
+
 			status = NFS4ERR_INVAL;
 			res->res_compound4.status = status;
 			res->res_compound4.resarray.resarray_len = 0;
 			return NFS_REQ_OK;
 		}
-	} else {
-		res->res_compound4.tag.utf8string_val = NULL;
-		tagname = notag;
 	}
 
 	/* Managing the operation list */
@@ -927,7 +946,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 
 		/* NFS_V4.1 specific stuff */
-		if (data.use_drc) {
+		if (data.use_slot_cached_result) {
 			/* Replay cache, only true for SEQUENCE or
 			 * CREATE_SESSION w/o SEQUENCE. Since will only be set
 			 * in those cases, no need to check operation or
@@ -938,11 +957,12 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			gsh_free(res->res_compound4.resarray.resarray_val);
 
 			/* Copy the reply from the cache */
-			res->res_compound4_extended = *data.cached_res;
-			status = ((COMPOUND4res *) data.cached_res)->status;
+			res->res_compound4_extended = *data.cached_result;
+			status = ((COMPOUND4res *) data.cached_result)->status;
 			LogFullDebug(COMPONENT_SESSIONS,
 				     "Use session replay cache %p result %s",
-				     data.cached_res, nfsstat4_to_str(status));
+				     data.cached_result,
+				     nfsstat4_to_str(status));
 			break;	/* Exit the for loop */
 		}
 	}			/* for */
@@ -957,25 +977,63 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Manage session's DRC: keep NFS4.1 replay for later use, but don't
 	 * save a replayed result again.
 	 */
-	if (data.cached_res != NULL && !data.use_drc) {
+	if (data.sa_cachethis) {
 		/* Pointer has been set by nfs4_op_sequence and points to slot
 		 * to cache result in.
 		 */
 		LogFullDebug(COMPONENT_SESSIONS,
 			     "Save result in session replay cache %p sizeof nfs_res_t=%d",
-			     data.cached_res, (int)sizeof(nfs_res_t));
+			     data.cached_result, (int)sizeof(nfs_res_t));
 
 		/* Indicate to nfs4_Compound_Free that this reply is cached. */
 		res->res_compound4_extended.res_cached = true;
 
-		/* If the cache is already in use, free it. */
-		if (data.cached_res->res_cached) {
-			data.cached_res->res_cached = false;
-			nfs4_Compound_Free((nfs_res_t *) data.cached_res);
+		/* Save the result in the cache (copy out of the result array
+		 * into the slot cache (which is pointed to by
+		 * data.cached_result).
+		 */
+		*data.cached_result = res->res_compound4_extended;
+	} else if (compound4_minor > 0 && !data.use_slot_cached_result &&
+		   argarray[0].argop == NFS4_OP_SEQUENCE &&
+		   data.cached_result != NULL) {
+		/* We need to cache an "uncached" response. The length is
+		 * 1 if only one op processed, otherwise 2. */
+		struct COMPOUND4res *c_res = &data.cached_result->res_compound4;
+		u_int resarray_len =
+			res->res_compound4.resarray.resarray_len == 1 ? 1 : 2;
+		struct nfs_resop4 *res0;
+
+		c_res->resarray.resarray_len = resarray_len;
+		c_res->resarray.resarray_val =
+			gsh_calloc(resarray_len, sizeof(struct nfs_resop4));
+		copy_tag(&c_res->tag, &res->res_compound4.tag);
+		res0 = c_res->resarray.resarray_val;
+
+		/* Copy the sequence result. */
+		*res0 = res->res_compound4.resarray.resarray_val[0];
+		c_res->status = res0->nfs_resop4_u.opillegal.status;
+
+		if (resarray_len == 2) {
+			struct nfs_resop4 *res1 = res0 + 1;
+
+			/* Shallow copy response since we will override any
+			 * resok or any negative response that might have
+			 * allocated data.
+			 */
+			*res1 = res->res_compound4.resarray.resarray_val[1];
+
+			if (res1->nfs_resop4_u.opillegal.status == NFS4_OK ||
+			    res1->nfs_resop4_u.opillegal.status ==
+							NFS4ERR_DENIED) {
+				res1->nfs_resop4_u.opillegal.status =
+						NFS4ERR_RETRY_UNCACHED_REP;
+			}
+
+			c_res->status = res1->nfs_resop4_u.opillegal.status;
 		}
 
-		/* Save the result in the cache. */
-		*data.cached_res = res->res_compound4_extended;
+		/* Indicate that this reply is cached in slot cache. */
+		data.cached_result->res_cached = true;
 	}
 
 	/* If we have reserved a lease, update it and release it */
@@ -1056,9 +1114,10 @@ void nfs4_Compound_Free(nfs_res_t *res)
 	}
 
 	gsh_free(res->res_compound4.resarray.resarray_val);
+	res->res_compound4.resarray.resarray_val = NULL;
 
-	if (res->res_compound4.tag.utf8string_val)
-		gsh_free(res->res_compound4.tag.utf8string_val);
+	gsh_free(res->res_compound4.tag.utf8string_val);
+	res->res_compound4.tag.utf8string_val = NULL;
 }
 
 /**

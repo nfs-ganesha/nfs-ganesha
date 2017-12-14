@@ -133,7 +133,6 @@ typedef struct nfs41_session_slot__ {
 	struct COMPOUND4res_extended cached_result;	/*< NFv41: pointer to
 							   cached RPC result in
 							   a session's slot */
-	unsigned int cache_used;	/*< If we cached the result */
 } nfs41_session_slot_t;
 
 /**
