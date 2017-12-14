@@ -1653,8 +1653,6 @@ fsal_status_t ceph_write2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	fsal_set_credentials(op_ctx->creds);
-
 	nb_written =
 	    ceph_ll_write(export->cmount, my_fd, offset, buffer_size, buffer);
 
@@ -1680,7 +1678,6 @@ fsal_status_t ceph_write2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	fsal_restore_ganesha_credentials();
 	return status;
 }
 
