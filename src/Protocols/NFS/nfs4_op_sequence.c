@@ -63,12 +63,6 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 		return res_SEQUENCE4->sr_status;
 	}
 
-	/* OP_SEQUENCE is always the first operation of the request */
-	if (data->oppos != 0) {
-		res_SEQUENCE4->sr_status = NFS4ERR_SEQUENCE_POS;
-		return res_SEQUENCE4->sr_status;
-	}
-
 	if (!nfs41_Session_Get_Pointer(arg_SEQUENCE4->sa_sessionid, &session)) {
 		res_SEQUENCE4->sr_status = NFS4ERR_BADSESSION;
 		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,

@@ -642,23 +642,6 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				return NFS_REQ_OK;
 			}
 		}
-
-		/* If the COMPOUND request starts with SEQUENCE, and if the
-		 * sessionids specified in SEQUENCE and DESTROY_SESSION are the
-		 * same, then DESTROY_SESSION MUST be the final operation in the
-		 * COMPOUND request.
-		 */
-		if (argarray_len > 2 && argarray[0].argop == NFS4_OP_SEQUENCE
-		    && argarray[1].argop == NFS4_OP_DESTROY_SESSION
-		    && strncmp(argarray[0].nfs_argop4_u.opsequence.sa_sessionid,
-			       argarray[1]
-				  .nfs_argop4_u.opdestroy_session.dsa_sessionid,
-			       NFS4_SESSIONID_SIZE) == 0) {
-			status = NFS4ERR_NOT_ONLY_OP;
-			res->res_compound4.status = status;
-			res->res_compound4.resarray.resarray_len = 0;
-			return NFS_REQ_OK;
-		}
 	}
 
 	for (i = 0; i < argarray_len; i++) {
@@ -674,7 +657,8 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			 argarray[i].argop, optabv4[opcode].name);
 
 		/* Verify BIND_CONN_TO_SESSION is not used in a compound
-		 * with length > 1.
+		 * with length > 1. This check is NOT redundant with the
+		 * checks above.
 		 */
 		if (i > 0 &&
 		    argarray[i].argop == NFS4_OP_BIND_CONN_TO_SESSION) {
@@ -682,6 +666,48 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			bad_op_state_reason =
 					"BIND_CONN_TO_SESSION past position 1";
 			goto bad_op_state;
+		}
+
+		/* OP_SEQUENCE is always the first operation of the request */
+		if (i > 0 && argarray[i].argop == NFS4_OP_SEQUENCE) {
+			status = NFS4ERR_SEQUENCE_POS;
+			bad_op_state_reason =
+					"SEQUENCE past position 1";
+			goto bad_op_state;
+		}
+
+		/* If a DESTROY_SESSION not the only operation, and it matches
+		 * the session specified in the SEQUENCE op (since the compound
+		 * has more than one op, we already know it MUST start with
+		 * SEQUENCE), then it MUST be the final op in the compound.
+		 */
+		if (i > 0 && argarray[i].argop == NFS4_OP_DESTROY_SESSION) {
+			bool session_compare;
+			bool bad_pos;
+
+			session_compare = memcmp(
+			    argarray[0].nfs_argop4_u.opsequence.sa_sessionid,
+			    argarray[i]
+				.nfs_argop4_u.opdestroy_session.dsa_sessionid,
+			    NFS4_SESSIONID_SIZE) == 0;
+
+			bad_pos = session_compare && i != (argarray_len - 1);
+
+			LogAtLevel(COMPONENT_SESSIONS,
+				   bad_pos ? NIV_INFO : NIV_DEBUG,
+				   "DESTROY_SESSION in position %u out of 0-%"
+				   PRIi32 " %s is %s",
+				   i, argarray_len - 1, session_compare
+					? "same session as SEQUENCE"
+					: "different session from SEQUENCE",
+				   bad_pos ? "not last op in compound" : "opk");
+
+			if (bad_pos) {
+				status = NFS4ERR_NOT_ONLY_OP;
+				bad_op_state_reason =
+				    "DESTROY_SESSION not last op in compound";
+				goto bad_op_state;
+			}
 		}
 
 		/* time each op */
