@@ -48,6 +48,13 @@
 #include "sal_data.h"
 #include "sal_functions.h"
 
+/* status, return on close, layout len, stateid */
+#define LAYOUTGET_RESP_BASE_SIZE (3 * BYTES_PER_XDR_UNIT + sizeof(stateid4))
+
+/* io_offset, io_length, io_mode, loc_type, body length */
+#define LAYOUYSEGMENT_BASE_SIZE (sizeof(offset4) + sizeof(length4) + \
+				 3 * BYTES_PER_XDR_UNIT)
+
 /**
  *
  * @brief Get or make a layout state
@@ -271,8 +278,7 @@ static nfsstat4 one_segment(struct fsal_obj_handle *obj,
 	if (loc_body_size == 0) {
 		LogCrit(COMPONENT_PNFS,
 			"The FSAL must specify a non-zero loc_body_size.");
-		nfs_status = NFS4ERR_SERVERFAULT;
-		goto out;
+		return NFS4ERR_SERVERFAULT;
 	}
 
 	/* Initialize the layout_content4 structure, allocate a buffer,
@@ -324,10 +330,8 @@ static nfsstat4 one_segment(struct fsal_obj_handle *obj,
 
  out:
 
-	if (nfs_status != NFS4_OK) {
-		if (current->lo_content.loc_body.loc_body_val)
-			gsh_free(current->lo_content.loc_body.loc_body_val);
-	}
+	if (nfs_status != NFS4_OK)
+		gsh_free(current->lo_content.loc_body.loc_body_val);
 
 	return nfs_status;
 }
@@ -372,6 +376,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 	/* Maximum number of segments this FSAL will ever return for a
 	   single LAYOUTGET */
 	int max_segment_count = 0;
+	uint32_t resp_size = LAYOUTGET_RESP_BASE_SIZE;
 
 	resp->resop = NFS4_OP_LAYOUTGET;
 
@@ -433,6 +438,8 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 	res.signal_available = false;
 
 	do {
+		u_int blen;
+
 		/* Since the FSAL writes to tis structure with every
 		   call, we re-initialize it with the operation's
 		   arguments */
@@ -452,8 +459,10 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 		if (nfs_status != NFS4_OK)
 			goto out;
 
-		arg.maxcount -=
-		    layouts[numlayouts].lo_content.loc_body.loc_body_len;
+		blen = layouts[numlayouts].lo_content.loc_body.loc_body_len;
+
+		resp_size += LAYOUYSEGMENT_BASE_SIZE + blen;
+		arg.maxcount -= LAYOUYSEGMENT_BASE_SIZE + blen;
 		numlayouts++;
 
 		if ((numlayouts == max_segment_count) && !res.last_segment) {
@@ -461,6 +470,12 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 			goto out;
 		}
 	} while (!res.last_segment);
+
+	/* Now check response size. */
+	nfs_status = check_resp_room(data, resp_size);
+
+	if (nfs_status != NFS4_OK)
+		goto out;
 
 	/* Update stateid.seqid and copy to current */
 	update_stateid(layout_state, &resok->logr_stateid, data, tag);
@@ -476,7 +491,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 
  out:
 
-	if (res_LAYOUTGET4->logr_status != NFS4_OK || nfs_status != NFS4_OK) {
+	if (nfs_status != NFS4_OK) {
 		if (layouts != NULL)
 			free_layouts(layouts, numlayouts);
 
@@ -487,6 +502,12 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 
 		/* Poison the current stateid */
 		data->current_stateid_valid = false;
+
+		/* reset the response size */
+		if (nfs_status == NFS4ERR_LAYOUTTRYLATER)
+			resp_size = sizeof(nfsstat4) + BYTES_PER_XDR_UNIT;
+		else
+			resp_size = sizeof(nfsstat4);
 	}
 
 	if (layout_state != NULL)

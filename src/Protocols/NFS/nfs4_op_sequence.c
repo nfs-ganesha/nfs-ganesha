@@ -34,6 +34,7 @@
 #include "sal_functions.h"
 #include "nfs_rpc_callback.h"
 #include "nfs_convert.h"
+#include "nfs_proto_tools.h"
 
 /**
  * @brief the NFS4_OP_SEQUENCE operation
@@ -216,9 +217,22 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	op_ctx->clientid = &data->session->clientid;
 
+	/* Now check the response size (we check here because we could't check
+	 * in nfs4_Compound because the session wasn't established yet).
+	 */
+	res_SEQUENCE4->sr_status = check_resp_room(data, data->op_resp_size);
+
+	if (res_SEQUENCE4->sr_status != NFS4_OK) {
+		/* Indicate the failed response size. */
+		data->op_resp_size = sizeof(nfsstat4);
+
+		dec_session_ref(session);
+		data->session = NULL;
+		return res_SEQUENCE4->sr_status;
+	}
+
 	(void) check_session_conn(session, data, true);
 
-	res_SEQUENCE4->sr_status = NFS4_OK;
 	return res_SEQUENCE4->sr_status;
 }				/* nfs41_op_sequence */
 

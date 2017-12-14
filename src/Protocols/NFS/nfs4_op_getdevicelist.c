@@ -50,6 +50,12 @@
 #include "fsal_pnfs.h"
 #include "export_mgr.h"
 
+/* nfsstat4 + layout type + gdlr_deviceid_list_len + nfs_cookie4 + verifier4 +
+ * gdlr_eof
+ */
+#define GETDEVICELIST_RESP_BASE_SIZE (3 * BYTES_PER_XDR_UNIT + \
+				      sizeof(nfs_cookie4) + sizeof(verifier4))
+
 struct cb_data {
 	deviceid4 *buffer;
 	size_t count;
@@ -107,6 +113,7 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t *data,
 	struct fsal_getdevicelist_res res;
 	/* Structure for callback */
 	struct cb_data cb_opaque;
+	uint32_t resp_size = GETDEVICELIST_RESP_BASE_SIZE;
 
 	resp->resop = NFS4_OP_GETDEVICELIST;
 
@@ -139,6 +146,15 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t *data,
 					arg_GETDEVICELIST4->gdla_layout_type,
 					&cb_opaque, cb,
 					&res);
+
+	if (nfs_status != NFS4_OK) {
+		gsh_free(cb_opaque.buffer);
+		goto out;
+	}
+
+	resp_size += cb_opaque.count * sizeof(deviceid4);
+
+	nfs_status = check_resp_room(data, resp_size);
 
 	if (nfs_status != NFS4_OK) {
 		gsh_free(cb_opaque.buffer);

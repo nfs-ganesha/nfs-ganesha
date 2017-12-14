@@ -77,6 +77,11 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	}
 }
 
+/* The base size of a readdir entry includes cookie, name length, and the
+ * indicator if a next entry follows.
+ */
+#define BASE_ENTRY_SIZE (sizeof(nfs_cookie4) + 2 * sizeof(uint32_t))
+
 /**
  * @brief Populate entry4s when called from fsal_readdir
  *
@@ -113,6 +118,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 	entry4 *tracker_entry = tracker->entries + tracker->count;
 	fsal_status_t fsal_status;
 	fsal_accessflags_t access_mask_attr = 0;
+	size_t initial_mem_left = tracker->mem_left;
 
 	/* Cleanup after problem with junction processing. */
 	if (cb_state == CB_PROBLEM) {
@@ -277,14 +283,14 @@ not_junction:
 	memset(val_fh, 0, NFS4_FHSIZE);
 
 	/* Bits that don't require allocation */
-	if (tracker->mem_left < sizeof(entry4)) {
+	if (tracker->mem_left < BASE_ENTRY_SIZE) {
 		if (tracker->count == 0)
 			tracker->error = NFS4ERR_TOOSMALL;
 
 		goto failure;
 	}
 
-	tracker->mem_left -= sizeof(entry4);
+	tracker->mem_left -= BASE_ENTRY_SIZE;
 	tracker_entry->cookie = cookie;
 	tracker_entry->nextentry = NULL;
 
@@ -294,20 +300,16 @@ not_junction:
 	 */
 	namelen = strlen(cb_parms->name);
 
-	if (tracker->mem_left < (namelen + 1)) {
+	if (tracker->mem_left < RNDUP(namelen)) {
 		if (tracker->count == 0)
 			tracker->error = NFS4ERR_TOOSMALL;
 
 		goto failure;
 	}
 
-	tracker->mem_left -= (namelen + 1);
+	tracker->mem_left -= RNDUP(namelen);
 	tracker_entry->name.utf8string_len = namelen;
-	tracker_entry->name.utf8string_val = gsh_malloc(namelen + 1);
-
-	memcpy(tracker_entry->name.utf8string_val,
-	       cb_parms->name,
-	       namelen);
+	tracker_entry->name.utf8string_val = gsh_strdup(cb_parms->name);
 
 	/* If we carried an error from above, now that we have
 	 * the name set up, go ahead and try and put error in
@@ -430,6 +432,7 @@ not_junction:
 
  failure:
 
+	tracker->mem_left = initial_mem_left;
 	nfs4_Fattr_Free(&tracker_entry->attrs);
 
 	if (tracker_entry->name.utf8string_val != NULL) {
@@ -445,6 +448,12 @@ not_junction:
 
 	return ERR_FSAL_NO_ERROR;
 }
+
+/* Base response size includes nfsstat4, eof, verifier and termination of
+ * entries list.
+ */
+#define READDIR_RESP_BASE_SIZE (sizeof(nfsstat4) + sizeof(verifier4) + \
+				2 * BYTES_PER_XDR_UNIT)
 
 /**
  * @brief Free a list of entry4s
@@ -515,14 +524,27 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* get the characteristic value for readdir operation */
 	dircount = arg_READDIR4->dircount;
-	maxcount = (arg_READDIR4->maxcount * 9) / 10;
 	cookie = arg_READDIR4->cookie;
+
+	/* Dont over flow V4.1 maxresponsesize or maxcachedsize */
+	maxcount = resp_room(data);
+
+	if (maxcount > (arg_READDIR4->maxcount + sizeof(nfsstat4)))
+		maxcount = arg_READDIR4->maxcount + sizeof(nfsstat4);
 
 	/* Dircount is considered meaningless by many nfsv4 client (like the
 	 * CITI one).  we use maxcount instead.
-	 *
-	 * The Linux 3.0, 3.1.0 clients vs. TCP Ganesha comes out 10x slower
-	 * with 500 max entries
+	 */
+	/** @todo FSF - I think we could increase this, alll it does is
+	 *              control how many entry4 we allocate. They aren't
+	 *              that big:
+	 *              cookie
+	 *              name length
+	 *              name pointer
+	 *              pointer to next entry
+	 *              bitmap4
+	 *              attr_vals length
+	 *              attr_vals pointer
 	 */
 	estimated_num_entries = 50;
 	tracker.total_entries = estimated_num_entries;
@@ -552,9 +574,11 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	/* If maxcount is too short (14 should be enough for an empty
 	 * directory) return NFS4ERR_TOOSMALL
 	 */
-	if (maxcount < 14 || estimated_num_entries == 0) {
+	if (maxcount < READDIR_RESP_BASE_SIZE || estimated_num_entries == 0) {
 		res_READDIR4->status = NFS4ERR_TOOSMALL;
-		LogDebug(COMPONENT_NFS_READDIR, "Response too small");
+		LogInfo(COMPONENT_NFS_READDIR,
+			"Response too small maxcount = %lu, estimated_num_entries = %u",
+			maxcount - sizeof(nfsstat4), estimated_num_entries);
 		goto out;
 	}
 
@@ -611,10 +635,9 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Prepare to read the entries */
-
 	entries = gsh_calloc(estimated_num_entries, sizeof(entry4));
 	tracker.entries = entries;
-	tracker.mem_left = maxcount - sizeof(READDIR4resok);
+	tracker.mem_left = maxcount - READDIR_RESP_BASE_SIZE;
 	tracker.count = 0;
 	tracker.error = NFS4_OK;
 	tracker.req_attr = &arg_READDIR4->attr_request;
@@ -656,6 +679,18 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 		LogDebug(COMPONENT_NFS_READDIR, "Tracker error");
 		goto out;
 	}
+
+	/* Set the op response size to be accounted for, maxcount was the
+	 * maximum space that mem_left started from before we deducted
+	 * READDIR_RESP_BASE_SIZE and the space used for each entry.
+	 *
+	 * So the formula below is equivalent to:
+	 *
+	 *     maxcount - maxcount + READDIR_RESP_BASE_SIZE + space for entries
+	 *
+	 * So maxcount disappears and all that is left is the actual size.
+	 */
+	data->op_resp_size = maxcount - tracker.mem_left;
 
 	if (tracker.count != 0) {
 		/* Put the entry's list in the READDIR reply if

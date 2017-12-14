@@ -48,6 +48,9 @@
 #include "nfs_file_handle.h"
 #include "export_mgr.h"
 
+/* nfsstat4 + layout type + da_addr_body_len + gdir_notification */
+#define GETDEVICEINFO_RESP_BASE_SIZE (3 * BYTES_PER_XDR_UNIT + sizeof(bitmap4))
+
 /**
  *
  * @brief The NFS4_OP_GETDEVICEINFO operation.
@@ -94,6 +97,7 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 	size_t da_addr_size = 0;
 	/* Pointer to the fsal appropriate to this deviceid */
 	struct fsal_module *fsal = NULL;
+	uint32_t resp_size = GETDEVICEINFO_RESP_BASE_SIZE;
 
 	resp->resop = NFS4_OP_GETDEVICEINFO;
 
@@ -155,6 +159,13 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 	da_length = xdr_getpos(&da_addr_body) - da_beginning;
 
 	xdr_destroy(&da_addr_body);
+
+	if (nfs_status != NFS4_OK)
+		goto out;
+
+	resp_size += RNDUP(da_length);
+
+	nfs_status = check_resp_room(data, resp_size);
 
 	if (nfs_status != NFS4_OK)
 		goto out;

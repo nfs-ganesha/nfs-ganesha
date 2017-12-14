@@ -36,6 +36,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
+#include "nfs_convert.h"
 
 /**
  * @brief The NFS4_OP_GETFH operation
@@ -67,7 +68,17 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
 	res_GETFH->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, true);
 
 	if (res_GETFH->status != NFS4_OK)
-		return res_GETFH->status;
+		goto out;
+
+	/* Fill in and check response size and make sure it fits. */
+	data->op_resp_size = sizeof(nfsstat4) + sizeof(uint32_t) +
+		((data->currentFH.nfs_fh4_len + sizeof(uint32_t) - 1) &
+		~(sizeof(uint32_t) - 1));
+
+	res_GETFH->status = check_resp_room(data, data->op_resp_size);
+
+	if (res_GETFH->status != NFS4_OK)
+		goto out;
 
 	fsal_prepare_attrs(&attrs,
 			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
@@ -75,6 +86,9 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
 
 	bool result = data->current_obj->obj_ops.is_referral(data->current_obj,
 				&attrs, true);
+
+	fsal_release_attrs(&attrs);
+
 	if (result) {
 		res_GETFH->status = NFS4ERR_MOVED;
 		goto out;
@@ -95,7 +109,12 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
 		      &res_GETFH->GETFH4res_u.resok4.object);
 
 out:
-	fsal_release_attrs(&attrs);
+
+	if (res_GETFH->status != NFS4_OK) {
+		/* Indicate the failed response size. */
+		data->op_resp_size = sizeof(nfsstat4);
+	}
+
 	return res_GETFH->status;
 }				/* nfs4_op_getfh */
 

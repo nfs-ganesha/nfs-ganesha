@@ -35,6 +35,7 @@
 #include "fsal.h"
 #include "nfs_core.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "sal_functions.h"
 #include "nfs_creds.h"
 
@@ -65,6 +66,26 @@ int get_raddr(SVCXPRT *xprt)
 	return addr;
 }
 
+/* spi_ops (spo_must_enforce bitmap + spo_must_allow bitmap) + 4 spi_ fields +
+ * len
+ */
+#define SSV_PROT_INFO4_BASE_SIZE (2 * sizeof(bitmap4) + 5 * BYTES_PER_XDR_UNIT)
+
+/* spr_how + spr_mach_ops + spr_ssv_info */
+#define STATE_PROTECT4_R_BASE_SIZE (BYTES_PER_XDR_UNIT + sizeof(bitmap4) + \
+				    SSV_PROT_INFO4_BASE_SIZE)
+
+/* nfsstat4 + clientid + sequenceid + eir_flags + eir_state_protect +
+ * so_minor_id + so_major_id_len + eir_server_scope_len + eir_server_impl_id_len
+ */
+#define EXCHANGE_ID_BASE_RESP_SIZE (BYTES_PER_XDR_UNIT + sizeof(clientid4) + \
+				    3 * BYTES_PER_XDR_UNIT \
+				    + STATE_PROTECT4_R_BASE_SIZE + \
+				    sizeof(uint64_t) + 3 * BYTES_PER_XDR_UNIT)
+
+char cid_server_owner[MAXNAMLEN+1]; /* max hostname length */
+char *cid_server_scope_suffix = "_NFS-Ganesha";
+
 /**
  * @brief The NFS4_OP_EXCHANGE_ID operation
  *
@@ -90,8 +111,6 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	bool update;
 	uint32_t pnfs_flags;
 	in_addr_t server_addr = 0;
-	char cid_server_owner[MAXNAMLEN+1]; /* max hostname length */
-	const char cid_server_scope_suffix[] = "_NFS-Ganesha";
 	/* Arguments and response */
 	EXCHANGE_ID4args * const arg_EXCHANGE_ID4 =
 	    &op->nfs_argop4_u.opexchange_id;
@@ -99,11 +118,14 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	    &resp->nfs_resop4_u.opexchange_id;
 	EXCHANGE_ID4resok * const res_EXCHANGE_ID4_ok =
 	    &resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4;
+	uint32_t resp_size = EXCHANGE_ID_BASE_RESP_SIZE;
 
 	resp->resop = NFS4_OP_EXCHANGE_ID;
 
-	if (data->minorversion == 0)
-		return res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
+	if (data->minorversion == 0) {
+		res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
+		return res_EXCHANGE_ID4->eir_status;
+	}
 
 	if ((arg_EXCHANGE_ID4->eia_flags & ~(EXCHGID4_FLAG_SUPP_MOVED_REFER |
 					     EXCHGID4_FLAG_SUPP_MOVED_MIGR |
@@ -112,8 +134,31 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 					     EXCHGID4_FLAG_USE_PNFS_MDS |
 					     EXCHGID4_FLAG_USE_PNFS_DS |
 					     EXCHGID4_FLAG_UPD_CONFIRMED_REC_A)
-	     ) != 0)
-		return res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
+	     ) != 0) {
+		res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
+		return res_EXCHANGE_ID4->eir_status;
+	}
+
+	if (cid_server_owner[0] == '\0') {
+		/* Set up the server owner string */
+		if (gethostname(cid_server_owner,
+				sizeof(cid_server_owner)) == -1) {
+			res_EXCHANGE_ID4->eir_status = NFS4ERR_SERVERFAULT;
+			return res_EXCHANGE_ID4->eir_status;
+		}
+	}
+
+	/* Now check that the response will fit. Use 0 for
+	 * eir_server_impl_id_len
+	 */
+	owner_len = strlen(cid_server_owner);
+	scope_len = strlen(cid_server_scope_suffix);
+	resp_size += RNDUP(owner_len) + RNDUP(owner_len + scope_len) + 0;
+
+	res_EXCHANGE_ID4->eir_status = check_resp_room(data, resp_size);
+
+	if (res_EXCHANGE_ID4->eir_status != NFS4_OK)
+		return res_EXCHANGE_ID4->eir_status;
 
 	/* If client did not ask for pNFS related server roles than just set
 	   server roles */
@@ -342,7 +387,6 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_EXCHANGE_ID4_ok->eir_state_protect.spr_how = SP4_NONE;
 
-	owner_len = strlen(cid_server_owner);
 	temp = gsh_malloc(owner_len + 1);
 	memcpy(temp, cid_server_owner, owner_len + 1);
 
@@ -353,7 +397,6 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_EXCHANGE_ID4_ok->eir_server_owner.so_minor_id = 0;
 
-	scope_len = strlen(cid_server_scope_suffix);
 	temp = gsh_malloc(owner_len + scope_len + 1);
 	memcpy(temp, cid_server_owner, owner_len);
 	memcpy(temp + owner_len, cid_server_scope_suffix, scope_len + 1);

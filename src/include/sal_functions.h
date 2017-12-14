@@ -545,12 +545,10 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 
 int Init_nfs4_owner(void);
 
-void Process_nfs4_conflict(/* NFS v4 Lock4denied structure to fill in */
-			   LOCK4denied * denied,
-			   /* owner that holds conflicting lock */
-			   state_owner_t *holder,
-			   /* description of conflicting lock */
-			   fsal_lock_param_t *conflict);
+nfsstat4 Process_nfs4_conflict(LOCK4denied *denied,
+			       state_owner_t *holder,
+			       fsal_lock_param_t *conflict,
+			       compound_data_t *data);
 
 void Release_nfs4_denied(LOCK4denied *denied);
 void Copy_nfs4_denied(LOCK4denied *denied_dst, LOCK4denied *denied_src);

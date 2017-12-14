@@ -41,6 +41,17 @@
 #include "sal_functions.h"
 #include "export_mgr.h"
 
+#ifdef _HAVE_GSSAPI
+/* flavor, oid len, qop, service */
+#define GSS_RESP_SIZE (4 * BYTES_PER_XDR_UNIT)
+#endif
+/* nfsstat4, resok_len, 2 flavors
+ * NOTE this requires space for up to 2 extra xdr units if the export doesn't
+ * allow AUTH_NONE and/or AUTH_UNIX. The response size is overall so small
+ * this op should never be the cause of overflow of maxrespsize...
+ */
+#define RESP_SIZE (4 * BYTES_PER_XDR_UNIT)
+
 /**
  * @brief NFSv4 SECINFO operation
  *
@@ -68,6 +79,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	int num_entry = 0;
 	struct export_perms save_export_perms = { 0, };
 	struct gsh_export *saved_gsh_export = NULL;
+	uint32_t resp_size = RESP_SIZE;
 
 	resp->resop = NFS4_OP_SECINFO;
 	res_SECINFO4->status = NFS4_OK;
@@ -181,12 +193,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Get the number of entries */
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
-		num_entry++;
-
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
-		num_entry++;
-
+#ifdef _HAVE_GSSAPI
 	if (op_ctx->export_perms->options &
 	    EXPORT_OPTION_RPCSEC_GSS_NONE)
 		num_entry++;
@@ -199,7 +206,25 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	    EXPORT_OPTION_RPCSEC_GSS_PRIV)
 		num_entry++;
 
+	resp_size += (RNDUP(krb5oid.length) + GSS_RESP_SIZE) * num_entry;
+#endif
+
+	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+		num_entry++;
+
+	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+		num_entry++;
+
+	/* Check for space in response. */
+	res_SECINFO4->status = check_resp_room(data, resp_size);
+
+	if (res_SECINFO4->status != NFS4_OK)
+		goto out;
+
+	data->op_resp_size = resp_size;
+
 	resok_val = gsh_calloc(num_entry, sizeof(secinfo4));
+
 	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val = resok_val;
 
 	/**
@@ -308,8 +333,7 @@ void nfs4_op_secinfo_Free(nfs_resop4 *res)
 {
 	SECINFO4res *resp = &res->nfs_resop4_u.opsecinfo;
 
-	if ((resp->status == NFS4_OK)
-	    && (resp->SECINFO4res_u.resok4.SECINFO4resok_val)) {
+	if (resp->status == NFS4_OK) {
 		gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
 		resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;
 	}

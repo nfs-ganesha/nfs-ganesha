@@ -41,6 +41,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
+#include "nfs_convert.h"
 
 static inline bool check_fs_locations(struct fsal_obj_handle *obj)
 {
@@ -104,27 +105,27 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 	res_GETATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
 	if (res_GETATTR4->status != NFS4_OK)
-		return res_GETATTR4->status;
+		goto out;
 
 	/* Sanity check: if no attributes are wanted, nothing is to be
 	 * done.  In this case NFS4_OK is to be returned */
 	if (arg_GETATTR4->attr_request.bitmap4_len == 0) {
 		res_GETATTR4->status = NFS4_OK;
-		return res_GETATTR4->status;
+		goto out;
 	}
 
 	/* Get only attributes that are allowed to be read */
 	if (!nfs4_Fattr_Check_Access_Bitmap(&arg_GETATTR4->attr_request,
 					    FATTR4_ATTR_READ)) {
 		res_GETATTR4->status = NFS4ERR_INVAL;
-		return res_GETATTR4->status;
+		goto out;
 	}
 
 	res_GETATTR4->status =
 	    bitmap4_to_attrmask_t(&arg_GETATTR4->attr_request, &mask);
 
 	if (res_GETATTR4->status != NFS4_OK)
-		return res_GETATTR4->status;
+		goto out;
 
 	/* Add mode to what we actually ask for so we can do fslocations
 	 * test.
@@ -167,21 +168,38 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 			    != 0) {
 				/* Report an error. */
 				res_GETATTR4->status = NFS4ERR_SERVERFAULT;
-				/* The attributes allocated will not be
-				 * consumed.
-				 */
-				nfs4_Fattr_Free(obj_attributes);
 			}
 		} else {
 			/* Report the referral. */
 			res_GETATTR4->status = NFS4ERR_MOVED;
-			/* The attributes allocated will not be consumed. */
-			nfs4_Fattr_Free(obj_attributes);
 		}
 	}
 
 	/* Done with the attrs */
 	fsal_release_attrs(&attrs);
+
+	if (res_GETATTR4->status == NFS4_OK) {
+		/* Fill in and check response size and make sure it fits. */
+		data->op_resp_size = sizeof(nfsstat4) +
+			res_GETATTR4->GETATTR4res_u.resok4.obj_attributes
+			.attr_vals.attrlist4_len;
+
+		res_GETATTR4->status =
+			check_resp_room(data, data->op_resp_size);
+	}
+
+out:
+
+	if (res_GETATTR4->status != NFS4_OK) {
+		/* The attributes that may have been allocated will not be
+		 * consumed. Since the response array was allocated with
+		 * gsh_calloc, the buffer pointer is always NULL or valid.
+		 */
+		nfs4_Fattr_Free(obj_attributes);
+
+		/* Indicate the failed response size. */
+		data->op_resp_size = sizeof(nfsstat4);
+	}
 
 	return res_GETATTR4->status;
 }				/* nfs4_op_getattr */

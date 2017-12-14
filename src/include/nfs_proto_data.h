@@ -325,7 +325,11 @@ typedef struct compound_data {
 				   (if applicable) */
 	slotid4 slot;		/*< Slot ID of the current compound
 				   (if applicable) */
+	uint32_t resp_size;	/*< Running total response size. */
+	uint32_t op_resp_size;	/*< Current op's response size. */
 } compound_data_t;
+
+#define VARIABLE_RESP_SIZE (0)
 
 typedef int (*nfs4_op_function_t) (struct nfs_argop4 *, compound_data_t *,
 				   struct nfs_resop4 *);

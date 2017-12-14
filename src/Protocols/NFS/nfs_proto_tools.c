@@ -4508,3 +4508,97 @@ bool is_sticky_bit_set(struct fsal_obj_handle *obj,
 
 	return true;
 }
+
+uint32_t resp_room(compound_data_t *data)
+{
+	uint32_t room;
+
+	if (data->minorversion == 0 || data->session == NULL) {
+		/* No response size checking */
+		return UINT32_MAX;
+	}
+
+	/* Start with max response size */
+	room = data->session->fore_channel_attrs.ca_maxresponsesize;
+
+	/* If this request is cached and maxcachesize is smaller use it. */
+	if (data->use_drc && room >
+	    data->session->fore_channel_attrs.ca_maxresponsesize_cached) {
+		room =
+		    data->session->fore_channel_attrs.ca_maxresponsesize_cached;
+	}
+
+	/* Now subtract the space for the opnum4 for this response plus at
+	 * least one more opnum and status.
+	 */
+	room -= sizeof(nfs_opnum4) + sizeof(nfs_opnum4) + sizeof(nfsstat4);
+
+	return room;
+}
+
+nfsstat4 check_resp_room(compound_data_t *data, uint32_t op_resp_size)
+{
+	nfsstat4 status;
+	uint32_t test_response_size = data->resp_size +
+				      sizeof(nfs_opnum4) + op_resp_size +
+				      sizeof(nfs_opnum4) + sizeof(nfsstat4);
+
+	if (data->minorversion == 0 || data->session == NULL) {
+		/* No response size checking */
+		return NFS4_OK;
+	}
+
+	/* Check that op_resp_size plus nfs_opnum4 plus at least another
+	 * response (nfs_opnum4 plus nfsstat4) fits.
+	 */
+	if (test_response_size >
+	    data->session->fore_channel_attrs.ca_maxresponsesize) {
+		/* Response is larger than maximum response size. */
+		status = NFS4ERR_REP_TOO_BIG;
+		goto err;
+	}
+
+	if (!data->use_drc) {
+		/* Response size is ok, and not cached. */
+		goto ok;
+	}
+
+	/* Check that op_resp_size plus nfs_opnum4 plus at least another
+	 * response (nfs_opnum4 plus nfsstat4) fits.
+	 */
+	if (test_response_size >
+	    data->session->fore_channel_attrs.ca_maxresponsesize_cached) {
+		/* Response is too big to cache. */
+		status = NFS4ERR_REP_TOO_BIG_TO_CACHE;
+		goto err;
+	}
+
+	/* Response is ok to cache. */
+
+ok:
+
+	LogFullDebug(COMPONENT_NFS_V4,
+		"Status of %s in position %d is ok so far, op response size = %"
+		PRIu32" total response size would be = %"PRIu32
+		" out of max %"PRIu32"/%"PRIu32,
+		data->opname, data->oppos,
+		op_resp_size, test_response_size,
+		data->session->fore_channel_attrs.ca_maxresponsesize,
+		data->session->fore_channel_attrs.ca_maxresponsesize_cached);
+
+	return NFS4_OK;
+
+err:
+
+	LogDebug(COMPONENT_NFS_V4,
+		 "Status of %s in position %d is %s, op response size = %"
+		 PRIu32" total response size would have been = %"PRIu32
+		 " out of max %"PRIu32"/%"PRIu32,
+		 data->opname, data->oppos,
+		 nfsstat4_to_str(status),
+		 op_resp_size, test_response_size,
+		 data->session->fore_channel_attrs.ca_maxresponsesize,
+		 data->session->fore_channel_attrs.ca_maxresponsesize_cached);
+
+	return status;
+}

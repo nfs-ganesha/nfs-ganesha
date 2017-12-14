@@ -214,9 +214,17 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		LogStateOwner("Conflict: ", conflict_owner);
 
-		Process_nfs4_conflict(&res_LOCKT4->LOCKT4res_u.denied,
-				      conflict_owner,
-				      &conflict_desc);
+		res_LOCKT4->status = Process_nfs4_conflict(
+						&res_LOCKT4->LOCKT4res_u.denied,
+						conflict_owner,
+						&conflict_desc,
+						data);
+	} else {
+		/* Return result */
+		res_LOCKT4->status = nfs4_Errno_state(state_status);
+
+		/* response is just nfsstat4 */
+		data->op_resp_size = sizeof(nfsstat4);
 	}
 
 	if (data->minorversion == 0)
@@ -228,9 +236,6 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	/* Release stateid reference */
 	if (state != NULL)
 		dec_state_t_ref(state);
-
-	/* Return result */
-	res_LOCKT4->status = nfs4_Errno_state(state_status);
 
  out:
 

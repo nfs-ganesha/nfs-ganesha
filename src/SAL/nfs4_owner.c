@@ -40,6 +40,7 @@
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
+#include "nfs_proto_tools.h"
 #include "nfs_core.h"
 
 hash_table_t *ht_nfs4_owner;
@@ -519,11 +520,36 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
  * @param[out] denied   NFSv4 LOCK4denied structure
  * @param[in]  holder   Holder of the conflicting lock
  * @param[in]  conflict The conflicting lock
+ * @param[in]  data     The nfsv4 compound data
  */
 
-void Process_nfs4_conflict(LOCK4denied *denied, state_owner_t *holder,
-			   fsal_lock_param_t *conflict)
+#define BASE_RESP_SIZE (sizeof(nfsstat4) + sizeof(offset4) + sizeof(length4) + \
+			sizeof(nfs_lock_type4) + sizeof(clientid4) + \
+			sizeof(uint32_t))
+
+nfsstat4 Process_nfs4_conflict(LOCK4denied *denied, state_owner_t *holder,
+			       fsal_lock_param_t *conflict,
+			       compound_data_t *data)
 {
+	nfsstat4 status;
+	size_t owner_len;
+
+	if (holder != NULL && holder->so_owner_len != 0)
+		owner_len = holder->so_owner_len;
+	else
+		owner_len = unknown_owner.so_owner_len;
+
+	/* First check if the response will fit, this is a response to a
+	 * LOCK or LOCKT operation.
+	 */
+	status = check_resp_room(data, BASE_RESP_SIZE + owner_len);
+
+	if (status != NFS4_OK)
+		return status;
+
+	/* Now set the op_resp_size. */
+	data->op_resp_size = BASE_RESP_SIZE + owner_len;
+
 	/* A  conflicting lock from a different lock_owner,
 	 * returns NFS4ERR_DENIED
 	 */
@@ -560,6 +586,8 @@ void Process_nfs4_conflict(LOCK4denied *denied, state_owner_t *holder,
 	/* Release any lock owner reference passed back from SAL */
 	if (holder != NULL)
 		dec_state_owner_ref(holder);
+
+	return NFS4ERR_DENIED;
 }
 
 /**

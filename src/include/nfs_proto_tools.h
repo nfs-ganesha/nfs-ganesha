@@ -309,4 +309,8 @@ void nfs4_pathname4_alloc(pathname4 *, char *);
 
 void nfs4_pathname4_free(pathname4 *);
 
+uint32_t resp_room(compound_data_t *data);
+
+nfsstat4 check_resp_room(compound_data_t *data, uint32_t op_resp_size);
+
 #endif				/* _NFS_PROTO_TOOLS_H */

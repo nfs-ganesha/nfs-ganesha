@@ -63,6 +63,7 @@ int nfs4_op_readlink(struct nfs_argop4 *op, compound_data_t *data,
 	struct gsh_buffdesc link_buffer = {.addr = NULL,
 		.len = 0
 	};
+	uint32_t resp_size;
 
 	resp->resop = NFS4_OP_READLINK;
 	res_READLINK4->status = NFS4_OK;
@@ -90,7 +91,21 @@ int nfs4_op_readlink(struct nfs_argop4 *op, compound_data_t *data,
 	res_READLINK4->READLINK4res_u.resok4.link.utf8string_len =
 	    link_buffer.len - 1;
 
-	res_READLINK4->status = NFS4_OK;
+	/* Response size is space for nfsstat4, length, pointer, and the
+	 * link itself.
+	 */
+	resp_size = RNDUP(link_buffer.len) + 3 * sizeof(uint32_t);
+
+	res_READLINK4->status = check_resp_room(data, resp_size);
+
+	if (res_READLINK4->status != NFS4_OK) {
+		/* No room for response, free link. */
+		gsh_free(
+		    res_READLINK4->READLINK4res_u.resok4.link.utf8string_val);
+	}
+
+	data->op_resp_size = resp_size;
+
 	return res_READLINK4->status;
 }				/* nfs4_op_readlink */
 
@@ -106,7 +121,6 @@ void nfs4_op_readlink_Free(nfs_resop4 *res)
 {
 	READLINK4res *resp = &res->nfs_resop4_u.opreadlink;
 
-	if (resp->status == NFS4_OK
-	    && resp->READLINK4res_u.resok4.link.utf8string_val)
+	if (resp->status == NFS4_OK)
 		gsh_free(resp->READLINK4res_u.resok4.link.utf8string_val);
 }

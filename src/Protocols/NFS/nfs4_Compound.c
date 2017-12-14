@@ -54,6 +54,7 @@ struct nfs4_op_desc {
 		     struct nfs_resop4 *);
 
 	void (*free_res)(nfs_resop4 *);
+	uint32_t resp_size;
 	int exp_perm_flags;
 };
 
@@ -67,296 +68,355 @@ static const struct nfs4_op_desc optabv4[] = {
 		.name = "OP_ILLEGAL",
 		.funct = nfs4_op_illegal,
 		.free_res = nfs4_op_illegal_Free,
+		.resp_size = sizeof(ILLEGAL4res),
 		.exp_perm_flags = 0},
 	[1] = {
 		.name = "OP_ILLEGAL",
 		.funct = nfs4_op_illegal,
 		.free_res = nfs4_op_illegal_Free,
+		.resp_size = sizeof(ILLEGAL4res),
 		.exp_perm_flags = 0},
 	[2] = {
 		.name = "OP_ILLEGAL",
 		.funct = nfs4_op_illegal,
 		.free_res = nfs4_op_illegal_Free,
+		.resp_size = sizeof(ILLEGAL4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_ACCESS] = {
 		.name = "OP_ACCESS",
 		.funct = nfs4_op_access,
 		.free_res = nfs4_op_access_Free,
+		.resp_size = sizeof(ACCESS4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_CLOSE] = {
 		.name = "OP_CLOSE",
 		.funct = nfs4_op_close,
 		.free_res = nfs4_op_close_Free,
+		.resp_size = sizeof(CLOSE4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_COMMIT] = {
 		.name = "OP_COMMIT",
 		.funct = nfs4_op_commit,
 		.free_res = nfs4_op_commit_Free,
+		.resp_size = sizeof(COMMIT4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS},
 	[NFS4_OP_CREATE] = {
 		.name = "OP_CREATE",
 		.funct = nfs4_op_create,
 		.free_res = nfs4_op_create_Free,
+		.resp_size = sizeof(CREATE4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS},
 	[NFS4_OP_DELEGPURGE] = {
 		.name = "OP_DELEGPURGE",
 		.funct = nfs4_op_delegpurge,
 		.free_res = nfs4_op_delegpurge_Free,
+		.resp_size = sizeof(DELEGPURGE4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_DELEGRETURN] = {
 		.name = "OP_DELEGRETURN",
 		.funct = nfs4_op_delegreturn,
 		.free_res = nfs4_op_delegreturn_Free,
+		.resp_size = sizeof(DELEGRETURN4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_GETATTR] = {
 		.name = "OP_GETATTR",
 		.funct = nfs4_op_getattr,
 		.free_res = nfs4_op_getattr_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_GETFH] = {
 		.name = "OP_GETFH",
 		.funct = nfs4_op_getfh,
 		.free_res = nfs4_op_getfh_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = 0},
 	[NFS4_OP_LINK] = {
 		.name = "OP_LINK",
 		.funct = nfs4_op_link,
 		.free_res = nfs4_op_link_Free,
+		.resp_size = sizeof(LINK4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS},
 	[NFS4_OP_LOCK] = {
 		.name = "OP_LOCK",
 		.funct = nfs4_op_lock,
 		.free_res = nfs4_op_lock_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_LOCKT] = {
 		.name = "OP_LOCKT",
 		.funct = nfs4_op_lockt,
 		.free_res = nfs4_op_lockt_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_LOCKU] = {
 		.name = "OP_LOCKU",
 		.funct = nfs4_op_locku,
 		.free_res = nfs4_op_locku_Free,
+		.resp_size = sizeof(LOCKU4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_LOOKUP] = {
 		.name = "OP_LOOKUP",
 		.funct = nfs4_op_lookup,
 		.free_res = nfs4_op_lookup_Free,
+		.resp_size = sizeof(LOOKUP4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_LOOKUPP] = {
 		.name = "OP_LOOKUPP",
 		.funct = nfs4_op_lookupp,
 		.free_res = nfs4_op_lookupp_Free,
+		.resp_size = sizeof(LOOKUPP4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_NVERIFY] = {
 		.name = "OP_NVERIFY",
 		.funct = nfs4_op_nverify,
 		.free_res = nfs4_op_nverify_Free,
+		.resp_size = sizeof(NVERIFY4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_OPEN] = {
 		.name = "OP_OPEN",
 		.funct = nfs4_op_open,
 		.free_res = nfs4_op_open_Free,
+		.resp_size = sizeof(OPEN4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_OPENATTR] = {
 		.name = "OP_OPENATTR",
 		.funct = nfs4_op_openattr,
 		.free_res = nfs4_op_openattr_Free,
+		.resp_size = sizeof(OPENATTR4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_OPEN_CONFIRM] = {
 		.name = "OP_OPEN_CONFIRM",
 		.funct = nfs4_op_open_confirm,
 		.free_res = nfs4_op_open_confirm_Free,
+		.resp_size = sizeof(OPEN_CONFIRM4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_OPEN_DOWNGRADE] = {
 		.name = "OP_OPEN_DOWNGRADE",
 		.funct = nfs4_op_open_downgrade,
 		.free_res = nfs4_op_open_downgrade_Free,
+		.resp_size = sizeof(OPEN_DOWNGRADE4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_PUTFH] = {
 		.name = "OP_PUTFH",
 		.funct = nfs4_op_putfh,
 		.free_res = nfs4_op_putfh_Free,
+		.resp_size = sizeof(PUTFH4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_PUTPUBFH] = {
 		.name = "OP_PUTPUBFH",
 		.funct = nfs4_op_putpubfh,
 		.free_res = nfs4_op_putpubfh_Free,
+		.resp_size = sizeof(PUTPUBFH4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_PUTROOTFH] = {
 		.name = "OP_PUTROOTFH",
 		.funct = nfs4_op_putrootfh,
 		.free_res = nfs4_op_putrootfh_Free,
+		.resp_size = sizeof(PUTROOTFH4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_READ] = {
 		.name = "OP_READ",
 		.funct = nfs4_op_read,
 		.free_res = nfs4_op_read_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = EXPORT_OPTION_READ_ACCESS},
 	[NFS4_OP_READDIR] = {
 		.name = "OP_READDIR",
 		.funct = nfs4_op_readdir,
 		.free_res = nfs4_op_readdir_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_READLINK] = {
 		.name = "OP_READLINK",
 		.funct = nfs4_op_readlink,
 		.free_res = nfs4_op_readlink_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_REMOVE] = {
 		.name = "OP_REMOVE",
 		.funct = nfs4_op_remove,
 		.free_res = nfs4_op_remove_Free,
+		.resp_size = sizeof(REMOVE4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS},
 	[NFS4_OP_RENAME] = {
 		.name = "OP_RENAME",
 		.funct = nfs4_op_rename,
 		.free_res = nfs4_op_rename_Free,
+		.resp_size = sizeof(RENAME4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS},
 	[NFS4_OP_RENEW] = {
 		.name = "OP_RENEW",
 		.funct = nfs4_op_renew,
 		.free_res = nfs4_op_renew_Free,
+		.resp_size = sizeof(RENEW4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_RESTOREFH] = {
 		.name = "OP_RESTOREFH",
 		.funct = nfs4_op_restorefh,
 		.free_res = nfs4_op_restorefh_Free,
+		.resp_size = sizeof(RESTOREFH4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_SAVEFH] = {
 		.name = "OP_SAVEFH",
 		.funct = nfs4_op_savefh,
 		.free_res = nfs4_op_savefh_Free,
+		.resp_size = sizeof(SAVEFH4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_SECINFO] = {
 		.name = "OP_SECINFO",
 		.funct = nfs4_op_secinfo,
 		.free_res = nfs4_op_secinfo_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_SETATTR] = {
 		.name = "OP_SETATTR",
 		.funct = nfs4_op_setattr,
 		.free_res = nfs4_op_setattr_Free,
+		.resp_size = sizeof(SETATTR4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_WRITE_ACCESS},
 	[NFS4_OP_SETCLIENTID] = {
 		.name = "OP_SETCLIENTID",
 		.funct = nfs4_op_setclientid,
 		.free_res = nfs4_op_setclientid_Free,
+		.resp_size = sizeof(SETCLIENTID4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_SETCLIENTID_CONFIRM] = {
 		.name = "OP_SETCLIENTID_CONFIRM",
 		.funct = nfs4_op_setclientid_confirm,
 		.free_res = nfs4_op_setclientid_confirm_Free,
+		.resp_size = sizeof(SETCLIENTID_CONFIRM4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_VERIFY] = {
 		.name = "OP_VERIFY",
 		.funct = nfs4_op_verify,
 		.free_res = nfs4_op_verify_Free,
+		.resp_size = sizeof(VERIFY4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_WRITE] = {
 		.name = "OP_WRITE",
 		.funct = nfs4_op_write,
 		.free_res = nfs4_op_write_Free,
+		.resp_size = sizeof(WRITE4res),
 		.exp_perm_flags = EXPORT_OPTION_WRITE_ACCESS},
 	[NFS4_OP_RELEASE_LOCKOWNER] = {
 		.name = "OP_RELEASE_LOCKOWNER",
 		.funct = nfs4_op_release_lockowner,
 		.free_res = nfs4_op_release_lockowner_Free,
+		.resp_size = sizeof(RELEASE_LOCKOWNER4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_BACKCHANNEL_CTL] = {
 		.name = "OP_BACKCHANNEL_CTL",
 		.funct = nfs4_op_illegal,
 		.free_res = nfs4_op_illegal_Free,
+		.resp_size = sizeof(BACKCHANNEL_CTL4res),
 		.exp_perm_flags = 0	/* tbd */},
 	[NFS4_OP_BIND_CONN_TO_SESSION] = {
 		.name = "OP_BIND_CONN_TO_SESSION",
 		.funct = nfs4_op_bind_conn,
 		.free_res = nfs4_op_nfs4_op_bind_conn_Free,
+		.resp_size = sizeof(BIND_CONN_TO_SESSION4res),
 		.exp_perm_flags = 0	/* tbd */},
 	[NFS4_OP_EXCHANGE_ID] = {
 		.name = "OP_EXCHANGE_ID",
 		.funct = nfs4_op_exchange_id,
 		.free_res = nfs4_op_exchange_id_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = 0},
 	[NFS4_OP_CREATE_SESSION] = {
 		.name = "OP_CREATE_SESSION",
 		.funct = nfs4_op_create_session,
 		.free_res = nfs4_op_create_session_Free,
+		.resp_size = sizeof(CREATE_SESSION4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_DESTROY_SESSION] = {
 		.name = "OP_DESTROY_SESSION",
 		.funct = nfs4_op_destroy_session,
 		.free_res = nfs4_op_reclaim_complete_Free,
+		.resp_size = sizeof(DESTROY_SESSION4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_FREE_STATEID] = {
 		.name = "OP_FREE_STATEID",
 		.funct = nfs4_op_free_stateid,
 		.free_res = nfs4_op_free_stateid_Free,
+		.resp_size = sizeof(FREE_STATEID4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_GET_DIR_DELEGATION] = {
 		.name = "OP_GET_DIR_DELEGATION",
 		.funct = nfs4_op_illegal,
 		.free_res = nfs4_op_illegal_Free,
+		.resp_size = sizeof(GET_DIR_DELEGATION4res),
 		.exp_perm_flags = 0	/* tbd */},
 	[NFS4_OP_GETDEVICEINFO] = {
 		.name = "OP_GETDEVICEINFO",
 		.funct = nfs4_op_getdeviceinfo,
 		.free_res = nfs4_op_getdeviceinfo_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = 0},
 	[NFS4_OP_GETDEVICELIST] = {
 		.name = "OP_GETDEVICELIST",
 		.funct = nfs4_op_getdevicelist,
 		.free_res = nfs4_op_getdevicelist_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_LAYOUTCOMMIT] = {
 		.name = "OP_LAYOUTCOMMIT",
 		.funct = nfs4_op_layoutcommit,
 		.free_res = nfs4_op_reclaim_complete_Free,
+		.resp_size = sizeof(LAYOUTCOMMIT4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_LAYOUTGET] = {
 		.name = "OP_LAYOUTGET",
 		.funct = nfs4_op_layoutget,
 		.free_res = nfs4_op_reclaim_complete_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_LAYOUTRETURN] = {
 		.name = "OP_LAYOUTRETURN",
 		.funct = nfs4_op_layoutreturn,
 		.free_res = nfs4_op_reclaim_complete_Free,
+		.resp_size = sizeof(LAYOUTRETURN4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_SECINFO_NO_NAME] = {
 		.name = "OP_SECINFO_NO_NAME",
 		.funct = nfs4_op_secinfo_no_name,
 		.free_res = nfs4_op_secinfo_no_name_Free,
+		.resp_size = VARIABLE_RESP_SIZE,
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS},
 	[NFS4_OP_SEQUENCE] = {
 		.name = "OP_SEQUENCE",
 		.funct = nfs4_op_sequence,
 		.free_res = nfs4_op_sequence_Free,
+		.resp_size = sizeof(SEQUENCE4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_SET_SSV] = {
 		.name = "OP_SET_SSV",
 		.funct = nfs4_op_set_ssv,
 		.free_res = nfs4_op_set_ssv_Free,
+		.resp_size = sizeof(SET_SSV4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_TEST_STATEID] = {
 		.name = "OP_TEST_STATEID",
 		.funct = nfs4_op_test_stateid,
 		.free_res = nfs4_op_test_stateid_Free,
+		.resp_size = sizeof(TEST_STATEID4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_WANT_DELEGATION] = {
 		.name = "OP_WANT_DELEGATION",
 		.funct = nfs4_op_illegal,
 		.free_res = nfs4_op_illegal_Free,
+		.resp_size = sizeof(WANT_DELEGATION4res),
 		.exp_perm_flags = EXPORT_OPTION_MD_READ_ACCESS	/* tbd */},
 	[NFS4_OP_DESTROY_CLIENTID] = {
 		.name = "OP_DESTROY_CLIENTID",
 		.funct = nfs4_op_destroy_clientid,
 		.free_res = nfs4_op_destroy_clientid_Free,
+		.resp_size = sizeof(DESTROY_CLIENTID4res),
 		.exp_perm_flags = 0	/* tbd */},
 	[NFS4_OP_RECLAIM_COMPLETE] = {
 		.name = "OP_RECLAIM_COMPLETE",
 		.funct = nfs4_op_reclaim_complete,
 		.free_res = nfs4_op_reclaim_complete_Free,
+		.resp_size = sizeof(RECLAIM_COMPLETE4res),
 		.exp_perm_flags = 0},
 
 	/* NFSv4.2 */
@@ -364,66 +424,79 @@ static const struct nfs4_op_desc optabv4[] = {
 		.name = "OP_ALLOCATE",
 		.funct = nfs4_op_allocate,
 		.free_res = nfs4_op_write_Free,
+		.resp_size = sizeof(ALLOCATE4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_COPY] = {
 		.name = "OP_COPY",
 		.funct = nfs4_op_notsupp,
 		.free_res = nfs4_op_notsupp_Free,
+		.resp_size = sizeof(COPY4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_COPY_NOTIFY] = {
 		.name = "OP_COPY_NOTIFY",
 		.funct = nfs4_op_notsupp,
 		.free_res = nfs4_op_notsupp_Free,
+		.resp_size = sizeof(COPY_NOTIFY4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_DEALLOCATE] = {
 		.name = "OP_DEALLOCATE",
 		.funct = nfs4_op_deallocate,
 		.free_res = nfs4_op_write_Free,
+		.resp_size = sizeof(DEALLOCATE4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_IO_ADVISE] = {
 		.name = "OP_IO_ADVISE",
 		.funct = nfs4_op_io_advise,
 		.free_res = nfs4_op_io_advise_Free,
+		.resp_size = sizeof(IO_ADVISE4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_LAYOUTERROR] = {
 		.name = "OP_LAYOUTERROR",
 		.funct = nfs4_op_layouterror,
 		.free_res = nfs4_op_layouterror_Free,
+		.resp_size = sizeof(LAYOUTERROR4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_LAYOUTSTATS] = {
 		.name = "OP_LAYOUTSTATS",
 		.funct = nfs4_op_layoutstats,
 		.free_res = nfs4_op_layoutstats_Free,
+		.resp_size = sizeof(LAYOUTSTATS4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_OFFLOAD_CANCEL] = {
 		.name = "OP_OFFLOAD_CANCEL",
 		.funct = nfs4_op_notsupp,
 		.free_res = nfs4_op_notsupp_Free,
+		.resp_size = sizeof(OFFLOAD_ABORT4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_OFFLOAD_STATUS] = {
 		.name = "OP_OFFLOAD_STATUS",
 		.funct = nfs4_op_notsupp,
 		.free_res = nfs4_op_notsupp_Free,
+		.resp_size = sizeof(OFFLOAD_STATUS4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_READ_PLUS] = {
 		.name = "OP_READ_PLUS",
 		.funct = nfs4_op_read_plus,
 		.free_res = nfs4_op_read_plus_Free,
+		.resp_size = sizeof(READ_PLUS4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_SEEK] = {
 		.name = "OP_SEEK",
 		.funct = nfs4_op_seek,
 		.free_res = nfs4_op_write_Free,
+		.resp_size = sizeof(SEEK4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_WRITE_SAME] = {
 		.name = "OP_WRITE_SAME",
 		.funct = nfs4_op_write_same,
 		.free_res = nfs4_op_write_same_Free,
+		.resp_size = sizeof(WRITE_SAME4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_CLONE] = {
 		.name = "OP_CLONE",
 		.funct = nfs4_op_notsupp,
 		.free_res = nfs4_op_notsupp_Free,
+		.resp_size = sizeof(ILLEGAL4res),
 		.exp_perm_flags = 0},
 
 	/* NFSv4.3 */
@@ -431,21 +504,25 @@ static const struct nfs4_op_desc optabv4[] = {
 		.name = "OP_GETXATTR",
 		.funct = nfs4_op_getxattr,
 		.free_res = nfs4_op_getxattr_Free,
+		.resp_size = sizeof(GETXATTR4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_SETXATTR] = {
 		.name = "OP_SETXATTR",
 		.funct = nfs4_op_setxattr,
 		.free_res = nfs4_op_setxattr_Free,
+		.resp_size = sizeof(SETXATTR4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_LISTXATTR] = {
 		.name = "OP_LISTXATTR",
 		.funct = nfs4_op_listxattr,
 		.free_res = nfs4_op_listxattr_Free,
+		.resp_size = sizeof(LISTXATTR4res),
 		.exp_perm_flags = 0},
 	[NFS4_OP_REMOVEXATTR] = {
 		.name = "OP_REMOVEXATTR",
 		.funct = nfs4_op_removexattr,
 		.free_res = nfs4_op_removexattr_Free,
+		.resp_size = sizeof(REMOVEXATTR4res),
 		.exp_perm_flags = 0},
 };
 
@@ -583,6 +660,9 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	data.minorversion = compound4_minor;
 	data.req = req;
 
+	/* Initialize response size with size of compound response size. */
+	data.resp_size = sizeof(COMPOUND4res) - sizeof(nfs_resop4 *);
+
 	/* Building the client credential field */
 	if (nfs_rpc_req2client_cred(req, &(data.credential)) == -1)
 		return NFS_REQ_DROP;	/* Malformed credential */
@@ -647,6 +727,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	for (i = 0; i < argarray_len; i++) {
 		/* Used to check if OP_SEQUENCE is the first operation */
 		data.oppos = i;
+		data.op_resp_size = sizeof(nfsstat4);
 		opcode = argarray[i].argop;
 
 		/* Handle opcode overflow */
@@ -756,29 +837,40 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				bad_op_state_reason =
 						"Export permission failure";
 				alt_component = COMPONENT_EXPORT;
+				goto bad_op_state;
+			}
+		}
+
+		/* Set up the minimum/default response size and check if there
+		 * is room for it.
+		*/
+		data.op_resp_size = optabv4[opcode].resp_size;
+
+		status = check_resp_room(&data, data.op_resp_size);
+
+		if (status != NFS4_OK) {
+			bad_op_state_reason = "op response size";
 
  bad_op_state:
+			/* Tally the response size */
+			data.resp_size += sizeof(nfs_opnum4) + sizeof(nfsstat4);
 
-				LogDebugAlt(COMPONENT_NFS_V4, alt_component,
-					    "Status of %s in position %d due to %s is %s",
-					    data.opname, i,
-					    bad_op_state_reason,
-					    nfsstat4_to_str(status));
+			LogDebugAlt(COMPONENT_NFS_V4, alt_component,
+				    "Status of %s in position %d due to %s is %s, op response size = %"
+				    PRIu32" total response size = %"PRIu32,
+				    data.opname, i, bad_op_state_reason,
+				    nfsstat4_to_str(status),
+				    data.op_resp_size, data.resp_size);
 
-				/* All the operation, like NFS4_OP_ACCESS, have
-				 * a first replied field called .status
-				 */
-				resarray[i].nfs_resop4_u.opaccess.status =
-				    status;
-				resarray[i].resop = argarray[i].argop;
+			/* All the operation, like NFS4_OP_ACCESS, have
+			 * a first replied field called .status
+			 */
+			resarray[i].nfs_resop4_u.opaccess.status = status;
+			resarray[i].resop = argarray[i].argop;
 
-				/* Do not manage the other requests in the
-				 * COMPOUND.
-				 */
-				res->res_compound4.resarray.resarray_len =
-					i + 1;
-				break;
-			}
+			/* Do not manage the other requests in the COMPOUND. */
+			res->res_compound4.resarray.resarray_len = i + 1;
+			break;
 		}
 
 		/***************************************************************
@@ -807,8 +899,24 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		server_stats_nfsv4_op_done(opcode, op_start_time, status);
 
-		LogDebug(COMPONENT_NFS_V4, "Status of %s in position %d = %s",
-			 data.opname, i, nfsstat4_to_str(status));
+		/* Tally the response size */
+		if (status != NFS4_OK &&
+		    (optabv4[opcode].resp_size != VARIABLE_RESP_SIZE ||
+		     data.op_resp_size == VARIABLE_RESP_SIZE)) {
+			/* If the op failed and has a static response size, or
+			 * it has a variable size that hasn't been set, use the
+			 * sizeof nfsstat4 instead.
+			 */
+			data.op_resp_size = sizeof(nfsstat4);
+		}
+
+		data.resp_size += sizeof(nfs_opnum4) + data.op_resp_size;
+
+		LogDebug(COMPONENT_NFS_V4,
+			 "Status of %s in position %d = %s, op response size is %"
+			 PRIu32" total response size is %"PRIu32,
+			 data.opname, i, nfsstat4_to_str(status),
+			 data.op_resp_size, data.resp_size);
 
 		if (status != NFS4_OK) {
 			/* An error occured, we do not manage the other requests
@@ -817,8 +925,6 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			res->res_compound4.resarray.resarray_len = i + 1;
 			break;
 		}
-
-		/* Check Req size */
 
 		/* NFS_V4.1 specific stuff */
 		if (data.use_drc) {

@@ -55,6 +55,8 @@ static const char *lock_tag = "LOCK";
  *
  */
 
+#define SUCCESS_RESP_SIZE (sizeof(nfsstat4) + sizeof(stateid4))
+
 int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		 struct nfs_resop4 *resp)
 {
@@ -107,7 +109,15 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Initialize to sane starting values */
 	resp->resop = NFS4_OP_LOCK;
-	res_LOCK4->status = NFS4_OK;
+
+	/* Before starting, make sure we have room for succeseful response so
+	 * we don't have to undo a successful lock operation (that may not be
+	 * reversible if it overlaps an existing lock).
+	 */
+	res_LOCK4->status = check_resp_room(data, SUCCESS_RESP_SIZE);
+
+	if (res_LOCK4->status != NFS4_OK)
+		return res_LOCK4->status;
 
 	/* Record the sequence info */
 	if (data->minorversion > 0) {
@@ -585,18 +595,22 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 				  &conflict_desc);
 
 	if (state_status != STATE_SUCCESS) {
-		if (state_status == STATE_LOCK_CONFLICT) {
-			/* A conflicting lock from a different
-			   lock_owner, returns NFS4ERR_DENIED */
-			Process_nfs4_conflict(&res_LOCK4->LOCK4res_u.denied,
-					      conflict_owner,
-					      &conflict_desc);
-		}
-
 		LogDebug(COMPONENT_NFS_V4_LOCK, "LOCK failed with status %s",
 			 state_err_str(state_status));
 
-		res_LOCK4->status = nfs4_Errno_state(state_status);
+		if (state_status == STATE_LOCK_CONFLICT) {
+			/* A conflicting lock from a different lock_owner,
+			 * returns NFS4ERR_DENIED, but check that the
+			 * response will fit, if not, return response error.
+			 */
+			res_LOCK4->status = Process_nfs4_conflict(
+						&res_LOCK4->LOCK4res_u.denied,
+						conflict_owner,
+						&conflict_desc,
+						data);
+		} else {
+			res_LOCK4->status = nfs4_Errno_state(state_status);
+		}
 
 		/* Save the response in the lock or open owner */
 		if (res_LOCK4->status != NFS4ERR_RESOURCE
@@ -622,6 +636,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		op_ctx->clientid = NULL;
 
 	res_LOCK4->status = NFS4_OK;
+	data->op_resp_size = SUCCESS_RESP_SIZE;
 
 	/* Handle stateid/seqid for success */
 	update_stateid(lock_state,
