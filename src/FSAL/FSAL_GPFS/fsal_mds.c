@@ -163,8 +163,8 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	darg.devid.devid = deviceid->devid;
 
 	da_beginning = xdr_getpos(da_addr_body);
-	darg.xdr.p = xdr_inline(da_addr_body, 0);
-	ds_buffer = da_addr_body->x_handy; /* xdr_size_inline(da_addr_body); */
+	darg.xdr.p = xdr_inline_encode(da_addr_body, 0);
+	ds_buffer = xdr_size_inline(da_addr_body);
 	darg.xdr.end = (int *)(darg.xdr.p
 			+ ((ds_buffer - da_beginning) / BYTES_PER_XDR_UNIT));
 
@@ -185,7 +185,7 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
 		return NFS4ERR_RESOURCE;
 	}
-	(void)xdr_inline(da_addr_body, rc);
+	(void)xdr_inline_encode(da_addr_body, rc);
 	da_length = xdr_getpos(da_addr_body) - da_beginning;
 
 	LogDebug(COMPONENT_PNFS, "rc %d da_length %zd",

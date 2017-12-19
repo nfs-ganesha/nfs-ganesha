@@ -127,7 +127,7 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 	for (retry = 0; retry < MAX_ASYNC_RETRY; retry++) {
 		if (host->slc_callback_clnt == NULL) {
 			LogFullDebug(COMPONENT_NLM,
-				     "gsh_clnt_create %s",
+				     "clnt_ncreate %s",
 				     caller_name);
 
 			if (host->slc_client_type == XPRT_TCP) {
@@ -223,22 +223,28 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 				freeaddrinfo(result);
 			} else {
 
-				host->slc_callback_clnt = gsh_clnt_create(
-						caller_name,
-						NLMPROG,
-						NLM4_VERS,
-						(char *) client_type_str);
+				host->slc_callback_clnt =
+				    clnt_ncreate(caller_name, NLMPROG,
+						 NLM4_VERS,
+						 (char *) client_type_str);
 			}
 
-			if (host->slc_callback_clnt == NULL) {
+			if (CLNT_FAILURE(host->slc_callback_clnt)) {
+				char *err = rpc_sperror(
+					&host->slc_callback_clnt->cl_error,
+					"failed");
+
 				LogMajor(COMPONENT_NLM,
-					 "Cannot create NLM async %s connection to client %s",
-					 client_type_str, caller_name);
+					 "Create NLM async %s connection to client %s %s",
+					 client_type_str, caller_name, err);
+				gsh_free(err);
+				CLNT_DESTROY(host->slc_callback_clnt);
+				host->slc_callback_clnt = NULL;
 				return -1;
 			}
 
 			/* split auth (for authnone, idempotent) */
-			host->slc_callback_auth = authnone_create();
+			host->slc_callback_auth = authnone_ncreate();
 		}
 
 		PTHREAD_MUTEX_lock(&nlm_async_resp_mutex);
@@ -273,7 +279,7 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 		gsh_free(t);
 
 		clnt_req_release(cc);
-		gsh_clnt_destroy(host->slc_callback_clnt);
+		CLNT_DESTROY(host->slc_callback_clnt);
 		host->slc_callback_clnt = NULL;
 	}
 

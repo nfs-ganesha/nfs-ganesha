@@ -163,9 +163,5 @@ int get_port(sockaddr_t *);
 /* Returns an EAI value, accepts only numeric strings */
 extern int ipstring_to_sockaddr(const char *, sockaddr_t *);
 
-/* Serialized clnt_create and clnt_destroy */
-CLIENT *gsh_clnt_create(char *, unsigned long, unsigned long, char *);
-void gsh_clnt_destroy(CLIENT *);
-
 extern tirpc_pkg_params ntirpc_pp;
 #endif /* GSH_RPC_H */

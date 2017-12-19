@@ -55,16 +55,21 @@ bool nsm_connect(void)
 
 	nodename = gsh_strdup(utsname.nodename);
 
-	nsm_clnt = gsh_clnt_create("localhost", SM_PROG, SM_VERS, "tcp");
+	nsm_clnt = clnt_ncreate("localhost", SM_PROG, SM_VERS, "tcp");
 
-	if (nsm_clnt == NULL) {
-		LogCrit(COMPONENT_NLM, "failed to connect to statd");
+	if (CLNT_FAILURE(nsm_clnt)) {
+		char *err = rpc_sperror(&nsm_clnt->cl_error, "failed");
+
+		LogCrit(COMPONENT_NLM, "connect to statd %s", err);
+		gsh_free(err);
+		CLNT_DESTROY(nsm_clnt);
+		nsm_clnt = NULL;
 		gsh_free(nodename);
 		nodename = NULL;
 	}
 
 	/* split auth (for authnone, idempotent) */
-	nsm_auth = authnone_create();
+	nsm_auth = authnone_ncreate();
 
 	return nsm_clnt != NULL;
 }
@@ -72,7 +77,7 @@ bool nsm_connect(void)
 void nsm_disconnect(void)
 {
 	if (nsm_count == 0 && nsm_clnt != NULL) {
-		gsh_clnt_destroy(nsm_clnt);
+		CLNT_DESTROY(nsm_clnt);
 		nsm_clnt = NULL;
 		AUTH_DESTROY(nsm_auth);
 		nsm_auth = NULL;

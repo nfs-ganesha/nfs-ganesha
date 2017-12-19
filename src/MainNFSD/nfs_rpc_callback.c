@@ -456,13 +456,14 @@ static inline char *format_host_principal(rpc_call_channel_t *chan, char *buf,
  *
  * @param[in,out] chan Channel on which to set up GSS
  * @param[in]     cred GSS Credential
+ *
+ * @return	chan->auth->ah_error; check AUTH_FAILURE or AUTH_SUCCESS.
  */
 
 #ifdef _HAVE_GSSAPI
 static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 					      nfs_client_cred_t *cred)
 {
-	AUTH *auth;
 	char hprinc[MAXPATHLEN + 1];
 	char *principal = nfs_param.krb5_param.svc.principal;
 	int32_t code;
@@ -496,12 +497,8 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 		/* no more lipkey, spkm3 */
 		chan->gss_sec.mech = (gss_OID) & krb5oid;
 		chan->gss_sec.req_flags = GSS_C_MUTUAL_FLAG;	/* XXX */
-		auth = authgss_create_default(chan->clnt, hprinc,
-					      &chan->gss_sec);
-		/* authgss_create and authgss_create_default return NULL on
-		 * failure, don't assign NULL to clnt->cl_auth */
-		if (auth)
-			chan->auth = auth;
+		chan->auth = authgss_ncreate_default(chan->clnt, hprinc,
+						     &chan->gss_sec);
 	}
 }
 #endif /* _HAVE_GSSAPI */
@@ -518,6 +515,7 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 {
 	rpc_call_channel_t *chan = &clientid->cid_cb.v40.cb_chan;
+	char *err;
 	struct netbuf raddr;
 	int fd;
 	int proto;
@@ -544,27 +542,32 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 	switch (proto) {
 	case IPPROTO_TCP:
 		raddr.maxlen = raddr.len = sizeof(struct sockaddr_in);
-		chan->clnt = clnt_vc_create(fd, &raddr,
-					    clientid->cid_cb.v40.cb_program,
-					    NFS_CB /* Errata ID: 2291 */, 0, 0);
-
-		/* Mark the fd to be closed on clnt_destroy */
-		if (chan->clnt)
-			CLNT_CONTROL(chan->clnt, CLSET_FD_CLOSE, NULL);
-
+		chan->clnt = clnt_vc_ncreatef(fd, &raddr,
+					      clientid->cid_cb.v40.cb_program,
+					      NFS_CB /* Errata ID: 2291 */,
+					      0, 0,
+					      CLNT_CREATE_FLAG_CLOSE |
+					      CLNT_CREATE_FLAG_CONNECT);
 		break;
 	case IPPROTO_UDP:
 		raddr.maxlen = raddr.len = sizeof(struct sockaddr_in6);
-		chan->clnt = clnt_dg_create(fd, &raddr,
-					    clientid->cid_cb.v40.cb_program,
-					    NFS_CB /* Errata ID: 2291 */, 0, 0);
+		chan->clnt = clnt_dg_ncreatef(fd, &raddr,
+					      clientid->cid_cb.v40.cb_program,
+					      NFS_CB /* Errata ID: 2291 */,
+					      0, 0,
+					      CLNT_CREATE_FLAG_CLOSE);
 		break;
 	default:
 		break;
 	}
 
-	if (!chan->clnt) {
-		close(fd);
+	if (CLNT_FAILURE(chan->clnt)) {
+		err = rpc_sperror(&chan->clnt->cl_error, "failed");
+
+		LogDebug(COMPONENT_NFS_CB, "%s", err);
+		gsh_free(err);
+		CLNT_DESTROY(chan->clnt);
+		chan->clnt = NULL;
 		return EINVAL;
 	}
 
@@ -576,19 +579,24 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 		break;
 #endif /* _HAVE_GSSAPI */
 	case AUTH_SYS:
-		chan->auth = authunix_create_default();
-		if (!chan->auth)
-			return EINVAL;
+		chan->auth = authunix_ncreate_default();
 		break;
 	case AUTH_NONE:
 		chan->auth = authnone_ncreate();
-		if (!chan->auth)
-			return EINVAL;
 		break;
 	default:
 		return EINVAL;
 	}
 
+	if (AUTH_FAILURE(chan->auth)) {
+		err = rpc_sperror(&chan->auth->ah_error, "failed");
+
+		LogDebug(COMPONENT_NFS_CB, "%s", err);
+		gsh_free(err);
+		AUTH_DESTROY(chan->auth);
+		chan->auth = NULL;
+		return EINVAL;
+	}
 	return 0;
 }
 
@@ -684,9 +692,10 @@ static enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, bool locked)
 int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 			    callback_sec_parms4 *sec_parms)
 {
-	int code = 0;
 	rpc_call_channel_t *chan = &session->cb_chan;
+	char *err;
 	int i;
+	int code = 0;
 	bool authed = false;
 
 	PTHREAD_MUTEX_lock(&chan->mtx);
@@ -712,11 +721,17 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 	/* connect an RPC client
 	 * Use version 1 per errata ID 2291 for RFC 5661
 	 */
-	chan->clnt = clnt_vc_create_svc(session->xprt, session->cb_program,
-					NFS_CB /* Errata ID: 2291 */,
-					CLNT_CREATE_FLAG_NONE);
+	chan->clnt = clnt_vc_ncreate_svc(session->xprt, session->cb_program,
+					 NFS_CB /* Errata ID: 2291 */,
+					 CLNT_CREATE_FLAG_NONE);
 
-	if (!chan->clnt) {
+	if (CLNT_FAILURE(chan->clnt)) {
+		err = rpc_sperror(&chan->clnt->cl_error, "failed");
+
+		LogDebug(COMPONENT_NFS_CB, "%s", err);
+		gsh_free(err);
+		CLNT_DESTROY(chan->clnt);
+		chan->clnt = NULL;
 		code = EINVAL;
 		goto out;
 	}
@@ -724,23 +739,21 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 	for (i = 0; i < num_sec_parms; ++i) {
 		if (sec_parms[i].cb_secflavor == AUTH_NONE) {
 			chan->auth = authnone_ncreate();
-			if (!chan->auth)
-				continue;
 			authed = true;
 			break;
 		} else if (sec_parms[i].cb_secflavor == AUTH_SYS) {
 			struct authunix_parms *sys_parms =
 			    &sec_parms[i].callback_sec_parms4_u.cbsp_sys_cred;
 
-			chan->auth = authunix_create(sys_parms->aup_machname,
-						     sys_parms->aup_uid,
-						     sys_parms->aup_gid,
-						     sys_parms->aup_len,
-						     sys_parms->aup_gids);
-			if (!chan->auth)
-				continue;
-			authed = true;
-			break;
+			chan->auth = authunix_ncreate(sys_parms->aup_machname,
+						      sys_parms->aup_uid,
+						      sys_parms->aup_gid,
+						      sys_parms->aup_len,
+						      sys_parms->aup_gids);
+			if (AUTH_SUCCESS(chan->auth)) {
+				authed = true;
+				break;
+			}
 		} else if (sec_parms[i].cb_secflavor == RPCSEC_GSS) {
 
 			/**
@@ -753,6 +766,12 @@ int nfs_rpc_create_chan_v41(nfs41_session_t *session, int num_sec_parms,
 				 "Client sent unknown auth type.");
 			continue;
 		}
+		err = rpc_sperror(&chan->auth->ah_error, "failed");
+
+		LogDebug(COMPONENT_NFS_CB, "%s", err);
+		gsh_free(err);
+		AUTH_DESTROY(chan->auth);
+		chan->auth = NULL;
 	}
 
 	if (!authed) {

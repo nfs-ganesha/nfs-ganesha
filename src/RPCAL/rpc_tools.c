@@ -471,34 +471,3 @@ int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
 	}
 	return rc;
 }
-
-pthread_mutex_t clnt_create_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-/*
- * TI-RPC's clnt_create hierarchy probably isn't re-entrant.  While we
- * -will- make it so, serialize these for now.
- */
-CLIENT *gsh_clnt_create(char *host, unsigned long prog, unsigned long vers,
-			char *proto)
-{
-	CLIENT *clnt;
-
-	PTHREAD_MUTEX_lock(&clnt_create_mutex);
-	clnt = clnt_create(host, prog, vers, proto);
-	if (clnt == NULL) {
-		char *err = rpc_sperror(&rpc_createerr.cf_error, "failed");
-
-		LogDebug(COMPONENT_RPC, "%s: %s %s",
-			 __func__, clnt_sperrno(rpc_createerr.cf_stat), err);
-		gsh_free(err);
-	}
-	PTHREAD_MUTEX_unlock(&clnt_create_mutex);
-	return clnt;
-}
-
-void gsh_clnt_destroy(CLIENT *clnt)
-{
-	PTHREAD_MUTEX_lock(&clnt_create_mutex);
-	CLNT_DESTROY(clnt);
-	PTHREAD_MUTEX_unlock(&clnt_create_mutex);
-}

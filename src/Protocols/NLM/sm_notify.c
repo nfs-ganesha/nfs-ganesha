@@ -41,7 +41,7 @@ nsm_notify_1(notify *argp, CLIENT *clnt)
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
 
 	cc = gsh_malloc(sizeof(*cc));
-	clnt_req_fill(cc, clnt, authnone_create(), SM_NOTIFY,
+	clnt_req_fill(cc, clnt, authnone_ncreate(), SM_NOTIFY,
 		      (xdrproc_t) xdr_notify, argp,
 		      (xdrproc_t) xdr_void, &clnt_res);
 	ret = clnt_req_setup(cc, tout);

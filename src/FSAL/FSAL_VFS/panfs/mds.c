@@ -48,8 +48,8 @@
 
 static void _XDR_2_ioctlxdr_read_begin(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 {
-	pixdr->xdr_buff = xdr_inline(xdr, 0);
-	pixdr->xdr_alloc_len = xdr->x_handy; /* xdr_size_inline(xdr); */
+	pixdr->xdr_buff = xdr_inline_encode(xdr, 0);
+	pixdr->xdr_alloc_len = xdr_size_inline(xdr);
 	pixdr->xdr_len = 0;
 	LogDebug(COMPONENT_FSAL,
 		 "alloc_len=%d xdr_buff=%p",
@@ -60,7 +60,7 @@ static void _XDR_2_ioctlxdr_read_begin(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 /* We need to update the XDR with the encoded bytes */
 static void _XDR_2_ioctlxdr_read_end(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 {
-	void *p = xdr_inline(xdr, pixdr->xdr_len);
+	void *p = xdr_inline_encode(xdr, pixdr->xdr_len);
 
 	LogDebug(COMPONENT_FSAL,
 		 "xdr_len=%d xdr_buff_end=%p",
@@ -74,7 +74,7 @@ static void _XDR_2_ioctlxdr_write(XDR *xdr, struct pan_ioctl_xdr *pixdr)
 		pixdr->xdr_len = xdr_getpos(xdr);
 		xdr_setpos(xdr, 0);
 		/* return the head of the buffer, and reset the pos again */
-		pixdr->xdr_buff = xdr_inline(xdr, pixdr->xdr_len);
+		pixdr->xdr_buff = xdr_inline_decode(xdr, pixdr->xdr_len);
 	} else {
 		/* ensure NULL for next test */
 		pixdr->xdr_buff = NULL;
