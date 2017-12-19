@@ -46,6 +46,9 @@ void admin_halt(void);
 #include "common_utils.h"
 /* For MDCACHE bypass.  Use with care */
 #include "../FSAL/Stackable_FSALs/FSAL_MDCACHE/mdcache_debug.h"
+
+/* LTTng headers */
+#include <lttng/lttng.h>
 }
 
 #define TEST_ROOT "lookup_latency"
@@ -59,6 +62,8 @@ namespace {
   char* lpath = nullptr;
   int dlevel = -1;
   uint16_t export_id = 77;
+  static struct lttng_handle* handle = nullptr;
+  char* event_list = nullptr;
 
   int ganesha_server() {
     /* XXX */
@@ -71,7 +76,8 @@ namespace {
 
   class Environment : public ::testing::Environment {
   public:
-    Environment() : ganesha(ganesha_server) {
+    Environment() : Environment(NULL) {}
+    Environment(char *_ses_name) : ganesha(ganesha_server), session_name(_ses_name) {
       using namespace std::literals;
       std::this_thread::sleep_for(5s);
     }
@@ -81,20 +87,119 @@ namespace {
       ganesha.join();
     }
 
-    virtual void SetUp() { }
+    virtual void SetUp() {
+      struct lttng_domain dom;
+
+      if (!session_name) {
+	/* Don't setup LTTng */
+	return;
+      }
+
+      /* Set up LTTng */
+      memset(&dom, 0, sizeof(dom));
+      dom.type = LTTNG_DOMAIN_UST;
+      dom.buf_type = LTTNG_BUFFER_PER_UID;
+
+      handle = lttng_create_handle(session_name, &dom);
+    }
 
     virtual void TearDown() {
+      if (handle) {
+	lttng_destroy_handle(handle);
+	handle = NULL;
+      }
     }
 
     std::thread ganesha;
+    char *session_name;
   };
 
-  class LookupEmptyLatencyTest : public ::testing::Test {
+  class GaneshaBaseTest : public ::testing::Test {
+  protected:
+    virtual void enableEvents(char *event_list) {
+      struct lttng_event ev;
+      int ret;
+
+      if (!handle) {
+	/* No LTTng this run */
+	return;
+      }
+
+      memset(&ev, 0, sizeof(ev));
+      ev.type = LTTNG_EVENT_TRACEPOINT;
+      ev.loglevel_type = LTTNG_EVENT_LOGLEVEL_ALL;
+      ev.loglevel = -1;
+
+      if (!event_list) {
+	/* Do them all */
+	strcpy(ev.name, "*");
+	ret = lttng_enable_event_with_exclusions(handle,
+			    &ev, NULL, NULL, 0, NULL);
+	ASSERT_GE(ret, 0);
+      } else {
+	char *event_name;
+	event_name = strtok(event_list, ",");
+	while (event_name != NULL) {
+	  /* Copy name and type of the event */
+	  strncpy(ev.name, event_name, LTTNG_SYMBOL_NAME_LEN);
+	  ev.name[sizeof(ev.name) - 1] = '\0';
+
+	  ret = lttng_enable_event_with_exclusions(handle,
+				&ev, NULL, NULL, 0, NULL);
+	  ASSERT_GE(ret, 0);
+
+	  /* Next event */
+	  event_name = strtok(NULL, ",");
+	}
+      }
+    }
+
+    virtual void disableEvents(char *event_list) {
+      struct lttng_event ev;
+      int ret;
+
+      if (!handle) {
+	/* No LTTng this run */
+	return;
+      }
+
+      memset(&ev, 0, sizeof(ev));
+      ev.type = LTTNG_EVENT_ALL;
+      ev.loglevel = -1;
+      if (!event_list) {
+	/* Do them all */
+	ret = lttng_disable_event_ext(handle, &ev, NULL, NULL);
+	ASSERT_GE(ret, 0);
+      } else {
+	char *event_name;
+	event_name = strtok(event_list, ",");
+	while (event_name != NULL) {
+	  /* Copy name and type of the event */
+	  strncpy(ev.name, event_name, LTTNG_SYMBOL_NAME_LEN);
+	  ev.name[sizeof(ev.name) - 1] = '\0';
+
+	  ret = lttng_disable_event_ext(handle, &ev, NULL, NULL);
+	  ASSERT_GE(ret, 0);
+
+	  /* Next event */
+	  event_name = strtok(NULL, ",");
+	}
+      }
+    }
+
+    virtual void SetUp() { }
+
+    virtual void TearDown() { }
+  };
+
+  class LookupEmptyLatencyTest : public GaneshaBaseTest {
   protected:
 
     virtual void SetUp() {
       fsal_status_t status;
       struct attrlist attrs_out;
+
+      GaneshaBaseTest::SetUp();
 
       a_export = get_gsh_export(export_id);
       ASSERT_NE(a_export, nullptr);
@@ -144,6 +249,8 @@ namespace {
 
       put_gsh_export(a_export);
       a_export = NULL;
+
+      GaneshaBaseTest::TearDown();
     }
 
     struct req_op_context req_ctx;
@@ -156,6 +263,18 @@ namespace {
   };
 
   class LookupFullLatencyTest : public LookupEmptyLatencyTest {
+
+  private:
+    static fsal_errors_t readdir_callback(void *opaque,
+					  struct fsal_obj_handle *obj,
+					  const struct attrlist *attr,
+					  uint64_t mounted_on_fileid,
+					  uint64_t cookie,
+					  enum cb_state cb_state)
+      {
+      return ERR_FSAL_NO_ERROR;
+      }
+
   protected:
 
     virtual void SetUp() {
@@ -163,6 +282,10 @@ namespace {
       char fname[NAMELEN];
       struct fsal_obj_handle *obj;
       struct attrlist attrs_out;
+      unsigned int num_entries;
+      bool eod_met;
+      attrmask_t attrmask = 0;
+      uint32_t tracker;
 
       LookupEmptyLatencyTest::SetUp();
 
@@ -179,6 +302,10 @@ namespace {
 	fsal_release_attrs(&attrs_out);
 	obj->obj_ops.put_ref(obj);
       }
+
+      /* Prime the cache */
+      status = fsal_readdir(test_root, 0, &num_entries, &eod_met, attrmask,
+			    readdir_callback, &tracker);
     }
 
     virtual void TearDown() {
@@ -204,9 +331,13 @@ TEST_F(LookupEmptyLatencyTest, SIMPLE)
   fsal_status_t status;
   struct fsal_obj_handle *lookup;
 
+  enableEvents(event_list);
+
   status = root_entry->obj_ops.lookup(root_entry, TEST_ROOT, &lookup, NULL);
   EXPECT_EQ(status.major, 0);
   EXPECT_EQ(test_root, lookup);
+
+  disableEvents(event_list);
 
   lookup->obj_ops.put_ref(lookup);
 }
@@ -217,11 +348,15 @@ TEST_F(LookupEmptyLatencyTest, SIMPLE_BYPASS)
   struct fsal_obj_handle *sub_hdl;
   struct fsal_obj_handle *lookup;
 
+  enableEvents(event_list);
+
   sub_hdl = mdcdb_get_sub_handle(root_entry);
   ASSERT_NE(sub_hdl, nullptr);
   status = sub_hdl->obj_ops.lookup(sub_hdl, TEST_ROOT, &lookup, NULL);
   EXPECT_EQ(status.major, 0);
   EXPECT_EQ(mdcdb_get_sub_handle(test_root), lookup);
+
+  disableEvents(event_list);
 
   /* Lookup on sub-FSAL did not refcount, so no need to put it */
 }
@@ -232,6 +367,8 @@ TEST_F(LookupEmptyLatencyTest, LOOP)
   struct fsal_obj_handle *lookup;
   struct timespec s_time, e_time;
 
+  enableEvents(event_list);
+
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
@@ -241,6 +378,8 @@ TEST_F(LookupEmptyLatencyTest, LOOP)
   }
 
   now(&e_time);
+
+  disableEvents(event_list);
 
   /* Have the put_ref()'s outside the latency loop */
   for (int i = 0; i < LOOP_COUNT; ++i) {
@@ -258,6 +397,8 @@ TEST_F(LookupEmptyLatencyTest, FSALLOOKUP)
   struct fsal_obj_handle *lookup;
   struct timespec s_time, e_time;
 
+  enableEvents(event_list);
+
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
@@ -267,6 +408,8 @@ TEST_F(LookupEmptyLatencyTest, FSALLOOKUP)
   }
 
   now(&e_time);
+
+  disableEvents(event_list);
 
   /* Have the put_ref()'s outside the latency loop */
   for (int i = 0; i < LOOP_COUNT; ++i) {
@@ -278,12 +421,39 @@ TEST_F(LookupEmptyLatencyTest, FSALLOOKUP)
 
 }
 
+TEST_F(LookupFullLatencyTest, BIG_SINGLE)
+{
+  fsal_status_t status;
+  char fname[NAMELEN];
+  struct fsal_obj_handle *obj;
+  struct timespec s_time, e_time;
+
+  enableEvents(event_list);
+
+  now(&s_time);
+
+  sprintf(fname, "d-%08x", DIR_COUNT / 5);
+
+  status = test_root->obj_ops.lookup(test_root, fname, &obj, NULL);
+  ASSERT_EQ(status.major, 0) << " failed to lookup " << fname;
+  obj->obj_ops.put_ref(obj);
+
+  now(&e_time);
+
+  disableEvents(event_list);
+
+  fprintf(stderr, "Average time per lookup: %" PRIu64 " ns\n",
+	  timespec_diff(&s_time, &e_time));
+}
+
 TEST_F(LookupFullLatencyTest, BIG)
 {
   fsal_status_t status;
   char fname[NAMELEN];
   struct fsal_obj_handle *obj;
   struct timespec s_time, e_time;
+
+  enableEvents(event_list);
 
   now(&s_time);
 
@@ -296,6 +466,8 @@ TEST_F(LookupFullLatencyTest, BIG)
   }
 
   now(&e_time);
+
+  disableEvents(event_list);
 
   fprintf(stderr, "Average time per lookup: %" PRIu64 " ns\n",
 	  timespec_diff(&s_time, &e_time) / LOOP_COUNT);
@@ -310,6 +482,9 @@ TEST_F(LookupFullLatencyTest, BIG_BYPASS)
   struct timespec s_time, e_time;
 
   sub_hdl = mdcdb_get_sub_handle(test_root);
+
+  enableEvents(event_list);
+
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
@@ -322,6 +497,8 @@ TEST_F(LookupFullLatencyTest, BIG_BYPASS)
 
   now(&e_time);
 
+  disableEvents(event_list);
+
   fprintf(stderr, "Average time per lookup: %" PRIu64 " ns\n",
 	  timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 }
@@ -329,6 +506,7 @@ TEST_F(LookupFullLatencyTest, BIG_BYPASS)
 int main(int argc, char *argv[])
 {
   int code = 0;
+  char* session_name = NULL;
 
   using namespace std;
   using namespace std::literals;
@@ -351,6 +529,12 @@ int main(int argc, char *argv[])
 
       ("debug", po::value<string>(),
 	"ganesha debug level")
+
+      ("session", po::value<string>(),
+	"LTTng session name")
+
+      ("event-list", po::value<string>(),
+	"LTTng event list, comma separated")
       ;
 
     po::variables_map::iterator vm_iter;
@@ -377,9 +561,17 @@ int main(int argc, char *argv[])
     if (vm_iter != vm.end()) {
       export_id = vm_iter->second.as<uint16_t>();
     }
+    vm_iter = vm.find("session");
+    if (vm_iter != vm.end()) {
+      session_name = (char*) vm_iter->second.as<std::string>().c_str();
+    }
+    vm_iter = vm.find("event-list");
+    if (vm_iter != vm.end()) {
+      event_list = (char*) vm_iter->second.as<std::string>().c_str();
+    }
 
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::AddGlobalTestEnvironment(new Environment);
+    ::testing::AddGlobalTestEnvironment(new Environment(session_name));
 
     code  = RUN_ALL_TESTS();
   }
