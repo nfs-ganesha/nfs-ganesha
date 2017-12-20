@@ -108,6 +108,9 @@ BuildRequires:	bison flex
 BuildRequires:	flex
 BuildRequires:	pkgconfig
 BuildRequires:	krb5-devel
+%if ( 0%{?suse_version} >= 1330 )
+BuildRequires:  libnsl-devel
+%endif
 %if ( 0%{?suse_version} )
 BuildRequires:	dbus-1-devel
 Requires:	dbus-1
