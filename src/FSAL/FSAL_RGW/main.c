@@ -289,13 +289,31 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			       &export->rgw_fs,
 			       RGW_MOUNT_FLAG_NONE);
 #else
-	rgw_status = rgw_mount2(RGWFSM.rgw,
-				export->rgw_user_id,
-				export->rgw_access_key_id,
-				export->rgw_secret_access_key,
-				op_ctx->ctx_export->fullpath,
-				&export->rgw_fs,
-				RGW_MOUNT_FLAG_NONE);
+	const char *fullpath = op_ctx->ctx_export->fullpath;
+
+	if (strcmp(fullpath, "/") && strchr(fullpath, '/') &&
+		(strchr(fullpath, '/') - fullpath) > 1) {
+		/* case : "bucket_name/dir" */
+		rgw_status = rgw_mount(RGWFSM.rgw,
+					export->rgw_user_id,
+					export->rgw_access_key_id,
+					export->rgw_secret_access_key,
+					&export->rgw_fs,
+					RGW_MOUNT_FLAG_NONE);
+	} else {
+		/* case : "/" of "bucket_name" or "/bucket_name" */
+		if (strcmp(fullpath, "/") && strchr(fullpath, '/') &&
+			(strchr(fullpath, '/') - fullpath) == 0) {
+			fullpath = op_ctx->ctx_export->fullpath + 1;
+		}
+	  rgw_status = rgw_mount2(RGWFSM.rgw,
+					export->rgw_user_id,
+					export->rgw_access_key_id,
+					export->rgw_secret_access_key,
+					fullpath,
+					&export->rgw_fs,
+					RGW_MOUNT_FLAG_NONE);
+	}
 #endif
 	if (rgw_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
