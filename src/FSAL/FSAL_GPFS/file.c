@@ -1196,7 +1196,8 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
  *
  *  default case not supported
  */
-fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl, struct io_info *info)
+fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
+			 struct io_info *info)
 {
 	struct gpfs_fsal_obj_handle *myself =
 		container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);

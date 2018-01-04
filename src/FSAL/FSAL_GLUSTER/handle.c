@@ -2065,6 +2065,84 @@ static void glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	done_cb(obj_hdl, status, write_arg, caller_arg);
 }
 
+/**
+ * @brief Implements GLUSTER FSAL objectoperation seek (DATA/HOLE)
+ * seek2
+ */
+static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
+				struct state_t *state,
+				struct io_info *info)
+{
+	off_t ret = 0, offset = info->io_content.hole.di_offset;
+	int what = 0;
+	bool has_lock = false;
+	bool closefd = false;
+	fsal_openflags_t openflags = FSAL_O_READ;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct glusterfs_fd my_fd = {0};
+	struct glusterfs_export *glfs_export =
+	   container_of(op_ctx->fsal_export, struct glusterfs_export, export);
+
+#ifdef GLTIMING
+	struct timespec s_time, e_time;
+
+	now(&s_time);
+#endif
+
+	/* Get a usable file descriptor */
+	status = find_fd(&my_fd, obj_hdl, false, state, openflags,
+		&has_lock, &closefd, false);
+
+	if (FSAL_IS_ERROR(status))
+		goto out;
+
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
+			&op_ctx->creds->caller_gid,
+			op_ctx->creds->caller_glen,
+			op_ctx->creds->caller_garray);
+
+	if (info->io_content.what == NFS4_CONTENT_DATA) {
+		what = SEEK_DATA;
+	} else if (info->io_content.what == NFS4_CONTENT_HOLE) {
+		what = SEEK_HOLE;
+	} else {
+		status = fsalstat(ERR_FSAL_UNION_NOTSUPP, 0);
+		goto out;
+	}
+
+	ret = glfs_lseek(my_fd.glfd, offset, what);
+
+	 /* restore credentials */
+	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
+
+	if (ret < 0) {
+		if (errno == ENXIO) {
+			info->io_eof = TRUE;
+		} else {
+			status = gluster2fsal_error(errno);
+		}
+		goto out;
+	} else {
+		info->io_eof = FALSE;
+		info->io_content.hole.di_offset = ret;
+	}
+
+ out:
+#ifdef GLTIMING
+	now(&e_time);
+	latency_update(&s_time, &e_time, lat_file_seek);
+#endif
+
+	if (closefd)
+		glusterfs_close_my_fd(&my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	return status;
+}
+
+
 /* commit2
  */
 
@@ -2813,6 +2891,7 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lock_op2 = glusterfs_lock_op2;
 	ops->setattr2 = glusterfs_setattr2;
 	ops->close2 = glusterfs_close2;
+	ops->seek2 = seek2;
 
 
 	/* pNFS related ops */

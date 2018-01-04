@@ -1463,7 +1463,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->rename = mdcache_rename;
 	ops->unlink = mdcache_unlink;
 	ops->fs_locations = mdcache_fs_locations;
-	ops->seek = mdcache_seek;
 	ops->io_advise = mdcache_io_advise;
 	ops->close = mdcache_close;
 	ops->handle_is = mdcache_handle_is;

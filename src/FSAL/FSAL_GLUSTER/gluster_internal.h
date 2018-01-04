@@ -103,6 +103,7 @@ typedef enum {
 	lat_file_unlink,
 	lat_file_open,
 	lat_file_read,
+	lat_file_seek,
 	lat_file_write,
 	lat_commit,
 	lat_file_close,
