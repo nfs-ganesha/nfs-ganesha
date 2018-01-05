@@ -662,23 +662,25 @@ fsal_fs_cmpf_fsid(const struct avltree_node *lhs,
 	lk = avltree_container_of(lhs, struct fsal_filesystem, avl_fsid);
 	rk = avltree_container_of(rhs, struct fsal_filesystem, avl_fsid);
 
+	if (lk->fsid_type < rk->fsid_type)
+		return -1;
+
+	if (lk->fsid_type > rk->fsid_type)
+		return 1;
+
 	if (lk->fsid.major < rk->fsid.major)
 		return -1;
 
 	if (lk->fsid.major > rk->fsid.major)
 		return 1;
 
-	if (lk->fsid_type == FSID_MAJOR_64 &&
-	    rk->fsid_type == FSID_MAJOR_64)
+	/* No need to compare minors as they should be
+	 * zeros if the type is FSID_MAJOR_64
+	 */
+	if (lk->fsid_type == FSID_MAJOR_64) {
+		assert(rk->fsid_type == FSID_MAJOR_64);
 		return 0;
-
-	/* Treat no minor as strictly less than any minor */
-	if (lk->fsid_type == FSID_MAJOR_64)
-		return -1;
-
-	/* Treat no minor as strictly less than any minor */
-	if (rk->fsid_type == FSID_MAJOR_64)
-		return 1;
+	}
 
 	if (lk->fsid.minor < rk->fsid.minor)
 		return -1;
