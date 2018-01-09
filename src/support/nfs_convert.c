@@ -482,6 +482,9 @@ nfsstat4 nfs4_Errno_verbose(fsal_errors_t error, const char *where)
 		break;
 
 	case ERR_FSAL_SYMLINK:
+		nfserror = NFS4ERR_SYMLINK;
+		break;
+
 	case ERR_FSAL_BADTYPE:
 	case ERR_FSAL_INVAL:
 	case ERR_FSAL_OVERFLOW:
