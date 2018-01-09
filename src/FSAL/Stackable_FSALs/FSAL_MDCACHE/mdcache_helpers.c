@@ -1010,80 +1010,6 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 }
 
 /**
- * @brief Create a new entry and add it to the parent's cache
- *
- * A new entry for @a sub_handle is created, and it is added to the dirent cache
- * of @a mdc_parent.
- *
- * @note mdc_parent MUST have it's content_lock held for writing
- *
- * @note Currently this function is only used when caching entire directories.
- *
- * @param[in]     mdc_parent  Parent entry
- * @param[in]     name        Name of new entry
- * @param[in]     sub_handle  Handle from sub-FSAL for new entry
- * @param[in]     attrs_in    Attributes for new entry
- *
- * @return FSAL status (ERR_FSAL_OVERFLOW if dircache full)
- */
-
-fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
-			    const char *name,
-			    struct fsal_obj_handle *sub_handle,
-			    struct attrlist *attrs_in)
-{
-	struct mdcache_fsal_export *export = mdc_cur_export();
-	fsal_status_t status;
-	mdcache_entry_t *new_entry = NULL;
-	bool invalidate = false;
-
-#ifdef DEBUG_MDCACHE
-	assert(mdc_parent->content_lock.__data.__writer != 0);
-#endif
-	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry for %s", name);
-
-	status = mdcache_new_entry(export, sub_handle, attrs_in, NULL,
-				   false, &new_entry, NULL);
-
-	if (FSAL_IS_ERROR(status))
-		return status;
-
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_readdir_populate,
-		   __func__, __LINE__, new_entry, new_entry->lru.refcnt);
-#endif
-	LogFullDebug(COMPONENT_CACHE_INODE,
-		     "Created entry %p FSAL %s for %s",
-		     new_entry, new_entry->sub_handle->fsal->name, name);
-
-	if (avltree_size(&mdc_parent->fsobj.fsdir.avl.t) >
-	    mdcache_param.dir.avl_max) {
-		LogFullDebug(COMPONENT_CACHE_INODE, "Parent %p at max",
-			     mdc_parent);
-		mdcache_put(new_entry);
-		return fsalstat(ERR_FSAL_OVERFLOW, 0);
-	}
-
-	/* Entry was found in the FSAL, add this entry to the
-	   parent directory */
-	status = mdcache_dirent_add(mdc_parent, name, new_entry, &invalidate);
-
-	if (status.major == ERR_FSAL_EXIST)
-		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-	if (!FSAL_IS_ERROR(status) && new_entry->obj_handle.type == DIRECTORY) {
-		/* Insert Parent's key */
-		PTHREAD_RWLOCK_wrlock(&new_entry->content_lock);
-		mdc_dir_add_parent(new_entry, mdc_parent);
-		PTHREAD_RWLOCK_unlock(&new_entry->content_lock);
-	}
-
-	mdcache_put(new_entry);
-
-	return status;
-}
-
-/**
  * @brief Try to get a cached child
  *
  * Get the cached entry child of @a mdc_parent If the cached entry cannot be
@@ -1117,8 +1043,8 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 #endif
 	*entry = NULL;
 
-	/* If parent isn't caching, return stale */
-	if (test_mde_flags(mdc_parent, MDCACHE_BYPASS_DIRCACHE))
+	/* If aren't caching dirents, return stale */
+	if (mdcache_param.dir.avl_chunk == 0)
 		return fsalstat(ERR_FSAL_STALE, 0);
 
 	/* If the dirent cache is untrustworthy, don't even ask it */
@@ -1225,8 +1151,8 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 		return status;
 	}
 
-	if (test_mde_flags(mdc_parent, MDCACHE_BYPASS_DIRCACHE)) {
-		/* Parent isn't caching dirents; call directly.
+	if (mdcache_param.dir.avl_chunk == 0) {
+		/* We aren't caching dirents; call directly.
 		 * NOTE: Technically we will call mdc_lookup_uncached not
 		 *       holding the content_lock write as required, however
 		 *       since we are operating uncached here, ultimately there
@@ -1457,54 +1383,6 @@ mdcache_src_dest_unlock(mdcache_entry_t *src, mdcache_entry_t *dest)
 }
 
 /**
- * @brief Find a cached directory entry
- *
- * Look up the entry in the cache.  Success is if found (obviously), or if the
- * cache isn't trusted.  NOENT is only retrned if both not found and trusted.
- *
- * Note that only if we are not chunking will we return ERR_FSAL_NOENT.
- *
- * @note Caller MUST hold the content_lock for read
- *
- * @param[in] dir	Directory to search
- * @param[in] name	Name to find
- * @param[in] direntp	Directory entry, if found
- * @return FSAL status
- */
-fsal_status_t mdcache_dirent_find(mdcache_entry_t *dir, const char *name,
-				  mdcache_dir_entry_t **direntp)
-{
-	mdcache_dir_entry_t *dirent;
-
-	LogFullDebug(COMPONENT_CACHE_INODE, "Find dir entry %s", name);
-
-	*direntp = NULL;
-
-	/* Sanity check */
-	if (dir->obj_handle.type != DIRECTORY)
-		return fsalstat(ERR_FSAL_NOTDIR, 0);
-
-	/* If no active entry, do nothing */
-	if (avltree_size(&dir->fsobj.fsdir.avl.t) == 0) {
-		if (mdc_dircache_trusted(dir))
-			return fsalstat(ERR_FSAL_NOENT, 0);
-		else
-			return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-	dirent = mdcache_avl_qp_lookup_s(dir, name, 1);
-	if (!dirent) {
-		if (mdc_dircache_trusted(dir))
-			return fsalstat(ERR_FSAL_NOENT, 0);
-
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-	*direntp = dirent;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
  *
  * @brief Adds a directory entry to a cached directory.
  *
@@ -1514,7 +1392,8 @@ fsal_status_t mdcache_dirent_find(mdcache_entry_t *dir, const char *name,
  * either once (for handling creation) or iteratively in directory
  * population.
  *
- * @note Caller MUST hold the content_lock for write
+ * @note Caller MUST hold the content_lock for write and must only call if
+ *       dirents are being cached.
  *
  * @param[in,out] parent      Cache entry of the directory being updated
  * @param[in]     name        The name to add to the entry
@@ -1541,13 +1420,6 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 #ifdef DEBUG_MDCACHE
 	assert(parent->content_lock.__data.__writer != 0);
 #endif
-	/* Sanity check */
-	if (parent->obj_handle.type != DIRECTORY)
-		return fsalstat(ERR_FSAL_NOTDIR, 0);
-
-	/* Don't cache if parent is not being cached */
-	if (test_mde_flags(parent, MDCACHE_BYPASS_DIRCACHE))
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	/* in cache avl, we always insert on pentry_parent */
 	new_dir_entry = gsh_calloc(1, sizeof(mdcache_dir_entry_t) + namesize);
@@ -1570,8 +1442,7 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 	}
 
 	/* we're going to succeed */
-	if (new_dir_entry == allocated_dir_entry &&
-	    mdcache_param.dir.avl_chunk > 0) {
+	if (new_dir_entry == allocated_dir_entry) {
 		/* Place new dirent into a chunk or as detached. */
 		place_new_dirent(parent, new_dir_entry);
 
@@ -1593,152 +1464,26 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
  *
  * @param[in] parent	Parent directory
  * @param[in] name	Name to remove
- * @return FSAL status
  */
-fsal_status_t
-mdcache_dirent_remove(mdcache_entry_t *parent, const char *name)
+void mdcache_dirent_remove(mdcache_entry_t *parent, const char *name)
 {
-	mdcache_dir_entry_t *dirent;
-	fsal_status_t status;
-
 #ifdef DEBUG_MDCACHE
 	assert(parent->content_lock.__data.__writer != 0);
 #endif
-	/* Don't remove if parent is not being cached */
-	if (test_mde_flags(parent, MDCACHE_BYPASS_DIRCACHE))
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-	LogFullDebug(COMPONENT_CACHE_INODE, "Remove dir entry %s", name);
-
-	status = mdcache_dirent_find(parent, name, &dirent);
-	if (FSAL_IS_ERROR(status)) {
-		if (status.major == ERR_FSAL_NOENT)
-			/* Wasn't there */
-			return fsalstat(ERR_FSAL_NO_ERROR, 0);
-		return status;
-	} else if (!dirent)
-		return status;
-
-	avl_dirent_set_deleted(parent, dirent);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
- * @brief Rename a cached directory entry
- *
- * @note Caller MUST hold the content_lock for write
- *
- * @param[in] parent	Parent directory
- * @param[in] oldname	Current name of dirent
- * @param[in] newname	New name for dirent
- * @return FSAL status
- */
-fsal_status_t
-mdcache_dirent_rename(mdcache_entry_t *parent, const char *oldname,
-		      const char *newname)
-
-{
-	mdcache_dir_entry_t *dirent, *dirent2;
-	fsal_status_t status;
-	int code = 0;
-
-	LogFullDebug(COMPONENT_CACHE_INODE,
-		     "Rename dir entry %s to %s",
-		     oldname, newname);
-
-#ifdef DEBUG_MDCACHE
-	assert(parent->content_lock.__data.__writer != 0);
-#endif
-	/* Don't rename if parent is not being cached */
-	if (test_mde_flags(parent, MDCACHE_BYPASS_DIRCACHE))
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-	/* Don't rename if chunking. */
-	if (mdcache_param.dir.avl_chunk > 0) {
-		/* Dump the dirent cache for this directory. */
-		mdcache_dirent_invalidate_all(parent);
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-	status = mdcache_dirent_find(parent, oldname, &dirent);
-
-	/* If not chunking, and the directory was fully populated, and we did
-	 * not find the entry, we will return error, and the caller will
-	 * invalidate the directory. With chunking there can be no failure.
+	/* Don't remove if we aren't doing dirent caching or the cache is empty
 	 */
-	if (FSAL_IS_ERROR(status))
-		return status;
+	if (mdcache_param.dir.avl_chunk != 0 &&
+	    avltree_size(&parent->fsobj.fsdir.avl.t) != 0) {
+		mdcache_dir_entry_t *dirent;
 
-	if (!dirent)
-		return status;
+		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+			     "Remove dir entry %s", name);
 
-	status = mdcache_dirent_find(parent, newname, &dirent2);
-	if (FSAL_IS_ERROR(status) && status.major != ERR_FSAL_NOENT)
-		return status;
+		dirent = mdcache_avl_qp_lookup_s(parent, name, 1);
 
-	if (dirent2) {
-		/* rename would cause a collision */
-		if (test_mde_flags(parent, MDCACHE_TRUST_CONTENT)) {
-			/* overwrite, replace entry and expire the old */
-			mdcache_entry_t *oldentry;
-
-			(void)mdcache_find_keyed(&dirent2->ckey, &oldentry);
-
-			/* dirent2 (newname) will now point to renamed entry */
-			mdcache_key_delete(&dirent2->ckey);
-			mdcache_key_dup(&dirent2->ckey, &dirent->ckey);
-
-			/* Delete dirent for oldname */
+		if (dirent != NULL)
 			avl_dirent_set_deleted(parent, dirent);
-
-			if (oldentry) {
-				/* if it is still around, mark it gone/stale */
-				LogFullDebug(COMPONENT_CACHE_INODE,
-					     "Entry %p Clearing MDCACHE_TRUST_ATTRS, MDCACHE_TRUST_CONTENT, MDCACHE_DIR_POPULATED",
-					     oldentry);
-				atomic_clear_uint32_t_bits(
-							&oldentry->mde_flags,
-							MDCACHE_TRUST_ATTRS |
-							MDCACHE_TRUST_CONTENT |
-							MDCACHE_DIR_POPULATED);
-				mdcache_put(oldentry);
-			}
-			return status;
-		} else {
-			LogDebug(COMPONENT_CACHE_INODE,
-				 "Returning EEXIST for %s", newname);
-			return fsalstat(ERR_FSAL_EXIST, 0);
-		}
 	}
-
-	/* Size (including terminating NULL) of the filename */
-	size_t newnamesize = strlen(newname) + 1;
-
-	/* try to rename--no longer in-place */
-	dirent2 = gsh_calloc(1, sizeof(mdcache_dir_entry_t) + newnamesize);
-	memcpy(dirent2->name, newname, newnamesize);
-	dirent2->flags = DIR_ENTRY_FLAG_NONE;
-	mdcache_key_dup(&dirent2->ckey, &dirent->ckey);
-
-	/* Delete the entry for oldname */
-	avl_dirent_set_deleted(parent, dirent);
-
-	/* Insert the entry for newname */
-	code = mdcache_avl_qp_insert(parent, &dirent2);
-
-	/* We should not be able to have a name collision. */
-	assert(code != -2);
-
-	if (code < 0) {
-		/* We had a hash collision (impossible for all practical
-		 * purposes). Just abandon...
-		 */
-		/* dirent2 was never inserted */
-		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-	}
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -3296,165 +3041,6 @@ again:
 	 */
 	first_pass = false;
 	goto again;
-}
-
-/**
- * @brief Populate a single dir entry
- *
- * This callback serves to populate a single dir entry from the
- * readdir.
- *
- * NOTE: Attributes are passed up from sub-FSAL, it will call
- * fsal_release_attrs, though if we do an fsal_copy_attrs(dest, src, true), any
- * references will have been transferred to the mdcache entry and the FSAL's
- * fsal_release_attrs will not really have anything to do.
- *
- * @param[in]     name       Name of the directory entry
- * @param[in]     sub_handle Object for entry
- * @param[in]     attrs      Attributes requested for the object
- * @param[in,out] dir_state  Callback state
- * @param[in]     cookie     Directory cookie
- *
- * @returns fsal_dir_result
- */
-
-static enum fsal_dir_result
-mdc_populate_dirent(const char *name, struct fsal_obj_handle *sub_handle,
-		    struct attrlist *attrs, void *dir_state,
-		    fsal_cookie_t cookie)
-{
-	struct mdcache_populate_cb_state *state = dir_state;
-	fsal_status_t status = { 0, 0 };
-	mdcache_entry_t *directory = container_of(&state->dir->obj_handle,
-						  mdcache_entry_t, obj_handle);
-
-	/* This is in the middle of a subcall. Do a supercall */
-	supercall_raw(state->export,
-		status = mdc_add_cache(directory, name, sub_handle, attrs)
-	);
-
-	if (FSAL_IS_ERROR(status)) {
-		*state->status = status;
-		if (status.major == ERR_FSAL_XDEV) {
-			LogInfo(COMPONENT_CACHE_INODE,
-				"Ignoring XDEV entry %s", name);
-			*state->status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-			return DIR_CONTINUE;
-		}
-		if ((*state->status).major == ERR_FSAL_OVERFLOW) {
-			LogFullDebug(COMPONENT_CACHE_INODE,
-				     "Lookup failed on %s in dir %p with %s",
-				     name, directory,
-				     fsal_err_txt(*state->status));
-		} else {
-			LogInfo(COMPONENT_CACHE_INODE,
-				"Lookup failed on %s in dir %p with %s",
-				name, directory, fsal_err_txt(*state->status));
-		}
-		return DIR_TERMINATE;
-	}
-
-	return DIR_CONTINUE;
-}
-
-/**
- *
- * @brief Cache complete directory contents
- *
- * This function reads a complete directory from the FSAL and caches
- * both the names and files.  The content lock must be held on the
- * directory being read.
- *
- * @note dir MUST have it's content_lock held for writing
- *
- * @param[in] dir  Entry for the parent directory to be read
- *
- * @return FSAL status
- */
-
-fsal_status_t
-mdcache_dirent_populate(mdcache_entry_t *dir)
-{
-	fsal_status_t fsal_status;
-	fsal_status_t status = {0, 0};
-	bool eod = false;
-	attrmask_t attrmask;
-
-	struct mdcache_populate_cb_state state;
-
-#ifdef DEBUG_MDCACHE
-	assert(dir->content_lock.__data.__writer != 0);
-#endif
-
-	/* Only DIRECTORY entries are concerned */
-	if (dir->obj_handle.type != DIRECTORY) {
-		LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-			    "CACHE_INODE_NOT_A_DIRECTORY");
-		return fsalstat(ERR_FSAL_NOTDIR, 0);
-	}
-
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-			"Entry %p, MDCACHE_TRUST_CONTENT %s, MDCACHE_DIR_POPULATED %s",
-			dir,
-			test_mde_flags(dir, MDCACHE_TRUST_CONTENT)
-				? "true" : "false",
-			test_mde_flags(dir, MDCACHE_DIR_POPULATED)
-				? "true" : "false");
-
-	if (test_mde_flags(dir, MDCACHE_DIR_POPULATED |
-				MDCACHE_TRUST_CONTENT)) {
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-	/* Invalidate all the dirents */
-	mdcache_dirent_invalidate_all(dir);
-
-	state.export = mdc_cur_export();
-	state.dir = dir;
-	state.status = &status;
-	state.cb = NULL; /* cached dirs don't use callback */
-	state.dir_state = NULL; /* cached dirs don't use dir_state */
-
-	attrmask = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
-					op_ctx->fsal_export) | ATTR_RDATTR_ERR;
-
-	subcall_raw(state.export,
-		fsal_status = dir->sub_handle->obj_ops.readdir(
-			dir->sub_handle, NULL, (void *)&state,
-			mdc_populate_dirent, attrmask, &eod)
-	       );
-	if (FSAL_IS_ERROR(fsal_status)) {
-
-		LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-			    "FSAL readdir status=%s",
-			    fsal_err_txt(fsal_status));
-		return fsal_status;
-	}
-
-	if (status.major == ERR_FSAL_OVERFLOW)
-		return status;
-
-	/* we were supposed to read to the end.... */
-	if (!eod && mdcache_param.retry_readdir) {
-		LogInfoAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-			   "Readdir didn't reach eod on dir %p (status %s)",
-			   &dir->sub_handle, fsal_err_txt(status));
-		return fsalstat(ERR_FSAL_DELAY, 0);
-	} else if (eod) {
-		/* End of work */
-		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-				"Entry %p setting MDCACHE_DIR_POPULATED", dir);
-		atomic_set_uint32_t_bits(&dir->mde_flags,
-					 MDCACHE_DIR_POPULATED);
-
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-	/* If !eod (and fsal_status isn't an error), then the only error path
-	 * is through a callback failure and status has been set the
-	 * mdc_populate_dirent callback */
-
-	return status;
 }
 
 /**

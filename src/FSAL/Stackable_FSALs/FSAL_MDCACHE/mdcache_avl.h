@@ -124,20 +124,6 @@ void mdcache_avl_init(mdcache_entry_t *entry);
 int mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent);
 int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
 
-#define MDCACHE_FLAG_NONE        0x0000
-#define MDCACHE_FLAG_NEXT_ACTIVE 0x0001
-#define MDCACHE_FLAG_ONLY_ACTIVE 0x0002
-
-enum mdcache_avl_err {
-	MDCACHE_AVL_NO_ERROR = 0,	/*< Entry was found */
-	MDCACHE_AVL_NOT_FOUND,		/*< Entry was not found */
-	MDCACHE_AVL_LAST,		/*< Requested next, but was last */
-	MDCACHE_AVL_DELETED,		/*< Entry was deleted */
-};
-
-enum mdcache_avl_err mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k,
-					  uint32_t flags,
-					  mdcache_dir_entry_t **dirent);
 bool mdcache_avl_lookup_ck(mdcache_entry_t *entry, uint64_t ck,
 			   mdcache_dir_entry_t **dirent);
 mdcache_dir_entry_t *mdcache_avl_qp_lookup_s(mdcache_entry_t *entry,

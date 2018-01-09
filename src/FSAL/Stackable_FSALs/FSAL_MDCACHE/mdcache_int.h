@@ -181,8 +181,6 @@ struct entry_export_map {
 #define MDCACHE_TRUST_DIR_CHUNKS FSAL_UP_INVALIDATE_DIR_CHUNKS
 /** The entry has been removed, but not unhashed due to state */
 static const uint32_t MDCACHE_UNREACHABLE = 0x100;
-/** The directory is too big; skip the dirent cache */
-static const uint32_t MDCACHE_BYPASS_DIRCACHE = 0x200;
 
 
 /**
@@ -298,8 +296,6 @@ struct mdcache_fsal_obj_handle {
 			struct {
 				/** Children by name hash */
 				struct avltree t;
-				/** Persist cookies for deleted entries */
-				struct avltree c;
 				/** Table of dirents by FSAL cookie */
 				struct avltree ck;
 				/** Table of dirents in sorted order. */
@@ -475,18 +471,14 @@ fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent,
 				  struct attrlist *attrs_out);
 void mdcache_src_dest_lock(mdcache_entry_t *src, mdcache_entry_t *dest);
 void mdcache_src_dest_unlock(mdcache_entry_t *src, mdcache_entry_t *dest);
-fsal_status_t mdcache_dirent_remove(mdcache_entry_t *parent, const char *name);
+void mdcache_dirent_remove(mdcache_entry_t *parent, const char *name);
 fsal_status_t mdcache_dirent_add(mdcache_entry_t *parent,
 				 const char *name,
 				 mdcache_entry_t *entry,
 				 bool *invalidate);
-fsal_status_t mdcache_dirent_rename(mdcache_entry_t *parent,
-				    const char *oldname,
-				    const char *newname);
 
 void mdcache_dirent_invalidate_all(mdcache_entry_t *entry);
 
-fsal_status_t mdcache_dirent_populate(mdcache_entry_t *dir);
 fsal_status_t mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t
 				       *whence, void *dir_state,
 				       fsal_readdir_cb cb, attrmask_t attrmask,
@@ -518,18 +510,6 @@ void mdc_update_attr_cache(mdcache_entry_t *entry, struct attrlist *attrs);
 static inline bool test_mde_flags(mdcache_entry_t *entry, uint32_t bits)
 {
 	return (atomic_fetch_uint32_t(&entry->mde_flags) & bits) == bits;
-}
-
-static inline bool mdc_dircache_trusted(mdcache_entry_t *dir)
-{
-	/* This function returns false if chunking is enabled, the only caller
-	 * that matters for chunking, mdcache_dirent_find will thus return
-	 * ERR_FSAL_NO_ERROR if an entry is not found, and it's callers will
-	 * do the right thing...
-	 */
-	return ((mdcache_param.dir.avl_chunk == 0) &&
-		test_mde_flags(dir, MDCACHE_TRUST_CONTENT |
-				    MDCACHE_DIR_POPULATED));
 }
 
 static inline struct mdcache_fsal_export *mdc_export(

@@ -30,12 +30,6 @@ Cache_Size(uint32, range 1 to UINT32_MAX, default 32633)
 Use_Getattr_Directory_Invalidation(bool, default false)
     Use getattr for directory invalidation.
 
-Dir_Max_Deleted(uint32, range 1 to UINT32_MAX, default 65536)
-    Max size of per-directory cache of removed entries
-
-Dir_Max(uint32, range 1 to UINT32_MAX, default 65536)
-    Max size of per-directory dirent cache
-
 Dir_Chunk(uint32, range 0 to UINT32_MAX, default 128)
     Size of per-directory dirent cache chunks, 0 means directory chunking is not
     enabled.
@@ -85,11 +79,6 @@ Required_Progress(uint32, range 1 to 50, default 5)
 Futility_Count(uint32, range 1 to 50, default 8)
     Number of failures to approach the high watermark before we disable caching,
     when in extremis.
-
-Retry_Readdir(bool, default false)
-    Behavior for when readdir fails for some reason:
-    * true will ask the client to retry later,
-    * false will give the
 
 See also
 ==============================

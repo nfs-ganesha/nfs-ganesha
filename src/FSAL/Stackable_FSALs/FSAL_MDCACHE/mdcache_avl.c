@@ -58,8 +58,6 @@ mdcache_avl_init(mdcache_entry_t *entry)
 {
 	avltree_init(&entry->fsobj.fsdir.avl.t, avl_dirent_hk_cmpf,
 		     0 /* flags */);
-	avltree_init(&entry->fsobj.fsdir.avl.c, avl_dirent_hk_cmpf,
-		     0 /* flags */);
 	avltree_init(&entry->fsobj.fsdir.avl.ck, avl_dirent_ck_cmpf,
 		     0 /* flags */);
 	avltree_init(&entry->fsobj.fsdir.avl.sorted, avl_dirent_sorted_cmpf,
@@ -94,10 +92,6 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 
 	v->flags |= DIR_ENTRY_FLAG_DELETED;
 	mdcache_key_delete(&v->ckey);
-
-	/* save cookie in deleted avl */
-	node = avltree_insert(&v->node_hk, &entry->fsobj.fsdir.avl.c);
-	assert(!node);
 
 	/* Do stuff if chunked... */
 	if (v->chunk != NULL) {
@@ -151,6 +145,9 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 		 * directory from that position, this means that directory
 		 * enumeration will have to skip deleted entries.
 		 */
+	} else {
+		/* Free the deleted dirent. */
+		mdcache_avl_remove(entry, v);
 	}
 }
 
@@ -211,10 +208,7 @@ void mdcache_avl_remove(mdcache_entry_t *parent,
 {
 	struct dir_chunk *chunk = dirent->chunk;
 
-	if (dirent->flags & DIR_ENTRY_FLAG_DELETED) {
-		/* Remove from deleted names tree */
-		avltree_remove(&dirent->node_hk, &parent->fsobj.fsdir.avl.c);
-	} else {
+	if ((dirent->flags & DIR_ENTRY_FLAG_DELETED) == 0) {
 		/* Remove from active names tree */
 		avltree_remove(&dirent->node_hk, &parent->fsobj.fsdir.avl.t);
 	}
@@ -258,41 +252,17 @@ mdcache_avl_insert_impl(mdcache_entry_t *entry, mdcache_dir_entry_t *v,
 	int code = -1;
 	struct avltree_node *node;
 	mdcache_dir_entry_t *v2;
-	struct avltree *t = &entry->fsobj.fsdir.avl.t;
-	struct avltree *c = &entry->fsobj.fsdir.avl.c;
+	struct avltree *avl_t = &entry->fsobj.fsdir.avl.t;
 
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Insert dir entry %p %s j=%d j2=%d",
 		     v, v->name, j, j2);
+
 #ifdef DEBUG_MDCACHE
 	assert(entry->content_lock.__data.__writer);
 #endif
-	/* first check for a previously-deleted entry */
-	node = avltree_inline_lookup_hk(&v->node_hk, c);
 
-	/* We must not allow persist-cookies to overrun resource
-	 * management processes.  Note this is not a limit on
-	 * directory size, but rather indirectly on the lifetime
-	 * of cookie offsets of directories under mutation. */
-	if ((!node) && (avltree_size(c) >
-			mdcache_param.dir.avl_max_deleted)) {
-		/* ie, recycle the smallest deleted entry */
-		node = avltree_first(c);
-	}
-
-	if (node) {
-		/* We can't really re-use slots safely since filenames can
-		 * have wildly differing lengths, so remove and free the
-		 * "deleted" entry.
-		 */
-		mdcache_avl_remove(entry,
-				   avltree_container_of(node,
-							mdcache_dir_entry_t,
-							node_hk));
-		node = NULL;
-	}
-
-	node = avltree_insert(&v->node_hk, t);
+	node = avltree_insert(&v->node_hk, avl_t);
 
 	if (!node) {
 		/* success, note iterations */
@@ -455,9 +425,9 @@ again:
 					 * AVL tree, remove from lookup by name
 					 * AVL tree.
 					 */
-					avltree_remove(&v->node_hk,
-						       &entry
-							   ->fsobj.fsdir.avl.t);
+					avltree_remove(
+						&v->node_hk,
+						&entry->fsobj.fsdir.avl.t);
 					v2 = NULL;
 					code = -4;
 					goto out;
@@ -629,78 +599,6 @@ out:
 }
 
 /**
- * @brief Look up a dirent by k-value
- *
- * Look up a dirent by k-value.  If @ref MDCACHE_FLAG_NEXT_ACTIVE is set in @a
- * flags then the dirent after the give k-value is returend (this is for
- * readdir).  If @ref MDCACHE_FLAG_ONLY_ACTIVE is set, then only the active tree
- * is searched.  Otherwise, the deleted tree is searched, and, if found, the
- * dirent after that deleted dirnet is returned.
- *
- * @param[in] entry	Directory to search in
- * @param[in] k		K-value to find
- * @param[in] flags	MDCACHE_FLAG_*
- * @param[out] dirent	Returned dirent, if found, NULL otherwise
- * @return MDCACHE_AVL_NO_ERROR if found; MDCACHE_AVL_NOT_FOUND if not found;
- * MDCACHE_AVL_LAST if next requested and found was last; and
- * MDCACHE_AVL_DELETED if all subsequent dirents are deleted.
- */
-enum mdcache_avl_err
-mdcache_avl_lookup_k(mdcache_entry_t *entry, uint64_t k, uint32_t flags,
-		     mdcache_dir_entry_t **dirent)
-{
-	struct avltree *t = &entry->fsobj.fsdir.avl.t;
-	struct avltree *c = &entry->fsobj.fsdir.avl.c;
-	mdcache_dir_entry_t dirent_key[1];
-	struct avltree_node *node, *node2;
-
-	*dirent = NULL;
-	dirent_key->hk.k = k;
-
-	node = avltree_inline_lookup_hk(&dirent_key->node_hk, t);
-	if (node) {
-		if (flags & MDCACHE_FLAG_NEXT_ACTIVE)
-			/* client wants the cookie -after- the last we sent, and
-			 * the Linux 3.0 and 3.1.0-rc7 clients misbehave if we
-			 * resend the last one */
-			node = avltree_next(node);
-		if (!node) {
-			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
-					"seek to cookie=%" PRIu64
-					" fail (no next entry)", k);
-			return MDCACHE_AVL_LAST;
-		}
-	}
-
-	/* only the forward AVL is valid for conflict checking */
-	if (flags & MDCACHE_FLAG_ONLY_ACTIVE)
-		goto done;
-
-	/* Try the deleted AVL.  If a node with hk.k == v->hk.k is found,
-	 * return its least upper bound in -t-, if any. */
-	if (!node) {
-		node2 = avltree_inline_lookup_hk(&dirent_key->node_hk, c);
-		if (node2) {
-			node = avltree_sup(&dirent_key->node_hk, t);
-			if (!node)
-				return MDCACHE_AVL_DELETED;
-		}
-		LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-			    "node %p found deleted supremum %p", node2, node);
-	}
-
-done:
-	if (node) {
-		*dirent =
-		    avltree_container_of(node, mdcache_dir_entry_t, node_hk);
-		return MDCACHE_AVL_NO_ERROR;
-	}
-
-	return MDCACHE_AVL_NOT_FOUND;
-}
-
-/**
  * @brief Look up a dirent by FSAL cookie
  *
  * Look up a dirent by FSAL cookie.
@@ -751,7 +649,7 @@ bool mdcache_avl_lookup_ck(mdcache_entry_t *entry, uint64_t ck,
 mdcache_dir_entry_t *
 mdcache_avl_qp_lookup_s(mdcache_entry_t *entry, const char *name, int maxj)
 {
-	struct avltree *t = &entry->fsobj.fsdir.avl.t;
+	struct avltree *avl_t = &entry->fsobj.fsdir.avl.t;
 	struct avltree_node *node;
 	mdcache_dir_entry_t *v2;
 #if AVL_HASH_MURMUR3
@@ -781,7 +679,7 @@ mdcache_avl_qp_lookup_s(mdcache_entry_t *entry, const char *name, int maxj)
 
 	for (j = 0; j < maxj; j++) {
 		v.hk.k = (v.hk.k + (j * 2));
-		node = avltree_lookup(&v.node_hk, t);
+		node = avltree_lookup(&v.node_hk, avl_t);
 		if (node) {
 			/* ensure that node is related to v */
 			v2 = avltree_container_of(node, mdcache_dir_entry_t,
@@ -814,15 +712,6 @@ void mdcache_avl_clean_trees(mdcache_entry_t *parent)
 #endif
 
 	while ((dirent_node = avltree_first(&parent->fsobj.fsdir.avl.t))) {
-		dirent = avltree_container_of(dirent_node, mdcache_dir_entry_t,
-					      node_hk);
-		LogFullDebug(COMPONENT_CACHE_INODE, "Invalidate %p %s",
-			     dirent, dirent->name);
-
-		mdcache_avl_remove(parent, dirent);
-	}
-
-	while ((dirent_node = avltree_first(&parent->fsobj.fsdir.avl.c))) {
 		dirent = avltree_container_of(dirent_node, mdcache_dir_entry_t,
 					      node_hk);
 		LogFullDebug(COMPONENT_CACHE_INODE, "Invalidate %p %s",

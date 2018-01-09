@@ -53,11 +53,6 @@ struct mdcache_parameter {
 	    false.  Settable with Use_Getattr_Directory_Invalidation. */
 	bool getattr_dir_invalidation;
 	struct {
-		/** Max size of per-directory cache of removed
-		    entries */
-		uint32_t avl_max_deleted;
-		/** Max size of per-directory dirent cache */
-		uint32_t avl_max;
 		/** Size of per-directory dirent cache chunks, 0 means
 		 *  directory chunking is not enabled.
 		 */
@@ -117,11 +112,6 @@ struct mdcache_parameter {
 	    we disable caching, when in extremis.  Defaults to 8,
 	    settable with Futility_Count */
 	uint32_t futility_count;
-	/** Behavior for when readdir fails for some reason:
-	    true will ask the client to retry later, false will give the
-	    client a partial reply based on what we have.
-	    Defaults to false, settable with Retry_Readdir */
-	bool retry_readdir;
 };
 
 extern struct mdcache_parameter mdcache_param;

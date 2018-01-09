@@ -486,10 +486,6 @@ CACHEINODE
 
 	Use_Getattr_Directory_Invalidation(bool, default false)
 
-	Dir_Max_Deleted(uint32, range 1 to UINT32_MAX, default 65536)
-
-	Dir_Max(uint32, range 1 to UINT32_MAX, default 65536)
-
 	Dir_Chunk(uint32, range 0 to UINT32_MAX, default 128)
 
 	Detached_Mult(uint32, range 1 to UINT32_MAX, default 1)
@@ -517,8 +513,6 @@ CACHEINODE
 	Required_Progress(uint32, range 1 to 50, default 5)
 
 	Futility_Count(uint32, range 1 to 50, default 8)
-
-	Retry_Readdir(bool, default false)
 
 9P {}
 -----

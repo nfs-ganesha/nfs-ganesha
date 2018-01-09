@@ -118,18 +118,21 @@ fsal_status_t mdcache_alloc_and_check_handle(
 					   MDCACHE_TRUST_ATTRS);
 	}
 
-	/* Add this entry to the directory (also takes an internal ref)
-	 */
-	status = mdcache_dirent_add(parent, name, new_entry, invalidate);
+	if (mdcache_param.dir.avl_chunk != 0) {
+		/* Add this entry to the directory (also takes an internal ref)
+		 */
+		status = mdcache_dirent_add(parent, name, new_entry,
+					    invalidate);
 
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_CACHE_INODE,
-			 "%s%s failed because add dirent failed",
-			 tag, name);
+		if (FSAL_IS_ERROR(status)) {
+			LogDebug(COMPONENT_CACHE_INODE,
+				 "%s%s failed because add dirent failed",
+				 tag, name);
 
-		mdcache_put(new_entry);
-		*new_obj = NULL;
-		return status;
+			mdcache_put(new_entry);
+			*new_obj = NULL;
+			return status;
+		}
 	}
 
 	if (new_entry->obj_handle.type == DIRECTORY) {
@@ -491,13 +494,15 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
 		return status;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&dest->content_lock);
+	if (mdcache_param.dir.avl_chunk != 0) {
+		PTHREAD_RWLOCK_wrlock(&dest->content_lock);
 
-	/* Add this entry to the directory (also takes an internal ref)
-	 */
-	status = mdcache_dirent_add(dest, name, entry, &invalidate);
+		/* Add this entry to the directory (also takes an internal ref)
+		 */
+		status = mdcache_dirent_add(dest, name, entry, &invalidate);
 
-	PTHREAD_RWLOCK_unlock(&dest->content_lock);
+		PTHREAD_RWLOCK_unlock(&dest->content_lock);
+	}
 
 	/* Invalidate attributes, so refresh will be forced */
 	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_ATTRS);
@@ -537,21 +542,14 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 {
 	mdcache_entry_t *directory = container_of(dir_hdl, mdcache_entry_t,
 						  obj_handle);
-	mdcache_dir_entry_t *dirent = NULL;
-	struct avltree_node *dirent_node = NULL;
-	fsal_status_t status = {0, 0};
-	enum fsal_dir_result cb_result = DIR_CONTINUE;
-
 	if (!(directory->obj_handle.type == DIRECTORY))
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
-	if (test_mde_flags(directory, MDCACHE_BYPASS_DIRCACHE)) {
+	if (mdcache_param.dir.avl_chunk == 0) {
 		/* Not caching dirents; pass through directly to FSAL */
 		return mdcache_readdir_uncached(directory, whence, dir_state,
 						cb, attrmask, eod_met);
-	}
-
-	if (mdcache_param.dir.avl_chunk > 0) {
+	} else {
 		/* Dirent chunking is enabled. */
 		LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 			    "Calling mdcache_readdir_chunked whence=%"PRIx64,
@@ -562,166 +560,6 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 					       dir_state, cb, attrmask,
 					       eod_met);
 	}
-
-	/* Dirent's are being cached; check to see if it needs updating */
-	if (!mdc_dircache_trusted(directory)) {
-		PTHREAD_RWLOCK_wrlock(&directory->content_lock);
-		status = mdcache_dirent_populate(directory);
-		PTHREAD_RWLOCK_unlock(&directory->content_lock);
-		if (FSAL_IS_ERROR(status)) {
-			if (status.major == ERR_FSAL_STALE) {
-				LogEvent(COMPONENT_CACHE_INODE,
-					 "FSAL returned STALE from readdir.");
-				mdcache_kill_entry(directory);
-			} else if (status.major == ERR_FSAL_OVERFLOW) {
-				/* Directory is too big.  Invalidate, set
-				 * MDCACHE_BYPASS_DIRCACHE and pass through */
-				atomic_set_uint32_t_bits(&directory->mde_flags,
-						 MDCACHE_BYPASS_DIRCACHE);
-				PTHREAD_RWLOCK_wrlock(&directory->content_lock);
-				mdcache_dirent_invalidate_all(directory);
-				PTHREAD_RWLOCK_unlock(&directory->content_lock);
-				return mdcache_readdir_uncached(directory,
-								whence,
-								dir_state,
-								cb, attrmask,
-								eod_met);
-			}
-			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
-					"mdcache_dirent_populate status=%s",
-					fsal_err_txt(status));
-			return status;
-		}
-	}
-
-	PTHREAD_RWLOCK_rdlock(&directory->content_lock);
-	/* Get initial starting position */
-	if (*whence > 0) {
-		enum mdcache_avl_err aerr;
-
-		/* Not a full directory walk */
-		if (*whence < 3) {
-			/* mdcache always uses 1 and 2 for . and .. */
-			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
-					"Bad cookie");
-			status = fsalstat(ERR_FSAL_BADCOOKIE, 0);
-			goto unlock_dir;
-		}
-		aerr = mdcache_avl_lookup_k(directory, *whence,
-					    MDCACHE_FLAG_NEXT_ACTIVE, &dirent);
-		switch (aerr) {
-		case MDCACHE_AVL_NOT_FOUND:
-			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
-					"seek to cookie=%" PRIu64 " fail",
-					*whence);
-			status = fsalstat(ERR_FSAL_BADCOOKIE, 0);
-			goto unlock_dir;
-		case MDCACHE_AVL_LAST:
-		case MDCACHE_AVL_DELETED:
-			/* dirent was last, or all dirents after this one are
-			 * deleted */
-			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
-					"EOD because empty result");
-			*eod_met = true;
-			goto unlock_dir;
-		case MDCACHE_AVL_NO_ERROR:
-			assert(dirent);
-			dirent_node = &dirent->node_hk;
-			break;
-		}
-	} else {
-		/* Start at beginning */
-		dirent_node = avltree_first(&directory->fsobj.fsdir.avl.t);
-	}
-
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-			"About to readdir directory=%p cookie=%"
-			PRIu64 " collisions %d",
-			directory, *whence,
-			directory->fsobj.fsdir.avl.collisions);
-
-	/* Now satisfy the request from the cached readdir--stop when either
-	 * the requested sequence or dirent sequence is exhausted */
-	*eod_met = false;
-
-	for (; cb_result < DIR_TERMINATE && dirent_node != NULL;
-	     dirent_node = avltree_next(dirent_node)) {
-		struct attrlist attrs;
-		mdcache_entry_t *entry = NULL;
-
-		dirent = avltree_container_of(dirent_node,
-					      mdcache_dir_entry_t,
-					      node_hk);
-
-		/* Get actual entry */
-		status = mdc_try_get_cached(directory, dirent->name, &entry);
-
-		if (status.major == ERR_FSAL_STALE) {
-			/* NOTE: We're supposed to hold the content_lock for
-			 *       write here, but to drop the lock we would then
-			 *       have to resume the readdir, which would mean
-			 *       adjusting whence from dirent->ck.
-			 */
-			status = mdc_lookup_uncached(directory, dirent->name,
-						     &entry, NULL);
-		}
-		if (FSAL_IS_ERROR(status)) {
-			if (status.major == ERR_FSAL_STALE) {
-				PTHREAD_RWLOCK_unlock(&directory->content_lock);
-				mdcache_kill_entry(directory);
-				return status;
-			}
-			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
-					"lookup failed status=%s",
-					fsal_err_txt(status));
-			goto unlock_dir;
-		}
-
-		/* Ensure the attribute cache is valid.  The simplest way to do
-		 * this is to call getattrs().  We need a copy anyway, to ensure
-		 * thread safety. */
-		fsal_prepare_attrs(&attrs, attrmask);
-		status = entry->obj_handle.obj_ops.getattrs(&entry->obj_handle,
-							    &attrs);
-		if (FSAL_IS_ERROR(status)) {
-			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
-					"getattrs failed status=%s",
-					fsal_err_txt(status));
-			goto unlock_dir;
-		}
-
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_readdir,
-		   __func__, __LINE__, entry, entry->lru.refcnt);
-#endif
-		cb_result = cb(dirent->name, &entry->obj_handle, &attrs,
-			       dir_state, dirent->hk.k);
-
-		fsal_release_attrs(&attrs);
-
-		if (cb_result >= DIR_TERMINATE)
-			break;
-	}
-
-	LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-		    "dirent_node = %p, cb_result = %s",
-		    dirent_node, fsal_dir_result_str(cb_result));
-
-	if (!dirent_node && cb_result < DIR_TERMINATE)
-		*eod_met = true;
-	else
-		*eod_met = false;
-
-
-unlock_dir:
-	PTHREAD_RWLOCK_unlock(&directory->content_lock);
-	return status;
 }
 
 /**
@@ -793,7 +631,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	struct fsal_export *sub_export = op_ctx->fsal_export->sub_export;
 	bool refresh = false;
 	bool rename_change_key;
-	fsal_status_t status;
+	fsal_status_t status = {0, 0};
 
 	/* Now update cached dirents.  Must take locks in the correct order */
 	mdcache_src_dest_lock(mdc_olddir, mdc_newdir);
@@ -850,15 +688,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 
 	if (mdc_lookup_dst) {
 		/* Remove the entry from parent dir_entries avl */
-		status = mdcache_dirent_remove(mdc_newdir, new_name);
-
-		if (FSAL_IS_ERROR(status)) {
-			LogDebug(COMPONENT_CACHE_INODE,
-				 "remove entry failed with status %s",
-				 fsal_err_txt(status));
-			/* Protected by mdcache_src_dst_lock() above */
-			mdcache_dirent_invalidate_all(mdc_newdir);
-		}
+		mdcache_dirent_remove(mdc_newdir, new_name);
 
 		/* Mark unreachable */
 		mdc_unreachable(mdc_lookup_dst);
@@ -877,14 +707,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 		/* FSAL changes keys on rename.  Just remove the dirent(s) */
 
 		/* Old dirent first */
-		status = mdcache_dirent_remove(mdc_olddir, old_name);
-		if (FSAL_IS_ERROR(status)) {
-			LogDebug(COMPONENT_CACHE_INODE,
-				 "Remove stale dirent returned %s",
-				 fsal_err_txt(status));
-			/* Protected by mdcache_src_dst_lock() above */
-			mdcache_dirent_invalidate_all(mdc_olddir);
-		}
+		mdcache_dirent_remove(mdc_olddir, old_name);
 
 		/** @todo: With chunking and compute cookie, we can actually
 		 *         figure out which chunk the new dirent belongs to
@@ -900,37 +723,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 		/* Handle key is changing.  This means the old handle is
 		 * useless.  Mark it unreachable, forcing a lookup next time */
 		mdc_unreachable(mdc_obj);
-	} else if (mdc_olddir == mdc_newdir &&
-		   mdcache_param.dir.avl_chunk == 0) {
-		/** @todo: This code really doesn't accomplish anything
-		 *         different than the code below, and actually the
-		 *         code below has better invalidation characteristics
-		 *         for chunking, so we will remove it later.
-		 */
-		/* if the rename operation is made within the same dir, then we
-		 * use an optimization: mdcache_rename_dirent is used
-		 * instead of adding/removing dirent. This limits the use of
-		 * resource in this case */
-
-		LogDebug(COMPONENT_CACHE_INODE,
-			 "Rename (%p,%s)->(%p,%s) : source and target directory  the same",
-			 mdc_olddir, old_name, mdc_newdir, new_name);
-
-		status = mdcache_dirent_rename(mdc_newdir, old_name, new_name);
-		if (FSAL_IS_ERROR(status)) {
-			if (status.major == ERR_FSAL_NOENT) {
-				/* Someone raced us, and reloaded the directory
-				 * after the sub-FSAL rename.  This is not an
-				 * error. Fall through to invalidate just in
-				 * case. */
-				status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-			}
-			/* We're obviously out of date.  Throw out the cached
-			   directory */
-			/* Protected by mdcache_src_dst_lock() above */
-			mdcache_dirent_invalidate_all(mdc_newdir);
-		}
-	} else {
+	} else if (mdcache_param.dir.avl_chunk != 0) {
 		bool invalidate = true;
 
 		LogDebug(COMPONENT_CACHE_INODE,
@@ -938,31 +731,11 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			 old_name, mdc_newdir, new_name);
 
 		/* Remove the old entry */
-		status = mdcache_dirent_remove(mdc_olddir, old_name);
-
-		if (FSAL_IS_ERROR(status)) {
-			LogDebug(COMPONENT_CACHE_INODE,
-				 "Remove old dirent returned %s",
-				 fsal_err_txt(status));
-			/* Protected by mdcache_src_dst_lock() above */
-			mdcache_dirent_invalidate_all(mdc_olddir);
-		}
-
-		/* Don't rename dirents if newdir is not being cached */
-		if (test_mde_flags(mdc_newdir, MDCACHE_BYPASS_DIRCACHE))
-			goto unlock;
+		mdcache_dirent_remove(mdc_olddir, old_name);
 
 		/* We may have a cache entry for the destination
 		 * filename.  If we do, we must delete it : it is stale. */
-		status = mdcache_dirent_remove(mdc_newdir, new_name);
-
-		if (FSAL_IS_ERROR(status)) {
-			LogDebug(COMPONENT_CACHE_INODE,
-				 "Remove stale dirent returned %s",
-				 fsal_err_txt(status));
-			/* Protected by mdcache_src_dst_lock() above */
-			mdcache_dirent_invalidate_all(mdc_newdir);
-		}
+		mdcache_dirent_remove(mdc_newdir, new_name);
 
 		status = mdcache_dirent_add(mdc_newdir, new_name, mdc_obj,
 					    &invalidate);
@@ -1262,7 +1035,7 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 		}
 	} else {
 		PTHREAD_RWLOCK_wrlock(&parent->content_lock);
-		(void)mdcache_dirent_remove(parent, name);
+		mdcache_dirent_remove(parent, name);
 		PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
 		/* Invalidate attributes of parent and entry */
