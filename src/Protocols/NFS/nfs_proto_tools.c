@@ -3925,6 +3925,10 @@ bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 	 */
 	attrmask_t want = ATTRS_NFS3;
 
+	/* If an error occurred when getting object attributes, return false */
+	if (FSAL_attr->valid_mask == ATTR_RDATTR_ERR)
+		return false;
+
 	if ((want & FSAL_attr->valid_mask) != want) {
 		LogCrit(COMPONENT_NFSPROTO,
 			"Likely bug: FSAL did not fill in a standard NFSv3 attribute: missing %"
