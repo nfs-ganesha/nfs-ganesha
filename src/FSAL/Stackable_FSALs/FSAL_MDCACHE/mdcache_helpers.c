@@ -2363,13 +2363,17 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		 * never actually see) the same.
 		 */
 		mdcache_put(new_entry);
-		/* Check for return code of -4. This indicates that its FSAL
-		 * cookie duplication / collision. This could happen due to
-		 * fast mutating directory. The already cached contents are
-		 * stale/invalid. Need to invalidate the cache and inform
-		 * client to re-read the directory.
+		/* Check for return code -3 and/or -4.
+		 * -3: This indicates the file name is duplicate but FSAL
+		 * cookie is different. This may happen in case lots of new
+		 * entries got added to the directory while running readdir.
+		 * -4: This indicates that it is FSAL cookie duplication /
+		 * collision. This could happen due to fast mutating directory.
+		 * In both cases already cached contents are stale/invalid.
+		 * Need to invalidate the cache and inform client to re-read
+		 * the directory.
 		 */
-		if (code == -4) {
+		if (code == -3 || code == -4) {
 			atomic_clear_uint32_t_bits(&state->dir->mde_flags,
 						   MDCACHE_TRUST_CONTENT);
 			state->status->major = ERR_FSAL_DELAY;
