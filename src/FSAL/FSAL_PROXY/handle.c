@@ -540,6 +540,7 @@ static int pxy_connect(struct pxy_client_params *info,
 	default:
 		LogCrit(COMPONENT_FSAL, "Unknown address family %d",
 			dest->ss_family);
+		return -1;
 	}
 
 	if (sock >= 0) {

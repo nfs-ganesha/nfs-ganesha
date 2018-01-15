@@ -1690,7 +1690,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	bool has_lock = false;
 	bool closefd = false;
 	int my_fd;
-	const char *func;
+	const char *func = "none";
 	struct vfs_fd *vfs_fd = NULL;
 
 	/* apply umask, if mode attribute is to be changed */

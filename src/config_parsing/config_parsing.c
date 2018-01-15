@@ -980,7 +980,7 @@ static int do_block_load(struct config_node *blk,
 	for (item = params; item->name != NULL; item++) {
 		uint64_t num64;
 		bool bool_val;
-		uint32_t num32;
+		uint32_t num32 = 0;
 
 		node = lookup_node(&blk->u.nterm.sub_nodes, item->name);
 		if ((item->flags & CONFIG_MANDATORY) && (node == NULL)) {

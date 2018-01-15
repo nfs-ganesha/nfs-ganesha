@@ -1281,8 +1281,9 @@ void delegrecall_one(struct fsal_obj_handle *obj,
 				delegrecall_completion_func, p_cargs);
 	if (ret == 0)
 		return;
-out:
 	LogDebug(COMPONENT_FSAL_UP, "nfs_rpc_cb_single returned %d", ret);
+
+out:
 	inc_failed_recalls(p_cargs->drc_clid->gsh_client);
 	nfs4_freeFH(&argop.nfs_cb_argop4_u.opcbrecall.fh);
 
