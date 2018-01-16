@@ -361,7 +361,7 @@ int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 	}
 
 	/* already inserted */
-	LogWarn(COMPONENT_CACHE_INODE,
+	LogDebug(COMPONENT_CACHE_INODE,
 		"Already existent when inserting dirent %p for %s on entry=%p FSAL cookie=%"
 		PRIx64
 		", duplicated directory cookies make READDIR unreliable.",
@@ -570,10 +570,10 @@ again:
 					 v->name, v->chunk, v2->chunk);
 				code = 0;
 			} else {
-				/* This is an odd case, lets treat it as an
-				 * error.
+				/* This is an odd case, and this error is
+				 * handled. Inform this condition via debug.
 				 */
-				LogWarn(COMPONENT_CACHE_INODE,
+				LogDebug(COMPONENT_CACHE_INODE,
 					"Duplicate filename %s with different cookies ckey %"
 					PRIx64
 					" chunk %p don't match existing ckey %"
