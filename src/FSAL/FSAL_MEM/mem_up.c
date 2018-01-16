@@ -31,6 +31,7 @@
  * Implement upcalls for testing purposes
  */
 
+#include "config.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include "fsal.h"
