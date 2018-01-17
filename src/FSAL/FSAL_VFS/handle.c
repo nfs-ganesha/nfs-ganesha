@@ -283,7 +283,7 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 		caddr_t xattr_content;
 		size_t attrsize = 0;
 		char proclnk[MAXPATHLEN];
-		char path[MAXPATHLEN];
+		char readlink_buf[MAXPATHLEN];
 		char *spath, *fspath;
 		ssize_t r;
 		uint64 hash;
@@ -302,7 +302,7 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 		}
 
 		sprintf(proclnk, "/proc/self/fd/%d", fd);
-		r = readlink(proclnk, path, MAXPATHLEN - 1);
+		r = readlink(proclnk, readlink_buf, MAXPATHLEN - 1);
 		if (r < 0) {
 			fsal_error = posix2fsal_error(errno);
 			r = errno;
@@ -310,9 +310,9 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 			close(fd);
 			return fsalstat(fsal_error, r);
 		}
-		path[r] = '\0';
+		readlink_buf[r] = '\0';
 		LogDebug(COMPONENT_FSAL, "fd -> path: %d -> %s",
-			 fd, path);
+			 fd, readlink_buf);
 		if (hdl->u.directory.path != NULL) {
 			LogFullDebug(COMPONENT_FSAL,
 				     "freeing old directory.path: %s",
@@ -322,8 +322,26 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 
 		fspath = vfs_fs->fs->path;
 
-		spath = path;
-		if (strncmp(path, fspath, strlen(fspath)) == 0) {
+		spath = readlink_buf;
+
+		/* If Path and Pseudo path are not equal replace path with
+		 * pseudo path.
+		 */
+		if (strcmp(op_ctx->ctx_export->fullpath,
+			op_ctx->ctx_export->pseudopath) != 0) {
+			int pseudo_length = strlen(
+				op_ctx->ctx_export->pseudopath);
+			int fullpath_length = strlen(
+				op_ctx->ctx_export->fullpath);
+			char *dirpath = spath + fullpath_length;
+
+			memcpy(proclnk, op_ctx->ctx_export->pseudopath,
+				pseudo_length);
+			memcpy(proclnk + pseudo_length, dirpath,
+				r - fullpath_length);
+			proclnk[pseudo_length + (r - fullpath_length)] = '\0';
+			spath = proclnk;
+		} else if (strncmp(path, fspath, strlen(fspath)) == 0) {
 			spath += strlen(fspath);
 		}
 		hdl->u.directory.path = gsh_strdup(spath);
