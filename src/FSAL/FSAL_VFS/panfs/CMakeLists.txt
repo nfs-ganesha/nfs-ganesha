@@ -14,6 +14,7 @@ SET(fsalpanfs_LIB_SRCS
    ../xattrs.c
    ../state.c
    ../vfs_methods.h
+   ../empty_check_hsm.c
    subfsal_panfs.c
    attrs.c
    handle.c

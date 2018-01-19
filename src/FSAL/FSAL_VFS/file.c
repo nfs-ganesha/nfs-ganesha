@@ -434,6 +434,28 @@ static fsal_status_t vfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
+	/* Check HSM status */
+	status = check_hsm_by_fd(my_fd->fd);
+	if (FSAL_IS_ERROR(status)) {
+		if (status.major == ERR_FSAL_DELAY) {
+			LogInfo(COMPONENT_FSAL,
+				"HSM restore at open for fd=%d", my_fd->fd);
+		}
+
+		 /*close fd*/
+		(void) vfs_close_my_fd(my_fd);
+		if (state == NULL) {
+			/* Release the lock taken above, and return
+			 * since there is nothing to undo.
+			 */
+			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+			return status;
+		} else {
+			/* Error - need to release the share */
+			goto undo_share;
+		}
+	}
+
 	if (createmode >= FSAL_EXCLUSIVE || truncated) {
 		/* Refresh the attributes */
 		struct attrlist attrs;
@@ -736,6 +758,19 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Opened fd=%d for file %s", fd, name);
+
+	/* Check HSM status */
+	status = check_hsm_by_fd(fd);
+	if (FSAL_IS_ERROR(status)) {
+		if (status.major == ERR_FSAL_DELAY) {
+			LogInfo(COMPONENT_FSAL,
+				"HSM restore at open for fd=%d for file %s",
+				fd, name);
+			retval = EAGAIN;
+		}
+
+		goto fileerr;
+	}
 
 	/* Remember if we were responsible for creating the file.
 	 * Note that in an UNCHECKED retry we MIGHT have re-created the

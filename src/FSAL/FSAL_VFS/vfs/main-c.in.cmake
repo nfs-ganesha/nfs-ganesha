@@ -51,7 +51,7 @@
 #define VFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX | ATTR_ACL))
 #endif
 
-const char myname[] = "VFS";
+const char myname[] = "@FSAL_LUSTRE_VFS_NAME@";
 
 /* my module private storage
  */

@@ -46,6 +46,10 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <stddef.h>		/* For having offsetof defined */
+#include <stdint.h>     /* For uint8_t */
+#include <stdbool.h>
+
+#include "gsh_types.h"
 
 #define VFS_HANDLE_LEN 59
 

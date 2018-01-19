@@ -13,7 +13,7 @@ SYNOPSIS
 DESCRIPTION
 ==========================================================
 
-NFS-Ganesha installa the config example for VFS FSAL:
+NFS-Ganesha installs the config example for VFS FSAL:
 | /etc/ganesha/vfs.conf
 
 This file lists VFS specific config options.

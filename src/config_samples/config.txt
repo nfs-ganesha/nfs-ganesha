@@ -359,13 +359,17 @@ EXPORT { FSAL {} }
 
 	transport(enum, values [tcp, rdma], default tcp)
 
-	FSAL_VFS:
+	FSAL_VFS or FSAL_LUSTRE:
 	---------
 
 	pnfs(bool, default false)
 
 	fsid_type(enum, values [None, One64, Major64, Two64, uuid, Two32, Dev,
 			        Device], no default)
+
+    FSAL_LUSTRE:
+	---------
+	async_hsm_restore(bool, default true)
 
 	EXPORT { FSAL { PNFS { } } }
 	---------------------------

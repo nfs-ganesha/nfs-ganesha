@@ -44,6 +44,7 @@ struct vfs_fsal_export {
 	struct fsal_filesystem *root_fs;
 	struct glist_head filesystems;
 	int fsid_type;
+	bool async_hsm_restore;
 };
 
 #define EXPORT_VFS_FROM_FSAL(fsal) \
@@ -356,4 +357,5 @@ fsal_status_t vfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t vfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					 const char *xattr_name);
 
+fsal_status_t check_hsm_by_fd(int fd);
 #endif			/* VFS_METHODS_H */

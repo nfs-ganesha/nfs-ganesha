@@ -10,6 +10,7 @@ The sample FSAL files:
 ceph.conf
 gpfs.conf
 vfs.conf
+lustre.conf
 xfs.conf
 
 The most readily used FSAL for experimentation with Ganesha given a recent

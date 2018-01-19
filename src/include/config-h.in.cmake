@@ -68,6 +68,7 @@
 #cmakedefine DEBUG_MDCACHE 1
 #cmakedefine USE_RADOS_RECOV 1
 #cmakedefine RADOS_URLS 1
+#cmakedefine USE_LLAPI 1
 
 #define NFS_GANESHA 1
 

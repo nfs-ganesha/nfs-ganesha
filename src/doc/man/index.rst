@@ -11,6 +11,7 @@
    ganesha-proxy-config
    ganesha-rgw-config
    ganesha-vfs-config
+   ganesha-lustre-config
    ganesha-xfs-config
    ganesha-cache-config
    ganesha-export-config

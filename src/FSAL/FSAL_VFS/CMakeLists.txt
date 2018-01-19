@@ -3,10 +3,13 @@ add_definitions(
   -D_GNU_SOURCE
 )
 
-set( LIB_PREFIX 64)
+set(LIB_PREFIX 64)
 
 add_subdirectory(os)
-add_subdirectory(vfs)
+
+if(USE_FSAL_VFS OR USE_FSAL_LUSTRE)
+    add_subdirectory(vfs)
+endif(USE_FSAL_VFS OR USE_FSAL_LUSTRE)
 
 if(USE_FSAL_XFS)
     add_subdirectory(xfs)
