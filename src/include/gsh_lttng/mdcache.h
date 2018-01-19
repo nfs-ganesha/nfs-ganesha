@@ -311,6 +311,37 @@ TRACEPOINT_LOGLEVEL(
 	mdc_readdir,
 	TRACE_INFO)
 
+/**
+ * @brief Trace lookup
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] parent	Address of parent entry
+ * @param[in] name	Name to lookup
+ * @param[in] entry	Address of entry (if found)
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	mdc_lookup,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, parent,
+		const char *, name,
+		void *, entry),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, parent, parent)
+		ctf_string(name, name)
+		ctf_integer_hex(void *, entry, entry)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	mdc_lookup,
+	TRACE_INFO)
+
 #endif /* GANESHA_LTTNG_MDCACHE_TP_H */
 
 #undef TRACEPOINT_INCLUDE
