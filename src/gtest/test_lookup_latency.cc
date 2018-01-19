@@ -49,6 +49,9 @@ void admin_halt(void);
 
 /* LTTng headers */
 #include <lttng/lttng.h>
+
+/* gperf headers */
+#include <gperftools/profiler.h>
 }
 
 #define TEST_ROOT "lookup_latency"
@@ -64,6 +67,7 @@ namespace {
   uint16_t export_id = 77;
   static struct lttng_handle* handle = nullptr;
   char* event_list = nullptr;
+  char* profile_out = nullptr;
 
   int ganesha_server() {
     /* XXX */
@@ -454,6 +458,8 @@ TEST_F(LookupFullLatencyTest, BIG)
   struct timespec s_time, e_time;
 
   enableEvents(event_list);
+  if (profile_out)
+    ProfilerStart(profile_out);
 
   now(&s_time);
 
@@ -467,6 +473,8 @@ TEST_F(LookupFullLatencyTest, BIG)
 
   now(&e_time);
 
+  if (profile_out)
+    ProfilerStop();
   disableEvents(event_list);
 
   fprintf(stderr, "Average time per lookup: %" PRIu64 " ns\n",
@@ -484,6 +492,8 @@ TEST_F(LookupFullLatencyTest, BIG_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_root);
 
   enableEvents(event_list);
+  if (profile_out)
+    ProfilerStart(profile_out);
 
   now(&s_time);
 
@@ -497,6 +507,8 @@ TEST_F(LookupFullLatencyTest, BIG_BYPASS)
 
   now(&e_time);
 
+  if (profile_out)
+    ProfilerStop();
   disableEvents(event_list);
 
   fprintf(stderr, "Average time per lookup: %" PRIu64 " ns\n",
@@ -535,6 +547,9 @@ int main(int argc, char *argv[])
 
       ("event-list", po::value<string>(),
 	"LTTng event list, comma separated")
+
+      ("profile", po::value<string>(),
+	"Enable profiling and set output file.")
       ;
 
     po::variables_map::iterator vm_iter;
@@ -568,6 +583,10 @@ int main(int argc, char *argv[])
     vm_iter = vm.find("event-list");
     if (vm_iter != vm.end()) {
       event_list = (char*) vm_iter->second.as<std::string>().c_str();
+    }
+    vm_iter = vm.find("profile");
+    if (vm_iter != vm.end()) {
+      profile_out = (char*) vm_iter->second.as<std::string>().c_str();
     }
 
     ::testing::InitGoogleTest(&argc, argv);
