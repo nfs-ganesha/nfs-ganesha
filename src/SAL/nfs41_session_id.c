@@ -36,6 +36,7 @@
 
 #include "config.h"
 #include "nfs_core.h"
+#include "nfs_proto_functions.h"
 #include "sal_functions.h"
 
 /**
@@ -254,8 +255,17 @@ int32_t dec_session_ref(nfs41_session_t *session)
 		dec_client_id_ref(session->clientid_record);
 		/* Destroy this session's mutexes and condition variable */
 
-		for (i = 0; i < session->nb_slots; i++)
-			PTHREAD_MUTEX_destroy(&session->fc_slots[i].lock);
+		for (i = 0; i < session->nb_slots; i++) {
+			nfs41_session_slot_t *slot;
+
+			slot = &session->fc_slots[i];
+			PTHREAD_MUTEX_destroy(&slot->lock);
+			if (slot->cached_result.res_cached) {
+				slot->cached_result.res_cached = false;
+				nfs4_Compound_Free((nfs_res_t *)
+						   &slot->cached_result);
+			}
+		}
 
 		PTHREAD_COND_destroy(&session->cb_cond);
 		PTHREAD_MUTEX_destroy(&session->cb_mutex);
