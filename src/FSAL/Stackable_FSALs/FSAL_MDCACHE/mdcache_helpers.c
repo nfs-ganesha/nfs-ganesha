@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -1037,13 +1037,6 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 #ifdef DEBUG_MDCACHE
 	assert(mdc_parent->content_lock.__data.__writer != 0);
 #endif
-	if (avltree_size(&mdc_parent->fsobj.fsdir.avl.t) >
-	    mdcache_param.dir.avl_max) {
-		LogFullDebug(COMPONENT_CACHE_INODE, "Parent %p at max",
-			     mdc_parent);
-		return fsalstat(ERR_FSAL_OVERFLOW, 0);
-	}
-
 	LogFullDebug(COMPONENT_CACHE_INODE, "Creating entry for %s", name);
 
 	status = mdcache_new_entry(export, sub_handle, attrs_in, NULL,
@@ -1059,6 +1052,14 @@ fsal_status_t mdc_add_cache(mdcache_entry_t *mdc_parent,
 	LogFullDebug(COMPONENT_CACHE_INODE,
 		     "Created entry %p FSAL %s for %s",
 		     new_entry, new_entry->sub_handle->fsal->name, name);
+
+	if (avltree_size(&mdc_parent->fsobj.fsdir.avl.t) >
+	    mdcache_param.dir.avl_max) {
+		LogFullDebug(COMPONENT_CACHE_INODE, "Parent %p at max",
+			     mdc_parent);
+		mdcache_put(new_entry);
+		return fsalstat(ERR_FSAL_OVERFLOW, 0);
+	}
 
 	/* Entry was found in the FSAL, add this entry to the
 	   parent directory */
