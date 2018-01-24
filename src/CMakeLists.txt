@@ -20,7 +20,7 @@ set(GANESHA_MAJOR_VERSION 2)
 set(GANESHA_MINOR_VERSION 5)
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-set(GANESHA_BUILD_RELEASE 4)
+set(GANESHA_BUILD_RELEASE 5)
 ELSE()
 set(GANESHA_BUILD_RELEASE 0)
 ENDIF(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
@@ -39,7 +39,7 @@ ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQU
 # Patch level is always ".0" for mainline (master).  It is blank for development.
 # When starting a stable maintenance branch, this becomes ".N"
 # where N is monotonically increasing starting at 1. Remember to include the "." !!
-set(GANESHA_PATCH_LEVEL .4)
+set(GANESHA_PATCH_LEVEL .5)
 
 # Extra version is for naming development/RC.  It is blank in master/stable branches
 # so it can be available to end-users to name local variants/versions
