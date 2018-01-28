@@ -449,7 +449,7 @@ static bool fridgethr_freeze(struct fridgethr *fr,
 		/* Nothing to do, loop around. */
 		if (fr->command != fridgethr_comm_stop
 		    && ((fr->command == fridgethr_comm_pause)
-			|| (!fridgethr_deferredwork(fr)))
+			|| fridgethr_deferredwork(fr))
 		    && (fr->p.flavor == fridgethr_flavor_worker)) {
 			PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 			fe->frozen = true;
