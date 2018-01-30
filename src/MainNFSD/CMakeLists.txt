@@ -80,6 +80,14 @@ set(fsal_CORE_SRCS
    ../FSAL_UP/fsal_up_top.c
    ../FSAL_UP/fsal_up_async.c
 )
+
+if (USE_ACL_MAPPING)
+  set(fsal_CORE_SRCS
+      ${fsal_CORE_SRCS}
+      ../FSAL/posix_acls.c
+  )
+endif(USE_ACL_MAPPING)
+
 add_library(FsalCore STATIC ${fsal_CORE_SRCS})
 add_sanitizers(FsalCore)
 

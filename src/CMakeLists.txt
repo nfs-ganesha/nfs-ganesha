@@ -376,6 +376,9 @@ option(USE_RADOS_RECOV "Enable Rados KV Recovery" ON)
 # Enable RADOS URL config file sections
 option(RADOS_URLS "Enable config file inclusion from RADOS objects" ON)
 
+# Enable NFSv4 and POSIX acls mapping
+option(USE_ACL_MAPPING "Build NFSv4 to POSIX ACL mapping" OFF)
+
 #
 # End build options
 #
@@ -598,6 +601,8 @@ if(USE_FSAL_GLUSTER)
     check_include_files("acl/libacl.h" HAVE_ACL_H)
     if(HAVE_ACL_H)
 	set(USE_POSIX_ACLS ON)
+	set(USE_ACL_MAPPING ON)
+	set(LibACL_FIND_REQUIRED TRUE)
     else()
 	set(USE_POSIX_ACLS OFF)
 	set(USE_FSAL_GLUSTER OFF)
@@ -698,6 +703,17 @@ else()
 endif()
 
 # Find optional libraries/packages
+
+if (USE_ACL_MAPPING)
+  find_package(LibACL)
+  if(LIBACL_FOUND)
+    set(SYSTEM_LIBRARIES ${LIBACL_LIBRARY} ${SYSTEM_LIBRARIES})
+  else(LIBACL_FOUND)
+    set(USE_ACL_MAPPING OFF)
+    message(STATUS "Could not find libacl, disabling ACL mapping build")
+  endif(LIBACL_FOUND)
+endif(USE_ACL_MAPPING)
+
 if(USE_EFENCE)
   find_package(efence REQUIRED)
   set(SYSTEM_LIBRARIES ${efence_LIBRARIES} ${SYSTEM_LIBRARIES})
@@ -1068,6 +1084,7 @@ message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
 message(STATUS "USE_NFS_RDMA = ${USE_NFS_RDMA}")
 message(STATUS "USE_NFS3 = ${USE_NFS3}")
 message(STATUS "USE_NLM = ${USE_NLM}")
+message(STATUS "USE_ACL_MAPPING = ${USE_ACL_MAPPING}")
 message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")
 message(STATUS "RGW_PREFIX = ${RGW_PREFIX}")
@@ -1257,6 +1274,12 @@ set(RADOS_URLS ${RADOS_URLS}
   CACHE BOOL
   "enable rados url provider"
   FORCE)
+
+set(USE_ACL_MAPPING ${USE_ACL_MAPPING}
+  CACHE BOOL
+  "Build NFSv4 to POSIX ACL mapping"
+  FORCE)
+
 
 # Now create a useable config.h
 configure_file(
