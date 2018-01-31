@@ -722,14 +722,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	}			/*  if( nfs_param.krb5_param.active_krb5 ) */
 #endif				/* HAVE_KRB5 */
 #endif				/* _HAVE_GSSAPI */
-
-	/* RPC Initialisation - exits on failure */
-	nfs_Init_svc();
-	LogInfo(COMPONENT_INIT, "RPC resources successfully initialized");
-
-	/* Admin initialisation */
-	nfs_Init_admin_thread();
-
 	/* Init the NFSv4 Clientid cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
 	if (nfs_Init_client_id() !=
@@ -830,6 +822,13 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	/* Start grace period */
 	nfs_start_grace(NULL);
+
+	/* RPC Initialisation - exits on failure */
+	nfs_Init_svc();
+	LogInfo(COMPONENT_INIT, "RPC resources successfully initialized");
+
+	/* Admin initialisation */
+	nfs_Init_admin_thread();
 
 	/* callback dispatch */
 	nfs_rpc_cb_pkginit();
