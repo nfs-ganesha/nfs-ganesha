@@ -52,6 +52,7 @@ target_link_libraries(test_ci_hash_dist1
 set_target_properties(test_ci_hash_dist1 PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
 
+
 set(test_lookup_latency_SRCS
   test_lookup_latency.cc
   )
@@ -80,4 +81,19 @@ target_link_libraries(test_readlink_latency
   ${GTEST_LIBRARIES}
   )
 set_target_properties(test_readlink_latency PROPERTIES COMPILE_FLAGS
+  "${UNITTEST_CXX_FLAGS}")
+
+
+set(test_mkdir_latency_SRCS
+  test_mkdir_latency.cc
+  )
+
+add_executable(test_mkdir_latency
+  ${test_mkdir_latency_SRCS})
+add_sanitizers(test_mkdir_latency)
+
+target_link_libraries(test_mkdir_latency
+  ${GTEST_LIBRARIES}
+  )
+set_target_properties(test_mkdir_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
