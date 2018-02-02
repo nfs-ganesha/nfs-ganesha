@@ -97,3 +97,18 @@ target_link_libraries(test_mkdir_latency
   )
 set_target_properties(test_mkdir_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
+
+
+set(test_symlink_latency_SRCS
+  test_symlink_latency.cc
+  )
+
+add_executable(test_symlink_latency
+  ${test_symlink_latency_SRCS})
+add_sanitizers(test_symlink_latency)
+
+target_link_libraries(test_symlink_latency
+  ${GTEST_LIBRARIES}
+  )
+set_target_properties(test_symlink_latency PROPERTIES COMPILE_FLAGS
+  "${UNITTEST_CXX_FLAGS}")
