@@ -48,6 +48,92 @@
 #include "server_stats.h"
 #include "export_mgr.h"
 
+struct nfs4_read_data {
+	READ4res *res_READ4;		/**< Results for read */
+	state_owner_t *owner;		/**< Owner of state */
+};
+
+/**
+ * @brief Callback for NFS4 read done
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] read_data		Data for read call
+ * @param[in] caller_data	Data for caller
+ */
+static void nfs4_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			  void *read_data, void *caller_data)
+{
+	struct nfs4_read_data *data = caller_data;
+	struct fsal_read_arg *read_arg = read_data;
+	int i;
+
+	/* Fixup FSAL_SHARE_DENIED status */
+	if (ret.major == ERR_FSAL_SHARE_DENIED)
+		ret = fsalstat(ERR_FSAL_LOCKED, 0);
+
+	/* Get result */
+	data->res_READ4->status = nfs4_Errno_status(ret);
+
+	if (FSAL_IS_ERROR(ret)) {
+		for (i = 0; i < read_arg->iov_count; ++i) {
+			gsh_free(read_arg->iov[i].iov_base);
+		}
+		data->res_READ4->READ4res_u.resok4.data.data_val = NULL;
+		goto done;
+	}
+
+	if (!read_arg->end_of_file) {
+		/** @todo FSF: add a config option for this behavior?
+		*/
+		/*
+		 * NFS requires to set the EOF flag for all reads that
+		 * reach the EOF, i.e., even the ones returning data.
+		 * Most FSALs don't set the flag in this case. The only
+		 * client that cares about this is ESXi. Other clients
+		 * will just see a short read and continue reading and then
+		 * get the EOF flag as 0 bytes are returned.
+		 */
+		struct attrlist attrs;
+
+		fsal_prepare_attrs(&attrs, ATTR_SIZE);
+
+		if (FSAL_IS_SUCCESS(obj->obj_ops.getattrs(obj, &attrs))) {
+			read_arg->end_of_file = (read_arg->offset +
+						 read_arg->read_amount)
+				>= attrs.filesize;
+		}
+
+		/* Done with the attrs */
+		fsal_release_attrs(&attrs);
+	}
+
+	data->res_READ4->READ4res_u.resok4.data.data_len =
+		read_arg->read_amount;
+	data->res_READ4->READ4res_u.resok4.data.data_val =
+		read_arg->iov[0].iov_base;
+
+	LogFullDebug(COMPONENT_NFS_V4,
+		     "NFS4_OP_READ: offset = %" PRIu64
+		     " read length = %zu eof=%u", read_arg->offset,
+		     read_arg->read_amount, read_arg->end_of_file);
+
+	/* Is EOF met or not ? */
+	data->res_READ4->READ4res_u.resok4.eof = read_arg->end_of_file;
+done:
+	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->read_amount,
+			     (data->res_READ4->status == NFS4_OK) ? true :
+			     false, false);
+
+	if (data->owner != NULL) {
+		op_ctx->clientid = NULL;
+		dec_state_owner_ref(data->owner);
+	}
+
+	if (read_arg->state)
+		dec_state_t_ref(read_arg->state);
+}
+
 /**
  * @brief Read on a pNFS pNFS data server
  *
@@ -201,9 +287,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	READ4args * const arg_READ4 = &op->nfs_argop4_u.opread;
 	READ4res * const res_READ4 = &resp->nfs_resop4_u.opread;
 	uint64_t size = 0;
-	size_t read_size = 0;
 	uint64_t offset = 0;
-	bool eof_met = false;
 	void *bufferdata = NULL;
 	fsal_status_t fsal_status = {0, 0};
 	state_t *state_found = NULL;
@@ -216,6 +300,9 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	uint64_t MaxOffsetRead =
 			atomic_fetch_uint64_t(
 				&op_ctx->ctx_export->MaxOffsetRead);
+	struct nfs4_read_data read_data;
+	struct fsal_read_arg *read_arg = alloca(sizeof(*read_arg) +
+						sizeof(struct iovec));
 
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
@@ -389,7 +476,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_READ4->status = nfs4_Errno_status(fsal_status);
-		goto done;
+		goto out;
 	}
 
 	/* Get the size and offset of the read operation */
@@ -410,7 +497,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 				 MaxOffsetRead,
 				 op_ctx->ctx_export->export_id);
 			res_READ4->status = NFS4ERR_FBIG;
-			goto done;
+			goto out;
 		}
 	}
 
@@ -437,7 +524,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		res_READ4->READ4res_u.resok4.data.data_len = 0;
 		res_READ4->READ4res_u.resok4.data.data_val = NULL;
 		res_READ4->status = NFS4_OK;
-		goto done;
+		goto out;
 	}
 
 	/* Some work is to be done */
@@ -451,47 +538,22 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	/* Call the new fsal_read2 */
-	fsal_status = fsal_read2(obj, bypass, state_found, offset, size,
-				 &read_size, bufferdata, &eof_met, info);
+	/* Set up args */
+	read_arg->info = info;
+	read_arg->state = state_found;
+	read_arg->offset = offset;
+	read_arg->iov_count = 1;
+	read_arg->iov[0].iov_len = size;
+	read_arg->iov[0].iov_base = bufferdata;
+	read_arg->read_amount = 0;
 
-	if (FSAL_IS_ERROR(fsal_status)) {
-		res_READ4->status = nfs4_Errno_status(fsal_status);
-		gsh_free(bufferdata);
-		res_READ4->READ4res_u.resok4.data.data_val = NULL;
-		goto done;
-	}
+	read_data.res_READ4 = res_READ4;
+	read_data.owner = owner;
 
-	if (!anonymous_started && data->minorversion == 0)
-		op_ctx->clientid = NULL;
-
-	res_READ4->READ4res_u.resok4.data.data_len = read_size;
-	res_READ4->READ4res_u.resok4.data.data_val = bufferdata;
-
-	LogFullDebug(COMPONENT_NFS_V4,
-		     "NFS4_OP_READ: offset = %" PRIu64
-		     " read length = %zu eof=%u", offset, read_size, eof_met);
-
-	/* Is EOF met or not ? */
-	res_READ4->READ4res_u.resok4.eof = eof_met;
-
-	/* Say it is ok */
-	res_READ4->status = NFS4_OK;
-
- done:
-
-	server_stats_io_done(size, read_size,
-			     (res_READ4->status == NFS4_OK) ? true : false,
-			     false);
+	/* Do the actual read */
+	obj->obj_ops.read2(obj, bypass, nfs4_read_cb, read_arg, &read_data);
 
  out:
-
-	if (owner != NULL)
-		dec_state_owner_ref(owner);
-
-	if (state_found != NULL)
-		dec_state_t_ref(state_found);
-
 	if (state_open != NULL)
 		dec_state_t_ref(state_open);
 

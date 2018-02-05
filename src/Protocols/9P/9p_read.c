@@ -44,6 +44,40 @@
 #include "server_stats.h"
 #include "client_mgr.h"
 
+struct _9p_read_data {
+	struct gsh_client *client;	/**< Client for stats */
+	fsal_status_t ret;		/**< Return from read */
+};
+
+/**
+ * @brief Callback for NFS3 read done
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] read_data		Data for read call
+ * @param[in] caller_data	Data for caller
+ */
+static void _9p_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			  void *read_data, void *caller_data)
+{
+	struct _9p_read_data *data = caller_data;
+	struct fsal_read_arg *read_arg = read_data;
+
+	/* Fixup FSAL_SHARE_DENIED status */
+	if (ret.major == ERR_FSAL_SHARE_DENIED)
+		ret = fsalstat(ERR_FSAL_LOCKED, 0);
+
+	data->ret = ret;
+
+	if (data->client) {
+		op_ctx->client = data->client;
+
+		server_stats_io_done(read_arg->iov[0].iov_len,
+				     read_arg->read_amount, FSAL_IS_ERROR(ret),
+				     false);
+	}
+}
+
 int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -58,8 +92,6 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *pfid = NULL;
 
 	size_t read_size = 0;
-	bool eof_met;
-	fsal_status_t fsal_status;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -112,36 +144,30 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		outcount = read_size;
 	} else {
-		/* Call the new fsal_read */
-		fsal_status = fsal_read2(pfid->pentry,
-					false,
-					pfid->state,
-					*offset,
-					*count,
-					&read_size,
-					databuffer,
-					&eof_met,
-					NULL);
+		struct _9p_read_data read_data;
+		struct fsal_read_arg *read_arg = alloca(sizeof(*read_arg) +
+							sizeof(struct iovec));
 
-		/* Get the handle, for stats */
-		struct gsh_client *client = req9p->pconn->client;
+		read_arg->info = NULL;
+		read_arg->state = pfid->state;
+		read_arg->offset = *offset;
+		read_arg->iov_count = 1;
+		read_arg->iov[0].iov_len = *count;
+		read_arg->iov[0].iov_base = databuffer;
+		read_arg->read_amount = 0;
 
-		if (client == NULL) {
-			LogDebug(COMPONENT_9P,
-				 "Cannot get client block for 9P request");
-		} else {
-			op_ctx->client = client;
+		read_data.client = req9p->pconn->client;
 
-			server_stats_io_done(*count, read_size,
-					     FSAL_IS_ERROR(fsal_status), false);
-		}
+		/* Do the actual read */
+		pfid->pentry->obj_ops.read2(pfid->pentry, true, _9p_read_cb,
+					    read_arg, &read_data);
 
-		if (FSAL_IS_ERROR(fsal_status))
+		if (FSAL_IS_ERROR(read_data.ret))
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
+					  _9p_tools_errno(read_data.ret),
 					  plenout, preply);
 
-		outcount = (u32) read_size;
+		outcount = (u32) read_arg->read_amount;
 	}
 	_9p_setfilledbuffer(cursor, outcount);
 

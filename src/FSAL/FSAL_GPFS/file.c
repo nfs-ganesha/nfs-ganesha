@@ -732,25 +732,24 @@ gpfs_write_plus_fd(int my_fd, uint64_t offset,
  *
  * This function reads data from the given file. The FSAL must be able to
  * perform the read whether a state is presented or not. This function also
- * is expected to handle properly bypassing or not share reservations.
+ * is expected to handle properly bypassing or not share reservations.  This is
+ * an (optionally) asynchronous call.  When the I/O is complete, the done
+ * callback is called with the results.
  *
- * @param[in]     obj_hdl        File on which to operate
- * @param[in]     bypass         If state doesn't indicate a share reservation,
- *                               bypass any deny read
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position from which to read
- * @param[in]     buffer_size    Amount of data to read
- * @param[out]    buffer         Buffer to which data are to be copied
- * @param[out]    read_amount    Amount of data read
- * @param[out]    end_of_file    true if the end of file has been reached
- * @param[in,out] info           more information about the data
+ * @note This does not handle iovecs larger than 1
  *
- * @return FSAL status.
+ * @param[in]     obj_hdl	File on which to operate
+ * @param[in]     bypass	If state doesn't indicate a share reservation,
+ *				bypass any deny read
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] read_arg	Info about read, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
+ *
+ * @return Nothing; results are in callback
  */
-fsal_status_t
-gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
-	   uint64_t offset, size_t buffer_size, void *buffer,
-	   size_t *read_amount, bool *end_of_file, struct io_info *info)
+void
+gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, fsal_async_cb done_cb,
+	   struct fsal_read_arg *read_arg, void *caller_arg)
 {
 	int my_fd = -1;
 	fsal_status_t status;
@@ -765,19 +764,21 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+		done_cb(obj_hdl, fsalstat(posix2fsal_error(EXDEV), EXDEV),
+			read_arg, caller_arg);
+		return;
 	}
 
 	/* Acquire state's fdlock to prevent OPEN upgrade closing the
 	 * file descriptor while we use it.
 	 */
-	if (state) {
-		gpfs_fd = STATE2FD(state);
+	if (read_arg->state) {
+		gpfs_fd = STATE2FD(read_arg->state);
 		PTHREAD_RWLOCK_rdlock(&gpfs_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
-	status = find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
+	status = find_fd(&my_fd, obj_hdl, bypass, read_arg->state, FSAL_O_READ,
 			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status)) {
@@ -785,17 +786,26 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 			 "find_fd failed %s", msg_fsal_err(status.major));
 		if (gpfs_fd)
 			PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
-		return status;
+		done_cb(obj_hdl, status, read_arg, caller_arg);
+		return;
 	}
 
-	if (info)
-		status = gpfs_read_plus_fd(my_fd, offset, buffer_size,
-					buffer, read_amount, end_of_file, info,
-					export_fd);
+	assert(read_arg->iov_count == 1);
+
+	if (read_arg->info)
+		status = gpfs_read_plus_fd(my_fd, read_arg->offset,
+					   read_arg->iov[0].iov_len,
+					   read_arg->iov[0].iov_base,
+					   &read_arg->read_amount,
+					   &read_arg->end_of_file,
+					   read_arg->info,
+					   export_fd);
 	else
-		status = GPFSFSAL_read(my_fd, offset, buffer_size, buffer,
-					read_amount, end_of_file,
-					export_fd);
+		status = GPFSFSAL_read(my_fd, read_arg->offset,
+				       read_arg->iov[0].iov_len,
+				       read_arg->iov[0].iov_base,
+				       &read_arg->read_amount,
+				       &read_arg->end_of_file, export_fd);
 
 	if (gpfs_fd)
 		PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
@@ -814,7 +824,7 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, struct state_t *state,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	return status;
+	done_cb(obj_hdl, status, read_arg, caller_arg);
 }
 
 /**

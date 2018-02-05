@@ -2415,15 +2415,12 @@ static fsal_status_t pxy_open2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t pxy_read2(struct fsal_obj_handle *obj_hdl,
-			       bool bypass,
-			       struct state_t *state,
-			       uint64_t offset,
-			       size_t buffer_size,
-			       void *buffer,
-			       size_t *read_amount,
-			       bool *end_of_file,
-			       struct io_info *info)
+/* XXX Note that this only currently supports a vector size of 1 */
+static void pxy_read2(struct fsal_obj_handle *obj_hdl,
+		      bool bypass,
+		      fsal_async_cb done_cb,
+		      struct fsal_read_arg *read_arg,
+		      void *caller_arg)
 {
 	int maxReadSize;
 	int rc;
@@ -2439,8 +2436,8 @@ static fsal_status_t pxy_read2(struct fsal_obj_handle *obj_hdl,
 
 	maxReadSize = op_ctx->fsal_export->exp_ops.fs_maxread(
 							op_ctx->fsal_export);
-	if (buffer_size > maxReadSize)
-		buffer_size = maxReadSize;
+	if (read_arg->iov[0].iov_len > maxReadSize)
+		read_arg->iov[0].iov_len = maxReadSize;
 
 	/* SEQUENCE */
 	pxy_get_client_sessionid(sid);
@@ -2449,42 +2446,50 @@ static fsal_status_t pxy_read2(struct fsal_obj_handle *obj_hdl,
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
 	/* prepare READ */
 	rok = &resoparray[opcnt].nfs_resop4_u.opread.READ4res_u.resok4;
-	rok->data.data_val = buffer;
-	rok->data.data_len = buffer_size;
+	rok->data.data_val = read_arg->iov[0].iov_base;
+	rok->data.data_len = read_arg->iov[0].iov_len;
 	if (bypass)
-		COMPOUNDV4_ARG_ADD_OP_READ_BYPASS(opcnt, argoparray, offset,
-						  buffer_size);
+		COMPOUNDV4_ARG_ADD_OP_READ_BYPASS(opcnt, argoparray,
+						  read_arg->offset,
+						  read_arg->iov[0].iov_len);
 	else {
-		if (state) {
-			struct pxy_state *pxy_state_id = container_of(state,
+		if (read_arg->state) {
+			struct pxy_state *pxy_state_id = container_of(
+						read_arg->state,
 						struct pxy_state, state);
 
-			COMPOUNDV4_ARG_ADD_OP_READ(opcnt, argoparray, offset,
-						   buffer_size,
+			COMPOUNDV4_ARG_ADD_OP_READ(opcnt, argoparray,
+						   read_arg->offset,
+						   read_arg->iov[0].iov_len,
 						   pxy_state_id->stateid.other);
 
 		} else {
 			COMPOUNDV4_ARG_ADD_OP_READ_STATELESS(opcnt, argoparray,
-							     offset,
-							     buffer_size);
+					     read_arg->offset,
+					     read_arg->iov[0].iov_len);
 		}
 	}
 
 	/* nfs call */
 	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
 			    opcnt, argoparray, resoparray);
-	if (rc != NFS4_OK)
-		return nfsstat4_to_fsal(rc);
-
-	*end_of_file = rok->eof;
-	*read_amount = rok->data.data_len;
-	if (info) {
-		info->io_content.what = NFS4_CONTENT_DATA;
-		info->io_content.data.d_offset = offset + *read_amount;
-		info->io_content.data.d_data.data_len = *read_amount;
-		info->io_content.data.d_data.data_val = buffer;
+	if (rc != NFS4_OK) {
+		done_cb(obj_hdl, nfsstat4_to_fsal(rc), read_arg, caller_arg);
+		return;
 	}
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	read_arg->end_of_file = rok->eof;
+	read_arg->read_amount = rok->data.data_len;
+	if (read_arg->info) {
+		read_arg->info->io_content.what = NFS4_CONTENT_DATA;
+		read_arg->info->io_content.data.d_offset = read_arg->offset +
+			read_arg->read_amount;
+		read_arg->info->io_content.data.d_data.data_len =
+			read_arg->read_amount;
+		read_arg->info->io_content.data.d_data.data_val =
+			read_arg->iov[0].iov_base;
+	}
+	done_cb(obj_hdl, fsalstat(0, 0), read_arg, caller_arg);
 }
 
 static fsal_status_t pxy_write2(struct fsal_obj_handle *obj_hdl,

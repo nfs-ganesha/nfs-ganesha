@@ -38,6 +38,7 @@
 #include "fsal_convert.h"
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/uio.h>
 #include "vfs_methods.h"
 #include "os/subr.h"
 #include "sal_data.h"
@@ -1108,81 +1109,81 @@ fsal_status_t find_fd(int *fd,
  *
  * This function reads data from the given file. The FSAL must be able to
  * perform the read whether a state is presented or not. This function also
- * is expected to handle properly bypassing or not share reservations.
+ * is expected to handle properly bypassing or not share reservations.  This is
+ * an (optionally) asynchronous call.  When the I/O is complete, the done
+ * callback is called with the results.
  *
- * @param[in]     obj_hdl        File on which to operate
- * @param[in]     bypass         If state doesn't indicate a share reservation,
- *                               bypass any deny read
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position from which to read
- * @param[in]     buffer_size    Amount of data to read
- * @param[out]    buffer         Buffer to which data are to be copied
- * @param[out]    read_amount    Amount of data read
- * @param[out]    end_of_file    true if the end of file has been reached
- * @param[in,out] info           more information about the data
+ * @param[in]     obj_hdl	File on which to operate
+ * @param[in]     bypass	If state doesn't indicate a share reservation,
+ *				bypass any deny read
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] read_arg	Info about read, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
  *
- * @return FSAL status.
+ * @return Nothing; results are in callback
  */
 
-fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
-			bool bypass,
-			struct state_t *state,
-			uint64_t offset,
-			size_t buffer_size,
-			void *buffer,
-			size_t *read_amount,
-			bool *end_of_file,
-			struct io_info *info)
+void vfs_read2(struct fsal_obj_handle *obj_hdl,
+	       bool bypass,
+	       fsal_async_cb done_cb,
+	       struct fsal_read_arg *read_arg,
+	       void *caller_arg)
 {
 	int my_fd = -1;
 	ssize_t nb_read;
-	fsal_status_t status;
+	fsal_status_t status = {0, 0};
 	int retval = 0;
 	bool has_lock = false;
 	bool closefd = false;
 	struct vfs_fd *vfs_fd = NULL;
 
-	if (info != NULL) {
+	if (read_arg->info != NULL) {
 		/* Currently we don't support READ_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), read_arg,
+			caller_arg);
+		return;
 	}
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+		done_cb(obj_hdl, fsalstat(posix2fsal_error(EXDEV), EXDEV),
+			read_arg, caller_arg);
+		return;
 	}
 
 	/* Acquire state's fdlock to prevent OPEN upgrade closing the
 	 * file descriptor while we use it.
 	 */
-	if (state) {
-		vfs_fd = &container_of(state, struct vfs_state_fd,
+	if (read_arg->state) {
+		vfs_fd = &container_of(read_arg->state, struct vfs_state_fd,
 				       state)->vfs_fd;
 
 		PTHREAD_RWLOCK_rdlock(&vfs_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
-	LogFullDebug(COMPONENT_FSAL, "Calling find_fd, state = %p", state);
-	status = find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
+	LogFullDebug(COMPONENT_FSAL, "Calling find_fd, state = %p",
+		     read_arg->state);
+	status = find_fd(&my_fd, obj_hdl, bypass, read_arg->state, FSAL_O_READ,
 			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status))
 		goto out;
 
-	nb_read = pread(my_fd, buffer, buffer_size, offset);
+	nb_read = preadv(my_fd, read_arg->iov, read_arg->iov_count,
+			 read_arg->offset);
 
-	if (offset == -1 || nb_read == -1) {
+	if (read_arg->offset == -1 || nb_read == -1) {
 		retval = errno;
 		status = fsalstat(posix2fsal_error(retval), retval);
 		goto out;
 	}
 
-	*read_amount = nb_read;
+	read_arg->read_amount = nb_read;
 
-	*end_of_file = (nb_read == 0);
+	read_arg->end_of_file = (nb_read == 0);
 
 #if 0
 	/** @todo
@@ -1210,7 +1211,7 @@ fsal_status_t vfs_read2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	return status;
+	done_cb(obj_hdl, status, read_arg, caller_arg);
 }
 
 /**

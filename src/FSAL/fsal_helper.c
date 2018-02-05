@@ -937,6 +937,22 @@ bool fsal_create_verify(struct fsal_obj_handle *obj, uint32_t verf_hi,
 }
 
 /**
+ * @brief Callback for fsal_read2
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] obj_data		Data for call
+ * @param[in] caller_data	Data for caller
+ */
+static void fsal_read2_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			  void *obj_data, void *caller_data)
+{
+	fsal_status_t *status = caller_data;
+
+	*status = ret;
+}
+
+/**
  * @brief New style reads
  *
  * @param[in]     obj          File to be read or written
@@ -965,9 +981,23 @@ fsal_status_t fsal_read2(struct fsal_obj_handle *obj,
 {
 	/* Error return from FSAL calls */
 	fsal_status_t status = { 0, 0 };
+	struct fsal_read_arg *read_arg = alloca(sizeof(*read_arg) +
+						sizeof(struct iovec));
 
-	status = obj->obj_ops.read2(obj, bypass, state, offset, io_size, buffer,
-				    bytes_moved, eof, info);
+	read_arg->info = info;
+	read_arg->state = state;
+	read_arg->offset = offset;
+	read_arg->iov_count = 1;
+	read_arg->iov[0].iov_len = io_size;
+	read_arg->iov[0].iov_base = buffer;
+
+
+	/* XXX This is temporary, and depends on the implementations being
+	 * synchronous */
+	obj->obj_ops.read2(obj, bypass, fsal_read2_cb, read_arg, &status);
+
+	*bytes_moved = read_arg->read_amount;
+	*eof = read_arg->end_of_file;
 
 	/* Fixup FSAL_SHARE_DENIED status */
 	if (status.major == ERR_FSAL_SHARE_DENIED)

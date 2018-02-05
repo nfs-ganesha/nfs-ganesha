@@ -1841,14 +1841,11 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 /* read2
  */
 
-static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
-				     bool bypass,
-				     struct state_t *state,
-				     uint64_t seek_descriptor,
-				     size_t buffer_size,
-				     void *buffer, size_t *read_amount,
-				     bool *end_of_file,
-				     struct io_info *info)
+static void glusterfs_read2(struct fsal_obj_handle *obj_hdl,
+			    bool bypass,
+			    fsal_async_cb done_cb,
+			    struct fsal_read_arg *read_arg,
+			    void *caller_arg)
 {
 	struct glusterfs_fd my_fd = {0};
 	ssize_t nb_read;
@@ -1859,10 +1856,15 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_fd *glusterfs_fd = NULL;
+	size_t total_size = 0;
+	uint64_t seek_descriptor = read_arg->offset;
+	int i;
 
-	if (info != NULL) {
+	if (read_arg->info != NULL) {
 		/* Currently we don't support READ_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), read_arg,
+			caller_arg);
+		return;
 	}
 
 #if 0
@@ -1878,15 +1880,16 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 	/* Acquire state's fdlock to prevent OPEN upgrade closing the
 	 * file descriptor while we use it.
 	 */
-	if (state) {
-		glusterfs_fd = &container_of(state, struct glusterfs_state_fd,
+	if (read_arg->state) {
+		glusterfs_fd = &container_of(read_arg->state,
+					     struct glusterfs_state_fd,
 					     state)->glusterfs_fd;
 
 		PTHREAD_RWLOCK_rdlock(&glusterfs_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
-	status = find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
+	status = find_fd(&my_fd, obj_hdl, bypass, read_arg->state, FSAL_O_READ,
 			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status))
@@ -1897,8 +1900,9 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray);
 
-	nb_read = glfs_pread(my_fd.glfd, buffer, buffer_size,
-			     seek_descriptor, 0);
+	/* XXX dang switch to preadv_async once async supported */
+	nb_read = glfs_preadv(my_fd.glfd, read_arg->iov, read_arg->iov_count,
+			      seek_descriptor, 0);
 
 	/* restore credentials */
 	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
@@ -1909,10 +1913,14 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	*read_amount = nb_read;
+	read_arg->read_amount = nb_read;
 
-	if (nb_read < buffer_size)
-		*end_of_file = true;
+	for (i = 0; i < read_arg->iov_count; i++) {
+		total_size += read_arg->iov[i].iov_len;
+	}
+
+	if (nb_read < total_size)
+		read_arg->end_of_file = true;
 #if 0
 	/** @todo
 	 *
@@ -1940,8 +1948,7 @@ static fsal_status_t glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	return status;
-
+	done_cb(obj_hdl, status, read_arg, caller_arg);
 }
 
 /* write2

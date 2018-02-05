@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -591,6 +591,13 @@ extern struct config_block mdcache_param_blk;
 	op_ctx->fsal_export = (myexp)->mfe_exp.sub_export; \
 } while (0)
 
+#define supercall(call) do { \
+	struct fsal_export *save_exp = op_ctx->fsal_export; \
+	op_ctx->fsal_export = save_exp->super_export; \
+	call; \
+	op_ctx->fsal_export = save_exp; \
+} while (0)
+
 /**
  * @brief Lock context for content lock recursion
  *
@@ -956,15 +963,11 @@ fsal_openflags_t mdcache_status2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mdcache_reopen2(struct fsal_obj_handle *obj_hdl,
 			      struct state_t *state,
 			      fsal_openflags_t openflags);
-fsal_status_t mdcache_read2(struct fsal_obj_handle *obj_hdl,
-			   bool bypass,
-			   struct state_t *state,
-			   uint64_t offset,
-			   size_t buf_size,
-			   void *buffer,
-			   size_t *read_amount,
-			   bool *eof,
-			   struct io_info *info);
+void mdcache_read2(struct fsal_obj_handle *obj_hdl,
+		   bool bypass,
+		   fsal_async_cb done_cb,
+		   struct fsal_read_arg *read_arg,
+		   void *caller_arg);
 fsal_status_t mdcache_write2(struct fsal_obj_handle *obj_hdl,
 			     bool bypass,
 			     struct state_t *state,

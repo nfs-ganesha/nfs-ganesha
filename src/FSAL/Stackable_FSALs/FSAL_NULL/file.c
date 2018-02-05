@@ -39,6 +39,40 @@
 #include "FSAL/fsal_commonlib.h"
 #include "nullfs_methods.h"
 
+/**
+ * @brief Callback arg for NULL async callbacks
+ *
+ * NULL needs to know what its object is related to the sub-FSAL's object.
+ * This wraps the given callback arg with NULL specific info
+ */
+struct null_async_arg {
+	struct fsal_obj_handle *obj_hdl;	/**< NULL's handle */
+	fsal_async_cb cb;			/**< Wrapped callback */
+	void *cb_arg;				/**< Wrapped callback data */
+};
+
+/**
+ * @brief Callback for NULL async calls
+ *
+ * Unstack, and call up.
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] obj_data		Data for call
+ * @param[in] caller_data	Data for caller
+ */
+void null_async_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+		   void *obj_data, void *caller_data)
+{
+	struct fsal_export *save_exp = op_ctx->fsal_export;
+	struct null_async_arg *arg = caller_data;
+
+	op_ctx->fsal_export = save_exp->super_export;
+	arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
+	op_ctx->fsal_export = save_exp;
+
+	gsh_free(arg);
+}
 
 /* nullfs_close
  * Close the file if it is still open.
@@ -168,34 +202,31 @@ fsal_status_t nullfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-fsal_status_t nullfs_read2(struct fsal_obj_handle *obj_hdl,
-			   bool bypass,
-			   struct state_t *state,
-			   uint64_t offset,
-			   size_t buf_size,
-			   void *buffer,
-			   size_t *read_amount,
-			   bool *eof,
-			   struct io_info *info)
+void nullfs_read2(struct fsal_obj_handle *obj_hdl,
+		  bool bypass,
+		  fsal_async_cb done_cb,
+		  struct fsal_read_arg *read_arg,
+		  void *caller_arg)
 {
 	struct nullfs_fsal_obj_handle *handle =
 		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
 			     obj_handle);
-
 	struct nullfs_fsal_export *export =
 		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
 			     export);
+	struct null_async_arg *arg;
+
+	/* Set up async callback */
+	arg = gsh_calloc(1, sizeof(*arg));
+	arg->obj_hdl = obj_hdl;
+	arg->cb = done_cb;
+	arg->cb_arg = caller_arg;
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops.read2(handle->sub_handle, bypass,
-						  state, offset, buf_size,
-						  buffer, read_amount, eof,
-						  info);
+	handle->sub_handle->obj_ops.read2(handle->sub_handle, bypass,
+					  null_async_cb, read_arg, arg);
 	op_ctx->fsal_export = &export->export;
-
-	return status;
 }
 
 fsal_status_t nullfs_write2(struct fsal_obj_handle *obj_hdl,

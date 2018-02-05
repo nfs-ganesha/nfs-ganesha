@@ -1545,31 +1545,25 @@ fsal_status_t mem_reopen2(struct fsal_obj_handle *obj_hdl,
  *
  * This function reads data from the given file. The FSAL must be able to
  * perform the read whether a state is presented or not. This function also
- * is expected to handle properly bypassing or not share reservations.
+ * is expected to handle properly bypassing or not share reservations.  This is
+ * an (optionally) asynchronous call.  When the I/O is complete, the done
+ * callback is called with the results.
  *
- * @param[in]     obj_hdl        File on which to operate
- * @param[in]     bypass         If state doesn't indicate a share reservation,
- *                               bypass any deny read
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position from which to read
- * @param[in]     buffer_size    Amount of data to read
- * @param[out]    buffer         Buffer to which data are to be copied
- * @param[out]    read_amount    Amount of data read
- * @param[out]    end_of_file    true if the end of file has been reached
- * @param[in,out] info           more information about the data
+ * @param[in]     obj_hdl	File on which to operate
+ * @param[in]     bypass	If state doesn't indicate a share reservation,
+ *				bypass any deny read
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] read_arg	Info about read, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
  *
- * @return FSAL status.
+ * @return Nothing; results are in callback
  */
 
-fsal_status_t mem_read2(struct fsal_obj_handle *obj_hdl,
-			bool bypass,
-			struct state_t *state,
-			uint64_t offset,
-			size_t buffer_size,
-			void *buffer,
-			size_t *read_amount,
-			bool *end_of_file,
-			struct io_info *info)
+void mem_read2(struct fsal_obj_handle *obj_hdl,
+	       bool bypass,
+	       fsal_async_cb done_cb,
+	       struct fsal_read_arg *read_arg,
+	       void *caller_arg)
 {
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
@@ -1577,54 +1571,71 @@ fsal_status_t mem_read2(struct fsal_obj_handle *obj_hdl,
 	bool has_lock, closefd = false;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	bool reusing_open_state_fd = false;
+	uint64_t offset = read_arg->offset;
+	int i;
 
-	if (info != NULL) {
+	if (read_arg->info != NULL) {
 		/* Currently we don't support READ_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), read_arg,
+			caller_arg);
+		return;
 	}
 
 	/* Find an FD */
 	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
-			      &myself->mh_file.share, bypass, state,
+			      &myself->mh_file.share, bypass, read_arg->state,
 			      FSAL_O_READ, mem_open_func, mem_close_func,
 			      &has_lock, &closefd, false,
 			      &reusing_open_state_fd);
 	if (FSAL_IS_ERROR(status)) {
-		return status;
+		done_cb(obj_hdl, status, read_arg, caller_arg);
+		return;
 	}
 
-	if (offset > myself->attrs.filesize) {
-		buffer_size = 0;
-	} else if (offset + buffer_size > myself->attrs.filesize) {
-		buffer_size = myself->attrs.filesize - offset;
-	}
+	read_arg->read_amount = 0;
 
-	if (offset < myself->datasize) {
-		size_t readsize;
+	for (i = 0; i < read_arg->iov_count; i++) {
+		size_t bufsize;
 
-		/* Data to read */
-		readsize = MIN(buffer_size, myself->datasize - offset);
-		memcpy(buffer, myself->data + offset, readsize);
-		if (readsize < buffer_size)
-			memset(buffer + readsize, 'a', buffer_size - readsize);
-	} else {
-		memset(buffer, 'a', buffer_size);
+		if (offset > myself->attrs.filesize) {
+			/* Past end of file */
+			read_arg->end_of_file = true;
+			break;
+		}
+
+		bufsize = read_arg->iov[i].iov_len;
+		if (offset +  bufsize > myself->attrs.filesize) {
+			bufsize = myself->attrs.filesize - offset;
+		}
+		if (offset < myself->datasize) {
+			size_t readsize;
+
+			/* Data to read */
+			readsize = MIN(bufsize, myself->datasize - offset);
+			memcpy(read_arg->iov[i].iov_base, myself->data + offset,
+			       readsize);
+			if (readsize < bufsize)
+				memset(read_arg->iov[i].iov_base + readsize,
+				       'a', bufsize - readsize);
+		} else {
+			memset(read_arg->iov[i].iov_base, 'a', bufsize);
+		}
+		read_arg->read_amount += bufsize;
+		offset += bufsize;
 	}
 
 #ifdef USE_LTTNG
 	tracepoint(fsalmem, mem_read, __func__, __LINE__, myself,
-		   myself->m_name, state, myself->attrs.filesize,
+		   myself->m_name, read_arg->state, myself->attrs.filesize,
 		   myself->attrs.spaceused);
 #endif
 
-	*read_amount = buffer_size;
-	*end_of_file = (buffer_size == 0);
 	now(&myself->attrs.atime);
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), read_arg, caller_arg);
 }
 
 /**

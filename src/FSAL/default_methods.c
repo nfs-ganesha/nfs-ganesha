@@ -1290,18 +1290,16 @@ static fsal_status_t reopen2(struct fsal_obj_handle *obj_hdl,
  * default case not supported
  */
 
-static fsal_status_t read2(struct fsal_obj_handle *obj_hdl,
-			   bool bypass,
-			   struct state_t *state,
-			   uint64_t seek_descriptor,
-			   size_t buffer_size,
-			   void *buffer, size_t *read_amount,
-			   bool *end_of_file,
-			   struct io_info *info)
+static void read2(struct fsal_obj_handle *obj_hdl,
+		  bool bypass,
+		  fsal_async_cb done_cb,
+		  struct fsal_read_arg *read_arg,
+		  void *caller_arg)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+	done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP), read_arg,
+		caller_arg);
 }
 
 /* write2

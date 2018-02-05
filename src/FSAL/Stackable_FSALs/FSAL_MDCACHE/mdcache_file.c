@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,18 @@
 #include "mdcache_int.h"
 #include "mdcache_lru.h"
 #include "mdcache.h"
+
+/**
+ * @brief Callback arg for MDCACHE async callbacks
+ *
+ * MDCACHE needs to know what its object is related to the sub-FSAL's object.
+ * This wraps the given callback arg with MDCACHE specific info
+ */
+struct mdc_async_arg {
+	struct fsal_obj_handle *obj_hdl;	/**< MDCACHE's handle */
+	fsal_async_cb cb;			/**< Wrapped callback */
+	void *cb_arg;				/**< Wrapped callback data */
+};
 
 /**
  *
@@ -528,47 +540,72 @@ fsal_status_t mdcache_reopen2(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
+ * @brief Callback for MDCACHE read calls
+ *
+ * Unstack, and call up.
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] obj_data		Data for call
+ * @param[in] caller_data	Data for caller
+ */
+static void mdc_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			void *obj_data, void *caller_data)
+{
+	struct mdc_async_arg *arg = caller_data;
+	mdcache_entry_t *entry =
+		container_of(arg->obj_hdl, mdcache_entry_t, obj_handle);
+
+	/* Fixup FSAL_SHARE_DENIED status */
+	if (ret.major == ERR_FSAL_SHARE_DENIED)
+		ret = fsalstat(ERR_FSAL_LOCKED, 0);
+
+	supercall(
+		  arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
+		 );
+
+	if (!FSAL_IS_ERROR(ret))
+		mdc_set_time_current(&entry->attrs.atime);
+	else if (ret.major == ERR_FSAL_DELAY)
+		mdcache_kill_entry(entry);
+
+	gsh_free(arg);
+}
+
+/**
  * @brief Read from a file (new style)
  *
  * Delegate to sub-FSAL
  *
- * @param[in] obj_hdl	Object owning state
- * @param[in] bypass	Bypass deny read
- * @param[in] state	Open file state to read
- * @param[in] offset	Offset into file
- * @param[in] buf_size	Size of read buffer
- * @param[in,out] buffer	Buffer to read into
- * @param[out] read_amount	Amount read in bytes
- * @param[out] eof	true if End of File was hit
- * @param[in] info	io_info for READ_PLUS
- * @return FSAL status
+ * @param[in]     obj_hdl	File on which to operate
+ * @param[in]     bypass	If state doesn't indicate a share reservation,
+ *				bypass any deny read
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] read_arg	Info about read, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
+ *
+ * @return Nothing; results are in callback
  */
-fsal_status_t mdcache_read2(struct fsal_obj_handle *obj_hdl,
-			   bool bypass,
-			   struct state_t *state,
-			   uint64_t offset,
-			   size_t buf_size,
-			   void *buffer,
-			   size_t *read_amount,
-			   bool *eof,
-			   struct io_info *info)
+void mdcache_read2(struct fsal_obj_handle *obj_hdl,
+		   bool bypass,
+		   fsal_async_cb done_cb,
+		   struct fsal_read_arg *read_arg,
+		   void *caller_arg)
 {
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-	fsal_status_t status;
+	struct mdc_async_arg *arg;
+
+	/* Set up async callback */
+	arg = gsh_calloc(1, sizeof(*arg));
+	arg->obj_hdl = obj_hdl;
+	arg->cb = done_cb;
+	arg->cb_arg = caller_arg;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.read2(
-			entry->sub_handle, bypass, state, offset, buf_size,
-			buffer, read_amount, eof, info)
+		entry->sub_handle->obj_ops.read2(entry->sub_handle, bypass,
+						 mdc_read_cb, read_arg, arg)
 	       );
-
-	if (!FSAL_IS_ERROR(status))
-		mdc_set_time_current(&entry->attrs.atime);
-	else if (status.major == ERR_FSAL_DELAY)
-		mdcache_kill_entry(entry);
-
-	return status;
 }
 
 /**

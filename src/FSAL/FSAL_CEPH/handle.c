@@ -1531,31 +1531,25 @@ fsal_status_t ceph_find_fd(Fh **fd,
  *
  * This function reads data from the given file. The FSAL must be able to
  * perform the read whether a state is presented or not. This function also
- * is expected to handle properly bypassing or not share reservations.
+ * is expected to handle properly bypassing or not share reservations.  This is
+ * an (optionally) asynchronous call.  When the I/O is complete, the done
+ * callback is called with the results.
  *
- * @param[in]     obj_hdl        File on which to operate
- * @param[in]     bypass         If state doesn't indicate a share reservation,
- *                               bypass any deny read
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position from which to read
- * @param[in]     buffer_size    Amount of data to read
- * @param[out]    buffer         Buffer to which data are to be copied
- * @param[out]    read_amount    Amount of data read
- * @param[out]    end_of_file    true if the end of file has been reached
- * @param[in,out] info           more information about the data
+ * @param[in]     obj_hdl	File on which to operate
+ * @param[in]     bypass	If state doesn't indicate a share reservation,
+ *				bypass any deny read
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] read_arg	Info about read, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
  *
- * @return FSAL status.
+ * @return Nothing; results are in callback
  */
 
-fsal_status_t ceph_read2(struct fsal_obj_handle *obj_hdl,
-			bool bypass,
-			struct state_t *state,
-			uint64_t offset,
-			size_t buffer_size,
-			void *buffer,
-			size_t *read_amount,
-			bool *end_of_file,
-			struct io_info *info)
+void ceph_read2(struct fsal_obj_handle *obj_hdl,
+		bool bypass,
+		fsal_async_cb done_cb,
+		struct fsal_read_arg *read_arg,
+		void *caller_arg)
 {
 	struct handle *myself = container_of(obj_hdl, struct handle, handle);
 	Fh *my_fd = NULL;
@@ -1566,40 +1560,52 @@ fsal_status_t ceph_read2(struct fsal_obj_handle *obj_hdl,
 	struct export *export =
 	    container_of(op_ctx->fsal_export, struct export, export);
 	struct ceph_fd *ceph_fd = NULL;
+	uint64_t offset = read_arg->offset;
+	int i;
 
-	if (info != NULL) {
+	if (read_arg->info != NULL) {
 		/* Currently we don't support READ_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), read_arg,
+			caller_arg);
+		return;
 	}
 
 	/* Acquire state's fdlock to prevent OPEN upgrade closing the
 	 * file descriptor while we use it.
 	 */
-	if (state) {
-		ceph_fd = &container_of(state, struct ceph_state_fd,
+	if (read_arg->state) {
+		ceph_fd = &container_of(read_arg->state, struct ceph_state_fd,
 					state)->ceph_fd;
 
 		PTHREAD_RWLOCK_rdlock(&ceph_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
-	status = ceph_find_fd(&my_fd, obj_hdl, bypass, state, FSAL_O_READ,
-			      &has_lock, &closefd, false);
+	status = ceph_find_fd(&my_fd, obj_hdl, bypass, read_arg->state,
+			      FSAL_O_READ, &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status))
 		goto out;
 
-	nb_read =
-	    ceph_ll_read(export->cmount, my_fd, offset, buffer_size, buffer);
+	read_arg->read_amount = 0;
 
-	if (offset == -1 || nb_read < 0) {
-		status = ceph2fsal_error(nb_read);
-		goto out;
+	for (i = 0; i < read_arg->iov_count; i++) {
+		nb_read = ceph_ll_read(export->cmount, my_fd, offset,
+				       read_arg->iov[i].iov_len,
+				       read_arg->iov[i].iov_base);
+
+		if (offset == -1 || nb_read < 0) {
+			status = ceph2fsal_error(nb_read);
+			goto out;
+		} else if (offset == 0) {
+			break;
+		}
+
+		read_arg->read_amount += nb_read;
+		offset += nb_read;
 	}
 
-	*read_amount = nb_read;
-
-	*end_of_file = nb_read == 0;
+	read_arg->end_of_file = read_arg->read_amount == 0;
 
 #if 0
 	/** @todo
@@ -1628,7 +1634,7 @@ fsal_status_t ceph_read2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	return status;
+	done_cb(obj_hdl, status, read_arg, caller_arg);
 }
 
 /**

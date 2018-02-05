@@ -1201,6 +1201,9 @@ struct export_ops {
  * @brief Filesystem operations
  */
 
+typedef void (*fsal_async_cb)(struct fsal_obj_handle *obj, fsal_status_t ret,
+			      void *obj_data, void *caller_data);
+
 typedef int (*claim_filesystem_cb)(struct fsal_filesystem *fs,
 				   struct fsal_export *exp);
 
@@ -1294,6 +1297,22 @@ typedef enum fsal_dir_result (*fsal_readdir_cb)(
 				const char *name, struct fsal_obj_handle *obj,
 				struct attrlist *attrs,
 				void *dir_state, fsal_cookie_t cookie);
+
+/**
+ * @brief Argument for read2 and it's callback
+ *
+ * Data needed for read and returned in it's done callback
+ */
+struct fsal_read_arg {
+	size_t read_amount;	/**< Total amount actually read */
+	struct io_info *info;	/**< More information about data */
+	bool end_of_file;	/**< True if end-of-file reached */
+	struct state_t *state;	/**< State to use for read (or NULL) */
+	uint64_t offset;	/**< Offset into file to read */
+	int iov_count;		/**< Number of vectors in iov */
+	struct iovec iov[];	/**< Vector of buffers to fill */
+};
+
 /**
  * @brief FSAL object operations vector
  */
@@ -2310,30 +2329,25 @@ struct fsal_obj_ops {
  *
  * This function reads data from the given file. The FSAL must be able to
  * perform the read whether a state is presented or not. This function also
- * is expected to handle properly bypassing or not share reservations.
+ * is expected to handle properly bypassing or not share reservations.  This is
+ * an (optionally) asynchronous call.  When the I/O is complete, the done
+ * callback is called with the results.
  *
- * @param[in]     obj_hdl        File on which to operate
- * @param[in]     bypass         If state doesn't indicate a share reservation,
- *                               bypass any deny read
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position from which to read
- * @param[in]     buffer_size    Amount of data to read
- * @param[out]    buffer         Buffer to which data are to be copied
- * @param[out]    read_amount    Amount of data read
- * @param[out]    end_of_file    true if the end of file has been reached
- * @param[in,out] info           more information about the data
+ * @param[in]     obj_hdl	File on which to operate
+ * @param[in]     bypass	If state doesn't indicate a share reservation,
+ *				bypass any deny read
+ * @param[in]     offset	Position from which to read
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] read_arg	Info about read, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
  *
- * @return FSAL status.
+ * @return Nothing; results are in callback
  */
-	 fsal_status_t (*read2)(struct fsal_obj_handle *obj_hdl,
-				bool bypass,
-				struct state_t *state,
-				uint64_t offset,
-				size_t buffer_size,
-				void *buffer,
-				size_t *read_amount,
-				bool *end_of_file,
-				struct io_info *info);
+	 void (*read2)(struct fsal_obj_handle *obj_hdl,
+		       bool bypass,
+		       fsal_async_cb done_cb,
+		       struct fsal_read_arg *read_arg,
+		       void *caller_arg);
 
 /**
  * @brief Write data to a file
@@ -2500,6 +2514,17 @@ struct fsal_obj_ops {
  */
 	 fsal_status_t (*close2)(struct fsal_obj_handle *obj_hdl,
 				 struct state_t *state);
+
+/**@}*/
+/**@{*/
+
+/**
+ * ASYNC API functions.
+ *
+ * These are asyncronous versions of some of the API functions.  FSALs are
+ * expected to implement these, but the upper layers are not expected to call
+ * them.  Instead, they will be called by MDCACHE at the appropriate points.
+ */
 
 /**@}*/
 };

@@ -136,7 +136,7 @@ struct rgw_cb_arg {
 static bool rgw_cb(const char *name, void *arg, uint64_t offset, uint32_t flags)
 {
 	struct rgw_cb_arg *rgw_cb_arg = arg;
-	struct fsal_obj_handle *obj;
+	struct fsal_obj_handle *obj = NULL;
 	fsal_status_t status;
 	struct attrlist attrs;
 	enum fsal_dir_result cb_rc;
@@ -1266,59 +1266,68 @@ fsal_status_t rgw_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
  *
  * This function reads data from the given file. The FSAL must be able to
  * perform the read whether a state is presented or not. This function also
- * is expected to handle properly bypassing or not share reservations.
+ * is expected to handle properly bypassing or not share reservations.  This is
+ * an (optionally) asynchronous call.  When the I/O is complete, the done
+ * callback is called with the results.
  *
- * @param[in]     obj_hdl        File on which to operate
- * @param[in]     bypass         If state doesn't indicate a share reservation,
- *                               bypass any deny read
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position from which to read
- * @param[in]     buffer_size    Amount of data to read
- * @param[out]    buffer         Buffer to which data are to be copied
- * @param[out]    read_amount    Amount of data read
- * @param[out]    end_of_file    true if the end of file has been reached
- * @param[in,out] info           more information about the data
+ * @param[in]     obj_hdl	File on which to operate
+ * @param[in]     bypass	If state doesn't indicate a share reservation,
+ *				bypass any deny read
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] read_arg	Info about read, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
  *
- * @return FSAL status.
+ * @return Nothing; results are in callback
  */
 
-fsal_status_t rgw_fsal_read2(struct fsal_obj_handle *obj_hdl,
-			bool bypass,
-			struct state_t *state,
-			uint64_t offset,
-			size_t buffer_size,
-			void *buffer,
-			size_t *read_amount,
-			bool *end_of_file,
-			struct io_info *info)
+void rgw_fsal_read2(struct fsal_obj_handle *obj_hdl,
+		    bool bypass,
+		    fsal_async_cb done_cb,
+		    struct fsal_read_arg *read_arg,
+		    void *caller_arg)
 {
 	struct rgw_export *export =
 	    container_of(op_ctx->fsal_export, struct rgw_export, export);
 
 	struct rgw_handle *handle = container_of(obj_hdl, struct rgw_handle,
 						 handle);
+	uint64_t offset = read_arg->offset;
+	int i;
 
 	LogFullDebug(COMPONENT_FSAL,
-		"%s enter obj_hdl %p state %p", __func__, obj_hdl, state);
+		"%s enter obj_hdl %p state %p", __func__, obj_hdl,
+		read_arg->state);
 
-	if (info != NULL) {
+	if (read_arg->info != NULL) {
 		/* Currently we don't support READ_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), read_arg,
+			caller_arg);
+		return;
 	}
 
 	/* RGW does not support a file descriptor abstraction--so
 	 * reads are handle based */
 
-	int rc = rgw_read(export->rgw_fs, handle->rgw_fh, offset,
-			buffer_size, read_amount, buffer,
-			RGW_READ_FLAG_NONE);
+	for (i = 0; i < read_arg->iov_count; i++) {
+		size_t nb_read;
+		int rc = rgw_read(export->rgw_fs, handle->rgw_fh, offset,
+				  read_arg->iov[i].iov_len, &nb_read,
+				  read_arg->iov[i].iov_base,
+				  RGW_READ_FLAG_NONE);
 
-	if (rc < 0)
-		return rgw2fsal_error(rc);
+		if (rc < 0) {
+			done_cb(obj_hdl, rgw2fsal_error(rc), read_arg,
+				caller_arg);
+			return;
+		}
 
-	*end_of_file = (read_amount == 0);
+		read_arg->read_amount += nb_read;
+		offset += nb_read;
+	}
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	read_arg->end_of_file = (read_arg->read_amount == 0);
+
+	done_cb(obj_hdl, fsalstat(0, 0), read_arg, caller_arg);
 }
 
 /**

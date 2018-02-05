@@ -126,15 +126,11 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t gpfs_reopen2(struct fsal_obj_handle *obj_hdl,
 			   struct state_t *state,
 			   fsal_openflags_t openflags);
-fsal_status_t gpfs_read2(struct fsal_obj_handle *obj_hdl,
-			 bool bypass,
-			 struct state_t *state,
-			 uint64_t offset,
-			 size_t buffer_size,
-			 void *buffer,
-			 size_t *read_amount,
-			 bool *end_of_file,
-			 struct io_info *info);
+void gpfs_read2(struct fsal_obj_handle *obj_hdl,
+		bool bypass,
+		fsal_async_cb done_cb,
+		struct fsal_read_arg
+		*read_arg, void *caller_arg);
 fsal_status_t gpfs_write2(struct fsal_obj_handle *obj_hdl,
 			  bool bypass,
 			  struct state_t *state,
