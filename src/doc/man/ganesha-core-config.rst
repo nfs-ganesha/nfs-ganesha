@@ -303,5 +303,5 @@ ceph_conf(string, no default)
 userid(path, no default)
     User ID to ceph cluster.
 
-pool(string, no default)
+pool(string, default nfs-ganesha)
     Pool for client info.
