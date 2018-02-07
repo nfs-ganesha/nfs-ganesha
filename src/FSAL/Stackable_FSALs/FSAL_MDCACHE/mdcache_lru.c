@@ -1224,7 +1224,7 @@ lru_run(struct fridgethr_context *ctx)
 	/* Finalized */
 	uint32_t fdratepersec = 1, fds_avg, fddelta;
 	float fdnorm, fdwait_ratio, fdmulti;
-	time_t threadwait = fridgethr_getwait(ctx);
+	time_t threadwait = mdcache_param.lru_run_interval;
 	/* True if we are taking extreme measures to reclaim FDs */
 	bool extremis = false;
 	/* Total work done in all passes so far.  If this exceeds the
@@ -1288,7 +1288,12 @@ lru_run(struct fridgethr_context *ctx)
 			atomic_store_uint32_t(&lru_state.fd_state, FD_MIDDLE);
 		}
 
-		fdratepersec = (curr_time <= lru_state.prev_time)
+		if ((curr_time >= lru_state.prev_time) &&
+		    (curr_time - lru_state.prev_time < fridgethr_getwait(ctx)))
+			threadwait = curr_time - lru_state.prev_time;
+
+		fdratepersec = ((curr_time <= lru_state.prev_time) ||
+				(formeropen < lru_state.prev_fd_count))
 			? 1 : (formeropen - lru_state.prev_fd_count) /
 					(curr_time - lru_state.prev_time);
 
@@ -1368,10 +1373,10 @@ lru_run(struct fridgethr_context *ctx)
 
 	LogDebug(COMPONENT_CACHE_INODE_LRU,
 		 "After work, open_fd_count:%zd  count:%" PRIu64
-		 " fdrate:%u threadwait=%" PRIu64,
+		 " fdrate:%u new_thread_wait=%" PRIu64,
 		 atomic_fetch_size_t(&open_fd_count),
 		 lru_state.entries_used, fdratepersec,
-		 ((uint64_t) threadwait));
+		 ((uint64_t) new_thread_wait));
 	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 		     "currentopen=%zd futility=%d totalwork=%zd biggest_window=%d extremis=%d lanes=%d fds_lowat=%d ",
 		     currentopen, lru_state.futility, totalwork,
