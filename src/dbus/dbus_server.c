@@ -800,7 +800,7 @@ void *gsh_dbus_thread(void *arg)
 	}			/* 1 */
 
  out:
-	LogCrit(COMPONENT_DBUS, "shutdown");
+	LogEvent(COMPONENT_DBUS, "shutdown");
 
 	return NULL;
 }
