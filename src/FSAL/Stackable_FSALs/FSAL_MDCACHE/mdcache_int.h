@@ -1044,9 +1044,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops);
 
 /* Export functions */
 void mdcache_export_ops_init(struct export_ops *ops);
-fsal_status_t mdc_init_export(struct fsal_module *fsal_hdl,
-			      const struct fsal_up_vector *mdc_up_ops,
-			      const struct fsal_up_vector *super_up_ops);
 
 /* Upcall functions */
 fsal_status_t mdcache_export_up_ops_init(struct fsal_up_vector *my_up_ops,
