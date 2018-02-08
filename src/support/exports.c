@@ -1904,10 +1904,8 @@ static int build_default_root(struct config_error_type *err_type)
 	} else {
 		fsal_status_t rc;
 
-		rc = fsal_hdl->m_ops.create_export(fsal_hdl,
-						   NULL,
-						   err_type,
-						   &fsal_up_top);
+		rc = mdcache_fsal_create_export(fsal_hdl, NULL, err_type,
+						&fsal_up_top);
 
 		if (FSAL_IS_ERROR(rc)) {
 			fsal_put(fsal_hdl);

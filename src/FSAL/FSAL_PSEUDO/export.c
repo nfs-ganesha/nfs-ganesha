@@ -316,7 +316,6 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 {
 	struct pseudofs_fsal_export *myself;
 	int retval = 0;
-	fsal_status_t status = {0, 0};
 
 	myself = gsh_calloc(1, sizeof(struct pseudofs_fsal_export));
 
@@ -348,13 +347,6 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 	/* Save the export path. */
 	myself->export_path = gsh_strdup(op_ctx->ctx_export->fullpath);
 	op_ctx->fsal_export = &myself->export;
-
-	/* Stack MDCACHE on top */
-	status = mdcache_export_init(up_ops, &myself->export.up_ops);
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL, "MDCACHE creation failed for PSEUDO");
-		return status;
-	}
 
 	LogDebug(COMPONENT_FSAL,
 		 "Created exp %p - %s",
