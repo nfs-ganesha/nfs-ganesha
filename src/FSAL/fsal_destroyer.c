@@ -151,6 +151,11 @@ static void shutdown_export(struct fsal_export *export)
 
 	export->exp_ops.release(export);
 	fsal_put(fsal);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "FSAL %s refcount %"PRIu32,
+		     fsal->name,
+		     atomic_fetch_int32_t(&fsal->refcount));
 }
 
 /**

@@ -175,11 +175,20 @@ fsal_status_t mdcache_export_init(const struct fsal_up_vector *super_up_ops,
 	/* Get ref on FSAL MDCACHE for sub FSAL. Done before mdc_init_export */
 	fsal_get(&MDCACHE.fsal);
 
+	LogFullDebug(COMPONENT_FSAL,
+		     "FSAL %s refcount %"PRIu32,
+		     MDCACHE.fsal.name,
+		     atomic_fetch_int32_t(&MDCACHE.fsal.refcount));
+
 	*mdc_up_ops = NULL;
 	mdcache_export_up_ops_init(&my_up_ops, super_up_ops);
 	status =  mdc_init_export(&MDCACHE.fsal, &my_up_ops, super_up_ops);
 	if (FSAL_IS_ERROR(status)) {
 		fsal_put(&MDCACHE.fsal);
+		LogFullDebug(COMPONENT_FSAL,
+			     "FSAL %s refcount %"PRIu32,
+			     MDCACHE.fsal.name,
+			     atomic_fetch_int32_t(&MDCACHE.fsal.refcount));
 		return status;
 	}
 
@@ -203,6 +212,11 @@ void mdcache_export_uninit(void)
 	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
 
 	fsal_put(sub_export->fsal);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "FSAL %s refcount %"PRIu32,
+		     sub_export->fsal->name,
+		     atomic_fetch_int32_t(&sub_export->fsal->refcount));
 
 	fsal_detach_export(op_ctx->fsal_export->fsal,
 			   &op_ctx->fsal_export->exports);
@@ -281,6 +295,12 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 
 	/* Get ref for sub-FSAL */
 	fsal_get(myself->mfe_exp.fsal);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "FSAL %s refcount %"PRIu32,
+		     myself->mfe_exp.fsal->name,
+		     atomic_fetch_int32_t(&myself->mfe_exp.fsal->refcount));
+
 	fsal_export_stack(op_ctx->fsal_export, &myself->mfe_exp);
 
 

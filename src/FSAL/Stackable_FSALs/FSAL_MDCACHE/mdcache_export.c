@@ -191,6 +191,11 @@ static void mdcache_exp_release(struct fsal_export *exp_hdl)
 
 	fsal_put(fsal_hdl);
 
+	LogFullDebug(COMPONENT_FSAL,
+		     "FSAL %s refcount %"PRIu32,
+		     fsal_hdl->name,
+		     atomic_fetch_int32_t(&fsal_hdl->refcount));
+
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 
@@ -916,6 +921,12 @@ mdc_init_export(struct fsal_module *fsal_hdl,
 	fsal_get(op_ctx->fsal_export->fsal);
 	snprintf(myself->name, namelen, "%s/MDC",
 		 op_ctx->fsal_export->fsal->name);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "FSAL %s refcount %"PRIu32,
+		     op_ctx->fsal_export->fsal->name,
+		     atomic_fetch_int32_t(
+					&op_ctx->fsal_export->fsal->refcount));
 
 	fsal_export_init(&myself->mfe_exp);
 	mdcache_export_ops_init(&myself->mfe_exp.exp_ops);

@@ -353,6 +353,10 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 		fsal_put(fsal);
 		LogCrit(COMPONENT_CONFIG,
 			"Could not create pNFS DS");
+		LogFullDebug(COMPONENT_FSAL,
+			     "FSAL %s refcount %"PRIu32,
+			     fsal->name,
+			     atomic_fetch_int32_t(&fsal->refcount));
 		err_type->init = true;
 		errcnt++;
 	}
