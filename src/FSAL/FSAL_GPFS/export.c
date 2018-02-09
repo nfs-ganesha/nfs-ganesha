@@ -576,9 +576,11 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	struct gpfs_filesystem_export_map *map;
 	pthread_attr_t attr_thr;
 
-	if (strcmp(fs->type, "gpfs") != 0)
-		LogFatal(COMPONENT_FSAL,
+	if (strcmp(fs->type, "gpfs") != 0) {
+		LogEvent(COMPONENT_FSAL,
 			"Attempt to claim non-GPFS filesystem %s", fs->path);
+		return ENXIO;
+	}
 
 	if (fs->fsal != NULL && fs->private_data == NULL)
 		LogFatal(COMPONENT_FSAL,
