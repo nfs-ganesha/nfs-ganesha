@@ -463,21 +463,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		goto done;
 	}
 
-	if (!eof_met) {
-		/** @todo FSF: add a config option for this behavior?
-		 */
-		/* Need to check against filesize for ESXi clients */
-		struct attrlist attrs;
-
-		fsal_prepare_attrs(&attrs, ATTR_SIZE);
-
-		if (!FSAL_IS_ERROR(obj->obj_ops.getattrs(obj, &attrs)))
-			eof_met = (offset + read_size) >= attrs.filesize;
-
-		/* Done with the attrs */
-		fsal_release_attrs(&attrs);
-	}
-
 	if (!anonymous_started && data->minorversion == 0)
 		op_ctx->clientid = NULL;
 

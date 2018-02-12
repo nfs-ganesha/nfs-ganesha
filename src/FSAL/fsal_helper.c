@@ -986,6 +986,24 @@ fsal_status_t fsal_read2(struct fsal_obj_handle *obj,
 		     "inode/direct: io_size=%zu, bytes_moved=%zu, offset=%"
 		     PRIu64, io_size, *bytes_moved, offset);
 
+	if (!*eof) {
+		/** @todo FSF: add a config option for this behavior?
+		 */
+		/*
+		 * NFS requires to set the EOF flag for all reads that
+		 * reach the EOF, i.e., even the ones returning data.
+		 * Most FSALs don't set the flag in this case. The only
+		 * client that cares about this is ESXi. Other clients
+		 * will just see a short read and continue reading and then
+		 * get the EOF flag as 0 bytes are returned.
+		 */
+		struct attrlist attrs;
+
+		fsal_prepare_attrs(&attrs, ATTR_SIZE);
+		if (FSAL_IS_SUCCESS(obj->obj_ops.getattrs(obj, &attrs)))
+			*eof = (offset + *bytes_moved) >= attrs.filesize;
+		fsal_release_attrs(&attrs);
+	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
