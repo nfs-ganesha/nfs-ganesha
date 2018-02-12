@@ -971,6 +971,11 @@ void Clean_RPC(void)
    */
 	unregister_rpc();
 	close_rpc_fd();
+
+	freenetconfigent(netconfig_udpv4);
+	freenetconfigent(netconfig_tcpv4);
+	freenetconfigent(netconfig_udpv6);
+	freenetconfigent(netconfig_tcpv6);
 }
 
 #define UDP_REGISTER(prot, vers, netconfig) \
