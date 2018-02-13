@@ -204,6 +204,7 @@ void nfs_try_lift_grace(void)
 	int32_t rc_count = 0;
 	time_t current = atomic_fetch_time_t(&current_grace);
 
+	/* Already lifted? Just return */
 	if (!current)
 		return;
 
@@ -221,13 +222,18 @@ void nfs_try_lift_grace(void)
 					time(NULL));
 
 	/*
-	 * Can we lift the grace period now? If so, take the grace_mutex and
-	 * try to do it.
+	 * Can we lift the grace period now? Clustered backends may need
+	 * extra checks before they can do so. If that is the case, then take
+	 * the grace_mutex and try to do it. If the backend does not implement
+	 * a try_lift_grace operation, then we assume it's always ok.
 	 */
 	if (!in_grace) {
-		PTHREAD_MUTEX_lock(&grace_mutex);
-		nfs_lift_grace_locked(current);
-		PTHREAD_MUTEX_unlock(&grace_mutex);
+		if (!recovery_backend->try_lift_grace ||
+		     recovery_backend->try_lift_grace()) {
+			PTHREAD_MUTEX_lock(&grace_mutex);
+			nfs_lift_grace_locked(current);
+			PTHREAD_MUTEX_unlock(&grace_mutex);
+		}
 	}
 }
 

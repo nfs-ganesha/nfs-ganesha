@@ -975,6 +975,7 @@ void blocked_lock_polling(struct fridgethr_context *ctx);
 
 void nfs_start_grace(nfs_grace_start_t *gsp);
 bool nfs_in_grace(void);
+bool simple_try_lift_grace(void);
 void nfs_try_lift_grace(void);
 void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(nfs_client_id_t *);
@@ -1022,6 +1023,7 @@ struct nfs4_recovery_backend {
 	void (*add_clid)(nfs_client_id_t *);
 	void (*rm_clid)(nfs_client_id_t *);
 	void (*add_revoke_fh)(nfs_client_id_t *, nfs_fh4 *);
+	bool (*try_lift_grace)(void);
 };
 
 void fs_backend_init(struct nfs4_recovery_backend **);
