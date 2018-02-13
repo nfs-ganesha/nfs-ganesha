@@ -131,35 +131,11 @@ static void rados_ng_init(void)
 
 	snprintf(rados_recov_oid, sizeof(rados_recov_oid), "%s.recov", host);
 
-	ret = rados_create(&rados_recov_cluster, rados_kv_param.userid);
+	ret = rados_kv_connect(&rados_recov_io_ctx, rados_kv_param.userid,
+			rados_kv_param.ceph_conf, rados_kv_param.pool);
 	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to rados create");
-		return;
-	}
-	ret = rados_conf_read_file(rados_recov_cluster,
-				   rados_kv_param.ceph_conf);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to read ceph_conf");
-		rados_shutdown(rados_recov_cluster);
-		return;
-	}
-	ret = rados_connect(rados_recov_cluster);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to connect to cluster");
-		rados_shutdown(rados_recov_cluster);
-		return;
-	}
-	ret = rados_pool_create(rados_recov_cluster, rados_kv_param.pool);
-	if (ret < 0 && ret != -EEXIST) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to create pool");
-		rados_shutdown(rados_recov_cluster);
-		return;
-	}
-	ret = rados_ioctx_create(rados_recov_cluster, rados_kv_param.pool,
-				 &rados_recov_io_ctx);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to create ioctx");
-		rados_shutdown(rados_recov_cluster);
+		LogEvent(COMPONENT_CLIENTID,
+			"Failed to connect to cluster: %d", ret);
 		return;
 	}
 
@@ -170,7 +146,7 @@ static void rados_ng_init(void)
 	if (ret < 0 && ret != -EEXIST) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to create object");
 		rados_release_write_op(op);
-		rados_shutdown(rados_recov_cluster);
+		rados_kv_shutdown();
 		return;
 	}
 	rados_release_write_op(op);

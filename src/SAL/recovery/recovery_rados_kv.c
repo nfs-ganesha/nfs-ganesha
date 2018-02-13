@@ -18,7 +18,7 @@
 
 #define MAX_ITEMS		1024		/* relaxed */
 
-rados_t rados_recov_cluster;
+static rados_t clnt;
 rados_ioctx_t rados_recov_io_ctx;
 char rados_recov_oid[NI_MAXHOST];
 static char rados_recov_old_oid[NI_MAXHOST];
@@ -300,6 +300,51 @@ int rados_kv_set_param_from_conf(config_file_t parse_tree,
 	return 0;
 }
 
+int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
+			const char *conf, const char *pool)
+{
+	int ret;
+
+	ret = rados_create(&clnt, userid);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CLIENTID, "Failed to create: %d", ret);
+		return ret;
+	}
+
+	ret = rados_conf_read_file(clnt, conf);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CLIENTID, "Failed to read conf: %d", ret);
+		rados_shutdown(clnt);
+		return ret;
+	}
+
+	ret = rados_connect(clnt);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CLIENTID, "Failed to connect: %d", ret);
+		rados_shutdown(clnt);
+		return ret;
+	}
+
+	ret = rados_pool_create(clnt, pool);
+	if (ret < 0 && ret != -EEXIST) {
+		LogEvent(COMPONENT_CLIENTID, "Failed to create pool: %d", ret);
+		rados_shutdown(clnt);
+		return ret;
+	}
+
+	ret = rados_ioctx_create(clnt, pool, io_ctx);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CLIENTID, "Failed to create ioctx");
+		rados_shutdown(clnt);
+	}
+	return ret;
+}
+
+void rados_kv_shutdown(void)
+{
+	rados_shutdown(clnt);
+}
+
 void rados_kv_init(void)
 {
 	int ret;
@@ -321,35 +366,11 @@ void rados_kv_init(void)
 		 "%s_old", host);
 	snprintf(rados_recov_oid, sizeof(rados_recov_oid), "%s_recov", host);
 
-	ret = rados_create(&rados_recov_cluster, rados_kv_param.userid);
+	ret = rados_kv_connect(&rados_recov_io_ctx, rados_kv_param.userid,
+			rados_kv_param.ceph_conf, rados_kv_param.pool);
 	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to rados create");
-		return;
-	}
-	ret = rados_conf_read_file(rados_recov_cluster,
-				   rados_kv_param.ceph_conf);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to read ceph_conf");
-		rados_shutdown(rados_recov_cluster);
-		return;
-	}
-	ret = rados_connect(rados_recov_cluster);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to connect to cluster");
-		rados_shutdown(rados_recov_cluster);
-		return;
-	}
-	ret = rados_pool_create(rados_recov_cluster, rados_kv_param.pool);
-	if (ret < 0 && ret != -EEXIST) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to create pool");
-		rados_shutdown(rados_recov_cluster);
-		return;
-	}
-	ret = rados_ioctx_create(rados_recov_cluster, rados_kv_param.pool,
-				 &rados_recov_io_ctx);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to create ioctx");
-		rados_shutdown(rados_recov_cluster);
+		LogEvent(COMPONENT_CLIENTID,
+			"Failed to connect to cluster: %d", ret);
 		return;
 	}
 
@@ -361,7 +382,7 @@ void rados_kv_init(void)
 	if (ret < 0 && ret != -EEXIST) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to create object");
 		rados_release_write_op(op);
-		rados_shutdown(rados_recov_cluster);
+		rados_kv_shutdown();
 		return;
 	}
 	rados_release_write_op(op);
@@ -373,7 +394,7 @@ void rados_kv_init(void)
 	if (ret < 0 && ret != -EEXIST) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to create object");
 		rados_release_write_op(op);
-		rados_shutdown(rados_recov_cluster);
+		rados_kv_shutdown();
 		return;
 	}
 	rados_release_write_op(op);

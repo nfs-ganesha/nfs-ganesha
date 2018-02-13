@@ -48,6 +48,9 @@ typedef struct pop_args {
 	bool takeover;
 } *pop_args_t;
 
+int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
+			const char *conf, const char *pool);
+void rados_kv_shutdown(void);
 int rados_kv_get(char *key, char **val, size_t *val_len, char *object);
 void rados_kv_create_key(nfs_client_id_t *clientid, char *key);
 void rados_kv_create_val(nfs_client_id_t *clientid, char *val);
