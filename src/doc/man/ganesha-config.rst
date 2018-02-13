@@ -84,7 +84,7 @@ eg.::
     %include base.conf
     %include "base.conf"
     %url rados://mypool/myobject
-    %url "rados://mypool/myobject
+    %url "rados://mypool/myobject"
 
 
 BLOCKS
