@@ -301,7 +301,7 @@ be used with NFS-Ganesha to support GPFS backend
 Summary: The NFS-GANESHA's CephFS FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
-BuildRequires:	libcephfs1-devel >= 10.2.0
+BuildRequires:	libcephfs-devel >= 10.2.0
 
 %description ceph
 This package contains a FSAL shared object to
@@ -314,7 +314,7 @@ be used with NFS-Ganesha to support CephFS
 Summary: The NFS-GANESHA's Ceph RGW FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
-BuildRequires:	librgw2-devel >= 10.2.0
+BuildRequires:	librgw-devel >= 10.2.0
 
 %description rgw
 This package contains a FSAL shared object to
