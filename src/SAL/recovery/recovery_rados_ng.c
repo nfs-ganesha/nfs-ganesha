@@ -111,7 +111,7 @@ static int rados_ng_del(char *key, char *object)
 	return ret;
 }
 
-void rados_ng_init(void)
+static void rados_ng_init(void)
 {
 	int ret;
 	char host[NI_MAXHOST];
@@ -182,7 +182,7 @@ void rados_ng_init(void)
 	LogEvent(COMPONENT_CLIENTID, "Rados kv store init done");
 }
 
-void rados_ng_add_clid(nfs_client_id_t *clientid)
+static void rados_ng_add_clid(nfs_client_id_t *clientid)
 {
 	char ckey[RADOS_KEY_MAX_LEN];
 	char *cval;
@@ -207,7 +207,7 @@ out:
 	gsh_free(cval);
 }
 
-void rados_ng_rm_clid(nfs_client_id_t *clientid)
+static void rados_ng_rm_clid(nfs_client_id_t *clientid)
 {
 	char ckey[RADOS_KEY_MAX_LEN];
 	int ret;
@@ -271,7 +271,7 @@ rados_ng_read_recov_clids_recover(add_clid_entry_hook add_clid_entry,
 	}
 }
 
-void rados_ng_read_recov_clids_takeover(nfs_grace_start_t *gsp,
+static void rados_ng_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 					add_clid_entry_hook add_clid_entry,
 					add_rfh_entry_hook add_rfh_entry)
 {
@@ -285,7 +285,7 @@ void rados_ng_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 		 "Unable to perform takeover with rados_ng recovery backend.");
 }
 
-void rados_ng_cleanup_old(void)
+static void rados_ng_cleanup_old(void)
 {
 	int ret;
 
@@ -303,7 +303,8 @@ void rados_ng_cleanup_old(void)
 	PTHREAD_MUTEX_unlock(&grace_op_lock);
 }
 
-void rados_ng_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
+static void rados_ng_add_revoke_fh(nfs_client_id_t *delr_clid,
+				   nfs_fh4 *delr_handle)
 {
 	int ret;
 	char ckey[RADOS_KEY_MAX_LEN];
