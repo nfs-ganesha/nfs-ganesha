@@ -34,10 +34,10 @@ Requires: openSUSE-release
 
 %define on_off_switch() %%{?with_%1:ON}%%{!?with_%1:OFF}
 
-# A few explanation about %bcond_with and %bcond_without
+# A few explanation about % bcond_with and % bcond_without
 # /!\ be careful: this syntax can be quite messy
-# %bcond_with means you add a "--with" option, default = without this feature
-# %bcond_without adds a"--without" so the feature is enabled by default
+# % bcond_with means you add a "--with" option, default = without this feature
+# % bcond_without adds a"--without" so the feature is enabled by default
 
 @BCOND_NULLFS@ nullfs
 %global use_fsal_null %{on_off_switch nullfs}
@@ -89,6 +89,9 @@ Requires: openSUSE-release
 @BCOND_RADOS_URLS@ rados_urls
 %global use_rados_urls %{on_off_switch rados_urls}
 
+@BCOND_RPCBIND@ rpcbind
+%global use_rpcbind %{on_off_switch rpcbind}
+
 %global dev_version %{lua: s = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); s2 = string.gsub(s, '%-', '.'); print((s2 ~= nil and s2 ~= '') and s2 or "0.1") }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -133,11 +136,15 @@ BuildRequires: libntirpc-devel >= @NTIRPC_MIN_VERSION@
 Requires: libntirpc = @NTIRPC_VERSION_EMBED@
 %endif
 Requires:	nfs-utils
+
+%if ( 0%{?with_rpcbind} )
 %if ( 0%{?fedora} ) || ( 0%{?rhel} && 0%{?rhel} >= 6 ) || ( 0%{?suse_version} )
 Requires:	rpcbind
 %else
 Requires:	portmap
 %endif
+%endif
+
 %if %{with_nfsidmap}
 %if ( 0%{?suse_version} )
 BuildRequires:	nfsidmap-devel
@@ -145,8 +152,9 @@ BuildRequires:	nfsidmap-devel
 BuildRequires:	libnfsidmap-devel
 %endif
 %else
-BuildRequires:	nfs-utils-lib-devel
+BuildRequires: nfs-utils-lib-devel
 %endif
+
 %if %{with rdma}
 BuildRequires:	libmooshika-devel >= 0.6-0
 %endif
@@ -425,6 +433,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_9P=ON					\
 	-DDISTNAME_HAS_GIT_DATA=OFF			\
 	-DUSE_MAN_PAGE=%{use_man_page}                  \
+	-DRPCBIND=%{use_rpcbind}			\
 %if %{with jemalloc}
 	-DALLOCATOR=jemalloc
 %endif
