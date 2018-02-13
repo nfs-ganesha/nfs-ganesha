@@ -41,6 +41,10 @@ set(netgroup_cache_SRCS
 add_library(netgroup_cache STATIC ${netgroup_cache_SRCS})
 add_sanitizers(netgroup_cache)
 
+if (USE_RADOS_RECOV)
+   add_library(rados_grace STATIC rados_grace.c)
+endif(USE_RADOS_RECOV)
+
 ########### next target ###############
 
 SET(support_STAT_SRCS
