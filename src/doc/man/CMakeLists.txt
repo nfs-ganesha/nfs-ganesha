@@ -52,6 +52,11 @@ if(USE_FSAL_GPFS)
         ganesha-gpfs-config.rst)
 endif()
 
+if(USE_RADOS_RECOV)
+	list(APPEND man_srcs
+	     rados_grace_tool.rst)
+endif()
+
 foreach(man ${man_srcs})
   list(APPEND sphinx_input ${CMAKE_CURRENT_SOURCE_DIR}/${man})
   string(REGEX REPLACE ".rst$" "" cmd ${man})

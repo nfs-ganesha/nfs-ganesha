@@ -16,3 +16,4 @@
    ganesha-cache-config
    ganesha-export-config
    ganesha-core-config
+   rados_grace_tool

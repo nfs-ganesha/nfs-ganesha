@@ -519,6 +519,7 @@ install -m 644 config_samples/xfs.conf %{buildroot}%{_sysconfdir}/ganesha
 
 %if %{with ceph}
 install -m 644 config_samples/ceph.conf %{buildroot}%{_sysconfdir}/ganesha
+install -m 755 tools/rados_grace_tool	%{buildroot}%{_sbindir}/rados_grace_tool
 %endif
 
 %if %{with rgw}
@@ -701,8 +702,10 @@ exit 0
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalceph*
 %config(noreplace) %{_sysconfdir}/ganesha/ceph.conf
+%{_sbindir}/rados_grace_tool
 %if %{with man_page}
 %{_mandir}/*/ganesha-ceph-config.8.gz
+%{_mandir}/*/rados_grace_tool.8.gz
 %endif
 %endif
 

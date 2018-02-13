@@ -1,0 +1,212 @@
+/*
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright 2017 Red Hat, Inc. and/or its affiliates.
+ * Author: Jeff Layton <jlayton@redhat.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * rados-grace: tool for managing coordinated grace period database
+ *
+ * This tool allows an administrator to make direct changes to the rados_grace
+ * database. See the rados_grace support library sources for more info about
+ * the internals.
+ */
+#include "config.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <endian.h>
+#include <rados/librados.h>
+#include <errno.h>
+#include <getopt.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <getopt.h>
+#include <rados_grace.h>
+
+static int
+cluster_connect(rados_ioctx_t *io_ctx, const char *pool)
+{
+	int ret;
+	rados_t clnt;
+
+	ret = rados_create(&clnt, NULL);
+	if (ret < 0) {
+		fprintf(stderr, "rados_create: %d\n", ret);
+		return ret;
+	}
+
+	ret = rados_conf_read_file(clnt, NULL);
+	if (ret < 0) {
+		fprintf(stderr, "rados_conf_read_file: %d\n", ret);
+		return ret;
+	}
+
+	ret = rados_connect(clnt);
+	if (ret < 0) {
+		fprintf(stderr, "rados_connect: %d\n", ret);
+		return ret;
+	}
+
+	ret = rados_pool_create(clnt, pool);
+	if (ret < 0 && ret != -EEXIST) {
+		fprintf(stderr, "rados_pool_create: %d\n", ret);
+		return ret;
+	}
+
+	ret = rados_ioctx_create(clnt, pool, io_ctx);
+	if (ret < 0) {
+		fprintf(stderr, "rados_ioctx_create: %d\n", ret);
+		return ret;
+	}
+	return 0;
+}
+
+static const struct option long_options[] = {
+	{"name", 1, NULL, 'n'},
+	{"pool", 1, NULL, 'p'},
+	{NULL, 0, NULL, 0}
+};
+
+static void usage(char * const *argv)
+{
+	fprintf(stderr,
+		"Usage:\n%s [ --pool pool_id ] [ --name obj_id ] dump|add|start|join|lift|remove|enforce|noenforce [ nodeid ... ]\n",
+		argv[0]);
+}
+
+int main(int argc, char * const *argv)
+{
+	int			ret, nodes = 0;
+	rados_ioctx_t		io_ctx;
+	const char		*cmd = "dump";
+	uint64_t		cur, rec;
+	char			*pool = DEFAULT_RADOS_GRACE_POOL;
+	char			*name = DEFAULT_RADOS_GRACE_OID;
+	char			c;
+	const char * const	*nodeids;
+
+	while ((c = getopt_long(argc, argv, "n:p:", long_options,
+				NULL)) != -1) {
+		switch (c) {
+		case 'n':
+			name = optarg;
+			break;
+		case 'p':
+			pool = optarg;
+			break;
+		default:
+			usage(argv);
+			return 1;
+		}
+	}
+
+	if (argc > optind) {
+		cmd = argv[optind];
+		++optind;
+		nodes = argc - optind;
+		nodeids = (const char * const *)&argv[optind];
+	}
+
+	ret = cluster_connect(&io_ctx, pool);
+	if (ret) {
+		fprintf(stderr, "Can't connect to cluster: %d\n", ret);
+		return 1;
+	}
+
+	ret = rados_grace_create(io_ctx, name);
+	if (ret < 0 && ret != -EEXIST) {
+		fprintf(stderr, "Can't create grace db: %d\n", ret);
+		return 1;
+	}
+
+	if (!strcmp(cmd, "dump")) {
+		ret = rados_grace_dump(io_ctx, name, stdout);
+	} else if (!strcmp(cmd, "add")) {
+		if (!nodes) {
+			fprintf(stderr, "Need at least one nodeid.\n");
+			ret = -EINVAL;
+		} else {
+			ret = rados_grace_add(io_ctx, name, nodes, nodeids);
+		}
+	} else if (!strcmp(cmd, "start")) {
+		if (!nodes) {
+			fprintf(stderr, "Need at least one nodeid.\n");
+			ret = -EINVAL;
+		} else {
+			ret = rados_grace_join_bulk(io_ctx, name,
+						nodes, nodeids, &cur,
+						&rec, true);
+		}
+	} else if (!strcmp(cmd, "join")) {
+		uint64_t cur, rec;
+
+		if (!nodes) {
+			fprintf(stderr, "Need at least one nodeid.\n");
+			ret = -EINVAL;
+		} else {
+			ret = rados_grace_join_bulk(io_ctx, name,
+						nodes, nodeids, &cur,
+						&rec, false);
+		}
+	} else if (!strcmp(cmd, "lift")) {
+		if (!nodes) {
+			fprintf(stderr, "Need at least one nodeid.\n");
+			ret = -EINVAL;
+		} else {
+			ret = rados_grace_lift_bulk(io_ctx, name,
+						nodes, nodeids, &cur,
+						&rec, false);
+		}
+	} else if (!strcmp(cmd, "remove")) {
+		if (!nodes) {
+			fprintf(stderr, "Need at least one nodeid.\n");
+			ret = -EINVAL;
+		} else {
+			ret = rados_grace_lift_bulk(io_ctx, name,
+						nodes, nodeids, &cur,
+						&rec, true);
+		}
+	} else if (!strcmp(cmd, "enforce")) {
+		if (!nodes) {
+			fprintf(stderr, "Need at least one nodeid.\n");
+			ret = -EINVAL;
+		} else {
+			ret = rados_grace_enforcing_toggle(io_ctx,
+					name, nodes, nodeids,
+					&cur, &rec, true);
+		}
+	} else if (!strcmp(cmd, "noenforce")) {
+		if (!nodes) {
+			fprintf(stderr, "Need at least one nodeid.\n");
+			ret = -EINVAL;
+		} else {
+			ret = rados_grace_enforcing_toggle(io_ctx,
+					name, nodes, nodeids,
+					&cur, &rec, false);
+		}
+	} else {
+		usage(argv);
+		ret = -EINVAL;
+	}
+
+	if (ret) {
+		fprintf(stderr, "Failure: %d\n", ret);
+		return 1;
+	}
+	return 0;
+}
