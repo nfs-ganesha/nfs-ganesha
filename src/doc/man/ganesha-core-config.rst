@@ -293,6 +293,7 @@ RecoveryBackend(path, default "fs")
     - fs_ng: filesystem (better resiliency)
     - rados_kv : rados key-value
     - rados_ng : rados key-value (better resiliency)
+    - rados_cluster: clustered rados backend (active/active)
 
 Minor_Versions(enum list, values [0, 1, 2], default [0, 1, 2])
     List of supported NFSV4 minor version numbers.

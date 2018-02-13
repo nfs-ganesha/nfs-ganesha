@@ -54,6 +54,7 @@ endif()
 
 if(USE_RADOS_RECOV)
 	list(APPEND man_srcs
+	     ganesha-rados-cluster-design.rst
 	     rados_grace_tool.rst)
 endif()
 

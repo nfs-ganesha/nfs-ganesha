@@ -223,11 +223,8 @@ bool nfs_in_grace(void)
  */
 void nfs_maybe_start_grace(void)
 {
-	if (recovery_backend->maybe_start_grace) {
-		if (nfs_in_grace())
-			return;
+	if (recovery_backend->maybe_start_grace)
 		recovery_backend->maybe_start_grace();
-	}
 }
 
 /**
@@ -488,6 +485,8 @@ static int load_backend(const char *name)
 		rados_kv_backend_init(&recovery_backend);
 	else if (!strcmp(name, "rados_ng"))
 		rados_ng_backend_init(&recovery_backend);
+	else if (!strcmp(name, "rados_cluster"))
+		rados_cluster_backend_init(&recovery_backend);
 #endif
 	else if (!strcmp(name, "fs_ng"))
 		fs_ng_backend_init(&recovery_backend);
