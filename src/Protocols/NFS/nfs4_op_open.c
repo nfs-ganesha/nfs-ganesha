@@ -887,8 +887,8 @@ static void open4_ex(OPEN4args *arg,
 		 * Delegation recalls will be scheduled if there is a conflict.
 		 */
 		if (state_deleg_conflict(file_obj,
-					 arg->share_access &
-					     (OPEN4_SHARE_ACCESS_WRITE != 0))) {
+					  (arg->share_access &
+					   OPEN4_SHARE_ACCESS_WRITE) != 0)) {
 			res_OPEN4->status = NFS4ERR_DELAY;
 			goto out;
 		}
