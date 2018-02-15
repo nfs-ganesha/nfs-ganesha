@@ -127,3 +127,18 @@ target_link_libraries(test_link_latency
   )
 set_target_properties(test_link_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
+
+
+set(test_unlink_latency_SRCS
+  test_unlink_latency.cc
+  )
+
+add_executable(test_unlink_latency
+  ${test_unlink_latency_SRCS})
+add_sanitizers(test_unlink_latency)
+
+target_link_libraries(test_unlink_latency
+  ${GTEST_LIBRARIES}
+  )
+set_target_properties(test_unlink_latency PROPERTIES COMPILE_FLAGS
+  "${UNITTEST_CXX_FLAGS}")
