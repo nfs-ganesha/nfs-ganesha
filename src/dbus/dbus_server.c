@@ -698,23 +698,25 @@ void gsh_dbus_pkgshutdown(void)
 	avltree_init(&thread_state.callouts, dbus_callout_cmpf, 0);
 
 	/* Unassign the name from dbus connection */
-	dbus_name_with_prefix(prefixed_dbus_name, dbus_name,
-				nfs_param.core_param.dbus_name_prefix);
-	dbus_bus_release_name(thread_state.dbus_conn,
-			      prefixed_dbus_name,
-			      &thread_state.dbus_err);
-	if (dbus_error_is_set(&thread_state.dbus_err)) {
-		LogCrit(COMPONENT_DBUS, "err releasing name (%s, %s)",
-			handler->name, thread_state.dbus_err.message);
-			dbus_error_free(&thread_state.dbus_err);
-	}
+	if (thread_state.dbus_conn) {
+		dbus_name_with_prefix(prefixed_dbus_name, dbus_name,
+					nfs_param.core_param.dbus_name_prefix);
+		dbus_bus_release_name(thread_state.dbus_conn,
+				      prefixed_dbus_name,
+				      &thread_state.dbus_err);
+		if (dbus_error_is_set(&thread_state.dbus_err)) {
+			LogCrit(COMPONENT_DBUS, "err releasing name (%s, %s)",
+				handler->name, thread_state.dbus_err.message);
+				dbus_error_free(&thread_state.dbus_err);
+		}
 
-	/* shutdown bus */
-	/* As per D-Bus documentation, a shared connection which are created
-	 * with dbus_connection_open() or dbus_bus_get() should not be closed
-	 * but instead be unref'ed */
-	if (thread_state.dbus_conn)
+		/*
+		 * Shutdown bus: As per D-Bus documentation, a shared
+		 * connection created with dbus_connection_open() or
+		 * dbus_bus_get() should not be closed but instead be unref'ed
+		 */
 		dbus_connection_unref(thread_state.dbus_conn);
+	}
 }
 
 void *gsh_dbus_thread(void *arg)
