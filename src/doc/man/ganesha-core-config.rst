@@ -277,10 +277,11 @@ Delegations(bool, default false)
 Deleg_Recall_Retry_Delay(uint32_t, range 0 to 10, default 1)
     Delay after which server will retry a recall in case of failures
 
-pnfs_mds(book, default false)
+pnfs_mds(bool, default false)
     Whether this a pNFS MDS server.
+    For FSAL Gluster, if this is true, set pnfs_mds in gluster block as well.
 
-pnfs_ds(book, default false)
+pnfs_ds(bool, default false)
     Whether this a pNFS DS server.
 
 RecoveryBackend(path, default "fs")

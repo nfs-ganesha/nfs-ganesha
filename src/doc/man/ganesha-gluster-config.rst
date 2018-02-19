@@ -37,6 +37,12 @@ Name(string, "GLUSTER")
 
 **transport(enum, values [tcp, rdma], default tcp)**
 
+GLUSTER {}
+--------------------------------------------------------------------------------
+
+**PNFS_MDS(bool, default FALSE)**
+  Set this parameter to true to select this node as MDS
+
 See also
 ==============================
 :doc:`ganesha-log-config <ganesha-log-config>`\(8)
