@@ -1,11 +1,8 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright (C) Panasas Inc., 2011
- * Author: Jim Lieb jlieb@panasas.com
- *
- * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
- *		Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ * Copyright 2017-2018 Red Hat, Inc.
+ * Author: Daniel Gryniewicz  dang@redhat.com
  *
  *
  * This program is free software; you can redistribute it and/or
