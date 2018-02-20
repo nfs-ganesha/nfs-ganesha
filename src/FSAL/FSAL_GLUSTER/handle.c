@@ -1844,7 +1844,7 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 static void glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 			    bool bypass,
 			    fsal_async_cb done_cb,
-			    struct fsal_read_arg *read_arg,
+			    struct fsal_io_arg *read_arg,
 			    void *caller_arg)
 {
 	struct glusterfs_fd my_fd = {0};
@@ -1913,7 +1913,7 @@ static void glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	read_arg->read_amount = nb_read;
+	read_arg->io_amount = nb_read;
 
 	for (i = 0; i < read_arg->iov_count; i++) {
 		total_size += read_arg->iov[i].iov_len;
@@ -1954,15 +1954,11 @@ static void glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 /* write2
  */
 
-static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
-				      bool bypass,
-				      struct state_t *state,
-				      uint64_t seek_descriptor,
-				      size_t buffer_size,
-				      void *buffer,
-				      size_t *write_amount,
-				      bool *fsal_stable,
-				      struct io_info *info)
+static void glusterfs_write2(struct fsal_obj_handle *obj_hdl,
+			     bool bypass,
+			     fsal_async_cb done_cb,
+			     struct fsal_io_arg *write_arg,
+			     void *caller_arg)
 {
 	ssize_t nb_written;
 	fsal_status_t status;
@@ -1975,9 +1971,11 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	     container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_fd *glusterfs_fd = NULL;
 
-	if (info != NULL) {
+	if (write_arg->info != NULL) {
 		/* Currently we don't support WRITE_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
+			caller_arg);
+		return;
 	}
 
 #if 0
@@ -1993,15 +1991,16 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	/* Acquire state's fdlock to prevent OPEN upgrade closing the
 	 * file descriptor while we use it.
 	 */
-	if (state) {
-		glusterfs_fd = &container_of(state, struct glusterfs_state_fd,
+	if (write_arg->state) {
+		glusterfs_fd = &container_of(write_arg->state, struct
+					     glusterfs_state_fd,
 					     state)->glusterfs_fd;
 
 		PTHREAD_RWLOCK_rdlock(&glusterfs_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
-	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
+	status = find_fd(&my_fd, obj_hdl, bypass, write_arg->state, openflags,
 			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status))
@@ -2012,8 +2011,10 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray);
 
-	nb_written = glfs_pwrite(my_fd.glfd, buffer, buffer_size,
-			     seek_descriptor, ((*fsal_stable) ? O_SYNC : 0));
+	/* XXX dang switch to pwritev_async once async supported */
+	nb_written = glfs_pwritev(my_fd.glfd, write_arg->iov,
+				  write_arg->iov_count, write_arg->offset,
+				  (write_arg->fsal_stable ? O_SYNC : 0));
 
 	/* restore credentials */
 	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
@@ -2024,7 +2025,7 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	*write_amount = nb_written;
+	write_arg->io_amount = nb_written;
 
  out:
 
@@ -2037,7 +2038,7 @@ static fsal_status_t glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	return status;
+	done_cb(obj_hdl, status, write_arg, caller_arg);
 }
 
 /* commit2

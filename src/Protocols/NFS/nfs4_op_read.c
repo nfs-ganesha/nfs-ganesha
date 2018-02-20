@@ -65,7 +65,7 @@ static void nfs4_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			  void *read_data, void *caller_data)
 {
 	struct nfs4_read_data *data = caller_data;
-	struct fsal_read_arg *read_arg = read_data;
+	struct fsal_io_arg *read_arg = read_data;
 	int i;
 
 	/* Fixup FSAL_SHARE_DENIED status */
@@ -100,7 +100,7 @@ static void nfs4_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 
 		if (FSAL_IS_SUCCESS(obj->obj_ops.getattrs(obj, &attrs))) {
 			read_arg->end_of_file = (read_arg->offset +
-						 read_arg->read_amount)
+						 read_arg->io_amount)
 				>= attrs.filesize;
 		}
 
@@ -109,19 +109,19 @@ static void nfs4_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	}
 
 	data->res_READ4->READ4res_u.resok4.data.data_len =
-		read_arg->read_amount;
+		read_arg->io_amount;
 	data->res_READ4->READ4res_u.resok4.data.data_val =
 		read_arg->iov[0].iov_base;
 
 	LogFullDebug(COMPONENT_NFS_V4,
 		     "NFS4_OP_READ: offset = %" PRIu64
 		     " read length = %zu eof=%u", read_arg->offset,
-		     read_arg->read_amount, read_arg->end_of_file);
+		     read_arg->io_amount, read_arg->end_of_file);
 
 	/* Is EOF met or not ? */
 	data->res_READ4->READ4res_u.resok4.eof = read_arg->end_of_file;
 done:
-	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->read_amount,
+	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->io_amount,
 			     (data->res_READ4->status == NFS4_OK) ? true :
 			     false, false);
 
@@ -301,7 +301,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 			atomic_fetch_uint64_t(
 				&op_ctx->ctx_export->MaxOffsetRead);
 	struct nfs4_read_data read_data;
-	struct fsal_read_arg *read_arg = alloca(sizeof(*read_arg) +
+	struct fsal_io_arg *read_arg = alloca(sizeof(*read_arg) +
 						sizeof(struct iovec));
 
 	/* Say we are managing NFS4_OP_READ */
@@ -545,7 +545,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	read_arg->iov_count = 1;
 	read_arg->iov[0].iov_len = size;
 	read_arg->iov[0].iov_base = bufferdata;
-	read_arg->read_amount = 0;
+	read_arg->io_amount = 0;
 
 	read_data.res_READ4 = res_READ4;
 	read_data.owner = owner;

@@ -45,6 +45,40 @@
 #include "server_stats.h"
 #include "client_mgr.h"
 
+struct _9p_write_data {
+	struct gsh_client *client;	/**< Client for stats */
+	fsal_status_t ret;		/**< Return from write */
+};
+
+/**
+ * @brief Callback for NFS3 write done
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] write_data	Data for write call
+ * @param[in] caller_data	Data for caller
+ */
+static void _9p_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			  void *write_data, void *caller_data)
+{
+	struct _9p_write_data *data = caller_data;
+	struct fsal_io_arg *write_arg = write_data;
+
+	/* Fixup ERR_FSAL_SHARE_DENIED status */
+	if (ret.major == ERR_FSAL_SHARE_DENIED)
+		ret = fsalstat(ERR_FSAL_LOCKED, 0);
+
+	data->ret = ret;
+
+	if (data->client) {
+		op_ctx->client = data->client;
+
+		server_stats_io_done(write_arg->iov[0].iov_len,
+				     write_arg->io_amount, FSAL_IS_ERROR(ret),
+				     false);
+	}
+}
+
 int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -59,13 +93,8 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	size_t size;
 	size_t written_size = 0;
-	fsal_status_t fsal_status;
-	/* bool sync = true; */
-	bool sync = false;
 
 	char *databuffer = NULL;
-
-	/* fsal_status_t fsal_status; */
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -136,38 +165,31 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		outcount = written_size;
 	} else {
-		/* Call the new fsal_write */
-		fsal_status = fsal_write2(pfid->pentry,
-					 false,
-					 pfid->state,
-					 *offset,
-					 size,
-					 &written_size,
-					 databuffer,
-					 &sync,
-					 NULL);
+		struct _9p_write_data write_data;
+		struct fsal_io_arg *write_arg = alloca(sizeof(*write_arg) +
+						      sizeof(struct iovec));
 
-		/* Get the handle, for stats */
-		struct gsh_client *client = req9p->pconn->client;
+		write_arg->info = NULL;
+		write_arg->state = pfid->state;
+		write_arg->offset = *offset;
+		write_arg->iov_count = 1;
+		write_arg->iov[0].iov_len = size;
+		write_arg->iov[0].iov_base = databuffer;
+		write_arg->io_amount = 0;
+		write_arg->fsal_stable = false;
 
-		if (client == NULL) {
-			LogDebug(COMPONENT_9P,
-				 "Cannot get client block for 9P request");
-		} else {
-			op_ctx->client = client;
+		write_data.client = req9p->pconn->client;
 
-			server_stats_io_done(size,
-					     written_size,
-					     FSAL_IS_ERROR(fsal_status),
-					     true);
-		}
+		/* Do the actual write */
+		pfid->pentry->obj_ops.write2(pfid->pentry, true, _9p_write_cb,
+					    write_arg, &write_data);
 
-		if (FSAL_IS_ERROR(fsal_status))
+		if (FSAL_IS_ERROR(write_data.ret))
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
+					  _9p_tools_errno(write_data.ret),
 					  plenout, preply);
 
-		outcount = (u32) written_size;
+		outcount = (u32) write_arg->io_amount;
 
 	}
 

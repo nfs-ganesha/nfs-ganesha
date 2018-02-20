@@ -1562,7 +1562,7 @@ fsal_status_t mem_reopen2(struct fsal_obj_handle *obj_hdl,
 void mem_read2(struct fsal_obj_handle *obj_hdl,
 	       bool bypass,
 	       fsal_async_cb done_cb,
-	       struct fsal_read_arg *read_arg,
+	       struct fsal_io_arg *read_arg,
 	       void *caller_arg)
 {
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
@@ -1592,7 +1592,7 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 		return;
 	}
 
-	read_arg->read_amount = 0;
+	read_arg->io_amount = 0;
 
 	for (i = 0; i < read_arg->iov_count; i++) {
 		size_t bufsize;
@@ -1620,7 +1620,7 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 		} else {
 			memset(read_arg->iov[i].iov_base, 'a', bufsize);
 		}
-		read_arg->read_amount += bufsize;
+		read_arg->io_amount += bufsize;
 		offset += bufsize;
 	}
 
@@ -1652,26 +1652,16 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
  * @param[in]     obj_hdl        File on which to operate
  * @param[in]     bypass         If state doesn't indicate a share reservation,
  *                               bypass any non-mandatory deny write
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position at which to write
- * @param[in]     buffer         Data to be written
- * @param[in,out] fsal_stable    In, if on, the fsal is requested to write data
- *                               to stable store. Out, the fsal reports what
- *                               it did.
- * @param[in,out] info           more information about the data
- *
- * @return FSAL status.
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] read_arg	Info about read, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
  */
 
-fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
+void mem_write2(struct fsal_obj_handle *obj_hdl,
 			 bool bypass,
-			 struct state_t *state,
-			 uint64_t offset,
-			 size_t buffer_size,
-			 void *buffer,
-			 size_t *wrote_amount,
-			 bool *fsal_stable,
-			 struct io_info *info)
+			 fsal_async_cb done_cb,
+			 struct fsal_io_arg *write_arg,
+			 void *caller_arg)
 {
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
@@ -1679,44 +1669,58 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 	bool has_lock, closefd = false;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	bool reusing_open_state_fd = false;
+	uint64_t offset = write_arg->offset;
+	int i;
 
-	if (info != NULL) {
+	if (write_arg->info != NULL) {
 		/* Currently we don't support WRITE_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
+			caller_arg);
+		return;
 	}
 
 	if (obj_hdl->type != REGULAR_FILE) {
 		/* Currently can only write to a file */
-		return fsalstat(ERR_FSAL_INVAL, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_INVAL, 0), write_arg,
+			caller_arg);
+		return;
 	}
 
 	/* Find an FD */
 	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
-			      &myself->mh_file.share, bypass, state,
+			      &myself->mh_file.share, bypass, write_arg->state,
 			      FSAL_O_WRITE, mem_open_func, mem_close_func,
 			      &has_lock, &closefd, false,
 			      &reusing_open_state_fd);
 	if (FSAL_IS_ERROR(status)) {
-		return status;
+		done_cb(obj_hdl, status, write_arg, caller_arg);
+		return;
 	}
 
-	if (offset + buffer_size > myself->attrs.filesize) {
-		myself->attrs.filesize = myself->attrs.spaceused =
-			offset + buffer_size;
-	}
+	for (i = 0; i < write_arg->iov_count; i++) {
+		size_t bufsize;
 
-	if (offset < myself->datasize) {
-		size_t writesize;
+		bufsize = write_arg->iov[i].iov_len;
+		if (offset +  bufsize > myself->attrs.filesize) {
+			myself->attrs.filesize = myself->attrs.spaceused =
+				offset + bufsize;
+		}
+		if (offset < myself->datasize) {
+			size_t writesize;
 
-		/* Space to write */
-		writesize = MIN(buffer_size, myself->datasize - offset);
-		memcpy(myself->data + offset, buffer, writesize);
+			/* Data to write */
+			writesize = MIN(bufsize, myself->datasize - offset);
+			memcpy(myself->data + offset,
+			       write_arg->iov[i].iov_base, writesize);
+		}
+		write_arg->io_amount += bufsize;
+		offset += bufsize;
 	}
 
 #ifdef USE_LTTNG
 	tracepoint(fsalmem, mem_write, __func__, __LINE__, myself,
-			   myself->m_name, state, myself->attrs.filesize,
-			   myself->attrs.spaceused);
+			   myself->m_name, write_arg->state,
+			   myself->attrs.filesize, myself->attrs.spaceused);
 #endif
 
 	/* Update change stats */
@@ -1725,12 +1729,10 @@ fsal_status_t mem_write2(struct fsal_obj_handle *obj_hdl,
 	myself->attrs.change =
 		timespec_to_nsecs(&myself->attrs.chgtime);
 
-	*wrote_amount = buffer_size;
-
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), write_arg, caller_arg);
 }
 
 /**

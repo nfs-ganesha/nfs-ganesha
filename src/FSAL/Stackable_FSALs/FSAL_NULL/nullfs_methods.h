@@ -108,17 +108,13 @@ fsal_status_t nullfs_reopen2(struct fsal_obj_handle *obj_hdl,
 void nullfs_read2(struct fsal_obj_handle *obj_hdl,
 		  bool bypass,
 		  fsal_async_cb done_cb,
-		  struct fsal_read_arg *read_arg,
+		  struct fsal_io_arg *read_arg,
 		  void *caller_arg);
-fsal_status_t nullfs_write2(struct fsal_obj_handle *obj_hdl,
-			    bool bypass,
-			    struct state_t *state,
-			    uint64_t offset,
-			    size_t buf_size,
-			    void *buffer,
-			    size_t *write_amount,
-			    bool *fsal_stable,
-			    struct io_info *info);
+void nullfs_write2(struct fsal_obj_handle *obj_hdl,
+		   bool bypass,
+		   fsal_async_cb done_cb,
+		   struct fsal_io_arg *write_arg,
+		   void *caller_arg);
 fsal_status_t nullfs_seek2(struct fsal_obj_handle *obj_hdl,
 			   struct state_t *state,
 			   struct io_info *info);

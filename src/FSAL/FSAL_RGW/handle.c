@@ -1283,7 +1283,7 @@ fsal_status_t rgw_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 void rgw_fsal_read2(struct fsal_obj_handle *obj_hdl,
 		    bool bypass,
 		    fsal_async_cb done_cb,
-		    struct fsal_read_arg *read_arg,
+		    struct fsal_io_arg *read_arg,
 		    void *caller_arg)
 {
 	struct rgw_export *export =
@@ -1321,11 +1321,11 @@ void rgw_fsal_read2(struct fsal_obj_handle *obj_hdl,
 			return;
 		}
 
-		read_arg->read_amount += nb_read;
+		read_arg->io_amount += nb_read;
 		offset += nb_read;
 	}
 
-	read_arg->end_of_file = (read_arg->read_amount == 0);
+	read_arg->end_of_file = (read_arg->io_amount == 0);
 
 	done_cb(obj_hdl, fsalstat(0, 0), read_arg, caller_arg);
 }
@@ -1344,61 +1344,68 @@ void rgw_fsal_read2(struct fsal_obj_handle *obj_hdl,
  * @param[in]     obj_hdl        File on which to operate
  * @param[in]     bypass         If state doesn't indicate a share reservation,
  *                               bypass any non-mandatory deny write
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position at which to write
- * @param[in]     buffer         Data to be written
- * @param[in,out] fsal_stable    In, if on, the fsal is requested to write data
- *                               to stable store. Out, the fsal reports what
- *                               it did.
- * @param[in,out] info           more information about the data
- *
- * @return FSAL status.
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] write_arg	Info about write, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
  */
 
-fsal_status_t rgw_fsal_write2(struct fsal_obj_handle *obj_hdl,
-			bool bypass,
-			struct state_t *state,
-			uint64_t offset,
-			size_t buffer_size,
-			void *buffer,
-			 size_t *wrote_amount,
-			bool *fsal_stable,
-			struct io_info *info)
+void rgw_fsal_write2(struct fsal_obj_handle *obj_hdl,
+		     bool bypass,
+		     fsal_async_cb done_cb,
+		     struct fsal_io_arg *write_arg,
+		     void *caller_arg)
 {
 	struct rgw_export *export =
 		container_of(op_ctx->fsal_export, struct rgw_export, export);
 
 	struct rgw_handle *handle = container_of(obj_hdl, struct rgw_handle,
 						handle);
-	LogFullDebug(COMPONENT_FSAL,
-		"%s enter obj_hdl %p state %p", __func__, obj_hdl, state);
+	int rc, i;
+	uint64_t offset = write_arg->offset;
 
-	if (info != NULL) {
+	LogFullDebug(COMPONENT_FSAL,
+		"%s enter obj_hdl %p state %p", __func__, obj_hdl,
+		write_arg->state);
+
+	if (write_arg->info != NULL) {
 		/* Currently we don't support WRITE_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
+			caller_arg);
+		return;
 	}
 
 	/* XXX note no call to fsal_find_fd (or wrapper) */
 
-	int rc = rgw_write(export->rgw_fs, handle->rgw_fh, offset,
-			buffer_size, wrote_amount, buffer,
-			(!state) ? RGW_OPEN_FLAG_V3 : RGW_OPEN_FLAG_NONE);
+	for (i = 0; i < write_arg->iov_count; i++) {
+		size_t nb_write;
 
-	LogFullDebug(COMPONENT_FSAL,
-		"%s post obj_hdl %p state %p returned %d", __func__, obj_hdl,
-		state, rc);
+		rc = rgw_write(export->rgw_fs, handle->rgw_fh, offset,
+			       write_arg->iov[i].iov_len, &nb_write,
+			       write_arg->iov[i].iov_base,
+			       (!write_arg->state) ? RGW_OPEN_FLAG_V3 :
+			       RGW_OPEN_FLAG_NONE);
 
-	if (rc < 0)
-		return rgw2fsal_error(rc);
+		if (rc < 0) {
+			done_cb(obj_hdl, rgw2fsal_error(rc), write_arg,
+				caller_arg);
+			return;
+		}
 
-	if (*fsal_stable) {
+		write_arg->io_amount += nb_write;
+		offset += nb_write;
+	}
+	if (write_arg->fsal_stable) {
 		rc = rgw_fsync(export->rgw_fs, handle->rgw_fh,
 			       RGW_WRITE_FLAG_NONE);
-		if (rc < 0)
-			return rgw2fsal_error(rc);
+		if (rc < 0) {
+			write_arg->fsal_stable = false;
+			done_cb(obj_hdl, rgw2fsal_error(rc), write_arg,
+				caller_arg);
+			return;
+		}
 	}
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), write_arg, caller_arg);
 }
 
 /**

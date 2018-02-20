@@ -1548,7 +1548,7 @@ fsal_status_t ceph_find_fd(Fh **fd,
 void ceph_read2(struct fsal_obj_handle *obj_hdl,
 		bool bypass,
 		fsal_async_cb done_cb,
-		struct fsal_read_arg *read_arg,
+		struct fsal_io_arg *read_arg,
 		void *caller_arg)
 {
 	struct handle *myself = container_of(obj_hdl, struct handle, handle);
@@ -1587,7 +1587,7 @@ void ceph_read2(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status))
 		goto out;
 
-	read_arg->read_amount = 0;
+	read_arg->io_amount = 0;
 
 	for (i = 0; i < read_arg->iov_count; i++) {
 		nb_read = ceph_ll_read(export->cmount, my_fd, offset,
@@ -1601,11 +1601,11 @@ void ceph_read2(struct fsal_obj_handle *obj_hdl,
 			break;
 		}
 
-		read_arg->read_amount += nb_read;
+		read_arg->io_amount += nb_read;
 		offset += nb_read;
 	}
 
-	read_arg->end_of_file = read_arg->read_amount == 0;
+	read_arg->end_of_file = read_arg->io_amount == 0;
 
 #if 0
 	/** @todo
@@ -1651,31 +1651,21 @@ void ceph_read2(struct fsal_obj_handle *obj_hdl,
  * @param[in]     obj_hdl        File on which to operate
  * @param[in]     bypass         If state doesn't indicate a share reservation,
  *                               bypass any non-mandatory deny write
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position at which to write
- * @param[in]     buffer         Data to be written
- * @param[in,out] fsal_stable    In, if on, the fsal is requested to write data
- *                               to stable store. Out, the fsal reports what
- *                               it did.
- * @param[in,out] info           more information about the data
- *
- * @return FSAL status.
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] write_arg	Info about write, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
  */
 
-fsal_status_t ceph_write2(struct fsal_obj_handle *obj_hdl,
-			 bool bypass,
-			 struct state_t *state,
-			 uint64_t offset,
-			 size_t buffer_size,
-			 void *buffer,
-			 size_t *wrote_amount,
-			 bool *fsal_stable,
-			 struct io_info *info)
+void ceph_write2(struct fsal_obj_handle *obj_hdl,
+		 bool bypass,
+		 fsal_async_cb done_cb,
+		 struct fsal_io_arg *write_arg,
+		 void *caller_arg)
 {
 	struct handle *myself = container_of(obj_hdl, struct handle, handle);
 	ssize_t nb_written;
 	fsal_status_t status;
-	int retval = 0;
+	int i, retval = 0;
 	Fh *my_fd = NULL;
 	bool has_lock = false;
 	bool closefd = false;
@@ -1683,25 +1673,28 @@ fsal_status_t ceph_write2(struct fsal_obj_handle *obj_hdl,
 	struct export *export =
 	    container_of(op_ctx->fsal_export, struct export, export);
 	struct ceph_fd *ceph_fd = NULL;
+	uint64_t offset = write_arg->offset;
 
-	if (info != NULL) {
+	if (write_arg->info != NULL) {
 		/* Currently we don't support WRITE_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
+			caller_arg);
+		return;
 	}
 
 	/* Acquire state's fdlock to prevent OPEN upgrade closing the
 	 * file descriptor while we use it.
 	 */
-	if (state) {
-		ceph_fd = &container_of(state, struct ceph_state_fd,
+	if (write_arg->state) {
+		ceph_fd = &container_of(write_arg->state, struct ceph_state_fd,
 					state)->ceph_fd;
 
 		PTHREAD_RWLOCK_rdlock(&ceph_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
-	status = ceph_find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			      &has_lock, &closefd, false);
+	status = ceph_find_fd(&my_fd, obj_hdl, bypass, write_arg->state,
+			      openflags, &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
@@ -1709,21 +1702,30 @@ fsal_status_t ceph_write2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	nb_written =
-	    ceph_ll_write(export->cmount, my_fd, offset, buffer_size, buffer);
+	for (i = 0; i < write_arg->iov_count; i++) {
+		nb_written =
+			ceph_ll_write(export->cmount, my_fd, offset,
+				      write_arg->iov[i].iov_len,
+				      write_arg->iov[i].iov_base);
 
-	if (nb_written < 0) {
-		status = ceph2fsal_error(nb_written);
-		goto out;
+		if (nb_written < 0) {
+			status = ceph2fsal_error(nb_written);
+			goto out;
+		} else if (offset == 0) {
+			break;
+		}
+
+		write_arg->io_amount += nb_written;
+		offset += nb_written;
 	}
 
-	*wrote_amount = nb_written;
-
-	if (*fsal_stable) {
+	if (write_arg->fsal_stable) {
 		retval = ceph_ll_fsync(export->cmount, my_fd, false);
 
-		if (retval < 0)
+		if (retval < 0) {
 			status = ceph2fsal_error(retval);
+			write_arg->fsal_stable = false;
+		}
 	}
 
  out:
@@ -1737,7 +1739,7 @@ fsal_status_t ceph_write2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	return status;
+	done_cb(obj_hdl, status, write_arg, caller_arg);
 }
 
 /**

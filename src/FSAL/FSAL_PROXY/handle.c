@@ -2419,7 +2419,7 @@ static fsal_status_t pxy_open2(struct fsal_obj_handle *obj_hdl,
 static void pxy_read2(struct fsal_obj_handle *obj_hdl,
 		      bool bypass,
 		      fsal_async_cb done_cb,
-		      struct fsal_read_arg *read_arg,
+		      struct fsal_io_arg *read_arg,
 		      void *caller_arg)
 {
 	int maxReadSize;
@@ -2479,28 +2479,24 @@ static void pxy_read2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	read_arg->end_of_file = rok->eof;
-	read_arg->read_amount = rok->data.data_len;
+	read_arg->io_amount = rok->data.data_len;
 	if (read_arg->info) {
 		read_arg->info->io_content.what = NFS4_CONTENT_DATA;
 		read_arg->info->io_content.data.d_offset = read_arg->offset +
-			read_arg->read_amount;
+			read_arg->io_amount;
 		read_arg->info->io_content.data.d_data.data_len =
-			read_arg->read_amount;
+			read_arg->io_amount;
 		read_arg->info->io_content.data.d_data.data_val =
 			read_arg->iov[0].iov_base;
 	}
 	done_cb(obj_hdl, fsalstat(0, 0), read_arg, caller_arg);
 }
 
-static fsal_status_t pxy_write2(struct fsal_obj_handle *obj_hdl,
-				bool bypass,
-				struct state_t *state,
-				uint64_t offset,
-				size_t buffer_size,
-				void *buffer,
-				size_t *wrote_amount,
-				bool *fsal_stable,
-				struct io_info *info)
+static void pxy_write2(struct fsal_obj_handle *obj_hdl,
+		       bool bypass,
+		       fsal_async_cb done_cb,
+		       struct fsal_io_arg *write_arg,
+		       void *caller_arg)
 {
 	int maxWriteSize;
 	int rc;
@@ -2512,10 +2508,13 @@ static fsal_status_t pxy_write2(struct fsal_obj_handle *obj_hdl,
 	WRITE4resok *wok;
 	struct pxy_obj_handle *ph;
 	stable_how4 stable_how;
+	size_t buffer_size = write_arg->iov[0].iov_len;
 
-	if (info != NULL) {
+	if (write_arg->info != NULL) {
 		/* Currently we don't support WRITE_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
+			caller_arg);
+		return;
 	}
 
 	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
@@ -2534,38 +2533,43 @@ static fsal_status_t pxy_write2(struct fsal_obj_handle *obj_hdl,
 	/* prepare write */
 	wok = &resoparray[opcnt].nfs_resop4_u.opwrite.WRITE4res_u.resok4;
 
-	if (*fsal_stable)
+	if (write_arg->fsal_stable)
 		stable_how = DATA_SYNC4;
 	else
 		stable_how = UNSTABLE4;
-	if (state) {
-		struct pxy_state *pxy_state_id = container_of(state,
+	if (write_arg->state) {
+		struct pxy_state *pxy_state_id = container_of(write_arg->state,
 							      struct pxy_state,
 							      state);
 
-		COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray, offset, buffer,
+		COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray,
+					    write_arg->offset,
+					    write_arg->iov[0].iov_base,
 					    buffer_size, stable_how,
 					    pxy_state_id->stateid.other);
 	} else {
-		COMPOUNDV4_ARG_ADD_OP_WRITE_STATELESS(opcnt, argoparray, offset,
-						      buffer, buffer_size,
-						      stable_how);
+		COMPOUNDV4_ARG_ADD_OP_WRITE_STATELESS(opcnt, argoparray,
+						  write_arg->offset,
+						  write_arg->iov[0].iov_base,
+						  buffer_size, stable_how);
 	}
 
 	/* nfs call */
 	rc = pxy_nfsv4_call(op_ctx->fsal_export, op_ctx->creds,
 			    opcnt, argoparray, resoparray);
-	if (rc != NFS4_OK)
-		return nfsstat4_to_fsal(rc);
+	if (rc != NFS4_OK) {
+		done_cb(obj_hdl, nfsstat4_to_fsal(rc), write_arg, caller_arg);
+		return;
+	}
 
 	/* get res */
-	*wrote_amount = wok->count;
+	write_arg->io_amount = wok->count;
 	if (wok->committed == UNSTABLE4)
-		*fsal_stable = false;
+		write_arg->fsal_stable = false;
 	else
-		*fsal_stable = true;
+		write_arg->fsal_stable = true;
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), write_arg, caller_arg);
 }
 
 static fsal_status_t pxy_close2(struct fsal_obj_handle *obj_hdl,

@@ -981,7 +981,7 @@ fsal_status_t fsal_read2(struct fsal_obj_handle *obj,
 {
 	/* Error return from FSAL calls */
 	fsal_status_t status = { 0, 0 };
-	struct fsal_read_arg *read_arg = alloca(sizeof(*read_arg) +
+	struct fsal_io_arg *read_arg = alloca(sizeof(*read_arg) +
 						sizeof(struct iovec));
 
 	read_arg->info = info;
@@ -996,7 +996,7 @@ fsal_status_t fsal_read2(struct fsal_obj_handle *obj,
 	 * synchronous */
 	obj->obj_ops.read2(obj, bypass, fsal_read2_cb, read_arg, &status);
 
-	*bytes_moved = read_arg->read_amount;
+	*bytes_moved = read_arg->io_amount;
 	*eof = read_arg->end_of_file;
 
 	/* Fixup FSAL_SHARE_DENIED status */
@@ -1038,6 +1038,22 @@ fsal_status_t fsal_read2(struct fsal_obj_handle *obj,
 }
 
 /**
+ * @brief Callback for fsal_write2
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] obj_data		Data for call
+ * @param[in] caller_data	Data for caller
+ */
+static void fsal_write2_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			   void *obj_data, void *caller_data)
+{
+	fsal_status_t *status = caller_data;
+
+	*status = ret;
+}
+
+/**
  * @brief New style writes
  *
  * @param[in]     obj          File to be read or written
@@ -1066,21 +1082,25 @@ fsal_status_t fsal_write2(struct fsal_obj_handle *obj,
 {
 	/* Error return from FSAL calls */
 	fsal_status_t status = { 0, 0 };
+	struct fsal_io_arg *write_arg = alloca(sizeof(*write_arg) +
+						sizeof(struct iovec));
+
+	write_arg->info = info;
+	write_arg->state = state;
+	write_arg->offset = offset;
+	write_arg->iov_count = 1;
+	write_arg->iov[0].iov_len = io_size;
+	write_arg->iov[0].iov_base = buffer;
 
 	if (op_ctx->export_perms->options & EXPORT_OPTION_COMMIT) {
 		/* Force sync if export requires it */
 		*sync = true;
 	}
 
-	status = obj->obj_ops.write2(obj,
-				     bypass,
-				     state,
-				     offset,
-				     io_size,
-				     buffer,
-				     bytes_moved,
-				     sync,
-				     info);
+	obj->obj_ops.write2(obj, bypass, fsal_write2_cb, write_arg, &status);
+
+	*bytes_moved = write_arg->io_amount;
+	*sync = write_arg->fsal_stable;
 
 	/* Fixup ERR_FSAL_SHARE_DENIED status */
 	if (status.major == ERR_FSAL_SHARE_DENIED)

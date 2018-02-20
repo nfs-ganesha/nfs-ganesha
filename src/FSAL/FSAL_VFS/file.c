@@ -1126,7 +1126,7 @@ fsal_status_t find_fd(int *fd,
 void vfs_read2(struct fsal_obj_handle *obj_hdl,
 	       bool bypass,
 	       fsal_async_cb done_cb,
-	       struct fsal_read_arg *read_arg,
+	       struct fsal_io_arg *read_arg,
 	       void *caller_arg)
 {
 	int my_fd = -1;
@@ -1181,7 +1181,7 @@ void vfs_read2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	read_arg->read_amount = nb_read;
+	read_arg->io_amount = nb_read;
 
 	read_arg->end_of_file = (nb_read == 0);
 
@@ -1228,26 +1228,18 @@ void vfs_read2(struct fsal_obj_handle *obj_hdl,
  * @param[in]     obj_hdl        File on which to operate
  * @param[in]     bypass         If state doesn't indicate a share reservation,
  *                               bypass any non-mandatory deny write
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position at which to write
- * @param[in]     buffer         Data to be written
- * @param[in,out] fsal_stable    In, if on, the fsal is requested to write data
- *                               to stable store. Out, the fsal reports what
- *                               it did.
- * @param[in,out] info           more information about the data
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] write_arg	Info about write, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
  *
  * @return FSAL status.
  */
 
-fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
-			 bool bypass,
-			 struct state_t *state,
-			 uint64_t offset,
-			 size_t buffer_size,
-			 void *buffer,
-			 size_t *wrote_amount,
-			 bool *fsal_stable,
-			 struct io_info *info)
+void vfs_write2(struct fsal_obj_handle *obj_hdl,
+		bool bypass,
+		fsal_async_cb done_cb,
+		struct fsal_io_arg *write_arg,
+		void *caller_arg)
 {
 	ssize_t nb_written;
 	fsal_status_t status;
@@ -1258,31 +1250,36 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 	fsal_openflags_t openflags = FSAL_O_WRITE;
 	struct vfs_fd *vfs_fd = NULL;
 
-	if (info != NULL) {
+	if (write_arg->info != NULL) {
 		/* Currently we don't support WRITE_PLUS */
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
+			caller_arg);
+		return;
 	}
 
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+		done_cb(obj_hdl, fsalstat(posix2fsal_error(EXDEV), EXDEV),
+			write_arg, caller_arg);
+		return;
 	}
 
 	/* Acquire state's fdlock to prevent OPEN upgrade closing the
 	 * file descriptor while we use it.
 	 */
-	if (state) {
-		vfs_fd = &container_of(state, struct vfs_state_fd,
+	if (write_arg->state) {
+		vfs_fd = &container_of(write_arg->state, struct vfs_state_fd,
 				       state)->vfs_fd;
 
 		PTHREAD_RWLOCK_rdlock(&vfs_fd->fdlock);
 	}
 
 	/* Get a usable file descriptor */
-	LogFullDebug(COMPONENT_FSAL, "Calling find_fd, state = %p", state);
-	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
+	LogFullDebug(COMPONENT_FSAL, "Calling find_fd, state = %p",
+		     write_arg->state);
+	status = find_fd(&my_fd, obj_hdl, bypass, write_arg->state, openflags,
 			 &has_lock, &closefd, false);
 
 	if (FSAL_IS_ERROR(status)) {
@@ -1293,7 +1290,8 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 
 	fsal_set_credentials(op_ctx->creds);
 
-	nb_written = pwrite(my_fd, buffer, buffer_size, offset);
+	nb_written = pwritev(my_fd, write_arg->iov, write_arg->iov_count,
+			     write_arg->offset);
 
 	if (nb_written == -1) {
 		retval = errno;
@@ -1301,13 +1299,14 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	*wrote_amount = nb_written;
+	write_arg->io_amount = nb_written;
 
-	if (*fsal_stable) {
+	if (write_arg->fsal_stable) {
 		retval = fsync(my_fd);
 		if (retval == -1) {
 			retval = errno;
 			status = fsalstat(posix2fsal_error(retval), retval);
+			write_arg->fsal_stable = false;
 		}
 	}
 
@@ -1325,7 +1324,7 @@ fsal_status_t vfs_write2(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	fsal_restore_ganesha_credentials();
-	return status;
+	done_cb(obj_hdl, status, write_arg, caller_arg);
 }
 
 /**

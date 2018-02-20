@@ -83,7 +83,7 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			  void *read_data, void *caller_data)
 {
 	struct nfs3_read_data *data = caller_data;
-	struct fsal_read_arg *read_arg = read_data;
+	struct fsal_io_arg *read_arg = read_data;
 	READ3resfail *resfail = &data->res->res_read3.READ3res_u.resfail;
 	int i;
 
@@ -93,7 +93,7 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 
 	if (!FSAL_IS_ERROR(ret)) {
 		nfs_read_ok(data->res, read_arg->iov[0].iov_base,
-			    read_arg->read_amount, obj, read_arg->end_of_file);
+			    read_arg->io_amount, obj, read_arg->end_of_file);
 		data->rc = NFS_REQ_OK;
 		if (!read_arg->end_of_file) {
 			/** @todo FSF: add a config option for this behavior?
@@ -114,7 +114,7 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 
 			if (FSAL_IS_SUCCESS(status)) {
 				read_arg->end_of_file = (read_arg->offset +
-							 read_arg->read_amount)
+							 read_arg->io_amount)
 							>= attrs.filesize;
 			}
 
@@ -145,7 +145,7 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	if (obj)
 		obj->obj_ops.put_ref(obj);
 
-	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->read_amount,
+	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->io_amount,
 			     (data->rc == NFS_REQ_OK) ?  true : false, false);
 }
 
@@ -177,7 +177,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetRead);
 	READ3resfail *resfail = &res->res_read3.READ3res_u.resfail;
 	struct nfs3_read_data read_data;
-	struct fsal_read_arg *read_arg = alloca(sizeof(*read_arg) +
+	struct fsal_io_arg *read_arg = alloca(sizeof(*read_arg) +
 						sizeof(struct iovec));
 
 	read_data.rc = NFS_REQ_OK;
@@ -302,7 +302,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	read_arg->iov_count = 1;
 	read_arg->iov[0].iov_len = size;
 	read_arg->iov[0].iov_base = data;
-	read_arg->read_amount = 0;
+	read_arg->io_amount = 0;
 
 	read_data.res = res;
 

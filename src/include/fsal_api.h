@@ -1299,14 +1299,16 @@ typedef enum fsal_dir_result (*fsal_readdir_cb)(
 				void *dir_state, fsal_cookie_t cookie);
 
 /**
- * @brief Argument for read2 and it's callback
+ * @brief Argument for read2/write2 and their callbacks
  *
- * Data needed for read and returned in it's done callback
  */
-struct fsal_read_arg {
-	size_t read_amount;	/**< Total amount actually read */
+struct fsal_io_arg {
+	size_t io_amount;	/**< Total amount of I/O actually done */
 	struct io_info *info;	/**< More information about data */
-	bool end_of_file;	/**< True if end-of-file reached */
+	union {
+		bool end_of_file;	/**< True if end-of-file reached */
+		bool fsal_stable;	/**< requested/achieved stability */
+	};
 	struct state_t *state;	/**< State to use for read (or NULL) */
 	uint64_t offset;	/**< Offset into file to read */
 	int iov_count;		/**< Number of vectors in iov */
@@ -2336,7 +2338,6 @@ struct fsal_obj_ops {
  * @param[in]     obj_hdl	File on which to operate
  * @param[in]     bypass	If state doesn't indicate a share reservation,
  *				bypass any deny read
- * @param[in]     offset	Position from which to read
  * @param[in,out] done_cb	Callback to call when I/O is done
  * @param[in,out] read_arg	Info about read, passed back in callback
  * @param[in,out] caller_arg	Opaque arg from the caller for callback
@@ -2346,7 +2347,7 @@ struct fsal_obj_ops {
 	 void (*read2)(struct fsal_obj_handle *obj_hdl,
 		       bool bypass,
 		       fsal_async_cb done_cb,
-		       struct fsal_read_arg *read_arg,
+		       struct fsal_io_arg *read_arg,
 		       void *caller_arg);
 
 /**
@@ -2360,29 +2361,21 @@ struct fsal_obj_ops {
  *
  * The FSAL is expected to enforce sync if necessary.
  *
- * @param[in]     obj_hdl        File on which to operate
- * @param[in]     bypass         If state doesn't indicate a share reservation,
- *                               bypass any non-mandatory deny write
- * @param[in]     state          state_t to use for this operation
- * @param[in]     offset         Position at which to write
- * @param[in]     buffer_size    Amount of data to write
- * @param[in]     buffer         Data to be written
- * @param[in,out] fsal_stable    In, if on, the fsal is requested to write data
- *                               to stable store. Out, the fsal reports what
- *                               it did.
- * @param[in,out] info           more information about the data
+ * This is an (optionally) asynchronous call.  When the I/O is complete, the @a
+ * done_cb callback is called.
  *
- * @return FSAL status.
+ * @param[in]     obj_hdl       File on which to operate
+ * @param[in]     bypass        If state doesn't indicate a share reservation,
+ *                              bypass any non-mandatory deny write
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] write_arg	Info about write, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
  */
-	 fsal_status_t (*write2)(struct fsal_obj_handle *obj_hdl,
-				 bool bypass,
-				 struct state_t *state,
-				 uint64_t offset,
-				 size_t buffer_size,
-				 void *buffer,
-				 size_t *wrote_amount,
-				 bool *fsal_stable,
-				 struct io_info *info);
+	 void (*write2)(struct fsal_obj_handle *obj_hdl,
+			bool bypass,
+			fsal_async_cb done_cb,
+			struct fsal_io_arg *write_arg,
+			void *caller_arg);
 
 /**
  * @brief Seek to data or hole
