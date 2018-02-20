@@ -70,6 +70,8 @@
 #include "uid2grp.h"
 #include "pnfs_utils.h"
 
+pthread_t dir_entries_monitor;
+
 /* global information exported to all layers (as extern vars) */
 nfs_parameter_t nfs_param;
 
@@ -325,7 +327,12 @@ int init_server_pkgs(void)
 {
 	cache_inode_status_t cache_status;
 	state_status_t state_status;
-
+  if(nfs_param.core_param.dirent_entries_track) {
+    if(pthread_create(&dir_entries_monitor, NULL, dirent_entries_monitor, NULL)) {
+      LogCrit(COMPONENT_INIT, "Failed to create dirent monitor thread");
+      return -1;
+    }
+  }
 	/* init uid2grp cache */
 	uid2grp_cache_init();
 

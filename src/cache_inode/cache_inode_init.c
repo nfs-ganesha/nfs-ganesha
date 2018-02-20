@@ -50,6 +50,19 @@
  * @return CACHE_INODE_SUCCESS or errors.
  *
  */
+
+extern uint64_t number_of_dirent_entries;
+void*
+dirent_entries_monitor(void *notused)
+{
+  while(1) {
+    if(number_of_dirent_entries > 1000*1000) {
+      LogCrit(COMPONENT_CACHE_INODE, "Number of dirent entries are more than 1M Exiting");
+      exit(9);
+    }
+    sleep(15);
+  }
+}
 cache_inode_status_t
 cache_inode_init(void)
 {

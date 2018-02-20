@@ -664,6 +664,7 @@ int cache_inode_compare_key_fsal(struct gsh_buffdesc *buff1,
 				 struct gsh_buffdesc *buff2);
 
 cache_inode_status_t cache_inode_init(void);
+void* dirent_entries_monitor(void *notused);
 
 #define CIG_KEYED_FLAG_NONE         0x0000
 #define CIG_KEYED_FLAG_CACHED_ONLY  0x0001
