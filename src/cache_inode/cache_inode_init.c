@@ -44,12 +44,37 @@
  *
  * @brief Initialize the caching layer
  *
+ * This function is dirent entries monitor thread function
+ *
+ * @return don't return any thing.
+ *
+ */
+
+extern uint64_t number_of_dirent_entries;
+void*
+dirent_entries_monitor(void *notused)
+{
+	while (1) {
+		if (number_of_dirent_entries > 100*1000*1000) {
+			LogCrit(COMPONENT_CACHE_INODE,
+			"Number of dirent entries are more than 100M Exiting");
+			exit(9);
+		}
+		sleep(15);
+	}
+}
+
+/**
+ *
+ * @brief Initialize the caching layer
+ *
  * This function initializes the memory pools, lookup table, and weakref
  * table used for cache management.
  *
  * @return CACHE_INODE_SUCCESS or errors.
  *
  */
+
 cache_inode_status_t
 cache_inode_init(void)
 {

@@ -360,6 +360,8 @@ typedef struct nfs_core_param {
 	char *ganesha_modules_loc;
 	/* Frequency of dbus health heartbeat in ms. Set to 0 to disable */
 	uint32_t heartbeat_freq;
+  /* Dirent entries enabling flag */
+  bool dirent_entries_track;
 } nfs_core_parameter_t;
 
 /** @} */

@@ -53,6 +53,8 @@
 #include <assert.h>
 #include <stdbool.h>
 
+extern uint64_t number_of_dirent_entries;
+
 pool_t *cache_inode_entry_pool;
 
 const char *
@@ -812,6 +814,7 @@ cache_inode_release_dirents(cache_entry_t *entry,
 			if (dirent->ckey.kv.len)
 				cache_inode_key_delete(&dirent->ckey);
 			gsh_free(dirent);
+			number_of_dirent_entries--;
 			dirent_node = next_dirent_node;
 		}
 
