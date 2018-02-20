@@ -310,7 +310,7 @@ struct state_t;
  * cycle at which point we will move to 6.0.
  */
 
-#define FSAL_MAJOR_VERSION 6
+#define FSAL_MAJOR_VERSION 7
 
 /**
  * @brief Minor Version
