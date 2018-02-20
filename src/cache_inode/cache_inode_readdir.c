@@ -315,7 +315,7 @@ cache_inode_add_cached_dirent(cache_entry_t *parent,
 
 	/* we're going to succeed */
 	parent->object.dir.nbactive++;
-  number_of_dirent_entries++;
+	number_of_dirent_entries++;
 
 	return status;
 }
