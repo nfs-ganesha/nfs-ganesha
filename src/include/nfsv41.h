@@ -836,6 +836,19 @@ typedef change_policy4 fattr4_change_policy;
 /* NFSv4.3 */
 #define FATTR4_XATTR_SUPPORT 82
 
+/* Restricted attrs on an absent FS */
+#define FATTR4_RESTRICTED_ATTRS (		\
+		FATTR4_MOUNTED_ON_FILEID |	\
+		FATTR4_FSID |			\
+		FATTR4_RDATTR_ERROR |		\
+		FATTR4_FS_LOCATIONS)
+
+#define FATTR4_RESTRICTED_ATTRS_SIZE (					\
+		fattr4tab[FATTR4_MOUNTED_ON_FILEID].size_fattr4 +	\
+		fattr4tab[FATTR4_FSID].size_fattr4 +			\
+		fattr4tab[FATTR4_RDATTR_ERROR].size_fattr4 +		\
+		fattr4tab[FATTR4_FS_LOCATIONS].size_fattr4)
+
 struct fattr4 {
 	struct bitmap4 attrmask;
 	attrlist4 attr_vals;

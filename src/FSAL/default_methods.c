@@ -1413,6 +1413,16 @@ static fsal_status_t close2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
+/* is_referral
+ * default case not a referral
+ */
+static bool is_referral(struct fsal_obj_handle *obj_hdl,
+			struct attrlist *attrs,
+			bool cache_attrs)
+{
+	return false;
+}
+
 /* Default fsal handle object method vector.
  * copied to allocated vector at register time
  */
@@ -1471,6 +1481,7 @@ struct fsal_obj_ops def_handle_ops = {
 	.lease_op2 = lease_op2,
 	.setattr2 = setattr2,
 	.close2 = close2,
+	.is_referral = is_referral,
 };
 
 /* fsal_pnfs_ds common methods */

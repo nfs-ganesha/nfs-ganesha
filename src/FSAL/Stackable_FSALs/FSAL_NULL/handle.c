@@ -634,6 +634,28 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	gsh_free(hdl);
 }
 
+static bool nullfs_is_referral(struct fsal_obj_handle *obj_hdl,
+			       struct attrlist *attrs,
+			       bool cache_attrs)
+{
+	struct nullfs_fsal_obj_handle *hdl =
+		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
+			     obj_handle);
+
+	struct nullfs_fsal_export *export =
+		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
+			     export);
+	bool result;
+
+	/* calling subfsal method */
+	op_ctx->fsal_export = export->export.sub_export;
+	result = hdl->sub_handle->obj_ops.is_referral(hdl->sub_handle, attrs,
+						      cache_attrs);
+	op_ctx->fsal_export = &export->export;
+
+	return result;
+}
+
 void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = release;
@@ -677,6 +699,7 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->remove_extattr_by_id = nullfs_remove_extattr_by_id;
 	ops->remove_extattr_by_name = nullfs_remove_extattr_by_name;
 
+	ops->is_referral = nullfs_is_referral;
 }
 
 /* export methods that create object handles

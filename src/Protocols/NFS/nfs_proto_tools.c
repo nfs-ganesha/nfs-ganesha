@@ -3519,58 +3519,85 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 	return NFS4_OK;
 }
 
-int nfs4_Fattr_Fill_Error(fattr4 *Fattr, nfsstat4 rdattr_error)
+static fattr_xdr_result decode_fattr(XDR *xdr,
+				     struct xdr_attrs_args *args,
+				     int fattr_id)
 {
-	u_int LastOffset;
-	XDR attr_body;
-	struct xdr_attrs_args args;
-	fattr_xdr_result xdr_res;
+	fattr_xdr_result res;
 
-	/* basic init */
-	memset(&Fattr->attrmask, 0, sizeof(Fattr->attrmask));
-	Fattr->attr_vals.attrlist4_val =
-	    gsh_malloc(fattr4tab[FATTR4_RDATTR_ERROR].size_fattr4);
-
-	LastOffset = 0;
-	memset(&attr_body, 0, sizeof(attr_body));
-	xdrmem_create(&attr_body, Fattr->attr_vals.attrlist4_val,
-		      fattr4tab[FATTR4_RDATTR_ERROR].size_fattr4, XDR_ENCODE);
-	memset(&args, 0, sizeof(args));
-	args.rdattr_error = rdattr_error;
-
-	xdr_res = fattr4tab[FATTR4_RDATTR_ERROR].encode(&attr_body, &args);
-	if (xdr_res == FATTR_XDR_SUCCESS) {
-		bool res = set_attribute_in_bitmap(&Fattr->attrmask,
-						   FATTR4_RDATTR_ERROR);
-		assert(res);
-		LogFullDebug(COMPONENT_NFS_V4,
-			     "Encoded attribute %d, name = %s",
-			     FATTR4_RDATTR_ERROR,
-			     fattr4tab[FATTR4_RDATTR_ERROR].name);
-
-		/* mark the attribute in the bitmap should be new bitmap btw */
-
-		LastOffset = xdr_getpos(&attr_body);	/* dumb but for now */
-		xdr_destroy(&attr_body);
-
-		if (LastOffset == 0) {	/* no supported attrs so we can free */
-			assert(Fattr->attrmask.bitmap4_len == 0);
-			gsh_free(Fattr->attr_vals.attrlist4_val);
-			Fattr->attr_vals.attrlist4_val = NULL;
-		}
-		Fattr->attr_vals.attrlist4_len = LastOffset;
-		return 0;
-	} else {
-		LogFullDebug(COMPONENT_NFS_V4,
-			     "Encode FAILED for attribute %d, name = %s",
-			     FATTR4_RDATTR_ERROR,
-			     fattr4tab[FATTR4_RDATTR_ERROR].name);
-		/* signal fail so if(LastOffset > 0) works right */
-
-		gsh_free(Fattr->attr_vals.attrlist4_val);
-		Fattr->attr_vals.attrlist4_val = NULL;
-		return -1;
+	res = fattr4tab[fattr_id].decode(xdr, args);
+	if (res != FATTR_XDR_SUCCESS) {
+		LogDebug(COMPONENT_NFS_V4, "Failed to decode %s (%d)",
+			 fattr4tab[fattr_id].name, fattr_id);
 	}
+
+	return res;
+}
+
+/*
+ * @brief Sets the FATTR4_RDATTR_ERROR in fattrs along with the other restricted
+ * attrs if requested.
+ *
+ * @param[in]		Current compound request data
+ * @param[in|out]	Attrs to be filled
+ * @param[in]		rdattr_error value
+ * @param[in]		Requested attrs bitmap mask
+ */
+
+int nfs4_Fattr_Fill_Error(compound_data_t *data, fattr4 *Fattr,
+			  nfsstat4 rdattr_error, struct bitmap4 *req_attrmask)
+{
+	struct xdr_attrs_args args;
+	struct bitmap4 restricted_attrmask;
+
+	memset(&args, 0, sizeof(args));
+	memset(&restricted_attrmask, 0, sizeof(restricted_attrmask));
+
+	if (attribute_is_set(req_attrmask, FATTR4_FSID) ||
+	    attribute_is_set(req_attrmask, FATTR4_MOUNTED_ON_FILEID) ||
+	    attribute_is_set(req_attrmask, FATTR4_FS_LOCATIONS)) {
+		XDR old_attr_body;
+
+		memset(&old_attr_body, 0, sizeof(old_attr_body));
+		xdrmem_create(&old_attr_body, Fattr->attr_vals.attrlist4_val,
+				Fattr->attr_vals.attrlist4_len, XDR_DECODE);
+
+		if (attribute_is_set(&Fattr->attrmask, FATTR4_FSID)) {
+			decode_fattr(&old_attr_body, &args, FATTR4_FSID);
+			set_attribute_in_bitmap(&restricted_attrmask,
+						FATTR4_FSID);
+		}
+
+		if (attribute_is_set(&Fattr->attrmask,
+			FATTR4_MOUNTED_ON_FILEID)) {
+			decode_fattr(&old_attr_body, &args,
+					FATTR4_MOUNTED_ON_FILEID);
+			set_attribute_in_bitmap(&restricted_attrmask,
+					FATTR4_MOUNTED_ON_FILEID);
+		}
+
+		/*
+		 * Since fslocations are set at the time of encoding
+		 * (encode_fs_locations), we should check the requested attrmask
+		 * here and not Fattr->attrmask.
+		 */
+		if (attribute_is_set(req_attrmask, FATTR4_FS_LOCATIONS)) {
+			set_attribute_in_bitmap(&restricted_attrmask,
+						FATTR4_FS_LOCATIONS);
+		}
+
+		xdr_destroy(&old_attr_body);
+	}
+
+	/* FATTR4_RDATTR_ERROR should be set only if it is requested */
+	if (attribute_is_set(req_attrmask, FATTR4_RDATTR_ERROR)) {
+		args.rdattr_error = rdattr_error;
+		set_attribute_in_bitmap(&restricted_attrmask,
+					FATTR4_RDATTR_ERROR);
+	}
+
+	args.data = data;
+	return nfs4_FSALattr_To_Fattr(&args, &restricted_attrmask, Fattr);
 }
 
 /**
@@ -3656,7 +3683,7 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
 				     fattr4tab[attribute_to_set].name);
 			continue;
 		} else {
-			LogFullDebug(COMPONENT_NFS_V4,
+			LogEvent(COMPONENT_NFS_V4,
 				     "Encode FAILED for attr %d, name = %s",
 				     attribute_to_set,
 				     fattr4tab[attribute_to_set].name);

@@ -291,7 +291,8 @@ int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *, compound_data_t *);
 
 int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *, fattr4 *);
 
-int nfs4_Fattr_Fill_Error(fattr4 *, nfsstat4);
+int nfs4_Fattr_Fill_Error(compound_data_t *, fattr4 *, nfsstat4,
+			  struct bitmap4 *);
 
 int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *, struct bitmap4 *,
 			   fattr4 *);

@@ -374,7 +374,9 @@ not_junction:
 		goto server_fault;
 	}
 
-	if (obj->type == DIRECTORY && is_sticky_bit_set(obj, attr)) {
+	/* Do not cache attrs, it will affect readdir performance */
+	if (obj->obj_ops.is_referral(obj, (struct attrlist *) attr,
+		false /*cache_attrs*/)) {
 		rdattr_error = NFS4ERR_MOVED;
 		LogDebug(COMPONENT_NFS_READDIR,
 			 "Skipping because of %s",
@@ -384,13 +386,18 @@ not_junction:
  skip:
 
 	if (rdattr_error != NFS4_OK) {
-		if (!attribute_is_set(tracker->req_attr, FATTR4_RDATTR_ERROR)) {
+		if (!attribute_is_set(tracker->req_attr,
+			FATTR4_RDATTR_ERROR) &&
+		    !attribute_is_set(tracker->req_attr,
+			FATTR4_FS_LOCATIONS)) {
+
 			tracker->error = rdattr_error;
 			goto failure;
 		}
 
-		if (nfs4_Fattr_Fill_Error(&tracker_entry->attrs,
-					  rdattr_error) == -1)
+		if (nfs4_Fattr_Fill_Error(data, &tracker_entry->attrs,
+					  rdattr_error,
+					  tracker->req_attr) == -1)
 			goto server_fault;
 	}
 

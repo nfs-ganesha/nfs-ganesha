@@ -1364,6 +1364,87 @@ static fsal_status_t mdcache_merge(struct fsal_obj_handle *orig_hdl,
 	return status;
 }
 
+
+static bool mdcache_is_referral(struct fsal_obj_handle *obj_hdl,
+				struct attrlist *attrs,
+				bool cache_attrs)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	bool result, locked, write_locked;
+	attrmask_t valid_request_mask = 0;
+
+	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+	locked = true;
+
+	if (mdcache_is_attrs_valid(entry, attrs->request_mask)) {
+		/* Up-to-date */
+		goto copy_and_unlock;
+	}
+
+	/* Promote to write lock */
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	write_locked = true;
+
+	if (!mdcache_is_attrs_valid(entry, attrs->request_mask)) {
+		/* attrs are not valid, let the subfsal take care of it */
+		goto invoke_subfsal;
+	}
+
+copy_and_unlock:
+
+	valid_request_mask = attrs->request_mask;
+	fsal_copy_attrs(attrs, &entry->attrs, false);
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	locked = false;
+	write_locked = false;
+
+invoke_subfsal:
+
+	subcall(
+		result = entry->sub_handle->obj_ops.is_referral(
+							entry->sub_handle,
+							attrs, cache_attrs);
+	       );
+
+	/* If the valid request mask before subcall and after subcall are same
+	 * then we can skip attr updates. This should ideally be the most common
+	 * case. */
+	if (!cache_attrs || valid_request_mask == attrs->request_mask ||
+	     attrs->valid_mask == 0) {
+		goto out;
+	}
+
+	/* Need to take a read lock again to check if cached attrs are valid */
+	if (!locked) {
+		PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+		locked = true;
+		assert(!write_locked);
+	}
+
+	/* Check if is_referral added any new attrs and update them in the
+	 * cache */
+	if (!mdcache_is_attrs_valid(entry, attrs->request_mask)) {
+		if (!write_locked) {
+			/* Promote to write lock to update the cached attrs */
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+			PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+		}
+
+		mdc_update_attr_cache(entry, attrs);
+	}
+
+	assert(locked);
+
+out:
+	if (locked) {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+	}
+
+	return result;
+}
+
 void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->get_ref = mdcache_get_ref;
@@ -1424,6 +1505,7 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->removexattrs = mdcache_removexattrs;
 	ops->listxattrs = mdcache_listxattrs;
 
+	ops->is_referral = mdcache_is_referral;
 }
 
 /*

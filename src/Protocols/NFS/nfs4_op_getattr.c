@@ -92,6 +92,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 	GETATTR4res * const res_GETATTR4 = &resp->nfs_resop4_u.opgetattr;
 	attrmask_t mask;
 	struct attrlist attrs;
+	bool current_obj_is_referral = false;
 
 	/* This is a NFS4_OP_GETTAR */
 	resp->resop = NFS4_OP_GETATTR;
@@ -135,12 +136,37 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 			&res_GETATTR4->GETATTR4res_u.resok4.obj_attributes,
 			&arg_GETATTR4->attr_request);
 
-	if (data->current_obj->type == DIRECTORY &&
-	    is_sticky_bit_set(data->current_obj, &attrs) &&
-	    !attribute_is_set(&arg_GETATTR4->attr_request,
-			      FATTR4_FS_LOCATIONS) &&
-	    check_fs_locations(data->current_obj))
-		res_GETATTR4->status = NFS4ERR_MOVED;
+	current_obj_is_referral = data->current_obj->obj_ops.is_referral(
+					data->current_obj, &attrs, false);
+
+	/*
+	 * If it is a referral point, return the FATTR4_RDATTR_ERROR if
+	 * requested along with the requested restricted attrs.
+	 */
+	if (current_obj_is_referral && check_fs_locations(data->current_obj)) {
+		bool fill_rdattr_error = true;
+		bool fslocations_requested = attribute_is_set(
+						&arg_GETATTR4->attr_request,
+						FATTR4_FS_LOCATIONS);
+
+		if (!fslocations_requested) {
+			if (!attribute_is_set(&arg_GETATTR4->attr_request,
+						FATTR4_RDATTR_ERROR)) {
+				fill_rdattr_error = false;
+			}
+		}
+
+		if (fill_rdattr_error) {
+			if (nfs4_Fattr_Fill_Error(data,
+				&res_GETATTR4->GETATTR4res_u.resok4
+				.obj_attributes, NFS4ERR_MOVED,
+				&arg_GETATTR4->attr_request) != 0) {
+				res_GETATTR4->status = NFS4ERR_SERVERFAULT;
+			}
+		} else {
+			res_GETATTR4->status = NFS4ERR_MOVED;
+		}
+	}
 
 	/* Done with the attrs */
 	fsal_release_attrs(&attrs);
