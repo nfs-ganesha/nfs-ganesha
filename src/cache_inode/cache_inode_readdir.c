@@ -225,7 +225,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
 			/* try to rename--no longer in-place */
 			dirent3 = gsh_malloc(sizeof(cache_inode_dir_entry_t)
 					     + newnamesize);
-      number_of_dirent_entries++;
+			number_of_dirent_entries++;
 			memcpy(dirent3->name, newname, newnamesize);
 			dirent3->flags = DIR_ENTRY_FLAG_NONE;
 			cache_inode_key_dup(&dirent3->ckey, &dirent->ckey);
@@ -238,7 +238,7 @@ cache_inode_operate_cached_dirent(cache_entry_t *directory,
 				avl_dirent_clear_deleted(directory, dirent);
 				/* dirent3 was never inserted */
 				gsh_free(dirent3);
-        number_of_dirent_entries--;
+				number_of_dirent_entries--;
 			}
 		}		/* !found */
 		break;
