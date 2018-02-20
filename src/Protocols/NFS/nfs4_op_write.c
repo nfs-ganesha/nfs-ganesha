@@ -251,8 +251,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		case STATE_TYPE_DELEG:
 			/* Check if the delegation state allows READ */
 			sdeleg = &state_found->state_data.deleg;
-			if (!(sdeleg->sd_type & OPEN_DELEGATE_WRITE) ||
-				(sdeleg->sd_state != DELEG_GRANTED)) {
+			if (!(sdeleg->sd_type & OPEN_DELEGATE_WRITE)) {
 				/* Invalid delegation for this operation. */
 				LogDebug(COMPONENT_STATE,
 					"Delegation type:%d state:%d",
