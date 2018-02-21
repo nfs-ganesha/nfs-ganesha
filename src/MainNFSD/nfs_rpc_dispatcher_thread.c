@@ -1194,7 +1194,7 @@ void nfs_Init_svc(void)
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS,
 				 EXT_RQUOTAVERS);
 	}
-#endif				/* _NO_PORTMAPPER */
+#endif	/* RPCBIND */
 
 }
 
