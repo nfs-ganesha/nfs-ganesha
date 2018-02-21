@@ -208,6 +208,7 @@ void _put_gsh_export(struct gsh_export *a_export,
 	_put_gsh_export(a_export, \
 	(char *) __FILE__, __LINE__, (char *) __func__)
 
+void export_cleanup(struct gsh_export *a_export);
 void export_revert(struct gsh_export *a_export);
 void export_add_to_mount_work(struct gsh_export *a_export);
 void export_add_to_unexport_work_locked(struct gsh_export *a_export);

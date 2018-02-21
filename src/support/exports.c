@@ -916,7 +916,7 @@ static void *export_init(void *link_mem, void *self_struct)
 			pnfs_ds_remove(export->export_id, true);
 		} else {
 			assert(export->refcnt == 0);
-			free_export(export);
+			export_cleanup(export);
 		}
 
 		return NULL;

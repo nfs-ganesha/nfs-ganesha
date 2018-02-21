@@ -164,6 +164,23 @@ static inline uint16_t eid_cache_offsetof(uint16_t k)
 }
 
 /**
+ * @brief Clean up an export
+ *
+ * This is used when an export needs to be freed but op_ctx isn't set up.
+ *
+ * @param[in] export	Export to clean up
+ */
+void export_cleanup(struct gsh_export *export)
+{
+	struct root_op_context ctx;
+
+	init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
+			     UNKNOWN_REQUEST);
+	free_export(export);
+	release_root_op_context();
+}
+
+/**
  * @brief Revert export_commit()
  *
  * @param export [in] the export just inserted/committed
@@ -173,6 +190,7 @@ void export_revert(struct gsh_export *export)
 	struct avltree_node *cnode;
 	void **cache_slot = (void **)
 	     &(export_by_id.cache[eid_cache_offsetof(export->export_id)]);
+	struct root_op_context ctx;
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 
@@ -185,12 +203,17 @@ void export_revert(struct gsh_export *export)
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
+	init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
+			     UNKNOWN_REQUEST);
+
 	if (export->has_pnfs_ds) {
 		/* once-only, so no need for lock here */
 		export->has_pnfs_ds = false;
 		pnfs_ds_remove(export->export_id, true);
 	}
 	put_gsh_export(export); /* Release sentinel ref */
+
+	release_root_op_context();
 }
 
 /**
