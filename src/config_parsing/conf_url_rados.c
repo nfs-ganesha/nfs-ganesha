@@ -129,18 +129,19 @@ static void cu_rados_url_init(void)
 	void *node;
 
 	node = config_GetBlockNode("RADOS_URLS");
-	if (!node) {
+	if (node) {
+		ret = rados_urls_set_param_from_conf(node, &err_type);
+		if (ret < 0) {
+			LogEvent(COMPONENT_CONFIG,
+				"%s: Failed to parse RADOS_URLS %d",
+				__func__, ret);
+		}
+	} else {
 		LogWarn(COMPONENT_CONFIG,
-			"%s: Failed to lookup RADOS_URLS config block",
+			"%s: RADOS_URLS config block not found",
 			__func__);
-		return;
 	}
 
-	ret = rados_urls_set_param_from_conf(node, &err_type);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CONFIG, "%s: Failed to parse RADOS_URLS %d",
-			__func__, ret);
-	}
 
 	ret = rados_create(&cluster, rados_url_param.userid);
 	if (ret < 0) {
