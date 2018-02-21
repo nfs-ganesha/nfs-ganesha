@@ -1057,10 +1057,8 @@ static rpc_call_t *construct_v41(nfs41_session_t *session,
 
 		ref_call = gsh_malloc(sizeof(referring_call4));
 
-		sequence->csa_referring_call_lists.csa_referring_call_lists_len
-			= 1;
-		sequence->csa_referring_call_lists.csa_referring_call_lists_val
-			= list;
+		sequence->csa_referring_call_lists.csarcl_len = 1;
+		sequence->csa_referring_call_lists.csarcl_val = list;
 		memcpy(list->rcl_sessionid, refer->session,
 		       sizeof(NFS4_SESSIONID_SIZE));
 		list->rcl_referring_calls.rcl_referring_calls_len = 1;
@@ -1068,10 +1066,8 @@ static rpc_call_t *construct_v41(nfs41_session_t *session,
 		ref_call->rc_sequenceid = refer->sequence;
 		ref_call->rc_slotid = refer->slot;
 	} else {
-		sequence->csa_referring_call_lists.csa_referring_call_lists_len
-			= 0;
-		sequence->csa_referring_call_lists.csa_referring_call_lists_val
-			= NULL;
+		sequence->csa_referring_call_lists.csarcl_len = 0;
+		sequence->csa_referring_call_lists.csarcl_val = NULL;
 	}
 	cb_compound_add_op(&call->cbt, &sequenceop);
 	cb_compound_add_op(&call->cbt, op);
@@ -1091,7 +1087,7 @@ static void release_v41(rpc_call_t *call)
 	CB_SEQUENCE4args *sequence =
 		&argarray_val[0].nfs_cb_argop4_u.opcbsequence;
 	referring_call_list4 *call_lists =
-		sequence->csa_referring_call_lists.csa_referring_call_lists_val;
+		sequence->csa_referring_call_lists.csarcl_val;
 
 	if (call_lists == NULL)
 		return;
