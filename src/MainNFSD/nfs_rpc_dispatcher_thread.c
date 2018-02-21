@@ -1175,7 +1175,7 @@ void nfs_Init_svc(void)
 	}
 #endif				/* _HAVE_GSSAPI */
 
-#ifndef _NO_PORTMAPPER
+#ifdef RPCBIND
 	/* Perform all the RPC registration, for UDP and TCP,
 	 * for NFS_V2, NFS_V3 and NFS_V4 */
 #ifdef _USE_NFS3
@@ -1194,7 +1194,7 @@ void nfs_Init_svc(void)
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS,
 				 EXT_RQUOTAVERS);
 	}
-#endif				/* _NO_PORTMAPPER */
+#endif	/* RPCBIND */
 
 }
 
