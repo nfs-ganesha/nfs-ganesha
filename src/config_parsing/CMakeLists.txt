@@ -1,6 +1,11 @@
 find_package(BISON)
 find_package(FLEX)
 
+add_definitions(
+  -D__USE_GNU
+  -D_GNU_SOURCE
+)
+
 BISON_TARGET(
   ConfigParser
   ${CMAKE_CURRENT_SOURCE_DIR}/conf_yacc.y
