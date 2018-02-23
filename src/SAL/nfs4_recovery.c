@@ -74,7 +74,7 @@ rdel_fh_t *nfs4_add_rfh_entry(clid_entry_t *clid_ent, char *rfh_name)
 	return new_ent;
 }
 
-void nfs4_cleanup_clid_entrys(void)
+void nfs4_cleanup_clid_entries(void)
 {
 	struct clid_entry *clid_entry;
 	/* when not doing a takeover, start with an empty list */
@@ -85,6 +85,8 @@ void nfs4_cleanup_clid_entrys(void)
 		gsh_free(clid_entry);
 		--clid_count;
 	}
+	assert(clid_count == 0);
+	atomic_store_int32_t(&reclaim_completes, 0);
 }
 
 /**
@@ -388,7 +390,7 @@ static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp)
 
 	/* A NULL gsp pointer indicates an initial startup grace period */
 	if (gsp == NULL)
-		nfs4_cleanup_clid_entrys();
+		nfs4_cleanup_clid_entries();
 	recovery_backend->recovery_read_clids(gsp, nfs4_add_clid_entry,
 						nfs4_add_rfh_entry);
 }
