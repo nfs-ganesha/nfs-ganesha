@@ -157,6 +157,8 @@ void nfs_SetWccData(const struct pre_op_attr *before_attr,
 {
 	if (before_attr == NULL)
 		wcc_data->before.attributes_follow = false;
+	else
+		wcc_data->before = *before_attr;
 
 	/* Build directory post operation attributes */
 	nfs_SetPostOpAttr(obj, &wcc_data->after, NULL);
