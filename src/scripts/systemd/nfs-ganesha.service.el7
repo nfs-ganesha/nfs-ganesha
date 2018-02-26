@@ -13,8 +13,8 @@
 [Unit]
 Description=NFS-Ganesha file server
 Documentation=http://github.com/nfs-ganesha/nfs-ganesha/wiki
-After=rpcbind.service nfs-ganesha-lock.service nfs-ganesha-config.service
-Wants=rpcbind.service nfs-ganesha-lock.service nfs-ganesha-config.service
+After=rpcbind.service nfs-ganesha-config.service
+Wants=rpcbind.service nfs-ganesha-config.service
 Conflicts=nfs.target
 
 
@@ -32,4 +32,3 @@ ExecStop=/bin/dbus-send --system   --dest=org.ganesha.nfsd --type=method_call /o
 
 [Install]
 WantedBy=multi-user.target
-Also=nfs-ganesha-lock.service
