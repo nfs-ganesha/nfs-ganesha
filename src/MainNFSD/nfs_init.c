@@ -828,66 +828,63 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 static void lower_my_caps(void)
 {
-	struct __user_cap_header_struct caphdr = {
-		.version = _LINUX_CAPABILITY_VERSION
-	};
-	cap_user_data_t capdata;
-	ssize_t capstrlen = 0;
-	cap_t my_cap;
+	cap_value_t cap_values[] = {CAP_SYS_RESOURCE};
+	cap_t cap;
 	char *cap_text;
-	int capsz;
+	ssize_t capstrlen = 0;
+	int ret;
 
 	if (!nfs_start_info.drop_caps) {
 		/* Skip dropping caps by request */
 		return;
 	}
 
-	(void) capget(&caphdr, NULL);
-	switch (caphdr.version) {
-	case _LINUX_CAPABILITY_VERSION_1:
-		capsz = _LINUX_CAPABILITY_U32S_1;
-		break;
-	case _LINUX_CAPABILITY_VERSION_2:
-		capsz = _LINUX_CAPABILITY_U32S_2;
-		break;
-	default:
-		abort(); /* can't happen */
+	cap = cap_get_proc();
+	if (cap == NULL) {
+		LogFatal(COMPONENT_INIT,
+			 "cap_get_proc() failed, %s", strerror(errno));
 	}
 
-	capdata = gsh_calloc(capsz, sizeof(struct __user_cap_data_struct));
-	caphdr.pid = getpid();
-
-	if (capget(&caphdr, capdata) != 0)
+	ret = cap_set_flag(cap, CAP_EFFECTIVE,
+			   sizeof(cap_values) / sizeof(cap_values[0]),
+			   cap_values, CAP_CLEAR);
+	if (ret != 0) {
 		LogFatal(COMPONENT_INIT,
-			 "Failed to query capabilities for process, errno=%u",
-			 errno);
+			 "cap_set_flag() failed, %s", strerror(errno));
+	}
 
-	/* Set the capability bitmask to remove CAP_SYS_RESOURCE */
-	if (capdata->effective & CAP_TO_MASK(CAP_SYS_RESOURCE))
-		capdata->effective &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
-
-	if (capdata->permitted & CAP_TO_MASK(CAP_SYS_RESOURCE))
-		capdata->permitted &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
-
-	if (capdata->inheritable & CAP_TO_MASK(CAP_SYS_RESOURCE))
-		capdata->inheritable &= ~CAP_TO_MASK(CAP_SYS_RESOURCE);
-
-	if (capset(&caphdr, capdata) != 0)
+	ret = cap_set_flag(cap, CAP_PERMITTED,
+			   sizeof(cap_values) / sizeof(cap_values[0]),
+			   cap_values, CAP_CLEAR);
+	if (ret != 0) {
 		LogFatal(COMPONENT_INIT,
-			 "Failed to set capabilities for process, errno=%u",
-			 errno);
-	else
-		LogEvent(COMPONENT_INIT,
-			 "CAP_SYS_RESOURCE was successfully removed for proper quota management in FSAL");
+			 "cap_set_flag() failed, %s", strerror(errno));
+	}
+
+	ret = cap_set_flag(cap, CAP_INHERITABLE,
+			   sizeof(cap_values) / sizeof(cap_values[0]),
+			   cap_values, CAP_CLEAR);
+	if (ret != 0) {
+		LogFatal(COMPONENT_INIT,
+			 "cap_set_flag() failed, %s", strerror(errno));
+	}
+
+	ret = cap_set_proc(cap);
+	if (ret != 0) {
+		LogFatal(COMPONENT_INIT,
+			 "Failed to set capabilities for process, %s",
+			 strerror(errno));
+	}
+
+	LogEvent(COMPONENT_INIT,
+		 "CAP_SYS_RESOURCE was successfully removed for proper quota management in FSAL");
 
 	/* Print newly set capabilities (same as what CLI "getpcaps" displays */
-	my_cap = cap_get_proc();
-	cap_text = cap_to_text(my_cap, &capstrlen);
+	cap_text = cap_to_text(cap, &capstrlen);
 	LogEvent(COMPONENT_INIT, "currenty set capabilities are: %s",
 		 cap_text);
 	cap_free(cap_text);
-	cap_free(my_cap);
-	gsh_free(capdata);
+	cap_free(cap);
 }
 #endif
 
