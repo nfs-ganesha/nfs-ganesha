@@ -212,6 +212,10 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			int clen;
 
 			if (RGWFSM.conf_path) {
+				if (access(RGWFSM.conf_path, F_OK)) {
+					LogCrit(COMPONENT_FSAL,
+					"ceph.conf path does not exist");
+				}
 				clen = strlen(RGWFSM.conf_path) + 8;
 				conf_path = (char *) gsh_malloc(clen);
 				sprintf(conf_path, "--conf=%s",
