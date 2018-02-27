@@ -751,7 +751,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		     xprt, xprt->xp_fd);
 
 	memset(arg_nfs, 0, sizeof(nfs_arg_t));
-	reqdata->r_u.req.svc.rq_msg.rm_xdr.where = (caddr_t) arg_nfs;
+	reqdata->r_u.req.svc.rq_msg.rm_xdr.where = arg_nfs;
 	reqdata->r_u.req.svc.rq_msg.rm_xdr.proc = reqdesc->xdr_decode_func;
 	xdrs->x_public = &reqdata->r_u.req.lookahead;
 
@@ -768,7 +768,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			reqdata->r_u.req.svc.rq_msg.rm_xid,
 			xprt, xprt->xp_fd);
 
-		if (!xdr_free(reqdesc->xdr_decode_func, (caddr_t) arg_nfs)) {
+		if (!xdr_free(reqdesc->xdr_decode_func, arg_nfs)) {
 			LogCrit(COMPONENT_DISPATCH,
 				"%s FAILURE: Bad xdr_free for %s",
 				__func__,
@@ -869,7 +869,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 				     xprt->xp_fd);
 
 			reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_results.where =
-						(caddr_t) res_nfs;
+						res_nfs;
 			reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_results.proc =
 						reqdesc->xdr_encode_func;
 			xprt_rc = svc_sendreply(&reqdata->r_u.req.svc);
@@ -1379,8 +1379,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Before svc_sendreply on socket %d", xprt->xp_fd);
 
-		reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_results.where =
-					(caddr_t) res_nfs;
+		reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_results.where = res_nfs;
 		reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_results.proc =
 					reqdesc->xdr_encode_func;
 		xprt_rc = svc_sendreply(&reqdata->r_u.req.svc);
@@ -1444,7 +1443,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 	if ((reqdata->r_u.req.svc.rq_msg.cb_vers == 2)
 	 || (reqdata->r_u.req.svc.rq_msg.cb_vers == 3)
 	 || (reqdata->r_u.req.svc.rq_msg.cb_vers == 4)) {
-		if (!xdr_free(reqdesc->xdr_decode_func, (caddr_t) arg_nfs)) {
+		if (!xdr_free(reqdesc->xdr_decode_func, arg_nfs)) {
 			LogCrit(COMPONENT_DISPATCH,
 				"%s FAILURE: Bad xdr_free for %s",
 				__func__,

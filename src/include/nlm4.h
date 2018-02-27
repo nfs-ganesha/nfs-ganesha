@@ -245,7 +245,7 @@ extern "C" {
 	extern void *nlmproc4_free_all_4(nlm4_free_allargs *, CLIENT *);
 	extern void *nlmproc4_free_all_4_svc(nlm4_free_allargs *,
 					     struct svc_req *);
-	extern int nlmprog_4_freeresult(SVCXPRT *, xdrproc_t, caddr_t);
+	extern int nlmprog_4_freeresult(SVCXPRT *, xdrproc_t, void *);
 
 #else				/* K&R C */
 #define NLMPROC4_NULL 0

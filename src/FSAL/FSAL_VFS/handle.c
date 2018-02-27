@@ -280,7 +280,7 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 	    is_sticky_bit_set(&hdl->obj_handle, attrs_out) &&
 	    hdl->obj_handle.fs->private_data != NULL) {
 
-		caddr_t xattr_content;
+		char *xattr_content;
 		size_t attrsize = 0;
 		char proclnk[MAXPATHLEN];
 		char readlink_buf[MAXPATHLEN];

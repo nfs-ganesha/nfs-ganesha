@@ -194,10 +194,10 @@ int handle_mapping_hash_add(hash_table_t *p_hash, uint64_t object_id,
 	memcpy(handle->fh_data, data, datalen);
 	handle->fh_len = datalen;
 
-	buffkey.addr = (caddr_t) digest;
+	buffkey.addr = digest;
 	buffkey.len = sizeof(digest_pool_entry_t);
 
-	buffval.addr = (caddr_t) handle;
+	buffval.addr = handle;
 	buffval.len = sizeof(handle_pool_entry_t);
 
 	rc = hashtable_test_and_set(handle_map_hash, &buffkey, &buffval,
@@ -322,7 +322,7 @@ int HandleMap_GetFH(const nfs23_map_handle_t *nfs23_digest,
 
 	digest.nfs23_digest = *nfs23_digest;
 
-	buffkey.addr = (caddr_t) &digest;
+	buffkey.addr = &digest;
 	buffkey.len = sizeof(digest_pool_entry_t);
 
 	rc = hashtable_getlatch(handle_map_hash, &buffkey, &buffval, 0, &hl);
@@ -392,7 +392,7 @@ int HandleMap_DelFH(nfs23_map_handle_t *p_in_nfs23_digest)
 
 	digest.nfs23_digest = *p_in_nfs23_digest;
 
-	buffkey.addr = (caddr_t) &digest;
+	buffkey.addr = &digest;
 	buffkey.len = sizeof(digest_pool_entry_t);
 
 	rc = HashTable_Del(handle_map_hash, &buffkey, &stored_buffkey,

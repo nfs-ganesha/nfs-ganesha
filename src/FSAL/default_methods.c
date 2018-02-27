@@ -1026,7 +1026,7 @@ static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					      const char *xattr_name,
-					      caddr_t buffer_addr,
+					      void *buffer_addr,
 					      size_t buffer_size,
 					      size_t *p_output_size)
 {
@@ -1041,7 +1041,7 @@ static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    unsigned int xattr_id,
-					    caddr_t buffer_addr,
+					    void *buffer_addr,
 					    size_t buffer_size,
 					    size_t *p_output_size)
 {
@@ -1056,7 +1056,7 @@ static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
 				      const char *xattr_name,
-				      caddr_t buffer_addr, size_t buffer_size,
+				      void *buffer_addr, size_t buffer_size,
 				      int create)
 {
 	LogCrit(COMPONENT_FSAL,
@@ -1070,7 +1070,7 @@ static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    unsigned int xattr_id,
-					    caddr_t buffer_addr,
+					    void *buffer_addr,
 					    size_t buffer_size)
 {
 	LogCrit(COMPONENT_FSAL,

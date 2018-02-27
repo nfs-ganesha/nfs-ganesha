@@ -119,7 +119,7 @@ extern "C" {
 							  CLIENT *);
 	extern setquota_rslt *rquotaproc_setactivequota_1_svc(setquota_args *,
 							      struct svc_req *);
-	extern int rquotaprog_1_freeresult(SVCXPRT *, xdrproc_t, caddr_t);
+	extern int rquotaprog_1_freeresult(SVCXPRT *, xdrproc_t, void *);
 	extern char *check_handle_lead_slash(char *, char *, size_t);
 
 #else				/* K&R C */

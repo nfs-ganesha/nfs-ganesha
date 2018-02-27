@@ -47,13 +47,13 @@
 #include "common_utils.h"
 
 typedef int (*xattr_getfunc_t) (struct fsal_obj_handle *, /* object handle */
-				caddr_t,	/* output buff */
+				void *,	/* output buff */
 				size_t,	/* output buff size */
 				size_t *,	/* output size */
 				void *arg);	/* optionnal argument */
 
 typedef int (*xattr_setfunc_t) (struct fsal_obj_handle *, /* object handle */
-				caddr_t,	/* input buff */
+				void *,	/* input buff */
 				size_t,	/* input size */
 				int,	/* creation flag */
 				void *arg);	/* optionnal argument */
@@ -70,7 +70,7 @@ struct fsal_xattr_def {
  * DEFINE GET/SET FUNCTIONS
  */
 
-int print_vfshandle(struct fsal_obj_handle *obj_hdl, caddr_t buffer_addr,
+int print_vfshandle(struct fsal_obj_handle *obj_hdl, void *buffer_addr,
 		    size_t buffer_size, size_t *p_output_size, void *arg)
 {
 	*p_output_size =
@@ -338,7 +338,7 @@ fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					 unsigned int xattr_id,
-					 caddr_t buffer_addr,
+					 void *buffer_addr,
 					 size_t buffer_size,
 					 size_t *p_output_size)
 {
@@ -399,7 +399,7 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					   const char *xattr_name,
-					   caddr_t buffer_addr,
+					   void *buffer_addr,
 					   size_t buffer_size,
 					   size_t *p_output_size)
 {
@@ -461,8 +461,10 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
-				   const char *xattr_name, caddr_t buffer_addr,
-				   size_t buffer_size, int create)
+				   const char *xattr_name,
+				   void *buffer_addr,
+				   size_t buffer_size,
+				   int create)
 {
 	struct vfs_fsal_obj_handle *obj_handle = NULL;
 	int fd = -1;
@@ -499,7 +501,7 @@ fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					 unsigned int xattr_id,
-					 caddr_t buffer_addr,
+					 void *buffer_addr,
 					 size_t buffer_size)
 {
 	char name[MAXNAMLEN];

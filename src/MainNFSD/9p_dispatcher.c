@@ -1019,7 +1019,7 @@ void *_9p_dispatcher_thread(void *Arg)
 	LogInfo(COMPONENT_9P_DISPATCH, "Entering nfs/rpc dispatcher");
 
 	LogDebug(COMPONENT_9P_DISPATCH, "My pthread id is %p",
-		 (caddr_t) pthread_self());
+		 (void *) pthread_self());
 
 	/* Set up the _9p_socket (trying V6 first, will fall back to V4
 	 * if V6 fails).

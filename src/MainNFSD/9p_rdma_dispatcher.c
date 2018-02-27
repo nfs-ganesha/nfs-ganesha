@@ -351,7 +351,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	LogInfo(COMPONENT_9P_DISPATCH, "Entering 9P/RDMA dispatcher");
 
 	LogDebug(COMPONENT_9P_DISPATCH, "My pthread id is %p",
-		 (caddr_t) pthread_self());
+		 (void *) pthread_self());
 
 	/* Prepare attr_thr for dispatch */
 	memset((char *)&attr_thr, 0, sizeof(attr_thr));

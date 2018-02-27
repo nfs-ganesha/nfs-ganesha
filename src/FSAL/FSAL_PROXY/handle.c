@@ -668,7 +668,7 @@ static enum clnt_stat pxy_process_reply(struct pxy_rpc_io_context *ctx,
 		memset(&reply, 0, sizeof(reply));
 		reply.RPCM_ack.ar_results.proc =
 		    (xdrproc_t) xdr_COMPOUND4res;
-		reply.RPCM_ack.ar_results.where = (caddr_t) res;
+		reply.RPCM_ack.ar_results.where = res;
 
 		memset(&x, 0, sizeof(x));
 		xdrmem_create(&x, ctx->recvbuf, ctx->ioresult, XDR_DECODE);

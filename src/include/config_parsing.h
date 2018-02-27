@@ -29,8 +29,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-/* opaque type */
-typedef caddr_t config_file_t;
+typedef struct config_root *config_file_t;
 
 typedef enum { CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR } config_item_type;
 

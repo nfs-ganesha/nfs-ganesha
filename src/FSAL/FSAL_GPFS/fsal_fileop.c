@@ -94,7 +94,7 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 
 /** @fn fsal_status_t
  *	GPFSFSAL_read(int fd, uint64_t offset, size_t buffer_size,
- *                    caddr_t buffer, size_t *p_read_amount,
+ *                    void * buffer, size_t *p_read_amount,
  *                    bool *p_end_of_file)
  *  @brief Perform a read operation on an opened file.
  *  @param fd The file descriptor returned by FSAL_open.
@@ -109,7 +109,7 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
  *  @return ERR_FSAL_NO_ERROR on success, error otherwise.
  */
 fsal_status_t
-GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
+GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
 	      size_t *read_amount, bool *end_of_file, int expfd)
 {
 	struct read_arg rarg = {0};
@@ -156,7 +156,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
 }
 
 /** @fn fsal_status_t
- *	GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
+ *	GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void * buf,
  *		       size_t *write_amount, bool *fsal_stable,
  *		       const struct req_op_context *op_ctx)
  *  @brief Perform a write operation on an opened file.
@@ -170,7 +170,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
  * @return ERR_FSAL_NO_ERROR on success, error otherwise
  */
 fsal_status_t
-GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, caddr_t buf,
+GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void *buf,
 	       size_t *write_amount, bool *fsal_stable,
 	       const struct req_op_context *op_ctx, int expfd)
 {

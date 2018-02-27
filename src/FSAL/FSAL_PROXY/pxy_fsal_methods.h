@@ -58,22 +58,27 @@ fsal_status_t pxy_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 fsal_status_t pxy_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					   const struct req_op_context *opctx,
 					   const char *xattr_name,
-					   caddr_t buffer_addr,
+					   void *buffer_addr,
 					   size_t buffer_size, size_t *len);
 
 fsal_status_t pxy_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					 const struct req_op_context *opctx,
-					 unsigned int xattr_id, caddr_t buf,
-					 size_t sz, size_t *len);
+					 unsigned int xattr_id,
+					 void *buf,
+					 size_t sz,
+					 size_t *len);
 
 fsal_status_t pxy_setextattr_value(struct fsal_obj_handle *obj_hdl,
 				   const struct req_op_context *opctx,
-				   const char *xattr_name, caddr_t buf,
-				   size_t sz, int create);
+				   const char *xattr_name,
+				   void *buf,
+				   size_t sz,
+				   int create);
 
 fsal_status_t pxy_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					 const struct req_op_context *opctx,
-					 unsigned int xattr_id, caddr_t buf,
+					 unsigned int xattr_id,
+					 void *buf,
 					 size_t sz);
 
 fsal_status_t pxy_getextattr_attrs(struct fsal_obj_handle *obj_hdl,

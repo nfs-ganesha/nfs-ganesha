@@ -152,21 +152,22 @@ fsal_status_t nullfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 					   unsigned int *pxattr_id);
 fsal_status_t nullfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					      const char *xattr_name,
-					      caddr_t buffer_addr,
+					      void *buffer_addr,
 					      size_t buffer_size,
 					      size_t *p_output_size);
 fsal_status_t nullfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    unsigned int xattr_id,
-					    caddr_t buffer_addr,
+					    void *buffer_addr,
 					    size_t buffer_size,
 					    size_t *p_output_size);
 fsal_status_t nullfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
 				      const char *xattr_name,
-				      caddr_t buffer_addr, size_t buffer_size,
+				      void *buffer_addr,
+				      size_t buffer_size,
 				      int create);
 fsal_status_t nullfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    unsigned int xattr_id,
-					    caddr_t buffer_addr,
+					    void *buffer_addr,
 					    size_t buffer_size);
 fsal_status_t nullfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					  unsigned int xattr_id);

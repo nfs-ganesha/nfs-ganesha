@@ -115,7 +115,7 @@ fsal_status_t mdcache_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
  */
 fsal_status_t mdcache_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					     unsigned int id,
-					     caddr_t buf,
+					     void *buf,
 					     size_t buf_size,
 					     size_t *p_output_size)
 {
@@ -147,7 +147,7 @@ fsal_status_t mdcache_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
  */
 fsal_status_t mdcache_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					       const char *name,
-					       caddr_t buf,
+					       void *buf,
 					       size_t buf_size,
 					       size_t *p_output_size)
 {
@@ -179,7 +179,8 @@ fsal_status_t mdcache_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
  */
 fsal_status_t mdcache_setextattr_value(struct fsal_obj_handle *obj_hdl,
 				       const char *name,
-				       caddr_t buf, size_t buf_size,
+				       void *buf,
+				       size_t buf_size,
 				       int create)
 {
 	struct mdcache_fsal_obj_handle *handle =
@@ -209,7 +210,7 @@ fsal_status_t mdcache_setextattr_value(struct fsal_obj_handle *obj_hdl,
  */
 fsal_status_t mdcache_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					     unsigned int id,
-					     caddr_t buf,
+					     void *buf,
 					     size_t buf_size)
 {
 	struct mdcache_fsal_obj_handle *handle =

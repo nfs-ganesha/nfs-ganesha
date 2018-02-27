@@ -491,8 +491,8 @@ do { \
 
 #define COMPOUNDV4_EXECUTE_SIMPLE(pcontext, argcompound, rescompound)   \
 	  clnt_call(pcontext->rpc_client, NFSPROC4_COMPOUND,		\
-		    (xdrproc_t)xdr_COMPOUND4args, (caddr_t)&argcompound, \
-		    (xdrproc_t)xdr_COMPOUND4res,  (caddr_t)&rescompound, \
+		    (xdrproc_t)xdr_COMPOUND4args, &argcompound,		\
+		    (xdrproc_t)xdr_COMPOUND4res,  &rescompound,		\
 		    timeout)
 
 #endif				/* _FSAL_NFSV4_MACROS_H */
