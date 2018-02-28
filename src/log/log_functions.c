@@ -41,6 +41,7 @@
 #include <signal.h>
 #include <libgen.h>
 #include <sys/resource.h>
+#include <execinfo.h>
 
 #include "log.h"
 #include "gsh_list.h"
@@ -2618,3 +2619,47 @@ int read_log_config(config_file_t in_config,
 	else
 		return -1;
 }				/* read_log_config */
+
+void gsh_backtrace(void)
+{
+#define MAX_STACK_DEPTH		32	/* enough ? */
+	void *buffer[MAX_STACK_DEPTH];
+	struct log_facility *facility;
+	struct glist_head *glist;
+	int fd = -1;
+	char **traces;
+	int i, nlines;
+
+	nlines = backtrace(buffer, MAX_STACK_DEPTH);
+
+	/* Find an active log facility that is file based to
+	 * log the backtrace symbols.
+	 */
+	PTHREAD_RWLOCK_rdlock(&log_rwlock);
+	glist_for_each(glist, &active_facility_list) {
+		facility = glist_entry(glist, struct log_facility, lf_active);
+		if (facility->lf_func == log_to_file) {
+			fd = open((char *)facility->lf_private,
+				  O_WRONLY | O_APPEND | O_CREAT, log_mask);
+			break;
+		}
+	}
+
+	if (fd != -1) {
+		LogMajor(COMPONENT_INIT, "stack backtrace follows:");
+		backtrace_symbols_fd(buffer, nlines, fd);
+		close(fd);
+	} else {
+		/* No file based logging, hope malloc call inside
+		 * backtrace_symbols() doesn't hang!
+		 */
+		traces = backtrace_symbols(buffer, nlines);
+		if (traces) {
+			for (i = 0; i < nlines; i++) {
+				LogMajor(COMPONENT_INIT, "%s", traces[i]);
+			}
+			free(traces);
+		}
+	}
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
+}

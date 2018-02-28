@@ -158,6 +158,8 @@ void LogMallocFailure(const char *file, int line, const char *function,
 int read_log_config(config_file_t in_config,
 		    struct config_error_type *err_type);
 
+void gsh_backtrace(void);
+
 /* These functions display a timeval or timespec into the display buffer
  * in the same format used for logging timestamp.
  */

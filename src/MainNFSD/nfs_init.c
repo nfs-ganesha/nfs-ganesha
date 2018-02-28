@@ -71,7 +71,6 @@
 #include "netgroup_cache.h"
 #include "pnfs_utils.h"
 #include "mdcache.h"
-#include <execinfo.h>
 #include "common_utils.h"
 #include "nfs_init.h"
 
@@ -235,26 +234,6 @@ static void *sigmgr_thread(void *UnusedArg)
 	return NULL;
 }
 
-static void gsh_backtrace(void)
-{
-#define MAX_STACK_DEPTH		32	/* enough ? */
-	void *buffer[MAX_STACK_DEPTH];
-	char **traces;
-	int i, nlines;
-
-	nlines = backtrace(buffer, MAX_STACK_DEPTH);
-	traces = backtrace_symbols(buffer, nlines);
-
-	if (!traces) {
-		return;
-	}
-
-	for (i = 0; i < nlines; i++) {
-		LogMajor(COMPONENT_INIT, "%s", traces[i]);
-	}
-
-	free(traces);
-}
 
 static void crash_handler(int signo, siginfo_t *info, void *ctx)
 {
