@@ -52,8 +52,6 @@
 /* helpers to/from other NULL objects
  */
 
-struct fsal_staticfsinfo_t *nullfs_staticinfo(struct fsal_module *hdl);
-
 /* export object methods
  */
 

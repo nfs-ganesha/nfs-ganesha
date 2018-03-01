@@ -50,65 +50,46 @@
 
 pool_t *mdcache_entry_pool;
 
-/* MDCACHE FSAL module private storage
- */
-
-struct mdcache_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-	/* mdcachefs_specific_initinfo_t specific_info;  placeholder */
-};
-
 struct mdcache_stats cache_st;
 struct mdcache_stats *cache_stp = &cache_st;
-
-/* my module private storage
- */
-
-static struct mdcache_fsal_module MDCACHE;
 
 /* FSAL name determines name of shared library: libfsal<name>.so */
 const char mdcachename[] = "MDCACHE";
 
-/* filesystem info for MDCACHE */
-static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = UINT64_MAX,
-	.maxlink = _POSIX_LINK_MAX,
-	.maxnamelen = 1024,
-	.maxpathlen = 1024,
-	.no_trunc = true,
-	.chown_restricted = true,
-	.case_insensitive = false,
-	.case_preserving = true,
-	.link_support = true,
-	.symlink_support = true,
-	.lock_support = true,
-	.lock_support_async_block = false,
-	.named_attr = true,
-	.unique_handles = true,
-	.lease_time = {10, 0},
-	.acl_support = FSAL_ACLSUPPORT_ALLOW,
-	.cansettime = true,
-	.homogenous = true,
-	.supported_attrs = ALL_ATTRIBUTES,
-	.maxread = FSAL_MAXIOSIZE,
-	.maxwrite = FSAL_MAXIOSIZE,
-	.umask = 0,
-	.auth_exportpath_xdev = false,
-	.xattr_access_rights = 0400,	/* root=RW, owner=R */
-	.link_supports_permission_checks = true,
+/* my module private storage
+ */
+static struct fsal_module MDCACHE = {
+	.fs_info = {
+		.maxfilesize = UINT64_MAX,
+		.maxlink = _POSIX_LINK_MAX,
+		.maxnamelen = 1024,
+		.maxpathlen = 1024,
+		.no_trunc = true,
+		.chown_restricted = true,
+		.case_insensitive = false,
+		.case_preserving = true,
+		.link_support = true,
+		.symlink_support = true,
+		.lock_support = true,
+		.lock_support_async_block = false,
+		.named_attr = true,
+		.unique_handles = true,
+		.lease_time = {10, 0},
+		.acl_support = FSAL_ACLSUPPORT_ALLOW,
+		.cansettime = true,
+		.homogenous = true,
+		.supported_attrs = ALL_ATTRIBUTES,
+		.maxread = FSAL_MAXIOSIZE,
+		.maxwrite = FSAL_MAXIOSIZE,
+		.umask = 0,
+		.auth_exportpath_xdev = false,
+		.xattr_access_rights = 0400,	/* root=RW, owner=R */
+		.link_supports_permission_checks = true,
+	}
 };
 
 /* private helper for export object
  */
-
-struct fsal_staticfsinfo_t *mdcache_staticinfo(struct fsal_module *hdl)
-{
-	struct mdcache_fsal_module *myself;
-
-	myself = container_of(hdl, struct mdcache_fsal_module, fsal);
-	return &myself->fs_info;
-}
 
 /* Module methods
  */
@@ -118,16 +99,10 @@ struct fsal_staticfsinfo_t *mdcache_staticinfo(struct fsal_module *hdl)
  */
 
 static fsal_status_t
-mdcache_fsal_init_config(struct fsal_module *fsal_hdl,
+mdcache_fsal_init_config(struct fsal_module *mdcache_fsal_module,
 			 config_file_t config_struct,
 			 struct config_error_type *err_type)
 {
-	struct mdcache_fsal_module *mdcache_me =
-	    container_of(fsal_hdl, struct mdcache_fsal_module, fsal);
-
-	/* get a copy of the defaults */
-	mdcache_me->fs_info = default_posix_info;
-
 	/* Configuration setting options:
 	 * 1. there are none that are changeable. (this case)
 	 *
@@ -140,13 +115,10 @@ mdcache_fsal_init_config(struct fsal_module *fsal_hdl,
 	 * diverse exports.
 	 */
 
-	display_fsinfo(&mdcache_me->fs_info);
-	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes default = 0x%" PRIx64,
-		     default_posix_info.supported_attrs);
+	display_fsinfo(mdcache_fsal_module);
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
-		 mdcache_me->fs_info.supported_attrs);
+		 mdcache_fsal_module->fs_info.supported_attrs);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -222,7 +194,7 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	myself->up_ops.up_gsh_export = op_ctx->ctx_export;
 	myself->up_ops.up_fsal_export = &myself->mfe_exp;
 	myself->mfe_exp.up_ops = &myself->up_ops;
-	myself->mfe_exp.fsal = &MDCACHE.fsal;
+	myself->mfe_exp.fsal = &MDCACHE;
 
 	glist_init(&myself->entry_list);
 	pthread_rwlockattr_init(&attrs);
@@ -258,7 +230,7 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 
 	/* Set up op_ctx */
 	op_ctx->fsal_export = &myself->mfe_exp;
-	op_ctx->fsal_module = &MDCACHE.fsal;
+	op_ctx->fsal_module = &MDCACHE;
 
 	/* Stacking is setup and ready to take upcalls now */
 	up_ready_set(&myself->up_ops);
@@ -292,7 +264,7 @@ mdcache_fsal_unload(struct fsal_module *fsal_hdl)
 	pool_destroy(mdcache_entry_pool);
 	mdcache_entry_pool = NULL;
 
-	retval = unregister_fsal(&MDCACHE.fsal);
+	retval = unregister_fsal(&MDCACHE);
 	if (retval != 0)
 		fprintf(stderr, "MDCACHE module failed to unregister");
 
@@ -304,7 +276,7 @@ mdcache_fsal_unload(struct fsal_module *fsal_hdl)
 void mdcache_fsal_init(void)
 {
 	int retval;
-	struct fsal_module *myself = &MDCACHE.fsal;
+	struct fsal_module *myself = &MDCACHE;
 
 	retval = register_fsal(myself, mdcachename, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);

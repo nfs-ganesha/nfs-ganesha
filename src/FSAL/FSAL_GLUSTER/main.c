@@ -41,35 +41,42 @@
 
 const char glfsal_name[] = "GLUSTER";
 
-/* filesystem info for GLUSTERFS */
-static struct fsal_staticfsinfo_t default_gluster_info = {
-	.maxfilesize = UINT64_MAX,
-	.maxlink = _POSIX_LINK_MAX,
-	.maxnamelen = 1024,
-	.maxpathlen = 1024,
-	.no_trunc = true,
-	.chown_restricted = true,
-	.case_insensitive = false,
-	.case_preserving = true,
-	.link_support = true,
-	.symlink_support = true,
-	.lock_support = true,
-	.lock_support_async_block = false,
-	.named_attr = true,
-	.unique_handles = true,
-	.lease_time = {10, 0},
-	.acl_support = FSAL_ACLSUPPORT_ALLOW | FSAL_ACLSUPPORT_DENY,
-	.cansettime = true,
-	.homogenous = true,
-	.supported_attrs = GLUSTERFS_SUPPORTED_ATTRIBUTES,
-	.maxread = 0,
-	.maxwrite = 0,
-	.umask = 0,
-	.auth_exportpath_xdev = false,
-	.xattr_access_rights = 0400,	/* root=RW, owner=R */
-	.pnfs_mds = false,
-	.pnfs_ds = true,
-	.link_supports_permission_checks = true,
+/**
+ * Gluster global module object
+ */
+struct glusterfs_fsal_module GlusterFS = {
+	.fsal = {
+		.fs_info = {
+			.maxfilesize = UINT64_MAX,
+			.maxlink = _POSIX_LINK_MAX,
+			.maxnamelen = 1024,
+			.maxpathlen = 1024,
+			.no_trunc = true,
+			.chown_restricted = true,
+			.case_insensitive = false,
+			.case_preserving = true,
+			.link_support = true,
+			.symlink_support = true,
+			.lock_support = true,
+			.lock_support_async_block = false,
+			.named_attr = true,
+			.unique_handles = true,
+			.lease_time = {10, 0},
+			.acl_support = FSAL_ACLSUPPORT_ALLOW |
+							FSAL_ACLSUPPORT_DENY,
+			.cansettime = true,
+			.homogenous = true,
+			.supported_attrs = GLUSTERFS_SUPPORTED_ATTRIBUTES,
+			.maxread = 0,
+			.maxwrite = 0,
+			.umask = 0,
+			.auth_exportpath_xdev = false,
+			.xattr_access_rights = 0400,	/* root=RW, owner=R */
+			.pnfs_mds = false,
+			.pnfs_ds = true,
+			.link_supports_permission_checks = true,
+		}
+	}
 };
 
 static struct config_item glfs_params[] = {
@@ -96,11 +103,9 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	struct glusterfs_fsal_module *glfsal_module =
 	    container_of(fsal_hdl, struct glusterfs_fsal_module, fsal);
 
-
-	glfsal_module->fs_info = default_gluster_info;
 	(void) load_config_from_parse(config_struct,
 				      &glfs_param,
-				      &glfsal_module->fs_info,
+					  &glfsal_module->fsal.fs_info,
 				      true,
 				      err_type);
 
@@ -112,7 +117,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	if (!config_error_is_harmless(err_type))
 		LogDebug(COMPONENT_FSAL, "Parsing Export Block failed");
 
-	display_fsinfo(&glfsal_module->fs_info);
+	display_fsinfo(&glfsal_module->fsal);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -123,9 +128,6 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 MODULE_INIT void glusterfs_init(void)
 {
 	struct fsal_module *myself = &GlusterFS.fsal;
-
-	/* register_fsal seems to expect zeroed memory. */
-	memset(myself, 0, sizeof(*myself));
 
 	if (register_fsal(myself, glfsal_name, FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION, FSAL_ID_GLUSTER) != 0) {

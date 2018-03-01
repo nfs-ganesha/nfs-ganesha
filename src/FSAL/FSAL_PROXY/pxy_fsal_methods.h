@@ -30,7 +30,6 @@ struct pxy_client_params {
 
 struct pxy_fsal_module {
 	struct fsal_module module;
-	struct fsal_staticfsinfo_t fsinfo;
 	struct pxy_client_params special;
 };
 

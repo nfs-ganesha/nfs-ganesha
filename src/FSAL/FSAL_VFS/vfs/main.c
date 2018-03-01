@@ -51,35 +51,33 @@
 #define VFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX | ATTR_ACL))
 #endif
 
-struct vfs_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-	/* vfsfs_specific_initinfo_t specific_info;  placeholder */
-};
-
 const char myname[] = "VFS";
 
-/* filesystem info for VFS */
-static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = UINT64_MAX,
-	.maxlink = _POSIX_LINK_MAX,
-	.maxnamelen = 1024,
-	.maxpathlen = 1024,
-	.no_trunc = true,
-	.chown_restricted = true,
-	.case_insensitive = false,
-	.case_preserving = true,
-	.lock_support = false,
-	.lock_support_async_block = false,
-	.named_attr = true,
-	.unique_handles = true,
-	.lease_time = {10, 0},
-	.acl_support = FSAL_ACLSUPPORT_ALLOW,
-	.homogenous = true,
-	.supported_attrs = VFS_SUPPORTED_ATTRIBUTES,
-	.maxread = FSAL_MAXIOSIZE,
-	.maxwrite = FSAL_MAXIOSIZE,
-	.link_supports_permission_checks = false,
+/* my module private storage
+ */
+
+static struct fsal_module VFS = {
+	.fs_info = {
+		.maxfilesize = UINT64_MAX,
+		.maxlink = _POSIX_LINK_MAX,
+		.maxnamelen = 1024,
+		.maxpathlen = 1024,
+		.no_trunc = true,
+		.chown_restricted = true,
+		.case_insensitive = false,
+		.case_preserving = true,
+		.lock_support = false,
+		.lock_support_async_block = false,
+		.named_attr = true,
+		.unique_handles = true,
+		.lease_time = {10, 0},
+		.acl_support = FSAL_ACLSUPPORT_ALLOW,
+		.homogenous = true,
+		.supported_attrs = VFS_SUPPORTED_ATTRIBUTES,
+		.maxread = FSAL_MAXIOSIZE,
+		.maxwrite = FSAL_MAXIOSIZE,
+		.link_supports_permission_checks = false,
+	}
 };
 
 static struct config_item vfs_params[] = {
@@ -111,17 +109,6 @@ struct config_block vfs_param = {
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
-/* private helper for export object
- */
-
-struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl)
-{
-	struct vfs_fsal_module *myself;
-
-	myself = container_of(hdl, struct vfs_fsal_module, fsal);
-	return &myself->fs_info;
-}
-
 /* Module methods
  */
 
@@ -129,19 +116,15 @@ struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl)
  * must be called with a reference taken (via lookup_fsal)
  */
 
-static fsal_status_t init_config(struct fsal_module *fsal_hdl,
+static fsal_status_t init_config(struct fsal_module *vfs_fsal_module,
 				 config_file_t config_struct,
 				 struct config_error_type *err_type)
 {
-	struct vfs_fsal_module *vfs_me =
-	    container_of(fsal_hdl, struct vfs_fsal_module, fsal);
 #ifdef F_OFD_GETLK
 	int fd, rc;
 	struct flock lock;
 	char *temp_name;
 #endif
-
-	vfs_me->fs_info = default_posix_info;	/* copy the consts */
 
 #ifdef F_OFD_GETLK
 	/* If on a system that might support OFD locks, verify them.
@@ -160,7 +143,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 		rc = fcntl(fd, F_OFD_GETLK, &lock);
 
 		if (rc == 0)
-			vfs_me->fs_info.lock_support = true;
+			vfs_fsal_module->fs_info.lock_support = true;
 		else
 			LogInfo(COMPONENT_FSAL, "Could not use OFD locks");
 
@@ -174,28 +157,28 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	gsh_free(temp_name);
 #endif
 
-	if (vfs_me->fs_info.lock_support)
+	if (vfs_fsal_module->fs_info.lock_support)
 		LogInfo(COMPONENT_FSAL, "FSAL_VFS enabling OFD Locks");
 	else
 		LogInfo(COMPONENT_FSAL, "FSAL_VFS disabling lock support");
 
+	LogFullDebug(COMPONENT_FSAL,
+		"Supported attributes default = 0x%" PRIx64,
+		vfs_fsal_module->fs_info.supported_attrs);
 	(void) load_config_from_parse(config_struct,
 				      &vfs_param,
-				      &vfs_me->fs_info,
+				      &vfs_fsal_module->fs_info,
 				      true,
 				      err_type);
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
-	display_fsinfo(&vfs_me->fs_info);
+	display_fsinfo(vfs_fsal_module);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
 		     VFS_SUPPORTED_ATTRIBUTES);
-	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes default = 0x%" PRIx64,
-		     default_posix_info.supported_attrs);
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
-		 vfs_me->fs_info.supported_attrs);
+		 vfs_fsal_module->fs_info.supported_attrs);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -213,18 +196,13 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
  * keep a private pointer to me in myself
  */
 
-/* my module private storage
- */
-
-static struct vfs_fsal_module VFS;
-
 /* linkage to the exports and handle ops initializers
  */
 
 MODULE_INIT void vfs_init(void)
 {
 	int retval;
-	struct fsal_module *myself = &VFS.fsal;
+	struct fsal_module *myself = &VFS;
 
 	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_VFS);
@@ -240,7 +218,7 @@ MODULE_FINI void vfs_unload(void)
 {
 	int retval;
 
-	retval = unregister_fsal(&VFS.fsal);
+	retval = unregister_fsal(&VFS);
 	if (retval != 0) {
 		fprintf(stderr, "VFS module failed to unregister");
 		return;

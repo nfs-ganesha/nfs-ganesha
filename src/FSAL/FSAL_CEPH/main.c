@@ -50,46 +50,47 @@
 #include "nfs_core.h"
 
 /**
- * Ceph global module object.
- */
-struct ceph_fsal_module CephFSM;
-
-/**
  * The name of this module.
  */
 static const char *module_name = "Ceph";
 
-static fsal_staticfsinfo_t default_ceph_info = {
-	/* settable */
-#if 0
-	.umask = 0,
-	.xattr_access_rights = 0,
-#endif
-	/* fixed */
-	.symlink_support = true,
-	.link_support = true,
-	.cansettime = true,
-	.no_trunc = true,
-	.chown_restricted = true,
-	.case_preserving = true,
-#ifdef USE_FSAL_CEPH_SETLK
-	.lock_support = true,
-	.lock_support_async_block = false,
-#endif
-	.unique_handles = true,
-	.homogenous = true,
-#ifdef USE_FSAL_CEPH_LL_DELEGATION
-	.delegations = FSAL_OPTION_FILE_READ_DELEG,
-#endif
+/**
+ * Ceph global module object.
+ */
+struct ceph_fsal_module CephFSM = {
+	.fsal = {
+		.fs_info = {
+		#if 0
+			.umask = 0,
+			.xattr_access_rights = 0,
+		#endif
+			/* fixed */
+			.symlink_support = true,
+			.link_support = true,
+			.cansettime = true,
+			.no_trunc = true,
+			.chown_restricted = true,
+			.case_preserving = true,
+		#ifdef USE_FSAL_CEPH_SETLK
+			.lock_support = true,
+			.lock_support_async_block = false,
+		#endif
+			.unique_handles = true,
+			.homogenous = true,
+		#ifdef USE_FSAL_CEPH_LL_DELEGATION
+			.delegations = FSAL_OPTION_FILE_READ_DELEG,
+		#endif
+		}
+	}
 };
 
 static struct config_item ceph_items[] = {
 	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL,
 		ceph_fsal_module, conf_path),
 	CONF_ITEM_MODE("umask", 0,
-			ceph_fsal_module, fs_info.umask),
+			ceph_fsal_module, fsal.fs_info.umask),
 	CONF_ITEM_MODE("xattr_access_rights", 0,
-			ceph_fsal_module, fs_info.xattr_access_rights),
+			ceph_fsal_module, fsal.fs_info.xattr_access_rights),
 	CONFIG_EOL
 };
 
@@ -119,7 +120,6 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 	LogDebug(COMPONENT_FSAL,
 		 "Ceph module setup.");
 
-	myself->fs_info = default_ceph_info;
 	(void) load_config_from_parse(config_struct,
 				      &ceph_block,
 				      myself,
@@ -128,6 +128,7 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
+	display_fsinfo(&myself->fsal);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -383,9 +384,6 @@ MODULE_INIT void init(void)
 
 	LogDebug(COMPONENT_FSAL,
 		 "Ceph module registering.");
-
-	/* register_fsal seems to expect zeroed memory. */
-	memset(myself, 0, sizeof(*myself));
 
 	if (register_fsal(myself, module_name, FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION, FSAL_ID_CEPH) != 0) {

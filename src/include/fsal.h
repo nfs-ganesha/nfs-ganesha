@@ -229,7 +229,7 @@ void destroy_fsals(void);
 void emergency_cleanup_fsals(void);
 void start_fsals(void);
 
-void display_fsinfo(struct fsal_staticfsinfo_t *info);
+void display_fsinfo(struct fsal_module *fsal);
 
 int display_attrlist(struct display_buffer *dspbuf,
 		     struct attrlist *attr, bool is_obj);

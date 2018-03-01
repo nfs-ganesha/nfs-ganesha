@@ -44,39 +44,39 @@
 /* defined the set of attributes supported with POSIX */
 #define MEM_SUPPORTED_ATTRIBUTES (ATTRS_POSIX)
 
-/* my module private storage */
-
-struct mem_fsal_module MEM;
-
 const char memname[] = "MEM";
 
-/* filesystem info for MEM */
-static struct fsal_staticfsinfo_t default_mem_info = {
-	.maxfilesize = UINT64_MAX,
-	.maxlink = 0,
-	.maxnamelen = MAXNAMLEN,
-	.maxpathlen = MAXPATHLEN,
-	.no_trunc = true,
-	.chown_restricted = true,
-	.case_insensitive = false,
-	.case_preserving = true,
-	.link_support = true,
-	.symlink_support = true,
-	.lock_support = true,
-	.lock_support_async_block = false,
-	.named_attr = false,
-	.unique_handles = true,
-	.lease_time = {10, 0},
-	.acl_support = 0,
-	.cansettime = true,
-	.homogenous = true,
-	.supported_attrs = MEM_SUPPORTED_ATTRIBUTES,
-	.maxread = FSAL_MAXIOSIZE,
-	.maxwrite = FSAL_MAXIOSIZE,
-	.umask = 0,
-	.auth_exportpath_xdev = false,
-	.xattr_access_rights = 0400,	/* root=RW, owner=R */
-	.link_supports_permission_checks = false,
+/* my module private storage */
+struct mem_fsal_module MEM = {
+	.fsal = {
+		.fs_info = {
+			.maxfilesize = UINT64_MAX,
+			.maxlink = 0,
+			.maxnamelen = MAXNAMLEN,
+			.maxpathlen = MAXPATHLEN,
+			.no_trunc = true,
+			.chown_restricted = true,
+			.case_insensitive = false,
+			.case_preserving = true,
+			.link_support = true,
+			.symlink_support = true,
+			.lock_support = true,
+			.lock_support_async_block = false,
+			.named_attr = false,
+			.unique_handles = true,
+			.lease_time = {10, 0},
+			.acl_support = 0,
+			.cansettime = true,
+			.homogenous = true,
+			.supported_attrs = MEM_SUPPORTED_ATTRIBUTES,
+			.maxread = FSAL_MAXIOSIZE,
+			.maxwrite = FSAL_MAXIOSIZE,
+			.umask = 0,
+			.auth_exportpath_xdev = false,
+			.xattr_access_rights = 0400,	/* root=RW, owner=R */
+			.link_supports_permission_checks = false,
+		}
+	}
 };
 
 static struct config_item mem_items[] = {
@@ -99,14 +99,6 @@ static struct config_block mem_block = {
 /* private helper for export object
  */
 
-struct fsal_staticfsinfo_t *mem_staticinfo(struct fsal_module *hdl)
-{
-	struct mem_fsal_module *myself;
-
-	myself = container_of(hdl, struct mem_fsal_module, fsal);
-	return &myself->fs_info;
-}
-
 /* Initialize mem fs info */
 static fsal_status_t mem_init_config(struct fsal_module *fsal_hdl,
 				 config_file_t config_struct,
@@ -117,9 +109,9 @@ static fsal_status_t mem_init_config(struct fsal_module *fsal_hdl,
 	fsal_status_t status = {0, 0};
 
 	LogDebug(COMPONENT_FSAL, "MEM module setup.");
-
-	/* get a copy of the defaults */
-	mem_me->fs_info = default_mem_info;
+	LogFullDebug(COMPONENT_FSAL,
+				 "Supported attributes default = 0x%" PRIx64,
+				 mem_me->fsal.fs_info.supported_attrs);
 
 	/* if we have fsal specific params, do them here
 	 * fsal_hdl->name is used to find the block containing the
@@ -142,16 +134,13 @@ static fsal_status_t mem_init_config(struct fsal_module *fsal_hdl,
 		return status;
 	}
 
-	display_fsinfo(&mem_me->fs_info);
+	display_fsinfo(&mem_me->fsal);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
 		     (uint64_t) MEM_SUPPORTED_ATTRIBUTES);
-	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes default = 0x%" PRIx64,
-		     default_mem_info.supported_attrs);
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
-		 mem_me->fs_info.supported_attrs);
+		 mem_me->fsal.fs_info.supported_attrs);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -175,9 +164,6 @@ MODULE_INIT void init(void)
 {
 	int retval;
 	struct fsal_module *myself = &MEM.fsal;
-
-	/* register_fsal seems to expect zeroed memory. */
-	memset(myself, 0, sizeof(*myself));
 
 	retval = register_fsal(myself, memname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);

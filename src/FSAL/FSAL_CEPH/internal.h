@@ -60,7 +60,6 @@
 
 struct ceph_fsal_module {
 	struct fsal_module fsal;
-	fsal_staticfsinfo_t fs_info;
 	char *conf_path;
 };
 extern struct ceph_fsal_module CephFSM;
@@ -146,16 +145,6 @@ struct ds {
 	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |	\
 	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |	\
 	ATTR_ATIME_SERVER))
-
-
-/* private helper for export object */
-
-static inline fsal_staticfsinfo_t *ceph_staticinfo(struct fsal_module *hdl)
-{
-	struct ceph_fsal_module *myself =
-	    container_of(hdl, struct ceph_fsal_module, fsal);
-	return &myself->fs_info;
-}
 
 /* Prototypes */
 

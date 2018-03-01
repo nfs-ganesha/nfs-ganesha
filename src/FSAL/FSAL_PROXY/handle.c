@@ -1319,20 +1319,22 @@ static void pxy_check_maxread_maxwrite(struct fsal_export *export, fattr4 *f4)
 		struct pxy_fsal_module *pm =
 		    container_of(export->fsal, struct pxy_fsal_module, module);
 
-		if (info.maxread != 0 && pm->fsinfo.maxread > info.maxread) {
+		if (info.maxread != 0 &&
+			pm->module.fs_info.maxread > info.maxread) {
 			LogWarn(COMPONENT_FSAL,
 				"Reduced maxread from %"PRIu64
 				" to align with remote server %"PRIu64,
-				pm->fsinfo.maxread, info.maxread);
-			pm->fsinfo.maxread = info.maxread;
+				pm->module.fs_info.maxread, info.maxread);
+			pm->module.fs_info.maxread = info.maxread;
 		}
 
-		if (info.maxwrite != 0 && pm->fsinfo.maxwrite > info.maxwrite) {
+		if (info.maxwrite != 0 &&
+		 pm->module.fs_info.maxwrite > info.maxwrite) {
 			LogWarn(COMPONENT_FSAL,
 				"Reduced maxwrite from %"PRIu64
 				" to align with remote server %"PRIu64,
-				pm->fsinfo.maxwrite, info.maxwrite);
-			pm->fsinfo.maxwrite = info.maxwrite;
+				pm->module.fs_info.maxwrite, info.maxwrite);
+			pm->module.fs_info.maxwrite = info.maxwrite;
 		}
 	}
 }

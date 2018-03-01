@@ -40,22 +40,26 @@
 #define PROXY_SUPPORTED_ATTRS ((const attrmask_t) (ATTRS_POSIX))
 
 /* filesystem info for PROXY */
-static struct fsal_staticfsinfo_t proxy_info = {
-	.maxfilesize = UINT64_MAX,
-	.maxlink = _POSIX_LINK_MAX,
-	.maxnamelen = 1024,
-	.maxpathlen = 1024,
-	.no_trunc = true,
-	.chown_restricted = true,
-	.case_preserving = true,
-	.lock_support = false,
-	.named_attr = true,
-	.unique_handles = true,
-	.lease_time = {10, 0},
-	.acl_support = FSAL_ACLSUPPORT_ALLOW,
-	.homogenous = true,
-	.supported_attrs = PROXY_SUPPORTED_ATTRS,
-	.link_supports_permission_checks = true,
+static struct pxy_fsal_module PROXY = {
+	.module = {
+		.fs_info = {
+			.maxfilesize = UINT64_MAX,
+			.maxlink = _POSIX_LINK_MAX,
+			.maxnamelen = 1024,
+			.maxpathlen = 1024,
+			.no_trunc = true,
+			.chown_restricted = true,
+			.case_preserving = true,
+			.lock_support = false,
+			.named_attr = true,
+			.unique_handles = true,
+			.lease_time = {10, 0},
+			.acl_support = FSAL_ACLSUPPORT_ALLOW,
+			.homogenous = true,
+			.supported_attrs = PROXY_SUPPORTED_ATTRS,
+			.link_supports_permission_checks = true,
+		}
+	}
 };
 
 #ifdef _USE_GSSRPC
@@ -130,9 +134,9 @@ static int remote_commit(void *node, void *link_mem, void *self_struct,
 
 	pxy = container_of(link_mem, struct pxy_fsal_module, special);
 
-	if (pxy->fsinfo.maxwrite + SEND_RECV_HEADER_SPACE >
+	if (pxy->module.fs_info.maxwrite + SEND_RECV_HEADER_SPACE >
 			pxy->special.srv_sendsize ||
-	    pxy->fsinfo.maxread + SEND_RECV_HEADER_SPACE >
+			pxy->module.fs_info.maxread + SEND_RECV_HEADER_SPACE >
 			pxy->special.srv_recvsize) {
 		LogCrit(COMPONENT_CONFIG,
 "FSAL_PROXY CONF : maxwrite/maxread + header > Max_SendSize/Max_RecvSize");
@@ -156,25 +160,33 @@ static int remote_commit(void *node, void *link_mem, void *self_struct,
 
 static struct config_item proxy_params[] = {
 	CONF_ITEM_BOOL("link_support", true,
-		       pxy_fsal_module, fsinfo.link_support),
+				pxy_fsal_module,
+				module.fs_info.link_support),
 	CONF_ITEM_BOOL("symlink_support", true,
-		       pxy_fsal_module, fsinfo.symlink_support),
+				pxy_fsal_module,
+				module.fs_info.symlink_support),
 	CONF_ITEM_BOOL("cansettime", true,
-		       pxy_fsal_module, fsinfo.cansettime),
+				pxy_fsal_module,
+				module.fs_info.cansettime),
 	CONF_ITEM_UI64("maxread", 512,
 		       FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
 		       DEFAULT_MAX_WRITE_READ,
-		       pxy_fsal_module, fsinfo.maxread),
+					 pxy_fsal_module,
+					 module.fs_info.maxread),
 	CONF_ITEM_UI64("maxwrite", 512,
 		       FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
 		       DEFAULT_MAX_WRITE_READ,
-		       pxy_fsal_module, fsinfo.maxwrite),
+		       pxy_fsal_module,
+		       module.fs_info.maxwrite),
 	CONF_ITEM_MODE("umask", 0,
-		       pxy_fsal_module, fsinfo.umask),
+				pxy_fsal_module,
+				module.fs_info.umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
-		       pxy_fsal_module, fsinfo.auth_exportpath_xdev),
+				pxy_fsal_module,
+				module.fs_info.auth_exportpath_xdev),
 	CONF_ITEM_MODE("xattr_access_rights", 0400,
-		       pxy_fsal_module, fsinfo.xattr_access_rights),
+				pxy_fsal_module,
+				module.fs_info.xattr_access_rights),
 	CONF_ITEM_BLOCK("Remote_Server", proxy_remote_params,
 		       noop_conf_init, remote_commit,
 		       pxy_fsal_module, special),
@@ -199,7 +211,6 @@ static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 	struct pxy_fsal_module *pxy =
 	    container_of(fsal_hdl, struct pxy_fsal_module, module);
 
-	pxy->fsinfo = proxy_info;
 	(void) load_config_from_parse(config_struct,
 				      &proxy_param,
 				      pxy,
@@ -207,6 +218,8 @@ static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 				      err_type);
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
+
+	display_fsinfo(&pxy->module);
 
 #ifdef PROXY_HANDLE_MAPPING
 	rc = HandleMap_Init(&pxy->special.hdlmap);
@@ -219,8 +232,6 @@ static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_FAULT, rc);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
-
-static struct pxy_fsal_module PROXY;
 
 MODULE_INIT void pxy_init(void)
 {

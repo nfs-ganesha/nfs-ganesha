@@ -47,86 +47,62 @@ static void pxy_release(struct fsal_export *exp_hdl)
 static bool pxy_get_supports(struct fsal_export *exp_hdl,
 			     fsal_fsinfo_options_t option)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_supports(&pm->fsinfo, option);
+	return fsal_supports(&exp_hdl->fsal->fs_info, option);
 }
 
 static uint64_t pxy_get_maxfilesize(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_maxfilesize(&pm->fsinfo);
+	return fsal_maxfilesize(&exp_hdl->fsal->fs_info);
 }
 
 static uint32_t pxy_get_maxread(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_maxread(&pm->fsinfo);
+	return fsal_maxread(&exp_hdl->fsal->fs_info);
 }
 
 static uint32_t pxy_get_maxwrite(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_maxwrite(&pm->fsinfo);
+	return fsal_maxwrite(&exp_hdl->fsal->fs_info);
 }
 
 static uint32_t pxy_get_maxlink(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_maxlink(&pm->fsinfo);
+	return fsal_maxlink(&exp_hdl->fsal->fs_info);
 }
 
 static uint32_t pxy_get_maxnamelen(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_maxnamelen(&pm->fsinfo);
+	return fsal_maxnamelen(&exp_hdl->fsal->fs_info);
 }
 
 static uint32_t pxy_get_maxpathlen(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_maxpathlen(&pm->fsinfo);
+	return fsal_maxpathlen(&exp_hdl->fsal->fs_info);
 }
 
 static struct timespec pxy_get_lease_time(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_lease_time(&pm->fsinfo);
+	return fsal_lease_time(&exp_hdl->fsal->fs_info);
 }
 
 static fsal_aclsupp_t pxy_get_acl_support(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_acl_support(&pm->fsinfo);
+	return fsal_acl_support(&exp_hdl->fsal->fs_info);
 }
 
 static attrmask_t pxy_get_supported_attrs(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_supported_attrs(&pm->fsinfo);
+	return fsal_supported_attrs(&exp_hdl->fsal->fs_info);
 }
 
 static uint32_t pxy_get_umask(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_umask(&pm->fsinfo);
+	return fsal_umask(&exp_hdl->fsal->fs_info);
 }
 
 static uint32_t pxy_get_xattr_access_rights(struct fsal_export *exp_hdl)
 {
-	struct pxy_fsal_module *pm =
-	    container_of(exp_hdl->fsal, struct pxy_fsal_module, module);
-	return fsal_xattr_access_rights(&pm->fsinfo);
+	return fsal_xattr_access_rights(&exp_hdl->fsal->fs_info);
 }
 
 void pxy_export_ops_init(struct export_ops *ops)

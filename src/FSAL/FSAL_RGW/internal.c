@@ -38,10 +38,6 @@
 #define RGW_INTERNAL_C
 #include "internal.h"
 
-
-struct rgw_fsal_module RGWFSM;
-
-
 /**
  * @brief FSAL status from RGW error
  *

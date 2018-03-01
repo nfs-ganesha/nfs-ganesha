@@ -417,10 +417,7 @@ void glusterfs_free_state(struct fsal_export *exp_hdl, struct state_t *state)
 static bool fs_supports(struct fsal_export *exp_hdl,
 			fsal_fsinfo_options_t option)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_supports(info, option);
+	return fsal_supports(&exp_hdl->fsal->fs_info, option);
 }
 
 /**
@@ -429,10 +426,7 @@ static bool fs_supports(struct fsal_export *exp_hdl,
 
 static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_maxfilesize(info);
+	return fsal_maxfilesize(&exp_hdl->fsal->fs_info);
 }
 
 /**
@@ -441,10 +435,7 @@ static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
 
 static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_maxread(info);
+	return fsal_maxread(&exp_hdl->fsal->fs_info);
 }
 
 /**
@@ -453,10 +444,7 @@ static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 
 static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_maxwrite(info);
+	return fsal_maxwrite(&exp_hdl->fsal->fs_info);
 }
 
 /**
@@ -465,10 +453,7 @@ static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 
 static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_maxlink(info);
+	return fsal_maxlink(&exp_hdl->fsal->fs_info);
 }
 
 /**
@@ -477,10 +462,7 @@ static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 
 static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_maxnamelen(info);
+	return fsal_maxnamelen(&exp_hdl->fsal->fs_info);
 }
 
 /**
@@ -489,10 +471,7 @@ static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 
 static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_maxpathlen(info);
+	return fsal_maxpathlen(&exp_hdl->fsal->fs_info);
 }
 
 /**
@@ -501,10 +480,7 @@ static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 
 static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_lease_time(info);
+	return fsal_lease_time(&exp_hdl->fsal->fs_info);
 }
 
 /**
@@ -513,10 +489,7 @@ static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 
 static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_acl_support(info);
+	return fsal_acl_support(&exp_hdl->fsal->fs_info);
 }
 
 /**
@@ -525,11 +498,9 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 
 static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
 	attrmask_t supported_mask;
 
-	info = gluster_staticinfo(exp_hdl->fsal);
-	supported_mask = fsal_supported_attrs(info);
+	supported_mask = fsal_supported_attrs(&exp_hdl->fsal->fs_info);
 	if (!NFSv4_ACL_SUPPORT)
 		supported_mask &= ~ATTR_ACL;
 	return supported_mask;
@@ -541,10 +512,7 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 
 static uint32_t fs_umask(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_umask(info);
+	return fsal_umask(&exp_hdl->fsal->fs_info);
 }
 
 /**
@@ -553,10 +521,7 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 
 static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
 {
-	struct fsal_staticfsinfo_t *info;
-
-	info = gluster_staticinfo(exp_hdl->fsal);
-	return fsal_xattr_access_rights(info);
+	return fsal_xattr_access_rights(&exp_hdl->fsal->fs_info);
 }
 
 /**

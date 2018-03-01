@@ -2811,6 +2811,7 @@ struct fsal_module {
 					    manipulating its lists (above). */
 	int32_t refcount;		/*< Reference count */
 	struct fsal_stats *stats;   /*< for storing the FSAL specific stats */
+	struct fsal_staticfsinfo_t fs_info; /*< for storing FSAL static info */
 };
 
 /**

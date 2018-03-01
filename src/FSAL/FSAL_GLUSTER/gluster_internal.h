@@ -122,12 +122,11 @@ struct latency_data {
 #endif
 
 struct glusterfs_fsal_module {
-	struct fsal_staticfsinfo_t fs_info;
 	struct fsal_module fsal;
 	struct glist_head  fs_obj; /* list of glusterfs_fs filesystem objects */
 	pthread_mutex_t   lock; /* lock to protect above list */
 };
-struct glusterfs_fsal_module GlusterFS;
+extern struct glusterfs_fsal_module GlusterFS;
 
 struct glusterfs_fs {
 	struct glist_head fs_obj; /* link to glusterfs_fs filesystem objects */
@@ -246,8 +245,6 @@ fsal_status_t gluster2fsal_error(const int gluster_errorcode);
 
 void stat2fsal_attributes(const struct stat *buffstat,
 			  struct attrlist *fsalattr);
-
-struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl);
 
 void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 		      struct glfs_object *glhandle, unsigned char *globjhdl,

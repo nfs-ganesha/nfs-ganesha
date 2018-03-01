@@ -116,14 +116,6 @@ void stat2fsal_attributes(const struct stat *buffstat,
 	fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
 }
 
-struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl)
-{
-	struct glusterfs_fsal_module *glfsal_module;
-
-	glfsal_module = container_of(hdl, struct glusterfs_fsal_module, fsal);
-	return &glfsal_module->fs_info;
-}
-
 /**
  * @brief Construct a new filehandle
  *

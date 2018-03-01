@@ -10,7 +10,6 @@
 /* private helpers from export
  */
 
-struct fsal_staticfsinfo_t *gpfs_staticinfo(struct fsal_module *hdl);
 
 /* method proto linkage to handle.c for export
  */

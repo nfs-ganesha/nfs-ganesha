@@ -399,52 +399,65 @@ const char *fsal_dir_result_str(enum fsal_dir_result result)
  *
  * @param[in] info The info to dump
  */
-void display_fsinfo(struct fsal_staticfsinfo_t *info)
+void display_fsinfo(struct fsal_module *fsal)
 {
-	LogDebug(COMPONENT_FSAL, "FileSystem info: {");
+	LogDebug(COMPONENT_FSAL, "FileSystem info for FSAL %s {", fsal->name);
 	LogDebug(COMPONENT_FSAL, "  maxfilesize  = %" PRIX64 "    ",
-		 (uint64_t) info->maxfilesize);
-	LogDebug(COMPONENT_FSAL, "  maxlink  = %" PRIu32, info->maxlink);
-	LogDebug(COMPONENT_FSAL, "  maxnamelen  = %" PRIu32, info->maxnamelen);
-	LogDebug(COMPONENT_FSAL, "  maxpathlen  = %" PRIu32, info->maxpathlen);
-	LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ", info->no_trunc);
+		 (uint64_t) fsal->fs_info.maxfilesize);
+	LogDebug(COMPONENT_FSAL, "  maxlink  = %" PRIu32,
+		fsal->fs_info.maxlink);
+	LogDebug(COMPONENT_FSAL, "  maxnamelen  = %" PRIu32,
+		fsal->fs_info.maxnamelen);
+	LogDebug(COMPONENT_FSAL, "  maxpathlen  = %" PRIu32,
+		fsal->fs_info.maxpathlen);
+	LogDebug(COMPONENT_FSAL, "  no_trunc  = %d ",
+		fsal->fs_info.no_trunc);
 	LogDebug(COMPONENT_FSAL, "  chown_restricted  = %d ",
-		 info->chown_restricted);
+		 fsal->fs_info.chown_restricted);
 	LogDebug(COMPONENT_FSAL, "  case_insensitive  = %d ",
-		 info->case_insensitive);
+		 fsal->fs_info.case_insensitive);
 	LogDebug(COMPONENT_FSAL, "  case_preserving  = %d ",
-		 info->case_preserving);
-	LogDebug(COMPONENT_FSAL, "  link_support  = %d  ", info->link_support);
+		 fsal->fs_info.case_preserving);
+	LogDebug(COMPONENT_FSAL, "  link_support  = %d  ",
+		fsal->fs_info.link_support);
 	LogDebug(COMPONENT_FSAL, "  symlink_support  = %d  ",
-		 info->symlink_support);
-	LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ", info->lock_support);
+		 fsal->fs_info.symlink_support);
+	LogDebug(COMPONENT_FSAL, "  lock_support  = %d  ",
+		fsal->fs_info.lock_support);
 	LogDebug(COMPONENT_FSAL, "  lock_support_async_block  = %d  ",
-		 info->lock_support_async_block);
-	LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ", info->named_attr);
+		 fsal->fs_info.lock_support_async_block);
+	LogDebug(COMPONENT_FSAL, "  named_attr  = %d  ",
+		fsal->fs_info.named_attr);
 	LogDebug(COMPONENT_FSAL, "  unique_handles  = %d  ",
-		 info->unique_handles);
-	LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ", info->acl_support);
-	LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ", info->cansettime);
-	LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ", info->homogenous);
+		 fsal->fs_info.unique_handles);
+	LogDebug(COMPONENT_FSAL, "  acl_support  = %hu  ",
+		fsal->fs_info.acl_support);
+	LogDebug(COMPONENT_FSAL, "  cansettime  = %d  ",
+		fsal->fs_info.cansettime);
+	LogDebug(COMPONENT_FSAL, "  homogenous  = %d  ",
+		fsal->fs_info.homogenous);
 	LogDebug(COMPONENT_FSAL, "  supported_attrs  = %" PRIX64,
-		 info->supported_attrs);
-	LogDebug(COMPONENT_FSAL, "  maxread  = %" PRIu64, info->maxread);
-	LogDebug(COMPONENT_FSAL, "  maxwrite  = %" PRIu64, info->maxwrite);
-	LogDebug(COMPONENT_FSAL, "  umask  = %X ", info->umask);
+		 fsal->fs_info.supported_attrs);
+	LogDebug(COMPONENT_FSAL, "  maxread  = %" PRIu64,
+		fsal->fs_info.maxread);
+	LogDebug(COMPONENT_FSAL, "  maxwrite  = %" PRIu64,
+		fsal->fs_info.maxwrite);
+	LogDebug(COMPONENT_FSAL, "  umask  = %X ",
+		fsal->fs_info.umask);
 	LogDebug(COMPONENT_FSAL, "  auth_exportpath_xdev  = %d  ",
-		 info->auth_exportpath_xdev);
+		 fsal->fs_info.auth_exportpath_xdev);
 	LogDebug(COMPONENT_FSAL, "  xattr_access_rights = %#o ",
-		 info->xattr_access_rights);
+		 fsal->fs_info.xattr_access_rights);
 	LogDebug(COMPONENT_FSAL, "  delegations = %d  ",
-		 info->delegations);
+		 fsal->fs_info.delegations);
 	LogDebug(COMPONENT_FSAL, "  pnfs_mds = %d  ",
-		 info->pnfs_mds);
+		 fsal->fs_info.pnfs_mds);
 	LogDebug(COMPONENT_FSAL, "  pnfs_ds = %d  ",
-		 info->pnfs_ds);
+		 fsal->fs_info.pnfs_ds);
 	LogDebug(COMPONENT_FSAL, "  fsal_trace = %d  ",
-		 info->fsal_trace);
+		 fsal->fs_info.fsal_trace);
 	LogDebug(COMPONENT_FSAL, "  fsal_grace = %d  ",
-		 info->fsal_grace);
+		 fsal->fs_info.fsal_grace);
 	LogDebug(COMPONENT_FSAL, "}");
 }
 

@@ -323,9 +323,7 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 static bool fs_supports(struct fsal_export *export_pub,
 			fsal_fsinfo_options_t option)
 {
-	struct fsal_staticfsinfo_t *info = ceph_staticinfo(export_pub->fsal);
-
-	return fsal_supports(info, option);
+	return fsal_supports(&export_pub->fsal->fs_info, option);
 }
 
 /**
@@ -485,7 +483,7 @@ static attrmask_t fs_supported_attrs(struct fsal_export *export_pub)
 
 static uint32_t fs_umask(struct fsal_export *export_pub)
 {
-	return fsal_umask(ceph_staticinfo(export_pub->fsal));
+	return fsal_umask(&export_pub->fsal->fs_info);
 }
 
 /**
@@ -501,7 +499,7 @@ static uint32_t fs_umask(struct fsal_export *export_pub)
 
 static uint32_t fs_xattr_access_rights(struct fsal_export *export_pub)
 {
-	return fsal_xattr_access_rights(ceph_staticinfo(export_pub->fsal));
+	return fsal_xattr_access_rights(&export_pub->fsal->fs_info);
 }
 
 /**

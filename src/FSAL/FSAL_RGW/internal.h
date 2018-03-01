@@ -56,7 +56,6 @@
 
 struct rgw_fsal_module {
 	struct fsal_module fsal;
-	fsal_staticfsinfo_t fs_info;
 	char *conf_path;
 	char *name;
 	char *cluster;
@@ -129,13 +128,6 @@ struct rgw_open_state {
  */
 
 static const size_t BIGGEST_PATTERN = 1024;
-
-static inline fsal_staticfsinfo_t *rgw_staticinfo(struct fsal_module *hdl)
-{
-	struct rgw_fsal_module *myself =
-	    container_of(hdl, struct rgw_fsal_module, fsal);
-	return &myself->fs_info;
-}
 
 /* Prototypes */
 int construct_handle(struct rgw_export *export,
