@@ -976,11 +976,7 @@ void nfs_start(nfs_start_info_t *p_start_info)
 	/* Regular exit */
 	LogEvent(COMPONENT_MAIN, "NFS EXIT: regular exit");
 
-	/* Try to lift the grace period */
-	nfs_try_lift_grace();
-
 	Cleanup();
-
 	/* let main return 0 to exit */
 }
 
