@@ -41,6 +41,9 @@
 #include "nfs_creds.h"
 #include "client_mgr.h"
 #include "fsal.h"
+#ifdef USE_LTTNG
+#include "gsh_lttng/nfs4.h"
+#endif
 
 /**
  *
@@ -340,6 +343,9 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	       NFS4_SESSIONID_SIZE);
 
 	LogDebug(component, "CREATE_SESSION replay=%p", data->cached_res);
+#ifdef USE_LTTNG
+	tracepoint(nfs4, session_ref, __func__, __LINE__, nfs41_session, 2);
+#endif
 
 	if (!nfs41_Session_Set(nfs41_session)) {
 		LogDebug(component, "Could not insert session into table");

@@ -6,6 +6,7 @@ set(ganesha_trace_LIB_SRCS
   fsal_mem.c
   logger.c
   mdcache.c
+  nfs4.c
   nfs_rpc.c
   state.c
 )

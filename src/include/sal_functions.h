@@ -352,8 +352,10 @@ nfs_client_record_t *get_client_record(const char *const value,
 int display_session_id(struct display_buffer *dspbuf, char *session_id);
 int display_session(struct display_buffer *dspbuf, nfs41_session_t *session);
 
-int32_t inc_session_ref(nfs41_session_t *session);
-int32_t dec_session_ref(nfs41_session_t *session);
+int32_t _inc_session_ref(nfs41_session_t *session, const char *func, int line);
+#define inc_session_ref(s)  _inc_session_ref(s, __func__, __LINE__)
+int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line);
+#define dec_session_ref(s)  _dec_session_ref(s, __func__, __LINE__)
 
 int display_session_id_key(struct gsh_buffdesc *buff, char *str);
 int display_session_id_val(struct gsh_buffdesc *buff, char *str);

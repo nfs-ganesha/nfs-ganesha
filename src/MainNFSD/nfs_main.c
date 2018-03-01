@@ -68,6 +68,7 @@
 #include "gsh_lttng/logger.h"
 #include "gsh_lttng/mdcache.h"
 #include "gsh_lttng/nfs_rpc.h"
+#include "gsh_lttng/nfs4.h"
 #include "gsh_lttng/state.h"
 #include "gsh_lttng/fsal_mem.h"
 #endif /* USE_LTTNG */

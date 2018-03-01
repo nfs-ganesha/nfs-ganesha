@@ -38,6 +38,9 @@
 #include "nfs_core.h"
 #include "nfs_proto_functions.h"
 #include "sal_functions.h"
+#ifdef USE_LTTNG
+#include "gsh_lttng/nfs4.h"
+#endif
 
 /**
  * @brief Pool for allocating session data
@@ -232,16 +235,22 @@ void nfs41_Build_sessionid(clientid4 *clientid, char *sessionid)
 	memcpy(sessionid + sizeof(clientid4), &seq, sizeof(seq));
 }
 
-int32_t inc_session_ref(nfs41_session_t *session)
+int32_t _inc_session_ref(nfs41_session_t *session, const char *func, int line)
 {
 	int32_t refcnt = atomic_inc_int32_t(&session->refcount);
+#ifdef USE_LTTNG
+	tracepoint(nfs4, session_ref, func, line, session, refcnt);
+#endif
 	return refcnt;
 }
 
-int32_t dec_session_ref(nfs41_session_t *session)
+int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 {
 	int i;
 	int32_t refcnt = atomic_dec_int32_t(&session->refcount);
+#ifdef USE_LTTNG
+	tracepoint(nfs4, session_unref, func, line, session, refcnt);
+#endif
 
 	if (refcnt == 0) {
 
