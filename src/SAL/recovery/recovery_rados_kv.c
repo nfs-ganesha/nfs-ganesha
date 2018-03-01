@@ -128,8 +128,7 @@ void rados_kv_create_val(nfs_client_id_t *clientid, char *val)
 	snprintf(val, total_len, "%s-(%s:%s)",
 		 str_client_addr, cidstr_len, cidstr);
 
-	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
-		 clientid->cid_recov_tag);
+	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]", val);
 }
 
 static int rados_kv_put(char *key, char *val, char *object)
