@@ -279,7 +279,6 @@ void rados_kv_append_val_rdfh(char *val, char *rdfh, int rdfh_len)
 
 	strncat(val, "#", 1);
 	strncat(val, rdfhstr, rdfhstr_len);
-	val[rdfhstr_len + 1] = '\0';
 }
 
 int rados_kv_set_param_from_conf(config_file_t parse_tree,
