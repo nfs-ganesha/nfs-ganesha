@@ -285,19 +285,16 @@ static void rados_ng_add_revoke_fh(nfs_client_id_t *delr_clid,
 	int ret;
 	char ckey[RADOS_KEY_MAX_LEN];
 	char *cval;
-	char *val_out;
-	size_t val_out_len;
 
 	cval = gsh_malloc(RADOS_VAL_MAX_LEN);
 
 	rados_kv_create_key(delr_clid, ckey);
-	ret = rados_kv_get(ckey, &val_out, &val_out_len, rados_recov_oid);
+	ret = rados_kv_get(ckey, cval, rados_recov_oid);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to get %s", ckey);
 		goto out;
 	}
 
-	strncpy(cval, val_out, val_out_len);
 	rados_kv_append_val_rdfh(cval, delr_handle->nfs_fh4_val,
 				      delr_handle->nfs_fh4_len);
 
