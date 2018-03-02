@@ -1080,17 +1080,7 @@ void state_export_release_nfs4_state(void)
 
 		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 		hold_export_lock = false;
-
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
-
-		if (state->state_type == STATE_TYPE_DELEG) {
-			/* this deletes the state too */
-			state_deleg_revoke(obj, state);
-		} else {
-			state_del_locked(state);
-		}
-
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		state_del(state);
 
 		/* Release the references taken above */
 		obj->obj_ops.put_ref(obj);
