@@ -159,7 +159,7 @@ static int rados_kv_put(char *key, char *val, char *object)
 	return ret;
 }
 
-int rados_kv_get(char *key, char **val, size_t *val_len, char *object)
+int rados_kv_get(char *key, char *val, char *object)
 {
 	int ret;
 	char *keys[1];
@@ -189,11 +189,11 @@ int rados_kv_get(char *key, char **val, size_t *val_len, char *object)
 			 ret, key);
 		goto out;
 	}
-	rados_omap_get_end(iter_vals);
 
-	val_out[val_len_out] = '\0';
-	*val = val_out;
-	*val_len = val_len_out;
+	strncpy(val, val_out, val_len_out);
+	val[val_len_out] = '\0';
+	LogDebug(COMPONENT_CLIENTID, "%s: key=%s val=%s", __func__, key, val);
+	rados_omap_get_end(iter_vals);
 out:
 	rados_release_read_op(read_op);
 	return ret;
@@ -546,19 +546,18 @@ void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 	int ret;
 	char ckey[RADOS_KEY_MAX_LEN];
 	char *cval;
-	char *val_out;
-	size_t val_out_len;
 
 	cval = gsh_malloc(RADOS_VAL_MAX_LEN);
 
 	rados_kv_create_key(delr_clid, ckey);
-	ret = rados_kv_get(ckey, &val_out, &val_out_len, rados_recov_oid);
+	ret = rados_kv_get(ckey, cval, rados_recov_oid);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to get %s", ckey);
 		goto out;
 	}
 
-	strncpy(cval, val_out, val_out_len);
+	LogDebug(COMPONENT_CLIENTID, "%s: key=%s val=%s", __func__,
+			ckey, cval);
 	rados_kv_append_val_rdfh(cval, delr_handle->nfs_fh4_val,
 				      delr_handle->nfs_fh4_len);
 

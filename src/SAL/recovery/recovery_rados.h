@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2017-2018 Red Hat, Inc. and/or its affiliates.
  * Author: Jeff Layton <jlayton@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ typedef struct pop_args {
 	bool takeover;
 } *pop_args_t;
 
-int rados_kv_get(char *key, char **val, size_t *val_len, char *object);
+int rados_kv_get(char *key, char *val, char *object);
 void rados_kv_create_key(nfs_client_id_t *clientid, char *key);
 void rados_kv_create_val(nfs_client_id_t *clientid, char *val);
 int rados_kv_traverse(pop_clid_entry_t pop_func, pop_args_t pop_args,
