@@ -220,7 +220,7 @@ static int rados_kv_del(char *key, char *object)
 	return ret;
 }
 
-int rados_kv_traverse(pop_clid_entry_t pop_func, pop_args_t pop_args,
+int rados_kv_traverse(pop_clid_entry_t callback, struct pop_args *args,
 			const char *object)
 {
 	int ret;
@@ -249,9 +249,7 @@ again:
 		if (val_len_out == 0 && key_out == NULL && val_out == NULL)
 			break;
 		start = key_out;
-		pop_func(key_out, val_out, pop_args->add_clid_entry,
-			 pop_args->add_rfh_entry, pop_args->old,
-			 pop_args->takeover);
+		callback(key_out, val_out, args);
 	}
 	rados_omap_get_end(iter_vals);
 
@@ -442,17 +440,17 @@ void rados_kv_rm_clid(nfs_client_id_t *clientid)
 	clientid->cid_recov_tag = NULL;
 }
 
-static void rados_kv_pop_clid_entry(char *key,
-				    char *val,
-				    add_clid_entry_hook add_clid_entry,
-				    add_rfh_entry_hook add_rfh_entry,
-				    bool old,
-				    bool takeover)
+static void rados_kv_pop_clid_entry(char *key, char *val,
+				    struct pop_args *pop_args)
 {
 	int ret;
 	char *dupval;
 	char *cl_name, *rfh_names, *rfh_name;
 	clid_entry_t *clid_ent;
+	add_clid_entry_hook add_clid_entry = pop_args->add_clid_entry;
+	add_rfh_entry_hook add_rfh_entry = pop_args->add_rfh_entry;
+	bool old = pop_args->old;
+	bool takeover = pop_args->takeover;
 
 	/* extract clid records */
 	dupval = gsh_strdup(val);
