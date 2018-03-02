@@ -56,21 +56,21 @@
 #include "mdcache_int.h"
 #include "avltree.h"
 
-static inline int avl_dirent_hk_cmpf(const struct avltree_node *lhs,
-				     const struct avltree_node *rhs)
+static inline int avl_dirent_name_cmpf(const struct avltree_node *lhs,
+				       const struct avltree_node *rhs)
 {
 	mdcache_dir_entry_t *lk, *rk;
 
-	lk = avltree_container_of(lhs, mdcache_dir_entry_t, node_hk);
-	rk = avltree_container_of(rhs, mdcache_dir_entry_t, node_hk);
+	lk = avltree_container_of(lhs, mdcache_dir_entry_t, node_name);
+	rk = avltree_container_of(rhs, mdcache_dir_entry_t, node_name);
 
-	if (lk->hk.k < rk->hk.k)
+	if (lk->namehash < rk->namehash)
 		return -1;
 
-	if (lk->hk.k == rk->hk.k)
-		return 0;
+	if (lk->namehash > rk->namehash)
+		return 1;
 
-	return 1;
+	return strcmp(lk->name, rk->name);
 }
 
 static inline int avl_dirent_ck_cmpf(const struct avltree_node *lhs,
@@ -121,13 +121,13 @@ static inline int avl_dirent_sorted_cmpf(const struct avltree_node *lhs,
 void mdcache_avl_remove(mdcache_entry_t *parent, mdcache_dir_entry_t *dirent);
 void avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
 void mdcache_avl_init(mdcache_entry_t *entry);
-int mdcache_avl_qp_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent);
+int mdcache_avl_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent);
 int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v);
 
 bool mdcache_avl_lookup_ck(mdcache_entry_t *entry, uint64_t ck,
 			   mdcache_dir_entry_t **dirent);
-mdcache_dir_entry_t *mdcache_avl_qp_lookup_s(mdcache_entry_t *entry,
-					     const char *name, int maxj);
+mdcache_dir_entry_t *mdcache_avl_lookup(mdcache_entry_t *entry,
+					const char *name);
 void mdcache_avl_clean_trees(mdcache_entry_t *parent);
 
 void unchunk_dirent(mdcache_dir_entry_t *dirent);

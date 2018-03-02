@@ -1051,7 +1051,7 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 	if (!test_mde_flags(mdc_parent, MDCACHE_TRUST_CONTENT))
 		return fsalstat(ERR_FSAL_STALE, 0);
 
-	dirent = mdcache_avl_qp_lookup_s(mdc_parent, name, 1);
+	dirent = mdcache_avl_lookup(mdc_parent, name);
 	if (dirent) {
 		if (dirent->chunk != NULL) {
 			/* Bump the chunk in the LRU */
@@ -1068,7 +1068,7 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 			     name, fsal_err_txt(status));
 	} else {	/* ! dirent */
 		LogFullDebug(COMPONENT_CACHE_INODE,
-			     "mdcache_avl_qp_lookup_s %s failed trust negative %s",
+			     "mdcache_avl_lookup %s failed trust negative %s",
 			     name,
 			     trust_negative_cache(mdc_parent) ? "yes" : "no");
 		if (trust_negative_cache(mdc_parent)) {
@@ -1426,15 +1426,18 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 	new_dir_entry->flags = DIR_ENTRY_FLAG_NONE;
 	allocated_dir_entry = new_dir_entry;
 
-	memcpy(&new_dir_entry->name, name, namesize);
+	memcpy(&new_dir_entry->name_buffer, name, namesize);
+	new_dir_entry->name = new_dir_entry->name_buffer;
 	mdcache_key_dup(&new_dir_entry->ckey, &entry->fh_hk.key);
 
 	/* add to avl */
-	code = mdcache_avl_qp_insert(parent, &new_dir_entry);
+	code = mdcache_avl_insert(parent, &new_dir_entry);
 	if (code < 0) {
-		/* Technically only a -2 is a name collision, however, we will
-		 * treat a hash collision (which per current code we should
-		 * never actually see) the same.
+		/** @todo: maybe we should actually invalidate the dirent cache
+		 *         at this point?
+		 *
+		 * This indicates an odd condition in the tree, just treat
+		 * as an EEXIST condition.
 		 */
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Returning EEXIST for %s code %d", name, code);
@@ -1479,7 +1482,7 @@ void mdcache_dirent_remove(mdcache_entry_t *parent, const char *name)
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 			     "Remove dir entry %s", name);
 
-		dirent = mdcache_avl_qp_lookup_s(parent, name, 1);
+		dirent = mdcache_avl_lookup(parent, name);
 
 		if (dirent != NULL)
 			avl_dirent_set_deleted(parent, dirent);
@@ -2087,11 +2090,12 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 	 *              chunk, posssibly making the chunk larger than normal.
 	 */
 
-	memcpy(&new_dir_entry->name, name, namesize);
+	memcpy(&new_dir_entry->name_buffer, name, namesize);
+	new_dir_entry->name = new_dir_entry->name_buffer;
 	mdcache_key_dup(&new_dir_entry->ckey, &new_entry->fh_hk.key);
 
 	/* add to avl */
-	code = mdcache_avl_qp_insert(mdc_parent, &new_dir_entry);
+	code = mdcache_avl_insert(mdc_parent, &new_dir_entry);
 
 	if (code < 0) {
 		/* We can get here with the following possibilities:
@@ -2101,15 +2105,8 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		 * - Name collision, something is broken and the FSAL has
 		 *   given us multiple directory entries with the same name
 		 *   but for different objects. Again, not much we can do.
-		 * - Degenerate name hash collision, we have tried many many
-		 *   times to find a workable hash for the name and failed.
-		 *   Due to the number of retries we should never get here.
 		 *
 		 * In any case, we will just ignore this entry.
-		 */
-		/* Technically only a -2 is a name collision, however, we will
-		 * treat a hash collision (which per current code we should
-		 * never actually see) the same.
 		 */
 		mdcache_put(new_entry);
 		/* Check for return code -3 and/or -4.
