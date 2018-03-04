@@ -86,9 +86,8 @@ groups *objp;
 	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-	if (!xdr_pointer
-	    (xdrs, (char **)objp, sizeof(struct groupnode),
-	     (xdrproc_t) xdr_groupnode))
+	if (!xdr_pointer(xdrs, (void **)objp, sizeof(struct groupnode),
+			 (xdrproc_t) xdr_groupnode))
 		return (false);
 	return (true);
 }
@@ -122,9 +121,8 @@ exports *objp;
 	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-	if (!xdr_pointer
-	    (xdrs, (char **)objp, sizeof(struct exportnode),
-	     (xdrproc_t) xdr_exportnode))
+	if (!xdr_pointer(xdrs, (void **)objp, sizeof(struct exportnode),
+			 (xdrproc_t) xdr_exportnode))
 		return (false);
 	return (true);
 }
@@ -160,9 +158,8 @@ mountlist *objp;
 	register long __attribute__ ((__unused__)) * buf;
 #endif
 
-	if (!xdr_pointer
-	    (xdrs, (char **)objp, sizeof(struct mountbody),
-	     (xdrproc_t) xdr_mountbody))
+	if (!xdr_pointer(xdrs, (void **)objp, sizeof(struct mountbody),
+			 (xdrproc_t) xdr_mountbody))
 		return (false);
 	return (true);
 }

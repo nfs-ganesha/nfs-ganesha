@@ -6319,7 +6319,7 @@ static inline bool xdr_entry4(XDR *xdrs, entry4 *objp)
 	if (!xdr_fattr4(xdrs, &objp->attrs))
 		return false;
 	if (!xdr_pointer(xdrs,
-	    (char **)&objp->nextentry, sizeof(entry4),
+	    (void **)&objp->nextentry, sizeof(entry4),
 	    (xdrproc_t) xdr_entry4))
 		return false;
 	return true;
@@ -6328,7 +6328,7 @@ static inline bool xdr_entry4(XDR *xdrs, entry4 *objp)
 static inline bool xdr_dirlist4(XDR *xdrs, dirlist4 *objp)
 {
 	if (!xdr_pointer(xdrs,
-	    (char **)&objp->entries, sizeof(entry4),
+	    (void **)&objp->entries, sizeof(entry4),
 	    (xdrproc_t) xdr_entry4))
 		return false;
 	if (!inline_xdr_bool(xdrs, &objp->eof))
