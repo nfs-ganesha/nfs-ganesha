@@ -344,6 +344,9 @@ hash_error_t hashtable_getref(struct hash_table *, struct gsh_buffdesc *,
 			      struct gsh_buffdesc *,
 			      void (*)(struct gsh_buffdesc *));
 
+typedef void (*ht_for_each_cb_t)(struct rbt_node *pn, void *arg);
+void hashtable_for_each(struct hash_table *ht, ht_for_each_cb_t callback,
+				void *arg);
 /** @} */
 
 #endif /* HASHTABLE_H */
