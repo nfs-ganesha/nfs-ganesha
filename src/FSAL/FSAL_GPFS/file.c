@@ -777,6 +777,7 @@ find_fd(int *fd, struct fsal_obj_handle *obj_hdl, bool bypass,
 		     out_fd->fd, object_file_type_to_str(obj_hdl->type));
 
 	*fd = out_fd->fd;
+	assert(*fd >= 3);
 	*closefd = true;
 
 	return status;
