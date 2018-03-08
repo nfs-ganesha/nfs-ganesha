@@ -175,6 +175,11 @@ class ServerAdmin():
         status, msg = self.admin.purge_idmap()
         self.status_message(status, msg)
 
+    def purge_gids(self):
+        print("Purging gids cache")
+        status, msg = self.admin.purge_gids()
+        self.status_message(status, msg)
+
     def status_message(self, status, errormsg):
         print "Returns: status = %s, %s" % (str(status), errormsg)
 
@@ -246,6 +251,7 @@ if __name__ == '__main__':
        "   shutdown: Shuts down the ganesha nfs server\n\n"                  \
        "   purge netgroups: Purges netgroups cache\n\n"                      \
        "   purge idmap: Purges idmapper cache\n\n"                      \
+       "   purge gids: Purges gids cache\n\n"                      \
        "   grace ipaddr: Begins grace for the given IP\n\n"                  \
        "   get_log component: Gets the log level for the given component\n\n"\
        "   set_log component level: \n"                                      \
@@ -305,10 +311,12 @@ if __name__ == '__main__':
             msg = 'purge requires a cache name to purge, '
             msg += 'Try "ganesha_mgr.py help" for more info'
             sys.exit(msg)
-        if sys.argv[2] == 'netgroups':
+        if sys.argv[2] == "netgroups":
             ganesha.purge_netgroups()
-        elif sys.argv[2] == 'idmap':
+        elif sys.argv[2] == "idmap":
             ganesha.purge_idmap()
+        elif sys.argv[2] == "gids":
+            ganesha.purge_gids()
         else:
             msg = "Purging '%s' is not supported" % sys.argv[2]
             sys.exit(msg)

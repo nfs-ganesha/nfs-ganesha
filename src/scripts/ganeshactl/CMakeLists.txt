@@ -23,7 +23,6 @@ set(SCRIPT_SRC
   fake_recall.py
   get_clientids.py
   grace_period.py
-  purge_gids.py
   ganesha_mgr.py
   ganesha_stats.py
   ganesha_conf.py

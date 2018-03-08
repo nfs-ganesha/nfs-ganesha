@@ -740,7 +740,6 @@ exit 0
 %{_bindir}/fake_recall
 %{_bindir}/get_clientids
 %{_bindir}/grace_period
-%{_bindir}/purge_gids
 %{_bindir}/ganesha_stats
 %{_bindir}/sm_notify.ganesha
 %{_bindir}/ganesha_mgr
