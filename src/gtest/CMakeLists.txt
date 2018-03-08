@@ -191,3 +191,18 @@ target_link_libraries(test_getattrs_latency
   )
 set_target_properties(test_getattrs_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
+
+
+set(test_close_latency_SRCS
+  test_close_latency.cc
+  )
+
+add_executable(test_close_latency
+  ${test_close_latency_SRCS})
+add_sanitizers(test_close_latency)
+
+target_link_libraries(test_close_latency
+  ${GTEST_LIBRARIES}
+  )
+set_target_properties(test_close_latency PROPERTIES COMPILE_FLAGS
+  "${UNITTEST_CXX_FLAGS}")
