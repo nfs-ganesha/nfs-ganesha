@@ -42,6 +42,7 @@
 #include "common_utils.h"
 #include "avltree.h"
 #include "idmapper.h"
+#include "nfs_core.h"
 #include "abstract_atomic.h"
 
 /**
@@ -56,7 +57,11 @@ struct cache_user {
 	struct avltree_node uname_node;	/*< Node in the name tree */
 	struct avltree_node uid_node;	/*< Node in the UID tree */
 	bool in_uidtree;		/* true iff this is in uid_tree */
+	time_t epoch;
 };
+
+#define user_expired(user) (time(NULL) - (user)->epoch > \
+		nfs_param.core_param.manage_gids_expiration)
 
 /**
  * @brief Group entry in the IDMapper cache
@@ -67,7 +72,11 @@ struct cache_group {
 	gid_t gid;		/*< Group ID */
 	struct avltree_node gname_node;	/*< Node in the name tree */
 	struct avltree_node gid_node;	/*< Node in the GID tree */
+	time_t epoch;
 };
+
+#define group_expired(group) (time(NULL) - (group)->epoch > \
+		nfs_param.core_param.manage_gids_expiration)
 
 /**
  * @brief Number of entires in the UID cache, should be prime.
@@ -304,7 +313,7 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 	struct cache_user *new;
 
 	new = gsh_malloc(sizeof(struct cache_user) + name->len);
-
+	new->epoch = time(NULL);
 	new->uname.addr = (char *)new + sizeof(struct cache_user);
 	new->uname.len = name->len;
 	new->uid = uid;
@@ -410,7 +419,7 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 	struct cache_group *new;
 
 	new = gsh_malloc(sizeof(struct cache_group) + name->len);
-
+	new->epoch = time(NULL);
 	new->gname.addr = (char *)new + sizeof(struct cache_group);
 	new->gname.len = name->len;
 	new->gid = gid;
@@ -511,7 +520,7 @@ bool idmapper_lookup_by_uname(const struct gsh_buffdesc *name, uid_t *uid,
 	if (unlikely(gid))
 		*gid = (found_user->gid_set ? &found_user->gid : NULL);
 
-	return true;
+	return user_expired(found_user) ? false : true;
 }
 
 /**
@@ -566,7 +575,7 @@ bool idmapper_lookup_by_uid(const uid_t uid, const struct gsh_buffdesc **name,
 	if (gid)
 		*gid = (found_user->gid_set ? &found_user->gid : NULL);
 
-	return true;
+	return user_expired(found_user) ? false : true;
 }
 
 /**
@@ -612,7 +621,7 @@ bool idmapper_lookup_by_gname(const struct gsh_buffdesc *name, uid_t *gid)
 	else
 		LogDebug(COMPONENT_IDMAPPER, "Caller is being weird.");
 
-	return true;
+	return group_expired(found_group) ? false : true;
 }
 
 /**
@@ -662,7 +671,7 @@ bool idmapper_lookup_by_gid(const gid_t gid, const struct gsh_buffdesc **name)
 	else
 		LogDebug(COMPONENT_IDMAPPER, "Caller is being weird.");
 
-	return true;
+	return group_expired(found_group) ? false : true;
 }
 
 /**
