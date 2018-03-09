@@ -1594,18 +1594,17 @@ void ceph_read2(struct fsal_obj_handle *obj_hdl,
 				       read_arg->iov[i].iov_len,
 				       read_arg->iov[i].iov_base);
 
-		if (offset == -1 || nb_read < 0) {
+		if (nb_read == 0) {
+			read_arg->end_of_file = true;
+			break;
+		} else if (nb_read < 0) {
 			status = ceph2fsal_error(nb_read);
 			goto out;
-		} else if (offset == 0) {
-			break;
 		}
 
 		read_arg->io_amount += nb_read;
 		offset += nb_read;
 	}
-
-	read_arg->end_of_file = read_arg->io_amount == 0;
 
 #if 0
 	/** @todo
@@ -1708,11 +1707,11 @@ void ceph_write2(struct fsal_obj_handle *obj_hdl,
 				      write_arg->iov[i].iov_len,
 				      write_arg->iov[i].iov_base);
 
-		if (nb_written < 0) {
+		if (nb_written == 0) {
+			break;
+		} else if (nb_written < 0) {
 			status = ceph2fsal_error(nb_written);
 			goto out;
-		} else if (offset == 0) {
-			break;
 		}
 
 		write_arg->io_amount += nb_written;
