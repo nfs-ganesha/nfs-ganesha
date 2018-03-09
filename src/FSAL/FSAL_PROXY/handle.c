@@ -1739,9 +1739,19 @@ static fsal_status_t pxy_link(struct fsal_obj_handle *obj_hdl,
 	return nfsstat4_to_fsal(rc);
 }
 
+#define FSAL_READDIR_NB_OP_ALLOC 3 /* SEQUENCE PUTFH READDIR */
 static bool xdr_readdirres(XDR *x, nfs_resop4 *rdres)
 {
-	return xdr_nfs_resop4(x, rdres) && xdr_nfs_resop4(x, rdres + 1);
+	int i;
+	int res = true;
+
+	for (i = 0; i < FSAL_READDIR_NB_OP_ALLOC; i++) {
+		res  = xdr_nfs_resop4(x, rdres + i);
+		if (res != true)
+			return res;
+	}
+
+	return res;
 }
 
 /*
@@ -1760,7 +1770,6 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 	int rc;
 	entry4 *e4;
 	sessionid4 sid;
-#define FSAL_READDIR_NB_OP_ALLOC 3 /* SEQUENCE PUTFH READDIR */
 	nfs_argop4 argoparray[FSAL_READDIR_NB_OP_ALLOC];
 	nfs_resop4 resoparray[FSAL_READDIR_NB_OP_ALLOC];
 	READDIR4resok *rdok;
