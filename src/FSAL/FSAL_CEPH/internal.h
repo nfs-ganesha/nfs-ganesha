@@ -68,12 +68,12 @@ extern struct ceph_fsal_module CephFSM;
  * Ceph private export object
  */
 
-struct export {
+struct ceph_export {
 	struct fsal_export export;	/*< The public export object */
 	struct ceph_mount_info *cmount;	/*< The mount object used to
 					   access all Ceph methods on
 					   this export. */
-	struct handle *root;	/*< The root handle */
+	struct ceph_handle *root;	/*< The root handle */
 	char *user_id;			/* cephx user_id for this mount */
 	char *secret_key;
 };
@@ -96,12 +96,13 @@ struct ceph_state_fd {
  * The 'private' Ceph FSAL handle
  */
 
-struct handle {
+struct ceph_handle {
 	struct fsal_obj_handle handle;	/*< The public handle */
 	struct ceph_fd fd;
 	struct Inode *i;	/*< The Ceph inode */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
-	struct export *export;	/*< The first export this handle belongs to */
+	/*< The first export this handle belongs to */
+	struct ceph_export *export;
 	vinodeno_t vi;		/*< The object identifier */
 	struct fsal_share share;
 #ifdef CEPH_PNFS
@@ -148,9 +149,11 @@ struct ds {
 
 /* Prototypes */
 
-void construct_handle(const struct ceph_statx *stx, struct Inode *i,
-		      struct export *export, struct handle **obj);
-void deconstruct_handle(struct handle *obj);
+void construct_handle(const struct ceph_statx *stx,
+					struct Inode *i,
+					struct ceph_export *export,
+					struct ceph_handle **obj);
+void deconstruct_handle(struct ceph_handle *obj);
 
 /**
  * @brief FSAL status from Ceph error

@@ -57,7 +57,7 @@ static const size_t BIGGEST_PATTERN = 1024;
 static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
 {
 	/* The private 'full' object handle */
-	struct handle *handle = (struct handle *)opaque;
+	struct ceph_handle *handle = (struct ceph_handle *)opaque;
 	/* Return code from upcall operation */
 	state_status_t status = STATE_SUCCESS;
 	struct gsh_buffdesc key = {
@@ -98,7 +98,8 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
 			      const struct pnfs_deviceid *deviceid)
 {
 	/* Full 'private' export */
-	struct export *export = container_of(export_pub, struct export, export);
+	struct ceph_export *export =
+		container_of(export_pub, struct ceph_export, export);
 	/* The number of Ceph OSDs in the cluster */
 	unsigned int num_osds = ceph_ll_num_osds(export->cmount);
 	/* Minimal information needed to get layout info */
@@ -333,10 +334,11 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 			  struct fsal_layoutget_res *res)
 {
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(req_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(req_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' object handle */
-	struct handle *handle = container_of(obj_pub, struct handle, handle);
+	struct ceph_handle *handle =
+		container_of(obj_pub, struct ceph_handle, handle);
 	/* Structure containing the storage parameters of the file within
 	   the Ceph cluster. */
 	struct ceph_file_layout file_layout;
@@ -554,10 +556,11 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
 			     const struct fsal_layoutreturn_arg *arg)
 {
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(req_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(req_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' object handle */
-	struct handle *handle = container_of(obj_pub, struct handle, handle);
+	struct ceph_handle *handle =
+		container_of(obj_pub, struct ceph_handle, handle);
 
 	/* Sanity check on type */
 	if (arg->lo_type != LAYOUT4_NFSV4_1_FILES) {
@@ -615,10 +618,11 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 			     struct fsal_layoutcommit_res *res)
 {
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(req_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(req_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' object handle */
-	struct handle *handle = container_of(obj_pub, struct handle, handle);
+	struct ceph_handle *handle =
+		container_of(obj_pub, struct ceph_handle, handle);
 	/* Old stat, so we don't truncate file or reverse time */
 	struct ceph_statx stxold;
 	/* new stat to set time and size */

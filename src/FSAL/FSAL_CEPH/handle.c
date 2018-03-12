@@ -59,7 +59,8 @@
 static void release(struct fsal_obj_handle *obj_pub)
 {
 	/* The private 'full' handle */
-	struct handle *obj = container_of(obj_pub, struct handle, handle);
+	struct ceph_handle *obj =
+			container_of(obj_pub, struct ceph_handle, handle);
 
 	if (obj != obj->export->root)
 		deconstruct_handle(obj);
@@ -85,10 +86,11 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
 	/* Stat output */
 	struct ceph_statx stx;
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
-	struct handle *dir = container_of(dir_pub, struct handle, handle);
-	struct handle *obj = NULL;
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+	struct ceph_handle *dir =
+		container_of(dir_pub, struct ceph_handle, handle);
+	struct ceph_handle *obj = NULL;
 	struct Inode *i = NULL;
 
 	LogFullDebug(COMPONENT_FSAL, "Lookup %s", path);
@@ -133,10 +135,11 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' directory handle */
-	struct handle *dir = container_of(dir_pub, struct handle, handle);
+	struct ceph_handle *dir =
+		container_of(dir_pub, struct ceph_handle, handle);
 	/* The director descriptor */
 	struct ceph_dir_result *dir_desc = NULL;
 	/* Cookie marking the start of the readdir */
@@ -168,7 +171,7 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 			fsal_status = ceph2fsal_error(rc);
 			goto closedir;
 		} else if (rc == 1) {
-			struct handle *obj;
+			struct ceph_handle *obj;
 			struct attrlist attrs;
 			enum fsal_dir_result cb_rc;
 
@@ -237,15 +240,16 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' directory handle */
-	struct handle *dir = container_of(dir_hdl, struct handle, handle);
+	struct ceph_handle *dir =
+		container_of(dir_hdl, struct ceph_handle, handle);
 	/* Stat result */
 	struct ceph_statx stx;
 	mode_t unix_mode;
 	/* Newly created object */
-	struct handle *obj = NULL;
+	struct ceph_handle *obj = NULL;
 	struct Inode *i = NULL;
 	fsal_status_t status;
 
@@ -332,10 +336,11 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' directory handle */
-	struct handle *dir = container_of(dir_hdl, struct handle, handle);
+	struct ceph_handle *dir =
+			container_of(dir_hdl, struct ceph_handle, handle);
 	/* Newly opened file descriptor */
 	struct Inode *i = NULL;
 	/* Status after create */
@@ -343,7 +348,7 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 	mode_t unix_mode;
 	dev_t unix_dev = 0;
 	/* Newly created object */
-	struct handle *obj;
+	struct ceph_handle *obj;
 	fsal_status_t status;
 
 	unix_mode = fsal2unix_mode(attrib->mode)
@@ -445,15 +450,16 @@ static fsal_status_t ceph_fsal_symlink(struct fsal_obj_handle *dir_hdl,
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' directory handle */
-	struct handle *dir = container_of(dir_hdl, struct handle, handle);
+	struct ceph_handle *dir =
+		container_of(dir_hdl, struct ceph_handle, handle);
 	/* Stat result */
 	struct ceph_statx stx;
 	struct Inode *i = NULL;
 	/* Newly created object */
-	struct handle *obj = NULL;
+	struct ceph_handle *obj = NULL;
 	fsal_status_t status;
 
 	rc = fsal_ceph_ll_symlink(export->cmount, dir->i, name, link_path,
@@ -520,10 +526,11 @@ static fsal_status_t ceph_fsal_readlink(struct fsal_obj_handle *link_pub,
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' directory handle */
-	struct handle *link = container_of(link_pub, struct handle, handle);
+	struct ceph_handle *link =
+		container_of(link_pub, struct ceph_handle, handle);
 	/* Pointer to the Ceph link content */
 	char content[PATH_MAX];
 
@@ -558,10 +565,11 @@ static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' directory handle */
-	struct handle *handle = container_of(handle_pub, struct handle, handle);
+	struct ceph_handle *handle =
+		container_of(handle_pub, struct ceph_handle, handle);
 	/* Stat buffer */
 	struct ceph_statx stx;
 
@@ -601,13 +609,14 @@ static fsal_status_t ceph_fsal_link(struct fsal_obj_handle *handle_pub,
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' object handle */
-	struct handle *handle = container_of(handle_pub, struct handle, handle);
+	struct ceph_handle *handle =
+		container_of(handle_pub, struct ceph_handle, handle);
 	/* The private 'full' destination directory handle */
-	struct handle *destdir =
-	    container_of(destdir_pub, struct handle, handle);
+	struct ceph_handle *destdir =
+		container_of(destdir_pub, struct ceph_handle, handle);
 
 	rc = fsal_ceph_ll_link(export->cmount, handle->i, destdir->i, name,
 				op_ctx->creds);
@@ -640,12 +649,14 @@ static fsal_status_t ceph_fsal_rename(struct fsal_obj_handle *obj_hdl,
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' object handle */
-	struct handle *olddir = container_of(olddir_pub, struct handle, handle);
+	struct ceph_handle *olddir =
+		container_of(olddir_pub, struct ceph_handle, handle);
 	/* The private 'full' destination directory handle */
-	struct handle *newdir = container_of(newdir_pub, struct handle, handle);
+	struct ceph_handle *newdir =
+		container_of(newdir_pub, struct ceph_handle, handle);
 
 	rc = fsal_ceph_ll_rename(export->cmount, olddir->i, old_name,
 					newdir->i, new_name, op_ctx->creds);
@@ -675,10 +686,11 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
 	/* Generic status return */
 	int rc = 0;
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' object handle */
-	struct handle *dir = container_of(dir_pub, struct handle, handle);
+	struct ceph_handle *dir =
+			container_of(dir_pub, struct ceph_handle, handle);
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Unlink %s, I think it's a %s",
@@ -713,14 +725,14 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-fsal_status_t ceph_open_my_fd(struct handle *myself,
+fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
 			      fsal_openflags_t openflags,
 			      int posix_flags,
 			      struct ceph_fd *my_fd)
 {
 	int rc;
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "my_fd = %p my_fd->fd = %p openflags = %x, posix_flags = %x",
@@ -756,7 +768,8 @@ fsal_status_t ceph_open_my_fd(struct handle *myself,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t ceph_close_my_fd(struct handle *handle, struct ceph_fd *my_fd)
+fsal_status_t ceph_close_my_fd(struct ceph_handle *handle,
+	struct ceph_fd *my_fd)
 {
 	int rc = 0;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -790,8 +803,9 @@ static fsal_status_t ceph_open_func(struct fsal_obj_handle *obj_hdl,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	return ceph_open_my_fd(container_of(obj_hdl, struct handle, handle),
-			       openflags, posix_flags, (struct ceph_fd *)fd);
+	return ceph_open_my_fd(container_of(obj_hdl,
+		struct ceph_handle, handle), openflags,
+		posix_flags, (struct ceph_fd *)fd);
 }
 
 /**
@@ -806,8 +820,8 @@ static fsal_status_t ceph_open_func(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t ceph_close_func(struct fsal_obj_handle *obj_hdl,
 				     struct fsal_fd *fd)
 {
-	return ceph_close_my_fd(container_of(obj_hdl, struct handle, handle),
-				(struct ceph_fd *)fd);
+	return ceph_close_my_fd(container_of(obj_hdl,
+		struct ceph_handle, handle), (struct ceph_fd *)fd);
 }
 
 /**
@@ -825,7 +839,8 @@ static fsal_status_t ceph_fsal_close(struct fsal_obj_handle *obj_hdl)
 {
 	fsal_status_t status;
 	/* The private 'full' object handle */
-	struct handle *handle = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *handle =
+			container_of(obj_hdl, struct ceph_handle, handle);
 
 	if (handle->fd.openflags == FSAL_O_CLOSED)
 		return fsalstat(ERR_FSAL_NOT_OPENED, 0);
@@ -920,10 +935,10 @@ fsal_status_t ceph_merge(struct fsal_obj_handle *orig_hdl,
 		/* We need to merge the share reservations on this file.
 		 * This could result in ERR_FSAL_SHARE_DENIED.
 		 */
-		struct handle *orig, *dupe;
+		struct ceph_handle *orig, *dupe;
 
-		orig = container_of(orig_hdl, struct handle, handle);
-		dupe = container_of(dupe_hdl, struct handle, handle);
+		orig = container_of(orig_hdl, struct ceph_handle, handle);
+		dupe = container_of(dupe_hdl, struct ceph_handle, handle);
 
 		/* This can block over an I/O operation. */
 		PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
@@ -1016,12 +1031,12 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 	mode_t unix_mode = 0;
 	fsal_status_t status = {0, 0};
 	struct ceph_fd *my_fd = NULL;
-	struct handle *myself, *hdl = NULL;
+	struct ceph_handle *myself, *hdl = NULL;
 	struct ceph_statx stx;
 	bool truncated;
 	bool created = false;
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	struct Inode *i = NULL;
 	Fh *fd;
 
@@ -1032,7 +1047,7 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
 		my_fd = &container_of(state, struct ceph_state_fd,
 				      state)->ceph_fd;
 
-	myself = container_of(obj_hdl, struct handle, handle);
+	myself = container_of(obj_hdl, struct ceph_handle, handle);
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
@@ -1373,8 +1388,8 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
  fileerr:
 
 	/* Close the file we just opened. */
-	(void) ceph_close_my_fd(container_of(*new_obj, struct handle, handle),
-				my_fd);
+	(void) ceph_close_my_fd(container_of(*new_obj,
+		struct ceph_handle, handle), my_fd);
 
 	/* Release the handle we just allocated. */
 	(*new_obj)->obj_ops.release(*new_obj);
@@ -1432,7 +1447,8 @@ fsal_status_t ceph_reopen2(struct fsal_obj_handle *obj_hdl,
 	struct ceph_fd temp_fd = {
 			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, NULL };
 	struct ceph_fd *my_fd = &temp_fd, *my_share_fd;
-	struct handle *myself = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	fsal_status_t status = {0, 0};
 	int posix_flags = 0;
 	fsal_openflags_t old_openflags;
@@ -1506,7 +1522,8 @@ fsal_status_t ceph_find_fd(Fh **fd,
 			   bool *closefd,
 			   bool open_for_locks)
 {
-	struct handle *myself = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	struct ceph_fd temp_fd = {
 			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, NULL };
 	struct ceph_fd *out_fd = &temp_fd;
@@ -1551,14 +1568,15 @@ void ceph_read2(struct fsal_obj_handle *obj_hdl,
 		struct fsal_io_arg *read_arg,
 		void *caller_arg)
 {
-	struct handle *myself = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	Fh *my_fd = NULL;
 	ssize_t nb_read;
 	fsal_status_t status;
 	bool has_lock = false;
 	bool closefd = false;
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	struct ceph_fd *ceph_fd = NULL;
 	uint64_t offset = read_arg->offset;
 	int i;
@@ -1661,7 +1679,8 @@ void ceph_write2(struct fsal_obj_handle *obj_hdl,
 		 struct fsal_io_arg *write_arg,
 		 void *caller_arg)
 {
-	struct handle *myself = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	ssize_t nb_written;
 	fsal_status_t status;
 	int i, retval = 0;
@@ -1669,8 +1688,8 @@ void ceph_write2(struct fsal_obj_handle *obj_hdl,
 	bool has_lock = false;
 	bool closefd = false;
 	fsal_openflags_t openflags = FSAL_O_WRITE;
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	struct ceph_fd *ceph_fd = NULL;
 	uint64_t offset = write_arg->offset;
 
@@ -1762,7 +1781,8 @@ fsal_status_t ceph_commit2(struct fsal_obj_handle *obj_hdl,
 			   off_t offset,
 			   size_t len)
 {
-	struct handle *myself = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	fsal_status_t status;
 	int retval;
 	struct ceph_fd temp_fd = {
@@ -1770,8 +1790,8 @@ fsal_status_t ceph_commit2(struct fsal_obj_handle *obj_hdl,
 	struct ceph_fd *out_fd = &temp_fd;
 	bool has_lock = false;
 	bool closefd = false;
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 
 	/* Make sure file is open in appropriate mode.
 	 * Do not check share reservation.
@@ -1827,7 +1847,8 @@ fsal_status_t ceph_lock_op2(struct fsal_obj_handle *obj_hdl,
 			    fsal_lock_param_t *request_lock,
 			    fsal_lock_param_t *conflicting_lock)
 {
-	struct handle *myself = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	struct flock lock_args;
 	fsal_status_t status = {0, 0};
 	int retval = 0;
@@ -1836,8 +1857,8 @@ fsal_status_t ceph_lock_op2(struct fsal_obj_handle *obj_hdl,
 	bool closefd = false;
 	bool bypass = false;
 	fsal_openflags_t openflags = FSAL_O_RDWR;
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	struct ceph_fd *ceph_fd = NULL;
 
 	LogFullDebug(COMPONENT_FSAL,
@@ -1990,7 +2011,8 @@ static void ceph_deleg_cb(Fh *fh, void *vhdl)
 {
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *obj_hdl = vhdl;
-	struct handle *hdl = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *hdl =
+		container_of(obj_hdl, struct ceph_handle, handle);
 	struct gsh_buffdesc key = {
 		.addr = &hdl->vi,
 		.len = sizeof(vinodeno_t)
@@ -2010,7 +2032,8 @@ static fsal_status_t ceph_lease_op2(struct fsal_obj_handle *obj_hdl,
 				     state_t *state,
 				     void *owner, fsal_deleg_t deleg)
 {
-	struct handle *myself = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *myself =
+		container_of(obj_hdl, struct ceph_handle, handle);
 	fsal_status_t status = {0, 0};
 	int retval = 0;
 	Fh *my_fd = NULL;
@@ -2093,13 +2116,14 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 			    struct state_t *state,
 			    struct attrlist *attrib_set)
 {
-	struct handle *myself = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *myself =
+		container_of(obj_hdl, struct ceph_handle, handle);
 	fsal_status_t status = {0, 0};
 	int rc = 0;
 	bool has_lock = false;
 	bool closefd = false;
-	struct export *export =
-	    container_of(op_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* Stat buffer */
 	struct ceph_statx stx;
 	/* Mask of attributes to set */
@@ -2261,7 +2285,8 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t ceph_close2(struct fsal_obj_handle *obj_hdl,
 			 struct state_t *state)
 {
-	struct handle *myself = container_of(obj_hdl, struct handle, handle);
+	struct ceph_handle *myself =
+		container_of(obj_hdl, struct ceph_handle, handle);
 	struct ceph_fd *my_fd = &container_of(state, struct ceph_state_fd,
 					      state)->ceph_fd;
 
@@ -2302,8 +2327,8 @@ static fsal_status_t handle_to_wire(const struct fsal_obj_handle *handle_pub,
 				    struct gsh_buffdesc *fh_desc)
 {
 	/* The private 'full' object handle */
-	const struct handle *handle =
-	    container_of(handle_pub, const struct handle, handle);
+	const struct ceph_handle *handle =
+		container_of(handle_pub, const struct ceph_handle, handle);
 
 	switch (output_type) {
 		/* Digested Handles */
@@ -2340,7 +2365,8 @@ static void handle_to_key(struct fsal_obj_handle *handle_pub,
 			  struct gsh_buffdesc *fh_desc)
 {
 	/* The private 'full' object handle */
-	struct handle *handle = container_of(handle_pub, struct handle, handle);
+	struct ceph_handle *handle =
+		container_of(handle_pub, struct ceph_handle, handle);
 
 	fh_desc->addr = &handle->vi;
 	fh_desc->len = sizeof(vinodeno_t);

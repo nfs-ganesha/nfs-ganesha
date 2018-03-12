@@ -147,8 +147,8 @@ static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_STR("user_id", 0, MAXUIDLEN, NULL, export, user_id),
-	CONF_ITEM_STR("secret_access_key", 0, MAXSECRETLEN, NULL, export,
+	CONF_ITEM_STR("user_id", 0, MAXUIDLEN, NULL, ceph_export, user_id),
+	CONF_ITEM_STR("secret_access_key", 0, MAXSECRETLEN, NULL, ceph_export,
 			secret_key),
 	CONFIG_EOL
 };
@@ -163,7 +163,7 @@ static struct config_block export_param_block = {
 };
 
 #ifdef USE_FSAL_CEPH_LL_DELEGATION
-static void enable_delegations(struct export *export)
+static void enable_delegations(struct ceph_export *export)
 {
 	struct export_perms *export_perms = &op_ctx->ctx_export->export_perms;
 
@@ -195,7 +195,7 @@ static void enable_delegations(struct export *export)
 	}
 }
 #else /* !USE_FSAL_CEPH_LL_DELEGATION */
-static inline void enable_delegations(struct export *export)
+static inline void enable_delegations(struct ceph_export *export)
 {
 }
 #endif /* USE_FSAL_CEPH_LL_DELEGATION */
@@ -229,9 +229,9 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The internal export object */
-	struct export *export = gsh_calloc(1, sizeof(struct export));
+	struct ceph_export *export = gsh_calloc(1, sizeof(struct ceph_export));
 	/* The 'private' root handle */
-	struct handle *handle = NULL;
+	struct ceph_handle *handle = NULL;
 	/* Root inode */
 	struct Inode *i = NULL;
 	/* Stat for root */

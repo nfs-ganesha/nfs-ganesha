@@ -63,8 +63,8 @@
 static void release(struct fsal_export *export_pub)
 {
 	/* The private, expanded export */
-	struct export *export =
-	    container_of(export_pub, struct export, export);
+	struct ceph_export *export =
+			container_of(export_pub, struct ceph_export, export);
 
 	deconstruct_handle(export->root);
 	export->root = 0;
@@ -100,10 +100,10 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 				 struct attrlist *attrs_out)
 {
 	/* The 'private' full export handle */
-	struct export *export =
-	    container_of(export_pub, struct export, export);
+	struct ceph_export *export =
+			container_of(export_pub, struct ceph_export, export);
 	/* The 'private' full object handle */
-	struct handle *handle = NULL;
+	struct ceph_handle *handle = NULL;
 	/* Inode pointer */
 	struct Inode *i = NULL;
 	/* FSAL status structure */
@@ -211,8 +211,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 				   struct attrlist *attrs_out)
 {
 	/* Full 'private' export structure */
-	struct export *export =
-	    container_of(export_pub, struct export, export);
+	struct ceph_export *export =
+			container_of(export_pub, struct ceph_export, export);
 	/* FSAL status to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The FSAL specific portion of the handle received by the
@@ -223,7 +223,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	/* Stat buffer */
 	struct ceph_statx stx;
 	/* Handle to be created */
-	struct handle *handle = NULL;
+	struct ceph_handle *handle = NULL;
 	/* Inode pointer */
 	struct Inode *i;
 
@@ -283,8 +283,8 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 					 fsal_dynamicfsinfo_t *info)
 {
 	/* Full 'private' export */
-	struct export *export =
-	    container_of(export_pub, struct export, export);
+	struct ceph_export *export =
+			container_of(export_pub, struct ceph_export, export);
 	/* Return value from Ceph calls */
 	int rc = 0;
 	/* Filesystem stat */

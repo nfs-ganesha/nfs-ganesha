@@ -110,8 +110,8 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 			bool * const end_of_file)
 {
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(req_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(req_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' DS handle */
 	struct ds *ds = container_of(ds_pub, struct ds, ds);
 	/* The OSD number for this machine */
@@ -196,8 +196,8 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 			 stable_how4 * const stability_got)
 {
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(req_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(req_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' DS handle */
 	struct ds *ds = container_of(ds_pub, struct ds, ds);
 	/* The OSD number for this host */
@@ -344,8 +344,8 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 {
 #ifdef COMMIT_FIX
 	/* The private 'full' export */
-	struct export *export =
-	    container_of(req_ctx->fsal_export, struct export, export);
+	struct ceph_export *export =
+		container_of(req_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' DS handle */
 	struct ds *ds = container_of(ds_pub, struct ds, ds);
 	/* Error return from Ceph */
