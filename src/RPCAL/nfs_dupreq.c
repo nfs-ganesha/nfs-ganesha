@@ -979,34 +979,24 @@ static inline bool nfs_dupreq_v4_cacheable(nfs_request_t *reqnfs)
 dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 				 struct svc_req *req)
 {
-	dupreq_status_t status = DUPREQ_SUCCESS;
 	dupreq_entry_t *dv = NULL, *dk = NULL;
 	drc_t *drc;
-	enum drc_type dtype = get_drc_type(req);
+	dupreq_status_t status = DUPREQ_SUCCESS;
+
+	if (!(reqnfs->funcdesc->dispatch_behaviour & CAN_BE_DUP))
+		goto no_cache;
 
 	if (nfs_param.core_param.drc.disabled)
 		goto no_cache;
 
-	switch (dtype) {
-	case DRC_TCP_V4:
-		if (reqnfs->funcdesc->service_function == nfs4_Compound) {
-			if (!nfs_dupreq_v4_cacheable(reqnfs)) {
-				/* for such requests, we merely thread
-				 * the request through for later
-				 * cleanup--all v41 caching is handled
-				 * by the v41 slot reply cache */
-				goto no_cache;
-			}
-		}
-		break;
-	default:
-		/* likewise for other protocol requests we may not or choose not
-		 * to cache */
-		if (!(reqnfs->funcdesc->dispatch_behaviour & CAN_BE_DUP))
-			goto no_cache;
-		break;
+	if (reqnfs->funcdesc->service_function == nfs4_Compound
+	 && !nfs_dupreq_v4_cacheable(reqnfs)) {
+		/* For such requests, we merely thread the request
+		 * through for later cleanup.  All v41 caching is
+		 * handled by the v41 slot reply cache.
+		 */
+		goto no_cache;
 	}
-
 
 	drc = nfs_dupreq_get_drc(req);
 	dk = alloc_dupreq();
