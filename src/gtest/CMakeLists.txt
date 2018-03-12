@@ -157,3 +157,17 @@ target_link_libraries(test_rename_latency
   )
 set_target_properties(test_rename_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
+
+set(test_rbt_SRCS
+  test_rbt.cc
+  )
+
+add_executable(test_rbt
+  ${test_rbt_SRCS})
+add_sanitizers(test_rbt)
+
+target_link_libraries(test_rbt
+  ${GTEST_LIBRARIES}
+  )
+set_target_properties(test_rbt PROPERTIES COMPILE_FLAGS
+  "${UNITTEST_CXX_FLAGS}")

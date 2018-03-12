@@ -446,7 +446,7 @@ static fattr_xdr_result encode_type(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result decode_type(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint32_t t;
+	uint32_t t = 0;
 
 	if (!xdr_u_int32_t(xdr, &t))
 		return FATTR_XDR_FAILED;
