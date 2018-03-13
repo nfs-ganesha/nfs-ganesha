@@ -361,9 +361,6 @@ option(USE_ADMIN_TOOLS "Package Admin scripts" OFF)
 # Build and package Python gui admin scripts for managing via DBus
 option(USE_GUI_ADMIN_TOOLS "Package GUI Admin scripts" ON)
 
-# Enable GCC Thread-sanitizer
-option(USE_TSAN "Enable GCC Thread-Sanitizer" OFF)
-
 # Enable LTTng tracing
 option(USE_LTTNG "Enable LTTng tracing" OFF)
 
@@ -1100,7 +1097,6 @@ message(STATUS "FSAL_DESTINATION = ${FSAL_DESTINATION}")
 message(STATUS "USE_ADMIN_TOOLS = ${USE_ADMIN_TOOLS}")
 message(STATUS "USE_GUI_ADMIN_TOOLS = ${USE_GUI_ADMIN_TOOLS}")
 message(STATUS "MODULES_PATH = ${MODULES_PATH}")
-message(STATUS "USE_TSAN = ${USE_TSAN}")
 message(STATUS "USE_LTTNG = ${USE_LTTNG}")
 message(STATUS "USE_BLKIN = ${USE_BLKIN}")
 message(STATUS "USE_VSOCK = ${USE_VSOCK}")
@@ -1243,11 +1239,6 @@ set(USE_ADMIN_TOOLS ${USE_ADMIN_TOOLS}
 set(USE_GUI_ADMIN_TOOLS ${USE_GUI_ADMIN_TOOLS}
   CACHE BOOL
   "Package GUI Admin Scripts"
-  FORCE)
-
-set(USE_TSAN ${USE_TSAN}
-  CACHE BOOL
-  "Enable GCC Thread-Sanitizer"
   FORCE)
 
 set(USE_LTTNG ${USE_LTTNG}
@@ -1476,6 +1467,3 @@ if(DOXYGEN_FOUND)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 endif(DOXYGEN_FOUND)
-
-# Include thread-sanitizer module
-include(${CMAKE_SOURCE_DIR}/cmake/tsan.cmake)
