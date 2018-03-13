@@ -60,5 +60,5 @@ function (add_sanitize_thread TARGET)
         return()
     endif ()
 
-    saitizer_add_flags(${TARGET} "ThreadSanitizer" "TSan")
+    sanitizer_add_flags(${TARGET} "ThreadSanitizer" "TSan")
 endfunction ()
