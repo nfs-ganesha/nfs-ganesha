@@ -204,6 +204,10 @@ fsal_ceph_ll_setattr(struct ceph_mount_info *cmount, Inode *i,
 		return -ENOMEM;
 
 	ret = ceph_ll_setattr(cmount, i, stx, mask, perms);
+#ifdef USE_FSAL_CEPH_LL_SYNC_INODE
+	if (!ret)
+		ret = ceph_ll_sync_inode(cmount, i, 0);
+#endif /* USE_FSAL_CEPH_LL_SYNC_INODE */
 	ceph_userperm_destroy(perms);
 	return ret;
 }
