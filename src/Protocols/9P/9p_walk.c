@@ -147,7 +147,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		/* Refcounted object (incremented at the end of the function,
 		 * if there was no errors). */
-		pnewfid->export = pfid->export;
+		pnewfid->fid_export = pfid->fid_export;
 		pnewfid->ucred = pfid->ucred;
 
 		/* Build the qid */
@@ -191,10 +191,10 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	 * to one to represent the state_t being embeded in the fid. This
 	 * prevents it from ever being reduced to zero by dec_state_t_ref.
 	 */
-	pnewfid->state = pnewfid->export->fsal_export->exp_ops.alloc_state(
-						pnewfid->export->fsal_export,
-						STATE_TYPE_9P_FID,
-						NULL);
+	pnewfid->state = pnewfid->fid_export->fsal_export->exp_ops.alloc_state(
+					       pnewfid->fid_export->fsal_export,
+					       STATE_TYPE_9P_FID,
+					       NULL);
 
 	glist_init(&pnewfid->state->state_data.fid.state_locklist);
 	pnewfid->state->state_refcount = 1;
@@ -208,7 +208,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* Increment refcounters. */
 	uid2grp_hold_group_data(pnewfid->gdata);
 	get_9p_user_cred_ref(pnewfid->ucred);
-	get_gsh_export_ref(pnewfid->export);
+	get_gsh_export_ref(pnewfid->fid_export);
 
 	if (pnewfid->ppentry != NULL) {
 		/* Increments refcount for ppentry */

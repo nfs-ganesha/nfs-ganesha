@@ -97,8 +97,8 @@ int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	/* Check that pfid and pdfid are in the same export. */
-	if (ptargetfid->export != NULL && pdfid->export != NULL &&
-	    ptargetfid->export->export_id != pdfid->export->export_id) {
+	if (ptargetfid->fid_export != NULL && pdfid->fid_export != NULL &&
+	    ptargetfid->fid_export->export_id != pdfid->fid_export->export_id) {
 		LogDebug(COMPONENT_9P,
 			 "request on targetfid=%u and dfid=%u crosses exports",
 			 *targetfid, *dfid);

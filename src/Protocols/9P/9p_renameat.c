@@ -99,8 +99,8 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	/* Check that poldfid and pnewfid are in the same export. */
-	if (poldfid->export != NULL && pnewfid->export != NULL &&
-	    poldfid->export->export_id != pnewfid->export->export_id) {
+	if (poldfid->fid_export != NULL && pnewfid->fid_export != NULL &&
+	    poldfid->fid_export->export_id != pnewfid->fid_export->export_id) {
 		LogDebug(COMPONENT_9P,
 			 "request on oldfid=%u and newfid=%u crosses exports",
 			 *oldfid, *newfid);

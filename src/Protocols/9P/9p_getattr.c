@@ -154,7 +154,7 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	 *     0LL; */
 	rdev =
 	    (*request_mask & _9P_GETATTR_RDEV) ?
-		(u64) pfid->export->filesystem_id.major :
+		(u64) pfid->fid_export->filesystem_id.major :
 		0LL;
 	size =
 	    (*request_mask & _9P_GETATTR_SIZE) ?

@@ -320,7 +320,7 @@ struct _9p_xattr_desc {
 struct _9p_fid {
 	u32 fid;
 	/** Ganesha export of the file (refcounted). */
-	struct gsh_export *export;
+	struct gsh_export *fid_export;
 	struct _9p_user_cred *ucred; /*< Client credentials (refcounted). */
 	struct group_data *gdata;
 	struct fsal_obj_handle *pentry;

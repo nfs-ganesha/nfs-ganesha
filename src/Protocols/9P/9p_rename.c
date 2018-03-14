@@ -95,8 +95,8 @@ int _9p_rename(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	/* Check that pfid and pdfid are in the same export. */
-	if (pfid->export != NULL && pdfid->export != NULL &&
-	    pfid->export->export_id != pdfid->export->export_id) {
+	if (pfid->fid_export != NULL && pdfid->fid_export != NULL &&
+	    pfid->fid_export->export_id != pdfid->fid_export->export_id) {
 		LogDebug(COMPONENT_9P,
 			 "request on fid=%u and dfid=%u crosses exports",
 			 *fid, *dfid);

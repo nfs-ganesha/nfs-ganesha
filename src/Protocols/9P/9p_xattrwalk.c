@@ -242,7 +242,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* hold reference on gdata */
 	uid2grp_hold_group_data(pxattrfid->gdata);
 
-	get_gsh_export_ref(pfid->export);
+	get_gsh_export_ref(pfid->fid_export);
 	get_9p_user_cred_ref(pfid->ucred);
 
 	if (pxattrfid->ppentry != NULL) {
