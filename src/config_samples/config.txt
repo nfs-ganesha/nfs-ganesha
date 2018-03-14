@@ -184,7 +184,8 @@ NFSV4 {}
 
 	Delegations(bool, default false)
 
-	RecoveryBackend(path, default "fs")
+	RecoveryBackend(enum, values [fs, fs_ng, rados_kv, rados_ng],
+			default fs)
 
 	Minor_Versions(enum list, values [0, 1, 2], default [0, 1, 2])
 
