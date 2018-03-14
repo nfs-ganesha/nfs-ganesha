@@ -6,14 +6,14 @@
 #endif
 
 struct pxy_client_params {
-	unsigned int retry_sleeptime;
+	uint32_t retry_sleeptime;
 	sockaddr_t srv_addr;
-	unsigned int srv_prognum;
-	unsigned int srv_sendsize;
-	unsigned int srv_recvsize;
-	unsigned int srv_timeout;
+	uint32_t srv_prognum;
+	uint64_t srv_sendsize;
+	uint64_t srv_recvsize;
+	uint32_t srv_timeout;
 	uint16_t srv_port;
-	unsigned int use_privileged_client_port;
+	bool use_privileged_client_port;
 	char *remote_principal;
 	char *keytab;
 	unsigned int cred_lifetime;
@@ -21,7 +21,7 @@ struct pxy_client_params {
 	bool active_krb5;
 
 	/* initialization info for handle mapping */
-	int enable_handle_mapping;
+	bool enable_handle_mapping;
 
 #ifdef PROXY_HANDLE_MAPPING
 	handle_map_param_t hdlmap;
