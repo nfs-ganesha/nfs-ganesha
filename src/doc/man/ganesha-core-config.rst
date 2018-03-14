@@ -286,8 +286,10 @@ pnfs_ds(bool, default false)
 
 RecoveryBackend(path, default "fs")
     Use different backend for client info:
-    - fs : shared filesystem
+    - fs : filesystem
+    - fs_ng: filesystem (better resiliency)
     - rados_kv : rados key-value
+    - rados_ng : rados key-value (better resiliency)
 
 Minor_Versions(enum list, values [0, 1, 2], default [0, 1, 2])
     List of supported NFSV4 minor version numbers.
