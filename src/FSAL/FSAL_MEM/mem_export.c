@@ -164,11 +164,6 @@ static uint32_t mem_fs_umask(struct fsal_export *exp_hdl)
 	return fsal_umask(&exp_hdl->fsal->fs_info);
 }
 
-static uint32_t mem_fs_xattr_access_rights(struct fsal_export *exp_hdl)
-{
-	return fsal_xattr_access_rights(&exp_hdl->fsal->fs_info);
-}
-
 /* extract a file handle from a buffer.
  * do verification checks and flag any and all suspicious bits.
  * Return an updated fh_desc into whatever was passed.  The most
@@ -259,7 +254,6 @@ void mem_export_ops_init(struct export_ops *ops)
 	ops->fs_acl_support = mem_fs_acl_support;
 	ops->fs_supported_attrs = mem_fs_supported_attrs;
 	ops->fs_umask = mem_fs_umask;
-	ops->fs_xattr_access_rights = mem_fs_xattr_access_rights;
 	ops->alloc_state = mem_alloc_state;
 }
 

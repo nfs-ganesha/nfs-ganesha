@@ -62,7 +62,6 @@ struct ceph_fsal_module CephFSM = {
 		.fs_info = {
 		#if 0
 			.umask = 0,
-			.xattr_access_rights = 0,
 		#endif
 			/* fixed */
 			.symlink_support = true,
@@ -89,8 +88,6 @@ static struct config_item ceph_items[] = {
 		ceph_fsal_module, conf_path),
 	CONF_ITEM_MODE("umask", 0,
 			ceph_fsal_module, fsal.fs_info.umask),
-	CONF_ITEM_MODE("xattr_access_rights", 0,
-			ceph_fsal_module, fsal.fs_info.xattr_access_rights),
 	CONFIG_EOL
 };
 

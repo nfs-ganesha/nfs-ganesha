@@ -41,8 +41,6 @@ XFS {}
 
 **auth_xdev_export(bool, default false)**
 
-**xattr_access_rights(mode, range 0 to 0777, default 0400)**
-
 See also
 ==============================
 :doc:`ganesha-log-config <ganesha-log-config>`\(8)

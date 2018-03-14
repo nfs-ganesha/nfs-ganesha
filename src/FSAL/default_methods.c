@@ -462,15 +462,6 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 	return 0000;
 }
 
-/* fs_xattr_access_rights
- * default case is no access
- */
-
-static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
-{
-	return 0000;
-}
-
 /* check_quota
  * return happiness for now.
  */
@@ -648,7 +639,6 @@ struct export_ops def_export_ops = {
 	.fs_acl_support = fs_acl_support,
 	.fs_supported_attrs = fs_supported_attrs,
 	.fs_umask = fs_umask,
-	.fs_xattr_access_rights = fs_xattr_access_rights,
 	.check_quota = check_quota,
 	.get_quota = get_quota,
 	.set_quota = set_quota,

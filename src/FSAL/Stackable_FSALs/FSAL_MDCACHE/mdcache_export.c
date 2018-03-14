@@ -468,27 +468,6 @@ static uint32_t mdcache_fs_umask(struct fsal_export *exp_hdl)
 }
 
 /**
- * @brief Get the configured xattr access mask
- *
- * MDCACHE only caches metadata, so it imposes no restrictions itself.
- *
- * @param[in] exp_hdl	Export to query
- * @return POSIX access bits for xattrs
- */
-static uint32_t mdcache_fs_xattr_access_rights(struct fsal_export *exp_hdl)
-{
-	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
-	uint32_t result;
-
-	subcall_raw(exp,
-		result = sub_export->exp_ops.fs_xattr_access_rights(sub_export)
-	       );
-
-	return result;
-}
-
-/**
  * @brief Check quota on a file
  *
  * MDCACHE only caches metadata, so it imposes no restrictions itself.
@@ -849,7 +828,6 @@ void mdcache_export_ops_init(struct export_ops *ops)
 	ops->fs_acl_support = mdcache_fs_acl_support;
 	ops->fs_supported_attrs = mdcache_fs_supported_attrs;
 	ops->fs_umask = mdcache_fs_umask;
-	ops->fs_xattr_access_rights = mdcache_fs_xattr_access_rights;
 	ops->check_quota = mdcache_check_quota;
 	ops->get_quota = mdcache_get_quota;
 	ops->set_quota = mdcache_set_quota;

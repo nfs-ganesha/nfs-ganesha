@@ -91,8 +91,6 @@ static struct config_item panfs_params[] = {
 		       fsal_staticfsinfo_t, umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
 		       fsal_staticfsinfo_t, auth_exportpath_xdev),
-	CONF_ITEM_MODE("xattr_access_rights", 0400,
-		       fsal_staticfsinfo_t, xattr_access_rights),
 	CONFIG_EOL
 };
 

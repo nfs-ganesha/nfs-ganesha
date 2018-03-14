@@ -39,8 +39,6 @@ CEPH {}
 
 **umask(mode, range 0 to 0777, default 0)**
 
-**xattr_access_rights(mode, range 0 to 0777, default 0)**
-
 See also
 ==============================
 :doc:`ganesha-config <ganesha-config>`\(8)

@@ -487,22 +487,6 @@ static uint32_t fs_umask(struct fsal_export *export_pub)
 }
 
 /**
- * @brief Return the mode for extended attributes
- *
- * This function returns the access mode applied to extended
- * attributes.  Dubious.
- *
- * @param[in] export_pub The public export
- *
- * @return 0644.
- */
-
-static uint32_t fs_xattr_access_rights(struct fsal_export *export_pub)
-{
-	return fsal_xattr_access_rights(&export_pub->fsal->fs_info);
-}
-
-/**
  * @brief Set operations for exports
  *
  * This function overrides operations that we've implemented, leaving
@@ -529,7 +513,6 @@ void export_ops_init(struct export_ops *ops)
 	ops->fs_acl_support = fs_acl_support;
 	ops->fs_supported_attrs = fs_supported_attrs;
 	ops->fs_umask = fs_umask;
-	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 	ops->alloc_state = ceph_alloc_state;
 	ops->free_state = ceph_free_state;
 #ifdef CEPH_PNFS

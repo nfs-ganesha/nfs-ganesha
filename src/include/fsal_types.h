@@ -677,8 +677,6 @@ typedef struct fsal_staticfsinfo_t {
 					   it is possible to cross junctions
 					   for resolving an NFS export path. */
 
-	uint32_t xattr_access_rights;	/*< This indicates who is allowed
-					   to read/modify xattrs value. */
 	uint32_t delegations;	/*< fsal supports delegations */
 	bool pnfs_mds;		/*< fsal supports file pnfs MDS */
 	bool pnfs_ds;		/*< fsal supports file pnfs DS */

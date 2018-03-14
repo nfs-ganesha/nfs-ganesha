@@ -31,8 +31,6 @@ GPFS {}
 
 **auth_xdev_export(bool, default false)**
 
-**xattr_access_rights(mode, range 0 to 0777, default 0400)**
-
 **Delegations(enum, default read)**
 
   Possible values:

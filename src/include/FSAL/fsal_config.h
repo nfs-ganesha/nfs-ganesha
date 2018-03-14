@@ -24,5 +24,3 @@ uint32_t fsal_maxread(struct fsal_staticfsinfo_t *info);
 uint32_t fsal_maxwrite(struct fsal_staticfsinfo_t *info);
 
 uint32_t fsal_umask(struct fsal_staticfsinfo_t *info);
-
-uint32_t fsal_xattr_access_rights(struct fsal_staticfsinfo_t *info);

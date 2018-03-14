@@ -974,20 +974,6 @@ struct export_ops {
  * @return creation umask.
  */
 	 uint32_t (*fs_umask)(struct fsal_export *exp_hdl);
-
-/**
- * @brief Get permissions applied to names attributes
- *
- * @note This doesn't make sense to me as an export-level parameter.
- * Permissions on named attributes could reasonably vary with
- * permission and ownership of the associated file, and some
- * attributes may be read/write while others are read-only. -- ACE
- *
- * @param[in] exp_hdl Filesystem to interrogate
- *
- * @return permissions on named attributes.
- */
-	 uint32_t (*fs_xattr_access_rights)(struct fsal_export *exp_hdl);
 /**@}*/
 
 /**@{*/

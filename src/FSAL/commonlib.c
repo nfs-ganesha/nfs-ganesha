@@ -446,8 +446,6 @@ void display_fsinfo(struct fsal_module *fsal)
 		fsal->fs_info.umask);
 	LogDebug(COMPONENT_FSAL, "  auth_exportpath_xdev  = %d  ",
 		 fsal->fs_info.auth_exportpath_xdev);
-	LogDebug(COMPONENT_FSAL, "  xattr_access_rights = %#o ",
-		 fsal->fs_info.xattr_access_rights);
 	LogDebug(COMPONENT_FSAL, "  delegations = %d  ",
 		 fsal->fs_info.delegations);
 	LogDebug(COMPONENT_FSAL, "  pnfs_mds = %d  ",

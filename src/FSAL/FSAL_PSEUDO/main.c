@@ -69,7 +69,6 @@ static struct fsal_module PSEUDOFS = {
 		.maxwrite = FSAL_MAXIOSIZE,
 		.umask = 0,
 		.auth_exportpath_xdev = false,
-		.xattr_access_rights = 0400,	/* root=RW, owner=R */
 		.link_supports_permission_checks = false,
 	}
 };

@@ -191,11 +191,6 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 	return fsal_umask(&exp_hdl->fsal->fs_info);
 }
 
-static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
-{
-	return fsal_xattr_access_rights(&exp_hdl->fsal->fs_info);
-}
-
 /* get_quota
  * return quotas for this export.
  * path could cross a lower mount boundary which could
@@ -372,7 +367,6 @@ void vfs_export_ops_init(struct export_ops *ops)
 	ops->fs_acl_support = fs_acl_support;
 	ops->fs_supported_attrs = fs_supported_attrs;
 	ops->fs_umask = fs_umask;
-	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 	ops->get_quota = get_quota;
 	ops->set_quota = set_quota;
 	ops->alloc_state = vfs_alloc_state;

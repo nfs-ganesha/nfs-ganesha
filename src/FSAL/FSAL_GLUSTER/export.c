@@ -516,15 +516,6 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 }
 
 /**
- * @brief Implements GLUSTER FSAL exportoperation fs_xattr_access_rights
- */
-
-static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
-{
-	return fsal_xattr_access_rights(&exp_hdl->fsal->fs_info);
-}
-
-/**
  * @brief Implements GLUSTER FSAL exportoperation check_quota
  */
 /*
@@ -591,7 +582,6 @@ void export_ops_init(struct export_ops *ops)
 	ops->fs_acl_support = fs_acl_support;
 	ops->fs_supported_attrs = fs_supported_attrs;
 	ops->fs_umask = fs_umask;
-	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 	ops->alloc_state = glusterfs_alloc_state;
 	ops->free_state = glusterfs_free_state;
 }

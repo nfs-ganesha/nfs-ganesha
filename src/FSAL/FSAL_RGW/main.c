@@ -98,8 +98,6 @@ static struct config_item rgw_items[] = {
 		rgw_fsal_module, init_args),
 	CONF_ITEM_MODE("umask", 0,
 			rgw_fsal_module, fsal.fs_info.umask),
-	CONF_ITEM_MODE("xattr_access_rights", 0,
-			rgw_fsal_module, fsal.fs_info.xattr_access_rights),
 	CONFIG_EOL
 };
 

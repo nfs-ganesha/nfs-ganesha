@@ -158,10 +158,4 @@ uint32_t fsal_umask(struct fsal_staticfsinfo_t *info)
 {
 	return info->umask;
 }
-
-uint32_t fsal_xattr_access_rights(struct fsal_staticfsinfo_t *info)
-{
-	return info->xattr_access_rights;
-}
-
 /** @} */
