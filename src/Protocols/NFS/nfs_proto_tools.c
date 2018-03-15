@@ -1834,7 +1834,7 @@ static fattr_xdr_result decode_rawdev(XDR *xdr, struct xdr_attrs_args *args)
  * FATTR4_SPACE_AVAIL
  */
 
-static fattr_xdr_result encode_sace_avail(XDR *xdr,
+static fattr_xdr_result encode_space_avail(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	if (!args->statfscalled)
@@ -1845,7 +1845,7 @@ static fattr_xdr_result encode_sace_avail(XDR *xdr,
 	return FATTR_XDR_SUCCESS;
 }
 
-static fattr_xdr_result decode_sace_avail(XDR *xdr,
+static fattr_xdr_result decode_space_avail(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	return inline_xdr_u_int64_t(xdr,
@@ -1857,7 +1857,7 @@ static fattr_xdr_result decode_sace_avail(XDR *xdr,
  * FATTR4_SPACE_FREE
  */
 
-static fattr_xdr_result encode_sace_free(XDR *xdr,
+static fattr_xdr_result encode_space_free(XDR *xdr,
 					  struct xdr_attrs_args *args)
 {
 	if (!args->statfscalled)
@@ -1868,7 +1868,7 @@ static fattr_xdr_result encode_sace_free(XDR *xdr,
 	return FATTR_XDR_SUCCESS;
 }
 
-static fattr_xdr_result decode_sace_free(XDR *xdr,
+static fattr_xdr_result decode_space_free(XDR *xdr,
 					  struct xdr_attrs_args *args)
 {
 	return inline_xdr_u_int64_t(xdr,
@@ -1880,7 +1880,7 @@ static fattr_xdr_result decode_sace_free(XDR *xdr,
  * FATTR4_SPACE_TOTAL
  */
 
-static fattr_xdr_result encode_sace_total(XDR *xdr,
+static fattr_xdr_result encode_space_total(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	if (!args->statfscalled)
@@ -1891,7 +1891,7 @@ static fattr_xdr_result encode_sace_total(XDR *xdr,
 	return FATTR_XDR_SUCCESS;
 }
 
-static fattr_xdr_result decode_sace_total(XDR *xdr,
+static fattr_xdr_result decode_space_total(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	return inline_xdr_u_int64_t(xdr,
@@ -2975,8 +2975,8 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_space_avail),
 		.attrmask = 0,
-		.encode = encode_sace_avail,
-		.decode = decode_sace_avail,
+		.encode = encode_space_avail,
+		.decode = decode_space_avail,
 		.access = FATTR4_ATTR_READ}
 	,
 	[FATTR4_SPACE_FREE] = {
@@ -2984,8 +2984,8 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_space_used),
 		.attrmask = 0,
-		.encode = encode_sace_free,
-		.decode = decode_sace_free,
+		.encode = encode_space_free,
+		.decode = decode_space_free,
 		.access = FATTR4_ATTR_READ}
 	,
 	[FATTR4_SPACE_TOTAL] = {
@@ -2993,8 +2993,8 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_space_total),
 		.attrmask = 0,
-		.encode = encode_sace_total,
-		.decode = decode_sace_total,
+		.encode = encode_space_total,
+		.decode = decode_space_total,
 		.access = FATTR4_ATTR_READ}
 	,
 	[FATTR4_SPACE_USED] = {
