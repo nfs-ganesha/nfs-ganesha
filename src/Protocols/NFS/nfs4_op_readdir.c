@@ -401,7 +401,7 @@ not_junction:
 
 		if (nfs4_Fattr_Fill_Error(data, &tracker_entry->attrs,
 					  rdattr_error,
-					  tracker->req_attr) == -1)
+					  tracker->req_attr, &args) == -1)
 			goto server_fault;
 	}
 

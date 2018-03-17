@@ -11,15 +11,10 @@ SET(fsalvfs_LIB_SRCS_common
    ../xattrs.c
    ../vfs_methods.h
    ../state.c
+   ../subfsal_helpers.c
    subfsal_vfs.c
+   attrs.c
 )
-
-if(ENABLE_VFS_DEBUG_ACL)
-    set(fsalvfs_LIB_SRCS_common
-        ${fsalvfs_LIB_SRCS_common}
-        attrs.c
-    )
-endif(ENABLE_VFS_DEBUG_ACL)
 
 if(USE_FSAL_VFS)
 

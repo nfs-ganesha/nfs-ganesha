@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <assert.h>
 #include "log.h"
 #include "gsh_rpc.h"
 #include "nfs4.h"
@@ -42,36 +43,6 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 #include "nfs_convert.h"
-
-static inline bool check_fs_locations(struct fsal_obj_handle *obj)
-{
-	fsal_status_t st;
-	fs_locations4 fs_locs;
-	fs_location4 fs_loc;
-	component4 fs_server;
-	char server[MAXHOSTNAMELEN];
-
-	nfs4_pathname4_alloc(&fs_locs.fs_root, NULL);
-	fs_server.utf8string_len = sizeof(server);
-	fs_server.utf8string_val = server;
-	fs_loc.server.server_len = 1;
-	fs_loc.server.server_val = &fs_server;
-	nfs4_pathname4_alloc(&fs_loc.rootpath, NULL);
-	fs_locs.locations.locations_len = 1;
-	fs_locs.locations.locations_val = &fs_loc;
-
-	/* For now allow for one fs locations, fs_locations() should set:
-	   root and update its length, can not be bigger than MAXPATHLEN
-	   path and update its length, can not be bigger than MAXPATHLEN
-	   server and update its length, can not be bigger than MAXHOSTNAMELEN
-	*/
-	st = obj->obj_ops.fs_locations(obj, &fs_locs);
-
-	nfs4_pathname4_free(&fs_locs.fs_root);
-	nfs4_pathname4_free(&fs_loc.rootpath);
-
-	return !FSAL_IS_ERROR(st);
-}
 
 /**
  * @brief Gets attributes for an entry in the FSAL.
@@ -147,8 +118,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 	 * requested along with the requested restricted attrs.
 	 */
 	if (res_GETATTR4->status == NFS4_OK &&
-	    current_obj_is_referral &&
-	    check_fs_locations(data->current_obj)) {
+	    current_obj_is_referral) {
 		bool fill_rdattr_error = true;
 		bool fslocations_requested = attribute_is_set(
 						&arg_GETATTR4->attr_request,
@@ -159,12 +129,21 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 						FATTR4_RDATTR_ERROR)) {
 				fill_rdattr_error = false;
 			}
+		} else {
+			assert(FSAL_TEST_MASK(attrs.valid_mask,
+				ATTR4_FS_LOCATIONS));
 		}
 
 		if (fill_rdattr_error) {
+			struct xdr_attrs_args args;
+
+			memset(&args, 0, sizeof(args));
+			args.attrs = &attrs;
+
 			if (nfs4_Fattr_Fill_Error(data, obj_attributes,
 						  NFS4ERR_MOVED,
-						  &arg_GETATTR4->attr_request)
+						  &arg_GETATTR4->attr_request,
+						  &args)
 			    != 0) {
 				/* Report an error. */
 				res_GETATTR4->status = NFS4ERR_SERVERFAULT;

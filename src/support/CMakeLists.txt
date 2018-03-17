@@ -58,6 +58,7 @@ SET(support_STAT_SRCS
    bsd-base64.c
    server_stats.c
    export_mgr.c
+   nfs4_fs_locations.c
 )
 
 if(ERROR_INJECTION)

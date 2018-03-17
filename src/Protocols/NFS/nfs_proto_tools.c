@@ -1309,7 +1309,6 @@ void nfs4_pathname4_free(pathname4 *pathname4)
 static fattr_xdr_result encode_fs_locations(XDR *xdr,
 					    struct xdr_attrs_args *args)
 {
-	fsal_status_t st;
 	fs_locations4 fs_locs;
 	fs_location4 fs_loc;
 	component4 fs_server;
@@ -1335,10 +1334,34 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	   path and update its length, can not be bigger than MAXPATHLEN
 	   server and update its length, can not be bigger than MAXHOSTNAMELEN
 	*/
-	st = args->data->current_obj->obj_ops.fs_locations(
-					args->data->current_obj,
-					&fs_locs);
-	if (FSAL_IS_ERROR(st)) {
+
+	if (args->attrs->fs_locations != NULL) {
+		char *server;
+		char *path_sav, *path_work;
+		fsal_fs_locations_t *fs_locations = args->attrs->fs_locations;
+		struct fs_location4 *loc_val = fs_locs.locations.locations_val;
+
+		path_sav = gsh_strdup(fs_locations->locations);
+		path_work = path_sav;
+		server = strsep(&path_work, ":");
+
+		LogDebug(COMPONENT_FSAL,
+			 "fs_location server %s",
+			 server);
+		LogDebug(COMPONENT_FSAL,
+			 "fs_location path %s",
+			 path_work);
+
+		nfs4_pathname4_free(&fs_locs.fs_root);
+		nfs4_pathname4_alloc(&fs_locs.fs_root, fs_locations->path);
+		strncpy(loc_val->server.server_val->utf8string_val,
+			server, strlen(server));
+		loc_val->server.server_val->utf8string_len = strlen(server);
+		nfs4_pathname4_free(&loc_val->rootpath);
+		nfs4_pathname4_alloc(&loc_val->rootpath, path_work);
+
+		gsh_free(path_sav);
+	} else {
 		strcpy(fs_locs.fs_root.pathname4_val->utf8string_val,
 		       "not_supported");
 		strcpy(fs_loc.rootpath.pathname4_val->utf8string_val,
@@ -1355,7 +1378,6 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 			 fs_locs.fs_root.pathname4_val->utf8string_val,
 			 fs_loc.rootpath.pathname4_val->utf8string_val,
 			 server);
-
 	}
 
 	if (!xdr_fs_locations4(xdr, &fs_locs)) {
@@ -3516,6 +3538,7 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 	return NFS4_OK;
 }
 
+
 static fattr_xdr_result decode_fattr(XDR *xdr,
 				     struct xdr_attrs_args *args,
 				     int fattr_id)
@@ -3542,12 +3565,11 @@ static fattr_xdr_result decode_fattr(XDR *xdr,
  */
 
 int nfs4_Fattr_Fill_Error(compound_data_t *data, fattr4 *Fattr,
-			  nfsstat4 rdattr_error, struct bitmap4 *req_attrmask)
+			  nfsstat4 rdattr_error, struct bitmap4 *req_attrmask,
+			  struct xdr_attrs_args *args)
 {
-	struct xdr_attrs_args args;
 	struct bitmap4 restricted_attrmask;
 
-	memset(&args, 0, sizeof(args));
 	memset(&restricted_attrmask, 0, sizeof(restricted_attrmask));
 
 	if (attribute_is_set(req_attrmask, FATTR4_FSID) ||
@@ -3560,14 +3582,14 @@ int nfs4_Fattr_Fill_Error(compound_data_t *data, fattr4 *Fattr,
 				Fattr->attr_vals.attrlist4_len, XDR_DECODE);
 
 		if (attribute_is_set(&Fattr->attrmask, FATTR4_FSID)) {
-			decode_fattr(&old_attr_body, &args, FATTR4_FSID);
+			decode_fattr(&old_attr_body, args, FATTR4_FSID);
 			set_attribute_in_bitmap(&restricted_attrmask,
 						FATTR4_FSID);
 		}
 
 		if (attribute_is_set(&Fattr->attrmask,
 			FATTR4_MOUNTED_ON_FILEID)) {
-			decode_fattr(&old_attr_body, &args,
+			decode_fattr(&old_attr_body, args,
 					FATTR4_MOUNTED_ON_FILEID);
 			set_attribute_in_bitmap(&restricted_attrmask,
 					FATTR4_MOUNTED_ON_FILEID);
@@ -3588,13 +3610,13 @@ int nfs4_Fattr_Fill_Error(compound_data_t *data, fattr4 *Fattr,
 
 	/* FATTR4_RDATTR_ERROR should be set only if it is requested */
 	if (attribute_is_set(req_attrmask, FATTR4_RDATTR_ERROR)) {
-		args.rdattr_error = rdattr_error;
+		args->rdattr_error = rdattr_error;
 		set_attribute_in_bitmap(&restricted_attrmask,
 					FATTR4_RDATTR_ERROR);
 	}
 
-	args.data = data;
-	return nfs4_FSALattr_To_Fattr(&args, &restricted_attrmask, Fattr);
+	args->data = data;
+	return nfs4_FSALattr_To_Fattr(args, &restricted_attrmask, Fattr);
 }
 
 /**

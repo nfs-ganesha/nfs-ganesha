@@ -1693,19 +1693,6 @@ struct fsal_obj_ops {
 			       const char *name);
 
 /**
- * @brief get fs_locations
- *
- * This function returns the fs locations for an object.
- *
- * @param[in] obj_hdl        Object to get fs locations for
- * @param[out] fs_locations4 fs locations
- *
- * @return FSAL status
- */
-	 fsal_status_t (*fs_locations)(struct fsal_obj_handle *obj_hdl,
-				       struct fs_locations4 *fs_locs);
-
-/**
  * @brief Rename a file
  *
  * This function renames a file (technically it changes the name of

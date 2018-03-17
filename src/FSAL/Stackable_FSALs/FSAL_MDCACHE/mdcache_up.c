@@ -37,6 +37,7 @@
 #include "nfs4_acls.h"
 #include "mdcache_hash.h"
 #include "mdcache_int.h"
+#include "nfs4_fs_locations.h"
 
 static fsal_status_t
 mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
@@ -273,6 +274,13 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 
 	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_CHANGE)) {
 		entry->attrs.change = attr->change;
+		mutatis_mutandis = true;
+	}
+
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR4_FS_LOCATIONS)) {
+		nfs4_fs_locations_release(entry->attrs.fs_locations);
+
+		entry->attrs.fs_locations = attr->fs_locations;
 		mutatis_mutandis = true;
 	}
 

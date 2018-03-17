@@ -84,6 +84,9 @@ int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
 			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
 					op_ctx->fsal_export));
 
+	/* Do not require ACLs and FS_LOCATIONS */
+	attrs.request_mask &= ~(ATTR_ACL | ATTR4_FS_LOCATIONS);
+
 	bool result = data->current_obj->obj_ops.is_referral(data->current_obj,
 				&attrs, true);
 

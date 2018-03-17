@@ -3128,6 +3128,20 @@ void mdc_update_attr_cache(mdcache_entry_t *entry, struct attrlist *attrs)
 		entry->attrs.request_mask |= ATTR_ACL;
 	}
 
+	// Same as above but for fs_locations
+	if (entry->attrs.fs_locations != NULL) {
+		if (attrs->fs_locations != NULL) {
+			nfs4_fs_locations_release(entry->attrs.fs_locations);
+		} else {
+			attrs->fs_locations = entry->attrs.fs_locations;
+			attrs->valid_mask |= ATTR4_FS_LOCATIONS;
+		}
+
+		entry->attrs.fs_locations = NULL;
+	} else if (attrs->fs_locations != NULL) {
+		entry->attrs.request_mask |= ATTR4_FS_LOCATIONS;
+	}
+
 	if (attrs->expire_time_attr == 0) {
 		/* FSAL did not set this, retain what was in the entry. */
 		attrs->expire_time_attr = entry->attrs.expire_time_attr;

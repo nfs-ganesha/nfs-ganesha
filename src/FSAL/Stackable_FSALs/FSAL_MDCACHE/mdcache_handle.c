@@ -790,14 +790,15 @@ unlock:
  *
  * @note The caller must hold the attribute lock for WRITE
  *
- * @param[in] entry       The mdcache entry to refresh attributes for.
- * @param[in] need_acl    Indicates if the ACL needs updating.
- * @param[in] invalidate  Invalidate the dirent cache if the entry is a
- *                        directory.
+ * @param[in] entry		The mdcache entry to refresh attributes for.
+ * @param[in] need_acl		Indicates if the ACL needs updating.
+ * @param[in] need_fslocations	Indicates if the fslocations are needed.
+ * @param[in] invalidate	Invalidate the dirent cache if the entry is a
+ *				directory.
  */
 
 fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
-				    bool invalidate)
+				    bool need_fslocations, bool invalidate)
 {
 	struct attrlist attrs;
 	fsal_status_t status = {0, 0};
@@ -816,6 +817,11 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 	if (!need_acl) {
 		/* Don't request the ACL if not necessary. */
 		attrs.request_mask &= ~ATTR_ACL;
+	}
+
+	if (!need_fslocations) {
+		/* Don't request FS LOCATIONS if not required */
+		attrs.request_mask &= ~ATTR4_FS_LOCATIONS;
 	}
 
 	/* We will want all the requested attributes in the entry */
@@ -889,7 +895,9 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 	}
 
 	status = mdcache_refresh_attrs(
-			entry, (attrs_out->request_mask & ATTR_ACL) != 0, true);
+			entry, (attrs_out->request_mask & ATTR_ACL) != 0,
+			(attrs_out->request_mask & ATTR4_FS_LOCATIONS) != 0,
+			true);
 
 	if (FSAL_IS_ERROR(status)) {
 		/* We failed to fetch any attributes. Pass that fact back to
@@ -962,11 +970,13 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	status2 = mdcache_refresh_attrs(entry, need_acl, false);
+	status2 = mdcache_refresh_attrs(entry, need_acl,
+					false /*need_fslocations*/, false);
 	if (FSAL_IS_ERROR(status2)) {
 		/* Assume that the cache is bogus now */
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
-				MDCACHE_TRUST_ATTRS | MDCACHE_TRUST_ACL);
+				MDCACHE_TRUST_ATTRS | MDCACHE_TRUST_ACL |
+				MDCACHE_TRUST_FS_LOCATIONS);
 		if (status2.major == ERR_FSAL_STALE)
 			kill_entry = true;
 	} else if (change == entry->attrs.change) {
@@ -1057,31 +1067,6 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 		     "Unlink %s %p/%s (%p)",
 		     FSAL_IS_ERROR(status) ? "failed" : "done",
 		     parent, name, entry);
-
-	return status;
-}
-
-/**
- * @brief get fs_locations
- *
- * This function returns the fs locations for an object.
- *
- * @param[in] obj_hdl	Object to get fs locations for
- * @param[out] fs_locs	fs locations
- *
- * @return FSAL status
- */
-static fsal_status_t mdcache_fs_locations(struct fsal_obj_handle *obj_hdl,
-					  struct fs_locations4 *fs_locs)
-{
-	mdcache_entry_t *entry =
-		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-	fsal_status_t status;
-
-	subcall(
-		status = entry->sub_handle->obj_ops.fs_locations(
-			entry->sub_handle, fs_locs)
-	       );
 
 	return status;
 }
@@ -1462,7 +1447,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = mdcache_link;
 	ops->rename = mdcache_rename;
 	ops->unlink = mdcache_unlink;
-	ops->fs_locations = mdcache_fs_locations;
 	ops->io_advise = mdcache_io_advise;
 	ops->close = mdcache_close;
 	ops->handle_is = mdcache_handle_is;

@@ -161,10 +161,6 @@ struct vfs_fsal_obj_handle {
 			struct vfs_fd fd;
 		} file;
 		struct {
-			char *path;
-			char *fs_location;
-		} directory;
-		struct {
 			unsigned char *link_content;
 			int link_size;
 		} symlink;
@@ -358,4 +354,8 @@ fsal_status_t vfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					 const char *xattr_name);
 
 fsal_status_t check_hsm_by_fd(int fd);
+
+fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
+				   struct attrlist *attrs_out);
+
 #endif			/* VFS_METHODS_H */

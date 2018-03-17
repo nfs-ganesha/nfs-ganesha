@@ -353,8 +353,9 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	/* Ask for all supported attributes except ACL (we defer fetching ACL
-	 * until asked for it (including a permission check).
+	/* Ask for all supported attributes except ACL and FS_LOCATIONS (we
+	 * defer fetching ACL/FS_LOCATIONS until asked for it (including a
+	 * permission check).
 	 *
 	 * We can survive if we don't actually succeed in fetching the
 	 * attributes.
@@ -362,7 +363,8 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 	fsal_prepare_attrs(&attrs,
 			   (op_ctx->fsal_export->exp_ops.fs_supported_attrs(
 							op_ctx->fsal_export)
-				& ~ATTR_ACL) | ATTR_RDATTR_ERR);
+				& ~(ATTR_ACL | ATTR4_FS_LOCATIONS)) |
+				ATTR_RDATTR_ERR);
 
 	subcall(
 		status = mdc_parent->sub_handle->obj_ops.open2(

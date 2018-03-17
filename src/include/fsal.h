@@ -62,6 +62,7 @@ extern __thread struct req_op_context *op_ctx;
 #include "fsal_api.h"
 #include "nfs23.h"
 #include "nfs4_acls.h"
+#include "nfs4_fs_locations.h"
 
 /**
  * @brief If we don't know how big a buffer we want for a link, use
@@ -472,6 +473,12 @@ static inline void fsal_release_attrs(struct attrlist *attrs)
 		attrs->acl = NULL;
 		attrs->valid_mask &= ~ATTR_ACL;
 	}
+
+	if (attrs->fs_locations) {
+		nfs4_fs_locations_release(attrs->fs_locations);
+		attrs->fs_locations = NULL;
+		attrs->valid_mask &= ~ATTR4_FS_LOCATIONS;
+	}
 }
 
 /**
@@ -496,12 +503,20 @@ static inline void fsal_copy_attrs(struct attrlist *dest,
 	*dest = *src;
 	dest->request_mask = save_request_mask;
 
-	if (pass_refs && ((save_request_mask & ATTR_ACL) != 0)) {
-		/* Pass any ACL reference to the dest, so remove from src
-		 * without adjusting the refcount.
-		 */
-		src->acl = NULL;
-		src->valid_mask &= ~ATTR_ACL;
+	if (pass_refs) {
+		if ((save_request_mask & ATTR_ACL) != 0) {
+			/* Pass any ACL reference to the dest, so remove from
+			 * src without adjusting the refcount.
+			 */
+			src->acl = NULL;
+			src->valid_mask &= ~ATTR_ACL;
+		}
+
+		if ((save_request_mask & ATTR4_FS_LOCATIONS) != 0) {
+			src->fs_locations = NULL;
+			src->valid_mask &= ~ATTR4_FS_LOCATIONS;
+		}
+
 	} else if (dest->acl != NULL && ((save_request_mask & ATTR_ACL) != 0)) {
 		/* Take reference on ACL if necessary */
 		nfs4_acl_entry_inc_ref(dest->acl);
@@ -512,6 +527,14 @@ static inline void fsal_copy_attrs(struct attrlist *dest,
 		 */
 		dest->acl = NULL;
 		dest->valid_mask &= ~ATTR_ACL;
+	}
+
+	if (dest->fs_locations != NULL &&
+		((save_request_mask & ATTR4_FS_LOCATIONS) != 0)) {
+		nfs4_fs_locations_get_ref(dest->fs_locations);
+	} else {
+		dest->fs_locations = NULL;
+		dest->valid_mask &= ~ATTR4_FS_LOCATIONS;
 	}
 }
 

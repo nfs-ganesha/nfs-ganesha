@@ -42,6 +42,7 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "gpfs_methods.h"
+#include "nfs_proto_tools.h"
 
 
 /* alloc_handle
@@ -539,14 +540,56 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 			      struct attrlist *attrs)
 {
 	struct gpfs_fsal_obj_handle *myself;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	struct fs_locations4 fs_locs;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 			      obj_handle);
 
-	return GPFSFSAL_getattrs(op_ctx->fsal_export,
+	status = GPFSFSAL_getattrs(op_ctx->fsal_export,
+				   obj_hdl->fs->private_data,
+				   op_ctx, myself->handle,
+				   attrs);
+	if (FSAL_IS_ERROR(status)) {
+		goto out;
+	}
+
+	if (!FSAL_TEST_MASK(attrs->request_mask, ATTR4_FS_LOCATIONS)) {
+		goto out;
+	}
+
+	memset(&fs_locs, 0, sizeof(fs_locs));
+	status = GPFSFSAL_fs_loc(op_ctx->fsal_export,
 				 obj_hdl->fs->private_data,
 				 op_ctx, myself->handle,
-				 attrs);
+				 &fs_locs);
+	if (FSAL_IS_ERROR(status)) {
+		goto out;
+	}
+
+	struct fs_location4 *loc_val = fs_locs.locations.locations_val;
+	int fs_root_len = fs_locs.fs_root.pathname4_val->utf8string_len + 1;
+	int locations_len = loc_val->server.server_val->utf8string_len +
+			    loc_val->rootpath.pathname4_val->utf8string_len + 2;
+
+	char *root_path = gsh_calloc(1, fs_root_len);
+	char *locations = gsh_calloc(1, locations_len);
+
+	strncpy(root_path, fs_locs.fs_root.pathname4_val->utf8string_val,
+		fs_root_len - 1);
+
+	snprintf(locations, locations_len, "%s:%s",
+		 loc_val->server.server_val->utf8string_val,
+		 loc_val->rootpath.pathname4_val->utf8string_val);
+
+	attrs->fs_locations = nfs4_fs_locations_new(root_path, locations);
+	FSAL_SET_MASK(attrs->valid_mask, ATTR4_FS_LOCATIONS);
+
+	gsh_free(root_path);
+	gsh_free(locations);
+
+out:
+	return status;
 }
 
 static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
@@ -901,23 +944,33 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	gsh_free(myself);
 }
 
-/* gpfs_fs_locations
- */
-static fsal_status_t gpfs_fs_locations(struct fsal_obj_handle *obj_hdl,
-					struct fs_locations4 *fs_locs)
+static bool
+gpfs_is_referral(struct fsal_obj_handle *obj_hdl, struct attrlist *attrs,
+		 bool cache_attrs)
 {
-	struct gpfs_fsal_obj_handle *myself;
-	fsal_status_t status;
+	if ((attrs->valid_mask & (ATTR_TYPE | ATTR_MODE)) == 0) {
+		/* Required attributes are not available, need to fetch them */
+		fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 
-	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
-			      obj_handle);
+		attrs->request_mask |= (ATTR_TYPE | ATTR_MODE);
 
-	status = GPFSFSAL_fs_loc(op_ctx->fsal_export,
-				obj_hdl->fs->private_data,
-				op_ctx, myself->handle,
-				fs_locs);
+		status = obj_hdl->obj_ops.getattrs(obj_hdl, attrs);
+		if (FSAL_IS_ERROR(status)) {
+			LogEvent(COMPONENT_FSAL, "Failed to get attributes for "
+					"referral, request_mask: %lu",
+					attrs->request_mask);
+			return false;
+		}
+	}
 
-	return status;
+	if (!obj_hdl->obj_ops.handle_is(obj_hdl, DIRECTORY))
+		return false;
+
+	if (!is_sticky_bit_set(obj_hdl, attrs))
+		return false;
+
+	LogDebug(COMPONENT_FSAL, "GPFS referral found for handle %p", obj_hdl);
+	return true;
 }
 
 /**
@@ -937,7 +990,6 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
-	ops->fs_locations = gpfs_fs_locations;
 	ops->seek = gpfs_seek;
 	ops->io_advise = gpfs_io_advise;
 	ops->close = gpfs_close;
@@ -957,6 +1009,7 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->close2 = gpfs_close2;
 	ops->lock_op2 = gpfs_lock_op2;
 	ops->merge = gpfs_merge;
+	ops->is_referral = gpfs_is_referral;
 }
 
 /**

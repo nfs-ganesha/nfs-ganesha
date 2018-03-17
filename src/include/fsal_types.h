@@ -341,6 +341,18 @@ typedef struct fsal_acl_data__ {
 	IS_FSAL_ACE_BIT(GET_FSAL_ACE_PERM(ACE), FSAL_ACE_PERM_SYNCHRONIZE)
 
 /**
+ * Stores root and fs locations. fs locations format is as follows
+ *
+ * <server>:<path>
+ */
+typedef struct fsal_fs_locations {
+	char *path;
+	char *locations;
+	pthread_rwlock_t lock;
+	uint32_t ref;
+} fsal_fs_locations_t;
+
+/**
  * Defines an attribute mask.
  *
  * Do not just use OR and AND to test these, use the macros.
@@ -471,6 +483,8 @@ struct attrlist {
 	uint64_t generation;	/*< Generation number for this file */
 	int32_t expire_time_attr;	/*< Expiration time interval in seconds
 					   for attributes. Settable by FSAL. */
+	fsal_fs_locations_t *fs_locations;	/*< fs locations for this
+						    object if any */
 };
 
 /******************************************************
