@@ -357,8 +357,7 @@ LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
 
 #define LogAtLevel(component, level, format, args...) \
 	do { \
-		if (unlikely(component_log_level[component] \
-		    >= level)) \
+		if (unlikely(component_log_level[component] >= (level))) \
 			DisplayLogComponentLevel(component,  __FILE__,\
 						 __LINE__, \
 						  __func__, \
