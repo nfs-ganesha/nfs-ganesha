@@ -264,6 +264,14 @@ int reaper_init(void)
 	return 0;
 }
 
+void reaper_wake(void)
+{
+	struct fridgethr *frt = reaper_fridge;
+
+	if (frt)
+		fridgethr_wake(frt);
+}
+
 int reaper_shutdown(void)
 {
 	int rc = fridgethr_sync_command(reaper_fridge,

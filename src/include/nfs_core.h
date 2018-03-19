@@ -197,6 +197,7 @@ int nfs_Init_ip_name(void);
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
 
 int reaper_init(void);
+void reaper_wake(void);
 int reaper_shutdown(void);
 
 #endif				/* !NFS_CORE_H */
