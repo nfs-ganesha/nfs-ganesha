@@ -65,7 +65,7 @@ static pthread_cond_t admin_control_cv = PTHREAD_COND_INITIALIZER;
  *
  * Protected by admin_control_mtx and signaled by admin_control_cv.
  */
-static bool admin_shutdown;
+bool admin_shutdown;
 
 #ifdef USE_DBUS
 

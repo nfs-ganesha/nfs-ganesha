@@ -176,6 +176,7 @@ extern struct config_block version4_param;
 
 /* in nfs_admin_thread.c */
 
+extern bool admin_shutdown;
 void nfs_Init_admin_thread(void);
 void *admin_thread(void *UnusedArg);
 void admin_halt(void);
