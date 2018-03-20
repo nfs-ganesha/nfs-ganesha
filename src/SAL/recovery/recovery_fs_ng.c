@@ -372,7 +372,7 @@ static void fs_ng_swap_recov_dir(void)
 
 static struct nfs4_recovery_backend fs_ng_backend = {
 	.recovery_init = fs_ng_create_recov_dir,
-	.recovery_cleanup = fs_ng_swap_recov_dir,
+	.end_grace = fs_ng_swap_recov_dir,
 	.recovery_read_clids = fs_ng_read_recov_clids,
 	.add_clid = fs_add_clid,
 	.rm_clid = fs_rm_clid,

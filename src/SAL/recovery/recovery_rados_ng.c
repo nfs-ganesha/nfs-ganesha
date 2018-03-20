@@ -309,7 +309,7 @@ out:
 
 struct nfs4_recovery_backend rados_ng_backend = {
 	.recovery_init = rados_ng_init,
-	.recovery_cleanup = rados_ng_cleanup_old,
+	.end_grace = rados_ng_cleanup_old,
 	.recovery_read_clids = rados_ng_read_recov_clids_takeover,
 	.add_clid = rados_ng_add_clid,
 	.rm_clid = rados_ng_rm_clid,

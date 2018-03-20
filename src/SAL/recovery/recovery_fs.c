@@ -779,7 +779,7 @@ void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 
 struct nfs4_recovery_backend fs_backend = {
 	.recovery_init = fs_create_recov_dir,
-	.recovery_cleanup = fs_clean_old_recov_dir,
+	.end_grace = fs_clean_old_recov_dir,
 	.recovery_read_clids = fs_read_recov_clids_takeover,
 	.add_clid = fs_add_clid,
 	.rm_clid = fs_rm_clid,

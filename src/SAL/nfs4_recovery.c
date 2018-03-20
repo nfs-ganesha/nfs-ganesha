@@ -103,7 +103,7 @@ nfs_lift_grace_locked(time_t current)
 	 * the value to 0 gets to clean up the recovery db.
 	 */
 	if (atomic_fetch_time_t(&current_grace) == current) {
-		nfs4_recovery_cleanup();
+		nfs4_end_grace();
 		__sync_synchronize();
 		atomic_store_time_t(&current_grace, (time_t)0);
 		LogEvent(COMPONENT_STATE, "NFS Server Now NOT IN GRACE");
@@ -431,9 +431,9 @@ void nfs4_recovery_init(void)
 /**
  * @brief Clean up recovery directory
  */
-void nfs4_recovery_cleanup(void)
+void nfs4_end_grace(void)
 {
-	recovery_backend->recovery_cleanup();
+	recovery_backend->end_grace();
 }
 
 /**

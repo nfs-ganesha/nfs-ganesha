@@ -591,7 +591,7 @@ out:
 
 struct nfs4_recovery_backend rados_kv_backend = {
 	.recovery_init = rados_kv_init,
-	.recovery_cleanup = rados_kv_cleanup_old,
+	.end_grace = rados_kv_cleanup_old,
 	.recovery_read_clids = rados_kv_read_recov_clids_takeover,
 	.add_clid = rados_kv_add_clid,
 	.rm_clid = rados_kv_rm_clid,
