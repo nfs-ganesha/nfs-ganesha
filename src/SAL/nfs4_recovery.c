@@ -429,6 +429,18 @@ void nfs4_recovery_init(void)
 }
 
 /**
+ * @brief Shut down the recovery backend
+ *
+ * Shut down the recovery backend, cleaning up any clients or tracking
+ * structures in preparation for server shutdown.
+ */
+void nfs4_recovery_shutdown(void)
+{
+	if (recovery_backend->recovery_shutdown)
+		recovery_backend->recovery_shutdown();
+}
+
+/**
  * @brief Clean up recovery directory
  */
 void nfs4_end_grace(void)

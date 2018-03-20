@@ -497,6 +497,8 @@ static void do_shutdown(void)
 
 	(void)svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
 
+	nfs4_recovery_shutdown();
+
 	if (disorderly) {
 		LogMajor(COMPONENT_MAIN,
 			 "Error in shutdown, taking emergency cleanup.");

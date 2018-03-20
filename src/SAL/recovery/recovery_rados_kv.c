@@ -338,7 +338,14 @@ int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
 
 void rados_kv_shutdown(void)
 {
-	rados_shutdown(clnt);
+	if (rados_recov_io_ctx) {
+		rados_ioctx_destroy(rados_recov_io_ctx);
+		rados_recov_io_ctx = NULL;
+	}
+	if (clnt) {
+		rados_shutdown(clnt);
+		clnt = NULL;
+	}
 }
 
 void rados_kv_init(void)
@@ -591,6 +598,7 @@ out:
 
 struct nfs4_recovery_backend rados_kv_backend = {
 	.recovery_init = rados_kv_init,
+	.recovery_shutdown = rados_kv_shutdown,
 	.end_grace = rados_kv_cleanup_old,
 	.recovery_read_clids = rados_kv_read_recov_clids_takeover,
 	.add_clid = rados_kv_add_clid,
