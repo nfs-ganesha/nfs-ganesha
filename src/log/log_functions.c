@@ -1374,6 +1374,10 @@ static int log_to_file2(log_header_t headers, void *private,
 	char *path = private;
 	uint64_t offset = 0;
 
+        if(nfs_param.core_param.num_log_files == 0) {
+		return 0;
+        }
+
 	len = display_buffer_len(buffer);
 
 	/* Add newline to end of buffer */
@@ -1384,7 +1388,7 @@ static int log_to_file2(log_header_t headers, void *private,
 	if (id == -1) {
 		pthread_mutex_lock(&lbuffer_lock);
 		id = global_id++;
-		if (id < LOG_FILES) {
+		if (id < (nfs_param.core_param.num_log_files)) {
 			newbuf = (log_file_t *) gsh_malloc(sizeof(log_file_t));
 			if (!newbuf) {
 				err = ENOMEM;
@@ -1417,11 +1421,11 @@ static int log_to_file2(log_header_t headers, void *private,
 			lbuffer[log_files] = newbuf;
 			log_files++;
 		}
-		file_picked = (id % LOG_FILES);
+		file_picked = (id % (nfs_param.core_param.num_log_files));
 		lbuffer_thr = lbuffer[file_picked];
 		pthread_mutex_unlock(&lbuffer_lock);
 	} else {
-		file_picked = (id % LOG_FILES);
+		file_picked = (id % (nfs_param.core_param.num_log_files));
 	}
 
 	assert(id != -1 && lbuffer_thr != NULL);
