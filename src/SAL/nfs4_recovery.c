@@ -198,6 +198,21 @@ bool nfs_in_grace(void)
 	return atomic_fetch_time_t(&current_grace);
 }
 
+/**
+ * @brief Enter the grace period if another node in the cluster needs it
+ *
+ * Singleton servers generally won't use this operation. Clustered servers
+ * call this function to check whether another node might need a grace period.
+ */
+void nfs_maybe_start_grace(void)
+{
+	if (recovery_backend->maybe_start_grace) {
+		if (nfs_in_grace())
+			return;
+		recovery_backend->maybe_start_grace();
+	}
+}
+
 void nfs_try_lift_grace(void)
 {
 	bool in_grace = true;
