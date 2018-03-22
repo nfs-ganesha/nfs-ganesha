@@ -134,7 +134,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		 * settings a xattr named system.posix_acl_access BUT this
 		 * attribute is to be used and should not be created
 		 * (it exists already since acl feature is on) */
-		if (!strncmp(name, "system.posix_acl_access", MAXNAMLEN))
+		if (!strcmp(name, "system.posix_acl_access"))
 			goto skip_create;
 
 		/* try to create if flag doesn't have REPLACE bit */

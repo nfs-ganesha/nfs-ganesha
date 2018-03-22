@@ -175,7 +175,7 @@ static int xattr_name_to_id(int fd, const char *name)
 	if (namesize < 0)
 		return -ERR_FSAL_NOENT;
 
-	if (!strncmp(name, "system.posix_acl_access", MAXNAMLEN))
+	if (!strcmp(name, "system.posix_acl_access"))
 		return XATTR_SYSTEM;
 
 	for (ptr = names, i = 0; ptr < names + namesize;

@@ -188,6 +188,7 @@ bool make_pseudofs_node(char *name, struct pseudofs_state *state)
 	fsal_status_t fsal_status;
 	bool retried = false;
 	struct attrlist sattr;
+	char const *fsal_name;
 
 retry:
 
@@ -231,9 +232,11 @@ retry:
 		return false;
 	}
 
-	if (strncmp(op_ctx->ctx_export->fsal_export->exp_ops.get_name(
-				op_ctx->ctx_export->fsal_export),
-			"PSEUDO", 6) != 0) {
+	fsal_name = op_ctx->ctx_export->fsal_export->exp_ops.get_name(
+				op_ctx->ctx_export->fsal_export);
+	/* fsal_name should be "PSEUDO" or "PSEUDO/<stacked-fsal-name>" */
+	if (strncmp(fsal_name, "PSEUDO", 6) != 0 ||
+	    (fsal_name[6] != '/' && fsal_name[6] != '\0')) {
 		/* Only allowed to create directories on FSAL_PSEUDO */
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s (can't create directory on non-PSEUDO FSAL)",

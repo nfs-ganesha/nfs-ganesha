@@ -883,7 +883,7 @@ bool arg_9p_op(DBusMessageIter *args, u8 *opcode, char **errormsg)
 		dbus_message_iter_get_basic(args, &opname);
 		for (opc = _9P_TSTATFS; opc <= _9P_TWSTAT; opc++) {
 			if (_9pfuncdesc[opc].funcname != NULL &&
-			    !strncmp(opname, _9pfuncdesc[opc].funcname, 16))
+			    !strcmp(opname, _9pfuncdesc[opc].funcname))
 				break;
 		}
 		if (opc > _9P_TWSTAT) {

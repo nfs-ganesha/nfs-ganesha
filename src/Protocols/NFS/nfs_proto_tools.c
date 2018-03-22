@@ -44,22 +44,18 @@
 /* Define mapping of NFS4 who name and type. */
 static struct {
 	char *string;
-	int stringlen;
 	int type;
 } whostr_2_type_map[] = {
 	{
 	.string = "OWNER@",
-	.stringlen = sizeof("OWNER@") - 1,
 	.type = FSAL_ACE_SPECIAL_OWNER,
 	},
 	{
 	.string = "GROUP@",
-	.stringlen = sizeof("GROUP@") - 1,
 	.type = FSAL_ACE_SPECIAL_GROUP,
 	},
 	{
 	.string = "EVERYONE@",
-	.stringlen = sizeof("EVERYONE@") - 1,
 	.type = FSAL_ACE_SPECIAL_EVERYONE,
 	},
 };
@@ -834,9 +830,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		if (!inline_xdr_string(xdr, &buffp, MAXNAMLEN))
 			goto baderr;
 		for (i = 0; i < FSAL_ACE_SPECIAL_EVERYONE; i++) {
-			if (strncmp
-			    (buffer, whostr_2_type_map[i].string,
-			     strlen(buffer)) == 0) {
+			if (strcmp(buffer, whostr_2_type_map[i].string) == 0) {
 				who = whostr_2_type_map[i].type;
 				break;
 			}
