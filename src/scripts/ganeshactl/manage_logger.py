@@ -19,7 +19,7 @@
 #
 # Author: Jim Lieb <jlieb@panasas.com>
 #-*- coding: utf-8 -*-
-
+from __future__ import print_function
 import sys
 import time
 from PyQt4 import QtCore, QtDBus
@@ -44,28 +44,28 @@ class ManageLogger(QtCore.QObject):
 
     def get_level(self, component):
         self.logmgr.Get(component)
-        print "Getting log level for %s" % (component)
+        print("Getting log level for %s" % (component))
 
     def set_level(self, component, level):
         self.logmgr.Set(component, level)
-        print "Setting log level for %s to %s" % (component, level)
+        print("Setting log level for %s to %s" % (component, level))
 
     def getall(self):
         self.logmgr.GetAll()
-        print "Fetching component log levels"
+        print("Fetching component log levels")
 
     def proc_level(self, level):
-        print "Level = %s" % (level)
+        print("Level = %s" % (level))
         sys.exit()
-    
+
     def proc_components(self, components):
-        print "dict of levels:"
+        print("dict of levels:")
         for comp in components.keys():
-            print "Component %s is at %s" % (comp, components[comp])
+            print("Component %s is at %s" % (comp, components[comp]))
         sys.exit()
 
     def status_message(self, status, errormsg):
-        print "Error: status = %s, %s" % (str(status), errormsg)
+        print("Error: status = %s, %s" % (str(status), errormsg))
         sys.exit()
 
 # Main
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     elif sys.argv[1] == "getall":
         logger.getall()
     else:
-        print "unknown/missing command"
+        print("unknown/missing command")
         sys.exit()
 
     app.exec_()

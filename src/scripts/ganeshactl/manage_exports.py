@@ -19,7 +19,7 @@
 #
 # Author: Jim Lieb <jlieb@panasas.com>
 #-*- coding: utf-8 -*-
-
+from __future__ import print_function
 import sys
 import time
 from PyQt4 import QtCore, QtDBus
@@ -32,7 +32,7 @@ SERVICE = 'org.ganesha.nfsd'
 class ShowExports(QtCore.QObject):
 
     show_status = QtCore.pyqtSignal(bool, str)
-    
+
     def __init__(self, sysbus, parent=None):
         super(ShowExports, self).__init__()
         self.exportmgr = ExportMgr(SERVICE,
@@ -44,35 +44,35 @@ class ShowExports(QtCore.QObject):
 
     def showexports(self):
         self.exportmgr.ShowExports()
-        print "Show exports"
+        print("Show exports")
 
     def addexport(self, conf_path, exp_expr):
         self.exportmgr.AddExport(conf_path, exp_expr)
-        print "Add Export in %s" % conf_path
+        print("Add Export in %s" % conf_path)
 
     def updateexport(self, conf_path, exp_expr):
         self.exportmgr.UpdateExport(conf_path, exp_expr)
-        print "Update Export in %s" % conf_path
+        print("Update Export in %s" % conf_path)
 
     def removeexport(self, exp_id):
         self.exportmgr.RemoveExport(exp_id)
-        print "Remove Export with id %d" % int(exp_id)
+        print("Remove Export with id %d" % int(exp_id))
 
     def displayexport(self, exp_id):
         self.exportmgr.DisplayExport(exp_id)
-        print "Display export with id %d" % int(exp_id)
+        print("Display export with id %d" % int(exp_id))
 
     def proc_export(self, id, path, pseudo, tag):
-        print "export %d: path = %s, pseudo = %s, tag = %s" % (id, path, pseudo, tag)
+        print("export %d: path = %s, pseudo = %s, tag = %s" % (id, path, pseudo, tag))
         sys.exit()
 
     def proc_exports(self, ts, exports):
-        print "Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs"
+        print("Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs")
         if len(exports) == 0:
-            print "No exports"
+            print("No exports")
         else:
-            print "Exports:"
-            print "  Id, path,    nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, 9p, last"
+            print("Exports:")
+            print("  Id, path,    nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, 9p, last")
             for export in exports:
                 print (" %d,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s %d nsecs" %
                        (export.ExportID,
@@ -88,9 +88,9 @@ class ShowExports(QtCore.QObject):
         sys.exit()
 
     def status_message(self, status, errormsg):
-        print "Error: status = %s, %s" % (str(status), errormsg)
+        print("Error: status = %s, %s" % (str(status), errormsg))
         sys.exit()
-        
+
 # Main
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -108,6 +108,6 @@ if __name__ == '__main__':
     elif sys.argv[1] == "show":
         exportmgr.showexports()
     else:
-        print "Unknown/missing command"
+        print("Unknown/missing command")
         sys.exit()
     app.exec_()

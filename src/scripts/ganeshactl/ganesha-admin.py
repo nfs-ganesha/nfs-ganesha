@@ -19,7 +19,7 @@
 #
 # Author: Jim Lieb <jlieb@panasas.com>
 #-*- coding: utf-8 -*-
-
+from __future__ import print_function
 import sys
 from PyQt4 import QtCore, QtDBus
 from PyQt4.QtGui import QApplication
@@ -31,7 +31,7 @@ SERVICE = 'org.ganesha.nfsd'
 class ServerAdmin(QtCore.QObject):
 
     show_status = QtCore.pyqtSignal(bool, str)
-    
+
     def __init__(self, sysbus, parent=None):
         super(ServerAdmin, self).__init__()
         self.admin = AdminInterface(SERVICE,
@@ -42,18 +42,18 @@ class ServerAdmin(QtCore.QObject):
 
     def shutdown(self):
         self.admin.shutdown()
-        print "Shutting down server."
+        print("Shutting down server.")
 
     def reload(self):
         self.admin.reload()
-        print "Reload server configuration."
+        print("Reload server configuration.")
 
     def grace(self, ipaddr):
         self.admin.grace(ipaddr)
-        print "Start grace period."
+        print("Start grace period.")
 
     def status_message(self, status, errormsg):
-        print "Returns: status = %s, %s" % (str(status), errormsg)
+        print("Returns: status = %s, %s" % (str(status), errormsg))
         sys.exit()
 
 # Main
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     elif sys.argv[1] == "grace":
         ganesha.grace(argv[2])
     else:
-        print "Unknown/missing command"
+        print("Unknown/missing command")
         sys.exit()
     app.exec_()
 

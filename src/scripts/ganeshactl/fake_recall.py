@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+from __future__ import print_function
 import getopt, sys
 import gobject
 
@@ -10,7 +10,7 @@ glib.init_threads()
 import dbus
 
 def usage():
-    print "fake_recall <clientid>"
+    print("fake_recall <clientid>")
 
 def main():
 
@@ -20,21 +20,21 @@ def main():
             usage()
             sys.exit(2)
         clientid = args[0]
-        print clientid
+        print(clientid)
 
         bus = dbus.SystemBus()
         cbsim = bus.get_object("org.ganesha.nfsd",
                                "/org/ganesha/nfsd/CBSIM")
-        print cbsim.Introspect()
+        print(cbsim.Introspect())
 
         # call method
         fake_recall = cbsim.get_dbus_method('fake_recall',
                                        'org.ganesha.nfsd.cbsim')
-        print fake_recall(dbus.UInt64(clientid))
+        print(fake_recall(dbus.UInt64(clientid)))
 
 
-    except getopt.GetoptError, err:
-        print str(err) # will print something like "option -a not recognized"
+    except getopt.GetoptError as err:
+        print(str(err)) # will print something like "option -a not recognized"
         usage()
         sys.exit(2)
 

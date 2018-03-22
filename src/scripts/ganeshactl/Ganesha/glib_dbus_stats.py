@@ -2,6 +2,7 @@
 
 # You must initialize the gobject/dbus support for threading
 # before doing anything.
+from __future__ import print_function
 import gobject
 import sys
 import time
@@ -26,7 +27,7 @@ class RetrieveExportStats():
             self.exportmgrobj = self.bus.get_object(self.dbus_service_name,
                                 self.export_interface)
         except:
-            print "Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down"
+            print("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")
             sys.exit()
 
     # NFSv3/NFSv4/NLM/MNT/QUOTA stats over all exports
@@ -93,21 +94,25 @@ class RetrieveExportStats():
         else:
             stats_dict[export_id] = stats_op(int(export_id))
             return PNFSStats(stats_dict)
+
     # Reset the statistics counters for all
     def reset_stats(self):
         stats_state = self.exportmgrobj.get_dbus_method("ResetStats",
                                   self.dbus_exportstats_name)
         return StatsReset(stats_state())
+
     # fsal stats
     def fsal_stats(self, fsal):
-	stats_op = self.exportmgrobj.get_dbus_method("GetFSALStats",
-				  self.dbus_exportstats_name)
-	return DumpFSALStats(stats_op(fsal))
+        stats_op = self.exportmgrobj.get_dbus_method("GetFSALStats",
+            self.dbus_exportstats_name)
+        return DumpFSALStats(stats_op(fsal))
+
     # enable stats
     def enable_stats(self, stat_type):
         stats_state = self.exportmgrobj.get_dbus_method("EnableStats",
                                   self.dbus_exportstats_name)
         return StatsEnable(stats_state(stat_type))
+
     # disable stats
     def disable_stats(self, stat_type):
         stats_state = self.exportmgrobj.get_dbus_method("DisableStats",
@@ -126,7 +131,7 @@ class RetrieveClientStats():
             self.clientmgrobj = self.bus.get_object(self.dbus_service_name,
                                     self.client_interface)
         except:
-            print "Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down"
+            print("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")
             sys.exit()
 
     # delegation stats related to a single client ip
@@ -217,7 +222,7 @@ class ExportStats():
 
 class GlobalStats():
     def __init__(self, stats):
-	self.success = stats[0]
+        self.success = stats[0]
         self.status = stats[1]
         if self.success:
             self.timestamp = (stats[2][0], stats[2][1])
@@ -226,17 +231,17 @@ class GlobalStats():
             self.nfsv41_total = stats[3][5]
             self.nfsv42_total = stats[3][7]
     def __str__(self):
-	output = ""
+        output = ""
         if not self.success:
             return "No NFS activity, GANESHA RESPONSE STATUS: " + self.status
-	if self.status != "OK":
-	    output += self.status + "\n"
-	output += ("Timestamp: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs" +
+        if self.status != "OK":
+            output += self.status + "\n"
+        output += ("Timestamp: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs" +
                 "\nTotal NFSv3 ops: " + str(self.nfsv3_total) +
                 "\nTotal NFSv4.0 ops: " + str(self.nfsv40_total) +
                 "\nTotal NFSv4.1 ops: " + str(self.nfsv41_total) +
                 "\nTotal NFSv4.2 ops: " + str(self.nfsv42_total))
-	return output
+        return output
 
 class InodeStats():
     def __init__(self, stats):
@@ -265,13 +270,13 @@ class FastStats():
     def __init__(self, stats):
         self.stats = stats
     def __str__(self):
-	if not self.stats[0]:
+        if not self.stats[0]:
             return "No NFS activity, GANESHA RESPONSE STATUS: " + self.stats[1]
         else:
             if self.stats[1] != "OK":
-		output = self.stats[1]+ "\n"
-	    else:
-		output = ""
+                output = self.stats[1]+ "\n"
+            else:
+                output = ""
             output += ("Timestamp: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs" +
                       "\nGlobal ops:\n" )
             # NFSv3, NFSv4, NLM, MNT, QUOTA self.stats
@@ -293,8 +298,8 @@ class ExportIOv3Stats():
             if not self.stats[key][0]:
                 output += "EXPORT %s: %s\n" % (key, self.stats[key][1])
                 continue
-	    if self.stats[key][1] != "OK":
-		output += self.stats[key][1] + "\n"
+            if self.stats[key][1] != "OK":
+                output += self.stats[key][1] + "\n"
             output += ( "\nEXPORT %s:" % (key) +
                         "\n\t\trequested\ttransferred\t     total\t    errors\t   latency\tqueue wait" +
                         "\nREADv3: " )
@@ -314,8 +319,8 @@ class ExportIOv4Stats():
             if not self.stats[key][0]:
                 output += "\nEXPORT %s: %s\n" % (key, self.stats[key][1])
                 continue
-	    if self.stats[key][1] != "OK":
-		output += self.stats[key][1] + "\n"
+            if self.stats[key][1] != "OK":
+                output += self.stats[key][1] + "\n"
             output += ("EXPORT %s:" % (key) +
                        "\n\t\trequested\ttransferred\t     total\t    errors\t   latency\tqueue wait" +
                        "\nREADv4: ")
@@ -331,12 +336,12 @@ class TotalStats():
     def __init__(self, stats):
         self.stats = stats
     def __str__(self):
-	output = ""
+        output = ""
         for key in self.stats:
             if not self.stats[key][0]:
                 return "No NFS activity, GANESHA RESPONSE STATUS: " + self.stats[key][1]
             if self.stats[key][1] != "OK":
-		output += self.stats[key][1] + "\n"
+                output += self.stats[key][1] + "\n"
             output += ("Total stats for export id: " + str(key) +
                       "\nTimestamp: " + time.ctime(self.stats[key][2][0]) +
                       str(self.stats[key][2][1]) + " nsecs\n")
@@ -383,36 +388,36 @@ class StatsReset():
 
 class DumpFSALStats():
     def __init__(self, stats):
-	self.stats = stats
+        self.stats = stats
     def __str__(self):
-	output = ""
-	if not self.stats[0]:
-	    return ("GANESHA RESPONSE STATUS: " + self.stats[1])
-	else:
-	    if self.stats[1] != "OK":
-		output += self.stats[1] + "\n"
-	    output += ("Timestamp: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs\n")
-	    output += "FSAL Stats: \n Total Supported Ops : " +  "%s\n" % (str(self.stats[3][0]).rjust(8))
-	    output += "\t Op-Name    Op-Code   Total Res:Avg      Min      Max \n"
-	    i = 1
-	    tot_len = len(self.stats[3])-1
-	    while i < tot_len:
-		output += "\n" + (self.stats[3][i+0]).ljust(20) + "%s" % (str(self.stats[3][i+1]).rjust(4))
-		if (i+2) < tot_len:
-		    if str(self.stats[3][i+2]).isdigit():
-			if (i+6) < tot_len:
-		    	    output += "%s" % (str(self.stats[3][i+2]).rjust(8))
-		    	    output += " %8.2f" % (self.stats[3][i+3])
-		    	    output += " %s" % (str(self.stats[3][i+4]).rjust(8))
-		    	    output += " %s" % (str(self.stats[3][i+5]).rjust(8))
-		    	    i += 6
-			else:
-			    break
-		    else:
-		    	i += 2
-		else:
-		    break
-	    return output
+        output = ""
+        if not self.stats[0]:
+            return ("GANESHA RESPONSE STATUS: " + self.stats[1])
+        else:
+            if self.stats[1] != "OK":
+                output += self.stats[1] + "\n"
+            output += ("Timestamp: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs\n")
+            output += "FSAL Stats: \n Total Supported Ops : " +  "%s\n" % (str(self.stats[3][0]).rjust(8))
+            output += "\t Op-Name    Op-Code   Total Res:Avg      Min      Max \n"
+            i = 1
+            tot_len = len(self.stats[3])-1
+            while i < tot_len:
+                output += "\n" + (self.stats[3][i+0]).ljust(20) + "%s" % (str(self.stats[3][i+1]).rjust(4))
+                if (i+2) < tot_len:
+                    if str(self.stats[3][i+2]).isdigit():
+                        if (i+6) < tot_len:
+                            output += "%s" % (str(self.stats[3][i+2]).rjust(8))
+                            output += " %8.2f" % (self.stats[3][i+3])
+                            output += " %s" % (str(self.stats[3][i+4]).rjust(8))
+                            output += " %s" % (str(self.stats[3][i+5]).rjust(8))
+                            i += 6
+                        else:
+                            break
+                    else:
+                        i += 2
+                else:
+                    break
+        return output
 
 class StatsEnable():
     def __init__(self, status):
