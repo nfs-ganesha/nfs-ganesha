@@ -1,16 +1,18 @@
 
-SET(test_avl_SRCS
-   test_avl.c
-)
-add_executable(test_avl EXCLUDE_FROM_ALL ${test_avl_SRCS})
-target_link_libraries(test_avl ${CMAKE_THREAD_LIBS_INIT})
+if(USE_CUNIT)
+  SET(test_avl_SRCS
+    test_avl.c
+    )
+  add_executable(test_avl EXCLUDE_FROM_ALL ${test_avl_SRCS})
+  target_link_libraries(test_avl ${CMAKE_THREAD_LIBS_INIT})
 
-SET(test_mh_avl_SRCS
-   test_mh_avl.c
-   ../support/murmur3.c
-)
-add_executable(test_mh_avl EXCLUDE_FROM_ALL ${test_mh_avl_SRCS})
-target_link_libraries(test_mh_avl ${CMAKE_THREAD_LIBS_INIT})
+  SET(test_mh_avl_SRCS
+    test_mh_avl.c
+    ../support/murmur3.c
+    )
+  add_executable(test_mh_avl EXCLUDE_FROM_ALL ${test_mh_avl_SRCS})
+  target_link_libraries(test_mh_avl ${CMAKE_THREAD_LIBS_INIT})
+endif(USE_CUNIT)
 
 SET(test_glist_SRCS
    test_glist.c

@@ -122,6 +122,9 @@ include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
 # For libraries that provide pkg-config files
 include(FindPkgConfig)
 
+# For our option system
+include(${CMAKE_SOURCE_DIR}/cmake/goption.cmake)
+
 # If we are in a git tree, then this CMakeLists.txt is in "src/" and go .git is in "src/.."
 IF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
   message( STATUS "Compilation from within a git repository. Using git rev-parse HEAD")
@@ -209,18 +212,17 @@ endif ()
 # FSAL selection
 # FSALs which are enabled by default but could be disabled
 # during the build
-option(USE_FSAL_PROXY "build PROXY FSAL shared library" ON)
-option(USE_FSAL_VFS "build VFS FSAL shared library" ON)
-option(USE_FSAL_LUSTRE "build LUSTRE FSAL shared library" ON)
-option(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
-option(USE_FSAL_GPFS "build GPFS FSAL" ON)
-option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
-option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" OFF)
-option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
-option(USE_FSAL_NULL "build NULL FSAL shared library" ON)
-option(USE_FSAL_RGW "build RGW FSAL shared library" OFF)
-option(USE_FSAL_MEM "build Memory FSAL shared library" ON)
-option(USE_TOOL_MULTILOCK "build multilock tool" OFF)
+goption(USE_FSAL_PROXY "build PROXY FSAL shared library" ON)
+goption(USE_FSAL_VFS "build VFS FSAL shared library" ON)
+goption(USE_FSAL_LUSTRE "build LUSTRE FSAL shared library" ON)
+goption(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
+goption(USE_FSAL_GPFS "build GPFS FSAL" ON)
+goption(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
+goption(USE_FSAL_PANFS "build PanFS support in VFS FSAL" OFF)
+goption(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
+goption(USE_FSAL_NULL "build NULL FSAL shared library" ON)
+goption(USE_FSAL_RGW "build RGW FSAL shared library" OFF)
+goption(USE_FSAL_MEM "build Memory FSAL shared library" ON)
 
 # nTIRPC
 option(USE_SYSTEM_NTIRPC "Use the system nTIRPC, rather than the submodule" OFF)
@@ -228,18 +230,19 @@ option (USE_GSS "enable RPCSEC_GSS support" ON)
 option(TIRPC_EPOLL "platform supports EPOLL or emulation" ON)
 
 # Build configure options
-option(USE_DBUS "enable DBUS protocol support" OFF)
+goption(USE_DBUS "enable DBUS protocol support" OFF)
 
 # Various DBUS enabled features
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
 
-option(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
+goption(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
 option(ENABLE_ERROR_INJECTION "enable error injection" OFF)
 option(ENABLE_VFS_DEBUG_ACL "Enable debug ACL store for VFS" OFF)
 option(ENABLE_RFC_ACL "Use all RFC ACL checks" OFF)
+option(USE_TOOL_MULTILOCK "build multilock tool" OFF)
 
 # Electric Fence (-lefence) link flag
-option(USE_EFENCE "link with efence memory debug library" OFF)
+goption(USE_EFENCE "link with efence memory debug library" OFF)
 
 # These are -D_FOO options, why ???  should be flags??
 option(_NO_TCP_REGISTER "disable registration of tcp services on portmapper" OFF)
@@ -248,7 +251,7 @@ option(_NO_XATTRD "disable ghost xattr directory and files support" ON)
 option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids, and state owners" OFF)
 option(_VALGRIND_MEMCHECK "Initialize buffers passed to GPFS ioctl that valgrind doesn't understand" OFF)
 option(ENABLE_LOCKTRACE "Enable lock trace" OFF)
-option(PROXY_HANDLE_MAPPING "enable NFSv3 handle mapping for PROXY FSAL" OFF)
+goption(PROXY_HANDLE_MAPPING "enable NFSv3 handle mapping for PROXY FSAL" OFF)
 option(DEBUG_MDCACHE "Add various asserts to mdcache" OFF)
 
 # Debug symbols (-g) build flag
@@ -257,7 +260,6 @@ option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
 # Add coverage information to build tree
 option(COVERAGE "add flag to generate coverage data at runtime" OFF)
 
-# Add coverage information to build tree
 option(ENFORCE_GCC "enforce gcc as a the C compiler used for the project" OFF)
 
 # enable code profiling [-g -pg]
@@ -279,14 +281,10 @@ include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
 include(CPack)
 
 # MSPAC support -lwbclient link flag
-if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
-  option(_MSPAC_SUPPORT "enable mspac Winbind support" ON)
-else( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
-  option(_MSPAC_SUPPORT "enable mspac Winbind support" OFF)
-endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+goption(_MSPAC_SUPPORT "enable mspac Winbind support" ON)
 
 # CUnit
-option(USE_CUNIT "Use Cunit test framework" OFF)
+goption(USE_CUNIT "Use Cunit test framework" OFF)
 
 # Blkin (Zipkin) Tracing
 option(USE_BLKIN "Use Blkin/Zipkin trace framework" OFF)
@@ -312,12 +310,13 @@ if(USE_BLKIN)
 endif(USE_BLKIN)
 
 # GTest
-option(USE_GTEST "Use Google Test test framework" OFF)
+goption(USE_GTEST "Use Google Test test framework" OFF)
 option(GTEST_PREFIX "Google Test installation prefix"
   "/opt/gmock/gtest")
+gopt_test(USE_GTEST)
 if(USE_GTEST)
-  find_package(LTTng)
-  find_package(Gperftools)
+  find_package(LTTng ${USE_GTEST_REQUIRED})
+  find_package(Gperftools ${USE_GTEST_REQUIRED})
   if(LTTNG_CTL_FOUND AND GPERFTOOLS_FOUND)
     if (NOT GTEST_PREFIX)
       set(GTEST_PREFIX "/opt/gmock/gtest")
@@ -350,29 +349,26 @@ if(USE_VSOCK)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DRPC_VSOCK")
 endif(USE_VSOCK)
 
-# This option will stop cmake compilation if a requested FSAL could not be built
-option(STRICT_PACKAGE "Enable strict packaging behavior" OFF )
-
 # This option will trigger "long distro name" aka name that contains git information
 option(DISTNAME_HAS_GIT_DATA "Distribution package's name carries git data" OFF )
 
 # Build and package Python admin scripts for managing via DBus
-option(USE_ADMIN_TOOLS "Package Admin scripts" OFF)
+goption(USE_ADMIN_TOOLS "Package Admin scripts" OFF)
 
 # Build and package Python gui admin scripts for managing via DBus
-option(USE_GUI_ADMIN_TOOLS "Package GUI Admin scripts" ON)
+goption(USE_GUI_ADMIN_TOOLS "Package GUI Admin scripts" ON)
 
 # Enable LTTng tracing
-option(USE_LTTNG "Enable LTTng tracing" OFF)
+goption(USE_LTTNG "Enable LTTng tracing" OFF)
 
 # Build man page.
-option(USE_MAN_PAGE "Build MAN page" OFF) 
+goption(USE_MAN_PAGE "Build MAN page" OFF)
 
 # Enable Rados KV store for recovery
-option(USE_RADOS_RECOV "Enable Rados KV Recovery" ON)
+goption(USE_RADOS_RECOV "Enable Rados KV Recovery" ON)
 
 # Enable RADOS URL config file sections
-option(RADOS_URLS "Enable config file inclusion from RADOS objects" ON)
+goption(RADOS_URLS "Enable config file inclusion from RADOS objects" ON)
 
 # Enable NFSv4 and POSIX acls mapping
 option(USE_ACL_MAPPING "Build NFSv4 to POSIX ACL mapping" OFF)
@@ -475,21 +471,6 @@ if(HAVE_STRING_H AND HAVE_STRINGS_H)
   set(HAVE_STRNLEN ON)
 endif(HAVE_STRING_H AND HAVE_STRINGS_H)
 
-# PROXY handle mapping needs sqlite3
-IF(PROXY_HANDLE_MAPPING)
-  check_include_files(sqlite3.h HAVE_SQLITE3_H)
-  check_library_exists(
-    sqlite3
-    sqlite3_open
-    ""
-    HAVE_SQLITE3
-    )
-  if(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
-    message(WARNING "Cannot find sqlite3.h or the library. Disabling proxy handle mapping")
-    set(PROXY_HANDLE_MAPPING OFF)
-  endif(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
-ENDIF(PROXY_HANDLE_MAPPING)
-
 IF(_VALGRIND_MEMCHECK)
   check_include_files(valgrind/memcheck.h HAVE_MEMCHECK_H)
   if(NOT HAVE_MEMCHECK_H)
@@ -540,29 +521,73 @@ if (USE_GSS)
   endif(KRB5_FOUND AND HAVE_GSSAPI_H)
 endif(USE_GSS)
 
+gopt_test(USE_ADMIN_TOOLS)
 if (USE_ADMIN_TOOLS)
-  find_package(PythonInterp)
+  find_package(PythonInterp ${USE_ADMIN_TOOLS_REQUIRED})
   if (NOT PYTHONINTERP_FOUND)
-    message(FATAL_ERROR "Cannot find python for enabling admin tools")
+    message(WARNING "Cannot find python. Disablin admin tools")
+    set(USE_ADMIN_TOOLS OFF)
   endif (NOT PYTHONINTERP_FOUND)
+endif (USE_ADMIN_TOOLS)
+
+gopt_test(USE_GUI_ADMIN_TOOLS)
+if (USE_ADMIN_TOOLS)
   if (USE_GUI_ADMIN_TOOLS)
     find_program(PYUIC NAMES pyuic4 DOC "PyQT UI-compiler executable")
     if (NOT PYUIC)
-      message(STATUS "Cannot find PyQt4.  Disabling GUI admin tools")
-      set(USE_GUI_ADMIN_TOOLS OFF)
+      if (USE_GUI_ADMIN_TOOLS_REQUIRED)
+	message(FATAL_ERROR "Cannot find PyQt but GUI admin tools requested on command line")
+      else (USE_GUI_ADMIN_TOOLS_REQUIRED)
+	message(WARNING "Cannot find PyQt4.  Disabling GUI admin tools")
+	set(USE_GUI_ADMIN_TOOLS OFF)
+      endif (USE_GUI_ADMIN_TOOLS_REQUIRED)
     endif (NOT PYUIC)
   endif (USE_GUI_ADMIN_TOOLS)
 endif (USE_ADMIN_TOOLS)
 
+gopt_test(USE_MAN_PAGE)
 if (USE_MAN_PAGE)
   find_program(SPHINX_BUILD sphinx-build)
   if(NOT SPHINX_BUILD)
-    message(FATAL_ERROR "Can't find sphinx-build.")
+    if (USE_MAN_PAGE_REQUIRED)
+      message(FATAL_ERROR "Can't find sphinx-build but man pages requested on command line")
+    else (USE_MAN_PAGE_REQUIRED)
+      message(WARNING "Can't find sphinx-build. Disabling man pages")
+      set(USE_MAN_PAGE OFF)
+    endif (USE_MAN_PAGE_REQUIRED)
   endif(NOT SPHINX_BUILD)
 endif(USE_MAN_PAGE)
 
 # Validate fsal dependencies
 
+gopt_test(USE_FSAL_PROXY)
+if (USE_FSAL_PROXY)
+  # PROXY has no deps of it's own, but it has a dependent option
+  # PROXY handle mapping needs sqlite3
+  gopt_test(PROXY_HANDLE_MAPPING)
+  if(PROXY_HANDLE_MAPPING)
+    check_include_files(sqlite3.h HAVE_SQLITE3_H)
+    check_library_exists(
+      sqlite3
+      sqlite3_open
+      ""
+      HAVE_SQLITE3
+      )
+    if(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
+      if(PROXY_HANDLE_MAPPING_REQUIRED)
+	message(FATAL_ERROR "Cannot find sqlite3.h or the library but proxy handle mapping requested on command line")
+      else(PROXY_HANDLE_MAPPING_REQUIRED)
+	message(WARNING "Cannot find sqlite3.h or the library. Disabling proxy handle mapping")
+	set(PROXY_HANDLE_MAPPING OFF)
+      endif(PROXY_HANDLE_MAPPING_REQUIRED)
+    endif(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
+  endif(PROXY_HANDLE_MAPPING)
+endif (USE_FSAL_PROXY)
+
+gopt_test(USE_FSAL_VFS)
+# VFS has no dependencies
+
+gopt_test(USE_FSAL_LUSTRE)
 if(USE_FSAL_LUSTRE)
     ########### lustre hsm version test ##########
     # Lustre/HSM feature needs Lustre 2.5.0.
@@ -571,23 +596,66 @@ if(USE_FSAL_LUSTRE)
     ##############################################
     CHECK_LIBRARY_EXISTS(lustreapi llapi_hsm_state_get_fd "" USE_LLAPI)
     if(NOT USE_LLAPI)
-        message(WARNING "Cannot find lustreapi. We will only build a dummy lustre fsal.")
+      if(USE_FSAL_LUSTRE_REQUIRED)
+	message(FATAL_ERROR "Cannot find lustreapi, but requested on command line")
+      else(USE_FSAL_LUSTRE_REQUIRED)
+	message(WARNING "Cannot find lustreapi. We will only build a dummy lustre fsal.")
+      endif(USE_FSAL_LUSTRE_REQUIRED)
     endif(NOT USE_LLAPI)
 endif(USE_FSAL_LUSTRE)
 
+gopt_test(USE_FSAL_CEPH)
+if(USE_FSAL_CEPH)
+  message(STATUS ${USE_FSAL_CEPH_REQUIRED})
+  find_package(CEPHFS ${USE_FSAL_CEPH_REQUIRED})
+  if(NOT CEPHFS_FOUND)
+    message(WARNING "Cannot find CEPH runtime.  Disabling CEPH fsal build")
+    set(USE_FSAL_CEPH OFF)
+  endif(NOT CEPHFS_FOUND)
+endif(USE_FSAL_CEPH)
+
+gopt_test(USE_FSAL_GPFS)
+# GPFS has no dependencies
+
+gopt_test(USE_FSAL_XFS)
+if(USE_FSAL_XFS)
+  if(EXISTS /lib/libhandle.so)
+    check_library_exists(handle "open_by_handle" "/./lib" HAVE_XFS_LIB)
+    if(HAVE_XFS_LIB)
+      set(PATH_LIBHANDLE "/lib/libhandle.so" CACHE INTERNAL "debian stretch and ubuntu xenial hack")
+    endif(HAVE_XFS_LIB)
+  else(EXISTS /lib/libhandle.so)
+    check_library_exists(handle "open_by_handle" "" HAVE_XFS_LIB)
+  endif(EXISTS /lib/libhandle.so)
+  check_include_files("xfs/xfs.h" HAVE_XFS_H)
+  if((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
+    if(USE_FSAL_XFS_REQUIRED)
+      message(FATAL_ERROR "Cannot find XFS runtime, but requested on command line.")
+    else(USE_FSAL_XFS_REQUIRED)
+      message(WARNING "Cannot find XFS runtime. Disabling XFS build")
+      set(USE_FSAL_XFS OFF)
+    endif(USE_FSAL_XFS_REQUIRED)
+  endif((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
+endif(USE_FSAL_XFS)
+
+gopt_test(USE_FSAL_PANFS)
+# PANFS has no dependencies
+
+gopt_test(USE_FSAL_GLUSTER)
 if(USE_FSAL_GLUSTER)
   find_package(PkgConfig)
   IF(GLUSTER_PREFIX)
     set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${GLUSTER_PREFIX}/lib/pkgconfig")
   ENDIF(GLUSTER_PREFIX)
+  # pkg_check_modules doesn't fatal error on REQUIRED, so handle it ourselves
   pkg_check_modules(GFAPI glusterfs-api>=7.3.10.7)
   if(NOT GFAPI_FOUND)
-    if(STRICT_PACKAGE)
-      message(FATAL_ERROR "STRICT PACKAGE: Cannot find GLUSTER GFAPI runtime. Disabling GLUSTER fsal build")
-    else(STRICT_PACKAGE)
+    if(USE_FSAL_GLUSTER_REQUIRED)
+      message(FATAL_ERROR "Cannot find GLUSTER GFAPI runtime but requested on command line")
+    else(USE_FSAL_GLUSTER_REQUIRED)
       message(WARNING "Cannot find GLUSTER GFAPI runtime. Disabling GLUSTER fsal build")
       set(USE_FSAL_GLUSTER OFF)
-    endif(STRICT_PACKAGE)
+    endif(USE_FSAL_GLUSTER_REQUIRED)
   else(NOT GFAPI_FOUND)
     message(STATUS "GFAPI_INCLUDE_DIRS=${GFAPI_INCLUDE_DIRS}")
     message(STATUS "GFAPI_LIBRARY_DIRS=${GFAPI_LIBRARY_DIRS}")
@@ -601,12 +669,12 @@ if(USE_FSAL_GLUSTER)
   if(USE_FSAL_GLUSTER)
     check_include_files("unistd.h;attr/xattr.h" HAVE_XATTR_H)
     if(NOT HAVE_XATTR_H)
-      if(STRICT_PACKAGE)
-        message(FATAL_ERROR "STRICT PACKAGE: Can not find attr/xattr.h, disabling GLUSTER fsal build")
-      else(STRICT_PACKAGE)
+      if(USE_FSAL_GLUSTER_REQUIRED)
+	message(FATAL_ERROR "Can not find attr/xattr.h, but GLUSTER requested on command line")
+      else(USE_FSAL_GLUSTER_REQUIRED)
         message(WARNING "Can not find attr/xattr.h, disabling GLUSTER fsal build")
         set(USE_FSAL_GLUSTER OFF)
-      endif(STRICT_PACKAGE)
+      endif(USE_FSAL_GLUSTER_REQUIRED)
     endif(NOT HAVE_XATTR_H)
     check_include_files("acl/libacl.h" HAVE_ACL_H)
     if(HAVE_ACL_H)
@@ -643,51 +711,21 @@ if(USE_FSAL_GLUSTER)
   endif(USE_FSAL_GLUSTER)
 endif(USE_FSAL_GLUSTER)
 
-if(USE_FSAL_CEPH)
-  find_package(CephFS)
-  if(NOT CEPHFS_FOUND)
-    if(STRICT_PACKAGE)
-      message(FATAL_ERROR "STRICT_PACKAGE : Cannot find CEPH runtime.  Disabling CEPH fsal build")
-    else(STRICT_PACKAGE)
-      message(WARNING "Cannot find CEPH runtime.  Disabling CEPH fsal build")
-      set(USE_FSAL_CEPH OFF)
-    endif(STRICT_PACKAGE)
-  endif(NOT CEPHFS_FOUND)
-endif(USE_FSAL_CEPH)
+gopt_test(USE_FSAL_NULL)
+# NULL has no dependencies
 
+gopt_test(USE_FSAL_RGW)
 if(USE_FSAL_RGW)
   # require RGW w/API version 1.1.x
-  find_package(RGW 1.1.6)
+  find_package(RGW 1.1.6 ${USE_FSAL_RGW_REQUIRED})
   if(NOT RGW_FOUND)
-    if(STRICT_PACKAGE)
-      message(FATAL_ERROR "STRICT_PACKAGE : Cannot find RGW runtime.  Disabling RGW fsal build")
-    else(STRICT_PACKAGE)
-      message(WARNING
-	"Cannot find supported RGW runtime.  Disabling RGW fsal build")
-      set(USE_FSAL_RGW OFF)
-    endif(STRICT_PACKAGE)
+    message(WARNING "Cannot find supported RGW runtime.  Disabling RGW fsal build")
+    set(USE_FSAL_RGW OFF)
   endif(NOT RGW_FOUND)
 endif(USE_FSAL_RGW)
 
-if(USE_FSAL_XFS)
-  if(EXISTS /lib/libhandle.so)
-    check_library_exists(handle "open_by_handle" "/./lib" HAVE_XFS_LIB)
-    if(HAVE_XFS_LIB)
-      set(PATH_LIBHANDLE "/lib/libhandle.so" CACHE INTERNAL "debian stretch and ubuntu xenial hack")
-    endif(HAVE_XFS_LIB)
-  else(EXISTS /lib/libhandle.so)
-    check_library_exists(handle "open_by_handle" "" HAVE_XFS_LIB)
-  endif(EXISTS /lib/libhandle.so)
-  check_include_files("xfs/xfs.h" HAVE_XFS_H)
-  if((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
-   if(STRICT_PACKAGE)
-      message(FATAL_ERROR "STRICT_PACKAGE: Cannot find XFS runtime. Disabling XFS build")
-    else(STRICT_PACKAGE)
-      message(WARNING "Cannot find XFS runtime. Disabling XFS build")
-      set(USE_FSAL_XFS OFF)
-    endif(STRICT_PACKAGE)
-  endif((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
-endif(USE_FSAL_XFS)
+gopt_test(USE_FSAL_MEM)
+# MEM has no dependencies
 
 # sort out which allocator to use
 if(${ALLOCATOR} STREQUAL "jemalloc")
@@ -724,21 +762,43 @@ if (USE_ACL_MAPPING)
   endif(LIBACL_FOUND)
 endif(USE_ACL_MAPPING)
 
+gopt_test(USE_EFENCE)
 if(USE_EFENCE)
-  find_library(LIBEFENCE efence REQUIRED)
-  set(SYSTEM_LIBRARIES ${LIBEFENCE} ${SYSTEM_LIBRARIES})
+  find_library(LIBEFENCE efence)
+  if(LIBEFENCE_FOUND)
+    set(SYSTEM_LIBRARIES ${LIBEFENCE} ${SYSTEM_LIBRARIES})
+  else(LIBEFENCE_FOUND)
+    if(USE_EFENCE_REQUIRED)
+      message(FATAL_ERROR "Cannot find efence libs but requested on command line")
+    else(USE_EFENCE_REQUIRED)
+      message(WARNING "Cannot find efence libs. Disabling efence support")
+    endif(USE_EFENCE_REQUIRED)
+    set(USE_EFENCE OFF)
+  endif(LIBEFENCE_FOUND)
 endif(USE_EFENCE)
 
+gopt_test(USE_DBUS)
 if(USE_DBUS)
   find_package(PkgConfig)
+  # pkg_check_modules doesn't fatal error on REQUIRED, so handle it ourselves
   pkg_check_modules(DBUS REQUIRED dbus-1)
-  set(SYSTEM_LIBRARIES ${DBUS_LIBRARIES} ${SYSTEM_LIBRARIES})
-  LIST(APPEND CMAKE_LIBRARY_PATH ${DBUS_LIBRARY_DIRS})
-  link_directories (${DBUS_LIBRARY_DIRS})
+  if(NOT DBUS_FOUND)
+    if(USE_DBUS_REQUIRED)
+      message(FATAL_ERROR "Cannot find DBUS libs but requested on command line")
+    else(USE_DBUS_REQUIRED)
+      message(WARNING "Cannot find DBUS libs. Disabling DBUS support")
+      set(USE_DBUS OFF)
+    endif(USE_DBUS_REQUIRED)
+  else(NOT DBUS_FOUND)
+    set(SYSTEM_LIBRARIES ${DBUS_LIBRARIES} ${SYSTEM_LIBRARIES})
+    LIST(APPEND CMAKE_LIBRARY_PATH ${DBUS_LIBRARY_DIRS})
+    link_directories (${DBUS_LIBRARY_DIRS})
+  endif(NOT DBUS_FOUND)
 endif(USE_DBUS)
 
+gopt_test(USE_NFSIDMAP)
 if(USE_NFSIDMAP)
-  find_package(NfsIdmap)
+  find_package(NfsIdmap ${USE_NFSIDMAP_REQUIRED})
   if(NFSIDMAP_FOUND)
     set(SYSTEM_LIBRARIES ${NFSIDMAP_LIBRARY} ${SYSTEM_LIBRARIES})
   else(NFSIDMAP_FOUND)
@@ -752,25 +812,33 @@ if(USE_EXECINFO)
   set(SYSTEM_LIBRARIES ${EXECINFO_LIBRARY} ${SYSTEM_LIBRARIES})
 endif(USE_EXECINFO)
 
+gopt_test(USE_CUNIT)
 if(USE_CUNIT)
-  find_package(cunit REQUIRED)
-  set(SYSTEM_LIBRARIES ${cunit_LIBRARIES} ${SYSTEM_LIBRARIES})
+  find_package(cunit ${USE_CUNIT_REQUIRED})
+  if (cunit_FOUND)
+    set(SYSTEM_LIBRARIES ${cunit_LIBRARIES} ${SYSTEM_LIBRARIES})
+  else (cunit_FOUND)
+    message(WARNING "CUnit not found.  Disabling USE_CUNIT")
+    set(_MSPAC_SUPPORT OFF)
+  endif (cunit_FOUND)
 endif(USE_CUNIT)
 
+gopt_test(_MSPAC_SUPPORT)
 if(_MSPAC_SUPPORT)
-  find_package(WBclient REQUIRED)
-  if(WBCLIENT_FOUND AND WBCLIENT4_H)
+  find_package(WBclient ${_MSPAC_SUPPORT_REQUIRED})
+  if(WBCLIENT_FOUND)
     set(SYSTEM_LIBRARIES ${WBCLIENT_LIBRARIES} ${SYSTEM_LIBRARIES})
-  else(WBCLIENT_FOUND AND WBCLIENT4_H)
+  else(WBCLIENT_FOUND)
     message(WARNING "Samba 4 wbclient not found.  Disabling MSPAC_SUPPORT")
     set(_MSPAC_SUPPORT OFF)
-  endif(WBCLIENT_FOUND AND WBCLIENT4_H)
+  endif(WBCLIENT_FOUND)
 endif(_MSPAC_SUPPORT)
 
+gopt_test(USE_LTTNG)
 if(USE_LTTNG)
   # Set LTTNG_PATH_HINT on the command line
   # if your LTTng is not in a standard place
-  find_package(LTTng)
+  find_package(LTTng ${USE_LTTNG_REQUIRED})
   if(LTTNG_FOUND)
     include_directories(${LTTNG_INCLUDE_DIR})
   else(LTTNG_FOUND)
@@ -779,18 +847,23 @@ if(USE_LTTNG)
   endif(LTTNG_FOUND)
 endif(USE_LTTNG)
 
-if(USE_RADOS_RECOV OR RADOS_URLS)
-  find_package(RADOS)
+gopt_test(USE_RADOS_RECOV)
+if(USE_RADOS_RECOV)
+  find_package(RADOS ${USE_RADOS_RECOV_REQUIRED})
   if(NOT RADOS_FOUND)
-    if(STRICT_PACKAGE)
-      message(FATAL_ERROR "STRICT_PACKAGE : Rados libraries not found.")
-    else(STRICT_PACKAGE)
-      message(WARNING "Rados libraries not found.")
-      set(USE_RADOS_RECOV OFF)
-      set(RADOS_URLS OFF)
-    endif(STRICT_PACKAGE)
+    message(WARNING "Rados libraries not found. Disabling USE_RADOS_RECOV")
+    set(USE_RADOS_RECOV OFF)
   endif(NOT RADOS_FOUND)
-endif(USE_RADOS_RECOV OR RADOS_URLS)
+endif(USE_RADOS_RECOV)
+
+gopt_test(RADOS_URLS)
+if(RADOS_URLS)
+  find_package(RADOS ${RADOS_URLS_REQUIRED})
+  if(NOT RADOS_FOUND)
+    message(WARNING "Rados libraries not found. Disabling RADOS_URLS")
+    set(RADOS_URLS OFF)
+  endif(NOT RADOS_FOUND)
+endif(RADOS_URLS)
 
 # Cmake 2.6 has issue in managing BISON and FLEX
 if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
@@ -816,10 +889,7 @@ set(_USE_9P ${USE_9P})
 set(_USE_9P_RDMA ${USE_9P_RDMA})
 set(_USE_NFS3 ${USE_NFS3})
 set(_USE_NLM ${USE_NLM})
-
-if(USE_CB_SIMULATOR)
-  set(_USE_CB_SIMULATOR ON)
-endif(USE_CB_SIMULATOR)
+set(_USE_CB_SIMULATOR ${USE_CB_SIMULATOR})
 
 ########### add a "make dist" and a "make rpm"  ###############
 
@@ -1071,7 +1141,6 @@ message(STATUS "ENABLE_VFS_DEBUG_ACL = ${ENABLE_VFS_DEBUG_ACL}")
 message(STATUS "ENABLE_RFC_ACL = ${ENABLE_RFC_ACL}")
 message(STATUS "USE_CAPS = ${USE_CAPS}")
 message(STATUS "USE_BLKID = ${USE_BLKID}")
-message(STATUS "STRICT_PACKAGE = ${STRICT_PACKAGE}")
 message(STATUS "DISTNAME_HAS_GIT_DATA = ${DISTNAME_HAS_GIT_DATA}" )
 message(STATUS "_MSPAC_SUPPORT = ${_MSPAC_SUPPORT}")
 message(STATUS "USE_EFENCE = ${USE_EFENCE}")
@@ -1080,7 +1149,9 @@ message(STATUS "RPCBIND = ${RPCBIND}")
 message(STATUS "_NO_XATTRD = ${_NO_XATTRD}")
 message(STATUS "DEBUG_SAL = ${DEBUG_SAL}")
 message(STATUS "_VALGRIND_MEMCHECK = ${_VALGRIND_MEMCHECK}")
+message(STATUS "ENABLE_LOCKTRACE = ${ENABLE_LOCKTRACE}")
 message(STATUS "PROXY_HANDLE_MAPPING = ${PROXY_HANDLE_MAPPING}")
+message(STATUS "DEBUG_MDCACHE = ${DEBUG_MDCACHE}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "COVERAGE = ${COVERAGE}")
 message(STATUS "ENFORCE_GCC = ${ENFORCE_GCC}")
@@ -1119,6 +1190,7 @@ message(STATUS "USE_TOOL_MULTILOCK = ${USE_TOOL_MULTILOCK}")
 message(STATUS "USE_MAN_PAGE = ${USE_MAN_PAGE}")
 message(STATUS "USE_RADOS_RECOV = ${USE_RADOS_RECOV}")
 message(STATUS "RADOS_URLS = ${RADOS_URLS}")
+message(STATUS "USE_CUNIT = ${USE_CUNIT}")
 
 #force command line options to be stored in cache
 set(USE_FSAL_VFS ${USE_FSAL_VFS}
@@ -1214,11 +1286,6 @@ set(ENABLE_RFC_ACL ${ENABLE_RFC_ACL}
 set(_MSPAC_SUPPORT ${_MSPAC_SUPPORT}
   CACHE BOOL
    "enable mspac winbind support"
-   FORCE)
-
-set(STRICT_PACKAGE ${STRICT_PACKAGE}
-  CACHE BOOL
-   "enable strict packaging behavior"
    FORCE)
 
 set( DISTNAME_HAS_GIT_DATA ${DISTNAME_HAS_GIT_DATA}
