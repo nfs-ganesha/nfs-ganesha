@@ -1017,15 +1017,16 @@ typedef rdel_fh_t * (*add_rfh_entry_hook)(clid_entry_t *, char *);
 struct nfs4_recovery_backend {
 	void (*recovery_init)(void);
 	void (*recovery_shutdown)(void);
-	void (*end_grace)(void);
 	void (*recovery_read_clids)(nfs_grace_start_t *gsp,
 				    add_clid_entry_hook add_clid,
 				    add_rfh_entry_hook add_rfh);
 	void (*add_clid)(nfs_client_id_t *);
 	void (*rm_clid)(nfs_client_id_t *);
 	void (*add_revoke_fh)(nfs_client_id_t *, nfs_fh4 *);
+	void (*end_grace)(void);
 	void (*maybe_start_grace)(void);
 	bool (*try_lift_grace)(void);
+	void (*set_enforcing)(void);
 };
 
 void fs_backend_init(struct nfs4_recovery_backend **);

@@ -110,6 +110,15 @@ nfs_lift_grace_locked(time_t current)
 	}
 }
 
+/*
+ * Report our new state to the cluster
+ */
+static void nfs4_set_enforcing(void)
+{
+	if (recovery_backend->set_enforcing)
+		recovery_backend->set_enforcing();
+}
+
 /**
  * @brief Start grace period
  *
@@ -155,6 +164,11 @@ void nfs_start_grace(nfs_grace_start_t *gsp)
 
 	LogEvent(COMPONENT_STATE, "NFS Server Now IN GRACE, duration %d",
 		 (int)nfs_param.nfsv4_param.grace_period);
+
+	/* Set enforcing flag here */
+	if (!was_grace)
+		nfs4_set_enforcing();
+
 	/*
 	 * If we're just starting the grace period, then load the
 	 * clid database. Don't load it however if we're extending the
