@@ -18,7 +18,7 @@
 #
 # Author: Jim Lieb <jlieb@panasas.com>
 #-*- coding: utf-8 -*-
-
+from __future__ import print_function
 from PyQt4.QtCore import *
 from PyQt4 import QtGui
 from Ganesha.QtUI.ui_log_dialog import Ui_LogSettings
@@ -54,7 +54,7 @@ class DebugLevelDelegate(QtGui.QItemDelegate):
         value = index.data(Qt.DisplayRole).toString()
         combo_index = editor.findText(value)
         editor.setCurrentIndex(combo_index)
-        
+
     def setModelData(self, editor, model, index):
         text = editor.currentText()
         model.setData(index, text, Qt.EditRole)
@@ -163,7 +163,7 @@ class LogSettingsModel(QAbstractTableModel):
         elif role == Qt.EditRole:
             if index.column() == 0:
                 comp = self.log_components[index.row()][0]
-                print "edit partitioned comp", comp
+                print("edit partitioned comp", comp)
                 return QVariant(comp)
             else:
                 return QVariant(self.log_components[index.row()][1])
@@ -183,7 +183,7 @@ class LogSetDialog(QtGui.QDialog):
         self.log_ui = Ui_LogSettings()
         self.log_ui.setupUi(self)
         self.log_mgr = log_mgr
-            
+
         self.log_setting_model = LogSettingsModel(self.log_mgr)
         self.level_edit_delegate = DebugLevelDelegate()
         self.log_ui.log_levels.setModel(self.log_setting_model)
@@ -194,7 +194,7 @@ class LogSetDialog(QtGui.QDialog):
         self.log_ui.log_done.clicked.connect(self.close_logsetting_dialog)
         self.log_setting_model.getComponents()
         self.log_setting_model.dataChanged.connect(self.log_setting_model.updateSetting)
-        
+
     def show_logsetting_dialog(self):
         self.show()
 

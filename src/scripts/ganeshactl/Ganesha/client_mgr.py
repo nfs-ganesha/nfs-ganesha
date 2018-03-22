@@ -39,7 +39,7 @@ class ClientMgr(QtDBus.QDBusAbstractInterface):
     org.ganesha.nfsd.clientmgr
     '''
     show_clients = QtCore.pyqtSignal(tuple, list)
-    
+
     def __init__(self, service, path, connection, show_status, parent=None):
         super(ClientMgr, self).__init__(service,
                                         path,
@@ -82,7 +82,7 @@ class ClientMgr(QtDBus.QDBusAbstractInterface):
         else:
             ts = (reply.argumentAt(0).toPyObject()[0].toULongLong()[0],
                   reply.argumentAt(0).toPyObject()[1].toULongLong()[0])
-            interval_nsecs = ts[0] * 1000000000L + ts[1]
+            interval_nsecs = ts[0] * 1000000000 + ts[1]
             clients = []
             for client in reply.argumentAt(1).toPyObject():
                 cl = client.toPyObject()
@@ -138,4 +138,4 @@ class ClientStats(QtDBus.QDBusAbstractInterface):
 
     def layout_done(self, call):
         pass
-    
+

@@ -18,7 +18,6 @@
 #
 # Author: Jim Lieb <jlieb@panasas.com>
 #-*- coding: utf-8 -*-
-
 import sys, time
 from PyQt4.QtCore import *
 from PyQt4 import QtDBus, QtGui
@@ -28,7 +27,7 @@ class ExportTableModel(QAbstractTableModel):
     '''
     Exports Table Model to match its table view
     '''
-    
+
     def __init__(self, exportmgr, parent=None):
         super(ExportTableModel, self).__init__(parent)
         self.header = ['Export ID',
@@ -44,7 +43,7 @@ class ExportTableModel(QAbstractTableModel):
         self.exportmgr = exportmgr
         self.exportmgr.show_exports.connect(self.FetchExports_done)
         self.exports = []
-        self.ts = (0L, 0L)
+        self.ts = (0, 0)
 
     # Fetch current exports
     def FetchExports(self):
@@ -100,7 +99,7 @@ class ExportTableModel(QAbstractTableModel):
         for i in reversed(xrange(count)):
             self.exports.pop(row + i)
         self.endRemoveRows()
-    
+
     def rowCount(self, parent=QModelIndex()):
         return len(self.exports)
 

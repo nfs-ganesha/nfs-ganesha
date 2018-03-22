@@ -28,7 +28,7 @@ class ClientTableModel(QAbstractTableModel):
     '''
     Clients Table Model to match its table view
     '''
-    
+
     def __init__(self, clientmgr, parent=None):
         super(ClientTableModel, self).__init__(parent)
         self.header = ['Client IP',
@@ -43,7 +43,7 @@ class ClientTableModel(QAbstractTableModel):
         self.clientmgr = clientmgr
         self.clientmgr.show_clients.connect(self.FetchClients_done)
         self.clients = []
-        self.ts = (0L, 0L)
+        self.ts = (0, 0)
 
     # Fetch current clients
     def FetchClients(self):
@@ -99,7 +99,7 @@ class ClientTableModel(QAbstractTableModel):
         for i in reversed(xrange(count)):
             self.clients.pop(row + i)
         self.endRemoveRows()
-    
+
     def rowCount(self, parent=QModelIndex()):
         return len(self.clients)
 

@@ -2,10 +2,9 @@
 
 # You must initialize the gobject/dbus support for threading
 # before doing anything.
+from __future__ import print_function
 import gobject
 import sys
-
-
 
 gobject.threads_init()
 from dbus import glib
@@ -20,7 +19,7 @@ try:
 	admin = bus.get_object("org.ganesha.nfsd",
                        "/org/ganesha/nfsd/ExportMgr")
 except: # catch *all* exceptions
-      print "Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down"
+      print("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")
       exit(1)
 
 
@@ -32,7 +31,7 @@ ganesha_9pOpstats = admin.get_dbus_method('Get9pOpStats',
 
 # get parameters
 if len(sys.argv) != 2 or not(sys.argv[1].isdigit()):
-	print "Usage: %s export_id" % sys.argv[0]
+	print("Usage: %s export_id" % sys.argv[0])
 	exit(1)
 export_id=dbus.UInt16(sys.argv[1])
 
@@ -44,11 +43,11 @@ for opname in OpNames:
 	status=opstats[0]
 	errmsg=opstats[1]
 	if (not(status)):
-		print errmsg
+		print(errmsg)
 		break
 	total=opstats[3][0]
 	if (total != 0):
-		print "%-16s\t%ld" % (opname, total)
+		print("%-16s\t%ld" % (opname, total))
 
 
 sys.exit(0);

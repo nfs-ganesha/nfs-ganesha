@@ -19,7 +19,7 @@
 #
 # Author: Jim Lieb <jlieb@panasas.com>
 #-*- coding: utf-8 -*-
-
+from __future__ import print_function
 import sys
 import time
 from PyQt4 import QtCore, QtDBus
@@ -32,7 +32,7 @@ SERVICE = 'org.ganesha.nfsd'
 class ManageClients(QtCore.QObject):
 
     show_status = QtCore.pyqtSignal(bool, str)
-    
+
     def __init__(self, sysbus, parent=None):
         super(ManageClients, self).__init__()
         self.clientmgr = ClientMgr(SERVICE,
@@ -43,25 +43,25 @@ class ManageClients(QtCore.QObject):
 
     def addclient(self, ipaddr):
         self.clientmgr.AddClient(ipaddr)
-        print "Add a client %s" % (ipaddr)
+        print("Add a client %s" % (ipaddr))
 
     def removeclient(self, ipaddr):
         self.clientmgr.RemoveClient(ipaddr)
-        print "Remove a client %s" % (ipaddr)
+        print("Remove a client %s" % (ipaddr))
 
     def showclients(self):
         self.clientmgr.ShowClients()
-        print "Show clients"
+        print("Show clients")
 
     def proc_clients(self, ts, clients):
-        print "Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs"
+        print("Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs")
         if len(clients) == 0:
-            print "No clients"
+            print("No clients")
         else:
-            print "Clients:"
-            print " IP addr,  nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, 9p, last"
+            print("Clients:")
+            print(" IP addr,  nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, 9p, last")
             for client in clients:
-                print (" %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s %d nsecs" %
+                print(" %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s %d nsecs" %
                        (client.ClientIP,
                         client.HasNFSv3,
                         client.HasMNT,
@@ -74,9 +74,9 @@ class ManageClients(QtCore.QObject):
         sys.exit()
 
     def status_message(self, status, errormsg):
-        print "Error: status = %s, %s" % (str(status), errormsg)
+        print("Error: status = %s, %s" % (str(status), errormsg))
         sys.exit()
-        
+
 # Main
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     elif sys.argv[1] == "show":
         clientmgr.showclients()
     else:
-        print "unknown/missing command"
+        print("unknown/missing command")
         sys.exit()
 
     app.exec_()
