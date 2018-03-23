@@ -411,88 +411,6 @@ void glusterfs_free_state(struct fsal_export *exp_hdl, struct state_t *state)
  */
 
 /**
- * @brief Implements GLUSTER FSAL exportoperation fs_supports
- */
-
-static bool fs_supports(struct fsal_export *exp_hdl,
-			fsal_fsinfo_options_t option)
-{
-	return fsal_supports(&exp_hdl->fsal->fs_info, option);
-}
-
-/**
- * @brief Implements GLUSTER FSAL exportoperation fs_maxfilesize
- */
-
-static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
-{
-	return fsal_maxfilesize(&exp_hdl->fsal->fs_info);
-}
-
-/**
- * @brief Implements GLUSTER FSAL exportoperation fs_maxread
- */
-
-static uint32_t fs_maxread(struct fsal_export *exp_hdl)
-{
-	return fsal_maxread(&exp_hdl->fsal->fs_info);
-}
-
-/**
- * @brief Implements GLUSTER FSAL exportoperation fs_maxwrite
- */
-
-static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
-{
-	return fsal_maxwrite(&exp_hdl->fsal->fs_info);
-}
-
-/**
- * @brief Implements GLUSTER FSAL exportoperation fs_maxlink
- */
-
-static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
-{
-	return fsal_maxlink(&exp_hdl->fsal->fs_info);
-}
-
-/**
- * @brief Implements GLUSTER FSAL exportoperation fs_maxnamelen
- */
-
-static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
-{
-	return fsal_maxnamelen(&exp_hdl->fsal->fs_info);
-}
-
-/**
- * @brief Implements GLUSTER FSAL exportoperation fs_maxpathlen
- */
-
-static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
-{
-	return fsal_maxpathlen(&exp_hdl->fsal->fs_info);
-}
-
-/**
- * @brief Implements GLUSTER FSAL exportoperation fs_lease_time
- */
-
-static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
-{
-	return fsal_lease_time(&exp_hdl->fsal->fs_info);
-}
-
-/**
- * @brief Implements GLUSTER FSAL exportoperation fs_acl_support
- */
-
-static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
-{
-	return fsal_acl_support(&exp_hdl->fsal->fs_info);
-}
-
-/**
  * @brief Implements GLUSTER FSAL exportoperation fs_supported_attrs
  */
 
@@ -504,15 +422,6 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 	if (!NFSv4_ACL_SUPPORT)
 		supported_mask &= ~ATTR_ACL;
 	return supported_mask;
-}
-
-/**
- * @brief Implements GLUSTER FSAL exportoperation fs_umask
- */
-
-static uint32_t fs_umask(struct fsal_export *exp_hdl)
-{
-	return fsal_umask(&exp_hdl->fsal->fs_info);
 }
 
 /**
@@ -571,17 +480,7 @@ void export_ops_init(struct export_ops *ops)
 	ops->wire_to_host = wire_to_host;
 	ops->create_handle = create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
-	ops->fs_supports = fs_supports;
-	ops->fs_maxfilesize = fs_maxfilesize;
-	ops->fs_maxread = fs_maxread;
-	ops->fs_maxwrite = fs_maxwrite;
-	ops->fs_maxlink = fs_maxlink;
-	ops->fs_maxnamelen = fs_maxnamelen;
-	ops->fs_maxpathlen = fs_maxpathlen;
-	ops->fs_lease_time = fs_lease_time;
-	ops->fs_acl_support = fs_acl_support;
 	ops->fs_supported_attrs = fs_supported_attrs;
-	ops->fs_umask = fs_umask;
 	ops->alloc_state = glusterfs_alloc_state;
 	ops->free_state = glusterfs_free_state;
 }

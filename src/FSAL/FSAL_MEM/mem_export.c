@@ -108,62 +108,6 @@ static fsal_status_t mem_get_dynamic_info(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static bool mem_fs_supports(struct fsal_export *exp_hdl,
-			    fsal_fsinfo_options_t option)
-{
-	return fsal_supports(&exp_hdl->fsal->fs_info, option);
-}
-
-static uint64_t mem_fs_maxfilesize(struct fsal_export *exp_hdl)
-{
-	return fsal_maxfilesize(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t mem_fs_maxread(struct fsal_export *exp_hdl)
-{
-	return fsal_maxread(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t mem_fs_maxwrite(struct fsal_export *exp_hdl)
-{
-	return fsal_maxwrite(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t mem_fs_maxlink(struct fsal_export *exp_hdl)
-{
-	return fsal_maxlink(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t mem_fs_maxnamelen(struct fsal_export *exp_hdl)
-{
-	return fsal_maxnamelen(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t mem_fs_maxpathlen(struct fsal_export *exp_hdl)
-{
-	return fsal_maxpathlen(&exp_hdl->fsal->fs_info);
-}
-
-static struct timespec mem_fs_lease_time(struct fsal_export *exp_hdl)
-{
-	return fsal_lease_time(&exp_hdl->fsal->fs_info);
-}
-
-static fsal_aclsupp_t mem_fs_acl_support(struct fsal_export *exp_hdl)
-{
-	return fsal_acl_support(&exp_hdl->fsal->fs_info);
-}
-
-static attrmask_t mem_fs_supported_attrs(struct fsal_export *exp_hdl)
-{
-	return fsal_supported_attrs(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t mem_fs_umask(struct fsal_export *exp_hdl)
-{
-	return fsal_umask(&exp_hdl->fsal->fs_info);
-}
-
 /* extract a file handle from a buffer.
  * do verification checks and flag any and all suspicious bits.
  * Return an updated fh_desc into whatever was passed.  The most
@@ -243,17 +187,6 @@ void mem_export_ops_init(struct export_ops *ops)
 	ops->wire_to_host = mem_wire_to_host;
 	ops->create_handle = mem_create_handle;
 	ops->get_fs_dynamic_info = mem_get_dynamic_info;
-	ops->fs_supports = mem_fs_supports;
-	ops->fs_maxfilesize = mem_fs_maxfilesize;
-	ops->fs_maxread = mem_fs_maxread;
-	ops->fs_maxwrite = mem_fs_maxwrite;
-	ops->fs_maxlink = mem_fs_maxlink;
-	ops->fs_maxnamelen = mem_fs_maxnamelen;
-	ops->fs_maxpathlen = mem_fs_maxpathlen;
-	ops->fs_lease_time = mem_fs_lease_time;
-	ops->fs_acl_support = mem_fs_acl_support;
-	ops->fs_supported_attrs = mem_fs_supported_attrs;
-	ops->fs_umask = mem_fs_umask;
 	ops->alloc_state = mem_alloc_state;
 }
 

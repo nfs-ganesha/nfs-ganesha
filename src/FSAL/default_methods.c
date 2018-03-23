@@ -56,6 +56,7 @@
 #include "pnfs_utils.h"
 #include "nfs_creds.h"
 #include "sal_data.h"
+#include "FSAL/fsal_config.h"
 
 /** fsal module method defaults and common methods
  */
@@ -360,106 +361,154 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-/* fs_supports
- * default case is supports nothing
+/**
+ * @brief Query the FSAL's capabilities
+ *
+ * This function queries the capabilities of an FSAL export.
+ *
+ * @param[in] exp_hdl The public export handle
+ * @param[in] option     The option to check
+ *
+ * @retval true if the option is supported.
+ * @retval false if the option is unsupported (or unknown).
  */
-
 static bool fs_supports(struct fsal_export *exp_hdl,
 			fsal_fsinfo_options_t option)
 {
-	return false;
+	return fsal_supports(&exp_hdl->fsal->fs_info, option);
 }
 
-/* fs_maxfilesize
- * default case is zero size
+/**
+ * @brief Return the longest file supported
+ *
+ * This function returns the length of the longest file supported.
+ *
+ * @param[in] exp_hdl The public export
+ *
  */
-
 static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
 {
-	return 0;
+	return fsal_maxfilesize(&exp_hdl->fsal->fs_info);
 }
 
-/* fs_maxread
- * default case is zero length
+/**
+ * @brief Return the longest read supported
+ *
+ * This function returns the length of the longest read supported.
+ *
+ * @param[in] exp_hdl The public export
+ *
  */
-
 static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 {
-	return 0;
+	return fsal_maxread(&exp_hdl->fsal->fs_info);
 }
 
-/* fs_maxwrite
- * default case is zero length
+/**
+ * @brief Return the longest write supported
+ *
+ * This function returns the length of the longest write supported.
+ *
+ * @param[in] exp_hdl The public export
+ *
  */
-
 static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 {
-	return 0;
+	return fsal_maxwrite(&exp_hdl->fsal->fs_info);
 }
 
-/* fs_maxlink
- * default case is zero links
+/**
+ * @brief Return the maximum number of hard links to a file
+ *
+ * This function returns the maximum number of hard links supported to
+ * any file.
+ *
+ * @param[in] exp_hdl The public export
+ *
  */
-
 static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 {
-	return 0;
+	return fsal_maxlink(&exp_hdl->fsal->fs_info);
 }
 
-/* fs_maxnamelen
- * default case is zero length
+/**
+ * @brief Return the maximum size of a Ceph filename
+ *
+ * This function returns the maximum filename length.
+ *
+ * @param[in] exp_hdl The public export
+ *
  */
-
 static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 {
-	return 0;
+	return fsal_maxnamelen(&exp_hdl->fsal->fs_info);
 }
 
-/* fs_maxpathlen
- * default case is zero length
- */
 
+/**
+ * @brief Return the maximum length of a Ceph path
+ *
+ * This function returns the maximum path length.
+ *
+ * @param[in] exp_hdl The public export
+ *
+ */
 static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 {
-	return 0;
+	return fsal_maxpathlen(&exp_hdl->fsal->fs_info);
 }
 
-/* fs_lease_time
- * default case is zero interval time
+/**
+ * @brief Return the lease time
+ *
+ * This function returns the lease time.
+ *
+ * @param[in] export_pub exp_hdl
+ *
  */
-
 static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
 {
-	struct timespec lease_time = { 0, 0 };
-
-	return lease_time;
+	return fsal_lease_time(&exp_hdl->fsal->fs_info);
 }
 
-/* fs_acl_support
- * default case is none, neither deny or allow
+/**
+ * @brief Return ACL support
+ *
+ * This function returns the export's ACL support.
+ *
+ * @param[in] export_pub The public export
+ *
  */
-
 static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 {
-	return 0;
+	return fsal_acl_support(&exp_hdl->fsal->fs_info);
 }
 
-/* fs_supported_attrs
- * default case is none
+/**
+ * @brief Return the attributes supported by this FSAL
+ *
+ * This function returns the mask of attributes this FSAL can support.
+ *
+ * @param[in] exp_hdl The public export
+ *
  */
-
 static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
-	return 0;
+	return fsal_supported_attrs(&exp_hdl->fsal->fs_info);
 }
 
-/* fs_umask
- * default case is no access
+/**
+ * @brief Return the mode under which the FSAL will create files
+ *
+ * This function modifies the default mode on any new file created.
+ *
+ * @param[in] export_pub The public export
+ *
+ * @return 0 (usually).  Bits set here turn off bits in created files.
  */
-
 static uint32_t fs_umask(struct fsal_export *exp_hdl)
 {
-	return 0000;
+	return fsal_umask(&exp_hdl->fsal->fs_info);
 }
 
 /* check_quota

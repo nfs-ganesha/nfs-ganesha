@@ -44,60 +44,9 @@ static void pxy_release(struct fsal_export *exp_hdl)
 	gsh_free(pxy_exp);
 }
 
-static bool pxy_get_supports(struct fsal_export *exp_hdl,
-			     fsal_fsinfo_options_t option)
-{
-	return fsal_supports(&exp_hdl->fsal->fs_info, option);
-}
-
-static uint64_t pxy_get_maxfilesize(struct fsal_export *exp_hdl)
-{
-	return fsal_maxfilesize(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t pxy_get_maxread(struct fsal_export *exp_hdl)
-{
-	return fsal_maxread(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t pxy_get_maxwrite(struct fsal_export *exp_hdl)
-{
-	return fsal_maxwrite(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t pxy_get_maxlink(struct fsal_export *exp_hdl)
-{
-	return fsal_maxlink(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t pxy_get_maxnamelen(struct fsal_export *exp_hdl)
-{
-	return fsal_maxnamelen(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t pxy_get_maxpathlen(struct fsal_export *exp_hdl)
-{
-	return fsal_maxpathlen(&exp_hdl->fsal->fs_info);
-}
-
-static struct timespec pxy_get_lease_time(struct fsal_export *exp_hdl)
-{
-	return fsal_lease_time(&exp_hdl->fsal->fs_info);
-}
-
-static fsal_aclsupp_t pxy_get_acl_support(struct fsal_export *exp_hdl)
-{
-	return fsal_acl_support(&exp_hdl->fsal->fs_info);
-}
-
 static attrmask_t pxy_get_supported_attrs(struct fsal_export *exp_hdl)
 {
 	return fsal_supported_attrs(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t pxy_get_umask(struct fsal_export *exp_hdl)
-{
-	return fsal_umask(&exp_hdl->fsal->fs_info);
 }
 
 void pxy_export_ops_init(struct export_ops *ops)
@@ -107,17 +56,7 @@ void pxy_export_ops_init(struct export_ops *ops)
 	ops->wire_to_host = pxy_wire_to_host;
 	ops->create_handle = pxy_create_handle;
 	ops->get_fs_dynamic_info = pxy_get_dynamic_info;
-	ops->fs_supports = pxy_get_supports;
-	ops->fs_maxfilesize = pxy_get_maxfilesize;
-	ops->fs_maxread = pxy_get_maxread;
-	ops->fs_maxwrite = pxy_get_maxwrite;
-	ops->fs_maxlink = pxy_get_maxlink;
-	ops->fs_maxnamelen = pxy_get_maxnamelen;
-	ops->fs_maxpathlen = pxy_get_maxpathlen;
-	ops->fs_lease_time = pxy_get_lease_time;
-	ops->fs_acl_support = pxy_get_acl_support;
 	ops->fs_supported_attrs = pxy_get_supported_attrs;
-	ops->fs_umask = pxy_get_umask;
 	ops->alloc_state = pxy_alloc_state;
 	ops->free_state = pxy_free_state;
 };

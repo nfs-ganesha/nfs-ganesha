@@ -98,52 +98,6 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	return fsalstat(fsal_error, 0);
 }
 
-static bool fs_supports(struct fsal_export *exp_hdl,
-			fsal_fsinfo_options_t option)
-{
-	return fsal_supports(&exp_hdl->fsal->fs_info, option);
-}
-
-static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
-{
-	return fsal_maxfilesize(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t fs_maxread(struct fsal_export *exp_hdl)
-{
-	return fsal_maxread(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
-{
-	return fsal_maxwrite(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
-{
-	return fsal_maxlink(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
-{
-	return fsal_maxnamelen(&exp_hdl->fsal->fs_info);
-}
-
-static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
-{
-	return fsal_maxpathlen(&exp_hdl->fsal->fs_info);
-}
-
-static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
-{
-	return fsal_lease_time(&exp_hdl->fsal->fs_info);
-}
-
-static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
-{
-	return fsal_acl_support(&exp_hdl->fsal->fs_info);
-}
-
 static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 {
 	attrmask_t supported_mask;
@@ -161,11 +115,6 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 		supported_mask &= ~ATTR_ACL;
 
 	return supported_mask;
-}
-
-static uint32_t fs_umask(struct fsal_export *exp_hdl)
-{
-	return fsal_umask(&exp_hdl->fsal->fs_info);
 }
 
 /* get_quota
@@ -428,17 +377,7 @@ void gpfs_export_ops_init(struct export_ops *ops)
 	ops->host_to_key = gpfs_host_to_key;
 	ops->create_handle = gpfs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
-	ops->fs_supports = fs_supports;
-	ops->fs_maxfilesize = fs_maxfilesize;
-	ops->fs_maxread = fs_maxread;
-	ops->fs_maxwrite = fs_maxwrite;
-	ops->fs_maxlink = fs_maxlink;
-	ops->fs_maxnamelen = fs_maxnamelen;
-	ops->fs_maxpathlen = fs_maxpathlen;
-	ops->fs_lease_time = fs_lease_time;
-	ops->fs_acl_support = fs_acl_support;
 	ops->fs_supported_attrs = fs_supported_attrs;
-	ops->fs_umask = fs_umask;
 	ops->get_quota = get_quota;
 	ops->set_quota = set_quota;
 	ops->alloc_state = gpfs_alloc_state;
