@@ -5,14 +5,20 @@ set(UNITTEST_LIBS ${GTEST_MAIN} ${GTEST} boost_program_options boost_system ${PT
 set(UNITTEST_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${GTEST_PREFIX}/include -fno-strict-aliasing")
 
 set(GTEST_LIBRARIES
+  rpcal
+  log
+  support
+  hash
+  config_parsing
   MainServices
   ${PROTOCOLS}
   ${GANESHA_CORE}
+  # the following double mention of fsalpseudo and FsalCore
+  # static libs is NOT a typo
   fsalpseudo
   FsalCore
   fsalpseudo
   FsalCore
-  config_parsing
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${UNITTEST_LIBS}
