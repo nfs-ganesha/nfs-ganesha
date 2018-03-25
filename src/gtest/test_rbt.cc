@@ -39,6 +39,13 @@ extern "C" {
 #include <intrinsic.h>
 #include <misc/rbtree_x.h>
 #include <misc/queue.h>
+#include "nfs_core.h"
+
+/* LTTng headers */
+#include <lttng/lttng.h>
+
+/* gperf headers */
+#include <gperftools/profiler.h>
 
   struct rbt_item {
     struct opr_rbtree_node xid_node;
@@ -69,11 +76,13 @@ extern "C" {
 
 namespace {
 
+  char* profile_out = nullptr; //"/tmp/profile.out";
+
   struct opr_rbtree call_replies;
   struct rbt_item *rbt_arr1;
 
   bool verbose = false;
-  static constexpr uint32_t item_wsize = 10000;
+  static constexpr uint32_t item_wsize = 100000;
   static constexpr uint32_t num_calls = 1000000;
 
   uint32_t xid_ix;
@@ -113,6 +122,12 @@ TEST_F(RBTLatency1, RUN1)
   rbt_item *item;
   struct opr_rbtree_node *nv;
   struct rbt_item item_k;
+  struct timespec s_time, e_time;
+
+  if (profile_out)
+    ProfilerStart(profile_out);
+
+  now(&s_time);
 
   uint32_t prev_xid = 0;
   uint32_t next_xid = xid_ix;
@@ -141,6 +156,18 @@ TEST_F(RBTLatency1, RUN1)
     ++next_xid;
     ++prev_xid;
   }
+
+  now(&e_time);
+
+  if (profile_out)
+    ProfilerStop();
+
+  uint64_t dt = timespec_diff(&s_time, &e_time);
+  uint64_t reqs_s = num_calls / (double(dt) / 1000000000);
+
+  fprintf(stderr, "total run time: %" PRIu64 " (" PRIu64 " reqs %" PRIu64
+	  " reqs/s) \n", dt, reqs_s);
+
 }
 
 int main(int argc, char *argv[])
