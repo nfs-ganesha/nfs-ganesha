@@ -1374,10 +1374,6 @@ static int log_to_file2(log_header_t headers, void *private,
 	char *path = private;
 	uint64_t offset = 0;
 
-        if(nfs_param.core_param.num_log_files == 0) {
-		return 0;
-        }
-
 	len = display_buffer_len(buffer);
 
 	/* Add newline to end of buffer */

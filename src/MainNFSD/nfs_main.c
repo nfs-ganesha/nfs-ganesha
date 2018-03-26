@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 #endif
 	sigset_t signals_to_block;
 	struct config_error_type err_type;
-
+        nfs_param.core_param.num_log_files = 1;
 	/* Set the server's boot time and epoch */
 	now(&ServerBootTime);
 	ServerEpoch = (time_t) ServerBootTime.tv_sec;
