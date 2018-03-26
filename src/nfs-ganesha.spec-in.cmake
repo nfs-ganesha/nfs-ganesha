@@ -660,7 +660,7 @@ exit 0
 %endif
 
 %files
-%{_bindir}/ganesha.nfsd
+%{_bindir}/gpfs.ganesha.nfsd
 %{_libdir}/libganesha_nfsd.so*
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
