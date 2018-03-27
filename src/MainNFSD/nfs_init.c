@@ -200,7 +200,10 @@ void nfs_print_param_config(void)
 	       (uint64_t) nfs_param.core_param.decoder_fridge_expiration_delay);
 	printf("\tDecoder_Fridge_Block_Timeout = %" PRIu64 " ;\n",
 	       (uint64_t) nfs_param.core_param.decoder_fridge_block_timeout);
-
+        printf("\tNumber of log files = %d\n",
+               nfs_param.core_param.num_log_files);
+        printf("\tDirent entries track = %d\n",
+               nfs_param.core_param.dirent_entries_track);
 	printf("\tManage_Gids_Expiration = %" PRIu64 " ;\n",
 	       (uint64_t) nfs_param.core_param.manage_gids_expiration);
 
