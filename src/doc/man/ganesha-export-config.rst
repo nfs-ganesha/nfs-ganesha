@@ -104,13 +104,13 @@ Tag (no default)
     Tag options, the same Path may be exported multiple
     times.
 
-MaxRead (4194304)
+MaxRead (67108864)
     The maximum read size on this export
-MaxWrite (4194304)
+MaxWrite (67108864)
     The maximum write size on this export
-PrefRead (4194304)
+PrefRead (67108864)
     The preferred read size on this export
-PrefWrite (4194304)
+PrefWrite (67108864)
    The preferred write size on this export
 PrefReaddir (16384)
    The preferred readdir size on this export
