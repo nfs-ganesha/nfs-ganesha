@@ -176,6 +176,7 @@ See also
 :doc:`ganesha-vfs-config <ganesha-vfs-config>`\(8)
 :doc:`ganesha-xfs-config <ganesha-xfs-config>`\(8)
 :doc:`ganesha-gpfs-config <ganesha-gpfs-config>`\(8)
+:doc:`ganesha-gluster-config <ganesha-gluster-config>`\(8)
 :doc:`ganesha-9p-config <ganesha-9p-config>`\(8)
 :doc:`ganesha-proxy-config <ganesha-proxy-config>`\(8)
 :doc:`ganesha-ceph-config <ganesha-ceph-config>`\(8)
