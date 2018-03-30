@@ -862,6 +862,7 @@ static bool do_block_init(struct config_node *blk_node,
 			errno = 0;
 			/* Try IPv6 (with mapping) first.  If this fails, fall
 			 * back on IPv4, if a v4 address was given. */
+			memset(&hints, 0, sizeof(struct addrinfo));
 			hints.ai_family = AF_INET6;
 			hints.ai_flags = AI_ADDRCONFIG | AI_V4MAPPED;
 			hints.ai_socktype = 0;
@@ -880,7 +881,7 @@ static bool do_block_init(struct config_node *blk_node,
 						  "Cannot set IP default for %s to %s because %s",
 						  item->name,
 						  item->u.ip.def,
-						  strerror(errno));
+						  gai_strerror(rc));
 				errors++;
 			}
 			if (res != NULL)
