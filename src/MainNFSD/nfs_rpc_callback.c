@@ -81,9 +81,9 @@ static const struct timespec tout = { 3, 0 };
  * @param[in] ccache Location of credential cache
  */
 
+#ifdef _HAVE_GSSAPI
 static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 {
-#ifdef _HAVE_GSSAPI
 	int code;
 
 	if (mkdir(ccache, 0700) < 0) {
@@ -106,8 +106,8 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 		LogWarn(COMPONENT_INIT,
 			"gssd_refresh_krb5_machine_credential failed (%d:%d)",
 			code, errno);
-#endif /* _HAVE_GSSAPI */
 }
+#endif /* _HAVE_GSSAPI */
 
 /**
  * @brief Initialize callback subsystem
@@ -391,7 +391,6 @@ static inline bool supported_auth_flavor(int flavor)
 
 #ifdef _HAVE_GSSAPI
 gss_OID_desc krb5oid = { 9, "\052\206\110\206\367\022\001\002\002" };
-#endif /* _HAVE_GSSAPI */
 
 /**
  * @brief Format a principal name for an RPC call channel
@@ -442,6 +441,7 @@ static inline char *format_host_principal(rpc_call_channel_t *chan, char *buf,
 
 	return NULL;
 }
+#endif /* _HAVE_GSSAPI */
 
 /**
  * @brief Set up GSS on a callback channel
