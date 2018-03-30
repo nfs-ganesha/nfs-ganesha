@@ -1992,7 +1992,7 @@ static inline fattr_xdr_result decode_time(XDR *xdr,
 		return FATTR_XDR_FAILED;
 	if (!inline_xdr_u_int32_t(xdr, &nseconds))
 		return FATTR_XDR_FAILED;
-	ts->tv_sec = (uint32_t) seconds;	/* !!! is this correct?? */
+	ts->tv_sec = seconds;
 	ts->tv_nsec = nseconds;
 	if (nseconds >= 1000000000) {	/* overflow */
 		args->nfs_status = NFS4ERR_INVAL;
