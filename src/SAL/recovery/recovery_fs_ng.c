@@ -14,6 +14,7 @@
 #include "client_mgr.h"
 #include "fsal.h"
 #include "recovery_fs.h"
+#include <libgen.h>
 
 static char v4_recov_link[sizeof(NFS_V4_RECOV_ROOT) +
 			  sizeof(NFS_V4_RECOV_DIR) +
