@@ -1027,13 +1027,13 @@ include_directories(${NTIRPC_INCLUDE_DIR})
 
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
+  ${NTIRPC_LIBRARY}
   ${SYSTEM_LIBRARIES}
   gos
   ${LIBDL}
   ${KRB5_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBRT}
-  ${NTIRPC_LIBRARY}
 )
 
 # Config file; make sure it doesn't clobber an existing one
