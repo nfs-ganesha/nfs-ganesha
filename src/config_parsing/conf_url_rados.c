@@ -101,7 +101,7 @@ int rados_urls_set_param_from_conf(void *tree_node,
  */
 
 #define RADOS_URL_REGEX \
-	"([-a-zA-Z0-9_&=]+)/?([-a-zA-Z0-9_&=/]+)?"
+	"([-a-zA-Z0-9_&=.]+)/?([-a-zA-Z0-9_&=/.]+)?"
 
 /** @brief url regex initializer
  */
