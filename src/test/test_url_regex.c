@@ -6,11 +6,12 @@
 
 /* decompose RADOS URL into (<pool>/)object */
 #define RADOS_URL_REGEX \
-	"([-a-zA-Z0-9_&=]+)/?([-a-zA-Z0-9_&=/]+)?"
+	"([-a-zA-Z0-9_&=.]+)/?([-a-zA-Z0-9_&=/.]+)?"
 
 #define URL1 "my_rados_object"
 #define URL2 "mypool_baby/myobject_baby"
 #define URL3 "mypool-baby/myobject-baby"
+#define URL4 "mypool.baby/myobject.conf"
 
 /* match general URL with optional enclosing quotes */
 #define CONFIG_URL_REGEX \
@@ -18,6 +19,7 @@
 
 #define CONF_URL1 "rados://mypool-baby/myobject-baby"
 #define CONF_URL2 "\"rados://mypool-baby/myobject-baby\""
+#define CONF_URL3 "\"rados://mypool/myobject.conf\""
 
 #define gsh_malloc malloc
 
@@ -133,6 +135,7 @@ int main(int argc, char **argv)
 	split_pool(URL1);
 	split_pool(URL2);
 	split_pool(URL3);
+	split_pool(URL4);
 
 	r = regcomp(&conf_url_regex, CONFIG_URL_REGEX, REG_EXTENDED);
 	if (!!r) {
@@ -146,6 +149,7 @@ int main(int argc, char **argv)
 
 	split_url(CONF_URL1);
 	split_url(CONF_URL2);
+	split_url(CONF_URL3);
 
 	return 0;
 }
