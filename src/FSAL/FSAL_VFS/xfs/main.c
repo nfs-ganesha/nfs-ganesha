@@ -69,7 +69,6 @@ static struct fsal_module XFS = {
 		.lock_support_async_block = false,
 		.named_attr = true,
 		.unique_handles = true,
-		.lease_time = {10, 0},
 		.acl_support = FSAL_ACLSUPPORT_ALLOW,
 		.homogenous = true,
 		.supported_attrs = XFS_SUPPORTED_ATTRIBUTES,

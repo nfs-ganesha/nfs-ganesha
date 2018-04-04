@@ -53,7 +53,6 @@ static struct pxy_fsal_module PROXY = {
 			.lock_support = false,
 			.named_attr = true,
 			.unique_handles = true,
-			.lease_time = {10, 0},
 			.acl_support = FSAL_ACLSUPPORT_ALLOW,
 			.homogenous = true,
 			.supported_attrs = PROXY_SUPPORTED_ATTRS,

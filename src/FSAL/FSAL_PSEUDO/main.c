@@ -60,7 +60,6 @@ static struct fsal_module PSEUDOFS = {
 		.lock_support_async_block = false,
 		.named_attr = false,
 		.unique_handles = true,
-		.lease_time = {10, 0},
 		.acl_support = 0,
 		.cansettime = true,
 		.homogenous = true,

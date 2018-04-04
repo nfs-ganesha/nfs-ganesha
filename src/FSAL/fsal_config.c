@@ -129,11 +129,6 @@ uint32_t fsal_maxpathlen(struct fsal_staticfsinfo_t *info)
 	return info->maxpathlen;
 }
 
-struct timespec fsal_lease_time(struct fsal_staticfsinfo_t *info)
-{
-	return info->lease_time;
-}
-
 fsal_aclsupp_t fsal_acl_support(struct fsal_staticfsinfo_t *info)
 {
 	return info->acl_support;

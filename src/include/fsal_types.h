@@ -660,7 +660,6 @@ typedef struct fsal_staticfsinfo_t {
 	bool lock_support_async_block;	/*< FS supports blocking locks? */
 	bool named_attr;	/*< FS supports named attributes. */
 	bool unique_handles;	/*< Handles are unique and persistent. */
-	struct timespec lease_time;	/*< Duration of lease at FS in secs */
 	fsal_aclsupp_t acl_support;	/*< what type of ACLs are supported */
 	bool cansettime;	/*< Is it possible to change file times
 				   using SETATTR. */

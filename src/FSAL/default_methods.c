@@ -459,19 +459,6 @@ static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 }
 
 /**
- * @brief Return the lease time
- *
- * This function returns the lease time.
- *
- * @param[in] export_pub exp_hdl
- *
- */
-static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
-{
-	return fsal_lease_time(&exp_hdl->fsal->fs_info);
-}
-
-/**
  * @brief Return ACL support
  *
  * This function returns the export's ACL support.
@@ -684,7 +671,6 @@ struct export_ops def_export_ops = {
 	.fs_maxlink = fs_maxlink,
 	.fs_maxnamelen = fs_maxnamelen,
 	.fs_maxpathlen = fs_maxpathlen,
-	.fs_lease_time = fs_lease_time,
 	.fs_acl_support = fs_acl_support,
 	.fs_supported_attrs = fs_supported_attrs,
 	.fs_umask = fs_umask,

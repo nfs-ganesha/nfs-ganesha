@@ -198,19 +198,6 @@ static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 	return result;
 }
 
-static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
-{
-	struct nullfs_fsal_export *exp =
-		container_of(exp_hdl, struct nullfs_fsal_export, export);
-
-	op_ctx->fsal_export = exp->export.sub_export;
-	struct timespec result = exp->export.sub_export->exp_ops.fs_lease_time(
-		exp->export.sub_export);
-	op_ctx->fsal_export = &exp->export;
-
-	return result;
-}
-
 static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 {
 	struct nullfs_fsal_export *exp =
@@ -405,7 +392,6 @@ void nullfs_export_ops_init(struct export_ops *ops)
 	ops->fs_maxlink = fs_maxlink;
 	ops->fs_maxnamelen = fs_maxnamelen;
 	ops->fs_maxpathlen = fs_maxpathlen;
-	ops->fs_lease_time = fs_lease_time;
 	ops->fs_acl_support = fs_acl_support;
 	ops->fs_supported_attrs = fs_supported_attrs;
 	ops->fs_umask = fs_umask;

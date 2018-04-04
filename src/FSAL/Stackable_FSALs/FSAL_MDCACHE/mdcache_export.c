@@ -384,27 +384,6 @@ static uint32_t mdcache_fs_maxpathlen(struct fsal_export *exp_hdl)
 }
 
 /**
- * @brief Get the FS lease time
- *
- * MDCACHE only caches metadata, so it imposes no restrictions itself.
- *
- * @param[in] exp_hdl	Export to query
- * @return Lease time
- */
-static struct timespec mdcache_fs_lease_time(struct fsal_export *exp_hdl)
-{
-	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
-	struct timespec result;
-
-	subcall_raw(exp,
-		result = sub_export->exp_ops.fs_lease_time(sub_export)
-	       );
-
-	return result;
-}
-
-/**
  * @brief Get the NFSv4 ACLSUPPORT attribute
  *
  * MDCACHE does not provide or restrict ACLs
@@ -824,7 +803,6 @@ void mdcache_export_ops_init(struct export_ops *ops)
 	ops->fs_maxlink = mdcache_fs_maxlink;
 	ops->fs_maxnamelen = mdcache_fs_maxnamelen;
 	ops->fs_maxpathlen = mdcache_fs_maxpathlen;
-	ops->fs_lease_time = mdcache_fs_lease_time;
 	ops->fs_acl_support = mdcache_fs_acl_support;
 	ops->fs_supported_attrs = mdcache_fs_supported_attrs;
 	ops->fs_umask = mdcache_fs_umask;

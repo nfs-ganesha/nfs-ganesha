@@ -65,7 +65,6 @@ static struct fsal_module PANFS = {
 		.lock_support_async_block = false,
 		.named_attr = true,
 		.unique_handles = true,
-		.lease_time = {10, 0},
 		.acl_support = FSAL_ACLSUPPORT_ALLOW |
 					FSAL_ACLSUPPORT_DENY,
 		.homogenous = true,

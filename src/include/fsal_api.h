@@ -920,18 +920,6 @@ struct export_ops {
 	 uint32_t (*fs_maxpathlen)(struct fsal_export *exp_hdl);
 
 /**
- * @brief Get the lease time for this filesystem
- *
- * @note Currently this value has no effect, with lease time being
- * configured globally for all filesystems at once.
- *
- * @param[in] exp_hdl Filesystem to interrogate
- *
- * @return Lease time.
- */
-	struct timespec (*fs_lease_time)(struct fsal_export *exp_hdl);
-
-/**
  * @brief Get supported ACL types
  *
  * This function returns a bitmask indicating whether it supports

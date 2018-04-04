@@ -70,7 +70,6 @@ struct rgw_fsal_module RGWFSM = {
 			.lock_support_async_block = false,
 			.named_attr = true, /* XXX */
 			.unique_handles = true,
-			.lease_time = {10, 0},
 			.acl_support = 0,
 			.cansettime = true,
 			.homogenous = true,
