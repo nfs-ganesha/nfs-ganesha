@@ -118,14 +118,18 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	fsal_status_t fsal_status = {0, 0};
 	fsal_openflags_t openflags = 0;
 	state_nlm_client_t *client = owner->so_owner.so_nlm_owner.so_client;
+	unsigned int old_access;
+	unsigned int old_deny;
+
+	old_access = state->state_data.nlm_share.share_access;
+	old_deny = state->state_data.nlm_share.share_deny;
+
+	LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+			"%s access %d, deny %d",
+			unshare ? "UNSHARE" : "SHARE",
+			share_access, share_deny);
 
 	if (unshare) {
-		unsigned int old_access;
-		unsigned int old_deny;
-
-		old_access = state->state_data.nlm_share.share_access;
-		old_deny = state->state_data.nlm_share.share_deny;
-
 		/* Remove share_access from old_access */
 		share_access = old_access - (old_access & share_access);
 
@@ -145,6 +149,10 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 		 * will be closed when the final reference to the state is
 		 * released.
 		 */
+		LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+				"removed state_t %p, share_access %u, share_deny %u",
+				state, old_access, old_deny);
+
 		remove_nlm_share(state);
 		goto out_unlock;
 	}
@@ -164,10 +172,13 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	fsal_status = fsal_reopen2(obj, state, openflags, true);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogDebug(COMPONENT_STATE,
-			 "fsal_reopen2 failed with %s",
-			 fsal_err_txt(fsal_status));
+		LogDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+			    "fsal_reopen2 failed with %s",
+			    fsal_err_txt(fsal_status));
 		goto out_unlock;
+	} else {
+		LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+				"fsal_reopen2 succeeded");
 	}
 
 	/* Add share to list for NLM Owner */
@@ -204,12 +215,13 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	if (state->state_data.nlm_share.share_access != OPEN4_SHARE_ACCESS_NONE)
 		inc_state_t_ref(state);
 
+	LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+			"added state_t %p, share_access %u, share_deny %u",
+			state, share_access, share_deny);
+
 	/* Update the current share type */
 	state->state_data.nlm_share.share_access = share_access;
 	state->state_data.nlm_share.share_deny = share_deny;
-
-	LogFullDebug(COMPONENT_STATE, "added share_access %u, share_deny %u",
-		     share_access, share_deny);
 
  out_unlock:
 
@@ -258,8 +270,8 @@ void state_export_unshare_all(void)
 		obj = get_state_obj_ref(state);
 
 		if (obj == NULL) {
-			LogDebug(COMPONENT_STATE,
-				 "Entry for state is stale");
+			LogDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+				    "Entry for state is stale");
 			PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 			break;
 		}

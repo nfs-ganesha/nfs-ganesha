@@ -29,6 +29,7 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_proto_functions.h"
+#include "nfs_file_handle.h"
 #include "sal_functions.h"
 #include "nlm_util.h"
 #include "nlm_async.h"
@@ -70,10 +71,19 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	netobj_to_string(&arg->cookie, buffer, 1024);
 
-	LogDebug(COMPONENT_NLM,
-		 "REQUEST PROCESSING: Calling NLM4_SHARE cookie=%s reclaim=%s",
-		 buffer,
-		 arg->reclaim ? "yes" : "no");
+	if (isDebug(COMPONENT_NLM)) {
+		char str[LEN_FH_STR];
+		char oh[MAXNETOBJ_SZ * 2] = "\0";
+
+		sprint_fhandle3(str, (struct nfs_fh3 *)&arg->share.fh);
+		netobj_to_string(&arg->share.oh, oh, 1024);
+
+		LogDebug(COMPONENT_NLM,
+			 "REQUEST PROCESSING: Calling NLM4_SHARE handle: %s, cookie=%s, reclaim=%s, owner=%s, access=%d, deny=%d",
+			 str, buffer, arg->reclaim ? "yes" : "no", oh,
+			 arg->share.access,
+			 arg->share.mode);
+	}
 
 	copy_netobj(&res->res_nlm4share.cookie, &arg->cookie);
 
