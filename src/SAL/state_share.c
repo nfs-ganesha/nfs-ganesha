@@ -181,6 +181,17 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 				"fsal_reopen2 succeeded");
 	}
 
+	/* If we already had a share, skip all the book keeping. */
+	if (old_access != OPEN4_SHARE_ACCESS_NONE) {
+		LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+				"updated state_t %p, share_access %u, share_deny %u",
+				state, share_access, share_deny);
+		goto update;
+	}
+
+	/* Take a reference on the state_t. */
+	inc_state_t_ref(state);
+
 	/* Add share to list for NLM Owner */
 	PTHREAD_MUTEX_lock(&owner->so_mutex);
 
@@ -209,15 +220,11 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 		       &state->state_export_list);
 	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 
-	/* If we had never had a share, take a reference on the state_t
-	 * to retain it.
-	 */
-	if (state->state_data.nlm_share.share_access != OPEN4_SHARE_ACCESS_NONE)
-		inc_state_t_ref(state);
-
 	LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
 			"added state_t %p, share_access %u, share_deny %u",
 			state, share_access, share_deny);
+
+ update:
 
 	/* Update the current share type */
 	state->state_data.nlm_share.share_access = share_access;
