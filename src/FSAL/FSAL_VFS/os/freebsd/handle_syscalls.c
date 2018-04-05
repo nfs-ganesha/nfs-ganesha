@@ -171,6 +171,7 @@ int vfs_extract_fsid(vfs_file_handle_t *fh,
 
 	LogVFSHandle(fh);
 
+#ifdef __PanFS__
 	if (hdl->fh_fid.fid_reserved != 0) {
 		int rc;
 
@@ -187,6 +188,7 @@ int vfs_extract_fsid(vfs_file_handle_t *fh,
 
 		return 0;
 	}
+#endif
 
 	*fsid_type = FSID_TWO_UINT32;
 	fsid->major = hdl->fh_fsid.val[0];
@@ -265,6 +267,7 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 		LogMidDebug(COMPONENT_FSAL, "%s", buf);
 	}
 
+#ifdef __PanFS__
 	if (hdl->fh_fid.fid_reserved != 0) {
 		bool fsid_type_ok = false;
 
@@ -286,6 +289,8 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 			return false;
 		}
 	}
+#endif
+
 	return (desc->len >= (sizeof(fsid_t) +
 			  sizeof(hdl->fh_fid.fid_len) +
 			  sizeof(hdl->fh_fid.fid_reserved))) &&
