@@ -2143,13 +2143,16 @@ static fsal_status_t fill_openhow_OPEN4args(openflag4 *openhow,
 					    fattr4 inattrs,
 					    enum fsal_create_mode createmode,
 					    fsal_verifier_t verifier,
-					    bool *setattr_needed)
+					    bool *setattr_needed,
+					    const char *name,
+					    fsal_openflags_t openflags)
 {
 	if (openhow == NULL)
 		return fsalstat(ERR_FSAL_INVAL, -1);
 
 	/* openhow */
-	if (createmode != FSAL_NO_CREATE) {
+	/* not an open by handle and flag create */
+	if (name && createmode != FSAL_NO_CREATE) {
 		createhow4 *how = &(openhow->openflag4_u.how);
 
 		openhow->opentype = OPEN4_CREATE;
@@ -2205,6 +2208,10 @@ static fsal_status_t fill_openhow_OPEN4args(openflag4 *openhow,
 		}
 	} else
 		openhow->opentype = OPEN4_NOCREATE;
+
+	/* include open by handle and TRUNCATE case in setattr_needed */
+	if (!name && openflags & FSAL_O_TRUNC)
+		*setattr_needed = true;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -2307,7 +2314,8 @@ static fsal_status_t pxy_open2(struct fsal_obj_handle *obj_hdl,
 		owner_len = strnlen(owner_val, sizeof(owner_val));
 		/* inattrs and openhow */
 		st = fill_openhow_OPEN4args(&openhow, inattrs, createmode,
-					    verifier, &setattr_needed);
+					    verifier, &setattr_needed, name,
+					    openflags);
 		if (FSAL_IS_ERROR(st)) {
 			nfs4_Fattr_Free(&inattrs);
 			return st;
