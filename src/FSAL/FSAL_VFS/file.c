@@ -282,6 +282,9 @@ static fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
 	int retval = 0;
 	fsal_status_t status = {0, 0};
 	const char *func = "unknown";
+#ifdef __FreeBSD__
+	struct fhandle *handle;
+#endif
 
 	/* Now stat the file as appropriate */
 	switch (myself->obj_handle.type) {
@@ -299,6 +302,12 @@ static fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
 		break;
 
 	case SYMBOLIC_LINK:
+#ifdef __FreeBSD__
+		handle = v_to_fhandle(myself->handle->handle_data);
+		retval = fhstat(handle, &stat);
+		func = "fhstat";
+		break;
+#endif
 	case FIFO_FILE:
 	case DIRECTORY:
 		retval = vfs_stat_by_handle(my_fd, &stat);
@@ -1668,7 +1677,7 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status = {0, 0};
 	bool has_lock = false;
 	bool closefd = false;
-	int my_fd;
+	int my_fd = -1;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
@@ -1681,6 +1690,11 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 				: "(none)");
 		goto out;
 	}
+
+	#ifdef __FreeBSD__
+	if (obj_hdl->type == SYMBOLIC_LINK)
+		goto fetch;
+	#endif
 
 	/* Get a usable file descriptor (don't need to bypass - FSAL_O_ANY
 	 * won't conflict with any share reservation).
@@ -1709,7 +1723,9 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 		}
 		goto out;
 	}
-
+#ifdef __FreeBSD__
+ fetch:
+#endif
 	status = fetch_attrs(myself, my_fd, attrs);
 
  out:
@@ -1845,7 +1861,11 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 
 	if (FSAL_IS_ERROR(status)) {
 		if (obj_hdl->type == SYMBOLIC_LINK &&
-		    status.major == ERR_FSAL_PERM) {
+		    (status.major == ERR_FSAL_PERM
+#ifdef __FreeBSD__
+		     || status.major == ERR_FSAL_MLINK
+#endif
+			)) {
 			/* You cannot open_by_handle (XFS) a symlink and it
 			 * throws an EPERM error for it.  open_by_handle_at
 			 * does not throw that error for symlinks so we play a

@@ -1952,11 +1952,27 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 					&fsal_error);
 
 		if (fd < 0) {
-			retval = -fd;
-			goto errout;
+			#ifdef __FreeBSD__
+			if (fd == -EMLINK) {
+				fd = -1;
+				fsal_error = ERR_FSAL_NO_ERROR;
+			} else
+			#endif
+			{
+				retval = -fd;
+				goto errout;
+			}
 		}
 
-		retval = vfs_stat_by_handle(fd, &obj_stat);
+		#ifdef __FreeBSD__
+		if (fd < 0)
+			retval = fhstat(v_to_fhandle(fh->handle_data),
+					&obj_stat);
+		else
+		#endif
+		{
+			retval = vfs_stat_by_handle(fd, &obj_stat);
+		}
 	}
 
 	/* Test the result of stat */
