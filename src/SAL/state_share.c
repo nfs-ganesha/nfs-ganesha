@@ -155,7 +155,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	}
 
 	/* Compute new share_access as union of all remaining shares. */
-	for (i = 1; i <= fsa_RW; i++) {
+	for (i = 0; i <= fsa_RW; i++) {
 		if (nlm_share->share_access_counts[i] != 0) {
 			new_access |= i;
 			acount += nlm_share->share_access_counts[i];
@@ -198,7 +198,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	if ((new_access & fsa_W) != 0)
 		openflags |= FSAL_O_WRITE;
 
-	if (openflags == FSAL_O_CLOSED) {
+	if (openflags == FSAL_O_CLOSED && unshare) {
 		/* This unshare is removing the final share. The file will be
 		 * closed when the final reference to the state is released.
 		 */
@@ -208,6 +208,13 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 
 		remove_nlm_share(state);
 		goto out_unlock;
+	}
+
+	if (openflags == FSAL_O_CLOSED) {
+		LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+				"SHARE with access none, deny %d and file is not already open, modify to read",
+				share_deny);
+		openflags |= FSAL_O_READ;
 	}
 
 	if ((new_deny & fsm_DR) != 0)
