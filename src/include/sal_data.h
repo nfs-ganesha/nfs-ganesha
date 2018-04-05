@@ -253,13 +253,17 @@ struct state_share {
  */
 
 struct state_nlm_share {
-	struct glist_head share_perclient;	/*< Lock states for this
-						    open state
-						    This field MUST be first */
-	unsigned int share_access;	/*< The NFSv4 Share Access state */
-	unsigned int share_deny;	/*< The NFSv4 Share Deny state */
-	unsigned int share_access_prev;	/*< Previous share access state */
-	unsigned int share_deny_prev;	/*< Previous share deny state   */
+	/** Put this share state on a list per client. This field MUST be first
+	 */
+	struct glist_head share_perclient;
+	/** The NLM Share Access state */
+	unsigned int share_access;
+	/** The NLM Share Deny state */
+	unsigned int share_deny;
+	/** Counts of each share access state */
+	unsigned int share_access_counts[fsa_RW + 1];
+	/** Counts of each share deny state   */
+	unsigned int share_deny_counts[fsm_DRW + 1];
 };
 
 /**

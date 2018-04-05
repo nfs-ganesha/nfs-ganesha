@@ -120,9 +120,15 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	state_nlm_client_t *client = owner->so_owner.so_nlm_owner.so_client;
 	unsigned int old_access;
 	unsigned int old_deny;
+	unsigned int new_access = 0;
+	unsigned int new_deny = 0;
+	struct state_nlm_share *nlm_share = &state->state_data.nlm_share;
+	int i, acount = 0, dcount = 0;
 
-	old_access = state->state_data.nlm_share.share_access;
-	old_deny = state->state_data.nlm_share.share_deny;
+	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+
+	old_access = nlm_share->share_access;
+	old_deny = nlm_share->share_deny;
 
 	LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
 			"%s access %d, deny %d",
@@ -130,37 +136,84 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 			share_access, share_deny);
 
 	if (unshare) {
-		/* Remove share_access from old_access */
-		share_access = old_access - (old_access & share_access);
+		if (nlm_share->share_access_counts[share_access] > 0)
+			nlm_share->share_access_counts[share_access]--;
+		else
+			LogDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+				    "UNSHARE access %d did not match",
+				    share_access);
 
-		/* Remove share_deny from old_deny */
-		share_deny = old_deny - (old_deny & share_deny);
+		if (nlm_share->share_deny_counts[share_deny] > 0)
+			nlm_share->share_deny_counts[share_deny]--;
+		else
+			LogDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+				    "UNSHARE deny %d did not match",
+				    share_access);
+	} else {
+		nlm_share->share_access_counts[share_access]++;
+		nlm_share->share_deny_counts[share_deny]++;
+	}
+
+	/* Compute new share_access as union of all remaining shares. */
+	for (i = 1; i <= fsa_RW; i++) {
+		if (nlm_share->share_access_counts[i] != 0) {
+			new_access |= i;
+			acount += nlm_share->share_access_counts[i];
+		}
+	}
+
+	/* Compute new share_deny as union of all remaining shares. */
+	for (i = 0; i <= fsm_DRW; i++) {
+		if (nlm_share->share_deny_counts[i] != 0) {
+			new_deny |= i;
+			dcount += nlm_share->share_deny_counts[i];
+		}
+	}
+
+	LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+			"%s share_access_counts[%d] = %d, total = %d, share_deny_counts[%d] = %d, total = %d",
+			unshare ? "UNSHARE" : "SHARE",
+			share_access,
+			nlm_share->share_access_counts[share_access],
+			acount,
+			share_deny,
+			nlm_share->share_deny_counts[share_deny],
+			dcount);
+
+	if (new_access == old_access && new_deny == old_deny) {
+		/* The share or unshare did not affect the union of shares so
+		 * there is no more work to do.
+		 */
+		LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
+				"%s union share did not change from access %d, deny %d",
+				unshare ? "UNSHARE" : "SHARE",
+				old_access, old_deny);
+		goto out_unlock;
 	}
 
 	/* Assume new access/deny is update in determining the openflags. */
-	if ((share_access & fsa_R) != 0)
+	if ((new_access & fsa_R) != 0)
 		openflags |= FSAL_O_READ;
 
-	if ((share_access & fsa_W) != 0)
+	if ((new_access & fsa_W) != 0)
 		openflags |= FSAL_O_WRITE;
 
 	if (openflags == FSAL_O_CLOSED) {
-		/* This share or unshare is removing the final share. The file
-		 * will be closed when the final reference to the state is
-		 * released.
+		/* This unshare is removing the final share. The file will be
+		 * closed when the final reference to the state is released.
 		 */
 		LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
-				"removed state_t %p, share_access %u, share_deny %u",
+				"UNSHARE removed state_t %p, share_access %u, share_deny %u",
 				state, old_access, old_deny);
 
 		remove_nlm_share(state);
 		goto out_unlock;
 	}
 
-	if ((share_deny & fsm_DR) != 0)
+	if ((new_deny & fsm_DR) != 0)
 		openflags |= FSAL_O_DENY_READ;
 
-	if ((share_deny & fsm_DW) != 0)
+	if ((new_deny & fsm_DW) != 0)
 		openflags |= FSAL_O_DENY_WRITE;
 
 	if (reclaim)
@@ -184,8 +237,9 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	/* If we already had a share, skip all the book keeping. */
 	if (old_access != OPEN4_SHARE_ACCESS_NONE) {
 		LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
-				"updated state_t %p, share_access %u, share_deny %u",
-				state, share_access, share_deny);
+				"%s updated state_t %p, share_access %u, share_deny %u",
+				unshare ? "UNSHARE" : "SHARE",
+				state, new_access, new_deny);
 		goto update;
 	}
 
@@ -206,7 +260,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	PTHREAD_MUTEX_lock(&client->slc_nsm_client->ssc_mutex);
 
 	glist_add_tail(&client->slc_nsm_client->ssc_share_list,
-		       &state->state_data.nlm_share.share_perclient);
+		       &nlm_share->share_perclient);
 
 	PTHREAD_MUTEX_unlock(&client->slc_nsm_client->ssc_mutex);
 
@@ -221,16 +275,18 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 
 	LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
-			"added state_t %p, share_access %u, share_deny %u",
-			state, share_access, share_deny);
+			"SHARE added state_t %p, share_access %u, share_deny %u",
+			state, new_access, new_deny);
 
  update:
 
 	/* Update the current share type */
-	state->state_data.nlm_share.share_access = share_access;
-	state->state_data.nlm_share.share_deny = share_deny;
+	nlm_share->share_access = new_access;
+	nlm_share->share_deny = new_deny;
 
  out_unlock:
+
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 	return state_error_convert(fsal_status);
 }
