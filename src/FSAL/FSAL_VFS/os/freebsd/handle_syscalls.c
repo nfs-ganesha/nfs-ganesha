@@ -45,7 +45,11 @@
  *
  */
 
+#ifdef __PanFS__
 #define MAXFIDSIZE 36
+#else
+#define MAXFIDSIZE 16
+#endif
 
 struct v_fid {
 	u_short fid_len;	/* length of data in bytes */
