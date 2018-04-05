@@ -1694,7 +1694,9 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->read2 = vfs_read2;
 	ops->write2 = vfs_write2;
 	ops->commit2 = vfs_commit2;
+#ifdef F_OFD_GETLK
 	ops->lock_op2 = vfs_lock_op2;
+#endif
 	ops->setattr2 = vfs_setattr2;
 	ops->close2 = vfs_close2;
 
