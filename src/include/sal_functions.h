@@ -1027,6 +1027,7 @@ struct nfs4_recovery_backend {
 	void (*maybe_start_grace)(void);
 	bool (*try_lift_grace)(void);
 	void (*set_enforcing)(void);
+	bool (*grace_enforcing)(void);
 };
 
 void fs_backend_init(struct nfs4_recovery_backend **);

@@ -227,6 +227,20 @@ void nfs_maybe_start_grace(void)
 	}
 }
 
+/**
+ * @brief Are all hosts in cluster enforcing the grace period?
+ *
+ * Singleton servers always return true here since the only grace period that
+ * matters is the local one. Clustered backends should check to make sure that
+ * the whole cluster is in grace.
+ */
+bool nfs_grace_enforcing(void)
+{
+	if (recovery_backend->grace_enforcing)
+		return recovery_backend->grace_enforcing();
+	return true;
+}
+
 void nfs_try_lift_grace(void)
 {
 	bool in_grace = true;
