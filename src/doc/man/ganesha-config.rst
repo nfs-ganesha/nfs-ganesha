@@ -147,8 +147,6 @@ PROXY {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-proxy-config <ganesha-proxy-config>`\(8) for usage
 
-1.**PROXY { Remote_Server {} }**
-
 RGW {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-rgw-config <ganesha-rgw-config>`\(8) for usage

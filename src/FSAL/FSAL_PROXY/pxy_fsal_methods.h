@@ -5,6 +5,19 @@
 #include "handle_mapping/handle_mapping.h"
 #endif
 
+/*512 bytes to store header*/
+#define SEND_RECV_HEADER_SPACE 512
+/*1MB of default maxsize*/
+#define DEFAULT_MAX_WRITE_READ 1048576
+
+#include <pthread.h>
+#include <dirent.h>
+#include <stdbool.h>
+
+struct pxy_fsal_module {
+	struct fsal_module module;
+};
+
 struct pxy_client_params {
 	uint32_t retry_sleeptime;
 	sockaddr_t srv_addr;
@@ -26,21 +39,64 @@ struct pxy_client_params {
 #ifdef PROXY_HANDLE_MAPPING
 	handle_map_param_t hdlmap;
 #endif
-} proxyfs_specific_initinfo_t;
+};
 
-struct pxy_fsal_module {
-	struct fsal_module module;
-	struct pxy_client_params special;
+struct pxy_export_rpc {
+/**
+ * pxy_clientid_mutex protects pxy_clientid, pxy_client_seqid,
+ * pxy_client_sessionid, no_sessionid and cond_sessionid.
+ */
+	clientid4 pxy_clientid;
+	sequenceid4 pxy_client_seqid;
+	sessionid4 pxy_client_sessionid;
+	bool no_sessionid;
+	pthread_cond_t cond_sessionid;
+	pthread_mutex_t pxy_clientid_mutex;
+
+	char pxy_hostname[MAXNAMLEN + 1];
+	pthread_t pxy_recv_thread;
+	pthread_t pxy_renewer_thread;
+
+	/**
+	 * listlock protects rpc_sock and rpc_xid values, sockless condition and
+	 * rpc_calls list.
+	 */
+	struct glist_head rpc_calls;
+	int rpc_sock;
+	uint32_t rpc_xid;
+	pthread_mutex_t listlock;
+	pthread_cond_t sockless;
+	bool close_thread;
+
+	/*
+	 * context_lock protects free_contexts list and need_context condition.
+	 */
+	struct glist_head free_contexts;
+	pthread_cond_t need_context;
+	pthread_mutex_t context_lock;
 };
 
 struct pxy_export {
 	struct fsal_export exp;
-	struct pxy_client_params *info;
+	struct pxy_client_params info;
+	struct pxy_export_rpc rpc;
 };
+
+static inline void pxy_export_init(struct pxy_export *pxy_exp)
+{
+	pxy_exp->rpc.no_sessionid = true;
+	pthread_mutex_init(&pxy_exp->rpc.pxy_clientid_mutex, NULL);
+	pthread_cond_init(&pxy_exp->rpc.cond_sessionid, NULL);
+	pxy_exp->rpc.rpc_sock = -1;
+	pthread_mutex_init(&pxy_exp->rpc.listlock, NULL);
+	pthread_cond_init(&pxy_exp->rpc.sockless, NULL);
+	pthread_cond_init(&pxy_exp->rpc.need_context, NULL);
+	pthread_mutex_init(&pxy_exp->rpc.context_lock, NULL);
+}
 
 void pxy_handle_ops_init(struct fsal_obj_ops *ops);
 
-int pxy_init_rpc(const struct pxy_fsal_module *);
+int pxy_init_rpc(struct pxy_export *);
 
 fsal_status_t pxy_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 				 const struct req_op_context *opctx,
@@ -121,6 +177,6 @@ struct state_t *pxy_alloc_state(struct fsal_export *exp_hdl,
 
 void pxy_free_state(struct fsal_export *exp_hdl, struct state_t *state);
 
-int pxy_close_thread(void);
+int pxy_close_thread(struct pxy_export *pxy_exp);
 
 #endif
