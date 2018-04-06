@@ -18,9 +18,7 @@
 
 #include "fsal.h"
 #if 0
-#include "fsal_internal.h"
 #include "fsal_convert.h"
-#include "fsal_common.h"
 #endif
 
 #ifndef ARRAY_SIZE
