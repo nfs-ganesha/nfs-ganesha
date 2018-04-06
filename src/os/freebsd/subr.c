@@ -36,6 +36,7 @@
 #include <sys/time.h>
 #include <log.h>
 #include "syscalls.h"
+#include <sys/module.h>
 
 /**
  * @brief Read system directory entries into the buffer
@@ -125,6 +126,77 @@ int vfs_utimes(int fd, const struct timespec *ts)
 	return futimes(fd, tv);
 }
 
+static int setthreaduid(uid_t uid)
+{
+	int mod, err;
+	int syscall_num;
+	struct module_stat stat;
+
+	stat.version = sizeof(stat);
+	/* modstat will retrieve the module_stat structure for our module named
+	 * syscall (see the SYSCALL_MODULE macro which sets the name to syscall)
+	 */
+	mod = modfind("sys/setthreaduid");
+	if (mod == -1)
+		return errno;
+
+	err = modstat(mod, &stat);
+	if (err)
+		return errno;
+	/* extract the slot (syscall) number */
+	syscall_num = stat.data.intval;
+
+	return syscall(syscall_num, uid);
+}
+
+static int setthreadgid(gid_t gid)
+{
+	int mod, err;
+	int syscall_num;
+	struct module_stat stat;
+
+	stat.version = sizeof(stat);
+	/* modstat will retrieve the module_stat structure for our module named
+	* syscall (see the SYSCALL_MODULE macro which sets the name to syscall)
+	*/
+	mod = modfind("sys/setthreadgid");
+	if (mod == -1)
+		return errno;
+
+	err = modstat(mod, &stat);
+	if (err)
+		return errno;
+
+	/* extract the slot (syscall) number */
+	syscall_num = stat.data.intval;
+
+	return syscall(syscall_num, gid);
+}
+
+static int setthreadgroups(size_t size, const gid_t *list)
+{
+	int mod, err;
+	int syscall_num;
+	struct module_stat stat;
+
+	stat.version = sizeof(stat);
+	/* modstat will retrieve the module_stat structure for our module named
+	* syscall (see the SYSCALL_MODULE macro which sets the name to syscall)
+	*/
+	mod = modfind("sys/setthreadgroups");
+	if (mod == -1)
+		return errno;
+
+	err = modstat(mod, &stat);
+	if (err)
+		return errno;
+
+	/* extract the slot (syscall) number */
+	syscall_num = stat.data.intval;
+
+	return syscall(syscall_num, size, list);
+}
+
 uid_t getuser(void)
 {
 	return geteuid();
@@ -137,7 +209,7 @@ gid_t getgroup(void)
 
 void setuser(uid_t uid)
 {
-	int rc =  syscall(SYS_seteuid, uid);
+	int rc = setthreaduid(uid);
 
 	if (rc != 0)
 		LogCrit(COMPONENT_FSAL,
@@ -147,7 +219,7 @@ void setuser(uid_t uid)
 
 void setgroup(gid_t gid)
 {
-	int rc = syscall(SYS_setegid, gid);
+	int rc = setthreadgid(gid);
 
 	if (rc != 0)
 		LogCrit(COMPONENT_FSAL,
@@ -157,5 +229,5 @@ void setgroup(gid_t gid)
 
 int set_threadgroups(size_t size, const gid_t *list)
 {
-	return syscall(SYS_setgroups, size, list);
+	return setthreadgroups(size, list);
 }
