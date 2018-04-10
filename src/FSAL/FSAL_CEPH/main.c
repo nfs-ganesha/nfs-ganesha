@@ -248,8 +248,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	int rc;
 	/* Return code from Ceph calls */
 	int ceph_status;
-	/* True if we have called fsal_export_init */
-	bool initialized = false;
 
 	fsal_export_init(&export->export);
 	export_ops_init(&export->export.exp_ops);
@@ -266,8 +264,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			return fsalstat(ERR_FSAL_INVAL, 0);
 		}
 	}
-
-	initialized = true;
 
 	/* allocates ceph_mount_info */
 	ceph_status = ceph_create(&export->cmount, export->user_id);
@@ -367,10 +363,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			ceph_shutdown(export->cmount);
 		gsh_free(export);
 	}
-
-	if (initialized)
-		initialized = false;
-
 	return status;
 }
 
