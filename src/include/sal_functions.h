@@ -978,6 +978,8 @@ bool nfs_in_grace(void);
 bool simple_try_lift_grace(void);
 void nfs_maybe_start_grace(void);
 void nfs_try_lift_grace(void);
+void nfs_wait_for_grace_enforcement(void);
+void nfs_notify_grace_waiters(void);
 void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(nfs_client_id_t *);
 void nfs4_recovery_reclaim_complete(nfs_client_id_t *clientid);

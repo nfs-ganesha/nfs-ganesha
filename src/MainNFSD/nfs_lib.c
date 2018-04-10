@@ -239,6 +239,12 @@ int nfs_libmain(const char *ganesha_conf,
 	 */
 	nfs4_recovery_init();
 
+	/* Start grace period */
+	nfs_start_grace(NULL);
+
+	/* Wait for enforcement to begin */
+	nfs_wait_for_grace_enforcement();
+
 	/* Load export entries from parsed file
 	 * returns the number of export entries.
 	 */

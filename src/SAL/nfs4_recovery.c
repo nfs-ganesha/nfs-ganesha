@@ -280,6 +280,38 @@ void nfs_try_lift_grace(void)
 	}
 }
 
+static pthread_cond_t enforcing_cond = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t enforcing_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+/* Poll every 5s, just in case we miss the wakeup for some reason */
+void nfs_wait_for_grace_enforcement(void)
+{
+	nfs_grace_start_t gsp = { .event = EVENT_JUST_GRACE };
+
+	pthread_mutex_lock(&enforcing_mutex);
+	nfs_try_lift_grace();
+	while (nfs_in_grace() && !nfs_grace_enforcing()) {
+		struct timespec	timeo = { .tv_sec = time(NULL) + 5,
+					  .tv_nsec = 0 };
+
+		pthread_cond_timedwait(&enforcing_cond, &enforcing_mutex,
+						&timeo);
+
+		pthread_mutex_unlock(&enforcing_mutex);
+		nfs_start_grace(&gsp);
+		nfs_try_lift_grace();
+		pthread_mutex_lock(&enforcing_mutex);
+	}
+	pthread_mutex_unlock(&enforcing_mutex);
+}
+
+void nfs_notify_grace_waiters(void)
+{
+	pthread_mutex_lock(&enforcing_mutex);
+	pthread_cond_broadcast(&enforcing_cond);
+	pthread_mutex_unlock(&enforcing_mutex);
+}
+
 /**
  * @brief Create an entry in the recovery directory
  *
