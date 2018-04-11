@@ -1238,6 +1238,9 @@ void vfs_read2(struct fsal_obj_handle *obj_hdl,
 
  out:
 
+	if (vfs_fd)
+		PTHREAD_RWLOCK_unlock(&vfs_fd->fdlock);
+
 	if (closefd) {
 		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd);
 		close(my_fd);
