@@ -43,6 +43,7 @@
 #include "nfs_exports.h"
 #include "pnfs_utils.h"
 #include "conf_url.h"
+#include "sal_functions.h"
 
 /**
  * @brief LTTng trace enabling magic
@@ -231,6 +232,12 @@ int nfs_libmain(const char *ganesha_conf,
 			"Error while parsing DS entries");
 		goto fatal_die;
 	}
+
+
+	/* Create stable storage directory, this needs to be done before
+	 * starting the recovery thread.
+	 */
+	nfs4_recovery_init();
 
 	/* Load export entries from parsed file
 	 * returns the number of export entries.
