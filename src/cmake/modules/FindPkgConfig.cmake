@@ -88,7 +88,11 @@
 ### Common stuff ####
 set(PKG_CONFIG_VERSION 1)
 
+if (FREEBSD)
+find_program(PKG_CONFIG_EXECUTABLE NAMES pkgconf DOC "pkg-config executable")
+else (FREEBSD)
 find_program(PKG_CONFIG_EXECUTABLE NAMES pkg-config DOC "pkg-config executable")
+endif (FREEBSD)
 mark_as_advanced(PKG_CONFIG_EXECUTABLE)
 
 if (PKG_CONFIG_EXECUTABLE)
