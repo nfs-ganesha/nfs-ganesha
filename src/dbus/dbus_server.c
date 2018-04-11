@@ -35,8 +35,6 @@
 #include <assert.h>
 #include "gsh_list.h"
 
-#include <sys/epoll.h>
-#include <sys/timerfd.h>
 #include <errno.h>
 #include <dbus/dbus.h>
 #include <ctype.h>
