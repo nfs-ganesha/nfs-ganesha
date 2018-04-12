@@ -1240,9 +1240,7 @@ lru_run(struct fridgethr_context *ctx)
 
 	fds_avg = (lru_state.fds_hiwat - lru_state.fds_lowat) / 2;
 
-	if (mdcache_param.use_fd_cache)
-		extremis = (atomic_fetch_size_t(&open_fd_count) >
-			    lru_state.fds_hiwat);
+	extremis = atomic_fetch_size_t(&open_fd_count) > lru_state.fds_hiwat;
 
 	LogFullDebug(COMPONENT_CACHE_INODE_LRU, "LRU awakes.");
 
@@ -1262,17 +1260,16 @@ lru_run(struct fridgethr_context *ctx)
 	   API, for example.) */
 
 	currentopen = atomic_fetch_size_t(&open_fd_count);
-	if ((currentopen < lru_state.fds_lowat)
-	    && mdcache_param.use_fd_cache) {
+
+	if (currentopen < lru_state.fds_lowat) {
 		LogDebug(COMPONENT_CACHE_INODE_LRU,
 			 "FD count is %zd and low water mark is %d: not reaping.",
 			 atomic_fetch_size_t(&open_fd_count),
 			 lru_state.fds_lowat);
-		if (mdcache_param.use_fd_cache
-		    && !lru_state.caching_fds) {
-			lru_state.caching_fds = true;
+		if (atomic_fetch_uint32_t(&lru_state.fd_state) > FD_LOW) {
 			LogEvent(COMPONENT_CACHE_INODE_LRU,
-				 "Re-enabling FD cache.");
+				 "Return to normal fd reaping.");
+			atomic_store_uint32_t(&lru_state.fd_state, FD_LOW);
 		}
 	} else {
 		/* The count of open file descriptors before this run
@@ -1283,6 +1280,13 @@ lru_run(struct fridgethr_context *ctx)
 		   don't spin through more passes. */
 		size_t workpass = 0;
 		time_t curr_time = time(NULL);
+
+		if (currentopen < lru_state.fds_hiwat &&
+		    atomic_fetch_uint32_t(&lru_state.fd_state) == FD_LIMIT) {
+			LogEvent(COMPONENT_CACHE_INODE_LRU,
+				 "Count of fd is below high water mark.");
+			atomic_store_uint32_t(&lru_state.fd_state, FD_MIDDLE);
+		}
 
 		fdratepersec = (curr_time <= lru_state.prev_time)
 			? 1 : (formeropen - lru_state.prev_fd_count) /
@@ -1328,8 +1332,7 @@ lru_run(struct fridgethr_context *ctx)
 			if (++lru_state.futility >
 			    mdcache_param.futility_count) {
 				LogCrit(COMPONENT_CACHE_INODE_LRU,
-					"Futility count exceeded.  The LRU thread is unable to make progress in reclaiming FDs.  Disabling FD cache.");
-				lru_state.caching_fds = false;
+					"Futility count exceeded.  The LRU thread is unable to make progress in reclaiming FDs, will try harder.");
 			}
 		}
 	}
@@ -1616,7 +1619,7 @@ mdcache_lru_pkginit(void)
 
 	atomic_store_size_t(&open_fd_count, 0);
 	lru_state.prev_fd_count = 0;
-	lru_state.caching_fds = mdcache_param.use_fd_cache;
+	atomic_store_uint32_t(&lru_state.fd_state, FD_LOW);
 	init_fds_limit();
 
 	/* Set high and low watermark for cache entries.  XXX This seems a
@@ -1983,17 +1986,40 @@ void lru_bump_chunk(struct dir_chunk *chunk)
 }
 
 /**
+ * @brief Check if FDs are available.
  *
- * @brief Wake the LRU thread to free FDs.
+ * This function checks if FDs are available to serve open
+ * requests. This function also wakes the LRU thread if the
+ * current FD count is above the high water mark.
  *
- * This function wakes the LRU reaper thread to free FDs and should be
- * called when we are over the high water mark.
+ * @return true if there are FDs available to serve open requests,
+ * false otherwise.
  */
-
-void
-lru_wake_thread(void)
+bool mdcache_lru_fds_available(void)
 {
-	fridgethr_wake(lru_fridge);
+	if (atomic_fetch_size_t(&open_fd_count) >= lru_state.fds_hard_limit) {
+		LogAtLevel(COMPONENT_CACHE_INODE_LRU,
+			   atomic_fetch_uint32_t(&lru_state.fd_state)
+								!= FD_LIMIT
+				? NIV_CRIT
+				: NIV_DEBUG,
+			   "FD Hard Limit Exceeded, waking LRU thread.");
+		atomic_store_uint32_t(&lru_state.fd_state, FD_LIMIT);
+		fridgethr_wake(lru_fridge);
+		return false;
+	}
+
+	if (atomic_fetch_size_t(&open_fd_count) >= lru_state.fds_hiwat) {
+		LogAtLevel(COMPONENT_CACHE_INODE_LRU,
+			   atomic_fetch_uint32_t(&lru_state.fd_state) == FD_LOW
+				? NIV_INFO
+				: NIV_DEBUG,
+			   "FDs above high water mark, waking LRU thread.");
+		atomic_store_uint32_t(&lru_state.fd_state, FD_HIGH);
+		fridgethr_wake(lru_fridge);
+	}
+
+	return true;
 }
 
 /** @} */
