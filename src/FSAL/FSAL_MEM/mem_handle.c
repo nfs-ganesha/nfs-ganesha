@@ -1865,7 +1865,7 @@ fsal_status_t mem_close2(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
 
-	status = mem_close_my_fd(&myself->mh_file.fd);
+	status = mem_close_my_fd(my_fd);
 
 	return status;
 }
