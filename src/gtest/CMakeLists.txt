@@ -24,6 +24,7 @@ set(GTEST_LIBRARIES
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 
 # generic test
@@ -69,7 +70,6 @@ add_sanitizers(test_lookup_latency)
 
 target_link_libraries(test_lookup_latency
   ${GTEST_LIBRARIES}
-  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_lookup_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
