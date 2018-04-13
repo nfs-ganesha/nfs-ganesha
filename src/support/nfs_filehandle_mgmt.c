@@ -142,7 +142,7 @@ cache_entry_t *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	/* Cast the fh as a non opaque structure */
 	v3_handle = (file_handle_v3_t *) (fh3->data.data_val);
 
-	assert(v3_handle->exportid == op_ctx->export->export_id);
+	assert(ntohs(v3_handle->exportid) == op_ctx->export->export_id);
 
 	export = op_ctx->fsal_export;
 
@@ -210,14 +210,14 @@ bool nfs4_FSALToFhandle(nfs_fh4 *fh4,
 	file_handle->fhflags1 = FH_FSAL_BIG_ENDIAN;
 #endif
 	file_handle->fs_len = fh_desc.len;	/* set the actual size */
-	/* keep track of the export id */
-	file_handle->id.exports = exp->export_id;
+	/* keep track of the export id network byte order for nfs_fh4*/
+	file_handle->id.exports = htons(exp->export_id);
 
 	/* Set the len */
 	fh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle);
 
 	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
-		file_handle->fhflags1, file_handle->id.exports);
+		file_handle->fhflags1, ntohs(file_handle->id.exports));
 	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "NFS4 Handle %s", LEN_FH_STR,
 			   fh4->nfs_fh4_val, fh4->nfs_fh4_len);
 
@@ -266,8 +266,8 @@ bool nfs3_FSALToFhandle(nfs_fh3 *fh3,
 	file_handle->fhflags1 = FH_FSAL_BIG_ENDIAN;
 #endif
 	file_handle->fs_len = fh_desc.len;	/* set the actual size */
-	/* keep track of the export id */
-	file_handle->exportid = exp->export_id;
+	/* keep track of the export id in network byte order*/
+	file_handle->exportid = htons(exp->export_id);
 
 	/* Set the len */
 	/* re-adjust to as built */
@@ -332,7 +332,7 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 	pfile_handle = (file_handle_v4_t *) (fh->nfs_fh4_val);
 
 	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
-		pfile_handle->fhflags1, pfile_handle->id.exports);
+		pfile_handle->fhflags1, ntohs(pfile_handle->id.exports));
 
 	/* validate the filehandle  */
 	if (pfile_handle == NULL || fh->nfs_fh4_len == 0
@@ -374,7 +374,7 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 			} else {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: is_pseudofs=%d",
-					pfile_handle->id.exports == 0);
+					ntohs(pfile_handle->id.exports) == 0);
 			}
 		}
 

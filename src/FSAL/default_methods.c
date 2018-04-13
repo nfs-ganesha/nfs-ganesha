@@ -1061,6 +1061,7 @@ struct fsal_obj_ops def_handle_ops = {
 	.symlink = makesymlink,
 	.readlink = readsymlink,
 	.test_access = fsal_test_access,	/* default is use common test */
+	.super_user = fsal_super_user,
 	.getattrs = getattrs,
 	.setattrs = setattrs,
 	.link = linkfile,

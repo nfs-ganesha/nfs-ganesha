@@ -216,6 +216,9 @@ cache_inode_create(cache_entry_t *parent,
 	/* Add this entry to the directory (also takes an internal ref) */
 	status = cache_inode_add_cached_dirent(parent, name, *entry, NULL);
 	PTHREAD_RWLOCK_unlock(&parent->content_lock);
+	if (status == CACHE_INODE_ENTRY_EXISTS)
+		status = CACHE_INODE_SUCCESS;
+
 	if (status != CACHE_INODE_SUCCESS) {
 		cache_inode_put(*entry);
 		*entry = NULL;

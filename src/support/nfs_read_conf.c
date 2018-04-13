@@ -168,6 +168,10 @@ static struct config_item core_params[] = {
 		       nfs_core_param, ganesha_modules_loc),
 	CONF_ITEM_UI32("heartbeat_freq", 0, 5000, 1000,
 		       nfs_core_param, heartbeat_freq),
+        CONF_ITEM_BOOL("Dirent_Entries_Track", true,
+                       nfs_core_param, dirent_entries_track),
+	CONF_ITEM_UI32("Num_Log_Files", 1, NUM_LOG_FILES, NUM_LOG_FILES,
+                       nfs_core_param, num_log_files),
 	CONFIG_EOL
 };
 

@@ -145,7 +145,7 @@ typedef enum protos {
 /**
  * @brief Default value for core_param.rpc.debug_flags
  */
-#define TIRPC_DEBUG_FLAGS 0x0
+#define TIRPC_DEBUG_FLAGS TIRPC_DEBUG_FLAG_ERROR
 
 /**
  * Default value for core_param.rpc.max_send_buffer_size
@@ -156,6 +156,11 @@ typedef enum protos {
  * Default value for core_param.rpc.max_recv_buffer_size
  */
 #define NFS_DEFAULT_RECV_BUFFER_SIZE 1048576
+
+/**
+ * Default value for core_param.num_log_files
+ */
+#define NUM_LOG_FILES 32
 
 /**
  * @brief Support NFSv3
@@ -360,6 +365,10 @@ typedef struct nfs_core_param {
 	char *ganesha_modules_loc;
 	/* Frequency of dbus health heartbeat in ms. Set to 0 to disable */
 	uint32_t heartbeat_freq;
+	/* Dirent entries enabling flag */
+	bool dirent_entries_track;
+	/* Number of log files */
+	uint32_t num_log_files;
 } nfs_core_parameter_t;
 
 /** @} */

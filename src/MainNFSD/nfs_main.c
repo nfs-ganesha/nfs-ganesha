@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 #endif
 	sigset_t signals_to_block;
 	struct config_error_type err_type;
-
+        nfs_param.core_param.num_log_files = 1;
 	/* Set the server's boot time and epoch */
 	now(&ServerBootTime);
 	ServerEpoch = (time_t) ServerBootTime.tv_sec;
@@ -358,6 +358,7 @@ int main(int argc, char *argv[])
 	signal(SIGXFSZ, SIG_IGN);
 #endif
 
+	spawn_log_flusher();
 	/* Echo PID into pidfile */
 	pidfile = open(pidfile_path, O_CREAT | O_RDWR, 0644);
 	if (pidfile == -1) {
@@ -488,6 +489,7 @@ fatal_die:
 	report_config_errors(&err_type, NULL, config_errs_to_log);
 	LogFatal(COMPONENT_INIT,
 		 "Fatal errors.  Server exiting...");
+	flush_all_logs(true /*close_fd*/);
 	/* NOT REACHED */
 	return 2;
 }

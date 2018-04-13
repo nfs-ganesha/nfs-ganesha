@@ -57,6 +57,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	struct groupnode *group, *grp_tail = NULL;
 	const char *grp_name;
 	char addr_buf[INET6_ADDRSTRLEN + 1];
+	uint32_t naddr;
 
 	state->retval = 0;
 
@@ -115,8 +116,9 @@ static bool proc_export(struct gsh_export *export, void *arg)
 			}
 			break;
 		case NETWORK_CLIENT:
+			naddr = htonl(client->client.network.netaddr);
 			grp_name =
-			    inet_ntop(AF_INET, &client->client.network.netaddr,
+			    inet_ntop(AF_INET, &naddr,
 				      addr_buf, INET6_ADDRSTRLEN);
 			if (grp_name == NULL) {
 				state->retval = errno;

@@ -1,3 +1,4 @@
 [submodule "src/libntirpc"]
 	path = src/libntirpc
-	url = https://github.com/nfs-ganesha/ntirpc.git
+	url = git@github.com:mapr/private-ntirpc.git
+	branch = v1.3.1-mapr

@@ -1244,6 +1244,8 @@ static struct config_item export_params[] = {
 	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX, 60,
 		       gsh_export, expire_time_attr,
 		       EXPORT_OPTION_EXPIRE_SET,  options_set),
+	CONF_ITEM_UI32("SuperUser_Uid", 0, UINT32_MAX, 0, gsh_export,
+		superuser_uid),
 
 	/* NOTE: the Client and FSAL sub-blocks must be the *last*
 	 * two entries in the list.  This is so all other
@@ -2151,11 +2153,11 @@ bool export_check_security(struct svc_req *req)
 				op_ctx->export->fullpath);
 			return false;
 		} else {
-			struct svc_rpc_gss_data *gd;
+			struct rpc_gss_cred *gc;
 			rpc_gss_svc_t svc;
 
-			gd = SVCAUTH_PRIVATE(req->rq_auth);
-			svc = gd->sec.svc;
+			gc = (struct rpc_gss_cred *)req->rq_clntcred;
+			svc = gc->gc_svc;
 			LogFullDebug(COMPONENT_EXPORT, "Testing svc %d",
 				     (int)svc);
 			switch (svc) {
