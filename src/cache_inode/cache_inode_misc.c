@@ -509,7 +509,7 @@ void cache_inode_unexport(struct gsh_export *export)
 
 		entry = expmap->entry;
 
-		status = cache_inode_lru_ref(entry, LRU_FLAG_NONE);
+		status = cache_inode_lru_ref(entry, LRU_REQ_STALE_OK);
 
 		if (status != CACHE_INODE_SUCCESS) {
 			/* This entry was going stale, skip it. */
