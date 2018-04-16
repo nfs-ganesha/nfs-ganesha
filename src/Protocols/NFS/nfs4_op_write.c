@@ -89,7 +89,7 @@ static void nfs4_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 done:
 	server_stats_io_done(write_arg->iov[0].iov_len, write_arg->io_amount,
 			     (data->res_WRITE4->status == NFS4_OK) ? true :
-			     false, false);
+			     false, true /*is_write*/);
 
 	if (data->owner != NULL) {
 		op_ctx->clientid = NULL;
