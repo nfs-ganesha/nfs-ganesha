@@ -31,9 +31,8 @@ MNT_Port (uint16, range 0 to UINT16_MAX, default 0)
 NLM_Port (uint16, range 0 to UINT16_MAX, default 0)
     Port number used by NLM Protocol.
 
-Bind_addr(IP4 addr, default 0.0.0.0)
+Bind_addr(IPv4 or IPv6 addr, default 0.0.0.0)
     The address to which to bind for our listening port.
-    IPv4 only, for now.
 
 NFS_Program(uint32, range 1 to INT32_MAX, default 100003)
     RPC program number for NFS.
