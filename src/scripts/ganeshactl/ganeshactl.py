@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/python2
 #
 # ganeshactl.py - PyQt4 GUI tool for admin of nfs-ganesha.
 #

@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2
+
 from __future__ import print_function
 import getopt, sys
 import gobject

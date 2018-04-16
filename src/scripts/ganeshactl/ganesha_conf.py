@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python2
 
 import os, sys
 from Ganesha.config_editor import BLOCK, ArgError
