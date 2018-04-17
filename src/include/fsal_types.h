@@ -87,14 +87,22 @@ struct user_cred {
 };
 
 struct export_perms {
-	uid_t anonymous_uid;	/* root uid when no root access is available
-				 * uid when access is available but all users
-				 * are being squashed. */
-	gid_t anonymous_gid;	/* root gid when no root access is available
-				 * gid when access is available but all users
-				 * are being squashed. */
-	uint32_t options;	/* available export options */
-	uint32_t set;		/* Options that have been set */
+	/** root uid when no root access is available uid when access is
+	 *  available but all users are being squashed.
+	 */
+	uid_t anonymous_uid;
+	/** root gid when no root access is available gid when access is
+	 *  available but all users are being squashed.
+	 */
+	gid_t anonymous_gid;
+	/** Expiration time interval in seconds for attributes.  Settable with
+	    Attr_Expiration_Time (should never be set for client export_perms.
+	 */
+	int32_t  expire_time_attr;
+	/** available export options */
+	uint32_t options;
+	/** Permission Options that have been set */
+	uint32_t set;
 };
 
 /* Define bit values for cred_flags */
