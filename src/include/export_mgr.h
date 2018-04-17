@@ -121,9 +121,6 @@ struct gsh_export {
 	uint32_t options;
 	/** CFG: Export non-permission options set - atomic changeable option */
 	uint32_t options_set;
-	/** CFG: Expiration time interval in seconds for attributes.  Settable
-	    with Attr_Expiration_Time. - atomic changeable option */
-	int32_t expire_time_attr;
 	/** CFG: Export_Id for this export - static option */
 	uint16_t export_id;
 

@@ -128,8 +128,7 @@ GPFSFSAL_getattrs(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 	buffxstat.fsal_fsid.major = 0;
 	buffxstat.fsal_fsid.minor = 0;
 
-	expire = atomic_fetch_uint32_t(
-		&op_ctx->ctx_export->expire_time_attr) > 0;
+	expire = op_ctx->export_perms->expire_time_attr > 0;
 
 	gpfs_export = container_of(export, struct gpfs_fsal_export, export);
 
