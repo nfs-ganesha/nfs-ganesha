@@ -1181,70 +1181,9 @@ message(STATUS "USE_RADOS_RECOV = ${USE_RADOS_RECOV}")
 message(STATUS "RADOS_URLS = ${RADOS_URLS}")
 message(STATUS "USE_CUNIT = ${USE_CUNIT}")
 
-#force command line options to be stored in cache
-set(USE_FSAL_VFS ${USE_FSAL_VFS}
-  CACHE BOOL
-   "build VFS FSAL shared library"
-   FORCE)
-
-set(USE_FSAL_LUSTRE ${USE_FSAL_LUSTRE}
-  CACHE BOOL
-   "build LUSTRE FSAL shared library"
-   FORCE)
-
-set(USE_FSAL_PROXY ${USE_FSAL_PROXY}
-  CACHE BOOL
-   "build PROXY FSAL shared library"
-   FORCE)
-
-set(USE_FSAL_CEPH ${USE_FSAL_CEPH}
-  CACHE BOOL
-   "build CEPH FSAL shared library"
-   FORCE)
-
- set(USE_FSAL_RGW ${USE_FSAL_RGW}
-  CACHE BOOL
-   "build RGW FSAL shared library"
-   FORCE)
-
-set(USE_FSAL_XFS ${USE_FSAL_XFS}
-  CACHE BOOL
-   "build XFS FSAL"
-   FORCE)
-
-set(USE_FSAL_PANFS ${USE_FSAL_PANFS}
-  CACHE BOOL
-   "build PanFS FSAL"
-   FORCE)
-
-set(USE_FSAL_GPFS ${USE_FSAL_GPFS}
-  CACHE BOOL
-   "build GPFS FSAL"
-   FORCE)
-
-set(USE_FSAL_GLUSTER ${USE_FSAL_GLUSTER}
-  CACHE BOOL
-   "build GLUSTER FSAL"
-   FORCE)
-
-set(USE_FSAL_MEM ${USE_FSAL_MEM}
-  CACHE BOOL
-   "build GLUSTER FSAL"
-   FORCE)
-
-set(USE_DBUS ${USE_DBUS}
-  CACHE BOOL
-   "enable DBUS protocol support"
-   FORCE)
-
 set(USE_CB_SIMULATOR ${USE_CB_SIMULATOR}
   CACHE BOOL
    "enable callback simulator thread"
-   FORCE)
-
-set(USE_NFSIDMAP ${USE_NFSIDMAP}
-  CACHE BOOL
-   "Use of libnfsidmap for name resolution"
    FORCE)
 
 set(DEBUG_SAL ${DEBUG_SAL}
@@ -1270,11 +1209,6 @@ set(ENABLE_VFS_DEBUG_ACL ${ENABLE_VFS_DEBUG_ACL}
 set(ENABLE_RFC_ACL ${ENABLE_RFC_ACL}
   CACHE BOOL
    "Enable debug ACL store for VFS"
-   FORCE)
-
-set(_MSPAC_SUPPORT ${_MSPAC_SUPPORT}
-  CACHE BOOL
-   "enable mspac winbind support"
    FORCE)
 
 set( DISTNAME_HAS_GIT_DATA ${DISTNAME_HAS_GIT_DATA}
@@ -1307,21 +1241,6 @@ set(USE_NLM ${USE_NLM}
    "enable NLM support"
    FORCE)
 
-set(USE_ADMIN_TOOLS ${USE_ADMIN_TOOLS}
-  CACHE BOOL
-  "Package Admin Scripts"
-  FORCE)
-
-set(USE_GUI_ADMIN_TOOLS ${USE_GUI_ADMIN_TOOLS}
-  CACHE BOOL
-  "Package GUI Admin Scripts"
-  FORCE)
-
-set(USE_LTTNG ${USE_LTTNG}
-  CACHE BOOL
-  "Enable LTTng tracing"
-  FORCE)
-
 set(USE_NFS_RDMA ${USE_NFS_RDMA}
   CACHE BOOL
   "enable nfs RDMA"
@@ -1330,16 +1249,6 @@ set(USE_NFS_RDMA ${USE_NFS_RDMA}
 set(_USE_NFS_RDMA ${USE_NFS_RDMA}
   CACHE BOOL
   "enable nfs RDMA in config"
-  FORCE)
-
-set(USE_RADOS_RECOV ${USE_RADOS_RECOV}
-  CACHE BOOL
-  "enable rados recovery"
-  FORCE)
-
-set(RADOS_URLS ${RADOS_URLS}
-  CACHE BOOL
-  "enable rados url provider"
   FORCE)
 
 set(USE_ACL_MAPPING ${USE_ACL_MAPPING}
