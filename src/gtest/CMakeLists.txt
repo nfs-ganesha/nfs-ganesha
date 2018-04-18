@@ -1,10 +1,10 @@
 # Set CMAKE_CXX_FLAGS, for gtest presently
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=gnu++14 -Wnon-virtual-dtor -Wno-invalid-offsetof")
 
-set(UNITTEST_LIBS ${GTEST_MAIN} ${GTEST} boost_program_options boost_system ${PTHREAD_LIBS})
-set(UNITTEST_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${GTEST_PREFIX}/include -fno-strict-aliasing")
+set(UNITTEST_LIBS ${GTEST_LIBRARIES} boost_program_options boost_system ${PTHREAD_LIBS})
+set(UNITTEST_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${GTEST_INCLUDE_DIR} -fno-strict-aliasing")
 
-set(GTEST_LIBRARIES
+set(GANESHA_LIBRARIES
   rpcal
   log
   support
@@ -21,10 +21,6 @@ set(GTEST_LIBRARIES
   FsalCore
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
-  ${UNITTEST_LIBS}
-  ${LTTNG_LIBRARIES}
-  ${LTTNG_CTL_LIBRARIES}
-  ${GPERFTOOLS_LIBRARIES}
   )
 
 # generic test
@@ -54,7 +50,11 @@ add_executable(test_ci_hash_dist1
 add_sanitizers(test_ci_hash_dist1)
 
 target_link_libraries(test_ci_hash_dist1
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_ci_hash_dist1 PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
@@ -69,7 +69,11 @@ add_executable(test_lookup_latency
 add_sanitizers(test_lookup_latency)
 
 target_link_libraries(test_lookup_latency
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_lookup_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
@@ -84,7 +88,11 @@ add_executable(test_readlink_latency
 add_sanitizers(test_readlink_latency)
 
 target_link_libraries(test_readlink_latency
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_readlink_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
@@ -99,7 +107,11 @@ add_executable(test_mkdir_latency
 add_sanitizers(test_mkdir_latency)
 
 target_link_libraries(test_mkdir_latency
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_mkdir_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
@@ -114,7 +126,11 @@ add_executable(test_symlink_latency
 add_sanitizers(test_symlink_latency)
 
 target_link_libraries(test_symlink_latency
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_symlink_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
@@ -129,7 +145,11 @@ add_executable(test_link_latency
 add_sanitizers(test_link_latency)
 
 target_link_libraries(test_link_latency
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_link_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
@@ -144,7 +164,11 @@ add_executable(test_unlink_latency
 add_sanitizers(test_unlink_latency)
 
 target_link_libraries(test_unlink_latency
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_unlink_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
@@ -159,7 +183,11 @@ add_executable(test_rename_latency
 add_sanitizers(test_rename_latency)
 
 target_link_libraries(test_rename_latency
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_rename_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
@@ -173,7 +201,11 @@ add_executable(test_rbt
 add_sanitizers(test_rbt)
 
 target_link_libraries(test_rbt
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_rbt PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
@@ -187,7 +219,11 @@ add_executable(test_getattrs_latency
 add_sanitizers(test_getattrs_latency)
 
 target_link_libraries(test_getattrs_latency
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_getattrs_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
@@ -202,7 +238,11 @@ add_executable(test_close_latency
 add_sanitizers(test_close_latency)
 
 target_link_libraries(test_close_latency
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_close_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")

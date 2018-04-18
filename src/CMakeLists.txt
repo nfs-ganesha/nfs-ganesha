@@ -221,7 +221,7 @@ goption(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
 goption(USE_FSAL_PANFS "build PanFS support in VFS FSAL" OFF)
 goption(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 goption(USE_FSAL_NULL "build NULL FSAL shared library" ON)
-goption(USE_FSAL_RGW "build RGW FSAL shared library" OFF)
+goption(USE_FSAL_RGW "build RGW FSAL shared library" ON)
 goption(USE_FSAL_MEM "build Memory FSAL shared library" ON)
 
 # nTIRPC
@@ -230,7 +230,7 @@ option (USE_GSS "enable RPCSEC_GSS support" ON)
 option(TIRPC_EPOLL "platform supports EPOLL or emulation" ON)
 
 # Build configure options
-goption(USE_DBUS "enable DBUS protocol support" OFF)
+goption(USE_DBUS "enable DBUS protocol support" ON)
 
 # Various DBUS enabled features
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
@@ -260,9 +260,6 @@ option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
 option(COVERAGE "add flag to generate coverage data at runtime" OFF)
 
 option(ENFORCE_GCC "enforce gcc as a the C compiler used for the project" OFF)
-
-# enable code profiling [-g -pg]
-option(PROFILING "turn on code profiling (-g and -pg)" OFF)
 
 # Define CPACK component (to deal with sub packages)
 set(CPACK_COMPONENTS_ALL daemon fsal headers )
@@ -310,23 +307,15 @@ endif(USE_BLKIN)
 
 # GTest
 goption(USE_GTEST "Use Google Test test framework" OFF)
-option(GTEST_PREFIX "Google Test installation prefix"
-  "/opt/gmock/gtest")
 gopt_test(USE_GTEST)
 if(USE_GTEST)
   find_package(LTTng ${USE_GTEST_REQUIRED})
   find_package(Gperftools ${USE_GTEST_REQUIRED})
-  if(LTTNG_CTL_FOUND AND GPERFTOOLS_FOUND)
-    if (NOT GTEST_PREFIX)
-      set(GTEST_PREFIX "/opt/gmock/gtest")
-    endif(NOT GTEST_PREFIX)
-    set(GTEST_PREFIX ${GTEST_PREFIX} CACHE PATH "Google Test path")
-    find_library(GTEST NAMES gtest PATHS "${GTEST_PREFIX}")
-    find_library(GTEST_MAIN NAMES gtest_main PATHS "${GTEST_PREFIX}")
-  else(LTTNG_CTL_FOUND AND GPERFTOOLS_FOUND)
-    message(WARNING "Couldn't find either LTTng ctl libraries or gperftools. Disabling USE_GTEST")
+  find_package(GTest ${USE_GTEST_REQUIRED})
+  if((NOT LTTNG_CTL_FOUND) OR (NOT GPERFTOOLS_FOUND) OR (NOT GTEST_FOUND))
+    message(WARNING "Couldn't find GTest dependencies. Disabling USE_GTEST")
     set(USE_GTEST OFF)
-  endif(LTTNG_CTL_FOUND AND GPERFTOOLS_FOUND)
+  endif((NOT LTTNG_CTL_FOUND) OR (NOT GPERFTOOLS_FOUND) OR (NOT GTEST_FOUND))
 endif(USE_GTEST)
 
 # NFS RDMA
@@ -771,7 +760,7 @@ gopt_test(USE_DBUS)
 if(USE_DBUS)
   find_package(PkgConfig)
   # pkg_check_modules doesn't fatal error on REQUIRED, so handle it ourselves
-  pkg_check_modules(DBUS REQUIRED dbus-1)
+  pkg_check_modules(DBUS ${USE_DBUS_REQUIRED} dbus-1)
   if(NOT DBUS_FOUND)
     if(USE_DBUS_REQUIRED)
       message(FATAL_ERROR "Cannot find DBUS libs but requested on command line")
@@ -889,22 +878,17 @@ add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 # Find misc system libs
 find_library(LIBRT rt)  # extended Pthreads functions
 
-# We need to have libcap installed
-find_library(LIBCAP cap)  # Management of Capablilities
-check_library_exists(
-	cap
-	cap_set_proc
-	""
-	HAVE_LIBCAP
-	)
-
-if(HAVE_LIBCAP)
-  set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${LIBCAP})
-  set(USE_CAPS ON)
-else(HAVE_LIBCAP)
-  set(USE_CAPS OFF)
-  message(STATUS "Could not find capabilities library, disabling USE_CAPS")
-endif(HAVE_LIBCAP)
+goption(USE_CAPS "Enable capability management" ON)
+gopt_test(USE_CAPS)
+if(USE_CAPS)
+  find_package(Caps ${USE_CAPS_REQUIRED})
+  if (CAPS_FOUND)
+    set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${CAPS_LIBRARIES})
+  else (CAPS_FOUND)
+    message(WARNING "Capability libraries not found. Disabling USE_CAPS")
+    set(USE_CAPS OFF)
+  endif (CAPS_FOUND)
+endif(USE_CAPS)
 
 # Check if we have libblkid and libuuid, will just be reported under one
 # flag USE_BLKID
@@ -1145,9 +1129,6 @@ message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "COVERAGE = ${COVERAGE}")
 message(STATUS "ENFORCE_GCC = ${ENFORCE_GCC}")
 message(STATUS "USE_GTEST = ${USE_GTEST}")
-message(STATUS "GTEST_PREFIX = ${GTEST_PREFIX}")
-message(STATUS "GTEST_MAIN = ${GTEST_MAIN}")
-message(STATUS "PROFILING = ${PROFILING}")
 message(STATUS "USE_GSS = ${USE_GSS}")
 message(STATUS "TIRPC_EPOLL = ${TIRPC_EPOLL}")
 message(STATUS "USE_9P = ${USE_9P}")
