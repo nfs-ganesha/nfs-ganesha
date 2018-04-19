@@ -207,11 +207,10 @@ TEST_F(CloseEmptyLatencyTest, SIMPLE)
 {
   fsal_status_t status;
   struct fsal_obj_handle *obj;
-  bool caller_perm_check = false;
 
   // create and open a file for test
-  status = test_root->obj_ops.open2(test_root, NULL, FSAL_O_RDWR, FSAL_UNCHECKED,
-               TEST_FILE, NULL, NULL, &obj, NULL, &caller_perm_check);
+  status = fsal_open2(test_root, NULL, FSAL_O_RDWR, FSAL_UNCHECKED,
+               TEST_FILE, NULL, NULL, &obj, NULL);
   ASSERT_EQ(status.major, 0);
 
   status = fsal_close(obj);
@@ -223,21 +222,19 @@ TEST_F(CloseEmptyLatencyTest, SIMPLE)
   obj->obj_ops.put_ref(obj);
 }
 
-TEST_F(CloseEmptyLatencyTest, FSAL_CLOSE)
+TEST_F(CloseEmptyLatencyTest, BIG)
 {
   fsal_status_t status;
   struct fsal_obj_handle *obj[LOOP_COUNT];
   char fname[NAMELEN];
-  bool caller_perm_check = false;
   struct timespec s_time, e_time;
 
   // create and open a file for test
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i);
 
-    status = test_root->obj_ops.open2(test_root, NULL, FSAL_O_RDWR,
-                 FSAL_UNCHECKED, fname, NULL, NULL, &obj[i], NULL,
-                 &caller_perm_check);
+    status = fsal_open2(test_root, NULL, FSAL_O_RDWR, FSAL_UNCHECKED, fname,
+			NULL, NULL, &obj[i], NULL);
     if(status.major ==  ERR_FSAL_DELAY) {
       i--;
       continue;
@@ -264,40 +261,6 @@ TEST_F(CloseEmptyLatencyTest, FSAL_CLOSE)
     status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
 
-    obj[i]->obj_ops.put_ref(obj[i]);
-  }
-}
-
-TEST_F(CloseFullLatencyTest, BIG)
-{
-  fsal_status_t status;
-  struct fsal_obj_handle *obj[LOOP_COUNT];
-  char fname[NAMELEN];
-  bool caller_perm_check = false;
-  struct timespec s_time, e_time;
-
-  for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "f-%08x", i);
-
-    status = test_root->obj_ops.open2(test_root, NULL, FSAL_O_RDWR,
-                 FSAL_UNCHECKED, fname, NULL, NULL, &obj[i], NULL,
-                 &caller_perm_check);
-    ASSERT_EQ(status.major, 0);
-  }
-
-  now(&s_time);
-
-  for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = fsal_close(obj[i]);
-    ASSERT_EQ(status.major, 0);
-  }
-
-  now(&e_time);
-
-  fprintf(stderr, "Average time per close %" PRIu64 " ns\n",
-          timespec_diff(&s_time, &e_time) / LOOP_COUNT);
-
-  for (int i = 0; i < LOOP_COUNT; ++i) {
     obj[i]->obj_ops.put_ref(obj[i]);
   }
 }
