@@ -1189,7 +1189,7 @@ void nfs_Init_svc(void)
 		Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
 #endif /* _USE_NLM */
 	if (nfs_param.core_param.enable_RQUOTA &&
-	    (NFS_options & (CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4))) {
+	    (NFS_options & CORE_OPTION_ALL_NFS_VERS)) {
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, RQUOTAVERS);
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS,
 				 EXT_RQUOTAVERS);

@@ -58,6 +58,7 @@
  */
 
 static struct config_item_list protocols[] = {
+	CONFIG_LIST_TOK("none", CORE_OPTION_NONE),
 	CONFIG_LIST_TOK("3", CORE_OPTION_NFSV3),
 	CONFIG_LIST_TOK("v3", CORE_OPTION_NFSV3),
 	CONFIG_LIST_TOK("nfs3", CORE_OPTION_NFSV3),

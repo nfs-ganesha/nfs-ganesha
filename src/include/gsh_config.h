@@ -155,6 +155,12 @@ typedef enum protos {
 #define NFS_DEFAULT_RECV_BUFFER_SIZE 1048576
 
 /**
+ * @brief Turn off all protocols
+ */
+
+#define CORE_OPTION_NONE 0x00000000	/*< No operations are supported */
+
+/**
  * @brief Support NFSv3
  */
 
