@@ -177,7 +177,7 @@ static void unregister(const rpcprog_t prog, const rpcvers_t vers1,
 static void unregister_rpc(void)
 {
 	if ((NFS_options & CORE_OPTION_NFSV3) != 0) {
-		unregister(NFS_program[P_NFS], NFS_V2, NFS_V4);
+		unregister(NFS_program[P_NFS], NFS_V3, NFS_V4);
 		unregister(NFS_program[P_MNT], MOUNT_V1, MOUNT_V3);
 	} else {
 		unregister(NFS_program[P_NFS], NFS_V4, NFS_V4);
