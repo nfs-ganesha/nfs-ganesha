@@ -167,9 +167,9 @@ static void unregister(const rpcprog_t prog, const rpcvers_t vers1,
 	for (vers = vers1; vers <= vers2; vers++) {
 		rpcb_unset(prog, vers, netconfig_udpv4);
 		rpcb_unset(prog, vers, netconfig_tcpv4);
-		if (netconfig_udpv6)
+		if (!v6disabled && netconfig_udpv6)
 			rpcb_unset(prog, vers, netconfig_udpv6);
-		if (netconfig_tcpv6)
+		if (!v6disabled && netconfig_tcpv6)
 			rpcb_unset(prog, vers, netconfig_tcpv6);
 	}
 }
