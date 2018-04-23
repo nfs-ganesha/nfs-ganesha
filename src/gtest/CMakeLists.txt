@@ -257,7 +257,11 @@ add_executable(test_commit2_latency
 add_sanitizers(test_commit2_latency)
 
 target_link_libraries(test_commit2_latency
-  ${GTEST_LIBRARIES}
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
   )
 set_target_properties(test_commit2_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
