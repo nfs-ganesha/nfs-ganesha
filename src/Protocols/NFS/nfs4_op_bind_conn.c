@@ -101,8 +101,12 @@ int nfs4_op_bind_conn(struct nfs_argop4 *op, compound_data_t *data,
 	/* By default, no DRC replay */
 	data->use_slot_cached_result = false;
 
-	/* Keep memory of the session in the COMPOUND's data */
+	/* Keep memory of the session in the COMPOUND's data and indicate no
+	 * slot in use. We assume the server will never support UINT32_MAX + 1
+	 * slots...
+	 */
 	data->session = session;
+	data->slot = UINT32_MAX;
 
 	memcpy(resok_BIND_CONN_TO_SESSION4->bctsr_sessid,
 	       arg_BIND_CONN_TO_SESSION4->bctsa_sessid,

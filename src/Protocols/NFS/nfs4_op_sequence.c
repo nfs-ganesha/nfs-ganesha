@@ -114,6 +114,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 	data->use_slot_cached_result = false;
 	slot = &session->fc_slots[slotid];
 
+	/* Serialize use of this slot. */
 	PTHREAD_MUTEX_lock(&slot->lock);
 
 	if (slot->sequence + 1 != arg_SEQUENCE4->sa_sequenceid) {
@@ -212,8 +213,6 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 				: "Don't use",
 			slotid, data->cached_result);
 
-	PTHREAD_MUTEX_unlock(&slot->lock);
-
 	/* If we were successful, stash the clientid in the request
 	 * context.
 	 */
@@ -228,10 +227,14 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 		/* Indicate the failed response size. */
 		data->op_resp_size = sizeof(nfsstat4);
 
+		PTHREAD_MUTEX_unlock(&slot->lock);
+
 		dec_session_ref(session);
 		data->session = NULL;
 		return res_SEQUENCE4->sr_status;
 	}
+
+	/* We keep the slot lock to serialize use of the slot. */
 
 	(void) check_session_conn(session, data, true);
 
