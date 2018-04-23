@@ -931,6 +931,14 @@ void compound_data_Free(compound_data_t *data)
 	set_saved_entry(data, NULL);
 
 	if (data->session) {
+		if (data->slot != UINT32_MAX) {
+			nfs41_session_slot_t *slot;
+
+			/* Release the slot if in use */
+			slot = &data->session->fc_slots[data->slot];
+			PTHREAD_MUTEX_unlock(&slot->lock);
+		}
+
 		dec_session_ref(data->session);
 		data->session = NULL;
 	}

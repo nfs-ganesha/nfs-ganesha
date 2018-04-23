@@ -115,7 +115,9 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 	data->use_drc = false;
 	slot = &session->fc_slots[arg_SEQUENCE4->sa_slotid];
 
+	/* Serialize use of this slot. */
 	PTHREAD_MUTEX_lock(&slot->lock);
+
 	if (slot->sequence + 1 != arg_SEQUENCE4->sa_sequenceid) {
 		if (slot->sequence == arg_SEQUENCE4->sa_sequenceid) {
 #if IMPLEMENT_CACHETHIS
@@ -214,8 +216,6 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 				"=NULL for DRC", arg_SEQUENCE4->sa_slotid);
 	}
 #endif
-
-	PTHREAD_MUTEX_unlock(&slot->lock);
 
 	/* If we were successful, stash the clientid in the request
 	 * context.
