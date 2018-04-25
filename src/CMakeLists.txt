@@ -1014,6 +1014,8 @@ else (USE_SYSTEM_NTIRPC)
   set(USE_RPC_RDMA ${USE_NFS_RDMA} CACHE BOOL "Use RDMA")
   set(TIRPC_EPOLL ${TIRPC_EPOLL} CACHE BOOL "Use EPOLL")
   set(USE_GSS ${USE_GSS} CACHE BOOL "Use GSS")
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+	  "${CMAKE_SOURCE_DIR}/libntirpc/cmake/modules/")
   add_subdirectory(libntirpc)
   set(NTIRPC_LIBRARY ntirpc)
   set(NTIRPC_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libntirpc/ntirpc/")
