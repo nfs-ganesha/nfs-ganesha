@@ -1680,9 +1680,9 @@ static struct config_item fsal_params[] = {
 		       EXPORT_OPTION_FSID_SET, options_set),		\
 	CONF_ITEM_STR("Tag", 1, MAXPATHLEN, NULL,			\
 		      _struct_, FS_tag),				\
-	CONF_ITEM_UI64("MaxOffsetWrite", 512, UINT64_MAX, UINT64_MAX,	\
+	CONF_ITEM_UI64("MaxOffsetWrite", 512, UINT64_MAX, INT64_MAX,	\
 		       _struct_, MaxOffsetWrite),			\
-	CONF_ITEM_UI64("MaxOffsetRead", 512, UINT64_MAX, UINT64_MAX,	\
+	CONF_ITEM_UI64("MaxOffsetRead", 512, UINT64_MAX, INT64_MAX,	\
 		       _struct_, MaxOffsetRead),			\
 	CONF_ITEM_BOOLBIT_SET("UseCookieVerifier",			\
 		false, EXPORT_OPTION_USE_COOKIE_VERIFIER,		\

@@ -328,7 +328,7 @@ static bool fs_supports(struct fsal_export *export_pub,
 
 static uint64_t fs_maxfilesize(struct fsal_export *export_pub)
 {
-	return UINT64_MAX;
+	return INT64_MAX;
 }
 
 /**

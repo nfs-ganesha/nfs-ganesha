@@ -52,7 +52,7 @@ const char pseudoname[] = "PSEUDO";
 
 /* filesystem info for PSEUDOFS */
 static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = UINT64_MAX,
+	.maxfilesize = INT64_MAX,
 	.maxlink = 0,
 	.maxnamelen = MAXNAMLEN,
 	.maxpathlen = MAXPATHLEN,
