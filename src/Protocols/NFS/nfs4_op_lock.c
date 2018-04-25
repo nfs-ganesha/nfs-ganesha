@@ -101,6 +101,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	int rc;
 	struct fsal_obj_handle *obj = data->current_obj;
 	bool state_lock_held = false;
+	uint64_t maxfilesize =
+	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCK handler ----------------------");
@@ -387,7 +389,24 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	if (lock_desc.lock_length >
 	    (STATE_LOCK_OFFSET_EOF - lock_desc.lock_start)) {
 		res_LOCK4->status = NFS4ERR_INVAL;
-		LogDebug(COMPONENT_NFS_V4_LOCK, "LOCK failed length overflow");
+		LogDebug(COMPONENT_NFS_V4_LOCK,
+			 "LOCK failed length overflow start %"PRIx64
+			 " length %"PRIx64,
+			 lock_desc.lock_start, lock_desc.lock_length);
+		goto out;
+	}
+
+	/* Check for range overflow past maxfilesize.  Comparing beyond 2^64 is
+	 * not possible in 64 bits precision, but off+len > maxfilesize is
+	 * equivalent to len > maxfilesize - off
+	 */
+	if (lock_desc.lock_length > (maxfilesize - lock_desc.lock_start)) {
+		res_LOCK4->status = NFS4ERR_BAD_RANGE;
+		LogDebug(COMPONENT_NFS_V4_LOCK,
+			 "LOCK failed past maxfilesize %"PRIx64" start %"PRIx64
+			 " length %"PRIx64,
+			 maxfilesize,
+			 lock_desc.lock_start, lock_desc.lock_length);
 		goto out;
 	}
 
