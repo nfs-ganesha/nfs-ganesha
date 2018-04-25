@@ -57,7 +57,7 @@ const char myname[] = "XFS";
 
 static struct fsal_module XFS = {
 	.fs_info = {
-		.maxfilesize = UINT64_MAX,
+		.maxfilesize = INT64_MAX,
 		.maxlink = _POSIX_LINK_MAX,
 		.maxnamelen = 1024,
 		.maxpathlen = 1024,

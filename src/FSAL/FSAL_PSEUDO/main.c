@@ -46,7 +46,7 @@ const char pseudoname[] = "PSEUDO";
 
 static struct fsal_module PSEUDOFS = {
 	.fs_info = {
-		.maxfilesize = UINT64_MAX,
+		.maxfilesize = 512,
 		.maxlink = 0,
 		.maxnamelen = MAXNAMLEN,
 		.maxpathlen = MAXPATHLEN,

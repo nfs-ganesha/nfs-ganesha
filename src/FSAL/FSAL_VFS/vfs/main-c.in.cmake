@@ -58,7 +58,7 @@ const char myname[] = "@FSAL_LUSTRE_VFS_NAME@";
 
 static struct fsal_module VFS = {
 	.fs_info = {
-		.maxfilesize = UINT64_MAX,
+		.maxfilesize = INT64_MAX,
 		.maxlink = _POSIX_LINK_MAX,
 		.maxnamelen = 1024,
 		.maxpathlen = 1024,

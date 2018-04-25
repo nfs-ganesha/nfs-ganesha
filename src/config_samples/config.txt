@@ -268,9 +268,9 @@ EXPORT {}
 
 	PrefReaddir(uint64, range 512 to 64*1024*1024, default 16384)
 
-	MaxOffsetWrite(uint64, range 512 to UINT64_MAX, default UINT64_MAX)
+	MaxOffsetWrite(uint64, range 512 to UINT64_MAX, default INT64_MAX)
 
-	MaxOffsetRead(uint64, range 512 to UINT64_MAX, default UINT64_MAX)
+	MaxOffsetRead(uint64, range 512 to UINT64_MAX, default INT64_MAX)
 
 	DisableReaddirPlus(bool, default false)
 

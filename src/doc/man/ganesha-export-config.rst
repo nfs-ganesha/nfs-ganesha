@@ -115,11 +115,13 @@ PrefWrite (67108864)
 PrefReaddir (16384)
    The preferred readdir size on this export
 
-MaxOffsetWrite (18446744073709551615)
+MaxOffsetWrite (9223372036854775807)
     Maximum file offset that may be written
+    Range is 512 to 18446744073709551615
 
-MaxOffsetRead (18446744073709551615)
+MaxOffsetRead (9223372036854775807)
     Maximum file offset that may be read
+    Range is 512 to 18446744073709551615
 
 CLIENT (optional)
     See the ``EXPORT { CLIENT  {} }`` block.
