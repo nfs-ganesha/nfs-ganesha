@@ -33,15 +33,20 @@ Access_Type(enum, default None)
 Protocols(enum list, default [3,4])
     Possible values:
         3, 4, NFS3, NFS4, V3, V4, NFSv3, NFSv4, 9P
-        Transports(enum list, values [UDP, TCP, RDMA], default [UDP, TCP])
-        Anonymous_uid(anonid, range INT32MIN to UINT32MAX, default -2)
-        Anonymous_gid(anonid, range INT32MIN to UINT32MAX, default -2)
+
+Transports(enum list, values [UDP, TCP, RDMA], default [UDP, TCP])
+
+Anonymous_uid(anonid, range INT32_MIN to UINT32_MAX, default -2)
+
+Anonymous_gid(anonid, range INT32_MIN to UINT32_MAX, default -2)
 
 SecType(enum list, default [none, sys])
     Possible values:
         none, sys, krb5, krb5i, krb5p
-        PrivilegedPort(bool, default false)
-        Manage_Gids(bool, default false)
+
+PrivilegedPort(bool, default false)
+
+Manage_Gids(bool, default false)
 
 Squash(enum, default root_sqaush)
     Possible values:
@@ -104,24 +109,28 @@ Tag (no default)
     Tag options, the same Path may be exported multiple
     times.
 
-MaxRead (67108864)
+MaxRead (64*1024*1024)
     The maximum read size on this export
-MaxWrite (67108864)
+
+MaxWrite (64*1024*1024)
     The maximum write size on this export
-PrefRead (67108864)
+
+PrefRead (64*1024*1024)
     The preferred read size on this export
-PrefWrite (67108864)
+
+PrefWrite (64*1024*1024)
    The preferred write size on this export
+
 PrefReaddir (16384)
    The preferred readdir size on this export
 
-MaxOffsetWrite (9223372036854775807)
+MaxOffsetWrite (INT64_MAX)
     Maximum file offset that may be written
-    Range is 512 to 18446744073709551615
+    Range is 512 to UINT64_MAX
 
-MaxOffsetRead (9223372036854775807)
+MaxOffsetRead (INT64_MAX)
     Maximum file offset that may be read
-    Range is 512 to 18446744073709551615
+    Range is 512 to UINT64_MAX
 
 CLIENT (optional)
     See the ``EXPORT { CLIENT  {} }`` block.
