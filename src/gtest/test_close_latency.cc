@@ -107,10 +107,12 @@ namespace {
       memset(&user_credentials, 0, sizeof(struct user_cred));
       memset(&req_ctx, 0, sizeof(struct req_op_context));
       memset(&attrs, 0, sizeof(attrs));
+      memset(&exp_perms, 0, sizeof(struct export_perms));
 
       req_ctx.ctx_export = a_export;
       req_ctx.fsal_export = a_export->fsal_export;
       req_ctx.creds = &user_credentials;
+      req_ctx.export_perms = &exp_perms;
 
       /* stashed in tls */
       op_ctx = &req_ctx;
@@ -149,6 +151,7 @@ namespace {
     struct req_op_context req_ctx;
     struct user_cred user_credentials;
     struct attrlist attrs;
+    struct export_perms exp_perms;
 
     struct gsh_export* a_export = nullptr;
     struct fsal_obj_handle *root_entry = nullptr;
