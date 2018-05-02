@@ -15,7 +15,9 @@
 #include "fsal.h"
 #include "recovery_fs.h"
 
-char v4_recov_link[PATH_MAX];
+static char v4_recov_link[sizeof(NFS_V4_RECOV_ROOT) +
+			  sizeof(NFS_V4_RECOV_DIR) +
+			  NI_MAXHOST + 1];
 
 /*
  * If we have a "legacy" fs driver database, we can allow clients to recover
@@ -35,8 +37,8 @@ static void legacy_fs_db_migrate(void)
 		char *dname;
 
 		/* create empty tmpdir in same parent */
-		snprintf(pathbuf, sizeof(pathbuf), "%s.XXXXXX",
-			 v4_recov_link);
+		snprintf(pathbuf, sizeof(pathbuf), "%s.XXXXXX", v4_recov_link);
+
 		dname = mkdtemp(pathbuf);
 		if (!dname) {
 			LogEvent(COMPONENT_CLIENTID,
