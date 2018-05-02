@@ -69,16 +69,14 @@ static void fs_ng_create_recov_dir(void)
 	char *newdir;
 	char host[NI_MAXHOST];
 
-	snprintf(recov_root, PATH_MAX, "%s", NFS_V4_RECOV_ROOT);
-
-	err = mkdir(recov_root, 0700);
+	err = mkdir(NFS_V4_RECOV_ROOT, 0700);
 	if (err == -1 && errno != EEXIST) {
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to create v4 recovery dir (%s): %s",
-			 recov_root, strerror(errno));
+			 NFS_V4_RECOV_ROOT, strerror(errno));
 	}
 
-	snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s", recov_root,
+	snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s", NFS_V4_RECOV_ROOT,
 		 NFS_V4_RECOV_DIR);
 	err = mkdir(v4_recov_dir, 0700);
 	if (err == -1 && errno != EEXIST) {
@@ -101,7 +99,7 @@ static void fs_ng_create_recov_dir(void)
 	}
 
 	snprintf(v4_recov_link, sizeof(v4_recov_link), "%s/%s/%s",
-		 recov_root, NFS_V4_RECOV_DIR, host);
+		 NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, host);
 
 	snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s.XXXXXX",
 		 v4_recov_link);
@@ -301,7 +299,7 @@ static void fs_ng_read_recov_clids(nfs_grace_start_t *gsp,
 	switch (gsp->event) {
 	case EVENT_TAKE_NODEID:
 		snprintf(path, sizeof(path), "%s/%s/node%d",
-			 recov_root, NFS_V4_RECOV_DIR,
+			 NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR,
 			 gsp->nodeid);
 		break;
 	default:

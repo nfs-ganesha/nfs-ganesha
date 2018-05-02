@@ -6,7 +6,6 @@
 #define NFS_V4_RECOV_DIR "v4recov"
 
 extern char v4_recov_dir[PATH_MAX];
-extern char recov_root[PATH_MAX];
 
 void fs_add_clid(nfs_client_id_t *clientid);
 void fs_rm_clid(nfs_client_id_t *clientid);

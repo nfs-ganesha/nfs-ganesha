@@ -16,7 +16,6 @@
 
 char v4_recov_dir[PATH_MAX];
 char v4_old_dir[PATH_MAX];
-char recov_root[PATH_MAX];
 
 /**
  * @brief convert clientid opaque bytes as a hex string for mkdir purpose.
@@ -119,16 +118,14 @@ void fs_create_recov_dir(void)
 {
 	int err;
 
-	snprintf(recov_root, PATH_MAX, "%s", NFS_V4_RECOV_ROOT);
-
-	err = mkdir(recov_root, 0755);
+	err = mkdir(NFS_V4_RECOV_ROOT, 0755);
 	if (err == -1 && errno != EEXIST) {
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to create v4 recovery dir (%s), errno=%d",
-			 recov_root, errno);
+			 NFS_V4_RECOV_ROOT, errno);
 	}
 
-	snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s", recov_root,
+	snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s", NFS_V4_RECOV_ROOT,
 		 NFS_V4_RECOV_DIR);
 	err = mkdir(v4_recov_dir, 0755);
 	if (err == -1 && errno != EEXIST) {
@@ -137,7 +134,7 @@ void fs_create_recov_dir(void)
 			 v4_recov_dir, errno);
 	}
 
-	snprintf(v4_old_dir, sizeof(v4_old_dir), "%s/%s", recov_root,
+	snprintf(v4_old_dir, sizeof(v4_old_dir), "%s/%s", NFS_V4_RECOV_ROOT,
 		 NFS_V4_OLD_DIR);
 	err = mkdir(v4_old_dir, 0755);
 	if (err == -1 && errno != EEXIST) {
@@ -147,7 +144,7 @@ void fs_create_recov_dir(void)
 	}
 	if (nfs_param.core_param.clustered) {
 		snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s/node%d",
-			 recov_root, NFS_V4_RECOV_DIR, g_nodeid);
+			 NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, g_nodeid);
 
 		err = mkdir(v4_recov_dir, 0755);
 		if (err == -1 && errno != EEXIST) {
@@ -157,7 +154,7 @@ void fs_create_recov_dir(void)
 		}
 
 		snprintf(v4_old_dir, sizeof(v4_old_dir), "%s/%s/node%d",
-			 recov_root, NFS_V4_OLD_DIR, g_nodeid);
+			 NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR, g_nodeid);
 
 		err = mkdir(v4_old_dir, 0755);
 		if (err == -1 && errno != EEXIST) {
@@ -645,12 +642,12 @@ void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 		break;
 	case EVENT_TAKE_IP:
 		snprintf(path, sizeof(path), "%s/%s/%s",
-			 recov_root, gsp->ipaddr,
+			 NFS_V4_RECOV_ROOT, gsp->ipaddr,
 			 NFS_V4_RECOV_DIR);
 		break;
 	case EVENT_TAKE_NODEID:
 		snprintf(path, sizeof(path), "%s/%s/node%d",
-			 recov_root, NFS_V4_RECOV_DIR,
+			 NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR,
 			 gsp->nodeid);
 		break;
 	default:
