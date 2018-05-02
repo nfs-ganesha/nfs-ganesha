@@ -706,7 +706,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 		if (strcmp(realm, default_realm) == 0)
 			tried_default = 1;
 		for (j = 0; svcnames[j] != NULL; j++) {
-			char spn[300];
+			char spn[1028];
 
 			/*
 			 * The special svcname "$" means 'try the active
