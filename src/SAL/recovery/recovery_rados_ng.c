@@ -278,35 +278,6 @@ static void rados_ng_cleanup_old(void)
 	PTHREAD_MUTEX_unlock(&grace_op_lock);
 }
 
-static void rados_ng_add_revoke_fh(nfs_client_id_t *delr_clid,
-				   nfs_fh4 *delr_handle)
-{
-	int ret;
-	char ckey[RADOS_KEY_MAX_LEN];
-	char *cval;
-
-	cval = gsh_malloc(RADOS_VAL_MAX_LEN);
-
-	rados_kv_create_key(delr_clid, ckey);
-	ret = rados_kv_get(ckey, cval, rados_recov_oid);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to get %s", ckey);
-		goto out;
-	}
-
-	rados_kv_append_val_rdfh(cval, delr_handle->nfs_fh4_val,
-				      delr_handle->nfs_fh4_len);
-
-	ret = rados_ng_put(ckey, cval, rados_recov_oid);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to add rdfh for clid %lu",
-			 delr_clid->cid_clientid);
-	}
-
-out:
-	gsh_free(cval);
-}
-
 struct nfs4_recovery_backend rados_ng_backend = {
 	.recovery_init = rados_ng_init,
 	.recovery_shutdown = rados_kv_shutdown,
@@ -314,7 +285,7 @@ struct nfs4_recovery_backend rados_ng_backend = {
 	.recovery_read_clids = rados_ng_read_recov_clids_takeover,
 	.add_clid = rados_ng_add_clid,
 	.rm_clid = rados_ng_rm_clid,
-	.add_revoke_fh = rados_ng_add_revoke_fh,
+	.add_revoke_fh = rados_kv_add_revoke_fh,
 };
 
 void rados_ng_backend_init(struct nfs4_recovery_backend **backend)

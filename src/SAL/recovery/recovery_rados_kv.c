@@ -264,7 +264,7 @@ out:
 	return ret;
 }
 
-void rados_kv_append_val_rdfh(char *val, char *rdfh, int rdfh_len)
+static void rados_kv_append_val_rdfh(char *val, char *rdfh, int rdfh_len)
 {
 	char rdfhstr[NAME_MAX];
 	int rdfhstr_len;
