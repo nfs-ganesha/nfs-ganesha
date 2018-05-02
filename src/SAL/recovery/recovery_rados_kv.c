@@ -267,16 +267,17 @@ out:
 static void rados_kv_append_val_rdfh(char *val, char *rdfh, int rdfh_len)
 {
 	char rdfhstr[NAME_MAX];
-	int rdfhstr_len;
 	int ret;
+	size_t buflen;
 
 	/* Convert nfs_fh4_val into base64 encoded string */
 	ret = base64url_encode(rdfh, rdfh_len, rdfhstr, NAME_MAX);
 	assert(ret != -1);
-	rdfhstr_len = strlen(rdfhstr);
 
-	strncat(val, "#", 1);
-	strncat(val, rdfhstr, rdfhstr_len);
+	buflen = RADOS_VAL_MAX_LEN - (strlen(val) + 1);
+	strncat(val, "#", buflen);
+	buflen--;
+	strncat(val, rdfhstr, buflen);
 }
 
 int rados_kv_set_param_from_conf(config_file_t parse_tree,
