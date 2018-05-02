@@ -27,7 +27,7 @@
 
 extern rados_t		rados_recov_cluster;
 extern rados_ioctx_t	rados_recov_io_ctx;
-extern char		rados_recov_oid[NI_MAXHOST];
+extern char		rados_recov_oid[NI_MAXHOST + 6];
 
 struct rados_kv_parameter {
 	/** Connection to ceph cluster */

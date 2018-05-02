@@ -20,8 +20,8 @@
 
 static rados_t clnt;
 rados_ioctx_t rados_recov_io_ctx;
-char rados_recov_oid[NI_MAXHOST];
-static char rados_recov_old_oid[NI_MAXHOST];
+char rados_recov_oid[NI_MAXHOST + 6];
+static char rados_recov_old_oid[NI_MAXHOST + 4];
 
 struct rados_kv_parameter rados_kv_param;
 
