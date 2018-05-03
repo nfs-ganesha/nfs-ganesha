@@ -28,6 +28,7 @@
 extern rados_t		rados_recov_cluster;
 extern rados_ioctx_t	rados_recov_io_ctx;
 extern char		rados_recov_oid[NI_MAXHOST + 6];
+extern char		rados_recov_old_oid[NI_MAXHOST + 4];
 
 struct rados_kv_parameter {
 	/** Connection to ceph cluster */
@@ -51,10 +52,15 @@ typedef void (*pop_clid_entry_t)(char *, char *, struct pop_args *);
 int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
 			const char *conf, const char *pool);
 void rados_kv_shutdown(void);
+int rados_kv_put(char *key, char *val, char *object);
 int rados_kv_get(char *key, char *val, char *object);
+void rados_kv_add_clid(nfs_client_id_t *clientid);
+void rados_kv_rm_clid(nfs_client_id_t *clientid);
+void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle);
 void rados_kv_create_key(nfs_client_id_t *clientid, char *key);
 void rados_kv_create_val(nfs_client_id_t *clientid, char *val);
 int rados_kv_traverse(pop_clid_entry_t callback, struct pop_args *args,
 			const char *object);
 void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle);
+void rados_kv_pop_clid_entry(char *key, char *val, struct pop_args *pop_args);
 #endif	/* _RECOVERY_RADOS_H */

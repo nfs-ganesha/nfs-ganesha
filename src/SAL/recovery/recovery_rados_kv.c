@@ -21,7 +21,7 @@
 static rados_t clnt;
 rados_ioctx_t rados_recov_io_ctx;
 char rados_recov_oid[NI_MAXHOST + 6];
-static char rados_recov_old_oid[NI_MAXHOST + 4];
+char rados_recov_old_oid[NI_MAXHOST + 4];
 
 struct rados_kv_parameter rados_kv_param;
 
@@ -131,7 +131,7 @@ void rados_kv_create_val(nfs_client_id_t *clientid, char *val)
 	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]", val);
 }
 
-static int rados_kv_put(char *key, char *val, char *object)
+int rados_kv_put(char *key, char *val, char *object)
 {
 	int ret;
 	char *keys[1];
@@ -448,8 +448,7 @@ void rados_kv_rm_clid(nfs_client_id_t *clientid)
 	clientid->cid_recov_tag = NULL;
 }
 
-static void rados_kv_pop_clid_entry(char *key, char *val,
-				    struct pop_args *pop_args)
+void rados_kv_pop_clid_entry(char *key, char *val, struct pop_args *pop_args)
 {
 	int ret;
 	char *dupval;
