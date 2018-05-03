@@ -76,7 +76,7 @@ void nfs3_AllocateFH(nfs_fh3 *fh)
 {
 	/* Allocating the filehandle in memory */
 	fh->data.data_len = NFS3_FHSIZE;
-	fh->data.data_val = gsh_calloc(1, NFS3_FHSIZE);
+	fh->data.data_val = (char *) gsh_calloc(1, NFS3_FHSIZE);
 }
 
 static inline void nfs3_freeFH(nfs_fh3 *fh)
@@ -100,7 +100,7 @@ void nfs4_AllocateFH(nfs_fh4 *fh)
 {
 	/* Allocating the filehandle in memory */
 	fh->nfs_fh4_len = NFS4_FHSIZE;
-	fh->nfs_fh4_val = gsh_calloc(1, NFS4_FHSIZE);
+	fh->nfs_fh4_val = (char *) gsh_calloc(1, NFS4_FHSIZE);
 }
 
 static inline void nfs4_freeFH(nfs_fh4 *fh)
