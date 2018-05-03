@@ -456,8 +456,10 @@ static void do_shutdown(void)
 	/* finalize RPC package */
 	Clean_RPC();
 
-	LogEvent(COMPONENT_MAIN, "Stopping worker threads");
+	LogEvent(COMPONENT_MAIN, "Shutting down RPC services");
+	(void)svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
 
+	LogEvent(COMPONENT_MAIN, "Stopping worker threads");
 #ifdef _USE_9P
 	rc = _9p_worker_shutdown();
 
@@ -494,8 +496,6 @@ static void do_shutdown(void)
 
 	LogEvent(COMPONENT_MAIN, "Removing all DSs.");
 	remove_all_dss();
-
-	(void)svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
 
 	nfs4_recovery_shutdown();
 
