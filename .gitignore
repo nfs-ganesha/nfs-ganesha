@@ -7,6 +7,7 @@ src/autom4te.cache/
 src/build-aux/
 src/rpm/
 src/pkg-deb/
+src/docker/
 .deps/
 .libs/
 CMakeFiles/
@@ -49,3 +50,11 @@ Doxyfile
 .project
 .checkpatch.conf
 src/scripts/systemd/nfs-ganesha-config.service
+src/FSAL/FSAL_VFS/vfs/lustre_main.c
+src/FSAL/FSAL_VFS/vfs/main.c
+src/Protocols/NLM/sm_notify.ganesha
+src/CMakeCache.txt
+src/CPackConfig.cmake
+src/CPackSourceConfig.cmake
+
+
