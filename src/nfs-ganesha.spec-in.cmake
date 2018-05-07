@@ -116,6 +116,10 @@ BuildRequires:	pkgconfig
 BuildRequires:	krb5-devel
 %if ( 0%{?suse_version} >= 1330 )
 BuildRequires:  libnsl-devel
+%else
+%if ( 0%{?fedora} >= 28 )
+BuildRequires:  libnsl2-devel
+%endif
 %endif
 %if ( 0%{?suse_version} )
 BuildRequires:	dbus-1-devel
