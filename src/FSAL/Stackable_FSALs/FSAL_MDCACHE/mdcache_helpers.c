@@ -906,7 +906,7 @@ mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry)
 
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Found entry %p",
-			     entry);
+			     *entry);
 
 		(void)atomic_inc_uint64_t(&cache_stp->inode_hit);
 
