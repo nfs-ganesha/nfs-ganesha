@@ -2402,8 +2402,22 @@ fsal_status_t merge_share(struct fsal_share *orig_share,
  * opened, in this case, all that actually happens is the share reservation
  * check (which may result in the lock being held).
  *
+ * If openflags is FSAL_O_ANY, the caller will utilize the global file
+ * descriptor if it is open, otherwise it will use a temporary file descriptor.
+ * The primary use of this is to not open long lasting global file descriptors
+ * for getattr and setattr calls. The other users of FSAL_O_ANY are NFSv3 LOCKT
+ * for which this behavior is also desireable and NFSv3 UNLOCK where there
+ * SHOULD be an open file descriptor attached to state, but if not, a temporary
+ * file descriptor will work fine (and the resulting unlock won't do anything
+ * since we just opened the temporary file descriptor).
+ *
  * @param[in]  obj_hdl     File on which to operate
  * @param[in]  check_share Indicates we must check for share conflict
+ * @param[in]  bypass         If state doesn't indicate a share reservation,
+ *                               bypass any deny read
+ * @param[in] bypass       If check_share is true, indicates to bypass
+ *                         share_deny_read and share_deny_write but
+ *                         not share_deny_write_mand
  * @param[in]  openflags   Mode for open
  * @param[in]  my_fd       The file descriptor associated with the object
  * @param[in]  share       The fsal_share associated with the object
@@ -2479,7 +2493,21 @@ again:
 		/* Drop the read lock */
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-		if (retried) {
+		if (openflags == FSAL_O_ANY) {
+			/* If caller is looking for any open descriptor, don't
+			 * bother trying to open global file descriptor if it
+			 * isn't already open, just go ahead an open a temporary
+			 * file descriptor.
+			 */
+			LogDebug(COMPONENT_FSAL,
+				 "Open in FSAL_O_ANY mode failed, just open temporary file descriptor.");
+
+			/* Although the global file descriptor isn't "busy" (we
+			 * can't acquire a write lock, re-use of EBUSY in this
+			 * case simplifies the code below.
+			 */
+			rc = EBUSY;
+		} else if (retried) {
 			/* Since we drop write lock for 'obj_hdl->obj_lock'
 			 * and acquire read lock for 'obj_hdl->obj_lock' after
 			 * opening the global file descriptor, some other
@@ -2487,11 +2515,11 @@ again:
 			 * verification of 'openflags' to fail.
 			 *
 			 * We will now attempt to just provide a temporary
-			 * file descriptor
+			 * file descriptor. EBUSY is sort of true...
 			 */
 			LogDebug(COMPONENT_FSAL,
 				 "Retry failed.");
-			*has_lock = false;
+			rc = EBUSY;
 		} else {
 			/* Switch to write lock on object to protect file
 			 * descriptor.
@@ -2505,8 +2533,12 @@ again:
 			rc = pthread_rwlock_trywrlock(&obj_hdl->obj_lock);
 		}
 
-		if (retried || rc == EBUSY) {
-			/* Someone else is using the file descriptor.
+		if (rc == EBUSY) {
+			/* Someone else is using the file descriptor or it
+			 * isn't open at all and the caller is looking for
+			 * any mode of open so a temporary file descriptor will
+			 * work fine.
+			 *
 			 * Just provide a temporary file descriptor.
 			 * We still take a read lock so we can protect the
 			 * share reservation for the duration of the caller's
@@ -2676,6 +2708,9 @@ again:
  * Optionally, out_fd can be NULL in which case a file is not actually
  * opened, in this case, all that actually happens is the share reservation
  * check (which may result in the lock being held).
+ *
+ * Note that FSAL_O_ANY may be passed on to fsal_reopen_obj, see the
+ * documentation of that function for the implications.
  *
  * @param[in,out] out_fd         File descriptor that is to be used
  * @param[in]     obj_hdl        File on which to operate
