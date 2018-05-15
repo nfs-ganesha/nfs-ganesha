@@ -129,13 +129,15 @@ static inline void add_detached_dirent(mdcache_entry_t *parent,
  * @param[in] export The mdcache export used by the handle.
  * @param[in] sub_handle The handle used by the subfsal.
  * @param[in] fs The filesystem of the new handle.
+ * @param[in] reason The reason the entry is being inserted
  *
  * @return The new handle, or NULL if the unexport in progress.
  */
 static mdcache_entry_t *mdcache_alloc_handle(
 		struct mdcache_fsal_export *export,
 		struct fsal_obj_handle *sub_handle,
-		struct fsal_filesystem *fs)
+		struct fsal_filesystem *fs,
+		mdc_reason_t reason)
 {
 	mdcache_entry_t *result;
 	fsal_status_t status;
@@ -204,7 +206,7 @@ static mdcache_entry_t *mdcache_alloc_handle(
 		return NULL;
 	}
 
-	mdcache_lru_insert(result);
+	mdcache_lru_insert(result, reason);
 
 	return result;
 }
@@ -547,7 +549,8 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		  struct attrlist *attrs_out,
 		  bool new_directory,
 		  mdcache_entry_t **entry,
-		  struct state_t *state)
+		  struct state_t *state,
+		  mdc_reason_t reason)
 {
 	fsal_status_t status;
 	mdcache_entry_t *oentry, *nentry = NULL;
@@ -592,7 +595,8 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	/* We did not find the object.  Pull an entry off the LRU. The entry
 	 * will already be mapped.
 	 */
-	nentry = mdcache_alloc_handle(export, sub_handle, sub_handle->fs);
+	nentry = mdcache_alloc_handle(export, sub_handle, sub_handle->fs,
+				      reason);
 
 	if (nentry == NULL) {
 		/* We didn't get an entry because of unexport in progress,
@@ -846,13 +850,15 @@ int display_mdcache_key(struct display_buffer *dspbuf, mdcache_key_t *key)
  *
  * @param[in] key	Cache key to use for lookup
  * @param[out] entry	Entry, if found
+ * @param[in] reason	The reason for the lookup
  *
- * @note This returns an INITIAL ref'd entry on success
+ * @note This returns ref'd entry on success, INITIAL if @a reason is not SCAN
  *
  * @return Status
  */
 fsal_status_t
-mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry)
+mdcache_find_keyed_reason(mdcache_key_t *key, mdcache_entry_t **entry,
+			  mdc_reason_t reason)
 {
 	cih_latch_t latch;
 
@@ -879,7 +885,8 @@ mdcache_find_keyed(mdcache_key_t *key, mdcache_entry_t **entry)
 		fsal_status_t status;
 
 		/* Initial Ref on entry */
-		status = mdcache_lru_ref(*entry, LRU_REQ_INITIAL);
+		status = mdcache_lru_ref(*entry, (reason != MDC_REASON_SCAN) ?
+					 LRU_REQ_INITIAL : LRU_FLAG_NONE);
 		/* Release the subtree hash table lock */
 		cih_hash_release(&latch);
 		if (FSAL_IS_ERROR(status)) {
@@ -996,7 +1003,7 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 	}
 
 	status = mdcache_new_entry(export, sub_handle, &attrs, attrs_out,
-				   false, entry, NULL);
+				   false, entry, NULL, MDC_REASON_DEFAULT);
 
 	fsal_release_attrs(&attrs);
 
@@ -1541,7 +1548,8 @@ mdc_readdir_uncached_cb(const char *name, struct fsal_obj_handle *sub_handle,
 	/* This is in the middle of a subcall. Do a supercall */
 	supercall_raw(state->export,
 		status = mdcache_new_entry(state->export, sub_handle, attrs,
-					   NULL, false, &new_entry, NULL)
+					   NULL, false, &new_entry, NULL,
+					   MDC_REASON_SCAN)
 	);
 
 	if (FSAL_IS_ERROR(status)) {
@@ -2058,7 +2066,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		     name, cookie, sub_handle);
 
 	status = mdcache_new_entry(export, sub_handle, attrs_in, NULL,
-				   false, &new_entry, NULL);
+				   false, &new_entry, NULL, MDC_REASON_SCAN);
 
 	if (FSAL_IS_ERROR(status)) {
 		*state->status = status;
@@ -2610,7 +2618,32 @@ again:
  * @brief Read the contents of a directory
  *
  * If necessary, populate dirent cache chunks from the underlying FSAL. Then,
-  * walk the dirent cache chunks calling the callback.
+ * walk the dirent cache chunks calling the callback.
+ *
+ * Interactions between readdir and entry LRU lifetime is complicated.  We want
+ * the LRU to be scan resistant, so that readdir() doesn't empty useful entries
+ * from the LRU.  However, the readdir() has to work in such a way that it's
+ * entries are still in the cache when they're used.  To achieve this, we do two
+ * things:
+ *
+ * First, we insert objects created during a scan into the MRU of L2, rather
+ * than the LRU of L1.  This allows them to be recycled in FIFO order rather
+ * than LIFO order.  Observed behavior was that, when we are over the hi-water
+ * mark, readdir() of a large directory would empty the L2 by recycling entries.
+ * Then, it would start recycling the LRU of L1.  However, the LRU of L1
+ * contained entries created during the readdir().  This means that, after the
+ * chunk loaded, and it's entries need to be returned to the upper layer, they
+ * have been recycled, and need to be re-created via a lookup() and getattr()
+ * pair, causing large numbers of round-trips to the cluster.  Inserting into
+ * the MRU of L2 keeps the L2 from being emptied, and causes the entries to be
+ * recycled FIFO, making it likely that the entries for a chunk are still in the
+ * cache when needed.
+ *
+ * The second important thing to do is to *not* take an INITIAL ref on entries
+ * when they are used during the scan.  An INITIAL ref promotes the entry in the
+ * LRU, which would put it at LRU of L1, recreating the above situation.  To
+ * avoid this, and keep scan resistance, we take a non-initial ref during
+ * readdir().
  *
  * @note The object passed into the callback is ref'd and must be unref'd by the
  * callback.
@@ -2872,7 +2905,8 @@ again:
 		}
 
 		/* Get actual entry using the dirent ckey */
-		status = mdcache_find_keyed(&dirent->ckey, &entry);
+		status = mdcache_find_keyed_reason(&dirent->ckey, &entry,
+						   MDC_REASON_SCAN);
 
 		if (FSAL_IS_ERROR(status)) {
 			/* Failed using ckey, do full lookup. */
