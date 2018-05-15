@@ -202,9 +202,25 @@ TEST_F(Reopen2EmptyLatencyTest, SIMPLE_BYPASS)
 TEST_F(Reopen2EmptyLatencyTest, FSAL_REOPEN2)
 {
   fsal_status_t status;
+  struct timespec s_time, e_time;
 
-  status = fsal_reopen2(test_file, &test_file_state, FSAL_O_READ, false);
-  ASSERT_EQ(status.major, 0);
+  now(&s_time);
+
+  for (int i = 0; i < LOOP_COUNT; ++i) {
+    if(i%2 == 0) {
+      status = fsal_reopen2(test_file, &test_file_state, FSAL_O_READ, false);
+      ASSERT_EQ(status.major, 0);
+    }
+    else {
+      status = fsal_reopen2(test_file, &test_file_state, FSAL_O_WRITE, false);
+      ASSERT_EQ(status.major, 0);
+    }
+  }
+
+  now(&e_time);
+
+  fprintf(stderr, "Average time per fsal_reopen2: %" PRIu64 " ns\n",
+          timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 }
 
 TEST_F(Reopen2EmptyLatencyTest, LOOP)

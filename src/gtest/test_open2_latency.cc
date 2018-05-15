@@ -214,21 +214,38 @@ TEST_F(Open2EmptyLatencyTest, SIMPLE_BYPASS)
 TEST_F(Open2EmptyLatencyTest, FSAL_OPEN2)
 {
   fsal_status_t status;
-  struct fsal_obj_handle *obj;
-  struct state_t file_state;
+  struct fsal_obj_handle *obj[LOOP_COUNT];
+  char fname[NAMELEN];
+  struct state_t file_state[LOOP_COUNT];
+  struct timespec s_time, e_time;
 
-  // create and open a file for test
-  status = fsal_open2(test_root, &file_state, FSAL_O_RDWR, FSAL_UNCHECKED,
-             TEST_FILE, NULL, NULL, &obj, NULL);
-  ASSERT_EQ(status.major, 0);
+  now(&s_time);
 
-  // close and delete the file created for test
-  status = fsal_close(obj);
-  EXPECT_EQ(status.major, 0);
+  // create and open a files for test
+  for (int i = 0; i < LOOP_COUNT; ++i) {
+    sprintf(fname, "f-%08x", i);
 
-  status = fsal_remove(test_root, TEST_FILE);
-  ASSERT_EQ(status.major, 0);
-  obj->obj_ops.put_ref(obj);
+    status = fsal_open2(test_root, &file_state[i], FSAL_O_RDWR, FSAL_UNCHECKED,
+               fname, NULL, NULL, &obj[i], NULL);
+    ASSERT_EQ(status.major, 0);
+  }
+
+  now(&e_time);
+
+  fprintf(stderr, "Average time per fsal_open2: %" PRIu64 " ns\n",
+          timespec_diff(&s_time, &e_time) / LOOP_COUNT);
+
+  // close and delete the files created for test
+  for (int i = 0; i < LOOP_COUNT; ++i) {
+    sprintf(fname, "f-%08x", i);
+
+    status = fsal_close(obj[i]);
+    EXPECT_EQ(status.major, 0);
+
+    status = fsal_remove(test_root, fname);
+    ASSERT_EQ(status.major, 0);
+    obj[i]->obj_ops.put_ref(obj[i]);
+  }
 }
 
 TEST_F(Open2EmptyLatencyTest, LOOP)
