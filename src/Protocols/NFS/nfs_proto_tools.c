@@ -1317,9 +1317,6 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	if (args->data == NULL || args->data->current_obj == NULL)
 		return FATTR_XDR_NOOP;
 
-	if (args->data->current_obj->type != DIRECTORY)
-		return FATTR_XDR_NOOP;
-
 	nfs4_pathname4_alloc(&fs_locs.fs_root, NULL);
 	fs_server.utf8string_len = sizeof(server);
 	fs_server.utf8string_val = server;

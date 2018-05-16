@@ -129,9 +129,6 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 						FATTR4_RDATTR_ERROR)) {
 				fill_rdattr_error = false;
 			}
-		} else {
-			assert(FSAL_TEST_MASK(attrs.valid_mask,
-				ATTR4_FS_LOCATIONS));
 		}
 
 		if (fill_rdattr_error) {
