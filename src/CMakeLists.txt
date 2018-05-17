@@ -1366,6 +1366,12 @@ else(RPCBIND)
     set(BCOND_RPCBIND "%bcond_with")
 endif(RPCBIND)
 
+if(_MSPAC_SUPPORT)
+    set(BCOND_MSPAC_SUPPORT "%bcond_without")
+else(_MSPAC_SUPPORT)
+    set(BCOND_MSPAC_SUPPORT "%bcond_with")
+endif(_MSPAC_SUPPORT)
+
 # Now create a useable specfile
 configure_file(
   "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"

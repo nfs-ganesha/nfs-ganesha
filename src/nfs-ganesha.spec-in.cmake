@@ -95,6 +95,9 @@ Requires: openSUSE-release
 @BCOND_RPCBIND@ rpcbind
 %global use_rpcbind %{on_off_switch rpcbind}
 
+@BCOND_MSPAC_SUPPORT@ mspac_support
+%global use_mspac_support %{on_off_switch mspac_support}
+
 %global dev_version %{lua: s = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); s2 = string.gsub(s, '%-', '.'); print((s2 ~= nil and s2 ~= '') and s2 or "0.1") }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -136,6 +139,9 @@ BuildRequires:	systemd-rpm-macros
 BuildRequires:	libcap-devel
 BuildRequires:	libblkid-devel
 BuildRequires:	libuuid-devel
+%if %{with mspac_support}
+BuildRequires:	libwbclient-devel
+%endif
 BuildRequires:	gcc-c++
 %if %{with system_ntirpc}
 BuildRequires: libntirpc-devel >= @NTIRPC_MIN_VERSION@
@@ -457,6 +463,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DDISTNAME_HAS_GIT_DATA=OFF			\
 	-DUSE_MAN_PAGE=%{use_man_page}                  \
 	-DRPCBIND=%{use_rpcbind}			\
+	-D_MSPAC_SUPPORT=%{use_mspac_support}		\
 %if %{with jemalloc}
 	-DALLOCATOR=jemalloc
 %endif
