@@ -65,6 +65,12 @@ struct ff_device_addr4 {
         ff_device_versions4 ffda_versions<>;
 };
 
+const FF_FLAGS_NO_LAYOUTCOMMIT   = 0x00000001;
+const FF_FLAGS_NO_IO_THRU_MDS    = 0x00000002;
+const FF_FLAGS_NO_READ_IO        = 0x00000004;
+const FF_FLAGS_WRITE_ONE_MIRROR  = 0x00000008;
+typedef uint32_t            ff_flags4;
+
 struct ff_data_server4 {
     deviceid4               ffds_deviceid;
     uint32_t                ffds_efficiency;
@@ -81,6 +87,8 @@ struct ff_mirror4 {
 struct ff_layout4 {
     length4                 ffl_stripe_unit;
     ff_mirror4              ffl_mirrors<>;
+    ff_flags4               ffl_flags;
+    uint32_t                ffl_stats_collect_hint;
 };
 
 struct ff_ioerr4 {
@@ -91,10 +99,13 @@ struct ff_ioerr4 {
 };
 
 struct ff_io_latency4 {
-        nfstime4       ffil_min;
-        nfstime4       ffil_max;
-        nfstime4       ffil_avg;
-        uint32_t       ffil_count;
+        uint64_t       ffil_ops_requested;
+        uint64_t       ffil_bytes_requested;
+        uint64_t       ffil_ops_completed;
+        uint64_t       ffil_bytes_completed;
+        uint64_t       ffil_bytes_not_delivered;
+        nfstime4       ffil_total_busy_time;
+        nfstime4       ffil_aggregate_completion_time;
 };
 
 struct ff_layoutupdate4 {
@@ -136,6 +147,9 @@ union ff_mirrors_hint switch (bool ffmc_valid) {
 struct ff_layouthint4 {
     ff_mirrors_hint fflh_mirrors_hint;
 };
+
+const RCA4_TYPE_MASK_FF_LAYOUT_MIN     = 16;
+const RCA4_TYPE_MASK_FF_LAYOUT_MAX     = 17;
 
 enum ff_cb_recall_any_mask {
     FF_RCA4_TYPE_MASK_READ = -2,

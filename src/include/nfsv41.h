@@ -3043,12 +3043,24 @@ struct ff_mirror4 {
 };
 typedef struct ff_mirror4 ff_mirror4;
 
+
+enum ff_flags4 {
+	FF_FLAGS_NO_LAYOUTCOMMIT   = 0x00000001,
+	FF_FLAGS_NO_IO_THRU_MDS    = 0x00000002,
+	FF_FLAGS_NO_READ_IO        = 0x00000004,
+	FF_FLAGS_WRITE_ONE_MIRROR  = 0x00000008,
+};
+
+typedef enum ff_flags4 ff_flags4;
+
 struct ff_layout4 {
 	length4 ffl_stripe_unit;
 	struct {
 		u_int ffl_mirrors_len;
 		ff_mirror4 *ffl_mirrors_val;
 	} ffl_mirrors;
+	ff_flags4               ffl_flags;
+	uint32_t                ffl_stats_collect_hint;
 };
 typedef struct ff_layout4 ff_layout4;
 
@@ -3064,10 +3076,13 @@ struct ff_ioerr4 {
 typedef struct ff_ioerr4 ff_ioerr4;
 
 struct ff_io_latency4 {
-	nfstime4 ffil_min;
-	nfstime4 ffil_max;
-	nfstime4 ffil_avg;
-	uint32_t ffil_count;
+	uint64_t	ffil_ops_requested;
+	uint64_t	ffil_bytes_requested;
+	uint64_t	ffil_ops_completed;
+	uint64_t	ffil_bytes_completed;
+	uint64_t	ffil_bytes_not_delivered;
+	nfstime4	ffil_total_busy_time;
+	nfstime4	ffil_aggregate_completion_time;
 };
 typedef struct ff_io_latency4 ff_io_latency4;
 
@@ -3488,6 +3503,8 @@ typedef struct CB_PUSH_DELEG4res CB_PUSH_DELEG4res;
 #define RCA4_TYPE_MASK_OBJ_LAYOUT_MAX 9
 #define RCA4_TYPE_MASK_OTHER_LAYOUT_MIN 12
 #define RCA4_TYPE_MASK_OTHER_LAYOUT_MAX 15
+#define RCA4_TYPE_MASK_FF_LAYOUT_MIN 16
+#define RCA4_TYPE_MASK_FF_LAYOUT_MAX 17
 
 struct CB_RECALL_ANY4args {
 	uint32_t craa_objects_to_keep;
@@ -9182,6 +9199,13 @@ static inline bool xdr_ff_mirror4(XDR *xdrs, ff_mirror4 *objp)
 	return true;
 }
 
+static inline bool xdr_ff_flags(XDR *xdrs, ff_flags4 *objp)
+{
+	if (!inline_xdr_enum(xdrs, (enum_t *) objp))
+		return false;
+	return true;
+}
+
 static inline bool xdr_ff_layout4(XDR *xdrs, ff_layout4 *objp)
 {
 	if (!xdr_length4(xdrs, &objp->ffl_stripe_unit))
@@ -9191,6 +9215,8 @@ static inline bool xdr_ff_layout4(XDR *xdrs, ff_layout4 *objp)
 		       &objp->ffl_mirrors.ffl_mirrors_len,
 		       XDR_ARRAY_MAXLEN, sizeof(ff_mirror4),
 		       (xdrproc_t) xdr_ff_mirror4))
+		return false;
+	if (!xdr_ff_flags(xdrs, &objp->ffl_flags))
 		return false;
 	return true;
 }
@@ -9226,13 +9252,19 @@ static inline bool xdr_ff_ioerr4(XDR *xdrs, ff_ioerr4 *objp)
 
 static inline bool xdr_ff_io_latency4(XDR *xdrs, ff_io_latency4 *objp)
 {
-	if (!xdr_nfstime4 (xdrs, &objp->ffil_min))
+	if (!xdr_uint64_t (xdrs, &objp->ffil_ops_requested))
 		return false;
-	if (!xdr_nfstime4 (xdrs, &objp->ffil_max))
+	if (!xdr_uint64_t (xdrs, &objp->ffil_bytes_requested))
 		return false;
-	if (!xdr_nfstime4 (xdrs, &objp->ffil_avg))
+	if (!xdr_uint64_t (xdrs, &objp->ffil_ops_completed))
 		return false;
-	if (!xdr_uint32_t (xdrs, &objp->ffil_count))
+	if (!xdr_uint64_t (xdrs, &objp->ffil_bytes_completed))
+		return false;
+	if (!xdr_uint64_t (xdrs, &objp->ffil_bytes_not_delivered))
+		return false;
+	if (!xdr_nfstime4 (xdrs, &objp->ffil_total_busy_time))
+		return false;
+	if (!xdr_nfstime4 (xdrs, &objp->ffil_aggregate_completion_time))
 		return false;
 	return true;
 }
