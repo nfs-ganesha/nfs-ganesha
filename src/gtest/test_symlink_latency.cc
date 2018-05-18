@@ -29,7 +29,6 @@
 #include <chrono>
 #include <thread>
 #include <random>
-#include "gtest/gtest.h"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/exception.hpp>
 #include <boost/program_options.hpp>
@@ -38,7 +37,6 @@ extern "C" {
 /* Manually forward this, as 9P is not C++ safe */
 void admin_halt(void);
 /* Ganesha headers */
-#include "nfs_lib.h"
 #include "export_mgr.h"
 #include "nfs_exports.h"
 #include "sal_data.h"
@@ -47,6 +45,8 @@ void admin_halt(void);
 /* For MDCACHE bypass.  Use with care */
 #include "../FSAL/Stackable_FSALs/FSAL_MDCACHE/mdcache_debug.h"
 }
+
+#include "gtest.hh"
 
 #define TEST_ROOT "symlink_latency"
 #define TEST_ROOT_LINK "symlink_to_symlink_latency"
@@ -61,42 +61,17 @@ namespace {
   char* lpath = nullptr;
   int dlevel = -1;
   uint16_t export_id = 77;
+  char* event_list = nullptr;
+  char* profile_out = nullptr;
 
-  int ganesha_server() {
-    /* XXX */
-    return nfs_libmain(
-      ganesha_conf,
-      lpath,
-      dlevel
-      );
-  }
-
-  class Environment : public ::testing::Environment {
-  public:
-    Environment() : ganesha(ganesha_server) {
-      using namespace std::literals;
-      std::this_thread::sleep_for(5s);
-    }
-
-    virtual ~Environment() {
-      admin_halt();
-      ganesha.join();
-    }
-
-    virtual void SetUp() { }
-
-    virtual void TearDown() {
-    }
-
-    std::thread ganesha;
-  };
-
-  class SymlinkEmptyLatencyTest : public ::testing::Test {
+  class SymlinkEmptyLatencyTest : public gtest::GaneshaBaseTest {
   protected:
 
     virtual void SetUp() {
       fsal_status_t status;
       struct attrlist attrs_out;
+
+      gtest::GaneshaBaseTest::SetUp();
 
       a_export = get_gsh_export(export_id);
       ASSERT_NE(a_export, nullptr);
@@ -121,14 +96,14 @@ namespace {
 
       // create root directory for test
       FSAL_SET_MASK(attrs.valid_mask,
-                    ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
+		    ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
       attrs.mode = 0777; /* XXX */
       attrs.owner = 667;
       attrs.group = 766;
       fsal_prepare_attrs(&attrs_out, 0);
 
       status = fsal_create(root_entry, TEST_ROOT, DIRECTORY, &attrs, NULL,
-                           &test_root, &attrs_out);
+			   &test_root, &attrs_out);
       ASSERT_EQ(status.major, 0);
       ASSERT_NE(test_root, nullptr);
 
@@ -146,6 +121,8 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
+      gsh_free(bfr_content.addr);
+
       status = test_symlink->obj_ops.unlink(root_entry, test_symlink, TEST_SYMLINK);
       EXPECT_EQ(0, status.major);
       test_symlink->obj_ops.put_ref(test_symlink);
@@ -161,6 +138,8 @@ namespace {
 
       put_gsh_export(a_export);
       a_export = NULL;
+
+      gtest::GaneshaBaseTest::TearDown();
     }
 
     struct req_op_context req_ctx;
@@ -239,6 +218,8 @@ TEST_F(SymlinkEmptyLatencyTest, SIMPLE)
           ret = memcmp(link_content.addr, bfr_content.addr, link_content.len);
   EXPECT_EQ(ret, 0);
 
+  gsh_free(link_content.addr);
+
   symlink->obj_ops.put_ref(symlink);
   lookup->obj_ops.put_ref(lookup);
 
@@ -273,6 +254,8 @@ TEST_F(SymlinkEmptyLatencyTest, SIMPLE_BYPASS)
   if(link_content.len == bfr_content.len)
           ret = memcmp(link_content.addr, bfr_content.addr, link_content.len);
   EXPECT_EQ(ret, 0);
+
+  gsh_free(link_content.addr);
 
   symlink->obj_ops.put_ref(symlink);
   lookup->obj_ops.put_ref(lookup);
@@ -420,6 +403,7 @@ TEST_F(SymlinkFullLatencyTest, BIG_BYPASS)
 int main(int argc, char *argv[])
 {
   int code = 0;
+  char* session_name = NULL;
 
   using namespace std;
   using namespace std::literals;
@@ -432,16 +416,25 @@ int main(int argc, char *argv[])
 
     opts.add_options()
       ("config", po::value<string>(),
-        "path to Ganesha conf file")
+       "path to Ganesha conf file")
 
       ("logfile", po::value<string>(),
-        "log to the provided file path")
+       "log to the provided file path")
 
       ("export", po::value<uint16_t>(),
-        "id of export on which to operate (must exist)")
+       "id of export on which to operate (must exist)")
 
       ("debug", po::value<string>(),
-        "ganesha debug level")
+       "ganesha debug level")
+
+      ("session", po::value<string>(),
+	"LTTng session name")
+
+      ("event-list", po::value<string>(),
+	"LTTng event list, comma separated")
+
+      ("profile", po::value<string>(),
+	"Enable profiling and set output file.")
       ;
 
     po::variables_map::iterator vm_iter;
@@ -462,15 +455,28 @@ int main(int argc, char *argv[])
     vm_iter = vm.find("debug");
     if (vm_iter != vm.end()) {
       dlevel = ReturnLevelAscii(
-        (char*) vm_iter->second.as<std::string>().c_str());
+	(char*) vm_iter->second.as<std::string>().c_str());
     }
     vm_iter = vm.find("export");
     if (vm_iter != vm.end()) {
       export_id = vm_iter->second.as<uint16_t>();
     }
+    vm_iter = vm.find("session");
+    if (vm_iter != vm.end()) {
+      session_name = (char*) vm_iter->second.as<std::string>().c_str();
+    }
+    vm_iter = vm.find("event-list");
+    if (vm_iter != vm.end()) {
+      event_list = (char*) vm_iter->second.as<std::string>().c_str();
+    }
+    vm_iter = vm.find("profile");
+    if (vm_iter != vm.end()) {
+      profile_out = (char*) vm_iter->second.as<std::string>().c_str();
+    }
 
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::AddGlobalTestEnvironment(new Environment);
+    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel, session_name);
+    ::testing::AddGlobalTestEnvironment(gtest::env);
 
     code  = RUN_ALL_TESTS();
   }

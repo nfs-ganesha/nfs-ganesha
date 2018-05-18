@@ -1,8 +1,8 @@
 // -*- mode:C; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
- * Copyright (C) 2015 Red Hat, Inc.
- * Contributor : Matt Benjamin <mbenjamin@redhat.com>
+ * Copyright (C) 2018 Red Hat, Inc.
+ * Contributor : Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,16 +29,14 @@
 #include <chrono>
 #include <thread>
 #include <random>
-#include "gtest/gtest.h"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/exception.hpp>
 #include <boost/program_options.hpp>
 
 extern "C" {
-/* Manually forward this, an 9P is not C++ safe */
+/* Manually forward this, as 9P is not C++ safe */
 void admin_halt(void);
 /* Ganesha headers */
-#include "nfs_lib.h"
 #include "export_mgr.h"
 #include "nfs_exports.h"
 #include "sal_data.h"
@@ -46,13 +44,9 @@ void admin_halt(void);
 #include "common_utils.h"
 /* For MDCACHE bypass.  Use with care */
 #include "../FSAL/Stackable_FSALs/FSAL_MDCACHE/mdcache_debug.h"
-
-/* LTTng headers */
-#include <lttng/lttng.h>
-
-/* gperf headers */
-#include <gperftools/profiler.h>
 }
+
+#include "gtest.hh"
 
 #define TEST_ROOT "lookup_latency"
 #define DIR_COUNT 100000
@@ -65,145 +59,17 @@ namespace {
   char* lpath = nullptr;
   int dlevel = -1;
   uint16_t export_id = 77;
-  static struct lttng_handle* handle = nullptr;
   char* event_list = nullptr;
   char* profile_out = nullptr;
 
-  int ganesha_server() {
-    /* XXX */
-    return nfs_libmain(
-      ganesha_conf,
-      lpath,
-      dlevel
-      );
-  }
-
-  class Environment : public ::testing::Environment {
-  public:
-    Environment() : Environment(NULL) {}
-    Environment(char *_ses_name) : ganesha(ganesha_server), session_name(_ses_name) {
-      using namespace std::literals;
-      std::this_thread::sleep_for(5s);
-    }
-
-    virtual ~Environment() {
-      admin_halt();
-      ganesha.join();
-    }
-
-    virtual void SetUp() {
-      struct lttng_domain dom;
-
-      if (!session_name) {
-	/* Don't setup LTTng */
-	return;
-      }
-
-      /* Set up LTTng */
-      memset(&dom, 0, sizeof(dom));
-      dom.type = LTTNG_DOMAIN_UST;
-      dom.buf_type = LTTNG_BUFFER_PER_UID;
-
-      handle = lttng_create_handle(session_name, &dom);
-    }
-
-    virtual void TearDown() {
-      if (handle) {
-	lttng_destroy_handle(handle);
-	handle = NULL;
-      }
-    }
-
-    std::thread ganesha;
-    char *session_name;
-  };
-
-  class GaneshaBaseTest : public ::testing::Test {
-  protected:
-    virtual void enableEvents(char *event_list) {
-      struct lttng_event ev;
-      int ret;
-
-      if (!handle) {
-	/* No LTTng this run */
-	return;
-      }
-
-      memset(&ev, 0, sizeof(ev));
-      ev.type = LTTNG_EVENT_TRACEPOINT;
-      ev.loglevel_type = LTTNG_EVENT_LOGLEVEL_ALL;
-      ev.loglevel = -1;
-
-      if (!event_list) {
-	/* Do them all */
-	strcpy(ev.name, "*");
-	ret = lttng_enable_event_with_exclusions(handle,
-			    &ev, NULL, NULL, 0, NULL);
-	ASSERT_GE(ret, 0);
-      } else {
-	char *event_name;
-	event_name = strtok(event_list, ",");
-	while (event_name != NULL) {
-	  /* Copy name and type of the event */
-	  strncpy(ev.name, event_name, LTTNG_SYMBOL_NAME_LEN);
-	  ev.name[sizeof(ev.name) - 1] = '\0';
-
-	  ret = lttng_enable_event_with_exclusions(handle,
-				&ev, NULL, NULL, 0, NULL);
-	  ASSERT_GE(ret, 0);
-
-	  /* Next event */
-	  event_name = strtok(NULL, ",");
-	}
-      }
-    }
-
-    virtual void disableEvents(char *event_list) {
-      struct lttng_event ev;
-      int ret;
-
-      if (!handle) {
-	/* No LTTng this run */
-	return;
-      }
-
-      memset(&ev, 0, sizeof(ev));
-      ev.type = LTTNG_EVENT_ALL;
-      ev.loglevel = -1;
-      if (!event_list) {
-	/* Do them all */
-	ret = lttng_disable_event_ext(handle, &ev, NULL, NULL);
-	ASSERT_GE(ret, 0);
-      } else {
-	char *event_name;
-	event_name = strtok(event_list, ",");
-	while (event_name != NULL) {
-	  /* Copy name and type of the event */
-	  strncpy(ev.name, event_name, LTTNG_SYMBOL_NAME_LEN);
-	  ev.name[sizeof(ev.name) - 1] = '\0';
-
-	  ret = lttng_disable_event_ext(handle, &ev, NULL, NULL);
-	  ASSERT_GE(ret, 0);
-
-	  /* Next event */
-	  event_name = strtok(NULL, ",");
-	}
-      }
-    }
-
-    virtual void SetUp() { }
-
-    virtual void TearDown() { }
-  };
-
-  class LookupEmptyLatencyTest : public GaneshaBaseTest {
+  class LookupEmptyLatencyTest : public gtest::GaneshaBaseTest {
   protected:
 
     virtual void SetUp() {
       fsal_status_t status;
       struct attrlist attrs_out;
 
-      GaneshaBaseTest::SetUp();
+      gtest::GaneshaBaseTest::SetUp();
 
       a_export = get_gsh_export(export_id);
       ASSERT_NE(a_export, nullptr);
@@ -256,7 +122,7 @@ namespace {
       put_gsh_export(a_export);
       a_export = NULL;
 
-      GaneshaBaseTest::TearDown();
+      gtest::GaneshaBaseTest::TearDown();
     }
 
     struct req_op_context req_ctx;
@@ -534,16 +400,16 @@ int main(int argc, char *argv[])
 
     opts.add_options()
       ("config", po::value<string>(),
-	"path to Ganesha conf file")
+       "path to Ganesha conf file")
 
       ("logfile", po::value<string>(),
-	"log to the provided file path")
+       "log to the provided file path")
 
       ("export", po::value<uint16_t>(),
-	"id of export on which to operate (must exist)")
+       "id of export on which to operate (must exist)")
 
       ("debug", po::value<string>(),
-	"ganesha debug level")
+       "ganesha debug level")
 
       ("session", po::value<string>(),
 	"LTTng session name")
@@ -593,7 +459,8 @@ int main(int argc, char *argv[])
     }
 
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::AddGlobalTestEnvironment(new Environment(session_name));
+    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel, session_name);
+    ::testing::AddGlobalTestEnvironment(gtest::env);
 
     code  = RUN_ALL_TESTS();
   }

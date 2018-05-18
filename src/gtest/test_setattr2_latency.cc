@@ -167,7 +167,6 @@ namespace {
     struct fsal_obj_handle *root_entry = nullptr;
     struct fsal_obj_handle *test_root = nullptr;
     struct fsal_obj_handle *test_file = nullptr;
-    struct state_t test_file_state;
   };
 
   class Setattr2FullLatencyTest : public Setattr2EmptyLatencyTest {

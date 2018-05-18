@@ -1952,6 +1952,28 @@ static void mem_handle_to_key(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
+ * @brief Get a ref on a MEM handle
+ *
+ * Stub, for bypass in unit tests
+ *
+ * @param[in] obj_hdl	Handle to ref
+ */
+static void mem_get_ref(struct fsal_obj_handle *obj_hdl)
+{
+}
+
+/**
+ * @brief Put a ref on a MEM handle
+ *
+ * Stub, for bypass in unit tests
+ *
+ * @param[in] obj_hdl	Handle to unref
+ */
+static void mem_put_ref(struct fsal_obj_handle *obj_hdl)
+{
+}
+
+/**
  * @brief Release an object handle
  *
  * @param[in] obj_hdl	Handle to release
@@ -2010,6 +2032,8 @@ static void mem_release(struct fsal_obj_handle *obj_hdl)
 
 void mem_handle_ops_init(struct fsal_obj_ops *ops)
 {
+	ops->get_ref = mem_get_ref,
+	ops->put_ref = mem_put_ref,
 	ops->release = mem_release;
 	ops->lookup = mem_lookup;
 	ops->readdir = mem_readdir;

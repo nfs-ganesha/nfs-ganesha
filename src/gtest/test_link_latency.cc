@@ -29,7 +29,6 @@
 #include <chrono>
 #include <thread>
 #include <random>
-#include "gtest/gtest.h"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/exception.hpp>
 #include <boost/program_options.hpp>
@@ -38,7 +37,6 @@ extern "C" {
 /* Manually forward this, an 9P is not C++ safe */
 void admin_halt(void);
 /* Ganesha headers */
-#include "nfs_lib.h"
 #include "export_mgr.h"
 #include "nfs_exports.h"
 #include "sal_data.h"
@@ -47,6 +45,8 @@ void admin_halt(void);
 /* For MDCACHE bypass.  Use with care */
 #include "../FSAL/Stackable_FSALs/FSAL_MDCACHE/mdcache_debug.h"
 }
+
+#include "gtest.hh"
 
 #define TEST_FILE "link_latency"
 #define TEST_FILE_LINK "link_to_link_latency"
@@ -60,42 +60,17 @@ namespace {
   char* lpath = nullptr;
   int dlevel = -1;
   uint16_t export_id = 77;
+  char* event_list = nullptr;
+  char* profile_out = nullptr;
 
-  int ganesha_server() {
-    /* XXX */
-    return nfs_libmain(
-      ganesha_conf,
-      lpath,
-      dlevel
-      );
-  }
-
-  class Environment : public ::testing::Environment {
-  public:
-    Environment() : ganesha(ganesha_server) {
-      using namespace std::literals;
-      std::this_thread::sleep_for(5s);
-    }
-
-    virtual ~Environment() {
-      admin_halt();
-      ganesha.join();
-    }
-
-    virtual void SetUp() { }
-
-    virtual void TearDown() {
-    }
-
-    std::thread ganesha;
-  };
-
-  class LinkEmptyLatencyTest : public ::testing::Test {
+  class LinkEmptyLatencyTest : public gtest::GaneshaBaseTest {
   protected:
 
     virtual void SetUp() {
       fsal_status_t status;
       struct attrlist attrs_out;
+
+      gtest::GaneshaBaseTest::SetUp();
 
       a_export = get_gsh_export(export_id);
       ASSERT_NE(a_export, nullptr);
@@ -108,7 +83,7 @@ namespace {
       memset(&user_credentials, 0, sizeof(struct user_cred));
       memset(&req_ctx, 0, sizeof(struct req_op_context));
       memset(&attrs, 0, sizeof(attrs));
-      memset(&exp_perms, 0,  sizeof(struct export_perms));
+      memset(&exp_perms, 0, sizeof(struct export_perms));
 
       req_ctx.ctx_export = a_export;
       req_ctx.fsal_export = a_export->fsal_export;
@@ -145,6 +120,8 @@ namespace {
 
       put_gsh_export(a_export);
       a_export = NULL;
+
+      gtest::GaneshaBaseTest::TearDown();
     }
 
     struct req_op_context req_ctx;
@@ -375,6 +352,7 @@ TEST_F(LinkFullLatencyTest, BIG_BYPASS)
 int main(int argc, char *argv[])
 {
   int code = 0;
+  char* session_name = NULL;
 
   using namespace std;
   using namespace std::literals;
@@ -387,16 +365,25 @@ int main(int argc, char *argv[])
 
     opts.add_options()
       ("config", po::value<string>(),
-        "path to Ganesha conf file")
+       "path to Ganesha conf file")
 
       ("logfile", po::value<string>(),
-        "log to the provided file path")
+       "log to the provided file path")
 
       ("export", po::value<uint16_t>(),
-        "id of export on which to operate (must exist)")
+       "id of export on which to operate (must exist)")
 
       ("debug", po::value<string>(),
-        "ganesha debug level")
+       "ganesha debug level")
+
+      ("session", po::value<string>(),
+	"LTTng session name")
+
+      ("event-list", po::value<string>(),
+	"LTTng event list, comma separated")
+
+      ("profile", po::value<string>(),
+	"Enable profiling and set output file.")
       ;
 
     po::variables_map::iterator vm_iter;
@@ -423,9 +410,22 @@ int main(int argc, char *argv[])
     if (vm_iter != vm.end()) {
       export_id = vm_iter->second.as<uint16_t>();
     }
+    vm_iter = vm.find("session");
+    if (vm_iter != vm.end()) {
+      session_name = (char*) vm_iter->second.as<std::string>().c_str();
+    }
+    vm_iter = vm.find("event-list");
+    if (vm_iter != vm.end()) {
+      event_list = (char*) vm_iter->second.as<std::string>().c_str();
+    }
+    vm_iter = vm.find("profile");
+    if (vm_iter != vm.end()) {
+      profile_out = (char*) vm_iter->second.as<std::string>().c_str();
+    }
 
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::AddGlobalTestEnvironment(new Environment);
+    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel, session_name);
+    ::testing::AddGlobalTestEnvironment(gtest::env);
 
     code  = RUN_ALL_TESTS();
   }

@@ -30,13 +30,12 @@
 #include <chrono>
 #include <thread>
 #include <random>
-#include "gtest/gtest.h"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/exception.hpp>
 #include <boost/program_options.hpp>
 
 extern "C" {
-/* Manually forward this, an 9P is not C++ safe */
+/* Manually forward this, as 9P is not C++ safe */
 void admin_halt(void);
 /* Ganesha headers */
 #include "nfs_lib.h"
@@ -47,11 +46,12 @@ void admin_halt(void);
 #include "common_utils.h"
 /* For MDCACHE bypass.  Use with care */
 #include "../FSAL/Stackable_FSALs/FSAL_MDCACHE/mdcache_debug.h"
-/* #include "../FSAL/Stackable_FSALs/FSAL_MDCACHE/mdcache_file.c" */
 }
 
+#include "gtest.hh"
+
 #define TEST_ROOT "read2_latency"
-#define TEST_FILE "test_file"
+#define TEST_FILE "read2_latency_file"
 #define LOOP_COUNT 1000000
 #define OFFSET 0
 
@@ -61,44 +61,18 @@ namespace {
   char* lpath = nullptr;
   int dlevel = -1;
   uint16_t export_id = 77;
+  char* event_list = nullptr;
+  char* profile_out = nullptr;
 
-
-  int ganesha_server() {
-    /* XXX */
-    return nfs_libmain(
-      ganesha_conf,
-      lpath,
-      dlevel
-      );
-  }
-
-  class Environment : public ::testing::Environment {
-  public:
-    Environment() : ganesha(ganesha_server) {
-      using namespace std::literals;
-      std::this_thread::sleep_for(5s);
-    }
-
-    virtual ~Environment() {
-      admin_halt();
-      ganesha.join();
-    }
-
-    virtual void SetUp() { }
-
-    virtual void TearDown() {
-    }
-
-    std::thread ganesha;
-  };
-
-  class Read2EmptyLatencyTest : public ::testing::Test {
+  class Read2EmptyLatencyTest : public gtest::GaneshaBaseTest {
   protected:
 
     virtual void SetUp() {
       fsal_status_t status;
       struct attrlist attrs_out;
       bool caller_perm_check = false;
+
+      gtest::GaneshaBaseTest::SetUp();
 
       a_export = get_gsh_export(export_id);
       ASSERT_NE(a_export, nullptr);
@@ -123,18 +97,24 @@ namespace {
 
       // create root directory for test
       FSAL_SET_MASK(attrs.valid_mask,
-                    ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
+		    ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
       attrs.mode = 0777; /* XXX */
       attrs.owner = 667;
       attrs.group = 766;
       fsal_prepare_attrs(&attrs_out, 0);
 
       status = fsal_create(root_entry, TEST_ROOT, DIRECTORY, &attrs, NULL,
-                           &test_root, &attrs_out);
+			   &test_root, &attrs_out);
       ASSERT_EQ(status.major, 0);
       ASSERT_NE(test_root, nullptr);
 
-      status = test_root->obj_ops.open2(test_root, &test_file_state,
+      test_file_state = op_ctx->fsal_export->exp_ops.alloc_state(
+						op_ctx->fsal_export,
+						STATE_TYPE_SHARE,
+						NULL);
+      ASSERT_NE(test_file_state, nullptr);
+
+      status = test_root->obj_ops.open2(test_root, test_file_state,
                       FSAL_O_RDWR, FSAL_UNCHECKED, TEST_FILE, NULL, NULL,
                       &test_file, NULL, &caller_perm_check);
       ASSERT_EQ(status.major, 0);
@@ -145,8 +125,11 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = test_file->obj_ops.close2(test_file, &test_file_state);
+      status = test_file->obj_ops.close2(test_file, test_file_state);
       EXPECT_EQ(0, status.major);
+
+      op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
+					      test_file_state);
 
       status = fsal_remove(test_root, TEST_FILE);
       EXPECT_EQ(status.major, 0);
@@ -163,6 +146,8 @@ namespace {
 
       put_gsh_export(a_export);
       a_export = NULL;
+
+      gtest::GaneshaBaseTest::TearDown();
     }
 
     struct req_op_context req_ctx;
@@ -174,7 +159,7 @@ namespace {
     struct fsal_obj_handle *root_entry = nullptr;
     struct fsal_obj_handle *test_root = nullptr;
     struct fsal_obj_handle *test_file = nullptr;
-    struct state_t test_file_state;
+    struct state_t *test_file_state;
   };
 
   static void callback(struct fsal_obj_handle *obj, fsal_status_t ret,
@@ -193,35 +178,39 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE)
 {
   char *w_databuffer;
   char *r_databuffer;
-  struct fsal_io_arg write_arg;
-  struct fsal_io_arg read_arg;
+  struct fsal_io_arg *write_arg;
+  struct fsal_io_arg *read_arg;
   int bytes = 64;
   int ret = -1;
 
   w_databuffer = (char *) malloc(bytes);
   memset(w_databuffer, 'a', bytes);
 
-  write_arg.info = NULL;
-  write_arg.state = NULL;
-  write_arg.offset = OFFSET;
-  write_arg.iov_count = 1;
-  write_arg.iov[0].iov_len = bytes;
-  write_arg.iov[0].iov_base = w_databuffer;
-  write_arg.io_amount = 0;
-  write_arg.fsal_stable = false;
+  write_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+					  sizeof(struct iovec));
+  write_arg->info = NULL;
+  write_arg->state = NULL;
+  write_arg->offset = OFFSET;
+  write_arg->iov_count = 1;
+  write_arg->iov[0].iov_len = bytes;
+  write_arg->iov[0].iov_base = w_databuffer;
+  write_arg->io_amount = 0;
+  write_arg->fsal_stable = false;
 
-  test_file->obj_ops.write2(test_file, true, callback, &write_arg, NULL);
+  test_file->obj_ops.write2(test_file, true, callback, write_arg, NULL);
 
   r_databuffer = (char *) malloc(bytes);
-  read_arg.info = NULL;
-  read_arg.state = NULL;
-  read_arg.offset = OFFSET;
-  read_arg.iov_count = 1;
-  read_arg.iov[0].iov_len = bytes;
-  read_arg.iov[0].iov_base = r_databuffer;
-  read_arg.io_amount = 0;
+  read_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+					 sizeof(struct iovec));
+  read_arg->info = NULL;
+  read_arg->state = NULL;
+  read_arg->offset = OFFSET;
+  read_arg->iov_count = 1;
+  read_arg->iov[0].iov_len = bytes;
+  read_arg->iov[0].iov_base = r_databuffer;
+  read_arg->io_amount = 0;
 
-  test_file->obj_ops.read2(test_file, true, callback, &read_arg, NULL);
+  test_file->obj_ops.read2(test_file, true, callback, read_arg, NULL);
 
   ret = memcmp(r_databuffer, w_databuffer, bytes);
   EXPECT_EQ(ret, 0);
@@ -235,37 +224,42 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE_BYPASS)
   struct fsal_obj_handle *sub_hdl;
   char *w_databuffer;
   char *r_databuffer;
-  struct fsal_io_arg write_arg;
-  struct fsal_io_arg read_arg;
+  struct fsal_io_arg *write_arg;
+  struct fsal_io_arg *read_arg;
   int bytes = 64;
 
   w_databuffer = (char *) malloc(bytes);
   memset(w_databuffer, 'a', bytes);
 
-  write_arg.info = NULL;
-  write_arg.state = NULL;
-  write_arg.offset = OFFSET;
-  write_arg.iov_count = 1;
-  write_arg.iov[0].iov_len = bytes;
-  write_arg.iov[0].iov_base = w_databuffer;
-  write_arg.io_amount = 0;
-  write_arg.fsal_stable = false;
+  write_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+					  sizeof(struct iovec));
+  write_arg->info = NULL;
+  write_arg->state = NULL;
+  write_arg->offset = OFFSET;
+  write_arg->iov_count = 1;
+  write_arg->iov[0].iov_len = bytes;
+  write_arg->iov[0].iov_base = w_databuffer;
+  write_arg->io_amount = 0;
+  write_arg->fsal_stable = false;
 
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  sub_hdl->obj_ops.write2(sub_hdl, true, callback, &write_arg, NULL);
+  sub_hdl->obj_ops.write2(sub_hdl, true, callback, write_arg, NULL);
 
   r_databuffer = (char *) malloc(bytes);
-  read_arg.info = NULL;
-  read_arg.state = NULL;
-  read_arg.offset = OFFSET;
-  read_arg.iov_count = 1;
-  read_arg.iov[0].iov_len = bytes;
-  read_arg.iov[0].iov_base = r_databuffer;
-  read_arg.io_amount = 0;
 
-  sub_hdl->obj_ops.read2(sub_hdl, true, callback, &read_arg, NULL);
+  read_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+					 sizeof(struct iovec));
+  read_arg->info = NULL;
+  read_arg->state = NULL;
+  read_arg->offset = OFFSET;
+  read_arg->iov_count = 1;
+  read_arg->iov[0].iov_len = bytes;
+  read_arg->iov[0].iov_base = r_databuffer;
+  read_arg->io_amount = 0;
+
+  sub_hdl->obj_ops.read2(sub_hdl, true, callback, read_arg, NULL);
 
   free(w_databuffer);
   free(r_databuffer);
@@ -275,35 +269,39 @@ TEST_F(Read2EmptyLatencyTest, LARGE_DATA_READ)
 {
   char *w_databuffer;
   char *r_databuffer;
-  struct fsal_io_arg write_arg;
-  struct fsal_io_arg read_arg;
+  struct fsal_io_arg *write_arg;
+  struct fsal_io_arg *read_arg;
   int bytes = (2*1024*1024);
   int ret = -1;
 
   w_databuffer = (char *) malloc(bytes);
   memset(w_databuffer, 'a', bytes);
 
-  write_arg.info = NULL;
-  write_arg.state = NULL;
-  write_arg.offset = OFFSET;
-  write_arg.iov_count = 1;
-  write_arg.iov[0].iov_len = bytes;
-  write_arg.iov[0].iov_base = w_databuffer;
-  write_arg.io_amount = 0;
-  write_arg.fsal_stable = false;
+  write_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+					  sizeof(struct iovec));
+  write_arg->info = NULL;
+  write_arg->state = NULL;
+  write_arg->offset = OFFSET;
+  write_arg->iov_count = 1;
+  write_arg->iov[0].iov_len = bytes;
+  write_arg->iov[0].iov_base = w_databuffer;
+  write_arg->io_amount = 0;
+  write_arg->fsal_stable = false;
 
-  test_file->obj_ops.write2(test_file, true, callback, &write_arg, NULL);
+  test_file->obj_ops.write2(test_file, true, callback, write_arg, NULL);
 
   r_databuffer = (char *) malloc(bytes);
-  read_arg.info = NULL;
-  read_arg.state = NULL;
-  read_arg.offset = OFFSET;
-  read_arg.iov_count = 1;
-  read_arg.iov[0].iov_len = bytes;
-  read_arg.iov[0].iov_base = r_databuffer;
-  read_arg.io_amount = 0;
+  read_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+					 sizeof(struct iovec));
+  read_arg->info = NULL;
+  read_arg->state = NULL;
+  read_arg->offset = OFFSET;
+  read_arg->iov_count = 1;
+  read_arg->iov[0].iov_len = bytes;
+  read_arg->iov[0].iov_base = r_databuffer;
+  read_arg->io_amount = 0;
 
-  test_file->obj_ops.read2(test_file, true, callback, &read_arg, NULL);
+  test_file->obj_ops.read2(test_file, true, callback, read_arg, NULL);
 
   ret = memcmp(r_databuffer, w_databuffer, bytes);
   EXPECT_EQ(ret, 0);
@@ -316,39 +314,43 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
 {
   char *w_databuffer;
   char *r_databuffer;
-  struct fsal_io_arg write_arg;
-  struct fsal_io_arg read_arg;
+  struct fsal_io_arg *write_arg;
+  struct fsal_io_arg *read_arg;
   int bytes = 64*LOOP_COUNT;
   struct timespec s_time, e_time;
 
   w_databuffer = (char *) malloc(bytes);
   memset(w_databuffer, 'a', bytes);
 
-  write_arg.info = NULL;
-  write_arg.state = NULL;
-  write_arg.offset = OFFSET;
-  write_arg.iov_count = 1;
-  write_arg.iov[0].iov_len = bytes;
-  write_arg.iov[0].iov_base = w_databuffer;
-  write_arg.io_amount = 0;
-  write_arg.fsal_stable = false;
+  write_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+					  sizeof(struct iovec));
+  write_arg->info = NULL;
+  write_arg->state = NULL;
+  write_arg->offset = OFFSET;
+  write_arg->iov_count = 1;
+  write_arg->iov[0].iov_len = bytes;
+  write_arg->iov[0].iov_base = w_databuffer;
+  write_arg->io_amount = 0;
+  write_arg->fsal_stable = false;
 
-  test_file->obj_ops.write2(test_file, true, callback, &write_arg, NULL);
+  test_file->obj_ops.write2(test_file, true, callback, write_arg, NULL);
 
   bytes = 64;
   r_databuffer = (char *) malloc(bytes);
-  read_arg.info = NULL;
-  read_arg.state = NULL;
-  read_arg.offset = OFFSET;
-  read_arg.iov_count = 1;
-  read_arg.iov[0].iov_len = bytes;
-  read_arg.iov[0].iov_base = r_databuffer;
-  read_arg.io_amount = 0;
+  read_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+					 sizeof(struct iovec));
+  read_arg->info = NULL;
+  read_arg->state = NULL;
+  read_arg->offset = OFFSET;
+  read_arg->iov_count = 1;
+  read_arg->iov[0].iov_len = bytes;
+  read_arg->iov[0].iov_base = r_databuffer;
+  read_arg->io_amount = 0;
 
   now(&s_time);
 
-  for (int i = 0; i < LOOP_COUNT; ++i, read_arg.offset += 64) {
-    test_file->obj_ops.read2(test_file, true, callback, &read_arg, NULL);
+  for (int i = 0; i < LOOP_COUNT; ++i, read_arg->offset += 64) {
+    test_file->obj_ops.read2(test_file, true, callback, read_arg, NULL);
   }
 
   now(&e_time);
@@ -363,6 +365,7 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
 int main(int argc, char *argv[])
 {
   int code = 0;
+  char* session_name = NULL;
 
   using namespace std;
   using namespace std::literals;
@@ -375,16 +378,25 @@ int main(int argc, char *argv[])
 
     opts.add_options()
       ("config", po::value<string>(),
-        "path to Ganesha conf file")
+       "path to Ganesha conf file")
 
       ("logfile", po::value<string>(),
-        "log to the provided file path")
+       "log to the provided file path")
 
       ("export", po::value<uint16_t>(),
-        "id of export on which to operate (must exist)")
+       "id of export on which to operate (must exist)")
 
       ("debug", po::value<string>(),
-        "ganesha debug level")
+       "ganesha debug level")
+
+      ("session", po::value<string>(),
+	"LTTng session name")
+
+      ("event-list", po::value<string>(),
+	"LTTng event list, comma separated")
+
+      ("profile", po::value<string>(),
+	"Enable profiling and set output file.")
       ;
 
     po::variables_map::iterator vm_iter;
@@ -405,15 +417,28 @@ int main(int argc, char *argv[])
     vm_iter = vm.find("debug");
     if (vm_iter != vm.end()) {
       dlevel = ReturnLevelAscii(
-        (char*) vm_iter->second.as<std::string>().c_str());
+	(char*) vm_iter->second.as<std::string>().c_str());
     }
     vm_iter = vm.find("export");
     if (vm_iter != vm.end()) {
       export_id = vm_iter->second.as<uint16_t>();
     }
+    vm_iter = vm.find("session");
+    if (vm_iter != vm.end()) {
+      session_name = (char*) vm_iter->second.as<std::string>().c_str();
+    }
+    vm_iter = vm.find("event-list");
+    if (vm_iter != vm.end()) {
+      event_list = (char*) vm_iter->second.as<std::string>().c_str();
+    }
+    vm_iter = vm.find("profile");
+    if (vm_iter != vm.end()) {
+      profile_out = (char*) vm_iter->second.as<std::string>().c_str();
+    }
 
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::AddGlobalTestEnvironment(new Environment);
+    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel, session_name);
+    ::testing::AddGlobalTestEnvironment(gtest::env);
 
     code  = RUN_ALL_TESTS();
   }
