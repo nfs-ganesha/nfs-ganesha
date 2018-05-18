@@ -2074,7 +2074,7 @@ static void pxy_hdl_release(struct fsal_obj_handle *obj_hdl)
  */
 static fsal_status_t pxy_close(struct fsal_obj_handle *obj_hdl)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(ERR_FSAL_NOT_OPENED, 0);
 }
 
 /*
