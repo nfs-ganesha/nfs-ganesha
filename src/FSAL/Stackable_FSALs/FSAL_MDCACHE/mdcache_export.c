@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -115,8 +115,10 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 		}
 
 		entry = expmap->entry;
-		/* Get a ref across cleanup */
-		status = mdcache_get(entry);
+		/* Get a ref across cleanup.  This must be an initial ref, so
+		 * that it takes the LRU lane lock, keeping it from racing with
+		 * lru_lane_run() */
+		status = mdcache_lru_ref(entry, LRU_REQ_INITIAL);
 		PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
 
 		if (FSAL_IS_ERROR(status)) {
