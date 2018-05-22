@@ -455,3 +455,22 @@ target_link_libraries(test_nfs4_putfh_latency
   )
 set_target_properties(test_nfs4_putfh_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
+
+
+set(test_lock_op2_latency_SRCS
+  test_lock_op2_latency.cc
+  )
+
+add_executable(test_lock_op2_latency
+  ${test_lock_op2_latency_SRCS})
+add_sanitizers(test_lock_op2_latency)
+
+target_link_libraries(test_lock_op2_latency
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
+  )
+set_target_properties(test_lock_op2_latency PROPERTIES COMPILE_FLAGS
+  "${UNITTEST_CXX_FLAGS}")
