@@ -29,6 +29,9 @@ extern "C" {
 void admin_halt(void);
 /* Ganesha headers */
 #include "nfs_lib.h"
+#include "fsal.h"
+#include "export_mgr.h"
+#include "nfs_exports.h"
 
 /* LTTng headers */
 #include <lttng/lttng.h>
@@ -40,6 +43,8 @@ void admin_halt(void);
 #ifndef GTEST_GTEST_HH
 #define GTEST_GTEST_HH
 
+#define NAMELEN 16
+
 namespace gtest {
 
   class Environment* env;
@@ -47,9 +52,12 @@ namespace gtest {
   class Environment : public ::testing::Environment {
   public:
     Environment() : Environment(NULL, NULL, -1, NULL) {}
-    Environment(char* ganesha_conf, char* lpath, int dlevel, char *_ses_name) :
+    Environment(char* ganesha_conf, char* lpath, int dlevel, char *_ses_name,
+                const char *_test_root_name = nullptr,
+                uint16_t _export_id = 77) :
 	    ganesha(nfs_libmain, ganesha_conf, lpath, dlevel),
-	    session_name(_ses_name), handle(NULL) {
+	    session_name(_ses_name), test_root_name(_test_root_name),
+	    export_id(_export_id), handle(NULL) {
       using namespace std::literals;
       std::this_thread::sleep_for(5s);
     }
@@ -86,8 +94,18 @@ namespace gtest {
       return handle;
     }
 
+    const char *get_test_root_name() {
+      return test_root_name;
+    }
+
+    uint16_t get_export_id() {
+      return export_id;
+    }
+
     std::thread ganesha;
     char *session_name;
+    const char *test_root_name;
+    uint16_t export_id;
     struct lttng_handle* handle;
   };
 
@@ -167,6 +185,142 @@ namespace gtest {
     virtual void SetUp() { }
 
     virtual void TearDown() { }
+  };
+
+  class GaeshaFSALBaseTest : public gtest::GaneshaBaseTest {
+
+  private:
+    static fsal_errors_t readdir_callback(void *opaque,
+                                          struct fsal_obj_handle *obj,
+                                          const struct attrlist *attr,
+                                          uint64_t mounted_on_fileid,
+                                          uint64_t cookie,
+                                          enum cb_state cb_state)
+      {
+      return ERR_FSAL_NO_ERROR;
+      }
+
+  protected:
+
+    virtual void SetUp() {
+      fsal_status_t status;
+      struct attrlist attrs_out;
+
+      gtest::GaneshaBaseTest::SetUp();
+
+      a_export = get_gsh_export(env->get_export_id());
+      ASSERT_NE(a_export, nullptr);
+
+      status = nfs_export_get_root_entry(a_export, &root_entry);
+      ASSERT_EQ(status.major, 0);
+      ASSERT_NE(root_entry, nullptr);
+
+      /* Ganesha call paths need real or forged context info */
+      memset(&user_credentials, 0, sizeof(struct user_cred));
+      memset(&req_ctx, 0, sizeof(struct req_op_context));
+      memset(&attrs, 0, sizeof(attrs));
+      memset(&exp_perms, 0, sizeof(struct export_perms));
+
+      req_ctx.ctx_export = a_export;
+      req_ctx.fsal_export = a_export->fsal_export;
+      req_ctx.creds = &user_credentials;
+      req_ctx.export_perms = &exp_perms;
+
+      /* stashed in tls */
+      op_ctx = &req_ctx;
+
+      // create root directory for test
+      FSAL_SET_MASK(attrs.valid_mask,
+                    ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
+      attrs.mode = 0777; /* XXX */
+      attrs.owner = 667;
+      attrs.group = 766;
+      fsal_prepare_attrs(&attrs_out, 0);
+
+      status = fsal_create(root_entry, env->get_test_root_name(), DIRECTORY,
+                           &attrs, NULL, &test_root, &attrs_out);
+      ASSERT_EQ(status.major, 0);
+      ASSERT_NE(test_root, nullptr);
+
+      fsal_release_attrs(&attrs_out);
+    }
+
+    virtual void TearDown() {
+      fsal_status_t status;
+
+      status = test_root->obj_ops.unlink(root_entry, test_root,
+                                         env->get_test_root_name());
+      EXPECT_EQ(0, status.major);
+      test_root->obj_ops.put_ref(test_root);
+      test_root = NULL;
+
+      root_entry->obj_ops.put_ref(root_entry);
+      root_entry = NULL;
+
+      put_gsh_export(a_export);
+      a_export = NULL;
+      req_ctx.ctx_export = NULL;
+      req_ctx.fsal_export = NULL;
+
+      gtest::GaneshaBaseTest::TearDown();
+    }
+
+    void create_and_prime_many(int count,
+                               struct fsal_obj_handle **objs = NULL) {
+      fsal_status_t status;
+      char fname[NAMELEN];
+      struct attrlist attrs_out;
+      unsigned int num_entries;
+      bool eod_met;
+      attrmask_t attrmask = 0;
+      uint32_t tracker;
+      struct fsal_obj_handle *obj;
+
+      /* create a bunch of dirents */
+      for (int i = 0; i < count; ++i) {
+        fsal_prepare_attrs(&attrs_out, 0);
+        sprintf(fname, "d-%08x", i);
+
+        status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL,
+                             &obj, &attrs_out);
+        ASSERT_EQ(status.major, 0);
+        ASSERT_NE(obj, nullptr);
+
+        fsal_release_attrs(&attrs_out);
+
+        if (objs != NULL)
+          objs[i] = obj;
+        else
+          obj->obj_ops.put_ref(obj);
+      }
+
+      /* Prime the cache */
+      status = fsal_readdir(test_root, 0, &num_entries, &eod_met, attrmask,
+                            readdir_callback, &tracker);
+    }
+
+    void remove_many(int count, struct fsal_obj_handle **objs = NULL) {
+      fsal_status_t status;
+      char fname[NAMELEN];
+
+      for (int i = 0; i < count; ++i) {
+        sprintf(fname, "d-%08x", i);
+
+	if (objs != NULL)
+          objs[i]->obj_ops.put_ref(objs[i]);
+        status = fsal_remove(test_root, fname);
+        EXPECT_EQ(status.major, 0);
+      }
+    }
+
+    struct req_op_context req_ctx;
+    struct user_cred user_credentials;
+    struct attrlist attrs;
+    struct export_perms exp_perms;
+
+    struct gsh_export* a_export = nullptr;
+    struct fsal_obj_handle *root_entry = nullptr;
+    struct fsal_obj_handle *test_root = nullptr;
   };
 } // namespase gtest
 
