@@ -1052,6 +1052,13 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	compound_data_Free(&data);
 
+	/* release current active export in op_ctx. */
+	if (op_ctx->ctx_export) {
+		put_gsh_export(op_ctx->ctx_export);
+		op_ctx->ctx_export = NULL;
+		op_ctx->fsal_export = NULL;
+	}
+
 	return NFS_REQ_OK;
 }				/* nfs4_Compound */
 
@@ -1145,13 +1152,6 @@ void compound_data_Free(compound_data_t *data)
 
 		dec_session_ref(data->session);
 		data->session = NULL;
-	}
-
-	/* Release CurrentFH reference to export. */
-	if (op_ctx->ctx_export) {
-		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
 	}
 
 	/* Release SavedFH reference to export. */
