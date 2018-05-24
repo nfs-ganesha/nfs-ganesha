@@ -190,13 +190,16 @@ void nfs_start_grace(nfs_grace_start_t *gsp)
 			cancel_all_nlm_blocked();
 		else {
 			nfs_release_nlm_state(gsp->ipaddr);
-			if (gsp->event == EVENT_RELEASE_IP)
+			if (gsp->event == EVENT_RELEASE_IP) {
+				PTHREAD_MUTEX_unlock(&grace_mutex);
 				nfs_release_v4_client(gsp->ipaddr);
-			else
+				return;
+			}
+			else {
 				nfs4_recovery_load_clids(gsp);
+			}
 		}
 	}
-
 out:
 	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
