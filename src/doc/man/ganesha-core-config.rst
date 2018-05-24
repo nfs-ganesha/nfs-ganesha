@@ -288,6 +288,7 @@ pnfs_ds(bool, default false)
 
 RecoveryBackend(path, default "fs")
     Use different backend for client info:
+
     - fs : filesystem
     - fs_ng: filesystem (better resiliency)
     - rados_kv : rados key-value
