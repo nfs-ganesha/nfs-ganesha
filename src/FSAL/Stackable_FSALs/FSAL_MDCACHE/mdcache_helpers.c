@@ -799,8 +799,11 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		 */
 		struct fsal_obj_handle *old_sub_handle = (*entry)->sub_handle;
 
-		status =
-		    old_sub_handle->obj_ops.merge(old_sub_handle, sub_handle);
+		subcall_raw(export,
+			    status =
+			    old_sub_handle->obj_ops.merge(old_sub_handle,
+							  sub_handle)
+			   );
 
 		if (FSAL_IS_ERROR(status)) {
 			/* Report this error and unref the entry */
@@ -818,8 +821,12 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		 * there is not a valid entry to use, or a merge failed
 		 * we must close that file before disposing of new_obj.
 		 */
-		fsal_status_t cstatus = sub_handle->obj_ops.close2(sub_handle,
-								   state);
+		fsal_status_t cstatus;
+
+		subcall_raw(export,
+			    cstatus = sub_handle->obj_ops.close2(sub_handle,
+								 state)
+			   );
 
 		LogDebug(COMPONENT_CACHE_INODE,
 			 "Close of state during error processing returned %s",
@@ -827,7 +834,9 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	}
 
 	/* must free sub_handle if no new entry was created to reference it. */
-	sub_handle->obj_ops.release(sub_handle);
+	subcall_raw(export,
+		    sub_handle->obj_ops.release(sub_handle)
+		   );
 
 	return status;
 }
