@@ -493,3 +493,22 @@ target_link_libraries(test_handle_to_key_latency
   )
 set_target_properties(test_handle_to_key_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
+
+
+set(test_release_latency_SRCS
+  test_release_latency.cc
+  )
+
+add_executable(test_release_latency
+  ${test_release_latency_SRCS})
+add_sanitizers(test_release_latency)
+
+target_link_libraries(test_release_latency
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
+  )
+set_target_properties(test_release_latency PROPERTIES COMPILE_FLAGS
+  "${UNITTEST_CXX_FLAGS}")
