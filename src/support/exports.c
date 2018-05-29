@@ -2048,15 +2048,26 @@ static void FreeClientList(struct glist_head *clients)
 		client =
 		    glist_entry(glist, exportlist_client_entry_t, cle_list);
 		glist_del(&client->cle_list);
-		if (client->type == NETGROUP_CLIENT &&
-		    client->client.netgroup.netgroupname != NULL)
+		switch (client->type) {
+		case NETWORK_CLIENT:
+			if (client->client.network.cidr != NULL)
+				cidr_free(client->client.network.cidr);
+			break;
+		case NETGROUP_CLIENT:
 			gsh_free(client->client.netgroup.netgroupname);
-		if (client->type == WILDCARDHOST_CLIENT &&
-		    client->client.wildcard.wildcard != NULL)
+			break;
+		case WILDCARDHOST_CLIENT:
 			gsh_free(client->client.wildcard.wildcard);
-		if (client->type == GSSPRINCIPAL_CLIENT &&
-		    client->client.gssprinc.princname != NULL)
+			break;
+		case GSSPRINCIPAL_CLIENT:
 			gsh_free(client->client.gssprinc.princname);
+			break;
+		case PROTO_CLIENT:
+		case MATCH_ANY_CLIENT:
+		case BAD_CLIENT:
+			/* Do nothing for these client types */
+			break;
+		}
 		gsh_free(client);
 	}
 }
