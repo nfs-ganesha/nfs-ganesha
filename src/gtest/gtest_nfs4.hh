@@ -83,6 +83,17 @@ namespace gtest {
       set_current_entry(&data, entry);
     }
 
+    void setSavedFH(struct fsal_obj_handle *entry) {
+      bool fhres;
+
+      /* Convert root_obj to a file handle in the args */
+      fhres = nfs4_FSALToFhandle(data.savedFH.nfs_fh4_val == NULL,
+                                 &data.savedFH, entry, op_ctx->ctx_export);
+      EXPECT_EQ(fhres, true);
+
+      set_saved_entry(&data, entry);
+    }
+
     void setup_lookup(int pos, const char *name) {
       gsh_free(ops[pos].nfs_argop4_u.oplookup.objname.utf8string_val);
       ops[pos].argop = NFS4_OP_LOOKUP;
@@ -113,6 +124,34 @@ namespace gtest {
       gsh_free(ops[pos].nfs_argop4_u.opputfh.object.nfs_fh4_val);
       ops[pos].nfs_argop4_u.opputfh.object.nfs_fh4_len = 0;
       ops[pos].nfs_argop4_u.opputfh.object.nfs_fh4_val = nullptr;
+    }
+
+    void setup_rename(int pos, const char *oldname, const char *newname) {
+      gsh_free(ops[pos].nfs_argop4_u.oprename.oldname.utf8string_val);
+      gsh_free(ops[pos].nfs_argop4_u.oprename.newname.utf8string_val);
+      ops[pos].argop = NFS4_OP_RENAME;
+      ops[pos].nfs_argop4_u.oprename.oldname.utf8string_len = strlen(oldname);
+      ops[pos].nfs_argop4_u.oprename.oldname.utf8string_val =
+                                                          gsh_strdup(oldname);
+      ops[pos].nfs_argop4_u.oprename.newname.utf8string_len = strlen(newname);
+      ops[pos].nfs_argop4_u.oprename.newname.utf8string_val =
+                                                          gsh_strdup(newname);
+    }
+
+    void swap_rename(int pos) {
+    	component4 temp = ops[pos].nfs_argop4_u.oprename.newname;
+    	ops[pos].nfs_argop4_u.oprename.newname =
+    	        ops[pos].nfs_argop4_u.oprename.oldname;
+    	ops[pos].nfs_argop4_u.oprename.oldname = temp;
+    }
+
+    void cleanup_rename(int pos) {
+      gsh_free(ops[pos].nfs_argop4_u.oprename.oldname.utf8string_val);
+      gsh_free(ops[pos].nfs_argop4_u.oprename.newname.utf8string_val);
+      ops[pos].nfs_argop4_u.oprename.oldname.utf8string_len = 0;
+      ops[pos].nfs_argop4_u.oprename.oldname.utf8string_val = nullptr;
+      ops[pos].nfs_argop4_u.oprename.newname.utf8string_len = 0;
+      ops[pos].nfs_argop4_u.oprename.newname.utf8string_val = nullptr;
     }
 
     struct compound_data data;
