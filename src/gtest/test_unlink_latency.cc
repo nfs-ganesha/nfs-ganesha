@@ -63,115 +63,29 @@ namespace {
   char* event_list = nullptr;
   char* profile_out = nullptr;
 
-  class UnlinkEmptyLatencyTest : public gtest::GaneshaBaseTest {
+  class UnlinkEmptyLatencyTest : public gtest::GaneshaFSALBaseTest {
   protected:
 
     virtual void SetUp() {
-      fsal_status_t status;
-      struct attrlist attrs_out;
-
-      gtest::GaneshaBaseTest::SetUp();
-
-      a_export = get_gsh_export(export_id);
-      ASSERT_NE(a_export, nullptr);
-
-      status = nfs_export_get_root_entry(a_export, &root_entry);
-      ASSERT_EQ(status.major, 0);
-      ASSERT_NE(root_entry, nullptr);
-
-      /* Ganesha call paths need real or forged context info */
-      memset(&user_credentials, 0, sizeof(struct user_cred));
-      memset(&req_ctx, 0, sizeof(struct req_op_context));
-      memset(&attrs, 0, sizeof(attrs));
-      memset(&exp_perms, 0, sizeof(struct export_perms));
-
-      req_ctx.ctx_export = a_export;
-      req_ctx.fsal_export = a_export->fsal_export;
-      req_ctx.creds = &user_credentials;
-      req_ctx.export_perms = &exp_perms;
-
-      /* stashed in tls */
-      op_ctx = &req_ctx;
-
-      // create root directory for test
-      FSAL_SET_MASK(attrs.valid_mask,
-		    ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
-      attrs.mode = 0777; /* XXX */
-      attrs.owner = 667;
-      attrs.group = 766;
-      fsal_prepare_attrs(&attrs_out, 0);
-
-      status = fsal_create(root_entry, TEST_ROOT, DIRECTORY, &attrs, NULL,
-			   &test_root, &attrs_out);
-      ASSERT_EQ(status.major, 0);
-      ASSERT_NE(test_root, nullptr);
-
-      fsal_release_attrs(&attrs_out);
+      gtest::GaneshaFSALBaseTest::SetUp();
     }
 
     virtual void TearDown() {
-      fsal_status_t status;
-
-      status = fsal_remove(root_entry, TEST_ROOT);
-      EXPECT_EQ(status.major, 0);
-      test_root->obj_ops.put_ref(test_root);
-      test_root = NULL;
-
-      root_entry->obj_ops.put_ref(root_entry);
-      root_entry = NULL;
-
-      put_gsh_export(a_export);
-      a_export = NULL;
-
-      gtest::GaneshaBaseTest::TearDown();
+      gtest::GaneshaFSALBaseTest::TearDown();
     }
-
-    struct req_op_context req_ctx;
-    struct user_cred user_credentials;
-    struct attrlist attrs;
-    struct export_perms exp_perms;
-
-    struct gsh_export* a_export = nullptr;
-    struct fsal_obj_handle *root_entry = nullptr;
-    struct fsal_obj_handle *test_root = nullptr;
   };
 
   class UnlinkFullLatencyTest : public UnlinkEmptyLatencyTest {
   protected:
 
     virtual void SetUp() {
-      fsal_status_t status;
-      char fname[NAMELEN];
-      struct fsal_obj_handle *obj;
-      struct attrlist attrs_out;
-
       UnlinkEmptyLatencyTest::SetUp();
 
-      /* create a bunch of dirents */
-      for (int i = 0; i < DIR_COUNT; ++i) {
-        fsal_prepare_attrs(&attrs_out, 0);
-        sprintf(fname, "file-%08x", i);
-
-        status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL, &obj,
-                             &attrs_out);
-        ASSERT_EQ(status.major, 0);
-        ASSERT_NE(obj, nullptr);
-
-        fsal_release_attrs(&attrs_out);
-        obj->obj_ops.put_ref(obj);
-      }
+      create_and_prime_many(DIR_COUNT, NULL);
     }
 
     virtual void TearDown() {
-      fsal_status_t status;
-      char fname[NAMELEN];
-
-      for (int i = 0; i < DIR_COUNT; ++i) {
-        sprintf(fname, "file-%08x", i);
-
-        status = fsal_remove(test_root, fname);
-        EXPECT_EQ(status.major, 0);
-      }
+      remove_many(DIR_COUNT, NULL);
 
       UnlinkEmptyLatencyTest::TearDown();
       }
@@ -205,22 +119,25 @@ TEST_F(UnlinkEmptyLatencyTest, SIMPLE)
 TEST_F(UnlinkEmptyLatencyTest, SIMPLE_BYPASS)
 {
   fsal_status_t status;
-  struct fsal_obj_handle *obj;
+  bool caller_perm_check = false;
   struct fsal_obj_handle *sub_hdl = nullptr;
   struct fsal_obj_handle *sub_hdl_obj = nullptr;
   struct fsal_obj_handle *lookup = nullptr;
 
-  /* Create files to unlink for the test */
-  status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL,
-                  &obj, NULL);
-  ASSERT_EQ(status.major, 0);
-  ASSERT_NE(obj, nullptr);
-
   sub_hdl = mdcdb_get_sub_handle(test_root);
   ASSERT_NE(sub_hdl, nullptr);
 
-  sub_hdl_obj = mdcdb_get_sub_handle(obj);
+  gtws_subcall(
+	       status = sub_hdl->obj_ops.open2(sub_hdl, NULL, FSAL_O_RDWR,
+					       FSAL_UNCHECKED, TEST_FILE, NULL,
+					       NULL, &sub_hdl_obj, NULL,
+					       &caller_perm_check)
+	      );
+  ASSERT_EQ(status.major, 0);
   ASSERT_NE(sub_hdl_obj, nullptr);
+
+  status = sub_hdl_obj->obj_ops.close(sub_hdl_obj);
+  EXPECT_EQ(status.major, 0);
 
   status = sub_hdl->obj_ops.unlink(sub_hdl, sub_hdl_obj, TEST_FILE);
   EXPECT_EQ(status.major, 0);
@@ -229,7 +146,7 @@ TEST_F(UnlinkEmptyLatencyTest, SIMPLE_BYPASS)
   EXPECT_EQ(status.major, ERR_FSAL_NOENT);
   EXPECT_EQ(lookup, nullptr);
 
-  obj->obj_ops.put_ref(obj);
+  sub_hdl_obj->obj_ops.put_ref(sub_hdl_obj);
 }
 
 TEST_F(UnlinkEmptyLatencyTest, FSALREMOVE)
@@ -269,6 +186,8 @@ TEST_F(UnlinkEmptyLatencyTest, FSALREMOVE)
   /* Remove file created for running the test */
   status = fsal_remove(test_root, TEST_FILE);
   ASSERT_EQ(status.major, 0);
+
+  obj->obj_ops.put_ref(obj);
 }
 
 TEST_F(UnlinkFullLatencyTest, BIG)
@@ -306,11 +225,11 @@ TEST_F(UnlinkFullLatencyTest, BIG)
           timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 
 
-  obj->obj_ops.put_ref(obj);
-
   /* Remove file created for running the test */
   status = fsal_remove(test_root, TEST_FILE);
   ASSERT_EQ(status.major, 0);
+
+  obj->obj_ops.put_ref(obj);
 }
 
 TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
@@ -318,8 +237,8 @@ TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
   fsal_status_t status;
   char fname[NAMELEN];
   struct fsal_obj_handle *obj;
-  struct fsal_obj_handle *sub_hdl;
-  struct fsal_obj_handle *sub_hdl_obj;
+  struct fsal_obj_handle *sub_root;
+  struct fsal_obj_handle *sub_obj;
   struct timespec s_time, e_time;
 
   /* Create files to unlink for the test */
@@ -328,25 +247,25 @@ TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
+  sub_root = mdcdb_get_sub_handle(test_root);
+  ASSERT_NE(sub_root, nullptr);
+
+  sub_obj = mdcdb_get_sub_handle(obj);
+  ASSERT_NE(sub_obj, nullptr);
+
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = test_root->obj_ops.link(obj, test_root, fname);
+    status = sub_root->obj_ops.link(sub_obj, sub_root, fname);
     ASSERT_EQ(status.major, 0);
   }
-
-  sub_hdl = mdcdb_get_sub_handle(test_root);
-  ASSERT_NE(sub_hdl, nullptr);
-
-  sub_hdl_obj = mdcdb_get_sub_handle(obj);
-  ASSERT_NE(sub_hdl_obj, nullptr);
 
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = sub_hdl->obj_ops.unlink(sub_hdl, sub_hdl_obj, fname);
+    status = sub_root->obj_ops.unlink(sub_root, sub_obj, fname);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -437,7 +356,8 @@ int main(int argc, char *argv[])
     }
 
     ::testing::InitGoogleTest(&argc, argv);
-    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel, session_name);
+    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel,
+					session_name, TEST_ROOT, export_id);
     ::testing::AddGlobalTestEnvironment(gtest::env);
 
     code  = RUN_ALL_TESTS();

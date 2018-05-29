@@ -45,6 +45,13 @@ void admin_halt(void);
 
 #define NAMELEN 16
 
+#define gtws_subcall(call) do { \
+	struct fsal_export *_saveexp = op_ctx->fsal_export; \
+	op_ctx->fsal_export = _saveexp->sub_export; \
+	call; \
+	op_ctx->fsal_export = _saveexp; \
+} while (0)
+
 namespace gtest {
 
   class Environment* env;
@@ -187,9 +194,9 @@ namespace gtest {
     virtual void TearDown() { }
   };
 
-  class GaeshaFSALBaseTest : public gtest::GaneshaBaseTest {
+  class GaneshaFSALBaseTest : public gtest::GaneshaBaseTest {
 
-  private:
+  protected:
     static fsal_errors_t readdir_callback(void *opaque,
                                           struct fsal_obj_handle *obj,
                                           const struct attrlist *attr,
@@ -199,8 +206,6 @@ namespace gtest {
       {
       return ERR_FSAL_NO_ERROR;
       }
-
-  protected:
 
     virtual void SetUp() {
       fsal_status_t status;

@@ -36,11 +36,11 @@ extern "C" {
 
 namespace gtest {
 
-  class GaeshaNFS4BaseTest : public gtest::GaeshaFSALBaseTest {
+  class GaeshaNFS4BaseTest : public gtest::GaneshaFSALBaseTest {
   protected:
 
     virtual void SetUp() {
-      gtest::GaeshaFSALBaseTest::SetUp();
+      gtest::GaneshaFSALBaseTest::SetUp();
 
       memset(&data, 0, sizeof(struct compound_data));
       memset(&arg, 0, sizeof(nfs_arg_t));
@@ -69,7 +69,7 @@ namespace gtest {
       rc = xdr_free((xdrproc_t) xdr_COMPOUND4args, &arg);
       EXPECT_EQ(rc, true);
 
-      gtest::GaeshaFSALBaseTest::TearDown();
+      gtest::GaneshaFSALBaseTest::TearDown();
     }
 
     void setCurrentFH(struct fsal_obj_handle *entry) {

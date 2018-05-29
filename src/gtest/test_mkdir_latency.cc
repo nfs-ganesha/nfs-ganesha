@@ -62,53 +62,16 @@ namespace {
   char* event_list = nullptr;
   char* profile_out = nullptr;
 
-  class MkdirEmptyLatencyTest : public gtest::GaneshaBaseTest {
+  class MkdirEmptyLatencyTest : public gtest::GaneshaFSALBaseTest {
   protected:
 
     virtual void SetUp() {
-      fsal_status_t status;
-
-      gtest::GaneshaBaseTest::SetUp();
-
-      a_export = get_gsh_export(export_id);
-      ASSERT_NE(a_export, nullptr);
-
-      status = nfs_export_get_root_entry(a_export, &root_entry);
-      ASSERT_EQ(status.major, 0);
-      ASSERT_NE(root_entry, nullptr);
-
-      /* Ganesha call paths need real or forged context info */
-      memset(&user_credentials, 0, sizeof(struct user_cred));
-      memset(&req_ctx, 0, sizeof(struct req_op_context));
-      memset(&attrs, 0, sizeof(attrs));
-      memset(&exp_perms, 0, sizeof(struct export_perms));
-
-      req_ctx.ctx_export = a_export;
-      req_ctx.fsal_export = a_export->fsal_export;
-      req_ctx.creds = &user_credentials;
-      req_ctx.export_perms = &exp_perms;
-
-      /* stashed in tls */
-      op_ctx = &req_ctx;
+      gtest::GaneshaFSALBaseTest::SetUp();
     }
 
     virtual void TearDown() {
-      root_entry->obj_ops.put_ref(root_entry);
-      root_entry = NULL;
-
-      put_gsh_export(a_export);
-      a_export = NULL;
-
-      gtest::GaneshaBaseTest::TearDown();
+      gtest::GaneshaFSALBaseTest::TearDown();
     }
-
-    struct req_op_context req_ctx;
-    struct user_cred user_credentials;
-    struct attrlist attrs;
-    struct export_perms exp_perms;
-
-    struct gsh_export* a_export = nullptr;
-    struct fsal_obj_handle *root_entry = nullptr;
   };
 
   class MkdirFullLatencyTest : public MkdirEmptyLatencyTest {
@@ -127,7 +90,7 @@ namespace {
         fsal_prepare_attrs(&attrs_out, 0);
         sprintf(fname, "f-%08x", i);
 
-        status = fsal_create(root_entry, fname, REGULAR_FILE, &attrs, NULL, &obj,
+        status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL, &obj,
                              &attrs_out);
         ASSERT_EQ(status.major, 0);
         ASSERT_NE(obj, nullptr);
@@ -144,7 +107,7 @@ namespace {
       for (int i = 0; i < FILE_COUNT; ++i) {
         sprintf(fname, "f-%08x", i);
 
-        status = fsal_remove(root_entry, fname);
+        status = fsal_remove(test_root, fname);
         EXPECT_EQ(status.major, 0);
       }
 
@@ -161,16 +124,16 @@ TEST_F(MkdirEmptyLatencyTest, SIMPLE)
   struct fsal_obj_handle *mkdir;
   struct fsal_obj_handle *lookup;
 
-  status = root_entry->obj_ops.mkdir(root_entry, TEST_ROOT, &attrs, &mkdir, NULL);
+  status = test_root->obj_ops.mkdir(test_root, TEST_ROOT, &attrs, &mkdir, NULL);
   EXPECT_EQ(status.major, 0);
-  root_entry->obj_ops.lookup(root_entry, TEST_ROOT, &lookup, NULL);
+  test_root->obj_ops.lookup(test_root, TEST_ROOT, &lookup, NULL);
   EXPECT_EQ(lookup, mkdir);
 
   mkdir->obj_ops.put_ref(mkdir);
   lookup->obj_ops.put_ref(lookup);
 
   /* Remove directory created while running test */
-  status = fsal_remove(root_entry, TEST_ROOT);
+  status = fsal_remove(test_root, TEST_ROOT);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -181,24 +144,24 @@ TEST_F(MkdirEmptyLatencyTest, SIMPLE_BYPASS)
   struct fsal_obj_handle *mkdir;
   struct fsal_obj_handle *lookup;
 
-  sub_hdl = mdcdb_get_sub_handle(root_entry);
+  sub_hdl = mdcdb_get_sub_handle(test_root);
   ASSERT_NE(sub_hdl, nullptr);
 
-  status = nfs_export_get_root_entry(a_export, &sub_hdl);
-  ASSERT_EQ(status.major, 0);
-
-  status = sub_hdl->obj_ops.mkdir(sub_hdl, TEST_ROOT, &attrs, &mkdir, NULL);
+  gtws_subcall(
+    status = sub_hdl->obj_ops.mkdir(sub_hdl, TEST_ROOT, &attrs, &mkdir, NULL)
+    );
 
   EXPECT_EQ(status.major, 0);
-  root_entry->obj_ops.lookup(root_entry, TEST_ROOT, &lookup, NULL);
+  sub_hdl->obj_ops.lookup(sub_hdl, TEST_ROOT, &lookup, NULL);
   EXPECT_EQ(lookup, mkdir);
 
-  mkdir->obj_ops.put_ref(mkdir);
   lookup->obj_ops.put_ref(lookup);
 
   /* Remove directory created while running test */
-  status = fsal_remove(root_entry, TEST_ROOT);
+  status = sub_hdl->obj_ops.unlink(sub_hdl, mkdir, TEST_ROOT);
   ASSERT_EQ(status.major, 0);
+
+  mkdir->obj_ops.put_ref(mkdir);
 }
 
 TEST_F(MkdirEmptyLatencyTest, LOOP)
@@ -213,7 +176,7 @@ TEST_F(MkdirEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = root_entry->obj_ops.mkdir(root_entry, fname, &attrs, &obj, NULL);
+    status = test_root->obj_ops.mkdir(test_root, fname, &attrs, &obj, NULL);
     EXPECT_EQ(status.major, 0);
     obj->obj_ops.put_ref(obj);
   }
@@ -227,7 +190,7 @@ TEST_F(MkdirEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -244,7 +207,7 @@ TEST_F(MkdirEmptyLatencyTest, FSALCREATE)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_create(root_entry, fname, DIRECTORY, &attrs, NULL, &obj, NULL);
+    status = fsal_create(test_root, fname, DIRECTORY, &attrs, NULL, &obj, NULL);
     EXPECT_EQ(status.major, 0);
     obj->obj_ops.put_ref(obj);
   }
@@ -258,7 +221,7 @@ TEST_F(MkdirEmptyLatencyTest, FSALCREATE)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
    }
 }
@@ -275,7 +238,7 @@ TEST_F(MkdirFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = root_entry->obj_ops.mkdir(root_entry, fname, &attrs, &obj, NULL);
+    status = test_root->obj_ops.mkdir(test_root, fname, &attrs, &obj, NULL);
     ASSERT_EQ(status.major, 0) << " failed to mkdir " << fname;
     obj->obj_ops.put_ref(obj);
   }
@@ -289,7 +252,7 @@ TEST_F(MkdirFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -302,18 +265,17 @@ TEST_F(MkdirFullLatencyTest, BIG_BYPASS)
   struct fsal_obj_handle *obj;
   struct timespec s_time, e_time;
 
-  sub_hdl = mdcdb_get_sub_handle(root_entry);
+  sub_hdl = mdcdb_get_sub_handle(test_root);
   ASSERT_NE(sub_hdl, nullptr);
-
-  status = nfs_export_get_root_entry(a_export, &sub_hdl);
-  ASSERT_EQ(status.major, 0);
 
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = sub_hdl->obj_ops.mkdir(sub_hdl, fname, &attrs, &obj, NULL);
+    gtws_subcall(
+      status = sub_hdl->obj_ops.mkdir(sub_hdl, fname, &attrs, &obj, NULL)
+      );
     ASSERT_EQ(status.major, 0) << " failed to mkdir " << fname;
     obj->obj_ops.put_ref(obj);
   }
@@ -327,8 +289,11 @@ TEST_F(MkdirFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    sub_hdl->obj_ops.lookup(sub_hdl, fname, &obj, NULL);
+    status = sub_hdl->obj_ops.unlink(sub_hdl, obj, fname);
     ASSERT_EQ(status.major, 0);
+
+    obj->obj_ops.put_ref(obj);
   }
 }
 
@@ -407,7 +372,8 @@ int main(int argc, char *argv[])
     }
 
     ::testing::InitGoogleTest(&argc, argv);
-    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel, session_name);
+    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel,
+					session_name, TEST_ROOT, export_id);
     ::testing::AddGlobalTestEnvironment(gtest::env);
 
     code  = RUN_ALL_TESTS();

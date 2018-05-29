@@ -62,135 +62,30 @@ namespace {
   char* event_list = nullptr;
   char* profile_out = nullptr;
 
-  class LookupEmptyLatencyTest : public gtest::GaneshaBaseTest {
+  class LookupEmptyLatencyTest : public gtest::GaneshaFSALBaseTest {
   protected:
 
     virtual void SetUp() {
-      fsal_status_t status;
-      struct attrlist attrs_out;
-
-      gtest::GaneshaBaseTest::SetUp();
-
-      a_export = get_gsh_export(export_id);
-      ASSERT_NE(a_export, nullptr);
-
-      status = nfs_export_get_root_entry(a_export, &root_entry);
-      ASSERT_EQ(status.major, 0);
-      ASSERT_NE(root_entry, nullptr);
-
-      /* Ganesha call paths need real or forged context info */
-      memset(&user_credentials, 0, sizeof(struct user_cred));
-      memset(&req_ctx, 0, sizeof(struct req_op_context));
-      memset(&attrs, 0, sizeof(attrs));
-      memset(&exp_perms, 0, sizeof(struct export_perms));
-
-      req_ctx.ctx_export = a_export;
-      req_ctx.fsal_export = a_export->fsal_export;
-      req_ctx.creds = &user_credentials;
-      req_ctx.export_perms = &exp_perms;
-
-      /* stashed in tls */
-      op_ctx = &req_ctx;
-
-      // create root directory for test
-      FSAL_SET_MASK(attrs.valid_mask,
-		    ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
-      attrs.mode = 0777; /* XXX */
-      attrs.owner = 667;
-      attrs.group = 766;
-      fsal_prepare_attrs(&attrs_out, 0);
-
-      status = fsal_create(root_entry, TEST_ROOT, DIRECTORY, &attrs, NULL,
-			   &test_root, &attrs_out);
-      ASSERT_EQ(status.major, 0);
-      ASSERT_NE(test_root, nullptr);
-
-      fsal_release_attrs(&attrs_out);
+      gtest::GaneshaFSALBaseTest::SetUp();
     }
 
     virtual void TearDown() {
-      fsal_status_t status;
-
-      status = test_root->obj_ops.unlink(root_entry, test_root, TEST_ROOT);
-      EXPECT_EQ(0, status.major);
-      test_root->obj_ops.put_ref(test_root);
-      test_root = NULL;
-
-      root_entry->obj_ops.put_ref(root_entry);
-      root_entry = NULL;
-
-      put_gsh_export(a_export);
-      a_export = NULL;
-
-      gtest::GaneshaBaseTest::TearDown();
+      gtest::GaneshaFSALBaseTest::TearDown();
     }
-
-    struct req_op_context req_ctx;
-    struct user_cred user_credentials;
-    struct attrlist attrs;
-    struct export_perms exp_perms;
-
-    struct gsh_export* a_export = nullptr;
-    struct fsal_obj_handle *root_entry = nullptr;
-    struct fsal_obj_handle *test_root = nullptr;
   };
 
   class LookupFullLatencyTest : public LookupEmptyLatencyTest {
 
-  private:
-    static fsal_errors_t readdir_callback(void *opaque,
-					  struct fsal_obj_handle *obj,
-					  const struct attrlist *attr,
-					  uint64_t mounted_on_fileid,
-					  uint64_t cookie,
-					  enum cb_state cb_state)
-      {
-      return ERR_FSAL_NO_ERROR;
-      }
-
   protected:
 
     virtual void SetUp() {
-      fsal_status_t status;
-      char fname[NAMELEN];
-      struct fsal_obj_handle *obj;
-      struct attrlist attrs_out;
-      unsigned int num_entries;
-      bool eod_met;
-      attrmask_t attrmask = 0;
-      uint32_t tracker;
-
       LookupEmptyLatencyTest::SetUp();
 
-      /* create a bunch of dirents */
-      for (int i = 0; i < FILE_COUNT; ++i) {
-	fsal_prepare_attrs(&attrs_out, 0);
-	sprintf(fname, "f-%08x", i);
-
-	status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL, &obj,
-			     &attrs_out);
-	ASSERT_EQ(status.major, 0);
-	ASSERT_NE(obj, nullptr);
-
-	fsal_release_attrs(&attrs_out);
-	obj->obj_ops.put_ref(obj);
-      }
-
-      /* Prime the cache */
-      status = fsal_readdir(test_root, 0, &num_entries, &eod_met, attrmask,
-			    readdir_callback, &tracker);
+      create_and_prime_many(FILE_COUNT, NULL);
     }
 
     virtual void TearDown() {
-      fsal_status_t status;
-      char fname[NAMELEN];
-
-      for (int i = 0; i < FILE_COUNT; ++i) {
-	sprintf(fname, "f-%08x", i);
-
-	status = fsal_remove(test_root, fname);
-	EXPECT_EQ(status.major, 0);
-      }
+      remove_many(FILE_COUNT, NULL);
 
       LookupEmptyLatencyTest::TearDown();
     }
@@ -231,7 +126,7 @@ TEST_F(LookupEmptyLatencyTest, SIMPLE_BYPASS)
 
   disableEvents(event_list);
 
-  /* Lookup on sub-FSAL did not refcount, so no need to put it */
+  lookup->obj_ops.put_ref(lookup);
 }
 
 TEST_F(LookupEmptyLatencyTest, LOOP)
@@ -371,7 +266,7 @@ TEST_F(LookupFullLatencyTest, BIG_BYPASS)
 
     status = sub_hdl->obj_ops.lookup(sub_hdl, fname, &obj, NULL);
     ASSERT_EQ(status.major, 0) << " failed to lookup " << fname;
-    /* Don't need to put_ref(obj) because sub-FSAL doesn't support refcounts */
+    obj->obj_ops.put_ref(obj);
   }
 
   now(&e_time);
@@ -459,7 +354,8 @@ int main(int argc, char *argv[])
     }
 
     ::testing::InitGoogleTest(&argc, argv);
-    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel, session_name);
+    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel,
+					session_name, TEST_ROOT, export_id);
     ::testing::AddGlobalTestEnvironment(gtest::env);
 
     code  = RUN_ALL_TESTS();

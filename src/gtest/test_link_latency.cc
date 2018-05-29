@@ -34,7 +34,7 @@
 #include <boost/program_options.hpp>
 
 extern "C" {
-/* Manually forward this, an 9P is not C++ safe */
+/* Manually forward this, as 9P is not C++ safe */
 void admin_halt(void);
 /* Ganesha headers */
 #include "export_mgr.h"
@@ -48,8 +48,9 @@ void admin_halt(void);
 
 #include "gtest.hh"
 
-#define TEST_FILE "link_latency"
-#define TEST_FILE_LINK "link_to_link_latency"
+#define TEST_ROOT "link_latency"
+#define TEST_FILE "link_source"
+#define TEST_FILE_LINK "link_to_link_source"
 #define DIR_COUNT 100000
 #define LOOP_COUNT 1000000
 #define NAMELEN 16
@@ -63,46 +64,19 @@ namespace {
   char* event_list = nullptr;
   char* profile_out = nullptr;
 
-  class LinkEmptyLatencyTest : public gtest::GaneshaBaseTest {
+  class LinkEmptyLatencyTest : public gtest::GaneshaFSALBaseTest {
   protected:
 
     virtual void SetUp() {
       fsal_status_t status;
       struct attrlist attrs_out;
 
-      gtest::GaneshaBaseTest::SetUp();
+      gtest::GaneshaFSALBaseTest::SetUp();
 
-      a_export = get_gsh_export(export_id);
-      ASSERT_NE(a_export, nullptr);
-
-      status = nfs_export_get_root_entry(a_export, &root_entry);
-      ASSERT_EQ(status.major, 0);
-      ASSERT_NE(root_entry, nullptr);
-
-      /* Ganesha call paths need real or forged context info */
-      memset(&user_credentials, 0, sizeof(struct user_cred));
-      memset(&req_ctx, 0, sizeof(struct req_op_context));
-      memset(&attrs, 0, sizeof(attrs));
-      memset(&exp_perms, 0, sizeof(struct export_perms));
-
-      req_ctx.ctx_export = a_export;
-      req_ctx.fsal_export = a_export->fsal_export;
-      req_ctx.creds = &user_credentials;
-      req_ctx.export_perms = &exp_perms;
-
-      /* stashed in tls */
-      op_ctx = &req_ctx;
-
-      // create file for test
-      FSAL_SET_MASK(attrs.valid_mask,
-                    ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
-      attrs.mode = 0777; /* XXX */
-      attrs.owner = 667;
-      attrs.group = 766;
       fsal_prepare_attrs(&attrs_out, 0);
 
-      status = fsal_create(root_entry, TEST_FILE, REGULAR_FILE, &attrs, NULL,
-                           &test_file, &attrs_out);
+      status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL,
+			   &test_file, &attrs_out);
       ASSERT_EQ(status.major, 0);
       ASSERT_NE(test_file, nullptr);
 
@@ -112,25 +86,14 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = fsal_remove(root_entry, TEST_FILE);
-      EXPECT_EQ(0, status.major);
+      status = fsal_remove(test_root, TEST_FILE);
+      EXPECT_EQ(status.major, 0);
+      test_file->obj_ops.put_ref(test_file);
+      test_file = NULL;
 
-      root_entry->obj_ops.put_ref(root_entry);
-      root_entry = NULL;
-
-      put_gsh_export(a_export);
-      a_export = NULL;
-
-      gtest::GaneshaBaseTest::TearDown();
+      gtest::GaneshaFSALBaseTest::TearDown();
     }
 
-    struct req_op_context req_ctx;
-    struct user_cred user_credentials;
-    struct attrlist attrs;
-    struct export_perms exp_perms;
-
-    struct gsh_export* a_export = nullptr;
-    struct fsal_obj_handle *root_entry = nullptr;
     struct fsal_obj_handle *test_file = nullptr;
   };
 
@@ -150,7 +113,7 @@ namespace {
         fsal_prepare_attrs(&attrs_out, 0);
         sprintf(fname, "file-%08x", i);
 
-        status = fsal_create(root_entry, fname, REGULAR_FILE, &attrs, NULL, &obj,
+        status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL, &obj,
                              &attrs_out);
         ASSERT_EQ(status.major, 0);
         ASSERT_NE(obj, nullptr);
@@ -167,7 +130,7 @@ namespace {
       for (int i = 0; i < DIR_COUNT; ++i) {
         sprintf(fname, "file-%08x", i);
 
-        status = fsal_remove(root_entry, fname);
+        status = fsal_remove(test_root, fname);
         EXPECT_EQ(status.major, 0);
       }
 
@@ -184,44 +147,48 @@ TEST_F(LinkEmptyLatencyTest, SIMPLE)
   struct fsal_obj_handle *link;
   struct fsal_obj_handle *lookup;
 
-  status = root_entry->obj_ops.link(test_file, root_entry, TEST_FILE_LINK);
+  enableEvents(event_list);
+
+  status = test_file->obj_ops.link(test_file, test_root, TEST_FILE_LINK);
   EXPECT_EQ(status.major, 0);
-  root_entry->obj_ops.lookup(root_entry, TEST_FILE_LINK, &link, NULL);
-  root_entry->obj_ops.lookup(root_entry, TEST_FILE, &lookup, NULL);
+  test_root->obj_ops.lookup(test_root, TEST_FILE_LINK, &link, NULL);
+  test_root->obj_ops.lookup(test_root, TEST_FILE, &lookup, NULL);
   EXPECT_EQ(lookup, link);
 
   link->obj_ops.put_ref(link);
   lookup->obj_ops.put_ref(lookup);
 
   /* Remove link created while running test */
-  status = fsal_remove(root_entry, TEST_FILE_LINK);
+  status = fsal_remove(test_root, TEST_FILE_LINK);
   ASSERT_EQ(status.major, 0);
+
+  disableEvents(event_list);
 }
 
 TEST_F(LinkEmptyLatencyTest, SIMPLE_BYPASS)
 {
   fsal_status_t status;
-  struct fsal_obj_handle *sub_hdl;
+  struct fsal_obj_handle *sub_root;
+  struct fsal_obj_handle *sub_file;
   struct fsal_obj_handle *link;
   struct fsal_obj_handle *lookup;
 
-  sub_hdl = mdcdb_get_sub_handle(root_entry);
-  ASSERT_NE(sub_hdl, nullptr);
+  sub_root = mdcdb_get_sub_handle(test_root);
+  ASSERT_NE(sub_root, nullptr);
+  sub_file = mdcdb_get_sub_handle(test_file);
+  ASSERT_NE(sub_file, nullptr);
 
-  status = nfs_export_get_root_entry(a_export, &sub_hdl);
-  ASSERT_EQ(status.major, 0);
-
-  status = sub_hdl->obj_ops.link(test_file, sub_hdl, TEST_FILE_LINK);
+  status = sub_root->obj_ops.link(sub_file, sub_root, TEST_FILE_LINK);
   EXPECT_EQ(status.major, 0);
-  root_entry->obj_ops.lookup(root_entry, TEST_FILE_LINK, &link, NULL);
-  root_entry->obj_ops.lookup(root_entry, TEST_FILE, &lookup, NULL);
+  sub_root->obj_ops.lookup(sub_root, TEST_FILE_LINK, &link, NULL);
+  sub_root->obj_ops.lookup(sub_root, TEST_FILE, &lookup, NULL);
   EXPECT_EQ(lookup, link);
 
   link->obj_ops.put_ref(link);
   lookup->obj_ops.put_ref(lookup);
 
   /* Remove link created while running test */
-  status = fsal_remove(root_entry, TEST_FILE_LINK);
+  status = fsal_remove(sub_root, TEST_FILE_LINK);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -236,7 +203,7 @@ TEST_F(LinkEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = root_entry->obj_ops.link(test_file, root_entry, fname);
+    status = test_root->obj_ops.link(test_file, test_root, fname);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -249,7 +216,7 @@ TEST_F(LinkEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -265,7 +232,7 @@ TEST_F(LinkEmptyLatencyTest, FSALLINK)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = fsal_link(test_file, root_entry, fname);
+    status = fsal_link(test_file, test_root, fname);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -278,7 +245,7 @@ TEST_F(LinkEmptyLatencyTest, FSALLINK)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -294,7 +261,7 @@ TEST_F(LinkFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = root_entry->obj_ops.link(test_file, root_entry, fname);
+    status = test_root->obj_ops.link(test_file, test_root, fname);
     ASSERT_EQ(status.major, 0) << " failed to link " << fname;
   }
 
@@ -307,7 +274,7 @@ TEST_F(LinkFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -316,22 +283,21 @@ TEST_F(LinkFullLatencyTest, BIG_BYPASS)
 {
   fsal_status_t status;
   char fname[NAMELEN];
-  struct fsal_obj_handle *sub_hdl;
+  struct fsal_obj_handle *sub_root;
+  struct fsal_obj_handle *sub_file;
   struct timespec s_time, e_time;
 
-  sub_hdl = mdcdb_get_sub_handle(root_entry);
-  ASSERT_NE(sub_hdl, nullptr);
-
-  status = nfs_export_get_root_entry(a_export, &sub_hdl);
-  ASSERT_EQ(status.major, 0);
-  ASSERT_NE(sub_hdl, nullptr);
+  sub_root = mdcdb_get_sub_handle(test_root);
+  ASSERT_NE(sub_root, nullptr);
+  sub_file = mdcdb_get_sub_handle(test_file);
+  ASSERT_NE(sub_file, nullptr);
 
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = sub_hdl->obj_ops.link(test_file, sub_hdl, fname);
+    status = sub_root->obj_ops.link(sub_file, sub_root, fname);
     ASSERT_EQ(status.major, 0) << " failed to link " << fname;
   }
 
@@ -344,7 +310,7 @@ TEST_F(LinkFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(sub_root, fname);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -404,7 +370,7 @@ int main(int argc, char *argv[])
     vm_iter = vm.find("debug");
     if (vm_iter != vm.end()) {
       dlevel = ReturnLevelAscii(
-        (char*) vm_iter->second.as<std::string>().c_str());
+	(char*) vm_iter->second.as<std::string>().c_str());
     }
     vm_iter = vm.find("export");
     if (vm_iter != vm.end()) {
@@ -424,7 +390,8 @@ int main(int argc, char *argv[])
     }
 
     ::testing::InitGoogleTest(&argc, argv);
-    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel, session_name);
+    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel,
+					session_name, TEST_ROOT, export_id);
     ::testing::AddGlobalTestEnvironment(gtest::env);
 
     code  = RUN_ALL_TESTS();

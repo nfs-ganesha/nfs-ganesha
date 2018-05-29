@@ -63,49 +63,14 @@ namespace {
   char* event_list = nullptr;
   char* profile_out = nullptr;
 
-  class Reopen2EmptyLatencyTest : public gtest::GaneshaBaseTest {
+  class Reopen2EmptyLatencyTest : public gtest::GaneshaFSALBaseTest {
   protected:
 
     virtual void SetUp() {
       fsal_status_t status;
-      struct attrlist attrs_out;
       bool caller_perm_check = false;
 
-      gtest::GaneshaBaseTest::SetUp();
-
-      a_export = get_gsh_export(export_id);
-      ASSERT_NE(a_export, nullptr);
-
-      status = nfs_export_get_root_entry(a_export, &root_entry);
-      ASSERT_EQ(status.major, 0);
-      ASSERT_NE(root_entry, nullptr);
-
-      /* Ganesha call paths need real or forged context info */
-      memset(&user_credentials, 0, sizeof(struct user_cred));
-      memset(&req_ctx, 0, sizeof(struct req_op_context));
-      memset(&attrs, 0, sizeof(attrs));
-      memset(&exp_perms, 0, sizeof(struct export_perms));
-
-      req_ctx.ctx_export = a_export;
-      req_ctx.fsal_export = a_export->fsal_export;
-      req_ctx.creds = &user_credentials;
-      req_ctx.export_perms = &exp_perms;
-
-      /* stashed in tls */
-      op_ctx = &req_ctx;
-
-      // create root directory for test
-      FSAL_SET_MASK(attrs.valid_mask,
-		    ATTR_MODE | ATTR_OWNER | ATTR_GROUP);
-      attrs.mode = 0777; /* XXX */
-      attrs.owner = 667;
-      attrs.group = 766;
-      fsal_prepare_attrs(&attrs_out, 0);
-
-      status = fsal_create(root_entry, TEST_ROOT, DIRECTORY, &attrs, NULL,
-			   &test_root, &attrs_out);
-      ASSERT_EQ(status.major, 0);
-      ASSERT_NE(test_root, nullptr);
+      gtest::GaneshaFSALBaseTest::SetUp();
 
       test_file_state = op_ctx->fsal_export->exp_ops.alloc_state(
                                                op_ctx->fsal_export,
@@ -117,8 +82,6 @@ namespace {
                       FSAL_O_RDWR, FSAL_UNCHECKED, TEST_FILE, NULL, NULL,
                       &test_file, NULL, &caller_perm_check);
       ASSERT_EQ(status.major, 0);
-
-      fsal_release_attrs(&attrs_out);
     }
 
     virtual void TearDown() {
@@ -135,28 +98,9 @@ namespace {
       test_file->obj_ops.put_ref(test_file);
       test_file = NULL;
 
-      status = test_root->obj_ops.unlink(root_entry, test_root, TEST_ROOT);
-      EXPECT_EQ(0, status.major);
-      test_root->obj_ops.put_ref(test_root);
-      test_root = NULL;
-
-      root_entry->obj_ops.put_ref(root_entry);
-      root_entry = NULL;
-
-      put_gsh_export(a_export);
-      a_export = NULL;
-
-      gtest::GaneshaBaseTest::TearDown();
+      gtest::GaneshaFSALBaseTest::TearDown();
     }
 
-    struct req_op_context req_ctx;
-    struct user_cred user_credentials;
-    struct attrlist attrs;
-    struct export_perms exp_perms;
-
-    struct gsh_export* a_export = nullptr;
-    struct fsal_obj_handle *root_entry = nullptr;
-    struct fsal_obj_handle *test_root = nullptr;
     struct fsal_obj_handle *test_file = nullptr;
     struct state_t* test_file_state;
   };
@@ -334,7 +278,8 @@ int main(int argc, char *argv[])
     }
 
     ::testing::InitGoogleTest(&argc, argv);
-    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel, session_name);
+    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel,
+					session_name, TEST_ROOT, export_id);
     ::testing::AddGlobalTestEnvironment(gtest::env);
 
     code  = RUN_ALL_TESTS();
