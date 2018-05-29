@@ -49,7 +49,7 @@ void admin_halt(void);
 #include "gtest.hh"
 
 #define TEST_ROOT "lookup_latency"
-#define DIR_COUNT 100000
+#define FILE_COUNT 100000
 #define LOOP_COUNT 1000000
 #define NAMELEN 16
 
@@ -163,9 +163,9 @@ namespace {
       LookupEmptyLatencyTest::SetUp();
 
       /* create a bunch of dirents */
-      for (int i = 0; i < DIR_COUNT; ++i) {
+      for (int i = 0; i < FILE_COUNT; ++i) {
 	fsal_prepare_attrs(&attrs_out, 0);
-	sprintf(fname, "d-%08x", i);
+	sprintf(fname, "f-%08x", i);
 
 	status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL, &obj,
 			     &attrs_out);
@@ -185,8 +185,8 @@ namespace {
       fsal_status_t status;
       char fname[NAMELEN];
 
-      for (int i = 0; i < DIR_COUNT; ++i) {
-	sprintf(fname, "d-%08x", i);
+      for (int i = 0; i < FILE_COUNT; ++i) {
+	sprintf(fname, "f-%08x", i);
 
 	status = fsal_remove(test_root, fname);
 	EXPECT_EQ(status.major, 0);
@@ -305,7 +305,7 @@ TEST_F(LookupFullLatencyTest, BIG_SINGLE)
 
   now(&s_time);
 
-  sprintf(fname, "d-%08x", DIR_COUNT / 5);
+  sprintf(fname, "f-%08x", FILE_COUNT / 5);
 
   status = test_root->obj_ops.lookup(test_root, fname, &obj, NULL);
   ASSERT_EQ(status.major, 0) << " failed to lookup " << fname;
@@ -333,7 +333,7 @@ TEST_F(LookupFullLatencyTest, BIG)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "d-%08x", i % DIR_COUNT);
+    sprintf(fname, "f-%08x", i % FILE_COUNT);
 
     status = test_root->obj_ops.lookup(test_root, fname, &obj, NULL);
     ASSERT_EQ(status.major, 0) << " failed to lookup " << fname;
@@ -367,7 +367,7 @@ TEST_F(LookupFullLatencyTest, BIG_BYPASS)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "d-%08x", i % DIR_COUNT);
+    sprintf(fname, "f-%08x", i % FILE_COUNT);
 
     status = sub_hdl->obj_ops.lookup(sub_hdl, fname, &obj, NULL);
     ASSERT_EQ(status.major, 0) << " failed to lookup " << fname;

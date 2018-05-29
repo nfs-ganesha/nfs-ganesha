@@ -47,7 +47,7 @@ void admin_halt(void);
 
 #define TEST_ROOT "nfs4_rename_latency"
 #define TEST_ROOT2 "nfs4_rename_latency2"
-#define DIR_COUNT 100000
+#define FILE_COUNT 100000
 #define LOOP_COUNT 1000000
 #define NAMELEN 16
 
@@ -66,16 +66,16 @@ namespace {
     virtual void SetUp() {
       GaeshaNFS4BaseTest::SetUp();
 
-      create_and_prime_many(DIR_COUNT, objs);
+      create_and_prime_many(FILE_COUNT, objs);
     }
 
     virtual void TearDown() {
-      remove_many(DIR_COUNT, objs);
+      remove_many(FILE_COUNT, objs);
 
       GaeshaNFS4BaseTest::TearDown();
     }
 
-    struct fsal_obj_handle *objs[DIR_COUNT];
+    struct fsal_obj_handle *objs[FILE_COUNT];
   };
 
 } /* namespace */
@@ -144,8 +144,8 @@ TEST_F(RenameFullLatencyTest, BIG_SINGLE)
 
   now(&s_time);
 
-  sprintf(fname, "d-%08x", DIR_COUNT / 5);
-  sprintf(fname2, "r-%08x", DIR_COUNT / 5);
+  sprintf(fname, "f-%08x", FILE_COUNT / 5);
+  sprintf(fname2, "r-%08x", FILE_COUNT / 5);
 
   setup_rename(0, fname, fname2);
 
@@ -181,12 +181,12 @@ TEST_F(RenameFullLatencyTest, BIG)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    int n = i % DIR_COUNT;
+    int n = i % FILE_COUNT;
 
-    sprintf(fname, "d-%08x", n);
+    sprintf(fname, "f-%08x", n);
     sprintf(fname2, "r-%08x", n);
 
-    if ((int)(i / DIR_COUNT) % 2 == 0) {
+    if ((int)(i / FILE_COUNT) % 2 == 0) {
       /* On odd cycles, rename from original */
       setup_rename(0, fname, fname2);
     } else {

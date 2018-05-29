@@ -51,7 +51,7 @@ void admin_halt(void);
 
 #define TEST_ROOT "readlink_latency"
 #define TEST_ROOT_LINK "symlink_to_readlink_latency"
-#define DIR_COUNT 100000
+#define FILE_COUNT 100000
 #define LOOP_COUNT 1000000
 #define NAMELEN 16
 
@@ -166,9 +166,9 @@ namespace {
       ReadlinkEmptyLatencyTest::SetUp();
 
       /* create a bunch of dirents */
-      for (int i = 0; i < DIR_COUNT; ++i) {
+      for (int i = 0; i < FILE_COUNT; ++i) {
 	fsal_prepare_attrs(&attrs_out, 0);
-	sprintf(fname, "d-%08x", i);
+	sprintf(fname, "f-%08x", i);
 
 	status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL, &obj,
 			     &attrs_out);
@@ -184,8 +184,8 @@ namespace {
       fsal_status_t status;
       char fname[NAMELEN];
 
-      for (int i = 0; i < DIR_COUNT; ++i) {
-	sprintf(fname, "d-%08x", i);
+      for (int i = 0; i < FILE_COUNT; ++i) {
+	sprintf(fname, "f-%08x", i);
 
 	status = fsal_remove(test_root, fname);
 	EXPECT_EQ(status.major, 0);

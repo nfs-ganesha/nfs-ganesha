@@ -51,7 +51,7 @@ void admin_halt(void);
 #define TEST_ROOT "test_root"
 #define TEST_FILE "original_name"
 #define TEST_FILE_NEW "new_name"
-#define DIR_COUNT 100000
+#define FILE_COUNT 100000
 #define LOOP_COUNT 1000000
 #define NAMELEN 16
 
@@ -149,9 +149,9 @@ namespace {
       RenameEmptyLatencyTest::SetUp();
 
       /* create a bunch of dirents */
-      for (int i = 0; i < DIR_COUNT; ++i) {
+      for (int i = 0; i < FILE_COUNT; ++i) {
         fsal_prepare_attrs(&attrs_out, 0);
-        sprintf(fname, "file-%08x", i);
+        sprintf(fname, "f-%08x", i);
 
         status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL, &obj,
                              &attrs_out);
@@ -167,8 +167,8 @@ namespace {
       fsal_status_t status;
       char fname[NAMELEN];
 
-      for (int i = 0; i < DIR_COUNT; ++i) {
-        sprintf(fname, "file-%08x", i);
+      for (int i = 0; i < FILE_COUNT; ++i) {
+        sprintf(fname, "f-%08x", i);
 
         status = fsal_remove(test_root, fname);
         EXPECT_EQ(status.major, 0);
@@ -257,7 +257,7 @@ TEST_F(RenameEmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname_new, "d-%08x", i);
+    sprintf(fname_new, "nf-%08x", i);
 
     status = test_root->obj_ops.rename(obj, test_root, fname, test_root,
                     fname_new);
@@ -294,7 +294,7 @@ TEST_F(RenameEmptyLatencyTest, FSALRENAME)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname_new, "d-%08x", i);
+    sprintf(fname_new, "nf-%08x", i);
 
     status = fsal_rename(test_root, fname, test_root, fname_new);
     EXPECT_EQ(status.major, 0);
@@ -330,7 +330,7 @@ TEST_F(RenameFullLatencyTest, BIG)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname_new, "d-%08x", i);
+    sprintf(fname_new, "nf-%08x", i);
 
     status = test_root->obj_ops.rename(obj, test_root, fname, test_root,
                     fname_new);
@@ -375,7 +375,7 @@ TEST_F(RenameFullLatencyTest, BIG_BYPASS)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname_new, "d-%08x", i);
+    sprintf(fname_new, "nf-%08x", i);
 
     status = sub_hdl->obj_ops.rename(sub_hdl_obj, sub_hdl, fname, sub_hdl, fname_new);
     ASSERT_EQ(status.major, 0) << " failed to rename " << fname;

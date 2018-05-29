@@ -51,7 +51,7 @@ void admin_halt(void);
 #define TEST_ROOT "symlink_latency"
 #define TEST_ROOT_LINK "symlink_to_symlink_latency"
 #define TEST_SYMLINK "test_symlink"
-#define DIR_COUNT 100000
+#define FILE_COUNT 100000
 #define LOOP_COUNT 1000000
 #define NAMELEN 16
 
@@ -166,9 +166,9 @@ namespace {
       SymlinkEmptyLatencyTest::SetUp();
 
       /* create a bunch of dirents */
-      for (int i = 0; i < DIR_COUNT; ++i) {
+      for (int i = 0; i < FILE_COUNT; ++i) {
         fsal_prepare_attrs(&attrs_out, 0);
-        sprintf(fname, "file-%08x", i);
+        sprintf(fname, "f-%08x", i);
 
         status = fsal_create(root_entry, fname, REGULAR_FILE, &attrs, NULL, &obj,
                              &attrs_out);
@@ -184,8 +184,8 @@ namespace {
       fsal_status_t status;
       char fname[NAMELEN];
 
-      for (int i = 0; i < DIR_COUNT; ++i) {
-        sprintf(fname, "file-%08x", i);
+      for (int i = 0; i < FILE_COUNT; ++i) {
+        sprintf(fname, "f-%08x", i);
 
 	status = fsal_remove(root_entry, fname);
         EXPECT_EQ(status.major, 0);
@@ -275,7 +275,7 @@ TEST_F(SymlinkEmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "d-%08x", i);
+    sprintf(fname, "s-%08x", i);
 
     status = root_entry->obj_ops.symlink(root_entry, fname, TEST_ROOT, &attrs,
 		    &obj, NULL);
@@ -290,7 +290,7 @@ TEST_F(SymlinkEmptyLatencyTest, LOOP)
 
  /* Remove symlink created while running test */
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "d-%08x", i);
+    sprintf(fname, "s-%08x", i);
 
     status = fsal_remove(root_entry, fname);
     ASSERT_EQ(status.major, 0);
@@ -307,7 +307,7 @@ TEST_F(SymlinkEmptyLatencyTest, FSALCREATE)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "d-%08x", i);
+    sprintf(fname, "s-%08x", i);
 
     status = fsal_create(root_entry, fname, SYMBOLIC_LINK, &attrs, TEST_ROOT,
 		    &obj, NULL);
@@ -322,7 +322,7 @@ TEST_F(SymlinkEmptyLatencyTest, FSALCREATE)
 
   /* Remove symlink created while running test */
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "d-%08x", i);
+    sprintf(fname, "s-%08x", i);
 
     status = fsal_remove(root_entry, fname);
     ASSERT_EQ(status.major, 0);
@@ -339,7 +339,7 @@ TEST_F(SymlinkFullLatencyTest, BIG)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "d-%08x", i);
+    sprintf(fname, "s-%08x", i);
 
     status = root_entry->obj_ops.symlink(root_entry, fname, TEST_ROOT, &attrs,
 		    &obj, NULL);
@@ -354,7 +354,7 @@ TEST_F(SymlinkFullLatencyTest, BIG)
 
   /* Remove symlink created while running test */
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "d-%08x", i);
+    sprintf(fname, "s-%08x", i);
 
     status = fsal_remove(root_entry, fname);
     ASSERT_EQ(status.major, 0);
@@ -378,7 +378,7 @@ TEST_F(SymlinkFullLatencyTest, BIG_BYPASS)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "d-%08x", i);
+    sprintf(fname, "s-%08x", i);
 
     status = sub_hdl->obj_ops.symlink(sub_hdl, fname, TEST_ROOT, &attrs,
 		    &obj, NULL);
@@ -393,7 +393,7 @@ TEST_F(SymlinkFullLatencyTest, BIG_BYPASS)
 
   /* Remove symlink created while running test */
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "d-%08x", i);
+    sprintf(fname, "s-%08x", i);
 
     status = fsal_remove(root_entry, fname);
     ASSERT_EQ(status.major, 0);

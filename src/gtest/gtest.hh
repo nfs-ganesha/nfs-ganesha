@@ -279,7 +279,7 @@ namespace gtest {
       /* create a bunch of dirents */
       for (int i = 0; i < count; ++i) {
         fsal_prepare_attrs(&attrs_out, 0);
-        sprintf(fname, "d-%08x", i);
+        sprintf(fname, "f-%08x", i);
 
         status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL,
                              &obj, &attrs_out);
@@ -304,7 +304,7 @@ namespace gtest {
       char fname[NAMELEN];
 
       for (int i = 0; i < count; ++i) {
-        sprintf(fname, "d-%08x", i);
+        sprintf(fname, "f-%08x", i);
 
 	if (objs != NULL)
           objs[i]->obj_ops.put_ref(objs[i]);

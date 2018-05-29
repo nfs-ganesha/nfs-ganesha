@@ -50,7 +50,7 @@ void admin_halt(void);
 
 #define TEST_ROOT "mknode_latency"
 #define TEST_NODE "test_node"
-#define DIR_COUNT 100000
+#define FILE_COUNT 100000
 #define LOOP_COUNT 1000000
 #define NAMELEN 16
 
@@ -148,9 +148,9 @@ namespace {
       MknodeEmptyLatencyTest::SetUp();
 
       /* create a bunch of dirents */
-      for (int i = 0; i < DIR_COUNT; ++i) {
+      for (int i = 0; i < FILE_COUNT; ++i) {
         fsal_prepare_attrs(&attrs_out, 0);
-        sprintf(fname, "file-%08x", i);
+        sprintf(fname, "f-%08x", i);
 
         status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL,
                    &obj, &attrs_out);
@@ -166,8 +166,8 @@ namespace {
       fsal_status_t status;
       char fname[NAMELEN];
 
-      for (int i = 0; i < DIR_COUNT; ++i) {
-        sprintf(fname, "file-%08x", i);
+      for (int i = 0; i < FILE_COUNT; ++i) {
+        sprintf(fname, "f-%08x", i);
 
         status = fsal_remove(test_root, fname);
         EXPECT_EQ(status.major, 0);
