@@ -38,7 +38,6 @@ extern "C" {
 /* Manually forward this, as 9P is not C++ safe */
 void admin_halt(void);
 /* Ganesha headers */
-#include "nfs_lib.h"
 #include "export_mgr.h"
 #include "nfs_exports.h"
 #include "sal_data.h"

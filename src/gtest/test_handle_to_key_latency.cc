@@ -29,7 +29,6 @@
 #include <chrono>
 #include <thread>
 #include <random>
-#include "gtest/gtest.h"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/exception.hpp>
 #include <boost/program_options.hpp>
@@ -38,7 +37,6 @@ extern "C" {
 /* Manually forward this, as 9P is not C++ safe */
 void admin_halt(void);
 /* Ganesha headers */
-#include "nfs_lib.h"
 #include "export_mgr.h"
 #include "nfs_exports.h"
 #include "sal_data.h"
@@ -48,8 +46,10 @@ void admin_halt(void);
 #include "../FSAL/Stackable_FSALs/FSAL_MDCACHE/mdcache_debug.h"
 }
 
+#include "gtest.hh"
+
 #define TEST_ROOT "handle_to_key_latency"
-#define TEST_FILE "test_file"
+#define TEST_FILE "handle_to_key_latency_file"
 #define TEST_NODE "test_node"
 #define LOOP_COUNT 1000000
 #define NAMELEN 16
@@ -60,42 +60,17 @@ namespace {
   char* lpath = nullptr;
   int dlevel = -1;
   uint16_t export_id = 77;
+  char* event_list = nullptr;
+  char* profile_out = nullptr;
 
-  int ganesha_server() {
-    /* XXX */
-    return nfs_libmain(
-      ganesha_conf,
-      lpath,
-      dlevel
-      );
-  }
-
-  class Environment : public ::testing::Environment {
-  public:
-    Environment() : ganesha(ganesha_server) {
-      using namespace std::literals;
-      std::this_thread::sleep_for(5s);
-    }
-
-    virtual ~Environment() {
-      admin_halt();
-      ganesha.join();
-    }
-
-    virtual void SetUp() { }
-
-    virtual void TearDown() {
-    }
-
-    std::thread ganesha;
-  };
-
-  class HandleToKeyEmptyLatencyTest : public ::testing::Test {
+  class HandleToKeyEmptyLatencyTest : public gtest::GaneshaBaseTest {
   protected:
 
     virtual void SetUp() {
       fsal_status_t status;
       struct attrlist attrs_out;
+
+      gtest::GaneshaBaseTest::SetUp();
 
       a_export = get_gsh_export(export_id);
       ASSERT_NE(a_export, nullptr);
@@ -157,6 +132,8 @@ namespace {
 
       put_gsh_export(a_export);
       a_export = NULL;
+
+      gtest::GaneshaBaseTest::TearDown();
     }
 
     struct req_op_context req_ctx;
@@ -254,36 +231,34 @@ TEST_F(HandleToKeyEmptyLatencyTest, LOOP_BYPASS)
 int main(int argc, char *argv[])
 {
   int code = 0;
-
+  char* session_name = NULL;
   using namespace std;
   using namespace std::literals;
   namespace po = boost::program_options;
-
   po::options_description opts("program options");
   po::variables_map vm;
-
   try {
-
     opts.add_options()
       ("config", po::value<string>(),
-        "path to Ganesha conf file")
-
+       "path to Ganesha conf file")
       ("logfile", po::value<string>(),
-        "log to the provided file path")
-
+       "log to the provided file path")
       ("export", po::value<uint16_t>(),
-        "id of export on which to operate (must exist)")
-
+       "id of export on which to operate (must exist)")
       ("debug", po::value<string>(),
-        "ganesha debug level")
+       "ganesha debug level")
+      ("session", po::value<string>(),
+	"LTTng session name")
+      ("event-list", po::value<string>(),
+	"LTTng event list, comma separated")
+      ("profile", po::value<string>(),
+	"Enable profiling and set output file.")
       ;
-
     po::variables_map::iterator vm_iter;
     po::command_line_parser parser{argc, argv};
     parser.options(opts).allow_unregistered();
     po::store(parser.run(), vm);
     po::notify(vm);
-
     // use config vars--leaves them on the stack
     vm_iter = vm.find("config");
     if (vm_iter != vm.end()) {
@@ -296,26 +271,34 @@ int main(int argc, char *argv[])
     vm_iter = vm.find("debug");
     if (vm_iter != vm.end()) {
       dlevel = ReturnLevelAscii(
-        (char*) vm_iter->second.as<std::string>().c_str());
+	(char*) vm_iter->second.as<std::string>().c_str());
     }
     vm_iter = vm.find("export");
     if (vm_iter != vm.end()) {
       export_id = vm_iter->second.as<uint16_t>();
     }
-
+    vm_iter = vm.find("session");
+    if (vm_iter != vm.end()) {
+      session_name = (char*) vm_iter->second.as<std::string>().c_str();
+    }
+    vm_iter = vm.find("event-list");
+    if (vm_iter != vm.end()) {
+      event_list = (char*) vm_iter->second.as<std::string>().c_str();
+    }
+    vm_iter = vm.find("profile");
+    if (vm_iter != vm.end()) {
+      profile_out = (char*) vm_iter->second.as<std::string>().c_str();
+    }
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::AddGlobalTestEnvironment(new Environment);
-
+    gtest::env = new gtest::Environment(ganesha_conf, lpath, dlevel, session_name);
+    ::testing::AddGlobalTestEnvironment(gtest::env);
     code  = RUN_ALL_TESTS();
   }
-
   catch(po::error& e) {
     cout << "Error parsing opts " << e.what() << endl;
   }
-
   catch(...) {
     cout << "Unhandled exception in main()" << endl;
   }
-
   return code;
 }
