@@ -78,6 +78,108 @@ mem_i_cmpf(const struct avltree_node *lhs,
 }
 
 /**
+ * @brief Clean up and free an object handle
+ *
+ * @param[in] obj_hdl	Handle to release
+ */
+static void mem_cleanup(struct mem_fsal_obj_handle *myself)
+{
+	struct mem_fsal_export *mfe;
+
+	mfe = myself->mfo_exp;
+
+	if (myself->is_export || !glist_empty(&myself->dirents)) {
+		/* Entry is still live: it's either an export, or in a dir.
+		 * This is likely a bug. */
+#ifdef USE_LTTNG
+		tracepoint(fsalmem, mem_inuse, __func__, __LINE__,
+			   &myself->obj_handle, myself->attrs.numlinks,
+			   myself->is_export);
+#endif
+		LogDebug(COMPONENT_FSAL,
+			 "Releasing live hdl=%p, name=%s, don't deconstruct it",
+			 myself, myself->m_name);
+		return;
+	}
+
+	fsal_obj_handle_fini(&myself->obj_handle);
+
+	LogDebug(COMPONENT_FSAL,
+		 "Releasing obj_hdl=%p, myself=%p, name=%s",
+		 &myself->obj_handle, myself, myself->m_name);
+
+	switch (myself->obj_handle.type) {
+	case DIRECTORY:
+		/* Empty directory */
+		mem_clean_all_dirents(myself);
+		break;
+	case REGULAR_FILE:
+		break;
+	case SYMBOLIC_LINK:
+		gsh_free(myself->mh_symlink.link_contents);
+		break;
+	case SOCKET_FILE:
+	case CHARACTER_FILE:
+	case BLOCK_FILE:
+	case FIFO_FILE:
+		break;
+	default:
+		break;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&mfe->mfe_exp_lock);
+	mem_free_handle(myself);
+	PTHREAD_RWLOCK_unlock(&mfe->mfe_exp_lock);
+}
+
+#define mem_int_get_ref(myself) _mem_int_get_ref(myself, __func__, __LINE__)
+/**
+ * @brief Get a ref for a handle
+ *
+ * @param[in] myself	Handle to ref
+ * @param[in] func	Function getting ref
+ * @param[in] line	Line getting ref
+ */
+static void _mem_int_get_ref(struct mem_fsal_obj_handle *myself,
+			     const char *func, int line)
+{
+#ifdef USE_LTTNG
+	int32_t refcount =
+#endif
+		atomic_inc_int32_t(&myself->refcount);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_get_ref, func, line, &myself->obj_handle,
+		   myself->m_name, refcount);
+#endif
+}
+
+#define mem_int_put_ref(myself) _mem_int_put_ref(myself, __func__, __LINE__)
+/**
+ * @brief Put a ref for a handle
+ *
+ * If this is the last ref, clean up and free the handle
+ *
+ * @param[in] myself	Handle to ref
+ * @param[in] func	Function getting ref
+ * @param[in] line	Line getting ref
+ */
+static void _mem_int_put_ref(struct mem_fsal_obj_handle *myself,
+			     const char *func, int line)
+{
+	int32_t refcount = atomic_dec_int32_t(&myself->refcount);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_put_ref, func, line, &myself->obj_handle,
+		   myself->m_name, refcount);
+#endif
+
+	if (refcount == 0) {
+		mem_cleanup(myself);
+	}
+}
+
+/**
  * @brief Construct the fs opaque part of a mem nfsv4 handle
  *
  * Given the components of a mem nfsv4 handle, the nfsv4 handle is
@@ -230,7 +332,7 @@ static void mem_remove_dirent_locked(struct mem_fsal_obj_handle *parent,
 	gsh_free(dirent);
 
 	if (release && empty)
-		mem_release(&child->obj_handle);
+		mem_cleanup(child);
 }
 
 /**
@@ -268,7 +370,7 @@ void mem_clean_export(struct mem_fsal_obj_handle *root)
 	struct mem_dirent *dirent;
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_inuse, __func__, __LINE__, root,
+	tracepoint(fsalmem, mem_inuse, __func__, __LINE__, &root->obj_handle,
 		   root->attrs.numlinks, root->is_export);
 #endif
 	while ((node = avltree_first(&root->mh_dir.avl_name))) {
@@ -553,6 +655,9 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 	hdl->attrs.valid_mask = ATTRS_POSIX;
 	hdl->attrs.supported = ATTRS_POSIX;
 
+	/* Initial ref */
+	hdl->refcount = 1;
+
 	fsal_obj_handle_init(&hdl->obj_handle, &mfe->export, type);
 	mem_handle_ops_init(&hdl->obj_handle.obj_ops);
 
@@ -564,7 +669,7 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		hdl->is_export = true;
 	}
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_alloc, func, line, hdl, name);
+	tracepoint(fsalmem, mem_alloc, func, line, &hdl->obj_handle, name);
 #endif
 	return hdl;
 }
@@ -581,7 +686,7 @@ static fsal_status_t _mem_int_lookup(struct mem_fsal_obj_handle *dir,
 	LogFullDebug(COMPONENT_FSAL, "Lookup %s in %p", path, dir);
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_lookup, func, line, dir, path);
+	tracepoint(fsalmem, mem_lookup, func, line, &dir->obj_handle, path);
 #endif
 	if (strcmp(path, "..") == 0) {
 		/* lookup parent - lookupp */
@@ -606,7 +711,8 @@ static fsal_status_t _mem_int_lookup(struct mem_fsal_obj_handle *dir,
 	*entry = dirent->hdl;
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_lookup, func, line, *entry, (*entry)->m_name);
+	tracepoint(fsalmem, mem_lookup, func, line, &(*entry)->obj_handle,
+		   (*entry)->m_name);
 #endif
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -699,6 +805,7 @@ static fsal_status_t mem_lookup(struct fsal_obj_handle *parent,
 	}
 
 	*handle = &hdl->obj_handle;
+	mem_int_get_ref(hdl);
 
 out:
 	if (op_ctx->fsal_private != parent)
@@ -748,6 +855,10 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 
 	*eof = true;
 
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_readdir, __func__, __LINE__, dir_hdl,
+		   myself->m_name, seekloc);
+#endif
 	LogFullDebug(COMPONENT_FSAL, "hdl=%p, name=%s",
 		     myself, myself->m_name);
 
@@ -770,6 +881,7 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 
 		fsal_prepare_attrs(&attrs, attrmask);
 		fsal_copy_attrs(&attrs, &dirent->hdl->attrs, false);
+		mem_int_get_ref(dirent->hdl);
 
 		cb_rc = cb(dirent->d_name, &dirent->hdl->obj_handle, &attrs,
 			   dir_state, dirent->d_index + 1);
@@ -819,6 +931,11 @@ static fsal_status_t mem_mkdir(struct fsal_obj_handle *dir_hdl,
 		container_of(dir_hdl, struct mem_fsal_obj_handle, obj_handle);
 
 	LogDebug(COMPONENT_FSAL, "mkdir %s", name);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_mkdir, __func__, __LINE__, dir_hdl,
+		   parent->m_name, name);
+#endif
 
 	return mem_create_obj(parent, DIRECTORY, name, attrs_in, new_obj,
 			      attrs_out);
@@ -953,9 +1070,9 @@ static fsal_status_t mem_getattrs(struct fsal_obj_handle *obj_hdl,
 	}
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_getattrs, __func__, __LINE__, myself,
-			   myself->m_name, myself->attrs.filesize,
-			   myself->attrs.numlinks, myself->attrs.change);
+	tracepoint(fsalmem, mem_getattrs, __func__, __LINE__, obj_hdl,
+		   myself->m_name, myself->attrs.filesize,
+		   myself->attrs.numlinks, myself->attrs.change);
 #endif
 	LogFullDebug(COMPONENT_FSAL,
 		     "hdl=%p, name=%s numlinks %"PRIu32,
@@ -1007,9 +1124,9 @@ fsal_status_t mem_setattr2(struct fsal_obj_handle *obj_hdl,
 	mem_copy_attrs_mask(attrs_set, &myself->attrs);
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_setattrs, __func__, __LINE__, myself,
-			   myself->m_name, myself->attrs.filesize,
-			   myself->attrs.numlinks, myself->attrs.change);
+	tracepoint(fsalmem, mem_setattrs, __func__, __LINE__, obj_hdl,
+		   myself->m_name, myself->attrs.filesize,
+		   myself->attrs.numlinks, myself->attrs.change);
 #endif
 	return fsalstat(ERR_FSAL_NO_ERROR, EINVAL);
 }
@@ -1048,9 +1165,8 @@ fsal_status_t mem_link(struct fsal_obj_handle *obj_hdl,
 	myself->attrs.numlinks++;
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_link, __func__, __LINE__, dir,
-		   dir->m_name, myself, myself->m_name, name,
-		   myself->attrs.numlinks);
+	tracepoint(fsalmem, mem_link, __func__, __LINE__, dir_hdl, dir->m_name,
+		   obj_hdl, myself->m_name, name, myself->attrs.numlinks);
 #endif
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1079,6 +1195,12 @@ static fsal_status_t mem_unlink(struct fsal_obj_handle *dir_hdl,
 	myself = container_of(obj_hdl,
 			      struct mem_fsal_obj_handle,
 			      obj_handle);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_unlink, __func__, __LINE__, dir_hdl,
+		   parent->m_name, obj_hdl, myself->m_name,
+		   myself->attrs.numlinks);
+#endif
 
 	PTHREAD_RWLOCK_wrlock(&dir_hdl->obj_lock);
 
@@ -1116,17 +1238,14 @@ static fsal_status_t mem_unlink(struct fsal_obj_handle *dir_hdl,
 
 	/* Remove the dirent from the parent*/
 	dirent = mem_dirent_lookup(parent, name);
-	if (dirent)
-		mem_remove_dirent_locked(parent, dirent, false);
+	if (dirent) {
+		int32_t refcount = atomic_fetch_int32_t(&myself->refcount);
+
+		mem_remove_dirent_locked(parent, dirent, (refcount == 0));
+	}
 
 unlock:
 	PTHREAD_RWLOCK_unlock(&dir_hdl->obj_lock);
-
-#ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_unlink, __func__, __LINE__, parent,
-		   parent->m_name, myself, myself->m_name,
-		   myself->attrs.numlinks);
-#endif
 
 	return status;
 }
@@ -1223,7 +1342,7 @@ static fsal_status_t mem_rename(struct fsal_obj_handle *obj_hdl,
 	}
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_rename, __func__, __LINE__, mem_obj,
+	tracepoint(fsalmem, mem_rename, __func__, __LINE__, obj_hdl,
 		   mem_olddir->m_name, old_name, mem_newdir->m_name, new_name);
 #endif
 
@@ -1304,7 +1423,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 	if (name == NULL) {
 		/* This is an open by handle */
 #ifdef USE_LTTNG
-		tracepoint(fsalmem, mem_open, __func__, __LINE__, myself,
+		tracepoint(fsalmem, mem_open, __func__, __LINE__, obj_hdl,
 			   myself->m_name, state, truncated, setattrs);
 #endif
 		/* Need a lock to protect the FD */
@@ -1421,7 +1540,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 		created = true;
 	}
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_open, __func__, __LINE__, hdl,
+	tracepoint(fsalmem, mem_open, __func__, __LINE__, &hdl->obj_handle,
 		   hdl->m_name, state, truncated, setattrs);
 #endif
 
@@ -1509,7 +1628,7 @@ fsal_status_t mem_reopen2(struct fsal_obj_handle *obj_hdl,
 	fsal_openflags_t old_openflags;
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_open, __func__, __LINE__, myself,
+	tracepoint(fsalmem, mem_open, __func__, __LINE__, obj_hdl,
 			   myself->m_name, state, openflags & FSAL_O_TRUNC,
 			   false);
 #endif
@@ -1625,7 +1744,7 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 	}
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_read, __func__, __LINE__, myself,
+	tracepoint(fsalmem, mem_read, __func__, __LINE__, obj_hdl,
 		   myself->m_name, read_arg->state, myself->attrs.filesize,
 		   myself->attrs.spaceused);
 #endif
@@ -1718,7 +1837,7 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 	}
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_write, __func__, __LINE__, myself,
+	tracepoint(fsalmem, mem_write, __func__, __LINE__, obj_hdl,
 			   myself->m_name, write_arg->state,
 			   myself->attrs.filesize, myself->attrs.spaceused);
 #endif
@@ -1859,7 +1978,7 @@ fsal_status_t mem_close2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 #ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_close, __func__, __LINE__, myself,
+	tracepoint(fsalmem, mem_close, __func__, __LINE__, obj_hdl,
 		   myself->m_name, state);
 #endif
 
@@ -1960,6 +2079,12 @@ static void mem_handle_to_key(struct fsal_obj_handle *obj_hdl,
  */
 static void mem_get_ref(struct fsal_obj_handle *obj_hdl)
 {
+	struct mem_fsal_obj_handle *myself;
+
+	myself = container_of(obj_hdl,
+			      struct mem_fsal_obj_handle,
+			      obj_handle);
+	mem_int_get_ref(myself);
 }
 
 /**
@@ -1971,6 +2096,12 @@ static void mem_get_ref(struct fsal_obj_handle *obj_hdl)
  */
 static void mem_put_ref(struct fsal_obj_handle *obj_hdl)
 {
+	struct mem_fsal_obj_handle *myself;
+
+	myself = container_of(obj_hdl,
+			      struct mem_fsal_obj_handle,
+			      obj_handle);
+	mem_int_put_ref(myself);
 }
 
 /**
@@ -1980,60 +2111,35 @@ static void mem_put_ref(struct fsal_obj_handle *obj_hdl)
  */
 static void mem_release(struct fsal_obj_handle *obj_hdl)
 {
-	struct mem_fsal_export *mfe;
 	struct mem_fsal_obj_handle *myself;
 
 	myself = container_of(obj_hdl,
 			      struct mem_fsal_obj_handle,
 			      obj_handle);
-	mfe = myself->mfo_exp;
+	mem_int_put_ref(myself);
+}
 
-	if (myself->is_export || !glist_empty(&myself->dirents)) {
-		/* Entry is still live: it's either an export, or in a dir */
-#ifdef USE_LTTNG
-		tracepoint(fsalmem, mem_inuse, __func__, __LINE__, myself,
-			   myself->attrs.numlinks, myself->is_export);
-#endif
-		LogDebug(COMPONENT_FSAL,
-			 "Releasing live hdl=%p, name=%s, don't deconstruct it",
-			 myself, myself->m_name);
-		return;
-	}
-
-	fsal_obj_handle_fini(obj_hdl);
-
-	LogDebug(COMPONENT_FSAL,
-		 "Releasing obj_hdl=%p, myself=%p, name=%s",
-		 obj_hdl, myself, myself->m_name);
-
-	switch (obj_hdl->type) {
-	case DIRECTORY:
-		/* Empty directory */
-		mem_clean_all_dirents(myself);
-		break;
-	case REGULAR_FILE:
-		break;
-	case SYMBOLIC_LINK:
-		gsh_free(myself->mh_symlink.link_contents);
-		break;
-	case SOCKET_FILE:
-	case CHARACTER_FILE:
-	case BLOCK_FILE:
-	case FIFO_FILE:
-		break;
-	default:
-		break;
-	}
-
-	PTHREAD_RWLOCK_wrlock(&mfe->mfe_exp_lock);
-	mem_free_handle(myself);
-	PTHREAD_RWLOCK_unlock(&mfe->mfe_exp_lock);
+/**
+ * @brief Merge two handles
+ *
+ * For a failed create, we need to merge the two handles.  If the handles are
+ * the same, we need to ref the handle, so that the following release doesn't
+ * free it.
+ *
+ * @param[in] old_hdl	Handle to merge
+ * @param[in] new_hdl	Handle to merge
+ */
+static fsal_status_t mem_merge(struct fsal_obj_handle *old_hdl,
+			       struct fsal_obj_handle *new_hdl)
+{
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 void mem_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->get_ref = mem_get_ref,
 	ops->put_ref = mem_put_ref,
+	ops->merge = mem_merge,
 	ops->release = mem_release;
 	ops->lookup = mem_lookup;
 	ops->readdir = mem_readdir;

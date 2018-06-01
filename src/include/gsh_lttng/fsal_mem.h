@@ -107,13 +107,13 @@ TRACEPOINT_EVENT(
 		int, line,
 		void *, obj,
 		int, numlinks,
-		int, inavl),
+		int, is_export),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, obj, obj)
 		ctf_integer(int, numlinks, numlinks)
-		ctf_integer(int, inavl, inavl)
+		ctf_integer(int, is_export, is_export)
 	)
 )
 
@@ -507,6 +507,135 @@ TRACEPOINT_EVENT(
 TRACEPOINT_LOGLEVEL(
 	fsalmem,
 	mem_unlink,
+	TRACE_INFO)
+
+
+/**
+ * @brief Trace a get_ref
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] olddir	Name of old directory
+ * @param[in] oldname	Name of old file
+ * @param[in] newdir	Name of new directory
+ * @param[in] newname	Name of new file
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_get_ref,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, file,
+		const char *, filename,
+		uint32_t, refcount),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, file, file)
+		ctf_string(filename, filename)
+		ctf_integer(uint32_t, refcount, refcount)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_get_ref,
+	TRACE_INFO)
+
+/**
+ * @brief Trace a put_ref
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] olddir	Name of old directory
+ * @param[in] oldname	Name of old file
+ * @param[in] newdir	Name of new directory
+ * @param[in] newname	Name of new file
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_put_ref,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, file,
+		const char *, filename,
+		uint32_t, refcount),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, file, file)
+		ctf_string(filename, filename)
+		ctf_integer(uint32_t, refcount, refcount)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_put_ref,
+	TRACE_INFO)
+
+
+/**
+ * @brief Trace a readdir
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] olddir	Name of old directory
+ * @param[in] oldname	Name of old file
+ * @param[in] newdir	Name of new directory
+ * @param[in] newname	Name of new file
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_readdir,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, dir,
+		const char *, dirname,
+		uint64_t, whence),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, dir, dir)
+		ctf_string(dirname, dirname)
+		ctf_integer(uint64_t, whence, whence)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_readdir,
+	TRACE_INFO)
+
+/**
+ * @brief Trace a mkdir
+ *
+ * @param[in] function	Name of function
+ * @param[in] line	Line number of call
+ * @param[in] dir	Directory handle
+ * @param[in] dirname	Name of directory
+ * @param[in] newname	Name of new directory
+ */
+TRACEPOINT_EVENT(
+	fsalmem,
+	mem_mkdir,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, dir,
+		const char *, dirname,
+		const char *, newname),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, dir, dir)
+		ctf_string(dirname, dirname)
+		ctf_string(newname, newname)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	fsalmem,
+	mem_mkdir,
 	TRACE_INFO)
 
 
