@@ -49,7 +49,7 @@
 /**
  * @brief Release an object
  *
- * This function looks up an object by name in a directory.
+ * This function destroys the object referred to by the given handle
  *
  * @param[in] obj_pub The object to release
  *
