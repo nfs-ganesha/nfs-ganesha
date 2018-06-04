@@ -164,6 +164,20 @@ namespace gtest {
       ops[pos].nfs_argop4_u.oprename.newname.utf8string_val = nullptr;
     }
 
+    void setup_link(int pos, const char *newname) {
+      gsh_free(ops[pos].nfs_argop4_u.oplink.newname.utf8string_val);
+      ops[pos].argop = NFS4_OP_LINK;
+      ops[pos].nfs_argop4_u.oplink.newname.utf8string_len = strlen(newname);
+      ops[pos].nfs_argop4_u.oplink.newname.utf8string_val =
+                                                          gsh_strdup(newname);
+    }
+
+    void cleanup_link(int pos) {
+      gsh_free(ops[pos].nfs_argop4_u.oplink.newname.utf8string_val);
+      ops[pos].nfs_argop4_u.oplink.newname.utf8string_len = 0;
+      ops[pos].nfs_argop4_u.oplink.newname.utf8string_val = nullptr;
+    }
+
     struct compound_data data;
     struct nfs_argop4 *ops;
     nfs_arg_t arg;
