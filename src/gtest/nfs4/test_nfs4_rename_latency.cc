@@ -67,6 +67,8 @@ namespace {
       GaeshaNFS4BaseTest::SetUp();
 
       create_and_prime_many(FILE_COUNT, objs);
+
+      set_saved_export();
     }
 
     virtual void TearDown() {
