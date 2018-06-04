@@ -22,11 +22,13 @@ TRACEPOINT_EVENT(
 	TP_ARGS(const char *, function,
 		int, line,
 		void *, entry,
+		void *, sub_handle,
 		int32_t, refcnt),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, entry, entry)
+		ctf_integer_hex(void *, sub_handle, sub_handle)
 		ctf_integer(int32_t, refcnt, refcnt)
 	)
 )
@@ -50,11 +52,13 @@ TRACEPOINT_EVENT(
 	TP_ARGS(const char *, function,
 		int, line,
 		void *, entry,
+		void *, sub_handle,
 		int32_t, refcnt),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, entry, entry)
+		ctf_integer_hex(void *, sub_handle, sub_handle)
 		ctf_integer(int32_t, refcnt, refcnt)
 	)
 )
@@ -272,12 +276,12 @@ TRACEPOINT_EVENT(
 	TP_ARGS(const char *, function,
 		int, line,
 		void *, entry,
-		int32_t, refcnt),
+		void *, sub_handle),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
+		ctf_integer_hex(void *, sub_handle, sub_handle)
 	)
 )
 
@@ -287,7 +291,7 @@ TRACEPOINT_LOGLEVEL(
 	TRACE_INFO)
 
 /**
- * @brief Trace readdir
+ * @brief Trace readdir begin
  *
  * @param[in] entry	Address of entry
  */
@@ -296,19 +300,44 @@ TRACEPOINT_EVENT(
 	mdc_readdir,
 	TP_ARGS(const char *, function,
 		int, line,
-		void *, entry,
-		int32_t, refcnt),
+		void *, entry),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
 	)
 )
 
 TRACEPOINT_LOGLEVEL(
 	mdcache,
 	mdc_readdir,
+	TRACE_INFO)
+
+/**
+ * @brief Trace readdir callback
+ *
+ * @param[in] entry	Address of entry
+ */
+TRACEPOINT_EVENT(
+	mdcache,
+	mdc_readdir_cb,
+	TP_ARGS(const char *, function,
+		int, line,
+		void *, entry,
+		void *, sub_handle,
+		int32_t, refcnt),
+	TP_FIELDS(
+		ctf_string(function, function)
+		ctf_integer(int, line, line)
+		ctf_integer_hex(void *, entry, entry)
+		ctf_integer_hex(void *, sub_handle, sub_handle)
+		ctf_integer(int32_t, refcnt, refcnt)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	mdc_readdir_cb,
 	TRACE_INFO)
 
 /**
