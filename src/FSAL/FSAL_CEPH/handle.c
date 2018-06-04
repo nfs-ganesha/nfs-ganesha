@@ -649,8 +649,15 @@ static fsal_status_t ceph_fsal_rename(struct fsal_obj_handle *obj_hdl,
 
 	rc = fsal_ceph_ll_rename(export->cmount, olddir->i, old_name,
 					newdir->i, new_name, op_ctx->creds);
-	if (rc < 0)
+	if (rc < 0) {
+		/*
+		 * RFC5661, section 18.26.3 - renaming on top of a non-empty
+		 * directory should return NFS4ERR_EXIST.
+		 */
+		if (rc == -ENOTEMPTY)
+			rc = -EEXIST;
 		return ceph2fsal_error(rc);
+	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
