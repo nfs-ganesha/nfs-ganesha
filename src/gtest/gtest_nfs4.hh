@@ -94,6 +94,16 @@ namespace gtest {
       set_saved_entry(&data, entry);
     }
 
+    void set_saved_export(void) {
+      /* Set saved export from op_ctx */
+      if (data.saved_export != NULL)
+        put_gsh_export(data.saved_export);
+      /* Save the export information and take reference. */
+      get_gsh_export_ref(op_ctx->ctx_export);
+      data.saved_export = op_ctx->ctx_export;
+      data.saved_export_perms = *op_ctx->export_perms;
+    }
+
     void setup_lookup(int pos, const char *name) {
       gsh_free(ops[pos].nfs_argop4_u.oplookup.objname.utf8string_val);
       ops[pos].argop = NFS4_OP_LOOKUP;
