@@ -737,19 +737,27 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * additional attributes. We don't need to separately track
 		 * the condition of not wanting to set attributes.
 		 */
-		LogFullDebug(COMPONENT_FSAL,
-			     "File %s exists, retrying UNCHECKED create with out O_EXCL",
-			     name);
 		posix_flags &= ~O_EXCL;
 		fd = openat(dir_fd, name, posix_flags, unix_mode);
+
+		/* Preserve errno */
+		retval = errno;
+
+		/* If we were creating, restore credentials now. */
+		if (createmode != FSAL_NO_CREATE)
+			fsal_restore_ganesha_credentials();
+
+		LogFullDebug(COMPONENT_FSAL,
+			     "File %s exists, retried UNCHECKED create with out O_EXCL, returned %d (%s)",
+			     name, retval, strerror(retval));
+	} else {
+		/* Preserve errno */
+		retval = errno;
+
+		/* If we were creating, restore credentials now. */
+		if (createmode != FSAL_NO_CREATE)
+			fsal_restore_ganesha_credentials();
 	}
-
-	/* Preserve errno */
-	retval = errno;
-
-	/* If we were creating, restore credentials now. */
-	if (createmode != FSAL_NO_CREATE)
-		fsal_restore_ganesha_credentials();
 
 	if (fd < 0) {
 		status = fsalstat(posix2fsal_error(retval), retval);
@@ -1350,6 +1358,8 @@ void vfs_write2(struct fsal_obj_handle *obj_hdl,
 
  out:
 
+	fsal_restore_ganesha_credentials();
+
 	if (vfs_fd)
 		PTHREAD_RWLOCK_unlock(&vfs_fd->fdlock);
 
@@ -1361,7 +1371,6 @@ void vfs_write2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	fsal_restore_ganesha_credentials();
 	done_cb(obj_hdl, status, write_arg, caller_arg);
 }
 

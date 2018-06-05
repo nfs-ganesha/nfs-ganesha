@@ -296,6 +296,7 @@ fsal_internal_unlink(int dirfd, struct gpfs_file_handle *gpfs_fh,
 		     const char *stat_name, struct stat *buf)
 {
 	struct stat_name_arg statarg;
+	int rc, errsv;
 
 	if (!stat_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -306,8 +307,15 @@ fsal_internal_unlink(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	statarg.handle = gpfs_fh;
 	statarg.buf = buf;
 
-	if (unlikely(gpfs_ganesha(OPENHANDLE_UNLINK_BY_NAME, &statarg) < 0))
-		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_UNLINK_BY_NAME");
+	fsal_set_credentials(op_ctx->creds);
+
+	rc = gpfs_ganesha(OPENHANDLE_UNLINK_BY_NAME, &statarg);
+	errsv = errno;
+
+	fsal_restore_ganesha_credentials();
+
+	if (unlikely(rc < 0))
+		return FSAL_INTERNAL_ERROR(errsv, "OPENHANDLE_UNLINK_BY_NAME");
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -405,6 +413,7 @@ fsal_internal_rename_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_old,
 			const char *old_name, const char *new_name)
 {
 	struct rename_fh_arg renamearg;
+	int rc, errsv;
 
 	if (!old_name || !new_name)
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -417,8 +426,15 @@ fsal_internal_rename_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_old,
 	renamearg.old_fh = gpfs_fh_old;
 	renamearg.new_fh = gpfs_fh_new;
 
-	if (unlikely(gpfs_ganesha(OPENHANDLE_RENAME_BY_FH, &renamearg) < 0))
-		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_RENAME_BY_FH");
+	fsal_set_credentials(op_ctx->creds);
+
+	rc = gpfs_ganesha(OPENHANDLE_RENAME_BY_FH, &renamearg);
+	errsv = errno;
+
+	fsal_restore_ganesha_credentials();
+
+	if (unlikely(rc < 0))
+		return FSAL_INTERNAL_ERROR(errsv, "OPENHANDLE_RENAME_BY_FH");
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
