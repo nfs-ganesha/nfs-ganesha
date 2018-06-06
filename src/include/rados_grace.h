@@ -45,6 +45,8 @@ int rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		bool remove);
 int rados_grace_add(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		    const char * const *nodeids);
+int rados_grace_member_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
+			    const char * const *nodeids);
 
 static inline int
 rados_grace_enforcing_on(rados_ioctx_t io_ctx, const char *oid,
@@ -89,4 +91,15 @@ rados_grace_lift(rados_ioctx_t io_ctx, const char *oid, const char *nodeid,
 	return rados_grace_lift_bulk(io_ctx, oid, 1, nodeids, pcur, prec,
 					false);
 }
+
+static inline int
+rados_grace_member(rados_ioctx_t io_ctx, const char *oid,
+		       const char *nodeid)
+{
+	const char *nodeids[1];
+
+	nodeids[0] = nodeid;
+	return rados_grace_member_bulk(io_ctx, oid, 1, nodeids);
+}
+
 #endif /* _RADOS_GRACE_H */

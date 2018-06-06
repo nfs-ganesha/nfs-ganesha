@@ -85,7 +85,7 @@ static const struct option long_options[] = {
 static void usage(char * const *argv)
 {
 	fprintf(stderr,
-		"Usage:\n%s [ --pool pool_id ] [ --name obj_id ] dump|add|start|join|lift|remove|enforce|noenforce [ nodeid ... ]\n",
+		"Usage:\n%s [ --pool pool_id ] [ --name obj_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]\n",
 		argv[0]);
 }
 
@@ -198,6 +198,14 @@ int main(int argc, char * const *argv)
 			ret = rados_grace_enforcing_toggle(io_ctx,
 					name, nodes, nodeids,
 					&cur, &rec, false);
+		}
+	} else if (!strcmp(cmd, "member")) {
+		if (!nodes) {
+			fprintf(stderr, "Need at least one nodeid.\n");
+			ret = -EINVAL;
+		} else {
+			ret = rados_grace_member_bulk(io_ctx, name, nodes,
+							nodeids);
 		}
 	} else {
 		usage(argv);

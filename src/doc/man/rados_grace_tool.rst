@@ -5,7 +5,7 @@ rados_grace_tool -- manipulate the shared grace management database
 SYNOPSIS
 ===================================================================
 
-| rados_grace_tool [ --pool pool_id ] [ --name obj_id ] dump|add|start|join|lift|remove|enforce|noenforce [ hostname ... ]
+| rados_grace_tool [ --pool pool_id ] [ --name obj_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ hostname ... ]
 
 DESCRIPTION
 ===================================================================
@@ -83,6 +83,12 @@ clients.
 
 Clear the enforcing flag for the given hosts, meaning that those hosts
 are now allowing clients to acquire new state.
+
+
+**member**
+
+Test whether the given hosts are members of the cluster. Returns an
+error if any of the hosts are not present in the grace db omap.
 
 STARTING A NEW CLUSTER
 ======================

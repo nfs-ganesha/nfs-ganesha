@@ -798,3 +798,36 @@ out:
 	free(vals);
 	return ret;
 }
+
+int
+rados_grace_member_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
+			 const char * const *nodeids)
+{
+	int			ret, rval, cnt;
+	rados_read_op_t		rop;
+	rados_omap_iter_t	iter;
+
+	/* read epoch blob */
+	rop = rados_create_read_op();
+	rados_read_op_omap_get_vals_by_keys(rop, nodeids, nodes, &iter, &rval);
+	ret = rados_read_op_operate(rop, io_ctx, oid, 0);
+	if (ret < 0) {
+		rados_release_read_op(rop);
+		return ret;
+	}
+
+	/* Count the returned keys */
+	cnt = 0;
+	for (;;) {
+		char *key, *val;
+		size_t len;
+
+		rados_omap_get_next(iter, &key, &val, &len);
+		if (!key)
+			break;
+		++cnt;
+	}
+	rados_omap_get_end(iter);
+	rados_release_read_op(rop);
+	return (cnt == nodes) ? 0 : -ENOENT;
+}
