@@ -482,7 +482,12 @@ int main(int argc, char *argv[])
 	/* Create stable storage directory, this needs to be done before
 	 * starting the recovery thread.
 	 */
-	nfs4_recovery_init();
+	rc = nfs4_recovery_init();
+	if (rc) {
+		LogCrit(COMPONENT_INIT,
+			  "Recovery backend initialization failed!");
+		goto fatal_die;
+	}
 
 	/* Start grace period */
 	nfs_start_grace(NULL);

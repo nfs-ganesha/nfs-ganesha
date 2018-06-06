@@ -65,7 +65,7 @@ static void legacy_fs_db_migrate(void)
 	}
 }
 
-static void fs_ng_create_recov_dir(void)
+static int fs_ng_create_recov_dir(void)
 {
 	int err;
 	char *newdir;
@@ -96,7 +96,7 @@ static void fs_ng_create_recov_dir(void)
 			LogEvent(COMPONENT_CLIENTID,
 				 "Failed to gethostname: %s",
 				 strerror(errno));
-			return;
+			return -errno;
 		}
 	}
 
@@ -114,6 +114,7 @@ static void fs_ng_create_recov_dir(void)
 	}
 
 	legacy_fs_db_migrate();
+	return 0;
 }
 
 /**

@@ -114,7 +114,7 @@ static void fs_create_clid_name(nfs_client_id_t *clientid)
 		 clientid->cid_recov_tag);
 }
 
-void fs_create_recov_dir(void)
+int fs_create_recov_dir(void)
 {
 	int err;
 
@@ -163,6 +163,7 @@ void fs_create_recov_dir(void)
 				 v4_old_dir, errno);
 		}
 	}
+	return 0;
 }
 
 void fs_add_clid(nfs_client_id_t *clientid)

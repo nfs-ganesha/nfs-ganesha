@@ -985,7 +985,7 @@ void nfs4_rm_clid(nfs_client_id_t *);
 void nfs4_recovery_reclaim_complete(nfs_client_id_t *clientid);
 void nfs4_chk_clid(nfs_client_id_t *);
 void nfs4_end_grace(void);
-void nfs4_recovery_init(void);
+int nfs4_recovery_init(void);
 void nfs4_recovery_shutdown(void);
 void nfs4_record_revoke(nfs_client_id_t *, nfs_fh4 *);
 bool nfs4_check_deleg_reclaim(nfs_client_id_t *, nfs_fh4 *);
@@ -1017,7 +1017,7 @@ typedef clid_entry_t * (*add_clid_entry_hook)(char *);
 typedef rdel_fh_t * (*add_rfh_entry_hook)(clid_entry_t *, char *);
 
 struct nfs4_recovery_backend {
-	void (*recovery_init)(void);
+	int (*recovery_init)(void);
 	void (*recovery_shutdown)(void);
 	void (*recovery_read_clids)(nfs_grace_start_t *gsp,
 				    add_clid_entry_hook add_clid,

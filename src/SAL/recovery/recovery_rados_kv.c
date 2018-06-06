@@ -348,7 +348,7 @@ void rados_kv_shutdown(void)
 	}
 }
 
-void rados_kv_init(void)
+int rados_kv_init(void)
 {
 	int ret;
 	char host[NI_MAXHOST];
@@ -361,7 +361,7 @@ void rados_kv_init(void)
 			LogEvent(COMPONENT_CLIENTID,
 				 "Failed to gethostname: %s",
 				 strerror(errno));
-			return;
+			return -errno;
 		}
 	}
 
@@ -374,7 +374,7 @@ void rados_kv_init(void)
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID,
 			"Failed to connect to cluster: %d", ret);
-		return;
+		return ret;
 	}
 
 	rados_write_op_t op = rados_create_write_op();
@@ -386,7 +386,7 @@ void rados_kv_init(void)
 		LogEvent(COMPONENT_CLIENTID, "Failed to create object");
 		rados_release_write_op(op);
 		rados_kv_shutdown();
-		return;
+		return ret;
 	}
 	rados_release_write_op(op);
 
@@ -398,11 +398,12 @@ void rados_kv_init(void)
 		LogEvent(COMPONENT_CLIENTID, "Failed to create object");
 		rados_release_write_op(op);
 		rados_kv_shutdown();
-		return;
+		return ret;
 	}
 	rados_release_write_op(op);
 
 	LogEvent(COMPONENT_CLIENTID, "Rados kv store init done");
+	return 0;
 }
 
 void rados_kv_add_clid(nfs_client_id_t *clientid)

@@ -502,13 +502,13 @@ static int load_backend(const char *name)
  * should only need to be done once (if at all).  Also, the location
  * of the directory could be configurable.
  */
-void nfs4_recovery_init(void)
+int nfs4_recovery_init(void)
 {
 	if (load_backend(nfs_param.nfsv4_param.recovery_backend)) {
 		LogCrit(COMPONENT_CLIENTID, "Unknown recovery backend");
-		return;
+		return -ENOENT;
 	}
-	recovery_backend->recovery_init();
+	return recovery_backend->recovery_init();
 }
 
 /**

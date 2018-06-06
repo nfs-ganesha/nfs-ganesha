@@ -55,7 +55,7 @@ static void rados_grace_watchcb(void *arg, uint64_t notify_id, uint64_t handle,
 	reaper_wake();
 }
 
-static void rados_cluster_init(void)
+static int rados_cluster_init(void)
 {
 	int ret;
 	long maxlen;
@@ -65,6 +65,7 @@ static void rados_cluster_init(void)
 	ret = gethostname(nodeid, maxlen);
 	if (ret) {
 		LogEvent(COMPONENT_CLIENTID, "gethostname failed: %d", errno);
+		ret = -errno;
 		goto out_free_nodeid;
 	}
 
@@ -85,13 +86,14 @@ static void rados_cluster_init(void)
 			"Failed to set watch on grace db: %d", ret);
 		goto out_shutdown;
 	}
-	return;
+	return 0;
 
 out_shutdown:
 	rados_kv_shutdown();
 out_free_nodeid:
 	gsh_free(nodeid);
 	nodeid = NULL;
+	return ret;
 }
 
 /* Try to delete old recovery db */

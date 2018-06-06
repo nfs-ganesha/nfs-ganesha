@@ -111,7 +111,7 @@ static int rados_ng_del(char *key, char *object)
 	return ret;
 }
 
-static void rados_ng_init(void)
+static int rados_ng_init(void)
 {
 	int ret;
 	char host[NI_MAXHOST];
@@ -125,7 +125,7 @@ static void rados_ng_init(void)
 			LogEvent(COMPONENT_CLIENTID,
 				 "Failed to gethostname: %s",
 				 strerror(errno));
-			return;
+			return -errno;
 		}
 	}
 
@@ -136,7 +136,7 @@ static void rados_ng_init(void)
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID,
 			"Failed to connect to cluster: %d", ret);
-		return;
+		return ret;
 	}
 
 	op = rados_create_write_op();
@@ -147,7 +147,7 @@ static void rados_ng_init(void)
 		LogEvent(COMPONENT_CLIENTID, "Failed to create object");
 		rados_release_write_op(op);
 		rados_kv_shutdown();
-		return;
+		return ret;
 	}
 	rados_release_write_op(op);
 
@@ -156,6 +156,7 @@ static void rados_ng_init(void)
 	rados_write_op_omap_clear(grace_op);
 
 	LogEvent(COMPONENT_CLIENTID, "Rados kv store init done");
+	return 0;
 }
 
 static void rados_ng_add_clid(nfs_client_id_t *clientid)
