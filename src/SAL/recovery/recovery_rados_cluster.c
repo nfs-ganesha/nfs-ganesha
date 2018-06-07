@@ -77,6 +77,14 @@ static int rados_cluster_init(void)
 		goto out_shutdown;
 	}
 
+	ret = rados_grace_member(rados_recov_io_ctx, DEFAULT_RADOS_GRACE_OID,
+				 nodeid);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CLIENTID,
+			 "Cluster membership check failed: %d", ret);
+		goto out_shutdown;
+	}
+
 	/* FIXME: not sure about the 30s timeout value here */
 	ret = rados_watch3(rados_recov_io_ctx, DEFAULT_RADOS_GRACE_OID,
 			   &rados_watch_cookie, rados_grace_watchcb, NULL,
