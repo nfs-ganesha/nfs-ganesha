@@ -717,6 +717,8 @@ RADOS_KV {}
 
 	grace_oid(string, default "grace")
 
+	nodeid(string, default result of gethostname())
+
 RADOS_URLS {}
 --------
 

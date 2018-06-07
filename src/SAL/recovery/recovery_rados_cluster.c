@@ -58,15 +58,21 @@ static void rados_grace_watchcb(void *arg, uint64_t notify_id, uint64_t handle,
 static int rados_cluster_init(void)
 {
 	int ret;
-	long maxlen;
 
-	maxlen = sysconf(_SC_HOST_NAME_MAX);
-	nodeid = gsh_malloc(maxlen);
-	ret = gethostname(nodeid, maxlen);
-	if (ret) {
-		LogEvent(COMPONENT_CLIENTID, "gethostname failed: %d", errno);
-		ret = -errno;
-		goto out_free_nodeid;
+	/* If no nodeid is specified, then use the hostname */
+	if (rados_kv_param.nodeid) {
+		nodeid = gsh_strdup(rados_kv_param.nodeid);
+	} else {
+		long maxlen = sysconf(_SC_HOST_NAME_MAX);
+
+		nodeid = gsh_malloc(maxlen);
+		ret = gethostname(nodeid, maxlen);
+		if (ret) {
+			LogEvent(COMPONENT_CLIENTID, "gethostname failed: %d",
+					errno);
+			ret = -errno;
+			goto out_free_nodeid;
+		}
 	}
 
 	ret = rados_kv_connect(&rados_recov_io_ctx, rados_kv_param.userid,

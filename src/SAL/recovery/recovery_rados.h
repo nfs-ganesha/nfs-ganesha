@@ -39,6 +39,8 @@ struct rados_kv_parameter {
 	char *pool;
 	/** rados_cluster grace database OID */
 	char *grace_oid;
+	/** rados_cluster node_id */
+	char *nodeid;
 };
 extern struct rados_kv_parameter rados_kv_param;
 

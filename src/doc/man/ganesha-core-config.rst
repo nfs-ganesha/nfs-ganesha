@@ -318,3 +318,6 @@ pool(string, default "nfs-ganesha")
 
 grace_oid(string, default "grace")
     Name of the object containing the rados_cluster grace DB
+
+nodeid(string, default result of gethostname())
+    Unique node identifier within rados_cluster
