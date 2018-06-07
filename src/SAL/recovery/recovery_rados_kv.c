@@ -31,6 +31,8 @@ static struct config_item rados_kv_params[] = {
 		       rados_kv_parameter, userid),
 	CONF_ITEM_STR("pool", 1, MAXPATHLEN, DEFAULT_RADOS_GRACE_POOL,
 		       rados_kv_parameter, pool),
+	CONF_ITEM_STR("grace_oid", 1, NI_MAXHOST, DEFAULT_RADOS_GRACE_OID,
+		       rados_kv_parameter, grace_oid),
 	CONFIG_EOL
 };
 

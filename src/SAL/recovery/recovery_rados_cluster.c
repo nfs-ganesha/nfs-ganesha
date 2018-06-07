@@ -44,7 +44,7 @@ static void rados_grace_watchcb(void *arg, uint64_t notify_id, uint64_t handle,
 	int ret;
 
 	/* ACK it first, so we keep things moving along */
-	ret = rados_notify_ack(rados_recov_io_ctx, DEFAULT_RADOS_GRACE_OID,
+	ret = rados_notify_ack(rados_recov_io_ctx, rados_kv_param.grace_oid,
 			       notify_id, rados_watch_cookie, NULL, 0);
 	if (ret < 0)
 		LogEvent(COMPONENT_CLIENTID,
@@ -77,7 +77,7 @@ static int rados_cluster_init(void)
 		goto out_shutdown;
 	}
 
-	ret = rados_grace_member(rados_recov_io_ctx, DEFAULT_RADOS_GRACE_OID,
+	ret = rados_grace_member(rados_recov_io_ctx, rados_kv_param.grace_oid,
 				 nodeid);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID,
@@ -86,7 +86,7 @@ static int rados_cluster_init(void)
 	}
 
 	/* FIXME: not sure about the 30s timeout value here */
-	ret = rados_watch3(rados_recov_io_ctx, DEFAULT_RADOS_GRACE_OID,
+	ret = rados_watch3(rados_recov_io_ctx, rados_kv_param.grace_oid,
 			   &rados_watch_cookie, rados_grace_watchcb, NULL,
 			   30, NULL);
 	if (ret < 0) {
@@ -115,7 +115,7 @@ static void rados_cluster_end_grace(void)
 		return;
 
 	ret = rados_grace_enforcing_off(rados_recov_io_ctx,
-					DEFAULT_RADOS_GRACE_OID, nodeid,
+					rados_kv_param.grace_oid, nodeid,
 					&cur, &rec);
 	if (ret)
 		LogEvent(COMPONENT_CLIENTID,
@@ -151,7 +151,7 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 	}
 
 	/* Start or join a grace period */
-	ret = rados_grace_join(rados_recov_io_ctx, DEFAULT_RADOS_GRACE_OID,
+	ret = rados_grace_join(rados_recov_io_ctx, rados_kv_param.grace_oid,
 			       nodeid, &cur, &rec, true);
 	if (ret) {
 		LogEvent(COMPONENT_CLIENTID,
@@ -191,7 +191,7 @@ static bool rados_cluster_try_lift_grace(void)
 	int ret;
 	uint64_t cur, rec;
 
-	ret = rados_grace_lift(rados_recov_io_ctx, DEFAULT_RADOS_GRACE_OID,
+	ret = rados_grace_lift(rados_recov_io_ctx, rados_kv_param.grace_oid,
 				nodeid, &cur, &rec);
 	if (ret) {
 		LogEvent(COMPONENT_CLIENTID,
@@ -270,7 +270,7 @@ static void rados_cluster_maybe_start_grace(void)
 		return;
 
 	/* Fix up the strings */
-	ret = rados_grace_epochs(rados_recov_io_ctx, DEFAULT_RADOS_GRACE_OID,
+	ret = rados_grace_epochs(rados_recov_io_ctx, rados_kv_param.grace_oid,
 				 &cur, &rec);
 	if (ret) {
 		LogEvent(COMPONENT_CLIENTID, "rados_grace_epochs failed: %d",
@@ -327,7 +327,7 @@ static void rados_cluster_shutdown(void)
 	 * FIXME: only do this if our key is in the omap, and we have a
 	 *        non-empty recovery db.
 	 */
-	ret = rados_grace_join(rados_recov_io_ctx, DEFAULT_RADOS_GRACE_OID,
+	ret = rados_grace_join(rados_recov_io_ctx, rados_kv_param.grace_oid,
 				nodeid, &cur, &rec, true);
 	if (ret)
 		LogEvent(COMPONENT_CLIENTID,
@@ -349,7 +349,7 @@ static void rados_cluster_set_enforcing(void)
 	uint64_t	cur, rec;
 
 	ret = rados_grace_enforcing_on(rados_recov_io_ctx,
-				       DEFAULT_RADOS_GRACE_OID, nodeid,
+				       rados_kv_param.grace_oid, nodeid,
 				       &cur, &rec);
 	if (ret)
 		LogEvent(COMPONENT_CLIENTID,
@@ -361,7 +361,7 @@ static bool rados_cluster_grace_enforcing(void)
 	int		ret;
 
 	ret = rados_grace_enforcing_check(rados_recov_io_ctx,
-					  DEFAULT_RADOS_GRACE_OID, nodeid);
+					  rados_kv_param.grace_oid, nodeid);
 	LogEvent(COMPONENT_CLIENTID, "%s: ret=%d", __func__, ret);
 	return (ret == 0);
 }

@@ -313,5 +313,8 @@ ceph_conf(string, no default)
 userid(path, no default)
     User ID to ceph cluster.
 
-pool(string, default nfs-ganesha)
+pool(string, default "nfs-ganesha")
     Pool for client info.
+
+grace_oid(string, default "grace")
+    Name of the object containing the rados_cluster grace DB
