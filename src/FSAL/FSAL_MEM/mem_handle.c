@@ -2132,7 +2132,32 @@ static void mem_release(struct fsal_obj_handle *obj_hdl)
 static fsal_status_t mem_merge(struct fsal_obj_handle *old_hdl,
 			       struct fsal_obj_handle *new_hdl)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+
+	if (old_hdl->type == REGULAR_FILE &&
+	    new_hdl->type == REGULAR_FILE) {
+		/* We need to merge the share reservations on this file.
+		 * This could result in ERR_FSAL_SHARE_DENIED.
+		 */
+		struct mem_fsal_obj_handle *old, *new;
+
+		old = container_of(old_hdl,
+				    struct mem_fsal_obj_handle,
+				    obj_handle);
+		new = container_of(new_hdl,
+				    struct mem_fsal_obj_handle,
+				    obj_handle);
+
+		/* This can block over an I/O operation. */
+		PTHREAD_RWLOCK_wrlock(&old_hdl->obj_lock);
+
+		status = merge_share(&old->mh_file.share,
+				     &new->mh_file.share);
+
+		PTHREAD_RWLOCK_unlock(&old_hdl->obj_lock);
+	}
+
+	return status;
 }
 
 void mem_handle_ops_init(struct fsal_obj_ops *ops)
