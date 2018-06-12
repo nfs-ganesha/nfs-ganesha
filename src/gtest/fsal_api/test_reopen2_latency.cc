@@ -175,7 +175,7 @@ TEST_F(Reopen2EmptyLatencyTest, LOOP)
           timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 }
 
-TEST_F(Reopen2EmptyLatencyTest, BIG_BYPASS)
+TEST_F(Reopen2EmptyLatencyTest, LOOP_BYPASS)
 {
   fsal_status_t status;
   struct fsal_obj_handle *sub_hdl;

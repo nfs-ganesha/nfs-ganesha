@@ -245,6 +245,50 @@ TEST_F(Open2LoopLatencyTest, LOOP)
   }
 }
 
+TEST_F(Open2LoopLatencyTest, LOOP_BYPASS)
+{
+  fsal_status_t status;
+  struct fsal_obj_handle *sub_hdl;
+  char fname[NAMELEN];
+  bool caller_perm_check = false;
+  struct timespec s_time, e_time;
+
+  sub_hdl = mdcdb_get_sub_handle(test_root);
+  ASSERT_NE(sub_hdl, nullptr);
+
+  status = nfs_export_get_root_entry(a_export, &sub_hdl);
+  ASSERT_EQ(status.major, 0);
+
+  now(&s_time);
+
+  // create and open a files for test
+  for (int i = 0; i < LOOP_COUNT; ++i) {
+    sprintf(fname, "f-%08x", i);
+
+    status = sub_hdl->obj_ops.open2(sub_hdl, file_state[i], FSAL_O_RDWR,
+               FSAL_UNCHECKED, fname, &attrs_in, NULL, &obj[i], NULL,
+               &caller_perm_check);
+    ASSERT_EQ(status.major, 0);
+  }
+
+  now(&e_time);
+
+  fprintf(stderr, "Average time per open2: %" PRIu64 " ns\n",
+          timespec_diff(&s_time, &e_time) / LOOP_COUNT);
+
+  // close and delete the files created for test
+  for (int i = 0; i < LOOP_COUNT; ++i) {
+    sprintf(fname, "f-%08x", i);
+
+    status = obj[i]->obj_ops.close2(obj[i], file_state[i]);
+    EXPECT_EQ(status.major, 0);
+
+    status = fsal_remove(sub_hdl, fname);
+    ASSERT_EQ(status.major, 0);
+    obj[i]->obj_ops.put_ref(obj[i]);
+  }
+}
+
 TEST_F(Open2LoopLatencyTest, OPEN_ONLY)
 {
   fsal_status_t status;
@@ -288,50 +332,6 @@ TEST_F(Open2LoopLatencyTest, OPEN_ONLY)
     EXPECT_EQ(status.major, 0);
 
     status = fsal_remove(test_root, fname);
-    ASSERT_EQ(status.major, 0);
-    obj[i]->obj_ops.put_ref(obj[i]);
-  }
-}
-
-TEST_F(Open2LoopLatencyTest, BIG_BYPASS)
-{
-  fsal_status_t status;
-  struct fsal_obj_handle *sub_hdl;
-  char fname[NAMELEN];
-  bool caller_perm_check = false;
-  struct timespec s_time, e_time;
-
-  sub_hdl = mdcdb_get_sub_handle(test_root);
-  ASSERT_NE(sub_hdl, nullptr);
-
-  status = nfs_export_get_root_entry(a_export, &sub_hdl);
-  ASSERT_EQ(status.major, 0);
-
-  now(&s_time);
-
-  // create and open a files for test
-  for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "f-%08x", i);
-
-    status = sub_hdl->obj_ops.open2(sub_hdl, file_state[i], FSAL_O_RDWR,
-               FSAL_UNCHECKED, fname, &attrs_in, NULL, &obj[i], NULL,
-               &caller_perm_check);
-    ASSERT_EQ(status.major, 0);
-  }
-
-  now(&e_time);
-
-  fprintf(stderr, "Average time per open2: %" PRIu64 " ns\n",
-          timespec_diff(&s_time, &e_time) / LOOP_COUNT);
-
-  // close and delete the files created for test
-  for (int i = 0; i < LOOP_COUNT; ++i) {
-    sprintf(fname, "f-%08x", i);
-
-    status = obj[i]->obj_ops.close2(obj[i], file_state[i]);
-    EXPECT_EQ(status.major, 0);
-
-    status = fsal_remove(sub_hdl, fname);
     ASSERT_EQ(status.major, 0);
     obj[i]->obj_ops.put_ref(obj[i]);
   }

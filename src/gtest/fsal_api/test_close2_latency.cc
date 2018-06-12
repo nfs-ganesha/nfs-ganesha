@@ -203,7 +203,7 @@ TEST_F(Close2LoopLatencyTest, LOOP)
   }
 }
 
-TEST_F(Close2LoopLatencyTest, BIG_BYPASS)
+TEST_F(Close2LoopLatencyTest, LOOP_BYPASS)
 {
   fsal_status_t status;
   char fname[NAMELEN];
