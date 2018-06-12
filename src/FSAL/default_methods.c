@@ -707,8 +707,7 @@ static bool handle_is(struct fsal_obj_handle *obj_hdl, object_file_type_t type)
 
 static void handle_get_ref(struct fsal_obj_handle *obj_hdl)
 {
-	LogFatal(COMPONENT_FSAL,
-		 "FSAL Must support get_ref");
+	/* return */
 }
 
 /* put_ref
@@ -718,8 +717,7 @@ static void handle_get_ref(struct fsal_obj_handle *obj_hdl)
 
 static void handle_put_ref(struct fsal_obj_handle *obj_hdl)
 {
-	LogFatal(COMPONENT_FSAL,
-		 "FSAL Must support put_ref");
+	/* return */
 }
 
 /* handle_release
