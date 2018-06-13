@@ -6,6 +6,7 @@
  *
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *                Patrice LUCAS     patrice.lucas@cea.fr
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +40,7 @@
 #include "fsal.h"
 #include "FSAL/fsal_init.h"
 #include "fsal_handle_syscalls.h"
+#include "vfs_methods.h"
 
 /* VFS FSAL module private storage
  */
@@ -55,44 +57,49 @@ const char myname[] = "XFS";
 /* my module private storage
  */
 
-static struct fsal_module XFS = {
-	.fs_info = {
-		.maxfilesize = INT64_MAX,
-		.maxlink = _POSIX_LINK_MAX,
-		.maxnamelen = 1024,
-		.maxpathlen = 1024,
-		.no_trunc = true,
-		.chown_restricted = true,
-		.case_insensitive = false,
-		.case_preserving = true,
-		.lock_support = false,
-		.lock_support_async_block = false,
-		.named_attr = true,
-		.unique_handles = true,
-		.acl_support = FSAL_ACLSUPPORT_ALLOW,
-		.homogenous = true,
-		.supported_attrs = XFS_SUPPORTED_ATTRIBUTES,
-		.maxread = FSAL_MAXIOSIZE,
-		.maxwrite = FSAL_MAXIOSIZE,
-		.link_supports_permission_checks = false,
-	}
+static struct vfs_fsal_module XFS = {
+	.module = {
+		.fs_info = {
+			.maxfilesize = INT64_MAX,
+			.maxlink = _POSIX_LINK_MAX,
+			.maxnamelen = 1024,
+			.maxpathlen = 1024,
+			.no_trunc = true,
+			.chown_restricted = true,
+			.case_insensitive = false,
+			.case_preserving = true,
+			.lock_support = false,
+			.lock_support_async_block = false,
+			.named_attr = true,
+			.unique_handles = true,
+			.acl_support = FSAL_ACLSUPPORT_ALLOW,
+			.homogenous = true,
+			.supported_attrs = XFS_SUPPORTED_ATTRIBUTES,
+			.maxread = FSAL_MAXIOSIZE,
+			.maxwrite = FSAL_MAXIOSIZE,
+			.link_supports_permission_checks = false,
+		}
+	},
+	.only_one_user = false
 };
 
 static struct config_item xfs_params[] = {
-	CONF_ITEM_BOOL("link_support", true,
-		       fsal_staticfsinfo_t, link_support),
-	CONF_ITEM_BOOL("symlink_support", true,
-		       fsal_staticfsinfo_t, symlink_support),
-	CONF_ITEM_BOOL("cansettime", true,
-		       fsal_staticfsinfo_t, cansettime),
+	CONF_ITEM_BOOL("link_support", true, vfs_fsal_module,
+		       module.fs_info.link_support),
+	CONF_ITEM_BOOL("symlink_support", true, vfs_fsal_module,
+		       module.fs_info.symlink_support),
+	CONF_ITEM_BOOL("cansettime", true, vfs_fsal_module,
+		       module.fs_info.cansettime),
 	CONF_ITEM_UI64("maxread", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxread),
+		       vfs_fsal_module, module.fs_info.maxread),
 	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxwrite),
-	CONF_ITEM_MODE("umask", 0,
-		       fsal_staticfsinfo_t, umask),
-	CONF_ITEM_BOOL("auth_xdev_export", false,
-		       fsal_staticfsinfo_t, auth_exportpath_xdev),
+		       vfs_fsal_module, module.fs_info.maxwrite),
+	CONF_ITEM_MODE("umask", 0, vfs_fsal_module,
+		       module.fs_info.umask),
+	CONF_ITEM_BOOL("auth_xdev_export", false, vfs_fsal_module,
+		       module.fs_info.auth_exportpath_xdev),
+	CONF_ITEM_BOOL("only_one_user", false, vfs_fsal_module,
+		       only_one_user),
 	CONFIG_EOL
 };
 
@@ -117,6 +124,9 @@ static fsal_status_t init_config(struct fsal_module *xfs_fsal_module,
 				 config_file_t config_struct,
 				 struct config_error_type *err_type)
 {
+	struct vfs_fsal_module *xfs_module =
+	    container_of(xfs_fsal_module, struct vfs_fsal_module, module);
+
 #ifdef F_OFD_GETLK
 	int fd, rc;
 	struct flock lock;
@@ -140,7 +150,7 @@ static fsal_status_t init_config(struct fsal_module *xfs_fsal_module,
 		rc = fcntl(fd, F_OFD_GETLK, &lock);
 
 		if (rc == 0)
-			xfs_fsal_module->fs_info.lock_support = true;
+			xfs_module->module.fs_info.lock_support = true;
 		else
 			LogInfo(COMPONENT_FSAL, "Could not use OFD locks");
 
@@ -154,29 +164,29 @@ static fsal_status_t init_config(struct fsal_module *xfs_fsal_module,
 	gsh_free(temp_name);
 #endif
 
-	if (xfs_fsal_module->fs_info.lock_support)
+	if (xfs_module->module.fs_info.lock_support)
 		LogInfo(COMPONENT_FSAL, "FSAL_XFS enabling OFD Locks");
 	else
 		LogInfo(COMPONENT_FSAL, "FSAL_XFS disabling lock support");
 
 	LogFullDebug(COMPONENT_FSAL,
 		"Supported attributes default = 0x%" PRIx64,
-		xfs_fsal_module->fs_info.supported_attrs);
+		xfs_module->module.fs_info.supported_attrs);
 
 	(void) load_config_from_parse(config_struct,
 				      &xfs_param,
-				      &xfs_fsal_module->fs_info,
+				      xfs_module,
 				      true,
 				      err_type);
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
-	display_fsinfo(xfs_fsal_module);
+	display_fsinfo(&xfs_module->module);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
 		     XFS_SUPPORTED_ATTRIBUTES);
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
-		 xfs_fsal_module->fs_info.supported_attrs);
+		 xfs_module->module.fs_info.supported_attrs);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -199,7 +209,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 MODULE_INIT void xfs_init(void)
 {
 	int retval;
-	struct fsal_module *myself = &XFS;
+	struct fsal_module *myself = &XFS.module;
 
 	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);
@@ -215,7 +225,7 @@ MODULE_FINI void xfs_unload(void)
 {
 	int retval;
 
-	retval = unregister_fsal(&XFS);
+	retval = unregister_fsal(&XFS.module);
 	if (retval != 0) {
 		fprintf(stderr, "XFS module failed to unregister");
 		return;

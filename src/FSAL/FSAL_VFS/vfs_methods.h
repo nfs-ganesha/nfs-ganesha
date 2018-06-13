@@ -1,4 +1,6 @@
 /*
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
+ *
  *   Copyright (C) International Business Machines  Corp., 2010
  *   Author(s): Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
  *
@@ -31,10 +33,19 @@
 #include "fsal_handle_syscalls.h"
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/access_check.h"
 
 struct vfs_fsal_obj_handle;
 struct vfs_fsal_export;
 struct vfs_filesystem;
+
+/*
+ * VFS internal module
+ */
+struct vfs_fsal_module {
+	struct fsal_module module;
+	bool only_one_user;
+};
 
 /*
  * VFS internal export
@@ -357,5 +368,29 @@ fsal_status_t check_hsm_by_fd(int fd);
 
 fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 				   struct attrlist *attrs_out);
+
+static inline bool vfs_set_credentials(const struct user_cred *creds,
+					  const struct fsal_module *fsal_module)
+{
+	bool only_one_user = container_of(fsal_module,
+				struct vfs_fsal_module, module)->only_one_user;
+
+	if (only_one_user)
+		return fsal_set_credentials_only_one_user(creds);
+	else {
+		fsal_set_credentials(creds);
+		return true;
+	}
+}
+
+static inline void vfs_restore_ganesha_credentials(const struct fsal_module
+							*fsal_module)
+{
+	bool only_one_user = container_of(fsal_module,
+				struct vfs_fsal_module, module)->only_one_user;
+
+	if (!only_one_user)
+		fsal_restore_ganesha_credentials();
+}
 
 #endif			/* VFS_METHODS_H */

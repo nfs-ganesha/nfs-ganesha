@@ -166,12 +166,17 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 
-	fsal_set_credentials(op_ctx->creds);
+	if (!vfs_set_credentials(op_ctx->creds, exp_hdl->fsal)) {
+		fsal_error = ERR_FSAL_PERM;
+		retval = EPERM;
+		goto out;
+	}
+
 	/** @todo need to get the right file system... */
 	retval = QUOTACTL(QCMD(Q_GETQUOTA, quota_type), myself->root_fs->device,
 			  quota_id, (caddr_t) &fs_quota);
 	errsv = errno;
-	fsal_restore_ganesha_credentials();
+	vfs_restore_ganesha_credentials(exp_hdl->fsal);
 
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errsv);
@@ -242,12 +247,17 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		fs_quota.dqb_valid |= QIF_ITIME;
 #endif
 
-	fsal_set_credentials(op_ctx->creds);
+	if (!vfs_set_credentials(op_ctx->creds, exp_hdl->fsal)) {
+		fsal_error = ERR_FSAL_PERM;
+		retval = EPERM;
+		goto err;
+	}
+
 	/** @todo need to get the right file system... */
 	retval = QUOTACTL(QCMD(Q_SETQUOTA, quota_type), myself->root_fs->device,
 			  quota_id, (caddr_t) &fs_quota);
 	errsv = errno;
-	fsal_restore_ganesha_credentials();
+	vfs_restore_ganesha_credentials(exp_hdl->fsal);
 
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errsv);

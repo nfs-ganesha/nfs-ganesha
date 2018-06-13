@@ -48,6 +48,8 @@ VFS {}
 
 **auth_xdev_export(bool, default false)**
 
+**only_one_user(bool, default fasle)**
+
 See also
 ==============================
 :doc:`ganesha-log-config <ganesha-log-config>`\(8)

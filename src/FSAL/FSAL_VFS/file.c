@@ -720,7 +720,11 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	/* Become the user because we are creating an object in this dir.
 	 */
 	if (createmode != FSAL_NO_CREATE)
-		fsal_set_credentials(op_ctx->creds);
+		if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+			retval = EPERM;
+			status = fsalstat(ERR_FSAL_PERM, EPERM);
+			goto direrr;
+		}
 
 	if ((posix_flags & O_CREAT) != 0)
 		fd = openat(dir_fd, name, posix_flags, unix_mode);
@@ -745,7 +749,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 		/* If we were creating, restore credentials now. */
 		if (createmode != FSAL_NO_CREATE)
-			fsal_restore_ganesha_credentials();
+			vfs_restore_ganesha_credentials(obj_hdl->fsal);
 
 		LogFullDebug(COMPONENT_FSAL,
 			     "File %s exists, retried UNCHECKED create with out O_EXCL, returned %d (%s)",
@@ -756,7 +760,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 		/* If we were creating, restore credentials now. */
 		if (createmode != FSAL_NO_CREATE)
-			fsal_restore_ganesha_credentials();
+			vfs_restore_ganesha_credentials(obj_hdl->fsal);
 	}
 
 	if (fd < 0) {
@@ -1334,7 +1338,11 @@ void vfs_write2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	fsal_set_credentials(op_ctx->creds);
+	if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+		retval = EPERM;
+		status = fsalstat(ERR_FSAL_PERM, EPERM);
+		goto out;
+	}
 
 	nb_written = pwritev(my_fd, write_arg->iov, write_arg->iov_count,
 			     write_arg->offset);
@@ -1358,7 +1366,7 @@ void vfs_write2(struct fsal_obj_handle *obj_hdl,
 
  out:
 
-	fsal_restore_ganesha_credentials();
+	vfs_restore_ganesha_credentials(obj_hdl->fsal);
 
 	if (vfs_fd)
 		PTHREAD_RWLOCK_unlock(&vfs_fd->fdlock);
@@ -1418,7 +1426,11 @@ fsal_status_t vfs_commit2(struct fsal_obj_handle *obj_hdl,
 
 	if (!FSAL_IS_ERROR(status)) {
 
-		fsal_set_credentials(op_ctx->creds);
+		if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+			retval = EPERM;
+			status = fsalstat(ERR_FSAL_PERM, EPERM);
+			goto out;
+		}
 
 		retval = fsync(out_fd->fd);
 
@@ -1427,9 +1439,10 @@ fsal_status_t vfs_commit2(struct fsal_obj_handle *obj_hdl,
 			status = fsalstat(posix2fsal_error(retval), retval);
 		}
 
-		fsal_restore_ganesha_credentials();
+		vfs_restore_ganesha_credentials(obj_hdl->fsal);
 	}
 
+out:
 	if (closefd) {
 		LogFullDebug(COMPONENT_FSAL,
 			     "Closing Opened fd %d", out_fd->fd);

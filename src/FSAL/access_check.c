@@ -871,6 +871,15 @@ void fsal_set_credentials(const struct user_cred *creds)
 	setuser(creds->caller_uid);
 }
 
+bool fsal_set_credentials_only_one_user(const struct user_cred *creds)
+{
+	if (creds->caller_uid == ganesha_uid
+		    && creds->caller_gid == ganesha_gid)
+		return true;
+	else
+		return false;
+}
+
 void fsal_save_ganesha_credentials(void)
 {
 	int i;

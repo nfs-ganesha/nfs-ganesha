@@ -481,18 +481,24 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	}
 	/* Become the user because we are creating an object in this dir.
 	 */
-	fsal_set_credentials(op_ctx->creds);
+
+	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+		retval = EPERM;
+		status = posix2fsal_status(retval);
+		goto direrr;
+	}
+
 	retval = mkdirat(dir_fd, name, unix_mode);
 	if (retval < 0) {
 		retval = errno;
-		fsal_restore_ganesha_credentials();
+		vfs_restore_ganesha_credentials(dir_hdl->fsal);
 		LogFullDebug(COMPONENT_FSAL,
 			     "mkdirat returned %s",
 			     strerror(retval));
 		status = posix2fsal_status(retval);
 		goto direrr;
 	}
-	fsal_restore_ganesha_credentials();
+	vfs_restore_ganesha_credentials(dir_hdl->fsal);
 	retval =  vfs_name_to_handle(dir_fd, dir_hdl->fs, name, fh);
 	if (retval < 0) {
 		retval = errno;
@@ -688,18 +694,22 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		goto direrr;
 	}
 
-	fsal_set_credentials(op_ctx->creds);
+	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+		retval = EPERM;
+		status = posix2fsal_status(retval);
+		goto direrr;
+	}
 
 	retval = mknodat(dir_fd, name, unix_mode, unix_dev);
 
 	if (retval < 0) {
 		retval = errno;
-		fsal_restore_ganesha_credentials();
+		vfs_restore_ganesha_credentials(dir_hdl->fsal);
 		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 
-	fsal_restore_ganesha_credentials();
+	vfs_restore_ganesha_credentials(dir_hdl->fsal);
 
 	vfs_alloc_handle(fh);
 
@@ -874,18 +884,22 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	/* Become the user because we are creating an object in this dir.
 	 */
-	fsal_set_credentials(op_ctx->creds);
+	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+		retval = EPERM;
+		status = posix2fsal_status(retval);
+		goto direrr;
+	}
 
 	retval = symlinkat(link_path, dir_fd, name);
 
 	if (retval < 0) {
 		retval = errno;
-		fsal_restore_ganesha_credentials();
+		vfs_restore_ganesha_credentials(dir_hdl->fsal);
 		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 
-	fsal_restore_ganesha_credentials();
+	vfs_restore_ganesha_credentials(dir_hdl->fsal);
 
 	retval = vfs_name_to_handle(dir_fd, dir_hdl->fs, name, fh);
 
@@ -1312,12 +1326,16 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 	/* Become the user because we are creating/removing objects
 	 * in these dirs which messes with quotas and perms.
 	 */
-	fsal_set_credentials(op_ctx->creds);
+	if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+		retval = EPERM;
+		fsal_error = posix2fsal_error(retval);
+		goto out;
+	}
 	retval = renameat(oldfd, old_name, newfd, new_name);
 	if (retval < 0) {
 		retval = errno;
 		fsal_error = posix2fsal_error(retval);
-		fsal_restore_ganesha_credentials();
+		vfs_restore_ganesha_credentials(obj_hdl->fsal);
 		LogDebug(COMPONENT_FSAL, "renameat returned %d (%s)",
 			 retval, strerror(retval));
 	} else {
@@ -1334,7 +1352,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 			obj->u.unopenable.name = gsh_strdup(new_name);
 		}
 
-		fsal_restore_ganesha_credentials();
+		vfs_restore_ganesha_credentials(obj_hdl->fsal);
 	}
 
  out:
@@ -1510,7 +1528,13 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 			fsal_error = posix2fsal_error(retval);
 		goto errout;
 	}
-	fsal_set_credentials(op_ctx->creds);
+
+	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+		retval = EPERM;
+		fsal_error = posix2fsal_error(retval);
+		goto errout;
+	}
+
 	retval = unlinkat(fd, name, (S_ISDIR(stat.st_mode)) ? AT_REMOVEDIR : 0);
 	if (retval < 0) {
 		retval = errno;
@@ -1519,7 +1543,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 		else
 			fsal_error = posix2fsal_error(retval);
 	}
-	fsal_restore_ganesha_credentials();
+	vfs_restore_ganesha_credentials(dir_hdl->fsal);
 
  errout:
 	close(fd);

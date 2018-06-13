@@ -6,6 +6,7 @@
  *
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
  *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *                Patrice LUCAS     patrice.lucas@cea.fr
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +40,7 @@
 #include "gsh_list.h"
 #include "fsal.h"
 #include "FSAL/fsal_init.h"
+#include "vfs_methods.h"
 
 /* PANFS FSAL module private storage
  */
@@ -51,45 +53,50 @@ const char myname[] = "PANFS";
 /* my module private storage
  */
 
-static struct fsal_module PANFS = {
-	.fs_info = {
-		.maxfilesize = INT64_MAX,
-		.maxlink = _POSIX_LINK_MAX,
-		.maxnamelen = 1024,
-		.maxpathlen = 1024,
-		.no_trunc = true,
-		.chown_restricted = true,
-		.case_insensitive = false,
-		.case_preserving = true,
-		.lock_support = false,
-		.lock_support_async_block = false,
-		.named_attr = true,
-		.unique_handles = true,
-		.acl_support = FSAL_ACLSUPPORT_ALLOW |
-					FSAL_ACLSUPPORT_DENY,
-		.homogenous = true,
-		.supported_attrs = PANFS_SUPPORTED_ATTRIBUTES,
-		.maxread = FSAL_MAXIOSIZE,
-		.maxwrite = FSAL_MAXIOSIZE,
-		.link_supports_permission_checks = false,
-	}
+static struct vfs_fsal_module PANFS = {
+	.module = {
+		.fs_info = {
+			.maxfilesize = INT64_MAX,
+			.maxlink = _POSIX_LINK_MAX,
+			.maxnamelen = 1024,
+			.maxpathlen = 1024,
+			.no_trunc = true,
+			.chown_restricted = true,
+			.case_insensitive = false,
+			.case_preserving = true,
+			.lock_support = false,
+			.lock_support_async_block = false,
+			.named_attr = true,
+			.unique_handles = true,
+			.acl_support = FSAL_ACLSUPPORT_ALLOW |
+						FSAL_ACLSUPPORT_DENY,
+			.homogenous = true,
+			.supported_attrs = PANFS_SUPPORTED_ATTRIBUTES,
+			.maxread = FSAL_MAXIOSIZE,
+			.maxwrite = FSAL_MAXIOSIZE,
+			.link_supports_permission_checks = false,
+		}
+	},
+	.only_one_user = false
 };
 
 static struct config_item panfs_params[] = {
-	CONF_ITEM_BOOL("link_support", true,
-		       fsal_staticfsinfo_t, link_support),
-	CONF_ITEM_BOOL("symlink_support", true,
-		       fsal_staticfsinfo_t, symlink_support),
-	CONF_ITEM_BOOL("cansettime", true,
-		       fsal_staticfsinfo_t, cansettime),
+	CONF_ITEM_BOOL("link_support", true, vfs_fsal_module,
+		       module.fs_info.link_support),
+	CONF_ITEM_BOOL("symlink_support", true, vfs_fsal_module,
+		       module.fs_info.symlink_support),
+	CONF_ITEM_BOOL("cansettime", true, vfs_fsal_module,
+		       module.fs_info.cansettime),
 	CONF_ITEM_UI64("maxread", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxread),
+		       vfs_fsal_module, module.fs_info.maxread),
 	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
-		       fsal_staticfsinfo_t, maxwrite),
-	CONF_ITEM_MODE("umask", 0,
-		       fsal_staticfsinfo_t, umask),
-	CONF_ITEM_BOOL("auth_xdev_export", false,
-		       fsal_staticfsinfo_t, auth_exportpath_xdev),
+		       vfs_fsal_module, module.fs_info.maxwrite),
+	CONF_ITEM_MODE("umask", 0, vfs_fsal_module,
+		       module.fs_info.umask),
+	CONF_ITEM_BOOL("auth_xdev_export", false, vfs_fsal_module,
+		       module.fs_info.auth_exportpath_xdev),
+	CONF_ITEM_BOOL("only_one_user", false, vfs_fsal_module,
+		       only_one_user),
 	CONFIG_EOL
 };
 
@@ -113,25 +120,28 @@ static fsal_status_t init_config(struct fsal_module *panfs_fsal_module,
 				 config_file_t config_struct,
 				 struct config_error_type *err_type)
 {
+	struct vfs_fsal_module *panfs_module =
+	    container_of(panfs_fsal_module, struct vfs_fsal_module, module);
+
 	LogFullDebug(COMPONENT_FSAL,
 		"Supported attributes default = 0x%" PRIx64,
-		panfs_fsal_module->fs_info.supported_attrs);
+		panfs_module->module.fs_info.supported_attrs);
 
 	(void) load_config_from_parse(config_struct,
 				      &panfs_param,
-				      &panfs_fsal_module->fs_info,
+				      panfs_module,
 				      true,
 				      err_type);
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
-	display_fsinfo(panfs_fsal_module);
+	display_fsinfo(&panfs_module->module);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
 		     PANFS_SUPPORTED_ATTRIBUTES);
 
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
-		 panfs_fsal_module->fs_info.supported_attrs);
+		 panfs_module->module.fs_info.supported_attrs);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -154,7 +164,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 MODULE_INIT void panfs_init(void)
 {
 	int retval;
-	struct fsal_module *myself = &PANFS;
+	struct fsal_module *myself = &PANFS.module;
 
 	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_PANFS);
@@ -170,7 +180,7 @@ MODULE_FINI void panfs_unload(void)
 {
 	int retval;
 
-	retval = unregister_fsal(&PANFS);
+	retval = unregister_fsal(&PANFS.module);
 	if (retval != 0) {
 		fprintf(stderr, "PANFS module failed to unregister");
 		return;
