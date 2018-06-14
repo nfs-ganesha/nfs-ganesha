@@ -142,16 +142,15 @@ In the rados_cluster backend, we track these using two epoch values:
          that a cluster-wide grace period is in effect. Setting this to
          0 ends that grace period.
 
-In order to decide when to make grace period transitions, we must also
-have each server to advertise its state to the other nodes. Specifically,
-we need to allow servers to determine these two things about each of
-its siblings:
+In order to decide when to make grace period transitions, each server must
+also advertise its state to the other nodes. Specifically, each server must
+be able to determine these two things about each of its siblings:
 
 1. Does this server have clients from the previous epoch that will require
    recovery? (NEED)
 
-2. Is this server preventing clients from acquiring new state? IOW, is it
-   enforcing the grace period? (ENFORCING)
+2. Is this server enforcing the grace period by refusing non-reclaim locks?
+   (ENFORCING)
 
 We do this with a pair of flags per sibling (NEED and ENFORCING). Each
 server typically manages its own flags.
@@ -221,7 +220,8 @@ we must consider them independently.
 
 When a server is finished with its own local recovery period, it should
 clear its NEED flag. That server should continue enforcing the grace
-period however until the grace period is fully lifted.
+period however until the grace period is fully lifted. The server must
+not permit reclaims after clearing its NEED flag, however.
 
 If the servers' own NEED flag is the last one set, then it can lift the
 grace period (by setting R=0). At that point, all servers in the cluster
