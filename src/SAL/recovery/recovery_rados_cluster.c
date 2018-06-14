@@ -288,9 +288,13 @@ static void rados_cluster_maybe_start_grace(void)
 	if (rec == 0)
 		return;
 
-	/* Start a new grace period */
-	nfs_start_grace(&gsp);
+	/*
+	 * A new epoch has been started and a cluster-wide grace period has
+	 * been reqeuested. Make a new DB for "cur" that has all of of the
+	 * currently active clients in it.
+	 */
 
+	/* Fix up the oid strings */
 	snprintf(rados_recov_oid, sizeof(rados_recov_oid),
 			"rec-%16.16lx:%s", cur, nodeid);
 	snprintf(rados_recov_old_oid, sizeof(rados_recov_old_oid),
@@ -319,6 +323,9 @@ static void rados_cluster_maybe_start_grace(void)
 		free(kvp.keys[i]);
 		free(kvp.vals[i]);
 	}
+
+	/* Start a new grace period */
+	nfs_start_grace(&gsp);
 }
 
 static void rados_cluster_shutdown(void)
