@@ -38,6 +38,7 @@
 #ifdef USE_LTTNG
 #include "gsh_lttng/fsal_mem.h"
 #endif
+#include "../Stackable_FSALs/FSAL_MDCACHE/mdcache_ext.h"
 
 static void mem_release(struct fsal_obj_handle *obj_hdl);
 
@@ -843,6 +844,7 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 	fsal_cookie_t seekloc = 0;
 	struct attrlist attrs;
 	enum fsal_dir_result cb_rc;
+	int count = 0;
 
 	myself = container_of(dir_hdl,
 			      struct mem_fsal_obj_handle,
@@ -887,6 +889,11 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 			   dir_state, dirent->d_index + 1);
 
 		fsal_release_attrs(&attrs);
+
+		if (count++ > 2 * mdcache_param.dir.avl_chunk) {
+			/* Limit readahead to 1 chunk */
+			break;
+		}
 
 		if (cb_rc >= DIR_TERMINATE) {
 			*eof = false;
