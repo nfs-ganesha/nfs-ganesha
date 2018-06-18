@@ -53,7 +53,6 @@ void admin_halt(void);
 #define TEST_ROOT_LINK "symlink_to_readlink_latency"
 #define FILE_COUNT 100000
 #define LOOP_COUNT 1000000
-#define NAMELEN 16
 
 namespace {
 

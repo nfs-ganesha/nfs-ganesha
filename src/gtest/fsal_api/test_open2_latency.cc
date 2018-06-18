@@ -51,7 +51,6 @@ void admin_halt(void);
 #define TEST_ROOT "open2_latency"
 #define TEST_FILE "open2_latency_file"
 #define LOOP_COUNT 100000
-#define NAMELEN 16
 
 namespace {
 

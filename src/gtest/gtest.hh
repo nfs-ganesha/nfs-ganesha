@@ -43,7 +43,7 @@ void admin_halt(void);
 #ifndef GTEST_GTEST_HH
 #define GTEST_GTEST_HH
 
-#define NAMELEN 16
+#define NAMELEN 24
 
 #define gtws_subcall(call) do { \
 	struct fsal_export *_saveexp = op_ctx->fsal_export; \

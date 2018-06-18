@@ -52,7 +52,6 @@ void admin_halt(void);
 #define TEST_FILE "handle_to_key_latency_file"
 #define TEST_NODE "test_node"
 #define LOOP_COUNT 1000000
-#define NAMELEN 16
 
 namespace {
 

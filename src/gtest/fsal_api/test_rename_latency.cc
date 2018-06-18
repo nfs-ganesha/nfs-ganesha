@@ -53,7 +53,6 @@ void admin_halt(void);
 #define TEST_FILE_NEW "new_name"
 #define FILE_COUNT 100000
 #define LOOP_COUNT 1000000
-#define NAMELEN 16
 
 namespace {
 

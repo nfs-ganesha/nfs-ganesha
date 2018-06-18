@@ -52,7 +52,6 @@ void admin_halt(void);
 #define TEST_FILE "unlink_test_file"
 #define DIR_COUNT 100000
 #define LOOP_COUNT 1000000
-#define NAMELEN 16
 
 namespace {
 

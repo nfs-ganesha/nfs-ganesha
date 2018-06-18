@@ -53,7 +53,6 @@ void admin_halt(void);
 #define TEST_FILE_LINK "link_to_link_source"
 #define DIR_COUNT 100000
 #define LOOP_COUNT 1000000
-#define NAMELEN 16
 
 namespace {
 

@@ -51,7 +51,6 @@ void admin_halt(void);
 #define TEST_ROOT "release_latency"
 #define TEST_NODE "test_node"
 #define LOOP_COUNT 1000000
-#define NAMELEN 16
 
 namespace {
 

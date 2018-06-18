@@ -51,7 +51,6 @@ void admin_halt(void);
 #define TEST_ROOT "close_latency"
 #define TEST_FILE "close_latency_file"
 #define LOOP_COUNT 100000  // Needs to be less than available FD count
-#define NAMELEN 16
 
 namespace {
 
