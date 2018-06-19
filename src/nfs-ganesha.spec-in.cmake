@@ -266,15 +266,15 @@ to the ganesha.nfsd server, it makes it possible to trace using LTTng.
 %endif
 
 %if %{with rados_recov}
-%package rados
-Summary: The NFS-GANESHA's library for recovery backend
+%package rados-grace
+Summary: The NFS-GANESHA's command for managing the RADOS grace database
 Group: Applications/System
 BuildRequires: librados-devel >= 0.61
 Requires: nfs-ganesha = %{version}-%{release}
 
-%description rados
-This package contains the librados.so library. Ganesha uses it to
-store client tracking data in ceph cluster.
+%description rados-grace
+This package contains the ganesha-rados-grace tool for interacting with the
+database used by the rados_cluster recovery backend.
 %endif
 
 # Option packages start here. use "rpmbuild --with gpfs" (or equivalent)
@@ -519,7 +519,10 @@ install -m 644 config_samples/xfs.conf %{buildroot}%{_sysconfdir}/ganesha
 
 %if %{with ceph}
 install -m 644 config_samples/ceph.conf %{buildroot}%{_sysconfdir}/ganesha
-install -m 755 tools/ganesha-rados-grace	%{buildroot}%{_sbindir}/ganesha-rados-grace
+%endif
+
+%if %{with rados_recov}
+install -m 755 tools/ganesha-rados-grace	%{buildroot}%{_bindir}/ganesha-rados-grace
 %endif
 
 %if %{with rgw}
@@ -624,6 +627,17 @@ exit 0
 %{_mandir}/*/ganesha-log-config.8.gz
 %endif
 
+
+%if %{with rados_recov}
+%files rados-grace
+%{_bindir}/ganesha-rados-grace
+%if %{with man_page}
+%{_mandir}/*/ganesha-rados-grace.8.gz
+%{_mandir}/*/ganesha-rados-cluster-design.8.gz
+%endif
+%endif
+
+
 %files mount-9P
 %defattr(-,root,root,-)
 %{_sbindir}/mount.9P
@@ -702,10 +716,8 @@ exit 0
 %defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalceph*
 %config(noreplace) %{_sysconfdir}/ganesha/ceph.conf
-%{_sbindir}/ganesha-rados-grace
 %if %{with man_page}
 %{_mandir}/*/ganesha-ceph-config.8.gz
-%{_mandir}/*/ganesha-rados-grace.8.gz
 %endif
 %endif
 
