@@ -17,4 +17,4 @@
    ganesha-export-config
    ganesha-core-config
    ganesha-rados-cluster-design
-   rados_grace_tool
+   ganesha-rados-grace

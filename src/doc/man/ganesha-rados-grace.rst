@@ -1,11 +1,11 @@
-===================================================================
-rados_grace_tool -- manipulate the shared grace management database
-===================================================================
+======================================================================
+ganesha-rados-grace -- manipulate the shared grace management database
+======================================================================
 
 SYNOPSIS
 ===================================================================
 
-| rados_grace_tool [ --pool pool_id ] [ --name obj_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ hostname ... ]
+| ganesha-rados-grace [ --pool pool_id ] [ --name obj_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ hostname ... ]
 
 DESCRIPTION
 ===================================================================
@@ -95,7 +95,7 @@ STARTING A NEW CLUSTER
 First, add the given cluster nodes to the grace database. Assuming that the
 nodes in our cluster will have hostnames ganesha-1 through ganesha-3:
 
-**rados_grace_tool add ganesha-1 ganesha-2 ganesha-3**
+**ganesha-rados-grace add ganesha-1 ganesha-2 ganesha-3**
 
 Once they are added to the database, start a new grace period. Because
 cluster nodes will attempt to lift the grace period as soon as no one
@@ -104,7 +104,7 @@ bringing up any nodes with an initial set of hosts that will be present.
 This ensures that the grace period won't be lifted before all of the
 hosts have joined the cluster:
 
-**rados_grace_tool start ganesha-1 ganesha-2 ganesha-3**
+**ganesha-rados-grace start ganesha-1 ganesha-2 ganesha-3**
 
 That will begin a new cluster-wide grace period, and add/update records for
 all three hosts to indicate that they need the grace period and are
@@ -116,7 +116,7 @@ ADDING NODES TO A RUNNING CLUSTER
 After this point, new nodes can then join the cluster as needed. Simply
 use the **add** command to add the new nodes to the cluster:
 
-**rados_grace_tool add ganesha-4**
+**ganesha-rados-grace add ganesha-4**
 
 Then, start up the cluster node.
 
@@ -126,7 +126,7 @@ To remove a node from the cluster, migrate any clients that are using it
 to other servers and then execute the remove command with the hostnames to
 be removed from the cluster:
 
-**rados_grace_tool remove ganesha-4**
+**ganesha-rados-grace remove ganesha-4**
 
 This will remove the ganesha-4's record from the database, and possibly lift
 the current grace period if one is active and the listed hosts were the last
