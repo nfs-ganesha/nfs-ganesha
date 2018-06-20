@@ -381,9 +381,12 @@ void do_read(struct response *resp)
 
 	if (resp->r_length > MAXSTR)
 		resp->r_length = MAXSTR;
-
+#ifdef USE_GLUSTER_STAT_FETCH_API
+	rc = glfs_read(fds[resp->r_fpos], resp->r_data, resp->r_length,
+			0, NULL);
+#else
 	rc = glfs_read(fds[resp->r_fpos], resp->r_data, resp->r_length, 0);
-
+#endif
 	if (rc < 0) {
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = -rc;

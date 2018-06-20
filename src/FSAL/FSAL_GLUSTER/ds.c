@@ -222,8 +222,11 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 			SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
 			return NFS4ERR_SERVERFAULT;
 		}
-
+#ifdef USE_GLUSTER_STAT_FETCH_API
+		rc = glfs_fsync(glfd, NULL, NULL);
+#else
 		rc = glfs_fsync(glfd);
+#endif
 		if (rc != 0)
 			LogMajor(COMPONENT_PNFS,
 				 "glfs_fsync failed %d", errno);

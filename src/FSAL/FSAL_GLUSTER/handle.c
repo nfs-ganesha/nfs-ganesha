@@ -2169,8 +2169,11 @@ static fsal_status_t glusterfs_commit2(struct fsal_obj_handle *obj_hdl,
 				  &op_ctx->creds->caller_gid,
 				  op_ctx->creds->caller_glen,
 				  op_ctx->creds->caller_garray);
-
+#ifdef USE_GLUSTER_STAT_FETCH_API
+		retval = glfs_fsync(out_fd->glfd, NULL, NULL);
+#else
 		retval = glfs_fsync(out_fd->glfd);
+#endif
 
 		if (retval == -1) {
 			retval = errno;
@@ -2482,9 +2485,12 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 				  &op_ctx->creds->caller_gid,
 				  op_ctx->creds->caller_glen,
 				  op_ctx->creds->caller_garray);
-
+#ifdef USE_GLUSTER_STAT_FETCH_API
+		retval = glfs_ftruncate(my_fd.glfd, attrib_set->filesize,
+					NULL, NULL);
+#else
 		retval = glfs_ftruncate(my_fd.glfd, attrib_set->filesize);
-
+#endif
 		SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
 
 		if (retval != 0) {

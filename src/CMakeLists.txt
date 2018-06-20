@@ -640,6 +640,13 @@ if(USE_FSAL_GLUSTER)
     # missing directory not provided by current version of GlusterFS
     include_directories(${GFAPI_PREFIX}/include)
     link_directories (${GFAPI_LIBRARY_DIRS})
+    pkg_check_modules(STAT_FETCH_GFAPI glusterfs-api>=7.6)
+    if(STAT_FETCH_GFAPI_FOUND)
+        set(USE_GLUSTER_STAT_FETCH_API ON)
+    else()
+        set(USE_GLUSTER_STAT_FETCH_API OFF)
+        message(STATUS "turning off stat api's")
+    endif(STAT_FETCH_GFAPI_FOUND)
   endif(NOT GFAPI_FOUND)
 
   if(USE_FSAL_GLUSTER)
