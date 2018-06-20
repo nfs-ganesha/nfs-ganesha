@@ -155,7 +155,7 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 
 		dirents_used = atomic_dec_uint64_t(&lru_state.dirents_used);
 
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 			     "Removed dirent, chunks_used = %"
 			     PRIu64" dirents_used = %"PRIu64,
 			     atomic_fetch_uint64_t(&lru_state.chunks_used),
@@ -282,7 +282,7 @@ int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 	}
 
 	/* already inserted */
-	LogDebug(COMPONENT_CACHE_INODE,
+	LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 		"Already existent when inserting dirent %p for %s on entry=%p FSAL cookie=%"
 		PRIx64
 		", duplicated directory cookies make READDIR unreliable.",
@@ -620,7 +620,7 @@ void mdcache_avl_clean_trees(mdcache_entry_t *parent)
 		i++;
 	}
 
-	LogFullDebug(COMPONENT_CACHE_INODE,
+	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 		     "Cleaning parent %p, freed %d dirents, chunks_used = %"
 		     PRIu64" dirents_used = %"PRIu64,
 		     parent, i,
