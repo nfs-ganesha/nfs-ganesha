@@ -735,8 +735,9 @@ lru_try_reap_entry(void)
  *
  * @note The caller @a MUST @a NOT hold the lane lock
  *
- * @param[in] qid     Queue to reap
- * @param[in] parent  The directory we desire a chunk for
+ * @param[in] qid        Queue to reap
+ * @param[in] parent     The directory we desire a chunk for
+ * @param[in] prev_chunk If non-NULL, the previous chunk in this directory
  *
  * @return Available chunk if found, NULL otherwise
  */
@@ -744,7 +745,8 @@ lru_try_reap_entry(void)
 static uint32_t chunk_reap_lane;
 
 static inline mdcache_lru_t *
-lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
+lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
+		    struct dir_chunk *prev_chunk)
 {
 	uint32_t lane;
 	struct lru_q_lane *qlane;
@@ -778,6 +780,12 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 		 */
 		chunk = container_of(lru, struct dir_chunk, chunk_lru);
 		entry = chunk->parent;
+
+		if (chunk == prev_chunk) {
+			/* We can't reap prev_chunk. */
+			QUNLOCK(qlane);
+			continue;
+		}
 
 		/* If this chunk belongs to the parent seeking another chunk,
 		 * or if we can get the content_lock for the chunk's parent,
@@ -854,19 +862,22 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
  *
  * @note The caller must hold the content_lock of the parent for write.
  *
- * @param[in] parent  The parent directory we desire a chunk for
+ * @param[in] parent     The parent directory we desire a chunk for
+ * @param[in] prev_chunk If non-NULL, the previous chunk in this directory
  *
  * @return reused or allocated chunk
  */
-struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent)
+struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
+				    struct dir_chunk *prev_chunk)
 {
 	mdcache_lru_t *lru = NULL;
 	struct dir_chunk *chunk = NULL;
 
 	if (lru_state.chunks_used >= lru_state.chunks_hiwat) {
-		lru = lru_reap_chunk_impl(LRU_ENTRY_L2, parent);
+		lru = lru_reap_chunk_impl(LRU_ENTRY_L2, parent, prev_chunk);
 		if (!lru)
-			lru = lru_reap_chunk_impl(LRU_ENTRY_L1, parent);
+			lru = lru_reap_chunk_impl(
+					LRU_ENTRY_L1, parent, prev_chunk);
 	}
 
 	if (lru) {
@@ -885,8 +896,9 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent)
 		(void) atomic_inc_int64_t(&lru_state.chunks_used);
 	}
 
-	/* Set the chunk's parent. */
+	/* Set the chunk's parent and prev_chunk. */
 	chunk->parent = parent;
+	chunk->prev_chunk = prev_chunk;
 
 	/* Chunk refcnt is not used (chunks are always protected by content_lock
 	 * and outside of LRU operations are not found other than while holding
