@@ -1924,6 +1924,9 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 		if (left != NULL) {
 			/* Fixup left chunk's next cookie */
 			left->chunk->next_ck = new_dir_entry->ck;
+			LogFullDebug(COMPONENT_CACHE_INODE,
+				     "Fixup next_ck=%"PRIx64,
+				     left->chunk->next_ck);
 		} else {
 			/* New first entry in directory */
 			LogFullDebug(COMPONENT_CACHE_INODE,
@@ -1950,6 +1953,9 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 		split = mdcache_get_chunk(parent_dir);
 		split->prev_chunk = chunk;
 		split->next_ck = chunk->next_ck;
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Split next_ck=%"PRIx64,
+			     split->next_ck);
 
 		glist_add_tail(&chunk->parent->fsobj.fsdir.chunks,
 			       &split->chunks);
@@ -1985,6 +1991,10 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 		 * first dirent in the new split chunk.
 		 */
 		chunk->next_ck = here->ck;
+
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Chunk next_ck=%"PRIx64,
+			     chunk->next_ck);
 	}
 
 	new_dir_entry->flags |= DIR_ENTRY_SORTED;
@@ -2228,6 +2238,10 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			 * passed into mdcache_populate_dir_chunk.
 			 */
 			chunk->prev_chunk->next_ck = cookie;
+			LogFullDebug(COMPONENT_CACHE_INODE,
+				     "Chunk %p Prev chunk %p next_ck=%"PRIx64,
+				     chunk, chunk->prev_chunk,
+				     chunk->prev_chunk->next_ck);
 		}
 		chunk->num_entries++;
 	}
@@ -2248,6 +2262,9 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		 * used chunk, we should link our chunk into that other chunk.
 		 */
 		chunk->next_ck = cookie;
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Collision Chunk next_ck=%"PRIx64,
+			     chunk->next_ck);
 	} else if (chunk->num_entries == mdcache_param.dir.avl_chunk) {
 		/* Chunk is full. Since dirent is pointing to the existing
 		 * dirent and the one we allocated above has been freed we don't
@@ -2987,6 +3004,9 @@ again:
 		}
 
 		next_ck = dirent->ck;
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Setting next_ck=%"PRIx64,
+			     next_ck);
 
 		/* Ensure the attribute cache is valid.  The simplest way to do
 		 * this is to call getattrs().  We need a copy anyway, to ensure
@@ -3063,6 +3083,9 @@ again:
 		 * for the next readdir.
 		 */
 		look_ck = chunk->next_ck;
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Setting look_ck from next_ck=%"PRIx64,
+			     chunk->next_ck);
 	} else {
 		/* The next chunk is not resident, skip right to populating
 		 * the next chunk. next_ck is the right cookie to use as the
