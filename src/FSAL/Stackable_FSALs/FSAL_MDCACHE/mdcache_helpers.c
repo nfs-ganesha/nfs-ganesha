@@ -2191,8 +2191,7 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 		int i = 0;
 		uint32_t split_count = mdcache_param.dir.avl_chunk_split / 2;
 
-		split = mdcache_get_chunk(parent_dir);
-		split->prev_chunk = chunk;
+		split = mdcache_get_chunk(parent_dir, chunk);
 		split->next_ck = chunk->next_ck;
 
 		glist_add_tail(&chunk->parent->fsobj.fsdir.chunks,
@@ -2288,8 +2287,6 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 
 	if (chunk->num_entries == mdcache_param.dir.avl_chunk) {
 		/* We are being called readahead. */
-		struct dir_chunk *new_chunk;
-
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 			     "Readdir readahead first entry in new chunk %s",
 			     name);
@@ -2300,15 +2297,11 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		glist_add_tail(&chunk->parent->fsobj.fsdir.chunks,
 			       &chunk->chunks);
 
-		/* Now start a new chunk. */
-		new_chunk = mdcache_get_chunk(chunk->parent);
-
-		/* Setup new chunk. */
-		new_chunk->prev_chunk = chunk;
+		/* Now start a new chunk, passing this chunk as prev_chunk. */
+		chunk = mdcache_get_chunk(chunk->parent, chunk);
 
 		/* And switch over to new chunk. */
-		state->dir_state = new_chunk;
-		chunk = new_chunk;
+		state->dir_state = chunk;
 
 		/* And start accepting entries into the new chunk. */
 	}
@@ -2613,10 +2606,13 @@ fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 	fsal_status_t status = {0, 0};
 	fsal_status_t readdir_status = {0, 0};
 	struct mdcache_populate_cb_state state;
-	struct dir_chunk *first_chunk = mdcache_get_chunk(directory);
-	struct dir_chunk *chunk = first_chunk;
+	struct dir_chunk *first_chunk;
+	struct dir_chunk *chunk;
 	attrmask_t attrmask;
 	fsal_cookie_t *whence_ptr = &whence;
+
+	first_chunk = mdcache_get_chunk(directory, prev_chunk);
+	chunk = first_chunk;
 
 	attrmask = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
 					op_ctx->fsal_export) | ATTR_RDATTR_ERR;
@@ -2649,9 +2645,6 @@ again:
 	 * back to here to accomplish that. chunk is newly allocated and
 	 * prev_chunk has been updated to point to the last cached chunk.
 	 */
-
-	chunk->prev_chunk = prev_chunk;
-
 	if (state.whence_is_name) {
 		if (prev_chunk != NULL) {
 			/* Start from end of prev_chunk */
@@ -2846,7 +2839,7 @@ again:
 				prev_chunk);
 
 		/* And we need to allocate a fresh chunk. */
-		chunk = mdcache_get_chunk(directory);
+		chunk = mdcache_get_chunk(directory, chunk);
 
 		/* And switch over to new chunk. */
 		state.dir_state = chunk;
