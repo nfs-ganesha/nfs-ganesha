@@ -241,6 +241,21 @@ bool nfs_grace_enforcing(void)
 	return true;
 }
 
+/**
+ * @brief Is this host still a member of the cluster?
+ *
+ * Singleton servers are always considered to be cluster members. This call
+ * is mainly for clustered servers, which may need to handle things differently
+ * on a clean shutdown depending on whether they are still a member of the
+ * cluster.
+ */
+bool nfs_grace_is_member(void)
+{
+	if (recovery_backend->is_member)
+		return recovery_backend->is_member();
+	return true;
+}
+
 void nfs_try_lift_grace(void)
 {
 	bool in_grace = true;

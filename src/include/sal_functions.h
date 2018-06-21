@@ -976,6 +976,7 @@ void nfs_start_grace(nfs_grace_start_t *gsp);
 bool nfs_in_grace(void);
 bool simple_try_lift_grace(void);
 void nfs_maybe_start_grace(void);
+bool nfs_grace_is_member(void);
 void nfs_try_lift_grace(void);
 void nfs_wait_for_grace_enforcement(void);
 void nfs_notify_grace_waiters(void);
@@ -1029,6 +1030,7 @@ struct nfs4_recovery_backend {
 	bool (*try_lift_grace)(void);
 	void (*set_enforcing)(void);
 	bool (*grace_enforcing)(void);
+	bool (*is_member)(void);
 };
 
 void fs_backend_init(struct nfs4_recovery_backend **);

@@ -379,6 +379,19 @@ static bool rados_cluster_grace_enforcing(void)
 	return (ret == 0);
 }
 
+static bool rados_cluster_is_member(void)
+{
+	int	ret = rados_grace_member(rados_recov_io_ctx,
+					 rados_kv_param.grace_oid, nodeid);
+	if (ret) {
+		LogEvent(COMPONENT_CLIENTID,
+			 "%s: %s is no longer a cluster member (ret=%d)",
+			 __func__, nodeid, ret);
+		return false;
+	}
+	return true;
+}
+
 struct nfs4_recovery_backend rados_cluster_backend = {
 	.recovery_init = rados_cluster_init,
 	.recovery_shutdown = rados_cluster_shutdown,
@@ -391,6 +404,7 @@ struct nfs4_recovery_backend rados_cluster_backend = {
 	.try_lift_grace = rados_cluster_try_lift_grace,
 	.set_enforcing = rados_cluster_set_enforcing,
 	.grace_enforcing = rados_cluster_grace_enforcing,
+	.is_member = rados_cluster_is_member,
 };
 
 void rados_cluster_backend_init(struct nfs4_recovery_backend **backend)
