@@ -349,6 +349,7 @@ struct dir_chunk {
 
 #define DIR_ENTRY_FLAG_NONE     0x0000
 #define DIR_ENTRY_FLAG_DELETED  0x0001
+#define DIR_ENTRY_REFFED        0x0002
 #define DIR_ENTRY_SORTED        0x0004
 
 typedef struct mdcache_dir_entry__ {
