@@ -662,6 +662,7 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_rename_changes_key,
 	fso_compute_readdir_cookie,
 	fso_whence_is_name,
+	fso_readdir_plus,
 } fsal_fsinfo_options_t;
 
 /* The largest maxread and maxwrite value */
@@ -707,6 +708,7 @@ typedef struct fsal_staticfsinfo_t {
 	bool rename_changes_key;/*< Handle key is changed across rename */
 	bool compute_readdir_cookie;
 	bool whence_is_name;
+	bool readdir_plus;	/*< FSAL supports readdir_plus */
 } fsal_staticfsinfo_t;
 
 /**
