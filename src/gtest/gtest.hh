@@ -271,7 +271,8 @@ namespace gtest {
     }
 
     void create_and_prime_many(int count,
-                               struct fsal_obj_handle **objs = NULL) {
+                               struct fsal_obj_handle **objs = NULL,
+			       struct fsal_obj_handle *directory = NULL) {
       fsal_status_t status;
       char fname[NAMELEN];
       struct attrlist attrs_out;
@@ -281,12 +282,15 @@ namespace gtest {
       uint32_t tracker;
       struct fsal_obj_handle *obj;
 
+      if (directory == NULL)
+	directory = test_root;
+
       /* create a bunch of dirents */
       for (int i = 0; i < count; ++i) {
         fsal_prepare_attrs(&attrs_out, 0);
         sprintf(fname, "f-%08x", i);
 
-        status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL,
+        status = fsal_create(directory, fname, REGULAR_FILE, &attrs, NULL,
                              &obj, &attrs_out);
         ASSERT_EQ(status.major, 0);
         ASSERT_NE(obj, nullptr);
@@ -300,20 +304,24 @@ namespace gtest {
       }
 
       /* Prime the cache */
-      status = fsal_readdir(test_root, 0, &num_entries, &eod_met, attrmask,
+      status = fsal_readdir(directory, 0, &num_entries, &eod_met, attrmask,
                             readdir_callback, &tracker);
     }
 
-    void remove_many(int count, struct fsal_obj_handle **objs = NULL) {
+    void remove_many(int count, struct fsal_obj_handle **objs = NULL,
+		     struct fsal_obj_handle *directory = NULL) {
       fsal_status_t status;
       char fname[NAMELEN];
+
+      if (directory == NULL)
+	directory = test_root;
 
       for (int i = 0; i < count; ++i) {
         sprintf(fname, "f-%08x", i);
 
 	if (objs != NULL)
           objs[i]->obj_ops->put_ref(objs[i]);
-        status = fsal_remove(test_root, fname);
+        status = fsal_remove(directory, fname);
         EXPECT_EQ(status.major, 0);
       }
     }

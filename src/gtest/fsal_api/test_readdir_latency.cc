@@ -101,11 +101,11 @@ namespace {
     virtual void SetUp() {
       ReaddirEmptyLatencyTest::SetUp();
 
-      create_and_prime_many(DIR_COUNT, NULL);
+      create_and_prime_many(DIR_COUNT, NULL, test_dir);
     }
 
     virtual void TearDown() {
-      remove_many(DIR_COUNT, NULL);
+      remove_many(DIR_COUNT, NULL, test_dir);
 
       ReaddirEmptyLatencyTest::TearDown();
     }
