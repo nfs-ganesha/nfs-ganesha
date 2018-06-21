@@ -162,6 +162,11 @@ TRACEPOINT_EVENT(
 	)
 )
 
+TRACEPOINT_LOGLEVEL(
+	mdcache,
+	mdc_lru_get,
+	TRACE_INFO)
+
 /**
  * @brief Trace a reap (reuse) of a chunk
  *
@@ -185,7 +190,7 @@ TRACEPOINT_EVENT(
 
 TRACEPOINT_LOGLEVEL(
 	mdcache,
-	mdc_lru_get,
+	mdc_lru_reap_chunk,
 	TRACE_INFO)
 
 /**
