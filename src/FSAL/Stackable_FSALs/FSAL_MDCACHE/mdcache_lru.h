@@ -196,6 +196,7 @@ static inline void mdcache_put(mdcache_entry_t *entry)
 	mdcache_lru_unref(entry);
 }
 
+void lru_reuse_chunk(mdcache_entry_t *parent, struct dir_chunk *chunk);
 void lru_remove_chunk(struct dir_chunk *chunk);
 struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 				    struct dir_chunk *prev_chunk);
