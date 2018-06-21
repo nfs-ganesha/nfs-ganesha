@@ -102,6 +102,8 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->compute_readdir_cookie;
 	case fso_whence_is_name:
 		return !!info->whence_is_name;
+	case fso_readdir_plus:
+		return !!info->readdir_plus;
 	default:
 		return false;	/* whatever I don't know about,
 				 * you can't do
