@@ -2362,6 +2362,8 @@ static void release_export(struct gsh_export *export)
 	 */
 	pseudo_unmount_export(export);
 
+	export->fsal_export->exp_ops.prepare_unexport(export->fsal_export);
+
 	/* Release state belonging to this export */
 	state_release_export(export);
 

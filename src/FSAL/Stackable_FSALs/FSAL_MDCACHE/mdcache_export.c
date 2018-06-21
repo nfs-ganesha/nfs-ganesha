@@ -789,6 +789,22 @@ static bool mdcache_is_superuser(struct fsal_export *exp_hdl,
 	return status;
 }
 
+/**
+ * @brief Prepare an export to be unexported
+ *
+ * @param[in] exp_hdl               Export state_t is associated with
+ *
+ * @returns NULL on failure otherwise a state structure.
+ */
+
+static void mdcache_prepare_unexport(struct fsal_export *exp_hdl)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
+
+	subcall_raw(exp, sub_export->exp_ops.prepare_unexport(sub_export));
+}
+
 /* mdcache_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -796,6 +812,7 @@ static bool mdcache_is_superuser(struct fsal_export *exp_hdl,
 void mdcache_export_ops_init(struct export_ops *ops)
 {
 	ops->get_name = mdcache_get_name;
+	ops->prepare_unexport = mdcache_prepare_unexport;
 	ops->unexport = mdcache_unexport;
 	ops->release = mdcache_exp_release;
 	ops->lookup_path = mdcache_lookup_path;

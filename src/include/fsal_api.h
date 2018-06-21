@@ -672,6 +672,14 @@ struct export_ops {
 */
 
 /**
+ * @brief Prepare an export to be unexported
+ *
+ * This function is called prior to unexporting an export. It should do any
+ * preparation that the export requires prior to being removed.
+ */
+	 void (*prepare_unexport)(struct fsal_export *exp_hdl);
+
+/**
  * @brief Clean up an export when it's unexported
  *
  * This function is called when the export is unexported.  It should release any

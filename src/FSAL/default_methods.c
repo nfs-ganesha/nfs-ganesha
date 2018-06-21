@@ -270,6 +270,16 @@ static const char *get_name(struct fsal_export *exp_hdl)
 	return exp_hdl->fsal->name;
 }
 
+/* export_prepare_unexport
+ * Nothing to do in the default case
+ */
+
+static void export_prepare_unexport(struct fsal_export *exp_hdl)
+{
+	/* return */
+}
+
+
 /* export_unexport
  * Nothing to do in the default case
  */
@@ -656,6 +666,7 @@ bool is_superuser(struct fsal_export *exp_hdl, const struct user_cred *creds)
 
 struct export_ops def_export_ops = {
 	.get_name = get_name,
+	.prepare_unexport = export_prepare_unexport,
 	.unexport = export_unexport,
 	.release = export_release,
 	.lookup_path = lookup_path,

@@ -373,6 +373,17 @@ static fsal_status_t nullfs_host_to_key(struct fsal_export *exp_hdl,
 	return result;
 }
 
+static void nullfs_prepare_unexport(struct fsal_export *exp_hdl)
+{
+	struct nullfs_fsal_export *exp =
+		container_of(exp_hdl, struct nullfs_fsal_export, export);
+
+	op_ctx->fsal_export = exp->export.sub_export;
+	exp->export.sub_export->exp_ops.prepare_unexport(
+						exp->export.sub_export);
+	op_ctx->fsal_export = &exp->export;
+}
+
 /* nullfs_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -380,6 +391,7 @@ static fsal_status_t nullfs_host_to_key(struct fsal_export *exp_hdl,
 void nullfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
+	ops->prepare_unexport = nullfs_prepare_unexport;
 	ops->lookup_path = nullfs_lookup_path;
 	ops->wire_to_host = wire_to_host;
 	ops->host_to_key = nullfs_host_to_key;
