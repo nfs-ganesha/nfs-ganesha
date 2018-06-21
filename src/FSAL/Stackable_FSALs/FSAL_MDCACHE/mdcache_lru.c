@@ -828,7 +828,6 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
 
 			/* Clean out the fields not touched by the cleanup. */
 			chunk->parent = NULL;
-			chunk->prev_chunk = NULL;
 			chunk->next_ck = 0;
 			chunk->num_entries = 0;
 
@@ -858,7 +857,8 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
  * @brief Re-use or allocate a chunk
  *
  * This function repurposes a resident chunk in the LRU system if the system is
- * above the high-water mark, and allocates a new one otherwise.
+ * above the high-water mark, and allocates a new one otherwise.  The resulting
+ * chunk is inserted into the chunk list.
  *
  * @note The caller must hold the content_lock of the parent for write.
  *
@@ -896,9 +896,13 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 		(void) atomic_inc_int64_t(&lru_state.chunks_used);
 	}
 
-	/* Set the chunk's parent and prev_chunk. */
+	/* Set the chunk's parent and insert */
 	chunk->parent = parent;
-	chunk->prev_chunk = prev_chunk;
+	if (prev_chunk) {
+		glist_add(&prev_chunk->chunks, &chunk->chunks);
+	} else {
+		glist_add(&chunk->parent->fsobj.fsdir.chunks, &chunk->chunks);
+	}
 
 	/* Chunk refcnt is not used (chunks are always protected by content_lock
 	 * and outside of LRU operations are not found other than while holding
@@ -1947,11 +1951,11 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 }
 
 /**
- * @brief Remove a chunk from LRU, clean it, and free it.
+ * @brief Remove a chunk from LRU, and clean it
  *
  * @param[in] chunk  The chunk to be removed from LRU
  */
-void lru_remove_chunk(struct dir_chunk *chunk)
+void lru_clean_chunk(struct dir_chunk *chunk)
 {
 	uint32_t lane = chunk->chunk_lru.lane;
 	struct lru_q_lane *qlane = &CHUNK_LRU[lane];
@@ -1975,10 +1979,35 @@ void lru_remove_chunk(struct dir_chunk *chunk)
 
 	/* Then do the actual cleaning work. */
 	mdcache_clean_dirent_chunk(chunk);
+}
+
+/**
+ * @brief Remove a chunk from LRU, clean it, and free it.
+ *
+ * @param[in] chunk  The chunk to be removed from LRU
+ */
+void lru_remove_chunk(struct dir_chunk *chunk)
+{
+	lru_clean_chunk(chunk);
 
 	/* And now we can free the chunk. */
 	LogFullDebug(COMPONENT_CACHE_INODE, "Freeing chunk %p", chunk);
 	gsh_free(chunk);
+}
+
+/**
+ * @brief Remove a chunk from LRU, and clean it
+ *
+ * @param[in] chunk  The chunk to be removed from LRU
+ */
+void lru_reuse_chunk(mdcache_entry_t *parent, struct dir_chunk *chunk)
+{
+	lru_clean_chunk(chunk);
+	chunk->parent = parent;
+	chunk->chunk_lru.refcnt = 0;
+	chunk->chunk_lru.cf = 0;
+	chunk->chunk_lru.lane = lru_lane_of(chunk);
+	lru_insert_chunk(chunk, &CHUNK_LRU[chunk->chunk_lru.lane].L2, LRU_MRU);
 }
 
 /**
