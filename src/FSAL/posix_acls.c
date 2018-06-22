@@ -197,7 +197,7 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 	int ret = 0, ent, d_ent, total = 0;
 	fsal_ace_t *pace_deny = NULL, *pace_allow = NULL;
 	acl_t dup_acl;
-	acl_entry_t entry, mask, other, d_entry;
+	acl_entry_t entry, mask, other, d_entry, dup_mask;
 	acl_tag_t tag;
 	acl_permset_t p_permset;
 	bool readmask = true, readother = false, readcurrent = true;
@@ -375,7 +375,12 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			/*
 			 * Do not consider ACL_MASK entry in the following loop
 			 */
-			acl_delete_entry(dup_acl, mask);
+			if (mask) {
+				dup_mask = find_entry(dup_acl, ACL_MASK, 0);
+				if (dup_mask)
+					acl_delete_entry(dup_acl, dup_mask);
+			}
+
 			if (tag == ACL_USER_OBJ) {
 				d_entry = find_entry(dup_acl, ACL_USER_OBJ, 0);
 				ret = acl_get_entry(dup_acl, ACL_NEXT_ENTRY,
