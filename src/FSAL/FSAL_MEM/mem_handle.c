@@ -876,6 +876,14 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 	     node = avltree_next(node)) {
 		struct mem_dirent *dirent;
 
+		if (count >= 2 * mdcache_param.dir.avl_chunk) {
+			LogEvent(COMPONENT_FSAL, "readahead done %d",
+				     count);
+			/* Limit readahead to 1 chunk */
+			*eof = false;
+			break;
+		}
+
 		dirent = avltree_container_of(node, struct mem_dirent, avl_i);
 		/* skip entries before seekloc */
 		if (dirent->d_index < seekloc)
@@ -890,10 +898,7 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 
 		fsal_release_attrs(&attrs);
 
-		if (count++ > 2 * mdcache_param.dir.avl_chunk) {
-			/* Limit readahead to 1 chunk */
-			break;
-		}
+		count++;
 
 		if (cb_rc >= DIR_TERMINATE) {
 			*eof = false;
