@@ -643,6 +643,10 @@ lru_reap_impl(enum lru_q_id qid)
 		}
 		refcnt = atomic_inc_int32_t(&lru->refcnt);
 		entry = container_of(lru, mdcache_entry_t, lru);
+#ifdef USE_LTTNG
+	tracepoint(mdcache, mdc_lru_ref,
+		   __func__, __LINE__, entry, entry->sub_handle, refcnt);
+#endif
 		QUNLOCK(qlane);
 
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
@@ -1746,7 +1750,7 @@ mdcache_entry_t *alloc_cache_entry(void)
  *
  * @return a usable entry or NULL if unexport is in progress.
  */
-mdcache_entry_t *mdcache_lru_get(void)
+mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle)
 {
 	mdcache_lru_t *lru;
 	mdcache_entry_t *nentry = NULL;
@@ -1767,12 +1771,12 @@ mdcache_entry_t *mdcache_lru_get(void)
 	nentry->lru.refcnt = 2;
 	nentry->lru.cf = 0;
 	nentry->lru.lane = lru_lane_of(nentry);
+	nentry->sub_handle = sub_handle;
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_get,
-		   __func__, __LINE__, nentry, nentry->lru.refcnt);
+		  __func__, __LINE__, nentry, sub_handle, nentry->lru.refcnt);
 #endif
-
 	return nentry;
 }
 

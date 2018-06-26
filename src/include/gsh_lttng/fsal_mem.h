@@ -22,12 +22,14 @@ TRACEPOINT_EVENT(
 	TP_ARGS(const char *, function,
 		int, line,
 		void *, obj,
-		const char *, name),
+		const char *, name,
+		uint32_t, refcount),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, obj, obj)
 		ctf_string(name, name)
+		ctf_integer(uint32_t, refcount, refcount)
 	)
 )
 

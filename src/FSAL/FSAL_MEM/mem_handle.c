@@ -655,6 +655,10 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 
 	/* Initial ref */
 	hdl->refcount = 1;
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_alloc, func, line, &hdl->obj_handle, name,
+		   hdl->refcount);
+#endif
 
 	fsal_obj_handle_init(&hdl->obj_handle, &mfe->export, type);
 	hdl->obj_handle.obj_ops = &MEM.handle_ops;
@@ -666,9 +670,7 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		/* This is an export */
 		hdl->is_export = true;
 	}
-#ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_alloc, func, line, &hdl->obj_handle, name);
-#endif
+
 	return hdl;
 }
 

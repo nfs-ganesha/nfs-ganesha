@@ -7,6 +7,7 @@
 #define GANESHA_LTTNG_MDCACHE_TP_H
 
 #include <lttng/tracepoint.h>
+#include <stdint.h>
 
 /**
  * @brief Trace an increase in refcount of an entry
@@ -153,11 +154,13 @@ TRACEPOINT_EVENT(
 	TP_ARGS(const char *, function,
 		int, line,
 		void *, entry,
+		void *, sub_handle,
 		int32_t, refcnt),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, entry, entry)
+		ctf_integer_hex(void *, sub_handle, sub_handle)
 		ctf_integer(int32_t, refcnt, refcnt)
 	)
 )
@@ -281,12 +284,14 @@ TRACEPOINT_EVENT(
 	TP_ARGS(const char *, function,
 		int, line,
 		void *, entry,
-		void *, sub_handle),
+		void *, sub_handle,
+		uint64_t, whence),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, entry, entry)
 		ctf_integer_hex(void *, sub_handle, sub_handle)
+		ctf_integer(uint64_t, whence, whence)
 	)
 )
 
@@ -328,12 +333,14 @@ TRACEPOINT_EVENT(
 	mdc_readdir_cb,
 	TP_ARGS(const char *, function,
 		int, line,
+		const char *, dirent_name,
 		void *, entry,
 		void *, sub_handle,
 		int32_t, refcnt),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
+		ctf_string(dirent_name, dirent_name)
 		ctf_integer_hex(void *, entry, entry)
 		ctf_integer_hex(void *, sub_handle, sub_handle)
 		ctf_integer(int32_t, refcnt, refcnt)
