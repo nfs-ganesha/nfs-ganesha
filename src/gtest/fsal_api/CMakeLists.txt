@@ -415,3 +415,20 @@ set_target_properties(test_handle_to_wire_latency PROPERTIES COMPILE_FLAGS
   "${UNITTEST_CXX_FLAGS}")
 
 
+set(test_readdir_correctness_SRCS
+  test_readdir_correctness.cc
+  )
+
+add_executable(test_readdir_correctness
+  ${test_readdir_correctness_SRCS})
+add_sanitizers(test_readdir_correctness)
+
+target_link_libraries(test_readdir_correctness
+  ${GANESHA_LIBRARIES}
+  ${UNITTEST_LIBS}
+  ${LTTNG_LIBRARIES}
+  ${LTTNG_CTL_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
+  )
+set_target_properties(test_readdir_correctness PROPERTIES COMPILE_FLAGS
+  "${UNITTEST_CXX_FLAGS}")
