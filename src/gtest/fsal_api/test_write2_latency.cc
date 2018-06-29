@@ -281,6 +281,45 @@ TEST_F(Write2EmptyLatencyTest, LOOP)
   free(databuffer);
 }
 
+TEST_F(Write2EmptyLatencyTest, LOOP_BYPASS)
+{
+  struct fsal_obj_handle *sub_hdl;
+  char *databuffer;
+  struct fsal_io_arg *write_arg;
+  struct timespec s_time, e_time;
+  int bytes = 64;
+  databuffer = (char *) malloc(bytes);
+
+  memset(databuffer, 'a', bytes);
+
+  write_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+                                          sizeof(struct iovec));
+  write_arg->info = NULL;
+  write_arg->state = NULL;
+  write_arg->offset = OFFSET;
+  write_arg->iov_count = 1;
+  write_arg->iov[0].iov_len = bytes;
+  write_arg->iov[0].iov_base = databuffer;
+  write_arg->io_amount = 0;
+  write_arg->fsal_stable = false;
+
+  sub_hdl = mdcdb_get_sub_handle(test_file);
+  ASSERT_NE(sub_hdl, nullptr);
+
+  now(&s_time);
+
+  for (int i = 0; i < LOOP_COUNT; ++i, write_arg->offset += 64) {
+    sub_hdl->obj_ops.write2(sub_hdl, true, write_cb, write_arg, NULL);
+  }
+
+  now(&e_time);
+
+  fprintf(stderr, "Average time per write2: %" PRIu64 " ns\n",
+          timespec_diff(&s_time, &e_time) / LOOP_COUNT);
+
+  free(databuffer);
+}
+
 int main(int argc, char *argv[])
 {
   int code = 0;

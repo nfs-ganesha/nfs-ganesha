@@ -305,6 +305,62 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
   free(r_databuffer);
 }
 
+TEST_F(Read2EmptyLatencyTest, LOOP_BYPASS)
+{
+  struct fsal_obj_handle *sub_hdl;
+  char *w_databuffer;
+  char *r_databuffer;
+  struct fsal_io_arg *write_arg;
+  struct fsal_io_arg *read_arg;
+  int bytes = 64*LOOP_COUNT;
+  struct timespec s_time, e_time;
+
+  w_databuffer = (char *) malloc(bytes);
+  memset(w_databuffer, 'a', bytes);
+
+  write_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+                                          sizeof(struct iovec));
+  write_arg->info = NULL;
+  write_arg->state = NULL;
+  write_arg->offset = OFFSET;
+  write_arg->iov_count = 1;
+  write_arg->iov[0].iov_len = bytes;
+  write_arg->iov[0].iov_base = w_databuffer;
+  write_arg->io_amount = 0;
+  write_arg->fsal_stable = false;
+
+  sub_hdl = mdcdb_get_sub_handle(test_file);
+  ASSERT_NE(sub_hdl, nullptr);
+
+  sub_hdl->obj_ops.write2(sub_hdl, true, callback, write_arg, NULL);
+
+  bytes = 64;
+  r_databuffer = (char *) malloc(bytes);
+  read_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
+                                         sizeof(struct iovec));
+  read_arg->info = NULL;
+  read_arg->state = NULL;
+  read_arg->offset = OFFSET;
+  read_arg->iov_count = 1;
+  read_arg->iov[0].iov_len = bytes;
+  read_arg->iov[0].iov_base = r_databuffer;
+  read_arg->io_amount = 0;
+
+  now(&s_time);
+
+  for (int i = 0; i < LOOP_COUNT; ++i, read_arg->offset += 64) {
+    sub_hdl->obj_ops.read2(sub_hdl, true, callback, read_arg, NULL);
+  }
+
+  now(&e_time);
+
+  fprintf(stderr, "Average time per read2: %" PRIu64 " ns\n",
+          timespec_diff(&s_time, &e_time) / LOOP_COUNT);
+
+  free(w_databuffer);
+  free(r_databuffer);
+}
+
 int main(int argc, char *argv[])
 {
   int code = 0;

@@ -111,7 +111,7 @@ TEST_F(CloseEmptyLatencyTest, SIMPLE)
   obj->obj_ops.put_ref(obj);
 }
 
-TEST_F(CloseEmptyLatencyTest, BIG)
+TEST_F(CloseEmptyLatencyTest, LOOP)
 {
   fsal_status_t status;
   struct fsal_obj_handle *obj[LOOP_COUNT];
