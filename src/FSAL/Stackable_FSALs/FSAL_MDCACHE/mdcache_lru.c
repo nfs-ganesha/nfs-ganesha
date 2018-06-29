@@ -826,6 +826,12 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
 			atomic_clear_uint32_t_bits(&entry->mde_flags,
 						   MDCACHE_DIR_POPULATED);
 
+			/* Clean out the fields not touched by the cleanup. */
+			chunk->parent = NULL;
+			chunk->prev_chunk = NULL;
+			chunk->next_ck = 0;
+			chunk->num_entries = 0;
+
 			if (entry != parent) {
 				/* And now we're done with the parent of the
 				 * chunk if it wasn't the directory we are
@@ -848,40 +854,6 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
 	return NULL;
 }
 
-static inline struct dir_chunk *lru_reap_chunk(mdcache_entry_t *parent,
-					       struct dir_chunk *prev_chunk)
-{
-	mdcache_lru_t *lru = NULL;
-	struct dir_chunk *chunk = NULL;
-
-	/* Reap a chunk */
-	lru = lru_reap_chunk_impl(LRU_ENTRY_L2, parent, prev_chunk);
-
-	if (!lru)
-		lru = lru_reap_chunk_impl(LRU_ENTRY_L1, parent, prev_chunk);
-
-	if (lru) {
-		/* we uniquely hold chunk, it has already been cleaned up. The
-		 * dirents list is effectively properly initialized.
-		 */
-		chunk = container_of(lru, struct dir_chunk, chunk_lru);
-	}
-
-	return chunk;
-}
-
-void mdcache_reap_and_free_chunk(mdcache_entry_t *parent)
-{
-	struct dir_chunk *chunk = lru_reap_chunk(parent, NULL);
-
-	if (chunk != NULL) {
-		/* And now we can free the chunk. */
-		LogFullDebug(COMPONENT_CACHE_INODE,
-			     "Freeing chunk %p", chunk);
-		gsh_free(chunk);
-	}
-}
-
 /**
  * @brief Re-use or allocate a chunk
  *
@@ -892,73 +864,27 @@ void mdcache_reap_and_free_chunk(mdcache_entry_t *parent)
  *
  * @param[in] parent     The parent directory we desire a chunk for
  * @param[in] prev_chunk If non-NULL, the previous chunk in this directory
- * @param[in] reserve    The number of dirents to reserve for this chunk
  *
  * @return reused or allocated chunk
  */
 struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
-				    struct dir_chunk *prev_chunk,
-				    int reserve)
+				    struct dir_chunk *prev_chunk)
 {
+	mdcache_lru_t *lru = NULL;
 	struct dir_chunk *chunk = NULL;
-	uint64_t dirents_used;
 
-	/* We are about to start a new chunk, go ahead and reserve our dirents
-	 * now.
-	 */
-	dirents_used = atomic_add_uint64_t(&lru_state.dirents_used, reserve);
-
-	LogFullDebug(COMPONENT_CACHE_INODE,
-		     "Reserved %d dirents, chunks_used = %"
-		     PRIu64" dirents_used = %"PRIu64,
-		     reserve,
-		     atomic_fetch_uint64_t(&lru_state.chunks_used),
-		     dirents_used);
-
-	/* If our reservation is over the entries_hiwat, then we need to
-	 * reap some chunks to bring it down. We take credit internally for
-	 * the chunks we reap. Another thread might ALSO be reaping to make
-	 * room for it's new chunk.
-	 */
-	if (dirents_used > lru_state.entries_hiwat) {
-		while (atomic_fetch_uint64_t(&lru_state.dirents_used) >
-		       lru_state.entries_hiwat) {
-
-			/* If we have a chunk from last iteration, we still
-			 * need to reap more, so free that chunk.
-			 */
-			if (chunk) {
-				/* And now we can free the chunk. */
-				LogFullDebug(COMPONENT_CACHE_INODE,
-					     "Freeing chunk %p", chunk);
-				gsh_free(chunk);
-			}
-
-			/* Reap a chunk */
-			chunk = lru_reap_chunk(parent, prev_chunk);
-
-			if (chunk == NULL) {
-				/*
-				assert(atomic_fetch_uint64_t(
-						&lru_state.dirents_used) <=
-						lru_state.entries_hiwat);
-				*/
-				LogFullDebug(COMPONENT_CACHE_INODE,
-					     "Could not free chunks to free dirents, chunks_used = %"
-					     PRIu64" dirents_used = %"PRIu64,
-					     atomic_fetch_uint64_t(
-						&lru_state.chunks_used),
-					     atomic_fetch_uint64_t(
-						&lru_state.dirents_used));
-				break;
-			}
-		}
+	if (lru_state.chunks_used >= lru_state.chunks_hiwat) {
+		lru = lru_reap_chunk_impl(LRU_ENTRY_L2, parent, prev_chunk);
+		if (!lru)
+			lru = lru_reap_chunk_impl(
+					LRU_ENTRY_L1, parent, prev_chunk);
 	}
 
-	if (chunk) {
+	if (lru) {
 		/* we uniquely hold chunk, it has already been cleaned up.
 		 * The dirents list is effectively properly initialized.
 		 */
+		chunk = container_of(lru, struct dir_chunk, chunk_lru);
 		LogFullDebug(COMPONENT_CACHE_INODE,
 			     "Recycling chunk at %p.", chunk);
 	} else {
@@ -969,12 +895,6 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 			     "New chunk %p.", chunk);
 		(void) atomic_inc_int64_t(&lru_state.chunks_used);
 	}
-
-	LogFullDebug(COMPONENT_CACHE_INODE,
-		     "chunks_used = %"
-		     PRIu64" dirents_used = %"PRIu64,
-		     atomic_fetch_uint64_t(&lru_state.chunks_used),
-		     atomic_fetch_uint64_t(&lru_state.dirents_used));
 
 	/* Set the chunk's parent and prev_chunk. */
 	chunk->parent = parent;
@@ -1560,7 +1480,7 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 	/* Index */
 	size_t lane;
 	/* A ratio computed to adjust wait time based on how close to high
-	 * water mark for number of dirents we are.
+	 * water mark for number of chunks we are.
 	 */
 	float wait_ratio;
 	/* The computed wait time. */
@@ -1571,8 +1491,8 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 	SetNameFunction("chunk_lru");
 
 	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-		     "LRU awakes, lru dirents_used: %" PRIu64,
-		     atomic_fetch_uint64_t(&lru_state.dirents_used));
+		     "LRU awakes, lru chunks used: %" PRIu64,
+		     lru_state.chunks_used);
 
 	/* Total chunks demoted to L2 between all lanes and all current runs. */
 	for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
@@ -1583,9 +1503,8 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 		totalwork += chunk_lru_run_lane(lane);
 	}
 
-	/* Run more frequently the closer to max number of dirents we are. */
-	wait_ratio = 1.0 - (atomic_fetch_uint64_t(&lru_state.dirents_used) /
-				lru_state.entries_hiwat);
+	/* Run more frequently the closer to max number of chunks we are. */
+	wait_ratio = 1.0 - (lru_state.chunks_used / lru_state.chunks_hiwat);
 
 	new_thread_wait = mdcache_param.lru_run_interval * wait_ratio;
 
@@ -1728,7 +1647,10 @@ mdcache_lru_pkginit(void)
 	   bit fishy, so come back and revisit this. */
 	lru_state.entries_hiwat = mdcache_param.entries_hwmark;
 	lru_state.entries_used = 0;
-	lru_state.dirents_used = 0;
+
+	/* Set high and low watermark for chunks.  XXX This seems a
+	   bit fishy, so come back and revisit this. */
+	lru_state.chunks_hiwat = mdcache_param.chunks_hwmark;
 	lru_state.chunks_used = 0;
 
 

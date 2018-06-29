@@ -65,6 +65,8 @@ static struct config_item mdcache_params[] = {
 		       mdcache_parameter, dir.avl_detached_mult),
 	CONF_ITEM_UI32("Entries_HWMark", 1, UINT32_MAX, 100000,
 		       mdcache_parameter, entries_hwmark),
+	CONF_ITEM_UI32("Chunks_HWMark", 1, UINT32_MAX, 100000,
+		       mdcache_parameter, chunks_hwmark),
 	CONF_ITEM_UI32("LRU_Run_Interval", 1, 24 * 3600, 90,
 		       mdcache_parameter, lru_run_interval),
 	CONF_ITEM_UI32("FD_Limit_Percent", 0, 100, 99,

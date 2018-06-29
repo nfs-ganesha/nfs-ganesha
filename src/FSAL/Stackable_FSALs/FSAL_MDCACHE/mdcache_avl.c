@@ -43,7 +43,6 @@
 #include "fsal.h"
 #include "mdcache_int.h"
 #include "mdcache_avl.h"
-#include "mdcache_lru.h"
 #include "murmur3.h"
 #include "city.h"
 
@@ -148,18 +147,7 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 		 * enumeration will have to skip deleted entries.
 		 */
 	} else {
-		/* Free the deleted dirent. */
-		uint64_t dirents_used;
-
 		mdcache_avl_remove(entry, v);
-
-		dirents_used = atomic_dec_uint64_t(&lru_state.dirents_used);
-
-		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-			     "Removed dirent, chunks_used = %"
-			     PRIu64" dirents_used = %"PRIu64,
-			     atomic_fetch_uint64_t(&lru_state.chunks_used),
-			     dirents_used);
 	}
 }
 
@@ -219,7 +207,6 @@ void mdcache_avl_remove(mdcache_entry_t *parent,
 			mdcache_dir_entry_t *dirent)
 {
 	struct dir_chunk *chunk = dirent->chunk;
-	uint64_t dirents_allocated;
 
 	if ((dirent->flags & DIR_ENTRY_FLAG_DELETED) == 0) {
 		/* Remove from active names tree */
@@ -238,14 +225,10 @@ void mdcache_avl_remove(mdcache_entry_t *parent,
 		mdcache_key_delete(&dirent->ckey);
 
 	gsh_free(dirent);
-	dirents_allocated = atomic_dec_uint64_t(&lru_state.dirents_allocated);
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-			"Just freed dirent %p from chunk %p parent %p, dirents_allocated = %"
-			PRIu64" dirents_used = %"PRIu64,
-			dirent, chunk, (chunk) ? chunk->parent : NULL,
-			dirents_allocated,
-			atomic_fetch_uint64_t(&lru_state.dirents_used));
+			"Just freed dirent %p from chunk %p parent %p",
+			dirent, chunk, (chunk) ? chunk->parent : NULL);
 }
 
 /**
@@ -499,7 +482,6 @@ out:
 
 	mdcache_key_delete(&v->ckey);
 	gsh_free(v);
-	atomic_dec_uint64_t(&lru_state.dirents_allocated);
 	*dirent = v2;
 
 	return code;
@@ -602,7 +584,6 @@ void mdcache_avl_clean_trees(mdcache_entry_t *parent)
 {
 	struct avltree_node *dirent_node;
 	mdcache_dir_entry_t *dirent;
-	int i = 0;
 
 #ifdef DEBUG_MDCACHE
 	assert(parent->content_lock.__data.__writer);
@@ -615,17 +596,7 @@ void mdcache_avl_clean_trees(mdcache_entry_t *parent)
 				"Invalidate %p %s", dirent, dirent->name);
 
 		mdcache_avl_remove(parent, dirent);
-
-		atomic_dec_uint64_t(&lru_state.dirents_used);
-		i++;
 	}
-
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-		     "Cleaning parent %p, freed %d dirents, chunks_used = %"
-		     PRIu64" dirents_used = %"PRIu64,
-		     parent, i,
-		     atomic_fetch_uint64_t(&lru_state.chunks_used),
-		     atomic_fetch_uint64_t(&lru_state.dirents_used));
 }
 
 /** @} */

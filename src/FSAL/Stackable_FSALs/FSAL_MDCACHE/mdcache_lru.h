@@ -74,9 +74,8 @@ enum fd_states {
 struct lru_state {
 	uint64_t entries_hiwat;
 	uint64_t entries_used;
+	uint64_t chunks_hiwat;
 	uint64_t chunks_used;
-	uint64_t dirents_used;
-	uint64_t dirents_allocated;
 	uint32_t fds_system_imposed;
 	uint32_t fds_hard_limit;
 	uint32_t fds_hiwat;
@@ -199,9 +198,7 @@ static inline void mdcache_put(mdcache_entry_t *entry)
 
 void lru_remove_chunk(struct dir_chunk *chunk);
 struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
-				    struct dir_chunk *prev_chunk,
-				    int reserve);
-void mdcache_reap_and_free_chunk(mdcache_entry_t *parent);
+				    struct dir_chunk *prev_chunk);
 void lru_bump_chunk(struct dir_chunk *chunk);
 
 #endif				/* MDCACHE_LRU_H */
