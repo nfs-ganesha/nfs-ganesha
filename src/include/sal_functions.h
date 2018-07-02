@@ -891,8 +891,7 @@ void deleg_heuristics_recall(struct fsal_obj_handle *obj,
 			     struct state_t *deleg);
 void get_deleg_perm(nfsace4 *permissions, open_delegation_type4 type);
 void update_delegation_stats(struct state_hdl *ostate,
-			     state_owner_t *owner,
-			     struct state_t *deleg);
+			     state_owner_t *owner);
 state_status_t delegrecall_impl(struct fsal_obj_handle *obj);
 nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state);
 void state_deleg_revoke(struct fsal_obj_handle *obj, state_t *state);

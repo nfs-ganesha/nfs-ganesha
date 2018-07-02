@@ -138,7 +138,7 @@ state_status_t acquire_lease_lock(struct state_hdl *ostate,
 	status = do_lease_op(ostate->file.obj, state, owner, deleg);
 
 	if (status == STATE_SUCCESS) {
-		update_delegation_stats(ostate, owner, state);
+		update_delegation_stats(ostate, owner);
 	} else {
 		LogDebug(COMPONENT_STATE, "Could not set lease, error=%s",
 			 state_err_str(status));
@@ -183,8 +183,7 @@ state_status_t release_lease_lock(struct fsal_obj_handle *obj, state_t *state)
  * @param[in] Delegation Entry
  */
 void update_delegation_stats(struct state_hdl *ostate,
-			     state_owner_t *owner,
-			     struct state_t *deleg)
+			     state_owner_t *owner)
 {
 	nfs_client_id_t *client = owner->so_owner.so_nfs4_owner.so_clientrec;
 
