@@ -470,49 +470,44 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 			 state_err_str(state_status));
 		whynone->ond_why = WND4_RESOURCE;
 		return;
+	}
+	new_state->state_seqid++;
+
+	LogFullDebugOpaque(COMPONENT_STATE,
+			   "delegation state added, stateid: %s",
+			   100, new_state->stateid_other, OTHERSIZE);
+
+	/* acquire_lease_lock() gets the delegation from FSAL */
+	state_status = acquire_lease_lock(ostate, clientowner, new_state);
+	if (state_status != STATE_SUCCESS) {
+		LogDebug(COMPONENT_NFS_V4_LOCK,
+			 "get delegation call added state but failed to lock with status %s",
+			 state_err_str(state_status));
+		state_del_locked(new_state);
+		dec_state_t_ref(new_state);
+		if (state_status == STATE_LOCK_CONFLICT)
+			whynone->ond_why = WND4_CONTENTION;
+		else
+			whynone->ond_why = WND4_RESOURCE;
+		return;
+	}
+
+	resok->delegation.delegation_type = deleg_type;
+	ostate->file.fdeleg_stats.fds_deleg_type = deleg_type;
+	if (deleg_type == OPEN_DELEGATE_WRITE) {
+		nfs_space_limit4 *space_limit = &writeres->space_limit;
+
+		space_limit->limitby = NFS_LIMIT_SIZE;
+		space_limit->nfs_space_limit4_u.filesize =
+				DELEG_SPACE_LIMIT_FILESZ;
+		COPY_STATEID(&writeres->stateid, new_state);
+		writeres->recall = prerecall;
+		get_deleg_perm(&writeres->permissions, deleg_type);
 	} else {
-		new_state->state_seqid++;
-
-		LogFullDebugOpaque(COMPONENT_STATE,
-				   "delegation state added, stateid: %s",
-				   100, new_state->stateid_other, OTHERSIZE);
-
-		/* acquire_lease_lock() gets the delegation from FSAL */
-		state_status = acquire_lease_lock(ostate,
-						  clientowner,
-						  new_state);
-		if (state_status != STATE_SUCCESS) {
-			LogDebug(COMPONENT_NFS_V4_LOCK,
-				 "get delegation call added state but failed to lock with status %s",
-				 state_err_str(state_status));
-			state_del_locked(new_state);
-			dec_state_t_ref(new_state);
-			if (state_status == STATE_LOCK_CONFLICT)
-				whynone->ond_why = WND4_CONTENTION;
-			else
-				whynone->ond_why = WND4_RESOURCE;
-			return;
-		} else {
-			nfs_space_limit4 *space_limit = &writeres->space_limit;
-
-			resok->delegation.delegation_type = deleg_type;
-			ostate->file.fdeleg_stats.fds_deleg_type = deleg_type;
-			if (deleg_type == OPEN_DELEGATE_WRITE) {
-				space_limit->limitby = NFS_LIMIT_SIZE;
-				space_limit->nfs_space_limit4_u.filesize =
-						DELEG_SPACE_LIMIT_FILESZ;
-				COPY_STATEID(&writeres->stateid, new_state);
-				writeres->recall = prerecall;
-				get_deleg_perm(&writeres->permissions,
-					       deleg_type);
-			} else {
-				assert(deleg_type == OPEN_DELEGATE_READ);
-				COPY_STATEID(&readres->stateid, new_state);
-				readres->recall = prerecall;
-				get_deleg_perm(&readres->permissions,
-					       deleg_type);
-			}
-		}
+		assert(deleg_type == OPEN_DELEGATE_READ);
+		COPY_STATEID(&readres->stateid, new_state);
+		readres->recall = prerecall;
+		get_deleg_perm(&readres->permissions, deleg_type);
 	}
 
 	if (isDebug(COMPONENT_NFS_V4_LOCK)) {
