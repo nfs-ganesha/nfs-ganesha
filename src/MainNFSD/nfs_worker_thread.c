@@ -1400,7 +1400,6 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 				 reqdata->r_u.req.svc.rq_msg.cb_vers,
 				 reqdata->r_u.req.svc.rq_msg.cb_proc,
 				 errno);
-			SVC_DESTROY(xprt);
 			goto freeargs;
 		}
 
