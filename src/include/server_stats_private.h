@@ -174,10 +174,20 @@ struct export_stats {
 	.direction = "out"   \
 }
 
+/* We are passing back FSAL name so that ganesha_stats can show it as per
+ * the FSAL name
+ * The fsal_stats is an array with below items in it
+ * OP_NAME, NUMBER_OF_OP, AVG_RES_TIME, MIN_RES_TIME & MAX_RES_TIME
+ */
 #define FSAL_OPS_REPLY      \
+{                               \
+	.name = "fsal_name",         \
+	.type = "s",            \
+	.direction = "out"       \
+},				\
 {                            \
-	.name = "op",        \
-	.type = "(qa(sq(tdtt)))",     \
+	.name = "fsal_stats",        \
+	.type = "a(stdtt)",     \
 	.direction = "out"   \
 }
 
