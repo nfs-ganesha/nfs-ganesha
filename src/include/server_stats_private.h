@@ -187,7 +187,7 @@ struct export_stats {
 },				\
 {                            \
 	.name = "fsal_stats",        \
-	.type = "a(stdtt)",     \
+	.type = "a(stddd)",     \
 	.direction = "out"   \
 }
 

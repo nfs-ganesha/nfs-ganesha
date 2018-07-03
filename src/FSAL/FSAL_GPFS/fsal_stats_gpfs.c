@@ -183,9 +183,8 @@ void fsal_gpfs_extract_stats(struct fsal_module *fsal_hdl, void *iter)
 	DBusMessageIter struct_iter;
 	DBusMessageIter *iter1 = (DBusMessageIter *)iter;
 	char *message;
-	uint64_t total_ops = 0, total_resp = 0, min_resp = 0, max_resp = 0;
-	uint64_t op_counter = 0;
-	double avg_resp = 0.0;
+	uint64_t total_ops, total_resp, min_resp, max_resp, op_counter = 0;
+	double res = 0.0;
 	int i;
 	struct fsal_stats *gpfs_stats;
 
@@ -219,13 +218,15 @@ void fsal_gpfs_extract_stats(struct fsal_module *fsal_hdl, void *iter)
 				DBUS_TYPE_STRING, &message);
 		dbus_message_iter_append_basic(&struct_iter,
 			DBUS_TYPE_UINT64, &total_ops);
-		avg_resp = (double) total_resp / total_ops;
+		res = (double) total_resp * 0.000001 / total_ops;
 		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_DOUBLE, &avg_resp);
+			DBUS_TYPE_DOUBLE, &res);
+		res = (double) min_resp * 0.000001;
 		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_UINT64, &min_resp);
+			DBUS_TYPE_DOUBLE, &res);
+		res = (double) max_resp * 0.000001;
 		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_UINT64, &max_resp);
+			DBUS_TYPE_DOUBLE, &res);
 		op_counter += total_ops;
 	}
 	if (op_counter == 0) {
@@ -236,11 +237,11 @@ void fsal_gpfs_extract_stats(struct fsal_module *fsal_hdl, void *iter)
 		dbus_message_iter_append_basic(&struct_iter,
 			DBUS_TYPE_UINT64, &total_ops);
 		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_DOUBLE, &avg_resp);
+			DBUS_TYPE_DOUBLE, &res);
 		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_UINT64, &min_resp);
+			DBUS_TYPE_DOUBLE, &res);
 		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_UINT64, &max_resp);
+			DBUS_TYPE_DOUBLE, &res);
 	} else {
 		message = "OK";
 	}

@@ -402,15 +402,15 @@ class DumpFSALStats():
 		    return output
 	    	else:
 	    	    tot_len = len(self.stats[4])
-	    	    output += "FSAL Stats: \n"
-	    	    output += "\tOp-Name        Total     Res:Avg      Min        Max"
+	    	    output += "FSAL Stats (response time in milliseconds): \n"
+	    	    output += "\tOp-Name         Total     Res:Avg         Min           Max"
 	    	    i = 0
 	    	    while (i+5) <= tot_len:
 	    	    	output += "\n" + (self.stats[4][i+0]).ljust(20)
 	    	    	output += " %s" % (str(self.stats[4][i+1]).rjust(8))
-	     	    	output += " %10.3f" % (self.stats[4][i+2])
-	    	    	output += " %10.3f" % (self.stats[4][i+3])
-	    	    	output += " %10.3f" % (self.stats[4][i+4])
+	     	    	output += " %12.6f" % (self.stats[4][i+2])
+	    	    	output += " %12.6f" % (self.stats[4][i+3])
+	    	    	output += " %12.6f" % (self.stats[4][i+4])
 	    	    	i += 5
 	    	    return output
 
