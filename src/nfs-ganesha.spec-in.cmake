@@ -547,7 +547,6 @@ exit 0
 %endif
 
 %files
-%defattr(-,root,root,-)
 %{_bindir}/ganesha.nfsd
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
@@ -581,14 +580,12 @@ exit 0
 %endif
 
 %files mount-9P
-%defattr(-,root,root,-)
 %{_sbindir}/mount.9P
 %if %{with man_page}
 %{_mandir}/*/ganesha-9p-config.8.gz
 %endif
 
 %files vfs
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalvfs*
 %config(noreplace) %{_sysconfdir}/ganesha/vfs.conf
 %if %{with man_page}
@@ -597,7 +594,6 @@ exit 0
 
 
 %files proxy
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalproxy*
 %if %{with man_page}
 %{_mandir}/*/ganesha-proxy-config.8.gz
@@ -606,19 +602,16 @@ exit 0
 # Optional packages
 %if %{with nullfs}
 %files nullfs
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalnull*
 %endif
 
 %if %{with mem}
 %files mem
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalmem*
 %endif
 
 %if %{with gpfs}
 %files gpfs
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalgpfs*
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.nfsd.conf
@@ -636,7 +629,6 @@ exit 0
 
 %if %{with xfs}
 %files xfs
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalxfs*
 %config(noreplace) %{_sysconfdir}/ganesha/xfs.conf
 %if %{with man_page}
@@ -646,7 +638,6 @@ exit 0
 
 %if %{with ceph}
 %files ceph
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalceph*
 %config(noreplace) %{_sysconfdir}/ganesha/ceph.conf
 %if %{with man_page}
@@ -656,7 +647,6 @@ exit 0
 
 %if %{with rgw}
 %files rgw
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalrgw*
 %config(noreplace) %{_sysconfdir}/ganesha/rgw.conf
 %config(noreplace) %{_sysconfdir}/ganesha/rgw_bucket.conf
@@ -667,7 +657,6 @@ exit 0
 
 %if %{with gluster}
 %files gluster
-%defattr(-,root,root,-)
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha-gfapi
 %{_libdir}/ganesha/libfsalgluster*
 %if %{with man_page}
@@ -677,7 +666,6 @@ exit 0
 
 %if ! %{with system_ntirpc}
 %files -n libntirpc
-%defattr(-,root,root,-)
 %{_libdir}/libntirpc.so.@NTIRPC_VERSION_EMBED@
 %{_libdir}/libntirpc.so.@NTIRPC_ABI_EMBED@
 %{_libdir}/libntirpc.so
@@ -692,26 +680,22 @@ exit 0
 
 %if %{with panfs}
 %files panfs
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalpanfs*
 %endif
 
 %if %{with pt}
 %files pt
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libfsalpt*
 %config(noreplace) %{_sysconfdir}/ganesha/pt.conf
 %endif
 
 %if %{with lttng}
 %files lttng
-%defattr(-,root,root,-)
 %{_libdir}/ganesha/libganesha_trace*
 %endif
 
 %if %{with utils}
 %files utils
-%defattr(-,root,root,-)
 %if ( 0%{?suse_version} )
 %{python_sitelib}/Ganesha/*
 %{python_sitelib}/ganeshactl-*-info
