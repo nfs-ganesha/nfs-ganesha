@@ -233,7 +233,7 @@ static nfsstat4 make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
  * @param[in]  util      Stripe width and flags for the layout
  * @param[in]  first_idx First stripe index
  * @param[in]  ptrn_ofst Pattern offset
- * @param[in]  ds_ids	 Server IDs of DSs for each file handle
+ * @param[in]  ds_ids	   Server IDs of DSs for each file handle
  * @param[in]  num_fhs   Number of file handles in array
  * @param[in]  fhs       Array if buffer descriptors holding opaque DS
  *                       handles
@@ -340,6 +340,280 @@ nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs, const uint32_t num_hosts,
 						      hosts[i].port);
 		if (nfs_status != NFS4_OK)
 			return nfs_status;
+	}
+
+	return NFS4_OK;
+}
+
+/**
+ * @brief Convenience function to encode a single ff_data_server4
+ *
+ * @param[out] xdrs      XDR stream
+ * @param[in]  deviceid  The deviceid for the layout
+ * @param[in]  num_fhs   Number of file handles and length of ds_ids array.
+ * @param[in]  ds_ids	 Server IDs of DSs for each file handle
+ * @param[in]  fhs       Array if buffer descriptors holding opaque DS
+ *                       handles
+ * @param[in] ffds_efficiency MDS evalution of mirror's effectiveness
+ * @param[in] ffds_user Synthetic uid to be used for RPC call to DS
+ * @param[in] ffds_group Synthetic gid to be used for RPC call to DS
+ * @return NFS status codes.
+ */
+static nfsstat4 FSAL_encode_data_server(XDR *xdrs,
+		const struct pnfs_deviceid *deviceid,
+		const uint32_t num_fhs,
+		const uint16_t *ds_ids,
+		const struct gsh_buffdesc *fhs,
+		const uint32_t ffds_efficiency,
+		const fattr4_owner ffds_user,
+		const fattr4_owner_group ffds_group)
+{
+	nfsstat4 nfs_status = 0;
+	size_t i = 0;
+
+	/* Encode ffds_deviceid */
+	if (!xdr_fsal_deviceid(xdrs, (struct pnfs_deviceid *)deviceid)) {
+		LogMajor(COMPONENT_PNFS,
+				"Failed encoding deviceid.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	/* Encode ffds_efficiency */
+	if (!xdr_uint32_t(xdrs, (int32_t *) &ffds_efficiency)) {
+		LogMajor(COMPONENT_PNFS,
+			"Failed encoding ffds_efficiency.");
+			return NFS4ERR_SERVERFAULT;
+	}
+
+	/* Encode ffds_stateid
+	 * For now, we assume only loosely coupled setup.
+	 * Hence set stateid to anonymous.
+	*/
+	stateid4 ffds_stateid;
+
+	ffds_stateid.seqid = 0;
+	memset(&ffds_stateid.other, '\0', sizeof(ffds_stateid.other));
+
+	if (!xdr_stateid4(xdrs, &ffds_stateid)) {
+		LogMajor(COMPONENT_PNFS,
+			"Failed encoding ffds_stateid.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	if (!xdr_uint32_t(xdrs, (int32_t *) &num_fhs)) {
+		LogMajor(COMPONENT_PNFS, "Failed encoding length of FH array.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	/* Encode ffds_fh_vers */
+	for (i = 0; i < num_fhs; i++) {
+
+		nfs_fh4 handle;
+		char buffer[NFS4_FHSIZE];
+
+		handle.nfs_fh4_val = buffer;
+		handle.nfs_fh4_len = sizeof(buffer);
+		memset(buffer, 0, sizeof(buffer));
+		nfs_status = make_file_handle_ds(fhs + i,
+						 *(ds_ids + i),
+						 &handle);
+		if (nfs_status != NFS4_OK) {
+			LogMajor(COMPONENT_PNFS,
+				"Failed converting FH %zu.", i);
+				return nfs_status;
+		}
+		if (!xdr_bytes(xdrs,
+			(char **)&handle.nfs_fh4_val,
+			&handle.nfs_fh4_len,
+			handle.nfs_fh4_len)) {
+			LogMajor(COMPONENT_PNFS,
+				"Failed encoding FH %zu.", i);
+				return NFS4ERR_SERVERFAULT;
+			}
+	}
+
+	if (!xdr_fattr4_owner(xdrs, (fattr4_owner *) &ffds_user)) {
+		LogMajor(COMPONENT_PNFS,
+				"Failed encoding ffds_user.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	if (!xdr_fattr4_owner (xdrs, (fattr4_owner_group *) &ffds_group)) {
+		LogMajor(COMPONENT_PNFS,
+				"Failed encoding ffds_group.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	return NFS4_OK;
+}
+
+
+/**
+ * @brief Convenience function to encode loc_body
+ *
+ * This function allows the FSAL to encode ff_layout4
+ * without having to allocate and construct all the components of the
+ * structure, including file handles.
+ *
+ * To encode a completed ff_layout4 structure, call
+ * xdr_ff_layout4.
+ *
+ * @param[out] xdrs      XDR stream
+ * @param[in]  deviceid  The deviceid for the layout
+ * @param[in]  ffl_stripe_unit Stripe unit for current layout segment
+ * @param[in]  ffl_mirrors_len Number of mirrored storage servers.
+ * @param[in]  stripes Number of stripes in layout
+ * @param[in]  num_fhs   Number of file handles and length of ds_ids array.
+ * @param[in]  ds_ids	 Server IDs of DSs for each file handle
+ * @param[in]  fhs       Array if buffer descriptors holding opaque DS
+ *                       handles
+ * @param[in] ffds_efficiency MDS evalution of mirror's effectiveness
+ * @param[in] ffds_user Synthetic uid to be used for RPC call to DS
+ * @param[in] ffds_group Synthetic gid to be used for RPC call to DS
+ * @param[in] ffl_flags Bitmap flags
+ * @param[in] ffl_stats_collect_hint Hint to client
+					on how often the server wants it
+ *        to report LAYOUTSTATS for a file. The time is in seconds.
+ * @return NFS status codes.
+ */
+nfsstat4 FSAL_encode_flex_file_layout(XDR *xdrs,
+				 const struct pnfs_deviceid *deviceid,
+				 const uint64_t ffl_stripe_unit,
+				 const uint32_t	ffl_mirrors_len,
+				 u_int stripes,
+				 const uint32_t num_fhs,
+				 const uint16_t *ds_ids,
+				 const struct gsh_buffdesc *fhs,
+				 const uint32_t ffds_efficiency,
+				 const fattr4_owner ffds_user,
+				 const fattr4_owner_group ffds_group,
+				 const ff_flags4 ffl_flags,
+				 const uint32_t ffl_stats_collect_hint)
+{
+	nfsstat4 nfs_status = NFS4_OK;
+	size_t i = 0;
+
+	/* Stripe_unit */
+	if (!xdr_length4(xdrs, (uint64_t *) &ffl_stripe_unit)) {
+		LogMajor(COMPONENT_PNFS, "Failed encoding ffl_stripe_unit.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	/* ffl_mirrors_len */
+	if (!xdr_uint32_t(xdrs, (uint32_t *) &ffl_mirrors_len)) {
+		LogMajor(COMPONENT_PNFS, "Failed encoding ffl_mirrors_len.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	/* ffl_mirrors_val */
+	for (i = 0; i < ffl_mirrors_len; i++) {
+		size_t j = 0;
+
+		/* stripes = ffm_data_servers_len */
+		if (!xdr_uint32_t(xdrs, (u_int *) &stripes)) {
+			LogMajor(COMPONENT_PNFS,
+				"Failed encoding ffm_data_servers_len.");
+			return NFS4ERR_SERVERFAULT;
+		}
+
+		/* Encode ff_data_server4 elements */
+		for (j = 0; j < stripes; j++) {
+			nfs_status = FSAL_encode_data_server(xdrs,
+						deviceid, num_fhs, ds_ids,
+						fhs, ffds_efficiency, ffds_user,
+						ffds_group);
+		}
+	}
+
+	/* FFL_FLAGS */
+	if (!xdr_ff_flags(xdrs, (ff_flags4 *) &ffl_flags)) {
+		LogMajor(COMPONENT_PNFS, "Failed encoding ffl_flags.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	/* Stats collect hint */
+	if (!xdr_uint32_t(xdrs, (uint32_t *) &ffl_stats_collect_hint)) {
+		LogMajor(COMPONENT_PNFS,
+			"Failed encoding ffl_stats_collect_hint.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	return nfs_status;
+}
+
+/**
+ * @brief Convenience function to encode ff_device_addr4
+ *
+ *
+ * @param[in,out] xdrs      The XDR stream
+ * @param[in]     hosts     Array of hosts
+ * @return NFSv4 Status code
+ *
+ */
+nfsstat4 FSAL_encode_ff_device_versions4(XDR *xdrs,
+				const u_int multipath_list4_len,
+				const u_int ffda_versions_len,
+				const fsal_multipath_member_t *hosts,
+				const uint32_t ffdv_version,
+				const uint32_t ffdv_minorversion,
+				const uint32_t ffdv_rsize,
+				const uint32_t ffdv_wsize,
+				const bool_t ffdv_tightly_coupled)
+{
+	size_t i = 0;
+	nfsstat4 nfs_status = 0;
+
+	/* multipath_list4_len */
+	if (!xdr_u_int (xdrs, (u_int *) &multipath_list4_len)) {
+		LogMajor(COMPONENT_PNFS,
+			"Failed encoding multipath_list4_len.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	for (i = 0; i < multipath_list4_len; i++) {
+		nfs_status = FSAL_encode_ipv4_netaddr(xdrs,
+								hosts[i].proto,
+								hosts[i].addr,
+								hosts[i].port);
+		if (nfs_status != NFS4_OK)
+			return nfs_status;
+	}
+
+	if (!xdr_uint32_t (xdrs, (uint32_t *) &ffda_versions_len)) {
+		LogMajor(COMPONENT_PNFS, "Failed encoding ffda_versions_len.");
+		return NFS4ERR_SERVERFAULT;
+	}
+
+	for (i = 0; i < ffda_versions_len; i++) {
+		if (!xdr_uint32_t (xdrs, (uint32_t *) &ffdv_version)) {
+			LogMajor(COMPONENT_PNFS,
+			 "Failed encoding ffdv_version.");
+			return NFS4ERR_SERVERFAULT;
+		}
+
+		if (!xdr_uint32_t (xdrs, (uint32_t *) &ffdv_minorversion)) {
+			LogMajor(COMPONENT_PNFS,
+				"Failed encoding ffdv_minorversion.");
+			return NFS4ERR_SERVERFAULT;
+		}
+
+		if (!xdr_uint32_t (xdrs, (uint32_t *) &ffdv_rsize)) {
+			LogMajor(COMPONENT_PNFS,
+				"Failed encoding ffdv_rsize.");
+			return NFS4ERR_SERVERFAULT;
+		}
+
+		if (!xdr_uint32_t (xdrs, (uint32_t *) &ffdv_wsize)) {
+			LogMajor(COMPONENT_PNFS,
+				"Failed encoding ffdv_wsize.");
+			return NFS4ERR_SERVERFAULT;
+		}
+
+		if (!xdr_bool (xdrs, (bool_t *) &ffdv_tightly_coupled)) {
+			LogMajor(COMPONENT_PNFS,
+				"Failed encoding ffdv_tightly_coupled.");
+			return NFS4ERR_SERVERFAULT;
+		}
 	}
 
 	return NFS4_OK;

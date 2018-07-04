@@ -225,6 +225,30 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs, const uint32_t num_hosts,
 				  const fsal_multipath_member_t *hosts);
 
+nfsstat4 FSAL_encode_flex_file_layout(XDR *xdrs,
+				 const struct pnfs_deviceid *deviceid,
+				 const uint64_t ffl_stripe_unit,
+				 const uint32_t	ffl_mirrors_len,
+				 u_int stripes,
+				 const uint32_t num_fhs,
+				 const uint16_t *ds_ids,
+				 const struct gsh_buffdesc *fhs,
+				 const uint32_t ffds_efficiency,
+				 const fattr4_owner ffds_user,
+				 const fattr4_owner_group ffds_group,
+				 const ff_flags4 ffl_flags,
+				 const uint32_t ffl_stats_collect_hint);
+
+nfsstat4 FSAL_encode_ff_device_versions4(XDR *xdrs,
+				const u_int multipath_list4_len,
+				const u_int ffda_versions_len,
+				const fsal_multipath_member_t *hosts,
+				const uint32_t ffdv_version,
+				const uint32_t ffdv_minorversion,
+				const uint32_t ffdv_rsize,
+				const uint32_t ffdv_wsize,
+				const bool_t ffdv_tightly_coupled);
+
 nfsstat4 posix2nfs4_error(int posix_errorcode);
 
 /*
