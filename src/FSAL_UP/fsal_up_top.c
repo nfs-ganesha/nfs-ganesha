@@ -1423,33 +1423,35 @@ static void delegrecall_task(void *ctx)
 	if (state == NULL) {
 		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
 		free_delegrecall_context(deleg_ctx);
-	} else {
-		ret = get_state_obj_export_owner_refs(state, &obj,
-						     &export,
-						     NULL);
-
-		if (!ret || obj == NULL) {
-			LogDebug(COMPONENT_NFS_CB,
-				 "Delgation recall skipped due to stale file");
-			goto out;
-		}
-
-		/* op_ctx may be used by state_del_locked and others */
-		save_ctx = op_ctx;
-		op_ctx = &req_ctx;
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
-		delegrecall_one(obj, state, deleg_ctx);
-
-		/* Release the obj ref and export ref. */
-		obj->obj_ops.put_ref(obj);
-		put_gsh_export(export);
-
-		op_ctx = save_ctx;
-
-out:
-		dec_state_t_ref(state);
+		return;
 	}
+
+	/* op_ctx may be used by state_del_locked and others */
+	save_ctx = op_ctx;
+	op_ctx = &req_ctx;
+
+	ret = get_state_obj_export_owner_refs(state, &obj,
+					     &export,
+					     NULL);
+	if (!ret || obj == NULL) {
+		LogDebug(COMPONENT_NFS_CB,
+			 "Delgation recall skipped due to stale file");
+		goto out;
+	}
+
+	op_ctx->ctx_export = export;
+	op_ctx->fsal_export = export->fsal_export;
+
+	delegrecall_one(obj, state, deleg_ctx);
+
+	/* Release the obj ref and export ref. */
+	obj->obj_ops.put_ref(obj);
+	put_gsh_export(export);
+	op_ctx->ctx_export = NULL;
+	op_ctx->fsal_export = NULL;
+out:
+	dec_state_t_ref(state);
+	op_ctx = save_ctx;
 }
 
 static int schedule_delegrecall_task(struct delegrecall_context *ctx,
