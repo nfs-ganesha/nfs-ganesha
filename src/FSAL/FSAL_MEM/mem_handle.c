@@ -249,6 +249,7 @@ static void mem_insert_obj(struct mem_fsal_obj_handle *parent,
 
 	dirent = gsh_calloc(1, sizeof(*dirent));
 	dirent->hdl = child;
+	mem_int_get_ref(child);
 	dirent->dir = parent;
 	dirent->d_name = gsh_strdup(name);
 
@@ -306,12 +307,10 @@ mem_dirent_lookup(struct mem_fsal_obj_handle *dir, const char *name)
  * @param[in] release	If true and no more dirents, release child
  */
 static void mem_remove_dirent_locked(struct mem_fsal_obj_handle *parent,
-				     struct mem_dirent *dirent,
-				     bool release)
+				     struct mem_dirent *dirent)
 {
 	struct mem_fsal_obj_handle *child;
 	uint32_t numkids;
-	bool empty;
 
 	avltree_remove(&dirent->avl_n, &parent->mh_dir.avl_name);
 	avltree_remove(&dirent->avl_i, &parent->mh_dir.avl_index);
@@ -321,7 +320,6 @@ static void mem_remove_dirent_locked(struct mem_fsal_obj_handle *parent,
 	child = dirent->hdl;
 	PTHREAD_RWLOCK_wrlock(&child->obj_handle.obj_lock);
 	glist_del(&dirent->dlist);
-	empty = glist_empty(&child->dirents);
 	PTHREAD_RWLOCK_unlock(&child->obj_handle.obj_lock);
 
 	numkids = atomic_dec_uint32_t(&parent->mh_dir.numkids);
@@ -332,8 +330,7 @@ static void mem_remove_dirent_locked(struct mem_fsal_obj_handle *parent,
 	gsh_free((char *)dirent->d_name);
 	gsh_free(dirent);
 
-	if (release && empty)
-		mem_cleanup(child);
+	mem_int_put_ref(child);
 }
 
 /**
@@ -351,7 +348,7 @@ static void mem_remove_dirent(struct mem_fsal_obj_handle *parent,
 
 	dirent = mem_dirent_lookup(parent, name);
 	if (dirent)
-		mem_remove_dirent_locked(parent, dirent, false);
+		mem_remove_dirent_locked(parent, dirent);
 
 	PTHREAD_RWLOCK_unlock(&parent->obj_handle.obj_lock);
 }
@@ -383,7 +380,7 @@ void mem_clean_export(struct mem_fsal_obj_handle *root)
 		}
 
 		PTHREAD_RWLOCK_wrlock(&root->obj_handle.obj_lock);
-		mem_remove_dirent_locked(root, dirent, true);
+		mem_remove_dirent_locked(root, dirent);
 		PTHREAD_RWLOCK_unlock(&root->obj_handle.obj_lock);
 	}
 
@@ -403,7 +400,7 @@ void mem_clean_all_dirents(struct mem_fsal_obj_handle *parent)
 
 	while ((node = avltree_first(&parent->mh_dir.avl_name))) {
 		dirent = avltree_container_of(node, struct mem_dirent, avl_n);
-		mem_remove_dirent_locked(parent, dirent, true);
+		mem_remove_dirent_locked(parent, dirent);
 	}
 
 	PTHREAD_RWLOCK_unlock(&parent->obj_handle.obj_lock);
@@ -1251,9 +1248,7 @@ static fsal_status_t mem_unlink(struct fsal_obj_handle *dir_hdl,
 	/* Remove the dirent from the parent*/
 	dirent = mem_dirent_lookup(parent, name);
 	if (dirent) {
-		int32_t refcount = atomic_fetch_int32_t(&myself->refcount);
-
-		mem_remove_dirent_locked(parent, dirent, (refcount == 0));
+		mem_remove_dirent_locked(parent, dirent);
 	}
 
 unlock:
