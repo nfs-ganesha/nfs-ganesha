@@ -690,6 +690,7 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lock_op2 = nullfs_lock_op2;
 	ops->setattr2 = nullfs_setattr2;
 	ops->close2 = nullfs_close2;
+	ops->fallocate = nullfs_fallocate;
 
 	/* xattr related functions */
 	ops->list_ext_attrs = nullfs_list_ext_attrs;

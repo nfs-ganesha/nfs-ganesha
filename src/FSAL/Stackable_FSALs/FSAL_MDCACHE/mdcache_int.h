@@ -993,6 +993,9 @@ fsal_status_t mdcache_lease_op2(struct fsal_obj_handle *obj_hdl,
 				fsal_deleg_t deleg);
 fsal_status_t mdcache_close2(struct fsal_obj_handle *obj_hdl,
 			     struct state_t *state);
+fsal_status_t mdcache_fallocate(struct fsal_obj_handle *obj_hdl,
+				struct state_t *state, uint64_t offset,
+				uint64_t length, bool allocate);
 
 /* extended attributes management */
 fsal_status_t mdcache_list_ext_attrs(struct fsal_obj_handle *obj_hdl,

@@ -827,3 +827,21 @@ fsal_status_t mdcache_close2(struct fsal_obj_handle *obj_hdl,
 
 	return status;
 }
+
+fsal_status_t mdcache_fallocate(struct fsal_obj_handle *obj_hdl,
+				struct state_t *state, uint64_t offset,
+				uint64_t length, bool allocate)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	fsal_status_t status;
+
+	subcall(
+		status = entry->sub_handle->obj_ops->fallocate(
+							entry->sub_handle,
+							state, offset, length,
+							allocate);
+	       );
+
+	return status;
+}

@@ -1770,6 +1770,21 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t (*close)(struct fsal_obj_handle *obj_hdl);
+
+/**
+ * @brief Reserve/Deallocate space in a region of a file
+ *
+ * @param[in] obj_hdl File to which bytes should be allocated
+ * @param[in] state   open stateid under which to do the allocation
+ * @param[in] offset  offset at which to begin the allocation
+ * @param[in] length  length of the data to be allocated
+ * @param[in] allocate Should space be allocated or deallocated?
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*fallocate)(struct fsal_obj_handle *obj_hdl,
+				    struct state_t *state, uint64_t offset,
+				    uint64_t length, bool allocate);
 /**@}*/
 
 /**@{*/

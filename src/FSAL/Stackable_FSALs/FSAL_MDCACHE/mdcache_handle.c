@@ -1477,6 +1477,7 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lease_op2 = mdcache_lease_op2;
 	ops->setattr2 = mdcache_setattr2;
 	ops->close2 = mdcache_close2;
+	ops->fallocate = mdcache_fallocate;
 
 	/* xattr related functions */
 	ops->list_ext_attrs = mdcache_list_ext_attrs;

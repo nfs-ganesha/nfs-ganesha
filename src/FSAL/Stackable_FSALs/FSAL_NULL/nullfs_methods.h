@@ -160,6 +160,9 @@ fsal_status_t nullfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 			      fsal_lock_param_t *conflicting_lock);
 fsal_status_t nullfs_close2(struct fsal_obj_handle *obj_hdl,
 			    struct state_t *state);
+fsal_status_t nullfs_fallocate(struct fsal_obj_handle *obj_hdl,
+			       struct state_t *state, uint64_t offset,
+			       uint64_t length, bool allocate);
 
 /* extended attributes management */
 fsal_status_t nullfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
