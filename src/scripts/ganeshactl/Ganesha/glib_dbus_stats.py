@@ -119,6 +119,12 @@ class RetrieveExportStats():
                                   self.dbus_exportstats_name)
         return StatsDisable(stats_state(stat_type))
 
+    # status
+    def status_stats(self):
+	stats_state = self.exportmgrobj.get_dbus_method("StatusStats",
+				  self.dbus_exportstats_name)
+	return StatsStatus(stats_state())
+
 class RetrieveClientStats():
     def __init__(self):
         self.dbus_service_name = "org.ganesha.nfsd"
@@ -385,6 +391,26 @@ class StatsReset():
             return "Failed to reset statistics, GANESHA RESPONSE STATUS: " + self.status[1]
         else:
             return "Successfully resetted statistics counters"
+
+class StatsStatus():
+    def __init__(self, status):
+	self.status = status
+    def __str__(self):
+	output = ""
+	if not self.status[0]:
+	    return "Unable to fetch current status of stats counting: " + self.status[1]
+	else:
+	    if self.status[2][0]:
+		output += "Stats counting for NFS server is enabled since: \n\t"
+		output += time.ctime(self.status[2][1][0]) + str(self.status[2][1][1]) + " nsecs\n"
+	    else:
+		 output += "Stats counting for NFS server is currently disabled\n"
+	    if self.status[3][0]:
+		output += "Stats counting for FSAL is enabled since: \n\t"
+		output += time.ctime(self.status[3][1][0]) + str(self.status[3][1][1]) + " nsecs"
+	    else:
+		 output += "Stats counting for FSAL is currently disabled"
+	    return output
 
 class DumpFSALStats():
     def __init__(self, stats):

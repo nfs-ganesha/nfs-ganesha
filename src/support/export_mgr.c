@@ -65,6 +65,8 @@
 #include "nfs_proto_functions.h"
 #include "pnfs_utils.h"
 
+struct timespec nfs_stats_time;
+struct timespec fsal_stats_time;
 /**
  * @brief Exports are stored in an AVL tree with front-end cache.
  *
@@ -1982,6 +1984,48 @@ static struct gsh_dbus_method reset_statistics = {
 };
 
 /**
+ * DBUS method to know current status of stats counting
+ */
+static bool stats_status(DBusMessageIter *args,
+			DBusMessage *reply,
+			DBusError *error)
+{
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter, nfsstatus, fsalstatus;
+	dbus_bool_t value;
+
+	dbus_message_iter_init_append(reply, &iter);
+	dbus_status_reply(&iter, success, errormsg);
+
+	/* Send info about NFS server stats */
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
+					 &nfsstatus);
+	value = nfs_param.core_param.enable_NFSSTATS;
+	dbus_message_iter_append_basic(&nfsstatus, DBUS_TYPE_BOOLEAN, &value);
+	dbus_append_timestamp(&nfsstatus, &nfs_stats_time);
+	dbus_message_iter_close_container(&iter, &nfsstatus);
+
+	/* Send info about FSAL stats */
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
+					 &fsalstatus);
+	value = nfs_param.core_param.enable_FSALSTATS;
+	dbus_message_iter_append_basic(&fsalstatus, DBUS_TYPE_BOOLEAN, &value);
+	dbus_append_timestamp(&fsalstatus, &fsal_stats_time);
+	dbus_message_iter_close_container(&iter, &fsalstatus);
+
+	return true;
+}
+
+static struct gsh_dbus_method status_stats = {
+	.name = "StatusStats",
+	.method = stats_status,
+	.args = {STATUS_REPLY,
+		 STATS_STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
+/**
  * DBUS method to disable statistics counting
  *
  */
@@ -2050,22 +2094,32 @@ static bool stats_enable(DBusMessageIter *args,
 
 	dbus_message_iter_get_basic(args, &stat_type);
 	if (strcmp(stat_type, "all") == 0) {
+		if (!nfs_param.core_param.enable_NFSSTATS) {
+			nfs_param.core_param.enable_NFSSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling NFS server statistics counting");
+			now(&nfs_stats_time);
+		}
+		if (!nfs_param.core_param.enable_FSALSTATS) {
+			nfs_param.core_param.enable_FSALSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling FSAL statistics counting");
+			now(&fsal_stats_time);
+		}
+	}
+	if (strcmp(stat_type, "nfs") == 0 &&
+			!nfs_param.core_param.enable_NFSSTATS) {
 		nfs_param.core_param.enable_NFSSTATS = true;
-		nfs_param.core_param.enable_FSALSTATS = true;
 		LogEvent(COMPONENT_CONFIG,
 			 "Enabling NFS server statistics counting");
-		LogEvent(COMPONENT_CONFIG,
-			 "Enabling FSAL statistics counting");
+		now(&nfs_stats_time);
 	}
-	if (strcmp(stat_type, "nfs") == 0) {
-		nfs_param.core_param.enable_NFSSTATS = true;
-		LogEvent(COMPONENT_CONFIG,
-			 "Enabling NFS server statistics counting");
-	}
-	if (strcmp(stat_type, "fsal") == 0) {
+	if (strcmp(stat_type, "fsal") == 0 &&
+			!nfs_param.core_param.enable_FSALSTATS) {
 		nfs_param.core_param.enable_FSALSTATS = true;
 		LogEvent(COMPONENT_CONFIG,
 			 "Enabling FSAL statistics counting");
+		now(&fsal_stats_time);
 	}
 
 	dbus_status_reply(&iter, success, errormsg);
@@ -2351,6 +2405,7 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&fsal_statistics,
 	&enable_statistics,
 	&disable_statistics,
+	&status_stats,
 	NULL
 };
 

@@ -14,6 +14,8 @@ import Ganesha.glib_dbus_stats
 
 def usage():
     message = "Command displays global stats by default.\n"
+    message += "To display current status regarding stat counting use \n"
+    message += "%s status \n" % (sys.argv[0])
     message += "To display stat counters use \n"
     message += "%s [list_clients | deleg <ip address> | " % (sys.argv[0])
     message += "inode | iov3 [export id] | iov4 [export id] | export |"
@@ -33,7 +35,7 @@ else:
 # check arguments
 commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
 	    'export', 'total', 'fast', 'pnfs', 'fsal', 'reset', 'enable',
-	    'disable')
+	    'disable', 'pool')
 if command not in commands:
     print("Option \"%s\" is not correct." % (command))
     usage()
@@ -99,3 +101,5 @@ elif command == "enable":
     print(exp_interface.enable_stats(command_arg))
 elif command == "disable":
     print(exp_interface.disable_stats(command_arg))
+elif command == "status":
+    print exp_interface.status_stats()
