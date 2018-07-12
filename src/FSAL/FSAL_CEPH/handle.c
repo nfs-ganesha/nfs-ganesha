@@ -45,6 +45,7 @@
 #include "nfs_exports.h"
 #include "sal_data.h"
 #include "statx_compat.h"
+#include "linux/falloc.h"
 
 /**
  * @brief Release an object
@@ -2379,6 +2380,68 @@ static void handle_to_key(struct fsal_obj_handle *handle_pub,
 	fh_desc->len = sizeof(vinodeno_t);
 }
 
+#ifdef USE_CEPH_LL_FALLOCATE
+static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
+					 state_t *state, uint64_t offset,
+					 uint64_t length, bool allocate)
+{
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
+	fsal_status_t status;
+	int retval = 0;
+	Fh *my_fd = NULL;
+	bool has_lock = false;
+	bool closefd = false;
+	fsal_openflags_t openflags = FSAL_O_WRITE;
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+	struct ceph_fd *ceph_fd = NULL;
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		ceph_fd = &container_of(state, struct ceph_state_fd,
+					state)->ceph_fd;
+		PTHREAD_RWLOCK_rdlock(&ceph_fd->fdlock);
+	}
+
+	/* Get a usable file descriptor */
+	status = ceph_find_fd(&my_fd, obj_hdl, false, state,
+			      openflags, &has_lock, &closefd, false);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL,
+			 "find_fd failed %s", msg_fsal_err(status.major));
+		goto out;
+	}
+
+	retval = ceph_ll_fallocate(export->cmount, my_fd,
+				   allocate ? 0 :
+				   FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+				   offset, length);
+	if (retval < 0) {
+		status = ceph2fsal_error(retval);
+		goto out;
+	}
+
+	retval = ceph_ll_fsync(export->cmount, my_fd, false);
+	if (retval < 0)
+		status = ceph2fsal_error(retval);
+ out:
+	if (ceph_fd)
+		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
+
+	if (closefd)
+		(void) ceph_ll_close(myself->export->cmount, my_fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	return status;
+}
+#endif
+
 /**
  * @brief Override functions in ops vector
  *
@@ -2424,4 +2487,7 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 #ifdef CEPH_PNFS
 	handle_ops_pnfs(ops);
 #endif				/* CEPH_PNFS */
+#ifdef USE_CEPH_LL_FALLOCATE
+	ops->fallocate = ceph_fsal_fallocate;
+#endif
 }
