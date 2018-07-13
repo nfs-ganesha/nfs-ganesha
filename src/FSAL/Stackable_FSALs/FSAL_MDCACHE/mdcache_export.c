@@ -136,6 +136,12 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 					   struct entry_export_map,
 					   export_per_entry);
 		if (expmap == NULL) {
+			/* Entry is unmapped, clear first_export_id.  This is to
+			 * close a race caused by lru_run_lane() taking a ref
+			 * before we call mdcache_lru_cleanup_try_push() below.
+			 * */
+			atomic_store_int32_t(&entry->first_export_id, -1);
+
 			/* We must not hold entry->attr_lock across
 			 * try_cleanup_push (LRU lane lock order) */
 			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
