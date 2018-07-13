@@ -108,7 +108,7 @@ TEST_F(CloseEmptyLatencyTest, SIMPLE)
   // delete the file created for test
   status = fsal_remove(test_root, TEST_FILE);
   ASSERT_EQ(status.major, 0);
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
 }
 
 TEST_F(CloseEmptyLatencyTest, LOOP)
@@ -146,7 +146,7 @@ TEST_F(CloseEmptyLatencyTest, LOOP)
     status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
 
-    obj[i]->obj_ops.put_ref(obj[i]);
+    obj[i]->obj_ops->put_ref(obj[i]);
   }
 }
 

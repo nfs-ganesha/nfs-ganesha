@@ -88,9 +88,9 @@ namespace {
 
       gsh_free(bfr_content.addr);
 
-      status = symlink_test_root->obj_ops.unlink(root_entry, symlink_test_root, TEST_ROOT_LINK);
+      status = symlink_test_root->obj_ops->unlink(root_entry, symlink_test_root, TEST_ROOT_LINK);
       EXPECT_EQ(0, status.major);
-      symlink_test_root->obj_ops.put_ref(symlink_test_root);
+      symlink_test_root->obj_ops->put_ref(symlink_test_root);
       symlink_test_root = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -125,7 +125,7 @@ TEST_F(ReadlinkEmptyLatencyTest, SIMPLE)
   struct gsh_buffdesc link_content;
   int ret = -1;
 
-  status = symlink_test_root->obj_ops.readlink(symlink_test_root, &link_content, false);
+  status = symlink_test_root->obj_ops->readlink(symlink_test_root, &link_content, false);
   EXPECT_EQ(status.major, 0);
   if(link_content.len == bfr_content.len)
 	  ret = memcmp(link_content.addr, bfr_content.addr, link_content.len);
@@ -143,7 +143,7 @@ TEST_F(ReadlinkEmptyLatencyTest, SIMPLE_BYPASS)
 
   sub_hdl = mdcdb_get_sub_handle(symlink_test_root);
   ASSERT_NE(sub_hdl, nullptr);
-  status = sub_hdl->obj_ops.readlink(sub_hdl, &link_content, false);
+  status = sub_hdl->obj_ops->readlink(sub_hdl, &link_content, false);
   EXPECT_EQ(status.major, 0);
   if(link_content.len == bfr_content.len)
 	  ret = memcmp(link_content.addr, bfr_content.addr, link_content.len);
@@ -161,7 +161,7 @@ TEST_F(ReadlinkEmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = symlink_test_root->obj_ops.readlink(symlink_test_root, &link_content, false);
+    status = symlink_test_root->obj_ops->readlink(symlink_test_root, &link_content, false);
     EXPECT_EQ(status.major, 0);
     gsh_free(link_content.addr);
   }
@@ -201,7 +201,7 @@ TEST_F(ReadlinkFullLatencyTest, BIG)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = symlink_test_root->obj_ops.readlink(symlink_test_root, &link_content, false);
+    status = symlink_test_root->obj_ops->readlink(symlink_test_root, &link_content, false);
     ASSERT_EQ(status.major, 0) << " failed to readlink " << TEST_ROOT_LINK;
     gsh_free(link_content.addr);
   }
@@ -223,7 +223,7 @@ TEST_F(ReadlinkFullLatencyTest, BIG_BYPASS)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = sub_hdl->obj_ops.readlink(sub_hdl, &link_content, false);
+    status = sub_hdl->obj_ops->readlink(sub_hdl, &link_content, false);
     ASSERT_EQ(status.major, 0) << " failed to readlink " << TEST_ROOT_LINK;
     gsh_free(link_content.addr);
   }

@@ -84,9 +84,9 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = test_root->obj_ops.unlink(test_root, test_dir, TEST_DIR);
+      status = test_root->obj_ops->unlink(test_root, test_dir, TEST_DIR);
       EXPECT_EQ(0, status.major);
-      test_dir->obj_ops.put_ref(test_dir);
+      test_dir->obj_ops->put_ref(test_dir);
       test_dir = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -119,7 +119,7 @@ namespace {
                 void *dir_state,
                 fsal_cookie_t cookie)
   {
-    obj->obj_ops.put_ref(obj);
+    obj->obj_ops->put_ref(obj);
     return DIR_CONTINUE;
   }
 
@@ -137,7 +137,7 @@ TEST_F(ReaddirEmptyLatencyTest, SIMPLE)
   uint64_t whence = 0;
   bool eod = false;
 
-  status = test_dir->obj_ops.readdir(test_dir, &whence, NULL, populate_dirent, 0, &eod);
+  status = test_dir->obj_ops->readdir(test_dir, &whence, NULL, populate_dirent, 0, &eod);
   EXPECT_EQ(status.major, 0);
 }
 
@@ -151,7 +151,7 @@ TEST_F(ReaddirEmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_dir);
   ASSERT_NE(sub_hdl, nullptr);
 
-  status = sub_hdl->obj_ops.readdir(sub_hdl, &whence, NULL, populate_dirent, 0, &eod);
+  status = sub_hdl->obj_ops->readdir(sub_hdl, &whence, NULL, populate_dirent, 0, &eod);
   EXPECT_EQ(status.major, 0);
 }
 
@@ -188,7 +188,7 @@ TEST_F(ReaddirEmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < EMPTY_LOOP_COUNT; ++i) {
-    status = test_dir->obj_ops.readdir(test_dir, &whence, NULL, populate_dirent, 0, &eod);
+    status = test_dir->obj_ops->readdir(test_dir, &whence, NULL, populate_dirent, 0, &eod);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -208,7 +208,7 @@ TEST_F(ReaddirFullLatencyTest, BIG)
   now(&s_time);
 
   for (int i = 0; i < FULL_LOOP_COUNT; ++i) {
-    status = test_dir->obj_ops.readdir(test_dir, &whence, NULL, populate_dirent, 0, &eod);
+    status = test_dir->obj_ops->readdir(test_dir, &whence, NULL, populate_dirent, 0, &eod);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -232,7 +232,7 @@ TEST_F(ReaddirFullLatencyTest, BIG_BYPASS)
   now(&s_time);
 
   for (int i = 0; i < FULL_LOOP_COUNT; ++i) {
-    status = sub_hdl->obj_ops.readdir(sub_hdl, &whence, NULL, populate_dirent, 0, &eod);
+    status = sub_hdl->obj_ops->readdir(sub_hdl, &whence, NULL, populate_dirent, 0, &eod);
     ASSERT_EQ(status.major, 0);
   }
 

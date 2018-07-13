@@ -59,7 +59,7 @@ mem_invalidate(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
 
 	LogFullDebug(COMPONENT_FSAL_UP, "invalidating %s", hdl->m_name);
 
-	hdl->obj_handle.obj_ops.handle_to_key(&hdl->obj_handle, &fh_desc);
+	hdl->obj_handle.obj_ops->handle_to_key(&hdl->obj_handle, &fh_desc);
 
 	status = up_ops->invalidate(up_ops, &fh_desc, FSAL_UP_INVALIDATE_CACHE);
 	if (FSAL_IS_ERROR(status)) {
@@ -88,7 +88,7 @@ mem_invalidate_close(struct mem_fsal_export *mfe,
 
 	LogFullDebug(COMPONENT_FSAL_UP, "invalidate_closing %s", hdl->m_name);
 
-	hdl->obj_handle.obj_ops.handle_to_key(&hdl->obj_handle, &fh_desc);
+	hdl->obj_handle.obj_ops->handle_to_key(&hdl->obj_handle, &fh_desc);
 
 	status = up_ops->invalidate_close(up_ops, &fh_desc,
 					  FSAL_UP_INVALIDATE_CACHE);
@@ -117,7 +117,7 @@ mem_update(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
 
 	LogFullDebug(COMPONENT_FSAL_UP, "updating %s", hdl->m_name);
 
-	hdl->obj_handle.obj_ops.handle_to_key(&hdl->obj_handle, &fh_desc);
+	hdl->obj_handle.obj_ops->handle_to_key(&hdl->obj_handle, &fh_desc);
 
 	fsal_prepare_attrs(&attrs, 0);
 	/* Set CTIME */

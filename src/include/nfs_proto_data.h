@@ -360,7 +360,7 @@ static inline void set_current_entry(compound_data_t *data,
 
 	if (data->current_obj) {
 		/* Release ref on old object */
-		data->current_obj->obj_ops.put_ref(data->current_obj);
+		data->current_obj->obj_ops->put_ref(data->current_obj);
 	}
 
 	data->current_obj = obj;
@@ -371,7 +371,7 @@ static inline void set_current_entry(compound_data_t *data,
 	}
 
 	/* Get our ref on the new object */
-	data->current_obj->obj_ops.get_ref(data->current_obj);
+	data->current_obj->obj_ops->get_ref(data->current_obj);
 
 	/* Set the current file type */
 	data->current_filetype = obj->type;
@@ -415,7 +415,7 @@ static inline void set_saved_entry(compound_data_t *data,
 
 	if (data->saved_obj) {
 		/* Release ref on old object */
-		data->saved_obj->obj_ops.put_ref(data->saved_obj);
+		data->saved_obj->obj_ops->put_ref(data->saved_obj);
 	}
 
 	if (restore_op_ctx) {
@@ -435,7 +435,7 @@ static inline void set_saved_entry(compound_data_t *data,
 	}
 
 	/* Get our ref on the new object */
-	data->saved_obj->obj_ops.get_ref(data->saved_obj);
+	data->saved_obj->obj_ops->get_ref(data->saved_obj);
 
 	/* Set the saved file type */
 	data->saved_filetype = obj->type;

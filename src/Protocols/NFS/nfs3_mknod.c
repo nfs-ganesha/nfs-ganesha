@@ -249,10 +249,10 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* return references */
 	if (parent_obj)
-		parent_obj->obj_ops.put_ref(parent_obj);
+		parent_obj->obj_ops->put_ref(parent_obj);
 
 	if (node_obj)
-		node_obj->obj_ops.put_ref(node_obj);
+		node_obj->obj_ops->put_ref(node_obj);
 
 	return rc;
 }				/* nfs3_mknod */

@@ -83,7 +83,7 @@ namespace {
 
       status = fsal_remove(test_root, TEST_FILE);
       EXPECT_EQ(status.major, 0);
-      test_file->obj_ops.put_ref(test_file);
+      test_file->obj_ops->put_ref(test_file);
       test_file = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -115,7 +115,7 @@ TEST_F(Setattr2EmptyLatencyTest, SIMPLE)
 {
   fsal_status_t status;
 
-  status = test_file->obj_ops.setattr2(test_file, false, NULL, &attrs);
+  status = test_file->obj_ops->setattr2(test_file, false, NULL, &attrs);
   EXPECT_EQ(status.major, 0);
 }
 
@@ -127,7 +127,7 @@ TEST_F(Setattr2EmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  status = sub_hdl->obj_ops.setattr2(sub_hdl, false, NULL, &attrs);
+  status = sub_hdl->obj_ops->setattr2(sub_hdl, false, NULL, &attrs);
   EXPECT_EQ(status.major, 0);
 }
 
@@ -157,7 +157,7 @@ TEST_F(Setattr2FullLatencyTest, BIG_CACHED)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = test_file->obj_ops.setattr2(test_file, false, NULL, &attrs);
+    status = test_file->obj_ops->setattr2(test_file, false, NULL, &attrs);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -177,14 +177,14 @@ TEST_F(Setattr2FullLatencyTest, BIG_UNCACHED)
   for (int i = 0; i < DIR_COUNT; ++i) {
     sprintf(fname, "f-%08x", i);
 
-    status = test_root->obj_ops.lookup(test_root, fname, &obj[i], NULL);
+    status = test_root->obj_ops->lookup(test_root, fname, &obj[i], NULL);
     ASSERT_EQ(status.major, 0);
   }
 
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = obj[i % DIR_COUNT]->obj_ops.setattr2(obj[i % DIR_COUNT], false, NULL, &attrs);
+    status = obj[i % DIR_COUNT]->obj_ops->setattr2(obj[i % DIR_COUNT], false, NULL, &attrs);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -194,7 +194,7 @@ TEST_F(Setattr2FullLatencyTest, BIG_UNCACHED)
           timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 
   for (int i = 0; i < DIR_COUNT; ++i) {
-    obj[i]->obj_ops.put_ref(obj[i]);
+    obj[i]->obj_ops->put_ref(obj[i]);
   }
 }
 
@@ -210,7 +210,7 @@ TEST_F(Setattr2FullLatencyTest, BIG_BYPASS_CACHED)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = sub_hdl->obj_ops.setattr2(sub_hdl, false, NULL, &attrs);
+    status = sub_hdl->obj_ops->setattr2(sub_hdl, false, NULL, &attrs);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -231,7 +231,7 @@ TEST_F(Setattr2FullLatencyTest, BIG_BYPASS_UNCACHED)
   for (int i = 0; i < DIR_COUNT; ++i) {
     sprintf(fname, "f-%08x", i);
 
-    status = test_root->obj_ops.lookup(test_root, fname, &obj[i], NULL);
+    status = test_root->obj_ops->lookup(test_root, fname, &obj[i], NULL);
     ASSERT_EQ(status.major, 0);
     sub_hdl[i] = mdcdb_get_sub_handle(obj[i]);
     ASSERT_NE(sub_hdl[i], nullptr);
@@ -240,7 +240,7 @@ TEST_F(Setattr2FullLatencyTest, BIG_BYPASS_UNCACHED)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = sub_hdl[i % DIR_COUNT]->obj_ops.setattr2(sub_hdl[i % DIR_COUNT], false, NULL, &attrs);
+    status = sub_hdl[i % DIR_COUNT]->obj_ops->setattr2(sub_hdl[i % DIR_COUNT], false, NULL, &attrs);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -250,7 +250,7 @@ TEST_F(Setattr2FullLatencyTest, BIG_BYPASS_UNCACHED)
           timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 
   for (int i = 0; i < DIR_COUNT; ++i) {
-    obj[i]->obj_ops.put_ref(obj[i]);
+    obj[i]->obj_ops->put_ref(obj[i]);
   }
 }
 

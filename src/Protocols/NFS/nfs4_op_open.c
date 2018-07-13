@@ -85,7 +85,7 @@ static nfsstat4 open4_create_fh(compound_data_t *data,
 	/* Building a new fh */
 	if (!nfs4_FSALToFhandle(false, &data->currentFH, obj,
 					op_ctx->ctx_export)) {
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 		return NFS4ERR_SERVERFAULT;
 	}
 
@@ -102,7 +102,7 @@ static nfsstat4 open4_create_fh(compound_data_t *data,
 	}
 
 	/* Put our ref */
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 
 	if (set_no_cleanup) {
 		/* And clear the no_cleanup we set above. */
@@ -975,10 +975,10 @@ static void open4_ex(OPEN4args *arg,
 		}
 
 		/* We need an extra reference below. */
-		file_obj->obj_ops.get_ref(file_obj);
+		file_obj->obj_ops->get_ref(file_obj);
 	} else {
 		old_openflags =
-			file_obj->obj_ops.status2(file_obj, *file_state);
+			file_obj->obj_ops->status2(file_obj, *file_state);
 
 		/* Open upgrade */
 		LogFullDebug(COMPONENT_STATE, "Calling reopen2");
@@ -993,7 +993,7 @@ static void open4_ex(OPEN4args *arg,
 		}
 
 		/* We need an extra reference below. */
-		file_obj->obj_ops.get_ref(file_obj);
+		file_obj->obj_ops->get_ref(file_obj);
 	}
 
 	if (file_obj == NULL) {
@@ -1053,7 +1053,7 @@ static void open4_ex(OPEN4args *arg,
 			 * release the ref on file_obj, since the state add
 			 * failed.
 			 */
-			file_obj->obj_ops.put_ref(file_obj);
+			file_obj->obj_ops->put_ref(file_obj);
 			res_OPEN4->status = nfs4_Errno_state(state_status);
 			*new_state = false;
 			goto out;
@@ -1072,7 +1072,7 @@ static void open4_ex(OPEN4args *arg,
 			*new_state = false;
 		} else {
 			/*Do an open downgrade to the old open flags */
-			status = file_obj->obj_ops.reopen2(file_obj,
+			status = file_obj->obj_ops->reopen2(file_obj,
 							   *file_state,
 							   old_openflags);
 			if (FSAL_IS_ERROR(status)) {
@@ -1088,7 +1088,7 @@ static void open4_ex(OPEN4args *arg,
 			state_lock_held = false;
 
 			/* Release the extra LRU reference on file_obj. */
-			file_obj->obj_ops.put_ref(file_obj);
+			file_obj->obj_ops->put_ref(file_obj);
 			goto out;
 		}
 	}
@@ -1157,7 +1157,7 @@ static void open4_ex(OPEN4args *arg,
 
 	if (looked_up_file_obj) {
 		/* We got file_obj via lookup, we need to unref it. */
-		file_obj->obj_ops.put_ref(file_obj);
+		file_obj->obj_ops->put_ref(file_obj);
 	}
 }
 
@@ -1323,7 +1323,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	 * current FH.
 	 */
 	obj_change = data->current_obj;
-	obj_change->obj_ops.get_ref(obj_change);
+	obj_change->obj_ops->get_ref(obj_change);
 
 	/* Update the change info for entry_change. */
 	res_OPEN4->OPEN4res_u.resok4.cinfo.before =
@@ -1428,7 +1428,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (obj_change)
-		obj_change->obj_ops.put_ref(obj_change);
+		obj_change->obj_ops->put_ref(obj_change);
 
 	if (owner != NULL) {
 		/* Need to release the open owner for this call */

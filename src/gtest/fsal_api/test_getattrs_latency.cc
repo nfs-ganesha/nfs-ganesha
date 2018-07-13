@@ -96,7 +96,7 @@ TEST_F(GetattrsEmptyLatencyTest, SIMPLE)
   fsal_status_t status;
   struct attrlist outattrs;
 
-  status = test_root->obj_ops.getattrs(test_root, &outattrs);
+  status = test_root->obj_ops->getattrs(test_root, &outattrs);
   EXPECT_EQ(status.major, 0);
 }
 
@@ -109,7 +109,7 @@ TEST_F(GetattrsEmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_root);
   ASSERT_NE(sub_hdl, nullptr);
 
-  status = sub_hdl->obj_ops.getattrs(sub_hdl, &outattrs);
+  status = sub_hdl->obj_ops->getattrs(sub_hdl, &outattrs);
   EXPECT_EQ(status.major, 0);
 }
 
@@ -141,7 +141,7 @@ TEST_F(GetattrsFullLatencyTest, BIG_CACHED)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = test_root->obj_ops.getattrs(test_root, &outattrs);
+    status = test_root->obj_ops->getattrs(test_root, &outattrs);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -162,7 +162,7 @@ TEST_F(GetattrsFullLatencyTest, BIG_UNCACHED)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i % DIR_COUNT);
 
-    status = test_root->obj_ops.lookup(test_root, fname, &obj[i], NULL);
+    status = test_root->obj_ops->lookup(test_root, fname, &obj[i], NULL);
     ASSERT_EQ(status.major, 0);
     ASSERT_NE(obj[i], nullptr);
   }
@@ -170,7 +170,7 @@ TEST_F(GetattrsFullLatencyTest, BIG_UNCACHED)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = obj[i]->obj_ops.getattrs(obj[i], &outattrs);
+    status = obj[i]->obj_ops->getattrs(obj[i], &outattrs);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -180,7 +180,7 @@ TEST_F(GetattrsFullLatencyTest, BIG_UNCACHED)
           timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    obj[i]->obj_ops.put_ref(obj[i]);
+    obj[i]->obj_ops->put_ref(obj[i]);
   }
 }
 
@@ -195,7 +195,7 @@ TEST_F(GetattrsFullLatencyTest, BIG_BYPASS_CACHED)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = sub_hdl->obj_ops.getattrs(sub_hdl, &outattrs);
+    status = sub_hdl->obj_ops->getattrs(sub_hdl, &outattrs);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -217,17 +217,17 @@ TEST_F(GetattrsFullLatencyTest, BIG_BYPASS_UNCACHED)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i % DIR_COUNT);
 
-    status = test_root->obj_ops.lookup(test_root, fname, &obj, NULL);
+    status = test_root->obj_ops->lookup(test_root, fname, &obj, NULL);
     ASSERT_EQ(status.major, 0);
     ASSERT_NE(obj, nullptr);
     sub_hdl[i] = mdcdb_get_sub_handle(obj);
-    obj->obj_ops.put_ref(obj);
+    obj->obj_ops->put_ref(obj);
   }
 
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = sub_hdl[i]->obj_ops.getattrs(sub_hdl[i], &outattrs);
+    status = sub_hdl[i]->obj_ops->getattrs(sub_hdl[i], &outattrs);
     ASSERT_EQ(status.major, 0);
   }
 

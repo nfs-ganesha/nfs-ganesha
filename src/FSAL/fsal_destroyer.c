@@ -63,7 +63,7 @@ static void shutdown_handles(struct fsal_module *fsal)
 							handles);
 		LogDebug(COMPONENT_FSAL,
 			 "Releasing handle");
-		h->obj_ops.release(h);
+		h->obj_ops->release(h);
 	}
 }
 

@@ -110,7 +110,7 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 			obj_attributes,
 			&arg_GETATTR4->attr_request);
 
-	current_obj_is_referral = data->current_obj->obj_ops.is_referral(
+	current_obj_is_referral = data->current_obj->obj_ops->is_referral(
 					data->current_obj, &attrs, false);
 
 	/*

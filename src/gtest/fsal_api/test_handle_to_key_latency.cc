@@ -86,7 +86,7 @@ namespace {
 
       status = fsal_remove(test_root, TEST_FILE);
       EXPECT_EQ(status.major, 0);
-      test_file->obj_ops.put_ref(test_file);
+      test_file->obj_ops->put_ref(test_file);
       test_file = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -104,7 +104,7 @@ TEST_F(HandleToKeyEmptyLatencyTest, SIMPLE)
   fh_desc.addr = nullptr;
   fh_desc.len = 0;
 
-  test_file->obj_ops.handle_to_key(test_file, &fh_desc);
+  test_file->obj_ops->handle_to_key(test_file, &fh_desc);
   EXPECT_NE(fh_desc.addr, nullptr);
   EXPECT_NE(fh_desc.len, 0);
 }
@@ -120,7 +120,7 @@ TEST_F(HandleToKeyEmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  sub_hdl->obj_ops.handle_to_key(sub_hdl, &fh_desc);
+  sub_hdl->obj_ops->handle_to_key(sub_hdl, &fh_desc);
   EXPECT_NE(fh_desc.addr, nullptr);
   EXPECT_NE(fh_desc.len, 0);
 }
@@ -136,7 +136,7 @@ TEST_F(HandleToKeyEmptyLatencyTest, LOOP)
     fh_desc.addr = nullptr;
     fh_desc.len = 0;
 
-    test_file->obj_ops.handle_to_key(test_file, &fh_desc);
+    test_file->obj_ops->handle_to_key(test_file, &fh_desc);
     EXPECT_NE(fh_desc.addr, nullptr);
     EXPECT_NE(fh_desc.len, 0);
   }
@@ -165,7 +165,7 @@ TEST_F(HandleToKeyEmptyLatencyTest, LOOP_BYPASS)
     fh_desc.addr = nullptr;
     fh_desc.len = 0;
 
-    sub_hdl->obj_ops.handle_to_key(sub_hdl, &fh_desc);
+    sub_hdl->obj_ops->handle_to_key(sub_hdl, &fh_desc);
     EXPECT_NE(fh_desc.addr, nullptr);
     EXPECT_NE(fh_desc.len, 0);
   }

@@ -181,7 +181,7 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		write_data.client = req9p->pconn->client;
 
 		/* Do the actual write */
-		pfid->pentry->obj_ops.write2(pfid->pentry, true, _9p_write_cb,
+		pfid->pentry->obj_ops->write2(pfid->pentry, true, _9p_write_cb,
 					    write_arg, &write_data);
 
 		if (FSAL_IS_ERROR(write_data.ret))

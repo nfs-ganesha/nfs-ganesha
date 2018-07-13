@@ -173,6 +173,9 @@ MODULE_INIT void init(void)
 	myself->m_ops.init_config = mem_init_config;
 	glist_init(&MEM.mem_exports);
 	MEM.next_inode = 0xc0ffee;
+
+	/* Initialize the fsal_obj_handle ops for FSAL MEM */
+	mem_handle_ops_init(&MEM.handle_ops);
 }
 
 MODULE_FINI void finish(void)

@@ -78,7 +78,7 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 
 	fsal_obj_handle_init(&constructing->handle, &export->export,
 			     posix2fsal_type(stx->stx_mode));
-	handle_ops_init(&constructing->handle.obj_ops);
+	constructing->handle.obj_ops = &CephFSM.handle_ops;
 	constructing->handle.fsid = posix2fsal_fsid(stx->stx_dev);
 	constructing->handle.fileid = stx->stx_ino;
 

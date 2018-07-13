@@ -83,7 +83,7 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* Get the obj's attributes */
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3);
 
-	fsal_status = pfid->pentry->obj_ops.getattrs(pfid->pentry, &attrs);
+	fsal_status = pfid->pentry->obj_ops->getattrs(pfid->pentry, &attrs);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		/* Done with the attrs */

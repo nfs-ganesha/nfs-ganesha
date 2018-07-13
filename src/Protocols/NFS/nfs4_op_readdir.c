@@ -346,7 +346,7 @@ not_junction:
 		access_mask_attr |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
 
 	/* Attrs were refreshed before call */
-	fsal_status = obj->obj_ops.test_access(obj, access_mask_attr, NULL,
+	fsal_status = obj->obj_ops->test_access(obj, access_mask_attr, NULL,
 					       NULL, false);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_NFS_READDIR,
@@ -377,7 +377,7 @@ not_junction:
 	}
 
 	/* Do not cache attrs, it will affect readdir performance */
-	if (obj->obj_ops.is_referral(obj, (struct attrlist *) attr,
+	if (obj->obj_ops->is_referral(obj, (struct attrlist *) attr,
 		false /*cache_attrs*/)) {
 		rdattr_error = NFS4ERR_MOVED;
 		LogDebug(COMPONENT_NFS_READDIR,
@@ -595,7 +595,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 		fsal_prepare_attrs(&attrs, ATTR_CHGTIME);
 
 		fsal_status =
-			data->current_obj->obj_ops.getattrs(data->current_obj,
+			data->current_obj->obj_ops->getattrs(data->current_obj,
 							    &attrs);
 
 		if (FSAL_IS_ERROR(fsal_status)) {

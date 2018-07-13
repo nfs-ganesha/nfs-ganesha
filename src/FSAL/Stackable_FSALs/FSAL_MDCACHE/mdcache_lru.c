@@ -569,7 +569,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 		}
 
 		subcall(
-			entry->sub_handle->obj_ops.release(entry->sub_handle)
+			entry->sub_handle->obj_ops->release(entry->sub_handle)
 		       );
 		entry->sub_handle = NULL;
 

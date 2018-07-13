@@ -86,6 +86,8 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	struct vfs_fsal_export *myself =
 	    container_of(exp_hdl, struct vfs_fsal_export, export);
 	struct vfs_fsal_obj_handle *hdl;
+	struct vfs_fsal_module *my_module = container_of(
+			exp_hdl->fsal, struct vfs_fsal_module, module);
 
 	hdl = vfs_sub_alloc_handle();
 
@@ -141,7 +143,7 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 #ifdef VFS_NO_MDCACHE
 	hdl->obj_handle.state_hdl = vfs_state_locate(&hdl->obj_handle);
 #endif /* VFS_NO_MDCACHE */
-	vfs_handle_ops_init(&hdl->obj_handle.obj_ops);
+	hdl->obj_handle.obj_ops = &my_module->handle_ops;
 	if (vfs_sub_init_handle(myself, hdl, path) < 0)
 		goto spcerr;
 
@@ -168,7 +170,7 @@ static bool vfs_is_referral(struct fsal_obj_handle *obj_hdl,
 
 		attrs->request_mask |= (ATTR_TYPE | ATTR_MODE);
 
-		status = obj_hdl->obj_ops.getattrs(obj_hdl, attrs);
+		status = obj_hdl->obj_ops->getattrs(obj_hdl, attrs);
 		if (FSAL_IS_ERROR(status)) {
 			LogEvent(COMPONENT_FSAL, "Failed to get attributes for "
 				 "referral, request_mask: %lu",
@@ -177,7 +179,7 @@ static bool vfs_is_referral(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	if (!obj_hdl->obj_ops.handle_is(obj_hdl, DIRECTORY))
+	if (!obj_hdl->obj_ops->handle_is(obj_hdl, DIRECTORY))
 		return false;
 
 	if (!is_sticky_bit_set(obj_hdl, attrs))
@@ -303,7 +305,7 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 	 */
 
 	if (attrs_out != NULL &&
-	    hdl->obj_handle.obj_ops.is_referral(&hdl->obj_handle, attrs_out,
+	    hdl->obj_handle.obj_ops->is_referral(&hdl->obj_handle, attrs_out,
 		false) &&
 	    hdl->obj_handle.fs->private_data != NULL &&
 	    hdl->sub_ops->getattrs) {
@@ -361,7 +363,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	*handle = NULL;		/* poison it first */
 	parent_hdl =
 	    container_of(parent, struct vfs_fsal_obj_handle, obj_handle);
-	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
+	if (!parent->obj_ops->handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -416,7 +418,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -437,14 +439,14 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 #ifdef ENABLE_VFS_DEBUG_ACL
 	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
 		FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
-	status = dir_hdl->obj_ops.test_access(dir_hdl, access_type, NULL, NULL,
+	status = dir_hdl->obj_ops->test_access(dir_hdl, access_type, NULL, NULL,
 					      false);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
 	fsal_prepare_attrs(&attrs, ATTR_ACL);
 
-	status = dir_hdl->obj_ops.getattrs(dir_hdl, &attrs);
+	status = dir_hdl->obj_ops->getattrs(dir_hdl, &attrs);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -536,17 +538,17 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
-		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+		status = (*handle)->obj_ops->setattr2(*handle, false, NULL,
 						     attrib);
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the handle we just allocated. */
 			LogFullDebug(COMPONENT_FSAL,
 				     "setattr2 status=%s",
 				     fsal_err_txt(status));
-			(*handle)->obj_ops.release(*handle);
+			(*handle)->obj_ops->release(*handle);
 			*handle = NULL;
 		} else if (attrs_out != NULL) {
-			status = (*handle)->obj_ops.getattrs(*handle,
+			status = (*handle)->obj_ops->getattrs(*handle,
 							     attrs_out);
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
@@ -608,7 +610,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -621,7 +623,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 #ifdef ENABLE_VFS_DEBUG_ACL
 	fsal_prepare_attrs(&attrs, ATTR_ACL);
 
-	status = dir_hdl->obj_ops.getattrs(dir_hdl, &attrs);
+	status = dir_hdl->obj_ops->getattrs(dir_hdl, &attrs);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -650,7 +652,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 #ifdef ENABLE_VFS_DEBUG_ACL
 	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
 		FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-	status = dir_hdl->obj_ops.test_access(dir_hdl, access_type, NULL, NULL,
+	status = dir_hdl->obj_ops->test_access(dir_hdl, access_type, NULL, NULL,
 					      false);
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -747,14 +749,14 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
-		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+		status = (*handle)->obj_ops->setattr2(*handle, false, NULL,
 						     attrib);
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the handle we just allocated. */
-			(*handle)->obj_ops.release(*handle);
+			(*handle)->obj_ops->release(*handle);
 			*handle = NULL;
 		} else if (attrs_out != NULL) {
-			status = (*handle)->obj_ops.getattrs(*handle,
+			status = (*handle)->obj_ops->getattrs(*handle,
 							     attrs_out);
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
@@ -823,7 +825,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
 	*handle = NULL;		/* poison it first */
-	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -844,14 +846,14 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 #ifdef ENABLE_VFS_DEBUG_ACL
 	access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
 		FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-	status = dir_hdl->obj_ops.test_access(dir_hdl, access_type, NULL, NULL,
+	status = dir_hdl->obj_ops->test_access(dir_hdl, access_type, NULL, NULL,
 					      false);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
 	fsal_prepare_attrs(&attrs, ATTR_ACL);
 
-	status = dir_hdl->obj_ops.getattrs(dir_hdl, &attrs);
+	status = dir_hdl->obj_ops->getattrs(dir_hdl, &attrs);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -937,14 +939,14 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
-		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+		status = (*handle)->obj_ops->setattr2(*handle, false, NULL,
 						     attrib);
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the handle we just allocated. */
-			(*handle)->obj_ops.release(*handle);
+			(*handle)->obj_ops->release(*handle);
 			*handle = NULL;
 		} else if (attrs_out != NULL) {
-			status = (*handle)->obj_ops.getattrs(*handle,
+			status = (*handle)->obj_ops->getattrs(*handle,
 							     attrs_out);
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
@@ -1670,6 +1672,8 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 {
+	fsal_default_obj_ops_init(ops);
+
 	ops->release = release;
 	ops->merge = vfs_merge;
 	ops->lookup = lookup;

@@ -617,7 +617,7 @@ static state_lock_entry_t *create_state_lock_entry(struct fsal_obj_handle *obj,
 	get_gsh_export_ref(export);
 
 	/* Get ref for sle_obj */
-	obj->obj_ops.get_ref(obj);
+	obj->obj_ops->get_ref(obj);
 
 	/* Add to list of locks owned by owner */
 	inc_state_owner_ref(owner);
@@ -705,7 +705,7 @@ static void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 		PTHREAD_MUTEX_unlock(&all_locks_mutex);
 #endif
 
-		lock_entry->sle_obj->obj_ops.put_ref(lock_entry->sle_obj);
+		lock_entry->sle_obj->obj_ops->put_ref(lock_entry->sle_obj);
 		put_gsh_export(lock_entry->sle_export);
 		PTHREAD_MUTEX_destroy(&lock_entry->sle_mutex);
 		gsh_free(lock_entry);
@@ -2066,7 +2066,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
 	 * we must release the object reference.
 	 */
 	if (glist_empty(&obj->state_hdl->file.lock_list))
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 
 	return status;
@@ -2176,7 +2176,7 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 	}
 
 	/* Perform this lock operation using the support_ex lock op. */
-	fsal_status = obj->obj_ops.lock_op2(obj, state, owner,
+	fsal_status = obj->obj_ops->lock_op2(obj, state, owner,
 					    fsal_lock_op, lock,
 					    &conflicting_lock);
 
@@ -2595,7 +2595,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 			 * mergining, because that can remove the last entry
 			 * from the list if we are merging with it.
 			 */
-			obj->obj_ops.get_ref(obj);
+			obj->obj_ops->get_ref(obj);
 		}
 
 		merge_lock_entry(obj->state_hdl, found_entry);
@@ -2716,7 +2716,7 @@ state_status_t state_unlock(struct fsal_obj_handle *obj,
 	 * list empty even if it failed.
 	 */
 	if (glist_empty(&obj->state_hdl->file.lock_list))
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 	if (status != STATE_SUCCESS) {
 		/* The unlock has not taken affect (other than canceling any
@@ -2994,7 +2994,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* Release the refcounts we took above. */
 		put_gsh_export(export);
 		dec_state_owner_ref(owner);
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
@@ -3093,7 +3093,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* Release the refcounts we took above. */
 		put_gsh_export(export);
 		dec_state_owner_ref(owner);
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 		dec_state_t_ref(found_share);
 
 		if (!state_unlock_err_ok(status)) {
@@ -3223,7 +3223,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		dec_state_t_ref(state);
 
 		/* Release the obj ref and export ref. */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 		put_gsh_export(export);
 	}
 
@@ -3292,7 +3292,7 @@ void state_export_unlock_all(void)
 		 * the ssc_mutex (since we hold this mutex, any other function
 		 * that might be cleaning up this lock CAN NOT have released
 		 * the last LRU reference, thus it is safe to grab another. */
-		obj->obj_ops.get_ref(obj);
+		obj->obj_ops->get_ref(obj);
 
 		/* Get a reference to the owner */
 		inc_state_owner_ref(owner);
@@ -3329,7 +3329,7 @@ void state_export_unlock_all(void)
 		/* Release the refcounts we took above. */
 		dec_state_t_ref(state);
 		dec_state_owner_ref(owner);
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,

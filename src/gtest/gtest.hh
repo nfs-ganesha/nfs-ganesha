@@ -253,13 +253,13 @@ namespace gtest {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = test_root->obj_ops.unlink(root_entry, test_root,
+      status = test_root->obj_ops->unlink(root_entry, test_root,
                                          env->get_test_root_name());
       EXPECT_EQ(0, status.major);
-      test_root->obj_ops.put_ref(test_root);
+      test_root->obj_ops->put_ref(test_root);
       test_root = NULL;
 
-      root_entry->obj_ops.put_ref(root_entry);
+      root_entry->obj_ops->put_ref(root_entry);
       root_entry = NULL;
 
       put_gsh_export(a_export);
@@ -296,7 +296,7 @@ namespace gtest {
         if (objs != NULL)
           objs[i] = obj;
         else
-          obj->obj_ops.put_ref(obj);
+          obj->obj_ops->put_ref(obj);
       }
 
       /* Prime the cache */
@@ -312,7 +312,7 @@ namespace gtest {
         sprintf(fname, "f-%08x", i);
 
 	if (objs != NULL)
-          objs[i]->obj_ops.put_ref(objs[i]);
+          objs[i]->obj_ops->put_ref(objs[i]);
         status = fsal_remove(test_root, fname);
         EXPECT_EQ(status.major, 0);
       }

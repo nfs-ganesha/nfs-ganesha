@@ -204,7 +204,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Fetch the attributes for use later. */
-	fsal_status = dir_obj->obj_ops.getattrs(dir_obj, &attrs_dir);
+	fsal_status = dir_obj->obj_ops->getattrs(dir_obj, &attrs_dir);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_readdirplus3.status = nfs3_Errno_status(fsal_status);
@@ -294,7 +294,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 					  &tracker,
 					  &attrs_parent);
 
-		parent_dir_obj->obj_ops.put_ref(parent_dir_obj);
+		parent_dir_obj->obj_ops->put_ref(parent_dir_obj);
 
 		if (res->res_readdir3.status != NFS3_OK) {
 			rc = NFS_REQ_OK;
@@ -358,7 +358,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_release_attrs(&attrs_parent);
 
 	if (dir_obj)
-		dir_obj->obj_ops.put_ref(dir_obj);
+		dir_obj->obj_ops->put_ref(dir_obj);
 
 	if (((res->res_readdir3.status != NFS3_OK) || (rc != NFS_REQ_OK))
 	    && (tracker.entries != NULL))

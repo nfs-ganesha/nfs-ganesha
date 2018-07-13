@@ -111,7 +111,7 @@ static void nfs3_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 
 out:
 	/* return references */
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 
 	server_stats_io_done(write_arg->iov[0].iov_len, write_arg->io_amount,
 			     (data->rc == NFS_REQ_OK) ? true : false,
@@ -202,7 +202,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	nfs_SetPreOpAttr(obj, &pre_attr);
 
 	fsal_status =
-	    obj->obj_ops.test_access(obj, FSAL_WRITE_ACCESS, NULL, NULL, true);
+	    obj->obj_ops->test_access(obj, FSAL_WRITE_ACCESS, NULL, NULL, true);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_write3.status = nfs3_Errno_status(fsal_status);
@@ -297,12 +297,12 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	write_data.res = res;
 
-	obj->obj_ops.write2(obj, true, nfs3_write_cb, write_arg, &write_data);
+	obj->obj_ops->write2(obj, true, nfs3_write_cb, write_arg, &write_data);
 	return write_data.rc;
 
  putref:
 	/* return references */
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 
 	server_stats_io_done(size, 0,
 			     (write_data.rc == NFS_REQ_OK) ? true : false,

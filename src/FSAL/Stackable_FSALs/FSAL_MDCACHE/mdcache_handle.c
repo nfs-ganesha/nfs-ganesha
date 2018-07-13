@@ -220,7 +220,7 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 					op_ctx->fsal_export) & ~ATTR_ACL);
 
 	subcall_raw(export,
-		status = parent->sub_handle->obj_ops.mkdir(
+		status = parent->sub_handle->obj_ops->mkdir(
 			parent->sub_handle, name, attrib, &sub_handle, &attrs)
 	       );
 
@@ -299,7 +299,7 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 					op_ctx->fsal_export) & ~ATTR_ACL);
 
 	subcall_raw(export,
-		status = parent->sub_handle->obj_ops.mknode(
+		status = parent->sub_handle->obj_ops->mknode(
 			parent->sub_handle, name, nodetype, attrib,
 			&sub_handle, &attrs)
 	       );
@@ -379,7 +379,7 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 					op_ctx->fsal_export) & ~ATTR_ACL);
 
 	subcall_raw(export,
-		status = parent->sub_handle->obj_ops.symlink(
+		status = parent->sub_handle->obj_ops->symlink(
 			parent->sub_handle, name, link_path, attrib,
 			&sub_handle, &attrs)
 	       );
@@ -451,7 +451,7 @@ static fsal_status_t mdcache_readlink(struct fsal_obj_handle *obj_hdl,
 	}
 
 	subcall(
-		status = entry->sub_handle->obj_ops.readlink(
+		status = entry->sub_handle->obj_ops->readlink(
 			entry->sub_handle, link_content, refresh)
 	       );
 
@@ -484,7 +484,7 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
 	bool invalidate = true;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.link(
+		status = entry->sub_handle->obj_ops->link(
 			entry->sub_handle, dest->sub_handle, name)
 	       );
 
@@ -652,7 +652,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	}
 
 	subcall(
-		status = mdc_olddir->sub_handle->obj_ops.rename(
+		status = mdc_olddir->sub_handle->obj_ops->rename(
 			mdc_obj->sub_handle, mdc_olddir->sub_handle,
 			old_name, mdc_newdir->sub_handle, new_name)
 	       );
@@ -829,7 +829,7 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 	entry->attrs.request_mask = attrs.request_mask;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.getattrs(
+		status = entry->sub_handle->obj_ops->getattrs(
 			entry->sub_handle, &attrs)
 	       );
 
@@ -951,7 +951,7 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	change = entry->attrs.change;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.setattr2(
+		status = entry->sub_handle->obj_ops->setattr2(
 			entry->sub_handle, bypass, state, attrs)
 	       );
 
@@ -1025,7 +1025,7 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 	}
 
 	subcall(
-		status = parent->sub_handle->obj_ops.unlink(
+		status = parent->sub_handle->obj_ops->unlink(
 			parent->sub_handle, entry->sub_handle, name)
 	       );
 
@@ -1091,7 +1091,7 @@ static bool mdcache_handle_is(struct fsal_obj_handle *obj_hdl,
 	bool status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.handle_is(
+		status = entry->sub_handle->obj_ops->handle_is(
 			entry->sub_handle, type)
 	       );
 
@@ -1118,7 +1118,7 @@ static fsal_status_t mdcache_handle_to_wire(
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.handle_to_wire(
+		status = entry->sub_handle->obj_ops->handle_to_wire(
 			entry->sub_handle, out_type, fh_desc)
 	       );
 
@@ -1140,7 +1140,7 @@ static void mdcache_handle_to_key(struct fsal_obj_handle *obj_hdl,
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 
 	subcall(
-		entry->sub_handle->obj_ops.handle_to_key(entry->sub_handle,
+		entry->sub_handle->obj_ops->handle_to_key(entry->sub_handle,
 							  fh_desc)
 	       );
 }
@@ -1166,7 +1166,7 @@ static bool mdcache_handle_cmp(struct fsal_obj_handle *obj_hdl1,
 	bool status;
 
 	subcall(
-		status = entry1->sub_handle->obj_ops.handle_cmp(
+		status = entry1->sub_handle->obj_ops->handle_cmp(
 			entry1->sub_handle, entry2->sub_handle)
 	       );
 
@@ -1200,7 +1200,7 @@ static nfsstat4 mdcache_layoutget(struct fsal_obj_handle *obj_hdl,
 	nfsstat4 status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.layoutget(
+		status = entry->sub_handle->obj_ops->layoutget(
 			entry->sub_handle, req_ctx, loc_body, arg, res)
 	       );
 
@@ -1233,7 +1233,7 @@ static nfsstat4 mdcache_layoutreturn(struct fsal_obj_handle *obj_hdl,
 	nfsstat4 status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.layoutreturn(
+		status = entry->sub_handle->obj_ops->layoutreturn(
 			entry->sub_handle, req_ctx, lrf_body, arg)
 	       );
 
@@ -1266,7 +1266,7 @@ static nfsstat4 mdcache_layoutcommit(struct fsal_obj_handle *obj_hdl,
 	nfsstat4 status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.layoutcommit(
+		status = entry->sub_handle->obj_ops->layoutcommit(
 			entry->sub_handle, req_ctx, lou_body, arg, res)
 	       );
 
@@ -1343,7 +1343,7 @@ static fsal_status_t mdcache_merge(struct fsal_obj_handle *orig_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.merge(entry->sub_handle,
+		status = entry->sub_handle->obj_ops->merge(entry->sub_handle,
 							  dupe_hdl)
 	       );
 
@@ -1389,7 +1389,7 @@ copy_and_unlock:
 invoke_subfsal:
 
 	subcall(
-		result = entry->sub_handle->obj_ops.is_referral(
+		result = entry->sub_handle->obj_ops->is_referral(
 							entry->sub_handle,
 							attrs, cache_attrs);
 	       );
@@ -1433,6 +1433,8 @@ out:
 
 void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 {
+	fsal_default_obj_ops_init(ops);
+
 	ops->get_ref = mdcache_get_ref;
 	ops->put_ref = mdcache_put_ref;
 	ops->release = mdcache_hdl_release;
@@ -1573,7 +1575,7 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
  * @brief Find or create a cache entry from a host-handle
  *
  * This is the equivalent of mdcache_get().  It returns a ref'd entry that
- * must be put using obj_ops.release().
+ * must be put using obj_ops->release().
  *
  * @param[in]     exp_hdl   The export in which to create the handle
  * @param[in]     hdl_desc  Buffer descriptor for the host handle

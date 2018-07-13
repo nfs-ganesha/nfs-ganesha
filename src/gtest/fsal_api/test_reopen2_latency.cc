@@ -78,7 +78,7 @@ namespace {
                                                NULL);
       ASSERT_NE(test_file_state, nullptr);
 
-      status = test_root->obj_ops.open2(test_root, test_file_state,
+      status = test_root->obj_ops->open2(test_root, test_file_state,
                       FSAL_O_RDWR, FSAL_UNCHECKED, TEST_FILE, NULL, NULL,
                       &test_file, NULL, &caller_perm_check);
       ASSERT_EQ(status.major, 0);
@@ -87,7 +87,7 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = test_file->obj_ops.close2(test_file, test_file_state);
+      status = test_file->obj_ops->close2(test_file, test_file_state);
       EXPECT_EQ(0, status.major);
 
       op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
@@ -95,7 +95,7 @@ namespace {
 
       status = fsal_remove(test_root, TEST_FILE);
       EXPECT_EQ(status.major, 0);
-      test_file->obj_ops.put_ref(test_file);
+      test_file->obj_ops->put_ref(test_file);
       test_file = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -111,7 +111,7 @@ TEST_F(Reopen2EmptyLatencyTest, SIMPLE)
 {
   fsal_status_t status;
 
-  status = test_file->obj_ops.reopen2(test_file, test_file_state, FSAL_O_READ);
+  status = test_file->obj_ops->reopen2(test_file, test_file_state, FSAL_O_READ);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -123,7 +123,7 @@ TEST_F(Reopen2EmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  status = sub_hdl->obj_ops.reopen2(sub_hdl, test_file_state, FSAL_O_READ);
+  status = sub_hdl->obj_ops->reopen2(sub_hdl, test_file_state, FSAL_O_READ);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -160,11 +160,11 @@ TEST_F(Reopen2EmptyLatencyTest, LOOP)
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
     if(i%2 == 0) {
-      status = test_file->obj_ops.reopen2(test_file, test_file_state, FSAL_O_READ);
+      status = test_file->obj_ops->reopen2(test_file, test_file_state, FSAL_O_READ);
       ASSERT_EQ(status.major, 0);
     }
     else {
-      status = test_file->obj_ops.reopen2(test_file, test_file_state, FSAL_O_WRITE);
+      status = test_file->obj_ops->reopen2(test_file, test_file_state, FSAL_O_WRITE);
       ASSERT_EQ(status.major, 0);
     }
   }
@@ -188,11 +188,11 @@ TEST_F(Reopen2EmptyLatencyTest, LOOP_BYPASS)
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
     if(i%2 == 0) {
-      status = sub_hdl->obj_ops.reopen2(sub_hdl, test_file_state, FSAL_O_READ);
+      status = sub_hdl->obj_ops->reopen2(sub_hdl, test_file_state, FSAL_O_READ);
       ASSERT_EQ(status.major, 0);
     }
     else {
-      status = sub_hdl->obj_ops.reopen2(sub_hdl, test_file_state, FSAL_O_WRITE);
+      status = sub_hdl->obj_ops->reopen2(sub_hdl, test_file_state, FSAL_O_WRITE);
       ASSERT_EQ(status.major, 0);
     }
   }

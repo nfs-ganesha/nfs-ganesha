@@ -322,7 +322,7 @@ fsal_status_t fsal_access(struct fsal_obj_handle *obj,
 			  fsal_accessflags_t access_type)
 {
 	return
-	    obj->obj_ops.test_access(obj, access_type, NULL, NULL, false);
+	    obj->obj_ops->test_access(obj, access_type, NULL, NULL, false);
 }
 
 fsal_status_t fsal_link(struct fsal_obj_handle *obj,
@@ -394,7 +394,7 @@ static inline fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl)
 	}
 
 	/* Return the result of close method. */
-	fsal_status_t status = obj_hdl->obj_ops.close(obj_hdl);
+	fsal_status_t status = obj_hdl->obj_ops->close(obj_hdl);
 
 	if (status.major != ERR_FSAL_NOT_OPENED) {
 		ssize_t count;
@@ -430,7 +430,7 @@ fsal_status_t fsal_commit(struct fsal_obj_handle *obj, off_t offset,
 	if ((uint64_t) len > ~(uint64_t) offset)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
-	return obj->obj_ops.commit2(obj, offset, len);
+	return obj->obj_ops->commit2(obj, offset, len);
 }
 fsal_status_t fsal_verify2(struct fsal_obj_handle *obj,
 			   fsal_verifier_t verifier);
@@ -555,7 +555,7 @@ fsal_get_changeid4(struct fsal_obj_handle *obj)
 
 	fsal_prepare_attrs(&attrs, ATTR_CHANGE | ATTR_CHGTIME);
 
-	status = obj->obj_ops.getattrs(obj, &attrs);
+	status = obj->obj_ops->getattrs(obj, &attrs);
 
 	if (FSAL_IS_ERROR(status))
 		return 0;

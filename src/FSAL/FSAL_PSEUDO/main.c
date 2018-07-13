@@ -44,31 +44,33 @@ const char pseudoname[] = "PSEUDO";
 /* my module private storage
  */
 
-static struct fsal_module PSEUDOFS = {
-	.fs_info = {
-		.maxfilesize = 512,
-		.maxlink = 0,
-		.maxnamelen = MAXNAMLEN,
-		.maxpathlen = MAXPATHLEN,
-		.no_trunc = true,
-		.chown_restricted = true,
-		.case_insensitive = false,
-		.case_preserving = true,
-		.link_support = false,
-		.symlink_support = false,
-		.lock_support = false,
-		.lock_support_async_block = false,
-		.named_attr = false,
-		.unique_handles = true,
-		.acl_support = 0,
-		.cansettime = true,
-		.homogenous = true,
-		.supported_attrs = PSEUDO_SUPPORTED_ATTRS,
-		.maxread = FSAL_MAXIOSIZE,
-		.maxwrite = FSAL_MAXIOSIZE,
-		.umask = 0,
-		.auth_exportpath_xdev = false,
-		.link_supports_permission_checks = false,
+struct pseudo_fsal_module PSEUDOFS = {
+	.module = {
+		.fs_info = {
+			.maxfilesize = 512,
+			.maxlink = 0,
+			.maxnamelen = MAXNAMLEN,
+			.maxpathlen = MAXPATHLEN,
+			.no_trunc = true,
+			.chown_restricted = true,
+			.case_insensitive = false,
+			.case_preserving = true,
+			.link_support = false,
+			.symlink_support = false,
+			.lock_support = false,
+			.lock_support_async_block = false,
+			.named_attr = false,
+			.unique_handles = true,
+			.acl_support = 0,
+			.cansettime = true,
+			.homogenous = true,
+			.supported_attrs = PSEUDO_SUPPORTED_ATTRS,
+			.maxread = FSAL_MAXIOSIZE,
+			.maxwrite = FSAL_MAXIOSIZE,
+			.umask = 0,
+			.auth_exportpath_xdev = false,
+			.link_supports_permission_checks = false,
+		}
 	}
 };
 
@@ -101,7 +103,7 @@ int unload_pseudo_fsal(struct fsal_module *fsal_hdl)
 {
 	int retval;
 
-	retval = unregister_fsal(&PSEUDOFS);
+	retval = unregister_fsal(&PSEUDOFS.module);
 	if (retval != 0)
 		fprintf(stderr, "PSEUDO module failed to unregister");
 
@@ -111,7 +113,7 @@ int unload_pseudo_fsal(struct fsal_module *fsal_hdl)
 void pseudo_fsal_init(void)
 {
 	int retval;
-	struct fsal_module *myself = &PSEUDOFS;
+	struct fsal_module *myself = &PSEUDOFS.module;
 
 	retval = register_fsal(myself, pseudoname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);
@@ -121,6 +123,9 @@ void pseudo_fsal_init(void)
 	}
 	myself->m_ops.create_export = pseudofs_create_export;
 	myself->m_ops.unload = unload_pseudo_fsal;
+
+	/* Initialize the fsal_obj_handle ops for FSAL PSEUDO */
+	pseudofs_handle_ops_init(&PSEUDOFS.handle_ops);
 
 	/* initialize our config */
 	init_config(myself);

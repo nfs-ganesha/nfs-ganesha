@@ -246,7 +246,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 		/* Release the reference taken above */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 		put_gsh_export(export);
 		dec_state_t_ref(state);
 

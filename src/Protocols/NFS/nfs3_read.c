@@ -110,7 +110,7 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			fsal_status_t status;
 
 			fsal_prepare_attrs(&attrs, ATTR_SIZE);
-			status = obj->obj_ops.getattrs(obj, &attrs);
+			status = obj->obj_ops->getattrs(obj, &attrs);
 
 			if (FSAL_IS_SUCCESS(status)) {
 				read_arg->end_of_file = (read_arg->offset +
@@ -143,7 +143,7 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
  out:
 	/* return references */
 	if (obj)
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->io_amount,
 			     (data->rc == NFS_REQ_OK) ?  true : false, false);
@@ -217,7 +217,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	nfs_SetPreOpAttr(obj, &pre_attr);
 
 	fsal_status =
-	    obj->obj_ops.test_access(obj, FSAL_READ_ACCESS, NULL, NULL, true);
+	    obj->obj_ops->test_access(obj, FSAL_READ_ACCESS, NULL, NULL, true);
 
 	if (fsal_status.major == ERR_FSAL_ACCESS) {
 		/* Test for execute permission */
@@ -307,13 +307,13 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	read_data.res = res;
 
 	/* Do the actual read */
-	obj->obj_ops.read2(obj, true, nfs3_read_cb, read_arg, &read_data);
+	obj->obj_ops->read2(obj, true, nfs3_read_cb, read_arg, &read_data);
 	return read_data.rc;
 
 putref:
 	/* return references */
 	if (obj)
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 	server_stats_io_done(size, 0,
 			     (read_data.rc == NFS_REQ_OK) ? true : false,

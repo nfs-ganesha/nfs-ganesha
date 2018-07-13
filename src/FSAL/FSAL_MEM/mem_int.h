@@ -171,6 +171,8 @@ void mem_clean_all_dirents(struct mem_fsal_obj_handle *parent);
 struct mem_fsal_module {
 	/** Module we're wrapping */
 	struct fsal_module fsal;
+	/** fsal_obj_handle ops vector */
+	struct fsal_obj_ops handle_ops;
 	/** List of MEM exports. TODO Locking when we care */
 	struct glist_head mem_exports;
 	/** Config - size of data in inode */

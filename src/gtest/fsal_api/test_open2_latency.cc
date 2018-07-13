@@ -122,18 +122,18 @@ TEST_F(Open2EmptyLatencyTest, SIMPLE)
   ASSERT_NE(file_state, nullptr);
 
   // create and open a file for test
-  status = test_root->obj_ops.open2(test_root, file_state, FSAL_O_RDWR,
+  status = test_root->obj_ops->open2(test_root, file_state, FSAL_O_RDWR,
              FSAL_UNCHECKED, TEST_FILE, &attrs_in, NULL, &obj, NULL,
 	     &caller_perm_check);
   ASSERT_EQ(status.major, 0);
 
   // close and  delete the file created for test
-  status = obj->obj_ops.close2(obj, file_state);
+  status = obj->obj_ops->close2(obj, file_state);
   EXPECT_EQ(status.major, 0);
 
   status = fsal_remove(test_root, TEST_FILE);
   ASSERT_EQ(status.major, 0);
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
   op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export, file_state);
 }
 
@@ -157,18 +157,18 @@ TEST_F(Open2EmptyLatencyTest, SIMPLE_BYPASS)
   ASSERT_EQ(status.major, 0);
 
   // create and open a file for test
-  status = sub_hdl->obj_ops.open2(sub_hdl, file_state, FSAL_O_RDWR,
+  status = sub_hdl->obj_ops->open2(sub_hdl, file_state, FSAL_O_RDWR,
              FSAL_UNCHECKED, TEST_FILE, &attrs_in, NULL, &obj, NULL,
 	     &caller_perm_check);
   ASSERT_EQ(status.major, 0);
 
   // close and delete the file created for test
-  status = obj->obj_ops.close2(obj, file_state);
+  status = obj->obj_ops->close2(obj, file_state);
   EXPECT_EQ(status.major, 0);
 
   status = fsal_remove(sub_hdl, TEST_FILE);
   ASSERT_EQ(status.major, 0);
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
   op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export, file_state);
 }
 
@@ -203,7 +203,7 @@ TEST_F(Open2LoopLatencyTest, FSAL_OPEN2)
 
     status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
-    obj[i]->obj_ops.put_ref(obj[i]);
+    obj[i]->obj_ops->put_ref(obj[i]);
   }
 }
 
@@ -220,7 +220,7 @@ TEST_F(Open2LoopLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i);
 
-    status = test_root->obj_ops.open2(test_root, file_state[i], FSAL_O_RDWR,
+    status = test_root->obj_ops->open2(test_root, file_state[i], FSAL_O_RDWR,
                FSAL_UNCHECKED, fname, &attrs_in, NULL, &obj[i], NULL,
                &caller_perm_check);
     ASSERT_EQ(status.major, 0);
@@ -235,12 +235,12 @@ TEST_F(Open2LoopLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i);
 
-    status = obj[i]->obj_ops.close2(obj[i], file_state[i]);
+    status = obj[i]->obj_ops->close2(obj[i], file_state[i]);
     EXPECT_EQ(status.major, 0);
 
     status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
-    obj[i]->obj_ops.put_ref(obj[i]);
+    obj[i]->obj_ops->put_ref(obj[i]);
   }
 }
 
@@ -264,7 +264,7 @@ TEST_F(Open2LoopLatencyTest, LOOP_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i);
 
-    status = sub_hdl->obj_ops.open2(sub_hdl, file_state[i], FSAL_O_RDWR,
+    status = sub_hdl->obj_ops->open2(sub_hdl, file_state[i], FSAL_O_RDWR,
                FSAL_UNCHECKED, fname, &attrs_in, NULL, &obj[i], NULL,
                &caller_perm_check);
     ASSERT_EQ(status.major, 0);
@@ -279,12 +279,12 @@ TEST_F(Open2LoopLatencyTest, LOOP_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i);
 
-    status = obj[i]->obj_ops.close2(obj[i], file_state[i]);
+    status = obj[i]->obj_ops->close2(obj[i], file_state[i]);
     EXPECT_EQ(status.major, 0);
 
     status = fsal_remove(sub_hdl, fname);
     ASSERT_EQ(status.major, 0);
-    obj[i]->obj_ops.put_ref(obj[i]);
+    obj[i]->obj_ops->put_ref(obj[i]);
   }
 }
 
@@ -303,7 +303,7 @@ TEST_F(Open2LoopLatencyTest, OPEN_ONLY)
                NULL);
     ASSERT_EQ(status.major, 0);
     ASSERT_NE(obj[i], nullptr);
-    obj[i]->obj_ops.put_ref(obj[i]);
+    obj[i]->obj_ops->put_ref(obj[i]);
   }
 
   now(&s_time);
@@ -312,7 +312,7 @@ TEST_F(Open2LoopLatencyTest, OPEN_ONLY)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i);
 
-    status = test_root->obj_ops.open2(test_root, file_state[i], FSAL_O_RDWR,
+    status = test_root->obj_ops->open2(test_root, file_state[i], FSAL_O_RDWR,
                FSAL_UNCHECKED, fname, &attrs_in, NULL, &obj[i], NULL,
                &caller_perm_check);
     ASSERT_EQ(status.major, 0);
@@ -327,12 +327,12 @@ TEST_F(Open2LoopLatencyTest, OPEN_ONLY)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i);
 
-    status = obj[i]->obj_ops.close2(obj[i], file_state[i]);
+    status = obj[i]->obj_ops->close2(obj[i], file_state[i]);
     EXPECT_EQ(status.major, 0);
 
     status = fsal_remove(test_root, fname);
     ASSERT_EQ(status.major, 0);
-    obj[i]->obj_ops.put_ref(obj[i]);
+    obj[i]->obj_ops->put_ref(obj[i]);
   }
 }
 

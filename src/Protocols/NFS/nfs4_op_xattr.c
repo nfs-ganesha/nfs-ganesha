@@ -85,7 +85,7 @@ int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_GETXATTR4->status != NFS4_OK)
 		return res_GETXATTR4->status;
 
-	fsal_status = obj_handle->obj_ops.getxattrs(obj_handle,
+	fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
 						    &arg_GETXATTR4->ga_name,
 						    &gr_value);
 	if (FSAL_IS_ERROR(fsal_status)) {
@@ -97,7 +97,7 @@ int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
 			gsh_free(gr_value.utf8string_val);
 			gr_value.utf8string_len = 0;
 			gr_value.utf8string_val = NULL;
-			fsal_status = obj_handle->obj_ops.getxattrs(obj_handle,
+			fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
 						    &arg_GETXATTR4->ga_name,
 						    &gr_value);
 			if (FSAL_IS_ERROR(fsal_status))
@@ -109,7 +109,7 @@ int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
 			/* Try again with a bigger buffer */
 			gr_value.utf8string_val = gsh_malloc(
 						      gr_value.utf8string_len);
-			fsal_status = obj_handle->obj_ops.getxattrs(obj_handle,
+			fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
 						    &arg_GETXATTR4->ga_name,
 						    &gr_value);
 			if (FSAL_IS_ERROR(fsal_status))
@@ -187,7 +187,7 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.atomic = false;
 	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.before =
 				fsal_get_changeid4(data->current_obj);
-	fsal_status = obj_handle->obj_ops.setxattrs(obj_handle,
+	fsal_status = obj_handle->obj_ops->setxattrs(obj_handle,
 					arg_SETXATTR4->sa_type,
 					&arg_SETXATTR4->sa_xattr.xa_name,
 					&arg_SETXATTR4->sa_xattr.xa_value);
@@ -272,7 +272,7 @@ int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
 			return res_LISTXATTR4->status;
 		}
 	}
-	fsal_status = obj_handle->obj_ops.listxattrs(obj_handle,
+	fsal_status = obj_handle->obj_ops->listxattrs(obj_handle,
 						arg_LISTXATTR4->la_maxcount,
 						&la_cookie,
 						&la_cookieverf,
@@ -364,7 +364,7 @@ int nfs4_op_removexattr(struct nfs_argop4 *op, compound_data_t *data,
 	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.atomic = false;
 	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.before =
 				fsal_get_changeid4(data->current_obj);
-	fsal_status = obj_handle->obj_ops.removexattrs(obj_handle,
+	fsal_status = obj_handle->obj_ops->removexattrs(obj_handle,
 					&arg_REMOVEXATTR4->ra_name);
 	if (FSAL_IS_ERROR(fsal_status))
 		return res_REMOVEXATTR4->status = nfs4_Errno_state(

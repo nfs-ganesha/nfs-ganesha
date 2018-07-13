@@ -653,7 +653,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 		access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
 			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-		status = obj_hdl->obj_ops.test_access(obj_hdl, access_type,
+		status = obj_hdl->obj_ops->test_access(obj_hdl, access_type,
 						      NULL, NULL, false);
 
 		if (FSAL_IS_ERROR(status))
@@ -661,7 +661,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 		fsal_prepare_attrs(&attrs, ATTR_ACL);
 
-		status = obj_hdl->obj_ops.getattrs(obj_hdl, &attrs);
+		status = obj_hdl->obj_ops->getattrs(obj_hdl, &attrs);
 
 		if (FSAL_IS_ERROR(status))
 			return status;
@@ -878,7 +878,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * Note if we have ENABLE_VFS_DEBUG_ACL an inherited ACL might
 		 * be part of the attributes we are setting here.
 		 */
-		status = (*new_obj)->obj_ops.setattr2(*new_obj,
+		status = (*new_obj)->obj_ops->setattr2(*new_obj,
 						      false,
 						      state,
 						      attrib_set);
@@ -887,7 +887,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			goto fileerr;
 
 		if (attrs_out != NULL) {
-			status = (*new_obj)->obj_ops.getattrs(*new_obj,
+			status = (*new_obj)->obj_ops->getattrs(*new_obj,
 							      attrs_out);
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
@@ -931,7 +931,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
  fileerr:
 
-	/* hdl->u.file.fd will be close in obj_ops.release */
+	/* hdl->u.file.fd will be close in obj_ops->release */
 	if (my_fd == &hdl->u.file.fd) {
 		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", fd);
 		close(fd);
@@ -939,7 +939,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (*new_obj) {
 		/* Release the handle we just allocated. */
-		(*new_obj)->obj_ops.release(*new_obj);
+		(*new_obj)->obj_ops->release(*new_obj);
 		*new_obj = NULL;
 	}
 
@@ -1779,7 +1779,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 
 		fsal_prepare_attrs(&attrs, ATTR_ACL);
 
-		status = obj_hdl->obj_ops.getattrs(obj_hdl, &attrs);
+		status = obj_hdl->obj_ops->getattrs(obj_hdl, &attrs);
 
 		if (FSAL_IS_ERROR(status))
 			return status;

@@ -128,7 +128,7 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  out:
 	/* return references */
 	if (obj)
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 	return rc;
 }				/* nfs3_readlink */

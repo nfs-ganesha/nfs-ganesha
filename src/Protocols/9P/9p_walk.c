@@ -95,7 +95,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		pnewfid->fid = *newfid;
 
 		/* Increments refcount */
-		pnewfid->pentry->obj_ops.get_ref(pnewfid->pentry);
+		pnewfid->pentry->obj_ops->get_ref(pnewfid->pentry);
 	} else {
 		/* the walk is in fact a lookup */
 		pentry = pfid->pentry;
@@ -129,7 +129,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			}
 
 			if (pentry != pfid->pentry)
-				pentry->obj_ops.put_ref(pentry);
+				pentry->obj_ops->put_ref(pentry);
 
 			pentry = pnewfid->pentry;
 		}
@@ -178,7 +178,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		default:
 			LogMajor(COMPONENT_9P,
 				 "implementation error, you should not see this message !!!!!!");
-			pentry->obj_ops.put_ref(pentry);
+			pentry->obj_ops->put_ref(pentry);
 			gsh_free(pnewfid);
 			return _9p_rerror(req9p, msgtag, EINVAL,
 					  plenout, preply);
@@ -212,7 +212,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	if (pnewfid->ppentry != NULL) {
 		/* Increments refcount for ppentry */
-		pnewfid->ppentry->obj_ops.get_ref(pnewfid->ppentry);
+		pnewfid->ppentry->obj_ops->get_ref(pnewfid->ppentry);
 	}
 
 	/* Build the reply */

@@ -106,14 +106,14 @@ TEST_F(RenameEmptyLatencyTest, SIMPLE)
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
-  status = test_root->obj_ops.rename(obj, test_root, TEST_FILE, test_root,
+  status = test_root->obj_ops->rename(obj, test_root, TEST_FILE, test_root,
                   TEST_FILE_NEW);
   EXPECT_EQ(status.major, 0);
-  test_root->obj_ops.lookup(test_root, TEST_FILE_NEW, &lookup, NULL);
+  test_root->obj_ops->lookup(test_root, TEST_FILE_NEW, &lookup, NULL);
   EXPECT_EQ(lookup, obj);
 
-  lookup->obj_ops.put_ref(lookup);
-  obj->obj_ops.put_ref(obj);
+  lookup->obj_ops->put_ref(lookup);
+  obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
   status = fsal_remove(test_root, TEST_FILE_NEW);
@@ -140,14 +140,14 @@ TEST_F(RenameEmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl_obj = mdcdb_get_sub_handle(obj);
   ASSERT_NE(sub_hdl_obj, nullptr);
 
-  status = sub_hdl_obj->obj_ops.rename(sub_hdl_obj, sub_hdl, TEST_FILE, sub_hdl,
+  status = sub_hdl_obj->obj_ops->rename(sub_hdl_obj, sub_hdl, TEST_FILE, sub_hdl,
 				       TEST_FILE_NEW);
   EXPECT_EQ(status.major, 0);
-  sub_hdl->obj_ops.lookup(sub_hdl, TEST_FILE_NEW, &lookup, NULL);
+  sub_hdl->obj_ops->lookup(sub_hdl, TEST_FILE_NEW, &lookup, NULL);
   EXPECT_EQ(lookup, sub_hdl_obj);
  
-  lookup->obj_ops.put_ref(lookup);
-  obj->obj_ops.put_ref(obj);
+  lookup->obj_ops->put_ref(lookup);
+  obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
   status = fsal_remove(test_root, TEST_FILE_NEW);
@@ -173,7 +173,7 @@ TEST_F(RenameEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname_new, "nf-%08x", i);
 
-    status = test_root->obj_ops.rename(obj, test_root, fname, test_root,
+    status = test_root->obj_ops->rename(obj, test_root, fname, test_root,
                     fname_new);
     EXPECT_EQ(status.major, 0);
     strncpy(fname, fname_new, NAMELEN);
@@ -184,7 +184,7 @@ TEST_F(RenameEmptyLatencyTest, LOOP)
   fprintf(stderr, "Average time per rename: %" PRIu64 " ns\n",
           timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
   status = fsal_remove(test_root, fname);
@@ -220,7 +220,7 @@ TEST_F(RenameEmptyLatencyTest, FSALRENAME)
   fprintf(stderr, "Average time per fsal_rename: %" PRIu64 " ns\n",
           timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
   status = fsal_remove(test_root, fname);
@@ -246,7 +246,7 @@ TEST_F(RenameFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname_new, "nf-%08x", i);
 
-    status = test_root->obj_ops.rename(obj, test_root, fname, test_root,
+    status = test_root->obj_ops->rename(obj, test_root, fname, test_root,
                     fname_new);
     ASSERT_EQ(status.major, 0) << " failed to rename " << fname;
     strncpy(fname, fname_new, NAMELEN);
@@ -257,7 +257,7 @@ TEST_F(RenameFullLatencyTest, BIG)
   fprintf(stderr, "Average time per rename: %" PRIu64 " ns\n",
           timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
   status = fsal_remove(test_root, fname);
@@ -291,7 +291,7 @@ TEST_F(RenameFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname_new, "nf-%08x", i);
 
-    status = sub_hdl->obj_ops.rename(sub_hdl_obj, sub_hdl, fname, sub_hdl, fname_new);
+    status = sub_hdl->obj_ops->rename(sub_hdl_obj, sub_hdl, fname, sub_hdl, fname_new);
     ASSERT_EQ(status.major, 0) << " failed to rename " << fname;
     strncpy(fname, fname_new, NAMELEN);
   }
@@ -301,7 +301,7 @@ TEST_F(RenameFullLatencyTest, BIG_BYPASS)
   fprintf(stderr, "Average time per rename: %" PRIu64 " ns\n",
                   timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
   status = fsal_remove(test_root, fname);

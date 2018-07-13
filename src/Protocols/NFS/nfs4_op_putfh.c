@@ -221,7 +221,7 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	set_current_entry(data, new_hdl);
 
 	/* Put our ref */
-	new_hdl->obj_ops.put_ref(new_hdl);
+	new_hdl->obj_ops->put_ref(new_hdl);
 
 	LogFullDebug(COMPONENT_FILEHANDLE,
 		     "File handle is of type %s(%d)",

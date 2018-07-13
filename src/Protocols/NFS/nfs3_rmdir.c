@@ -160,10 +160,10 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  out:
 	/* return references */
 	if (child_obj)
-		child_obj->obj_ops.put_ref(child_obj);
+		child_obj->obj_ops->put_ref(child_obj);
 
 	if (parent_obj)
-		parent_obj->obj_ops.put_ref(parent_obj);
+		parent_obj->obj_ops->put_ref(parent_obj);
 
 	return rc;
 }				/* nfs3_rmdir */

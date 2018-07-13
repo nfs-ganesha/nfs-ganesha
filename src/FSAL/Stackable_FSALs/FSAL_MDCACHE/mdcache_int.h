@@ -43,6 +43,13 @@
 
 typedef struct mdcache_fsal_obj_handle mdcache_entry_t;
 
+struct mdcache_fsal_module {
+	struct fsal_module module;
+	struct fsal_obj_ops handle_ops;
+};
+
+extern struct mdcache_fsal_module MDCACHE;
+
 #define MDC_UNEXPORT 1
 
 /**

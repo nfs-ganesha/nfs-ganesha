@@ -221,6 +221,9 @@ MODULE_INIT void vfs_init(void)
 	}
 	myself->m_ops.create_export = vfs_create_export;
 	myself->m_ops.init_config = init_config;
+
+	/* Initialize the fsal_obj_handle ops for FSAL VFS/LUSTRE */
+	vfs_handle_ops_init(&VFS.handle_ops);
 }
 
 MODULE_FINI void vfs_unload(void)

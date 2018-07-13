@@ -258,7 +258,7 @@ open_by_name(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	fsal_status_t status;
 
 	/* We don't have open by name... */
-	status = obj_hdl->obj_ops.lookup(obj_hdl, name, &temp, NULL);
+	status = obj_hdl->obj_ops->lookup(obj_hdl, name, &temp, NULL);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL, "lookup returned %s",
@@ -271,7 +271,7 @@ open_by_name(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 	if (FSAL_IS_ERROR(status)) {
 		/* Release the object we found by lookup. */
-		temp->obj_ops.release(temp);
+		temp->obj_ops->release(temp);
 		LogFullDebug(COMPONENT_FSAL, "open returned %s",
 			     fsal_err_txt(status));
 	}
@@ -445,13 +445,13 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		 * Note that we only set the attributes if we were responsible
 		 * for creating the file.
 		 */
-		status = (*new_obj)->obj_ops.setattr2(*new_obj, false, state,
+		status = (*new_obj)->obj_ops->setattr2(*new_obj, false, state,
 						      attr_set);
 		if (FSAL_IS_ERROR(status))
 			goto fileerr;
 
 		if (attrs_out != NULL) {
-			status = (*new_obj)->obj_ops.getattrs(*new_obj,
+			status = (*new_obj)->obj_ops->getattrs(*new_obj,
 							      attrs_out);
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0)
@@ -472,7 +472,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
  fileerr:
 	if (hdl != NULL) {
 		/* Release the handle we just allocated. */
-		(*new_obj)->obj_ops.release(*new_obj);
+		(*new_obj)->obj_ops->release(*new_obj);
 		*new_obj = NULL;
 	}
 

@@ -86,7 +86,7 @@ namespace {
 
       status = fsal_remove(test_root, TEST_FILE);
       EXPECT_EQ(status.major, 0);
-      test_file->obj_ops.put_ref(test_file);
+      test_file->obj_ops->put_ref(test_file);
       test_file = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -106,7 +106,7 @@ TEST_F(Lockop2EmptyLatencyTest, SIMPLE)
   request_lock.lock_sle_type = FSAL_POSIX_LOCK;
   request_lock.lock_reclaim = true;
 
-  status = test_file->obj_ops.lock_op2(test_file, NULL, NULL, FSAL_OP_LOCK,
+  status = test_file->obj_ops->lock_op2(test_file, NULL, NULL, FSAL_OP_LOCK,
                   &request_lock, NULL);
   EXPECT_EQ(status.major, 0);
 }
@@ -124,7 +124,7 @@ TEST_F(Lockop2EmptyLatencyTest, SIMPLE_BYPASS)
   request_lock.lock_sle_type = FSAL_POSIX_LOCK;
   request_lock.lock_reclaim = true;
 
-  status = sub_hdl->obj_ops.lock_op2(sub_hdl, NULL, NULL, FSAL_OP_LOCK,
+  status = sub_hdl->obj_ops->lock_op2(sub_hdl, NULL, NULL, FSAL_OP_LOCK,
                   &request_lock, NULL);
   EXPECT_EQ(status.major, 0);
 }
@@ -142,7 +142,7 @@ TEST_F(Lockop2EmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = test_file->obj_ops.lock_op2(test_file, NULL, NULL, FSAL_OP_LOCK,
+    status = test_file->obj_ops->lock_op2(test_file, NULL, NULL, FSAL_OP_LOCK,
                     &request_lock, NULL);
     EXPECT_EQ(status.major, 0);
   }
@@ -170,7 +170,7 @@ TEST_F(Lockop2EmptyLatencyTest, LOOP_BYPASS)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = sub_hdl->obj_ops.lock_op2(sub_hdl, NULL, NULL, FSAL_OP_LOCK,
+    status = sub_hdl->obj_ops->lock_op2(sub_hdl, NULL, NULL, FSAL_OP_LOCK,
                    &request_lock, NULL);
     ASSERT_EQ(status.major, 0);
   }

@@ -79,7 +79,7 @@ namespace {
 						NULL);
       ASSERT_NE(test_file_state, nullptr);
 
-      status = test_root->obj_ops.open2(test_root, test_file_state,
+      status = test_root->obj_ops->open2(test_root, test_file_state,
                       FSAL_O_RDWR, FSAL_UNCHECKED, TEST_FILE, NULL, NULL,
                       &test_file, NULL, &caller_perm_check);
       ASSERT_EQ(status.major, 0);
@@ -88,7 +88,7 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = test_file->obj_ops.close2(test_file, test_file_state);
+      status = test_file->obj_ops->close2(test_file, test_file_state);
       EXPECT_EQ(0, status.major);
 
       test_file_state->state_exp->exp_ops.free_state(test_file_state->state_exp,
@@ -97,7 +97,7 @@ namespace {
 
       status = fsal_remove(test_root, TEST_FILE);
       EXPECT_EQ(status.major, 0);
-      test_file->obj_ops.put_ref(test_file);
+      test_file->obj_ops->put_ref(test_file);
       test_file = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -123,7 +123,7 @@ TEST_F(Commit2EmptyLatencyTest, SIMPLE)
 {
   fsal_status_t status;
 
-  status = test_file->obj_ops.commit2(test_file, OFFSET, LENGTH);
+  status = test_file->obj_ops->commit2(test_file, OFFSET, LENGTH);
   EXPECT_EQ(status.major, 0);
 }
 
@@ -135,7 +135,7 @@ TEST_F(Commit2EmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  status = sub_hdl->obj_ops.commit2(sub_hdl, OFFSET, LENGTH);
+  status = sub_hdl->obj_ops->commit2(sub_hdl, OFFSET, LENGTH);
   EXPECT_EQ(status.major, 0);
 }
 
@@ -157,9 +157,9 @@ TEST_F(Commit2EmptyLatencyTest, SMALL_UNSTABLE_WRITE)
   write_arg.io_amount = 0;
   write_arg.fsal_stable = false;
 
-  test_file->obj_ops.write2(test_file, true, write_cb, &write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, write_cb, &write_arg, NULL);
 
-  status = test_file->obj_ops.commit2(test_file, OFFSET, bytes);
+  status = test_file->obj_ops->commit2(test_file, OFFSET, bytes);
   EXPECT_EQ(status.major, 0);
 
   free(databuffer);
@@ -183,9 +183,9 @@ TEST_F(Commit2EmptyLatencyTest, SMALL_STABLE_WRITE)
   write_arg.io_amount = 0;
   write_arg.fsal_stable = true;
 
-  test_file->obj_ops.write2(test_file, true, write_cb, &write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, write_cb, &write_arg, NULL);
 
-  status = test_file->obj_ops.commit2(test_file, OFFSET, bytes);
+  status = test_file->obj_ops->commit2(test_file, OFFSET, bytes);
   EXPECT_EQ(status.major, 0);
 
   free(databuffer);
@@ -209,9 +209,9 @@ TEST_F(Commit2EmptyLatencyTest, LARGE_UNSTABLE_WRITE)
   write_arg.io_amount = 0;
   write_arg.fsal_stable = false;
 
-  test_file->obj_ops.write2(test_file, true, write_cb, &write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, write_cb, &write_arg, NULL);
 
-  status = test_file->obj_ops.commit2(test_file, OFFSET, bytes);
+  status = test_file->obj_ops->commit2(test_file, OFFSET, bytes);
   EXPECT_EQ(status.major, 0);
 
   free(databuffer);
@@ -235,9 +235,9 @@ TEST_F(Commit2EmptyLatencyTest, LARGE_STABLE_WRITE)
   write_arg.io_amount = 0;
   write_arg.fsal_stable = true;
 
-  test_file->obj_ops.write2(test_file, true, write_cb, &write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, write_cb, &write_arg, NULL);
 
-  status = test_file->obj_ops.commit2(test_file, OFFSET, bytes);
+  status = test_file->obj_ops->commit2(test_file, OFFSET, bytes);
   EXPECT_EQ(status.major, 0);
 
   free(databuffer);
@@ -251,7 +251,7 @@ TEST_F(Commit2EmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = test_file->obj_ops.commit2(test_file, OFFSET, LENGTH);
+    status = test_file->obj_ops->commit2(test_file, OFFSET, LENGTH);
     ASSERT_EQ(status.major, 0);
   }
 

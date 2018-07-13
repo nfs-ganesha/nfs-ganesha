@@ -65,6 +65,7 @@ void free_export_ops(struct fsal_export *exp_hdl);
 /* fsal_obj_handle common methods
  */
 
+void fsal_default_obj_ops_init(struct fsal_obj_ops *obj_ops);
 void fsal_obj_handle_init(struct fsal_obj_handle *, struct fsal_export *,
 			  object_file_type_t);
 

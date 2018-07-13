@@ -84,7 +84,7 @@ void nfs_SetPostOpAttr(struct fsal_obj_handle *obj,
 		pattrs = &attr_buf;
 		fsal_prepare_attrs(pattrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
-		(void) obj->obj_ops.getattrs(obj, pattrs);
+		(void) obj->obj_ops->getattrs(obj, pattrs);
 	}
 
 	/* Check if attributes follow and place the following attributes */
@@ -116,7 +116,7 @@ void nfs_SetPreOpAttr(struct fsal_obj_handle *obj, pre_op_attr *attr)
 
 	fsal_prepare_attrs(&attrs, ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
 
-	status = obj->obj_ops.getattrs(obj, &attrs);
+	status = obj->obj_ops->getattrs(obj, &attrs);
 
 	if (FSAL_IS_ERROR(status))
 		attr->attributes_follow = false;
@@ -1371,7 +1371,7 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 		fs_server.utf8string_len = strlen(server);
 
 		LogDebug(COMPONENT_NFS_V4,
-			 "encode fs_locations obj_ops.fs_locations failed %s, %s, %s",
+			 "encode fs_locations obj_ops->fs_locations failed %s, %s, %s",
 			 fs_locs.fs_root.pathname4_val->utf8string_val,
 			 fs_loc.rootpath.pathname4_val->utf8string_val,
 			 server);
@@ -3517,7 +3517,7 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 	args.fileid = data->current_obj->fileid;
 	args.fsid = data->current_obj->fsid;
 
-	status = data->current_obj->obj_ops.getattrs(data->current_obj, attr);
+	status = data->current_obj->obj_ops->getattrs(data->current_obj, attr);
 	if (FSAL_IS_ERROR(status))
 		return nfs4_Errno_status(status);
 

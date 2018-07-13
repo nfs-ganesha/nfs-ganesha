@@ -122,7 +122,7 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  out:
 
 	if (entry)
-		entry->obj_ops.put_ref(entry);
+		entry->obj_ops->put_ref(entry);
 
 	return rc;
 }				/* nfs3_access */

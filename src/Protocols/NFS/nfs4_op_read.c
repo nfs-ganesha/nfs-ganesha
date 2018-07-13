@@ -98,7 +98,7 @@ static void nfs4_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 
 		fsal_prepare_attrs(&attrs, ATTR_SIZE);
 
-		if (FSAL_IS_SUCCESS(obj->obj_ops.getattrs(obj, &attrs))) {
+		if (FSAL_IS_SUCCESS(obj->obj_ops->getattrs(obj, &attrs))) {
 			read_arg->end_of_file = (read_arg->offset +
 						 read_arg->io_amount)
 				>= attrs.filesize;
@@ -464,7 +464,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Need to permission check the read. */
-	fsal_status = obj->obj_ops.test_access(obj, FSAL_READ_ACCESS,
+	fsal_status = obj->obj_ops->test_access(obj, FSAL_READ_ACCESS,
 					       NULL, NULL, true);
 
 	if (fsal_status.major == ERR_FSAL_ACCESS) {
@@ -564,7 +564,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	read_data.owner = owner;
 
 	/* Do the actual read */
-	obj->obj_ops.read2(obj, bypass, nfs4_read_cb, read_arg, &read_data);
+	obj->obj_ops->read2(obj, bypass, nfs4_read_cb, read_arg, &read_data);
 
  out:
 	if (state_open != NULL)
@@ -732,7 +732,7 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 		hints.offset = arg_IO_ADVISE->iaa_offset;
 		hints.count = arg_IO_ADVISE->iaa_count;
 
-		fsal_status = obj->obj_ops.io_advise(obj, &hints);
+		fsal_status = obj->obj_ops->io_advise(obj, &hints);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_IO_ADVISE->iaa_status = NFS4ERR_NOTSUPP;
 			goto done;
@@ -816,7 +816,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 		else
 			info.io_content.adb.adb_offset = arg_SEEK->sa_offset;
 
-		fsal_status = obj->obj_ops.seek2(obj, state_found, &info);
+		fsal_status = obj->obj_ops->seek2(obj, state_found, &info);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_SEEK->sr_status = NFS4ERR_NXIO;
 			goto done;

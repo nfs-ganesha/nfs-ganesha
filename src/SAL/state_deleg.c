@@ -101,7 +101,7 @@ state_status_t do_lease_op(struct fsal_obj_handle *obj,
 	/* Perform this delegation operation using the new
 	 * multiple file-descriptors.
 	 */
-	fsal_status = obj->obj_ops.lease_op2(
+	fsal_status = obj->obj_ops->lease_op2(
 				obj,
 				state,
 				owner,

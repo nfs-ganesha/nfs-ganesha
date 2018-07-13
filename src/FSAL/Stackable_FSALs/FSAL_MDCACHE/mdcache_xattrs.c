@@ -66,7 +66,7 @@ fsal_status_t mdcache_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.list_ext_attrs(
+		status = handle->sub_handle->obj_ops->list_ext_attrs(
 			handle->sub_handle, argcookie, xattrs_tab,
 			xattrs_tabsize, p_nb_returned, end_of_list)
 	       );
@@ -94,7 +94,7 @@ fsal_status_t mdcache_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.getextattr_id_by_name(
+		status = handle->sub_handle->obj_ops->getextattr_id_by_name(
 				handle->sub_handle, name, p_id)
 	       );
 
@@ -125,7 +125,7 @@ fsal_status_t mdcache_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.getextattr_value_by_id(
+		status = handle->sub_handle->obj_ops->getextattr_value_by_id(
 				handle->sub_handle, id, buf,
 				buf_size, p_output_size)
 	       );
@@ -157,7 +157,7 @@ fsal_status_t mdcache_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.getextattr_value_by_name(
+		status = handle->sub_handle->obj_ops->getextattr_value_by_name(
 				handle->sub_handle, name, buf,
 				buf_size, p_output_size)
 	       );
@@ -189,7 +189,7 @@ fsal_status_t mdcache_setextattr_value(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.setextattr_value(
+		status = handle->sub_handle->obj_ops->setextattr_value(
 			handle->sub_handle, name, buf,
 			buf_size, create)
 	       );
@@ -219,7 +219,7 @@ fsal_status_t mdcache_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.setextattr_value_by_id(
+		status = handle->sub_handle->obj_ops->setextattr_value_by_id(
 				handle->sub_handle, id, buf,
 				buf_size)
 	       );
@@ -245,7 +245,7 @@ fsal_status_t mdcache_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.remove_extattr_by_id(
+		status = handle->sub_handle->obj_ops->remove_extattr_by_id(
 			handle->sub_handle, id)
 	       );
 
@@ -270,7 +270,7 @@ fsal_status_t mdcache_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.remove_extattr_by_name(
+		status = handle->sub_handle->obj_ops->remove_extattr_by_name(
 			handle->sub_handle, name)
 	       );
 
@@ -296,7 +296,7 @@ fsal_status_t mdcache_getxattrs(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.getxattrs(
+		status = handle->sub_handle->obj_ops->getxattrs(
 			handle->sub_handle, name, value)
 	       );
 
@@ -324,7 +324,7 @@ fsal_status_t mdcache_setxattrs(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.setxattrs(
+		status = handle->sub_handle->obj_ops->setxattrs(
 			handle->sub_handle, type, name, value)
 	       );
 
@@ -349,7 +349,7 @@ fsal_status_t mdcache_removexattrs(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.removexattrs(
+		status = handle->sub_handle->obj_ops->removexattrs(
 			handle->sub_handle, name)
 	       );
 
@@ -380,7 +380,7 @@ fsal_status_t mdcache_listxattrs(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = handle->sub_handle->obj_ops.listxattrs(
+		status = handle->sub_handle->obj_ops->listxattrs(
 			handle->sub_handle, len, cookie, verf, eof, names)
 	       );
 

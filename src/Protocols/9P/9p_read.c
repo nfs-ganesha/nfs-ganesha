@@ -159,7 +159,7 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		read_data.client = req9p->pconn->client;
 
 		/* Do the actual read */
-		pfid->pentry->obj_ops.read2(pfid->pentry, true, _9p_read_cb,
+		pfid->pentry->obj_ops->read2(pfid->pentry, true, _9p_read_cb,
 					    read_arg, &read_data);
 
 		if (FSAL_IS_ERROR(read_data.ret))

@@ -105,14 +105,14 @@ TEST_F(UnlinkEmptyLatencyTest, SIMPLE)
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
-  status = test_root->obj_ops.unlink(test_root, obj, TEST_FILE);
+  status = test_root->obj_ops->unlink(test_root, obj, TEST_FILE);
   EXPECT_EQ(status.major, 0);
 
-  status = test_root->obj_ops.lookup(test_root, TEST_FILE, &lookup, NULL);
+  status = test_root->obj_ops->lookup(test_root, TEST_FILE, &lookup, NULL);
   EXPECT_EQ(status.major, ERR_FSAL_NOENT);
   EXPECT_EQ(lookup, nullptr);
 
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
 }
 
 TEST_F(UnlinkEmptyLatencyTest, SIMPLE_BYPASS)
@@ -127,7 +127,7 @@ TEST_F(UnlinkEmptyLatencyTest, SIMPLE_BYPASS)
   ASSERT_NE(sub_hdl, nullptr);
 
   gtws_subcall(
-	       status = sub_hdl->obj_ops.open2(sub_hdl, NULL, FSAL_O_RDWR,
+	       status = sub_hdl->obj_ops->open2(sub_hdl, NULL, FSAL_O_RDWR,
 					       FSAL_UNCHECKED, TEST_FILE, NULL,
 					       NULL, &sub_hdl_obj, NULL,
 					       &caller_perm_check)
@@ -135,17 +135,17 @@ TEST_F(UnlinkEmptyLatencyTest, SIMPLE_BYPASS)
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(sub_hdl_obj, nullptr);
 
-  status = sub_hdl_obj->obj_ops.close(sub_hdl_obj);
+  status = sub_hdl_obj->obj_ops->close(sub_hdl_obj);
   EXPECT_EQ(status.major, 0);
 
-  status = sub_hdl->obj_ops.unlink(sub_hdl, sub_hdl_obj, TEST_FILE);
+  status = sub_hdl->obj_ops->unlink(sub_hdl, sub_hdl_obj, TEST_FILE);
   EXPECT_EQ(status.major, 0);
 
-  status = sub_hdl->obj_ops.lookup(sub_hdl, TEST_FILE, &lookup, NULL);
+  status = sub_hdl->obj_ops->lookup(sub_hdl, TEST_FILE, &lookup, NULL);
   EXPECT_EQ(status.major, ERR_FSAL_NOENT);
   EXPECT_EQ(lookup, nullptr);
 
-  sub_hdl_obj->obj_ops.put_ref(sub_hdl_obj);
+  sub_hdl_obj->obj_ops->put_ref(sub_hdl_obj);
 }
 
 TEST_F(UnlinkEmptyLatencyTest, FSALREMOVE)
@@ -164,7 +164,7 @@ TEST_F(UnlinkEmptyLatencyTest, FSALREMOVE)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = test_root->obj_ops.link(obj, test_root, fname);
+    status = test_root->obj_ops->link(obj, test_root, fname);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -186,7 +186,7 @@ TEST_F(UnlinkEmptyLatencyTest, FSALREMOVE)
   status = fsal_remove(test_root, TEST_FILE);
   ASSERT_EQ(status.major, 0);
 
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
 }
 
 TEST_F(UnlinkFullLatencyTest, BIG)
@@ -205,7 +205,7 @@ TEST_F(UnlinkFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = test_root->obj_ops.link(obj, test_root, fname);
+    status = test_root->obj_ops->link(obj, test_root, fname);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -214,7 +214,7 @@ TEST_F(UnlinkFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = test_root->obj_ops.unlink(test_root, obj, fname);
+    status = test_root->obj_ops->unlink(test_root, obj, fname);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -228,7 +228,7 @@ TEST_F(UnlinkFullLatencyTest, BIG)
   status = fsal_remove(test_root, TEST_FILE);
   ASSERT_EQ(status.major, 0);
 
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
 }
 
 TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
@@ -255,7 +255,7 @@ TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = sub_root->obj_ops.link(sub_obj, sub_root, fname);
+    status = sub_root->obj_ops->link(sub_obj, sub_root, fname);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -264,7 +264,7 @@ TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = sub_root->obj_ops.unlink(sub_root, sub_obj, fname);
+    status = sub_root->obj_ops->unlink(sub_root, sub_obj, fname);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -277,7 +277,7 @@ TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
   status = fsal_remove(test_root, TEST_FILE);
   ASSERT_EQ(status.major, 0);
 
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
 }
 
 int main(int argc, char *argv[])

@@ -166,12 +166,16 @@ void free_export_ops(struct fsal_export *exp_hdl)
 /* fsal_export to fsal_obj_handle helpers
  */
 
+void fsal_default_obj_ops_init(struct fsal_obj_ops *obj_ops)
+{
+	*obj_ops = def_handle_ops;
+}
+
 void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 			  object_file_type_t type)
 {
 	pthread_rwlockattr_t attrs;
 
-	memcpy(&obj->obj_ops, &def_handle_ops, sizeof(struct fsal_obj_ops));
 	obj->fsal = exp->fsal;
 	obj->type = type;
 	pthread_rwlockattr_init(&attrs);
@@ -1804,7 +1808,7 @@ fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 
 	/* draft-ietf-nfsv4-acls section 12 */
 	/* If no execute on dir, deny */
-	fsal_status = dir_hdl->obj_ops.test_access(
+	fsal_status = dir_hdl->obj_ops->test_access(
 				dir_hdl,
 				FSAL_MODE_MASK_SET(FSAL_X_OK) |
 				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE),
@@ -1818,13 +1822,13 @@ fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 
 	/* We can delete if we have *either* ACE_PERM_DELETE or
 	 * ACE_PERM_DELETE_CHILD.  7530 - 6.2.1.3.2 */
-	del_status = rem_hdl->obj_ops.test_access(
+	del_status = rem_hdl->obj_ops->test_access(
 				rem_hdl,
 				FSAL_MODE_MASK_SET(FSAL_W_OK) |
 				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE) |
 				FSAL_ACE4_REQ_FLAG,
 				NULL, NULL, false);
-	fsal_status = dir_hdl->obj_ops.test_access(
+	fsal_status = dir_hdl->obj_ops->test_access(
 				dir_hdl,
 				FSAL_MODE_MASK_SET(FSAL_W_OK) |
 				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_DELETE_CHILD) |
@@ -1849,7 +1853,7 @@ fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 
 		/* Neither ACE_PERM_DELETE nor ACE_PERM_DELETE_CHILD are set.
 		 * Check for ADD_FILE in parent */
-		fsal_status = dir_hdl->obj_ops.test_access(
+		fsal_status = dir_hdl->obj_ops->test_access(
 				dir_hdl,
 				FSAL_MODE_MASK_SET(FSAL_W_OK) |
 				FSAL_ACE4_MASK_SET(isdir ?
@@ -1894,7 +1898,7 @@ fsal_status_t fsal_rename_access(struct fsal_obj_handle *src_dir_hdl,
 			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_SUBDIRECTORY);
 	else
 		access_type |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE);
-	status = dst_dir_hdl->obj_ops.test_access(dst_dir_hdl, access_type,
+	status = dst_dir_hdl->obj_ops->test_access(dst_dir_hdl, access_type,
 						  NULL, NULL, false);
 	if (FSAL_IS_ERROR(status))
 		return status;

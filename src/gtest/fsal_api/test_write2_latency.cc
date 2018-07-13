@@ -78,7 +78,7 @@ namespace {
 						NULL);
       ASSERT_NE(test_file_state, nullptr);
 
-      status = test_root->obj_ops.open2(test_root, test_file_state,
+      status = test_root->obj_ops->open2(test_root, test_file_state,
                       FSAL_O_RDWR, FSAL_UNCHECKED, TEST_FILE, NULL, NULL,
                       &test_file, NULL, &caller_perm_check);
       ASSERT_EQ(status.major, 0);
@@ -87,7 +87,7 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = test_file->obj_ops.close2(test_file, test_file_state);
+      status = test_file->obj_ops->close2(test_file, test_file_state);
       EXPECT_EQ(0, status.major);
 
       op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
@@ -95,7 +95,7 @@ namespace {
 
       status = fsal_remove(test_root, TEST_FILE);
       EXPECT_EQ(status.major, 0);
-      test_file->obj_ops.put_ref(test_file);
+      test_file->obj_ops->put_ref(test_file);
       test_file = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -137,7 +137,7 @@ TEST_F(Write2EmptyLatencyTest, SIMPLE)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = false;
 
-  test_file->obj_ops.write2(test_file, true, write_cb, write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, write_cb, write_arg, NULL);
 
   free(databuffer);
 }
@@ -166,7 +166,7 @@ TEST_F(Write2EmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  sub_hdl->obj_ops.write2(sub_hdl, true, write_cb, write_arg, NULL);
+  sub_hdl->obj_ops->write2(sub_hdl, true, write_cb, write_arg, NULL);
 
   free(databuffer);
 }
@@ -191,7 +191,7 @@ TEST_F(Write2EmptyLatencyTest, SMALL_STABLE_WRITE)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = true;
 
-  test_file->obj_ops.write2(test_file, true, write_cb, write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, write_cb, write_arg, NULL);
 
   free(databuffer);
 }
@@ -216,7 +216,7 @@ TEST_F(Write2EmptyLatencyTest, LARGE_UNSTABLE_WRITE)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = false;
 
-  test_file->obj_ops.write2(test_file, true, write_cb, write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, write_cb, write_arg, NULL);
 
   free(databuffer);
 }
@@ -241,7 +241,7 @@ TEST_F(Write2EmptyLatencyTest, LARGE_STABLE_WRITE)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = true;
 
-  test_file->obj_ops.write2(test_file, true, write_cb, write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, write_cb, write_arg, NULL);
 
   free(databuffer);
 }
@@ -270,7 +270,7 @@ TEST_F(Write2EmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i, write_arg->offset += 64) {
-    test_file->obj_ops.write2(test_file, true, write_cb, write_arg, NULL);
+    test_file->obj_ops->write2(test_file, true, write_cb, write_arg, NULL);
   }
 
   now(&e_time);
@@ -309,7 +309,7 @@ TEST_F(Write2EmptyLatencyTest, LOOP_BYPASS)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i, write_arg->offset += 64) {
-    sub_hdl->obj_ops.write2(sub_hdl, true, write_cb, write_arg, NULL);
+    sub_hdl->obj_ops->write2(sub_hdl, true, write_cb, write_arg, NULL);
   }
 
   now(&e_time);

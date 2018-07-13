@@ -1514,7 +1514,7 @@ static fsal_status_t pxy_mkdir(struct fsal_obj_handle *dir_hdl,
 	if (FSAL_IS_ERROR(st))
 		return st;
 
-	return (*handle)->obj_ops.getattrs(*handle, attrib);
+	return (*handle)->obj_ops->getattrs(*handle, attrib);
 }
 
 static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
@@ -1599,7 +1599,7 @@ static fsal_status_t pxy_mknod(struct fsal_obj_handle *dir_hdl,
 	if (FSAL_IS_ERROR(st))
 		return st;
 
-	return (*handle)->obj_ops.getattrs(*handle, attrib);
+	return (*handle)->obj_ops->getattrs(*handle, attrib);
 }
 
 static fsal_status_t pxy_symlink(struct fsal_obj_handle *dir_hdl,
@@ -1662,7 +1662,7 @@ static fsal_status_t pxy_symlink(struct fsal_obj_handle *dir_hdl,
 	if (FSAL_IS_ERROR(st))
 		return st;
 
-	return (*handle)->obj_ops.getattrs(*handle, attrib);
+	return (*handle)->obj_ops->getattrs(*handle, attrib);
 }
 
 static fsal_status_t pxy_readlink(struct fsal_obj_handle *obj_hdl,
@@ -2756,6 +2756,8 @@ static fsal_status_t pxy_commit2(struct fsal_obj_handle *obj_hdl,
 
 void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 {
+	fsal_default_obj_ops_init(ops);
+
 	ops->release = pxy_hdl_release;
 	ops->lookup = pxy_lookup;
 	ops->readdir = pxy_readdir;
@@ -2862,7 +2864,7 @@ static struct pxy_obj_handle *pxy_alloc_handle(struct fsal_export *exp,
 	n->obj.state_hdl = NULL;
 	n->obj.fsid = attributes.fsid;
 	n->obj.fileid = attributes.fileid;
-	pxy_handle_ops_init(&n->obj.obj_ops);
+	n->obj.obj_ops = &PROXY.handle_ops;
 	if (attrs_out != NULL) {
 		/* We aren't keeping ACL ref ourself, so pass it
 		 * to the caller.

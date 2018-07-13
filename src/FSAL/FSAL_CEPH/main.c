@@ -396,6 +396,9 @@ MODULE_INIT void init(void)
 #endif				/* CEPH_PNFS */
 	myself->m_ops.create_export = create_export;
 	myself->m_ops.init_config = init_config;
+
+	/* Initialize the fsal_obj_handle ops for FSAL CEPH */
+	handle_ops_init(&CephFSM.handle_ops);
 }
 
 /**

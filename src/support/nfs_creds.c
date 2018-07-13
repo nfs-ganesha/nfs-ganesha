@@ -747,7 +747,7 @@ fsal_errors_t nfs_access_op(struct fsal_obj_handle *obj,
 		    FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_DELETE_CHILD) ?
 			"delete_child" : "-");
 
-	fsal_status = obj->obj_ops.test_access(obj, access_mask,
+	fsal_status = obj->obj_ops->test_access(obj, access_mask,
 					       &access_allowed,
 					       &access_denied, false);
 	if (fsal_status.major == ERR_FSAL_NO_ERROR ||

@@ -155,7 +155,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 		arg.segment = segment->sls_segment;
 		arg.fsal_seg_data = segment->sls_fsal_data;
 
-		nfs_status = data->current_obj->obj_ops.layoutcommit(
+		nfs_status = data->current_obj->obj_ops->layoutcommit(
 						data->current_obj,
 						op_ctx,
 						&lou_body,

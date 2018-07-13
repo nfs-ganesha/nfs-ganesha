@@ -100,13 +100,13 @@ TEST_F(LookupEmptyLatencyTest, SIMPLE)
 
   enableEvents(event_list);
 
-  status = root_entry->obj_ops.lookup(root_entry, TEST_ROOT, &lookup, NULL);
+  status = root_entry->obj_ops->lookup(root_entry, TEST_ROOT, &lookup, NULL);
   EXPECT_EQ(status.major, 0);
   EXPECT_EQ(test_root, lookup);
 
   disableEvents(event_list);
 
-  lookup->obj_ops.put_ref(lookup);
+  lookup->obj_ops->put_ref(lookup);
 }
 
 TEST_F(LookupEmptyLatencyTest, SIMPLE_BYPASS)
@@ -119,13 +119,13 @@ TEST_F(LookupEmptyLatencyTest, SIMPLE_BYPASS)
 
   sub_hdl = mdcdb_get_sub_handle(root_entry);
   ASSERT_NE(sub_hdl, nullptr);
-  status = sub_hdl->obj_ops.lookup(sub_hdl, TEST_ROOT, &lookup, NULL);
+  status = sub_hdl->obj_ops->lookup(sub_hdl, TEST_ROOT, &lookup, NULL);
   EXPECT_EQ(status.major, 0);
   EXPECT_EQ(mdcdb_get_sub_handle(test_root), lookup);
 
   disableEvents(event_list);
 
-  lookup->obj_ops.put_ref(lookup);
+  lookup->obj_ops->put_ref(lookup);
 }
 
 TEST_F(LookupEmptyLatencyTest, LOOP)
@@ -139,7 +139,7 @@ TEST_F(LookupEmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    status = root_entry->obj_ops.lookup(root_entry, TEST_ROOT, &lookup, NULL);
+    status = root_entry->obj_ops->lookup(root_entry, TEST_ROOT, &lookup, NULL);
     EXPECT_EQ(status.major, 0);
     EXPECT_EQ(test_root, lookup);
   }
@@ -150,7 +150,7 @@ TEST_F(LookupEmptyLatencyTest, LOOP)
 
   /* Have the put_ref()'s outside the latency loop */
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    lookup->obj_ops.put_ref(lookup);
+    lookup->obj_ops->put_ref(lookup);
   }
 
   fprintf(stderr, "Average time per lookup: %" PRIu64 " ns\n",
@@ -180,7 +180,7 @@ TEST_F(LookupEmptyLatencyTest, FSALLOOKUP)
 
   /* Have the put_ref()'s outside the latency loop */
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    lookup->obj_ops.put_ref(lookup);
+    lookup->obj_ops->put_ref(lookup);
   }
 
   fprintf(stderr, "Average time per fsal_lookup: %" PRIu64 " ns\n",
@@ -201,9 +201,9 @@ TEST_F(LookupFullLatencyTest, BIG_SINGLE)
 
   sprintf(fname, "f-%08x", FILE_COUNT / 5);
 
-  status = test_root->obj_ops.lookup(test_root, fname, &obj, NULL);
+  status = test_root->obj_ops->lookup(test_root, fname, &obj, NULL);
   ASSERT_EQ(status.major, 0) << " failed to lookup " << fname;
-  obj->obj_ops.put_ref(obj);
+  obj->obj_ops->put_ref(obj);
 
   now(&e_time);
 
@@ -229,9 +229,9 @@ TEST_F(LookupFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i % FILE_COUNT);
 
-    status = test_root->obj_ops.lookup(test_root, fname, &obj, NULL);
+    status = test_root->obj_ops->lookup(test_root, fname, &obj, NULL);
     ASSERT_EQ(status.major, 0) << " failed to lookup " << fname;
-    obj->obj_ops.put_ref(obj);
+    obj->obj_ops->put_ref(obj);
   }
 
   now(&e_time);
@@ -263,9 +263,9 @@ TEST_F(LookupFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i % FILE_COUNT);
 
-    status = sub_hdl->obj_ops.lookup(sub_hdl, fname, &obj, NULL);
+    status = sub_hdl->obj_ops->lookup(sub_hdl, fname, &obj, NULL);
     ASSERT_EQ(status.major, 0) << " failed to lookup " << fname;
-    obj->obj_ops.put_ref(obj);
+    obj->obj_ops->put_ref(obj);
   }
 
   now(&e_time);

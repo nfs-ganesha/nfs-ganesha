@@ -126,14 +126,14 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*name_len == 0) {
 		/* xattrwalk is used with an empty name,
 		 * this is a listxattr request */
-		fsal_status =
-		    pxattrfid->pentry->obj_ops.list_ext_attrs(pxattrfid->pentry,
+		fsal_status = pxattrfid->pentry->obj_ops->list_ext_attrs(
+			pxattrfid->pentry,
 			FSAL_XATTR_RW_COOKIE,	/* Start with RW cookie,
 						 * hiding RO ones */
-			 xattrs_arr,
-			 XATTRS_ARRAY_LEN, /** @todo fix static length */
-			 &nb_xattrs_read,
-			 &eod_met);
+			xattrs_arr,
+			XATTRS_ARRAY_LEN, /** @todo fix static length */
+			&nb_xattrs_read,
+			&eod_met);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			gsh_free(pxattrfid->xattr);
@@ -175,7 +175,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	} else {
 		/* xattrwalk has a non-empty name, use regular getxattr */
 		fsal_status =
-		    pxattrfid->pentry->obj_ops.getextattr_value_by_name(
+		    pxattrfid->pentry->obj_ops->getextattr_value_by_name(
 					     pxattrfid->pentry, name,
 					     pxattrfid->xattr->xattr_content,
 					     XATTR_BUFFERSIZE,
@@ -185,7 +185,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			/* we need a bigger buffer, do one more request with
 			 * 0-size to get length and reallocate/try again */
 			fsal_status =
-			   pxattrfid->pentry->obj_ops.getextattr_value_by_name(
+			   pxattrfid->pentry->obj_ops->getextattr_value_by_name(
 					     pxattrfid->pentry, name,
 					     pxattrfid->xattr->xattr_content,
 					     0, &attrsize);
@@ -212,7 +212,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					sizeof(*pxattrfid->xattr) + attrsize);
 
 			fsal_status =
-			   pxattrfid->pentry->obj_ops.getextattr_value_by_name(
+			   pxattrfid->pentry->obj_ops->getextattr_value_by_name(
 					     pxattrfid->pentry, name,
 					     pxattrfid->xattr->xattr_content,
 					     attrsize, &attrsize);
@@ -237,7 +237,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	req9p->pconn->fids[*attrfid] = pxattrfid;
 
 	/* Increments refcount as we're manually making a new copy */
-	pfid->pentry->obj_ops.get_ref(pfid->pentry);
+	pfid->pentry->obj_ops->get_ref(pfid->pentry);
 
 	/* hold reference on gdata */
 	uid2grp_hold_group_data(pxattrfid->gdata);
@@ -247,7 +247,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	if (pxattrfid->ppentry != NULL) {
 		/* Increments refcount for ppentry */
-		pxattrfid->ppentry->obj_ops.get_ref(pxattrfid->ppentry);
+		pxattrfid->ppentry->obj_ops->get_ref(pxattrfid->ppentry);
 	}
 
 	/* Build the reply */

@@ -730,7 +730,7 @@ void state_del(state_t *state);
 static inline struct fsal_obj_handle *get_state_obj_ref_locked(state_t *state)
 {
 	if (state->state_obj) {
-		state->state_obj->obj_ops.get_ref(state->state_obj);
+		state->state_obj->obj_ops->get_ref(state->state_obj);
 	}
 
 	return state->state_obj;

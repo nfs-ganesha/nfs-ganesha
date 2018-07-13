@@ -78,7 +78,7 @@ namespace {
 						NULL);
       ASSERT_NE(test_file_state, nullptr);
 
-      status = test_root->obj_ops.open2(test_root, test_file_state,
+      status = test_root->obj_ops->open2(test_root, test_file_state,
                       FSAL_O_RDWR, FSAL_UNCHECKED, TEST_FILE, &attrs, NULL,
                       &test_file, NULL, &caller_perm_check);
       ASSERT_EQ(status.major, 0);
@@ -87,7 +87,7 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = test_file->obj_ops.close2(test_file, test_file_state);
+      status = test_file->obj_ops->close2(test_file, test_file_state);
       EXPECT_EQ(0, status.major);
 
       op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
@@ -95,7 +95,7 @@ namespace {
 
       status = fsal_remove(test_root, TEST_FILE);
       EXPECT_EQ(status.major, 0);
-      test_file->obj_ops.put_ref(test_file);
+      test_file->obj_ops->put_ref(test_file);
       test_file = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -140,7 +140,7 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = false;
 
-  test_file->obj_ops.write2(test_file, true, callback, write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, callback, write_arg, NULL);
 
   r_databuffer = (char *) malloc(bytes);
   read_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
@@ -153,7 +153,7 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE)
   read_arg->iov[0].iov_base = r_databuffer;
   read_arg->io_amount = 0;
 
-  test_file->obj_ops.read2(test_file, true, callback, read_arg, NULL);
+  test_file->obj_ops->read2(test_file, true, callback, read_arg, NULL);
 
   ret = memcmp(r_databuffer, w_databuffer, bytes);
   EXPECT_EQ(ret, 0);
@@ -188,7 +188,7 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  sub_hdl->obj_ops.write2(sub_hdl, true, callback, write_arg, NULL);
+  sub_hdl->obj_ops->write2(sub_hdl, true, callback, write_arg, NULL);
 
   r_databuffer = (char *) malloc(bytes);
 
@@ -202,7 +202,7 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE_BYPASS)
   read_arg->iov[0].iov_base = r_databuffer;
   read_arg->io_amount = 0;
 
-  sub_hdl->obj_ops.read2(sub_hdl, true, callback, read_arg, NULL);
+  sub_hdl->obj_ops->read2(sub_hdl, true, callback, read_arg, NULL);
 
   free(w_databuffer);
   free(r_databuffer);
@@ -231,7 +231,7 @@ TEST_F(Read2EmptyLatencyTest, LARGE_DATA_READ)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = false;
 
-  test_file->obj_ops.write2(test_file, true, callback, write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, callback, write_arg, NULL);
 
   r_databuffer = (char *) malloc(bytes);
   read_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
@@ -244,7 +244,7 @@ TEST_F(Read2EmptyLatencyTest, LARGE_DATA_READ)
   read_arg->iov[0].iov_base = r_databuffer;
   read_arg->io_amount = 0;
 
-  test_file->obj_ops.read2(test_file, true, callback, read_arg, NULL);
+  test_file->obj_ops->read2(test_file, true, callback, read_arg, NULL);
 
   ret = memcmp(r_databuffer, w_databuffer, bytes);
   EXPECT_EQ(ret, 0);
@@ -276,7 +276,7 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = false;
 
-  test_file->obj_ops.write2(test_file, true, callback, write_arg, NULL);
+  test_file->obj_ops->write2(test_file, true, callback, write_arg, NULL);
 
   bytes = 64;
   r_databuffer = (char *) malloc(bytes);
@@ -293,7 +293,7 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i, read_arg->offset += 64) {
-    test_file->obj_ops.read2(test_file, true, callback, read_arg, NULL);
+    test_file->obj_ops->read2(test_file, true, callback, read_arg, NULL);
   }
 
   now(&e_time);
@@ -332,7 +332,7 @@ TEST_F(Read2EmptyLatencyTest, LOOP_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  sub_hdl->obj_ops.write2(sub_hdl, true, callback, write_arg, NULL);
+  sub_hdl->obj_ops->write2(sub_hdl, true, callback, write_arg, NULL);
 
   bytes = 64;
   r_databuffer = (char *) malloc(bytes);
@@ -349,7 +349,7 @@ TEST_F(Read2EmptyLatencyTest, LOOP_BYPASS)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i, read_arg->offset += 64) {
-    sub_hdl->obj_ops.read2(sub_hdl, true, callback, read_arg, NULL);
+    sub_hdl->obj_ops->read2(sub_hdl, true, callback, read_arg, NULL);
   }
 
   now(&e_time);

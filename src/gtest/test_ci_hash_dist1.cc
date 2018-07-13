@@ -113,7 +113,7 @@ TEST(CI_HASH_DIST1, CREATE_ROOT)
   object_attributes.owner = 667;
   object_attributes.group = 766;
 
-  status = root_entry->obj_ops.mkdir(root_entry, "ci_hash_dist1",
+  status = root_entry->obj_ops->mkdir(root_entry, "ci_hash_dist1",
 				    &object_attributes, &test_root,
 				    attrs_out);
   ASSERT_NE(test_root, nullptr);

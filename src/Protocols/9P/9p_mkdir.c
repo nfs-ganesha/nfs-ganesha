@@ -116,7 +116,7 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				  _9p_tools_errno(fsal_status), plenout,
 				  preply);
 
-	pentry_newdir->obj_ops.put_ref(pentry_newdir);
+	pentry_newdir->obj_ops->put_ref(pentry_newdir);
 
 	/* Build the qid */
 	qid_newdir.type = _9P_QTDIR;

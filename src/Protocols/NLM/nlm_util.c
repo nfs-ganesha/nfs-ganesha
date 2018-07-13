@@ -390,7 +390,7 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 
  out_put:
 
-	(*ppobj)->obj_ops.put_ref((*ppobj));
+	(*ppobj)->obj_ops->put_ref((*ppobj));
 
 	if (*ppnsm_client != NULL) {
 		dec_nsm_client_ref(*ppnsm_client);
@@ -521,7 +521,7 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 		*ppowner = NULL;
 	}
 
-	(*ppobj)->obj_ops.put_ref((*ppobj));
+	(*ppobj)->obj_ops->put_ref((*ppobj));
 	*ppobj = NULL;
 	return rc;
 }

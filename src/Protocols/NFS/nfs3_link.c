@@ -132,7 +132,7 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	target_obj = nfs3_FhandleToCache(&l3_arg->file, &l3_res->status, &rc);
 	if (target_obj == NULL) {
-		parent_obj->obj_ops.put_ref(parent_obj);
+		parent_obj->obj_ops->put_ref(parent_obj);
 		return rc;  /* Status and rc are set by nfs3_FhandleToCache */
 	}
 
@@ -178,8 +178,8 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out:
 	/* return references */
-	target_obj->obj_ops.put_ref(target_obj);
-	parent_obj->obj_ops.put_ref(parent_obj);
+	target_obj->obj_ops->put_ref(target_obj);
+	parent_obj->obj_ops->put_ref(parent_obj);
 
 	return rc;
 }				/* nfs3_link */

@@ -247,7 +247,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		dcount += 24 + strlen(pathdotdot);
 
 		/* put the parent */
-		pentry_dot_dot->obj_ops.put_ref(pentry_dot_dot);
+		pentry_dot_dot->obj_ops->put_ref(pentry_dot_dot);
 
 		cookie = 0LL;
 	} else if (*offset == 1LL) {
@@ -265,7 +265,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		dcount += 24 + strlen(pathdotdot);
 
 		/* put the parent */
-		pentry_dot_dot->obj_ops.put_ref(pentry_dot_dot);
+		pentry_dot_dot->obj_ops->put_ref(pentry_dot_dot);
 
 		cookie = 0LL;
 	} else if (*offset == 2LL) {

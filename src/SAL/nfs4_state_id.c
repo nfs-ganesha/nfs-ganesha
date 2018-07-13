@@ -366,7 +366,7 @@ uint32_t state_obj_value_hash_func(hash_parameter_t *hparam,
 	struct gsh_buffdesc fh_desc;
 	state_t *pkey = key->addr;
 
-	pkey->state_obj->obj_ops.handle_to_key(pkey->state_obj, &fh_desc);
+	pkey->state_obj->obj_ops->handle_to_key(pkey->state_obj, &fh_desc);
 
 	/* Compute the sum of all the characters */
 	for (i = 0; i < pkey->state_owner->so_owner_len; i++) {
@@ -405,7 +405,7 @@ uint64_t state_obj_rbt_hash_func(hash_parameter_t *hparam,
 	unsigned char c = 0;
 	uint64_t res = 0;
 
-	pkey->state_obj->obj_ops.handle_to_key(pkey->state_obj, &fh_desc);
+	pkey->state_obj->obj_ops->handle_to_key(pkey->state_obj, &fh_desc);
 
 	/* Compute the sum of all the characters */
 	for (i = 0; i < pkey->state_owner->so_owner_len; i++) {
@@ -1074,7 +1074,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 	}
 
 	/* Sanity check : Is this the right file ? */
-	if (fsal_obj && !fsal_obj->obj_ops.handle_cmp(fsal_obj, obj2)) {
+	if (fsal_obj && !fsal_obj->obj_ops->handle_cmp(fsal_obj, obj2)) {
 		if (str_valid)
 			LogDebug(COMPONENT_STATE,
 				 "Check %s stateid found stateid %s has wrong file",
@@ -1161,7 +1161,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
  success:
 
 	if (obj2 != NULL) {
-		obj2->obj_ops.put_ref(obj2);
+		obj2->obj_ops->put_ref(obj2);
 		dec_state_owner_ref(owner2);
 	}
 
@@ -1178,7 +1178,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
  replay:
 
 	if (obj2 != NULL) {
-		obj2->obj_ops.put_ref(obj2);
+		obj2->obj_ops->put_ref(obj2);
 		dec_state_owner_ref(owner2);
 	}
 

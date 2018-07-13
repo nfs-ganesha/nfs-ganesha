@@ -138,10 +138,10 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* return references */
 	if (obj_dir)
-		obj_dir->obj_ops.put_ref(obj_dir);
+		obj_dir->obj_ops->put_ref(obj_dir);
 
 	if (obj_file)
-		obj_file->obj_ops.put_ref(obj_file);
+		obj_file->obj_ops->put_ref(obj_file);
 
 	return rc;
 }				/* nfs3_lookup */

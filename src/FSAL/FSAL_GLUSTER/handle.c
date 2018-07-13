@@ -427,14 +427,14 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
-		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+		status = (*handle)->obj_ops->setattr2(*handle, false, NULL,
 						     attrib);
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the handle we just allocated. */
 			LogFullDebug(COMPONENT_FSAL,
 				     "setattr2 status=%s",
 				     fsal_err_txt(status));
-			(*handle)->obj_ops.release(*handle);
+			(*handle)->obj_ops->release(*handle);
 			/* We released handle at this point */
 			glhandle = NULL;
 			*handle = NULL;
@@ -553,14 +553,14 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
-		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+		status = (*handle)->obj_ops->setattr2(*handle, false, NULL,
 						     attrib);
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the handle we just allocated. */
 			LogFullDebug(COMPONENT_FSAL,
 				     "setattr2 status=%s",
 				     fsal_err_txt(status));
-			(*handle)->obj_ops.release(*handle);
+			(*handle)->obj_ops->release(*handle);
 			/* We released handle at this point */
 			glhandle = NULL;
 			*handle = NULL;
@@ -651,14 +651,14 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
-		status = (*handle)->obj_ops.setattr2(*handle, false, NULL,
+		status = (*handle)->obj_ops->setattr2(*handle, false, NULL,
 						     attrib);
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the handle we just allocated. */
 			LogFullDebug(COMPONENT_FSAL,
 				     "setattr2 status=%s",
 				     fsal_err_txt(status));
-			(*handle)->obj_ops.release(*handle);
+			(*handle)->obj_ops->release(*handle);
 			/* We released handle at this point */
 			glhandle = NULL;
 			*handle = NULL;
@@ -1554,7 +1554,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (createmode == FSAL_NO_CREATE) {
 		/* lookup if the object exists */
-		status = (obj_hdl)->obj_ops.lookup(obj_hdl,
+		status = (obj_hdl)->obj_ops->lookup(obj_hdl,
 						   name,
 						   new_obj,
 						   attrs_out);
@@ -1687,7 +1687,7 @@ open:
 		 * Note that we only set the attributes if we were responsible
 		 * for creating the file and we have attributes to set.
 		 */
-		status = (*new_obj)->obj_ops.setattr2(*new_obj,
+		status = (*new_obj)->obj_ops->setattr2(*new_obj,
 						      false,
 						      state,
 						      attrib_set);
@@ -1696,7 +1696,7 @@ open:
 			goto fileerr;
 
 		if (attrs_out != NULL) {
-			status = (*new_obj)->obj_ops.getattrs(*new_obj,
+			status = (*new_obj)->obj_ops->getattrs(*new_obj,
 							      attrs_out);
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
@@ -1738,16 +1738,16 @@ open:
 
 fileerr:
 	/* Avoiding use after freed, make sure close my_fd before
-	 * obj_ops.release(), glfs_close is called depends on
+	 * obj_ops->release(), glfs_close is called depends on
 	 * FSAL_O_CLOSED flags, it's harmless of closing my_fd twice
-	 * in the floowing obj_ops.release().
+	 * in the floowing obj_ops->release().
 	 */
 	glusterfs_close_my_fd(my_fd);
 
 direrr:
 	/* Release the handle we just allocated. */
 	if (*new_obj) {
-		(*new_obj)->obj_ops.release(*new_obj);
+		(*new_obj)->obj_ops->release(*new_obj);
 		/* We released handle at this point */
 		glhandle = NULL;
 		*new_obj = NULL;
@@ -2866,6 +2866,8 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 void handle_ops_init(struct fsal_obj_ops *ops)
 {
+	fsal_default_obj_ops_init(ops);
+
 	ops->release = handle_release;
 	ops->merge = glusterfs_merge;
 	ops->lookup = lookup;

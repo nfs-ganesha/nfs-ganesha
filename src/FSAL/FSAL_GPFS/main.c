@@ -39,40 +39,43 @@ static const char myname[] = "GPFS";
 /** @struct GPFS
  *  @brief my module private storage
  */
-static struct fsal_module GPFS = {
-	.fs_info = {
-		.maxfilesize = INT64_MAX,
-		.maxlink = _POSIX_LINK_MAX,
-		.maxnamelen = 1024,
-		.maxpathlen = 1024,
-		.no_trunc = true,
-		.chown_restricted = false,
-		.case_insensitive = false,
-		.case_preserving = true,
-		.link_support = true,
-		.symlink_support = true,
-		.lock_support = true,
-		.lock_support_async_block = true,
-		.named_attr = true,
-		.unique_handles = true,
-		.acl_support = FSAL_ACLSUPPORT_ALLOW | FSAL_ACLSUPPORT_DENY,
-		.cansettime = true,
-		.homogenous = true,
-		.supported_attrs = GPFS_SUPPORTED_ATTRIBUTES,
-		.maxread = FSAL_MAXIOSIZE,
-		.maxwrite = FSAL_MAXIOSIZE,
-		.umask = 0,
-		.auth_exportpath_xdev = true,
-		/* @todo Update lease handling to use new interfaces */
-		#if 0
-		/** not working with pNFS */
-		.delegations = FSAL_OPTION_FILE_READ_DELEG,
-		#endif
-		.pnfs_mds = true,
-		.pnfs_ds = true,
-		.fsal_trace = true,
-		.fsal_grace = false,
-		.link_supports_permission_checks = true,
+struct gpfs_fsal_module GPFS = {
+	.module = {
+		.fs_info = {
+			.maxfilesize = INT64_MAX,
+			.maxlink = _POSIX_LINK_MAX,
+			.maxnamelen = 1024,
+			.maxpathlen = 1024,
+			.no_trunc = true,
+			.chown_restricted = false,
+			.case_insensitive = false,
+			.case_preserving = true,
+			.link_support = true,
+			.symlink_support = true,
+			.lock_support = true,
+			.lock_support_async_block = true,
+			.named_attr = true,
+			.unique_handles = true,
+			.acl_support = FSAL_ACLSUPPORT_ALLOW |
+							FSAL_ACLSUPPORT_DENY,
+			.cansettime = true,
+			.homogenous = true,
+			.supported_attrs = GPFS_SUPPORTED_ATTRIBUTES,
+			.maxread = FSAL_MAXIOSIZE,
+			.maxwrite = FSAL_MAXIOSIZE,
+			.umask = 0,
+			.auth_exportpath_xdev = true,
+			/* @todo Update lease handling to use new interfaces */
+			#if 0
+			/** not working with pNFS */
+			.delegations = FSAL_OPTION_FILE_READ_DELEG,
+			#endif
+			.pnfs_mds = true,
+			.pnfs_ds = true,
+			.fsal_trace = true,
+			.fsal_grace = false,
+			.link_supports_permission_checks = true,
+		}
 	}
 };
 
@@ -210,7 +213,7 @@ static fsal_status_t init_config(struct fsal_module *gpfs_fsal_module,
  */
 MODULE_INIT void gpfs_init(void)
 {
-	struct fsal_module *myself = &GPFS;
+	struct fsal_module *myself = &GPFS.module;
 
 	if (register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION, FSAL_ID_GPFS) != 0) {
@@ -228,6 +231,11 @@ MODULE_INIT void gpfs_init(void)
 	myself->m_ops.fsal_extract_stats = fsal_gpfs_extract_stats;
 #endif
 	myself->m_ops.fsal_reset_stats = fsal_gpfs_reset_stats;
+
+	/* Initialize the fsal_obj_handle ops for FSAL GPFS */
+	gpfs_handle_ops_init(&GPFS.handle_ops);
+	gpfs_handle_ops_init(&GPFS.handle_ops_with_pnfs);
+	handle_ops_pnfs(&GPFS.handle_ops_with_pnfs);
 }
 
 /** @fn MODULE_FINI void gpfs_unload(void)
@@ -237,6 +245,6 @@ MODULE_FINI void gpfs_unload(void)
 {
 	release_log_facility(myname);
 
-	if (unregister_fsal(&GPFS) != 0)
+	if (unregister_fsal(&GPFS.module) != 0)
 		fprintf(stderr, "GPFS module failed to unregister");
 }

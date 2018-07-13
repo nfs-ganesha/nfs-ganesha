@@ -138,7 +138,7 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				  plenout, preply);
 
 	/* we don't keep a reference to the entry */
-	pentry_newobj->obj_ops.put_ref(pentry_newobj);
+	pentry_newobj->obj_ops->put_ref(pentry_newobj);
 
 	/* Build the qid */
 	qid_newobj.type = _9P_QTTMP;

@@ -104,12 +104,12 @@ static inline int avl_dirent_sorted_cmpf(const struct avltree_node *lhs,
 	 */
 	subcall(
 		if (lk->chunk != NULL)
-			rc = lk->chunk->parent->sub_handle->obj_ops.dirent_cmp(
+			rc = lk->chunk->parent->sub_handle->obj_ops->dirent_cmp(
 				lk->chunk->parent->sub_handle,
 				lk->name, lk->ck,
 				rk->name, rk->ck);
 		else
-			rc = rk->chunk->parent->sub_handle->obj_ops.dirent_cmp(
+			rc = rk->chunk->parent->sub_handle->obj_ops->dirent_cmp(
 				rk->chunk->parent->sub_handle,
 				lk->name, lk->ck,
 				rk->name, rk->ck)

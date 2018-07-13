@@ -195,10 +195,10 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* return references */
 	if (dir_obj)
-		dir_obj->obj_ops.put_ref(dir_obj);
+		dir_obj->obj_ops->put_ref(dir_obj);
 
 	if (parent_obj)
-		parent_obj->obj_ops.put_ref(parent_obj);
+		parent_obj->obj_ops->put_ref(parent_obj);
 
 	return rc;
 }

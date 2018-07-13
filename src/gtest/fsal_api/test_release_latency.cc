@@ -78,7 +78,7 @@ namespace {
 
 TEST_F(ReleaseEmptyLatencyTest, SIMPLE)
 {
-  test_root->obj_ops.release(test_root);
+  test_root->obj_ops->release(test_root);
 }
 
 TEST_F(ReleaseEmptyLatencyTest, LOOP)
@@ -88,7 +88,7 @@ TEST_F(ReleaseEmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    test_root->obj_ops.release(test_root);
+    test_root->obj_ops->release(test_root);
   }
 
   now(&e_time);

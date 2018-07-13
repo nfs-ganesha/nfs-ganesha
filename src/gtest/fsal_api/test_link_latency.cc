@@ -87,7 +87,7 @@ namespace {
 
       status = fsal_remove(test_root, TEST_FILE);
       EXPECT_EQ(status.major, 0);
-      test_file->obj_ops.put_ref(test_file);
+      test_file->obj_ops->put_ref(test_file);
       test_file = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -118,7 +118,7 @@ namespace {
         ASSERT_NE(obj, nullptr);
 
         fsal_release_attrs(&attrs_out);
-        obj->obj_ops.put_ref(obj);
+        obj->obj_ops->put_ref(obj);
       }
     }
 
@@ -148,14 +148,14 @@ TEST_F(LinkEmptyLatencyTest, SIMPLE)
 
   enableEvents(event_list);
 
-  status = test_file->obj_ops.link(test_file, test_root, TEST_FILE_LINK);
+  status = test_file->obj_ops->link(test_file, test_root, TEST_FILE_LINK);
   EXPECT_EQ(status.major, 0);
-  test_root->obj_ops.lookup(test_root, TEST_FILE_LINK, &link, NULL);
-  test_root->obj_ops.lookup(test_root, TEST_FILE, &lookup, NULL);
+  test_root->obj_ops->lookup(test_root, TEST_FILE_LINK, &link, NULL);
+  test_root->obj_ops->lookup(test_root, TEST_FILE, &lookup, NULL);
   EXPECT_EQ(lookup, link);
 
-  link->obj_ops.put_ref(link);
-  lookup->obj_ops.put_ref(lookup);
+  link->obj_ops->put_ref(link);
+  lookup->obj_ops->put_ref(lookup);
 
   /* Remove link created while running test */
   status = fsal_remove(test_root, TEST_FILE_LINK);
@@ -177,14 +177,14 @@ TEST_F(LinkEmptyLatencyTest, SIMPLE_BYPASS)
   sub_file = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_file, nullptr);
 
-  status = sub_root->obj_ops.link(sub_file, sub_root, TEST_FILE_LINK);
+  status = sub_root->obj_ops->link(sub_file, sub_root, TEST_FILE_LINK);
   EXPECT_EQ(status.major, 0);
-  sub_root->obj_ops.lookup(sub_root, TEST_FILE_LINK, &link, NULL);
-  sub_root->obj_ops.lookup(sub_root, TEST_FILE, &lookup, NULL);
+  sub_root->obj_ops->lookup(sub_root, TEST_FILE_LINK, &link, NULL);
+  sub_root->obj_ops->lookup(sub_root, TEST_FILE, &lookup, NULL);
   EXPECT_EQ(lookup, link);
 
-  link->obj_ops.put_ref(link);
-  lookup->obj_ops.put_ref(lookup);
+  link->obj_ops->put_ref(link);
+  lookup->obj_ops->put_ref(lookup);
 
   /* Remove link created while running test */
   status = fsal_remove(sub_root, TEST_FILE_LINK);
@@ -202,7 +202,7 @@ TEST_F(LinkEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = test_root->obj_ops.link(test_file, test_root, fname);
+    status = test_root->obj_ops->link(test_file, test_root, fname);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -260,7 +260,7 @@ TEST_F(LinkFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = test_root->obj_ops.link(test_file, test_root, fname);
+    status = test_root->obj_ops->link(test_file, test_root, fname);
     ASSERT_EQ(status.major, 0) << " failed to link " << fname;
   }
 
@@ -296,7 +296,7 @@ TEST_F(LinkFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = sub_root->obj_ops.link(sub_file, sub_root, fname);
+    status = sub_root->obj_ops->link(sub_file, sub_root, fname);
     ASSERT_EQ(status.major, 0) << " failed to link " << fname;
   }
 

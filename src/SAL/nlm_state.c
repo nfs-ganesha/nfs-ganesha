@@ -336,14 +336,14 @@ void dec_nlm_state_ref(state_t *state)
 	}
 
 	/* We need to close the state before freeing the state. */
-	(void) obj->obj_ops.close2(obj, state);
+	(void) obj->obj_ops->close2(obj, state);
 
 	state->state_exp->exp_ops.free_state(state->state_exp, state);
 
 	/* Release 2 refs: our sentinal one, plus the one from
 	 * get_state_obj_ref() */
-	obj->obj_ops.put_ref(obj);
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 }
 
 /**
@@ -483,7 +483,7 @@ int get_nlm_state(enum state_type state_type,
 	buffval.addr = state;
 	buffval.len = sizeof(*state);
 
-	state_obj->obj_ops.get_ref(state_obj);
+	state_obj->obj_ops->get_ref(state_obj);
 
 	rc = hashtable_setlatched(ht_nlm_states, &buffval, &buffval, &latch,
 				  false, NULL, NULL);
@@ -501,7 +501,7 @@ int get_nlm_state(enum state_type state_type,
 		 * No need to close here, the state was never opened.
 		 */
 		state->state_exp->exp_ops.free_state(state->state_exp, state);
-		state_obj->obj_ops.put_ref(state_obj);
+		state_obj->obj_ops->put_ref(state_obj);
 
 		*pstate = NULL;
 

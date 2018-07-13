@@ -219,6 +219,9 @@ MODULE_INIT void xfs_init(void)
 	}
 	myself->m_ops.create_export = vfs_create_export;
 	myself->m_ops.init_config = init_config;
+
+	/* Initialize the fsal_obj_handle ops for FSAL XFS */
+	vfs_handle_ops_init(&XFS.handle_ops);
 }
 
 MODULE_FINI void xfs_unload(void)
