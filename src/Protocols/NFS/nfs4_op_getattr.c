@@ -64,7 +64,7 @@ static inline bool check_fs_locations(struct fsal_obj_handle *obj)
 	   path and update its length, can not be bigger than MAXPATHLEN
 	   server and update its length, can not be bigger than MAXHOSTNAMELEN
 	*/
-	st = obj->obj_ops.fs_locations(obj, &fs_locs);
+	st = obj->obj_ops->fs_locations(obj, &fs_locs);
 
 	nfs4_pathname4_free(&fs_locs.fs_root);
 	nfs4_pathname4_free(&fs_loc.rootpath);

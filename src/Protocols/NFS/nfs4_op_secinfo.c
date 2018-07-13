@@ -172,7 +172,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 			 secinfo_fh_name);
 
 		/* Swap in the obj on the other side of the junction. */
-		obj_src->obj_ops.put_ref(obj_src);
+		obj_src->obj_ops->put_ref(obj_src);
 
 		obj_src = obj;
 	} else {
@@ -288,7 +288,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (obj_src)
-		obj_src->obj_ops.put_ref(obj_src);
+		obj_src->obj_ops->put_ref(obj_src);
 
 	if (secinfo_fh_name)
 		gsh_free(secinfo_fh_name);

@@ -368,7 +368,7 @@ void state_export_unshare_all(void)
 
 		/* Release references taken above. Should free the state_t. */
 		dec_state_owner_ref(owner);
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 		dec_state_t_ref(state);
 
 		if (!state_unlock_err_ok(status)) {

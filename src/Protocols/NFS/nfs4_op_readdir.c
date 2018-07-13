@@ -344,7 +344,7 @@ not_junction:
 		access_mask_attr |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
 
 	/* Attrs were refreshed before call */
-	fsal_status = obj->obj_ops.test_access(obj, access_mask_attr, NULL,
+	fsal_status = obj->obj_ops->test_access(obj, access_mask_attr, NULL,
 					       NULL, false);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_NFS_READDIR,
@@ -565,7 +565,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 		fsal_prepare_attrs(&attrs, ATTR_CHGTIME);
 
 		fsal_status =
-			data->current_obj->obj_ops.getattrs(data->current_obj,
+			data->current_obj->obj_ops->getattrs(data->current_obj,
 							    &attrs);
 
 		if (FSAL_IS_ERROR(fsal_status)) {

@@ -1128,8 +1128,8 @@ static bool handle_cmp(struct fsal_obj_handle *obj_hdl1,
 	if (obj_hdl1 == obj_hdl2)
 		return true;
 
-	obj_hdl1->obj_ops.handle_to_key(obj_hdl1, &key1);
-	obj_hdl2->obj_ops.handle_to_key(obj_hdl2, &key2);
+	obj_hdl1->obj_ops->handle_to_key(obj_hdl1, &key1);
+	obj_hdl2->obj_ops->handle_to_key(obj_hdl2, &key2);
 	if (key1.len != key2.len)
 		return false;
 	return !memcmp(key1.addr, key2.addr, key1.len);
@@ -1250,7 +1250,7 @@ static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 
 	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
 
-	if (FSAL_IS_ERROR(obj_hdl->obj_ops.getattrs(obj_hdl, &attrs)))
+	if (FSAL_IS_ERROR(obj_hdl->obj_ops->getattrs(obj_hdl, &attrs)))
 		return false;
 
 	result = check_verifier_attrlist(&attrs, verifier);

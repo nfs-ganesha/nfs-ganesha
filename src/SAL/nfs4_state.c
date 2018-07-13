@@ -204,7 +204,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 	glist_add_tail(&ostate->file.list_of_states, &pnew_state->state_list);
 	/* Get ref for this state entry */
-	obj->obj_ops.get_ref(obj);
+	obj->obj_ops->get_ref(obj);
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 
 #ifdef USE_LTTNG
@@ -256,7 +256,7 @@ errout:
 		/* Make sure the new state is closed (may have been passed in
 		 * with file open).
 		 */
-		(void) obj->obj_ops.close2(obj, pnew_state);
+		(void) obj->obj_ops->close2(obj, pnew_state);
 
 		pnew_state->state_exp->exp_ops.free_state(pnew_state->state_exp,
 							  pnew_state);
@@ -386,7 +386,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	PTHREAD_MUTEX_lock(&state->state_mutex);
 	glist_del(&state->state_list);
 	/* Put ref for this state entry */
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 	state->state_obj = NULL;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
@@ -395,7 +395,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	 * is the last point we have a valid reference to the object
 	 * handle.
 	 */
-	(void) obj->obj_ops.close2(obj, state);
+	(void) obj->obj_ops->close2(obj, state);
 
 	if (owner != NULL) {
 		bool owner_retain = false;
@@ -498,7 +498,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	/* Remove the sentinel reference */
 	dec_state_t_ref(state);
 
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 	/* Can cleanup now */
 	obj->state_hdl->no_cleanup = false;
 }
@@ -525,7 +525,7 @@ void state_del(state_t *state)
 
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 }
 
 /**
@@ -825,7 +825,7 @@ void release_openstate(state_owner_t *owner)
 		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 		/* Release refs we held during state_del */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 		put_gsh_export(op_ctx->ctx_export);
 		op_ctx->ctx_export = NULL;
 		op_ctx->fsal_export = NULL;
@@ -918,7 +918,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		state_deleg_revoke(obj, state);
 
 		/* Release refs we held */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 		put_gsh_export(op_ctx->ctx_export);
 		op_ctx->ctx_export = NULL;
 		op_ctx->fsal_export = NULL;
@@ -1031,7 +1031,7 @@ void state_export_release_nfs4_state(void)
 		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 		/* Release the references taken above */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 		dec_state_owner_ref(owner);
 		dec_state_t_ref(state);
 		if (errcnt < STATE_ERR_MAX) {
@@ -1093,7 +1093,7 @@ void state_export_release_nfs4_state(void)
 		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 		/* Release the references taken above */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 		dec_state_owner_ref(owner);
 		dec_state_t_ref(state);
 	}

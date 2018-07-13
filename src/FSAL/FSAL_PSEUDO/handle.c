@@ -266,7 +266,7 @@ static struct pseudo_fsal_obj_handle
 	hdl->attributes.supported = PSEUDO_SUPPORTED_ATTRS;
 
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY);
-	pseudofs_handle_ops_init(&hdl->obj_handle.obj_ops);
+	hdl->obj_handle.obj_ops = &PSEUDOFS.handle_ops;
 
 	avltree_init(&hdl->avl_name, pseudofs_n_cmpf, 0 /* flags */);
 	avltree_init(&hdl->avl_index, pseudofs_i_cmpf, 0 /* flags */);
@@ -396,7 +396,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 	*handle = NULL;		/* poison it */
 
-	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
+	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -679,6 +679,8 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
 {
+	fsal_default_obj_ops_init(ops);
+
 	ops->release = release;
 	ops->lookup = lookup;
 	ops->readdir = read_dirents;

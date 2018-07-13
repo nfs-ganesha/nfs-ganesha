@@ -1316,7 +1316,7 @@ void state_wipe_file(struct fsal_obj_handle *obj)
 
 	if (release) {
 		/* Drop the ref for the lock_list */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 	}
 }
 

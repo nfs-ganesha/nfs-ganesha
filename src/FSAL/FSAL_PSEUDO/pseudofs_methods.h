@@ -36,6 +36,14 @@
 
 struct pseudo_fsal_obj_handle;
 
+struct pseudo_fsal_module {
+	struct fsal_module module;
+	struct fsal_obj_ops handle_ops;
+	struct fsal_staticfsinfo_t fs_info;
+};
+
+extern struct pseudo_fsal_module PSEUDOFS;
+
 /*
  * PSEUDOFS internal export
  */

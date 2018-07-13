@@ -172,6 +172,8 @@ struct mem_fsal_module {
 	struct fsal_module fsal;
 	/** Our FS INFO */
 	struct fsal_staticfsinfo_t fs_info;
+	/** fsal_obj_handle ops vector */
+	struct fsal_obj_ops handle_ops;
 	/** List of MEM exports. TODO Locking when we care */
 	struct glist_head mem_exports;
 	/** Config - size of data in inode */

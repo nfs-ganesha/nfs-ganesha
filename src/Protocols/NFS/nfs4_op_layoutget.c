@@ -289,7 +289,7 @@ static nfsstat4 one_segment(struct fsal_obj_handle *obj,
 
 	++layout_state->state_data.layout.granting;
 
-	nfs_status = obj->obj_ops.layoutget(obj, op_ctx, &loc_body, arg, res);
+	nfs_status = obj->obj_ops->layoutget(obj, op_ctx, &loc_body, arg, res);
 
 	--layout_state->state_data.layout.granting;
 

@@ -132,7 +132,7 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				  preply);
 	}
 
-	pentry_symlink->obj_ops.put_ref(pentry_symlink);
+	pentry_symlink->obj_ops->put_ref(pentry_symlink);
 
 	/* Build the qid */
 	qid_symlink.type = _9P_QTSYMLINK;

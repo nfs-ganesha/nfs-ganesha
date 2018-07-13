@@ -92,7 +92,7 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	status = obj->obj_ops.getattrs(obj, &attrs);
+	status = obj->obj_ops->getattrs(obj, &attrs);
 
 	if (FSAL_IS_ERROR(status)) {
 		res->res_getattr3.status = nfs3_Errno_status(status);
@@ -120,7 +120,7 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* return references */
 	if (obj)
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 	return rc;
 

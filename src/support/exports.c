@@ -2161,7 +2161,7 @@ fsal_status_t nfs_export_get_root_entry(struct gsh_export *export,
 	PTHREAD_RWLOCK_rdlock(&export->lock);
 
 	if (export->exp_root_obj)
-		export->exp_root_obj->obj_ops.get_ref(export->exp_root_obj);
+		export->exp_root_obj->obj_ops->get_ref(export->exp_root_obj);
 
 	PTHREAD_RWLOCK_unlock(&export->lock);
 
@@ -2343,7 +2343,7 @@ static void release_export(struct gsh_export *export)
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	glist_del(&export->exp_root_list);
-	export->exp_root_obj->obj_ops.put_ref(export->exp_root_obj);
+	export->exp_root_obj->obj_ops->put_ref(export->exp_root_obj);
 	export->exp_root_obj = NULL;
 
 	(void) atomic_dec_int32_t(&obj->state_hdl->dir.exp_root_refcount);
@@ -2372,7 +2372,7 @@ static void release_export(struct gsh_export *export)
 	remove_gsh_export(export->export_id);
 
 	/* Release ref taken above */
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 }
 
 void unexport(struct gsh_export *export)

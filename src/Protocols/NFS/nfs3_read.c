@@ -133,7 +133,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	nfs_SetPreOpAttr(obj, &pre_attr);
 
 	fsal_status =
-	    obj->obj_ops.test_access(obj, FSAL_READ_ACCESS, NULL, NULL, true);
+	    obj->obj_ops->test_access(obj, FSAL_READ_ACCESS, NULL, NULL, true);
 
 	if (fsal_status.major == ERR_FSAL_ACCESS) {
 		/* Test for execute permission */
@@ -246,7 +246,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  out:
 	/* return references */
 	if (obj)
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 	server_stats_io_done(size, read_size,
 			     (rc == NFS_REQ_OK) ? true : false,

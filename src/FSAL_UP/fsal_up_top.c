@@ -148,7 +148,7 @@ static state_status_t lock_grant(const struct fsal_up_vector *vec,
 		return STATE_NOT_FOUND;
 
 	grant_blocked_lock_upcall(obj, owner, lock_param);
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 	return STATE_SUCCESS;
 }
 
@@ -176,7 +176,7 @@ static state_status_t lock_avail(const struct fsal_up_vector *vec,
 		return STATE_NOT_FOUND;
 
 	available_blocked_lock_upcall(obj, owner, lock_param);
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 	return STATE_SUCCESS;
 }
 
@@ -488,7 +488,7 @@ state_status_t layoutrecall(const struct fsal_up_vector *vec,
 
 	/* Free the recall list resources */
 	destroy_recall(recall);
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 
 	return rc;
 }
@@ -657,7 +657,7 @@ out:
 		put_gsh_export(export);
 
 		/* Release object ref */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 		/* Release the owner */
 		dec_state_owner_ref(owner);
@@ -723,7 +723,7 @@ static void return_one_async(void *arg)
 		put_gsh_export(export);
 
 		/* Release object ref */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 		/* Release the owner */
 		dec_state_owner_ref(owner);
@@ -836,7 +836,7 @@ static void layoutrecall_one_call(void *arg)
 		put_gsh_export(export);
 
 		/* Release object ref */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 		/* Release the owner */
 		dec_state_owner_ref(owner);
@@ -1219,7 +1219,7 @@ out_free:
 
 	/* Release the obj ref and export ref. */
 	if (obj != NULL)
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 	if (export != NULL)
 		put_gsh_export(export);
@@ -1401,7 +1401,7 @@ static void delegrevoke_check(void *ctx)
 
 	/* Release the obj ref and export ref. */
 	if (obj != NULL)
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 	if (export != NULL)
 		put_gsh_export(export);
@@ -1442,7 +1442,7 @@ static void delegrecall_task(void *ctx)
 		delegrecall_one(obj, state, deleg_ctx);
 
 		/* Release the obj ref and export ref. */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 		put_gsh_export(export);
 
 		op_ctx = save_ctx;
@@ -1603,7 +1603,7 @@ state_status_t delegrecall(const struct fsal_up_vector *vec,
 	}
 
 	rc = delegrecall_impl(obj);
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 	return rc;
 }
 

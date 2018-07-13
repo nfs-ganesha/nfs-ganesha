@@ -871,7 +871,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 				 */
 				if (createmode >= FSAL_EXCLUSIVE &&
 					createmode != FSAL_EXCLUSIVE_9P &&
-					!obj_hdl->obj_ops.check_verifier(
+					!obj_hdl->obj_ops->check_verifier(
 						obj_hdl, verifier)) {
 					/* Verifier didn't match */
 					status =
@@ -943,7 +943,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		struct fsal_obj_handle *temp = NULL;
 
 		/* We don't have open by name... */
-		status = obj_hdl->obj_ops.lookup(obj_hdl, name, &temp, NULL);
+		status = obj_hdl->obj_ops->lookup(obj_hdl, name, &temp, NULL);
 
 		if (FSAL_IS_ERROR(status)) {
 			LogFullDebug(COMPONENT_FSAL,
@@ -953,7 +953,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		}
 
 		/* Now call ourselves without name and attributes to open. */
-		status = obj_hdl->obj_ops.open2(temp, state, openflags,
+		status = obj_hdl->obj_ops->open2(temp, state, openflags,
 						FSAL_NO_CREATE, NULL, NULL,
 						verifier, new_obj,
 						attrs_out,
@@ -961,7 +961,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the object we found by lookup. */
-			temp->obj_ops.release(temp);
+			temp->obj_ops->release(temp);
 			LogFullDebug(COMPONENT_FSAL,
 				     "open returned %s",
 				     fsal_err_txt(status));
@@ -1078,7 +1078,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		 * Note that we only set the attributes if we were responsible
 		 * for creating the file.
 		 */
-		status = (*new_obj)->obj_ops.setattr2(*new_obj,
+		status = (*new_obj)->obj_ops->setattr2(*new_obj,
 						      false,
 						      state,
 						      attrib_set);
@@ -1087,7 +1087,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			goto fileerr;
 
 		if (attrs_out != NULL) {
-			status = (*new_obj)->obj_ops.getattrs(*new_obj,
+			status = (*new_obj)->obj_ops->getattrs(*new_obj,
 							      attrs_out);
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
@@ -1136,7 +1136,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* Release the handle we just allocated. */
-	(*new_obj)->obj_ops.release(*new_obj);
+	(*new_obj)->obj_ops->release(*new_obj);
 	*new_obj = NULL;
 
 	return status;
@@ -1607,6 +1607,8 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 void handle_ops_init(struct fsal_obj_ops *ops)
 {
+	fsal_default_obj_ops_init(ops);
+
 	ops->release = release;
 	ops->merge = rgw_merge;
 	ops->lookup = lookup;

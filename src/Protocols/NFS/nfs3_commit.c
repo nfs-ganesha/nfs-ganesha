@@ -116,7 +116,7 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  out:
 
 	if (obj)
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 	return rc;
 }				/* nfs3_commit */

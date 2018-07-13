@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -81,7 +81,7 @@ fsal_status_t mdcache_seek(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.seek(entry->sub_handle,
+		status = entry->sub_handle->obj_ops->seek(entry->sub_handle,
 							 info)
 	       );
 
@@ -106,7 +106,7 @@ fsal_status_t mdcache_io_advise(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.io_advise(
+		status = entry->sub_handle->obj_ops->io_advise(
 				entry->sub_handle, hints)
 	       );
 
@@ -127,7 +127,7 @@ fsal_status_t mdcache_close(struct fsal_obj_handle *obj_hdl)
 
 	/* XXX dang caching FDs?  How does it interact with multi-FD */
 	subcall(
-		status = entry->sub_handle->obj_ops.close(entry->sub_handle)
+		status = entry->sub_handle->obj_ops->close(entry->sub_handle)
 	       );
 
 	return status;
@@ -184,7 +184,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 	} /* else UNGUARDED, go ahead and open the file. */
 
 	subcall(
-		status = entry->sub_handle->obj_ops.open2(
+		status = entry->sub_handle->obj_ops->open2(
 			entry->sub_handle, state, openflags, createmode,
 			NULL, attrib_set, verifier, &sub_handle,
 			attrs_out, caller_perm_check)
@@ -231,7 +231,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 		} else if (attrs_out->request_mask & ATTR_RDATTR_ERR) {
 			/* We didn't get attributes from open2, but the caller
 			 * wants them.  Try a full getattrs() */
-			status = entry->obj_handle.obj_ops.getattrs(
+			status = entry->obj_handle.obj_ops->getattrs(
 					    &entry->obj_handle, attrs_out);
 			if (FSAL_IS_ERROR(status)) {
 				LogFullDebug(COMPONENT_CACHE_INODE,
@@ -377,7 +377,7 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 				& ~ATTR_ACL) | ATTR_RDATTR_ERR);
 
 	subcall(
-		status = mdc_parent->sub_handle->obj_ops.open2(
+		status = mdc_parent->sub_handle->obj_ops->open2(
 			mdc_parent->sub_handle, state, openflags, createmode,
 			name, attrs_in, verifier, &sub_handle, &attrs,
 			caller_perm_check)
@@ -460,7 +460,7 @@ bool mdcache_check_verifier(struct fsal_obj_handle *obj_hdl,
 
 	/* XXX dang caching FDs?  How does it interact with multi-FD */
 	subcall(
-		result = entry->sub_handle->obj_ops.check_verifier(
+		result = entry->sub_handle->obj_ops->check_verifier(
 				entry->sub_handle, verifier)
 	       );
 
@@ -484,7 +484,7 @@ fsal_openflags_t mdcache_status2(struct fsal_obj_handle *obj_hdl,
 	fsal_openflags_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.status2(
+		status = entry->sub_handle->obj_ops->status2(
 			entry->sub_handle, state)
 	       );
 
@@ -512,7 +512,7 @@ fsal_status_t mdcache_reopen2(struct fsal_obj_handle *obj_hdl,
 	bool truncated = openflags & FSAL_O_TRUNC;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.reopen2(
+		status = entry->sub_handle->obj_ops->reopen2(
 			entry->sub_handle, state, openflags)
 	       );
 
@@ -558,7 +558,7 @@ fsal_status_t mdcache_read2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.read2(
+		status = entry->sub_handle->obj_ops->read2(
 			entry->sub_handle, bypass, state, offset, buf_size,
 			buffer, read_amount, eof, info)
 	       );
@@ -602,7 +602,7 @@ fsal_status_t mdcache_write2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.write2(
+		status = entry->sub_handle->obj_ops->write2(
 			entry->sub_handle, bypass, state, offset, buf_size,
 			buffer, write_amount, fsal_stable, info)
 	       );
@@ -635,7 +635,7 @@ fsal_status_t mdcache_seek2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.seek2(
+		status = entry->sub_handle->obj_ops->seek2(
 			entry->sub_handle, state, info)
 	       );
 
@@ -664,7 +664,7 @@ fsal_status_t mdcache_io_advise2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.io_advise2(
+		status = entry->sub_handle->obj_ops->io_advise2(
 			entry->sub_handle, state, hints)
 	       );
 
@@ -692,7 +692,7 @@ fsal_status_t mdcache_commit2(struct fsal_obj_handle *obj_hdl, off_t offset,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.commit2(
+		status = entry->sub_handle->obj_ops->commit2(
 			entry->sub_handle, offset, len)
 	       );
 
@@ -730,7 +730,7 @@ fsal_status_t mdcache_lock_op2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.lock_op2(
+		status = entry->sub_handle->obj_ops->lock_op2(
 			entry->sub_handle, state, p_owner, lock_op, req_lock,
 			conflicting_lock)
 	       );
@@ -759,7 +759,7 @@ fsal_status_t mdcache_lease_op2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.lease_op2(
+		status = entry->sub_handle->obj_ops->lease_op2(
 			entry->sub_handle, state, p_owner, deleg);
 	       );
 
@@ -781,7 +781,7 @@ fsal_status_t mdcache_close2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status;
 
 	subcall(
-		status = entry->sub_handle->obj_ops.close2(
+		status = entry->sub_handle->obj_ops->close2(
 			  entry->sub_handle, state)
 	       );
 

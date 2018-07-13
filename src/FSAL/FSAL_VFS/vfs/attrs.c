@@ -81,7 +81,7 @@ static struct vfs_acl_entry *vfs_acl_locate(struct fsal_obj_handle *obj)
 	struct avltree_node *node;
 	struct gsh_buffdesc key;
 
-	obj->obj_ops.handle_to_key(obj, &key);
+	obj->obj_ops->handle_to_key(obj, &key);
 
 	fa_entry = vfs_acl_lookup(&key);
 	if (fa_entry) {

@@ -36,15 +36,6 @@
 
 static const char myname[] = "GPFS";
 
-/** @struct gpfs_fsal_module
- *  @brief GPFS FSAL module private storage
- */
-struct gpfs_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-	/** gpfsfs_specific_initinfo_t specific_info;  placeholder */
-};
-
 /** @struct default_gpfs_info
  *  @brief filesystem info for GPFS
  */
@@ -131,7 +122,7 @@ static struct config_block gpfs_param = {
 /** @struct GPFS
  *  @brief my module private storage
  */
-static struct gpfs_fsal_module GPFS;
+struct gpfs_fsal_module GPFS;
 
 
 /** @fn struct fsal_staticfsinfo_t *gpfs_staticinfo(struct fsal_module *hdl)
@@ -141,7 +132,7 @@ static struct gpfs_fsal_module GPFS;
 struct fsal_staticfsinfo_t *gpfs_staticinfo(struct fsal_module *hdl)
 {
 	struct gpfs_fsal_module *gpfs_me =
-		container_of(hdl, struct gpfs_fsal_module, fsal);
+		container_of(hdl, struct gpfs_fsal_module, module);
 
 	return &gpfs_me->fs_info;
 }
@@ -176,7 +167,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 				 struct config_error_type *err_type)
 {
 	struct gpfs_fsal_module *gpfs_me =
-	    container_of(fsal_hdl, struct gpfs_fsal_module, fsal);
+	    container_of(fsal_hdl, struct gpfs_fsal_module, module);
 	int rc;
 
 	(void) prepare_for_stats(fsal_hdl);
@@ -236,7 +227,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
  */
 MODULE_INIT void gpfs_init(void)
 {
-	struct fsal_module *myself = &GPFS.fsal;
+	struct fsal_module *myself = &GPFS.module;
 
 	if (register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION, FSAL_ID_GPFS) != 0) {
@@ -254,6 +245,11 @@ MODULE_INIT void gpfs_init(void)
 	myself->m_ops.fsal_extract_stats = fsal_gpfs_extract_stats;
 #endif
 	myself->m_ops.fsal_reset_stats = fsal_gpfs_reset_stats;
+
+	/* Initialize the fsal_obj_handle ops for FSAL GPFS */
+	gpfs_handle_ops_init(&GPFS.handle_ops);
+	gpfs_handle_ops_init(&GPFS.handle_ops_with_pnfs);
+	handle_ops_pnfs(&GPFS.handle_ops_with_pnfs);
 }
 
 /** @fn MODULE_FINI void gpfs_unload(void)
@@ -263,6 +259,6 @@ MODULE_FINI void gpfs_unload(void)
 {
 	release_log_facility(myname);
 
-	if (unregister_fsal(&GPFS.fsal) != 0)
+	if (unregister_fsal(&GPFS.module) != 0)
 		fprintf(stderr, "GPFS module failed to unregister");
 }

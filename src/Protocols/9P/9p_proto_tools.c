@@ -327,7 +327,7 @@ void free_fid(struct _9p_fid *pfid)
 		if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
 			/* We need to close the state before freeing the state.
 			 */
-			(void) pfid->pentry->obj_ops.close2(
+			(void) pfid->pentry->obj_ops->close2(
 						pfid->pentry,
 						pfid->state);
 		}
@@ -337,10 +337,10 @@ void free_fid(struct _9p_fid *pfid)
 	}
 
 	if (pfid->pentry != NULL)
-		pfid->pentry->obj_ops.put_ref(pfid->pentry);
+		pfid->pentry->obj_ops->put_ref(pfid->pentry);
 
 	if (pfid->ppentry != NULL)
-		pfid->ppentry->obj_ops.put_ref(pfid->ppentry);
+		pfid->ppentry->obj_ops->put_ref(pfid->ppentry);
 
 	if (pfid->export != NULL)
 		put_gsh_export(pfid->export);
@@ -379,7 +379,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 		}
 
 		fsal_status =
-		    pfid->pentry->obj_ops.setextattr_value(
+		    pfid->pentry->obj_ops->setextattr_value(
 				pfid->pentry,
 				pfid->xattr->xattr_name,
 				pfid->xattr->xattr_content,
@@ -400,7 +400,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 			 object_file_type_to_str(pfid->pentry->type),
 			 pfid->pentry);
 
-		fsal_status = pfid->pentry->obj_ops.close2(pfid->pentry,
+		fsal_status = pfid->pentry->obj_ops->close2(pfid->pentry,
 							   pfid->state);
 
 		if (FSAL_IS_ERROR(fsal_status)) {

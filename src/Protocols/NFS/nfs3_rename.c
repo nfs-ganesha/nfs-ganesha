@@ -187,10 +187,10 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out:
 	if (parent_obj)
-		parent_obj->obj_ops.put_ref(parent_obj);
+		parent_obj->obj_ops->put_ref(parent_obj);
 
 	if (new_parent_obj)
-		new_parent_obj->obj_ops.put_ref(new_parent_obj);
+		new_parent_obj->obj_ops->put_ref(new_parent_obj);
 
 	return rc;
 }

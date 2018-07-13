@@ -116,7 +116,7 @@ namespace {
     }
 
     virtual void TearDown() {
-      root_entry->obj_ops.put_ref(root_entry);
+      root_entry->obj_ops->put_ref(root_entry);
       root_entry = NULL;
 
       put_gsh_export(a_export);
@@ -153,7 +153,7 @@ namespace {
         ASSERT_NE(obj, nullptr);
 
 	fsal_release_attrs(&attrs_out);
-        obj->obj_ops.put_ref(obj);
+        obj->obj_ops->put_ref(obj);
       }
     }
 
@@ -181,13 +181,13 @@ TEST_F(MkdirEmptyLatencyTest, SIMPLE)
   struct fsal_obj_handle *mkdir;
   struct fsal_obj_handle *lookup;
 
-  status = root_entry->obj_ops.mkdir(root_entry, TEST_ROOT, &attrs, &mkdir, NULL);
+  status = root_entry->obj_ops->mkdir(root_entry, TEST_ROOT, &attrs, &mkdir, NULL);
   EXPECT_EQ(status.major, 0);
-  root_entry->obj_ops.lookup(root_entry, TEST_ROOT, &lookup, NULL);
+  root_entry->obj_ops->lookup(root_entry, TEST_ROOT, &lookup, NULL);
   EXPECT_EQ(lookup, mkdir);
 
-  mkdir->obj_ops.put_ref(mkdir);
-  lookup->obj_ops.put_ref(lookup);
+  mkdir->obj_ops->put_ref(mkdir);
+  lookup->obj_ops->put_ref(lookup);
 
   /* Remove directory created while running test */
   status = fsal_remove(root_entry, TEST_ROOT);
@@ -207,14 +207,14 @@ TEST_F(MkdirEmptyLatencyTest, SIMPLE_BYPASS)
   status = nfs_export_get_root_entry(a_export, &sub_hdl);
   ASSERT_EQ(status.major, 0);
 
-  status = sub_hdl->obj_ops.mkdir(sub_hdl, TEST_ROOT, &attrs, &mkdir, NULL);
+  status = sub_hdl->obj_ops->mkdir(sub_hdl, TEST_ROOT, &attrs, &mkdir, NULL);
 
   EXPECT_EQ(status.major, 0);
-  root_entry->obj_ops.lookup(root_entry, TEST_ROOT, &lookup, NULL);
+  root_entry->obj_ops->lookup(root_entry, TEST_ROOT, &lookup, NULL);
   EXPECT_EQ(lookup, mkdir);
 
-  mkdir->obj_ops.put_ref(mkdir);
-  lookup->obj_ops.put_ref(lookup);
+  mkdir->obj_ops->put_ref(mkdir);
+  lookup->obj_ops->put_ref(lookup);
 
   /* Remove directory created while running test */
   status = fsal_remove(root_entry, TEST_ROOT);
@@ -233,9 +233,9 @@ TEST_F(MkdirEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = root_entry->obj_ops.mkdir(root_entry, fname, &attrs, &obj, NULL);
+    status = root_entry->obj_ops->mkdir(root_entry, fname, &attrs, &obj, NULL);
     EXPECT_EQ(status.major, 0);
-    obj->obj_ops.put_ref(obj);
+    obj->obj_ops->put_ref(obj);
   }
 
   now(&e_time);
@@ -266,7 +266,7 @@ TEST_F(MkdirEmptyLatencyTest, FSALCREATE)
 
     status = fsal_create(root_entry, fname, DIRECTORY, &attrs, NULL, &obj, NULL);
     EXPECT_EQ(status.major, 0);
-    obj->obj_ops.put_ref(obj);
+    obj->obj_ops->put_ref(obj);
   }
 
   now(&e_time);
@@ -295,9 +295,9 @@ TEST_F(MkdirFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = root_entry->obj_ops.mkdir(root_entry, fname, &attrs, &obj, NULL);
+    status = root_entry->obj_ops->mkdir(root_entry, fname, &attrs, &obj, NULL);
     ASSERT_EQ(status.major, 0) << " failed to mkdir " << fname;
-    obj->obj_ops.put_ref(obj);
+    obj->obj_ops->put_ref(obj);
   }
 
   now(&e_time);
@@ -333,9 +333,9 @@ TEST_F(MkdirFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = sub_hdl->obj_ops.mkdir(sub_hdl, fname, &attrs, &obj, NULL);
+    status = sub_hdl->obj_ops->mkdir(sub_hdl, fname, &attrs, &obj, NULL);
     ASSERT_EQ(status.major, 0) << " failed to mkdir " << fname;
-    obj->obj_ops.put_ref(obj);
+    obj->obj_ops->put_ref(obj);
   }
 
   now(&e_time);

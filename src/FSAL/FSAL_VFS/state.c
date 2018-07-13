@@ -98,7 +98,7 @@ struct state_hdl *vfs_state_locate(struct fsal_obj_handle *obj)
 	struct avltree_node *node;
 	struct gsh_buffdesc key;
 
-	obj->obj_ops.handle_to_key(obj, &key);
+	obj->obj_ops->handle_to_key(obj, &key);
 
 	fs_entry = vfs_state_lookup(&key);
 	if (fs_entry) {

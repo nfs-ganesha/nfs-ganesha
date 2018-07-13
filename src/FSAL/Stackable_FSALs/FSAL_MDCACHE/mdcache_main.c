@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -53,19 +53,13 @@ pool_t *mdcache_entry_pool;
 /* MDCACHE FSAL module private storage
  */
 
-struct mdcache_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-	/* mdcachefs_specific_initinfo_t specific_info;  placeholder */
-};
-
 struct mdcache_stats cache_st;
 struct mdcache_stats *cache_stp = &cache_st;
 
 /* my module private storage
  */
 
-static struct mdcache_fsal_module MDCACHE;
+struct mdcache_fsal_module MDCACHE;
 
 /* FSAL name determines name of shared library: libfsal<name>.so */
 const char mdcachename[] = "MDCACHE";
@@ -106,7 +100,7 @@ struct fsal_staticfsinfo_t *mdcache_staticinfo(struct fsal_module *hdl)
 {
 	struct mdcache_fsal_module *myself;
 
-	myself = container_of(hdl, struct mdcache_fsal_module, fsal);
+	myself = container_of(hdl, struct mdcache_fsal_module, module);
 	return &myself->fs_info;
 }
 
@@ -123,7 +117,7 @@ mdcache_fsal_init_config(struct fsal_module *fsal_hdl,
 			 struct config_error_type *err_type)
 {
 	struct mdcache_fsal_module *mdcache_me =
-	    container_of(fsal_hdl, struct mdcache_fsal_module, fsal);
+	    container_of(fsal_hdl, struct mdcache_fsal_module, module);
 
 	/* get a copy of the defaults */
 	mdcache_me->fs_info = default_posix_info;
@@ -222,7 +216,7 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	myself->up_ops.up_gsh_export = op_ctx->ctx_export;
 	myself->up_ops.up_fsal_export = &myself->mfe_exp;
 	myself->mfe_exp.up_ops = &myself->up_ops;
-	myself->mfe_exp.fsal = &MDCACHE.fsal;
+	myself->mfe_exp.fsal = &MDCACHE.module;
 
 	glist_init(&myself->entry_list);
 	pthread_rwlockattr_init(&attrs);
@@ -258,7 +252,7 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 
 	/* Set up op_ctx */
 	op_ctx->fsal_export = &myself->mfe_exp;
-	op_ctx->fsal_module = &MDCACHE.fsal;
+	op_ctx->fsal_module = &MDCACHE.module;
 
 	/* Stacking is setup and ready to take upcalls now */
 	up_ready_set(&myself->up_ops);
@@ -292,7 +286,7 @@ mdcache_fsal_unload(struct fsal_module *fsal_hdl)
 	pool_destroy(mdcache_entry_pool);
 	mdcache_entry_pool = NULL;
 
-	retval = unregister_fsal(&MDCACHE.fsal);
+	retval = unregister_fsal(&MDCACHE.module);
 	if (retval != 0)
 		fprintf(stderr, "MDCACHE module failed to unregister");
 
@@ -304,7 +298,7 @@ mdcache_fsal_unload(struct fsal_module *fsal_hdl)
 void mdcache_fsal_init(void)
 {
 	int retval;
-	struct fsal_module *myself = &MDCACHE.fsal;
+	struct fsal_module *myself = &MDCACHE.module;
 
 	retval = register_fsal(myself, mdcachename, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);
@@ -315,6 +309,9 @@ void mdcache_fsal_init(void)
 	/*myself->m_ops.create_export = mdcache_fsal_create_export;*/
 	myself->m_ops.init_config = mdcache_fsal_init_config;
 	myself->m_ops.unload = mdcache_fsal_unload;
+
+	/* Initialize the fsal_obj_handle ops for FSAL MDCACHE */
+	mdcache_handle_ops_init(&MDCACHE.handle_ops);
 }
 
 /**

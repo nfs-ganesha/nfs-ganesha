@@ -140,7 +140,7 @@ bool nfs4_FSALToFhandle(bool allocate,
 	fh_desc.addr = &file_handle->fsopaque;
 	fh_desc.len = fh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
 
-	if (FSAL_IS_ERROR(fsalhandle->obj_ops.handle_to_wire(fsalhandle,
+	if (FSAL_IS_ERROR(fsalhandle->obj_ops->handle_to_wire(fsalhandle,
 							    FSAL_DIGEST_NFSV4,
 							    &fh_desc))) {
 		LogDebug(COMPONENT_FILEHANDLE,
@@ -204,7 +204,7 @@ bool nfs3_FSALToFhandle(bool allocate,
 	fh_desc.addr = &file_handle->fsopaque;
 	fh_desc.len = NFS3_FHSIZE - offsetof(file_handle_v3_t, fsopaque);
 
-	if (FSAL_IS_ERROR(fsalhandle->obj_ops.handle_to_wire(fsalhandle,
+	if (FSAL_IS_ERROR(fsalhandle->obj_ops->handle_to_wire(fsalhandle,
 							    FSAL_DIGEST_NFSV3,
 							    &fh_desc))) {
 		LogDebug(COMPONENT_FILEHANDLE,

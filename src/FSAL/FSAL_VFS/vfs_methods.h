@@ -37,6 +37,15 @@ struct vfs_fsal_export;
 struct vfs_filesystem;
 
 /*
+ * VFS internal module
+ */
+struct vfs_fsal_module {
+	struct fsal_module module;
+	struct fsal_obj_ops handle_ops;
+	struct fsal_staticfsinfo_t fs_info;
+};
+
+/*
  * VFS internal export
  */
 struct vfs_fsal_export {

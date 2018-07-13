@@ -44,12 +44,6 @@
 /* NULLFS FSAL module private storage
  */
 
-struct nullfs_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-	/* nullfsfs_specific_initinfo_t specific_info;  placeholder */
-};
-
 /* FSAL name determines name of shared library: libfsal<name>.so */
 const char myname[] = "NULL";
 
@@ -87,9 +81,9 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 
 struct fsal_staticfsinfo_t *nullfs_staticinfo(struct fsal_module *hdl)
 {
-	struct nullfs_fsal_module *myself;
+	struct null_fsal_module *myself;
 
-	myself = container_of(hdl, struct nullfs_fsal_module, fsal);
+	myself = container_of(hdl, struct null_fsal_module, module);
 	return &myself->fs_info;
 }
 
@@ -104,8 +98,8 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 				 config_file_t config_struct,
 				 struct config_error_type *err_type)
 {
-	struct nullfs_fsal_module *nullfs_me =
-	    container_of(fsal_hdl, struct nullfs_fsal_module, fsal);
+	struct null_fsal_module *nullfs_me =
+	    container_of(fsal_hdl, struct null_fsal_module, module);
 
 	/* get a copy of the defaults */
 	nullfs_me->fs_info = default_posix_info;
@@ -148,7 +142,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 /* my module private storage
  */
 
-static struct nullfs_fsal_module NULLFS;
+struct null_fsal_module NULLFS;
 struct next_ops next_ops;
 
 /* linkage to the exports and handle ops initializers
@@ -156,7 +150,7 @@ struct next_ops next_ops;
 MODULE_INIT void nullfs_init(void)
 {
 	int retval;
-	struct fsal_module *myself = &NULLFS.fsal;
+	struct fsal_module *myself = &NULLFS.module;
 
 	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);
@@ -166,13 +160,16 @@ MODULE_INIT void nullfs_init(void)
 	}
 	myself->m_ops.create_export = nullfs_create_export;
 	myself->m_ops.init_config = init_config;
+
+	/* Initialize the fsal_obj_handle ops for FSAL NULL */
+	nullfs_handle_ops_init(&NULLFS.handle_ops);
 }
 
 MODULE_FINI void nullfs_unload(void)
 {
 	int retval;
 
-	retval = unregister_fsal(&NULLFS.fsal);
+	retval = unregister_fsal(&NULLFS.module);
 	if (retval != 0) {
 		fprintf(stderr, "NULLFS module failed to unregister");
 		return;

@@ -42,12 +42,6 @@
 /* PSEUDOFS FSAL module private storage
  */
 
-struct pseudo_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-	/* pseudofsfs_specific_initinfo_t specific_info;  placeholder */
-};
-
 const char pseudoname[] = "PSEUDO";
 
 /* filesystem info for PSEUDOFS */
@@ -86,7 +80,7 @@ struct fsal_staticfsinfo_t *pseudofs_staticinfo(struct fsal_module *hdl)
 {
 	struct pseudo_fsal_module *myself;
 
-	myself = container_of(hdl, struct pseudo_fsal_module, fsal);
+	myself = container_of(hdl, struct pseudo_fsal_module, module);
 	return &myself->fs_info;
 }
 
@@ -94,7 +88,7 @@ struct fsal_staticfsinfo_t *pseudofs_staticinfo(struct fsal_module *hdl)
 static void init_config(struct fsal_module *fsal_hdl)
 {
 	struct pseudo_fsal_module *pseudofs_me =
-	    container_of(fsal_hdl, struct pseudo_fsal_module, fsal);
+	    container_of(fsal_hdl, struct pseudo_fsal_module, module);
 
 	/* get a copy of the defaults */
 	pseudofs_me->fs_info = default_posix_info;
@@ -121,7 +115,7 @@ static void init_config(struct fsal_module *fsal_hdl)
 /* my module private storage
  */
 
-static struct pseudo_fsal_module PSEUDOFS;
+struct pseudo_fsal_module PSEUDOFS;
 
 /* linkage to the exports and handle ops initializers
  */
@@ -130,7 +124,7 @@ int unload_pseudo_fsal(struct fsal_module *fsal_hdl)
 {
 	int retval;
 
-	retval = unregister_fsal(&PSEUDOFS.fsal);
+	retval = unregister_fsal(&PSEUDOFS.module);
 	if (retval != 0)
 		fprintf(stderr, "PSEUDO module failed to unregister");
 
@@ -140,7 +134,7 @@ int unload_pseudo_fsal(struct fsal_module *fsal_hdl)
 void pseudo_fsal_init(void)
 {
 	int retval;
-	struct fsal_module *myself = &PSEUDOFS.fsal;
+	struct fsal_module *myself = &PSEUDOFS.module;
 
 	retval = register_fsal(myself, pseudoname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);
@@ -150,6 +144,9 @@ void pseudo_fsal_init(void)
 	}
 	myself->m_ops.create_export = pseudofs_create_export;
 	myself->m_ops.unload = unload_pseudo_fsal;
+
+	/* Initialize the fsal_obj_handle ops for FSAL PSEUDO */
+	pseudofs_handle_ops_init(&PSEUDOFS.handle_ops);
 
 	/* initialize our config */
 	init_config(myself);

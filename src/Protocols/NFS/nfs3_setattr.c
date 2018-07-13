@@ -204,7 +204,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* return references */
 	if (obj)
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 
 	LogDebug(COMPONENT_NFSPROTO,
 		 "Result %s%s",

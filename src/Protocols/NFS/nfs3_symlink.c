@@ -200,10 +200,10 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* return references */
 	if (parent_obj)
-		parent_obj->obj_ops.put_ref(parent_obj);
+		parent_obj->obj_ops->put_ref(parent_obj);
 
 	if (symlink_obj)
-		symlink_obj->obj_ops.put_ref(symlink_obj);
+		symlink_obj->obj_ops->put_ref(symlink_obj);
 
 	return rc;
 }				/* nfs3_symlink */

@@ -44,7 +44,7 @@
 
 #define FREE_FID(pfid, fid, req9p) do {                                 \
 	/* mark object no longer reachable */				\
-	pfid->pentry->obj_ops.put_ref(pfid->pentry);			\
+	pfid->pentry->obj_ops->put_ref(pfid->pentry);			\
 	pfid->pentry = NULL;						\
 	/* Free the fid */                                              \
 	free_fid(pfid);							\
@@ -93,7 +93,7 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
 		pfid->opens = 0;	/* dead */
 
-		fsal_status = pfid->pentry->obj_ops.close2(pfid->pentry,
+		fsal_status = pfid->pentry->obj_ops->close2(pfid->pentry,
 							   pfid->state);
 
 		if (FSAL_IS_ERROR(fsal_status)) {

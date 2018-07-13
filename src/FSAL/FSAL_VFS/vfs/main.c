@@ -40,6 +40,7 @@
 #include "fsal.h"
 #include "FSAL/fsal_init.h"
 #include "fsal_handle_syscalls.h"
+#include "../vfs_methods.h"
 
 /* VFS FSAL module private storage
  */
@@ -50,12 +51,6 @@
 #else
 #define VFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX | ATTR_ACL))
 #endif
-
-struct vfs_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-	/* vfsfs_specific_initinfo_t specific_info;  placeholder */
-};
 
 const char myname[] = "VFS";
 
@@ -118,7 +113,7 @@ struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl)
 {
 	struct vfs_fsal_module *myself;
 
-	myself = container_of(hdl, struct vfs_fsal_module, fsal);
+	myself = container_of(hdl, struct vfs_fsal_module, module);
 	return &myself->fs_info;
 }
 
@@ -134,7 +129,7 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 				 struct config_error_type *err_type)
 {
 	struct vfs_fsal_module *vfs_me =
-	    container_of(fsal_hdl, struct vfs_fsal_module, fsal);
+	    container_of(fsal_hdl, struct vfs_fsal_module, module);
 #ifdef F_OFD_GETLK
 	int fd, rc;
 	struct flock lock;
@@ -224,7 +219,7 @@ static struct vfs_fsal_module VFS;
 MODULE_INIT void vfs_init(void)
 {
 	int retval;
-	struct fsal_module *myself = &VFS.fsal;
+	struct fsal_module *myself = &VFS.module;
 
 	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_VFS);
@@ -234,13 +229,16 @@ MODULE_INIT void vfs_init(void)
 	}
 	myself->m_ops.create_export = vfs_create_export;
 	myself->m_ops.init_config = init_config;
+
+	/* Initialize the fsal_obj_handle ops for FSAL VFS/LUSTRE */
+	vfs_handle_ops_init(&VFS.handle_ops);
 }
 
 MODULE_FINI void vfs_unload(void)
 {
 	int retval;
 
-	retval = unregister_fsal(&VFS.fsal);
+	retval = unregister_fsal(&VFS.module);
 	if (retval != 0) {
 		fprintf(stderr, "VFS module failed to unregister");
 		return;

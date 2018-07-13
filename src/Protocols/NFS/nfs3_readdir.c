@@ -203,7 +203,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		fsal_prepare_attrs(&attrs, ATTR_CTIME);
 
-		fsal_status = dir_obj->obj_ops.getattrs(dir_obj, &attrs);
+		fsal_status = dir_obj->obj_ops->getattrs(dir_obj, &attrs);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res->res_readdir3.status =
@@ -281,7 +281,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out;
 		}
 
-		parent_dir_obj->obj_ops.put_ref(parent_dir_obj);
+		parent_dir_obj->obj_ops->put_ref(parent_dir_obj);
 		parent_dir_obj = NULL;
 	}
 
@@ -329,10 +329,10 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  out:
 	/* return references */
 	if (dir_obj)
-		dir_obj->obj_ops.put_ref(dir_obj);
+		dir_obj->obj_ops->put_ref(dir_obj);
 
 	if (parent_dir_obj)
-		parent_dir_obj->obj_ops.put_ref(parent_dir_obj);
+		parent_dir_obj->obj_ops->put_ref(parent_dir_obj);
 
 	/* Deallocate memory in the event of an error */
 	if (((res->res_readdir3.status != NFS3_OK) || (rc != NFS_REQ_OK) ||

@@ -179,7 +179,7 @@ void cleanup_pseudofs_node(char *pseudopath,
 	cleanup_pseudofs_node(pseudopath, parent_obj);
 
 out:
-	parent_obj->obj_ops.put_ref(parent_obj);
+	parent_obj->obj_ops->put_ref(parent_obj);
 }
 
 bool make_pseudofs_node(char *name, struct pseudofs_state *state)
@@ -204,7 +204,7 @@ retry:
 				state->export->pseudopath,
 				name);
 			/* Release the reference on the new node */
-			new_node->obj_ops.put_ref(new_node);
+			new_node->obj_ops->put_ref(new_node);
 			return false;
 		}
 
@@ -213,7 +213,7 @@ retry:
 			 state->obj, new_node, name,
 			 new_node->fsal->name);
 
-		state->obj->obj_ops.put_ref(state->obj);
+		state->obj->obj_ops->put_ref(state->obj);
 		/* Make new node the current node */
 		state->obj = new_node;
 		return true;
@@ -284,7 +284,7 @@ retry:
 		 new_node, new_node->state_hdl);
 
 	/* Release reference to the old node */
-	state->obj->obj_ops.put_ref(state->obj);
+	state->obj->obj_ops->put_ref(state->obj);
 
 	/* Make new node the current node */
 	state->obj = new_node;
@@ -401,7 +401,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 			/* Release reference on mount point inode
 			 * and the mounted on export
 			 */
-			state.obj->obj_ops.put_ref(state.obj);
+			state.obj->obj_ops->put_ref(state.obj);
 			put_gsh_export(op_ctx->ctx_export);
 			return false;
 		}
@@ -583,6 +583,6 @@ void pseudo_unmount_export(struct gsh_export *export)
 
 	if (junction_inode != NULL) {
 		/* Release the LRU reference */
-		junction_inode->obj_ops.put_ref(junction_inode);
+		junction_inode->obj_ops->put_ref(junction_inode);
 	}
 }

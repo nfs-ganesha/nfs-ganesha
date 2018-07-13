@@ -138,7 +138,7 @@ namespace {
       status = fsal_remove(root_entry, TEST_FILE);
       EXPECT_EQ(0, status.major);
 
-      root_entry->obj_ops.put_ref(root_entry);
+      root_entry->obj_ops->put_ref(root_entry);
       root_entry = NULL;
 
       put_gsh_export(a_export);
@@ -176,7 +176,7 @@ namespace {
         ASSERT_NE(obj, nullptr);
 
         fsal_release_attrs(&attrs_out);
-        obj->obj_ops.put_ref(obj);
+        obj->obj_ops->put_ref(obj);
       }
     }
 
@@ -204,14 +204,14 @@ TEST_F(LinkEmptyLatencyTest, SIMPLE)
   struct fsal_obj_handle *link;
   struct fsal_obj_handle *lookup;
 
-  status = root_entry->obj_ops.link(test_file, root_entry, TEST_FILE_LINK);
+  status = root_entry->obj_ops->link(test_file, root_entry, TEST_FILE_LINK);
   EXPECT_EQ(status.major, 0);
-  root_entry->obj_ops.lookup(root_entry, TEST_FILE_LINK, &link, NULL);
-  root_entry->obj_ops.lookup(root_entry, TEST_FILE, &lookup, NULL);
+  root_entry->obj_ops->lookup(root_entry, TEST_FILE_LINK, &link, NULL);
+  root_entry->obj_ops->lookup(root_entry, TEST_FILE, &lookup, NULL);
   EXPECT_EQ(lookup, link);
 
-  link->obj_ops.put_ref(link);
-  lookup->obj_ops.put_ref(lookup);
+  link->obj_ops->put_ref(link);
+  lookup->obj_ops->put_ref(lookup);
 
   /* Remove link created while running test */
   status = fsal_remove(root_entry, TEST_FILE_LINK);
@@ -231,14 +231,14 @@ TEST_F(LinkEmptyLatencyTest, SIMPLE_BYPASS)
   status = nfs_export_get_root_entry(a_export, &sub_hdl);
   ASSERT_EQ(status.major, 0);
 
-  status = sub_hdl->obj_ops.link(test_file, sub_hdl, TEST_FILE_LINK);
+  status = sub_hdl->obj_ops->link(test_file, sub_hdl, TEST_FILE_LINK);
   EXPECT_EQ(status.major, 0);
-  root_entry->obj_ops.lookup(root_entry, TEST_FILE_LINK, &link, NULL);
-  root_entry->obj_ops.lookup(root_entry, TEST_FILE, &lookup, NULL);
+  root_entry->obj_ops->lookup(root_entry, TEST_FILE_LINK, &link, NULL);
+  root_entry->obj_ops->lookup(root_entry, TEST_FILE, &lookup, NULL);
   EXPECT_EQ(lookup, link);
 
-  link->obj_ops.put_ref(link);
-  lookup->obj_ops.put_ref(lookup);
+  link->obj_ops->put_ref(link);
+  lookup->obj_ops->put_ref(lookup);
 
   /* Remove link created while running test */
   status = fsal_remove(root_entry, TEST_FILE_LINK);
@@ -256,7 +256,7 @@ TEST_F(LinkEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = root_entry->obj_ops.link(test_file, root_entry, fname);
+    status = root_entry->obj_ops->link(test_file, root_entry, fname);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -314,7 +314,7 @@ TEST_F(LinkFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = root_entry->obj_ops.link(test_file, root_entry, fname);
+    status = root_entry->obj_ops->link(test_file, root_entry, fname);
     ASSERT_EQ(status.major, 0) << " failed to link " << fname;
   }
 
@@ -351,7 +351,7 @@ TEST_F(LinkFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = sub_hdl->obj_ops.link(test_file, sub_hdl, fname);
+    status = sub_hdl->obj_ops->link(test_file, sub_hdl, fname);
     ASSERT_EQ(status.major, 0) << " failed to link " << fname;
   }
 

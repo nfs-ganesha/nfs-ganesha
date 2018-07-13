@@ -124,6 +124,7 @@ struct latency_data {
 struct glusterfs_fsal_module {
 	struct fsal_staticfsinfo_t fs_info;
 	struct fsal_module fsal;
+	struct fsal_obj_ops handle_ops;
 	struct glist_head  fs_obj; /* list of glusterfs_fs filesystem objects */
 	pthread_mutex_t   lock; /* lock to protect above list */
 };

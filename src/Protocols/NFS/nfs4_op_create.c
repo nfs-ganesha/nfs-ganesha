@@ -291,7 +291,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (obj_new) {
 		/* Put our ref */
-		obj_new->obj_ops.put_ref(obj_new);
+		obj_new->obj_ops->put_ref(obj_new);
 	}
 
 	gsh_free(name);

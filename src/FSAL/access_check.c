@@ -829,7 +829,7 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 							op_ctx->fsal_export)
 			   & (ATTRS_CREDS | ATTR_MODE | ATTR_ACL));
 
-	status = obj_hdl->obj_ops.getattrs(obj_hdl, &attrs);
+	status = obj_hdl->obj_ops->getattrs(obj_hdl, &attrs);
 
 	if (FSAL_IS_ERROR(status))
 		goto out;

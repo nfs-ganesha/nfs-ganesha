@@ -150,7 +150,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				  plenout, preply);
 
 	/* put parent directory entry */
-	pfid->pentry->obj_ops.put_ref(pfid->pentry);
+	pfid->pentry->obj_ops->put_ref(pfid->pentry);
 
 	/* Build the qid */
 	qid_newfile.type = _9P_QTFILE;

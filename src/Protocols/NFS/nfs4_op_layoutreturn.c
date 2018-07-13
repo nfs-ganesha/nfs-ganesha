@@ -296,7 +296,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			if (return_fsid) {
 				if (!memcmp(&fsid, &data->current_obj->fsid,
 					    sizeof(fsid))) {
-					obj->obj_ops.put_ref(obj);
+					obj->obj_ops->put_ref(obj);
 					put_gsh_export(export);
 					dec_state_t_ref(layout_state);
 
@@ -332,7 +332,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 			/* Since we had to drop so_mutex, the list may have
 			 * changed under us, we MUST start over.
 			 */
-			obj->obj_ops.put_ref(obj);
+			obj->obj_ops->put_ref(obj);
 			put_gsh_export(export);
 			goto again;
 		}
@@ -361,7 +361,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (obj != NULL) {
 		/* Release object ref */
-		obj->obj_ops.put_ref(obj);
+		obj->obj_ops->put_ref(obj);
 	}
 
 	if (export != NULL) {
@@ -590,7 +590,7 @@ nfsstat4 nfs4_return_one_state(struct fsal_obj_handle *obj,
 			handle_recalls(arg, obj->state_hdl, state,
 				       &g->sls_segment);
 
-			nfs_status = obj->obj_ops.layoutreturn(
+			nfs_status = obj->obj_ops->layoutreturn(
 						obj,
 						op_ctx,
 						body_val ? &lrf_body : NULL,
@@ -636,7 +636,7 @@ nfsstat4 nfs4_return_one_state(struct fsal_obj_handle *obj,
 		arg->last_segment = false;
 		arg->dispose = false;
 
-		nfs_status = obj->obj_ops.layoutreturn(
+		nfs_status = obj->obj_ops->layoutreturn(
 					obj,
 					op_ctx, body_val ? &lrf_body : NULL,
 					arg);

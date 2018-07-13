@@ -377,7 +377,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Need to permission check the read. */
-	fsal_status = obj->obj_ops.test_access(obj, FSAL_READ_ACCESS,
+	fsal_status = obj->obj_ops->test_access(obj, FSAL_READ_ACCESS,
 					       NULL, NULL, true);
 
 	if (fsal_status.major == ERR_FSAL_ACCESS) {
@@ -658,7 +658,7 @@ int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
 		hints.offset = arg_IO_ADVISE->iaa_offset;
 		hints.count = arg_IO_ADVISE->iaa_count;
 
-		fsal_status = obj->obj_ops.io_advise(obj, &hints);
+		fsal_status = obj->obj_ops->io_advise(obj, &hints);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_IO_ADVISE->iaa_status = NFS4ERR_NOTSUPP;
 			goto done;
@@ -742,7 +742,7 @@ int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
 		else
 			info.io_content.adb.adb_offset = arg_SEEK->sa_offset;
 
-		fsal_status = obj->obj_ops.seek(obj, &info);
+		fsal_status = obj->obj_ops->seek(obj, &info);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_SEEK->sr_status = NFS4ERR_NXIO;
 			goto done;

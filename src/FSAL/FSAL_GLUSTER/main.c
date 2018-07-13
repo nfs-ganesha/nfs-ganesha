@@ -146,6 +146,9 @@ MODULE_INIT void glusterfs_init(void)
 	myself->m_ops.getdeviceinfo = getdeviceinfo;
 	myself->m_ops.fsal_pnfs_ds_ops = pnfs_ds_ops_init;
 
+	/* Initialize the fsal_obj_handle ops for FSAL GLUSTER */
+	handle_ops_init(&GlusterFS.handle_ops);
+
 	PTHREAD_MUTEX_init(&GlusterFS.lock, NULL);
 	glist_init(&GlusterFS.fs_obj);
 

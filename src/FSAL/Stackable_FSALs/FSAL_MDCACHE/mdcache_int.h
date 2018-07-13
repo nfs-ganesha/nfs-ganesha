@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -42,6 +42,14 @@
 #include "display.h"
 
 typedef struct mdcache_fsal_obj_handle mdcache_entry_t;
+
+struct mdcache_fsal_module {
+	struct fsal_module module;
+	struct fsal_obj_ops handle_ops;
+	struct fsal_staticfsinfo_t fs_info;
+};
+
+extern struct mdcache_fsal_module MDCACHE;
 
 #define MDC_UNEXPORT 1
 

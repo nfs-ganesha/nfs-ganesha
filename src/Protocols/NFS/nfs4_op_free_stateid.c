@@ -126,7 +126,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 	op_ctx->ctx_export = save_exp;
 	op_ctx->fsal_export = save_exp != NULL ? save_exp->fsal_export : NULL;
 
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 	put_gsh_export(export);
 
 	return res_FREE_STATEID4->fsr_status;

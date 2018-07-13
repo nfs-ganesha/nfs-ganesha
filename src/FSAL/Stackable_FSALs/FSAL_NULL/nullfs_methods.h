@@ -1,5 +1,44 @@
+/*
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright (C) Panasas Inc., 2011
+ * Author: Jim Lieb jlieb@panasas.com
+ *
+ * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
+ *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *
+ *   This library is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU Lesser General Public License as published
+ *   by the Free Software Foundation; either version 2.1 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This library is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ *   the GNU Lesser General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Lesser General Public License
+ *   along with this library; if not, write to the Free Software
+ *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
+
+/**
+ * @brief NULLFS methods for handles
+ */
+
 /* NULLFS methods for handles
  */
+
+#ifndef NULLFS_METHODS_H
+#define NULLFS_METHODS_H
+
+struct null_fsal_module {
+	struct fsal_module module;
+	struct fsal_obj_ops handle_ops;
+	struct fsal_staticfsinfo_t fs_info;
+};
+
+extern struct null_fsal_module NULLFS;
 
 struct nullfs_fsal_obj_handle;
 
@@ -172,3 +211,5 @@ fsal_status_t nullfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					  unsigned int xattr_id);
 fsal_status_t nullfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					    const char *xattr_name);
+
+#endif			/* NULLFS_METHODS_H */

@@ -158,7 +158,7 @@ static mdcache_entry_t *mdcache_alloc_handle(
 	fsal_obj_handle_init(&result->obj_handle, &export->mfe_exp,
 			     sub_handle->type);
 	/* mdcache handlers */
-	mdcache_handle_ops_init(&result->obj_handle.obj_ops);
+	result->obj_handle.obj_ops = &MDCACHE.handle_ops;
 	/* state */
 	if (sub_handle->type == DIRECTORY) {
 		result->obj_handle.state_hdl = &result->fsobj.fsdir.dhdl;
@@ -373,7 +373,7 @@ mdc_get_parent_handle(struct mdcache_fsal_export *export,
 
 	/* Get a wire handle that can be used with create_handle() */
 	subcall_raw(export,
-		    status = sub_parent->obj_ops.handle_to_wire(sub_parent,
+		    status = sub_parent->obj_ops->handle_to_wire(sub_parent,
 					FSAL_DIGEST_NFSV4, &fh_desc)
 		   );
 	if (FSAL_IS_ERROR(status))
@@ -407,7 +407,7 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
 	}
 
 	subcall_raw(export,
-		status = entry->sub_handle->obj_ops.lookup(
+		status = entry->sub_handle->obj_ops->lookup(
 			    entry->sub_handle, "..", &sub_handle, NULL)
 	       );
 
@@ -420,7 +420,7 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
 
 	/* Release parent handle */
 	subcall_raw(export,
-		    sub_handle->obj_ops.release(sub_handle)
+		    sub_handle->obj_ops->release(sub_handle)
 		   );
 }
 
@@ -561,7 +561,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	/* Get FSAL-specific key */
 	subcall_raw(export,
-		    sub_handle->obj_ops.handle_to_key(sub_handle, &fh_desc)
+		    sub_handle->obj_ops->handle_to_key(sub_handle, &fh_desc)
 		   );
 
 	(void) cih_hash_key(&key, export->mfe_exp.sub_export->fsal, &fh_desc,
@@ -797,7 +797,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 		subcall_raw(export,
 			    status =
-			    old_sub_handle->obj_ops.merge(old_sub_handle,
+			    old_sub_handle->obj_ops->merge(old_sub_handle,
 							  sub_handle)
 			   );
 
@@ -820,7 +820,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		fsal_status_t cstatus;
 
 		subcall_raw(export,
-			    cstatus = sub_handle->obj_ops.close2(sub_handle,
+			    cstatus = sub_handle->obj_ops->close2(sub_handle,
 								 state)
 			   );
 
@@ -831,7 +831,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	/* must free sub_handle if no new entry was created to reference it. */
 	subcall_raw(export,
-		    sub_handle->obj_ops.release(sub_handle)
+		    sub_handle->obj_ops->release(sub_handle)
 		   );
 
 	return status;
@@ -1348,7 +1348,7 @@ fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent,
 					op_ctx->fsal_export) & ~ATTR_ACL);
 
 	subcall(
-		status = mdc_parent->sub_handle->obj_ops.lookup(
+		status = mdc_parent->sub_handle->obj_ops->lookup(
 			    mdc_parent->sub_handle, name, &sub_handle, &attrs)
 	       );
 
@@ -1863,7 +1863,7 @@ mdcache_readdir_uncached(mdcache_entry_t *directory, fsal_cookie_t *whence,
 	state.dir_state = dir_state;
 
 	subcall(
-		readdir_status = directory->sub_handle->obj_ops.readdir(
+		readdir_status = directory->sub_handle->obj_ops->readdir(
 			directory->sub_handle, whence, &state,
 			mdc_readdir_uncached_cb, attrmask, eod_met)
 	       );
@@ -1910,7 +1910,7 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 	assert(parent_dir->content_lock.__data.__writer != 0);
 #endif
 	subcall(
-		ck = parent_dir->sub_handle->obj_ops.compute_readdir_cookie(
+		ck = parent_dir->sub_handle->obj_ops->compute_readdir_cookie(
 				parent_dir->sub_handle, new_dir_entry->name)
 	       );
 
@@ -1960,7 +1960,7 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 			 */
 			subcall(
 				nck = parent_dir->sub_handle
-					->obj_ops.compute_readdir_cookie(
+					->obj_ops->compute_readdir_cookie(
 						parent_dir->sub_handle,
 						right->name)
 			       );
@@ -2697,7 +2697,7 @@ again:
 	}
 
 	subcall(
-		readdir_status = directory->sub_handle->obj_ops.readdir(
+		readdir_status = directory->sub_handle->obj_ops->readdir(
 			directory->sub_handle, whence_ptr, &state,
 			mdc_readdir_chunked_cb, attrmask, eod_met)
 	       );
@@ -3210,7 +3210,7 @@ again:
 		 */
 		fsal_prepare_attrs(&attrs, attrmask);
 
-		status = entry->obj_handle.obj_ops.getattrs(&entry->obj_handle,
+		status = entry->obj_handle.obj_ops->getattrs(&entry->obj_handle,
 							    &attrs);
 		if (FSAL_IS_ERROR(status)) {
 			PTHREAD_RWLOCK_unlock(&directory->content_lock);
@@ -3428,7 +3428,7 @@ mdcache_dirent_populate(mdcache_entry_t *dir)
 					op_ctx->fsal_export) | ATTR_RDATTR_ERR;
 
 	subcall_raw(state.export,
-		fsal_status = dir->sub_handle->obj_ops.readdir(
+		fsal_status = dir->sub_handle->obj_ops->readdir(
 			dir->sub_handle, NULL, (void *)&state,
 			mdc_populate_dirent, attrmask, &eod)
 	       );

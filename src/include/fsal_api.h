@@ -223,7 +223,7 @@ struct state_t;
  *
  * The invariant to be maintained is that given an @c fsal_obj_handle,
  * obj_hdl, exp_ops.host_to_key(wire_to_host(handle_to_wire(obj_hdl)))
- * is equal to obj_ops.handle_to_key(obj_hdl).
+ * is equal to obj_ops->handle_to_key(obj_hdl).
  *
  * History and Details
  * ===================
@@ -2897,7 +2897,7 @@ struct fsal_obj_handle {
 					   the same FSAL. */
 	struct fsal_filesystem *fs;	/*< Owning filesystem */
 	struct fsal_module *fsal;	/*< Link back to fsal module */
-	struct fsal_obj_ops obj_ops;	/*< Operations vector */
+	struct fsal_obj_ops *obj_ops;	/*< Operations vector */
 
 	pthread_rwlock_t obj_lock;		/*< Lock on handle */
 

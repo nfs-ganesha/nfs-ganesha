@@ -312,7 +312,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Need to permission check the write. */
-	fsal_status = obj->obj_ops.test_access(obj, FSAL_WRITE_ACCESS,
+	fsal_status = obj->obj_ops->test_access(obj, FSAL_WRITE_ACCESS,
 					       NULL, NULL, true);
 
 	if (FSAL_IS_ERROR(fsal_status)) {

@@ -39,6 +39,7 @@
 #include "fsal.h"
 #include "FSAL/fsal_init.h"
 #include "fsal_handle_syscalls.h"
+#include "../vfs_methods.h"
 
 /* VFS FSAL module private storage
  */
@@ -49,12 +50,6 @@
 #else
 #define XFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX | ATTR_ACL))
 #endif
-
-struct xfs_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-	/* xfsfs_specific_initinfo_t specific_info;  placeholder */
-};
 
 const char myname[] = "XFS";
 
@@ -115,9 +110,9 @@ struct config_block xfs_param = {
 
 struct fsal_staticfsinfo_t *vfs_staticinfo(struct fsal_module *hdl)
 {
-	struct xfs_fsal_module *myself;
+	struct vfs_fsal_module *myself;
 
-	myself = container_of(hdl, struct xfs_fsal_module, fsal);
+	myself = container_of(hdl, struct vfs_fsal_module, module);
 	return &myself->fs_info;
 }
 
@@ -132,8 +127,8 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 				 config_file_t config_struct,
 				 struct config_error_type *err_type)
 {
-	struct xfs_fsal_module *xfs_me =
-	    container_of(fsal_hdl, struct xfs_fsal_module, fsal);
+	struct vfs_fsal_module *xfs_me =
+	    container_of(fsal_hdl, struct vfs_fsal_module, module);
 #ifdef F_OFD_GETLK
 	int fd, rc;
 	struct flock lock;
@@ -214,7 +209,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 /* my module private storage
  */
 
-static struct xfs_fsal_module XFS;
+static struct vfs_fsal_module XFS;
 
 /* linkage to the exports and handle ops initializers
  */
@@ -222,7 +217,7 @@ static struct xfs_fsal_module XFS;
 MODULE_INIT void xfs_init(void)
 {
 	int retval;
-	struct fsal_module *myself = &XFS.fsal;
+	struct fsal_module *myself = &XFS.module;
 
 	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
 			       FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);
@@ -232,13 +227,16 @@ MODULE_INIT void xfs_init(void)
 	}
 	myself->m_ops.create_export = vfs_create_export;
 	myself->m_ops.init_config = init_config;
+
+	/* Initialize the fsal_obj_handle ops for FSAL XFS */
+	vfs_handle_ops_init(&XFS.handle_ops);
 }
 
 MODULE_FINI void xfs_unload(void)
 {
 	int retval;
 
-	retval = unregister_fsal(&XFS.fsal);
+	retval = unregister_fsal(&XFS.module);
 	if (retval != 0) {
 		fprintf(stderr, "XFS module failed to unregister");
 		return;

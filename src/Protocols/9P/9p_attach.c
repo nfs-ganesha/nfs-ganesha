@@ -204,7 +204,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			goto errout;
 		}
 
-		pfsal_handle->obj_ops.handle_to_key(pfsal_handle,
+		pfsal_handle->obj_ops->handle_to_key(pfsal_handle,
 						 &fh_desc);
 		fsal_status = op_ctx->fsal_export->exp_ops.create_handle(
 				 op_ctx->fsal_export, &fh_desc, &pfid->pentry,

@@ -120,7 +120,7 @@ int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	dec_nsm_client_ref(nsm_client);
 	dec_nlm_client_ref(nlm_client);
 	dec_state_owner_ref(nlm_owner);
-	obj->obj_ops.put_ref(obj);
+	obj->obj_ops->put_ref(obj);
 
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST RESULT: NLM4_CANCEL %s",

@@ -46,6 +46,18 @@
 
 struct gpfs_filesystem;
 
+/*
+ * GPFS internal module
+ */
+struct gpfs_fsal_module {
+	struct fsal_module module;
+	struct fsal_staticfsinfo_t fs_info;
+	struct fsal_obj_ops handle_ops;
+	struct fsal_obj_ops handle_ops_with_pnfs;
+};
+
+extern struct gpfs_fsal_module GPFS;
+
 void gpfs_handle_ops_init(struct fsal_obj_ops *ops);
 
 bool fsal_error_is_event(fsal_status_t status);
