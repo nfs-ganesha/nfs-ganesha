@@ -42,9 +42,7 @@
 #include "sal_data.h"
 
 #ifdef _USE_9P_RDMA
-#include <infiniband/arch.h>
-#include <rdma/rdma_cma.h>
-#include "mooshika.h"
+#include <mooshika.h>
 #endif
 
 #define NB_PREALLOC_HASH_9P 100
