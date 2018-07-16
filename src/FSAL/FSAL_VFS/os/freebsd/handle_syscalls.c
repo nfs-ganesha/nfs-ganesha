@@ -35,48 +35,25 @@
 #include "FSAL/fsal_commonlib.h"
 #include "../../vfs_methods.h"
 #include <syscalls.h>
-
-/*
- * Currently all FreeBSD versions define MAXFIDSZ to be 16 which is not
- * sufficient for PanFS file handle. Following scheme ensures that on FreeBSD
- * platform we always use big enough data structure for holding file handle by
- * using our own file handle data structure instead of struct fhandle from
- * mount.h
- *
- */
-
-#ifdef __PanFS__
-#define MAXFIDSIZE 36
-#else
-#define MAXFIDSIZE 16
-#endif
-
-struct v_fid {
-	u_short fid_len;	/* length of data in bytes */
-	u_short fid_reserved;	/* force longword alignment */
-	char fid_data[MAXFIDSIZE];	/* data (variable length) */
-};
-
-struct v_fhandle {
-	fsid_t fh_fsid;		/* Filesystem id of mount point */
-	struct v_fid fh_fid;	/* Filesys specific id */
-};
+#include "fsal_handle_syscalls.h"
 
 static inline size_t vfs_sizeof_handle(struct v_fhandle *fh)
 {
-	return sizeof(fsid_t) +
+	return sizeof(fh->fh_flags) +
+	       sizeof(fsid_t) +
 	       sizeof(fh->fh_fid.fid_len) +
 	       sizeof(fh->fh_fid.fid_reserved) +
 	       fh->fh_fid.fid_len;
 }
 
 /* Verify handle size is large enough.
+ * sizeof(fh_flags) == 1
  * sizeof(fsid_t) == 8
  * sizeof(fid_len) == 2
  * sizeof(fid_reserved) == 2
  * fid_len == MAXFIDSIZE
  */
-#if VFS_HANDLE_LEN < (8 + 2 + 2 + MAXFIDSIZE)
+#if VFS_HANDLE_LEN < (1 + 8 + 2 + 2 + MAXFIDSIZE)
 #error "VFS_HANDLE_LEN is too small"
 #endif
 
@@ -124,7 +101,7 @@ int vfs_fd_to_handle(int fd, struct fsal_filesystem *fs,
 	int error;
 	struct v_fhandle *handle = (struct v_fhandle *) fh->handle_data;
 
-	error = getfhat(fd, NULL, (struct fhandle *) handle, AT_SYMLINK_FOLLOW);
+	error = getfhat(fd, NULL, v_to_fhandle(handle), AT_SYMLINK_FOLLOW);
 
 	if (error == 0)
 		fh->handle_len = vfs_sizeof_handle(handle);
@@ -140,7 +117,7 @@ int vfs_name_to_handle(int atfd,
 	int error;
 	struct v_fhandle *handle = (struct v_fhandle *) fh->handle_data;
 
-	error = getfhat(atfd, (char *)name, (struct fhandle *) handle,
+	error = getfhat(atfd, (char *)name, v_to_fhandle(handle),
 			AT_SYMLINK_NOFOLLOW);
 
 	if (error == 0)
@@ -155,7 +132,7 @@ int vfs_open_by_handle(struct vfs_filesystem *fs,
 {
 	int fd;
 
-	fd = fhopen((struct fhandle *) fh->handle_data, openflags);
+	fd = fhopen(v_to_fhandle(fh->handle_data), openflags);
 
 	if (fd < 0) {
 		fd = -errno;
@@ -221,6 +198,7 @@ int vfs_encode_dummy_handle(vfs_file_handle_t *fh,
 
 	hdl->fh_fid.fid_reserved = fs->fsid_type + 1;
 	hdl->fh_fid.fid_len = rc;
+	hdl->fh_flags = HANDLE_DUMMY;
 
 	fh->handle_len = vfs_sizeof_handle(hdl);
 
@@ -233,7 +211,7 @@ bool vfs_is_dummy_handle(vfs_file_handle_t *fh)
 {
 	struct v_fhandle *hdl = (struct v_fhandle *) fh->handle_data;
 
-	return hdl->fh_fid.fid_reserved != 0;
+	return hdl->fh_flags == HANDLE_DUMMY;
 }
 
 bool vfs_valid_handle(struct gsh_buffdesc *desc)
