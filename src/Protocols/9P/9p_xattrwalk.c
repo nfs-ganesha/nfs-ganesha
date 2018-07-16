@@ -38,7 +38,7 @@
 #include <pthread.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/xattr.h>
+#include "os/xattr.h"
 #include "nfs_core.h"
 #include "log.h"
 #include "fsal.h"
