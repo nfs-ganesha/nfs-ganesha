@@ -6,7 +6,7 @@ Here is a list of things that may be useful with Ganesha.
 
  * libgssapi
    A gssapi interface, available from CITI at
-   http://www.citi.umich.edu/projects/nfsv4/linux/libgssapi/   
+   http://www.citi.umich.edu/projects/nfsv4/linux/libgssapi/
 
  * libgssglue
    A gssapi interface, available from CITI at

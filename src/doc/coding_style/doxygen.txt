@@ -105,7 +105,7 @@ be done one of two ways.
 /**
  * @brief A structure holding some state.
  */
- 
+
 struct state {
         char *name; /*< The name of the state */
         char abbrev[2]; /*< The two-letter abbreviation for the state */
@@ -145,7 +145,7 @@ module, wrap every file that implements it like so:
  * @file foo.c
  * @brief Functions for the foo layer
  */
- 
+
 /**
  * @brief Foo Function
  */
@@ -165,7 +165,7 @@ void foo(void)
  * @file foo.h
  * @brief Structures for the foo layer
  */
- 
+
 /**
  * @brief Foo structure
  */
