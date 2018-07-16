@@ -2644,6 +2644,11 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		glist_add_tail(&state_blocked_locks, &block_data->sbd_list);
 
 		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
+
+		if (*holder != NULL) {
+			dec_state_owner_ref(*holder);
+		}
+
 	} else {
 		LogMajor(COMPONENT_STATE, "Unable to lock FSAL, error=%s",
 			 state_err_str(status));
