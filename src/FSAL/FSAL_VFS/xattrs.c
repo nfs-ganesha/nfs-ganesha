@@ -36,9 +36,9 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
-#include <os/xattr.h>
 #include <ctype.h>
 
+#include "os/xattr.h"
 #include "gsh_list.h"
 #include "fsal_api.h"
 #include "fsal_convert.h"

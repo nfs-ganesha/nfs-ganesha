@@ -26,7 +26,7 @@
  */
 
 #include <sys/types.h>
-#include <attr/xattr.h> /* ENOATTR */
+#include "os/xattr.h"
 #include "gluster_internal.h"
 #include "fsal_api.h"
 #include "fsal_convert.h"

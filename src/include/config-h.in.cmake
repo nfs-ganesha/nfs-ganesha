@@ -49,7 +49,7 @@
 #cmakedefine HAVE_STRNLEN 1
 #cmakedefine LITTLEEND 1
 #cmakedefine BIGEND 1
-#cmakedefine HAVE_XATTR_H 1
+#cmakedefine HAVE_SYS_XATTR_H 1
 #cmakedefine HAVE_DAEMON 1
 #cmakedefine USE_LTTNG 1
 #cmakedefine ENABLE_VFS_DEBUG_ACL 1
