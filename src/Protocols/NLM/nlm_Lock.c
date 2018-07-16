@@ -49,7 +49,8 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	char buffer[MAXNETOBJ_SZ * 2] = "\0";
 	state_nsm_client_t *nsm_client;
 	state_nlm_client_t *nlm_client;
-	state_owner_t *nlm_owner, *holder;
+	state_owner_t *nlm_owner;
+	state_owner_t *holder = NULL;
 	state_t *nlm_state;
 	fsal_lock_param_t lock, conflict;
 	int rc;
