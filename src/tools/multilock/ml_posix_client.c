@@ -25,6 +25,7 @@
 
 #include <pthread.h>
 #include <assert.h>
+#include <stdint.h>
 #include "multilock.h"
 #include "../../include/gsh_list.h"
 
