@@ -521,7 +521,7 @@ bool do_lock(struct response *resp, enum thread_type thread_type)
 	struct flock lock;
 	bool retry = false;
 	uint64_t owner;
-	bool sleep;
+	bool sleep = false;
 
 	if (resp->r_fpos != 0 && filehandles[resp->r_fpos] == NULL) {
 		resp->r_status = STATUS_ERRNO;
