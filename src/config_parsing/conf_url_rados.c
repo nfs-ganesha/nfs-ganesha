@@ -197,7 +197,7 @@ static inline char *match_dup(regmatch_t *m, char *in)
 static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 {
 	rados_ioctx_t io_ctx;
-	char *x0, *x1, *x2;
+	char *x0 = NULL, *x1 = NULL, *x2 = NULL;
 
 	char *pool_name;
 	char *object_name;
