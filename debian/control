@@ -1,4 +1,4 @@
-Source: nfs-ganesha
+Source: gpfs.nfs-ganesha
 Section: net
 Priority: optional
 Maintainer: IBM Corp. <gpfs@us.ibm.com>
@@ -28,7 +28,10 @@ Build-Depends: debhelper (>= 9),
                pkgconf
 Vcs-Git: https://github.com/nfs-ganesha/nfs-ganesha.git
 
-Package: nfs-ganesha
+Package: gpfs.nfs-ganesha
+Conflicts: nfs-ganesha
+Provides: nfs-ganesha (=2.5.3)
+Replaces: nfs-ganesha
 Architecture: any
 Depends: dbus, nfs-common, rpcbind,
          ${shlibs:Depends}, daemon
@@ -38,11 +41,14 @@ Description: nfs-ganesha is a NFS server in User Space
  and namespaces. Supported name spaces are POSIX, PROXY, SNMP, FUSE-like,
  HPSS, LUSTRE, XFS and ZFS.
 
-Package: nfs-ganesha-fsal
+Package: gpfs.nfs-ganesha-gpfs
+Conflicts: nfs-ganesha-fsal
+Provides: nfs-ganesha-fsal
+Replaces: nfs-ganesha-fsal
 Multi-Arch: same
 Architecture: any
 Section: libs
-Depends: nfs-ganesha (=${binary:Version}), ${shlibs:Depends},
+Depends: gpfs.nfs-ganesha (=${binary:Version}), ${shlibs:Depends},
          gpfs.base (>=4.2.3-0)
 Description: nfs-ganesha fsal libraries
  NFS-GANESHA is a NFS Server running in user space with a large cache.
@@ -50,11 +56,13 @@ Description: nfs-ganesha fsal libraries
  and namespaces. Supported name spaces are POSIX, PROXY, SNMP, FUSE-like,
  HPSS, LUSTRE, XFS and ZFS.
 
-Package: python-nfs-ganesha
+Package: gpfs.python-nfs-ganesha
+Conflicts: python-nfs-ganesha
+Provides: python-nfs-ganesha, ${python:Provides}
+Replaces: python-nfs-ganesha
 Pre-Depends: ${misc:Pre-Depends}
 Architecture: all
 Section: python
-Provides: ${python:Provides}
 Depends: python-dbus,
          python-gobject,
          python-qt4,
@@ -67,7 +75,10 @@ Description: Python bindings for nfs-ganesha
  .
  This package contains Python bindings for nfs-ganesha admin
 
-Package: nfs-ganesha-doc
+Package: gpfs.nfs-ganesha-doc
+Conflicts: nfs-ganesha-doc
+Provides: nfs-ganesha-doc
+Replaces: nfs-ganesha-doc
 Architecture: all
 Section: doc
 Description: Documentation for nfs-ganesha
@@ -78,11 +89,14 @@ Description: Documentation for nfs-ganesha
  .
  This package contains documentation and examples for nfs-ganesha
 
-Package: nfs-ganesha-dbgsym
+Package: gpfs.nfs-ganesha-dbgsym
+Conflicts: nfs-ganesha-dbgsym
+Provides: nfs-ganesha-dbgsym
+Replaces: nfs-ganesha-dbgsym
 Architecture: any
 Section: debug
 Priority: extra
-Depends: nfs-ganesha (=${binary:Version}),
+Depends: gpfs.nfs-ganesha (=${binary:Version}),
          ${misc:Depends}
 Description: Debugging symbols for nfs-ganesha
  NFS-GANESHA is a NFS Server running in user space with a large cache.

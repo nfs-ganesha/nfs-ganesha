@@ -79,4 +79,4 @@ override_dh_install:
 	make -C src/obj-*-linux-gnu* install && dh_install --sourcedir=./src
 
 override_dh_strip:
-	dh_strip -a --dbg-package=nfs-ganesha-dbgsym
+	dh_strip -a --dbg-package=gpfs.nfs-ganesha-dbgsym
