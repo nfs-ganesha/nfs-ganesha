@@ -451,7 +451,6 @@ include(CheckLibraryExists)
 include(CheckCSourceCompiles)
 include(TestBigEndian)
 
-check_include_files(stdbool.h HAVE_STDBOOL_H)
 check_include_files(strings.h HAVE_STRINGS_H)
 check_include_files(string.h HAVE_STRING_H)
 
@@ -468,9 +467,7 @@ IF(_VALGRIND_MEMCHECK)
 ENDIF(_VALGRIND_MEMCHECK)
 
 TEST_BIG_ENDIAN(BIGENDIAN)
-if(${BIGENDIAN})
-  set(BIGEND ON)
-else()
+if(NOT ${BIGENDIAN})
   set(LITTLEEND ON)
 endif(${BIGENDIAN})
 
@@ -489,7 +486,6 @@ if (USE_GSS)
 
   if(KRB5_FOUND AND HAVE_GSSAPI_H)
     set(HAVE_KRB5 ON)
-    set(KRB5_VERSION 194)  # hand code until we do krb5-config --version magic
     set(_HAVE_GSSAPI ON)
   else(KRB5_FOUND AND HAVE_GSSAPI_H)
     if (NOT KRB5_FOUND)
