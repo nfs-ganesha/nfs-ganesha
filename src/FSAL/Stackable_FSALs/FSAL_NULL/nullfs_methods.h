@@ -41,13 +41,6 @@ extern struct null_fsal_module NULLFS;
 
 struct nullfs_fsal_obj_handle;
 
-struct next_ops {
-	struct export_ops exp_ops;	/*< Vector of operations */
-	struct fsal_obj_ops obj_ops;	/*< Shared handle methods vector */
-	struct fsal_dsh_ops dsh_ops;	/*< Shared handle methods vector */
-	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
-};
-
 /**
  * Structure used to store data for read_dirents callback.
  *
@@ -60,8 +53,6 @@ struct nullfs_readdir_state {
 	void *dir_state; /*< State to be sent to the next callback. */
 };
 
-
-extern struct next_ops next_ops;
 extern struct fsal_up_vector fsal_up_top;
 void nullfs_handle_ops_init(struct fsal_obj_ops *ops);
 

@@ -487,30 +487,6 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 
 	fsal_export_stack(op_ctx->fsal_export, &myself->export);
 
-	/* Init next_ops structure */
-	/*** FIX ME!!!
-	 * This structure had 3 mallocs that were never freed,
-	 * and would leak for every export created.
-	 * Now static to avoid the leak, the saved contents were
-	 * never restored back to the original.
-	 */
-
-	memcpy(&next_ops.exp_ops,
-	       &myself->export.sub_export->exp_ops,
-	       sizeof(struct export_ops));
-#ifdef EXPORT_OPS_INIT
-	/*** FIX ME!!!
-	 * Need to iterate through the lists to save and restore.
-	 */
-	memcpy(&next_ops.obj_ops,
-	       myself->export.sub_export->obj_ops,
-	       sizeof(struct fsal_obj_ops));
-	memcpy(&next_ops.dsh_ops,
-	       myself->export.sub_export->dsh_ops,
-	       sizeof(struct fsal_dsh_ops));
-#endif				/* EXPORT_OPS_INIT */
-	next_ops.up_ops = up_ops;
-
 	fsal_export_init(&myself->export);
 	nullfs_export_ops_init(&myself->export.exp_ops);
 #ifdef EXPORT_OPS_INIT

@@ -120,7 +120,6 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself
  */
-struct next_ops next_ops;
 
 /* linkage to the exports and handle ops initializers
  */
