@@ -188,7 +188,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Build Weak Cache Coherency data */
 	res->res_setattr3.status = NFS3_OK;
 	if (arg->arg_setattr3.new_attributes.size.set_it
-	    && !(setattr.valid_mask ^ (ATTR_SPACEUSED | ATTR_SIZE))) {
+	    && !(setattr.valid_mask ^ ATTR_SIZE)) {
 		resfail->obj_wcc.before.attributes_follow = FALSE;
 		resfail->obj_wcc.after.attributes_follow = FALSE;
 	} else {
