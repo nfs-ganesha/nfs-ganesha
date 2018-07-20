@@ -384,6 +384,26 @@ LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
 /* Use either the first component, or if it is not at least at level,
  * use the second component.
  */
+#define LogEventAlt(comp1, comp2, format, args...) \
+	do { \
+		if (unlikely(component_log_level[comp1] \
+		    >= NIV_EVENT) || \
+		    unlikely(component_log_level[comp2] \
+		    >= NIV_EVENT)) { \
+			log_components_t component = \
+			    component_log_level[comp1] \
+				>= NIV_EVENT ? comp1 : comp2; \
+			\
+			DisplayLogComponentLevel(component,  __FILE__, \
+						 __LINE__, \
+						 __func__, \
+						 NIV_EVENT, \
+						 "%s: EVENT: " format, \
+						 LogComponents[component] \
+						     .comp_str, ## args); \
+		} \
+	} while (0)
+
 #define LogInfoAlt(comp1, comp2, format, args...) \
 	do { \
 		if (unlikely(component_log_level[comp1] \
