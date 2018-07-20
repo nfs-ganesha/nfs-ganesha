@@ -97,7 +97,7 @@ ON           [Oo][Nn]
 NO           [Nn][Oo]
 FALSE        [Ff][Aa][Ll][Ss][Ee]
 OFF          [Oo][Ff][Ff]
-OCTNUM       0[1-7][0-7]*
+OCTNUM       0[0-7][0-7]*
 HEXNUM       0[xX][0-9a-fA-F]+
 DECNUM       (0|[1-9][0-9]*)
 NINEP        9[pP]
