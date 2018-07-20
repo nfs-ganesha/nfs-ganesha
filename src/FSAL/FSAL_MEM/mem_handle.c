@@ -1914,7 +1914,7 @@ fsal_status_t mem_lock_op2(struct fsal_obj_handle *obj_hdl,
 {
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
-	struct fsal_fd *fsal_fd;
+	struct fsal_fd fsal_fd = {0}, *fdp = &fsal_fd;
 	bool has_lock, closefd = false;
 	bool bypass = false;
 	fsal_openflags_t openflags;
@@ -1949,7 +1949,7 @@ fsal_status_t mem_lock_op2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
-	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
+	status = fsal_find_fd(&fdp, obj_hdl, &myself->mh_file.fd,
 			      &myself->mh_file.share, bypass, state,
 			      openflags, mem_open_func, mem_close_func,
 			      &has_lock, &closefd, true,
