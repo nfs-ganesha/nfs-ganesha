@@ -1014,6 +1014,7 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lock_op2 = gpfs_lock_op2;
 	ops->merge = gpfs_merge;
 	ops->is_referral = gpfs_is_referral;
+	ops->fallocate = gpfs_fallocate;
 }
 
 /**

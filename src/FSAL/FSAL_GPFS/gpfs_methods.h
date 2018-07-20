@@ -161,6 +161,8 @@ fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
 fsal_status_t gpfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			    fsal_share_param_t request_share);
 fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl);
+fsal_status_t gpfs_fallocate(struct fsal_obj_handle *obj_hdl, state_t *state,
+			     uint64_t offset, uint64_t length, bool allocate);
 
 /* Internal GPFS method linkage to export object */
 fsal_status_t

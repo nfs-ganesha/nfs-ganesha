@@ -928,6 +928,66 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl,
 	done_cb(obj_hdl, status, write_arg, caller_arg);
 }
 
+fsal_status_t
+gpfs_fallocate(struct fsal_obj_handle *obj_hdl, state_t *state,
+	       uint64_t offset, uint64_t length, bool allocate)
+{
+	fsal_status_t status;
+	int my_fd = -1;
+	bool has_lock = false;
+	bool closefd = false;
+	fsal_openflags_t openflags = FSAL_O_WRITE;
+	struct gpfs_fd *gpfs_fd = NULL;
+
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogMajor(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		gpfs_fd = STATE2FD(state);
+		PTHREAD_RWLOCK_rdlock(&gpfs_fd->fdlock);
+	}
+
+	/* Get a usable file descriptor */
+	status = find_fd(&my_fd, obj_hdl, false, state, openflags,
+			 &has_lock, &closefd, false);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL,
+			 "find_fd failed %s", msg_fsal_err(status.major));
+		if (gpfs_fd)
+			PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
+		return status;
+	}
+
+	status = GPFSFSAL_alloc(my_fd, offset, length, allocate);
+
+	if (gpfs_fd)
+		PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
+
+	if (closefd) {
+		fsal_status_t status2;
+
+		status2 = fsal_internal_close(my_fd, NULL, 0);
+		if (FSAL_IS_ERROR(status2)) {
+			LogEvent(COMPONENT_FSAL,
+				 "fsal close failed, fd:%d, error: %s",
+				 my_fd, msg_fsal_err(status2.major));
+		}
+	}
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	return status;
+}
+
 static fsal_status_t
 gpfs_commit_fd(int my_fd, struct fsal_obj_handle *obj_hdl, off_t offset,
 	       size_t len)
