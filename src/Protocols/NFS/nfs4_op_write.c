@@ -251,7 +251,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
 						op_ctx->fsal_export,
 						op_ctx->ctx_export->fullpath,
-						FSAL_QUOTA_INODES);
+						FSAL_QUOTA_BLOCKS);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_WRITE4->status = NFS4ERR_DQUOT;
