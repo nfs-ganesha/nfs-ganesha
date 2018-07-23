@@ -446,24 +446,6 @@ fsal_status_t mdcache_alloc_and_check_handle(
 fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 				    bool need_fslocations, bool invalidate);
 
-static inline
-void mdcache_refresh_attrs_no_invalidate(mdcache_entry_t *entry)
-{
-	fsal_status_t status;
-
-	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-
-	status = mdcache_refresh_attrs(entry, false /*need_acl*/,
-				       false /*need_fslocations*/, false);
-
-	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_CACHE_INODE, "Refresh attributes failed %s",
-			 fsal_err_txt(status));
-	}
-}
-
 fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *exp,
 				struct fsal_obj_handle *sub_handle,
 				struct attrlist *attrs_in,
@@ -1074,5 +1056,27 @@ fsal_status_t mdcache_export_up_ops_init(struct fsal_up_vector *my_up_ops,
 			   (key)->kv.len); \
 	LogFullDebug(COMPONENT_CACHE_INODE, "hash key: %lx", (key)->hk); \
 } while (0)
+
+static inline
+fsal_status_t mdcache_refresh_attrs_no_invalidate(mdcache_entry_t *entry)
+{
+	fsal_status_t status;
+
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+
+	status = mdcache_refresh_attrs(entry, false /*need_acl*/,
+				       false /*need_fslocations*/, false);
+
+	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_CACHE_INODE, "Refresh attributes failed %s",
+			 fsal_err_txt(status));
+		if (status.major == ERR_FSAL_STALE)
+			mdcache_kill_entry(entry);
+	}
+
+	return status;
+}
 
 #endif /* MDCACHE_INT_H */

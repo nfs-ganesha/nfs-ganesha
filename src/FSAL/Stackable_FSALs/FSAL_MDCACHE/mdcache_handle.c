@@ -252,11 +252,11 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	fsal_release_attrs(&attrs);
 
-	if (!invalidate) {
+	if (FSAL_IS_SUCCESS(status) && !invalidate) {
 		/* Refresh destination directory attributes without
 		 * invalidating dirents.
 		 */
-		mdcache_refresh_attrs_no_invalidate(parent);
+		status = mdcache_refresh_attrs_no_invalidate(parent);
 	}
 
 	return status;
@@ -332,11 +332,11 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 
 	fsal_release_attrs(&attrs);
 
-	if (!invalidate) {
+	if (FSAL_IS_SUCCESS(status) && !invalidate) {
 		/* Refresh destination directory attributes without
 		 * invalidating dirents.
 		 */
-		mdcache_refresh_attrs_no_invalidate(parent);
+		status = mdcache_refresh_attrs_no_invalidate(parent);
 	}
 
 	return status;
@@ -412,11 +412,11 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 
 	fsal_release_attrs(&attrs);
 
-	if (!invalidate) {
+	if (FSAL_IS_SUCCESS(status) && !invalidate) {
 		/* Refresh destination directory attributes without
 		 * invalidating dirents.
 		 */
-		mdcache_refresh_attrs_no_invalidate(parent);
+		status = mdcache_refresh_attrs_no_invalidate(parent);
 	}
 
 	return status;
@@ -508,11 +508,11 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
 	/* Invalidate attributes, so refresh will be forced */
 	atomic_clear_uint32_t_bits(&entry->mde_flags, MDCACHE_TRUST_ATTRS);
 
-	if (!invalidate) {
+	if (FSAL_IS_SUCCESS(status) && !invalidate) {
 		/* Refresh destination directory attributes without
 		 * invalidating dirents.
 		 */
-		mdcache_refresh_attrs_no_invalidate(dest);
+		status = mdcache_refresh_attrs_no_invalidate(dest);
 	}
 
 	return status;
@@ -763,9 +763,6 @@ unlock:
 
 	/* Refresh, if necessary.  Must be done without lock held */
 	if (FSAL_IS_SUCCESS(status)) {
-		if (refresh)
-			mdcache_refresh_attrs_no_invalidate(mdc_newdir);
-
 		/* If we're moving a directory out, update parent hash */
 		if (mdc_olddir != mdc_newdir && obj_hdl->type == DIRECTORY) {
 			PTHREAD_RWLOCK_wrlock(&mdc_obj->content_lock);
@@ -775,6 +772,10 @@ unlock:
 
 			PTHREAD_RWLOCK_unlock(&mdc_obj->content_lock);
 		}
+
+		if (refresh)
+			status =
+			       mdcache_refresh_attrs_no_invalidate(mdc_newdir);
 	}
 
 	if (mdc_lookup_dst)

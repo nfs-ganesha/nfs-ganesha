@@ -424,11 +424,12 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 
 	fsal_release_attrs(&attrs);
 
-	if (createmode != FSAL_NO_CREATE && !invalidate) {
+	if (FSAL_IS_SUCCESS(status) && createmode != FSAL_NO_CREATE &&
+	    !invalidate) {
 		/* Refresh destination directory attributes without
 		 * invalidating dirents.
 		 */
-		mdcache_refresh_attrs_no_invalidate(mdc_parent);
+		status = mdcache_refresh_attrs_no_invalidate(mdc_parent);
 	}
 
 	return status;
