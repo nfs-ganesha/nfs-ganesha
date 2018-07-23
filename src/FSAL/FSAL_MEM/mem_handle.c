@@ -876,7 +876,7 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 		struct mem_dirent *dirent;
 
 		if (count >= 2 * mdcache_param.dir.avl_chunk) {
-			LogEvent(COMPONENT_FSAL, "readahead done %d",
+			LogFullDebug(COMPONENT_FSAL, "readahead done %d",
 				     count);
 			/* Limit readahead to 1 chunk */
 			*eof = false;
