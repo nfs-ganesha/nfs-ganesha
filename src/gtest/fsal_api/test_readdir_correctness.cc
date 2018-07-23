@@ -87,9 +87,9 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = test_root->obj_ops.unlink(test_root, test_dir, TEST_DIR);
+      status = test_root->obj_ops->unlink(test_root, test_dir, TEST_DIR);
       EXPECT_EQ(0, status.major);
-      test_dir->obj_ops.put_ref(test_dir);
+      test_dir->obj_ops->put_ref(test_dir);
       test_dir = NULL;
 
       gtest::GaneshaFSALBaseTest::TearDown();
@@ -111,10 +111,10 @@ namespace {
       for (int i = 0; i < DIR_COUNT; i++) {
 	struct gsh_buffdesc fh_desc;
 
-	dir_hdls[i]->obj_ops.handle_to_key(dir_hdls[i], &fh_desc);
+	dir_hdls[i]->obj_ops->handle_to_key(dir_hdls[i], &fh_desc);
 	keyDup(&keys[i], &fh_desc);
 
-	dir_hdls[i]->obj_ops.put_ref(dir_hdls[i]);
+	dir_hdls[i]->obj_ops->put_ref(dir_hdls[i]);
       }
     }
 
@@ -151,7 +151,7 @@ namespace {
     rd_state_t *st = (rd_state_t*)dir_state;
     struct gsh_buffdesc fh_desc;
 
-    obj->obj_ops.handle_to_key(obj, &fh_desc);
+    obj->obj_ops->handle_to_key(obj, &fh_desc);
 
     for (int i = 0; i < DIR_COUNT; i++) {
       if (keyEQ(&st->keys[i], &fh_desc)) {
@@ -160,7 +160,7 @@ namespace {
 	break;
       }
     }
-    obj->obj_ops.put_ref(obj);
+    obj->obj_ops->put_ref(obj);
     return DIR_CONTINUE;
   }
 
@@ -182,7 +182,7 @@ TEST_F(ReaddirFullCorrectnessTest, BIG)
   st.keys = keys;
   st.hdl_found = hdl_found;
 
-  status = test_dir->obj_ops.readdir(test_dir, &whence, &st, trc_populate_dirent, 0, &eod);
+  status = test_dir->obj_ops->readdir(test_dir, &whence, &st, trc_populate_dirent, 0, &eod);
   ASSERT_EQ(status.major, 0);
 
   for (int i=0; i < DIR_COUNT; i++) {
@@ -206,7 +206,7 @@ TEST_F(ReaddirFullCorrectnessTest, BIG_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_dir);
   ASSERT_NE(sub_hdl, nullptr);
 
-  status = sub_hdl->obj_ops.readdir(sub_hdl, &whence, &st, trc_populate_dirent, 0, &eod);
+  status = sub_hdl->obj_ops->readdir(sub_hdl, &whence, &st, trc_populate_dirent, 0, &eod);
   ASSERT_EQ(status.major, 0);
 
   for (int i = 0; i < DIR_COUNT; i++) {
