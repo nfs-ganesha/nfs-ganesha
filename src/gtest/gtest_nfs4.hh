@@ -42,7 +42,8 @@ namespace gtest {
     virtual void SetUp() {
       gtest::GaneshaFSALBaseTest::SetUp();
 
-      memset(&data, 0, sizeof(struct compound_data));
+      data = (compound_data_t *) gsh_calloc(1, sizeof(*data));
+
       memset(&arg, 0, sizeof(nfs_arg_t));
       memset(&resp, 0, sizeof(struct nfs_resop4));
 
@@ -51,19 +52,19 @@ namespace gtest {
       arg.arg_compound4.argarray.argarray_val = ops;
 
       /* Setup some basic stuff (that will be overrode) so TearDown works. */
-      data.minorversion = 0;
+      data->minorversion = 0;
       ops[0].argop = NFS4_OP_PUTROOTFH;
     }
 
     virtual void TearDown() {
       bool rc;
 
-      set_current_entry(&data, nullptr);
+      set_current_entry(data, nullptr);
 
       nfs4_Compound_FreeOne(&resp);
 
       /* Free the compound data and response */
-      compound_data_Free(&data);
+      compound_data_Free(data);
 
       /* Free the args structure. */
       rc = xdr_free((xdrproc_t) xdr_COMPOUND4args, &arg);
@@ -76,32 +77,32 @@ namespace gtest {
       bool fhres;
 
       /* Convert root_obj to a file handle in the args */
-      fhres = nfs4_FSALToFhandle(data.currentFH.nfs_fh4_val == NULL,
-                                 &data.currentFH, entry, op_ctx->ctx_export);
+      fhres = nfs4_FSALToFhandle(data->currentFH.nfs_fh4_val == NULL,
+                                 &data->currentFH, entry, op_ctx->ctx_export);
       EXPECT_EQ(fhres, true);
 
-      set_current_entry(&data, entry);
+      set_current_entry(data, entry);
     }
 
     void setSavedFH(struct fsal_obj_handle *entry) {
       bool fhres;
 
       /* Convert root_obj to a file handle in the args */
-      fhres = nfs4_FSALToFhandle(data.savedFH.nfs_fh4_val == NULL,
-                                 &data.savedFH, entry, op_ctx->ctx_export);
+      fhres = nfs4_FSALToFhandle(data->savedFH.nfs_fh4_val == NULL,
+                                 &data->savedFH, entry, op_ctx->ctx_export);
       EXPECT_EQ(fhres, true);
 
-      set_saved_entry(&data, entry);
+      set_saved_entry(data, entry);
     }
 
     void set_saved_export(void) {
       /* Set saved export from op_ctx */
-      if (data.saved_export != NULL)
-        put_gsh_export(data.saved_export);
+      if (data->saved_export != NULL)
+        put_gsh_export(data->saved_export);
       /* Save the export information and take reference. */
       get_gsh_export_ref(op_ctx->ctx_export);
-      data.saved_export = op_ctx->ctx_export;
-      data.saved_export_perms = *op_ctx->export_perms;
+      data->saved_export = op_ctx->ctx_export;
+      data->saved_export_perms = *op_ctx->export_perms;
     }
 
     void setup_lookup(int pos, const char *name) {
@@ -178,7 +179,7 @@ namespace gtest {
       ops[pos].nfs_argop4_u.oplink.newname.utf8string_val = nullptr;
     }
 
-    struct compound_data data;
+    compound_data_t *data;
     struct nfs_argop4 *ops;
     nfs_arg_t arg;
     struct nfs_resop4 resp;

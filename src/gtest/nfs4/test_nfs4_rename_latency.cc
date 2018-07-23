@@ -91,7 +91,7 @@ TEST_F(RenameEmptyLatencyTest, SIMPLE)
 
   enableEvents(event_list);
 
-  rc = nfs4_op_rename(&ops[0], &data, &resp);
+  rc = nfs4_op_rename(&ops[0], data, &resp);
 
   EXPECT_EQ(rc, NFS4_OK);
 
@@ -99,7 +99,7 @@ TEST_F(RenameEmptyLatencyTest, SIMPLE)
 
   swap_rename(0);
 
-  rc = nfs4_op_rename(&ops[0], &data, &resp);
+  rc = nfs4_op_rename(&ops[0], data, &resp);
 
   EXPECT_EQ(rc, NFS4_OK);
 }
@@ -118,7 +118,7 @@ TEST_F(RenameEmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    rc = nfs4_op_rename(&ops[0], &data, &resp);
+    rc = nfs4_op_rename(&ops[0], data, &resp);
     EXPECT_EQ(rc, NFS4_OK);
     /* Set up so next time, we rename back... Even loop count value assures
      * that the file ends up having the original name.
@@ -152,7 +152,7 @@ TEST_F(RenameFullLatencyTest, BIG_SINGLE)
 
   setCurrentFH(test_root);
   setSavedFH(test_root);
-  rc = nfs4_op_rename(&ops[0], &data, &resp);
+  rc = nfs4_op_rename(&ops[0], data, &resp);
   EXPECT_EQ(rc, NFS4_OK);
 
   now(&e_time);
@@ -164,7 +164,7 @@ TEST_F(RenameFullLatencyTest, BIG_SINGLE)
 
   swap_rename(0);
 
-  rc = nfs4_op_rename(&ops[0], &data, &resp);
+  rc = nfs4_op_rename(&ops[0], data, &resp);
 
   EXPECT_EQ(rc, NFS4_OK);
 }
@@ -196,7 +196,7 @@ TEST_F(RenameFullLatencyTest, BIG)
     }
     setCurrentFH(test_root);
     setSavedFH(test_root);
-    rc = nfs4_op_rename(&ops[0], &data, &resp);
+    rc = nfs4_op_rename(&ops[0], data, &resp);
     EXPECT_EQ(rc, NFS4_OK);
     cleanup_rename(0);
   }

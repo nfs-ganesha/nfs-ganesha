@@ -210,6 +210,7 @@ typedef struct nfs_request {
 	nfs_arg_t arg_nfs;
 	nfs_res_t *res_nfs;
 	const nfs_function_desc_t *funcdesc;
+	void *proc_data;
 } nfs_request_t;
 
 enum rpc_chan_type {
@@ -324,6 +325,11 @@ struct compound_data {
 	struct export_perms saved_export_perms; /*< Permissions for export for
 					       savedFH */
 	struct svc_req *req;	/*< RPC Request related to the compound */
+	nsecs_elapsed_t op_start_time;
+	nfs_argop4 *argarray;
+	nfs_res_t *res;
+	nfs_resop4 *resarray;
+	uint32_t argarray_len;
 	nfs_client_cred_t credential;	/*< Raw RPC credentials */
 	nfs_client_id_t *preserved_clientid;	/*< clientid that has lease
 						   reserved, if any */
@@ -334,6 +340,7 @@ struct compound_data {
 					    used */
 	bool sa_cachethis;	/*< True if cachethis was specified in
 				    SEQUENCE op. */
+	nfs_opnum4 opcode;	/*< Current NFS4 OP */
 	uint32_t oppos;		/*< Position of the operation within the
 				    request processed  */
 	const char *opname;	/*< Name of the operation */

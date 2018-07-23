@@ -86,10 +86,10 @@ TEST_F(PutfhEmptyLatencyTest, SIMPLE)
 
   enableEvents(event_list);
 
-  rc = nfs4_op_putfh(&ops[0], &data, &resp);
+  rc = nfs4_op_putfh(&ops[0], data, &resp);
 
   EXPECT_EQ(rc, NFS4_OK);
-  EXPECT_EQ(test_root, data.current_obj);
+  EXPECT_EQ(test_root, data->current_obj);
 
   disableEvents(event_list);
 }
@@ -106,9 +106,9 @@ TEST_F(PutfhEmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
-    rc = nfs4_op_putfh(&ops[0], &data, &resp);
+    rc = nfs4_op_putfh(&ops[0], data, &resp);
     EXPECT_EQ(rc, NFS4_OK);
-    EXPECT_EQ(test_root, data.current_obj);
+    EXPECT_EQ(test_root, data->current_obj);
   }
 
   now(&e_time);
@@ -131,9 +131,9 @@ TEST_F(PutfhFullLatencyTest, BIG_SINGLE)
 
   setup_putfh(0, objs[FILE_COUNT / 5]);
 
-  rc = nfs4_op_putfh(&ops[0], &data, &resp);
+  rc = nfs4_op_putfh(&ops[0], data, &resp);
   EXPECT_EQ(rc, NFS4_OK);
-  EXPECT_EQ(objs[FILE_COUNT / 5], data.current_obj);
+  EXPECT_EQ(objs[FILE_COUNT / 5], data->current_obj);
 
   now(&e_time);
 
@@ -158,9 +158,9 @@ TEST_F(PutfhFullLatencyTest, BIG)
     int n = i % FILE_COUNT;
 
     setup_putfh(0, objs[n]);
-    rc = nfs4_op_putfh(&ops[0], &data, &resp);
+    rc = nfs4_op_putfh(&ops[0], data, &resp);
     EXPECT_EQ(rc, NFS4_OK);
-    EXPECT_EQ(objs[n], data.current_obj);
+    EXPECT_EQ(objs[n], data->current_obj);
     cleanup_putfh(0);
   }
 

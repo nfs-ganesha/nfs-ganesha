@@ -94,7 +94,7 @@ TEST_F(LinkFullLatencyTest, BIG_SINGLE)
 
   setCurrentFH(test_root);
   setSavedFH(objs[DIR_COUNT / 5]);
-  rc = nfs4_op_link(&ops[0], &data, &resp);
+  rc = nfs4_op_link(&ops[0], data, &resp);
   EXPECT_EQ(rc, NFS4_OK);
 
   now(&e_time);
@@ -132,7 +132,7 @@ TEST_F(LinkFullLatencyTest, BIG)
 
     setCurrentFH(test_root);
     setSavedFH(objs[n]);
-    rc = nfs4_op_link(&ops[0], &data, &resp);
+    rc = nfs4_op_link(&ops[0], data, &resp);
     EXPECT_EQ(rc, NFS4_OK);
     cleanup_link(0);
   }

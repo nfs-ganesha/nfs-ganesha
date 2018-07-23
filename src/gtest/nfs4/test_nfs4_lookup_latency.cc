@@ -87,10 +87,10 @@ TEST_F(LookupEmptyLatencyTest, SIMPLE)
 
   enableEvents(event_list);
 
-  rc = nfs4_op_lookup(&ops[0], &data, &resp);
+  rc = nfs4_op_lookup(&ops[0], data, &resp);
 
   EXPECT_EQ(rc, NFS4_OK);
-  EXPECT_EQ(test_root, data.current_obj);
+  EXPECT_EQ(test_root, data->current_obj);
 
   disableEvents(event_list);
 }
@@ -108,9 +108,9 @@ TEST_F(LookupEmptyLatencyTest, LOOP)
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
     setCurrentFH(root_entry);
-    rc = nfs4_op_lookup(&ops[0], &data, &resp);
+    rc = nfs4_op_lookup(&ops[0], data, &resp);
     EXPECT_EQ(rc, NFS4_OK);
-    EXPECT_EQ(test_root, data.current_obj);
+    EXPECT_EQ(test_root, data->current_obj);
   }
 
   now(&e_time);
@@ -137,9 +137,9 @@ TEST_F(LookupFullLatencyTest, BIG_SINGLE)
   setup_lookup(0, fname);
 
   setCurrentFH(test_root);
-  rc = nfs4_op_lookup(&ops[0], &data, &resp);
+  rc = nfs4_op_lookup(&ops[0], data, &resp);
   EXPECT_EQ(rc, NFS4_OK);
-  EXPECT_EQ(objs[FILE_COUNT / 5], data.current_obj);
+  EXPECT_EQ(objs[FILE_COUNT / 5], data->current_obj);
 
   now(&e_time);
 
@@ -168,9 +168,9 @@ TEST_F(LookupFullLatencyTest, BIG)
 
     setup_lookup(0, fname);
     setCurrentFH(test_root);
-    rc = nfs4_op_lookup(&ops[0], &data, &resp);
+    rc = nfs4_op_lookup(&ops[0], data, &resp);
     EXPECT_EQ(rc, NFS4_OK);
-    EXPECT_EQ(objs[n], data.current_obj);
+    EXPECT_EQ(objs[n], data->current_obj);
     cleanup_lookup(0);
   }
 
