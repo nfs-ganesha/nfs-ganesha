@@ -48,6 +48,7 @@
 #include "export_mgr.h"
 #include "statx_compat.h"
 #include "nfs_core.h"
+#include "sal_functions.h"
 
 /**
  * The name of this module.
@@ -211,6 +212,54 @@ static inline void enable_delegations(struct ceph_export *export)
 }
 #endif /* USE_FSAL_CEPH_LL_DELEGATION */
 
+#ifdef USE_FSAL_CEPH_RECLAIM_RESET
+#define RECLAIM_UUID_PREFIX		"ganesha-"
+static int reclaim_reset(struct ceph_export *export)
+{
+	int		ceph_status;
+	char		*nodeid, *uuid;
+	size_t		len;
+
+	/*
+	 * Set long timeout for the session to ensure that MDS doesn't lose
+	 * state before server can come back and do recovery.
+	 */
+	ceph_set_session_timeout(export->cmount, 300);
+
+	/*
+	 * For the uuid here, we just use whatever ganesha- + whatever
+	 * nodeid the recovery backend reports.
+	 */
+	ceph_status = nfs_recovery_get_nodeid(&nodeid);
+	if (ceph_status != 0) {
+		LogEvent(COMPONENT_FSAL, "couldn't get nodeid: %d", errno);
+		return ceph_status;
+	}
+
+	len = strlen(RECLAIM_UUID_PREFIX) + strlen(nodeid) + 1;
+	uuid = gsh_malloc(len);
+	snprintf(uuid, len, RECLAIM_UUID_PREFIX "%s", nodeid);
+
+	/* If this fails, log a message but soldier on */
+	ceph_status = ceph_start_reclaim(export->cmount, nodeid,
+						CEPH_RECLAIM_RESET);
+	if (ceph_status)
+		LogEvent(COMPONENT_FSAL, "start_reclaim failed: %d",
+				ceph_status);
+	ceph_finish_reclaim(export->cmount);
+	ceph_set_uuid(export->cmount, nodeid);
+	gsh_free(nodeid);
+	gsh_free(uuid);
+	return 0;
+}
+#undef RECLAIM_UUID_PREFIX
+#else
+static inline int reclaim_reset(struct ceph_export *export)
+{
+	return 0;
+}
+#endif
+
 /**
  * @brief Create a new export under this FSAL
  *
@@ -311,6 +360,24 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		LogCrit(COMPONENT_FSAL,
 			"Unable to set Ceph client_mountpoint for %s: %d",
 			op_ctx->ctx_export->fullpath, ceph_status);
+		goto error;
+	}
+
+	ceph_status = ceph_init(export->cmount);
+	if (ceph_status != 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to init Ceph handle for %s.",
+			op_ctx->ctx_export->fullpath);
+		goto error;
+	}
+
+	ceph_status = reclaim_reset(export);
+	if (ceph_status != 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to do reclaim_reset for %s.",
+			op_ctx->ctx_export->fullpath);
 		goto error;
 	}
 
