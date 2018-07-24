@@ -87,6 +87,7 @@ struct ceph_fsal_module CephFSM = {
 		#ifdef USE_FSAL_CEPH_LL_DELEGATION
 			.delegations = FSAL_OPTION_FILE_READ_DELEG,
 		#endif
+			.readdir_plus = true,
 		}
 	}
 };
