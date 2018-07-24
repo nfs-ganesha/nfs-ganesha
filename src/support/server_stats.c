@@ -1921,13 +1921,6 @@ void reset_global_stats(void)
 	reset_nlmv4_stats(&global_st.nlm4);
 }
 
-void global_dbus_reset_stats(DBusMessageIter *iter)
-{
-	reset_global_stats();
-	reset_export_stats();
-	reset_client_stats();
-}
-
 void server_dbus_total_ops(struct export_stats *export_st,
 			   DBusMessageIter *iter)
 {
@@ -1956,13 +1949,11 @@ void global_dbus_total_ops(DBusMessageIter *iter)
 	global_dbus_total(iter);
 }
 
-void server_reset_stats(DBusMessageIter *iter)
+void reset_server_stats(void)
 {
-	struct timespec timestamp;
-
-	now(&timestamp);
-	dbus_append_timestamp(iter, &timestamp);
-	global_dbus_reset_stats(iter);
+	reset_global_stats();
+	reset_export_stats();
+	reset_client_stats();
 }
 
 #ifdef _USE_9P
