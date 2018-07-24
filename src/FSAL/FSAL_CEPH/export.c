@@ -47,6 +47,7 @@
 #include "FSAL/fsal_config.h"
 #include "internal.h"
 #include "statx_compat.h"
+#include "sal_functions.h"
 
 /**
  * @brief Clean up an export
@@ -308,6 +309,26 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+void ceph_prepare_unexport(struct fsal_export *export_pub)
+{
+	struct ceph_export *export =
+			container_of(export_pub, struct ceph_export, export);
+
+	/* Flush all buffers */
+	ceph_sync_fs(export->cmount);
+
+#if USE_FSAL_CEPH_ABORT_CONN
+	/*
+	 * If we're still a member of the cluster, do a hard abort on the
+	 * connection to ensure that state is left intact on the MDS when we
+	 * return. If we're not a member any longer, then just shutdown
+	 * cleanly.
+	 */
+	if (nfs_grace_is_member())
+		ceph_abort_conn(export->cmount);
+#endif
+}
+
 /**
  * @brief Set operations for exports
  *
@@ -319,6 +340,7 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 
 void export_ops_init(struct export_ops *ops)
 {
+	ops->prepare_unexport = ceph_prepare_unexport,
 	ops->release = release;
 	ops->lookup_path = lookup_path;
 	ops->wire_to_host = wire_to_host;
