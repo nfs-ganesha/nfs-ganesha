@@ -81,6 +81,7 @@ static fsal_staticfsinfo_t default_ceph_info = {
 #ifdef USE_FSAL_CEPH_LL_DELEGATION
 	.delegations = FSAL_OPTION_FILE_READ_DELEG,
 #endif
+	.readdir_plus = true,
 };
 
 static struct config_item ceph_items[] = {
