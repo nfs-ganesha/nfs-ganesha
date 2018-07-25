@@ -174,6 +174,7 @@ enum nfs_req_result {
 	NFS_REQ_OK = 0,
 	NFS_REQ_DROP = 1,
 	NFS_REQ_ERROR = 2,
+	NFS_REQ_ASYNC_WAIT = 3,
 };
 
 typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
@@ -203,6 +204,9 @@ typedef struct nfs_function_desc__ {
 typedef struct nfs_request {
 	struct svc_req svc;
 	struct nfs_request_lookahead lookahead;
+	struct req_op_context req_ctx;
+	struct export_perms req_export_perms;
+	struct user_cred req_user_credentials;
 	nfs_arg_t arg_nfs;
 	nfs_res_t *res_nfs;
 	const nfs_function_desc_t *funcdesc;

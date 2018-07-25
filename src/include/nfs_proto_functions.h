@@ -36,12 +36,16 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include "nfs_core.h"
 #include "sal_data.h"
 
 static inline enum nfs_req_result nfsstat4_to_nfs_req_result(nfsstat4 stat)
 {
 	return stat == NFS4_OK ? NFS_REQ_OK : NFS_REQ_ERROR;
 }
+
+void nfs_rpc_complete_async_request(nfs_request_t *reqdata,
+				    enum nfs_req_result rc);
 
 extern const nfs_function_desc_t nfs3_func_desc[];
 extern const nfs_function_desc_t nfs4_func_desc[];
