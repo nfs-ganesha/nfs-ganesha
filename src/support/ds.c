@@ -537,4 +537,5 @@ void server_pkginit(void)
 	avltree_init(&server_by_id.t, server_id_cmpf, 0);
 	glist_init(&dslist);
 	memset(&server_by_id.cache, 0, sizeof(server_by_id.cache));
+	pthread_rwlockattr_destroy(&rwlock_attr);
 }

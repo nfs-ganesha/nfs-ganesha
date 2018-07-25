@@ -1066,6 +1066,7 @@ void *_9p_dispatcher_thread(void *Arg)
 	}			/* while */
 
 	close(_9p_socket);
+	pthread_attr_destroy(&attr_thr);
 
 	return NULL;
 }				/* _9p_dispatcher_thread */

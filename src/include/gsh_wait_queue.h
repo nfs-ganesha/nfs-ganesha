@@ -63,6 +63,7 @@ static inline int gsh_mutex_init(pthread_mutex_t *m,
 				 __attribute__ ((unused)))
 {
 	pthread_mutexattr_t attr;
+	int ret;
 
 	pthread_mutexattr_init(&attr);
 	pthread_mutexattr_settype(&attr,
@@ -72,7 +73,9 @@ static inline int gsh_mutex_init(pthread_mutex_t *m,
 				  PTHREAD_MUTEX_DEFAULT
 #endif
 	    );
-	return pthread_mutex_init(m, &attr);
+	ret = pthread_mutex_init(m, &attr);
+	pthread_mutexattr_destroy(&attr);
+	return ret;
 }
 
 static inline void init_wait_entry(wait_entry_t *we)

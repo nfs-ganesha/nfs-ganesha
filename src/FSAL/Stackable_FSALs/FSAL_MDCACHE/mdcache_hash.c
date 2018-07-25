@@ -80,6 +80,8 @@ cih_pkginit(void)
 		&rwlock_attr,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
+	pthread_rwlockattr_destroy(&rwlock_attr);
+
 	cih_fhcache.npart = mdcache_param.nparts;
 	cih_fhcache.partition =
 		gsh_calloc(cih_fhcache.npart, sizeof(cih_partition_t));

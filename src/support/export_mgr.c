@@ -2364,6 +2364,8 @@ void export_pkginit(void)
 	glist_init(&exportlist);
 	glist_init(&mount_work);
 	glist_init(&unexport_work);
+
+	pthread_rwlockattr_destroy(&rwlock_attr);
 }
 
 /** @} */

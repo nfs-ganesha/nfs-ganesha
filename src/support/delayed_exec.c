@@ -293,6 +293,7 @@ void delayed_start(void)
 		LIST_INSERT_HEAD(&thread_list, thread, link);
 	}
 	PTHREAD_MUTEX_unlock(&mtx);
+	pthread_attr_destroy(&attr);
 }
 
 /**

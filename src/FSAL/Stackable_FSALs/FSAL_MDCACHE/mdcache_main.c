@@ -203,6 +203,7 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 	PTHREAD_RWLOCK_init(&myself->mdc_exp_lock, &attrs);
+	pthread_rwlockattr_destroy(&attrs);
 
 	status = sub_fsal->m_ops.create_export(sub_fsal,
 						 parse_node,

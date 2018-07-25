@@ -597,6 +597,9 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 	mdcache_key_delete(&entry->fh_hk.key);
 	PTHREAD_RWLOCK_destroy(&entry->content_lock);
 	PTHREAD_RWLOCK_destroy(&entry->attr_lock);
+
+	if (entry->obj_handle.type == DIRECTORY)
+		pthread_spin_destroy(&entry->fsobj.fsdir.spin);
 }
 
 /**

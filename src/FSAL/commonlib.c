@@ -189,6 +189,8 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 	PTHREAD_RWLOCK_wrlock(&obj->fsal->lock);
 	glist_add(&obj->fsal->handles, &obj->handles);
 	PTHREAD_RWLOCK_unlock(&obj->fsal->lock);
+
+	pthread_rwlockattr_destroy(&attrs);
 }
 
 void fsal_obj_handle_fini(struct fsal_obj_handle *obj)
@@ -224,6 +226,8 @@ void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal)
 	PTHREAD_RWLOCK_wrlock(&fsal->lock);
 	glist_add(&fsal->servers, &pds->server);
 	PTHREAD_RWLOCK_unlock(&fsal->lock);
+
+	pthread_rwlockattr_destroy(&attrs);
 }
 
 void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds)

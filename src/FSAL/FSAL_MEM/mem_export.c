@@ -215,6 +215,7 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 	PTHREAD_RWLOCK_init(&myself->mfe_exp_lock, &attrs);
+	pthread_rwlockattr_destroy(&attrs);
 	fsal_export_init(&myself->export);
 	mem_export_ops_init(&myself->export.exp_ops);
 

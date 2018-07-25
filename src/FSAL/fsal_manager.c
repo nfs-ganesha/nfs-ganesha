@@ -420,6 +420,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
 	PTHREAD_RWLOCK_init(&fsal_hdl->lock, &attrs);
+	pthread_rwlockattr_destroy(&attrs);
 	glist_init(&fsal_hdl->servers);
 	glist_init(&fsal_hdl->handles);
 	glist_init(&fsal_hdl->exports);

@@ -1059,6 +1059,7 @@ void client_pkginit(void)
 	client_by_ip.cache_sz = 32767;
 	client_by_ip.cache =
 	    gsh_calloc(client_by_ip.cache_sz, sizeof(struct avltree_node *));
+	pthread_rwlockattr_destroy(&rwlock_attr);
 }
 
 /** @} */

@@ -604,6 +604,7 @@ static void nfs_Start_threads(void)
 	}
 	LogEvent(COMPONENT_THREAD, "General fridge was started successfully");
 
+	pthread_attr_destroy(&attr_thr);
 }
 
 /**
