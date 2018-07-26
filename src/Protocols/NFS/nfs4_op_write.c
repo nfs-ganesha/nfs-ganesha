@@ -320,10 +320,6 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			state_open = NULL;
 			break;
 
-		case STATE_TYPE_LAYOUT:
-			state_open = NULL;
-			break;
-
 		default:
 			res_WRITE4->status = NFS4ERR_BAD_STATEID;
 			LogDebug(COMPONENT_NFS_V4_LOCK,
