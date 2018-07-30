@@ -1263,9 +1263,10 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
 	/* Check for . and .. on oldname and newname. */
-	if (!strcmp(oldname, ".") || !strcmp(oldname, "..")
+	if (oldname[0] == '\0' || newname[0] == '\0'
+	    || !strcmp(oldname, ".") || !strcmp(oldname, "..")
 	    || !strcmp(newname, ".") || !strcmp(newname, "..")) {
-		return fsalstat(ERR_FSAL_BADNAME, 0);
+		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
 	/* Check for object existence in source directory */

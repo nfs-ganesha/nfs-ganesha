@@ -1446,6 +1446,13 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 
 	LogFullDebug(COMPONENT_CACHE_INODE, "Add dir entry %s", name);
 
+	if (name[0] == '\0') {
+		/* An empty dirent name is invalid */
+		LogInfo(COMPONENT_CACHE_INODE,
+			"Invalid dirent with empty name");
+		return fsalstat(ERR_FSAL_INVAL, 0);
+	}
+
 #ifdef DEBUG_MDCACHE
 	assert(parent->content_lock.__data.__writer != 0);
 #endif
