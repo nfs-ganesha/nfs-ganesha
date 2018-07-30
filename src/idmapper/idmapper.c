@@ -175,6 +175,9 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				rc = getgrgid_r(id, &g, namebuff, new_name.len,
 						&gres);
 				nulled = (gres == NULL);
+
+				if((rc == 0) && !nulled)
+                                	memcpy(namebuff, g.gr_name, strlen(g.gr_name)+1);
 			} else {
 				struct passwd p;
 				struct passwd *pres;
@@ -182,6 +185,9 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				rc = getpwuid_r(id, &p, namebuff, new_name.len,
 						&pres);
 				nulled = (pres == NULL);
+
+				if((rc == 0) && !nulled)
+					memcpy(namebuff, p.pw_name, strlen(p.pw_name)+1);
 			}
 
 			if ((rc == 0) && !nulled) {
