@@ -2143,6 +2143,11 @@ static fsal_status_t mem_merge(struct fsal_obj_handle *old_hdl,
 {
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 
+	if (old_hdl == new_hdl) {
+		/* Nothing to merge */
+		return status;
+	}
+
 	if (old_hdl->type == REGULAR_FILE &&
 	    new_hdl->type == REGULAR_FILE) {
 		/* We need to merge the share reservations on this file.
