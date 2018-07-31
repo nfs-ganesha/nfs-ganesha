@@ -39,7 +39,7 @@
 #include <rados_grace.h>
 
 static int
-cluster_connect(rados_ioctx_t *io_ctx, const char *pool)
+cluster_connect(rados_ioctx_t *io_ctx, const char *pool, const char *ns)
 {
 	int ret;
 	rados_t clnt;
@@ -73,10 +73,13 @@ cluster_connect(rados_ioctx_t *io_ctx, const char *pool)
 		fprintf(stderr, "rados_ioctx_create: %d\n", ret);
 		return ret;
 	}
+
+	rados_ioctx_set_namespace(*io_ctx, ns);
 	return 0;
 }
 
 static const struct option long_options[] = {
+	{"ns", 1, NULL, 'n'},
 	{"oid", 1, NULL, 'o'},
 	{"pool", 1, NULL, 'p'},
 	{NULL, 0, NULL, 0}
@@ -85,7 +88,7 @@ static const struct option long_options[] = {
 static void usage(char * const *argv)
 {
 	fprintf(stderr,
-		"Usage:\n%s [ --pool pool_id ] [ --oid obj_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]\n",
+		"Usage:\n%s [ --ns namespace ] [ --oid obj_id ] [ --pool pool_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]\n",
 		argv[0]);
 }
 
@@ -97,12 +100,16 @@ int main(int argc, char * const *argv)
 	uint64_t		cur, rec;
 	char			*pool = DEFAULT_RADOS_GRACE_POOL;
 	char			*oid = DEFAULT_RADOS_GRACE_OID;
+	char			*ns = NULL;
 	char			c;
 	const char * const	*nodeids;
 
-	while ((c = getopt_long(argc, argv, "o:p:", long_options,
+	while ((c = getopt_long(argc, argv, "n:o:p:", long_options,
 				NULL)) != -1) {
 		switch (c) {
+		case 'n':
+			ns = optarg;
+			break;
 		case 'o':
 			oid = optarg;
 			break;
@@ -122,7 +129,7 @@ int main(int argc, char * const *argv)
 		nodeids = (const char * const *)&argv[optind];
 	}
 
-	ret = cluster_connect(&io_ctx, pool);
+	ret = cluster_connect(&io_ctx, pool, ns);
 	if (ret) {
 		fprintf(stderr, "Can't connect to cluster: %d\n", ret);
 		return 1;

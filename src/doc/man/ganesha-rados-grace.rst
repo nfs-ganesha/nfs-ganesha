@@ -5,7 +5,7 @@ ganesha-rados-grace -- manipulate the shared grace management database
 SYNOPSIS
 ===================================================================
 
-| ganesha-rados-grace [ --pool pool_id ] [ --oid obj_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]
+| ganesha-rados-grace [--ns namespace] [ --oid obj_id ] [ --pool pool_id ]  dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]
 
 DESCRIPTION
 ===================================================================
@@ -21,13 +21,18 @@ that should be acted upon.
 
 OPTIONS
 ===================================================================
-**--pool**
+**--ns**
 
-Set the RADOS poolid in which the grace database object resides
+Set the RADOS namespace to use within the pool (default is NULL)
 
 **--oid**
 
-Set the object id of the grace database RADOS object
+Set the object id of the grace database RADOS object (default is "grace")
+
+**--pool**
+
+Set the RADOS poolid in which the grace database object resides (default is
+"nfs-ganesha")
 
 COMMANDS
 ===================================================================
