@@ -77,7 +77,7 @@ cluster_connect(rados_ioctx_t *io_ctx, const char *pool)
 }
 
 static const struct option long_options[] = {
-	{"name", 1, NULL, 'n'},
+	{"oid", 1, NULL, 'o'},
 	{"pool", 1, NULL, 'p'},
 	{NULL, 0, NULL, 0}
 };
@@ -85,7 +85,7 @@ static const struct option long_options[] = {
 static void usage(char * const *argv)
 {
 	fprintf(stderr,
-		"Usage:\n%s [ --pool pool_id ] [ --name obj_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]\n",
+		"Usage:\n%s [ --pool pool_id ] [ --oid obj_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]\n",
 		argv[0]);
 }
 
@@ -96,15 +96,15 @@ int main(int argc, char * const *argv)
 	const char		*cmd = "dump";
 	uint64_t		cur, rec;
 	char			*pool = DEFAULT_RADOS_GRACE_POOL;
-	char			*name = DEFAULT_RADOS_GRACE_OID;
+	char			*oid = DEFAULT_RADOS_GRACE_OID;
 	char			c;
 	const char * const	*nodeids;
 
-	while ((c = getopt_long(argc, argv, "n:p:", long_options,
+	while ((c = getopt_long(argc, argv, "o:p:", long_options,
 				NULL)) != -1) {
 		switch (c) {
-		case 'n':
-			name = optarg;
+		case 'o':
+			oid = optarg;
 			break;
 		case 'p':
 			pool = optarg;
@@ -128,27 +128,27 @@ int main(int argc, char * const *argv)
 		return 1;
 	}
 
-	ret = rados_grace_create(io_ctx, name);
+	ret = rados_grace_create(io_ctx, oid);
 	if (ret < 0 && ret != -EEXIST) {
 		fprintf(stderr, "Can't create grace db: %d\n", ret);
 		return 1;
 	}
 
 	if (!strcmp(cmd, "dump")) {
-		ret = rados_grace_dump(io_ctx, name, stdout);
+		ret = rados_grace_dump(io_ctx, oid, stdout);
 	} else if (!strcmp(cmd, "add")) {
 		if (!nodes) {
 			fprintf(stderr, "Need at least one nodeid.\n");
 			ret = -EINVAL;
 		} else {
-			ret = rados_grace_add(io_ctx, name, nodes, nodeids);
+			ret = rados_grace_add(io_ctx, oid, nodes, nodeids);
 		}
 	} else if (!strcmp(cmd, "start")) {
 		if (!nodes) {
 			fprintf(stderr, "Need at least one nodeid.\n");
 			ret = -EINVAL;
 		} else {
-			ret = rados_grace_join_bulk(io_ctx, name,
+			ret = rados_grace_join_bulk(io_ctx, oid,
 						nodes, nodeids, &cur,
 						&rec, true);
 		}
@@ -159,7 +159,7 @@ int main(int argc, char * const *argv)
 			fprintf(stderr, "Need at least one nodeid.\n");
 			ret = -EINVAL;
 		} else {
-			ret = rados_grace_join_bulk(io_ctx, name,
+			ret = rados_grace_join_bulk(io_ctx, oid,
 						nodes, nodeids, &cur,
 						&rec, false);
 		}
@@ -168,7 +168,7 @@ int main(int argc, char * const *argv)
 			fprintf(stderr, "Need at least one nodeid.\n");
 			ret = -EINVAL;
 		} else {
-			ret = rados_grace_lift_bulk(io_ctx, name,
+			ret = rados_grace_lift_bulk(io_ctx, oid,
 						nodes, nodeids, &cur,
 						&rec, false);
 		}
@@ -177,7 +177,7 @@ int main(int argc, char * const *argv)
 			fprintf(stderr, "Need at least one nodeid.\n");
 			ret = -EINVAL;
 		} else {
-			ret = rados_grace_lift_bulk(io_ctx, name,
+			ret = rados_grace_lift_bulk(io_ctx, oid,
 						nodes, nodeids, &cur,
 						&rec, true);
 		}
@@ -187,7 +187,7 @@ int main(int argc, char * const *argv)
 			ret = -EINVAL;
 		} else {
 			ret = rados_grace_enforcing_toggle(io_ctx,
-					name, nodes, nodeids,
+					oid, nodes, nodeids,
 					&cur, &rec, true);
 		}
 	} else if (!strcmp(cmd, "noenforce")) {
@@ -196,7 +196,7 @@ int main(int argc, char * const *argv)
 			ret = -EINVAL;
 		} else {
 			ret = rados_grace_enforcing_toggle(io_ctx,
-					name, nodes, nodeids,
+					oid, nodes, nodeids,
 					&cur, &rec, false);
 		}
 	} else if (!strcmp(cmd, "member")) {
@@ -204,7 +204,7 @@ int main(int argc, char * const *argv)
 			fprintf(stderr, "Need at least one nodeid.\n");
 			ret = -EINVAL;
 		} else {
-			ret = rados_grace_member_bulk(io_ctx, name, nodes,
+			ret = rados_grace_member_bulk(io_ctx, oid, nodes,
 							nodeids);
 		}
 	} else {

@@ -5,7 +5,7 @@ ganesha-rados-grace -- manipulate the shared grace management database
 SYNOPSIS
 ===================================================================
 
-| ganesha-rados-grace [ --pool pool_id ] [ --name obj_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ hostname ... ]
+| ganesha-rados-grace [ --pool pool_id ] [ --oid obj_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]
 
 DESCRIPTION
 ===================================================================
@@ -16,7 +16,7 @@ indicate their current state in order to coordinate a cluster-wide grace
 period.
 
 The first argument should be a command to execute against the database.
-Any remaining arguments represent the hostnames of nodes in the cluster
+Any remaining arguments represent the nodeids of nodes in the cluster
 that should be acted upon.
 
 OPTIONS
@@ -25,9 +25,9 @@ OPTIONS
 
 Set the RADOS poolid in which the grace database object resides
 
-**--name**
+**--oid**
 
-Set the name of the grace database RADOS object
+Set the object id of the grace database RADOS object
 
 COMMANDS
 ===================================================================
@@ -93,7 +93,7 @@ error if any of the hosts are not present in the grace db omap.
 STARTING A NEW CLUSTER
 ======================
 First, add the given cluster nodes to the grace database. Assuming that the
-nodes in our cluster will have hostnames ganesha-1 through ganesha-3:
+nodes in our cluster will have nodeids ganesha-1 through ganesha-3:
 
 **ganesha-rados-grace add ganesha-1 ganesha-2 ganesha-3**
 
@@ -123,7 +123,7 @@ Then, start up the cluster node.
 REMOVING A NODE FROM THE CLUSTER
 ===================================================================
 To remove a node from the cluster, migrate any clients that are using it
-to other servers and then execute the remove command with the hostnames to
+to other servers and then execute the remove command with the nodeids to
 be removed from the cluster:
 
 **ganesha-rados-grace remove ganesha-4**
