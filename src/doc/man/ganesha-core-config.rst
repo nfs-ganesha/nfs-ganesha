@@ -313,6 +313,9 @@ ceph_conf(string, no default)
 userid(path, no default)
     User ID to ceph cluster.
 
+namespace(string, default NULL)
+    RADOS Namespace in which to store objects
+
 pool(string, default "nfs-ganesha")
     Pool for client info.
 

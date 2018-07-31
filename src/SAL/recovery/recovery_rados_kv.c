@@ -31,6 +31,8 @@ static struct config_item rados_kv_params[] = {
 		       rados_kv_parameter, userid),
 	CONF_ITEM_STR("pool", 1, MAXPATHLEN, DEFAULT_RADOS_GRACE_POOL,
 		       rados_kv_parameter, pool),
+	CONF_ITEM_STR("namespace", 1, NI_MAXHOST, NULL,
+			rados_kv_parameter, namespace),
 	CONF_ITEM_STR("grace_oid", 1, NI_MAXHOST, DEFAULT_RADOS_GRACE_OID,
 		       rados_kv_parameter, grace_oid),
 	CONF_ITEM_STR("nodeid", 1, NI_MAXHOST, NULL, rados_kv_parameter,
@@ -301,7 +303,7 @@ int rados_kv_set_param_from_conf(config_file_t parse_tree,
 }
 
 int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
-			const char *conf, const char *pool)
+			const char *conf, const char *pool, const char *ns)
 {
 	int ret;
 
@@ -337,6 +339,8 @@ int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
 		LogEvent(COMPONENT_CLIENTID, "Failed to create ioctx");
 		rados_shutdown(clnt);
 	}
+
+	rados_ioctx_set_namespace(*io_ctx, ns);
 	return ret;
 }
 
@@ -374,7 +378,8 @@ int rados_kv_init(void)
 	snprintf(rados_recov_oid, sizeof(rados_recov_oid), "%s_recov", host);
 
 	ret = rados_kv_connect(&rados_recov_io_ctx, rados_kv_param.userid,
-			rados_kv_param.ceph_conf, rados_kv_param.pool);
+			rados_kv_param.ceph_conf, rados_kv_param.pool,
+			rados_kv_param.namespace);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID,
 			"Failed to connect to cluster: %d", ret);

@@ -76,7 +76,8 @@ static int rados_cluster_init(void)
 	}
 
 	ret = rados_kv_connect(&rados_recov_io_ctx, rados_kv_param.userid,
-			rados_kv_param.ceph_conf, rados_kv_param.pool);
+			rados_kv_param.ceph_conf, rados_kv_param.pool,
+			rados_kv_param.namespace);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID,
 			"Failed to connect to cluster: %d", ret);

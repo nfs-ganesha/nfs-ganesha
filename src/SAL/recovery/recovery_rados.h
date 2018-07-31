@@ -37,6 +37,8 @@ struct rados_kv_parameter {
 	char *userid;
 	/** Pool for client info */
 	char *pool;
+	/** Namespace for objects within the pool **/
+	char *namespace;
 	/** rados_cluster grace database OID */
 	char *grace_oid;
 	/** rados_cluster node_id */
@@ -54,7 +56,7 @@ struct pop_args {
 typedef void (*pop_clid_entry_t)(char *, char *, struct pop_args *);
 
 int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
-			const char *conf, const char *pool);
+			const char *conf, const char *pool, const char *ns);
 void rados_kv_shutdown(void);
 int rados_kv_put(char *key, char *val, char *object);
 int rados_kv_get(char *key, char *val, char *object);
