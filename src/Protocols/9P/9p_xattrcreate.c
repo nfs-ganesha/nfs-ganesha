@@ -160,6 +160,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			gsh_free(pfid->xattr);
+			pfid->xattr = NULL;
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status), plenout,
 					  preply);
