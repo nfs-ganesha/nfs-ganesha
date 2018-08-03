@@ -634,22 +634,21 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	bool rename_change_key;
 	fsal_status_t status = {0, 0};
 
-	/* Now update cached dirents.  Must take locks in the correct order */
-	mdcache_src_dest_lock(mdc_olddir, mdc_newdir);
-
-	status = mdc_try_get_cached(mdc_newdir, new_name, &mdc_lookup_dst);
-
+	status = mdc_lookup(mdc_newdir, new_name, true, &mdc_lookup_dst, NULL);
 	if (!FSAL_IS_ERROR(status)) {
 		if (mdc_obj == mdc_lookup_dst) {
 			/* Same source and destination */
-			goto unlock;
+			goto out;
 		}
 		if (obj_is_junction(&mdc_lookup_dst->obj_handle)) {
 			/* Cannot rename on top of junction */
 			status = fsalstat(ERR_FSAL_XDEV, 0);
-			goto unlock;
+			goto out;
 		}
 	}
+
+	/* Now update cached dirents.  Must take locks in the correct order */
+	mdcache_src_dest_lock(mdc_olddir, mdc_newdir);
 
 	subcall(
 		status = mdc_olddir->sub_handle->obj_ops->rename(
@@ -761,6 +760,7 @@ unlock:
 	/* unlock entries */
 	mdcache_src_dest_unlock(mdc_olddir, mdc_newdir);
 
+out:
 	/* Refresh, if necessary.  Must be done without lock held */
 	if (FSAL_IS_SUCCESS(status)) {
 		/* If we're moving a directory out, update parent hash */
