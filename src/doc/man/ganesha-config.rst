@@ -8,7 +8,7 @@ ganesha-config -- NFS Ganesha Configuration File
 SYNOPSIS
 ==========================================================
 
-| /etc/ganesha/ganesha/conf
+| /etc/ganesha/ganesha.conf
 
 DESCRIPTION
 ==========================================================
@@ -17,7 +17,7 @@ NFS-Ganesha obtains configuration data from the configuration file:
 
     /etc/ganesha/ganesha.conf
 
-The configuration file constitues of following parts:
+The configuration file consists of following parts:
 
 Comments
 --------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ A block is a name followed by parameters enclosed between "{"
 and "}".
 A block can contain other sub blocks as well.::
 
-    Export
+    EXPORT
     {
         Export_ID = 1;
         FSAL {
@@ -48,39 +48,37 @@ Options
 --------------------------------------------------------------------------------
 Configuration options can be of following types.
 
-1. **Numeric** Numeric options can be defined in octal, decimal, or hexadecimal.
+1. **Numeric.** Numeric options can be defined in octal, decimal, or hexadecimal.
 The format follows ANSI C syntax.
 eg.::
 
-    mode = 07555;  # This is octal 0755, 493 (decimal)
+    mode = 0755;  # This is octal 0755, 493 (decimal)
 
 Numeric values can also be negated or logical NOT'd.
 eg.::
 
-    anonomousuid = -2; # this is a negative
+    anonymousuid = -2; # this is a negative
     mask = ~0xff; # Equivalent to 0xffffff00 (for 32 bit integers)
 
-2. **Boolean** Possible values are true, false, yes and no.
+2. **Boolean.** Possible values are true, false, yes and no.
 1 and 0 are not acceptable.
 
-3. **List** The option can contain a list of possible applicable values.
+3. **List.** The option can contain a list of possible applicable values.
 Protocols = 3, 4, 9p;
 
 
 Including other config files
 --------------------------------------------------------------------------------
-Additional files can be referenced in a configuration using %include
-and %url directives.::
+Additional files can be referenced in a configuration using '%include'
+and '%url' directives.::
 
 	%include <filename>
 	%url <url, e.g., rados://mypool/myobject>
 
 The included file is inserted into the configuration text in place of
-the %include or %url line. The configuration following the inclusion
-is resumed after the end of the included files. File inclusion can be
-to any depth.
+the %include or %url line. Sub-inclusions may be to any depth. Filenames and
+URLs may optionally use '"'::
 
-eg.::
     %include base.conf
     %include "base.conf"
     %url rados://mypool/myobject
@@ -93,12 +91,10 @@ NFS-Ganesha supports the following blocks:
 
 EXPORT {}
 --------------------------------------------------------------------------------
-Along with configuration options, it also support two subblocks:
-1.**EXPORT { FSAL {} }**
-2.**EXPORT { CLIENT  {} }**
-
-Refer to :doc:`ganesha-export-config <ganesha-export-config>`\(8) for usage
-that this block and its sub blocks support.
+Along with its configuration options, the **EXPORT** block supports **FSAL**
+and **CLIENT** sub-blocks. See
+:doc:`ganesha-export-config <ganesha-export-config>`\(8) for usage of this
+block and its sub-blocks.
 
 EXPORT_DEFAULTS {}
 --------------------------------------------------------------------------------
@@ -131,6 +127,10 @@ Refer to :doc:`ganesha-ceph-config <ganesha-ceph-config>`\(8) for usage
 9P {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-9p-config <ganesha-9p-config>`\(8) for usage
+
+GLUSTER {}
+--------------------------------------------------------------------------------
+Refer to :doc:`ganesha-gluster-config <ganesha-gluster-config>`\(8) for usage
 
 GPFS {}
 --------------------------------------------------------------------------------
