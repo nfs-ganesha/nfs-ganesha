@@ -51,7 +51,8 @@ void nfs4_fs_locations_free(fsal_fs_locations_t *fs_locations)
 		return;
 
 	gsh_free(fs_locations->fs_root);
-	gsh_free(fs_locations->locations);
+	gsh_free(fs_locations->server);
+	gsh_free(fs_locations->rootpath);
 
 	gsh_free(fs_locations);
 }
@@ -94,8 +95,9 @@ void nfs4_fs_locations_release(fsal_fs_locations_t *fs_locations)
 	nfs4_fs_locations_free(fs_locations);
 }
 
-fsal_fs_locations_t *nfs4_fs_locations_new(const char *path,
-					   const char *locations)
+fsal_fs_locations_t *nfs4_fs_locations_new(const char *fs_root,
+					   const char *server,
+					   const char *rootpath)
 {
 	fsal_fs_locations_t *fs_locations;
 
@@ -105,8 +107,9 @@ fsal_fs_locations_t *nfs4_fs_locations_new(const char *path,
 		return NULL;
 	}
 
-	fs_locations->fs_root = gsh_strdup(path);
-	fs_locations->locations = gsh_strdup(locations);
+	fs_locations->fs_root = gsh_strdup(fs_root);
+	fs_locations->server = gsh_strdup(server);
+	fs_locations->rootpath = gsh_strdup(rootpath);
 	fs_locations->ref = 1;
 
 	return fs_locations;

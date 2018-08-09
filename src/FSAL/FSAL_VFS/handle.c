@@ -327,14 +327,23 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 			 * and stored in the fsid object of the fsal_obj_handle
 			 */
 
-			hash = CityHash64(attrs_out->fs_locations->locations,
-				  strlen(attrs_out->fs_locations->locations));
+			int loclen = strlen(attrs_out->fs_locations->server) +
+				     strlen(attrs_out->fs_locations->rootpath)
+				     + 2;
+
+			char *location = gsh_calloc(1, loclen);
+
+			snprintf(location, loclen, "%s:%s",
+				 attrs_out->fs_locations->server,
+				 attrs_out->fs_locations->rootpath);
+			hash = CityHash64(location, loclen);
 			hdl->obj_handle.fsid.major = hash;
 			hdl->obj_handle.fsid.minor = hash;
 			LogDebug(COMPONENT_NFS_V4,
 				 "fsid.major = %"PRIu64", fsid.minor = %"PRIu64,
 				 hdl->obj_handle.fsid.major,
 				 hdl->obj_handle.fsid.minor);
+			gsh_free(location);
 		}
 
 		attrs_out->request_mask |= old_request_mask;

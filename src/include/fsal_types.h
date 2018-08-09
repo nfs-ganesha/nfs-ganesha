@@ -347,7 +347,8 @@ typedef struct fsal_acl_data__ {
  */
 typedef struct fsal_fs_locations {
 	char *fs_root;
-	char *locations;
+	char *server;
+	char *rootpath;
 	pthread_rwlock_t lock;
 	uint32_t ref;
 } fsal_fs_locations_t;

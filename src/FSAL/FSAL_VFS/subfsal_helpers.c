@@ -110,13 +110,16 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 			&attrsize);
 
 	if (!FSAL_IS_ERROR(st)) {
+		char *path = xattr_content;
+		char *server = strsep(&path, ":");
+
 		LogDebug(COMPONENT_FSAL, "user.fs_location: %s",
 				xattr_content);
 
 		nfs4_fs_locations_release(attrs_out->fs_locations);
 
-		attrs_out->fs_locations = nfs4_fs_locations_new(spath,
-								xattr_content);
+		attrs_out->fs_locations = nfs4_fs_locations_new(spath, server,
+								path);
 		FSAL_SET_MASK(attrs_out->valid_mask, ATTR4_FS_LOCATIONS);
 	}
 	gsh_free(xattr_content);

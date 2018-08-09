@@ -1333,31 +1333,23 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	*/
 
 	if (args->attrs->fs_locations != NULL) {
-		char *server;
-		char *path_sav, *path_work;
 		fsal_fs_locations_t *fs_locations = args->attrs->fs_locations;
 		struct fs_location4 *loc_val = fs_locs.locations.locations_val;
 
-		path_sav = gsh_strdup(fs_locations->locations);
-		path_work = path_sav;
-		server = strsep(&path_work, ":");
-
 		LogDebug(COMPONENT_FSAL,
-			 "fs_location server %s",
-			 server);
+			 "fs_location server %s", fs_locations->server);
 		LogDebug(COMPONENT_FSAL,
-			 "fs_location path %s",
-			 path_work);
+			 "fs_location rootpath %s", fs_locations->rootpath);
 
 		nfs4_pathname4_free(&fs_locs.fs_root);
 		nfs4_pathname4_alloc(&fs_locs.fs_root, fs_locations->fs_root);
 		strncpy(loc_val->server.server_val->utf8string_val,
-			server, strlen(server));
-		loc_val->server.server_val->utf8string_len = strlen(server);
+			fs_locations->server, strlen(fs_locations->server));
+		loc_val->server.server_val->utf8string_len =
+			strlen(fs_locations->server);
 		nfs4_pathname4_free(&loc_val->rootpath);
-		nfs4_pathname4_alloc(&loc_val->rootpath, path_work);
-
-		gsh_free(path_sav);
+		nfs4_pathname4_alloc(&loc_val->rootpath,
+				     fs_locations->rootpath);
 	} else {
 		strcpy(fs_locs.fs_root.pathname4_val->utf8string_val,
 		       "not_supported");
