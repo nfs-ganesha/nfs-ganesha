@@ -98,7 +98,6 @@ bool state_unlock_err_ok(state_status_t status);
  * @param[in,out] ostate	State handle to initialize
  * @param[in] type	Type of handle
  * @param[in] obj	Object owning handle
- * @return Return description
  */
 static inline void state_hdl_init(struct state_hdl *ostate,
 				  object_file_type_t type,
@@ -120,6 +119,16 @@ static inline void state_hdl_init(struct state_hdl *ostate,
 	default:
 		break;
 	}
+}
+
+/**
+ * @brief Clean up a state handle
+ *
+ * @param[in] state_hdl	State handle to clean up
+ */
+static inline void state_hdl_cleanup(struct state_hdl *state_hdl)
+{
+	PTHREAD_RWLOCK_destroy(&state_hdl->state_lock);
 }
 
 /*****************************************************************************
