@@ -1350,7 +1350,7 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 			 path_work);
 
 		nfs4_pathname4_free(&fs_locs.fs_root);
-		nfs4_pathname4_alloc(&fs_locs.fs_root, fs_locations->path);
+		nfs4_pathname4_alloc(&fs_locs.fs_root, fs_locations->fs_root);
 		strncpy(loc_val->server.server_val->utf8string_val,
 			server, strlen(server));
 		loc_val->server.server_val->utf8string_len = strlen(server);

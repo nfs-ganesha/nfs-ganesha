@@ -50,7 +50,7 @@ void nfs4_fs_locations_free(fsal_fs_locations_t *fs_locations)
 	if (!fs_locations)
 		return;
 
-	gsh_free(fs_locations->path);
+	gsh_free(fs_locations->fs_root);
 	gsh_free(fs_locations->locations);
 
 	gsh_free(fs_locations);
@@ -105,7 +105,7 @@ fsal_fs_locations_t *nfs4_fs_locations_new(const char *path,
 		return NULL;
 	}
 
-	fs_locations->path = gsh_strdup(path);
+	fs_locations->fs_root = gsh_strdup(path);
 	fs_locations->locations = gsh_strdup(locations);
 	fs_locations->ref = 1;
 
