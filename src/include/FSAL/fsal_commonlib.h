@@ -71,6 +71,20 @@ void fsal_obj_handle_init(struct fsal_obj_handle *, struct fsal_export *,
 
 void fsal_obj_handle_fini(struct fsal_obj_handle *obj);
 
+/**
+ * @brief Test handle type
+ *
+ * This function tests that a handle is of the specified type.
+ *
+ * @retval true if it is.
+ * @retval false if it isn't.
+ */
+static inline bool fsal_obj_handle_is(struct fsal_obj_handle *obj_hdl,
+					object_file_type_t type)
+{
+	return obj_hdl->type == type;
+}
+
 /*
  * pNFS DS Helpers
  */

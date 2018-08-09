@@ -1956,17 +1956,6 @@ struct fsal_obj_ops {
  */
 
 /**
- * @brief Test handle type
- *
- * This function tests that a handle is of the specified type.
- *
- * @retval true if it is.
- * @retval false if it isn't.
- */
-	 bool (*handle_is)(struct fsal_obj_handle *obj_hdl,
-			   object_file_type_t type);
-
-/**
  * @brief Write wire handle
  *
  * This function writes a "wire" handle or file ID to the given

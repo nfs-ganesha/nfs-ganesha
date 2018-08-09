@@ -702,15 +702,6 @@ struct export_ops def_export_ops = {
 /* fsal_obj_handle common methods
  */
 
-/* handle_is
- * test the type of this handle
- */
-
-static bool handle_is(struct fsal_obj_handle *obj_hdl, object_file_type_t type)
-{
-	return obj_hdl->type == type;
-}
-
 /* get_ref
  * This MUST be handled by someone. For many FSALs, it is handled by
  * FSAL_MDCACHE.
@@ -1494,7 +1485,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.setextattr_value_by_id = setextattr_value_by_id,
 	.remove_extattr_by_id = remove_extattr_by_id,
 	.remove_extattr_by_name = remove_extattr_by_name,
-	.handle_is = handle_is,
 	.handle_to_wire = handle_to_wire,
 	.handle_cmp = handle_cmp,
 	.handle_to_key = handle_to_key,

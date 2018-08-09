@@ -113,7 +113,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	memset(fh, 0, sizeof(struct gpfs_file_handle));
 	fh->handle_size = GPFS_MAX_FH_SIZE;
-	if (!parent->obj_ops->handle_is(parent, DIRECTORY)) {
+	if (!fsal_obj_handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -167,7 +167,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	struct attrlist attrib;
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -236,7 +236,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	struct attrlist attrib;
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -312,7 +312,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	struct attrlist attrib;
 
 	*handle = NULL;		/* poison it first */
-	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -965,7 +965,7 @@ gpfs_is_referral(struct fsal_obj_handle *obj_hdl, struct attrlist *attrs,
 		}
 	}
 
-	if (!obj_hdl->obj_ops->handle_is(obj_hdl, DIRECTORY))
+	if (!fsal_obj_handle_is(obj_hdl, DIRECTORY))
 		return false;
 
 	if (!is_sticky_bit_set(obj_hdl, attrs))

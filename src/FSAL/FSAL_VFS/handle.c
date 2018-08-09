@@ -179,7 +179,7 @@ static bool vfs_is_referral(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	if (!obj_hdl->obj_ops->handle_is(obj_hdl, DIRECTORY))
+	if (!fsal_obj_handle_is(obj_hdl, DIRECTORY))
 		return false;
 
 	if (!is_sticky_bit_set(obj_hdl, attrs))
@@ -363,7 +363,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	*handle = NULL;		/* poison it first */
 	parent_hdl =
 	    container_of(parent, struct vfs_fsal_obj_handle, obj_handle);
-	if (!parent->obj_ops->handle_is(parent, DIRECTORY)) {
+	if (!fsal_obj_handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -418,7 +418,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -610,7 +610,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -825,7 +825,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
 	*handle = NULL;		/* poison it first */
-	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);

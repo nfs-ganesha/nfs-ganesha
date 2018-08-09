@@ -1074,32 +1074,6 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 }
 
 /**
- * @brief Test handle type
- *
- * All FSALs currently use the default, but delegate in case a FSAL wants to
- * override.
- *
- * @param[in] obj_hdl	Handle to test
- * @param[in] type	Type to test
- * @retval true if it is.
- * @retval false if it isn't.
- */
-static bool mdcache_handle_is(struct fsal_obj_handle *obj_hdl,
-			      object_file_type_t type)
-{
-	mdcache_entry_t *entry =
-		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-	bool status;
-
-	subcall(
-		status = entry->sub_handle->obj_ops->handle_is(
-			entry->sub_handle, type)
-	       );
-
-	return status;
-}
-
-/**
  * @brief Get the wire version of a handle
  *
  * Just pass through to the underlying FSAL
@@ -1453,7 +1427,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->unlink = mdcache_unlink;
 	ops->io_advise = mdcache_io_advise;
 	ops->close = mdcache_close;
-	ops->handle_is = mdcache_handle_is;
 	ops->handle_to_wire = mdcache_handle_to_wire;
 	ops->handle_to_key = mdcache_handle_to_key;
 	ops->handle_cmp = mdcache_handle_cmp;

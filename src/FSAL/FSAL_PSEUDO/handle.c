@@ -396,7 +396,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 	*handle = NULL;		/* poison it */
 
-	if (!dir_hdl->obj_ops->handle_is(dir_hdl, DIRECTORY)) {
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);

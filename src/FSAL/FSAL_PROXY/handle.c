@@ -1964,12 +1964,6 @@ static fsal_status_t pxy_getattrs(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static bool pxy_handle_is(struct fsal_obj_handle *obj_hdl,
-			  object_file_type_t type)
-{
-	return obj_hdl->type == type;
-}
-
 static fsal_status_t pxy_unlink(struct fsal_obj_handle *dir_hdl,
 				struct fsal_obj_handle *obj_hdl,
 				const char *name)
@@ -2770,7 +2764,6 @@ void pxy_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->rename = pxy_rename;
 	ops->unlink = pxy_unlink;
 	ops->close = pxy_close;
-	ops->handle_is = pxy_handle_is;
 	ops->handle_to_wire = pxy_handle_to_wire;
 	ops->handle_to_key = pxy_handle_to_key;
 	ops->open2 = pxy_open2;
