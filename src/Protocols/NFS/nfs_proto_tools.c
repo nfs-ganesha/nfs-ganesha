@@ -1337,16 +1337,18 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 		struct fs_location4 *loc_val = fs_locs.locations.locations_val;
 
 		LogDebug(COMPONENT_FSAL,
-			 "fs_location server %s", fs_locations->server);
+			 "fs_location server %.*s",
+			 fs_locations->server.utf8string_len,
+			 fs_locations->server.utf8string_val);
 		LogDebug(COMPONENT_FSAL,
 			 "fs_location rootpath %s", fs_locations->rootpath);
 
 		nfs4_pathname4_free(&fs_locs.fs_root);
 		nfs4_pathname4_alloc(&fs_locs.fs_root, fs_locations->fs_root);
-		strncpy(loc_val->server.server_val->utf8string_val,
-			fs_locations->server, strlen(fs_locations->server));
+		loc_val->server.server_val->utf8string_val =
+					fs_locations->server.utf8string_val;
 		loc_val->server.server_val->utf8string_len =
-			strlen(fs_locations->server);
+					fs_locations->server.utf8string_len;
 		nfs4_pathname4_free(&loc_val->rootpath);
 		nfs4_pathname4_alloc(&loc_val->rootpath,
 				     fs_locations->rootpath);

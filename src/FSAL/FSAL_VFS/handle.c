@@ -327,14 +327,15 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 			 * and stored in the fsid object of the fsal_obj_handle
 			 */
 
-			int loclen = strlen(attrs_out->fs_locations->server) +
-				     strlen(attrs_out->fs_locations->rootpath)
-				     + 2;
+			int loclen =
+				attrs_out->fs_locations->server.utf8string_len +
+				strlen(attrs_out->fs_locations->rootpath) + 2;
 
 			char *location = gsh_calloc(1, loclen);
 
-			snprintf(location, loclen, "%s:%s",
-				 attrs_out->fs_locations->server,
+			snprintf(location, loclen, "%.*s:%s",
+				 attrs_out->fs_locations->server.utf8string_len,
+				 attrs_out->fs_locations->server.utf8string_val,
 				 attrs_out->fs_locations->rootpath);
 			hash = CityHash64(location, loclen);
 			hdl->obj_handle.fsid.major = hash;
