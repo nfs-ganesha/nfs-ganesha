@@ -325,7 +325,7 @@ void free_client_id(nfs_client_id_t *clientid)
 		struct svc_rpc_gss_data *gd;
 
 		gd = clientid->cid_credential.auth_union.auth_gss.gd;
-		unref_svc_rpc_gss_data(gd, 0);
+		unref_svc_rpc_gss_data(gd);
 	}
 #endif /* _HAVE_GSSAPI */
 	/* For NFSv4.1 clientids, destroy all associated sessions */
