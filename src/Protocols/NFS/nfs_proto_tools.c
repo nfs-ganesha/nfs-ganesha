@@ -1311,30 +1311,31 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 {
 	fs_locations4 fs_locs;
 	fs_location4 fs_loc;
-	component4 fs_server;
-	char server[MAXHOSTNAMELEN];
+	utf8str_cis fs_server;
 
 	if (args->data == NULL || args->data->current_obj == NULL)
 		return FATTR_XDR_NOOP;
 
-	nfs4_pathname4_alloc(&fs_locs.fs_root, NULL);
-	fs_server.utf8string_len = sizeof(server);
-	fs_server.utf8string_val = server;
 	fs_loc.server.server_len = 1;
 	fs_loc.server.server_val = &fs_server;
-	nfs4_pathname4_alloc(&fs_loc.rootpath, NULL);
 	fs_locs.locations.locations_len = 1;
 	fs_locs.locations.locations_val = &fs_loc;
 
 	/* For now allow for one fs locations, fs_locations() should set:
 	   root and update its length, can not be bigger than MAXPATHLEN
 	   path and update its length, can not be bigger than MAXPATHLEN
-	   server and update its length, can not be bigger than MAXHOSTNAMELEN
+	   server and update its length
 	*/
 
 	if (args->attrs->fs_locations != NULL) {
 		fsal_fs_locations_t *fs_locations = args->attrs->fs_locations;
-		struct fs_location4 *loc_val = fs_locs.locations.locations_val;
+
+		fs_loc.server.server_val->utf8string_val =
+					fs_locations->server.utf8string_val;
+		fs_loc.server.server_val->utf8string_len =
+					fs_locations->server.utf8string_len;
+		nfs4_pathname4_alloc(&fs_loc.rootpath, fs_locations->rootpath);
+		nfs4_pathname4_alloc(&fs_locs.fs_root, fs_locations->fs_root);
 
 		LogDebug(COMPONENT_FSAL,
 			 "fs_location server %.*s",
@@ -1343,40 +1344,22 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 		LogDebug(COMPONENT_FSAL,
 			 "fs_location rootpath %s", fs_locations->rootpath);
 
-		nfs4_pathname4_free(&fs_locs.fs_root);
-		nfs4_pathname4_alloc(&fs_locs.fs_root, fs_locations->fs_root);
-		loc_val->server.server_val->utf8string_val =
-					fs_locations->server.utf8string_val;
-		loc_val->server.server_val->utf8string_len =
-					fs_locations->server.utf8string_len;
-		nfs4_pathname4_free(&loc_val->rootpath);
-		nfs4_pathname4_alloc(&loc_val->rootpath,
-				     fs_locations->rootpath);
 	} else {
-		strcpy(fs_locs.fs_root.pathname4_val->utf8string_val,
-		       "not_supported");
-		strcpy(fs_loc.rootpath.pathname4_val->utf8string_val,
-		       "not_supported");
-		strcpy(server, "not_supported");
-		fs_locs.fs_root.pathname4_val->utf8string_len =
-			strlen(fs_locs.fs_root.pathname4_val->utf8string_val);
-		fs_loc.rootpath.pathname4_val->utf8string_len =
-			strlen(fs_loc.rootpath.pathname4_val->utf8string_val);
-		fs_server.utf8string_len = strlen(server);
+		char *notsupp = "not supported";
 
-		LogDebug(COMPONENT_NFS_V4,
-			 "encode fs_locations obj_ops->fs_locations failed %s, %s, %s",
-			 fs_locs.fs_root.pathname4_val->utf8string_val,
-			 fs_loc.rootpath.pathname4_val->utf8string_val,
-			 server);
+		fs_loc.server.server_val->utf8string_val = notsupp;
+		fs_loc.server.server_val->utf8string_len = strlen(notsupp);
+		nfs4_pathname4_alloc(&fs_loc.rootpath, notsupp);
+		nfs4_pathname4_alloc(&fs_locs.fs_root, notsupp);
 	}
 
 	if (!xdr_fs_locations4(xdr, &fs_locs)) {
 		LogEvent(COMPONENT_NFS_V4,
-			 "encode fs_locations xdr_fs_locations failed %s, %s, %s",
+			 "encode fs_locations xdr_fs_locations failed %s, %s, %.*s",
 			 fs_locs.fs_root.pathname4_val->utf8string_val,
 			 fs_loc.rootpath.pathname4_val->utf8string_val,
-			 server);
+			 fs_loc.server.server_val->utf8string_len,
+			 fs_loc.server.server_val->utf8string_val);
 
 		return FATTR_XDR_FAILED;
 	}
