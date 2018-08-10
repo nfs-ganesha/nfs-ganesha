@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2012, The Linux Box Corporation
- * Copyright (c) 2012-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright (c) 2012-2018 Red Hat, Inc. and/or its affiliates.
  * Contributor : Matt Benjamin <matt@linuxbox.com>
  *               William Allen Simpson <william.allen.simpson@gmail.com>
  *
@@ -138,8 +138,6 @@ void nfs_rpc_cb_pkgshutdown(void)
  *
  * @todo This is automatically redundant, but in fact upstream TI-RPC is
  * not up-to-date with RFC 5665, will fix (Matt)
- *
- * @copyright 2012-2017, Linux Box Corp
  *
  * @param[in] netid The netid label dictating the protocol
  *
@@ -457,13 +455,14 @@ static inline char *format_host_principal(rpc_call_channel_t *chan, char *buf,
  * @param[in,out] chan Channel on which to set up GSS
  * @param[in]     cred GSS Credential
  *
- * @return	chan->auth->ah_error; check AUTH_FAILURE or AUTH_SUCCESS.
+ * @return	auth->ah_error; check AUTH_FAILURE or AUTH_SUCCESS.
  */
 
 #ifdef _HAVE_GSSAPI
-static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
-					      nfs_client_cred_t *cred)
+static inline AUTH *nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
+					       nfs_client_cred_t *cred)
 {
+	AUTH *result;
 	char hprinc[MAXPATHLEN + 1];
 	char *principal = nfs_param.krb5_param.svc.principal;
 	int32_t code;
@@ -482,12 +481,13 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 		LogWarn(COMPONENT_NFS_CB,
 			"gssd_refresh_krb5_machine_credential failed (%d:%d)",
 			code, errno);
-		return;
+		goto out_err;
 	}
 
 	if (!format_host_principal(chan, hprinc, sizeof(hprinc))) {
+		code = errno;
 		LogCrit(COMPONENT_NFS_CB, "format_host_principal failed");
-		return;
+		goto out_err;
 	}
 
 	chan->gss_sec.cred = GSS_C_NO_CREDENTIAL;
@@ -497,9 +497,17 @@ static inline void nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 		/* no more lipkey, spkm3 */
 		chan->gss_sec.mech = (gss_OID) & krb5oid;
 		chan->gss_sec.req_flags = GSS_C_MUTUAL_FLAG;	/* XXX */
-		chan->auth = authgss_ncreate_default(chan->clnt, hprinc,
-						     &chan->gss_sec);
+		result = authgss_ncreate_default(chan->clnt, hprinc,
+						 &chan->gss_sec);
+	} else {
+		result = authnone_ncreate();
 	}
+
+out_err:
+	result = authnone_ncreate_dummy();
+	result->ah_error.re_status = RPC_SYSTEMERROR;
+	result->ah_error.re_errno = code;
+	return result;
 }
 #endif /* _HAVE_GSSAPI */
 
@@ -575,7 +583,8 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 	switch (clientid->cid_credential.flavor) {
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
-		nfs_rpc_callback_setup_gss(chan, &clientid->cid_credential);
+		chan->auth = nfs_rpc_callback_setup_gss(chan,
+						&clientid->cid_credential);
 		break;
 #endif /* _HAVE_GSSAPI */
 	case AUTH_SYS:
@@ -822,8 +831,11 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid, uint32_t flags)
 
 	if (clientid->cid_minorversion == 0) {
 		chan = &clientid->cid_cb.v40.cb_chan;
-		if (!chan->clnt)
-			(void)nfs_rpc_create_chan_v40(clientid, flags);
+		if (!chan->clnt) {
+			if (!nfs_rpc_create_chan_v40(clientid, flags)) {
+				chan = NULL;
+			}
+		}
 		return chan;
 	}
 
@@ -1311,6 +1323,12 @@ enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *clientid)
 			return RPC_SYSTEMERROR;
 		}
 
+		if (!chan->auth) {
+			LogCrit(COMPONENT_NFS_CB,
+				"nfs_rpc_get_chan failed (no auth)");
+			return RPC_SYSTEMERROR;
+		}
+
 		/* try the CB_NULL proc -- inline here, should be ok-ish */
 		stat = rpc_cb_null(chan, false);
 		LogDebug(COMPONENT_NFS_CB,
@@ -1347,6 +1365,11 @@ static int nfs_rpc_v40_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 	}
 	if (!chan->clnt) {
 		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no clnt)");
+		set_cb_chan_down(clientid, true);
+		return ENOTCONN;
+	}
+	if (!chan->auth) {
+		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no auth)");
 		set_cb_chan_down(clientid, true);
 		return ENOTCONN;
 	}

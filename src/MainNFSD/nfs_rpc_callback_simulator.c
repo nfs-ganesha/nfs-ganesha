@@ -301,6 +301,11 @@ static int cbsim_fake_cbrecall(clientid4 clientid)
 		goto out;
 	}
 
+	if (!chan->auth) {
+		LogCrit(COMPONENT_NFS_CB, "nfs_rpc_get_chan failed (no auth)");
+		goto out;
+	}
+
 	/* allocate a new call--freed in completion hook */
 	call = alloc_rpc_call();
 
