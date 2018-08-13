@@ -346,11 +346,12 @@ typedef struct fsal_acl_data__ {
  * <server>:<path>
  */
 typedef struct fsal_fs_locations {
+	uint32_t ref;
+	uint32_t nservers;	/* size of server array */
+	pthread_rwlock_t lock;
 	char *fs_root;
 	char *rootpath;
-	utf8string server;
-	pthread_rwlock_t lock;
-	uint32_t ref;
+	utf8string *server;
 } fsal_fs_locations_t;
 
 /**

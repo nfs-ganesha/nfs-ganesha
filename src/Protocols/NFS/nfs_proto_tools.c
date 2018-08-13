@@ -1311,7 +1311,6 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 {
 	fs_locations4 fs_locs = {};
 	fs_location4 fs_loc = {};
-	utf8str_cis fs_server = {};
 
 	if (args->data == NULL || args->data->current_obj == NULL)
 		return FATTR_XDR_NOOP;
@@ -1325,22 +1324,18 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 	if (args->attrs->fs_locations != NULL) {
 		fsal_fs_locations_t *fs_locations = args->attrs->fs_locations;
 
-		fs_loc.server.server_len = 1;
-		fs_loc.server.server_val = &fs_server;
+		fs_loc.server.server_len = fs_locations->nservers;
+		fs_loc.server.server_val = fs_locations->server;
 		fs_locs.locations.locations_len = 1;
 		fs_locs.locations.locations_val = &fs_loc;
 
-		fs_loc.server.server_val->utf8string_val =
-					fs_locations->server.utf8string_val;
-		fs_loc.server.server_val->utf8string_len =
-					fs_locations->server.utf8string_len;
 		nfs4_pathname4_alloc(&fs_loc.rootpath, fs_locations->rootpath);
 		nfs4_pathname4_alloc(&fs_locs.fs_root, fs_locations->fs_root);
 
 		LogDebug(COMPONENT_FSAL,
 			 "fs_location server %.*s",
-			 fs_locations->server.utf8string_len,
-			 fs_locations->server.utf8string_val);
+			 fs_locations->server[0].utf8string_len,
+			 fs_locations->server[0].utf8string_val);
 		LogDebug(COMPONENT_FSAL,
 			 "fs_location rootpath %s", fs_locations->rootpath);
 

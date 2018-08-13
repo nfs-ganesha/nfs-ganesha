@@ -29,11 +29,13 @@
 #include "fsal_types.h"
 #include "common_utils.h"
 
-fsal_fs_locations_t *nfs4_fs_locations_alloc()
+static fsal_fs_locations_t *nfs4_fs_locations_alloc(const unsigned int count)
 {
 	fsal_fs_locations_t *fs_locations;
 
 	fs_locations = gsh_calloc(1, sizeof(fsal_fs_locations_t));
+	if (count)
+		fs_locations->server = gsh_calloc(count, sizeof(utf8string));
 	if (pthread_rwlock_init(&(fs_locations->lock), NULL) != 0) {
 		nfs4_fs_locations_free(fs_locations);
 		LogCrit(COMPONENT_NFS_V4,
@@ -47,13 +49,18 @@ fsal_fs_locations_t *nfs4_fs_locations_alloc()
 
 void nfs4_fs_locations_free(fsal_fs_locations_t *fs_locations)
 {
+	unsigned int i;
+
 	if (!fs_locations)
 		return;
 
 	gsh_free(fs_locations->fs_root);
-	gsh_free(fs_locations->server.utf8string_val);
 	gsh_free(fs_locations->rootpath);
 
+	for (i = 0; i < fs_locations->nservers; ++i)
+		gsh_free(fs_locations->server[i].utf8string_val);
+
+	gsh_free(fs_locations->server);
 	gsh_free(fs_locations);
 }
 
@@ -96,20 +103,18 @@ void nfs4_fs_locations_release(fsal_fs_locations_t *fs_locations)
 }
 
 fsal_fs_locations_t *nfs4_fs_locations_new(const char *fs_root,
-					   const char *server,
-					   const char *rootpath)
+					   const char *rootpath,
+					   const unsigned int count)
 {
 	fsal_fs_locations_t *fs_locations;
 
-	fs_locations = nfs4_fs_locations_alloc();
+	fs_locations = nfs4_fs_locations_alloc(count);
 	if (fs_locations == NULL) {
 		LogCrit(COMPONENT_NFS_V4, "Could not allocate fs_locations");
 		return NULL;
 	}
 
 	fs_locations->fs_root = gsh_strdup(fs_root);
-	fs_locations->server.utf8string_len = strlen(server);
-	fs_locations->server.utf8string_val = gsh_strdup(server);
 	fs_locations->rootpath = gsh_strdup(rootpath);
 	fs_locations->ref = 1;
 

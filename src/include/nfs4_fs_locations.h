@@ -27,13 +27,12 @@
 
 #include "fsal_types.h"
 
-fsal_fs_locations_t *nfs4_fs_locations_alloc();
 void nfs4_fs_locations_free(fsal_fs_locations_t *);
 void nfs4_fs_locations_get_ref(fsal_fs_locations_t *);
 void nfs4_fs_locations_release(fsal_fs_locations_t *);
 
 fsal_fs_locations_t *nfs4_fs_locations_new(const char *fs_root,
-					   const char *server,
-					   const char *rootpath);
+					   const char *rootpath,
+					   const unsigned int count);
 
 #endif

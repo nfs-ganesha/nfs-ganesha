@@ -575,21 +575,25 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	int rootpath_len = loc_val->rootpath.pathname4_val->utf8string_len;
 
 	char *fs_root = gsh_calloc(1, fs_root_len + 1);
-	char *server = gsh_calloc(1, server_len + 1);
 	char *rootpath = gsh_calloc(1, rootpath_len + 1);
 
 	memcpy(fs_root, fs_locs.fs_root.pathname4_val->utf8string_val,
 		fs_root_len);
-	memcpy(server, loc_val->server.server_val->utf8string_val,
-		loc_val->server.server_val->utf8string_len);
 	memcpy(rootpath, loc_val->rootpath.pathname4_val->utf8string_val,
-		loc_val->rootpath.pathname4_val->utf8string_len);
+		rootpath_len);
 
-	attrs->fs_locations = nfs4_fs_locations_new(fs_root, server, rootpath);
+	attrs->fs_locations = nfs4_fs_locations_new(fs_root, rootpath, 1);
+
+	attrs->fs_locations->nservers = 1;
+	attrs->fs_locations->server[0].utf8string_len =
+				loc_val->server.server_val->utf8string_len;
+	attrs->fs_locations->server[0].utf8string_val =
+		gsh_memdup(loc_val->server.server_val->utf8string_val,
+				server_len);
+
 	FSAL_SET_MASK(attrs->valid_mask, ATTR4_FS_LOCATIONS);
 
 	gsh_free(fs_root);
-	gsh_free(server);
 	gsh_free(rootpath);
 
 out:
