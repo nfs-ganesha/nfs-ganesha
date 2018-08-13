@@ -1309,17 +1309,12 @@ void nfs4_pathname4_free(pathname4 *pathname4)
 static fattr_xdr_result encode_fs_locations(XDR *xdr,
 					    struct xdr_attrs_args *args)
 {
-	fs_locations4 fs_locs;
-	fs_location4 fs_loc;
-	utf8str_cis fs_server;
+	fs_locations4 fs_locs = {};
+	fs_location4 fs_loc = {};
+	utf8str_cis fs_server = {};
 
 	if (args->data == NULL || args->data->current_obj == NULL)
 		return FATTR_XDR_NOOP;
-
-	fs_loc.server.server_len = 1;
-	fs_loc.server.server_val = &fs_server;
-	fs_locs.locations.locations_len = 1;
-	fs_locs.locations.locations_val = &fs_loc;
 
 	/* For now allow for one fs locations, fs_locations() should set:
 	   root and update its length, can not be bigger than MAXPATHLEN
@@ -1329,6 +1324,11 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 
 	if (args->attrs->fs_locations != NULL) {
 		fsal_fs_locations_t *fs_locations = args->attrs->fs_locations;
+
+		fs_loc.server.server_len = 1;
+		fs_loc.server.server_val = &fs_server;
+		fs_locs.locations.locations_len = 1;
+		fs_locs.locations.locations_val = &fs_loc;
 
 		fs_loc.server.server_val->utf8string_val =
 					fs_locations->server.utf8string_val;
@@ -1345,21 +1345,19 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 			 "fs_location rootpath %s", fs_locations->rootpath);
 
 	} else {
-		char *notsupp = "not supported";
+		LogDebug(COMPONENT_FSAL, "NULL fs_locations");
 
-		fs_loc.server.server_val->utf8string_val = notsupp;
-		fs_loc.server.server_val->utf8string_len = strlen(notsupp);
-		nfs4_pathname4_alloc(&fs_loc.rootpath, notsupp);
-		nfs4_pathname4_alloc(&fs_locs.fs_root, notsupp);
+		/*
+		 * If we don't have an fs_locations structure, just assume that
+		 * the fs_root corresponds to the root of the export.
+		 */
+		nfs4_pathname4_alloc(&fs_locs.fs_root,
+					op_ctx->ctx_export->pseudopath);
 	}
 
 	if (!xdr_fs_locations4(xdr, &fs_locs)) {
 		LogEvent(COMPONENT_NFS_V4,
-			 "encode fs_locations xdr_fs_locations failed %s, %s, %.*s",
-			 fs_locs.fs_root.pathname4_val->utf8string_val,
-			 fs_loc.rootpath.pathname4_val->utf8string_val,
-			 fs_loc.server.server_val->utf8string_len,
-			 fs_loc.server.server_val->utf8string_val);
+			 "encode fs_locations xdr_fs_locations failed");
 
 		return FATTR_XDR_FAILED;
 	}
