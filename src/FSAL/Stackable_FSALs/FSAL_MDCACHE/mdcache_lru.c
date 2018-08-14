@@ -508,12 +508,14 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 		/* Find the first export id. */
 		export_id = atomic_fetch_int32_t(&entry->first_export_id);
 
-		if (export_id >= 0 && op_ctx != NULL &&
-		    op_ctx->ctx_export != NULL &&
-		    op_ctx->ctx_export->export_id != export_id) {
-			/* We can't be sure the op_ctx has a valid export_id for
-			 * this entry, so we'll use the first export_id and set
-			 * up a new op_ctx.
+		/* Check if we have a valid op_ctx */
+		if (export_id >= 0 && (op_ctx == NULL ||
+		    op_ctx->ctx_export == NULL ||
+		    op_ctx->ctx_export->export_id != export_id)) {
+			/* If the entry's first_export_id is valid and does not
+			 * match the current op_ctx, set up a new context
+			 * using first_export_id to ensure the op_ctx export is
+			 * valid for the entry.
 			 *
 			 * Get a reference to the first_export_id.
 			 */
