@@ -57,7 +57,7 @@
  * @return FSAL status codes.
  */
 
-static void release(struct fsal_obj_handle *obj_pub)
+static void ceph_fsal_release(struct fsal_obj_handle *obj_pub)
 {
 	/* The private 'full' handle */
 	struct ceph_handle *obj =
@@ -78,9 +78,10 @@ static void release(struct fsal_obj_handle *obj_pub)
  *
  * @return FSAL status codes.
  */
-static fsal_status_t lookup(struct fsal_obj_handle *dir_pub,
-			    const char *path, struct fsal_obj_handle **obj_pub,
-			    struct attrlist *attrs_out)
+static fsal_status_t ceph_fsal_lookup(struct fsal_obj_handle *dir_pub,
+				      const char *path,
+				      struct fsal_obj_handle **obj_pub,
+				      struct attrlist *attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -560,8 +561,8 @@ static fsal_status_t ceph_fsal_readlink(struct fsal_obj_handle *link_pub,
  * @return FSAL status.
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *handle_pub,
-			      struct attrlist *attrs)
+static fsal_status_t ceph_fsal_getattrs(struct fsal_obj_handle *handle_pub,
+					struct attrlist *attrs)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -733,10 +734,9 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
  * @return FSAL status.
  */
 
-fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
-			      fsal_openflags_t openflags,
-			      int posix_flags,
-			      struct ceph_fd *my_fd)
+static fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
+				     fsal_openflags_t openflags,
+				     int posix_flags, struct ceph_fd *my_fd)
 {
 	int rc;
 	struct ceph_export *export =
@@ -776,8 +776,8 @@ fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t ceph_close_my_fd(struct ceph_handle *handle,
-	struct ceph_fd *my_fd)
+static fsal_status_t ceph_close_my_fd(struct ceph_handle *handle,
+				      struct ceph_fd *my_fd)
 {
 	int rc = 0;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -933,8 +933,8 @@ void ceph_free_state(struct fsal_export *exp_hdl, struct state_t *state)
  *
  */
 
-fsal_status_t ceph_merge(struct fsal_obj_handle *orig_hdl,
-			 struct fsal_obj_handle *dupe_hdl)
+static fsal_status_t ceph_fsal_merge(struct fsal_obj_handle *orig_hdl,
+				     struct fsal_obj_handle *dupe_hdl)
 {
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 
@@ -1023,16 +1023,16 @@ ceph_check_verifier_stat(struct ceph_statx *stx, fsal_verifier_t verifier)
  * @return FSAL status.
  */
 
-fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
-			 struct state_t *state,
-			 fsal_openflags_t openflags,
-			 enum fsal_create_mode createmode,
-			 const char *name,
-			 struct attrlist *attrib_set,
-			 fsal_verifier_t verifier,
-			 struct fsal_obj_handle **new_obj,
-			 struct attrlist *attrs_out,
-			 bool *caller_perm_check)
+static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
+				 struct state_t *state,
+				 fsal_openflags_t openflags,
+				 enum fsal_create_mode createmode,
+				 const char *name,
+				 struct attrlist *attrib_set,
+				 fsal_verifier_t verifier,
+				 struct fsal_obj_handle **new_obj,
+				 struct attrlist *attrs_out,
+				 bool *caller_perm_check)
 {
 	int posix_flags = 0;
 	int retval = 0;
@@ -1424,8 +1424,8 @@ fsal_status_t ceph_open2(struct fsal_obj_handle *obj_hdl,
  * @retval Flags representing current open status
  */
 
-fsal_openflags_t ceph_status2(struct fsal_obj_handle *obj_hdl,
-			     struct state_t *state)
+static fsal_openflags_t ceph_fsal_status2(struct fsal_obj_handle *obj_hdl,
+					  struct state_t *state)
 {
 	struct ceph_fd *my_fd = (struct ceph_fd *)(state + 1);
 
@@ -1448,9 +1448,9 @@ fsal_openflags_t ceph_status2(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-fsal_status_t ceph_reopen2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *state,
-			   fsal_openflags_t openflags)
+static fsal_status_t ceph_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
+				       struct state_t *state,
+				       fsal_openflags_t openflags)
 {
 	struct ceph_fd temp_fd = {
 			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, NULL };
@@ -1521,7 +1521,7 @@ fsal_status_t ceph_reopen2(struct fsal_obj_handle *obj_hdl,
  * We do not need file descriptors for non-regular files, so this never has to
  * handle them.
  */
-fsal_status_t ceph_find_fd(Fh **fd,
+static fsal_status_t ceph_find_fd(Fh **fd,
 			   struct fsal_obj_handle *obj_hdl,
 			   bool bypass,
 			   struct state_t *state,
@@ -1570,11 +1570,9 @@ fsal_status_t ceph_find_fd(Fh **fd,
  * @return Nothing; results are in callback
  */
 
-void ceph_read2(struct fsal_obj_handle *obj_hdl,
-		bool bypass,
-		fsal_async_cb done_cb,
-		struct fsal_io_arg *read_arg,
-		void *caller_arg)
+static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
+			    fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
+			    void *caller_arg)
 {
 	struct ceph_handle *myself =
 			container_of(obj_hdl, struct ceph_handle, handle);
@@ -1681,11 +1679,9 @@ void ceph_read2(struct fsal_obj_handle *obj_hdl,
  * @param[in,out] caller_arg	Opaque arg from the caller for callback
  */
 
-void ceph_write2(struct fsal_obj_handle *obj_hdl,
-		 bool bypass,
-		 fsal_async_cb done_cb,
-		 struct fsal_io_arg *write_arg,
-		 void *caller_arg)
+static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
+			     fsal_async_cb done_cb,
+			     struct fsal_io_arg *write_arg, void *caller_arg)
 {
 	struct ceph_handle *myself =
 			container_of(obj_hdl, struct ceph_handle, handle);
@@ -1785,9 +1781,9 @@ void ceph_write2(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-fsal_status_t ceph_commit2(struct fsal_obj_handle *obj_hdl,
-			   off_t offset,
-			   size_t len)
+static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
+				       off_t offset,
+				       size_t len)
 {
 	struct ceph_handle *myself =
 			container_of(obj_hdl, struct ceph_handle, handle);
@@ -1848,12 +1844,11 @@ fsal_status_t ceph_commit2(struct fsal_obj_handle *obj_hdl,
  *
  * @return FSAL status.
  */
-fsal_status_t ceph_lock_op2(struct fsal_obj_handle *obj_hdl,
-			    struct state_t *state,
-			    void *owner,
-			    fsal_lock_op_t lock_op,
-			    fsal_lock_param_t *request_lock,
-			    fsal_lock_param_t *conflicting_lock)
+static fsal_status_t ceph_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
+					struct state_t *state, void *owner,
+					fsal_lock_op_t lock_op,
+					fsal_lock_param_t *request_lock,
+					fsal_lock_param_t *conflicting_lock)
 {
 	struct ceph_handle *myself =
 			container_of(obj_hdl, struct ceph_handle, handle);
@@ -2036,9 +2031,9 @@ static void ceph_deleg_cb(Fh *fh, void *vhdl)
 			hdl, fsal_err_txt(fsal_status));
 }
 
-static fsal_status_t ceph_lease_op2(struct fsal_obj_handle *obj_hdl,
-				     state_t *state,
-				     void *owner, fsal_deleg_t deleg)
+static fsal_status_t ceph_fsal_lease_op2(struct fsal_obj_handle *obj_hdl,
+					 state_t *state, void *owner,
+					 fsal_deleg_t deleg)
 {
 	struct ceph_handle *myself =
 		container_of(obj_hdl, struct ceph_handle, handle);
@@ -2119,10 +2114,9 @@ static fsal_status_t ceph_lease_op2(struct fsal_obj_handle *obj_hdl,
  *
  * @return FSAL status.
  */
-fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
-			    bool bypass,
-			    struct state_t *state,
-			    struct attrlist *attrib_set)
+static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
+					bool bypass, struct state_t *state,
+					struct attrlist *attrib_set)
 {
 	struct ceph_handle *myself =
 		container_of(obj_hdl, struct ceph_handle, handle);
@@ -2290,8 +2284,8 @@ fsal_status_t ceph_setattr2(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-fsal_status_t ceph_close2(struct fsal_obj_handle *obj_hdl,
-			 struct state_t *state)
+static fsal_status_t ceph_fsal_close2(struct fsal_obj_handle *obj_hdl,
+				      struct state_t *state)
 {
 	struct ceph_handle *myself =
 		container_of(obj_hdl, struct ceph_handle, handle);
@@ -2330,9 +2324,10 @@ fsal_status_t ceph_close2(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-static fsal_status_t handle_to_wire(const struct fsal_obj_handle *handle_pub,
-				    uint32_t output_type,
-				    struct gsh_buffdesc *fh_desc)
+static fsal_status_t
+ceph_fsal_handle_to_wire(const struct fsal_obj_handle *handle_pub,
+		    uint32_t output_type,
+		    struct gsh_buffdesc *fh_desc)
 {
 	/* The private 'full' object handle */
 	const struct ceph_handle *handle =
@@ -2369,8 +2364,9 @@ static fsal_status_t handle_to_wire(const struct fsal_obj_handle *handle_pub,
  * @param[out] fh_desc    Address and length of key
  */
 
-static void handle_to_key(struct fsal_obj_handle *handle_pub,
-			  struct gsh_buffdesc *fh_desc)
+static void
+ceph_fsal_handle_to_key(struct fsal_obj_handle *handle_pub,
+		   struct gsh_buffdesc *fh_desc)
 {
 	/* The private 'full' object handle */
 	struct ceph_handle *handle =
@@ -2455,35 +2451,35 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 {
 	fsal_default_obj_ops_init(ops);
 
-	ops->release = release;
-	ops->merge = ceph_merge;
-	ops->lookup = lookup;
+	ops->release = ceph_fsal_release;
+	ops->merge = ceph_fsal_merge;
+	ops->lookup = ceph_fsal_lookup;
 	ops->mkdir = ceph_fsal_mkdir;
 	ops->mknode = ceph_fsal_mknode;
 	ops->readdir = ceph_fsal_readdir;
 	ops->symlink = ceph_fsal_symlink;
 	ops->readlink = ceph_fsal_readlink;
-	ops->getattrs = getattrs;
+	ops->getattrs = ceph_fsal_getattrs;
 	ops->link = ceph_fsal_link;
 	ops->rename = ceph_fsal_rename;
 	ops->unlink = ceph_fsal_unlink;
 	ops->close = ceph_fsal_close;
-	ops->handle_to_wire = handle_to_wire;
-	ops->handle_to_key = handle_to_key;
-	ops->open2 = ceph_open2;
-	ops->status2 = ceph_status2;
-	ops->reopen2 = ceph_reopen2;
-	ops->read2 = ceph_read2;
-	ops->write2 = ceph_write2;
-	ops->commit2 = ceph_commit2;
+	ops->handle_to_wire = ceph_fsal_handle_to_wire;
+	ops->handle_to_key = ceph_fsal_handle_to_key;
+	ops->open2 = ceph_fsal_open2;
+	ops->status2 = ceph_fsal_status2;
+	ops->reopen2 = ceph_fsal_reopen2;
+	ops->read2 = ceph_fsal_read2;
+	ops->write2 = ceph_fsal_write2;
+	ops->commit2 = ceph_fsal_commit2;
 #ifdef USE_FSAL_CEPH_SETLK
-	ops->lock_op2 = ceph_lock_op2;
+	ops->lock_op2 = ceph_fsal_lock_op2;
 #endif
 #ifdef USE_FSAL_CEPH_LL_DELEGATION
-	ops->lease_op2 = ceph_lease_op2;
+	ops->lease_op2 = ceph_fsal_lease_op2;
 #endif
-	ops->setattr2 = ceph_setattr2;
-	ops->close2 = ceph_close2;
+	ops->setattr2 = ceph_fsal_setattr2;
+	ops->close2 = ceph_fsal_close2;
 #ifdef CEPH_PNFS
 	handle_ops_pnfs(ops);
 #endif				/* CEPH_PNFS */
