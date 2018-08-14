@@ -258,6 +258,34 @@ gsh_strldup__(const char *s, size_t length, size_t *copied,
 						__func__)
 
 /**
+ * @brief Duplicate a blob of memory
+ *
+ * This function allocates a new block of memory sufficient to contain
+ * the supplied data, then copies the data into that buffer.
+ *
+ * This function aborts if no memory is available.
+ *
+ * @param[in] s  Pointer to data to be copied
+ * @param[in] l  Length of data
+ * @param[in] file Calling source file
+ * @param[in] line Calling source line
+ * @param[in] function Calling source function
+ *
+ * @return Pointer to new copy of data
+ */
+static inline char *
+gsh_memdup__(const char *s, const size_t l, const char *file, int line,
+		const char *function)
+{
+	char *p = (char *) gsh_malloc__(l, file, line, function);
+
+	memcpy(p, s, l);
+	return p;
+}
+
+#define gsh_memdup(s, l) gsh_memdup__(s, l, __FILE__, __LINE__, __func__)
+
+/**
  * @brief Free a block of memory
  *
  * This function frees a block of memory allocated with gsh_malloc,
