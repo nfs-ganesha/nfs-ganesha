@@ -952,39 +952,10 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	gsh_free(myself);
 }
 
-static bool
-gpfs_is_referral(struct fsal_obj_handle *obj_hdl, struct attrlist *attrs,
-		 bool cache_attrs)
-{
-	if ((attrs->valid_mask & (ATTR_TYPE | ATTR_MODE)) == 0) {
-		/* Required attributes are not available, need to fetch them */
-		fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-
-		attrs->request_mask |= (ATTR_TYPE | ATTR_MODE);
-
-		status = obj_hdl->obj_ops->getattrs(obj_hdl, attrs);
-		if (FSAL_IS_ERROR(status)) {
-			LogEvent(COMPONENT_FSAL, "Failed to get attributes for "
-					"referral, request_mask: %lu",
-					attrs->request_mask);
-			return false;
-		}
-	}
-
-	if (!fsal_obj_handle_is(obj_hdl, DIRECTORY))
-		return false;
-
-	if (!is_sticky_bit_set(obj_hdl, attrs))
-		return false;
-
-	LogDebug(COMPONENT_FSAL, "GPFS referral found for handle %p", obj_hdl);
-	return true;
-}
-
 /**
  *
  *  @param ops Object operations
-*/
+ */
 void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	fsal_default_obj_ops_init(ops);
@@ -1019,7 +990,7 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->close2 = gpfs_close2;
 	ops->lock_op2 = gpfs_lock_op2;
 	ops->merge = gpfs_merge;
-	ops->is_referral = gpfs_is_referral;
+	ops->is_referral = fsal_common_is_referral;
 	ops->fallocate = gpfs_fallocate;
 }
 

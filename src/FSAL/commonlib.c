@@ -80,6 +80,7 @@
 #include "sal_data.h"
 #include "nfs_init.h"
 #include "mdcache.h"
+#include "nfs_proto_tools.h"
 
 
 #ifdef USE_BLKID
@@ -2930,6 +2931,45 @@ bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier)
 
 	return attrs->atime.tv_sec == verf_hi &&
 	       attrs->mtime.tv_sec == verf_lo;
+}
+
+/**
+ * @brief Common is_referral routine for FSALs that use the special mode
+ *
+ * @param[in]     obj_hdl       Handle on which to operate
+ * @param[in|out] attrs         Attributes of the handle
+ * @param[in]     cache_attrs   Cache the received attrs
+ *
+ * Most FSALs don't support referrals, but those that do often use a special
+ * mode bit combination on a directory for a junction. This routine tests for
+ * that and returns true if it is a referral.
+ */
+bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
+			     struct attrlist *attrs, bool cache_attrs)
+{
+	if ((attrs->valid_mask & (ATTR_TYPE | ATTR_MODE)) == 0) {
+		/* Required attributes are not available, need to fetch them */
+		fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+
+		attrs->request_mask |= (ATTR_TYPE | ATTR_MODE);
+
+		status = obj_hdl->obj_ops->getattrs(obj_hdl, attrs);
+		if (FSAL_IS_ERROR(status)) {
+			LogEvent(COMPONENT_FSAL, "Failed to get attributes for "
+				 "referral, request_mask: %lu",
+				 attrs->request_mask);
+			return false;
+		}
+	}
+
+	if (!fsal_obj_handle_is(obj_hdl, DIRECTORY))
+		return false;
+
+	if (!is_sticky_bit_set(obj_hdl, attrs))
+		return false;
+
+	LogDebug(COMPONENT_FSAL, "Referral found for handle %p", obj_hdl);
+	return true;
 }
 
 /** @} */
