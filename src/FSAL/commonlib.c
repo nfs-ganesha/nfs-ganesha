@@ -1251,6 +1251,7 @@ int populate_posix_file_systems(bool force)
 {
 	FILE *fp;
 	struct mntent *mnt;
+	struct stat st;
 	int retval = 0;
 	struct glist_head *glist;
 	struct fsal_filesystem *fs;
@@ -1284,6 +1285,10 @@ int populate_posix_file_systems(bool force)
 	while ((mnt = getmntent(fp)) != NULL) {
 		if (mnt->mnt_dir == NULL)
 			continue;
+
+		if (stat(mnt->mnt_dir, &st) < 0 || !S_ISDIR(st.st_mode)) {
+			continue;
+		}
 
 		posix_create_file_system(mnt);
 	}
