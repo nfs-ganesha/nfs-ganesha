@@ -1458,7 +1458,7 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 
 		/* Move lru object to MRU of L2 */
 		q = &qlane->L1;
-		LRU_DQ_SAFE(lru, q);
+		CHUNK_LRU_DQ_SAFE(lru, q);
 		lru->qid = LRU_ENTRY_L2;
 		q = &qlane->L2;
 		lru_insert(lru, q, LRU_MRU);
@@ -2034,7 +2034,7 @@ void lru_bump_chunk(struct dir_chunk *chunk)
 	switch (lru->qid) {
 	case LRU_ENTRY_L1:
 		/* advance chunk to MRU (of L1) */
-		LRU_DQ_SAFE(lru, q);
+		CHUNK_LRU_DQ_SAFE(lru, q);
 		lru_insert(lru, q, LRU_MRU);
 		break;
 	case LRU_ENTRY_L2:
