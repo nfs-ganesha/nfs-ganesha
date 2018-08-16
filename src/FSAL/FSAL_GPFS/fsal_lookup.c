@@ -89,18 +89,18 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 	case REGULAR_FILE:
 	case SYMBOLIC_LINK:
 		/* not a directory */
-		close(parent_fd);
+		fsal_internal_close(parent_fd, NULL, 0);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
 	default:
-		close(parent_fd);
+		fsal_internal_close(parent_fd, NULL, 0);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
 	status = fsal_internal_get_handle_at(parent_fd, filename, fh,
 					     export_fd);
 	if (FSAL_IS_ERROR(status)) {
-		close(parent_fd);
+		fsal_internal_close(parent_fd, NULL, 0);
 		return status;
 	}
 
@@ -142,7 +142,7 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 	status = GPFSFSAL_getattrs(op_ctx->fsal_export, gpfs_fs,
 				   op_ctx, fh, fsal_attr);
 
-	close(parent_fd);
+	fsal_internal_close(parent_fd, NULL, 0);
 
 	/* lookup complete ! */
 	return status;
