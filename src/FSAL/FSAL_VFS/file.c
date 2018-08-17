@@ -722,7 +722,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (retval < 0) {
 		retval = errno;
-		status = fsalstat(posix2fsal_error(retval), retval);
+		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 
@@ -730,8 +730,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	 */
 	if (createmode != FSAL_NO_CREATE)
 		if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
-			retval = EPERM;
-			status = fsalstat(ERR_FSAL_PERM, EPERM);
+			status = posix2fsal_status(EPERM);
 			goto direrr;
 		}
 
@@ -773,7 +772,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (fd < 0) {
-		status = fsalstat(posix2fsal_error(retval), retval);
+		status = posix2fsal_status(retval);
 		goto direrr;
 	}
 
@@ -787,7 +786,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			LogInfo(COMPONENT_FSAL,
 				"HSM restore at open for fd=%d for file %s",
 				fd, name);
-			retval = EAGAIN;
+			status = posix2fsal_status(EAGAIN);
 		}
 
 		goto fileerr;
@@ -839,7 +838,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (retval < 0) {
 		retval = errno;
-		status = fsalstat(posix2fsal_error(retval), retval);
+		status = posix2fsal_status(retval);
 		goto fileerr;
 	}
 
@@ -847,7 +846,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (retval < 0) {
 		retval = errno;
-		status = fsalstat(posix2fsal_error(retval), retval);
+		status = posix2fsal_status(retval);
 		goto fileerr;
 	}
 
@@ -856,7 +855,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			   op_ctx->fsal_export);
 
 	if (hdl == NULL) {
-		status = fsalstat(posix2fsal_error(ENOMEM), ENOMEM);
+		status = posix2fsal_status(ENOMEM);
 		goto fileerr;
 	}
 
@@ -960,7 +959,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", dir_fd);
 	close(dir_fd);
-	return fsalstat(posix2fsal_error(retval), retval);
+	return status;
 }
 
 /**
