@@ -2908,18 +2908,6 @@ struct fsal_obj_handle {
 
 	pthread_rwlock_t obj_lock;		/*< Lock on handle */
 
-	/** Pointer to the cached attributes.
-	 *
-	 * This pointer should be set by the fsal when the handle is created.
-	 * Its value should not be changed once initialized. The release
-	 * of this field is also done by the FSAL.
-	 *
-	 * Typically the attributes are part of the FSAL's private handle,
-	 * however, some FSALs, particularly stackable FSALs may point to
-	 * some other field (for example, the underlying FSAL's attributes
-	 * in the case of FSAL_NULL).
-	 */
-
 	/* Static attributes */
 	object_file_type_t type;	/*< Object file type */
 	fsal_fsid_t fsid;	/*< Filesystem on which this object is
