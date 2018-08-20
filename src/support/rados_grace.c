@@ -564,6 +564,7 @@ rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		char			buf[sizeof(uint64_t) * 2];
 		unsigned char		more = '\0';
 		uint64_t		ver;
+		bool			enforcing;
 
 		/* read epoch blob and omap keys */
 		rop = rados_create_read_op();
@@ -603,10 +604,17 @@ rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		 */
 		need = 0;
 		k = 0;
+		enforcing = true;
 		for (;;) {
 			ret = rados_omap_get_next(iter, &key, &val, &len);
 			if (!key)
 				break;
+
+			/* Don't lift if anyone is not enforcing */
+			if (!(*val & RADOS_GRACE_ENFORCING)) {
+				enforcing = false;
+				break;
+			}
 
 			if (*val & RADOS_GRACE_NEED_GRACE)
 				++need;
@@ -634,6 +642,13 @@ rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		};
 		rados_omap_get_end(iter);
 		rados_release_read_op(rop);
+
+		/*
+		 * We can't lift if there are cluster members that haven't
+		 * started enforcement yet. Wait until they catch up.
+		 */
+		if (!enforcing)
+			goto out;
 
 		/* Ensure that all given nodes have a key in the omap */
 		for (i = 0; i < nodes; ++i) {
@@ -682,11 +697,11 @@ rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		if (ret >= 0)
 			rados_grace_notify(io_ctx, oid);
 	} while (ret == -ERANGE);
+out:
 	if (!ret) {
 		*pcur = cur;
 		*prec = rec;
 	}
-out:
 	free(match);
 	free(vals);
 	free(lens);
