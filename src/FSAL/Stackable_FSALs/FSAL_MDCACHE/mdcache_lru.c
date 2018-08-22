@@ -2029,9 +2029,10 @@ void lru_bump_chunk(struct dir_chunk *chunk)
 {
 	mdcache_lru_t *lru = &chunk->chunk_lru;
 	struct lru_q_lane *qlane = &CHUNK_LRU[lru->lane];
-	struct lru_q *q = chunk_lru_queue_of(chunk);
+	struct lru_q *q;
 
 	QLOCK(qlane);
+	q = chunk_lru_queue_of(chunk);
 
 	switch (lru->qid) {
 	case LRU_ENTRY_L1:
