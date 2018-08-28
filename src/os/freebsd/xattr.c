@@ -28,7 +28,9 @@
 #include <os/freebsd/xattr.h>
 #include <sys/extattr.h>
 
+#ifndef EXTATTR_MAXNAMELEN
 #define EXTATTR_MAXNAMELEN 255
+#endif
 
 ssize_t fgetxattr(int fd, const char *name, void *value, size_t size)
 {
