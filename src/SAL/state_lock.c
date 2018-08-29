@@ -1725,7 +1725,6 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 	granted_callback_t call_back;
 	state_blocking_t blocked;
 	state_status_t status;
-	struct root_op_context root_op_context;
 	struct gsh_export *export = lock_entry->sle_export;
 	const char *reason;
 
@@ -1739,7 +1738,6 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 	} else if (!export_ready(export)) {
 		reason = "Removing blocked lock entry due to stale export";
 	} else {
-		get_gsh_export_ref(export);
 		call_back = lock_entry->sle_block_data->sbd_granted_callback;
 		/* Mark the lock_entry as provisionally granted and make the
 		 * granted call back. The granted call back is responsible
@@ -1752,17 +1750,8 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 			lock_entry->sle_block_data->sbd_grant_type =
 			    STATE_GRANT_INTERNAL;
 
-		/* Initialize a root context, need to get a valid export. */
-		init_root_op_context(&root_op_context,
-				     export, export->fsal_export,
-				     0, 0, UNKNOWN_REQUEST);
-
 		status = call_back(lock_entry->sle_obj,
 				   lock_entry);
-
-		put_gsh_export(export);
-
-		release_root_op_context();
 
 		if (status == STATE_LOCK_BLOCKED) {
 			/* The lock is still blocked, restore it's type and
