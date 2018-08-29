@@ -155,6 +155,7 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		read_arg->iov[0].iov_len = *count;
 		read_arg->iov[0].iov_base = databuffer;
 		read_arg->io_amount = 0;
+		read_arg->end_of_file = false;
 
 		read_data.client = req9p->pconn->client;
 

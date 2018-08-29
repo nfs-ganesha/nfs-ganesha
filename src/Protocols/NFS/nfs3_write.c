@@ -159,6 +159,8 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if ((arg->arg_write3.stable == DATA_SYNC) ||
 	    (arg->arg_write3.stable == FILE_SYNC))
 		write_arg->fsal_stable = true;
+	else
+		write_arg->fsal_stable = false;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR], *stables = "";

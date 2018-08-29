@@ -559,6 +559,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	read_arg->iov[0].iov_len = size;
 	read_arg->iov[0].iov_base = bufferdata;
 	read_arg->io_amount = 0;
+	read_arg->end_of_file = false;
 
 	read_data.res_READ4 = res_READ4;
 	read_data.owner = owner;
