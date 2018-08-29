@@ -42,11 +42,13 @@
 #include "client_mgr.h"
 #include "fsal.h"
 
-time_t current_grace;
-pthread_mutex_t grace_mutex = PTHREAD_MUTEX_INITIALIZER;        /*< Mutex */
-struct glist_head clid_list = GLIST_HEAD_INIT(clid_list);  /*< Clients */
-struct nfs4_recovery_backend *recovery_backend;
-static int clid_count; /* protected by grace_mutex */
+/* The grace_mutex protects current_grace, clid_list, and clid_count */
+static pthread_mutex_t grace_mutex = PTHREAD_MUTEX_INITIALIZER;
+static time_t current_grace; /* current grace period timeout */
+static int clid_count; /* number of active clients */
+static struct glist_head clid_list = GLIST_HEAD_INIT(clid_list);  /* clients */
+
+static struct nfs4_recovery_backend *recovery_backend;
 static int32_t reclaim_completes; /* atomic */
 
 static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp);
@@ -103,7 +105,7 @@ nfs_lift_grace_locked(time_t current)
 	 * the value to 0 gets to clean up the recovery db.
 	 */
 	if (atomic_fetch_time_t(&current_grace) == current) {
-		nfs4_end_grace();
+		nfs_end_grace();
 		__sync_synchronize();
 		atomic_store_time_t(&current_grace, (time_t)0);
 		LogEvent(COMPONENT_STATE, "NFS Server Now NOT IN GRACE");
@@ -541,7 +543,7 @@ void nfs4_recovery_shutdown(void)
 /**
  * @brief Clean up recovery directory
  */
-void nfs4_end_grace(void)
+void nfs_end_grace(void)
 {
 	recovery_backend->end_grace();
 }

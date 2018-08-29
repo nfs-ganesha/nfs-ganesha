@@ -981,23 +981,29 @@ void blocked_lock_polling(struct fridgethr_context *ctx);
  *
  ******************************************************************************/
 
+/* Grace period handling */
 void nfs_start_grace(nfs_grace_start_t *gsp);
+void nfs_end_grace(void);
 bool nfs_in_grace(void);
-bool simple_try_lift_grace(void);
 void nfs_maybe_start_grace(void);
 bool nfs_grace_is_member(void);
 void nfs_try_lift_grace(void);
 void nfs_wait_for_grace_enforcement(void);
 void nfs_notify_grace_waiters(void);
+
+/* v4 Client stable-storage database management */
 void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(nfs_client_id_t *);
 void nfs4_recovery_reclaim_complete(nfs_client_id_t *clientid);
 void nfs4_chk_clid(nfs_client_id_t *);
-void nfs4_end_grace(void);
+
+/* Delegation revocation tracking */
+bool nfs4_check_deleg_reclaim(nfs_client_id_t *, nfs_fh4 *);
+void nfs4_record_revoke(nfs_client_id_t *, nfs_fh4 *);
+
+/* Recovery backend management */
 int nfs4_recovery_init(void);
 void nfs4_recovery_shutdown(void);
-void nfs4_record_revoke(nfs_client_id_t *, nfs_fh4 *);
-bool nfs4_check_deleg_reclaim(nfs_client_id_t *, nfs_fh4 *);
 
 /**
  * @brief Check to see if an object is a junction
