@@ -278,6 +278,13 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 not_junction:
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
+	memset(&args, 0, sizeof(args));
+	args.attrs = (struct attrlist *)attr;
+	args.data = data;
+	args.hdl4 = &entryFH;
+	args.mounted_on_fileid = mounted_on_fileid;
+	args.fileid = obj->fileid;
+	args.fsid = obj->fsid;
 
 	/* Now process the entry */
 	memset(val_fh, 0, NFS4_FHSIZE);
@@ -359,14 +366,6 @@ not_junction:
 			 nfsstat4_to_str(rdattr_error));
 		goto skip;
 	}
-
-	memset(&args, 0, sizeof(args));
-	args.attrs = (struct attrlist *)attr;
-	args.data = data;
-	args.hdl4 = &entryFH;
-	args.mounted_on_fileid = mounted_on_fileid;
-	args.fileid = obj->fileid;
-	args.fsid = obj->fsid;
 
 	if (nfs4_FSALattr_To_Fattr(&args,
 				   tracker->req_attr,
