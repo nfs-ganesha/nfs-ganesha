@@ -48,6 +48,23 @@ static time_t current_grace; /* current grace period timeout */
 static int clid_count; /* number of active clients */
 static struct glist_head clid_list = GLIST_HEAD_INIT(clid_list);  /* clients */
 
+/*
+ * Low two bits of grace_status word are flags. One for whether we're currently
+ * in a grace period and one if a change was requested.
+ */
+#define GRACE_STATUS_ACTIVE_SHIFT	0
+#define GRACE_STATUS_CHANGE_REQ_SHIFT	1
+
+/* The remaining bits are for the refcount */
+#define GRACE_STATUS_COUNTER_SHIFT	2
+
+#define GRACE_STATUS_ACTIVE		(1U << GRACE_STATUS_ACTIVE_SHIFT)
+#define GRACE_STATUS_CHANGE_REQ		(1U << GRACE_STATUS_CHANGE_REQ_SHIFT)
+#define GRACE_STATUS_REF_INCREMENT	(1U << GRACE_STATUS_COUNTER_SHIFT)
+#define GRACE_STATUS_COUNT_MASK		((~0U) << GRACE_STATUS_COUNTER_SHIFT)
+
+static uint32_t	grace_status;
+
 static struct nfs4_recovery_backend *recovery_backend;
 int32_t reclaim_completes; /* atomic */
 
@@ -90,6 +107,48 @@ void nfs4_cleanup_clid_entries(void)
 	atomic_store_int32_t(&reclaim_completes, 0);
 }
 
+/*
+ * Check the current status of the grace period against what the caller needs.
+ * If it's different then return false without taking a reference. If a change
+ * has been requested, then we also don't want to give out a reference.
+ */
+bool nfs_get_grace_status(bool want_grace)
+{
+	uint32_t cur, pro, old;
+
+	old = atomic_fetch_uint32_t(&grace_status);
+	do {
+		cur = old;
+
+		/* If it's not the state we want, then no reference */
+		if (want_grace != (bool)(cur & GRACE_STATUS_ACTIVE))
+			return false;
+
+		/* If a change was requested, no reference */
+		if (cur & GRACE_STATUS_CHANGE_REQ)
+			return false;
+
+		/* Bump the counter */
+		pro = cur + GRACE_STATUS_REF_INCREMENT;
+		old = __sync_val_compare_and_swap(&grace_status, cur, pro);
+	} while (old != cur);
+	return true;
+}
+
+/*
+ * Put grace status. If the refcount goes to zero, and a change was requested,
+ * then wake the reaper thread to do its thing.
+ */
+void nfs_put_grace_status(void)
+{
+	uint32_t cur;
+
+	cur = __sync_fetch_and_sub(&grace_status, GRACE_STATUS_REF_INCREMENT);
+	if (cur & GRACE_STATUS_CHANGE_REQ &&
+	    !(cur >> GRACE_STATUS_COUNTER_SHIFT))
+		reaper_wake();
+}
+
 /**
  * Lift the grace period, if current_grace has not changed since we last
  * checked it. If something has changed in the interim, then don't do
@@ -99,14 +158,20 @@ void nfs4_cleanup_clid_entries(void)
 static void
 nfs_lift_grace_locked(time_t current)
 {
+	uint32_t cur;
+
 	/*
 	 * Caller must hold grace_mutex. Only the thread that actually sets
 	 * the value to 0 gets to clean up the recovery db.
 	 */
-	if (atomic_fetch_time_t(&current_grace) == current) {
+	if (nfs_in_grace() &&
+	    atomic_fetch_time_t(&current_grace) == current) {
 		nfs_end_grace();
 		__sync_synchronize();
-		atomic_store_time_t(&current_grace, (time_t)0);
+		/* Now change the actual status */
+		cur = __sync_and_and_fetch(&grace_status,
+			~(GRACE_STATUS_ACTIVE|GRACE_STATUS_CHANGE_REQ));
+		assert(!(cur & GRACE_STATUS_COUNT_MASK));
 		LogEvent(COMPONENT_STATE, "NFS Server Now NOT IN GRACE");
 	}
 }
@@ -132,6 +197,7 @@ static void nfs4_set_enforcing(void)
 void nfs_start_grace(nfs_grace_start_t *gsp)
 {
 	bool was_grace;
+	uint32_t cur, old, pro;
 
 	PTHREAD_MUTEX_lock(&grace_mutex);
 
@@ -151,8 +217,48 @@ void nfs_start_grace(nfs_grace_start_t *gsp)
 	 * that the callers see the
 	 * Full barrier to ensure enforcement begins ASAP.
 	 */
-	was_grace = (bool)atomic_fetch_time_t(&current_grace);
+
+	/*
+	 * Ensure there are no outstanding references to the current state of
+	 * grace. If there are, set flag indicating that a change has been
+	 * requested and that no more references will be handed out until it
+	 * takes effect.
+	 */
 	atomic_store_time_t(&current_grace, time(NULL));
+	cur = atomic_fetch_uint32_t(&grace_status);
+	do {
+		old = cur;
+		was_grace = cur & GRACE_STATUS_ACTIVE;
+
+		/* If we're already in a grace period then we're done */
+		if (was_grace)
+			break;
+
+		/*
+		 * Are there outstanding refs? If so, then set the change req
+		 * flag and nothing else. If not, then clear the change req
+		 * flag and flip the active bit.
+		 */
+		if (old & GRACE_STATUS_COUNT_MASK) {
+			pro = old | GRACE_STATUS_CHANGE_REQ;
+		} else {
+			pro = old | GRACE_STATUS_ACTIVE;
+			pro &= ~GRACE_STATUS_CHANGE_REQ;
+		}
+
+		/* If there are no changes, then we don't need to update */
+		if (pro == old)
+			break;
+		cur = __sync_val_compare_and_swap(&grace_status, old, pro);
+	} while (cur != old);
+
+	/*
+	 * If we were not in a grace period before and there were still
+	 * references outstanding, then we can't do anything else.
+	 */
+	if (!was_grace && (old & GRACE_STATUS_COUNT_MASK))
+		goto out;
+
 	__sync_synchronize();
 
 	if ((int)nfs_param.nfsv4_param.grace_period <
@@ -213,7 +319,7 @@ out:
  */
 bool nfs_in_grace(void)
 {
-	return atomic_fetch_time_t(&current_grace);
+	return atomic_fetch_uint32_t(&grace_status) & GRACE_STATUS_ACTIVE;
 }
 
 /**
@@ -262,9 +368,10 @@ void nfs_try_lift_grace(void)
 	bool in_grace = true;
 	int32_t rc_count = 0;
 	time_t current = atomic_fetch_time_t(&current_grace);
+	uint32_t cur, old, pro;
 
 	/* Already lifted? Just return */
-	if (!current)
+	if (!(atomic_fetch_uint32_t(&grace_status) & GRACE_STATUS_ACTIVE))
 		return;
 
 	/*
@@ -281,18 +388,46 @@ void nfs_try_lift_grace(void)
 					time(NULL));
 
 	/*
-	 * Can we lift the grace period now? Clustered backends may need
-	 * extra checks before they can do so. If that is the case, then take
-	 * the grace_mutex and try to do it. If the backend does not implement
-	 * a try_lift_grace operation, then we assume it's always ok.
+	 * Ok, we're basically ready to lift. Ensure there are no outstanding
+	 * references to the current status of the grace period. If there are,
+	 * then set the flag saying that there is an upcoming change.
+	 */
+
+	/*
+	 * Can we lift the grace period now? If there are any outstanding refs,
+	 * then just set the grace_change_req flag to indicate that we don't
+	 * want to hand any more refs out. Otherwise, we try to lift.
+	 *
+	 * Clustered backends may need extra checks before they can do so. If
+	 * the backend does not implement a try_lift_grace operation, then we
+	 * assume there are no external conditions and that it's always ok.
 	 */
 	if (!in_grace) {
-		if (!recovery_backend->try_lift_grace ||
-		     recovery_backend->try_lift_grace()) {
-			PTHREAD_MUTEX_lock(&grace_mutex);
+		PTHREAD_MUTEX_lock(&grace_mutex);
+		cur = atomic_fetch_uint32_t(&grace_status);
+		do {
+			old = cur;
+
+			/* Are we already done? Exit if so */
+			if (!(cur & GRACE_STATUS_ACTIVE)) {
+				PTHREAD_MUTEX_unlock(&grace_mutex);
+				return;
+			}
+
+			/* Record that a change has now been requested */
+			pro = old | GRACE_STATUS_CHANGE_REQ;
+			if (pro == old)
+				break;
+			cur = __sync_val_compare_and_swap(&grace_status,
+							  old, pro);
+		} while (cur != old);
+
+		/* Otherwise, go ahead and lift if we can */
+		if (!(old & GRACE_STATUS_COUNT_MASK) &&
+		    (!recovery_backend->try_lift_grace ||
+		     recovery_backend->try_lift_grace()))
 			nfs_lift_grace_locked(current);
-			PTHREAD_MUTEX_unlock(&grace_mutex);
-		}
+		PTHREAD_MUTEX_unlock(&grace_mutex);
 	}
 }
 

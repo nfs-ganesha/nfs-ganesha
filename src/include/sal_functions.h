@@ -986,6 +986,8 @@ extern int32_t reclaim_completes; /* atomic */
 void nfs_start_grace(nfs_grace_start_t *gsp);
 void nfs_end_grace(void);
 bool nfs_in_grace(void);
+bool nfs_get_grace_status(bool want_grace);
+void nfs_put_grace_status(void);
 void nfs_maybe_start_grace(void);
 bool nfs_grace_is_member(void);
 void nfs_try_lift_grace(void);
