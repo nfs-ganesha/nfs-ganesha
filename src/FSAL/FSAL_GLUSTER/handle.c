@@ -1207,14 +1207,11 @@ fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 	*/
 	if (reusing_open_state_fd) {
 		my_fd->glfd = glfs_dup(tmp2_fd->glfd);
-		my_fd->creds.caller_garray =
-			gsh_malloc(my_fd->creds.caller_glen *
-				   sizeof(gid_t));
-
-		memcpy(my_fd->creds.caller_garray,
-		       op_ctx->creds->caller_garray,
-		       op_ctx->creds->caller_glen *
-		       sizeof(gid_t));
+		if (tmp2_fd->creds.caller_glen)
+			my_fd->creds.caller_garray =
+				gsh_memdup(tmp2_fd->creds.caller_garray,
+					   tmp2_fd->creds.caller_glen *
+					   sizeof(gid_t));
 	} else {
 		my_fd->glfd = tmp2_fd->glfd;
 		my_fd->creds.caller_garray = tmp2_fd->creds.caller_garray;

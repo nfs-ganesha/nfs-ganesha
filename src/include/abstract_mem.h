@@ -273,11 +273,11 @@ gsh_strldup__(const char *s, size_t length, size_t *copied,
  *
  * @return Pointer to new copy of data
  */
-static inline char *
-gsh_memdup__(const char *s, const size_t l, const char *file, int line,
+static inline void *
+gsh_memdup__(const void *s, const size_t l, const char *file, int line,
 		const char *function)
 {
-	char *p = (char *) gsh_malloc__(l, file, line, function);
+	void *p = gsh_malloc__(l, file, line, function);
 
 	memcpy(p, s, l);
 	return p;
