@@ -100,6 +100,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	struct state_refer refer;
 	/* Indicate if we let FSAL to handle requests during grace. */
 	bool_t fsal_grace = false;
+	bool_t have_grace_ref = false;
 	int rc;
 	struct fsal_obj_handle *obj = data->current_obj;
 	bool state_lock_held = false;
@@ -448,39 +449,41 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
+
+	fsal_grace = op_ctx->fsal_export->exp_ops.fs_supports(
+					op_ctx->fsal_export, fso_grace_method);
+
 	/* Do grace period checking (use resp_owner below since a new
 	 * lock request with a new lock owner doesn't have a lock owner
 	 * yet, but does have an open owner - resp_owner is always one or
 	 * the other and non-NULL at this point - so makes for a better log).
 	 */
-	if (nfs_in_grace()) {
-		if (op_ctx->fsal_export->exp_ops.fs_supports(
-					op_ctx->fsal_export, fso_grace_method))
-			fsal_grace = true;
-
-		if (!fsal_grace && !arg_LOCK4->reclaim) {
-			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-			"LOCK failed, non-reclaim while in grace",
-				obj, resp_owner, &lock_desc);
-			res_LOCK4->status = NFS4ERR_GRACE;
-			goto out;
-		}
-		if (!fsal_grace && arg_LOCK4->reclaim
-		    && !clientid->cid_allow_reclaim) {
-			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-				"LOCK failed, invalid reclaim while in grace",
-				obj, resp_owner, &lock_desc);
-			res_LOCK4->status = NFS4ERR_NO_GRACE;
-			goto out;
-		}
-	} else {
+	if (!fsal_grace) {
 		if (arg_LOCK4->reclaim) {
-			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
-				"LOCK failed, reclaim while not in grace",
-				obj, resp_owner, &lock_desc);
-			res_LOCK4->status = NFS4ERR_NO_GRACE;
-			goto out;
+			if (!clientid->cid_allow_reclaim) {
+				LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+					"LOCK failed, invalid reclaim while in grace",
+					obj, resp_owner, &lock_desc);
+				res_LOCK4->status = NFS4ERR_NO_GRACE;
+				goto out;
+			}
+			if (!nfs_get_grace_status(true)) {
+				LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+					"LOCK failed, reclaim while not in grace",
+					obj, resp_owner, &lock_desc);
+				res_LOCK4->status = NFS4ERR_NO_GRACE;
+				goto out;
+			}
+		} else {
+			if (!nfs_get_grace_status(false)) {
+				LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
+					"LOCK failed, non-reclaim while in grace",
+					obj, resp_owner, &lock_desc);
+				res_LOCK4->status = NFS4ERR_GRACE;
+				goto out;
+			}
 		}
+		have_grace_ref = true;
 	}
 
 	/* Test if this request is attempting to create a new lock owner */
@@ -699,6 +702,8 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
  out2:
+	if (have_grace_ref)
+		nfs_put_grace_status();
 
 	if (state_lock_held) {
 		/* Now release the state_lock */
