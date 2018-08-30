@@ -104,7 +104,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		return res_LOCKT4->status;
 	}
 
-	if (nfs_in_grace()) {
+	if (!nfs_get_grace_status(false)) {
 		res_LOCKT4->status = NFS4ERR_GRACE;
 		return res_LOCKT4->status;
 	}
@@ -124,7 +124,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		LogDebug(COMPONENT_NFS_V4_LOCK,
 			 "Invalid lock type");
 		res_LOCKT4->status = NFS4ERR_INVAL;
-		return res_LOCKT4->status;
+		goto out;
 	}
 
 	lock_desc.lock_start = arg_LOCKT4->offset;
@@ -146,7 +146,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 			 "LOCK failed length overflow start %"PRIx64
 			 " length %"PRIx64,
 			 lock_desc.lock_start, lock_desc.lock_length);
-		return res_LOCKT4->status;
+		goto out;
 	}
 
 	/* Check for range overflow past maxfilesize.  Comparing beyond 2^64 is
@@ -160,7 +160,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 			 " length %"PRIx64,
 			 maxfilesize,
 			 lock_desc.lock_start, lock_desc.lock_length);
-		return res_LOCKT4->status;
+		goto out;
 	}
 
 	/* Check clientid */
@@ -171,16 +171,15 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (rc != CLIENT_ID_SUCCESS) {
 		res_LOCKT4->status = clientid_error_to_nfsstat(rc);
-		return res_LOCKT4->status;
+		goto out;
 	}
 
 	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
 	if (data->minorversion == 0 && !reserve_lease(clientid)) {
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
-		dec_client_id_ref(clientid);
 		res_LOCKT4->status = NFS4ERR_EXPIRED;
-		return res_LOCKT4->status;
+		goto out_clientid;
 	}
 
 	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
@@ -203,7 +202,7 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		LogEvent(COMPONENT_NFS_V4_LOCK,
 			 "LOCKT unable to create lock owner");
 		res_LOCKT4->status = NFS4ERR_SERVERFAULT;
-		goto out;
+		goto out_clientid;
 	}
 
 	LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG, "LOCKT",
@@ -257,17 +256,16 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	if (state != NULL)
 		dec_state_t_ref(state);
 
- out:
-
+out_clientid:
 	/* Update the lease before exit */
 	if (data->minorversion == 0) {
 		PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 		update_lease(clientid);
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 	}
-
 	dec_client_id_ref(clientid);
-
+out:
+	nfs_put_grace_status();
 	return res_LOCKT4->status;
 }				/* nfs4_op_lockt */
 
