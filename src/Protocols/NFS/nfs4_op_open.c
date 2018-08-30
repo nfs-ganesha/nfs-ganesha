@@ -120,6 +120,7 @@ static nfsstat4 open4_create_fh(compound_data_t *data,
  *
  * @param[in]  data         Compound's data
  * @param[in]  claim        Claim type
+ * @param[out] grace_ref    Did this function acquire a grace reference?
  *
  * @retval NFS4_OK claim is valid.
  * @retval NFS4ERR_GRACE new open not allowed in grace period.
@@ -131,32 +132,27 @@ static nfsstat4 open4_create_fh(compound_data_t *data,
 
 static nfsstat4 open4_validate_claim(compound_data_t *data,
 				     open_claim_type4 claim,
-				     nfs_client_id_t *clientid)
+				     nfs_client_id_t *clientid,
+				     bool *grace_ref)
 {
 	/* Return code */
 	nfsstat4 status = NFS4_OK;
-	/* Indicate if we let FSAL to handle requests during grace. */
-	bool_t fsal_grace = false;
-
-	/* Pick off erroneous claims so we don't have to deal with
-	   them later. */
+	/* does this claim require a grace period? */
+	bool want_grace = false;
+	/* do we need a reference on the current state of grace? */
+	bool take_ref = !op_ctx->fsal_export->exp_ops.fs_supports(
+					op_ctx->fsal_export, fso_grace_method);
 
 	switch (claim) {
 	case CLAIM_NULL:
-		if (nfs_in_grace() || ((data->minorversion > 0)
-		    && !clientid->cid_cb.v41.cid_reclaim_complete))
+		if ((data->minorversion > 0)
+		    && !clientid->cid_cb.v41.cid_reclaim_complete)
 			status = NFS4ERR_GRACE;
 		break;
 
 	case CLAIM_FH:
 		if (data->minorversion == 0)
 			status = NFS4ERR_NOTSUPP;
-
-		if (op_ctx->fsal_export->exp_ops.fs_supports(
-					op_ctx->fsal_export, fso_grace_method))
-			fsal_grace = true;
-		if (!fsal_grace && nfs_in_grace())
-			status = NFS4ERR_GRACE;
 		break;
 
 	case CLAIM_DELEGATE_PREV:
@@ -164,13 +160,15 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
 		break;
 
 	case CLAIM_PREVIOUS:
-		if (!clientid->cid_allow_reclaim || !nfs_in_grace()
-		    || ((data->minorversion > 0)
-		    && clientid->cid_cb.v41.cid_reclaim_complete))
+		want_grace = true;
+		if (!clientid->cid_allow_reclaim ||
+		    ((data->minorversion > 0) &&
+		    clientid->cid_cb.v41.cid_reclaim_complete))
 			status = NFS4ERR_NO_GRACE;
 		break;
 
 	case CLAIM_DELEGATE_CUR:
+		take_ref = false;
 		break;
 
 	case CLAIM_DELEG_CUR_FH:
@@ -182,6 +180,18 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
 		status = NFS4ERR_INVAL;
 	}
 
+	if (status == NFS4_OK) {
+		if (take_ref) {
+			if (nfs_get_grace_status(want_grace)) {
+				*grace_ref = true;
+			} else {
+				status = want_grace ? NFS4ERR_NO_GRACE :
+						      NFS4ERR_GRACE;
+			}
+		} else {
+			*grace_ref = false;
+		}
+	}
 	return status;
 }
 
@@ -378,6 +388,7 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 			 "state not found with CLAIM_DELEGATE_CUR");
 		return NFS4ERR_BAD_STATEID;
 	} else {
+		/* FIXME: vet stateid here */
 		if (isFullDebug(COMPONENT_NFS_V4)) {
 			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -1203,6 +1214,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	state_t *file_state = NULL;
 	/* True if the state was newly created */
 	bool new_state = false;
+	/* True if a grace reference was taken */
+	bool grace_ref = false;
 	int retval;
 
 	LogDebug(COMPONENT_STATE,
@@ -1302,8 +1315,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* Do the claim check here, so we can save the result in the
 	 * owner for NFSv4.0.
 	 */
-	res_OPEN4->status = open4_validate_claim(data, claim, clientid);
-
+	res_OPEN4->status = open4_validate_claim(data, claim, clientid,
+						 &grace_ref);
 	if (res_OPEN4->status != NFS4_OK) {
 		LogDebug(COMPONENT_NFS_V4, "open4_validate_claim failed");
 		goto out;
@@ -1410,6 +1423,8 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
  out2:
+	if (grace_ref)
+		nfs_put_grace_status();
 
 	/* Update the lease before exit */
 	if (data->minorversion == 0) {
