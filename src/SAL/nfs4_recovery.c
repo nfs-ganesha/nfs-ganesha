@@ -438,9 +438,8 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 		return;
 
 	/*
-	 * loop through the list and try to find this client.  if we
-	 * find it, mark it to allow reclaims.  perhaps the client should
-	 * be removed from the list at this point to make the list shorter?
+	 * loop through the list and try to find this client. If we
+	 * find it, mark it to allow reclaims.
 	 */
 	glist_for_each(node, &clid_list) {
 		clid_ent = glist_entry(node, clid_entry_t, cl_list);
@@ -467,9 +466,6 @@ void  nfs4_chk_clid(nfs_client_id_t *clientid)
 {
 	clid_entry_t *dummy_clid_ent;
 
-	/* If we aren't in grace period, then reclaim is not possible */
-	if (!nfs_in_grace())
-		return;
 	PTHREAD_MUTEX_lock(&grace_mutex);
 	nfs4_chk_clid_impl(clientid, &dummy_clid_ent);
 	PTHREAD_MUTEX_unlock(&grace_mutex);
