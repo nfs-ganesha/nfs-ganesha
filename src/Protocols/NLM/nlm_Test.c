@@ -78,7 +78,7 @@ int nlm4_Test(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	copy_netobj(&res->res_nlm4test.cookie, &arg->cookie);
 
-	if (nfs_in_grace()) {
+	if (!nfs_get_grace_status(false)) {
 		test_stat->stat = NLM4_DENIED_GRACE_PERIOD;
 		LogDebug(COMPONENT_NLM,
 			 "REQUEST RESULT: NLM4_TEST %s",
@@ -113,7 +113,7 @@ int nlm4_Test(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		LogDebug(COMPONENT_NLM,
 			 "REQUEST RESULT: nlm4_Unlock %s",
 			 lock_result_str(res->res_nlm4.stat.stat));
-		return NFS_REQ_OK;
+		goto out;
 	}
 
 	state_status = state_test(obj,
@@ -150,7 +150,8 @@ int nlm4_Test(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	LogDebug(COMPONENT_NLM,
 		 "REQUEST RESULT: NLM4_TEST %s",
 		 lock_result_str(res->res_nlm4.stat.stat));
-
+out:
+	nfs_put_grace_status();
 	return NFS_REQ_OK;
 }
 
