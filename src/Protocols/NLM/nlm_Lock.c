@@ -53,12 +53,11 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	state_t *nlm_state;
 	fsal_lock_param_t lock, conflict;
 	int rc;
-	bool grace = nfs_in_grace();
 	state_block_data_t *pblock_data;
 	const char *proc_name = "nlm4_Lock";
 	care_t care = CARE_MONITOR;
 	/* Indicate if we let FSAL to handle requests during grace. */
-	bool_t fsal_grace = false;
+	bool grace_ref;
 
 	if (req->rq_msg.cb_proc == NLMPROC4_NM_LOCK) {
 		/* If call is a NM lock, indicate that we care about NLM
@@ -88,25 +87,19 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	copy_netobj(&res->res_nlm4test.cookie, &arg->cookie);
 
-	if (grace) {
-		/* allow only reclaim lock request during recovery */
-		if (op_ctx->fsal_export->exp_ops.fs_supports(
-					op_ctx->fsal_export, fso_grace_method))
-			fsal_grace = true;
-		if (!fsal_grace && !arg->reclaim) {
+	grace_ref = !op_ctx->fsal_export->exp_ops.fs_supports(
+					op_ctx->fsal_export, fso_grace_method);
+	if (grace_ref) {
+		if (!nfs_get_grace_status(arg->reclaim)) {
+			grace_ref = false;
 			res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
 			LogDebug(COMPONENT_NLM,
-				 "REQUEST RESULT: in grace %s %s",
+				 "REQUEST RESULT:%s in grace %s %s",
+				 arg->reclaim ? " NOT" : "",
 				 proc_name,
 				 lock_result_str(res->res_nlm4.stat.stat));
 			return NFS_REQ_OK;
 		}
-	} else if (arg->reclaim) { /* don't allow reclaim if not in recovery */
-		res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: not in grace %s %s",
-			 proc_name, lock_result_str(res->res_nlm4.stat.stat));
-		return NFS_REQ_OK;
 	}
 
 	rc = nlm_process_parameters(req,
@@ -131,7 +124,8 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 			 "REQUEST RESULT: %s %s",
 			 proc_name,
 			 lock_result_str(res->res_nlm4.stat.stat));
-		return NFS_REQ_OK;
+		rc = NFS_REQ_OK;
+		goto out;
 	}
 
 	/* Check if v4 delegations conflict with v3 op */
@@ -141,7 +135,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		LogDebug(COMPONENT_NLM,
 			 "NLM lock request DROPPED due to delegation conflict");
 		rc = NFS_REQ_DROP;
-		goto out;
+		goto out_dec;
 	} else {
 		(void) atomic_inc_uint32_t(&obj->state_hdl->file.anon_ops);
 		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
@@ -184,21 +178,13 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		if (state_status != STATE_LOCK_BLOCKED && pblock_data != NULL)
 			gsh_free(pblock_data);
 
-		if (state_status == STATE_IN_GRACE) {
+		if (state_status == STATE_IN_GRACE)
 			res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-			goto out_ok;
-		}
-
 	} else {
 		res->res_nlm4.stat.stat = NLM4_GRANTED;
 	}
-
- out_ok:
-
 	rc = NFS_REQ_OK;
-
- out:
-
+ out_dec:
 	/* Release the NLM Client and NLM Owner references we have */
 	dec_nsm_client_ref(nsm_client);
 	dec_nlm_client_ref(nlm_client);
@@ -210,7 +196,9 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		 "REQUEST RESULT: %s %s",
 		 proc_name,
 		 lock_result_str(res->res_nlm4.stat.stat));
-
+out:
+	if (grace_ref)
+		nfs_put_grace_status();
 	return rc;
 }
 
