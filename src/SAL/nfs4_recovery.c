@@ -225,7 +225,7 @@ bool nfs_in_grace(void)
  */
 void nfs_maybe_start_grace(void)
 {
-	if (recovery_backend->maybe_start_grace)
+	if (!nfs_in_grace() && recovery_backend->maybe_start_grace)
 		recovery_backend->maybe_start_grace();
 }
 

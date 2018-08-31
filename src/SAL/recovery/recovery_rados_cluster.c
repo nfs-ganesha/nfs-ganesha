@@ -272,10 +272,6 @@ static void rados_cluster_maybe_start_grace(void)
 					.lens = lens };
 
 
-	/* Do nothing if we're already enforcing grace period */
-	if (nfs_in_grace())
-		return;
-
 	/* Fix up the strings */
 	ret = rados_grace_epochs(rados_recov_io_ctx, rados_kv_param.grace_oid,
 				 &cur, &rec);
