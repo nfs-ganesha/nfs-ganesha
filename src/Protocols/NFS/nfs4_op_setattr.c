@@ -82,7 +82,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	 * Required for delegation reclaims and may be needed for other
 	 * reclaimable states as well.
 	 */
-	if (nfs_in_grace()) {
+	if (!nfs_get_grace_status(false)) {
 		res_SETATTR4->status = NFS4ERR_GRACE;
 		return res_SETATTR4->status;
 	}
@@ -91,13 +91,13 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	if (!nfs4_Fattr_Check_Access
 	    (&arg_SETATTR4->obj_attributes, FATTR4_ATTR_WRITE)) {
 		res_SETATTR4->status = NFS4ERR_INVAL;
-		return res_SETATTR4->status;
+		goto done;
 	}
 
 	/* Ask only for supported attributes */
 	if (!nfs4_Fattr_Supported(&arg_SETATTR4->obj_attributes)) {
 		res_SETATTR4->status = NFS4ERR_ATTRNOTSUPP;
-		return res_SETATTR4->status;
+		goto done;
 	}
 
 	/* Convert the fattr4 in the request to a fsal sattr structure */
@@ -107,7 +107,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 					data);
 
 	if (res_SETATTR4->status != NFS4_OK)
-		return res_SETATTR4->status;
+		goto done;
 
 	/* Trunc may change Xtime so we have to start with trunc and
 	 * finish by the mtime and atime
@@ -117,13 +117,13 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 		/* Setting the size of a directory is prohibited */
 		if (data->current_filetype == DIRECTORY) {
 			res_SETATTR4->status = NFS4ERR_ISDIR;
-			return res_SETATTR4->status;
+			goto done;
 		}
 
 		/* Object should be a file */
 		if (data->current_obj->type != REGULAR_FILE) {
 			res_SETATTR4->status = NFS4ERR_INVAL;
-			return res_SETATTR4->status;
+			goto done;
 		}
 
 		obj = data->current_obj;
@@ -140,7 +140,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 				       tag);
 
 		if (res_SETATTR4->status != NFS4_OK)
-			return res_SETATTR4->status;
+			goto done;
 
 		/* NB: After this point, if state_found == NULL, then
 		 * the stateid is all-0 or all-1
@@ -167,7 +167,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 
 			default:
 				res_SETATTR4->status = NFS4ERR_BAD_STATEID;
-				return res_SETATTR4->status;
+				goto done;
 			}
 
 			/* This is a size operation, this means that
@@ -178,7 +178,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 			     OPEN4_SHARE_ACCESS_WRITE) == 0) {
 				/* Bad open mode, return NFS4ERR_OPENMODE */
 				res_SETATTR4->status = NFS4ERR_OPENMODE;
-				return res_SETATTR4->status;
+				goto done;
 			}
 		} else {
 			/* Special stateid, no open state, check to
@@ -237,6 +237,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	res_SETATTR4->status = NFS4_OK;
 
  done:
+	nfs_put_grace_status();
 
 	if (state_found != NULL)
 		dec_state_t_ref(state_found);
