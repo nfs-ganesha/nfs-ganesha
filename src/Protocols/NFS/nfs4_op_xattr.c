@@ -345,7 +345,6 @@ int nfs4_op_removexattr(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *obj_handle = data->current_obj;
 
-	resp->resop = NFS4_OP_REMOVEXATTR;
 	res_REMOVEXATTR4->status = NFS4_OK;
 
 	LogDebug(COMPONENT_NFS_V4,
@@ -356,7 +355,6 @@ int nfs4_op_removexattr(struct nfs_argop4 *op, compound_data_t *data,
 	/* Do basic checks on a filehandle */
 	res_REMOVEXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
 							false);
-
 	if (res_REMOVEXATTR4->status != NFS4_OK)
 		return res_REMOVEXATTR4->status;
 
@@ -364,20 +362,23 @@ int nfs4_op_removexattr(struct nfs_argop4 *op, compound_data_t *data,
 	 * Required for delegation reclaims and may be needed for other
 	 * reclaimable states as well.
 	 */
-	if (nfs_in_grace()) {
+	if (!nfs_get_grace_status(false)) {
 		res_REMOVEXATTR4->status = NFS4ERR_GRACE;
 		return res_REMOVEXATTR4->status;
 	}
+
 	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.atomic = false;
 	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.before =
 				fsal_get_changeid4(data->current_obj);
 	fsal_status = obj_handle->obj_ops->removexattrs(obj_handle,
 					&arg_REMOVEXATTR4->ra_name);
 	if (FSAL_IS_ERROR(fsal_status))
-		return res_REMOVEXATTR4->status = nfs4_Errno_state(
+		res_REMOVEXATTR4->status = nfs4_Errno_state(
 					state_error_convert(fsal_status));
-	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.after =
+	else
+		res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rr_info.after =
 				fsal_get_changeid4(data->current_obj);
+	nfs_put_grace_status();
 	return res_REMOVEXATTR4->status;
 }
 
