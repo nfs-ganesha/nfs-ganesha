@@ -53,7 +53,6 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	state_owner_t *nlm_owner;
 	state_t *nlm_state;
 	int rc;
-	bool grace = nfs_in_grace();
 
 	/* NLM doesn't have a BADHANDLE error, nor can rpc_execute deal with
 	 * responding to an NLM_*_MSG call, so we check here if the export is
@@ -84,20 +83,6 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	}
 
 	copy_netobj(&res->res_nlm4share.cookie, &arg->cookie);
-
-	/* Allow only reclaim share request during recovery and visa versa.
-	 * Note: NLM_SHARE is indicated to be non-monitored, however, it does
-	 * have a reclaim flag, so we will honor the reclaim flag if used.
-	 * This is a little more bizare for UNSHARE, but, we'll still honor
-	 * the reclaim flag.
-	 */
-	if ((grace && !arg->reclaim) || (!grace && arg->reclaim)) {
-		res->res_nlm4share.stat = NLM4_DENIED_GRACE_PERIOD;
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: NLM4_UNSHARE %s",
-			 lock_result_str(res->res_nlm4share.stat));
-		return NFS_REQ_OK;
-	}
 
 	rc = nlm_process_share_parms(req,
 				     &arg->share,
