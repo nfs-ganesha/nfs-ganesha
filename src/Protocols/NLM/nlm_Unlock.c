@@ -73,14 +73,6 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	copy_netobj(&res->res_nlm4test.cookie, &arg->cookie);
 
-	if (nfs_in_grace()) {
-		res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: NLM4_UNLOCK %s",
-			 lock_result_str(res->res_nlm4.stat.stat));
-		return NFS_REQ_OK;
-	}
-
 	/* unlock doesn't care if owner is found */
 	rc = nlm_process_parameters(req,
 				    false,
