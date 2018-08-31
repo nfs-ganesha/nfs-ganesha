@@ -165,7 +165,6 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 	struct fsal_obj_handle *obj_handle = data->current_obj;
 
 	resp->resop = NFS4_OP_SETXATTR;
-	res_SETXATTR4->status = NFS4_OK;
 
 	LogDebug(COMPONENT_NFS_V4,
 		 "SetXattr type %d len %d name: %s",
@@ -175,7 +174,6 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Do basic checks on a filehandle */
 	res_SETXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
-
 	if (res_SETXATTR4->status != NFS4_OK)
 		return res_SETXATTR4->status;
 
@@ -183,10 +181,11 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 	 * Required for delegation reclaims and may be needed for other
 	 * reclaimable states as well.
 	 */
-	if (nfs_in_grace()) {
+	if (!nfs_get_grace_status(false)) {
 		res_SETXATTR4->status = NFS4ERR_GRACE;
 		return res_SETXATTR4->status;
 	}
+
 	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.atomic = false;
 	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.before =
 				fsal_get_changeid4(data->current_obj);
@@ -195,10 +194,12 @@ int nfs4_op_setxattr(struct nfs_argop4 *op, compound_data_t *data,
 					&arg_SETXATTR4->sa_xattr.xa_name,
 					&arg_SETXATTR4->sa_xattr.xa_value);
 	if (FSAL_IS_ERROR(fsal_status))
-		return res_SETXATTR4->status = nfs4_Errno_state(
+		res_SETXATTR4->status = nfs4_Errno_state(
 					state_error_convert(fsal_status));
-	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.after =
+	else
+		res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.after =
 				fsal_get_changeid4(data->current_obj);
+	nfs_put_grace_status();
 	return res_SETXATTR4->status;
 }
 
