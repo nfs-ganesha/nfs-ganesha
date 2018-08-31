@@ -679,10 +679,6 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 	int b64ret;
 	bool retval = true;
 
-	/* If we aren't in grace period, then reclaim is not possible */
-	if (!nfs_in_grace())
-		return false;
-
 	/* Convert nfs_fh4_val into base64 encoded string */
 	b64ret = base64url_encode(fhandle->nfs_fh4_val, fhandle->nfs_fh4_len,
 				  rhdlstr, sizeof(rhdlstr));
