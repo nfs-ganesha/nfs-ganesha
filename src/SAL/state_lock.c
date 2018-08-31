@@ -1445,10 +1445,6 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 		return status;
 	}
 
-	/* Increment lock entry reference count and link it to the cookie */
-	lock_entry_inc_ref(lock_entry);
-	lock_entry->sle_block_data->sbd_blocked_cookie = hash_entry;
-
 	if (str_valid)
 		LogFullDebug(COMPONENT_STATE, "Lock Cookie {%s} Added", str);
 
@@ -1493,6 +1489,8 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 	}
 
 	if (status != STATE_SUCCESS) {
+		struct gsh_buffdesc buffused_key;
+
 		/* Lock will be returned to right blocking type if it is
 		 * still blocking. We could lose a block if we failed for
 		 * any other reason
@@ -1510,6 +1508,10 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 
 		LogEntry("Entry", lock_entry);
 
+		/* Remove the hashtable entry */
+		HashTable_Del(ht_lock_cookies, &buffkey, &buffused_key,
+			      &buffval);
+
 		/* And release the cookie without unblocking the lock.
 		 * grant_blocked_locks() will decide whether to keep or
 		 * free the block.
@@ -1519,6 +1521,9 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 		return status;
 	}
 
+	/* Increment lock entry reference count and link it to the cookie */
+	lock_entry_inc_ref(lock_entry);
+	lock_entry->sle_block_data->sbd_blocked_cookie = hash_entry;
 	*cookie_entry = hash_entry;
 	return status;
 }
