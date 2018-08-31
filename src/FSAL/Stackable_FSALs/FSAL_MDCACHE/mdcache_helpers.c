@@ -2082,7 +2082,6 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 	int code = 0;
 	fsal_status_t status;
 	enum fsal_dir_result result = DIR_CONTINUE;
-	bool in_readahead = false;
 
 	if (chunk->num_entries == mdcache_param.dir.avl_chunk) {
 		/* We are being called readahead. */
@@ -2096,7 +2095,6 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 
 		state->dir_state = chunk;
 
-		in_readahead = true;
 		/* And start accepting entries into the new chunk. */
 	}
 
@@ -2290,7 +2288,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 				new_dir_entry->chunk,
 				new_dir_entry->chunk->next_ck, chunk,
 				chunk->next_ck);
-		if (chunk->num_entries == 0 && in_readahead) {
+		if (chunk->num_entries == 0) {
 
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
 				    COMPONENT_CACHE_INODE,
@@ -2300,7 +2298,9 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			lru_remove_chunk(chunk);
 			chunk = new_dir_entry->chunk;
 			state->dir_state = chunk;
-			mdc_prev_chunk(chunk)->next_ck = cookie;
+			*(state->dirent) = new_dir_entry;
+			if (mdc_prev_chunk(chunk))
+				mdc_prev_chunk(chunk)->next_ck = cookie;
 			if (new_dir_entry->flags & DIR_ENTRY_REFFED) {
 				/* This was ref'd already; drop extra ref */
 				mdcache_put(new_entry);
@@ -2513,7 +2513,7 @@ again:
 		}
 	} else {
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-				"Calling FSAL readdir whence = %"PRIx64,
+				"Calling FSAL readdir whence = 0x%"PRIx64,
 				whence);
 	}
 
