@@ -61,7 +61,7 @@ Reaper_Work(uint32, range 1 to 2000, default 0)
     normal conditions.  (Ideally, a multiple of the number of lanes.)  *This
     setting is deprecated.  Please use Reaper_Work_Per_Lane*
 
-Reaper_Work_Per_Lane(uint32, range 1 to 2000, default 50)
+Reaper_Work_Per_Lane(uint32, range 1 to UINT32_MAX, default 50)
     This is the numer of handles per lane to scan when performing LRU
     maintenance.  This task is performed by the Reaper thread.
 

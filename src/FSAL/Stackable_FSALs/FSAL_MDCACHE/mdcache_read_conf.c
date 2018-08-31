@@ -77,7 +77,7 @@ static struct config_item mdcache_params[] = {
 		       mdcache_parameter, fd_lwmark_percent),
 	CONF_ITEM_UI32("Reaper_Work", 1, 2000, 0,
 		       mdcache_parameter, reaper_work),
-	CONF_ITEM_UI32("Reaper_Work_Per_Lane", 1, 2000, 50,
+	CONF_ITEM_UI32("Reaper_Work_Per_Lane", 1, UINT32_MAX, 50,
 		       mdcache_parameter, reaper_work_per_lane),
 	CONF_ITEM_UI32("Biggest_Window", 1, 100, 40,
 		       mdcache_parameter, biggest_window),

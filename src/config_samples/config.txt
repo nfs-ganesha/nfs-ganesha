@@ -555,7 +555,7 @@ CACHEINODE
 
 	Reaper_Work(uint32, range 1 to 2000, default 0)
 
-	Reaper_Work_Per_Lane(uint32, range 1 to 2000, default 50)
+	Reaper_Work_Per_Lane(uint32, range 1 to UINT32_MAX, default 50)
 
 	Biggest_Window(uint32, range 1 to 100, default 40)
 
