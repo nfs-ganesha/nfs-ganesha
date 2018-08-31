@@ -65,25 +65,22 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_status_t fsal_status = {0, 0};
 
 	resp->resop = NFS4_OP_REMOVE;
-	res_REMOVE4->status = NFS4_OK;
 
 	/* Do basic checks on a filehandle
 	 * Delete arg_REMOVE4.target in directory pointed by currentFH
 	 * Make sure the currentFH is pointed a directory
 	 */
 	res_REMOVE4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
-
 	if (res_REMOVE4->status != NFS4_OK)
 		goto out;
 
 	/* Validate and convert the UFT8 target to a regular string */
 	res_REMOVE4->status =
 	    nfs4_utf8string2dynamic(&arg_REMOVE4->target, UTF8_SCAN_ALL, &name);
-
 	if (res_REMOVE4->status != NFS4_OK)
 		goto out;
 
-	if (nfs_in_grace()) {
+	if (!nfs_get_grace_status(false)) {
 		res_REMOVE4->status = NFS4ERR_GRACE;
 		goto out;
 	}
@@ -104,7 +101,7 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_status = fsal_remove(parent_obj, name);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_REMOVE4->status = nfs4_Errno_status(fsal_status);
-		goto out;
+		goto out_put_grace;
 	}
 
 	res_REMOVE4->REMOVE4res_u.resok4.cinfo.after =
@@ -112,15 +109,10 @@ int nfs4_op_remove(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Operation was not atomic .... */
 	res_REMOVE4->REMOVE4res_u.resok4.cinfo.atomic = FALSE;
-
-	/* If you reach this point, everything was ok */
-
-	res_REMOVE4->status = NFS4_OK;
-
- out:
-
-	if (name)
-		gsh_free(name);
+out_put_grace:
+	nfs_put_grace_status();
+out:
+	gsh_free(name);
 
 	return res_REMOVE4->status;
 }				/* nfs4_op_remove */
