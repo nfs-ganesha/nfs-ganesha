@@ -610,11 +610,9 @@ rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 			if (!key)
 				break;
 
-			/* Don't lift if anyone is not enforcing */
-			if (!(*val & RADOS_GRACE_ENFORCING)) {
+			/* Make note if anyone is not enforcing */
+			if (!(*val & RADOS_GRACE_ENFORCING))
 				enforcing = false;
-				break;
-			}
 
 			if (*val & RADOS_GRACE_NEED_GRACE)
 				++need;
@@ -644,10 +642,11 @@ rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		rados_release_read_op(rop);
 
 		/*
-		 * We can't lift if there are cluster members that haven't
-		 * started enforcement yet. Wait until they catch up.
+		 * We can't lift if we're in a grace period and there are
+		 * cluster members that haven't started enforcement yet. Wait
+		 * until they catch up.
 		 */
-		if (!enforcing)
+		if (rec && !enforcing)
 			goto out;
 
 		/* Ensure that all given nodes have a key in the omap */
