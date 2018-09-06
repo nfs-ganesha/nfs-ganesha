@@ -1590,7 +1590,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");
-		return status;
+		goto err;
 	}
 
 	errno = 0;
@@ -1598,6 +1598,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	if (retval /* && lock_op == FSAL_OP_LOCK */) {
 		retval = errno;
+		status = posix2fsal_status(retval);
 
 		LogDebug(COMPONENT_FSAL,
 			 "fcntl returned %d %s",
@@ -1609,6 +1610,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 			if (rc) {
 				retval = errno;	/* we lose the initial error */
+				status = posix2fsal_status(retval);
 				LogCrit(COMPONENT_FSAL,
 					"After failing a lock request, I couldn't even get the details of who owns the lock.");
 				goto err;
@@ -1638,7 +1640,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	/* Fall through (retval == 0) */
+	/* Fall through (status == SUCCESS) */
 
  err:
 
@@ -1653,7 +1655,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	return fsalstat(posix2fsal_error(retval), retval);
+	return status;
 }
 #endif
 
