@@ -1464,7 +1464,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 			/* We need to use the global fd to continue, and take
 			 * the lock to protect it.
 			 */
-			my_fd = &hdl->mh_file.fd;
+			my_fd = &myself->mh_file.fd;
 		}
 
 		if (openflags & FSAL_O_WRITE)
