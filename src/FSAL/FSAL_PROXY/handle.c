@@ -508,6 +508,7 @@ static int pxy_connect(struct pxy_export *pxy_exp,
 	default:
 		LogCrit(COMPONENT_FSAL, "Unknown address family %d",
 			dest->ss_family);
+		close(sock);
 		return -1;
 	}
 
