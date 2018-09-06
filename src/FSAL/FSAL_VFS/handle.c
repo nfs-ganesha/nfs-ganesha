@@ -1154,26 +1154,9 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	off_t rewindloc = 0;
 	off_t entloc = 0;
 #endif
-	fsal_cookie_t cookie;
-	bool skip_first;
 
 	if (whence != NULL)
 		seekloc = (off_t) *whence;
-	cookie = seekloc;
-
-	/* If we don't start from beginning skip an entry */
-	skip_first = cookie != 0;
-
-	if (cookie == 0) {
-		/* Return a non-zero cookie for the first file. */
-		cookie = FIRST_COOKIE;
-	}
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "whence=%p seekloc=%"PRIx64" cookie=%"PRIx64"%s",
-		     whence, (uint64_t) seekloc, cookie,
-		     skip_first ? " skip_first" : "");
-
 	myself = container_of(dir_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	if (dir_hdl->fsal != dir_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -1239,28 +1222,18 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				status = posix2fsal_status(retval);
 				goto done;
 			}
-			cookie = dentryp->vd_offset = entloc;
+			entloc = lseek(dirfd, 0, SEEK_CUR);
+			if (entloc < 0) {
+				retval = errno;
+				status = posix2fsal_status(retval);
+				goto done;
+			}
+			dentryp->vd_offset = entloc;
 #endif
 
-			LogFullDebug(COMPONENT_FSAL,
-				     "Entry %s last_ck=%"PRIx64
-				     " next_ck=%"PRIx64"%s",
-				     dentryp->vd_name, cookie,
-				     (uint64_t) dentryp->vd_offset,
-				     skip_first ? " skip_first" : "");
-
-			if (strcmp(dentryp->vd_name, ".") == 0 ||
-			    strcmp(dentryp->vd_name, "..") == 0)
+			if (strcmp(dentryp->vd_name, ".") == 0
+			    || strcmp(dentryp->vd_name, "..") == 0)
 				goto skip;	/* must skip '.' and '..' */
-
-			/* If this is the first dirent found after a restarted
-			 * readdir, we actually just fetched the last dirent
-			 * from the previous call so we skip it.
-			 */
-			if (skip_first) {
-				skip_first = false;
-				goto skip;
-			}
 
 			fsal_prepare_attrs(&attrs, attrmask);
 
@@ -1273,7 +1246,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 
 			/* callback to cache inode */
 			cb_rc = cb(dentryp->vd_name, hdl, &attrs, dir_state,
-				   cookie);
+				(fsal_cookie_t) dentryp->vd_offset);
 
 			fsal_release_attrs(&attrs);
 
@@ -1282,9 +1255,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				goto done;
 
  skip:
-			/* Save this d_off for the next cookie */
-			cookie = (fsal_cookie_t) dentryp->vd_offset;
-
 			bpos += dentryp->vd_reclen;
 		}
 	} while (nread > 0);
