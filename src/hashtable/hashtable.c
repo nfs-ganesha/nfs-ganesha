@@ -1040,6 +1040,7 @@ hashtable_getref(hash_table_t *ht, struct gsh_buffdesc *key,
 	case HASHTABLE_SUCCESS:
 		if (get_ref != NULL)
 			get_ref(val);
+		/* FALLTHROUGH */
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
 		hashtable_releaselatched(ht, &latch);
 		break;
