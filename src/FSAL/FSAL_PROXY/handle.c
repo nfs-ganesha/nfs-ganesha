@@ -812,8 +812,8 @@ static int pxy_compoundv4_call(struct pxy_rpc_io_context *pcontext,
 	} else {
 		rc = RPC_CANTENCODEARGS;
 	}
-	if (au)
-		auth_destroy(au);
+
+	auth_destroy(au);
 	return rc;
 }
 
