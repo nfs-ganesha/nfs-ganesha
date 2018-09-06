@@ -495,6 +495,8 @@ static inline AUTH *nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 		result = authnone_ncreate();
 	}
 
+	return result;
+
 out_err:
 	result = authnone_ncreate_dummy();
 	result->ah_error.re_status = RPC_SYSTEMERROR;
