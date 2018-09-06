@@ -1877,20 +1877,23 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 	/* Note in the following, every dirent that is in the sorted tree MUST
 	 * be in a chunk, so we don't check for chunk != NULL.
 	 */
-	prev_chunk = mdc_prev_chunk(right->chunk);
+	if (left != NULL && right != NULL) {
+		prev_chunk = mdc_prev_chunk(right->chunk);
 
-	if (left != NULL && right != NULL &&
-	    left->chunk != right->chunk &&
-	    left->chunk != prev_chunk &&
-	    prev_chunk->next_ck != mdc_chunk_first_dirent(right->chunk)->ck) {
-		/* left and right are in different non-adjacent chunks, however,
-		 * we can still trust the chunks since the new entry is part of
-		 * the directory we don't have cached, a readdir that wants that
-		 * part of the directory will populate a new chunk.
-		 */
+		if (left->chunk != right->chunk &&
+		    left->chunk != prev_chunk &&
+		    prev_chunk->next_ck !=
+		    mdc_chunk_first_dirent(right->chunk)->ck) {
+			/* left and right are in different non-adjacent chunks,
+			 * however, we can still trust the chunks since the new
+			 * entry is part of the directory we don't have cached,
+			 * a readdir that wants that part of the directory will
+			 * populate a new chunk.
+			 */
 
-		invalidate_chunks = false;
-		goto out;
+			invalidate_chunks = false;
+			goto out;
+		}
 	}
 
 	/* Set up to add to chunk and by cookie AVL tree. */
