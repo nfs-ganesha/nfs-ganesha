@@ -328,6 +328,7 @@ void LogClientListEntry(log_levels_t level,
 	char addr[INET6_ADDRSTRLEN];
 	char *paddr = addr;
 	char *client_type;
+	bool free_paddr = false;
 
 	if (!isLevel(component, level))
 		return;
@@ -344,6 +345,7 @@ void LogClientListEntry(log_levels_t level,
 	switch (entry->type) {
 	case NETWORK_CLIENT:
 		paddr = cidr_to_str(entry->client.network.cidr, CIDR_NOFLAGS);
+		free_paddr = true;
 		break;
 
 	case NETGROUP_CLIENT:
@@ -371,6 +373,9 @@ void LogClientListEntry(log_levels_t level,
 	DisplayLogComponentLevel(component, (char *) __FILE__, line, func,
 				 level, "%s%p %s: %s (%s)",
 				 tag, entry, client_type, paddr, perms);
+
+	if (free_paddr)
+		gsh_free(paddr);
 }
 
 static void display_clients(struct gsh_export *export)
