@@ -722,10 +722,8 @@ out:
 	if (fs)
 		glfs_fini(fs);
 
-	if (gl_fs) {
-		glist_del(&gl_fs->fs_obj); /* not needed atm */
-		gsh_free(gl_fs);
-	}
+	glist_del(&gl_fs->fs_obj); /* not needed atm */
+	gsh_free(gl_fs);
 
 	return NULL;
 }
