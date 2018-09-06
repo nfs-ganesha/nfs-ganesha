@@ -338,7 +338,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 		}
 
 		if (so_mutex_locked)
-			PTHREAD_MUTEX_lock(&clientid_owner->so_mutex);
+			PTHREAD_MUTEX_unlock(&clientid_owner->so_mutex);
 
 		/* Poison the current stateid */
 		data->current_stateid_valid = false;
