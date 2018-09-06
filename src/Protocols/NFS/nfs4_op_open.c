@@ -723,6 +723,7 @@ static void open4_ex(OPEN4args *arg,
 
 	/* Make sure... */
 	*file_state = NULL;
+	*new_state = false;
 
 	/* Pre-process the claim type */
 	switch (claim) {
