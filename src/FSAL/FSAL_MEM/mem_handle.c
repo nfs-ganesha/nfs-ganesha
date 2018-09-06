@@ -437,7 +437,7 @@ static void mem_copy_attrs_mask(struct attrlist *attrs_in,
 		} else if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_ATIME)) {
 			attrs_out->atime = attrs_in->atime;
 		} else {
-			attrs_out->mtime = attrs_out->ctime;
+			attrs_out->atime = attrs_out->ctime;
 		}
 
 		if (FSAL_TEST_MASK(attrs_in->valid_mask, ATTR_MTIME_SERVER)) {
