@@ -2,6 +2,7 @@
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
  * Copyright 2017 VMware, Inc.
+ * Copyright 2018 Red Hat, Inc.
  * Author: Sriram Patil sriramp@vmware.com
  *
  *
@@ -116,8 +117,6 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 
 		LogDebug(COMPONENT_FSAL, "user.fs_location: %s",
 				xattr_content);
-
-		nfs4_fs_locations_release(attrs_out->fs_locations);
 
 		attrs_out->fs_locations = nfs4_fs_locations_new(spath, path, 1);
 		len = strlen(server);
