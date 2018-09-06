@@ -85,14 +85,13 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->current_obj->type != DIRECTORY)
 		goto not_junction;
 
-	PTHREAD_RWLOCK_rdlock(&original_export->lock);
-
 	status = nfs_export_get_root_entry(original_export, &root_obj);
 	if (FSAL_IS_ERROR(status)) {
 		res_LOOKUPP4->status = nfs4_Errno_status(status);
-		PTHREAD_RWLOCK_unlock(&original_export->lock);
 		return res_LOOKUPP4->status;
 	}
+
+	PTHREAD_RWLOCK_rdlock(&original_export->lock);
 
 	if (data->current_obj == root_obj) {
 		struct gsh_export *parent_exp = NULL;
