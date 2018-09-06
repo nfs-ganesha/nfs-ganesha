@@ -2556,7 +2556,7 @@ again:
 
 	if (chunk->num_entries == 0) {
 		/* Save the previous chunk in case we need it. */
-		struct dir_chunk *prev_chunk = mdc_prev_chunk(chunk);
+		struct dir_chunk *cur_prev = mdc_prev_chunk(chunk);
 		mdcache_dir_entry_t *last;
 		bool last_chunk;
 
@@ -2574,9 +2574,9 @@ again:
 
 		lru_remove_chunk(chunk);
 
-		if (prev_chunk != NULL && last_chunk) {
+		if (cur_prev != NULL && last_chunk) {
 			/* We need to mark the end of directory */
-			last = glist_last_entry(&prev_chunk->dirents,
+			last = glist_last_entry(&cur_prev->dirents,
 						mdcache_dir_entry_t,
 						chunk_list);
 			last->eod = true;
@@ -2584,7 +2584,7 @@ again:
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
 					COMPONENT_CACHE_INODE,
 					"Setting last dirent %p %s of chunk %p as eod",
-					last, last->name, prev_chunk);
+					last, last->name, cur_prev);
 		}
 
 		if (chunk == first_chunk) {
@@ -2602,7 +2602,7 @@ again:
 		/* If whence_is_name, and we actually have this odd condition,
 		 * we need the previous chunk.
 		 */
-		chunk = prev_chunk;
+		chunk = cur_prev;
 	} else {
 		/* Retain this chunk and if end of directory, mark last
 		 * dirent of current chunk as eod.

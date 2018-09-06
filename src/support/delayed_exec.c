@@ -222,9 +222,9 @@ void *delayed_thread(void *arg)
 	while (delayed_state == delayed_running) {
 		struct timespec then;
 		void (*func)(void *);
-		void *arg;
+		void *farg;
 
-		switch (delayed_get_work(&then, &func, &arg)) {
+		switch (delayed_get_work(&then, &func, &farg)) {
 		case delayed_unemployed:
 			pthread_cond_wait(&cv, &mtx);
 			break;
@@ -235,7 +235,7 @@ void *delayed_thread(void *arg)
 
 		case delayed_employed:
 			PTHREAD_MUTEX_unlock(&mtx);
-			func(arg);
+			func(farg);
 			PTHREAD_MUTEX_lock(&mtx);
 			break;
 		}

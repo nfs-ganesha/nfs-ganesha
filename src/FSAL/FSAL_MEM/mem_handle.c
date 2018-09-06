@@ -1532,7 +1532,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 
 	status = mem_int_lookup(myself, name, &hdl);
 	if (FSAL_IS_ERROR(status)) {
-		struct fsal_obj_handle *new_obj;
+		struct fsal_obj_handle *create;
 
 		if (status.major != ERR_FSAL_NOENT) {
 			/* Actual error from lookup */
@@ -1540,11 +1540,11 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 		}
 		/* Doesn't exist, create it */
 		status = mem_create_obj(myself, REGULAR_FILE, name, attrs_set,
-					&new_obj, attrs_out);
+					&create, attrs_out);
 		if (FSAL_IS_ERROR(status)) {
 			return status;
 		}
-		hdl = container_of(new_obj, struct mem_fsal_obj_handle,
+		hdl = container_of(create, struct mem_fsal_obj_handle,
 				   obj_handle);
 		created = true;
 	}
