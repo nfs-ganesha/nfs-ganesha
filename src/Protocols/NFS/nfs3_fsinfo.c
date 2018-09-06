@@ -64,6 +64,8 @@ int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
+	FSINFO3resok * const FSINFO_FIELD =
+		&res->res_fsinfo3.FSINFO3res_u.resok;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
@@ -89,9 +91,6 @@ int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* New fields were added to nfs_config_t to handle this
 	   value. We use them */
-
-	FSINFO3resok * const FSINFO_FIELD =
-		&res->res_fsinfo3.FSINFO3res_u.resok;
 
 	FSINFO_FIELD->rtmax =
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);

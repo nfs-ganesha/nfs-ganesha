@@ -196,6 +196,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	struct glfs_xreaddirp_stat *xstat = NULL;
 	uint32_t flags =
 		 (GFAPI_XREADDIRP_STAT | GFAPI_XREADDIRP_HANDLE);
+	struct glfs_object *tmp = NULL;
+	struct stat *sb;
 #endif
 
 #ifdef GLTIMING
@@ -289,9 +291,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		if (FSAL_IS_ERROR(status))
 			goto out;
 #else
-		struct glfs_object *tmp = NULL;
-		struct stat *sb;
-
 		if (!xstat || !(rc & GFAPI_XREADDIRP_HANDLE)) {
 			status = gluster2fsal_error(errno);
 			goto out;

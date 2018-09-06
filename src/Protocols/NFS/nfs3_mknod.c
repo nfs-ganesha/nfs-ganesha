@@ -73,6 +73,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status;
 	struct attrlist sattr, attrs;
 	MKNOD3resfail *resfail = &res->res_mknod3.MKNOD3res_u.resfail;
+	MKNOD3resok * const rok = &res->res_mknod3.MKNOD3res_u.resok;
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
@@ -208,8 +209,6 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
-
-	MKNOD3resok * const rok = &res->res_mknod3.MKNOD3res_u.resok;
 
 	/* Build file handle */
 	if (!nfs3_FSALToFhandle(true,

@@ -67,6 +67,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
 	struct fsal_obj_handle *obj = NULL;
+	const time_t S_NSECS = 1000000000UL;
 
 	resp->resop = NFS4_OP_SETATTR;
 	res_SETATTR4->status = NFS4_OK;
@@ -193,7 +194,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 		}
 	}
 
-	const time_t S_NSECS = 1000000000UL;
 	/* Set the atime and mtime (ctime is not setable) */
 
 	/* A carry into seconds considered invalid */

@@ -80,6 +80,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	struct export_perms save_export_perms = { 0, };
 	struct gsh_export *saved_gsh_export = NULL;
 	uint32_t resp_size = RESP_SIZE;
+	int idx = 0;
 
 	resp->resop = NFS4_OP_SECINFO;
 	res_SECINFO4->status = NFS4_OK;
@@ -232,7 +233,6 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	 * security triple with a specific fs/export.  For now, list
 	 * all implemented.
 	 */
-	int idx = 0;
 
 	/* List the security flavors in the order we prefer */
 #ifdef _HAVE_GSSAPI
