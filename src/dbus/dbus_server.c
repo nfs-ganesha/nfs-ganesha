@@ -704,8 +704,9 @@ void gsh_dbus_pkgshutdown(void)
 				      &thread_state.dbus_err);
 		if (dbus_error_is_set(&thread_state.dbus_err)) {
 			LogCrit(COMPONENT_DBUS, "err releasing name (%s, %s)",
-				handler->name, thread_state.dbus_err.message);
-				dbus_error_free(&thread_state.dbus_err);
+				prefixed_dbus_name,
+				thread_state.dbus_err.message);
+			dbus_error_free(&thread_state.dbus_err);
 		}
 
 		/*
