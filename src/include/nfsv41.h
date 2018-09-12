@@ -739,6 +739,24 @@ typedef nfsacl41 fattr4_dacl;
 typedef nfsacl41 fattr4_sacl;
 
 typedef change_policy4 fattr4_change_policy;
+
+typedef uint32_t  policy4;
+
+struct labelformat_spec4 {
+	policy4	lfs_lfs;
+	policy4	lfs_pi;
+};
+
+struct sec_label4 {
+	struct labelformat_spec4	slai_lfs;
+	struct {
+		u_int	slai_data_len;
+		char	*slai_data_val;
+	} slai_data;
+};
+
+typedef struct sec_label4 fattr4_sec_label;
+
 /*
  * REQUIRED Attributes
  */
@@ -4010,6 +4028,19 @@ static inline bool xdr_change_policy4(XDR *xdrs, change_policy4 *objp)
 	if (!inline_xdr_u_int64_t(xdrs, &objp->cp_major))
 		return false;
 	if (!inline_xdr_u_int64_t(xdrs, &objp->cp_minor))
+		return false;
+	return true;
+}
+
+static inline bool xdr_sec_label4(XDR *xdrs, fattr4_sec_label *objp)
+{
+	if (!inline_xdr_u_int32_t(xdrs, &objp->slai_lfs.lfs_lfs))
+		return false;
+	if (!inline_xdr_u_int32_t(xdrs, &objp->slai_lfs.lfs_pi))
+		return false;
+	if (!inline_xdr_bytes(xdrs, &objp->slai_data.slai_data_val,
+				&objp->slai_data.slai_data_len,
+				XDR_ARRAY_MAXLEN))
 		return false;
 	return true;
 }

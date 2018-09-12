@@ -418,6 +418,8 @@ typedef uint64_t attrmask_t;
 #define ATTR4_FS_LOCATIONS  0x0000000000800000LL
 /* xattr supported */
 #define ATTR4_XATTR  0x0000000001000000LL
+/* security labels supported */
+#define ATTR4_SEC_LABEL  0x0000000002000000LL
 
 /* attributes that used for NFS v3 */
 
@@ -487,6 +489,7 @@ struct attrlist {
 					   for attributes. Settable by FSAL. */
 	fsal_fs_locations_t *fs_locations;	/*< fs locations for this
 						    object if any */
+	struct sec_label4 sec_label;
 };
 
 /******************************************************
