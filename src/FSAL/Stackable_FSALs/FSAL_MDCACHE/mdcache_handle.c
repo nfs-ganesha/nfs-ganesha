@@ -978,7 +978,8 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 		/* Assume that the cache is bogus now */
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
 				MDCACHE_TRUST_ATTRS | MDCACHE_TRUST_ACL |
-				MDCACHE_TRUST_FS_LOCATIONS);
+				MDCACHE_TRUST_FS_LOCATIONS |
+				MDCACHE_TRUST_SEC_LABEL);
 		if (status2.major == ERR_FSAL_STALE)
 			kill_entry = true;
 	} else if (change == entry->attrs.change) {
