@@ -2554,6 +2554,14 @@ static fattr_xdr_result decode_fs_charset_cap(XDR *xdr,
 	return FATTR_XDR_NOOP;
 }
 
+static fattr_xdr_result encdec_sec_label(XDR *xdr,
+					      struct xdr_attrs_args *args)
+{
+	if (!xdr_sec_label4(xdr, &args->attrs->sec_label))
+		return FATTR_XDR_FAILED;
+	return FATTR_XDR_SUCCESS;
+}
+
 /*
  * FATTR4_XATTR_SUPPORT
  */
@@ -3276,6 +3284,15 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.encode = encode_fs_charset_cap,
 		.decode = decode_fs_charset_cap,
 		.access = FATTR4_ATTR_READ}
+	,
+	[FATTR4_SEC_LABEL] = {
+		.name = "ATTR4_SEC_LABEL",
+		.supported = 1,
+		.size_fattr4 = sizeof(fattr4_sec_label),
+		.attrmask = ATTR4_SEC_LABEL,
+		.encode = encdec_sec_label,
+		.decode = encdec_sec_label,
+		.access = FATTR4_ATTR_READ_WRITE}
 	,
 	[FATTR4_XATTR_SUPPORT] = {
 		.name = "FATTR4_XATTR_SUPPORT",
