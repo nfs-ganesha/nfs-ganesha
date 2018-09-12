@@ -479,6 +479,10 @@ static inline void fsal_release_attrs(struct attrlist *attrs)
 		attrs->fs_locations = NULL;
 		attrs->valid_mask &= ~ATTR4_FS_LOCATIONS;
 	}
+
+	attrs->sec_label.slai_data.slai_data_len = 0;
+	gsh_free(attrs->sec_label.slai_data.slai_data_val);
+	attrs->sec_label.slai_data.slai_data_val = NULL;
 }
 
 /**
@@ -530,6 +534,25 @@ static inline void fsal_copy_attrs(struct attrlist *dest,
 	} else {
 		dest->fs_locations = NULL;
 		dest->valid_mask &= ~ATTR4_FS_LOCATIONS;
+	}
+
+	/*
+	 * Ditto for security label. Here though, we just make a copy if
+	 * needed.
+	 */
+	if (pass_refs && ((save_request_mask & ATTR4_SEC_LABEL) != 0)) {
+		src->sec_label.slai_data.slai_data_len = 0;
+		src->sec_label.slai_data.slai_data_val = NULL;
+		src->valid_mask &= ~ATTR4_SEC_LABEL;
+	} else if (dest->sec_label.slai_data.slai_data_val != NULL &&
+		((save_request_mask & ATTR4_SEC_LABEL) != 0)) {
+		dest->sec_label.slai_data.slai_data_val =
+			gsh_memdup(dest->sec_label.slai_data.slai_data_val,
+				   dest->sec_label.slai_data.slai_data_len);
+	} else {
+		dest->sec_label.slai_data.slai_data_len = 0;
+		dest->sec_label.slai_data.slai_data_val = NULL;
+		dest->valid_mask &= ~ATTR4_SEC_LABEL;
 	}
 }
 

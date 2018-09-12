@@ -284,6 +284,14 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		mutatis_mutandis = true;
 	}
 
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR4_SEC_LABEL)) {
+		gsh_free(entry->attrs.sec_label.slai_data.slai_data_val);
+		entry->attrs.sec_label = attr->sec_label;
+		attr->sec_label.slai_data.slai_data_len = 0;
+		attr->sec_label.slai_data.slai_data_val = NULL;
+		mutatis_mutandis = true;
+	}
+
 	if (mutatis_mutandis) {
 		mdc_fixup_md(entry, attr);
 		/* If directory can not trust content anymore. */

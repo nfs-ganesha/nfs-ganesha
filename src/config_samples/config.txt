@@ -286,6 +286,11 @@ EXPORT {}
 		* Disable_ACL is processed at create_export time currently
 		  which makes it effectively a static option.
 
+	Security_Label(bool, default false)
+		* Enable NFSv4.2 security label attribute. Ganesha supports
+		  "Limited Server Mode" as detailed in RFC 7204. Note that
+		  not all FSALs support security labels.
+
 	Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
 
 		* Attr_Expiration_Time is evaluated when an MDCACHE entry

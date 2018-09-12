@@ -651,6 +651,11 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 	if (attribute_is_set(tracker.req_attr, FATTR4_ACL))
 		attrmask |= ATTR_ACL;
 
+	/* If seclabel requested, then fetch it too */
+	if (attribute_is_set(tracker.req_attr, FATTR4_SEC_LABEL) &&
+	    op_ctx_export_has_option(EXPORT_OPTION_SECLABEL_SET))
+		attrmask |= ATTR4_SEC_LABEL;
+
 	/* Perform the readdir operation */
 	fsal_status = fsal_readdir(dir_obj,
 				   cookie,

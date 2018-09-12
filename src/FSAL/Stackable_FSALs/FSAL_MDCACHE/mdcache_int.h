@@ -194,8 +194,10 @@ struct entry_export_map {
 #define MDCACHE_DIR_POPULATED FSAL_UP_INVALIDATE_DIR_POPULATED
 /** The directory chunks are considered valid */
 #define MDCACHE_TRUST_DIR_CHUNKS FSAL_UP_INVALIDATE_DIR_CHUNKS
-/** The fs locaitons are considered calid */
+/** The fs_locations are considered valid */
 #define MDCACHE_TRUST_FS_LOCATIONS FSAL_UP_INVALIDATE_FS_LOCATIONS
+/** The sec_labels are considered valid */
+#define MDCACHE_TRUST_SEC_LABEL FSAL_UP_INVALIDATE_SEC_LABEL
 /** The entry has been removed, but not unhashed due to state */
 static const uint32_t MDCACHE_UNREACHABLE = 0x100;
 
@@ -704,7 +706,9 @@ mdc_fixup_md(mdcache_entry_t *entry, struct attrlist *attrs)
 	 * attributes. Note that if not all could be provided, we assumed
 	 * that an error occurred.
 	 */
-	if (attrs->request_mask & ~(ATTR_ACL|ATTR4_FS_LOCATIONS))
+	if (attrs->request_mask & ~(ATTR_ACL |
+				    ATTR4_FS_LOCATIONS |
+				    ATTR4_SEC_LABEL))
 		flags |= MDCACHE_TRUST_ATTRS;
 
 	if (attrs->valid_mask == ATTR_RDATTR_ERR) {
@@ -720,6 +724,11 @@ mdc_fixup_md(mdcache_entry_t *entry, struct attrlist *attrs)
 	if (attrs->request_mask & ATTR4_FS_LOCATIONS &&
 		attrs->fs_locations != NULL) {
 		flags |= MDCACHE_TRUST_FS_LOCATIONS;
+	}
+
+	if (attrs->request_mask & ATTR4_SEC_LABEL &&
+		attrs->sec_label.slai_data.slai_data_val != NULL) {
+		flags |= MDCACHE_TRUST_SEC_LABEL;
 	}
 
 	time_t cur_time = time(NULL);
@@ -764,6 +773,9 @@ mdcache_test_attrs_trust(mdcache_entry_t *entry, attrmask_t mask)
 
 	if (mask & ATTR4_FS_LOCATIONS)
 		flags |= MDCACHE_TRUST_FS_LOCATIONS;
+
+	if (mask & ATTR4_SEC_LABEL)
+		flags |= MDCACHE_TRUST_SEC_LABEL;
 
 	/* If any of the requested attributes are not valid, return. */
 	if (!test_mde_flags(entry, flags))

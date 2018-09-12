@@ -3340,6 +3340,25 @@ void mdc_update_attr_cache(mdcache_entry_t *entry, struct attrlist *attrs)
 		entry->attrs.request_mask |= ATTR4_FS_LOCATIONS;
 	}
 
+	// Same as above but for sec_label
+	if (entry->attrs.sec_label.slai_data.slai_data_val != NULL) {
+		char *secdata = entry->attrs.sec_label.slai_data.slai_data_val;
+
+		if (attrs->sec_label.slai_data.slai_data_val != NULL) {
+			gsh_free(secdata);
+		} else {
+			attrs->sec_label.slai_data.slai_data_len =
+				entry->attrs.sec_label.slai_data.slai_data_len;
+			attrs->sec_label.slai_data.slai_data_val = secdata;
+			attrs->valid_mask |= ATTR4_SEC_LABEL;
+		}
+
+		entry->attrs.sec_label.slai_data.slai_data_len = 0;
+		entry->attrs.sec_label.slai_data.slai_data_val = NULL;
+	} else if (attrs->sec_label.slai_data.slai_data_val != NULL) {
+		entry->attrs.request_mask |= ATTR4_SEC_LABEL;
+	}
+
 	if (attrs->expire_time_attr == 0) {
 		/* FSAL did not set this, retain what was in the entry. */
 		attrs->expire_time_attr = entry->attrs.expire_time_attr;
