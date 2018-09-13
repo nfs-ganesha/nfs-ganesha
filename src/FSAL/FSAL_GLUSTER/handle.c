@@ -2052,6 +2052,7 @@ static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
 	fsal_openflags_t openflags = FSAL_O_READ;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_fd my_fd = {0};
+	struct stat sbuf = {0};
 	struct glusterfs_export *glfs_export =
 	   container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 
@@ -2067,6 +2068,22 @@ static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
 
 	if (FSAL_IS_ERROR(status))
 		goto out;
+
+	ret = glfs_fstat(my_fd.glfd, &sbuf);
+	if (ret != 0) {
+		if (errno == EBADF)
+			errno = ESTALE;
+		status = gluster2fsal_error(errno);
+		goto out;
+	}
+
+	/* RFC7862 15.11.3,
+	 * If the sa_offset is beyond the end of the file,
+	 * then SEEK MUST return NFS4ERR_NXIO. */
+	if (offset > sbuf.st_size) {
+		status = gluster2fsal_error(ENXIO);
+		goto out;
+	}
 
 	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
 			&op_ctx->creds->caller_gid,
@@ -2095,7 +2112,7 @@ static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
 		}
 		goto out;
 	} else {
-		info->io_eof = FALSE;
+		info->io_eof = (ret >= sbuf.st_size) ? TRUE : FALSE;
 		info->io_content.hole.di_offset = ret;
 	}
 
