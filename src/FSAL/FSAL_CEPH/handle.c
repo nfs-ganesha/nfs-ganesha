@@ -112,6 +112,48 @@ static fsal_status_t ceph_fsal_lookup(struct fsal_obj_handle *dir_pub,
 	return fsalstat(0, 0);
 }
 
+static int
+ceph_fsal_get_sec_label(struct ceph_handle *handle, struct attrlist *attrs)
+{
+	int rc = 0;
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+
+	if (FSAL_TEST_MASK(attrs->request_mask, ATTR4_SEC_LABEL) &&
+	    op_ctx_export_has_option(EXPORT_OPTION_SECLABEL_SET)) {
+		char label[NFS4_OPAQUE_LIMIT];
+		struct user_cred root_creds = {};
+
+		/*
+		 * It's possible that the user won't have permission to fetch
+		 * the xattrs, so use root creds to get them since it's
+		 * supposed to be part of the inode metadata.
+		 */
+		rc = fsal_ceph_ll_getxattr(export->cmount, handle->i,
+					   export->sec_label_xattr, label,
+					   NFS4_OPAQUE_LIMIT, &root_creds);
+		if (rc < 0) {
+			/* If there's no label then just do zero-length one */
+			if (rc != -ENODATA)
+				goto out_err;
+			rc = 0;
+		}
+
+		attrs->sec_label.slai_data.slai_data_len = rc;
+		gsh_free(attrs->sec_label.slai_data.slai_data_val);
+		if (rc > 0) {
+			attrs->sec_label.slai_data.slai_data_val =
+				gsh_memdup(label, rc);
+			FSAL_SET_MASK(attrs->valid_mask, ATTR4_SEC_LABEL);
+		} else {
+			attrs->sec_label.slai_data.slai_data_val = NULL;
+			FSAL_UNSET_MASK(attrs->valid_mask, ATTR4_SEC_LABEL);
+		}
+	}
+out_err:
+	return rc;
+}
+
 /**
  * @brief Read a directory
  *
@@ -187,6 +229,12 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 
 			fsal_prepare_attrs(&attrs, attrmask);
 			ceph2fsal_attributes(&stx, &attrs);
+
+			rc = ceph_fsal_get_sec_label(obj, &attrs);
+			if (rc < 0) {
+				fsal_status = ceph2fsal_error(rc);
+				goto closedir;
+			}
 
 			cb_rc = cb(de.d_name, &obj->handle, &attrs, dir_state,
 					de.d_off);
@@ -577,18 +625,21 @@ static fsal_status_t ceph_fsal_getattrs(struct fsal_obj_handle *handle_pub,
 
 	rc = fsal_ceph_ll_getattr(export->cmount, handle->i, &stx,
 				CEPH_STATX_ATTR_MASK, op_ctx->creds);
-	LogDebug(COMPONENT_FSAL, "getattr returned %d", rc);
-	if (rc < 0) {
-		if (attrs->request_mask & ATTR_RDATTR_ERR) {
-			/* Caller asked for error to be visible. */
-			attrs->valid_mask = ATTR_RDATTR_ERR;
-		}
-		return ceph2fsal_error(rc);
-	}
+	if (rc < 0)
+		goto out_err;
+
+	rc = ceph_fsal_get_sec_label(handle, attrs);
+	if (rc < 0)
+		goto out_err;
 
 	ceph2fsal_attributes(&stx, attrs);
-
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+out_err:
+	if (attrs->request_mask & ATTR_RDATTR_ERR) {
+		/* Caller asked for error to be visible. */
+		attrs->valid_mask = ATTR_RDATTR_ERR;
+	}
+	return ceph2fsal_error(rc);
 }
 
 /**
@@ -2290,12 +2341,23 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		LogDebug(COMPONENT_FSAL,
 			 "setattrx returned %s (%d)",
 			 strerror(-rc), -rc);
-		status = ceph2fsal_error(rc);
-	} else {
-		/* Success */
-		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		goto out;
 	}
 
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR4_SEC_LABEL)) {
+		rc = fsal_ceph_ll_setxattr(export->cmount, myself->i,
+				export->sec_label_xattr,
+				attrib_set->sec_label.slai_data.slai_data_val,
+				attrib_set->sec_label.slai_data.slai_data_len,
+				0, op_ctx->creds);
+		if (rc < 0) {
+			status = ceph2fsal_error(rc);
+			goto out;
+		}
+	}
+
+	/* Success */
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
  out:
 
 	if (has_lock)

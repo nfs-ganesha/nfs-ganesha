@@ -43,6 +43,7 @@
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
 #include "statx_compat.h"
+#include "nfs_exports.h"
 #include "internal.h"
 
 /**
@@ -143,6 +144,10 @@ void ceph2fsal_attributes(const struct ceph_statx *stx,
 	fsalattr->rawdev = posix2fsal_devt(stx->stx_rdev);
 	fsalattr->fsid = posix2fsal_fsid(stx->stx_dev);
 	fsalattr->fileid = stx->stx_ino;
+
+	/* Disable seclabels if not enabled in config */
+	if (!op_ctx_export_has_option(EXPORT_OPTION_SECLABEL_SET))
+		fsalattr->supported &= ~ATTR4_SEC_LABEL;
 
 	if (stx->stx_mask & CEPH_STATX_MODE) {
 		fsalattr->valid_mask |= ATTR_MODE;
