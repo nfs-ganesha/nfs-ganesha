@@ -159,6 +159,8 @@ static struct config_item export_params[] = {
 	CONF_ITEM_STR("user_id", 0, MAXUIDLEN, NULL, ceph_export, user_id),
 	CONF_ITEM_STR("secret_access_key", 0, MAXSECRETLEN, NULL, ceph_export,
 			secret_key),
+	CONF_ITEM_STR("sec_label_xattr", 0, 256, "security.selinux",
+			ceph_export, sec_label_xattr),
 	CONFIG_EOL
 };
 

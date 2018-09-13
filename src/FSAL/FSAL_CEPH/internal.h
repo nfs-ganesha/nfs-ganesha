@@ -77,6 +77,7 @@ struct ceph_export {
 	struct ceph_handle *root;	/*< The root handle */
 	char *user_id;			/* cephx user_id for this mount */
 	char *secret_key;
+	char *sec_label_xattr;		/* name of xattr for security label */
 };
 
 struct ceph_fd {
@@ -141,12 +142,12 @@ struct ds {
 
 #endif				/* CEPH_PNFS */
 
-#define CEPH_SUPPORTED_ATTRS ((const attrmask_t) (ATTRS_POSIX))
+#define CEPH_SUPPORTED_ATTRS ((const attrmask_t) (ATTRS_POSIX|ATTR4_SEC_LABEL))
 
 #define CEPH_SETTABLE_ATTRIBUTES ((const attrmask_t) (			\
 	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |	\
 	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |	\
-	ATTR_ATIME_SERVER))
+	ATTR_ATIME_SERVER | ATTR4_SEC_LABEL))
 
 /* Prototypes */
 
