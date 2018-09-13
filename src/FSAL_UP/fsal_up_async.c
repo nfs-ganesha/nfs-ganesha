@@ -434,11 +434,18 @@ static void queue_delegrecall(struct fridgethr_context *ctx)
 	struct fsal_obj_handle *obj = ctx->arg;
 
 	(void)delegrecall_impl(obj);
+	obj->obj_ops->put_ref(obj);
 }
 
 int async_delegrecall(struct fridgethr *fr, struct fsal_obj_handle *obj)
 {
-	int rc = fridgethr_submit(fr, queue_delegrecall, obj);
+	int rc;
+
+	/* get a ref to prevent races when delegrecall is called too late */
+	obj->obj_ops->get_ref(obj);
+	rc = fridgethr_submit(fr, queue_delegrecall, obj);
+	if (rc != 0)
+		obj->obj_ops->put_ref(obj);
 	return rc;
 }
 
