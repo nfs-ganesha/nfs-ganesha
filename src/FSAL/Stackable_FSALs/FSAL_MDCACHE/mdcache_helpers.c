@@ -1597,9 +1597,9 @@ mdc_readdir_uncached_cb(const char *name, struct fsal_obj_handle *sub_handle,
 
 	/* Call up the stack.  Do a supercall */
 	supercall_raw(state->export,
-		      rv = state->cb(name, &new_entry->obj_handle, attrs,
-				     state->dir_state, cookie)
-	);
+		      rv = state->cb(name, &new_entry->obj_handle,
+				     &new_entry->attrs, state->dir_state,
+				     cookie));
 
 	return rv;
 }
