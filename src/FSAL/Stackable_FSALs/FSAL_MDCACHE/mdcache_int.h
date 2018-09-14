@@ -702,7 +702,7 @@ mdc_fixup_md(mdcache_entry_t *entry, struct attrlist *attrs)
 	 * attributes. Note that if not all could be provided, we assumed
 	 * that an error occurred.
 	 */
-	if (attrs->request_mask & ~ATTR_ACL)
+	if (attrs->request_mask & ~(ATTR_ACL|ATTR4_FS_LOCATIONS))
 		flags |= MDCACHE_TRUST_ATTRS;
 
 	if (attrs->valid_mask == ATTR_RDATTR_ERR) {
