@@ -303,14 +303,9 @@ struct state_t;
  *
  * Increment this whenever any part of the existing API is changed,
  * e.g.  the argument list changed or a method is removed.
- *
- * This has been bumped to 5.0 even though the old non-support_ex API
- * still exists. This is because we expect all FSALs to convert to the
- * new API. The old API will be removed early in the V2.6 development
- * cycle at which point we will move to 6.0.
  */
 
-#define FSAL_MAJOR_VERSION 7
+#define FSAL_MAJOR_VERSION 8
 
 /**
  * @brief Minor Version
