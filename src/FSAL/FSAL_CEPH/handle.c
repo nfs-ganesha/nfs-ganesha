@@ -2207,6 +2207,9 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		struct timespec timestamp;
 
 		mask |= CEPH_SETATTR_ATIME;
+	#ifdef CEPH_SETATTR_ATIME_NOW
+		mask |= CEPH_SETATTR_ATIME_NOW;
+	#endif
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
 		if (rc != 0) {
 			LogDebug(COMPONENT_FSAL,
@@ -2227,6 +2230,9 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		struct timespec timestamp;
 
 		mask |= CEPH_SETATTR_MTIME;
+	#ifdef CEPH_SETATTR_MTIME_NOW
+		mask |= CEPH_SETATTR_MTIME_NOW;
+	#endif
 		rc = clock_gettime(CLOCK_REALTIME, &timestamp);
 		if (rc != 0) {
 			LogDebug(COMPONENT_FSAL,
