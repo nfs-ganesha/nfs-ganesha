@@ -264,6 +264,7 @@ This package contains utility scripts for managing the NFS-GANESHA server
 Summary: The NFS-GANESHA's library for use with LTTng
 Group: Applications/System
 BuildRequires: lttng-ust-devel >= 2.3
+BuildRequires: lttng-tools-devel >= 2.3
 Requires: nfs-ganesha = %{version}-%{release}, lttng-tools >= 2.3,  lttng-ust >= 2.3
 
 %description lttng
