@@ -1164,6 +1164,7 @@ message(STATUS "USE_MAN_PAGE = ${USE_MAN_PAGE}")
 message(STATUS "USE_RADOS_RECOV = ${USE_RADOS_RECOV}")
 message(STATUS "RADOS_URLS = ${RADOS_URLS}")
 message(STATUS "USE_CUNIT = ${USE_CUNIT}")
+message(STATUS "SANITIZE_ADDRESS = ${SANITIZE_ADDRESS}")
 
 set(USE_CB_SIMULATOR ${USE_CB_SIMULATOR}
   CACHE BOOL
@@ -1372,6 +1373,12 @@ if(_MSPAC_SUPPORT)
 else(_MSPAC_SUPPORT)
     set(BCOND_MSPAC_SUPPORT "%bcond_with")
 endif(_MSPAC_SUPPORT)
+
+if(SANITIZE_ADDRESS)
+    set(BCOND_SANITIZE_ADDRESS "%bcond_without")
+else(SANITIZE_ADDRESS)
+    set(BCOND_SANITIZE_ADDRESS "%bcond_with")
+endif(SANITIZE_ADDRESS)
 
 # Now create a useable specfile
 configure_file(

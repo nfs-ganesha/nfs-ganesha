@@ -98,6 +98,9 @@ Requires: openSUSE-release
 @BCOND_MSPAC_SUPPORT@ mspac_support
 %global use_mspac_support %{on_off_switch mspac_support}
 
+@BCOND_SANITIZE_ADDRESS@ sanitize_address
+%global use_sanitize_address %{on_off_switch sanitize_address}
+
 %global dev_version %{lua: s = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); s2 = string.gsub(s, '%-', '.'); print((s2 ~= nil and s2 ~= '') and s2 or "0.1") }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -147,6 +150,9 @@ BuildRequires:	gcc-c++
 BuildRequires: libntirpc-devel >= @NTIRPC_MIN_VERSION@
 %else
 Requires: libntirpc = @NTIRPC_VERSION_EMBED@
+%endif
+%if %{with sanitize_address}
+BuildRequires:	libasan
 %endif
 Requires:	nfs-utils
 
@@ -464,6 +470,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_MAN_PAGE=%{use_man_page}                  \
 	-DRPCBIND=%{use_rpcbind}			\
 	-D_MSPAC_SUPPORT=%{use_mspac_support}		\
+	-DSANITIZE_ADDRESS=%{use_sanitize_address}	\
 %if %{with jemalloc}
 	-DALLOCATOR=jemalloc
 %endif
