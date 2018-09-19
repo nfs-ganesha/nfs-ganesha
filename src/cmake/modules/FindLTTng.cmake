@@ -36,7 +36,7 @@ find_path(LTTNG_INCLUDE_DIR
 find_path(LTTNG_LIBRARY_DIR
           NAMES liblttng-ust.so
           PATHS ${LTTNG_PATH_HINT}
-          PATH_SUFFIXES lib lib64
+	  PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE} lib lib64
           DOC "The LTTng libraries")
 
 find_library(LTTNG_UST_LIBRARY lttng-ust PATHS ${LTTNG_LIBRARY_DIR})
@@ -54,7 +54,7 @@ find_path(LTTNG_CTL_INCLUDE_DIR
 find_path(LTTNG_CTL_LIBRARY_DIR
           NAMES liblttng-ctl.so
           PATHS ${LTTNG_PATH_HINT}
-          PATH_SUFFIXES lib lib64
+	  PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE} lib lib64
           DOC "The LTTng libraries")
 
 find_library(LTTNG_CTL_LIBRARY lttng-ctl PATHS ${LTTNG_CTL_LIBRARY_DIR})

@@ -29,7 +29,7 @@ if(RGW_PREFIX)
   find_path(RGW_LIBRARY_DIR
     NAMES librgw.so
     PATHS ${RGW_PREFIX}
-    PATH_SUFFIXES lib lib64
+    PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE} lib lib64
     NO_DEFAULT_PATH
     DOC "The RGW libraries")
 endif()
@@ -45,7 +45,7 @@ if (NOT RGW_LIBRARY_DIR)
   find_path(RGW_LIBRARY_DIR
     NAMES librgw.so
     PATHS ${RGW_PREFIX}
-    PATH_SUFFIXES lib lib64
+    PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE} lib lib64
     DOC "The RGW libraries")
 endif (NOT RGW_LIBRARY_DIR)
 

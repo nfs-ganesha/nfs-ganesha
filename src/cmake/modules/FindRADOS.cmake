@@ -26,7 +26,7 @@ if(RADOS_PREFIX)
   find_path(RADOS_LIBRARY_DIR
     NAMES librados.so
     PATHS ${RADOS_PREFIX}
-    PATH_SUFFIXES lib lib64
+    PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE} lib lib64
     NO_DEFAULT_PATH
     DOC "The RADOS libraries")
 endif(RADOS_PREFIX)
@@ -44,7 +44,7 @@ if (NOT RADOS_LIBRARY_DIR)
   find_path(RADOS_LIBRARY_DIR
     NAMES librados.so
     PATHS ${RADOS_PREFIX}
-    PATH_SUFFIXES lib lib64
+    PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE} lib lib64
     DOC "The RADOS libraries")
 endif (NOT RADOS_LIBRARY_DIR)
 
