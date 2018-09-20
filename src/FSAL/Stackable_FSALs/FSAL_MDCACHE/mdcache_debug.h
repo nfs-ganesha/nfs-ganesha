@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -53,5 +53,7 @@ struct fsal_obj_handle *mdcdb_get_sub_handle(struct fsal_obj_handle *obj_hdl)
 
 	return entry->sub_handle;
 }
+
+void lru_cleanup_entries(void);
 
 #endif /* MDCACHE_DEBUG_H */

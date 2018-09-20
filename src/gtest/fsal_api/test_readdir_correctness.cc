@@ -122,6 +122,9 @@ namespace {
 
 	dir_hdls[i]->obj_ops->put_ref(dir_hdls[i]);
       }
+
+      /* Clean up extra entries */
+      lru_cleanup_entries();
     }
 
     virtual void TearDown() {

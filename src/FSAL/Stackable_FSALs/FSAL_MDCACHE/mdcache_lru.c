@@ -1533,6 +1533,32 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 		 ((uint64_t) new_thread_wait), totalwork);
 }
 
+/**
+ * @brief Remove reapable entries until we are below the high-water mark
+ *
+ * If something refs a lot of entries at the same time, this can put the number
+ * of entries above the high water mark.  They will slowly fall, as entries are
+ * actually freed, but this may take a very long time.
+ *
+ * This is a big hammer, that will clean up anything it can until either it
+ * can't anymore, or we're back below the high water mark.
+ *
+ * @param[in] parm     Parameter description
+ * @return Return description
+ */
+void lru_cleanup_entries(void)
+{
+	mdcache_lru_t *lru;
+	mdcache_entry_t *entry = NULL;
+
+	while ((lru = lru_try_reap_entry())) {
+		if (lru) {
+			entry = container_of(lru, mdcache_entry_t, lru);
+			mdcache_lru_unref(entry);
+		}
+	}
+}
+
 void init_fds_limit(void)
 {
 	int code = 0;
