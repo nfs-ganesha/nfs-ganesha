@@ -365,6 +365,52 @@ bool nfs_grace_is_member(void)
 	return true;
 }
 
+/**
+ * @brief Return nodeid for the server
+ *
+ * If the recovery backend specifies a nodeid, return it. If it does not
+ * specify one, default to using the server's hostname.
+ *
+ * Returns 0 on success and fills out pnodeid. Caller must free the returned
+ * value with gsh_free. Returns negative POSIX error code on error.
+ */
+int nfs_recovery_get_nodeid(char **pnodeid)
+{
+	int rc;
+	long maxlen;
+	char *nodeid = NULL;
+
+	if (recovery_backend->get_nodeid) {
+		rc = recovery_backend->get_nodeid(&nodeid);
+
+		/* Return error if we got one */
+		if (rc)
+			return rc;
+
+		/* If we got a nodeid, then we're done */
+		if (nodeid) {
+			*pnodeid = nodeid;
+			return 0;
+		}
+	}
+
+	/*
+	 * Either the backend doesn't support get_nodeid or it handed back a
+	 * NULL pointer. Just use hostname.
+	 */
+	maxlen = sysconf(_SC_HOST_NAME_MAX);
+	nodeid = gsh_malloc(maxlen);
+	rc = gethostname(nodeid, maxlen);
+	if (rc != 0) {
+		LogEvent(COMPONENT_CLIENTID, "gethostname failed: %d", errno);
+		rc = -errno;
+		gsh_free(nodeid);
+	} else {
+		*pnodeid = nodeid;
+	}
+	return rc;
+}
+
 void nfs_try_lift_grace(void)
 {
 	bool in_grace = true;
