@@ -870,7 +870,16 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 	 */
 	op_ctx->fsal_private = dir_hdl;
 
-	for (node = avltree_first(&myself->mh_dir.avl_index);
+	if (seekloc) {
+		struct mem_dirent key;
+
+		key.d_index = seekloc;
+		node = avltree_lookup(&key.avl_i, &myself->mh_dir.avl_index);
+	} else {
+		node = avltree_first(&myself->mh_dir.avl_index);
+	}
+
+	for (;
 	     node != NULL;
 	     node = avltree_next(node)) {
 		struct mem_dirent *dirent;
@@ -884,9 +893,6 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 		}
 
 		dirent = avltree_container_of(node, struct mem_dirent, avl_i);
-		/* skip entries before seekloc */
-		if (dirent->d_index < seekloc)
-			continue;
 
 		fsal_prepare_attrs(&attrs, attrmask);
 		fsal_copy_attrs(&attrs, &dirent->hdl->attrs, false);
