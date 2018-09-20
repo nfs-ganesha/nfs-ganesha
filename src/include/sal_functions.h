@@ -988,6 +988,7 @@ void nfs_end_grace(void);
 bool nfs_in_grace(void);
 void nfs_maybe_start_grace(void);
 bool nfs_grace_is_member(void);
+int nfs_recovery_get_nodeid(char **pnodeid);
 void nfs_try_lift_grace(void);
 void nfs_wait_for_grace_enforcement(void);
 void nfs_notify_grace_waiters(void);
@@ -1046,6 +1047,7 @@ struct nfs4_recovery_backend {
 	void (*set_enforcing)(void);
 	bool (*grace_enforcing)(void);
 	bool (*is_member)(void);
+	int (*get_nodeid)(char **pnodeid);
 };
 
 void fs_backend_init(struct nfs4_recovery_backend **);
