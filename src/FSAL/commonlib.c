@@ -2768,8 +2768,9 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 	state_fd = (struct fsal_fd *) (state + 1);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "state_fd->openflags = %d openflags = %d",
-		     state_fd->openflags, openflags);
+		     "state_fd->openflags = %d openflags = %d%s",
+		     state_fd->openflags, openflags,
+		     open_for_locks ? " Open For Locks" : "");
 
 	if (open_correct(state_fd->openflags, openflags)) {
 		/* It was valid, return it.
@@ -2791,24 +2792,33 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 		}
 
 		/* This is being opened for locks, we will not be able to
-		 * re-open so open for read/write unless openstate indicates
-		 * something different.
+		 * re-open so open for read/write. If that fails permission
+		 * check and openstate is available, retry with that state's
+		 * access mode.
 		 */
-		if (state->state_data.lock.openstate != NULL) {
+		openflags = FSAL_O_RDWR;
+
+		status = open_func(obj_hdl, openflags, state_fd);
+
+		if (status.major == ERR_FSAL_ACCESS &&
+		    state->state_data.lock.openstate != NULL) {
+			/* Got an EACCESS and openstate is available, try
+			 * again with it's openflags.
+			 */
 			struct fsal_fd *related_fd = (struct fsal_fd *)
 					(state->state_data.lock.openstate + 1);
 
 			openflags = related_fd->openflags & FSAL_O_RDWR;
-		} else {
-			/* No associated open, open read/write. */
-			openflags = FSAL_O_RDWR;
-		}
 
-		status = open_func(obj_hdl, openflags, state_fd);
+			status = open_func(obj_hdl, openflags, state_fd);
+		}
 
 		if (FSAL_IS_ERROR(status)) {
 			LogCrit(COMPONENT_FSAL,
-				"Open for locking failed");
+				"Open for locking failed for access %s",
+				openflags == FSAL_O_RDWR ? "Read/Write"
+				: openflags == FSAL_O_READ ? "Read"
+				: "Write");
 		} else {
 			LogFullDebug(COMPONENT_FSAL,
 				     "Opened state_fd %p", state_fd);
