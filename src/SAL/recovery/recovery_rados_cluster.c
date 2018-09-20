@@ -389,6 +389,12 @@ static bool rados_cluster_is_member(void)
 	return true;
 }
 
+static int rados_cluster_get_nodeid(char **pnodeid)
+{
+	*pnodeid = gsh_strdup(nodeid);
+	return 0;
+}
+
 struct nfs4_recovery_backend rados_cluster_backend = {
 	.recovery_init = rados_cluster_init,
 	.recovery_shutdown = rados_cluster_shutdown,
@@ -402,6 +408,7 @@ struct nfs4_recovery_backend rados_cluster_backend = {
 	.set_enforcing = rados_cluster_set_enforcing,
 	.grace_enforcing = rados_cluster_grace_enforcing,
 	.is_member = rados_cluster_is_member,
+	.get_nodeid = rados_cluster_get_nodeid,
 };
 
 void rados_cluster_backend_init(struct nfs4_recovery_backend **backend)
