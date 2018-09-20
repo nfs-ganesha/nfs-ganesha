@@ -65,6 +65,7 @@ namespace {
   typedef struct {
     struct gsh_buffdesc *keys;
     bool *hdl_found;
+    std::string *names;
   } rd_state_t;
 
   class ReaddirEmptyCorrectnessTest : public gtest::GaneshaFSALBaseTest {
@@ -110,9 +111,14 @@ namespace {
 
       for (int i = 0; i < DIR_COUNT; i++) {
 	struct gsh_buffdesc fh_desc;
+	std::stringstream sstr;
 
 	dir_hdls[i]->obj_ops->handle_to_key(dir_hdls[i], &fh_desc);
 	keyDup(&keys[i], &fh_desc);
+	sstr << "f-" << std::setfill('0') << std::setw(8) << std::hex << i;
+	names[i] = sstr.str();
+	sstr.str("");
+	sstr.clear();
 
 	dir_hdls[i]->obj_ops->put_ref(dir_hdls[i]);
       }
@@ -135,6 +141,7 @@ namespace {
     }
 
     struct gsh_buffdesc keys[DIR_COUNT];
+    std::string names[DIR_COUNT];
     bool hdl_found[DIR_COUNT] = { false };
 
   };
@@ -155,7 +162,7 @@ namespace {
 
     for (int i = 0; i < DIR_COUNT; i++) {
       if (keyEQ(&st->keys[i], &fh_desc)) {
-	EXPECT_EQ(false, st->hdl_found[i]);
+	EXPECT_EQ(false, st->hdl_found[i]) << st->names[i];
 	st->hdl_found[i] = true;
 	break;
       }
@@ -181,12 +188,13 @@ TEST_F(ReaddirFullCorrectnessTest, BIG)
 
   st.keys = keys;
   st.hdl_found = hdl_found;
+  st.names = names;
 
   status = test_dir->obj_ops->readdir(test_dir, &whence, &st, trc_populate_dirent, 0, &eod);
   ASSERT_EQ(status.major, 0);
 
   for (int i=0; i < DIR_COUNT; i++) {
-    ASSERT_EQ(true, hdl_found[i]);
+    ASSERT_EQ(true, hdl_found[i]) << names[i];
   }
 }
 
