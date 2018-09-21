@@ -250,8 +250,7 @@ void stat2fsal_attributes(const struct stat *buffstat,
 
 void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 		      struct glfs_object *glhandle, unsigned char *globjhdl,
-		      int len, struct glusterfs_handle **obj,
-		      const char *vol_uuid);
+		      struct glusterfs_handle **obj, const char *vol_uuid);
 
 fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
 			       struct glfs_object *glhandle,

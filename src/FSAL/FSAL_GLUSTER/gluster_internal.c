@@ -132,13 +132,9 @@ void stat2fsal_attributes(const struct stat *buffstat,
 
 void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 		      struct glfs_object *glhandle, unsigned char *globjhdl,
-		      int len, struct glusterfs_handle **obj,
-		      const char *vol_uuid)
+		      struct glusterfs_handle **obj, const char *vol_uuid)
 {
 	struct glusterfs_handle *constructing = NULL;
-	glusterfs_fsal_xstat_t buffxstat;
-
-	memset(&buffxstat, 0, sizeof(glusterfs_fsal_xstat_t));
 
 	constructing = gsh_calloc(1, sizeof(struct glusterfs_handle));
 
