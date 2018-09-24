@@ -1796,15 +1796,23 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 	bool closefd = false;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
+	struct user_cred root_creds = {};
+	struct user_cred *saved_creds = op_ctx->creds;
 
-	/* Make sure file is open in appropriate mode.
-	 * Do not check share reservation.
+
+	/*
+	 * Make sure file is open in appropriate mode, without checking for
+	 * share reservation. Also, it's possible that the file has changed
+	 * permissions since it was opened by the writer, so open the file
+	 * with root creds here since we're just doing a fsync.
 	 */
+	op_ctx->creds = &root_creds;
 	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_WRITE,
 				 (struct fsal_fd *)&myself->fd, &myself->share,
 				 ceph_open_func, ceph_close_func,
 				 (struct fsal_fd **)&out_fd, &has_lock,
 				 &closefd);
+	op_ctx->creds = saved_creds;
 
 	if (!FSAL_IS_ERROR(status)) {
 		retval = ceph_ll_fsync(export->cmount, out_fd->fd, false);
