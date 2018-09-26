@@ -628,8 +628,6 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	nsecs_elapsed_t op_start_time;
 	struct timespec ts;
 	int perm_flags;
-	char *notag = "NO TAG";
-	char *tagname = notag;
 	const char *bad_op_state_reason = "";
 	log_components_t alt_component = COMPONENT_NFS_V4;
 
@@ -651,6 +649,10 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		return NFS_REQ_OK;
 	}
 
+	/* Initialisation of the compound request internal's data */
+	memset(&data, 0, sizeof(data));
+	op_ctx->nfs_minorvers = compound4_minor;
+
 	/* Keeping the same tag as in the arguments */
 	copy_tag(&res->res_compound4.tag, &arg->arg_compound4.tag);
 
@@ -658,7 +660,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		/* Check if the tag is a valid utf8 string */
 		status =
 		    nfs4_utf8string2dynamic(&(res->res_compound4.tag),
-					    UTF8_SCAN_ALL, &tagname);
+					    UTF8_SCAN_ALL, &data.tagname);
 		if (status != 0) {
 			char str[LOG_BUFF_LEN];
 			struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -677,17 +679,18 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			status = NFS4ERR_INVAL;
 			res->res_compound4.status = status;
 			res->res_compound4.resarray.resarray_len = 0;
+			compound_data_Free(&data);
 			return NFS_REQ_OK;
 		}
+	} else {
+		/* No tag */
+		data.tagname = gsh_strdup("NO TAG");
 	}
 
 	/* Managing the operation list */
 	LogDebug(COMPONENT_NFS_V4,
 		 "COMPOUND: There are %d operations, res = %p, tag = %s",
-		 argarray_len, res, tagname);
-
-	if (tagname != notag)
-		gsh_free(tagname);
+		 argarray_len, res, data.tagname);
 
 	/* Check for empty COMPOUND request */
 	if (argarray_len == 0) {
@@ -696,6 +699,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		res->res_compound4.status = NFS4_OK;
 		res->res_compound4.resarray.resarray_len = 0;
+		compound_data_Free(&data);
 		return NFS_REQ_OK;
 	}
 
@@ -707,12 +711,9 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		res->res_compound4.status = NFS4ERR_RESOURCE;
 		res->res_compound4.resarray.resarray_len = 0;
+		compound_data_Free(&data);
 		return NFS_REQ_OK;
 	}
-
-	/* Initialisation of the compound request internal's data */
-	memset(&data, 0, sizeof(data));
-	op_ctx->nfs_minorvers = compound4_minor;
 
 	/* Minor version related stuff */
 	data.minorversion = compound4_minor;
@@ -722,8 +723,10 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	data.resp_size = sizeof(COMPOUND4res) - sizeof(nfs_resop4 *);
 
 	/* Building the client credential field */
-	if (nfs_rpc_req2client_cred(req, &(data.credential)) == -1)
+	if (nfs_rpc_req2client_cred(req, &(data.credential)) == -1) {
+		compound_data_Free(&data);
 		return NFS_REQ_DROP;	/* Malformed credential */
+	}
 
 	/* Keeping the same tag as in the arguments */
 	res->res_compound4.tag.utf8string_len =
@@ -752,6 +755,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			status = NFS4ERR_OP_NOT_IN_SESSION;
 			res->res_compound4.status = status;
 			res->res_compound4.resarray.resarray_len = 0;
+			compound_data_Free(&data);
 			return NFS_REQ_OK;
 		}
 
@@ -777,6 +781,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				status = NFS4ERR_NOT_ONLY_OP;
 				res->res_compound4.status = status;
 				res->res_compound4.resarray.resarray_len = 0;
+				compound_data_Free(&data);
 				return NFS_REQ_OK;
 			}
 		}
@@ -1196,6 +1201,8 @@ void compound_data_Free(compound_data_t *data)
 	/* Release refcounted cache entries */
 	set_current_entry(data, NULL);
 	set_saved_entry(data, NULL);
+
+	gsh_free(data->tagname);
 
 	if (data->session) {
 		if (data->slot != UINT32_MAX) {

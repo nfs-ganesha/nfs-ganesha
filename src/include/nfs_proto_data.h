@@ -321,6 +321,7 @@ typedef struct compound_data {
 	uint32_t oppos;		/*< Position of the operation within the
 				    request processed  */
 	const char *opname;	/*< Name of the operation */
+	char *tagname;
 	nfs41_session_t *session;	/*< Related session
 					   (found by OP_SEQUENCE) */
 	sequenceid4 sequence;	/*< Sequence ID of the current compound

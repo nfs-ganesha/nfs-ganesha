@@ -323,7 +323,8 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 						NFS41_MIN_OPERATIONS ||
 	    arg_CREATE_SESSION4->csa_back_chan_attrs.ca_maxrequests == 0) {
 		LogWarn(component,
-			"Invalid channel attributes");
+			"Invalid channel attributes for %s",
+			data->tagname);
 		res_CREATE_SESSION4->csr_status = NFS4ERR_TOOSMALL;
 		goto out;
 	}
