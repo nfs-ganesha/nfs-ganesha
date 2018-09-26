@@ -182,7 +182,7 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 	}
 
 	LogFullDebug(COMPONENT_NFS_V4,
-		     "offset = %" PRIu64 "  length = %" PRIu64 "allocate = %d",
+		     "offset = %" PRIu64 "  length = %" PRIu64 " allocate = %d",
 		     offset, size, allocate);
 
 	/* if size == 0 , nothing changes -- just say success */

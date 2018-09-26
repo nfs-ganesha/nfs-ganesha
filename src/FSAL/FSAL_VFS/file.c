@@ -1486,6 +1486,73 @@ fsal_status_t vfs_seek2(struct fsal_obj_handle *obj_hdl,
 #endif
 
 /**
+ * @brief Reserve/Deallocate space in a region of a file
+ *
+ * @param[in] obj_hdl File to which bytes should be allocated
+ * @param[in] state   open stateid under which to do the allocation
+ * @param[in] offset  offset at which to begin the allocation
+ * @param[in] length  length of the data to be allocated
+ * @param[in] allocate Should space be allocated or deallocated?
+ *
+ * @return FSAL status.
+ */
+
+#ifdef FALLOC_FL_PUNCH_HOLE
+fsal_status_t vfs_fallocate(struct fsal_obj_handle *obj_hdl,
+			    struct state_t *state, uint64_t offset,
+			    uint64_t length, bool allocate)
+{
+	int ret = 0;
+	bool has_lock = false;
+	bool closefd = false;
+	fsal_openflags_t openflags = FSAL_O_WRITE;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	int my_fd = -1;
+
+	/* Get a usable file descriptor */
+	status = find_fd(&my_fd, obj_hdl, false, state, openflags,
+		&has_lock, &closefd, false);
+
+	if (FSAL_IS_ERROR(status))
+		goto out;
+
+	if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+		status = posix2fsal_status(EPERM);
+		goto out;
+	}
+
+	ret = fallocate(my_fd,
+			allocate
+				? 0
+				: FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+			offset, length);
+
+	if (ret < 0) {
+		ret = errno;
+		LogFullDebug(COMPONENT_FSAL,
+			     "fallocate returned %s (%d)",
+			     strerror(ret), ret);
+		status = posix2fsal_status(ret);
+	}
+
+	vfs_restore_ganesha_credentials(obj_hdl->fsal);
+
+ out:
+
+	if (closefd) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "Closing Opened fd %d", my_fd);
+		close(my_fd);
+	}
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	return status;
+}
+#endif
+
+/**
  * @brief Commit written data
  *
  * This function flushes possibly buffered data to a file. This method

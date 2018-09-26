@@ -314,6 +314,12 @@ fsal_status_t vfs_seek2(struct fsal_obj_handle *obj_hdl,
 			struct io_info *info);
 #endif
 
+#ifdef FALLOC_FL_PUNCH_HOLE
+fsal_status_t vfs_fallocate(struct fsal_obj_handle *obj_hdl,
+			    struct state_t *state, uint64_t offset,
+			    uint64_t length, bool allocate);
+#endif
+
 fsal_status_t vfs_commit2(struct fsal_obj_handle *obj_hdl,
 			  off_t offset,
 			  size_t len);
