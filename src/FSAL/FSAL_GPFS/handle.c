@@ -555,7 +555,6 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 {
 	struct gpfs_fsal_obj_handle *myself;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-	struct fs_locations4 fs_locs;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
 			      obj_handle);
@@ -572,41 +571,14 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	memset(&fs_locs, 0, sizeof(fs_locs));
 	status = GPFSFSAL_fs_loc(op_ctx->fsal_export,
 				 obj_hdl->fs->private_data,
 				 op_ctx, myself->handle,
-				 &fs_locs);
-	if (FSAL_IS_ERROR(status)) {
-		goto out;
+				 attrs);
+
+	if (FSAL_IS_SUCCESS(status)) {
+		FSAL_SET_MASK(attrs->valid_mask, ATTR4_FS_LOCATIONS);
 	}
-
-	struct fs_location4 *loc_val = fs_locs.locations.locations_val;
-	int fs_root_len = fs_locs.fs_root.pathname4_val->utf8string_len;
-	int server_len = loc_val->server.server_val->utf8string_len;
-	int rootpath_len = loc_val->rootpath.pathname4_val->utf8string_len;
-
-	char *fs_root = gsh_calloc(1, fs_root_len + 1);
-	char *rootpath = gsh_calloc(1, rootpath_len + 1);
-
-	memcpy(fs_root, fs_locs.fs_root.pathname4_val->utf8string_val,
-		fs_root_len);
-	memcpy(rootpath, loc_val->rootpath.pathname4_val->utf8string_val,
-		rootpath_len);
-
-	attrs->fs_locations = nfs4_fs_locations_new(fs_root, rootpath, 1);
-
-	attrs->fs_locations->nservers = 1;
-	attrs->fs_locations->server[0].utf8string_len =
-				loc_val->server.server_val->utf8string_len;
-	attrs->fs_locations->server[0].utf8string_val =
-		gsh_memdup(loc_val->server.server_val->utf8string_val,
-				server_len);
-
-	FSAL_SET_MASK(attrs->valid_mask, ATTR4_FS_LOCATIONS);
-
-	gsh_free(fs_root);
-	gsh_free(rootpath);
 
 out:
 	return status;

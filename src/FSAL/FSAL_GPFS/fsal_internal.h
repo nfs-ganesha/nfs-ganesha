@@ -221,10 +221,10 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,
 				struct attrlist *p_object_attributes);
 
 fsal_status_t GPFSFSAL_fs_loc(struct fsal_export *export,
-				struct gpfs_filesystem *gpfs_fs,
-				const struct req_op_context *p_context,
-				struct gpfs_file_handle *p_filehandle,
-				struct fs_locations4 *fs_loc);
+			      struct gpfs_filesystem *gpfs_fs,
+			      const struct req_op_context *p_context,
+			      struct gpfs_file_handle *p_filehandle,
+			      struct attrlist *attrs);
 
 fsal_status_t GPFSFSAL_statfs(int fd,
 			      struct fsal_obj_handle *obj_hdl,

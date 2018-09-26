@@ -49,34 +49,35 @@ fsal_acl_2_gpfs_acl(struct fsal_obj_handle *, fsal_acl_t *, gpfsfsal_xstat_t *,
  *  @param gpfs_fs GPFS filesystem
  *  @param op_ctx Request op context
  *  @param gpfs_fh GPFS file handle
- *  @param obj_attr Object attributes
- *  @param fs_locs FS locations
+ *  @param attrs Object attributes (fs_locations is initialized
+ *                                  on a successful return)
  *  @return FSAL status
  *
  */
 fsal_status_t
 GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 		const struct req_op_context *op_ctx,
-		struct gpfs_file_handle *gpfs_fh,
-		struct fs_locations4 *fs_locs)
+		struct gpfs_file_handle *gpfs_fh, struct attrlist *attrs)
 {
+	char root[MAXPATHLEN];
+	char path[MAXPATHLEN];
+	char server[MAXHOSTNAMELEN];
 	int errsv, rc;
-	struct fs_loc_arg fs_loc;
+	struct fs_loc_arg loc_arg;
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
-	struct fs_location4 *loc_val = fs_locs->locations.locations_val;
 
-	fs_loc.fs_path_len = fs_locs->fs_root.pathname4_val->utf8string_len;
-	fs_loc.fs_path = fs_locs->fs_root.pathname4_val->utf8string_val;
-	fs_loc.fs_server_len = loc_val->server.server_val->utf8string_len;
-	fs_loc.fs_server = loc_val->server.server_val->utf8string_val;
-	fs_loc.fs_root_len = loc_val->rootpath.pathname4_val->utf8string_len;
-	fs_loc.fs_root = loc_val->rootpath.pathname4_val->utf8string_val;
-	fs_loc.mountdirfd = export_fd;
-	fs_loc.handle = gpfs_fh;
+	loc_arg.fs_root = root;
+	loc_arg.fs_root_len = sizeof(root);
+	loc_arg.fs_path = path;
+	loc_arg.fs_path_len = sizeof(path);
+	loc_arg.fs_server = server;
+	loc_arg.fs_server_len = sizeof(server);
+	loc_arg.mountdirfd = export_fd;
+	loc_arg.handle = gpfs_fh;
 
-	rc = gpfs_ganesha(OPENHANDLE_FS_LOCATIONS, &fs_loc);
+	rc = gpfs_ganesha(OPENHANDLE_FS_LOCATIONS, &loc_arg);
 	errsv = errno;
 	LogDebug(COMPONENT_FSAL,
 		 "gpfs_ganesha: FS_LOCATIONS returned, rc %d errsv %d",
@@ -85,13 +86,16 @@ GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 	if (rc)
 		return fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
 
-	fs_locs->fs_root.pathname4_val->utf8string_len = fs_loc.fs_path_len;
-	loc_val->server.server_val->utf8string_len = fs_loc.fs_server_len;
-	loc_val->rootpath.pathname4_val->utf8string_len = fs_loc.fs_root_len;
+	attrs->fs_locations = nfs4_fs_locations_new(root, path, 1);
+	attrs->fs_locations->nservers = 1;
+	attrs->fs_locations->server[0].utf8string_len = strlen(server);
+	attrs->fs_locations->server[0].utf8string_val =
+		gsh_memdup(server, strlen(server));
+
 
 	LogDebug(COMPONENT_FSAL,
 		 "gpfs_ganesha: FS_LOCATIONS root=%s path=%s server=%s",
-		 fs_loc.fs_root, fs_loc.fs_path, fs_loc.fs_server);
+		 root, path, server);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
