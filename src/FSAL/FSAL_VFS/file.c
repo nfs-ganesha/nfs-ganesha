@@ -1391,6 +1391,101 @@ void vfs_write2(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
+ * @brief Seek to data or hole
+ *
+ * This function seek to data or hole in a file.
+ *
+ * @param[in]     obj_hdl   File on which to operate
+ * @param[in]     state     state_t to use for this operation
+ * @param[in,out] info      Information about the data
+ *
+ * @return FSAL status.
+ */
+
+#ifdef __USE_GNU
+fsal_status_t vfs_seek2(struct fsal_obj_handle *obj_hdl,
+			struct state_t *state,
+			struct io_info *info)
+{
+	struct vfs_fsal_obj_handle *myself;
+	off_t ret = 0, offset = info->io_content.hole.di_offset;
+	int what = 0;
+	bool has_lock = false;
+	bool closefd = false;
+	fsal_openflags_t openflags = FSAL_O_ANY;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	int my_fd = -1;
+	struct attrlist attrs;
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+
+	/* Get a usable file descriptor */
+	status = find_fd(&my_fd, obj_hdl, false, state, openflags,
+		&has_lock, &closefd, false);
+
+	if (FSAL_IS_ERROR(status))
+		goto out;
+
+	fsal_prepare_attrs(&attrs,
+			   (op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+							op_ctx->fsal_export)
+				& ~(ATTR_ACL | ATTR4_FS_LOCATIONS)));
+
+	status = fetch_attrs(myself, my_fd, &attrs);
+
+	fsal_release_attrs(&attrs);
+
+	if (FSAL_IS_ERROR(status)) {
+		goto out;
+	}
+
+	/* RFC7862 15.11.3,
+	 * If the sa_offset is beyond the end of the file,
+	 * then SEEK MUST return NFS4ERR_NXIO. */
+	if (offset >= attrs.filesize) {
+		status = posix2fsal_status(ENXIO);
+		goto out;
+	}
+
+	if (info->io_content.what == NFS4_CONTENT_DATA) {
+		what = SEEK_DATA;
+	} else if (info->io_content.what == NFS4_CONTENT_HOLE) {
+		what = SEEK_HOLE;
+	} else {
+		status = fsalstat(ERR_FSAL_UNION_NOTSUPP, 0);
+		goto out;
+	}
+
+	ret = lseek(my_fd, offset, what);
+
+	if (ret < 0) {
+		if (errno == ENXIO) {
+			info->io_eof = TRUE;
+		} else {
+			status = posix2fsal_status(errno);
+		}
+		goto out;
+	} else {
+		info->io_eof = (ret >= attrs.filesize);
+		info->io_content.hole.di_offset = ret;
+	}
+
+ out:
+
+	if (closefd) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "Closing Opened fd %d", my_fd);
+		close(my_fd);
+	}
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	return status;
+}
+#endif
+
+/**
  * @brief Commit written data
  *
  * This function flushes possibly buffered data to a file. This method

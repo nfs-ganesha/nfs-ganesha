@@ -308,6 +308,12 @@ void vfs_write2(struct fsal_obj_handle *obj_hdl,
 		struct fsal_io_arg *write_arg,
 		void *caller_arg);
 
+#ifdef __USE_GNU
+fsal_status_t vfs_seek2(struct fsal_obj_handle *obj_hdl,
+			struct state_t *state,
+			struct io_info *info);
+#endif
+
 fsal_status_t vfs_commit2(struct fsal_obj_handle *obj_hdl,
 			  off_t offset,
 			  size_t len);
