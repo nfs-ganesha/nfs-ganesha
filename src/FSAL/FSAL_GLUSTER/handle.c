@@ -2049,7 +2049,7 @@ static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
 	int what = 0;
 	bool has_lock = false;
 	bool closefd = false;
-	fsal_openflags_t openflags = FSAL_O_READ;
+	fsal_openflags_t openflags = FSAL_O_ANY;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_fd my_fd = {0};
 	struct stat sbuf = {0};
