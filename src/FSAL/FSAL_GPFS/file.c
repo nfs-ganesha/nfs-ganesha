@@ -694,8 +694,10 @@ find_fd(int *fd, struct fsal_obj_handle *obj_hdl, bool bypass,
 				      has_lock, closefd, open_for_locks,
 				      &reusing_open_state_fd);
 
-		*fd = out_fd->fd;
-		assert(*fd >= 3);
+		if (FSAL_IS_SUCCESS(status)) {
+			*fd = out_fd->fd;
+			assert(*fd >= 3);
+		}
 		return status;
 
 	case SOCKET_FILE:
