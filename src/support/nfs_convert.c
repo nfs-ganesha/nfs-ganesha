@@ -555,8 +555,11 @@ nfsstat4 nfs4_Errno_verbose(fsal_errors_t error, const char *where)
 		break;
 
 	case ERR_FSAL_NOTSUPP:
-	case ERR_FSAL_ATTRNOTSUPP:
 		nfserror = NFS4ERR_NOTSUPP;
+		break;
+
+	case ERR_FSAL_ATTRNOTSUPP:
+		nfserror = NFS4ERR_ATTRNOTSUPP;
 		break;
 
 	case ERR_FSAL_UNION_NOTSUPP:
