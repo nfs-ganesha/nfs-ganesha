@@ -1118,6 +1118,8 @@ static void delegrecall_completion_func(rpc_call_t *call)
 		goto out_free_drc;
 	}
 
+	op_ctx = &req_ctx;
+
 	ret = get_state_obj_export_owner_refs(state, &obj,
 					     &export,
 					     NULL);
@@ -1127,7 +1129,6 @@ static void delegrecall_completion_func(rpc_call_t *call)
 		goto out_free_drc;
 	}
 
-	op_ctx = &req_ctx;
 	op_ctx->ctx_export = export;
 	op_ctx->fsal_export = export->fsal_export;
 
@@ -1347,6 +1348,9 @@ static void delegrevoke_check(void *ctx)
 		str_valid = true;
 	}
 
+	/* op_ctx may be used by state_del_locked and others */
+	op_ctx = &req_ctx;
+
 	ret = get_state_obj_export_owner_refs(state, &obj,
 					     &export,
 					     NULL);
@@ -1356,8 +1360,6 @@ static void delegrevoke_check(void *ctx)
 		goto out;
 	}
 
-	/* op_ctx may be used by state_del_locked and others */
-	op_ctx = &req_ctx;
 	op_ctx->ctx_export = export;
 	op_ctx->fsal_export = export->fsal_export;
 
