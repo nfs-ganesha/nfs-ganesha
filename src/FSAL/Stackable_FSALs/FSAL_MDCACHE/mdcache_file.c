@@ -843,5 +843,11 @@ fsal_status_t mdcache_fallocate(struct fsal_obj_handle *obj_hdl,
 							allocate);
 	       );
 
+	if (status.major == ERR_FSAL_STALE)
+		mdcache_kill_entry(entry);
+	else
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+
 	return status;
 }
