@@ -76,24 +76,19 @@
 
 /* parameters for NFSd startup and default values */
 
-nfs_start_info_t my_nfs_start_info = {
+static nfs_start_info_t my_nfs_start_info = {
 	.dump_default_config = false,
 	.lw_mark_trigger = false,
 	.drop_caps = true
 };
 
-config_file_t config_struct;
-char *log_path;
-char *exec_name = "nfs-ganesha";
-char *host_name = "localhost";
-int debug_level = -1;
-int detach_flag = true;
-bool dump_trace;
+config_file_t nfs_config_struct;
+char *nfs_host_name = "localhost";
 
 /* command line syntax */
 
-char options[] = "v@L:N:f:p:FRTE:Ch";
-char usage[] =
+static const char options[] = "v@L:N:f:p:FRTE:Ch";
+static const char usage[] =
 	"Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
 	"\t[-v]                display version information\n"
 	"\t[-L <logfile>]      set the default logfile for the daemon\n"
@@ -146,6 +141,11 @@ int main(int argc, char *argv[])
 	int dsc;
 	int rc;
 	int pidfile;
+	char *log_path;
+	char *exec_name = "nfs-ganesha";
+	int debug_level = -1;
+	int detach_flag = true;
+	bool dump_trace;
 #ifndef HAVE_DAEMON
 	int dev_null_fd = 0;
 	pid_t son_pid;
@@ -154,9 +154,9 @@ int main(int argc, char *argv[])
 	struct config_error_type err_type;
 
 	/* Set the server's boot time and epoch */
-	now(&ServerBootTime);
-	ServerEpoch = (time_t) ServerBootTime.tv_sec;
-	srand(ServerEpoch);
+	now(&nfs_ServerBootTime);
+	nfs_ServerEpoch = (time_t) nfs_ServerBootTime.tv_sec;
+	srand(nfs_ServerEpoch);
 
 	tempo_exec_name = strrchr(argv[0], '/');
 	if (tempo_exec_name != NULL)
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Could not get local host name, exiting...\n");
 		exit(1);
 	} else {
-		host_name = main_strdup("host_name", localmachine);
+		nfs_host_name = main_strdup("host_name", localmachine);
 	}
 
 	/* now parsing options with getopt */
@@ -208,12 +208,12 @@ int main(int argc, char *argv[])
 		case 'f':
 			/* config file */
 
-			config_path = main_strdup("config_path", optarg);
+			nfs_config_path = main_strdup("config_path", optarg);
 			break;
 
 		case 'p':
 			/* PID file */
-			pidfile_path = main_strdup("pidfile_path", optarg);
+			nfs_pidfile_path = main_strdup("pidfile_path", optarg);
 			break;
 
 		case 'F':
@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'E':
-			ServerEpoch = (time_t) atoll(optarg);
+			nfs_ServerEpoch = (time_t) atoll(optarg);
 			break;
 
 		case 'h':
@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* initialize memory and logging */
-	nfs_prereq_init(exec_name, host_name, debug_level, log_path,
+	nfs_prereq_init(exec_name, nfs_host_name, debug_level, log_path,
 			dump_trace);
 #if GANESHA_BUILD_RELEASE
 	LogEvent(COMPONENT_MAIN, "%s Starting: Ganesha Version %s",
@@ -372,10 +372,10 @@ int main(int argc, char *argv[])
 #endif
 
 	/* Echo PID into pidfile */
-	pidfile = open(pidfile_path, O_CREAT | O_RDWR, 0644);
+	pidfile = open(nfs_pidfile_path, O_CREAT | O_RDWR, 0644);
 	if (pidfile == -1) {
 		LogFatal(COMPONENT_MAIN, "Can't open pid file %s for writing",
-			 pidfile_path);
+			 nfs_pidfile_path);
 	} else {
 		char linebuf[1024];
 		struct flock lk;
@@ -392,7 +392,7 @@ int main(int argc, char *argv[])
 		(void)snprintf(linebuf, sizeof(linebuf), "%u\n", getpid());
 		if (write(pidfile, linebuf, strlen(linebuf)) == -1)
 			LogCrit(COMPONENT_MAIN, "Couldn't write pid to file %s",
-				pidfile_path);
+				nfs_pidfile_path);
 	}
 
 	/* Set up for the signal handler.
@@ -415,12 +415,13 @@ int main(int argc, char *argv[])
 
 	/* Parse the configuration file so we all know what is going on. */
 
-	if (config_path == NULL || config_path[0] == '\0') {
+	if (nfs_config_path == NULL || nfs_config_path[0] == '\0') {
 		LogWarn(COMPONENT_INIT,
 			"No configuration file named.");
-		config_struct = NULL;
+		nfs_config_struct = NULL;
 	} else
-		config_struct = config_ParseFile(config_path, &err_type);
+		nfs_config_struct =
+			config_ParseFile(nfs_config_path, &err_type);
 
 	if (!config_error_no_error(&err_type)) {
 		char *errstr = err_type_str(&err_type);
@@ -429,7 +430,7 @@ int main(int argc, char *argv[])
 			LogCrit(COMPONENT_INIT,
 				 "Error %s while parsing (%s)",
 				 errstr != NULL ? errstr : "unknown",
-				 config_path);
+				 nfs_config_path);
 			if (errstr != NULL)
 				gsh_free(errstr);
 			goto fatal_die;
@@ -437,12 +438,12 @@ int main(int argc, char *argv[])
 			LogWarn(COMPONENT_INIT,
 				"Error %s while parsing (%s)",
 				errstr != NULL ? errstr : "unknown",
-				config_path);
+				nfs_config_path);
 		if (errstr != NULL)
 			gsh_free(errstr);
 	}
 
-	if (read_log_config(config_struct, &err_type) < 0) {
+	if (read_log_config(nfs_config_struct, &err_type) < 0) {
 		LogCrit(COMPONENT_INIT,
 			 "Error while parsing log configuration");
 		goto fatal_die;
@@ -455,7 +456,7 @@ int main(int argc, char *argv[])
 
 	/* parse configuration file */
 
-	if (nfs_set_param_from_conf(config_struct,
+	if (nfs_set_param_from_conf(nfs_config_struct,
 				    &my_nfs_start_info,
 				    &err_type)) {
 		LogCrit(COMPONENT_INIT,
@@ -472,7 +473,7 @@ int main(int argc, char *argv[])
 	/* Load Data Server entries from parsed file
 	 * returns the number of DS entries.
 	 */
-	dsc = ReadDataServers(config_struct, &err_type);
+	dsc = ReadDataServers(nfs_config_struct, &err_type);
 	if (dsc < 0) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing DS entries");
@@ -498,7 +499,7 @@ int main(int argc, char *argv[])
 	/* Load export entries from parsed file
 	 * returns the number of export entries.
 	 */
-	rc = ReadExports(config_struct, &err_type);
+	rc = ReadExports(nfs_config_struct, &err_type);
 	if (rc < 0) {
 		LogCrit(COMPONENT_INIT,
 			  "Error while parsing export entries");
@@ -511,7 +512,7 @@ int main(int argc, char *argv[])
 
 	/* freeing syntax tree : */
 
-	config_Free(config_struct);
+	config_Free(nfs_config_struct);
 
 	/* Everything seems to be OK! We can now start service threads */
 	nfs_start(&my_nfs_start_info);

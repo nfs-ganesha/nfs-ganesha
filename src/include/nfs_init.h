@@ -60,8 +60,8 @@ void nfs_init_wait(void);
  * nfs_prereq_init:
  * Initialize NFSd prerequisites: memory management, logging, ...
  */
-void nfs_prereq_init(char *program_name, char *host_name, int debug_level,
-		     char *log_path, bool dump_trace);
+void nfs_prereq_init(const char *program_name, const char *host_name,
+		     int debug_level, const char *log_path, bool dump_trace);
 
 /**
  * nfs_set_param_from_conf:

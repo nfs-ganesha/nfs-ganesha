@@ -853,7 +853,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		/* time each op */
 		now(&ts);
-		op_start_time = timespec_diff(&ServerBootTime, &ts);
+		op_start_time = timespec_diff(&nfs_ServerBootTime, &ts);
 
 		if (compound4_minor > 0 && data.session != NULL &&
 		    data.session->fore_channel_attrs.ca_maxoperations == i) {

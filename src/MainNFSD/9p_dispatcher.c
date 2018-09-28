@@ -303,7 +303,7 @@ static void nfs_rpc_enqueue_req(request_data_t *reqdata)
 		 "enqueued req, q %p (%s %p:%p) size is %d (enq %"
 		 PRIu64 " deq %" PRIu64 ")",
 		 q, qpair->s, &qpair->producer, &qpair->consumer, q->size,
-		 health.enqueued_reqs, health.dequeued_reqs);
+		 nfs_health_.enqueued_reqs, nfs_health_.dequeued_reqs);
 
 	/* potentially wakeup some thread */
 
@@ -459,8 +459,8 @@ static void worker_run(struct fridgethr_context *ctx)
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Invalidating processed entry");
 
-		pool_free(request_pool, reqdata);
-		(void) atomic_inc_uint64_t(&health.dequeued_reqs);
+		pool_free(nfs_request_pool, reqdata);
+		(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 	}
 }
 
@@ -735,8 +735,8 @@ void *_9p_socket_thread(void *Arg)
 					    0, 0, 0);
 
 		/* Message is good. */
-		(void) atomic_inc_uint64_t(&health.enqueued_reqs);
-		req = pool_alloc(request_pool);
+		(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
+		req = pool_alloc(nfs_request_pool);
 
 		req->rtype = _9P_REQUEST;
 		req->r_u._9p._9pmsg = _9pmsg;

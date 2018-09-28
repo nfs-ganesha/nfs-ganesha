@@ -1211,7 +1211,7 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 		return;
 
 	now(&current_time);
-	stop_time = timespec_diff(&ServerBootTime, &current_time);
+	stop_time = timespec_diff(&nfs_ServerBootTime, &current_time);
 	if (client != NULL) {
 		struct server_stats *server_st;
 
@@ -1258,7 +1258,7 @@ void server_stats_nfsv4_op_done(int proto_op,
 		return;
 
 	now(&current_time);
-	stop_time = timespec_diff(&ServerBootTime, &current_time);
+	stop_time = timespec_diff(&nfs_ServerBootTime, &current_time);
 
 	if (client != NULL) {
 		struct server_stats *server_st;
@@ -1310,7 +1310,7 @@ void server_stats_compound_done(int num_ops, int status)
 	if (!nfs_param.core_param.enable_NFSSTATS)
 		return;
 	now(&current_time);
-	stop_time = timespec_diff(&ServerBootTime, &current_time);
+	stop_time = timespec_diff(&nfs_ServerBootTime, &current_time);
 	if (client != NULL) {
 		struct server_stats *server_st;
 

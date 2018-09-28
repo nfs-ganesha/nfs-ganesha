@@ -796,9 +796,9 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 	 * server boot time.  This gets high precision with simple 64 bit math.
 	 */
 	now(&timer_start);
-	op_ctx->start_time = timespec_diff(&ServerBootTime, &timer_start);
+	op_ctx->start_time = timespec_diff(&nfs_ServerBootTime, &timer_start);
 	op_ctx->queue_wait =
-	    op_ctx->start_time - timespec_diff(&ServerBootTime,
+	    op_ctx->start_time - timespec_diff(&nfs_ServerBootTime,
 					       &reqdata->time_queued);
 
 	/* Initialized user_credentials */

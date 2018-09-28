@@ -1384,7 +1384,7 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	    (struct showexports_state *)state;
 	struct export_stats *exp;
 	DBusMessageIter struct_iter;
-	struct timespec last_as_ts = ServerBootTime;
+	struct timespec last_as_ts = nfs_ServerBootTime;
 	const char *path;
 
 	exp = container_of(exp_node, struct export_stats, export);

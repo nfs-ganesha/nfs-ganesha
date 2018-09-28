@@ -55,7 +55,7 @@
 
 #define XATTR_BUFFERSIZE 4096
 
-extern char *host_name;
+extern char *nfs_host_name;
 
 /*
  * Bind protocol family, pending a richer interface model.
@@ -118,25 +118,25 @@ typedef struct request_data {
 
 /* in nfs_init.c */
 
-extern pool_t *request_pool;
+extern pool_t *nfs_request_pool;
 
 struct _nfs_health {
 	uint64_t enqueued_reqs;
 	uint64_t dequeued_reqs;
 };
 
-extern struct _nfs_health health;
+extern struct _nfs_health nfs_health_;
 bool nfs_health(void);
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
-extern struct timespec ServerBootTime;
-extern time_t ServerEpoch;
+extern struct timespec nfs_ServerBootTime;
+extern time_t nfs_ServerEpoch;
 
 extern verifier4 NFS4_write_verifier;	/*< NFS V4 write verifier */
 extern writeverf3 NFS3_write_verifier;	/*< NFS V3 write verifier */
 
-extern char *config_path;
-extern char *pidfile_path;
+extern char *nfs_config_path;
+extern char *nfs_pidfile_path;
 
 /*
  * Thread entry functions
@@ -166,7 +166,7 @@ void nfs_Init_svc(void);
 void nfs_rpc_dispatch_stop(void);
 
 /* Config parsing routines */
-extern config_file_t config_struct;
+extern config_file_t nfs_config_struct;
 extern struct config_block nfs_core;
 extern struct config_block nfs_ip_name;
 #ifdef _HAVE_GSSAPI

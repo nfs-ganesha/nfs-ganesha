@@ -99,8 +99,9 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 
 	ccachesearch[0] = nfs_param.krb5_param.ccache_dir;
 
-	code = gssd_refresh_krb5_machine_credential(
-			host_name, NULL, nfs_param.krb5_param.svc.principal);
+	code =
+		gssd_refresh_krb5_machine_credential(nfs_host_name,
+			NULL, nfs_param.krb5_param.svc.principal);
 
 	if (code)
 		LogWarn(COMPONENT_INIT,
@@ -467,7 +468,8 @@ static inline AUTH *nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 
 	/* the GSSAPI k5 mech needs to find an unexpired credential
 	 * for nfs/hostname in an accessible k5ccache */
-	code = gssd_refresh_krb5_machine_credential(host_name, NULL, principal);
+	code = gssd_refresh_krb5_machine_credential(nfs_host_name,
+						    NULL, principal);
 
 	if (code) {
 		LogWarn(COMPONENT_NFS_CB,
@@ -894,9 +896,9 @@ static inline void free_resop(nfs_cb_resop4 *op)
 
 rpc_call_t *alloc_rpc_call(void)
 {
-	request_data_t *reqdata = pool_alloc(request_pool);
+	request_data_t *reqdata = pool_alloc(nfs_request_pool);
 
-	(void) atomic_inc_uint64_t(&health.enqueued_reqs);
+	(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
 
 	reqdata->rtype = NFS_CALL;
 	return &reqdata->r_u.call;
@@ -925,8 +927,8 @@ static void nfs_rpc_call_free(struct clnt_req *cc, size_t unused)
 	rpc_call_t *call = container_of(cc, rpc_call_t, call_req);
 	request_data_t *reqdata = container_of(call, request_data_t, r_u.call);
 
-	pool_free(request_pool, reqdata);
-	(void) atomic_inc_uint64_t(&health.dequeued_reqs);
+	pool_free(nfs_request_pool, reqdata);
+	(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 }
 
 /**

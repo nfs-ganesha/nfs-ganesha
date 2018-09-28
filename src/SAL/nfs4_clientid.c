@@ -1171,7 +1171,7 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
 	clientid_status_t status;
-	uint64_t epoch_low = ServerEpoch & 0xFFFFFFFF;
+	uint64_t epoch_low = nfs_ServerEpoch & 0xFFFFFFFF;
 	uint64_t cid_epoch = (uint64_t) (clientid >> (clientid4) 32);
 	nfs_client_id_t *pclientid;
 
@@ -1366,7 +1366,7 @@ int display_clientid(struct display_buffer *dspbuf, clientid4 clientid)
 clientid4 new_clientid(void)
 {
 	clientid4 newid = atomic_inc_uint32_t(&clientid_counter);
-	uint64_t epoch_low = ServerEpoch & UINT32_MAX;
+	uint64_t epoch_low = nfs_ServerEpoch & UINT32_MAX;
 
 	return newid + (epoch_low << (clientid4) 32);
 }

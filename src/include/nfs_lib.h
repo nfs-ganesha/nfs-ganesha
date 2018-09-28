@@ -33,7 +33,7 @@
 #ifndef NFS_LIB_H
 #define NFS_LIB_H
 
-extern char *config_path;
+extern char *nfs_config_path;
 
 extern int nfs_libmain(
 	const char *config_path,

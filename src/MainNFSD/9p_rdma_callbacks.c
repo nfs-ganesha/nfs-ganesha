@@ -197,8 +197,8 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *data, void *arg)
 	u16 tag = 0;
 	char *_9pmsg = NULL;
 
-	(void) atomic_inc_uint64_t(&health.enqueued_reqs);
-	req = pool_alloc(request_pool);
+	(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
+	req = pool_alloc(nfs_request_pool);
 
 	req->rtype = _9P_REQUEST;
 	req->r_u._9p._9pmsg = _9pmsg;

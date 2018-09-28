@@ -514,7 +514,7 @@ static void do_shutdown(void)
 		LogEvent(COMPONENT_MAIN, "FSAL system destroyed.");
 	}
 
-	unlink(pidfile_path);
+	unlink(nfs_pidfile_path);
 }
 
 void *admin_thread(void *UnusedArg)

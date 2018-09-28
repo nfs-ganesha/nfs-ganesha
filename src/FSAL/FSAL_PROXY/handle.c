@@ -1034,7 +1034,7 @@ static int pxy_setclientid(clientid4 *new_clientid, sequenceid4 *new_seqid,
 	clientid.co_ownerid.co_ownerid_val = clientid_name;
 
 	/* copy to intermediate uint64_t to 0-fill or truncate as needed */
-	temp_verifier = (uint64_t)ServerBootTime.tv_sec;
+	temp_verifier = (uint64_t)nfs_ServerBootTime.tv_sec;
 	BUILD_BUG_ON(sizeof(clientid.co_verifier) != sizeof(uint64_t));
 	memcpy(&clientid.co_verifier, &temp_verifier, sizeof(uint64_t));
 

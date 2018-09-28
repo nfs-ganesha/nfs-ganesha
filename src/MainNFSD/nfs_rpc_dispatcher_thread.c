@@ -1263,9 +1263,9 @@ static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *xprt)
  */
 static inline request_data_t *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 {
-	request_data_t *reqdata = pool_alloc(request_pool);
+	request_data_t *reqdata = pool_alloc(nfs_request_pool);
 
-	(void) atomic_inc_uint64_t(&health.enqueued_reqs);
+	(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
 
 	/* set the request as NFS already-read */
 	reqdata->rtype = NFS_REQUEST;
@@ -1303,8 +1303,8 @@ int free_nfs_request(request_data_t *reqdata)
 		break;
 	}
 	SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
-	pool_free(request_pool, reqdata);
-	(void) atomic_inc_uint64_t(&health.dequeued_reqs);
+	pool_free(nfs_request_pool, reqdata);
+	(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 	return 0;
 }
 

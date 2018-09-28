@@ -81,15 +81,15 @@
 struct nfs_init nfs_init;
 
 /* global information exported to all layers (as extern vars) */
-pool_t *request_pool;
+pool_t *nfs_request_pool;
 nfs_parameter_t nfs_param;
-struct _nfs_health health;
+struct _nfs_health nfs_health_;
 
 static struct _nfs_health healthstats;
 
 /* ServerEpoch is ServerBootTime unless overriden by -E command line option */
-struct timespec ServerBootTime;
-time_t ServerEpoch;
+struct timespec nfs_ServerBootTime;
+time_t nfs_ServerEpoch;
 
 verifier4 NFS4_write_verifier;	/* NFS V4 write verifier */
 writeverf3 NFS3_write_verifier;	/* NFS V3 write verifier */
@@ -126,9 +126,9 @@ pthread_t _9p_rdma_dispatcher_thrid;
 pthread_t nfs_rdma_dispatcher_thrid;
 #endif
 
-char *config_path = GANESHA_CONFIG_PATH;
+char *nfs_config_path = GANESHA_CONFIG_PATH;
 
-char *pidfile_path = GANESHA_PIDFILE_PATH;
+char *nfs_pidfile_path = GANESHA_PIDFILE_PATH;
 
 /**
  * @brief Reread the configuration file to accomplish update of options.
@@ -159,7 +159,7 @@ void reread_config(void)
 	/* If no configuration file is given, then the caller must want to
 	 * reparse the configuration file from startup.
 	 */
-	if (config_path[0] == '\0') {
+	if (nfs_config_path[0] == '\0') {
 		LogCrit(COMPONENT_CONFIG,
 			"No configuration file was specified for reloading log config.");
 		return;
@@ -169,12 +169,12 @@ void reread_config(void)
 	if (!init_error_type(&err_type))
 		return;
 	/* Attempt to parse the new configuration file */
-	config_struct = config_ParseFile(config_path, &err_type);
+	config_struct = config_ParseFile(nfs_config_path, &err_type);
 	if (!config_error_no_error(&err_type)) {
 		config_Free(config_struct);
 		LogCrit(COMPONENT_CONFIG,
 			"Error while parsing new configuration file %s",
-			config_path);
+			nfs_config_path);
 		report_config_errors(&err_type, NULL, config_errs_to_log);
 		return;
 	}
@@ -281,11 +281,11 @@ static void init_crash_handlers(void)
  * @param[in] log_path     Log path
  * @param[in] dump_trace   Dump trace when segfault
  */
-void nfs_prereq_init(char *program_name, char *host_name, int debug_level,
-		     char *log_path, bool dump_trace)
+void nfs_prereq_init(const char *program_name, const char *host_name,
+		     int debug_level, const char *log_path, bool dump_trace)
 {
-	healthstats.enqueued_reqs = health.enqueued_reqs = 0;
-	healthstats.enqueued_reqs = health.dequeued_reqs = 0;
+	healthstats.enqueued_reqs = nfs_health_.enqueued_reqs = 0;
+	healthstats.enqueued_reqs = nfs_health_.dequeued_reqs = 0;
 
 	/* Initialize logging */
 	SetNamePgm(program_name);
@@ -642,7 +642,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	nfs41_session_pool =
 	    pool_basic_init("NFSv4.1 session pool", sizeof(nfs41_session_t));
 
-	request_pool =
+	nfs_request_pool =
 	    pool_basic_init("Request pool", sizeof(request_data_t));
 
 	/* If rpcsec_gss is used, set the path to the keytab */
@@ -908,7 +908,7 @@ void nfs_start(nfs_start_info_t *p_start_info)
 			uint64_t epoch;
 		} build_verifier;
 
-		build_verifier.epoch = (uint64_t) ServerEpoch;
+		build_verifier.epoch = (uint64_t) nfs_ServerEpoch;
 
 		memcpy(NFS3_write_verifier, build_verifier.NFS3_write_verifier,
 		       sizeof(NFS3_write_verifier));
@@ -983,8 +983,8 @@ bool nfs_health(void)
 	uint64_t dequeue_diff, enqueue_diff;
 	bool healthy;
 
-	newenq = health.enqueued_reqs;
-	newdeq = health.dequeued_reqs;
+	newenq = nfs_health_.enqueued_reqs;
+	newdeq = nfs_health_.dequeued_reqs;
 	enqueue_diff = newenq - healthstats.enqueued_reqs;
 	dequeue_diff = newdeq - healthstats.dequeued_reqs;
 

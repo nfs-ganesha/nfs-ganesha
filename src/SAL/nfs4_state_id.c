@@ -800,7 +800,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			    const char *tag)
 {
 	uint32_t epoch = 0;
-	uint64_t epoch_low = ServerEpoch & 0xFFFFFFFF;
+	uint64_t epoch_low = nfs_ServerEpoch & 0xFFFFFFFF;
 	state_t *state2 = NULL;
 	struct fsal_obj_handle *obj2 = NULL;
 	state_owner_t *owner2 = NULL;
