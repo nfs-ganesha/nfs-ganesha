@@ -103,7 +103,7 @@ char usage[] =
 	"\t[-F]                the program stays in foreground\n"
 	"\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
 	"\t[-T]                dump the default configuration on stdout\n"
-	"\t[-E] <epoch<]       overrides ServerBootTime for ServerEpoch\n"
+	"\t[-E] <epoch>]       overrides ServerBootTime for ServerEpoch\n"
 	"\t[-C]                dump trace when segfault\n"
 	"\t[-h]                display this help\n"
 	"----------------- Signals ----------------\n"
