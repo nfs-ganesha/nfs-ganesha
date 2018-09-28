@@ -2080,7 +2080,7 @@ static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
 	/* RFC7862 15.11.3,
 	 * If the sa_offset is beyond the end of the file,
 	 * then SEEK MUST return NFS4ERR_NXIO. */
-	if (offset > sbuf.st_size) {
+	if (offset >= sbuf.st_size) {
 		status = gluster2fsal_error(ENXIO);
 		goto out;
 	}
