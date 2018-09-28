@@ -151,7 +151,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	}
 
 	construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
+			 &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(&sb, attrs_out);
@@ -387,7 +387,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	}
 
 	construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
+			 &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(&sb, attrs_out);
@@ -513,7 +513,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	}
 
 	construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
+			 &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(&sb, attrs_out);
@@ -614,7 +614,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	}
 
 	construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
+			 &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(&sb, attrs_out);
@@ -1631,7 +1631,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			 GLAPI_HANDLE_LENGTH, &myself, vol_uuid);
+			 &myself, vol_uuid);
 
 	*new_obj = &myself->handle;
 

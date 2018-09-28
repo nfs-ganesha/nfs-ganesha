@@ -144,7 +144,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	}
 
 	construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
+			 &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(&sb, attrs_out);
@@ -250,7 +250,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	}
 
 	construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
+			 &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(&sb, attrs_out);
@@ -309,7 +309,7 @@ fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
 	}
 
 	construct_handle(glfs_export, sb, glhandle, globjhdl,
-			 GLAPI_HANDLE_LENGTH, &objhandle, vol_uuid);
+			 &objhandle, vol_uuid);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(sb, attrs_out);
