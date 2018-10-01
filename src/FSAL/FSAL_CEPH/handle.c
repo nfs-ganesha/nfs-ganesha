@@ -1781,6 +1781,25 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
  * @return FSAL status.
  */
 
+#ifdef USE_FSAL_CEPH_LL_SYNC_INODE
+static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
+				       off_t offset,
+				       size_t len)
+{
+	int retval;
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+
+	/*
+	 * If we have the ceph_ll_sync_inode call, then we can avoid opening
+	 * altogether.
+	 */
+	retval = ceph_ll_sync_inode(export->cmount, myself->i, 0);
+	return ceph2fsal_error(retval);
+}
+#else
 static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 				       off_t offset,
 				       size_t len)
@@ -1829,6 +1848,7 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 
 	return status;
 }
+#endif
 
 #ifdef USE_FSAL_CEPH_SETLK
 /**
