@@ -198,6 +198,15 @@ TEST_F(ReaddirFullCorrectnessTest, BIG)
 
   for (int i=0; i < DIR_COUNT; i++) {
     ASSERT_EQ(true, hdl_found[i]) << names[i];
+    hdl_found[i] = false;
+  }
+
+  status = test_dir->obj_ops->readdir(test_dir, &whence, &st, trc_populate_dirent, 0, &eod);
+  ASSERT_EQ(status.major, 0);
+
+  for (int i=0; i < DIR_COUNT; i++) {
+    ASSERT_EQ(true, hdl_found[i]) << names[i];
+    hdl_found[i] = false;
   }
 }
 
