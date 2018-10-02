@@ -2891,6 +2891,14 @@ fsal_status_t pxy_lookup_path(struct fsal_export *exp_hdl,
 	pcopy = gsh_strdup(path);
 
 	p = strtok_r(pcopy, "/", &saved);
+	if (!p) {
+		fsal_status_t st = pxy_lookup_impl(parent, exp_hdl, creds,
+						   NULL, &next, attrs_out);
+		if (FSAL_IS_ERROR(st)) {
+			gsh_free(pcopy);
+			return st;
+		}
+	}
 	while (p) {
 		if (strcmp(p, "..") == 0) {
 			/* Don't allow lookup of ".." */
