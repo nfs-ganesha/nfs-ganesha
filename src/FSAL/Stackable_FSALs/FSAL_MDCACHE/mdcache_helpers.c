@@ -2759,7 +2759,7 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_readdir,
-		   __func__, __LINE__, directory);
+		   __func__, __LINE__, &directory->obj_handle);
 #endif
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 			"Starting chunked READDIR for %p, MDCACHE_TRUST_CONTENT %s, MDCACHE_TRUST_DIR_CHUNKS %s",
@@ -3115,8 +3115,8 @@ again:
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_readdir_cb,
-		   __func__, __LINE__, dirent->name, entry, entry->sub_handle,
-		   entry->lru.refcnt);
+		   __func__, __LINE__, dirent->name, &entry->obj_handle,
+		   entry->sub_handle, entry->lru.refcnt);
 #endif
 		cb_result = cb(dirent->name, &entry->obj_handle, &entry->attrs,
 			       dir_state, next_ck);
@@ -3243,7 +3243,8 @@ _mdcache_kill_entry(mdcache_entry_t *entry,
 	freed = cih_remove_checked(entry); /* !reachable, drop sentinel ref */
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_kill_entry,
-		   function, line, entry, entry->lru.refcnt, freed);
+		   function, line, &entry->obj_handle, entry->lru.refcnt,
+		   freed);
 #endif
 
 	if (!freed) {

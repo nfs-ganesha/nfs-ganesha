@@ -652,7 +652,8 @@ lru_reap_impl(enum lru_q_id qid)
 		entry = container_of(lru, mdcache_entry_t, lru);
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_ref,
-		   __func__, __LINE__, entry, entry->sub_handle, refcnt);
+		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
+		   refcnt);
 #endif
 		QUNLOCK(qlane);
 
@@ -679,7 +680,7 @@ lru_reap_impl(enum lru_q_id qid)
 
 #ifdef USE_LTTNG
 				tracepoint(mdcache, mdc_lru_reap, __func__,
-					   __LINE__, entry,
+					   __LINE__, &entry->obj_handle,
 					   entry->lru.refcnt);
 #endif
 				LRU_DQ_SAFE(lru, q);
@@ -827,7 +828,7 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
 #ifdef USE_LTTNG
 				tracepoint(mdcache, mdc_lru_reap_chunk,
 					   __func__, __LINE__,
-					   entry, chunk);
+					   &entry->obj_handle, chunk);
 #endif
 
 			/* Clean the chunk out and indicate the directory is no
@@ -1131,7 +1132,8 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		refcnt = atomic_inc_int32_t(&entry->lru.refcnt);
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_ref,
-		   __func__, __LINE__, entry, entry->sub_handle, refcnt);
+		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
+		   refcnt);
 #endif
 
 		init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
@@ -1808,7 +1810,8 @@ mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle)
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_get,
-		  __func__, __LINE__, nentry, sub_handle, nentry->lru.refcnt);
+		  __func__, __LINE__, &nentry->obj_handle, sub_handle,
+		  nentry->lru.refcnt);
 #endif
 	return nentry;
 }
@@ -1869,7 +1872,7 @@ _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_ref,
-		   func, line, entry, entry->sub_handle, refcnt);
+		   func, line, &entry->obj_handle, entry->sub_handle, refcnt);
 #endif
 
 	/* adjust LRU on initial refs */
@@ -1951,7 +1954,7 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_unref,
-		   func, line, entry, entry->sub_handle, refcnt);
+		   func, line, &entry->obj_handle, entry->sub_handle, refcnt);
 #endif
 
 	if (unlikely(refcnt == 0)) {
