@@ -876,11 +876,13 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
  *
  * @param[in] parent     The parent directory we desire a chunk for
  * @param[in] prev_chunk If non-NULL, the previous chunk in this directory
+ * @param[in] whence	 If @a prev_chunk is NULL, the starting whence of chunk
  *
  * @return reused or allocated chunk
  */
 struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
-				    struct dir_chunk *prev_chunk)
+				    struct dir_chunk *prev_chunk,
+				    fsal_cookie_t whence)
 {
 	mdcache_lru_t *lru = NULL;
 	struct dir_chunk *chunk = NULL;
@@ -912,8 +914,12 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 	chunk->parent = parent;
 	if (prev_chunk) {
 		glist_add(&prev_chunk->chunks, &chunk->chunks);
+		chunk->reload_ck = glist_last_entry(&prev_chunk->dirents,
+						    mdcache_dir_entry_t,
+						    chunk_list)->ck;
 	} else {
 		glist_add(&chunk->parent->fsobj.fsdir.chunks, &chunk->chunks);
+		chunk->reload_ck = whence;
 	}
 
 	/* Chunk refcnt is not used (chunks are always protected by content_lock

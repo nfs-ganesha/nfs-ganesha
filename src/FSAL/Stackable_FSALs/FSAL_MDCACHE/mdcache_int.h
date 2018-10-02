@@ -335,6 +335,8 @@ struct dir_chunk {
 	struct mdcache_fsal_obj_handle *parent;
 	/** LRU link */
 	mdcache_lru_t chunk_lru;
+	/** Cookie to use to reload this chunk */
+	fsal_cookie_t reload_ck;
 	/** Cookie of first entry in sequentially next chunk, will be set to
 	 *  0 if there is no sequentially next chunk.
 	 */
