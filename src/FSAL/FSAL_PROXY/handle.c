@@ -946,6 +946,7 @@ static int pxy_setsessionid(sessionid4 new_sessionid, uint32_t *lease_time,
 	sequenceid4 seqid;
 	CREATE_SESSION4res *s_res;
 	CREATE_SESSION4resok *res_ok;
+	callback_sec_parms4 sec_parms4;
 	uint32_t fore_ca_rdma_ird_val_sink;
 	uint32_t back_ca_rdma_ird_val_sink;
 
@@ -963,7 +964,7 @@ static int pxy_setsessionid(sessionid4 new_sessionid, uint32_t *lease_time,
 						&back_ca_rdma_ird_val_sink;
 
 	COMPOUNDV4_ARG_ADD_OP_CREATE_SESSION(opcnt, arg, cid, seqid,
-					     (&(pxy_exp->info)));
+					     (&(pxy_exp->info)), &sec_parms4);
 	rc = pxy_compoundv4_execute(__func__, NULL, opcnt, arg, res, pxy_exp);
 	if (rc != NFS4_OK)
 		return -1;
