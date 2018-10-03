@@ -355,16 +355,6 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	       arg_EXCHANGE_ID4->eia_clientowner.co_verifier,
 	       NFS4_VERIFIER_SIZE);
 
-	if (gethostname(cid_server_owner,
-			sizeof(cid_server_owner)) == -1) {
-		/* Free the clientid record and return */
-		free_client_id(unconf);
-		res_EXCHANGE_ID4->eir_status = NFS4ERR_SERVERFAULT;
-		goto out;
-	}
-
-	LogDebug(COMPONENT_CLIENTID, "Serving IP %s", cid_server_owner);
-
 	rc = nfs_client_id_insert(unconf);
 
 	if (rc != CLIENT_ID_SUCCESS) {
