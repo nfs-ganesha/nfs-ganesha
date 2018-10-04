@@ -75,6 +75,7 @@ int nfs4_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t *data,
 	    = &op->nfs_argop4_u.opreclaim_complete;
 	RECLAIM_COMPLETE4res * const res_RECLAIM_COMPLETE4 =
 	    &resp->nfs_resop4_u.opreclaim_complete;
+	nfs_client_id_t	*clientid = data->session->clientid_record;
 
 	resp->resop = NFS4_OP_RECLAIM_COMPLETE;
 
@@ -93,16 +94,16 @@ int nfs4_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t *data,
 	/* For now, we don't handle rca_one_fs, so we won't complain about
 	 * complete already for it.
 	 */
-	if (data->session->clientid_record->cid_cb.v41.cid_reclaim_complete &&
+	if (clientid->cid_cb.v41.cid_reclaim_complete &&
 	    !arg_RECLAIM_COMPLETE4->rca_one_fs) {
 		res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_COMPLETE_ALREADY;
 		return res_RECLAIM_COMPLETE4->rcr_status;
 	}
 
 	if (!arg_RECLAIM_COMPLETE4->rca_one_fs) {
-		data->session->clientid_record->cid_cb.v41.cid_reclaim_complete
-									= true;
-		nfs4_recovery_reclaim_complete(data->session->clientid_record);
+		clientid->cid_cb.v41.cid_reclaim_complete = true;
+		if (clientid->cid_allow_reclaim)
+			atomic_inc_int32_t(&reclaim_completes);
 	}
 
 	return res_RECLAIM_COMPLETE4->rcr_status;

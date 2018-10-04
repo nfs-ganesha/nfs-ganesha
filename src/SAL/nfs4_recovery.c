@@ -61,7 +61,6 @@ clid_entry_t *nfs4_add_clid_entry(char *cl_name)
 
 	glist_init(&new_ent->cl_rfh_list);
 	strcpy(new_ent->cl_name, cl_name);
-	new_ent->cl_reclaim_complete = false;
 	glist_add(&clid_list, &new_ent->cl_list);
 	++clid_count;
 	return new_ent;
@@ -373,48 +372,6 @@ static bool check_clid(nfs_client_id_t *clientid, clid_entry_t *clid_ent)
 
 	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 	return ret;
-}
-
-void nfs4_recovery_reclaim_complete(nfs_client_id_t *clientid)
-{
-	struct glist_head *node;
-
-	/* If there are no clients */
-	if (clid_count == 0)
-		return;
-
-	/*
-	 * Loop through the list and try to find a matching client that hasn't
-	 * yet sent a reclaim_complete. If we find it, mark its clid_ent
-	 * record, and increment the reclaim_completes counter.
-	 */
-	PTHREAD_MUTEX_lock(&grace_mutex);
-	glist_for_each(node, &clid_list) {
-		clid_entry_t *clid_ent = glist_entry(node, clid_entry_t,
-						     cl_list);
-
-		/* Skip any that have already sent a reclaim_complete */
-		if (clid_ent->cl_reclaim_complete)
-			continue;
-
-		if (check_clid(clientid, clid_ent)) {
-			if (isDebug(COMPONENT_CLIENTID)) {
-				char str[LOG_BUFF_LEN] = "\0";
-				struct display_buffer dspbuf = {
-					sizeof(str), str, str};
-
-				display_client_id_rec(&dspbuf, clientid);
-
-				LogFullDebug(COMPONENT_CLIENTID,
-					     "RECLAIM_COMPLETE for %s",
-					     str);
-			}
-			clid_ent->cl_reclaim_complete = true;
-			atomic_inc_int32_t(&reclaim_completes);
-			break;
-		}
-	}
-	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
 
 /**

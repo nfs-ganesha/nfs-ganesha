@@ -995,7 +995,6 @@ void nfs_notify_grace_waiters(void);
 /* v4 Client stable-storage database management */
 void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(nfs_client_id_t *);
-void nfs4_recovery_reclaim_complete(nfs_client_id_t *clientid);
 void nfs4_chk_clid(nfs_client_id_t *);
 
 /* Delegation revocation tracking */
