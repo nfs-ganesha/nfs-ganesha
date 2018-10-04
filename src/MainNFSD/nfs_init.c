@@ -531,14 +531,15 @@ static void nfs_Start_threads(void)
 	LogDebug(COMPONENT_THREAD, "sigmgr thread started");
 
 #ifdef _USE_9P
-	rc = _9p_worker_init();
-	if (rc != 0) {
-		LogFatal(COMPONENT_THREAD, "Could not start worker threads: %d",
-			 errno);
-	}
-
-	/* Starting the 9P/TCP dispatcher thread */
 	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
+		/* Start 9P worker threads */
+		rc = _9p_worker_init();
+		if (rc != 0) {
+			LogFatal(COMPONENT_THREAD,
+				 "Could not start worker threads: %d", errno);
+		}
+
+		/* Starting the 9P/TCP dispatcher thread */
 		rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr,
 				    _9p_dispatcher_thread, NULL);
 		if (rc != 0) {
