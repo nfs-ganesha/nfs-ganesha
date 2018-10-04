@@ -118,5 +118,7 @@ void nfs4_op_test_stateid_Free(nfs_resop4 *resp)
 	TEST_STATEID4resok *res =
 	    &res_TEST_STATEID4->TEST_STATEID4res_u.tsr_resok4;
 
-	gsh_free(res->tsr_status_codes.tsr_status_codes_val);
+	if (res_TEST_STATEID4->tsr_status == NFS4_OK) {
+		gsh_free(res->tsr_status_codes.tsr_status_codes_val);
+	}
 }

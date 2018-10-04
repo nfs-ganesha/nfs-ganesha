@@ -138,8 +138,11 @@ int nfs4_op_getxattr(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_getxattr_Free(nfs_resop4 *resp)
 {
 	GETXATTR4res * const res_GETXATTR4 = &resp->nfs_resop4_u.opgetxattr;
+	GETXATTR4resok *res = &res_GETXATTR4->GETXATTR4res_u.resok4;
 
-	gsh_free(res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_val);
+	if (res_GETXATTR4->status == NFS4_OK) {
+		gsh_free(res->gr_value.utf8string_val);
+	}
 }
 
 /**
@@ -312,8 +315,11 @@ int nfs4_op_listxattr(struct nfs_argop4 *op, compound_data_t *data,
 void nfs4_op_listxattr_Free(nfs_resop4 *resp)
 {
 	LISTXATTR4res *res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
+	LISTXATTR4resok *res = &res_LISTXATTR4->LISTXATTR4res_u.resok4;
 
-	gsh_free(res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_names.entries);
+	if (res_LISTXATTR4->status == NFS4_OK) {
+		gsh_free(res->lr_names.entries);
+	}
 }
 
 /**
