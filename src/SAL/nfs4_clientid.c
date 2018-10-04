@@ -1116,6 +1116,14 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 					str);
 			}
 		}
+
+		/*
+		 * Decrement reclaim_completes counter if it sent one and was
+		 * in the reclaim table.
+		 */
+		if (clientid->cid_allow_reclaim &&
+		    clientid->cid_cb.v41.cid_reclaim_complete)
+			atomic_dec_int32_t(&reclaim_completes);
 	}
 
 	if (clientid->cid_recov_tag != NULL && !make_stale) {

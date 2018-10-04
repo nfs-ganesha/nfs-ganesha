@@ -49,7 +49,7 @@ static int clid_count; /* number of active clients */
 static struct glist_head clid_list = GLIST_HEAD_INIT(clid_list);  /* clients */
 
 static struct nfs4_recovery_backend *recovery_backend;
-static int32_t reclaim_completes; /* atomic */
+int32_t reclaim_completes; /* atomic */
 
 static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state(char *release_ip);
