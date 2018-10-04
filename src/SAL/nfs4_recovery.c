@@ -44,7 +44,7 @@
 
 /* The grace_mutex protects current_grace, clid_list, and clid_count */
 static pthread_mutex_t grace_mutex = PTHREAD_MUTEX_INITIALIZER;
-static time_t current_grace; /* current grace period timeout */
+static struct timespec current_grace; /* current grace period timeout */
 static int clid_count; /* number of active clients */
 static struct glist_head clid_list = GLIST_HEAD_INIT(clid_list);  /* clients */
 
@@ -150,13 +150,10 @@ void nfs_put_grace_status(void)
 }
 
 /**
- * Lift the grace period, if current_grace has not changed since we last
- * checked it. If something has changed in the interim, then don't do
- * anything. Either someone has set a new grace period, or someone else
- * beat us to lifting this one.
+ * Lift the grace period if it's still active.
  */
 static void
-nfs_lift_grace_locked(time_t current)
+nfs_lift_grace_locked(void)
 {
 	uint32_t cur;
 
@@ -164,8 +161,7 @@ nfs_lift_grace_locked(time_t current)
 	 * Caller must hold grace_mutex. Only the thread that actually sets
 	 * the value to 0 gets to clean up the recovery db.
 	 */
-	if (nfs_in_grace() &&
-	    atomic_fetch_time_t(&current_grace) == current) {
+	if (nfs_in_grace()) {
 		nfs_end_grace();
 		__sync_synchronize();
 		/* Now change the actual status */
@@ -196,13 +192,14 @@ static void nfs4_set_enforcing(void)
  */
 void nfs_start_grace(nfs_grace_start_t *gsp)
 {
+	int ret;
 	bool was_grace;
 	uint32_t cur, old, pro;
 
 	PTHREAD_MUTEX_lock(&grace_mutex);
 
 	if (nfs_param.nfsv4_param.graceless) {
-		nfs_lift_grace_locked(atomic_fetch_time_t(&current_grace));
+		nfs_lift_grace_locked();
 		LogEvent(COMPONENT_STATE,
 			 "NFS Server skipping GRACE (Graceless is true)");
 		goto out;
@@ -224,7 +221,12 @@ void nfs_start_grace(nfs_grace_start_t *gsp)
 	 * requested and that no more references will be handed out until it
 	 * takes effect.
 	 */
-	atomic_store_time_t(&current_grace, time(NULL));
+	ret = clock_gettime(CLOCK_MONOTONIC, &current_grace);
+	if (ret != 0) {
+		LogCrit(COMPONENT_MAIN, "Failed to get timestamp");
+		assert(0);	/* if this is broken, we are toast so die */
+	}
+
 	cur = atomic_fetch_uint32_t(&grace_status);
 	do {
 		old = cur;
@@ -367,7 +369,6 @@ void nfs_try_lift_grace(void)
 {
 	bool in_grace = true;
 	int32_t rc_count = 0;
-	time_t current = atomic_fetch_time_t(&current_grace);
 	uint32_t cur, old, pro;
 
 	/* Already lifted? Just return */
@@ -378,14 +379,25 @@ void nfs_try_lift_grace(void)
 	 * If we know there are no NLM clients, then we can consider the grace
 	 * period done when all previous clients have sent a RECLAIM_COMPLETE.
 	 */
+	PTHREAD_MUTEX_lock(&grace_mutex);
 	rc_count = atomic_fetch_int32_t(&reclaim_completes);
 	if (!nfs_param.core_param.enable_NLM)
 		in_grace = (rc_count != clid_count);
 
 	/* Otherwise, wait for the timeout */
-	if (in_grace)
-		in_grace = ((current + nfs_param.nfsv4_param.grace_period) >
-					time(NULL));
+	if (in_grace) {
+		struct timespec timeout, now;
+		int ret = clock_gettime(CLOCK_MONOTONIC, &now);
+
+		if (ret != 0) {
+			LogCrit(COMPONENT_MAIN, "Failed to get timestamp");
+			assert(0);
+		}
+
+		timeout = current_grace;
+		timeout.tv_sec += nfs_param.nfsv4_param.grace_period;
+		in_grace = gsh_time_cmp(&timeout, &now) > 0;
+	}
 
 	/*
 	 * Ok, we're basically ready to lift. Ensure there are no outstanding
@@ -403,7 +415,6 @@ void nfs_try_lift_grace(void)
 	 * assume there are no external conditions and that it's always ok.
 	 */
 	if (!in_grace) {
-		PTHREAD_MUTEX_lock(&grace_mutex);
 		cur = atomic_fetch_uint32_t(&grace_status);
 		do {
 			old = cur;
@@ -426,9 +437,9 @@ void nfs_try_lift_grace(void)
 		if (!(old & GRACE_STATUS_COUNT_MASK) &&
 		    (!recovery_backend->try_lift_grace ||
 		     recovery_backend->try_lift_grace()))
-			nfs_lift_grace_locked(current);
-		PTHREAD_MUTEX_unlock(&grace_mutex);
+			nfs_lift_grace_locked();
 	}
+	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
 
 static pthread_cond_t enforcing_cond = PTHREAD_COND_INITIALIZER;
