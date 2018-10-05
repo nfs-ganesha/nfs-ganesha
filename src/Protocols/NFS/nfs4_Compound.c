@@ -47,14 +47,53 @@
 #include "gsh_lttng/nfs_rpc.h"
 #endif
 
+/**
+ * #brief Structure to map out how each compound op is managed.
+ *
+ */
 struct nfs4_op_desc {
+	/** Operation name */
 	char *name;
+	/** Function to process the operation */
 	int (*funct)(struct nfs_argop4 *,
 		     compound_data_t *,
 		     struct nfs_resop4 *);
 
+	/** Function to free the results of the operation.
+	 *
+	 * Note this function is called whether the operation succeeds or
+	 * fails. It may be called as a result of higher level operation
+	 * completion (depending on DRC handling) or it may be called as part
+	 * of NFS v4.1 slot cache management.
+	 *
+	 * Note that entries placed into the NFS v4.1 slot cache are marked so
+	 * the higher level operation completion will not release them. A deep
+	 * copy is made when the slot cache is replayed. If sa_cachethis
+	 * indicates a response will not be cached, the higher level operaiton
+	 * completion will call the free_res, HOWEVER, a shallow copy of the
+	 * SEQUENCE op and first operation responses are made. If the first
+	 * operation resulted in an error (other than NFS4_DENIED for LOCK and
+	 * LOCKT) the shallow copy preserves that error rather than replacing
+	 * it with NFS4ERR_RETRY_UNCACHED_REP. For this reason for any response
+	 * that includes dyanmically allocated data on NFS4_OK MUST check the
+	 * response status before freeing any memory since the shallow copy will
+	 * mean the cached NFS4ERR_RETRY_UNCACHED_REP response will have copied
+	 * those pointers. It should only free data if the status is NFS4_OK
+	 * (or NFS4ERR_DENIED in the case of LOCK and LOCKT). Note that
+	 * SETCLIENTID also has dunamic data on a non-NFS4_OK status, and the
+	 * free_res function for that checks, howwever, we will never see
+	 * SETCLIENTID in NFS v4.1+, or if we do, it will get an error.
+	 *
+	 * At this time, LOCK and LOCKT are the only NFS v4.1 or v4.2 operations
+	 * that have dynamic data on a non-NFS4_OK response. Should any others
+	 * be added, checks for that MUST be added to the shallow copy code
+	 * below.
+	 *
+	 */
 	void (*free_res)(nfs_resop4 *);
+	/** Default response size */
 	uint32_t resp_size;
+	/** Export permissions required flags */
 	int exp_perm_flags;
 };
 
@@ -1022,6 +1061,23 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			 */
 			*res1 = res->res_compound4.resarray.resarray_val[1];
 
+			/* Override NFS4_OK and NFS4ERR_DENIED. We MUST override
+			 * NFS4_OK since we aren't caching a full response and
+			 * we MUST override NFS4ERR_DENIED because LOCK and
+			 * LOCKT allocate data that we did not deep copy.
+			 *
+			 * If any new operations are added with dynamically
+			 * allocated data associated with a non-NFS4_OK
+			 * status are added in some future minor version, they
+			 * will likely need special handling here also.
+			 *
+			 * Note that we COULD get fancy and if we had a 2 op
+			 * compound that had an NFS4_OK status and no dynamic
+			 * data was allocated then go ahead and cache the
+			 * full response since it wouldn't take any more
+			 * memory. However, that would add a lot more special
+			 * handling here.
+			 */
 			if (res1->nfs_resop4_u.opillegal.status == NFS4_OK ||
 			    res1->nfs_resop4_u.opillegal.status ==
 							NFS4ERR_DENIED) {
