@@ -35,7 +35,7 @@ SET(fsalmem_LIB_SRCS
    mem_up.c
 )
 
-add_library(fsalmem SHARED ${fsalmem_LIB_SRCS})
+add_library(fsalmem MODULE ${fsalmem_LIB_SRCS})
 add_sanitizers(fsalmem)
 
 target_link_libraries(fsalmem
