@@ -19,6 +19,10 @@ The first argument should be a command to execute against the database.
 Any remaining arguments represent the nodeids of nodes in the cluster
 that should be acted upon.
 
+Most commands will just fail if the grace database is not present. The
+exception to this rule is the **add** command which will create the
+pool, database and namespace if they do not already exist.
+
 OPTIONS
 ===================================================================
 **--ns**
@@ -89,11 +93,28 @@ clients.
 Clear the enforcing flag for the given hosts, meaning that those hosts
 are now allowing clients to acquire new state.
 
-
 **member**
 
 Test whether the given hosts are members of the cluster. Returns an
 error if any of the hosts are not present in the grace db omap.
+
+NODEID ASSIGNMENT
+=================
+Each running ganesha daemon requires a **nodeid** string that is unique
+within the cluster. This can be any value as ganesha treats it as an opaque
+string. By default, the ganesha daemon will use the hostname of the node where
+it is running.
+
+This may not be suitable when running under certain HA clustering
+infrastructure, so it's generally recommended to manually assign nodeid values
+to the hosts in the **RADOS_KV** config block of **ganesha.conf**.
+
+GANESHA CONFIGURATION
+=====================
+The ganesha daemon will need to be configured with the RecoveryBackend
+set to **rados_cluster**. If you use a non-default pool, namespace or
+oid, nodeid then those values will need to be set accordingly in the
+**RADOS_KV** config block as well.
 
 STARTING A NEW CLUSTER
 ======================
@@ -102,37 +123,26 @@ nodes in our cluster will have nodeids ganesha-1 through ganesha-3:
 
 **ganesha-rados-grace add ganesha-1 ganesha-2 ganesha-3**
 
-Once they are added to the database, start a new grace period. Because
-cluster nodes will attempt to lift the grace period as soon as no one
-needs it, it's best to start the grace period for all nodes before
-bringing up any nodes with an initial set of hosts that will be present.
-This ensures that the grace period won't be lifted before all of the
-hosts have joined the cluster:
-
-**ganesha-rados-grace start ganesha-1 ganesha-2 ganesha-3**
-
-That will begin a new cluster-wide grace period, and add/update records for
-all three hosts to indicate that they need the grace period and are
-currently enforcing. With those records in place, the grace period can't
-be lifted until they have all ended their local recovery periods.
+Once this is done, you can start the daemons on each host and they will
+coordinate to start and lift the grace periods as-needed.
 
 ADDING NODES TO A RUNNING CLUSTER
 =================================
-After this point, new nodes can then join the cluster as needed. Simply
-use the **add** command to add the new nodes to the cluster:
+After this point, new nodes can then be added to the cluster as needed using
+the **add** command:
 
 **ganesha-rados-grace add ganesha-4**
 
-Then, start up the cluster node.
+After the node has been added, ganesha.nfsd can then be started. It will
+then request a new grace period as-needed.
 
 REMOVING A NODE FROM THE CLUSTER
-===================================================================
-To remove a node from the cluster, migrate any clients that are using it
-to other servers and then execute the remove command with the nodeids to
-be removed from the cluster:
+================================
+To remove a node from the cluster, first unmount any clients that have
+that node mounted (possibly moving them to other servers). Then execute the
+remove command with the nodeids to be removed from the cluster. For example:
 
 **ganesha-rados-grace remove ganesha-4**
 
 This will remove the ganesha-4's record from the database, and possibly lift
-the current grace period if one is active and the listed hosts were the last
-ones to need it.
+the current grace period if one is active and it was the last one to need it.
