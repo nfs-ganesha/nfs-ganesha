@@ -141,11 +141,11 @@ int main(int argc, char *argv[])
 	int dsc;
 	int rc;
 	int pidfile;
-	char *log_path;
+	char *log_path = NULL;
 	char *exec_name = "nfs-ganesha";
 	int debug_level = -1;
 	int detach_flag = true;
-	bool dump_trace;
+	bool dump_trace = false;
 #ifndef HAVE_DAEMON
 	int dev_null_fd = 0;
 	pid_t son_pid;
