@@ -514,7 +514,7 @@ static fattr_xdr_result encode_change(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result decode_change(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint64_t change;
+	uint64_t change = 0;
 
 	if (!xdr_u_int64_t(xdr, &change))
 		return FATTR_XDR_FAILED;

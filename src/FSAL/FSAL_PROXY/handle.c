@@ -1364,7 +1364,7 @@ static fsal_status_t pxy_lookup_impl(struct fsal_obj_handle *parent,
 	int rc;
 	uint32_t opcnt = 0;
 	GETATTR4resok *atok;
-	GETATTR4resok *atok_per_file_system_attr;
+	GETATTR4resok *atok_per_file_system_attr = NULL;
 	GETFH4resok *fhok;
 	sessionid4 sid;
 	/* SEQUENCE PUTROOTFH/PUTFH LOOKUP GETFH GETATTR (GETATTR) */
