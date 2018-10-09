@@ -73,6 +73,7 @@ struct glusterfs_fsal_module GlusterFS = {
 			.pnfs_mds = false,
 			.pnfs_ds = true,
 			.link_supports_permission_checks = true,
+			.delegations = FSAL_OPTION_FILE_DELEGATIONS,
 		}
 	}
 };
