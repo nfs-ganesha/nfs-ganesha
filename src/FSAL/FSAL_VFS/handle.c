@@ -160,6 +160,52 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	return NULL;
 }
 
+static fsal_status_t populate_fs_locations(struct vfs_fsal_obj_handle *hdl,
+					   struct attrlist *attrs_out)
+{
+	fsal_status_t status;
+	uint64 hash;
+	attrmask_t old_request_mask = attrs_out->request_mask;
+
+	attrs_out->request_mask = ATTR4_FS_LOCATIONS;
+	status = hdl->sub_ops->getattrs(hdl, -1 /* no fd here */,
+			attrs_out->request_mask,
+			attrs_out);
+	if (FSAL_IS_ERROR(status)) {
+		goto out;
+	}
+
+	if (FSAL_TEST_MASK(attrs_out->valid_mask, ATTR4_FS_LOCATIONS)) {
+		/* on a referral the filesystem id has to change
+		 * it get's calculated via a hash from the referral
+		 * and stored in the fsid object of the fsal_obj_handle
+		 */
+
+		fsal_fs_locations_t *fsloc = attrs_out->fs_locations;
+		int loclen = fsloc->server[0].utf8string_len +
+			strlen(fsloc->rootpath) + 2;
+
+		char *location = gsh_calloc(1, loclen);
+
+		snprintf(location, loclen, "%.*s:%s",
+				fsloc->server[0].utf8string_len,
+				fsloc->server[0].utf8string_val,
+				fsloc->rootpath);
+		hash = CityHash64(location, loclen);
+		hdl->obj_handle.fsid.major = hash;
+		hdl->obj_handle.fsid.minor = hash;
+		LogDebug(COMPONENT_NFS_V4,
+				"fsid.major = %"PRIu64", fsid.minor = %"PRIu64,
+				hdl->obj_handle.fsid.major,
+				hdl->obj_handle.fsid.minor);
+		gsh_free(location);
+	}
+
+out:
+	attrs_out->request_mask |= old_request_mask;
+	return status;
+}
+
 static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 				    int dirfd, const char *path,
 				    struct fsal_obj_handle **handle,
@@ -281,44 +327,13 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 	    hdl->obj_handle.fs->private_data != NULL &&
 	    hdl->sub_ops->getattrs) {
 
-		uint64 hash;
-		attrmask_t old_request_mask = attrs_out->request_mask;
-
-		attrs_out->request_mask = ATTR4_FS_LOCATIONS;
-		status = hdl->sub_ops->getattrs(hdl, -1 /* no fd here */,
-						attrs_out->request_mask,
-						attrs_out);
+		status = populate_fs_locations(hdl, attrs_out);
 		if (FSAL_IS_ERROR(status)) {
+			LogEvent(COMPONENT_FSAL, "Could not get the referral "
+				 "locations the path: %d, %s", dirfd, path);
+			gsh_free(hdl);
 			return status;
 		}
-
-		if (FSAL_TEST_MASK(attrs_out->valid_mask, ATTR4_FS_LOCATIONS)) {
-			/* on a referral the filesystem id has to change
-			 * it get's calculated via a hash from the referral
-			 * and stored in the fsid object of the fsal_obj_handle
-			 */
-
-			fsal_fs_locations_t *fsloc = attrs_out->fs_locations;
-			int loclen = fsloc->server[0].utf8string_len +
-				     strlen(fsloc->rootpath) + 2;
-
-			char *location = gsh_calloc(1, loclen);
-
-			snprintf(location, loclen, "%.*s:%s",
-				 fsloc->server[0].utf8string_len,
-				 fsloc->server[0].utf8string_val,
-				 fsloc->rootpath);
-			hash = CityHash64(location, loclen);
-			hdl->obj_handle.fsid.major = hash;
-			hdl->obj_handle.fsid.minor = hash;
-			LogDebug(COMPONENT_NFS_V4,
-				 "fsid.major = %"PRIu64", fsid.minor = %"PRIu64,
-				 hdl->obj_handle.fsid.major,
-				 hdl->obj_handle.fsid.minor);
-			gsh_free(location);
-		}
-
-		attrs_out->request_mask |= old_request_mask;
 	}
 
 	*handle = &hdl->obj_handle;
@@ -1786,6 +1801,26 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(&stat, attrs_out);
+	}
+
+	/* if it is a directory and the sticky bit is set
+	 * let's look for referral information
+	 */
+
+	if (attrs_out != NULL &&
+	    hdl->obj_handle.obj_ops->is_referral(&hdl->obj_handle, attrs_out,
+		false) &&
+	    hdl->obj_handle.fs->private_data != NULL &&
+	    hdl->sub_ops->getattrs) {
+
+		fsal_status_t status;
+
+		status = populate_fs_locations(hdl, attrs_out);
+		if (FSAL_IS_ERROR(status)) {
+			LogEvent(COMPONENT_FSAL, "Could not get the referral "
+				 "locations for the exported path: %s", path);
+			return status;
+		}
 	}
 
 	*handle = &hdl->obj_handle;
