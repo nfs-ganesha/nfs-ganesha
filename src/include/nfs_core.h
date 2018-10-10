@@ -102,7 +102,6 @@ typedef enum request_type {
 
 typedef struct request_data {
 	union request_content {
-		rpc_call_t call;
 		nfs_request_t req;
 #ifdef _USE_9P
 		struct _9p_request_data _9p;

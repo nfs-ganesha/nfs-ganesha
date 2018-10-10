@@ -894,14 +894,13 @@ static inline void free_resop(nfs_cb_resop4 *op)
  * @return The newly allocated call or NULL.
  */
 
-rpc_call_t *alloc_rpc_call(void)
+struct _rpc_call *alloc_rpc_call(void)
 {
-	request_data_t *reqdata = pool_alloc(nfs_request_pool);
+	struct _rpc_call *call = gsh_calloc(1, sizeof(struct _rpc_call));
 
 	(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
 
-	reqdata->rtype = NFS_CALL;
-	return &reqdata->r_u.call;
+	return call;
 }
 
 /**
@@ -924,10 +923,9 @@ void free_rpc_call(rpc_call_t *call)
  */
 static void nfs_rpc_call_free(struct clnt_req *cc, size_t unused)
 {
-	rpc_call_t *call = container_of(cc, rpc_call_t, call_req);
-	request_data_t *reqdata = container_of(call, request_data_t, r_u.call);
+	rpc_call_t *call = container_of(cc, struct _rpc_call, call_req);
 
-	pool_free(nfs_request_pool, reqdata);
+	gsh_free(call);
 	(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 }
 
