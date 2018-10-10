@@ -262,7 +262,7 @@ option(COVERAGE "add flag to generate coverage data at runtime" OFF)
 option(ENFORCE_GCC "enforce gcc as a the C compiler used for the project" OFF)
 
 # Define CPACK component (to deal with sub packages)
-set(CPACK_COMPONENTS_ALL daemon fsal headers )
+set(CPACK_COMPONENTS_ALL daemon fsal headers tools)
 set(CPACK_COMPONENT_DAEMON_DISPLAY_NAME "NFS-Ganesha daemon")
 if (USE_SYSTEM_NTIRPC)
   # Don't include libntirpc in the tarball
