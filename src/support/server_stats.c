@@ -317,7 +317,6 @@ struct proto_op {
 	uint64_t dups;		/* detected dup requests */
 	struct op_latency latency;	/* either executed ops latency */
 	struct op_latency dup_latency;	/* or latency (runtime) to replay */
-	struct op_latency queue_latency;	/* queue wait time */
 };
 
 /* basic I/O transfer counter
@@ -569,11 +568,9 @@ static struct _9p_stats *get_9p(struct gsh_stats *stats, pthread_rwlock_t *lock)
  *
  * @param op           [IN] protocol op stats struct
  * @param request_time [IN] time consumed by request
- * @param qwait_time   [IN] time sitting on queue
  * @param dup          [IN] detected this was a dup request
  */
-void record_latency(struct proto_op *op, nsecs_elapsed_t request_time,
-		    nsecs_elapsed_t qwait_time, bool dup)
+void record_latency(struct proto_op *op, nsecs_elapsed_t request_time, bool dup)
 {
 
 	/* dup latency is counted separately */
@@ -597,12 +594,6 @@ void record_latency(struct proto_op *op, nsecs_elapsed_t request_time,
 			(void)atomic_store_uint64_t(&op->dup_latency.max,
 						    request_time);
 	}
-	/* record how long it was laying around waiting ... */
-	(void)atomic_add_uint64_t(&op->queue_latency.latency, qwait_time);
-	if (op->queue_latency.min == 0L || op->queue_latency.min > qwait_time)
-		(void)atomic_store_uint64_t(&op->queue_latency.min, qwait_time);
-	if (op->queue_latency.max == 0L || op->queue_latency.max < qwait_time)
-		(void)atomic_store_uint64_t(&op->queue_latency.max, qwait_time);
 }
 
 /**
@@ -684,13 +675,12 @@ static void record_io_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
  *
  * @param op           [IN] pointer to specific protocol struct
  * @param request_time [IN] wallclock time (nsecs) for this op
- * @param qwait_time   [IN] wallclock time (nsecs) waiting for service
  * @param success      [IN] protocol error code == OK
  * @param dup          [IN] true if op was detected duplicate
  */
 
 static void record_op(struct proto_op *op, nsecs_elapsed_t request_time,
-		      nsecs_elapsed_t qwait_time, bool success, bool dup)
+		      bool success, bool dup)
 {
 	/* count the op */
 	(void)atomic_inc_uint64_t(&op->total);
@@ -699,7 +689,7 @@ static void record_op(struct proto_op *op, nsecs_elapsed_t request_time,
 		(void)atomic_inc_uint64_t(&op->errors);
 	if (unlikely(dup))
 		(void)atomic_inc_uint64_t(&op->dups);
-	record_latency(op, request_time, qwait_time, dup);
+	record_latency(op, request_time, dup);
 }
 
 #ifdef USE_DBUS
@@ -721,9 +711,6 @@ static void reset_op(struct proto_op *op)
 	(void)atomic_store_uint64_t(&op->dup_latency.latency, 0);
 	(void)atomic_store_uint64_t(&op->dup_latency.min, 0);
 	(void)atomic_store_uint64_t(&op->dup_latency.max, 0);
-	(void)atomic_store_uint64_t(&op->queue_latency.latency, 0);
-	(void)atomic_store_uint64_t(&op->queue_latency.min, 0);
-	(void)atomic_store_uint64_t(&op->queue_latency.max, 0);
 }
 
 /**
@@ -916,7 +903,7 @@ static void record_layout(struct nfsv41_stats *sp, int proto_op, int status)
 static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			    int proto_op, int minorversion,
 			    nsecs_elapsed_t request_time,
-			    nsecs_elapsed_t qwait_time, int status)
+			    int status)
 {
 	if (minorversion == 0) {
 		struct nfsv40_stats *sp = get_v40(gsh_st, lock);
@@ -924,15 +911,13 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		/* record stuff */
 		switch (nfsv40_optype[proto_op]) {
 		case READ_OP:
-			record_latency(&sp->read.cmd, request_time, qwait_time,
-				       false);
+			record_latency(&sp->read.cmd, request_time, false);
 			break;
 		case WRITE_OP:
-			record_latency(&sp->write.cmd, request_time, qwait_time,
-				       false);
+			record_latency(&sp->write.cmd, request_time, false);
 			break;
 		default:
-			record_op(&sp->compounds, request_time, qwait_time,
+			record_op(&sp->compounds, request_time,
 				  status == NFS4_OK, false);
 		}
 	} else if (minorversion == 1) {
@@ -941,18 +926,16 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		/* record stuff */
 		switch (nfsv41_optype[proto_op]) {
 		case READ_OP:
-			record_latency(&sp->read.cmd, request_time, qwait_time,
-				       false);
+			record_latency(&sp->read.cmd, request_time, false);
 			break;
 		case WRITE_OP:
-			record_latency(&sp->write.cmd, request_time, qwait_time,
-				       false);
+			record_latency(&sp->write.cmd, request_time, false);
 			break;
 		case LAYOUT_OP:
 			record_layout(sp, proto_op, status);
 			break;
 		default:
-			record_op(&sp->compounds, request_time, qwait_time,
+			record_op(&sp->compounds, request_time,
 				  status == NFS4_OK, false);
 		}
 	} else if (minorversion == 2) {
@@ -961,18 +944,16 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		/* record stuff */
 		switch (nfsv42_optype[proto_op]) {
 		case READ_OP:
-			record_latency(&sp->read.cmd, request_time, qwait_time,
-				       false);
+			record_latency(&sp->read.cmd, request_time, false);
 			break;
 		case WRITE_OP:
-			record_latency(&sp->write.cmd, request_time, qwait_time,
-				       false);
+			record_latency(&sp->write.cmd, request_time, false);
 			break;
 		case LAYOUT_OP:
 			record_layout(sp, proto_op, status);
 			break;
 		default:
-			record_op(&sp->compounds, request_time, qwait_time,
+			record_op(&sp->compounds, request_time,
 				  status == NFS4_OK, false);
 		}
 	}
@@ -986,29 +967,26 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 static void record_compound(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			    int minorversion, uint64_t num_ops,
 			    nsecs_elapsed_t request_time,
-			    nsecs_elapsed_t qwait_time, bool success)
+			    bool success)
 {
 	if (minorversion == 0) {
 
 		struct nfsv40_stats *sp = get_v40(gsh_st, lock);
 
 		/* record stuff */
-		record_op(&sp->compounds, request_time, qwait_time, success,
-			  false);
+		record_op(&sp->compounds, request_time, success, false);
 		(void)atomic_add_uint64_t(&sp->ops_per_compound, num_ops);
 	} else if (minorversion == 1) {
 		struct nfsv41_stats *sp = get_v41(gsh_st, lock);
 
 		/* record stuff */
-		record_op(&sp->compounds, request_time, qwait_time, success,
-			  false);
+		record_op(&sp->compounds, request_time, success, false);
 		(void)atomic_add_uint64_t(&sp->ops_per_compound, num_ops);
 	} else if (minorversion == 2) {
 		struct nfsv41_stats *sp = get_v42(gsh_st, lock);
 
 		/* record stuff */
-		record_op(&sp->compounds, request_time, qwait_time, success,
-			  false);
+		record_op(&sp->compounds, request_time, success, false);
 		(void)atomic_add_uint64_t(&sp->ops_per_compound, num_ops);
 	}
 
@@ -1025,14 +1003,12 @@ static void record_compound(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
  * @param reqdata      [IN] info about the proto request
  * @param success      [IN] the op returned OK (or error)
  * @param request_time [IN] time consumed by request
- * @param qwait_time   [IN] time sitting on queue
  * @param dup          [IN] detected this was a dup request
  */
 
 static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			 request_data_t *reqdata, nsecs_elapsed_t request_time,
-			 nsecs_elapsed_t qwait_time, bool success, bool dup,
-			 bool global)
+			 bool success, bool dup, bool global)
 {
 	struct svc_req *req = &reqdata->r_u.req.svc;
 	uint32_t proto_op = req->rq_msg.cb_proc;
@@ -1047,19 +1023,19 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			/* record stuff */
 			if (global)
 				record_op(&global_st.nfsv3.cmds, request_time,
-					  qwait_time, success, dup);
+					  success, dup);
 			switch (nfsv3_optype[proto_op]) {
 			case READ_OP:
 				record_latency(&sp->read.cmd, request_time,
-					       qwait_time, dup);
+					       dup);
 				break;
 			case WRITE_OP:
 				record_latency(&sp->write.cmd, request_time,
-					       qwait_time, dup);
+					       dup);
 				break;
 			default:
-				record_op(&sp->cmds, request_time, qwait_time,
-					  success, dup);
+				record_op(&sp->cmds, request_time, success,
+					  dup);
 			}
 		} else {
 			/* We don't do V4 here and V2 is toast */
@@ -1070,39 +1046,35 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 
 		if (global && req->rq_msg.cb_vers == MOUNT_V1)
 			record_op(&global_st.mnt.v1_ops, request_time,
-				  qwait_time, success, dup);
+				  success, dup);
 		else if (global)
 			record_op(&global_st.mnt.v3_ops, request_time,
-				  qwait_time, success, dup);
+				  success, dup);
 
 		/* record stuff */
 		if (req->rq_msg.cb_vers == MOUNT_V1)
-			record_op(&sp->v1_ops, request_time, qwait_time,
-				  success, dup);
+			record_op(&sp->v1_ops, request_time, success, dup);
 		else
-			record_op(&sp->v3_ops, request_time, qwait_time,
-				  success, dup);
+			record_op(&sp->v3_ops, request_time, success, dup);
 	} else if (program_op == NFS_program[P_NLM]) {
 		struct nlmv4_stats *sp = get_nlm4(gsh_st, lock);
 
 		if (global)
 			record_op(&global_st.nlm4.ops, request_time,
-				  qwait_time, success, dup);
+				  success, dup);
 		/* record stuff */
-		record_op(&sp->ops, request_time, qwait_time, success, dup);
+		record_op(&sp->ops, request_time, success, dup);
 	} else if (program_op == NFS_program[P_RQUOTA]) {
 		struct rquota_stats *sp = get_rquota(gsh_st, lock);
 
 		if (global)
 			record_op(&global_st.rquota.ops, request_time,
-				  qwait_time, success, dup);
+				  success, dup);
 		/* record stuff */
 		if (req->rq_msg.cb_vers == RQUOTAVERS)
-			record_op(&sp->ops, request_time, qwait_time, success,
-				  dup);
+			record_op(&sp->ops, request_time, success, dup);
 		else
-			record_op(&sp->ext_ops, request_time, qwait_time,
-				  success, dup);
+			record_op(&sp->ext_ops, request_time, success, dup);
 	}
 }
 
@@ -1170,7 +1142,7 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 		if (sp->opcodes[opc] == NULL)
 			sp->opcodes[opc] =
 				gsh_calloc(1, sizeof(struct proto_op));
-		record_op(sp->opcodes[opc], 0, 0, true, false);
+		record_op(sp->opcodes[opc], 0, true, false);
 	}
 
 	if (op_ctx->ctx_export) {
@@ -1182,18 +1154,16 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 		if (sp->opcodes[opc] == NULL)
 			sp->opcodes[opc] =
 				gsh_calloc(1, sizeof(struct proto_op));
-		record_op(sp->opcodes[opc], 0, 0, true, false);
+		record_op(sp->opcodes[opc], 0, true, false);
 	}
 }
 #endif
 
 static void record_v3_full_stats(struct svc_req *req,
 			       nsecs_elapsed_t request_time,
-			       nsecs_elapsed_t qwait_time,
 			       bool success, bool dup);
 static void record_v4_full_stats(uint32_t proc,
 			       nsecs_elapsed_t request_time,
-			       nsecs_elapsed_t qwait_time,
 			       bool success);
 
 /**
@@ -1230,7 +1200,7 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 
 	if (nfs_param.core_param.enable_FULLV3STATS)
 		record_v3_full_stats(req, stop_time - op_ctx->start_time,
-			    op_ctx->queue_wait, rc == NFS_REQ_OK, dup);
+			    rc == NFS_REQ_OK, dup);
 
 	if (client != NULL) {
 		struct server_stats *server_st;
@@ -1238,7 +1208,6 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 		server_st = container_of(client, struct server_stats, client);
 		record_stats(&server_st->st, &client->lock, reqdata,
 			     stop_time - op_ctx->start_time,
-			     op_ctx->queue_wait,
 			     rc == NFS_REQ_OK, dup, true);
 		(void)atomic_store_uint64_t(&client->last_update, stop_time);
 	}
@@ -1250,7 +1219,7 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 			    export);
 		record_stats(&exp_st->st, &op_ctx->ctx_export->lock, reqdata,
 			     stop_time - op_ctx->start_time,
-			     op_ctx->queue_wait, rc == NFS_REQ_OK, dup, false);
+			     rc == NFS_REQ_OK, dup, false);
 		(void)atomic_store_uint64_t(&op_ctx->ctx_export->last_update,
 					    stop_time);
 	}
@@ -1282,7 +1251,7 @@ void server_stats_nfsv4_op_done(int proto_op,
 
 	if (nfs_param.core_param.enable_FULLV4STATS)
 		record_v4_full_stats(proto_op, stop_time - op_ctx->start_time,
-			    op_ctx->queue_wait, status == NFS4_OK);
+			    status == NFS4_OK);
 
 	if (client != NULL) {
 		struct server_stats *server_st;
@@ -1290,19 +1259,19 @@ void server_stats_nfsv4_op_done(int proto_op,
 		server_st = container_of(client, struct server_stats, client);
 		record_nfsv4_op(&server_st->st, &client->lock, proto_op,
 				op_ctx->nfs_minorvers, stop_time - start_time,
-				op_ctx->queue_wait, status);
+				status);
 		(void)atomic_store_uint64_t(&client->last_update, stop_time);
 	}
 
 	if (op_ctx->nfs_minorvers == 0)
 		record_op(&global_st.nfsv40.compounds, stop_time - start_time,
-			  op_ctx->queue_wait, status == NFS4_OK, false);
+			  status == NFS4_OK, false);
 	else if (op_ctx->nfs_minorvers == 1)
 		record_op(&global_st.nfsv41.compounds, stop_time - start_time,
-			  op_ctx->queue_wait, status == NFS4_OK, false);
+			  status == NFS4_OK, false);
 	else if (op_ctx->nfs_minorvers == 2)
 		record_op(&global_st.nfsv42.compounds, stop_time - start_time,
-			  op_ctx->queue_wait, status == NFS4_OK, false);
+			  status == NFS4_OK, false);
 
 	if (op_ctx->ctx_export != NULL) {
 		struct export_stats *exp_st;
@@ -1313,7 +1282,7 @@ void server_stats_nfsv4_op_done(int proto_op,
 		record_nfsv4_op(&exp_st->st, &op_ctx->ctx_export->lock,
 				proto_op,
 				op_ctx->nfs_minorvers, stop_time - start_time,
-				op_ctx->queue_wait, status);
+				status);
 		(void)atomic_store_uint64_t(&op_ctx->ctx_export->last_update,
 					    stop_time);
 	}
@@ -1342,7 +1311,7 @@ void server_stats_compound_done(int num_ops, int status)
 		record_compound(&server_st->st, &client->lock,
 				op_ctx->nfs_minorvers,
 				num_ops, stop_time - op_ctx->start_time,
-				op_ctx->queue_wait, status == NFS4_OK);
+				status == NFS4_OK);
 		(void)atomic_store_uint64_t(&client->last_update, stop_time);
 	}
 	if (op_ctx->ctx_export != NULL) {
@@ -1354,7 +1323,7 @@ void server_stats_compound_done(int num_ops, int status)
 		record_compound(&exp_st->st, &op_ctx->ctx_export->lock,
 				op_ctx->nfs_minorvers, num_ops,
 				stop_time - op_ctx->start_time,
-				op_ctx->queue_wait, status == NFS4_OK);
+				status == NFS4_OK);
 		(void)atomic_store_uint64_t(&op_ctx->ctx_export->last_update,
 					    stop_time);
 	}
@@ -1561,6 +1530,7 @@ static void server_dbus_op_stats(struct proto_op *op, DBusMessageIter *iter)
 static void server_dbus_iostats(struct xfer_op *iop, DBusMessageIter *iter)
 {
 	DBusMessageIter struct_iter;
+	uint64_t zero = 0;
 
 	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
 					 &struct_iter);
@@ -1575,7 +1545,7 @@ static void server_dbus_iostats(struct xfer_op *iop, DBusMessageIter *iter)
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 				       &iop->cmd.latency.latency);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-				       &iop->cmd.queue_latency.latency);
+				       &zero);
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
@@ -2131,16 +2101,11 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 			res = (double) v3_full_stats[op].latency.max * 0.000001;
 			dbus_message_iter_append_basic(&array_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			res = (double) v3_full_stats[op].queue_latency.latency /
-					v3_full_stats[op].total * 0.000001;
+			res = 0.0;
 			dbus_message_iter_append_basic(&array_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			res = (double) v3_full_stats[op].queue_latency.min *
-					0.000001;
 			dbus_message_iter_append_basic(&array_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			res = (double) v3_full_stats[op].queue_latency.max *
-					0.000001;
 			dbus_message_iter_append_basic(&array_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			op_counter += v3_full_stats[op].total;
@@ -2210,16 +2175,11 @@ void server_dbus_v4_full_stats(DBusMessageIter *iter)
 			res = (double) v4_full_stats[op].latency.max * 0.000001;
 			dbus_message_iter_append_basic(&array_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			res = (double) v4_full_stats[op].queue_latency.latency /
-					v4_full_stats[op].total * 0.000001;
+			res = 0.0;
 			dbus_message_iter_append_basic(&array_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			res = (double) v4_full_stats[op].queue_latency.min *
-					0.000001;
 			dbus_message_iter_append_basic(&array_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			res = (double) v4_full_stats[op].queue_latency.max *
-					0.000001;
 			dbus_message_iter_append_basic(&array_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			op_counter += v4_full_stats[op].total;
@@ -2309,7 +2269,6 @@ void server_stats_free(struct gsh_stats *statsp)
 
 static void record_v3_full_stats(struct svc_req *req,
 			       nsecs_elapsed_t request_time,
-			       nsecs_elapsed_t qwait_time,
 			       bool success, bool dup)
 {
 	uint32_t prog = req->rq_msg.cb_prog;
@@ -2323,8 +2282,7 @@ static void record_v3_full_stats(struct svc_req *req,
 				proc);
 			return;
 		}
-		record_op(&v3_full_stats[proc], request_time, qwait_time,
-			  success, dup);
+		record_op(&v3_full_stats[proc], request_time, success, dup);
 	}
 }
 
@@ -2339,15 +2297,11 @@ void reset_v3_full_stats(void)
 		v3_full_stats[op].latency.latency = 0;
 		v3_full_stats[op].latency.min = 0;
 		v3_full_stats[op].latency.max = 0;
-		v3_full_stats[op].queue_latency.latency = 0;
-		v3_full_stats[op].queue_latency.min = 0;
-		v3_full_stats[op].queue_latency.max = 0;
 	}
 }
 
 static void record_v4_full_stats(uint32_t proc,
 			       nsecs_elapsed_t request_time,
-			       nsecs_elapsed_t qwait_time,
 			       bool success)
 {
 	if (proc > NFS_V42_NB_OPERATION) {
@@ -2356,8 +2310,7 @@ static void record_v4_full_stats(uint32_t proc,
 			proc);
 		return;
 	}
-	record_op(&v4_full_stats[proc], request_time, qwait_time,
-			  success, false);
+	record_op(&v4_full_stats[proc], request_time, success, false);
 }
 
 void reset_v4_full_stats(void)
@@ -2371,9 +2324,6 @@ void reset_v4_full_stats(void)
 		v4_full_stats[op].latency.latency = 0;
 		v4_full_stats[op].latency.min = 0;
 		v4_full_stats[op].latency.max = 0;
-		v4_full_stats[op].queue_latency.latency = 0;
-		v4_full_stats[op].queue_latency.min = 0;
-		v4_full_stats[op].queue_latency.max = 0;
 	}
 }
 

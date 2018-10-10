@@ -411,7 +411,6 @@ struct req_op_context {
 	struct fsal_export *fsal_export;	/*< current fsal export */
 	struct export_perms *export_perms;	/*< Effective export perms */
 	nsecs_elapsed_t start_time;	/*< start time of this op/request */
-	nsecs_elapsed_t queue_wait;	/*< time in wait queue */
 	void *fsal_private;		/*< private for FSAL use */
 	struct fsal_module *fsal_module;	/*< current fsal module */
 	struct fsal_pnfs_ds *fsal_pnfs_ds;	/*< current pNFS DS */

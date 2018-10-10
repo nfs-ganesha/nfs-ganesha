@@ -797,9 +797,6 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 	 */
 	now(&timer_start);
 	op_ctx->start_time = timespec_diff(&nfs_ServerBootTime, &timer_start);
-	op_ctx->queue_wait =
-	    op_ctx->start_time - timespec_diff(&nfs_ServerBootTime,
-					       &reqdata->time_queued);
 
 	/* Initialized user_credentials */
 	init_credentials();
