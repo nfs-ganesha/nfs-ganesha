@@ -406,6 +406,7 @@ struct _9p_rdma_priv {
 #endif
 
 struct _9p_request_data {
+	struct glist_head req_q;	/* chaining of pending requests */
 	char *_9pmsg;
 	struct _9p_conn *pconn;
 #ifdef _USE_9P_RDMA

@@ -47,7 +47,6 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
-#include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "server_stats.h"
 #include "9p.h"
@@ -193,22 +192,21 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p)
 
 void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *data, void *arg)
 {
-	request_data_t *req = NULL;
+	struct _9p_request_data *req = NULL;
 	u16 tag = 0;
 	char *_9pmsg = NULL;
 
 	(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
-	req = pool_alloc(nfs_request_pool);
+	req = gsh_calloc(1, sizeof(struct _9p_request_data));
 
-	req->rtype = _9P_REQUEST;
-	req->r_u._9p._9pmsg = _9pmsg;
-	req->r_u._9p.pconn = _9p_rdma_priv_of(trans)->pconn;
-	req->r_u._9p.data = data;
+	req->_9pmsg = _9pmsg;
+	req->pconn = _9p_rdma_priv_of(trans)->pconn;
+	req->data = data;
 
 	/* Add this request to the request list, should it be flushed later. */
 	_9pmsg = data->data;
 	tag = *(u16 *) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
-	_9p_AddFlushHook(&req->r_u._9p, tag, req->r_u._9p.pconn->sequence++);
+	_9p_AddFlushHook(req, tag, req->pconn->sequence++);
 
 	DispatchWork9P(req);
 	server_stats_transport_done(_9p_rdma_priv_of(trans)->pconn->client,

@@ -24,17 +24,17 @@
  */
 
 /**
- * @file nfs_req_queue.h
+ * @file 9p_req_queue.h
  * @author Matt Benjamin <matt@linuxbox.com>
- * @brief NFS request queue package
+ * @brief 9P request queue package
  *
  * This module defines an infrastructure for classification and
  * dispatch of incoming protocol requests using a forward queueing
  * model, with priority and isolation partitions.
  */
 
-#ifndef NFS_REQ_QUEUE_H
-#define NFS_REQ_QUEUE_H
+#ifndef _9P_REQ_QUEUE_H
+#define _9P_REQ_QUEUE_H
 
 #include "gsh_list.h"
 #include "gsh_wait_queue.h"
@@ -65,10 +65,10 @@ struct req_q_set {
 	struct req_q_pair qset[N_REQ_QUEUES];
 };
 
-struct nfs_req_st {
+struct _9p_req_st {
 	struct {
 		uint32_t ctr;
-		struct req_q_set nfs_request_q;
+		struct req_q_set _9p_request_q;
 		uint64_t size;
 		pthread_spinlock_t sp;
 		struct glist_head wait_list;
@@ -77,7 +77,7 @@ struct nfs_req_st {
 	GSH_CACHE_PAD(1);
 };
 
-static inline void nfs_rpc_q_init(struct req_q *q)
+static inline void _9p_rpc_q_init(struct req_q *q)
 {
 	glist_init(&q->q);
 	pthread_spin_init(&q->sp, PTHREAD_PROCESS_PRIVATE);
@@ -85,9 +85,9 @@ static inline void nfs_rpc_q_init(struct req_q *q)
 	q->waiters = 0;
 }
 
-static inline void nfs_rpc_queue_awaken(void *arg)
+static inline void _9p_queue_awaken(void *arg)
 {
-	struct nfs_req_st *st = arg;
+	struct _9p_req_st *st = arg;
 	struct glist_head *g = NULL;
 	struct glist_head *n = NULL;
 
@@ -101,4 +101,4 @@ static inline void nfs_rpc_queue_awaken(void *arg)
 	pthread_spin_unlock(&st->reqs.sp);
 }
 
-#endif				/* NFS_REQ_QUEUE_H */
+#endif				/* _9P_REQ_QUEUE_H */
