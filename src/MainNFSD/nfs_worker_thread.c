@@ -666,14 +666,14 @@ const nfs_function_desc_t rquota2_func_desc[] = {
  * @param[in,out] reqdata	NFS request
  *
  */
-static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
+static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 {
 	const char *client_ip = "<unknown client>";
 	const char *progname = "unknown";
-	const nfs_function_desc_t *reqdesc = reqdata->r_u.req.funcdesc;
-	nfs_arg_t *arg_nfs = &reqdata->r_u.req.arg_nfs;
-	SVCXPRT *xprt = reqdata->r_u.req.svc.rq_xprt;
-	XDR *xdrs = reqdata->r_u.req.svc.rq_xdrs;
+	const nfs_function_desc_t *reqdesc = reqdata->funcdesc;
+	nfs_arg_t *arg_nfs = &reqdata->arg_nfs;
+	SVCXPRT *xprt = reqdata->svc.rq_xprt;
+	XDR *xdrs = reqdata->svc.rq_xdrs;
 	nfs_res_t *res_nfs;
 	struct export_perms export_perms;
 	struct user_cred user_credentials;
@@ -695,8 +695,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 #if defined(HAVE_BLKIN)
 	BLKIN_TIMESTAMP(
-		&reqdata->r_u.req.svc.bl_trace,
-		&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
+		&reqdata->svc.bl_trace,
+		&reqdata->svc.rq_xprt->blkin.endp,
 		"nfs_rpc_process_request-start");
 #endif
 
@@ -706,10 +706,10 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		     ", proc=%" PRIu32
 		     ", xid=%" PRIu32
 		     ", SVCXPRT=%p, fd=%d",
-		     reqdata->r_u.req.svc.rq_msg.cb_prog,
-		     reqdata->r_u.req.svc.rq_msg.cb_vers,
-		     reqdata->r_u.req.svc.rq_msg.cb_proc,
-		     reqdata->r_u.req.svc.rq_msg.rm_xid,
+		     reqdata->svc.rq_msg.cb_prog,
+		     reqdata->svc.rq_msg.cb_vers,
+		     reqdata->svc.rq_msg.cb_proc,
+		     reqdata->svc.rq_msg.rm_xid,
 		     xprt, xprt->xp_fd);
 
 	/* If authentication is AUTH_NONE or AUTH_UNIX, then the value of
@@ -721,17 +721,17 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 	 * GSSAPI. It should not be processed by the worker and SVC_STAT
 	 * should be returned to the dispatcher.
 	 */
-	auth_rc = svc_auth_authenticate(&reqdata->r_u.req.svc, &no_dispatch);
+	auth_rc = svc_auth_authenticate(&reqdata->svc, &no_dispatch);
 	if (auth_rc != AUTH_OK) {
 		LogInfo(COMPONENT_DISPATCH,
 			"Could not authenticate request... rejecting with AUTH_STAT=%s",
 			auth_stat2str(auth_rc));
-		return svcerr_auth(&reqdata->r_u.req.svc, auth_rc);
+		return svcerr_auth(&reqdata->svc, auth_rc);
 #ifdef _HAVE_GSSAPI
-	} else if (reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_verf.oa_flavor
+	} else if (reqdata->svc.rq_msg.RPCM_ack.ar_verf.oa_flavor
 		   == RPCSEC_GSS) {
 		struct rpc_gss_cred *gc = (struct rpc_gss_cred *)
-			reqdata->r_u.req.svc.rq_msg.rq_cred_body;
+			reqdata->svc.rq_msg.rq_cred_body;
 
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "RPCSEC_GSS no_dispatch=%d gc->gc_proc=(%"
@@ -751,21 +751,21 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		     xprt, xprt->xp_fd);
 
 	memset(arg_nfs, 0, sizeof(nfs_arg_t));
-	reqdata->r_u.req.svc.rq_msg.rm_xdr.where = arg_nfs;
-	reqdata->r_u.req.svc.rq_msg.rm_xdr.proc = reqdesc->xdr_decode_func;
-	xdrs->x_public = &reqdata->r_u.req.lookahead;
+	reqdata->svc.rq_msg.rm_xdr.where = arg_nfs;
+	reqdata->svc.rq_msg.rm_xdr.proc = reqdesc->xdr_decode_func;
+	xdrs->x_public = &reqdata->lookahead;
 
-	if (!SVCAUTH_CHECKSUM(&reqdata->r_u.req.svc)) {
+	if (!SVCAUTH_CHECKSUM(&reqdata->svc)) {
 		LogInfo(COMPONENT_DISPATCH,
 			"SVCAUTH_CHECKSUM failed for Program %" PRIu32
 			", Version %" PRIu32
 			", Function %" PRIu32
 			", xid=%" PRIu32
 			", SVCXPRT=%p, fd=%d",
-			reqdata->r_u.req.svc.rq_msg.cb_prog,
-			reqdata->r_u.req.svc.rq_msg.cb_vers,
-			reqdata->r_u.req.svc.rq_msg.cb_proc,
-			reqdata->r_u.req.svc.rq_msg.rm_xid,
+			reqdata->svc.rq_msg.cb_prog,
+			reqdata->svc.rq_msg.cb_vers,
+			reqdata->svc.rq_msg.cb_proc,
+			reqdata->svc.rq_msg.rm_xid,
 			xprt, xprt->xp_fd);
 
 		if (!xdr_free(reqdesc->xdr_decode_func, arg_nfs)) {
@@ -774,7 +774,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 				__func__,
 				reqdesc->funcname);
 		}
-		return svcerr_decode(&reqdata->r_u.req.svc);
+		return svcerr_decode(&reqdata->svc);
 	}
 
 	/* set up the request context
@@ -784,8 +784,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 	op_ctx = &req_ctx;
 	op_ctx->creds = &user_credentials;
 	op_ctx->caller_addr = (sockaddr_t *)svc_getrpccaller(xprt);
-	op_ctx->nfs_vers = reqdata->r_u.req.svc.rq_msg.cb_vers;
-	op_ctx->req_type = reqdata->rtype;
+	op_ctx->nfs_vers = reqdata->svc.rq_msg.cb_vers;
+	op_ctx->req_type = NFS_REQUEST;
 	op_ctx->export_perms = &export_perms;
 
 	/* Set up initial export permissions that don't allow anything. */
@@ -817,9 +817,9 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			 "Cannot get client block for Program %" PRIu32
 			 ", Version %" PRIu32
 			 ", Function %" PRIu32,
-			 reqdata->r_u.req.svc.rq_msg.cb_prog,
-			 reqdata->r_u.req.svc.rq_msg.cb_vers,
-			 reqdata->r_u.req.svc.rq_msg.cb_proc);
+			 reqdata->svc.rq_msg.cb_prog,
+			 reqdata->svc.rq_msg.cb_vers,
+			 reqdata->svc.rq_msg.cb_proc);
 	} else {
 		/* Set the Client IP for this thread */
 		SetClientIP(op_ctx->client->hostaddr_str);
@@ -830,23 +830,23 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			 ", Function %" PRIu32
 			 " has xid=%" PRIu32,
 			 client_ip,
-			 reqdata->r_u.req.svc.rq_msg.cb_prog,
-			 reqdata->r_u.req.svc.rq_msg.cb_vers,
-			 reqdata->r_u.req.svc.rq_msg.cb_proc,
-			 reqdata->r_u.req.svc.rq_msg.rm_xid);
+			 reqdata->svc.rq_msg.cb_prog,
+			 reqdata->svc.rq_msg.cb_vers,
+			 reqdata->svc.rq_msg.cb_proc,
+			 reqdata->svc.rq_msg.rm_xid);
 	}
 
 #if defined(HAVE_BLKIN)
 	BLKIN_TIMESTAMP(
-		&reqdata->r_u.req.svc.bl_trace,
-		&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
+		&reqdata->svc.bl_trace,
+		&reqdata->svc.rq_xprt->blkin.endp,
 		"nfs_rpc_process_request-have-clientid");
 #endif
 	/* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
 	 * nothing but allocate a result object and mark the request (ie, the
 	 * path is short, lockless, and does no hash/search). */
-	dpq_status = nfs_dupreq_start(&reqdata->r_u.req, &reqdata->r_u.req.svc);
-	res_nfs = reqdata->r_u.req.res_nfs;
+	dpq_status = nfs_dupreq_start(reqdata, &reqdata->svc);
+	res_nfs = reqdata->res_nfs;
 	if (dpq_status == DUPREQ_SUCCESS) {
 		/* A new request, continue processing it. */
 		LogFullDebug(COMPONENT_DISPATCH,
@@ -859,17 +859,17 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "DUP: DupReq Cache Hit: using previous reply, rpcxid=%"
 				     PRIu32,
-				     reqdata->r_u.req.svc.rq_msg.rm_xid);
+				     reqdata->svc.rq_msg.rm_xid);
 
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Before svc_sendreply on socket %d (dup req)",
 				     xprt->xp_fd);
 
-			reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_results.where =
+			reqdata->svc.rq_msg.RPCM_ack.ar_results.where =
 						res_nfs;
-			reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_results.proc =
+			reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
 						reqdesc->xdr_encode_func;
-			xprt_rc = svc_sendreply(&reqdata->r_u.req.svc);
+			xprt_rc = svc_sendreply(&reqdata->svc);
 			if (xprt_rc >= XPRT_DIED) {
 				LogDebug(COMPONENT_DISPATCH,
 					 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a duplicate request. rpcxid=%"
@@ -879,15 +879,15 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 					 " nfs version:%" PRIu32
 					 " proc:%" PRIu32
 					 " errno: %d",
-					 reqdata->r_u.req.svc.rq_msg.rm_xid,
+					 reqdata->svc.rq_msg.rm_xid,
 					 xprt->xp_fd,
 					 reqdesc->funcname,
 					 client_ip,
-					 reqdata->r_u.req.svc.rq_msg.cb_prog,
-					 reqdata->r_u.req.svc.rq_msg.cb_vers,
-					 reqdata->r_u.req.svc.rq_msg.cb_proc,
+					 reqdata->svc.rq_msg.cb_prog,
+					 reqdata->svc.rq_msg.cb_vers,
+					 reqdata->svc.rq_msg.cb_proc,
 					 errno);
-				svcerr_systemerr(&reqdata->r_u.req.svc);
+				svcerr_systemerr(&reqdata->svc);
 			}
 			break;
 
@@ -896,7 +896,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "DUP: Request xid=%" PRIu32
 				     " is already being processed; the active thread will reply",
-				     reqdata->r_u.req.svc.rq_msg.rm_xid);
+				     reqdata->svc.rq_msg.rm_xid);
 			/* Free the arguments */
 			/* Ignore the request, send no error */
 			break;
@@ -906,20 +906,20 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		case DUPREQ_ERROR:
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Did not find the request in the duplicate request cache and couldn't add the request.");
-			svcerr_systemerr(&reqdata->r_u.req.svc);
+			svcerr_systemerr(&reqdata->svc);
 			break;
 
 			/* oom */
 		case DUPREQ_INSERT_MALLOC_ERROR:
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Cannot process request, not enough memory available!");
-			svcerr_systemerr(&reqdata->r_u.req.svc);
+			svcerr_systemerr(&reqdata->svc);
 			break;
 
 		default:
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Unknown duplicate request cache status. This should never be reached!");
-			svcerr_systemerr(&reqdata->r_u.req.svc);
+			svcerr_systemerr(&reqdata->svc);
 			break;
 		}
 		server_stats_nfs_done(reqdata, rc, true);
@@ -933,10 +933,10 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 	 */
 
 	if (reqdesc == &invalid_funcdesc
-	    || reqdata->r_u.req.svc.rq_msg.cb_proc == NFSPROC_NULL)
+	    || reqdata->svc.rq_msg.cb_proc == NFSPROC_NULL)
 		goto null_op;
 	/* Get the export entry */
-	if (reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_NFS]) {
+	if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS]) {
 		/* The NFSv3 functions' arguments always begin with the file
 		 * handle (but not the NULL function).  This hook is used to
 		 * get the fhandle with the arguments and so determine the
@@ -946,7 +946,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 		progname = "NFS";
 #ifdef _USE_NFS3
-		if (reqdata->r_u.req.svc.rq_msg.cb_vers == NFS_V3) {
+		if (reqdata->svc.rq_msg.cb_vers == NFS_V3) {
 			exportid = nfs3_FhandleToExportId((nfs_fh3 *) arg_nfs);
 
 			if (exportid < 0) {
@@ -985,12 +985,12 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		/* NFS V4 gets its own export id from the ops
 		 * in the compound */
 #ifdef _USE_NLM
-	} else if (reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_NLM]) {
+	} else if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NLM]) {
 		netobj *pfh3 = NULL;
 
 		progname = "NLM";
 
-		switch (reqdata->r_u.req.svc.rq_msg.cb_proc) {
+		switch (reqdata->svc.rq_msg.cb_proc) {
 		case NLMPROC4_NULL:
 			/* caught above and short circuited */
 		case NLMPROC4_TEST_RES:
@@ -1080,7 +1080,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			}
 		}
 #endif /* _USE_NLM */
-	} else if (reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_MNT]) {
+	} else if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_MNT]) {
 		progname = "MNT";
 	}
 
@@ -1102,8 +1102,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 				client_ip,
 				op_ctx->ctx_export->export_id,
 				op_ctx_export_path(op_ctx->ctx_export),
-				reqdata->r_u.req.svc.rq_msg.cb_vers,
-				reqdata->r_u.req.svc.rq_msg.cb_proc);
+				reqdata->svc.rq_msg.cb_vers,
+				reqdata->svc.rq_msg.cb_proc);
 
 			auth_rc = AUTH_TOOWEAK;
 			goto auth_failure;
@@ -1114,7 +1114,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 				"%s Version %" PRIu32
 				" not allowed on Export_Id %d %s for client %s",
 				progname,
-				reqdata->r_u.req.svc.rq_msg.cb_vers,
+				reqdata->svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
 				op_ctx_export_path(op_ctx->ctx_export),
 				client_ip);
@@ -1132,7 +1132,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 				"%s Version %" PRIu32
 				" over %s not allowed on Export_Id %d %s for client %s",
 				progname,
-				reqdata->r_u.req.svc.rq_msg.cb_vers,
+				reqdata->svc.rq_msg.cb_vers,
 				xprt_type_to_str(xprt_type),
 				op_ctx->ctx_export->export_id,
 				op_ctx_export_path(op_ctx->ctx_export),
@@ -1144,12 +1144,12 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 		/* Test if export allows the authentication provided */
 		if ((reqdesc->dispatch_behaviour & SUPPORTS_GSS)
-		 && !export_check_security(&reqdata->r_u.req.svc)) {
+		 && !export_check_security(&reqdata->svc)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %" PRIu32
 				" auth not allowed on Export_Id %d %s for client %s",
 				progname,
-				reqdata->r_u.req.svc.rq_msg.cb_vers,
+				reqdata->svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
 				op_ctx_export_path(op_ctx->ctx_export),
 				client_ip);
@@ -1160,7 +1160,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 		/* Check if client is using a privileged port,
 		 * but only for NFS protocol */
-		if ((reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_NFS])
+		if ((reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS])
 		 && (export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT)
 		 && (port >= IPPORT_RESERVED)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1187,8 +1187,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		 * (this error is known for not disturbing
 		 * the client's requests cache)
 		 */
-		if (reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_NFS])
-			switch (reqdata->r_u.req.svc.rq_msg.cb_vers) {
+		if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS])
+			switch (reqdata->svc.rq_msg.cb_vers) {
 #ifdef _USE_NFS3
 			case NFS_V3:
 				LogDebugAlt(COMPONENT_DISPATCH,
@@ -1215,8 +1215,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		   && (export_perms.options
 		       & (EXPORT_OPTION_WRITE_ACCESS
 			| EXPORT_OPTION_MD_WRITE_ACCESS)) == 0) {
-		if (reqdata->r_u.req.svc.rq_msg.cb_prog == NFS_program[P_NFS])
-			switch (reqdata->r_u.req.svc.rq_msg.cb_vers) {
+		if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS])
+			switch (reqdata->svc.rq_msg.cb_vers) {
 #ifdef _USE_NFS3
 			case NFS_V3:
 				LogDebugAlt(COMPONENT_DISPATCH,
@@ -1247,8 +1247,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			PRIu32 ", proc=%" PRIu32,
 			client_ip, op_ctx->ctx_export->export_id,
 			op_ctx_export_path(op_ctx->ctx_export),
-			reqdata->r_u.req.svc.rq_msg.cb_vers,
-			reqdata->r_u.req.svc.rq_msg.cb_proc);
+			reqdata->svc.rq_msg.cb_vers,
+			reqdata->svc.rq_msg.cb_proc);
 		auth_rc = AUTH_TOOWEAK;
 		goto auth_failure;
 	} else {
@@ -1258,8 +1258,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			if (op_ctx->fsal_export == NULL) {
 				export_perms.options &=
 					~EXPORT_OPTION_SQUASH_TYPES;
-			} else if (nfs_req_creds(&reqdata->r_u.req.svc) !=
-					NFS4_OK) {
+			} else if (nfs_req_creds(&reqdata->svc) != NFS4_OK) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"could not get uid and gid, rejecting client %s",
 					client_ip);
@@ -1304,25 +1303,25 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 #if defined(HAVE_BLKIN)
 		BLKIN_TIMESTAMP(
-			&reqdata->r_u.req.svc.bl_trace,
-			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
+			&reqdata->svc.bl_trace,
+			&reqdata->svc.rq_xprt->blkin.endp,
 			"nfs_rpc_process_request-pre-service");
 
 		BLKIN_KEYVAL_STRING(
-			&reqdata->r_u.req.svc.bl_trace,
-			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
+			&reqdata->svc.bl_trace,
+			&reqdata->svc.rq_xprt->blkin.endp,
 			"op-name",
 			reqdesc->funcname
 			);
 
 		BLKIN_KEYVAL_INTEGER(
-			&reqdata->r_u.req.svc.bl_trace,
-			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
+			&reqdata->svc.bl_trace,
+			&reqdata->svc.rq_xprt->blkin.endp,
 			"export-id",
 			(op_ctx->ctx_export != NULL)
 			? op_ctx->ctx_export->export_id : -1);
 #endif
-		rc = reqdesc->service_function(arg_nfs, &reqdata->r_u.req.svc,
+		rc = reqdesc->service_function(arg_nfs, &reqdata->svc,
 					res_nfs);
 
 #ifdef USE_LTTNG
@@ -1331,8 +1330,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 #if defined(HAVE_BLKIN)
 		BLKIN_TIMESTAMP(
-			&reqdata->r_u.req.svc.bl_trace,
-			&reqdata->r_u.req.svc.rq_xprt->blkin.endp,
+			&reqdata->svc.bl_trace,
+			&reqdata->svc.rq_xprt->blkin.endp,
 			"nfs_rpc_process_request-post-service");
 #endif
 	}
@@ -1343,8 +1342,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 /* NFSv4 stats are handled in nfs4_compound()
  */
-	if (reqdata->r_u.req.svc.rq_msg.cb_prog != NFS_program[P_NFS]
-	    || reqdata->r_u.req.svc.rq_msg.cb_vers != NFS_V4)
+	if (reqdata->svc.rq_msg.cb_prog != NFS_program[P_NFS]
+	    || reqdata->svc.rq_msg.cb_vers != NFS_V4)
 		server_stats_nfs_done(reqdata, rc, false);
 
 	/* If request is dropped, no return to the client */
@@ -1355,16 +1354,16 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			 ", program %" PRIu32
 			 ", version %" PRIu32
 			 ", function %" PRIu32,
-			 reqdata->r_u.req.svc.rq_msg.rm_xid,
-			 reqdata->r_u.req.svc.rq_msg.cb_prog,
-			 reqdata->r_u.req.svc.rq_msg.cb_vers,
-			 reqdata->r_u.req.svc.rq_msg.cb_proc);
+			 reqdata->svc.rq_msg.rm_xid,
+			 reqdata->svc.rq_msg.cb_prog,
+			 reqdata->svc.rq_msg.cb_vers,
+			 reqdata->svc.rq_msg.cb_proc);
 
 		/* If the request is not normally cached, then the entry
 		 * will be removed later.  We only remove a reply that is
 		 * normally cached that has been dropped.
 		 */
-		if (nfs_dupreq_delete(&reqdata->r_u.req.svc)
+		if (nfs_dupreq_delete(&reqdata->svc)
 		    != DUPREQ_SUCCESS) {
 			LogCrit(COMPONENT_DISPATCH,
 				"Attempt to delete duplicate request failed on line %d",
@@ -1375,10 +1374,10 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Before svc_sendreply on socket %d", xprt->xp_fd);
 
-		reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_results.where = res_nfs;
-		reqdata->r_u.req.svc.rq_msg.RPCM_ack.ar_results.proc =
+		reqdata->svc.rq_msg.RPCM_ack.ar_results.where = res_nfs;
+		reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
 					reqdesc->xdr_encode_func;
-		xprt_rc = svc_sendreply(&reqdata->r_u.req.svc);
+		xprt_rc = svc_sendreply(&reqdata->svc);
 		if (xprt_rc >= XPRT_DIED) {
 			LogDebug(COMPONENT_DISPATCH,
 				 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a new request. rpcxid=%"
@@ -1388,13 +1387,13 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 				 " nfs version:%" PRIu32
 				 " proc:%" PRIu32
 				 " errno: %d",
-				 reqdata->r_u.req.svc.rq_msg.rm_xid,
+				 reqdata->svc.rq_msg.rm_xid,
 				 xprt->xp_fd,
 				 reqdesc->funcname,
 				 client_ip,
-				 reqdata->r_u.req.svc.rq_msg.cb_prog,
-				 reqdata->r_u.req.svc.rq_msg.cb_vers,
-				 reqdata->r_u.req.svc.rq_msg.cb_proc,
+				 reqdata->svc.rq_msg.cb_prog,
+				 reqdata->svc.rq_msg.cb_vers,
+				 reqdata->svc.rq_msg.cb_proc,
 				 errno);
 			SVC_DESTROY(xprt);
 			goto freeargs;
@@ -1407,13 +1406,13 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 	/* Finish any request not already deleted */
 	if (dpq_status == DUPREQ_SUCCESS)
-		dpq_status = nfs_dupreq_finish(&reqdata->r_u.req.svc, res_nfs);
+		dpq_status = nfs_dupreq_finish(&reqdata->svc, res_nfs);
 	goto freeargs;
 
  auth_failure:
-	svcerr_auth(&reqdata->r_u.req.svc, auth_rc);
+	svcerr_auth(&reqdata->svc, auth_rc);
 	/* nb, a no-op when req is uncacheable */
-	if (nfs_dupreq_delete(&reqdata->r_u.req.svc) != DUPREQ_SUCCESS) {
+	if (nfs_dupreq_delete(&reqdata->svc) != DUPREQ_SUCCESS) {
 		LogCrit(COMPONENT_DISPATCH,
 			"Attempt to delete duplicate request failed on line %d",
 			__LINE__);
@@ -1422,9 +1421,9 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
  freeargs:
 	/* Free the allocated resources once the work is done */
 	/* Free the arguments */
-	if ((reqdata->r_u.req.svc.rq_msg.cb_vers == 2)
-	 || (reqdata->r_u.req.svc.rq_msg.cb_vers == 3)
-	 || (reqdata->r_u.req.svc.rq_msg.cb_vers == 4)) {
+	if ((reqdata->svc.rq_msg.cb_vers == 2)
+	 || (reqdata->svc.rq_msg.cb_vers == 3)
+	 || (reqdata->svc.rq_msg.cb_vers == 4)) {
 		if (!xdr_free(reqdesc->xdr_decode_func, arg_nfs)) {
 			LogCrit(COMPONENT_DISPATCH,
 				"%s FAILURE: Bad xdr_free for %s",
@@ -1435,7 +1434,7 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 
 	/* Finalize the request. */
 	if (res_nfs)
-		nfs_dupreq_rele(&reqdata->r_u.req.svc, reqdesc);
+		nfs_dupreq_rele(&reqdata->svc, reqdesc);
 
 	SetClientIP(NULL);
 	if (op_ctx->client != NULL) {
@@ -1461,12 +1460,12 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
  * @param[in] reqnfs	NFS request
  *
  */
-static enum xprt_stat nfs_rpc_noprog(request_data_t *reqdata)
+static enum xprt_stat nfs_rpc_noprog(nfs_request_t *reqdata)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "Invalid Program number %" PRIu32,
-		     reqdata->r_u.req.svc.rq_msg.cb_prog);
-	return svcerr_noprog(&reqdata->r_u.req.svc);
+		     reqdata->svc.rq_msg.cb_prog);
+	return svcerr_noprog(&reqdata->svc);
 }
 
 /**
@@ -1475,15 +1474,15 @@ static enum xprt_stat nfs_rpc_noprog(request_data_t *reqdata)
  * @param[in] reqnfs	NFS request
  *
  */
-static enum xprt_stat nfs_rpc_novers(request_data_t *reqdata,
+static enum xprt_stat nfs_rpc_novers(nfs_request_t *reqdata,
 				     int lo_vers, int hi_vers)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "Invalid protocol Version %" PRIu32
 		     " for Program number %" PRIu32,
-		     reqdata->r_u.req.svc.rq_msg.cb_vers,
-		     reqdata->r_u.req.svc.rq_msg.cb_prog);
-	return svcerr_progvers(&reqdata->r_u.req.svc, lo_vers, hi_vers);
+		     reqdata->svc.rq_msg.cb_vers,
+		     reqdata->svc.rq_msg.cb_prog);
+	return svcerr_progvers(&reqdata->svc, lo_vers, hi_vers);
 }
 
 /**
@@ -1492,16 +1491,16 @@ static enum xprt_stat nfs_rpc_novers(request_data_t *reqdata,
  * @param[in] reqnfs	NFS request
  *
  */
-static enum xprt_stat nfs_rpc_noproc(request_data_t *reqdata)
+static enum xprt_stat nfs_rpc_noproc(nfs_request_t *reqdata)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "Invalid Procedure %" PRIu32
 		     " in protocol Version %" PRIu32
 		     " for Program number %" PRIu32,
-		     reqdata->r_u.req.svc.rq_msg.cb_proc,
-		     reqdata->r_u.req.svc.rq_msg.cb_vers,
-		     reqdata->r_u.req.svc.rq_msg.cb_prog);
-	return svcerr_noproc(&reqdata->r_u.req.svc);
+		     reqdata->svc.rq_msg.cb_proc,
+		     reqdata->svc.rq_msg.cb_vers,
+		     reqdata->svc.rq_msg.cb_prog);
+	return svcerr_noproc(&reqdata->svc);
 }
 
 /**
@@ -1519,18 +1518,18 @@ static enum xprt_stat nfs_rpc_noproc(request_data_t *reqdata)
  */
 enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 {
-	request_data_t *reqdata =
-			container_of(req, struct request_data, r_u.req.svc);
+	nfs_request_t *reqdata =
+			container_of(req, struct nfs_request, svc);
 	int lo_vers;
 	int hi_vers;
 
-	reqdata->r_u.req.funcdesc = &invalid_funcdesc;
+	reqdata->funcdesc = &invalid_funcdesc;
 
 	if (req->rq_msg.cb_prog == NFS_program[P_NFS]) {
 		if (req->rq_msg.cb_vers == NFS_V4) {
 			if ((NFS_options & CORE_OPTION_NFSV4)
 			    && req->rq_msg.cb_proc <= NFSPROC4_COMPOUND) {
-				reqdata->r_u.req.funcdesc =
+				reqdata->funcdesc =
 					&nfs4_func_desc[req->rq_msg.cb_proc];
 				return nfs_rpc_process_request(reqdata);
 			}
@@ -1540,7 +1539,7 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 #ifdef _USE_NFS3
 			if ((NFS_options & CORE_OPTION_NFSV3)
 			    && req->rq_msg.cb_proc <= NFSPROC3_COMMIT) {
-				reqdata->r_u.req.funcdesc =
+				reqdata->funcdesc =
 					&nfs3_func_desc[req->rq_msg.cb_proc];
 				return nfs_rpc_process_request(reqdata);
 			}
@@ -1562,17 +1561,17 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 
 enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 {
-	request_data_t *reqdata =
-			container_of(req, struct request_data, r_u.req.svc);
+	nfs_request_t *reqdata =
+			container_of(req, struct nfs_request, svc);
 
-	reqdata->r_u.req.funcdesc = &invalid_funcdesc;
+	reqdata->funcdesc = &invalid_funcdesc;
 
 #ifdef _USE_NLM
 	if (req->rq_msg.cb_prog == NFS_program[P_NLM]
 	     && (NFS_options & CORE_OPTION_NFSV3)) {
 		if (req->rq_msg.cb_vers == NLM4_VERS) {
 			if (req->rq_msg.cb_proc <= NLMPROC4_FREE_ALL) {
-				reqdata->r_u.req.funcdesc =
+				reqdata->funcdesc =
 					&nlm4_func_desc[req->rq_msg.cb_proc];
 				return nfs_rpc_process_request(reqdata);
 			}
@@ -1586,14 +1585,14 @@ enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 
 enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 {
-	request_data_t *reqdata =
-			container_of(req, struct request_data, r_u.req.svc);
+	nfs_request_t *reqdata =
+			container_of(req, struct nfs_request, svc);
 
-	reqdata->r_u.req.funcdesc = &invalid_funcdesc;
+	reqdata->funcdesc = &invalid_funcdesc;
 
 	if (req->rq_msg.cb_prog == NFS_program[P_MNT]
 	    && (NFS_options & CORE_OPTION_NFSV3)) {
-		reqdata->r_u.req.lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
+		reqdata->lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
 
 		/* Some clients may use the wrong mount version to
 		 * umount, so always allow umount. Otherwise, only allow
@@ -1603,7 +1602,7 @@ enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 		 */
 		if (req->rq_msg.cb_vers == MOUNT_V3) {
 			if (req->rq_msg.cb_proc <= MOUNTPROC3_EXPORT) {
-				reqdata->r_u.req.funcdesc =
+				reqdata->funcdesc =
 					&mnt3_func_desc[req->rq_msg.cb_proc];
 				return nfs_rpc_process_request(reqdata);
 			}
@@ -1612,7 +1611,7 @@ enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 		if (req->rq_msg.cb_vers == MOUNT_V1) {
 			if (req->rq_msg.cb_proc <= MOUNTPROC2_EXPORT
 			    && req->rq_msg.cb_proc != MOUNTPROC2_MNT) {
-				reqdata->r_u.req.funcdesc =
+				reqdata->funcdesc =
 					&mnt1_func_desc[req->rq_msg.cb_proc];
 				return nfs_rpc_process_request(reqdata);
 			}
@@ -1625,15 +1624,15 @@ enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 
 enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 {
-	request_data_t *reqdata =
-			container_of(req, struct request_data, r_u.req.svc);
+	nfs_request_t *reqdata =
+			container_of(req, struct nfs_request, svc);
 
-	reqdata->r_u.req.funcdesc = &invalid_funcdesc;
+	reqdata->funcdesc = &invalid_funcdesc;
 
 	if (req->rq_msg.cb_prog == NFS_program[P_RQUOTA]) {
 		if (req->rq_msg.cb_vers == EXT_RQUOTAVERS) {
 			if (req->rq_msg.cb_proc <= RQUOTAPROC_SETACTIVEQUOTA) {
-				reqdata->r_u.req.funcdesc =
+				reqdata->funcdesc =
 					&rquota2_func_desc[req->rq_msg.cb_proc];
 				return nfs_rpc_process_request(reqdata);
 			}
@@ -1641,7 +1640,7 @@ enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 		}
 		if (req->rq_msg.cb_vers == RQUOTAVERS) {
 			if (req->rq_msg.cb_proc <= RQUOTAPROC_SETACTIVEQUOTA) {
-				reqdata->r_u.req.funcdesc =
+				reqdata->funcdesc =
 					&rquota1_func_desc[req->rq_msg.cb_proc];
 				return nfs_rpc_process_request(reqdata);
 			}

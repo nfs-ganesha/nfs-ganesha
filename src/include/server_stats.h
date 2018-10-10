@@ -41,7 +41,7 @@
 
 #include <sys/types.h>
 
-void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup);
+void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup);
 
 #ifdef _USE_9P
 void server_stats_9p_done(u8 msgtype, struct _9p_request_data *req9p);

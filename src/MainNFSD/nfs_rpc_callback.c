@@ -978,7 +978,7 @@ enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 	clnt_req_fill(cc, call->chan->clnt, call->chan->auth, CB_COMPOUND,
 		      (xdrproc_t) xdr_CB_COMPOUND4args, &call->cbt.v_u.v4.args,
 		      (xdrproc_t) xdr_CB_COMPOUND4res, &call->cbt.v_u.v4.res);
-	cc->cc_size = sizeof(request_data_t);
+	cc->cc_size = sizeof(nfs_request_t);
 	cc->cc_free_cb = nfs_rpc_call_free;
 
 	if (!call->chan->clnt) {

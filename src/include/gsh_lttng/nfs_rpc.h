@@ -16,9 +16,9 @@
 TRACEPOINT_EVENT(
 	nfs_rpc,
 	start,
-	TP_ARGS(request_data_t *, req),
+	TP_ARGS(nfs_request_t *, req),
 	TP_FIELDS(
-		ctf_integer_hex(request_data_t *, req, req)
+		ctf_integer_hex(nfs_request_t *, req, req)
 	)
 )
 
@@ -38,9 +38,9 @@ TRACEPOINT_LOGLEVEL(
 TRACEPOINT_EVENT(
 	nfs_rpc,
 	end,
-	TP_ARGS(request_data_t *, req),
+	TP_ARGS(nfs_request_t *, req),
 	TP_FIELDS(
-		ctf_integer_hex(request_data_t *, req, req)
+		ctf_integer_hex(nfs_request_t *, req, req)
 	)
 )
 
@@ -58,11 +58,11 @@ TRACEPOINT_LOGLEVEL(
 TRACEPOINT_EVENT(
 	nfs_rpc,
 	op_start,
-	TP_ARGS(request_data_t *, req,
+	TP_ARGS(nfs_request_t *, req,
 		const char *, op_name,
 		int, export_id),
 	TP_FIELDS(
-		ctf_integer_hex(request_data_t *, req, req)
+		ctf_integer_hex(nfs_request_t *, req, req)
 		ctf_string(op_name, op_name)
 		ctf_integer(int, export_id, export_id)
 	)
@@ -84,9 +84,9 @@ TRACEPOINT_LOGLEVEL(
 TRACEPOINT_EVENT(
 	nfs_rpc,
 	op_end,
-	TP_ARGS(request_data_t *, req),
+	TP_ARGS(nfs_request_t *, req),
 	TP_FIELDS(
-		ctf_integer_hex(request_data_t *, req, req)
+		ctf_integer_hex(nfs_request_t *, req, req)
 	)
 )
 

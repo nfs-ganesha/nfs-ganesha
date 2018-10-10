@@ -82,7 +82,6 @@
 struct nfs_init nfs_init;
 
 /* global information exported to all layers (as extern vars) */
-pool_t *nfs_request_pool;
 nfs_parameter_t nfs_param;
 struct _nfs_health nfs_health_;
 
@@ -645,9 +644,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	nfs41_session_pool =
 	    pool_basic_init("NFSv4.1 session pool", sizeof(nfs41_session_t));
-
-	nfs_request_pool =
-	    pool_basic_init("Request pool", sizeof(request_data_t));
 
 	/* If rpcsec_gss is used, set the path to the keytab */
 #ifdef _HAVE_GSSAPI

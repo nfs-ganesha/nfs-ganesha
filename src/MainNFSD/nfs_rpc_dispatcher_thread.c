@@ -1265,27 +1265,24 @@ static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *xprt)
  *
  * @return New request data
  */
-static inline request_data_t *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
+static inline nfs_request_t *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 {
-	request_data_t *reqdata = pool_alloc(nfs_request_pool);
+	nfs_request_t *reqdata = gsh_calloc(1, sizeof(nfs_request_t));
 
 	(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
 
-	/* set the request as NFS already-read */
-	reqdata->rtype = NFS_REQUEST;
-
 	/* set up req */
 	SVC_REF(xprt, SVC_REF_FLAG_NONE);
-	reqdata->r_u.req.svc.rq_xprt = xprt;
-	reqdata->r_u.req.svc.rq_xdrs = xdrs;
-	reqdata->r_u.req.svc.rq_refcnt = 1;
+	reqdata->svc.rq_xprt = xprt;
+	reqdata->svc.rq_xdrs = xdrs;
+	reqdata->svc.rq_refcnt = 1;
 	return reqdata;
 }
 
-int free_nfs_request(request_data_t *reqdata)
+int free_nfs_request(nfs_request_t *reqdata)
 {
-	SVCXPRT *xprt = reqdata->r_u.req.svc.rq_xprt;
-	uint32_t refs = atomic_dec_uint32_t(&reqdata->r_u.req.svc.rq_refcnt);
+	SVCXPRT *xprt = reqdata->svc.rq_xprt;
+	uint32_t refs = atomic_dec_uint32_t(&reqdata->svc.rq_refcnt);
 
 	LogDebug(COMPONENT_DISPATCH,
 		 "%s: %p fd %d xp_refcnt %" PRIu32 " rq_refcnt %" PRIu32,
@@ -1296,25 +1293,21 @@ int free_nfs_request(request_data_t *reqdata)
 	if (refs)
 		return refs;
 
-	switch (reqdata->rtype) {
-	case NFS_REQUEST:
-		/* dispose RPC header */
-		if (reqdata->r_u.req.svc.rq_auth)
-			SVCAUTH_RELEASE(&(reqdata->r_u.req.svc));
-		XDR_DESTROY(reqdata->r_u.req.svc.rq_xdrs);
-		break;
-	default:
-		break;
-	}
+	/* dispose RPC header */
+	if (reqdata->svc.rq_auth)
+		SVCAUTH_RELEASE(&(reqdata->svc));
+
+	XDR_DESTROY(reqdata->svc.rq_xdrs);
+
 	SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
-	pool_free(nfs_request_pool, reqdata);
+	gsh_free(reqdata);
 	(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 	return 0;
 }
 
 static enum xprt_stat nfs_rpc_decode_request(SVCXPRT *xprt, XDR *xdrs)
 {
-	request_data_t *reqdata;
+	nfs_request_t *reqdata;
 	enum xprt_stat stat;
 
 	if (!xprt) {
@@ -1333,26 +1326,26 @@ static enum xprt_stat nfs_rpc_decode_request(SVCXPRT *xprt, XDR *xdrs)
 
 	reqdata = alloc_nfs_request(xprt, xdrs);
 #if HAVE_BLKIN
-	blkin_init_new_trace(&reqdata->r_u.req.svc.bl_trace, "nfs-ganesha",
+	blkin_init_new_trace(&reqdata->svc.bl_trace, "nfs-ganesha",
 			&xprt->blkin.endp);
 #endif
 
 #if defined(HAVE_BLKIN)
 	BLKIN_TIMESTAMP(
-		&reqdata->r_u.req.svc.bl_trace, &xprt->blkin.endp, "pre-recv");
+		&reqdata->svc.bl_trace, &xprt->blkin.endp, "pre-recv");
 #endif
 
-	stat = SVC_DECODE(&reqdata->r_u.req.svc);
+	stat = SVC_DECODE(&reqdata->svc);
 
 #if defined(HAVE_BLKIN)
 	BLKIN_TIMESTAMP(
-		&reqdata->r_u.req.svc.bl_trace, &xprt->blkin.endp, "post-recv");
+		&reqdata->svc.bl_trace, &xprt->blkin.endp, "post-recv");
 
 	BLKIN_KEYVAL_INTEGER(
-		&reqdata->r_u.req.svc.bl_trace,
-		&reqdata->r_u.req.xprt->blkin.endp,
+		&reqdata->svc.bl_trace,
+		&reqdata->xprt->blkin.endp,
 		"rq-xid",
-		reqdata->r_u.req.svc.rq_xid);
+		reqdata->svc.rq_xid);
 #endif
 
 	if (unlikely(stat > XPRT_DESTROYED)) {
@@ -1377,7 +1370,7 @@ static enum xprt_stat nfs_rpc_decode_request(SVCXPRT *xprt, XDR *xdrs)
 			 " returned %s",
 			 xprt, xprt->xp_fd,
 			 addrbuf,
-			 reqdata->r_u.req.svc.rq_msg.rm_xid,
+			 reqdata->svc.rq_msg.rm_xid,
 			 xprt_stat_s[stat]);
 	}
 

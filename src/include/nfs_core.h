@@ -100,16 +100,7 @@ typedef enum request_type {
 #endif				/* _USE_9P */
 } request_type_t;
 
-typedef struct request_data {
-	union request_content {
-		nfs_request_t req;
-	} r_u;
-	request_type_t rtype;
-} request_data_t;
-
 /* in nfs_init.c */
-
-extern pool_t *nfs_request_pool;
 
 struct _nfs_health {
 	uint64_t enqueued_reqs;
