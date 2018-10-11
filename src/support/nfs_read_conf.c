@@ -93,8 +93,9 @@ static struct config_item core_params[] = {
 		       nfs_core_param, program[P_NLM]),
 	CONF_ITEM_UI32("Rquota_Program", 1, INT32_MAX, RQUOTAPROG,
 		       nfs_core_param, program[P_RQUOTA]),
-	CONF_ITEM_UI32("Nb_Worker", 1, 1024*128, NB_WORKER_THREAD_DEFAULT,
-		       nfs_core_param, nb_worker),
+	CONF_ITEM_DEPRECATED("Nb_Worker",
+			     "This parameter has been replaced with _9P { Nb_Worker}"
+			     ),
 	CONF_ITEM_BOOL("Drop_IO_Errors", false,
 		       nfs_core_param, drop_io_errors),
 	CONF_ITEM_BOOL("Drop_Inval_Errors", false,

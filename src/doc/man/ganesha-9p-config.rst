@@ -19,8 +19,11 @@ NFS-Ganesha obtains configuration data from the configuration file:
 
 This file lists 9p specific config options.
 
-9P {}
+_9P {}
 --------------------------------------------------------------------------------
+
+**Nb_Worker(uint32, range 1 to 1024*128, default 256)**
+    Number of worker threads.
 
 **_9P_TCP_Port(uint16, range 1 to UINT16_MAX, default 564)**
 

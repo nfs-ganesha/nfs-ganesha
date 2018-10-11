@@ -317,7 +317,6 @@ void nfs_print_param_config(void)
 	printf("\tMNT_Port = %u ;\n", nfs_param.core_param.port[P_MNT]);
 	printf("\tNFS_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
 	printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
-	printf("\tNb_Worker = %u ;\n", nfs_param.core_param.nb_worker);
 	printf("\tDRC_TCP_Npart = %u ;\n", nfs_param.core_param.drc.tcp.npart);
 	printf("\tDRC_TCP_Size = %u ;\n", nfs_param.core_param.drc.tcp.size);
 	printf("\tDRC_TCP_Cachesz = %u ;\n",

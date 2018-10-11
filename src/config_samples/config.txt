@@ -14,7 +14,7 @@ LOG {}
 LOG { COMPONENTS {} }
 LOG { FACILITY {} }
 LOG { FORMAT {} }
-9P {}
+_9P {}
 CACHEINODE {}
 CEPH {}
 GPFS {}
@@ -50,8 +50,6 @@ NFS_CORE_PARAM {}
 	NLM_Program(uint32, range 1 to INT32_MAX, default  100021)
 
 	Rquota_Program(uint32, range 1 to INT32_MAX, default  100011)
-
-	Nb_Worker(uint32, range 1 to 1024*128, default 256)
 
 	Drop_IO_Errors(bool, default false)
 
@@ -572,8 +570,10 @@ CACHEINODE
 
 	Futility_Count(uint32, range 1 to 50, default 8)
 
-9P {}
+_9P {}
 -----
+
+	Nb_Worker(uint32, range 1 to 1024*128, default 256)
 
 	_9P_TCP_Port(uint16, range 1 to UINT16_MAX, default 564)
 

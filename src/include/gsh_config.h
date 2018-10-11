@@ -80,7 +80,7 @@ typedef enum protos {
 #define RQUOTA_PORT 875
 
 /**
- * @brief Default value for core_param.nb_worker
+ * @brief Default value for _9p_param.nb_worker
  */
 #define NB_WORKER_THREAD_DEFAULT 256
 
@@ -213,9 +213,6 @@ typedef struct nfs_core_param {
 	    Rquota_Program.  It is debatable whether this is a
 	    worthwhile option to have. */
 	uint32_t program[P_COUNT];
-	/** Number of worker threads.  Set to NB_WORKER_DEFAULT by
-	    default and changed with the Nb_Worker option. */
-	uint32_t nb_worker;
 	/** For NFSv3, whether to drop rather than reply to requests
 	    yielding I/O errors.  True by default and settable with
 	    Drop_IO_Errors.  As this generally results in client

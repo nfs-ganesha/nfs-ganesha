@@ -46,9 +46,6 @@ MNT_Program(uint32, range 1 to INT32_MAX, default 100005)
 NLM_Program(uint32, range 1 to INT32_MAX, default 100021)
     RPC program number for NLM.
 
-Nb_Worker(uint32, range 1 to 1024*128, default 256)
-    Number of worker threads.
-
 Drop_IO_Errors(bool, default false)
     For NFSv3, whether to drop rather than reply to requests yielding I/O
     errors. It results in client retry.

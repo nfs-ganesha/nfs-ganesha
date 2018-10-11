@@ -427,8 +427,8 @@ int _9p_worker_init(void)
 	_9p_req_st.reqs.waiters = 0;
 
 	memset(&frp, 0, sizeof(struct fridgethr_params));
-	frp.thr_max = nfs_param.core_param.nb_worker;
-	frp.thr_min = nfs_param.core_param.nb_worker;
+	frp.thr_max = _9p_param.nb_worker;
+	frp.thr_min = _9p_param.nb_worker;
 	frp.flavor = fridgethr_flavor_looper;
 	frp.thread_initialize = worker_thread_initializer;
 	frp.thread_finalize = worker_thread_finalizer;

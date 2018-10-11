@@ -31,11 +31,14 @@
 #include "config.h"
 #include "9p.h"
 #include "config_parsing.h"
+#include "gsh_config.h"
 
 /* 9P parameters, settable in the 9P stanza. */
 struct _9p_param _9p_param;
 
 static struct config_item _9p_params[] = {
+	CONF_ITEM_UI32("Nb_Worker", 1, 1024*128, NB_WORKER_THREAD_DEFAULT,
+		       _9p_param, nb_worker),
 	CONF_ITEM_UI16("_9P_TCP_Port", 1, UINT16_MAX, _9P_TCP_PORT,
 		       _9p_param, _9p_tcp_port),
 	CONF_ITEM_UI16("_9P_RDMA_Port", 1, UINT16_MAX, _9P_RDMA_PORT,

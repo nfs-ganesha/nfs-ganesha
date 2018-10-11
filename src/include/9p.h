@@ -635,6 +635,9 @@ do {                                                   \
  */
 
 struct _9p_param {
+	/** Number of worker threads.  Set to NB_WORKER_DEFAULT by
+	    default and changed with the Nb_Worker option. */
+	uint32_t nb_worker;
 	/** TCP port for 9p operations.  Defaults to _9P_TCP_PORT,
 	    settable by _9P_TCP_Port */
 	uint16_t _9p_tcp_port;
