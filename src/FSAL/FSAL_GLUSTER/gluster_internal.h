@@ -323,8 +323,9 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 /* UP thread routines */
 void *GLUSTERFSAL_UP_Thread(void *Arg);
 int initiate_up_thread(struct glusterfs_fs *gl_fs);
-int upcall_inode_invalidate(struct glusterfs_fs *gl_fs,
-			    struct glfs_object *object);
+int up_process_event_object(struct glusterfs_fs *gl_fs,
+			    struct glfs_object *object,
+			    enum glfs_upcall_reason reason);
 void gluster_process_upcall(struct glfs_upcall *cbk, void *data);
 
 fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd);

@@ -172,7 +172,8 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 
 	/* Incase of MDS being DS, there shall not be upcalls sent from
 	 * backend. Hence invalidate the entry here */
-	(void)upcall_inode_invalidate(glfs_export->gl_fs, ds->glhandle);
+	(void)up_process_event_object(glfs_export->gl_fs, ds->glhandle,
+				      GLFS_EVENT_INODE_INVALIDATE);
 
 	return NFS4_OK;
 }

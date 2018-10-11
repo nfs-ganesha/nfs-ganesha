@@ -36,9 +36,11 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/time.h>
+#include "sal_functions.h"
 
-int upcall_inode_invalidate(struct glusterfs_fs *gl_fs,
-			     struct glfs_object *object)
+int up_process_event_object(struct glusterfs_fs *gl_fs,
+			    struct glfs_object *object,
+			    enum glfs_upcall_reason reason)
 {
 	int	     rc                             = -1;
 	glfs_t          *fs                         = NULL;
@@ -47,6 +49,9 @@ int upcall_inode_invalidate(struct glusterfs_fs *gl_fs,
 	struct gsh_buffdesc         key;
 	const struct fsal_up_vector *event_func;
 	fsal_status_t fsal_status = {0, 0};
+#ifdef USE_GLUSTER_DELEGATION
+	state_status_t rc_s;
+#endif
 
 	fs = gl_fs->fs;
 	if (!fs) {
@@ -83,16 +88,38 @@ int upcall_inode_invalidate(struct glusterfs_fs *gl_fs,
 
 	event_func = gl_fs->up_ops;
 
+
+	switch (reason) {
+	case GLFS_EVENT_INODE_INVALIDATE:
 	fsal_status = event_func->invalidate_close(
 					event_func,
 					&key,
 					FSAL_UP_INVALIDATE_CACHE);
-
-	rc = fsal_status.major;
-	if (FSAL_IS_ERROR(fsal_status) && fsal_status.major != ERR_FSAL_NOENT) {
-		LogWarn(COMPONENT_FSAL_UP,
-			"Inode_Invalidate event could not be processed for fd %p, rc %d",
+		rc = fsal_status.major;
+		if (FSAL_IS_ERROR(fsal_status) &&
+			 fsal_status.major != ERR_FSAL_NOENT) {
+			LogWarn(COMPONENT_FSAL_UP,
+			"UP event:GLFS_EVENT_INODE_INVALIDATE could not be processed for fs (%p), rc(%d)",
 			gl_fs->fs, rc);
+		}
+	break;
+#ifdef USE_GLUSTER_DELEGATION
+	case GLFS_EVENT_RECALL_LEASE:
+		rc_s = event_func->delegrecall(event_func, &key);
+		if (rc_s != STATE_SUCCESS) {
+			LogWarn(COMPONENT_FSAL_UP,
+			"UP event:GLFS_EVENT_RECALL_LEASE could not be processed for fs(%p), reason(%s)",
+			gl_fs->fs, state_err_str(rc_s));
+			rc = -1;
+		}
+	break;
+#endif
+	default:
+		/* invalid reason */
+		rc = EINVAL;
+		LogWarn(COMPONENT_FSAL_UP,
+			"UP event: Invalid value provided for fs(%p), event(%d)",
+			gl_fs->fs, reason);
 	}
 
 out:
@@ -106,13 +133,16 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 	char                        thr_name[16];
 	int                         rc                  = 0;
 	struct glfs_upcall          *cbk                = NULL;
-	struct glfs_upcall_inode    *in_arg             = NULL;
 	enum glfs_upcall_reason     reason              = 0;
 	int                         retry               = 0;
 	int                         errsv               = 0;
 	struct glfs_object          *object             = NULL;
 	struct glfs_object          *p_object           = NULL;
 	struct glfs_object          *oldp_object        = NULL;
+	struct glfs_upcall_inode    *in_arg             = NULL;
+#ifdef USE_GLUSTER_DELEGATION
+	struct glfs_upcall_lease    *lease_arg          = NULL;
+#endif
 
 
 	snprintf(thr_name, sizeof(thr_name),
@@ -216,14 +246,32 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 
 			object = glfs_upcall_inode_get_object(in_arg);
 			if (object)
-				upcall_inode_invalidate(gl_fs, object);
+				up_process_event_object(gl_fs, object, reason);
 			p_object = glfs_upcall_inode_get_pobject(in_arg);
 			if (p_object)
-				upcall_inode_invalidate(gl_fs, p_object);
+				up_process_event_object(gl_fs, p_object,
+							reason);
 			oldp_object = glfs_upcall_inode_get_oldpobject(in_arg);
 			if (oldp_object)
-				upcall_inode_invalidate(gl_fs, oldp_object);
+				up_process_event_object(gl_fs, oldp_object,
+							reason);
 			break;
+#ifdef USE_GLUSTER_DELEGATION
+		case GLFS_UPCALL_RECALL_LEASE:
+			lease_arg = glfs_upcall_get_event(cbk);
+
+			if (!lease_arg) {
+				/* Could be ENOMEM issues. continue */
+				LogWarn(COMPONENT_FSAL_UP,
+					"Received NULL upcall event arg");
+				break;
+			}
+
+			object = glfs_upcall_lease_get_object(lease_arg);
+			if (object)
+				up_process_event_object(gl_fs, object, reason);
+			break;
+#endif
 		default:
 			LogWarn(COMPONENT_FSAL_UP, "Unknown event: %d", reason);
 			continue;
@@ -242,11 +290,14 @@ void gluster_process_upcall(struct glfs_upcall *cbk, void *data)
 {
 	struct glusterfs_fs         *gl_fs              = data;
 	struct fsal_up_vector *event_func;
-	struct glfs_upcall_inode    *in_arg             = NULL;
 	enum glfs_upcall_reason     reason              = 0;
 	struct glfs_object          *object             = NULL;
 	struct glfs_object          *p_object           = NULL;
 	struct glfs_object          *oldp_object        = NULL;
+	struct glfs_upcall_inode    *in_arg             = NULL;
+#ifdef USE_GLUSTER_DELEGATION
+	struct glfs_upcall_lease    *lease_arg          = NULL;
+#endif
 
 	if (!cbk) {
 		LogFatal(COMPONENT_FSAL_UP, "Upcall received with no data");
@@ -288,16 +339,32 @@ void gluster_process_upcall(struct glfs_upcall *cbk, void *data)
 
 		object = glfs_upcall_inode_get_object(in_arg);
 		if (object)
-			upcall_inode_invalidate(gl_fs, object);
+			up_process_event_object(gl_fs, object, reason);
 
 		p_object = glfs_upcall_inode_get_pobject(in_arg);
 		if (p_object)
-			upcall_inode_invalidate(gl_fs, p_object);
+			up_process_event_object(gl_fs, p_object, reason);
 
 		oldp_object = glfs_upcall_inode_get_oldpobject(in_arg);
 		if (oldp_object)
-			upcall_inode_invalidate(gl_fs, oldp_object);
+			up_process_event_object(gl_fs, oldp_object, reason);
 		break;
+#ifdef USE_GLUSTER_DELEGATION
+	case GLFS_UPCALL_RECALL_LEASE:
+		lease_arg = glfs_upcall_get_event(cbk);
+
+		if (!lease_arg) {
+			/* Could be ENOMEM issues. continue */
+			LogWarn(COMPONENT_FSAL_UP,
+				"Received NULL upcall event arg");
+			break;
+		}
+
+		object = glfs_upcall_lease_get_object(lease_arg);
+		if (object)
+			up_process_event_object(gl_fs, object, reason);
+		break;
+#endif
 	default:
 		LogWarn(COMPONENT_FSAL_UP, "Unknown event: %d", reason);
 	}
