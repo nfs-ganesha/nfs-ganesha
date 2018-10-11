@@ -571,7 +571,7 @@ static int add_client(struct glist_head *client_list,
 			goto out;
 		} else {
 			config_proc_error(cnode, err_type,
-					  "Client (%s)not found because %s",
+					  "Client (%s) not found because %s",
 					  client_tok, gai_strerror(rc));
 			err_type->bogus = true;
 			errcnt++;
