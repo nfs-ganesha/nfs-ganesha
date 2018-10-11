@@ -210,7 +210,7 @@ This package contains the mount.9P script that clients can use
 to simplify mounting to NFS-GANESHA. This is a 9p mount helper.
 
 %package vfs
-Summary: The NFS-GANESHA's VFS FSAL
+Summary: The NFS-GANESHA VFS FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
 Requires: nfs-ganesha = %{version}-%{release}
@@ -220,7 +220,7 @@ This package contains a FSAL shared object to
 be used with NFS-Ganesha to support VFS based filesystems
 
 %package proxy
-Summary: The NFS-GANESHA's PROXY FSAL
+Summary: The NFS-GANESHA PROXY FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
 Requires: nfs-ganesha = %{version}-%{release}
@@ -231,7 +231,7 @@ be used with NFS-Ganesha to support PROXY based filesystems
 
 %if %{with utils}
 %package utils
-Summary: The NFS-GANESHA's util scripts
+Summary: The NFS-GANESHA util scripts
 Group: Applications/System
 %if ( 0%{?suse_version} )
 Requires:	dbus-1-python, python-gobject2, python-pyparsing
@@ -261,7 +261,7 @@ This package contains utility scripts for managing the NFS-GANESHA server
 
 %if %{with lttng}
 %package lttng
-Summary: The NFS-GANESHA's library for use with LTTng
+Summary: The NFS-GANESHA library for use with LTTng
 Group: Applications/System
 BuildRequires: lttng-ust-devel >= 2.3
 BuildRequires: lttng-tools-devel >= 2.3
@@ -274,7 +274,7 @@ to the ganesha.nfsd server, it makes it possible to trace using LTTng.
 
 %if %{with rados_recov}
 %package rados-grace
-Summary: The NFS-GANESHA's command for managing the RADOS grace database
+Summary: The NFS-GANESHA command for managing the RADOS grace database
 Group: Applications/System
 BuildRequires: librados-devel >= 0.61
 Requires: nfs-ganesha = %{version}-%{release}
@@ -290,7 +290,7 @@ database used by the rados_cluster recovery backend.
 # NULL
 %if %{with nullfs}
 %package nullfs
-Summary: The NFS-GANESHA's NULLFS Stackable FSAL
+Summary: The NFS-GANESHA NULLFS Stackable FSAL
 Group: Applications/System
 Requires: nfs-ganesha = %{version}-%{release}
 
@@ -302,7 +302,7 @@ be used with NFS-Ganesha. This is mostly a template for future (more sophisticat
 # MEM
 %if %{with mem}
 %package mem
-Summary: The NFS-GANESHA's Memory backed testing FSAL
+Summary: The NFS-GANESHA Memory backed testing FSAL
 Group: Applications/System
 Requires: nfs-ganesha = %{version}-%{release}
 
@@ -314,7 +314,7 @@ is used for speed and latency testing.
 # GPFS
 %if %{with gpfs}
 %package gpfs
-Summary: The NFS-GANESHA's GPFS FSAL
+Summary: The NFS-GANESHA GPFS FSAL
 Group: Applications/System
 Requires: nfs-ganesha = %{version}-%{release}
 
@@ -326,7 +326,7 @@ be used with NFS-Ganesha to support GPFS backend
 # CEPH
 %if %{with ceph}
 %package ceph
-Summary: The NFS-GANESHA's CephFS FSAL
+Summary: The NFS-GANESHA CephFS FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
 BuildRequires:	libcephfs-devel >= 10.2.0
@@ -339,7 +339,7 @@ be used with NFS-Ganesha to support CephFS
 # RGW
 %if %{with rgw}
 %package rgw
-Summary: The NFS-GANESHA's Ceph RGW FSAL
+Summary: The NFS-GANESHA Ceph RGW FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
 BuildRequires:	librgw-devel >= 10.2.0
@@ -352,7 +352,7 @@ be used with NFS-Ganesha to support Ceph RGW
 # XFS
 %if %{with xfs}
 %package xfs
-Summary: The NFS-GANESHA's XFS FSAL
+Summary: The NFS-GANESHA XFS FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
 BuildRequires:	libattr-devel xfsprogs-devel
@@ -365,7 +365,7 @@ to support XFS correctly
 #LUSTRE
 %if %{with lustre}
 %package lustre
-Summary: The NFS-GANESHA's LUSTRE FSAL
+Summary: The NFS-GANESHA LUSTRE FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
 BuildRequires: lustre-client
@@ -380,7 +380,7 @@ be used with NFS-Ganesha to support LUSTRE based filesystems
 # PANFS
 %if %{with panfs}
 %package panfs
-Summary: The NFS-GANESHA's PANFS FSAL
+Summary: The NFS-GANESHA PANFS FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
 
@@ -392,7 +392,7 @@ be used with NFS-Ganesha to support PANFS
 # GLUSTER
 %if %{with gluster}
 %package gluster
-Summary: The NFS-GANESHA's GLUSTER FSAL
+Summary: The NFS-GANESHA GLUSTER FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
 BuildRequires:        glusterfs-api-devel >= 3.8
@@ -401,6 +401,36 @@ BuildRequires:        libattr-devel, libacl-devel
 %description gluster
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support Gluster
+%endif
+
+# SELINUX
+%if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
+%package selinux
+Summary: The NFS-GANESHA SELINUX targeted policy
+Group: Applications/System
+BuildArch:	noarch
+Requires:	nfs-ganesha = %{version}-%{release}
+BuildRequires:        selinux-policy-devel
+Requires(post):       selinux-policy-base >= 3.14.1
+Requires(post):       libselinux-utils
+Requires(post):       policycoreutils
+
+%description selinux
+This package contains an selinux policy for running ganesha.nfsd
+
+%post selinux
+%selinux_modules_install -s %{selinuxtype} %{_datadir}/selinux/packages/ganesha.pp.bz2
+
+%pre selinux
+%selinux_relabel_pre -s %{selinuxtype}
+
+%postun selinux
+if [ $1 -eq 0 ]; then
+    %selinux_modules_uninstall -s contrib ganesha
+fi
+
+%posttrans
+%selinux_relabel_post -s contrib
 %endif
 
 # NTIRPC (if built-in)
@@ -477,6 +507,11 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 %endif
 
 make %{?_smp_mflags} || make %{?_smp_mflags} || make
+
+%if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
+make -C selinux -f /usr/share/selinux/devel/Makefile ganesha.pp
+pushd src/selinux && bzip2 -9 nfs-ganesha.pp && popd
+%endif
 
 %install
 mkdir -p %{buildroot}%{_sysconfdir}/ganesha/
@@ -556,6 +591,13 @@ install -m 755 scripts/init.d/nfs-ganesha.gpfs		%{buildroot}%{_sysconfdir}/init.
 %endif
 
 make DESTDIR=%{buildroot} install
+
+%if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
+install -d %{buildroot}%{_datadir}/selinux/packages
+install -d -p %{buildroot}%{_datadir}/selinux/devel/include/contrib
+install -p -m 644 selinux/ganesha.if %{buildroot}%{_datadir}/selinux/devel/include/contrib
+install -m 0644 selinux/ganesha.pp.bz2 %{buildroot}%{_datadir}/selinux/packages
+%endif
 
 %post
 %if ( 0%{?suse_version} )
@@ -736,6 +778,12 @@ exit 0
 %if %{with man_page}
 %{_mandir}/*/ganesha-gluster-config.8.gz
 %endif
+%endif
+
+%if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
+%files selinux
+%attr(0644,root,root) %{_datadir}/selinux/packages/ganesha.pp.bz2
+%attr(0644,root,root) %{_datadir}/selinux/devel/include/contrib/ganesha.if
 %endif
 
 %if ! %{with system_ntirpc}

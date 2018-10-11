@@ -1,0 +1,11 @@
+/usr/bin/ganesha.nfsd		--	gen_context(system_u:object_r:ganesha_exec_t,s0)
+
+/usr/lib/systemd/system/nfs-ganesha-config.*		--	gen_context(system_u:object_r:ganesha_unit_file_t,s0)
+
+/usr/lib/systemd/system/nfs-ganesha-lock.*		--	gen_context(system_u:object_r:ganesha_unit_file_t,s0)
+
+/usr/lib/systemd/system/nfs-ganesha.*e		--	gen_context(system_u:object_r:ganesha_unit_file_t,s0)
+
+/var/log/ganesha(/.*)?		gen_context(system_u:object_r:ganesha_var_log_t,s0)
+
+/var/run/ganesha(/.*)?		gen_context(system_u:object_r:ganesha_var_run_t,s0)

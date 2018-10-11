@@ -1,0 +1,111 @@
+policy_module(ganesha, 1.0.0)
+
+########################################
+#
+# Declarations
+#
+
+## <desc>
+## <p>
+## Allow ganesha to read/write fuse files
+## </p>
+## </desc>
+gen_tunable(ganesha_use_fusefs, false)
+
+type ganesha_t;
+type ganesha_exec_t;
+init_daemon_domain(ganesha_t, ganesha_exec_t)
+
+type ganesha_var_log_t;
+logging_log_file(ganesha_var_log_t)
+
+type ganesha_var_run_t;
+files_pid_file(ganesha_var_run_t)
+
+type ganesha_tmp_t;
+files_tmp_file(ganesha_tmp_t)
+
+type ganesha_unit_file_t;
+systemd_unit_file(ganesha_unit_file_t)
+
+########################################
+#
+# ganesha local policy
+#
+dontaudit ganesha_t self:capability net_admin;
+
+allow ganesha_t self:capability { dac_read_search dac_override };
+allow ganesha_t self:capability2 block_suspend;
+allow ganesha_t self:process { setcap setrlimit };
+allow ganesha_t self:fifo_file rw_fifo_file_perms;
+allow ganesha_t self:unix_stream_socket create_stream_socket_perms;
+allow ganesha_t self:tcp_socket { accept listen };
+
+manage_dirs_pattern(ganesha_t, ganesha_var_run_t, ganesha_var_run_t)
+manage_files_pattern(ganesha_t, ganesha_var_run_t, ganesha_var_run_t)
+manage_lnk_files_pattern(ganesha_t, ganesha_var_run_t, ganesha_var_run_t)
+files_pid_filetrans(ganesha_t, ganesha_var_run_t, { dir file lnk_file })
+
+manage_dirs_pattern(ganesha_t, ganesha_var_log_t, ganesha_var_log_t)
+manage_files_pattern(ganesha_t, ganesha_var_log_t, ganesha_var_log_t)
+logging_log_filetrans(ganesha_t, ganesha_var_log_t, { file dir })
+
+manage_dirs_pattern(ganesha_t, ganesha_tmp_t, ganesha_tmp_t)
+manage_files_pattern(ganesha_t, ganesha_tmp_t, ganesha_tmp_t)
+files_tmp_filetrans(ganesha_t, ganesha_tmp_t, { file dir })
+
+kernel_read_system_state(ganesha_t)
+kernel_search_network_sysctl(ganesha_t)
+kernel_read_net_sysctls(ganesha_t)
+
+auth_use_nsswitch(ganesha_t)
+
+corenet_tcp_bind_nfs_port(ganesha_t)
+corenet_tcp_connect_generic_port(ganesha_t)
+corenet_tcp_connect_gluster_port(ganesha_t)
+corenet_udp_bind_dey_keyneg_port(ganesha_t)
+corenet_tcp_bind_dey_keyneg_port(ganesha_t)
+corenet_udp_bind_nfs_port(ganesha_t)
+corenet_udp_bind_all_rpc_ports(ganesha_t)
+corenet_tcp_bind_all_rpc_ports(ganesha_t)
+corenet_tcp_bind_mountd_port(ganesha_t)
+corenet_udp_bind_mountd_port(ganesha_t)
+corenet_tcp_connect_virt_migration_port(ganesha_t)
+corenet_tcp_connect_all_rpc_ports(ganesha_t)
+
+dev_rw_infiniband_dev(ganesha_t)
+dev_read_gpfs(ganesha_t)
+dev_read_rand(ganesha_t)
+
+logging_send_syslog_msg(ganesha_t)
+
+sysnet_dns_name_resolve(ganesha_t)
+
+optional_policy(`
+	dbus_system_bus_client(ganesha_t)
+	dbus_connect_system_bus(ganesha_t)
+    unconfined_dbus_chat(ganesha_t)
+')
+
+optional_policy(`
+    glusterd_read_conf(ganesha_t)
+    glusterd_read_lib_files(ganesha_t)
+    glusterd_manage_pid(ganesha_t)
+')
+
+optional_policy(`
+    kerberos_read_keytab(ganesha_t)
+')
+
+optional_policy(`
+	rpc_manage_nfs_state_data_dir(ganesha_t)
+    rpc_read_nfs_state_data(ganesha_t)
+	rpcbind_stream_connect(ganesha_t)
+')
+
+tunable_policy(`ganesha_use_fusefs',`
+    fs_manage_fusefs_dirs(ganesha_t)
+    fs_manage_fusefs_files(ganesha_t)
+    fs_read_fusefs_symlinks(ganesha_t)
+    fs_getattr_fusefs(ganesha_t)
+')

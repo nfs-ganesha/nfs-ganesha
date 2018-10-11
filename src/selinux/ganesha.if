@@ -1,0 +1,146 @@
+## <summary>policy for ganesha</summary>
+
+########################################
+## <summary>
+##	Execute ganesha_exec_t in the ganesha domain.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed to transition.
+## </summary>
+## </param>
+#
+interface(`ganesha_domtrans',`
+	gen_require(`
+		type ganesha_t, ganesha_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	domtrans_pattern($1, ganesha_exec_t, ganesha_t)
+')
+
+######################################
+## <summary>
+##	Execute ganesha in the caller domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`ganesha_exec',`
+	gen_require(`
+		type ganesha_exec_t;
+	')
+
+	corecmd_search_bin($1)
+	can_exec($1, ganesha_exec_t)
+')
+########################################
+## <summary>
+##	Read ganesha PID files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`ganesha_read_pid_files',`
+	gen_require(`
+		type ganesha_var_run_t;
+	')
+
+	files_search_pids($1)
+	read_files_pattern($1, ganesha_var_run_t, ganesha_var_run_t)
+')
+
+########################################
+## <summary>
+##	Execute ganesha server in the ganesha domain.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed to transition.
+##	</summary>
+## </param>
+#
+interface(`ganesha_systemctl',`
+	gen_require(`
+		type ganesha_t;
+		type ganesha_unit_file_t;
+	')
+
+	systemd_exec_systemctl($1)
+        systemd_read_fifo_file_passwd_run($1)
+	allow $1 ganesha_unit_file_t:file read_file_perms;
+	allow $1 ganesha_unit_file_t:service manage_service_perms;
+
+	ps_process_pattern($1, ganesha_t)
+')
+
+
+########################################
+## <summary>
+##	Send and receive messages from
+##	ganesha over dbus.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+interface(`ganesha_dbus_chat',`
+	gen_require(`
+		type ganesha_t;
+		class dbus send_msg;
+	')
+
+	allow $1 ganesha_t:dbus send_msg;
+	allow ganesha_t $1:dbus send_msg;
+')
+
+########################################
+## <summary>
+##	All of the rules required to administrate
+##	an ganesha environment
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+## <param name="role">
+##	<summary>
+##	Role allowed access.
+##	</summary>
+## </param>
+## <rolecap/>
+#
+interface(`ganesha_admin',`
+	gen_require(`
+		type ganesha_t;
+		type ganesha_var_run_t;
+	type ganesha_unit_file_t;
+	')
+
+	allow $1 ganesha_t:process { signal_perms };
+	ps_process_pattern($1, ganesha_t)
+
+    tunable_policy(`deny_ptrace',`',`
+        allow $1 ganesha_t:process ptrace;
+    ')
+
+	files_search_pids($1)
+	admin_pattern($1, ganesha_var_run_t)
+
+	ganesha_systemctl($1)
+	admin_pattern($1, ganesha_unit_file_t)
+	allow $1 ganesha_unit_file_t:service all_service_perms;
+	optional_policy(`
+		systemd_passwd_agent_exec($1)
+		systemd_read_fifo_file_passwd_run($1)
+	')
+')
