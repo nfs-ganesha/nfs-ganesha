@@ -164,6 +164,8 @@ char *err_type_str(struct config_error_type *err_type)
 		fputs("internal error, ", fp);
 	if (err_type->bogus)
 		fputs("unknown param, ", fp);
+	if (err_type->deprecated)
+		fputs("deprecated param, ", fp);
 	if (ferror(fp))
 		LogCrit(COMPONENT_CONFIG,
 			"file error while constructing err_type string");
@@ -764,6 +766,8 @@ static const char *config_type_str(enum config_type type)
 		return "CONFIG_BLOCK";
 	case CONFIG_PROC:
 		return "CONFIG_PROC";
+	case CONFIG_DEPRECATED:
+		return "CONFIG_DEPRECATED";
 	}
 	return "unknown";
 }
@@ -894,6 +898,8 @@ static bool do_block_init(struct config_node *blk_node,
 			break;
 		case CONFIG_PROC:
 			(void) item->u.proc.init(NULL, param_addr);
+			break;
+		case CONFIG_DEPRECATED:
 			break;
 		default:
 			config_proc_error(blk_node, err_type,
@@ -1228,6 +1234,19 @@ static int do_block_load(struct config_node *blk,
 				break;
 			case CONFIG_PROC:
 				do_proc(node, item, param_addr,	err_type);
+				break;
+			case CONFIG_DEPRECATED:
+				config_proc_error(node, err_type,
+					"Deprectated parameter (%s)%s%s",
+					item->name,
+					item->u.deprecated.message
+						? " - "
+						: "",
+					item->u.deprecated.message
+						? item->u.deprecated.message
+						: "");
+				err_type->deprecated = true;
+				errors++;
 				break;
 			default:
 				config_proc_error(term_node, err_type,
