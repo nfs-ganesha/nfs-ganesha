@@ -2370,12 +2370,16 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	errno = 0;
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+	SET_GLUSTER_CREDS(glfs_export, &my_fd.creds.caller_uid,
+			  &my_fd.creds.caller_gid,
+			  my_fd.creds.caller_glen,
+			  my_fd.creds.caller_garray,
+#ifdef USE_GLUSTER_DELEGATION
+			  my_fd.lease_id,
+			  GLAPI_LEASE_ID_SIZE);
+#else
+			  NULL, 0);
+#endif
 
 	/* Convert lkowner ptr address to opaque string */
 	retval = glfs_fd_set_lkowner(my_fd.glfd, p_owner, sizeof(p_owner));
@@ -2532,12 +2536,12 @@ static fsal_status_t glusterfs_lease_op2(struct fsal_obj_handle *obj_hdl,
 	memcpy(lease.lease_id, my_fd.lease_id, GLAPI_LEASE_ID_SIZE);
 
 	errno = 0;
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+	SET_GLUSTER_CREDS(glfs_export, &my_fd.creds.caller_uid,
+			  &my_fd.creds.caller_gid,
+			  my_fd.creds.caller_glen,
+			  my_fd.creds.caller_garray,
+			  my_fd.lease_id,
+			  GLAPI_LEASE_ID_SIZE);
 	retval = glfs_lease(my_fd.glfd, &lease, NULL, NULL);
 
 	if (retval) {
