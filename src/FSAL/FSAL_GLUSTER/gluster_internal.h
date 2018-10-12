@@ -153,6 +153,10 @@ struct glusterfs_export {
 	bool pnfs_mds_enabled;
 };
 
+#ifdef USE_GLUSTER_DELEGATION
+#define GLAPI_LEASE_ID_SIZE GLFS_LEASE_ID_SIZE
+#endif
+
 struct glusterfs_fd {
 	/** The open and share mode etc. This MUST be first in every
 	 *  file descriptor structure.
@@ -165,6 +169,9 @@ struct glusterfs_fd {
 	/** Gluster file descriptor. */
 	struct glfs_fd *glfd;
 	struct user_cred creds; /* user creds opening fd*/
+#ifdef USE_GLUSTER_DELEGATION
+	char lease_id[GLAPI_LEASE_ID_SIZE];
+#endif
 };
 
 struct glusterfs_handle {
@@ -222,14 +229,18 @@ struct glusterfs_state_fd {
 
 void setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
 		     gid_t *gid, unsigned int ngrps, gid_t *groups,
+		     char *client_addr, unsigned int client_addr_len,
 		     char *file, int line, char *function);
 
-#define SET_GLUSTER_CREDS(glfs_export, uid, gid, glen, garray) do {	\
-	int old_errno = errno;						\
-	((void) setglustercreds(glfs_export, uid, gid, glen,		\
-				garray, (char *) __FILE__,		\
-				__LINE__, (char *) __func__));		\
-	errno = old_errno;						\
+#define SET_GLUSTER_CREDS(glfs_export, uid, gid, glen, garray, client_addr, \
+			  client_addr_len)				    \
+do {									    \
+	int old_errno = errno;						    \
+	((void) setglustercreds(glfs_export, uid, gid, glen,		    \
+			       garray, client_addr, client_addr_len,	    \
+			       (char *) __FILE__,			    \
+			       __LINE__, (char *) __func__));		    \
+	errno = old_errno;						    \
 } while (0)
 
 #ifdef GLTIMING

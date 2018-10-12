@@ -213,13 +213,16 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
 				  &op_ctx->creds->caller_gid,
 				  op_ctx->creds->caller_glen,
-				  op_ctx->creds->caller_garray);
+				  op_ctx->creds->caller_garray,
+				  op_ctx->client->addr.addr,
+				  op_ctx->client->addr.len);
 
 		glfd = glfs_h_open(glfs_export->gl_fs->fs, ds->glhandle,
 				   O_RDWR);
 		if (glfd == NULL) {
 			LogDebug(COMPONENT_PNFS, "glfd in ds_handle is NULL");
-			SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
+			SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL,
+					  NULL, 0);
 			return NFS4ERR_SERVERFAULT;
 		}
 #ifdef USE_GLUSTER_STAT_FETCH_API
@@ -235,7 +238,7 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 			LogDebug(COMPONENT_PNFS,
 				 "status after close %d", errno);
 
-		SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
+		SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL, NULL, 0);
 	}
 
 	if ((rc != 0) || (status.major != ERR_FSAL_NO_ERROR))
