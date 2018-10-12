@@ -33,6 +33,7 @@
 #include "pnfs_utils.h"
 #include "nfs_exports.h"
 #include "sal_data.h"
+#include "sal_functions.h"
 
 /* fsal_obj_handle common methods
  */
@@ -80,6 +81,7 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 					strerror(errno), errno);
 			}
 		}
+		my_fd->glfd = NULL;
 	}
 
 	if (my_fd->creds.caller_garray) {
@@ -1261,6 +1263,9 @@ fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 	my_fd->creds.caller_uid = tmp2_fd->creds.caller_uid;
 	my_fd->creds.caller_gid = tmp2_fd->creds.caller_gid;
 	my_fd->creds.caller_glen = tmp2_fd->creds.caller_glen;
+#ifdef USE_GLUSTER_DELEGATION
+	memcpy(my_fd->lease_id, tmp2_fd->lease_id, GLAPI_LEASE_ID_SIZE);
+#endif
 
 	return status;
 }
@@ -2451,6 +2456,122 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(posix2fsal_error(retval), retval);
 }
 
+#ifdef USE_GLUSTER_DELEGATION
+static fsal_status_t glusterfs_lease_op2(struct fsal_obj_handle *obj_hdl,
+					 struct state_t *state,
+					 void *owner,
+					 fsal_deleg_t deleg)
+{
+	int retval = 0;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	struct glusterfs_fd my_fd = {0};
+	bool has_lock = false;
+	bool closefd = false;
+	bool bypass = false;
+	fsal_openflags_t openflags = FSAL_O_RDWR;
+	struct glusterfs_handle *myself = NULL;
+	struct glusterfs_fd *glusterfs_fd = NULL;
+	struct glfs_lease lease = {0,};
+	struct glusterfs_export *glfs_export =
+	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
+
+	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
+
+	switch (deleg) {
+	case FSAL_DELEG_NONE:
+		lease.cmd = GLFS_UNLK_LEASE;
+		openflags = FSAL_O_ANY;
+		/* 'myself' should contain the lease_type obtained.
+		 * If not, we had already unlocked the lease and this is
+		 * duplicate request. Return as noop. */
+		if (myself->lease_type == 0) {
+			LogDebug(COMPONENT_FSAL,
+				"No lease found to unlock");
+			return status;
+		}
+		lease.lease_type = myself->lease_type;
+		break;
+	case FSAL_DELEG_RD:
+		lease.cmd = GLFS_SET_LEASE;
+		openflags = FSAL_O_READ;
+		lease.lease_type = GLFS_RD_LEASE;
+		break;
+	case FSAL_DELEG_WR:
+		lease.cmd = GLFS_SET_LEASE;
+		openflags = FSAL_O_WRITE;
+		lease.lease_type = GLFS_RW_LEASE;
+		break;
+	default:
+		LogCrit(COMPONENT_FSAL, "Unknown requested lease state");
+		return gluster2fsal_error(EINVAL);
+	}
+
+	/* Acquire state's fdlock to prevent OPEN upgrade closing the
+	 * file descriptor while we use it.
+	 */
+	if (state) {
+		glusterfs_fd = &container_of(state, struct glusterfs_state_fd,
+					     state)->glusterfs_fd;
+
+		PTHREAD_RWLOCK_rdlock(&glusterfs_fd->fdlock);
+	}
+
+	/* Get a usable file descriptor */
+	status = find_fd(&my_fd, obj_hdl, bypass, state, openflags,
+			 &has_lock, &closefd, true);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to find fd for lease operation");
+		goto err;
+	}
+
+	/* Since we open unique fd for each NFSv4.x OPEN
+	 * operation, we should have had lease_id set
+	 */
+	memcpy(lease.lease_id, my_fd.lease_id, GLAPI_LEASE_ID_SIZE);
+
+	errno = 0;
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
+			  &op_ctx->creds->caller_gid,
+			  op_ctx->creds->caller_glen,
+			  op_ctx->creds->caller_garray,
+			  op_ctx->client->addr.addr,
+			  op_ctx->client->addr.len);
+	retval = glfs_lease(my_fd.glfd, &lease, NULL, NULL);
+
+	if (retval) {
+		retval = errno;
+		LogWarn(COMPONENT_FSAL, "Unable to %s lease",
+			(deleg == FSAL_DELEG_NONE) ?
+			 "release" : "acquire");
+	} else {
+		if (deleg == FSAL_DELEG_NONE) { /* reset lease_type */
+			myself->lease_type = 0;
+		} else {
+			myself->lease_type = lease.lease_type;
+		}
+	}
+
+	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL, NULL, 0);
+
+err:
+	if (closefd)
+		glusterfs_close_my_fd(&my_fd);
+
+	if (glusterfs_fd)
+		PTHREAD_RWLOCK_unlock(&glusterfs_fd->fdlock);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	if (retval)
+		status = gluster2fsal_error(retval);
+
+	return status;
+}
+#endif
+
 /**
  * @brief Set attributes on an object
  *
@@ -2947,7 +3068,9 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->setattr2 = glusterfs_setattr2;
 	ops->close2 = glusterfs_close2;
 	ops->seek2 = seek2;
-
+#ifdef USE_GLUSTER_DELEGATION
+	ops->lease_op2 = glusterfs_lease_op2;
+#endif
 
 	/* pNFS related ops */
 	handle_ops_pnfs(ops);

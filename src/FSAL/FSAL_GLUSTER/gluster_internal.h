@@ -188,6 +188,10 @@ struct glusterfs_handle {
 	uint64_t rw_issued;
 	uint64_t rw_serial;
 	uint64_t rw_max_len;
+#ifdef USE_GLUSTER_DELEGATION
+	glfs_lease_types_t lease_type; /* Store lease_type granted to
+					 this file: NONE,RD or RW */
+#endif
 };
 
 /* Structures defined for PNFS */
