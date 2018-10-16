@@ -74,6 +74,31 @@ NFS_RecvSize(uint64, default MAX_READ_WRITE_SIZE + SEND_RECV_HEADER_SPACE)
 
 **HandleMap_HashTable_Size(uint32, range 1 to 127, default 103)**
 
+PROXY {}
+--------------------------------------------------------------------------------
+
+**link_support(bool, default true)**
+
+**symlink_support(bool, default true)**
+
+**cansettime(bool, default true)**
+
+**MAX_READ_WRITE_SIZE(default 1MB)**
+
+**FSAL_MAXIOSIZE(default 64 MB)**
+
+**SEND_RECV_HEADER_SPACE(default, 512 Bytes)**
+
+**maxread(uint64, default MAX_READ_WRITE_SIZE)**
+    range 512 to FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE
+
+**maxwrite(uint64, default MAX_READ_WRITE_SIZE)**
+    range 512 to FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE
+
+**umask(mode, range 0 to 0777, default 0)**
+
+**auth_xdev_export(bool, default false)**
+
 See also
 ==============================
 :doc:`ganesha-log-config <ganesha-log-config>`\(8)
