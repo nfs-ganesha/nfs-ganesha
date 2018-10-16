@@ -546,7 +546,7 @@ static inline void fsal_copy_attrs(struct attrlist *dest,
 		src->valid_mask &= ~ATTR4_SEC_LABEL;
 	} else if (dest->sec_label.slai_data.slai_data_val != NULL &&
 		((save_request_mask & ATTR4_SEC_LABEL) != 0)) {
-		dest->sec_label.slai_data.slai_data_val =
+		dest->sec_label.slai_data.slai_data_val = (char *)
 			gsh_memdup(dest->sec_label.slai_data.slai_data_val,
 				   dest->sec_label.slai_data.slai_data_len);
 	} else {
