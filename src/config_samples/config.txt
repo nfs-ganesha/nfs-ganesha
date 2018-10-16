@@ -22,6 +22,7 @@ MEM {}
 RGW {}
 VFS {}
 XFS {}
+PROXY {}
 RADOS_KV {}
 RADOS_URLS {}
 
@@ -287,6 +288,7 @@ EXPORT {}
 		  which makes it effectively a static option.
 
 	Security_Label(bool, default false)
+
 		* Enable NFSv4.2 security label attribute. Ganesha supports
 		  "Limited Server Mode" as detailed in RFC 7204. Note that
 		  not all FSALs support security labels.
@@ -684,6 +686,28 @@ XFS {}
 	maxread(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
 
 	maxwrite(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
+
+	umask(mode, range 0 to 0777, default 0)
+
+	auth_xdev_export(bool, default false)
+
+PROXY {}
+--------
+
+	link_support(bool, default true)
+
+	symlink_support(bool, default true)
+
+	cansettime(bool, default true)
+
+	/*MAX_READ_WRITE_SIZE == 1MB*/
+	/*FSAL_MAXIOSIZE = 64 MB*/
+	/*SEND_RECV_HEADER_SPACE == 512 Bytes*/
+	maxread(uint64, range 512 to FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
+		default MAX_READ_WRITE_SIZE)
+
+	maxwrite(uint64, range 512 to FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
+		 default MAX_READ_WRITE_SIZE)
 
 	umask(mode, range 0 to 0777, default 0)
 
