@@ -1370,7 +1370,7 @@ int resolve_posix_filesystem(const char *path,
 	return retval;
 }
 
-static void release_posix_file_system(struct fsal_filesystem *fs)
+void release_posix_file_system(struct fsal_filesystem *fs)
 {
 	struct fsal_filesystem *child_fs;
 

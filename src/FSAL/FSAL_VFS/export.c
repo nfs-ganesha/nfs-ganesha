@@ -426,30 +426,28 @@ void vfs_unclaim_filesystem(struct fsal_filesystem *fs)
 
 void vfs_unexport_filesystems(struct vfs_fsal_export *exp)
 {
-	struct glist_head *glist, *glistn;
 	struct vfs_filesystem_export_map *map;
 
 	PTHREAD_RWLOCK_wrlock(&fs_lock);
 
-	glist_for_each_safe(glist, glistn, &exp->filesystems) {
-		map = glist_entry(glist,
-				  struct vfs_filesystem_export_map,
-				  on_filesystems);
+	do {
+		map = glist_first_entry(&exp->filesystems,
+					struct vfs_filesystem_export_map,
+					on_filesystems);
+		if (map == NULL) {
+			break;
+		}
 
-		/* Remove this export from mapping */
+		/* Remove this file system from mapping */
 		glist_del(&map->on_filesystems);
 		glist_del(&map->on_exports);
-
 		if (glist_empty(&map->fs->exports)) {
-			LogInfo(COMPONENT_FSAL,
-				"VFS is no longer exporting filesystem %s",
-				map->fs->fs->path);
-			unclaim_fs(map->fs->fs);
+			release_posix_file_system(map->fs->fs);
 		}
 
 		/* And free it */
 		gsh_free(map);
-	}
+	} while (true);
 
 	PTHREAD_RWLOCK_unlock(&fs_lock);
 }
