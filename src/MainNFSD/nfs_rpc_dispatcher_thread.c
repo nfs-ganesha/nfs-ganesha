@@ -90,7 +90,8 @@ static struct rpc_evchan rpc_evchan[EVCHAN_SIZE];
 
 static enum xprt_stat nfs_rpc_tcp_user_data(SVCXPRT *);
 static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *);
-static enum xprt_stat nfs_rpc_decode_request(SVCXPRT *, XDR *);
+static struct svc_req *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs);
+static void free_nfs_request(struct svc_req *req, enum xprt_stat stat);
 
 const char *xprt_stat_s[XPRT_DESTROYED + 1] = {
 	"XPRT_IDLE",
@@ -1084,7 +1085,8 @@ void nfs_Init_svc(void)
 
 	/* New TI-RPC package init function */
 	svc_params.disconnect_cb = NULL;
-	svc_params.request_cb = nfs_rpc_decode_request;
+	svc_params.alloc_cb = alloc_nfs_request;
+	svc_params.free_cb = free_nfs_request;
 	svc_params.flags = SVC_INIT_EPOLL;	/* use EPOLL event mgmt */
 	svc_params.flags |= SVC_INIT_NOREG_XPRTS; /* don't call xprt_register */
 	svc_params.max_connections = nfs_param.core_param.rpc.max_connections;
@@ -1257,17 +1259,31 @@ static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *xprt)
 	return XPRT_DESTROYED;
 }
 
-
 /**
  * @brief Allocate a new request
  *
  * @param[in] xprt Transport to use
+ * @param[in] xdrs XDR to use
  *
- * @return New request data
+ * @return New svc request
  */
-static inline nfs_request_t *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
+static struct svc_req *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 {
 	nfs_request_t *reqdata = gsh_calloc(1, sizeof(nfs_request_t));
+
+	if (!xprt) {
+		LogFatal(COMPONENT_DISPATCH,
+			 "missing xprt!");
+	}
+
+	if (!xdrs) {
+		LogFatal(COMPONENT_DISPATCH,
+			 "missing xdrs!");
+	}
+
+	LogDebug(COMPONENT_DISPATCH,
+		 "%p fd %d context %p",
+		 xprt, xprt->xp_fd, xdrs);
 
 	(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
 
@@ -1276,55 +1292,7 @@ static inline nfs_request_t *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 	reqdata->svc.rq_xprt = xprt;
 	reqdata->svc.rq_xdrs = xdrs;
 	reqdata->svc.rq_refcnt = 1;
-	return reqdata;
-}
 
-int free_nfs_request(nfs_request_t *reqdata)
-{
-	SVCXPRT *xprt = reqdata->svc.rq_xprt;
-	uint32_t refs = atomic_dec_uint32_t(&reqdata->svc.rq_refcnt);
-
-	LogDebug(COMPONENT_DISPATCH,
-		 "%s: %p fd %d xp_refcnt %" PRIu32 " rq_refcnt %" PRIu32,
-		 __func__,
-		 xprt, xprt->xp_fd, xprt->xp_refcnt,
-		 refs);
-
-	if (refs)
-		return refs;
-
-	/* dispose RPC header */
-	if (reqdata->svc.rq_auth)
-		SVCAUTH_RELEASE(&(reqdata->svc));
-
-	XDR_DESTROY(reqdata->svc.rq_xdrs);
-
-	SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
-	gsh_free(reqdata);
-	(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
-	return 0;
-}
-
-static enum xprt_stat nfs_rpc_decode_request(SVCXPRT *xprt, XDR *xdrs)
-{
-	nfs_request_t *reqdata;
-	enum xprt_stat stat;
-
-	if (!xprt) {
-		LogFatal(COMPONENT_DISPATCH,
-			 "missing xprt!");
-		return XPRT_DIED;
-	}
-	if (!xdrs) {
-		LogFatal(COMPONENT_DISPATCH,
-			 "missing xdrs!");
-		return XPRT_DIED;
-	}
-	LogDebug(COMPONENT_DISPATCH,
-		 "%p fd %d context %p",
-		 xprt, xprt->xp_fd, xdrs);
-
-	reqdata = alloc_nfs_request(xprt, xdrs);
 #if HAVE_BLKIN
 	blkin_init_new_trace(&reqdata->svc.bl_trace, "nfs-ganesha",
 			&xprt->blkin.endp);
@@ -1335,7 +1303,13 @@ static enum xprt_stat nfs_rpc_decode_request(SVCXPRT *xprt, XDR *xdrs)
 		&reqdata->svc.bl_trace, &xprt->blkin.endp, "pre-recv");
 #endif
 
-	stat = SVC_DECODE(&reqdata->svc);
+	return &reqdata->svc;
+}
+
+static void free_nfs_request(struct svc_req *req, enum xprt_stat stat)
+{
+	nfs_request_t *reqdata = container_of(req, nfs_request_t, svc);
+	SVCXPRT *xprt = reqdata->svc.rq_xprt;
 
 #if defined(HAVE_BLKIN)
 	BLKIN_TIMESTAMP(
@@ -1374,8 +1348,11 @@ static enum xprt_stat nfs_rpc_decode_request(SVCXPRT *xprt, XDR *xdrs)
 			 xprt_stat_s[stat]);
 	}
 
-	/* refresh status before possible release */
-	stat = SVC_STAT(xprt);
-	free_nfs_request(reqdata);
-	return stat;
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "%s: %p fd %d xp_refcnt %" PRIu32,
+		     __func__, xprt, xprt->xp_fd, xprt->xp_refcnt);
+
+	gsh_free(reqdata);
+
+	(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 }

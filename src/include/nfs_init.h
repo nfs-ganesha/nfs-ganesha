@@ -108,10 +108,6 @@ static inline void nfs_check_malloc(void)
 	free(p);
 }
 
-/* in nfs_rpc_dispatcher_thread.c */
-
-int free_nfs_request(nfs_request_t *);
-
 /* in nfs_worker_thread.c */
 
 enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *);
