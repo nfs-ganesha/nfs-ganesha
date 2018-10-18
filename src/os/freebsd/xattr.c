@@ -26,6 +26,7 @@
  */
 
 #include <os/freebsd/xattr.h>
+#include <limits.h>
 #include <sys/extattr.h>
 
 #ifndef EXTATTR_MAXNAMELEN
