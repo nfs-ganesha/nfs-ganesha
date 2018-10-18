@@ -312,6 +312,7 @@ static void *callback_thread(void *callback_info)
 	struct pan_cb_layoutrecall_event events[E_MAX_EVENTS];
 	int err = 0;
 
+	rcu_register_thread();
 	while (!_rt->stop) {
 		int num_events = 0;
 		int e;
@@ -341,7 +342,7 @@ static void *callback_thread(void *callback_info)
 			initiate_recall(myself, &seg, r_cookie);
 		}
 	}
-
+	rcu_unregister_thread();
 	return (void *)(long)err;
 }
 

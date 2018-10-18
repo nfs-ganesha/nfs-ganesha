@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/time.h>
+#include <urcu.h>
 
 /* Setup up_vector. File system's upvector_mutex must be held */
 static bool setup_up_vector(struct gpfs_filesystem *gpfs_fs)
@@ -81,6 +82,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	uint32_t upflags;
 	int errsv = 0;
 	fsal_status_t fsal_status = {0,};
+
+	rcu_register_thread();
 
 #ifdef _VALGRIND_MEMCHECK
 		memset(&handle, 0, sizeof(handle));
@@ -134,7 +137,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				LogFatal(COMPONENT_FSAL_UP,
 					 "Ganesha version %d mismatch GPFS version %d.",
 					 callback.interface_version, rc);
-				return NULL;
+				goto out;
 			}
 
 			if (errsv == EINTR)
@@ -205,7 +208,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		PTHREAD_MUTEX_lock(&gpfs_fs->upvector_mutex);
 		if (!setup_up_vector(gpfs_fs)) {
 			PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
-			return NULL;
+			goto out;
 		}
 		event_func = gpfs_fs->up_vector;
 
@@ -429,7 +432,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				"Terminating the GPFS up call thread for %d",
 				gpfs_fs->root_fd);
 			PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
-			return NULL;
+			goto out;
 
 		case INODE_INVALIDATE:
 			LogMidDebug(COMPONENT_FSAL_UP,
@@ -468,6 +471,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				fsal_err_txt(fsal_status));
 		}
 	}
-
+out:
+	rcu_unregister_thread();
 	return NULL;
 }				/* GPFSFSAL_UP_Thread */

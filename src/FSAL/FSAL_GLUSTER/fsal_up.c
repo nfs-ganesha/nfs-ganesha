@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/time.h>
+#include <urcu.h>
 #include "sal_functions.h"
 
 int up_process_event_object(struct glusterfs_fs *gl_fs,
@@ -144,7 +145,7 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 	struct glfs_upcall_lease    *lease_arg          = NULL;
 #endif
 
-
+	rcu_register_thread();
 	snprintf(thr_name, sizeof(thr_name),
 		 "fsal_up_%p",
 		 gl_fs->fs);
@@ -157,7 +158,7 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 		LogFatal(COMPONENT_FSAL_UP,
 			 "FSAL up vector does not exist. Can not continue.");
 		gsh_free(Arg);
-		return NULL;
+		goto out;
 	}
 
 	LogFullDebug(COMPONENT_FSAL_UP,
@@ -212,7 +213,7 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 						gl_fs->fs, rc, errsv,
 						strerror(errsv), reason);
 				}
-				return NULL;
+				goto out;
 			}
 		}
 
@@ -283,6 +284,7 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 	}
 
 out:
+	rcu_unregister_thread();
 	return NULL;
 }				/* GLUSTERFSFSAL_UP_Thread */
 

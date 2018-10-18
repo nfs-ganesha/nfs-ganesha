@@ -33,6 +33,8 @@
 #include <arpa/inet.h>
 #include <sys/poll.h>
 #include <netdb.h>
+#include <urcu.h>
+
 #include "gsh_list.h"
 #include "abstract_atomic.h"
 #include "fsal_types.h"
@@ -537,6 +539,7 @@ static void *pxy_rpc_recv(void *arg)
 
 	SetNameFunction("pxy_rcv_thread");
 
+	rcu_register_thread();
 	while (!pxy_exp->rpc.close_thread) {
 		int nsleeps = 0;
 
@@ -548,7 +551,7 @@ static void *pxy_rpc_recv(void *arg)
 			/* early stop test */
 			if (pxy_exp->rpc.close_thread) {
 				PTHREAD_MUTEX_unlock(&pxy_exp->rpc.listlock);
-				return NULL;
+				goto out;
 			}
 			if (pxy_exp->rpc.rpc_sock < 0) {
 				if (nsleeps == 0)
@@ -571,7 +574,7 @@ static void *pxy_rpc_recv(void *arg)
 		PTHREAD_MUTEX_unlock(&pxy_exp->rpc.listlock);
 		/* early stop test */
 		if (pxy_exp->rpc.close_thread)
-			return NULL;
+			goto out;
 
 		pfd.fd = pxy_exp->rpc.rpc_sock;
 		pfd.events = POLLIN | POLLRDHUP;
@@ -606,7 +609,8 @@ static void *pxy_rpc_recv(void *arg)
 			PTHREAD_MUTEX_unlock(&pxy_exp->rpc.listlock);
 		}
 	}
-
+out:
+	rcu_unregister_thread();
 	return NULL;
 }
 
@@ -1085,6 +1089,7 @@ static void *pxy_clientid_renewer(void *arg)
 
 	SetNameFunction("pxy_clientid_renewer");
 
+	rcu_register_thread();
 	while (!pxy_exp->rpc.close_thread) {
 		clientid4 newcid = 0;
 		sequenceid4 newseqid = 0;
@@ -1132,13 +1137,13 @@ static void *pxy_clientid_renewer(void *arg)
 
 		/* early stop test */
 		if (pxy_exp->rpc.close_thread)
-			return NULL;
+			break;
 
 		/* We've either failed to renew or rpc socket has been
 		 * reconnected and we need new clientid or sessionid. */
 		if (pxy_rpc_need_sock(pxy_exp))
 			/* early stop test */
-			return NULL;
+			break;
 
 		/* We need a new session_id */
 		if (!clientid_needed) {
@@ -1178,7 +1183,7 @@ static void *pxy_clientid_renewer(void *arg)
 			PTHREAD_MUTEX_unlock(&pxy_exp->rpc.pxy_clientid_mutex);
 		}
 	}
-
+	rcu_unregister_thread();
 	return NULL;
 }
 

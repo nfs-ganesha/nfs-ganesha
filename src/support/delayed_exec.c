@@ -42,6 +42,8 @@
 #elif FREEBSD
 #include <signal.h>
 #endif
+#include <urcu.h>
+
 #include "abstract_mem.h"
 #include "delayed_exec.h"
 #include "log.h"
@@ -207,6 +209,7 @@ void *delayed_thread(void *arg)
 	sigset_t old_sigmask;
 
 	SetNameFunction("Async");
+	rcu_register_thread();
 
 	/* Excplicitly and definitely enable cancellation */
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old_state);
@@ -247,6 +250,7 @@ void *delayed_thread(void *arg)
 	PTHREAD_MUTEX_unlock(&mtx);
 	gsh_free(thr);
 
+	rcu_unregister_thread();
 	return NULL;
 }
 

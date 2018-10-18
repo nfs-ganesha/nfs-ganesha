@@ -46,6 +46,7 @@
 #elif FREEBSD
 #include <signal.h>
 #endif
+#include <urcu.h>
 #include "abstract_mem.h"
 #include "fridgethr.h"
 #include "nfs_core.h"
@@ -521,6 +522,7 @@ static void *fridgethr_start_routine(void *arg)
 	int old_type = 0;
 	int old_state = 0;
 
+	rcu_register_thread();
 	SetNameFunction(fr->s);
 
 	/* Excplicitly and definitely enable cancellation */
@@ -564,6 +566,7 @@ static void *fridgethr_start_routine(void *arg)
 	fe = NULL;
 	/* At this point the fridge entry no longer exists and must
 	   not be accessed. */
+	rcu_unregister_thread();
 	return NULL;
 }
 

@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <dbus/dbus.h>
 #include <ctype.h>
+#include <urcu.h>
 
 #include "fsal.h"
 #include "nfs_core.h"
@@ -728,6 +729,8 @@ void *gsh_dbus_thread(void *arg)
 
 	SetNameFunction("dbus");
 
+	rcu_register_thread();
+
 	if (!thread_state.initialized) {
 		LogCrit(COMPONENT_DBUS,
 			"DBUS not initialized, service thread exiting");
@@ -802,7 +805,7 @@ void *gsh_dbus_thread(void *arg)
 
  out:
 	LogEvent(COMPONENT_DBUS, "shutdown");
-
+	rcu_unregister_thread();
 	return NULL;
 }
 

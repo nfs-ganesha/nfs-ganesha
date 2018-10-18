@@ -73,6 +73,7 @@
 #include "mdcache.h"
 #include "common_utils.h"
 #include "nfs_init.h"
+#include <urcu.h>
 
 /**
  * @brief init_complete used to indicate if ganesha is during
@@ -202,8 +203,10 @@ void reread_config(void)
  */
 static void *sigmgr_thread(void *UnusedArg)
 {
-	SetNameFunction("sigmgr");
 	int signal_caught = 0;
+
+	SetNameFunction("sigmgr");
+	rcu_register_thread();
 
 	/* Loop until we catch SIGTERM */
 	while (signal_caught != SIGTERM) {
@@ -231,6 +234,7 @@ static void *sigmgr_thread(void *UnusedArg)
 	admin_halt();
 
 	/* Might as well exit - no need for this thread any more */
+	rcu_unregister_thread();
 	return NULL;
 }
 

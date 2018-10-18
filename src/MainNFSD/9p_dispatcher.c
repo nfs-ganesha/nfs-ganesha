@@ -60,6 +60,7 @@
 #include "server_stats.h"
 #include "9p.h"
 #include <stdbool.h>
+#include <urcu.h>
 
 #define P_FAMILY AF_INET6
 
@@ -599,6 +600,7 @@ void *_9p_socket_thread(void *Arg)
 
 	snprintf(my_name, MAXNAMLEN, "9p_sock_mgr#fd=%ld", tcp_sock);
 	SetNameFunction(my_name);
+	rcu_register_thread();
 
 	/* Init the struct _9p_conn structure */
 	memset(&_9p_conn, 0, sizeof(_9p_conn));
@@ -801,6 +803,7 @@ end:
 	if (_9p_conn.client != NULL)
 		put_gsh_client(_9p_conn.client);
 
+	rcu_unregister_thread();
 	pthread_exit(NULL);
 }				/* _9p_socket_thread */
 
@@ -1015,6 +1018,8 @@ void *_9p_dispatcher_thread(void *Arg)
 
 	SetNameFunction("_9p_disp");
 
+	rcu_register_thread();
+
 	/* Calling dispatcher main loop */
 	LogInfo(COMPONENT_9P_DISPATCH, "Entering nfs/rpc dispatcher");
 
@@ -1068,5 +1073,6 @@ void *_9p_dispatcher_thread(void *Arg)
 	close(_9p_socket);
 	pthread_attr_destroy(&attr_thr);
 
+	rcu_unregister_thread();
 	return NULL;
 }				/* _9p_dispatcher_thread */

@@ -33,6 +33,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <urcu.h>
+
 #include "nfs_core.h"
 #include "log.h"
 #include "sal_functions.h"
@@ -520,6 +522,7 @@ static void do_shutdown(void)
 void *admin_thread(void *UnusedArg)
 {
 	SetNameFunction("Admin");
+	rcu_register_thread();
 
 	PTHREAD_MUTEX_lock(&admin_control_mtx);
 
@@ -532,5 +535,6 @@ void *admin_thread(void *UnusedArg)
 
 	do_shutdown();
 
+	rcu_unregister_thread();
 	return NULL;
 }
