@@ -1041,6 +1041,11 @@ endif (USE_SYSTEM_NTIRPC)
 message(${NTIRPC_INCLUDE_DIR})
 include_directories(${NTIRPC_INCLUDE_DIR})
 
+find_library(LIBURCU urcu)
+if (NOT LIBURCU)
+	message(FATAL_ERROR "userspace-rcu library not found!")
+endif(NOT LIBURCU)
+
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
   ${NTIRPC_LIBRARY}
@@ -1050,6 +1055,7 @@ set(SYSTEM_LIBRARIES
   ${KRB5_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBRT}
+  ${LIBURCU}
 )
 
 # Config file; make sure it doesn't clobber an existing one

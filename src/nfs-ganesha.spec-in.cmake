@@ -119,6 +119,7 @@ BuildRequires:	cmake
 BuildRequires:	bison flex
 BuildRequires:	flex
 BuildRequires:	pkgconfig
+BuildRequires:	userspace-rcu-devel
 BuildRequires:	krb5-devel
 %if ( 0%{?suse_version} >= 1330 )
 BuildRequires:  libnsl-devel
