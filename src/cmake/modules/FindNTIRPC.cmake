@@ -19,6 +19,9 @@ include(LibFindMacros)
 
 libfind_pkg_detect(NTIRPC libntirpc FIND_PATH netconfig.h PATH_SUFFIXES ntirpc FIND_LIBRARY ntirpc)
 
+find_library(NTIRPC_TRACEPOINTS ntirpc_tracepoints)
+find_library(NTIRPC_LTTNG ntirpc_lttng)
+
 if (NTIRPC_LIBRARY)
 	libfind_version_header(NTIRPC version.h NTIRPC_VERSION)
 endif (NTIRPC_LIBRARY)
