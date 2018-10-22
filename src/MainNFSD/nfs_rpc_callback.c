@@ -828,7 +828,7 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *clientid, uint32_t flags)
 	if (clientid->cid_minorversion == 0) {
 		chan = &clientid->cid_cb.v40.cb_chan;
 		if (!chan->clnt) {
-			if (!nfs_rpc_create_chan_v40(clientid, flags)) {
+			if (nfs_rpc_create_chan_v40(clientid, flags)) {
 				chan = NULL;
 			}
 		}
