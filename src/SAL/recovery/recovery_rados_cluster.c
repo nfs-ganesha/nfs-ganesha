@@ -28,6 +28,7 @@
 #include <netdb.h>
 #include <rados/librados.h>
 #include <rados_grace.h>
+#include <urcu.h>
 #include "log.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -144,8 +145,10 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 				add_rfh_entry_hook add_rfh_entry)
 {
 	int ret;
+	size_t len;
 	uint64_t cur, rec;
 	rados_write_op_t wop;
+	struct gsh_refstr *recov_oid;
 	struct pop_args args = {
 		.add_clid_entry = add_clid_entry,
 		.add_rfh_entry = add_rfh_entry,
@@ -171,13 +174,20 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 	 *
 	 * "rec-" followed by epoch in 16 hex digits + nodeid.
 	 */
-	snprintf(rados_recov_oid, sizeof(rados_recov_oid),
-			"rec-%16.16lx:%s", cur, nodeid);
+
+	/* FIXME: assert that rados_recov_oid is NULL? */
+	len = 4 + 16 + 1 + strlen(nodeid) + 1;
+	recov_oid = gsh_refstr_alloc(len);
+	snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
+	gsh_refstr_get(recov_oid);
+	rcu_set_pointer(&rados_recov_oid, recov_oid);
+
 	wop = rados_create_write_op();
 	rados_write_op_create(wop, LIBRADOS_CREATE_IDEMPOTENT, NULL);
 	rados_write_op_omap_clear(wop);
 	ret = rados_write_op_operate(wop, rados_recov_io_ctx,
-				     rados_recov_oid, NULL, 0);
+				     recov_oid->gr_val, NULL, 0);
+	gsh_refstr_put(recov_oid);
 	rados_release_write_op(wop);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to create recovery db");
@@ -258,9 +268,11 @@ static void rados_set_client_cb(struct rbt_node *pn, void *arg)
 static void rados_cluster_maybe_start_grace(void)
 {
 	int ret, i;
+	size_t len;
 	nfs_grace_start_t gsp = { .event = EVENT_JUST_GRACE };
 	rados_write_op_t wop;
 	uint64_t cur, rec;
+	struct gsh_refstr *recov_oid, *prev_recov_oid;
 	char *keys[RADOS_KV_STARTING_SLOTS];
 	char *vals[RADOS_KV_STARTING_SLOTS];
 	size_t lens[RADOS_KV_STARTING_SLOTS];
@@ -291,9 +303,18 @@ static void rados_cluster_maybe_start_grace(void)
 	 * currently active clients in it.
 	 */
 
-	/* Fix up the oid strings */
-	snprintf(rados_recov_oid, sizeof(rados_recov_oid),
-			"rec-%16.16lx:%s", cur, nodeid);
+	/* Allocate new oid string and xchg it into place */
+	len = 4 + 16 + 1 + strlen(nodeid) + 1;
+	recov_oid = gsh_refstr_alloc(len);
+
+	/* Get an extra working reference of new string */
+	gsh_refstr_get(recov_oid);
+
+	snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
+	prev_recov_oid = rcu_xchg_pointer(&rados_recov_oid, recov_oid);
+	synchronize_rcu();
+	gsh_refstr_put(prev_recov_oid);
+
 	snprintf(rados_recov_old_oid, sizeof(rados_recov_old_oid),
 			"rec-%16.16lx:%s", rec, nodeid);
 
@@ -308,7 +329,8 @@ static void rados_cluster_maybe_start_grace(void)
 				     (char const * const *)vals,
 				     (const size_t *)lens, kvp.num);
 	ret = rados_write_op_operate(wop, rados_recov_io_ctx,
-				     rados_recov_oid, NULL, 0);
+				     recov_oid->gr_val, NULL, 0);
+	gsh_refstr_put(recov_oid);
 	if (ret)
 		LogEvent(COMPONENT_CLIENTID,
 				"rados_write_op_operate failed: %d", ret);

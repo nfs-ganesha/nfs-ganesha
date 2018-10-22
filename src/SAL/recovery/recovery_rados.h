@@ -21,14 +21,15 @@
  */
 #ifndef _RECOVERY_RADOS_H
 #define _RECOVERY_RADOS_H
+#include "gsh_refstr.h"
 
 #define RADOS_KEY_MAX_LEN	NAME_MAX
 #define RADOS_VAL_MAX_LEN	PATH_MAX
 
-extern rados_t		rados_recov_cluster;
-extern rados_ioctx_t	rados_recov_io_ctx;
-extern char		rados_recov_oid[NI_MAXHOST + 6];
-extern char		rados_recov_old_oid[NI_MAXHOST + 4];
+extern rados_t			rados_recov_cluster;
+extern rados_ioctx_t		rados_recov_io_ctx;
+extern struct gsh_refstr	*rados_recov_oid;
+extern char			rados_recov_old_oid[NI_MAXHOST + 4];
 
 struct rados_kv_parameter {
 	/** Connection to ceph cluster */

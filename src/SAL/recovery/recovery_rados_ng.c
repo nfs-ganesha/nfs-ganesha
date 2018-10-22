@@ -37,6 +37,7 @@
 #include "config.h"
 #include <netdb.h>
 #include <rados/librados.h>
+#include <urcu.h>
 #include "log.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -114,6 +115,8 @@ static int rados_ng_del(char *key, char *object)
 static int rados_ng_init(void)
 {
 	int ret;
+	size_t len;
+	struct gsh_refstr *recov_oid;
 	char host[NI_MAXHOST];
 	rados_write_op_t op;
 
@@ -129,12 +132,17 @@ static int rados_ng_init(void)
 		}
 	}
 
-	snprintf(rados_recov_oid, sizeof(rados_recov_oid), "%s.recov", host);
+	len = strlen(host) + 6 + 1;
+	recov_oid = gsh_refstr_alloc(len);
+	gsh_refstr_get(recov_oid);
+	snprintf(recov_oid->gr_val, len, "%s_recov", host);
+	rcu_set_pointer(&rados_recov_oid, recov_oid);
 
 	ret = rados_kv_connect(&rados_recov_io_ctx, rados_kv_param.userid,
 			rados_kv_param.ceph_conf, rados_kv_param.pool,
 			rados_kv_param.namespace);
 	if (ret < 0) {
+		gsh_refstr_put(recov_oid);
 		LogEvent(COMPONENT_CLIENTID,
 			"Failed to connect to cluster: %d", ret);
 		return ret;
@@ -142,8 +150,9 @@ static int rados_ng_init(void)
 
 	op = rados_create_write_op();
 	rados_write_op_create(op, LIBRADOS_CREATE_EXCLUSIVE, NULL);
-	ret = rados_write_op_operate(op, rados_recov_io_ctx, rados_recov_oid,
+	ret = rados_write_op_operate(op, rados_recov_io_ctx, recov_oid->gr_val,
 				     NULL, 0);
+	gsh_refstr_put(recov_oid);
 	if (ret < 0 && ret != -EEXIST) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to create object");
 		rados_release_write_op(op);
@@ -162,6 +171,7 @@ static int rados_ng_init(void)
 
 static void rados_ng_add_clid(nfs_client_id_t *clientid)
 {
+	struct gsh_refstr *recov_oid;
 	char ckey[RADOS_KEY_MAX_LEN];
 	char *cval;
 	int ret;
@@ -172,7 +182,11 @@ static void rados_ng_add_clid(nfs_client_id_t *clientid)
 	rados_kv_create_val(clientid, cval);
 
 	LogDebug(COMPONENT_CLIENTID, "adding %s :: %s", ckey, cval);
-	ret = rados_ng_put(ckey, cval, rados_recov_oid);
+	rcu_read_lock();
+	recov_oid = gsh_refstr_get(rcu_dereference(rados_recov_oid));
+	rcu_read_unlock();
+	ret = rados_ng_put(ckey, cval, recov_oid->gr_val);
+	gsh_refstr_put(recov_oid);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to add clid %lu",
 			 clientid->cid_clientid);
@@ -189,11 +203,16 @@ static void rados_ng_rm_clid(nfs_client_id_t *clientid)
 {
 	char ckey[RADOS_KEY_MAX_LEN];
 	int ret;
+	struct gsh_refstr *recov_oid;
 
 	rados_kv_create_key(clientid, ckey);
 
 	LogDebug(COMPONENT_CLIENTID, "removing %s", ckey);
-	ret = rados_ng_del(ckey, rados_recov_oid);
+	rcu_read_lock();
+	recov_oid = gsh_refstr_get(rcu_dereference(rados_recov_oid));
+	rcu_read_unlock();
+	ret = rados_ng_del(ckey, recov_oid->gr_val);
+	gsh_refstr_put(recov_oid);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to del clid %lu",
 			 clientid->cid_clientid);
@@ -234,13 +253,18 @@ rados_ng_read_recov_clids_recover(add_clid_entry_hook add_clid_entry,
 				       add_rfh_entry_hook add_rfh_entry)
 {
 	int ret;
+	struct gsh_refstr *recov_oid;
 	struct pop_args args = {
 		.add_clid_entry = add_clid_entry,
 		.add_rfh_entry = add_rfh_entry,
 	};
 
+	rcu_read_lock();
+	recov_oid = gsh_refstr_get(rcu_dereference(rados_recov_oid));
+	rcu_read_unlock();
 	ret = rados_kv_traverse(rados_ng_pop_clid_entry, &args,
-				rados_recov_oid);
+				recov_oid->gr_val);
+	gsh_refstr_put(recov_oid);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to recover, processing old entries");
@@ -265,11 +289,16 @@ static void rados_ng_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 static void rados_ng_cleanup_old(void)
 {
 	int ret;
+	struct gsh_refstr *recov_oid;
 
 	/* Commit pregrace transaction */
 	PTHREAD_MUTEX_lock(&grace_op_lock);
+	rcu_read_lock();
+	recov_oid = gsh_refstr_get(rcu_dereference(rados_recov_oid));
+	rcu_read_unlock();
 	ret = rados_write_op_operate(grace_op, rados_recov_io_ctx,
-				     rados_recov_oid, NULL, 0);
+				     recov_oid->gr_val, NULL, 0);
+	gsh_refstr_put(recov_oid);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to commit grace period transactions: %s",
