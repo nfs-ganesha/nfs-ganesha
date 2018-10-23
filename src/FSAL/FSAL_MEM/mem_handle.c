@@ -493,7 +493,7 @@ static void mem_copy_attrs_mask(struct attrlist *attrs_in,
 static fsal_status_t mem_open_my_fd(struct fsal_fd *fd,
 				    fsal_openflags_t openflags)
 {
-	fd->openflags = openflags;
+	fd->openflags = FSAL_O_NFS_FLAGS(openflags);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
