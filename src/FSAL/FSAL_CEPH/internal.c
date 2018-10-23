@@ -74,7 +74,7 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 #ifdef CEPH_NOSNAP
 	constructing->key.chk_vi.snapid.val = stx->stx_dev;
 #endif /* CEPH_NOSNAP */
-	constructing->key.chk_fscid = 0;
+	constructing->key.chk_fscid = export->fscid;
 	constructing->i = i;
 	constructing->up_ops = export->export.up_ops;
 

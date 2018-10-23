@@ -158,6 +158,7 @@ static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_ITEM_STR("user_id", 0, MAXUIDLEN, NULL, ceph_export, user_id),
+	CONF_ITEM_STR("filesystem", 0, NAME_MAX, NULL, ceph_export, fs_name),
 	CONF_ITEM_STR("secret_access_key", 0, MAXSECRETLEN, NULL, ceph_export,
 			secret_key),
 	CONF_ITEM_STR("sec_label_xattr", 0, 256, "security.selinux",
@@ -259,6 +260,35 @@ static inline int reclaim_reset(struct ceph_export *export)
 	return 0;
 }
 #endif
+
+#ifdef USE_FSAL_CEPH_GET_FS_CID
+static int select_filesystem(struct ceph_export *export)
+{
+	int ceph_status;
+
+	if (export->fs_name) {
+		ceph_status = ceph_select_filesystem(export->cmount,
+						     export->fs_name);
+		if (ceph_status != 0) {
+			LogCrit(COMPONENT_FSAL,
+				"Unable to set filesystem to %s.",
+				export->fs_name);
+			return ceph_status;
+		}
+	}
+	return 0;
+}
+#else /* USE_FSAL_CEPH_GET_FS_CID */
+static int select_filesystem(struct ceph_export *export)
+{
+	if (export->fs_name) {
+		LogCrit(COMPONENT_FSAL,
+			"This libcephfs version doesn't support named filesystems.");
+		return -EINVAL;
+	}
+	return 0;
+}
+#endif /* USE_FSAL_CEPH_GET_FS_CID */
 
 /**
  * @brief Create a new export under this FSAL
@@ -372,6 +402,12 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
+	ceph_status = select_filesystem(export);
+	if (ceph_status != 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		goto error;
+	}
+
 	ceph_status = reclaim_reset(export);
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
@@ -389,6 +425,17 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			op_ctx->ctx_export->fullpath);
 		goto error;
 	}
+
+#ifdef USE_FSAL_CEPH_GET_FS_CID
+	/* Fetch fscid for use in filehandles */
+	export->fscid = ceph_get_fs_cid(export->cmount);
+	if (export->fscid < 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogCrit(COMPONENT_FSAL,
+			"Error getting fscid for %s.", export->fs_name);
+		goto error;
+	}
+#endif /* USE_FSAL_CEPH_GET_FS_CID */
 
 	enable_delegations(export);
 
