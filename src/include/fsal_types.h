@@ -630,6 +630,11 @@ typedef uint16_t fsal_openflags_t;
 #define FSAL_O_DENY_WRITE_MAND 0x0400  /* Mandatory deny-write (i.e. NFSv4) */
 #define FSAL_O_DENY_NONE       0x0000
 
+/* Extract NFS open flags */
+#define FSAL_O_NFS_FLAGS(flags) ((flags) & \
+		(FSAL_O_RDWR | FSAL_O_DENY_READ | \
+		 FSAL_O_DENY_WRITE | FSAL_O_DENY_WRITE_MAND))
+
 enum fsal_create_mode {
 	FSAL_NO_CREATE = 0,
 	FSAL_UNCHECKED = 1,

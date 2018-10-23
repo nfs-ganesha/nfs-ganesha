@@ -1059,7 +1059,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 	my_fd->fd = fd;
 #endif
-	handle->openflags = openflags;
+	handle->openflags = FSAL_O_NFS_FLAGS(openflags);
 
 	*new_obj = &obj->handle;
 

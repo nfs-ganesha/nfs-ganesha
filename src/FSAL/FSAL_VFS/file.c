@@ -79,7 +79,7 @@ fsal_status_t vfs_open_my_fd(struct vfs_fsal_obj_handle *myself,
 				"fd = %d, new openflags = %x",
 				fd, openflags);
 		my_fd->fd = fd;
-		my_fd->openflags = openflags;
+		my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
 	}
 
 	return fsalstat(fsal_error, retval);
@@ -871,7 +871,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	my_fd->fd = fd;
-	my_fd->openflags = openflags;
+	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
 
 	*new_obj = &hdl->obj_handle;
 

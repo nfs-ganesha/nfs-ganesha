@@ -60,7 +60,7 @@ gpfs_open_func(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-	my_fd->openflags = openflags;
+	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
 	LogFullDebug(COMPONENT_FSAL, "new fd %d", my_fd->fd);
 
 	return status;
@@ -191,8 +191,9 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		/* assert(state == NULL); */
 		(void)fsal_internal_close(my_fd->fd, NULL, 0);
 	}
+
 	my_fd->fd = fd;
-	my_fd->openflags = openflags;
+	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
 
 	if (attrs_out && (createmode >= FSAL_EXCLUSIVE || truncated)) {
 		/* Refresh the attributes */
@@ -640,8 +641,9 @@ gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		PTHREAD_RWLOCK_wrlock(&my_share_fd->fdlock);
 
 		fsal_internal_close(my_share_fd->fd, NULL, 0);
+
 		my_share_fd->fd = my_fd;
-		my_share_fd->openflags = openflags;
+		my_share_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
 
 		PTHREAD_RWLOCK_unlock(&my_share_fd->fdlock);
 	} else {

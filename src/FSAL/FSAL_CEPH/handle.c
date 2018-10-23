@@ -830,7 +830,7 @@ static fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
 		     "fd = %p, new openflags = %x",
 		     my_fd->fd, openflags);
 
-	my_fd->openflags = openflags;
+	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1395,7 +1395,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		my_fd = &hdl->fd;
 
 	my_fd->fd = fd;
-	my_fd->openflags = openflags;
+	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
 
 	*new_obj = &hdl->handle;
 
