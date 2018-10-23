@@ -23,6 +23,11 @@ EXPORT { FSAL {} }
 Name(string, "Ceph")
     Name of FSAL should always be Ceph.
 
+Filesystem(string, no default)
+    Ceph filesystem name string, for mounting an alternate filesystem within
+    the cluster. The default is to mount the default filesystem in the cluster
+    (usually, the first one created).
+
 User_Id(string, no default)
     cephx userid used to open the MDS session. This string is what gets appended
     to "client.". If not set, the ceph client libs will sort this out based on

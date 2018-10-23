@@ -78,6 +78,8 @@ struct ceph_export {
 	char *user_id;			/* cephx user_id for this mount */
 	char *secret_key;
 	char *sec_label_xattr;		/* name of xattr for security label */
+	char *fs_name;			/* filesystem name */
+	int64_t fscid;			/* Cluster fsid for named fs' */
 };
 
 struct ceph_fd {
