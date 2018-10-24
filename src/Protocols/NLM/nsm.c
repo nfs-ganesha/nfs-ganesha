@@ -74,9 +74,9 @@ bool nsm_connect(void)
 	return nsm_clnt != NULL;
 }
 
-void nsm_disconnect(void)
+void nsm_disconnect(bool force)
 {
-	if (nsm_count == 0 && nsm_clnt != NULL) {
+	if ((nsm_count == 0 || force) && nsm_clnt != NULL) {
 		CLNT_DESTROY(nsm_clnt);
 		nsm_clnt = NULL;
 		AUTH_DESTROY(nsm_auth);
@@ -86,7 +86,7 @@ void nsm_disconnect(void)
 	}
 }
 
-bool nsm_monitor(state_nsm_client_t *host)
+static bool nsm_monitor_noretry(state_nsm_client_t *host)
 {
 	struct clnt_req *cc;
 	char *t;
@@ -144,7 +144,7 @@ bool nsm_monitor(state_nsm_client_t *host)
 		gsh_free(t);
 
 		clnt_req_release(cc);
-		nsm_disconnect();
+		nsm_disconnect(true);
 		PTHREAD_MUTEX_unlock(&nsm_mutex);
 		PTHREAD_MUTEX_unlock(&host->ssc_mutex);
 		return false;
@@ -156,7 +156,7 @@ bool nsm_monitor(state_nsm_client_t *host)
 			"Monitor %s SM_MON failed (%d)",
 			nsm_mon.mon_id.mon_name, res.res_stat);
 
-		nsm_disconnect();
+		nsm_disconnect(true);
 		PTHREAD_MUTEX_unlock(&nsm_mutex);
 		PTHREAD_MUTEX_unlock(&host->ssc_mutex);
 		return false;
@@ -174,7 +174,19 @@ bool nsm_monitor(state_nsm_client_t *host)
 	return true;
 }
 
-bool nsm_unmonitor(state_nsm_client_t *host)
+bool nsm_monitor(state_nsm_client_t *host)
+{
+	/* If someone restarts nsm service, nsm_monitor_noretry may fail
+	 * and would tear down the old structures. A retry should work!
+	 * So let us retry once if there is a failure.
+	 */
+	if (nsm_monitor_noretry(host))
+		return true;
+
+	return nsm_monitor_noretry(host);
+}
+
+static bool nsm_unmonitor_noretry(state_nsm_client_t *host)
 {
 	struct clnt_req *cc;
 	char *t;
@@ -230,7 +242,7 @@ bool nsm_unmonitor(state_nsm_client_t *host)
 		gsh_free(t);
 
 		clnt_req_release(cc);
-		nsm_disconnect();
+		nsm_disconnect(true);
 		PTHREAD_MUTEX_unlock(&nsm_mutex);
 		PTHREAD_MUTEX_unlock(&host->ssc_mutex);
 		return false;
@@ -242,11 +254,23 @@ bool nsm_unmonitor(state_nsm_client_t *host)
 	LogDebug(COMPONENT_NLM, "Unmonitored %s for nodename %s",
 		 nsm_mon_id.mon_name, nodename);
 
-	nsm_disconnect();
+	nsm_disconnect(false);
 
 	PTHREAD_MUTEX_unlock(&nsm_mutex);
 	PTHREAD_MUTEX_unlock(&host->ssc_mutex);
 	return true;
+}
+
+bool nsm_unmonitor(state_nsm_client_t *host)
+{
+	/* If someone restarts nsm service, nsm_unmonitor_noretry may
+	 * fail and would tear down the old structures. A retry should
+	 * work!  So let us retry once if there is a failure.
+	 */
+	if (nsm_unmonitor_noretry(host))
+		return true;
+
+	return nsm_unmonitor_noretry(host);
 }
 
 void nsm_unmonitor_all(void)
@@ -287,9 +311,11 @@ void nsm_unmonitor_all(void)
 		t = rpc_sperror(&cc->cc_error, "failed");
 		LogEventLimited(COMPONENT_NLM, "Unmonitor all %s", t);
 		gsh_free(t);
+		nsm_disconnect(true);
+	} else {
+		nsm_disconnect(false);
 	}
 	clnt_req_release(cc);
 
-	nsm_disconnect();
 	PTHREAD_MUTEX_unlock(&nsm_mutex);
 }
