@@ -180,12 +180,17 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 				  struct gsh_buffdesc *fh_desc,
 				  int flags)
 {
+	struct ceph_handle_key *key = fh_desc->addr;
+
 	switch (in_type) {
 		/* Digested Handles */
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		/* wire handles */
-		fh_desc->len = sizeof(vinodeno_t);
+		if (key->chk_fscid)
+			fh_desc->len = sizeof(*key);
+		else
+			fh_desc->len = sizeof(key->chk_vi);
 		break;
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
@@ -216,9 +221,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 			container_of(export_pub, struct ceph_export, export);
 	/* FSAL status to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	/* The FSAL specific portion of the handle received by the
-	   client */
-	vinodeno_t *vi = desc->addr;
+	/* The FSAL specific portion of the handle received by the client */
+	struct ceph_handle_key *key = desc->addr;
 	/* Ceph return code */
 	int rc = 0;
 	/* Stat buffer */
@@ -230,13 +234,14 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 
 	*pub_handle = NULL;
 
-	if (desc->len != sizeof(vinodeno_t)) {
+	if (desc->len != sizeof(*key) &&
+	    desc->len != sizeof(key->chk_vi)) {
 		status.major = ERR_FSAL_INVAL;
 		return status;
 	}
 
 	/* Check our local cache first */
-	i = ceph_ll_get_inode(export->cmount, *vi);
+	i = ceph_ll_get_inode(export->cmount, key->chk_vi);
 	if (!i) {
 		/*
 		 * Try the slow way, may not be in cache now.
@@ -244,10 +249,10 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		 * Currently, there is no interface for looking up a snapped
 		 * inode, so we just bail here in that case.
 		 */
-		if (vi->snapid.val != CEPH_NOSNAP)
+		if (key->chk_vi.snapid.val != CEPH_NOSNAP)
 			return ceph2fsal_error(-ESTALE);
 
-		rc = ceph_ll_lookup_inode(export->cmount, vi->ino, &i);
+		rc = ceph_ll_lookup_inode(export->cmount, key->chk_vi.ino, &i);
 		if (rc)
 			return ceph2fsal_error(rc);
 	}

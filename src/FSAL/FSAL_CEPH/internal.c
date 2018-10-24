@@ -70,10 +70,11 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 
 	constructing = gsh_calloc(1, sizeof(struct ceph_handle));
 
-	constructing->vi.ino.val = stx->stx_ino;
+	constructing->key.chk_vi.ino.val = stx->stx_ino;
 #ifdef CEPH_NOSNAP
-	constructing->vi.snapid.val = stx->stx_dev;
+	constructing->key.chk_vi.snapid.val = stx->stx_dev;
 #endif /* CEPH_NOSNAP */
+	constructing->key.chk_fscid = 0;
 	constructing->i = i;
 	constructing->up_ops = export->export.up_ops;
 
