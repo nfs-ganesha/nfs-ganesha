@@ -98,6 +98,11 @@ struct ceph_state_fd {
  * The 'private' Ceph FSAL handle
  */
 
+struct ceph_handle_key {
+	vinodeno_t	chk_vi;
+	int64_t		chk_fscid;
+} __attribute__ ((__packed__));
+
 struct ceph_handle {
 	struct fsal_obj_handle handle;	/*< The public handle */
 	struct ceph_fd fd;
@@ -105,7 +110,7 @@ struct ceph_handle {
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
 	/*< The first export this handle belongs to */
 	struct ceph_export *export;
-	vinodeno_t vi;		/*< The object identifier */
+	struct ceph_handle_key key;
 	struct fsal_share share;
 #ifdef CEPH_PNFS
 	uint64_t rd_issued;
