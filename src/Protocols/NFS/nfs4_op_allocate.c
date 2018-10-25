@@ -41,10 +41,13 @@
 #include "server_stats.h"
 #include "export_mgr.h"
 
-static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
-			       uint64_t offset, uint64_t size, bool allocate)
+static enum nfs_req_result allocate_deallocate(compound_data_t *data,
+					       stateid4 *stateid,
+					       uint64_t offset,
+					       uint64_t size,
+					       bool allocate,
+					       nfsstat4 *status)
 {
-	int status;
 	state_t *state = NULL;
 	fsal_status_t fsal_status = {0, 0};
 	struct fsal_obj_handle *obj = NULL;
@@ -52,9 +55,9 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetWrite);
 
 	/* Only files can have their allocation info changed */
-	status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
-	if (status != NFS4_OK)
-		return status;
+	*status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
+	if (*status != NFS4_OK)
+		return NFS_REQ_ERROR;
 
 	/* if quota support is active, then we should check if the FSAL
 	   allows block allocation */
@@ -63,8 +66,8 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 						op_ctx->ctx_export->fullpath,
 						FSAL_QUOTA_BLOCKS);
 	if (FSAL_IS_ERROR(fsal_status)) {
-		status = NFS4ERR_DQUOT;
-		return status;
+		*status = NFS4ERR_DQUOT;
+		return NFS_REQ_ERROR;
 	}
 
 	obj = data->current_obj;
@@ -72,12 +75,12 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 	/* Check stateid correctness and get pointer to state
 	 * (also checks for special stateids)
 	 */
-	status = nfs4_Check_Stateid(stateid, obj, &state, data,
-				    STATEID_SPECIAL_ANY, 0, false,
-				    allocate ? "ALLOCATE" : "DEALLOCATE");
+	*status = nfs4_Check_Stateid(stateid, obj, &state, data,
+				     STATEID_SPECIAL_ANY, 0, false,
+				     allocate ? "ALLOCATE" : "DEALLOCATE");
 
-	if (status != NFS4_OK)
-		return status;
+	if (*status != NFS4_OK)
+		return NFS_REQ_ERROR;
 
 	/* NB: After this points, if state == NULL, then
 	 * the stateid is all-0 or all-1
@@ -112,12 +115,12 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 					"Delegation type:%d state:%d",
 					sdeleg->sd_type,
 					sdeleg->sd_state);
-				status = NFS4ERR_BAD_STATEID;
+				*status = NFS4ERR_BAD_STATEID;
 				goto out;
 			}
 			break;
 		default:
-			status = NFS4ERR_BAD_STATEID;
+			*status = NFS4ERR_BAD_STATEID;
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "ALLOCATE with invalid stateid of type %d",
 				 (int)state->state_type);
@@ -131,16 +134,16 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 		    (state->state_data.share.share_access &
 		     OPEN4_SHARE_ACCESS_WRITE) == 0) {
 			/* Bad open mode, return NFS4ERR_OPENMODE */
-			status = NFS4ERR_OPENMODE;
-				if (isDebug(COMPONENT_NFS_V4_LOCK)) {
-					char str[LOG_BUFF_LEN] = "\0";
-					struct display_buffer dspbuf = {
-							sizeof(str), str, str};
-					display_stateid(&dspbuf, state);
-					LogDebug(COMPONENT_NFS_V4_LOCK,
-						 "ALLOCATE %s doesn't have OPEN4_SHARE_ACCESS_WRITE",
-						 str);
-				}
+			*status = NFS4ERR_OPENMODE;
+			if (isDebug(COMPONENT_NFS_V4_LOCK)) {
+				char str[LOG_BUFF_LEN] = "\0";
+				struct display_buffer dspbuf = {
+						sizeof(str), str, str};
+				display_stateid(&dspbuf, state);
+				LogDebug(COMPONENT_NFS_V4_LOCK,
+					 "ALLOCATE %s doesn't have OPEN4_SHARE_ACCESS_WRITE",
+					 str);
+			}
 			goto out;
 		}
 	} else {
@@ -149,7 +152,7 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 		 * conflict with an outstanding delegation.
 		 */
 		if (state_deleg_conflict(obj, true)) {
-			status = NFS4ERR_DELAY;
+			*status = NFS4ERR_DELAY;
 			goto out;
 		}
 	}
@@ -159,7 +162,7 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 					       NULL, NULL, true);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
-		status = nfs4_Errno_status(fsal_status);
+		*status = nfs4_Errno_status(fsal_status);
 		goto out;
 	}
 
@@ -176,7 +179,7 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 				 PRIu64 " for exportid #%hu",
 				 MaxOffsetWrite,
 				 op_ctx->ctx_export->export_id);
-			status = NFS4ERR_FBIG;
+			*status = NFS4ERR_FBIG;
 			goto out;
 		}
 	}
@@ -187,7 +190,7 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 
 	/* if size == 0 , nothing changes -- just say success */
 	if (size == 0) {
-		status = NFS4_OK;
+		*status = NFS4_OK;
 		goto out;
 	}
 
@@ -195,12 +198,12 @@ static int allocate_deallocate(compound_data_t *data, stateid4 *stateid,
 	fsal_status = obj->obj_ops->fallocate(obj, state, offset, size,
 						allocate);
 	if (FSAL_IS_ERROR(fsal_status))
-		status = nfs4_Errno_status(fsal_status);
+		*status = nfs4_Errno_status(fsal_status);
 out:
 	if (state != NULL)
 		dec_state_t_ref(state);
 
-	return status;
+	return nfsstat4_to_nfs_req_result(*status);
 }				/* nfs4_op_allocate */
 
 /**
@@ -213,20 +216,21 @@ out:
  * @param[out]    resp  Results for nfs4_op
  *
  */
-int nfs4_op_allocate(struct nfs_argop4 *op, compound_data_t *data,
-		     struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_allocate(struct nfs_argop4 *op,
+				     compound_data_t *data,
+				     struct nfs_resop4 *resp)
 {
-	int status;
 	ALLOCATE4args * const arg_ALLOCATE4 = &op->nfs_argop4_u.opallocate;
 	ALLOCATE4res * const res_ALLOCATE4 = &resp->nfs_resop4_u.opallocate;
 
 	resp->resop = NFS4_OP_ALLOCATE;
 
-	status = allocate_deallocate(data, &arg_ALLOCATE4->aa_stateid,
-				     arg_ALLOCATE4->aa_offset,
-				     arg_ALLOCATE4->aa_length, true);
-	res_ALLOCATE4->ar_status = status;
-	return status;
+	return allocate_deallocate(data,
+				   &arg_ALLOCATE4->aa_stateid,
+				   arg_ALLOCATE4->aa_offset,
+				   arg_ALLOCATE4->aa_length,
+				   true,
+				   &res_ALLOCATE4->ar_status);
 }
 
 
@@ -240,18 +244,19 @@ int nfs4_op_allocate(struct nfs_argop4 *op, compound_data_t *data,
  * @param[out]    resp  Results for nfs4_op
  *
  */
-int nfs4_op_deallocate(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_deallocate(struct nfs_argop4 *op,
+				       compound_data_t *data,
+				       struct nfs_resop4 *resp)
 {
-	int status;
 	DEALLOCATE4args * const arg_DEALLOC = &op->nfs_argop4_u.opdeallocate;
 	DEALLOCATE4res * const res_DEALLOC = &resp->nfs_resop4_u.opdeallocate;
 
 	resp->resop = NFS4_OP_DEALLOCATE;
 
-	status = allocate_deallocate(data, &arg_DEALLOC->da_stateid,
-				     arg_DEALLOC->da_offset,
-				     arg_DEALLOC->da_length, false);
-	res_DEALLOC->dr_status = status;
-	return status;
+	return allocate_deallocate(data,
+				   &arg_DEALLOC->da_stateid,
+				   arg_DEALLOC->da_offset,
+				   arg_DEALLOC->da_length,
+				   false,
+				   &res_DEALLOC->dr_status);
 }

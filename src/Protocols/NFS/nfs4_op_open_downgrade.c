@@ -54,11 +54,13 @@
  */
 static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 				       compound_data_t *data,
-				       state_owner_t *owner, state_t *state,
+				       state_owner_t *owner,
+				       state_t *state,
 				       char **cause);
 
-int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
-			   struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_open_downgrade(struct nfs_argop4 *op,
+					   compound_data_t *data,
+					   struct nfs_resop4 *resp)
 {
 	OPEN_DOWNGRADE4args * const arg_OPEN_DOWNGRADE4 =
 		&op->nfs_argop4_u.opopen_downgrade;
@@ -80,12 +82,12 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 	    nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
 	if (res_OPEN_DOWNGRADE4->status != NFS4_OK)
-		return res_OPEN_DOWNGRADE4->status;
+		return NFS_REQ_ERROR;
 
 	/* Open downgrade is done only on a file */
 	if (data->current_filetype != REGULAR_FILE) {
 		res_OPEN_DOWNGRADE4->status = NFS4ERR_INVAL;
-		return res_OPEN_DOWNGRADE4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Check stateid correctness and get pointer to state */
@@ -102,7 +104,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 		res_OPEN_DOWNGRADE4->status = rc;
 		LogDebug(COMPONENT_STATE,
 			 "OPEN_DOWNGRADE failed nfs4_Check_Stateid");
-		return res_OPEN_DOWNGRADE4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	open_owner = get_state_owner_ref(state_found);
@@ -174,7 +176,7 @@ int nfs4_op_open_downgrade(struct nfs_argop4 *op, compound_data_t *data,
 
 	dec_state_t_ref(state_found);
 
-	return res_OPEN_DOWNGRADE4->status;
+	return nfsstat4_to_nfs_req_result(res_OPEN_DOWNGRADE4->status);
 }				/* nfs4_op_opendowngrade */
 
 /**

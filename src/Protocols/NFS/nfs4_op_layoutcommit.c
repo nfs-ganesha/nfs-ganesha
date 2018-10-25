@@ -57,8 +57,9 @@
  *
  */
 
-int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
-			 struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_layoutcommit(struct nfs_argop4 *op,
+					 compound_data_t *data,
+					 struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
 	LAYOUTCOMMIT4args * const args = &op->nfs_argop4_u.oplayoutcommit;
@@ -91,14 +92,14 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		res_LAYOUTCOMMIT4->locr_status = NFS4ERR_INVAL;
-		return res_LAYOUTCOMMIT4->locr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	nfs_status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
 
 	if (nfs_status != NFS4_OK) {
 		res_LAYOUTCOMMIT4->locr_status = nfs_status;
-		return res_LAYOUTCOMMIT4->locr_status;
+		return NFS_REQ_ERROR;
 	}
 
 
@@ -195,7 +196,7 @@ int nfs4_op_layoutcommit(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_LAYOUTCOMMIT4->locr_status = nfs_status;
 
-	return res_LAYOUTCOMMIT4->locr_status;
+	return nfsstat4_to_nfs_req_result(res_LAYOUTCOMMIT4->locr_status);
 }				/* nfs41_op_layoutcommit */
 
 /**

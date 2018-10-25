@@ -170,9 +170,21 @@ typedef union nfs_res__ {
 #define MAKES_IO	0x0010	/* Request may do I/O
 				   (not allowed on MD ONLY exports */
 
+enum nfs_req_result {
+	NFS_REQ_OK = 0,
+	NFS_REQ_DROP = 1,
+	NFS_REQ_ERROR = 2,
+};
+
 typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
 					struct svc_req *,
 					nfs_res_t *);
+
+typedef struct compound_data compound_data_t;
+
+typedef enum nfs_req_result (*nfs4_function_t)(struct nfs_argop4 *,
+					       compound_data_t *,
+					       struct nfs_resop4 *);
 
 typedef int (*nfsremote_protocol_function_t) (CLIENT *, nfs_arg_t *,
 					      nfs_res_t *);
@@ -289,7 +301,7 @@ typedef struct nfs_client_cred__ {
  * This structure contains the necessary stuff for keeping the state
  * of a V4 compound request.
  */
-typedef struct compound_data {
+struct compound_data {
 	nfs_fh4 currentFH;	/*< Current filehandle */
 	nfs_fh4 savedFH;	/*< Saved filehandle */
 	stateid4 current_stateid;	/*< Current stateid */
@@ -330,7 +342,7 @@ typedef struct compound_data {
 				   (if applicable) */
 	uint32_t resp_size;	/*< Running total response size. */
 	uint32_t op_resp_size;	/*< Current op's response size. */
-} compound_data_t;
+};
 
 #define VARIABLE_RESP_SIZE (0)
 

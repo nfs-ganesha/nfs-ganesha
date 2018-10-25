@@ -54,8 +54,9 @@
  *
  */
 
-int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
-			struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_setclientid(struct nfs_argop4 *op,
+					compound_data_t *data,
+					struct nfs_resop4 *resp)
 {
 	SETCLIENTID4args * const arg_SETCLIENTID4 =
 	    &op->nfs_argop4_u.opsetclientid;
@@ -86,7 +87,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion > 0) {
 		res_SETCLIENTID4->status = NFS4ERR_NOTSUPP;
-		return res_SETCLIENTID4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (op_ctx->client != NULL)
@@ -124,7 +125,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 		LogCrit(COMPONENT_CLIENTID, "SETCLIENTID failed");
 
 		res_SETCLIENTID4->status = NFS4ERR_SERVERFAULT;
-		return res_SETCLIENTID4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* The following checks are based on RFC3530bis draft 16
@@ -366,7 +367,7 @@ int nfs4_op_setclientid(struct nfs_argop4 *op, compound_data_t *data,
 	/* Release our reference to the client record */
 	dec_client_record_ref(client_record);
 
-	return res_SETCLIENTID4->status;
+	return nfsstat4_to_nfs_req_result(res_SETCLIENTID4->status);
 }
 
 /**

@@ -52,8 +52,9 @@
  * @retval NFS4ERR_NOTSUPP for NFSv4.1
  *
  */
-int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
-			 struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_open_confirm(struct nfs_argop4 *op,
+					 compound_data_t *data,
+					 struct nfs_resop4 *resp)
 {
 	OPEN_CONFIRM4args * const arg_OPEN_CONFIRM4 =
 		&op->nfs_argop4_u.opopen_confirm;
@@ -71,7 +72,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion > 0) {
 		res_OPEN_CONFIRM4->status = NFS4ERR_NOTSUPP;
-		return res_OPEN_CONFIRM4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Do basic checks on a filehandle
@@ -81,7 +82,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	    nfs4_sanity_check_FH(data, REGULAR_FILE, false);
 
 	if (res_OPEN_CONFIRM4->status != NFS4_OK)
-		return res_OPEN_CONFIRM4->status;
+		return NFS_REQ_ERROR;
 
 	/* Check stateid correctness and get pointer to state */
 	rc =  nfs4_Check_Stateid(&arg_OPEN_CONFIRM4->open_stateid,
@@ -95,7 +96,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (rc != NFS4_OK && rc != NFS4ERR_REPLAY) {
 		res_OPEN_CONFIRM4->status = rc;
-		return res_OPEN_CONFIRM4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	open_owner = get_state_owner_ref(state_found);
@@ -154,7 +155,7 @@ int nfs4_op_open_confirm(struct nfs_argop4 *op, compound_data_t *data,
 
 	dec_state_t_ref(state_found);
 
-	return res_OPEN_CONFIRM4->status;
+	return nfsstat4_to_nfs_req_result(res_OPEN_CONFIRM4->status);
 }				/* nfs4_op_open_confirm */
 
 /**

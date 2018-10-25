@@ -52,8 +52,9 @@
  * @retval NFS4ERR_NOTSUPP for NFSv4.1.
  */
 
-int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t *data,
-			      struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_release_lockowner(struct nfs_argop4 *op,
+					      compound_data_t *data,
+					      struct nfs_resop4 *resp)
 {
 	RELEASE_LOCKOWNER4args * const arg_RELEASE_LOCKOWNER4 =
 	    &op->nfs_argop4_u.oprelease_lockowner;
@@ -72,7 +73,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion > 0) {
 		res_RELEASE_LOCKOWNER4->status = NFS4ERR_NOTSUPP;
-		return res_RELEASE_LOCKOWNER4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Check clientid */
@@ -142,7 +143,7 @@ int nfs4_op_release_lockowner(struct nfs_argop4 *op, compound_data_t *data,
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Leaving NFS v4 RELEASE_LOCKOWNER handler -----------------------");
 
-	return res_RELEASE_LOCKOWNER4->status;
+	return nfsstat4_to_nfs_req_result(res_RELEASE_LOCKOWNER4->status);
 }				/* nfs4_op_release_lock_owner */
 
 /**

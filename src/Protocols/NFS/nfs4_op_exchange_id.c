@@ -99,8 +99,9 @@ char *cid_server_scope_suffix = "_NFS-Ganesha";
  *
  */
 
-int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
-			struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
+					compound_data_t *data,
+					struct nfs_resop4 *resp)
 {
 	nfs_client_record_t *client_record;
 	nfs_client_id_t *conf;
@@ -124,7 +125,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
-		return res_EXCHANGE_ID4->eir_status;
+		return NFS_REQ_ERROR;
 	}
 
 	if ((arg_EXCHANGE_ID4->eia_flags & ~(EXCHGID4_FLAG_SUPP_MOVED_REFER |
@@ -136,7 +137,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 					     EXCHGID4_FLAG_UPD_CONFIRMED_REC_A)
 	     ) != 0) {
 		res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
-		return res_EXCHANGE_ID4->eir_status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (cid_server_owner[0] == '\0') {
@@ -144,7 +145,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 		if (gethostname(cid_server_owner,
 				sizeof(cid_server_owner)) == -1) {
 			res_EXCHANGE_ID4->eir_status = NFS4ERR_SERVERFAULT;
-			return res_EXCHANGE_ID4->eir_status;
+			return NFS_REQ_ERROR;
 		}
 	}
 
@@ -158,7 +159,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	res_EXCHANGE_ID4->eir_status = check_resp_room(data, resp_size);
 
 	if (res_EXCHANGE_ID4->eir_status != NFS4_OK)
-		return res_EXCHANGE_ID4->eir_status;
+		return NFS_REQ_ERROR;
 
 	/* If client did not ask for pNFS related server roles than just set
 	   server roles */
@@ -202,7 +203,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 		/* Some major failure */
 		LogCrit(COMPONENT_CLIENTID, "EXCHANGE_ID failed");
 		res_EXCHANGE_ID4->eir_status = NFS4ERR_SERVERFAULT;
-		return res_EXCHANGE_ID4->eir_status;
+		return NFS_REQ_ERROR;
 	}
 
 	/*
@@ -414,7 +415,7 @@ int nfs4_op_exchange_id(struct nfs_argop4 *op, compound_data_t *data,
 	/* Release our reference to the client record */
 	dec_client_record_ref(client_record);
 
-	return res_EXCHANGE_ID4->eir_status;
+	return nfsstat4_to_nfs_req_result(res_EXCHANGE_ID4->eir_status);
 }
 
 /**

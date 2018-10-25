@@ -55,8 +55,9 @@
  * @return per RFC 5661, pp. 363-4
  *
  */
-int nfs4_op_delegpurge(struct nfs_argop4 *op, compound_data_t *data,
-		       struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_delegpurge(struct nfs_argop4 *op,
+				       compound_data_t *data,
+				       struct nfs_resop4 *resp)
 {
 	/* Unused for now, but when we actually implement this function it
 	   won't be, so remove the attribute. */
@@ -69,7 +70,7 @@ int nfs4_op_delegpurge(struct nfs_argop4 *op, compound_data_t *data,
 	resp->resop = NFS4_OP_DELEGPURGE;
 	res_DELEGPURGE4->status = NFS4ERR_NOTSUPP;
 
-	return res_DELEGPURGE4->status;
+	return NFS_REQ_ERROR;
 }				/* nfs4_op_delegpurge */
 
 /**

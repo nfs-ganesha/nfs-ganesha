@@ -61,8 +61,9 @@
  *
  */
 
-int nfs4_op_test_stateid(struct nfs_argop4 *op, compound_data_t *data,
-			 struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_test_stateid(struct nfs_argop4 *op,
+					 compound_data_t *data,
+					 struct nfs_resop4 *resp)
 {
 	TEST_STATEID4args * const arg_TEST_STATEID4 =
 	    &op->nfs_argop4_u.optest_stateid;
@@ -79,7 +80,7 @@ int nfs4_op_test_stateid(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		res_TEST_STATEID4->tsr_status = NFS4ERR_INVAL;
-		return res_TEST_STATEID4->tsr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	nr_stateids = arg_TEST_STATEID4->ts_stateids.ts_stateids_len;
@@ -100,7 +101,7 @@ int nfs4_op_test_stateid(struct nfs_argop4 *op, compound_data_t *data,
 
 	res->tsr_status_codes.tsr_status_codes_len = nr_stateids;
 
-	return res_TEST_STATEID4->tsr_status;
+	return NFS_REQ_OK;
 }				/* nfs41_op_lock */
 
 /**

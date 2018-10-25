@@ -34,6 +34,7 @@
  */
 #include "config.h"
 #include "sal_functions.h"
+#include "nfs_proto_functions.h"
 
 /**
  *
@@ -51,8 +52,9 @@
  *
  */
 
-int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t *data,
-			    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_destroy_session(struct nfs_argop4 *op,
+					    compound_data_t *data,
+					    struct nfs_resop4 *resp)
 {
 
 	DESTROY_SESSION4args * const arg_DESTROY_SESSION4 =
@@ -66,13 +68,13 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		res_DESTROY_SESSION4->dsr_status = NFS4ERR_INVAL;
-		return res_DESTROY_SESSION4->dsr_status = NFS4ERR_INVAL;
+		return NFS_REQ_ERROR;
 	}
 
 	if (!nfs41_Session_Get_Pointer(arg_DESTROY_SESSION4->dsa_sessionid,
 				       &session)) {
 		res_DESTROY_SESSION4->dsr_status = NFS4ERR_BADSESSION;
-		return res_DESTROY_SESSION4->dsr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* DESTROY_SESSION MUST be invoked on a connection that is associated
@@ -82,7 +84,7 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t *data,
 		res_DESTROY_SESSION4->dsr_status =
 		    NFS4ERR_CONN_NOT_BOUND_TO_SESSION;
 		dec_session_ref(session);
-		return res_DESTROY_SESSION4->dsr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (!nfs41_Session_Del(arg_DESTROY_SESSION4->dsa_sessionid))
@@ -94,7 +96,7 @@ int nfs4_op_destroy_session(struct nfs_argop4 *op, compound_data_t *data,
 
 	dec_session_ref(session);
 
-	return res_DESTROY_SESSION4->dsr_status;
+	return nfsstat4_to_nfs_req_result(res_DESTROY_SESSION4->dsr_status);
 }				/* nfs41_op_destroy_session */
 
 /**

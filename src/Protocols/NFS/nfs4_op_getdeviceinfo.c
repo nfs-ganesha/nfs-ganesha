@@ -67,8 +67,9 @@
  *
  */
 
-int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
-			  struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
+					  compound_data_t *data,
+					  struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
 	GETDEVICEINFO4args * const arg_GETDEVICEINFO4 =
@@ -101,8 +102,10 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	resp->resop = NFS4_OP_GETDEVICEINFO;
 
-	if (data->minorversion == 0)
-		return res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
+	if (data->minorversion == 0) {
+		res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
+		return NFS_REQ_ERROR;
+	}
 
 	/* Overlay Ganesha's pnfs_deviceid on arg */
 	deviceid = (struct pnfs_deviceid *) arg_GETDEVICEINFO4->gdia_device_id;
@@ -111,7 +114,8 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 		LogInfo(COMPONENT_PNFS,
 			"GETDEVICEINFO with invalid fsal id %0hhx",
 			deviceid->fsal_id);
-		return res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
+		res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
+		return NFS_REQ_ERROR;
 	}
 
 	fsal = pnfs_fsal[deviceid->fsal_id];
@@ -120,7 +124,8 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 		LogInfo(COMPONENT_PNFS,
 			"GETDEVICEINFO with inactive fsal id %0hhx",
 			deviceid->fsal_id);
-		return res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
+		res_GETDEVICEINFO4->gdir_status = NFS4ERR_INVAL;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Check that we have space */
@@ -184,7 +189,7 @@ int nfs4_op_getdeviceinfo(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_GETDEVICEINFO4->gdir_status = nfs_status;
 
-	return res_GETDEVICEINFO4->gdir_status;
+	return nfsstat4_to_nfs_req_result(res_GETDEVICEINFO4->gdir_status);
 }				/* nfs41_op_getdeviceinfo */
 
 /**

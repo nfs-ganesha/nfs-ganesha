@@ -61,8 +61,8 @@ static const char *locku_tag = "LOCKU";
  * @see nfs4_Compound
  */
 
-int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
+			  struct nfs_resop4 *resp)
 {
 	/* Alias for arguments */
 	LOCKU4args * const arg_LOCKU4 = &op->nfs_argop4_u.oplocku;
@@ -91,7 +91,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	res_LOCKU4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
 
 	if (res_LOCKU4->status != NFS4_OK)
-		return res_LOCKU4->status;
+		return NFS_REQ_ERROR;
 
 
 	/* Convert lock parameters to internal types */
@@ -109,7 +109,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 		LogDebug(COMPONENT_NFS_V4_LOCK,
 			 "Invalid lock type");
 		res_LOCKU4->status = NFS4ERR_INVAL;
-		return res_LOCKU4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	lock_desc.lock_start = arg_LOCKU4->offset;
@@ -133,7 +133,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (nfs_status != NFS4_OK && nfs_status != NFS4ERR_REPLAY) {
 		res_LOCKU4->status = nfs_status;
-		return res_LOCKU4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	lock_owner = get_state_owner_ref(state_found);
@@ -244,7 +244,7 @@ int nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 
 	dec_state_t_ref(state_found);
 
-	return res_LOCKU4->status;
+	return nfsstat4_to_nfs_req_result(res_LOCKU4->status);
 }				/* nfs4_op_locku */
 
 /**

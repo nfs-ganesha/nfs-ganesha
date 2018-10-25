@@ -62,8 +62,9 @@
  * @return NFS status codes.
  */
 
-int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
-			    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
+					    compound_data_t *data,
+					    struct nfs_resop4 *resp)
 {
 	SECINFO_NO_NAME4res * const res_SECINFO_NO_NAME4 =
 	    &resp->nfs_resop4_u.opsecinfo_no_name;
@@ -84,11 +85,16 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 
 	if (op->nfs_argop4_u.opsecinfo_no_name == SECINFO_STYLE4_PARENT) {
-		/* Use LOOKUPP to get the parent into CurrentFH. */
-		res_SECINFO_NO_NAME4->status = nfs4_op_lookupp(op, data, resp);
+		/* Use LOOKUPP to get the parent into CurrentFH. Note that all
+		 * ops have status in the same location, so if there is an error
+		 * we just need to set the resop and return the result.
+		 */
+		enum nfs_req_result result = nfs4_op_lookupp(op, data, resp);
 
-		if (res_SECINFO_NO_NAME4->status != NFS4_OK)
-			goto out;
+		if (result != NFS_REQ_OK) {
+			resp->resop = NFS4_OP_SECINFO_NO_NAME;
+			return result;
+		}
 	}
 
 	/* Get the number of entries */
@@ -189,7 +195,7 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
 
 	resp->resop = NFS4_OP_SECINFO_NO_NAME;
 
-	return res_SECINFO_NO_NAME4->status;
+	return nfsstat4_to_nfs_req_result(res_SECINFO_NO_NAME4->status);
 }				/* nfs4_op_secinfo_no_name */
 
 /**

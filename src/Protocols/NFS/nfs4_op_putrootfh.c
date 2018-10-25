@@ -39,6 +39,7 @@
 #include "nfs_file_handle.h"
 #include "export_mgr.h"
 #include "nfs_creds.h"
+#include "nfs_proto_functions.h"
 
 /**
  *
@@ -57,8 +58,9 @@
  *
  */
 
-int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
+				      compound_data_t *data,
+				      struct nfs_resop4 *resp)
 {
 	fsal_status_t status = {0, 0};
 	struct fsal_obj_handle *file_obj;
@@ -89,7 +91,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 			"Could not get export for Pseudo Root");
 
 		res_PUTROOTFH4->status = NFS4ERR_NOENT;
-		return res_PUTROOTFH4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
@@ -102,13 +104,13 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 		/* Client has no access at all */
 		LogDebug(COMPONENT_EXPORT,
 			 "Client doesn't have access to Pseudo Root");
-		return res_PUTROOTFH4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (res_PUTROOTFH4->status != NFS4_OK) {
 		LogMajor(COMPONENT_EXPORT,
 			 "Failed to get FSAL credentials Pseudo Root");
-		return res_PUTROOTFH4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Get the Pesudo Root inode of the mounted on export */
@@ -118,7 +120,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 			"Could not get root inode for Pseudo Root");
 
 		res_PUTROOTFH4->status = nfs4_Errno_status(status);
-		return res_PUTROOTFH4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	LogMidDebug(COMPONENT_EXPORT,
@@ -138,13 +140,13 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
 			"Could not get handle for Pseudo Root");
 
 		res_PUTROOTFH4->status = NFS4ERR_SERVERFAULT;
-		return res_PUTROOTFH4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
 
 	res_PUTROOTFH4->status = NFS4_OK;
-	return res_PUTROOTFH4->status;
+	return NFS_REQ_OK;
 }				/* nfs4_op_putrootfh */
 
 /**

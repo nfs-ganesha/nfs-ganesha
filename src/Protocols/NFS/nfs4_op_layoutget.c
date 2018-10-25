@@ -350,8 +350,9 @@ static nfsstat4 one_segment(struct fsal_obj_handle *obj,
  * @see nfs4_Compound
  */
 
-int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_layoutget(struct nfs_argop4 *op,
+				      compound_data_t *data,
+				      struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
 	LAYOUTGET4args * const arg_LAYOUTGET4 = &op->nfs_argop4_u.oplayoutget;
@@ -382,7 +383,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		res_LAYOUTGET4->logr_status = NFS4ERR_INVAL;
-		return res_LAYOUTGET4->logr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	nfs_status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
@@ -515,7 +516,7 @@ int nfs4_op_layoutget(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_LAYOUTGET4->logr_status = nfs_status;
 
-	return res_LAYOUTGET4->logr_status;
+	return nfsstat4_to_nfs_req_result(res_LAYOUTGET4->logr_status);
 }				/* nfs4_op_layoutget */
 
 /**
@@ -537,8 +538,9 @@ void nfs4_op_layoutget_Free(nfs_resop4 *res)
 
 }				/* nfs41_op_layoutget_Free */
 
-int nfs4_op_layouterror(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_layouterror(struct nfs_argop4 *op,
+					compound_data_t *data,
+					struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
 	LAYOUTERROR4args * const arg_LAYOUTERROR4 =
@@ -546,8 +548,6 @@ int nfs4_op_layouterror(struct nfs_argop4 *op, compound_data_t *data,
 	/* Convenience alias for response */
 	LAYOUTERROR4res * const res_LAYOUTERROR4 =
 					&resp->nfs_resop4_u.oplayouterror;
-	/* NFSv4.2 status code */
-	nfsstat4 nfs_status = 0;
 
 	LogEvent(COMPONENT_PNFS,
 		 "LAYOUTERROR OP %d status %d offset: %" PRIu64
@@ -559,17 +559,18 @@ int nfs4_op_layouterror(struct nfs_argop4 *op, compound_data_t *data,
 
 	/** @todo: what else do we want to do with this error ???  */
 
-	res_LAYOUTERROR4->ler_status = nfs_status;
+	res_LAYOUTERROR4->ler_status = NFS4_OK;
 
-	return res_LAYOUTERROR4->ler_status;
+	return NFS_REQ_OK;
 }
 
 void nfs4_op_layouterror_Free(nfs_resop4 *res)
 {
 }
 
-int nfs4_op_layoutstats(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_layoutstats(struct nfs_argop4 *op,
+					compound_data_t *data,
+					struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
 	LAYOUTSTATS4args * const arg_LAYOUTSTATS4 =
@@ -577,8 +578,6 @@ int nfs4_op_layoutstats(struct nfs_argop4 *op, compound_data_t *data,
 	/* Convenience alias for response */
 	LAYOUTSTATS4res * const res_LAYOUTSTATS4 =
 					&resp->nfs_resop4_u.oplayoutstats;
-	/* NFSv4.2 status code */
-	nfsstat4 nfs_status = 0;
 
 	LogEvent(COMPONENT_PNFS,
 		 "LAYOUTSTATS offset %" PRIu64 " length %" PRIu64,
@@ -595,9 +594,9 @@ int nfs4_op_layoutstats(struct nfs_argop4 *op, compound_data_t *data,
 
 	/** @todo: what else do we want to do with the stats ???  */
 
-	res_LAYOUTSTATS4->lsr_status = nfs_status;
+	res_LAYOUTSTATS4->lsr_status = NFS4_OK;
 
-	return res_LAYOUTSTATS4->lsr_status;
+	return NFS_REQ_OK;
 }
 
 void nfs4_op_layoutstats_Free(nfs_resop4 *res)

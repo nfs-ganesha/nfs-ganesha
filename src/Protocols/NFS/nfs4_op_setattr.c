@@ -56,8 +56,9 @@
  * @return per RFC5661, p. 373-4
  */
 
-int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
+				    compound_data_t *data,
+				    struct nfs_resop4 *resp)
 {
 	SETATTR4args * const arg_SETATTR4 = &op->nfs_argop4_u.opsetattr;
 	SETATTR4res * const res_SETATTR4 = &resp->nfs_resop4_u.opsetattr;
@@ -75,7 +76,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	res_SETATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
 	if (res_SETATTR4->status != NFS4_OK)
-		return res_SETATTR4->status;
+		return NFS_REQ_ERROR;
 
 	/* Don't allow attribute change while we are in grace period.
 	 * Required for delegation reclaims and may be needed for other
@@ -83,7 +84,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (!nfs_get_grace_status(false)) {
 		res_SETATTR4->status = NFS4ERR_GRACE;
-		return res_SETATTR4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Get only attributes that are allowed to be read */
@@ -236,7 +237,7 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	if (state_open != NULL)
 		dec_state_t_ref(state_open);
 
-	return res_SETATTR4->status;
+	return nfsstat4_to_nfs_req_result(res_SETATTR4->status);
 }				/* nfs4_op_setattr */
 
 /**

@@ -54,13 +54,14 @@
  * @retval NFS4ERR_OP_ILLEGAL always.
  *
  */
-int nfs4_op_illegal(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_illegal(struct nfs_argop4 *op,
+				    compound_data_t *data,
+				    struct nfs_resop4 *resp)
 {
 	resp->resop = NFS4_OP_ILLEGAL;
 	resp->nfs_resop4_u.opillegal.status = NFS4ERR_OP_ILLEGAL;
 
-	return NFS4ERR_OP_ILLEGAL;
+	return NFS_REQ_ERROR;
 }				/* nfs4_op_illegal */
 
 /**
@@ -88,13 +89,14 @@ void nfs4_op_illegal_Free(nfs_resop4 *resp)
  * @retval NFS4ERR_NOTSUPP always.
  *
  */
-int nfs4_op_notsupp(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_notsupp(struct nfs_argop4 *op,
+				    compound_data_t *data,
+				    struct nfs_resop4 *resp)
 {
 	resp->resop = op->argop;
 	resp->nfs_resop4_u.opillegal.status = NFS4ERR_NOTSUPP;
 
-	return NFS4ERR_NOTSUPP;
+	return NFS_REQ_ERROR;
 }				/* nfs4_op_notsupp */
 
 /**

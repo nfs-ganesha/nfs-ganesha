@@ -62,24 +62,26 @@
  *
  */
 
-int nfs4_op_set_ssv(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_set_ssv(struct nfs_argop4 *op,
+				    compound_data_t *data,
+				    struct nfs_resop4 *resp)
 {
 	SET_SSV4args * const arg_SET_SSV4 __attribute__ ((unused))
 	    = &op->nfs_argop4_u.opset_ssv;
 	SET_SSV4res * const res_SET_SSV4 = &resp->nfs_resop4_u.opset_ssv;
+
 	resp->resop = NFS4_OP_SET_SSV;
 	res_SET_SSV4->ssr_status = NFS4_OK;
 
 	if (data->minorversion == 0) {
 		res_SET_SSV4->ssr_status = NFS4ERR_INVAL;
-		return res_SET_SSV4->ssr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* I know this is pretty dirty...
 	 * But this is an early implementation...
 	 */
-	return res_SET_SSV4->ssr_status;
+	return nfsstat4_to_nfs_req_result(res_SET_SSV4->ssr_status);
 }				/* nfs41_op_set_ssv */
 
 /**

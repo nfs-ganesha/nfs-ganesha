@@ -56,8 +56,8 @@
  *
  */
 
-int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
+				  struct nfs_resop4 *resp)
 {
 	RENEW4args * const arg_RENEW4 = &op->nfs_argop4_u.oprenew;
 	RENEW4res * const res_RENEW4 = &resp->nfs_resop4_u.oprenew;
@@ -70,7 +70,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion > 0) {
 		res_RENEW4->status = NFS4ERR_NOTSUPP;
-		return res_RENEW4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Tell the admin what I am doing... */
@@ -84,7 +84,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 	if (rc != CLIENT_ID_SUCCESS) {
 		/* Unknown client id */
 		res_RENEW4->status = clientid_error_to_nfsstat(rc);
-		return res_RENEW4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
@@ -113,7 +113,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 
 	dec_client_id_ref(clientid);
 
-	return res_RENEW4->status;
+	return nfsstat4_to_nfs_req_result(res_RENEW4->status);
 }				/* nfs4_op_renew */
 
 /**

@@ -57,8 +57,8 @@
  * @see nfs4_Compound
  */
 
-int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
+				  struct nfs_resop4 *resp)
 {
 	/* Alias for arguments */
 	LOCKT4args * const arg_LOCKT4 = &op->nfs_argop4_u.oplockt;
@@ -95,18 +95,18 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	res_LOCKT4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
 
 	if (res_LOCKT4->status != NFS4_OK)
-		return res_LOCKT4->status;
+		return NFS_REQ_ERROR;
 
 
 	/* Lock length should not be 0 */
 	if (arg_LOCKT4->length == 0LL) {
 		res_LOCKT4->status = NFS4ERR_INVAL;
-		return res_LOCKT4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (!nfs_get_grace_status(false)) {
 		res_LOCKT4->status = NFS4ERR_GRACE;
-		return res_LOCKT4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Convert lock parameters to internal types */
@@ -266,7 +266,7 @@ out_clientid:
 	dec_client_id_ref(clientid);
 out:
 	nfs_put_grace_status();
-	return res_LOCKT4->status;
+	return nfsstat4_to_nfs_req_result(res_LOCKT4->status);
 }				/* nfs4_op_lockt */
 
 /**

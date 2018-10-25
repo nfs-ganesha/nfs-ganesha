@@ -55,9 +55,7 @@ struct nfs4_op_desc {
 	/** Operation name */
 	char *name;
 	/** Function to process the operation */
-	int (*funct)(struct nfs_argop4 *,
-		     compound_data_t *,
-		     struct nfs_resop4 *);
+	nfs4_function_t funct;
 
 	/** Function to free the results of the operation.
 	 *
@@ -617,7 +615,7 @@ void copy_tag(utf8str_cs *dest, utf8str_cs *src)
 int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	unsigned int i = 0;
-	int status = NFS4_OK;
+	nfsstat4 status = NFS4_OK;
 	compound_data_t data;
 	nfs_opnum4 opcode;
 	const uint32_t compound4_minor = arg->arg_compound4.minorversion;
@@ -658,10 +656,9 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (res->res_compound4.tag.utf8string_len > 0) {
 		/* Check if the tag is a valid utf8 string */
-		status =
-		    nfs4_utf8string2dynamic(&(res->res_compound4.tag),
-					    UTF8_SCAN_ALL, &data.tagname);
-		if (status != 0) {
+		if ( nfs4_utf8string2dynamic(
+				&res->res_compound4.tag,
+				UTF8_SCAN_ALL, &data.tagname) != 0) {
 			char str[LOG_BUFF_LEN];
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
@@ -676,8 +673,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				res->res_compound4.tag.utf8string_len,
 				str);
 
-			status = NFS4ERR_INVAL;
-			res->res_compound4.status = status;
+			res->res_compound4.status = NFS4ERR_INVAL;
 			res->res_compound4.resarray.resarray_len = 0;
 			compound_data_Free(&data);
 			return NFS_REQ_OK;
@@ -752,8 +748,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		    && argarray[0].argop != NFS4_OP_DESTROY_SESSION
 		    && argarray[0].argop != NFS4_OP_BIND_CONN_TO_SESSION
 		    && argarray[0].argop != NFS4_OP_DESTROY_CLIENTID) {
-			status = NFS4ERR_OP_NOT_IN_SESSION;
-			res->res_compound4.status = status;
+			res->res_compound4.status = NFS4ERR_OP_NOT_IN_SESSION;
 			res->res_compound4.resarray.resarray_len = 0;
 			compound_data_Free(&data);
 			return NFS_REQ_OK;
@@ -778,8 +773,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			    argarray[0].argop == NFS4_OP_DESTROY_CLIENTID ||
 			    argarray[0].argop == NFS4_OP_DESTROY_SESSION ||
 			    argarray[0].argop == NFS4_OP_BIND_CONN_TO_SESSION) {
-				status = NFS4ERR_NOT_ONLY_OP;
-				res->res_compound4.status = status;
+				res->res_compound4.status = NFS4ERR_NOT_ONLY_OP;
 				res->res_compound4.resarray.resarray_len = 0;
 				compound_data_Free(&data);
 				return NFS_REQ_OK;
@@ -788,6 +782,8 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	for (i = 0; i < argarray_len; i++) {
+		enum nfs_req_result req_result = NFS_REQ_OK;
+
 		/* Used to check if OP_SEQUENCE is the first operation */
 		data.oppos = i;
 		data.op_resp_size = sizeof(nfsstat4);
@@ -944,21 +940,22 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			   data.opname);
 #endif
 
-		status = (optabv4[opcode].funct) (&argarray[i],
-						  &data,
-						  &resarray[i]);
+		req_result = (optabv4[opcode].funct) (&argarray[i],
+						      &data,
+						      &resarray[i]);
+
+		/* All the operation, like NFS4_OP_ACCESS, have a first replyied
+		 * field called .status
+		 */
+		status = resarray[i].nfs_resop4_u.opaccess.status;
 
 #ifdef USE_LTTNG
 		tracepoint(nfs_rpc, v4op_end, i, argarray[i].argop,
-			   data.opname, nfsstat4_to_str(status));
+			   data.opname,
+			   nfsstat4_to_str(status));
 #endif
 
 		LogCompoundFH(&data);
-
-		/* All the operation, like NFS4_OP_ACESS, have a first replyied
-		 * field called .status
-		 */
-		resarray[i].nfs_resop4_u.opaccess.status = status;
 
 		server_stats_nfsv4_op_done(opcode, op_start_time, status);
 
@@ -981,7 +978,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			 data.opname, i, nfsstat4_to_str(status),
 			 data.op_resp_size, data.resp_size);
 
-		if (status != NFS4_OK) {
+		if (req_result == NFS_REQ_ERROR) {
 			/* An error occured, we do not manage the other requests
 			 * in the COMPOUND, this may be a regular behavior
 			 */

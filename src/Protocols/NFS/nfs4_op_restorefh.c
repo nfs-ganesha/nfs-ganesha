@@ -59,8 +59,9 @@
  *
  */
 
-int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
+				      compound_data_t *data,
+				      struct nfs_resop4 *resp)
 {
 	RESTOREFH4res * const res_RESTOREFH = &resp->nfs_resop4_u.oprestorefh;
 	/* First of all, set the reply to zero to make sure it contains no
@@ -82,7 +83,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 		 * (cg RFC3530, page 202)
 		 */
 		res_RESTOREFH->status = NFS4ERR_RESTOREFH;
-		return res_RESTOREFH->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Do basic checks on saved filehandle */
@@ -90,7 +91,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 	    nfs4_sanity_check_saved_FH(data, NO_FILE_TYPE, true);
 
 	if (res_RESTOREFH->status != NFS4_OK)
-		return res_RESTOREFH->status;
+		return NFS_REQ_ERROR;
 
 	/* Determine if we can get a new export reference. If there is
 	 * no saved export, don't get a reference to it.
@@ -99,7 +100,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 		if (!export_ready(data->saved_export)) {
 			/* The SavedFH export has gone bad. */
 			res_RESTOREFH->status = NFS4ERR_STALE;
-			return res_RESTOREFH->status;
+			return NFS_REQ_ERROR;
 		}
 		get_gsh_export_ref(data->saved_export);
 	}
@@ -148,7 +149,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
 			     str);
 	}
 
-	return NFS4_OK;
+	return NFS_REQ_OK;
 }				/* nfs4_op_restorefh */
 
 /**

@@ -49,8 +49,9 @@
 #include "nfs_file_handle.h"
 #include "fsal_pnfs.h"
 
-static int op_dscommit(struct nfs_argop4 *op, compound_data_t *data,
-		       struct nfs_resop4 *resp);
+static enum nfs_req_result op_dscommit(struct nfs_argop4 *op,
+				       compound_data_t *data,
+				       struct nfs_resop4 *resp);
 
 /**
  * @brief Implemtation of NFS4_OP_COMMIT
@@ -65,8 +66,8 @@ static int op_dscommit(struct nfs_argop4 *op, compound_data_t *data,
  *
  */
 
-int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
-		   struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
+				   struct nfs_resop4 *resp)
 {
 	COMMIT4args * const arg_COMMIT4 = &op->nfs_argop4_u.opcommit;
 	COMMIT4res * const res_COMMIT4 = &resp->nfs_resop4_u.opcommit;
@@ -90,13 +91,13 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 	res_COMMIT4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
 
 	if (res_COMMIT4->status != NFS4_OK)
-		return res_COMMIT4->status;
+		return NFS_REQ_ERROR;
 
 	fsal_status = fsal_commit(data->current_obj, arg_COMMIT4->offset,
 				  arg_COMMIT4->count);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_COMMIT4->status = nfs4_Errno_status(fsal_status);
-		return res_COMMIT4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	verf_desc.addr = &res_COMMIT4->COMMIT4res_u.resok4.writeverf;
@@ -111,7 +112,7 @@ int nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* If you reach this point, then an error occured */
 	res_COMMIT4->status = NFS4_OK;
-	return res_COMMIT4->status;
+	return NFS_REQ_OK;
 }				/* nfs4_op_commit */
 
 /**
@@ -142,24 +143,22 @@ void nfs4_op_commit_Free(nfs_resop4 *resp)
  *
  */
 
-static int op_dscommit(struct nfs_argop4 *op, compound_data_t *data,
-		       struct nfs_resop4 *resp)
+static enum nfs_req_result op_dscommit(struct nfs_argop4 *op,
+				       compound_data_t *data,
+				       struct nfs_resop4 *resp)
 {
 	COMMIT4args * const arg_COMMIT4 = &op->nfs_argop4_u.opcommit;
 	COMMIT4res * const res_COMMIT4 = &resp->nfs_resop4_u.opcommit;
-	/* NFSv4 status code */
-	nfsstat4 nfs_status = 0;
 
 	/* Construct the FSAL file handle */
 
 	/* Call the commit operation */
-	nfs_status =
+	res_COMMIT4->status =
 	    data->current_ds->dsh_ops.commit(
 				data->current_ds, op_ctx,
 				arg_COMMIT4->offset,
 				arg_COMMIT4->count,
 				&res_COMMIT4->COMMIT4res_u.resok4.writeverf);
 
-	res_COMMIT4->status = nfs_status;
-	return res_COMMIT4->status;
+	return nfsstat4_to_nfs_req_result(res_COMMIT4->status);
 }

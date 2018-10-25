@@ -75,8 +75,9 @@
  *
  */
 
-int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
-			   struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
+					   compound_data_t *data,
+					   struct nfs_resop4 *resp)
 {
 	/* Result of looking up the clientid in the confirmed ID
 	   table */
@@ -136,8 +137,10 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 
 	display_clientid(&dspbuf_clientid4, clientid);
 
-	if (data->minorversion == 0)
-		return res_CREATE_SESSION4->csr_status = NFS4ERR_INVAL;
+	if (data->minorversion == 0) {
+		res_CREATE_SESSION4->csr_status = NFS4ERR_INVAL;
+		return NFS_REQ_ERROR;
+	}
 
 	LogDebug(component,
 		 "CREATE_SESSION client addr=%s clientid=%s -------------------",
@@ -163,7 +166,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 			res_CREATE_SESSION4->csr_status =
 			    clientid_error_to_nfsstat_no_expire(rc);
 
-			return res_CREATE_SESSION4->csr_status;
+			return NFS_REQ_ERROR;
 		}
 
 		client_record = conf->cid_client_record;
@@ -583,7 +586,7 @@ int nfs4_op_create_session(struct nfs_argop4 *op, compound_data_t *data,
 	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
 	/* Release our reference to the client record and return */
 	dec_client_record_ref(client_record);
-	return res_CREATE_SESSION4->csr_status;
+	return nfsstat4_to_nfs_req_result(res_CREATE_SESSION4->csr_status);
 }
 
 /**

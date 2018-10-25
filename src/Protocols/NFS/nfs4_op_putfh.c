@@ -246,8 +246,8 @@ static int nfs4_mds_putfh(compound_data_t *data)
  *
  */
 
-int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
+				  struct nfs_resop4 *resp)
 {
 	/* Convenience alias for args */
 	PUTFH4args * const arg_PUTFH4 = &op->nfs_argop4_u.opputfh;
@@ -260,7 +260,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	res_PUTFH4->status = nfs4_Is_Fh_Invalid(&arg_PUTFH4->object);
 	if (res_PUTFH4->status != NFS4_OK)
-		return res_PUTFH4->status;
+		return NFS_REQ_ERROR;
 
 	/* If no currentFH were set, allocate one */
 	if (data->currentFH.nfs_fh4_val == NULL)
@@ -280,7 +280,7 @@ int nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	else
 		res_PUTFH4->status = nfs4_mds_putfh(data);
 
-	return res_PUTFH4->status;
+	return nfsstat4_to_nfs_req_result(res_PUTFH4->status);
 }				/* nfs4_op_putfh */
 
 /**

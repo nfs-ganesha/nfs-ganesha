@@ -41,6 +41,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_convert.h"
 #include "export_mgr.h"
+#include "nfs_proto_functions.h"
 
 /**
  * @brief NFS4_OP_LOOKUP
@@ -56,8 +57,9 @@
  *
  */
 
-int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
-		   struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
+				   compound_data_t *data,
+				   struct nfs_resop4 *resp)
 {
 	/* Convenient alias for the arguments */
 	LOOKUP4args * const arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
@@ -233,7 +235,7 @@ int nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 
 	gsh_free(name);
 
-	return res_LOOKUP4->status;
+	return nfsstat4_to_nfs_req_result(res_LOOKUP4->status);
 }				/* nfs4_op_lookup */
 
 /**

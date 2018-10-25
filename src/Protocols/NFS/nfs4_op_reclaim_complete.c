@@ -67,8 +67,9 @@
  *
  */
 
-int nfs4_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t *data,
-			     struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_reclaim_complete(struct nfs_argop4 *op,
+					     compound_data_t *data,
+					     struct nfs_resop4 *resp)
 {
 	RECLAIM_COMPLETE4args * const arg_RECLAIM_COMPLETE4
 	    __attribute__ ((unused))
@@ -83,12 +84,12 @@ int nfs4_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_INVAL;
-		return res_RECLAIM_COMPLETE4->rcr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (data->session == NULL) {
 		res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_OP_NOT_IN_SESSION;
-		return res_RECLAIM_COMPLETE4->rcr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* For now, we don't handle rca_one_fs, so we won't complain about
@@ -97,7 +98,7 @@ int nfs4_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t *data,
 	if (clientid->cid_cb.v41.cid_reclaim_complete &&
 	    !arg_RECLAIM_COMPLETE4->rca_one_fs) {
 		res_RECLAIM_COMPLETE4->rcr_status = NFS4ERR_COMPLETE_ALREADY;
-		return res_RECLAIM_COMPLETE4->rcr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (!arg_RECLAIM_COMPLETE4->rca_one_fs) {
@@ -106,7 +107,7 @@ int nfs4_op_reclaim_complete(struct nfs_argop4 *op, compound_data_t *data,
 			atomic_inc_int32_t(&reclaim_completes);
 	}
 
-	return res_RECLAIM_COMPLETE4->rcr_status;
+	return NFS_REQ_OK;
 }				/* nfs41_op_reclaim_complete */
 
 /**

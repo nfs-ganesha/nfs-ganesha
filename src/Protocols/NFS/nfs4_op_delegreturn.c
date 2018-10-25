@@ -58,8 +58,9 @@
  *
  * @return per RFC 5661, p. 364
  */
-int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
-			struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_delegreturn(struct nfs_argop4 *op,
+					compound_data_t *data,
+					struct nfs_resop4 *resp)
 {
 	DELEGRETURN4args * const arg_DELEGRETURN4 =
 	    &op->nfs_argop4_u.opdelegreturn;
@@ -87,7 +88,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_DELEGRETURN4->status != NFS4_OK) {
 		if (res_DELEGRETURN4->status == NFS4ERR_ISDIR)
 			res_DELEGRETURN4->status = NFS4ERR_INVAL;
-		return res_DELEGRETURN4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Check stateid correctness and get pointer to state */
@@ -97,7 +98,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 				   STATEID_SPECIAL_FOR_LOCK, 0, false, tag);
 
 	if (res_DELEGRETURN4->status != NFS4_OK)
-		return res_DELEGRETURN4->status;
+		return NFS_REQ_ERROR;
 
 	owner = get_state_owner_ref(state_found);
 
@@ -134,7 +135,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	dec_state_t_ref(state_found);
 
-	return res_DELEGRETURN4->status;
+	return nfsstat4_to_nfs_req_result(res_DELEGRETURN4->status);
 }				/* nfs4_op_delegreturn */
 
 /**

@@ -50,8 +50,9 @@
  *
  */
 
-int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
-			     struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_destroy_clientid(struct nfs_argop4 *op,
+					     compound_data_t *data,
+					     struct nfs_resop4 *resp)
 {
 	DESTROY_CLIENTID4args * const arg_DESTROY_CLIENTID4 =
 	    &op->nfs_argop4_u.opdestroy_clientid;
@@ -206,7 +207,7 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
 
  out:
 
-	return res_DESTROY_CLIENTID4->dcr_status;
+	return nfsstat4_to_nfs_req_result(res_DESTROY_CLIENTID4->dcr_status);
 }
 
 /**

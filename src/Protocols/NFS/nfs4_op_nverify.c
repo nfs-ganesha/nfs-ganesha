@@ -53,8 +53,9 @@
  *
  */
 
-int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_nverify(struct nfs_argop4 *op,
+				    compound_data_t *data,
+				    struct nfs_resop4 *resp)
 {
 	NVERIFY4args * const arg_NVERIFY4 = &op->nfs_argop4_u.opnverify;
 	NVERIFY4res * const res_NVERIFY4 = &resp->nfs_resop4_u.opnverify;
@@ -69,19 +70,19 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t *data,
 	res_NVERIFY4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
 	if (res_NVERIFY4->status != NFS4_OK)
-		return res_NVERIFY4->status;
+		return NFS_REQ_ERROR;
 
 	/* Get only attributes that are allowed to be read */
 	if (!nfs4_Fattr_Check_Access(&arg_NVERIFY4->obj_attributes,
 				     FATTR4_ATTR_READ)) {
 		res_NVERIFY4->status = NFS4ERR_INVAL;
-		return res_NVERIFY4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Ask only for supported attributes */
 	if (!nfs4_Fattr_Supported(&arg_NVERIFY4->obj_attributes)) {
 		res_NVERIFY4->status = NFS4ERR_ATTRNOTSUPP;
-		return res_NVERIFY4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	fsal_prepare_attrs(&attrs, 0);
@@ -91,14 +92,14 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t *data,
 				      &attrs.request_mask);
 
 	if (res_NVERIFY4->status != NFS4_OK)
-		return res_NVERIFY4->status;
+		return NFS_REQ_ERROR;
 
 	res_NVERIFY4->status =
 		file_To_Fattr(data, attrs.request_mask, &attrs, &file_attr4,
 			      &arg_NVERIFY4->obj_attributes.attrmask);
 
 	if (res_NVERIFY4->status != NFS4_OK)
-		return res_NVERIFY4->status;
+		return NFS_REQ_ERROR;
 
 	/* Done with the attrs */
 	fsal_release_attrs(&attrs);
@@ -115,7 +116,7 @@ int nfs4_op_nverify(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	nfs4_Fattr_Free(&file_attr4);
-	return res_NVERIFY4->status;
+	return nfsstat4_to_nfs_req_result(res_NVERIFY4->status);
 }				/* nfs4_op_nverify */
 
 /**

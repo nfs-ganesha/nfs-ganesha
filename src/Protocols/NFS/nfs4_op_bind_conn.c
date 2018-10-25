@@ -31,6 +31,7 @@
 #include "sal_functions.h"
 #include "nfs_rpc_callback.h"
 #include "nfs_convert.h"
+#include "nfs_proto_functions.h"
 
 /**
  * @brief the NFS4_OP_BIND_CONN_TO_SESSION operation
@@ -44,8 +45,9 @@
  * @see nfs4_Compound
  *
  */
-int nfs4_op_bind_conn(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
+				      compound_data_t *data,
+				      struct nfs_resop4 *resp)
 {
 	BIND_CONN_TO_SESSION4args * const arg_BIND_CONN_TO_SESSION4 =
 	    &op->nfs_argop4_u.opbind_conn_to_session;
@@ -60,7 +62,7 @@ int nfs4_op_bind_conn(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		res_BIND_CONN_TO_SESSION4->bctsr_status = NFS4ERR_INVAL;
-		return res_BIND_CONN_TO_SESSION4->bctsr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (!nfs41_Session_Get_Pointer(arg_BIND_CONN_TO_SESSION4->bctsa_sessid,
@@ -71,7 +73,7 @@ int nfs4_op_bind_conn(struct nfs_argop4 *op, compound_data_t *data,
 			    nfsstat4_to_str(
 				res_BIND_CONN_TO_SESSION4->bctsr_status));
 
-		return res_BIND_CONN_TO_SESSION4->bctsr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* session->refcount +1 */
@@ -91,7 +93,7 @@ int nfs4_op_bind_conn(struct nfs_argop4 *op, compound_data_t *data,
 			    "BIND_CONN_TO_SESSION returning status %s",
 			    nfsstat4_to_str(
 				res_BIND_CONN_TO_SESSION4->bctsr_status));
-		return res_BIND_CONN_TO_SESSION4->bctsr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	data->preserved_clientid = session->clientid_record;
@@ -147,7 +149,7 @@ int nfs4_op_bind_conn(struct nfs_argop4 *op, compound_data_t *data,
 	(void) check_session_conn(session, data, true);
 
 	res_BIND_CONN_TO_SESSION4->bctsr_status = NFS4_OK;
-	return res_BIND_CONN_TO_SESSION4->bctsr_status;
+	return NFS_REQ_OK;
 }				/* nfs4_op_bind_conn */
 
 /**

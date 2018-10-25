@@ -53,8 +53,8 @@
  * @see nfs4_Compound
  */
 
-int nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
+				  struct nfs_resop4 *resp)
 {
 	GETFH4res * const res_GETFH = &resp->nfs_resop4_u.opgetfh;
 	struct attrlist attrs;
@@ -119,7 +119,7 @@ out:
 		data->op_resp_size = sizeof(nfsstat4);
 	}
 
-	return res_GETFH->status;
+	return nfsstat4_to_nfs_req_result(res_GETFH->status);
 }				/* nfs4_op_getfh */
 
 /**

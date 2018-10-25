@@ -65,8 +65,9 @@
  * @see nfs4_Compound
  */
 
-int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
-			 struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
+					 compound_data_t *data,
+					 struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
 	LAYOUTRETURN4args * const arg_LAYOUTRETURN4 =
@@ -118,7 +119,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		res_LAYOUTRETURN4->lorr_status = NFS4ERR_INVAL;
-		return res_LAYOUTRETURN4->lorr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	switch (arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype) {
@@ -369,7 +370,7 @@ int nfs4_op_layoutreturn(struct nfs_argop4 *op, compound_data_t *data,
 		put_gsh_export(export);
 	}
 
-	return res_LAYOUTRETURN4->lorr_status;
+	return nfsstat4_to_nfs_req_result(res_LAYOUTRETURN4->lorr_status);
 }				/* nfs41_op_layoutreturn */
 
 /**

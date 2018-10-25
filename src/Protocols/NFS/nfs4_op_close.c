@@ -142,8 +142,8 @@ void cleanup_layouts(compound_data_t *data)
  * @return per RFC5661, p. 362
  */
 
-int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
+				  struct nfs_resop4 *resp)
 {
 	/* Short alias for arguments */
 	CLOSE4args * const arg_CLOSE4 = &op->nfs_argop4_u.opclose;
@@ -171,7 +171,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	res_CLOSE4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
 
 	if (res_CLOSE4->status != NFS4_OK)
-		return res_CLOSE4->status;
+		return NFS_REQ_ERROR;
 
 	/* Check stateid correctness and get pointer to state */
 	nfs_status = nfs4_Check_Stateid(&arg_CLOSE4->open_stateid,
@@ -188,7 +188,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	if (nfs_status != NFS4_OK && nfs_status != NFS4ERR_REPLAY) {
 		res_CLOSE4->status = nfs_status;
 		LogDebug(COMPONENT_STATE, "CLOSE failed nfs4_Check_Stateid");
-		return res_CLOSE4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (state_found == NULL) {
@@ -207,7 +207,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		LogDebug(COMPONENT_STATE,
 			 "CLOSE failed nfs4_Check_Stateid must have already been closed. But treating it as replayed close and returning NFS4_OK");
 
-		return res_CLOSE4->status;
+		return NFS_REQ_OK;
 	}
 
 	open_owner = get_state_owner_ref(state_found);
@@ -336,7 +336,7 @@ int nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	dec_state_t_ref(state_found);
 
-	return res_CLOSE4->status;
+	return nfsstat4_to_nfs_req_result(res_CLOSE4->status);
 }				/* nfs4_op_close */
 
 /**

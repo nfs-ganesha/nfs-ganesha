@@ -57,8 +57,9 @@ static const char *lock_tag = "LOCK";
 
 #define SUCCESS_RESP_SIZE (sizeof(nfsstat4) + sizeof(stateid4))
 
-int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
-		 struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
+				 compound_data_t *data,
+				 struct nfs_resop4 *resp)
 {
 	/* Shorter alias for arguments */
 	LOCK4args * const arg_LOCK4 = &op->nfs_argop4_u.oplock;
@@ -120,7 +121,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	res_LOCK4->status = check_resp_room(data, SUCCESS_RESP_SIZE);
 
 	if (res_LOCK4->status != NFS4_OK)
-		return res_LOCK4->status;
+		return NFS_REQ_ERROR;
 
 	/* Record the sequence info */
 	if (data->minorversion > 0) {
@@ -134,7 +135,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	res_LOCK4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
 
 	if (res_LOCK4->status != NFS4_OK)
-		return res_LOCK4->status;
+		return NFS_REQ_ERROR;
 
 	/* Convert lock parameters to internal types */
 	switch (arg_LOCK4->locktype) {
@@ -158,7 +159,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		LogDebug(COMPONENT_NFS_V4_LOCK,
 			 "Invalid lock type");
 		res_LOCK4->status = NFS4ERR_INVAL;
-		return res_LOCK4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	lock_desc.lock_start = arg_LOCK4->offset;
@@ -199,7 +200,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			res_LOCK4->status = nfs_status;
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "LOCK failed nfs4_Check_Stateid for open owner");
-			return res_LOCK4->status;
+			return NFS_REQ_ERROR;
 		}
 
 		open_owner = get_state_owner_ref(state_open);
@@ -312,7 +313,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 			res_LOCK4->status = nfs_status;
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "LOCK failed nfs4_Check_Stateid for existing lock owner");
-			return res_LOCK4->status;
+			return NFS_REQ_ERROR;
 		}
 
 		/* Check if lock state belongs to same export */
@@ -728,7 +729,7 @@ int nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 	if (clientid != NULL)
 		dec_client_id_ref(clientid);
 
-	return res_LOCK4->status;
+	return nfsstat4_to_nfs_req_result(res_LOCK4->status);
 }				/* nfs4_op_lock */
 
 /**

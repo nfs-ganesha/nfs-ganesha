@@ -57,8 +57,9 @@
  * @see nfs4_Compound
  */
 
-int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
-				struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
+						compound_data_t *data,
+						struct nfs_resop4 *resp)
 {
 	SETCLIENTID_CONFIRM4args * const arg_SETCLIENTID_CONFIRM4 =
 	    &op->nfs_argop4_u.opsetclientid_confirm;
@@ -96,7 +97,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion > 0) {
 		res_SETCLIENTID_CONFIRM4->status = NFS4ERR_NOTSUPP;
-		return res_SETCLIENTID_CONFIRM4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (op_ctx->client != NULL)
@@ -138,7 +139,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 			res_SETCLIENTID_CONFIRM4->status =
 			    clientid_error_to_nfsstat_no_expire(rc);
 
-			return res_SETCLIENTID_CONFIRM4->status;
+			return NFS_REQ_ERROR;
 		}
 
 		client_record = conf->cid_client_record;
@@ -486,7 +487,7 @@ int nfs4_op_setclientid_confirm(struct nfs_argop4 *op, compound_data_t *data,
 	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
 	/* Release our reference to the client record and return */
 	dec_client_record_ref(client_record);
-	return res_SETCLIENTID_CONFIRM4->status;
+	return nfsstat4_to_nfs_req_result(res_SETCLIENTID_CONFIRM4->status);
 }
 
 /**

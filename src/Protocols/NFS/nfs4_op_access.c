@@ -59,8 +59,8 @@
  * @return per RFC5661, p. 362
  *
  */
-int nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
-		   struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
+				   struct nfs_resop4 *resp)
 {
 	ACCESS4args * const arg_ACCESS4 = &op->nfs_argop4_u.opaccess;
 	ACCESS4res * const res_ACCESS4 = &resp->nfs_resop4_u.opaccess;
@@ -79,12 +79,12 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 	res_ACCESS4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
 	if (res_ACCESS4->status != NFS4_OK)
-		return res_ACCESS4->status;
+		return NFS_REQ_ERROR;
 
 	/* Check for input parameter's sanity */
 	if (arg_ACCESS4->access > max_access) {
 		res_ACCESS4->status = NFS4ERR_INVAL;
-		return res_ACCESS4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Perform the 'access' call */
@@ -99,7 +99,7 @@ int nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 	else
 		res_ACCESS4->status = nfs4_Errno(fsal_status);
 
-	return res_ACCESS4->status;
+	return nfsstat4_to_nfs_req_result(res_ACCESS4->status);
 }				/* nfs4_op_access */
 
 /**

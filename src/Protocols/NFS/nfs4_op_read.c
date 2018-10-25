@@ -149,8 +149,9 @@ done:
  *
  */
 
-static int op_dsread(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
+				     compound_data_t *data,
+				     struct nfs_resop4 *resp)
 {
 	READ4args * const arg_READ4 = &op->nfs_argop4_u.opread;
 	READ4res * const res_READ4 = &resp->nfs_resop4_u.opread;
@@ -168,7 +169,7 @@ static int op_dsread(struct nfs_argop4 *op, compound_data_t *data,
 		res_READ4->READ4res_u.resok4.data.data_len = 0;
 		res_READ4->READ4res_u.resok4.data.data_val = NULL;
 		res_READ4->status = NFS4_OK;
-		return res_READ4->status;
+		return NFS_REQ_OK;
 	}
 
 	/* Construct the FSAL file handle */
@@ -199,7 +200,7 @@ static int op_dsread(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_READ4->status = nfs_status;
 
-	return res_READ4->status;
+	return nfsstat4_to_nfs_req_result(res_READ4->status);
 }
 
 /**
@@ -216,8 +217,10 @@ static int op_dsread(struct nfs_argop4 *op, compound_data_t *data,
  *
  */
 
-static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
-			 struct nfs_resop4 *resp, struct io_info *info)
+static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
+					  compound_data_t *data,
+					  struct nfs_resop4 *resp,
+					  struct io_info *info)
 {
 	READ4args * const arg_READ4 = &op->nfs_argop4_u.opread;
 	READ_PLUS4res * const res_RPLUS = &resp->nfs_resop4_u.opread_plus;
@@ -239,7 +242,7 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 		contentp->data.d_data.data_len =  0;
 		contentp->data.d_data.data_val = NULL;
 		res_RPLUS->rpr_status = NFS4_OK;
-		return res_RPLUS->rpr_status;
+		return NFS_REQ_OK;
 	}
 
 	/* Construct the FSAL file handle */
@@ -259,7 +262,7 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 	res_RPLUS->rpr_status = nfs_status;
 	if (nfs_status != NFS4_OK) {
 		gsh_free(buffer);
-		return res_RPLUS->rpr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	contentp->what = info->io_content.what;
@@ -277,13 +280,15 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 		contentp->data.d_data.data_val =
 					info->io_content.data.d_data.data_val;
 	}
-	return res_RPLUS->rpr_status;
+	return nfsstat4_to_nfs_req_result(res_RPLUS->rpr_status);
 }
 
 
-static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp, io_direction_t io,
-		    struct io_info *info)
+static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
+				     compound_data_t *data,
+				     struct nfs_resop4 *resp,
+				     io_direction_t io,
+				     struct io_info *info)
 {
 	READ4args * const arg_READ4 = &op->nfs_argop4_u.opread;
 	READ4res * const res_READ4 = &resp->nfs_resop4_u.opread;
@@ -318,7 +323,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_READ4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
 	if (res_READ4->status != NFS4_OK)
-		return res_READ4->status;
+		return NFS_REQ_ERROR;
 
 	obj = data->current_obj;
 	/* Check stateid correctness and get pointer to state (also
@@ -328,7 +333,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	    nfs4_Check_Stateid(&arg_READ4->stateid, obj, &state_found, data,
 			       STATEID_SPECIAL_ANY, 0, false, "READ");
 	if (res_READ4->status != NFS4_OK)
-		return res_READ4->status;
+		return NFS_REQ_ERROR;
 
 	/* NB: After this point, if state_found == NULL, then the
 	   stateid is all-0 or all-1 */
@@ -579,12 +584,12 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		op_ctx->clientid = NULL;
 		dec_state_owner_ref(owner);
 	}
+
 	if (state_found != NULL) {
 		dec_state_t_ref(state_found);
 	}
 
-
-	return res_READ4->status;
+	return nfsstat4_to_nfs_req_result(res_READ4->status);
 }				/* nfs4_op_read */
 
 /**
@@ -600,8 +605,8 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
  * @return Errors as specified by RFC3550 RFC5661 p. 371.
  */
 
-int nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
-		 struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
+				 struct nfs_resop4 *resp)
 {
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
@@ -640,8 +645,9 @@ void nfs4_op_read_Free(nfs_resop4 *res)
  * @return Errors as specified by RFC3550 RFC5661 p. 371.
  */
 
-int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_read_plus(struct nfs_argop4 *op,
+				      compound_data_t *data,
+				      struct nfs_resop4 *resp)
 {
 	/* Create a response frame on the stack to pass into nfs4_read
 	 * we will then copy out of it into actual response frame.
@@ -652,14 +658,16 @@ int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
 	READ_PLUS4res * const res_RPLUS = &resp->nfs_resop4_u.opread_plus;
 	READ4res *res_READ4 = &res.nfs_resop4_u.opread;
 	contents *contentp = &res_RPLUS->rpr_resok4.rpr_contents;
+	enum nfs_req_result req_result;
 
 	resp->resop = NFS4_OP_READ_PLUS;
 
-	nfs4_read(op, data, &res, IO_READ_PLUS, &info);
+	req_result = nfs4_read(op, data, &res, IO_READ_PLUS, &info);
 
 	res_RPLUS->rpr_status = res_READ4->status;
-	if (res_RPLUS->rpr_status != NFS4_OK)
-		return res_RPLUS->rpr_status;
+
+	if (req_result != NFS_REQ_OK)
+		return req_result;
 
 	contentp->what = info.io_content.what;
 	res_RPLUS->rpr_resok4.rpr_contents_count = 1;
@@ -670,6 +678,7 @@ int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
 		contentp->hole.di_offset = info.io_content.hole.di_offset;
 		contentp->hole.di_length = info.io_content.hole.di_length;
 	}
+
 	if (info.io_content.what == NFS4_CONTENT_DATA) {
 		contentp->data.d_offset = info.io_content.data.d_offset;
 		contentp->data.d_data.data_len =
@@ -677,7 +686,8 @@ int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
 		contentp->data.d_data.data_val =
 					info.io_content.data.d_data.data_val;
 	}
-	return res_RPLUS->rpr_status;
+
+	return req_result;
 }
 
 void nfs4_op_read_plus_Free(nfs_resop4 *res)
@@ -702,8 +712,9 @@ void nfs4_op_read_plus_Free(nfs_resop4 *res)
  * @return Errors as specified by RFC3550 RFC5661 p. 371.
  */
 
-int nfs4_op_io_advise(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_io_advise(struct nfs_argop4 *op,
+				      compound_data_t *data,
+				      struct nfs_resop4 *resp)
 {
 	IO_ADVISE4args * const arg_IO_ADVISE = &op->nfs_argop4_u.opio_advise;
 	IO_ADVISE4res * const res_IO_ADVISE = &resp->nfs_resop4_u.opio_advise;
@@ -769,7 +780,7 @@ done:
 	if (state_found != NULL)
 		dec_state_t_ref(state_found);
 
-	return res_IO_ADVISE->iaa_status;
+	return nfsstat4_to_nfs_req_result(res_IO_ADVISE->iaa_status);
 }				/* nfs4_op_io_advise */
 
 /**
@@ -786,8 +797,9 @@ void nfs4_op_io_advise_Free(nfs_resop4 *resp)
 }
 
 
-int nfs4_op_seek(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_seek(struct nfs_argop4 *op,
+				 compound_data_t *data,
+				 struct nfs_resop4 *resp)
 {
 	SEEK4args * const arg_SEEK = &op->nfs_argop4_u.opseek;
 	SEEK4res * const res_SEEK = &resp->nfs_resop4_u.opseek;
@@ -849,6 +861,6 @@ done:
 	if (state_found != NULL)
 		dec_state_t_ref(state_found);
 
-	return res_SEEK->sr_status;
+	return nfsstat4_to_nfs_req_result(res_SEEK->sr_status);
 }
 

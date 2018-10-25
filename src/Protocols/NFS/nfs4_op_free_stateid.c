@@ -62,8 +62,9 @@
  * @see nfs4_Compound
  */
 
-int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
-			 struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
+					 compound_data_t *data,
+					 struct nfs_resop4 *resp)
 {
 	FREE_STATEID4args * const arg_FREE_STATEID4 __attribute__ ((unused))
 	    = &op->nfs_argop4_u.opfree_stateid;
@@ -75,10 +76,11 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 	struct fsal_obj_handle *obj;
 
 	resp->resop = NFS4_OP_FREE_STATEID;
-	res_FREE_STATEID4->fsr_status = NFS4_OK;
 
-	if (data->minorversion == 0)
-		return res_FREE_STATEID4->fsr_status = NFS4ERR_INVAL;
+	if (data->minorversion == 0) {
+		res_FREE_STATEID4->fsr_status = NFS4ERR_INVAL;
+		return NFS_REQ_ERROR;
+	}
 
 	res_FREE_STATEID4->fsr_status =
 	    nfs4_Check_Stateid(&arg_FREE_STATEID4->fsa_stateid,
@@ -91,7 +93,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 			       "FREE_STATEID");
 
 	if (res_FREE_STATEID4->fsr_status != NFS4_OK)
-		return res_FREE_STATEID4->fsr_status;
+		return NFS_REQ_ERROR;
 
 	if (!get_state_obj_export_owner_refs(state, &obj, &export, NULL)) {
 		/* If this happens, something is going stale, just return
@@ -100,7 +102,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		res_FREE_STATEID4->fsr_status = NFS4ERR_BAD_STATEID;
 		dec_state_t_ref(state);
-		return res_FREE_STATEID4->fsr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	save_exp = op_ctx->ctx_export;
@@ -130,7 +132,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 	obj->obj_ops->put_ref(obj);
 	put_gsh_export(export);
 
-	return res_FREE_STATEID4->fsr_status;
+	return nfsstat4_to_nfs_req_result(res_FREE_STATEID4->fsr_status);
 
 }				/* nfs41_op_free_stateid */
 

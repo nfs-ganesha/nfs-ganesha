@@ -61,8 +61,8 @@
  * @return per RFC5661, p. 367
  */
 
-int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
-		 struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
+				 struct nfs_resop4 *resp)
 {
 	LINK4args * const arg_LINK4 = &op->nfs_argop4_u.oplink;
 	LINK4res * const res_LINK4 = &resp->nfs_resop4_u.oplink;
@@ -130,7 +130,7 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	if (newname)
 		gsh_free(newname);
 
-	return res_LINK4->status;
+	return nfsstat4_to_nfs_req_result(res_LINK4->status);
 }				/* nfs4_op_link */
 
 /**

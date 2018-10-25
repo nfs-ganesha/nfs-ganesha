@@ -53,17 +53,17 @@
  *
  */
 
-int nfs4_op_putpubfh(struct nfs_argop4 *op, compound_data_t *data,
-		     struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_putpubfh(struct nfs_argop4 *op,
+				     compound_data_t *data,
+				     struct nfs_resop4 *resp)
 {
-	PUTPUBFH4res * const res_PUTPUBFH4 = &resp->nfs_resop4_u.opputpubfh;
-
 	/* PUTPUBFH really isn't used, just make PUTROOTFH do our work and
 	 * call it our own...
 	 */
-	res_PUTPUBFH4->status = nfs4_op_putrootfh(op, data, resp);
+	enum nfs_req_result req_result = nfs4_op_putrootfh(op, data, resp);
+
 	resp->resop = NFS4_OP_PUTPUBFH;
-	return res_PUTPUBFH4->status;
+	return req_result;
 }
 
 /**

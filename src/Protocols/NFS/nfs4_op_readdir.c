@@ -493,8 +493,9 @@ static void free_entries(entry4 *entries)
  * @return per RFC5661, pp. 371-2
  *
  */
-int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
+				    compound_data_t *data,
+				    struct nfs_resop4 *resp)
 {
 	READDIR4args * const arg_READDIR4 = &op->nfs_argop4_u.opreaddir;
 	READDIR4res * const res_READDIR4 = &resp->nfs_resop4_u.opreaddir;
@@ -736,7 +737,7 @@ int nfs4_op_readdir(struct nfs_argop4 *op, compound_data_t *data,
 		 "Returning %s",
 		 nfsstat4_to_str(res_READDIR4->status));
 
-	return res_READDIR4->status;
+	return nfsstat4_to_nfs_req_result(res_READDIR4->status);
 }				/* nfs4_op_readdir */
 
 /**

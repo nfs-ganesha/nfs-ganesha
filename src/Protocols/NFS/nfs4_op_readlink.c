@@ -55,8 +55,9 @@
  *
  */
 
-int nfs4_op_readlink(struct nfs_argop4 *op, compound_data_t *data,
-		     struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_readlink(struct nfs_argop4 *op,
+				     compound_data_t *data,
+				     struct nfs_resop4 *resp)
 {
 	READLINK4res * const res_READLINK4 = &resp->nfs_resop4_u.opreadlink;
 	fsal_status_t fsal_status = {0, 0};
@@ -76,12 +77,12 @@ int nfs4_op_readlink(struct nfs_argop4 *op, compound_data_t *data,
 	    nfs4_sanity_check_FH(data, SYMBOLIC_LINK, false);
 
 	if (res_READLINK4->status != NFS4_OK)
-		return res_READLINK4->status;
+		return NFS_REQ_ERROR;
 
 	fsal_status = fsal_readlink(data->current_obj, &link_buffer);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_READLINK4->status = nfs4_Errno_status(fsal_status);
-		return res_READLINK4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	res_READLINK4->READLINK4res_u.resok4.link.utf8string_val =
@@ -106,7 +107,7 @@ int nfs4_op_readlink(struct nfs_argop4 *op, compound_data_t *data,
 
 	data->op_resp_size = resp_size;
 
-	return res_READLINK4->status;
+	return nfsstat4_to_nfs_req_result(res_READLINK4->status);
 }				/* nfs4_op_readlink */
 
 /**

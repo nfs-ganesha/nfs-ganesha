@@ -57,8 +57,8 @@
  * @return per RFC5661, p. 373
  */
 
-int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
-		   struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
+				   struct nfs_resop4 *resp)
 {
 	RENAME4args * const arg_RENAME4 = &op->nfs_argop4_u.oprename;
 	RENAME4res * const res_RENAME4 = &resp->nfs_resop4_u.oprename;
@@ -139,7 +139,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 	if (newname)
 		gsh_free(newname);
 
-	return res_RENAME4->status;
+	return nfsstat4_to_nfs_req_result(res_RENAME4->status);
 }
 
 /**

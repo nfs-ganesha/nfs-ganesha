@@ -59,8 +59,8 @@
  *
  */
 
-int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
-		   struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
+				   struct nfs_resop4 *resp)
 {
 	SAVEFH4res * const res_SAVEFH = &resp->nfs_resop4_u.opsavefh;
 
@@ -75,7 +75,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	res_SAVEFH->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, true);
 
 	if (res_SAVEFH->status != NFS4_OK)
-		return res_SAVEFH->status;
+		return NFS_REQ_ERROR;
 
 	/* If the savefh is not allocated, do it now */
 	if (data->savedFH.nfs_fh4_val == NULL)
@@ -88,7 +88,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 		if (!export_ready(op_ctx->ctx_export)) {
 			/* The CurrentFH export has gone bad. */
 			res_SAVEFH->status = NFS4ERR_STALE;
-			return res_SAVEFH->status;
+			return NFS_REQ_ERROR;
 		}
 		get_gsh_export_ref(op_ctx->ctx_export);
 	}
@@ -133,7 +133,7 @@ int nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_SAVEFH->status = NFS4_OK;
 
-	return NFS4_OK;
+	return NFS_REQ_OK;
 }				/* nfs4_op_savefh */
 
 /**

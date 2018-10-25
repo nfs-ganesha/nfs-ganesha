@@ -95,8 +95,9 @@ static bool cb(void *opaque, uint64_t id)
  *
  */
 
-int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t *data,
-			  struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_getdevicelist(struct nfs_argop4 *op,
+					  compound_data_t *data,
+					  struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
 	GETDEVICELIST4args * const arg_GETDEVICELIST4 =
@@ -117,8 +118,10 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t *data,
 
 	resp->resop = NFS4_OP_GETDEVICELIST;
 
-	if (data->minorversion == 0)
-		return res_GETDEVICELIST4->gdlr_status = NFS4ERR_INVAL;
+	if (data->minorversion == 0) {
+		res_GETDEVICELIST4->gdlr_status = NFS4ERR_INVAL;
+		return NFS_REQ_ERROR;
+	}
 
 	nfs_status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
@@ -174,7 +177,7 @@ int nfs4_op_getdevicelist(struct nfs_argop4 *op, compound_data_t *data,
  out:
 	res_GETDEVICELIST4->gdlr_status = nfs_status;
 
-	return res_GETDEVICELIST4->gdlr_status;
+	return nfsstat4_to_nfs_req_result(res_GETDEVICELIST4->gdlr_status);
 }
 
 /**

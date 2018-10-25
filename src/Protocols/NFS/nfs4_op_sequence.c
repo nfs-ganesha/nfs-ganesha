@@ -49,8 +49,9 @@
  * @see nfs4_Compound
  *
  */
-int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
-		     struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
+				     compound_data_t *data,
+				     struct nfs_resop4 *resp)
 {
 	SEQUENCE4args * const arg_SEQUENCE4 = &op->nfs_argop4_u.opsequence;
 	SEQUENCE4res * const res_SEQUENCE4 = &resp->nfs_resop4_u.opsequence;
@@ -64,7 +65,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		res_SEQUENCE4->sr_status = NFS4ERR_INVAL;
-		return res_SEQUENCE4->sr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	if (!nfs41_Session_Get_Pointer(arg_SEQUENCE4->sa_sessionid, &session)) {
@@ -73,7 +74,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 			    "SEQUENCE returning status %s",
 			    nfsstat4_to_str(res_SEQUENCE4->sr_status));
 
-		return res_SEQUENCE4->sr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* session->refcount +1 */
@@ -91,7 +92,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
 			    "SEQUENCE returning status %s",
 			    nfsstat4_to_str(res_SEQUENCE4->sr_status));
-		return res_SEQUENCE4->sr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	data->preserved_clientid = session->clientid_record;
@@ -107,7 +108,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
 			    "SEQUENCE returning status %s",
 			    nfsstat4_to_str(res_SEQUENCE4->sr_status));
-		return res_SEQUENCE4->sr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* By default, no DRC replay */
@@ -139,7 +140,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 
 				dec_session_ref(session);
 				res_SEQUENCE4->sr_status = NFS4_OK;
-				return res_SEQUENCE4->sr_status;
+				return NFS_REQ_OK;
 			} else {
 				/* Illegal replay */
 				PTHREAD_MUTEX_unlock(&slot->lock);
@@ -155,7 +156,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 						res_SEQUENCE4->sr_status),
 					    slot->sequence,
 					    arg_SEQUENCE4->sa_sequenceid);
-				return res_SEQUENCE4->sr_status;
+				return NFS_REQ_ERROR;
 			}
 		}
 
@@ -166,7 +167,7 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
 			    "SEQUENCE returning status %s",
 			    nfsstat4_to_str(res_SEQUENCE4->sr_status));
-		return res_SEQUENCE4->sr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* Keep memory of the session in the COMPOUND's data */
@@ -231,14 +232,14 @@ int nfs4_op_sequence(struct nfs_argop4 *op, compound_data_t *data,
 
 		dec_session_ref(session);
 		data->session = NULL;
-		return res_SEQUENCE4->sr_status;
+		return NFS_REQ_ERROR;
 	}
 
 	/* We keep the slot lock to serialize use of the slot. */
 
 	(void) check_session_conn(session, data, true);
 
-	return res_SEQUENCE4->sr_status;
+	return NFS_REQ_OK;
 }				/* nfs41_op_sequence */
 
 /**

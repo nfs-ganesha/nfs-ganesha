@@ -57,8 +57,9 @@
  * @return per RFC5661, p. 365
  *
  */
-int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
+				    compound_data_t *data,
+				    struct nfs_resop4 *resp)
 {
 	GETATTR4args * const arg_GETATTR4 = &op->nfs_argop4_u.opgetattr;
 	GETATTR4res * const res_GETATTR4 = &resp->nfs_resop4_u.opgetattr;
@@ -70,7 +71,6 @@ int nfs4_op_getattr(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* This is a NFS4_OP_GETTAR */
 	resp->resop = NFS4_OP_GETATTR;
-	res_GETATTR4->status = NFS4_OK;
 
 	/* Do basic checks on a filehandle */
 	res_GETATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
@@ -177,7 +177,7 @@ out:
 		data->op_resp_size = sizeof(nfsstat4);
 	}
 
-	return res_GETATTR4->status;
+	return nfsstat4_to_nfs_req_result(res_GETATTR4->status);
 }				/* nfs4_op_getattr */
 
 /**

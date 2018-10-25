@@ -64,8 +64,9 @@
  * @return NFS status codes.
  */
 
-int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
+				    compound_data_t *data,
+				    struct nfs_resop4 *resp)
 {
 	SECINFO4args * const arg_SECINFO4 = &op->nfs_argop4_u.opsecinfo;
 	SECINFO4res * const res_SECINFO4 = &resp->nfs_resop4_u.opsecinfo;
@@ -318,7 +319,7 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
 	if (secinfo_fh_name)
 		gsh_free(secinfo_fh_name);
 
-	return res_SECINFO4->status;
+	return nfsstat4_to_nfs_req_result(res_SECINFO4->status);
 }				/* nfs4_op_secinfo */
 
 /**

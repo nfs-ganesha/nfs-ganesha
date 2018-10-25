@@ -42,6 +42,7 @@
 #include "nfs_file_handle.h"
 #include "nfs_convert.h"
 #include "export_mgr.h"
+#include "nfs_proto_functions.h"
 
 /**
  * @brief NFS4_OP_LOOKUPP
@@ -56,8 +57,9 @@
  * @return per RFC5661, p. 369
  *
  */
-int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
+				    compound_data_t *data,
+				    struct nfs_resop4 *resp)
 {
 	LOOKUPP4res * const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
 	struct fsal_obj_handle *dir_obj = NULL;
@@ -73,7 +75,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	res_LOOKUPP4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
 
 	if (res_LOOKUPP4->status != NFS4_OK)
-		return res_LOOKUPP4->status;
+		return NFS_REQ_ERROR;
 
 	/* Preparing for cache_inode_lookup ".." */
 	file_obj = NULL;
@@ -88,7 +90,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 	status = nfs_export_get_root_entry(original_export, &root_obj);
 	if (FSAL_IS_ERROR(status)) {
 		res_LOOKUPP4->status = nfs4_Errno_status(status);
-		return res_LOOKUPP4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	PTHREAD_RWLOCK_rdlock(&original_export->lock);
@@ -110,7 +112,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 			root_obj->obj_ops->put_ref(root_obj);
 			PTHREAD_RWLOCK_unlock(&original_export->lock);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
-			return res_LOOKUPP4->status;
+			return NFS_REQ_ERROR;
 		}
 
 		PTHREAD_RWLOCK_unlock(&original_export->lock);
@@ -149,7 +151,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 				original_export->pseudopath,
 				parent_exp);
 			res_LOOKUPP4->status = NFS4ERR_STALE;
-			return res_LOOKUPP4->status;
+			return NFS_REQ_ERROR;
 		}
 
 		get_gsh_export_ref(parent_exp);
@@ -192,7 +194,7 @@ int nfs4_op_lookupp(struct nfs_argop4 *op, compound_data_t *data,
 				 parent_exp->export_id,
 				 parent_exp->pseudopath);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
-			return res_LOOKUPP4->status;
+			return NFS_REQ_ERROR;
 		}
 	} else {
 		/* Release the lock taken above */
@@ -213,7 +215,7 @@ not_junction:
 						op_ctx->ctx_export)) {
 			res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
 			file_obj->obj_ops->put_ref(file_obj);
-			return res_LOOKUPP4->status;
+			return NFS_REQ_ERROR;
 		}
 
 		/* Keep the pointer within the compound data */
@@ -232,7 +234,7 @@ not_junction:
 		res_LOOKUPP4->status = nfs4_Errno_status(status);
 	}
 
-	return res_LOOKUPP4->status;
+	return nfsstat4_to_nfs_req_result(res_LOOKUPP4->status);
 }				/* nfs4_op_lookupp */
 
 /**
