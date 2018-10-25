@@ -49,6 +49,7 @@
 #include "sal_data.h"
 #include "sal_functions.h"
 #include "FSAL/fsal_commonlib.h"
+#include "sal_functions.h"
 
 /**
  * This is a global counter of files opened.
@@ -478,6 +479,10 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 			obj->type);
 		return fsalstat(ERR_FSAL_BADTYPE, 0);
 	}
+	if ((attr->valid_mask & (ATTR_SIZE | ATTR_MODE))) {
+		if (state_deleg_conflict(obj, true))
+			return fsalstat(ERR_FSAL_DELAY, 0);
+	}
 
 	/* Is it allowed to change times ? */
 	if (!op_ctx->fsal_export->exp_ops.fs_supports(op_ctx->fsal_export,
@@ -631,6 +636,11 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 
 		if (FSAL_IS_ERROR(status))
 			return status;
+	}
+	if (state_deleg_conflict(obj, true)) {
+		LogDebug(COMPONENT_FSAL, "Found an existing delegation for %s",
+			  name);
+		return fsalstat(ERR_FSAL_DELAY, 0);
 	}
 
 	/* Rather than performing a lookup first, just try to make the
@@ -1206,6 +1216,12 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 		goto out;
 	}
 
+	if (state_deleg_conflict(to_remove_obj, true)) {
+		LogDebug(COMPONENT_FSAL, "Found an existing delegation for %s",
+			  name);
+		status = fsalstat(ERR_FSAL_DELAY, 0);
+		goto out;
+	}
 	LogFullDebug(COMPONENT_FSAL, "%s", name);
 
 	/* Make sure the to_remove_obj is closed since unlink of an
@@ -1297,7 +1313,15 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
 		goto out;
 	}
-
+	/* *
+	 * TODO : check conflicts in for destination as well
+	 */
+	if (state_deleg_conflict(lookup_src, true)) {
+		LogDebug(COMPONENT_FSAL, "Found an existing delegation for %s",
+			  oldname);
+		fsal_status = fsalstat(ERR_FSAL_DELAY, 0);
+		goto out;
+	}
 	LogFullDebug(COMPONENT_FSAL, "about to call FSAL rename");
 
 	fsal_status = dir_src->obj_ops->rename(lookup_src, dir_src, oldname,

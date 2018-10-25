@@ -66,7 +66,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 	const char *tag = "SETATTR";
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
-	struct fsal_obj_handle *obj = NULL;
 	const time_t S_NSECS = 1000000000UL;
 
 	resp->resop = NFS4_OP_SETATTR;
@@ -126,8 +125,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 			goto done;
 		}
 
-		obj = data->current_obj;
-
 		/* Check stateid correctness and get pointer to state */
 		res_SETATTR4->status =
 		    nfs4_Check_Stateid(&arg_SETATTR4->stateid,
@@ -185,12 +182,6 @@ int nfs4_op_setattr(struct nfs_argop4 *op, compound_data_t *data,
 			 * see if any share conflicts
 			 */
 			state_open = NULL;
-
-			/* Check for delegation conflict. */
-			if (state_deleg_conflict(obj, true)) {
-				res_SETATTR4->status = NFS4ERR_DELAY;
-				goto done;
-			}
 		}
 	}
 

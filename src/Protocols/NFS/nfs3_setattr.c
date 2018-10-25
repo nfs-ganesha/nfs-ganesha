@@ -147,16 +147,6 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		 */
 		squash_setattr(&setattr);
 
-		if (arg->arg_setattr3.new_attributes.size.set_it) {
-			/* Check for delegation conflict. */
-			if (state_deleg_conflict(obj, true)) {
-				res->res_setattr3.status = NFS3ERR_JUKEBOX;
-				LogFullDebug(COMPONENT_NFSPROTO,
-					     "state_share_anonymous_io_start failed");
-				goto out_fail;
-			}
-		}
-
 		/* Don't allow attribute change while we are in grace period.
 		 * Required for delegation reclaims and may be needed for other
 		 * reclaimable states as well. No NFS4ERR_GRACE in NFS v3, so
