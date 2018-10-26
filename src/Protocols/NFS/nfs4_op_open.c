@@ -1280,7 +1280,7 @@ int nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		LogCrit(COMPONENT_NFS_V4,
 			"Impossible condition in compound data at %s:%u.",
 			__FILE__, __LINE__);
-		goto out3;
+		return res_OPEN4->status;
 	}
 
 	/* It this a known client id? */
