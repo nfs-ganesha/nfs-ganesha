@@ -92,9 +92,6 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		ret = fsalstat(ERR_FSAL_LOCKED, 0);
 
 	if (!FSAL_IS_ERROR(ret)) {
-		nfs_read_ok(data->res, read_arg->iov[0].iov_base,
-			    read_arg->io_amount, obj, read_arg->end_of_file);
-		data->rc = NFS_REQ_OK;
 		if (!read_arg->end_of_file) {
 			/** @todo FSF: add a config option for this behavior?
 			*/
@@ -121,6 +118,9 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			/* Done with the attrs */
 			fsal_release_attrs(&attrs);
 		}
+		nfs_read_ok(data->res, read_arg->iov[0].iov_base,
+			    read_arg->io_amount, obj, read_arg->end_of_file);
+		data->rc = NFS_REQ_OK;
 		goto out;
 	}
 
