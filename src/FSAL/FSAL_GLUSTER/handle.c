@@ -2638,6 +2638,7 @@ static fsal_status_t glusterfs_close2(struct fsal_obj_handle *obj_hdl,
 				      struct state_t *state)
 {
 	struct glusterfs_handle *myself = NULL;
+	fsal_status_t status = {0, 0};
 	struct glusterfs_fd *my_fd = &container_of(state,
 						   struct glusterfs_state_fd,
 						   state)->glusterfs_fd;
@@ -2661,7 +2662,14 @@ static fsal_status_t glusterfs_close2(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
 
-	return glusterfs_close_my_fd(my_fd);
+	/* Acquire state's fdlock to make sure no other thread
+	 * is operating on the fd while we close it.
+	 */
+	PTHREAD_RWLOCK_wrlock(&my_fd->fdlock);
+	status = glusterfs_close_my_fd(my_fd);
+	PTHREAD_RWLOCK_unlock(&my_fd->fdlock);
+
+	return status;
 }
 
 /**

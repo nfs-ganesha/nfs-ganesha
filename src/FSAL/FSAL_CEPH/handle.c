@@ -2321,6 +2321,7 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t ceph_fsal_close2(struct fsal_obj_handle *obj_hdl,
 				      struct state_t *state)
 {
+	fsal_status_t status = {0, 0};
 	struct ceph_handle *myself =
 		container_of(obj_hdl, struct ceph_handle, handle);
 	struct ceph_fd *my_fd = &container_of(state, struct ceph_state_fd,
@@ -2341,7 +2342,14 @@ static fsal_status_t ceph_fsal_close2(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
 
-	return ceph_close_my_fd(myself, my_fd);
+	/* Acquire state's fdlock to make sure no other thread
+	 * is operating on the fd while we close it.
+	 */
+	PTHREAD_RWLOCK_wrlock(&my_fd->fdlock);
+	status = ceph_close_my_fd(myself, my_fd);
+	PTHREAD_RWLOCK_unlock(&my_fd->fdlock);
+
+	return status;
 }
 
 /**

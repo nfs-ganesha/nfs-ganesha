@@ -2055,6 +2055,7 @@ fsal_status_t vfs_close2(struct fsal_obj_handle *obj_hdl,
 			 struct state_t *state)
 {
 	struct vfs_fsal_obj_handle *myself = NULL;
+	fsal_status_t status = {0, 0};
 	struct vfs_fd *my_fd = &container_of(state, struct vfs_state_fd,
 					     state)->vfs_fd;
 
@@ -2077,5 +2078,12 @@ fsal_status_t vfs_close2(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
 
-	return vfs_close_my_fd(my_fd);
+	/* Acquire state's fdlock to make sure no other thread
+	 * is operating on the fd while we close it.
+	 */
+	PTHREAD_RWLOCK_wrlock(&my_fd->fdlock);
+	status = vfs_close_my_fd(my_fd);
+	PTHREAD_RWLOCK_unlock(&my_fd->fdlock);
+
+	return status;
 }
