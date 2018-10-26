@@ -1870,6 +1870,14 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 		glusterfs_close_my_fd(my_share_fd);
 		my_share_fd->glfd = my_fd->glfd;
 		my_share_fd->openflags = my_fd->openflags;
+		my_share_fd->creds.caller_uid = my_fd->creds.caller_uid;
+		my_share_fd->creds.caller_gid = my_fd->creds.caller_gid;
+		my_share_fd->creds.caller_glen = my_fd->creds.caller_glen;
+		my_share_fd->creds.caller_garray = my_fd->creds.caller_garray;
+#ifdef USE_GLUSTER_DELEGATION
+		memcpy(my_share_fd->lease_id, my_fd->lease_id,
+		       GLAPI_LEASE_ID_SIZE);
+#endif
 
 		PTHREAD_RWLOCK_unlock(&my_share_fd->fdlock);
 	} else {
