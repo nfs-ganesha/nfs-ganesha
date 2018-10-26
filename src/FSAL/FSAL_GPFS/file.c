@@ -1461,9 +1461,15 @@ gpfs_close2(struct fsal_obj_handle *obj_hdl, struct state_t *state)
 			     "state %p fd %d", state, my_fd->fd);
 		state_owner = state->state_owner;
 
+		/* Acquire state's fdlock to make sure no other thread
+		 * is operating on the fd while we close it.
+		 */
+		PTHREAD_RWLOCK_wrlock(&my_fd->fdlock);
 		status = fsal_internal_close(my_fd->fd, state_owner, 0);
+
 		my_fd->fd = -1;
 		my_fd->openflags = FSAL_O_CLOSED;
+		PTHREAD_RWLOCK_unlock(&my_fd->fdlock);
 	}
 	if (FSAL_IS_ERROR(status)) {
 		struct gpfs_file_handle *gfh = container_of(obj_hdl,
