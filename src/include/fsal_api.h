@@ -1281,7 +1281,7 @@ typedef enum fsal_dir_result (*fsal_readdir_cb)(
  */
 struct fsal_io_arg {
 	size_t io_amount;	/**< Total amount of I/O actually done */
-	struct io_info *info;	/**< More information about data */
+	struct io_info *info;	/**< More info about data for read_plus */
 	union {
 		bool end_of_file;	/**< True if end-of-file reached */
 		bool fsal_stable;	/**< requested/achieved stability */
@@ -2694,43 +2694,6 @@ struct fsal_dsh_ops {
 			  count4 * const written_length,
 			  verifier4 * const writeverf,
 			  stable_how4 * const stability_got);
-
-/**
- *
- * @brief Write plus to a data-server handle.
- *
- * NFSv4.2 data server filehandles are disjount from normal
- * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
- * structure) and do not get loaded into cache_inode or processed the
- * normal way.
- *
- * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
- * @param[in]  stateid          The stateid supplied with the READ operation,
- *                              for validation
- * @param[in]  offset           The offset at which to read
- * @param[in]  write_length     Length of write requested (and size of buffer)
- * @param[out] buffer           The buffer to which to store read data
- * @param[in]  stability wanted Stability of write
- * @param[out] written_length   Length of data written
- * @param[out] writeverf        Write verifier
- * @param[out] stability_got    Stability used for write (must be as
- *                              or more stable than request)
- * @param[in/out] info          IO info
- *
- * @return An NFSv4.2 status code.
- */
-	 nfsstat4(*write_plus)(struct fsal_ds_handle *const ds_hdl,
-			       struct req_op_context *const req_ctx,
-			       const stateid4 * stateid,
-			       const offset4 offset,
-			       const count4 write_length,
-			       const void *buffer,
-			       const stable_how4 stability_wanted,
-			       count4 * const written_length,
-			       verifier4 * const writeverf,
-			       stable_how4 * const stability_got,
-			       struct io_info *info);
 
 /**
  * @brief Commit a byte range to a DS handle.

@@ -1673,20 +1673,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
 	return NFS4ERR_NOTSUPP;
 }
 
-static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_hdl,
-			 struct req_op_context *const req_ctx,
-			 const stateid4 *stateid, const offset4 offset,
-			 const count4 write_length, const void *buffer,
-			 const stable_how4 stability_wanted,
-			 count4 * const written_length,
-			 verifier4 * const writeverf,
-			 stable_how4 * const stability_got,
-			 struct io_info *info)
-{
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS write_plus!");
-	return NFS4ERR_NOTSUPP;
-}
-
 /**
  * @brief Fail to commit a byte range on a DS handle.
  *
@@ -1712,7 +1698,6 @@ struct fsal_dsh_ops def_dsh_ops = {
 	.read = ds_read,
 	.read_plus = ds_read_plus,
 	.write = ds_write,
-	.write_plus = ds_write_plus,
 	.commit = ds_commit
 };
 

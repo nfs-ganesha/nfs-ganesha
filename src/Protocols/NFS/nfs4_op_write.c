@@ -131,58 +131,6 @@ static int op_dswrite(struct nfs_argop4 *op, compound_data_t *data,
 }
 
 /**
- * @brief Write plus for a data server
- *
- * This function bypasses cache_inode and calls directly into the FSAL
- * to perform a pNFS data server write.
- *
- * @param[in]     op    Arguments for nfs41_op
- * @param[in,out] data  Compound request's data
- * @param[out]    resp  Results for nfs41_op
- *
- * @return per RFC5661, p. 376
- *
- */
-
-static int op_dswrite_plus(struct nfs_argop4 *op, compound_data_t *data,
-			  struct nfs_resop4 *resp, struct io_info *info)
-{
-	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
-	WRITE4res * const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
-	/* NFSv4 return code */
-	nfsstat4 nfs_status = 0;
-
-	if (info->io_content.what == NFS4_CONTENT_DATA)
-		nfs_status = data->current_ds->dsh_ops.write(
-				data->current_ds,
-				op_ctx,
-				&arg_WRITE4->stateid,
-				arg_WRITE4->offset,
-				arg_WRITE4->data.data_len,
-				arg_WRITE4->data.data_val,
-				arg_WRITE4->stable,
-				&res_WRITE4->WRITE4res_u.resok4.count,
-				&res_WRITE4->WRITE4res_u.resok4.writeverf,
-				&res_WRITE4->WRITE4res_u.resok4.committed);
-	else
-		nfs_status = data->current_ds->dsh_ops.write_plus(
-				data->current_ds,
-				op_ctx,
-				&arg_WRITE4->stateid,
-				arg_WRITE4->offset,
-				arg_WRITE4->data.data_len,
-				arg_WRITE4->data.data_val,
-				arg_WRITE4->stable,
-				&res_WRITE4->WRITE4res_u.resok4.count,
-				&res_WRITE4->WRITE4res_u.resok4.writeverf,
-				&res_WRITE4->WRITE4res_u.resok4.committed,
-				info);
-
-	res_WRITE4->status = nfs_status;
-	return res_WRITE4->status;
-}
-
-/**
  * @brief The NFS4_OP_WRITE operation
  *
  * This functions handles the NFS4_OP_WRITE operation in NFSv4. This
@@ -195,9 +143,8 @@ static int op_dswrite_plus(struct nfs_argop4 *op, compound_data_t *data,
  * @return per RFC5661, p. 376
  */
 
-static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
-		     struct nfs_resop4 *resp, fsal_io_direction_t io,
-		     struct io_info *info)
+int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
+		  struct nfs_resop4 *resp)
 {
 	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
 	WRITE4res * const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
@@ -224,10 +171,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	if ((data->minorversion > 0)
 	     && (nfs4_Is_Fh_DSHandle(&data->currentFH))) {
-		if (io == FSAL_IO_WRITE)
-			return op_dswrite(op, data, resp);
-		else
-			return op_dswrite_plus(op, data, resp, info);
+		return op_dswrite(op, data, resp);
 	}
 
 	/*
@@ -275,8 +219,6 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	if (state_found != NULL) {
 		struct state_deleg *sdeleg;
 
-		if (info)
-			info->io_advise = state_found->state_data.io_advise;
 		switch (state_found->state_type) {
 		case STATE_TYPE_SHARE:
 			state_open = state_found;
@@ -392,15 +334,11 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 		 * The client asked for too much data, we
 		 * must restrict him
 		 */
-
-		if (info == NULL ||
-		    info->io_content.what != NFS4_CONTENT_HOLE) {
-			LogFullDebug(COMPONENT_NFS_V4,
-				     "write requested size = %" PRIu64
-				     " write allowed size = %" PRIu64,
-				     size, MaxWrite);
-			size = MaxWrite;
-		}
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "write requested size = %" PRIu64
+			     " write allowed size = %" PRIu64,
+			     size, MaxWrite);
+		size = MaxWrite;
 	}
 
 	LogFullDebug(COMPONENT_NFS_V4,
@@ -431,7 +369,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Set up args */
-	write_arg->info = info;
+	write_arg->info = NULL;
 	write_arg->state = state_found;
 	write_arg->offset = offset;
 	write_arg->iov_count = 1;
@@ -467,29 +405,6 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 }				/* nfs4_op_write */
 
 /**
- * @brief The NFS4_OP_WRITE operation
- *
- * This functions handles the NFS4_OP_WRITE operation in NFSv4. This
- * function can be called only from nfs4_Compound.
- *
- * @param[in]     op    Arguments for nfs4_op
- * @param[in,out] data  Compound request's data
- * @param[out]    resp  Results for nfs4_op
- *
- * @return per RFC5661, p. 376
- */
-
-int nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
-{
-	int err;
-
-	err = nfs4_write(op, data, resp, FSAL_IO_WRITE, NULL);
-
-	return err;
-}
-
-/**
  * @brief Free memory allocated for WRITE result
  *
  * This function frees any memory allocated for the result of the
@@ -518,7 +433,7 @@ void nfs4_op_write_Free(nfs_resop4 *resp)
 int nfs4_op_write_same(struct nfs_argop4 *op, compound_data_t *data,
 		  struct nfs_resop4 *resp)
 {
-	WRITE_SAME4res * const res_WSAME = &resp->nfs_resop4_u.opwrite_plus;
+	WRITE_SAME4res * const res_WSAME = &resp->nfs_resop4_u.opwrite_same;
 
 	resp->resop = NFS4_OP_WRITE_SAME;
 	res_WSAME->wpr_status =  NFS4ERR_NOTSUPP;

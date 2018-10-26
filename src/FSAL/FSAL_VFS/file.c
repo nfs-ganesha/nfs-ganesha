@@ -1308,13 +1308,6 @@ void vfs_write2(struct fsal_obj_handle *obj_hdl,
 	fsal_openflags_t openflags = FSAL_O_WRITE;
 	struct vfs_fd *vfs_fd = NULL;
 
-	if (write_arg->info != NULL) {
-		/* Currently we don't support WRITE_PLUS */
-		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
-			caller_arg);
-		return;
-	}
-
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",

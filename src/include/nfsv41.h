@@ -3217,7 +3217,7 @@ struct nfs_argop4 {
 		COPY4args opcopy;
 		OFFLOAD_ABORT4args opoffload_abort;
 		OFFLOAD_STATUS4args opoffload_status;
-		WRITE_SAME4args opwrite_plus;
+		WRITE_SAME4args opwrite_same;
 		ALLOCATE4args opallocate;
 		DEALLOCATE4args opdeallocate;
 		READ_PLUS4args opread_plus;
@@ -3302,7 +3302,7 @@ struct nfs_resop4 {
 		COPY4res opcopy;
 		OFFLOAD_ABORT4res opoffload_abort;
 		OFFLOAD_STATUS4res opoffload_status;
-		WRITE_SAME4res opwrite_plus;
+		WRITE_SAME4res opwrite_same;
 		ALLOCATE4res opallocate;
 		DEALLOCATE4res opdeallocate;
 		READ_PLUS4res opread_plus;
@@ -8344,7 +8344,7 @@ static inline bool xdr_nfs_argop4(XDR *xdrs, nfs_argop4 *objp)
 	/* NFSv4.2 */
 	case NFS4_OP_WRITE_SAME:
 		if (!xdr_WRITE_SAME4args(xdrs,
-				&objp->nfs_argop4_u.opwrite_plus))
+				&objp->nfs_argop4_u.opwrite_same))
 			return false;
 		lkhd->flags |= NFS_LOOKAHEAD_WRITE;
 		(lkhd->write)++;
@@ -8683,7 +8683,7 @@ static inline bool xdr_nfs_resop4(XDR *xdrs, nfs_resop4 *objp)
 
 	/* NFSv4.2 */
 	case NFS4_OP_WRITE_SAME:
-		if (!xdr_WRITE_SAME4res(xdrs, &objp->nfs_resop4_u.opwrite_plus))
+		if (!xdr_WRITE_SAME4res(xdrs, &objp->nfs_resop4_u.opwrite_same))
 			return false;
 		break;
 	case NFS4_OP_READ_PLUS:

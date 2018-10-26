@@ -2527,13 +2527,6 @@ static void pxy_write2(struct fsal_obj_handle *obj_hdl,
 	stable_how4 stable_how;
 	size_t buffer_size = write_arg->iov[0].iov_len;
 
-	if (write_arg->info != NULL) {
-		/* Currently we don't support WRITE_PLUS */
-		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
-			caller_arg);
-		return;
-	}
-
 	ph = container_of(obj_hdl, struct pxy_obj_handle, obj);
 
 	/* check max write size */

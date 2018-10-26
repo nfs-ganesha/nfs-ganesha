@@ -1367,13 +1367,6 @@ void rgw_fsal_write2(struct fsal_obj_handle *obj_hdl,
 		"%s enter obj_hdl %p state %p", __func__, obj_hdl,
 		write_arg->state);
 
-	if (write_arg->info != NULL) {
-		/* Currently we don't support WRITE_PLUS */
-		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
-			caller_arg);
-		return;
-	}
-
 	/* XXX note no call to fsal_find_fd (or wrapper) */
 
 	for (i = 0; i < write_arg->iov_count; i++) {

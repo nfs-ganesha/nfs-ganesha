@@ -1806,13 +1806,6 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 	uint64_t offset = write_arg->offset;
 	int i;
 
-	if (write_arg->info != NULL) {
-		/* Currently we don't support WRITE_PLUS */
-		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
-			caller_arg);
-		return;
-	}
-
 	if (obj_hdl->type != REGULAR_FILE) {
 		/* Currently can only write to a file */
 		done_cb(obj_hdl, fsalstat(ERR_FSAL_INVAL, 0), write_arg,

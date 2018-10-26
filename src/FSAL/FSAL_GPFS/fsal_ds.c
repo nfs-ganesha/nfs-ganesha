@@ -314,98 +314,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 }
 
 /**
- *
- * @brief Write plus to a data-server handle.
- *
- * This performs a DS write not going through the data server unless
- * FILE_SYNC4 is specified, in which case it connects the filehandle
- * and performs an MDS write.
- *
- * @param[in]  ds_pub           FSAL DS handle
- * @param[in]  req_ctx          Credentials
- * @param[in]  stateid          The stateid supplied with the READ operation,
- *                              for validation
- * @param[in]  offset           The offset at which to read
- * @param[in]  write_length     Length of write requested (and size of buffer)
- * @param[out] buffer           The buffer to which to store read data
- * @param[in]  stability wanted Stability of write
- * @param[out] written_length   Length of data written
- * @param[out] writeverf        Write verifier
- * @param[out] stability_got    Stability used for write (must be as
- *                              or more stable than request)
- * @param[in/out] info          IO info
- *
- * @return An NFSv4.2 status code.
- */
-static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_pub,
-			 struct req_op_context *const req_ctx,
-			 const stateid4 *stateid, const offset4 offset,
-			 const count4 write_length, const void *buffer,
-			 const stable_how4 stability_wanted,
-			 count4 * const written_length,
-			 verifier4 * const writeverf,
-			 stable_how4 * const stability_got,
-			 struct io_info *info)
-{
-	/* The private 'full' DS handle */
-	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
-	struct gpfs_file_handle *gpfs_handle = &ds->wire;
-	/* The amount actually read */
-	int32_t amount_written = 0;
-	struct dswrite_arg warg;
-	unsigned int *fh;
-	struct gsh_buffdesc key;
-	int errsv = 0;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
-	int export_fd = exp->export_fd;
-
-	fh = (int *)&(gpfs_handle->f_handle);
-
-	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
-
-	warg.mountdirfd = export_fd;
-	warg.handle = gpfs_handle;
-	warg.bufP = (char *)buffer;
-	warg.offset = offset;
-	warg.length = write_length;
-	warg.stability_wanted = stability_wanted;
-	warg.stability_got = stability_got;
-	warg.verifier4 = (int32_t *) writeverf;
-	warg.options = 0;
-
-	if (info->io_content.what == NFS4_CONTENT_HOLE)
-		warg.options = IO_SKIP_HOLE;
-
-	LogDebug(COMPONENT_PNFS,
-		 "fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
-		 gpfs_handle->handle_size, gpfs_handle->handle_type,
-		 gpfs_handle->handle_key_size, fh[0], fh[1], fh[2], fh[3],
-		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
-
-	amount_written = gpfs_ganesha(OPENHANDLE_DS_WRITE, &warg);
-	errsv = errno;
-	if (amount_written < 0) {
-		if (errsv == EUNATCH)
-			LogFatal(COMPONENT_PNFS, "GPFS Returned EUNATCH");
-		return posix2nfs4_error(errsv);
-	}
-
-	LogDebug(COMPONENT_PNFS, "write verifier %d-%d\n",
-				warg.verifier4[0], warg.verifier4[1]);
-
-	key.addr = gpfs_handle;
-	key.len = gpfs_handle->handle_key_size;
-	req_ctx->fsal_export->up_ops->invalidate(
-			req_ctx->fsal_export->up_ops, &key,
-			FSAL_UP_INVALIDATE_CACHE);
-
-	*written_length = amount_written;
-
-	return NFS4_OK;
-}
-
-/**
  * @brief Commit a byte range to a DS handle.
  *
  * NFSv4.1 data server filehandles are disjount from normal
@@ -442,7 +350,6 @@ static void dsh_ops_init(struct fsal_dsh_ops *ops)
 	ops->read = ds_read;
 	ops->read_plus = ds_read_plus;
 	ops->write = ds_write;
-	ops->write_plus = ds_write_plus;
 	ops->commit = ds_commit;
 }
 

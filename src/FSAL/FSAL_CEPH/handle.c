@@ -1756,13 +1756,6 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	struct ceph_fd *ceph_fd = NULL;
 	uint64_t offset = write_arg->offset;
 
-	if (write_arg->info != NULL) {
-		/* Currently we don't support WRITE_PLUS */
-		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
-			caller_arg);
-		return;
-	}
-
 	/* Acquire state's fdlock to prevent OPEN upgrade closing the
 	 * file descriptor while we use it.
 	 */

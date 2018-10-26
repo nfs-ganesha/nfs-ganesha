@@ -54,6 +54,15 @@ struct nfs4_read_data {
 };
 
 /**
+ * Indicate type of read operation this is.
+ */
+
+typedef enum io_direction__ {
+	IO_READ = 1,		/*< Reading */
+	IO_READ_PLUS = 2,	/*< Reading plus */
+} io_direction_t;
+
+/**
  * @brief Callback for NFS4 read done
  *
  * @param[in] obj		Object being acted on
@@ -273,7 +282,7 @@ static int op_dsread_plus(struct nfs_argop4 *op, compound_data_t *data,
 
 
 static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp, fsal_io_direction_t io,
+		    struct nfs_resop4 *resp, io_direction_t io,
 		    struct io_info *info)
 {
 	READ4args * const arg_READ4 = &op->nfs_argop4_u.opread;
@@ -301,7 +310,7 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 
 	if ((data->minorversion > 0)
 	    && nfs4_Is_Fh_DSHandle(&data->currentFH)) {
-		if (io == FSAL_IO_READ)
+		if (io == IO_READ)
 			return op_dsread(op, data, resp);
 		else
 			return op_dsread_plus(op, data, resp, info);
@@ -597,7 +606,7 @@ int nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
 
-	return nfs4_read(op, data, resp, FSAL_IO_READ, NULL);
+	return nfs4_read(op, data, resp, IO_READ, NULL);
 }
 
 /**
@@ -646,7 +655,7 @@ int nfs4_op_read_plus(struct nfs_argop4 *op, compound_data_t *data,
 
 	resp->resop = NFS4_OP_READ_PLUS;
 
-	nfs4_read(op, data, &res, FSAL_IO_READ_PLUS, &info);
+	nfs4_read(op, data, &res, IO_READ_PLUS, &info);
 
 	res_RPLUS->rpr_status = res_READ4->status;
 	if (res_RPLUS->rpr_status != NFS4_OK)

@@ -269,17 +269,6 @@ typedef fsal_errors_t (*helper_readdir_cb)
 	 enum cb_state cb_state);
 
 /**
- * Indicate whether this is a read or write operation, for fsal_rdwr.
- */
-
-typedef enum io_direction__ {
-	FSAL_IO_READ = 1,		/*< Reading */
-	FSAL_IO_WRITE = 2,		/*< Writing */
-	FSAL_IO_READ_PLUS = 3,	/*< Reading plus */
-	FSAL_IO_WRITE_PLUS = 4	/*< Writing plus */
-} fsal_io_direction_t;
-
-/**
  * @brief Type of callback for fsal_readdir
  *
  * This callback provides the upper level protocol handling function

@@ -2032,13 +2032,6 @@ static void glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	     container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_fd *glusterfs_fd = NULL;
 
-	if (write_arg->info != NULL) {
-		/* Currently we don't support WRITE_PLUS */
-		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), write_arg,
-			caller_arg);
-		return;
-	}
-
 #if 0
 	/** @todo: fsid work */
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
