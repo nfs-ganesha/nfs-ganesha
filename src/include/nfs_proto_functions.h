@@ -165,6 +165,18 @@ int nfs3_mknod(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 int nfs4_Compound(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
+enum nfs_req_result nfs4_op_read_resume(struct nfs_argop4 *op,
+					compound_data_t *data,
+					struct nfs_resop4 *resp);
+
+enum nfs_req_result nfs4_op_write_resume(struct nfs_argop4 *op,
+					 compound_data_t *data,
+					 struct nfs_resop4 *resp);
+
+enum nfs_req_result nfs4_op_read_plus_resume(struct nfs_argop4 *op,
+					     compound_data_t *data,
+					     struct nfs_resop4 *resp);
+
 enum nfs_req_result nfs4_op_access(struct nfs_argop4 *, compound_data_t *,
 				   struct nfs_resop4 *);
 

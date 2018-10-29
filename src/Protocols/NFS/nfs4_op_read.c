@@ -49,8 +49,20 @@
 #include "export_mgr.h"
 
 struct nfs4_read_data {
-	READ4res *res_READ4;		/**< Results for read */
-	state_owner_t *owner;		/**< Owner of state */
+	/** Results for read */
+	READ4res *res_READ4;
+	/** Owner of state */
+	state_owner_t *owner;
+	/* Pointer to compound data */
+	compound_data_t *data;
+	/** Object being acted on */
+	struct fsal_obj_handle *obj;
+	/** Flags to control synchronization */
+	uint32_t flags;
+	/** IO Info for READ_PLUS */
+	struct io_info info;
+	/** Arguments for read call - must be last */
+	struct fsal_io_arg read_arg;
 };
 
 /**
@@ -61,6 +73,149 @@ typedef enum io_direction__ {
 	IO_READ = 1,		/*< Reading */
 	IO_READ_PLUS = 2,	/*< Reading plus */
 } io_direction_t;
+
+static enum nfs_req_result nfs4_complete_read(struct nfs4_read_data *data)
+{
+	struct fsal_io_arg *read_arg = &data->read_arg;
+
+	if (data->res_READ4->status == NFS4_OK) {
+		if (!read_arg->end_of_file) {
+			/** @todo FSF: add a config option for this behavior?
+			*/
+			/*
+			 * NFS requires to set the EOF flag for all reads that
+			 * reach the EOF, i.e., even the ones returning data.
+			 * Most FSALs don't set the flag in this case. The only
+			 * client that cares about this is ESXi. Other clients
+			 * will just see a short read and continue reading and
+			 * then get the EOF flag as 0 bytes are returned.
+			 */
+			struct attrlist attrs;
+			fsal_status_t status;
+
+			fsal_prepare_attrs(&attrs, ATTR_SIZE);
+			status =
+				data->obj->obj_ops->getattrs(data->obj, &attrs);
+
+			if (FSAL_IS_SUCCESS(status)) {
+				read_arg->end_of_file = (read_arg->offset +
+							 read_arg->io_amount)
+							>= attrs.filesize;
+			}
+
+			/* Done with the attrs */
+			fsal_release_attrs(&attrs);
+		}
+
+		/* Is EOF met or not ? */
+		data->res_READ4->READ4res_u.resok4.eof = read_arg->end_of_file;
+
+		data->res_READ4->READ4res_u.resok4.data.data_len =
+			read_arg->io_amount;
+		data->res_READ4->READ4res_u.resok4.data.data_val =
+			read_arg->iov[0].iov_base;
+
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "NFS4_OP_READ: offset = %" PRIu64
+			     " read length = %zu eof=%u", read_arg->offset,
+			     read_arg->io_amount, read_arg->end_of_file);
+	} else {
+		int i;
+
+		for (i = 0; i < read_arg->iov_count; ++i) {
+			gsh_free(read_arg->iov[i].iov_base);
+		}
+
+		data->res_READ4->READ4res_u.resok4.data.data_val = NULL;
+	}
+
+	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->io_amount,
+			     (data->res_READ4->status == NFS4_OK) ? true :
+			     false, false);
+
+	if (data->owner != NULL) {
+		op_ctx->clientid = NULL;
+		dec_state_owner_ref(data->owner);
+	}
+
+	if (read_arg->state)
+		dec_state_t_ref(read_arg->state);
+
+	return nfsstat4_to_nfs_req_result(data->res_READ4->status);
+}
+
+static void nfs4_complete_read_plus(struct nfs_resop4 *resp,
+				    struct io_info *info)
+{
+	READ4res * const res_READ4 = &resp->nfs_resop4_u.opread;
+	READ_PLUS4res * const res_RPLUS = &resp->nfs_resop4_u.opread_plus;
+	contents *contentp = &res_RPLUS->rpr_resok4.rpr_contents;
+
+	/* Fixup the eof status from the res_READ4 that res_RPLUS overlays. */
+	res_RPLUS->rpr_resok4.rpr_eof = res_READ4->READ4res_u.resok4.eof;
+
+	/* Now fill in the rest of res_RPLUS */
+	contentp->what = info->io_content.what;
+	res_RPLUS->rpr_resok4.rpr_contents_count = 1;
+
+	if (info->io_content.what == NFS4_CONTENT_HOLE) {
+		contentp->hole.di_offset = info->io_content.hole.di_offset;
+		contentp->hole.di_length = info->io_content.hole.di_length;
+	}
+
+	if (info->io_content.what == NFS4_CONTENT_DATA) {
+		contentp->data.d_offset = info->io_content.data.d_offset;
+		contentp->data.d_data.data_len =
+					info->io_content.data.d_data.data_len;
+		contentp->data.d_data.data_val =
+					info->io_content.data.d_data.data_val;
+	}
+}
+
+enum nfs_req_result nfs4_op_read_resume(struct nfs_argop4 *op,
+					compound_data_t *data,
+					struct nfs_resop4 *resp)
+{
+	enum nfs_req_result rc = nfs4_complete_read(data->op_data);
+
+	if (rc != NFS_REQ_ASYNC_WAIT) {
+		/* We are completely done with the request. This test wasn't
+		 * strictly necessary since nfs4_complete_read doesn't async but
+		 * at some future time, the getattr it does might go async so we
+		 * might as well be prepared here. Our caller is already
+		 * prepared for such a scenario.
+		 */
+		gsh_free(data->op_data);
+		data->op_data = NULL;
+	}
+
+	return rc;
+}
+
+enum nfs_req_result nfs4_op_read_plus_resume(struct nfs_argop4 *op,
+					     compound_data_t *data,
+					     struct nfs_resop4 *resp)
+{
+	struct nfs4_read_data *read_data = data->op_data;
+	enum nfs_req_result rc = nfs4_complete_read(read_data);
+
+	if (rc == NFS_REQ_OK) {
+		nfs4_complete_read_plus(resp, &read_data->info);
+	}
+
+	if (rc != NFS_REQ_ASYNC_WAIT) {
+		/* We are completely done with the request. This test wasn't
+		 * strictly necessary since nfs4_complete_read doesn't async but
+		 * at some future time, the getattr it does might go async so we
+		 * might as well be prepared here. Our caller is already
+		 * prepared for such a scenario.
+		 */
+		gsh_free(read_data);
+		data->op_data = NULL;
+	}
+
+	return rc;
+}
 
 /**
  * @brief Callback for NFS4 read done
@@ -74,8 +229,7 @@ static void nfs4_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			  void *read_data, void *caller_data)
 {
 	struct nfs4_read_data *data = caller_data;
-	struct fsal_io_arg *read_arg = read_data;
-	int i;
+	uint32_t flags;
 
 	/* Fixup FSAL_SHARE_DENIED status */
 	if (ret.major == ERR_FSAL_SHARE_DENIED)
@@ -84,55 +238,14 @@ static void nfs4_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	/* Get result */
 	data->res_READ4->status = nfs4_Errno_status(ret);
 
-	if (FSAL_IS_ERROR(ret)) {
-		for (i = 0; i < read_arg->iov_count; ++i) {
-			gsh_free(read_arg->iov[i].iov_base);
-		}
-		data->res_READ4->READ4res_u.resok4.data.data_val = NULL;
-		goto done;
-	}
+	flags = atomic_postset_uint32_t_bits(&data->flags, ASYNC_PROC_DONE);
 
-	if (!read_arg->end_of_file) {
-		/** @todo FSF: add a config option for this behavior?
-		*/
-		/*
-		 * NFS requires to set the EOF flag for all reads that
-		 * reach the EOF, i.e., even the ones returning data.
-		 * Most FSALs don't set the flag in this case. The only
-		 * client that cares about this is ESXi. Other clients
-		 * will just see a short read and continue reading and then
-		 * get the EOF flag as 0 bytes are returned.
+	if ((flags & ASYNC_PROC_EXIT) == ASYNC_PROC_EXIT) {
+		/* nfs4_read has already exited, we will need to reschedule
+		 * the request for completion.
 		 */
-		struct attrlist attrs;
-
-		fsal_prepare_attrs(&attrs, ATTR_SIZE);
-
-		if (FSAL_IS_SUCCESS(obj->obj_ops->getattrs(obj, &attrs))) {
-			read_arg->end_of_file = (read_arg->offset +
-						 read_arg->io_amount)
-				>= attrs.filesize;
-		}
-
-		/* Done with the attrs */
-		fsal_release_attrs(&attrs);
+		svc_resume(data->data->req);
 	}
-
-	data->res_READ4->READ4res_u.resok4.data.data_len =
-		read_arg->io_amount;
-	data->res_READ4->READ4res_u.resok4.data.data_val =
-		read_arg->iov[0].iov_base;
-
-	LogFullDebug(COMPONENT_NFS_V4,
-		     "NFS4_OP_READ: offset = %" PRIu64
-		     " read length = %zu eof=%u", read_arg->offset,
-		     read_arg->io_amount, read_arg->end_of_file);
-
-	/* Is EOF met or not ? */
-	data->res_READ4->READ4res_u.resok4.eof = read_arg->end_of_file;
-done:
-	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->io_amount,
-			     (data->res_READ4->status == NFS4_OK) ? true :
-			     false, false);
 }
 
 /**
@@ -283,7 +396,6 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 	return nfsstat4_to_nfs_req_result(res_RPLUS->rpr_status);
 }
 
-
 static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 				     compound_data_t *data,
 				     struct nfs_resop4 *resp,
@@ -304,23 +416,17 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	bool anonymous_started = false;
 	state_owner_t *owner = NULL;
 	bool bypass = false;
-	struct nfs4_read_data read_data;
-	struct fsal_io_arg *read_arg = alloca(sizeof(*read_arg) +
-						sizeof(struct iovec));
+	struct nfs4_read_data *read_data = NULL;
+	struct fsal_io_arg *read_arg;
 	uint32_t resp_size;
+	/* In case we don't call read2, we indicate the I/O as already done
+	 * since in that case we should go ahead and exit as expected.
+	 */
+	uint32_t flags = ASYNC_PROC_DONE;
 
 	res_READ4->status = NFS4_OK;
 
 	/* Do basic checks on a filehandle Only files can be read */
-
-	if ((data->minorversion > 0)
-	    && nfs4_Is_Fh_DSHandle(&data->currentFH)) {
-		if (io == IO_READ)
-			return op_dsread(op, data, resp);
-		else
-			return op_dsread_plus(op, data, resp, info);
-	}
-
 	res_READ4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, true);
 	if (res_READ4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
@@ -541,6 +647,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	/* If size == 0, no I/O is to be made and everything is
 	   alright */
 	if (size == 0) {
+		/** @todo Should we handle this case for READ_PLUS? */
 		/* A size = 0 can not lead to EOF */
 		res_READ4->READ4res_u.resok4.eof = false;
 		res_READ4->READ4res_u.resok4.data.data_len = 0;
@@ -560,8 +667,10 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 		}
 	}
 
-	/* Set up args */
-	read_arg->info = info;
+	/* Set up args, allocate from heap, iov_len will be 1 */
+	read_data = gsh_calloc(1, sizeof(*read_data) + sizeof(struct iovec));
+	LogFullDebug(COMPONENT_NFS_V4, "Allocated read_data %p", read_data);
+	read_arg = &read_data->read_arg;
 	read_arg->state = state_found;
 	read_arg->offset = offset;
 	read_arg->iov_count = 1;
@@ -570,23 +679,41 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	read_arg->io_amount = 0;
 	read_arg->end_of_file = false;
 
-	read_data.res_READ4 = res_READ4;
-	read_data.owner = owner;
+	read_data->res_READ4 = res_READ4;
+	read_data->owner = owner;
+	read_data->data = data;
+	read_data->obj = obj;
+
+	data->op_data = read_data;
+
+	if (info != NULL) {
+		/* We will be using the io_info that is part of read_data */
+		read_data->info.io_advise = info->io_advise;
+	}
 
 	/* Do the actual read */
-	obj->obj_ops->read2(obj, bypass, nfs4_read_cb, read_arg, &read_data);
+	obj->obj_ops->read2(obj, bypass, nfs4_read_cb, read_arg, read_data);
+
+	/* Only atomically set the flags if we actually call read2, otherwise
+	 * we will have indicated as having been DONE.
+	 */
+	flags =
+	    atomic_postset_uint32_t_bits(&read_data->flags, ASYNC_PROC_EXIT);
 
  out:
+
 	if (state_open != NULL)
 		dec_state_t_ref(state_open);
 
-	if (owner != NULL) {
-		op_ctx->clientid = NULL;
-		dec_state_owner_ref(owner);
-	}
-
-	if (state_found != NULL) {
-		dec_state_t_ref(state_found);
+	if ((flags & ASYNC_PROC_DONE) != ASYNC_PROC_DONE) {
+		/* The read was not finished before we got here. When the
+		 * read completes, nfs4_read_cb() will have to reschedule the
+		 * request for completion. The resume will be resolved by
+		 * nfs4_simple_resume() which will free read_data and return
+		 * the appropriate return result. We will NOT go async again for
+		 * the read op (but could for a subsequent op in the compound).
+		 */
+		return NFS_REQ_ASYNC_WAIT;
 	}
 
 	return nfsstat4_to_nfs_req_result(res_READ4->status);
@@ -608,10 +735,39 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 enum nfs_req_result nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
 				 struct nfs_resop4 *resp)
 {
+	enum nfs_req_result rc;
+
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
 
-	return nfs4_read(op, data, resp, IO_READ, NULL);
+	if ((data->minorversion > 0)
+	    && nfs4_Is_Fh_DSHandle(&data->currentFH)) {
+		/* DS handle, call op_dsread */
+		return op_dsread(op, data, resp);
+	}
+
+	rc = nfs4_read(op, data, resp, IO_READ, NULL);
+
+	/* We need to complete the request now if we didn't async wait and
+	 * op_data (read_data) is present.
+	 */
+	if (rc != NFS_REQ_ASYNC_WAIT && data->op_data != NULL) {
+		/* Go ahead and complete the read. */
+		rc = nfs4_complete_read(data->op_data);
+	}
+
+	if (rc != NFS_REQ_ASYNC_WAIT && data->op_data != NULL) {
+		/* We are completely done with the request. This test wasn't
+		 * strictly necessary since nfs4_complete_read doesn't async but
+		 * at some future time, the getattr it does might go async so we
+		 * might as well be prepared here. Our caller is already
+		 * prepared for such a scenario.
+		 */
+		gsh_free(data->op_data);
+		data->op_data = NULL;
+	}
+
+	return rc;
 }
 
 /**
@@ -649,42 +805,47 @@ enum nfs_req_result nfs4_op_read_plus(struct nfs_argop4 *op,
 				      compound_data_t *data,
 				      struct nfs_resop4 *resp)
 {
-	/* Create a response frame on the stack to pass into nfs4_read
-	 * we will then copy out of it into actual response frame.
-	 */
-	struct nfs_resop4 res;
 	struct io_info info;
-	/* Response */
-	READ_PLUS4res * const res_RPLUS = &resp->nfs_resop4_u.opread_plus;
-	READ4res *res_READ4 = &res.nfs_resop4_u.opread;
-	contents *contentp = &res_RPLUS->rpr_resok4.rpr_contents;
 	enum nfs_req_result req_result;
 
+	memset(&info, 0, sizeof(info));
+
+	/* Say we are managing NFS4_OP_READ_PLUS */
 	resp->resop = NFS4_OP_READ_PLUS;
 
-	req_result = nfs4_read(op, data, &res, IO_READ_PLUS, &info);
-
-	res_RPLUS->rpr_status = res_READ4->status;
-
-	if (req_result != NFS_REQ_OK)
-		return req_result;
-
-	contentp->what = info.io_content.what;
-	res_RPLUS->rpr_resok4.rpr_contents_count = 1;
-	res_RPLUS->rpr_resok4.rpr_eof =
-			res_READ4->READ4res_u.resok4.eof;
-
-	if (info.io_content.what == NFS4_CONTENT_HOLE) {
-		contentp->hole.di_offset = info.io_content.hole.di_offset;
-		contentp->hole.di_length = info.io_content.hole.di_length;
+	if ((data->minorversion > 0)
+	    && nfs4_Is_Fh_DSHandle(&data->currentFH)) {
+		/* DS handle, call op_dsread */
+		return op_dsread_plus(op, data, resp, &info);
 	}
 
-	if (info.io_content.what == NFS4_CONTENT_DATA) {
-		contentp->data.d_offset = info.io_content.data.d_offset;
-		contentp->data.d_data.data_len =
-					info.io_content.data.d_data.data_len;
-		contentp->data.d_data.data_val =
-					info.io_content.data.d_data.data_val;
+	req_result = nfs4_read(op, data, resp, IO_READ_PLUS, &info);
+
+	/* We need to complete the request now if we didn't async wait and
+	 * op_data (read_data) is present.
+	 */
+	if (req_result != NFS_REQ_ASYNC_WAIT && data->op_data != NULL) {
+		/* Go ahead and complete the read. */
+		req_result = nfs4_complete_read(data->op_data);
+	}
+
+	if (req_result == NFS_REQ_OK) {
+		struct nfs4_read_data *read_data = data->op_data;
+
+		nfs4_complete_read_plus(resp, read_data != NULL
+					      ? &read_data->info
+					      : &info);
+	}
+
+	if (req_result != NFS_REQ_ASYNC_WAIT && data->op_data != NULL) {
+		/* We are completely done with the request. This test wasn't
+		 * strictly necessary since nfs4_complete_read doesn't async but
+		 * at some future time, the getattr it does might go async so we
+		 * might as well be prepared here. Our caller is already
+		 * prepared for such a scenario.
+		 */
+		gsh_free(data->op_data);
+		data->op_data = NULL;
 	}
 
 	return req_result;

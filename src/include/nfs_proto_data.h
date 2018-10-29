@@ -177,6 +177,12 @@ enum nfs_req_result {
 	NFS_REQ_ASYNC_WAIT = 3,
 };
 
+/* Async process synchronizations flags to be used with
+ * atomic_postset_uint32_t_bits
+ */
+#define ASYNC_PROC_DONE 1
+#define ASYNC_PROC_EXIT 2
+
 typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
 					struct svc_req *,
 					nfs_res_t *);
@@ -345,6 +351,7 @@ struct compound_data {
 				    request processed  */
 	const char *opname;	/*< Name of the operation */
 	char *tagname;
+	void *op_data;		/*< operation specific data for resume */
 	nfs41_session_t *session;	/*< Related session
 					   (found by OP_SEQUENCE) */
 	sequenceid4 sequence;	/*< Sequence ID of the current compound
