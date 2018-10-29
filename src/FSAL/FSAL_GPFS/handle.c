@@ -502,9 +502,24 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			fsal_prepare_attrs(&attrs, attrmask);
 
 			status = lookup(dir_hdl, dentry->d_name, &hdl, &attrs);
+
+			/* The entries we get in getdents64 syscall may
+			 * not be there by the time we do lookup, so
+			 * handle some errors here.
+			 *
+			 * Since we do lookup by name, we mostly get
+			 * ERR_FSAL_NOENT, but handle other similar
+			 * errors!
+			 */
 			if (FSAL_IS_ERROR(status)) {
-				fsal_error = status.major;
-				goto done;
+				if (status.major == ERR_FSAL_NOENT ||
+				    status.major == ERR_FSAL_STALE ||
+				    status.major == ERR_FSAL_XDEV) {
+					goto skip;
+				} else {
+					fsal_error = status.major;
+					goto done;
+				}
 			}
 
 			/* callback to cache inode */
