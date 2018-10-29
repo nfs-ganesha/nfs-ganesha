@@ -2563,7 +2563,8 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	/* EATTRNOTSUPP error.  */
 
 	if (NFSv4_ACL_SUPPORT) {
-		if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ACL)) {
+		if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ACL) &&
+		    attrib_set->acl && attrib_set->acl->naces) {
 			if (obj_hdl->type == DIRECTORY)
 				buffxstat.is_dir = true;
 			else
