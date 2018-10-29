@@ -408,12 +408,8 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 	if (attr_changed != 0)
 		attr_valid |= XATTR_STAT;
 
-	if (use_acl && FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_ACL)) {
-		if (!obj_attr->acl) {
-			LogCrit(COMPONENT_FSAL, "setattr acl is NULL");
-			return fsalstat(ERR_FSAL_FAULT, 0);
-		}
-
+	if (use_acl && FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_ACL) &&
+	    obj_attr->acl && obj_attr->acl->naces) {
 		attr_valid |= XATTR_ACL;
 		LogDebug(COMPONENT_FSAL, "setattr acl = %p", obj_attr->acl);
 
