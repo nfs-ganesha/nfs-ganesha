@@ -1132,7 +1132,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
  * Use the smallest buffer possible on FreeBSD
  * to narrow the race due to the d_off workaround.
  */
-#ifdef __FreeBSD__
+#ifndef HAS_DOFF
 #define BUF_SIZE sizeof(struct dirent)
 #else
 #define BUF_SIZE 1024
@@ -1163,7 +1163,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	int nread;
 	struct vfs_dirent dentry, *dentryp = &dentry;
 	char buf[BUF_SIZE];
-#ifdef __FreeBSD__
+#ifndef HAS_DOFF
 	int nreadent;
 	char entbuf[sizeof(struct dirent)];
 	off_t rewindloc = 0;
@@ -1207,7 +1207,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		}
 		if (nread == 0)
 			break;
-#ifdef __FreeBSD__
+#ifndef HAS_DOFF
 		/*
 		 * Very inefficient workaround to retrieve directory offsets.
 		 * We rewind dirfd's to its previous offset in order read the
@@ -1228,7 +1228,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			if (!to_vfs_dirent(buf, bpos, dentryp, baseloc))
 				goto skip;
 
-#ifdef __FreeBSD__
+#ifndef HAS_DOFF
 			/* Re-read the entry and fetch its offset. */
 			nreadent = vfs_readents(dirfd, entbuf,
 						dentryp->vd_reclen, &entloc);
