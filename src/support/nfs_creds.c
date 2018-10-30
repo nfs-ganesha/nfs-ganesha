@@ -788,6 +788,13 @@ fsal_errors_t nfs_access_op(struct fsal_obj_handle *obj,
 		if (access_allowed & FSAL_ACE_PERM_EXECUTE)
 			*granted_access |= ACCESS3_LOOKUP | ACCESS3_EXECUTE;
 
+		/* Allow only read if client has read only access
+		 * on this share.
+		 */
+		if (!(op_ctx->export_perms->options &
+		    EXPORT_OPTION_WRITE_ACCESS))
+			*granted_access &= ~(ACCESS3_EXTEND | ACCESS3_MODIFY |
+					   ACCESS3_DELETE);
 		/* Don't allow any bits that weren't set on request or
 		 * allowed by the file type.
 		 */
