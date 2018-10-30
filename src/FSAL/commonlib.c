@@ -1073,7 +1073,8 @@ static void posix_create_file_system(struct mntent *mnt)
 	struct fsal_filesystem *fs;
 	struct avltree_node *node;
 
-	if (strncasecmp(mnt->mnt_type, "nfs", 3) == 0) {
+	if (strncasecmp(mnt->mnt_type, "nfs", 3) == 0 ||
+	    strcasecmp(mnt->mnt_type, "autofs") == 0) {
 		LogDebug(COMPONENT_FSAL,
 			 "Ignoring %s because type %s",
 			 mnt->mnt_dir,
