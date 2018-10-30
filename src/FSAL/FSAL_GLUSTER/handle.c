@@ -834,6 +834,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	latency_update(&s_time, &e_time, lat_getattrs);
 #endif
 
+	glusterfs_fsal_clean_xstat(&buffxstat);
 	return status;
 }
 
@@ -2620,7 +2621,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	struct glusterfs_fd my_fd = {0};
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
-	glusterfs_fsal_xstat_t buffxstat;
+	glusterfs_fsal_xstat_t buffxstat = { 0 };
 	int attr_valid = 0;
 	int mask = 0;
 	struct glusterfs_fd *glusterfs_fd = NULL;
@@ -2827,6 +2828,7 @@ out:
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
+	glusterfs_fsal_clean_xstat(&buffxstat);
 	return status;
 }
 
