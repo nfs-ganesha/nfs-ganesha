@@ -62,36 +62,30 @@ static void nfs_read_ok(nfs_res_t *res, char *data, uint32_t read_size,
 	res->res_read3.READ3res_u.resok.count = read_size;
 	res->res_read3.READ3res_u.resok.data.data_val = data;
 	res->res_read3.READ3res_u.resok.data.data_len = read_size;
-
-	res->res_read3.status = NFS3_OK;
 }
 
 struct nfs3_read_data {
-	nfs_res_t *res;		/**< Results for read */
-	int rc;			/**< Return code */
+	/** Results for read */
+	nfs_res_t *res;
+	/** RPC Request for this READ */
+	struct svc_req *req;
+	/** Object being acted on */
+	struct fsal_obj_handle *obj;
+	/** Return code */
+	int rc;
+	/** Flags to control synchronization */
+	uint32_t flags;
+	/** Arguments for read call - must be last */
+	struct fsal_io_arg read_arg;
 };
 
-/**
- * @brief Callback for NFS3 read done
- *
- * @param[in] obj		Object being acted on
- * @param[in] ret		Return status of call
- * @param[in] read_data		Data for read call
- * @param[in] caller_data	Data for caller
- */
-static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
-			  void *read_data, void *caller_data)
+static int nfs3_complete_read(struct nfs3_read_data *data)
 {
-	struct nfs3_read_data *data = caller_data;
-	struct fsal_io_arg *read_arg = read_data;
+	struct fsal_io_arg *read_arg = &data->read_arg;
 	READ3resfail *resfail = &data->res->res_read3.READ3res_u.resfail;
 	int i;
 
-	/* Fixup FSAL_SHARE_DENIED status */
-	if (ret.major == ERR_FSAL_SHARE_DENIED)
-		ret = fsalstat(ERR_FSAL_LOCKED, 0);
-
-	if (!FSAL_IS_ERROR(ret)) {
+	if (data->rc == NFS_REQ_OK) {
 		if (!read_arg->end_of_file) {
 			/** @todo FSF: add a config option for this behavior?
 			*/
@@ -107,7 +101,8 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			fsal_status_t status;
 
 			fsal_prepare_attrs(&attrs, ATTR_SIZE);
-			status = obj->obj_ops->getattrs(obj, &attrs);
+			status =
+				data->obj->obj_ops->getattrs(data->obj, &attrs);
 
 			if (FSAL_IS_SUCCESS(status)) {
 				read_arg->end_of_file = (read_arg->offset +
@@ -118,9 +113,11 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			/* Done with the attrs */
 			fsal_release_attrs(&attrs);
 		}
+
 		nfs_read_ok(data->res, read_arg->iov[0].iov_base,
-			    read_arg->io_amount, obj, read_arg->end_of_file);
-		data->rc = NFS_REQ_OK;
+			    read_arg->io_amount, data->obj,
+			    read_arg->end_of_file);
+
 		goto out;
 	}
 
@@ -129,24 +126,92 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	}
 
 	/* If we are here, there was an error */
-	if (nfs_RetryableError(ret.major)) {
-		data->rc = NFS_REQ_DROP;
+	if (data->rc == NFS_REQ_DROP) {
 		goto out;
 	}
 
-	data->res->res_read3.status = nfs3_Errno_status(ret);
+	nfs_SetPostOpAttr(data->obj, &resfail->file_attributes, NULL);
 
-	nfs_SetPostOpAttr(obj, &resfail->file_attributes, NULL);
-
+	/* Now we convert NFS_REQ_ERROR into NFS_REQ_OK */
 	data->rc = NFS_REQ_OK;
 
  out:
 	/* return references */
-	if (obj)
-		obj->obj_ops->put_ref(obj);
+	if (data->obj)
+		data->obj->obj_ops->put_ref(data->obj);
 
 	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->io_amount,
 			     (data->rc == NFS_REQ_OK) ?  true : false, false);
+
+	return data->rc;
+}
+
+static enum xprt_stat nfs3_read_resume(struct svc_req *req)
+{
+	SVCXPRT *xprt = req->rq_xprt;
+	nfs_request_t *reqdata = xprt->xp_u1;
+	struct nfs3_read_data *data = reqdata->proc_data;
+	int rc;
+
+	/* Restore the op_ctx */
+	op_ctx = &reqdata->req_ctx;
+
+	/* Complete the read */
+	rc = nfs3_complete_read(data);
+
+	/* Free the read_data. */
+	gsh_free(data);
+	reqdata->proc_data = NULL;
+
+	nfs_rpc_complete_async_request(reqdata, rc);
+
+	return XPRT_IDLE;
+}
+
+/**
+ * @brief Callback for NFS3 read done
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] read_data		Data for read call
+ * @param[in] caller_data	Data for caller
+ */
+static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			  void *read_data, void *caller_data)
+{
+	struct nfs3_read_data *data = caller_data;
+	SVCXPRT *xprt = data->req->rq_xprt;
+	uint32_t flags;
+
+	if (ret.major == ERR_FSAL_SHARE_DENIED) {
+		/* Fixup FSAL_SHARE_DENIED status */
+		ret = fsalstat(ERR_FSAL_LOCKED, 0);
+	}
+
+	if (nfs_RetryableError(ret.major)) {
+		/* If we are here, there was an error */
+		data->rc = NFS_REQ_DROP;
+	} else if (FSAL_IS_ERROR(ret)) {
+		/* We need to let nfs3_complete_read know there was an error.
+		 * This will be converted to NFS_REQ_OK later.
+		 */
+		data->rc = NFS_REQ_ERROR;
+	} else {
+		/* No error */
+		data->rc = NFS_REQ_OK;
+	}
+
+	data->res->res_read3.status = nfs3_Errno_status(ret);
+
+	flags = atomic_postset_uint32_t_bits(&data->flags, ASYNC_PROC_DONE);
+
+	if ((flags & ASYNC_PROC_EXIT) == ASYNC_PROC_EXIT) {
+		/* nfs3_read has already exited, we will need to reschedule
+		 * the request for completion.
+		 */
+		xprt->xp_resume_cb = nfs3_read_resume;
+		svc_resume(data->req);
+	}
 }
 
 /**
@@ -170,22 +235,22 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_obj_handle *obj;
 	pre_op_attr pre_attr;
 	fsal_status_t fsal_status = {0, 0};
+	uint64_t offset;
 	size_t size = 0;
-	void *data = NULL;
 	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
 	uint64_t MaxOffsetRead =
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetRead);
 	READ3resfail *resfail = &res->res_read3.READ3res_u.resfail;
-	struct nfs3_read_data read_data;
-	struct fsal_io_arg *read_arg = alloca(sizeof(*read_arg) +
-						sizeof(struct iovec));
-
-	read_data.rc = NFS_REQ_OK;
+	struct nfs3_read_data *read_data = NULL;
+	struct fsal_io_arg *read_arg;
+	nfs_request_t *reqdata = container_of(req, nfs_request_t, svc);
+	int rc = NFS_REQ_OK;
+	uint32_t flags;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
 
-		read_arg->offset = arg->arg_read3.offset;
+		offset = arg->arg_read3.offset;
 		size = arg->arg_read3.count;
 
 		nfs_FhandleToStr(req->rq_msg.cb_vers, &arg->arg_read3.file,
@@ -193,7 +258,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		LogDebug(COMPONENT_NFSPROTO,
 			 "REQUEST PROCESSING: Calling nfs_Read handle: %s start: %"
 			 PRIu64 " len: %zu",
-			 str, read_arg->offset, size);
+			 str, offset, size);
 	}
 
 	/* to avoid setting it on each error case */
@@ -206,7 +271,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_read3.READ3res_u.resok.data.data_len = 0;
 	res->res_read3.status = NFS3_OK;
 	obj = nfs3_FhandleToCache(&arg->arg_read3.file,
-				    &res->res_read3.status, &read_data.rc);
+				  &res->res_read3.status, &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -229,7 +294,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_read3.status = nfs3_Errno_status(fsal_status);
-		read_data.rc = NFS_REQ_OK;
+		rc = NFS_REQ_OK;
 		goto putref;
 	}
 
@@ -240,12 +305,12 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		else
 			res->res_read3.status = NFS3ERR_INVAL;
 
-		read_data.rc = NFS_REQ_OK;
+		rc = NFS_REQ_OK;
 		goto putref;
 	}
 
 	/* Extract the argument from the request */
-	read_arg->offset = arg->arg_read3.offset;
+	offset = arg->arg_read3.offset;
 	size = arg->arg_read3.count;
 
 	/* do not exceed maxium READ offset if set */
@@ -253,9 +318,9 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Read offset=%" PRIu64
 			     " count=%zd MaxOffSet=%" PRIu64,
-			     read_arg->offset, size, MaxOffsetRead);
+			     offset, size, MaxOffsetRead);
 
-		if ((read_arg->offset + size) > MaxOffsetRead) {
+		if ((offset + size) > MaxOffsetRead) {
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tryed to violate max file size %"
 				 PRIu64 " for exportid #%hu",
@@ -266,7 +331,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 			nfs_SetPostOpAttr(obj, &resfail->file_attributes, NULL);
 
-			read_data.rc = NFS_REQ_OK;
+			rc = NFS_REQ_OK;
 			goto putref;
 		}
 	}
@@ -282,44 +347,74 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (size == 0) {
 		nfs_read_ok(res, NULL, 0, obj, 0);
-		read_data.rc = NFS_REQ_OK;
+		rc = NFS_REQ_OK;
 		goto putref;
 	}
-
-	data = gsh_malloc(size);
 
 	/* Check for delegation conflict. */
 	if (state_deleg_conflict(obj, false)) {
 		res->res_read3.status = NFS3ERR_JUKEBOX;
-		read_data.rc = NFS_REQ_OK;
-		gsh_free(data);
+		rc = NFS_REQ_OK;
 		goto putref;
 	}
+
+	/* Set up args, allocate from heap, iov_count will be 1 */
+	read_data = gsh_calloc(1, sizeof(*read_data) + sizeof(struct iovec));
+	read_arg = &read_data->read_arg;
 
 	read_arg->info = NULL;
 	/** @todo for now pass NULL state */
 	read_arg->state = NULL;
+	read_arg->offset = offset;
 	read_arg->iov_count = 1;
 	read_arg->iov[0].iov_len = size;
-	read_arg->iov[0].iov_base = data;
+	read_arg->iov[0].iov_base = gsh_malloc(size);
 	read_arg->io_amount = 0;
 	read_arg->end_of_file = false;
 
-	read_data.res = res;
+	read_data->res = res;
+	read_data->req = req;
+	read_data->obj = obj;
+
+	reqdata->proc_data = read_data;
 
 	/* Do the actual read */
-	obj->obj_ops->read2(obj, true, nfs3_read_cb, read_arg, &read_data);
-	return read_data.rc;
+	obj->obj_ops->read2(obj, true, nfs3_read_cb, read_arg, read_data);
+
+	/* Only atomically set the flags if we actually call read2, otherwise
+	 * we will have indicated as having been DONE.
+	 */
+	flags =
+	    atomic_postset_uint32_t_bits(&read_data->flags, ASYNC_PROC_EXIT);
+
+	if ((flags & ASYNC_PROC_DONE) != ASYNC_PROC_DONE) {
+		/* The read was not finished before we got here. When the
+		 * read completes, nfs3_read_cb() will have to reschedule the
+		 * request for completion. The resume will be resolved by
+		 * nfs3_read_resume() which will free read_data and return
+		 * the appropriate return result. We will NOT go async again for
+		 * the read op (but could for a subsequent op in the compound).
+		 */
+		return NFS_REQ_ASYNC_WAIT;
+	}
+
+	/* Complete the read */
+	rc = nfs3_complete_read(read_data);
+
+	/* Since we're actually done, we can free read_data. */
+	gsh_free(read_data);
+	reqdata->proc_data = NULL;
+
+	return rc;
 
 putref:
 	/* return references */
 	if (obj)
 		obj->obj_ops->put_ref(obj);
 
-	server_stats_io_done(size, 0,
-			     (read_data.rc == NFS_REQ_OK) ? true : false,
-			     false);
-	return read_data.rc;
+	server_stats_io_done(size, 0, (rc == NFS_REQ_OK ? true : false), false);
+
+	return rc;
 }				/* nfs3_read */
 
 /**
