@@ -62,6 +62,8 @@ namespace {
   uint16_t export_id = 77;
   char* event_list = nullptr;
   char* profile_out = nullptr;
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
   class Write2EmptyLatencyTest : public gtest::GaneshaFSALBaseTest {
   protected:
@@ -105,22 +107,13 @@ namespace {
     struct state_t* test_file_state;
   };
 
-  static void write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
-                        void *write_data, void *caller_data)
-  {
-    /* Fixup ERR_FSAL_SHARE_DENIED status */
-    if (ret.major == ERR_FSAL_SHARE_DENIED)
-      ret = fsalstat(ERR_FSAL_LOCKED, 0);
-
-    EXPECT_EQ(ret.major, 0);
-  }
-
 } /* namespace */
 
 TEST_F(Write2EmptyLatencyTest, SIMPLE)
 {
   char *databuffer;
   struct fsal_io_arg *write_arg;
+  struct async_process_data io_data;
   int bytes = 64;
   databuffer = (char *) malloc(bytes);
 
@@ -137,7 +130,15 @@ TEST_F(Write2EmptyLatencyTest, SIMPLE)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = false;
 
-  test_file->obj_ops->write2(test_file, true, write_cb, write_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   free(databuffer);
 }
@@ -147,6 +148,7 @@ TEST_F(Write2EmptyLatencyTest, SIMPLE_BYPASS)
   struct fsal_obj_handle *sub_hdl;
   char *databuffer;
   struct fsal_io_arg *write_arg;
+  struct async_process_data io_data;
   int bytes = 64;
   databuffer = (char *) malloc(bytes);
 
@@ -166,7 +168,15 @@ TEST_F(Write2EmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  sub_hdl->obj_ops->write2(sub_hdl, true, write_cb, write_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_write(sub_hdl, true, write_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   free(databuffer);
 }
@@ -175,6 +185,7 @@ TEST_F(Write2EmptyLatencyTest, SMALL_STABLE_WRITE)
 {
   char *databuffer;
   struct fsal_io_arg *write_arg;
+  struct async_process_data io_data;
   int bytes = 64;
   databuffer = (char *) malloc(bytes);
 
@@ -191,7 +202,15 @@ TEST_F(Write2EmptyLatencyTest, SMALL_STABLE_WRITE)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = true;
 
-  test_file->obj_ops->write2(test_file, true, write_cb, write_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   free(databuffer);
 }
@@ -200,6 +219,7 @@ TEST_F(Write2EmptyLatencyTest, LARGE_UNSTABLE_WRITE)
 {
   char *databuffer;
   struct fsal_io_arg *write_arg;
+  struct async_process_data io_data;
   int bytes = (2*1024*1024);
   databuffer = (char *) malloc(bytes);
 
@@ -216,7 +236,15 @@ TEST_F(Write2EmptyLatencyTest, LARGE_UNSTABLE_WRITE)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = false;
 
-  test_file->obj_ops->write2(test_file, true, write_cb, write_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   free(databuffer);
 }
@@ -225,6 +253,7 @@ TEST_F(Write2EmptyLatencyTest, LARGE_STABLE_WRITE)
 {
   char *databuffer;
   struct fsal_io_arg *write_arg;
+  struct async_process_data io_data;
   int bytes = (2*1024*1024);
   databuffer = (char *) malloc(bytes);
 
@@ -241,7 +270,15 @@ TEST_F(Write2EmptyLatencyTest, LARGE_STABLE_WRITE)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = true;
 
-  test_file->obj_ops->write2(test_file, true, write_cb, write_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   free(databuffer);
 }
@@ -250,6 +287,7 @@ TEST_F(Write2EmptyLatencyTest, LOOP)
 {
   char *databuffer;
   struct fsal_io_arg *write_arg;
+  struct async_process_data io_data;
   struct timespec s_time, e_time;
   int bytes = 64;
   databuffer = (char *) malloc(bytes);
@@ -270,7 +308,15 @@ TEST_F(Write2EmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i, write_arg->offset += 64) {
-    test_file->obj_ops->write2(test_file, true, write_cb, write_arg, NULL);
+    io_data.ret.major = ERR_FSAL_NO_ERROR;
+    io_data.ret.minor = 0;
+    io_data.done = false;
+    io_data.cond = &cond;
+    io_data.mutex = &mutex;
+
+    fsal_write(test_file, true, write_arg, &io_data);
+
+    EXPECT_EQ(io_data.ret.major, 0);
   }
 
   now(&e_time);
@@ -286,6 +332,7 @@ TEST_F(Write2EmptyLatencyTest, LOOP_BYPASS)
   struct fsal_obj_handle *sub_hdl;
   char *databuffer;
   struct fsal_io_arg *write_arg;
+  struct async_process_data io_data;
   struct timespec s_time, e_time;
   int bytes = 64;
   databuffer = (char *) malloc(bytes);
@@ -309,7 +356,15 @@ TEST_F(Write2EmptyLatencyTest, LOOP_BYPASS)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i, write_arg->offset += 64) {
-    sub_hdl->obj_ops->write2(sub_hdl, true, write_cb, write_arg, NULL);
+    io_data.ret.major = ERR_FSAL_NO_ERROR;
+    io_data.ret.minor = 0;
+    io_data.done = false;
+    io_data.cond = &cond;
+    io_data.mutex = &mutex;
+
+    fsal_write(sub_hdl, true, write_arg, &io_data);
+
+    EXPECT_EQ(io_data.ret.major, 0);
   }
 
   now(&e_time);

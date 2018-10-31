@@ -62,6 +62,8 @@ namespace {
   uint16_t export_id = 77;
   char* event_list = nullptr;
   char* profile_out = nullptr;
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
   class Read2EmptyLatencyTest : public gtest::GaneshaFSALBaseTest {
   protected:
@@ -105,16 +107,6 @@ namespace {
     struct state_t *test_file_state;
   };
 
-  static void callback(struct fsal_obj_handle *obj, fsal_status_t ret,
-                        void *data, void *caller_data)
-  {
-    /* Fixup ERR_FSAL_SHARE_DENIED status */
-    if (ret.major == ERR_FSAL_SHARE_DENIED)
-      ret = fsalstat(ERR_FSAL_LOCKED, 0);
-
-    EXPECT_EQ(ret.major, 0);
-  }
-
 } /* namespace */
 
 TEST_F(Read2EmptyLatencyTest, SIMPLE)
@@ -123,6 +115,7 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE)
   char *r_databuffer;
   struct fsal_io_arg *write_arg;
   struct fsal_io_arg *read_arg;
+  struct async_process_data io_data;
   int bytes = 64;
   int ret = -1;
 
@@ -140,7 +133,15 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = false;
 
-  test_file->obj_ops->write2(test_file, true, callback, write_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   r_databuffer = (char *) malloc(bytes);
   read_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
@@ -153,7 +154,15 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE)
   read_arg->iov[0].iov_base = r_databuffer;
   read_arg->io_amount = 0;
 
-  test_file->obj_ops->read2(test_file, true, callback, read_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_read(test_file, true, read_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   ret = memcmp(r_databuffer, w_databuffer, bytes);
   EXPECT_EQ(ret, 0);
@@ -169,6 +178,7 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE_BYPASS)
   char *r_databuffer;
   struct fsal_io_arg *write_arg;
   struct fsal_io_arg *read_arg;
+  struct async_process_data io_data;
   int bytes = 64;
 
   w_databuffer = (char *) malloc(bytes);
@@ -188,7 +198,15 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  sub_hdl->obj_ops->write2(sub_hdl, true, callback, write_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_write(sub_hdl, true, write_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   r_databuffer = (char *) malloc(bytes);
 
@@ -202,7 +220,15 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE_BYPASS)
   read_arg->iov[0].iov_base = r_databuffer;
   read_arg->io_amount = 0;
 
-  sub_hdl->obj_ops->read2(sub_hdl, true, callback, read_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_read(sub_hdl, true, read_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   free(w_databuffer);
   free(r_databuffer);
@@ -214,6 +240,7 @@ TEST_F(Read2EmptyLatencyTest, LARGE_DATA_READ)
   char *r_databuffer;
   struct fsal_io_arg *write_arg;
   struct fsal_io_arg *read_arg;
+  struct async_process_data io_data;
   int bytes = (2*1024*1024);
   int ret = -1;
 
@@ -231,7 +258,15 @@ TEST_F(Read2EmptyLatencyTest, LARGE_DATA_READ)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = false;
 
-  test_file->obj_ops->write2(test_file, true, callback, write_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   r_databuffer = (char *) malloc(bytes);
   read_arg = (struct fsal_io_arg*)alloca(sizeof(struct fsal_io_arg) +
@@ -244,7 +279,15 @@ TEST_F(Read2EmptyLatencyTest, LARGE_DATA_READ)
   read_arg->iov[0].iov_base = r_databuffer;
   read_arg->io_amount = 0;
 
-  test_file->obj_ops->read2(test_file, true, callback, read_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_read(test_file, true, read_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   ret = memcmp(r_databuffer, w_databuffer, bytes);
   EXPECT_EQ(ret, 0);
@@ -259,6 +302,7 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
   char *r_databuffer;
   struct fsal_io_arg *write_arg;
   struct fsal_io_arg *read_arg;
+  struct async_process_data io_data;
   int bytes = 64*LOOP_COUNT;
   struct timespec s_time, e_time;
 
@@ -276,7 +320,15 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
   write_arg->io_amount = 0;
   write_arg->fsal_stable = false;
 
-  test_file->obj_ops->write2(test_file, true, callback, write_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   bytes = 64;
   r_databuffer = (char *) malloc(bytes);
@@ -293,7 +345,15 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i, read_arg->offset += 64) {
-    test_file->obj_ops->read2(test_file, true, callback, read_arg, NULL);
+    io_data.ret.major = ERR_FSAL_NO_ERROR;
+    io_data.ret.minor = 0;
+    io_data.done = false;
+    io_data.cond = &cond;
+    io_data.mutex = &mutex;
+
+    fsal_read(test_file, true, read_arg, &io_data);
+
+    EXPECT_EQ(io_data.ret.major, 0);
   }
 
   now(&e_time);
@@ -312,6 +372,7 @@ TEST_F(Read2EmptyLatencyTest, LOOP_BYPASS)
   char *r_databuffer;
   struct fsal_io_arg *write_arg;
   struct fsal_io_arg *read_arg;
+  struct async_process_data io_data;
   int bytes = 64*LOOP_COUNT;
   struct timespec s_time, e_time;
 
@@ -332,7 +393,15 @@ TEST_F(Read2EmptyLatencyTest, LOOP_BYPASS)
   sub_hdl = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_hdl, nullptr);
 
-  sub_hdl->obj_ops->write2(sub_hdl, true, callback, write_arg, NULL);
+  io_data.ret.major = ERR_FSAL_NO_ERROR;
+  io_data.ret.minor = 0;
+  io_data.done = false;
+  io_data.cond = &cond;
+  io_data.mutex = &mutex;
+
+  fsal_write(sub_hdl, true, write_arg, &io_data);
+
+  EXPECT_EQ(io_data.ret.major, 0);
 
   bytes = 64;
   r_databuffer = (char *) malloc(bytes);
@@ -349,7 +418,15 @@ TEST_F(Read2EmptyLatencyTest, LOOP_BYPASS)
   now(&s_time);
 
   for (int i = 0; i < LOOP_COUNT; ++i, read_arg->offset += 64) {
-    sub_hdl->obj_ops->read2(sub_hdl, true, callback, read_arg, NULL);
+    io_data.ret.major = ERR_FSAL_NO_ERROR;
+    io_data.ret.minor = 0;
+    io_data.done = false;
+    io_data.cond = &cond;
+    io_data.mutex = &mutex;
+
+    fsal_read(sub_hdl, true, read_arg, &io_data);
+
+    EXPECT_EQ(io_data.ret.major, 0);
   }
 
   now(&e_time);

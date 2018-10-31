@@ -63,6 +63,8 @@ namespace {
   uint16_t export_id = 77;
   char* event_list = nullptr;
   char* profile_out = nullptr;
+  pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
   class Commit2EmptyLatencyTest : public gtest::GaneshaFSALBaseTest {
   protected:
@@ -107,16 +109,6 @@ namespace {
     struct state_t* test_file_state = nullptr;
   };
 
-  static void write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
-                        void *write_data, void *caller_data)
-  {
-    /* Fixup ERR_FSAL_SHARE_DENIED status */
-    if (ret.major == ERR_FSAL_SHARE_DENIED)
-      ret = fsalstat(ERR_FSAL_LOCKED, 0);
-
-    EXPECT_EQ(ret.major, 0);
-  }
-
 } /* namespace */
 
 TEST_F(Commit2EmptyLatencyTest, SIMPLE)
@@ -143,21 +135,32 @@ TEST_F(Commit2EmptyLatencyTest, SMALL_UNSTABLE_WRITE)
 {
   fsal_status_t status;
   char *databuffer;
-  struct fsal_io_arg write_arg;
+  struct fsal_io_arg *write_arg = (struct fsal_io_arg *)
+  				  alloca(sizeof(*write_arg) +
+				  sizeof(struct iovec));
+  struct async_process_data write_data;
   int bytes = 64;
   databuffer = (char *) malloc(bytes);
 
   memset(databuffer, 'a', bytes);
 
-  write_arg.info = NULL;
-  write_arg.state = NULL;
-  write_arg.iov_count = 1;
-  write_arg.iov[0].iov_len = bytes;
-  write_arg.iov[0].iov_base = databuffer;
-  write_arg.io_amount = 0;
-  write_arg.fsal_stable = false;
+  write_arg->info = NULL;
+  write_arg->state = NULL;
+  write_arg->iov_count = 1;
+  write_arg->iov[0].iov_len = bytes;
+  write_arg->iov[0].iov_base = databuffer;
+  write_arg->io_amount = 0;
+  write_arg->fsal_stable = false;
 
-  test_file->obj_ops->write2(test_file, true, write_cb, &write_arg, NULL);
+  write_data.ret.major = ERR_FSAL_NO_ERROR;
+  write_data.ret.minor = 0;
+  write_data.done = false;
+  write_data.cond = &cond;
+  write_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &write_data);
+
+  EXPECT_EQ(write_data.ret.major, 0);
 
   status = test_file->obj_ops->commit2(test_file, OFFSET, bytes);
   EXPECT_EQ(status.major, 0);
@@ -169,21 +172,32 @@ TEST_F(Commit2EmptyLatencyTest, SMALL_STABLE_WRITE)
 {
   fsal_status_t status;
   char *databuffer;
-  struct fsal_io_arg write_arg;
+  struct fsal_io_arg *write_arg = (struct fsal_io_arg *)
+  				  alloca(sizeof(*write_arg) +
+				  sizeof(struct iovec));
+  struct async_process_data write_data;
   int bytes = 64;
   databuffer = (char *) malloc(bytes);
 
   memset(databuffer, 'a', bytes);
 
-  write_arg.info = NULL;
-  write_arg.state = NULL;
-  write_arg.iov_count = 1;
-  write_arg.iov[0].iov_len = bytes;
-  write_arg.iov[0].iov_base = databuffer;
-  write_arg.io_amount = 0;
-  write_arg.fsal_stable = true;
+  write_arg->info = NULL;
+  write_arg->state = NULL;
+  write_arg->iov_count = 1;
+  write_arg->iov[0].iov_len = bytes;
+  write_arg->iov[0].iov_base = databuffer;
+  write_arg->io_amount = 0;
+  write_arg->fsal_stable = true;
 
-  test_file->obj_ops->write2(test_file, true, write_cb, &write_arg, NULL);
+  write_data.ret.major = ERR_FSAL_NO_ERROR;
+  write_data.ret.minor = 0;
+  write_data.done = false;
+  write_data.cond = &cond;
+  write_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &write_data);
+
+  EXPECT_EQ(write_data.ret.major, 0);
 
   status = test_file->obj_ops->commit2(test_file, OFFSET, bytes);
   EXPECT_EQ(status.major, 0);
@@ -195,21 +209,32 @@ TEST_F(Commit2EmptyLatencyTest, LARGE_UNSTABLE_WRITE)
 {
   fsal_status_t status;
   char *databuffer;
-  struct fsal_io_arg write_arg;
+  struct fsal_io_arg *write_arg = (struct fsal_io_arg *)
+  				  alloca(sizeof(*write_arg) +
+				  sizeof(struct iovec));
+  struct async_process_data write_data;
   int bytes = (2*1024*1024);
   databuffer = (char *) malloc(bytes);
 
   memset(databuffer, 'a', bytes);
 
-  write_arg.info = NULL;
-  write_arg.state = NULL;
-  write_arg.iov_count = 1;
-  write_arg.iov[0].iov_len = bytes;
-  write_arg.iov[0].iov_base = databuffer;
-  write_arg.io_amount = 0;
-  write_arg.fsal_stable = false;
+  write_arg->info = NULL;
+  write_arg->state = NULL;
+  write_arg->iov_count = 1;
+  write_arg->iov[0].iov_len = bytes;
+  write_arg->iov[0].iov_base = databuffer;
+  write_arg->io_amount = 0;
+  write_arg->fsal_stable = false;
 
-  test_file->obj_ops->write2(test_file, true, write_cb, &write_arg, NULL);
+  write_data.ret.major = ERR_FSAL_NO_ERROR;
+  write_data.ret.minor = 0;
+  write_data.done = false;
+  write_data.cond = &cond;
+  write_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &write_data);
+
+  EXPECT_EQ(write_data.ret.major, 0);
 
   status = test_file->obj_ops->commit2(test_file, OFFSET, bytes);
   EXPECT_EQ(status.major, 0);
@@ -221,21 +246,32 @@ TEST_F(Commit2EmptyLatencyTest, LARGE_STABLE_WRITE)
 {
   fsal_status_t status;
   char *databuffer;
-  struct fsal_io_arg write_arg;
+  struct fsal_io_arg *write_arg = (struct fsal_io_arg *)
+  				  alloca(sizeof(*write_arg) +
+				  sizeof(struct iovec));
+  struct async_process_data write_data;
   int bytes = (2*1024*1024);
   databuffer = (char *) malloc(bytes);
 
   memset(databuffer, 'a', bytes);
 
-  write_arg.info = NULL;
-  write_arg.state = NULL;
-  write_arg.iov_count = 1;
-  write_arg.iov[0].iov_len = bytes;
-  write_arg.iov[0].iov_base = databuffer;
-  write_arg.io_amount = 0;
-  write_arg.fsal_stable = true;
+  write_arg->info = NULL;
+  write_arg->state = NULL;
+  write_arg->iov_count = 1;
+  write_arg->iov[0].iov_len = bytes;
+  write_arg->iov[0].iov_base = databuffer;
+  write_arg->io_amount = 0;
+  write_arg->fsal_stable = true;
 
-  test_file->obj_ops->write2(test_file, true, write_cb, &write_arg, NULL);
+  write_data.ret.major = ERR_FSAL_NO_ERROR;
+  write_data.ret.minor = 0;
+  write_data.done = false;
+  write_data.cond = &cond;
+  write_data.mutex = &mutex;
+
+  fsal_write(test_file, true, write_arg, &write_data);
+
+  EXPECT_EQ(write_data.ret.major, 0);
 
   status = test_file->obj_ops->commit2(test_file, OFFSET, bytes);
   EXPECT_EQ(status.major, 0);
