@@ -652,5 +652,27 @@ struct fsal_stats {
 	struct fsal_op_stats *op_stats;
 };
 
+/* Async Processes that will be made synchronous */
+struct async_process_data {
+	/** Return from process */
+	fsal_status_t ret;
+	/** Indicator callback is done. */
+	bool done;
+	/** Mutex to protect done and condition variable. */
+	pthread_mutex_t *mutex;
+	/** Condition variable to signal callback is done. */
+	pthread_cond_t *cond;
+};
+
+extern void fsal_read(struct fsal_obj_handle *obj_hdl,
+		      bool bypass,
+		      struct fsal_io_arg *arg,
+		      struct async_process_data *data);
+
+extern void fsal_write(struct fsal_obj_handle *obj_hdl,
+		       bool bypass,
+		       struct fsal_io_arg *arg,
+		       struct async_process_data *data);
+
 #endif				/* !FSAL_H */
 /** @} */

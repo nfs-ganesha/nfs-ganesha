@@ -1593,4 +1593,70 @@ fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
+/**
+ * @brief Callback to implement syncronous read and write
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] args		Args for read call
+ * @param[in] caller_data	Data for caller
+ */
+static void sync_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			 void *args, void *caller_data)
+{
+	struct async_process_data *data = caller_data;
+
+	/* Fixup FSAL_SHARE_DENIED status */
+	if (ret.major == ERR_FSAL_SHARE_DENIED)
+		ret = fsalstat(ERR_FSAL_LOCKED, 0);
+
+	data->ret = ret;
+
+	/* Let caller know we are done. */
+
+	PTHREAD_MUTEX_lock(data->mutex);
+
+	data->done = true;
+
+	pthread_cond_signal(data->cond);
+
+	PTHREAD_MUTEX_unlock(data->mutex);
+}
+
+void fsal_read(struct fsal_obj_handle *obj_hdl,
+	       bool bypass,
+	       struct fsal_io_arg *arg,
+	       struct async_process_data *data)
+{
+	obj_hdl->obj_ops->read2(obj_hdl, bypass, sync_cb, arg, data);
+
+	PTHREAD_MUTEX_lock(data->mutex);
+
+	while (!data->done) {
+		int rc = pthread_cond_wait(data->cond, data->mutex);
+
+		assert(rc == 0);
+	}
+
+	PTHREAD_MUTEX_unlock(data->mutex);
+}
+
+void fsal_write(struct fsal_obj_handle *obj_hdl,
+		bool bypass,
+		struct fsal_io_arg *arg,
+		struct async_process_data *data)
+{
+	obj_hdl->obj_ops->write2(obj_hdl, bypass, sync_cb, arg, data);
+
+	PTHREAD_MUTEX_lock(data->mutex);
+
+	while (!data->done) {
+		int rc = pthread_cond_wait(data->cond, data->mutex);
+
+		assert(rc == 0);
+	}
+
+	PTHREAD_MUTEX_unlock(data->mutex);
+}
+
 /** @} */
