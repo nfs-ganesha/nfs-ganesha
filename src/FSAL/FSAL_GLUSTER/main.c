@@ -73,6 +73,7 @@ struct glusterfs_fsal_module GlusterFS = {
 			.pnfs_mds = false,
 			.pnfs_ds = true,
 			.link_supports_permission_checks = true,
+			.readdir_plus = true,
 			.expire_time_parent = -1,
 		}
 	}
