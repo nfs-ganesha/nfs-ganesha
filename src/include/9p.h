@@ -413,6 +413,8 @@ struct _9p_request_data {
 	msk_data_t *data;
 #endif
 	struct _9p_flush_hook flush_hook;
+	pthread_mutex_t *mutex;
+	pthread_cond_t *cond;
 };
 
 typedef int (*_9p_function_t) (struct _9p_request_data *req9p,

@@ -45,40 +45,6 @@
 #include "server_stats.h"
 #include "client_mgr.h"
 
-struct _9p_write_data {
-	struct gsh_client *client;	/**< Client for stats */
-	fsal_status_t ret;		/**< Return from write */
-};
-
-/**
- * @brief Callback for NFS3 write done
- *
- * @param[in] obj		Object being acted on
- * @param[in] ret		Return status of call
- * @param[in] write_data	Data for write call
- * @param[in] caller_data	Data for caller
- */
-static void _9p_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
-			  void *write_data, void *caller_data)
-{
-	struct _9p_write_data *data = caller_data;
-	struct fsal_io_arg *write_arg = write_data;
-
-	/* Fixup ERR_FSAL_SHARE_DENIED status */
-	if (ret.major == ERR_FSAL_SHARE_DENIED)
-		ret = fsalstat(ERR_FSAL_LOCKED, 0);
-
-	data->ret = ret;
-
-	if (data->client) {
-		op_ctx->client = data->client;
-
-		server_stats_io_done(write_arg->iov[0].iov_len,
-				     write_arg->io_amount, FSAL_IS_ERROR(ret),
-				     false);
-	}
-}
-
 int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -165,7 +131,7 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		outcount = written_size;
 	} else {
-		struct _9p_write_data write_data;
+		struct async_process_data write_data;
 		struct fsal_io_arg *write_arg = alloca(sizeof(*write_arg) +
 						      sizeof(struct iovec));
 
@@ -178,11 +144,24 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		write_arg->io_amount = 0;
 		write_arg->fsal_stable = false;
 
-		write_data.client = req9p->pconn->client;
+
+		write_data.ret.major = 0;
+		write_data.ret.minor = 0;
+		write_data.done = false;
+		write_data.cond = req9p->cond;
+		write_data.mutex = req9p->mutex;
 
 		/* Do the actual write */
-		pfid->pentry->obj_ops->write2(pfid->pentry, true, _9p_write_cb,
-					    write_arg, &write_data);
+		fsal_write(pfid->pentry, true, write_arg, &write_data);
+
+		if (req9p->pconn->client) {
+			op_ctx->client = req9p->pconn->client;
+
+			server_stats_io_done(write_arg->iov[0].iov_len,
+					     write_arg->io_amount,
+					     FSAL_IS_ERROR(write_data.ret),
+					     false);
+		}
 
 		if (FSAL_IS_ERROR(write_data.ret))
 			return _9p_rerror(req9p, msgtag,

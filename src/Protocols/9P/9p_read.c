@@ -44,40 +44,6 @@
 #include "server_stats.h"
 #include "client_mgr.h"
 
-struct _9p_read_data {
-	struct gsh_client *client;	/**< Client for stats */
-	fsal_status_t ret;		/**< Return from read */
-};
-
-/**
- * @brief Callback for NFS3 read done
- *
- * @param[in] obj		Object being acted on
- * @param[in] ret		Return status of call
- * @param[in] read_data		Data for read call
- * @param[in] caller_data	Data for caller
- */
-static void _9p_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
-			  void *read_data, void *caller_data)
-{
-	struct _9p_read_data *data = caller_data;
-	struct fsal_io_arg *read_arg = read_data;
-
-	/* Fixup FSAL_SHARE_DENIED status */
-	if (ret.major == ERR_FSAL_SHARE_DENIED)
-		ret = fsalstat(ERR_FSAL_LOCKED, 0);
-
-	data->ret = ret;
-
-	if (data->client) {
-		op_ctx->client = data->client;
-
-		server_stats_io_done(read_arg->iov[0].iov_len,
-				     read_arg->io_amount, FSAL_IS_ERROR(ret),
-				     false);
-	}
-}
-
 int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
@@ -144,7 +110,7 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		outcount = read_size;
 	} else {
-		struct _9p_read_data read_data;
+		struct async_process_data read_data;
 		struct fsal_io_arg *read_arg = alloca(sizeof(*read_arg) +
 							sizeof(struct iovec));
 
@@ -157,11 +123,23 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		read_arg->io_amount = 0;
 		read_arg->end_of_file = false;
 
-		read_data.client = req9p->pconn->client;
+		read_data.ret.major = 0;
+		read_data.ret.minor = 0;
+		read_data.done = false;
+		read_data.cond = req9p->cond;
+		read_data.mutex = req9p->mutex;
 
 		/* Do the actual read */
-		pfid->pentry->obj_ops->read2(pfid->pentry, true, _9p_read_cb,
-					    read_arg, &read_data);
+		fsal_read(pfid->pentry, true, read_arg, &read_data);
+
+		if (req9p->pconn->client) {
+			op_ctx->client = req9p->pconn->client;
+
+			server_stats_io_done(read_arg->iov[0].iov_len,
+					     read_arg->io_amount,
+					     FSAL_IS_ERROR(read_data.ret),
+					     false);
+		}
 
 		if (FSAL_IS_ERROR(read_data.ret))
 			return _9p_rerror(req9p, msgtag,
