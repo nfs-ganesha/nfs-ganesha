@@ -1045,6 +1045,7 @@ find_library(LIBURCU urcu)
 if (NOT LIBURCU)
 	message(FATAL_ERROR "userspace-rcu library not found!")
 endif(NOT LIBURCU)
+check_symbol_exists(urcu_ref_get_unless_zero urcu/ref.h HAVE_URCU_REF_GET_UNLESS_ZERO)
 
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES

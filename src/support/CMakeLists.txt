@@ -10,6 +10,7 @@ endif(USE_DBUS)
 set(string_utils_STAT_SRCS
    strlcpy.c
    strnlen.c
+   refstr.c
 )
 
 add_library(string_utils STATIC ${string_utils_STAT_SRCS})
