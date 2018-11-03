@@ -763,13 +763,13 @@ unlock:
 out:
 	/* Refresh, if necessary.  Must be done without lock held */
 	if (FSAL_IS_SUCCESS(status)) {
-		/* If we're moving a directory out, update parent hash */
+		/* If we're moving a directory out, update parent hash.
+		 * Since we already dropped the src_desk lock, things
+		 * may have changed, so just free the parent fh.
+		 */
 		if (mdc_olddir != mdc_newdir && obj_hdl->type == DIRECTORY) {
 			PTHREAD_RWLOCK_wrlock(&mdc_obj->content_lock);
-
 			mdcache_free_fh(&mdc_obj->fsobj.fsdir.parent);
-			mdc_dir_add_parent(mdc_obj, mdc_newdir);
-
 			PTHREAD_RWLOCK_unlock(&mdc_obj->content_lock);
 		}
 
