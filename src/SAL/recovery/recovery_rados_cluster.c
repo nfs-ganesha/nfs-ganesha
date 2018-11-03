@@ -118,8 +118,11 @@ static void rados_cluster_end_grace(void)
 	int ret;
 	rados_write_op_t wop;
 	uint64_t cur, rec;
+	struct gsh_refstr *old_oid;
 
-	if (rados_recov_old_oid[0] == '\0')
+
+	old_oid = rcu_xchg_pointer(&rados_recov_old_oid, NULL);
+	if (!old_oid)
 		return;
 
 	ret = rados_grace_enforcing_off(rados_recov_io_ctx,
@@ -131,13 +134,14 @@ static void rados_cluster_end_grace(void)
 
 	wop = rados_create_write_op();
 	rados_write_op_remove(wop);
-	ret = rados_write_op_operate(wop, rados_recov_io_ctx,
-			       rados_recov_old_oid, NULL, 0);
+	ret = rados_write_op_operate(wop, rados_recov_io_ctx, old_oid->gr_val,
+				     NULL, 0);
 	if (ret)
 		LogEvent(COMPONENT_CLIENTID, "Failed to remove %s: %d",
-			 rados_recov_old_oid, ret);
+			 old_oid->gr_val, ret);
 
-	memset(rados_recov_old_oid, '\0', sizeof(rados_recov_old_oid));
+	synchronize_rcu();
+	gsh_refstr_put(old_oid);
 }
 
 static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
@@ -148,7 +152,7 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 	size_t len;
 	uint64_t cur, rec;
 	rados_write_op_t wop;
-	struct gsh_refstr *recov_oid;
+	struct gsh_refstr *recov_oid, *old_oid;
 	struct pop_args args = {
 		.add_clid_entry = add_clid_entry,
 		.add_rfh_entry = add_rfh_entry,
@@ -194,10 +198,11 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 		return;
 	};
 
-	snprintf(rados_recov_old_oid, sizeof(rados_recov_old_oid),
-			"rec-%16.16lx:%s", rec, nodeid);
+	old_oid = gsh_refstr_alloc(len);
+	snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
+	rcu_set_pointer(&rados_recov_old_oid, old_oid);
 	ret = rados_kv_traverse(rados_kv_pop_clid_entry, &args,
-				rados_recov_old_oid);
+				old_oid->gr_val);
 	if (ret < 0)
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to traverse recovery db: %d", ret);
@@ -272,7 +277,7 @@ static void rados_cluster_maybe_start_grace(void)
 	nfs_grace_start_t gsp = { .event = EVENT_JUST_GRACE };
 	rados_write_op_t wop;
 	uint64_t cur, rec;
-	struct gsh_refstr *recov_oid, *prev_recov_oid;
+	struct gsh_refstr *recov_oid, *old_oid, *prev_recov_oid;
 	char *keys[RADOS_KV_STARTING_SLOTS];
 	char *vals[RADOS_KV_STARTING_SLOTS];
 	size_t lens[RADOS_KV_STARTING_SLOTS];
@@ -312,11 +317,15 @@ static void rados_cluster_maybe_start_grace(void)
 
 	snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
 	prev_recov_oid = rcu_xchg_pointer(&rados_recov_oid, recov_oid);
+
+	old_oid = gsh_refstr_alloc(len);
+	snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
+	old_oid = rcu_xchg_pointer(&rados_recov_old_oid, old_oid);
+
 	synchronize_rcu();
 	gsh_refstr_put(prev_recov_oid);
-
-	snprintf(rados_recov_old_oid, sizeof(rados_recov_old_oid),
-			"rec-%16.16lx:%s", rec, nodeid);
+	if (old_oid)
+		gsh_refstr_put(old_oid);
 
 	/* Populate key/val/len arrays from confirmed client hash */
 	hashtable_for_each(ht_confirmed_client_id, rados_set_client_cb, &kvp);

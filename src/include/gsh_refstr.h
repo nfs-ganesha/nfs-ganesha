@@ -91,8 +91,8 @@ static inline struct gsh_refstr *gsh_refstr_get(struct gsh_refstr *gr)
 
 	/*
 	 * The assumption is that the persistent reference to the object is
-	 * only put after an RCU grace period has settled, so we abort if it's
-	 * already zero (or if it looks like the counter will wrap).
+	 * only put after an RCU grace period has settled. So, we abort if
+	 * it's already zero or if it looks like the counter will wrap to 0.
 	 */
 	cur = uatomic_read(&ref->refcount);
 	for (;;) {
