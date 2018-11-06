@@ -1048,6 +1048,12 @@ populate_dirent(const char *name,
 
 		junction_obj->obj_ops->put_ref(junction_obj);
 		put_gsh_export(junction_export);
+
+		/* state->cb (nfs4_readdir_callback) saved op_ctx
+		 * ctx_export and fsal_export. Restore them here
+		 */
+		(void)state->cb(&state->cb_parms, NULL, NULL,
+				 0, 0, CB_PROBLEM);
 	}
 
 	if (!state->cb_parms.in_result) {
