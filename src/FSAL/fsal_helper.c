@@ -1314,7 +1314,7 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 		goto out;
 	}
 	/* *
-	 * TODO : check conflicts in for destination as well
+	 * added conflictsi check for destination in MDCACHE layer
 	 */
 	if (state_deleg_conflict(lookup_src, true)) {
 		LogDebug(COMPONENT_FSAL, "Found an existing delegation for %s",

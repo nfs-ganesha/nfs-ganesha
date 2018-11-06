@@ -645,8 +645,13 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			status = fsalstat(ERR_FSAL_XDEV, 0);
 			goto out;
 		}
+		if (state_deleg_conflict(&mdc_lookup_dst->obj_handle, true)) {
+			LogDebug(COMPONENT_CACHE_INODE, "Found an existing delegation for %s",
+				  new_name);
+			status = fsalstat(ERR_FSAL_DELAY, 0);
+			goto out;
+		}
 	}
-
 	/* Now update cached dirents.  Must take locks in the correct order */
 	mdcache_src_dest_lock(mdc_olddir, mdc_newdir);
 
