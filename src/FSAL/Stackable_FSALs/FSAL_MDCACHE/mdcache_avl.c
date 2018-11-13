@@ -525,7 +525,7 @@ bool mdcache_avl_lookup_ck(mdcache_entry_t *entry, uint64_t ck,
 			/* This entry doesn't belong to a chunk, something
 			 * is horribly wrong.
 			 */
-			assert(!chunk);
+			assert(chunk);
 			return false;
 		}
 		*dirent = ent;
