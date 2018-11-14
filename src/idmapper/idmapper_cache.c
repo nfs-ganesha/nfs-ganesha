@@ -696,7 +696,8 @@ void idmapper_clear_cache(void)
 		user = avltree_container_of(node,
 					    struct cache_user, uname_node);
 		avltree_remove(&user->uname_node, &uname_tree);
-		avltree_remove(&user->uid_node, &uid_tree);
+		if (user->in_uidtree)
+			avltree_remove(&user->uid_node, &uid_tree);
 		gsh_free(user);
 	}
 
