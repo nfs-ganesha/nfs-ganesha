@@ -73,7 +73,7 @@ Additional files can be referenced in a configuration using '%include'
 and '%url' directives.::
 
 	%include <filename>
-	%url <url, e.g., rados://mypool/myobject>
+	%url <url, e.g., rados://mypool/mynamespace/myobject>
 
 The included file is inserted into the configuration text in place of
 the %include or %url line. Sub-inclusions may be to any depth. Filenames and
@@ -81,8 +81,13 @@ URLs may optionally use '"'::
 
     %include base.conf
     %include "base.conf"
+    %url rados://mypool/mynamespace/myobject
+    %url "rados://mypool/mynamespace/myobject"
     %url rados://mypool/myobject
     %url "rados://mypool/myobject"
+
+In the case of rados:// URLs, providing a two-component URL indicates that
+the default namespace should be used.
 
 
 BLOCKS
