@@ -58,15 +58,16 @@ or
 
 The quotes are optional.
 
-%url <url, e.g., rados://mypool/myobject>
+%url <url, e.g., rados://mypool/mynamespace/myobject>
 
-%url rados://mypool/myobject
+%url rados://mypool/mynamespace/myobject
 
 or
 
-%url "rados://mypool/myobject"
+%url "rados://mypool/mynamespace/myobject"
 
-The quotes are optional.
+The quotes are optional, as is the namespace. If the URL has only two
+components, then the default namespace is used.
 
 Symbols
 -------

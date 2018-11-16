@@ -91,7 +91,7 @@ int rados_urls_set_param_from_conf(void *tree_node,
 }
 
 
-/* decompose RADOS URL into (<pool>/)object
+/* decompose RADOS URL into (<pool>/(<namespace>/))object
  *
  *  verified to match each of the following:
  *
@@ -101,7 +101,7 @@ int rados_urls_set_param_from_conf(void *tree_node,
  */
 
 #define RADOS_URL_REGEX \
-	"([-a-zA-Z0-9_&=.]+)/?([-a-zA-Z0-9_&=/.]+)?"
+	"([-a-zA-Z0-9_&=.]+)/?([-a-zA-Z0-9_&=.]+)?/?([-a-zA-Z0-9_&=/.]+)?"
 
 /** @brief url regex initializer
  */
@@ -197,16 +197,17 @@ static inline char *match_dup(regmatch_t *m, char *in)
 static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 {
 	rados_ioctx_t io_ctx;
-	char *x0 = NULL, *x1 = NULL, *x2 = NULL;
+	char *x0 = NULL, *x1 = NULL, *x2 = NULL, *x3 = NULL;
 
-	char *pool_name;
-	char *object_name;
+	char *pool_name = NULL;
+	char *object_name = NULL;
+	char *rados_ns = NULL;
 
 	char *streambuf = NULL; /* not optional (buggy open_memstream) */
 	FILE *stream = NULL;
 	char buf[1024];
 
-	regmatch_t match[3];
+	regmatch_t match[4];
 	size_t streamsz;
 	uint64_t off1 = 0;
 	int ret;
@@ -215,7 +216,7 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 		cu_rados_url_init();
 	}
 
-	ret = regexec(&url_regex, url, 3, match, 0);
+	ret = regexec(&url_regex, url, 4, match, 0);
 	if (likely(!ret)) {
 		/* matched */
 		regmatch_t *m = &(match[0]);
@@ -225,18 +226,25 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 		x1 = match_dup(m, (char *)url);
 		m = &(match[2]);
 		x2 = match_dup(m, (char *)url);
+		m = &(match[3]);
+		x3 = match_dup(m, (char *)url);
 
+		/* Huh? How would we have x2 but not x1? */
 		if ((!x1) && (!x2))
 			goto out;
 
 		if (x1) {
 			if (!x2) {
 				/* object only */
-				pool_name = NULL;
 				object_name = x1;
 			} else {
 				pool_name = x1;
-				object_name = x2;
+				if (!x3) {
+					object_name = x2;
+				} else {
+					rados_ns = x2;
+					object_name = x3;
+				}
 			}
 		}
 	} else if (ret == REG_NOMATCH) {
@@ -261,6 +269,8 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 		cu_rados_url_shutdown();
 		goto out;
 	}
+	rados_ioctx_set_namespace(io_ctx, rados_ns);
+
 	do {
 		int nread, wrt, nwrt;
 		uint64_t off2 = 0;
@@ -303,6 +313,7 @@ out:
 	gsh_free(x0);
 	gsh_free(x1);
 	gsh_free(x2);
+	gsh_free(x3);
 
 	return ret;
 }
