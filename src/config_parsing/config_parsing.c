@@ -1397,6 +1397,8 @@ static bool proc_block(struct config_node *node,
 		 * disposed of. Need to clear the flag so the next config
 		 * block processed gets a clear slate.
 		 */
+		LogFullDebug(COMPONENT_CONFIG,
+			     "Releasing block %p/%p", link_mem, param_struct);
 		(void)item->u.blk.init(link_mem, param_struct);
 		err_type->dispose = false;
 	}
@@ -1404,6 +1406,8 @@ static bool proc_block(struct config_node *node,
 	return true;
 
 err_out:
+	LogFullDebug(COMPONENT_CONFIG,
+		     "Releasing block %p/%p", link_mem, param_struct);
 	(void)item->u.blk.init(link_mem, param_struct);
 	err_type->dispose = false;
 	return false;
