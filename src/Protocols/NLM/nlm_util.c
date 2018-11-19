@@ -199,7 +199,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 	 * We are not able call granted callback. Some client may retry
 	 * the lock again. So remove the existing blocked nlm entry
 	 */
-	LogMajor(COMPONENT_NLM,
+	LogEvent(COMPONENT_NLM,
 		 "GRANTED_MSG RPC call failed with return code %d. Removing the blocking lock",
 		 retval);
 
