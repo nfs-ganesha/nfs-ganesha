@@ -190,14 +190,6 @@ static fsal_status_t init_config(struct fsal_module *xfs_fsal_module,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* Internal XFS method linkage to export object
- */
-
-fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
-				void *parse_node,
-				struct config_error_type *err_type,
-				const struct fsal_up_vector *up_ops);
-
 /* Module initialization.
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself
@@ -218,6 +210,7 @@ MODULE_INIT void xfs_init(void)
 		return;
 	}
 	myself->m_ops.create_export = vfs_create_export;
+	myself->m_ops.update_export = vfs_update_export;
 	myself->m_ops.init_config = init_config;
 
 	/* Initialize the fsal_obj_handle ops for FSAL XFS */

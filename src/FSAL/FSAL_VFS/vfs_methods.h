@@ -91,6 +91,20 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 
 int vfs_get_root_fd(struct fsal_export *exp_hdl);
 
+/* Internal VFS method linkage to export object
+ */
+
+fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
+				void *parse_node,
+				struct config_error_type *err_type,
+				const struct fsal_up_vector *up_ops);
+
+fsal_status_t vfs_update_export(struct fsal_module *fsal_hdl,
+				void *parse_node,
+				struct config_error_type *err_type,
+				struct fsal_export *original,
+				struct fsal_module *updated_super);
+
 /* method proto linkage to handle.c for export
  */
 
