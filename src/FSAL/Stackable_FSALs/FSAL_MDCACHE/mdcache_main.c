@@ -162,8 +162,7 @@ void mdcache_export_uninit(void)
  * available via the @e fsal_export member of @link op_ctx @endlink, the same
  * way that this export is returned.
  *
- * There is currently no config; FSALs that want caching should call @ref
- * mdcache_export_init
+ * There is currently no config;
  *
  * @param[in] sub_fsal		Sub-FSAL module handle
  * @param[in] parse_node	Config node for export
@@ -235,6 +234,66 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 
 	/* Stacking is setup and ready to take upcalls now */
 	up_ready_set(&myself->up_ops);
+
+	return status;
+}
+
+/**
+ * @brief Update an export for MDCACHE
+ *
+ * Create the stacked export for MDCACHE to allow metadata caching on another
+ * export.  Unlike other Stackable FSALs, this one is created @b after the FSAL
+ * underneath.  It assumes the sub-FSAL's export is already created and
+ * available via the @e fsal_export member of @link op_ctx @endlink, the same
+ * way that this export is returned.
+ *
+ * There is currently no config;
+ *
+ * @param[in] sub_fsal		Sub-FSAL module handle
+ * @param[in] parse_node	Config node for export
+ * @param[out] err_type		Parse errors
+ * @param[in] existing_export	The existing export that is being updated
+ * @return FSAL status
+ */
+fsal_status_t
+mdcache_fsal_update_export(struct fsal_module *sub_fsal, void *parse_node,
+			   struct config_error_type *err_type,
+			   struct fsal_export *original)
+{
+	fsal_status_t status = {0, 0};
+#if 0
+	/* We currently don't actually have any MDCACHE EXPORT FSAL parameters
+	 * so we don't need an mdcache_fsal_export to fill in.
+	 */
+	struct mdcache_fsal_export myself;
+
+	memset(&myself, 0, sizeof(myself));
+
+	/* Here's where we would parse the FSAL block to get our params and
+	 * then validate them.
+	 */
+#endif
+
+	/* Now update the sub-fsal */
+
+	status = sub_fsal->m_ops.update_export(sub_fsal,
+					       parse_node,
+					       err_type,
+					       original->sub_export,
+					       &MDCACHE.module);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogMajor(COMPONENT_FSAL,
+			 "Failed to call update_export on underlying FSAL %s",
+			 sub_fsal->name);
+	} else {
+		/* And here's where we would actually update the parameters. */
+	}
+
+	/* We don't do any of the stuff mdcache_fsal_create_export does after
+	 * calling the sub_fsal's update_export because we aren't actually
+	 * creating a fsal_export stack.
+	 */
 
 	return status;
 }

@@ -153,6 +153,35 @@ static fsal_status_t create_export(struct fsal_module *fsal_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
+/* update_export
+ * default is do nothing other than check stacking. This works for a
+ * bottom end FSAL that has no updatable parameters (and doesn't want to
+ * bother checking that none of its parameters actually changed).
+ */
+
+fsal_status_t update_export(struct fsal_module *fsal_hdl,
+			    void *parse_node,
+			    struct config_error_type *err_type,
+			    struct fsal_export *original,
+			    struct fsal_module *updated_super)
+{
+	if (original->super_export->fsal != updated_super ||
+	    original->fsal != fsal_hdl) {
+		/* We have a stacking error. */
+		LogCrit(COMPONENT_FSAL,
+			"Export stacking has changed for export %d FSAL %s from super was %s to %s",
+			original->export_id, fsal_hdl->name,
+			original->super_export->fsal->name,
+			updated_super->name);
+		return fsalstat(ERR_FSAL_INVAL, EINVAL);
+	}
+
+	LogFullDebugAlt(COMPONENT_FSAL, COMPONENT_EXPORT,
+			"Updating export %p", op_ctx->fsal_export);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 /**
  * @brief Default emergency cleanup method
  *
@@ -252,6 +281,7 @@ struct fsal_ops def_fsal_ops = {
 	.init_config = init_config,
 	.dump_config = dump_config,
 	.create_export = create_export,
+	.update_export = update_export,
 	.emergency_cleanup = emergency_cleanup,
 	.getdeviceinfo = getdeviceinfo,
 	.fs_da_addr_size = fs_da_addr_size,

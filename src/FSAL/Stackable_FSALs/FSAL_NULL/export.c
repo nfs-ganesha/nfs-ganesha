@@ -516,3 +516,58 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	op_ctx->fsal_export = &myself->export;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
+
+fsal_status_t nullfs_update_export(struct fsal_module *fsal_hdl,
+				   void *parse_node,
+				   struct config_error_type *err_type,
+				   struct fsal_export *original,
+				   struct fsal_module *updated_super)
+{
+	fsal_status_t status;
+	struct fsal_module *fsal_stack;
+	struct nullfsal_args nullfsal;
+	int retval;
+
+	/* Check for changes in stacking by calling default update_export. */
+	status = update_export(fsal_hdl, parse_node, err_type,
+			       original, updated_super);
+
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	/* process our FSAL block to get the name of the fsal
+	 * underneath us.
+	 */
+	retval = load_config_from_node(parse_node,
+				       &export_param,
+				       &nullfsal,
+				       true,
+				       err_type);
+
+	if (retval != 0)
+		return fsalstat(ERR_FSAL_INVAL, 0);
+
+	fsal_stack = lookup_fsal(nullfsal.subfsal.name);
+
+	if (fsal_stack == NULL) {
+		LogMajor(COMPONENT_FSAL,
+			 "nullfs update export failed to lookup for FSAL %s",
+			 nullfsal.subfsal.name);
+		return fsalstat(ERR_FSAL_INVAL, EINVAL);
+	}
+
+	status = fsal_stack->m_ops.update_export(fsal_stack,
+						 nullfsal.subfsal.fsal_node,
+						 err_type,
+						 original->sub_export,
+						 fsal_hdl);
+	fsal_put(fsal_stack);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogMajor(COMPONENT_FSAL,
+			 "Failed to call update_export on underlying FSAL %s",
+			 nullfsal.subfsal.name);
+	}
+
+	return status;
+}

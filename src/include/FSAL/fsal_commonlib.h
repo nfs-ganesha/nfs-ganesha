@@ -265,4 +265,11 @@ bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier);
 
 bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 			     struct attrlist *attrs, bool cache_attrs);
+
+fsal_status_t update_export(struct fsal_module *fsal_hdl,
+			    void *parse_node,
+			    struct config_error_type *err_type,
+			    struct fsal_export *original,
+			    struct fsal_module *updated_super);
+
 #endif				/* FSAL_COMMONLIB_H */

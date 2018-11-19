@@ -116,6 +116,12 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 				   struct config_error_type *err_type,
 				   const struct fsal_up_vector *up_ops);
 
+fsal_status_t nullfs_update_export(struct fsal_module *fsal_hdl,
+				   void *parse_node,
+				   struct config_error_type *err_type,
+				   struct fsal_export *original,
+				   struct fsal_module *updated_super);
+
 /* Module initialization.
  * Called by dlopen() to register the module
  * keep a private pointer to me in myself
@@ -135,6 +141,7 @@ MODULE_INIT void nullfs_init(void)
 		return;
 	}
 	myself->m_ops.create_export = nullfs_create_export;
+	myself->m_ops.update_export = nullfs_update_export;
 	myself->m_ops.init_config = init_config;
 
 	/* Initialize the fsal_obj_handle ops for FSAL NULL */

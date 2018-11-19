@@ -503,7 +503,7 @@ static int add_client(struct glist_head *client_list,
 			struct in6_addr in6_addr_last;
 
 			for (ap = info; ap != NULL; ap = ap->ai_next) {
-				LogFullDebug(COMPONENT_CONFIG,
+				LogFullDebug(COMPONENT_EXPORT,
 					     "flags=%d family=%d socktype=%d protocol=%d addrlen=%d name=%s",
 					     ap->ai_flags,
 					     ap->ai_family,
@@ -559,7 +559,7 @@ static int add_client(struct glist_head *client_list,
 					continue;
 				cli->client_perms = *perms;
 				LogClientListEntry(NIV_MID_DEBUG,
-						   COMPONENT_CONFIG,
+						   COMPONENT_EXPORT,
 						   __LINE__,
 						   (char *) __func__,
 						   "",
@@ -588,7 +588,7 @@ static int add_client(struct glist_head *client_list,
 	}
 	cli->client_perms = *perms;
 	LogClientListEntry(NIV_MID_DEBUG,
-			   COMPONENT_CONFIG,
+			   COMPONENT_EXPORT,
 			   __LINE__,
 			   (char *) __func__,
 			   "",
@@ -683,6 +683,10 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
  */
 void clean_export_paths(struct gsh_export *export)
 {
+	LogFullDebug(COMPONENT_EXPORT,
+		     "Cleaning paths for %d",
+		     export->export_id);
+
 	/* Some admins stuff a '/' at  the end for some reason.
 	 * chomp it so we have a /dir/path/basename to work
 	 * with. But only if it's a non-root path starting
@@ -814,8 +818,12 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 	struct gsh_export *probe_exp;
 	struct gsh_export *export =
 	    container_of(exp_hdl, struct gsh_export, fsal_export);
+	struct fsal_args *fp = self_struct;
 	struct root_op_context root_op_context;
 	uint64_t MaxRead, MaxWrite;
+	struct fsal_module *fsal;
+	fsal_status_t status;
+	int errcnt;
 
 	/* Determine if this is actually an update */
 	probe_exp = get_gsh_export(export->export_id);
@@ -825,24 +833,46 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 		return fsal_cfg_commit(node, link_mem, self_struct, err_type);
 	}
 
-	/** @todo - we really should verify update of FSAL options in
-	 *          export, at the moment any changes there will be
-	 *          ignored. In fact, we can't even process the
-	 *          FSAL name...
-	 */
+	/* Initialize req_ctx from the probe_exp */
+	init_root_op_context(&root_op_context, probe_exp,
+			     probe_exp->fsal_export, 0, 0, UNKNOWN_REQUEST);
+
+	errcnt = fsal_load_init(node, fp->name, &fsal, err_type);
+
+	if (errcnt > 0)
+		goto err;
 
 	/* We have to clean the export paths so we can properly compare them
 	 * later.
 	 */
 	clean_export_paths(export);
 
+	/* The handle cache (currently MDCACHE) must be at the top of the stack
+	 * of FSALs.  To achieve this, call directly into MDCACHE, passing the
+	 * sub-FSAL's fsal_module.  MDCACHE will stack itself on top of that
+	 * FSAL, continuing down the chain.
+	 */
+	status = mdcache_fsal_update_export(fsal, node, err_type,
+					    probe_exp->fsal_export);
+
+	if (FSAL_IS_ERROR(status)) {
+		fsal_put(fsal);
+		LogCrit(COMPONENT_CONFIG,
+			"Could not update export for (%s) to (%s)",
+			export->pseudopath,
+			export->fullpath);
+		LogFullDebug(COMPONENT_FSAL,
+			     "FSAL %s refcount %"PRIu32,
+			     fsal->name,
+			     atomic_fetch_int32_t(&fsal->refcount));
+		err_type->export_ = true;
+		errcnt++;
+		goto err;
+	}
+
 	/* We don't assign export->fsal_export because we don't have a new
 	 * fsal_export to later release...
 	 */
-
-	/* Initialize req_ctx from the probe_exp */
-	init_root_op_context(&root_op_context, probe_exp,
-			     probe_exp->fsal_export, 0, 0, UNKNOWN_REQUEST);
 
 	/* Now validate maxread/write etc with fsal params based on the
 	 * original export, which will then allow us to validate the
@@ -852,8 +882,6 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 	    probe_exp->fsal_export->exp_ops.fs_maxread(probe_exp->fsal_export);
 	MaxWrite =
 	    probe_exp->fsal_export->exp_ops.fs_maxwrite(probe_exp->fsal_export);
-
-	release_root_op_context();
 
 	if (export->MaxRead > MaxRead && MaxRead != 0) {
 		LogInfo(COMPONENT_CONFIG,
@@ -871,13 +899,26 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 		export->MaxWrite = MaxWrite;
 	}
 
-	LogDebug(COMPONENT_CONFIG,
+	LogDebug(COMPONENT_EXPORT,
 		 "Export %d FSAL config update processed",
 		 export->export_id);
 
+	release_root_op_context();
+
 	put_gsh_export(probe_exp);
 
+	/* Don't leak the FSAL block */
+	err_type->dispose = true;
+
 	return 0;
+
+err:
+
+	release_root_op_context();
+
+	/* Don't leak the FSAL block */
+	err_type->dispose = true;
+	return errcnt;
 }
 
 /**
@@ -1070,8 +1111,9 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			 * update.
 			 */
 			LogCrit(COMPONENT_CONFIG,
-				"Tag for export update %d doesn't match",
-				export->export_id);
+				"Tag for export update %d %s doesn't match %s",
+				export->export_id,
+				export->FS_tag, probe_exp->FS_tag);
 			err_type->invalid = true;
 			errcnt++;
 		}
@@ -1082,8 +1124,9 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			 * update.
 			 */
 			LogCrit(COMPONENT_CONFIG,
-				"Pseudo for export update %d doesn't match",
-				export->export_id);
+				"Pseudo for export update %d %s doesn't match %s",
+				export->export_id,
+				export->pseudopath, probe_exp->pseudopath);
 			err_type->invalid = true;
 			errcnt++;
 		}
@@ -1094,8 +1137,9 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			 * update.
 			 */
 			LogCrit(COMPONENT_CONFIG,
-				"Path for export update %d doesn't match",
-				export->export_id);
+				"Path for export update %d %s doesn't match %s",
+				export->export_id,
+				export->fullpath, probe_exp->fullpath);
 			err_type->invalid = true;
 			errcnt++;
 		}
@@ -1108,8 +1152,14 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		    probe_exp->filesystem_id.minor
 					!= export->filesystem_id.minor) {
 			LogCrit(COMPONENT_CONFIG,
-				"Filesystem_Id for export update %d doesn't match",
-				export->export_id);
+				"Filesystem_Id for export update %d %"
+				PRIu64".%"PRIu64" doesn't match%"
+				PRIu64".%"PRIu64,
+				export->export_id,
+				export->filesystem_id.major,
+				export->filesystem_id.minor,
+				probe_exp->filesystem_id.major,
+				probe_exp->filesystem_id.minor);
 			err_type->invalid = true;
 			errcnt++;
 		}
@@ -1166,7 +1216,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	}
 
 	if (probe_exp != NULL) {
-		LogDebug(COMPONENT_CONFIG,
+		LogDebug(COMPONENT_EXPORT,
 			 "Export %d already exists", export->export_id);
 		put_gsh_export(probe_exp);
 		err_type->exists = true;
@@ -1228,7 +1278,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 
 	if (errcnt) {
 		if (err_type->exists && !err_type->invalid)
-			LogDebug(COMPONENT_CONFIG,
+			LogDebug(COMPONENT_EXPORT,
 				 "Duplicate export id = %d",
 				 export->export_id);
 		else
@@ -1344,7 +1394,7 @@ static void export_display(const char *step, void *node,
 
 	(void) StrExportOptions(&dspbuf, &export->export_perms);
 
-	LogMidDebug(COMPONENT_CONFIG,
+	LogMidDebug(COMPONENT_EXPORT,
 		    "%s %p Export %d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
 		    step, export, export->export_id, export->pseudopath,
 		    export->fullpath, export->FS_tag, perms);
@@ -1431,7 +1481,7 @@ static void export_defaults_display(const char *step, void *node,
 
 	(void) StrExportOptions(&dspbuf, defaults);
 
-	LogMidDebug(COMPONENT_CONFIG,
+	LogMidDebug(COMPONENT_EXPORT,
 		    "%s Export Defaults (%s)",
 		    step, perms);
 }
@@ -1613,7 +1663,7 @@ static int client_adder(const char *token,
 	proto_cli = container_of(param_addr,
 				 struct exportlist_client_entry__,
 				 cle_list);
-	LogMidDebug(COMPONENT_CONFIG, "Adding client %s", token);
+	LogMidDebug(COMPONENT_EXPORT, "Adding client %s", token);
 	rc = add_client(&proto_cli->cle_list,
 			token, type_hint,
 			&proto_cli->client_perms, cnode, err_type);
@@ -1838,7 +1888,7 @@ static int build_default_root(struct config_error_type *err_type)
 
 	if (export != NULL) {
 		/* export_id = 0 has already been specified */
-		LogDebug(COMPONENT_CONFIG,
+		LogDebug(COMPONENT_EXPORT,
 			 "Export 0 already exists");
 		put_gsh_export(export);
 		return 0;
@@ -1850,14 +1900,14 @@ static int build_default_root(struct config_error_type *err_type)
 
 	if (export != NULL) {
 		/* Pseudo = / has already been specified */
-		LogDebug(COMPONENT_CONFIG,
+		LogDebug(COMPONENT_EXPORT,
 			 "Pseudo root already exists");
 		put_gsh_export(export);
 		return 0;
 	}
 
 	/* allocate and initialize the exportlist part with the id */
-	LogDebug(COMPONENT_CONFIG,
+	LogDebug(COMPONENT_EXPORT,
 		 "Allocating Pseudo root export");
 	export = alloc_export();
 

@@ -518,6 +518,37 @@ struct fsal_ops {
 					const struct fsal_up_vector *up_ops);
 
 /**
+ * @brief Update an existing export
+ *
+ * This will result in a temporary fsal_export being created, and built into
+ * a stacked export.
+ *
+ * On entry, op_ctx has the original gsh_export and no fsal_export.
+ *
+ * The caller passes the original fsal_export, as well as the new super_export's
+ * FSAL when there is a stacked export. This will allow the underlying export to
+ * validate that the stacking has not changed.
+ *
+ * This function does not actually create a new fsal_export, the only purpose is
+ * to validate and update the config.
+ *
+ * @param[in]     fsal_hdl         FSAL module
+ * @param[in]     parse_node       opaque pointer to parse tree node for
+ *                                 export options to be passed to
+ *                                 load_config_from_node
+ * @param[out]    err_type         config proocessing error reporting
+ * @param[in]     original         The original export that is being updated
+ * @param[in]     updated_super    The updated super_export's FSAL
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*update_export)(struct fsal_module *fsal_hdl,
+					void *parse_node,
+					struct config_error_type *err_type,
+					struct fsal_export *original,
+					struct fsal_module *updated_super);
+
+/**
  * @brief Minimal emergency cleanup on error
  *
  * This method is called only in the event of a catastrophic

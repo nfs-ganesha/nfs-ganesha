@@ -41,6 +41,12 @@ mdcache_fsal_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 			   struct config_error_type *err_type,
 			   const struct fsal_up_vector *super_up_ops);
 
+/* Update an MDCACHE instance at the top of a stack */
+fsal_status_t
+mdcache_fsal_update_export(struct fsal_module *sub_fsal, void *parse_node,
+			   struct config_error_type *err_type,
+			   struct fsal_export *original);
+
 /* Clean up on init failure */
 void mdcache_export_uninit(void);
 
