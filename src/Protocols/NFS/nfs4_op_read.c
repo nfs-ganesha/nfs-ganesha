@@ -288,6 +288,8 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	READ4res * const res_READ4 = &resp->nfs_resop4_u.opread;
 	uint64_t size = 0;
 	uint64_t offset = 0;
+	uint64_t MaxRead = 0;
+	uint64_t MaxOffsetRead = 0;
 	void *bufferdata = NULL;
 	fsal_status_t fsal_status = {0, 0};
 	state_t *state_found = NULL;
@@ -296,10 +298,6 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 	bool anonymous_started = false;
 	state_owner_t *owner = NULL;
 	bool bypass = false;
-	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
-	uint64_t MaxOffsetRead =
-			atomic_fetch_uint64_t(
-				&op_ctx->ctx_export->MaxOffsetRead);
 	struct nfs4_read_data read_data;
 	struct fsal_io_arg *read_arg = alloca(sizeof(*read_arg) +
 						sizeof(struct iovec));
@@ -479,6 +477,10 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
 		res_READ4->status = nfs4_Errno_status(fsal_status);
 		goto out;
 	}
+
+	MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
+	MaxOffsetRead =
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetRead);
 
 	/* Get the size and offset of the read operation */
 	offset = arg_READ4->offset;
