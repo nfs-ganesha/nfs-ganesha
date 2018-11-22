@@ -985,7 +985,7 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 #endif
 
 	if (stat(fs->path, &mnt_stat) != 0) {
-		LogCrit(COMPONENT_FSAL,
+		LogEvent(COMPONENT_FSAL,
 			"stat of %s resulted in error %s(%d)",
 			fs->path, strerror(errno), errno);
 		return false;
