@@ -1189,7 +1189,10 @@ out_revoke:
 	deleg_ctx->drc_clid->num_revokes++;
 	inc_revokes(deleg_ctx->drc_clid->gsh_client);
 
+	/* state_del_locked is called from deleg_revoke, take the lock. */
+	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 	rc = deleg_revoke(obj, state);
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 	if (rc != NFS4_OK) {
 		LogCrit(COMPONENT_NFS_V4,
@@ -1368,7 +1371,12 @@ static void delegrevoke_check(void *ctx)
 			LogDebug(COMPONENT_STATE,
 				"Revoking delegation for %s", str);
 
+		/* state_del_locked is called from deleg_revoke,
+		 * take the lock.
+		 */
+		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 		rc = deleg_revoke(obj, state);
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 		if (rc != NFS4_OK) {
 			if (!str_valid)
@@ -1444,7 +1452,10 @@ static void delegrecall_task(void *ctx)
 	op_ctx->ctx_export = export;
 	op_ctx->fsal_export = export->fsal_export;
 
+	/* state_del_locked is called from deleg_revoke, take the lock. */
+	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 	delegrecall_one(obj, state, deleg_ctx);
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 	/* Release the obj ref and export ref. */
 	obj->obj_ops->put_ref(obj);
