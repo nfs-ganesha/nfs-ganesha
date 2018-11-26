@@ -117,12 +117,29 @@ class ShowExports():
            path = reply[1]
            pseudo = reply[2]
            tag = reply[3]
-           self.proc_export(id, path, pseudo, tag)
+           clients = reply[4]
+           self.proc_export(id, path, pseudo, tag, clients)
         else:
            self.status_message(status, msg)
 
-    def proc_export(self, id, path, pseudo, tag):
-        print("export %d: path = %s, pseudo = %s, tag = %s" % (id, path, pseudo, tag))
+    def proc_export(self, id, path, pseudo, tag, clients):
+        print("export %d: path = %s, pseudo = %s, tag = %s" %\
+              (id, path, pseudo, tag))
+        print(" Client type,  CIDR version, CIDR address, CIDR mask, " +\
+              "CIDR proto, Anonymous UID, Anonymous GID, " +\
+              "Attribute timeout, Options, Set")
+        for client in clients:
+            print(" %s,  %d,  %d,  %d,  %d,  %d,  %d,  %d,  %d, %d" %
+                       (client.Client_type,
+                        client.CIDR_version,
+                        client.CIDR_address,
+                        client.CIDR_mask,
+                        client.CIDR_proto,
+                        client.Anonymous_uid,
+                        client.Anonymous_gid,
+                        client.Expire_time_attr,
+                        client.Options,
+                        client.Set))
 
     def proc_exports(self, ts, exports):
         print("Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs")

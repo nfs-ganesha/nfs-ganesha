@@ -129,6 +129,19 @@ Export = namedtuple('Export',
                      'Has9P',
                      'LastTime'])
 
+ExportClient = namedtuple('ExportClient',
+                          ['Client_type',
+                           'CIDR_version',
+                           'CIDR_address',
+                           'CIDR_mask',
+                           'CIDR_proto',
+                           'Anonymous_uid',
+                           'Anonymous_gid',
+                           'Expire_time_attr',
+                           'Options',
+                           'Set'])
+
+
 class ExportMgr():
     '''
     org.ganesha.nfsd.exportmgr
@@ -178,10 +191,27 @@ class ExportMgr():
         display_export_method = self.dbusobj.get_dbus_method("DisplayExport",
                                                              self.dbus_interface)
         try:
-           id, fullpath, pseudopath, tag = display_export_method(int(exp_id))
+           id, fullpath, pseudopath, tag, clients_array = \
+                display_export_method(int(exp_id))
         except dbus.exceptions.DBusException as e:
            return False, e, []
-        return True, "Done", [id, fullpath, pseudopath, tag]
+
+        export_clients = []
+        for client in clients_array:
+            c = ExportClient(Client_type = client[0],
+                             CIDR_version = client[1],
+                             CIDR_address = client[2],
+                             CIDR_mask = client[3],
+                             CIDR_proto = client[4],
+                             Anonymous_uid = client[5],
+                             Anonymous_gid = client[6],
+                             Expire_time_attr = client[7],
+                             Options = client[8],
+                             Set = client[9])
+
+            export_clients.append(c)
+
+        return True, "Done", [id, fullpath, pseudopath, tag, export_clients]
 
     def ShowExports(self):
         show_export_method = self.dbusobj.get_dbus_method("ShowExports",
