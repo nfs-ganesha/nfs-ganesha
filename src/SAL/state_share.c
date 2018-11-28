@@ -124,6 +124,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	unsigned int new_deny = 0;
 	struct state_nlm_share *nlm_share = &state->state_data.nlm_share;
 	int i, acount = 0, dcount = 0;
+	fsal_accessflags_t access_mask = 0;
 
 	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 
@@ -226,10 +227,31 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	if (reclaim)
 		openflags |= FSAL_O_RECLAIM;
 
+
+	if (openflags & FSAL_O_READ)
+		access_mask |= FSAL_READ_ACCESS;
+
+	if (openflags & FSAL_O_WRITE)
+		access_mask |= FSAL_WRITE_ACCESS;
+
+	/* The access check must be same as the read and write calls.
+	 * Use owner_skip for the access checks
+	 * The reopen2 call does not use the owner_skip
+	 * perform test_access first and then call reopen2.
+	 */
+	fsal_status = obj->obj_ops->test_access(obj, access_mask,
+						NULL, NULL, true);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogDebug(COMPONENT_STATE,
+			 "test_access failed with %s",
+			 fsal_err_txt(fsal_status));
+		goto out_unlock;
+	}
+
 	/* Use reopen2 to open or re-open the file and check for share
 	 * conflict.
 	 */
-	fsal_status = fsal_reopen2(obj, state, openflags, true);
+	fsal_status = fsal_reopen2(obj, state, openflags, false);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
