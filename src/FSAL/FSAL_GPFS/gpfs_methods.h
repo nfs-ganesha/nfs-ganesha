@@ -36,6 +36,7 @@ struct gpfs_fsal_export {
 	bool pnfs_ds_enabled;
 	bool pnfs_mds_enabled;
 	bool use_acl;
+	bool ignore_mode_change;
 };
 
 /*

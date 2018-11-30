@@ -331,7 +331,8 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
   /***********
    *  CHMOD  *
    ***********/
-	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_MODE) &&
+	    !exp->ignore_mode_change) {
 
 		/* The POSIX chmod call don't affect the symlink object, but
 		 * the entry it points to. So we must ignore it.

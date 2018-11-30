@@ -667,6 +667,25 @@ void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp)
 	PTHREAD_RWLOCK_unlock(&fs_lock);
 }
 
+/* GPFS FSAL export config */
+static struct config_item export_params[] = {
+	CONF_ITEM_NOOP("name"),
+	CONF_ITEM_BOOL("ignore_mode_change", false,
+		       gpfs_fsal_export, ignore_mode_change),
+	CONFIG_EOL
+};
+
+
+static struct config_block export_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.gpfs-export%d",
+	.blk_desc.name = "FSAL",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = export_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
+
 /**
  * @brief create_export
  *
@@ -686,6 +705,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct gpfs_fsal_export *gpfs_exp;
 	struct fsal_export *exp;
+	int rc;
 
 	gpfs_exp = gsh_calloc(1, sizeof(struct gpfs_fsal_export));
 	exp = &gpfs_exp->export;
@@ -700,6 +720,20 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 
 	fsal_export_init(exp);
 	gpfs_export_ops_init(&exp->exp_ops);
+
+	/* Load GPFS FSAL specific export config */
+	rc = load_config_from_node(parse_node,
+				   &export_param,
+				   gpfs_exp,
+				   true,
+				   err_type);
+	if (rc != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Incorrect or missing parameters for export %s",
+			op_ctx->ctx_export->fullpath);
+		status.major = ERR_FSAL_INVAL;
+		goto free;
+	}
 
 	status.minor = fsal_attach_export(fsal_hdl, &exp->exports);
 	if (status.minor != 0) {
