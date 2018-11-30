@@ -3015,7 +3015,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		found_share =
 			glist_first_entry(&nsmclient->ssc_share_list,
 					  state_t,
-					  state_data.share.share_lockstates);
+					  state_data.nlm_share.share_perclient);
 
 		/* If we don't find any entries, then we are done. */
 		if (found_share == NULL) {
@@ -3058,8 +3058,9 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* Move this entry to the end of the list
 		 * (this will help if errors occur)
 		 */
+		glist_del(&found_share->state_data.nlm_share.share_perclient);
 		glist_add_tail(&nsmclient->ssc_share_list,
-			       &found_share->state_data.share.share_lockstates);
+			  &found_share->state_data.nlm_share.share_perclient);
 
 		PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 
@@ -3068,8 +3069,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			 * Owner on the file (on all exports)
 			 */
 			status = state_nlm_share(obj,
-						 OPEN4_SHARE_ACCESS_NONE,
-						 OPEN4_SHARE_DENY_NONE,
+						 OPEN4_SHARE_ACCESS_ALL,
+						 OPEN4_SHARE_DENY_ALL,
 						 owner,
 						 found_share,
 						 false,

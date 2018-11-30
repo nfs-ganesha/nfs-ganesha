@@ -137,14 +137,21 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 			share_access, share_deny);
 
 	if (unshare) {
-		if (nlm_share->share_access_counts[share_access] > 0)
+		/* For FREE_ALL case need to release all shares */
+		if (share_access == OPEN4_SHARE_ACCESS_ALL)
+			for (i = 0; i <= fsa_RW; i++)
+				nlm_share->share_access_counts[i] = 0;
+		else if (nlm_share->share_access_counts[share_access] > 0)
 			nlm_share->share_access_counts[share_access]--;
 		else
 			LogDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
 				    "UNSHARE access %d did not match",
 				    share_access);
 
-		if (nlm_share->share_deny_counts[share_deny] > 0)
+		if (share_access == OPEN4_SHARE_DENY_ALL)
+			for (i = 0; i <= fsm_DRW; i++)
+				nlm_share->share_deny_counts[i] = 0;
+		else if (nlm_share->share_deny_counts[share_deny] > 0)
 			nlm_share->share_deny_counts[share_deny]--;
 		else
 			LogDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
@@ -381,8 +388,8 @@ void state_export_unshare_all(void)
 
 		/* Remove all shares held by this Owner on this export */
 		status = state_nlm_share(obj,
-					 OPEN4_SHARE_ACCESS_BOTH,
-					 OPEN4_SHARE_DENY_BOTH,
+					 OPEN4_SHARE_ACCESS_ALL,
+					 OPEN4_SHARE_DENY_ALL,
 					 owner,
 					 state,
 					 false,
