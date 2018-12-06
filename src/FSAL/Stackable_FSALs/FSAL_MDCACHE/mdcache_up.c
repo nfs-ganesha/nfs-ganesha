@@ -37,6 +37,7 @@
 #include "nfs4_acls.h"
 #include "mdcache_hash.h"
 #include "mdcache_int.h"
+#include "nfs_core.h"
 #include "nfs4_fs_locations.h"
 
 static fsal_status_t
@@ -360,17 +361,16 @@ state_status_t mdc_up_lock_grant(const struct fsal_up_vector *vec,
 {
 	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;
-	struct req_op_context *save_ctx, req_ctx = {0};
+	struct root_op_context root_ctx;
 
-	req_ctx.ctx_export = vec->up_gsh_export;
-	req_ctx.fsal_export = vec->up_fsal_export;
-	save_ctx = op_ctx;
-	op_ctx = &req_ctx;
+	/* Initialize op context */
+	init_root_op_context(&root_ctx, vec->up_gsh_export,
+		vec->up_fsal_export, 0, 0, UNKNOWN_REQUEST);
 
 	rc = myself->super_up_ops.lock_grant(vec, file, owner,
 					     lock_param);
 
-	op_ctx = save_ctx;
+	release_root_op_context();
 
 	return rc;
 }
@@ -392,17 +392,16 @@ state_status_t mdc_up_lock_avail(const struct fsal_up_vector *vec,
 {
 	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;
-	struct req_op_context *save_ctx, req_ctx = {0};
+	struct root_op_context root_ctx;
 
-	req_ctx.ctx_export = vec->up_gsh_export;
-	req_ctx.fsal_export = vec->up_fsal_export;
-	save_ctx = op_ctx;
-	op_ctx = &req_ctx;
+	/* Initialize op context */
+	init_root_op_context(&root_ctx, vec->up_gsh_export,
+		vec->up_fsal_export, 0, 0, UNKNOWN_REQUEST);
 
 	rc = myself->super_up_ops.lock_avail(vec, file, owner,
 					     lock_param);
 
-	op_ctx = save_ctx;
+	release_root_op_context();
 
 	return rc;
 }
