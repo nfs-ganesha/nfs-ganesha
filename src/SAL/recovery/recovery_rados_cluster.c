@@ -28,7 +28,7 @@
 #include <netdb.h>
 #include <rados/librados.h>
 #include <rados_grace.h>
-#include <urcu.h>
+#include <urcu-bp.h>
 #include "log.h"
 #include "nfs_core.h"
 #include "sal_functions.h"

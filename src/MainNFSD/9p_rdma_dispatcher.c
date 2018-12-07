@@ -58,7 +58,7 @@
 #include "9p.h"
 
 #include <mooshika.h>
-#include <urcu.h>
+#include <urcu-bp.h>
 
 static void *_9p_rdma_cleanup_conn_thread(void *arg)
 {

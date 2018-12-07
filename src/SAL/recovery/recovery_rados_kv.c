@@ -14,7 +14,7 @@
 #include <rados/librados.h>
 #include <rados_grace.h>
 #include "recovery_rados.h"
-#include <urcu.h>
+#include <urcu-bp.h>
 
 #define MAX_ITEMS		1024		/* relaxed */
 

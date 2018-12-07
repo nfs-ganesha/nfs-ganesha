@@ -46,7 +46,7 @@
 #elif FREEBSD
 #include <signal.h>
 #endif
-#include <urcu.h>
+#include <urcu-bp.h>
 #include "abstract_mem.h"
 #include "fridgethr.h"
 #include "nfs_core.h"

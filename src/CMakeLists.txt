@@ -1057,7 +1057,7 @@ endif (USE_SYSTEM_NTIRPC)
 message(${NTIRPC_INCLUDE_DIR})
 include_directories(${NTIRPC_INCLUDE_DIR})
 
-find_library(LIBURCU urcu)
+find_library(LIBURCU urcu-bp)
 if (NOT LIBURCU)
 	message(FATAL_ERROR "userspace-rcu library not found!")
 endif(NOT LIBURCU)

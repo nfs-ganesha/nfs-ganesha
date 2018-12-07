@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/time.h>
-#include <urcu.h>
+#include <urcu-bp.h>
 #include "sal_functions.h"
 
 int up_process_event_object(struct glusterfs_fs *gl_fs,

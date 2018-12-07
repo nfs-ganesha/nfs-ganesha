@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <sys/time.h>
-#include <urcu.h>
+#include <urcu-bp.h>
 
 /* Setup up_vector. File system's upvector_mutex must be held */
 static bool setup_up_vector(struct gpfs_filesystem *gpfs_fs)

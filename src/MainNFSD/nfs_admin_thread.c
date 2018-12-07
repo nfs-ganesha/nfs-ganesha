@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <urcu.h>
+#include <urcu-bp.h>
 
 #include "nfs_core.h"
 #include "log.h"

@@ -73,7 +73,7 @@
 #include "mdcache.h"
 #include "common_utils.h"
 #include "nfs_init.h"
-#include <urcu.h>
+#include <urcu-bp.h>
 
 /**
  * @brief init_complete used to indicate if ganesha is during

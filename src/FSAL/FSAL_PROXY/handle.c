@@ -33,7 +33,7 @@
 #include <arpa/inet.h>
 #include <sys/poll.h>
 #include <netdb.h>
-#include <urcu.h>
+#include <urcu-bp.h>
 
 #include "gsh_list.h"
 #include "abstract_atomic.h"

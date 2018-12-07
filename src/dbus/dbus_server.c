@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <dbus/dbus.h>
 #include <ctype.h>
-#include <urcu.h>
+#include <urcu-bp.h>
 
 #include "fsal.h"
 #include "nfs_core.h"

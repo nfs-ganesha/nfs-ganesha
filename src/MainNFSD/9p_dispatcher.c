@@ -60,7 +60,7 @@
 #include "server_stats.h"
 #include "9p.h"
 #include <stdbool.h>
-#include <urcu.h>
+#include <urcu-bp.h>
 
 #define P_FAMILY AF_INET6
 

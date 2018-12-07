@@ -42,7 +42,7 @@
 #elif FREEBSD
 #include <signal.h>
 #endif
-#include <urcu.h>
+#include <urcu-bp.h>
 
 #include "abstract_mem.h"
 #include "delayed_exec.h"
