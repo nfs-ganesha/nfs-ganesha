@@ -28,6 +28,8 @@
 
 #include "config.h"
 
+#include <unistd.h>
+#include <stdlib.h>
 #include "fsal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
@@ -39,6 +41,7 @@
 #include "gsh_lttng/fsal_mem.h"
 #endif
 #include "../Stackable_FSALs/FSAL_MDCACHE/mdcache_ext.h"
+#include "nfs_core.h"
 
 static void mem_release(struct fsal_obj_handle *obj_hdl);
 
@@ -1674,6 +1677,49 @@ fsal_status_t mem_reopen2(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
+struct mem_async_arg {
+	struct fsal_obj_handle *obj_hdl;
+	struct fsal_io_arg *io_arg;
+	fsal_async_cb done_cb;
+	void *caller_arg;
+	struct gsh_export *ctx_export;
+	struct fsal_export *fsal_export;
+};
+
+static void
+mem_async_complete(struct fridgethr_context *ctx)
+{
+	struct mem_async_arg *async_arg = ctx->arg;
+	struct root_op_context root_op_context;
+	struct mem_fsal_export *mem_export =
+	   container_of(async_arg->fsal_export, struct mem_fsal_export, export);
+	uint32_t async_delay = atomic_fetch_uint32_t(&mem_export->async_delay);
+
+	/* Now check if we need to delay the call back */
+	if (atomic_fetch_uint32_t(&mem_export->async_type) != MEM_FIXED) {
+		/* Randomize delay */
+		async_delay = random() % async_delay;
+	}
+
+	if (async_delay != 0) {
+		/* Now actually delay call back */
+		usleep(async_delay);
+	}
+
+	/* Need an op context for the call back */
+	init_root_op_context(&root_op_context, async_arg->ctx_export,
+			     async_arg->fsal_export, 0, 0,
+			     UNKNOWN_REQUEST);
+
+	async_arg->done_cb(async_arg->obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0),
+			   async_arg->io_arg, async_arg->caller_arg);
+
+	release_root_op_context();
+
+	gsh_free(async_arg);
+}
+
+
 /**
  * @brief Read data from a file
  *
@@ -1707,6 +1753,11 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 	bool reusing_open_state_fd = false;
 	uint64_t offset = read_arg->offset;
 	int i;
+	struct mem_fsal_export *mem_export =
+	      container_of(op_ctx->fsal_export, struct mem_fsal_export, export);
+	uint32_t async_type = atomic_fetch_uint32_t(&mem_export->async_type);
+	uint32_t async_stall_delay =
+			atomic_fetch_uint32_t(&mem_export->async_stall_delay);
 
 	if (read_arg->info != NULL) {
 		/* Currently we don't support READ_PLUS */
@@ -1769,7 +1820,45 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
+	if (async_type > MEM_RANDOM_OR_INLINE ||
+	    ((async_type == MEM_RANDOM_OR_INLINE) && ((random() % 1) == 1))) {
+		struct mem_async_arg *async_arg;
+
+		/* Was MEM_FIXED, MEM_RANDOM, or MEM_RANDOM_OR_INLINE and we
+		 * scored a non-inline.
+		 */
+		async_arg = gsh_malloc(sizeof(*async_arg));
+
+		async_arg->obj_hdl = obj_hdl;
+		async_arg->io_arg = read_arg;
+		async_arg->caller_arg = caller_arg;
+		async_arg->done_cb = done_cb;
+		async_arg->ctx_export = op_ctx->ctx_export;
+		async_arg->fsal_export = op_ctx->fsal_export;
+
+		if (fridgethr_submit(mem_async_fridge,
+				     mem_async_complete,
+				     async_arg) == 0) {
+			/* Async fired off... */
+			goto out;
+		}
+
+		/* Could not schedule, fall through and do an immediate
+		 * call back.
+		 */
+		gsh_free(async_arg);
+	}
+
 	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), read_arg, caller_arg);
+
+out:
+
+	if (async_stall_delay > 0) {
+		/* We have been asked to stall the calling thread, whether we
+		 * issued an inline or async callback.
+		 */
+		usleep(async_stall_delay);
+	}
 }
 
 /**
@@ -1805,6 +1894,11 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 	bool reusing_open_state_fd = false;
 	uint64_t offset = write_arg->offset;
 	int i;
+	struct mem_fsal_export *mem_export =
+	      container_of(op_ctx->fsal_export, struct mem_fsal_export, export);
+	uint32_t async_type = atomic_fetch_uint32_t(&mem_export->async_type);
+	uint32_t async_stall_delay =
+			atomic_fetch_uint32_t(&mem_export->async_stall_delay);
 
 	if (obj_hdl->type != REGULAR_FILE) {
 		/* Currently can only write to a file */
@@ -1859,7 +1953,45 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
+	if (async_type > MEM_RANDOM_OR_INLINE ||
+	    ((async_type == MEM_RANDOM_OR_INLINE) && ((random() % 1) == 1))) {
+		struct mem_async_arg *async_arg;
+
+		/* Was MEM_FIXED, MEM_RANDOM, or MEM_RANDOM_OR_INLINE and we
+		 * scored a non-inline.
+		 */
+		async_arg = gsh_malloc(sizeof(*async_arg));
+
+		async_arg->obj_hdl = obj_hdl;
+		async_arg->io_arg = write_arg;
+		async_arg->caller_arg = caller_arg;
+		async_arg->done_cb = done_cb;
+		async_arg->ctx_export = op_ctx->ctx_export;
+		async_arg->fsal_export = op_ctx->fsal_export;
+
+		if (fridgethr_submit(mem_async_fridge,
+				     mem_async_complete,
+				     async_arg) == 0) {
+			/* Async fired off... */
+			goto out;
+		}
+
+		/* Could not schedule, fall through and do an immediate
+		 * call back.
+		 */
+		gsh_free(async_arg);
+	}
+
 	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), write_arg, caller_arg);
+
+out:
+
+	if (async_stall_delay > 0) {
+		/* We have been asked to stall the calling thread, whether we
+		 * issued an inline or async callback.
+		 */
+		usleep(async_stall_delay);
+	}
 }
 
 /**

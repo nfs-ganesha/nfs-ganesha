@@ -366,19 +366,19 @@ EXPORT { FSAL {} }
 	transport(enum, values [tcp, rdma], default tcp)
 
 	FSAL_VFS or FSAL_LUSTRE:
-	---------
+	------------------------
 
 	pnfs(bool, default false)
 
 	fsid_type(enum, values [None, One64, Major64, Two64, uuid, Two32, Dev,
 			        Device], no default)
 
-    FSAL_LUSTRE:
-	---------
+	FSAL_LUSTRE:
+	------------
 	async_hsm_restore(bool, default true)
 
-    FSAL_PROXY:
-    ----------
+	FSAL_PROXY:
+	-----------
 
 	Retry_SleepTime(uint32, range 0 to 60, default 10)
 
@@ -425,8 +425,17 @@ EXPORT { FSAL {} }
 
 	HandleMap_HashTable_Size(uint32, range 1 to 127, default 103)
 
+	FSAL_MEM:
+	---------
+	Async_Delay(uint32, range 0 to 1000, defaults to 0)
+
+	Async_Type(enum, values [inline, fixed, random, random_or_inline],
+		   defaults to inline)
+
+	Async_Stall_Delay(uint32, range 0 to 1000, defaults to 0)
+
 	EXPORT { FSAL { PNFS { } } }
-	---------------------------
+	----------------------------
 		Stripe_Unit(uint32, range 1024 to 1024*1024, default 8192)
 
 		pnfs_enabled(bool, default false)
@@ -624,6 +633,8 @@ MEM {}
 	Inode_Size(uint32, range 0 to 2097152, default 0)
 
 	Up_Test_Interval(uint32, range 0 to UINT32_MAX, default 0)
+
+	Async_Threads(uint32, range 0 to 100, default to 0)
 
 RGW {}
 -------

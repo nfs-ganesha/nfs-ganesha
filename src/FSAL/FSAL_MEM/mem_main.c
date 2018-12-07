@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include "FSAL/fsal_init.h"
 #include "mem_int.h"
+#include "fsal_convert.h"
 #include "../fsal_private.h"
 
 /* MEM FSAL module private storage
@@ -83,6 +84,8 @@ static struct config_item mem_items[] = {
 		       mem_fsal_module, inode_size),
 	CONF_ITEM_UI32("Up_Test_Interval", 0, UINT32_MAX, 0,
 		       mem_fsal_module, up_interval),
+	CONF_ITEM_UI32("Async_Threads", 0, 100, 0,
+		       mem_fsal_module, async_threads),
 	CONFIG_EOL
 };
 
@@ -94,6 +97,80 @@ static struct config_block mem_block = {
 	.blk_desc.u.blk.params = mem_items,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
+
+struct fridgethr *mem_async_fridge;
+
+/**
+ * Initialize subsystem
+ */
+static fsal_status_t
+mem_async_pkginit(void)
+{
+	/* Return code from system calls */
+	int code = 0;
+	struct fridgethr_params frp;
+
+	if (MEM.async_threads == 0) {
+		/* Don't run async-threads */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+
+	if (mem_async_fridge) {
+		/* Already initialized */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+
+	memset(&frp, 0, sizeof(struct fridgethr_params));
+	frp.thr_max = MEM.async_threads;
+	frp.thr_min = 1;
+	frp.flavor = fridgethr_flavor_worker;
+
+	/* spawn MEM_ASYNC background thread */
+	code = fridgethr_init(&mem_async_fridge, "MEM_ASYNC_fridge", &frp);
+	if (code != 0) {
+		LogMajor(COMPONENT_FSAL,
+			 "Unable to initialize MEM_ASYNC fridge, error code %d.",
+			 code);
+	}
+
+	LogEvent(COMPONENT_FSAL,
+		 "Initialized FSAL_MEM async thread pool with %"
+		 PRIu32" threads.",
+		 MEM.async_threads);
+
+	return posix2fsal_status(code);
+}
+
+/**
+ * Shutdown subsystem
+ *
+ * @return FSAL status
+ */
+static fsal_status_t
+mem_async_pkgshutdown(void)
+{
+	if (!mem_async_fridge) {
+		/* Async wasn't configured */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+
+	int rc = fridgethr_sync_command(mem_async_fridge,
+					fridgethr_comm_stop,
+					120);
+
+	if (rc == ETIMEDOUT) {
+		LogMajor(COMPONENT_FSAL,
+			 "Shutdown timed out, cancelling threads.");
+		fridgethr_cancel(mem_async_fridge);
+	} else if (rc != 0) {
+		LogMajor(COMPONENT_FSAL,
+			 "Failed shutting down MEM_ASYNC threads: %d", rc);
+	}
+
+	fridgethr_destroy(mem_async_fridge);
+	mem_async_fridge = NULL;
+	return posix2fsal_status(rc);
+}
 
 /* private helper for export object
  */
@@ -129,6 +206,15 @@ static fsal_status_t mem_init_config(struct fsal_module *fsal_hdl,
 	if (FSAL_IS_ERROR(status)) {
 		LogMajor(COMPONENT_FSAL,
 			 "Failed to initialize FSAL_MEM UP package %s",
+			 fsal_err_txt(status));
+		return status;
+	}
+
+	/* Initialize ASYNC call back threads */
+	status = mem_async_pkginit();
+	if (FSAL_IS_ERROR(status)) {
+		LogMajor(COMPONENT_FSAL,
+			 "Failed to initialize FSAL_MEM ASYNC package %s",
 			 fsal_err_txt(status));
 		return status;
 	}
@@ -171,6 +257,7 @@ MODULE_INIT void init(void)
 			"MEM module failed to register.");
 	}
 	myself->m_ops.create_export = mem_create_export;
+	myself->m_ops.update_export = mem_update_export;
 	myself->m_ops.init_config = mem_init_config;
 	glist_init(&MEM.mem_exports);
 	MEM.next_inode = 0xc0ffee;
@@ -188,6 +275,9 @@ MODULE_FINI void finish(void)
 
 	/* Shutdown UP calls */
 	mem_up_pkgshutdown();
+
+	/* Shutdown ASYNC threads */
+	mem_async_pkgshutdown();
 
 	retval = unregister_fsal(&MEM.fsal);
 	if (retval != 0) {
