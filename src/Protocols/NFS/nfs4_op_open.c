@@ -524,6 +524,11 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 		get_deleg_perm(&readres->permissions, deleg_type);
 	}
 
+	new_state->state_data.deleg.share_access =
+		args->share_access & OPEN4_SHARE_ACCESS_BOTH;
+	new_state->state_data.deleg.share_deny =
+		args->share_deny;
+
 	if (isDebug(COMPONENT_NFS_V4_LOCK)) {
 		char str1[LOG_BUFF_LEN / 2] = "\0";
 		char str2[LOG_BUFF_LEN / 2] = "\0";
