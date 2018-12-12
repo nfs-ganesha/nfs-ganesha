@@ -104,6 +104,7 @@ struct config_root {
 	char *conf_dir;
 	struct file_list *files;
 	struct token_tab *tokens;
+	uint64_t generation;
 };
 
 /*

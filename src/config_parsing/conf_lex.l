@@ -10,6 +10,7 @@
 #include "analyse.h"
 #include "abstract_mem.h"
 #include "conf_yacc.h"
+#include "abstract_atomic.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -393,6 +394,15 @@ int ganeshun_yywrap(void *yyscanner){
     return 1;
 }
 
+/*
+ * This value represents a unique value for _this_ config_root. By tagging
+ * each root with a value, we can propagate that value down to the structures
+ * that this parsed tree touches. Then, later we can remove structures that
+ * should no longer be present by looking to see if their generation number
+ * predates this one.
+ */
+static uint64_t config_generation;
+
 int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st)
 {
 	FILE *in_file;
@@ -409,6 +419,7 @@ int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st)
 	glist_init(&confroot->root.node);
 	glist_init(&confroot->root.u.nterm.sub_nodes);
 	confroot->root.type = TYPE_ROOT;
+	confroot->generation = atomic_inc_uint64_t(&config_generation);
 	st->root_node = confroot;
 	ganeshun_yylex_init_extra(st, &st->scanner);
 	rc = new_file(srcfile, st);

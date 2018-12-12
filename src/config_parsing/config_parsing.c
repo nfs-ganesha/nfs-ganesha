@@ -1415,6 +1415,18 @@ config_file_t get_parse_root(void *node)
 	return (config_file_t)root;
 }
 
+uint64_t get_config_generation(struct config_root *root)
+{
+	return root->generation;
+}
+
+uint64_t get_parse_root_generation(void *node)
+{
+	struct config_root *root = (struct config_root *)get_parse_root(node);
+
+	return get_config_generation(root);
+}
+
 /**
  * @brief Data structures for walking parse trees
  *
