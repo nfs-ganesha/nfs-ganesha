@@ -77,6 +77,8 @@ struct gsh_export {
 	struct glist_head mounted_exports_node;
 	/** Entry for the root of this export, protected by lock */
 	struct fsal_obj_handle *exp_root_obj;
+	/** CFG config_generation that last touched this export */
+	uint64_t config_gen;
 	/** CFG Allowed clients - update protected by lock */
 	struct glist_head clients;
 	/** Entry for the junction of this export.  Protected by lock */

@@ -1123,6 +1123,9 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			return errcnt;
 		}
 
+		/* Grab config_generation for this config */
+		probe_exp->config_gen = get_parse_root_generation(node);
+
 		/* Update atomic fields */
 		update_atomic_fields(probe_exp, export);
 
@@ -1283,6 +1286,9 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		export_add_to_mount_work(export);
 
 	display_clients(export);
+
+	/* Copy the generation */
+	export->config_gen = get_parse_root_generation(node);
 
 success:
 
