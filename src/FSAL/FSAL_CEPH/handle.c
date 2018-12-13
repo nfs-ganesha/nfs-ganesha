@@ -336,6 +336,14 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 				     fsal_err_txt(status));
 			(*new_obj)->obj_ops->release(*new_obj);
 			*new_obj = NULL;
+		} else if (attrs_out != NULL) {
+			/*
+			 * We ignore errors here. The mkdir and setattr
+			 * succeeded, so we don't want to return error if the
+			 * getattrs fails. We'll just return no attributes
+			 * in that case.
+			 */
+			(*new_obj)->obj_ops->getattrs(*new_obj, attrs_out);
 		}
 	} else {
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
