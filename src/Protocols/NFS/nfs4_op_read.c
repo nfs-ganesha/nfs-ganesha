@@ -124,14 +124,6 @@ done:
 	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->io_amount,
 			     (data->res_READ4->status == NFS4_OK) ? true :
 			     false, false);
-
-	if (data->owner != NULL) {
-		op_ctx->clientid = NULL;
-		dec_state_owner_ref(data->owner);
-	}
-
-	if (read_arg->state)
-		dec_state_t_ref(read_arg->state);
 }
 
 /**
@@ -572,6 +564,15 @@ static int nfs4_read(struct nfs_argop4 *op, compound_data_t *data,
  out:
 	if (state_open != NULL)
 		dec_state_t_ref(state_open);
+
+	if (owner != NULL) {
+		op_ctx->clientid = NULL;
+		dec_state_owner_ref(owner);
+	}
+	if (state_found != NULL) {
+		dec_state_t_ref(state_found);
+	}
+
 
 	return res_READ4->status;
 }				/* nfs4_op_read */

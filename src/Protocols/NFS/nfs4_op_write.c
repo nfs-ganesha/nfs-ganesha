@@ -90,14 +90,6 @@ done:
 	server_stats_io_done(write_arg->iov[0].iov_len, write_arg->io_amount,
 			     (data->res_WRITE4->status == NFS4_OK) ? true :
 			     false, true /*is_write*/);
-
-	if (data->owner != NULL) {
-		op_ctx->clientid = NULL;
-		dec_state_owner_ref(data->owner);
-	}
-
-	if (write_arg->state)
-		dec_state_t_ref(write_arg->state);
 }
 
 /**
@@ -314,7 +306,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 					sdeleg->sd_type,
 					sdeleg->sd_state);
 				res_WRITE4->status = NFS4ERR_BAD_STATEID;
-				return res_WRITE4->status;
+				goto out;
 			}
 
 			state_open = NULL;
@@ -325,7 +317,7 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "WRITE with invalid stateid of type %d",
 				 (int)state_found->state_type);
-			return res_WRITE4->status;
+			goto out;
 		}
 
 		/* This is a write operation, this means that the file
@@ -462,6 +454,14 @@ static int nfs4_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (state_open != NULL)
 		dec_state_t_ref(state_open);
+
+	if (owner != NULL) {
+		op_ctx->clientid = NULL;
+		dec_state_owner_ref(owner);
+	}
+	if (state_found != NULL) {
+		dec_state_t_ref(state_found);
+	}
 
 	return res_WRITE4->status;
 }				/* nfs4_op_write */
