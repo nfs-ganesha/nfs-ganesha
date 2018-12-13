@@ -790,6 +790,27 @@ bool remove_one_export(struct gsh_export *export, void *state)
 	return true;
 }
 
+static void process_unexports(void)
+{
+	struct gsh_export *export;
+
+	/* Now process all the unexports */
+	while (true) {
+		export = export_take_unexport_work();
+		if (export == NULL)
+			break;
+
+		op_ctx->ctx_export = export;
+		op_ctx->fsal_export = export->fsal_export;
+
+		unexport(export);
+		put_gsh_export(export);
+
+		op_ctx->ctx_export = NULL;
+		op_ctx->fsal_export = NULL;
+	}
+}
+
 /**
  * @brief Bring down all exports in an orderly fashion.
  */
@@ -822,22 +843,34 @@ void remove_all_exports(void)
 	 */
 	(void) foreach_gsh_export(remove_one_export, true, NULL);
 
-	/* Now process all the unexports */
-	while (true) {
-		export = export_take_unexport_work();
-		if (export == NULL)
-			break;
+	process_unexports();
+	release_root_op_context();
+}
 
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+static bool prune_defunct_export(struct gsh_export *exp, void *state)
+{
+	uint64_t *pgen = state;
 
-		unexport(export);
-		put_gsh_export(export);
+	if (export_is_defunct(exp, *pgen))
+		export_add_to_unexport_work_locked(exp);
+	return true;
+}
 
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
-	}
+void prune_defunct_exports(uint64_t generation)
+{
+	struct root_op_context root_op_context;
 
+	/*
+	 * Initialize req_ctx, we use NFSv4 types here to make paths show
+	 * up sanely in the logs.
+	 */
+	init_root_op_context(&root_op_context, NULL, NULL,
+				NFS_V4, 0, NFS_REQUEST);
+
+	(void)foreach_gsh_export(prune_defunct_export, true, &generation);
+
+	/* now run the work */
+	process_unexports();
 	release_root_op_context();
 }
 

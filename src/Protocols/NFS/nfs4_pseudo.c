@@ -589,3 +589,39 @@ void pseudo_unmount_export(struct gsh_export *export)
 		junction_inode->obj_ops->put_ref(junction_inode);
 	}
 }
+
+bool export_is_defunct(struct gsh_export *export, uint64_t generation)
+{
+	bool ok;
+	struct glist_head *cur;
+
+	if (export->config_gen >= generation) {
+		LogDebug(COMPONENT_EXPORT,
+			 "%s can't be unmounted (conf=%lu gen=%lu)",
+			 export->pseudopath, export->config_gen, generation);
+		return false;
+	}
+
+	ok = strcmp(export->pseudopath, "/");
+	if (!ok) {
+		LogDebug(COMPONENT_EXPORT, "Refusing to unmount /");
+		return false;
+	}
+
+	PTHREAD_RWLOCK_rdlock(&export->lock);
+	glist_for_each(cur, &export->mounted_exports_list) {
+		struct gsh_export *sub = container_of(cur, struct gsh_export,
+							mounted_exports_node);
+
+		/* Test each submount */
+		ok = export_is_defunct(sub, generation);
+		if (!ok) {
+			LogCrit(COMPONENT_EXPORT,
+				"%s can't be unmounted (child export remains)",
+				export->pseudopath);
+			break;
+		}
+	}
+	PTHREAD_RWLOCK_unlock(&export->lock);
+	return ok;
+}
