@@ -218,6 +218,7 @@ struct gsh_export *export_take_unexport_work(void);
 extern struct config_block add_export_param;
 extern struct config_block update_export_param;
 
+void prune_defunct_exports(uint64_t generation);
 void remove_all_exports(void);
 
 extern struct timespec nfs_stats_time;

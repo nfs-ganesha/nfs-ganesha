@@ -2048,6 +2048,7 @@ int reread_exports(config_file_t in_config,
 		return -1;
 	}
 
+	prune_defunct_exports(get_config_generation(in_config));
 	return num_exp;
 }
 
