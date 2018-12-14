@@ -121,7 +121,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		 * acquired.
 		 */
 		*layout_state = supplied_state;
-		return nfs_status;
+		goto out;
 	} else if ((supplied_state->state_type == STATE_TYPE_SHARE)
 		   || (supplied_state->state_type == STATE_TYPE_DELEG)
 		   || (supplied_state->state_type == STATE_TYPE_LOCK)) {

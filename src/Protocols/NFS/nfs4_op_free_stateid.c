@@ -99,6 +99,7 @@ int nfs4_op_free_stateid(struct nfs_argop4 *op, compound_data_t *data,
 		 * more apparent to the client soon...
 		 */
 		res_FREE_STATEID4->fsr_status = NFS4ERR_BAD_STATEID;
+		dec_state_t_ref(state);
 		return res_FREE_STATEID4->fsr_status;
 	}
 
