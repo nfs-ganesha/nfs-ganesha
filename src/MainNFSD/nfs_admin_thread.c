@@ -34,6 +34,9 @@
 #include <string.h>
 #include <pthread.h>
 #include <urcu-bp.h>
+#ifdef LINUX
+#include <mcheck.h>		/* For mtrace/muntrace */
+#endif
 
 #include "nfs_core.h"
 #include "log.h"
@@ -359,6 +362,102 @@ static struct gsh_dbus_method method_init_fds_limit = {
 		 END_ARG_LIST}
 };
 
+/**
+ * @brief Dbus method for enabling malloc trace
+ *
+ * @param[in]  args
+ * @param[out] reply
+ */
+static bool
+admin_dbus_malloc_trace(DBusMessageIter *args,
+			DBusMessage *reply,
+			DBusError *error)
+{
+	char *errormsg = "malloc trace";
+	bool success = true;
+	DBusMessageIter iter;
+	char *filename;
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (args == NULL) {
+		errormsg = "malloc trace needs trace filename.";
+		success = false;
+		goto out;
+	}
+
+	if (dbus_message_iter_get_arg_type(args) != DBUS_TYPE_STRING) {
+		errormsg = "malloc trace needs trace filename.";
+		success = false;
+		goto out;
+	}
+
+	dbus_message_iter_get_basic(args, &filename);
+
+#ifdef LINUX
+	LogEvent(COMPONENT_DBUS, "enabling malloc trace to %s.", filename);
+	setenv("MALLOC_TRACE", filename, 1);
+	mtrace();
+#else
+	errormsg = "malloc trace is not supported";
+	success = false;
+#endif
+
+ out:
+	dbus_status_reply(&iter, success, errormsg);
+	return success;
+}
+
+/**
+ * @brief Dbus method for disabling malloc trace
+ *
+ * @param[in]  args
+ * @param[out] reply
+ */
+static bool
+admin_dbus_malloc_untrace(DBusMessageIter *args,
+			  DBusMessage *reply,
+			  DBusError *error)
+{
+	char *errormsg = "malloc untrace";
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (args != NULL) {
+		errormsg = "malloc untrace takes no arguments.";
+		success = false;
+		goto out;
+	}
+
+#ifdef LINUX
+	LogEvent(COMPONENT_DBUS, "disabling malloc trace.");
+	muntrace();
+#else
+	errormsg = "malloc untrace is not supported";
+	success = false;
+#endif
+
+ out:
+	dbus_status_reply(&iter, success, errormsg);
+	return success;
+}
+
+static struct gsh_dbus_method method_malloc_trace = {
+	.name = "malloc_trace",
+	.method = admin_dbus_malloc_trace,
+	.args = {{ .name = "tracefile",
+		   .type = "s",
+		   .direction = "in"},
+		 STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
+static struct gsh_dbus_method method_malloc_untrace = {
+	.name = "malloc_untrace",
+	.method = admin_dbus_malloc_untrace,
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST}
+};
 
 static struct gsh_dbus_method *admin_methods[] = {
 	&method_shutdown,
@@ -368,6 +467,8 @@ static struct gsh_dbus_method *admin_methods[] = {
 	&method_purge_netgroups,
 	&method_init_fds_limit,
 	&method_purge_idmapper_cache,
+	&method_malloc_trace,
+	&method_malloc_untrace,
 	NULL
 };
 
