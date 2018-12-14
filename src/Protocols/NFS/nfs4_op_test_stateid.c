@@ -92,7 +92,7 @@ int nfs4_op_test_stateid(struct nfs_argop4 *op, compound_data_t *data,
 			&arg_TEST_STATEID4->ts_stateids.ts_stateids_val[i],
 			NULL, &state, data, STATEID_NO_SPECIAL,
 			0, false, "TEST_STATEID");
-		if (ret == NFS4_OK)
+		if (state != NULL)
 			dec_state_t_ref(state);
 
 		res->tsr_status_codes.tsr_status_codes_val[i] = ret;
