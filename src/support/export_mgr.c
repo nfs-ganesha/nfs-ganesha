@@ -770,7 +770,7 @@ bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 {
 	struct glist_head *glist, *glistn;
 	struct gsh_export *export;
-	int rc = true;
+	bool rc = true;
 
 	if (wrlock)
 		PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
