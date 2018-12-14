@@ -1141,19 +1141,17 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 {
 	struct gsh_export *export = NULL;
 	char *errormsg;
-	bool rc = true;
+	bool rc = false;
 	bool op_ctx_set = false;
 	struct root_op_context ctx;
 
 	export = lookup_export(args, &errormsg);
-
 	if (export == NULL) {
 		LogDebug(COMPONENT_EXPORT, "lookup_export failed with %s",
 			errormsg);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
 			       "lookup_export failed with %s",
 			       errormsg);
-		rc = false;
 		goto out;
 	}
 
@@ -1161,9 +1159,20 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 		LogDebug(COMPONENT_EXPORT,
 			"Cannot remove export with id 0");
 		put_gsh_export(export);
-		rc = false;
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
 			       "Cannot remove export with id 0");
+		goto out;
+	}
+
+	PTHREAD_RWLOCK_rdlock(&export->lock);
+	rc = glist_empty(&export->mounted_exports_list);
+	PTHREAD_RWLOCK_unlock(&export->lock);
+	if (!rc) {
+		LogDebug(COMPONENT_EXPORT,
+			"Cannot remove export with submounts");
+		put_gsh_export(export);
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "Cannot remove export with submounts");
 		goto out;
 	}
 
