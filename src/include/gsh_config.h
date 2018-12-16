@@ -362,6 +362,8 @@ typedef struct nfs_core_param {
 	bool enable_FASTSTATS;
 	/** Whether to collect FSAL stats.  Defaults to false. */
 	bool enable_FSALSTATS;
+	/** Whether to collect NFSv3 Detailed stats.  Defaults to false. */
+	bool enable_FULLV3STATS;
 	/** Whether tcp sockets should use SO_KEEPALIVE */
 	bool enable_tcp_keepalive;
 	/** Maximum number of TCP probes before dropping the connection */

@@ -124,6 +124,12 @@ class RetrieveExportStats():
 	stats_state = self.exportmgrobj.get_dbus_method("StatusStats",
 				  self.dbus_exportstats_name)
 	return StatsStatus(stats_state())
+    # v3_full
+    def v3_full_stats(self):
+	stats_state = self.exportmgrobj.get_dbus_method("GetFULLV3Stats",
+				  self.dbus_exportstats_name)
+	return DumpFULLV3Stats(stats_state())
+
 
 class RetrieveClientStats():
     def __init__(self):
@@ -409,8 +415,14 @@ class StatsStatus():
 		output += "Stats counting for FSAL is enabled since: \n\t"
 		output += time.ctime(self.status[3][1][0]) + str(self.status[3][1][1]) + " nsecs"
 	    else:
-		 output += "Stats counting for FSAL is currently disabled"
+		 output += "Stats counting for FSAL is currently disabled \n"
+	    if self.status[4][0]:
+		output += "Stats counting for v3_full is enabled since: \n\t"
+		output += time.ctime(self.status[4][1][0]) + str(self.status[4][1][1]) + " nsecs"
+	    else:
+		 output += "Stats counting for v3_full is currently disabled \n"
 	    return output
+
 
 class DumpFSALStats():
     def __init__(self, stats):
@@ -457,3 +469,35 @@ class StatsDisable():
             return "Failed to disable statistics counting, GANESHA RESPONSE STATUS: " + self.status[1]
         else:
             return "Successfully disabled statistics counting"
+
+class DumpFULLV3Stats():
+    def __init__(self, status):
+	self.stats = status
+    def __str__(self):
+	output = ""
+	if not self.stats[0]:
+	    return "Unable to fetch Detailed NFSv3 stats - " + self.stats[1]
+	else:
+	    output += "NFSv3 Detailed statistics \n"
+	    output += ("Timestamp: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs\n")
+	    if self.stats[4] != "OK":
+		output += "\n No stats available for display"
+		return output
+	    output += "\nOperation Details                         |  Operation Latency                     |  Queue Latency"
+	    output += "\n==========================================|========================================|======================================="
+	    output += "\nName            Total     Error      Dups |       Avg          Min           Max   |      Avg          Min           Max"
+	    i = 0
+	    tot_len = len(self.stats[3])
+	    while (i+10) <= tot_len:
+		output += "\n" + (self.stats[3][i+0]).ljust(11)
+		output += " %s" % (str(self.stats[3][i+1]).rjust(9))
+		output += " %s" % (str(self.stats[3][i+2]).rjust(9))
+		output += " %s |" % (str(self.stats[3][i+3]).rjust(9))
+		output += " %12.6f" % (self.stats[3][i+4])
+		output += " %12.6f" % (self.stats[3][i+5])
+		output += " %12.6f |" % (self.stats[3][i+6])
+		output += " %12.6f" % (self.stats[3][i+7])
+		output += " %12.6f" % (self.stats[3][i+8])
+		output += " %12.6f" % (self.stats[3][i+9])
+		i += 10
+	    return output

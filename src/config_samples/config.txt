@@ -127,6 +127,8 @@ NFS_CORE_PARAM {}
 
 	Enable_FSAL_Stats(bool, default false)
 
+	Enable_FULLV3_Stats(bool, default false)
+
 	Short_File_Handle(bool, default false)
 
 	Manage_Gids_Expiration(int64, range 0 to 7*24*60*60, default 30*60)
