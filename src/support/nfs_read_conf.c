@@ -173,6 +173,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, enable_FASTSTATS),
 	CONF_ITEM_BOOL("Enable_FSAL_Stats", false,
 		       nfs_core_param, enable_FSALSTATS),
+	CONF_ITEM_BOOL("Enable_FULLV3_Stats", false,
+		       nfs_core_param, enable_FULLV3STATS),
 	CONF_ITEM_BOOL("Short_File_Handle", false,
 		       nfs_core_param, short_file_handle),
 	CONF_ITEM_I64("Manage_Gids_Expiration", 0, 7*24*60*60, 30*60,

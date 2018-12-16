@@ -77,6 +77,11 @@ Enable_FSAL_Stats(bool, default false)
     Whether to count and collect FSAL specific performance statistics.
     Enable_FSAL_Stats can be enabled or disabled dynamically via ganesha_stats
 
+Enable_FULLV3_Stats(bool, default false)
+    Whether to count and collect "detailed statistics" for NFSv3.
+    Enable_FULLV3_Stats can be enabled or disabled dynamically via
+    ganesha_stats.
+
 Short_File_Handle(bool, default false)
     Whether to use short NFS file handle to accommodate VMware NFS client.
     Enable this if you have a VMware NFSv3 client. VMware NFSv3 client has a max

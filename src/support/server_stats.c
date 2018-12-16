@@ -439,6 +439,9 @@ static struct global_stats global_st;
  */
 #include "server_stats_private.h"
 
+/* NFSv3 Detailed stats holder */
+struct proto_op v3_full_stats[NFSPROC3_COMMIT+1];
+
 /**
  * @brief Get stats struct helpers
  *
@@ -1181,6 +1184,11 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 }
 #endif
 
+static void record_v3_full_stats(struct svc_req *req,
+			       nsecs_elapsed_t request_time,
+			       nsecs_elapsed_t qwait_time,
+			       bool success, bool dup);
+
 /**
  * @brief record NFS op finished
  *
@@ -1212,6 +1220,11 @@ void server_stats_nfs_done(request_data_t *reqdata, int rc, bool dup)
 
 	now(&current_time);
 	stop_time = timespec_diff(&nfs_ServerBootTime, &current_time);
+
+	if (nfs_param.core_param.enable_FULLV3STATS)
+		record_v3_full_stats(req, stop_time - op_ctx->start_time,
+			    op_ctx->queue_wait, rc == NFS_REQ_OK, dup);
+
 	if (client != NULL) {
 		struct server_stats *server_st;
 
@@ -1954,6 +1967,7 @@ void reset_server_stats(void)
 	reset_global_stats();
 	reset_export_stats();
 	reset_client_stats();
+	reset_v3_full_stats();
 }
 
 #ifdef _USE_9P
@@ -2068,6 +2082,88 @@ void server_dbus_delegations(struct deleg_stats *ds, DBusMessageIter *iter)
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
+
+/**
+ * @brief NFSv3 Detailed stats reporting
+ */
+void server_dbus_v3_full_stats(DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+	DBusMessageIter array_iter;
+	int op;
+	double res = 0.0;
+	uint64_t op_counter = 0;
+	char *message;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT,
+					 NULL, &array_iter);
+	for (op = 1; op < NFSPROC3_COMMIT+1; op++) {
+		if (v3_full_stats[op].total) {
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_STRING, &optabv3[op].name);
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_UINT64, &v3_full_stats[op].total);
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_UINT64, &v3_full_stats[op].errors);
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_UINT64, &v3_full_stats[op].dups);
+			res = (double) v3_full_stats[op].latency.latency /
+					v3_full_stats[op].total * 0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			res = (double) v3_full_stats[op].latency.min * 0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			res = (double) v3_full_stats[op].latency.max * 0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			res = (double) v3_full_stats[op].queue_latency.latency /
+					v3_full_stats[op].total * 0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			res = (double) v3_full_stats[op].queue_latency.min *
+					0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			res = (double) v3_full_stats[op].queue_latency.max *
+					0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			op_counter += v3_full_stats[op].total;
+		}
+	}
+	if (op_counter == 0) {
+		message = "None";
+		/* insert dummy stats to avoid dbus crash */
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_STRING, &message);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_UINT64, &op_counter);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_UINT64, &op_counter);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_UINT64, &op_counter);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+	} else {
+		message = "OK";
+	}
+	dbus_message_iter_close_container(iter, &array_iter);
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message);
+}
+
 #endif				/* USE_DBUS */
 
 /**
@@ -2121,6 +2217,44 @@ void server_stats_free(struct gsh_stats *statsp)
 		statsp->_9p = NULL;
 	}
 #endif
+}
+
+static void record_v3_full_stats(struct svc_req *req,
+			       nsecs_elapsed_t request_time,
+			       nsecs_elapsed_t qwait_time,
+			       bool success, bool dup)
+{
+	uint32_t prog = req->rq_msg.cb_prog;
+	uint32_t vers = req->rq_msg.cb_vers;
+	uint32_t proc = req->rq_msg.cb_proc;
+
+	if (prog == NFS_program[P_NFS] && vers == NFS_V3) {
+		if (proc > NFSPROC3_COMMIT) {
+			LogCrit(COMPONENT_DBUS,
+				"req->rq_proc is more than COMMIT: %d\n",
+				proc);
+			return;
+		}
+		record_op(&v3_full_stats[proc], request_time, qwait_time,
+			  success, dup);
+	}
+}
+
+void reset_v3_full_stats(void)
+{
+	int op;
+
+	for (op = 1; op < NFSPROC3_COMMIT+1; op++) {
+		v3_full_stats[op].total = 0;
+		v3_full_stats[op].errors = 0;
+		v3_full_stats[op].dups = 0;
+		v3_full_stats[op].latency.latency = 0;
+		v3_full_stats[op].latency.min = 0;
+		v3_full_stats[op].latency.max = 0;
+		v3_full_stats[op].queue_latency.latency = 0;
+		v3_full_stats[op].queue_latency.min = 0;
+		v3_full_stats[op].queue_latency.max = 0;
+	}
 }
 
 /** @} */
