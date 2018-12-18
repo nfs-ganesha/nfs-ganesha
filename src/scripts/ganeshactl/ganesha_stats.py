@@ -102,4 +102,4 @@ elif command == "enable":
 elif command == "disable":
     print(exp_interface.disable_stats(command_arg))
 elif command == "status":
-    print exp_interface.status_stats()
+    print(exp_interface.status_stats())
