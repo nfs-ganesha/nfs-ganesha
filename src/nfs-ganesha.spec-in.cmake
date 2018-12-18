@@ -411,27 +411,24 @@ Summary: The NFS-GANESHA SELINUX targeted policy
 Group: Applications/System
 BuildArch:	noarch
 Requires:	nfs-ganesha = %{version}-%{release}
-BuildRequires:        selinux-policy-devel
-Requires(post):       selinux-policy-base >= 3.14.1
-Requires(post):       libselinux-utils
-Requires(post):       policycoreutils
+%selinux_requires
 
 %description selinux
 This package contains an selinux policy for running ganesha.nfsd
 
 %post selinux
-%selinux_modules_install -s %{selinuxtype} %{_datadir}/selinux/packages/ganesha.pp.bz2
+%selinux_modules_install %{_datadir}/selinux/packages/ganesha.pp.bz2
 
 %pre selinux
-%selinux_relabel_pre -s %{selinuxtype}
+%selinux_relabel_pre
 
 %postun selinux
 if [ $1 -eq 0 ]; then
-    %selinux_modules_uninstall -s contrib ganesha
+    %selinux_modules_uninstall ganesha
 fi
 
 %posttrans
-%selinux_relabel_post -s contrib
+%selinux_relabel_post
 %endif
 
 # NTIRPC (if built-in)
@@ -594,10 +591,10 @@ install -m 755 scripts/init.d/nfs-ganesha.gpfs		%{buildroot}%{_sysconfdir}/init.
 make DESTDIR=%{buildroot} install
 
 %if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
-install -d %{buildroot}%{_datadir}/selinux/packages
-install -d -p %{buildroot}%{_datadir}/selinux/devel/include/contrib
-install -p -m 644 selinux/ganesha.if %{buildroot}%{_datadir}/selinux/devel/include/contrib
-install -m 0644 selinux/ganesha.pp.bz2 %{buildroot}%{_datadir}/selinux/packages
+install -d %{buildroot}%{_selinux_store_path}/packages
+install -d -p %{buildroot}%{_selinux_store_path}/devel/include/contrib
+install -p -m 644 selinux/ganesha.if %{buildroot}%{_selinux_store_path}/devel/include/contrib
+install -m 0644 selinux/ganesha.pp.bz2 %{buildroot}%{_selinux_store_path}/packages
 %endif
 
 %post
@@ -783,8 +780,8 @@ exit 0
 
 %if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
 %files selinux
-%attr(0644,root,root) %{_datadir}/selinux/packages/ganesha.pp.bz2
-%attr(0644,root,root) %{_datadir}/selinux/devel/include/contrib/ganesha.if
+%attr(0644,root,root) %{_selinux_store_path}/packages/ganesha.pp.bz2
+%attr(0644,root,root) %{_selinux_store_path}/devel/include/contrib/ganesha.if
 %endif
 
 %if ! %{with system_ntirpc}
@@ -846,39 +843,4 @@ exit 0
 %endif
 
 %changelog
-* Tue Apr 21 2015  Philippe DENIEL <philippe.deniel@cea.fr> 2.2
-- Ganesha supports granting delegations
-- There have been numerous config changes
-- Ganesha now includes systemd scripts
-- Improved packaging for RPM and Debian
-- Major stability improvements
-- non-QT based python tools
-- Support for Ganesha to be a pNFS DS only, no MDS
-- SECINFO in preferred order
-- LTTng support
-- NFS v4.2 support
-- Major improvements in 9p support
-- Code cleanup (checkpatch and Coverity)
-- ntirpc improvements
-- FSAL_GLUSTER updated with pNFS and ACL support and more
-
-* Fri Jun 27 2014  Philippe DENIEL <philippe.deniel@cea.fr> 2.1
-- Exports are now dynamic.  They can be added or removed via DBus commands.
-- The Pseudo filesystem has been re-written as a FSAL
-- The configuration file processing has been rewritten to improve error checking and logging.
-- GIDs can now be managed to use external authentication sources. Altgroups with AUTH_SYS can be larger than 16.
-- RPM packaging has been restructured and updated.  The DBus tools are now packaged.
-
-* Thu Nov 21 2013  Philippe DENIEL <philippe.deniel@cea.fr> 2.O
-- FSALs (filesystem backends) are now loadable shared objects.
-- The server can support multiple backends at runtime.
-- NFSv4.1 pNFS is supported.
-- DBus is now the administration tool.
-- All the significant bugfixes from the 1.5.x branch have been backported
-- The server passes all of the cthonv4 and pynfs 4.0 tests.
--  All of the significant (non-delegation) pynfs 4.1 tests also pass.
-- NFSv2 support has been deprecated.
-- NFSv3 still supports the older version of the MNT protocol for compatibility
-- The build process has been converted to Cmake
-- The codebase has been reformatted to conform to Linux kernel coding style.
 
