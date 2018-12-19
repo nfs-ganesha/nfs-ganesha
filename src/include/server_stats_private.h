@@ -206,6 +206,11 @@ struct export_stats {
 	.name = "v3_full_status",  \
 	.type = "b(tt)",        \
 	.direction = "out"      \
+},				\
+{                               \
+	.name = "v4_full_status",  \
+	.type = "b(tt)",        \
+	.direction = "out"      \
 }
 
 
@@ -213,6 +218,13 @@ struct export_stats {
 {				\
 	.name = "v3_full_stats",	\
 	.type = "a(stttdddddd)",	\
+	.direction = "out"	\
+}
+
+#define V4_FULL_REPLY		\
+{				\
+	.name = "v4_full_stats",	\
+	.type = "a(sttdddddd)",	\
 	.direction = "out"	\
 }
 
@@ -294,11 +306,13 @@ void global_dbus_total_ops(DBusMessageIter *iter);
 void server_dbus_fast_ops(DBusMessageIter *iter);
 void mdcache_dbus_show(DBusMessageIter *iter);
 void server_dbus_v3_full_stats(DBusMessageIter *iter);
+void server_dbus_v4_full_stats(DBusMessageIter *iter);
 void reset_server_stats(void);
 void reset_export_stats(void);
 void reset_client_stats(void);
 void reset_gsh_stats(struct gsh_stats *st);
 void reset_v3_full_stats(void);
+void reset_v4_full_stats(void);
 
 #ifdef _USE_9P
 void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter);
