@@ -68,6 +68,7 @@
 struct timespec nfs_stats_time;
 struct timespec fsal_stats_time;
 struct timespec v3_full_stats_time;
+struct timespec v4_full_stats_time;
 /**
  * @brief Exports are stored in an AVL tree with front-end cache.
  *
@@ -2063,6 +2064,41 @@ static struct gsh_dbus_method v3_full_statistics = {
 		 MESSAGE_REPLY,
 		 END_ARG_LIST}
 };
+
+/**
+ * DBUS method to get NFSv4 Detailed stats
+ */
+static bool stats_v4_full(DBusMessageIter *args,
+			DBusMessage *reply,
+			DBusError *error)
+{
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (!nfs_param.core_param.enable_FULLV4STATS) {
+		success = false;
+		errormsg = "v4_full stats disabled";
+		dbus_status_reply(&iter, success, errormsg);
+		return true;
+	}
+	dbus_status_reply(&iter, success, errormsg);
+	server_dbus_v4_full_stats(&iter);
+
+	return true;
+}
+
+static struct gsh_dbus_method v4_full_statistics = {
+	.name = "GetFULLV4Stats",
+	.method = stats_v4_full,
+	.args = {STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 V4_FULL_REPLY,
+		 MESSAGE_REPLY,
+		 END_ARG_LIST}
+};
+
 /**
  * DBUS method to know current status of stats counting
  */
@@ -2072,7 +2108,8 @@ static bool stats_status(DBusMessageIter *args,
 {
 	bool success = true;
 	char *errormsg = "OK";
-	DBusMessageIter iter, nfsstatus, fsalstatus, v3_full_status;
+	DBusMessageIter iter, nfsstatus, fsalstatus;
+	DBusMessageIter v3_full_status, v4_full_status;
 	dbus_bool_t value;
 
 	dbus_message_iter_init_append(reply, &iter);
@@ -2102,6 +2139,15 @@ static bool stats_status(DBusMessageIter *args,
 					&value);
 	dbus_append_timestamp(&v3_full_status, &v3_full_stats_time);
 	dbus_message_iter_close_container(&iter, &v3_full_status);
+
+	/* Send info about NFSv3 Detailed stats */
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
+					 &v4_full_status);
+	value = nfs_param.core_param.enable_FULLV4STATS;
+	dbus_message_iter_append_basic(&v4_full_status, DBUS_TYPE_BOOLEAN,
+					&value);
+	dbus_append_timestamp(&v4_full_status, &v4_full_stats_time);
+	dbus_message_iter_close_container(&iter, &v4_full_status);
 
 	return true;
 }
@@ -2136,18 +2182,20 @@ static bool stats_disable(DBusMessageIter *args,
 		nfs_param.core_param.enable_NFSSTATS = false;
 		nfs_param.core_param.enable_FSALSTATS = false;
 		nfs_param.core_param.enable_FULLV3STATS = false;
+		nfs_param.core_param.enable_FULLV4STATS = false;
 		LogEvent(COMPONENT_CONFIG,
 			 "Disabling NFS server statistics counting");
 		LogEvent(COMPONENT_CONFIG,
 			 "Disabling FSAL statistics counting");
 		/* reset all stats counters */
 		reset_fsal_stats();
-		/* resetting server stats include v3_full stats as well */
+		/* resetting server stats includes v3_full & v4_full stats */
 		reset_server_stats();
 	}
 	if (strcmp(stat_type, "nfs") == 0) {
 		nfs_param.core_param.enable_NFSSTATS = false;
 		nfs_param.core_param.enable_FULLV3STATS = false;
+		nfs_param.core_param.enable_FULLV4STATS = false;
 		LogEvent(COMPONENT_CONFIG,
 			 "Disabling NFS server statistics counting");
 		/* reset server stats counters */
@@ -2166,6 +2214,13 @@ static bool stats_disable(DBusMessageIter *args,
 			 "Disabling NFSv3 Detailed statistics counting");
 		/* reset v3_full stats counters */
 		reset_v3_full_stats();
+	}
+	if (strcmp(stat_type, "v4_full") == 0) {
+		nfs_param.core_param.enable_FULLV4STATS = false;
+		LogEvent(COMPONENT_CONFIG,
+			 "Disabling NFSv4 Detailed statistics counting");
+		/* reset v4_full stats counters */
+		reset_v4_full_stats();
 	}
 
 	dbus_status_reply(&iter, success, errormsg);
@@ -2219,6 +2274,12 @@ static bool stats_enable(DBusMessageIter *args,
 				 "Enabling NFSv3 Detailed statistics counting");
 			now(&v3_full_stats_time);
 		}
+		if (!nfs_param.core_param.enable_FULLV4STATS) {
+			nfs_param.core_param.enable_FULLV4STATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling NFSv4 Detailed statistics counting");
+			now(&v4_full_stats_time);
+		}
 	}
 	if (strcmp(stat_type, "nfs") == 0 &&
 			!nfs_param.core_param.enable_NFSSTATS) {
@@ -2244,6 +2305,18 @@ static bool stats_enable(DBusMessageIter *args,
 			LogEvent(COMPONENT_CONFIG,
 			 "Enabling NFSv3 Detailed statistics counting");
 			now(&v3_full_stats_time);
+		}
+	}
+	if (strcmp(stat_type, "v4_full") == 0 &&
+			!nfs_param.core_param.enable_FULLV4STATS) {
+		if (!nfs_param.core_param.enable_NFSSTATS) {
+			errormsg = "First enable NFS stats counting";
+			success = false;
+		} else {
+			nfs_param.core_param.enable_FULLV4STATS = true;
+			LogEvent(COMPONENT_CONFIG,
+			 "Enabling NFSv4 Detailed statistics counting");
+			now(&v4_full_stats_time);
 		}
 	}
 
@@ -2532,6 +2605,7 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&disable_statistics,
 	&status_stats,
 	&v3_full_statistics,
+	&v4_full_statistics,
 	NULL
 };
 

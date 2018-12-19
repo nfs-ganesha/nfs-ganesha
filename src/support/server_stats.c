@@ -442,6 +442,9 @@ static struct global_stats global_st;
 /* NFSv3 Detailed stats holder */
 struct proto_op v3_full_stats[NFSPROC3_COMMIT+1];
 
+/* NFSv4 Detailed stats holder */
+struct proto_op v4_full_stats[NFS_V42_NB_OPERATION+1];
+
 /**
  * @brief Get stats struct helpers
  *
@@ -1188,6 +1191,10 @@ static void record_v3_full_stats(struct svc_req *req,
 			       nsecs_elapsed_t request_time,
 			       nsecs_elapsed_t qwait_time,
 			       bool success, bool dup);
+static void record_v4_full_stats(uint32_t proc,
+			       nsecs_elapsed_t request_time,
+			       nsecs_elapsed_t qwait_time,
+			       bool success);
 
 /**
  * @brief record NFS op finished
@@ -1272,6 +1279,10 @@ void server_stats_nfsv4_op_done(int proto_op,
 
 	now(&current_time);
 	stop_time = timespec_diff(&nfs_ServerBootTime, &current_time);
+
+	if (nfs_param.core_param.enable_FULLV4STATS)
+		record_v4_full_stats(proto_op, stop_time - op_ctx->start_time,
+			    op_ctx->queue_wait, status == NFS4_OK);
 
 	if (client != NULL) {
 		struct server_stats *server_st;
@@ -1968,6 +1979,7 @@ void reset_server_stats(void)
 	reset_export_stats();
 	reset_client_stats();
 	reset_v3_full_stats();
+	reset_v4_full_stats();
 }
 
 #ifdef _USE_9P
@@ -2164,6 +2176,82 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message);
 }
 
+/**
+ * @brief NFSv4 Detailed stats reporting
+ */
+void server_dbus_v4_full_stats(DBusMessageIter *iter)
+{
+	struct timespec timestamp;
+	DBusMessageIter array_iter;
+	int op;
+	double res = 0.0;
+	uint64_t op_counter = 0;
+	char *message;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT,
+					 NULL, &array_iter);
+	for (op = 1; op < NFS_V42_NB_OPERATION+1; op++) {
+		if (v4_full_stats[op].total) {
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_STRING, &optabv4[op].name);
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_UINT64, &v4_full_stats[op].total);
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_UINT64, &v4_full_stats[op].errors);
+			res = (double) v4_full_stats[op].latency.latency /
+					v4_full_stats[op].total * 0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			res = (double) v4_full_stats[op].latency.min * 0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			res = (double) v4_full_stats[op].latency.max * 0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			res = (double) v4_full_stats[op].queue_latency.latency /
+					v4_full_stats[op].total * 0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			res = (double) v4_full_stats[op].queue_latency.min *
+					0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			res = (double) v4_full_stats[op].queue_latency.max *
+					0.000001;
+			dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+			op_counter += v4_full_stats[op].total;
+		}
+	}
+	if (op_counter == 0) {
+		message = "None";
+		/* insert dummy stats to avoid dbus crash */
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_STRING, &message);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_UINT64, &op_counter);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_UINT64, &op_counter);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&array_iter,
+				DBUS_TYPE_DOUBLE, &res);
+	} else {
+		message = "OK";
+	}
+	dbus_message_iter_close_container(iter, &array_iter);
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message);
+}
 #endif				/* USE_DBUS */
 
 /**
@@ -2254,6 +2342,38 @@ void reset_v3_full_stats(void)
 		v3_full_stats[op].queue_latency.latency = 0;
 		v3_full_stats[op].queue_latency.min = 0;
 		v3_full_stats[op].queue_latency.max = 0;
+	}
+}
+
+static void record_v4_full_stats(uint32_t proc,
+			       nsecs_elapsed_t request_time,
+			       nsecs_elapsed_t qwait_time,
+			       bool success)
+{
+	if (proc > NFS_V42_NB_OPERATION) {
+		LogCrit(COMPONENT_DBUS,
+			"proc is more than NFS4_OP_WRITE_SAME: %d\n",
+			proc);
+		return;
+	}
+	record_op(&v4_full_stats[proc], request_time, qwait_time,
+			  success, false);
+}
+
+void reset_v4_full_stats(void)
+{
+	int op;
+
+	for (op = 1; op < NFS_V42_NB_OPERATION+1; op++) {
+		v4_full_stats[op].total = 0;
+		v4_full_stats[op].errors = 0;
+		v4_full_stats[op].dups = 0;
+		v4_full_stats[op].latency.latency = 0;
+		v4_full_stats[op].latency.min = 0;
+		v4_full_stats[op].latency.max = 0;
+		v4_full_stats[op].queue_latency.latency = 0;
+		v4_full_stats[op].queue_latency.min = 0;
+		v4_full_stats[op].queue_latency.max = 0;
 	}
 }
 

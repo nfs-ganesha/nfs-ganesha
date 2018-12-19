@@ -129,6 +129,11 @@ class RetrieveExportStats():
 	stats_state = self.exportmgrobj.get_dbus_method("GetFULLV3Stats",
 				  self.dbus_exportstats_name)
 	return DumpFULLV3Stats(stats_state())
+    # v4_full
+    def v4_full_stats(self):
+	stats_state = self.exportmgrobj.get_dbus_method("GetFULLV4Stats",
+				  self.dbus_exportstats_name)
+	return DumpFULLV4Stats(stats_state())
 
 
 class RetrieveClientStats():
@@ -422,6 +427,12 @@ class StatsStatus():
 	    else:
 		 output += "Stats counting for v3_full is currently disabled \n"
 	    return output
+	    if self.status[6][0]:
+		output += "Stats counting for v4_full is enabled since: \n\t"
+		output += time.ctime(self.status[6][1][0]) + str(self.status[6][1][1]) + " nsecs"
+	    else:
+		 output += "Stats counting for v4_full is currently disabled \n"
+	    return output
 
 
 class DumpFSALStats():
@@ -500,4 +511,35 @@ class DumpFULLV3Stats():
 		output += " %12.6f" % (self.stats[3][i+8])
 		output += " %12.6f" % (self.stats[3][i+9])
 		i += 10
+	    return output
+
+class DumpFULLV4Stats():
+    def __init__(self, status):
+	self.stats = status
+    def __str__(self):
+	output = ""
+	if not self.stats[0]:
+	    return "Unable to fetch Detailed NFSv4 stats - " + self.stats[1]
+	else:
+	    output += "NFSv4 Detailed statistics \n"
+	    output += ("Timestamp: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs\n")
+	    if self.stats[4] != "OK":
+		output += "\n No stats available for display"
+		return output
+	    output += "\nOperation Details                |  Operation Latency                     |  Queue Latency"
+	    output += "\n=================================|========================================|======================================="
+	    output += "\nName            Total     Error  |       Avg          Min           Max   |      Avg          Min           Max"
+	    i = 0
+	    tot_len = len(self.stats[3])
+	    while (i+9) <= tot_len:
+		output += "\n" + (self.stats[3][i+0]).ljust(11)
+		output += " %s" % (str(self.stats[3][i+1]).rjust(9))
+		output += " %s |" % (str(self.stats[3][i+2]).rjust(9))
+		output += " %12.6f" % (self.stats[3][i+3])
+		output += " %12.6f" % (self.stats[3][i+4])
+		output += " %12.6f |" % (self.stats[3][i+5])
+		output += " %12.6f" % (self.stats[3][i+6])
+		output += " %12.6f" % (self.stats[3][i+7])
+		output += " %12.6f" % (self.stats[3][i+8])
+		i += 9
 	    return output
