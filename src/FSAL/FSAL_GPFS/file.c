@@ -211,7 +211,7 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 						  EEXIST);
 		}
 	} else if (attrs_out && attrs_out->request_mask & ATTR_RDATTR_ERR) {
-		attrs_out->valid_mask &= ATTR_RDATTR_ERR;
+		attrs_out->valid_mask = ATTR_RDATTR_ERR;
 	}
 
 	if (state == NULL) {
