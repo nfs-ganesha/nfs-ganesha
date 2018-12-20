@@ -1439,7 +1439,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 
 		} else if (attrs_out && attrs_out->request_mask &
 			   ATTR_RDATTR_ERR) {
-			attrs_out->valid_mask &= ATTR_RDATTR_ERR;
+			attrs_out->valid_mask = ATTR_RDATTR_ERR;
 		}
 
 		if (state == NULL) {
