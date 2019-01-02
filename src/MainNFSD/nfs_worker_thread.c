@@ -1261,9 +1261,8 @@ static enum xprt_stat nfs_rpc_process_request(request_data_t *reqdata)
 			if (op_ctx->fsal_export == NULL) {
 				export_perms.options &=
 					~EXPORT_OPTION_SQUASH_TYPES;
-			}
-
-			if (nfs_req_creds(&reqdata->r_u.req.svc) != NFS4_OK) {
+			} else if (nfs_req_creds(&reqdata->r_u.req.svc) !=
+					NFS4_OK) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"could not get uid and gid, rejecting client %s",
 					client_ip);
