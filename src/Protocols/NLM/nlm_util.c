@@ -549,8 +549,9 @@ void nlm_process_conflict(nlm4_holder *nlm_holder, state_owner_t *holder,
 			    holder->so_owner.so_nlm_owner.so_nlm_svid;
 		else
 			nlm_holder->svid = 0;
-		fill_netobj(&nlm_holder->oh, holder->so_owner_val,
-			    holder->so_owner_len);
+		/*fill_netobj(&nlm_holder->oh, holder->so_owner_val,
+			    holder->so_owner_len);*/
+		fill_netobj(&nlm_holder->oh, "", 0);
 	} else {
 		/* If we don't have an NLM owner, not much we can do. */
 		nlm_holder->svid = 0;
