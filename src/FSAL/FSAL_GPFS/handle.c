@@ -456,7 +456,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	int dirfd;
 	fsal_status_t status;
 	off_t seekloc = 0;
-	int bpos, cnt, nread;
+	int bpos, nread;
 	struct dirent64 *dentry;
 	char buf[BUF_SIZE];
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
@@ -479,7 +479,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		fsal_error = posix2fsal_error(retval);
 		goto done;
 	}
-	cnt = 0;
 	do {
 		nread = syscall(SYS_getdents64, dirfd, buf, BUF_SIZE);
 		if (nread < 0) {
@@ -533,7 +532,6 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				goto done;
  skip:
 			bpos += dentry->d_reclen;
-			cnt++;
 		}
 	} while (nread > 0);
 

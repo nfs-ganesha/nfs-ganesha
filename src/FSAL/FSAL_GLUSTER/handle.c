@@ -2692,10 +2692,8 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL, NULL, 0);
 
 		if (retval != 0) {
-			if (retval != 0) {
-				status = gluster2fsal_error(errno);
-				goto out;
-			}
+			status = gluster2fsal_error(errno);
+			goto out;
 		}
 	}
 

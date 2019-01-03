@@ -672,7 +672,6 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 						data->current_filetype));
 			if (-required_type == DIRECTORY) {
 				return NFS4ERR_ISDIR;
-				return NFS4ERR_INVAL;
 			}
 		}
 	} else if (required_type != NO_FILE_TYPE &&
