@@ -44,6 +44,7 @@ add_sanitizers(netgroup_cache)
 
 if (USE_RADOS_RECOV)
    add_library(rados_grace STATIC rados_grace.c)
+   include_directories(${RADOS_INCLUDE_DIR})
 endif(USE_RADOS_RECOV)
 
 ########### next target ###############
