@@ -98,6 +98,22 @@ are now allowing clients to acquire new state.
 Test whether the given hosts are members of the cluster. Returns an
 error if any of the hosts are not present in the grace db omap.
 
+FLAGS
+=====
+When the **dump** command is issued, ganesha-rados-grace will display a
+list of all of the nodes in the grace database, and any flags they have set.
+The flags are as follows:
+
+**E (Enforcing)**
+
+The node is currently enforcing the grace period by rejecting requests from
+clients to acquire new state.
+
+**N (Need Grace)**
+
+The node currently requires a grace period. Generally, this means that the
+node has clients that need to perform recovery.
+
 NODEID ASSIGNMENT
 =================
 Each running ganesha daemon requires a **nodeid** string that is unique
