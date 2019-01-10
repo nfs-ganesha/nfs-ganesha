@@ -2760,6 +2760,7 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 	mdcache_dir_entry_t *dirent = NULL;
 	bool has_write, set_first_ck;
 	fsal_cookie_t next_ck = whence, look_ck = whence;
+	fsal_cookie_t prev_next_ck = next_ck, prev_look_ck = look_ck;
 	struct dir_chunk *chunk = NULL;
 	bool first_pass = true;
 	bool eod = false;
@@ -2797,6 +2798,7 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 		 * chunk of the directory is still present.
 		 */
 		look_ck = directory->fsobj.fsdir.first_ck;
+		prev_look_ck = look_ck;
 	}
 
 	/* We need to know if we need to set first_ck. */
@@ -2822,8 +2824,21 @@ again:
 			 * another thread managed to populate this cookie
 			 * in the meantime.
 			 */
+			/* If first_pass = true then chunk = NULL. But if
+			 * first_pass = false, then dropping the lock means
+			 * we can no longer trust the chunk.
+			 */
 			PTHREAD_RWLOCK_unlock(&directory->content_lock);
 			PTHREAD_RWLOCK_wrlock(&directory->content_lock);
+			/* As we had dropped the lock, there is a chance that
+			 * the chunk may have been discarded by another
+			 * thread. We need to repopulate.
+			 */
+			if (chunk != NULL) {
+				next_ck = prev_next_ck;
+				look_ck = prev_look_ck;
+				chunk = NULL;
+			}
 			has_write = true;
 			goto again;
 		}
@@ -2961,7 +2976,6 @@ again:
 		 * something went wrong at some point. That chunk is valid,
 		 */
 		chunk = dirent->chunk;
-
 		LogFullDebugAlt(COMPONENT_NFS_READDIR,
 				COMPONENT_CACHE_INODE,
 				"found dirent in cached chunk %p dirent %p %s",
@@ -2970,6 +2984,10 @@ again:
 
 	/* Bump the chunk in the LRU */
 	lru_bump_chunk(chunk);
+
+	/* Save look_ck, next_ck in case we need to use them for re-scanning */
+	prev_look_ck = look_ck;
+	prev_next_ck = next_ck;
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 			"About to read directory=%p cookie=%" PRIx64,
