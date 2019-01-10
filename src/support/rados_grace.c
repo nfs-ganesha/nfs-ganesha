@@ -781,7 +781,7 @@ rados_grace_add(rados_ioctx_t io_ctx, const char *oid, int nodes,
 				break;
 			for (i = 0; i < nodes; ++i) {
 				if (!strcmp(key, nodeids[i])) {
-					ret = -EEXIST;
+					ret = 0;
 					rados_omap_get_end(iter);
 					rados_release_read_op(rop);
 					goto out;
