@@ -85,7 +85,13 @@ gsh_malloc__(size_t n,
 	return p;
 }
 
-#define gsh_malloc(n) gsh_malloc__(n, __FILE__, __LINE__, __func__)
+#define gsh_malloc(n) ({ \
+		void *p_ = malloc(n); \
+		if (p_ == NULL) { \
+			abort(); \
+		} \
+		p_; \
+	})
 
 /**
  * @brief Allocate aligned memory
@@ -122,8 +128,13 @@ gsh_malloc_aligned__(size_t a, size_t n,
 	return p;
 }
 
-#define gsh_malloc_aligned(a, n) \
-	gsh_malloc_aligned__(a, n, __FILE__, __LINE__, __func__)
+#define gsh_malloc_aligned(a, n) ({ \
+		void *p_; \
+		if (posix_memalign(&p_, a, n) != 0) { \
+			abort(); \
+		} \
+		p_; \
+	})
 
 /**
  * @brief Allocate zeroed memory
@@ -152,7 +163,13 @@ gsh_calloc__(size_t n, size_t s,
 	return p;
 }
 
-#define gsh_calloc(n, s) gsh_calloc__(n, s, __FILE__, __LINE__, __func__)
+#define gsh_calloc(n, s) ({ \
+		void *p_ = calloc(n, s); \
+		if (p_ == NULL) { \
+			abort(); \
+		} \
+		p_; \
+	})
 
 /**
  * @brief Resize a block of memory
@@ -185,105 +202,35 @@ gsh_realloc__(void *p, size_t n,
 	return p2;
 }
 
-#define gsh_realloc(p, n) gsh_realloc__(p, n, __FILE__, __LINE__, __func__)
+#define gsh_realloc(p, n) ({ \
+		void *p2_ = realloc(p, n); \
+		if (n != 0 && p2_ == NULL) { \
+			abort(); \
+		} \
+		p2_; \
+	})
 
-/**
- * @brief Duplicate a string to newly allocated memory
- *
- * This function allocates a new block of memory sufficient to contain
- * the supplied string, then copies the string into that buffer.
- *
- * This function aborts if no memory is available.
- *
- * @param[in] s  String to duplicate
- * @param[in] file Calling source file
- * @param[in] line Calling source line
- * @param[in] function Calling source function
- *
- * @return Pointer to new copy of string.
- */
-static inline char *
-gsh_strdup__(const char *s, const char *file, int line, const char *function)
-{
-	char *p = strdup(s);
+#define gsh_strdup(s) ({ \
+		char *p_ = strdup(s); \
+		if (p_ == NULL) { \
+			abort(); \
+		} \
+		p_; \
+	})
 
-	if (p == NULL) {
-		LogMallocFailure(file, line, function, "gsh_strdup");
-		abort();
-	}
+#define gsh_strldup(s, l, n) ({ \
+		char *p_ = (char *) gsh_malloc(l+1); \
+		memcpy(p_, s, l); \
+		p_[l] = '\0'; \
+		*n = l + 1; \
+		p_; \
+	})
 
-	return p;
-}
-
-#define gsh_strdup(s) gsh_strdup__(s, __FILE__, __LINE__, __func__)
-
-/**
- * @brief Duplicate a string to newly allocated memory (bounded)
- *
- * This function allocates a new block of memory sufficient to contain
- * the supplied string, then copies the string into that buffer.
- *
- * This function aborts if no memory is available.
- *
- * The returned copied value includes the terminating NUL.
- *
- * @param[in] s String to duplicate
- * @param[in] length Size of the returned string shall be <= length+1
- * @param[out] copied Number of bytes copied
- * @param[in] file Calling source file
- * @param[in] line Calling source line
- * @param[in] function Calling source function
- *
- * @return Pointer to new copy of string.
- */
-static inline char *
-gsh_strldup__(const char *s, size_t length, size_t *copied,
-	     const char *file, int line, const char *function)
-{
-	char *p = (char *) gsh_malloc__(length+1, file, line, function);
-
-	if (p == NULL) {
-		LogMallocFailure(file, line, function, "gsh_strldup");
-		abort();
-	}
-
-	memcpy(p, s, length);
-	p[length] = '\0';
-	*copied = length + 1;
-
-	return p;
-}
-
-#define gsh_strldup(s, l, n) gsh_strldup__(s, l, n, __FILE__, __LINE__, \
-						__func__)
-
-/**
- * @brief Duplicate a blob of memory
- *
- * This function allocates a new block of memory sufficient to contain
- * the supplied data, then copies the data into that buffer.
- *
- * This function aborts if no memory is available.
- *
- * @param[in] s  Pointer to data to be copied
- * @param[in] l  Length of data
- * @param[in] file Calling source file
- * @param[in] line Calling source line
- * @param[in] function Calling source function
- *
- * @return Pointer to new copy of data
- */
-static inline void *
-gsh_memdup__(const void *s, const size_t l, const char *file, int line,
-		const char *function)
-{
-	void *p = gsh_malloc__(l, file, line, function);
-
-	memcpy(p, s, l);
-	return p;
-}
-
-#define gsh_memdup(s, l) gsh_memdup__(s, l, __FILE__, __LINE__, __func__)
+#define gsh_memdup(s, l) ({ \
+		void *p_ = gsh_malloc(l); \
+		memcpy(p_, s, l); \
+		p_; \
+	})
 
 /**
  * @brief Free a block of memory
@@ -358,24 +305,19 @@ typedef struct pool {
  */
 
 static inline pool_t *
-pool_basic_init__(const char *name, size_t object_size,
-		  const char *file, int line, const char *function)
+pool_basic_init(const char *name, size_t object_size)
 {
-	pool_t *pool = (pool_t *) gsh_malloc__(sizeof(pool_t), file, line,
-					function);
+	pool_t *pool = (pool_t *) gsh_malloc(sizeof(pool_t));
 
 	pool->object_size = object_size;
 
 	if (name)
-		pool->name = gsh_strdup__(name, file, line, function);
+		pool->name = gsh_strdup(name);
 	else
 		pool->name = NULL;
 
 	return pool;
 }
-
-#define pool_basic_init(name, object_size) \
-	pool_basic_init__(name, object_size, __FILE__, __LINE__, __func__)
 
 /**
  * @brief Destroy a memory pool
@@ -417,14 +359,7 @@ pool_destroy(pool_t *pool)
  * @return A pointer to the allocated pool item.
  */
 
-static inline void *
-pool_alloc__(pool_t *pool, const char *file, int line, const char *function)
-{
-	return gsh_calloc__(1, pool->object_size, file, line, function);
-}
-
-#define pool_alloc(pool) \
-	pool_alloc__(pool, __FILE__, __LINE__, __func__)
+#define pool_alloc(pool) gsh_calloc(1, (pool)->object_size)
 
 /**
  * @brief Return an entry to a pool
