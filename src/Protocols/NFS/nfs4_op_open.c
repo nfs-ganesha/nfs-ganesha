@@ -172,6 +172,11 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
 		break;
 
 	case CLAIM_DELEG_CUR_FH:
+		take_ref = false;
+		if (data->minorversion == 0)
+			status = NFS4ERR_NOTSUPP;
+		break;
+
 	case CLAIM_DELEG_PREV_FH:
 		status = NFS4ERR_NOTSUPP;
 		break;
@@ -349,7 +354,15 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 		return NFS4ERR_NOTSUPP;
 	}
 
-	assert(claim == CLAIM_DELEGATE_CUR);
+	assert((claim  == CLAIM_DELEGATE_CUR) ||
+	       (claim == CLAIM_DELEG_CUR_FH));
+
+	if (claim == CLAIM_DELEG_CUR_FH) {
+		rcurr_state =
+			&arg->claim.open_claim4_u.oc_delegate_stateid;
+		goto find_state;
+	}
+
 	utfname = &arg->claim.open_claim4_u.delegate_cur_info.file;
 	rcurr_state =
 		&arg->claim.open_claim4_u.delegate_cur_info.delegate_stateid;
@@ -381,6 +394,7 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 		return status;
 	}
 
+find_state:
 	found_state = nfs4_State_Get_Pointer(rcurr_state->other);
 
 	if (found_state == NULL) {
@@ -849,6 +863,7 @@ static void open4_ex(OPEN4args *arg,
 		goto out;
 
 	case CLAIM_DELEGATE_CUR:
+	case CLAIM_DELEG_CUR_FH:
 		res_OPEN4->status = open4_claim_deleg(arg, data);
 		if (res_OPEN4->status != NFS4_OK)
 			goto out;
