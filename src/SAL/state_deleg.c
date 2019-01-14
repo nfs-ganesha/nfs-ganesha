@@ -483,6 +483,43 @@ void state_deleg_revoke(struct fsal_obj_handle *obj, state_t *state)
 }
 
 /**
+ * @brief Check if the file is write delegated under state_lock
+ *
+ * Check if the file is write delegated. If yes, take a ref and return
+ * the client holding the delegation.
+ *
+ * @note: The caller should acquire state_lock before calling this
+ * function.
+ *
+ * @param[in] obj File
+ * @param[out] client holding the delegation
+ *
+ * @retval true if file is write delegated
+ * @retval false otherwise
+ */
+bool is_write_delegated(struct fsal_obj_handle *obj, nfs_client_id_t **client)
+{
+	bool write_delegated = false;
+	struct file_deleg_stats *deleg_stats;
+
+	if (obj->type != REGULAR_FILE)
+		return false;
+
+	deleg_stats = &obj->state_hdl->file.fdeleg_stats;
+
+	if (deleg_stats->fds_curr_delegations < 0)
+		return false;
+
+	write_delegated = obj->state_hdl->file.write_delegated;
+	if (write_delegated && client) {
+		*client = obj->state_hdl->file.write_deleg_client;
+		inc_client_id_ref(*client);
+	}
+
+	return write_delegated;
+}
+
+/**
  * @brief Check if an operation is conflicting with delegations.
  *
  * Check if an operation will conflict with current delegations on a file.
@@ -501,15 +538,22 @@ void state_deleg_revoke(struct fsal_obj_handle *obj, state_t *state)
 bool state_deleg_conflict_impl(struct fsal_obj_handle *obj, bool write)
 {
 	struct file_deleg_stats *deleg_stats;
+	struct gsh_client *deleg_client = NULL;
 
 	if (obj->type != REGULAR_FILE)
 		return false;
 
 	deleg_stats = &obj->state_hdl->file.fdeleg_stats;
+
+	if (obj->state_hdl->file.write_delegated)
+		deleg_client =
+			obj->state_hdl->file.write_deleg_client->gsh_client;
+
 	if (deleg_stats->fds_curr_delegations > 0
 	    && ((deleg_stats->fds_deleg_type == OPEN_DELEGATE_READ
 		 && write)
-		|| (deleg_stats->fds_deleg_type == OPEN_DELEGATE_WRITE))
+		|| (deleg_stats->fds_deleg_type == OPEN_DELEGATE_WRITE &&
+		    deleg_client != op_ctx->client))
 	    ) {
 		LogDebug(COMPONENT_STATE,
 			 "While trying to perform a %s op, found a conflicting %s delegation",

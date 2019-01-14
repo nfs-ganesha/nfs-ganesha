@@ -890,6 +890,7 @@ struct state_file {
 	struct glist_head nlm_share_list;
 	/** true iff write delegated */
 	bool write_delegated;
+	nfs_client_id_t *write_deleg_client;
 	/** Delegation statistics. Protected by state_lock */
 	struct file_deleg_stats fdeleg_stats;
 	uint32_t anon_ops;   /* number of anonymous operations

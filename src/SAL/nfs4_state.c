@@ -233,8 +233,16 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 #endif
 
 	if (pnew_state->state_type == STATE_TYPE_DELEG &&
-	    pnew_state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE)
+	    pnew_state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE) {
+		nfs_client_id_t *client =
+			 owner_input->so_owner.so_nfs4_owner.so_clientrec;
 		ostate->file.write_delegated = true;
+		/* take a ref and save client ptr holding delegation for
+		 * conflict resolution
+		 */
+		inc_client_id_ref(client);
+		ostate->file.write_deleg_client = client;
+	}
 
 	/* Copy the result */
 	*state = pnew_state;
@@ -468,10 +476,14 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	if (state->state_type == STATE_TYPE_LOCK)
 		glist_del(&state->state_data.lock.state_sharelist);
 
-	/* Reset write delegated if this is a write delegation */
+	/* Reset write delegated and release client ref if this is a
+	 * write delegation */
 	if (state->state_type == STATE_TYPE_DELEG &&
-	    state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE)
+	    state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE) {
 		obj->state_hdl->file.write_delegated = false;
+		dec_client_id_ref(obj->state_hdl->file.write_deleg_client);
+		obj->state_hdl->file.write_deleg_client = NULL;
+	}
 
 	/* Remove from list of states for a particular export.
 	 * In this case, it is safe to look at state_export without yet
