@@ -687,7 +687,7 @@ enum nfs_req_result complete_op(compound_data_t *data, nfsstat4 *status,
 	*status = thisres->nfs_resop4_u.opaccess.status;
 
 #ifdef USE_LTTNG
-	tracepoint(nfs_rpc, v4op_end, data->oppos, thisarg->argop,
+	tracepoint(nfs_rpc, v4op_end, data->oppos, data->opcode,
 		   data->opname, nfsstat4_to_str(*status));
 #endif
 
@@ -769,13 +769,13 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 	data->opname = optabv4[data->opcode].name;
 
 	LogDebug(COMPONENT_NFS_V4, "Request %d: opcode %d is %s",
-		 data->oppos, thisarg->argop, data->opname);
+		 data->oppos, data->opcode, data->opname);
 
 	/* Verify BIND_CONN_TO_SESSION is not used in a compound
 	 * with length > 1. This check is NOT redundant with the
 	 * checks in nfs4_Compound().
 	 */
-	if (data->oppos > 0 && thisarg->argop == NFS4_OP_BIND_CONN_TO_SESSION) {
+	if (data->oppos > 0 && data->opcode == NFS4_OP_BIND_CONN_TO_SESSION) {
 		*status = NFS4ERR_NOT_ONLY_OP;
 		bad_op_state_reason =
 				"BIND_CONN_TO_SESSION past position 1";
@@ -783,7 +783,7 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 	}
 
 	/* OP_SEQUENCE is always the first operation of the request */
-	if (data->oppos > 0 && thisarg->argop == NFS4_OP_SEQUENCE) {
+	if (data->oppos > 0 && data->opcode == NFS4_OP_SEQUENCE) {
 		*status = NFS4ERR_SEQUENCE_POS;
 		bad_op_state_reason =
 				"SEQUENCE past position 1";
@@ -795,7 +795,7 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 	 * has more than one op, we already know it MUST start with
 	 * SEQUENCE), then it MUST be the final op in the compound.
 	 */
-	if (data->oppos > 0 && thisarg->argop == NFS4_OP_DESTROY_SESSION) {
+	if (data->oppos > 0 && data->opcode == NFS4_OP_DESTROY_SESSION) {
 		bool session_compare;
 		bool bad_pos;
 
@@ -899,7 +899,7 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 		 * a first replied field called .status
 		 */
 		thisres->nfs_resop4_u.opaccess.status = *status;
-		thisres->resop = thisarg->argop;
+		thisres->resop = data->opcode;
 
 		/* Do not manage the other requests in the COMPOUND. */
 		data->res->res_compound4.resarray.resarray_len =
@@ -912,7 +912,7 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 	 **************************************************************/
 #ifdef USE_LTTNG
 	tracepoint(nfs_rpc, v4op_start, data->oppos,
-		   thisarg->argop, data->opname);
+		   data->opcode, data->opname);
 #endif
 
 	result = (optabv4[data->opcode].funct) (thisarg, data, thisres);
@@ -1047,16 +1047,12 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 	nfsstat4 status = NFS4_OK;
 	compound_data_t *data = reqdata->proc_data;
 	enum nfs_req_result result;
-	nfs_argop4 *thisarg;
-	nfs_resop4 *thisres;
 
 	op_ctx = &reqdata->req_ctx;
 
 	/* Start by resuming the operation that suspended. */
-	thisarg = &data->argarray[data->oppos];
-	thisres = &data->resarray[data->oppos];
-
-	result = (optabv4[data->opcode].resume) (thisarg, data, thisres);
+	result = (optabv4[data->opcode].resume)
+	    (&data->argarray[data->oppos], data, &data->resarray[data->oppos]);
 
 	if (result != NFS_REQ_ASYNC_WAIT) {
 		/* Complete the operation (will fill in status). */
