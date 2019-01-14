@@ -908,6 +908,7 @@ bool state_deleg_conflict(struct fsal_obj_handle *obj, bool write);
 bool state_deleg_conflict_impl(struct fsal_obj_handle *obj, bool write);
 bool is_write_delegated(struct fsal_obj_handle *obj,
 			nfs_client_id_t **client);
+nfsstat4 handle_deleg_getattr(struct fsal_obj_handle *obj);
 
 /******************************************************************************
  *

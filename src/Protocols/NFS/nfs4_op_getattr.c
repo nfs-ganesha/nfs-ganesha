@@ -43,6 +43,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 #include "nfs_convert.h"
+#include "sal_functions.h"
 
 /**
  * @brief Gets attributes for an entry in the FSAL.
@@ -68,6 +69,8 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 	bool current_obj_is_referral = false;
 	fattr4 *obj_attributes =
 		&res_GETATTR4->GETATTR4res_u.resok4.obj_attributes;
+	nfs_client_id_t *deleg_client = NULL;
+	struct fsal_obj_handle *obj = data->current_obj;
 
 	/* This is a NFS4_OP_GETTAR */
 	resp->resop = NFS4_OP_GETATTR;
@@ -105,13 +108,36 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 
 	nfs4_bitmap4_Remove_Unsupported(&arg_GETATTR4->attr_request);
 
+	/* As per rfc 7530, section:10.4.3
+	 * The server needs to employ special handling for a GETATTR where the
+	 * target is a file that has an OPEN_DELEGATE_WRITE delegation in
+	 * effect.
+	 *
+	 * The server may use CB_GETATTR to fetch the right attributes from the
+	 * client holding the delegation or may simply recall the delegation.
+	 * Till then send EDELAY error.
+	 */
+
+	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
+	if (is_write_delegated(obj, &deleg_client) &&
+	    deleg_client && (deleg_client->gsh_client != op_ctx->client)) {
+
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		res_GETATTR4->status = handle_deleg_getattr(obj);
+
+		if (res_GETATTR4->status != NFS4_OK)
+			goto out;
+	} else
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+
+
 	res_GETATTR4->status = file_To_Fattr(
 			data, mask, &attrs,
 			obj_attributes,
 			&arg_GETATTR4->attr_request);
 
-	current_obj_is_referral = data->current_obj->obj_ops->is_referral(
-					data->current_obj, &attrs, false);
+	current_obj_is_referral = obj->obj_ops->is_referral(
+					obj, &attrs, false);
 
 	/*
 	 * If it is a referral point, return the FATTR4_RDATTR_ERROR if
@@ -165,6 +191,9 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 	}
 
 out:
+
+	if (deleg_client)
+		dec_client_id_ref(deleg_client);
 
 	if (res_GETATTR4->status != NFS4_OK) {
 		/* The attributes that may have been allocated will not be

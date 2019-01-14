@@ -586,7 +586,25 @@ bool state_deleg_conflict(struct fsal_obj_handle *obj, bool write)
 	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
 	status = state_deleg_conflict_impl(obj, write);
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	return status;
+}
 
+nfsstat4 handle_deleg_getattr(struct fsal_obj_handle *obj)
+{
+	nfsstat4 status = NFS4_OK;
+#ifndef CB_GETATTR
+	/* Check for delegation conflict.*/
+	LogDebug(COMPONENT_STATE,
+		 "While trying to perform a GETATTR op, found a conflicting WRITE delegation");
+	status = NFS4ERR_DELAY;
+	if (async_delegrecall(general_fridge, obj) != 0) {
+		LogCrit(COMPONENT_STATE,
+			"Failed to start thread to recall delegation from conflicting operation.");
+		goto out;
+	}
+#endif
+
+out:
 	return status;
 }
 
