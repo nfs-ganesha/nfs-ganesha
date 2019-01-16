@@ -106,7 +106,7 @@ enum nfs_req_result nfs4_op_verify(struct nfs_argop4 *op,
 
 	rc = nfs4_Fattr_cmp(&(arg_VERIFY4->obj_attributes), &file_attr4);
 
-	if (rc == true)
+	if (rc == 1)
 		res_VERIFY4->status = NFS4_OK;
 	else if (rc == -1)
 		res_VERIFY4->status = NFS4ERR_INVAL;
