@@ -4098,52 +4098,67 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 {
 	u_int LastOffset;
 	uint32_t i;
-	uint32_t k;
 	u_int len = 0;
-	int attribute_to_set = 0;
+	int attr1 = 0, attr2 = 0;
 
-	if (Fattr1->attrmask.bitmap4_len != Fattr2->attrmask.bitmap4_len) {
-		/* different mask */
-		return 0;
-	}
-
-	for (i = 0; i < Fattr1->attrmask.bitmap4_len; i++)
-		if (Fattr1->attrmask.map[i] != Fattr2->attrmask.map[i])
-			return FALSE;
-	if (attribute_is_set(&Fattr1->attrmask, FATTR4_RDATTR_ERROR))
+	if (attribute_is_set(&Fattr1->attrmask, FATTR4_RDATTR_ERROR)) {
+		/* Error case */
 		return -1;
+	}
 
 	LastOffset = 0;
 	len = 0;
-
-	if (Fattr1->attr_vals.attrlist4_len !=
-			Fattr2->attr_vals.attrlist4_len) {
-		/* can't trust Fattr to be constructed properly
-		 * as it can come from client */
-		return 0;
-	}
 
 	if (Fattr1->attr_vals.attrlist4_len == 0) {
 		/* Could have no attrlist if all the flags in bitmask
 		 * are invalid, both buffers are empty so equal */
 		return 1;
 	}
-  /** There has got to be a better way to do this but we do have to cope
-   *  with unaligned buffers for opaque data
-   */
-	for (attribute_to_set = next_attr_from_bitmap(&Fattr1->attrmask, -1);
-	     attribute_to_set != -1;
-	     attribute_to_set =
-	     next_attr_from_bitmap(&Fattr1->attrmask, attribute_to_set)) {
-		if (attribute_to_set > FATTR4_XATTR_SUPPORT) {
-			/* Erroneous value... skip */
-			continue;
-		}
-		LogFullDebug(COMPONENT_NFS_V4,
-			     "Comparing %s",
-			     fattr4tab[attribute_to_set].name);
 
-		switch (attribute_to_set) {
+	/* We need to iterate both bitmaps, and make sure all set bits match.
+	 * It's possible for a client (I'm looking at you VMWare) to send a
+	 * bitmap that is longer than it needs to be, with all words zero, so
+	 * extend the length of each bitmap to the end of the other one,
+	 * treating all bits as zero */
+	attr1 = next_attr_from_bitmap(&Fattr1->attrmask, -1);
+	attr2 = next_attr_from_bitmap(&Fattr2->attrmask, -1);
+
+	while (attr1 != -1 && attr2 != -1) {
+		if (attr1 > FATTR4_XATTR_SUPPORT) {
+			/* Erroneous value... skip; Just advance attr1, since we
+			 * won't ever generate invalid values in our bitmask */
+			attr1 = next_attr_from_bitmap(&Fattr1->attrmask, attr1);
+			continue;
+
+		}
+
+		if (LastOffset + sizeof(uint32_t) >
+		    Fattr1->attr_vals.attrlist4_len) {
+			/* Minimum attribute size is 4, given attrlist has bits
+			 * set but no values. */
+			LogFullDebug(COMPONENT_NFS_V4,
+				     "Attrlist missing values for %s",
+				     fattr4tab[attr1].name);
+			return 0;
+		}
+
+		if (attr1 != attr2) {
+			/* The next-set-bits don't match (including one bitmask
+			 * being done and the other not).  This is a failure
+			 * case */
+			LogFullDebug(COMPONENT_NFS_V4,
+				     "Next bits don't match. Given %s expect %s",
+				     fattr4tab[attr1].name,
+				     fattr4tab[attr2].name);
+			return 0;
+		}
+
+		LogFullDebug(COMPONENT_NFS_V4, "Comparing %s",
+			     fattr4tab[attr1].name);
+
+		/* We have matching attribute bits.  Compare the attribute
+		 * values. */
+		switch (attr1) {
 		case FATTR4_SUPPORTED_ATTRS:
 			memcpy(&len,
 			       (char *)(Fattr1->attr_vals.attrlist4_val +
@@ -4152,20 +4167,31 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 			    ((char *)(Fattr1->attr_vals.attrlist4_val +
 				      LastOffset),
 			     (char *)(Fattr2->attr_vals.attrlist4_val +
-				      LastOffset), sizeof(u_int)) != 0)
+				      LastOffset), sizeof(u_int)) != 0) {
+				LogFullDebug(COMPONENT_NFS_V4,
+					     "Attr %s wrong len expexted %u got %u",
+					     fattr4tab[attr1].name, len,
+					     *((u_int *)
+					       (Fattr2->attr_vals.attrlist4_val
+						+ LastOffset)));
 				return 0;
+			}
 
 			len = htonl(len);
 			LastOffset += sizeof(u_int);
 
-			for (k = 0; k < len; k++) {
+			for (i = 0; i < len; i++) {
 				if (memcmp
 				    ((char *)(Fattr1->attr_vals.attrlist4_val +
 					      LastOffset),
 				     (char *)(Fattr2->attr_vals.attrlist4_val +
 					      LastOffset),
-				     sizeof(uint32_t)) != 0)
+				     sizeof(uint32_t)) != 0) {
+					LogFullDebug(COMPONENT_NFS_V4,
+						     "Wrong value for %s",
+						     fattr4tab[attr1].name);
 					return 0;
+				}
 				LastOffset += sizeof(uint32_t);
 			}
 
@@ -4174,23 +4200,37 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 		case FATTR4_FILEHANDLE:
 		case FATTR4_OWNER:
 		case FATTR4_OWNER_GROUP:
+			/* These are variable size. */
 			memcpy(&len,
 			       (char *)(Fattr1->attr_vals.attrlist4_val +
 					LastOffset), sizeof(u_int));
-			len = ntohl(len);	/* xdr marshalling on fattr4 */
 			if (memcmp
 			    ((char *)(Fattr1->attr_vals.attrlist4_val +
 				      LastOffset),
 			     (char *)(Fattr2->attr_vals.attrlist4_val +
-				      LastOffset), sizeof(u_int)) != 0)
+				      LastOffset), sizeof(u_int)) != 0) {
+				LogFullDebug(COMPONENT_NFS_V4,
+					     "Attr %s wrong len expexted %u got %u",
+					     fattr4tab[attr1].name, len,
+					     *((u_int *)
+					       (Fattr2->attr_vals.attrlist4_val
+						+ LastOffset)));
 				return 0;
+			}
+
+			len = ntohl(len);	/* xdr marshalling on fattr4 */
 			LastOffset += sizeof(u_int);
 			if (memcmp
 			    ((char *)(Fattr1->attr_vals.attrlist4_val +
 				      LastOffset),
 			     (char *)(Fattr2->attr_vals.attrlist4_val +
-				      LastOffset), len) != 0)
+				      LastOffset), len) != 0) {
+				LogFullDebug(COMPONENT_NFS_V4,
+					     "Wrong value for %s",
+					     fattr4tab[attr1].name);
 				return 0;
+			}
+			LastOffset += len;
 			break;
 
 		case FATTR4_TYPE:
@@ -4245,19 +4285,31 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 		case FATTR4_TIME_MODIFY:
 		case FATTR4_TIME_MODIFY_SET:
 		case FATTR4_MOUNTED_ON_FILEID:
+			/* These are fixed size */
 			if (memcmp
 			    ((char *)(Fattr1->attr_vals.attrlist4_val +
 				      LastOffset),
 			     (char *)(Fattr2->attr_vals.attrlist4_val +
 				      LastOffset),
-			     fattr4tab[attribute_to_set].size_fattr4) != 0)
+			     fattr4tab[attr1].size_fattr4) != 0) {
+				LogFullDebug(COMPONENT_NFS_V4,
+					     "Wrong value for %s",
+					     fattr4tab[attr1].name);
 				return 0;
+			}
+			LastOffset += fattr4tab[attr1].size_fattr4;
 			break;
 
 		default:
+			LogFullDebug(COMPONENT_NFS_V4,
+				     "unknown attribute %d", attr1);
 			return 0;
 		}
+
+	     attr1 = next_attr_from_bitmap(&Fattr1->attrmask, attr1);
+	     attr2 = next_attr_from_bitmap(&Fattr2->attrmask, attr2);
 	}
+
 	return 1;
 }
 
