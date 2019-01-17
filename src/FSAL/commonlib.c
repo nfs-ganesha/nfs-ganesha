@@ -2962,6 +2962,12 @@ bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier)
 bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 			     struct attrlist *attrs, bool cache_attrs)
 {
+	LogDebug(COMPONENT_FSAL, "Checking attrs for referral"
+		 ", handle: %p, valid_mask: %" PRIx64
+		 ", request_mask: %" PRIx64 ", supported: %" PRIx64,
+		 obj_hdl, attrs->valid_mask,
+		 attrs->request_mask, attrs->supported);
+
 	if ((attrs->valid_mask & (ATTR_TYPE | ATTR_MODE)) == 0) {
 		/* Required attributes are not available, need to fetch them */
 		fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
@@ -2970,9 +2976,13 @@ bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 
 		status = obj_hdl->obj_ops->getattrs(obj_hdl, attrs);
 		if (FSAL_IS_ERROR(status)) {
-			LogEvent(COMPONENT_FSAL, "Failed to get attributes for "
-				 "referral, request_mask: %lu",
-				 attrs->request_mask);
+			LogEvent(COMPONENT_FSAL,
+				 "Failed to get attrs for referral, "
+				 "handle: %p, valid_mask: %" PRIx64
+				 ", request_mask: %" PRIx64
+				 ", supported: %" PRIx64,
+				 obj_hdl, attrs->valid_mask,
+				 attrs->request_mask, attrs->supported);
 			return false;
 		}
 	}
@@ -2983,7 +2993,7 @@ bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 	if (!is_sticky_bit_set(obj_hdl, attrs))
 		return false;
 
-	LogDebug(COMPONENT_FSAL, "Referral found for handle %p", obj_hdl);
+	LogDebug(COMPONENT_FSAL, "Referral found for handle: %p", obj_hdl);
 	return true;
 }
 

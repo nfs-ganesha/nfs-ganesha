@@ -97,7 +97,7 @@ int nfs_libmain(const char *ganesha_conf,
 	char localmachine[MAXHOSTNAMELEN + 1];
 	int dsc;
 	int rc;
-	char *log_path;
+	char *log_path = NULL;
 	const char *exec_name = "nfs-ganesha";
 	sigset_t signals_to_block;
 	struct config_error_type err_type;

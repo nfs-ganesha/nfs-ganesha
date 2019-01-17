@@ -364,22 +364,25 @@ const svc_xprt_fun_t tcp_dispatch[] = {
 
 void Create_udp(protos prot)
 {
-	udp_xprt[prot] =
-	    svc_dg_create(udp_socket[prot],
-			  nfs_param.core_param.rpc.max_send_buffer_size,
-			  nfs_param.core_param.rpc.max_recv_buffer_size);
-	if (udp_xprt[prot] == NULL)
-		LogFatal(COMPONENT_DISPATCH, "Cannot allocate %s/UDP SVCXPRT",
-			 tags[prot]);
+	if (udp_socket[prot] != -1) {
+		udp_xprt[prot] =
+		    svc_dg_create(udp_socket[prot],
+			nfs_param.core_param.rpc.max_send_buffer_size,
+			nfs_param.core_param.rpc.max_recv_buffer_size);
+		if (udp_xprt[prot] == NULL)
+			LogFatal(COMPONENT_DISPATCH,
+				 "Cannot allocate %s/UDP SVCXPRT", tags[prot]);
 
-	udp_xprt[prot]->xp_dispatch.rendezvous_cb = udp_dispatch[prot];
+		udp_xprt[prot]->xp_dispatch.rendezvous_cb = udp_dispatch[prot];
 
-	/* Hook xp_free_user_data (finalize/free private data) */
-	(void)SVC_CONTROL(udp_xprt[prot], SVCSET_XP_FREE_USER_DATA,
-			  nfs_rpc_free_user_data);
+		/* Hook xp_free_user_data (finalize/free private data) */
+		(void)SVC_CONTROL(udp_xprt[prot], SVCSET_XP_FREE_USER_DATA,
+				  nfs_rpc_free_user_data);
 
-	(void)svc_rqst_evchan_reg(rpc_evchan[UDP_UREG_CHAN].chan_id,
-				  udp_xprt[prot], SVC_RQST_FLAG_XPRT_UREG);
+		(void)svc_rqst_evchan_reg(rpc_evchan[UDP_UREG_CHAN].chan_id,
+					  udp_xprt[prot],
+					  SVC_RQST_FLAG_XPRT_UREG);
+	}
 }
 
 void Create_tcp(protos prot)
@@ -485,40 +488,47 @@ static int Bind_sockets_V6(void)
 
 			proto_data *pdatap = &pdata[p];
 
-			memset(&pdatap->sinaddr_udp6, 0,
-			       sizeof(pdatap->sinaddr_udp6));
-			pdatap->sinaddr_udp6.sin6_family = AF_INET6;
-			/* all interfaces */
-			pdatap->sinaddr_udp6.sin6_addr =
-			    ((struct sockaddr_in6 *)
-			    &nfs_param.core_param.bind_addr)->sin6_addr;
-			pdatap->sinaddr_udp6.sin6_port =
-			    htons(nfs_param.core_param.port[p]);
+			if (udp_socket[p] != -1) {
+				memset(&pdatap->sinaddr_udp6, 0,
+				       sizeof(pdatap->sinaddr_udp6));
+				pdatap->sinaddr_udp6.sin6_family = AF_INET6;
+				/* all interfaces */
+				pdatap->sinaddr_udp6.sin6_addr =
+				    ((struct sockaddr_in6 *)
+				    &nfs_param.core_param.bind_addr)->sin6_addr;
+				pdatap->sinaddr_udp6.sin6_port =
+				    htons(nfs_param.core_param.port[p]);
 
-			pdatap->netbuf_udp6.maxlen =
-			    sizeof(pdatap->sinaddr_udp6);
-			pdatap->netbuf_udp6.len = sizeof(pdatap->sinaddr_udp6);
-			pdatap->netbuf_udp6.buf = &pdatap->sinaddr_udp6;
+				pdatap->netbuf_udp6.maxlen =
+				    sizeof(pdatap->sinaddr_udp6);
+				pdatap->netbuf_udp6.len =
+				    sizeof(pdatap->sinaddr_udp6);
+				pdatap->netbuf_udp6.buf = &pdatap->sinaddr_udp6;
 
-			pdatap->bindaddr_udp6.qlen = SOMAXCONN;
-			pdatap->bindaddr_udp6.addr = pdatap->netbuf_udp6;
+				pdatap->bindaddr_udp6.qlen = SOMAXCONN;
+				pdatap->bindaddr_udp6.addr =
+				    pdatap->netbuf_udp6;
 
-			if (!__rpc_fd2sockinfo(udp_socket[p],
-			    &pdatap->si_udp6)) {
-				LogWarn(COMPONENT_DISPATCH,
-					 "Cannot get %s socket info for udp6 socket errno=%d (%s)",
-					 tags[p], errno, strerror(errno));
-				return -1;
-			}
+				if (!__rpc_fd2sockinfo(udp_socket[p],
+				    &pdatap->si_udp6)) {
+					LogWarn(COMPONENT_DISPATCH,
+						"Cannot get %s socket info for udp6 socket errno=%d (%s)",
+						tags[p], errno,
+						strerror(errno));
+					return -1;
+				}
 
-			rc = bind(udp_socket[p],
-			      (struct sockaddr *)pdatap->bindaddr_udp6.addr.buf,
-				  (socklen_t) pdatap->si_udp6.si_alen);
-			if (rc == -1) {
-				LogWarn(COMPONENT_DISPATCH,
-					 "Cannot bind %s udp6 socket, error %d (%s)",
-					 tags[p], errno, strerror(errno));
-				goto exit;
+				rc = bind(udp_socket[p],
+					  (struct sockaddr *)
+					  pdatap->bindaddr_udp6.addr.buf,
+					  (socklen_t) pdatap->si_udp6.si_alen);
+				if (rc == -1) {
+					LogWarn(COMPONENT_DISPATCH,
+						"Cannot bind %s udp6 socket, error %d (%s)",
+						tags[p], errno,
+						strerror(errno));
+					goto exit;
+				}
 			}
 
 			memset(&pdatap->sinaddr_tcp6, 0,
@@ -577,41 +587,48 @@ static int Bind_sockets_V4(void)
 
 			proto_data *pdatap = &pdata[p];
 
-			memset(&pdatap->sinaddr_udp, 0,
-			       sizeof(pdatap->sinaddr_udp));
-			pdatap->sinaddr_udp.sin_family = AF_INET;
-			/* all interfaces */
-			pdatap->sinaddr_udp.sin_addr.s_addr =
-			    ((struct sockaddr_in *)
-			    &nfs_param.core_param.bind_addr)->sin_addr.s_addr;
-			pdatap->sinaddr_udp.sin_port =
-			    htons(nfs_param.core_param.port[p]);
+			if (udp_socket[p] != -1) {
+				memset(&pdatap->sinaddr_udp, 0,
+				       sizeof(pdatap->sinaddr_udp));
+				pdatap->sinaddr_udp.sin_family = AF_INET;
+				/* all interfaces */
+				pdatap->sinaddr_udp.sin_addr.s_addr =
+				    ((struct sockaddr_in *)
+				    &nfs_param.core_param.bind_addr)->
+				    sin_addr.s_addr;
+				pdatap->sinaddr_udp.sin_port =
+				    htons(nfs_param.core_param.port[p]);
 
-			pdatap->netbuf_udp6.maxlen =
-			    sizeof(pdatap->sinaddr_udp);
-			pdatap->netbuf_udp6.len = sizeof(pdatap->sinaddr_udp);
-			pdatap->netbuf_udp6.buf = &pdatap->sinaddr_udp;
+				pdatap->netbuf_udp6.maxlen =
+				    sizeof(pdatap->sinaddr_udp);
+				pdatap->netbuf_udp6.len =
+				    sizeof(pdatap->sinaddr_udp);
+				pdatap->netbuf_udp6.buf = &pdatap->sinaddr_udp;
 
-			pdatap->bindaddr_udp6.qlen = SOMAXCONN;
-			pdatap->bindaddr_udp6.addr = pdatap->netbuf_udp6;
+				pdatap->bindaddr_udp6.qlen = SOMAXCONN;
+				pdatap->bindaddr_udp6.addr =
+				    pdatap->netbuf_udp6;
 
-			if (!__rpc_fd2sockinfo(udp_socket[p],
-			    &pdatap->si_udp6)) {
-				LogWarn(COMPONENT_DISPATCH,
-					"Cannot get %s socket info for udp6 socket errno=%d (%s)",
-					tags[p], errno, strerror(errno));
-				return -1;
-			}
+				if (!__rpc_fd2sockinfo(udp_socket[p],
+				    &pdatap->si_udp6)) {
+					LogWarn(COMPONENT_DISPATCH,
+						"Cannot get %s socket info for udp6 socket errno=%d (%s)",
+						tags[p], errno,
+						strerror(errno));
+					return -1;
+				}
 
-			rc = bind(udp_socket[p],
-				  (struct sockaddr *)
-				  pdatap->bindaddr_udp6.addr.buf,
-				  (socklen_t) pdatap->si_udp6.si_alen);
-			if (rc == -1) {
-				LogWarn(COMPONENT_DISPATCH,
-					"Cannot bind %s udp6 socket, error %d (%s)",
-					tags[p], errno, strerror(errno));
-				return -1;
+				rc = bind(udp_socket[p],
+					  (struct sockaddr *)
+					  pdatap->bindaddr_udp6.addr.buf,
+					  (socklen_t) pdatap->si_udp6.si_alen);
+				if (rc == -1) {
+					LogWarn(COMPONENT_DISPATCH,
+						"Cannot bind %s udp6 socket, error %d (%s)",
+						tags[p], errno,
+						strerror(errno));
+					return -1;
+				}
 			}
 
 			memset(&pdatap->sinaddr_tcp, 0,
@@ -722,14 +739,16 @@ static int alloc_socket_setopts(int p)
 
 	/* Use SO_REUSEADDR in order to avoid wait
 	 * the 2MSL timeout */
-	if (setsockopt(udp_socket[p],
-		       SOL_SOCKET, SO_REUSEADDR,
-		       &one, sizeof(one))) {
-		LogWarn(COMPONENT_DISPATCH,
-			"Bad udp socket options for %s, error %d(%s)",
-			tags[p], errno, strerror(errno));
+	if (udp_socket[p] != -1) {
+		if (setsockopt(udp_socket[p],
+			       SOL_SOCKET, SO_REUSEADDR,
+			       &one, sizeof(one))) {
+			LogWarn(COMPONENT_DISPATCH,
+				"Bad udp socket options for %s, error %d(%s)",
+				tags[p], errno, strerror(errno));
 
-		return -1;
+			return -1;
+		}
 	}
 
 	if (setsockopt(tcp_socket[p],
@@ -790,14 +809,16 @@ static int alloc_socket_setopts(int p)
 		}
 	}
 
-	/* We prefer using non-blocking socket
-	 * in the specific case */
-	if (fcntl(udp_socket[p], F_SETFL, FNDELAY) == -1) {
-		LogWarn(COMPONENT_DISPATCH,
-			"Cannot set udp socket for %s as non blocking, error %d(%s)",
-			tags[p], errno, strerror(errno));
+	if (udp_socket[p] != -1) {
+		/* We prefer using non-blocking socket
+		 * in the specific case */
+		if (fcntl(udp_socket[p], F_SETFL, FNDELAY) == -1) {
+			LogWarn(COMPONENT_DISPATCH,
+				"Cannot set udp socket for %s as non blocking, error %d(%s)",
+				tags[p], errno, strerror(errno));
 
-		return -1;
+			return -1;
+		}
 	}
 
 	return 0;
@@ -809,21 +830,24 @@ static int alloc_socket_setopts(int p)
  */
 static int Allocate_sockets_V4(int p)
 {
-	udp_socket[p] = socket(AF_INET,
-			       SOCK_DGRAM,
-			       IPPROTO_UDP);
+	udp_socket[p] = tcp_socket[p] = -1;
+	if (nfs_param.core_param.enable_UDP) {
+		udp_socket[p] = socket(AF_INET,
+				       SOCK_DGRAM,
+				       IPPROTO_UDP);
 
-	if (udp_socket[p] == -1) {
-		if (errno == EAFNOSUPPORT) {
-			LogInfo(COMPONENT_DISPATCH,
-				"No V6 and V4 intfs configured?!");
+		if (udp_socket[p] == -1) {
+			if (errno == EAFNOSUPPORT) {
+				LogInfo(COMPONENT_DISPATCH,
+					"No V6 and V4 intfs configured?!");
+			}
+
+			LogWarn(COMPONENT_DISPATCH,
+				"Cannot allocate a udp socket for %s, error %d(%s)",
+				tags[p], errno, strerror(errno));
+
+			return -1;
 		}
-
-		LogWarn(COMPONENT_DISPATCH,
-			"Cannot allocate a udp socket for %s, error %d(%s)",
-			tags[p], errno, strerror(errno));
-
-		return -1;
 	}
 
 	tcp_socket[p] = socket(AF_INET,
@@ -867,7 +891,7 @@ static int allocate_socket_vsock(void)
 	}
 
 	LogDebug(COMPONENT_DISPATCH,
-		"Socket numbers are: %s tcp=%u",
+		"Socket numbers are: %s tcp=%d",
 		tags[P_NFS_VSOCK],
 		tcp_socket[P_NFS_VSOCK]);
 	return 0;
@@ -887,37 +911,39 @@ static void Allocate_sockets(void)
 	for (p = P_NFS; p < P_COUNT; p++) {
 		/* Initialize all the sockets to -1 because
 		 * it makes some code later easier */
-		udp_socket[p] = -1;
-		tcp_socket[p] = -1;
+		udp_socket[p] = tcp_socket[p] = -1;
 
 		if (nfs_protocol_enabled(p)) {
 			if (v6disabled)
 				goto try_V4;
 
-			udp_socket[p] = socket(AF_INET6,
-					       SOCK_DGRAM,
-					       IPPROTO_UDP);
+			if (nfs_param.core_param.enable_UDP) {
+				udp_socket[p] = socket(AF_INET6,
+						       SOCK_DGRAM,
+						       IPPROTO_UDP);
 
-			if (udp_socket[p] == -1) {
-				/*
-				 * We assume that EAFNOSUPPORT points
-				 * to the likely case when the host has
-				 * V6 interfaces disabled. So we will
-				 * try to use the existing V4 interfaces
-				 * instead
-				 */
-				if (errno == EAFNOSUPPORT) {
-					v6disabled = true;
-					LogWarn(COMPONENT_DISPATCH,
-					    "System may not have V6 intfs configured error %d(%s)",
-					    errno, strerror(errno));
+				if (udp_socket[p] == -1) {
+					/*
+					 * We assume that EAFNOSUPPORT points
+					 * to the likely case when the host has
+					 * V6 interfaces disabled. So we will
+					 * try to use the existing V4 interfaces
+					 * instead
+					 */
+					if (errno == EAFNOSUPPORT) {
+						v6disabled = true;
+						LogWarn(COMPONENT_DISPATCH,
+						    "System may not have V6 intfs configured error %d(%s)",
+						    errno, strerror(errno));
 
-					goto try_V4;
+						goto try_V4;
+					}
+
+					LogFatal(COMPONENT_DISPATCH,
+						 "Cannot allocate a udp socket for %s, error %d(%s)",
+						 tags[p], errno,
+						 strerror(errno));
 				}
-
-				LogFatal(COMPONENT_DISPATCH,
-					 "Cannot allocate a udp socket for %s, error %d(%s)",
-					 tags[p], errno, strerror(errno));
 			}
 
 			tcp_socket[p] = socket(AF_INET6,
@@ -954,7 +980,7 @@ try_V4:
 					 p, tags[p]);
 			}
 			LogDebug(COMPONENT_DISPATCH,
-				"Socket numbers are: %s tcp=%u udp=%u",
+				"Socket numbers are: %s tcp=%d udp=%d",
 				tags[p],
 				tcp_socket[p],
 				udp_socket[p]);
@@ -997,25 +1023,29 @@ void Clean_RPC(void)
 static bool __Register_program(protos prot, int flag, int vers)
 {
 	if ((NFS_options & flag) != 0) {
-		LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/UDP",
-			tags[prot], (int)vers);
-
-		/* XXXX fix svc_register! */
-		if (!UDP_REGISTER(prot, vers, netconfig_udpv4)) {
-			LogMajor(COMPONENT_DISPATCH,
-				 "Cannot register %s V%d on UDP", tags[prot],
-				 (int)vers);
-			return false;
-		}
-
-		if (!v6disabled && netconfig_udpv6) {
-			LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/UDPv6",
+		if (nfs_param.core_param.enable_UDP) {
+			LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/UDP",
 				tags[prot], (int)vers);
-			if (!UDP_REGISTER(prot, vers, netconfig_udpv6)) {
+
+			/* XXXX fix svc_register! */
+			if (!UDP_REGISTER(prot, vers, netconfig_udpv4)) {
 				LogMajor(COMPONENT_DISPATCH,
-					 "Cannot register %s V%d on UDPv6",
+					 "Cannot register %s V%d on UDP",
 					 tags[prot], (int)vers);
 				return false;
+			}
+
+			if (!v6disabled && netconfig_udpv6) {
+				LogInfo(COMPONENT_DISPATCH,
+					"Registering %s V%d/UDPv6",
+					tags[prot], (int)vers);
+				if (!UDP_REGISTER(prot, vers,
+						  netconfig_udpv6)) {
+					LogMajor(COMPONENT_DISPATCH,
+						 "Cannot register %s V%d on UDPv6",
+						 tags[prot], (int)vers);
+					return false;
+				}
 			}
 		}
 
@@ -1142,7 +1172,7 @@ void nfs_Init_svc(void)
 	netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6");
 	if (netconfig_udpv6 == NULL)
 		LogInfo(COMPONENT_DISPATCH,
-			 "Cannot get udp6 netconfig, cannot get an entry for udp6 in netconfig file. Check file /etc/netconfig...");
+			"Cannot get udp6 netconfig, cannot get an entry for udp6 in netconfig file. Check file /etc/netconfig...");
 
 	/* Get the netconfig entries from /etc/netconfig */
 	netconfig_tcpv6 = (struct netconfig *)getnetconfigent("tcp6");

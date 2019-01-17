@@ -390,6 +390,8 @@ typedef struct nfs_core_param {
 	/** Whether to use Pseudo (true) or Path (false) for NFS v3 and 9P
 	    mounts. */
 	bool mount_path_pseudo;
+	/** Whether to disable UDP listeners */
+	bool enable_UDP;
 	/** DBus name prefix. Required if one wants to run multiple ganesha
 	    instances on single host. The prefix should be different for every
 	    ganesha instance. If this is set, dbus name will be

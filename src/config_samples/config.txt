@@ -141,6 +141,8 @@ NFS_CORE_PARAM {}
 
 	mount_path_pseudo(bool, default false)
 
+	Enable_UDP(bool, default true)
+
 	Dbus_Name_Prefix(string, default NULL)
 
 NFS_IP_NAME {}

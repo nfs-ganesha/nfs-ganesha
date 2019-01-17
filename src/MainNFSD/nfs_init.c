@@ -341,20 +341,17 @@ void nfs_print_param_config(void)
 	printf("\tManage_Gids_Expiration = %" PRIu64 " ;\n",
 	       (uint64_t) nfs_param.core_param.manage_gids_expiration);
 
-	if (nfs_param.core_param.drop_io_errors)
-		printf("\tDrop_IO_Errors = true ;\n");
-	else
-		printf("\tDrop_IO_Errors = false ;\n");
+	printf("\tDrop_IO_Errors = %s ;\n",
+	       nfs_param.core_param.drop_io_errors ?  "true" : "false");
 
-	if (nfs_param.core_param.drop_inval_errors)
-		printf("\tDrop_Inval_Errors = true ;\n");
-	else
-		printf("\tDrop_Inval_Errors = false ;\n");
+	printf("\tDrop_Inval_Errors = %s ;\n",
+	       nfs_param.core_param.drop_inval_errors ?  "true" : "false");
 
-	if (nfs_param.core_param.drop_delay_errors)
-		printf("\tDrop_Delay_Errors = true ;\n");
-	else
-		printf("\tDrop_Delay_Errors = false ;\n");
+	printf("\tDrop_Delay_Errors = %s ;\n",
+	       nfs_param.core_param.drop_delay_errors ? "true" : "false");
+
+	printf("\tEnable UDP = %s ;\n", nfs_param.core_param.enable_UDP ?
+	       "true" : "false");
 
 	printf("}\n\n");
 }
