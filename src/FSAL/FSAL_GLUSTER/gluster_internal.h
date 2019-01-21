@@ -38,7 +38,8 @@
 #define GLUSTER_VOLPATH_KEY  "volpath"
 
 /* defined the set of attributes supported with POSIX */
-#define GLUSTERFS_SUPPORTED_ATTRIBUTES (ATTRS_POSIX | ATTR_ACL)
+#define GLUSTERFS_SUPPORTED_ATTRIBUTES (ATTRS_POSIX | ATTR_ACL | \
+					ATTR4_SEC_LABEL)
 
 /**
  * The attributes this FSAL can set.
@@ -48,7 +49,7 @@
 ATTR_MODE     | ATTR_OWNER	  | ATTR_GROUP	      |  \
 ATTR_ATIME    | ATTR_CTIME	  | ATTR_MTIME	      |  \
 ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER |  \
-ATTR_ACL)
+ATTR_ACL      | ATTR4_SEC_LABEL)
 
 /**
  * Override internal Gluster defines for the time being.
@@ -151,6 +152,7 @@ struct glusterfs_export {
 	struct fsal_export export;
 	bool pnfs_ds_enabled;
 	bool pnfs_mds_enabled;
+	char *sec_label_xattr;
 };
 
 #ifdef USE_GLUSTER_DELEGATION

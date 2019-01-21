@@ -33,6 +33,7 @@
 #include "nfs4_acls.h"
 #include "FSAL/fsal_commonlib.h"
 #include "posix_acls.h"
+#include "nfs_exports.h"
 
 /**
  * @brief FSAL status mapping from GlusterFS errors
@@ -112,6 +113,10 @@ void stat2fsal_attributes(const struct stat *buffstat,
 	fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
 
 	fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
+
+	/* Disable seclabels if not enabled in config */
+	if (!op_ctx_export_has_option(EXPORT_OPTION_SECLABEL_SET))
+		fsalattr->supported &= ~ATTR4_SEC_LABEL;
 }
 
 /**
