@@ -65,8 +65,8 @@ struct config_block rados_url_param_blk = {
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
-int rados_urls_set_param_from_conf(void *tree_node,
-				struct config_error_type *err_type)
+static int rados_urls_set_param_from_conf(void *tree_node,
+					  struct config_error_type *err_type)
 {
 	(void) load_config_from_node(tree_node,
 				&rados_url_param_blk,
