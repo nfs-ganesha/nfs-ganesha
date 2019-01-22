@@ -69,6 +69,9 @@ Requires: openSUSE-release
 @BCOND_RDMA@ rdma
 %global use_rdma %{on_off_switch rdma}
 
+@BCOND_9P@ 9P
+%global use_9P %{on_off_switch 9P}
+
 @BCOND_JEMALLOC@ jemalloc
 
 @BCOND_LTTNG@ lttng
@@ -202,6 +205,7 @@ nfs-ganesha : NFS-GANESHA is a NFS Server running in user space.
 It comes with various back-end modules (called FSALs) provided as
  shared objects to support different file systems and name-spaces.
 
+%if %{with 9P}
 %package mount-9P
 Summary: a 9p mount helper
 Group: Applications/System
@@ -209,6 +213,7 @@ Group: Applications/System
 %description mount-9P
 This package contains the mount.9P script that clients can use
 to simplify mounting to NFS-GANESHA. This is a 9p mount helper.
+%endif
 
 %package vfs
 Summary: The NFS-GANESHA VFS FSAL
@@ -495,7 +500,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_VFS=ON				\
 	-DUSE_FSAL_PROXY=ON				\
 	-DUSE_DBUS=ON					\
-	-DUSE_9P=ON					\
+	-DUSE_9P=%{use_9P}				\
 	-DDISTNAME_HAS_GIT_DATA=OFF			\
 	-DUSE_MAN_PAGE=%{use_man_page}                  \
 	-DRPCBIND=%{use_rpcbind}			\
@@ -526,7 +531,9 @@ mkdir -p %{buildroot}%{_libexecdir}/ganesha
 install -m 644 config_samples/logrotate_ganesha	%{buildroot}%{_sysconfdir}/logrotate.d/ganesha
 install -m 644 scripts/ganeshactl/org.ganesha.nfsd.conf	%{buildroot}%{_sysconfdir}/dbus-1/system.d
 install -m 755 scripts/nfs-ganesha-config.sh %{buildroot}%{_libexecdir}/ganesha
+%if %{with 9P}
 install -m 755 tools/mount.9P	%{buildroot}%{_sbindir}/mount.9P
+%endif
 
 install -m 644 config_samples/vfs.conf %{buildroot}%{_sysconfdir}/ganesha
 
@@ -686,10 +693,12 @@ exit 0
 %endif
 
 
+%if %{with 9P}
 %files mount-9P
 %{_sbindir}/mount.9P
 %if %{with man_page}
 %{_mandir}/*/ganesha-9p-config.8.gz
+%endif
 %endif
 
 %files vfs
@@ -830,8 +839,10 @@ exit 0
 %{_bindir}/manage_exports
 %{_bindir}/manage_logger
 %{_bindir}/ganeshactl
+%if %{with 9P}
 %{_bindir}/client_stats_9pOps
 %{_bindir}/export_stats_9pOps
+%endif
 %endif
 %{_bindir}/fake_recall
 %{_bindir}/get_clientids
