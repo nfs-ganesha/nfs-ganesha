@@ -520,17 +520,18 @@ static inline void now(struct timespec *ts)
  * @param[in]  dest_size Total size of dest
  *
  * @retval 0 on success.
- * @retval -1 if the buffer would overflow (the buffer is not modified)
+ * @retval -1 if the buffer would overflow
  */
 
 static inline int strmaxcpy(char *dest, const char *src, size_t dest_size)
 {
-	size_t len = strlen(src);
+	size_t slen;
 
-	if (len >= dest_size)
+	slen = strlcpy(dest, src, dest_size);
+	if (slen >= dest_size) {
 		return -1;
+	}
 
-	memcpy(dest, src, len + 1);
 	return 0;
 }
 
