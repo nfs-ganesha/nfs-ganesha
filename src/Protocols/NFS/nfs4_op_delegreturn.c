@@ -110,6 +110,7 @@ enum nfs_req_result nfs4_op_delegreturn(struct nfs_argop4 *op,
 	}
 
 	deleg_heuristics_recall(data->current_obj, owner, state_found);
+	reset_cbgetattr_stats(data->current_obj);
 
 	/* Release reference taken above. */
 	dec_state_owner_ref(owner);

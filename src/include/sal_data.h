@@ -872,6 +872,23 @@ struct file_deleg_stats {
 					   num_opens */
 };
 
+enum cbgetattr_state {
+	CB_GETATTR_NONE = 0, /* initial state or reset to as
+				and when finished processing
+				response */
+	CB_GETATTR_WIP, /* when req sent */
+	CB_GETATTR_RSP_OK, /* successful response */
+	CB_GETATTR_FAILED /* for any failure */
+};
+
+struct cbgetattr_rsp {
+	enum cbgetattr_state state;
+	uint64_t change;
+	uint64_t filesize;
+	bool modified;
+};
+typedef struct cbgetattr_rsp  cbgetattr_t;
+
 /**
  * @brief Per-file state lists
  *
@@ -888,11 +905,14 @@ struct state_file {
 	struct glist_head lock_list;
 	/** Pointers for NLM share list. Protected by state_lock */
 	struct glist_head nlm_share_list;
-	/** true iff write delegated */
+	/** true iff write delegated. Protected by state_lock */
 	bool write_delegated;
+	/** client holding write_deleg. Protected by state_lock */
 	nfs_client_id_t *write_deleg_client;
 	/** Delegation statistics. Protected by state_lock */
 	struct file_deleg_stats fdeleg_stats;
+	/* cbgetattr stats. Protected by state_lock */
+	cbgetattr_t cbgetattr;
 	uint32_t anon_ops;   /* number of anonymous operations
 			      * happening at the moment which
 			      * prevents delegations from being

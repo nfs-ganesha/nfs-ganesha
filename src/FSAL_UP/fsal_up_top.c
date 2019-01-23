@@ -45,6 +45,7 @@
 #include "delayed_exec.h"
 #include "export_mgr.h"
 #include "server_stats.h"
+#include "sal_data.h"
 
 struct delegrecall_context {
 	/* Reserve lease during delegation recall */
@@ -1619,6 +1620,290 @@ state_status_t delegrecall(const struct fsal_up_vector *vec,
 
 	rc = delegrecall_impl(obj);
 	obj->obj_ops->put_ref(obj);
+	return rc;
+}
+
+struct cbgetattr_context {
+	struct fsal_obj_handle *obj;
+	nfs_client_id_t *clid; /* client holding deleg */
+	struct gsh_export *ctx_export;	/*< current export */
+};
+
+/*
+ * release cbgetattr_context args reference and
+ * free the memory allocated.
+ */
+static inline void
+free_cbgetattr_context(struct cbgetattr_context *cbgetattr_ctx)
+{
+	PTHREAD_MUTEX_lock(&cbgetattr_ctx->clid->cid_mutex);
+	update_lease(cbgetattr_ctx->clid);
+	PTHREAD_MUTEX_unlock(&cbgetattr_ctx->clid->cid_mutex);
+
+	put_gsh_export(cbgetattr_ctx->ctx_export);
+
+	dec_client_id_ref(cbgetattr_ctx->clid);
+	cbgetattr_ctx->obj->obj_ops->put_ref(cbgetattr_ctx->obj);
+
+	gsh_free(cbgetattr_ctx);
+}
+
+/**
+ * @brief act on response received to CB_GETATTR request
+ *
+ * On successful rpc callback request, read and store
+ * the attributes sent by client and mark cbgetattr_state
+ * as CB_GETATTR_RESP_OK
+ *
+ * @param[in] cbgetattr_context
+ * @param[in] rpc_call
+ *
+ * @return CB_GETATTR_RESP_OK on success
+ *	 CB_GETATTR_FAILED on failure
+ */
+enum
+cbgetattr_state handle_getattr_response(struct cbgetattr_context *cbg_ctx,
+					rpc_call_t *call)
+{
+	fattr4 attr;
+	struct attrlist rsp_attr;
+	int rc = 0;
+	enum cbgetattr_state cb_state;
+	struct fsal_obj_handle *obj = cbg_ctx->obj;
+	nfs_client_id_t *clid = cbg_ctx->clid;
+	nfs_cb_resop4 *cbr = NULL;
+	CB_GETATTR4res *res = NULL;
+
+	if (clid->cid_minorversion == 0)
+		cbr = &call->cbt.v_u.v4.res.resarray.resarray_val[0];
+	else
+		cbr = &call->cbt.v_u.v4.res.resarray.resarray_val[1];
+
+	res = &cbr->nfs_cb_resop4_u.opcbgetattr;
+	attr = res->CB_GETATTR4res_u.resok4.obj_attributes;
+
+	rc = nfs4_Fattr_To_FSAL_attr(&rsp_attr, &attr, NULL);
+
+	if (rc)
+		goto out;
+
+	cb_state = CB_GETATTR_RSP_OK;
+
+	if (!obj->state_hdl->file.cbgetattr.modified)
+		obj->state_hdl->file.cbgetattr.change = rsp_attr.change;
+
+	obj->state_hdl->file.cbgetattr.filesize = rsp_attr.filesize;
+
+	return cb_state;
+out:
+	return CB_GETATTR_FAILED;
+
+}
+
+/**
+ * @brief Handle the reply to a CB_GETATTR
+ *
+ * @param[in] call  The RPC call being completed
+ *
+ */
+
+static void cbgetattr_completion_func(rpc_call_t *call)
+{
+	struct cbgetattr_context *cbg_ctx = call->call_arg;
+	enum cbgetattr_state *cbgetattr_state;
+	CB_GETATTR4args *opcbgetattr;
+
+	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
+		 !(call->states & NFS_CB_CALL_ABORTED) ? "Success" : "Failed");
+
+	PTHREAD_RWLOCK_wrlock(&cbg_ctx->obj->state_hdl->state_lock);
+
+	cbgetattr_state = &cbg_ctx->obj->state_hdl->file.cbgetattr.state;
+
+	if (!(call->states & NFS_CB_CALL_ABORTED)) {
+		LogMidDebug(COMPONENT_NFS_CB, "call result: %d",
+			    call->call_req.cc_error.re_status);
+
+		if (call->call_req.cc_error.re_status != RPC_SUCCESS) {
+			LogEvent(COMPONENT_NFS_CB,
+				 "CB_GETATTR call result: %d, marking CB channel down",
+				 call->call_req.cc_error.re_status);
+			set_cb_chan_down(cbg_ctx->clid, true);
+			*cbgetattr_state = CB_GETATTR_FAILED;
+			goto out;
+		}
+
+	} else {
+		LogEvent(COMPONENT_NFS_CB,
+			 "CB_GETATTR Aborted: %d, marking CB channel down",
+			 call->call_req.cc_error.re_status);
+		set_cb_chan_down(cbg_ctx->clid, true);
+		/* Mark the getattr as failed */
+		*cbgetattr_state = CB_GETATTR_FAILED;
+		goto out;
+	}
+	switch (call->cbt.v_u.v4.res.status) {
+	case NFS4_OK:
+		LogDebug(COMPONENT_NFS_CB,
+			 "CB_GEATTR succeded for client(%s)",
+			 cbg_ctx->clid->gsh_client->hostaddr_str);
+		*cbgetattr_state = handle_getattr_response(cbg_ctx,
+							   call);
+		break;
+	default:
+		*cbgetattr_state = CB_GETATTR_FAILED;
+	}
+
+out:
+	PTHREAD_RWLOCK_unlock(&cbg_ctx->obj->state_hdl->state_lock);
+	if (cbg_ctx->clid->cid_minorversion == 0) {
+		opcbgetattr = &call->cbt.v_u.v4.args.argarray.argarray_val[0]
+				.nfs_cb_argop4_u.opcbgetattr;
+		nfs4_freeFH(&opcbgetattr->fh);
+	} else {
+		opcbgetattr = &call->cbt.v_u.v4.args.argarray.argarray_val[1]
+				.nfs_cb_argop4_u.opcbgetattr;
+		nfs4_freeFH(&opcbgetattr->fh);
+		nfs41_release_single(call);
+	}
+	free_cbgetattr_context(cbg_ctx);
+}
+
+/**
+ * @brief Send CB_GETATTR to write_delegated client.
+ *
+ * This function sends a CB_GETATTR, the caller has to lock
+ * cache_entry->state_lock before calling this function.
+ *
+ * @param[in] obj The file holding delegation
+ * @param[in] cbgetattr_context
+ *
+ * @return 0, success
+ *	   otherwise, failure
+ */
+int send_cbgetattr(struct fsal_obj_handle *obj,
+		   struct cbgetattr_context *p_cargs)
+{
+	int ret = 0;
+	nfs_cb_argop4 argop;
+	bitmap4	*cb_attr_req;
+	struct root_op_context root_ctx;
+
+	init_root_op_context(&root_ctx, p_cargs->ctx_export,
+			     p_cargs->ctx_export->fsal_export,
+			     0, 0, UNKNOWN_REQUEST);
+
+	LogDebug(COMPONENT_FSAL_UP, "Sending CB_GETATTR to client %s",
+		 p_cargs->clid->gsh_client->hostaddr_str);
+
+	argop.argop = NFS4_OP_CB_GETATTR;
+
+	/* Convert it to a file handle */
+	if (!nfs4_FSALToFhandle(true, &argop.nfs_cb_argop4_u.opcbgetattr.fh,
+				obj, p_cargs->ctx_export)) {
+		LogCrit(COMPONENT_FSAL_UP,
+			"nfs4_FSALToFhandle failed, can not process recall");
+		goto out;
+	}
+
+	cb_attr_req = &argop.nfs_cb_argop4_u.opcbgetattr.attr_request;
+
+	memset(cb_attr_req, 0, sizeof(*cb_attr_req));
+
+	/*
+	 * If we already know that client has modified data, no need to
+	 * query for change attribute
+	 */
+	if (!obj->state_hdl->file.cbgetattr.modified)
+		set_attribute_in_bitmap(cb_attr_req, FATTR4_CHANGE);
+
+	set_attribute_in_bitmap(cb_attr_req, FATTR4_SIZE);
+
+	ret = nfs_rpc_cb_single(p_cargs->clid, &argop, NULL,
+				cbgetattr_completion_func, p_cargs);
+	if (ret == 0)
+		return 0;
+	LogDebug(COMPONENT_FSAL_UP, "CB_GETATTR nfs_rpc_cb_single returned %d",
+		 ret);
+
+out:
+	nfs4_freeFH(&argop.nfs_cb_argop4_u.opcbgetattr.fh);
+
+	LogCrit(COMPONENT_STATE, "CB_GETATTR failed for %s",
+		p_cargs->clid->gsh_client->hostaddr_str);
+
+	free_cbgetattr_context(p_cargs);
+	release_root_op_context();
+	return ret;
+}
+
+/**
+ * @brief Implement CB_GETATTR op
+ *
+ * By making use of cbgetattr_context, prepare and
+ * send CB_GETATTR request to the client. On success,
+ * set cbgetattr_state to CB_GETATTR_WIP state,
+ * otherwise mark it as CB_GETATTR_FAILED.
+ *
+ * @param[in] obj file being operated on
+ * @param[in] client client holding delegation
+ * @param[in] ctx_exp current export reference
+ *
+ * @return: 0, success
+ *	    otherwise, failure
+ */
+int cbgetattr_impl(struct fsal_obj_handle *obj,
+		   nfs_client_id_t *client,
+		   struct gsh_export *ctx_exp)
+{
+	int rc = 0;
+	enum  cbgetattr_state *cb_state = NULL;
+	struct cbgetattr_context *cbg_ctx;
+
+	LogDebug(COMPONENT_FSAL_UP, "CB_GETATTR: obj %p type %u",
+		 obj, obj->type);
+
+	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+
+	cb_state = &obj->state_hdl->file.cbgetattr.state;
+
+	if (*cb_state != CB_GETATTR_NONE) {
+		/* Either its already WIP or got error */
+		goto out;
+	}
+	*cb_state = CB_GETATTR_WIP;
+
+	cbg_ctx = gsh_malloc(sizeof(struct cbgetattr_context));
+
+	obj->obj_ops->get_ref(obj);
+	cbg_ctx->obj = obj;
+
+	inc_client_id_ref(client);
+	cbg_ctx->clid = client;
+	/* Prevent client's lease expiring until we complete
+	 * this cb_getattr operation. If the client's lease
+	 * has already expired, let the reaper thread handling
+	 * expired clients revoke this delegation, and we just
+	 * skip it here.
+	 */
+	PTHREAD_MUTEX_lock(&cbg_ctx->clid->cid_mutex);
+	if (!reserve_lease(cbg_ctx->clid)) {
+		gsh_free(cbg_ctx);
+		*cb_state = CB_GETATTR_FAILED;
+		PTHREAD_MUTEX_unlock(&cbg_ctx->clid->cid_mutex);
+		goto out;
+	}
+	PTHREAD_MUTEX_unlock(&cbg_ctx->clid->cid_mutex);
+	get_gsh_export_ref(ctx_exp);
+	cbg_ctx->ctx_export = ctx_exp;
+
+	rc = send_cbgetattr(obj, cbg_ctx);
+out:
+	if (rc)
+		*cb_state = CB_GETATTR_FAILED;
+
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+
 	return rc;
 }
 

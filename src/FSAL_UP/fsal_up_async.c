@@ -419,6 +419,54 @@ fsal_status_t up_async_notify_device(struct fridgethr *fr,
 	return fsalstat(posix2fsal_error(rc), rc);
 }
 
+/* CB_GETATTR */
+
+struct cbgetattr_args {
+	struct fsal_obj_handle *obj;
+	nfs_client_id_t *clid;
+	struct gsh_export *ctx_export;
+};
+
+static void queue_cbgetattr(struct fridgethr_context *ctx)
+{
+	struct cbgetattr_args *args = ctx->arg;
+
+	(void)cbgetattr_impl(args->obj, args->clid, args->ctx_export);
+
+	args->obj->obj_ops->put_ref(args->obj);
+	dec_client_id_ref(args->clid);
+	put_gsh_export(args->ctx_export);
+
+	gsh_free(args);
+}
+
+int async_cbgetattr(struct fridgethr *fr, struct fsal_obj_handle *obj,
+			nfs_client_id_t *client)
+{
+	int rc = 0;
+	struct cbgetattr_args *args = NULL;
+
+	args = gsh_malloc(sizeof(struct cbgetattr_args));
+
+	/* get a ref to prevent races when callback is called too late */
+	obj->obj_ops->get_ref(obj);
+	inc_client_id_ref(client);
+
+	args->obj = obj;
+	args->clid = client;
+	args->ctx_export = op_ctx->ctx_export;
+	get_gsh_export_ref(args->ctx_export);
+
+	rc = fridgethr_submit(fr, queue_cbgetattr, args);
+	if (rc != 0) {
+		obj->obj_ops->put_ref(obj);
+		dec_client_id_ref(client);
+		put_gsh_export(args->ctx_export);
+		gsh_free(args);
+	}
+	return rc;
+}
+
 /* Delegrecall */
 
 struct delegrecall_args {

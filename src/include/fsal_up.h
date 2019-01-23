@@ -49,6 +49,7 @@
 
 #include "gsh_status.h"
 #include "fsal_api.h"
+#include "sal_data.h"
 
 enum {
 	/* empty flags */
@@ -323,6 +324,9 @@ fsal_status_t up_async_delegrecall(struct fridgethr *fr,
 
 /** @} */
 int async_delegrecall(struct fridgethr *fr, struct fsal_obj_handle *obj);
+
+int async_cbgetattr(struct fridgethr *fr, struct fsal_obj_handle *obj,
+		    nfs_client_id_t *client);
 
 void up_ready_init(struct fsal_up_vector *up_ops);
 void up_ready_set(struct fsal_up_vector *up_ops);

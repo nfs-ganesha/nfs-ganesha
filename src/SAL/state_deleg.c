@@ -52,6 +52,8 @@
 #include "server_stats.h"
 #include "fsal_up.h"
 #include "nfs_file_handle.h"
+#include "nfs_convert.h"
+#include "fsal_convert.h"
 
 /**
  * @brief Initialize new delegation state as argument for state_add()
@@ -139,6 +141,7 @@ state_status_t acquire_lease_lock(struct state_hdl *ostate,
 
 	if (status == STATE_SUCCESS) {
 		update_delegation_stats(ostate, owner);
+		reset_cbgetattr_stats(ostate->file.obj);
 	} else {
 		LogDebug(COMPONENT_STATE, "Could not set lease, error=%s",
 			 state_err_str(status));
@@ -204,6 +207,17 @@ static int advance_avg(time_t prev_avg, time_t new_time,
 		       uint32_t prev_tot, uint32_t curr_tot)
 {
 	return ((prev_tot * prev_avg) + new_time) / curr_tot;
+}
+
+/*
+ * @brief reset cbgetattr struct args
+ */
+void reset_cbgetattr_stats(struct fsal_obj_handle *obj)
+{
+	cbgetattr_t *cbgetattr = &obj->state_hdl->file.cbgetattr;
+
+	cbgetattr->state = CB_GETATTR_NONE;
+	cbgetattr->modified = false;
 }
 
 /**
@@ -427,6 +441,7 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
 	(void) nfs4_FSALToFhandle(true, &fhandle, obj, export);
 
 	deleg_heuristics_recall(obj, owner, deleg_state);
+	reset_cbgetattr_stats(obj);
 
 	/* Build op_context for state_unlock_locked */
 	init_root_op_context(&root_op_context, NULL, NULL, 0, 0,
@@ -589,22 +604,67 @@ bool state_deleg_conflict(struct fsal_obj_handle *obj, bool write)
 	return status;
 }
 
-nfsstat4 handle_deleg_getattr(struct fsal_obj_handle *obj)
+/*
+ * @brief: fetch getattr from the write_delegated client
+ *
+ * Send CB_GETATTR to the write_delegated client to fetch
+ * right attributes. If not recall delegation.
+ *
+ * @note: should be called under state_lock.
+ */
+nfsstat4 handle_deleg_getattr(struct fsal_obj_handle *obj,
+			      nfs_client_id_t *client)
 {
-	nfsstat4 status = NFS4_OK;
-#ifndef CB_GETATTR
+	nfsstat4 status = NFS4ERR_DELAY;
+	int rc = 0;
+	enum cbgetattr_state cb_state;
+
 	/* Check for delegation conflict.*/
 	LogDebug(COMPONENT_STATE,
 		 "While trying to perform a GETATTR op, found a conflicting WRITE delegation");
-	status = NFS4ERR_DELAY;
-	if (async_delegrecall(general_fridge, obj) != 0) {
+
+	/*
+	 * @todo: Provide an option for user to enable CB_GETATTR
+	 */
+
+	cb_state = obj->state_hdl->file.cbgetattr.state;
+	switch (cb_state) {
+	case CB_GETATTR_RSP_OK:
+		/* got response for CB_GETATTR */
+		status = NFS4_OK;
+		goto out;
+	case CB_GETATTR_WIP:
+		/* wait for response */
+		goto out;
+	case CB_GETATTR_FAILED:
+		goto deleg_recall;
+	default: /* CB_GETATTR_NONE */
+		goto send_request;
+	}
+send_request:
+	LogDebug(COMPONENT_STATE, "sending CB_GETATTR");
+	rc = async_cbgetattr(general_fridge, obj, client);
+	if (rc != 0) {
+		LogCrit(COMPONENT_STATE,
+			"Failed to start thread to send cb_getattr.");
+		goto deleg_recall;
+	}
+	goto out;
+deleg_recall:
+	LogDebug(COMPONENT_STATE, "CB_GETATTR is either not enabled or failed,"
+				   " recalling write delegation");
+	rc = async_delegrecall(general_fridge, obj);
+	if (rc != 0) {
 		LogCrit(COMPONENT_STATE,
 			"Failed to start thread to recall delegation from conflicting operation.");
 		goto out;
 	}
-#endif
 
 out:
+	if (rc != 0) {
+		status = nfs4_Errno_status(fsalstat(posix2fsal_error(rc),
+						    rc));
+	}
 	return status;
 }
 
