@@ -198,10 +198,9 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 	LogDebug(component,
 		 "CREATE_SESSION clientid=%s csa_sequence=%" PRIu32
 		 " clientid_cs_seq=%" PRIu32
-		 " data_oppos=%d data_use_slot_cached_result=%d",
+		 " data_oppos=%d",
 		 str_clientid4, arg_CREATE_SESSION4->csa_sequence,
-		 found->cid_create_session_sequence, data->oppos,
-		 data->use_slot_cached_result);
+		 found->cid_create_session_sequence, data->oppos);
 
 	if (isFullDebug(component)) {
 		char str[LOG_BUFF_LEN] = "\0";
@@ -211,15 +210,12 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 		LogFullDebug(component, "Found %s", str);
 	}
 
-	data->use_slot_cached_result = false;
-
 	if ((arg_CREATE_SESSION4->csa_sequence + 1) ==
 	     found->cid_create_session_sequence) {
 		*res_CREATE_SESSION4 = found->cid_create_session_slot;
 
 		LogDebug(component,
-			 "CREATE_SESSION replay=%p special case",
-			 data->cached_result);
+			 "CREATE_SESSION special replay case, used response in cid_create_session_slot");
 		goto out;
 	} else if (arg_CREATE_SESSION4->csa_sequence !=
 		   found->cid_create_session_sequence) {
@@ -393,7 +389,6 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 	       nfs41_session->session_id,
 	       NFS4_SESSIONID_SIZE);
 
-	LogDebug(component, "CREATE_SESSION replay=%p", data->cached_result);
 #ifdef USE_LTTNG
 	tracepoint(nfs4, session_ref, __func__, __LINE__, nfs41_session, 2);
 #endif

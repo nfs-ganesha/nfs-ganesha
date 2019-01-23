@@ -38,6 +38,7 @@
 
 #include "nfs_core.h"
 #include "sal_data.h"
+#include "nfs_proto_data.h"
 
 static inline enum nfs_req_result nfsstat4_to_nfs_req_result(nfsstat4 stat)
 {
@@ -473,9 +474,9 @@ void nfs3_commit_free(nfs_res_t *);
 void nfs3_read_free(nfs_res_t *);
 
 void nfs4_Compound_FreeOne(nfs_resop4 *);
+void release_nfs4_res_compound(struct COMPOUND4res_extended *res_compound4_ex);
 void nfs4_Compound_Free(nfs_res_t *);
 void nfs4_Compound_CopyResOne(nfs_resop4 *, nfs_resop4 *);
-void nfs4_Compound_CopyRes(nfs_res_t *, nfs_res_t *);
 
 void nfs4_op_access_Free(nfs_resop4 *);
 void nfs4_op_close_Free(nfs_resop4 *);
@@ -548,11 +549,24 @@ void nfs4_op_destroy_clientid_Free(nfs_resop4 *);
 void nfs4_op_reclaim_complete_Free(nfs_resop4 *);
 
 void compound_data_Free(compound_data_t *);
+bool xdr_COMPOUND4res_extended(XDR *xdrs, struct COMPOUND4res_extended **objp);
 
 /* Pseudo FS functions */
 bool pseudo_mount_export(struct gsh_export *exp);
 void create_pseudofs(void);
 void pseudo_unmount_export(struct gsh_export *exp);
 bool export_is_defunct(struct gsh_export *exp, uint64_t generation);
+
+/* Slot functions */
+static inline void release_slot(nfs41_session_slot_t *slot)
+{
+	if (slot->cached_result != NULL) {
+		/* Release slot cache reference to the result. */
+		release_nfs4_res_compound(slot->cached_result);
+
+		/* And empty the slot cache */
+		slot->cached_result = NULL;
+	}
+}
 
 #endif	/* NFS_PROTO_FUNCTIONS_H */

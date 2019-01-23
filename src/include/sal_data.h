@@ -130,7 +130,7 @@ extern hash_table_t *ht_session_id;
 typedef struct nfs41_session_slot__ {
 	sequenceid4 sequence;	/*< Sequence number of this operation */
 	pthread_mutex_t lock;	/*< Lock on the slot */
-	struct COMPOUND4res_extended cached_result;	/*< NFv41: pointer to
+	struct COMPOUND4res_extended *cached_result;	/*< NFv41: pointer to
 							   cached RPC result in
 							   a session's slot */
 } nfs41_session_slot_t;

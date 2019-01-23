@@ -269,11 +269,7 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 
 			slot = &session->fc_slots[i];
 			PTHREAD_MUTEX_destroy(&slot->lock);
-			if (slot->cached_result.res_cached) {
-				slot->cached_result.res_cached = false;
-				nfs4_Compound_Free((nfs_res_t *)
-						   &slot->cached_result);
-			}
+			release_slot(slot);
 		}
 
 		PTHREAD_COND_destroy(&session->cb_cond);

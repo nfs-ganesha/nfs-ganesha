@@ -94,7 +94,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 	memcpy(refer.session, data->session->session_id, sizeof(sessionid4));
 	refer.sequence = data->sequence;
-	refer.slot = data->slot;
+	refer.slot = data->slotid;
 
 	clientid_owner = &data->session->clientid_record->cid_owner;
 

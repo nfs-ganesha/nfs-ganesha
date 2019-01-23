@@ -279,7 +279,7 @@ const nfs_function_desc_t nfs4_func_desc[] = {
 	 .service_function = nfs4_Compound,
 	 .free_function = nfs4_Compound_Free,
 	 .xdr_decode_func = (xdrproc_t) xdr_COMPOUND4args,
-	 .xdr_encode_func = (xdrproc_t) xdr_COMPOUND4res,
+	 .xdr_encode_func = (xdrproc_t) xdr_COMPOUND4res_extended,
 	 .funcname = "nfs4_Comp",
 	 .dispatch_behaviour = CAN_BE_DUP}
 };

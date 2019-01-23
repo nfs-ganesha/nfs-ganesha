@@ -129,7 +129,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 		       data->session->session_id,
 		       sizeof(sessionid4));
 		refer.sequence = data->sequence;
-		refer.slot = data->slot;
+		refer.slot = data->slotid;
 	}
 
 	res_LOCK4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);

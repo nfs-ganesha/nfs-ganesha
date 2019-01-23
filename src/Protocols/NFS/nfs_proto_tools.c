@@ -4575,13 +4575,6 @@ uint32_t resp_room(compound_data_t *data)
 	/* Start with max response size */
 	room = data->session->fore_channel_attrs.ca_maxresponsesize;
 
-	/* If this request is cached and maxcachesize is smaller use it. */
-	if (data->use_slot_cached_result && room >
-	    data->session->fore_channel_attrs.ca_maxresponsesize_cached) {
-		room =
-		    data->session->fore_channel_attrs.ca_maxresponsesize_cached;
-	}
-
 	/* Now subtract the space for the opnum4 for this response plus at
 	 * least one more opnum and status.
 	 */
