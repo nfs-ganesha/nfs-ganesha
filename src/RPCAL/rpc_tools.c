@@ -285,12 +285,12 @@ int sprint_sockip(sockaddr_t *addr, char *buf, int len)
 			      len);
 		break;
 	case AF_LOCAL:
-		strncpy(buf, ((struct sockaddr_un *)addr)->sun_path, len);
+		strlcpy(buf, ((struct sockaddr_un *)addr)->sun_path, len);
 		name = buf;
 	}
 
 	if (name == NULL) {
-		strncpy(buf, "<unknown>", len);
+		strlcpy(buf, "<unknown>", len);
 		return 0;
 	}
 

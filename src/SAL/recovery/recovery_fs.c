@@ -192,7 +192,8 @@ void fs_add_clid(nfs_client_id_t *clientid)
 		}
 		/* if (remaining) clientid is longer than 255, */
 		/* get the next 255 bytes and create a subdir */
-		strncpy(segment, &clientid->cid_recov_tag[position], NAME_MAX);
+		strlcpy(segment, &clientid->cid_recov_tag[position],
+			sizeof(segment));
 		strcat(path, "/");
 		strncat(path, segment, NAME_MAX);
 		err = mkdir(path, 0700);
@@ -267,10 +268,9 @@ static void fs_rm_clid_impl(char *recov_dir, char *parent_path, int position)
 		fs_rm_revoked_handles(parent_path);
 		return;
 	}
-	segment = gsh_malloc(NAME_MAX+1);
 
-	memset(segment, 0, NAME_MAX+1);
-	strncpy(segment, &recov_dir[position], NAME_MAX);
+	segment = gsh_malloc(NAME_MAX+1);
+	strlcpy(segment, &recov_dir[position], NAME_MAX+1);
 	segment_len = strlen(segment);
 
 	/* allocate enough memory for the new part of the string */
@@ -558,8 +558,7 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 				gsh_free(build_clid);
 				continue;
 			}
-			strncpy(temp, ptr+1, len);
-			temp[len] = 0;
+			strlcpy(temp, ptr+1, len+1);
 			cid_len = atoi(temp);
 			len = strlen(ptr2);
 			if ((len == (cid_len+2)) && (ptr2[len-1] == ')')) {
@@ -768,7 +767,8 @@ void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 			}
 			return;
 		}
-		strncpy(segment, &delr_clid->cid_recov_tag[position], NAME_MAX);
+		strlcpy(segment, &delr_clid->cid_recov_tag[position],
+			sizeof(segment));
 		strcat(path, "/");
 		strncat(path, segment, NAME_MAX);
 		position += NAME_MAX;

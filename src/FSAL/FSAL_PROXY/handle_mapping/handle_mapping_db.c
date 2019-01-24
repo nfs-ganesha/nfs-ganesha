@@ -847,8 +847,8 @@ int handlemap_db_init(const char *db_dir, const char *tmp_dir,
 
 	/* first, save the parameters */
 
-	strncpy(dbmap_dir, db_dir, MAXPATHLEN);
-	strncpy(db_tmpdir, tmp_dir, MAXPATHLEN);
+	strlcpy(dbmap_dir, db_dir, sizeof(dbmap_dir));
+	strlcpy(db_tmpdir, tmp_dir, sizeof(db_tmpdir));
 
 	if (db_count > MAX_DB)
 		return HANDLEMAP_INVALID_PARAM;
