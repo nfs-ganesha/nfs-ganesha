@@ -127,7 +127,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		pfid->xattr->xattr_write = _9P_XATTR_CAN_WRITE;
 
 
-		strncpy(pfid->xattr->xattr_name, name, MAXNAMLEN);
+		strlcpy(pfid->xattr->xattr_name, name, MAXNAMLEN+1);
 
 		/* /!\  POSIX_ACL RELATED HOOK
 		 * Setting a POSIX ACL (using setfacl for example) means

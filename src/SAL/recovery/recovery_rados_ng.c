@@ -190,12 +190,10 @@ static void rados_ng_add_clid(nfs_client_id_t *clientid)
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to add clid %lu",
 			 clientid->cid_clientid);
-		goto out;
+	} else {
+		clientid->cid_recov_tag = gsh_strdup(cval);
 	}
 
-	clientid->cid_recov_tag = gsh_malloc(strlen(cval) + 1);
-	strncpy(clientid->cid_recov_tag, cval, strlen(cval) + 1);
-out:
 	gsh_free(cval);
 }
 

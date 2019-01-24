@@ -216,9 +216,8 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 		    (xattr_list[index].flags, obj_handle->obj_handle.type)) {
 			/* fills an xattr entry */
 			xattrs_tab[out_index].xattr_id = index;
-			strncpy(xattr_list[index].xattr_name,
-				xattrs_tab[out_index].xattr_name, MAXNAMLEN);
-			xattr_list[index].xattr_name[MAXNAMLEN] = '\0';
+			strlcpy(xattr_list[index].xattr_name,
+				xattrs_tab[out_index].xattr_name, MAXNAMLEN+1);
 			xattrs_tab[out_index].xattr_cookie = index + 1;
 
 			/* next output slot */
@@ -261,7 +260,7 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 			/* fills an xattr entry */
 			xattrs_tab[out_index].xattr_id = index;
-			strncpy(xattrs_tab[out_index].xattr_name, ptr, len + 1);
+			strlcpy(xattrs_tab[out_index].xattr_name, ptr, len + 1);
 			xattrs_tab[out_index].xattr_cookie = index + 1;
 
 			/* next output slot */

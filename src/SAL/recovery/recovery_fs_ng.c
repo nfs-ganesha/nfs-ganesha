@@ -242,8 +242,7 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path,
 				gsh_free(build_clid);
 				continue;
 			}
-			strncpy(temp, ptr+1, len);
-			temp[len] = 0;
+			strlcpy(temp, ptr+1, len+1);
 			cid_len = atoi(temp);
 			len = strlen(ptr2);
 			if ((len == (cid_len+2)) && (ptr2[len-1] == ')')) {

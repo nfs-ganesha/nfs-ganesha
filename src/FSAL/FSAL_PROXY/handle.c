@@ -1256,7 +1256,7 @@ int pxy_init_rpc(struct pxy_export *pxy_exp)
 	PTHREAD_MUTEX_unlock(&pxy_exp->rpc.listlock);
 	if (gethostname(pxy_exp->rpc.pxy_hostname,
 			sizeof(pxy_exp->rpc.pxy_hostname)))
-		strncpy(pxy_exp->rpc.pxy_hostname, "NFS-GANESHA/Proxy",
+		strlcpy(pxy_exp->rpc.pxy_hostname, "NFS-GANESHA/Proxy",
 			sizeof(pxy_exp->rpc.pxy_hostname));
 
 	for (i = NB_RPC_SLOT-1; i >= 0; i--) {

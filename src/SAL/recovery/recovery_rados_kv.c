@@ -195,8 +195,7 @@ int rados_kv_get(char *key, char *val, char *object)
 		goto out;
 	}
 
-	strncpy(val, val_out, val_len_out);
-	val[val_len_out] = '\0';
+	strlcpy(val, val_out, val_len_out+1);
 	LogDebug(COMPONENT_CLIENTID, "%s: key=%s val=%s", __func__, key, val);
 	rados_omap_get_end(iter_vals);
 out:

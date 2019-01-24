@@ -138,7 +138,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		pnewfid->ppentry = pfid->pentry;
 
-		strncpy(pnewfid->name, name, MAXNAMLEN);
+		strlcpy(pnewfid->name, name, MAXNAMLEN+1);
 
 		/* gdata ref is not hold : the pfid, which use same gdata */
 		/*  will be clunked after pnewfid */

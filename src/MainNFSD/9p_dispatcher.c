@@ -574,8 +574,7 @@ void *_9p_socket_thread(void *Arg)
 			 "Cannot get peername to tcp socket for 9p, error %d (%s)",
 			 errno, strerror(errno));
 		/* XXX */
-		strncpy(strcaller, "(unresolved)", INET6_ADDRSTRLEN);
-		strcaller[12] = '\0';
+		strlcpy(strcaller, "(unresolved)", INET6_ADDRSTRLEN);
 		goto end;
 	} else {
 		switch (_9p_conn.addrpeer.ss_family) {

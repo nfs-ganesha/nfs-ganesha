@@ -148,8 +148,7 @@ static struct mntent *statfs_to_mntent(struct statfs *mntbuf)
 	_mntent.mnt_type = mntbuf->f_fstypename;
 	tmp = flags2opts(mntbuf->f_flags);
 	if (tmp) {
-		opts_buf[sizeof(opts_buf) - 1] = '\0';
-		strncpy(opts_buf, tmp, sizeof(opts_buf) - 1);
+		strlcpy(opts_buf, tmp, sizeof(opts_buf));
 		gsh_free(tmp);
 	} else {
 		*opts_buf = '\0';
