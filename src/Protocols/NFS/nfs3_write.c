@@ -359,6 +359,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	write_data->res = res;
 	write_data->req = req;
+	write_data->obj = obj;
 
 	reqdata->proc_data = write_data;
 
