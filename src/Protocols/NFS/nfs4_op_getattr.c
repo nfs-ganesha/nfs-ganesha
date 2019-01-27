@@ -71,7 +71,7 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 		&res_GETATTR4->GETATTR4res_u.resok4.obj_attributes;
 	nfs_client_id_t *deleg_client = NULL;
 	struct fsal_obj_handle *obj = data->current_obj;
-	bool state_lock_held = false;
+	cbgetattr_t *cbgetattr = NULL;
 
 	/* This is a NFS4_OP_GETTAR */
 	resp->resop = NFS4_OP_GETATTR;
@@ -120,23 +120,25 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 	 */
 
 	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
-	state_lock_held = true;
 	if (is_write_delegated(obj, &deleg_client) &&
 	    deleg_client && (deleg_client->gsh_client != op_ctx->client)) {
 
 		res_GETATTR4->status = handle_deleg_getattr(obj, deleg_client);
 
 		if (res_GETATTR4->status != NFS4_OK) {
+			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 			goto out;
 		} else {
 			/* CB_GETATTR response handler must have updated the
-			 * attributes in md-cache. fall through. */
+			 * attributes in md-cache. reset cbgetattr state and
+			 * fall through. state_lock is held till we finish
+			 * sending response*/
+			cbgetattr = &obj->state_hdl->file.cbgetattr;
+			cbgetattr->state = CB_GETATTR_NONE;
 		}
-	} else {
-		/* release state_lock */
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
-		state_lock_held = false;
 	}
+	/* release state_lock */
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 	res_GETATTR4->status = file_To_Fattr(
 			data, mask, &attrs,
@@ -201,9 +203,6 @@ out:
 
 	if (deleg_client)
 		dec_client_id_ref(deleg_client);
-
-	if (state_lock_held)
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
 	if (res_GETATTR4->status != NFS4_OK) {
 		/* The attributes that may have been allocated will not be

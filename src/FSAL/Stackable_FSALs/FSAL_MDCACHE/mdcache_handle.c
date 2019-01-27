@@ -811,6 +811,8 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 	struct attrlist attrs;
 	fsal_status_t status = {0, 0};
 	struct timespec oldmtime;
+	bool file_deleg = false;
+	cbgetattr_t *cbgetattr;
 
 	/* Use this to detect if we should invalidate a directory. */
 	oldmtime = entry->attrs.mtime;
@@ -854,6 +856,18 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 	 * release them anyway to make it easy to scan the code for correctness.
 	 */
 	fsal_release_attrs(&attrs);
+
+	file_deleg = (entry->obj_handle.state_hdl &&
+	  entry->obj_handle.state_hdl->file.fdeleg_stats.fds_curr_delegations);
+
+	/* Always save copy of latest change and filesize
+	 * to compare with values returned in cbgetattr response
+	 */
+	if (file_deleg) {
+		cbgetattr = &entry->obj_handle.state_hdl->file.cbgetattr;
+		cbgetattr->change = entry->attrs.change;
+		cbgetattr->filesize = entry->attrs.filesize;
+	}
 
 	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
 		    "attrs ", &entry->attrs, true);

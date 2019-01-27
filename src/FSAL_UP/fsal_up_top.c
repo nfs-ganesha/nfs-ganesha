@@ -1673,6 +1673,14 @@ cbgetattr_state handle_getattr_response(struct cbgetattr_context *cbg_ctx,
 	nfs_client_id_t *clid = cbg_ctx->clid;
 	nfs_cb_resop4 *cbr = NULL;
 	CB_GETATTR4res *res = NULL;
+	const struct fsal_up_vector *event_func;
+	struct attrlist up_attr = {0, };
+	uint32_t upflags = 0;
+	struct gsh_buffdesc key;
+	fsal_status_t fsal_status = {0,};
+	struct root_op_context root_ctx;
+	struct timespec	timeo = { .tv_sec = time(NULL) + 5,
+				  .tv_nsec = 0 };
 
 	if (clid->cid_minorversion == 0)
 		cbr = &call->cbt.v_u.v4.res.resarray.resarray_val[0];
@@ -1684,20 +1692,62 @@ cbgetattr_state handle_getattr_response(struct cbgetattr_context *cbg_ctx,
 
 	rc = nfs4_Fattr_To_FSAL_attr(&rsp_attr, &attr, NULL);
 
-	if (rc)
+	if (rc) {
+		cb_state = CB_GETATTR_FAILED;
 		goto out;
+	}
 
 	cb_state = CB_GETATTR_RSP_OK;
 
-	if (!obj->state_hdl->file.cbgetattr.modified)
-		obj->state_hdl->file.cbgetattr.change = rsp_attr.change;
+	/* Determine if the file is modified the very first time */
+	if (!obj->state_hdl->file.cbgetattr.modified &&
+	   ((obj->state_hdl->file.cbgetattr.change ==
+		rsp_attr.change) &&
+	    (obj->state_hdl->file.cbgetattr.filesize ==
+		rsp_attr.filesize))) {
+		goto out;
+	} else {
+		/* One/more attributes changed */
+		obj->state_hdl->file.cbgetattr.modified = true;
+	}
 
+	/* everytime we need to update change number to let
+	 * other clients know that file contents could have
+	 * been modified even if the filesize remains same
+	 */
+	obj->state_hdl->file.cbgetattr.change++;
 	obj->state_hdl->file.cbgetattr.filesize = rsp_attr.filesize;
 
-	return cb_state;
-out:
-	return CB_GETATTR_FAILED;
+	event_func = (cbg_ctx->ctx_export->fsal_export->up_ops);
 
+	init_root_op_context(&root_ctx, cbg_ctx->ctx_export,
+			 cbg_ctx->ctx_export->fsal_export,
+			 0, 0, UNKNOWN_REQUEST);
+
+	/* @todo : log message if event_func is NULL */
+	obj->obj_ops->handle_to_key(obj, &key);
+
+	up_attr.valid_mask |= (ATTR_CHANGE | ATTR_SIZE | ATTR_MTIME
+			      | ATTR_CTIME);
+	up_attr.request_mask = up_attr.valid_mask;
+
+	up_attr.filesize = obj->state_hdl->file.cbgetattr.filesize;
+	up_attr.change = obj->state_hdl->file.cbgetattr.change;
+	up_attr.mtime = timeo;
+	up_attr.ctime = timeo;
+
+	fsal_status = event_func->update(event_func, &key,
+					 &up_attr, upflags);
+
+	release_root_op_context();
+
+	if (FSAL_IS_ERROR(fsal_status)) {
+		cb_state = CB_GETATTR_FAILED;
+		/* log message */
+		return CB_GETATTR_FAILED;
+	}
+out:
+	return cb_state;
 }
 
 /**
