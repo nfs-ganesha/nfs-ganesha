@@ -903,9 +903,9 @@ static void open4_ex(OPEN4args *arg,
 		 */
 		if (arg->claim.claim != CLAIM_DELEGATE_CUR &&
 		    arg->claim.claim != CLAIM_DELEG_CUR_FH &&
-		    state_deleg_conflict(file_obj,
-					  (arg->share_access &
-					   OPEN4_SHARE_ACCESS_WRITE) != 0)) {
+		    state_deleg_conflict_impl(file_obj,
+					     (arg->share_access &
+					      OPEN4_SHARE_ACCESS_WRITE) != 0)) {
 			res_OPEN4->status = NFS4ERR_DELAY;
 			goto out;
 		}

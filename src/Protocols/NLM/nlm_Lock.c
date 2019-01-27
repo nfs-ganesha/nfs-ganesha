@@ -129,16 +129,13 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Check if v4 delegations conflict with v3 op */
-	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
 	if (state_deleg_conflict(obj, lock.lock_type == FSAL_LOCK_W)) {
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 		LogDebug(COMPONENT_NLM,
 			 "NLM lock request DROPPED due to delegation conflict");
 		rc = NFS_REQ_DROP;
 		goto out_dec;
 	} else {
 		(void) atomic_inc_uint32_t(&obj->state_hdl->file.anon_ops);
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 	}
 
 	/* Cast the state number into a state pointer to protect

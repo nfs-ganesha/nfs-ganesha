@@ -905,6 +905,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj);
 nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state);
 void state_deleg_revoke(struct fsal_obj_handle *obj, state_t *state);
 bool state_deleg_conflict(struct fsal_obj_handle *obj, bool write);
+bool state_deleg_conflict_impl(struct fsal_obj_handle *obj, bool write);
 
 /******************************************************************************
  *

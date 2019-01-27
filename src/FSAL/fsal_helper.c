@@ -480,8 +480,9 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 		return fsalstat(ERR_FSAL_BADTYPE, 0);
 	}
 	if ((attr->valid_mask & (ATTR_SIZE | ATTR_MODE))) {
-		if (state_deleg_conflict(obj, true))
+		if (state_deleg_conflict(obj, true)) {
 			return fsalstat(ERR_FSAL_DELAY, 0);
+		}
 	}
 
 	/* Is it allowed to change times ? */
@@ -637,6 +638,7 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 		if (FSAL_IS_ERROR(status))
 			return status;
 	}
+
 	if (state_deleg_conflict(obj, true)) {
 		LogDebug(COMPONENT_FSAL, "Found an existing delegation for %s",
 			  name);
@@ -1222,6 +1224,7 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 		status = fsalstat(ERR_FSAL_DELAY, 0);
 		goto out;
 	}
+
 	LogFullDebug(COMPONENT_FSAL, "%s", name);
 
 	/* Make sure the to_remove_obj is closed since unlink of an
@@ -1314,7 +1317,7 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 		goto out;
 	}
 	/* *
-	 * added conflictsi check for destination in MDCACHE layer
+	 * added conflicts check for destination in MDCACHE layer
 	 */
 	if (state_deleg_conflict(lookup_src, true)) {
 		LogDebug(COMPONENT_FSAL, "Found an existing delegation for %s",
@@ -1322,6 +1325,7 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 		fsal_status = fsalstat(ERR_FSAL_DELAY, 0);
 		goto out;
 	}
+
 	LogFullDebug(COMPONENT_FSAL, "about to call FSAL rename");
 
 	fsal_status = dir_src->obj_ops->rename(lookup_src, dir_src, oldname,

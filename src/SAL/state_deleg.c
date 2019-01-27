@@ -498,7 +498,7 @@ void state_deleg_revoke(struct fsal_obj_handle *obj, state_t *state)
  * @retval true if there is a conflict and the delegations have been recalled.
  * @retval false if there is no delegation conflict.
  */
-bool state_deleg_conflict(struct fsal_obj_handle *obj, bool write)
+bool state_deleg_conflict_impl(struct fsal_obj_handle *obj, bool write)
 {
 	struct file_deleg_stats *deleg_stats;
 
@@ -522,6 +522,28 @@ bool state_deleg_conflict(struct fsal_obj_handle *obj, bool write)
 		return true;
 	}
 	return false;
+}
+
+/**
+ * @brief Acquire state_lock and check if an operation is conflicting
+ *        with delegations.
+ *
+ * @param[in] obj   File
+ * @param[in] write a boolean indicating whether the operation will read or
+ *            change the file.
+ *
+ * @retval true if there is a conflict and the delegations have been recalled.
+ * @retval false if there is no delegation conflict.
+ */
+bool state_deleg_conflict(struct fsal_obj_handle *obj, bool write)
+{
+	bool status = false;
+
+	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
+	status = state_deleg_conflict_impl(obj, write);
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+
+	return status;
 }
 
 bool deleg_supported(struct fsal_obj_handle *obj,

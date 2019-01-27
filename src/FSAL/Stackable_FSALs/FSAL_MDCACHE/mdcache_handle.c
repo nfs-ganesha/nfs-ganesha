@@ -645,6 +645,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 			status = fsalstat(ERR_FSAL_XDEV, 0);
 			goto out;
 		}
+
 		if (state_deleg_conflict(&mdc_lookup_dst->obj_handle, true)) {
 			LogDebug(COMPONENT_CACHE_INODE, "Found an existing delegation for %s",
 				  new_name);
