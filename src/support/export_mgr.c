@@ -2140,7 +2140,7 @@ static bool stats_status(DBusMessageIter *args,
 	dbus_append_timestamp(&v3_full_status, &v3_full_stats_time);
 	dbus_message_iter_close_container(&iter, &v3_full_status);
 
-	/* Send info about NFSv3 Detailed stats */
+	/* Send info about NFSv4 Detailed stats */
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
 					 &v4_full_status);
 	value = nfs_param.core_param.enable_FULLV4STATS;
