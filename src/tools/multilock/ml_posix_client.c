@@ -545,7 +545,10 @@ bool do_lock(struct response *resp, enum thread_type thread_type)
 	}
 
 	if (rc == -1) {
-		if (errno == EAGAIN) {
+		/* If a conflicting lock is held, F_SETLK returns -1
+		   and sets errno to EACCES or EAGAIN */
+		if ((errno == EAGAIN) ||
+		   ((errno == EACCES) && (cmd == F_SETLK))) {
 			if (retry) {
 				/* Let caller know we didn't complete */
 				return false;
@@ -610,7 +613,10 @@ void do_hop(struct response *resp)
 		rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 
 		if (rc == -1) {
-			if (errno == EAGAIN) {
+			/* If a conflicting lock is held, F_SETLK returns -1
+			   and sets errno to EACCES or EAGAIN */
+			if ((errno == EAGAIN) ||
+			   ((errno == EACCES) && (cmd == F_SETLK))) {
 				resp->r_start = lock.l_start;
 				resp->r_length = 1;
 				resp->r_status = STATUS_DENIED;
