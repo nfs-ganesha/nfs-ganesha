@@ -733,3 +733,5 @@ RADOS_URLS {}
 	ceph_conf(string, no default)
 
 	userid(path, no default)
+
+	watch_url(url, no default)

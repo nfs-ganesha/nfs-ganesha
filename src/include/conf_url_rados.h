@@ -31,10 +31,21 @@
 #include <rados/librados.h>
 
 void conf_url_rados_pkginit(void);
+int rados_url_setup_watch(void);
+void rados_url_shutdown_watch(void);
 
 #else
 
 static inline void conf_url_rados_pkginit(void)
+{
+}
+
+static inline int rados_url_setup_watch(void)
+{
+	return 0;
+}
+
+static inline void rados_url_shutdown_watch(void)
 {
 }
 

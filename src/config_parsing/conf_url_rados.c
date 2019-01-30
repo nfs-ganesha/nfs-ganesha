@@ -26,16 +26,22 @@
 #include <regex.h>
 #include "log.h"
 #include "sal_functions.h"
+#include <string.h>
 
 static regex_t url_regex;
 static rados_t cluster;
 static bool initialized;
+static rados_ioctx_t rados_watch_io_ctx;
+static uint64_t rados_watch_cookie;
+static char *rados_watch_oid;
 
 static struct rados_url_parameter {
 	/** Path to ceph.conf */
 	char *ceph_conf;
 	/** Userid (?) */
 	char *userid;
+	/** watch URL */
+	char *watch_url;
 } rados_url_param;
 
 static struct config_item rados_url_params[] = {
@@ -43,6 +49,8 @@ static struct config_item rados_url_params[] = {
 		       rados_url_parameter, ceph_conf),
 	CONF_ITEM_STR("userid", 1, MAXPATHLEN, NULL,
 		       rados_url_parameter, userid),
+	CONF_ITEM_STR("watch_url", 1, MAXPATHLEN, NULL,
+		       rados_url_parameter, watch_url),
 	CONFIG_EOL
 };
 
@@ -346,4 +354,105 @@ static struct gsh_url_provider rados_url_provider = {
 void conf_url_rados_pkginit(void)
 {
 	register_url_provider(&rados_url_provider);
+}
+
+static void rados_url_watchcb(void *arg, uint64_t notify_id, uint64_t handle,
+			      uint64_t notifier_id, void *data, size_t data_len)
+{
+	int ret;
+
+	/* ACK it to keep things moving */
+	ret = rados_notify_ack(rados_watch_io_ctx, rados_watch_oid, notify_id,
+				rados_watch_cookie, NULL, 0);
+	if (ret < 0)
+		LogEvent(COMPONENT_CONFIG, "rados_notify_ack failed: %d", ret);
+
+	/* Send myself a SIGHUP */
+	kill(getpid(), SIGHUP);
+}
+
+int rados_url_setup_watch(void)
+{
+	int ret;
+	void *node;
+	char *pool = NULL, *ns = NULL, *obj = NULL;
+	char *url;
+
+	/* No RADOS_URLs block? Just return */
+	node = config_GetBlockNode("RADOS_URLS");
+	if (!node)
+		return 0;
+
+	ret = rados_urls_set_param_from_conf(node, &err_type);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CONFIG, "%s: Failed to parse RADOS_URLS %d",
+			 __func__, ret);
+		return ret;
+	}
+
+	/* No watch parameter? Just return */
+	if (rados_url_param.watch_url == NULL)
+		return 0;
+
+	if (strncmp(rados_url_param.watch_url, "rados://", 8)) {
+		LogEvent(COMPONENT_CONFIG,
+			 "watch_url doesn't start with rados://");
+		return -1;
+	}
+
+	url = rados_url_param.watch_url + 8;
+
+	/* Parse the URL */
+	ret = rados_url_parse(url, &pool, &ns, &obj);
+	if (ret)
+		return ret;
+
+	ret = rados_url_client_setup();
+	if (ret)
+		return ret;
+
+	/* Set up an ioctx */
+	ret = rados_ioctx_create(cluster, pool, &rados_watch_io_ctx);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CONFIG, "%s: Failed to create ioctx",
+			__func__);
+		goto out;
+	}
+	rados_ioctx_set_namespace(rados_watch_io_ctx, ns);
+
+	ret = rados_watch3(rados_watch_io_ctx, obj, &rados_watch_cookie,
+			   rados_url_watchcb, NULL, 30, NULL);
+	if (ret) {
+		rados_ioctx_destroy(rados_watch_io_ctx);
+		LogEvent(COMPONENT_CONFIG,
+			 "Failed to set watch on RADOS_URLS object: %d", ret);
+	} else {
+		rados_watch_oid = obj;
+		obj = NULL;
+	}
+out:
+	gsh_free(pool);
+	gsh_free(ns);
+	gsh_free(obj);
+
+	return ret;
+}
+
+void rados_url_shutdown_watch(void)
+{
+	int ret;
+
+	if (rados_watch_oid) {
+		ret = rados_unwatch2(rados_watch_io_ctx, rados_watch_cookie);
+		if (ret)
+			LogEvent(COMPONENT_CONFIG,
+				 "Failed to unwatch RADOS_URLS object: %d",
+				 ret);
+
+		rados_ioctx_destroy(rados_watch_io_ctx);
+		rados_watch_io_ctx = NULL;
+		gsh_free(rados_watch_oid);
+		rados_watch_oid = NULL;
+		/* Leave teardown of client to the %url parser shutdown */
+	}
 }
