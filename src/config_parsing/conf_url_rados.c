@@ -121,6 +121,41 @@ static void cu_rados_url_early_init(void)
 
 extern struct config_error_type err_type;
 
+static int rados_url_client_setup(void)
+{
+	int ret;
+
+	if (initialized)
+		return 0;
+
+	ret = rados_create(&cluster, rados_url_param.userid);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CONFIG, "%s: Failed in rados_create",
+			__func__);
+		return ret;
+	}
+
+	ret = rados_conf_read_file(cluster, rados_url_param.ceph_conf);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CLIENTID, "%s: Failed to read ceph_conf",
+			__func__);
+		rados_shutdown(cluster);
+		return ret;
+	}
+
+	ret = rados_connect(cluster);
+	if (ret < 0) {
+		LogEvent(COMPONENT_CONFIG, "%s: Failed to connect to cluster",
+			__func__);
+		rados_shutdown(cluster);
+		return ret;
+	}
+
+	init_url_regex();
+	initialized = true;
+	return 0;
+}
+
 static void cu_rados_url_init(void)
 {
 	int ret;
@@ -140,33 +175,7 @@ static void cu_rados_url_init(void)
 			__func__);
 	}
 
-
-	ret = rados_create(&cluster, rados_url_param.userid);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CONFIG, "%s: Failed in rados_create",
-			__func__);
-		return;
-	}
-
-	ret = rados_conf_read_file(cluster, rados_url_param.ceph_conf);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID, "%s: Failed to read ceph_conf",
-			__func__);
-		rados_shutdown(cluster);
-		return;
-	}
-
-	ret = rados_connect(cluster);
-	if (ret < 0) {
-		LogEvent(COMPONENT_CONFIG, "%s: Failed to connect to cluster",
-			__func__);
-		rados_shutdown(cluster);
-		return;
-	}
-
-	init_url_regex();
-
-	initialized = true;
+	rados_url_client_setup();
 }
 
 static void cu_rados_url_shutdown(void)
