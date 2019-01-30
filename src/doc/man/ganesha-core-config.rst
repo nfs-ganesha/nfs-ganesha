@@ -343,3 +343,7 @@ ceph_conf(string, no default)
 
 userid(path, no default)
     User ID to ceph cluster.
+
+watch_url(url, no default)
+    rados:// URL to watch for notifications of config changes. When a
+    notification is received, the server will issue a SIGHUP to itself.
