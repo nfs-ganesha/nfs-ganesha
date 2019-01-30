@@ -32,5 +32,11 @@
 
 void conf_url_rados_pkginit(void);
 
+#else
+
+static inline void conf_url_rados_pkginit(void)
+{
+}
+
 #endif /* RADOS_URLS */
 #endif /* CONF_URL_RADOS_H */

@@ -25,10 +25,7 @@
 #include "sal_functions.h"
 
 #include "conf_url.h"
-
-#ifdef RADOS_URLS
 #include "conf_url_rados.h"
-#endif
 
 static pthread_rwlock_t url_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 static struct glist_head url_providers;
@@ -81,9 +78,7 @@ void config_url_init(void)
 	glist_init(&url_providers);
 
 /* init well-known URL providers */
-#ifdef RADOS_URLS
 	conf_url_rados_pkginit();
-#endif
 	init_url_regex();
 }
 

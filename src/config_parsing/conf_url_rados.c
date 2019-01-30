@@ -27,8 +27,6 @@
 #include "log.h"
 #include "sal_functions.h"
 
-#ifdef RADOS_URLS
-
 static regex_t url_regex;
 static rados_t cluster;
 static bool initialized;
@@ -329,5 +327,3 @@ void conf_url_rados_pkginit(void)
 {
 	register_url_provider(&rados_url_provider);
 }
-
-#endif /* RADOS_URLS */
