@@ -201,10 +201,65 @@ static inline char *match_dup(regmatch_t *m, char *in)
 	return s;
 }
 
+static int rados_url_parse(const char *url, char **pool, char **ns, char **obj)
+{
+	int ret;
+	regmatch_t match[4];
+
+	ret = regexec(&url_regex, url, 4, match, 0);
+	if (likely(!ret)) {
+		regmatch_t *m;
+		char *x1, *x2, *x3;
+
+		m = &(match[1]);
+		x1 = match_dup(m, (char *)url);
+		m = &(match[2]);
+		x2 = match_dup(m, (char *)url);
+		m = &(match[3]);
+		x3 = match_dup(m, (char *)url);
+
+		*pool = NULL;
+		*ns = NULL;
+		*obj = NULL;
+
+		if (x1) {
+			if (!x2) {
+				/*
+				 * object only
+				 *
+				 * FIXME: should we reject this case? I don't
+				 * think there is such a thing as a default
+				 * pool
+				 */
+				*obj = x1;
+			} else {
+				*pool = x1;
+				if (!x3) {
+					*obj = x2;
+				} else {
+					*ns = x2;
+					*obj = x3;
+				}
+			}
+		}
+	} else if (ret == REG_NOMATCH) {
+		LogWarn(COMPONENT_CONFIG,
+			"%s: Failed to match %s as a config URL",
+			__func__, url);
+	} else {
+		char ebuf[100];
+
+		regerror(ret, &url_regex, ebuf, sizeof(ebuf));
+		LogWarn(COMPONENT_CONFIG,
+			"%s: Error in regexec: %s",
+			__func__, ebuf);
+	}
+	return ret;
+}
+
 static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 {
 	rados_ioctx_t io_ctx;
-	char *x0 = NULL, *x1 = NULL, *x2 = NULL, *x3 = NULL;
 
 	char *pool_name = NULL;
 	char *object_name = NULL;
@@ -214,7 +269,6 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 	FILE *stream = NULL;
 	char buf[1024];
 
-	regmatch_t match[4];
 	size_t streamsz;
 	uint64_t off1 = 0;
 	int ret;
@@ -223,51 +277,9 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 		cu_rados_url_init();
 	}
 
-	ret = regexec(&url_regex, url, 4, match, 0);
-	if (likely(!ret)) {
-		/* matched */
-		regmatch_t *m = &(match[0]);
-		/* matched url pattern is NUL-terminated */
-		x0 = match_dup(m, (char *)url);
-		m = &(match[1]);
-		x1 = match_dup(m, (char *)url);
-		m = &(match[2]);
-		x2 = match_dup(m, (char *)url);
-		m = &(match[3]);
-		x3 = match_dup(m, (char *)url);
-
-		/* Huh? How would we have x2 but not x1? */
-		if ((!x1) && (!x2))
-			goto out;
-
-		if (x1) {
-			if (!x2) {
-				/* object only */
-				object_name = x1;
-			} else {
-				pool_name = x1;
-				if (!x3) {
-					object_name = x2;
-				} else {
-					rados_ns = x2;
-					object_name = x3;
-				}
-			}
-		}
-	} else if (ret == REG_NOMATCH) {
-		LogWarn(COMPONENT_CONFIG,
-			"%s: Failed to match %s as a config URL",
-			__func__, url);
+	ret = rados_url_parse(url, &pool_name, &rados_ns, &object_name);
+	if (ret)
 		goto out;
-	} else {
-		char ebuf[100];
-
-		regerror(ret, &url_regex, ebuf, sizeof(ebuf));
-		LogWarn(COMPONENT_CONFIG,
-			"%s: Error in regexec: %s",
-			__func__, ebuf);
-		goto out;
-	}
 
 	ret = rados_ioctx_create(cluster, pool_name, &io_ctx);
 	if (ret < 0) {
@@ -317,10 +329,9 @@ err:
 
 out:
 	/* allocated or NULL */
-	gsh_free(x0);
-	gsh_free(x1);
-	gsh_free(x2);
-	gsh_free(x3);
+	gsh_free(pool_name);
+	gsh_free(rados_ns);
+	gsh_free(object_name);
 
 	return ret;
 }
