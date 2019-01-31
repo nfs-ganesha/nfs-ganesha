@@ -47,6 +47,7 @@
 #include "gsh_dbus.h"
 #include "mdcache.h"
 #endif
+#include "conf_url.h"
 
 /**
  * @brief Mutex protecting shutdown flag.
@@ -430,6 +431,8 @@ static void do_shutdown(void)
 	bool disorderly = false;
 
 	LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
+
+	config_url_shutdown();
 
 #ifdef USE_DBUS
 	/* DBUS shutdown */

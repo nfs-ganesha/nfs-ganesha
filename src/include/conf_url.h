@@ -37,6 +37,7 @@ struct gsh_url_provider {
  */
 
 void config_url_init(void);
+void config_url_shutdown(void);
 int register_url_provider(struct gsh_url_provider *nurl_p);
 int config_url_fetch(const char *url, FILE **f, char **fbuf);
 void config_url_release(FILE *f, char *fbuf);
