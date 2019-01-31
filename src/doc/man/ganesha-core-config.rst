@@ -324,3 +324,11 @@ grace_oid(string, default "grace")
 
 nodeid(string, default result of gethostname())
     Unique node identifier within rados_cluster
+
+RADOS_URLS {}
+--------------------------------------------------------------------------------
+ceph_conf(string, no default)
+    Connection to ceph cluster, should be file path for ceph configuration.
+
+userid(path, no default)
+    User ID to ceph cluster.
