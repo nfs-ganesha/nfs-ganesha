@@ -462,9 +462,13 @@ int _9p_worker_init(void)
 
 int _9p_worker_shutdown(void)
 {
-	int rc = fridgethr_sync_command(_9p_worker_fridge,
-					fridgethr_comm_stop,
-					120);
+	int rc;
+
+	if (!_9p_worker_fridge)
+		return 0;
+
+	rc = fridgethr_sync_command(_9p_worker_fridge, fridgethr_comm_stop,
+				    120);
 
 	if (rc == ETIMEDOUT) {
 		LogMajor(COMPONENT_DISPATCH,
