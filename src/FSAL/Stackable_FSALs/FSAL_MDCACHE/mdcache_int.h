@@ -795,6 +795,9 @@ mdcache_test_attrs_trust(mdcache_entry_t *entry, attrmask_t mask)
 static inline bool
 mdcache_is_attrs_valid(mdcache_entry_t *entry, attrmask_t mask)
 {
+	bool file_deleg = false;
+	attrmask_t orig_mask = mask;
+
 	if (!mdcache_test_attrs_trust(entry, mask))
 		return false;
 
@@ -805,7 +808,19 @@ mdcache_is_attrs_valid(mdcache_entry_t *entry, attrmask_t mask)
 	    && mdcache_param.getattr_dir_invalidation)
 		return false;
 
-	if ((mask & ~ATTR_ACL) != 0 && entry->attrs.expire_time_attr == 0)
+	file_deleg = (entry->obj_handle.state_hdl &&
+	  entry->obj_handle.state_hdl->file.fdeleg_stats.fds_curr_delegations);
+
+	if (file_deleg) {
+		/* If the file is delegated, then we can trust
+		 * the attributes already fetched (i.e, which
+		 * are in entry->attrs.valid_mask), unless
+		 * expire_time_attr is set to '0'.
+		 */
+		mask = (mask & ~entry->attrs.valid_mask);
+	}
+
+	if ((orig_mask & ~ATTR_ACL) != 0 && entry->attrs.expire_time_attr == 0)
 		return false;
 
 	if ((mask & ~ATTR_ACL) != 0 && entry->attrs.expire_time_attr > 0) {
@@ -816,7 +831,7 @@ mdcache_is_attrs_valid(mdcache_entry_t *entry, attrmask_t mask)
 			return false;
 	}
 
-	if ((mask & ATTR_ACL) != 0 && entry->attrs.expire_time_attr == 0)
+	if ((orig_mask & ATTR_ACL) != 0 && entry->attrs.expire_time_attr == 0)
 		return false;
 
 	if ((mask & ATTR_ACL) != 0 && entry->attrs.expire_time_attr > 0) {
