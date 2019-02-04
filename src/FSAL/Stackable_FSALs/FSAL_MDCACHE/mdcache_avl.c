@@ -43,6 +43,7 @@
 #include "fsal.h"
 #include "mdcache_int.h"
 #include "mdcache_avl.h"
+#include "mdcache_lru.h"
 #include "murmur3.h"
 #include "city.h"
 
@@ -207,10 +208,23 @@ void mdcache_avl_remove(mdcache_entry_t *parent,
 			mdcache_dir_entry_t *dirent)
 {
 	struct dir_chunk *chunk = dirent->chunk;
+	fsal_status_t status;
+	mdcache_entry_t *entry = NULL;
 
 	if ((dirent->flags & DIR_ENTRY_FLAG_DELETED) == 0) {
 		/* Remove from active names tree */
 		avltree_remove(&dirent->node_name, &parent->fsobj.fsdir.avl.t);
+	}
+
+	if (dirent->flags & DIR_ENTRY_REFFED) {
+		/* We have a ref, so the entry must exist */
+		status = mdcache_find_keyed_reason(&dirent->ckey, &entry,
+						   MDC_REASON_SCAN);
+		assert(FSAL_IS_SUCCESS(status));
+
+		mdcache_put(entry);  /* Ref for dirent */
+		mdcache_put(entry);  /* Ref gotten above */
+		dirent->flags &= ~DIR_ENTRY_REFFED;
 	}
 
 	if (dirent->chunk != NULL) {

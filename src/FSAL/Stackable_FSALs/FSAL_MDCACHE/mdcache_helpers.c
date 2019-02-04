@@ -2353,7 +2353,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			atomic_fetch_int32_t(&new_entry->lru.refcnt));
 
 	/* Note that this entry is ref'd, so that mdcache_readdir_chunked can
-	 * un-ref it.  Keep the ref from above for this puropes */
+	 * un-ref it.  Keep the ref from above for this purpose */
 	new_dir_entry->flags |= DIR_ENTRY_REFFED;
 
 
@@ -3078,7 +3078,16 @@ again:
 
 				return status;
 			}
-		} else if (reload_chunk && look_ck != 0 && dirent->ck !=
+		}
+
+		/* If we get here, we got an entry, and took a ref on it.  Put
+		 * the saved ref from the mdc_readdir_chunk_object(), if any. */
+		if (dirent->flags & DIR_ENTRY_REFFED) {
+			mdcache_put(entry);
+			dirent->flags &= ~DIR_ENTRY_REFFED;
+		}
+
+		if (reload_chunk && look_ck != 0 && dirent->ck !=
 			   look_ck) {
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
 					COMPONENT_CACHE_INODE,
@@ -3086,24 +3095,13 @@ again:
 					dirent->name, &entry->obj_handle);
 			/* This chunk was reloaded, but some dirents were
 			 * already consumed.  Deref and continue */
-			if (dirent->flags & DIR_ENTRY_REFFED) {
-				/* Put mdc_readdir_chunk_object()'s ref */
-				mdcache_put(entry);
-				dirent->flags &= ~DIR_ENTRY_REFFED;
-			}
 			mdcache_put(entry);
 			continue;
 		}
 
 		if (dirent->ck == whence) {
 			/* When called with whence, the caller always wants the
-			 * next entry, skip this entry.
-			 */
-			if (dirent->flags & DIR_ENTRY_REFFED) {
-				/* Put mdc_readdir_chunk_object()'s ref */
-				mdcache_put(entry);
-				dirent->flags &= ~DIR_ENTRY_REFFED;
-			}
+			 * next entry, skip this entry. */
 			mdcache_put(entry);
 			continue;
 		}
@@ -3129,11 +3127,6 @@ again:
 					"getattrs failed status=%s",
 					fsal_err_txt(status));
 
-			if (dirent->flags & DIR_ENTRY_REFFED) {
-				/* Put mdc_readdir_chunk_object()'s ref */
-				mdcache_put(entry);
-				dirent->flags &= ~DIR_ENTRY_REFFED;
-			}
 			mdcache_put(entry);
 			return status;
 		}
@@ -3148,11 +3141,8 @@ again:
 
 		fsal_release_attrs(&attrs);
 
-		if (dirent->flags & DIR_ENTRY_REFFED) {
-			/* Put mdc_readdir_chunk_object()'s ref */
-			mdcache_put(entry);
-			dirent->flags &= ~DIR_ENTRY_REFFED;
-		}
+		/* The ref on entry was put by the callback.  Don't use it
+		 * anymore */
 
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 				"dirent = %p %s, cb_result = %s, eod = %s",
