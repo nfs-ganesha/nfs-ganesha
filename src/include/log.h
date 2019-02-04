@@ -483,4 +483,41 @@ void rpc_warnx(/* const */ char *fmt, ...);
 extern struct gsh_dbus_interface log_interface;
 #endif
 
+/* Rate limited logging */
+struct ratelimit_state {
+	pthread_mutex_t mutex;
+	int interval;
+	int burst;
+	int printed;
+	int missed;
+	time_t begin;
+};
+bool _ratelimit(struct ratelimit_state *rs, int *missed);
+
+#define RATELIMIT_STATE_INIT(interval_init, burst_init) {         \
+		.mutex          = PTHREAD_MUTEX_INITIALIZER,      \
+		.interval       = interval_init,                  \
+		.burst          = burst_init,                     \
+	}
+
+#define DEFINE_RATELIMIT_STATE(name, interval_init, burst_init)   \
+	struct ratelimit_state name =                             \
+		RATELIMIT_STATE_INIT(interval_init, burst_init)   \
+
+#define DEFAULT_RATELIMIT_INTERVAL    30 /* 30 seconds */
+#define DEFAULT_RATELIMIT_BURST       2
+
+#define LogEventLimited(comp, fmt, args...) ({                             \
+	int missed;                                                        \
+									   \
+	static DEFINE_RATELIMIT_STATE(_rs,                                 \
+			DEFAULT_RATELIMIT_INTERVAL,                        \
+			DEFAULT_RATELIMIT_BURST);                          \
+	if (_ratelimit(&(_rs), &missed)) {                                    \
+		if (missed)                                                \
+			LogEvent(comp, "message missed %d times", missed); \
+		LogEvent(comp, fmt, ## args);                              \
+	}                                                                  \
+})
+
 #endif
