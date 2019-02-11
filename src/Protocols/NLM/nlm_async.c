@@ -258,16 +258,17 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 			      host->slc_callback_auth, proc,
 			      (xdrproc_t) nlm_reply_proc[proc], inarg,
 			      (xdrproc_t) xdr_void, NULL);
-		retval = clnt_req_setup(cc, tout);
-		if (retval == RPC_SUCCESS) {
+		cc->cc_error.re_status = clnt_req_setup(cc, tout);
+		if (cc->cc_error.re_status == RPC_SUCCESS) {
 			cc->cc_refreshes = 0;
-			retval = CLNT_CALL_ONCE(cc);
+			cc->cc_error.re_status = CLNT_CALL_ONCE(cc);
 		}
 
 		LogFullDebug(COMPONENT_NLM, "Done with clnt_call");
 
-		if (retval == RPC_TIMEDOUT || retval == RPC_SUCCESS) {
-			retval = RPC_SUCCESS;
+		if (cc->cc_error.re_status == RPC_TIMEDOUT ||
+		    cc->cc_error.re_status == RPC_SUCCESS) {
+			cc->cc_error.re_status = RPC_SUCCESS;
 			clnt_req_release(cc);
 			break;
 		}
