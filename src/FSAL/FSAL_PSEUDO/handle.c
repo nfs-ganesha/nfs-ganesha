@@ -38,6 +38,7 @@
 #include "city.h"
 #include "nfs_file_handle.h"
 #include "display.h"
+#include "common_utils.h"
 
 /* Atomic uint64_t that is used to generate inode numbers in the Pseudo FS */
 uint64_t inode_number;
@@ -578,6 +579,12 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	hdl->inavl = false;
 
 	error = ERR_FSAL_NO_ERROR;
+
+	now(&myself->attributes.mtime);
+	myself->attributes.ctime = myself->attributes.mtime;
+	myself->attributes.chgtime = myself->attributes.mtime;
+	myself->attributes.change = timespec_to_nsecs(
+					&myself->attributes.chgtime);
 
 unlock:
 	PTHREAD_RWLOCK_unlock(&dir_hdl->obj_lock);
