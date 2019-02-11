@@ -1,7 +1,7 @@
 /*
  * vim:shiftwidth=8:tabstop=8:
  *
- * Copyright 2017-2018 Red Hat, Inc.
+ * Copyright 2017-2019 Red Hat, Inc.
  * Author: Daniel Gryniewicz  dang@redhat.com
  *
  *
@@ -39,6 +39,7 @@
 #include "gsh_lttng/fsal_mem.h"
 #endif
 #include "../Stackable_FSALs/FSAL_MDCACHE/mdcache_ext.h"
+#include "common_utils.h"
 
 static void mem_release(struct fsal_obj_handle *obj_hdl);
 
@@ -298,6 +299,21 @@ mem_dirent_lookup(struct mem_fsal_obj_handle *dir, const char *name)
 }
 
 /**
+ * @brief Update the change times of the FSAL object
+ *
+ * @note Call must hold the obj_lock on the obj
+ *
+ * @param[in] obj	FSAL obj which was modified
+ */
+static void mem_update_change_locked(struct mem_fsal_obj_handle *obj)
+{
+	now(&obj->attrs.mtime);
+	obj->attrs.ctime = obj->attrs.mtime;
+	obj->attrs.chgtime = obj->attrs.mtime;
+	obj->attrs.change = timespec_to_nsecs(&obj->attrs.chgtime);
+}
+
+/**
  * @brief Remove an obj from it's parent's tree
  *
  * @note Caller must hold the obj_lock on the parent
@@ -331,6 +347,8 @@ static void mem_remove_dirent_locked(struct mem_fsal_obj_handle *parent,
 	gsh_free(dirent);
 
 	mem_int_put_ref(child);
+
+	mem_update_change_locked(parent);
 }
 
 /**
