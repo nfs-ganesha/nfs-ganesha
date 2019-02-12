@@ -488,7 +488,8 @@ void mdcache_clean_dirent_chunks(mdcache_entry_t *entry)
 	struct glist_head *glist, *glistn;
 
 	glist_for_each_safe(glist, glistn, &entry->fsobj.fsdir.chunks) {
-		lru_remove_chunk(glist_entry(glist, struct dir_chunk, chunks));
+		mdcache_lru_unref_chunk(glist_entry(glist, struct dir_chunk,
+						    chunks));
 	}
 }
 
@@ -2304,7 +2305,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 				    "Nuking empty Chunk %p", chunk);
 			/* We read-ahead into an existing chunk, and this chunk
 			 * is empty.  Just ditch it now, to avoid any issue. */
-			lru_remove_chunk(chunk);
+			mdcache_lru_unref_chunk(chunk);
 			if (state->first_chunk == chunk) {
 				state->first_chunk = new_dir_entry->chunk;
 			}
@@ -2542,7 +2543,7 @@ again:
 			    "FSAL readdir status=%s",
 			    fsal_err_txt(readdir_status));
 		*dirent = NULL;
-		lru_remove_chunk(chunk);
+		mdcache_lru_unref_chunk(chunk);
 		return readdir_status;
 	}
 
@@ -2551,7 +2552,7 @@ again:
 			    "status=%s",
 			    fsal_err_txt(status));
 		*dirent = NULL;
-		lru_remove_chunk(chunk);
+		mdcache_lru_unref_chunk(chunk);
 		return status;
 	}
 
@@ -2578,7 +2579,7 @@ again:
 				&chunk->parent->fsobj.fsdir.chunks,
 				struct dir_chunk, chunks, &chunk->chunks));
 
-		lru_remove_chunk(chunk);
+		mdcache_lru_unref_chunk(chunk);
 
 		if (cur_prev != NULL && last_chunk) {
 			/* We need to mark the end of directory */
@@ -3042,7 +3043,6 @@ again:
 				goto again;
 			} else if (op_ctx->fsal_export->exp_ops.fs_supports(
 				   op_ctx->fsal_export, fso_readdir_plus)) {
-				struct dir_chunk *prev_chunk = NULL;
 
 				/* If the FSAL supports readdir_plus, then a
 				 * single round-trip for the chunk is preferable
@@ -3050,15 +3050,14 @@ again:
 				 * chunk, and reload it using readdir_plus */
 				look_ck = dirent->ck;
 				next_ck = chunk->reload_ck;
-				prev_chunk = mdc_prev_chunk(chunk);
 				reload_chunk = true;
 				LogFullDebugAlt(COMPONENT_NFS_READDIR,
 						COMPONENT_CACHE_INODE,
 						"Reloading chunk %p look_ck %"
 						PRIx64" next_ck %"PRIx64,
-						prev_chunk, look_ck, next_ck);
-				lru_remove_chunk(chunk);
-				chunk = prev_chunk;
+						chunk, look_ck, next_ck);
+				mdcache_lru_unref_chunk(chunk);
+				chunk = NULL;
 				goto again;
 			}
 
