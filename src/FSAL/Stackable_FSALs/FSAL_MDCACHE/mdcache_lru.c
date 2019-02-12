@@ -749,7 +749,6 @@ lru_try_reap_entry(void)
  *
  * @param[in] qid        Queue to reap
  * @param[in] parent     The directory we desire a chunk for
- * @param[in] prev_chunk If non-NULL, the previous chunk in this directory
  *
  * @return Available chunk if found, NULL otherwise
  */
@@ -757,8 +756,7 @@ lru_try_reap_entry(void)
 static uint32_t chunk_reap_lane;
 
 static inline mdcache_lru_t *
-lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
-		    struct dir_chunk *prev_chunk)
+lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 {
 	uint32_t lane;
 	struct lru_q_lane *qlane;
@@ -767,6 +765,7 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
 	mdcache_entry_t *entry;
 	struct dir_chunk *chunk;
 	int ix;
+	int32_t refcnt;
 
 	lane = LRU_NEXT(chunk_reap_lane);
 
@@ -785,6 +784,8 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
 			continue;
 		}
 
+		refcnt = atomic_inc_int32_t(&lru->refcnt);
+
 		/* Get the chunk and parent entry that owns the chunk, all of
 		 * this is valid because we hold the QLANE lock, the chunk was
 		 * in the LRU, and thus the chunk is not yet being destroyed,
@@ -793,9 +794,10 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
 		chunk = container_of(lru, struct dir_chunk, chunk_lru);
 		entry = chunk->parent;
 
-		if (chunk == prev_chunk) {
-			/* We can't reap prev_chunk. */
+		if (refcnt != (LRU_SENTINEL_REFCOUNT + 1)) {
+			/* We can't reap a chunk with a ref */
 			QUNLOCK(qlane);
+			mdcache_lru_unref_chunk(chunk);
 			continue;
 		}
 
@@ -838,11 +840,6 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
 			atomic_clear_uint32_t_bits(&entry->mde_flags,
 						   MDCACHE_DIR_POPULATED);
 
-			/* Clean out the fields not touched by the cleanup. */
-			chunk->parent = NULL;
-			chunk->next_ck = 0;
-			chunk->num_entries = 0;
-
 			if (entry != parent) {
 				/* And now we're done with the parent of the
 				 * chunk if it wasn't the directory we are
@@ -851,6 +848,7 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
 				PTHREAD_RWLOCK_unlock(&entry->content_lock);
 				mdcache_put(entry);
 			}
+			mdcache_lru_unref_chunk(chunk);
 			return lru;
 		}
 
@@ -859,6 +857,7 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent,
 		 * eligible for reaping. Try the next lane...
 		 */
 		QUNLOCK(qlane);
+		mdcache_lru_unref_chunk(chunk);
 	}			/* foreach lane */
 
 	/* ! reclaimable */
@@ -887,12 +886,19 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 	mdcache_lru_t *lru = NULL;
 	struct dir_chunk *chunk = NULL;
 
+	/* Get a ref on prev_chunk, so that it's not reaped */
+	if (prev_chunk)
+		mdcache_lru_ref_chunk(prev_chunk);
+
 	if (lru_state.chunks_used >= lru_state.chunks_hiwat) {
-		lru = lru_reap_chunk_impl(LRU_ENTRY_L2, parent, prev_chunk);
+		lru = lru_reap_chunk_impl(LRU_ENTRY_L2, parent);
 		if (!lru)
 			lru = lru_reap_chunk_impl(
-					LRU_ENTRY_L1, parent, prev_chunk);
+					LRU_ENTRY_L1, parent);
 	}
+
+	if (prev_chunk)
+		mdcache_lru_unref_chunk(prev_chunk);
 
 	if (lru) {
 		/* we uniquely hold chunk, it has already been cleaned up.
@@ -912,21 +918,16 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 
 	/* Set the chunk's parent and insert */
 	chunk->parent = parent;
+	glist_add_tail(&chunk->parent->fsobj.fsdir.chunks, &chunk->chunks);
 	if (prev_chunk) {
-		glist_add(&prev_chunk->chunks, &chunk->chunks);
 		chunk->reload_ck = glist_last_entry(&prev_chunk->dirents,
 						    mdcache_dir_entry_t,
 						    chunk_list)->ck;
 	} else {
-		glist_add(&chunk->parent->fsobj.fsdir.chunks, &chunk->chunks);
 		chunk->reload_ck = whence;
 	}
 
-	/* Chunk refcnt is not used (chunks are always protected by content_lock
-	 * and outside of LRU operations are not found other than while holding
-	 * the content lock).
-	 */
-	chunk->chunk_lru.refcnt = 0;
+	chunk->chunk_lru.refcnt = 1;
 	chunk->chunk_lru.cf = 0;
 	chunk->chunk_lru.lane = lru_lane_of(chunk);
 
@@ -1443,6 +1444,8 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 	mdcache_lru_t *lru = NULL;
 	/* Current queue lane */
 	struct lru_q_lane *qlane = &CHUNK_LRU[lane];
+	struct dir_chunk *chunk;
+	uint32_t refcnt;
 
 	q = &qlane->L1;
 
@@ -1466,6 +1469,16 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 
 		lru = glist_entry(qlane->iter.glist, mdcache_lru_t, q);
 
+		chunk = container_of(lru, struct dir_chunk, chunk_lru);
+		/* Get a ref on the chunk now */
+		refcnt = atomic_inc_int32_t(&chunk->chunk_lru.refcnt);
+
+		if (unlikely(refcnt > 2)) {
+			QUNLOCK(qlane);
+			mdcache_lru_unref_chunk(chunk);
+			goto next_lru;
+		}
+
 		/* Move lru object to MRU of L2 */
 		q = &qlane->L1;
 		CHUNK_LRU_DQ_SAFE(lru, q);
@@ -1473,6 +1486,11 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 		q = &qlane->L2;
 		lru_insert(lru, q, LRU_MRU);
 
+		QUNLOCK(qlane);
+		mdcache_lru_unref_chunk(chunk);
+
+next_lru:
+		QLOCK(qlane);
 		++workdone;
 	} /* for_each_safe lru */
 
@@ -1999,17 +2017,15 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 /**
  * @brief Remove a chunk from LRU, and clean it
  *
+ * QLane must be locked
+ *
  * @param[in] chunk  The chunk to be removed from LRU
  */
-void lru_clean_chunk(struct dir_chunk *chunk)
+static void lru_clean_chunk(struct dir_chunk *chunk)
 {
-	uint32_t lane = chunk->chunk_lru.lane;
-	struct lru_q_lane *qlane = &CHUNK_LRU[lane];
 	struct lru_q *lq;
 
 	LogFullDebug(COMPONENT_CACHE_INODE, "Removing chunk %p", chunk);
-
-	QLOCK(qlane);
 
 	/* Remove chunk and mark it as dead. */
 	lq = chunk_lru_queue_of(chunk);
@@ -2019,41 +2035,35 @@ void lru_clean_chunk(struct dir_chunk *chunk)
 		CHUNK_LRU_DQ_SAFE(&chunk->chunk_lru, lq);
 	}
 
-	QUNLOCK(qlane);
-
 	(void) atomic_dec_int64_t(&lru_state.chunks_used);
 
 	/* Then do the actual cleaning work. */
 	mdcache_clean_dirent_chunk(chunk);
 }
 
-/**
- * @brief Remove a chunk from LRU, clean it, and free it.
- *
- * @param[in] chunk  The chunk to be removed from LRU
- */
-void lru_remove_chunk(struct dir_chunk *chunk)
+void mdcache_lru_ref_chunk(struct dir_chunk *chunk)
 {
-	lru_clean_chunk(chunk);
-
-	/* And now we can free the chunk. */
-	LogFullDebug(COMPONENT_CACHE_INODE, "Freeing chunk %p", chunk);
-	gsh_free(chunk);
+	atomic_inc_int32_t(&chunk->chunk_lru.refcnt);
 }
 
-/**
- * @brief Remove a chunk from LRU, and clean it
- *
- * @param[in] chunk  The chunk to be removed from LRU
- */
-void lru_reuse_chunk(mdcache_entry_t *parent, struct dir_chunk *chunk)
+void mdcache_lru_unref_chunk(struct dir_chunk *chunk)
 {
-	lru_clean_chunk(chunk);
-	chunk->parent = parent;
-	chunk->chunk_lru.refcnt = 0;
-	chunk->chunk_lru.cf = 0;
-	chunk->chunk_lru.lane = lru_lane_of(chunk);
-	lru_insert_chunk(chunk, &CHUNK_LRU[chunk->chunk_lru.lane].L2, LRU_MRU);
+	int refcnt;
+	uint32_t lane = chunk->chunk_lru.lane;
+	struct lru_q_lane *qlane;
+
+	qlane = &CHUNK_LRU[lane];
+	QLOCK(qlane);
+
+	refcnt = atomic_dec_int32_t(&chunk->chunk_lru.refcnt);
+	if (refcnt == 0) {
+		lru_clean_chunk(chunk);
+
+		/* And now we can free the chunk. */
+		LogFullDebug(COMPONENT_CACHE_INODE, "Freeing chunk %p", chunk);
+		gsh_free(chunk);
+	}
+	QUNLOCK(qlane);
 }
 
 /**
