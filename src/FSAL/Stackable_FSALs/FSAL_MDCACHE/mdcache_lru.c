@@ -33,6 +33,7 @@
  */
 
 #include "config.h"
+#include "nfs_init.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <time.h>
@@ -1271,6 +1272,13 @@ lru_run(struct fridgethr_context *ctx)
 	/* The current count (after reaping) of open FDs */
 	size_t currentopen = 0;
 	time_t new_thread_wait;
+	static bool first_time = TRUE;
+
+	if (first_time) {
+		/* Wait for NFS server to properly initialize */
+		nfs_init_wait();
+		first_time = FALSE;
+	}
 
 	SetNameFunction("cache_lru");
 
