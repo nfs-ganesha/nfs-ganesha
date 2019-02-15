@@ -227,6 +227,8 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 		cl = avltree_container_of(node, struct gsh_client, node_k);
 	} else {
 		PTHREAD_RWLOCK_init(&cl->lock, NULL);
+		/* update cache */
+		atomic_store_voidptr(cache_slot, &cl->node_k);
 	}
 
  out:
