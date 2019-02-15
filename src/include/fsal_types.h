@@ -402,8 +402,6 @@ typedef uint64_t attrmask_t;
 #define ATTR_MTIME 0x0000000000008000LL
 /* space used by this file. */
 #define ATTR_SPACEUSED 0x0000000000010000LL
-/* NFS4 change_time like attribute */
-#define ATTR_CHGTIME 0x0000000000040000LL
 /* This bit indicates that an error occured during getting object attributes */
 #define ATTR_RDATTR_ERR 0x8000000000000000LL
 /* Generation number */
@@ -448,7 +446,7 @@ typedef uint64_t attrmask_t;
  */
 #define ATTRS_POSIX (ATTR_TYPE | ATTR_SIZE | ATTR_FSID | ATTR_FILEID |     \
 		     ATTR_MODE | ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP | \
-		     ATTR_ATIME | ATTR_CTIME | ATTR_MTIME | ATTR_CHGTIME | \
+		     ATTR_ATIME | ATTR_CTIME | ATTR_MTIME | \
 		     ATTR_CHANGE | ATTR_SPACEUSED | ATTR_RAWDEV)
 
 /**
@@ -481,7 +479,6 @@ struct attrlist {
 	struct timespec ctime;	/*< Inode modification time (a la stat.
 				   NOT creation.) */
 	struct timespec mtime;	/*< Time of last modification */
-	struct timespec chgtime;	/*< Time of last 'change' */
 	uint64_t spaceused;	/*< Space used on underlying filesystem */
 	uint64_t change;	/*< A 'change id' */
 	uint64_t generation;	/*< Generation number for this file */

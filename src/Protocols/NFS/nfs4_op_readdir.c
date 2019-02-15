@@ -586,17 +586,18 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 		goto out;
 	}
 
-	/* If a cookie verifier is used, then a non-trivial value is
-	 * returned to the client.  This value is the change_time of the
-	 * directory.  If verifier is unused (as in many NFS Servers)
-	 * then only a set of zeros is returned (trivial value)
+	/* To make or check the cookie verifier */
+	memset(cookie_verifier, 0, sizeof(cookie_verifier));
+
+	/* If cookie verifier is used, then an non-trivial value is
+	 * returned to the client This value is the change attribute of the
+	 * directory. If verifier is unused (as in many NFS Servers) then
+	 * only a set of zeros is returned (trivial value)
 	 */
-	memset(cookie_verifier, 0, NFS4_VERIFIER_SIZE);
 	if (use_cookie_verifier) {
-		time_t change_time;
 		struct attrlist attrs;
 
-		fsal_prepare_attrs(&attrs, ATTR_CHGTIME);
+		fsal_prepare_attrs(&attrs, ATTR_CHANGE);
 
 		fsal_status =
 			data->current_obj->obj_ops->getattrs(data->current_obj,
@@ -610,8 +611,8 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 			goto out;
 		}
 
-		change_time = timespec_to_nsecs(&attrs.chgtime);
-		memcpy(cookie_verifier, &change_time, sizeof(change_time));
+		memcpy(cookie_verifier, &attrs.change,
+		       MIN(sizeof(cookie_verifier), sizeof(attrs.change)));
 
 		/* Done with the attrs */
 		fsal_release_attrs(&attrs);

@@ -75,10 +75,6 @@ enum {
 	 * than that currently set. */
 	fsal_up_update_mtime_inc = 0x0010,
 
-	/* Update the chgtime only if the new time is later
-	 * than that currently set. */
-	fsal_up_update_chgtime_inc = 0x0020,
-
 	/* Update the spaceused only if the new size is greater
 	 * than that currently set. */
 	fsal_up_update_spaceused_inc = 0x0040,

@@ -371,11 +371,11 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					upflags = 0;
 					if (flags & UP_SIZE)
 						attr.valid_mask |=
-						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_CHANGE |
 						   ATTR_SIZE | ATTR_SPACEUSED;
 					if (flags & UP_SIZE_BIG) {
 						attr.valid_mask |=
-						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_CHANGE |
 						   ATTR_SIZE | ATTR_SPACEUSED;
 						upflags |=
 						   fsal_up_update_filesize_inc |
@@ -383,21 +383,21 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 					}
 					if (flags & UP_MODE)
 						attr.valid_mask |=
-						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_CHANGE |
 						   ATTR_MODE;
 					if (flags & UP_OWN)
 						attr.valid_mask |=
-						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_CHANGE |
 						   ATTR_OWNER | ATTR_GROUP |
 						   ATTR_MODE;
 					if (flags & UP_TIMES)
 						attr.valid_mask |=
-						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_CHANGE |
 						   ATTR_ATIME | ATTR_CTIME |
 						    ATTR_MTIME;
 					if (flags & UP_ATIME)
 						attr.valid_mask |=
-						   ATTR_CHGTIME | ATTR_CHANGE |
+						   ATTR_CHANGE |
 						   ATTR_ATIME;
 					if (flags & UP_NLINK)
 						attr.valid_mask |=

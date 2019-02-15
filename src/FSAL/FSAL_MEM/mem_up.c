@@ -125,11 +125,8 @@ mem_update(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
 	attrs.ctime = hdl->attrs.ctime; /* struct copy */
 	FSAL_SET_MASK(attrs.valid_mask, ATTR_CTIME);
 
-	/* Set change and chgtime */
-	hdl->attrs.chgtime = attrs.ctime; /* struct copy */
-	attrs.chgtime = hdl->attrs.chgtime; /* struct copy */
-	FSAL_SET_MASK(attrs.valid_mask, ATTR_CHGTIME);
-	hdl->attrs.change++;
+	/* Set change */
+	hdl->attrs.change = timespec_to_nsecs(&hdl->attrs.ctime);
 	attrs.change = hdl->attrs.change;
 	FSAL_SET_MASK(attrs.valid_mask, ATTR_CHANGE);
 

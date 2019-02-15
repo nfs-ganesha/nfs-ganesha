@@ -214,10 +214,11 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	memset(cookie_verifier, 0, sizeof(cookieverf3));
+	/* To make or check the cookie verifier */
+	memset(cookie_verifier, 0, sizeof(cookie_verifier));
 
 	/* If cookie verifier is used, then an non-trivial value is
-	 * returned to the client This value is the ctime of the
+	 * returned to the client This value is the change attribute of the
 	 * directory. If verifier is unused (as in many NFS Servers) then
 	 * only a set of zeros is returned (trivial value)
 	 */
@@ -229,9 +230,8 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out_fail;
 		}
 
-		memcpy(cookie_verifier,
-		       &attrs_dir.ctime.tv_sec,
-		       sizeof(attrs_dir.ctime.tv_sec));
+		memcpy(cookie_verifier, &attrs_dir.change,
+		       MIN(sizeof(cookie_verifier), sizeof(attrs_dir.change)));
 	}
 
 	if (use_cookie_verifier && begin_cookie != 0) {

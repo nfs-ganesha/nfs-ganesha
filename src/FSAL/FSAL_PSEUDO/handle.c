@@ -243,7 +243,6 @@ static struct pseudo_fsal_obj_handle
 
 	/* Use full timer resolution */
 	now(&hdl->attributes.ctime);
-	hdl->attributes.chgtime = hdl->attributes.ctime;
 
 	if ((attrs->valid_mask & ATTR_ATIME) != 0)
 		hdl->attributes.atime = attrs->atime;
@@ -255,8 +254,7 @@ static struct pseudo_fsal_obj_handle
 	else
 		hdl->attributes.mtime = hdl->attributes.ctime;
 
-	hdl->attributes.change =
-		timespec_to_nsecs(&hdl->attributes.chgtime);
+	hdl->attributes.change = timespec_to_nsecs(&hdl->attributes.ctime);
 
 	hdl->attributes.spaceused = 0;
 	hdl->attributes.rawdev.major = 0;
@@ -582,9 +580,8 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 
 	now(&myself->attributes.mtime);
 	myself->attributes.ctime = myself->attributes.mtime;
-	myself->attributes.chgtime = myself->attributes.mtime;
 	myself->attributes.change = timespec_to_nsecs(
-					&myself->attributes.chgtime);
+					&myself->attributes.mtime);
 
 unlock:
 	PTHREAD_RWLOCK_unlock(&dir_hdl->obj_lock);

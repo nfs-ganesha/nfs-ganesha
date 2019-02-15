@@ -514,13 +514,8 @@ static fattr_xdr_result encode_change(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result decode_change(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint64_t change = 0;
-
-	if (!xdr_u_int64_t(xdr, &change))
+	if (!xdr_u_int64_t(xdr, &args->attrs->change))
 		return FATTR_XDR_FAILED;
-	args->attrs->chgtime.tv_sec = (uint32_t) change;
-	args->attrs->chgtime.tv_nsec = 0;
-	args->attrs->change = change;
 	return FATTR_XDR_SUCCESS;
 }
 
@@ -2615,7 +2610,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
 		.name = "FATTR4_CHANGE",
 		.supported = 1,
 		.size_fattr4 = sizeof(fattr4_change),
-		.attrmask = (ATTR_CHGTIME | ATTR_CHANGE),
+		.attrmask = ATTR_CHANGE,
 		.encode = encode_change,
 		.decode = decode_change,
 		.access = FATTR4_ATTR_READ}

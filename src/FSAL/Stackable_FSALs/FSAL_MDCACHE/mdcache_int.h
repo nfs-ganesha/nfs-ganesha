@@ -675,7 +675,7 @@ mdcache_free_fh(struct gsh_buffdesc *fh_desc)
  * @brief Update entry metadata from its attributes
  *
  * This function, to be used after a FSAL_getattr, updates the
- * attribute trust flag and time, and stores the change time
+ * attribute trust flag and time, and stores the refresh time
  * in the main mdcache_entry_t.
  *
  * @note the caller MUST hold attr_lock for write

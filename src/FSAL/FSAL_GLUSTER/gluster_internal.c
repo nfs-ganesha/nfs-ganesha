@@ -107,9 +107,7 @@ void stat2fsal_attributes(const struct stat *buffstat,
 	fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
 	fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
 
-	fsalattr->chgtime = posix2fsal_time(MAX(buffstat->st_mtime,
-						buffstat->st_ctime), 0);
-	fsalattr->change = fsalattr->chgtime.tv_sec;
+	fsalattr->change = MAX(buffstat->st_mtime, buffstat->st_ctime);
 
 	fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
 

@@ -560,7 +560,7 @@ fsal_get_changeid4(struct fsal_obj_handle *obj)
 	fsal_status_t status;
 	changeid4 change;
 
-	fsal_prepare_attrs(&attrs, ATTR_CHANGE | ATTR_CHGTIME);
+	fsal_prepare_attrs(&attrs, ATTR_CHANGE);
 
 	status = obj->obj_ops->getattrs(obj, &attrs);
 

@@ -164,32 +164,31 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 			     fsal_attr->mtime.tv_sec);
 	}
 
-	if (FSAL_TEST_MASK(fsal_attr->request_mask, ATTR_CHGTIME)) {
+	if (FSAL_TEST_MASK(fsal_attr->request_mask, ATTR_CHANGE)) {
 		if (p_buffstat->st_mtime == p_buffstat->st_ctime) {
 			if (p_buffstat->st_mtim.tv_nsec >
-			    p_buffstat->st_ctim.tv_nsec)
-				fsal_attr->chgtime = posix2fsal_time(
-						p_buffstat->st_mtime,
-						p_buffstat->st_mtim.tv_nsec);
-			else
-				fsal_attr->chgtime = posix2fsal_time(
-						p_buffstat->st_ctime,
-						p_buffstat->st_ctim.tv_nsec);
+			    p_buffstat->st_ctim.tv_nsec) {
+				fsal_attr->change =
+					(uint64_t) p_buffstat->st_mtim.tv_sec +
+					(uint64_t) p_buffstat->st_mtim.tv_nsec;
+			} else {
+				fsal_attr->change =
+					(uint64_t) p_buffstat->st_ctim.tv_sec +
+					(uint64_t) p_buffstat->st_ctim.tv_nsec;
+			}
 		} else if (p_buffstat->st_mtime > p_buffstat->st_ctime) {
-			fsal_attr->chgtime =
-			    posix2fsal_time(p_buffstat->st_mtime,
-					    p_buffstat->st_mtim.tv_nsec);
+			fsal_attr->change =
+				(uint64_t) p_buffstat->st_mtim.tv_sec +
+				(uint64_t) p_buffstat->st_mtim.tv_nsec;
 		} else {
-			fsal_attr->chgtime =
-			    posix2fsal_time(p_buffstat->st_ctime,
-					    p_buffstat->st_ctim.tv_nsec);
+			fsal_attr->change =
+				(uint64_t) p_buffstat->st_ctim.tv_sec +
+				(uint64_t) p_buffstat->st_ctim.tv_nsec;
 		}
-		fsal_attr->change =
-		    (uint64_t) fsal_attr->chgtime.tv_sec +
-		    (uint64_t) fsal_attr->chgtime.tv_nsec;
-		fsal_attr->valid_mask |= ATTR_CHGTIME;
-		LogFullDebug(COMPONENT_FSAL, "chgtime = %lu",
-			     fsal_attr->chgtime.tv_sec);
+
+		fsal_attr->valid_mask |= ATTR_CHANGE;
+		LogFullDebug(COMPONENT_FSAL, "change = %"PRIu64,
+			     fsal_attr->change);
 
 	}
 

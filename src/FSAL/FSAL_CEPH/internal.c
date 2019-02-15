@@ -129,8 +129,6 @@ attrmask2ceph_want(attrmask_t mask)
 		want |= CEPH_STATX_BTIME;
 	if (mask & ATTR_CHANGE)
 		want |= CEPH_STATX_VERSION;
-	if (mask & ATTR_CHGTIME)
-		want |= (CEPH_STATX_CTIME|CEPH_STATX_MTIME);
 
 	return want;
 }
@@ -197,13 +195,5 @@ void ceph2fsal_attributes(const struct ceph_statx *stx,
 	if (stx->stx_mask & CEPH_STATX_VERSION) {
 		fsalattr->valid_mask |= ATTR_CHANGE;
 		fsalattr->change = stx->stx_version;
-	}
-
-	if ((stx->stx_mask & (CEPH_STATX_CTIME|CEPH_STATX_MTIME)) ==
-	     (CEPH_STATX_CTIME|CEPH_STATX_MTIME)) {
-		fsalattr->valid_mask |= ATTR_CHGTIME;
-		fsalattr->chgtime =
-		    (gsh_time_cmp(&fsalattr->mtime, &fsalattr->ctime) > 0) ?
-		    fsalattr->mtime : fsalattr->ctime;
 	}
 }
