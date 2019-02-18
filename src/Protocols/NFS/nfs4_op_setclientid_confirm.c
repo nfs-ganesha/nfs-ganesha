@@ -382,6 +382,9 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 		nfs_rpc_destroy_chan(&conf->cid_cb.v40.cb_chan);
 
+		/* Bump the lease timer*/
+		conf->cid_last_renew = time(NULL);
+
 		memcpy(conf->cid_verifier, unconf->cid_verifier,
 		       NFS4_VERIFIER_SIZE);
 
