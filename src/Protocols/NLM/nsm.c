@@ -221,10 +221,11 @@ bool nsm_unmonitor(state_nsm_client_t *host)
 		ret = CLNT_CALL_WAIT(cc);
 	}
 
+	nsm_count--;
 	if (ret != RPC_SUCCESS) {
 		t = rpc_sperror(&cc->cc_error, "failed");
 		LogCrit(COMPONENT_NLM,
-			"Unmonitor %s SM_MON %s",
+			"Unmonitor %s SM_UNMON %s",
 			nsm_mon_id.mon_name, t);
 		gsh_free(t);
 
@@ -237,7 +238,6 @@ bool nsm_unmonitor(state_nsm_client_t *host)
 	clnt_req_release(cc);
 
 	atomic_store_int32_t(&host->ssc_monitored, false);
-	nsm_count--;
 
 	LogDebug(COMPONENT_NLM, "Unmonitored %s for nodename %s",
 		 nsm_mon_id.mon_name, nodename);
