@@ -2278,7 +2278,11 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			 * is empty.  Just ditch it now, to avoid any issue. */
 			mdcache_lru_unref_chunk(chunk);
 			if (state->first_chunk == chunk) {
+				/* Drop the first_chunk ref */
+				mdcache_lru_unref_chunk(state->first_chunk);
 				state->first_chunk = new_dir_entry->chunk;
+				/* And take the first_chunk ref */
+				mdcache_lru_ref_chunk(state->first_chunk);
 			}
 			chunk = new_dir_entry->chunk;
 			state->cur_chunk = chunk;
@@ -2380,6 +2384,7 @@ static struct dir_chunk *mdcache_skip_chunks(mdcache_entry_t *directory,
 	while (next_ck != 0 &&
 	       mdcache_avl_lookup_ck(directory, next_ck, &dirent)) {
 		chunk = dirent->chunk;
+		mdcache_lru_unref_chunk(chunk);
 		next_ck = chunk->next_ck;
 	}
 
@@ -2395,6 +2400,8 @@ static struct dir_chunk *mdcache_skip_chunks(mdcache_entry_t *directory,
  * beginning. If prev_chunk is not NULL, we can scan the directory starting with
  * the last dirent name in prev_chunk, but we must still scan the directory
  * until we find whence.
+ *
+ * @note this returns a ref on the chunk containing @a dirent
  *
  * @param[in] directory   The directory to read
  * @param[in] whence      Where to start (next)
@@ -2422,6 +2429,9 @@ fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 
 	attrmask = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
 					op_ctx->fsal_export) | ATTR_RDATTR_ERR;
+
+	/* Take a ref on the first chunk */
+	mdcache_lru_ref_chunk(chunk);
 
 	state.export = mdc_cur_export();
 	state.dir = directory;
@@ -2546,6 +2556,7 @@ again:
 			 * return a dirent.
 			 */
 			*dirent = NULL;
+			mdcache_lru_unref_chunk(chunk);
 			LogDebugAlt(COMPONENT_NFS_READDIR,
 				    COMPONENT_CACHE_INODE,
 				    "status=%s",
@@ -2921,6 +2932,9 @@ again:
 
 	/* Bump the chunk in the LRU */
 	lru_bump_chunk(chunk);
+
+	/* We can drop the ref now, we've bumped */
+	mdcache_lru_unref_chunk(chunk);
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 			"About to read directory=%p cookie=%" PRIx64,
