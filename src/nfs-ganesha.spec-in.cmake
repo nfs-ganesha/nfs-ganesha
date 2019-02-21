@@ -509,7 +509,7 @@ make %{?_smp_mflags} || make %{?_smp_mflags} || make
 
 %if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
 make -C selinux -f /usr/share/selinux/devel/Makefile ganesha.pp
-pushd src/selinux && bzip2 -9 nfs-ganesha.pp && popd
+pushd selinux && bzip2 -9 ganesha.pp && popd
 %endif
 
 %install
