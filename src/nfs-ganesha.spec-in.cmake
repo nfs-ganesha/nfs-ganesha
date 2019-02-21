@@ -411,7 +411,8 @@ Summary: The NFS-GANESHA SELINUX targeted policy
 Group: Applications/System
 BuildArch:	noarch
 Requires:	nfs-ganesha = %{version}-%{release}
-%selinux_requires
+BuildRequires: selinux-policy-devel
+%{?selinux_requires}
 
 %description selinux
 This package contains an selinux policy for running ganesha.nfsd
