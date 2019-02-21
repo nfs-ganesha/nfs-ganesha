@@ -124,7 +124,7 @@ BuildRequires:	krb5-devel
 %if ( 0%{?suse_version} >= 1330 )
 BuildRequires:  libnsl-devel
 %else
-%if ( 0%{?fedora} >= 28 )
+%if ( 0%{?fedora} >= 28 || 0%{?rhel} >= 8 )
 BuildRequires:  libnsl2-devel
 %endif
 %endif
