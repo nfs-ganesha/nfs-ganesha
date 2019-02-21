@@ -399,6 +399,7 @@ cih_remove_checked(mdcache_entry_t *entry)
 	struct avltree_node *node;
 	cih_partition_t *cp =
 	    cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
+	bool unref = false;
 	bool freed = false;
 
 	PTHREAD_RWLOCK_wrlock(&cp->lock);
@@ -413,9 +414,16 @@ cih_remove_checked(mdcache_entry_t *entry)
 					     entry->fh_hk.key.hk)] = NULL;
 		entry->fh_hk.inavl = false;
 		/* return sentinel ref */
-		freed = mdcache_lru_unref(entry);
+		unref = true;
 	}
 	PTHREAD_RWLOCK_unlock(&cp->lock);
+
+	if (unref) {
+		/* We can't unref with the lock held, in case this is the last
+		 * ref.  That will recurse into here, and try to take the lock
+		 * again. */
+		freed = mdcache_lru_unref(entry);
+	}
 
 	return freed;
 }
