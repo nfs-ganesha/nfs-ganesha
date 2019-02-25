@@ -2288,6 +2288,8 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			state->cur_chunk = chunk;
 			if (new_dir_entry->flags & DIR_ENTRY_REFFED) {
 				/* This was ref'd already; drop extra ref */
+				/* Note, we have the write lock here, so atomics
+				 * are unnecessary */
 				mdcache_put(new_entry);
 				new_dir_entry->flags &= ~DIR_ENTRY_REFFED;
 			}
@@ -2326,7 +2328,8 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			atomic_fetch_int32_t(&new_entry->lru.refcnt));
 
 	/* Note that this entry is ref'd, so that mdcache_readdir_chunked can
-	 * un-ref it.  Keep the ref from above for this purpose */
+	 * un-ref it.  Keep the ref from above for this purpose.  We have the
+	 * write lock, so atomics are unnecessary */
 	new_dir_entry->flags |= DIR_ENTRY_REFFED;
 
 
@@ -2953,6 +2956,7 @@ again:
 		enum fsal_dir_result cb_result;
 		mdcache_entry_t *entry = NULL;
 		struct attrlist attrs;
+		uint32_t flags;
 
 		if (dirent->flags & DIR_ENTRY_FLAG_DELETED) {
 			/* Skip deleted entries */
@@ -3042,9 +3046,10 @@ again:
 
 		/* If we get here, we got an entry, and took a ref on it.  Put
 		 * the saved ref from the mdc_readdir_chunk_object(), if any. */
-		if (dirent->flags & DIR_ENTRY_REFFED) {
+		flags = atomic_postclear_uint32_t_bits(&dirent->flags,
+						       DIR_ENTRY_REFFED);
+		if (flags & DIR_ENTRY_REFFED) {
 			mdcache_put(entry);
-			dirent->flags &= ~DIR_ENTRY_REFFED;
 		}
 
 		if (reload_chunk && look_ck != 0 && dirent->ck !=
