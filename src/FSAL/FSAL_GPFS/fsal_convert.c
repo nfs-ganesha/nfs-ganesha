@@ -298,6 +298,14 @@ fsal_acl_2_gpfs_acl(struct fsal_obj_handle *dir_hdl, fsal_acl_t *fsal_acl,
 	acl_buf->acl_nace = fsal_acl->naces;
 	acl_buf->acl_len = acl_buflen;
 
+	/* GPFS can support max 638 entries */
+	if (fsal_acl->naces > GPFS_ACL_MAX_NACES) {
+		LogInfo(COMPONENT_FSAL,
+			"No. of ACE's:%d higher than supported by GPFS",
+			fsal_acl->naces);
+		return fsalstat(ERR_FSAL_INVAL, 0);
+	}
+
 	for (pace = fsal_acl->aces, i = 0;
 	     pace < fsal_acl->aces + fsal_acl->naces; pace++, i++) {
 		acl_buf->ace_v4[i].aceType = pace->type;

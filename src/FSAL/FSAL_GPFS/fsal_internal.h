@@ -101,6 +101,9 @@ struct gpfs_state_fd {
 #define GPFS_ACL_BUF_SIZE 0x1000
 #define GPFS_ACL_MAX_RETRY 10
 
+/* Max no. of ACEs supported for GPFS NFS4 ACL */
+#define GPFS_ACL_MAX_NACES 638
+
 /* Define the standard fsid_type for GPFS*/
 #define GPFS_FSID_TYPE FSID_MAJOR_64
 
