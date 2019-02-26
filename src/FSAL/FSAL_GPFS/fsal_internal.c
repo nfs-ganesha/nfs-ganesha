@@ -524,6 +524,7 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 		acl_buf->acl_version = GPFS_ACL_VERSION_NFS4;
 		acl_buf->acl_type = GPFS_ACL_TYPE_NFS4;
 		acl_buf->acl_len = acl_buflen;
+		acl_buf->acl_nace = 0;
 		xstatarg.acl = acl_buf;
 		xstatarg.attr_valid = XATTR_STAT | XATTR_ACL;
 	} else {
@@ -591,8 +592,16 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 		}
 	}
 
-	if (use_acl)
+	if (use_acl) {
+		if (acl_buf->acl_nace > GPFS_ACL_MAX_NACES) {
+			LogEvent(COMPONENT_FSAL,
+				"No. of ACE's:%d higher than supported by GPFS",
+				acl_buf->acl_nace);
+			/* Fail the request if ACL is invalid*/
+			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		}
 		buffxstat->attr_valid = XATTR_FSID | XATTR_STAT | XATTR_ACL;
+	}
 	else
 		buffxstat->attr_valid = XATTR_FSID | XATTR_STAT;
 
