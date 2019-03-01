@@ -1259,6 +1259,10 @@ fsal_status_t find_fd(struct glusterfs_fd *my_fd,
 				gsh_memdup(tmp2_fd->creds.caller_garray,
 					   tmp2_fd->creds.caller_glen *
 					   sizeof(gid_t));
+		/* Since we dup the fd, we need to close it post
+		 * processing the fop.
+		 */
+		*closefd = true;
 	} else {
 		my_fd->glfd = tmp2_fd->glfd;
 		my_fd->creds.caller_garray = tmp2_fd->creds.caller_garray;
