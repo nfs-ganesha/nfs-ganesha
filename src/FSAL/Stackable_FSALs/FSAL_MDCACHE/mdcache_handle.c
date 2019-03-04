@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2019 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -855,6 +855,10 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 
 	/* We will want all the requested attributes in the entry */
 	entry->attrs.request_mask = attrs.request_mask;
+	if (entry->attrs.acl != NULL) {
+		/* request_mask & ATTR_ACL must match attrs.acl */
+		entry->attrs.request_mask |= ATTR_ACL;
+	}
 
 	subcall(
 		status = entry->sub_handle->obj_ops->getattrs(
