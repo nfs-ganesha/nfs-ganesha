@@ -188,17 +188,18 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		ret = fsalstat(ERR_FSAL_LOCKED, 0);
 	}
 
-	if (nfs_RetryableError(ret.major)) {
+	if (FSAL_IS_SUCCESS(ret)) {
+		/* No error */
+		data->rc = NFS_REQ_OK;
+
+	} else if (nfs_RetryableError(ret.major)) {
 		/* If we are here, there was an error */
 		data->rc = NFS_REQ_DROP;
-	} else if (FSAL_IS_ERROR(ret)) {
+	} else {
 		/* We need to let nfs3_complete_read know there was an error.
 		 * This will be converted to NFS_REQ_OK later.
 		 */
 		data->rc = NFS_REQ_ERROR;
-	} else {
-		/* No error */
-		data->rc = NFS_REQ_OK;
 	}
 
 	data->res->res_read3.status = nfs3_Errno_status(ret);
