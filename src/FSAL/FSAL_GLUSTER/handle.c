@@ -1347,6 +1347,8 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	bool created = false;
 	int retval = 0;
 	mode_t unix_mode;
+	struct user_cred root_creds = {};
+	struct user_cred *saved_creds = op_ctx->creds;
 
 
 #ifdef GLTIMING
@@ -1699,7 +1701,9 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 
 open:
 	/* now open it */
+	op_ctx->creds = &root_creds;
 	status = glusterfs_open_my_fd(myself, openflags, p_flags, my_fd);
+	op_ctx->creds = saved_creds;
 
 	if (FSAL_IS_ERROR(status))
 		goto direrr;
