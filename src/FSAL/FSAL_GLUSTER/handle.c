@@ -1471,6 +1471,9 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	bool created = false;
 	int retval = 0;
 	mode_t unix_mode;
+	struct user_cred root_creds = {};
+	struct user_cred *saved_creds = op_ctx->creds;
+	uid_t process_uid;
 
 
 #ifdef GLTIMING
@@ -1852,7 +1855,12 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 
 open:
 	/* now open it */
+	process_uid = geteuid();
+	if (process_uid == 0)
+		op_ctx->creds = &root_creds;
 	status = glusterfs_open_my_fd(myself, openflags, p_flags, my_fd);
+	if (process_uid == 0)
+		op_ctx->creds = saved_creds;
 
 	if (FSAL_IS_ERROR(status))
 		goto direrr;
@@ -2365,12 +2373,19 @@ static fsal_status_t glusterfs_commit2(struct fsal_obj_handle *obj_hdl,
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export,
 			 struct glusterfs_export, export);
+	struct user_cred root_creds = {};
+	struct user_cred *saved_creds = op_ctx->creds;
+	uid_t process_uid;
 
 	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
 
 	/* Make sure file is open in appropriate mode.
 	 * Do not check share reservation.
 	 */
+	process_uid = geteuid();
+	if (process_uid == 0)
+		op_ctx->creds = &root_creds;
+
 	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_WRITE,
 				 (struct fsal_fd *)&myself->globalfd,
 				 &myself->share, glusterfs_open_func,
@@ -2400,6 +2415,9 @@ static fsal_status_t glusterfs_commit2(struct fsal_obj_handle *obj_hdl,
 		/* restore credentials */
 		SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL, NULL, 0);
 	}
+
+	if (process_uid == 0)
+		op_ctx->creds = saved_creds;
 
 	if (closefd)
 		glusterfs_close_my_fd(out_fd);
