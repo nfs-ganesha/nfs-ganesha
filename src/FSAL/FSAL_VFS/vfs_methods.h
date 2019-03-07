@@ -260,6 +260,8 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 					 const char *path,
 					 struct fsal_export *exp_hdl);
 
+void free_vfs_fsal_obj_handle(struct vfs_fsal_obj_handle **hdl);
+
 static inline bool vfs_unopenable_type(object_file_type_t type)
 {
 	if ((type == SOCKET_FILE) || (type == CHARACTER_FILE)

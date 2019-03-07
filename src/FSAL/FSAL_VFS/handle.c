@@ -64,6 +64,54 @@ int vfs_fsal_open(struct vfs_fsal_obj_handle *hdl,
 }
 
 /**
+ * handle_to_key
+ * return a handle descriptor into the handle in this object handle
+ * @TODO reminder.  make sure things like hash keys don't point here
+ * after the handle is released.
+ */
+
+static void handle_to_key(struct fsal_obj_handle *obj_hdl,
+			  struct gsh_buffdesc *fh_desc)
+{
+	struct vfs_fsal_obj_handle *myself;
+
+	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+
+	fh_desc->addr = myself->handle->handle_data;
+	fh_desc->len = myself->handle->handle_len;
+}
+
+/*
+ * @brief Free the VFS OBJ handle
+ *
+ * @param[in] hdl_ref	VFS OBJ handle reference
+ */
+void free_vfs_fsal_obj_handle(struct vfs_fsal_obj_handle **hdl_ref)
+{
+	struct vfs_fsal_obj_handle *myself = *hdl_ref;
+	object_file_type_t type = myself->obj_handle.type;
+
+	if (type == SYMBOLIC_LINK) {
+		gsh_free(myself->u.symlink.link_content);
+	} else if (type == REGULAR_FILE) {
+		struct gsh_buffdesc key;
+
+		handle_to_key(&myself->obj_handle, &key);
+		vfs_state_release(&key);
+	} else if (vfs_unopenable_type(type)) {
+		gsh_free(myself->u.unopenable.name);
+		gsh_free(myself->u.unopenable.dir);
+	}
+
+	LogDebug(COMPONENT_FSAL,
+		 "Releasing obj_hdl=%p, myself=%p",
+		 &myself->obj_handle, myself);
+
+	gsh_free(myself);
+	*hdl_ref = NULL;
+}
+
+/**
  * @brief Create a VFS OBJ handle
  *
  * @param[in] dirfd	FD for dir containing new handle
@@ -150,13 +198,7 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	return hdl;
 
  spcerr:
-	if (hdl->obj_handle.type == SYMBOLIC_LINK) {
-		gsh_free(hdl->u.symlink.link_content);
-	} else if (vfs_unopenable_type(hdl->obj_handle.type)) {
-		gsh_free(hdl->u.unopenable.name);
-		gsh_free(hdl->u.unopenable.dir);
-	}
-	gsh_free(hdl);		/* elvis has left the building */
+	free_vfs_fsal_obj_handle(&hdl);
 	return NULL;
 }
 
@@ -331,7 +373,7 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 		if (FSAL_IS_ERROR(status)) {
 			LogEvent(COMPONENT_FSAL, "Could not get the referral "
 				 "locations the path: %d, %s", dirfd, path);
-			gsh_free(hdl);
+			free_vfs_fsal_obj_handle(&hdl);
 			return status;
 		}
 	}
@@ -1605,24 +1647,6 @@ static fsal_status_t handle_to_wire(const struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/**
- * handle_to_key
- * return a handle descriptor into the handle in this object handle
- * @TODO reminder.  make sure things like hash keys don't point here
- * after the handle is released.
- */
-
-static void handle_to_key(struct fsal_obj_handle *obj_hdl,
-			  struct gsh_buffdesc *fh_desc)
-{
-	struct vfs_fsal_obj_handle *myself;
-
-	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-
-	fh_desc->addr = myself->handle->handle_data;
-	fh_desc->len = myself->handle->handle_len;
-}
-
 /*
  * release
  * release our export first so they know we are gone
@@ -1655,24 +1679,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	}
 
 	fsal_obj_handle_fini(obj_hdl);
-
-	if (type == SYMBOLIC_LINK) {
-		gsh_free(myself->u.symlink.link_content);
-	} else if (type == REGULAR_FILE) {
-		struct gsh_buffdesc key;
-
-		handle_to_key(obj_hdl, &key);
-		vfs_state_release(&key);
-	} else if (vfs_unopenable_type(type)) {
-		gsh_free(myself->u.unopenable.name);
-		gsh_free(myself->u.unopenable.dir);
-	}
-
-	LogDebug(COMPONENT_FSAL,
-		 "Releasing obj_hdl=%p, myself=%p",
-		 obj_hdl, myself);
-
-	gsh_free(myself);
+	free_vfs_fsal_obj_handle(&myself);
 }
 
 void vfs_handle_ops_init(struct fsal_obj_ops *ops)
@@ -1825,6 +1832,7 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 		if (FSAL_IS_ERROR(status)) {
 			LogEvent(COMPONENT_FSAL, "Could not get the referral "
 				 "locations for the exported path: %s", path);
+			free_vfs_fsal_obj_handle(&hdl);
 			return status;
 		}
 	}
