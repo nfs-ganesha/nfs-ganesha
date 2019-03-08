@@ -898,9 +898,6 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 					LRU_ENTRY_L1, parent);
 	}
 
-	if (prev_chunk)
-		mdcache_lru_unref_chunk(prev_chunk, true);
-
 	if (lru) {
 		/* we uniquely hold chunk, it has already been cleaned up.
 		 * The dirents list is effectively properly initialized.
@@ -924,6 +921,10 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 		chunk->reload_ck = glist_last_entry(&prev_chunk->dirents,
 						    mdcache_dir_entry_t,
 						    chunk_list)->ck;
+		/* unref prev_chunk as we had got a ref on prev_chunk
+		 * at the beginning of this function
+		 */
+		mdcache_lru_unref_chunk(prev_chunk, true);
 	} else {
 		chunk->reload_ck = whence;
 	}
