@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2017-2018 Red Hat, Inc.
+ * Copyright 2017-2019 Red Hat, Inc.
  * Author: Daniel Gryniewicz  dang@redhat.com
  *
  *
@@ -266,7 +266,7 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 
 	retval = load_config_from_node(parse_node,
 				       &mem_export_param_block,
-				       &myself,
+				       myself,
 				       true,
 				       err_type);
 
