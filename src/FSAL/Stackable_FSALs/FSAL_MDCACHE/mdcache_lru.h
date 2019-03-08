@@ -197,7 +197,7 @@ static inline void mdcache_put(mdcache_entry_t *entry)
 }
 
 void mdcache_lru_ref_chunk(struct dir_chunk *chunk);
-void mdcache_lru_unref_chunk(struct dir_chunk *chunk);
+void mdcache_lru_unref_chunk(struct dir_chunk *chunk, bool locked);
 struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 				    struct dir_chunk *prev_chunk,
 				    fsal_cookie_t whence);
