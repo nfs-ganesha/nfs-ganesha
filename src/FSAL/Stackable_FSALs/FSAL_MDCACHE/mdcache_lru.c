@@ -798,7 +798,7 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 		if (refcnt != (LRU_SENTINEL_REFCOUNT + 1)) {
 			/* We can't reap a chunk with a ref */
 			QUNLOCK(qlane);
-			mdcache_lru_unref_chunk(chunk);
+			mdcache_lru_unref_chunk(chunk, false);
 			continue;
 		}
 
@@ -849,7 +849,7 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 				PTHREAD_RWLOCK_unlock(&entry->content_lock);
 				mdcache_put(entry);
 			}
-			mdcache_lru_unref_chunk(chunk);
+			mdcache_lru_unref_chunk(chunk, true);
 			return lru;
 		}
 
@@ -858,7 +858,7 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 		 * eligible for reaping. Try the next lane...
 		 */
 		QUNLOCK(qlane);
-		mdcache_lru_unref_chunk(chunk);
+		mdcache_lru_unref_chunk(chunk, false);
 	}			/* foreach lane */
 
 	/* ! reclaimable */
@@ -899,7 +899,7 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 	}
 
 	if (prev_chunk)
-		mdcache_lru_unref_chunk(prev_chunk);
+		mdcache_lru_unref_chunk(prev_chunk, true);
 
 	if (lru) {
 		/* we uniquely hold chunk, it has already been cleaned up.
@@ -1483,7 +1483,7 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 
 		if (unlikely(refcnt > 2)) {
 			QUNLOCK(qlane);
-			mdcache_lru_unref_chunk(chunk);
+			mdcache_lru_unref_chunk(chunk, false);
 			goto next_lru;
 		}
 
@@ -1495,7 +1495,7 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 		lru_insert(lru, q, LRU_MRU);
 
 		QUNLOCK(qlane);
-		mdcache_lru_unref_chunk(chunk);
+		mdcache_lru_unref_chunk(chunk, false);
 
 next_lru:
 		QLOCK(qlane);
@@ -2054,11 +2054,25 @@ void mdcache_lru_ref_chunk(struct dir_chunk *chunk)
 	atomic_inc_int32_t(&chunk->chunk_lru.refcnt);
 }
 
-void mdcache_lru_unref_chunk(struct dir_chunk *chunk)
+/**
+ * @brief Unref a dirent chunk
+ *
+ * Since freeing requires the content_lock, you must either hold the
+ * content_lock already, or indicate that it's not already held.
+ *
+ * @param [in] chunk	The chunk to unref
+ * @param [in] locked	True if content_lock is held for write
+ */
+void mdcache_lru_unref_chunk(struct dir_chunk *chunk, bool locked)
 {
 	int refcnt;
 	uint32_t lane = chunk->chunk_lru.lane;
 	struct lru_q_lane *qlane;
+	mdcache_entry_t *parent = chunk->parent;
+
+	if (!locked) {
+		PTHREAD_RWLOCK_wrlock(&parent->content_lock);
+	}
 
 	qlane = &CHUNK_LRU[lane];
 	QLOCK(qlane);
@@ -2072,6 +2086,10 @@ void mdcache_lru_unref_chunk(struct dir_chunk *chunk)
 		gsh_free(chunk);
 	}
 	QUNLOCK(qlane);
+
+	if (!locked) {
+		PTHREAD_RWLOCK_unlock(&parent->content_lock);
+	}
 }
 
 /**
