@@ -81,6 +81,10 @@
 #include "nfs_init.h"
 #include "mdcache.h"
 #include "nfs_proto_tools.h"
+#ifdef USE_DBUS
+#include "gsh_dbus.h"
+#endif
+#include "server_stats_private.h"
 
 
 #ifdef USE_BLKID
@@ -1624,6 +1628,100 @@ out:
 	PTHREAD_RWLOCK_unlock(&fs_lock);
 	return retval;
 }
+
+#ifdef USE_DBUS
+
+ /**
+ *@brief Dbus method for showing dev ids of mounted POSIX filesystems
+ *
+ *@param[in]  args
+ *@param[out] reply
+ **/
+static bool posix_showfs(DBusMessageIter *args,
+			 DBusMessage *reply,
+			 DBusError *error)
+{
+	struct fsal_filesystem *fs;
+	struct glist_head *glist;
+	DBusMessageIter iter, sub_iter, fs_iter;
+	struct timespec timestamp;
+	uint64_t val;
+	char *path;
+
+	dbus_message_iter_init_append(reply, &iter);
+	now(&timestamp);
+	dbus_append_timestamp(&iter, &timestamp);
+
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+					 "(stt)",
+					 &sub_iter);
+
+	PTHREAD_RWLOCK_rdlock(&fs_lock);
+	/* Traverse POSIX file systems to display dev ids */
+	glist_for_each(glist, &posix_file_systems) {
+		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
+
+		dbus_message_iter_open_container(&sub_iter,
+			DBUS_TYPE_STRUCT, NULL, &fs_iter);
+
+		path = (fs->path != NULL) ? fs->path : "";
+		dbus_message_iter_append_basic(&fs_iter,
+			DBUS_TYPE_STRING, &path);
+
+		val = fs->dev.major;
+		dbus_message_iter_append_basic(&fs_iter, DBUS_TYPE_UINT64,
+			&val);
+
+		val = fs->dev.minor;
+		dbus_message_iter_append_basic(&fs_iter, DBUS_TYPE_UINT64,
+			&val);
+
+		dbus_message_iter_close_container(&sub_iter,
+			&fs_iter);
+	}
+	PTHREAD_RWLOCK_unlock(&fs_lock);
+	dbus_message_iter_close_container(&iter, &sub_iter);
+	return true;
+}
+
+static struct gsh_dbus_method cachemgr_show_fs = {
+	.name = "showfs",
+	.method = posix_showfs,
+	.args = {TIMESTAMP_REPLY,
+		{
+		  .name = "fss",
+		  .type = "a(stt)",
+		  .direction = "out"},
+		END_ARG_LIST}
+};
+
+static struct gsh_dbus_method *cachemgr_methods[] = {
+	&cachemgr_show_fs,
+	NULL
+};
+
+static struct gsh_dbus_interface cachemgr_table = {
+	.name = "org.ganesha.nfsd.cachemgr",
+	.props = NULL,
+	.methods = cachemgr_methods,
+	.signals = NULL
+};
+
+/* DBUS list of interfaces on /org/ganesha/nfsd/CacheMgr
+ * Intended for showing different caches
+ */
+
+static struct gsh_dbus_interface *cachemgr_interfaces[] = {
+	&cachemgr_table,
+	NULL
+};
+
+void dbus_cache_init(void)
+{
+	gsh_dbus_register_path("CacheMgr", cachemgr_interfaces);
+}
+
+#endif                          /* USE_DBUS */
 
 int encode_fsid(char *buf,
 		int max,

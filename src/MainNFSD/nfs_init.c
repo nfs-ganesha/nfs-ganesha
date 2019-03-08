@@ -45,6 +45,7 @@
 #ifdef USE_DBUS
 #include "gsh_dbus.h"
 #endif
+#include "FSAL/fsal_commonlib.h"
 #ifdef _USE_CB_SIMULATOR
 #include "nfs_rpc_callback_simulator.h"
 #endif
@@ -630,6 +631,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	gsh_dbus_pkginit();
 	dbus_export_init();
 	dbus_client_init();
+	dbus_cache_init();
 #endif
 
 	/* acls cache may be needed by exports_pkginit */

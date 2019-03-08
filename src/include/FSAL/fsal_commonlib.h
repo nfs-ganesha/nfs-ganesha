@@ -272,4 +272,8 @@ fsal_status_t update_export(struct fsal_module *fsal_hdl,
 			    struct fsal_export *original,
 			    struct fsal_module *updated_super);
 
+#ifdef USE_DBUS
+void dbus_cache_init(void);
+#endif
+
 #endif				/* FSAL_COMMONLIB_H */

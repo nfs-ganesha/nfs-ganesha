@@ -26,6 +26,7 @@ from Ganesha.ganesha_mgr_utils import ClientMgr
 from Ganesha.ganesha_mgr_utils import ExportMgr
 from Ganesha.ganesha_mgr_utils import AdminInterface
 from Ganesha.ganesha_mgr_utils import LogManager
+from Ganesha.ganesha_mgr_utils import CacheMgr
 
 SERVICE = 'org.ganesha.nfsd'
 
@@ -200,6 +201,39 @@ class ServerAdmin():
     def status_message(self, status, errormsg):
         print("Returns: status = %s, %s" % (str(status), errormsg))
 
+class ManageCache():
+
+    def __init__(self, parent=None):
+        self.cachemgr = CacheMgr(SERVICE,
+                                        '/org/ganesha/nfsd/CacheMgr',
+                                        'org.ganesha.nfsd.cachemgr')
+
+    def status_message(self, status, errormsg):
+        print "Returns: status = %s, %s" % (str(status), errormsg)
+
+    def showfs(self):
+        print "Show filesystems"
+        status, errormsg, reply = self.cachemgr.ShowFileSys()
+        if status == True:
+           ts = reply[0]
+           fss = reply[1]
+           self.proc_fs(ts, fss)
+        else:
+           self.status_message(status, errormsg)
+
+    def proc_fs(self, ts, fss):
+        print "Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs"
+        if len(fss) == 0:
+            print "No filesystems"
+        else:
+            print "Filesystems:"
+            print " Path,  MajorDevId, MinorDevId"
+            for fs in fss:
+                print (" %s,  %s,  %s" %
+                       (fs.Path,
+                        fs.MajorDevId,
+                        fs.MinorDevId))
+
 class ManageLogs():
 
     def __init__(self, parent=None):
@@ -244,16 +278,18 @@ if __name__ == '__main__':
     clientmgr = ManageClients()
     ganesha = ServerAdmin()
     logmgr = ManageLogs()
+    cachemgr = ManageCache()
 
     USAGE = \
        "\nganesha_mgr.py command [OPTIONS]\n\n"                                \
        "COMMANDS\n\n"                                                        \
        "   add_client ipaddr: Adds the client with the given IP\n\n"         \
        "   remove_client ipaddr: Removes the client with the given IP\n\n"   \
-       "   show_client: Shows the current clients\n\n"                       \
+       "   show clients: Displays the current clients\n\n"                   \
+       "   show posix_fs: Displays the mounted POSIX filesystems\n\n"        \
+       "   show exports: Displays all current exports\n\n"                   \
        "   display_export export_id: \n"                                     \
        "      Displays the export with the given ID\n\n"                     \
-       "   show_exports: Displays all current exports\n\n"                   \
        "   add_export conf expr:\n"                                          \
        "      Adds an export from the given config file that contains\n"     \
        "      the given expression\n"                                        \
@@ -336,6 +372,21 @@ if __name__ == '__main__':
             ganesha.purge_gids()
         else:
             msg = "Purging '%s' is not supported" % sys.argv[2]
+            sys.exit(msg)
+
+    elif sys.argv[1] == "show":
+        if len(sys.argv) < 3:
+            msg = 'show requires an option, '
+            msg += 'Try "ganesha_mgr.py help" for more info'
+            sys.exit(msg)
+        if sys.argv[2] == "clients":
+            clientmgr.showclients()
+        elif sys.argv[2] == "exports":
+            exportmgr.showexports()
+        elif sys.argv[2] == "posix_fs":
+            cachemgr.showfs()
+        else:
+            msg = "Showing '%s' is not supported" % sys.argv[2]
             sys.exit(msg)
 
     elif sys.argv[1] == "grace":
