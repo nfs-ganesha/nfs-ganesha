@@ -223,7 +223,7 @@ static void rados_ng_rm_clid(nfs_client_id_t *clientid)
 	clientid->cid_recov_tag = NULL;
 }
 
-static void rados_ng_pop_clid_entry(char *key, char *val,
+static void rados_ng_pop_clid_entry(char *key, char *val, size_t val_len,
 				    struct pop_args *pop_args)
 {
 	char *dupval, *cl_name;
@@ -233,7 +233,9 @@ static void rados_ng_pop_clid_entry(char *key, char *val,
 	add_rfh_entry_hook add_rfh_entry = pop_args->add_rfh_entry;
 
 	/* extract clid records */
-	dupval = gsh_strdup(val);
+	dupval = gsh_malloc(val_len +  1);
+	memcpy(dupval, val, val_len);
+	dupval[val_len] = '\0';
 	cl_name = strtok(dupval, "#");
 	if (!cl_name)
 		cl_name = dupval;

@@ -255,7 +255,7 @@ again:
 		if (val_len_out == 0 && key_out == NULL && val_out == NULL)
 			break;
 		start = key_out;
-		callback(key_out, val_out, args);
+		callback(key_out, val_out, val_len_out, args);
 	}
 	rados_omap_get_end(iter_vals);
 
@@ -488,7 +488,8 @@ void rados_kv_rm_clid(nfs_client_id_t *clientid)
 	clientid->cid_recov_tag = NULL;
 }
 
-void rados_kv_pop_clid_entry(char *key, char *val, struct pop_args *pop_args)
+void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
+			     struct pop_args *pop_args)
 {
 	int ret;
 	char *dupval;
@@ -501,7 +502,10 @@ void rados_kv_pop_clid_entry(char *key, char *val, struct pop_args *pop_args)
 	bool takeover = pop_args->takeover;
 
 	/* extract clid records */
-	dupval = gsh_strdup(val);
+	dupval = gsh_malloc(val_len +  1);
+	memcpy(dupval, val, val_len);
+	dupval[val_len] = '\0';
+
 	cl_name = strtok(dupval, "#");
 	if (!cl_name)
 		cl_name = dupval;
@@ -513,18 +517,18 @@ void rados_kv_pop_clid_entry(char *key, char *val, struct pop_args *pop_args)
 		add_rfh_entry(clid_ent, rfh_name);
 		rfh_name = strtok(NULL, "#");
 	}
-	gsh_free(dupval);
 
 	rcu_read_lock();
 	old_oid = gsh_refstr_get(rcu_dereference(rados_recov_old_oid));
 	rcu_read_unlock();
 	if (!old) {
-		ret = rados_kv_put(key, val, old_oid->gr_val);
+		ret = rados_kv_put(key, dupval, old_oid->gr_val);
 		if (ret < 0) {
 			LogEvent(COMPONENT_CLIENTID,
 				 "Failed to move %s", key);
 		}
 	}
+	gsh_free(dupval);
 
 	if (!takeover) {
 		if (old) {
