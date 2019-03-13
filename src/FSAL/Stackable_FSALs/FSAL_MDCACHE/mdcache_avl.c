@@ -83,7 +83,7 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 			v, v->name);
 
 #ifdef DEBUG_MDCACHE
-	assert(entry->content_lock.__data.__writer);
+	assert(entry->content_lock.__data.__cur_writer);
 #endif
 	assert(!(v->flags & DIR_ENTRY_FLAG_DELETED));
 
@@ -171,7 +171,7 @@ void unchunk_dirent(mdcache_dir_entry_t *dirent)
 			dirent, dirent->name);
 
 #ifdef DEBUG_MDCACHE
-	assert(parent->content_lock.__data.__writer);
+	assert(parent->content_lock.__data.__cur_writer);
 #endif
 
 	/* Dirent is part of a chunk, must do additional clean
@@ -269,7 +269,7 @@ int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 			v, v->name, entry, v->ck);
 
 #ifdef DEBUG_MDCACHE
-	assert(entry->content_lock.__data.__writer);
+	assert(entry->content_lock.__data.__cur_writer);
 #endif
 	node = avltree_inline_insert(&v->node_ck, &entry->fsobj.fsdir.avl.ck,
 				     avl_dirent_ck_cmpf);
@@ -326,7 +326,7 @@ mdcache_avl_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent)
 			"Insert dir entry %p %s",
 			v, v->name);
 #ifdef DEBUG_MDCACHE
-	assert(entry->content_lock.__data.__writer);
+	assert(entry->content_lock.__data.__cur_writer);
 #endif
 
 	/* compute hash */
@@ -607,7 +607,7 @@ void mdcache_avl_clean_trees(mdcache_entry_t *parent)
 	mdcache_dir_entry_t *dirent;
 
 #ifdef DEBUG_MDCACHE
-	assert(parent->content_lock.__data.__writer);
+	assert(parent->content_lock.__data.__cur_writer);
 #endif
 
 	while ((dirent_node = avltree_first(&parent->fsobj.fsdir.avl.t))) {

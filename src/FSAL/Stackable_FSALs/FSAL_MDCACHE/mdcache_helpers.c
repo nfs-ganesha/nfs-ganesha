@@ -90,7 +90,7 @@ static inline void add_detached_dirent(mdcache_entry_t *parent,
 				       mdcache_dir_entry_t *dirent)
 {
 #ifdef DEBUG_MDCACHE
-	assert(parent->content_lock.__data.__writer != 0);
+	assert(parent->content_lock.__data.__cur_writer);
 #endif
 	if (parent->fsobj.fsdir.detached_count ==
 	    mdcache_param.dir.avl_detached_max) {
@@ -375,7 +375,7 @@ mdc_get_parent_handle(struct mdcache_fsal_export *export,
 	fsal_status_t status;
 
 #ifdef DEBUG_MDCACHE
-	assert(entry->content_lock.__data.__writer != 0);
+	assert(entry->content_lock.__data.__cur_writer);
 #endif
 
 	/* Get a wire handle that can be used with create_handle() */
@@ -400,7 +400,7 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry)
 	fsal_status_t status;
 
 #ifdef DEBUG_MDCACHE
-	assert(entry->content_lock.__data.__writer != 0);
+	assert(entry->content_lock.__data.__cur_writer);
 #endif
 
 	if (entry->obj_handle.type != DIRECTORY) {
@@ -488,7 +488,7 @@ void mdcache_clean_dirent_chunks(mdcache_entry_t *entry)
 	struct glist_head *glist, *glistn;
 
 #ifdef DEBUG_MDCACHE
-	assert(entry->content_lock.__data.__writer);
+	assert(entry->content_lock.__data.__cur_writer);
 #endif
 	glist_for_each_safe(glist, glistn, &entry->fsobj.fsdir.chunks) {
 		mdcache_lru_unref_chunk(glist_entry(glist, struct dir_chunk,
@@ -1063,8 +1063,8 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 				? "yes" : "no");
 
 #ifdef DEBUG_MDCACHE
-	assert(mdc_parent->content_lock.__data.__nr_readers ||
-	       mdc_parent->content_lock.__data.__writer);
+	assert(mdc_parent->content_lock.__data.__readers ||
+	       mdc_parent->content_lock.__data.__cur_writer);
 #endif
 	*entry = NULL;
 
@@ -1457,7 +1457,7 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 	}
 
 #ifdef DEBUG_MDCACHE
-	assert(parent->content_lock.__data.__writer != 0);
+	assert(parent->content_lock.__data.__cur_writer);
 #endif
 
 	/* in cache avl, we always insert on pentry_parent */
@@ -1510,7 +1510,7 @@ mdcache_dirent_add(mdcache_entry_t *parent, const char *name,
 void mdcache_dirent_remove(mdcache_entry_t *parent, const char *name)
 {
 #ifdef DEBUG_MDCACHE
-	assert(parent->content_lock.__data.__writer != 0);
+	assert(parent->content_lock.__data.__cur_writer);
 #endif
 	/* Don't remove if we aren't doing dirent caching or the cache is empty
 	 */
@@ -1692,7 +1692,7 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 	bool invalidate_chunks = true;
 
 #ifdef DEBUG_MDCACHE
-	assert(parent_dir->content_lock.__data.__writer != 0);
+	assert(parent_dir->content_lock.__data.__cur_writer);
 #endif
 	subcall(
 		ck = parent_dir->sub_handle->obj_ops->compute_readdir_cookie(
@@ -2080,7 +2080,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 	enum fsal_dir_result result = DIR_CONTINUE;
 
 #ifdef DEBUG_MDCACHE
-	assert(mdc_parent->content_lock.__data.__writer);
+	assert(mdc_parent->content_lock.__data.__cur_writer);
 #endif
 
 	if (chunk->num_entries == mdcache_param.dir.avl_chunk) {
