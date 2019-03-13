@@ -161,8 +161,6 @@ bool nfs4_FSALToFhandle(bool allocate,
 	/* Set the len */
 	fh4->nfs_fh4_len = nfs4_sizeof_handle(file_handle);
 
-	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
-		file_handle->fhflags1, ntohs(file_handle->id.exports));
 	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "NFS4 Handle %s", LEN_FH_STR,
 			   fh4->nfs_fh4_val, fh4->nfs_fh4_len);
 
@@ -283,9 +281,6 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 
 	/* Cast the fh as a non opaque structure */
 	pfile_handle = (file_handle_v4_t *) (fh->nfs_fh4_val);
-
-	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
-		pfile_handle->fhflags1, ntohs(pfile_handle->id.exports));
 
 	/* validate the filehandle  */
 	if (pfile_handle == NULL || fh->nfs_fh4_len == 0
