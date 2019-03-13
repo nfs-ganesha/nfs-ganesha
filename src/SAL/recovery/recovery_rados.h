@@ -53,7 +53,7 @@ struct pop_args {
 	bool old;
 	bool takeover;
 };
-typedef void (*pop_clid_entry_t)(char *, char *, struct pop_args *);
+typedef void (*pop_clid_entry_t)(char *, char *, size_t,  struct pop_args *);
 
 int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
 			const char *conf, const char *pool, const char *ns);
@@ -68,5 +68,6 @@ void rados_kv_create_val(nfs_client_id_t *clientid, char *val);
 int rados_kv_traverse(pop_clid_entry_t callback, struct pop_args *args,
 			const char *object);
 void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle);
-void rados_kv_pop_clid_entry(char *key, char *val, struct pop_args *pop_args);
+void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
+			     struct pop_args *pop_args);
 #endif	/* _RECOVERY_RADOS_H */
