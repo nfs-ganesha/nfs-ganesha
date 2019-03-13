@@ -9,6 +9,11 @@ if(USE_DBUS)
     )
 endif(USE_DBUS)
 
+if(RADOS_URLS)
+  include_directories(
+	  ${RADOS_INCLUDE_DIR}
+    )
+endif(RADOS_URLS)
 ########### next target ###############
 
 SET(MainServices_STAT_SRCS
