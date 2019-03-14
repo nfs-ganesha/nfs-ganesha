@@ -356,7 +356,6 @@ struct dir_chunk {
 
 #define DIR_ENTRY_FLAG_NONE     0x0000
 #define DIR_ENTRY_FLAG_DELETED  0x0001
-#define DIR_ENTRY_REFFED        0x0002
 #define DIR_ENTRY_SORTED        0x0004
 
 typedef struct mdcache_dir_entry__ {
@@ -383,8 +382,12 @@ typedef struct mdcache_dir_entry__ {
 	/** Key of cache entry */
 	mdcache_key_t ckey;
 	/** Flags
-	 * Protected by write lock or atomics. */
+	 * Protected by write content_lock or atomics. */
 	uint32_t flags;
+	/** Temporary entry pointer
+	 * Only valid while the entry is ref'd.  Must be NULL otherwise.
+	 * Protected by the parent content_lock */
+	mdcache_entry_t *entry;
 	const char *name;
 	/** The NUL-terminated filename */
 	char name_buffer[];
