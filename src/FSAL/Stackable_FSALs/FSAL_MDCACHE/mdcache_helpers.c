@@ -2800,7 +2800,8 @@ again:
 		/* Assure that dirent is NULL */
 		dirent = NULL;
 
-		if (look_ck == directory->fsobj.fsdir.first_ck) {
+		if (look_ck != 0 &&
+		    look_ck == directory->fsobj.fsdir.first_ck) {
 			/* We failed to find the first dentry in the directory,
 			 * and will load this chunk.  Make sure we save
 			 * whatever is the new first_ck. */
