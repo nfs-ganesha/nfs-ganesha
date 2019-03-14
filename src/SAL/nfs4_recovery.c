@@ -406,7 +406,6 @@ static bool check_clid(nfs_client_id_t *clientid, clid_entry_t *clid_ent)
 {
 	bool ret = false;
 
-	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
 	LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
 		 clientid->cid_recov_tag, clid_ent->cl_name);
@@ -416,7 +415,6 @@ static bool check_clid(nfs_client_id_t *clientid, clid_entry_t *clid_ent)
 		     clid_ent->cl_name, PATH_MAX))
 		ret = true;
 
-	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 	return ret;
 }
 
@@ -444,6 +442,7 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 	 * loop through the list and try to find this client. If we
 	 * find it, mark it to allow reclaims.
 	 */
+	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 	glist_for_each(node, &clid_list) {
 		clid_ent = glist_entry(node, clid_entry_t, cl_list);
 		if (check_clid(clientid, clid_ent)) {
@@ -460,9 +459,10 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 			}
 			clientid->cid_allow_reclaim = true;
 			*clid_ent_arg = clid_ent;
-			return;
+			break;
 		}
 	}
+	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 }
 
 void  nfs4_chk_clid(nfs_client_id_t *clientid)
