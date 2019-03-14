@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2018 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2018-2019 Red Hat, Inc. and/or its affiliates.
  * Author: Jeff Layton <jlayton@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -186,7 +186,7 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 
 	snprintf(rados_recov_old_oid, sizeof(rados_recov_old_oid),
 			"rec-%16.16lx:%s", rec, nodeid);
-	ret = rados_kv_traverse(rados_kv_pop_clid_entry, &args,
+	ret = rados_kv_traverse(rados_ng_pop_clid_entry, &args,
 				rados_recov_old_oid);
 	if (ret < 0)
 		LogEvent(COMPONENT_CLIENTID,
