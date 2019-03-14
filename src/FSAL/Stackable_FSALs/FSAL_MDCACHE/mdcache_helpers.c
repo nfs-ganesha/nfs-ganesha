@@ -445,6 +445,10 @@ void mdcache_clean_dirent_chunk(struct dir_chunk *chunk)
 	struct glist_head *glist, *glistn;
 	struct mdcache_fsal_obj_handle *parent = chunk->parent;
 
+#ifdef DEBUG_MDCACHE
+	assert(parent->content_lock.__data.__cur_writer);
+#endif
+
 	glist_for_each_safe(glist, glistn, &chunk->dirents) {
 		mdcache_dir_entry_t *dirent;
 
@@ -2294,12 +2298,10 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			}
 			chunk = new_dir_entry->chunk;
 			state->cur_chunk = chunk;
-			if (new_dir_entry->flags & DIR_ENTRY_REFFED) {
+			if (new_dir_entry->entry) {
 				/* This was ref'd already; drop extra ref */
-				/* Note, we have the write lock here, so atomics
-				 * are unnecessary */
-				mdcache_put(new_entry);
-				new_dir_entry->flags &= ~DIR_ENTRY_REFFED;
+				mdcache_put(new_dir_entry->entry);
+				new_dir_entry->entry = NULL;
 			}
 			if (state->prev_chunk) {
 				state->prev_chunk->next_ck = new_dir_entry->ck;
@@ -2336,10 +2338,9 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			atomic_fetch_int32_t(&new_entry->lru.refcnt));
 
 	/* Note that this entry is ref'd, so that mdcache_readdir_chunked can
-	 * un-ref it.  Keep the ref from above for this purpose.  We have the
-	 * write lock, so atomics are unnecessary */
-	new_dir_entry->flags |= DIR_ENTRY_REFFED;
-
+	 * un-ref it.  Pass this ref off to the dir_entry for this purpose. */
+	assert(!new_dir_entry->entry);
+	new_dir_entry->entry = new_entry;
 
 	return result;
 }
@@ -2970,16 +2971,24 @@ again:
 		enum fsal_dir_result cb_result;
 		mdcache_entry_t *entry = NULL;
 		struct attrlist attrs;
-		uint32_t flags;
 
 		if (dirent->flags & DIR_ENTRY_FLAG_DELETED) {
 			/* Skip deleted entries */
 			continue;
 		}
 
-		/* Get actual entry using the dirent ckey */
-		status = mdcache_find_keyed_reason(&dirent->ckey, &entry,
-						   MDC_REASON_SCAN);
+		status.major = ERR_FSAL_NO_ERROR;
+		/* We have the content_lock for at least read. */
+		if (dirent->entry) {
+			/* Take a ref for our use */
+			entry = dirent->entry;
+			mdcache_get(entry);
+		} else {
+			/* Not cached, get actual entry using the dirent ckey */
+			status = mdcache_find_keyed_reason(&dirent->ckey,
+							   &entry,
+							   MDC_REASON_SCAN);
+		}
 
 		if (FSAL_IS_ERROR(status)) {
 			/* Failed using ckey, do full lookup. */
@@ -3060,12 +3069,17 @@ again:
 			}
 		}
 
-		/* If we get here, we got an entry, and took a ref on it.  Put
-		 * the saved ref from the mdc_readdir_chunk_object(), if any. */
-		flags = atomic_postclear_uint32_t_bits(&dirent->flags,
-						       DIR_ENTRY_REFFED);
-		if (flags & DIR_ENTRY_REFFED) {
-			mdcache_put(entry);
+		if (has_write && dirent->entry) {
+			/* If we get here, we have the write lock, have an
+			 * entry, and took a ref on it above.  The dirent also
+			 * has a ref on the entry.  Drop that ref now.  This can
+			 * only be done under the write lock.  If we don't have
+			 * the write lock, then this was not the readdir that
+			 * took the ref, and another readdir will drop the ref,
+			 * or it will be dropped when the dirent is cleaned up.
+			 * */
+			mdcache_put(dirent->entry);
+			dirent->entry = NULL;
 		}
 
 		if (reload_chunk && look_ck != 0 && dirent->ck !=
