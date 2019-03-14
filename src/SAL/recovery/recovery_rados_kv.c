@@ -488,8 +488,8 @@ void rados_kv_rm_clid(nfs_client_id_t *clientid)
 	clientid->cid_recov_tag = NULL;
 }
 
-void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
-			     struct pop_args *pop_args)
+static void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
+				    struct pop_args *pop_args)
 {
 	int ret;
 	char *dupval;

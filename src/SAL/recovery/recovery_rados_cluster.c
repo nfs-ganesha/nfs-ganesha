@@ -201,7 +201,7 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 	old_oid = gsh_refstr_alloc(len);
 	snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
 	rcu_set_pointer(&rados_recov_old_oid, old_oid);
-	ret = rados_kv_traverse(rados_kv_pop_clid_entry, &args,
+	ret = rados_kv_traverse(rados_ng_pop_clid_entry, &args,
 				old_oid->gr_val);
 	if (ret < 0)
 		LogEvent(COMPONENT_CLIENTID,

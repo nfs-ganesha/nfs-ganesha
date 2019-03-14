@@ -69,6 +69,7 @@ void rados_kv_create_val(nfs_client_id_t *clientid, char *val);
 int rados_kv_traverse(pop_clid_entry_t callback, struct pop_args *args,
 			const char *object);
 void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle);
-void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
+
+void rados_ng_pop_clid_entry(char *key, char *val, size_t val_len,
 			     struct pop_args *pop_args);
 #endif	/* _RECOVERY_RADOS_H */
