@@ -193,7 +193,11 @@ Requires(postun): systemd
 BuildRequires:	initscripts
 %endif
 %if %{with man_page}
+%if ( 0%{?fedora} >= 28 || 0%{?rhel} >= 8 )
+BuildRequires: python3-sphinx
+%else
 BuildRequires: python-sphinx
+%endif
 %endif
 Requires(post): psmisc
 Requires(pre): shadow-utils
