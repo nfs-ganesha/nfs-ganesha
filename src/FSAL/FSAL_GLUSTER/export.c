@@ -69,6 +69,8 @@ static void export_release(struct fsal_export *exp_hdl)
 	glfs_export->gl_fs = NULL;
 	gsh_free(glfs_export->export_path);
 	glfs_export->export_path = NULL;
+	gsh_free(glfs_export->sec_label_xattr);
+	glfs_export->sec_label_xattr = NULL;
 	gsh_free(glfs_export);
 	glfs_export = NULL;
 }
