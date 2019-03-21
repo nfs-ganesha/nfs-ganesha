@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2019 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -73,6 +73,14 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 
 	if (flags & FSAL_UP_INVALIDATE_CLOSE)
 		status = fsal_close(&entry->obj_handle);
+
+	if (flags & FSAL_UP_INVALIDATE_PARENT &&
+	    entry->obj_handle.type == DIRECTORY) {
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+		/* Clean up parent key */
+		mdcache_free_fh(&entry->fsobj.fsdir.parent);
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	}
 
 	mdcache_put(entry);
 
