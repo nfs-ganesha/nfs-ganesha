@@ -313,4 +313,6 @@ uint32_t resp_room(compound_data_t *data);
 
 nfsstat4 check_resp_room(compound_data_t *data, uint32_t op_resp_size);
 
+void get_mounted_on_fileid(compound_data_t *data, uint64_t *mounted_on_fileid);
+
 #endif				/* _NFS_PROTO_TOOLS_H */
