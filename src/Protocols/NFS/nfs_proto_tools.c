@@ -3402,6 +3402,25 @@ void nfs4_Fattr_Free(fattr4 *fattr)
 	}
 }
 
+void get_mounted_on_fileid(compound_data_t *data, uint64_t *mounted_on_fileid)
+{
+	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
+
+	if (data->current_obj == op_ctx->ctx_export->exp_root_obj) {
+		/* This is the root of the current export, find our
+		 * mounted_on_fileid and use that.
+		 */
+		*mounted_on_fileid = op_ctx->ctx_export->exp_mounted_on_file_id;
+	} else {
+		/* This is not the root of the current export, just
+		 * use fileid.
+		 */
+		*mounted_on_fileid = data->current_obj->fileid;
+	}
+
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+}
+
 /**
  * @brief Fill NFSv4 Fattr from a file
  *
@@ -3477,22 +3496,7 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 	}
 
 	if (attribute_is_set(Bitmap, FATTR4_MOUNTED_ON_FILEID)) {
-		PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
-
-		if (data->current_obj == op_ctx->ctx_export->exp_root_obj) {
-			/* This is the root of the current export, find our
-			 * mounted_on_fileid and use that.
-			 */
-			args.mounted_on_fileid =
-				op_ctx->ctx_export->exp_mounted_on_file_id;
-		} else {
-			/* This is not the root of the current export, just
-			 * use fileid.
-			 */
-			args.mounted_on_fileid = data->current_obj->fileid;
-		}
-
-		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+		get_mounted_on_fileid(data, &args.mounted_on_fileid);
 	}
 
 	/* Fill in fileid and fsid into args */
@@ -3518,21 +3522,6 @@ nfsstat4 file_To_Fattr(compound_data_t *data,
 }
 
 
-static fattr_xdr_result decode_fattr(XDR *xdr,
-				     struct xdr_attrs_args *args,
-				     int fattr_id)
-{
-	fattr_xdr_result res;
-
-	res = fattr4tab[fattr_id].decode(xdr, args);
-	if (res != FATTR_XDR_SUCCESS) {
-		LogDebug(COMPONENT_NFS_V4, "Failed to decode %s (%d)",
-			 fattr4tab[fattr_id].name, fattr_id);
-	}
-
-	return res;
-}
-
 /*
  * @brief Sets the FATTR4_RDATTR_ERROR in fattrs along with the other restricted
  * attrs if requested.
@@ -3551,40 +3540,25 @@ int nfs4_Fattr_Fill_Error(compound_data_t *data, fattr4 *Fattr,
 
 	memset(&restricted_attrmask, 0, sizeof(restricted_attrmask));
 
-	if (attribute_is_set(req_attrmask, FATTR4_FSID) ||
-	    attribute_is_set(req_attrmask, FATTR4_MOUNTED_ON_FILEID) ||
-	    attribute_is_set(req_attrmask, FATTR4_FS_LOCATIONS)) {
-		XDR old_attr_body;
+	if (attribute_is_set(&Fattr->attrmask, FATTR4_FSID)) {
+		set_attribute_in_bitmap(&restricted_attrmask,
+				FATTR4_FSID);
+	}
 
-		memset(&old_attr_body, 0, sizeof(old_attr_body));
-		xdrmem_create(&old_attr_body, Fattr->attr_vals.attrlist4_val,
-				Fattr->attr_vals.attrlist4_len, XDR_DECODE);
+	if (attribute_is_set(&Fattr->attrmask,
+				FATTR4_MOUNTED_ON_FILEID)) {
+		set_attribute_in_bitmap(&restricted_attrmask,
+				FATTR4_MOUNTED_ON_FILEID);
+	}
 
-		if (attribute_is_set(&Fattr->attrmask, FATTR4_FSID)) {
-			decode_fattr(&old_attr_body, args, FATTR4_FSID);
-			set_attribute_in_bitmap(&restricted_attrmask,
-						FATTR4_FSID);
-		}
-
-		if (attribute_is_set(&Fattr->attrmask,
-			FATTR4_MOUNTED_ON_FILEID)) {
-			decode_fattr(&old_attr_body, args,
-					FATTR4_MOUNTED_ON_FILEID);
-			set_attribute_in_bitmap(&restricted_attrmask,
-					FATTR4_MOUNTED_ON_FILEID);
-		}
-
-		/*
-		 * Since fslocations are set at the time of encoding
-		 * (encode_fs_locations), we should check the requested attrmask
-		 * here and not Fattr->attrmask.
-		 */
-		if (attribute_is_set(req_attrmask, FATTR4_FS_LOCATIONS)) {
-			set_attribute_in_bitmap(&restricted_attrmask,
-						FATTR4_FS_LOCATIONS);
-		}
-
-		xdr_destroy(&old_attr_body);
+	/*
+	 * Since fslocations are set at the time of encoding
+	 * (encode_fs_locations), we should check the requested attrmask
+	 * here and not Fattr->attrmask.
+	 */
+	if (attribute_is_set(req_attrmask, FATTR4_FS_LOCATIONS)) {
+		set_attribute_in_bitmap(&restricted_attrmask,
+				FATTR4_FS_LOCATIONS);
 	}
 
 	/* FATTR4_RDATTR_ERROR should be set only if it is requested */

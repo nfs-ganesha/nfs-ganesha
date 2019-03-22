@@ -171,6 +171,8 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 
 			memset(&args, 0, sizeof(args));
 			args.attrs = &attrs;
+			args.fsid = data->current_obj->fsid;
+			get_mounted_on_fileid(data, &args.mounted_on_fileid);
 
 			if (nfs4_Fattr_Fill_Error(data, obj_attributes,
 						  NFS4ERR_MOVED,
