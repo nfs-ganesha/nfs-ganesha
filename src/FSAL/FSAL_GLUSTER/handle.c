@@ -127,6 +127,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	struct glusterfs_handle *parenthandle =
 	    container_of(parent, struct glusterfs_handle, handle);
+	glusterfs_fsal_xstat_t buffxstat = {.e_acl = NULL, .i_acl = NULL};
+
 #ifdef GLTIMING
 	struct timespec s_time, e_time;
 
@@ -158,6 +160,30 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(&sb, attrs_out);
+
+		if (attrs_out->request_mask & ATTR_ACL) {
+			/* Fetch the ACL */
+			status = glusterfs_get_acl(glfs_export,
+						   glhandle,
+						   &buffxstat, attrs_out);
+			if (status.major == ERR_FSAL_NOENT) {
+				if (attrs_out->type == SYMBOLIC_LINK)
+					status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+				else
+					status = gluster2fsal_error(ESTALE);
+			}
+
+			if (!FSAL_IS_ERROR(status)) {
+				/* Success, so mark ACL as valid. */
+				attrs_out->valid_mask |= ATTR_ACL;
+			} else {
+				if (attrs_out->request_mask & ATTR_RDATTR_ERR)
+					attrs_out->valid_mask = ATTR_RDATTR_ERR;
+
+				fsal_release_attrs(attrs_out);
+				goto out;
+			}
+		}
 	}
 
 	*handle = &objhandle->handle;
@@ -170,6 +196,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	latency_update(&s_time, &e_time, lat_lookup);
 #endif
 
+	glusterfs_fsal_clean_xstat(&buffxstat);
 	return status;
 }
 
@@ -241,6 +268,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		 (GFAPI_XREADDIRP_STAT | GFAPI_XREADDIRP_HANDLE);
 	struct glfs_object *tmp = NULL;
 	struct stat *sb;
+	glusterfs_fsal_xstat_t buffxstat = {.e_acl = NULL, .i_acl = NULL};
 #endif
 
 #ifdef GLTIMING
@@ -347,6 +375,31 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			gluster_cleanup_vars(glhandle);
 			goto out;
 		}
+
+		if (attrs.request_mask & ATTR_ACL) {
+			/* Fetch the ACL */
+			status = glusterfs_get_acl(glfs_export,
+						   glhandle,
+						   &buffxstat, &attrs);
+			if (status.major == ERR_FSAL_NOENT) {
+				if (attrs.type == SYMBOLIC_LINK)
+					status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+				else
+					status = gluster2fsal_error(ESTALE);
+			}
+
+			if (!FSAL_IS_ERROR(status)) {
+				/* Success, so mark ACL as valid. */
+				attrs.valid_mask |= ATTR_ACL;
+			} else {
+				if (attrs.request_mask & ATTR_RDATTR_ERR)
+					attrs.valid_mask = ATTR_RDATTR_ERR;
+
+				fsal_release_attrs(&attrs);
+				glusterfs_fsal_clean_xstat(&buffxstat);
+				goto out;
+			}
+		}
 #endif
 		rc = glusterfs_fsal_get_sec_label(objhandle, &attrs);
 		if (rc < 0) {
@@ -358,6 +411,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			   dir_state, glfs_telldir(glfd));
 
 		fsal_release_attrs(&attrs);
+		glusterfs_fsal_clean_xstat(&buffxstat);
 
 		/* Read ahead not supported by this FSAL. */
 		if (cb_rc >= DIR_READAHEAD)
