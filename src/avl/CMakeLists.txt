@@ -8,7 +8,8 @@ SET(avltree_STAT_SRCS
    splay.c
 )
 
-add_library(avltree STATIC ${avltree_STAT_SRCS})
+add_library(avltree OBJECT ${avltree_STAT_SRCS})
 add_sanitizers(avltree)
+set_target_properties(avltree PROPERTIES COMPILE_FLAGS "-fPIC")
 
 ########### install files ###############

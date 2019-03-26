@@ -37,7 +37,8 @@ SET(9p_STAT_SRCS
    9p_rerror.c
 )
 
-add_library(9p STATIC ${9p_STAT_SRCS})
+add_library(9p OBJECT ${9p_STAT_SRCS})
 add_sanitizers(9p)
+set_target_properties(9p PROPERTIES COMPILE_FLAGS "-fPIC")
 
 ########### install files ###############

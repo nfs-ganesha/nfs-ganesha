@@ -1071,7 +1071,6 @@ check_symbol_exists(urcu_ref_get_unless_zero urcu/ref.h HAVE_URCU_REF_GET_UNLESS
 set(SYSTEM_LIBRARIES
   ${NTIRPC_LIBRARY}
   ${SYSTEM_LIBRARIES}
-  gos
   ${LIBDL}
   ${KRB5_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
@@ -1496,6 +1495,72 @@ if(COVERAGE)
 			)
 	endif(LCOV_EXEC AND GENHTML_EXEC)
 endif(COVERAGE)
+
+########### next target ###############
+
+add_executable(ganesha.nfsd ./MainNFSD/nfs_main.c)
+add_sanitizers(ganesha.nfsd)
+
+target_link_libraries(ganesha.nfsd
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
+  ${SYSTEM_LIBRARIES}
+  ${LTTNG_LIBRARIES}
+)
+
+install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
+
+########### next target ###############
+
+if (USE_RADOS_RECOV)
+  add_executable(ganesha-rados-grace ./tools/ganesha-rados-grace.c)
+  include_directories(${RADOS_INCLUDE_DIR})
+  target_link_libraries(ganesha-rados-grace ganesha_nfsd ${RADOS_LIBRARIES})
+  install(TARGETS ganesha-rados-grace COMPONENT tools DESTINATION bin)
+endif(USE_RADOS_RECOV)
+
+########### next target ###############
+
+if(LINUX)
+
+  add_executable(sm_notify.ganesha ./Protocols/NLM/sm_notify.c)
+  add_sanitizers(sm_notify.ganesha)
+
+  target_link_libraries(sm_notify.ganesha
+    ganesha_nfsd
+    ${LIBTIRPC_LIBRARIES}
+    ${SYSTEM_LIBRARIES}
+    ${LTTNG_LIBRARIES}
+  )
+
+  if( USE_ADMIN_TOOLS )
+    install(TARGETS sm_notify.ganesha COMPONENT daemon DESTINATION bin)
+  endif( USE_ADMIN_TOOLS )
+endif(LINUX)
+
+########### next target ###############
+
+add_executable(verif_syntax EXCLUDE_FROM_ALL ./config_parsing/verif_syntax.c)
+add_sanitizers(verif_syntax)
+
+target_link_libraries(verif_syntax
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
+  ${SYSTEM_LIBRARIES}
+  ${LTTNG_LIBRARIES}
+)
+
+########### next target ###############
+
+add_executable(test_parsing EXCLUDE_FROM_ALL ./config_parsing/test_parse.c)
+add_sanitizers(test_parsing)
+
+target_link_libraries(test_parsing
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
+  ${SYSTEM_LIBRARIES}
+  ${LTTNG_LIBRARIES}
+)
 
 ########### add a "make doc" target to call Doxygen
 find_package(Doxygen)

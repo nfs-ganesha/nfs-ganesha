@@ -65,8 +65,9 @@ if(USE_CB_SIMULATOR)
     )
 endif(USE_CB_SIMULATOR)
 
-add_library(MainServices STATIC ${MainServices_STAT_SRCS})
+add_library(MainServices OBJECT ${MainServices_STAT_SRCS})
 add_sanitizers(MainServices)
+set_target_properties(MainServices PROPERTIES COMPILE_FLAGS "-fPIC")
 
 # FSAL core sources
 # fsal_manager and fsal_destroyer are the only objects referenced by the
@@ -93,33 +94,85 @@ if (USE_ACL_MAPPING)
   )
 endif(USE_ACL_MAPPING)
 
-add_library(FsalCore STATIC ${fsal_CORE_SRCS})
+add_library(FsalCore OBJECT ${fsal_CORE_SRCS})
 add_sanitizers(FsalCore)
+set_target_properties(FsalCore PROPERTIES COMPILE_FLAGS "-fPIC")
 
-########### next target ###############
-
-SET(ganesha.nfsd_SRCS
-   nfs_main.c
+set(ganesha_nfsd_OBJS
+    $<TARGET_OBJECTS:MainServices>
+    $<TARGET_OBJECTS:FsalCore>
+    $<TARGET_OBJECTS:avltree>
+    $<TARGET_OBJECTS:cidr>
+    $<TARGET_OBJECTS:config_parsing>
+    $<TARGET_OBJECTS:hashtable>
+    $<TARGET_OBJECTS:idmap>
+    $<TARGET_OBJECTS:log>
+    $<TARGET_OBJECTS:gos>
+    $<TARGET_OBJECTS:rpcal>
+    $<TARGET_OBJECTS:sal>
+    $<TARGET_OBJECTS:support>
+    $<TARGET_OBJECTS:string_utils>
+    $<TARGET_OBJECTS:hash>
+    $<TARGET_OBJECTS:uid2grp>
+    $<TARGET_OBJECTS:netgroup_cache>
+    $<TARGET_OBJECTS:nfsproto>
+    $<TARGET_OBJECTS:nfs4callbacks>
+    $<TARGET_OBJECTS:rquota>
+    $<TARGET_OBJECTS:nfs_mnt_xdr>
+    $<TARGET_OBJECTS:fsalpseudo>
+    $<TARGET_OBJECTS:fsalmdcache>
 )
 
-add_executable(ganesha.nfsd
-  ${ganesha.nfsd_SRCS}
-  ${fsal_CORE_SRCS}
-)
-add_sanitizers(ganesha.nfsd)
+if(USE_DBUS)
+  set(ganesha_nfsd_OBJS
+    ${ganesha_nfsd_OBJS}
+    $<TARGET_OBJECTS:gshdbus>
+  )
+endif(USE_DBUS)
 
-target_link_libraries(ganesha.nfsd
-  MainServices
-  ${PROTOCOLS}
-  ${GANESHA_CORE}
-  config_parsing
+if(USE_NLM)
+  set(ganesha_nfsd_OBJS
+    ${ganesha_nfsd_OBJS}
+    $<TARGET_OBJECTS:nlm>
+  )
+endif(USE_NLM)
+
+if(USE_RADOS_RECOV)
+  set(ganesha_nfsd_OBJS
+    ${ganesha_nfsd_OBJS}
+    $<TARGET_OBJECTS:rados_grace>
+  )
+endif(USE_RADOS_RECOV)
+
+if(USE_9P)
+  set(ganesha_nfsd_OBJS
+    ${ganesha_nfsd_OBJS}
+    $<TARGET_OBJECTS:9p>
+  )
+endif(USE_9P)
+
+add_library(ganesha_nfsd SHARED
+    ${ganesha_nfsd_OBJS}
+)
+
+target_link_libraries(ganesha_nfsd
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
 )
 
-install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
+if(USE_RADOS_RECOV)
+  target_link_libraries(ganesha_nfsd ${RADOS_LIBRARIES})
+endif(USE_RADOS_RECOV)
 
+add_sanitizers(ganesha_nfsd)
+set_target_properties(ganesha_nfsd PROPERTIES
+  VERSION "${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}"
+  SOVERSION "${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}"
+)
+install(TARGETS ganesha_nfsd LIBRARY DESTINATION ${LIB_INSTALL_DIR})
+
+#install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
 
 ########### install files ###############
 

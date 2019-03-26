@@ -19,12 +19,9 @@ SET(fsalnull_LIB_SRCS
 add_library(fsalnull MODULE ${fsalnull_LIB_SRCS})
 add_sanitizers(fsalnull)
 
-target_link_libraries(fsalnull
-  gos
-)
+target_link_libraries(fsalnull ganesha_nfsd)
 
 set_target_properties(fsalnull PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsalnull COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )
-
 
 ########### install files ###############

@@ -37,8 +37,6 @@ target_link_libraries(fsalgpfs ${SYSTEM_LIBRARIES})
 
 set_target_properties(fsalgpfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
 
-
-
 ########### install files ###############
 
 install(TARGETS fsalgpfs COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )

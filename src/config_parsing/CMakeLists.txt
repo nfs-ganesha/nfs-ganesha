@@ -42,43 +42,13 @@ if(RADOS_URLS)
   include_directories(${RADOS_INCLUDE_DIR})
 endif(RADOS_URLS)
 
-add_library(config_parsing STATIC
+add_library(config_parsing OBJECT
   ${config_parsing_STAT_SRCS}
   ${BISON_ConfigParser_OUTPUTS}
   ${FLEX_ConfigScanner_OUTPUTS}
 )
 
-if(RADOS_URLS)
-  target_link_libraries(config_parsing ${RADOS_LIBRARIES})
-endif(RADOS_URLS)
-
 add_sanitizers(config_parsing)
-
-########### next target ###############
-
-SET(verif_syntax_SRCS
-   verif_syntax.c
-)
-
-add_executable(verif_syntax EXCLUDE_FROM_ALL ${verif_syntax_SRCS})
-add_sanitizers(verif_syntax)
-
-target_link_libraries(verif_syntax config_parsing log ${CMAKE_THREAD_LIBS_INIT})
-
-if(RADOS_URLS)
-  target_link_libraries(config_parsing ${RADOS_LIBRARIES})
-endif(RADOS_URLS)
-
-########### next target ###############
-
-SET(test_parsing_SRCS
-   test_parse.c
-)
-
-add_executable(test_parsing EXCLUDE_FROM_ALL ${test_parsing_SRCS})
-add_sanitizers(test_parsing)
-
-target_link_libraries(test_parsing config_parsing log ${CMAKE_THREAD_LIBS_INIT})
-
+set_target_properties(config_parsing PROPERTIES COMPILE_FLAGS "-fPIC")
 
 ########### install files ###############

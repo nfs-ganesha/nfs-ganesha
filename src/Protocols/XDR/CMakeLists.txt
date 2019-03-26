@@ -10,8 +10,8 @@ SET(nfs_mnt_xdr_STAT_SRCS
    xdr_nsm.c
 )
 
-add_library(nfs_mnt_xdr STATIC ${nfs_mnt_xdr_STAT_SRCS})
+add_library(nfs_mnt_xdr OBJECT ${nfs_mnt_xdr_STAT_SRCS})
 add_sanitizers(nfs_mnt_xdr)
-
+set_target_properties(nfs_mnt_xdr PROPERTIES COMPILE_FLAGS "-fPIC")
 
 ########### install files ###############

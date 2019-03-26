@@ -15,7 +15,8 @@ SET(cidr_STAT_SRCS
    cidr_pow2_p.h
 )
 
-add_library(cidr STATIC ${cidr_STAT_SRCS})
+add_library(cidr OBJECT ${cidr_STAT_SRCS})
 add_sanitizers(cidr)
+set_target_properties(cidr PROPERTIES COMPILE_FLAGS "-fPIC")
 
 ########### install files ###############

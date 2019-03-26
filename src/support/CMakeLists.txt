@@ -13,8 +13,9 @@ set(string_utils_STAT_SRCS
    refstr.c
 )
 
-add_library(string_utils STATIC ${string_utils_STAT_SRCS})
+add_library(string_utils OBJECT ${string_utils_STAT_SRCS})
 add_sanitizers(string_utils)
+set_target_properties(string_utils PROPERTIES COMPILE_FLAGS "-fPIC")
 
 # hash function libraries
 
@@ -23,8 +24,9 @@ set(hash_SRCS
    city.c
 )
 
-add_library(hash STATIC ${hash_SRCS})
+add_library(hash OBJECT ${hash_SRCS})
 add_sanitizers(hash)
+set_target_properties(hash PROPERTIES COMPILE_FLAGS "-fPIC")
 
 # uid2grp mapper
 set( uid2grp_SRCS
@@ -32,19 +34,22 @@ set( uid2grp_SRCS
      uid2grp_cache.c
 )
 
-add_library(uid2grp STATIC ${uid2grp_SRCS})
+add_library(uid2grp OBJECT ${uid2grp_SRCS})
 add_sanitizers(uid2grp)
+set_target_properties(uid2grp PROPERTIES COMPILE_FLAGS "-fPIC")
 
 # netgroup cache
 set(netgroup_cache_SRCS
     netgroup_cache.c
 )
-add_library(netgroup_cache STATIC ${netgroup_cache_SRCS})
+add_library(netgroup_cache OBJECT ${netgroup_cache_SRCS})
 add_sanitizers(netgroup_cache)
+set_target_properties(netgroup_cache PROPERTIES COMPILE_FLAGS "-fPIC")
 
 if (USE_RADOS_RECOV)
-   add_library(rados_grace STATIC rados_grace.c)
+   add_library(rados_grace OBJECT rados_grace.c)
    include_directories(${RADOS_INCLUDE_DIR})
+   set_target_properties(rados_grace PROPERTIES COMPILE_FLAGS "-fPIC")
 endif(USE_RADOS_RECOV)
 
 ########### next target ###############
@@ -81,7 +86,8 @@ if(APPLE)
     )
 endif(APPLE)
 
-add_library(support STATIC ${support_STAT_SRCS})
+add_library(support OBJECT ${support_STAT_SRCS})
 add_sanitizers(support)
+set_target_properties(support PROPERTIES COMPILE_FLAGS "-fPIC")
 
 ########### install files ###############

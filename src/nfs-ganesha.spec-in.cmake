@@ -574,10 +574,6 @@ install -m 644 config_samples/xfs.conf %{buildroot}%{_sysconfdir}/ganesha
 install -m 644 config_samples/ceph.conf %{buildroot}%{_sysconfdir}/ganesha
 %endif
 
-%if %{with rados_recov}
-install -m 755 tools/ganesha-rados-grace	%{buildroot}%{_bindir}/ganesha-rados-grace
-%endif
-
 %if %{with rgw}
 install -m 644 config_samples/rgw.conf %{buildroot}%{_sysconfdir}/ganesha
 install -m 644 config_samples/rgw_bucket.conf %{buildroot}%{_sysconfdir}/ganesha
@@ -655,6 +651,7 @@ exit 0
 
 %files
 %{_bindir}/ganesha.nfsd
+%{_libdir}/libganesha_nfsd.so*
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha

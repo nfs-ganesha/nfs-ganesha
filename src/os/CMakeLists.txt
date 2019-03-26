@@ -7,7 +7,6 @@ if(FREEBSD)
       freebsd/mntent_compat.c
       freebsd/subr.c
       freebsd/xattr.c
-      freebsd/memstream.c
   )
 endif(FREEBSD)
 
@@ -17,12 +16,8 @@ if(LINUX)
   )
 endif(LINUX)
 
-add_library(gos STATIC ${gos_STAT_SRCS})
+add_library(gos OBJECT ${gos_STAT_SRCS})
 add_sanitizers(gos)
+set_target_properties(gos PROPERTIES COMPILE_FLAGS "-fPIC")
 
 ########### install files ###############
-
-# This is GCC specific to force PIC compiles.
-# cmake 2.8.9 has a portable POSITION_INDEPENDENT_CODE property that can be
-# used when it is available
-set_target_properties(gos PROPERTIES COMPILE_FLAGS "-fPIC")

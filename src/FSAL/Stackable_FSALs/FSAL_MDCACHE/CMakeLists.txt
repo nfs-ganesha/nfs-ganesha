@@ -32,7 +32,8 @@ SET(fsalmdcache_LIB_SRCS
 	mdcache_up.c
 	)
 
-add_library(fsalmdcache STATIC ${fsalmdcache_LIB_SRCS})
+add_library(fsalmdcache OBJECT ${fsalmdcache_LIB_SRCS})
 add_sanitizers(fsalmdcache)
+set_target_properties(fsalmdcache PROPERTIES COMPILE_FLAGS "-fPIC")
 
 ########### install files ###############

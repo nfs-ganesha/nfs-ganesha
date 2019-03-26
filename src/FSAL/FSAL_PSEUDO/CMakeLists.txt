@@ -14,7 +14,8 @@ SET(fsalpseudo_LIB_SRCS
    export.c
 )
 
-add_library(fsalpseudo STATIC ${fsalpseudo_LIB_SRCS})
+add_library(fsalpseudo OBJECT ${fsalpseudo_LIB_SRCS})
 add_sanitizers(fsalpseudo)
+set_target_properties(fsalpseudo PROPERTIES COMPILE_FLAGS "-fPIC")
 
 ########### install files ###############

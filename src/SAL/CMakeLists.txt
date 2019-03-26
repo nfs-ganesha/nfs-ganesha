@@ -42,12 +42,12 @@ if(USE_RADOS_RECOV)
     )
 endif(USE_RADOS_RECOV)
 
-add_library(sal STATIC ${sal_STAT_SRCS})
+add_library(sal OBJECT ${sal_STAT_SRCS})
 add_sanitizers(sal)
+set_target_properties(sal PROPERTIES COMPILE_FLAGS "-fPIC")
 
 if(USE_RADOS_RECOV)
   include_directories(${RADOS_INCLUDE_DIR})
-  target_link_libraries(sal rados_grace ${RADOS_LIBRARIES})
 endif(USE_RADOS_RECOV)
 
 ########### install files ###############

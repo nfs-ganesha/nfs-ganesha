@@ -24,7 +24,8 @@ add_library(fsalproxy MODULE ${fsalproxy_LIB_SRCS})
 add_sanitizers(fsalproxy)
 
 target_link_libraries(fsalproxy 
-		      ${SYSTEM_LIBRARIES}
+    ganesha_nfsd
+    ${SYSTEM_LIBRARIES}
 )
 
 if(PROXY_HANDLE_MAPPING)
@@ -33,6 +34,5 @@ endif(PROXY_HANDLE_MAPPING)
 
 set_target_properties(fsalproxy PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsalproxy COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )
-
 
 ########### install files ###############

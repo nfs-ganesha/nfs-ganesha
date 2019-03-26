@@ -10,11 +10,8 @@ SET(rquota_STAT_SRCS
    rquota_common.c
 )
 
-add_library(rquota STATIC ${rquota_STAT_SRCS})
+add_library(rquota OBJECT ${rquota_STAT_SRCS})
 add_sanitizers(rquota)
-
-target_link_libraries(rquota
-  string_utils
-)
+set_target_properties(rquota PROPERTIES COMPILE_FLAGS "-fPIC")
 
 ########### install files ###############

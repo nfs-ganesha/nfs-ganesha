@@ -97,13 +97,16 @@ if(USE_NFS3)
     )
 endif(USE_NFS3)
 
-add_library(nfsproto STATIC ${nfsproto_STAT_SRCS})
+add_library(nfsproto OBJECT ${nfsproto_STAT_SRCS})
 add_sanitizers(nfsproto)
+set_target_properties(nfsproto PROPERTIES COMPILE_FLAGS "-fPIC")
 
 set(nfs4callbackSRCS
    nfs4_cb_Compound.c
 )
 
-add_library(nfs4callbacks STATIC ${nfs4callbackSRCS})
+add_library(nfs4callbacks OBJECT ${nfs4callbackSRCS})
 add_sanitizers(nfs4callbacks)
+set_target_properties(nfs4callbacks PROPERTIES COMPILE_FLAGS "-fPIC")
 
+########### install files ###############

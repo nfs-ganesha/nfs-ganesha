@@ -24,8 +24,4 @@ if(USE_FSAL_PANFS)
     add_subdirectory(panfs)
 endif(USE_FSAL_PANFS)
 
-########### next target ###############
-
-
-
 ########### install files ###############
