@@ -785,14 +785,7 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 		goto out;
 	}
 
-	if (rpc_cb_null(chan, true) != RPC_SUCCESS)
-#ifdef EBADFD
-		code = EBADFD;
-#else				/* !EBADFD */
-		code = EBADF;
-#endif				/* !EBADFD */
-	else
-		atomic_set_uint32_t_bits(&session->flags, session_bc_up);
+	atomic_set_uint32_t_bits(&session->flags, session_bc_up);
 
  out:
 	if (code != 0) {
