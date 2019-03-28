@@ -48,6 +48,7 @@
 #include "internal.h"
 #include "statx_compat.h"
 #include "sal_functions.h"
+#include "nfs_core.h"
 
 /**
  * @brief Clean up an export
@@ -324,12 +325,12 @@ void ceph_prepare_unexport(struct fsal_export *export_pub)
 
 #if USE_FSAL_CEPH_ABORT_CONN
 	/*
-	 * If we're still a member of the cluster, do a hard abort on the
-	 * connection to ensure that state is left intact on the MDS when we
-	 * return. If we're not a member any longer, then just shutdown
-	 * cleanly.
+	 * If we're shutting down and are still a member of the cluster, do a
+	 * hard abort on the connection to ensure that state is left intact on
+	 * the MDS when we return. If we're not shutting down or aren't a
+	 * member any longer then cleanly tear down the export.
 	 */
-	if (nfs_grace_is_member())
+	if (admin_shutdown && nfs_grace_is_member())
 		ceph_abort_conn(export->cmount);
 #endif
 }
