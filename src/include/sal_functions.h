@@ -949,7 +949,6 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 			       int share_deny,
 			       state_owner_t *owner,
 			       state_t *state,
-			       bool reclaim,
 			       bool unshare);
 
 void state_share_wipe(struct state_hdl *ostate);

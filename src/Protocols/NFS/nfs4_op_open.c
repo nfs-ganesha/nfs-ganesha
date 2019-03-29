@@ -847,7 +847,6 @@ static void open4_ex(OPEN4args *arg,
 			res_OPEN4->status = NFS4ERR_RECLAIM_BAD;
 			goto out;
 		}
-		openflags |= FSAL_O_RECLAIM;
 		file_obj = data->current_obj;
 		break;
 
@@ -867,7 +866,6 @@ static void open4_ex(OPEN4args *arg,
 		res_OPEN4->status = open4_claim_deleg(arg, data);
 		if (res_OPEN4->status != NFS4_OK)
 			goto out;
-		openflags |= FSAL_O_RECLAIM;
 		file_obj = data->current_obj;
 		break;
 

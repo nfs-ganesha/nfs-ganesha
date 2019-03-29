@@ -3073,7 +3073,6 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 						 OPEN4_SHARE_DENY_ALL,
 						 owner,
 						 found_share,
-						 false,
 						 true);
 		} else {
 			/* The export is being removed, we didn't bother

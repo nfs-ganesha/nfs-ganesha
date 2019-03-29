@@ -611,6 +611,7 @@ typedef enum {
 
 typedef uint16_t fsal_openflags_t;
 
+/* ACCESS flags */
 #define FSAL_O_CLOSED     0x0000  /* Closed */
 #define FSAL_O_READ       0x0001  /* read */
 #define FSAL_O_WRITE      0x0002  /* write */
@@ -618,10 +619,12 @@ typedef uint16_t fsal_openflags_t;
 						     * explicitly or'd together
 						     * so that FSAL_O_RDWR can
 						     * be used as a mask */
-#define FSAL_O_RECLAIM         0x0008  /* open reclaim */
-#define FSAL_O_REOPEN          0x0010  /* re-open */
+
+/* Internal flags, not really NFS open flags! */
 #define FSAL_O_ANY             0x0020  /* any open file descriptor is usable */
 #define FSAL_O_TRUNC           0x0040  /* Truncate file on open */
+
+/* DENY flags */
 #define FSAL_O_DENY_READ       0x0100
 #define FSAL_O_DENY_WRITE      0x0200
 #define FSAL_O_DENY_WRITE_MAND 0x0400  /* Mandatory deny-write (i.e. NFSv4) */
