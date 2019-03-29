@@ -134,7 +134,6 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				       arg->share.mode,
 				       nlm_owner,
 				       nlm_state,
-				       grace,
 				       false);
 
 	if (state_status != STATE_SUCCESS) {

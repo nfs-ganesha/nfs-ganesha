@@ -108,7 +108,6 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				       arg->share.mode,
 				       nlm_owner,
 				       nlm_state,
-				       false,
 				       true);
 
 	if (state_status != STATE_SUCCESS) {

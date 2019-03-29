@@ -102,7 +102,6 @@ void remove_nlm_share(state_t *state)
  * @param[in]     share_deny   Deny mode requested
  * @param[in]     owner        Share owner
  * @param[in]     state        state_t to manage the share
- * @param[in]     reclaim      Indicates if this is a reclaim
  * @param[in]     unshare      Indicates if this was an unshare
  *
  * @return State status.
@@ -112,7 +111,6 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 			       int share_deny,
 			       state_owner_t *owner,
 			       state_t *state,
-			       bool reclaim,
 			       bool unshare)
 {
 	fsal_status_t fsal_status = {0, 0};
@@ -230,10 +228,6 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 
 	if ((new_deny & fsm_DW) != 0)
 		openflags |= FSAL_O_DENY_WRITE;
-
-	if (reclaim)
-		openflags |= FSAL_O_RECLAIM;
-
 
 	if (openflags & FSAL_O_READ)
 		access_mask |= FSAL_READ_ACCESS;
@@ -392,7 +386,6 @@ void state_export_unshare_all(void)
 					 OPEN4_SHARE_DENY_ALL,
 					 owner,
 					 state,
-					 false,
 					 true);
 
 		/* Release references taken above. Should free the state_t. */
