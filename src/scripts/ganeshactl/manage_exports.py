@@ -74,7 +74,7 @@ class ShowExports(QtCore.QObject):
             print("Exports:")
             print("  Id, path,    nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, 9p, last")
             for export in exports:
-                print (" %d,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s %d nsecs" %
+                print(" %d,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s %d nsecs" %
                        (export.ExportID,
                         export.ExportPath,
                         export.HasNFSv3,
