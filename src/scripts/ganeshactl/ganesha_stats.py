@@ -1,9 +1,12 @@
 #!/usr/bin/python2
 #
-# This command receives statistics from Ganesha over DBus. The format for a command is:
-# ./ganesha_stats.py <command> <option>
-# eg. ./ganesha_stats.py deleg ::ffff:192.168.122.94
-# To get a list of clients and client ips use the "list_clients " command.
+# This command receives statistics from Ganesha over DBus. The format
+# for a command is:
+#
+# ganesha_stats <subcommand> <args>
+#
+# ganesha_stats help
+#	    To get detaled help
 #
 from __future__ import print_function
 import gobject
@@ -37,12 +40,12 @@ commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
 	    'export', 'total', 'fast', 'pnfs', 'fsal', 'reset', 'enable',
 	    'disable', 'status', 'v3_full', 'v4_full')
 if command not in commands:
-    print("Option \"%s\" is not correct." % (command))
+    print("Option '%s' is not correct." % command)
     usage()
 # requires an IP address
 elif command in ('deleg'):
     if not len(sys.argv) == 3:
-        print("Option \"%s\" must be followed by an ip address." % (command))
+        print("Option '%s' must be followed by an ip address." % command)
         usage()
     command_arg = sys.argv[2]
 # optionally accepts an export id
@@ -58,19 +61,21 @@ elif command == "help":
 # requires fsal name
 elif command in ('fsal'):
     if not len(sys.argv) == 3:
-        print("Option \"%s\" must be followed by fsal name." % (command))
+        print("Option '%s' must be followed by fsal name." % command)
         usage()
     command_arg = sys.argv[2]
 elif command in ('enable', 'disable'):
     if not len(sys.argv) == 3:
-	print "Option \"%s\" must be followed by all/nfs/fsal/v3_full/v4_full" % (command)
+	print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full" %
+            command)
 	usage()
     command_arg = sys.argv[2]
     if command_arg not in ('all', 'nfs', 'fsal', 'v3_full', 'v4_full'):
-	print "Option \"%s\" must be followed by all/nfs/fsal/v3_full/v4_full" % (command)
+	print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full" %
+            command)
 	usage()
 
-# retrieve and print(stats
+# retrieve and print stats
 exp_interface = Ganesha.glib_dbus_stats.RetrieveExportStats()
 cl_interface = Ganesha.glib_dbus_stats.RetrieveClientStats()
 if command == "global":
