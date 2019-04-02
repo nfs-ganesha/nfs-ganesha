@@ -455,6 +455,27 @@ static uint32_t mdcache_fs_umask(struct fsal_export *exp_hdl)
 }
 
 /**
+ * @brief Get the configured expiration time for parent handle
+ *
+ * MDCACHE only caches metadata, so it imposes no restrictions itself.
+ *
+ * @param[in] exp_hdl   Export to query
+ * @return Expiry time for parent handle
+ */
+static int32_t mdcache_fs_expiretimeparent(struct fsal_export *exp_hdl)
+{
+	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
+	int32_t result;
+
+	subcall_raw(exp,
+		result = sub_export->exp_ops.fs_expiretimeparent(sub_export)
+	);
+
+	return result;
+}
+
+/**
  * @brief Check quota on a file
  *
  * MDCACHE only caches metadata, so it imposes no restrictions itself.
@@ -843,6 +864,7 @@ void mdcache_export_ops_init(struct export_ops *ops)
 	ops->alloc_state = mdcache_alloc_state;
 	ops->free_state = mdcache_free_state;
 	ops->is_superuser = mdcache_is_superuser;
+	ops->fs_expiretimeparent = mdcache_fs_expiretimeparent;
 }
 
 #if 0

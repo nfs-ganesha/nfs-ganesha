@@ -155,4 +155,9 @@ uint32_t fsal_umask(struct fsal_staticfsinfo_t *info)
 {
 	return info->umask;
 }
+int32_t fsal_expiretimeparent(struct fsal_staticfsinfo_t *info)
+{
+	return info->expire_time_parent;
+}
+
 /** @} */

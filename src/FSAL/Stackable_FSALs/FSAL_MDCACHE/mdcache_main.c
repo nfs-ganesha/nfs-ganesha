@@ -84,6 +84,7 @@ struct mdcache_fsal_module MDCACHE = {
 			.umask = 0,
 			.auth_exportpath_xdev = false,
 			.link_supports_permission_checks = true,
+			.expire_time_parent = -1,
 		}
 	}
 };

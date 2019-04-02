@@ -1536,9 +1536,7 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 			     "lookup_path Created entry %p FSAL %s",
 			     new_entry, new_entry->sub_handle->fsal->name);
 		/* Make sure this entry has a parent pointer */
-		PTHREAD_RWLOCK_wrlock(&new_entry->content_lock);
-		mdc_get_parent(export, new_entry);
-		PTHREAD_RWLOCK_unlock(&new_entry->content_lock);
+		mdc_get_parent(export, new_entry, NULL);
 
 		*handle = &new_entry->obj_handle;
 	}
@@ -1580,9 +1578,7 @@ fsal_status_t mdcache_create_handle(struct fsal_export *exp_hdl,
 		return status;
 
 	/* Make sure this entry has a parent pointer */
-	PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-	mdc_get_parent(export, entry);
-	PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	mdc_get_parent(export, entry, NULL);
 
 	if (attrs_out != NULL) {
 		LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
