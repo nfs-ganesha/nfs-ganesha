@@ -719,6 +719,12 @@ typedef struct fsal_staticfsinfo_t {
 	bool compute_readdir_cookie;
 	bool whence_is_name;
 	bool readdir_plus;	/*< FSAL supports readdir_plus */
+	int32_t expire_time_parent; /*< Expiration time interval in
+				       seconds for parent handle.
+				       If FS gives information about parent
+				       change for a directory with an upcall,
+				       set this to -1. Else set it to some
+				       positive value. Defaults to -1. */
 } fsal_staticfsinfo_t;
 
 /**

@@ -1202,6 +1202,16 @@ struct export_ops {
 
 	bool (*is_superuser)(struct fsal_export *exp_hdl,
 			     const struct user_cred *creds);
+
+/**
+ * @brief Get the expiration time for parent handle.
+ *
+ * @param[in] exp_hdl Filesystem to interrogate
+ *
+ * @return Expiration time for parent handle
+ */
+
+	int32_t (*fs_expiretimeparent)(struct fsal_export *exp_hdl);
 };
 
 /**

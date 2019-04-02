@@ -538,6 +538,20 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 	return fsal_umask(&exp_hdl->fsal->fs_info);
 }
 
+/**
+ * @brief Get the expiration time for parent handle.
+ *
+ * This function gets the expiration time for parent handle.
+ *
+ * @param[in] exp_hdl The public export
+ *
+ * @return Expiration time for parent handle
+ */
+static int32_t fs_expiretimeparent(struct fsal_export *exp_hdl)
+{
+	return fsal_expiretimeparent(&exp_hdl->fsal->fs_info);
+}
+
 /* check_quota
  * return happiness for now.
  */
@@ -727,6 +741,7 @@ struct export_ops def_export_ops = {
 	.alloc_state = alloc_state,
 	.free_state = free_state,
 	.is_superuser = is_superuser,
+	.fs_expiretimeparent = fs_expiretimeparent,
 };
 
 /* fsal_obj_handle common methods

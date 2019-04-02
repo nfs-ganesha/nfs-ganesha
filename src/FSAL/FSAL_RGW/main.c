@@ -82,6 +82,7 @@ struct rgw_fsal_module RGWFSM = {
 				.compute_readdir_cookie = true,
 			#endif
 			.whence_is_name = true,
+			.expire_time_parent = -1,
 		}
 	}
 };

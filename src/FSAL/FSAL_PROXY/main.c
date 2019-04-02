@@ -57,6 +57,7 @@ struct pxy_fsal_module PROXY = {
 			.homogenous = true,
 			.supported_attrs = PROXY_SUPPORTED_ATTRS,
 			.link_supports_permission_checks = true,
+			.expire_time_parent = -1,
 		}
 	}
 };

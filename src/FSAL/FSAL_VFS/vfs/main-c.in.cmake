@@ -81,6 +81,7 @@ static struct vfs_fsal_module VFS = {
 			.maxread = FSAL_MAXIOSIZE,
 			.maxwrite = FSAL_MAXIOSIZE,
 			.link_supports_permission_checks = false,
+			.expire_time_parent = -1,
 		}
 	},
 	.only_one_user = false

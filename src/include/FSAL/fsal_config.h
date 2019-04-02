@@ -22,3 +22,5 @@ uint32_t fsal_maxread(struct fsal_staticfsinfo_t *info);
 uint32_t fsal_maxwrite(struct fsal_staticfsinfo_t *info);
 
 uint32_t fsal_umask(struct fsal_staticfsinfo_t *info);
+
+int32_t fsal_expiretimeparent(struct fsal_staticfsinfo_t *info);

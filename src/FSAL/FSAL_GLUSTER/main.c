@@ -75,6 +75,7 @@ struct glusterfs_fsal_module GlusterFS = {
 			.link_supports_permission_checks = true,
 			.delegations = FSAL_OPTION_FILE_DELEGATIONS,
 			.readdir_plus = true,
+			.expire_time_parent = -1,
 		}
 	}
 };

@@ -465,6 +465,8 @@ void display_fsinfo(struct fsal_module *fsal)
 		 fsal->fs_info.fsal_trace);
 	LogDebug(COMPONENT_FSAL, "  fsal_grace = %d  ",
 		 fsal->fs_info.fsal_grace);
+	LogDebug(COMPONENT_FSAL, "  expire_time_parent = %d  ",
+		 fsal->fs_info.expire_time_parent);
 	LogDebug(COMPONENT_FSAL, "}");
 }
 

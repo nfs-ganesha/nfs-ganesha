@@ -75,6 +75,7 @@ struct gpfs_fsal_module GPFS = {
 			.fsal_trace = true,
 			.fsal_grace = false,
 			.link_supports_permission_checks = true,
+			.expire_time_parent = 60,
 		}
 	}
 };
