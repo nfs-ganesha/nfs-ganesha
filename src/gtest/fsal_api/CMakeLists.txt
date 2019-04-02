@@ -7,7 +7,8 @@ add_executable(test_lookup_latency
 add_sanitizers(test_lookup_latency)
 
 target_link_libraries(test_lookup_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -26,7 +27,8 @@ add_executable(test_readlink_latency
 add_sanitizers(test_readlink_latency)
 
 target_link_libraries(test_readlink_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -45,7 +47,8 @@ add_executable(test_mkdir_latency
 add_sanitizers(test_mkdir_latency)
 
 target_link_libraries(test_mkdir_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -64,7 +67,8 @@ add_executable(test_symlink_latency
 add_sanitizers(test_symlink_latency)
 
 target_link_libraries(test_symlink_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -83,7 +87,8 @@ add_executable(test_link_latency
 add_sanitizers(test_link_latency)
 
 target_link_libraries(test_link_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -102,7 +107,8 @@ add_executable(test_unlink_latency
 add_sanitizers(test_unlink_latency)
 
 target_link_libraries(test_unlink_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -121,7 +127,8 @@ add_executable(test_rename_latency
 add_sanitizers(test_rename_latency)
 
 target_link_libraries(test_rename_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -139,7 +146,8 @@ add_executable(test_getattrs_latency
 add_sanitizers(test_getattrs_latency)
 
 target_link_libraries(test_getattrs_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -158,7 +166,8 @@ add_executable(test_close_latency
 add_sanitizers(test_close_latency)
 
 target_link_libraries(test_close_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -177,7 +186,8 @@ add_executable(test_commit2_latency
 add_sanitizers(test_commit2_latency)
 
 target_link_libraries(test_commit2_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -196,7 +206,8 @@ add_executable(test_write2_latency
 add_sanitizers(test_write2_latency)
 
 target_link_libraries(test_write2_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -215,7 +226,8 @@ add_executable(test_read2_latency
 add_sanitizers(test_read2_latency)
 
 target_link_libraries(test_read2_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -234,7 +246,8 @@ add_executable(test_open2_latency
 add_sanitizers(test_open2_latency)
 
 target_link_libraries(test_open2_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -253,7 +266,8 @@ add_executable(test_close2_latency
 add_sanitizers(test_close2_latency)
 
 target_link_libraries(test_close2_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -272,7 +286,8 @@ add_executable(test_reopen2_latency
 add_sanitizers(test_reopen2_latency)
 
 target_link_libraries(test_reopen2_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -291,7 +306,8 @@ add_executable(test_setattr2_latency
 add_sanitizers(test_setattr2_latency)
 
 target_link_libraries(test_setattr2_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -310,7 +326,8 @@ add_executable(test_readdir_latency
 add_sanitizers(test_readdir_latency)
 
 target_link_libraries(test_readdir_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -329,7 +346,8 @@ add_executable(test_mknode_latency
 add_sanitizers(test_mknode_latency)
 
 target_link_libraries(test_mknode_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -348,7 +366,8 @@ add_executable(test_lock_op2_latency
 add_sanitizers(test_lock_op2_latency)
 
 target_link_libraries(test_lock_op2_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -367,7 +386,8 @@ add_executable(test_handle_to_key_latency
 add_sanitizers(test_handle_to_key_latency)
 
 target_link_libraries(test_handle_to_key_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -386,7 +406,8 @@ add_executable(test_release_latency
 add_sanitizers(test_release_latency)
 
 target_link_libraries(test_release_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -405,7 +426,8 @@ add_executable(test_handle_to_wire_latency
 add_sanitizers(test_handle_to_wire_latency)
 
 target_link_libraries(test_handle_to_wire_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -424,7 +446,8 @@ add_executable(test_readdir_correctness
 add_sanitizers(test_readdir_correctness)
 
 target_link_libraries(test_readdir_correctness
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}

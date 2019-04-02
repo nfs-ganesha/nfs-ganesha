@@ -4,25 +4,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=gnu++14 -Wnon-virtual-dtor -Wno-inval
 set(UNITTEST_LIBS ${GTEST_LIBRARIES} boost_program_options boost_system ${PTHREAD_LIBS})
 set(UNITTEST_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${PROJECT_SOURCE_DIR}/gtest -I${GTEST_INCLUDE_DIR} -fno-strict-aliasing")
 
-set(GANESHA_LIBRARIES
-  rpcal
-  log
-  support
-  hash
-  config_parsing
-  MainServices
-  ${PROTOCOLS}
-  ${GANESHA_CORE}
-  # the following double mention of fsalpseudo and FsalCore
-  # static libs is NOT a typo
-  fsalpseudo
-  FsalCore
-  fsalpseudo
-  FsalCore
-  ${LIBTIRPC_LIBRARIES}
-  ${SYSTEM_LIBRARIES}
-  )
-
 add_subdirectory(fsal_api)
 add_subdirectory(nfs4)
 
@@ -53,7 +34,8 @@ add_executable(test_ci_hash_dist1
 add_sanitizers(test_ci_hash_dist1)
 
 target_link_libraries(test_ci_hash_dist1
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -71,7 +53,8 @@ add_executable(test_rbt
 add_sanitizers(test_rbt)
 
 target_link_libraries(test_rbt
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}

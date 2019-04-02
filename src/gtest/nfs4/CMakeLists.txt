@@ -7,7 +7,8 @@ add_executable(test_nfs4_lookup_latency
 add_sanitizers(test_nfs4_lookup_latency)
 
 target_link_libraries(test_nfs4_lookup_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -26,7 +27,8 @@ add_executable(test_nfs4_putfh_latency
 add_sanitizers(test_nfs4_putfh_latency)
 
 target_link_libraries(test_nfs4_putfh_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -45,7 +47,8 @@ add_executable(test_nfs4_rename_latency
 add_sanitizers(test_nfs4_rename_latency)
 
 target_link_libraries(test_nfs4_rename_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
@@ -64,7 +67,8 @@ add_executable(test_nfs4_link_latency
 add_sanitizers(test_nfs4_link_latency)
 
 target_link_libraries(test_nfs4_link_latency
-  ${GANESHA_LIBRARIES}
+  ganesha_nfsd
+  ${LIBTIRPC_LIBRARIES}
   ${UNITTEST_LIBS}
   ${LTTNG_LIBRARIES}
   ${LTTNG_CTL_LIBRARIES}
