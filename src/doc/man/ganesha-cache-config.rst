@@ -62,7 +62,7 @@ FD_HWMark_Percent(uint32, range 0 to 100, default 90)
     The percentage of the system-imposed maximum of file descriptors above which
     Ganesha will make greater efforts at reaping.
 
-FD_LWMark_Percent(uint32, range 0 to 100, default 50)
+FD_LWMark_Percent(uint32, range 0 to 100, default 0)
     The percentage of the system-imposed maximum of file descriptors below which
     Ganesha will not reap file descriptors.
 

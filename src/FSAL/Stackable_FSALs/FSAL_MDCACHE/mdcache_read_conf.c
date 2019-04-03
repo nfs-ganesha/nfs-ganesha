@@ -75,7 +75,7 @@ static struct config_item mdcache_params[] = {
 		       mdcache_parameter, fd_limit_percent),
 	CONF_ITEM_UI32("FD_HWMark_Percent", 0, 100, 90,
 		       mdcache_parameter, fd_hwmark_percent),
-	CONF_ITEM_UI32("FD_LWMark_Percent", 0, 100, 50,
+	CONF_ITEM_UI32("FD_LWMark_Percent", 0, 100, 0,
 		       mdcache_parameter, fd_lwmark_percent),
 	CONF_ITEM_UI32("Reaper_Work", 1, 2000, 0,
 		       mdcache_parameter, reaper_work),

@@ -91,7 +91,7 @@ struct mdcache_parameter {
 	uint32_t fd_hwmark_percent;
 	/** The percentage of the system-imposed maximum of file
 	    descriptors below which Ganesha will not reap file
-	    descriptonot reap file descriptors.  Defaults to 50,
+	    descriptonot reap file descriptors.  Defaults to 0,
 	    settable with FD_LWMark_Percent. */
 	uint32_t fd_lwmark_percent;
 	/** Roughly, the amount of work to do on each pass through the
