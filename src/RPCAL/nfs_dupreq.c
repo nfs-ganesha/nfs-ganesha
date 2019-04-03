@@ -1198,6 +1198,7 @@ dq_again:
 
 			/* remove q entry */
 			TAILQ_REMOVE(&drc->dupreq_q, ov, fifo_q);
+			TAILQ_INIT_ENTRY(ov, fifo_q);
 			--(drc->size);
 			/* release dv's ref */
 			nfs_dupreq_put_drc(drc, DRC_FLAG_LOCKED);
@@ -1272,6 +1273,27 @@ dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
 		     dupreq_state_table[dv->state], dupreq_status_table[status],
 		     dv->refcnt);
 
+	/* This function is called to remove this dupreq from the
+	 * hashtable/list, but it is possible that another thread
+	 * processing a different request calling nfs_dupreq_finish()
+	 * might have already deleted this dupreq.
+	 *
+	 * If this dupreq is already removed from hash table/list, do
+	 * nothing.
+	 *
+	 * req holds a ref on drc, so it should be valid here.
+	 * assert(drc == (drc_t *)req->rq_xprt->xp_u2);
+	 */
+	PTHREAD_MUTEX_lock(&drc->mtx);
+	if (!TAILQ_IS_ENQUEUED(dv, fifo_q)) {
+		PTHREAD_MUTEX_unlock(&drc->mtx);
+		goto out; /* no more in the hash table/list, nothing todo */
+	}
+	TAILQ_REMOVE(&drc->dupreq_q, dv, fifo_q);
+	TAILQ_INIT_ENTRY(dv, fifo_q);
+	--(drc->size);
+	PTHREAD_MUTEX_unlock(&drc->mtx);
+
 	/* XXX dv holds a ref on drc */
 	t = rbtx_partition_of_scalar(&drc->xt, dv->hk);
 
@@ -1279,14 +1301,8 @@ dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
 	rbtree_x_cached_remove(&drc->xt, t, &dv->rbt_k, dv->hk);
 	PTHREAD_MUTEX_unlock(&t->mtx);
 
-	PTHREAD_MUTEX_lock(&drc->mtx);
-
-	TAILQ_REMOVE(&drc->dupreq_q, dv, fifo_q);
-	--(drc->size);
-
 	/* release dv's ref on drc and unlock */
-	nfs_dupreq_put_drc(drc, DRC_FLAG_LOCKED);
-	/* !LOCKED */
+	nfs_dupreq_put_drc(drc, DRC_FLAG_NONE);
 
 	/* we removed the dupreq from hashtable, release a ref */
 	dupreq_entry_put(dv);
