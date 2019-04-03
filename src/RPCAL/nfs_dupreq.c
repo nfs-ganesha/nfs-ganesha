@@ -864,14 +864,19 @@ static inline void dupreq_entry_get(dupreq_entry_t *dv)
 static inline void dupreq_entry_put(dupreq_entry_t *dv)
 {
 	int32_t refcnt;
+	drc_t *drc;
 
 	refcnt = atomic_dec_uint32_t(&dv->refcnt);
 
 	/* If ref count is zero, no one should be accessing it other
 	 * than us.  so no lock is needed.
 	 */
-	if (refcnt == 0)
+	if (refcnt == 0) {
+		/* release dv's ref on drc and unlock */
+		drc = dv->hin.drc;
+		nfs_dupreq_put_drc(drc, DRC_FLAG_NONE);
 		nfs_dupreq_free_dupreq(dv);
+	}
 }
 
 /**
@@ -1200,9 +1205,7 @@ dq_again:
 			TAILQ_REMOVE(&drc->dupreq_q, ov, fifo_q);
 			TAILQ_INIT_ENTRY(ov, fifo_q);
 			--(drc->size);
-			/* release dv's ref */
-			nfs_dupreq_put_drc(drc, DRC_FLAG_LOCKED);
-			/* drc->mtx gets unlocked in the above call! */
+			PTHREAD_MUTEX_unlock(&drc->mtx);
 
 			rbtree_x_cached_remove(&drc->xt, t, &ov->rbt_k, ov->hk);
 
@@ -1300,9 +1303,6 @@ dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
 	PTHREAD_MUTEX_lock(&t->mtx);
 	rbtree_x_cached_remove(&drc->xt, t, &dv->rbt_k, dv->hk);
 	PTHREAD_MUTEX_unlock(&t->mtx);
-
-	/* release dv's ref on drc and unlock */
-	nfs_dupreq_put_drc(drc, DRC_FLAG_NONE);
 
 	/* we removed the dupreq from hashtable, release a ref */
 	dupreq_entry_put(dv);
