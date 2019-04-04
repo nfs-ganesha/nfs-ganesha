@@ -94,7 +94,6 @@ struct dupreq_entry {
 	TAILQ_ENTRY(dupreq_entry) fifo_q;
 	pthread_mutex_t mtx;
 	struct {
-		drc_t *drc;
 		sockaddr_t addr;
 		struct {
 			uint32_t rq_xid;
