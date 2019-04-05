@@ -569,15 +569,17 @@ static void do_shutdown(void)
 
 	LogEvent(COMPONENT_MAIN, "Stopping worker threads");
 #ifdef _USE_9P
-	rc = _9p_worker_shutdown();
+	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
+		rc = _9p_worker_shutdown();
 
-	if (rc != 0) {
-		LogMajor(COMPONENT_THREAD,
-			 "Unable to shut down worker threads: %d", rc);
-		disorderly = true;
-	} else {
-		LogEvent(COMPONENT_THREAD,
-			 "Worker threads successfully shut down.");
+		if (rc != 0) {
+			LogMajor(COMPONENT_THREAD,
+				 "Unable to shut down worker threads: %d", rc);
+			disorderly = true;
+		} else {
+			LogEvent(COMPONENT_THREAD,
+				 "Worker threads successfully shut down.");
+		}
 	}
 #endif
 
