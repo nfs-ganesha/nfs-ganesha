@@ -586,13 +586,20 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	status = GPFSFSAL_fs_loc(op_ctx->fsal_export,
-				 obj_hdl->fs->private_data,
-				 op_ctx, myself->handle,
-				 attrs);
+	if (obj_hdl->type != DIRECTORY)
+		goto out;
 
-	if (FSAL_IS_SUCCESS(status)) {
+	fsal_status_t fs_loc_status = GPFSFSAL_fs_loc(op_ctx->fsal_export,
+						      obj_hdl->fs->private_data,
+						      op_ctx, myself->handle,
+						      attrs);
+
+	if (FSAL_IS_SUCCESS(fs_loc_status)) {
 		FSAL_SET_MASK(attrs->valid_mask, ATTR4_FS_LOCATIONS);
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			 "Request for attribute fs_locations failed with error: %s",
+			 msg_fsal_err(fs_loc_status.major));
 	}
 
 out:
