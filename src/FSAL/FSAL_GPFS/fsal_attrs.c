@@ -86,6 +86,9 @@ GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
 	if (rc)
 		return fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
 
+	// Release old fs locations if any
+	nfs4_fs_locations_release(attrs->fs_locations);
+
 	attrs->fs_locations = nfs4_fs_locations_new(root, path, 1);
 	attrs->fs_locations->nservers = 1;
 	attrs->fs_locations->server[0].utf8string_len = strlen(server);
