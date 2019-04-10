@@ -888,8 +888,10 @@ void fsal_save_ganesha_credentials(void)
 	char buffer[1024];
 	struct display_buffer dspbuf = {sizeof(buffer), buffer, buffer};
 
-	ganesha_uid = getuser();
-	ganesha_gid = getgroup();
+	ganesha_uid = setuser(0);
+	setuser(ganesha_uid);
+	ganesha_gid = setgroup(0);
+	setgroup(ganesha_gid);
 
 	ganesha_ngroups = getgroups(0, NULL);
 	if (ganesha_ngroups > 0) {

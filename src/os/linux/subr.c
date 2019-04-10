@@ -106,34 +106,25 @@ int vfs_utimes(int fd, const struct timespec *ts)
 	return futimens(fd, ts);
 }
 
-uid_t getuser(void)
+uid_t setuser(uid_t uid)
 {
-	return geteuid();
+	uid_t orig_uid = setfsuid(uid);
+
+	if (uid != setfsuid(uid))
+		LogCrit(COMPONENT_FSAL, "Could not set user identity");
+
+	return orig_uid;
 }
 
-gid_t getgroup(void)
+gid_t setgroup(gid_t gid)
 {
-	return getegid();
-}
+	gid_t orig_gid = setfsgid(gid);
 
-void setuser(uid_t uid)
-{
-	int rc = syscall(SYS_setresuid, -1, uid, -1);
+	if (gid != setfsgid(gid))
+		LogCrit(COMPONENT_FSAL, "Could not set group identity");
 
-	if (rc != 0)
-		LogCrit(COMPONENT_FSAL,
-			"Could not set user identity %s (%d)",
-			strerror(errno), errno);
-}
+	return orig_gid;
 
-void setgroup(gid_t gid)
-{
-	int rc = syscall(SYS_setresgid, -1, gid, -1);
-
-	if (rc != 0)
-		LogCrit(COMPONENT_FSAL,
-			"Could not set group identity %s (%d)",
-			strerror(errno), errno);
 }
 
 int set_threadgroups(size_t size, const gid_t *list)
