@@ -54,7 +54,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	fsal_lock_param_t lock, conflict;
 	int rc;
 	bool grace = nfs_in_grace();
-	state_block_data_t *pblock_data;
+	state_block_data_t *pblock_data = NULL;
 	const char *proc_name = "nlm4_Lock";
 	care_t care = CARE_MONITOR;
 	/* Indicate if we let FSAL to handle requests during grace. */
@@ -118,7 +118,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				    &nsm_client,
 				    &nlm_client,
 				    &nlm_owner,
-				    &pblock_data,
+				    arg->block ? &pblock_data : NULL,
 				    arg->state,
 				    &nlm_state);
 
@@ -157,7 +157,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				  nlm_state,
 				  arg->block ? STATE_NLM_BLOCKING :
 					       STATE_NON_BLOCKING,
-				  pblock_data,
+				  arg->block ? &pblock_data : NULL,
 				  &lock,
 				  &holder,
 				  &conflict);
@@ -180,10 +180,6 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 			    &conflict);
 		}
 
-		/* If we didn't block, release the block data */
-		if (state_status != STATE_LOCK_BLOCKED && pblock_data != NULL)
-			gsh_free(pblock_data);
-
 		if (state_status == STATE_IN_GRACE) {
 			res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
 			goto out_ok;
@@ -198,6 +194,11 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	rc = NFS_REQ_OK;
 
  out:
+	/* If we didn't block, release the block data. Note that
+	 * state_lock() would set pblock_data to NULL if the lock was
+	 * blocked!
+	 */
+	gsh_free(pblock_data);
 
 	/* Release the NLM Client and NLM Owner references we have */
 	dec_nsm_client_ref(nsm_client);
