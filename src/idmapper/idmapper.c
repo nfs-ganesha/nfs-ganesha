@@ -656,14 +656,24 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 		.len = strlen(principal)
 	};
 #endif
+	LogFullDebug(COMPONENT_IDMAPPER,
+		     "Find principal %s", principal);
 
-	if (nfs_param.nfsv4_param.use_getpwnam)
+	if (nfs_param.nfsv4_param.use_getpwnam) {
+		LogFullDebug(COMPONENT_IDMAPPER,
+			     "use_getpwnam is false, exiting");
 		return false;
+	}
 
 #ifdef USE_NFSIDMAP
 	PTHREAD_RWLOCK_rdlock(&idmapper_user_lock);
 	success =
 	    idmapper_lookup_by_uname(&princbuff, &gss_uid, &gss_gidres, true);
+
+	LogFullDebug(COMPONENT_IDMAPPER,
+		     "idmapper_lookup_by_uname %s gss_gidres %s NULL",
+		     success ? "succeeded" : "failed",
+		     gss_gidres != NULL ? "not" : "is");
 
 	/* We do need uid and gid. If gid is not in the cache, treat it as a
 	 * failure.
@@ -687,6 +697,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 			 * choice is made to map them to root */
 			/* This is a "root" request made from the
 			   hostbased nfs principal, use root */
+			LogFullDebug(COMPONENT_IDMAPPER, "Mapping to root");
 			*uid = 0;
 			*gid = 0;
 			return true;
@@ -695,8 +706,13 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 		   from gss creds */
 		rc = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid,
 					   &gss_gid);
+		LogFullDebug(COMPONENT_IDMAPPER,
+			     "nfs4_gss_princ_to_ids returned %d", rc);
+
 		if (rc) {
-#ifdef _MSPAC_SUPPORT
+#ifndef _MSPAC_SUPPORT
+			return false;
+#else
 			bool found_uid = false;
 			bool found_gid = false;
 
@@ -759,16 +775,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 				found_gid = true;
 			}
 #endif				/* _MSPAC_SUPPORT */
-#ifdef _MSPAC_SUPPORT
-			if ((found_uid == true) && (found_gid == true))
-				goto principal_found;
-#endif
-
-			return false;
 		}
-#ifdef _MSPAC_SUPPORT
- principal_found:
-#endif
 
 		PTHREAD_RWLOCK_wrlock(&idmapper_user_lock);
 		success =

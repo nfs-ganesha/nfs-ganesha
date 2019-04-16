@@ -2309,14 +2309,14 @@ state_status_t state_test(struct fsal_obj_handle *obj,
  *
  * Must hold the state_lock
  *
- * @param[in]  obj        File to lock
- * @param[in]  owner      Lock owner
- * @param[in]  state      Associated state for the lock
- * @param[in]  blocking   Blocking type
- * @param[in]  block_data Blocking lock data
- * @param[in]  lock       Lock description
- * @param[out] holder     Holder of conflicting lock
- * @param[out] conflict   Conflicting lock description
+ * @param[in]     obj        File to lock
+ * @param[in]     owner      Lock owner
+ * @param[in]     state      Associated state for the lock
+ * @param[in]     blocking   Blocking type
+ * @param[in,out] bdata      Blocking lock data
+ * @param[in]     lock       Lock description
+ * @param[out]    holder     Holder of conflicting lock
+ * @param[out]    conflict   Conflicting lock description
  *
  * @return State status.
  */
@@ -2324,7 +2324,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 			  state_owner_t *owner,
 			  state_t *state,
 			  state_blocking_t blocking,
-			  state_block_data_t *block_data,
+			  state_block_data_t **bdata,
 			  fsal_lock_param_t *lock,
 			  state_owner_t **holder,
 			  fsal_lock_param_t *conflict)
@@ -2338,6 +2338,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 	fsal_lock_op_t lock_op;
 	state_status_t status = 0;
 	bool async;
+	state_block_data_t *block_data;
 
 	if (blocking != STATE_NON_BLOCKING) {
 		/* First search for a blocked request. Client can ignore the
@@ -2608,6 +2609,12 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		/* Discard lock entry */
 		remove_from_locklist(found_entry);
 	} else if (status == STATE_LOCK_BLOCKED) {
+		/* We are going to use the bdata, set it to NULL so that
+		 * the caller doesn't free it!
+		 */
+		block_data = *bdata;
+		*bdata = NULL;
+
 		/* Mark entry as blocking and attach block_data */
 		found_entry->sle_block_data = block_data;
 		found_entry->sle_blocked = blocking;
