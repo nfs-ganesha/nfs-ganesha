@@ -2430,7 +2430,10 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 				LogEntry("Conflicts with", found_entry);
 				LogList("Locks", obj,
 					&obj->state_hdl->file.lock_list);
-				copy_conflict(found_entry, holder, conflict);
+				if (blocking != STATE_NLM_BLOCKING) {
+					copy_conflict(found_entry, holder,
+						      conflict);
+				}
 				allow = false;
 				overlap = true;
 				break;
@@ -2494,7 +2497,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		 */
 		lock_op = FSAL_OP_LOCK;
 	} else {
-		/* Can't do async blocking lock in FSAL and have a conflict.
+		/* This is not a blocking lock and has a conflict.
 		 * Return it.
 		 */
 		status = STATE_LOCK_CONFLICT;
