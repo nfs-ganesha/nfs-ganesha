@@ -163,11 +163,17 @@ bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 			&cred2_cred_name, NULL, NULL, NULL, NULL, NULL, NULL);
 
 		if (maj_stat != GSS_S_COMPLETE &&
-		    maj_stat != GSS_S_CONTEXT_EXPIRED)
+		    maj_stat != GSS_S_CONTEXT_EXPIRED) {
+			gss_release_name(&min_stat, &cred1_cred_name);
 			return false;
+		}
 
 		maj_stat = gss_compare_name(&min_stat, cred1_cred_name,
 					    cred2_cred_name, &status);
+		/* release the names */
+		gss_release_name(&min_stat, &cred1_cred_name);
+		gss_release_name(&min_stat, &cred2_cred_name);
+
 		if (maj_stat != GSS_S_COMPLETE)
 			return false;
 
