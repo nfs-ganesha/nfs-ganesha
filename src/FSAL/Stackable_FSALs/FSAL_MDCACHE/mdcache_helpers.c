@@ -520,7 +520,7 @@ void mdcache_clean_dirent_chunks(mdcache_entry_t *entry)
 #endif
 	glist_for_each_safe(glist, glistn, &entry->fsobj.fsdir.chunks) {
 		mdcache_lru_unref_chunk(glist_entry(glist, struct dir_chunk,
-						    chunks), true);
+						    chunks));
 	}
 }
 
@@ -2298,11 +2298,10 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 				    "Nuking empty Chunk %p", chunk);
 			/* We read-ahead into an existing chunk, and this chunk
 			 * is empty.  Just ditch it now, to avoid any issue. */
-			mdcache_lru_unref_chunk(chunk, true);
+			mdcache_lru_unref_chunk(chunk);
 			if (state->first_chunk == chunk) {
 				/* Drop the first_chunk ref */
-				mdcache_lru_unref_chunk(state->first_chunk,
-						true);
+				mdcache_lru_unref_chunk(state->first_chunk);
 				state->first_chunk = new_dir_entry->chunk;
 				/* And take the first_chunk ref */
 				mdcache_lru_ref_chunk(state->first_chunk);
@@ -2409,7 +2408,7 @@ static struct dir_chunk *mdcache_skip_chunks(mdcache_entry_t *directory,
 	while (next_ck != 0 &&
 	       mdcache_avl_lookup_ck(directory, next_ck, &dirent)) {
 		chunk = dirent->chunk;
-		mdcache_lru_unref_chunk(chunk, true);
+		mdcache_lru_unref_chunk(chunk);
 		next_ck = chunk->next_ck;
 	}
 
@@ -2547,7 +2546,7 @@ again:
 			    "FSAL readdir status=%s",
 			    fsal_err_txt(readdir_status));
 		*dirent = NULL;
-		mdcache_lru_unref_chunk(chunk, true);
+		mdcache_lru_unref_chunk(chunk);
 		return readdir_status;
 	}
 
@@ -2556,7 +2555,7 @@ again:
 			    "status=%s",
 			    fsal_err_txt(status));
 		*dirent = NULL;
-		mdcache_lru_unref_chunk(chunk, true);
+		mdcache_lru_unref_chunk(chunk);
 		return status;
 	}
 
@@ -2574,14 +2573,14 @@ again:
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 				"Empty chunk");
 
-		mdcache_lru_unref_chunk(chunk, true);
+		mdcache_lru_unref_chunk(chunk);
 
 		if (chunk == state.first_chunk) {
 			/* We really got nothing on this readdir, so don't
 			 * return a dirent.
 			 */
 			*dirent = NULL;
-			mdcache_lru_unref_chunk(chunk, true);
+			mdcache_lru_unref_chunk(chunk);
 			LogDebugAlt(COMPONENT_NFS_READDIR,
 				    COMPONENT_CACHE_INODE,
 				    "status=%s",
@@ -2964,7 +2963,7 @@ again:
 	 * drop.  To get here, we had at least 2 refs, and we also hold the
 	 * content_lock for at least read.  This means noone holds it for write,
 	 * and all final ref drops are done with it held for write. */
-	mdcache_lru_unref_chunk(chunk, true);
+	mdcache_lru_unref_chunk(chunk);
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 			"About to read directory=%p cookie=%" PRIx64,
@@ -3058,7 +3057,7 @@ again:
 						chunk, look_ck, next_ck);
 				/* In order to get here, we passed the has_write
 				 * check above, and took the write lock. */
-				mdcache_lru_unref_chunk(chunk, true);
+				mdcache_lru_unref_chunk(chunk);
 				chunk = NULL;
 				goto again;
 			}
