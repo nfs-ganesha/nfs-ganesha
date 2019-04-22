@@ -539,6 +539,11 @@ static void mdc_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	if (ret.major == ERR_FSAL_SHARE_DENIED)
 		ret = fsalstat(ERR_FSAL_LOCKED, 0);
 
+	/*
+	 * cb will drop the initial ref, take an additional ref to prevent the
+	 * entry from getting freed/reaped.
+	 */
+	mdcache_get(entry);
 	supercall(
 		  arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
 		 );
@@ -547,7 +552,7 @@ static void mdc_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		mdc_set_time_current(&entry->attrs.atime);
 	else if (ret.major == ERR_FSAL_DELAY)
 		mdcache_kill_entry(entry);
-
+	mdcache_put(entry);
 	gsh_free(arg);
 }
 
@@ -604,8 +609,14 @@ static void mdc_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	mdcache_entry_t *entry =
 		container_of(arg->obj_hdl, mdcache_entry_t, obj_handle);
 
-	if (ret.major == ERR_FSAL_STALE)
+	if (ret.major == ERR_FSAL_STALE) {
+		/*
+		 * killing the entry might drop the sentinel ref. Take an
+		 * extra ref to prevent this entry for being reused.
+		 */
+		mdcache_get(entry);
 		mdcache_kill_entry(entry);
+	}
 	else
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
 					   MDCACHE_TRUST_ATTRS);
@@ -614,6 +625,8 @@ static void mdc_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		  arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
 		 );
 
+	if (ret.major == ERR_FSAL_STALE)
+		mdcache_put(entry);
 	gsh_free(arg);
 }
 
