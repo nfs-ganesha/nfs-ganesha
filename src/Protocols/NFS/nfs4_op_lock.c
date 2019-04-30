@@ -410,16 +410,17 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 
 	/* Check for range overflow past maxfilesize.  Comparing beyond 2^64 is
 	 * not possible in 64 bits precision, but off+len > maxfilesize is
-	 * equivalent to len > maxfilesize - off
+	 * equivalent to len > maxfilesize - off.  We checked 64-bit overflow
+	 * above, so treat overflowing the FS maxsize as a request to lock the
+	 * entire file.
 	 */
 	if (lock_desc.lock_length > (maxfilesize - lock_desc.lock_start)) {
-		res_LOCK4->status = NFS4ERR_BAD_RANGE;
 		LogDebug(COMPONENT_NFS_V4_LOCK,
-			 "LOCK failed past maxfilesize %"PRIx64" start %"PRIx64
+			 "LOCK past maxfilesize %"PRIx64" start %"PRIx64
 			 " length %"PRIx64,
 			 maxfilesize,
 			 lock_desc.lock_start, lock_desc.lock_length);
-		goto out;
+		lock_desc.lock_length = 0;
 	}
 
 	/* Check if open state has correct access for type of lock.
