@@ -2071,7 +2071,7 @@ void server_dbus_delegations(struct deleg_stats *ds, DBusMessageIter *iter)
 void server_dbus_v3_full_stats(DBusMessageIter *iter)
 {
 	struct timespec timestamp;
-	DBusMessageIter array_iter;
+	DBusMessageIter array_iter, op_iter;
 	int op;
 	double res = 0.0;
 	uint64_t op_counter = 0;
@@ -2079,61 +2079,71 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 
 	now(&timestamp);
 	dbus_append_timestamp(iter, &timestamp);
-	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT,
-					 NULL, &array_iter);
+	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
+					 "(stttdddddd)", &array_iter);
 	for (op = 1; op < NFSPROC3_COMMIT+1; op++) {
 		if (v3_full_stats[op].total) {
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_open_container(&array_iter,
+							 DBUS_TYPE_STRUCT,
+							 NULL, &op_iter);
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_STRING, &optabv3[op].name);
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &v3_full_stats[op].total);
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &v3_full_stats[op].errors);
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &v3_full_stats[op].dups);
 			res = (double) v3_full_stats[op].latency.latency /
 					v3_full_stats[op].total * 0.000001;
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			res = (double) v3_full_stats[op].latency.min * 0.000001;
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			res = (double) v3_full_stats[op].latency.max * 0.000001;
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			res = 0.0;
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
+			dbus_message_iter_close_container(&array_iter,
+							  &op_iter);
 			op_counter += v3_full_stats[op].total;
 		}
 	}
 	if (op_counter == 0) {
 		message = "None";
 		/* insert dummy stats to avoid dbus crash */
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_open_container(&array_iter,
+						 DBUS_TYPE_STRUCT,
+						 NULL, &op_iter);
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_STRING, &message);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &op_counter);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &op_counter);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &op_counter);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_close_container(&array_iter,
+						  &op_iter);
 	} else {
 		message = "OK";
 	}
@@ -2147,7 +2157,7 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 void server_dbus_v4_full_stats(DBusMessageIter *iter)
 {
 	struct timespec timestamp;
-	DBusMessageIter array_iter;
+	DBusMessageIter array_iter, op_iter;
 	int op;
 	double res = 0.0;
 	uint64_t op_counter = 0;
@@ -2155,57 +2165,67 @@ void server_dbus_v4_full_stats(DBusMessageIter *iter)
 
 	now(&timestamp);
 	dbus_append_timestamp(iter, &timestamp);
-	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT,
-					 NULL, &array_iter);
+	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
+					 "(sttdddddd)", &array_iter);
 	for (op = 1; op < NFS_V42_NB_OPERATION+1; op++) {
 		if (v4_full_stats[op].total) {
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_open_container(&array_iter,
+							 DBUS_TYPE_STRUCT,
+							 NULL, &op_iter);
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_STRING, &optabv4[op].name);
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &v4_full_stats[op].total);
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &v4_full_stats[op].errors);
 			res = (double) v4_full_stats[op].latency.latency /
 					v4_full_stats[op].total * 0.000001;
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			res = (double) v4_full_stats[op].latency.min * 0.000001;
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			res = (double) v4_full_stats[op].latency.max * 0.000001;
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			res = 0.0;
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			dbus_message_iter_append_basic(&array_iter,
+			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
+			dbus_message_iter_close_container(&array_iter,
+							  &op_iter);
 			op_counter += v4_full_stats[op].total;
 		}
 	}
 	if (op_counter == 0) {
 		message = "None";
+		dbus_message_iter_open_container(&array_iter,
+						 DBUS_TYPE_STRUCT,
+						 NULL, &op_iter);
 		/* insert dummy stats to avoid dbus crash */
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_STRING, &message);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &op_counter);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &op_counter);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&array_iter,
+		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_close_container(&array_iter,
+						  &op_iter);
 	} else {
 		message = "OK";
 	}
