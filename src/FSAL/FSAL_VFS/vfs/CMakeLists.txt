@@ -26,11 +26,10 @@ if(USE_FSAL_VFS)
         main.c
     )
 
-    add_library(fsalvfs MODULE ${fsalvfs_LIB_SRCS})
+    add_library(fsalvfs MODULE ${fsalvfs_LIB_SRCS} $<TARGET_OBJECTS:fsal_os>)
     add_sanitizers(fsalvfs)
     set(fsalvfs_TGT_LINK_LIB
       ganesha_nfsd
-      fsal_os
       ${SYSTEM_LIBRARIES}
     )
 

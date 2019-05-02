@@ -16,7 +16,7 @@ if(LINUX)
   )
 endif(LINUX)
 
-add_library(fsal_os STATIC ${fsal_os_STAT_SRCS})
+add_library(fsal_os OBJECT ${fsal_os_STAT_SRCS})
 add_sanitizers(fsal_os)
 set_target_properties(fsal_os PROPERTIES COMPILE_FLAGS "-fPIC")
 
