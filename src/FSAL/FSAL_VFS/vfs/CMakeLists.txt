@@ -29,11 +29,13 @@ if(USE_FSAL_VFS)
     add_library(fsalvfs MODULE ${fsalvfs_LIB_SRCS} $<TARGET_OBJECTS:fsal_os>)
     add_sanitizers(fsalvfs)
     set(fsalvfs_TGT_LINK_LIB
-      ganesha_nfsd
       ${SYSTEM_LIBRARIES}
     )
 
-    target_link_libraries(fsalvfs ${fsalvfs_TGT_LINK_LIB})
+    target_link_libraries(fsalvfs
+      ganesha_nfsd
+      ${fsalvfs_TGT_LINK_LIB}
+      "-Wl,--no-undefined")
     set_target_properties(fsalvfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
     install(TARGETS fsalvfs COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )
 endif(USE_FSAL_VFS)
@@ -45,26 +47,28 @@ if(USE_FSAL_LUSTRE)
         set(FSAL_LUSTRE_VFS_NAME "LUSTRE")
         configure_file(main-c.in.cmake lustre_main.c)
         set(fsallustre_LIB_SRCS
-            ${fsalvfs_LIB_SRCS_common}
-            lustre_main.c
-            llapi_check_hsm.c
+          ${fsalvfs_LIB_SRCS_common}
+          lustre_main.c
+          llapi_check_hsm.c
         )
 
-        add_library(fsallustre MODULE ${fsallustre_LIB_SRCS})
+        add_library(fsallustre MODULE ${fsallustre_LIB_SRCS} $<TARGET_OBJECTS:fsal_os>)
         add_sanitizers(fsallustre)
         target_link_libraries(fsallustre
-            ${fsalvfs_TGT_LINK_LIB}
-            lustreapi
+          ganesha_nfsd
+          ${fsalvfs_TGT_LINK_LIB}
+          lustreapi
+          "-Wl,--no-undefined"
         )
 
         set_target_properties(fsallustre PROPERTIES
-            VERSION 4.2.0
-            SOVERSION 4
+          VERSION 4.2.0
+          SOVERSION 4
         )
 
         install(TARGETS fsallustre
-            COMPONENT fsal
-            DESTINATION ${FSAL_DESTINATION}
+          COMPONENT fsal
+          DESTINATION ${FSAL_DESTINATION}
         )
 
     else(USE_LLAPI)
@@ -74,25 +78,27 @@ if(USE_FSAL_LUSTRE)
         set(FSAL_LUSTRE_VFS_NAME "DUMMYLUSTRE")
         configure_file(main-c.in.cmake dummy_lustre_main.c)
         set(fsallustre_LIB_SRCS
-            ${fsalvfs_LIB_SRCS_common}
-            dummy_lustre_main.c
-            llapi_check_hsm.c
+          ${fsalvfs_LIB_SRCS_common}
+          dummy_lustre_main.c
+          llapi_check_hsm.c
         )
 
-        add_library(fsaldummylustre MODULE ${fsallustre_LIB_SRCS})
+        add_library(fsaldummylustre MODULE ${fsallustre_LIB_SRCS} $<TARGET_OBJECTS:fsal_os>)
         add_sanitizers(fsaldummylustre)
         target_link_libraries(fsaldummylustre
-            ${fsalvfs_TGT_LINK_LIB}
+          ganesha_nfsd
+          ${fsalvfs_TGT_LINK_LIB}
+          "-Wl,--no-undefined"
         )
 
         set_target_properties(fsaldummylustre PROPERTIES
-            VERSION 4.2.0
-            SOVERSION 4
+          VERSION 4.2.0
+          SOVERSION 4
         )
 
         install(TARGETS fsaldummylustre
-            COMPONENT fsal
-            DESTINATION ${FSAL_DESTINATION}
+          COMPONENT fsal
+          DESTINATION ${FSAL_DESTINATION}
         )
 
     endif(USE_LLAPI)

@@ -25,7 +25,12 @@ include_directories(${CEPHFS_INCLUDE_DIR})
 add_library(fsalceph MODULE ${fsalceph_LIB_SRCS})
 add_sanitizers(fsalceph)
 
-target_link_libraries(fsalceph ${CEPHFS_LIBRARIES} ${SYSTEM_LIBRARIES})
+target_link_libraries(fsalceph
+  ganesha_nfsd
+  ${CEPHFS_LIBRARIES}
+  ${SYSTEM_LIBRARIES}
+  "-Wl,--no-undefined"
+)
 
 set_target_properties(fsalceph PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsalceph COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )

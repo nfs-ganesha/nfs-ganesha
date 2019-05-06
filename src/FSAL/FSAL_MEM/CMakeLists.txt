@@ -19,9 +19,11 @@ add_library(fsalmem SHARED ${fsalmem_LIB_SRCS})
 add_sanitizers(fsalmem)
 
 target_link_libraries(fsalmem
-    ganesha_nfsd
-    ${SYSTEM_LIBRARIES}
-    ${LTTNG_LIBRARIES})
+  ganesha_nfsd
+  ${SYSTEM_LIBRARIES}
+  ${LTTNG_LIBRARIES}
+  "-Wl,--no-undefined"
+)
 
 set_target_properties(fsalmem PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsalmem COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )

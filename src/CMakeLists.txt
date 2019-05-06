@@ -1448,6 +1448,7 @@ target_link_libraries(ganesha.nfsd
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
+  "-Wl,--no-undefined"
 )
 
 install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
@@ -1457,7 +1458,11 @@ install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
 if (USE_RADOS_RECOV)
   add_executable(ganesha-rados-grace ./tools/ganesha-rados-grace.c)
   include_directories(${RADOS_INCLUDE_DIR})
-  target_link_libraries(ganesha-rados-grace ganesha_nfsd ${RADOS_LIBRARIES})
+  target_link_libraries(ganesha-rados-grace
+    ganesha_nfsd
+    ${RADOS_LIBRARIES}
+    "-Wl,--no-undefined"
+  )
   install(TARGETS ganesha-rados-grace COMPONENT tools DESTINATION bin)
 endif(USE_RADOS_RECOV)
 
@@ -1473,6 +1478,7 @@ if(LINUX)
     ${LIBTIRPC_LIBRARIES}
     ${SYSTEM_LIBRARIES}
     ${LTTNG_LIBRARIES}
+    "-Wl,--no-undefined"
   )
 
   if( USE_ADMIN_TOOLS )
@@ -1490,6 +1496,7 @@ target_link_libraries(verif_syntax
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
+  "-Wl,--no-undefined"
 )
 
 ########### next target ###############
@@ -1502,6 +1509,7 @@ target_link_libraries(test_parsing
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
+  "-Wl,--no-undefined"
 )
 
 ########### add a "make doc" target to call Doxygen

@@ -33,7 +33,11 @@ SET(fsalgpfs_LIB_SRCS
 add_library(fsalgpfs MODULE ${fsalgpfs_LIB_SRCS})
 add_sanitizers(fsalgpfs)
 
-target_link_libraries(fsalgpfs ${SYSTEM_LIBRARIES})
+target_link_libraries(fsalgpfs
+  ganesha_nfsd
+  ${SYSTEM_LIBRARIES}
+  "-Wl,--no-undefined"
+)
 
 set_target_properties(fsalgpfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
 

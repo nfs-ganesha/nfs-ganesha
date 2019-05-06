@@ -17,7 +17,12 @@ include_directories(${RGW_INCLUDE_DIR})
 add_library(fsalrgw MODULE ${fsalrgw_LIB_SRCS})
 add_sanitizers(fsalrgw)
 
-target_link_libraries(fsalrgw ganesha_nfsd ${RGW_LIBRARIES} ${SYSTEM_LIBRARIES})
+target_link_libraries(fsalrgw
+  ganesha_nfsd
+  ${RGW_LIBRARIES}
+  ${SYSTEM_LIBRARIES}
+  "-Wl,--no-undefined"
+)
 
 set_target_properties(fsalrgw PROPERTIES VERSION 4.2.0 SOVERSION 4)
 install(TARGETS fsalrgw COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )

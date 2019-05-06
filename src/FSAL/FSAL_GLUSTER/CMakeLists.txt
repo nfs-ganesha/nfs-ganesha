@@ -32,6 +32,7 @@ target_link_libraries(fsalgluster
   ganesha_nfsd
   ${SYSTEM_LIBRARIES}
   ${GFAPI_LIBRARIES}
+  "-Wl,--no-undefined"
 )
 
 set_target_properties(fsalgluster PROPERTIES VERSION 4.2.0 SOVERSION 4)

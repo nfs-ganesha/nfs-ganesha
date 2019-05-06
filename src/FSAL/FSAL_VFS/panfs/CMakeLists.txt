@@ -27,6 +27,7 @@ target_link_libraries(fsalpanfs
   ganesha_nfsd
   fsal_os
   ${SYSTEM_LIBRARIES}
+  "-Wl,--no-undefined"
 )
 
 set_target_properties(fsalpanfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
