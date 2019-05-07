@@ -1723,7 +1723,7 @@ void rpc_warnx(char *fmt, ...)
 {
 	va_list ap;
 
-	if (component_log_level[COMPONENT_TIRPC] <= NIV_FATAL)
+	if (component_log_level[COMPONENT_TIRPC] < NIV_DEBUG)
 		return;
 
 	va_start(ap, fmt);
