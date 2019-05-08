@@ -79,13 +79,10 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u8 status = _9P_LOCK_SUCCESS;
 
 	state_status_t state_status = STATE_SUCCESS;
-	state_owner_t *holder;
 	state_owner_t *powner;
 	fsal_lock_param_t lock;
-	fsal_lock_param_t conflict;
 
 	memset(&lock, 0, sizeof(lock));
-	memset(&conflict, 0, sizeof(conflict));
 
 	char name[MAXNAMLEN+1];
 
@@ -167,7 +164,7 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		PTHREAD_RWLOCK_wrlock(&pfid->pentry->state_hdl->state_lock);
 		state_status = state_lock(pfid->pentry, powner, pfid->state,
 					  STATE_NON_BLOCKING, NULL, &lock,
-					  &holder, &conflict);
+					  NULL, NULL);
 		PTHREAD_RWLOCK_unlock(&pfid->pentry->state_hdl->state_lock);
 
 		if (state_status == STATE_SUCCESS)
