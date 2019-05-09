@@ -659,6 +659,7 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		hdl->mh_dir.next_i = 2;
 		hdl->attrs.numlinks = 2;
 		hdl->mh_dir.numkids = 2;
+		hdl->mh_dir.parent = parent;
 		break;
 	default:
 		hdl->attrs.numlinks = 1;
