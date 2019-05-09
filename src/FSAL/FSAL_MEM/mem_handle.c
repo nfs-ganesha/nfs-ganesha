@@ -1,7 +1,7 @@
 /*
  * vim:shiftwidth=8:tabstop=8:
  *
- * Copyright 2017-2018 Red Hat, Inc.
+ * Copyright 2017-2019 Red Hat, Inc.
  * Author: Daniel Gryniewicz  dang@redhat.com
  *
  *
@@ -666,6 +666,7 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		hdl->mh_dir.next_i = 2;
 		hdl->attrs.numlinks = 2;
 		hdl->mh_dir.numkids = 2;
+		hdl->mh_dir.parent = parent;
 		break;
 	default:
 		hdl->attrs.numlinks = 1;
