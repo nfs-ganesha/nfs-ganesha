@@ -427,7 +427,7 @@ BuildRequires: selinux-policy-devel
 This package contains an selinux policy for running ganesha.nfsd
 
 %post selinux
-%selinux_modules_install %{_datadir}/selinux/packages/ganesha.pp.bz2
+%selinux_modules_install %{_selinux_store_path}/packages/ganesha.pp.bz2
 
 %pre selinux
 %selinux_relabel_pre
