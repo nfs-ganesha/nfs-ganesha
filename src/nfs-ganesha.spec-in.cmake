@@ -198,6 +198,10 @@ BuildRequires: python-sphinx
 Requires(post): psmisc
 Requires(pre): shadow-utils
 
+%if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
+Requires: nfs-ganesha-selinux = %{version}-%{release}
+%endif
+
 # Use CMake variables
 
 %description
