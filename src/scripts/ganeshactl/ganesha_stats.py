@@ -9,7 +9,6 @@
 #       To get detaled help
 #
 from __future__ import print_function
-import gobject
 import sys
 import time
 import re

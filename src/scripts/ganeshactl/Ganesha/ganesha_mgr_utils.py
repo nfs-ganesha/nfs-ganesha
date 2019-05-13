@@ -20,7 +20,11 @@
 # Author: Allison Henderson <achender@vnet.linux.ibm.com>
 #-*- coding: utf-8 -*-
 
-import gobject
+try:
+    import gobject
+except ImportError:
+    from gi.repository import GObject as gobject
+
 import sys
 import time
 import traceback
