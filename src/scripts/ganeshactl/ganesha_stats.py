@@ -6,7 +6,7 @@
 # ganesha_stats <subcommand> <args>
 #
 # ganesha_stats help
-#	    To get detaled help
+#       To get detaled help
 #
 from __future__ import print_function
 import gobject
@@ -37,8 +37,8 @@ else:
 
 # check arguments
 commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
-	    'export', 'total', 'fast', 'pnfs', 'fsal', 'reset', 'enable',
-	    'disable', 'status', 'v3_full', 'v4_full')
+        'export', 'total', 'fast', 'pnfs', 'fsal', 'reset', 'enable',
+        'disable', 'status', 'v3_full', 'v4_full')
 if command not in commands:
     print("Option '%s' is not correct." % command)
     usage()
@@ -66,14 +66,14 @@ elif command in ('fsal'):
     command_arg = sys.argv[2]
 elif command in ('enable', 'disable'):
     if not len(sys.argv) == 3:
-	print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full" %
+        print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full" %
             command)
-	usage()
+        usage()
     command_arg = sys.argv[2]
     if command_arg not in ('all', 'nfs', 'fsal', 'v3_full', 'v4_full'):
-	print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full" %
+        print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full" %
             command)
-	usage()
+        usage()
 
 # retrieve and print stats
 exp_interface = Ganesha.glib_dbus_stats.RetrieveExportStats()

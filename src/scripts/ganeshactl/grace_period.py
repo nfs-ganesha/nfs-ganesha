@@ -20,11 +20,11 @@ bus = dbus.SystemBus()
 
 # Create an object that will proxy for a particular remote object.
 try:
-	admin = bus.get_object("org.ganesha.nfsd",
-        	               "/org/ganesha/nfsd/admin")
+    admin = bus.get_object("org.ganesha.nfsd",
+                           "/org/ganesha/nfsd/admin")
 except dbus.exceptions.DBusException as e:
-	sys.exit("Error: Can't talk to ganesha service on d-bus." \
-		 " Looks like Ganesha is down")
+    sys.exit("Error: Can't talk to ganesha service on d-bus. "
+             "Looks like Ganesha is down")
 
 # call method
 ganesha_grace = admin.get_dbus_method('grace',
@@ -33,6 +33,6 @@ ganesha_grace = admin.get_dbus_method('grace',
 print("Start grace period.")
 
 try:
-	print(ganesha_grace(ipaddr))
+    print(ganesha_grace(ipaddr))
 except dbus.exceptions.DBusException as e:
-	sys.exit("Error: Failed to start grace period")
+    sys.exit("Error: Failed to start grace period")
