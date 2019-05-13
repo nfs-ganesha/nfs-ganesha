@@ -3,7 +3,10 @@
 # You must initialize the gobject/dbus support for threading
 # before doing anything.
 from __future__ import print_function
-import gobject
+try:
+    import gobject
+except ImportError:
+    from gi.repository import GObject as gobject
 gobject.threads_init()
 
 from dbus import glib

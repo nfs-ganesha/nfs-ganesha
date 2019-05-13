@@ -2,7 +2,10 @@
 
 from __future__ import print_function
 import getopt, sys
-import gobject
+try:
+    import gobject
+except ImportError:
+    from gi.repository import GObject as gobject
 
 gobject.threads_init()
 from dbus import glib
