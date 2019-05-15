@@ -1710,6 +1710,22 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 			goto direrr;
 		}
 
+		if ((*new_obj)->type != REGULAR_FILE) {
+			if ((*new_obj)->type == DIRECTORY) {
+				/* Trying to open2 a directory */
+				status = fsalstat(ERR_FSAL_ISDIR, 0);
+			} else {
+				/* Trying to open2 any other non-regular file */
+				status = fsalstat(ERR_FSAL_SYMLINK, 0);
+			}
+
+			/* Release the object we found by lookup. */
+			LogFullDebug(COMPONENT_FSAL,
+				     "open2 returning %s",
+				     fsal_err_txt(status));
+			goto direrr;
+		}
+
 		myself = container_of(*new_obj,
 				      struct glusterfs_handle,
 				      handle);
@@ -1764,6 +1780,19 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
+	}
+
+	/* Check if the opened file is not a regular file. */
+	if (posix2fsal_type(sb.st_mode) == DIRECTORY) {
+		/* Trying to open2 a directory */
+		status = fsalstat(ERR_FSAL_ISDIR, 0);
+		goto direrr;
+	}
+
+	if (posix2fsal_type(sb.st_mode) != REGULAR_FILE) {
+		/* Trying to open2 any other non-regular file */
+		status = fsalstat(ERR_FSAL_SYMLINK, 0);
+		goto direrr;
 	}
 
 	/* Remember if we were responsible for creating the file.

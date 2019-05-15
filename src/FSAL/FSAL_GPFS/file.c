@@ -268,6 +268,23 @@ open_by_name(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		return status;
 	}
 
+	if (temp->type != REGULAR_FILE) {
+		if (temp->type == DIRECTORY) {
+			/* Trying to open2 a directory */
+			status = fsalstat(ERR_FSAL_ISDIR, 0);
+		} else {
+			/* Trying to open2 any other non-regular file */
+			status = fsalstat(ERR_FSAL_SYMLINK, 0);
+		}
+
+		/* Release the object we found by lookup. */
+		temp->obj_ops->release(temp);
+		LogFullDebug(COMPONENT_FSAL,
+			     "open returned %s",
+			     fsal_err_txt(status));
+		return status;
+	}
+
 	status = open_by_handle(temp, state, openflags, posix_flags,
 				verifier, attrs_out, FSAL_NO_CREATE, cpm_check);
 
@@ -371,6 +388,12 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 				    posix_flags, verifier, attrs_out,
 				    caller_perm_check);
 
+	/** @todo: to proceed past here, we need a struct attrlist in order to
+	 *         create the fsal_obj_handle, so if it actually is NULL (it
+	 *         will actually never be since mdcache will always ask for
+	 *         attributes) we really should create a temporary attrlist...
+	 */
+
 	posix_flags |= O_CREAT;
 
 	/* And if we are at least FSAL_GUARDED, do an O_EXCL create. */
@@ -434,9 +457,15 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	 * If yes, then give error ERR_FSAL_SYMLINK.
 	 */
 	if (state != NULL &&
-		attrs_out != NULL && attrs_out->type == SYMBOLIC_LINK) {
-		LogDebug(COMPONENT_FSAL, "Trying to open a SYMBOLIC_LINK");
-		status = fsalstat(ERR_FSAL_SYMLINK, 0);
+		attrs_out != NULL && attrs_out->type != REGULAR_FILE) {
+		LogDebug(COMPONENT_FSAL, "Trying to open a non-regular file");
+			if (attrs_out->type == DIRECTORY) {
+				/* Trying to open2 a directory */
+				status = fsalstat(ERR_FSAL_ISDIR, 0);
+			} else {
+				/* Trying to open2 any other non-regular file */
+				status = fsalstat(ERR_FSAL_SYMLINK, 0);
+			}
 		goto fileerr;
 	}
 

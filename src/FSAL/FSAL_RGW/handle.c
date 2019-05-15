@@ -952,6 +952,23 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			return status;
 		}
 
+		if (temp->type != REGULAR_FILE) {
+			if (temp->type == DIRECTORY) {
+				/* Trying to open2 a directory */
+				status = fsalstat(ERR_FSAL_ISDIR, 0);
+			} else {
+				/* Trying to open2 any other non-regular file */
+				status = fsalstat(ERR_FSAL_SYMLINK, 0);
+			}
+
+			/* Release the object we found by lookup. */
+			temp->obj_ops->release(temp);
+			LogFullDebug(COMPONENT_FSAL,
+				     "open2 returning %s",
+				     fsal_err_txt(status));
+			return status;
+		}
+
 		/* Now call ourselves without name and attributes to open. */
 		status = obj_hdl->obj_ops->open2(temp, state, openflags,
 						FSAL_NO_CREATE, NULL, NULL,
@@ -1044,6 +1061,19 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	*caller_perm_check = false;
 
 	construct_handle(export, rgw_fh, &st, &obj);
+
+	/* Check if the opened file is not a regular file. */
+	if (posix2fsal_type(st.st_mode) == DIRECTORY) {
+		/* Trying to open2 a directory */
+		status = fsalstat(ERR_FSAL_ISDIR, 0);
+		goto fileerr;
+	}
+
+	if (posix2fsal_type(st.st_mode) != REGULAR_FILE) {
+		/* Trying to open2 any other non-regular file */
+		status = fsalstat(ERR_FSAL_SYMLINK, 0);
+		goto fileerr;
+	}
 
 	/* here FSAL_CEPH operates on its (for RGW non-existent) global
 	 * fd */
