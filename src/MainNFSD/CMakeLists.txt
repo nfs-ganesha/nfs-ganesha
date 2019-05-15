@@ -165,6 +165,10 @@ if(USE_RADOS_RECOV)
   target_link_libraries(ganesha_nfsd ${RADOS_LIBRARIES})
 endif(USE_RADOS_RECOV)
 
+if(USE_9P_RDMA)
+  target_link_libraries(ganesha_nfsd ${MOOSHIKA_LIBRARIES})
+endif(USE_9P_RDMA)
+
 add_sanitizers(ganesha_nfsd)
 set_target_properties(ganesha_nfsd PROPERTIES
   VERSION "${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}"

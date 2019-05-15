@@ -971,67 +971,12 @@ check_library_exists(
 
 # Roll up required libraries
 
-#Protocols we support
-set(PROTOCOLS
-  nfsproto
-  rquota
-)
-
-if(USE_NLM)
-  set(PROTOCOLS ${PROTOCOLS} nlm)
-endif(USE_NLM)
-
-if(USE_9P)
-  set(PROTOCOLS ${PROTOCOLS} 9p)
-endif(USE_9P)
-
-set(PROTOCOLS
-  ${PROTOCOLS}
-  nfs_mnt_xdr
-  )
-
-# Core subsystems
-set(GANESHA_CORE
-  sal
-  idmap
-  avltree
-  hashtable
-  rpcal
-  support
-  nfs4callbacks
-  cidr
-  string_utils
-  hash
-  log
-  uid2grp
-  netgroup_cache
-  fsalpseudo
-  fsalmdcache
-  )
-
-if(USE_CACHE_INODE)
-  set(GANESHA_CORE ${GANESHA_CORE} cache_inode)
-endif(USE_CACHE_INODE)
-
-if(USE_DBUS)
-  set(GANESHA_CORE ${GANESHA_CORE} gshdbus)
-endif(USE_DBUS)
-
 if(USE_9P_RDMA)
   find_package(PkgConfig)
   IF(MOOSHIKA_PREFIX)
     set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${MOOSHIKA_PREFIX}/lib/pkgconfig")
   ENDIF()
   pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.6)
-  # Remove rdma and ibverbs libraries that have already been found by FindRDMA
-  #
-  # TODO: this temporary workaround will no longer be required
-  # with future mooshika versions (>1.0)
-  # Original code is: set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBRARIES})
-  #
-  set(MOOSHIKA_LIBS_EXCEPT_RDMA ${MOOSHIKA_LIBRARIES})
-  list(REMOVE_ITEM MOOSHIKA_LIBS_EXCEPT_RDMA rdmacm ibverbs)
-  set(GANESHA_CORE ${GANESHA_CORE} ${MOOSHIKA_LIBS_EXCEPT_RDMA})
 
   include_directories(${MOOSHIKA_INCLUDE_DIRS})
   link_directories (${MOOSHIKA_LIBRARY_DIRS})
