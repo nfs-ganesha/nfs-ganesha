@@ -850,6 +850,19 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		goto fileerr;
 	}
 
+	/* Check if the opened file is not a regular file. */
+	if (posix2fsal_type(stat.st_mode) == DIRECTORY) {
+		/* Trying to open2 a directory */
+		status = fsalstat(ERR_FSAL_ISDIR, 0);
+		goto fileerr;
+	}
+
+	if (posix2fsal_type(stat.st_mode) != REGULAR_FILE) {
+		/* Trying to open2 any other non-regular file */
+		status = fsalstat(ERR_FSAL_SYMLINK, 0);
+		goto fileerr;
+	}
+
 	/* allocate an obj_handle and fill it up */
 	hdl = alloc_handle(dir_fd, fh, obj_hdl->fs, &stat, myself->handle, name,
 			   op_ctx->fsal_export);
