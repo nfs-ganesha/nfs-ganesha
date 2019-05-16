@@ -2029,6 +2029,15 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 						    mdcache_dir_entry_t,
 						    chunk_list)->ck;
 
+		/* Update the chunk pointer on all the dirents */
+		glist_for_each(glist, &split->dirents) {
+			mdcache_dir_entry_t *dirent;
+
+			dirent = glist_entry(glist, mdcache_dir_entry_t,
+					     chunk_list);
+			dirent->chunk = split;
+		}
+
 		/* Fill in the first chunk's next_ck to be the cookie of the
 		 * first dirent in the new split chunk.
 		 */
