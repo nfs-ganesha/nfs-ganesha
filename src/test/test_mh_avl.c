@@ -7,6 +7,7 @@
 
 #include "CUnit/Basic.h"
 
+#include "abstract_mem.h"
 #include "avltree.h"
 #include "murmur3.h"
 
@@ -104,36 +105,12 @@ static int qp_avl_insert(struct avltree *t, avl_unit_val_t *v)
 	return -1;
 }
 
-/* This permits inlining, also elides some locally-scoped stores in
- * do_lookup. */
-static inline struct avltree_node *
-avltree_inline_lookup(const struct avltree_node *key,
-		      const struct avltree *tree)
-{
-	struct avltree_node *node = tree->root;
-	int is_left = 0, res = 0;
-
-	while (node) {
-		res = avl_unit_hk_cmpf(node, key);	/* may inline */
-		if (res == 0)
-			return node;
-
-		is_left = res;
-
-		if (is_left > 0)
-			node = node->left;
-		else
-			node = node->right;
-	}
-	return NULL;
-}
-
 static avl_unit_val_t *qp_avl_lookup_s(struct avltree *t, avl_unit_val_t *v,
 				       int maxj)
 {
 	struct avltree_node *node;
 	avl_unit_val_t *v2;
-	uint32_t j, j2;
+	uint32_t j;
 	uint32_t hk[4];
 
 	assert(avltree_size(t) < UINT64_MAX);
@@ -143,7 +120,7 @@ static avl_unit_val_t *qp_avl_lookup_s(struct avltree *t, avl_unit_val_t *v,
 
 	for (j = 0; j < maxj; j++) {
 		v->hk.k = (v->hk.k + (j * 2));
-		node = avltree_inline_lookup(&v->node_hk, t);
+		node = avltree_lookup(&v->node_hk, t);
 		if (node) {
 			/* it's almost but not entirely certain that node is
 			 * related to v.  in the general case, j is also not
@@ -162,30 +139,31 @@ static avl_unit_val_t *qp_avl_lookup_s(struct avltree *t, avl_unit_val_t *v,
 static struct dir_data {
 	char *name;
 } dir_data[] = {
-".gitignore", "Makefile", "Makefile.gate", "acpi-ext.c",
-	    "acpi-processor.c", "acpi.c", "asm-offsets.c", "audit.c",
-	    "brl_emu.c", "cpufreq", "crash.c", "crash_dump.c",
-	    "cyclone.c", "dma-mapping.c", "efi.c", "efi_stub.S",
-	    "entry.S", "entry.h", "err_inject.c", "esi.c", "esi_stub.S",
-	    "fsys.S", "fsyscall_gtod_data.h", "ftrace.c", "gate-data.S",
-	    "gate.S", "gate.lds.S", "head.S", "ia64_ksyms.c",
-	    "init_task.c", "iosapic.c", "irq.c", "irq_ia64.c",
-	    "irq_lsapic.c", "ivt.S", "jprobes.S", "kprobes.c",
-	    "machine_kexec.c", "machvec.c", "mca.c", "mca_asm.S",
-	    "mca_drv.c", "mca_drv.h", "mca_drv_asm.S", "minstate.h",
-	    "module.c", "msi_ia64.c", "nr-irqs.c", "numa.c", "pal.S",
-	    "palinfo.c", "paravirt.c", "paravirt_inst.h",
-	    "paravirt_patch.c", "paravirt_patchlist.c",
-	    "paravirt_patchlist.h", "paravirtentry.S", "patch.c",
-	    "pci-dma.c", "pci-swiotlb.c", "perfmon.c",
-	    "perfmon_default_smpl.c", "perfmon_generic.h",
-	    "perfmon_itanium.h", "perfmon_mckinley.h",
-	    "perfmon_montecito.h", "process.c", "ptrace.c",
-	    "relocate_kernel.S", "sal.c", "salinfo.c", "setup.c",
-	    "sigframe.h", "signal.c", "smp.c", "smpboot.c",
-	    "sys_ia64.c", "time.c", "topology.c", "traps.c",
-	    "unaligned.c", "uncached.c", "unwind.c", "unwind_decoder.c",
-	    "unwind_i.h", "vmlinux.lds.S", 0};
+	{ ".gitignore" }, { "Makefile" }, { "Makefile.gate" }, { "acpi-ext.c" },
+	{ "acpi-processor.c" }, { "acpi.c" }, { "asm-offsets.c" },
+	{ "audit.c" }, { "brl_emu.c" }, { "cpufreq" }, { "crash.c" },
+	{ "crash_dump.c" }, { "cyclone.c" }, { "dma-mapping.c" }, { "efi.c" },
+	{ "efi_stub.S" }, { "entry.S" }, { "entry.h" }, { "err_inject.c" },
+	{ "esi.c" }, { "esi_stub.S" }, { "fsys.S" },
+	{ "fsyscall_gtod_data.h" }, { "ftrace.c" }, { "gate-data.S" },
+	{ "gate.S" }, { "gate.lds.S" }, { "head.S" }, { "ia64_ksyms.c" },
+	{ "init_task.c" }, { "iosapic.c" }, { "irq.c" }, { "irq_ia64.c" },
+	{ "irq_lsapic.c" }, { "ivt.S" }, { "jprobes.S" }, { "kprobes.c" },
+	{ "machine_kexec.c" }, { "machvec.c" }, { "mca.c" }, { "mca_asm.S" },
+	{ "mca_drv.c" }, { "mca_drv.h" }, { "mca_drv_asm.S" }, { "minstate.h" },
+	{ "module.c" }, { "msi_ia64.c" }, { "nr-irqs.c" }, { "numa.c" },
+	{ "pal.S" }, { "palinfo.c" }, { "paravirt.c" }, { "paravirt_inst.h" },
+	{ "paravirt_patch.c" }, { "paravirt_patchlist.c" },
+	{ "paravirt_patchlist.h" }, { "paravirtentry.S" }, { "patch.c" },
+	{ "pci-dma.c" }, { "pci-swiotlb.c" }, { "perfmon.c" },
+	{ "perfmon_default_smpl.c" }, { "perfmon_generic.h" },
+	{ "perfmon_itanium.h" }, { "perfmon_mckinley.h" },
+	{ "perfmon_montecito.h" }, { "process.c" }, { "ptrace.c" },
+	{ "relocate_kernel.S" }, { "sal.c" }, { "salinfo.c" }, { "setup.c" },
+	{ "sigframe.h" }, { "signal.c" }, { "smp.c" }, { "smpboot.c" },
+	{ "sys_ia64.c" }, { "time.c" }, { "topology.c" }, { "traps.c" },
+	{ "unaligned.c" }, { "uncached.c" }, { "unwind.c" },
+	{ "unwind_decoder.c" }, { "unwind_i.h" }, { "vmlinux.lds.S" }, { 0 } };
 
 void avl_unit_free_val(avl_unit_val_t *v)
 {
@@ -226,6 +204,16 @@ void avl_unit_clear_and_destroy_tree(struct avltree *t)
 /*
  *  BEGIN SUITE INITIALIZATION and CLEANUP FUNCTIONS
  */
+
+void avl_setup(void)
+{
+	/* nothing */
+}
+
+void avl_teardown(void)
+{
+	/* nothing */
+}
 
 void avl_unit_PkgInit(void)
 {
@@ -295,7 +283,6 @@ void check_tree_1(void)
 
 void lookups_tree_1(void)
 {
-	struct avltree_node *node;
 	avl_unit_val_t *v2, *v;
 	char *s;
 	int ix;
@@ -352,7 +339,6 @@ void check_tree_2(void)
 
 void lookups_tree_2(void)
 {
-	struct avltree_node *node = NULL;
 	avl_unit_val_t *v2, *v;
 	char s[256];
 	int ix;
@@ -415,12 +401,12 @@ int main(int argc, char *argv[])
 
 	CU_SuiteInfo suites[] = {
 		{"Rb tree operations 1", init_suite1, clean_suite1,
-		 avl_tree_unit_1_arr}
+		 avl_setup, avl_teardown, avl_tree_unit_1_arr}
 		,
 		CU_SUITE_INFO_NULL,
 	};
 
-	CU_ErrorCode error = CU_register_suites(suites);
+	CU_register_suites(suites);
 
 	/* Initialize the avl_tree package */
 	avl_unit_PkgInit();

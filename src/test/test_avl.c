@@ -6,6 +6,7 @@
 
 #include "CUnit/Basic.h"
 
+#include "abstract_mem.h"
 #include "avltree.h"
 
 #define DEBUG 1
@@ -88,6 +89,16 @@ void avl_unit_clear_and_destroy_tree(struct avltree *t)
 /*
  *  BEGIN SUITE INITIALIZATION and CLEANUP FUNCTIONS
  */
+
+void avl_setup(void)
+{
+	/* nothing */
+}
+
+void avl_teardown(void)
+{
+	/* nothing */
+}
 
 void avl_unit_PkgInit(void)
 {
@@ -925,30 +936,30 @@ int main(int argc, char *argv[])
 
 	CU_SuiteInfo suites[] = {
 		{"Avl operations 1", init_suite1, clean_suite1,
-		 avl_tree_unit_1_arr}
+		 avl_setup, avl_teardown, avl_tree_unit_1_arr}
 		,
 		{"Avl operations 2", init_suite2, clean_suite2,
-		 avl_tree_unit_2_arr}
+		 avl_setup, avl_teardown, avl_tree_unit_2_arr}
 		,
 		{"Avl operations 2 R", init_suite2, clean_suite2,
-		 avl_tree_unit_2r_arr}
+		 avl_setup, avl_teardown, avl_tree_unit_2r_arr}
 		,
 		{"Avl operations 100", init_suite100, clean_suite100,
-		 avl_tree_unit_100_arr}
+		 avl_setup, avl_teardown, avl_tree_unit_100_arr}
 		,
 		{"Avl operations 10000", init_suite10000, clean_suite10000,
-		 avl_tree_unit_10000_arr}
+		 avl_setup, avl_teardown, avl_tree_unit_10000_arr}
 		,
 		{"Check min 1", init_suite1, clean_suite1,
-		 avl_tree_unit_min_1_arr}
+		 avl_setup, avl_teardown, avl_tree_unit_min_1_arr}
 		,
 		{"Check supremum", init_supremum, clean_supremum,
-		 avl_tree_unit_supremum}
+		 avl_setup, avl_teardown, avl_tree_unit_supremum}
 		,
 		CU_SUITE_INFO_NULL,
 	};
 
-	CU_ErrorCode error = CU_register_suites(suites);
+	CU_register_suites(suites);
 
 	/* Initialize the avl_tree package */
 	avl_unit_PkgInit();
