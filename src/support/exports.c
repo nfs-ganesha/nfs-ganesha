@@ -2482,7 +2482,7 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 	struct glist_head *glist;
 	int rc;
 	int ipvalid = -1;	/* -1 need to print, 0 - invalid, 1 - ok */
-	char hostname[MAXHOSTNAMELEN + 1];
+	char hostname[NI_MAXHOST];
 	char ipstring[SOCK_NAME_MAX + 1];
 	CIDR *host_prefix = NULL;
 	exportlist_client_entry_t *client;
