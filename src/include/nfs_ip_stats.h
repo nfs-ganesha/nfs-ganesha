@@ -12,14 +12,13 @@
 #define IP_NAME_SUCCESS             0
 #define IP_NAME_INSERT_MALLOC_ERROR 1
 #define IP_NAME_NOT_FOUND           2
-#define IP_NAME_NETDB_ERROR         3
 
 #define IP_NAME_PREALLOC_SIZE      200
 
 /* NFS IPaddr cache entry structure */
 typedef struct nfs_ip_name__ {
 	time_t timestamp;
-	char hostname[MAXHOSTNAMELEN + 1];
+	char hostname[];
 } nfs_ip_name_t;
 
 int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size);

@@ -143,42 +143,32 @@ int display_ip_name_val(struct gsh_buffdesc *pbuff, char *str)
  * @return IP_NAME_SUCCESS if successful
  * @return IP_NAME_INSERT_MALLOC_ERROR if an error occurred during the insertion
  *                                     process
- * @return IP_NAME_NETDB_ERROR if an error occurred during the netdb query (via
- *                             gethostbyaddr).
  *
  */
 
-int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size)
+int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 {
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffdata;
 	nfs_ip_name_t *nfs_ip_name = NULL;
-	sockaddr_t *pipaddr = NULL;
 	struct timeval tv0, tv1, dur;
-	int rc;
+	int rc, len, size;
 	char ipstring[SOCK_NAME_MAX + 1];
+	char *hn = hostname;
 	hash_error_t hash_rc;
 
 	nfs_ip_name = gsh_malloc(sizeof(nfs_ip_name_t));
 
-	pipaddr = gsh_malloc(sizeof(sockaddr_t));
-
-	/* I have to keep an integer as key, I wil use the pointer buffkey->addr
-	 * for this, this also means that buffkey->len will be 0
-	 */
-	memcpy(pipaddr, ipaddr, sizeof(sockaddr_t));
-
-	buffkey.addr = pipaddr;
-	buffkey.len = sizeof(sockaddr_t);
-
 	gettimeofday(&tv0, NULL);
-	rc = getnameinfo((struct sockaddr *)pipaddr, sizeof(sockaddr_t),
-			 nfs_ip_name->hostname, sizeof(nfs_ip_name->hostname),
+
+	/* Speculatively get the hostname into our caller's buffer... */
+	rc = getnameinfo((struct sockaddr *)ipaddr, sizeof(sockaddr_t),
+			 hostname, maxsize,
 			 NULL, 0, 0);
 	gettimeofday(&tv1, NULL);
 	timersub(&tv1, &tv0, &dur);
 
-	sprint_sockip(pipaddr, ipstring, sizeof(ipstring));
+	sprint_sockip(ipaddr, ipstring, sizeof(ipstring));
 
 	/* display warning if DNS resolution took more that 1.0s */
 	if (dur.tv_sec >= 1) {
@@ -190,51 +180,70 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t size)
 
 	/* Ask for the name to be cached */
 	if (rc != 0) {
-		strmaxcpy(nfs_ip_name->hostname, ipstring,
-			sizeof(nfs_ip_name->hostname));
+		hn = ipstring;
 		LogEvent(COMPONENT_DISPATCH,
-			 "Cannot resolve address %s, error %s, using %s as hostname",
-			 ipstring, gai_strerror(rc), nfs_ip_name->hostname);
+			 "Cannot resolve address %s, error %s, using address as hostname",
+			 ipstring, gai_strerror(rc));
+
+		if (maxsize < SOCK_NAME_MAX) {
+			LogMajor(COMPONENT_DISPATCH,
+				 "Could not return ip address because caller's buffer was too small");
+			return IP_NAME_INSERT_MALLOC_ERROR;
+		}
+
+		/* And copy the ipstring out to the caller's buffer. */
+		strcpy(hostname, ipstring);
 	}
 
-	LogDebug(COMPONENT_DISPATCH, "Inserting %s->%s to addr cache", ipstring,
-		 nfs_ip_name->hostname);
-
-	/* I build the data with the request pointer
-	 * that should be in state 'IN USE'
+	/* At this point, no matter what, the caller's buffer has been filled
+	 * with the hostname we would cache.
 	 */
+
+	/* I have to keep an integer as key, I wil use the pointer buffkey->addr
+	 * for this, this also means that buffkey->len will be 0
+	 */
+	buffkey.len = sizeof(sockaddr_t);
+	buffkey.addr = gsh_memdup(ipaddr, buffkey.len);
+
+	/* Now setup the cached hostname */
+	len = strlen(hn);
+	size = sizeof(nfs_ip_name_t) + len + 1;
+
+	nfs_ip_name = gsh_malloc(size);
+
 	nfs_ip_name->timestamp = time(NULL);
+	memcpy(nfs_ip_name->hostname, hn, len + 1);
+
+	LogDebug(COMPONENT_DISPATCH, "Inserting %s->%s to addr cache",
+		 ipstring, hn);
 
 	buffdata.addr = nfs_ip_name;
-	buffdata.len = sizeof(nfs_ip_name_t);
+	buffdata.len = size;
 
 	/* Multiple threads may try to add the same IP/name to cache. Need to
 	 * return success if we get HASHTABLE_ERROR_KEY_ALREADY_EXISTS
 	 * as return status
 	 */
 	hash_rc = HashTable_Set(ht_ip_name, &buffkey, &buffdata);
-	switch (hash_rc) {
-	case HASHTABLE_SUCCESS:
-		/* Copy the value for the caller */
-		strmaxcpy(hostname, nfs_ip_name->hostname, size);
-		return IP_NAME_SUCCESS;
-	case HASHTABLE_ERROR_KEY_ALREADY_EXISTS:
-		/* Copy the value for the caller */
-		strmaxcpy(hostname, nfs_ip_name->hostname, size);
+
+	/* No matter if we were able to cache or not, we either have a hostname
+	 * or it didn't work, so we will return the hostname from above which is
+	 * already in the caller's buffer.
+	 */
+	if (hash_rc != HASHTABLE_SUCCESS) {
+		if (hash_rc != HASHTABLE_ERROR_KEY_ALREADY_EXISTS) {
+			/* This should not happen */
+			LogEvent(COMPONENT_DISPATCH,
+				 "Error %s while adding host %s to cache",
+				 hash_table_err_to_str(hash_rc), hn);
+		}
+
 		/* Release not required allocations */
 		gsh_free(nfs_ip_name);
-		gsh_free(pipaddr);
-		return IP_NAME_SUCCESS;
-	default:
-		/* This should not happen */
-		LogEvent(COMPONENT_DISPATCH,
-			 "Error while adding host %s to cache",
-			 nfs_ip_name->hostname);
-		/* Release not required allocations */
-		gsh_free(nfs_ip_name);
-		gsh_free(pipaddr);
-		return IP_NAME_INSERT_MALLOC_ERROR;
+		gsh_free(buffkey.addr);
 	}
+
+	return IP_NAME_SUCCESS;
 }				/* nfs_ip_name_add */
 
 /**
@@ -265,7 +274,12 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
 			  &buffkey,
 			  &buffval) == HASHTABLE_SUCCESS) {
 		nfs_ip_name = buffval.addr;
-		strmaxcpy(hostname, nfs_ip_name->hostname, size);
+		if (strlcpy(hostname, nfs_ip_name->hostname, size) >= size) {
+			LogWarn(COMPONENT_DISPATCH,
+				"Could not return host %s to caller, too big",
+				nfs_ip_name->hostname);
+			return IP_NAME_INSERT_MALLOC_ERROR;
+		}
 
 		LogFullDebug(COMPONENT_DISPATCH, "Cache get hit for %s->%s",
 			     ipstring, nfs_ip_name->hostname);
