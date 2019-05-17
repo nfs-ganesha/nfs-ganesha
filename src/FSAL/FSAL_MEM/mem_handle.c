@@ -256,6 +256,8 @@ static void mem_insert_obj(struct mem_fsal_obj_handle *parent,
 	mem_int_get_ref(child);
 	dirent->dir = parent;
 	dirent->d_name = gsh_strdup(name);
+	/* Index is hash of the name */
+	dirent->d_index = CityHash64(name, strlen(name));
 
 	/* Link into child */
 	PTHREAD_RWLOCK_wrlock(&child->obj_handle.obj_lock);
@@ -266,8 +268,7 @@ static void mem_insert_obj(struct mem_fsal_obj_handle *parent,
 	PTHREAD_RWLOCK_wrlock(&parent->obj_handle.obj_lock);
 	/* Name tree */
 	avltree_insert(&dirent->avl_n, &parent->mh_dir.avl_name);
-	/* Index tree (increment under lock) */
-	dirent->d_index = (parent->mh_dir.next_i)++;
+	/* Index tree */
 	avltree_insert(&dirent->avl_i, &parent->mh_dir.avl_index);
 	/* Update numkids */
 	numkids = atomic_inc_uint32_t(&parent->mh_dir.numkids);
@@ -302,9 +303,77 @@ mem_dirent_lookup(struct mem_fsal_obj_handle *dir, const char *name)
 }
 
 /**
+ * @brief Get the next dirent in a directory
+ *
+ * @note Caller must hold the obj_lock on the obj
+ *
+ * @param[in] dirent	Current dirent
+ * @return Next dirent, or NULL if at EOD
+ */
+static struct mem_dirent *
+mem_dirent_next(struct mem_dirent *dirent)
+{
+	struct avltree_node *node;
+
+	node = avltree_next(&dirent->avl_i);
+	if (!node) {
+		return NULL;
+	}
+
+	return avltree_container_of(node, struct mem_dirent, avl_i);
+}
+
+/**
+ * @brief Seek to a location in a directory
+ *
+ * Handle normal vs whence-is-name directories.
+ *
+ * @note Caller must hold the obj_lock on the obj
+ *
+ * @param[in] dir	Directory to seek in
+ * @param[in] seekloc	Location to seek to
+ * @return Dirent associated with seekloc
+ */
+static struct mem_dirent *
+mem_readdir_seekloc(struct mem_fsal_obj_handle *dir, fsal_cookie_t seekloc)
+{
+	struct mem_dirent *dirent;
+	struct avltree_node *node;
+	struct mem_dirent key;
+
+	if (!seekloc) {
+		/* Start from the beginning.  We walk the index tree, so always
+		 * grab from the index tree. */
+		node = avltree_first(&dir->mh_dir.avl_index);
+		if (!node) {
+			return NULL;
+		}
+		dirent = avltree_container_of(node, struct mem_dirent,
+					      avl_i);
+		return dirent;
+	}
+
+
+	key.d_index = seekloc;
+	node = avltree_lookup(&key.avl_i, &dir->mh_dir.avl_index);
+	if (!node) {
+		/* Dirent was probably deleted.  Find the next one */
+		node = avltree_sup(&key.avl_i, &dir->mh_dir.avl_index);
+	}
+	if (!node) {
+		/* Done */
+		return NULL;
+	}
+
+	dirent = avltree_container_of(node, struct mem_dirent, avl_i);
+
+	return dirent;
+}
+
+/**
  * @brief Update the change attribute of the FSAL object
  *
- * @note Call must hold the obj_lock on the obj
+ * @note Caller must hold the obj_lock on the obj
  *
  * @param[in] obj	FSAL obj which was modified
  */
@@ -663,7 +732,6 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 	case DIRECTORY:
 		avltree_init(&hdl->mh_dir.avl_name, mem_n_cmpf, 0);
 		avltree_init(&hdl->mh_dir.avl_index, mem_i_cmpf, 0);
-		hdl->mh_dir.next_i = 2;
 		hdl->attrs.numlinks = 2;
 		hdl->mh_dir.numkids = 2;
 		hdl->mh_dir.parent = parent;
@@ -865,8 +933,8 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 				 bool *eof)
 {
 	struct mem_fsal_obj_handle *myself;
-	struct avltree_node *node;
-	fsal_cookie_t seekloc = 0;
+	struct mem_dirent *dirent, *dirent_next;
+	fsal_cookie_t cookie = 0;
 	struct attrlist attrs;
 	enum fsal_dir_result cb_rc;
 	int count = 0;
@@ -876,15 +944,13 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 			      obj_handle);
 
 	if (whence != NULL)
-		seekloc = *whence;
-	else
-		seekloc = 2;
+		cookie = *whence;
 
 	*eof = true;
 
 #ifdef USE_LTTNG
 	tracepoint(fsalmem, mem_readdir, __func__, __LINE__, dir_hdl,
-		   myself->m_name, seekloc);
+		   myself->m_name, cookie);
 #endif
 	LogFullDebug(COMPONENT_FSAL, "hdl=%p, name=%s",
 		     myself, myself->m_name);
@@ -896,19 +962,12 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 	 */
 	op_ctx->fsal_private = dir_hdl;
 
-	if (seekloc) {
-		struct mem_dirent key;
+	dirent = mem_readdir_seekloc(myself, cookie);
 
-		key.d_index = seekloc;
-		node = avltree_lookup(&key.avl_i, &myself->mh_dir.avl_index);
-	} else {
-		node = avltree_first(&myself->mh_dir.avl_index);
-	}
-
+	/* Always run in index order */
 	for (;
-	     node != NULL;
-	     node = avltree_next(node)) {
-		struct mem_dirent *dirent;
+	     dirent != NULL;
+	     dirent = dirent_next) {
 
 		if (count >= 2 * mdcache_param.dir.avl_chunk) {
 			LogFullDebug(COMPONENT_FSAL, "readahead done %d",
@@ -918,14 +977,19 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 			break;
 		}
 
-		dirent = avltree_container_of(node, struct mem_dirent, avl_i);
+		dirent_next = mem_dirent_next(dirent);
+		if (dirent_next) {
+			cookie = dirent_next->d_index;
+		} else {
+			cookie = UINT64_MAX;
+		}
 
 		fsal_prepare_attrs(&attrs, attrmask);
 		fsal_copy_attrs(&attrs, &dirent->hdl->attrs, false);
 		mem_int_get_ref(dirent->hdl);
 
 		cb_rc = cb(dirent->d_name, &dirent->hdl->obj_handle, &attrs,
-			   dir_state, dirent->d_index + 1);
+			   dir_state, cookie);
 
 		fsal_release_attrs(&attrs);
 

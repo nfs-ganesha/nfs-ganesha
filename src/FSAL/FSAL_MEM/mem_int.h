@@ -1,7 +1,7 @@
 /*
  * vim:shiftwidth=8:tabstop=8:
  *
- * Copyright 2017-2018 Red Hat, Inc.
+ * Copyright 2017-2019 Red Hat, Inc.
  * Author: Daniel Gryniewicz  dang@redhat.com
  *
  *
@@ -92,7 +92,6 @@ struct mem_fsal_obj_handle {
 			struct avltree avl_name;
 			struct avltree avl_index;
 			uint32_t numkids;
-			uint32_t next_i; /* next child index */
 		} mh_dir;
 		struct {
 			struct fsal_share share;
@@ -123,7 +122,7 @@ struct mem_dirent {
 	struct mem_fsal_obj_handle *hdl; /**< Handle dirent points to */
 	struct mem_fsal_obj_handle *dir; /**< Dir containing dirent */
 	const char *d_name;		 /**< Name of dirent */
-	uint32_t d_index;		 /**< index in dir */
+	uint64_t d_index;		 /**< index in dir */
 	struct avltree_node avl_n;	 /**< Entry in dir's avl_name tree */
 	struct avltree_node avl_i;	 /**< Entry in dir's avl_index tree */
 	struct glist_head dlist;	 /**< Entry in hdl's dirents list */
@@ -203,6 +202,8 @@ struct mem_fsal_module {
 	uint64_t next_inode;
 	/** Config - number of async threads */
 	uint32_t async_threads;
+	/** Config - whether so use whence-is-name */
+	bool whence_is_name;
 };
 
 /* ASYNC testing */

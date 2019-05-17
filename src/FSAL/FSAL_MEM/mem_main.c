@@ -1,7 +1,7 @@
 /*
  * vim:shiftwidth=8:tabstop=8:
  *
- * Copyright 2017-2018 Red Hat, Inc.
+ * Copyright 2017-2019 Red Hat, Inc.
  * Author: Daniel Gryniewicz  dang@redhat.com
  *
  *
@@ -87,6 +87,8 @@ static struct config_item mem_items[] = {
 		       mem_fsal_module, up_interval),
 	CONF_ITEM_UI32("Async_Threads", 0, 100, 0,
 		       mem_fsal_module, async_threads),
+	CONF_ITEM_BOOL("Whence_is_name", false,
+		       mem_fsal_module, whence_is_name),
 	CONFIG_EOL
 };
 
@@ -219,6 +221,9 @@ static fsal_status_t mem_init_config(struct fsal_module *fsal_hdl,
 			 fsal_err_txt(status));
 		return status;
 	}
+
+	/* Set whence_is_name in fsinfo */
+	mem_me->fsal.fs_info.whence_is_name = mem_me->whence_is_name;
 
 	display_fsinfo(&mem_me->fsal);
 	LogFullDebug(COMPONENT_FSAL,
