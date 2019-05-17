@@ -28,7 +28,7 @@
 #}
 
 ## Configure settings for the object handle cache
-#CACHEINODE {
+#MDCACHE {
 	## The point at which object cache entries will start being reused.
 	#Entries_HWMark = 100000;
 #}

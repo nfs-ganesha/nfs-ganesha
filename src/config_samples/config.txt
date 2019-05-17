@@ -15,6 +15,7 @@ LOG { COMPONENTS {} }
 LOG { FACILITY {} }
 LOG { FORMAT {} }
 _9P {}
+MDCACHE {}
 CACHEINODE {}
 CEPH {}
 GPFS {}
@@ -546,7 +547,7 @@ LOG { FORMAT {} }
 	LEVEL(bool, default true)
 
 
-CACHEINODE
+MDCACHE / CACHEINODE
 ----------
 
 	NParts(uint32, range 1 to 32633, default 7)

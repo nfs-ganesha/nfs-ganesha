@@ -105,7 +105,7 @@ EXPORT_DEFAULTS {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-export-config <ganesha-export-config>`\(8) for usage
 
-CACHEINODE {}
+MDCACHE {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-cache-config <ganesha-cache-config>`\(8) for usage
 

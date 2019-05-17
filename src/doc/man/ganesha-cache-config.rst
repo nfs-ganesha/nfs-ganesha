@@ -16,9 +16,12 @@ DESCRIPTION
 NFS-Ganesha reads the configuration data from:
 | /etc/ganesha/ganesha.conf
 
-This file lists NFS-Ganesha Cache config options.
+This file lists NFS-Ganesha Cache config options.  These options used to be
+configured in the CACHEINODE block.  They may still be used in that block, but
+it is deprecated and will go away.  The MDCACHE block takes precidence over the
+CACHEINODE block.
 
-CACHEINODE {}
+MDCACHE {}
 --------------------------------------------------------------------------------
 
 NParts (uint32, range 1 to 32633, default 7)
