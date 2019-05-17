@@ -2756,6 +2756,7 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 	tracepoint(mdcache, mdc_readdir,
 		   __func__, __LINE__, &directory->obj_handle);
 #endif
+
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 			"Starting chunked READDIR for %p, MDCACHE_TRUST_CONTENT %s, MDCACHE_TRUST_DIR_CHUNKS %s",
 			directory,
@@ -2778,6 +2779,7 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 		has_write = false;
 	}
 
+restart:
 	if (look_ck == 0) {
 		/* If starting from beginning, use the first_ck from the
 		 * directory instead, this is only non-zero if the first
@@ -3070,6 +3072,9 @@ again:
 				goto again;
 			}
 
+			/* Save look_ck in case dirent is nuked */
+			look_ck = dirent->ck;
+
 			status = mdc_lookup_uncached(directory, dirent->name,
 						     &entry, NULL);
 
@@ -3085,6 +3090,16 @@ again:
 					mdcache_kill_entry(directory);
 
 				return status;
+			}
+
+			if (!test_mde_flags(directory, MDCACHE_TRUST_CONTENT |
+					    MDCACHE_TRUST_DIR_CHUNKS)) {
+				/* mdc_lookup_uncached() replaced the dirent,
+				 * because the key for the old and new entries
+				 * don't match.  If the new dirent couldn't be
+				 * placed, we need to restart readdir.
+				 */
+				goto restart;
 			}
 		}
 
