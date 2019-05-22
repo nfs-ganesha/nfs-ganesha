@@ -198,6 +198,14 @@ size_t socket_addr_len(sockaddr_t *addr)
 static inline
 bool sprint_sockip(sockaddr_t *addr, char *buf, int len)
 {
+#ifdef RPC_VSOCK
+	if (addr->ss_family == AF_VSOCK) {
+		int rc = snprintf(buf, len, "%d",
+				  ((struct sockaddr_vm *)addr)->svm_cid));
+		return rc >= 0 && rc < len;
+	}
+#endif /* VSOCK */
+
 	if (addr->ss_family != AF_INET && addr->ss_family != AF_INET6)
 		return false;
 

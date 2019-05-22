@@ -205,6 +205,13 @@ int display_sockaddr_port(struct display_buffer *dspbuf, sockaddr_t *addr,
 		port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
 		break;
 
+#ifdef RPC_VSOCK
+	case AF_VSOCK:
+		return display_printf(dspbuf, "%s:%d",
+				      ((struct sockaddr_vm *)addr)->svm_cid,
+				      ((struct sockaddr_vm *)addr)->svm_port);
+#endif /* VSOCK */
+
 	case AF_LOCAL:
 		return display_cat(dspbuf,
 				   ((struct sockaddr_un *)addr)->sun_path);
@@ -226,10 +233,9 @@ int display_sockaddr_port(struct display_buffer *dspbuf, sockaddr_t *addr,
  * @param[in] addr_2      Second address
  * @param[in] ignore_port Whether to ignore the port
  *
- * @return Comparator trichotomy,
+ * @return Comparator true/false,
  */
-int cmp_sockaddr(sockaddr_t *addr_1, sockaddr_t *addr_2,
-		 bool ignore_port)
+int cmp_sockaddr(sockaddr_t *addr_1, sockaddr_t *addr_2, bool ignore_port)
 {
 	if (addr_1->ss_family != addr_2->ss_family)
 		return 0;
@@ -237,30 +243,37 @@ int cmp_sockaddr(sockaddr_t *addr_1, sockaddr_t *addr_2,
 	switch (addr_1->ss_family) {
 	case AF_INET:
 	{
-		struct sockaddr_in *inaddr1 =
-			(struct sockaddr_in *)addr_1;
-		struct sockaddr_in *inaddr2 =
-			(struct sockaddr_in *)addr_2;
+		struct sockaddr_in *inaddr1 = (struct sockaddr_in *)addr_1;
+		struct sockaddr_in *inaddr2 = (struct sockaddr_in *)addr_2;
 
-		return (inaddr1->sin_addr.s_addr ==
-			inaddr2->sin_addr.s_addr
+		return (inaddr1->sin_addr.s_addr == inaddr2->sin_addr.s_addr
 			&& (ignore_port ||
 			    inaddr1->sin_port == inaddr2->sin_port));
 	}
 	case AF_INET6:
 	{
-		struct sockaddr_in6 *ip6addr1 =
-			(struct sockaddr_in6 *)addr_1;
-		struct sockaddr_in6 *ip6addr2 =
-			(struct sockaddr_in6 *)addr_2;
+		struct sockaddr_in6 *ip6addr1 = (struct sockaddr_in6 *)addr_1;
+		struct sockaddr_in6 *ip6addr2 = (struct sockaddr_in6 *)addr_2;
 
-		return (memcmp
-			(ip6addr1->sin6_addr.s6_addr,
-			 ip6addr2->sin6_addr.s6_addr,
-			 sizeof(ip6addr2->sin6_addr.s6_addr)) == 0) &&
-			(ignore_port ||
-			 ip6addr1->sin6_port == ip6addr2->sin6_port);
-		}
+		return (memcmp(ip6addr1->sin6_addr.s6_addr,
+			       ip6addr2->sin6_addr.s6_addr,
+			       sizeof(ip6addr2->sin6_addr.s6_addr)) == 0)
+			&& (ignore_port ||
+			    ip6addr1->sin6_port == ip6addr2->sin6_port);
+	}
+	break;
+#ifdef RPC_VSOCK
+	case AF_VSOCK:
+	{
+		struct sockaddr_vm *svm1 = (struct sockaddr_vm *)addr_1;
+		struct sockaddr_vm *svm2 = (struct sockaddr_vm *)addr_2;
+
+
+		return (svm1->svm_cid == svm2->svm_cid
+			&& (ignore_port || svm1->svm_port == svm2->svm_port));
+	}
+	break;
+#endif /* VSOCK */
 	default:
 		return 0;
 	}
@@ -275,8 +288,7 @@ int cmp_sockaddr(sockaddr_t *addr_1, sockaddr_t *addr_2,
  *
  * @return Comparator trichotomy
  */
-int sockaddr_cmpf(sockaddr_t *addr1, sockaddr_t *addr2,
-		  bool ignore_port)
+int sockaddr_cmpf(sockaddr_t *addr1, sockaddr_t *addr2, bool ignore_port)
 {
 	switch (addr1->ss_family) {
 	case AF_INET:
@@ -318,6 +330,29 @@ int sockaddr_cmpf(sockaddr_t *addr1, sockaddr_t *addr2,
 		} else
 			return acmp < 0 ? -1 : 1;
 	}
+#ifdef RPC_VSOCK
+	case AF_VSOCK:
+	{
+		struct sockaddr_vm *svm1 = (struct sockaddr_vm *)addr1;
+		struct sockaddr_vm *svm2 = (struct sockaddr_vm *)addr2;
+
+		if (svm1->svm_cid < svm2->svm_cid)
+			return -1;
+
+		if (svm1->svm_cid == svm2->svm_cid) {
+			if (ignore_port)
+				return 0;
+			/* else */
+			if (svm1->svm_port < svm2->svm_port)
+				return -1;
+			if (svm1->svm_port == svm2->svm_port)
+				return 0;
+			return 1;
+		}
+		return 1;
+	}
+	break;
+#endif /* VSOCK */
 	default:
 		/* unhandled AF */
 		return -2;
