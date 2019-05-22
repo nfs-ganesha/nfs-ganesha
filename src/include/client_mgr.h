@@ -48,11 +48,10 @@
 struct gsh_client {
 	struct avltree_node node_k;
 	pthread_rwlock_t lock;
-	struct gsh_buffdesc addr;
 	int64_t refcnt;
 	nsecs_elapsed_t last_update;
-	char *hostaddr_str;
-	unsigned char addrbuf[];
+	char hostaddr_str[SOCK_NAME_MAX];
+	sockaddr_t cl_addrbuf;
 };
 
 static inline int64_t inc_gsh_client_refcount(struct gsh_client *client)

@@ -90,7 +90,7 @@ static struct client_by_ip client_by_ip;
  *
  * @return The computed offset.
  */
-static inline uint32_t eip_cache_offsetof(struct client_by_ip *eid, uint32_t k)
+static inline int eip_cache_offsetof(struct client_by_ip *eid, uint64_t k)
 {
 	return k % eid->cache_sz;
 }
@@ -110,10 +110,8 @@ static int client_ip_cmpf(const struct avltree_node *lhs,
 
 	lk = avltree_container_of(lhs, struct gsh_client, node_k);
 	rk = avltree_container_of(rhs, struct gsh_client, node_k);
-	if (lk->addr.len != rk->addr.len)
-		return (lk->addr.len < rk->addr.len) ? -1 : 1;
-	else
-		return memcmp(lk->addr.addr, rk->addr.addr, lk->addr.len);
+
+	return sockaddr_cmpf(&lk->cl_addrbuf, &rk->cl_addrbuf, true);
 }
 
 /**
@@ -135,61 +133,21 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	struct gsh_client *cl;
 	struct server_stats *server_st;
 	struct gsh_client v;
-	char hoststr[SOCK_NAME_MAX];
-	uint8_t *addr = NULL;
-	uint32_t ipaddr;
-	int addr_len = 0;
 	void **cache_slot;
-
-	switch (client_ipaddr->ss_family) {
-	case AF_INET:
-		addr =
-		    (uint8_t *) &((struct sockaddr_in *)client_ipaddr)->
-		    sin_addr;
-		addr_len = 4;
-		memcpy(&ipaddr,
-		       (uint8_t *) &((struct sockaddr_in *)client_ipaddr)->
-		       sin_addr, sizeof(ipaddr));
-		break;
-	case AF_INET6:
-		addr =
-		    (uint8_t *) &((struct sockaddr_in6 *)client_ipaddr)->
-		    sin6_addr;
-		addr_len = 16;
-		memcpy(&ipaddr,
-		       (uint8_t *) &((struct sockaddr_in6 *)client_ipaddr)->
-		       sin6_addr, sizeof(ipaddr));
-		break;
-#ifdef RPC_VSOCK
-	case AF_VSOCK:
-	{
-		struct sockaddr_vm *svm; /* XXX checkpatch bs */
-
-		svm = (struct sockaddr_vm *)client_ipaddr;
-		addr = (uint8_t *)&(svm->svm_cid);
-		addr_len = sizeof(svm->svm_cid);
-		ipaddr = svm->svm_cid;
-	}
-	break;
-#endif /* VSOCK */
-	default:
-		assert(0);
-	}
-	v.addr.addr = addr;
-	v.addr.len = addr_len;
+	uint64_t hash = hash_sockaddr(client_ipaddr, true);
 
 	PTHREAD_RWLOCK_rdlock(&client_by_ip.lock);
 
 	/* check cache */
 	cache_slot = (void **)
-	    &(client_by_ip.cache[eip_cache_offsetof(&client_by_ip, ipaddr)]);
+	    &(client_by_ip.cache[eip_cache_offsetof(&client_by_ip, hash)]);
 	node = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
 	if (node) {
 		if (client_ip_cmpf(&v.node_k, node) == 0) {
 			/* got it in 1 */
 			LogDebug(COMPONENT_HASHTABLE_CACHE,
 				 "client_mgr cache hit slot %d",
-				 eip_cache_offsetof(&client_by_ip, ipaddr));
+				 eip_cache_offsetof(&client_by_ip, hash));
 			cl = avltree_container_of(node, struct gsh_client,
 						  node_k);
 			goto out;
@@ -209,24 +167,21 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	}
 	PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
 
-	server_st = gsh_calloc(1, (sizeof(struct server_stats) + addr_len));
+	server_st = gsh_calloc(1, sizeof(*server_st));
 
 	cl = &server_st->client;
-	memcpy(cl->addrbuf, addr, addr_len);
-	cl->addr.addr = cl->addrbuf;
-	cl->addr.len = addr_len;
-	cl->refcnt = 0;		/* we will hold a ref starting out... */
+	cl->cl_addrbuf = *client_ipaddr;
+	cl->refcnt = 0;
 
-	if (sprint_sockip(client_ipaddr, hoststr, sizeof(hoststr))) {
-		cl->hostaddr_str = gsh_strdup(hoststr);
-	} else {
-		cl->hostaddr_str = gsh_strdup("<unknown>");
+	if (!sprint_sockip(client_ipaddr, cl->hostaddr_str,
+			   sizeof(cl->hostaddr_str))) {
+		(void) strlcpy(cl->hostaddr_str, "<unknown>",
+			       sizeof(cl->hostaddr_str));
 	}
 
 	PTHREAD_RWLOCK_wrlock(&client_by_ip.lock);
 	node = avltree_insert(&cl->node_k, &client_by_ip.t);
 	if (node) {
-		gsh_free(cl->hostaddr_str);
 		gsh_free(server_st);	/* somebody beat us to it */
 		cl = avltree_container_of(node, struct gsh_client, node_k);
 	} else {
@@ -236,6 +191,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	}
 
  out:
+	/* we will hold a ref starting out... */
 	inc_gsh_client_refcount(cl);
 	PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
 	return cl;
@@ -272,48 +228,9 @@ int remove_gsh_client(sockaddr_t *client_ipaddr)
 	struct gsh_client *cl = NULL;
 	struct server_stats *server_st;
 	struct gsh_client v;
-	uint8_t *addr = NULL;
-	uint32_t ipaddr;
-	int addr_len = 0;
 	int removed = 0;
 	void **cache_slot;
-
-	switch (client_ipaddr->ss_family) {
-	case AF_INET:
-		addr =
-		    (uint8_t *) &((struct sockaddr_in *)client_ipaddr)->
-		    sin_addr;
-		addr_len = 4;
-		memcpy(&ipaddr,
-		       (uint8_t *) &((struct sockaddr_in *)client_ipaddr)->
-		       sin_addr, sizeof(ipaddr));
-		break;
-	case AF_INET6:
-		addr =
-		    (uint8_t *) &((struct sockaddr_in6 *)client_ipaddr)->
-		    sin6_addr;
-		addr_len = 16;
-		memcpy(&ipaddr,
-		       (uint8_t *) &((struct sockaddr_in6 *)client_ipaddr)->
-		       sin6_addr, sizeof(ipaddr));
-		break;
-#ifdef RPC_VSOCK
-	case AF_VSOCK:
-	{
-		struct sockaddr_vm *svm; /* XXX checkpatch horror */
-
-		svm = (struct sockaddr_vm *)client_ipaddr;
-		addr = (uint8_t *)&(svm->svm_cid);
-		addr_len = sizeof(svm->svm_cid);
-		ipaddr = svm->svm_cid;
-	}
-	break;
-#endif /* VSOCK */
-	default:
-		assert(0);
-	}
-	v.addr.addr = addr;
-	v.addr.len = addr_len;
+	uint64_t hash = hash_sockaddr(client_ipaddr, true);
 
 	PTHREAD_RWLOCK_wrlock(&client_by_ip.lock);
 	node = avltree_lookup(&v.node_k, &client_by_ip.t);
@@ -325,7 +242,7 @@ int remove_gsh_client(sockaddr_t *client_ipaddr)
 		}
 		cache_slot = (void **)
 		    &(client_by_ip.cache[eip_cache_offsetof(
-						&client_by_ip, ipaddr)]);
+						&client_by_ip, hash)]);
 		cnode = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
 		if (node == cnode)
 			atomic_store_voidptr(cache_slot, NULL);
@@ -338,8 +255,6 @@ int remove_gsh_client(sockaddr_t *client_ipaddr)
 	if (removed == 0) {
 		server_st = container_of(cl, struct server_stats, client);
 		server_stats_free(&server_st->st);
-		if (cl->hostaddr_str != NULL)
-			gsh_free(cl->hostaddr_str);
 		gsh_free(server_st);
 	}
 	return removed;
@@ -383,7 +298,7 @@ int foreach_gsh_client(bool(*cb) (struct gsh_client *cl, void *state),
 static bool arg_ipaddr(DBusMessageIter *args, sockaddr_t *sp, char **errormsg)
 {
 	char *client_addr;
-	unsigned char addrbuf[16];
+	unsigned char cl_addrbuf[16];
 	bool success = true;
 
 	/* XXX AF_VSOCK addresses are not self-describing--and one might
@@ -398,14 +313,14 @@ static bool arg_ipaddr(DBusMessageIter *args, sockaddr_t *sp, char **errormsg)
 		*errormsg = "arg not a string";
 	} else {
 		dbus_message_iter_get_basic(args, &client_addr);
-		if (inet_pton(AF_INET, client_addr, addrbuf) == 1) {
+		if (inet_pton(AF_INET, client_addr, cl_addrbuf) == 1) {
 			sp->ss_family = AF_INET;
-			memcpy(&(((struct sockaddr_in *)sp)->sin_addr), addrbuf,
-			       4);
-		} else if (inet_pton(AF_INET6, client_addr, addrbuf) == 1) {
+			memcpy(&((struct sockaddr_in *)sp)->sin_addr,
+			       cl_addrbuf, sizeof(struct sockaddr_in));
+		} else if (inet_pton(AF_INET6, client_addr, cl_addrbuf) == 1) {
 			sp->ss_family = AF_INET6;
-			memcpy(&(((struct sockaddr_in6 *)sp)->sin6_addr),
-			       addrbuf, 16);
+			memcpy(&((struct sockaddr_in6 *)sp)->sin6_addr,
+			       cl_addrbuf, sizeof(struct sockaddr_in6));
 		} else {
 			success = false;
 			*errormsg = "can't decode client address";
@@ -510,19 +425,18 @@ static bool client_to_dbus(struct gsh_client *cl_node, void *state)
 	    (struct showclients_state *)state;
 	struct server_stats *cl;
 	char ipaddr[SOCK_NAME_MAX];
-	const char *addrp;
-	int addr_type;
 	DBusMessageIter struct_iter;
 	struct timespec last_as_ts = nfs_ServerBootTime;
 
 	cl = container_of(cl_node, struct server_stats, client);
-	addr_type = (cl_node->addr.len == 4) ? AF_INET : AF_INET6;
-	addrp =
-	    inet_ntop(addr_type, cl_node->addr.addr, ipaddr, sizeof(ipaddr));
+
+	if (!sprint_sockip(&cl_node->cl_addrbuf, ipaddr, sizeof(ipaddr)))
+		(void) strlcpy(ipaddr, "<unknown>", sizeof(ipaddr));
+
 	timespec_add_nsecs(cl_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->client_iter,
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &addrp);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &ipaddr);
 	server_stats_summary(&struct_iter, &cl->st);
 	dbus_append_timestamp(&struct_iter, &last_as_ts);
 	dbus_message_iter_close_container(&iter_state->client_iter,

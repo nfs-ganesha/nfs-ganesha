@@ -281,8 +281,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	/** @todo : Can we use globalfd instead */
 	glfd = glfs_h_opendir(glfs_export->gl_fs->fs, objhandle->glhandle);
@@ -305,8 +305,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				  &op_ctx->creds->caller_gid,
 				  op_ctx->creds->caller_glen,
 				  op_ctx->creds->caller_garray,
-				  op_ctx->client->addr.addr,
-				  op_ctx->client->addr.len);
+				  socket_addr(&op_ctx->client->cl_addrbuf),
+				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 #ifndef USE_GLUSTER_XREADDIRPLUS
 		rc = glfs_readdir_r(glfd, &de, &pde);
@@ -427,8 +427,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	rc = glfs_closedir(glfd);
 
@@ -472,8 +472,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	glhandle =
 	    glfs_h_mkdir(glfs_export->gl_fs->fs, parenthandle->glhandle, name,
@@ -600,8 +600,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	glhandle =
 	    glfs_h_mknod(glfs_export->gl_fs->fs, parenthandle->glhandle, name,
@@ -703,8 +703,8 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	glhandle =
 	    glfs_h_symlink(glfs_export->gl_fs->fs, parenthandle->glhandle, name,
@@ -799,8 +799,8 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	rc = glfs_h_readlink(glfs_export->gl_fs->fs, objhandle->glhandle,
 			     link_content->addr, link_content->len);
@@ -982,8 +982,8 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	rc = glfs_h_link(glfs_export->gl_fs->fs, objhandle->glhandle,
 			 dstparenthandle->glhandle, name);
@@ -1033,8 +1033,8 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	rc = glfs_h_rename(glfs_export->gl_fs->fs, srcparenthandle->glhandle,
 			   old_name, dstparenthandle->glhandle, new_name);
@@ -1079,8 +1079,8 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	rc = glfs_h_unlink(glfs_export->gl_fs->fs, parenthandle->glhandle,
 			   name);
@@ -1140,8 +1140,8 @@ fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	glfd = glfs_h_open(glfs_export->gl_fs->fs, objhandle->glhandle,
 			   posix_flags);
@@ -1175,10 +1175,11 @@ fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
 	}
 
 #ifdef USE_GLUSTER_DELEGATION
-	if ((op_ctx->client->addr.len) &&
-		(op_ctx->client->addr.len <= GLAPI_LEASE_ID_SIZE)) {
-		memcpy(my_fd->lease_id, op_ctx->client->addr.addr,
-		       op_ctx->client->addr.len);
+	if (socket_addr_len(&op_ctx->client->cl_addrbuf)
+						<= GLAPI_LEASE_ID_SIZE) {
+		memcpy(my_fd->lease_id,
+		       socket_addr(&op_ctx->client->cl_addrbuf),
+		       socket_addr_len(&op_ctx->client->cl_addrbuf));
 	} else
 		memset(my_fd->lease_id, 0, GLAPI_LEASE_ID_SIZE);
 #endif
@@ -1744,8 +1745,8 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	/** @todo: glfs_h_creat doesn't honour NO_CREATE mode. Instead use
 	 *  glfs_h_open to verify if the file already exists.
@@ -1936,8 +1937,8 @@ direrr:
 				  &op_ctx->creds->caller_gid,
 				  op_ctx->creds->caller_glen,
 				  op_ctx->creds->caller_garray,
-				  op_ctx->client->addr.addr,
-				  op_ctx->client->addr.len);
+				  socket_addr(&op_ctx->client->cl_addrbuf),
+				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 		glfs_h_unlink(glfs_export->gl_fs->fs, parenthandle->glhandle,
 			      name);
@@ -2110,8 +2111,8 @@ static void glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	/* XXX dang switch to preadv_async once async supported */
 	nb_read = glfs_preadv(my_fd.glfd, read_arg->iov, read_arg->iov_count,
@@ -2216,8 +2217,8 @@ static void glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	/* XXX dang switch to pwritev_async once async supported */
 	nb_written = glfs_pwritev(my_fd.glfd, write_arg->iov,
@@ -2301,8 +2302,8 @@ static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
 			&op_ctx->creds->caller_gid,
 			op_ctx->creds->caller_glen,
 			op_ctx->creds->caller_garray,
-			op_ctx->client->addr.addr,
-			op_ctx->client->addr.len);
+			socket_addr(&op_ctx->client->cl_addrbuf),
+			socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	if (info->io_content.what == NFS4_CONTENT_DATA) {
 		what = SEEK_DATA;
@@ -2383,8 +2384,8 @@ static fsal_status_t glusterfs_commit2(struct fsal_obj_handle *obj_hdl,
 				  &op_ctx->creds->caller_gid,
 				  op_ctx->creds->caller_glen,
 				  op_ctx->creds->caller_garray,
-				  op_ctx->client->addr.addr,
-				  op_ctx->client->addr.len);
+				  socket_addr(&op_ctx->client->cl_addrbuf),
+				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 #ifdef USE_GLUSTER_STAT_FETCH_API
 		retval = glfs_fsync(out_fd->glfd, NULL, NULL);
 #else
@@ -2826,8 +2827,8 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 				  &op_ctx->creds->caller_gid,
 				  op_ctx->creds->caller_glen,
 				  op_ctx->creds->caller_garray,
-				  op_ctx->client->addr.addr,
-				  op_ctx->client->addr.len);
+				  socket_addr(&op_ctx->client->cl_addrbuf),
+				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 #ifdef USE_GLUSTER_STAT_FETCH_API
 		retval = glfs_ftruncate(my_fd.glfd, attrib_set->filesize,
 					NULL, NULL);
@@ -2923,8 +2924,8 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	/* If any stat changed, indicate that */
 	if (mask != 0)

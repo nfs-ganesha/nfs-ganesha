@@ -357,8 +357,8 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 			  &op_ctx->creds->caller_gid,
 			  op_ctx->creds->caller_glen,
 			  op_ctx->creds->caller_garray,
-			  op_ctx->client->addr.addr,
-			  op_ctx->client->addr.len);
+			  socket_addr(&op_ctx->client->cl_addrbuf),
+			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 	rc = glfs_h_setattrs(glfs_export->gl_fs->fs,
 			     objhandle->glhandle,
