@@ -369,6 +369,12 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 fsal_status_t vfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 					const char *xattr_name,
 					unsigned int *pxattr_id);
+fsal_status_t vfs_getextattr_value(struct vfs_fsal_obj_handle *vfs_hdl,
+				   int fd,
+				   const char *xattr_name,
+				   void *buffer_addr,
+				   size_t buffer_size,
+				   size_t *p_output_size);
 fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					   const char *xattr_name,
 					   void *buffer_addr,
@@ -396,6 +402,7 @@ fsal_status_t vfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 fsal_status_t check_hsm_by_fd(int fd);
 
 fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
+				   int fd,
 				   struct attrlist *attrs_out);
 
 static inline bool vfs_set_credentials(const struct user_cred *creds,

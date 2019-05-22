@@ -396,6 +396,61 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	}
 }
 
+fsal_status_t vfs_getextattr_value(struct vfs_fsal_obj_handle *vfs_hdl,
+				   int fd,
+				   const char *xattr_name,
+				   void *buffer_addr,
+				   size_t buffer_size,
+				   size_t *p_output_size)
+{
+	struct fsal_obj_handle *obj_hdl = &vfs_hdl->obj_handle;
+	int local_fd = fd;
+	int rc = 0;
+	fsal_status_t st = {ERR_FSAL_NO_ERROR, 0};
+
+	if (fd < 0) {
+		int openflags;
+
+		switch (obj_hdl->type) {
+		case DIRECTORY:
+			openflags = O_DIRECTORY;
+			break;
+		case SYMBOLIC_LINK:
+			return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+		default:
+			openflags = O_RDWR;
+		}
+
+		local_fd = vfs_fsal_open(vfs_hdl, openflags, &st.major);
+		if (local_fd < 0) {
+			st.minor = -local_fd;
+			return st;
+		}
+	}
+
+	/* is it an xattr? */
+	rc = fgetxattr(local_fd, xattr_name, buffer_addr, buffer_size);
+	if (rc < 0) {
+		st = fsalstat(posix2fsal_error(rc), errno);
+		goto out;
+	}
+
+	/* the xattr value can be a binary, or a string.
+	 * trying to determine its type...
+	 */
+	*p_output_size = rc;
+
+out:
+	// Close the local_fd only if no fd was passed into the function and we
+	// opened the file in this function explicitly.
+	if (fd < 0 && local_fd > 0) {
+		close(local_fd);
+	}
+
+	return st;
+}
+
+
 fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					   const char *xattr_name,
 					   void *buffer_addr,
@@ -403,11 +458,7 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					   size_t *p_output_size)
 {
 	struct vfs_fsal_obj_handle *obj_handle = NULL;
-	int fd = -1;
-	int rc = 0;
-	int openflags;
 	unsigned int index;
-	fsal_errors_t fe;
 
 	obj_handle =
 	    container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
@@ -430,33 +481,8 @@ fsal_status_t vfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	switch (obj_hdl->type) {
-	case DIRECTORY:
-		openflags = O_DIRECTORY;
-		break;
-	case SYMBOLIC_LINK:
-		return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-	default:
-		openflags = O_RDWR;
-	}
-	fd = vfs_fsal_open(obj_handle, openflags, &fe);
-	if (fd < 0)
-		return fsalstat(fe, -fd);
-
-	/* is it an xattr? */
-	rc = fgetxattr(fd, xattr_name, buffer_addr, buffer_size);
-	if (rc < 0) {
-		rc = errno;
-		close(fd);
-		return fsalstat(posix2fsal_error(rc), rc);
-	}
-	/* the xattr value can be a binary, or a string.
-	 * trying to determine its type...
-	 */
-	*p_output_size = rc;
-
-	close(fd);
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return vfs_getextattr_value(obj_handle, -1 /*fd*/, xattr_name,
+				    buffer_addr, buffer_size, p_output_size);
 }
 
 fsal_status_t vfs_setextattr_value(struct fsal_obj_handle *obj_hdl,

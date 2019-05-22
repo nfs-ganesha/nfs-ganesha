@@ -38,39 +38,41 @@
 #include "nfs_proto_tools.h"
 
 fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
+				   int fd,
 				   struct attrlist *attrs_out)
 {
-	char *xattr_content;
+	char *xattr_content = NULL;
 	size_t attrsize = 0;
 	char proclnk[MAXPATHLEN];
 	char readlink_buf[MAXPATHLEN];
 	char *spath;
 	ssize_t r;
-	fsal_status_t st;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int fd;
+	fsal_status_t st = {ERR_FSAL_NO_ERROR, 0};
+	int local_fd = fd;
 
 	/* the real path of the referral directory is needed.
 	 * it get's stored in attrs_out->fs_locations->path
 	 */
 
-	fd = vfs_fsal_open(hdl, O_DIRECTORY, &fsal_error);
 	if (fd < 0) {
-		return fsalstat(fsal_error, -fd);
+		local_fd = vfs_fsal_open(hdl, O_DIRECTORY, &st.major);
+		if (local_fd < 0) {
+			st.minor = -local_fd;
+			return st;
+		}
 	}
 
-	sprintf(proclnk, "/proc/self/fd/%d", fd);
+	sprintf(proclnk, "/proc/self/fd/%d", local_fd);
 	r = readlink(proclnk, readlink_buf, MAXPATHLEN - 1);
 	if (r < 0) {
-		fsal_error = posix2fsal_error(errno);
-		r = errno;
+		st = fsalstat(posix2fsal_error(errno), errno);
 		LogEvent(COMPONENT_FSAL, "failed to readlink");
-		close(fd);
-		return fsalstat(fsal_error, r);
+		goto out;
 	}
+
 	readlink_buf[r] = '\0';
-	LogDebug(COMPONENT_FSAL, "fd -> path: %d -> %s",
-			fd, readlink_buf);
+	LogDebug(COMPONENT_FSAL, "fd -> path: %d -> %s", local_fd,
+		 readlink_buf);
 
 	// Release old fs locations if any
 	nfs4_fs_locations_release(attrs_out->fs_locations);
@@ -104,19 +106,15 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 
 	xattr_content = gsh_calloc(XATTR_BUFFERSIZE, sizeof(char));
 
-	st = vfs_getextattr_value_by_name((struct fsal_obj_handle *)hdl,
-			"user.fs_location",
-			xattr_content,
-			XATTR_BUFFERSIZE,
-			&attrsize);
+	st = vfs_getextattr_value(hdl, local_fd, "user.fs_location",
+				  xattr_content, XATTR_BUFFERSIZE, &attrsize);
 
 	if (!FSAL_IS_ERROR(st)) {
 		size_t len;
 		char *path = xattr_content;
 		char *server = strsep(&path, ":");
 
-		LogDebug(COMPONENT_FSAL, "user.fs_location: %s",
-				xattr_content);
+		LogDebug(COMPONENT_FSAL, "user.fs_location: %s", xattr_content);
 
 		attrs_out->fs_locations = nfs4_fs_locations_new(spath, path, 1);
 		len = strlen(server);
@@ -126,8 +124,15 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 		attrs_out->fs_locations->nservers = 1;
 		FSAL_SET_MASK(attrs_out->valid_mask, ATTR4_FS_LOCATIONS);
 	}
+
+out:
 	gsh_free(xattr_content);
-	close(fd);
+
+	// Close the local_fd only if no fd was passed into the function and we
+	// opened the file in this function explicitly.
+	if (fd < 0 && local_fd > 0) {
+		close(local_fd);
+	}
 
 	return st;
 }

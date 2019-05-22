@@ -132,8 +132,11 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 {
 	fsal_status_t fsal_st = {ERR_FSAL_NO_ERROR, 0};
 
-	if (FSAL_TEST_MASK(request_mask, ATTR4_FS_LOCATIONS)) {
-		fsal_st = vfs_get_fs_locations(vfs_hdl, attrib);
+	if (FSAL_TEST_MASK(request_mask, ATTR4_FS_LOCATIONS) &&
+	    vfs_hdl->obj_handle.obj_ops->is_referral(&vfs_hdl->obj_handle,
+		attrib, false /*cache_attrs*/)) {
+
+		fsal_st = vfs_get_fs_locations(vfs_hdl, fd, attrib);
 		if (FSAL_IS_ERROR(fsal_st)) {
 			/* No error should be returned here, any major error
 			 * should have been caught before this */
