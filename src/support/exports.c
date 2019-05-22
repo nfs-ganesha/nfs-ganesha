@@ -2483,7 +2483,7 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 	int rc;
 	int ipvalid = -1;	/* -1 need to print, 0 - invalid, 1 - ok */
 	char hostname[NI_MAXHOST];
-	char ipstring[SOCK_NAME_MAX + 1];
+	char ipstring[SOCK_NAME_MAX];
 	CIDR *host_prefix = NULL;
 	exportlist_client_entry_t *client;
 
@@ -2744,12 +2744,16 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 		paddr->sin_addr.s_addr = *(in_addr_t *) ab;
 		ipv4->ss_family = AF_INET;
 
-		if (isFullDebug(COMPONENT_EXPORT)) {
+		if (isMidDebug(COMPONENT_EXPORT)) {
 			char ipstring4[SOCK_NAME_MAX];
 			char ipstring6[SOCK_NAME_MAX];
+			struct display_buffer dspbuf4 = {
+				sizeof(ipstring4), ipstring4, ipstring4};
+			struct display_buffer dspbuf6 = {
+				sizeof(ipstring6), ipstring6, ipstring6};
 
-			sprint_sockip(ipv6, ipstring6, sizeof(ipstring6));
-			sprint_sockip(ipv4, ipstring4, sizeof(ipstring4));
+			display_sockip(&dspbuf4, ipv4);
+			display_sockip(&dspbuf6, ipv6);
 			LogMidDebug(COMPONENT_EXPORT,
 				    "Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
 				    ipstring6, ipstring4);
@@ -2861,10 +2865,11 @@ void export_check_access(void)
 
 	if (isMidDebug(COMPONENT_EXPORT)) {
 		char ipstring[SOCK_NAME_MAX];
+		struct display_buffer dspbuf = {
+					sizeof(ipstring), ipstring, ipstring};
 
-		ipstring[0] = '\0';
-		(void) sprint_sockip(hostaddr,
-				     ipstring, sizeof(ipstring));
+		display_sockip(&dspbuf, hostaddr);
+
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Check for address %s for export id %u path %s",
 			    ipstring, op_ctx->ctx_export->export_id,

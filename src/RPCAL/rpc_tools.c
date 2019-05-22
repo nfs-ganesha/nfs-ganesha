@@ -62,56 +62,6 @@
 /* XXX doesn't ntirpc have an equivalent for all of the following?
  */
 
-const char *str_sock_type(int st)
-{
-	static char buf[16];
-
-	switch (st) {
-	case SOCK_STREAM:
-		return "SOCK_STREAM";
-	case SOCK_DGRAM:
-		return "SOCK_DGRAM ";
-	case SOCK_RAW:
-		return "SOCK_RAW   ";
-	}
-	sprintf(buf, "%d", st);
-	return buf;
-}
-
-const char *str_ip_proto(int p)
-{
-	static char buf[16];
-
-	switch (p) {
-	case IPPROTO_IP:
-		return "IPPROTO_IP ";
-	case IPPROTO_TCP:
-		return "IPPROTO_TCP";
-	case IPPROTO_UDP:
-		return "IPPROTO_UDP";
-	}
-	sprintf(buf, "%d", p);
-	return buf;
-}
-
-const char *str_af(int af)
-{
-	static char buf[16];
-
-	switch (af) {
-	case AF_INET:
-		return "AF_INET ";
-	case AF_INET6:
-		return "AF_INET6";
-#ifdef RPC_VSOCK
-	case AF_VSOCK:
-		return "AF_VSOCK";
-#endif /* VSOCK */
-	}
-	sprintf(buf, "%d", af);
-	return buf;
-}
-
 const char *xprt_type_to_str(xprt_type_t type)
 {
 	switch (type) {
@@ -227,7 +177,8 @@ uint64_t hash_sockaddr(sockaddr_t *addr, bool ignore_port)
 	return addr_hash;
 }
 
-int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr)
+int display_sockaddr_port(struct display_buffer *dspbuf, sockaddr_t *addr,
+			  bool ignore_port)
 {
 	const char *name = NULL;
 	char ipname[SOCK_NAME_MAX];
@@ -261,40 +212,10 @@ int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr)
 
 	if (name == NULL)
 		return display_cat(dspbuf, "<unknown>");
+	else if (ignore_port)
+		return display_cat(dspbuf, name);
 	else
 		return display_printf(dspbuf, "%s:%d", name, port);
-}
-
-int sprint_sockip(sockaddr_t *addr, char *buf, int len)
-{
-	const char *name = NULL;
-
-	memset(buf, 0, len);
-
-	switch (addr->ss_family) {
-	case AF_INET:
-		name =
-		    inet_ntop(addr->ss_family,
-			      &(((struct sockaddr_in *)addr)->sin_addr), buf,
-			      len);
-		break;
-	case AF_INET6:
-		name =
-		    inet_ntop(addr->ss_family,
-			      &(((struct sockaddr_in6 *)addr)->sin6_addr), buf,
-			      len);
-		break;
-	case AF_LOCAL:
-		strlcpy(buf, ((struct sockaddr_un *)addr)->sun_path, len);
-		name = buf;
-	}
-
-	if (name == NULL) {
-		strlcpy(buf, "<unknown>", len);
-		return 0;
-	}
-
-	return 1;
 }
 
 /**
@@ -403,14 +324,6 @@ int sockaddr_cmpf(sockaddr_t *addr1, sockaddr_t *addr2,
 	}
 }
 
-in_addr_t get_in_addr(sockaddr_t *addr)
-{
-	if (addr->ss_family == AF_INET)
-		return ((struct sockaddr_in *)addr)->sin_addr.s_addr;
-	else
-		return 0;
-}
-
 int get_port(sockaddr_t *addr)
 {
 	switch (addr->ss_family) {
@@ -425,49 +338,4 @@ int get_port(sockaddr_t *addr)
 	default:
 		return -1;
 	}
-}
-
-int ipstring_to_sockaddr(const char *str, sockaddr_t *addr)
-{
-	struct addrinfo *info, hints, *p;
-	int rc;
-	char ipname[SOCK_NAME_MAX + 1];
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICHOST;
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_RAW;
-	hints.ai_protocol = 0;
-	rc = getaddrinfo(str, NULL, &hints, &info);
-	if (rc == 0 && info != NULL) {
-		p = info;
-		if (isFullDebug(COMPONENT_RPC)) {
-			while (p != NULL) {
-				sprint_sockip((sockaddr_t *) p->ai_addr,
-					      ipname, sizeof(ipname));
-				LogFullDebug(COMPONENT_RPC,
-					     "getaddrinfo %s returned %s family=%s socktype=%s protocol=%s",
-					     str, ipname,
-					     str_af(p->ai_family),
-					     str_sock_type(p->ai_socktype),
-					     str_ip_proto(p->ai_protocol));
-				p = p->ai_next;
-			}
-		}
-		memcpy(addr, info->ai_addr, info->ai_addrlen);
-		freeaddrinfo(info);
-	} else {
-		switch (rc) {
-		case EAI_SYSTEM:
-			LogFullDebug(COMPONENT_RPC,
-				     "getaddrinfo %s returned %d(%s)", str,
-				     errno, strerror(errno));
-			break;
-		default:
-			LogFullDebug(COMPONENT_RPC,
-				     "getaddrinfo %s returned %d(%s)", str, rc,
-				     gai_strerror(rc));
-		}
-	}
-	return rc;
 }

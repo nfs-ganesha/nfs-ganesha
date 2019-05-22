@@ -1357,17 +1357,16 @@ static void free_nfs_request(struct svc_req *req, enum xprt_stat stat)
 			"SVC_DECODE on %p fd %d returned unknown %u",
 			xprt, xprt->xp_fd,
 			stat);
-	} else {
+	} else if (isDebug(COMPONENT_DISPATCH)) {
 		sockaddr_t addr;
-		char addrbuf[SOCK_NAME_MAX + 1];
+		char addrbuf[SOCK_NAME_MAX];
+		struct display_buffer dspbuf = {
+					sizeof(addrbuf), addrbuf, addrbuf};
 
-		if (isDebug(COMPONENT_DISPATCH)) {
-			if (copy_xprt_addr(&addr, xprt) == 1)
-				sprint_sockaddr(&addr, addrbuf,
-						sizeof(addrbuf));
-			else
-				sprintf(addrbuf, "<unresolved>");
-		}
+		if (copy_xprt_addr(&addr, xprt) == 1)
+			display_sockaddr(&dspbuf, &addr);
+		else
+			display_cat(&dspbuf, "<unresolved>");
 
 		LogDebug(COMPONENT_DISPATCH,
 			 "SVC_DECODE on %p fd %d (%s) xid=%" PRIu32

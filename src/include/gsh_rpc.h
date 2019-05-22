@@ -18,6 +18,7 @@
 #include <rpc/rpc.h>
 #include <rpc/svc.h>
 #include <rpc/clnt.h>
+#include <arpa/inet.h>
 
 #include <rpc/svc_auth.h>
 #ifdef _HAVE_GSSAPI
@@ -73,6 +74,11 @@ struct nfs_request_lookahead {
 
 typedef struct sockaddr_storage sockaddr_t;
 
+/* Allow much more space than we really need for a sock name. An IPV4 address
+ * embedded in IPv6 could use 45 bytes and then if we add a port, that would be
+ * an additional 6 bytes (:65535) for a total of 51, and then one more for NUL
+ * termination. We could use 64 instead of 128.
+ */
 #define SOCK_NAME_MAX 128
 
 struct netconfig *getnetconfigent(const char *);
@@ -140,28 +146,71 @@ const char *str_gc_proc(rpc_gss_proc_t);
 
 bool copy_xprt_addr(sockaddr_t *, SVCXPRT *);
 
-int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr);
+int display_sockaddr_port(struct display_buffer *dspbuf, sockaddr_t *addr,
+			  bool ignore_port);
 
-static inline void sprint_sockaddr(sockaddr_t *addr, char *buf, size_t len)
+static inline
+int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr)
 {
-	struct display_buffer dspbuf = {len, buf, buf};
-
-	buf[0] = '\0';
-	display_sockaddr(&dspbuf, addr);
+	return display_sockaddr_port(dspbuf, addr, false);
 }
 
-int sprint_sockip(sockaddr_t *, char *, int);
+static inline
+int display_sockip(struct display_buffer *dspbuf, sockaddr_t *addr)
+{
+	return display_sockaddr_port(dspbuf, addr, true);
+}
+
+static inline
+void *socket_addr(sockaddr_t *addr)
+{
+	switch (addr->ss_family) {
+	case AF_INET:
+		return &(((struct sockaddr_in *)addr)->sin_addr);
+	case AF_INET6:
+		return &(((struct sockaddr_in6 *)addr)->sin6_addr);
+#ifdef RPC_VSOCK
+	case AF_VSOCK:
+		return &(((struct sockaddr_vm *)addr)->svm_cid);
+#endif /* VSOCK */
+	default:
+		return addr;
+	}
+}
+
+static inline
+size_t socket_addr_len(sockaddr_t *addr)
+{
+	switch (addr->ss_family) {
+	case AF_INET:
+		return sizeof(struct sockaddr_in);
+	case AF_INET6:
+		return sizeof(struct sockaddr_in6);
+#ifdef RPC_VSOCK
+	case AF_VSOCK:
+		return sizeof(((struct sockaddr_vm *)addr)->svm_cid);
+#endif /* VSOCK */
+	default:
+		return sizeof(sockaddr_t);
+	}
+}
+
+static inline
+bool sprint_sockip(sockaddr_t *addr, char *buf, int len)
+{
+	if (addr->ss_family != AF_INET && addr->ss_family != AF_INET6)
+		return false;
+
+	return inet_ntop(addr->ss_family, socket_addr(addr), buf, len) != NULL;
+}
+
 const char *xprt_type_to_str(xprt_type_t);
 
 int cmp_sockaddr(sockaddr_t *, sockaddr_t *, bool);
 int sockaddr_cmpf(sockaddr_t *, sockaddr_t *, bool);
 uint64_t hash_sockaddr(sockaddr_t *, bool);
 
-in_addr_t get_in_addr(sockaddr_t *);
 int get_port(sockaddr_t *);
-
-/* Returns an EAI value, accepts only numeric strings */
-extern int ipstring_to_sockaddr(const char *, sockaddr_t *);
 
 extern tirpc_pkg_params ntirpc_pp;
 #endif /* GSH_RPC_H */

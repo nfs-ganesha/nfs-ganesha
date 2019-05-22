@@ -111,7 +111,8 @@ int display_ip_name_key(struct gsh_buffdesc *pbuff, char *str)
 {
 	sockaddr_t *addr = (sockaddr_t *) (pbuff->addr);
 
-	sprint_sockip(addr, str, HASHTABLE_DISPLAY_STRLEN);
+	str[0] = '\0';
+	(void) sprint_sockip(addr, str, HASHTABLE_DISPLAY_STRLEN);
 	return strlen(str);
 }
 
@@ -153,7 +154,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 	nfs_ip_name_t *nfs_ip_name = NULL;
 	struct timeval tv0, tv1, dur;
 	int rc, len, size;
-	char ipstring[SOCK_NAME_MAX + 1];
+	char ipstring[SOCK_NAME_MAX];
 	char *hn = hostname;
 	hash_error_t hash_rc;
 
@@ -168,7 +169,10 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 	gettimeofday(&tv1, NULL);
 	timersub(&tv1, &tv0, &dur);
 
-	sprint_sockip(ipaddr, ipstring, sizeof(ipstring));
+	if (!sprint_sockip(ipaddr, ipstring, sizeof(ipstring))) {
+		/* Error in converting socket address into string. */
+		return IP_NAME_INSERT_MALLOC_ERROR;
+	}
 
 	/* display warning if DNS resolution took more that 1.0s */
 	if (dur.tv_sec >= 1) {
@@ -263,9 +267,12 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
 	nfs_ip_name_t *nfs_ip_name;
-	char ipstring[SOCK_NAME_MAX + 1];
+	char ipstring[SOCK_NAME_MAX];
 
-	sprint_sockip(ipaddr, ipstring, sizeof(ipstring));
+	if (!sprint_sockip(ipaddr, ipstring, sizeof(ipstring))) {
+		/* Error in converting socket address into string. */
+		return IP_NAME_NOT_FOUND;
+	}
 
 	buffkey.addr = ipaddr;
 	buffkey.len = sizeof(sockaddr_t);
@@ -307,9 +314,12 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
 {
 	struct gsh_buffdesc buffkey, old_value;
 	nfs_ip_name_t *nfs_ip_name = NULL;
-	char ipstring[SOCK_NAME_MAX + 1];
+	char ipstring[SOCK_NAME_MAX];
 
-	sprint_sockip(ipaddr, ipstring, sizeof(ipstring));
+	if (!sprint_sockip(ipaddr, ipstring, sizeof(ipstring))) {
+		/* Error in converting socket address into string. */
+		return IP_NAME_NOT_FOUND;
+	}
 
 	buffkey.addr = ipaddr;
 	buffkey.len = sizeof(sockaddr_t);

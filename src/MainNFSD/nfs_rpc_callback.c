@@ -188,7 +188,7 @@ nc_type nfs_netid_to_nc(const char *netid)
 static inline void setup_client_saddr(nfs_client_id_t *clientid,
 				      const char *uaddr)
 {
-	char addr_buf[SOCK_NAME_MAX + 1];
+	char addr_buf[SOCK_NAME_MAX];
 	uint32_t bytes[11];
 	int code;
 
@@ -404,9 +404,12 @@ gss_OID_desc krb5oid = { 9, "\052\206\110\206\367\022\001\002\002" };
 static inline char *format_host_principal(rpc_call_channel_t *chan, char *buf,
 					  size_t len)
 {
-	char addr_buf[SOCK_NAME_MAX + 1];
-	const char *host = NULL;
+	const char *qualifier = "nfs@";
+	int qualifier_len = strlen(qualifier);
 	void *sin;
+
+	if (len < SOCK_NAME_MAX)
+		return NULL;
 
 	switch (chan->type) {
 	case RPC_CHAN_V40:
@@ -416,27 +419,10 @@ static inline char *format_host_principal(rpc_call_channel_t *chan, char *buf,
 		return NULL;
 	}
 
-	switch (((struct sockaddr_in *)sin)->sin_family) {
-	case AF_INET:
-		host = inet_ntop(AF_INET,
-				 &((struct sockaddr_in *)sin)->sin_addr,
-				 addr_buf, INET_ADDRSTRLEN);
-		break;
+	memcpy(buf, qualifier, qualifier_len + 1);
 
-	case AF_INET6:
-		host = inet_ntop(AF_INET6,
-				 &((struct sockaddr_in6 *)sin)->sin6_addr,
-				 addr_buf, INET6_ADDRSTRLEN);
-		break;
-
-	default:
-		break;
-	}
-
-	if (host) {
-		snprintf(buf, len, "nfs@%s", host);
+	if (sprint_sockip(sin, buf + qualifier_len, len - qualifier_len))
 		return buf;
-	}
 
 	return NULL;
 }

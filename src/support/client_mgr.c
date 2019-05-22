@@ -216,8 +216,12 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	cl->addr.addr = cl->addrbuf;
 	cl->addr.len = addr_len;
 	cl->refcnt = 0;		/* we will hold a ref starting out... */
-	sprint_sockip(client_ipaddr, hoststr, SOCK_NAME_MAX);
-	cl->hostaddr_str = gsh_strdup(hoststr);
+
+	if (sprint_sockip(client_ipaddr, hoststr, sizeof(hoststr))) {
+		cl->hostaddr_str = gsh_strdup(hoststr);
+	} else {
+		cl->hostaddr_str = gsh_strdup("<unknown>");
+	}
 
 	PTHREAD_RWLOCK_wrlock(&client_by_ip.lock);
 	node = avltree_insert(&cl->node_k, &client_by_ip.t);
@@ -505,7 +509,7 @@ static bool client_to_dbus(struct gsh_client *cl_node, void *state)
 	struct showclients_state *iter_state =
 	    (struct showclients_state *)state;
 	struct server_stats *cl;
-	char ipaddr[64];
+	char ipaddr[SOCK_NAME_MAX];
 	const char *addrp;
 	int addr_type;
 	DBusMessageIter struct_iter;
