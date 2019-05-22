@@ -31,6 +31,7 @@
   display_opaque_value_max;
   display_opaque_bytes_flags;
   display_sockaddr;
+  display_sockaddr_port;
   display_vprintf;
   DisplayLogComponentLevel;
   enable_log_facility;

@@ -802,7 +802,7 @@ void extractv4(char *ipv6, char *ipv4)
 bool ip_str_match(char *release_ip, char *server_ip)
 {
 	bool ripv6, sipv6;
-	char ipv4[SOCK_NAME_MAX + 1];
+	char ipv4[SOCK_NAME_MAX];
 
 	/* IPv6 delimiter is ':' */
 	ripv6 = (strchr(release_ip, ':') != NULL);
@@ -840,7 +840,7 @@ static void nfs_release_nlm_state(char *release_ip)
 	struct rbt_node *pn;
 	struct hash_data *pdata;
 	state_status_t state_status;
-	char serverip[SOCK_NAME_MAX + 1];
+	char serverip[SOCK_NAME_MAX];
 	int i;
 
 	LogDebug(COMPONENT_STATE, "Release all NLM locks");
@@ -855,10 +855,10 @@ static void nfs_release_nlm_state(char *release_ip)
 		RBT_LOOP(head_rbt, pn) {
 			pdata = RBT_OPAQ(pn);
 			nlm_cp = (state_nlm_client_t *) pdata->val.addr;
-			sprint_sockip(&(nlm_cp->slc_server_addr),
-					serverip,
-					SOCK_NAME_MAX + 1);
-			if (ip_str_match(release_ip, serverip)) {
+
+			if (sprint_sockip(&nlm_cp->slc_server_addr,
+					  serverip, sizeof(serverip)) &&
+			    ip_str_match(release_ip, serverip)) {
 				nsm_cp = nlm_cp->slc_nsm_client;
 				inc_nsm_client_ref(nsm_cp);
 				state_status = fridgethr_submit(

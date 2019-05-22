@@ -533,7 +533,6 @@ static int pxy_connect(struct pxy_export *pxy_exp,
 static void *pxy_rpc_recv(void *arg)
 {
 	struct pxy_export *pxy_exp = arg;
-	char addr[INET6_ADDRSTRLEN];
 	struct pollfd pfd;
 	int millisec = pxy_exp->info.srv_timeout * 1000;
 
@@ -554,12 +553,18 @@ static void *pxy_rpc_recv(void *arg)
 				goto out;
 			}
 			if (pxy_exp->rpc.rpc_sock < 0) {
-				if (nsleeps == 0)
-					sprint_sockaddr(&pxy_exp->info.srv_addr,
-							addr, sizeof(addr));
+				if (nsleeps == 0) {
+					char addr[SOCK_NAME_MAX];
+					struct display_buffer dspbuf = {
+						sizeof(addr), addr, addr};
+
+					display_sockaddr(
+					    &dspbuf, &pxy_exp->info.srv_addr);
+
 					LogCrit(COMPONENT_FSAL,
 						"Cannot connect to server %s:%u",
 						addr, pxy_exp->info.srv_port);
+				}
 				PTHREAD_MUTEX_unlock(&pxy_exp->rpc.listlock);
 				sleep(pxy_exp->info.retry_sleeptime);
 				nsleeps++;

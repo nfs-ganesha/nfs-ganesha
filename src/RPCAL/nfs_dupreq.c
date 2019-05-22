@@ -611,11 +611,13 @@ retry:
 			drc_k.d_u.tcp.hk =
 			    CityHash64WithSeed((char *)&drc_k.d_u.tcp.addr,
 					       sizeof(sockaddr_t), 911);
-			{
-				char str[SOCK_NAME_MAX];
 
-				sprint_sockaddr(&drc_k.d_u.tcp.addr,
-						str, sizeof(str));
+			if (isFullDebug(COMPONENT_DUPREQ)) {
+				char str[SOCK_NAME_MAX];
+				struct display_buffer dspbuf = {
+							sizeof(str), str, str};
+
+				display_sockaddr(&dspbuf, &drc_k.d_u.tcp.addr);
 				LogFullDebug(COMPONENT_DUPREQ,
 					     "get drc for addr: %s", str);
 			}

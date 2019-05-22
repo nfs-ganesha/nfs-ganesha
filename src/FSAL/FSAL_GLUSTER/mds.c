@@ -647,7 +647,6 @@ glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object, uint32_t *ds_addr)
 	int             ret                    = 0;
 	char            pathinfo[1024]         = {0, };
 	char            hostname[256]          = {0, };
-	char		scratch[SOCK_NAME_MAX] = {0, };
 	struct addrinfo hints                  = {0, };
 	struct addrinfo *res                   = NULL;
 	const char      *pathinfokey           = "trusted.glusterfs.pathinfo";
@@ -672,8 +671,16 @@ glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object, uint32_t *ds_addr)
 		LogMajor(COMPONENT_PNFS, "error %s\n", gai_strerror(ret));
 		goto out;
 	}
-	sprint_sockip((sockaddr_t *)res->ai_addr, scratch, sizeof(scratch));
-	LogDebug(COMPONENT_PNFS, "ip address : %s", scratch);
+
+	if (isDebug(COMPONENT_PNFS)) {
+		char scratch[SOCK_NAME_MAX];
+		struct display_buffer dspbuf = {
+					sizeof(scratch), scratch, scratch};
+
+		display_sockip(&dspbuf, (sockaddr_t *)res->ai_addr);
+		LogDebug(COMPONENT_PNFS, "ip address : %s", scratch);
+	}
+
 	*ds_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
 out:
 	freeaddrinfo(res);

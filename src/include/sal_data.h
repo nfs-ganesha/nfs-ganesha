@@ -691,7 +691,7 @@ struct nfs_client_id_t {
 			/** Callback identifier */
 			uint32_t cb_callback_ident;
 			/** Universal address */
-			char cb_client_r_addr[SOCK_NAME_MAX + 1];
+			char cb_client_r_addr[SOCK_NAME_MAX];
 			/** Callback program */
 			uint32_t cb_program;
 			bool cb_chan_down;    /* Callback channel state */

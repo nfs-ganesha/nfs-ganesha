@@ -527,7 +527,9 @@ void *_9p_socket_thread(void *Arg)
 	struct pollfd fds[1];
 	int fdcount = 1;
 	static char my_name[MAXNAMLEN + 1];
-	char strcaller[INET6_ADDRSTRLEN];
+	char strcaller[SOCK_NAME_MAX];
+	struct display_buffer dspbuf = {
+				sizeof(strcaller), strcaller, strcaller};
 	struct _9p_request_data *req = NULL;
 	int tag;
 	unsigned long sequence = 0;
@@ -574,24 +576,10 @@ void *_9p_socket_thread(void *Arg)
 			 "Cannot get peername to tcp socket for 9p, error %d (%s)",
 			 errno, strerror(errno));
 		/* XXX */
-		strlcpy(strcaller, "(unresolved)", INET6_ADDRSTRLEN);
+		display_cat(&dspbuf, "(unresolved)");
 		goto end;
 	} else {
-		switch (_9p_conn.addrpeer.ss_family) {
-		case AF_INET:
-			inet_ntop(_9p_conn.addrpeer.ss_family,
-				  &((struct sockaddr_in *)&_9p_conn.addrpeer)->
-				  sin_addr, strcaller, INET6_ADDRSTRLEN);
-			break;
-		case AF_INET6:
-			inet_ntop(_9p_conn.addrpeer.ss_family,
-				  &((struct sockaddr_in6 *)&_9p_conn.addrpeer)->
-				  sin6_addr, strcaller, INET6_ADDRSTRLEN);
-			break;
-		default:
-			snprintf(strcaller, INET6_ADDRSTRLEN, "BAD ADDRESS");
-			break;
-		}
+		display_sockaddr(&dspbuf, &_9p_conn.addrpeer);
 
 		LogEvent(COMPONENT_9P, "9p socket #%ld is connected to %s",
 			 tcp_sock, strcaller);
