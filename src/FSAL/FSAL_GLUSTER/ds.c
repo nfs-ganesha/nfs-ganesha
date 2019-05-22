@@ -215,8 +215,8 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 				  &op_ctx->creds->caller_gid,
 				  op_ctx->creds->caller_glen,
 				  op_ctx->creds->caller_garray,
-				  op_ctx->client->addr.addr,
-				  op_ctx->client->addr.len);
+				  socket_addr(&op_ctx->client->cl_addrbuf),
+				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
 		glfd = glfs_h_open(glfs_export->gl_fs->fs, ds->glhandle,
 				   O_RDWR);

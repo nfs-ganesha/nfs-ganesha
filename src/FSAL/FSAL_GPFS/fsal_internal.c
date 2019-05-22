@@ -102,7 +102,7 @@ fsal_internal_handle2fd(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	struct open_arg oarg = {0};
 	int rc;
 
-	if (op_ctx && op_ctx->client && op_ctx->client->hostaddr_str)
+	if (op_ctx && op_ctx->client)
 		oarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	oarg.mountdirfd = dirfd;
