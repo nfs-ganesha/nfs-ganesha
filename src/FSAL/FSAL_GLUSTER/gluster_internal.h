@@ -294,9 +294,6 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 void gluster_cleanup_vars(struct glfs_object *glhandle);
 
-bool fs_specific_has(const char *fs_specific, const char *key, char *val,
-		     int *max_val_bytes);
-
 fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 				 struct glfs_object *objhandle,
 				 glusterfs_fsal_xstat_t *buffxstat,

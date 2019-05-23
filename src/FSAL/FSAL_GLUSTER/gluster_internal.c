@@ -165,48 +165,6 @@ void gluster_cleanup_vars(struct glfs_object *glhandle)
 	}
 }
 
-/* fs_specific_has() parses the fs_specific string for a particular key,
- * returns true if found, and optionally returns a val if the string is
- * of the form key=val.
- *
- * The fs_specific string is a comma (,) separated options where each option
- * can be of the form key=value or just key. Example:
- *	FS_specific = "foo=baz,enable_A";
- */
-bool fs_specific_has(const char *fs_specific, const char *key, char *val,
-		     int *max_val_bytes)
-{
-	char *next_comma, *option;
-	bool ret;
-	char *fso_dup = NULL;
-
-	if (!fs_specific || !fs_specific[0])
-		return false;
-
-	fso_dup = gsh_strdup(fs_specific);
-
-	for (option = strtok_r(fso_dup, ",", &next_comma); option;
-	     option = strtok_r(NULL, ",", &next_comma)) {
-		char *k = option;
-		char *v = k;
-
-		strsep(&v, "=");
-		if (strcmp(k, key) == 0) {
-			if (val)
-				strncpy(val, v, *max_val_bytes);
-			if (max_val_bytes)
-				*max_val_bytes = strlen(v) + 1;
-			ret = true;
-			goto cleanup;
-		}
-	}
-
-	ret = false;
- cleanup:
-	gsh_free(fso_dup);
-	return ret;
-}
-
 void setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
 		     gid_t *gid, unsigned int ngrps, gid_t *groups,
 		     char *client_addr, unsigned int client_addr_len,
