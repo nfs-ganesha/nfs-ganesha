@@ -909,15 +909,15 @@ static fsal_status_t ceph_fsal_close(struct fsal_obj_handle *obj_hdl)
 	struct ceph_handle *handle =
 			container_of(obj_hdl, struct ceph_handle, handle);
 
-	if (handle->fd.openflags == FSAL_O_CLOSED)
-		return fsalstat(ERR_FSAL_NOT_OPENED, 0);
-
 	/* Take write lock on object to protect file descriptor.
 	 * This can block over an I/O operation.
 	 */
 	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
-	status = ceph_close_my_fd(handle, &handle->fd);
+	if (handle->fd.openflags == FSAL_O_CLOSED)
+		status = fsalstat(ERR_FSAL_NOT_OPENED, 0);
+	else
+		status = ceph_close_my_fd(handle, &handle->fd);
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
