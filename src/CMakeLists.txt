@@ -1529,12 +1529,12 @@ endif(SANITIZE_ADDRESS)
 # Now create a useable specfile
 configure_file(
   "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"
-  "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec"
+  "${PROJECT_BINARY_DIR}/nfs-ganesha.spec"
 )
 
 configure_file(
   "${PROJECT_SOURCE_DIR}/scripts/systemd/nfs-ganesha-config.service-in.cmake"
-  "${PROJECT_SOURCE_DIR}/scripts/systemd/nfs-ganesha-config.service"
+  "${PROJECT_BINARY_DIR}/scripts/systemd/nfs-ganesha-config.service"
 )
 
 # Make a docker image
