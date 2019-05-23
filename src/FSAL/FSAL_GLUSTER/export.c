@@ -102,27 +102,34 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	if (strcmp(path, glfs_export->mount_path) == 0) {
 		realpath = gsh_strdup(glfs_export->export_path);
 	} else {
+		int len_export_path = strlen(glfs_export->export_path);
+		int len_path = strlen(path);
+		int len_mount_path = strlen(glfs_export->mount_path);
+		int len_dest_path = len_path - len_mount_path;
+		char *dest_path;
+
 		/*
 		 *  mount path is not same as the exported one. Should be subdir
 		 *  then.
 		 */
 		/** @todo: How do we handle symlinks if present in the path.
 		 */
-		realpath = gsh_malloc(strlen(glfs_export->export_path) +
-				      strlen(path) + 1);
+		realpath = gsh_malloc(len_export_path + len_dest_path + 1);
+
 		/*
 		 * Handle the case wherein glfs_export->export_path
 		 * is root i.e, '/' separately.
 		 */
-		if (strlen(glfs_export->export_path) != 1) {
-			strcpy(realpath, glfs_export->export_path);
-			strcpy((realpath +
-				strlen(glfs_export->export_path)),
-				&path[strlen(glfs_export->mount_path)]);
+		if (len_export_path != 1) {
+			memcpy(realpath, glfs_export->export_path,
+			       len_export_path);
+			dest_path = realpath + len_export_path;
 		} else {
-			strcpy(realpath,
-				&path[strlen(glfs_export->mount_path)]);
+			dest_path = realpath;
 		}
+
+		memcpy(dest_path, path + len_mount_path,
+		       len_path - len_mount_path + 1);
 	}
 
 	glhandle = glfs_h_lookupat(glfs_export->gl_fs->fs, NULL, realpath,
