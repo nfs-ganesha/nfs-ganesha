@@ -59,7 +59,7 @@ typedef int (*xattr_setfunc_t) (struct fsal_obj_handle *, /* object handle */
 				void *arg);	/* optionnal argument */
 
 struct fsal_xattr_def {
-	char xattr_name[MAXNAMLEN + 1];
+	char xattr_name[XATTR_NAME_SIZE];
 	xattr_getfunc_t get_func;
 	xattr_setfunc_t set_func;
 	int flags;
@@ -120,7 +120,8 @@ static int attr_is_read_only(unsigned int attr_index)
 	return false;
 }
 
-static int xattr_id_to_name(int fd, unsigned int xattr_id, char *name)
+static int xattr_id_to_name(int fd, unsigned int xattr_id,
+			    char *name, int maxname)
 {
 	unsigned int index;
 	unsigned int curr_idx;
@@ -143,7 +144,9 @@ static int xattr_id_to_name(int fd, unsigned int xattr_id, char *name)
 	errno = 0;
 
 	if (xattr_id == XATTR_SYSTEM) {
-		strcpy(name, "system.posix_acl_access");
+		if (strlcpy(name, "system.posix_acl_access", maxname)
+		    >= maxname)
+			return ERR_FSAL_INVAL;
 		return ERR_FSAL_NO_ERROR;
 	}
 
@@ -151,7 +154,9 @@ static int xattr_id_to_name(int fd, unsigned int xattr_id, char *name)
 	     curr_idx++, ptr += len + 1) {
 		len = strlen(ptr);
 		if (curr_idx == index) {
-			strcpy(name, ptr);
+			if (len >= maxname)
+				return ERR_FSAL_INVAL;
+			memcpy(name, ptr, len + 1);
 			return ERR_FSAL_NO_ERROR;
 		}
 	}
@@ -212,13 +217,20 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 	for (index = cookie, out_index = 0;
 	     index < XATTR_COUNT && out_index < xattrs_tabsize; index++) {
-		if (do_match_type
-		    (xattr_list[index].flags, obj_handle->obj_handle.type)) {
+		if (do_match_type(xattr_list[index].flags,
+				  obj_handle->obj_handle.type)) {
 			/* fills an xattr entry */
 			xattrs_tab[out_index].xattr_id = index;
-			strlcpy(xattr_list[index].xattr_name,
-				xattrs_tab[out_index].xattr_name, MAXNAMLEN+1);
 			xattrs_tab[out_index].xattr_cookie = index + 1;
+
+			if (strlcpy(xattrs_tab[out_index].xattr_name,
+				    xattr_list[index].xattr_name,
+				    sizeof(xattrs_tab[out_index].xattr_name))
+			    >= sizeof(xattrs_tab[out_index].xattr_name)) {
+				LogCrit(COMPONENT_FSAL,
+					"xattr_name %s didn't fit",
+					xattr_list[index].xattr_name);
+			}
 
 			/* next output slot */
 			out_index++;
@@ -260,8 +272,16 @@ fsal_status_t vfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 			/* fills an xattr entry */
 			xattrs_tab[out_index].xattr_id = index;
-			strlcpy(xattrs_tab[out_index].xattr_name, ptr, len + 1);
 			xattrs_tab[out_index].xattr_cookie = index + 1;
+
+			if (strlcpy(xattrs_tab[out_index].xattr_name,
+				    ptr,
+				    sizeof(xattrs_tab[out_index].xattr_name))
+			    >= sizeof(xattrs_tab[out_index].xattr_name)) {
+				LogCrit(COMPONENT_FSAL,
+					"xattr_name %s didn't fit",
+					ptr);
+			}
 
 			/* next output slot */
 			out_index++;
@@ -364,12 +384,13 @@ fsal_status_t vfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 			return fsalstat(fe, -fd);
 
 		/* get the name for this attr */
-		rc = xattr_id_to_name(fd, xattr_id, attr_name);
+		rc = xattr_id_to_name(fd, xattr_id,
+				      attr_name, sizeof(attr_name));
 		if (rc) {
 			int minor = errno;
 
 			close(fd);
-			return fsalstat(-rc, minor);
+			return fsalstat(rc, minor);
 		}
 
 		rc = fgetxattr(fd, attr_name, buffer_addr, buffer_size);
@@ -549,12 +570,12 @@ fsal_status_t vfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 	if (fd < 0)
 		return fsalstat(fe, -fd);
 
-	rc = xattr_id_to_name(fd, xattr_id, name);
+	rc = xattr_id_to_name(fd, xattr_id, name, sizeof(name));
 	if (rc) {
 		int minor = errno;
 
 		close(fd);
-		return fsalstat(-rc, minor);
+		return fsalstat(rc, minor);
 	}
 
 	close(fd);
@@ -580,12 +601,12 @@ fsal_status_t vfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 	if (fd < 0)
 		return fsalstat(fe, -fd);
 
-	rc = xattr_id_to_name(fd, xattr_id, name);
+	rc = xattr_id_to_name(fd, xattr_id, name, sizeof(name));
 	if (rc) {
 		int minor = errno;
 
 		close(fd);
-		return fsalstat(-rc, minor);
+		return fsalstat(rc, minor);
 	}
 
 	rc = fremovexattr(fd, name);

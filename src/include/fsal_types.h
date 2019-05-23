@@ -521,11 +521,13 @@ struct attrlist {
  *          FSAL extended attributes management.
  ******************************************************/
 
+#define XATTR_NAME_SIZE (MAXNAMLEN + 1)
+
 /** An extented attribute entry */
 typedef struct fsal_xattrent {
 	uint64_t xattr_id;	/*< xattr index */
 	uint64_t xattr_cookie;	/*< cookie for the next entry */
-	char xattr_name[MAXNAMLEN + 1];	/*< attribute name  */
+	char xattr_name[XATTR_NAME_SIZE];	/*< attribute name  */
 } fsal_xattrent_t;
 
 /* generic definitions for extended attributes */
