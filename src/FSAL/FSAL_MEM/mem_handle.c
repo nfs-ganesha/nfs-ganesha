@@ -614,7 +614,15 @@ static fsal_status_t mem_open_func(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t mem_close_func(struct fsal_obj_handle *obj_hdl,
 				    struct fsal_fd *fd)
 {
-	return mem_close_my_fd(fd);
+	fsal_status_t status;
+
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+	status = mem_close_my_fd(fd);
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	return status;
 }
 
 #define mem_alloc_handle(p, n, t, e, a) \
@@ -2213,22 +2221,22 @@ fsal_status_t mem_close2(struct fsal_obj_handle *obj_hdl,
 		   myself->m_name, state);
 #endif
 
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
 	if (state->state_type == STATE_TYPE_SHARE ||
 	    state->state_type == STATE_TYPE_NLM_SHARE ||
 	    state->state_type == STATE_TYPE_9P_FID) {
 		/* This is a share state, we must update the share counters */
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
 		update_share_counters(&myself->mh_file.share,
 				      my_fd->openflags,
 				      FSAL_O_CLOSED);
-
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
 
 	status = mem_close_my_fd(my_fd);
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
 	return status;
 }

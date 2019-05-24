@@ -1511,6 +1511,7 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 {
 	int rc;
 	struct rgw_open_state *open_state;
+	fsal_status_t status;
 
 	struct rgw_export *export =
 	    container_of(op_ctx->fsal_export, struct rgw_export, export);
@@ -1521,6 +1522,8 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 	LogFullDebug(COMPONENT_FSAL,
 		"%s enter obj_hdl %p state %p", __func__, obj_hdl, state);
 
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
 	if (state) {
 		open_state = (struct rgw_open_state *) state;
 
@@ -1530,28 +1533,32 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 		if (state->state_type == STATE_TYPE_SHARE ||
 			state->state_type == STATE_TYPE_NLM_SHARE ||
 			state->state_type == STATE_TYPE_9P_FID) {
+
 			/* This is a share state, we must update the share
 			 * counters.  This can block over an I/O operation.
 			 */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 			update_share_counters(&handle->share,
 					handle->openflags,
 					FSAL_O_CLOSED);
 
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 		}
 	} else if (handle->openflags == FSAL_O_CLOSED) {
-		return fsalstat(ERR_FSAL_NOT_OPENED, 0);
+		status = fsalstat(ERR_FSAL_NOT_OPENED, 0);
+	} else {
+		rc = rgw_close(export->rgw_fs, handle->rgw_fh,
+			       RGW_CLOSE_FLAG_NONE);
+		if (rc < 0) {
+			status = rgw2fsal_error(rc);
+		} else {
+			handle->openflags = FSAL_O_CLOSED;
+			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		}
 	}
 
-	rc = rgw_close(export->rgw_fs, handle->rgw_fh, RGW_CLOSE_FLAG_NONE);
-	if (rc < 0)
-		return rgw2fsal_error(rc);
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	handle->openflags = FSAL_O_CLOSED;
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return status;
 }
 
 /**
