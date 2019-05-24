@@ -226,6 +226,8 @@ static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 	((n) == LRU_SENTINEL_REFCOUNT+1) && \
 	 ((e)->fh_hk.inavl))
 
+extern bool admin_shutdown;
+
 /**
  * @brief Initialize a single base queue.
  *
@@ -605,17 +607,22 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 
 			init_root_op_context(&ctx, export, export->fsal_export,
 					     0, 0, UNKNOWN_REQUEST);
-		} else {
-			/* We MUST have a valid op_ctx based on the conditions
-			 * we could get here. first_export_id coild be -1 or it
-			 * could match the current op_ctx export. In either case
-			 * we will trust the current op_ctx.
-			 */
-			assert(op_ctx);
-			assert(op_ctx->ctx_export);
+		} else if (op_ctx && op_ctx->ctx_export) {
 			LogFullDebug(COMPONENT_CACHE_INODE,
 				     "Trusting op_ctx export id %"PRIu16,
 				     op_ctx->ctx_export->export_id);
+		} else if (!admin_shutdown) {
+			/* We MUST have had a valid op_ctx based on the conditions
+			 * we could get here. first_export_id coild be -1 or it
+			 * could match the current op_ctx export. In either case
+			 * op_ctx should have been trustable, but as that is not the
+			 * case we will abort.
+			 */
+			abort();
+		} else {
+			LogCrit(COMPONENT_CACHE_INODE,
+				"Extra reference hanging around entry: %p "
+				"Cleaning it.", entry);
 		}
 
 		/* Make sure any FSAL global file descriptor is closed.
