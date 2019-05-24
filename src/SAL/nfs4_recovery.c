@@ -77,7 +77,7 @@ clid_entry_t *nfs4_add_clid_entry(char *cl_name)
 	clid_entry_t *new_ent = gsh_malloc(sizeof(clid_entry_t));
 
 	glist_init(&new_ent->cl_rfh_list);
-	strcpy(new_ent->cl_name, cl_name);
+	(void) strlcpy(new_ent->cl_name, cl_name, sizeof(new_ent->cl_name));
 	glist_add(&clid_list, &new_ent->cl_list);
 	++clid_count;
 	return new_ent;
@@ -781,7 +781,7 @@ static void nlm_releasecall(struct fridgethr_context *ctx)
 }
 #endif /* _USE_NLM */
 
-void extractv4(char *ipv6, char *ipv4)
+void extractv4(char *ipv6, char *ipv4, size_t size)
 {
 	char *token, *saveptr;
 	char *delim = ":";
@@ -790,13 +790,13 @@ void extractv4(char *ipv6, char *ipv4)
 	while (token != NULL) {
 		/* IPv4 delimiter is '.' */
 		if (strchr(token, '.') != NULL) {
-			(void)strcpy(ipv4, token);
+			(void) strlcpy(ipv4, token, size);
 			return;
 		}
 		token = strtok_r(NULL, delim, &saveptr);
 	}
 	/* failed, copy a null string */
-	(void)strcpy(ipv4, "");
+	ipv4[0] = '\0';
 }
 
 bool ip_str_match(char *release_ip, char *server_ip)
@@ -813,13 +813,13 @@ bool ip_str_match(char *release_ip, char *server_ip)
 			return !strcmp(release_ip, server_ip);
 		else {
 			/* extract v4 addr from release_ip*/
-			extractv4(release_ip, ipv4);
+			extractv4(release_ip, ipv4, sizeof(ipv4));
 			return !strcmp(ipv4, server_ip);
 		}
 	} else {
 		if (sipv6) {
 			/* extract v4 addr from server_ip*/
-			extractv4(server_ip, ipv4);
+			extractv4(server_ip, ipv4, sizeof(ipv4));
 			return !strcmp(ipv4, release_ip);
 		}
 	}

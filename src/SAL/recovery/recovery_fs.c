@@ -15,7 +15,9 @@
 #define NFS_V4_OLD_DIR "v4old"
 
 char v4_recov_dir[PATH_MAX];
+int v4_recov_dir_len;
 char v4_old_dir[PATH_MAX];
+int v4_old_dir_len;
 
 /**
  * @brief convert clientid opaque bytes as a hex string for mkdir purpose.
@@ -86,28 +88,46 @@ static void fs_create_clid_name(nfs_client_id_t *clientid)
 	const char *str_client_addr = "(unknown)";
 	char cidstr[PATH_MAX] = { 0, };
 	struct display_buffer dspbuf = {sizeof(cidstr), cidstr, cidstr};
-	char cidstr_len[20];
-	int total_len;
+	char cidstr_lenx[5];
+	int total_size, cidstr_lenx_len, cidstr_len, str_client_addr_len;
 
 	/* get the caller's IP addr */
 	if (clientid->gsh_client != NULL)
 		str_client_addr = clientid->gsh_client->hostaddr_str;
 
 	if (fs_convert_opaque_value_max_for_dir(&dspbuf,
-					     cl_rec->cr_client_val,
-					     cl_rec->cr_client_val_len,
-					     PATH_MAX) > 0) {
+						cl_rec->cr_client_val,
+						cl_rec->cr_client_val_len,
+						PATH_MAX) > 0) {
+		cidstr_len = strlen(cidstr);
+		str_client_addr_len = strlen(str_client_addr);
+
 		/* fs_convert_opaque_value_max_for_dir does not prefix
 		 * the "(<length>:". So we need to do it here */
-		snprintf(cidstr_len, sizeof(cidstr_len), "%zd", strlen(cidstr));
-		total_len = strlen(cidstr) + strlen(str_client_addr) + 5 +
-			    strlen(cidstr_len);
-		/* hold both long form clientid and IP */
-		clientid->cid_recov_tag = gsh_malloc(total_len);
+		cidstr_lenx_len = snprintf(cidstr_lenx, sizeof(cidstr_lenx),
+					   "%d", cidstr_len);
 
-		(void) snprintf(clientid->cid_recov_tag, total_len,
+		if (unlikely(cidstr_lenx_len >= sizeof(cidstr_lenx) ||
+			     cidstr_lenx_len < 0)) {
+			/* cidrstr can at most be PATH_MAX or 1024, so at most
+			 * 4 characters plus NUL are necessary, so we won't
+			 * overrun, nor can we get a -1 with EOVERFLOW or EINVAL
+			 */
+			LogFatal(COMPONENT_CLIENTID,
+				 "snprintf returned unexpected %d",
+				 cidstr_lenx_len);
+		}
+
+		total_size = cidstr_len + str_client_addr_len + 5 +
+			     cidstr_lenx_len;
+
+		/* hold both long form clientid and IP */
+		clientid->cid_recov_tag = gsh_malloc(total_size);
+
+		/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
+		(void) snprintf(clientid->cid_recov_tag, total_size,
 				"%s-(%s:%s)",
-				str_client_addr, cidstr_len, cidstr);
+				str_client_addr, cidstr_lenx, cidstr);
 	}
 
 	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]",
@@ -116,51 +136,101 @@ static void fs_create_clid_name(nfs_client_id_t *clientid)
 
 int fs_create_recov_dir(void)
 {
-	int err;
+	int err, root_len, dir_len, old_len, node_size = 0;
+	char *nfs_v4_recov_root = NFS_V4_RECOV_ROOT;
+	char *nfs_v4_recov_dir = NFS_V4_RECOV_DIR;
+	char *nfs_v4_old_dir = NFS_V4_OLD_DIR;
+	char node[14];
 
-	err = mkdir(NFS_V4_RECOV_ROOT, 0755);
-	if (err == -1 && errno != EEXIST) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to create v4 recovery dir (%s), errno=%d",
-			 NFS_V4_RECOV_ROOT, errno);
+	if (nfs_param.core_param.clustered) {
+		node_size = snprintf(node, sizeof(node), "node%d", g_nodeid)
+			    + 1;
+
+		if (unlikely(node_size >= sizeof(node) || node_size < 0)) {
+			LogFatal(COMPONENT_CLIENTID,
+				 "snprintf returned unexpected %d", node_size);
+		}
+		/* Now include the NUL */
+		node_size++;
 	}
 
-	snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s", NFS_V4_RECOV_ROOT,
-		 NFS_V4_RECOV_DIR);
+	err = mkdir(nfs_v4_recov_root, 0755);
+	if (err == -1 && errno != EEXIST) {
+		LogEvent(COMPONENT_CLIENTID,
+			 "Failed to create v4 recovery dir (%s), errno: %s (%d)",
+			 nfs_v4_recov_root, strerror(errno), errno);
+	}
+
+	root_len = strlen(nfs_v4_recov_root);
+	dir_len = strlen(nfs_v4_recov_dir);
+	v4_recov_dir_len = root_len + 1 + dir_len + node_size - 1;
+
+	if (v4_recov_dir_len >= sizeof(v4_recov_dir))
+		LogFatal(COMPONENT_CLIENTID,
+			 "v4 recovery dir path (%s/%s) is to long",
+			 nfs_v4_recov_root, nfs_v4_recov_dir);
+
+	memcpy(v4_recov_dir, nfs_v4_recov_root, root_len);
+	v4_recov_dir[root_len] = '/';
+	memcpy(v4_recov_dir + 1 + root_len, nfs_v4_recov_dir, dir_len + 1);
+	dir_len = 1 + root_len + dir_len;
+
+	LogDebug(COMPONENT_CLIENTID, "v4_recov_dir=%s", v4_recov_dir);
+
 	err = mkdir(v4_recov_dir, 0755);
 	if (err == -1 && errno != EEXIST) {
 		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to create v4 recovery dir(%s), errno=%d",
-			 v4_recov_dir, errno);
+			 "Failed to create v4 recovery dir(%s), errno: %s (%d)",
+			 v4_recov_dir, strerror(errno), errno);
 	}
 
-	snprintf(v4_old_dir, sizeof(v4_old_dir), "%s/%s", NFS_V4_RECOV_ROOT,
-		 NFS_V4_OLD_DIR);
+	root_len = strlen(nfs_v4_recov_root);
+	old_len = strlen(nfs_v4_old_dir);
+	v4_old_dir_len = root_len + 1 + dir_len + node_size - 1;
+
+	if (v4_old_dir_len >= sizeof(v4_old_dir))
+		LogFatal(COMPONENT_CLIENTID,
+			 "v4 recovery dir path (%s/%s) is to long",
+			 nfs_v4_recov_root, nfs_v4_old_dir);
+
+	memcpy(v4_old_dir, nfs_v4_recov_root, root_len);
+	v4_old_dir[root_len] = '/';
+	memcpy(v4_old_dir + 1 + root_len, nfs_v4_old_dir, old_len + 1);
+	old_len = 1 + root_len + old_len;
+
+	LogDebug(COMPONENT_CLIENTID, "v4_old_dir=%s", v4_old_dir);
+
 	err = mkdir(v4_old_dir, 0755);
+
 	if (err == -1 && errno != EEXIST) {
 		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to create v4 recovery dir(%s), errno=%d",
-			 v4_old_dir, errno);
+			 "Failed to create v4 recovery dir(%s), errno: %s (%d)",
+			 v4_old_dir, strerror(errno), errno);
 	}
 	if (nfs_param.core_param.clustered) {
-		snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s/node%d",
-			 NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, g_nodeid);
+		/* Now make the node specific directories */
+		v4_recov_dir[dir_len] = '/';
+		v4_old_dir[old_len] = '/';
+		memcpy(v4_recov_dir + 1 + dir_len, node, node_size);
+		memcpy(v4_old_dir + 1 + old_len, node, node_size);
+
+		LogDebug(COMPONENT_CLIENTID, "v4_recov_dir=%s", v4_recov_dir);
+		LogDebug(COMPONENT_CLIENTID, "v4_old_dir=%s", v4_old_dir);
 
 		err = mkdir(v4_recov_dir, 0755);
+
 		if (err == -1 && errno != EEXIST) {
 			LogEvent(COMPONENT_CLIENTID,
-				 "Failed to create v4 recovery dir(%s), errno=%d",
-				 v4_recov_dir, errno);
+				 "Failed to create v4 recovery dir(%s), errno: %s (%d)",
+				 v4_recov_dir, strerror(errno), errno);
 		}
 
-		snprintf(v4_old_dir, sizeof(v4_old_dir), "%s/%s/node%d",
-			 NFS_V4_RECOV_ROOT, NFS_V4_OLD_DIR, g_nodeid);
-
 		err = mkdir(v4_old_dir, 0755);
+
 		if (err == -1 && errno != EEXIST) {
 			LogEvent(COMPONENT_CLIENTID,
-				 "Failed to create v4 recovery dir(%s), errno=%d",
-				 v4_old_dir, errno);
+				 "Failed to create v4 recovery dir(%s), errno: %s (%d)",
+				 v4_old_dir, strerror(errno), errno);
 		}
 	}
 	return 0;
@@ -169,43 +239,58 @@ int fs_create_recov_dir(void)
 void fs_add_clid(nfs_client_id_t *clientid)
 {
 	int err = 0;
-	char path[PATH_MAX] = {0}, segment[NAME_MAX + 1] = {0};
-	int length, position = 0;
+	char path[PATH_MAX] = {0};
+	int length, position;
+	int pathpos = strlen(v4_recov_dir);
 
 	fs_create_clid_name(clientid);
 
 	/* break clientid down if it is greater than max dir name */
 	/* and create a directory hierarchy to represent the clientid. */
-	snprintf(path, sizeof(path), "%s", v4_recov_dir);
+	memcpy(path, v4_recov_dir, pathpos + 1);
 
 	length = strlen(clientid->cid_recov_tag);
-	while (position < length) {
+
+	for (position = 0; position < length; position += NAME_MAX) {
 		/* if the (remaining) clientid is shorter than 255 */
 		/* create the last level of dir and break out */
-		int len = strlen(&clientid->cid_recov_tag[position]);
+		int len = length - position;
+
+		/* No matter what, we need a '/' */
+		path[pathpos++] = '/';
+
+		/* Make sure there's still room in path */
+		if ((pathpos + len) >= sizeof(path)) {
+			errno = ENOMEM;
+			err = -1;
+			break;
+		}
 
 		if (len <= NAME_MAX) {
-			strcat(path, "/");
-			strncat(path, &clientid->cid_recov_tag[position], len);
+			memcpy(path + pathpos,
+			       clientid->cid_recov_tag + position,
+			       len + 1);
 			err = mkdir(path, 0700);
 			break;
 		}
+
 		/* if (remaining) clientid is longer than 255, */
 		/* get the next 255 bytes and create a subdir */
-		strlcpy(segment, &clientid->cid_recov_tag[position],
-			sizeof(segment));
-		strcat(path, "/");
-		strncat(path, segment, NAME_MAX);
+		memcpy(path + pathpos,
+		       clientid->cid_recov_tag + position,
+		       NAME_MAX);
+		pathpos += NAME_MAX;
+		path[pathpos] = '\0';
+
 		err = mkdir(path, 0700);
 		if (err == -1 && errno != EEXIST)
 			break;
-		position += NAME_MAX;
 	}
 
 	if (err == -1 && errno != EEXIST) {
 		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to create client in recovery dir (%s), errno=%d",
-			 path, errno);
+			 "Failed to create client in recovery dir (%s), errno: %s (%d)",
+			 path, strerror(errno), errno);
 	} else {
 		LogDebug(COMPONENT_CLIENTID, "Created client dir [%s]", path);
 	}
@@ -225,42 +310,49 @@ static void fs_rm_revoked_handles(char *path)
 
 	dp = opendir(path);
 	if (dp == NULL) {
-		LogEvent(COMPONENT_CLIENTID, "opendir %s failed errno=%d",
-			path, errno);
+		LogEvent(COMPONENT_CLIENTID, "opendir %s failed errno: %s (%d)",
+			path, strerror(errno), errno);
 		return;
 	}
 	for (dentp = readdir(dp); dentp != NULL; dentp = readdir(dp)) {
+		int rc;
+
 		if (!strcmp(dentp->d_name, ".") ||
 				!strcmp(dentp->d_name, "..") ||
 				dentp->d_name[0] != '\x1') {
 			continue;
 		}
 
-		snprintf(del_path, sizeof(del_path), "%s/%s",
-			 path, dentp->d_name);
+		rc = snprintf(del_path, sizeof(del_path), "%s/%s",
+			      path, dentp->d_name);
 
-		if (unlink(del_path) < 0) {
+		if (unlikely(rc >= sizeof(del_path))) {
+			LogCrit(COMPONENT_CLIENTID,
+				"Path %s/%s too long",
+				path, dentp->d_name);
+		} else if (unlikely(rc < 0)) {
+			LogCrit(COMPONENT_CLIENTID,
+				"Unexpected return from snprintf %d error %s (%d)",
+				rc, strerror(errno), errno);
+		} else if (unlink(del_path) < 0) {
 			LogEvent(COMPONENT_CLIENTID,
-					"unlink of %s failed errno: %d",
-					del_path,
-					errno);
+				 "unlink of %s failed errno: %s (%d)",
+				 del_path,
+				 strerror(errno), errno);
 		}
 	}
 	(void)closedir(dp);
 }
 
-static void fs_rm_clid_impl(char *recov_dir, char *parent_path, int position)
+static void fs_rm_clid_impl(int position,
+			    char *recov_dir, int len,
+			    char *parent_path, int parent_len)
 {
 	int err;
 	char *path;
-	char *segment;
-	int len, segment_len;
+	int segment_len;
 	int total_len;
 
-	if (recov_dir == NULL)
-		return;
-
-	len = strlen(recov_dir);
 	if (position == len) {
 		/* We are at the tail directory of the clid,
 		* remove revoked handles, if any.
@@ -269,44 +361,51 @@ static void fs_rm_clid_impl(char *recov_dir, char *parent_path, int position)
 		return;
 	}
 
-	segment = gsh_malloc(NAME_MAX+1);
-	strlcpy(segment, &recov_dir[position], NAME_MAX+1);
-	segment_len = strlen(segment);
+	if ((len - position) > NAME_MAX)
+		segment_len = NAME_MAX;
+	else
+		segment_len = len - position;
 
-	/* allocate enough memory for the new part of the string */
-	/* which is parent path + '/' + new segment */
-	total_len = strlen(parent_path) + segment_len + 2;
+	/* allocate enough memory for the new part of the string
+	 * which is parent path + '/' + new segment
+	 */
+	total_len = parent_len + segment_len + 2;
 	path = gsh_malloc(total_len);
 
-	memset(path, 0, total_len);
-	(void) snprintf(path, total_len, "%s/%s",
-			parent_path, segment);
-	/* free setment as it has no use now */
-	gsh_free(segment);
+	memcpy(path, parent_path, parent_len);
+	path[parent_len] = '/';
+	memcpy(path + parent_len + 1, recov_dir + position, segment_len + 1);
 
 	/* recursively remove the directory hirerchy which represent the
 	 *clientid
 	 */
-	fs_rm_clid_impl(recov_dir, path, position + segment_len);
+	fs_rm_clid_impl(position + segment_len,
+			recov_dir, len,
+			path, total_len - 1);
 
 	err = rmdir(path);
 	if (err == -1) {
 		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to remove client recovery dir (%s), errno=%d",
-			 path, errno);
+			 "Failed to remove client recovery dir (%s), errno: %s (%d)",
+			 path, strerror(errno), errno);
 	} else {
-		LogDebug(COMPONENT_CLIENTID, "Removed client dir [%s]", path);
+		LogDebug(COMPONENT_CLIENTID, "Removed client dir (%s)", path);
 	}
 	gsh_free(path);
 }
 
 void fs_rm_clid(nfs_client_id_t *clientid)
 {
-	char *recov_tag = clientid->cid_recov_tag;
+	char *recov_dir = clientid->cid_recov_tag;
+
+	if (recov_dir == NULL)
+		return;
 
 	clientid->cid_recov_tag = NULL;
-	fs_rm_clid_impl(recov_tag, v4_recov_dir, 0);
-	gsh_free(recov_tag);
+	fs_rm_clid_impl(0,
+			recov_dir, strlen(recov_dir),
+			v4_recov_dir, v4_recov_dir_len);
+	gsh_free(recov_dir);
 }
 
 /**
@@ -337,8 +436,8 @@ static void fs_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 	/* Read the contents from recov dir of this clientid. */
 	dp = opendir(path);
 	if (dp == NULL) {
-		LogEvent(COMPONENT_CLIENTID, "opendir %s failed errno=%d",
-			path, errno);
+		LogEvent(COMPONENT_CLIENTID, "opendir %s failed errno: %s (%d)",
+			path, strerror(errno), errno);
 		return;
 	}
 
@@ -356,17 +455,29 @@ static void fs_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 
 		if (tgtdir) {
 			char lopath[PATH_MAX];
-			int fd;
+			int fd, rc;
 
-			snprintf(lopath, sizeof(lopath), "%s/", tgtdir);
-			strncat(lopath, dentp->d_name, strlen(dentp->d_name));
-			fd = creat(lopath, 0700);
-			if (fd < 0) {
-				LogEvent(COMPONENT_CLIENTID,
-					"Failed to copy revoked handle file %s to %s errno:%d\n",
-				dentp->d_name, tgtdir, errno);
+			rc = snprintf(lopath, sizeof(lopath), "%s/%s",
+				      tgtdir, dentp->d_name);
+
+			if (unlikely(rc >= sizeof(lopath))) {
+				LogCrit(COMPONENT_CLIENTID,
+					"Path %s/%s too long",
+					 tgtdir, dentp->d_name);
+			} else if (unlikely(rc < 0)) {
+				LogCrit(COMPONENT_CLIENTID,
+					"Unexpected return from snprintf %d error %s (%d)",
+					rc, strerror(errno), errno);
 			} else {
-				close(fd);
+				fd = creat(lopath, 0700);
+				if (fd < 0) {
+					LogEvent(COMPONENT_CLIENTID,
+						"Failed to copy revoked handle file %s to %s errno: %s(%d)",
+						dentp->d_name, tgtdir,
+						strerror(errno), errno);
+				} else {
+					close(fd);
+				}
 			}
 		}
 
@@ -382,15 +493,24 @@ static void fs_cp_pop_revoked_delegs(clid_entry_t *clid_ent,
 		 */
 		if (del) {
 			char del_path[PATH_MAX];
+			int rc;
 
-			snprintf(del_path, sizeof(del_path), "%s/%s",
-				 path, dentp->d_name);
+			rc = snprintf(del_path, sizeof(del_path), "%s/%s",
+				      path, dentp->d_name);
 
-			if (unlink(del_path) < 0) {
+			if (unlikely(rc >= sizeof(del_path))) {
+				LogCrit(COMPONENT_CLIENTID,
+					"Path %s/%s too long",
+					 path, dentp->d_name);
+			} else if (unlikely(rc < 0)) {
+				LogCrit(COMPONENT_CLIENTID,
+					"Unexpected return from snprintf %d error %s (%d)",
+					rc, strerror(errno), errno);
+			} else if (unlink(del_path) < 0) {
 				LogEvent(COMPONENT_CLIENTID,
-						"unlink of %s failed errno: %d",
-						del_path,
-						errno);
+					 "unlink of %s failed errno: %s (%d)",
+					 del_path,
+					 strerror(errno), errno);
 			}
 		}
 	}
@@ -434,15 +554,14 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 	char temp[10];
 	int cid_len, len;
 	int segment_len;
-	int total_len;
-	int total_tgt_len;
 	int total_clid_len;
+	int clid_str_len = (clid_str == NULL) ? 0 : strlen(clid_str);
 
 	dp = opendir(parent_path);
 	if (dp == NULL) {
 		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to open v4 recovery dir (%s), errno=%d",
-			 parent_path, errno);
+			 "Failed to open v4 recovery dir (%s), errno: %s (%d)",
+			 parent_path, strerror(errno), errno);
 		return -1;
 	}
 
@@ -465,42 +584,35 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 		 * subdirectory until reaching the end.
 		 */
 		segment_len = strlen(dentp->d_name);
-		total_len = segment_len + 2 + strlen(parent_path);
-		sub_path = gsh_malloc(total_len);
+		sub_path = gsh_concat_sep(parent_path, '/', dentp->d_name);
 
-		memset(sub_path, 0, total_len);
-
-		strcpy(sub_path, parent_path);
-		strcat(sub_path, "/");
-		strncat(sub_path, dentp->d_name, segment_len);
 		/* if tgtdir is not NULL, we need to build
 		 * nfs4old/currentnode
 		 */
 		if (tgtdir) {
-			total_tgt_len = segment_len + 2 +
-					strlen(tgtdir);
-			new_path = gsh_malloc(total_tgt_len);
+			new_path = gsh_concat_sep(tgtdir, '/', dentp->d_name);
 
-			memset(new_path, 0, total_tgt_len);
-			strcpy(new_path, tgtdir);
-			strcat(new_path, "/");
-			strncat(new_path, dentp->d_name, segment_len);
 			rc = mkdir(new_path, 0700);
+
 			if ((rc == -1) && (errno != EEXIST)) {
 				LogEvent(COMPONENT_CLIENTID,
-					 "mkdir %s faied errno=%d",
-					 new_path, errno);
+					 "mkdir %s faied errno: %s (%d)",
+					 new_path, strerror(errno), errno);
 			}
 		}
+
 		/* keep building the clientid str by recursively */
 		/* reading the directory structure */
-		total_clid_len = segment_len + 1;
+		total_clid_len = segment_len + 1 + clid_str_len;
+
+		build_clid = gsh_malloc(total_clid_len);
+
 		if (clid_str)
-			total_clid_len += strlen(clid_str);
-		build_clid = gsh_calloc(1, total_clid_len);
-		if (clid_str)
-			strcpy(build_clid, clid_str);
-		strncat(build_clid, dentp->d_name, segment_len);
+			memcpy(build_clid, clid_str, clid_str_len);
+
+		memcpy(build_clid + clid_str_len,
+		       dentp->d_name,
+		       segment_len + 1);
 
 		rc = fs_read_recov_clids_impl(sub_path,
 					      build_clid,
@@ -523,7 +635,7 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 			 * to prevent getting incompleted strings that
 			 * might exist due to program crash.
 			 */
-			if (strlen(build_clid) >= PATH_MAX) {
+			if (total_clid_len >= PATH_MAX) {
 				LogEvent(COMPONENT_CLIENTID,
 					"invalid clid format: %s, too long",
 					build_clid);
@@ -558,7 +670,7 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 				gsh_free(build_clid);
 				continue;
 			}
-			strlcpy(temp, ptr+1, len+1);
+			memcpy(temp, ptr+1, len+1);
 			cid_len = atoi(temp);
 			len = strlen(ptr2);
 			if ((len == (cid_len+2)) && (ptr2[len-1] == ')')) {
@@ -581,8 +693,8 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 			rc = rmdir(sub_path);
 			if (rc == -1) {
 				LogEvent(COMPONENT_CLIENTID,
-					 "Failed to rmdir (%s), errno=%d",
-					 sub_path, errno);
+					 "Failed to rmdir (%s), errno: %s (%d)",
+					 sub_path, strerror(errno), errno);
 			}
 		}
 		gsh_free(sub_path);
@@ -638,17 +750,52 @@ void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 
 	switch (gsp->event) {
 	case EVENT_UPDATE_CLIENTS:
-		snprintf(path, sizeof(path), "%s", v4_recov_dir);
+		rc = snprintf(path, sizeof(path), "%s", v4_recov_dir);
+
+		if (unlikely(rc >= sizeof(path))) {
+			LogCrit(COMPONENT_CLIENTID,
+				"Path %s too long",
+				v4_recov_dir);
+			return;
+		} else if (unlikely(rc < 0)) {
+			LogCrit(COMPONENT_CLIENTID,
+				"Unexpected return from snprintf %d error %s (%d)",
+				rc, strerror(errno), errno);
+		}
 		break;
 	case EVENT_TAKE_IP:
-		snprintf(path, sizeof(path), "%s/%s/%s",
-			 NFS_V4_RECOV_ROOT, gsp->ipaddr,
-			 NFS_V4_RECOV_DIR);
+		rc = snprintf(path, sizeof(path), "%s/%s/%s",
+			      NFS_V4_RECOV_ROOT, gsp->ipaddr,
+			      NFS_V4_RECOV_DIR);
+
+		if (unlikely(rc >= sizeof(path))) {
+			LogCrit(COMPONENT_CLIENTID,
+				"Path %s/%s/%s too long",
+				NFS_V4_RECOV_ROOT, gsp->ipaddr,
+				NFS_V4_RECOV_DIR);
+			return;
+		} else if (unlikely(rc < 0)) {
+			LogCrit(COMPONENT_CLIENTID,
+				"Unexpected return from snprintf %d error %s (%d)",
+				rc, strerror(errno), errno);
+		}
 		break;
 	case EVENT_TAKE_NODEID:
-		snprintf(path, sizeof(path), "%s/%s/node%d",
-			 NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR,
-			 gsp->nodeid);
+		rc = snprintf(path, sizeof(path), "%s/%s/node%d",
+			      NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR,
+			      gsp->nodeid);
+
+		if (unlikely(rc >= sizeof(path))) {
+			LogCrit(COMPONENT_CLIENTID,
+				"Path %s/%s/node%d too long",
+				NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR,
+				gsp->nodeid);
+			return;
+		} else if (unlikely(rc < 0)) {
+			LogCrit(COMPONENT_CLIENTID,
+				"Unexpected return from snprintf %d error %s (%d)",
+				rc, strerror(errno), errno);
+		}
 		break;
 	default:
 		LogWarn(COMPONENT_STATE, "Recovery unknown event");
@@ -674,13 +821,12 @@ void fs_clean_old_recov_dir_impl(char *parent_path)
 	struct dirent *dentp;
 	char *path = NULL;
 	int rc;
-	int total_len;
 
 	dp = opendir(parent_path);
 	if (dp == NULL) {
 		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to open old v4 recovery dir (%s), errno=%d",
-			 v4_old_dir, errno);
+			 "Failed to open old v4 recovery dir (%s), errno: %s (%d)",
+			 v4_old_dir, strerror(errno), errno);
 		return;
 	}
 
@@ -689,36 +835,29 @@ void fs_clean_old_recov_dir_impl(char *parent_path)
 		if (!strcmp(dentp->d_name, ".") || !strcmp(dentp->d_name, ".."))
 			continue;
 
+		/* Assemble the path */
+		path = gsh_concat_sep(parent_path, '/', dentp->d_name);
+
 		/* If there is a filename starting with '\x1', then it is
 		 * a revoked handle, go ahead and remove it.
 		 */
 		if (dentp->d_name[0] == '\x1') {
-			char del_path[PATH_MAX];
-
-			snprintf(del_path, sizeof(del_path), "%s/%s",
-				 parent_path, dentp->d_name);
-
-			if (unlink(del_path) < 0) {
+			if (unlink(path) < 0) {
 				LogEvent(COMPONENT_CLIENTID,
-						"unlink of %s failed errno: %d",
-						del_path,
-						errno);
+						"unlink of %s failed errno: %s (%d)",
+						path, strerror(errno), errno);
 			}
+		} else {
+			/* This is a directory, we need process files in it! */
+			fs_clean_old_recov_dir_impl(path);
 
-			continue;
-		}
+			rc = rmdir(path);
 
-		/* This is a directory, we need process files in it! */
-		total_len = strlen(parent_path) + strlen(dentp->d_name) + 2;
-		path = gsh_malloc(total_len);
-
-		snprintf(path, total_len, "%s/%s", parent_path, dentp->d_name);
-
-		fs_clean_old_recov_dir_impl(path);
-		rc = rmdir(path);
-		if (rc == -1) {
-			LogEvent(COMPONENT_CLIENTID,
-				 "Failed to remove %s, errno=%d", path, errno);
+			if (rc == -1) {
+				LogEvent(COMPONENT_CLIENTID,
+					 "Failed to remove %s, errno: %s (%d)",
+					 path, strerror(errno), errno);
+			}
 		}
 		gsh_free(path);
 	}
@@ -733,8 +872,8 @@ void fs_clean_old_recov_dir(void)
 void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 {
 	char rhdlstr[NAME_MAX];
-	char path[PATH_MAX] = {0}, segment[NAME_MAX + 1] = {0};
-	int length, position = 0;
+	char path[PATH_MAX] = {0};
+	int length, position = 0, pathpos, rhdlstr_len;
 	int fd;
 	int retval;
 
@@ -743,34 +882,57 @@ void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 				  delr_handle->nfs_fh4_len,
 				  rhdlstr, sizeof(rhdlstr));
 	assert(retval != -1);
+	rhdlstr_len = strlen(rhdlstr);
 
 	/* Parse through the clientid directory structure */
 	assert(delr_clid->cid_recov_tag != NULL);
 
-	snprintf(path, sizeof(path), "%s", v4_recov_dir);
+	assert(v4_recov_dir_len < sizeof(path));
+
+	memcpy(path, v4_recov_dir, v4_recov_dir_len + 1);
+	pathpos = v4_recov_dir_len;
+
 	length = strlen(delr_clid->cid_recov_tag);
+
 	while (position < length) {
-		int len = strlen(&delr_clid->cid_recov_tag[position]);
+		int len = length - position;
 
 		if (len <= NAME_MAX) {
-			strcat(path, "/");
-			strncat(path, &delr_clid->cid_recov_tag[position], len);
-			strcat(path, "/\x1"); /* Prefix 1 to converted fh */
-			strncat(path, rhdlstr, strlen(rhdlstr));
+			int new_pathpos = pathpos + 1 + len + 3 + rhdlstr_len;
+
+			if (new_pathpos >= sizeof(path)) {
+				LogCrit(COMPONENT_CLIENTID,
+					"Could not revoke path %s/%s/%s too long",
+					path,
+					delr_clid->cid_recov_tag + position,
+					rhdlstr);
+			}
+			path[pathpos++] = '/';
+			memcpy(path + pathpos,
+			       delr_clid->cid_recov_tag + position,
+			       len);
+			/* Prefix 1 to converted fh */
+			memcpy(path + pathpos + len, "/\x1", 2);
+			memcpy(path + pathpos + len + 2,
+			       rhdlstr,
+			       rhdlstr_len + 1);
+			pathpos = new_pathpos;
 			fd = creat(path, 0700);
 			if (fd < 0) {
 				LogEvent(COMPONENT_CLIENTID,
-					"Failed to record revoke errno:%d\n",
-					errno);
+					"Failed to record revoke errno: %s (%d)",
+					strerror(errno), errno);
 			} else {
 				close(fd);
 			}
 			return;
 		}
-		strlcpy(segment, &delr_clid->cid_recov_tag[position],
-			sizeof(segment));
-		strcat(path, "/");
-		strncat(path, segment, NAME_MAX);
+		path[pathpos++] = '/';
+		memcpy(path + pathpos,
+		       delr_clid->cid_recov_tag + position,
+		       NAME_MAX);
+		pathpos += NAME_MAX;
+		path[pathpos] = '\0';
 		position += NAME_MAX;
 	}
 }

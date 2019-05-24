@@ -182,7 +182,9 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 	/* FIXME: assert that rados_recov_oid is NULL? */
 	len = 4 + 16 + 1 + strlen(nodeid) + 1;
 	recov_oid = gsh_refstr_alloc(len);
-	snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
+
+	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
+	(void) snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
 	gsh_refstr_get(recov_oid);
 	rcu_set_pointer(&rados_recov_oid, recov_oid);
 
@@ -199,7 +201,9 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 	};
 
 	old_oid = gsh_refstr_alloc(len);
-	snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
+
+/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
+	(void) snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
 	rcu_set_pointer(&rados_recov_old_oid, old_oid);
 	ret = rados_kv_traverse(rados_ng_pop_clid_entry, &args,
 				old_oid->gr_val);
@@ -247,7 +251,6 @@ static void rados_set_client_cb(struct rbt_node *pn, void *arg)
 	nfs_client_id_t *clientid = addr->val.addr;
 	struct rados_cluster_kv_pairs *kvp = arg;
 	char ckey[RADOS_KEY_MAX_LEN];
-	char cval[RADOS_VAL_MAX_LEN];
 
 	/* FIXME: resize arrays in this case? */
 	if (kvp->num >= kvp->slots) {
@@ -255,12 +258,12 @@ static void rados_set_client_cb(struct rbt_node *pn, void *arg)
 		return;
 	}
 
-	rados_kv_create_key(clientid, ckey);
-	rados_kv_create_val(clientid, cval);
+	rados_kv_create_key(clientid, ckey, sizeof(ckey));
 
-	kvp->keys[kvp->num] = strdup(ckey);
-	kvp->vals[kvp->num] = strdup(cval);
-	kvp->lens[kvp->num] = strlen(cval);
+	kvp->keys[kvp->num] = gsh_strdup(ckey);
+	kvp->vals[kvp->num] = rados_kv_create_val(clientid,
+						  &kvp->lens[kvp->num]);
+
 	++kvp->num;
 }
 
@@ -315,11 +318,14 @@ static void rados_cluster_maybe_start_grace(void)
 	/* Get an extra working reference of new string */
 	gsh_refstr_get(recov_oid);
 
-	snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
+	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
+	(void) snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
 	prev_recov_oid = rcu_xchg_pointer(&rados_recov_oid, recov_oid);
 
 	old_oid = gsh_refstr_alloc(len);
-	snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
+
+	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
+	(void) snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
 	old_oid = rcu_xchg_pointer(&rados_recov_old_oid, old_oid);
 
 	synchronize_rcu();

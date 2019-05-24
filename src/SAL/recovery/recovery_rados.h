@@ -21,6 +21,7 @@
  */
 #ifndef _RECOVERY_RADOS_H
 #define _RECOVERY_RADOS_H
+#include <stdio.h>
 #include "gsh_refstr.h"
 
 #define RADOS_KEY_MAX_LEN	NAME_MAX
@@ -64,8 +65,26 @@ int rados_kv_get(char *key, char *val, char *object);
 void rados_kv_add_clid(nfs_client_id_t *clientid);
 void rados_kv_rm_clid(nfs_client_id_t *clientid);
 void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle);
-void rados_kv_create_key(nfs_client_id_t *clientid, char *key);
-void rados_kv_create_val(nfs_client_id_t *clientid, char *val);
+
+/**
+ * Convert a clientid into a rados key.
+ *
+ * @param(in)     clientid  The clientid to conevrt into a key
+ * @param(in/out) key       The string buffer to put the key in
+ * @param(in)     size      Buffer size - expected to be RADOS_KEY_MAX_LEN
+ */
+static inline
+void rados_kv_create_key(nfs_client_id_t *clientid, char *key, size_t size)
+{
+	assert(size == RADOS_KEY_MAX_LEN);
+
+	/* Can't overrun RADOS_KEY_MAX_LEN and shouldn't return EOVERFLOW or
+	 * EINVAL
+	 */
+	(void) snprintf(key, size, "%lu", (uint64_t)clientid->cid_clientid);
+}
+
+char *rados_kv_create_val(nfs_client_id_t *clientid, size_t *len);
 int rados_kv_traverse(pop_clid_entry_t callback, struct pop_args *args,
 			const char *object);
 void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle);

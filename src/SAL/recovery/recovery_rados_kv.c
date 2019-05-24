@@ -102,39 +102,60 @@ static int convert_opaque_val(struct display_buffer *dspbuf,
 	return b_left;
 }
 
-void rados_kv_create_key(nfs_client_id_t *clientid, char *key)
-{
-	snprintf(key, RADOS_KEY_MAX_LEN, "%lu",
-		 (uint64_t)clientid->cid_clientid);
-}
-
-void rados_kv_create_val(nfs_client_id_t *clientid, char *val)
+char *rados_kv_create_val(nfs_client_id_t *clientid, size_t *size)
 {
 	char *src = clientid->cid_client_record->cr_client_val;
 	int src_len = clientid->cid_client_record->cr_client_val_len;
 	const char *str_client_addr = "(unknown)";
-	char cidstr[PATH_MAX] = { 0, };
+	char cidstr[PATH_MAX] = { 0, }, *val;
 	struct display_buffer dspbuf = {sizeof(cidstr), cidstr, cidstr};
-	char cidstr_len[20];
-	int total_len;
+	char cidstr_lenx[5];
+	int total_len, cidstr_len, cidstr_lenx_len, str_client_addr_len;
 	int ret;
 
 	/* get the caller's IP addr */
 	if (clientid->gsh_client != NULL)
 		str_client_addr = clientid->gsh_client->hostaddr_str;
 
-	ret = convert_opaque_val(&dspbuf, src, src_len, PATH_MAX);
+	str_client_addr_len = strlen(str_client_addr);
+
+	ret = convert_opaque_val(&dspbuf, src, src_len, sizeof(cidstr));
 	assert(ret > 0);
 
-	snprintf(cidstr_len, sizeof(cidstr_len), "%zd", strlen(cidstr));
-	total_len = strlen(cidstr) + strlen(str_client_addr) + 5 +
-		    strlen(cidstr_len);
+	cidstr_len = display_buffer_len(&dspbuf);
+
+	cidstr_lenx_len = snprintf(cidstr_lenx, sizeof(cidstr_lenx), "%d",
+				   cidstr_len);
+
+	if (unlikely(cidstr_lenx_len >= sizeof(cidstr_lenx) ||
+		     cidstr_lenx_len < 0)) {
+		/* cidrstr can at most be PATH_MAX or 1024, so at most
+		 * 4 characters plus NUL are necessary, so we won't
+		 * overrun, nor can we get a -1 with EOVERFLOW or EINVAL
+		 */
+		LogFatal(COMPONENT_CLIENTID,
+			 "snprintf returned unexpected %d", cidstr_lenx_len);
+	}
+
+	*size = str_client_addr_len + 2 + cidstr_lenx_len + 1 + cidstr_len + 2;
 
 	/* hold both long form clientid and IP */
-	snprintf(val, total_len, "%s-(%s:%s)",
-		 str_client_addr, cidstr_len, cidstr);
+	val = gsh_malloc(*size);
+	memcpy(val, str_client_addr, str_client_addr_len);
+	total_len = str_client_addr_len;
+	memcpy(val + total_len, "-(", 2);
+	total_len += 2;
+	memcpy(val + total_len, cidstr_lenx, cidstr_lenx_len);
+	total_len += cidstr_lenx_len;
+	val[total_len] = ':';
+	total_len += 1;
+	memcpy(val + total_len, cidstr, cidstr_len);
+	total_len += cidstr_lenx_len;
+	memcpy(val + total_len, ")", 2);
 
 	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]", val);
+
+	return val;
 }
 
 int rados_kv_put(char *key, char *val, char *object)
@@ -195,7 +216,8 @@ int rados_kv_get(char *key, char *val, char *object)
 		goto out;
 	}
 
-	strlcpy(val, val_out, val_len_out+1);
+	/* All internal so buffer length is known to be ok */
+	memcpy(val, val_out, val_len_out+1);
 	LogDebug(COMPONENT_CLIENTID, "%s: key=%s val=%s", __func__, key, val);
 	rados_omap_get_end(iter_vals);
 out:
@@ -365,32 +387,51 @@ void rados_kv_shutdown(void)
 int rados_kv_init(void)
 {
 	int ret;
-	size_t len;
+	size_t len, host_len;
 	struct gsh_refstr *recov_oid = NULL, *old_oid = NULL;
 	char host[NI_MAXHOST];
 
 	if (nfs_param.core_param.clustered) {
-		snprintf(host, sizeof(host), "node%d", g_nodeid);
+		ret = snprintf(host, sizeof(host), "node%d", g_nodeid);
+
+		if (unlikely(ret >= sizeof(host))) {
+			LogCrit(COMPONENT_CLIENTID,
+				"node%d too long", g_nodeid);
+			return -ENAMETOOLONG;
+		} else if (unlikely(ret < 0)) {
+			ret = errno;
+			LogCrit(COMPONENT_CLIENTID,
+				"Unexpected return from snprintf %d error %s (%d)",
+				ret, strerror(ret), ret);
+			return -ret;
+		}
 	} else {
 		ret = gethostname(host, sizeof(host));
+
 		if (ret) {
+			ret = errno;
 			LogEvent(COMPONENT_CLIENTID,
-				 "Failed to gethostname: %s",
-				 strerror(errno));
-			return -errno;
+				 "Failed to gethostname: %s (%d)",
+				 strerror(ret), ret);
+			return -ret;
 		}
 	}
 
-	len = strlen(host) + 6 + 1;
+	host_len = strlen(host);
+	len = host_len + 6 + 1;
 	recov_oid = gsh_refstr_alloc(len);
 	gsh_refstr_get(recov_oid);
-	snprintf(recov_oid->gr_val, len, "%s_recov", host);
+
+	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
+	(void) snprintf(recov_oid->gr_val, len, "%s_recov", host);
 	rcu_set_pointer(&rados_recov_oid, recov_oid);
 
-	len = strlen(host) + 4 + 1;
+	len = host_len + 4 + 1;
 	old_oid = gsh_refstr_alloc(len);
 	gsh_refstr_get(old_oid);
-	snprintf(old_oid->gr_val, len, "%s_old", host);
+
+	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
+	(void) snprintf(old_oid->gr_val, len, "%s_old", host);
 	rcu_set_pointer(&rados_recov_old_oid, old_oid);
 
 	ret = rados_kv_connect(&rados_recov_io_ctx, rados_kv_param.userid,
@@ -442,10 +483,8 @@ void rados_kv_add_clid(nfs_client_id_t *clientid)
 	struct gsh_refstr *recov_oid;
 	int ret;
 
-	cval = gsh_malloc(RADOS_VAL_MAX_LEN);
-
-	rados_kv_create_key(clientid, ckey);
-	rados_kv_create_val(clientid, cval);
+	rados_kv_create_key(clientid, ckey, sizeof(ckey));
+	cval = rados_kv_create_val(clientid, NULL);
 
 	rcu_read_lock();
 	recov_oid = gsh_refstr_get(rcu_dereference(rados_recov_oid));
@@ -455,13 +494,10 @@ void rados_kv_add_clid(nfs_client_id_t *clientid)
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to add clid %lu",
 			 clientid->cid_clientid);
-		goto out;
+		gsh_free(cval);
+	} else {
+		clientid->cid_recov_tag = cval;
 	}
-
-	clientid->cid_recov_tag = gsh_malloc(strlen(cval) + 1);
-	strncpy(clientid->cid_recov_tag, cval, strlen(cval) + 1);
-out:
-	gsh_free(cval);
 }
 
 void rados_kv_rm_clid(nfs_client_id_t *clientid)
@@ -470,7 +506,7 @@ void rados_kv_rm_clid(nfs_client_id_t *clientid)
 	struct gsh_refstr *recov_oid;
 	int ret;
 
-	rados_kv_create_key(clientid, ckey);
+	rados_kv_create_key(clientid, ckey, sizeof(ckey));
 
 	rcu_read_lock();
 	recov_oid = gsh_refstr_get(rcu_dereference(rados_recov_oid));
@@ -607,7 +643,18 @@ void rados_kv_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 		return;
 	}
 
-	snprintf(object_takeover, NI_MAXHOST, "%s_recov", gsp->ipaddr);
+	ret = snprintf(object_takeover, sizeof(object_takeover), "%s_recov",
+		       gsp->ipaddr);
+
+	if (unlikely(ret >= sizeof(object_takeover))) {
+		LogCrit(COMPONENT_CLIENTID,
+			"object_takeover too long %s_recov", gsp->ipaddr);
+	} else if (unlikely(ret < 0)) {
+		LogCrit(COMPONENT_CLIENTID,
+			"Unexpected return from snprintf %d error %s (%d)",
+			ret, strerror(errno), errno);
+	}
+
 	ret = rados_kv_traverse(rados_kv_pop_clid_entry, &args,
 				object_takeover);
 	if (ret < 0) {
@@ -643,7 +690,7 @@ void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 
 	cval = gsh_malloc(RADOS_VAL_MAX_LEN);
 
-	rados_kv_create_key(delr_clid, ckey);
+	rados_kv_create_key(delr_clid, ckey, sizeof(ckey));
 	rcu_read_lock();
 	recov_oid = gsh_refstr_get(rcu_dereference(rados_recov_oid));
 	rcu_read_unlock();
