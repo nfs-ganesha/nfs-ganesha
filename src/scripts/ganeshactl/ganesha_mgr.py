@@ -209,10 +209,10 @@ class ManageCache():
                                         'org.ganesha.nfsd.cachemgr')
 
     def status_message(self, status, errormsg):
-        print "Returns: status = %s, %s" % (str(status), errormsg)
+        print("Returns: status = %s, %s" % (str(status), errormsg))
 
     def showfs(self):
-        print "Show filesystems"
+        print("Show filesystems")
         status, errormsg, reply = self.cachemgr.ShowFileSys()
         if status == True:
            ts = reply[0]
@@ -222,14 +222,14 @@ class ManageCache():
            self.status_message(status, errormsg)
 
     def proc_fs(self, ts, fss):
-        print "Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs"
+        print("Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs")
         if len(fss) == 0:
-            print "No filesystems"
+            print("No filesystems")
         else:
-            print "Filesystems:"
-            print " Path,  MajorDevId, MinorDevId"
+            print("Filesystems:")
+            print(" Path,  MajorDevId, MinorDevId")
             for fs in fss:
-                print (" %s,  %s,  %s" %
+                print(" %s,  %s,  %s" %
                        (fs.Path,
                         fs.MajorDevId,
                         fs.MinorDevId))
