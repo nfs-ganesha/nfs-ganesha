@@ -35,6 +35,9 @@
 #include "sal_data.h"
 #include "sal_functions.h"
 #include "fsal_types.h"
+#ifdef USE_LTTNG
+#include "gsh_lttng/fsal_gluster.h"
+#endif
 
 /* fsal_obj_handle common methods
  */
@@ -67,6 +70,10 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 		if (op_ctx && op_ctx->fsal_export) {
 			/* Since handle gets released as part of internal
 			 * operation, we may not need to set credentials */
+#ifdef USE_LTTNG
+			tracepoint(fsalgl, close_fd, __func__, __LINE__,
+				   my_fd->glfd);
+#endif
 			status = glusterfs_close_my_fd(my_fd);
 			if (FSAL_IS_ERROR(status)) {
 				LogCrit(COMPONENT_FSAL,
@@ -1436,13 +1443,19 @@ fsal_status_t glusterfs_open_func(struct fsal_obj_handle *obj_hdl,
 {
 	struct glusterfs_handle *myself;
 	int posix_flags = 0;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 
 	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	return glusterfs_open_my_fd(myself, openflags, posix_flags,
+	status = glusterfs_open_my_fd(myself, openflags, posix_flags,
 				   (struct glusterfs_fd *)fd);
+#ifdef USE_LTTNG
+	tracepoint(fsalgl, open_fd, __func__, __LINE__, posix_flags,
+		   myself->globalfd.glfd);
+#endif
+	return status;
 }
 
 /**
@@ -1675,12 +1688,20 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 		}
 
 		if (my_fd->openflags != FSAL_O_CLOSED) {
+#ifdef USE_LTTNG
+			tracepoint(fsalgl, close_fd, __func__, __LINE__,
+				   my_fd->glfd);
+#endif
 			glusterfs_close_my_fd(my_fd);
 		}
 
 		/* truncate is set in p_flags */
 		status = glusterfs_open_my_fd(myself, openflags, p_flags,
 					      my_fd);
+#ifdef USE_LTTNG
+		tracepoint(fsalgl, open_fd, __func__, __LINE__, p_flags,
+			   my_fd->glfd);
+#endif
 
 		if (FSAL_IS_ERROR(status)) {
 			status = gluster2fsal_error(errno);
@@ -2006,6 +2027,11 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	status = glusterfs_copy_my_fd(my_fd, &myself->globalfd,
 				     (state != NULL));
 
+#ifdef USE_LTTNG
+	tracepoint(fsalgl, open_fd, __func__, __LINE__, p_flags,
+		   my_fd->glfd);
+#endif
+
 	if (FSAL_IS_ERROR(status))
 		goto fileerr;
 
@@ -2079,6 +2105,11 @@ fileerr:
 	 * FSAL_O_CLOSED flags, it's harmless of closing my_fd twice
 	 * in the floowing obj_ops->release().
 	 */
+
+#ifdef USE_LTTNG
+	tracepoint(fsalgl, close_fd, __func__, __LINE__,
+		   my_fd->glfd);
+#endif
 	glusterfs_close_my_fd(my_fd);
 
 direrr:
@@ -2181,6 +2212,11 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 
 	status = glusterfs_open_my_fd(myself, openflags, posix_flags, my_fd);
 
+#ifdef USE_LTTNG
+	tracepoint(fsalgl, open_fd, __func__, __LINE__, posix_flags,
+		   my_fd->glfd);
+#endif
+
 	if (!FSAL_IS_ERROR(status)) {
 		/* Close the existing file descriptor and copy the new
 		 * one over. Make sure no one is using the fd that we are
@@ -2188,7 +2224,12 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 		 */
 		PTHREAD_RWLOCK_wrlock(&my_share_fd->fdlock);
 
+#ifdef USE_LTTNG
+		tracepoint(fsalgl, close_fd, __func__, __LINE__,
+			   my_share_fd->glfd);
+#endif
 		glusterfs_close_my_fd(my_share_fd);
+
 		my_share_fd->glfd = my_fd->glfd;
 		my_share_fd->openflags = my_fd->openflags;
 		my_share_fd->creds.caller_uid = my_fd->creds.caller_uid;
@@ -2323,8 +2364,13 @@ static void glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 	if (glusterfs_fd)
 		PTHREAD_RWLOCK_unlock(&glusterfs_fd->fdlock);
 
-	if (closefd)
+	if (closefd) {
+#ifdef USE_LTTNG
+		tracepoint(fsalgl, close_fd, __func__, __LINE__,
+			   my_fd.glfd);
+#endif
 		glusterfs_close_my_fd(&my_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -2408,8 +2454,13 @@ static void glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	if (glusterfs_fd)
 		PTHREAD_RWLOCK_unlock(&glusterfs_fd->fdlock);
 
-	if (closefd)
+	if (closefd) {
+#ifdef USE_LTTNG
+		tracepoint(fsalgl, close_fd, __func__, __LINE__,
+			   my_fd.glfd);
+#endif
 		glusterfs_close_my_fd(&my_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -2504,8 +2555,13 @@ static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
 	latency_update(&s_time, &e_time, lat_file_seek);
 #endif
 
-	if (closefd)
+	if (closefd) {
+#ifdef USE_LTTNG
+		tracepoint(fsalgl, close_fd, __func__, __LINE__,
+			   my_fd.glfd);
+#endif
 		glusterfs_close_my_fd(&my_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -2568,8 +2624,13 @@ static fsal_status_t glusterfs_commit2(struct fsal_obj_handle *obj_hdl,
 		SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL, NULL, 0);
 	}
 
-	if (closefd)
+	if (closefd) {
+#ifdef USE_LTTNG
+		tracepoint(fsalgl, close_fd, __func__, __LINE__,
+			   out_fd->glfd);
+#endif
 		glusterfs_close_my_fd(out_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -2778,8 +2839,13 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	if (glusterfs_fd)
 		PTHREAD_RWLOCK_unlock(&glusterfs_fd->fdlock);
 
-	if (closefd)
+	if (closefd) {
+#ifdef USE_LTTNG
+		tracepoint(fsalgl, close_fd, __func__, __LINE__,
+			   my_fd.glfd);
+#endif
 		glusterfs_close_my_fd(&my_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -2890,8 +2956,13 @@ static fsal_status_t glusterfs_lease_op2(struct fsal_obj_handle *obj_hdl,
 	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL, NULL, 0);
 
 err:
-	if (closefd)
+	if (closefd) {
+#ifdef USE_LTTNG
+		tracepoint(fsalgl, close_fd, __func__, __LINE__,
+			   my_fd.glfd);
+#endif
 		glusterfs_close_my_fd(&my_fd);
+	}
 
 	if (glusterfs_fd)
 		PTHREAD_RWLOCK_unlock(&glusterfs_fd->fdlock);
@@ -3151,8 +3222,13 @@ out:
 	if (glusterfs_fd)
 		PTHREAD_RWLOCK_unlock(&glusterfs_fd->fdlock);
 
-	if (closefd)
+	if (closefd) {
+#ifdef USE_LTTNG
+		tracepoint(fsalgl, close_fd, __func__, __LINE__,
+			   my_fd.glfd);
+#endif
 		glusterfs_close_my_fd(&my_fd);
+	}
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -3196,6 +3272,11 @@ static fsal_status_t glusterfs_close2(struct fsal_obj_handle *obj_hdl,
 	 * is operating on the fd while we close it.
 	 */
 	PTHREAD_RWLOCK_wrlock(&my_fd->fdlock);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalgl, close_fd, __func__, __LINE__,
+		   my_fd->glfd);
+#endif
 	status = glusterfs_close_my_fd(my_fd);
 	PTHREAD_RWLOCK_unlock(&my_fd->fdlock);
 

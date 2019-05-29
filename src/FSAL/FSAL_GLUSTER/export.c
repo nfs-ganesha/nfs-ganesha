@@ -42,6 +42,9 @@
 #include "export_mgr.h"
 #include "pnfs_utils.h"
 #include "sal_data.h"
+#ifdef USE_LTTNG
+#include "gsh_lttng/fsal_gluster.h"
+#endif
 
 /* The default location of gfapi log
  * if glfs_log param is not defined in
@@ -266,6 +269,10 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	}
 
 	*pub_handle = &objhandle->handle;
+#ifdef USE_LTTNG
+	tracepoint(fsalgl, gl_handle, __func__, __LINE__,
+		   &objhandle->handle);
+#endif
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
 		gluster_cleanup_vars(glhandle);
@@ -325,6 +332,10 @@ fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
 	}
 
 	*pub_handle = &objhandle->handle;
+#ifdef USE_LTTNG
+	tracepoint(fsalgl, gl_handle, __func__, __LINE__,
+		   &objhandle->handle);
+#endif
  out:
 #ifdef GLTIMING
 	now(&e_time);

@@ -32,6 +32,7 @@ target_link_libraries(fsalgluster
   ganesha_nfsd
   ${SYSTEM_LIBRARIES}
   ${GFAPI_LIBRARIES}
+  ${LTTNG_LIBRARIES}
   "-Wl,--no-undefined"
 )
 

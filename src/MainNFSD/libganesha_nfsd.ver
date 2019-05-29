@@ -237,6 +237,9 @@
   __tracepoint_fsalmem___mem_write;
   __tracepoint_fsalmem___mem_close;
   __tracepoint_fsalmem___mem_create_handle;
+  __tracepoint_fsalgl___open_fd;
+  __tracepoint_fsalgl___close_fd;
+  __tracepoint_fsalgl___gl_handle;
 local:
   *;
 };
