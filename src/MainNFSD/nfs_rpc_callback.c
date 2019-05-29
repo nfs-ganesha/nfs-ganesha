@@ -188,11 +188,36 @@ nc_type nfs_netid_to_nc(const char *netid)
 static inline void setup_client_saddr(nfs_client_id_t *clientid,
 				      const char *uaddr)
 {
-	char addr_buf[SOCK_NAME_MAX];
-	uint32_t bytes[11];
 	int code;
+	char *uaddr2 = gsh_strdup(uaddr);
+	char *dot, *p1, *p2;
+	uint16_t port;
 
 	assert(clientid->cid_minorversion == 0);
+
+	/* find the two port bytes and terminate the string */
+	dot = strrchr(uaddr2, '.');
+
+	if (dot == NULL)
+		goto out;
+
+	p2 = dot + 1;
+	*dot = '\0';
+
+	dot = strrchr(uaddr2, '.');
+
+	if (dot == NULL)
+		goto out;
+
+	p1 = dot + 1;
+	*dot = '\0';
+
+	port = htons((atoi(p1) << 8) | atoi(p2));
+
+	/* At this point, the port has been extracted and uaddr2 is now
+	 * terminated without the port portion and is thus suitable for
+	 * passing to inet_pton as is and will support a variety of formats.
+	 */
 
 	memset(&clientid->cid_cb.v40.cb_addr.ss, 0,
 	       sizeof(struct sockaddr_storage));
@@ -202,68 +227,58 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 	case _NC_RDMA:
 	case _NC_SCTP:
 	case _NC_UDP:
+	{
 		/* IPv4 (ws inspired) */
-		if (sscanf(uaddr, "%u.%u.%u.%u.%u.%u", &bytes[1], &bytes[2],
-			   &bytes[3], &bytes[4], &bytes[5], &bytes[6]) != 6)
-			return;
-
 		struct sockaddr_in *sin = ((struct sockaddr_in *)
 					   &clientid->cid_cb.v40.cb_addr.ss);
 
-		snprintf(addr_buf, sizeof(addr_buf), "%u.%u.%u.%u",
-			 bytes[1], bytes[2], bytes[3], bytes[4]);
-
 		sin->sin_family = AF_INET;
-		sin->sin_port = htons((bytes[5] << 8) | bytes[6]);
-		code = inet_pton(AF_INET, addr_buf, &sin->sin_addr);
+		sin->sin_port = port;
+		code = inet_pton(AF_INET, uaddr2, &sin->sin_addr);
 
 		if (code != 1)
 			LogWarn(COMPONENT_NFS_CB, "inet_pton failed (%d %s)",
-				code, addr_buf);
+				code, uaddr);
 		else
 			LogDebug(COMPONENT_NFS_CB,
 				 "client callback addr:port %s:%d",
-				 addr_buf, ntohs(sin->sin_port));
+				 uaddr2, ntohs(port));
 
 		break;
 
+	}
 	case _NC_TCP6:
 	case _NC_RDMA6:
 	case _NC_SCTP6:
 	case _NC_UDP6:
+	{
 		/* IPv6 (ws inspired) */
-		if (sscanf(uaddr, "%2x:%2x:%2x:%2x:%2x:%2x:%2x:%2x.%u.%u",
-			   &bytes[1], &bytes[2], &bytes[3], &bytes[4],
-			   &bytes[5], &bytes[6], &bytes[7], &bytes[8],
-			   &bytes[9], &bytes[10]) != 10)
-			return;
-
 		struct sockaddr_in6 *sin6 = ((struct sockaddr_in6 *)
 					     &clientid->cid_cb.v40.cb_addr.ss);
 
-		snprintf(addr_buf, sizeof(addr_buf),
-			 "%2x:%2x:%2x:%2x:%2x:%2x:%2x:%2x",
-			 bytes[1], bytes[2], bytes[3], bytes[4], bytes[5],
-			 bytes[6], bytes[7], bytes[8]);
-
-		code = inet_pton(AF_INET6, addr_buf, &sin6->sin6_addr);
-		sin6->sin6_port = htons((bytes[9] << 8) | bytes[10]);
 		sin6->sin6_family = AF_INET6;
+		sin6->sin6_port = port;
+		code = inet_pton(AF_INET6, uaddr2, &sin6->sin6_addr);
 
 		if (code != 1)
 			LogWarn(COMPONENT_NFS_CB,
-				"inet_pton failed (%d %s)", code, addr_buf);
+				"inet_pton failed (%d %s)", code, uaddr);
 		else
 			LogDebug(COMPONENT_NFS_CB,
 				 "client callback addr:port %s:%d",
-				 addr_buf, ntohs(sin6->sin6_port));
+				 uaddr2, ntohs(port));
 
 		break;
 
+	}
 	default:
 		/* unknown netid */
 		break;
 	};
+
+out:
+
+	gsh_free(uaddr2);
 }
 
 /**
