@@ -320,8 +320,9 @@ static int cbsim_fake_cbrecall(clientid4 clientid)
 	memset(argop, 0, sizeof(nfs_cb_argop4));
 	argop->argop = NFS4_OP_CB_RECALL;
 	argop->nfs_cb_argop4_u.opcbrecall.stateid.seqid = 0xdeadbeef;
-	strlcpy(argop->nfs_cb_argop4_u.opcbrecall.stateid.other, "0xdeadbeef",
-		12);
+	memcpy(argop->nfs_cb_argop4_u.opcbrecall.stateid.other,
+	       "\0xde\0xad\0xbe\0xef\0xde\0xad\0xbe\0xef\0xde\0xad\0xbe\0xef",
+	       sizeof(argop->nfs_cb_argop4_u.opcbrecall.stateid.other));
 	argop->nfs_cb_argop4_u.opcbrecall.truncate = TRUE;
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 11;
 	/* leaks, sorry */

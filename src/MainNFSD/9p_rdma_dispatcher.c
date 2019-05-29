@@ -330,8 +330,8 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	msk_data_t *wdata;
 	struct _9p_outqueue *outqueue;
 
-#define PORT_MAX_LEN 6
-	char port[PORT_MAX_LEN];
+	/* Port is a uint16_t so prints out to at most 5 characters */
+	char port[6];
 
 	rcu_register_thread();
 	memset(&trans_attr, 0, sizeof(msk_trans_attr_t));
@@ -339,7 +339,9 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	trans_attr.server = _9p_param._9p_rdma_backlog;
 	trans_attr.rq_depth = _9p_param._9p_rdma_inpool_size + 1;
 	trans_attr.sq_depth = _9p_param._9p_rdma_outpool_size + 1;
-	snprintf(port, PORT_MAX_LEN, "%d", _9p_param._9p_rdma_port);
+
+	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
+	(void) snprintf(port, sizeof(port), "%d", _9p_param._9p_rdma_port);
 	trans_attr.port = port;
 	trans_attr.node = "::";
 	trans_attr.use_srq = 1;

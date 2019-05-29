@@ -159,10 +159,11 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 	if (ip == NULL)
 		gsp.ipaddr = input;	/* no event specified */
 	else {
-		char *buf = alloca(strlen(input) + 1);
+		int size = strlen(input) + 1;
+		char *buf = alloca(size);
 
 		gsp.ipaddr = ip + 1;	/* point at the ip passed the : */
-		strcpy(buf, input);
+		memcpy(buf, input, size);
 		ip = strstr(buf, ":");
 		if (ip != NULL) {
 			*ip = '\0';	/* replace ":" with null */

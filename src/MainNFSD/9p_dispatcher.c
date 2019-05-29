@@ -352,7 +352,12 @@ static void worker_thread_initializer(struct fridgethr_context *ctx)
 	char thr_name[32];
 
 	wd->worker_index = atomic_inc_uint32_t(&worker_indexer);
-	snprintf(thr_name, sizeof(thr_name), "work-%u", wd->worker_index);
+
+	/* We don't care about too long string, truncated is fine and we don't
+	 * expect EOVERRUN or EINVAL.
+	 */
+	(void) snprintf(thr_name, sizeof(thr_name),
+			"work-%u", wd->worker_index);
 	SetNameFunction(thr_name);
 
 	/* Initialize thr waitq */
@@ -526,7 +531,7 @@ void *_9p_socket_thread(void *Arg)
 	int rc = -1;
 	struct pollfd fds[1];
 	int fdcount = 1;
-	static char my_name[MAXNAMLEN + 1];
+	static char my_name[32];
 	char strcaller[SOCK_NAME_MAX];
 	struct display_buffer dspbuf = {
 				sizeof(strcaller), strcaller, strcaller};
@@ -543,7 +548,11 @@ void *_9p_socket_thread(void *Arg)
 	int readlen = 0;
 	int total_readlen = 0;
 
-	snprintf(my_name, MAXNAMLEN, "9p_sock_mgr#fd=%ld", tcp_sock);
+	/* We don't care about too long string, truncated is fine and we don't
+	 * expect EOVERRUN or EINVAL.
+	 */
+	(void) snprintf(my_name, sizeof(my_name),
+			"9p_sock_mgr#fd=%ld", tcp_sock);
 	SetNameFunction(my_name);
 	rcu_register_thread();
 

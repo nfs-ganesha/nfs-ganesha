@@ -278,8 +278,12 @@ void nfs_set_client_location(nfs_client_id_t *clientid,
 {
 	assert(clientid->cid_minorversion == 0);
 	clientid->cid_cb.v40.cb_addr.nc = nfs_netid_to_nc(addr4->r_netid);
-	strlcpy(clientid->cid_cb.v40.cb_client_r_addr, addr4->r_addr,
-		SOCK_NAME_MAX);
+	if (strlcpy(clientid->cid_cb.v40.cb_client_r_addr, addr4->r_addr,
+		    sizeof(clientid->cid_cb.v40.cb_client_r_addr))
+	    >= sizeof(clientid->cid_cb.v40.cb_client_r_addr)) {
+		LogCrit(COMPONENT_CLIENTID, "Callback r_addr %s too long",
+			addr4->r_addr);
+	}
 	setup_client_saddr(clientid, clientid->cid_cb.v40.cb_client_r_addr);
 }
 

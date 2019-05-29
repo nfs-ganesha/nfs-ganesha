@@ -377,7 +377,6 @@ int main(int argc, char *argv[])
 		LogFatal(COMPONENT_MAIN, "Can't open pid file %s for writing",
 			 nfs_pidfile_path);
 	} else {
-		char linebuf[1024];
 		struct flock lk;
 
 		/* Try to obtain a lock on the file */
@@ -389,10 +388,11 @@ int main(int argc, char *argv[])
 			LogFatal(COMPONENT_MAIN, "Ganesha already started");
 
 		/* Put pid into file, then close it */
-		(void)snprintf(linebuf, sizeof(linebuf), "%u\n", getpid());
-		if (write(pidfile, linebuf, strlen(linebuf)) == -1)
-			LogCrit(COMPONENT_MAIN, "Couldn't write pid to file %s",
-				nfs_pidfile_path);
+		if (dprintf(pidfile, "%u\n", getpid()) < 0 ||
+		    close(pidfile) < 0)
+			LogCrit(COMPONENT_MAIN,
+				"Couldn't write pid to file %s error %s (%d)",
+				nfs_pidfile_path, strerror(errno), errno);
 	}
 
 	/* Set up for the signal handler.
