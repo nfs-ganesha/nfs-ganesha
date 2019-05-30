@@ -198,16 +198,18 @@ static void _mem_int_put_ref(struct mem_fsal_obj_handle *myself,
 static void package_mem_handle(struct mem_fsal_obj_handle *myself)
 {
 	char buf[MAXPATHLEN];
-	uint16_t len;
+	uint16_t len_fileid, len_name;
 	uint64_t hashkey;
 	int opaque_bytes_used = 0, pathlen = 0;
 
 	memset(buf, 0, sizeof(buf));
 
 	/* Make hashkey */
-	len = sizeof(myself->obj_handle.fileid);
-	memcpy(buf, &myself->obj_handle.fileid, len);
-	strncpy(buf + len, myself->m_name, sizeof(buf) - len);
+	len_fileid = sizeof(myself->obj_handle.fileid);
+	memcpy(buf, &myself->obj_handle.fileid, len_fileid);
+	len_name = strlen(myself->m_name);
+	memcpy(buf + len_fileid, myself->m_name,
+	       MIN(len_name, sizeof(buf) - len_name));
 	hashkey = CityHash64(buf, sizeof(buf));
 
 	memcpy(myself->handle, &hashkey, sizeof(hashkey));
@@ -216,15 +218,14 @@ static void package_mem_handle(struct mem_fsal_obj_handle *myself)
 	/* include length of the name in the handle.
 	 * MAXPATHLEN=4096 ... max path length can be contained in a short int.
 	 */
-	len = strlen(myself->m_name);
-	memcpy(myself->handle + opaque_bytes_used, &len, sizeof(len));
-	opaque_bytes_used += sizeof(len);
+	memcpy(myself->handle + opaque_bytes_used, &len_name, sizeof(len_name));
+	opaque_bytes_used += sizeof(len_name);
 
 	/* Either the nfsv4 fh opaque size or the length of the name.
 	 * Ideally we can include entire mem name for guaranteed
 	 * uniqueness of mem handles.
 	 */
-	pathlen = MIN(V4_FH_OPAQUE_SIZE - opaque_bytes_used, len);
+	pathlen = MIN(V4_FH_OPAQUE_SIZE - opaque_bytes_used, len_name);
 	memcpy(myself->handle + opaque_bytes_used, myself->m_name, pathlen);
 	opaque_bytes_used += pathlen;
 

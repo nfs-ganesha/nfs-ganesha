@@ -107,52 +107,62 @@ static inline int dbus_callout_cmpf(const struct avltree_node *lhs,
 	return strcmp(lk->name, rk->name);
 }
 
-static inline bool is_valid_dbus_prefix(const char *prefix)
+/* Validate dbus prefix, returning 0 if empty, -1 if invalid, otherwise the
+ * length of the prefix.
+ */
+static inline int is_valid_dbus_prefix(const char *prefix)
 {
+	int i = 0;
+
 	if (prefix == NULL || *prefix == '\0')
-		return false;
+		return 0;
 
-	if (!isalpha(*prefix) && *prefix != '_')
-		return false;
+	if (!isalpha(prefix[i]) && prefix[i] != '_')
+		return -1;
 
-	prefix++;
-	while (*prefix != '\0') {
-		if (!isalnum(*prefix) && *prefix != '_')
-			return false;
-		prefix++;
+	i++;
+	while (prefix[i] != '\0') {
+		if (!isalnum(prefix[i]) && prefix[i] != '_')
+			return -1;
+		i++;
 	}
 
-	return true;
+	return i;
 }
 
 static inline void dbus_name_with_prefix(char *prefixed_dbus_name,
-			const char *default_name, const char *prefix)
+					 size_t prefixed_dbus_name_size,
+					 const char *default_name,
+					 const char *prefix)
 {
-	int prefix_len, total_len;
+	int prefix_len, total_len, default_len = strlen(default_name);
 
-	if (!is_valid_dbus_prefix(prefix)) {
-		if (prefix != NULL && prefix[0] != '\0') {
+	assert(default_len < prefixed_dbus_name_size);
+
+	prefix_len = is_valid_dbus_prefix(prefix);
+
+	if (prefix_len <= 0) {
+		if (prefix_len < 0) {
 			LogEvent(COMPONENT_DBUS,
 				"Dbus name prefix is invalid. Ignoring the prefix.");
 		}
-		strcpy(prefixed_dbus_name, default_name);
+		memcpy(prefixed_dbus_name, default_name, default_len + 1);
 		return;
 	}
-
-	prefix_len = strlen(prefix);
 
 	/* Additional length for separator (.) and null character */
-	total_len = strlen(default_name) + prefix_len + 2;
-	if (total_len > NAME_MAX) {
+	total_len = default_len + prefix_len + 2;
+	if (total_len >= prefixed_dbus_name_size) {
 		LogEvent(COMPONENT_DBUS,
 			"Dbus name prefix too long. Ignoring the prefix.");
-		strcpy(prefixed_dbus_name, default_name);
+		memcpy(prefixed_dbus_name, default_name, default_len + 1);
 		return;
 	}
 
-	strcpy(prefixed_dbus_name, prefix);
+	memcpy(prefixed_dbus_name, prefix, prefix_len);
 	prefixed_dbus_name[prefix_len] = '.';
-	strcpy(prefixed_dbus_name + prefix_len + 1, default_name);
+	memcpy(prefixed_dbus_name + prefix_len + 1, default_name,
+	       default_len + 1);
 }
 
 /*
@@ -256,7 +266,7 @@ void init_dbus_broadcast(void)
 void gsh_dbus_pkginit(void)
 {
 	int code = 0;
-	char prefixed_dbus_name[NAME_MAX];
+	char prefixed_dbus_name[NAME_MAX + 1];
 
 	LogDebug(COMPONENT_DBUS, "init");
 
@@ -273,8 +283,8 @@ void gsh_dbus_pkginit(void)
 		goto out;
 	}
 
-	dbus_name_with_prefix(prefixed_dbus_name, dbus_name,
-				nfs_param.core_param.dbus_name_prefix);
+	dbus_name_with_prefix(prefixed_dbus_name, sizeof(prefixed_dbus_name),
+			      dbus_name, nfs_param.core_param.dbus_name_prefix);
 	code =
 	    dbus_bus_request_name(thread_state.dbus_conn, prefixed_dbus_name,
 				  DBUS_NAME_FLAG_REPLACE_EXISTING,
@@ -615,15 +625,12 @@ int32_t gsh_dbus_register_path(const char *name,
 {
 	struct ganesha_dbus_handler *handler;
 	struct avltree_node *node;
-	char path[512];
 	int code = 0;
+	const char *dbus_path = DBUS_PATH;
 
-	/* XXX if this works, add ifc level */
-	snprintf(path, 512, "%s%s", DBUS_PATH, name);
+	handler = gsh_malloc(sizeof(struct ganesha_dbus_handler));
 
-	handler = (struct ganesha_dbus_handler *)
-	    gsh_malloc(sizeof(struct ganesha_dbus_handler));
-	handler->name = gsh_strdup(path);
+	handler->name = gsh_concat(dbus_path, name);
 	handler->vtable.unregister_function = path_unregistered_func;
 	handler->vtable.message_function = dbus_message_entrypoint;
 
@@ -650,11 +657,12 @@ int32_t gsh_dbus_register_path(const char *name,
 
 	node = avltree_insert(&handler->node_k, &thread_state.callouts);
 	if (node) {
-		LogFatal(COMPONENT_DBUS, "failed inserting method %s", path);
+		LogFatal(COMPONENT_DBUS, "failed inserting method %s",
+			 handler->name);
 		code = EINVAL;
 	}
 
-	LogDebug(COMPONENT_DBUS, "registered handler for %s", path);
+	LogDebug(COMPONENT_DBUS, "registered handler for %s", handler->name);
 
  out:
 	return code;
@@ -665,7 +673,7 @@ void gsh_dbus_pkgshutdown(void)
 	struct avltree_node *node, *next_node;
 	struct ganesha_dbus_handler *handler;
 	int code = 0;
-	char prefixed_dbus_name[NAME_MAX];
+	char prefixed_dbus_name[NAME_MAX + 1];
 
 	LogDebug(COMPONENT_DBUS, "shutdown");
 
@@ -698,8 +706,9 @@ void gsh_dbus_pkgshutdown(void)
 
 	/* Unassign the name from dbus connection */
 	if (thread_state.dbus_conn) {
-		dbus_name_with_prefix(prefixed_dbus_name, dbus_name,
-					nfs_param.core_param.dbus_name_prefix);
+		dbus_name_with_prefix(prefixed_dbus_name,
+				      sizeof(prefixed_dbus_name), dbus_name,
+				      nfs_param.core_param.dbus_name_prefix);
 		dbus_bus_release_name(thread_state.dbus_conn,
 				      prefixed_dbus_name,
 				      &thread_state.dbus_err);

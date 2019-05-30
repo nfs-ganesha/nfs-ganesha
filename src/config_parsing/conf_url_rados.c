@@ -195,7 +195,7 @@ static void cu_rados_url_shutdown(void)
 	}
 }
 
-static inline char *match_dup(regmatch_t *m, char *in)
+static inline char *match_dup(regmatch_t *m, const char *in)
 {
 	char *s = NULL;
 
@@ -204,7 +204,8 @@ static inline char *match_dup(regmatch_t *m, char *in)
 
 		size = m->rm_eo - m->rm_so + 1;
 		s = (char *)gsh_malloc(size);
-		snprintf(s, size, "%s", in + m->rm_so);
+		memcpy(s, in + m->rm_so, size - 1);
+		s[size - 1] = '\0';
 	}
 	return s;
 }
@@ -220,11 +221,11 @@ static int rados_url_parse(const char *url, char **pool, char **ns, char **obj)
 		char *x1, *x2, *x3;
 
 		m = &(match[1]);
-		x1 = match_dup(m, (char *)url);
+		x1 = match_dup(m, url);
 		m = &(match[2]);
-		x2 = match_dup(m, (char *)url);
+		x2 = match_dup(m, url);
 		m = &(match[3]);
-		x3 = match_dup(m, (char *)url);
+		x3 = match_dup(m, url);
 
 		*pool = NULL;
 		*ns = NULL;

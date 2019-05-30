@@ -399,11 +399,12 @@ void SetNameHost(const char *name)
 /* Set the function name in progress. */
 void SetNameFunction(const char *nom)
 {
-	strlcpy(thread_name, nom, sizeof(thread_name));
-	if (strlen(nom) >= sizeof(thread_name))
+	if (strlcpy(thread_name, nom, sizeof(thread_name))
+	    >= sizeof(thread_name)) {
 		LogWarn(COMPONENT_LOG,
 			"Thread name %s too long truncated to %s",
 			nom, thread_name);
+	}
 	clientip = NULL;
 }
 

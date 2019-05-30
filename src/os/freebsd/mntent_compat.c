@@ -106,53 +106,47 @@ char *hasmntopt(const struct mntent *mnt, const char *option)
 	return NULL;
 }
 
-static char *catopt(char *s0, const char *s1)
+static void catopt(char *buf, int *pos, size_t size, const char *s1)
 {
 	size_t newlen;
 	char *cp;
 
 	if (s1 == NULL || *s1 == '\0')
-		return s0;
+		return;
 
-	if (s0 != NULL) {
-		newlen = strlen(s0) + strlen(s1) + 1 + 1;
-		cp = gsh_realloc(s0, newlen);
+	newlen = strlen(s1);
 
-		strcat(cp, " ");
-		strcat(cp, s1);
-	} else
-		cp = gsh_strdup(s1);
+	if (*pos != 0 && (*pos + 1 + newlen) < size) {
+		buf[*pos] = ' ';
+		*pos = *pos + 1;
+	}
 
-	return cp;
+	if ((*pos + newlen) < size) {
+		memcpy(buf + *pos, s1, newlen + 1);
+		*pos = *pos + newlen;
+	}
 }
 
-static char *flags2opts(int flags)
+static void flags2opts(int flags, char *buf, size_t size)
 {
 	char *res = NULL;
-	int i;
+	int i, pos = 0;
 
-	res = catopt(res, (flags & MNT_RDONLY) ? "ro" : "rw");
+	catopt(res, &pos, size, (flags & MNT_RDONLY) ? "ro" : "rw");
 
 	for (i = 0; i < N_OPTS; i++)
 		if (flags & mntoptions[i].m_flag)
-			res = catopt(res, mntoptions[i].m_option);
-	return res;
+			catopt(res, &pos, size, mntoptions[i].m_option);
 }
 
 static struct mntent *statfs_to_mntent(struct statfs *mntbuf)
 {
-	static char opts_buf[40], *tmp;
+	static char opts_buf[40];
 
 	_mntent.mnt_fsname = mntbuf->f_mntfromname;
 	_mntent.mnt_dir = mntbuf->f_mntonname;
 	_mntent.mnt_type = mntbuf->f_fstypename;
-	tmp = flags2opts(mntbuf->f_flags);
-	if (tmp) {
-		strlcpy(opts_buf, tmp, sizeof(opts_buf));
-		gsh_free(tmp);
-	} else {
-		*opts_buf = '\0';
-	}
+	flags2opts(mntbuf->f_flags, opts_buf, sizeof(opts_buf));
 	_mntent.mnt_opts = opts_buf;
 	_mntent.mnt_freq = _mntent.mnt_passno = 0;
 	return &_mntent;
