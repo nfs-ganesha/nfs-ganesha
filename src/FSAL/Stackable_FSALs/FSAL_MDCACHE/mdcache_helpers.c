@@ -425,17 +425,18 @@ mdc_get_parent_handle(struct mdcache_fsal_export *export,
 
 /* entry's content_lock must not be held, this function will
 get the content_lock in exclusive mode */
-void
+fsal_status_t
 mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry,
 	       struct gsh_buffdesc *parent_out)
 {
 	struct fsal_obj_handle *sub_handle = NULL;
-	fsal_status_t status;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 
 	PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 
 	if (entry->obj_handle.type != DIRECTORY) {
 		/* Parent pointer only for directories */
+		status.major = ERR_FSAL_INVAL;
 		goto out;
 	}
 
@@ -452,16 +453,26 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry,
 			    entry->sub_handle, "..", &sub_handle, NULL)
 	       );
 
-	if (FSAL_IS_ERROR(status)) {
-		/* Top of filesystem */
-		goto copy_parent_out;
-	}
-
-	mdcache_free_fh(&entry->fsobj.fsdir.parent);
-	mdc_get_parent_handle(export, entry, sub_handle);
+	if (FSAL_IS_SUCCESS(status)) {
+		/* if we already had a parent handle, then we are
+		 * going to refresh it.
+		 */
+		mdcache_free_fh(&entry->fsobj.fsdir.parent);
+		mdc_get_parent_handle(export, entry, sub_handle);
+	} else if (entry->fsobj.fsdir.parent.len != 0) {
+		/* Lookup of (..) failed, but if we had a cached
+		 * parent handle then we will keep the same and
+		 * not fail this request for getting parent.
+		 */
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Lookup for (..) failed for entry: %p, but we have a "
+			 "cached parent handle so we will keep it", entry);
+		status.major = ERR_FSAL_NO_ERROR;
+	} else
+		goto out;
 
 copy_parent_out:
-	if (parent_out != NULL  && entry->fsobj.fsdir.parent.len != 0) {
+	if (parent_out != NULL) {
 		/* Copy the parent handle to parent_out */
 		mdcache_copy_fh(parent_out, &entry->fsobj.fsdir.parent);
 	}
@@ -475,6 +486,7 @@ out:
 			    sub_handle->obj_ops->release(sub_handle)
 			   );
 	}
+	return status;
 }
 
 /**
@@ -1201,12 +1213,13 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 				"Lookup parent (..) of %p", mdc_parent);
 
-		mdc_get_parent(export, mdc_parent, &tmpfh);
+		status = mdc_get_parent(export, mdc_parent, &tmpfh);
 
-		status =  mdcache_locate_host(&tmpfh, export, new_entry,
-					      attrs_out);
-
-		mdcache_free_fh(&tmpfh);
+		if (FSAL_IS_SUCCESS(status)) {
+			status =  mdcache_locate_host(&tmpfh, export, new_entry,
+						      attrs_out);
+			mdcache_free_fh(&tmpfh);
+		}
 
 		if (status.major == ERR_FSAL_STALE)
 			status.major = ERR_FSAL_NOENT;
