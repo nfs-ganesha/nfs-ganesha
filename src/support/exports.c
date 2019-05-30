@@ -323,29 +323,19 @@ void LogClientListEntry(log_levels_t level,
 			char *tag,
 			exportlist_client_entry_t *entry)
 {
-	char perms[1024] = "\0";
-	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
-	char addr[INET6_ADDRSTRLEN];
-	char *paddr = addr;
-	char *client_type;
-	bool free_paddr = false;
+	char buf[1024] = "\0";
+	struct display_buffer dspbuf = {sizeof(buf), buf, buf};
+	char *paddr = NULL;
+	char *free_paddr = NULL;
 
 	if (!isLevel(component, level))
 		return;
 
-	if (entry->type > BAD_CLIENT) {
-		sprintf(paddr, "0x%08x", entry->type);
-		client_type = "UNKNOWN_CLIENT_TYPE";
-	} else {
-		client_type = client_types[entry->type];
-	}
-
-	(void) StrExportOptions(&dspbuf, &entry->client_perms);
-
 	switch (entry->type) {
 	case NETWORK_CLIENT:
-		paddr = cidr_to_str(entry->client.network.cidr, CIDR_NOFLAGS);
-		free_paddr = true;
+		free_paddr = cidr_to_str(entry->client.network.cidr,
+					 CIDR_NOFLAGS);
+		paddr = free_paddr;
 		break;
 
 	case NETGROUP_CLIENT:
@@ -368,14 +358,27 @@ void LogClientListEntry(log_levels_t level,
 	case BAD_CLIENT:
 		paddr = "<unknown>";
 		break;
+
+	default:
+		break;
 	}
 
-	DisplayLogComponentLevel(component, (char *) __FILE__, line, func,
-				 level, "%s%p %s: %s (%s)",
-				 tag, entry, client_type, paddr, perms);
+	if (entry->type > BAD_CLIENT) {
+		display_printf(&dspbuf, "UNKNOWN_CLIENT_TYPE: 0x%08x (",
+			       entry->type);
+	} else {
+		display_printf(&dspbuf, "%s: %s (",
+			       client_types[entry->type], paddr);
+	}
 
-	if (free_paddr)
-		gsh_free(paddr);
+	(void) StrExportOptions(&dspbuf, &entry->client_perms);
+
+	display_cat(&dspbuf, ")");
+
+	DisplayLogComponentLevel(component, (char *) __FILE__, line, func,
+				 level, "%s%p %s", tag, entry, buf);
+
+	gsh_free(free_paddr);
 }
 
 static void display_clients(struct gsh_export *export)
