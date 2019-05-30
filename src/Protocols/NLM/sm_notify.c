@@ -83,27 +83,28 @@ int main(int argc, char **argv)
 			sflag = 1;
 			break;
 		case 'm':
-			if (strlen(optarg) >= STR_SIZE) {
+			if (strlcpy(mon_client, optarg, sizeof(mon_client))
+			    >= sizeof(mon_client)) {
 				fprintf(stderr, ERR_MSG1, "monitor host");
 				exit(1);
 			}
-			strcpy(mon_client, optarg);
 			mflag = 1;
 			break;
 		case 'r':
-			if (strlen(optarg) >= STR_SIZE) {
+			if (strlcpy(remote_addr_s, optarg,
+				    sizeof(remote_addr_s))
+			    >= sizeof(remote_addr_s)) {
 				fprintf(stderr, ERR_MSG1, "remote address");
 				exit(1);
 			}
-			strcpy(remote_addr_s, optarg);
 			rflag = 1;
 			break;
 		case 'l':
-			if (strlen(optarg) >= STR_SIZE) {
+			if (strlcpy(local_addr_s, optarg, sizeof(local_addr_s))
+			    >= sizeof(local_addr_s)) {
 				fprintf(stderr, ERR_MSG1, "local address");
 				exit(1);
 			}
-			strcpy(local_addr_s, optarg);
 			lflag = 1;
 			break;
 		case '?':
