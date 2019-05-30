@@ -504,7 +504,7 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 				      attrmask_t attrmask,
 				      bool *eod_met);
 
-void mdc_get_parent(struct mdcache_fsal_export *exp,
+fsal_status_t mdc_get_parent(struct mdcache_fsal_export *exp,
 		    mdcache_entry_t *entry,
 		    struct gsh_buffdesc *parent_out);
 
