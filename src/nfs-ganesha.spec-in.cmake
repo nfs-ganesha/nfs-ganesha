@@ -852,6 +852,9 @@ exit 0
 %if %{with 9P}
 %{_bindir}/client_stats_9pOps
 %{_bindir}/export_stats_9pOps
+%else
+%exclude %{_bindir}/client_stats_9pOps
+%exclude %{_bindir}/export_stats_9pOps
 %endif
 %endif
 %{_bindir}/fake_recall
