@@ -45,6 +45,7 @@
 #include <rbt_tree.h>
 #include <pthread.h>
 #include "log.h"
+#include "display.h"
 #include "abstract_mem.h"
 #include "gsh_types.h"
 
@@ -71,8 +72,8 @@ typedef uint64_t(*rbthash_function_t)(struct hash_param *,
 typedef int (*both_function_t)(struct hash_param *, struct gsh_buffdesc *,
 			       uint32_t *, uint64_t *);
 typedef int (*hash_comparator_t)(struct gsh_buffdesc *, struct gsh_buffdesc *);
-typedef int (*key_display_function_t)(struct gsh_buffdesc *, char *);
-typedef int (*val_display_function_t)(struct gsh_buffdesc *, char *);
+typedef int (*hash_display_function_t)(struct display_buffer *dspbuf,
+				       struct gsh_buffdesc *);
 
 #define HT_FLAG_NONE 0x0000	/*< Null hash table flags */
 #define HT_FLAG_CACHE 0x0001	/*< Indicates that caching should be
@@ -112,10 +113,8 @@ struct hash_param {
 	hash_comparator_t compare_key;/*< Function to compare two
 					  keys.  This function
 					  returns 0 on equality. */
-	key_display_function_t key_to_str; /*< Function to convert a key
-					       to a string. */
-	val_display_function_t val_to_str; /*< Function to convert a
-					       value to a string. */
+	hash_display_function_t display_key; /*< Function to display a key */
+	hash_display_function_t display_val; /*< Function to display a value */
 	char *ht_name; /*< Name of this hash table. */
 	log_components_t ht_log_component; /*< Log component to use for this
 					       hash table */
@@ -187,7 +186,7 @@ typedef enum hash_set_how {
 } hash_set_how_t;
 
 /* How many character used to display a key or value */
-#define HASHTABLE_DISPLAY_STRLEN 8192
+#define HASHTABLE_DISPLAY_STRLEN 512
 
 /* Possible errors */
 typedef enum hash_error {

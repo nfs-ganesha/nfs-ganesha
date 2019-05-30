@@ -83,18 +83,14 @@ int display_session_id(struct display_buffer *dspbuf, char *session_id)
 /**
  * @brief Display a key in the session ID table
  *
- * @param[in]  buff The key to display
- * @param[out] str  Displayed key
- *
- * @return Length of output string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   The key to display
  */
 
-int display_session_id_key(struct gsh_buffdesc *buff, char *str)
+int display_session_id_key(struct display_buffer *dspbuf,
+			      struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_session_id(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_session_id(dspbuf, buff->addr);
 }
 
 /**
@@ -122,18 +118,14 @@ int display_session(struct display_buffer *dspbuf, nfs41_session_t *session)
 /**
  * @brief Display a value in the session ID table
  *
- * @param[in]  buff The value to display
- * @param[out] str  Displayed value
- *
- * @return Length of output string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   The value to display
  */
 
-int display_session_id_val(struct gsh_buffdesc *buff, char *str)
+int display_session_id_val(struct display_buffer *dspbuf,
+			      struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_session(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_session(dspbuf, buff->addr);
 }
 
 /**
@@ -191,8 +183,8 @@ static hash_parameter_t session_id_param = {
 	.hash_func_rbt = session_id_rbt_hash_func,
 	.ht_log_component = COMPONENT_SESSIONS,
 	.compare_key = compare_session_id,
-	.key_to_str = display_session_id_key,
-	.val_to_str = display_session_id_val,
+	.display_key = display_session_id_key,
+	.display_val = display_session_id_val,
 	.flags = HT_FLAG_CACHE,
 };
 

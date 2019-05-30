@@ -117,17 +117,13 @@ int display_stateid_other(struct display_buffer *dspbuf, char *other)
 /**
  * @brief Display a stateid other in the hash table
  *
+ * @param[in]  dspbuf display buffer to display into
  * @param[in]  buff The key
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
  */
-int display_state_id_key(struct gsh_buffdesc *buff, char *str)
+int display_state_id_key(struct display_buffer *dspbuf,
+			 struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_stateid_other(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_stateid_other(dspbuf, buff->addr);
 }
 
 /**
@@ -222,17 +218,14 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 /**
  * @brief Display a state in the hash table
  *
+ * @param[in]  dspbuf display buffer to display into
  * @param[in]  buff The value
- * @param[out] str  Output buffer
- *
  * @return Length of output string.
  */
-int display_state_id_val(struct gsh_buffdesc *buff, char *str)
+int display_state_id_val(struct display_buffer *dspbuf,
+			 struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_stateid(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_stateid(dspbuf, buff->addr);
 }
 
 /**
@@ -317,8 +310,8 @@ static hash_parameter_t state_id_param = {
 	.hash_func_key = state_id_value_hash_func,
 	.hash_func_rbt = state_id_rbt_hash_func,
 	.compare_key = compare_state_id,
-	.key_to_str = display_state_id_key,
-	.val_to_str = display_state_id_val,
+	.display_key = display_state_id_key,
+	.display_val = display_state_id_val,
 	.flags = HT_FLAG_CACHE,
 	.ht_log_component = COMPONENT_STATE,
 	.ht_name = "State ID Table"
@@ -429,8 +422,8 @@ static hash_parameter_t state_obj_param = {
 	.hash_func_key = state_obj_value_hash_func,
 	.hash_func_rbt = state_obj_rbt_hash_func,
 	.compare_key = compare_state_obj,
-	.key_to_str = display_state_id_val,
-	.val_to_str = display_state_id_val,
+	.display_key = display_state_id_val,
+	.display_val = display_state_id_val,
 	.flags = HT_FLAG_CACHE,
 	.ht_log_component = COMPONENT_STATE,
 	.ht_name = "State Obj Table"

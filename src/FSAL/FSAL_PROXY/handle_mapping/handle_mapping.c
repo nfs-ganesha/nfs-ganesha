@@ -146,21 +146,35 @@ static int cmp_digest(struct gsh_buffdesc *p_key1, struct gsh_buffdesc *p_key2)
 		return 0;
 }
 
-static int print_digest(struct gsh_buffdesc *p_val, char *outbuff)
+/**
+ * @brief Display the handle digest (key)
+ *
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Buffer to display
+ */
+static int display_digest(struct display_buffer *dspbuf,
+			  struct gsh_buffdesc *buff)
 {
-	digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_val->addr;
+	digest_pool_entry_t *p_digest = (digest_pool_entry_t *) buff->addr;
 
-	return sprintf(outbuff, "%llu, %u",
-		       (unsigned long long)p_digest->nfs23_digest.object_id,
-		       p_digest->nfs23_digest.handle_hash);
+	return display_printf(dspbuf, "%"PRIu64", %u",
+			      p_digest->nfs23_digest.object_id,
+			      p_digest->nfs23_digest.handle_hash);
 }
 
-static int print_handle(struct gsh_buffdesc *p_val, char *outbuff)
+/**
+ * @brief Display the handle (val)
+ *
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Buffer to display
+ */
+static int display_handle(struct display_buffer *dspbuf,
+			  struct gsh_buffdesc *buff)
 {
-	handle_pool_entry_t *p_handle = (handle_pool_entry_t *) p_val->addr;
+	handle_pool_entry_t *p_handle = (handle_pool_entry_t *) buff->addr;
 
-	return snprintmem(outbuff, HASHTABLE_DISPLAY_STRLEN, p_handle->fh_data,
-			  p_handle->fh_len);
+	return display_opaque_bytes(dspbuf,
+				    p_handle->fh_data, p_handle->fh_len);
 }
 
 int handle_mapping_hash_add(hash_table_t *p_hash, uint64_t object_id,
@@ -226,8 +240,8 @@ static hash_parameter_t handle_hash_config = {
 	.hash_func_key = hash_digest_idx,
 	.hash_func_rbt = hash_digest_rbt,
 	.compare_key = cmp_digest,
-	.key_to_str = print_digest,
-	.val_to_str = print_handle
+	.display_key = display_digest,
+	.display_val = display_handle
 };
 
 /**

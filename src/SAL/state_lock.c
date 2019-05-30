@@ -117,49 +117,6 @@ static state_status_t do_lock_op(struct fsal_obj_handle *obj,
  */
 
 /**
- * Parameters used for lock cookie hash table initialization.
- *
- * @todo Switch the cookie table to something else and get rid
- * of this.
- */
-
-static hash_parameter_t cookie_param = {
-	.index_size = PRIME_STATE,
-	.hash_func_key = lock_cookie_value_hash_func,
-	.hash_func_rbt = lock_cookie_rbt_hash_func,
-	.compare_key = compare_lock_cookie_key,
-	.key_to_str = display_lock_cookie_key,
-	.val_to_str = display_lock_cookie_val,
-	.flags = HT_FLAG_NONE,
-};
-
-static hash_table_t *ht_lock_cookies;
-
-/**
- * @brief Initalize locking
- *
- * @return State status.
- */
-state_status_t state_lock_init(void)
-{
-	state_status_t status = STATE_SUCCESS;
-
-	ht_lock_cookies = hashtable_init(&cookie_param);
-	if (ht_lock_cookies == NULL) {
-		LogCrit(COMPONENT_STATE, "Cannot init NLM Client cache");
-		status = STATE_INIT_ENTRY_FAILED;
-		return status;
-	}
-
-	status = state_async_init();
-
-	state_owner_pool =
-		pool_basic_init("NFSv4 state owners", sizeof(state_owner_t));
-
-	return status;
-}
-
-/**
  * @brief Check whether a lock is from NLM
  *
  * @param[in] lock_entry Lock to check
@@ -1154,20 +1111,22 @@ static state_status_t subtract_lock_from_list(state_owner_t *owner,
 
 static void grant_blocked_locks(struct state_hdl *);
 
+static inline int display_lock_cookie(struct display_buffer *dspbuf,
+				      struct gsh_buffdesc *buff)
+{
+	return display_opaque_value(dspbuf, buff->addr, buff->len);
+}
+
 /**
  * @brief Display lock cookie in hash table
  *
- * @param[in]  buff Key to display
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Key to display
  */
-int display_lock_cookie_key(struct gsh_buffdesc *buff, char *str)
+int display_lock_cookie_key(struct display_buffer *dspbuf,
+			    struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_lock_cookie(&dspbuf, buff);
-	return display_buffer_len(&dspbuf);
+	return display_lock_cookie(dspbuf, buff);
 }
 
 /**
@@ -1229,17 +1188,13 @@ int display_lock_cookie_entry(struct display_buffer *dspbuf,
 /**
  * @brief Display lock cookie entry in hash table
  *
- * @param[in]  buff Value to display
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Value to display
  */
-int display_lock_cookie_val(struct gsh_buffdesc *buff, char *str)
+int display_lock_cookie_val(struct display_buffer *dspbuf,
+			    struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_lock_cookie_entry(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_lock_cookie_entry(dspbuf, buff->addr);
 }
 
 /**
@@ -1375,6 +1330,25 @@ void free_cookie(state_cookie_entry_t *cookie_entry, bool unblock)
 	gsh_free(cookie);
 	gsh_free(cookie_entry);
 }
+
+/**
+ * Parameters used for lock cookie hash table initialization.
+ *
+ * @todo Switch the cookie table to something else and get rid
+ * of this.
+ */
+
+static hash_parameter_t cookie_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = lock_cookie_value_hash_func,
+	.hash_func_rbt = lock_cookie_rbt_hash_func,
+	.compare_key = compare_lock_cookie_key,
+	.display_key = display_lock_cookie_key,
+	.display_val = display_lock_cookie_val,
+	.flags = HT_FLAG_NONE,
+};
+
+static hash_table_t *ht_lock_cookies;
 
 /**
  * @brief Add a grant cookie to a blocked lock
@@ -3586,6 +3560,30 @@ out:
 
 	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 	release_root_op_context();
+}
+
+/**
+ * @brief Initialize locking
+ *
+ * @return State status.
+ */
+state_status_t state_lock_init(void)
+{
+	state_status_t status = STATE_SUCCESS;
+
+	ht_lock_cookies = hashtable_init(&cookie_param);
+	if (ht_lock_cookies == NULL) {
+		LogCrit(COMPONENT_STATE, "Cannot init NLM Client cache");
+		status = STATE_INIT_ENTRY_FAILED;
+		return status;
+	}
+
+	status = state_async_init();
+
+	state_owner_pool =
+		pool_basic_init("NFSv4 state owners", sizeof(state_owner_t));
+
+	return status;
 }
 
 /** @} */

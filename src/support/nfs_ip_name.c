@@ -102,34 +102,27 @@ int compare_ip_name(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 /**
  * @brief Display the ip_name stored in the buffer
  *
- * @param[in]  pbuff Buffer to display
- * @param[out] str   Output string
- *
- * @return number of character written.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Buffer to display
  */
-int display_ip_name_key(struct gsh_buffdesc *pbuff, char *str)
+int display_ip_name_key(struct display_buffer *dspbuf,
+			struct gsh_buffdesc *buff)
 {
-	sockaddr_t *addr = (sockaddr_t *) (pbuff->addr);
-
-	str[0] = '\0';
-	(void) sprint_sockip(addr, str, HASHTABLE_DISPLAY_STRLEN);
-	return strlen(str);
+	return display_sockip(dspbuf, buff->addr);
 }
 
 /**
  * @brief Display the ip_name stored in the buffer
  *
- * @param[in]  pbuff Buffer to display
- * @param[out] str   Output string
- *
- * @return number of character written
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Buffer to display
  */
-int display_ip_name_val(struct gsh_buffdesc *pbuff, char *str)
+int display_ip_name_val(struct display_buffer *dspbuf,
+			struct gsh_buffdesc *buff)
 {
-	nfs_ip_name_t *nfs_ip_name = (pbuff->addr);
+	nfs_ip_name_t *nfs_ip_name = (buff->addr);
 
-	return snprintf(str, HASHTABLE_DISPLAY_STRLEN, "%s",
-			nfs_ip_name->hostname);
+	return display_cat(dspbuf, nfs_ip_name->hostname);
 }
 
 /**
@@ -377,8 +370,8 @@ static struct ip_name_cache ip_name_cache = {
 	.hash_param.hash_func_key = ip_name_value_hash_func,
 	.hash_param.hash_func_rbt = ip_name_rbt_hash_func,
 	.hash_param.compare_key = compare_ip_name,
-	.hash_param.key_to_str = display_ip_name_key,
-	.hash_param.val_to_str = display_ip_name_val,
+	.hash_param.display_key = display_ip_name_key,
+	.hash_param.display_val = display_ip_name_val,
 	.hash_param.flags = HT_FLAG_NONE,
 };
 

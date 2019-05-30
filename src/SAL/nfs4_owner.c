@@ -48,17 +48,13 @@ hash_table_t *ht_nfs4_owner;
 /**
  * @brief Display an NFSv4 owner key
  *
- * @param[in]  buff Key to display
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Key to display
  */
-int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str)
+int display_nfs4_owner_key(struct display_buffer *dspbuf,
+			   struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_nfs4_owner(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_nfs4_owner(dspbuf, buff->addr);
 }
 
 /**
@@ -150,17 +146,13 @@ int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 /**
  * @brief Display owner from hash table
  *
- * @param[in]  buff Buffer
- * @param[out] str  Output buffer
- *
- * @return Length of the output string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Buffer
  */
-int display_nfs4_owner_val(struct gsh_buffdesc *buff, char *str)
+int display_nfs4_owner_val(struct display_buffer *dspbuf,
+			   struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_nfs4_owner(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_nfs4_owner(dspbuf, buff->addr);
 }
 
 /**
@@ -347,8 +339,8 @@ static hash_parameter_t nfs4_owner_param = {
 	.hash_func_key = nfs4_owner_value_hash_func,
 	.hash_func_rbt = nfs4_owner_rbt_hash_func,
 	.compare_key = compare_nfs4_owner_key,
-	.key_to_str = display_nfs4_owner_key,
-	.val_to_str = display_nfs4_owner_val,
+	.display_key = display_nfs4_owner_key,
+	.display_val = display_nfs4_owner_val,
 	.flags = HT_FLAG_CACHE,
 };
 

@@ -477,39 +477,25 @@ int compare_client_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 /**
  * @brief Displays the client_id stored from the hash table
  *
- * @param[in]  buff Buffer to display
- * @param[out] str  Output string
- *
- * @return Number of character written.
- *
- */
-int display_client_id_key(struct gsh_buffdesc *buff, char *str)
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Buffer to display
+  */
+int display_client_id_key(struct display_buffer *dspbuf,
+			  struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {DISPLAY_CLIENTID_SIZE, str, str};
-	int rc;
-
-	rc = display_clientid(&dspbuf, *((clientid4 *) (buff->addr)));
-	assert(rc >= 0);
-
-	return display_buffer_len(&dspbuf);
+	return display_clientid(dspbuf, *((clientid4 *) (buff->addr)));
 }
 
 /**
  * @brief Displays the client record from a hash table
  *
- * @param[in]  buff Buffer to display
- * @param[out] str  Output string
- *
- * @return Number of character written.
- *
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Buffer to display
  */
-int display_client_id_val(struct gsh_buffdesc *buff, char *str)
+int display_client_id_val(struct display_buffer *dspbuf,
+			  struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_client_id_rec(&dspbuf, buff->addr);
-
-	return display_buffer_len(&dspbuf);
+	return display_client_id_rec(dspbuf, buff->addr);
 }
 
 /**
@@ -1266,8 +1252,8 @@ static hash_parameter_t cid_confirmed_hash_param = {
 	.hash_func_rbt = client_id_rbt_hash_func,
 	.hash_func_both = NULL,
 	.compare_key = compare_client_id,
-	.key_to_str = display_client_id_key,
-	.val_to_str = display_client_id_val,
+	.display_key = display_client_id_key,
+	.display_val = display_client_id_val,
 	.ht_name = "Confirmed Client ID",
 	.flags = HT_FLAG_CACHE,
 	.ht_log_component = COMPONENT_CLIENTID,
@@ -1279,67 +1265,12 @@ static hash_parameter_t cid_unconfirmed_hash_param = {
 	.hash_func_rbt = client_id_rbt_hash_func,
 	.hash_func_both = NULL,
 	.compare_key = compare_client_id,
-	.key_to_str = display_client_id_key,
-	.val_to_str = display_client_id_val,
+	.display_key = display_client_id_key,
+	.display_val = display_client_id_val,
 	.ht_name = "Unconfirmed Client ID",
 	.flags = HT_FLAG_CACHE,
 	.ht_log_component = COMPONENT_CLIENTID,
 };
-
-static hash_parameter_t cr_hash_param = {
-	.index_size = PRIME_STATE,
-	.hash_func_key = client_record_value_hash_func,
-	.hash_func_rbt = client_record_rbt_hash_func,
-	.hash_func_both = NULL,
-	.compare_key = compare_client_record,
-	.key_to_str = display_client_record_key,
-	.val_to_str = display_client_record_val,
-	.ht_name = "Client Record",
-	.flags = HT_FLAG_CACHE,
-	.ht_log_component = COMPONENT_CLIENTID,
-};
-
-/**
- * @brief Init the hashtable for Client Id cache.
- *
- * Perform all the required initialization for hashtable Client Id cache
- *
- * @return 0 if successful, -1 otherwise
- */
-int nfs_Init_client_id(void)
-{
-	ht_confirmed_client_id =
-		hashtable_init(&cid_confirmed_hash_param);
-
-	if (ht_confirmed_client_id == NULL) {
-		LogCrit(COMPONENT_INIT,
-			"NFS CLIENT_ID: Cannot init Client Id cache");
-		return -1;
-	}
-
-	ht_unconfirmed_client_id =
-		hashtable_init(&cid_unconfirmed_hash_param);
-
-	if (ht_unconfirmed_client_id == NULL) {
-		LogCrit(COMPONENT_INIT,
-			"NFS CLIENT_ID: Cannot init Client Id cache");
-		return -1;
-	}
-
-	ht_client_record = hashtable_init(&cr_hash_param);
-
-	if (ht_client_record == NULL) {
-		LogCrit(COMPONENT_INIT,
-			"NFS CLIENT_ID: Cannot init Client Record cache");
-		return -1;
-	}
-
-	client_id_pool =
-	    pool_basic_init("NFS4 Client ID Pool", sizeof(nfs_client_id_t));
-
-	return CLIENT_ID_SUCCESS;
-}
-
 int display_clientid(struct display_buffer *dspbuf, clientid4 clientid)
 {
 	int b_left = display_buffer_remain(dspbuf);
@@ -1626,35 +1557,25 @@ int compare_client_record(struct gsh_buffdesc *buff1,
 /**
  * @brief Displays the client_record stored in the buffer.
  *
- * @param[in]  buff Buffer to display
- * @param[out] str  output string
- *
- * @return The number of character written.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Buffer to display
  */
-int display_client_record_key(struct gsh_buffdesc *buff, char *str)
+int display_client_record_key(struct display_buffer *dspbuf,
+			      struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_client_record(&dspbuf, buff->addr);
-
-	return display_buffer_len(&dspbuf);
+	return display_client_record(dspbuf, buff->addr);
 }
 
 /**
  * @brief Displays the client_record stored in the buffer.
  *
- * @param[in]  buff Buffer to display
- * @param[out] str  output string
- *
- * @return The number of character written.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Buffer to display
  */
-int display_client_record_val(struct gsh_buffdesc *buff, char *str)
+int display_client_record_val(struct display_buffer *dspbuf,
+			      struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_client_record(&dspbuf, buff->addr);
-
-	return display_buffer_len(&dspbuf);
+	return display_client_record(dspbuf, buff->addr);
 }
 
 /**
@@ -1815,5 +1736,60 @@ nfs41_foreach_client_callback(bool(*cb) (nfs_client_id_t *cl, void *state),
 		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
 	}
 }
+
+static hash_parameter_t cr_hash_param = {
+	.index_size = PRIME_STATE,
+	.hash_func_key = client_record_value_hash_func,
+	.hash_func_rbt = client_record_rbt_hash_func,
+	.hash_func_both = NULL,
+	.compare_key = compare_client_record,
+	.display_key = display_client_record_key,
+	.display_val = display_client_record_val,
+	.ht_name = "Client Record",
+	.flags = HT_FLAG_CACHE,
+	.ht_log_component = COMPONENT_CLIENTID,
+};
+
+/**
+ * @brief Init the hashtable for Client Id cache.
+ *
+ * Perform all the required initialization for hashtable Client Id cache
+ *
+ * @return 0 if successful, -1 otherwise
+ */
+int nfs_Init_client_id(void)
+{
+	ht_confirmed_client_id =
+		hashtable_init(&cid_confirmed_hash_param);
+
+	if (ht_confirmed_client_id == NULL) {
+		LogCrit(COMPONENT_INIT,
+			"NFS CLIENT_ID: Cannot init Client Id cache");
+		return -1;
+	}
+
+	ht_unconfirmed_client_id =
+		hashtable_init(&cid_unconfirmed_hash_param);
+
+	if (ht_unconfirmed_client_id == NULL) {
+		LogCrit(COMPONENT_INIT,
+			"NFS CLIENT_ID: Cannot init Client Id cache");
+		return -1;
+	}
+
+	ht_client_record = hashtable_init(&cr_hash_param);
+
+	if (ht_client_record == NULL) {
+		LogCrit(COMPONENT_INIT,
+			"NFS CLIENT_ID: Cannot init Client Record cache");
+		return -1;
+	}
+
+	client_id_pool =
+	    pool_basic_init("NFS4 Client ID Pool", sizeof(nfs_client_id_t));
+
+	return CLIENT_ID_SUCCESS;
+}
+
 
 /** @} */

@@ -80,33 +80,13 @@ int display_nlm_state(struct display_buffer *dspbuf, state_t *key)
 /**
  * @brief Display an NLM State in the hash table
  *
- * @param[in]  buff The key
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   The key or val
  */
-int display_nlm_state_key(struct gsh_buffdesc *buff, char *str)
+int display_nlm_state_key_val(struct display_buffer *dspbuf,
+			      struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_nlm_state(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
-}
-
-/**
- * @brief Display an NLM State in the hash table
- *
- * @param[in]  buff The value
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
- */
-int display_nlm_state_val(struct gsh_buffdesc *buff, char *str)
-{
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_nlm_state(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_nlm_state(dspbuf, buff->addr);
 }
 
 /**
@@ -228,8 +208,8 @@ static hash_parameter_t nlm_state_hash_param = {
 	.hash_func_key = nlm_state_value_hash_func,
 	.hash_func_rbt = nlm_state_rbt_hash_func,
 	.compare_key = compare_nlm_state_key,
-	.key_to_str = display_nlm_state_key,
-	.val_to_str = display_nlm_state_val,
+	.display_key = display_nlm_state_key_val,
+	.display_val = display_nlm_state_key_val,
 	.flags = HT_FLAG_NONE,
 };
 

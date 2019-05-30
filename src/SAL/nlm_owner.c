@@ -112,33 +112,13 @@ int display_nsm_client(struct display_buffer *dspbuf, state_nsm_client_t *key)
 /**
  * @brief Display an NSM client in the hash table
  *
- * @param[in]  buff The key
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   The key or val
  */
-int display_nsm_client_key(struct gsh_buffdesc *buff, char *str)
+int display_nsm_client_key_val(struct display_buffer *dspbuf,
+			       struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_nsm_client(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
-}
-
-/**
- * @brief Display an NSM client in the hash table
- *
- * @param[in]  buff The value
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
- */
-int display_nsm_client_val(struct gsh_buffdesc *buff, char *str)
-{
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_nsm_client(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_nsm_client(dspbuf, buff->addr);
 }
 
 /**
@@ -327,33 +307,13 @@ int display_nlm_client(struct display_buffer *dspbuf, state_nlm_client_t *key)
 /**
  * @brief Display an NLM client in the hash table
  *
- * @param[in]  buff The key
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   The key or val
  */
-int display_nlm_client_key(struct gsh_buffdesc *buff, char *str)
+int display_nlm_client_key_val(struct display_buffer *dspbuf,
+			       struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_nlm_client(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
-}
-
-/**
- * @brief Display an NLM client in the hash table
- *
- * @param[in]  buff The value
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
- */
-int display_nlm_client_val(struct gsh_buffdesc *buff, char *str)
-{
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_nlm_client(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_nlm_client(dspbuf, buff->addr);
 }
 
 /**
@@ -535,33 +495,13 @@ int display_nlm_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 /**
  * @brief Display an NLM owner in the hash table
  *
- * @param[in]  buff The key
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   The key or val
  */
-int display_nlm_owner_key(struct gsh_buffdesc *buff, char *str)
+int display_nlm_owner_key_val(struct display_buffer *dspbuf,
+			      struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_nlm_owner(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
-}
-
-/**
- * @brief Display an NLM owner in the hash table
- *
- * @param[in]  buff The value
- * @param[out] str  Output buffer
- *
- * @return Length of output string.
- */
-int display_nlm_owner_val(struct gsh_buffdesc *buff, char *str)
-{
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_nlm_owner(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_nlm_owner(dspbuf, buff->addr);
 }
 
 /**
@@ -695,8 +635,8 @@ static hash_parameter_t nsm_client_hash_param = {
 	.hash_func_key = nsm_client_value_hash_func,
 	.hash_func_rbt = nsm_client_rbt_hash_func,
 	.compare_key = compare_nsm_client_key,
-	.key_to_str = display_nsm_client_key,
-	.val_to_str = display_nsm_client_val,
+	.display_key = display_nsm_client_key_val,
+	.display_val = display_nsm_client_key_val,
 	.flags = HT_FLAG_NONE,
 };
 
@@ -705,8 +645,8 @@ static hash_parameter_t nlm_client_hash_param = {
 	.hash_func_key = nlm_client_value_hash_func,
 	.hash_func_rbt = nlm_client_rbt_hash_func,
 	.compare_key = compare_nlm_client_key,
-	.key_to_str = display_nlm_client_key,
-	.val_to_str = display_nlm_client_val,
+	.display_key = display_nlm_client_key_val,
+	.display_val = display_nlm_client_key_val,
 	.flags = HT_FLAG_NONE,
 };
 
@@ -715,8 +655,8 @@ static hash_parameter_t nlm_owner_hash_param = {
 	.hash_func_key = nlm_owner_value_hash_func,
 	.hash_func_rbt = nlm_owner_rbt_hash_func,
 	.compare_key = compare_nlm_owner_key,
-	.key_to_str = display_nlm_owner_key,
-	.val_to_str = display_nlm_owner_val,
+	.display_key = display_nlm_owner_key_val,
+	.display_val = display_nlm_owner_key_val,
 	.flags = HT_FLAG_NONE,
 };
 

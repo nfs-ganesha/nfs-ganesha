@@ -139,17 +139,8 @@ static inline void state_hdl_cleanup(struct state_hdl *state_hdl)
 
 #ifdef _USE_9P
 int compare_9p_owner(state_owner_t *owner1, state_owner_t *owner2);
-int compare_9p_owner_key(struct gsh_buffdesc *buff1,
-			 struct gsh_buffdesc *buff2);
 
 int display_9p_owner(struct display_buffer *dspbuf, state_owner_t *owner);
-int display_9p_owner_key(struct gsh_buffdesc *buff, char *str);
-int display_9p_owner_val(struct gsh_buffdesc *buff, char *str);
-
-uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
-				   struct gsh_buffdesc *key);
-uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
-				 struct gsh_buffdesc *key);
 
 state_owner_t *get_9p_owner(struct sockaddr_storage *client_addr,
 			    uint32_t proc_id);
@@ -170,38 +161,11 @@ void inc_nsm_client_ref(state_nsm_client_t *client);
 void dec_nsm_client_ref(state_nsm_client_t *client);
 
 int display_nsm_client(struct display_buffer *dspbuf, state_nsm_client_t *key);
-int display_nsm_client_key(struct gsh_buffdesc *buff, char *str);
-
-int compare_nsm_client(state_nsm_client_t *client1,
-		       state_nsm_client_t *client2);
-
-int compare_nsm_client_key(struct gsh_buffdesc *buff1,
-			   struct gsh_buffdesc *buff2);
-
-uint32_t nsm_client_value_hash_func(hash_parameter_t *hparam,
-				    struct gsh_buffdesc *key);
-
-uint64_t nsm_client_rbt_hash_func(hash_parameter_t *hparam,
-				  struct gsh_buffdesc *key);
 
 state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
 				   char *caller_name);
 void inc_nlm_client_ref(state_nlm_client_t *client);
 void dec_nlm_client_ref(state_nlm_client_t *client);
-int display_nlm_client_val(struct gsh_buffdesc *buff, char *str);
-int display_nlm_client_key(struct gsh_buffdesc *buff, char *str);
-
-int compare_nlm_client(state_nlm_client_t *client1,
-		       state_nlm_client_t *client2);
-
-int compare_nlm_client_key(struct gsh_buffdesc *buff1,
-			   struct gsh_buffdesc *buff2);
-
-uint32_t nlm_client_value_hash_func(hash_parameter_t *hparam,
-				    struct gsh_buffdesc *key);
-
-uint64_t nlm_client_rbt_hash_func(hash_parameter_t *hparam,
-				  struct gsh_buffdesc *key);
 
 state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 				   state_nsm_client_t *nsm_client,
@@ -210,19 +174,8 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 void free_nlm_owner(state_owner_t *powner);
 
 int display_nlm_owner(struct display_buffer *dspbuf, state_owner_t *owner);
-int display_nlm_owner_val(struct gsh_buffdesc *buff, char *str);
-int display_nlm_owner_key(struct gsh_buffdesc *buff, char *str);
 
 int compare_nlm_owner(state_owner_t *owner1, state_owner_t *owner2);
-
-int compare_nlm_owner_key(struct gsh_buffdesc *buff1,
-			  struct gsh_buffdesc *buff2);
-
-uint32_t nlm_owner_value_hash_func(hash_parameter_t *hparam,
-				   struct gsh_buffdesc *key);
-
-uint64_t nlm_owner_rbt_hash_func(hash_parameter_t *hparam,
-				 struct gsh_buffdesc *key);
 
 state_owner_t *get_nlm_owner(care_t care, state_nlm_client_t *client,
 			     netobj *oh, uint32_t svid);
@@ -298,17 +251,6 @@ int display_clientid(struct display_buffer *dspbuf, clientid4 clientid);
 clientid4 new_clientid(void);
 void new_clientid_verifier(char *verf);
 
-int display_client_id_key(struct gsh_buffdesc *buff, char *str);
-int display_client_id_val(struct gsh_buffdesc *buff, char *str);
-
-int compare_client_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
-
-uint64_t client_id_rbt_hash_func(hash_parameter_t *hparam,
-				 struct gsh_buffdesc *key);
-
-uint32_t client_id_value_hash_func(hash_parameter_t *hparam,
-				   struct gsh_buffdesc *key);
-
 int display_client_id_rec(struct display_buffer *dspbuf,
 			  nfs_client_id_t *clientid);
 
@@ -335,18 +277,6 @@ void free_client_record(nfs_client_record_t *record);
 int32_t inc_client_record_ref(nfs_client_record_t *record);
 int32_t dec_client_record_ref(nfs_client_record_t *record);
 
-int display_client_record_key(struct gsh_buffdesc *buff, char *str);
-int display_client_record_val(struct gsh_buffdesc *buff, char *str);
-
-int compare_client_record(struct gsh_buffdesc *buff1,
-			  struct gsh_buffdesc *buff2);
-
-uint64_t client_record_rbt_hash_func(hash_parameter_t *hparam,
-				     struct gsh_buffdesc *key);
-
-uint32_t client_record_value_hash_func(hash_parameter_t *hparam,
-				       struct gsh_buffdesc *key);
-
 nfs_client_record_t *get_client_record(const char *const value,
 				       const size_t len,
 				       const uint32_t pnfs_flags,
@@ -365,16 +295,6 @@ int32_t _inc_session_ref(nfs41_session_t *session, const char *func, int line);
 #define inc_session_ref(s)  _inc_session_ref(s, __func__, __LINE__)
 int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line);
 #define dec_session_ref(s)  _dec_session_ref(s, __func__, __LINE__)
-
-int display_session_id_key(struct gsh_buffdesc *buff, char *str);
-int display_session_id_val(struct gsh_buffdesc *buff, char *str);
-int compare_session_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2);
-
-uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
-				    struct gsh_buffdesc *key);
-
-uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
-				  struct gsh_buffdesc *key);
 
 int nfs41_Init_session_id(void);
 
@@ -475,15 +395,6 @@ void nfs_State_PrintAll(void);
 struct state_t *nfs4_State_Get_Obj(struct fsal_obj_handle *obj,
 				     state_owner_t *owner);
 
-int display_state_id_val(struct gsh_buffdesc *buff, char *str);
-int display_state_id_key(struct gsh_buffdesc *buff, char *str);
-
-uint32_t state_id_value_hash_func(hash_parameter_t *hparam,
-				  struct gsh_buffdesc *key);
-
-uint64_t state_id_rbt_hash_func(hash_parameter_t *hparam,
-				struct gsh_buffdesc *key);
-
 /******************************************************************************
  *
  * NFSv4 Lease functions
@@ -503,19 +414,8 @@ bool valid_lease(nfs_client_id_t *clientid);
 void uncache_nfs4_owner(struct state_nfs4_owner_t *nfs4_owner);
 void free_nfs4_owner(state_owner_t *owner);
 int display_nfs4_owner(struct display_buffer *dspbuf, state_owner_t *owner);
-int display_nfs4_owner_val(struct gsh_buffdesc *buff, char *str);
-int display_nfs4_owner_key(struct gsh_buffdesc *buff, char *str);
 
 int compare_nfs4_owner(state_owner_t *owner1, state_owner_t *owner2);
-
-int compare_nfs4_owner_key(struct gsh_buffdesc *buff1,
-			   struct gsh_buffdesc *buff2);
-
-uint32_t nfs4_owner_value_hash_func(hash_parameter_t *hparam,
-				    struct gsh_buffdesc *key);
-
-uint64_t nfs4_owner_rbt_hash_func(hash_parameter_t *hparam,
-				  struct gsh_buffdesc *key);
 
 /**
  * @brief Convert an open_owner to an owner name
@@ -607,23 +507,6 @@ static inline bool owner_has_state(state_owner_t *owner)
  * Lock functions
  *
  ******************************************************************************/
-
-static inline int display_lock_cookie(struct display_buffer *dspbuf,
-				      struct gsh_buffdesc *buff)
-{
-	return display_opaque_value(dspbuf, buff->addr, buff->len);
-}
-
-int display_lock_cookie_key(struct gsh_buffdesc *buff, char *str);
-int display_lock_cookie_val(struct gsh_buffdesc *buff, char *str);
-int compare_lock_cookie_key(struct gsh_buffdesc *buff1,
-			    struct gsh_buffdesc *buff2);
-
-uint32_t lock_cookie_value_hash_func(hash_parameter_t *hparam,
-				     struct gsh_buffdesc *key);
-
-uint64_t lock_cookie_rbt_hash_func(hash_parameter_t *hparam,
-				   struct gsh_buffdesc *key);
 
 state_status_t state_lock_init(void);
 

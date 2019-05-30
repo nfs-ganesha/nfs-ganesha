@@ -86,35 +86,14 @@ int display_9p_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 /**
  * @brief Display owner from hash key
  *
- * @param[in]  buff Buffer pointing to owner
- * @param[out] str  Output buffer
- *
- * @return Length of display string.
+ * @param[in]  dspbuf display buffer to display into
+ * @param[in]  buff   Buffer pointing to owner
  */
 
-int display_9p_owner_key(struct gsh_buffdesc *buff, char *str)
+int display_9p_owner_key_val(struct display_buffer *dspbuf,
+			     struct gsh_buffdesc *buff)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_9p_owner(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
-}
-
-/**
- * @brief Display owner from hash value
- *
- * @param[in]  buff Buffer pointing to owner
- * @param[out] str  Output buffer
- *
- * @return Length of display string.
- */
-
-int display_9p_owner_val(struct gsh_buffdesc *buff, char *str)
-{
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
-
-	display_9p_owner(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+	return display_9p_owner(dspbuf, buff->addr);
 }
 
 /**
@@ -248,8 +227,8 @@ static hash_parameter_t _9p_owner_hash_param = {
 	.hash_func_key = _9p_owner_value_hash_func,
 	.hash_func_rbt = _9p_owner_rbt_hash_func,
 	.compare_key = compare_9p_owner_key,
-	.key_to_str = display_9p_owner_key,
-	.val_to_str = display_9p_owner_val,
+	.display_key = display_9p_owner_key_val,
+	.display_val = display_9p_owner_key_val,
 	.flags = HT_FLAG_NONE,
 };
 

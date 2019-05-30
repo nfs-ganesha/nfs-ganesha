@@ -510,9 +510,11 @@ hashtable_getlatch(struct hash_table *ht,
 		if (isDebug(COMPONENT_HASHTABLE)
 		    && isFullDebug(ht->parameter.ht_log_component)) {
 			char dispval[HASHTABLE_DISPLAY_STRLEN];
+			struct display_buffer valbuf = {
+				sizeof(dispval), dispval, dispval};
 
-			if (ht->parameter.val_to_str != NULL)
-				ht->parameter.val_to_str(&data->val, dispval);
+			if (ht->parameter.display_val != NULL)
+				ht->parameter.display_val(&valbuf, &data->val);
 			else
 				dispval[0] = '\0';
 
@@ -612,14 +614,18 @@ hashtable_setlatched(struct hash_table *ht,
 	    && isFullDebug(ht->parameter.ht_log_component)) {
 		char dispkey[HASHTABLE_DISPLAY_STRLEN];
 		char dispval[HASHTABLE_DISPLAY_STRLEN];
+		struct display_buffer keybuf = {
+			sizeof(dispkey), dispkey, dispkey};
+		struct display_buffer valbuf = {
+			sizeof(dispval), dispval, dispval};
 
-		if (ht->parameter.key_to_str != NULL)
-			ht->parameter.key_to_str(key, dispkey);
+		if (ht->parameter.display_key != NULL)
+			ht->parameter.display_key(&keybuf, key);
 		else
 			dispkey[0] = '\0';
 
-		if (ht->parameter.val_to_str != NULL)
-			ht->parameter.val_to_str(val, dispval);
+		if (ht->parameter.display_val != NULL)
+			ht->parameter.display_val(&valbuf, val);
 		else
 			dispval[0] = '\0';
 
@@ -643,16 +649,20 @@ hashtable_setlatched(struct hash_table *ht,
 		    && isFullDebug(ht->parameter.ht_log_component)) {
 			char dispkey[HASHTABLE_DISPLAY_STRLEN];
 			char dispval[HASHTABLE_DISPLAY_STRLEN];
+			struct display_buffer keybuf = {
+				sizeof(dispkey), dispkey, dispkey};
+			struct display_buffer valbuf = {
+				sizeof(dispval), dispval, dispval};
 
-			if (ht->parameter.key_to_str != NULL)
-				ht->parameter.key_to_str(&descriptors->key,
-							 dispkey);
+			if (ht->parameter.display_key != NULL)
+				ht->parameter.display_key(&keybuf,
+							  &descriptors->key);
 			else
 				dispkey[0] = '\0';
 
-			if (ht->parameter.val_to_str != NULL)
-				ht->parameter.val_to_str(&descriptors->val,
-							 dispval);
+			if (ht->parameter.display_val != NULL)
+				ht->parameter.display_val(&valbuf,
+							  &descriptors->val);
 			else
 				dispval[0] = '\0';
 
@@ -749,14 +759,18 @@ void hashtable_deletelatched(struct hash_table *ht,
 	    && isFullDebug(ht->parameter.ht_log_component)) {
 		char dispkey[HASHTABLE_DISPLAY_STRLEN];
 		char dispval[HASHTABLE_DISPLAY_STRLEN];
+		struct display_buffer keybuf = {
+			sizeof(dispkey), dispkey, dispkey};
+		struct display_buffer valbuf = {
+			sizeof(dispval), dispval, dispval};
 
-		if (ht->parameter.key_to_str != NULL)
-			ht->parameter.key_to_str(&data->key, dispkey);
+		if (ht->parameter.display_key != NULL)
+			ht->parameter.display_key(&keybuf, &data->key);
 		else
 			dispkey[0] = '\0';
 
-		if (ht->parameter.val_to_str != NULL)
-			ht->parameter.val_to_str(&data->val, dispval);
+		if (ht->parameter.display_val != NULL)
+			ht->parameter.display_val(&valbuf, &data->val);
 		else
 			dispval[0] = '\0';
 
@@ -903,6 +917,8 @@ hashtable_log(log_components_t component, struct hash_table *ht)
 	char dispkey[HASHTABLE_DISPLAY_STRLEN];
 	/* String representation of the stored value */
 	char dispval[HASHTABLE_DISPLAY_STRLEN];
+	struct display_buffer keybuf = {sizeof(dispkey), dispkey, dispkey};
+	struct display_buffer valbuf = {sizeof(dispval), dispval, dispval};
 	/* Index for traversing the partitions */
 	uint32_t i = 0;
 	/* Running count of entries  */
@@ -929,8 +945,15 @@ hashtable_log(log_components_t component, struct hash_table *ht)
 		RBT_LOOP(root, it) {
 			data = it->rbt_opaq;
 
-			ht->parameter.key_to_str(&(data->key), dispkey);
-			ht->parameter.val_to_str(&(data->val), dispval);
+			if (ht->parameter.display_key != NULL)
+				ht->parameter.display_key(&keybuf, &data->key);
+			else
+				dispkey[0] = '\0';
+
+			if (ht->parameter.display_val != NULL)
+				ht->parameter.display_val(&valbuf, &data->val);
+			else
+				dispval[0] = '\0';
 
 			if (compute(ht, &data->key, &index, &rbt_hash)
 			    != HASHTABLE_SUCCESS) {
