@@ -29,6 +29,7 @@
   display_fsinfo;
   display_len_cat;
   display_opaque_value_max;
+  display_opaque_bytes_flags;
   display_sockaddr;
   display_vprintf;
   DisplayLogComponentLevel;

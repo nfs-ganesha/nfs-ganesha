@@ -171,7 +171,41 @@ static inline int display_printf(struct display_buffer *dspbuf, const char *fmt,
 	return b_left;
 }
 
-int display_opaque_bytes(struct display_buffer *dspbuf, void *value, int len);
+#define OPAQUE_BYTES_SIZE(len) (MAX(len * 2 + 2 + 1, 32))
+
+/* Indicate if use upper case (%02X) or lower case (%02x) */
+#define OPAQUE_BYTES_UPPER 0x01
+
+/* Indicate if to lead with 0x */
+#define OPAQUE_BYTES_0x 0x02
+
+/* Return -1 on invalid length */
+#define OPAQUE_BYTES_INVALID_LEN 0x04
+
+/* Return -1 on NULL pointer */
+#define OPAQUE_BYTES_INVALID_NULL 0x08
+
+/* Return -1 on EMPTTY target */
+#define OPAQUE_BYTES_INVALID_EMPTY 0x10
+
+int display_opaque_bytes_flags(struct display_buffer *dspbuf,
+			       void *value, int len, int flags);
+
+/**
+ * @brief Display a number of opaque bytes as a hex string.
+ *
+ * @param[in,out] dspbuf The buffer.
+ * @param[in]     value  The bytes to display
+ * @param[in]     len    The number of bytes to display
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ */
+static inline
+int display_opaque_bytes(struct display_buffer *dspbuf, void *value, int len)
+{
+	return display_opaque_bytes_flags(dspbuf, value, len, OPAQUE_BYTES_0x);
+}
 
 int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
 			     int len, int max);
@@ -194,7 +228,7 @@ static inline int display_opaque_value(struct display_buffer *dspbuf,
 	return display_opaque_value_max(dspbuf, value, len, len);
 }
 
-int display_len_cat(struct display_buffer *dspbuf, char *str, int len);
+int display_len_cat(struct display_buffer *dspbuf, const char *str, int len);
 
 /**
  * @brief Append a null delimited string to the buffer.
@@ -205,7 +239,7 @@ int display_len_cat(struct display_buffer *dspbuf, char *str, int len);
  * @return the bytes remaining in the buffer.
  *
  */
-static inline int display_cat(struct display_buffer *dspbuf, char *str)
+static inline int display_cat(struct display_buffer *dspbuf, const char *str)
 {
 	return display_len_cat(dspbuf, str, strlen(str));
 }
