@@ -452,19 +452,19 @@ static int new_file(char *name_tok,
 	struct config_root *confroot = st->root_node;
 	char *fullpath = NULL;
 	int rc = ENOMEM;
-	char *filename = alloca(strlen(name_tok) + 1);
+	char *filename;
 
 	if (*name_tok == '\"') {
-		strcpy(filename, name_tok + 1);
+		 /* alloca'd memory freed on exit */
+		filename = gsh_strdupa(name_tok + 1);
 		filename[strlen(filename) - 1] = '\0';
 	} else {
-		strcpy(filename, name_tok); /* alloca'd memory freed on exit */
+		/* alloca'd memory freed on exit */
+		filename = gsh_strdupa(name_tok);
 	}
 	if (confroot->files == NULL) {
 		if (filename[0] == '/') {
-			char *path = alloca(strlen(filename) + 1);
-
-			strcpy(path, filename);
+			char *path = gsh_strdupa(filename);
 			confroot->conf_dir = gsh_strdup(dirname(path));
 		} else {
 			confroot->conf_dir = gsh_strdup(".");

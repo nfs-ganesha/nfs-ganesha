@@ -332,8 +332,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 		 export->export_id, export->fullpath, export->pseudopath);
 
 	/* Make a copy of the path */
-	tmp_pseudopath = alloca(strlen(export->pseudopath) + 1);
-	strcpy(tmp_pseudopath, export->pseudopath);
+	tmp_pseudopath = gsh_strdupa(export->pseudopath);
 
 	/* Find last '/' in path */
 	p = tmp_pseudopath;

@@ -750,8 +750,7 @@ int create_log_facility(const char *name, lf_function_t *log_func,
 				 "New log file path empty or too long");
 			return -EINVAL;
 		}
-		dir = alloca(strlen(private) + 1);
-		strcpy(dir, private);
+		dir = gsh_strdupa(private);
 		dir = dirname(dir);
 		rc = access(dir, W_OK);
 		if (rc != 0) {
@@ -1020,8 +1019,7 @@ int set_log_destination(const char *name, char *dest)
 	if (facility->lf_func == log_to_file) {
 		char *logfile, *dir;
 
-		dir = alloca(strlen(dest) + 1);
-		strcpy(dir, dest);
+		dir = gsh_strdupa(dest);
 		dir = dirname(dir);
 		rc = access(dir, W_OK);
 		if (rc != 0) {

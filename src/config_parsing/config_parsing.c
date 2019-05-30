@@ -1684,9 +1684,8 @@ static char *parse_expr(char *expr, struct expr_parse **expr_node)
 {
 	char *sp;
 	struct expr_parse *node = NULL, *prev_node = NULL, *root_node = NULL;
-	char *lexpr = alloca(strlen(expr) + 1);
+	char *lexpr = gsh_strdupa(expr);
 
-	strcpy(lexpr, expr);
 	sp = lexpr;
 	while (sp != NULL && *sp != '\0') {
 		sp = parse_block(sp, &node);	/* block is name ( ... ) */

@@ -226,6 +226,16 @@ gsh_realloc__(void *p, size_t n,
 		p_; \
 	})
 
+#ifdef _GNU_SOURCE
+#define gsh_strdupa(src) strdupa(src)
+#else
+#define gsh_strdupa(src) ({\
+		char *dest = alloca(strlen(src) + 1); \
+		strcpy(dest, src); \
+		dest; \
+	})
+#endif
+
 #define gsh_memdup(s, l) ({ \
 		void *p_ = gsh_malloc(l); \
 		memcpy(p_, s, l); \
