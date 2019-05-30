@@ -101,8 +101,8 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
 				  preply);
 	}
-	snprintf(symlink_name, sizeof(symlink_name), "%.*s", *name_len,
-		 name_str);
+
+	_9p_get_fname(symlink_name, *name_len, name_str);
 
 	link_content = gsh_malloc(*linkcontent_len + 1);
 

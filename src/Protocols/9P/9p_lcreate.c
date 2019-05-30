@@ -104,7 +104,8 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
 				  preply);
 	}
-	snprintf(file_name, sizeof(file_name), "%.*s", *name_len, name_str);
+
+	_9p_get_fname(file_name, *name_len, name_str);
 
 	_9p_openflags2FSAL(flags, &openflags);
 	pfid->state->state_data.fid.share_access =

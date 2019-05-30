@@ -107,8 +107,8 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				return _9p_rerror(req9p, msgtag, ENAMETOOLONG,
 						  plenout, preply);
 			}
-			snprintf(name, sizeof(name), "%.*s", *wnames_len,
-				 wnames_str);
+
+			_9p_get_fname(name, *wnames_len, wnames_str);
 
 			LogDebug(COMPONENT_9P,
 				 "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
@@ -138,7 +138,13 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		pnewfid->ppentry = pfid->pentry;
 
-		strlcpy(pnewfid->name, name, MAXNAMLEN+1);
+		if (strlcpy(pnewfid->name, name, sizeof(pnewfid->name))
+		    >= sizeof(pnewfid->name)) {
+			pentry->obj_ops->put_ref(pentry);
+			gsh_free(pnewfid);
+			return _9p_rerror(req9p, msgtag, ENAMETOOLONG,
+					  plenout, preply);
+		}
 
 		/* gdata ref is not hold : the pfid, which use same gdata */
 		/*  will be clunked after pnewfid */

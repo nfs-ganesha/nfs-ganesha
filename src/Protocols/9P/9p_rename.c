@@ -109,7 +109,8 @@ int _9p_rename(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
 				  preply);
 	}
-	snprintf(newname, sizeof(newname), "%.*s", *name_len, name_str);
+
+	_9p_get_fname(newname, *name_len, name_str);
 
 	fsal_status = fsal_rename(pfid->ppentry, pfid->name, pdfid->pentry,
 				  newname);

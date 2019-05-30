@@ -118,7 +118,8 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
 				  preply);
 	}
-	snprintf(oldname, sizeof(oldname), "%.*s", *oldname_len, oldname_str);
+
+	_9p_get_fname(oldname, *oldname_len, oldname_str);
 
 	if (*newname_len >= sizeof(newname)) {
 		LogDebug(COMPONENT_9P, "request with names too long (%u or %u)",
@@ -126,7 +127,8 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
 				  preply);
 	}
-	snprintf(newname, sizeof(newname), "%.*s", *newname_len, newname_str);
+
+	_9p_get_fname(newname, *newname_len, newname_str);
 
 	fsal_status = fsal_rename(poldfid->pentry, oldname, pnewfid->pentry,
 				  newname);

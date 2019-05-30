@@ -91,7 +91,8 @@ int _9p_unlinkat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
 				  preply);
 	}
-	snprintf(name, sizeof(name), "%.*s", *name_len, name_str);
+
+	_9p_get_fname(name, *name_len, name_str);
 
 	fsal_status = fsal_remove(pdfid->pentry, name);
 	if (FSAL_IS_ERROR(fsal_status))

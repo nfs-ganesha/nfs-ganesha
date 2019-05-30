@@ -92,7 +92,8 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		err = ENAMETOOLONG;
 		goto errout;
 	}
-	snprintf(exppath, sizeof(exppath), "%.*s", (int)*aname_len, aname_str);
+
+	_9p_get_fname(exppath, *aname_len, aname_str);
 
 	/*  Find the export for the dirname (using as well Path, Pseudo, or Tag)
 	 */

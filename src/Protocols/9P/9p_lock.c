@@ -129,7 +129,8 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
 				  preply);
 	}
-	snprintf(name, sizeof(name), "%.*s", *client_id_len, client_id_str);
+
+	_9p_get_fname(name, *client_id_len, client_id_str);
 
 	memset((char *)&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_INET;

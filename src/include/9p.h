@@ -827,4 +827,11 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply);
 int _9p_rerror(struct _9p_request_data *req9p, u16 *msgtag, u32 err,
 	       u32 *plenout, char *preply);
 
+/* Expects to already be size checked */
+static inline void _9p_get_fname(char *name, int len, const char *str)
+{
+	memcpy(name, str, len);
+	name[len] = '\0';
+}
+
 #endif				/* _9P_H */
