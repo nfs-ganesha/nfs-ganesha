@@ -1,5 +1,6 @@
 #include "config.h"
 #include "handle_mapping_db.h"
+#include "abstract_mem.h"
 #include <sys/time.h>
 
 int main(int argc, char **argv)
@@ -31,8 +32,8 @@ int main(int argc, char **argv)
 
 	dir = argv[1];
 
-	strcpy(param.databases_directory, dir);
-	strcpy(param.temp_directory, "/tmp");
+	param.databases_directory = gsh_strdup(dir);
+	param.temp_directory = gsh_strdup("/tmp");
 	param.database_count = count;
 	param.hashtable_size = 27;
 	param.nb_handles_prealloc = 1024;

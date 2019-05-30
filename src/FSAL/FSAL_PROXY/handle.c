@@ -46,6 +46,7 @@
 #include "nfs_proto_tools.h"
 #include "export_mgr.h"
 #include "common_utils.h"
+#include "fsal_convert.h"
 
 #define FSAL_PROXY_NFS_V4 4
 #define FSAL_PROXY_NFS_V4_MINOR 1
@@ -1036,9 +1037,18 @@ static int pxy_setclientid(clientid4 *new_clientid, sequenceid4 *new_seqid,
 	if (getsockname(pxy_exp->rpc.rpc_sock, &sin, &slen))
 		return -errno;
 
-	snprintf(clientid_name, MAXNAMLEN, "%s(%d) - GANESHA NFSv4 Proxy",
-		 inet_ntop(AF_INET, &sin.sin_addr, addrbuf, sizeof(addrbuf)),
-		 getpid());
+	rc = snprintf(clientid_name, sizeof(clientid_name),
+		      "%s(%d) - GANESHA NFSv4 Proxy",
+		      inet_ntop(AF_INET, &sin.sin_addr, addrbuf,
+			       sizeof(addrbuf)),
+		      getpid());
+
+	if (rc < 0) {
+		return -errno;
+	} else if (rc >= sizeof(clientid_name)) {
+		return -EINVAL;
+	}
+
 	clientid.co_ownerid.co_ownerid_len = strlen(clientid_name);
 	clientid.co_ownerid.co_ownerid_val = clientid_name;
 
@@ -1259,10 +1269,16 @@ int pxy_init_rpc(struct pxy_export *pxy_exp)
 	if (pxy_exp->rpc.rpc_xid == 0)
 		pxy_exp->rpc.rpc_xid = getpid() ^ time(NULL);
 	PTHREAD_MUTEX_unlock(&pxy_exp->rpc.listlock);
+
 	if (gethostname(pxy_exp->rpc.pxy_hostname,
-			sizeof(pxy_exp->rpc.pxy_hostname)))
-		strlcpy(pxy_exp->rpc.pxy_hostname, "NFS-GANESHA/Proxy",
-			sizeof(pxy_exp->rpc.pxy_hostname));
+			sizeof(pxy_exp->rpc.pxy_hostname))) {
+		if (strlcpy(pxy_exp->rpc.pxy_hostname, "NFS-GANESHA/Proxy",
+			    sizeof(pxy_exp->rpc.pxy_hostname))
+		    >= sizeof(pxy_exp->rpc.pxy_hostname)) {
+			free_io_contexts(pxy_exp);
+			return -1;
+		}
+	}
 
 	for (i = NB_RPC_SLOT-1; i >= 0; i--) {
 		struct pxy_rpc_io_context *c =
@@ -2312,10 +2328,22 @@ static fsal_status_t pxy_open2(struct fsal_obj_handle *obj_hdl,
 		}
 
 		/* owner */
-		snprintf(owner_val, sizeof(owner_val),
-			 "GANESHA/PROXY: pid=%u %" PRIu64, getpid(),
-			 atomic_inc_uint64_t(&fcnt));
-		owner_len = strnlen(owner_val, sizeof(owner_val));
+		owner_len = snprintf(owner_val, sizeof(owner_val),
+				     "GANESHA/PROXY: pid=%u %" PRIu64, getpid(),
+				     atomic_inc_uint64_t(&fcnt));
+
+		if (owner_len < 0) {
+			int error = errno;
+
+			LogCrit(COMPONENT_FSAL,
+				"Unexpected return from snprintf %d error %s (%d)",
+				rc, strerror(error), error);
+			return posix2fsal_status(error);
+		} else if (owner_len >= sizeof(owner_val)) {
+			LogMajor(COMPONENT_FSAL, "Owner length too long");
+			return posix2fsal_status(EINVAL);
+		}
+
 		/* inattrs and openhow */
 		st = fill_openhow_OPEN4args(&openhow, inattrs, createmode,
 					    verifier, &setattr_needed, name,

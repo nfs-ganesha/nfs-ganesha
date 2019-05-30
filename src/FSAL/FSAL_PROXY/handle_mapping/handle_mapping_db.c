@@ -167,8 +167,8 @@ typedef struct db_thread_info__ {
 
 } db_thread_info_t;
 
-static char dbmap_dir[MAXPATHLEN + 1];
-static char db_tmpdir[MAXPATHLEN + 1];
+static char dbmap_dir[MAXPATHLEN];
+static char db_tmpdir[MAXPATHLEN];
 static unsigned int nb_db_threads;
 static int synchronous;
 
@@ -177,45 +177,6 @@ static int do_terminate;
 
 /* all information and context for threads */
 static db_thread_info_t db_thread[MAX_DB];
-
-/**
- * @brief Print memory to a a hex string
- *
- * @param[out] target   Buffer where memory is to be printed
- * @param[in]  tgt_size Size of the target buffer
- * @param[in]  source   Buffer to be printed
- * @param[in]  mem_size Size of the buffer
- *
- * @return The number of bytes written in the target buffer.
- */
-int
-snprintmem(char *target, size_t tgt_size, const void *source,
-	   size_t mem_size)
-{
-
-	const unsigned char *c;	/* the current char to be printed */
-	char *str = target;	/* the current position in target buffer */
-	int wrote = 0;
-
-	for (c = (const unsigned char *)source;
-	     c < ((const unsigned char *)source + mem_size); c++) {
-		int tmp_wrote = 0;
-
-		if (wrote >= tgt_size) {
-			target[tgt_size - 1] = '\0';
-			break;
-		}
-
-		tmp_wrote =
-		    snprintf(str, tgt_size - wrote, "%.2X", (unsigned char)*c);
-		str += tmp_wrote;
-		wrote += tmp_wrote;
-
-	}
-
-	return wrote;
-
-}
 
 /* test if a letter is hexa */
 #define IS_HEXA(c)  \
@@ -341,7 +302,7 @@ static int init_db_thread_info(db_thread_info_t *p_thr_info,
  */
 static int init_database_access(db_thread_info_t *p_thr_info)
 {
-	char db_file[MAXPATHLEN + 1];
+	char db_file[MAXPATHLEN];
 	int rc;
 	char **result = NULL;
 	int rows, cols;
@@ -350,8 +311,20 @@ static int init_database_access(db_thread_info_t *p_thr_info)
 
 	/* first open the database file */
 
-	snprintf(db_file, MAXPATHLEN, "%s/%s.%u", dbmap_dir, DB_FILE_PREFIX,
-		 p_thr_info->thr_index);
+	rc = snprintf(db_file, sizeof(db_file), "%s/%s.%u", dbmap_dir,
+		      DB_FILE_PREFIX, p_thr_info->thr_index);
+
+	if (rc < 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unexpected return from snprintf %d error %s (%d)",
+			rc, strerror(errno), errno);
+		return HANDLEMAP_DB_ERROR;
+	} else if (rc >= sizeof(db_file)) {
+		LogCrit(COMPONENT_FSAL,
+			"PROXY HANDLE DB path %s/%s.%u too long",
+			dbmap_dir, DB_FILE_PREFIX, p_thr_info->thr_index);
+		return HANDLEMAP_DB_ERROR;
+	}
 
 	rc = sqlite3_open(db_file, &p_thr_info->db_conn);
 
@@ -520,7 +493,9 @@ static int db_insert_operation(db_thread_info_t *p_info,
 			       struct hdlmap_tuple *data)
 {
 	int rc;
-	char handle_str[2 * NFS4_FHSIZE + 1];
+	char handle_str[OPAQUE_BYTES_SIZE(NFS4_FHSIZE)];
+	struct display_buffer dspbuf = {
+				sizeof(handle_str), handle_str, handle_str};
 
 	rc = sqlite3_bind_int64(p_info->prep_stmt[INSERT_STATEMENT], 1,
 				data->nfs23_digest.object_id);
@@ -530,8 +505,11 @@ static int db_insert_operation(db_thread_info_t *p_info,
 			      data->nfs23_digest.handle_hash);
 	CheckBind(p_info->db_conn, rc, p_info->prep_stmt[INSERT_STATEMENT]);
 
-	snprintmem(handle_str, sizeof(handle_str), data->fh4_data,
-		   data->fh4_len);
+	if (display_opaque_bytes_flags(&dspbuf, data->fh4_data, data->fh4_len,
+				       OPAQUE_BYTES_UPPER) <= 0) {
+		LogCrit(COMPONENT_FSAL, "Invalid file handle %s", handle_str);
+		return HANDLEMAP_DB_ERROR;
+	}
 
 	rc = sqlite3_bind_text(p_info->prep_stmt[INSERT_STATEMENT], 3,
 			       handle_str, -1, SQLITE_STATIC);
@@ -636,10 +614,15 @@ static void *database_worker_thread(void *arg)
 	db_thread_info_t *p_info = (db_thread_info_t *) arg;
 	int rc;
 	db_op_item_t *to_be_done = NULL;
-	char thread_name[256];
+	char thread_name[32];
 
 	/* initialize logging */
-	snprintf(thread_name, 256, "DB thread #%u", p_info->thr_index);
+
+	/* We don't care about too long string, truncated is fine and we don't
+	 * expect EOVERRUN or EINVAL.
+	 */
+	(void) snprintf(thread_name, sizeof(thread_name),
+			"DB thread #%u", p_info->thr_index);
 	SetNameFunction(thread_name);
 
 	/* initialize memory management */
@@ -769,12 +752,24 @@ int handlemap_db_count(const char *dir)
 {
 	DIR *dir_hdl;
 	struct dirent *direntry;
-	char db_pattern[MAXPATHLEN + 1];
-
+	char db_pattern[MAXPATHLEN];
+	int rc;
 	unsigned int count = 0;
 	int end_of_dir = false;
 
-	snprintf(db_pattern, MAXPATHLEN, "%s.*[0-9]", DB_FILE_PREFIX);
+	rc = snprintf(db_pattern, sizeof(db_pattern), "%s.*[0-9]",
+		      DB_FILE_PREFIX);
+
+	if (rc < 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unexpected return from snprintf %d error %s (%d)",
+			rc, strerror(errno), errno);
+		return -HANDLEMAP_SYSTEM_ERROR;
+	} else if (rc >= sizeof(db_pattern)) {
+		LogCrit(COMPONENT_FSAL,
+			"ERROR: db_pattern too long %s.*[0-9]", DB_FILE_PREFIX);
+		return -HANDLEMAP_SYSTEM_ERROR;
+	}
 
 	dir_hdl = opendir(dir);
 
@@ -847,8 +842,11 @@ int handlemap_db_init(const char *db_dir, const char *tmp_dir,
 
 	/* first, save the parameters */
 
-	strlcpy(dbmap_dir, db_dir, sizeof(dbmap_dir));
-	strlcpy(db_tmpdir, tmp_dir, sizeof(db_tmpdir));
+	if (strlcpy(dbmap_dir, db_dir, sizeof(dbmap_dir)) >= sizeof(dbmap_dir))
+		return HANDLEMAP_INVALID_PARAM;
+	if (strlcpy(db_tmpdir, tmp_dir, sizeof(db_tmpdir))
+	    >=  sizeof(db_tmpdir))
+		return HANDLEMAP_INVALID_PARAM;
 
 	if (db_count > MAX_DB)
 		return HANDLEMAP_INVALID_PARAM;
