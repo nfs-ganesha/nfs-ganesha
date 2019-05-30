@@ -381,18 +381,20 @@ void SetNamePgm(const char *nom)
 
 	/* This function isn't thread-safe because the name of the program
 	 * is common among all the threads. */
-	if (strmaxcpy(program_name, nom, sizeof(program_name)) == -1)
+	if (strlcpy(program_name, nom, sizeof(program_name))
+	    >= sizeof(program_name))
 		LogFatal(COMPONENT_LOG, "Program name %s too long", nom);
-}				/* SetNamePgm */
+}
 
 /*
  * Set the hostname.
  */
 void SetNameHost(const char *name)
 {
-	if (strmaxcpy(hostname, name, sizeof(hostname)) == -1)
+	if (strlcpy(hostname, name, sizeof(hostname))
+	    >= sizeof(hostname))
 		LogFatal(COMPONENT_LOG, "Host name %s too long", name);
-}				/* SetNameHost */
+}
 
 /* Set the function name in progress. */
 void SetNameFunction(const char *nom)
