@@ -377,26 +377,6 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	owner = state->state_owner;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
-	/* Don't cleanup when ref is dropped, as this could recurse into here.
-	 * Caller must have a ref anyway.
-	 */
-	obj->state_hdl->no_cleanup = true;
-
-	/* Remove from the list of states for a particular file */
-	PTHREAD_MUTEX_lock(&state->state_mutex);
-	glist_del(&state->state_list);
-	/* Put ref for this state entry */
-	obj->obj_ops->put_ref(obj);
-	state->state_obj = NULL;
-	PTHREAD_MUTEX_unlock(&state->state_mutex);
-
-	/* We need to close the state at this point. The state will
-	 * eventually be freed and it must be closed before free. This
-	 * is the last point we have a valid reference to the object
-	 * handle.
-	 */
-	(void) obj->obj_ops->close2(obj, state);
-
 	if (owner != NULL) {
 		bool owner_retain = false;
 		struct state_nfs4_owner_t *nfs4_owner;
@@ -494,6 +474,26 @@ void _state_del_locked(state_t *state, const char *func, int line)
 
 	PTHREAD_MUTEX_unlock(&all_state_v4_mutex);
 #endif
+
+	/* Don't cleanup when ref is dropped, as this could recurse into here.
+	 * Caller must have a ref anyway.
+	 */
+	obj->state_hdl->no_cleanup = true;
+
+	/* Remove from the list of states for a particular file */
+	PTHREAD_MUTEX_lock(&state->state_mutex);
+	glist_del(&state->state_list);
+	/* Put ref for this state entry */
+	obj->obj_ops->put_ref(obj);
+	state->state_obj = NULL;
+	PTHREAD_MUTEX_unlock(&state->state_mutex);
+
+	/* We need to close the state at this point. The state will
+	 * eventually be freed and it must be closed before free. This
+	 * is the last point we have a valid reference to the object
+	 * handle.
+	 */
+	(void) obj->obj_ops->close2(obj, state);
 
 	/* Remove the sentinel reference */
 	dec_state_t_ref(state);
