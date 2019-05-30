@@ -331,37 +331,59 @@ int display_vprintf(struct display_buffer *dspbuf, const char *fmt,
  * @param[in,out] dspbuf The buffer.
  * @param[in]     value  The bytes to display
  * @param[in]     len    The number of bytes to display
+ * @param[in]     flags  Flags indicating options for display
  *
  * @return the bytes remaining in the buffer.
  *
  */
-int display_opaque_bytes(struct display_buffer *dspbuf, void *value, int len)
+int display_opaque_bytes_flags(struct display_buffer *dspbuf,
+			       void *value, int len, int flags)
 {
 	unsigned int i = 0;
 	int b_left = display_start(dspbuf);
+	const char *fmt;
 
 	if (b_left <= 0)
 		return b_left;
 
 	/* Check that the length is ok */
-	if (len < 0)
-		return display_printf(dspbuf, "(invalid len=%d)", len);
+	if (len < 0) {
+		if (flags & OPAQUE_BYTES_INVALID_LEN)
+			return -1;
+		else
+			return display_printf(dspbuf, "(invalid len=%d)", len);
+	}
 
 	/* If the value is NULL, display NULL value. */
-	if (value == NULL)
-		return display_cat(dspbuf, "(NULL)");
+	if (value == NULL) {
+		if (flags & OPAQUE_BYTES_INVALID_NULL)
+			return -1;
+		else
+			return display_cat(dspbuf, "(NULL)");
+	}
 
 	/* If the value is empty, display EMPTY value. */
-	if (len == 0)
-		return display_cat(dspbuf, "(EMPTY)");
+	if (len == 0) {
+		if (flags & OPAQUE_BYTES_INVALID_EMPTY)
+			return -1;
+		else
+			return display_cat(dspbuf, "(EMPTY)");
+	}
 
-	/* Indicate the value is a hex string. */
-	b_left = display_cat(dspbuf, "0x");
+	if (flags & OPAQUE_BYTES_0x) {
+		/* Indicate the value is a hex string. */
+		b_left = display_cat(dspbuf, "0x");
+	}
+
+	if (flags & OPAQUE_BYTES_UPPER)
+		fmt = "%02X";
+	else
+		fmt = "%02x";
 
 	/* Display the value one hex byte at a time. */
 	for (i = 0; i < len && b_left > 0; i++)
 		b_left =
-		    display_printf(dspbuf, "%02x", ((unsigned char *)value)[i]);
+		    display_printf(dspbuf, fmt, ((unsigned char *)value)[i]);
 
 	/* Finish up */
 	return display_finish(dspbuf);
@@ -448,7 +470,7 @@ int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
  * @return the bytes remaining in the buffer.
  *
  */
-int display_len_cat(struct display_buffer *dspbuf, char *str, int len)
+int display_len_cat(struct display_buffer *dspbuf, const char *str, int len)
 {
 	int b_left = display_start(dspbuf);
 	int cpy;
