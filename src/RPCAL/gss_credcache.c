@@ -143,17 +143,22 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 				     int nocache);
 static void gssd_set_krb5_ccache_name(char *ccname);
 
-
-
-static void gssd_err_default(int priority, const char *fmt, ...)
-{
-	/* XXX do something */
-}
-
-static gssd_err_func_t gss_err = (gssd_err_func_t) gssd_err_default;
-
-#define printerr(pri, ...) gss_err(__VA_ARGS__)
-
+#define printerr(pri, format, args...) \
+	do { \
+		if (unlikely(component_log_level[COMPONENT_NFS_CB] \
+		    >= NIV_DEBUG)) { \
+			log_components_t component = \
+			    pri == 0	? NIV_CRIT \
+					: (pri == 1 ? NIV_WARN \
+					: NIV_FULL_DEBUG); \
+			\
+			DisplayLogComponentLevel(COMPONENT_NFS_CB,  __FILE__,\
+						 __LINE__, \
+						  __func__, \
+						 component, "Pri %d " format, \
+						 pri, ## args); \
+		} \
+	} while (0)
 
 /* Global list of principals/cache file names for machine credentials */
 
@@ -254,9 +259,17 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 		cache_type = "MEMORY";
 	else
 		cache_type = "FILE";
-	snprintf(cc_name, sizeof(cc_name), "%s:%s/%s%s_%s", cache_type,
-		 ccachesearch[0], GSSD_DEFAULT_CRED_PREFIX,
-		 GSSD_DEFAULT_MACHINE_CRED_SUFFIX, ple->realm);
+	code = snprintf(cc_name, sizeof(cc_name), "%s:%s/%s%s_%s", cache_type,
+			ccachesearch[0], GSSD_DEFAULT_CRED_PREFIX,
+			GSSD_DEFAULT_MACHINE_CRED_SUFFIX, ple->realm);
+	if (code < 0) {
+		/* code and errno already set */
+		goto out;
+	} else if (code >= sizeof(cc_name)) {
+		code = -1;
+		errno = EINVAL;
+		goto out;
+	}
 	ple->endtime = my_creds.times.endtime;
 	if (ple->ccname != NULL)
 		gsh_free(ple->ccname);
@@ -442,19 +455,27 @@ static int get_full_hostname(const char *inhost, char *outhost, int outhostlen)
 
 	/* Get full target hostname */
 	retval = getaddrinfo(inhost, NULL, &hints, &addrs);
+
 	if (retval) {
 		printerr(1, "%s while getting full hostname for '%s'\n",
 			 gai_strerror(retval), inhost);
+		return retval;
+	}
+
+	if (strlcpy(outhost, addrs->ai_canonname, outhostlen) >= outhostlen) {
+		retval = -1;
 		goto out;
 	}
-	strmaxcpy(outhost, addrs->ai_canonname, outhostlen);
-	freeaddrinfo(addrs);
+
 	for (c = outhost; *c != '\0'; c++)
 		*c = tolower(*c);
 
 	printerr(3, "Full hostname for '%s' is '%s'\n", inhost, outhost);
 	retval = 0;
+
  out:
+
+	freeaddrinfo(addrs);
 	return retval;
 }
 
@@ -713,26 +734,31 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 			 * directory machine account'
 			 */
 			if (strcmp(svcnames[j], "$") == 0) {
-				snprintf(spn, sizeof(spn), "%s@%s", myhostad,
-					 realm);
-				code =
-				    krb5_build_principal_ext(context, &princ,
-							     strlen(realm),
-							     realm,
-							     strlen(myhostad),
-							     myhostad, NULL);
+				retval = snprintf(spn, sizeof(spn), "%s@%s",
+						  myhostad, realm);
+				if (retval < 0) {
+					goto out;
+				} else if (retval >= sizeof(spn)) {
+					retval = -1;
+					goto out;
+				}
+				code = krb5_build_principal_ext(
+					context, &princ, strlen(realm), realm,
+					strlen(myhostad), myhostad, NULL);
 			} else {
-				snprintf(spn, sizeof(spn), "%s/%s@%s",
-					 svcnames[j], myhostname, realm);
-				code =
-				    krb5_build_principal_ext(context, &princ,
-							     strlen(realm),
-							     realm,
-							     strlen(svcnames
-								    [j]),
-							     svcnames[j],
-							     strlen(myhostname),
-							     myhostname, NULL);
+				retval = snprintf(spn, sizeof(spn), "%s/%s@%s",
+						  svcnames[j], myhostname,
+						  realm);
+				if (retval < 0) {
+					goto out;
+				} else if (retval >= sizeof(spn)) {
+					retval = -1;
+					goto out;
+				}
+				code = krb5_build_principal_ext(
+					context, &princ, strlen(realm), realm,
+					strlen(svcnames[j]), svcnames[j],
+					strlen(myhostname), myhostname, NULL);
 			}
 
 			if (code) {
