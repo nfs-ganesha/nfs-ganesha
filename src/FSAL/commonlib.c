@@ -85,6 +85,7 @@
 #include "gsh_dbus.h"
 #endif
 #include "server_stats_private.h"
+#include "idmapper.h"
 
 
 #ifdef USE_BLKID
@@ -1697,6 +1698,7 @@ static struct gsh_dbus_method cachemgr_show_fs = {
 
 static struct gsh_dbus_method *cachemgr_methods[] = {
 	&cachemgr_show_fs,
+	&cachemgr_show_idmapper,
 	NULL
 };
 

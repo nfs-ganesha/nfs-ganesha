@@ -234,6 +234,34 @@ class ManageCache():
                         fs.MajorDevId,
                         fs.MinorDevId))
 
+    def showidmapper(self):
+        print("Show idmapper cache")
+        status, errormsg, reply = self.cachemgr.ShowIdmapper()
+        if status == True:
+           ts = reply[0]
+           ids = reply[1]
+           self.proc_id(ts, ids)
+        else:
+           self.status_message(status, errormsg)
+
+    def proc_id(self, ts, ids):
+        print("Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs")
+        if len(ids) == 0:
+            print("No entries in idmapper cache")
+        else:
+            print("Idmapper cache:")
+            print(" Name,  UID, GID")
+            for entry in ids:
+                if entry.HasGID == True:
+                        print(" %s,  %s,  %s" %
+                                (entry.Name,
+                                 entry.UID,
+                                 entry.GID))
+                else:
+                        print(" %s,  %s,  -" %
+                                (entry.Name,
+                                 entry.UID))
+
 class ManageLogs():
 
     def __init__(self, parent=None):
@@ -288,6 +316,7 @@ if __name__ == '__main__':
        "   show clients: Displays the current clients\n\n"                   \
        "   show posix_fs: Displays the mounted POSIX filesystems\n\n"        \
        "   show exports: Displays all current exports\n\n"                   \
+       "   show idmap: Displays the idmapper cache\n\n"                      \
        "   display_export export_id: \n"                                     \
        "      Displays the export with the given ID\n\n"                     \
        "   add_export conf expr:\n"                                          \
@@ -385,6 +414,8 @@ if __name__ == '__main__':
             exportmgr.showexports()
         elif sys.argv[2] == "posix_fs":
             cachemgr.showfs()
+	elif sys.argv[2] == "idmap":
+            cachemgr.showidmapper()
         else:
             msg = "Showing '%s' is not supported" % sys.argv[2]
             sys.exit(msg)

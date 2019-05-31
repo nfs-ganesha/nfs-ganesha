@@ -327,6 +327,12 @@ class AdminInterface():
         return status, msg
 
 
+IDMapper = namedtuple('IDMapper',
+                     ['Name',
+                      'UID',
+                      'HasGID',
+                      'GID'])
+
 FileSys = namedtuple('FileSys',
                      ['Path',
                       'MajorDevId',
@@ -370,6 +376,30 @@ class CacheMgr():
                                MinorDevId = fs[2])
 	    fss.append(filesys1)
 	return True, "Done", [ts, fss]
+
+
+    def ShowIdmapper(self):
+        show_id_method = self.dbusobj.get_dbus_method("showidmapper",
+                                                      self.dbus_interface)
+        try:
+           reply = show_id_method()
+        except dbus.exceptions.DBusException as e:
+           return False, e, []
+
+        time = reply[0]
+        id_array = reply[1]
+
+        ts = (time[0],
+              time[1])
+
+        ids = []
+        for entry in id_array:
+            entry1 = IDMapper(Name = str(entry[0]),
+                              UID = entry[1],
+                              HasGID = entry[2],
+                              GID = entry[3])
+            ids.append(entry1)
+        return True, "Done", [ts, ids]
 
 
 LOGGER_PROPS = 'org.ganesha.nfsd.log.component'

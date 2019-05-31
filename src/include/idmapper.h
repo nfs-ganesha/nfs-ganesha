@@ -86,5 +86,9 @@ bool principal2uid(char *, uid_t *, gid_t *);
 #endif
 #endif
 
+#ifdef USE_DBUS
+extern struct gsh_dbus_method cachemgr_show_idmapper;
+#endif
+
 #endif				/* IDMAPPER_H */
 /** @} */

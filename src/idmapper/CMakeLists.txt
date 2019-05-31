@@ -4,6 +4,12 @@ if(_MSPAC_SUPPORT)
     )
 endif(_MSPAC_SUPPORT)
 
+if(USE_DBUS)
+  include_directories(
+    ${DBUS_INCLUDE_DIRS}
+    )
+endif(USE_DBUS)
+
 ########### next target ###############
 
 SET(idmap_STAT_SRCS
