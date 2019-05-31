@@ -129,6 +129,7 @@ static fsal_status_t init_config(struct fsal_module *vfs_fsal_module,
 {
 	struct vfs_fsal_module *vfs_module =
 	    container_of(vfs_fsal_module, struct vfs_fsal_module, module);
+	int prev_errors = err_type->errors;
 
 #ifdef F_OFD_GETLK
 	int fd, rc;
@@ -180,8 +181,15 @@ static fsal_status_t init_config(struct fsal_module *vfs_fsal_module,
 				      vfs_module,
 				      true,
 				      err_type);
-	if (!config_error_is_harmless(err_type))
+
+	/* Check for actual errors in vfs_param parsing.
+	 * err_type could have errors from previous block
+	 * parsing also.
+	 */
+	if ((err_type->errors > prev_errors) &&
+	    !config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
+
 	display_fsinfo(&vfs_module->module);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,

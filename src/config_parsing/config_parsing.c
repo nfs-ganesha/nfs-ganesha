@@ -978,7 +978,7 @@ static int do_block_load(struct config_node *blk,
 	void *param_addr;
 	struct config_node *node, *term_node, *next_node = NULL;
 	struct glist_head *ns;
-	int errors = 0;
+	int errors = 0, prev_errors = err_type->errors;
 
 	for (item = params; item->name != NULL; item++) {
 		uint64_t num64;
@@ -1240,6 +1240,16 @@ static int do_block_load(struct config_node *blk,
 			node = next_node;
 		}
 	}
+
+	/* Check for any errors in parsing params.
+	 * It will set to default value if parsing fails.
+	 * For params like Export_Id if parsing fails, we
+	 * will end up setting it to 1, which could cause issue
+	 * if we set it to 1 for multiple exports.
+	 */
+	if (err_type->errors > prev_errors)
+		errors = err_type->errors;
+
 	if (relax)
 		return errors;
 
