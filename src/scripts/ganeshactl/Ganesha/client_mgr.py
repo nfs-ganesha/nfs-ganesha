@@ -49,18 +49,18 @@ class ClientMgr(QtDBus.QDBusAbstractInterface):
         self.show_status = show_status
 
     def AddClient(self, ipaddr):
-        async = self.asyncCall("AddClient", ipaddr)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("AddClient", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.clientmgr_done)
 
     def RemoveClient(self, ipaddr):
-        async = self.asyncCall("RemoveClient", ipaddr)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("RemoveClient", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.clientmgr_done)
 
     def ShowClients(self):
-        async = self.asyncCall("ShowClients")
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("ShowClients")
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.clientshow_done)
 
     # catch the reply and forward it to the UI
@@ -114,23 +114,23 @@ class ClientStats(QtDBus.QDBusAbstractInterface):
         self.status_handler = status_handler
 
     def GetNFSv3IO(self, ipaddr):
-        async = self.asyncCall("GetNFSv3IO", ipaddr)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("GetNFSv3IO", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.io_done)
 
     def GetNFSv40IO(self, ipaddr):
-        async = self.asyncCall("GetNFSv40IO", ipaddr)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("GetNFSv40IO", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.io_done)
 
     def GetNFSv41IO(self, ipaddr):
-        async = self.asyncCall("GetNFSv41IO", ipaddr)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("GetNFSv41IO", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.io_done)
 
     def GetNFSv41Layouts(self, ipaddr):
-        async = self.asyncCall("GetNFSv41Layouts", ipaddr)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("GetNFSv41Layouts", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.layout_done)
 
     def io_done(self, call):

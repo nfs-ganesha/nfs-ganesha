@@ -43,7 +43,7 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
     '''
     show_exports = pyqtSignal(tuple, list)
     display_export = pyqtSignal(int, str, str, str)
-    
+
     def __init__(self, service, path, connection,
                  show_status, parent=None):
         super(ExportMgr, self).__init__(service,
@@ -54,28 +54,28 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
         self.show_status = show_status
 
     def AddExport(self, conf_path, exp_expr):
-        async = self.asyncCall("AddExport", conf_path, exp_expr)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("AddExport", conf_path, exp_expr)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.exportadd_done)
 
     def UpdateExport(self, conf_path, exp_expr):
-        async = self.asyncCall("UpdateExport", conf_path, exp_expr)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("UpdateExport", conf_path, exp_expr)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.exportadd_done)
 
     def RemoveExport(self, exp_id):
-        async = self.asyncCall("RemoveExport", int(exp_id))
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("RemoveExport", int(exp_id))
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.exportrm_done)
 
     def DisplayExport(self, exp_id):
-        async = self.asyncCall("DisplayExport", int(exp_id))
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("DisplayExport", int(exp_id))
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.exportdisplay_done)
-        
+
     def ShowExports(self):
-        async = self.asyncCall("ShowExports")
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("ShowExports")
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.exportshow_done)
 
     def exportadd_done(self, call):
@@ -106,7 +106,7 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
             pseudopath = reply.argumentAt(2).toPyObject()
             tag = reply.argumentAt(3).toPyObject()
             self.display_export.emit(id, fullpath, pseudopath, tag)
-            
+
     def exportshow_done(self, call):
         reply = QtDBus.QDBusPendingReply(call)
         if reply.isError():
@@ -148,23 +148,23 @@ class ExportStats(QtDBus.QDBusAbstractInterface):
         self.stats_handler = stats_handler
 
     def GetNFSv3IO(self, exportid):
-        async = self.asyncCall("GetNFSv3IO", exportid)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("GetNFSv3IO", exportid)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.io_done)
 
     def GetNFSv40IO(self, exportid):
-        async = self.asyncCall("GetNFSv40IO", exportid)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("GetNFSv40IO", exportid)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.io_done)
 
     def GetNFSv41IO(self, exportid):
-        async = self.asyncCall("GetNFSv41IO", exportid)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("GetNFSv41IO", exportid)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.io_done)
 
     def GetNFSv41Layouts(self, exportid):
-        async = self.asyncCall("GetNFSv41Layouts", exportid)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("GetNFSv41Layouts", exportid)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.layout_done)
 
     def io_done(self, call):
@@ -172,4 +172,4 @@ class ExportStats(QtDBus.QDBusAbstractInterface):
 
     def layout_done(self, call):
         pass
-    
+

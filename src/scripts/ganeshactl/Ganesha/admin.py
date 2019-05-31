@@ -34,18 +34,18 @@ class AdminInterface(QtDBus.QDBusAbstractInterface):
         self.show_status = show_status
 
     def grace(self, ipaddr):
-        async = self.asyncCall("grace", ipaddr)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("grace", ipaddr)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.admin_done)
 
     def reload(self):
-        async = self.asyncCall("reload")
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("reload")
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.admin_done)
 
     def shutdown(self):
-        async = self.asyncCall("shutdown")
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("shutdown")
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.admin_done)
 
     # catch the reply and forward it to the UI

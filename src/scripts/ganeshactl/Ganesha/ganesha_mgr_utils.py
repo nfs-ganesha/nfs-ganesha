@@ -369,13 +369,13 @@ class CacheMgr():
         ts = (time[0],
               time[1])
 
-	fss = []
+        fss = []
         for fs in fs_array:
             filesys1 = FileSys(Path = str(fs[0]),
-			       MajorDevId = fs[1],
+                               MajorDevId = fs[1],
                                MinorDevId = fs[2])
-	    fss.append(filesys1)
-	return True, "Done", [ts, fss]
+            fss.append(filesys1)
+        return True, "Done", [ts, fss]
 
 
     def ShowIdmapper(self):

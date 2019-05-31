@@ -29,10 +29,10 @@ class LogManager(QtDBus.QDBusAbstractInterface):
     '''
     org.ganesha.nfsd.log.component
     '''
-    
+
     show_components = QtCore.pyqtSignal(dict)
     show_level = QtCore.pyqtSignal(str)
-        
+
     def __init__(self, service, connection, show_status, parent=None):
         super(LogManager, self).__init__(service,
                                          ADMIN_OBJECT,
@@ -42,8 +42,8 @@ class LogManager(QtDBus.QDBusAbstractInterface):
         self.show_status = show_status
 
     def GetAll(self):
-        async = self.asyncCall("GetAll", LOGGER_PROPS)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("GetAll", LOGGER_PROPS)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.GetAll_done)
 
     def GetAll_done(self, call):
@@ -65,8 +65,8 @@ class LogManager(QtDBus.QDBusAbstractInterface):
             self.show_components.emit(prop_dict)
 
     def Get(self, property):
-        async = self.asyncCall("Get", LOGGER_PROPS, property)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        _async = self.asyncCall("Get", LOGGER_PROPS, property)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.Get_done)
 
     def Get_done(self, call):
@@ -81,10 +81,10 @@ class LogManager(QtDBus.QDBusAbstractInterface):
     def Set(self, property, setval):
         qval = QtDBus.QDBusVariant()
         qval.setVariant(str(str(setval)))
-        async = self.asyncCall("Set", LOGGER_PROPS,
+        _async = self.asyncCall("Set", LOGGER_PROPS,
                                property,
                                qval)
-        status = QtDBus.QDBusPendingCallWatcher(async, self)
+        status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.Set_done)
 
     def Set_done(self, call):
