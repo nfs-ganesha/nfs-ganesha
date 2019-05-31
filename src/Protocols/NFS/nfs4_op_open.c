@@ -1164,6 +1164,12 @@ static void open4_ex(OPEN4args *arg,
 			     (*file_state)->state_data.share.share_deny_prev);
 	}
 
+	if (!state_lock_held) {
+		/* Acquire state_lock before adding deleg state */
+		PTHREAD_RWLOCK_wrlock(&file_obj->state_hdl->state_lock);
+		state_lock_held = true;
+	}
+
 	do_delegation(arg, res_OPEN4, data, owner, *file_state, clientid);
  out:
 

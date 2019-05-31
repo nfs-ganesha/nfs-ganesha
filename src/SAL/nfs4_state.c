@@ -479,7 +479,8 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	/* Reset write delegated and release client ref if this is a
 	 * write delegation */
 	if (state->state_type == STATE_TYPE_DELEG &&
-	    state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE) {
+	    state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE &&
+	    obj->state_hdl->file.write_deleg_client) {
 		obj->state_hdl->file.write_delegated = false;
 		dec_client_id_ref(obj->state_hdl->file.write_deleg_client);
 		obj->state_hdl->file.write_deleg_client = NULL;
