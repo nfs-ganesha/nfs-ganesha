@@ -64,7 +64,7 @@ enum nfs_req_result nfs4_op_setclientid(struct nfs_argop4 *op,
 	    &resp->nfs_resop4_u.opsetclientid;
 	clientaddr4 * const res_SETCLIENTID4_INUSE =
 	    &resp->nfs_resop4_u.opsetclientid.SETCLIENTID4res_u.client_using;
-	char str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
+	char str_verifier[OPAQUE_BYTES_SIZE(NFS4_VERIFIER_SIZE)];
 	struct display_buffer dspbuf_verifier = {
 			sizeof(str_verifier), str_verifier, str_verifier};
 	char str_client[NFS4_OPAQUE_LIMIT * 2 + 1];
@@ -350,11 +350,12 @@ enum nfs_req_result nfs4_op_setclientid(struct nfs_argop4 *op,
 		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
-		sprint_mem(str_verifier, verifier, NFS4_VERIFIER_SIZE);
-
+		display_cat(&dspbuf, "Verifier=");
+		display_opaque_bytes(&dspbuf, verifier, NFS4_VERIFIER_SIZE);
+		display_cat(&dspbuf, " ");
 		display_client_id_rec(&dspbuf, unconf);
-		LogDebug(COMPONENT_CLIENTID, "SETCLIENTID reply Verifier=%s %s",
-			 str_verifier, str);
+
+		LogDebug(COMPONENT_CLIENTID, "SETCLIENTID reply %s", str);
 	}
 
 	res_SETCLIENTID4->status = NFS4_OK;

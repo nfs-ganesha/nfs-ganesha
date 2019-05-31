@@ -69,7 +69,7 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 	nfs_client_id_t *unconf = NULL;
 	nfs_client_record_t *client_record;
 	clientid4 clientid = 0;
-	char str_verifier[NFS4_VERIFIER_SIZE * 2 + 1];
+	char str_verifier[OPAQUE_BYTES_SIZE(NFS4_VERIFIER_SIZE)];
 	const char *str_client_addr = "(unknown)";
 	/* The client name, for gratuitous logging */
 	char str_client[CLIENTNAME_BUFSIZE];
@@ -104,9 +104,13 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		str_client_addr = op_ctx->client->hostaddr_str;
 
 	if (isDebug(COMPONENT_CLIENTID)) {
-		sprint_mem(str_verifier,
-			   arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
-			   NFS4_VERIFIER_SIZE);
+		struct display_buffer dspbuf_verifier = {
+			sizeof(str_verifier), str_verifier, str_verifier};
+
+		display_opaque_bytes(
+				&dspbuf_verifier,
+				arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
+				NFS4_VERIFIER_SIZE);
 	} else {
 		str_verifier[0] = '\0';
 	}
@@ -294,18 +298,17 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 				char str[LOG_BUFF_LEN] = "\0";
 				struct display_buffer dspbuf = {
 					sizeof(str), str, str};
-				char str_conf_verifier[NFS4_VERIFIER_SIZE * 2 +
-						       1];
 
-				sprint_mem(str_conf_verifier,
-					   conf->cid_verifier,
-					   NFS4_VERIFIER_SIZE);
-
+				display_cat(&dspbuf, "Verifier=");
+				display_opaque_bytes(&dspbuf,
+						     conf->cid_verifier,
+						     NFS4_VERIFIER_SIZE);
+				display_printf(&dspbuf,
+					       " doesn't match verifier=%s for ",
+					       str_verifier);
 				display_client_id_rec(&dspbuf, conf);
 
-				LogDebug(COMPONENT_CLIENTID,
-					 "Confirm verifier=%s doesn't match verifier=%s for %s",
-					 str_conf_verifier, str_verifier, str);
+				LogDebug(COMPONENT_CLIENTID, "Confirm %s", str);
 			}
 
 			res_SETCLIENTID_CONFIRM4->status = NFS4ERR_CLID_INUSE;
