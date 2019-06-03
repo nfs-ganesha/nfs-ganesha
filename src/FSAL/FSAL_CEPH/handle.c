@@ -222,6 +222,13 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 			/* skip . and .. */
 			if ((strcmp(de.d_name, ".") == 0)
 			    || (strcmp(de.d_name, "..") == 0)) {
+				/* Deref inode here as we reference inode in
+				 * libcephfs readdir_r_cb. The other inodes
+				 * gets deref in deconstruct_handle.
+				 */
+				if (i != NULL)
+					ceph_ll_put(export->cmount, i);
+
 				continue;
 			}
 
@@ -233,6 +240,8 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 			rc = ceph_fsal_get_sec_label(obj, &attrs);
 			if (rc < 0) {
 				fsal_status = ceph2fsal_error(rc);
+				if (i != NULL)
+					ceph_ll_put(export->cmount, i);
 				goto closedir;
 			}
 
