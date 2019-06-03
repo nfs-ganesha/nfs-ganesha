@@ -398,9 +398,7 @@ LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
 						 __LINE__, \
 						 __func__, \
 						 NIV_EVENT, \
-						 "%s: EVENT: " format, \
-						 LogComponents[component] \
-						     .comp_str, ## args); \
+						 format, ## args); \
 		} \
 	} while (0)
 
@@ -418,9 +416,7 @@ LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
 						 __LINE__, \
 						 __func__, \
 						 NIV_INFO, \
-						 "%s: INFO: " format, \
-						 LogComponents[component] \
-						     .comp_str, ## args); \
+						 format, ## args); \
 		} \
 	} while (0)
 
@@ -438,9 +434,7 @@ LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
 						 __LINE__, \
 						 __func__, \
 						 NIV_DEBUG, \
-						 "%s: DEBUG: " format, \
-						 LogComponents[component] \
-						     .comp_str, ## args); \
+						 format, ## args); \
 		} \
 	} while (0)
 
@@ -458,9 +452,7 @@ LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
 						 __LINE__, \
 						 __func__, \
 						 NIV_MID_DEBUG, \
-						 "%s: MID DEBUG: " format, \
-						 LogComponents[component] \
-						     .comp_str, ## args); \
+						 format, ## args); \
 		} \
 	} while (0)
 
@@ -478,9 +470,7 @@ LogFullDebugOpaque(component, format, buf_size, value, length, args...) \
 						 __LINE__, \
 						 __func__, \
 						 NIV_FULL_DEBUG, \
-						 "%s: FULLDEBUG: " format, \
-						 LogComponents[component] \
-						     .comp_str, ## args); \
+						 format, ## args); \
 		} \
 	} while (0)
 
