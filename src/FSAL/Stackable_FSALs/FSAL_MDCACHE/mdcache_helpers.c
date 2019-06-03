@@ -217,7 +217,29 @@ static mdcache_entry_t *_mdcache_alloc_handle(
 }
 
 /**
+ * @brief Drop ref on remaining dirents in chunk
  *
+ * @note content_lock of parent dir must be held for WRITE
+ *
+ * @param[in]  dirent	First ref'd dirent
+ */
+static void mdc_unref_chunk(struct dir_chunk *chunk,
+			    mdcache_dir_entry_t *dirent)
+{
+	for (;
+	     dirent != NULL;
+	     dirent = glist_next_entry(&chunk->dirents,
+				       mdcache_dir_entry_t,
+				       chunk_list,
+				       &dirent->chunk_list)) {
+		if (dirent->entry) {
+			mdcache_put(dirent->entry);
+			dirent->entry = NULL;
+		}
+	}
+}
+
+/**
  * @brief Cleans up an entry so it can be reused
  *
  * @param[in]  entry     The cache entry to clean
@@ -3197,6 +3219,14 @@ again:
 				 */
 				atomic_set_uint32_t_bits(&directory->mde_flags,
 							 MDCACHE_DIR_POPULATED);
+			}
+
+			if (has_write) {
+				/* We need to drop the ref on the rest of the
+				 * entries in this chunk, so that they don't
+				 * hang around until the directory is
+				 * invalidated. */
+				mdc_unref_chunk(chunk, dirent);
 			}
 
 			LogDebugAlt(COMPONENT_NFS_READDIR,
