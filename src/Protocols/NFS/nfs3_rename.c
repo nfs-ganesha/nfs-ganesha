@@ -80,23 +80,9 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		.attributes_follow = false
 	};
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &arg->arg_rename3.from.dir,
-				 NULL,
-				 strfrom);
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &arg->arg_rename3.to.dir,
-				 NULL,
-				 strto);
-
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Rename from handle: %s name %s to handle: %s name: %s",
-			 strfrom, entry_name, strto, new_entry_name);
-	}
+	LogNFS3_Operation2(COMPONENT_NFSPROTO, req,
+			   &arg->arg_rename3.from.dir, entry_name,
+			   &arg->arg_rename3.to.dir, new_entry_name);
 
 	/* to avoid setting it on each error case */
 	resfail->fromdir_wcc.before.attributes_follow = FALSE;

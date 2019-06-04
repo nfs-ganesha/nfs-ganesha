@@ -140,14 +140,7 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 		ds_handle_get_ref(data->current_ds);
 	}
 
-	if (isFullDebug(COMPONENT_NFS_V4)) {
-		char str[LEN_FH_STR];
-
-		sprint_fhandle4(str, &data->currentFH);
-		LogFullDebug(COMPONENT_NFS_V4,
-			     "RESTORE FH: Current FH %s",
-			     str);
-	}
+	LogHandleNFS4("RESTORE FH: Current FH ", &data->currentFH);
 
 	return NFS_REQ_OK;
 }				/* nfs4_op_restorefh */

@@ -72,18 +72,8 @@ int nfs3_remove(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	const char *name = arg->arg_remove3.object.name;
 	int rc = NFS_REQ_OK;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &arg->arg_create3.where.dir,
-				 NULL,
-				 str);
-
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Remove handle: %s name: %s",
-			 str, name);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_remove3.object.dir,
+			  " name: %s", name);
 
 	/* Convert file handle into a pentry */
 	/* to avoid setting it on each error case */

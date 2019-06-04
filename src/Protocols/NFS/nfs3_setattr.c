@@ -77,18 +77,8 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	memset(&setattr, 0, sizeof(setattr));
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &arg->arg_setattr3.object,
-				 NULL,
-				 str);
-
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Setattr handle: %s",
-			 str);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_setattr3.object,
+			  "");
 
 	/* to avoid setting it on each error case */
 	resfail->obj_wcc.before.attributes_follow = FALSE;

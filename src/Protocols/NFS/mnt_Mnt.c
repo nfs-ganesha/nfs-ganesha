@@ -57,7 +57,6 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	int auth_flavor[NB_AUTH_FLAVOR];
 	int index_auth = 0;
 	int i = 0;
-	char dumpfh[1024];
 	int retval = NFS_REQ_OK;
 	nfs_fh3 *fh3 = (nfs_fh3 *) &res->res_mnt3.mountres3_u.mountinfo.fhandle;
 	struct fsal_obj_handle *obj = NULL;
@@ -165,13 +164,10 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * The mountinfo.fhandle definition is an overlay on/of nfs_fh3.
 	 * redefine and eliminate one or the other.
 	 */
-	if (!nfs3_FSALToFhandle(true, fh3, obj, export)) {
+	if (!nfs3_FSALToFhandle(true, fh3, obj, export))
 		res->res_mnt3.fhs_status = MNT3ERR_INVAL;
-	} else {
-		if (isDebug(COMPONENT_NFSPROTO))
-			sprint_fhandle3(dumpfh, fh3);
+	else
 		res->res_mnt3.fhs_status = MNT3_OK;
-	}
 
 	/* Release the fsal_obj_handle created for the path */
 	LogFullDebug(COMPONENT_FSAL,
@@ -200,12 +196,20 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
 		auth_flavor[index_auth++] = AUTH_NONE;
 
-	LogDebug(COMPONENT_NFSPROTO,
-		 "MOUNT: Entry supports %d different flavours handle=%s for client %s",
-		 index_auth, dumpfh,
-			op_ctx->client
+	if (isDebug(COMPONENT_NFSPROTO)) {
+		char str[LEN_FH_STR];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		display_opaque_bytes(&dspbuf, fh3->data.data_val,
+				     fh3->data.data_len);
+
+		LogDebug(COMPONENT_NFSPROTO,
+			 "MOUNT: Entry supports %d different flavours handle=%s for client %s",
+			 index_auth, str,
+			 op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
+	}
 
 	RES_MOUNTINFO->auth_flavors.auth_flavors_val =
 		gsh_calloc(index_auth, sizeof(int));

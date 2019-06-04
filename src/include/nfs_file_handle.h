@@ -36,9 +36,11 @@
 #include <sys/param.h>
 
 #include "log.h"
+#include "display.h"
 #include "sal_data.h"
 #include "export_mgr.h"
 #include "nfs_fh.h"
+#include "nfs_proto_functions.h"
 
 /**
  * @brief Get the actual size of a v3 handle based on the sized fsopaque
@@ -121,7 +123,7 @@ static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 	return offsetof(struct file_handle_v4, fsopaque)+hdl->fs_len;
 }
 
-#define LEN_FH_STR 1024
+#define LEN_FH_STR OPAQUE_BYTES_SIZE(NFS4_FHSIZE)
 
 /* File handle translation utility */
 #ifdef _USE_NFS3
@@ -214,26 +216,97 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 				    bool ds_allowed);
 
 /* File handle print function (mostly used for debugging) */
-void print_fhandle3(log_components_t, nfs_fh3 *);
-void print_fhandle4(log_components_t, nfs_fh4 *);
-void print_fhandle_nlm(log_components_t, netobj *);
-void print_buff(log_components_t, char *, int);
-void LogCompoundFH(compound_data_t *);
 
-void sprint_fhandle3(char *str, nfs_fh3 *fh);
-void sprint_fhandle4(char *str, nfs_fh4 *fh);
-void sprint_fhandle_nlm(char *str, netobj *fh);
-void sprint_buff(char *str, char *buff, int len);
-void sprint_mem(char *str, char *buff, int len);
+#define LogNFS3_Operation(component, req, fh, format, args...) \
+	do { \
+		if (unlikely(component_log_level[component] >= NIV_DEBUG)) { \
+			char str[LEN_FH_STR]; \
+			struct display_buffer dspbuf = { \
+				sizeof(str), str, str}; \
+			\
+			display_opaque_bytes(&dspbuf, (fh)->data.data_val, \
+					     (fh)->data.data_len); \
+			\
+			DisplayLogComponentLevel( \
+				component,  __FILE__, __LINE__, __func__, \
+				NIV_DEBUG, \
+				"REQUEST PROCESSING: Calling %s " \
+				"File Handle V3: Len=%u %s" \
+				format, \
+				nfs3_func_desc[req->rq_msg.cb_proc].funcname, \
+				(fh)->data.data_len, str, \
+				## args); \
+		} \
+	} while (0)
 
-void nfs_FhandleToStr(u_long rq_vers, nfs_fh3 *pfh3, nfs_fh4 *pfh4, char *str);
+#define LogNFS3_Operation2(component, req, fh1, name1, fh2, name2) \
+	do { \
+		if (unlikely(component_log_level[component] >= NIV_DEBUG)) { \
+			char str1[LEN_FH_STR]; \
+			struct display_buffer dspbuf1 = { \
+				sizeof(str1), str1, str1}; \
+			char str2[LEN_FH_STR]; \
+			struct display_buffer dspbuf2 = { \
+				sizeof(str2), str2, str2}; \
+			\
+			display_opaque_bytes(&dspbuf1, (fh1)->data.data_val, \
+					     (fh1)->data.data_len); \
+			display_opaque_bytes(&dspbuf2, (fh2)->data.data_val, \
+					     (fh2)->data.data_len); \
+			\
+			DisplayLogComponentLevel( \
+				component,  __FILE__, __LINE__, __func__, \
+				NIV_DEBUG, \
+				"REQUEST PROCESSING: Calling %s " \
+				"File Handle V3: Len=%u %s%s%s to " \
+				"File Handle V3: Len=%u %s name %s", \
+				nfs3_func_desc[req->rq_msg.cb_proc].funcname, \
+				(fh1)->data.data_len, str1, \
+				name1 ? " name " : "", name1 ? "name1" : "", \
+				(fh2)->data.data_len, str2, name2); \
+		} \
+	} while (0)
 
 #define LogHandleNFS4(label, fh4) \
 	do { \
 		if (isFullDebug(COMPONENT_NFS_V4)) { \
 			char str[LEN_FH_STR]; \
-			sprint_fhandle4(str, fh4); \
-			LogFullDebug(COMPONENT_NFS_V4, "%s%s", label, str); \
+			struct display_buffer dspbuf = { \
+				sizeof(str), str, str}; \
+			\
+			display_opaque_bytes(&dspbuf, (fh4)->nfs_fh4_val, \
+					     (fh4)->nfs_fh4_len); \
+			\
+			LogFullDebug(COMPONENT_NFS_V4, \
+				     "%sFile Handle V4: Len=%u %s", \
+				     label, (fh4)->nfs_fh4_len, str); \
+		} \
+	} while (0)
+
+#define LogCompoundFH(data) \
+	do { \
+		if (isFullDebug(COMPONENT_NFS_V4)) { \
+			char str[LEN_FH_STR]; \
+			struct display_buffer dspbuf = { \
+				sizeof(str), str, str}; \
+			\
+			display_opaque_bytes(&dspbuf, \
+					     &data->currentFH.nfs_fh4_val, \
+					     data->currentFH.nfs_fh4_len); \
+			\
+			LogFullDebug(COMPONENT_NFS_V4, \
+				     "Current FH  Len=%u %s", \
+				     data->currentFH.nfs_fh4_len, str); \
+			\
+			display_reset_buffer(&dspbuf); \
+			\
+			display_opaque_bytes(&dspbuf, \
+					     &data->savedFH.nfs_fh4_val, \
+					     data->savedFH.nfs_fh4_len); \
+			\
+			LogFullDebug(COMPONENT_NFS_V4, \
+				     "Saved FH    Len=%u %s", \
+				     data->savedFH.nfs_fh4_len, str); \
 		} \
 	} while (0)
 

@@ -141,15 +141,8 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_prepare_attrs(&attrs_dir, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 	fsal_prepare_attrs(&attrs_parent, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
-	if (isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR)) {
-		char str[LEN_FH_STR];
-
-		sprint_fhandle3(str, &(arg->arg_readdirplus3.dir));
-
-		LogDebugAlt(COMPONENT_NFSPROTO, COMPONENT_NFS_READDIR,
-			    "REQUEST PROCESSING: Calling NFS3_READDIRPLUS handle: %s",
-			    str);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_readdirplus3.dir,
+			  "");
 
 	/* to avoid setting it on each error case */
 	res->res_readdir3.READDIR3res_u.resfail.dir_attributes.attributes_follow

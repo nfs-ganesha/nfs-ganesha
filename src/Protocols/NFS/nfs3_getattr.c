@@ -67,16 +67,8 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct attrlist attrs;
 	fsal_status_t status;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &(arg->arg_getattr3.object),
-				 NULL, str);
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling NFS3_GETATTR handle: %s",
-			 str);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_getattr3.object,
+			  "");
 
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3);
 

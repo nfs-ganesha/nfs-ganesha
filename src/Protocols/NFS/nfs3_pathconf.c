@@ -66,14 +66,8 @@ int nfs3_pathconf(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	PATHCONF3resfail *resfail = &res->res_pathconf3.PATHCONF3res_u.resfail;
 	PATHCONF3resok *resok = &res->res_pathconf3.PATHCONF3res_u.resok;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		sprint_fhandle3(str, &(arg->arg_pathconf3.object));
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling NFS3_PATHCONF handle: %s",
-			 str);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_pathconf3.object,
+			  "");
 
 	/* to avoid setting it on each error case */
 	resfail->obj_attributes.attributes_follow = FALSE;

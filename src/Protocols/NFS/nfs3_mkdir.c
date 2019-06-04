@@ -82,17 +82,8 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	memset(&sattr, 0, sizeof(sattr));
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &(arg->arg_mkdir3.where.dir),
-				 NULL, str);
-
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling NFS3_MKDIR handle: %s name: %s",
-			 str, dir_name);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_mkdir3.where.dir,
+			  " name: %s", dir_name);
 
 	/* to avoid setting it on each error case */
 	resfail->dir_wcc.before.attributes_follow = FALSE;

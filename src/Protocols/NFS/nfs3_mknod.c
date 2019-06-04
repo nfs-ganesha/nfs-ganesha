@@ -81,17 +81,8 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	memset(&sattr, 0, sizeof(sattr));
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-		const char *fname;
-
-		fname = (file_name == NULL || *file_name == '\0') ?
-			"<empty name>" : file_name;
-		sprint_fhandle3(str, &(arg->arg_mknod3.where.dir));
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling NFS3_MKNOD handle: %s name: %s",
-			 str, fname);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_mknod3.where.dir,
+			  " name: %s", file_name);
 
 	/* to avoid setting them on each error case */
 	resfail->dir_wcc.before.attributes_follow = FALSE;

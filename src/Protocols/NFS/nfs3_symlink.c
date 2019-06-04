@@ -81,18 +81,9 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	memset(&sattr, 0, sizeof(sattr));
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &arg->arg_symlink3.where.dir,
-				 NULL,
-				 str);
-
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Symlink handle: %s name: %s target: %s",
-			 str, symlink_name, target_path);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_symlink3.where.dir,
+			  " name: %s target: %s",
+			  symlink_name, target_path);
 
 	/* to avoid setting it on each error case */
 	resfail->dir_wcc.before.attributes_follow = false;

@@ -69,16 +69,8 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &(arg->arg_fsstat3.fsroot),
-				 NULL, str);
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling NFS3_FSSTAT handle: %s",
-			 str);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_fsstat3.fsroot,
+			  "");
 
 	/* to avoid setting it on each error case */
 	res->res_fsstat3.FSSTAT3res_u.resfail.obj_attributes.attributes_follow =

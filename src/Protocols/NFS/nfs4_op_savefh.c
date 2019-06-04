@@ -124,12 +124,7 @@ enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	data->saved_export = op_ctx->ctx_export;
 	data->saved_export_perms = *op_ctx->export_perms;
 
-	if (isFullDebug(COMPONENT_NFS_V4)) {
-		char str[LEN_FH_STR];
-
-		sprint_fhandle4(str, &data->savedFH);
-		LogFullDebug(COMPONENT_NFS_V4, "SAVE FH: Saved FH %s", str);
-	}
+	LogHandleNFS4("SAVE FH: Saved FH ", &data->savedFH);
 
 	res_SAVEFH->status = NFS4_OK;
 

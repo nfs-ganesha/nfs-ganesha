@@ -236,8 +236,8 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_obj_handle *obj;
 	pre_op_attr pre_attr;
 	fsal_status_t fsal_status = {0, 0};
-	uint64_t offset;
-	size_t size = 0;
+	uint64_t offset = arg->arg_read3.offset;
+	size_t size = arg->arg_read3.count;
 	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
 	uint64_t MaxOffsetRead =
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetRead);
@@ -248,19 +248,9 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	int rc = NFS_REQ_OK;
 	uint32_t flags;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		offset = arg->arg_read3.offset;
-		size = arg->arg_read3.count;
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers, &arg->arg_read3.file,
-				 NULL, str);
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Read handle: %s start: %"
-			 PRIu64 " len: %zu",
-			 str, offset, size);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_read3.file,
+		" start: %"PRIx64 " len: %zu",
+		offset, size);
 
 	/* to avoid setting it on each error case */
 	resfail->file_attributes.attributes_follow =  FALSE;
@@ -309,10 +299,6 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		rc = NFS_REQ_OK;
 		goto putref;
 	}
-
-	/* Extract the argument from the request */
-	offset = arg->arg_read3.offset;
-	size = arg->arg_read3.count;
 
 	/* do not exceed maxium READ offset if set */
 	if (MaxOffsetRead < UINT64_MAX) {

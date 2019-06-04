@@ -70,14 +70,18 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	if (isDebug(COMPONENT_NLM)) {
 		char str[LEN_FH_STR];
+		struct display_buffer dspbuf = {sizeof(str), str, str};
 		char oh[MAXNETOBJ_SZ * 2] = "\0";
 
-		sprint_fhandle3(str, (struct nfs_fh3 *)&arg->share.fh);
+		display_opaque_bytes(&dspbuf, arg->share.fh.n_bytes,
+				     arg->share.fh.n_len);
+
 		netobj_to_string(&arg->share.oh, oh, 1024);
 
 		LogDebug(COMPONENT_NLM,
-			 "REQUEST PROCESSING: Calling NLM4_UNSHARE handle: %s, cookie=%s, reclaim=%s, owner=%s, access=%d, deny=%d",
-			 str, buffer, arg->reclaim ? "yes" : "no", oh,
+			 "REQUEST PROCESSING: Calling NLM4_UNSHARE File Handle V3: Len=%u %s, cookie=%s, reclaim=%s, owner=%s, access=%d, deny=%d",
+			 arg->share.fh.n_len, str, buffer,
+			 arg->reclaim ? "yes" : "no", oh,
 			 arg->share.access,
 			 arg->share.mode);
 	}

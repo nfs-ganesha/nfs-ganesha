@@ -76,16 +76,9 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_verifier_t verifier;
 	enum fsal_create_mode createmode;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &(arg->arg_create3.where.dir),
-				 NULL, str);
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling NFS3_CREATE handle: %s name: %s",
-			 str, file_name ? file_name : "");
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_create3.where.dir,
+			  " name: %s",
+			 file_name ? file_name : "");
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */

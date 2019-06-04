@@ -131,18 +131,8 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 					EXPORT_OPTION_USE_COOKIE_VERIFIER);
 	READDIR3resfail *resfail = &res->res_readdir3.READDIR3res_u.resfail;
 
-	if (isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR)) {
-		char str[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &(arg->arg_readdir3.dir),
-				 NULL,
-				 str);
-
-		LogDebugAlt(COMPONENT_NFSPROTO, COMPONENT_NFS_READDIR,
-			    "REQUEST PROCESSING: Calling nfs_Readdir handle: %s",
-			    str);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_readdir3.dir,
+			  "");
 
 	READDIR3resok * const RES_READDIR3_OK =
 	    &res->res_readdir3.READDIR3res_u.resok;

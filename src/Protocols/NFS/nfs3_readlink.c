@@ -74,17 +74,8 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	READLINK3resfail *resfail = &res->res_readlink3.READLINK3res_u.resfail;
 	READLINK3resok *resok = &res->res_readlink3.READLINK3res_u.resok;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &(arg->arg_readlink3.symlink),
-				 NULL, str);
-
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Readlink handle: %s",
-			 str);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_readlink3.symlink,
+			  "");
 
 	/* to avoid setting it on each error case */
 	resfail->symlink_attributes.attributes_follow = false;

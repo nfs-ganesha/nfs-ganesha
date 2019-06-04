@@ -67,14 +67,8 @@ int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	FSINFO3resok * const FSINFO_FIELD =
 		&res->res_fsinfo3.FSINFO3res_u.resok;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		sprint_fhandle3(str, &(arg->arg_fsinfo3.fsroot));
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling NFS3_FSINFO handle: %s",
-			 str);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_fsinfo3.fsroot,
+			  "");
 
 	/* To avoid setting it on each error case */
 	res->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow =

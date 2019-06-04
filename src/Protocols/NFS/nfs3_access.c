@@ -68,14 +68,8 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_obj_handle *entry = NULL;
 	int rc = NFS_REQ_OK;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		sprint_fhandle3(str, &(arg->arg_access3.object));
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling NFS3_ACCESS handle: %s",
-			 str);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_access3.object,
+			  "");
 
 	/* to avoid setting it on each error case */
 	res->res_access3.ACCESS3res_u.resfail.obj_attributes.attributes_follow =

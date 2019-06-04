@@ -68,14 +68,8 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		sprint_fhandle3(str, &(arg->arg_commit3.file));
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling NFS3_COMMIT handle: %s",
-			 str);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_commit3.file,
+			  "");
 
 	/* To avoid setting it on each error case */
 	res->res_commit3.COMMIT3res_u.resfail.file_wcc.before.attributes_follow

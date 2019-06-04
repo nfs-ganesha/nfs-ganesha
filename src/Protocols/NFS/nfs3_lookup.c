@@ -74,18 +74,8 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 */
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
-
-		name = arg->arg_lookup3.what.name;
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &(arg->arg_lookup3.what.dir),
-				 NULL, str);
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Lookup handle: %s name: %s",
-			 str, name);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_lookup3.what.dir,
+			  " name: %s", name);
 
 	/* to avoid setting it on each error case */
 	resfail->dir_attributes.attributes_follow = FALSE;

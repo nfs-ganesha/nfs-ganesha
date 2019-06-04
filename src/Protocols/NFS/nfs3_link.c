@@ -101,18 +101,9 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char strto[LEN_FH_STR], strfrom[LEN_FH_STR];
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers, &l3_arg->file,
-				 NULL, strfrom);
-		nfs_FhandleToStr(req->rq_msg.cb_vers, &l3_arg->link.dir,
-				 NULL, strto);
-
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling NFS3_LINK handle: %s to handle: %s name: %s",
-			 strfrom, strto, link_name);
-	}
+	LogNFS3_Operation2(COMPONENT_NFSPROTO, req,
+			   &l3_arg->file, NULL,
+			   &l3_arg->link.dir, link_name);
 
 	/* to avoid setting it on each error case */
 	l3_res->LINK3res_u.resfail.file_attributes.attributes_follow = FALSE;

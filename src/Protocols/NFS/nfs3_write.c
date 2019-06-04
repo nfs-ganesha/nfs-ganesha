@@ -197,8 +197,8 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		.attributes_follow = false
 	};
 	fsal_status_t fsal_status = {0, 0};
-	uint64_t offset;
-	size_t size = 0;
+	uint64_t offset = arg->arg_write3.offset;
+	size_t size = arg->arg_write3.count;
 	uint64_t MaxWrite =
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxWrite);
 	uint64_t MaxOffsetWrite =
@@ -212,34 +212,12 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	rc = NFS_REQ_OK;
 
-	offset = arg->arg_write3.offset;
-	size = arg->arg_write3.count;
-
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR], *stables = "";
-
-		switch (arg->arg_write3.stable) {
-		case UNSTABLE:
-			stables = "UNSTABLE";
-			break;
-		case DATA_SYNC:
-			stables = "DATA_SYNC";
-			break;
-		case FILE_SYNC:
-			stables = "FILE_SYNC";
-			break;
-		}
-
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &arg->arg_write3.file,
-				 NULL,
-				 str);
-
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Write handle: %s start: %"
-			 PRIx64 " len: %zx %s",
-			 str, offset, size, stables);
-	}
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_write3.file,
+		" start: %"PRIx64 " len: %zu %s",
+		offset, size,
+			arg->arg_write3.stable == UNSTABLE ? "UNSTABLE"
+			: arg->arg_write3.stable == UNSTABLE ? "DATA_SYNC"
+			: "FILE_SYNC");
 
 	/* to avoid setting it on each error case */
 	resfail->file_wcc.before.attributes_follow = false;
