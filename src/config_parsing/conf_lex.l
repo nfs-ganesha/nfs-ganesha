@@ -473,10 +473,7 @@ static int new_file(char *name_tok,
 	if (filename[0] == '/') {
 		fullpath = gsh_strdup(filename);
 	} else {
-		fullpath = gsh_malloc(strlen(filename) +
-				      strlen(confroot->conf_dir) + 2);
-
-		sprintf(fullpath, "%s/%s", confroot->conf_dir, filename);
+		fullpath = gsh_concat_sep(confroot->conf_dir, '/', filename);
 	}
 	/* loop detection */
 	for (fp = confroot->files; fp != NULL; fp = fp->next) {

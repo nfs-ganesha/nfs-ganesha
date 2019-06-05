@@ -103,12 +103,8 @@ static enum load_state {
 
 static void load_fsal_static(const char *name, void (*init)(void))
 {
-	char pname[24];
-	char *dl_path;
+	char *dl_path = gsh_concat("Builtin-", name);
 	struct fsal_module *fsal;
-
-	snprintf(pname, sizeof(pname), "Builtin-%s", name);
-	dl_path = gsh_strdup(pname);
 
 	PTHREAD_MUTEX_lock(&fsal_lock);
 

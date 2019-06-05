@@ -383,4 +383,29 @@ pool_free(pool_t *pool, void *object)
 	gsh_free(object);
 }
 
+static inline char *gsh_concat(const char *p1, const char *p2)
+{
+	size_t len1 = strlen(p1);
+	size_t len2 = strlen(p2);
+	char *path = gsh_malloc(len1 + len2 + 1);
+
+	memcpy(path, p1, len1);
+	memcpy(path + len1, p2, len2 + 1);
+
+	return path;
+}
+
+static inline char *gsh_concat_sep(const char *p1, char sep, const char *p2)
+{
+	size_t len1 = strlen(p1);
+	size_t len2 = strlen(p2);
+	char *path = gsh_malloc(len1 + 1 + len2 + 1);
+
+	memcpy(path, p1, len1);
+	path[len1] = sep;
+	memcpy(path + len1 + 1, p2, len2 + 1);
+
+	return path;
+}
+
 #endif /* ABSTRACT_MEM_H */

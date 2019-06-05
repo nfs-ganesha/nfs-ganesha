@@ -178,13 +178,10 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 {
 	fsal_status_t status = {0, 0};
 	struct mdcache_fsal_export *myself;
-	int namelen;
 	pthread_rwlockattr_t attrs;
 
 	myself = gsh_calloc(1, sizeof(struct mdcache_fsal_export));
-	namelen = strlen(sub_fsal->name) + 5;
-	myself->name = gsh_calloc(1, namelen);
-	snprintf(myself->name, namelen, "%s/MDC", sub_fsal->name);
+	myself->name = gsh_concat(sub_fsal->name, "/MDC");
 
 	fsal_export_init(&myself->mfe_exp);
 	mdcache_export_ops_init(&myself->mfe_exp.exp_ops);
