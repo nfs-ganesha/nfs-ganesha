@@ -39,7 +39,7 @@ ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQU
 # Patch level is always ".0" for mainline (master).  It is blank for development.
 # When starting a stable maintenance branch, this becomes ".N"
 # where N is monotonically increasing starting at 1. Remember to include the "." !!
-set(GANESHA_PATCH_LEVEL .3)
+set(GANESHA_PATCH_LEVEL .4)
 
 # Extra version is for naming development/RC.  It is blank in master/stable branches
 # so it can be available to end-users to name local variants/versions
