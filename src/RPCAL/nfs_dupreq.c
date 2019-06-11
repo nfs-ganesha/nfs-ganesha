@@ -577,6 +577,7 @@ nfs_dupreq_get_drc(struct svc_req *req)
 		LogFullDebug(COMPONENT_DUPREQ, "ref shared UDP DRC");
 		drc = &(drc_st->udp_drc);
 		DRC_ST_LOCK();
+		req->rq_xprt->xp_u2 = (void *)drc;
 		(void)nfs_dupreq_ref_drc(drc);
 		DRC_ST_UNLOCK();
 		goto out;
