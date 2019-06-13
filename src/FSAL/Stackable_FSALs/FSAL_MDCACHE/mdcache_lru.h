@@ -196,8 +196,14 @@ static inline void mdcache_put(mdcache_entry_t *entry)
 	mdcache_lru_unref(entry);
 }
 
-void mdcache_lru_ref_chunk(struct dir_chunk *chunk);
-void mdcache_lru_unref_chunk(struct dir_chunk *chunk);
+#define mdcache_lru_ref_chunk(chunk) \
+	_mdcache_lru_ref_chunk(chunk, __func__, __LINE__)
+void _mdcache_lru_ref_chunk(struct dir_chunk *chunk, const char *func,
+			    int line);
+#define mdcache_lru_unref_chunk(chunk) \
+	_mdcache_lru_unref_chunk(chunk, __func__, __LINE__)
+void _mdcache_lru_unref_chunk(struct dir_chunk *chunk, const char *func,
+			      int line);
 struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 				    struct dir_chunk *prev_chunk,
 				    fsal_cookie_t whence);

@@ -869,7 +869,7 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
  * @param[in] prev_chunk If non-NULL, the previous chunk in this directory
  * @param[in] whence	 If @a prev_chunk is NULL, the starting whence of chunk
  *
- * @return reused or allocated chunk
+ * @return reused or allocated chunk with a ref taken for the caller
  */
 struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 				    struct dir_chunk *prev_chunk,
@@ -920,7 +920,7 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 		chunk->reload_ck = whence;
 	}
 
-	chunk->chunk_lru.refcnt = 1;
+	chunk->chunk_lru.refcnt = 2;
 	chunk->chunk_lru.cf = 0;
 	chunk->chunk_lru.lane = lru_lane_of(chunk);
 
@@ -2033,7 +2033,7 @@ static void lru_clean_chunk(struct dir_chunk *chunk)
 	mdcache_clean_dirent_chunk(chunk);
 }
 
-void mdcache_lru_ref_chunk(struct dir_chunk *chunk)
+void _mdcache_lru_ref_chunk(struct dir_chunk *chunk, const char *func, int line)
 {
 	atomic_inc_int32_t(&chunk->chunk_lru.refcnt);
 }
@@ -2043,12 +2043,17 @@ void mdcache_lru_ref_chunk(struct dir_chunk *chunk)
  * Should be called with content_lock held in write mode.
  * @param [in] chunk	The chunk to unref
  */
-void mdcache_lru_unref_chunk(struct dir_chunk *chunk)
+void _mdcache_lru_unref_chunk(struct dir_chunk *chunk, const char *func,
+			      int line)
 {
 	int refcnt;
-	uint32_t lane = chunk->chunk_lru.lane;
+	uint32_t lane;
 	struct lru_q_lane *qlane;
 
+	if (!chunk)
+		return;
+
+	lane = chunk->chunk_lru.lane;
 	qlane = &CHUNK_LRU[lane];
 	QLOCK(qlane);
 
