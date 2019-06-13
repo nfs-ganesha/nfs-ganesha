@@ -474,6 +474,48 @@ static struct gsh_dbus_method *admin_methods[] = {
 	NULL
 };
 
+#define HANDLE_VERSION_PROP(prop_name, prop_string) \
+static bool dbus_prop_get_VERSION_##prop_name(DBusMessageIter *reply) \
+{ \
+	const char *version_string = prop_string; \
+	if (!dbus_message_iter_append_basic \
+	    (reply, DBUS_TYPE_STRING, &version_string)) \
+		return false; \
+	return true; \
+} \
+\
+static struct gsh_dbus_prop VERSION_##prop_name##_prop = { \
+	.name = "VERSION_" #prop_name, \
+	.access = DBUS_PROP_READ, \
+	.type = "s", \
+	.get = dbus_prop_get_VERSION_##prop_name, \
+	.set = NULL \
+}
+
+#define VERSION_PROPERTY_ITEM(name) (&VERSION_##name##_prop)
+
+HANDLE_VERSION_PROP(RELEASE, GANESHA_VERSION);
+
+#if !GANESHA_BUILD_RELEASE
+HANDLE_VERSION_PROP(COMPILE_DATE, __DATE__);
+HANDLE_VERSION_PROP(COMPILE_TIME, __TIME__);
+HANDLE_VERSION_PROP(COMMENT, VERSION_COMMENT);
+HANDLE_VERSION_PROP(GIT_HEAD, _GIT_HEAD_COMMIT);
+HANDLE_VERSION_PROP(GIT_DESCRIBE, _GIT_DESCRIBE);
+#endif
+
+static struct gsh_dbus_prop *admin_props[] = {
+	VERSION_PROPERTY_ITEM(RELEASE),
+#if !GANESHA_BUILD_RELEASE
+	VERSION_PROPERTY_ITEM(COMPILE_DATE),
+	VERSION_PROPERTY_ITEM(COMPILE_TIME),
+	VERSION_PROPERTY_ITEM(COMMENT),
+	VERSION_PROPERTY_ITEM(GIT_HEAD),
+	VERSION_PROPERTY_ITEM(GIT_DESCRIBE),
+#endif
+	NULL
+};
+
 static struct gsh_dbus_signal heartbeat_signal = {
 	.name = HEARTBEAT_NAME,
 	.signal = NULL,
@@ -488,7 +530,7 @@ static struct gsh_dbus_signal *admin_signals[] = {
 
 static struct gsh_dbus_interface admin_interface = {
 	.name = DBUS_ADMIN_IFACE,
-	.props = NULL,
+	.props = admin_props,
 	.methods = admin_methods,
 	.signals = admin_signals
 };
