@@ -198,6 +198,22 @@ class ServerAdmin():
         status, msg = self.admin.purge_gids()
         self.status_message(status, msg)
 
+    def show_version(self):
+        status, msg, versions = self.admin.GetAll()
+        if status:
+            print("NFS-Ganesha Release = V{}".format(versions['VERSION_RELEASE']))
+            try:
+                print("ganesha compiled on {} at {}".format(
+                   versions['VERSION_COMPILE_DATE'],
+                   versions['VERSION_COMPILE_TIME']))
+                print("Release comment = {}".format(versions['VERSION_COMMENT']))
+                print("Git HEAD = {}".format(versions['VERSION_GIT_HEAD']))
+                print("Git Describe = {}".format(versions['VERSION_GIT_DESCRIBE']))
+            except KeyError:
+                pass
+        else:
+            self.status_message(status, msg)
+
     def status_message(self, status, errormsg):
         print("Returns: status = %s, %s" % (str(status), errormsg))
 

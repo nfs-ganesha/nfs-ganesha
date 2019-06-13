@@ -326,6 +326,20 @@ class AdminInterface():
         msg = reply[1]
         return status, msg
 
+    def GetAll(self):
+        method = self.dbusobj.get_dbus_method(
+                "GetAll",
+                "org.freedesktop.DBus.Properties")
+        try:
+            dictionary = method(self.dbus_interface)
+        except dbus.exceptions.DBusException as e:
+            return False, e, {}
+
+        prop_dict = {}
+        for key in dictionary.keys():
+            prop_dict[key] = dictionary[key]
+        return True, "Done", prop_dict
+
 
 IDMapper = namedtuple('IDMapper',
                      ['Name',
