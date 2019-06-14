@@ -2535,8 +2535,7 @@ fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 	state.dirent = dirent;
 	state.whence_is_name = op_ctx->fsal_export->exp_ops.fs_supports(
 				op_ctx->fsal_export, fso_whence_is_name);
-	state.whence_search = state.whence_is_name && whence != 0 &&
-							prev_chunk == NULL;
+	state.whence_search = state.whence_is_name && whence != 0;
 
 	/* Set up chunks */
 	state.first_chunk = mdcache_get_chunk(directory, prev_chunk, whence);
