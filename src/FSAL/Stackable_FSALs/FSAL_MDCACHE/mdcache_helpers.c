@@ -2415,10 +2415,16 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			new_entry,
 			atomic_fetch_int32_t(&new_entry->lru.refcnt));
 
-	/* Note that this entry is ref'd, so that mdcache_readdir_chunked can
-	 * un-ref it.  Pass this ref off to the dir_entry for this purpose. */
-	assert(!new_dir_entry->entry);
-	new_dir_entry->entry = new_entry;
+	if (new_dir_entry != allocated_dir_entry && new_dir_entry->entry) {
+		/* This was swapped and already has a refcounted entry. Drop our
+		 * ref. */
+		mdcache_put(new_entry);
+	} else {
+		/* This is a new dirent, or doesn't have an entry. Pass our ref
+		 * on entry off to mdcache_readdir_chunked */
+		assert(!new_dir_entry->entry);
+		new_dir_entry->entry = new_entry;
+	}
 
 	return result;
 }
