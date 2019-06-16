@@ -1685,7 +1685,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 	version = "NFSv3:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
-	for (i = 0; i < NFSPROC3_COMMIT; i++) {
+	for (i = 0; i <= NFSPROC3_COMMIT; i++) {
 		if (global_st.v3.op[i] > 0) {
 			op = optabv3[i].name;
 			dbus_message_iter_append_basic(&struct_iter,
@@ -1709,7 +1709,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 	version = "\nNLM:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
-	for (i = 0; i < NLM4_FAILED; i++) {
+	for (i = 0; i <= NLMPROC4_FREE_ALL; i++) {
 		if (global_st.lm.op[i] > 0) {
 			op = optnlm[i].name;
 			dbus_message_iter_append_basic(&struct_iter,
@@ -1721,7 +1721,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 	version = "\nMNT:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
-	for (i = 0; i < MOUNTPROC3_EXPORT; i++) {
+	for (i = 0; i <= MOUNTPROC3_EXPORT; i++) {
 		if (global_st.mn.op[i] > 0) {
 			op = optmnt[i].name;
 			dbus_message_iter_append_basic(&struct_iter,
@@ -1733,7 +1733,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 	version = "\nQUOTA:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
-	for (i = 0; i < RQUOTAPROC_SETACTIVEQUOTA; i++) {
+	for (i = 0; i <= RQUOTAPROC_SETACTIVEQUOTA; i++) {
 		if (global_st.qt.op[i] > 0) {
 			op = optqta[i].name;
 			dbus_message_iter_append_basic(&struct_iter,
