@@ -104,6 +104,16 @@ struct export_stats {
 	struct gsh_export export;
 };
 
+/**
+ * @brief Auth stats information
+ */
+struct auth_stats {
+	uint64_t total;
+	uint64_t latency;
+	uint64_t max;
+	uint64_t min;
+};
+
 #ifdef USE_DBUS
 
 /* Bits for introspect arg structures
@@ -211,8 +221,12 @@ struct export_stats {
 	.name = "v4_full_status",  \
 	.type = "b(tt)",        \
 	.direction = "out"      \
+},				\
+{                               \
+	.name = "auth_status",  \
+	.type = "b(tt)",        \
+	.direction = "out"      \
 }
-
 
 #define V3_FULL_REPLY		\
 {				\
@@ -226,6 +240,13 @@ struct export_stats {
 	.name = "v4_full_stats",	\
 	.type = "a(sttdddddd)",	\
 	.direction = "out"	\
+}
+
+#define AUTH_REPLY		\
+{                               \
+	.name = "auth",		\
+	.type = "a(tdddtddd)",  \
+	.direction = "out"      \
 }
 
 #define LAYOUTS_REPLY		\
@@ -313,6 +334,7 @@ void reset_client_stats(void);
 void reset_gsh_stats(struct gsh_stats *st);
 void reset_v3_full_stats(void);
 void reset_v4_full_stats(void);
+void reset_auth_stats(void);
 
 #ifdef _USE_9P
 void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter);

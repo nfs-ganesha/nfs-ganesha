@@ -46,6 +46,7 @@
 #include <stdbool.h>
 #include "common_utils.h"
 #include "uid2grp.h"
+#include "idmapper.h"
 
 /* group_data has a reference counter. If it goes to zero, it implies
  * that it is out of the cache (AVL trees) and should be freed. The
@@ -91,6 +92,8 @@ static bool my_getgrouplist_alloc(char *user,
 {
 	int ngroups = 0;
 	gid_t *groups = NULL;
+	struct timespec s_time, e_time;
+	bool stats = nfs_param.core_param.enable_AUTHSTATS;
 
 	/* We call getgrouplist() with 0 ngroups first. This should always
 	 * return -1, and ngroups should be set to the actual number of
@@ -112,6 +115,7 @@ static bool my_getgrouplist_alloc(char *user,
 	if (ngroups > 0)
 		groups = gsh_malloc(ngroups * sizeof(gid_t));
 
+	now(&s_time);
 	if (getgrouplist(user, gid, groups, &ngroups) == -1) {
 		LogEvent(COMPONENT_IDMAPPER,
 			 "getgrouplist for user: %s failed retrying", user);
@@ -122,12 +126,19 @@ static bool my_getgrouplist_alloc(char *user,
 		ngroups = 1000;
 		groups = gsh_malloc(ngroups * sizeof(gid_t));
 
+		now(&s_time);
 		if (getgrouplist(user, gid, groups, &ngroups) == -1) {
 			LogWarn(COMPONENT_IDMAPPER,
 				"getgrouplist for user:%s failed, ngroups: %d",
 				user, ngroups);
 			gsh_free(groups);
 			return false;
+		}
+
+		now(&e_time);
+		if (stats) {
+			gc_stats_update(&s_time, &e_time);
+			stats = false;
 		}
 
 		if (ngroups != 0) {
@@ -142,6 +153,9 @@ static bool my_getgrouplist_alloc(char *user,
 		}
 	}
 
+	now(&e_time);
+	if (stats)
+		gc_stats_update(&s_time, &e_time);
 	gdata->groups = groups;
 	gdata->nbgroups = ngroups;
 

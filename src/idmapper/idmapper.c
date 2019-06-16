@@ -51,10 +51,24 @@
 #endif
 #include "common_utils.h"
 #include "gsh_rpc.h"
+#include "gsh_types.h"
+#include "gsh_list.h"
+#ifdef USE_DBUS
+#include "gsh_dbus.h"
+#endif
 #include "nfs_core.h"
 #include "idmapper.h"
+#include "server_stats_private.h"
 
 static struct gsh_buffdesc owner_domain;
+
+/* winbind auth stats information */
+struct auth_stats winbind_auth_stats;
+pthread_rwlock_t winbind_auth_lock = PTHREAD_RWLOCK_INITIALIZER;
+
+/*group cache auth stats information */
+struct auth_stats gc_auth_stats;
+pthread_rwlock_t gc_auth_lock = PTHREAD_RWLOCK_INITIALIZER;
 
 /**
  * @brief Initialize the ID Mapper
@@ -620,6 +634,59 @@ bool name2gid(const struct gsh_buffdesc *name, gid_t *gid, const gid_t anon)
 	return name2id(name, gid, true, anon);
 }
 
+void winbind_stats_update(struct timespec *s_time, struct timespec *e_time)
+{
+	nsecs_elapsed_t resp_time;
+
+	resp_time = timespec_diff(s_time, e_time);
+
+	PTHREAD_RWLOCK_wrlock(&winbind_auth_lock);
+	(void)atomic_inc_uint64_t(&winbind_auth_stats.total);
+	(void)atomic_add_uint64_t(&winbind_auth_stats.latency,
+					resp_time);
+	if (winbind_auth_stats.max < resp_time)
+		winbind_auth_stats.max = resp_time;
+	if (winbind_auth_stats.min == 0 ||
+	    winbind_auth_stats.min > resp_time)
+		winbind_auth_stats.min = resp_time;
+	PTHREAD_RWLOCK_unlock(&winbind_auth_lock);
+}
+
+void gc_stats_update(struct timespec *s_time, struct timespec *e_time)
+{
+	nsecs_elapsed_t resp_time;
+
+	resp_time = timespec_diff(s_time, e_time);
+
+	PTHREAD_RWLOCK_wrlock(&gc_auth_lock);
+	(void)atomic_inc_uint64_t(&gc_auth_stats.total);
+	(void)atomic_add_uint64_t(&gc_auth_stats.latency,
+					resp_time);
+	if (gc_auth_stats.max < resp_time)
+		gc_auth_stats.max = resp_time;
+	if (gc_auth_stats.min == 0 ||
+	    gc_auth_stats.min > resp_time)
+		gc_auth_stats.min = resp_time;
+	PTHREAD_RWLOCK_unlock(&gc_auth_lock);
+}
+
+void reset_auth_stats(void)
+{
+	PTHREAD_RWLOCK_wrlock(&winbind_auth_lock);
+	winbind_auth_stats.total = 0;
+	winbind_auth_stats.latency = 0;
+	winbind_auth_stats.max = 0;
+	winbind_auth_stats.min = 0;
+	PTHREAD_RWLOCK_unlock(&winbind_auth_lock);
+
+	PTHREAD_RWLOCK_wrlock(&gc_auth_lock);
+	gc_auth_stats.total = 0;
+	gc_auth_stats.latency = 0;
+	gc_auth_stats.max = 0;
+	gc_auth_stats.min = 0;
+	PTHREAD_RWLOCK_unlock(&gc_auth_lock);
+}
+
 #ifdef _HAVE_GSSAPI
 #ifdef _MSPAC_SUPPORT
 /**
@@ -646,6 +713,10 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 #endif
 {
 #ifdef USE_NFSIDMAP
+#ifdef _MSPAC_SUPPORT
+	struct timespec s_time, e_time;
+	bool stats = false;
+#endif
 	uid_t gss_uid = -1;
 	gid_t gss_gid = -1;
 	const gid_t *gss_gidres = NULL;
@@ -659,8 +730,12 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 
 	if (nfs_param.nfsv4_param.use_getpwnam)
 		return false;
-
 #ifdef USE_NFSIDMAP
+#ifdef _MSPAC_SUPPORT
+	if (nfs_param.core_param.enable_AUTHSTATS)
+		stats = true;
+#endif
+
 	PTHREAD_RWLOCK_rdlock(&idmapper_user_lock);
 	success =
 	    idmapper_lookup_by_uname(&princbuff, &gss_uid, &gss_gidres, true);
@@ -713,9 +788,13 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 				params.password.pac.length =
 				    gd->pac.ms_pac.length;
 
+				now(&s_time);
 				wbc_err =
 				    wbcAuthenticateUserEx(&params, &info,
 							  &error);
+				now(&e_time);
+				if (stats)
+					winbind_stats_update(&s_time, &e_time);
 				if (!WBC_ERROR_IS_OK(wbc_err)) {
 					LogCrit(COMPONENT_IDMAPPER,
 						"wbcAuthenticateUserEx returned %s",
@@ -732,9 +811,13 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 					return false;
 				}
 
+				now(&s_time);
 				/* 1st SID is account sid, see wbclient.h */
 				wbc_err =
 				    wbcSidToUid(&info->sids[0].sid, &gss_uid);
+				now(&e_time);
+				if (stats)
+					winbind_stats_update(&s_time, &e_time);
 				if (!WBC_ERROR_IS_OK(wbc_err)) {
 					LogCrit(COMPONENT_IDMAPPER,
 						"wbcSidToUid for uid returned %s",
@@ -743,10 +826,14 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 					return false;
 				}
 
+				now(&s_time);
 				/* 2nd SID is primary_group sid, see
 				   wbclient.h */
 				wbc_err =
 				    wbcSidToGid(&info->sids[1].sid, &gss_gid);
+				now(&e_time);
+				if (stats)
+					winbind_stats_update(&s_time, &e_time);
 				if (!WBC_ERROR_IS_OK(wbc_err)) {
 					LogCrit(COMPONENT_IDMAPPER,
 						"wbcSidToUid for gid returned %s\n",
@@ -791,6 +878,93 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 	return false;
 #endif
 }
+
+#ifdef USE_DBUS
+
+/**
+ * DBUS method to collect Auth stats for group cache and winbind
+ */
+static bool all_auth_stats(DBusMessageIter *args, DBusMessage *reply,
+				DBusError *error)
+{
+	bool success = true, stats_exist = false;
+	char *errormsg = "OK";
+	DBusMessageIter iter, struct_iter;
+	struct timespec timestamp;
+	double res = 0.0;
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (!nfs_param.core_param.enable_AUTHSTATS) {
+		success = false;
+		errormsg = "auth related stats disabled";
+		dbus_status_reply(&iter, success, errormsg);
+		return true;
+	}
+	dbus_status_reply(&iter, success, errormsg);
+
+	now(&timestamp);
+	dbus_append_timestamp(&iter, &timestamp);
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT,
+		NULL, &struct_iter);
+
+	/* group cache stats */
+	PTHREAD_RWLOCK_rdlock(&gc_auth_lock);
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_UINT64, &gc_auth_stats.total);
+	if (gc_auth_stats.total > 0) {
+		stats_exist = true;
+		res = (double) gc_auth_stats.latency /
+			gc_auth_stats.total * 0.000001;
+	}
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_DOUBLE, &res);
+	if (stats_exist)
+		res = (double) gc_auth_stats.max * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_DOUBLE, &res);
+	if (stats_exist)
+		res = (double) gc_auth_stats.min * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_DOUBLE, &res);
+	PTHREAD_RWLOCK_unlock(&gc_auth_lock);
+
+	stats_exist = false;
+	res = 0.0;
+
+	/* winbind stats */
+	PTHREAD_RWLOCK_rdlock(&winbind_auth_lock);
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_UINT64, &winbind_auth_stats.total);
+	if (winbind_auth_stats.total > 0) {
+		stats_exist = true;
+		res = (double) winbind_auth_stats.latency /
+			winbind_auth_stats.total * 0.000001;
+	}
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_DOUBLE, &res);
+	if (stats_exist)
+		res = (double) winbind_auth_stats.max * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_DOUBLE, &res);
+	if (stats_exist)
+		res = (double) winbind_auth_stats.min * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_DOUBLE, &res);
+	dbus_message_iter_close_container(&iter, &struct_iter);
+	PTHREAD_RWLOCK_unlock(&winbind_auth_lock);
+
+	return true;
+}
+
+struct gsh_dbus_method auth_statistics = {
+	.name = "GetAuthStats",
+	.method = all_auth_stats,
+	.args = {STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 AUTH_REPLY,
+		 END_ARG_LIST}
+};
+#endif
 #endif
 
 /** @} */

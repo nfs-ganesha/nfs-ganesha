@@ -137,7 +137,11 @@ class RetrieveExportStats():
         stats_state = self.exportmgrobj.get_dbus_method("GetFULLV4Stats",
                                   self.dbus_exportstats_name)
         return DumpFULLV4Stats(stats_state())
-
+    # authentication
+    def auth_stats(self):
+	stats_state = self.exportmgrobj.get_dbus_method("GetAuthStats",
+				self.dbus_exportstats_name)
+	return DumpAuth(stats_state())
 
 class RetrieveClientStats():
     def __init__(self):
@@ -434,6 +438,11 @@ class StatsStatus():
                 output += time.ctime(self.status[5][1][0]) + str(self.status[5][1][1]) + " nsecs\n"
             else:
                  output += "Stats counting for v4_full is currently disabled \n"
+            if self.status[6][0]:
+                output += "Stats counting for authentication is enabled since: \n\t"
+                output += time.ctime(self.status[6][1][0]) + str(self.status[6][1][1]) + " nsecs\n"
+            else:
+                 output += "Stats counting for authentication is currently disabled \n"
             return output
 
 
@@ -482,6 +491,41 @@ class StatsDisable():
             return "Failed to disable statistics counting, GANESHA RESPONSE STATUS: " + self.status[1]
         else:
             return "Successfully disabled statistics counting"
+
+class DumpAuth():
+    def __init__(self, stats):
+        self.success = stats[0]
+        self.status = stats[1]
+        if self.success:
+	   self.timestamp = (stats[2][0], stats[2][1])
+           self.gctotal = stats[3][0]
+           self.gclatency = stats[3][1]
+           self.gcmax = stats[3][2]
+           self.gcmin = stats[3][3]
+           self.wbtotal = stats[3][4]
+           self.wblatency = stats[3][5]
+           self.wbmax = stats[3][6]
+           self.wbmin = stats[3][7]
+    def __str__(self):
+        output = ""
+        if not self.success:
+            return "No auth activity, GANESHA RESPONSE STATUS: " + self.status
+        if self.status != "OK":
+            output += self.status + "\n"
+        output += ("Timestamp: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs"+
+                   "\nAuthentication related stats" +
+                   "\n\nGroup Cache" +
+                   "\nTotal ops: " + str(self.gctotal) +
+                   "\nAve Latency: " + str(self.gclatency) +
+                   "\nMax Latency: " + str(self.gcmax) +
+                   "\nMin Latency: " + str(self.gcmin) +
+                   "\n\nWinbind" +
+                   "\nTotal ops: " + str(self.wbtotal) +
+                   "\nAve Latency: " + str(self.wblatency) +
+                   "\nMax Latency: " + str(self.wbmax) +
+                   "\nMin Latency: " + str(self.wbmin))
+        return output
+
 
 class DumpFULLV3Stats():
     def __init__(self, status):
