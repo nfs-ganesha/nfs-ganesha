@@ -222,8 +222,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 				}
 				clen = strlen(RGWFSM.conf_path) + 8;
 				conf_path = (char *) gsh_malloc(clen);
-				sprintf(conf_path, "--conf=%s",
-					RGWFSM.conf_path);
+				(void) sprintf(conf_path, "--conf=%s",
+					       RGWFSM.conf_path);
 				argv[argc] = conf_path;
 				++argc;
 			}
@@ -231,7 +231,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			if (RGWFSM.name) {
 				clen = strlen(RGWFSM.name) + 8;
 				inst_name = (char *) gsh_malloc(clen);
-				sprintf(inst_name, "--name=%s", RGWFSM.name);
+				(void) sprintf(inst_name, "--name=%s",
+					       RGWFSM.name);
 				argv[argc] = inst_name;
 				++argc;
 			}
@@ -239,8 +240,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			if (RGWFSM.cluster) {
 				clen = strlen(RGWFSM.cluster) + 8;
 				cluster = (char *) gsh_malloc(clen);
-				sprintf(cluster, "--cluster=%s",
-					RGWFSM.cluster);
+				(void) sprintf(cluster, "--cluster=%s",
+					       RGWFSM.cluster);
 				argv[argc] = cluster;
 				++argc;
 			}

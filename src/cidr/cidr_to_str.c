@@ -74,9 +74,9 @@ char *cidr_to_str(const CIDR * block, int flags)
 			 * host address, and treat it as such.
 			 */
 
-			sprintf(toret, "%d.%d.%d.%d.in-addr.arpa",
-				block->addr[15], block->addr[14],
-				block->addr[13], block->addr[12]);
+			(void) sprintf(toret, "%d.%d.%d.%d.in-addr.arpa",
+				       block->addr[15], block->addr[14],
+				       block->addr[13], block->addr[12]);
 			return (toret);
 		}
 
@@ -107,7 +107,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 			/* USEV6 */
 			/* Now, slap on the v4 address */
 			for (i = 12; i <= 15; i++) {
-				sprintf(tmpbuf, "%u", (block->addr)[i]);
+				(void) sprintf(tmpbuf, "%u", (block->addr)[i]);
 				strcat(toret, tmpbuf);
 				if (i < 15)
 					strcat(toret, ".");
@@ -134,7 +134,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 					moct = (block->mask)[i];
 					if (flags & CIDR_WILDCARD)
 						moct = ~(moct);
-					sprintf(tmpbuf, "%u", moct);
+					(void) sprintf(tmpbuf, "%u", moct);
 					strcat(toret, tmpbuf);
 					if (i < 15)
 						strcat(toret, ".");
@@ -154,9 +154,9 @@ char *cidr_to_str(const CIDR * block, int flags)
 				    && (flags & CIDR_FORCEV4))
 					pflen -= 96;
 
-				sprintf(tmpbuf, "%u",
-					(flags & CIDR_USEV6) ? pflen +
-					96 : pflen);
+				(void) sprintf(tmpbuf, "%u",
+					       (flags & CIDR_USEV6) ? pflen +
+								96 : pflen);
 
 				strcat(toret, tmpbuf);
 			}
@@ -172,7 +172,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 			 * Build the ...ip6.arpa form.  See notes in the CIDR_REVERSE
 			 * section of PROTO_IPV4 above for various notes.
 			 */
-			sprintf(toret,
+			(void) sprintf(toret,
 				"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
 				"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
 				"%x.%x.%x.%x.%x.ip6.arpa",
@@ -286,9 +286,9 @@ char *cidr_to_str(const CIDR * block, int flags)
 				 * only use as many digits as we need.
 				 */
 				if (flags & CIDR_VERBOSE)
-					sprintf(tmpbuf, "%.4x", v6sect);
+					(void) sprintf(tmpbuf, "%.4x", v6sect);
 				else
-					sprintf(tmpbuf, "%x", v6sect);
+					(void) sprintf(tmpbuf, "%x", v6sect);
 				strcat(toret, tmpbuf);
 
 				/* And loop back around to the next 2-octet set */
@@ -352,7 +352,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 				    && (flags & CIDR_FORCEV6))
 					pflen += 96;
 
-				sprintf(tmpbuf, "%u", pflen);
+				(void) sprintf(tmpbuf, "%u", pflen);
 				strcat(toret, tmpbuf);
 			}
 		}		/* ! ONLYADDR */

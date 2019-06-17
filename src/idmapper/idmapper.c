@@ -127,8 +127,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		char namebuf[11];
 
 		name.addr = namebuf;
-		sprintf(namebuf, "%"PRIu32, id);
-		name.len = strlen(namebuf);
+		name.len = sprintf(namebuf, "%"PRIu32, id);
 		not_a_size_t = name.len;
 		return inline_xdr_bytes(xdrs, (char **)&name.addr,
 					&not_a_size_t, UINT32_MAX);
@@ -244,8 +243,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 					"Lookup for %d failed, using numeric %s",
 					id, (group ? "group" : "owner"));
 				/* 2**32 is 10 digits long in decimal */
-				sprintf(namebuff, "%"PRIu32, id);
-				new_name.len = strlen(namebuff);
+				new_name.len = sprintf(namebuff, "%"PRIu32, id);
 			} else {
 				LogInfo(COMPONENT_IDMAPPER,
 					"Lookup for %d failed, using nobody.",

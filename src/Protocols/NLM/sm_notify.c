@@ -154,9 +154,8 @@ int main(int argc, char **argv)
 	}
 
 	/* convert port to string format */
-	sprintf(port_str, "%d",
-		htons(((struct sockaddr_in *)
-		buf->buf)->sin_port));
+	(void) sprintf(port_str, "%d",
+		       htons(((struct sockaddr_in *) buf->buf)->sin_port));
 
 	clnt = clnt_dg_ncreate(fd, buf, SM_PROG,
 			SM_VERS, 0, 0);

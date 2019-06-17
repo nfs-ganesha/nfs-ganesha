@@ -179,9 +179,9 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 				hints.ai_next = NULL;
 
 				/* convert port to string format */
-				sprintf(port_str, "%d",
-					htons(((struct sockaddr_in *)
-						buf->buf)->sin_port));
+				(void) sprintf(port_str, "%d",
+					       htons(((struct sockaddr_in *)
+							buf->buf)->sin_port));
 
 				/* buf with inet is only needed for the port */
 				gsh_free(buf->buf);
