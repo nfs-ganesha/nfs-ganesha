@@ -146,9 +146,9 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 #endif
 
 	rcu_register_thread();
-	snprintf(thr_name, sizeof(thr_name),
-		 "fsal_up_%p",
-		 gl_fs->fs);
+	(void) snprintf(thr_name, sizeof(thr_name),
+			"fsal_up_%p",
+			gl_fs->fs);
 	SetNameFunction(thr_name);
 
 	/* Set the FSAL UP functions that will be used to process events. */

@@ -884,8 +884,9 @@ bool fsal_set_credentials_only_one_user(const struct user_cred *creds)
 
 void fsal_save_ganesha_credentials(void)
 {
-	int i;
-	char buffer[1024], *p = buffer;
+	int i, b_left;
+	char buffer[1024];
+	struct display_buffer dspbuf = {sizeof(buffer), buffer, buffer};
 
 	ganesha_uid = getuser();
 	ganesha_gid = getgroup();
@@ -901,20 +902,25 @@ void fsal_save_ganesha_credentials(void)
 		}
 	}
 
-	p += sprintf(p, "Ganesha uid=%d gid=%d ngroups=%d", (int)ganesha_uid,
-		     (int)ganesha_gid, ganesha_ngroups);
-	if (ganesha_ngroups != 0)
-		p += sprintf(p, " (");
-	for (i = 0; i < ganesha_ngroups; i++) {
-		if ((p - buffer) < (sizeof(buffer) - 10)) {
-			if (i == 0)
-				p += sprintf(p, "%d", (int)ganesha_groups[i]);
-			else
-				p += sprintf(p, " %d", (int)ganesha_groups[i]);
-		}
+	if (!isInfo(COMPONENT_FSAL))
+		return;
+
+	b_left = display_printf(&dspbuf,  "Ganesha uid=%d gid=%d ngroups=%d",
+				(int)ganesha_uid, (int)ganesha_gid,
+				ganesha_ngroups);
+
+	if (b_left > 0 && ganesha_ngroups != 0)
+		b_left = display_cat(&dspbuf, " (");
+
+	for (i = 0; b_left > 0 && i < ganesha_ngroups; i++) {
+		b_left = display_printf(&dspbuf, "%s%d",
+					i == 0 ? "" : " ",
+					(int)ganesha_groups[i]);
 	}
-	if (ganesha_ngroups != 0)
-		p += sprintf(p, ")");
+
+	if (b_left > 0 && ganesha_ngroups != 0)
+		(void) display_cat(&dspbuf, ")");
+
 	LogInfo(COMPONENT_FSAL, "%s", buffer);
 }
 

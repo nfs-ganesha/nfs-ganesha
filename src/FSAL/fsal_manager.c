@@ -194,13 +194,13 @@ int load_fsal(const char *name,
 	char *dl_path;
 	struct fsal_module *fsal;
 	char *bp;
-	char *path = alloca(strlen(nfs_param.core_param.ganesha_modules_loc)
-			    + strlen(name)
-			    + strlen(pathfmt) + 1);
+	size_t size = strlen(nfs_param.core_param.ganesha_modules_loc)
+		      + strlen(name)
+		      + strlen(pathfmt) + 1;
+	char *path = alloca(size);
 
-	sprintf(path, pathfmt,
-		nfs_param.core_param.ganesha_modules_loc,
-		name);
+	(void) snprintf(path, size, pathfmt,
+			nfs_param.core_param.ganesha_modules_loc, name);
 	bp = rindex(path, '/');
 	bp++; /* now it is the basename, lcase it */
 	while (*bp != '\0') {

@@ -92,9 +92,9 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		memset(&devid, 0, sizeof(devid));
 #endif
 
-	snprintf(thr_name, sizeof(thr_name),
-		 "fsal_up_%"PRIu64".%"PRIu64,
-		 gpfs_fs->fs->dev.major, gpfs_fs->fs->dev.minor);
+	(void) snprintf(thr_name, sizeof(thr_name),
+			"fsal_up_%"PRIu64".%"PRIu64,
+			gpfs_fs->fs->dev.major, gpfs_fs->fs->dev.minor);
 	SetNameFunction(thr_name);
 
 	LogFullDebug(COMPONENT_FSAL_UP,

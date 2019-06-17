@@ -62,10 +62,11 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 		}
 	}
 
-	sprintf(proclnk, "/proc/self/fd/%d", local_fd);
-	r = readlink(proclnk, readlink_buf, MAXPATHLEN - 1);
+	(void) snprintf(proclnk, sizeof(proclnk),
+			"/proc/self/fd/%d", local_fd);
+	r = readlink(proclnk, readlink_buf, sizeof(readlink_buf) - 1);
 	if (r < 0) {
-		st = fsalstat(posix2fsal_error(errno), errno);
+		st = posix2fsal_status(errno);
 		LogEvent(COMPONENT_FSAL, "failed to readlink");
 		goto out;
 	}
@@ -84,17 +85,25 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 	 */
 	if (strcmp(op_ctx->ctx_export->fullpath,
 				op_ctx->ctx_export->pseudopath) != 0) {
-		int pseudo_length = strlen(
+		size_t pseudo_length = strlen(
 				op_ctx->ctx_export->pseudopath);
-		int fullpath_length = strlen(
+		size_t fullpath_length = strlen(
 				op_ctx->ctx_export->fullpath);
+		size_t dirpath_len = r - fullpath_length;
+		size_t total_length = pseudo_length + dirpath_len;
 		char *dirpath = spath + fullpath_length;
+
+		if (total_length >= sizeof(proclnk)) {
+			st = posix2fsal_status(EINVAL);
+			LogCrit(COMPONENT_FSAL,
+				"Fixed up referral path %s%s too long",
+				op_ctx->ctx_export->pseudopath, dirpath);
+			goto out;
+		}
 
 		memcpy(proclnk, op_ctx->ctx_export->pseudopath,
 				pseudo_length);
-		memcpy(proclnk + pseudo_length, dirpath,
-				r - fullpath_length);
-		proclnk[pseudo_length + (r - fullpath_length)] = '\0';
+		memcpy(proclnk + pseudo_length, dirpath, dirpath_len + 1);
 		spath = proclnk;
 	}
 

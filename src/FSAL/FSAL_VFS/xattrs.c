@@ -73,8 +73,11 @@ struct fsal_xattr_def {
 int print_vfshandle(struct fsal_obj_handle *obj_hdl, void *buffer_addr,
 		    size_t buffer_size, size_t *p_output_size, void *arg)
 {
-	*p_output_size =
-	    snprintf(buffer_addr, buffer_size, "(not yet implemented)");
+	*p_output_size = snprintf(buffer_addr, buffer_size,
+				  "(not yet implemented)");
+
+	if (*p_output_size >= buffer_size)
+		return posix2fsal_error(ERANGE);
 
 	return 0;
 }				/* print_fid */

@@ -229,7 +229,7 @@ static fsal_status_t populate_fs_locations(struct vfs_fsal_obj_handle *hdl,
 
 		char *location = gsh_calloc(1, loclen);
 
-		snprintf(location, loclen, "%.*s:%s",
+		(void) snprintf(location, loclen, "%.*s:%s",
 				fsloc->server[0].utf8string_len,
 				fsloc->server[0].utf8string_val,
 				fsloc->rootpath);

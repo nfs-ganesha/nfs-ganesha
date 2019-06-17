@@ -108,7 +108,7 @@ static inline char *match_dup(regmatch_t *m, char *in)
 
 		size = m->rm_eo - m->rm_so + 1;
 		s = (char *)gsh_malloc(size);
-		snprintf(s, size, "%s", in + m->rm_so);
+		(void) snprintf(s, size, "%s", in + m->rm_so);
 	}
 	return s;
 }

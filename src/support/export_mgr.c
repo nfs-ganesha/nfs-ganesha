@@ -1101,12 +1101,12 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 				msg_size += (strlen(conf_errs.buf)
 					     + strlen(". Errors found:\n"));
 				message = gsh_calloc(1, msg_size);
-				snprintf(message, msg_size,
+				(void) snprintf(message, msg_size,
 					 "%d exports added. Errors found:\n%s",
 					 exp_cnt, conf_errs.buf);
 			} else {
 				message = gsh_calloc(1, msg_size);
-				snprintf(message, msg_size,
+				(void) snprintf(message, msg_size,
 					 "%d exports added", exp_cnt);
 			}
 			dbus_message_iter_init_append(reply, &iter);
@@ -1621,12 +1621,12 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 				msg_size += (strlen(conf_errs.buf)
 					     + strlen(". Errors found:\n"));
 				message = gsh_calloc(1, msg_size);
-				snprintf(message, msg_size,
+				(void) snprintf(message, msg_size,
 					 "%d exports updated. Errors found:\n%s",
 					 exp_cnt, conf_errs.buf);
 			} else {
 				message = gsh_calloc(1, msg_size);
-				snprintf(message, msg_size,
+				(void) snprintf(message, msg_size,
 					 "%d exports updated", exp_cnt);
 			}
 			dbus_message_iter_init_append(reply, &iter);
