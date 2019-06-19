@@ -76,6 +76,8 @@ static fsal_status_t lookup_int(struct fsal_obj_handle *dir_hdl,
 				const char *path,
 				struct fsal_obj_handle **obj_hdl,
 				struct attrlist *attrs_out,
+				struct stat *rcb_st,
+				uint32_t rcb_st_mask,
 				uint32_t flags)
 {
 	int rc;
@@ -92,10 +94,8 @@ static fsal_status_t lookup_int(struct fsal_obj_handle *dir_hdl,
 	LogFullDebug(COMPONENT_FSAL,
 		"%s enter dir_hdl %p path %s", __func__, dir_hdl, path);
 
-	/* XXX presently, we can only fake attrs--maybe rgw_lookup should
-	 * take struct stat pointer OUT as libcephfs' does */
 	rc = rgw_lookup(export->rgw_fs, dir->rgw_fh, path, &rgw_fh,
-			flags);
+			rcb_st, rcb_st_mask, flags);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
@@ -122,7 +122,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *dir_hdl,
 			const char *path, struct fsal_obj_handle **obj_hdl,
 			struct attrlist *attrs_out)
 {
-	return lookup_int(dir_hdl, path, obj_hdl, attrs_out,
+	return lookup_int(dir_hdl, path, obj_hdl, attrs_out, NULL, 0,
 			RGW_LOOKUP_FLAG_NONE);
 }
 
@@ -133,7 +133,8 @@ struct rgw_cb_arg {
 	attrmask_t attrmask;
 };
 
-static bool rgw_cb(const char *name, void *arg, uint64_t offset, uint32_t flags)
+static bool rgw_cb(const char *name, void *arg, uint64_t offset,
+		struct stat *st, uint32_t st_mask, uint32_t flags)
 {
 	struct rgw_cb_arg *rgw_cb_arg = arg;
 	struct fsal_obj_handle *obj = NULL;
@@ -144,8 +145,8 @@ static bool rgw_cb(const char *name, void *arg, uint64_t offset, uint32_t flags)
 	fsal_prepare_attrs(&attrs, rgw_cb_arg->attrmask);
 
 	/* rgw_lookup now accepts type hints */
-	status = lookup_int(rgw_cb_arg->dir_hdl, name, &obj, &attrs,
-			RGW_LOOKUP_FLAG_RCB|
+	status = lookup_int(rgw_cb_arg->dir_hdl, name, &obj, &attrs, st,
+			st_mask, RGW_LOOKUP_FLAG_RCB|
 			(flags & (RGW_LOOKUP_FLAG_DIR|RGW_LOOKUP_FLAG_FILE)));
 	if (FSAL_IS_ERROR(status))
 		return false;

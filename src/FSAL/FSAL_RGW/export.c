@@ -142,7 +142,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	if (global_dir == NULL) {
 		rc = rgw_lookup(export->rgw_fs,
 				export->rgw_fs->root_fh,
-				bucket_name, &rgw_fh, RGW_LOOKUP_FLAG_NONE);
+				bucket_name, &rgw_fh, NULL, 0,
+				RGW_LOOKUP_FLAG_NONE);
 		if (rc < 0)
 			return rgw2fsal_error(rc);
 	}
@@ -156,14 +157,15 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		struct rgw_file_handle *rgw_dh;
 
 		rc = rgw_lookup(export->rgw_fs,
-					export->rgw_fs->root_fh, bucket_name,
-					&rgw_dh, RGW_LOOKUP_FLAG_NONE);
+				export->rgw_fs->root_fh, bucket_name,
+				&rgw_dh, NULL, 0, RGW_LOOKUP_FLAG_NONE);
 
 		if (rc < 0)
 			return rgw2fsal_error(rc);
 		/* search fh of global directory */
 		rc = rgw_lookup(export->rgw_fs, rgw_dh, global_dir,
-					&rgw_fh, RGW_LOOKUP_FLAG_RCB);
+				&rgw_fh, NULL, 0,
+				RGW_LOOKUP_FLAG_RCB /* XXX why RCB? */);
 		if (rc < 0)
 			return rgw2fsal_error(rc);
 		if (rgw_fh->fh_type == RGW_FS_TYPE_FILE) {

@@ -727,7 +727,7 @@ gopt_test(USE_FSAL_NULL)
 gopt_test(USE_FSAL_RGW)
 if(USE_FSAL_RGW)
   # require RGW w/API version 1.1.x
-  find_package(RGW 1.1.6 ${USE_FSAL_RGW_REQUIRED})
+  find_package(RGW 1.1.7 ${USE_FSAL_RGW_REQUIRED})
   if(NOT RGW_FOUND)
     message(WARNING "Cannot find supported RGW runtime.  Disabling RGW fsal build")
     set(USE_FSAL_RGW OFF)
