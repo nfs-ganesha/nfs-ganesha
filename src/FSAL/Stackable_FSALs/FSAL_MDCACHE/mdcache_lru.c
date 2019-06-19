@@ -1520,6 +1520,13 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 	time_t new_thread_wait;
 	/* Total work done (number of chunks demoted) across all lanes. */
 	size_t totalwork = 0;
+	static bool first_time = true;
+
+	if (first_time) {
+		/* Wait for NFS server to properly initialize */
+		nfs_init_wait();
+		first_time = false;
+	}
 
 	SetNameFunction("chunk_lru");
 
@@ -1692,7 +1699,7 @@ mdcache_lru_pkginit(void)
 	struct fridgethr_params frp;
 
 	memset(&frp, 0, sizeof(struct fridgethr_params));
-	frp.thr_max = 2;
+	frp.thr_max = 0;
 	frp.thr_min = 2;
 	frp.thread_delay = mdcache_param.lru_run_interval;
 	frp.flavor = fridgethr_flavor_looper;
@@ -2137,6 +2144,186 @@ bool mdcache_lru_fds_available(void)
 	}
 
 	return true;
+}
+
+static inline void mdc_lru_dirmap_add(struct mdcache_fsal_export *exp,
+				      mdcache_dmap_entry_t *dmap)
+{
+	avltree_insert(&dmap->node, &exp->dirent_map.map);
+	/* MRU is the tail; Mdd to MRU of list */
+	glist_add_tail(&exp->dirent_map.lru, &dmap->lru_entry);
+	exp->dirent_map.count++;
+}
+
+static inline void mdc_lru_dirmap_del(struct mdcache_fsal_export *exp,
+				      mdcache_dmap_entry_t *dmap)
+{
+	glist_del(&dmap->lru_entry);
+	avltree_remove(&dmap->node, &exp->dirent_map.map);
+	exp->dirent_map.count--;
+}
+
+/**
+ * @brief Add a dirent to the dirmap
+ *
+ * Add this dirent to the dirmap.  The dirmap is a mapping of cookies to names
+ * that allows whence-is-name to restart where it left off if the chunk was
+ * reaped, instead of reloading the whole directory to find the cookie.
+ *
+ * @param[in] dirent	Dirent to add
+ */
+void mdc_lru_map_dirent(mdcache_dir_entry_t *dirent)
+{
+	struct mdcache_fsal_export *exp = mdc_cur_export();
+	mdcache_dmap_entry_t key, *dmap;
+	struct avltree_node *node;
+
+	PTHREAD_MUTEX_lock(&exp->dirent_map.mtx);
+
+	key.ck = dirent->ck;
+	node = avltree_lookup(&key.node, &exp->dirent_map.map);
+	if (node) {
+		LogFullDebug(COMPONENT_NFS_READDIR, "Already map for %s -> %lx",
+			     dirent->name, dirent->ck);
+		PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
+		return;
+	}
+
+	if (exp->dirent_map.count > mdcache_param.dirmap_hwmark) {
+		/* LRU end is the head; grab the LRU entry */
+		dmap = glist_first_entry(&exp->dirent_map.lru,
+					 mdcache_dmap_entry_t, lru_entry);
+		mdc_lru_dirmap_del(exp, dmap);
+		/* Free name */
+		gsh_free(dmap->name);
+	} else {
+		dmap = gsh_malloc(sizeof(*dmap));
+	}
+
+	dmap->ck = dirent->ck;
+	dmap->name = gsh_strdup(dirent->name);
+	now(&dmap->timestamp);
+	LogFullDebug(COMPONENT_NFS_READDIR, "Mapping %s -> %lx %p:%d",
+		     dmap->name, dmap->ck, exp, exp->dirent_map.count);
+
+	mdc_lru_dirmap_add(exp, dmap);
+
+	PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
+}
+
+/**
+ * @brief Look up and remove an entry from the dirmap
+ *
+ * This looks up the cookie in the dirmap, and returns the associated name, if
+ * it's in the cache.  The entry is removed from the cache and freed, and the
+ * name is returned.
+ *
+ * @note the returned name must be freed by the caller
+ *
+ * @param[in] ck	Cookie to look up
+ * @return Name, if found, or NULL otherwise
+ */
+fsal_cookie_t *mdc_lru_unmap_dirent(uint64_t ck)
+{
+	struct mdcache_fsal_export *exp = mdc_cur_export();
+	struct avltree_node *node;
+	mdcache_dmap_entry_t key, *dmap;
+	char *name;
+
+	PTHREAD_MUTEX_lock(&exp->dirent_map.mtx);
+
+	key.ck = ck;
+	node = avltree_lookup(&key.node, &exp->dirent_map.map);
+	if (!node) {
+		LogFullDebug(COMPONENT_NFS_READDIR, "No map for %lx", ck);
+		PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
+		return NULL;
+	}
+
+	dmap = avltree_container_of(node, mdcache_dmap_entry_t, node);
+	mdc_lru_dirmap_del(exp, dmap);
+
+	PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
+
+	name = dmap->name;
+
+	LogFullDebug(COMPONENT_NFS_READDIR, "Unmapping %s -> %lx", dmap->name,
+		     dmap->ck);
+
+	/* Don't free name, we're passing it back to the caller */
+	gsh_free(dmap);
+
+	return (fsal_cookie_t *)name;
+}
+
+#define DIRMAP_MAX_PER_SCAN 1000
+#define DIRMAP_KEEP_NS (60 * NS_PER_SEC)
+
+static void dirmap_lru_run(struct fridgethr_context *ctx)
+{
+	struct mdcache_fsal_export *exp = ctx->arg;
+	mdcache_dmap_entry_t *cur, *next;
+	int i;
+	struct timespec curtime;
+	nsecs_elapsed_t age;
+	static bool first_time = true;
+
+	/* XXX dang this needs to be here or this will hijack another thread,
+	 * causing that one to never run again. */
+	if (first_time) {
+		/* Wait for NFS server to properly initialize */
+		nfs_init_wait();
+		first_time = false;
+	}
+
+	PTHREAD_MUTEX_lock(&exp->dirent_map.mtx);
+
+	now(&curtime);
+
+	cur = glist_last_entry(&exp->dirent_map.lru, mdcache_dmap_entry_t,
+			       lru_entry);
+	for (i = 0; i < DIRMAP_MAX_PER_SCAN && cur != NULL; ++i) {
+		next = glist_prev_entry(&exp->dirent_map.lru,
+					mdcache_dmap_entry_t,
+					lru_entry, &cur->lru_entry);
+		age = timespec_diff(&cur->timestamp, &curtime);
+		if (age < DIRMAP_KEEP_NS) {
+			/* LRU is in timestamp order; done */
+			goto out;
+		}
+		mdc_lru_dirmap_del(exp, cur);
+		gsh_free(cur->name);
+		gsh_free(cur);
+		cur = next;
+	}
+
+out:
+	PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
+	fridgethr_setwait(ctx, mdcache_param.lru_run_interval);
+}
+
+
+fsal_status_t dirmap_lru_init(struct mdcache_fsal_export *exp)
+{
+	int rc;
+
+	avltree_init(&exp->dirent_map.map, avl_dmap_ck_cmpf, 0 /* flags */);
+	glist_init(&exp->dirent_map.lru);
+	rc = pthread_mutex_init(&exp->dirent_map.mtx, NULL);
+	if (rc != 0) {
+		return posix2fsal_status(rc);
+	}
+
+	rc = fridgethr_submit(lru_fridge, dirmap_lru_run, exp);
+	if (rc != 0) {
+		LogMajor(COMPONENT_CACHE_INODE_LRU,
+			 "Unable to start Chunk LRU thread, error code %d.",
+			 rc);
+		return posix2fsal_status(rc);
+	}
+
+
+	return fsalstat(0, 0);
 }
 
 /** @} */

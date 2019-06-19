@@ -85,6 +85,8 @@ static struct config_item mdcache_params[] = {
 		       mdcache_parameter, required_progress),
 	CONF_ITEM_UI32("Futility_Count", 1, 50, 8,
 		       mdcache_parameter, futility_count),
+	CONF_ITEM_UI32("Dirmap_HWMark", 1, UINT32_MAX, 10000,
+		       mdcache_parameter, dirmap_hwmark),
 	CONFIG_EOL
 };
 

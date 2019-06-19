@@ -60,6 +60,30 @@ typedef enum {
 	MDC_REASON_SCAN		/**< Is being inserted by a scan */
 } mdc_reason_t;
 
+typedef struct mdcache_dmap_entry__ {
+	/** AVL node in tree by cookie */
+	struct avltree_node node;
+	/** Entry in LRU */
+	struct glist_head lru_entry;
+	/** Cookie */
+	uint64_t ck;
+	/** Name */
+	char *name;
+	/** Timestamp on entry */
+	struct timespec timestamp;
+} mdcache_dmap_entry_t;
+
+typedef struct {
+	/** Lock protecting this structure */
+	pthread_mutex_t mtx;
+	/** Mapping of ck -> name for whence-is-name */
+	struct avltree map;
+	/** LRU of dirent map entries */
+	struct glist_head lru;
+	/** Count of entries in LRU */
+	uint32_t count;
+} mdc_dirmap_t;
+
 /*
  * MDCACHE internal export
  */
@@ -76,6 +100,8 @@ struct mdcache_fsal_export {
 	pthread_rwlock_t mdc_exp_lock;
 	/** Flags for the export. */
 	uint8_t flags;
+	/** Mapping of ck -> name for whence-is-name */
+	mdc_dirmap_t dirent_map;
 };
 
 /**
@@ -1128,6 +1154,23 @@ fsal_status_t mdcache_refresh_attrs_no_invalidate(mdcache_entry_t *entry)
 	}
 
 	return status;
+}
+
+static inline int avl_dmap_ck_cmpf(const struct avltree_node *lhs,
+				     const struct avltree_node *rhs)
+{
+	mdcache_dmap_entry_t *lk, *rk;
+
+	lk = avltree_container_of(lhs, mdcache_dmap_entry_t, node);
+	rk = avltree_container_of(rhs, mdcache_dmap_entry_t, node);
+
+	if (lk->ck < rk->ck)
+		return -1;
+
+	if (lk->ck == rk->ck)
+		return 0;
+
+	return 1;
 }
 
 #endif /* MDCACHE_INT_H */
