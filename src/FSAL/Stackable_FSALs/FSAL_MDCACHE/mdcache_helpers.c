@@ -2911,6 +2911,15 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 		has_write = false;
 	}
 
+	if (whence_is_name) {
+		/* While we're getting active readdirs, we don't want to
+		 * invalidate a whence-is-name directory.  This will cause the
+		 * entire directory to be reloaded, causing a huge delay that
+		 * can cause the readdir to time out on the client.  To avoid
+		 * this, bump the expire time on the directory */
+		directory->attr_time = time(NULL);
+	}
+
 restart:
 	if (look_ck == 0) {
 		/* If starting from beginning, use the first_ck from the
