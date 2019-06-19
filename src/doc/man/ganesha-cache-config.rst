@@ -83,6 +83,11 @@ Futility_Count(uint32, range 1 to 50, default 8)
     Number of failures to approach the high watermark before we disable caching,
     when in extremis.
 
+Dirmap_HWMark(uint32, range 1 to UINT32_MAX, default 10000)
+    The point at which dirmap entries are reused.  This puts a practical limit
+    on the number of simultaneous readdirs that may be in progress on an export
+    for a whence-is-name FSAL (currently only FSAL_RGW)
+
 See also
 ==============================
 :doc:`ganesha-config <ganesha-config>`\(8)

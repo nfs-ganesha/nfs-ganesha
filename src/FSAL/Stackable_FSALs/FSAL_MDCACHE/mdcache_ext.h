@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2017 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2019 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -109,6 +109,9 @@ struct mdcache_parameter {
 	    we disable caching, when in extremis.  Defaults to 8,
 	    settable with Futility_Count */
 	uint32_t futility_count;
+	/** High water mark for dirent mapping entries.  Defaults to 10000,
+	    settable by Dirmap_HWMark. */
+	uint32_t dirmap_hwmark;
 };
 
 extern struct mdcache_parameter mdcache_param;
