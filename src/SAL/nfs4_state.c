@@ -456,6 +456,9 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	if (state->state_type == STATE_TYPE_LOCK)
 		glist_del(&state->state_data.lock.state_sharelist);
 
+	if (state->state_type == STATE_TYPE_SHARE)
+		assert(glist_empty(&state->state_data.share.share_lockstates));
+
 	/* Reset write delegated and release client ref if this is a
 	 * write delegation */
 	if (state->state_type == STATE_TYPE_DELEG &&
@@ -650,8 +653,22 @@ void state_nfs4_state_wipe(struct state_hdl *ostate)
 		state = glist_entry(glist, state_t, state_list);
 		if (state->state_type > STATE_TYPE_LAYOUT)
 			continue;
+		/* Skip STATE_TYPE_SHARE
+		 * It must be deleted after all the related LOCK states
+		 */
+		if (state->state_type == STATE_TYPE_SHARE)
+			continue;
 		state_del_locked(state);
 	}
+
+	/* Loop over again to delete any STATE_TYPE_SHARE */
+	glist_for_each_safe(glist, glistn, &ostate->file.list_of_states) {
+		state = glist_entry(glist, state_t, state_list);
+		if (state->state_type > STATE_TYPE_LAYOUT)
+			continue;
+		state_del_locked(state);
+	}
+
 }
 
 /**
