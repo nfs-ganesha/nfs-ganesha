@@ -3346,9 +3346,9 @@ again:
 				    "readdir completed, eod = %s",
 				    *eod_met ? "true" : "false");
 
+			mdcache_lru_unref_chunk(chunk);
 			PTHREAD_RWLOCK_unlock(&directory->content_lock);
 
-			mdcache_lru_unref_chunk(chunk);
 			return status;
 		}
 
