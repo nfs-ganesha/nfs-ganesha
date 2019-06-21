@@ -319,8 +319,7 @@ not_junction:
 	}
 
 	tracker->mem_left -= RNDUP(namelen);
-	tracker_entry->name.utf8string_len = namelen;
-	tracker_entry->name.utf8string_val = gsh_strdup(cb_parms->name);
+	utf8string_dup(&tracker_entry->name, cb_parms->name, namelen);
 
 	/* If we carried an error from above, now that we have
 	 * the name set up, go ahead and try and put error in

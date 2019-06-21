@@ -1253,10 +1253,8 @@ void nfs4_pathname4_alloc(pathname4 *pathname4, char *path)
 			if (strlen(token) > 0) {
 				LogDebug(COMPONENT_NFS_V4,
 					 "token %d is %s", i, token);
-				pathname4->pathname4_val[i].utf8string_val =
-					gsh_strdup(token);
-				pathname4->pathname4_val[i].utf8string_len =
-					strlen(token);
+				utf8string_dup(&pathname4->pathname4_val[i],
+						token, strlen(token));
 				i++;
 			}
 		}

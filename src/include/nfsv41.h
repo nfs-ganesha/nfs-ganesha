@@ -21,6 +21,7 @@ extern "C" {
 
 #include "gsh_rpc.h"
 #include "nfs_fh.h"
+#include "log.h"
 
 typedef struct authsys_parms authsys_parms;
 #endif				/* _AUTH_SYS_DEFINE_FOR_NFSv41 */
@@ -229,6 +230,22 @@ typedef utf8string utf8str_mixed;
 typedef utf8str_cs component4;
 
 typedef utf8str_cs linktext4;
+
+static inline utf8string *
+utf8string_dup(utf8string *d, const char *s, size_t l)
+{
+	d->utf8string_val = malloc(l + 1);
+
+	if (d->utf8string_val == NULL) {
+		LogMallocFailure(__FILE__, __LINE__, __func__,
+				 "utf8string_dup");
+		abort();
+	}
+	d->utf8string_len = l;
+	memcpy(d->utf8string_val, s, l);
+	d->utf8string_val[l] = '\0';
+	return d;
+}
 
 typedef struct {
 	u_int pathname4_len;

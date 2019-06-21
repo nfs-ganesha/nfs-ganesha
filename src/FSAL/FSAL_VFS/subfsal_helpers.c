@@ -110,19 +110,24 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 				  xattr_content, XATTR_BUFFERSIZE, &attrsize);
 
 	if (!FSAL_IS_ERROR(st)) {
-		size_t len;
 		char *path = xattr_content;
 		char *server = strsep(&path, ":");
 
 		LogDebug(COMPONENT_FSAL, "user.fs_location: %s", xattr_content);
 
-		attrs_out->fs_locations = nfs4_fs_locations_new(spath, path, 1);
-		len = strlen(server);
-		attrs_out->fs_locations->server[0].utf8string_len = len;
-		attrs_out->fs_locations->server[0].utf8string_val =
-							gsh_memdup(server, len);
-		attrs_out->fs_locations->nservers = 1;
-		FSAL_SET_MASK(attrs_out->valid_mask, ATTR4_FS_LOCATIONS);
+		if (!path) {
+			attrs_out->fs_locations = NULL;
+		} else {
+			attrs_out->fs_locations =
+				nfs4_fs_locations_new(spath, path, 1);
+
+			attrs_out->fs_locations->nservers = 1;
+			utf8string_dup(&attrs_out->fs_locations->server[0],
+					server, path - server - 1);
+
+			FSAL_SET_MASK(attrs_out->valid_mask,
+				      ATTR4_FS_LOCATIONS);
+		}
 	}
 
 out:

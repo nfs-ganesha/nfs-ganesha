@@ -103,6 +103,7 @@
   lookup_fsal;
   lookup_fsid;
   LogCrit;
+  LogMallocFailure;
   LogWarn;
   lru_cleanup_entries;
   mdcache_param;
