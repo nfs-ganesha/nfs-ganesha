@@ -268,10 +268,12 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 
 		if (cc->cc_error.re_status == RPC_TIMEDOUT ||
 		    cc->cc_error.re_status == RPC_SUCCESS) {
-			cc->cc_error.re_status = RPC_SUCCESS;
+			retval = RPC_SUCCESS;
 			clnt_req_release(cc);
 			break;
 		}
+
+		retval = cc->cc_error.re_status;
 
 		t = rpc_sperror(&cc->cc_error, "failed");
 		LogCrit(COMPONENT_NLM,
