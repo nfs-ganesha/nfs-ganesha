@@ -94,6 +94,9 @@ int vfs_get_root_fd(struct fsal_export *exp_hdl);
 /* Internal VFS method linkage to export object
  */
 
+int vfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp);
+void vfs_unclaim_filesystem(struct fsal_filesystem *fs);
+
 fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 				void *parse_node,
 				struct config_error_type *err_type,

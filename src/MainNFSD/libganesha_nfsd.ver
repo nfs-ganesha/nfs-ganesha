@@ -171,6 +171,8 @@
   release_posix_file_system;
   read_log_config;
   report_config_errors;
+  claim_posix_filesystems;
+  reload_posix_filesystems;
   resolve_posix_filesystem;
   ReturnLevelAscii;
   re_index_fs_fsid;
