@@ -160,6 +160,122 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	return NULL;
 }
 
+static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
+				      int dirfd, const char *path,
+				      struct stat *stat,
+				      struct fsal_filesystem **filesystem,
+				      bool *xfsal)
+{
+	int retval;
+	fsal_dev_t dev;
+	struct fsal_filesystem *fs = NULL;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	struct vfs_fsal_export *myexp_hdl =
+	    container_of(op_ctx->fsal_export, struct vfs_fsal_export, export);
+
+	retval = fstatat(dirfd, path, stat, AT_SYMLINK_NOFOLLOW);
+
+	if (retval < 0) {
+		retval = errno;
+		LogDebug(COMPONENT_FSAL, "Failed to open stat %s: %s", path,
+			 msg_fsal_err(posix2fsal_error(retval)));
+		status = posix2fsal_status(retval);
+		goto out;
+	}
+
+	dev = posix2fsal_devt(stat->st_dev);
+
+	fs = parent_hdl->obj_handle.fs;
+
+	if ((dev.minor == parent_hdl->dev.minor) &&
+	    (dev.major == parent_hdl->dev.major)) {
+		/* Filesystem is ok */
+		goto out;
+	}
+
+	/* XDEV */
+	fs = lookup_dev(&dev);
+
+	if (fs == NULL) {
+		LogInfo(COMPONENT_FSAL,
+			"Lookup of %s crosses filesystem boundary to unknown file system dev=%"
+			PRIu64".%"PRIu64" - reloading filesystems to find it",
+			path, dev.major, dev.minor);
+
+		retval = reload_posix_filesystems(op_ctx->ctx_export->fullpath,
+						  parent_hdl->obj_handle.fsal,
+						  op_ctx->fsal_export,
+						  vfs_claim_filesystem,
+						  vfs_unclaim_filesystem,
+						  &myexp_hdl->root_fs);
+
+		if (retval != 0) {
+			LogFullDebug(COMPONENT_FSAL,
+				     "resolve_posix_filesystem failed");
+			status = posix2fsal_status(EXDEV);
+			goto out;
+		}
+
+		fs = lookup_dev(&dev);
+
+		if (fs == NULL) {
+			LogFullDebug(COMPONENT_FSAL,
+				     "Filesystem still was not claimed");
+			status = posix2fsal_status(EXDEV);
+			goto out;
+		} else {
+			LogInfo(COMPONENT_FSAL,
+				"Filesystem %s has been added to export %d:%s",
+				fs->path, op_ctx->ctx_export->export_id,
+				op_ctx_export_path(op_ctx->ctx_export));
+		}
+	}
+
+	if (fs->fsal == NULL) {
+		/* The filesystem wasn't claimed, it must have been added after
+		 * we created this export. Go ahead and try to get it claimed.
+		 */
+		LogInfo(COMPONENT_FSAL,
+			"Lookup of %s crosses filesystem boundary to unclaimed file system %s - attempt to claim it",
+			path, fs->path);
+
+		retval = claim_posix_filesystems(op_ctx->ctx_export->fullpath,
+						 parent_hdl->obj_handle.fsal,
+						 op_ctx->fsal_export,
+						 vfs_claim_filesystem,
+						 vfs_unclaim_filesystem,
+						 &myexp_hdl->root_fs);
+
+		if (retval != 0) {
+			LogFullDebug(COMPONENT_FSAL,
+				     "claim_posix_filesystems failed");
+			status = posix2fsal_status(EXDEV);
+			goto out;
+		}
+	}
+
+	if (fs->fsal != parent_hdl->obj_handle.fsal) {
+		*xfsal = true;
+		LogDebug(COMPONENT_FSAL,
+			 "Lookup of %s crosses filesystem boundary to file system %s into FSAL %s",
+			 path, fs->path,
+			 fs->fsal != NULL
+				? fs->fsal->name
+				: "(none)");
+		goto out;
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			 "Lookup of %s crosses filesystem boundary to file system %s",
+			 path, fs->path);
+		goto out;
+	}
+
+out:
+
+	*filesystem = fs;
+	return status;
+}
+
 static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 				    int dirfd, const char *path,
 				    struct fsal_obj_handle **handle,
@@ -169,53 +285,16 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 	int retval;
 	struct stat stat;
 	vfs_file_handle_t *fh = NULL;
-	fsal_dev_t dev;
 	struct fsal_filesystem *fs;
 	bool xfsal = false;
 	fsal_status_t status;
 
 	vfs_alloc_handle(fh);
 
-	retval = fstatat(dirfd, path, &stat, AT_SYMLINK_NOFOLLOW);
+	status = check_filesystem(parent_hdl, dirfd, path, &stat, &fs, &xfsal);
 
-	if (retval < 0) {
-		retval = errno;
-		LogDebug(COMPONENT_FSAL, "Failed to open stat %s: %s", path,
-			 msg_fsal_err(posix2fsal_error(retval)));
-		status = posix2fsal_status(retval);
+	if (FSAL_IS_ERROR(status))
 		return status;
-	}
-
-	dev = posix2fsal_devt(stat.st_dev);
-
-	fs = parent_hdl->obj_handle.fs;
-	if ((dev.minor != parent_hdl->dev.minor) ||
-	    (dev.major != parent_hdl->dev.major)) {
-		/* XDEV */
-		fs = lookup_dev(&dev);
-		if (fs == NULL) {
-			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to unknown file system dev=%"
-				 PRIu64".%"PRIu64,
-				 path, dev.major, dev.minor);
-			status = fsalstat(ERR_FSAL_XDEV, EXDEV);
-			return status;
-		}
-
-		if (fs->fsal != parent_hdl->obj_handle.fsal) {
-			xfsal = true;
-			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to file system %s into FSAL %s",
-				 path, fs->path,
-				 fs->fsal != NULL
-					? fs->fsal->name
-					: "(none)");
-		} else {
-			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to file system %s",
-				 path, fs->path);
-		}
-	}
 
 	if (xfsal || vfs_name_to_handle(dirfd, fs, path, fh) < 0) {
 		retval = errno;

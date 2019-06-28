@@ -91,6 +91,12 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 
 int vfs_get_root_fd(struct fsal_export *exp_hdl);
 
+/* Internal VFS method linkage to export object
+ */
+
+int vfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp);
+void vfs_unclaim_filesystem(struct fsal_filesystem *fs);
+
 /* method proto linkage to handle.c for export
  */
 
