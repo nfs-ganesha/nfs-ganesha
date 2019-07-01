@@ -139,9 +139,9 @@ class RetrieveExportStats():
         return DumpFULLV4Stats(stats_state())
     # authentication
     def auth_stats(self):
-	stats_state = self.exportmgrobj.get_dbus_method("GetAuthStats",
-				self.dbus_exportstats_name)
-	return DumpAuth(stats_state())
+        stats_state = self.exportmgrobj.get_dbus_method("GetAuthStats",
+                                  self.dbus_exportstats_name)
+        return DumpAuth(stats_state())
 
 class RetrieveClientStats():
     def __init__(self):
@@ -497,7 +497,7 @@ class DumpAuth():
         self.success = stats[0]
         self.status = stats[1]
         if self.success:
-	   self.timestamp = (stats[2][0], stats[2][1])
+           self.timestamp = (stats[2][0], stats[2][1])
            self.gctotal = stats[3][0]
            self.gclatency = stats[3][1]
            self.gcmax = stats[3][2]
