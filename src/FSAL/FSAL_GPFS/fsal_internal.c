@@ -159,6 +159,16 @@ fsal_internal_get_handle_at(int dfd, const char *fs_name,
 	if (unlikely(gpfs_ganesha(OPENHANDLE_NAME_TO_HANDLE, &harg) < 0))
 		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_NAME_TO_HANDLE");
 
+	/* Workaround: Currently for lookup of name (specifically ..), GPFS may
+	 * return a handle with handle_size=40, which is not correct. Expected
+	 * value of handle_size for a GPFS handle is 48 bytes.
+	 * Till we don't have a fix from GPFS for this issue we will set the
+	 * handle_size to 48 in case GPFS returned handle with handle_size=40.
+	 */
+	if (harg.handle->handle_size == 40) {
+		harg.handle->handle_size = 48;
+	}
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
