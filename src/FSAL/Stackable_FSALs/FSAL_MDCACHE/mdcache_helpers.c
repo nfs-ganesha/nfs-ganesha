@@ -2533,7 +2533,7 @@ fsal_status_t mdcache_populate_dir_chunk(mdcache_entry_t *directory,
 	struct mdcache_populate_cb_state state;
 	attrmask_t attrmask;
 	fsal_cookie_t *whence_ptr = &whence;
-	bool free_whence;
+	bool free_whence = false;
 	bool rescan = false;
 
 	attrmask = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
