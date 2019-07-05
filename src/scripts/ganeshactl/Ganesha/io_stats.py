@@ -27,8 +27,7 @@ BasicIO = namedtuple('BasicIO',
                       transferred,
                       total_ops,
                       errors,
-                      latency,
-                      queue_wait])
+                      latency])
 
 IOReply = namedtuple('IOReply',
                      [status,

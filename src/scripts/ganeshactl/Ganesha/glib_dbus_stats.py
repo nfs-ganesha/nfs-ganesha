@@ -325,7 +325,7 @@ class ExportIOv3Stats():
             if self.stats[key][1] != "OK":
                 output += self.stats[key][1] + "\n"
             output += ( "\nEXPORT %s:" % (key) +
-                        "\n\t\trequested\ttransferred\t     total\t    errors\t   latency\tqueue wait" +
+                        "\n\t\trequested\ttransferred\t     total\t    errors\t   latency" +
                         "\nREADv3: " )
             for stat in self.stats[key][3]:
                 output += "\t" + str(stat).rjust(8)
@@ -346,7 +346,7 @@ class ExportIOv4Stats():
             if self.stats[key][1] != "OK":
                 output += self.stats[key][1] + "\n"
             output += ("EXPORT %s:" % (key) +
-                       "\n\t\trequested\ttransferred\t     total\t    errors\t   latency\tqueue wait" +
+                       "\n\t\trequested\ttransferred\t     total\t    errors\t   latency" +
                        "\nREADv4: ")
             for stat in self.stats[key][3]:
                 output += "\t" + str(stat).rjust(8)
@@ -540,23 +540,20 @@ class DumpFULLV3Stats():
             if self.stats[4] != "OK":
                 output += "\n No stats available for display"
                 return output
-            output += "\nOperation Details                         |  Operation Latency                     |  Queue Latency"
-            output += "\n==========================================|========================================|======================================="
-            output += "\nName            Total     Error      Dups |       Avg          Min           Max   |      Avg          Min           Max"
+            output += "\nOperation Details                         |  Operation Latency           "
+            output += "\n==========================================|========================================"
+            output += "\nName            Total     Error      Dups |       Avg          Min           Max   "
             i = 0
             tot_len = len(self.stats[3])
-            while (i+10) <= tot_len:
+            while (i+7) <= tot_len:
                 output += "\n" + (self.stats[3][i+0]).ljust(11)
                 output += " %s" % (str(self.stats[3][i+1]).rjust(9))
                 output += " %s" % (str(self.stats[3][i+2]).rjust(9))
                 output += " %s |" % (str(self.stats[3][i+3]).rjust(9))
                 output += " %12.6f" % (self.stats[3][i+4])
                 output += " %12.6f" % (self.stats[3][i+5])
-                output += " %12.6f |" % (self.stats[3][i+6])
-                output += " %12.6f" % (self.stats[3][i+7])
-                output += " %12.6f" % (self.stats[3][i+8])
-                output += " %12.6f" % (self.stats[3][i+9])
-                i += 10
+                output += " %12.6f" % (self.stats[3][i+6])
+                i += 7
             return output
 
 class DumpFULLV4Stats():
@@ -572,20 +569,17 @@ class DumpFULLV4Stats():
             if self.stats[4] != "OK":
                 output += "\n No stats available for display"
                 return output
-            output += "\nOperation Details                |  Operation Latency                     |  Queue Latency"
-            output += "\n=================================|========================================|======================================="
-            output += "\nName            Total     Error  |       Avg          Min           Max   |      Avg          Min           Max"
+            output += "\nOperation Details                            |  Operation Latency                     "
+            output += "\n=============================================|========================================"
+            output += "\nName                        Total     Error  |       Avg          Min           Max   "
             i = 0
             tot_len = len(self.stats[3])
-            while (i+9) <= tot_len:
-                output += "\n" + (self.stats[3][i+0]).ljust(11)
+            while (i+6) <= tot_len:
+                output += "\n" + (self.stats[3][i+0]).ljust(23)
                 output += " %s" % (str(self.stats[3][i+1]).rjust(9))
-                output += " %s |" % (str(self.stats[3][i+2]).rjust(9))
+                output += " %s  |" % (str(self.stats[3][i+2]).rjust(9))
                 output += " %12.6f" % (self.stats[3][i+3])
                 output += " %12.6f" % (self.stats[3][i+4])
-                output += " %12.6f |" % (self.stats[3][i+5])
-                output += " %12.6f" % (self.stats[3][i+6])
-                output += " %12.6f" % (self.stats[3][i+7])
-                output += " %12.6f" % (self.stats[3][i+8])
-                i += 9
+                output += " %12.6f" % (self.stats[3][i+5])
+                i += 6
             return output

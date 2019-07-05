@@ -231,14 +231,14 @@ struct auth_stats {
 #define V3_FULL_REPLY		\
 {				\
 	.name = "v3_full_stats",	\
-	.type = "a(stttdddddd)",	\
+	.type = "a(stttddd)",	\
 	.direction = "out"	\
 }
 
 #define V4_FULL_REPLY		\
 {				\
 	.name = "v4_full_stats",	\
-	.type = "a(sttdddddd)",	\
+	.type = "a(sttddd)",	\
 	.direction = "out"	\
 }
 

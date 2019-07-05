@@ -141,7 +141,7 @@ static const struct op_name optabv3[] = {
 	[NFSPROC3_READDIR] = {.name = "READDIR", },
 	[NFSPROC3_READDIRPLUS] = {.name = "READDIRPLUS", },
 	[NFSPROC3_FSSTAT] = {.name = "FSSTAT", },
-	[NFSPROC3_FSINFO] = {.name = "FSINFO	", },
+	[NFSPROC3_FSINFO] = {.name = "FSINFO", },
 	[NFSPROC3_PATHCONF] = {.name = "PATHCONF", },
 	[NFSPROC3_COMMIT] = {.name = "COMMIT", },
 };
@@ -2080,7 +2080,7 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 	now(&timestamp);
 	dbus_append_timestamp(iter, &timestamp);
 	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
-					 "(stttdddddd)", &array_iter);
+					 "(stttddd)", &array_iter);
 	for (op = 1; op < NFSPROC3_COMMIT+1; op++) {
 		if (v3_full_stats[op].total) {
 			dbus_message_iter_open_container(&array_iter,
@@ -2104,13 +2104,6 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 			res = (double) v3_full_stats[op].latency.max * 0.000001;
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			res = 0.0;
-			dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
-			dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
-			dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
 			dbus_message_iter_close_container(&array_iter,
 							  &op_iter);
 			op_counter += v3_full_stats[op].total;
@@ -2130,12 +2123,6 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 				DBUS_TYPE_UINT64, &op_counter);
 		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &op_counter);
-		dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
 		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 		dbus_message_iter_append_basic(&op_iter,
@@ -2166,7 +2153,7 @@ void server_dbus_v4_full_stats(DBusMessageIter *iter)
 	now(&timestamp);
 	dbus_append_timestamp(iter, &timestamp);
 	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
-					 "(sttdddddd)", &array_iter);
+					 "(sttddd)", &array_iter);
 	for (op = 1; op < NFS_V42_NB_OPERATION+1; op++) {
 		if (v4_full_stats[op].total) {
 			dbus_message_iter_open_container(&array_iter,
@@ -2188,13 +2175,6 @@ void server_dbus_v4_full_stats(DBusMessageIter *iter)
 			res = (double) v4_full_stats[op].latency.max * 0.000001;
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			res = 0.0;
-			dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
-			dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
-			dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
 			dbus_message_iter_close_container(&array_iter,
 							  &op_iter);
 			op_counter += v4_full_stats[op].total;
@@ -2212,12 +2192,6 @@ void server_dbus_v4_full_stats(DBusMessageIter *iter)
 				DBUS_TYPE_UINT64, &op_counter);
 		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &op_counter);
-		dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_DOUBLE, &res);
 		dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 		dbus_message_iter_append_basic(&op_iter,
