@@ -1699,7 +1699,7 @@ mdcache_lru_pkginit(void)
 	struct fridgethr_params frp;
 
 	memset(&frp, 0, sizeof(struct fridgethr_params));
-	frp.thr_max = 0;
+	frp.thr_max = 2;
 	frp.thr_min = 2;
 	frp.thread_delay = mdcache_param.lru_run_interval;
 	frp.flavor = fridgethr_flavor_looper;
@@ -2305,7 +2305,15 @@ out:
 
 fsal_status_t dirmap_lru_init(struct mdcache_fsal_export *exp)
 {
+	struct fridgethr_params frp;
 	int rc;
+
+	if (!exp->mfe_exp.exp_ops.fs_supports(&exp->mfe_exp,
+					      fso_whence_is_name)) {
+		LogDebug(COMPONENT_NFS_READDIR, "Skipping dirmap %s",
+			 exp->name);
+		return fsalstat(0, 0);
+	}
 
 	avltree_init(&exp->dirent_map.map, avl_dmap_ck_cmpf, 0 /* flags */);
 	glist_init(&exp->dirent_map.lru);
@@ -2314,16 +2322,56 @@ fsal_status_t dirmap_lru_init(struct mdcache_fsal_export *exp)
 		return posix2fsal_status(rc);
 	}
 
-	rc = fridgethr_submit(lru_fridge, dirmap_lru_run, exp);
+	memset(&frp, 0, sizeof(struct fridgethr_params));
+	frp.thr_max = 1;
+	frp.thr_min = 1;
+	frp.thread_delay = mdcache_param.lru_run_interval;
+	frp.flavor = fridgethr_flavor_looper;
+
+	rc = fridgethr_init(&exp->dirmap_fridge, exp->name, &frp);
 	if (rc != 0) {
-		LogMajor(COMPONENT_CACHE_INODE_LRU,
-			 "Unable to start Chunk LRU thread, error code %d.",
-			 rc);
+		LogMajor(COMPONENT_NFS_READDIR,
+			 "Unable to initialize %s dirmap fridge, error code %d.",
+			 exp->name, rc);
 		return posix2fsal_status(rc);
 	}
 
+	rc = fridgethr_submit(exp->dirmap_fridge, dirmap_lru_run, exp);
+	if (rc != 0) {
+		LogMajor(COMPONENT_NFS_READDIR,
+			 "Unable to start %s dirmap thread, error code %d.",
+			 exp->name, rc);
+		return posix2fsal_status(rc);
+	}
+
+	LogDebug(COMPONENT_NFS_READDIR, "started dirmap %s", exp->name);
 
 	return fsalstat(0, 0);
+}
+
+void dirmap_lru_stop(struct mdcache_fsal_export *exp)
+{
+	if (!exp->dirmap_fridge) {
+		/* Wasn't running */
+		return;
+	}
+
+	int rc = fridgethr_sync_command(exp->dirmap_fridge,
+					fridgethr_comm_stop,
+					10);
+
+	if (rc == ETIMEDOUT) {
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "Shutdown timed out, cancelling threads.");
+		fridgethr_cancel(exp->dirmap_fridge);
+	} else if (rc != 0) {
+		LogMajor(COMPONENT_NFS_READDIR,
+			 "Failed shutting down LRU thread: %d", rc);
+	}
+
+	fridgethr_destroy(exp->dirmap_fridge);
+
+	LogDebug(COMPONENT_NFS_READDIR, "stopped dirmap %s", exp->name);
 }
 
 /** @} */

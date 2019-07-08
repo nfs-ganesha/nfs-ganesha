@@ -206,14 +206,6 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	PTHREAD_RWLOCK_init(&myself->mdc_exp_lock, &attrs);
 	pthread_rwlockattr_destroy(&attrs);
 
-	status = dirmap_lru_init(myself);
-	if (FSAL_IS_ERROR(status)) {
-		LogMajor(COMPONENT_FSAL, "Failed to call dirmap_lru_init");
-		gsh_free(myself->name);
-		gsh_free(myself);
-		return status;
-	}
-
 	status = sub_fsal->m_ops.create_export(sub_fsal,
 						 parse_node,
 						 err_type,
@@ -237,6 +229,13 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 
 	fsal_export_stack(op_ctx->fsal_export, &myself->mfe_exp);
 
+	status = dirmap_lru_init(myself);
+	if (FSAL_IS_ERROR(status)) {
+		LogMajor(COMPONENT_FSAL, "Failed to call dirmap_lru_init");
+		gsh_free(myself->name);
+		gsh_free(myself);
+		return status;
+	}
 
 	/* Set up op_ctx */
 	op_ctx->fsal_export = &myself->mfe_exp;

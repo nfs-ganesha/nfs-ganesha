@@ -212,5 +212,6 @@ void lru_bump_chunk(struct dir_chunk *chunk);
 void mdc_lru_map_dirent(mdcache_dir_entry_t *dirent);
 fsal_cookie_t *mdc_lru_unmap_dirent(uint64_t ck);
 fsal_status_t dirmap_lru_init(struct mdcache_fsal_export *exp);
+void dirmap_lru_stop(struct mdcache_fsal_export *exp);
 #endif				/* MDCACHE_LRU_H */
 /** @} */
