@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2019 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -190,6 +190,9 @@ static void mdcache_exp_release(struct fsal_export *exp_hdl)
 	LogInfo(COMPONENT_FSAL, "Releasing %s export %" PRIu16 " for %s",
 		fsal_hdl->name, op_ctx->ctx_export->export_id,
 		export_path(op_ctx->ctx_export));
+
+	/* Stop the dirmap thread */
+	dirmap_lru_stop(exp);
 
 	/* Release the sub_export */
 	subcall_shutdown_raw(exp,

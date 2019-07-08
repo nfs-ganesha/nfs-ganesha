@@ -102,6 +102,8 @@ struct mdcache_fsal_export {
 	uint8_t flags;
 	/** Mapping of ck -> name for whence-is-name */
 	mdc_dirmap_t dirent_map;
+	/** Thread for dirmap processing */
+	struct fridgethr *dirmap_fridge;
 };
 
 /**
