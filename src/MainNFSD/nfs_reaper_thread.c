@@ -28,6 +28,11 @@
 #include "config.h"
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <malloc.h>
+
 #include "log.h"
 #include "nfs4.h"
 #include "sal_functions.h"
@@ -181,6 +186,79 @@ static int reap_expired_open_owners(void)
 	return count;
 }
 
+/* Return resident memory of the process in MB */
+static size_t get_current_rss(void)
+{
+	static long page_size;
+	int rc, fd;
+	char buf[1024];
+	long vsize = 0, rss = 0;
+
+	if (page_size == 0) {
+		page_size = sysconf(_SC_PAGESIZE);
+		if (page_size <= 0) {
+			LogEvent(COMPONENT_MEMLEAKS,
+				 "_SC_PAGESIZE failed, %d", errno);
+			return 0;
+		}
+	}
+
+	fd = open("/proc/self/statm", O_RDONLY);
+	if (fd < 0)
+		return 0;
+
+	rc = read(fd, buf, sizeof(buf) - 1);
+	if (rc < 0)
+		goto out;
+
+	buf[rc] = '\0';
+	rc = sscanf(buf, "%ld %ld", &vsize, &rss);
+	if (rc != 2) {
+		LogEvent(COMPONENT_MEMLEAKS,
+			"Failed to read data from /proc/self/statm");
+	}
+out:
+	close(fd);
+	return ((uint64_t)rss * page_size) / (1024 * 1024);
+}
+
+static void reap_malloc_frag(void)
+{
+	static size_t trim_threshold;
+	size_t min_threshold = nfs_param.core_param.malloc_trim_minthreshold;
+	size_t rss;
+
+	if (trim_threshold == 0)
+		trim_threshold = min_threshold;
+
+	rss = get_current_rss();
+	LogDebug(COMPONENT_MEMLEAKS,
+		 "current rss: %zu MB, threshold: %zu MB",
+		 rss, trim_threshold);
+
+	if (rss < trim_threshold) {
+		/* If the threshold is too big, drop it in relation to
+		 * the current RSS
+		 */
+		if (trim_threshold > rss + rss / 2)
+			trim_threshold = MAX(rss + rss / 2, min_threshold);
+		return;
+	}
+
+	LogEvent(COMPONENT_MEMLEAKS,
+		 "calling malloc_trim, current rss: %zu MB, threshold: %zu MB",
+		 rss, trim_threshold);
+
+	malloc_trim(0);
+	rss = get_current_rss();
+	/* Set trim threshold to one and one half times of the current RSS */
+	trim_threshold = MAX(rss + rss / 2, min_threshold);
+
+	LogEvent(COMPONENT_MEMLEAKS,
+		 "called malloc_trim, current rss: %zu MB, threshold: %zu MB",
+		 rss, trim_threshold);
+}
+
 struct reaper_state {
 	size_t count;
 	bool logged;
@@ -224,6 +302,8 @@ static void reaper_run(struct fridgethr_context *ctx)
 	     reap_hash_table(ht_unconfirmed_client_id));
 
 	rst->count += reap_expired_open_owners();
+	if (nfs_param.core_param.malloc_trim)
+		reap_malloc_frag();
 }
 
 int reaper_init(void)

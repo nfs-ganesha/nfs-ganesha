@@ -173,6 +173,14 @@ Getattrs_In_Complete_Read(bool, default true)
     validate the EOF flag correctness. Needed for ESXi client compatibility
     when FSAL's don't set it correctly.
 
+Enable_malloc_trim(bool, default false)
+    Set true to enable dynamic malloc_trim support.
+
+Malloc_trim_MinThreshold(uint32, range 1 to INT32_MAX, default 15*1024)
+    Minimum threshold value to call malloc_trim. The malloc_trim will be called
+    once memory allocation exceeds minimum value. Size in MB's.
+    Note, this setting has no effect when Enable_malloc_trim is set to false.
+
 Parameters controlling TCP DRC behavior:
 ----------------------------------------
 

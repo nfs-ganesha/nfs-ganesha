@@ -449,6 +449,13 @@ typedef struct nfs_core_param {
 		nfs3_complete_read.
 		Defaults to true and settable by Getattrs_In_Complete_Read. */
 	bool getattrs_in_complete_read;
+	bool malloc_trim; /* Enable malloc trim */
+	/** Minimum threshold value to call malloc_trim. The malloc_trim
+	* will be called once memory allocation exceeds minimum value.
+	* Size in MB's. Note, this setting has no effect when
+	* Enable_malloc_trim is set to false.
+	*/
+	uint32_t malloc_trim_minthreshold;
 } nfs_core_parameter_t;
 
 /** @} */

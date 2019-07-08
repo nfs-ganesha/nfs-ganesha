@@ -163,6 +163,10 @@ NFS_CORE_PARAM {}
 
 	Getattrs_In_Complete_Read(bool, default true)
 
+	Enable_malloc_trim(bool, default false)
+
+	Malloc_trim_MinThreshold(uint32, range 1 to INT32_MAX, default 15*1024)
+
 NFS_IP_NAME {}
 --------------
 
