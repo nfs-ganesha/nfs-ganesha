@@ -1497,6 +1497,7 @@ void fridgethr_cancel(struct fridgethr *fr)
 		   good enough for me. */
 		pthread_cancel(t->ctx.id);
 		glist_del(&t->thread_link);
+		gsh_free(t);
 		--(fr->nthreads);
 	}
 	PTHREAD_MUTEX_unlock(&fr->mtx);
