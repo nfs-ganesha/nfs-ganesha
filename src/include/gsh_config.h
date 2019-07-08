@@ -408,6 +408,7 @@ typedef struct nfs_core_param {
 	    environment where users are part of large number of groups.
 	*/
 	uint32_t max_uid_to_grp_reqs;
+	bool enable_trim; /* Enable malloc trim */
 } nfs_core_parameter_t;
 
 /** @} */

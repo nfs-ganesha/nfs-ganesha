@@ -27,6 +27,11 @@
 #include "config.h"
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <malloc.h>
+
 #include "log.h"
 #include "nfs4.h"
 #include "sal_functions.h"
@@ -190,6 +195,72 @@ static int reap_expired_open_owners(void)
 	return count;
 }
 
+/* Return resident memory of the process in MB */
+static size_t get_current_rss(void)
+{
+	static long page_size;
+	int rc, fd;
+	char buf[1024];
+	long vsize, rss;
+
+	if (page_size == 0) {
+		page_size = sysconf(_SC_PAGESIZE);
+		if (page_size <= 0) {
+			LogEvent(COMPONENT_MEMLEAKS,
+				 "_SC_PAGESIZE failed, %d", errno);
+		}
+	}
+
+	fd = open("/proc/self/statm", O_RDONLY);
+	if (fd < 0)
+		return 0;
+	rc = read(fd, buf, sizeof(buf) - 1);
+	if (rc < 0)
+		return 0;
+
+	buf[rc] = '\0';
+	rc = sscanf(buf, "%ld %ld", &vsize, &rss);
+	if (rc != 2)
+		return 0;
+
+	return ((uint64_t)rss * page_size) / (1024 * 1024);
+}
+
+static void reap_malloc_frag(void)
+{
+#define MIN_TRIM_THRESHOLD (15 * 1024) /* in MB */
+	static size_t trim_threshold = MIN_TRIM_THRESHOLD;
+	size_t rss;
+	size_t rss2;
+
+	rss = get_current_rss();
+	LogDebug(COMPONENT_MEMLEAKS,
+		 "current rss: %zu MB, threshold: %zu MB",
+		 rss, trim_threshold);
+
+	if (rss < trim_threshold) {
+		/* If the threshold is too big, drop it in relation to
+		 * the current RSS
+		 */
+		if (trim_threshold > rss + rss / 2)
+			trim_threshold = MAX(rss + rss / 2, MIN_TRIM_THRESHOLD);
+		return;
+	}
+
+	LogEvent(COMPONENT_MEMLEAKS,
+		 "calling malloc_trim, current rss: %zu MB, threshold: %zu MB",
+		 rss, trim_threshold);
+
+	malloc_trim(0);
+	rss2 = get_current_rss();
+	/* Set trim threshold to one and one half times of the current RSS */
+	trim_threshold = MAX(rss2 + rss2 / 2, MIN_TRIM_THRESHOLD);
+
+	LogEvent(COMPONENT_MEMLEAKS,
+		 "called malloc_trim, current rss: %zu MB, threshold: %zu MB",
+		 rss2, trim_threshold);
+}
+
 struct reaper_state {
 	size_t count;
 	bool logged;
@@ -233,6 +304,8 @@ static void reaper_run(struct fridgethr_context *ctx)
 	     reap_hash_table(ht_unconfirmed_client_id));
 
 	rst->count += reap_expired_open_owners();
+	if (nfs_param.core_param.enable_trim)
+		reap_malloc_frag();
 }
 
 int reaper_init(void)

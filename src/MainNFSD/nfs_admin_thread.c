@@ -37,6 +37,7 @@
 #ifdef LINUX
 #include <mcheck.h>		/* For mtrace/muntrace */
 #endif
+#include <malloc.h>
 
 #include "nfs_core.h"
 #include "log.h"
@@ -427,6 +428,16 @@ admin_dbus_malloc_trace(DBusMessageIter *args,
 	return success;
 }
 
+static struct gsh_dbus_method method_malloc_trace = {
+	.name = "malloc_trace",
+	.method = admin_dbus_malloc_trace,
+	.args = {{ .name = "tracefile",
+		   .type = "s",
+		   .direction = "in"},
+		 STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
 /**
  * @brief Dbus method for disabling malloc trace
  *
@@ -462,22 +473,142 @@ admin_dbus_malloc_untrace(DBusMessageIter *args,
 	return success;
 }
 
-static struct gsh_dbus_method method_malloc_trace = {
-	.name = "malloc_trace",
-	.method = admin_dbus_malloc_trace,
-	.args = {{ .name = "tracefile",
-		   .type = "s",
-		   .direction = "in"},
-		 STATUS_REPLY,
-		 END_ARG_LIST}
-};
-
 static struct gsh_dbus_method method_malloc_untrace = {
 	.name = "malloc_untrace",
 	.method = admin_dbus_malloc_untrace,
 	.args = {STATUS_REPLY,
 		 END_ARG_LIST}
 };
+
+/**
+ * @brief Dbus method for enabling malloc trim
+ *
+ * @param[in]  args
+ * @param[out] reply
+ */
+static bool admin_dbus_trim_enable(DBusMessageIter *args,
+				   DBusMessage *reply,
+				   DBusError *error)
+{
+	char *errormsg = "Malloc trim enabled";
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	LogEvent(COMPONENT_MEMLEAKS, "enabling malloc_trim");
+	nfs_param.core_param.enable_trim = true;
+	dbus_status_reply(&iter, success, errormsg);
+
+	return success;
+}
+
+static struct gsh_dbus_method method_trim_enable = {
+	.name = "trim_enable",
+	.method = admin_dbus_trim_enable,
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
+/**
+ * @brief Dbus method for disabling malloc trim
+ *
+ * @param[in]  args
+ * @param[out] reply
+ */
+static bool admin_dbus_trim_disable(DBusMessageIter *args,
+				    DBusMessage *reply,
+				    DBusError *error)
+{
+	char *errormsg = "Malloc trim disabled";
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	LogEvent(COMPONENT_MEMLEAKS, "disabling malloc_trim");
+	nfs_param.core_param.enable_trim = false;
+	dbus_status_reply(&iter, success, errormsg);
+
+	return success;
+}
+
+static struct gsh_dbus_method method_trim_disable = {
+	.name = "trim_disable",
+	.method = admin_dbus_trim_disable,
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
+/**
+ * @brief Dbus method for calling malloc_trim()
+ *
+ * @param[in]  args
+ * @param[out] reply
+ */
+static bool admin_dbus_trim_call(DBusMessageIter *args,
+				 DBusMessage *reply,
+				 DBusError *error)
+{
+	char *errormsg = "malloc_trim() called";
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	LogEvent(COMPONENT_MEMLEAKS, "Calling malloc_trim");
+	malloc_trim(0);
+	dbus_status_reply(&iter, success, errormsg);
+
+	return success;
+}
+
+static struct gsh_dbus_method method_trim_call = {
+	.name = "trim_call",
+	.method = admin_dbus_trim_call,
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
+/**
+ * @brief Dbus method for getting trim status
+ *
+ * @param[in]  args
+ * @param[out] reply
+ */
+static bool admin_dbus_trim_status(DBusMessageIter *args,
+				   DBusMessage *reply,
+				   DBusError *error)
+{
+	char *errormsg = "Malloc trim status: enabled";
+	bool success = true;
+	DBusMessageIter iter;
+	char hostname[64+1] = {0};
+	char name[100];
+	FILE *fp;
+
+	/* log malloc_info() as a side effect! */
+	(void)gethostname(hostname, sizeof(hostname));
+	snprintf(name, sizeof(name), "/tmp/mallinfo-%s.%d.txt",
+		 hostname, getpid());
+	fp = fopen(name, "w");
+	if (fp != NULL) {
+		malloc_info(0, fp);
+		fclose(fp);
+	}
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (!nfs_param.core_param.enable_trim)
+		errormsg = "Malloc trim status: disabled";
+	dbus_status_reply(&iter, success, errormsg);
+
+	return success;
+}
+
+static struct gsh_dbus_method method_trim_status = {
+	.name = "trim_status",
+	.method = admin_dbus_trim_status,
+	.args = {STATUS_REPLY,
+		 END_ARG_LIST}
+};
+
 
 static struct gsh_dbus_method *admin_methods[] = {
 	&method_shutdown,
@@ -489,6 +620,10 @@ static struct gsh_dbus_method *admin_methods[] = {
 	&method_purge_idmapper_cache,
 	&method_malloc_trace,
 	&method_malloc_untrace,
+	&method_trim_enable,
+	&method_trim_disable,
+	&method_trim_call,
+	&method_trim_status,
 	NULL
 };
 
