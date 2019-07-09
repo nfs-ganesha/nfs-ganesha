@@ -64,23 +64,19 @@ enum nfs_req_result nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 	RENAME4res * const res_RENAME4 = &resp->nfs_resop4_u.oprename;
 	struct fsal_obj_handle *dst_obj = NULL;
 	struct fsal_obj_handle *src_obj = NULL;
-	char *oldname = NULL;
-	char *newname = NULL;
 
 	resp->resop = NFS4_OP_RENAME;
 	res_RENAME4->status = NFS4_OK;
 
 	/* Read and validate oldname and newname from uft8 strings. */
-	res_RENAME4->status = nfs4_utf8string2dynamic(&arg_RENAME4->oldname,
-						      UTF8_SCAN_ALL,
-						      &oldname);
+	res_RENAME4->status = nfs4_utf8string_scan(&arg_RENAME4->oldname,
+						   UTF8_SCAN_ALL);
 
 	if (res_RENAME4->status != NFS4_OK)
 		goto out;
 
-	res_RENAME4->status = nfs4_utf8string2dynamic(&arg_RENAME4->newname,
-						      UTF8_SCAN_ALL,
-						      &newname);
+	res_RENAME4->status = nfs4_utf8string_scan(&arg_RENAME4->newname,
+						   UTF8_SCAN_ALL);
 
 	if (res_RENAME4->status != NFS4_OK)
 		goto out;
@@ -92,7 +88,7 @@ enum nfs_req_result nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 
 	res_RENAME4->status =
-	    nfs4_sanity_check_saved_FH(data, DIRECTORY, false);
+		nfs4_sanity_check_saved_FH(data, DIRECTORY, false);
 
 	if (res_RENAME4->status != NFS4_OK)
 		goto out;
@@ -113,12 +109,15 @@ enum nfs_req_result nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 	src_obj = data->saved_obj;
 
 	res_RENAME4->RENAME4res_u.resok4.source_cinfo.before =
-	    fsal_get_changeid4(src_obj);
-	res_RENAME4->RENAME4res_u.resok4.target_cinfo.before =
-	    fsal_get_changeid4(dst_obj);
+						fsal_get_changeid4(src_obj);
 
-	res_RENAME4->status = nfs4_Errno_status(fsal_rename(src_obj, oldname,
-							    dst_obj, newname));
+	res_RENAME4->RENAME4res_u.resok4.target_cinfo.before =
+						fsal_get_changeid4(dst_obj);
+
+	res_RENAME4->status = nfs4_Errno_status(
+		fsal_rename(src_obj, arg_RENAME4->oldname.utf8string_val,
+			    dst_obj, arg_RENAME4->newname.utf8string_val));
+
 	if (res_RENAME4->status == NFS4_OK) {
 		/* If you reach this point, then everything was alright
 		 * For the change_info4, get the 'change' attributes
@@ -131,13 +130,10 @@ enum nfs_req_result nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 		res_RENAME4->RENAME4res_u.resok4.target_cinfo.atomic = FALSE;
 		res_RENAME4->RENAME4res_u.resok4.source_cinfo.atomic = FALSE;
 	}
-	nfs_put_grace_status();
- out:
-	if (oldname)
-		gsh_free(oldname);
 
-	if (newname)
-		gsh_free(newname);
+	nfs_put_grace_status();
+
+ out:
 
 	return nfsstat4_to_nfs_req_result(res_RENAME4->status);
 }

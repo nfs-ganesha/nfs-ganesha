@@ -62,7 +62,6 @@ enum nfs_req_result nfs4_op_remove(struct nfs_argop4 *op,
 	REMOVE4args * const arg_REMOVE4 = &op->nfs_argop4_u.opremove;
 	REMOVE4res * const res_REMOVE4 = &resp->nfs_resop4_u.opremove;
 	struct fsal_obj_handle *parent_obj = NULL;
-	char *name = NULL;
 	fsal_status_t fsal_status = {0, 0};
 
 	resp->resop = NFS4_OP_REMOVE;
@@ -77,7 +76,8 @@ enum nfs_req_result nfs4_op_remove(struct nfs_argop4 *op,
 
 	/* Validate and convert the UFT8 target to a regular string */
 	res_REMOVE4->status =
-	    nfs4_utf8string2dynamic(&arg_REMOVE4->target, UTF8_SCAN_ALL, &name);
+		nfs4_utf8string_scan(&arg_REMOVE4->target, UTF8_SCAN_ALL);
+
 	if (res_REMOVE4->status != NFS4_OK)
 		goto out;
 
@@ -99,7 +99,9 @@ enum nfs_req_result nfs4_op_remove(struct nfs_argop4 *op,
 	res_REMOVE4->REMOVE4res_u.resok4.cinfo.before =
 	    fsal_get_changeid4(parent_obj);
 
-	fsal_status = fsal_remove(parent_obj, name);
+	fsal_status = fsal_remove(parent_obj,
+				  arg_REMOVE4->target.utf8string_val);
+
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_REMOVE4->status = nfs4_Errno_status(fsal_status);
 		goto out_put_grace;
@@ -113,7 +115,6 @@ enum nfs_req_result nfs4_op_remove(struct nfs_argop4 *op,
 out_put_grace:
 	nfs_put_grace_status();
 out:
-	gsh_free(name);
 
 	return nfsstat4_to_nfs_req_result(res_REMOVE4->status);
 }				/* nfs4_op_remove */

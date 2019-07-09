@@ -286,7 +286,6 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_OPEN4->status == NFS4_OK) {
 		utf8string *utfile;
 		open_claim4 *oc = &arg_OPEN4->claim;
-		char *filename;
 
 		/* Load up CLAIM_DELEGATE_CUR file */
 
@@ -302,18 +301,15 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 			return false;
 		}
 		/* Check if filename is correct */
-		res_OPEN4->status = nfs4_utf8string2dynamic(
-					utfile, UTF8_SCAN_ALL, &filename);
+		res_OPEN4->status = nfs4_utf8string_scan(utfile, UTF8_SCAN_ALL);
 
 		if (res_OPEN4->status != NFS4_OK)
 			return false;
 
 		status = fsal_lookup(data->current_obj,
-				     filename,
+				     utfile->utf8string_val,
 				     &obj_lookup,
 				     NULL);
-
-		gsh_free(filename);
 
 		if (obj_lookup == NULL) {
 			res_OPEN4->status = nfs4_Errno_status(status);
@@ -339,7 +335,6 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 	stateid4 *rcurr_state;
 	struct fsal_obj_handle *obj_lookup;
 	const utf8string *utfname;
-	char *filename;
 	fsal_status_t fsal_status;
 	nfsstat4 status;
 	state_t *found_state = NULL;
@@ -367,26 +362,25 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 	rcurr_state =
 		&arg->claim.open_claim4_u.delegate_cur_info.delegate_stateid;
 
-	LogDebug(COMPONENT_NFS_V4, "file name: %.*s",
-		 utfname->utf8string_len, utfname->utf8string_val);
+	LogDebug(COMPONENT_NFS_V4, "file name: %s",
+		 utfname->utf8string_val);
 
 	/* Check if filename is correct */
-	status = nfs4_utf8string2dynamic(utfname, UTF8_SCAN_ALL, &filename);
+	status = nfs4_utf8string_scan(utfname, UTF8_SCAN_ALL);
 	if (status != NFS4_OK) {
 		LogDebug(COMPONENT_NFS_V4, "Invalid filename");
 		return status;
 	}
 
 	/* Does a file with this name already exist ? */
-	fsal_status = fsal_lookup(data->current_obj, filename,
+	fsal_status = fsal_lookup(data->current_obj, utfname->utf8string_val,
 				  &obj_lookup, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogDebug(COMPONENT_NFS_V4, "%s lookup failed.", filename);
-		gsh_free(filename);
+		LogDebug(COMPONENT_NFS_V4, "%s lookup failed.",
+			 utfname->utf8string_val);
 		return nfs4_Errno_status(fsal_status);
 	}
-	gsh_free(filename);
 
 	status = open4_create_fh(data, obj_lookup, false);
 	if (status != NFS4_OK) {
@@ -773,13 +767,15 @@ static void open4_ex(OPEN4args *arg,
 			}
 		}
 
-		/* Validate and convert the utf8 filename */
-		res_OPEN4->status =
-		    nfs4_utf8string2dynamic(&arg->claim.open_claim4_u.file,
-					    UTF8_SCAN_ALL, &filename);
+		/* Validate the utf8 filename */
+		res_OPEN4->status = nfs4_utf8string_scan(
+						&arg->claim.open_claim4_u.file,
+						UTF8_SCAN_ALL);
 
 		if (res_OPEN4->status != NFS4_OK)
 			goto out;
+
+		filename = arg->claim.open_claim4_u.file.utf8string_val;
 
 		/* Set the createmode if appropriate) */
 		if (arg->openhow.opentype == OPEN4_CREATE) {
@@ -790,7 +786,11 @@ static void open4_ex(OPEN4args *arg,
 				goto out;
 		}
 
-		status = fsal_lookup(parent, filename, &file_obj, NULL);
+		status =
+		    fsal_lookup(parent,
+				arg->claim.open_claim4_u.file.utf8string_val,
+				&file_obj,
+				NULL);
 
 		if (!FSAL_IS_ERROR(status)) {
 			/* Check create situations. */
@@ -823,11 +823,10 @@ static void open4_ex(OPEN4args *arg,
 				}
 			}
 
-			/* We found the file by lookup, discard the filename
+			/* We found the file by lookup, set filename to NULL
 			 * and remember that we found the entry by lookup.
 			 */
 			looked_up_file_obj = true;
-			gsh_free(filename);
 			filename = NULL;
 		} else if (status.major != ERR_FSAL_NOENT ||
 			   arg->openhow.opentype != OPEN4_CREATE) {
@@ -1180,9 +1179,6 @@ static void open4_ex(OPEN4args *arg,
 
 	if (state_lock_held)
 		PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
-
-	if (filename)
-		gsh_free(filename);
 
 	if (res_OPEN4->status != NFS4_OK) {
 		/* Cleanup state on error */

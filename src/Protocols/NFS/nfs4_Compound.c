@@ -657,23 +657,9 @@ nfs_opnum4 LastOpcode[] = {
 	NFS4_OP_REMOVEXATTR
 };
 
-void copy_tag(utf8str_cs *dest, utf8str_cs *src)
+static inline void copy_tag(utf8str_cs *dest, utf8str_cs *src)
 {
-	/* Keeping the same tag as in the arguments */
-	dest->utf8string_len = src->utf8string_len;
-
-	if (dest->utf8string_len > 0) {
-
-		dest->utf8string_val = gsh_malloc(dest->utf8string_len + 1);
-
-		memcpy(dest->utf8string_val,
-		       src->utf8string_val,
-		       dest->utf8string_len);
-
-		dest->utf8string_val[dest->utf8string_len] = '\0';
-	} else {
-		dest->utf8string_val = NULL;
-	}
+	utf8string_dup(dest, src->utf8string_val, src->utf8string_len);
 }
 
 enum nfs_req_result complete_op(compound_data_t *data, nfsstat4 *status,
@@ -1206,9 +1192,8 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (res_compound4->tag.utf8string_len > 0) {
 		/* Check if the tag is a valid utf8 string */
-		if (nfs4_utf8string2dynamic(
-				&res_compound4->tag,
-				UTF8_SCAN_ALL, &data->tagname) != 0) {
+		if (nfs4_utf8string_scan(&res_compound4->tag, UTF8_SCAN_ALL)
+		    != 0) {
 			char str[LOG_BUFF_LEN];
 			struct display_buffer dspbuf = {sizeof(str), str, str};
 
@@ -1227,6 +1212,13 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			res_compound4->resarray.resarray_len = 0;
 			goto out;
 		}
+
+		/* Make a copy of the tagname */
+		data->tagname =
+			gsh_malloc(res_compound4->tag.utf8string_len + 1);
+		memcpy(data->tagname,
+		       res_compound4->tag.utf8string_val,
+		       res_compound4->tag.utf8string_len + 1);
 	} else {
 		/* No tag */
 		data->tagname = gsh_strdup("NO TAG");

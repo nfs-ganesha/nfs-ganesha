@@ -234,6 +234,12 @@ typedef utf8str_cs linktext4;
 static inline utf8string *
 utf8string_dup(utf8string *d, const char *s, size_t l)
 {
+	if (s == NULL || l == 0) {
+		d->utf8string_val = 0;
+		d->utf8string_len = 0;
+		return d;
+	}
+
 	d->utf8string_val = (char *)malloc(l + 1);
 
 	if (d->utf8string_val == NULL) {
@@ -242,8 +248,7 @@ utf8string_dup(utf8string *d, const char *s, size_t l)
 		abort();
 	}
 	d->utf8string_len = l;
-	memcpy(d->utf8string_val, s, l);
-	d->utf8string_val[l] = '\0';
+	memcpy(d->utf8string_val, s, l + 1);
 	return d;
 }
 
@@ -3933,14 +3938,82 @@ static inline bool xdr_slotid4(XDR *xdrs, slotid4 *objp)
 	return true;
 }
 
-static inline bool xdr_utf8string(XDR *xdrs, utf8string *objp)
+static inline bool
+xdr_utf8string_decode(XDR *xdrs, utf8string *objp, u_int maxsize)
 {
-	if (!inline_xdr_bytes(xdrs,
-	    &objp->utf8string_val,
-	    &objp->utf8string_len, XDR_STRING_MAXLEN)) {
+	/* sp is the actual string pointer */
+	char *sp = objp->utf8string_val;
+	uint32_t size;
+	bool ret;
+
+	/*
+	 * first deal with the length since xdr bytes are counted
+	 */
+	if (!XDR_GETUINT32(xdrs, &size)) {
+		LogDebug(COMPONENT_TIRPC,
+			 "%s:%u ERROR size",
+			 __func__, __LINE__);
 		return false;
 	}
-	return true;
+
+	if (size >= maxsize) {
+		LogDebug(COMPONENT_TIRPC,
+			 "%s:%u ERROR size %" PRIu32 " > max %u",
+			 __func__, __LINE__,
+			 size, maxsize);
+		return false;
+	}
+
+	/* only valid size */
+	objp->utf8string_len = (u_int)size;
+
+	/*
+	 * now deal with the actual bytes of the string
+	 */
+	if (!size)
+		return true;
+
+	if (!sp) {
+		sp = malloc(size + 1);
+
+		if (sp == NULL) {
+			LogMallocFailure(__FILE__, __LINE__, __func__,
+					 "utf8string_dup");
+			abort();
+		}
+	}
+
+	ret = xdr_opaque_decode(xdrs, sp, size);
+
+	if (!ret) {
+		if (!objp->utf8string_val) {
+			/* Only free if we allocated */
+			free(sp);
+		}
+		return ret;
+	}
+
+	objp->utf8string_val = sp;			/* only valid pointer */
+	sp[size] = '\0';
+	return ret;
+}
+
+static inline bool
+inline_xdr_utf8string(XDR *xdrs, utf8string *objp, u_int maxsize)
+{
+	if (xdrs->x_op == XDR_DECODE) {
+		return xdr_utf8string_decode(xdrs, objp, maxsize);
+	} else {
+		return inline_xdr_bytes(xdrs,
+					&objp->utf8string_val,
+					&objp->utf8string_len,
+					maxsize);
+	}
+}
+
+static inline bool xdr_utf8string(XDR *xdrs, utf8string *objp)
+{
+	return inline_xdr_utf8string(xdrs, objp, XDR_STRING_MAXLEN);
 }
 
 static inline bool xdr_utf8str_cis(XDR *xdrs, utf8str_cis *objp)

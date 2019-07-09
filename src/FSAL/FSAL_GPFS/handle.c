@@ -638,9 +638,13 @@ static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
 			return fsalstat(ERR_FSAL_NOENT, 0);
 		return fsalstat(posix2fsal_error(errsv), errsv);
 	}
+
+	/* Make sure utf8string is NUL terminated */
+	xa_value->utf8string_val[gxarg.value_len] = '\0';
+
 	LogDebug(COMPONENT_FSAL,
-		"GETXATTRS returned value %.*s len %d rc %d",
-		gxarg.value_len, (char *)gxarg.value, gxarg.value_len, rc);
+		"GETXATTRS returned value %s len %d rc %d",
+		(char *)gxarg.value, gxarg.value_len, rc);
 
 	xa_value->utf8string_len = gxarg.value_len;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -778,7 +782,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 		next += 1;
 
 		LogDebug(COMPONENT_FSAL,
-		"nameP %s at offset %td", name, (next - name));
+			 "nameP %s at offset %td", name, (next - name));
 
 		if (entryCount >= *la_cookie) {
 			if ((((char *)entry - (char *)lr_names->entries) +
@@ -804,6 +808,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 			entry->utf8string_val = val;
 			memcpy(entry->utf8string_val, name,
 						entry->utf8string_len);
+			entry->utf8string_val[entry->utf8string_len] = '\0';
 
 			LogFullDebug(COMPONENT_FSAL,
 				"entry %d val %p at %p len %d at %p name %s",

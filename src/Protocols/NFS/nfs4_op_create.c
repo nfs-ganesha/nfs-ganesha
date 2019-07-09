@@ -71,7 +71,6 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	struct fsal_obj_handle *obj_new = NULL;
 	struct attrlist sattr;
 	int convrc = 0;
-	char *name = NULL;
 	char *link_content = NULL;
 	struct fsal_export *exp_hdl;
 	fsal_status_t fsal_status;
@@ -126,9 +125,8 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 
 	/* Validate and convert the UFT8 objname to a regular string */
-	res_CREATE4->status = nfs4_utf8string2dynamic(&arg_CREATE4->objname,
-						      UTF8_SCAN_ALL,
-						      &name);
+	res_CREATE4->status = nfs4_utf8string_scan(&arg_CREATE4->objname,
+						   UTF8_SCAN_ALL);
 
 	if (res_CREATE4->status != NFS4_OK)
 		goto out;
@@ -166,15 +164,17 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	/* Create either a symbolic link or a directory */
 	switch (arg_CREATE4->objtype.type) {
 	case NF4LNK:
-		/* Convert the name to link from into a regular string */
+		/* Validate the symbolic link content */
 		type = SYMBOLIC_LINK;
-		res_CREATE4->status = nfs4_utf8string2dynamic(
+		res_CREATE4->status = nfs4_utf8string_scan(
 				&arg_CREATE4->objtype.createtype4_u.linkdata,
-				UTF8_SCAN_SYMLINK,
-				&link_content);
+				UTF8_SCAN_SYMLINK);
 
 		if (res_CREATE4->status != NFS4_OK)
 			goto out;
+
+		link_content =
+		    arg_CREATE4->objtype.createtype4_u.linkdata.utf8string_val;
 		break;
 
 	case NF4DIR:
@@ -229,8 +229,13 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		sattr.valid_mask |= ATTR_MODE;
 	}
 
-	fsal_status = fsal_create(obj_parent, name, type, &sattr, link_content,
-				  &obj_new, NULL);
+	fsal_status = fsal_create(obj_parent,
+				  arg_CREATE4->objname.utf8string_val,
+				  type,
+				  &sattr,
+				  link_content,
+				  &obj_new,
+				  NULL);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
@@ -293,9 +298,6 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		/* Put our ref */
 		obj_new->obj_ops->put_ref(obj_new);
 	}
-
-	gsh_free(name);
-	gsh_free(link_content);
 
 	return nfsstat4_to_nfs_req_result(res_CREATE4->status);
 }				/* nfs4_op_create */
