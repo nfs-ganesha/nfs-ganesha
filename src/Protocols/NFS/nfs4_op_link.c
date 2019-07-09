@@ -69,7 +69,6 @@ enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	struct fsal_obj_handle *dir_obj = NULL;
 	struct fsal_obj_handle *file_obj = NULL;
 	fsal_status_t status = {0, 0};
-	char *newname = NULL;
 
 	resp->resop = NFS4_OP_LINK;
 	res_LINK4->status = NFS4_OK;
@@ -99,9 +98,8 @@ enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 
 	/* Validate and convert the UFT8 objname to a regular string */
-	res_LINK4->status = nfs4_utf8string2dynamic(&arg_LINK4->newname,
-						    UTF8_SCAN_ALL,
-						    &newname);
+	res_LINK4->status = nfs4_utf8string_scan(&arg_LINK4->newname,
+						 UTF8_SCAN_ALL);
 
 	if (res_LINK4->status != NFS4_OK)
 		goto out;
@@ -114,7 +112,9 @@ enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	file_obj = data->saved_obj;
 
 	/* make the link */
-	status = fsal_link(file_obj, dir_obj, newname);
+	status = fsal_link(file_obj, dir_obj,
+			   arg_LINK4->newname.utf8string_val);
+
 	if (FSAL_IS_ERROR(status)) {
 		res_LINK4->status = nfs4_Errno_status(status);
 		goto out;
@@ -126,9 +126,6 @@ enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	res_LINK4->status = NFS4_OK;
 
  out:
-
-	if (newname)
-		gsh_free(newname);
 
 	return nfsstat4_to_nfs_req_result(res_LINK4->status);
 }				/* nfs4_op_link */

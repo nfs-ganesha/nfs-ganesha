@@ -790,7 +790,6 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	fsal_acl_data_t acldata;
 	fsal_ace_t *ace;
 	char buffer[MAXNAMLEN + 1];
-	char *buffp = buffer;
 	utf8string utf8buffer;
 	fattr_xdr_result res = FATTR_XDR_FAILED;
 	int who = 0;		/* not ACE_SPECIAL anything */
@@ -824,7 +823,11 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 			goto baderr;
 		if (!inline_xdr_u_int32_t(xdr, &ace->perm))
 			goto baderr;
-		if (!inline_xdr_string(xdr, &buffp, MAXNAMLEN))
+
+		utf8buffer.utf8string_val = buffer;
+		utf8buffer.utf8string_len = 0;
+
+		if (!inline_xdr_utf8string(xdr, &utf8buffer, MAXNAMLEN))
 			goto baderr;
 		for (i = 0; i < FSAL_ACE_SPECIAL_EVERYONE; i++) {
 			if (strcmp(buffer, whostr_2_type_map[i].string) == 0) {
@@ -841,8 +844,6 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 				     "ACE special who.uid = 0x%x",
 				     ace->who.uid);
 		} else {
-			utf8buffer.utf8string_val = buffer;
-			utf8buffer.utf8string_len = strlen(buffer);
 			if (IS_FSAL_ACE_GROUP_ID(*ace)) {
 				/* Decode group. */
 				struct gsh_buffdesc gname = {
@@ -3314,7 +3315,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
  *
  */
 
-static nfsstat4 path_filter(const char *name, utf8_scantype_t scan)
+nfsstat4 path_filter(const char *name, utf8_scantype_t scan)
 {
 	const unsigned char *np = (const unsigned char *)name;
 	nfsstat4 status = NFS4_OK;
@@ -4475,39 +4476,6 @@ int nfs4_Fattr_To_FSAL_attr(struct attrlist *FSAL_attr, fattr4 *Fattr,
 int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *dinfo, fattr4 *Fattr)
 {
 	return Fattr4_To_FSAL_attr(NULL, Fattr, NULL, dinfo, NULL);
-}
-
-/* nfs4_utf8string2dynamic
- * unpack the input string from the XDR into a null term'd string
- * scan for bad chars
- */
-
-nfsstat4 nfs4_utf8string2dynamic(const utf8string *input,
-				 utf8_scantype_t scan,
-				 char **obj_name)
-{
-	nfsstat4 status = NFS4_OK;
-
-	*obj_name = NULL;
-
-	if (input->utf8string_val == NULL || input->utf8string_len == 0)
-		return NFS4ERR_INVAL;
-
-	if (((scan & UTF8_SCAN_PATH) && input->utf8string_len > MAXPATHLEN) ||
-	    (!(scan & UTF8_SCAN_PATH) && input->utf8string_len > MAXNAMLEN))
-		return NFS4ERR_NAMETOOLONG;
-
-	char *name = gsh_malloc(input->utf8string_len + 1);
-
-	memcpy(name, input->utf8string_val, input->utf8string_len);
-	name[input->utf8string_len] = '\0';
-	if (scan != UTF8_SCAN_NONE)
-		status = path_filter(name, scan);
-	if (status == NFS4_OK)
-		*obj_name = name;
-	else
-		gsh_free(name);
-	return status;
 }
 
 /**

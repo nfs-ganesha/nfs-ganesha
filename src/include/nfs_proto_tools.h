@@ -262,8 +262,24 @@ typedef enum {
 	UTF8_SCAN_SYMLINK = 12	/* a symlink, allow '/', ".", "..", utf8 */
 } utf8_scantype_t;
 
-nfsstat4 nfs4_utf8string2dynamic(const utf8string *input, utf8_scantype_t scan,
-				 char **obj_name);
+nfsstat4 path_filter(const char *name, utf8_scantype_t scan);
+
+static inline
+nfsstat4 nfs4_utf8string_scan(const utf8string *input, utf8_scantype_t scan)
+{
+	if (input->utf8string_val == NULL || input->utf8string_len == 0)
+		return NFS4ERR_INVAL;
+
+	if (scan == UTF8_SCAN_NONE)
+		return NFS4_OK;
+
+	if (((scan & UTF8_SCAN_PATH) && input->utf8string_len > MAXPATHLEN) ||
+	    (!(scan & UTF8_SCAN_PATH) && input->utf8string_len > MAXNAMLEN))
+		return NFS4ERR_NAMETOOLONG;
+
+	/* utf8strings are now NUL terminated, so it's ok to call the filter */
+	return path_filter(input->utf8string_val, scan);
+}
 
 int bitmap4_to_attrmask_t(bitmap4 *bitmap4, attrmask_t *mask);
 

@@ -71,7 +71,6 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	SECINFO4args * const arg_SECINFO4 = &op->nfs_argop4_u.opsecinfo;
 	SECINFO4res * const res_SECINFO4 = &resp->nfs_resop4_u.opsecinfo;
 	secinfo4 *resok_val;
-	char *secinfo_fh_name = NULL;
 	fsal_status_t fsal_status = {0, 0};
 	struct fsal_obj_handle *obj_src = NULL;
 #ifdef _HAVE_GSSAPI
@@ -89,9 +88,8 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	/* Read name from uft8 strings, if one is empty then returns
 	 * NFS4ERR_INVAL
 	 */
-	res_SECINFO4->status = nfs4_utf8string2dynamic(&arg_SECINFO4->name,
-						       UTF8_SCAN_ALL,
-						       &secinfo_fh_name);
+	res_SECINFO4->status = nfs4_utf8string_scan(&arg_SECINFO4->name,
+						    UTF8_SCAN_ALL);
 
 	if (res_SECINFO4->status != NFS4_OK)
 		goto out;
@@ -104,7 +102,8 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		goto out;
 
 
-	fsal_status = fsal_lookup(data->current_obj, secinfo_fh_name,
+	fsal_status = fsal_lookup(data->current_obj,
+				  arg_SECINFO4->name.utf8string_val,
 				  &obj_src, NULL);
 
 	if (obj_src == NULL) {
@@ -183,7 +182,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
 			 op_ctx->ctx_export->pseudopath,
 			 op_ctx->ctx_export->export_id,
-			 secinfo_fh_name);
+			 arg_SECINFO4->name.utf8string_val);
 
 		/* Swap in the obj on the other side of the junction. */
 		obj_src->obj_ops->put_ref(obj_src);
@@ -315,9 +314,6 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 
 	if (obj_src)
 		obj_src->obj_ops->put_ref(obj_src);
-
-	if (secinfo_fh_name)
-		gsh_free(secinfo_fh_name);
 
 	return nfsstat4_to_nfs_req_result(res_SECINFO4->status);
 }				/* nfs4_op_secinfo */

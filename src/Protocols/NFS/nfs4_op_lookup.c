@@ -65,8 +65,6 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 	LOOKUP4args * const arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
 	/* Convenient alias for the response  */
 	LOOKUP4res * const res_LOOKUP4 = &resp->nfs_resop4_u.oplookup;
-	/* The name to look up */
-	char *name = NULL;
 	/* The directory in which to look up the name */
 	struct fsal_obj_handle *dir_obj = NULL;
 	/* The name found */
@@ -90,14 +88,14 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 	}
 
 	/* Validate and convert the UFT8 objname to a regular string */
-	res_LOOKUP4->status = nfs4_utf8string2dynamic(&arg_LOOKUP4->objname,
-						      UTF8_SCAN_ALL,
-						      &name);
+	res_LOOKUP4->status = nfs4_utf8string_scan(&arg_LOOKUP4->objname,
+						   UTF8_SCAN_ALL);
 
 	if (res_LOOKUP4->status != NFS4_OK)
 		goto out;
 
-	LogDebug(COMPONENT_NFS_V4, "name=%s", name);
+	LogDebug(COMPONENT_NFS_V4, "name=%s",
+		 arg_LOOKUP4->objname.utf8string_val);
 
 	/* Do the lookup in the FSAL */
 	file_obj = NULL;
@@ -105,7 +103,9 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 
 	/* Sanity check: dir_obj should be ACTUALLY a directory */
 
-	status = fsal_lookup(dir_obj, name, &file_obj, NULL);
+	status = fsal_lookup(dir_obj, arg_LOOKUP4->objname.utf8string_val,
+			     &file_obj, NULL);
+
 	if (FSAL_IS_ERROR(status)) {
 		res_LOOKUP4->status = nfs4_Errno_status(status);
 		goto out;
@@ -127,7 +127,8 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 				 * stale.  Release state_lock
 				 */
 				LogDebug(COMPONENT_EXPORT,
-					 "NFS4ERR_STALE on LOOKUP of %s", name);
+					 "NFS4ERR_STALE on LOOKUP of %s",
+					 arg_LOOKUP4->objname.utf8string_val);
 				res_LOOKUP4->status = NFS4ERR_STALE;
 				PTHREAD_RWLOCK_unlock(
 					&file_obj->state_hdl->state_lock);
@@ -202,7 +203,8 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 			LogDebug(COMPONENT_EXPORT,
 				"PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
 				op_ctx->ctx_export->pseudopath,
-				op_ctx->ctx_export->export_id, name);
+				op_ctx->ctx_export->export_id,
+				arg_LOOKUP4->objname.utf8string_val);
 
 			file_obj->obj_ops->put_ref(file_obj);
 			file_obj = obj;
@@ -232,8 +234,6 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 	/* Release reference on file_obj if we didn't utilze it. */
 	if (file_obj)
 		file_obj->obj_ops->put_ref(file_obj);
-
-	gsh_free(name);
 
 	return nfsstat4_to_nfs_req_result(res_LOOKUP4->status);
 }				/* nfs4_op_lookup */

@@ -1826,15 +1826,12 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 
 	for (e4 = rdok->reply.entries; e4; e4 = e4->nextentry) {
 		struct attrlist attrs;
-		char name[MAXNAMLEN + 1];
 		struct fsal_obj_handle *handle;
 		enum fsal_dir_result cb_rc;
 
 		/* UTF8 name does not include trailing 0 */
 		if (e4->name.utf8string_len > sizeof(name) - 1)
 			return fsalstat(ERR_FSAL_SERVERFAULT, E2BIG);
-		memcpy(name, e4->name.utf8string_val, e4->name.utf8string_len);
-		name[e4->name.utf8string_len] = '\0';
 
 		if (nfs4_Fattr_To_FSAL_attr(&attrs, &e4->attrs, NULL))
 			return fsalstat(ERR_FSAL_FAULT, 0);
@@ -1855,11 +1852,13 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 		 *             avoid over large READDIR response.
 		 */
 		st = pxy_lookup_impl(&ph->obj, op_ctx->fsal_export,
-				     op_ctx->creds, name, &handle, NULL);
+				     op_ctx->creds, e4->name.utf8string_val,
+				     &handle, NULL);
 		if (FSAL_IS_ERROR(st))
 			break;
 
-		cb_rc = cb(name, handle, &attrs, cbarg, e4->cookie);
+		cb_rc = cb(e4->name.utf8string_val, handle, &attrs,
+			   cbarg, e4->cookie);
 
 		fsal_release_attrs(&attrs);
 

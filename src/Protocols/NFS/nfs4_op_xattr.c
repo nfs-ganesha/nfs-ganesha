@@ -78,7 +78,7 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 	res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_val = NULL;
 
 	gr_value.utf8string_len = XATTR_VALUE_SIZE;
-	gr_value.utf8string_val = gsh_malloc(gr_value.utf8string_len);
+	gr_value.utf8string_val = gsh_malloc(gr_value.utf8string_len + 1);
 
 	/* Do basic checks on a filehandle */
 	res_GETXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
@@ -113,7 +113,7 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 				  gr_value.utf8string_len);
 			/* Try again with a bigger buffer */
 			gr_value.utf8string_val = gsh_malloc(
-						      gr_value.utf8string_len);
+						gr_value.utf8string_len + 1);
 			fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
 						    &arg_GETXATTR4->ga_name,
 						    &gr_value);
