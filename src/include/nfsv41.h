@@ -234,7 +234,7 @@ typedef utf8str_cs linktext4;
 static inline utf8string *
 utf8string_dup(utf8string *d, const char *s, size_t l)
 {
-	d->utf8string_val = malloc(l + 1);
+	d->utf8string_val = (char *)malloc(l + 1);
 
 	if (d->utf8string_val == NULL) {
 		LogMallocFailure(__FILE__, __LINE__, __func__,
