@@ -1038,8 +1038,8 @@ fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 		attributes.request_mask |= attrs_out->request_mask;
 
 	if (dir_fd < 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Could not open directory for path %s", path);
+		LogDebug(COMPONENT_FSAL,
+			 "Could not open directory for path %s", path);
 		fsal_status = fsalstat(posix2fsal_error(-dir_fd), retval);
 		goto errout;
 	}

@@ -1838,8 +1838,8 @@ fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 	dir_fd = open_dir_by_path_walk(-1, path, &stat);
 
 	if (dir_fd < 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Could not open directory for path %s",
+		LogDebug(COMPONENT_FSAL,
+			 "Could not open directory for path %s",
 			path);
 		retval = -dir_fd;
 		goto errout;
