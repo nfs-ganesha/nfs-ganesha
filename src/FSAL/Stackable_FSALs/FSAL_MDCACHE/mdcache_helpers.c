@@ -2950,12 +2950,18 @@ again:
 		if (!has_write) {
 			/* Upgrade to write lock and retry just in case
 			 * another thread managed to populate this cookie
-			 * in the meantime.
+			 * in the meantime.  We need to drop our ref on chunk
+			 * (if any) since it could be nuked when we drop the
+			 * lock.
 			 */
+			if (chunk) {
+				mdcache_lru_unref_chunk(chunk);
+				chunk = NULL;
+			}
+
 			PTHREAD_RWLOCK_unlock(&directory->content_lock);
 			PTHREAD_RWLOCK_wrlock(&directory->content_lock);
 			has_write = true;
-			/* We have a ref on chunk; don't null it out */
 			goto again;
 		}
 
@@ -3135,20 +3141,20 @@ again:
 				 */
 				look_ck = dirent->ck;
 
-				PTHREAD_RWLOCK_unlock(&directory->content_lock);
-				PTHREAD_RWLOCK_wrlock(&directory->content_lock);
-				has_write = true;
-
-				/* Dropping the content_lock may have
-				 * invalidated some or all of the dirents and/or
-				 * chunks in this directory.  We need to start
-				 * over from this point.  look_ck is now correct
-				 * if the dirent is still cached, and we haven't
-				 * changed next_ck, so it's still correct for
-				 * reloading the chunk.
+				/* Dropping the content_lock may invalidate some
+				 * or all of the dirents and/or chunks in this
+				 * directory.  We need to start over from this
+				 * point.  look_ck is now correct if the dirent
+				 * is still cached, and we haven't changed
+				 * next_ck, so it's still correct for reloading
+				 * the chunk.
 				 */
 				mdcache_lru_unref_chunk(chunk);
 				chunk = NULL;
+
+				PTHREAD_RWLOCK_unlock(&directory->content_lock);
+				PTHREAD_RWLOCK_wrlock(&directory->content_lock);
+				has_write = true;
 
 				/* Now we need to look for this dirent again.
 				 * We haven't updated next_ck for this dirent
@@ -3187,6 +3193,8 @@ again:
 						     &entry, NULL);
 
 			if (FSAL_IS_ERROR(status)) {
+				mdcache_lru_unref_chunk(chunk);
+
 				PTHREAD_RWLOCK_unlock(&directory->content_lock);
 
 				LogFullDebugAlt(COMPONENT_NFS_READDIR,
@@ -3196,8 +3204,6 @@ again:
 
 				if (status.major == ERR_FSAL_STALE)
 					mdcache_kill_entry(directory);
-
-				mdcache_lru_unref_chunk(chunk);
 				return status;
 			}
 
@@ -3260,6 +3266,7 @@ again:
 		status = entry->obj_handle.obj_ops->getattrs(&entry->obj_handle,
 							    &attrs);
 		if (FSAL_IS_ERROR(status)) {
+			mdcache_lru_unref_chunk(chunk);
 			PTHREAD_RWLOCK_unlock(&directory->content_lock);
 
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
@@ -3268,7 +3275,6 @@ again:
 					fsal_err_txt(status));
 
 			mdcache_put(entry);
-			mdcache_lru_unref_chunk(chunk);
 			return status;
 		}
 
