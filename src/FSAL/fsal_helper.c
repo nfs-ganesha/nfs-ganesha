@@ -117,9 +117,11 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 	/* Ask for owner_skip on exclusive create (we will be checking the
 	 * verifier later, so this allows a replay of
 	 * open("foo", O_RDWR | O_CREAT | O_EXCL, 0) to succeed).
+	 * For open reclaims ask for owner_skip.
 	 */
 	status = obj->obj_ops->test_access(obj, access_mask,
-					  NULL, NULL, exclusive_create);
+					   NULL, NULL, exclusive_create ||
+					   (openflags & FSAL_O_RECLAIM));
 
 	if (!FSAL_IS_ERROR(status)) {
 		*reason = "";
