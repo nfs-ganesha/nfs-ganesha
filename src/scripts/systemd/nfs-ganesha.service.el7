@@ -26,7 +26,7 @@ RuntimeDirectory=ganesha
 LogsDirectory=ganesha
 StateDirectory=nfs/ganesha
 EnvironmentFile=-/run/sysconfig/ganesha
-ExecStart=/bin/bash -c "${NUMACTL} ${NUMAOPTS} /usr/bin/ganesha.nfsd -C ${OPTIONS} ${EPOCH}"
+ExecStart=/bin/bash -c "${MALLOC_ARENA_MAX} ${NUMACTL} ${NUMAOPTS} /usr/bin/ganesha.nfsd -C ${OPTIONS} ${EPOCH}"
 ExecStartPost=-/bin/bash -c "prlimit --pid $MAINPID --nofile=$NOFILE:$NOFILE"
 ExecStartPost=-/bin/bash -c "/usr/bin/sleep 2 && /bin/dbus-send --system   --dest=org.ganesha.nfsd --type=method_call /org/ganesha/nfsd/admin  org.ganesha.nfsd.admin.init_fds_limit"
 ExecReload=/bin/kill -HUP $MAINPID
