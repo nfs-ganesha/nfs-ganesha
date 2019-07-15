@@ -305,7 +305,7 @@ struct state_t;
  * e.g.  the argument list changed or a method is removed.
  */
 
-#define FSAL_MAJOR_VERSION 8
+#define FSAL_MAJOR_VERSION 9
 
 /**
  * @brief Minor Version
