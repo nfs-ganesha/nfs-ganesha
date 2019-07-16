@@ -179,7 +179,6 @@ void prepare_for_stats(struct fsal_module *fsal_hdl)
  *   */
 void fsal_gpfs_extract_stats(struct fsal_module *fsal_hdl, void *iter)
 {
-	struct timespec timestamp;
 	DBusMessageIter struct_iter;
 	DBusMessageIter *iter1 = (DBusMessageIter *)iter;
 	char *message;
@@ -188,11 +187,9 @@ void fsal_gpfs_extract_stats(struct fsal_module *fsal_hdl, void *iter)
 	int i;
 	struct fsal_stats *gpfs_stats;
 
-	now(&timestamp);
-	dbus_append_timestamp(iter, &timestamp);
 	gpfs_stats = fsal_hdl->stats;
 	message = "GPFS";
-	dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message);
+	dbus_message_iter_append_basic(iter1, DBUS_TYPE_STRING, &message);
 
 	dbus_message_iter_open_container(iter1, DBUS_TYPE_STRUCT, NULL,
 					 &struct_iter);

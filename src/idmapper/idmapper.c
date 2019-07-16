@@ -888,7 +888,6 @@ static bool all_auth_stats(DBusMessageIter *args, DBusMessage *reply,
 	bool success = true, stats_exist = false;
 	char *errormsg = "OK";
 	DBusMessageIter iter, struct_iter;
-	struct timespec timestamp;
 	double res = 0.0;
 
 	dbus_message_iter_init_append(reply, &iter);
@@ -900,8 +899,7 @@ static bool all_auth_stats(DBusMessageIter *args, DBusMessage *reply,
 	}
 	dbus_status_reply(&iter, success, errormsg);
 
-	now(&timestamp);
-	dbus_append_timestamp(&iter, &timestamp);
+	dbus_append_timestamp(&iter, &auth_stats_time);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT,
 		NULL, &struct_iter);
 

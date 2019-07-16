@@ -390,12 +390,8 @@ fsal_status_t mdcache_pkginit(void)
 #ifdef USE_DBUS
 void mdcache_dbus_show(DBusMessageIter *iter)
 {
-	struct timespec timestamp;
 	DBusMessageIter struct_iter;
 	char *type;
-
-	now(&timestamp);
-	dbus_append_timestamp(iter, &timestamp);
 
 	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
 					 &struct_iter);

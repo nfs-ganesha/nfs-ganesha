@@ -310,6 +310,9 @@ struct auth_stats {
 	.direction = "out"  \
 }
 
+extern struct timespec auth_stats_time;
+extern struct timespec v3_full_stats_time;
+extern struct timespec v4_full_stats_time;
 
 void server_stats_summary(DBusMessageIter * iter, struct gsh_stats *st);
 void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter);

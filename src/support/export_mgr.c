@@ -1455,12 +1455,10 @@ static bool gsh_export_showexports(DBusMessageIter *args,
 {
 	DBusMessageIter iter;
 	struct showexports_state iter_state;
-	struct timespec timestamp;
 
-	now(&timestamp);
 	/* create a reply from the message */
 	dbus_message_iter_init_append(reply, &iter);
-	dbus_append_timestamp(&iter, &timestamp);
+	dbus_append_timestamp(&iter, &nfs_stats_time);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 "(qsbbbbbbbb(tt))",
 					 &iter_state.export_iter);
@@ -1966,6 +1964,7 @@ static bool show_cache_inode_stats(DBusMessageIter *args,
 
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_status_reply(&iter, success, errormsg);
+	dbus_append_timestamp(&iter, &nfs_ServerBootTime);
 
 	mdcache_dbus_show(&iter);
 
@@ -2445,6 +2444,7 @@ static bool stats_fsal(DBusMessageIter *args,
 		goto error;
 	}
 	dbus_status_reply(&iter, true, errormsg);
+	dbus_append_timestamp(&iter, &fsal_stats_time);
 	fsal_hdl->m_ops.fsal_extract_stats(fsal_hdl, &iter);
 	return true;
 error:
@@ -2624,7 +2624,6 @@ static bool get_nfs_io(DBusMessageIter *args,
 	bool success = true;
 	char *errormsg = "OK";
 	DBusMessageIter reply_iter, array_iter;
-	struct timespec timestamp;
 
 	/* create a reply iterator from the message */
 	dbus_message_iter_init_append(message, &reply_iter);
@@ -2632,8 +2631,7 @@ static bool get_nfs_io(DBusMessageIter *args,
 		errormsg = "NFS stat counting disabled";
 	/* status and timestamp reply */
 	dbus_status_reply(&reply_iter, success, errormsg);
-	now(&timestamp);
-	dbus_append_timestamp(&reply_iter, &timestamp);
+	dbus_append_timestamp(&reply_iter, &nfs_stats_time);
 
 	/* create an array container iterator and loop over all exports */
 	dbus_message_iter_open_container(&reply_iter, DBUS_TYPE_ARRAY,
