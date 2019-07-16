@@ -430,7 +430,7 @@ if __name__ == '__main__':
             exportmgr.showexports()
         elif sys.argv[2] == "posix_fs":
             cachemgr.showfs()
-	elif sys.argv[2] == "idmap":
+        elif sys.argv[2] == "idmap":
             cachemgr.showidmapper()
         else:
             msg = "Showing '%s' is not supported" % sys.argv[2]
