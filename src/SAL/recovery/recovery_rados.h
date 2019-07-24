@@ -24,7 +24,10 @@
 #include <stdio.h>
 #include "gsh_refstr.h"
 
-#define RADOS_KEY_MAX_LEN	NAME_MAX
+/* A rados key is a decimal string of a uint64_t value which has at most 20
+ * digits plus 1 for NUL
+ */
+#define RADOS_KEY_MAX_LEN	21
 #define RADOS_VAL_MAX_LEN	PATH_MAX
 
 extern rados_t			rados_recov_cluster;
