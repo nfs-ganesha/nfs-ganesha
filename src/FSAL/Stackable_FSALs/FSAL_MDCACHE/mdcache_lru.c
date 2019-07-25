@@ -1367,17 +1367,16 @@ lru_run(struct fridgethr_context *ctx)
 			 && (totalwork < lru_state.biggest_window));
 
 		currentopen = atomic_fetch_size_t(&open_fd_count);
-		if (extremis
-		    && ((currentopen > formeropen)
-			|| (formeropen - currentopen <
-			    (((formeropen -
-			       lru_state.fds_hiwat) *
-			      mdcache_param.required_progress) /
-			     100)))) {
+		if (extremis &&
+		    ((currentopen > formeropen)
+		     || (formeropen - currentopen <
+			 (((formeropen - lru_state.fds_hiwat) *
+			      mdcache_param.required_progress) / 100)))) {
 			if (++lru_state.futility ==
 			    mdcache_param.futility_count) {
 				LogWarn(COMPONENT_CACHE_INODE_LRU,
-					"Futility count exceeded.  Client load is opening FDs faster than the LRU thread can close them.");
+					"Futility count exceeded.  Client load is opening FDs faster than the LRU thread can close them. current_open = %zu, former_open = %zu",
+					currentopen, formeropen);
 			}
 		}
 	}
@@ -2121,24 +2120,30 @@ void lru_bump_chunk(struct dir_chunk *chunk)
  */
 bool mdcache_lru_fds_available(void)
 {
-	if (atomic_fetch_size_t(&open_fd_count) >= lru_state.fds_hard_limit) {
+	size_t open_fds = atomic_fetch_size_t(&open_fd_count);
+
+	if (open_fds >= lru_state.fds_hard_limit) {
 		LogAtLevel(COMPONENT_CACHE_INODE_LRU,
 			   atomic_fetch_uint32_t(&lru_state.fd_state)
 								!= FD_LIMIT
 				? NIV_CRIT
 				: NIV_DEBUG,
-			   "FD Hard Limit Exceeded, waking LRU thread.");
+			   "FD Hard Limit (%"PRIu32
+			   ") Exceeded (open_fd_count = %zu), waking LRU thread.",
+			   lru_state.fds_hard_limit, open_fds);
 		atomic_store_uint32_t(&lru_state.fd_state, FD_LIMIT);
 		fridgethr_wake(lru_fridge);
 		return false;
 	}
 
-	if (atomic_fetch_size_t(&open_fd_count) >= lru_state.fds_hiwat) {
+	if (open_fds >= lru_state.fds_hiwat) {
 		LogAtLevel(COMPONENT_CACHE_INODE_LRU,
 			   atomic_fetch_uint32_t(&lru_state.fd_state) == FD_LOW
 				? NIV_INFO
 				: NIV_DEBUG,
-			   "FDs above high water mark, waking LRU thread.");
+			   "FDs above high water mark (%"PRIu32
+			   ", open_fd_count = %zu), waking LRU thread.",
+			   lru_state.fds_hiwat, open_fds);
 		atomic_store_uint32_t(&lru_state.fd_state, FD_HIGH);
 		fridgethr_wake(lru_fridge);
 	}
