@@ -2021,6 +2021,10 @@ static bool stats_reset(DBusMessageIter *args,
 	reset_server_stats();
 	reset_auth_stats();
 
+	/* update the stats counting time */
+	now(&nfs_stats_time);
+	fsal_stats_time = v3_full_stats_time = v4_full_stats_time =
+		auth_stats_time = nfs_stats_time;
 	return true;
 }
 
