@@ -55,8 +55,8 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	op_ctx = &req_ctx;
 
 	key.fsal = vec->up_fsal_export->sub_export->fsal;
-	(void) cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
-			    CIH_HASH_KEY_PROTOTYPE);
+	cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
+		     CIH_HASH_KEY_PROTOTYPE);
 
 	status = mdcache_find_keyed(&key, &entry);
 	if (status.major == ERR_FSAL_NOENT) {
@@ -137,8 +137,8 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	op_ctx = &req_ctx;
 
 	key.fsal = vec->up_fsal_export->sub_export->fsal;
-	(void) cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
-			    CIH_HASH_KEY_PROTOTYPE);
+	cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
+		     CIH_HASH_KEY_PROTOTYPE);
 
 	status = mdcache_find_keyed(&key, &entry);
 	if (status.major == ERR_FSAL_NOENT) {

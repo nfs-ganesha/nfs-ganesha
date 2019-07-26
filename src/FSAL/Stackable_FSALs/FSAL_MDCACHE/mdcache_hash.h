@@ -192,7 +192,7 @@ cih_fhcache_inline_lookup(const struct avltree *tree,
  *
  * @return (void)
  */
-static inline bool
+static inline void
 cih_hash_key(mdcache_key_t *key,
 	     struct fsal_module *fsal,
 	     struct gsh_buffdesc *fh_desc,
@@ -213,8 +213,6 @@ cih_hash_key(mdcache_key_t *key,
 	/* hash it */
 	key->hk =
 	    CityHash64WithSeed(fh_desc->addr, fh_desc->len, 557);
-
-	return true;
 }
 
 #define CIH_GET_NONE           0x0000
@@ -350,12 +348,14 @@ cih_get_by_key_latch(mdcache_key_t *key, cih_latch_t *latch,
  * Insert cache entry on partition previously locked.
  *
  * @param entry [in] Entry to be inserted
+ * @param latch [in] latch held for set
+ * @param fsak [in] FSAL used to hash the key
  * @param fh_desc [in] Hash input bytes (MUST be those used previously)
  * @param flags [in] Flags
  *
- * @return Pointer to cache entry if found, else NULL
+ * @return void
  */
-static inline int
+static inline void
 cih_set_latched(mdcache_entry_t *entry, cih_latch_t *latch,
 		struct fsal_module *fsal,
 		struct gsh_buffdesc *fh_desc,
@@ -366,9 +366,7 @@ cih_set_latched(mdcache_entry_t *entry, cih_latch_t *latch,
 	/* Omit hash if you are SURE we hashed it, and that the
 	 * hash remains valid */
 	if (unlikely(!(flags & CIH_SET_HASHED)))
-		if (!cih_hash_key(&entry->fh_hk.key, fsal,
-				  fh_desc, CIH_HASH_NONE))
-			return 1;
+		cih_hash_key(&entry->fh_hk.key, fsal, fh_desc, CIH_HASH_NONE);
 
 	(void)avltree_insert(&entry->fh_hk.node_k, &cp->t);
 	entry->fh_hk.inavl = true;
@@ -379,8 +377,6 @@ cih_set_latched(mdcache_entry_t *entry, cih_latch_t *latch,
 
 	if (likely(flags & CIH_SET_UNLOCK))
 		cih_hash_release(latch);
-
-	return 0;
 }
 
 /**

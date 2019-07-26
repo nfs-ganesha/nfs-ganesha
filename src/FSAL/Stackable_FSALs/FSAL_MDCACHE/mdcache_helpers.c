@@ -648,8 +648,6 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	mdcache_entry_t *oentry, *nentry = NULL;
 	struct gsh_buffdesc fh_desc;
 	cih_latch_t latch;
-	bool has_hashkey = false;
-	int rc = 0;
 	mdcache_key_t key;
 
 	*entry = NULL;
@@ -659,8 +657,8 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		    sub_handle->obj_ops->handle_to_key(sub_handle, &fh_desc)
 		   );
 
-	(void) cih_hash_key(&key, export->mfe_exp.sub_export->fsal, &fh_desc,
-			    CIH_HASH_KEY_PROTOTYPE);
+	cih_hash_key(&key, export->mfe_exp.sub_export->fsal, &fh_desc,
+		     CIH_HASH_KEY_PROTOTYPE);
 
 	/* Check if the entry already exists.  We allow the following race
 	 * because mdcache_lru_get has a slow path, and the latch is a
@@ -732,17 +730,8 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	/* Set cache key */
 
-	has_hashkey = cih_hash_key(&nentry->fh_hk.key,
-				   export->mfe_exp.sub_export->fsal,
-				   &fh_desc, CIH_HASH_NONE);
-
-	if (!has_hashkey) {
-		cih_hash_release(&latch);
-		LogCrit(COMPONENT_CACHE_INODE,
-			"Could not hash new entry");
-		status = fsalstat(ERR_FSAL_NOMEM, 0);
-		goto out_release_new_entry;
-	}
+	cih_hash_key(&nentry->fh_hk.key, export->mfe_exp.sub_export->fsal,
+		     &fh_desc, CIH_HASH_NONE);
 
 	switch (nentry->obj_handle.type) {
 	case REGULAR_FILE:
@@ -820,19 +809,8 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	/* Hash and insert entry, after this would need attr_lock to
 	 * access attributes.
 	 */
-	rc = cih_set_latched(nentry, &latch,
-			     op_ctx->fsal_export->fsal, &fh_desc,
-			     CIH_SET_UNLOCK | CIH_SET_HASHED);
-	if (unlikely(rc)) {
-		LogCrit(COMPONENT_CACHE_INODE,
-			"entry could not be added to hash, rc=%d", rc);
-		status = fsalstat(ERR_FSAL_NOMEM, 0);
-		if (attrs_out != NULL) {
-			/* Release the attrs we just copied. */
-			fsal_release_attrs(attrs_out);
-		}
-		goto out_release_new_entry;
-	}
+	cih_set_latched(nentry, &latch, op_ctx->fsal_export->fsal, &fh_desc,
+			CIH_SET_UNLOCK | CIH_SET_HASHED);
 
 	if (isFullDebug(COMPONENT_CACHE_INODE)) {
 		char str[LOG_BUFF_LEN] = "\0";
@@ -1065,9 +1043,7 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-	(void)cih_hash_key(&key, sub_export->fsal, &key.kv,
-			    CIH_HASH_KEY_PROTOTYPE);
-
+	cih_hash_key(&key, sub_export->fsal, &key.kv, CIH_HASH_KEY_PROTOTYPE);
 
 	status = mdcache_find_keyed(&key, entry);
 
