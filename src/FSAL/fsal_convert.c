@@ -206,8 +206,8 @@ fsal_errors_t posix2fsal_error(int posix_errorcode)
 
 	default:
 		LogCrit(COMPONENT_FSAL,
-			"Mapping %d(default) to ERR_FSAL_SERVERFAULT",
-			posix_errorcode);
+			"Default case mapping %s (%d) to ERR_FSAL_SERVERFAULT",
+			strerror(posix_errorcode), posix_errorcode);
 		/* other unexpected errors */
 		return ERR_FSAL_SERVERFAULT;
 
