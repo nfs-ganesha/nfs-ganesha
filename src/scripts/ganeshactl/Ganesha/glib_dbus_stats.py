@@ -75,7 +75,7 @@ class RetrieveExportStats():
                 stats_dict[exportid] = stats_op(exportid)
             return stats_dict
         else:
-            stats_dict[export_id] = stats_op(int(export_id))
+            stats_dict[export_id] = stats_op(export_id)
             return stats_dict
     def v3io_stats(self, export_id):
         stats_op =  self.exportmgrobj.get_dbus_method("GetNFSv3IO",

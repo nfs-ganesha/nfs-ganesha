@@ -54,7 +54,7 @@ elif command in ('iov3', 'iov4', 'total', 'pnfs'):
     if (len(sys.argv) == 2):
         command_arg = -1
     elif (len(sys.argv) == 3) and sys.argv[2].isdigit():
-        command_arg = sys.argv[2]
+        command_arg = int(sys.argv[2])
     else:
         usage()
 elif command == "help":
