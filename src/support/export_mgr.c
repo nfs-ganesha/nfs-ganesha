@@ -1984,9 +1984,11 @@ static bool get_nfsv_global_total_ops(DBusMessageIter *args,
 	DBusMessageIter iter;
 
 	dbus_message_iter_init_append(reply, &iter);
-	if (!nfs_param.core_param.enable_NFSSTATS)
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		success = false;
 		errormsg = "NFS stat counting disabled";
-	gsh_dbus_status_reply(&iter, success, errormsg);
+	}
+	dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		global_dbus_total_ops(&iter);
 

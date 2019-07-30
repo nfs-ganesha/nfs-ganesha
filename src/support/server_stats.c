@@ -2526,7 +2526,12 @@ void server_dbus_fast_ops(DBusMessageIter *iter)
 
 void global_dbus_total_ops(DBusMessageIter *iter)
 {
-	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
+	/* Do not make any changes for this function *
+	 * This interface is used by CES to monitor NFS health */
+	struct timespec timestamp;
+
+	now(&timestamp);
+	dbus_append_timestamp(iter, &timestamp);
 	global_dbus_total(iter);
 }
 
