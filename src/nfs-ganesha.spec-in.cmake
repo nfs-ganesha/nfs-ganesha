@@ -556,10 +556,6 @@ install -m 644 scripts/systemd/nfs-ganesha.service.el7	%{buildroot}%{_unitdir}/n
 install -m 644 scripts/systemd/nfs-ganesha-lock.service.el7	%{buildroot}%{_unitdir}/nfs-ganesha-lock.service
 install -m 644 scripts/systemd/nfs-ganesha-config.service %{buildroot}%{_unitdir}/nfs-ganesha-config.service
 install -m 644 scripts/systemd/sysconfig/nfs-ganesha	%{buildroot}%{_sysconfdir}/sysconfig/ganesha
-%if 0%{?_tmpfilesdir:1}
-mkdir -p %{buildroot}%{_tmpfilesdir}
-install -m 644 scripts/systemd/tmpfiles.d/ganesha.conf	%{buildroot}%{_tmpfilesdir}
-%endif
 %else
 mkdir -p %{buildroot}%{_sysconfdir}/init.d
 install -m 755 scripts/init.d/nfs-ganesha.el6		%{buildroot}%{_sysconfdir}/init.d/nfs-ganesha
@@ -676,9 +672,6 @@ exit 0
 %{_unitdir}/nfs-ganesha.service
 %{_unitdir}/nfs-ganesha-lock.service
 %{_unitdir}/nfs-ganesha-config.service
-%if 0%{?_tmpfilesdir:1}
-%{_tmpfilesdir}/ganesha.conf
-%endif
 %else
 %{_sysconfdir}/init.d/nfs-ganesha
 %endif
