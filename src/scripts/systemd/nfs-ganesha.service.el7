@@ -22,6 +22,9 @@ Wants=nfs-ganesha-config.service
 
 [Service]
 Type=forking
+RuntimeDirectory=ganesha     # /run/ganesha
+LogsDirectory=ganesha        # /var/log/ganesha
+StateDirectory=nfs/ganesha   # /var/lib/nfs/ganesha
 Environment="NOFILE=1048576"
 EnvironmentFile=-/run/sysconfig/ganesha
 ExecStart=/bin/bash -c "${NUMACTL} ${NUMAOPTS} /usr/bin/ganesha.nfsd ${OPTIONS} ${EPOCH}"
