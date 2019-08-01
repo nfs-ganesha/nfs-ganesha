@@ -328,7 +328,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 					   &op_ctx->original_creds.caller_gid)
 			   ) {
 #endif
-				LogWarn(COMPONENT_IDMAPPER,
+				LogInfo(COMPONENT_IDMAPPER,
 					"Could not map principal %s to uid",
 					principal);
 				/* For compatibility with Linux knfsd, we set
