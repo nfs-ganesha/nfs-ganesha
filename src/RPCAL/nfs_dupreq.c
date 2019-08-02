@@ -721,11 +721,9 @@ out:
  * @param[in] drc   The DRC
  * @param[in] flags Control flags
  */
-void nfs_dupreq_put_drc(drc_t *drc, uint32_t flags)
+void nfs_dupreq_put_drc(drc_t *drc)
 {
-	if (!(flags & DRC_FLAG_LOCKED))
-		PTHREAD_MUTEX_lock(&drc->mtx);
-	/* drc LOCKED */
+	PTHREAD_MUTEX_lock(&drc->mtx);
 
 	/* refcnt is not used on shared UDP DRC, so nothing to do */
 	if (drc->type == DRC_UDP_V234)
@@ -770,7 +768,7 @@ void nfs_dupreq_put_drc(drc_t *drc, uint32_t flags)
 	DRC_ST_UNLOCK();
 
 unlock:
-	PTHREAD_MUTEX_unlock(&drc->mtx); /* !LOCKED */
+	PTHREAD_MUTEX_unlock(&drc->mtx);
 }
 
 /**
@@ -1056,7 +1054,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 	case DRC_UDP_V234:
 		dk->hin.tcp.rq_xid = req->rq_msg.rm_xid;
 		if (unlikely(!copy_xprt_addr(&dk->hin.addr, req->rq_xprt))) {
-			nfs_dupreq_put_drc(drc, DRC_FLAG_NONE);
+			nfs_dupreq_put_drc(drc);
 			nfs_dupreq_free_dupreq(dk);
 			return DUPREQ_INSERT_MALLOC_ERROR;
 		}
@@ -1066,7 +1064,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 		break;
 	default:
 		/* @todo: should this be an assert? */
-		nfs_dupreq_put_drc(drc, DRC_FLAG_NONE);
+		nfs_dupreq_put_drc(drc);
 		nfs_dupreq_free_dupreq(dk);
 		return DUPREQ_INSERT_MALLOC_ERROR;
 	}
@@ -1378,7 +1376,7 @@ void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func)
 
 	/* release req's hold on dupreq and drc */
 	dupreq_entry_put(dv);
-	nfs_dupreq_put_drc(drc, DRC_FLAG_NONE);
+	nfs_dupreq_put_drc(drc);
 
  out:
 	/* dispose RPC header */
