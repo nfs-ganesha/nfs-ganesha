@@ -237,11 +237,11 @@ void mdcache_avl_remove(mdcache_entry_t *parent,
 	if (dirent->ckey.kv.len)
 		mdcache_key_delete(&dirent->ckey);
 
-	gsh_free(dirent);
-
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
 			"Just freed dirent %p from chunk %p parent %p",
 			dirent, chunk, (chunk) ? chunk->parent : NULL);
+
+	gsh_free(dirent);
 }
 
 /**
