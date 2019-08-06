@@ -127,6 +127,7 @@ else (NOT CEPH_FS)
   endif(NOT CEPH_FS_GET_FS_CID)
 
   set(CMAKE_REQUIRED_INCLUDES ${CEPHFS_INCLUDE_DIR})
+  include(CheckSymbolExists)
   check_symbol_exists(CEPH_STATX_INO "cephfs/libcephfs.h" CEPH_FS_CEPH_STATX)
   if(NOT CEPH_FS_CEPH_STATX)
     message("Cannot find CEPH_STATX_INO. Enabling backward compatibility for pre-ceph_statx APIs.")
