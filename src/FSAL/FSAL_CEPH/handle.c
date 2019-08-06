@@ -2058,6 +2058,10 @@ static fsal_status_t ceph_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");
+
+		if (ceph_fd)
+			PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
+
 		return status;
 	}
 
