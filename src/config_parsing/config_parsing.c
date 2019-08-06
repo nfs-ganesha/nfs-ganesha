@@ -890,8 +890,10 @@ static bool do_block_init(struct config_node *blk_node,
 						  gai_strerror(rc));
 				errors++;
 			}
-			if (res != NULL)
+			if (res != NULL) {
 				freeaddrinfo(res);
+				res = NULL;
+			}
 			break;
 		case CONFIG_BLOCK:
 			(void) item->u.blk.init(NULL, param_addr);
