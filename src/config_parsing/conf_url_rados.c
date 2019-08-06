@@ -410,7 +410,7 @@ int rados_url_setup_watch(void)
 
 	ret = rados_url_client_setup();
 	if (ret)
-		return ret;
+		goto out;
 
 	/* Set up an ioctx */
 	ret = rados_ioctx_create(cluster, pool, &rados_watch_io_ctx);
