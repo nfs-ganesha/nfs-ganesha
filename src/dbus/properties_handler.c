@@ -108,10 +108,11 @@ static inline struct gsh_dbus_prop **lookup_property(const char *prop_name,
 		if (strcmp(prop_name, (*prop)->name) == 0)
 			break;
 	}
-	if (prop == NULL) {
+	if (prop == NULL || *prop == NULL) {
 		dbus_set_error(error, DBUS_ERROR_UNKNOWN_PROPERTY,
 			       "Requested property: %s from %s", prop_name,
 			       (*iface)->name);
+		return NULL;
 	}
 	return prop;
 }
@@ -204,7 +205,7 @@ bool dbus_proc_property(const char *method, DBusMessage *msg,
 		if (*iface == NULL)
 			goto err_out;
 		prop = lookup_property(prop_name, iface, error);
-		if (*prop == NULL)
+		if (prop == NULL)
 			goto err_out;
 		if ((*prop)->access == DBUS_PROP_READ
 		    || (*prop)->access == DBUS_PROP_READWRITE) {
@@ -260,7 +261,7 @@ bool dbus_proc_property(const char *method, DBusMessage *msg,
 		if (*iface == NULL)
 			goto err_out;
 		prop = lookup_property(prop_name, iface, error);
-		if (*prop == NULL)
+		if (prop == NULL)
 			goto err_out;
 		if ((*prop)->access == DBUS_PROP_WRITE
 		    || (*prop)->access == DBUS_PROP_READWRITE) {
