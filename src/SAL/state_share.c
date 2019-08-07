@@ -148,7 +148,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 				    "UNSHARE access %d did not match",
 				    share_access);
 
-		if (share_access == OPEN4_SHARE_DENY_ALL)
+		if (share_deny == OPEN4_SHARE_DENY_ALL)
 			for (i = 0; i <= fsm_DRW; i++)
 				nlm_share->share_deny_counts[i] = 0;
 		else if (nlm_share->share_deny_counts[share_deny] > 0)
@@ -156,7 +156,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 		else
 			LogDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
 				    "UNSHARE deny %d did not match",
-				    share_access);
+				    share_deny);
 	} else {
 		nlm_share->share_access_counts[share_access]++;
 		nlm_share->share_deny_counts[share_deny]++;
