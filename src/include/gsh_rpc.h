@@ -103,10 +103,8 @@ void freenetconfigent(struct netconfig *);
 #define DEFAULT_NFS_PRINCIPAL "nfs"
 /**
  * @brief default value for krb5_param.keytab
- *
- * The empty string lets GSSAPI use keytab specified in /etc/krb5.conf
  */
-#define DEFAULT_NFS_KEYTAB ""
+#define DEFAULT_NFS_KEYTAB "/etc/krb5.keytab"
 
 #ifdef _HAVE_GSSAPI
 /**

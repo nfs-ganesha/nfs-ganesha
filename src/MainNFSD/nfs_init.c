@@ -653,7 +653,7 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	if (nfs_param.krb5_param.active_krb5) {
 		OM_uint32 gss_status = GSS_S_COMPLETE;
 
-		if (*nfs_param.krb5_param.keytab != '\0')
+		if (strcmp(nfs_param.krb5_param.keytab, DEFAULT_NFS_KEYTAB))
 			gss_status = krb5_gss_register_acceptor_identity(
 						nfs_param.krb5_param.keytab);
 
