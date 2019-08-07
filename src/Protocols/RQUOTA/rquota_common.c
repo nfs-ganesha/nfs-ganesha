@@ -38,7 +38,8 @@ char *check_handle_lead_slash(char *quota_path, char *temp_path,
 		int pathlen;
 		int qpathlen;
 
-		exp = get_gsh_export(0);
+		exp = get_gsh_export_by_pseudo("/", true);
+		assert(exp);
 		pathlen = strlen(exp->fullpath);
 		if (pathlen >= temp_path_size) {
 			put_gsh_export(exp);
