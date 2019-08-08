@@ -244,66 +244,6 @@ fsal_acl_status_t nfs4_acl_release_entry(fsal_acl_t *acl)
 	return status;
 }
 
-static void nfs4_acls_test(void)
-{
-	int i = 0;
-	fsal_acl_data_t acldata, acldata2;
-	fsal_ace_t *ace = NULL;
-	fsal_acl_t *acl = NULL;
-	fsal_acl_status_t status;
-
-	acldata.naces = 3;
-	acldata.aces = nfs4_ace_alloc(3);
-	LogDebug(COMPONENT_NFS_V4_ACL, "acldata.aces = %p", acldata.aces);
-
-	ace = acldata.aces;
-
-	for (i = 0; i < 3; i++) {
-		ace->type = i;
-		ace->perm = i;
-		ace->flag = i;
-		ace->who.uid = i;
-		ace++;
-	}
-
-	acl = nfs4_acl_new_entry(&acldata, &status);
-	PTHREAD_RWLOCK_rdlock(&acl->lock);
-	LogDebug(COMPONENT_NFS_V4_ACL, "acl = %p, ref = %u, status = %u", acl,
-		 acl->ref, status);
-	PTHREAD_RWLOCK_unlock(&acl->lock);
-
-	acldata2.naces = 3;
-	acldata2.aces = nfs4_ace_alloc(3);
-
-	LogDebug(COMPONENT_NFS_V4_ACL, "acldata2.aces = %p", acldata2.aces);
-
-	ace = acldata2.aces;
-
-	for (i = 0; i < 3; i++) {
-		ace->type = i;
-		ace->perm = i;
-		ace->flag = i;
-		ace->who.uid = i;
-		ace++;
-	}
-
-	acl = nfs4_acl_new_entry(&acldata2, &status);
-	PTHREAD_RWLOCK_rdlock(&acl->lock);
-	LogDebug(COMPONENT_NFS_V4_ACL,
-		 "re-access: acl = %p, ref = %u, status = %u", acl, acl->ref,
-		 status);
-	PTHREAD_RWLOCK_unlock(&acl->lock);
-
-	status = nfs4_acl_release_entry(acl);
-	PTHREAD_RWLOCK_rdlock(&acl->lock);
-	LogDebug(COMPONENT_NFS_V4_ACL,
-		 "release: acl = %p, ref = %u, status = %u", acl, acl->ref,
-		 status);
-	PTHREAD_RWLOCK_unlock(&acl->lock);
-
-	status = nfs4_acl_release_entry(acl);
-}
-
 int nfs4_acls_init(void)
 {
 	LogDebug(COMPONENT_NFS_V4_ACL, "Initialize NFSv4 ACLs");
@@ -322,8 +262,6 @@ int nfs4_acls_init(void)
 			"ERROR creating hash table for NFSv4 ACLs");
 		return NFS_V4_ACL_INTERNAL_ERROR;
 	}
-
-	nfs4_acls_test();
 
 	return NFS_V4_ACL_SUCCESS;
 }
