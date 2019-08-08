@@ -397,7 +397,7 @@ static inline char *gsh_concat(const char *p1, const char *p2)
 {
 	size_t len1 = strlen(p1);
 	size_t len2 = strlen(p2);
-	char *path = gsh_malloc(len1 + len2 + 1);
+	char *path = (char *)gsh_malloc(len1 + len2 + 1);
 
 	memcpy(path, p1, len1);
 	memcpy(path + len1, p2, len2 + 1);
@@ -409,7 +409,7 @@ static inline char *gsh_concat_sep(const char *p1, char sep, const char *p2)
 {
 	size_t len1 = strlen(p1);
 	size_t len2 = strlen(p2);
-	char *path = gsh_malloc(len1 + 1 + len2 + 1);
+	char *path = (char *)gsh_malloc(len1 + 1 + len2 + 1);
 
 	memcpy(path, p1, len1);
 	path[len1] = sep;

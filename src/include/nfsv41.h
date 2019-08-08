@@ -3974,7 +3974,7 @@ xdr_utf8string_decode(XDR *xdrs, utf8string *objp, u_int maxsize)
 		return true;
 
 	if (!sp) {
-		sp = malloc(size + 1);
+		sp = (char *)malloc(size + 1);
 
 		if (sp == NULL) {
 			LogMallocFailure(__FILE__, __LINE__, __func__,
