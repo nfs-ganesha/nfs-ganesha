@@ -808,18 +808,6 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 	fsal_status_t status = { 0, 0 };
 	attrmask_t orig_mask = attrs->valid_mask;
 
-	if ((type != REGULAR_FILE) && (type != DIRECTORY)
-	    && (type != SYMBOLIC_LINK) && (type != SOCKET_FILE)
-	    && (type != FIFO_FILE) && (type != CHARACTER_FILE)
-	    && (type != BLOCK_FILE)) {
-		status = fsalstat(ERR_FSAL_BADTYPE, 0);
-
-		LogFullDebug(COMPONENT_FSAL,
-			     "create failed because of bad type");
-		*obj = NULL;
-		goto out;
-	}
-
 	/* For support_ex API, turn off owner and/or group attr
 	 * if they are the same as the credentials.
 	 */
@@ -869,7 +857,7 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 		status = fsalstat(ERR_FSAL_BADTYPE, 0);
 		*obj = NULL;
 		LogFullDebug(COMPONENT_FSAL,
-			     "create failed because inconsistent entry");
+			     "create failed because of bad type");
 		goto out;
 	}
 
