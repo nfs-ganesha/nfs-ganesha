@@ -2852,6 +2852,7 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 	mdcache_dir_entry_t *dirent = NULL;
 	bool has_write, set_first_ck;
 	fsal_cookie_t next_ck = whence, look_ck = whence;
+	fsal_cookie_t save_ck = 0;
 	struct dir_chunk *chunk = NULL;
 	int dirent_count = 0;
 	bool eod = false;
@@ -2931,6 +2932,13 @@ again:
 			 * lock.
 			 */
 			if (chunk) {
+				save_ck = glist_last_entry(&chunk->dirents,
+							   mdcache_dir_entry_t,
+							   chunk_list)->ck;
+				LogFullDebugAlt(COMPONENT_NFS_READDIR,
+						COMPONENT_CACHE_INODE,
+						"chunk %p save_ck=0x%"PRIx64,
+						chunk, save_ck);
 				mdcache_lru_unref_chunk(chunk);
 				chunk = NULL;
 			}
@@ -2939,6 +2947,19 @@ again:
 			PTHREAD_RWLOCK_wrlock(&directory->content_lock);
 			has_write = true;
 			goto again;
+		}
+
+		if (save_ck) {
+			/* Try to get the chunk back for whence_is_name */
+			if (mdcache_avl_lookup_ck(directory, save_ck,
+						  &dirent)) {
+				chunk = dirent->chunk;
+				LogFullDebugAlt(COMPONENT_NFS_READDIR,
+						COMPONENT_CACHE_INODE,
+						"found saved chunk %p",
+						chunk);
+			}
+			save_ck = 0;
 		}
 
 		/* Assure that dirent is NULL */
