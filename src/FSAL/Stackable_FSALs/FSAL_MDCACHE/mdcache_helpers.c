@@ -452,6 +452,7 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry,
 	       struct gsh_buffdesc *parent_out)
 {
 	struct fsal_obj_handle *sub_handle = NULL;
+	struct fsal_obj_handle *root_obj = NULL;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 
 	PTHREAD_RWLOCK_wrlock(&entry->content_lock);
@@ -460,6 +461,17 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry,
 		/* Parent pointer only for directories */
 		status.major = ERR_FSAL_INVAL;
 		goto out;
+	}
+
+	/* First check if the entry->obj_handle points to a root object.
+	 * Never lookup for parent of a root object.
+	 */
+	status = nfs_export_get_root_entry(op_ctx->ctx_export, &root_obj);
+	if (!FSAL_IS_ERROR(status) && &entry->obj_handle == root_obj) {
+		/* This entry is the root of the current export, so we
+		 * should not do lookup of parent at root.
+		 */
+		goto copy_parent_out;
 	}
 
 	if (entry->fsobj.fsdir.parent.len != 0) {
