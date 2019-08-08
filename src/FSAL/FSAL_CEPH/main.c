@@ -478,11 +478,10 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	if (i)
 		ceph_ll_put(export->cmount, i);
 
-	if (export) {
-		if (export->cmount)
-			ceph_shutdown(export->cmount);
-		gsh_free(export);
-	}
+	if (export->cmount)
+		ceph_shutdown(export->cmount);
+	gsh_free(export);
+
 	return status;
 }
 
