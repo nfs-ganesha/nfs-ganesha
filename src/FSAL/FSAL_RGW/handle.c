@@ -1544,7 +1544,9 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 					FSAL_O_CLOSED);
 
 		}
-	} else if (handle->openflags == FSAL_O_CLOSED) {
+	}
+
+	if (unlikely(handle->openflags == FSAL_O_CLOSED)) {
 		status = fsalstat(ERR_FSAL_NOT_OPENED, 0);
 	} else {
 		rc = rgw_close(export->rgw_fs, handle->rgw_fh,
