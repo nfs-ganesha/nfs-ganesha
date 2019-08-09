@@ -7,20 +7,20 @@ import logging, pprint
 # Modify the file with the given data atomically
 def modify_file(filename, data):
     from tempfile import NamedTemporaryFile
-    f = NamedTemporaryFile(dir=os.path.dirname(filename), delete=False)
-    f.write(data)
-    f.flush()
-    os.fsync(f.fileno())
+    tmp = NamedTemporaryFile(dir=os.path.dirname(filename), delete=False)
+    tmp.write(data)
+    tmp.flush()
+    os.fsync(tmp.fileno())
 
     # If filename exists, get its stats and apply them to the temp file
     try:
         stat = os.stat(filename)
-        os.chown(f.name, stat.st_uid, stat.st_gid)
-        os.chmod(f.name, stat.st_mode)
+        os.chown(tmp.name, stat.st_uid, stat.st_gid)
+        os.chmod(tmp.name, stat.st_mode)
     except:
         pass
 
-    os.rename(f.name, filename)
+    os.rename(tmp.name, filename)
 
 # Get block names and key value options as separate lists
 def get_blocks(args):
@@ -31,9 +31,9 @@ def get_blocks(args):
             break
 
     if key_found:
-        return (args[0:i],  args[i:])
-    else:
-        return (args, [])
+        return (args[0:i], args[i:])
+
+    return (args, [])
 
 
 usage = """
@@ -50,7 +50,7 @@ Usage: %s set <block-descriptor> [--param value]
 """ % (6 * (sys.argv[0],))
 
 if len(sys.argv) < 2:
-    sys.exit(usage);
+    sys.exit(usage)
 
 FORMAT = "[%(filename)s:%(lineno)d-%(funcName)s()] %(message)s"
 #logging.basicConfig(format=FORMAT, level=logging.DEBUG)
@@ -95,13 +95,13 @@ conffile = os.environ.get("CONFFILE", "/etc/ganesha/ganesha.conf")
 old = open(conffile).read()
 
 try:
-    if (opcode == "set"):
+    if opcode == "set":
         logging.debug("opairs: %s", pprint.pformat(opairs))
         new = block.set_keys(old, opairs)
     else:
         logging.debug("keys: %s", pprint.pformat(keys))
         new = block.del_keys(old, keys)
 except ArgError as e:
-        sys.exit(e.error)
+    sys.exit(e.error)
 
 modify_file(conffile, new)

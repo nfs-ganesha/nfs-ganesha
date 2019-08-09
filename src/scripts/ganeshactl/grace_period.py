@@ -9,7 +9,7 @@ except ImportError:
     from gi.repository import GObject as gobject
 import sys
 
-ipaddr=sys.argv[1]
+ipaddr = sys.argv[1]
 print('event:ip_addr=', ipaddr)
 
 gobject.threads_init()
@@ -30,8 +30,7 @@ except dbus.exceptions.DBusException as e:
              "Looks like Ganesha is down")
 
 # call method
-ganesha_grace = admin.get_dbus_method('grace',
-                               'org.ganesha.nfsd.admin')
+ganesha_grace = admin.get_dbus_method('grace', 'org.ganesha.nfsd.admin')
 
 print("Start grace period.")
 

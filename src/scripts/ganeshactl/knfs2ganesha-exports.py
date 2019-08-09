@@ -80,10 +80,10 @@ def process_opts(opts):
             sys.exit("async option is not supported in NFS-Ganesha, "
                      "more over, you shouldn't be using it if you "
                      "care about your data!\n"
-                     "Please remove this option and re-run the program");
+                     "Please remove this option and re-run the program")
         elif opt == "subtree_check":
             sys.exit("subtree_check option is not supported in NFS-Ganesha.\n"
-                     "Please remove this option and re-run the program");
+                     "Please remove this option and re-run the program")
         elif opt.startswith("fsid"):
             pass
         elif opt.startswith("anonuid"):
@@ -119,7 +119,7 @@ def create_client(path, host, pairs, fsalname):
     # Create EXPORT{CLIENT{}} block with all key,value pairs
     cmd = ["ganesha_conf", "set", "EXPORT", "Path", path]
     cmd += ["CLIENT", "Clients", host]
-    for key,value in pairs:
+    for key, value in pairs:
         cmd += [key, value]
     subprocess.check_call(cmd)
 

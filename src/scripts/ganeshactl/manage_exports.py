@@ -62,12 +62,12 @@ class ShowExports(QtCore.QObject):
         self.exportmgr.DisplayExport(exp_id)
         print("Display export with id %d" % int(exp_id))
 
-    def proc_export(self, id, path, pseudo, tag):
-        print("export %d: path = %s, pseudo = %s, tag = %s" % (id, path, pseudo, tag))
+    def proc_export(self, _id, path, pseudo, tag):
+        print("export %d: path = %s, pseudo = %s, tag = %s" % (_id, path, pseudo, tag))
         sys.exit()
 
-    def proc_exports(self, ts, exports):
-        print("Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs")
+    def proc_exports(self, _ts, exports):
+        print("Timestamp: ", time.ctime(_ts[0]), _ts[1], " nsecs")
         if len(exports) == 0:
             print("No exports")
         else:
@@ -75,16 +75,16 @@ class ShowExports(QtCore.QObject):
             print("  Id, path,    nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, 9p, last")
             for export in exports:
                 print(" %d,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s %d nsecs" %
-                       (export.ExportID,
-                        export.ExportPath,
-                        export.HasNFSv3,
-                        export.HasMNT,
-                        export.HasNLM4,
-                        export.HasRQUOTA,
-                        export.HasNFSv40,
-                        export.HasNFSv41,
-                        export.Has9P,
-                        time.ctime(export.LastTime[0]), export.LastTime[1]))
+                      (export.ExportID,
+                       export.ExportPath,
+                       export.HasNFSv3,
+                       export.HasMNT,
+                       export.HasNLM4,
+                       export.HasRQUOTA,
+                       export.HasNFSv40,
+                       export.HasNFSv41,
+                       export.Has9P,
+                       time.ctime(export.LastTime[0]), export.LastTime[1]))
         sys.exit()
 
     def status_message(self, status, errormsg):

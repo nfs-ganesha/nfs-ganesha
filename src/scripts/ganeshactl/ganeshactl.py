@@ -26,7 +26,7 @@ NFS Ganesha administration tool
 
 import sys
 
-from PyQt4 import QtCore, QtGui, QtDBus 
+from PyQt4 import QtCore, QtGui, QtDBus
 from Ganesha.QtUI.ui_main_window import Ui_MainWindow
 from Ganesha.admin import AdminInterface
 from Ganesha.export_mgr import ExportMgr
@@ -41,7 +41,7 @@ SERVICE = 'org.ganesha.nfsd'
 class MainWindow(QtGui.QMainWindow):
 
     show_status = QtCore.pyqtSignal(bool, str)
-    
+
     def __init__(self, sysbus, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
@@ -93,7 +93,7 @@ class MainWindow(QtGui.QMainWindow):
         # Dbus data models
         self.exports_show_model = ExportTableModel(self.exportmgr)
         self.clients_show_model = ClientTableModel(self.clientmgr)
-        
+
         # Tabs, tables, and views
         self.ui.exports.setModel(self.exports_show_model)
         self.ui.exports.resizeColumnsToContents()
@@ -109,7 +109,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def connect_gsh(self):
         self.statusBar().showMessage("Connecting to nfs-ganesha...")
-        
+
     def add_client(self):
         ipaddr, ok = QtGui.QInputDialog.getText(self,
                                                 'Add a Client',
@@ -126,7 +126,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def export_mgr(self):
         self.statusBar().showMessage("Export manager")
-        
+
     def logsettings(self):
         self.logdialog.show_logsetting_dialog()
 
@@ -146,7 +146,7 @@ class MainWindow(QtGui.QMainWindow):
                                            QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             self.admin.shutdown()
-        
+
     def reload(self):
         reply = QtGui.QMessageBox.question(self,
                                            'Warning!!!',
@@ -159,22 +159,22 @@ class MainWindow(QtGui.QMainWindow):
 
     def stats(self):
         self.statusBar().showMessage("stats go here")
-        
+
     def view_exports(self):
         self.exports_show_model.FetchExports()
-        
+
     def view_clients(self):
         self.clients_show_model.FetchClients()
-        
+
     def help(self):
         self.statusBar().showMessage("Help! Help!!")
 
     def status_message(self, status, errormsg):
         if status:
-            str = "Success: "
+            sstr = "Success: "
         else:
-            str = "Failed: "
-        self.statusBar().showMessage(str + errormsg)
+            sstr = "Failed: "
+        self.statusBar().showMessage(sstr + errormsg)
 
 # Main
 if __name__ == '__main__':
