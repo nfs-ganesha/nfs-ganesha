@@ -19,7 +19,7 @@ def usage():
 def main():
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "c", [])
+        args = getopt.getopt(sys.argv[1:], "c", [])
         if len(args) < 1:
             usage()
             sys.exit(2)
@@ -33,7 +33,7 @@ def main():
 
         # call method
         fake_recall = cbsim.get_dbus_method('fake_recall',
-                                       'org.ganesha.nfsd.cbsim')
+                                            'org.ganesha.nfsd.cbsim')
         print(fake_recall(dbus.UInt64(clientid)))
 
 

@@ -10,8 +10,6 @@
 #
 from __future__ import print_function
 import sys
-import time
-import re
 import Ganesha.glib_dbus_stats
 
 def usage():
@@ -38,20 +36,20 @@ else:
 
 # check arguments
 commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
-        'export', 'total', 'fast', 'pnfs', 'fsal', 'reset', 'enable',
-        'disable', 'status', 'v3_full', 'v4_full', 'auth')
+            'export', 'total', 'fast', 'pnfs', 'fsal', 'reset', 'enable',
+            'disable', 'status', 'v3_full', 'v4_full', 'auth')
 if command not in commands:
     print("Option '%s' is not correct." % command)
     usage()
 # requires an IP address
-elif command in ('deleg'):
+elif command in 'deleg':
     if not len(sys.argv) == 3:
         print("Option '%s' must be followed by an ip address." % command)
         usage()
     command_arg = sys.argv[2]
 # optionally accepts an export id
 elif command in ('iov3', 'iov4', 'total', 'pnfs'):
-    if (len(sys.argv) == 2):
+    if len(sys.argv) == 2:
         command_arg = -1
     elif (len(sys.argv) == 3) and sys.argv[2].isdigit():
         command_arg = int(sys.argv[2])
@@ -60,7 +58,7 @@ elif command in ('iov3', 'iov4', 'total', 'pnfs'):
 elif command == "help":
     usage()
 # requires fsal name
-elif command in ('fsal'):
+elif command in 'fsal':
     if not len(sys.argv) == 3:
         print("Option '%s' must be followed by fsal name." % command)
         usage()
@@ -68,12 +66,12 @@ elif command in ('fsal'):
 elif command in ('enable', 'disable'):
     if not len(sys.argv) == 3:
         print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth" %
-            command)
+              command)
         usage()
     command_arg = sys.argv[2]
     if command_arg not in ('all', 'nfs', 'fsal', 'v3_full', 'v4_full', 'auth'):
         print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth" %
-            command)
+              command)
         usage()
 
 # retrieve and print stats

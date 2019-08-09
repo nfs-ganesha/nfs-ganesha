@@ -53,8 +53,8 @@ class ManageClients(QtCore.QObject):
         self.clientmgr.ShowClients()
         print("Show clients")
 
-    def proc_clients(self, ts, clients):
-        print("Timestamp: ", time.ctime(ts[0]), ts[1], " nsecs")
+    def proc_clients(self, _ts, clients):
+        print("Timestamp: ", time.ctime(_ts[0]), _ts[1], " nsecs")
         if len(clients) == 0:
             print("No clients")
         else:
@@ -62,15 +62,15 @@ class ManageClients(QtCore.QObject):
             print(" IP addr,  nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, 9p, last")
             for client in clients:
                 print(" %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s %d nsecs" %
-                       (client.ClientIP,
-                        client.HasNFSv3,
-                        client.HasMNT,
-                        client.HasNLM4,
-                        client.HasRQUOTA,
-                        client.HasNFSv40,
-                        client.HasNFSv41,
-                        client.Has9P,
-                        time.ctime(client.LastTime[0]), client.LastTime[1]))
+                      (client.ClientIP,
+                       client.HasNFSv3,
+                       client.HasMNT,
+                       client.HasNLM4,
+                       client.HasRQUOTA,
+                       client.HasNFSv40,
+                       client.HasNFSv41,
+                       client.Has9P,
+                       time.ctime(client.LastTime[0]), client.LastTime[1]))
         sys.exit()
 
     def status_message(self, status, errormsg):

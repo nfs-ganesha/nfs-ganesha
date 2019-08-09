@@ -67,7 +67,7 @@ if __name__ == '__main__':
     elif sys.argv[1] == "reload":
         ganesha.reload()
     elif sys.argv[1] == "grace":
-        ganesha.grace(argv[2])
+        ganesha.grace(sys.argv[2])
     else:
         print("Unknown/missing command")
         sys.exit()
