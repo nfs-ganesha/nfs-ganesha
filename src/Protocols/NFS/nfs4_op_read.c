@@ -47,6 +47,7 @@
 #include "fsal_pnfs.h"
 #include "server_stats.h"
 #include "export_mgr.h"
+#include "gsh_rpc.h"
 
 struct nfs4_read_data {
 	/** Results for read */
@@ -287,7 +288,8 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
 
 	/* Construct the FSAL file handle */
 
-	buffer = gsh_malloc_aligned(4096, arg_READ4->count);
+	/* Must allocate buffer as a multiple of BYTES_PER_XDR_UNIT */
+	buffer = gsh_malloc_aligned(4096, RNDUP(arg_READ4->count));
 
 	res_READ4->READ4res_u.resok4.data.data_val = buffer;
 
@@ -360,7 +362,7 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 
 	/* Construct the FSAL file handle */
 
-	buffer = gsh_malloc_aligned(4096, arg_READ4->count);
+	buffer = gsh_malloc_aligned(4096, RNDUP(arg_READ4->count));
 
 	nfs_status = data->current_ds->dsh_ops.read_plus(
 				data->current_ds,
@@ -657,7 +659,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	}
 
 	/* Some work is to be done */
-	bufferdata = gsh_malloc_aligned(4096, size);
+	bufferdata = gsh_malloc_aligned(4096, RNDUP(size));
 
 	if (!anonymous_started && data->minorversion == 0) {
 		owner = get_state_owner_ref(state_found);
@@ -768,6 +770,59 @@ enum nfs_req_result nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	return rc;
+}
+
+void xdr_READ4res_uio_release(struct xdr_uio *uio, u_int flags)
+{
+	int ix;
+
+	LogFullDebug(COMPONENT_NFS_V4,
+		     "Releasing %p, references %"PRIi32", count %d",
+		     uio, uio->uio_references, (int) uio->uio_count);
+
+	if (!(--uio->uio_references)) {
+		for (ix = 0; ix < uio->uio_count; ix++) {
+			gsh_free(uio->uio_vio[ix].vio_base);
+		}
+		gsh_free(uio);
+	}
+}
+
+struct xdr_uio *xdr_READ4res_uio_setup(struct READ4resok *objp)
+{
+	struct xdr_uio *uio;
+	u_int size = objp->data.data_len;
+	/* The size to actually be written must be a multiple of
+	 * BYTES_PER_XDR_UNIT
+	 */
+	u_int size2 = RNDUP(size);
+	int i;
+
+	if (size2 != size) {
+		/* Must zero out extra bytes */
+		for (i = size; i < size2; i++)
+			objp->data.data_val[i] = 0;
+	}
+
+	uio = gsh_calloc(1, sizeof(struct xdr_uio) + sizeof(struct xdr_uio));
+	uio->uio_release = xdr_READ4res_uio_release;
+	uio->uio_count = 1;
+	uio->uio_vio[0].vio_base = objp->data.data_val;
+	uio->uio_vio[0].vio_head = objp->data.data_val;
+	uio->uio_vio[0].vio_tail = objp->data.data_val + size2;
+	uio->uio_vio[0].vio_wrap = objp->data.data_val + size2;
+	uio->uio_vio[0].vio_length = objp->data.data_len;
+	uio->uio_vio[0].vio_type = VIO_DATA;
+
+	/* Take over read data buffer */
+	objp->data.data_val = NULL;
+	objp->data.data_len = 0;
+
+	LogFullDebug(COMPONENT_NFS_V4,
+		     "Allocated %p, references %"PRIi32", count %d",
+		     uio, uio->uio_references, (int) uio->uio_count);
+
+	return uio;
 }
 
 /**

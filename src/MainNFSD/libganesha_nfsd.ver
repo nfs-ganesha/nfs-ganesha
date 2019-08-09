@@ -207,6 +207,7 @@
   vfs_utimes;
   vfs_utimesat;
   xdr_notify;
+  xdr_READ4res_uio_setup;
   _get_gsh_export_ref;
   _put_gsh_export;
   __tracepoint_fsalmem___mem_free;

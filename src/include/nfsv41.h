@@ -6409,10 +6409,31 @@ static inline bool xdr_READ4args(XDR *xdrs, READ4args *objp)
 	return true;
 }
 
+static inline bool xdr_READ4resok_encode(XDR *xdrs, READ4resok *objp)
+{
+	struct xdr_uio *uio;
+	uint32_t size = objp->data.data_len;
+
+	if (!inline_xdr_u_int32_t(xdrs, &size))
+		return false;
+
+	uio = xdr_READ4res_uio_setup(objp);
+
+	if (!xdr_putbufs(xdrs, uio, UIO_FLAG_NONE)) {
+		uio->uio_release(uio, UIO_FLAG_NONE);
+		return false;
+	}
+	return true;
+}
+
 static inline bool xdr_READ4resok(XDR *xdrs, READ4resok *objp)
 {
 	if (!inline_xdr_bool(xdrs, &objp->eof))
 		return false;
+
+	if (xdrs->x_op == XDR_ENCODE)
+		return xdr_READ4resok_encode(xdrs, objp);
+
 	if (!inline_xdr_bytes(xdrs,
 	    (char **)&objp->data.data_val,
 	    &objp->data.data_len, XDR_BYTES_MAXLEN_IO))

@@ -218,5 +218,8 @@ uint64_t hash_sockaddr(sockaddr_t *, bool);
 
 int get_port(sockaddr_t *);
 
+struct READ4resok;
+struct xdr_uio *xdr_READ4res_uio_setup(struct READ4resok *objp);
+
 extern tirpc_pkg_params ntirpc_pp;
 #endif /* GSH_RPC_H */
