@@ -63,6 +63,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 {
 	if (tracker->saved_gsh_export == NULL) {
 		LogCrit(COMPONENT_NFS_READDIR, "Nothing to restore!");
+		return;
 	}
 
 	/* Restore export stuff */
