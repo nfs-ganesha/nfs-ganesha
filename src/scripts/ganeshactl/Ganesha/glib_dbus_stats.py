@@ -28,7 +28,7 @@ class RetrieveExportStats():
         self.bus = dbus.SystemBus()
         try:
             self.exportmgrobj = self.bus.get_object(self.dbus_service_name,
-                                self.export_interface)
+                                                    self.export_interface)
         except:
             print("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")
             sys.exit()
@@ -36,28 +36,28 @@ class RetrieveExportStats():
     # NFSv3/NFSv4/NLM/MNT/QUOTA stats over all exports
     def fast_stats(self):
         stats_op = self.exportmgrobj.get_dbus_method("GetFastOPS",
-                                 self.dbus_exportstats_name)
+                                                     self.dbus_exportstats_name)
         return FastStats(stats_op())
     # NFSv3/NFSv40/NFSv41/NFSv42/NLM4/MNTv1/MNTv3/RQUOTA totalled over all exports
     def global_stats(self):
         stats_op = self.exportmgrobj.get_dbus_method("GetGlobalOPS",
-                                 self.dbus_exportstats_name)
+                                                     self.dbus_exportstats_name)
         return GlobalStats(stats_op())
     # cache inode stats
     def inode_stats(self):
         stats_op = self.exportmgrobj.get_dbus_method("ShowCacheInode",
-                                 self.dbus_exportstats_name)
+                                                     self.dbus_exportstats_name)
         return InodeStats(stats_op())
     # list of all exports
     def export_stats(self):
         stats_op = self.exportmgrobj.get_dbus_method("ShowExports",
-                                 self.dbus_exportmgr_name)
+                                                     self.dbus_exportmgr_name)
         return ExportStats(stats_op())
 
     # NFSv3/NFSv4/NLM/MNT/QUOTA stats totalled for a single export
     def total_stats(self, export_id):
         stats_op = self.exportmgrobj.get_dbus_method("GetTotalOPS",
-                                 self.dbus_exportstats_name)
+                                                     self.dbus_exportstats_name)
         stats_dict = {}
         if export_id < 0:
             export_list = self.export_stats()
@@ -78,16 +78,16 @@ class RetrieveExportStats():
             stats_dict[export_id] = stats_op(export_id)
             return stats_dict
     def v3io_stats(self, export_id):
-        stats_op =  self.exportmgrobj.get_dbus_method("GetNFSv3IO",
-                                  self.dbus_exportstats_name)
+        stats_op = self.exportmgrobj.get_dbus_method("GetNFSv3IO",
+                                                     self.dbus_exportstats_name)
         return ExportIOv3Stats(self.io_stats(stats_op, export_id))
     def v4io_stats(self, export_id):
         stats_op = self.exportmgrobj.get_dbus_method("GetNFSv40IO",
-                                 self.dbus_exportstats_name)
+                                                     self.dbus_exportstats_name)
         return ExportIOv4Stats(self.io_stats(stats_op, export_id))
     def pnfs_stats(self, export_id):
         stats_op = self.exportmgrobj.get_dbus_method("GetNFSv41Layouts",
-                                 self.dbus_exportstats_name)
+                                                     self.dbus_exportstats_name)
         stats_dict = {}
         if export_id < 0:
             export_list = self.export_stats()
@@ -101,46 +101,46 @@ class RetrieveExportStats():
     # Reset the statistics counters for all
     def reset_stats(self):
         stats_state = self.exportmgrobj.get_dbus_method("ResetStats",
-                                  self.dbus_exportstats_name)
+                                                        self.dbus_exportstats_name)
         return StatsReset(stats_state())
 
     # fsal stats
     def fsal_stats(self, fsal):
         stats_op = self.exportmgrobj.get_dbus_method("GetFSALStats",
-            self.dbus_exportstats_name)
+                                                     self.dbus_exportstats_name)
         return DumpFSALStats(stats_op(fsal))
 
     # enable stats
     def enable_stats(self, stat_type):
         stats_state = self.exportmgrobj.get_dbus_method("EnableStats",
-                                  self.dbus_exportstats_name)
+                                                        self.dbus_exportstats_name)
         return StatsEnable(stats_state(stat_type))
 
     # disable stats
     def disable_stats(self, stat_type):
         stats_state = self.exportmgrobj.get_dbus_method("DisableStats",
-                                  self.dbus_exportstats_name)
+                                                        self.dbus_exportstats_name)
         return StatsDisable(stats_state(stat_type))
 
     # status
     def status_stats(self):
         stats_state = self.exportmgrobj.get_dbus_method("StatusStats",
-                                  self.dbus_exportstats_name)
+                                                        self.dbus_exportstats_name)
         return StatsStatus(stats_state())
     # v3_full
     def v3_full_stats(self):
         stats_state = self.exportmgrobj.get_dbus_method("GetFULLV3Stats",
-                                  self.dbus_exportstats_name)
+                                                        self.dbus_exportstats_name)
         return DumpFULLV3Stats(stats_state())
     # v4_full
     def v4_full_stats(self):
         stats_state = self.exportmgrobj.get_dbus_method("GetFULLV4Stats",
-                                  self.dbus_exportstats_name)
+                                                        self.dbus_exportstats_name)
         return DumpFULLV4Stats(stats_state())
     # authentication
     def auth_stats(self):
         stats_state = self.exportmgrobj.get_dbus_method("GetAuthStats",
-                                  self.dbus_exportstats_name)
+                                                        self.dbus_exportstats_name)
         return DumpAuth(stats_state())
 
 class RetrieveClientStats():
@@ -153,19 +153,19 @@ class RetrieveClientStats():
         self.bus = dbus.SystemBus()
         try:
             self.clientmgrobj = self.bus.get_object(self.dbus_service_name,
-                                    self.client_interface)
+                                                    self.client_interface)
         except:
             print("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")
             sys.exit()
 
     # delegation stats related to a single client ip
-    def deleg_stats(self, ip):
+    def deleg_stats(self, ip_):
         stats_op = self.clientmgrobj.get_dbus_method("GetDelegations",
-                          self.dbus_clientstats_name)
-        return DelegStats(stats_op(ip))
+                                                     self.dbus_clientstats_name)
+        return DelegStats(stats_op(ip_))
     def list_clients(self):
         stats_op = self.clientmgrobj.get_dbus_method("ShowClients",
-                          self.dbus_clientmgr_name)
+                                                     self.dbus_clientmgr_name)
         return Clients(stats_op())
 
 class Clients():
@@ -174,7 +174,7 @@ class Clients():
     def __str__(self):
         output = ("\nTimestamp: " + time.ctime(self._clients[0][0]) +
                   str(self._clients[0][1]) + " nsecs" +
-                  "\nClient List:\n" )
+                  "\nClient List:\n")
         for client in self._clients[1]:
             output += ("\nAddress: " + client[0] +
                        "\n\tNFSv3 stats available: " + str(client[1]) +
@@ -184,7 +184,7 @@ class Clients():
                        "\n\tNFSv4.0 stats available " + str(client[5]) +
                        "\n\tNFSv4.1 stats available: " + str(client[6]) +
                        "\n\tNFSv4.2 stats available: " + str(client[7]) +
-                       "\n\t9P stats available: " + str(client[8]) )
+                       "\n\t9P stats available: " + str(client[8]))
         return output
 class DelegStats():
     def __init__(self, stats):
@@ -198,7 +198,7 @@ class DelegStats():
             self.num_revokes = stats[3][3]
     def __str__(self):
         if self.status != "OK":
-            return ("GANESHA RESPONSE STATUS: " + self.status)
+            return "GANESHA RESPONSE STATUS: " + self.status
         self.starttime = self.timestamp[0] + self.timestamp[1] / 1e9
         self.duration = self.curtime - self.starttime
         return ("GANESHA RESPONSE STATUS: " + self.status +
@@ -207,7 +207,7 @@ class DelegStats():
                 "\nCurrent Delegations: " + str(self.curr_deleg) +
                 "\nCurrent Recalls: " + str(self.curr_recall) +
                 "\nCurrent Failed Recalls: " + str(self.fail_recall) +
-                "\nCurrent Number of Revokes: " + str(self.num_revokes) )
+                "\nCurrent Number of Revokes: " + str(self.num_revokes))
 
 class Export():
     def __init__(self, export):
@@ -243,9 +243,9 @@ class ExportStats():
     def __str__(self):
         self.starttime = self.timestamp[0] + self.timestamp[1] / 1e9
         self.duration = self.curtime - self.starttime
-        output = ( "Export Stats \n" +
-                   "Stats collected since: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs" +
-                   "\nDuration: " + "%.10f" % self.duration + " seconds" )
+        output = ("Export Stats \n" +
+                  "Stats collected since: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs" +
+                  "\nDuration: " + "%.10f" % self.duration + " seconds")
         for exportid in self.exports:
             output += str(self.exports[exportid])
         return output
@@ -272,12 +272,12 @@ class GlobalStats():
         self.starttime = self.timestamp[0] + self.timestamp[1] / 1e9
         self.duration = self.curtime - self.starttime
         output += ("Global Stats \n" +
-                "Stats collected since: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs" +
-                "\nDuration: " + "%.10f" % self.duration + " seconds" +
-                "\nTotal NFSv3 ops: " + str(self.nfsv3_total) +
-                "\nTotal NFSv4.0 ops: " + str(self.nfsv40_total) +
-                "\nTotal NFSv4.1 ops: " + str(self.nfsv41_total) +
-                "\nTotal NFSv4.2 ops: " + str(self.nfsv42_total))
+                   "Stats collected since: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs" +
+                   "\nDuration: " + "%.10f" % self.duration + " seconds" +
+                   "\nTotal NFSv3 ops: " + str(self.nfsv3_total) +
+                   "\nTotal NFSv4.0 ops: " + str(self.nfsv40_total) +
+                   "\nTotal NFSv4.1 ops: " + str(self.nfsv41_total) +
+                   "\nTotal NFSv4.2 ops: " + str(self.nfsv42_total))
         return output
 
 class InodeStats():
@@ -295,14 +295,14 @@ class InodeStats():
     def __str__(self):
         if self.status != "OK":
             return "No NFS activity, GANESHA RESPONSE STATUS: " + self.status
-        return ( "Inode Cache statistics \n" +
-                 "Stats collected since: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs" +
-                 "\n  Cache Requests: " + str(self.cache_requests) +
-                 "\n  Cache Hits: " + str(self.cache_hits) +
-                 "\n  Cache Misses: " + str(self.cache_miss) +
-                 "\n  Cache Conflicts: " + str(self.cache_conflict) +
-                 "\n  Cache Adds: " + str(self.cache_add) +
-                 "\n  Cache Mapping: " + str(self.cache_mapping) )
+        return ("Inode Cache statistics \n" +
+                "Stats collected since: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs" +
+                "\n  Cache Requests: " + str(self.cache_requests) +
+                "\n  Cache Hits: " + str(self.cache_hits) +
+                "\n  Cache Misses: " + str(self.cache_miss) +
+                "\n  Cache Conflicts: " + str(self.cache_conflict) +
+                "\n  Cache Adds: " + str(self.cache_add) +
+                "\n  Cache Mapping: " + str(self.cache_mapping))
 
 class FastStats():
     def __init__(self, stats):
@@ -318,12 +318,12 @@ class FastStats():
                 output = ""
             self.starttime = self.stats[2][0] + self.stats[2][1] / 1e9
             self.duration = self.curtime - self.starttime
-            output += ( "Fast stats" +
-                        "\nStats collected since: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs" +
-                        "\nDuration: " + "%.10f" % self.duration + " seconds" +
-                        "\nGlobal ops:\n" )
+            output += ("Fast stats" +
+                       "\nStats collected since: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs" +
+                       "\nDuration: " + "%.10f" % self.duration + " seconds" +
+                       "\nGlobal ops:\n")
             # NFSv3, NFSv4, NLM, MNT, QUOTA self.stats
-            for i in range(0,len(self.stats[3])-1):
+            for i in range(0, len(self.stats[3])-1):
                 if ":" in str(self.stats[3][i]):
                     output += self.stats[3][i] + "\n"
                 elif str(self.stats[3][i]).isdigit():
@@ -343,9 +343,9 @@ class ExportIOv3Stats():
                 continue
             if self.stats[key][1] != "OK":
                 output += self.stats[key][1] + "\n"
-            output += ( "\nEXPORT %s:" % (key) +
-                        "\n\t\trequested\ttransferred\t     total\t    errors\t   latency" +
-                        "\nREADv3: " )
+            output += ("\nEXPORT %s:" % (key) +
+                       "\n\t\trequested\ttransferred\t     total\t    errors\t   latency" +
+                       "\nREADv3: ")
             for stat in self.stats[key][3]:
                 output += "\t" + str(stat).rjust(8)
             output += "\nWRITEv3: "
@@ -384,17 +384,17 @@ class TotalStats():
         key = next(iter(self.stats))
         self.starttime = self.stats[key][2][0] + self.stats[key][2][1] / 1e9
         self.duration = self.curtime - self.starttime
-        output += ( "Total stats for export(s) \n" +
-                    "Stats collected since: " + time.ctime(self.stats[key][2][0]) +
-                    str(self.stats[key][2][1]) + " nsecs" +
-                    "\nDuration: " + "%.10f" % self.duration + " seconds " )
+        output += ("Total stats for export(s) \n" +
+                   "Stats collected since: " + time.ctime(self.stats[key][2][0]) +
+                   str(self.stats[key][2][1]) + " nsecs" +
+                   "\nDuration: " + "%.10f" % self.duration + " seconds ")
         for key in self.stats:
             if not self.stats[key][0]:
                 return "No NFS activity, GANESHA RESPONSE STATUS: " + self.stats[key][1]
             if self.stats[key][1] != "OK":
                 output += self.stats[key][1] + "\n"
             output += "\nExport id: " + str(key)
-            for i in range(0,len(self.stats[key][3])-1, 2):
+            for i in range(0, len(self.stats[key][3])-1, 2):
                 output += "\n\t%s: %s" % (self.stats[key][3][i], self.stats[key][3][i+1])
         return output
 
@@ -409,8 +409,8 @@ class PNFSStats():
                 return "No NFS activity, GANESHA RESPONSE STATUS: \n" + self.stats[key][1]
             self.starttime = self.stats[key][2][0] + self.stats[key][2][1] / 1e9
             self.duration = self.curtime - self.starttime
-            output += ( "\nStats collected since: " + time.ctime(self.stats[key][2][0]) + str(self.stats[key][2][1]) + " nsecs" +
-                "\nDuration: " + "%.10f" % self.duration + " seconds\n" )
+            output += ("\nStats collected since: " + time.ctime(self.stats[key][2][0]) + str(self.stats[key][2][1]) + " nsecs" +
+                       "\nDuration: " + "%.10f" % self.duration + " seconds\n")
             output += "\nStatistics for:" + str(exports[1]) +" export id: "+ str(key)
             output += "\n\t\ttotal\terrors\tdelays" + "getdevinfo "
             for stat in self.stats[key][3]:
@@ -450,27 +450,27 @@ class StatsStatus():
                 output += "Stats counting for NFS server is enabled since: \n\t"
                 output += time.ctime(self.status[2][1][0]) + str(self.status[2][1][1]) + " nsecs\n"
             else:
-                 output += "Stats counting for NFS server is currently disabled\n"
+                output += "Stats counting for NFS server is currently disabled\n"
             if self.status[3][0]:
                 output += "Stats counting for FSAL is enabled since: \n\t"
                 output += time.ctime(self.status[3][1][0]) + str(self.status[3][1][1]) + " nsecs\n"
             else:
-                 output += "Stats counting for FSAL is currently disabled \n"
+                output += "Stats counting for FSAL is currently disabled \n"
             if self.status[4][0]:
                 output += "Stats counting for v3_full is enabled since: \n\t"
                 output += time.ctime(self.status[4][1][0]) + str(self.status[4][1][1]) + " nsecs\n"
             else:
-                 output += "Stats counting for v3_full is currently disabled \n"
+                output += "Stats counting for v3_full is currently disabled \n"
             if self.status[5][0]:
                 output += "Stats counting for v4_full is enabled since: \n\t"
                 output += time.ctime(self.status[5][1][0]) + str(self.status[5][1][1]) + " nsecs\n"
             else:
-                 output += "Stats counting for v4_full is currently disabled \n"
+                output += "Stats counting for v4_full is currently disabled \n"
             if self.status[6][0]:
                 output += "Stats counting for authentication is enabled since: \n\t"
                 output += time.ctime(self.status[6][1][0]) + str(self.status[6][1][1]) + " nsecs\n"
             else:
-                 output += "Stats counting for authentication is currently disabled \n"
+                output += "Stats counting for authentication is currently disabled \n"
             return output
 
 
@@ -481,7 +481,7 @@ class DumpFSALStats():
     def __str__(self):
         output = ""
         if not self.stats[0]:
-            return ("GANESHA RESPONSE STATUS: " + self.stats[1])
+            return "GANESHA RESPONSE STATUS: " + self.stats[1]
         else:
             if self.stats[3] == "GPFS":
                 if self.stats[5] != "OK":
@@ -529,15 +529,15 @@ class DumpAuth():
         self.success = stats[0]
         self.status = stats[1]
         if self.success:
-           self.timestamp = (stats[2][0], stats[2][1])
-           self.gctotal = stats[3][0]
-           self.gclatency = stats[3][1]
-           self.gcmax = stats[3][2]
-           self.gcmin = stats[3][3]
-           self.wbtotal = stats[3][4]
-           self.wblatency = stats[3][5]
-           self.wbmax = stats[3][6]
-           self.wbmin = stats[3][7]
+            self.timestamp = (stats[2][0], stats[2][1])
+            self.gctotal = stats[3][0]
+            self.gclatency = stats[3][1]
+            self.gcmax = stats[3][2]
+            self.gcmin = stats[3][3]
+            self.wbtotal = stats[3][4]
+            self.wblatency = stats[3][5]
+            self.wbmax = stats[3][6]
+            self.wbmin = stats[3][7]
     def __str__(self):
         output = ""
         if not self.success:

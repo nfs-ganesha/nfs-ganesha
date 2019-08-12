@@ -69,14 +69,14 @@ class ClientTableModel(QAbstractTableModel):
                 self.setData(self.createIndex(i, j), val)
 
     # model abstract methods
-    def setData(self, index, value, role = Qt.EditRole):
+    def setData(self, index, value, role=Qt.EditRole):
         if role == Qt.EditRole:
             row = index.row()
             col = index.column()
-            t = self.clients[row]
+            t_ = self.clients[row]
             if row > self.rowCount() or col > self.columnCount():
                 return False
-            t[col] = value
+            t_[col] = value
             self.emit(SIGNAL('dataChanged'), index, index)
             return True
         return False

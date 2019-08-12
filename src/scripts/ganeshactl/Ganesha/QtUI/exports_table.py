@@ -69,14 +69,14 @@ class ExportTableModel(QAbstractTableModel):
                 self.setData(self.createIndex(i, j), val)
 
     # model abstract methods
-    def setData(self, index, value, role = Qt.EditRole):
+    def setData(self, index, value, role=Qt.EditRole):
         if role == Qt.EditRole:
             row = index.row()
             col = index.column()
-            t = self.exports[row]
+            t_ = self.exports[row]
             if row > self.rowCount() or col > self.columnCount():
                 return False
-            t[col] = value
+            t_[col] = value
             self.emit(SIGNAL('dataChanged'), index, index)
             return True
         return False
