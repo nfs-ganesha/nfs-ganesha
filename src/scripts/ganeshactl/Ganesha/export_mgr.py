@@ -101,11 +101,11 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
             self.show_status.emit(False,
                                   "Error:" + str(reply.error().message()))
         else:
-            id = reply.argumentAt(0).toPyObject()
+            id_ = reply.argumentAt(0).toPyObject()
             fullpath = reply.argumentAt(1).toPyObject()
             pseudopath = reply.argumentAt(2).toPyObject()
             tag = reply.argumentAt(3).toPyObject()
-            self.display_export.emit(id, fullpath, pseudopath, tag)
+            self.display_export.emit(id_, fullpath, pseudopath, tag)
 
     def exportshow_done(self, call):
         reply = QtDBus.QDBusPendingReply(call)
@@ -113,26 +113,26 @@ class ExportMgr(QtDBus.QDBusAbstractInterface):
             self.show_status.emit(False,
                                   "DBUS error:" + str(reply.error().message()))
         else:
-            ts = (reply.argumentAt(0).toPyObject()[0].toULongLong()[0],
+            ts_ = (reply.argumentAt(0).toPyObject()[0].toULongLong()[0],
                   reply.argumentAt(0).toPyObject()[1].toULongLong()[0])
             exports = []
             for export in reply.argumentAt(1).toPyObject():
                 ex = export.toPyObject()
                 lasttime = ex[10].toPyObject()
-                exp = Export(ExportID = ex[0].toInt()[0],
-                             ExportPath = str(ex[1].toString()),
-                             HasNFSv3 = ex[2].toBool(),
-                             HasMNT = ex[3].toBool(),
-                             HasNLM4 = ex[4].toBool(),
-                             HasRQUOTA = ex[5].toBool(),
-                             HasNFSv40 = ex[6].toBool(),
-                             HasNFSv41 = ex[7].toBool(),
-                             HasNFSv42 = ex[8].toBool(),
-                             Has9P = ex[9].toBool(),
-                             LastTime = (lasttime[0].toPyObject(),
-                                         lasttime[1].toPyObject()))
+                exp = Export(ExportID=ex[0].toInt()[0],
+                             ExportPath=str(ex[1].toString()),
+                             HasNFSv3=ex[2].toBool(),
+                             HasMNT=ex[3].toBool(),
+                             HasNLM4=ex[4].toBool(),
+                             HasRQUOTA=ex[5].toBool(),
+                             HasNFSv40=ex[6].toBool(),
+                             HasNFSv41=ex[7].toBool(),
+                             HasNFSv42=ex[8].toBool(),
+                             Has9P=ex[9].toBool(),
+                             LastTime=(lasttime[0].toPyObject(),
+                                       lasttime[1].toPyObject()))
                 exports.append(exp)
-            self.show_exports.emit(ts, exports)
+            self.show_exports.emit(ts_, exports)
 
 
 class ExportStats(QtDBus.QDBusAbstractInterface):

@@ -45,15 +45,15 @@ class BLOCK(object):
         for ppr, start, end in match:
             if block_match(self.blocknames, ppr[0], ppr[1]):
                 block_found = True
-                break;
+                break
 
         if block_found:
             begin_part = s[:start]
             end_part = s[end:]
-            r3 = ppr.asList()
-            logging.debug("%s", pprint.pformat(r3))
-            self.set_process(r3, self.blocknames, opairs)
-            text = r3_to_text(r3, 0)
+            r3_ = ppr.asList()
+            logging.debug("%s", pprint.pformat(r3_))
+            self.set_process(r3_, self.blocknames, opairs)
+            text = r3_to_text(r3_, 0)
             logging.debug("%s", pprint.pformat(text))
             assert text[-1] == "\n"
             if end_part[0] == "\n":
@@ -61,9 +61,9 @@ class BLOCK(object):
         else:
             begin_part = s
             end_part = ""
-            r3 = make_r3(self.blocknames)
-            self.set_process(r3, self.blocknames, opairs)
-            text = r3_to_text(r3, 0)
+            r3_ = make_r3(self.blocknames)
+            self.set_process(r3_, self.blocknames, opairs)
+            text = r3_to_text(r3_, 0)
 
         return begin_part + text + end_part
 
@@ -75,15 +75,15 @@ class BLOCK(object):
         for ppr, start, end in match:
             if block_match(self.blocknames, ppr[0], ppr[1]):
                 block_found = True
-                break;
+                break
 
         if block_found:
             begin_part = s[:start]
             end_part = s[end:]
-            r3 = ppr.asList()
-            logging.debug("%s", pprint.pformat(r3))
-            self.del_process(r3, self.blocknames, okeys)
-            text = r3_to_text(r3, 0)
+            r3_ = ppr.asList()
+            logging.debug("%s", pprint.pformat(r3_))
+            self.del_process(r3_, self.blocknames, okeys)
+            text = r3_to_text(r3_, 0)
             logging.debug("%s", pprint.pformat(text))
 
             # if we remove this entire block, remove the last new line
@@ -98,10 +98,10 @@ class BLOCK(object):
 
         return begin_part + text + end_part
 
-    def set_process(self, r3, blocknames, opairs):
+    def set_process(self, r3_, blocknames, opairs):
         logging.debug("names: %s, r3: %s", pprint.pformat(blocknames),
-                      pprint.pformat(r3))
-        name, pairs, subs = r3[0], r3[1], r3[2]
+                      pprint.pformat(r3_))
+        name, pairs, subs = r3_[0], r3_[1], r3_[2]
         assert block_match(blocknames, name, pairs)
 
         # If last block, add given key value opairs
@@ -122,7 +122,7 @@ class BLOCK(object):
             name2, pairs2, subs2 = sub[0], sub[1], sub[2]
             if block_match(subnames, name2, pairs2):
                 block_found = True
-                break;
+                break
 
         if block_found:
             self.set_process(sub, subnames, opairs)
@@ -131,10 +131,10 @@ class BLOCK(object):
             subs.append(new_r3)
             self.set_process(new_r3, subnames, opairs)
 
-    def del_process(self, r3, blocknames, okeys):
+    def del_process(self, r3_, blocknames, okeys):
         logging.debug("names: %s, r3: %s", pprint.pformat(blocknames),
-                      pprint.pformat(r3))
-        name, pairs, subs = r3[0], r3[1], r3[2]
+                      pprint.pformat(r3_))
+        name, pairs, subs = r3_[0], r3_[1], r3_[2]
 
         assert block_match(blocknames, name, pairs)
 
@@ -156,9 +156,9 @@ class BLOCK(object):
             # also?
             if not pairs and (blocknames[0].lower() == "export" or
                               blocknames[0].lower() == "client"):
-                r3[:] = []
+                r3_[:] = []
             if not okeys: # remove the whole block
-                r3[:] = []
+                r3_[:] = []
 
             return
 
@@ -177,20 +177,20 @@ class BLOCK(object):
 
 # Given a block as recursive 3 element list, and the indentation level,
 # produce a corresponding text that can be written to config file!
-def r3_to_text(r3, level):
-    logging.debug("%s", pprint.pformat(r3))
-    if not r3:
+def r3_to_text(r3_, level):
+    logging.debug("%s", pprint.pformat(r3_))
+    if not r3_:
         return ""
-    name, keypairs, subs = r3[0], r3[1], r3[2]
+    name, keypairs, subs = r3_[0], r3_[1], r3_[2]
     indent = level * "\t"
-    s = indent + name + " {\n"
+    ss_ = indent + name + " {\n"
     for keypair in keypairs:
         key, value = keypair[0], keypair[1]
-        s += indent + "\t" + "%s = %s;\n" % (key, value.strip())
+        ss_ += indent + "\t" + "%s = %s;\n" % (key, value.strip())
     for sub in subs:
-        s += r3_to_text(sub, level+1)
-    s += indent + "}\n"
-    return s
+        ss_ += r3_to_text(sub, level+1)
+    ss_ += indent + "}\n"
+    return ss_
 
 # Exception for arguments and options
 class ArgError(Exception):
@@ -262,7 +262,7 @@ def next_subnames(blocknames):
 
 def block_match(blocknames, name, pairs):
     logging.debug("names:%s, name:%s, pairs:%s",
-            pprint.pformat(blocknames), name, pprint.pformat(pairs))
+                  pprint.pformat(blocknames), name, pprint.pformat(pairs))
     if blocknames[0].lower() == "export" or blocknames[0].lower() == "client":
         if blocknames[0].lower() != name.lower():
             return False
@@ -276,7 +276,7 @@ def block_match(blocknames, name, pairs):
             valid_keys = ["clients"]
 
         assert key.lower() in valid_keys, "key:%s valid_keys:%s" % (key,
-                pprint.pformat(valid_keys))
+                                                                    pprint.pformat(valid_keys))
 
         for pair in pairs:
             if pair[0].lower() == key.lower() and pair[1].strip() == value:

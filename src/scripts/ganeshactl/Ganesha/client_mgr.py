@@ -80,37 +80,35 @@ class ClientMgr(QtDBus.QDBusAbstractInterface):
             self.show_status.emit(False,
                                   "DBUS error:" + str(reply.error().message()))
         else:
-            ts = (reply.argumentAt(0).toPyObject()[0].toULongLong()[0],
-                  reply.argumentAt(0).toPyObject()[1].toULongLong()[0])
-            interval_nsecs = ts[0] * 1000000000 + ts[1]
+            ts_ = (reply.argumentAt(0).toPyObject()[0].toULongLong()[0],
+                   reply.argumentAt(0).toPyObject()[1].toULongLong()[0])
+            interval_nsecs = ts_[0] * 1000000000 + ts_[1]
             clients = []
             for client in reply.argumentAt(1).toPyObject():
-                cl = client.toPyObject()
-                lasttime = cl[9].toPyObject()
-                clt = Client(ClientIP = str(cl[0].toString()),
-                             HasNFSv3 = cl[1].toBool(),
-                             HasMNT = cl[2].toBool(),
-                             HasNLM4 = cl[3].toBool(),
-                             HasRQUOTA = cl[4].toBool(),
-                             HasNFSv40 = cl[5].toBool(),
-                             HasNFSv41 = cl[6].toBool(),
-                             HasNFSv42 = cl[7].toBool(),
-                             Has9P = cl[8].toBool(),
-                             LastTime = (lasttime[0].toPyObject(),
-                                         lasttime[1].toPyObject()))
+                cl_ = client.toPyObject()
+                lasttime = cl_[9].toPyObject()
+                clt = Client(ClientIP=str(cl_[0].toString()),
+                             HasNFSv3=cl_[1].toBool(),
+                             HasMNT=cl_[2].toBool(),
+                             HasNLM4=cl_[3].toBool(),
+                             HasRQUOTA=cl_[4].toBool(),
+                             HasNFSv40=cl_[5].toBool(),
+                             HasNFSv41=cl_[6].toBool(),
+                             HasNFSv42=cl_[7].toBool(),
+                             Has9P=cl_[8].toBool(),
+                             LastTime=(lasttime[0].toPyObject(),
+                                       lasttime[1].toPyObject()))
                 clients.append(clt)
-            self.show_clients.emit(ts, clients)
+            self.show_clients.emit(ts_, clients)
 
 class ClientStats(QtDBus.QDBusAbstractInterface):
     '''
     org.ganesha.nfsd.clientstats
     '''
     def __init__(self, service, path, connection, status_handler, parent=None):
-        super(ClientStats, self).__init__(service,
-                                             path,
-                                             'org.ganesha.nfsd.clientstats',
-                                             connection,
-                                             parent)
+        super(ClientStats, self).__init__(service, path,
+                                          'org.ganesha.nfsd.clientstats',
+                                          connection, parent)
         self.status_handler = status_handler
 
     def GetNFSv3IO(self, ipaddr):

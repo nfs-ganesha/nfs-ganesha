@@ -64,8 +64,8 @@ class LogManager(QtDBus.QDBusAbstractInterface):
                 prop_dict[str(key.toString())] = str(d[key].toPyObject().toString())
             self.show_components.emit(prop_dict)
 
-    def Get(self, property):
-        _async = self.asyncCall("Get", LOGGER_PROPS, property)
+    def Get(self, prop):
+        _async = self.asyncCall("Get", LOGGER_PROPS, prop)
         status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.Get_done)
 
@@ -78,12 +78,10 @@ class LogManager(QtDBus.QDBusAbstractInterface):
             level = str(reply.value().toPyObject().toString())
             self.show_level.emit(level)
 
-    def Set(self, property, setval):
+    def Set(self, prop, setval):
         qval = QtDBus.QDBusVariant()
         qval.setVariant(str(str(setval)))
-        _async = self.asyncCall("Set", LOGGER_PROPS,
-                               property,
-                               qval)
+        _async = self.asyncCall("Set", LOGGER_PROPS, prop, qval)
         status = QtDBus.QDBusPendingCallWatcher(_async, self)
         status.finished.connect(self.Set_done)
 

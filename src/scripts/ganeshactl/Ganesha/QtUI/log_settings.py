@@ -40,7 +40,7 @@ class DebugLevelDelegate(QtGui.QItemDelegate):
                  'NIV_MID_DEBUG',
                  'NIV_FULL_DEBUG']
 
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super(DebugLevelDelegate, self).__init__(parent)
 
     def createEditor(self, parent, option, index):
@@ -82,7 +82,7 @@ class LogSettingsModel(QAbstractTableModel):
         if len(self.log_components) != len(comp_dict):
             if len(self.log_components) > 0:
                 self.removeRows(0, len(self.log_components))
-            self.insertRows(0,len(comp_dict))
+            self.insertRows(0, len(comp_dict))
         comps = comp_dict.keys()
         comps.sort()
         # Populate the table in sorted order by hand.
@@ -99,7 +99,7 @@ class LogSettingsModel(QAbstractTableModel):
         self.logmanager.GetAll()
 
     # model abstract methods
-    def setData(self, index, value, role = Qt.EditRole):
+    def setData(self, index, value, role=Qt.EditRole):
         if role == Qt.EditRole:
             row = index.row()
             col = index.column()
