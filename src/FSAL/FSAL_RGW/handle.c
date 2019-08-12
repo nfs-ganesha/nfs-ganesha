@@ -857,6 +857,12 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			}
 		}
 
+		if (state) {
+			open_state->openflags = FSAL_O_NFS_FLAGS(openflags);
+		} else {
+			handle->openflags = FSAL_O_NFS_FLAGS(openflags);
+		}
+
 		if (createmode >= FSAL_EXCLUSIVE || truncated) {
 			/* refresh attributes */
 			rc = rgw_getattr(export->rgw_fs, handle->rgw_fh, &st,
@@ -1089,7 +1095,11 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 	my_fd->fd = fd;
 #endif
-	handle->openflags = FSAL_O_NFS_FLAGS(openflags);
+	if (state) {
+		open_state->openflags = FSAL_O_NFS_FLAGS(openflags);
+	} else {
+		handle->openflags = FSAL_O_NFS_FLAGS(openflags);
+	}
 
 	*new_obj = &obj->handle;
 
@@ -1512,6 +1522,7 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 	int rc;
 	struct rgw_open_state *open_state;
 	fsal_status_t status;
+	fsal_openflags_t *openflags;
 
 	struct rgw_export *export =
 	    container_of(op_ctx->fsal_export, struct rgw_export, export);
@@ -1543,9 +1554,13 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 					FSAL_O_CLOSED);
 
 		}
+
+		openflags = &open_state->openflags;
+	} else {
+		openflags = &handle->openflags;
 	}
 
-	if (unlikely(handle->openflags == FSAL_O_CLOSED)) {
+	if (unlikely(*openflags == FSAL_O_CLOSED)) {
 		status = fsalstat(ERR_FSAL_NOT_OPENED, 0);
 	} else {
 		rc = rgw_close(export->rgw_fs, handle->rgw_fh,
@@ -1553,7 +1568,7 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 		if (rc < 0) {
 			status = rgw2fsal_error(rc);
 		} else {
-			handle->openflags = FSAL_O_CLOSED;
+			*openflags = FSAL_O_CLOSED;
 			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
 	}

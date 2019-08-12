@@ -104,7 +104,7 @@ struct rgw_handle {
  */
 struct rgw_open_state {
 	struct state_t gsh_open;
-	uint32_t flags;
+	fsal_openflags_t openflags;
 };
 
 /**
