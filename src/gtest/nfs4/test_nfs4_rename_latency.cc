@@ -221,7 +221,6 @@ int main(int argc, char *argv[])
   uint16_t export_id = 77;
 
   using namespace std;
-  using namespace std::literals;
   namespace po = boost::program_options;
 
   po::options_description opts("program options");

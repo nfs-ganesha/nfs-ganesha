@@ -124,7 +124,6 @@ int main(int argc, char *argv[])
   int code = 0;
 
   using namespace std;
-  using namespace std::literals;
   namespace po = boost::program_options;
 
   po::options_description opts("program options");
@@ -172,7 +171,7 @@ int main(int argc, char *argv[])
     ::testing::InitGoogleTest(&argc, argv);
 
     std::thread ganesha(ganesha_server);
-    std::this_thread::sleep_for(5s);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
     code  = RUN_ALL_TESTS();
     ganesha.join();

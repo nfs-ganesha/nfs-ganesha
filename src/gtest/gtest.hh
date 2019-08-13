@@ -65,8 +65,7 @@ namespace gtest {
 	    ganesha(nfs_libmain, ganesha_conf, lpath, dlevel),
 	    session_name(_ses_name), test_root_name(_test_root_name),
 	    export_id(_export_id), handle(NULL) {
-      using namespace std::literals;
-      std::this_thread::sleep_for(5s);
+      std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 
     virtual ~Environment() {

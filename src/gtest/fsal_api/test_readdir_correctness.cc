@@ -241,7 +241,6 @@ int main(int argc, char *argv[])
   char* session_name = NULL;
 
   using namespace std;
-  using namespace std::literals;
   namespace po = boost::program_options;
 
   po::options_description opts("program options");
