@@ -193,6 +193,8 @@ NFSV4 {}
 
 	Slot_Table_Size(uint32, range 1 to 1024, default 64)
 
+	Enforce_UTF8_Validation(bool, default false)
+
 EXPORT_DEFAULTS {}
 ------------------
 

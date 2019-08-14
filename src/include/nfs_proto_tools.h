@@ -258,8 +258,9 @@ nfsstat4 nfs4_return_one_state(struct fsal_obj_handle *obj,
 #define UTF8_SCAN_CKUTF8  0x04	/* validate utf8 */
 #define UTF8_SCAN_PATH    0x10	/* validate path length */
 
-/** @todo this will be modified by checking config in a subsequent patch. */
-#define UTF8_SCAN_STRICT UTF8_SCAN_CKUTF8
+/* Do UTF-8 checking if Enforce_UTF8_Validation is true */
+#define UTF8_SCAN_STRICT \
+	(nfs_param.nfsv4_param.enforce_utf8_vld ? UTF8_SCAN_CKUTF8 : 0)
 
 /* Validate path components, with optional UTF-8 validation */
 #define UTF8_SCAN_PATH_COMP \

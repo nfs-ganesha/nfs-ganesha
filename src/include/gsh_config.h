@@ -503,6 +503,9 @@ typedef struct nfs_version4_parameter {
 	unsigned int minor_versions;
 	/** Number of allowed slots in the 4.1 slot table */
 	uint32_t nb_slots;
+	/** whether to skip utf8 validation. defaults to false and settable
+	     with enforce_utf8_validation. */
+	bool enforce_utf8_vld;
 } nfs_version4_parameter_t;
 
 /** @} */
