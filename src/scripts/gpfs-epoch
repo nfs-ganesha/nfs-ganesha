@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 # Usually ganesha daemon start up time is used as its epoch. This is
 # fine for a single node configurations, but in clustered environment,
