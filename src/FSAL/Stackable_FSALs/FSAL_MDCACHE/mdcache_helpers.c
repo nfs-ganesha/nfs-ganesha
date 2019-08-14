@@ -2854,7 +2854,6 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 	fsal_cookie_t next_ck = whence, look_ck = whence;
 	fsal_cookie_t save_ck = 0;
 	struct dir_chunk *chunk = NULL;
-	int dirent_count = 0;
 	bool eod = false;
 	bool reload_chunk = false;
 	bool whence_is_name = op_ctx->fsal_export->exp_ops.fs_supports(
@@ -3285,13 +3284,10 @@ again:
 
 		fsal_release_attrs(&attrs);
 
-		dirent_count++;
-		if (whence_is_name && dirent_count == 2) {
-			/* HACK!  The linux client doesn't always ask for the
-			 * last cookie we gave it.  About 1/3 of the time, it
-			 * asks for a cookie earlier in the set.  Usually, this
-			 * seems to be the second entry in the set we sent, so
-			 * map that entry as well. */
+		if (whence_is_name) {
+			/* Save the dirmap for the dirents so that
+			 * whence-is-name doesn't need to restart a readdir to
+			 * find a missing mapping */
 			mdc_lru_map_dirent(dirent);
 		}
 
@@ -3332,9 +3328,6 @@ again:
 							  mdcache_dir_entry_t,
 							  chunk_list,
 							  &dirent->chunk_list);
-				if (dirent) {
-					mdc_lru_map_dirent(dirent);
-				}
 			}
 
 			if (has_write) {

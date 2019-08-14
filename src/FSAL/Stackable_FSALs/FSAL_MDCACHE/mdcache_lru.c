@@ -2190,6 +2190,11 @@ void mdc_lru_map_dirent(mdcache_dir_entry_t *dirent)
 	if (node) {
 		LogFullDebug(COMPONENT_NFS_READDIR, "Already map for %s -> %lx",
 			     dirent->name, dirent->ck);
+		/* Move to MRU */
+		dmap = avltree_container_of(node, mdcache_dmap_entry_t, node);
+		now(&dmap->timestamp);
+		glist_del(&dmap->lru_entry);
+		glist_add_tail(&exp->dirent_map.lru, &dmap->lru_entry);
 		PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
 		return;
 	}
