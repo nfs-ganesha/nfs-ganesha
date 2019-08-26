@@ -193,10 +193,14 @@ Requires(postun): systemd
 BuildRequires:	initscripts
 %endif
 %if %{with man_page}
-%if ( 0%{?fedora} >= 28 || 0%{?rhel} >= 8 )
-BuildRequires: python3-sphinx
-%else
+%if ( 0%{?rhel} && 0%{?rhel} < 8 )
 BuildRequires: python-sphinx
+%else
+%if ( 0%{?suse_version} )
+BuildRequires: python3-Sphinx
+%else
+BuildRequires: python3-sphinx
+%endif
 %endif
 %endif
 Requires(post): psmisc
@@ -247,27 +251,24 @@ be used with NFS-Ganesha to support PROXY based filesystems
 %package utils
 Summary: The NFS-GANESHA util scripts
 Group: Applications/System
-%if ( 0%{?suse_version} )
-Requires:	dbus-1-python, python-gobject2, python-pyparsing
-Requires: 	python
+%if ( 0%{?rhel} && 0%{?rhel} < 8 )
+Requires:       dbus-python, pygobject2, pyparsing
 BuildRequires:  python-devel
 %else
-%if ( 0%{?rhel} >= 8 )
-Requires:	python3-dbus, python3-gobject, python3-pyparsing
+Requires:	python3-gobject, python3-pyparsing
 BuildRequires:  python3-devel
-%else
-Requires:       dbus-python, pygobject2, pyparsing
-BuildRequires:  python2-devel
 %endif
+%if ( 0%{?suse_version} )
+Requires:	dbus-1-python
+%else
+Requires:	python3-dbus
 %endif
 
 %if %{with gui_utils}
 %if ( 0%{?suse_version} )
-BuildRequires:	python-qt4-devel
-Requires:	python-qt4
+BuildRequires:	python-qt5-devel
 %else
 BuildRequires:	PyQt4-devel
-Requires:	PyQt4
 %endif
 %endif
 
@@ -826,17 +827,12 @@ exit 0
 
 %if %{with utils}
 %files utils
-%if ( 0%{?suse_version} )
+%if ( 0%{?rhel} && 0%{?rhel} < 8 )
 %{python_sitelib}/Ganesha/*
 %{python_sitelib}/ganeshactl-*-info
 %else
-%if ( 0%{?rhel} >= 8 )
 %{python3_sitelib}/Ganesha/*
 %{python3_sitelib}/ganeshactl-*-info
-%else
-%{python2_sitelib}/Ganesha/*
-%{python2_sitelib}/ganeshactl-*-info
-%endif
 %endif
 %if %{with gui_utils}
 %{_bindir}/ganesha-admin
