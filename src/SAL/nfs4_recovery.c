@@ -70,7 +70,7 @@ int32_t reclaim_completes; /* atomic */
 
 static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state(char *release_ip);
-static void nfs_release_v4_client(char *ip);
+static void nfs_release_v4_clients(char *ip);
 
 clid_entry_t *nfs4_add_clid_entry(char *cl_name)
 {
@@ -301,7 +301,7 @@ void nfs_start_grace(nfs_grace_start_t *gsp)
 			nfs_release_nlm_state(gsp->ipaddr);
 			if (gsp->event == EVENT_RELEASE_IP) {
 				PTHREAD_MUTEX_unlock(&grace_mutex);
-				nfs_release_v4_client(gsp->ipaddr);
+				nfs_release_v4_clients(gsp->ipaddr);
 				return;
 			}
 			else {
@@ -893,11 +893,11 @@ static int ip_match(char *ip, nfs_client_id_t *cid)
 }
 
 /*
- * try to find a V4 client that matches the IP we are releasing.
+ * try to find a V4 clients which match the IP we are releasing.
  * only search the confirmed clients, unconfirmed clients won't
  * have any state to release.
  */
-static void nfs_release_v4_client(char *ip)
+static void nfs_release_v4_clients(char *ip)
 {
 	hash_table_t *ht = ht_confirmed_client_id;
 	struct rbt_head *head_rbt;
@@ -911,9 +911,10 @@ static void nfs_release_v4_client(char *ip)
 
 	/* go through the confirmed clients looking for a match */
 	for (i = 0; i < ht->parameter.index_size; i++) {
-
-		PTHREAD_RWLOCK_wrlock(&ht->partitions[i].lock);
 		head_rbt = &ht->partitions[i].rbt;
+
+restart:
+		PTHREAD_RWLOCK_wrlock(&ht->partitions[i].lock);
 
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
@@ -952,7 +953,7 @@ static void nfs_release_v4_client(char *ip)
 				}
 
 				dec_client_id_ref(cp);
-				return;
+				goto restart;
 
 			} else {
 				PTHREAD_MUTEX_unlock(&cp->cid_mutex);
