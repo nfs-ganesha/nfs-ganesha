@@ -1408,6 +1408,10 @@ lru_run(struct fridgethr_context *ctx)
 	if (new_thread_wait < mdcache_param.lru_run_interval / 10)
 		new_thread_wait = mdcache_param.lru_run_interval / 10;
 
+	/* if new_thread_wait is 0, lru_run will not be scheduled */
+	if (new_thread_wait == 0)
+		new_thread_wait = 1;
+
 	fridgethr_setwait(ctx, new_thread_wait);
 
 	LogDebug(COMPONENT_CACHE_INODE_LRU,
@@ -1549,6 +1553,10 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 
 	if (new_thread_wait < mdcache_param.lru_run_interval / 10)
 		new_thread_wait = mdcache_param.lru_run_interval / 10;
+
+	/* if new_thread_wait is 0, chunk_lru_run will not be scheduled */
+	if (new_thread_wait == 0)
+		new_thread_wait = 1;
 
 	fridgethr_setwait(ctx, new_thread_wait);
 
