@@ -61,6 +61,10 @@
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 
+#ifdef USE_LTTNG
+#include "gsh_lttng/nfs_rpc.h"
+#endif
+
 #define NFS_pcp nfs_param.core_param
 #define NFS_options NFS_pcp.core_options
 #define NFS_program NFS_pcp.program
@@ -268,6 +272,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_NFS(SVCXPRT *xprt)
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "NFS UDP request for SVCXPRT %p fd %d",
 		     xprt, xprt->xp_fd);
+#ifdef USE_LTTNG
+	tracepoint(nfs_rpc, before_recv, __func__, __LINE__, xprt);
+#endif
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFS;
 	return SVC_RECV(xprt);
 }
@@ -277,6 +284,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_MNT(SVCXPRT *xprt)
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "MOUNT UDP request for SVCXPRT %p fd %d",
 		     xprt, xprt->xp_fd);
+#ifdef USE_LTTNG
+	tracepoint(nfs_rpc, before_recv, __func__, __LINE__, xprt);
+#endif
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_MNT;
 	return SVC_RECV(xprt);
 }
@@ -286,6 +296,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_NLM(SVCXPRT *xprt)
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "NLM UDP request for SVCXPRT %p fd %d",
 		     xprt, xprt->xp_fd);
+#ifdef USE_LTTNG
+	tracepoint(nfs_rpc, before_recv, __func__, __LINE__, xprt);
+#endif
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NLM;
 	return SVC_RECV(xprt);
 }
@@ -295,6 +308,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_RQUOTA(SVCXPRT *xprt)
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "RQUOTA UDP request for SVCXPRT %p fd %d",
 		     xprt, xprt->xp_fd);
+#ifdef USE_LTTNG
+	tracepoint(nfs_rpc, before_recv, __func__, __LINE__, xprt);
+#endif
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_RQUOTA;
 	return SVC_RECV(xprt);
 }

@@ -152,6 +152,66 @@ TRACEPOINT_LOGLEVEL(
 	v4op_end,
 	TRACE_INFO)
 
+TRACEPOINT_EVENT(
+	nfs_rpc,
+	before_reply,
+	TP_ARGS(const char *, function,
+		unsigned int, line,
+		void *, xprt),
+	TP_FIELDS(
+		ctf_string(fnc, function)
+		ctf_integer(unsigned int, line, line)
+		ctf_integer_hex(void *, xprt, xprt)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	nfs_rpc,
+	before_reply,
+	TRACE_INFO)
+
+TRACEPOINT_EVENT(
+	nfs_rpc,
+	before_recv,
+	TP_ARGS(const char *, function,
+		unsigned int, line,
+		void *, xprt),
+	TP_FIELDS(
+		ctf_string(fnc, function)
+		ctf_integer(unsigned int, line, line)
+		ctf_integer_hex(void *, xprt, xprt)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	nfs_rpc,
+	before_recv,
+	TRACE_INFO)
+
+TRACEPOINT_EVENT(
+	nfs_rpc,
+	valid,
+	TP_ARGS(const char *, function,
+		unsigned int, line,
+		void *, xprt,
+		unsigned int, prog,
+		unsigned int, vers,
+		unsigned int, proc),
+	TP_FIELDS(
+		ctf_string(fnc, function)
+		ctf_integer(unsigned int, line, line)
+		ctf_integer_hex(void *, xprt, xprt)
+		ctf_integer(unsigned int, prog, prog)
+		ctf_integer(unsigned int, vers, vers)
+		ctf_integer(unsigned int, proc, proc)
+	)
+)
+
+TRACEPOINT_LOGLEVEL(
+	nfs_rpc,
+	valid,
+	TRACE_INFO)
+
 #endif /* GANESHA_LTTNG_NFS_RPC_H */
 
 #undef TRACEPOINT_INCLUDE

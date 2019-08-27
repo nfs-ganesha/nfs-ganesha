@@ -758,6 +758,9 @@ void complete_request(nfs_request_t *reqdata,
 		reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
 					reqdesc->xdr_encode_func;
 
+#ifdef USE_LTTNG
+		tracepoint(nfs_rpc, before_reply, __func__, __LINE__, xprt);
+#endif
 		if (svc_sendreply(&reqdata->svc) >= XPRT_DIED) {
 			LogDebug(COMPONENT_DISPATCH,
 				 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a new request. rpcxid=%"
@@ -1024,6 +1027,11 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 						res_nfs;
 			reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
 						reqdesc->xdr_encode_func;
+
+#ifdef USE_LTTNG
+			tracepoint(nfs_rpc, before_reply, __func__, __LINE__,
+				   xprt);
+#endif
 			xprt_rc = svc_sendreply(&reqdata->svc);
 			if (xprt_rc >= XPRT_DIED) {
 				LogDebug(COMPONENT_DISPATCH,
@@ -1579,6 +1587,14 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 			container_of(req, struct nfs_request, svc);
 	int lo_vers;
 	int hi_vers;
+#ifdef USE_LTTNG
+	SVCXPRT *xprt = reqdata->svc.rq_xprt;
+
+	tracepoint(nfs_rpc, valid, __func__, __LINE__, xprt,
+		   (unsigned int) req->rq_msg.cb_prog,
+		   (unsigned int) req->rq_msg.cb_vers,
+		   (unsigned int) reqdata->svc.rq_msg.cb_proc);
+#endif
 
 	reqdata->funcdesc = &invalid_funcdesc;
 
