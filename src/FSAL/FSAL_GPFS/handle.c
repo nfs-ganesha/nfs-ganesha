@@ -66,7 +66,7 @@ struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 
 	hdl->handle = (struct gpfs_file_handle *)&hdl[1];
 	hdl->obj_handle.fs = fs;
-	memcpy(hdl->handle, fh, sizeof(struct gpfs_file_handle));
+	memcpy(hdl->handle, fh, fh->handle_size);
 	hdl->obj_handle.type = attributes->type;
 	if (hdl->obj_handle.type == REGULAR_FILE) {
 		hdl->u.file.fd.fd = -1;	/* no open on this yet */
@@ -1201,7 +1201,7 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	fh = alloca(hdl_desc->len);
-	memcpy(fh, hdl_desc->addr, hdl_desc->len); /* struct aligned copy */
+	memcpy(fh, hdl_desc->addr, hdl_desc->len);
 
 	gpfs_extract_fsid(fh, &fsid);
 
