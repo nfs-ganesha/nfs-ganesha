@@ -104,10 +104,8 @@ rados_grace_dump(rados_ioctx_t io_ctx, const char *oid, FILE *stream)
 	rados_read_op_read(op, 0, sizeof(buf), buf, &len_out, NULL);
 	rados_read_op_omap_get_vals2(op, "", "", MAX_ITEMS, &iter, &more, NULL);
 	ret = rados_read_op_operate(op, io_ctx, oid, 0);
-	if (ret < 0) {
-		fprintf(stream, "%s: ret=%d", __func__, ret);
+	if (ret < 0)
 		goto out;
-	}
 
 	if (len_out != sizeof(buf)) {
 		ret = -ENOTRECOVERABLE;
