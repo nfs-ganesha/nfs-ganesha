@@ -5,7 +5,7 @@ ganesha-rados-grace -- manipulate the shared grace management database
 SYNOPSIS
 ===================================================================
 
-| ganesha-rados-grace [--ns namespace] [ --oid obj_id ] [ --pool pool_id ]  dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]
+| ganesha-rados-grace [ --cephconf /path/to/ceph.conf ] [--ns namespace] [ --oid obj_id ] [ --pool pool_id ] [ --userid cephuser ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]
 
 DESCRIPTION
 ===================================================================
@@ -24,12 +24,17 @@ exception to this rule is the **add** command which will create the
 pool, database and namespace if they do not already exist.
 
 Note that this program does not consult ganesha.conf. If you use
-non-default values for **grace_oid**, **namespace** or **pool** in your
-RADOS_KV config block, then they will need to passed in via command-line
-options.
+non-default values for **ceph_conf**, **userid**, **grace_oid**,
+**namespace** or **pool** in your RADOS_KV config block, then they will
+need to passed in via command-line options.
 
 OPTIONS
 ===================================================================
+**--cephconf**
+
+Specify the ceph.conf configuration that should be used (default is to
+use the normal search path to find one)
+
 **--ns**
 
 Set the RADOS namespace to use within the pool (default is NULL)
@@ -42,6 +47,10 @@ Set the object id of the grace database RADOS object (default is "grace")
 
 Set the RADOS poolid in which the grace database object resides (default is
 "nfs-ganesha")
+
+**--userid**
+
+Set the cephx user ID to use when contacting the cluster (default is NULL)
 
 COMMANDS
 ===================================================================

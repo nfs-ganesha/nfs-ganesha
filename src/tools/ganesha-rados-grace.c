@@ -39,19 +39,19 @@
 #include <rados_grace.h>
 
 static int
-cluster_connect(rados_ioctx_t *io_ctx, const char *pool, const char *ns,
-		bool create)
+cluster_connect(rados_ioctx_t *io_ctx, const char *id, const char *cephconf,
+		const char *pool, const char *ns, bool create)
 {
 	int ret;
 	rados_t clnt;
 
-	ret = rados_create(&clnt, NULL);
+	ret = rados_create(&clnt, id);
 	if (ret < 0) {
 		fprintf(stderr, "rados_create: %d\n", ret);
 		return ret;
 	}
 
-	ret = rados_conf_read_file(clnt, NULL);
+	ret = rados_conf_read_file(clnt, cephconf);
 	if (ret < 0) {
 		fprintf(stderr, "rados_conf_read_file: %d\n", ret);
 		return ret;
@@ -82,16 +82,18 @@ cluster_connect(rados_ioctx_t *io_ctx, const char *pool, const char *ns,
 }
 
 static const struct option long_options[] = {
+	{"cephconf", 1, NULL, 'c'},
 	{"ns", 1, NULL, 'n'},
 	{"oid", 1, NULL, 'o'},
 	{"pool", 1, NULL, 'p'},
+	{"userid", 1, NULL, 'u' },
 	{NULL, 0, NULL, 0}
 };
 
 static void usage(char * const *argv)
 {
 	fprintf(stderr,
-		"Usage:\n%s [ --ns namespace ] [ --oid obj_id ] [ --pool pool_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]\n",
+		"Usage:\n%s [ --userid ceph_user ] [ --cephconf /path/to/ceph.conf ] [ --ns namespace ] [ --oid obj_id ] [ --pool pool_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]\n",
 		argv[0]);
 }
 
@@ -101,6 +103,8 @@ int main(int argc, char * const *argv)
 	rados_ioctx_t		io_ctx;
 	const char		*cmd = "dump";
 	uint64_t		cur, rec;
+	char			*userid = NULL;
+	char			*cephconf = NULL;
 	char			*pool = DEFAULT_RADOS_GRACE_POOL;
 	char			*oid = DEFAULT_RADOS_GRACE_OID;
 	char			*ns = NULL;
@@ -108,9 +112,12 @@ int main(int argc, char * const *argv)
 	const char * const	*nodeids;
 	bool			do_add;
 
-	while ((c = getopt_long(argc, argv, "n:o:p:", long_options,
+	while ((c = getopt_long(argc, argv, "c:n:o:p:u:", long_options,
 				NULL)) != -1) {
 		switch (c) {
+		case 'c':
+			cephconf = optarg;
+			break;
 		case 'n':
 			ns = optarg;
 			break;
@@ -119,6 +126,9 @@ int main(int argc, char * const *argv)
 			break;
 		case 'p':
 			pool = optarg;
+			break;
+		case 'u':
+			userid = optarg;
 			break;
 		default:
 			usage(argv);
@@ -134,7 +144,7 @@ int main(int argc, char * const *argv)
 	}
 
 	do_add = !strcmp(cmd, "add");
-	ret = cluster_connect(&io_ctx, pool, ns, do_add);
+	ret = cluster_connect(&io_ctx, userid, cephconf, pool, ns, do_add);
 	if (ret) {
 		fprintf(stderr, "Can't connect to cluster: %d\n", ret);
 		return 1;
