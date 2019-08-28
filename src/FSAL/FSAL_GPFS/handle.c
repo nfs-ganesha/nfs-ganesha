@@ -67,6 +67,19 @@ struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 	hdl->handle = (struct gpfs_file_handle *)&hdl[1];
 	hdl->obj_handle.fs = fs;
 	memcpy(hdl->handle, fh, fh->handle_size);
+
+	/* See fsal_internal_get_handle_at() for details. Some versions
+	 * of GPFS may return 40 byte sized handles and 48 byte sized
+	 * handles for the same object. Having different sized file
+	 * handles for the same object causes multiple entries in the
+	 * cache leading to junction check failures. This code makes
+	 * sure that any client sending us the old 40 byte sized handle
+	 * will be modified here to match its 48 byte sized handle!
+	 */
+	if (hdl->handle->handle_size == 40) {
+		hdl->handle->handle_size = 48;
+	}
+
 	hdl->obj_handle.type = attributes->type;
 	if (hdl->obj_handle.type == REGULAR_FILE) {
 		hdl->u.file.fd.fd = -1;	/* no open on this yet */
