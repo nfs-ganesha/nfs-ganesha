@@ -23,6 +23,11 @@ Most commands will just fail if the grace database is not present. The
 exception to this rule is the **add** command which will create the
 pool, database and namespace if they do not already exist.
 
+Note that this program does not consult ganesha.conf. If you use
+non-default values for **grace_oid**, **namespace** or **pool** in your
+RADOS_KV config block, then they will need to passed in via command-line
+options.
+
 OPTIONS
 ===================================================================
 **--ns**
