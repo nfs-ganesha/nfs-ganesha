@@ -1768,10 +1768,11 @@ err_open:
 		} else {
 			lru_state.fds_system_imposed = rlim.rlim_cur;
 		}
-		LogInfo(COMPONENT_CACHE_INODE_LRU,
-			"Setting the system-imposed limit on FDs to %d.",
-			lru_state.fds_system_imposed);
 	}
+
+	LogEvent(COMPONENT_CACHE_INODE_LRU,
+		 "Setting the system-imposed limit on FDs to %d.",
+		 lru_state.fds_system_imposed);
 
 	lru_state.fds_hard_limit =
 	    (mdcache_param.fd_limit_percent *
