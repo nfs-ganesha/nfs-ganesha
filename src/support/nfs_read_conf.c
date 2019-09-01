@@ -274,7 +274,7 @@ static struct config_item version4_params[] = {
 		       nfs_version4_parameter, graceless),
 	CONF_ITEM_UI32("Lease_Lifetime", 0, 120, LEASE_LIFETIME_DEFAULT,
 		       nfs_version4_parameter, lease_lifetime),
-	CONF_ITEM_UI32("Grace_Period", 0, 180, 60,
+	CONF_ITEM_UI32("Grace_Period", 0, 180, GRACE_PERIOD_DEFAULT,
 		       nfs_version4_parameter, grace_period),
 	CONF_ITEM_STR("DomainName", 1, MAXPATHLEN, DOMAINNAME_DEFAULT,
 		      nfs_version4_parameter, domainname),
