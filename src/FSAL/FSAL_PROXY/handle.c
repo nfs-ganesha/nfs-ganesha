@@ -2336,7 +2336,7 @@ static fsal_status_t pxy_open2(struct fsal_obj_handle *obj_hdl,
 
 			LogCrit(COMPONENT_FSAL,
 				"Unexpected return from snprintf %d error %s (%d)",
-				rc, strerror(error), error);
+				owner_len, strerror(error), error);
 			return posix2fsal_status(error);
 		} else if (owner_len >= sizeof(owner_val)) {
 			LogMajor(COMPONENT_FSAL, "Owner length too long");
