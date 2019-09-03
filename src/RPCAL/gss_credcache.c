@@ -146,7 +146,7 @@ static void gssd_set_krb5_ccache_name(char *ccname);
 	do { \
 		if (unlikely(component_log_level[COMPONENT_NFS_CB] \
 		    >= NIV_DEBUG)) { \
-			log_components_t component = \
+			log_levels_t level = \
 			    pri == 0	? NIV_CRIT \
 					: (pri == 1 ? NIV_WARN \
 					: NIV_FULL_DEBUG); \
@@ -154,7 +154,7 @@ static void gssd_set_krb5_ccache_name(char *ccname);
 			DisplayLogComponentLevel(COMPONENT_NFS_CB,  __FILE__,\
 						 __LINE__, \
 						  __func__, \
-						 component, "Pri %d " format, \
+						 level, "Pri %d " format, \
 						 pri, ## args); \
 		} \
 	} while (0)
