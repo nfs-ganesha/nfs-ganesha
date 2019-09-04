@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2018 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2019 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -519,7 +519,7 @@ fsal_status_t mdcache_reopen2(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Callback for MDCACHE read calls
+ * @brief Callback for MDCACHE read calls in MDCACHE context
  *
  * Unstack, and call up.
  *
@@ -528,7 +528,7 @@ fsal_status_t mdcache_reopen2(struct fsal_obj_handle *obj_hdl,
  * @param[in] obj_data		Data for call
  * @param[in] caller_data	Data for caller
  */
-static void mdc_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+static void mdc_read_super_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			void *obj_data, void *caller_data)
 {
 	struct mdc_async_arg *arg = caller_data;
@@ -544,9 +544,7 @@ static void mdc_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	 * entry from getting freed/reaped.
 	 */
 	mdcache_get(entry);
-	supercall(
-		  arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
-		 );
+	arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
 
 	if (!FSAL_IS_ERROR(ret))
 		mdc_set_time_current(&entry->attrs.atime);
@@ -554,6 +552,24 @@ static void mdc_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		mdcache_kill_entry(entry);
 	mdcache_put(entry);
 	gsh_free(arg);
+}
+
+/**
+ * @brief Callback for MDCACHE read calls
+ *
+ * Call super callback in MDCACHE context
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] obj_data		Data for call
+ * @param[in] caller_data	Data for caller
+ */
+static void mdc_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			void *obj_data, void *caller_data)
+{
+	supercall(
+		  mdc_read_super_cb(obj, ret, obj_data, caller_data);
+		 );
 }
 
 /**
@@ -593,7 +609,7 @@ void mdcache_read2(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Callback for MDCACHE write calls
+ * @brief Callback for MDCACHE write calls in MDCACHE context
  *
  * Unstack, and call up.
  *
@@ -602,7 +618,7 @@ void mdcache_read2(struct fsal_obj_handle *obj_hdl,
  * @param[in] obj_data		Data for call
  * @param[in] caller_data	Data for caller
  */
-static void mdc_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+static void mdc_write_super_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			void *obj_data, void *caller_data)
 {
 	struct mdc_async_arg *arg = caller_data;
@@ -621,13 +637,29 @@ static void mdc_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
 					   MDCACHE_TRUST_ATTRS);
 
-	supercall(
-		  arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
-		 );
+	arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
 
 	if (ret.major == ERR_FSAL_STALE)
 		mdcache_put(entry);
 	gsh_free(arg);
+}
+
+/**
+ * @brief Callback for MDCACHE write calls
+ *
+ * Call super callback in MDCACHE context
+ *
+ * @param[in] obj		Object being acted on
+ * @param[in] ret		Return status of call
+ * @param[in] obj_data		Data for call
+ * @param[in] caller_data	Data for caller
+ */
+static void mdc_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			void *obj_data, void *caller_data)
+{
+	supercall(
+		  mdc_write_super_cb(obj, ret, obj_data, caller_data);
+		 );
 }
 
 /**
