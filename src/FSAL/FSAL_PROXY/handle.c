@@ -1038,10 +1038,10 @@ static int pxy_setclientid(clientid4 *new_clientid, sequenceid4 *new_seqid,
 		return -errno;
 
 	rc = snprintf(clientid_name, sizeof(clientid_name),
-		      "%s(%d) - GANESHA NFSv4 Proxy",
+		      "%s(%d, %d) - GANESHA NFSv4 Proxy",
 		      inet_ntop(AF_INET, &sin.sin_addr, addrbuf,
 			       sizeof(addrbuf)),
-		      getpid());
+		      getpid(), pxy_exp->exp.export_id);
 
 	if (rc < 0) {
 		return -errno;
