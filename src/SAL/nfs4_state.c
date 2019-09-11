@@ -966,12 +966,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 }
 
-/**
- * @brief Remove all state belonging to an export.
- *
- */
-
-void state_export_release_nfs4_state(void)
+static void release_export_nfs4_state(enum state_type type)
 {
 	state_t *state;
 	state_t *first;
@@ -979,8 +974,7 @@ void state_export_release_nfs4_state(void)
 	struct glist_head *glist, *glistn;
 	bool hold_export_lock;
 
-	/* Revoke layouts first (so that open states are still present).
-	 * Because we have to drop the export lock, when we cycle around agin
+	/* Because we have to drop the export lock, when we cycle around again
 	 * we MUST restart.
 	 */
 
@@ -994,11 +988,6 @@ void state_export_release_nfs4_state(void)
 		struct fsal_obj_handle *obj = NULL;
 		state_owner_t *owner = NULL;
 		bool deleted = false;
-		struct pnfs_segment entire = {
-			.io_mode = LAYOUTIOMODE4_ANY,
-			.offset = 0,
-			.length = NFS4_UINT64_MAX
-		};
 
 		state = glist_entry(glist, state_t, state_export_list);
 
@@ -1021,11 +1010,11 @@ void state_export_release_nfs4_state(void)
 		glist_add_tail(&op_ctx->ctx_export->exp_state_list,
 			       &state->state_export_list);
 
-		if (state->state_type != STATE_TYPE_LAYOUT) {
-			/* Skip non-layout states. */
+		/* Release states of specific type. Skip all other states
+		 * STATE_TYPE_NONE is used to release ALL states
+		 */
+		if (state->state_type != type && type != STATE_TYPE_NONE)
 			continue;
-		}
-
 
 		if (!get_state_obj_export_owner_refs(state, &obj, NULL,
 						     &owner)) {
@@ -1040,26 +1029,32 @@ void state_export_release_nfs4_state(void)
 		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 		hold_export_lock = false;
 
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+		if (type == STATE_TYPE_LAYOUT) {
+			struct pnfs_segment entire = {
+				.io_mode = LAYOUTIOMODE4_ANY,
+				.offset = 0,
+				.length = NFS4_UINT64_MAX
+			};
 
-		/* this deletes the state too */
+			PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 
-		(void) nfs4_return_one_state(obj,
-					     LAYOUTRETURN4_FILE,
-					     circumstance_revoke,
-					     state,
-					     entire,
-					     0,
-					     NULL,
-					     &deleted);
-
-		if (!deleted) {
-			LogCrit(COMPONENT_PNFS,
-				"Layout state not destroyed during export cleanup.");
-			errcnt++;
-		}
-
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+			/* this deletes the state too */
+			(void) nfs4_return_one_state(obj,
+						     LAYOUTRETURN4_FILE,
+						     circumstance_revoke,
+						     state,
+						     entire,
+						     0,
+						     NULL,
+						     &deleted);
+			if (!deleted) {
+				LogCrit(COMPONENT_PNFS,
+					"Layout state not destroyed during export cleanup.");
+				errcnt++;
+			}
+			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		} else
+			state_del(state);
 
 		/* Release the references taken above */
 		obj->obj_ops->put_ref(obj);
@@ -1076,49 +1071,6 @@ void state_export_release_nfs4_state(void)
 		break;
 	}
 
-	while (errcnt < STATE_ERR_MAX) {
-		struct fsal_obj_handle *obj = NULL;
-		state_owner_t *owner = NULL;
-
-		if (!hold_export_lock) {
-			PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
-			hold_export_lock = true;
-		}
-
-		state = glist_first_entry(&op_ctx->ctx_export->exp_state_list,
-					  state_t,
-					  state_export_list);
-
-		if (state == NULL)
-			break;
-
-		/* Move state to the end of the list in case an error
-		 * occurs or the state is going stale.
-		 */
-		glist_del(&state->state_export_list);
-		glist_add_tail(&op_ctx->ctx_export->exp_state_list,
-			       &state->state_export_list);
-
-		if (!get_state_obj_export_owner_refs(state, &obj, NULL,
-						     &owner)) {
-			/* This state_t is in the process of being destroyed,
-			 * skip it.
-			 */
-			continue;
-		}
-
-		inc_state_t_ref(state);
-
-		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
-		hold_export_lock = false;
-		state_del(state);
-
-		/* Release the references taken above */
-		obj->obj_ops->put_ref(obj);
-		dec_state_owner_ref(owner);
-		dec_state_t_ref(state);
-	}
-
 	if (hold_export_lock)
 		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 
@@ -1127,6 +1079,23 @@ void state_export_release_nfs4_state(void)
 			 "Could not complete cleanup of layouts for export %s",
 			 op_ctx->ctx_export->pseudopath);
 	}
+}
+
+/**
+ * @brief Remove all state belonging to an export.
+ *
+ */
+
+void state_export_release_nfs4_state(void)
+{
+	/* Revoke layouts first (so that open states are still present). */
+	release_export_nfs4_state(STATE_TYPE_LAYOUT);
+
+	/* Release LOCK states before the SHARE states. */
+	release_export_nfs4_state(STATE_TYPE_LOCK);
+
+	/* Okay to delete all states */
+	release_export_nfs4_state(STATE_TYPE_NONE);
 }
 
 #ifdef DEBUG_SAL
