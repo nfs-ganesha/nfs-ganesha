@@ -47,7 +47,7 @@ set(UI_SRC
 if(PYTHON)
   set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
   set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
-  set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
+  set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build/ganeshactl_timestamp")
 
   # Generate rules for compiling .ui -> .py
   set(GANESHA_SRCS)
@@ -123,7 +123,7 @@ if(PYTHON)
     DEPENDS ${GANESHA_SRCS} ${UI_PY_FILES} ${SCRIPTS}
     )
 
-  add_custom_target(target ALL DEPENDS ${OUTPUT})
+  add_custom_target(python_ganeshactl ALL DEPENDS ${OUTPUT})
 
   install(
     CODE

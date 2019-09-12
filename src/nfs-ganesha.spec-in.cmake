@@ -587,7 +587,6 @@ install -m 644 config_samples/logrotate_fsal_gluster %{buildroot}%{_sysconfdir}/
 %endif
 
 %if %{with gpfs}
-install -m 755 scripts/gpfs-epoch %{buildroot}%{_libexecdir}/ganesha
 install -m 644 config_samples/gpfs.conf	%{buildroot}%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.nfsd.conf %{buildroot}%{_sysconfdir}/ganesha
 install -m 644 config_samples/gpfs.ganesha.main.conf %{buildroot}%{_sysconfdir}/ganesha
@@ -606,6 +605,14 @@ install -d %{buildroot}%{_selinux_store_path}/packages
 install -d -p %{buildroot}%{_selinux_store_path}/devel/include/contrib
 install -p -m 644 selinux/ganesha.if %{buildroot}%{_selinux_store_path}/devel/include/contrib
 install -m 0644 selinux/ganesha.pp.bz2 %{buildroot}%{_selinux_store_path}/packages
+%endif
+
+%if ( 0%{?rhel} && 0%{?rhel} < 8 )
+rm -f %{buildroot}/%{python_sitelib}/gpfs*
+rm -f %{buildroot}/%{python_sitelib}/__init__.*
+%else
+rm -f %{buildroot}/%{python3_sitelib}/gpfs*
+rm -f %{buildroot}/%{python3_sitelib}/__init__.*
 %endif
 
 %post
