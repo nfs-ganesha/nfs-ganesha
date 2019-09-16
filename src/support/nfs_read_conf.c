@@ -138,7 +138,7 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI32("MaxRPCRecvBufferSize", 1, 1048576*9,
 		       NFS_DEFAULT_RECV_BUFFER_SIZE,
 		       nfs_core_param, rpc.max_recv_buffer_size),
-	CONF_ITEM_UI32("RPC_Ioq_ThrdMax", 1, 1024*128, 200,
+	CONF_ITEM_UI32("RPC_Ioq_ThrdMax", 1, 1024*128, 512,
 		       nfs_core_param, rpc.ioq_thrd_max),
 	CONF_ITEM_UI32("RPC_GSS_Npart", 1, 1021, 13,
 		       nfs_core_param, rpc.gss.ctx_hash_partitions),
