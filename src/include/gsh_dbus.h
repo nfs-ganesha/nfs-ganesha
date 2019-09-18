@@ -222,8 +222,8 @@ void gsh_dbus_pkgshutdown(void);
 void *gsh_dbus_thread(void *arg);
 
 /* callout method */
-void dbus_append_timestamp(DBusMessageIter *iterp, struct timespec *ts);
-void dbus_status_reply(DBusMessageIter *iter, bool success, char *errormsg);
+void gsh_dbus_append_timestamp(DBusMessageIter *iterp, struct timespec *ts);
+void gsh_dbus_status_reply(DBusMessageIter *iter, bool success, char *errormsg);
 int32_t gsh_dbus_register_path(const char *name,
 			       struct gsh_dbus_interface **interfaces);
 int gsh_dbus_broadcast(char *obj_name, char *int_name,

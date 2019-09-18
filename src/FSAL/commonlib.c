@@ -1682,7 +1682,7 @@ static bool posix_showfs(DBusMessageIter *args,
 
 	dbus_message_iter_init_append(reply, &iter);
 	now(&timestamp);
-	dbus_append_timestamp(&iter, &timestamp);
+	gsh_dbus_append_timestamp(&iter, &timestamp);
 
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 "(stt)",

@@ -103,7 +103,7 @@ static bool admin_dbus_get_grace(DBusMessageIter *args,
 	dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &ingrace);
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 
@@ -174,7 +174,7 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 	}
 	nfs_start_grace(&gsp);
  out:
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 
@@ -212,7 +212,7 @@ static bool admin_dbus_shutdown(DBusMessageIter *args,
 	admin_halt();
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 
@@ -248,7 +248,7 @@ static bool admin_dbus_purge_gids(DBusMessageIter *args,
 	uid2grp_clear_cache();
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 
@@ -284,7 +284,7 @@ static bool admin_dbus_purge_netgroups(DBusMessageIter *args,
 	ng_clear_cache();
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 
@@ -318,7 +318,7 @@ static bool admin_dbus_purge_idmapper_cache(DBusMessageIter *args,
 	}
 	idmapper_clear_cache();
  out:
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 
@@ -354,7 +354,7 @@ static bool admin_dbus_init_fds_limit(DBusMessageIter *args,
 	init_fds_limit();
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 
@@ -406,7 +406,7 @@ admin_dbus_malloc_trace(DBusMessageIter *args,
 #endif
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 
@@ -441,7 +441,7 @@ admin_dbus_malloc_untrace(DBusMessageIter *args,
 #endif
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 

@@ -20,7 +20,6 @@
   config_ParseFile;
   config_url_init;
   create_log_facility;
-  dbus_append_timestamp;
   decode_fsid;
   def_dsh_ops;
   def_pnfs_ds_ops;
@@ -89,6 +88,10 @@
   get_gsh_export;
   get_optional_attrs;
   general_fridge;
+  gsh_dbus_append_timestamp;
+  gsh_dbus_register_path;
+  gsh_dbus_broadcast;
+  gsh_dbus_status_reply;
   g_nodeid;
   hashtable_deletelatched;
   hashtable_getlatch;

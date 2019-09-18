@@ -1753,28 +1753,28 @@ void global_dbus_fast(DBusMessageIter *iter)
 
 void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter)
 {
-	dbus_append_timestamp(iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	server_dbus_iostats(&v3p->read, iter);
 	server_dbus_iostats(&v3p->write, iter);
 }
 
 void server_dbus_v40_iostats(struct nfsv40_stats *v40p, DBusMessageIter *iter)
 {
-	dbus_append_timestamp(iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	server_dbus_iostats(&v40p->read, iter);
 	server_dbus_iostats(&v40p->write, iter);
 }
 
 void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter *iter)
 {
-	dbus_append_timestamp(iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	server_dbus_iostats(&v41p->read, iter);
 	server_dbus_iostats(&v41p->write, iter);
 }
 
 void server_dbus_v42_iostats(struct nfsv41_stats *v42p, DBusMessageIter *iter)
 {
-	dbus_append_timestamp(iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	server_dbus_iostats(&v42p->read, iter);
 	server_dbus_iostats(&v42p->write, iter);
 }
@@ -1912,19 +1912,19 @@ void reset_global_stats(void)
 void server_dbus_total_ops(struct export_stats *export_st,
 			   DBusMessageIter *iter)
 {
-	dbus_append_timestamp(iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	server_dbus_total(export_st, iter);
 }
 
 void server_dbus_fast_ops(DBusMessageIter *iter)
 {
-	dbus_append_timestamp(iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	global_dbus_fast(iter);
 }
 
 void global_dbus_total_ops(DBusMessageIter *iter)
 {
-	dbus_append_timestamp(iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	global_dbus_total(iter);
 }
 
@@ -1943,7 +1943,7 @@ void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter)
 	struct timespec timestamp;
 
 	now(&timestamp);
-	dbus_append_timestamp(iter, &timestamp);
+	gsh_dbus_append_timestamp(iter, &timestamp);
 	server_dbus_iostats(&_9pp->read, iter);
 	server_dbus_iostats(&_9pp->write, iter);
 }
@@ -1953,7 +1953,7 @@ void server_dbus_9p_transstats(struct _9p_stats *_9pp, DBusMessageIter *iter)
 	struct timespec timestamp;
 
 	now(&timestamp);
-	dbus_append_timestamp(iter, &timestamp);
+	gsh_dbus_append_timestamp(iter, &timestamp);
 	server_dbus_transportstats(&_9pp->trans, iter);
 }
 
@@ -1963,7 +1963,7 @@ void server_dbus_9p_opstats(struct _9p_stats *_9pp, u8 opcode,
 	struct timespec timestamp;
 
 	now(&timestamp);
-	dbus_append_timestamp(iter, &timestamp);
+	gsh_dbus_append_timestamp(iter, &timestamp);
 	server_dbus_op_stats(_9pp->opcodes[opcode], iter);
 }
 #endif
@@ -1999,7 +1999,7 @@ static void server_dbus_layouts(struct layout_op *lop, DBusMessageIter *iter)
 
 void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter)
 {
-	dbus_append_timestamp(iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	server_dbus_layouts(&v41p->getdevinfo, iter);
 	server_dbus_layouts(&v41p->layout_get, iter);
 	server_dbus_layouts(&v41p->layout_commit, iter);
@@ -2009,7 +2009,7 @@ void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter)
 
 void server_dbus_v42_layouts(struct nfsv41_stats *v42p, DBusMessageIter *iter)
 {
-	dbus_append_timestamp(iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	server_dbus_layouts(&v42p->getdevinfo, iter);
 	server_dbus_layouts(&v42p->layout_get, iter);
 	server_dbus_layouts(&v42p->layout_commit, iter);
@@ -2027,7 +2027,7 @@ void server_dbus_delegations(struct deleg_stats *ds, DBusMessageIter *iter)
 {
 	DBusMessageIter struct_iter;
 
-	dbus_append_timestamp(iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
 					 &struct_iter);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
@@ -2053,7 +2053,7 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 	uint64_t op_counter = 0;
 	char *message;
 
-	dbus_append_timestamp(iter, &v3_full_stats_time);
+	gsh_dbus_append_timestamp(iter, &v3_full_stats_time);
 	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
 					 "(stttddd)", &array_iter);
 	for (op = 1; op < NFSPROC3_COMMIT+1; op++) {
@@ -2124,7 +2124,7 @@ void server_dbus_v4_full_stats(DBusMessageIter *iter)
 	uint64_t op_counter = 0;
 	char *message;
 
-	dbus_append_timestamp(iter, &v4_full_stats_time);
+	gsh_dbus_append_timestamp(iter, &v4_full_stats_time);
 	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
 					 "(sttddd)", &array_iter);
 	for (op = 1; op < NFS_V42_NB_OPERATION+1; op++) {

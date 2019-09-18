@@ -365,7 +365,7 @@ static bool gsh_client_addclient(DBusMessageIter *args,
 			errormsg = "No memory to insert client";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return true;
 }
 
@@ -403,7 +403,7 @@ static bool gsh_client_removeclient(DBusMessageIter *args,
 			errormsg = "Unexpected error";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return true;
 }
 
@@ -438,7 +438,7 @@ static bool client_to_dbus(struct gsh_client *cl_node, void *state)
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &ipaddr);
 	server_stats_summary(&struct_iter, &cl->st);
-	dbus_append_timestamp(&struct_iter, &last_as_ts);
+	gsh_dbus_append_timestamp(&struct_iter, &last_as_ts);
 	dbus_message_iter_close_container(&iter_state->client_iter,
 					  &struct_iter);
 	return true;
@@ -455,7 +455,7 @@ static bool gsh_client_showclients(DBusMessageIter *args,
 	now(&timestamp);
 	/* create a reply from the message */
 	dbus_message_iter_init_append(reply, &iter);
-	dbus_append_timestamp(&iter, &timestamp);
+	gsh_dbus_append_timestamp(&iter, &timestamp);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 "(sbbbbbbbb(tt))",
 					 &iter_state.client_iter);
@@ -562,7 +562,7 @@ static bool get_nfsv3_stats_io(DBusMessageIter *args,
 			errormsg = "Client does not have any NFSv3 activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_v3_iostats(server_st->st.nfsv3, &iter);
 
@@ -611,7 +611,7 @@ static bool get_nfsv40_stats_io(DBusMessageIter *args,
 			errormsg = "Client does not have any NFSv4.0 activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_v40_iostats(server_st->st.nfsv40, &iter);
 
@@ -660,7 +660,7 @@ static bool get_nfsv41_stats_io(DBusMessageIter *args,
 			errormsg = "Client does not have any NFSv4.1 activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_v41_iostats(server_st->st.nfsv41, &iter);
 
@@ -710,7 +710,7 @@ static bool get_nfsv41_stats_layouts(DBusMessageIter *args,
 			errormsg = "Client does not have any NFSv4.1 activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_v41_layouts(server_st->st.nfsv41, &iter);
 
@@ -756,7 +756,7 @@ static bool get_stats_delegations(DBusMessageIter *args,
 		}
 	}
 
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_delegations(server_st->st.deleg, &iter);
 
@@ -805,7 +805,7 @@ static bool get_9p_stats_io(DBusMessageIter *args,
 			errormsg = "Client does not have any 9p activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_9p_iostats(server_st->st._9p, &iter);
 
@@ -852,7 +852,7 @@ static bool get_9p_stats_trans(DBusMessageIter *args,
 			errormsg = "Client does not have any 9p activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_9p_transstats(server_st->st._9p, &iter);
 
@@ -901,7 +901,7 @@ static bool get_9p_client_op_stats(DBusMessageIter *args,
 	dbus_message_iter_next(args);
 	if (success)
 		success = arg_9p_op(args, &opcode, &errormsg);
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_9p_opstats(server_st->st._9p, opcode, &iter);
 

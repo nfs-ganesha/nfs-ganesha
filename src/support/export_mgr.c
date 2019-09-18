@@ -1443,7 +1443,7 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 				       &exp_node->export_id);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &path);
 	server_stats_summary(&struct_iter, &exp->st);
-	dbus_append_timestamp(&struct_iter, &last_as_ts);
+	gsh_dbus_append_timestamp(&struct_iter, &last_as_ts);
 	dbus_message_iter_close_container(&iter_state->export_iter,
 					  &struct_iter);
 	return true;
@@ -1458,7 +1458,7 @@ static bool gsh_export_showexports(DBusMessageIter *args,
 
 	/* create a reply from the message */
 	dbus_message_iter_init_append(reply, &iter);
-	dbus_append_timestamp(&iter, &nfs_stats_time);
+	gsh_dbus_append_timestamp(&iter, &nfs_stats_time);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 "(qsbbbbbbbb(tt))",
 					 &iter_state.export_iter);
@@ -1733,7 +1733,7 @@ static bool get_nfsv3_export_io(DBusMessageIter *args,
 			errormsg = "Export does not have any NFSv3 activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_v3_iostats(export_st->st.nfsv3, &iter);
 
@@ -1781,7 +1781,7 @@ static bool get_nfsv40_export_io(DBusMessageIter *args,
 			errormsg = "Export does not have any NFSv4.0 activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_v40_iostats(export_st->st.nfsv40, &iter);
 
@@ -1829,7 +1829,7 @@ static bool get_nfsv41_export_io(DBusMessageIter *args,
 			errormsg = "Export does not have any NFSv4.1 activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_v41_iostats(export_st->st.nfsv41, &iter);
 
@@ -1877,7 +1877,7 @@ static bool get_nfsv41_export_layouts(DBusMessageIter *args,
 			errormsg = "Export does not have any NFSv4.1 activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_v41_layouts(export_st->st.nfsv41, &iter);
 
@@ -1907,13 +1907,13 @@ static bool get_nfsv_export_total_ops(DBusMessageIter *args,
 	export = lookup_export(args, &errormsg);
 	if (export != NULL) {
 		export_st = container_of(export, struct export_stats, export);
-		dbus_status_reply(&iter, success, errormsg);
+		gsh_dbus_status_reply(&iter, success, errormsg);
 		server_dbus_total_ops(export_st, &iter);
 		put_gsh_export(export);
 	} else {
 		success = false;
 		errormsg = "Export does not have any activity";
-		dbus_status_reply(&iter, success, errormsg);
+		gsh_dbus_status_reply(&iter, success, errormsg);
 	}
 	return true;
 }
@@ -1929,7 +1929,7 @@ static bool get_nfsv_global_total_ops(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	if (!nfs_param.core_param.enable_NFSSTATS)
 		errormsg = "NFS stat counting disabled";
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		global_dbus_total_ops(&iter);
 
@@ -1947,7 +1947,7 @@ static bool get_nfsv_global_fast_ops(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	if (!nfs_param.core_param.enable_NFSSTATS)
 		errormsg = "NFS stat counting disabled";
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_fast_ops(&iter);
 
@@ -1963,8 +1963,8 @@ static bool show_cache_inode_stats(DBusMessageIter *args,
 	DBusMessageIter iter;
 
 	dbus_message_iter_init_append(reply, &iter);
-	dbus_status_reply(&iter, success, errormsg);
-	dbus_append_timestamp(&iter, &nfs_ServerBootTime);
+	gsh_dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_append_timestamp(&iter, &nfs_ServerBootTime);
 
 	mdcache_dbus_show(&iter);
 
@@ -2013,9 +2013,9 @@ static bool stats_reset(DBusMessageIter *args,
 	struct timespec timestamp;
 
 	dbus_message_iter_init_append(reply, &iter);
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	now(&timestamp);
-	dbus_append_timestamp(&iter, &timestamp);
+	gsh_dbus_append_timestamp(&iter, &timestamp);
 
 	reset_fsal_stats();
 	reset_server_stats();
@@ -2052,10 +2052,10 @@ static bool stats_v3_full(DBusMessageIter *args,
 	if (!nfs_param.core_param.enable_FULLV3STATS) {
 		success = false;
 		errormsg = "v3_full stats disabled";
-		dbus_status_reply(&iter, success, errormsg);
+		gsh_dbus_status_reply(&iter, success, errormsg);
 		return true;
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	server_dbus_v3_full_stats(&iter);
 
 	return true;
@@ -2086,10 +2086,10 @@ static bool stats_v4_full(DBusMessageIter *args,
 	if (!nfs_param.core_param.enable_FULLV4STATS) {
 		success = false;
 		errormsg = "v4_full stats disabled";
-		dbus_status_reply(&iter, success, errormsg);
+		gsh_dbus_status_reply(&iter, success, errormsg);
 		return true;
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	server_dbus_v4_full_stats(&iter);
 
 	return true;
@@ -2119,14 +2119,14 @@ static bool stats_status(DBusMessageIter *args,
 	dbus_bool_t value;
 
 	dbus_message_iter_init_append(reply, &iter);
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 
 	/* Send info about NFS server stats */
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
 					 &nfsstatus);
 	value = nfs_param.core_param.enable_NFSSTATS;
 	dbus_message_iter_append_basic(&nfsstatus, DBUS_TYPE_BOOLEAN, &value);
-	dbus_append_timestamp(&nfsstatus, &nfs_stats_time);
+	gsh_dbus_append_timestamp(&nfsstatus, &nfs_stats_time);
 	dbus_message_iter_close_container(&iter, &nfsstatus);
 
 	/* Send info about FSAL stats */
@@ -2134,7 +2134,7 @@ static bool stats_status(DBusMessageIter *args,
 					 &fsalstatus);
 	value = nfs_param.core_param.enable_FSALSTATS;
 	dbus_message_iter_append_basic(&fsalstatus, DBUS_TYPE_BOOLEAN, &value);
-	dbus_append_timestamp(&fsalstatus, &fsal_stats_time);
+	gsh_dbus_append_timestamp(&fsalstatus, &fsal_stats_time);
 	dbus_message_iter_close_container(&iter, &fsalstatus);
 
 	/* Send info about NFSv3 Detailed stats */
@@ -2143,7 +2143,7 @@ static bool stats_status(DBusMessageIter *args,
 	value = nfs_param.core_param.enable_FULLV3STATS;
 	dbus_message_iter_append_basic(&v3_full_status, DBUS_TYPE_BOOLEAN,
 					&value);
-	dbus_append_timestamp(&v3_full_status, &v3_full_stats_time);
+	gsh_dbus_append_timestamp(&v3_full_status, &v3_full_stats_time);
 	dbus_message_iter_close_container(&iter, &v3_full_status);
 
 	/* Send info about NFSv4 Detailed stats */
@@ -2152,7 +2152,7 @@ static bool stats_status(DBusMessageIter *args,
 	value = nfs_param.core_param.enable_FULLV4STATS;
 	dbus_message_iter_append_basic(&v4_full_status, DBUS_TYPE_BOOLEAN,
 					&value);
-	dbus_append_timestamp(&v4_full_status, &v4_full_stats_time);
+	gsh_dbus_append_timestamp(&v4_full_status, &v4_full_stats_time);
 	dbus_message_iter_close_container(&iter, &v4_full_status);
 
 	/* Send info about auth stats */
@@ -2161,7 +2161,7 @@ static bool stats_status(DBusMessageIter *args,
 	value = nfs_param.core_param.enable_AUTHSTATS;
 	dbus_message_iter_append_basic(&authstatus, DBUS_TYPE_BOOLEAN,
 						&value);
-	dbus_append_timestamp(&authstatus, &auth_stats_time);
+	gsh_dbus_append_timestamp(&authstatus, &auth_stats_time);
 	dbus_message_iter_close_container(&iter, &authstatus);
 
 	return true;
@@ -2259,12 +2259,12 @@ static bool stats_disable(DBusMessageIter *args,
 		reset_auth_stats();
 	}
 
-	dbus_status_reply(&iter, true, errormsg);
+	gsh_dbus_status_reply(&iter, true, errormsg);
 	now(&timestamp);
-	dbus_append_timestamp(&iter, &timestamp);
+	gsh_dbus_append_timestamp(&iter, &timestamp);
 	return true;
 error:
-	dbus_status_reply(&iter, false, errormsg);
+	gsh_dbus_status_reply(&iter, false, errormsg);
 	return true;
 }
 
@@ -2382,12 +2382,12 @@ static bool stats_enable(DBusMessageIter *args,
 		now(&auth_stats_time);
 	}
 
-	dbus_status_reply(&iter, true, errormsg);
+	gsh_dbus_status_reply(&iter, true, errormsg);
 	now(&timestamp);
-	dbus_append_timestamp(&iter, &timestamp);
+	gsh_dbus_append_timestamp(&iter, &timestamp);
 	return true;
 error:
-	dbus_status_reply(&iter, false, errormsg);
+	gsh_dbus_status_reply(&iter, false, errormsg);
 	return true;
 }
 
@@ -2447,12 +2447,12 @@ static bool stats_fsal(DBusMessageIter *args,
 		errormsg = "FSAL stats disabled";
 		goto error;
 	}
-	dbus_status_reply(&iter, true, errormsg);
-	dbus_append_timestamp(&iter, &fsal_stats_time);
+	gsh_dbus_status_reply(&iter, true, errormsg);
+	gsh_dbus_append_timestamp(&iter, &fsal_stats_time);
 	fsal_hdl->m_ops.fsal_extract_stats(fsal_hdl, &iter);
 	return true;
 error:
-	dbus_status_reply(&iter, false, errormsg);
+	gsh_dbus_status_reply(&iter, false, errormsg);
 	return true;
 }
 
@@ -2497,7 +2497,7 @@ static bool get_9p_export_io(DBusMessageIter *args,
 			errormsg = "Export does not have any 9p activity";
 		}
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_9p_iostats(export_st->st._9p, &iter);
 
@@ -2545,7 +2545,7 @@ static bool get_9p_export_op_stats(DBusMessageIter *args,
 	dbus_message_iter_next(args);
 	if (success)
 		success = arg_9p_op(args, &opcode, &errormsg);
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		server_dbus_9p_opstats(export_st->st._9p, opcode, &iter);
 
@@ -2634,8 +2634,8 @@ static bool get_nfs_io(DBusMessageIter *args,
 	if (!nfs_param.core_param.enable_NFSSTATS)
 		errormsg = "NFS stat counting disabled";
 	/* status and timestamp reply */
-	dbus_status_reply(&reply_iter, success, errormsg);
-	dbus_append_timestamp(&reply_iter, &nfs_stats_time);
+	gsh_dbus_status_reply(&reply_iter, success, errormsg);
+	gsh_dbus_append_timestamp(&reply_iter, &nfs_stats_time);
 
 	/* create an array container iterator and loop over all exports */
 	dbus_message_iter_open_container(&reply_iter, DBUS_TYPE_ARRAY,

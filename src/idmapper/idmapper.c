@@ -894,12 +894,12 @@ static bool all_auth_stats(DBusMessageIter *args, DBusMessage *reply,
 	if (!nfs_param.core_param.enable_AUTHSTATS) {
 		success = false;
 		errormsg = "auth related stats disabled";
-		dbus_status_reply(&iter, success, errormsg);
+		gsh_dbus_status_reply(&iter, success, errormsg);
 		return true;
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 
-	dbus_append_timestamp(&iter, &auth_stats_time);
+	gsh_dbus_append_timestamp(&iter, &auth_stats_time);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT,
 		NULL, &struct_iter);
 
