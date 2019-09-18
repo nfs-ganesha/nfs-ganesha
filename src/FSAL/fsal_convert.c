@@ -177,6 +177,7 @@ fsal_errors_t posix2fsal_error(int posix_errorcode)
 		/* Error code that needs a retry */
 	case EAGAIN:
 	case EBUSY:
+	case ETIMEDOUT:
 #ifdef ETIME
 	case ETIME:
 #endif
