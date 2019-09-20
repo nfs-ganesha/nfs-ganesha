@@ -464,6 +464,7 @@ struct attrlist {
 				   read) */
 	fsal_fsid_t fsid;	/*< Filesystem on which this object is
 				   stored */
+	uint64_t fsid3;		/*< Squashed fsid for NFS v3 */
 	fsal_acl_t *acl;	/*< ACL for this object */
 	uint64_t fileid;	/*< Unique identifier for this object within
 				   the scope of the fsid, (e.g. inode number) */

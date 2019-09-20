@@ -88,8 +88,8 @@ void nfs_SetPostOpAttr(struct fsal_obj_handle *obj,
 	}
 
 	/* Check if attributes follow and place the following attributes */
-	Fattr->attributes_follow = nfs3_FSALattr_To_Fattr(obj, pattrs,
-				       &Fattr->post_op_attr_u.attributes);
+	Fattr->attributes_follow = nfs3_Fixup_FSALattr(obj, pattrs);
+	Fattr->post_op_attr_u.attributes = *pattrs;
 
 	if (attrs == NULL) {
 		/* Release any attributes fetched. Caller MUST release any
@@ -3782,22 +3782,21 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
  */
 
 /**
- * @brief Convert FSAL Attributes to NFSv3 attributes.
+ * @brief Fixup FSAL Attributes for NFSv3.
  *
- * This function converts FSAL Attributes to NFSv3 attributes.  The
- * callee is expecting the full compliment of FSAL attributes to fill
- * in all the fields in the fattr3 structure.
+ * This function validates the FSAL attributes as having all the required
+ * attributes and it fills in fsid3 with a squashed fsid. Since the ONLY
+ * modification to the FSAL attr is to compute fsid3, we consider FSAL_attr
+ * const and just override to set fsid3.
  *
  * @param export   [IN]  the related export entry
- * @param FSAL_attr [IN]  pointer to FSAL attributes.
- * @param Fattr     [OUT] pointer to NFSv3 attributes.
+ * @param FSAL_attr [IN,OUT]  pointer to FSAL attributes.
  *
  * @return true if successful, false otherwise.
  *
  */
-bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
-			    const struct attrlist *FSAL_attr,
-			    fattr3 *Fattr)
+bool nfs3_Fixup_FSALattr(struct fsal_obj_handle *obj,
+			 const struct attrlist *FSAL_attr)
 {
 	/* We want to override the FSAL fsid with the export's configured fsid
 	 */
@@ -3815,14 +3814,12 @@ bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 		return false;
 	}
 
-	*Fattr = *FSAL_attr;
-
 	if (op_ctx_export_has_option_set(EXPORT_OPTION_FSID_SET)) {
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
-		Fattr->fsid.major = squash_fsid(
-					&op_ctx->ctx_export->filesystem_id);
+		((struct attrlist *) FSAL_attr)->fsid3 =
+				squash_fsid(&op_ctx->ctx_export->filesystem_id);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Compressing export filesystem_id for NFS v3 from fsid major %#"
@@ -3833,12 +3830,13 @@ bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			     op_ctx->ctx_export->filesystem_id.major,
 			     op_ctx->ctx_export->filesystem_id.minor,
 			     op_ctx->ctx_export->filesystem_id.minor,
-			     Fattr->fsid.major, Fattr->fsid.major);
+			     FSAL_attr->fsid3, FSAL_attr->fsid3);
 	} else {
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
-		Fattr->fsid.major = squash_fsid(&obj->fsid);
+		((struct attrlist *) FSAL_attr)->fsid3 =
+							squash_fsid(&obj->fsid);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Compressing fsid for NFS v3 from fsid major %#"
@@ -3849,7 +3847,7 @@ bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			     obj->fsid.major,
 			     obj->fsid.minor,
 			     obj->fsid.minor,
-			     Fattr->fsid.major, Fattr->fsid.major);
+			     FSAL_attr->fsid3, FSAL_attr->fsid3);
 	}
 	return true;
 }

@@ -294,9 +294,8 @@ bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *, int);
 bool nfs4_Fattr_Supported(fattr4 *);
 int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
 
-bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
-			    const struct attrlist *FSAL_attr,
-			    fattr3 *Fattr);
+bool nfs3_Fixup_FSALattr(struct fsal_obj_handle *obj,
+			 const struct attrlist *FSAL_attr);
 
 bool is_sticky_bit_set(struct fsal_obj_handle *obj,
 		       const struct attrlist *attr);

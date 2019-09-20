@@ -64,13 +64,15 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
-	struct attrlist attrs;
+	struct attrlist *attrs;
 	fsal_status_t status;
+
+	attrs = &res->res_getattr3.GETATTR3res_u.resok.obj_attributes;
 
 	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_getattr3.object,
 			  "");
 
-	fsal_prepare_attrs(&attrs, ATTRS_NFS3);
+	fsal_prepare_attrs(attrs, ATTRS_NFS3);
 
 	obj = nfs3_FhandleToCache(&arg->arg_getattr3.object,
 				    &res->res_getattr3.status,
@@ -84,7 +86,7 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	status = obj->obj_ops->getattrs(obj, &attrs);
+	status = obj->obj_ops->getattrs(obj, attrs);
 
 	if (FSAL_IS_ERROR(status)) {
 		res->res_getattr3.status = nfs3_Errno_status(status);
@@ -96,9 +98,7 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	nfs3_FSALattr_To_Fattr(
-			obj, &attrs,
-			&res->res_getattr3.GETATTR3res_u.resok.obj_attributes);
+	nfs3_Fixup_FSALattr(obj, attrs);
 
 	res->res_getattr3.status = NFS3_OK;
 
@@ -107,8 +107,9 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out:
 
-	/* Done with the attrs */
-	fsal_release_attrs(&attrs);
+	/* Done with the attrs (NFSv3 doesn't use ANY of the reffed attributes)
+	 */
+	fsal_release_attrs(attrs);
 
 	/* return references */
 	if (obj)
