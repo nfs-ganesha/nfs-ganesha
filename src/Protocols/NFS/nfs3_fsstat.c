@@ -135,13 +135,15 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_fsstat3.status = NFS3_OK;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
-		     "nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu",
+		     "nfs_Fsstat --> tbytes=%"PRIu64" fbytes=%"PRIu64
+		     " abytes=%"PRIu64,
 		     res->res_fsstat3.FSSTAT3res_u.resok.tbytes,
 		     res->res_fsstat3.FSSTAT3res_u.resok.fbytes,
 		     res->res_fsstat3.FSSTAT3res_u.resok.abytes);
 
 	LogFullDebug(COMPONENT_NFSPROTO,
-		     "nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu",
+		     "nfs_Fsstat --> tfiles=%"PRIu64" fffiles=%"PRIu64
+		     " afiles=%"PRIu64,
 		     res->res_fsstat3.FSSTAT3res_u.resok.tfiles,
 		     res->res_fsstat3.FSSTAT3res_u.resok.ffiles,
 		     res->res_fsstat3.FSSTAT3res_u.resok.afiles);

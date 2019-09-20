@@ -239,35 +239,6 @@ int fsal2posix_testperm(fsal_accessflags_t testperm)
 
 }
 
-/* mode bits are a uint16_t and chmod masks off type */
-
-#define S_IALLUGO (~S_IFMT & 0xFFFF)
-
-/**
- * @brief Convert FSAL mode to POSIX mode
- *
- * @param[in] fsal_mode FSAL mode to be translated
- *
- * @return The POSIX mode associated to fsal_mode.
- */
-mode_t fsal2unix_mode(uint32_t fsal_mode)
-{
-	return fsal_mode & S_IALLUGO;
-}
-
-/**
- * @brief Convert POSIX mode to FSAL mode
- *
- * @param[in] unix_mode POSIX mode to be translated
- *
- * @return FSAL mode associated with @c unix_mode
- */
-
-uint32_t unix2fsal_mode(mode_t unix_mode)
-{
-	return unix_mode & S_IALLUGO;
-}
-
 /**
  * @brief Convert POSIX object type to an FSAL object type
  *

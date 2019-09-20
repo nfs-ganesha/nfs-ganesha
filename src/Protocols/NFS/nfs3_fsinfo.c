@@ -115,7 +115,7 @@ int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		     "wtmax = %d | wtpref = %d | wrmult = %d",
 		     FSINFO_FIELD->wtmax, FSINFO_FIELD->wtpref,
 		     FSINFO_FIELD->wtmult);
-	LogFullDebug(COMPONENT_NFSPROTO, "dtpref = %d | maxfilesize = %llu ",
+	LogFullDebug(COMPONENT_NFSPROTO, "dtpref = %d | maxfilesize = %"PRIu64,
 		     FSINFO_FIELD->dtpref, FSINFO_FIELD->maxfilesize);
 
 	/* Allow all kinds of operations to be performed on the server

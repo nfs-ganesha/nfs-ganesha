@@ -3719,7 +3719,7 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
 	}
 
 	if (sattr->size.set_it) {
-		LogFullDebug(COMPONENT_NFSPROTO, "size = %lld",
+		LogFullDebug(COMPONENT_NFSPROTO, "size = %"PRIu64,
 			     sattr->size.set_size3_u.size);
 		FSAL_attr->filesize = sattr->size.set_size3_u.size;
 		FSAL_attr->valid_mask |= ATTR_SIZE;
@@ -3782,125 +3782,6 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
  */
 
 /**
- * @brief Converts FSAL Attributes to NFSv3 attributes.
- *
- * Fill in the fields in the fattr3 structure.
- *
- * @param[in]    obj        FSAL object.
- * @param[in]    FSAL_attr  FSAL attributes related to the FSAL object.
- * @param[out]   Fattr      NFSv3 attributes.
- *
- */
-static void nfs3_FSALattr_To_PartialFattr(struct fsal_obj_handle *obj,
-					  const struct attrlist *FSAL_attr,
-					  fattr3 *Fattr)
-{
-	if (FSAL_attr->valid_mask & ATTR_TYPE) {
-		switch (FSAL_attr->type) {
-		case FIFO_FILE:
-			Fattr->type = NF3FIFO;
-			break;
-
-		case CHARACTER_FILE:
-			Fattr->type = NF3CHR;
-			break;
-
-		case DIRECTORY:
-			Fattr->type = NF3DIR;
-			break;
-
-		case BLOCK_FILE:
-			Fattr->type = NF3BLK;
-			break;
-
-		case REGULAR_FILE:
-		case EXTENDED_ATTR:
-			Fattr->type = NF3REG;
-			break;
-
-		case SYMBOLIC_LINK:
-			Fattr->type = NF3LNK;
-			break;
-
-		case SOCKET_FILE:
-			Fattr->type = NF3SOCK;
-			break;
-
-		default:
-			LogEvent(COMPONENT_NFSPROTO,
-				 "nfs3_FSALattr_To_Fattr: Bogus type = %d",
-				 FSAL_attr->type);
-		}
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_MODE) {
-		Fattr->mode = fsal2unix_mode(FSAL_attr->mode);
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_NUMLINKS) {
-		Fattr->nlink = FSAL_attr->numlinks;
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_OWNER) {
-		Fattr->uid = FSAL_attr->owner;
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_GROUP) {
-		Fattr->gid = FSAL_attr->group;
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_SIZE) {
-		Fattr->size = FSAL_attr->filesize;
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_SPACEUSED) {
-		Fattr->used = FSAL_attr->spaceused;
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_RAWDEV) {
-		Fattr->rdev.specdata1 = FSAL_attr->rawdev.major;
-		Fattr->rdev.specdata2 = FSAL_attr->rawdev.minor;
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_FSID) {
-		/* xor filesystem_id major and rotated minor to create unique
-		 * on-wire fsid.
-		 */
-		Fattr->fsid = (nfs3_uint64) squash_fsid(&obj->fsid);
-
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Compressing fsid for NFS v3 from fsid major %#"
-			     PRIX64 " (%" PRIu64 "), minor %#"
-			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
-			     " (%" PRIu64 ")",
-			     obj->fsid.major,
-			     obj->fsid.major,
-			     obj->fsid.minor,
-			     obj->fsid.minor,
-			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_FILEID) {
-		Fattr->fileid = obj->fileid;
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_ATIME) {
-		Fattr->atime.tv_sec = FSAL_attr->atime.tv_sec;
-		Fattr->atime.tv_nsec = FSAL_attr->atime.tv_nsec;
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_MTIME) {
-		Fattr->mtime.tv_sec = FSAL_attr->mtime.tv_sec;
-		Fattr->mtime.tv_nsec = FSAL_attr->mtime.tv_nsec;
-	}
-
-	if (FSAL_attr->valid_mask & ATTR_CTIME) {
-		Fattr->ctime.tv_sec = FSAL_attr->ctime.tv_sec;
-		Fattr->ctime.tv_nsec = FSAL_attr->ctime.tv_nsec;
-	}
-}				/* nfs3_FSALattr_To_PartialFattr */
-
-/**
  * @brief Convert FSAL Attributes to NFSv3 attributes.
  *
  * This function converts FSAL Attributes to NFSv3 attributes.  The
@@ -3933,13 +3814,14 @@ bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			want & ~(FSAL_attr->valid_mask));
 		return false;
 	}
-	nfs3_FSALattr_To_PartialFattr(obj, FSAL_attr, Fattr);
+
+	*Fattr = *FSAL_attr;
 
 	if (op_ctx_export_has_option_set(EXPORT_OPTION_FSID_SET)) {
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
-		Fattr->fsid = (nfs3_uint64) squash_fsid(
+		Fattr->fsid.major = squash_fsid(
 					&op_ctx->ctx_export->filesystem_id);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
@@ -3951,7 +3833,23 @@ bool nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
 			     op_ctx->ctx_export->filesystem_id.major,
 			     op_ctx->ctx_export->filesystem_id.minor,
 			     op_ctx->ctx_export->filesystem_id.minor,
-			     (uint64_t) Fattr->fsid, (uint64_t) Fattr->fsid);
+			     Fattr->fsid.major, Fattr->fsid.major);
+	} else {
+		/* xor filesystem_id major and rotated minor to create unique
+		 * on-wire fsid.
+		 */
+		Fattr->fsid.major = squash_fsid(&obj->fsid);
+
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "Compressing fsid for NFS v3 from fsid major %#"
+			     PRIX64 " (%" PRIu64 "), minor %#"
+			     PRIX64 " (%" PRIu64 ") to nfs3_fsid = %#" PRIX64
+			     " (%" PRIu64 ")",
+			     obj->fsid.major,
+			     obj->fsid.major,
+			     obj->fsid.minor,
+			     obj->fsid.minor,
+			     Fattr->fsid.major, Fattr->fsid.major);
 	}
 	return true;
 }

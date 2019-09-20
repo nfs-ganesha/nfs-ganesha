@@ -11,8 +11,8 @@
 
 #include "gsh_rpc.h"
 #include "extended_types.h"
-
 #include "mount.h"
+#include "fsal_types.h"
 
 #define NFS2_MAXDATA 8192
 #define NFS2_MAXPATHLEN 1024
@@ -71,13 +71,13 @@ enum nfsstat2 {
 
 typedef char nfscookie2[NFS2_COOKIESIZE];
 
-typedef u_longlong_t nfs3_uint64;
+typedef uint64_t nfs3_uint64;
 
-typedef longlong_t nfs3_int64;
+typedef int64_t nfs3_int64;
 
-typedef u_int nfs3_uint32;
+typedef uint32_t nfs3_uint32;
 
-typedef int nfs3_int32;
+typedef int32_t nfs3_int32;
 
 typedef char *filename3;
 
@@ -189,7 +189,7 @@ struct fattr3 {
 	nfstime3 mtime;
 	nfstime3 ctime;
 };
-typedef struct fattr3 fattr3;
+typedef struct attrlist fattr3;
 
 struct post_op_attr {
 	bool_t attributes_follow;

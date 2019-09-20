@@ -9,6 +9,7 @@
 #include "gsh_rpc.h"
 #include "nfs23.h"
 #include "nfs_fh.h"
+#include "fsal_convert.h"
 
 static struct nfs_request_lookahead dummy_lookahead = {
 	.flags = 0,
@@ -229,32 +230,143 @@ bool xdr_nfstime3(XDR *xdrs, nfstime3 *objp)
 
 bool xdr_fattr3(XDR *xdrs, fattr3 *objp)
 {
-	if (!xdr_ftype3(xdrs, &objp->type))
+	ftype3 ft;
+	specdata3 rdev;
+	uid3 uid;
+	gid3 gid;
+	nfstime3 atime, mtime, ctime;
+	mode3 mode;
+
+	if (xdrs->x_op == XDR_ENCODE) {
+		/* Convert object_file_type_t to ftype3 */
+		switch (objp->type) {
+		case FIFO_FILE:
+			ft = NF3FIFO;
+			break;
+
+		case CHARACTER_FILE:
+			ft = NF3CHR;
+			break;
+
+		case DIRECTORY:
+			ft = NF3DIR;
+			break;
+
+		case BLOCK_FILE:
+			ft = NF3BLK;
+			break;
+
+		case REGULAR_FILE:
+		case EXTENDED_ATTR:
+			ft = NF3REG;
+			break;
+
+		case SYMBOLIC_LINK:
+			ft = NF3LNK;
+			break;
+
+		case SOCKET_FILE:
+			ft = NF3SOCK;
+			break;
+
+		default:
+			LogEvent(COMPONENT_NFSPROTO,
+				 "xdr_fattr3: Bogus type = %d",
+				 objp->type);
+		}
+
+		mode = fsal2unix_mode(objp->mode);
+		rdev.specdata1 = objp->rawdev.major;
+		rdev.specdata2 = objp->rawdev.minor;
+		uid = objp->owner;
+		gid = objp->group;
+		atime.tv_sec = objp->atime.tv_sec;
+		atime.tv_nsec = objp->atime.tv_nsec;
+		mtime.tv_sec = objp->mtime.tv_sec;
+		mtime.tv_nsec = objp->mtime.tv_nsec;
+		ctime.tv_sec = objp->ctime.tv_sec;
+		ctime.tv_nsec = objp->ctime.tv_nsec;
+	}
+
+	if (!xdr_ftype3(xdrs, &ft))
 		return (false);
-	if (!xdr_mode3(xdrs, &objp->mode))
+	if (!xdr_mode3(xdrs, &mode))
 		return (false);
-	if (!xdr_nfs3_uint32(xdrs, &objp->nlink))
+	if (!xdr_nfs3_uint32(xdrs, &objp->numlinks))
 		return (false);
-	if (!xdr_uid3(xdrs, &objp->uid))
+	if (!xdr_uid3(xdrs, &uid))
 		return (false);
-	if (!xdr_gid3(xdrs, &objp->gid))
+	if (!xdr_gid3(xdrs, &gid))
 		return (false);
-	if (!xdr_size3(xdrs, &objp->size))
+	if (!xdr_size3(xdrs, &objp->filesize))
 		return (false);
-	if (!xdr_size3(xdrs, &objp->used))
+	if (!xdr_size3(xdrs, &objp->spaceused))
 		return (false);
-	if (!xdr_specdata3(xdrs, &objp->rdev))
+	if (!xdr_specdata3(xdrs, &rdev))
 		return (false);
-	if (!xdr_nfs3_uint64(xdrs, &objp->fsid))
+	if (!xdr_nfs3_uint64(xdrs, &objp->fsid.major))
 		return (false);
 	if (!xdr_fileid3(xdrs, &objp->fileid))
 		return (false);
-	if (!xdr_nfstime3(xdrs, &objp->atime))
+	if (!xdr_nfstime3(xdrs, &atime))
 		return (false);
-	if (!xdr_nfstime3(xdrs, &objp->mtime))
+	if (!xdr_nfstime3(xdrs, &mtime))
 		return (false);
-	if (!xdr_nfstime3(xdrs, &objp->ctime))
+	if (!xdr_nfstime3(xdrs, &ctime))
 		return (false);
+
+
+	if (xdrs->x_op == XDR_DECODE) {
+		/* Convert ftype3 to object_file_type_t */
+		switch (ft) {
+		case NF3FIFO:
+			objp->type = FIFO_FILE;
+			break;
+
+		case NF3CHR:
+			objp->type = CHARACTER_FILE;
+			break;
+
+		case NF3DIR:
+			objp->type = DIRECTORY;
+			break;
+
+		case NF3BLK:
+			objp->type = BLOCK_FILE;
+			break;
+
+		case NF3REG:
+			objp->type = REGULAR_FILE;
+			break;
+
+		case NF3LNK:
+			objp->type = SYMBOLIC_LINK;
+			break;
+
+		case NF3SOCK:
+			objp->type = SOCKET_FILE;
+			break;
+
+		default:
+			LogEvent(COMPONENT_NFSPROTO,
+				 "xdr_fattr3: Bogus type = %d",
+				 ft);
+		}
+
+		objp->mode = unix2fsal_mode(mode);
+		objp->rawdev.major = rdev.specdata1;
+		objp->rawdev.minor = rdev.specdata2;
+		objp->fsid.minor = 0;
+		objp->owner = uid;
+		objp->group = gid;
+		objp->atime.tv_sec = atime.tv_sec;
+		objp->atime.tv_nsec = atime.tv_nsec;
+		objp->mtime.tv_sec = mtime.tv_sec;
+		objp->mtime.tv_nsec = mtime.tv_nsec;
+		objp->ctime.tv_sec = ctime.tv_sec;
+		objp->ctime.tv_nsec = ctime.tv_nsec;
+	}
+
 	return (true);
 }
 

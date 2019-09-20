@@ -65,11 +65,34 @@ void posix2fsal_attributes(const struct stat *buffstat,
 void posix2fsal_attributes_all(const struct stat *buffstat,
 			       struct attrlist *fsalattr_out);
 
-/** converts FSAL access mode to unix mode. */
-mode_t fsal2unix_mode(uint32_t fsal_mode);
+/* mode bits are a uint16_t and chmod masks off type */
 
-/** converts unix access mode to fsal mode. */
-uint32_t unix2fsal_mode(mode_t unix_mode);
+#define S_IALLUGO (~S_IFMT & 0xFFFF)
+
+/**
+ * @brief Convert FSAL mode to POSIX mode
+ *
+ * @param[in] fsal_mode FSAL mode to be translated
+ *
+ * @return The POSIX mode associated to fsal_mode.
+ */
+static inline mode_t fsal2unix_mode(uint32_t fsal_mode)
+{
+	return fsal_mode & S_IALLUGO;
+}
+
+/**
+ * @brief Convert POSIX mode to FSAL mode
+ *
+ * @param[in] unix_mode POSIX mode to be translated
+ *
+ * @return FSAL mode associated with @c unix_mode
+ */
+
+static inline uint32_t unix2fsal_mode(mode_t unix_mode)
+{
+	return unix_mode & S_IALLUGO;
+}
 
 /** converts POSIX object type to fsal object type. */
 object_file_type_t posix2fsal_type(mode_t posix_type_in);
