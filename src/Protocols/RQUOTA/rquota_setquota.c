@@ -36,10 +36,12 @@
 #include "rquota.h"
 #include "nfs_proto_functions.h"
 #include "export_mgr.h"
+#include "nfs_creds.h"
 
 static int do_rquota_setquota(char *quota_path, int quota_type,
 			      int quota_id,
 			      sq_dqblk * quota_dqblk,
+			      struct svc_req *req,
 			      setquota_rslt * qres);
 
 /**
@@ -76,12 +78,13 @@ int rquota_setquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	return do_rquota_setquota(quota_path, quota_type,
-				  quota_id, quota_dqblk, qres);
+				  quota_id, quota_dqblk, req, qres);
 }                               /* rquota_setquota */
 
 static int do_rquota_setquota(char *quota_path, int quota_type,
 			      int quota_id,
 			      sq_dqblk *quota_dqblk,
+			      struct svc_req *req,
 			      setquota_rslt *qres)
 {
 	fsal_status_t fsal_status;
@@ -90,6 +93,7 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	struct gsh_export *exp = NULL;
 	char *qpath;
 	char path[MAXPATHLEN];
+	struct root_op_context root_ctx;
 
 	qres->status = Q_EPERM;
 
@@ -131,6 +135,23 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 			 "Export entry for %s not found", qpath);
 
 		/* entry not found. */
+		goto out;
+	}
+
+	init_root_op_context(&root_ctx, exp, exp->fsal_export, 0, 0,
+			     UNKNOWN_REQUEST);
+
+	op_ctx->ctx_export = exp;
+	op_ctx->fsal_export = exp->fsal_export;
+
+	/* Get creds */
+	if (nfs_req_creds(req) == NFS4ERR_ACCESS) {
+		const char *client_ip = "<unknown client>";
+
+		client_ip = op_ctx->client->hostaddr_str;
+		LogInfo(COMPONENT_NFSPROTO,
+			"could not get uid and gid, rejecting client %s",
+			client_ip);
 		goto out;
 	}
 
@@ -177,8 +198,10 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 
 out:
 
-	if (exp != NULL)
+	if (exp != NULL) {
 		put_gsh_export(exp);
+		release_root_op_context();
+	}
 
 	return NFS_REQ_OK;
 }				/* do_rquota_setquota */

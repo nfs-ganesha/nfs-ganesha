@@ -38,6 +38,7 @@
 #include "rquota.h"
 #include "nfs_proto_functions.h"
 #include "export_mgr.h"
+#include "nfs_creds.h"
 
 /**
  * @brief The Rquota getquota function, for all versions.
@@ -57,6 +58,7 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	getquota_rslt *qres = &res->res_rquota_getquota;
 	char path[MAXPATHLEN];
 	int quota_id;
+	struct root_op_context root_ctx;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling RQUOTA_GETQUOTA");
@@ -110,6 +112,23 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
+	init_root_op_context(&root_ctx, exp, exp->fsal_export, 0, 0,
+			     UNKNOWN_REQUEST);
+
+	op_ctx->ctx_export = exp;
+	op_ctx->fsal_export = exp->fsal_export;
+
+	/* Get creds */
+	if (nfs_req_creds(req) == NFS4ERR_ACCESS) {
+		const char *client_ip = "<unknown client>";
+
+		client_ip = op_ctx->client->hostaddr_str;
+		LogInfo(COMPONENT_NFSPROTO,
+			"could not get uid and gid, rejecting client %s",
+			client_ip);
+		goto out;
+	}
+
 	fsal_status =
 	    exp->fsal_export->exp_ops.get_quota(exp->fsal_export,
 					     quota_path, quota_type,
@@ -136,8 +155,10 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out:
 
-	if (exp != NULL)
+	if (exp != NULL) {
 		put_gsh_export(exp);
+		release_root_op_context();
+	}
 
 	return NFS_REQ_OK;
 }				/* rquota_getquota */
