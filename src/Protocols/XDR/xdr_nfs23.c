@@ -1505,8 +1505,62 @@ bool xdr_entryplus3(XDR *xdrs, entryplus3 *objp)
 	return (true);
 }
 
+bool xdr_encode_entryplus3(XDR *xdrs, entryplus3 *objp, const fattr3 *attrs)
+{
+	bool_t next = objp != NULL;
+
+	if (!xdr_bool(xdrs, &next))
+		return false;
+	if (!next)
+		return true;
+
+	if (!xdr_fileid3(xdrs, &objp->fileid))
+		return false;
+	if (!xdr_filename3(xdrs, &objp->name))
+		return false;
+	if (!xdr_cookie3(xdrs, &objp->cookie))
+		return false;
+	if (!xdr_bool(xdrs, &objp->name_attributes.attributes_follow))
+		return false;
+	if (objp->name_attributes.attributes_follow) {
+		if (!xdr_fattr3(xdrs, (fattr3 *) attrs))
+			return false;
+	}
+	if (!xdr_post_op_fh3(xdrs, &objp->name_handle))
+		return false;
+	return true;
+}
+
+void xdr_dirlistplus3_uio_release(struct xdr_uio *uio, u_int flags)
+{
+	int ix;
+
+	LogFullDebug(COMPONENT_NFS_V4,
+		     "Releasing %p, references %"PRIi32", count %d",
+		     uio, uio->uio_references, (int) uio->uio_count);
+
+	if (!(--uio->uio_references)) {
+		for (ix = 0; ix < uio->uio_count; ix++) {
+			gsh_free(uio->uio_vio[ix].vio_base);
+		}
+		gsh_free(uio);
+	}
+}
+
+static inline bool xdr_dirlistplus3_encode(XDR *xdrs, dirlistplus3 *objp)
+{
+	if (!xdr_putbufs(xdrs, objp->uio, UIO_FLAG_NONE)) {
+		objp->uio->uio_release(objp->uio, UIO_FLAG_NONE);
+		return false;
+	}
+	return true;
+}
+
 bool xdr_dirlistplus3(XDR *xdrs, dirlistplus3 *objp)
 {
+	if (objp->uio != NULL)
+		return xdr_dirlistplus3_encode(xdrs, objp);
+
 	if (!xdr_pointer(xdrs, (void **)&objp->entries, sizeof(entryplus3),
 			 (xdrproc_t) xdr_entryplus3))
 		return (false);
