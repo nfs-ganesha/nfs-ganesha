@@ -467,11 +467,17 @@ mdc_get_parent(struct mdcache_fsal_export *export, mdcache_entry_t *entry,
 	 * Never lookup for parent of a root object.
 	 */
 	status = nfs_export_get_root_entry(op_ctx->ctx_export, &root_obj);
-	if (!FSAL_IS_ERROR(status) && &entry->obj_handle == root_obj) {
-		/* This entry is the root of the current export, so we
-		 * should not do lookup of parent at root.
-		 */
-		goto copy_parent_out;
+
+	if (!FSAL_IS_ERROR(status)) {
+		/* Put the ref on root_obj; we're only doing a pointer compare,
+		 * so it's okay */
+		root_obj->obj_ops->put_ref(root_obj);
+		if (&entry->obj_handle == root_obj) {
+			/* This entry is the root of the current export, so we
+			 * should not do lookup of parent at root.
+			 */
+			goto copy_parent_out;
+		}
 	}
 
 	if (entry->fsobj.fsdir.parent.len != 0) {
