@@ -1229,8 +1229,6 @@ static void record_transport_stats(struct transport_stats *t_st,
 	if (tx_err)
 		atomic_add_uint64_t(&t_st->tx_err, tx_err);
 }
-#endif
-#ifdef _USE_9P
 /**
  * @brief record 9P tcp transport stats
  *
@@ -1675,6 +1673,116 @@ static void server_dbus_iostats(struct xfer_op *iop, DBusMessageIter *iter)
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
+/**
+ * @brief Report Client/Export statistics for xfer_op
+ *
+ * struct iostats {
+ *       uint64_t total_ops;
+ *       uint64_t errors;
+ *       double latency;
+ *       uint64_t bytes_transferred;
+ * }
+ *
+ * @param iop   [IN] pointer to xfer op sub-structure of interest
+ * @param iter  [IN] interator in reply stream to fill
+ * @param for_export  [IN] boolean indicating whether it is for an export
+ **/
+
+static void server_dbus_cexop_stats(struct xfer_op *iop, DBusMessageIter *iter,
+				    bool for_export)
+{
+	DBusMessageIter struct_iter;
+	double res = 0.0;
+
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &struct_iter);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &iop->cmd.total);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &iop->cmd.errors);
+	if (for_export) {
+		if (iop->cmd.total)
+			res = (double) (iop->cmd.latency.latency * 0.000001) /
+					(iop->cmd.total);
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
+					       &res);
+	}
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &iop->transferred);
+	dbus_message_iter_close_container(iter, &struct_iter);
+}
+
+/**
+ * @brief Report Client/Export statistics for proto_op
+ *
+ * struct iostats {
+ *       uint64_t total_ops;
+ *       uint64_t errors;
+ *       double latency;
+ * }
+ *
+ * @param iop   [IN] pointer to proto_op sub-structure of interest
+ * @param iter  [IN] interator in reply stream to fill
+ * @param for_export  [IN] boolean indicating whether it is for an export
+ **/
+static void server_dbus_ceop_stats(struct proto_op *op, DBusMessageIter *iter,
+				   bool for_export)
+{
+	DBusMessageIter struct_iter;
+	double res = 0.0;
+
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &struct_iter);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &op->total);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &op->errors);
+	if (for_export) {
+		if (op->total)
+			res = (double) (op->latency.latency / op->total) *
+			       0.000001;
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
+					       &res);
+	}
+	dbus_message_iter_close_container(iter, &struct_iter);
+}
+
+/**
+ * @brief Report Client/Export statistics for layout operations
+ *
+ * struct layout {
+ *       uint64_t total;
+ *       uint64_t errors;
+ *       uint64_t delays;
+ * }
+ *
+ * @param sp   [IN] pointer to nfsv41_stats sub-structure of interest
+ * @param iter  [IN] interator in reply stream to fill
+ * @param for_export  [IN] boolean indicating whether it is for an export
+ **/
+static void server_dbus_celo_stats(struct nfsv41_stats *sp,
+				   DBusMessageIter *iter,
+				   bool for_export)
+{
+	DBusMessageIter struct_iter;
+	uint64_t total, errors, delays;
+
+	total = sp->getdevinfo.total + sp->layout_get.total +
+		sp->layout_commit.total + sp->layout_return.total;
+	errors = sp->getdevinfo.errors + sp->layout_get.errors +
+		sp->layout_commit.errors + sp->layout_return.errors;
+	delays = sp->getdevinfo.delays + sp->layout_get.delays +
+		sp->layout_commit.delays + sp->layout_return.delays;
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &struct_iter);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64, &total);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64, &errors);
+	if (for_export)
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+					       &delays);
+	dbus_message_iter_close_container(iter, &struct_iter);
+}
+
 #ifdef _USE_9P
 static void server_dbus_transportstats(struct transport_stats *tstats,
 				       DBusMessageIter *iter)
@@ -1698,6 +1806,112 @@ static void server_dbus_transportstats(struct transport_stats *tstats,
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 #endif
+
+void server_dbus_client_details(DBusMessageIter *iter,
+				struct gsh_client *client)
+{
+	struct server_stats *svr = NULL;
+	struct gsh_stats *st;
+	dbus_bool_t stats_available;
+	struct timespec last_as_ts = nfs_ServerBootTime;
+
+	svr = container_of(client, struct server_stats, client);
+	st = &svr->st;
+	timespec_add_nsecs(client->last_update, &last_as_ts);
+
+	gsh_dbus_append_timestamp(iter, &last_as_ts);
+
+	stats_available = st->nfsv3 != 0;
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
+				       &stats_available);
+	if (st->nfsv3) {
+		server_dbus_cexop_stats(&st->nfsv3->read, iter, false);
+		server_dbus_cexop_stats(&st->nfsv3->write, iter, false);
+		server_dbus_ceop_stats(&st->nfsv3->cmds, iter, false);
+	}
+
+	stats_available = st->nfsv40 != 0;
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
+				       &stats_available);
+	if (st->nfsv40) {
+		server_dbus_cexop_stats(&st->nfsv40->read, iter, false);
+		server_dbus_cexop_stats(&st->nfsv40->write, iter, false);
+		server_dbus_ceop_stats(&st->nfsv40->compounds, iter, false);
+	}
+
+	stats_available = st->nfsv41 != 0;
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
+				       &stats_available);
+	if (st->nfsv41) {
+		server_dbus_cexop_stats(&st->nfsv41->read, iter, false);
+		server_dbus_cexop_stats(&st->nfsv41->write, iter, false);
+		server_dbus_ceop_stats(&st->nfsv41->compounds, iter, false);
+		server_dbus_celo_stats(st->nfsv41, iter, false);
+	}
+
+	stats_available = st->nfsv42 != 0;
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
+				       &stats_available);
+	if (st->nfsv42) {
+		server_dbus_cexop_stats(&st->nfsv42->read, iter, false);
+		server_dbus_cexop_stats(&st->nfsv42->write, iter, false);
+		server_dbus_ceop_stats(&st->nfsv42->compounds, iter, false);
+		server_dbus_celo_stats(st->nfsv42, iter, false);
+	}
+}
+
+void server_dbus_export_details(DBusMessageIter *iter,
+				struct gsh_export *g_export)
+{
+	struct export_stats *exp_st = NULL;
+	struct gsh_stats *st;
+	dbus_bool_t stats_available;
+	struct timespec last_as_ts = nfs_ServerBootTime;
+
+	exp_st = container_of(g_export, struct export_stats, export);
+	st = &exp_st->st;
+	timespec_add_nsecs(g_export->last_update, &last_as_ts);
+
+	gsh_dbus_append_timestamp(iter, &last_as_ts);
+
+	stats_available = st->nfsv3 != 0;
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
+				       &stats_available);
+	if (st->nfsv3) {
+		server_dbus_cexop_stats(&st->nfsv3->read, iter, true);
+		server_dbus_cexop_stats(&st->nfsv3->write, iter, true);
+		server_dbus_ceop_stats(&st->nfsv3->cmds, iter, true);
+	}
+
+	stats_available = st->nfsv40 != 0;
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
+				       &stats_available);
+	if (st->nfsv40) {
+		server_dbus_cexop_stats(&st->nfsv40->read, iter, true);
+		server_dbus_cexop_stats(&st->nfsv40->write, iter, true);
+		server_dbus_ceop_stats(&st->nfsv40->compounds, iter, true);
+	}
+
+	stats_available = st->nfsv41 != 0;
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
+				       &stats_available);
+	if (st->nfsv41) {
+		server_dbus_cexop_stats(&st->nfsv41->read, iter, true);
+		server_dbus_cexop_stats(&st->nfsv41->write, iter, true);
+		server_dbus_ceop_stats(&st->nfsv41->compounds, iter, true);
+		server_dbus_celo_stats(st->nfsv41, iter, true);
+	}
+
+	stats_available = st->nfsv42 != 0;
+	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
+				       &stats_available);
+	if (st->nfsv42) {
+		server_dbus_cexop_stats(&st->nfsv42->read, iter, true);
+		server_dbus_cexop_stats(&st->nfsv42->write, iter, true);
+		server_dbus_ceop_stats(&st->nfsv42->compounds, iter, true);
+		server_dbus_celo_stats(st->nfsv42, iter, true);
+	}
+}
 
 void server_dbus_total(struct export_stats *export_st, DBusMessageIter *iter)
 {

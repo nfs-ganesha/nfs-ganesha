@@ -1481,6 +1481,41 @@ static struct gsh_dbus_method export_show_exports = {
 };
 
 /**
+ *   DBUS method to detailed client statistics
+ */
+static bool gsh_export_details(DBusMessageIter *args,
+				DBusMessage *reply,
+				DBusError *error)
+{
+	char *errormsg = "OK";
+	bool success = true;
+	DBusMessageIter iter;
+	struct gsh_export *export = NULL;
+
+	dbus_message_iter_init_append(reply, &iter);
+	export = lookup_export(args, &errormsg);
+	if (export == NULL) {
+		success = false;
+		errormsg = "Export ID not found";
+	}
+	gsh_dbus_status_reply(&iter, success, errormsg);
+	if (success) {
+		server_dbus_export_details(&iter, export);
+		put_gsh_export(export);
+	}
+	return true;
+}
+
+static struct gsh_dbus_method export_details = {
+	.name = "GetExportDetails",
+	.method = gsh_export_details,
+	.args = {ID_ARG,
+		STATUS_REPLY,
+		TIMESTAMP_REPLY,
+		CE_STATS_REPLY,
+		END_ARG_LIST}
+};
+/**
  * @brief Reset stat counters for all exports
  */
 void reset_export_stats(void)
@@ -2679,6 +2714,7 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&v3_full_statistics,
 	&v4_full_statistics,
 	&auth_statistics,
+	&export_details,
 	NULL
 };
 

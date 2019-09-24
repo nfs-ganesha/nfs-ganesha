@@ -142,6 +142,12 @@ class RetrieveExportStats():
         stats_state = self.exportmgrobj.get_dbus_method("GetAuthStats",
                                                         self.dbus_exportstats_name)
         return DumpAuth(stats_state())
+    # Export Details
+    def export_details_stats(self, export_id):
+        stats_op = self.exportmgrobj.get_dbus_method("GetExportDetails",
+                                 self.dbus_exportstats_name)
+        return ExportDetails(stats_op(export_id))
+
 
 class RetrieveClientStats():
     def __init__(self):
@@ -167,6 +173,11 @@ class RetrieveClientStats():
         stats_op = self.clientmgrobj.get_dbus_method("ShowClients",
                                                      self.dbus_clientmgr_name)
         return Clients(stats_op())
+    # Clients specific stats
+    def client_details_stats(self, ip):
+        stats_op = self.clientmgrobj.get_dbus_method("GetClientDetails",
+                          self.dbus_clientstats_name)
+        return ClientDetails(stats_op(ip))
 
 class Clients():
     def __init__(self, clients):
@@ -186,6 +197,7 @@ class Clients():
                        "\n\tNFSv4.2 stats available: " + str(client[7]) +
                        "\n\t9P stats available: " + str(client[8]))
         return output
+
 class DelegStats():
     def __init__(self, stats):
         self.curtime = time.time()
@@ -208,6 +220,65 @@ class DelegStats():
                 "\nCurrent Recalls: " + str(self.curr_recall) +
                 "\nCurrent Failed Recalls: " + str(self.fail_recall) +
                 "\nCurrent Number of Revokes: " + str(self.num_revokes))
+
+class ClientDetails():
+    def __init__(self, stats):
+        self.stats = stats
+        self.status = stats[1]
+        if stats[1] == "OK":
+            self.timestamp = (stats[2][0], stats[2][1])
+    def __str__(self):
+	output = ""
+        cnt = 3
+        if self.status != "OK":
+            return ("GANESHA RESPONSE STATUS: " + self.status)
+        else:
+            output += "\nClient last active at: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs"
+            j = 0
+            while j<4:
+                if self.stats[cnt]:
+                    i = 0
+                    if j==0:
+                        output += "\n\t\tNFSv3:"
+                    if j==1:
+                        output += "\n\t\tNFSv4.0:"
+                    if j==2:
+                        output += "\n\t\tNFSv4.1:"
+                    if j==3:
+                        output += "\n\t\tNFSv4.2:"
+                    output += "\n\t     total \t errors     transferred"
+                    while  i<4:
+                        if i==0:
+                            output += "\nREAD :"
+                        if i==1:
+                            output += "\nWRITE:"
+                        if i==2:
+                            output += "\nOther:"
+                        if i==3:
+                            output += "\nLayout:"
+                        output += "%12d" % self.stats[cnt+i+1][0]
+                        output += " %12d" % self.stats[cnt+i+1][1]
+                        if i<2:
+                            output += " %12d" % self.stats[cnt+i+1][2]
+                        if (i==2 and j<2):
+                            i += 1
+                        i += 1
+                    if j<2:
+                        cnt += 4
+                    else:
+                        cnt += 5
+                else:
+                    if j==0:
+                        output += "\n\tNo NFSv3 activity"
+                    if j==1:
+                        output += "\n\tNo NFSv4.0 activity"
+                    if j==2:
+                        output += "\n\tNo NFSv4.1 activity"
+                    if j==3:
+                        output += "\n\tNo NFSv4.2 activity"
+                    cnt += 1
+                j += 1
+            return output
 
 class Export():
     def __init__(self, export):
@@ -232,6 +303,7 @@ class Export():
                 "\n\tNLMv4 stats available: " + str(self.nlmv4_stats_avail) +
                 "\n\tRQUOTA stats available: " + str(self.rquota_stats_avail) +
                 "\n\t9p stats available: " + str(self._9p_stats_avail) + "\n")
+
 class ExportStats():
     def __init__(self, exports):
         self.curtime = time.time()
@@ -251,6 +323,69 @@ class ExportStats():
         return output
     def exportids(self):
         return self.exports.keys()
+
+class ExportDetails():
+    def __init__(self, stats):
+        self.stats = stats
+        self.status = stats[1]
+        if stats[1] == "OK":
+            self.timestamp = (stats[2][0], stats[2][1])
+    def __str__(self):
+	output = ""
+        cnt = 3
+        if self.status != "OK":
+            return ("GANESHA RESPONSE STATUS: " + self.status)
+        else:
+            output += "\nExport last accessed at: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs"
+            j = 0
+            while j<4:
+                if self.stats[cnt]:
+                    i = 0
+                    if j==0:
+                        output += "\n\t\tNFSv3:"
+                    if j==1:
+                        output += "\n\t\tNFSv4.0:"
+                    if j==2:
+                        output += "\n\t\tNFSv4.1:"
+                    if j==3:
+                        output += "\n\t\tNFSv4.2:"
+                    output += "\n\t     total \t errors      latency/delays     transferred"
+                    while  i<4:
+                        if i==0:
+                            output += "\nREAD :"
+                        if i==1:
+                            output += "\nWRITE:"
+                        if i==2:
+                            output += "\nOther:"
+                        if i==3:
+                            output += "\nLayout:"
+                        output += "%12d" % self.stats[cnt+i+1][0]
+                        output += " %12d" % self.stats[cnt+i+1][1]
+                        if (j>1 and i==3):
+                            output += " %12d" % self.stats[cnt+i+1][2]
+                        else:
+                            output += " %18.6f" % self.stats[cnt+i+1][2]
+                        if i<2:
+                            output += " %12d" % self.stats[cnt+i+1][3]
+                        if (i==2 and j<2):
+                            i += 1
+                        i += 1
+                    if j<2:
+                        cnt += 4
+                    else:
+                        cnt += 5
+                else:
+                    if j==0:
+                        output += "\n\tNo NFSv3 activity"
+                    if j==1:
+                        output += "\n\tNo NFSv4.0 activity"
+                    if j==2:
+                        output += "\n\tNo NFSv4.1 activity"
+                    if j==3:
+                        output += "\n\tNo NFSv4.2 activity"
+                    cnt += 1
+                j += 1
+            return output
 
 class GlobalStats():
     def __init__(self, stats):
