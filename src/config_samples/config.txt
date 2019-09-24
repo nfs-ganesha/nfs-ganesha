@@ -576,6 +576,8 @@ MDCACHE / CACHEINODE
 
 	LRU_Run_Interval(uint32, range 1 to 24 * 3600, default 90)
 
+	Cache_FDs(bool, default false)
+
 	FD_Limit_Percent(uint32, range 0 to 100, default 99)
 
 	FD_HWMark_Percent(uint32, range 0 to 100, default 90)

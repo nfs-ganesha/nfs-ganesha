@@ -54,6 +54,9 @@ Chunks_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
 LRU_Run_Interval(uint32, range 1 to 24 * 3600, default 90)
     Base interval in seconds between runs of the LRU cleaner thread.
 
+Cache_FDs(bool, default false)
+    Whether to cache open files
+
 FD_Limit_Percent(uint32, range 0 to 100, default 99)
     The percentage of the system-imposed maximum of file descriptors at which
     Ganesha will deny requests.

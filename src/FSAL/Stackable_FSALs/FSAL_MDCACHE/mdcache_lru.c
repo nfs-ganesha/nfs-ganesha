@@ -1368,7 +1368,8 @@ lru_run(struct fridgethr_context *ctx)
 
 	currentopen = atomic_fetch_size_t(&open_fd_count);
 
-	if (currentopen < lru_state.fds_lowat) {
+	if (currentopen < lru_state.fds_lowat &&
+	    mdcache_param.use_fd_cache) {
 		LogDebug(COMPONENT_CACHE_INODE_LRU,
 			 "FD count is %zd and low water mark is %d: not reaping.",
 			 atomic_fetch_size_t(&open_fd_count),
@@ -1388,7 +1389,13 @@ lru_run(struct fridgethr_context *ctx)
 		size_t workpass = 0;
 		time_t curr_time = time(NULL);
 
-		if (currentopen < lru_state.fds_hiwat &&
+		if (!mdcache_param.use_fd_cache &&
+		    atomic_fetch_uint32_t(&lru_state.fd_state) > FD_LOW &&
+		    currentopen < lru_state.fds_lowat) {
+			LogEvent(COMPONENT_CACHE_INODE_LRU,
+				 "Return to normal fd reaping.");
+			atomic_store_uint32_t(&lru_state.fd_state, FD_LOW);
+		} else if (currentopen < lru_state.fds_hiwat &&
 		    atomic_fetch_uint32_t(&lru_state.fd_state) == FD_LIMIT) {
 			LogEvent(COMPONENT_CACHE_INODE_LRU,
 				 "Count of fd is below high water mark.");
@@ -1821,6 +1828,9 @@ mdcache_lru_pkginit(void)
 	lru_state.prev_fd_count = 0;
 	atomic_store_uint32_t(&lru_state.fd_state, FD_LOW);
 	init_fds_limit();
+
+	LogEvent(COMPONENT_CACHE_INODE_LRU, "Cache_FDs=%s is configured.",
+		 (mdcache_param.use_fd_cache) ? "TRUE" : "FALSE");
 
 	/* Set high and low watermark for cache entries.  XXX This seems a
 	   bit fishy, so come back and revisit this. */
