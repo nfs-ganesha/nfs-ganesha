@@ -19,7 +19,7 @@
 # Author: Jim Lieb <jlieb@panasas.com>
 #-*- coding: utf-8 -*-
 
-from PyQt4 import QtCore, QtDBus
+from PyQt5 import QtCore, QtDBus
 
 ADMIN_OBJECT = '/org/ganesha/nfsd/admin'
 PROP_INTERFACE = 'org.freedesktop.DBus.Properties'

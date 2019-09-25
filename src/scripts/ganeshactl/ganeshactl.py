@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 # ganeshactl.py - PyQt4 GUI tool for admin of nfs-ganesha.
 #
@@ -26,7 +26,7 @@ NFS Ganesha administration tool
 
 import sys
 
-from PyQt4 import QtCore, QtGui, QtDBus
+from PyQt5 import QtCore, QtGui, QtDBus
 from Ganesha.QtUI.ui_main_window import Ui_MainWindow
 from Ganesha.admin import AdminInterface
 from Ganesha.export_mgr import ExportMgr

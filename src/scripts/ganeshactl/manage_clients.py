@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 # manage_clients.py - commandline tool for managing clients of nfs-ganesha.
 #
@@ -22,8 +22,8 @@
 from __future__ import print_function
 import sys
 import time
-from PyQt4 import QtCore, QtDBus
-from PyQt4.QtGui import QApplication
+from PyQt5 import QtCore, QtDBus
+from PyQt5.QtGui import QApplication
 from dbus.mainloop.qt import DBusQtMainLoop
 from Ganesha.client_mgr import ClientMgr
 

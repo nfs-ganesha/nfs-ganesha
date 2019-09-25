@@ -268,7 +268,11 @@ Requires:	python3-dbus
 %if ( 0%{?suse_version} )
 BuildRequires:	python-qt5-devel
 %else
+%if ( 0%{?fedora} >= 31 || 0%{?rhel} >= 8 )
+BuildRequires:	PyQt5-devel
+%else
 BuildRequires:	PyQt4-devel
+%endif
 %endif
 %endif
 

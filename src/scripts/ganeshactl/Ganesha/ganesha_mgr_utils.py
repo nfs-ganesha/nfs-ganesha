@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 # ganesha_mgr_utils.py - commandline tool utils for managing nfs-ganesha.
 #
