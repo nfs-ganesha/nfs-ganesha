@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 # ganesha-admin.py - commandline tool for admin of nfs-ganesha.
 #
@@ -21,8 +21,8 @@
 #-*- coding: utf-8 -*-
 from __future__ import print_function
 import sys
-from PyQt4 import QtCore, QtDBus
-from PyQt4.QtGui import QApplication
+from PyQt5 import QtCore, QtDBus
+from PyQt5.QtGui import QApplication
 from dbus.mainloop.qt import DBusQtMainLoop
 from Ganesha.admin import AdminInterface
 

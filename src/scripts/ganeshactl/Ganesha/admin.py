@@ -19,7 +19,7 @@
 # Author: Jim Lieb <jlieb@panasas.com>
 #-*- coding: utf-8 -*-
 
-from PyQt4 import QtDBus
+from PyQt5 import QtDBus
 
 class AdminInterface(QtDBus.QDBusAbstractInterface):
     '''

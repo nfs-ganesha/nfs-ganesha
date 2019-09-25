@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 # Convert given Linux kernel NFS server exports into Ganesha exports.
 #

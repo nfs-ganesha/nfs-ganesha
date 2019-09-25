@@ -19,9 +19,9 @@
 # Author: Jim Lieb <jlieb@panasas.com>
 #-*- coding: utf-8 -*-
 import sys, time
-from PyQt4.QtCore import *
-from PyQt4 import QtDBus, QtGui
-from PyQt4.QtGui import QColor
+from PyQt5.QtCore import *
+from PyQt5 import QtDBus, QtGui
+from PyQt5.QtGui import QColor
 
 class ExportTableModel(QAbstractTableModel):
     '''

@@ -19,8 +19,8 @@
 # Author: Jim Lieb <jlieb@panasas.com>
 #-*- coding: utf-8 -*-
 from __future__ import print_function
-from PyQt4.QtCore import *
-from PyQt4 import QtGui
+from PyQt5.QtCore import *
+from PyQt5 import QtGui
 from Ganesha.QtUI.ui_log_dialog import Ui_LogSettings
 
 class DebugLevelDelegate(QtGui.QItemDelegate):
