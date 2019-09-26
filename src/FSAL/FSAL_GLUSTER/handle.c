@@ -2020,6 +2020,14 @@ static fsal_status_t glusterfs_reopen2(struct fsal_obj_handle *obj_hdl,
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
+	/* No need to reopen the file if the openflags are same.
+	 * XXX: Compare creds too post using glfs_h_create_open
+	 * atomic fop to create and open in open2 */
+	if (!(openflags & ~(FSAL_O_OPENFLAGS)) &&
+		(old_openflags == openflags)) {
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+
 	status = glusterfs_open_my_fd(myself, openflags, posix_flags, my_fd);
 
 	if (!FSAL_IS_ERROR(status)) {
