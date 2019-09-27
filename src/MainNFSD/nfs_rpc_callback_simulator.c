@@ -148,7 +148,8 @@ static bool nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
 	struct rbt_head *head_rbt;
 	struct hash_data *pdata = NULL;
 	struct rbt_node *pn;
-	char session_id[2 * NFS4_SESSIONID_SIZE];	/* guaranteed to fit */
+	/* guaranteed to fit */
+	char *session_id = alloca(2 * NFS4_SESSIONID_SIZE);
 	nfs41_session_t *session_data;
 	DBusMessageIter iter, sub_iter;
 	struct timespec ts;
