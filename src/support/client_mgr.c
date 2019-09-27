@@ -424,14 +424,14 @@ static bool client_to_dbus(struct gsh_client *cl_node, void *state)
 	struct showclients_state *iter_state =
 	    (struct showclients_state *)state;
 	struct server_stats *cl;
-	char ipaddr[SOCK_NAME_MAX];
+	char *ipaddr = alloca(SOCK_NAME_MAX);
 	DBusMessageIter struct_iter;
 	struct timespec last_as_ts = nfs_ServerBootTime;
 
 	cl = container_of(cl_node, struct server_stats, client);
 
-	if (!sprint_sockip(&cl_node->cl_addrbuf, ipaddr, sizeof(ipaddr)))
-		(void) strlcpy(ipaddr, "<unknown>", sizeof(ipaddr));
+	if (!sprint_sockip(&cl_node->cl_addrbuf, ipaddr, SOCK_NAME_MAX))
+		(void) strlcpy(ipaddr, "<unknown>", SOCK_NAME_MAX);
 
 	timespec_add_nsecs(cl_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->client_iter,
