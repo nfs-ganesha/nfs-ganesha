@@ -1478,7 +1478,7 @@ target_link_libraries(ganesha.nfsd
   ${LTTNG_LIBRARIES}
   "-Wl,--no-undefined"
 )
-
+set_target_properties(ganesha.nfsd PROPERTIES COMPILE_FLAGS "-fPIC")
 install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
 
 ########### next target ###############
