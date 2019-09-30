@@ -47,7 +47,10 @@ Usage: %s set <block-descriptor> [--param value]
        %s set log components --FSAL FULL_DEBUG
        %s set export export_id 14 --pseudo "/nfsroot/export1"
        %s set export export_id 14 client clients '*' --manage-gids true
-""" % (6 * (sys.argv[0],))
+
+       %s get cacheinode
+       %s get cacheinode --Dir_Max
+""" % (8 * (sys.argv[0],))
 
 if len(sys.argv) < 2:
     sys.exit(usage)
@@ -74,6 +77,20 @@ if opcode == "set":
     opairs = zip(keys, values)
     block = BLOCK(names)
 
+elif opcode == "get":
+    (names, pairs) = get_blocks(sys.argv[2:])
+    if not names:
+        sys.exit("no block names")
+    if len(pairs) > 1:
+        sys.exit("only zero or one value for get operations")
+    for key in pairs[::2]:
+        if not key.startswith("--"):
+            sys.exit("some keys are not with -- prefix")
+
+    # remove "--" prefix of keys
+    keys = [key[2:] for key in pairs[::2]]
+    block = BLOCK(names)
+
 elif opcode == "del":
     (names, keys) = get_blocks(sys.argv[2:])
     if not names:
@@ -98,6 +115,10 @@ try:
     if opcode == "set":
         logging.debug("opairs: %s", pprint.pformat(opairs))
         new = block.set_keys(old, opairs)
+    elif opcode == "get":
+        logging.debug("keys: %s", pprint.pformat(keys))
+        value = block.get_keys(old, keys)
+        sys.exit(value)
     else:
         logging.debug("keys: %s", pprint.pformat(keys))
         new = block.del_keys(old, keys)

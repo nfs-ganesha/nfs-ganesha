@@ -67,6 +67,29 @@ class BLOCK(object):
 
         return begin_part + text + end_part
 
+    def get_keys(self, s, opair):
+        validate_blocknames(self.blocknames)
+        match = ppblock.parseWithTabs().scanString(s)
+        block_found = False
+        text = ""
+        for ppr, start, end in match:
+            if block_match(self.blocknames, ppr[0], ppr[1]):
+                match_text = dict(ppr[1].asList())
+                if len(opair) == 0:
+                    for key in match_text:
+                        text = text + "{:<20}".format(key) + "\t\t" + match_text[key] + "\n"
+                    block_found = True
+                    break;
+                else:
+                    if match_text.has_key(opair[0]):
+                        text = match_text[opair[0]]
+                        block_found = True
+                        break;
+        if False == block_found:
+            text = self.blocknames[0] + " not configured"
+
+        return text
+
     def del_keys(self, s, okeys):
         validate_blocknames(self.blocknames)
         validate_opt_keys(okeys)
