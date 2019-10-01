@@ -352,18 +352,6 @@ static uint32_t lzfs_fsal_fs_maxpathlen(struct fsal_export *exp_hdl)
 	return fsal_maxpathlen(info);
 }
 
-/*! \brief Get the lease time for this filesystem
- *
- * \see fsal_api.h for more information
- */
-static struct timespec lzfs_fsal_fs_lease_time(struct fsal_export *exp_hdl)
-{
-	struct fsal_staticfsinfo_t *info;
-
-	info = lzfs_fsal_staticinfo(exp_hdl->fsal);
-	return fsal_lease_time(info);
-}
-
 /*! \brief Get supported ACL types
  *
  * \see fsal_api.h for more information
@@ -404,18 +392,6 @@ static uint32_t lzfs_fsal_fs_umask(struct fsal_export *exp_hdl)
 	return fsal_umask(info);
 }
 
-/*! \brief Get permissions applied to names attributes
- *
- * \see fsal_api.h for more information
- */
-static uint32_t lzfs_fsal_fs_xattr_access_rights(struct fsal_export *exp_hdl)
-{
-	struct fsal_staticfsinfo_t *info;
-
-	info = lzfs_fsal_staticinfo(exp_hdl->fsal);
-	return fsal_xattr_access_rights(info);
-}
-
 /*! \brief Allocate a state_t structure
  *
  * \see fsal_api.h for more information
@@ -453,11 +429,9 @@ void lzfs_fsal_export_ops_init(struct export_ops *ops)
 	ops->fs_maxlink = lzfs_fsal_fs_maxlink;
 	ops->fs_maxnamelen = lzfs_fsal_fs_maxnamelen;
 	ops->fs_maxpathlen = lzfs_fsal_fs_maxpathlen;
-	ops->fs_lease_time = lzfs_fsal_fs_lease_time;
 	ops->fs_acl_support = lzfs_fsal_fs_acl_support;
 	ops->fs_supported_attrs = lzfs_fsal_fs_supported_attrs;
 	ops->fs_umask = lzfs_fsal_fs_umask;
-	ops->fs_xattr_access_rights = lzfs_fsal_fs_xattr_access_rights;
 	ops->alloc_state = lzfs_fsal_alloc_state;
 	ops->free_state = lzfs_fsal_free_state;
 	lzfs_fsal_export_ops_pnfs(ops);

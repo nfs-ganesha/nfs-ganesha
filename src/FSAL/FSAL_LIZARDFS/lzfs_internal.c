@@ -128,7 +128,7 @@ struct lzfs_fsal_handle *lzfs_fsal_new_handle(
 	fsal_obj_handle_init(&result->handle,
 			     &lzfs_export->export,
 			     posix2fsal_type(attr->st_mode));
-	lzfs_fsal_handle_ops_init(lzfs_export, &result->handle.obj_ops);
+	lzfs_fsal_handle_ops_init(lzfs_export, result->handle.obj_ops);
 	result->handle.fsid = posix2fsal_fsid(attr->st_dev);
 	result->handle.fileid = attr->st_ino;
 	result->export = lzfs_export;

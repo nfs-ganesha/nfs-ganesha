@@ -166,15 +166,15 @@ static nfsstat4 lzfs_fsal_ds_handle_read(struct fsal_ds_handle *const ds_hdl,
  * \see fsal_api.h for more information
  */
 static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
-					  struct req_op_context *const req_ctx,
-					  const stateid4 *stateid,
-					  const offset4 offset,
-					  const count4 write_length,
-					  const void *buffer,
-					  const stable_how4 stability_wanted,
-					  count4 *const written_length,
-					  verifier4 const writeverf,
-					  stable_how4 *const stability_got)
+					 struct req_op_context *const req_ctx,
+					 const stateid4 *stateid,
+					 const offset4 offset,
+					 const count4 write_length,
+					 const void *buffer,
+					 const stable_how4 stability_wanted,
+					 count4 * const written_length,
+					 verifier4 * const writeverf,
+					 stable_how4 * const stability_got)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_ds_handle *lzfs_ds;
@@ -227,7 +227,7 @@ static nfsstat4 lzfs_fsal_ds_handle_commit(
 					struct req_op_context *const req_ctx,
 					const offset4 offset,
 					const count4 count,
-					verifier4 const writeverf)
+					verifier4 * const writeverf)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_ds_handle *lzfs_ds;
@@ -284,26 +284,6 @@ static nfsstat4 lzfs_fsal_ds_read_plus(struct fsal_ds_handle *const ds_hdl,
 	return NFS4ERR_NOTSUPP;
 }
 
-/*! \brief Write plus to a data-server handle.
- *
- * \see fsal_api.h for more information
- */
-static nfsstat4 lzfs_fsal_ds_write_plus(struct fsal_ds_handle *const ds_hdl,
-					struct req_op_context *const req_ctx,
-					const stateid4 *stateid,
-					const offset4 offset,
-					const count4 write_length,
-					const void *buffer,
-					const stable_how4 stability_wanted,
-					count4 *const written_length,
-					verifier4 const writeverf,
-					stable_how4 *const stability_got,
-					struct io_info *info)
-{
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS write_plus!");
-	return NFS4ERR_NOTSUPP;
-}
-
 /*! \brief Initialize FSAL specific values for DS handle
  *
  * \see fsal_api.h for more information
@@ -317,7 +297,6 @@ static void lzfs_fsal_dsh_ops_init(struct fsal_dsh_ops *ops)
 	ops->write = lzfs_fsal_ds_handle_write;
 	ops->commit = lzfs_fsal_ds_handle_commit;
 	ops->read_plus = lzfs_fsal_ds_read_plus;
-	ops->write_plus = lzfs_fsal_ds_write_plus;
 }
 
 /*! \brief Create a FSAL data server handle from a wire handle

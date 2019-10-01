@@ -20,7 +20,7 @@
 #include "FSAL/fsal_commonlib.h"
 
 #include "lizardfs/lizardfs_c_api.h"
-#include "lizardfs/lizardfs_fileinfo_cache.h"
+#include "fileinfo_cache.h"
 
 #define LIZARDFS_VERSION(major, minor, micro) \
 				(0x010000 * major + 0x0100 * minor + micro)
@@ -112,12 +112,11 @@ struct lzfs_fsal_ds_handle {
 	liz_fileinfo_entry_t *cache_handle;
 };
 
-#define LZFS_LEASE_TIME				10
 #define LZFS_SUPPORTED_ATTRS						\
 	(ATTR_TYPE | ATTR_SIZE | ATTR_FSID | ATTR_FILEID | ATTR_MODE |	\
 	 ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME |		\
-	 ATTR_CTIME | ATTR_MTIME | ATTR_CHGTIME | ATTR_CHANGE |		\
-	 ATTR_SPACEUSED | ATTR_RAWDEV | ATTR_ACL)
+	 ATTR_CTIME | ATTR_MTIME | ATTR_CHANGE | ATTR_SPACEUSED |	\
+	 ATTR_RAWDEV | ATTR_ACL)
 
 #define LZFS_BIGGEST_STRIPE_COUNT		4096
 #define LZFS_STD_CHUNK_PART_TYPE		0

@@ -46,7 +46,6 @@ static fsal_staticfsinfo_t default_lizardfs_info = {
 	.lock_support_async_block = false,
 	.named_attr = true,
 	.unique_handles = true,
-	.lease_time = {LZFS_LEASE_TIME, 0},
 	.acl_support = FSAL_ACLSUPPORT_ALLOW | FSAL_ACLSUPPORT_DENY,
 	.cansettime = true,
 	.homogenous = true,
@@ -55,7 +54,6 @@ static fsal_staticfsinfo_t default_lizardfs_info = {
 	.maxwrite = FSAL_MAXIOSIZE,
 	.umask = 0,
 	.auth_exportpath_xdev = false,
-	.xattr_access_rights = 0,
 	.pnfs_mds = false,
 	.pnfs_ds = false,
 	.fsal_trace = false,
@@ -65,8 +63,6 @@ static fsal_staticfsinfo_t default_lizardfs_info = {
 
 static struct config_item lzfs_fsal_items[] = {
 	CONF_ITEM_MODE("umask", 0, fsal_staticfsinfo_t, umask),
-	CONF_ITEM_MODE("xattr_access_rights", 0, fsal_staticfsinfo_t,
-			xattr_access_rights),
 	CONF_ITEM_BOOL("link_support", true, fsal_staticfsinfo_t,
 			link_support),
 	CONF_ITEM_BOOL("symlink_support", true, fsal_staticfsinfo_t,
@@ -318,7 +314,7 @@ static fsal_status_t lzfs_fsal_init_config(struct fsal_module *module_in,
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
-	display_fsinfo(&lzfs_module->fs_info);
+	display_fsinfo(&lzfs_module->fsal);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
