@@ -1730,6 +1730,7 @@ typedef struct entry4 entry4;
 
 struct dirlist4 {
 	entry4 *entries;
+	xdr_uio *uio;
 	bool_t eof;
 };
 typedef struct dirlist4 dirlist4;
@@ -6486,8 +6487,20 @@ static inline bool xdr_entry4(XDR *xdrs, entry4 *objp)
 	return true;
 }
 
+static inline bool xdr_dirlist4_encode(XDR *xdrs, dirlist4 *objp)
+{
+	if (!xdr_putbufs(xdrs, objp->uio, UIO_FLAG_NONE)) {
+		objp->uio->uio_release(objp->uio, UIO_FLAG_NONE);
+		return false;
+	}
+	return true;
+}
+
 static inline bool xdr_dirlist4(XDR *xdrs, dirlist4 *objp)
 {
+	if (objp->uio != NULL)
+		return xdr_dirlist4_encode(xdrs, objp);
+
 	if (!xdr_pointer(xdrs,
 	    (void **)&objp->entries, sizeof(entry4),
 	    (xdrproc_t) xdr_entry4))

@@ -90,6 +90,7 @@ struct xdr_attrs_args {
 typedef struct fattr4_dent {
 	char *name;		/* The name of the operation */
 	unsigned int supported;	/* Is this action supported? */
+	unsigned int encoded;	/* Can we encode this attribute? */
 	unsigned int size_fattr4; /* The size of the dedicated attr subtype */
 	unsigned int access;	/* The access type for this attributes */
 	attrmask_t attrmask;	/* attr bit for decoding to attrs */
@@ -309,6 +310,12 @@ int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *, fattr4 *);
 int nfs4_Fattr_Fill_Error(compound_data_t *, fattr4 *, nfsstat4,
 			  struct bitmap4 *, struct xdr_attrs_args *args);
 
+bool xdr_nfs4_fattr_fill_error(XDR *xdrs, struct bitmap4 *req_attrmask,
+			       nfs_cookie4 cookie, component4 *name,
+			       struct xdr_attrs_args *args);
+bool xdr_encode_entry4(XDR *xdrs, struct xdr_attrs_args *args,
+		       struct bitmap4 *req_bitmap, nfs_cookie4 cookie,
+		       component4 *name);
 int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *, struct bitmap4 *,
 			   fattr4 *);
 
