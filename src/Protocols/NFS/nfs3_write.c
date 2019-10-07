@@ -103,8 +103,7 @@ static int nfs3_complete_write(struct nfs3_write_data *data)
 
 static enum xprt_stat nfs3_write_resume(struct svc_req *req)
 {
-	SVCXPRT *xprt = req->rq_xprt;
-	nfs_request_t *reqdata = xprt->xp_u1;
+	nfs_request_t *reqdata = container_of(req, nfs_request_t, svc);
 	struct nfs3_write_data *data = reqdata->proc_data;
 	int rc = data->rc;
 
