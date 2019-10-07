@@ -650,7 +650,7 @@ if(USE_FSAL_GLUSTER)
     set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${GLUSTER_PREFIX}/lib/pkgconfig")
   ENDIF(GLUSTER_PREFIX)
   # pkg_check_modules doesn't fatal error on REQUIRED, so handle it ourselves
-  pkg_check_modules(GFAPI glusterfs-api>=7.3.10.7)
+  pkg_check_modules(GFAPI glusterfs-api>=7.6.6)
   if(NOT GFAPI_FOUND)
     if(USE_FSAL_GLUSTER_REQUIRED)
       message(FATAL_ERROR "Cannot find GLUSTER GFAPI runtime but requested on command line")
