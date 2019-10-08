@@ -222,6 +222,10 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 
 void fridgethr_destroy(struct fridgethr *fr)
 {
+	/* make sure that fridgethr_freeze has released this mutex */
+	PTHREAD_MUTEX_lock(&fr->mtx);
+	PTHREAD_MUTEX_unlock(&fr->mtx);
+
 	PTHREAD_MUTEX_destroy(&fr->mtx);
 	pthread_attr_destroy(&fr->attr);
 	gsh_free(fr->s);
