@@ -45,7 +45,7 @@ fhandle3 *objp;
 
 bool xdr_dirpath(xdrs, objp)
 register XDR *xdrs;
-dirpath *objp;
+mnt3_dirpath *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -61,7 +61,7 @@ dirpath *objp;
 
 bool xdr_name(xdrs, objp)
 register XDR *xdrs;
-name *objp;
+mnt3_name *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -77,7 +77,7 @@ name *objp;
 
 bool xdr_groups(xdrs, objp)
 register XDR *xdrs;
-groups *objp;
+mnt3_groups *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -112,7 +112,7 @@ groupnode *objp;
 
 bool xdr_exports(xdrs, objp)
 register XDR *xdrs;
-exports *objp;
+mnt3_exports *objp;
 {
 
 #if defined(_LP64) || defined(_KERNEL)

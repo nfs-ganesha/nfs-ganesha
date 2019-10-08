@@ -43,8 +43,8 @@
 #include "export_mgr.h"
 
 struct proc_state {
-	exports head;
-	exports tail;
+	mnt3_exports head;
+	mnt3_exports tail;
 	int retval;
 };
 

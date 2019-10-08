@@ -41,32 +41,32 @@ typedef struct {
 	char *fhandle3_val;
 } fhandle3;
 
-typedef char *dirpath;
+typedef char *mnt3_dirpath;
 
-typedef char *name;
+typedef char *mnt3_name;
 
-typedef struct groupnode *groups;
+typedef struct groupnode *mnt3_groups;
 
 struct groupnode {
-	name gr_name;
-	groups gr_next;
+	mnt3_name gr_name;
+	mnt3_groups gr_next;
 };
 typedef struct groupnode groupnode;
 
-typedef struct exportnode *exports;
+typedef struct exportnode *mnt3_exports;
 
 struct exportnode {
-	dirpath ex_dir;
-	groups ex_groups;
-	exports ex_next;
+	mnt3_dirpath ex_dir;
+	mnt3_groups ex_groups;
+	mnt3_exports ex_next;
 };
 typedef struct exportnode exportnode;
 
 typedef struct mountbody *mountlist;
 
 struct mountbody {
-	name ml_hostname;
-	dirpath ml_directory;
+	mnt3_name ml_hostname;
+	mnt3_dirpath ml_directory;
 	mountlist ml_next;
 };
 typedef struct mountbody mountbody;
@@ -107,11 +107,11 @@ typedef struct mountres3 mountres3;
 /* the xdr functions */
 extern bool xdr_mountstat3(XDR *, mountstat3 *);
 extern bool xdr_fhandle3(XDR *, fhandle3 *);
-extern bool xdr_dirpath(XDR *, dirpath *);
-extern bool xdr_name(XDR *, name *);
-extern bool xdr_groups(XDR *, groups *);
+extern bool xdr_dirpath(XDR *, mnt3_dirpath *);
+extern bool xdr_name(XDR *, mnt3_name *);
+extern bool xdr_groups(XDR *, mnt3_groups *);
 extern bool xdr_groupnode(XDR *, groupnode *);
-extern bool xdr_exports(XDR *, exports *);
+extern bool xdr_exports(XDR *, mnt3_exports *);
 extern bool xdr_exportnode(XDR *, exportnode *);
 extern bool xdr_mountlist(XDR *, mountlist *);
 extern bool xdr_mountbody(XDR *, mountbody *);

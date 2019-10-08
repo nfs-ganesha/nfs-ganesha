@@ -75,7 +75,7 @@ typedef union nfs_arg__ {
 	COMPOUND4args arg_compound4;
 
 	/* mnt */
-	dirpath arg_mnt;
+	mnt3_dirpath arg_mnt;
 
 	/* nlm */
 	nlm4_testargs arg_nlm4_test;
@@ -131,7 +131,7 @@ typedef union nfs_res__ {
 
 	/* mount */
 	fhstatus2 res_mnt1;
-	exports res_mntexport;
+	mnt3_exports res_mntexport;
 	mountres3 res_mnt3;
 	mountlist res_dump;
 
