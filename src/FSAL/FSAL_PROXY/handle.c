@@ -1830,7 +1830,7 @@ static fsal_status_t pxy_do_readdir(struct pxy_obj_handle *ph,
 		enum fsal_dir_result cb_rc;
 
 		/* UTF8 name does not include trailing 0 */
-		if (e4->name.utf8string_len > sizeof(name) - 1)
+		if (e4->name.utf8string_len > MAXNAMLEN)
 			return fsalstat(ERR_FSAL_SERVERFAULT, E2BIG);
 
 		if (nfs4_Fattr_To_FSAL_attr(&attrs, &e4->attrs, NULL))
