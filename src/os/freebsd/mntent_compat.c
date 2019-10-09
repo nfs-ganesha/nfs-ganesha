@@ -109,7 +109,6 @@ char *hasmntopt(const struct mntent *mnt, const char *option)
 static void catopt(char *buf, int *pos, size_t size, const char *s1)
 {
 	size_t newlen;
-	char *cp;
 
 	if (s1 == NULL || *s1 == '\0')
 		return;
