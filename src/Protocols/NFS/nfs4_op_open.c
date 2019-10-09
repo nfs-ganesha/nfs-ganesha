@@ -569,10 +569,11 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 	}
 
 	/* This will be updated later if we actually delegate */
-	if (clientid->cid_minorversion == 0)
-		resok->delegation.delegation_type = OPEN_DELEGATE_NONE;
-	else
+	if (clientid->cid_minorversion != 0 &&
+	    (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WANT_DELEG_MASK) != 0)
 		resok->delegation.delegation_type = OPEN_DELEGATE_NONE_EXT;
+	else
+		resok->delegation.delegation_type = OPEN_DELEGATE_NONE;
 
 	/* Client doesn't want a delegation. */
 	if (arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WANT_NO_DELEG) {
