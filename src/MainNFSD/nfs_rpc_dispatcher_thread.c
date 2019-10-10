@@ -1399,5 +1399,7 @@ static void free_nfs_request(struct svc_req *req, enum xprt_stat stat)
 
 	gsh_free(reqdata);
 
+	SVC_RELEASE(xprt, SVC_REF_FLAG_NONE);
+
 	(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 }
