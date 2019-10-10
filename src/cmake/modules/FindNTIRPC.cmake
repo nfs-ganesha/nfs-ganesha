@@ -2,36 +2,75 @@
 # Find the New TIRPC RPC library
 #
 # This module accepts the following optional variables:
-#    NTIRPC_PATH_HINT   = A hint on NTIRPC install path.
+#    NTIRPC_PREFIX   = A hint on NTIRPC install path.
 #
 # This module defines the following variables:
 #    NTIRPC_FOUND       = Was NTIRPC found or not?
 #    NTIRPC_LIBRARY   = The list of libraries to link to when using NTIRPC
 #    NTIRPC_INCLUDE_DIR = The path to NTIRPC include directory(s)
 #
-# On can set NTIRPC_PATH_HINT before using find_package(NTIRPC) and the
+# On can set NTIRPC_PREFIX before using find_package(NTIRPC) and the
 # module with use the PATH as a hint to find NTIRPC.
 #
 # The hint can be given on the command line too:
-#   cmake -DNTIRPC_PATH_HINT=/DATA/ERIC/NTIRPC /path/to/source
+#   cmake -DNTIRPC_PREFIX=/DATA/ERIC/NTIRPC /path/to/source
 
 include(LibFindMacros)
 
-libfind_pkg_detect(NTIRPC libntirpc FIND_PATH netconfig.h PATH_SUFFIXES ntirpc FIND_LIBRARY ntirpc)
+if(NTIRPC_PREFIX)
+	message(STATUS "FindNTIRPC: using PATH HINT: ${NTIRPC_PREFIX}")
+  # Try to make the prefix override the normal paths
+	find_path(NTIRPC_INCLUDE_DIR
+    NAMES rpc/xdr.h
+		PATHS ${NTIRPC_PREFIX}
+    PATH_SUFFIXES include/ntirpc
+    NO_DEFAULT_PATH
+		DOC "The NTIRPC include headers")
+	message("NTIRPC_INCLUDE_DIR ${NTIRPC_INCLUDE_DIR}")
 
-find_library(NTIRPC_TRACEPOINTS ntirpc_tracepoints)
-find_library(NTIRPC_LTTNG ntirpc_lttng)
+	find_path(NTIRPC_LIBRARY_DIR
+    NAMES libntirpc.so
+		PATHS ${NTIRPC_PREFIX}
+    PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE} lib lib64
+    NO_DEFAULT_PATH
+		DOC "The NTIRPC libraries")
+endif()
 
-if (NTIRPC_LIBRARY)
-	libfind_version_header(NTIRPC version.h NTIRPC_VERSION)
-endif (NTIRPC_LIBRARY)
+if (NOT NTIRPC_INCLUDE_DIR)
+	find_path(NTIRPC_INCLUDE_DIR
+    NAMES rpc/xdr.h
+		PATHS ${NTIRPC_PREFIX}
+    PATH_SUFFIXES include/ntirpc
+		DOC "The NTIRPC include headers")
+endif (NOT NTIRPC_INCLUDE_DIR)
+
+if (NOT NTIRPC_LIBRARY_DIR)
+	find_path(NTIRPC_LIBRARY_DIR
+    NAMES libntirpc.so
+		PATHS ${NTIRPC_PREFIX}
+    PATH_SUFFIXES lib/${CMAKE_LIBRARY_ARCHITECTURE} lib lib64
+		DOC "The NTIRPC libraries")
+endif (NOT NTIRPC_LIBRARY_DIR)
+
+find_library(NTIRPC_LIBRARY ntirpc PATHS ${NTIRPC_LIBRARY_DIR} NO_DEFAULT_PATH)
+find_library(NTIRPC_TRACEPOINTS ntirpc_tracepoints PATHS ${NTIRPC_LIBRARY_DIR} NO_DEFAULT_PATH)
+find_library(NTIRPC_LTTNG ntirpc_lttng PATHS ${NTIRPC_LIBRARY_DIR} NO_DEFAULT_PATH)
+
+set(NTIRPC_VERSION_HEADER "${NTIRPC_INCLUDE_DIR}/version.h")
+if (EXISTS ${NTIRPC_VERSION_HEADER})
+	file(READ "${NTIRPC_VERSION_HEADER}" header)
+	string(REGEX REPLACE ".*#[ \t]*define[ \t]*NTIRPC_VERSION[ \t]*\"([^\n]*)\".*" "\\1" match "${header}")
+	set(NTIRPC_VERSION "${match}")
+else()
+	set(NTIRPC_VERSION "0.0.0")
+endif()
 
 # handle the QUIETLY and REQUIRED arguments and set PRELUDE_FOUND to TRUE if
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(NTIRPC
-                                  REQUIRED_VARS NTIRPC_INCLUDE_DIR NTIRPC_LIBRARY
-				  VERSION_VAR NTIRPC_VERSION)
+	REQUIRED_VARS NTIRPC_INCLUDE_DIR NTIRPC_LIBRARY NTIRPC_LTTNG
+	VERSION_VAR NTIRPC_VERSION)
 # VERSION FPHSA options not handled by CMake version < 2.8.2)
 #                                  VERSION_VAR)
 mark_as_advanced(NTIRPC_INCLUDE_DIR)

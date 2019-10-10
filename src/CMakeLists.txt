@@ -1009,6 +1009,7 @@ if (USE_SYSTEM_NTIRPC)
   find_package(NTIRPC ${NTIRPC_MIN_VERSION} REQUIRED)
   if (USE_LTTNG)
     set(NTIRPC_LIBRARY ${NTIRPC_LIBRARY} ${NTIRPC_LTTNG})
+    set(USE_LTTNG_NTIRPC ON)
   endif (USE_LTTNG)
 else (USE_SYSTEM_NTIRPC)
   # Set options for submodule
