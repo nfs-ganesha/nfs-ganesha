@@ -99,10 +99,14 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 
 	status = fsal_internal_get_handle_at(parent_fd, filename, fh,
 					     export_fd);
-	if (FSAL_IS_ERROR(status)) {
-		fsal_internal_close(parent_fd, NULL, 0);
+
+	/* After getting file handle 'fh' we won't be using parent_fd,
+	 * hence we can close parent_fd here.
+	 */
+	fsal_internal_close(parent_fd, NULL, 0);
+
+	if (FSAL_IS_ERROR(status))
 		return status;
-	}
 
 	/* In order to check XDEV, we need to get the fsid from the handle.
 	 * We need to do this before getting attributes in order to have the
@@ -141,8 +145,6 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 	/* get object attributes */
 	status = GPFSFSAL_getattrs(op_ctx->fsal_export, gpfs_fs,
 				   op_ctx, fh, fsal_attr);
-
-	fsal_internal_close(parent_fd, NULL, 0);
 
 	/* lookup complete ! */
 	return status;
