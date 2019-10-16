@@ -1062,8 +1062,7 @@ void complete_nfs4_compound(compound_data_t *data, int status,
 
 static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 {
-	SVCXPRT *xprt = req->rq_xprt;
-	nfs_request_t *reqdata = xprt->xp_u1;
+	nfs_request_t *reqdata = container_of(req, nfs_request_t, svc);
 	nfsstat4 status = NFS4_OK;
 	compound_data_t *data = reqdata->proc_data;
 	enum nfs_req_result result;
@@ -1318,7 +1317,6 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * request might have already been resumed on another worker thread.
 	 */
 	xprt->xp_resume_cb = nfs4_compound_resume;
-	xprt->xp_u1 = reqdata;
 
 	/**********************************************************************
 	 * Now start processing the compound ops.
