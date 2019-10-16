@@ -150,13 +150,13 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 *	nfsstat3 status (BYTES_PER_XDR_UNIT)
 	 *	post_op_attr dir_attributes
 	 *		bool_t attributes_follow
-	 *		struct fattr3 attributes
+	 *		struct fattr3_wire attributes
 	 *	cookieverf3 cookieverf (8 or sizeof(cookieverf3))
 	 */
 	tracker.mem_avail = arg->arg_readdirplus3.maxcount
 				- BYTES_PER_XDR_UNIT
 				- BYTES_PER_XDR_UNIT
-				- sizeof(struct fattr3)
+				- sizeof(struct fattr3_wire)
 				- sizeof(cookieverf3);
 
 	begin_cookie = arg->arg_readdirplus3.cookie;

@@ -178,7 +178,7 @@ typedef struct nfstime3 nfstime3;
  * for attributes, and sizeof(struct fattr3) properly accounts for the
  * space used.
  */
-struct fattr3 {
+struct fattr3_wire {
 	ftype3 type;
 	mode3 mode;
 	nfs3_uint32 nlink;
