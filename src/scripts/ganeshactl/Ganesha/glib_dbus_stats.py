@@ -228,7 +228,7 @@ class ClientDetails():
         if stats[1] == "OK":
             self.timestamp = (stats[2][0], stats[2][1])
     def __str__(self):
-	output = ""
+        output = ""
         cnt = 3
         if self.status != "OK":
             return ("GANESHA RESPONSE STATUS: " + self.status)
@@ -331,7 +331,7 @@ class ExportDetails():
         if stats[1] == "OK":
             self.timestamp = (stats[2][0], stats[2][1])
     def __str__(self):
-	output = ""
+        output = ""
         cnt = 3
         if self.status != "OK":
             return ("GANESHA RESPONSE STATUS: " + self.status)
