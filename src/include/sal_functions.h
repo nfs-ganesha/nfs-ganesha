@@ -946,10 +946,7 @@ struct nfs4_recovery_backend {
 void fs_backend_init(struct nfs4_recovery_backend **);
 void fs_ng_backend_init(struct nfs4_recovery_backend **);
 #ifdef USE_RADOS_RECOV
-int rados_kv_set_param_from_conf(config_file_t, struct config_error_type *);
-void rados_kv_backend_init(struct nfs4_recovery_backend **);
-void rados_ng_backend_init(struct nfs4_recovery_backend **);
-void rados_cluster_backend_init(struct nfs4_recovery_backend **backend);
+int gsh_rados_kv_set_param_from_conf(config_file_t, struct config_error_type *);
 #endif
 
 #endif				/* SAL_FUNCTIONS_H */

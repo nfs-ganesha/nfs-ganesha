@@ -53,7 +53,6 @@
 #include "mdcache.h"
 #endif
 #include "conf_url.h"
-#include "conf_url_rados.h"
 
 /**
  * @brief Mutex protecting shutdown flag.
@@ -579,7 +578,9 @@ static void do_shutdown(void)
 
 	LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
 
+#ifdef USE_RADOS_URLS
 	rados_url_shutdown_watch();
+#endif
 	config_url_shutdown();
 
 #ifdef USE_DBUS

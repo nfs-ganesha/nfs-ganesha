@@ -1486,7 +1486,8 @@ install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
 ########### next target ###############
 
 if (USE_RADOS_RECOV)
-  add_executable(ganesha-rados-grace ./tools/ganesha-rados-grace.c)
+  add_executable(ganesha-rados-grace
+    ./tools/ganesha-rados-grace.c ./support/rados_grace.c)
   include_directories(${RADOS_INCLUDE_DIR})
   target_link_libraries(ganesha-rados-grace
     ganesha_nfsd

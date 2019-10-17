@@ -74,7 +74,6 @@
 #include "mdcache.h"
 #include "common_utils.h"
 #include "nfs_init.h"
-#include "conf_url_rados.h"
 #include <urcu-bp.h>
 
 /**
@@ -446,12 +445,14 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 		return -1;
 
 #ifdef USE_RADOS_RECOV
-	if (rados_kv_set_param_from_conf(parse_tree, err_type) < 0)
+	if (gsh_rados_kv_set_param_from_conf(parse_tree, err_type) < 0)
 		return -1;
 #endif
 
+#ifdef USE_RADOS_URLS
 	if (rados_url_setup_watch() != 0)
 		return -1;
+#endif
 
 	LogEvent(COMPONENT_INIT, "Configuration file successfully parsed");
 

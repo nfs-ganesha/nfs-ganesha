@@ -137,13 +137,6 @@ if(USE_NLM)
   )
 endif(USE_NLM)
 
-if(USE_RADOS_RECOV)
-  set(ganesha_nfsd_OBJS
-    ${ganesha_nfsd_OBJS}
-    $<TARGET_OBJECTS:rados_grace>
-  )
-endif(USE_RADOS_RECOV)
-
 if(USE_9P)
   set(ganesha_nfsd_OBJS
     ${ganesha_nfsd_OBJS}
@@ -160,10 +153,6 @@ target_link_libraries(ganesha_nfsd
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
 )
-
-if(USE_RADOS_RECOV)
-  target_link_libraries(ganesha_nfsd ${RADOS_LIBRARIES})
-endif(USE_RADOS_RECOV)
 
 if(USE_9P_RDMA)
   target_link_libraries(ganesha_nfsd ${MOOSHIKA_LIBRARIES})

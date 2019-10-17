@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <dlfcn.h>
 #include "bsd-base64.h"
 #include "client_mgr.h"
 #include "fsal.h"
@@ -65,12 +66,54 @@ static struct glist_head clid_list = GLIST_HEAD_INIT(clid_list);  /* clients */
 
 static uint32_t	grace_status;
 
-static struct nfs4_recovery_backend *recovery_backend;
+static int default_recovery_init(void)
+{
+	return 0;
+}
+
+static void default_end_grace(void)
+{
+}
+
+static void default_recovery_read_clids(nfs_grace_start_t *gsp,
+					add_clid_entry_hook add_clid_entry,
+					add_rfh_entry_hook add_rfs_entry)
+{
+}
+
+static void default_add_clid(nfs_client_id_t *clientid)
+{
+}
+
+static void default_rm_clid(nfs_client_id_t *clientid)
+{
+}
+
+static void default_add_revoke_fh(nfs_client_id_t *dlr_clid,
+				  nfs_fh4 *dlr_handle)
+{
+}
+
+static struct nfs4_recovery_backend default_recovery_backend = {
+	.recovery_init = default_recovery_init,
+	.end_grace = default_end_grace,
+	.recovery_read_clids = default_recovery_read_clids,
+	.add_clid = default_add_clid,
+	.rm_clid = default_rm_clid,
+	.add_revoke_fh = default_add_revoke_fh,
+};
+
+
+static struct nfs4_recovery_backend *recovery_backend =
+					&default_recovery_backend;
 int32_t reclaim_completes; /* atomic */
 
 static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state(char *release_ip);
 static void nfs_release_v4_clients(char *ip);
+
+
+
 
 clid_entry_t *nfs4_add_clid_entry(char *cl_name)
 {
@@ -638,19 +681,77 @@ static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp)
 						nfs4_add_rfh_entry);
 }
 
+#ifdef USE_RADOS_RECOV
+static struct {
+	void *dl;
+	void (*kv_init)(struct nfs4_recovery_backend **);
+	void (*ng_init)(struct nfs4_recovery_backend **);
+	void (*cluster_init)(struct nfs4_recovery_backend **);
+	int (*kv_set_param)(config_file_t, struct config_error_type *);
+} rados = { NULL,};
+
+static int load_rados_recov(void)
+{
+	rados.dl = dlopen("libganesha_rados_recov.so",
+#if defined(LINUX) && !defined(SANITIZE_ADDRESS)
+			  RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+#elif defined(FREEBSD) || defined(SANITIZE_ADDRESS)
+			  RTLD_NOW | RTLD_LOCAL);
+#endif
+
+	if (rados.dl) {
+		rados.kv_init = dlsym(rados.dl, "rados_kv_backend_init");
+		rados.ng_init = dlsym(rados.dl, "rados_ng_backend_init");
+		rados.cluster_init = dlsym(rados.dl,
+					   "rados_cluster_backend_init");
+		rados.kv_set_param = dlsym(rados.dl,
+					   "rados_kv_set_param_from_conf");
+
+		if (!rados.kv_init || !rados.ng_init || !rados.cluster_init ||
+		    !rados.kv_set_param) {
+			dlclose(rados.dl);
+			rados.dl = NULL;
+			return -1;
+		}
+	} else {
+		return -1;
+	}
+	return 0;
+}
+#endif
+
 static int load_backend(const char *name)
 {
-	if (!strcmp(name, "fs"))
+	if (!strcmp(name, "fs")) {
 		fs_backend_init(&recovery_backend);
 #ifdef USE_RADOS_RECOV
-	else if (!strcmp(name, "rados_kv"))
-		rados_kv_backend_init(&recovery_backend);
-	else if (!strcmp(name, "rados_ng"))
-		rados_ng_backend_init(&recovery_backend);
-	else if (!strcmp(name, "rados_cluster"))
-		rados_cluster_backend_init(&recovery_backend);
+	} else if (!strcmp(name, "rados_kv")) {
+		/*
+		 * we are here because the config (explicitly) calls
+		 * for this recovery class. If we can't do it because
+		 * the package with the libganesha_rados_recovery
+		 * library wasn't installed, then we should return
+		 * an error and eventually die. Because otherwise the
+		 * recovery will fail when it might otherwise succeed.
+		 */
+		if (rados.kv_init)
+			rados.kv_init(&recovery_backend);
+		else
+			return -1;
+	} else if (!strcmp(name, "rados_ng")) {
+		/* likewise */
+		if (rados.ng_init)
+			rados.ng_init(&recovery_backend);
+		else
+			return -1;
+	} else if (!strcmp(name, "rados_cluster")) {
+		/* ditto */
+		if (rados.cluster_init)
+			rados.cluster_init(&recovery_backend);
+		else
+			return -1;
 #endif
-	else if (!strcmp(name, "fs_ng"))
+	} else if (!strcmp(name, "fs_ng"))
 		fs_ng_backend_init(&recovery_backend);
 	else
 		return -1;
@@ -683,6 +784,11 @@ void nfs4_recovery_shutdown(void)
 {
 	if (recovery_backend->recovery_shutdown)
 		recovery_backend->recovery_shutdown();
+#ifdef USE_RADOS_RECOV
+	if (rados.dl)
+		(void) dlclose(rados.dl);
+	rados.dl = NULL;
+#endif
 }
 
 /**
@@ -969,6 +1075,21 @@ restart:
 		}
 		PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
 	}
+}
+
+int gsh_rados_kv_set_param_from_conf(config_file_t parse_tree,
+				     struct config_error_type *err_type)
+{
+#ifdef USE_RADOS_RECOV
+	if (!rados.dl)
+		if (load_rados_recov() == -1)
+			return -1;
+
+	return rados.kv_set_param ?
+		rados.kv_set_param(parse_tree, err_type) : -1;
+#else
+	return -1;
+#endif
 }
 
 /** @} */

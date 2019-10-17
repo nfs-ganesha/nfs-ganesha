@@ -33,15 +33,6 @@ SET(config_parsing_STAT_SRCS
    analyse.h
 )
 
-if(RADOS_URLS)
-  set(config_parsing_STAT_SRCS
-    ${config_parsing_STAT_SRCS}
-    conf_url_rados.c
-    )
-
-  include_directories(${RADOS_INCLUDE_DIR})
-endif(RADOS_URLS)
-
 add_library(config_parsing OBJECT
   ${config_parsing_STAT_SRCS}
   ${BISON_ConfigParser_OUTPUTS}
@@ -50,5 +41,24 @@ add_library(config_parsing OBJECT
 
 add_sanitizers(config_parsing)
 set_target_properties(config_parsing PROPERTIES COMPILE_FLAGS "-fPIC")
+
+if(RADOS_URLS)
+  set(config_parsing_RADOS_SRCS
+    ${config_parsing_RADOS_SRCS}
+    conf_url_rados.c
+    )
+  add_library(ganesha_rados_urls MODULE ${config_parsing_RADOS_SRCS})
+  add_sanitizers(ganesha_rados_urls)
+  target_link_libraries(ganesha_rados_urls
+    ganesha_nfsd
+    ${SYSTEM_LIBRARIES}
+    ${RADOS_LIBRARIES}
+    "-Wl,--no-undefined")
+  include_directories(${RADOS_INCLUDE_DIR})
+  set_target_properties(ganesha_rados_urls PROPERTIES SOVERSION
+    "${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}")
+  install(TARGETS ganesha_rados_urls LIBRARY DESTINATION ${LIB_INSTALL_DIR})
+
+endif(RADOS_URLS)
 
 ########### install files ###############

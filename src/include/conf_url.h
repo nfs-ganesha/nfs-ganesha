@@ -42,4 +42,7 @@ int register_url_provider(struct gsh_url_provider *nurl_p);
 int config_url_fetch(const char *url, FILE **f, char **fbuf);
 void config_url_release(FILE *f, char *fbuf);
 
+int gsh_rados_url_setup_watch(void);
+void gsh_rados_url_shutdown_watch(void);
+
 #endif /* CONF_URL_H */
