@@ -46,12 +46,6 @@ add_library(netgroup_cache OBJECT ${netgroup_cache_SRCS})
 add_sanitizers(netgroup_cache)
 set_target_properties(netgroup_cache PROPERTIES COMPILE_FLAGS "-fPIC")
 
-if (USE_RADOS_RECOV)
-   add_library(rados_grace OBJECT rados_grace.c)
-   include_directories(${RADOS_INCLUDE_DIR})
-   set_target_properties(rados_grace PROPERTIES COMPILE_FLAGS "-fPIC")
-endif(USE_RADOS_RECOV)
-
 ########### next target ###############
 
 SET(support_STAT_SRCS

@@ -21,11 +21,11 @@
 
 #include "config.h"
 #include <regex.h>
+#include <dlfcn.h>
 #include "log.h"
 #include "sal_functions.h"
 
 #include "conf_url.h"
-#include "conf_url_rados.h"
 
 static pthread_rwlock_t url_rwlock = PTHREAD_RWLOCK_INITIALIZER;
 static struct glist_head url_providers;
@@ -71,6 +71,44 @@ static void init_url_regex(void)
 	}
 }
 
+#ifdef RADOS_URLS
+static struct {
+	void *dl;
+	void (*pkginit)(void);
+	int (*setup_watch)(void);
+	void (*shutdown_watch)(void);
+} rados_urls = { NULL,};
+
+static void load_rados_config(void)
+{
+	rados_urls.dl = dlopen("libganesha_rados_urls.so",
+#if defined(LINUX) && !defined(SANITIZE_ADDRESS)
+			      RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+#elif defined(FREEBSD) || defined(SANITIZE_ADDRESS)
+			      RTLD_NOW | RTLD_LOCAL);
+#endif
+
+	if (rados_urls.dl) {
+		rados_urls.pkginit = dlsym(rados_urls.dl,
+					   "conf_url_rados_pkginit");
+		rados_urls.setup_watch = dlsym(rados_urls.dl,
+					       "rados_url_setup_watch");
+		rados_urls.shutdown_watch = dlsym(rados_urls.dl,
+						  "rados_url_shutdown_watch");
+
+		if (!rados_urls.pkginit || !rados_urls.setup_watch ||
+		    !rados_urls.shutdown_watch) {
+			dlclose(rados_urls.dl);
+			rados_urls.dl = NULL;
+			LogCrit(COMPONENT_CONFIG, "Unknown urls backend");
+		}
+	} else {
+		LogCrit(COMPONENT_CONFIG, "Unknown urls backend");
+	}
+}
+
+#endif
+
 /** @brief package initializer
  */
 void config_url_init(void)
@@ -78,7 +116,13 @@ void config_url_init(void)
 	glist_init(&url_providers);
 
 /* init well-known URL providers */
-	conf_url_rados_pkginit();
+#ifdef RADOS_URLS
+	if (!rados_urls.dl)
+		load_rados_config();
+
+	if (rados_urls.pkginit)
+		rados_urls.pkginit();
+#endif
 	init_url_regex();
 }
 
@@ -97,6 +141,31 @@ void config_url_shutdown(void)
 	PTHREAD_RWLOCK_unlock(&url_rwlock);
 
 	regfree(&url_regex);
+
+#ifdef RADOS_URLS
+	if (rados_urls.dl)
+		dlclose(rados_urls.dl);
+	rados_urls.dl = NULL;
+#endif
+}
+
+int gsh_rados_url_setup_watch(void)
+{
+#ifdef RADOS_URLS
+	return rados_urls.setup_watch ? rados_urls.setup_watch() : -1;
+#else
+	return -1;
+#endif
+}
+
+void gsh_rados_url_shutdown_watch(void)
+{
+#ifdef RADOS_URLS
+	if (rados_urls.shutdown_watch)
+		rados_urls.shutdown_watch();
+#else
+	return; /* non-empty fn to avoid compile warning/error */
+#endif
 }
 
 static inline char *match_dup(regmatch_t *m, char *in)

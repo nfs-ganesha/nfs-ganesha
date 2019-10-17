@@ -124,6 +124,9 @@ BuildRequires:	flex
 BuildRequires:	pkgconfig
 BuildRequires:	userspace-rcu-devel
 BuildRequires:	krb5-devel
+%if %{with rados_recov} || %{with rados_urls}
+BuildRequires: librados-devel >= 0.61
+%endif
 %if ( 0%{?suse_version} >= 1330 )
 BuildRequires:  libnsl-devel
 %else
@@ -297,12 +300,24 @@ to the ganesha.nfsd server, it makes it possible to trace using LTTng.
 %package rados-grace
 Summary: The NFS-GANESHA command for managing the RADOS grace database
 Group: Applications/System
-BuildRequires: librados-devel >= 0.61
 Requires: nfs-ganesha = %{version}-%{release}
 
 %description rados-grace
 This package contains the ganesha-rados-grace tool for interacting with the
-database used by the rados_cluster recovery backend.
+database used by the rados_cluster recovery backend and the
+libganesha_rados_grace shared library for using RADOS storage for
+recovery state.
+%endif
+
+%if %{with rados_urls}
+%package rados-urls
+Summary: The NFS-GANESHA library for use with RADOS URLs
+Group: Applications/System
+Requires: nfs-ganesha = %{version}-%{release}
+
+%description rados-urls
+This package contains the libganesha_rados_urls library used for
+handling RADOS URL configurations.
 %endif
 
 # Option packages start here. use "rpmbuild --with gpfs" (or equivalent)
@@ -698,12 +713,17 @@ exit 0
 %if %{with rados_recov}
 %files rados-grace
 %{_bindir}/ganesha-rados-grace
+%{_libdir}/libganesha_rados_recov.so*
 %if %{with man_page}
 %{_mandir}/*/ganesha-rados-grace.8.gz
 %{_mandir}/*/ganesha-rados-cluster-design.8.gz
 %endif
 %endif
 
+%if %{with rados_urls}
+%files rados-urls
+%{_libdir}/libganesha_rados_urls.so*
+%endif
 
 %if %{with 9P}
 %files mount-9P

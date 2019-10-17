@@ -33,21 +33,28 @@ if(USE_9P)
     )
 endif(USE_9P)
 
-if(USE_RADOS_RECOV)
-  set(sal_STAT_SRCS
-    ${sal_STAT_SRCS}
-    recovery/recovery_rados_kv.c
-    recovery/recovery_rados_ng.c
-    recovery/recovery_rados_cluster.c
-    )
-endif(USE_RADOS_RECOV)
-
 add_library(sal OBJECT ${sal_STAT_SRCS})
 add_sanitizers(sal)
 set_target_properties(sal PROPERTIES COMPILE_FLAGS "-fPIC")
 
 if(USE_RADOS_RECOV)
+  set(sal_RADOS_SRCS
+    recovery/recovery_rados_kv.c
+    recovery/recovery_rados_ng.c
+    recovery/recovery_rados_cluster.c
+    ../support/rados_grace.c
+    )
+  add_library(ganesha_rados_recov MODULE ${sal_RADOS_SRCS})
+  add_sanitizers(ganesha_rados_recov)
+  target_link_libraries(ganesha_rados_recov
+    ganesha_nfsd
+    ${SYSTEM_LIBRARIES}
+    ${RADOS_LIBRARIES}
+    "-Wl,--no-undefined")
   include_directories(${RADOS_INCLUDE_DIR})
+  set_target_properties(ganesha_rados_recov PROPERTIES SOVERSION
+    "${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}")
+  install(TARGETS ganesha_rados_recov LIBRARY DESTINATION ${LIB_INSTALL_DIR})
 endif(USE_RADOS_RECOV)
 
 ########### install files ###############
