@@ -112,6 +112,7 @@ char *rados_kv_create_val(nfs_client_id_t *clientid, size_t *size)
 	char cidstr_lenx[5];
 	int total_len, cidstr_len, cidstr_lenx_len, str_client_addr_len;
 	int ret;
+	size_t lsize;
 
 	/* get the caller's IP addr */
 	if (clientid->gsh_client != NULL)
@@ -137,10 +138,10 @@ char *rados_kv_create_val(nfs_client_id_t *clientid, size_t *size)
 			 "snprintf returned unexpected %d", cidstr_lenx_len);
 	}
 
-	*size = str_client_addr_len + 2 + cidstr_lenx_len + 1 + cidstr_len + 2;
+	lsize = str_client_addr_len + 2 + cidstr_lenx_len + 1 + cidstr_len + 2;
 
 	/* hold both long form clientid and IP */
-	val = gsh_malloc(*size);
+	val = gsh_malloc(lsize);
 	memcpy(val, str_client_addr, str_client_addr_len);
 	total_len = str_client_addr_len;
 	memcpy(val + total_len, "-(", 2);
@@ -154,6 +155,9 @@ char *rados_kv_create_val(nfs_client_id_t *clientid, size_t *size)
 	memcpy(val + total_len, ")", 2);
 
 	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]", val);
+
+	if (size)
+		*size = lsize;
 
 	return val;
 }
