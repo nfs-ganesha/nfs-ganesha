@@ -372,7 +372,7 @@ class CacheMgr():
 
         fss = []
         for fs_ in fs_array:
-            filesys1 = FileSys(Path=str(fs[0]),
+            filesys1 = FileSys(Path=str(fs_[0]),
                                MajorDevId=fs_[1],
                                MinorDevId=fs_[2])
             fss.append(filesys1)
