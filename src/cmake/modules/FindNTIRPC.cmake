@@ -69,7 +69,7 @@ endif()
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(NTIRPC
-	REQUIRED_VARS NTIRPC_INCLUDE_DIR NTIRPC_LIBRARY NTIRPC_LTTNG
+	REQUIRED_VARS NTIRPC_INCLUDE_DIR NTIRPC_LIBRARY
 	VERSION_VAR NTIRPC_VERSION)
 # VERSION FPHSA options not handled by CMake version < 2.8.2)
 #                                  VERSION_VAR)
