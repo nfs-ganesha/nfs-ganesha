@@ -1033,6 +1033,9 @@ find_library(LIBURCU urcu-bp)
 if (NOT LIBURCU)
 	message(FATAL_ERROR "userspace-rcu library not found!")
 endif(NOT LIBURCU)
+if (CMAKE_MAJOR_VERSION VERSION_EQUAL 3 AND CMAKE_MINOR_VERSION VERSION_GREATER 14)
+  include(CheckSymbolExists)
+endif(CMAKE_MAJOR_VERSION VERSION_EQUAL 3 AND CMAKE_MINOR_VERSION VERSION_GREATER 14)
 check_symbol_exists(urcu_ref_get_unless_zero urcu/ref.h HAVE_URCU_REF_GET_UNLESS_ZERO)
 
 # All the plumbing in the basement
