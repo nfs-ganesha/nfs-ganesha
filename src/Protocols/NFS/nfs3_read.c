@@ -86,9 +86,9 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 	int i;
 
 	if (data->rc == NFS_REQ_OK) {
-		if (!read_arg->end_of_file) {
-			/** @todo FSF: add a config option for this behavior?
-			*/
+		if (!op_ctx->fsal_export->exp_ops.fs_supports(
+		     op_ctx->fsal_export, fso_compliant_eof_behavior)
+		    && !read_arg->end_of_file) {
 			/*
 			 * NFS requires to set the EOF flag for all reads that
 			 * reach the EOF, i.e., even the ones returning data.

@@ -674,6 +674,7 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_compute_readdir_cookie,
 	fso_whence_is_name,
 	fso_readdir_plus,
+	fso_compliant_eof_behavior,
 } fsal_fsinfo_options_t;
 
 /* The largest maxread and maxwrite value */
@@ -720,6 +721,8 @@ typedef struct fsal_staticfsinfo_t {
 	bool compute_readdir_cookie;
 	bool whence_is_name;
 	bool readdir_plus;	/*< FSAL supports readdir_plus */
+	bool compliant_eof_behavior;	/* FSAL compliant to end-of-file NFS
+					  v3 read behavior. */
 	int32_t expire_time_parent; /*< Expiration time interval in
 				       seconds for parent handle.
 				       If FS gives information about parent
