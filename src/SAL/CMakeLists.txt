@@ -53,7 +53,7 @@ if(USE_RADOS_RECOV)
     "-Wl,--no-undefined")
   include_directories(${RADOS_INCLUDE_DIR})
   set_target_properties(ganesha_rados_recov PROPERTIES SOVERSION
-    "${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}")
+    "${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}")
   install(TARGETS ganesha_rados_recov LIBRARY DESTINATION ${LIB_INSTALL_DIR})
 endif(USE_RADOS_RECOV)
 

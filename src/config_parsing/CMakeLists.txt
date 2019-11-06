@@ -56,7 +56,7 @@ if(RADOS_URLS)
     "-Wl,--no-undefined")
   include_directories(${RADOS_INCLUDE_DIR})
   set_target_properties(ganesha_rados_urls PROPERTIES SOVERSION
-    "${GANESHA_MAJOR_VERSION}.${GANESHA_MINOR_VERSION}")
+    "${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}")
   install(TARGETS ganesha_rados_urls LIBRARY DESTINATION ${LIB_INSTALL_DIR})
 
 endif(RADOS_URLS)
