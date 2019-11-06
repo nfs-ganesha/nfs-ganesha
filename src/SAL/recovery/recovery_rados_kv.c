@@ -311,7 +311,7 @@ static void rados_kv_append_val_rdfh(char *val, char *rdfh, int rdfh_len)
 	strncat(val, rdfhstr, buflen);
 }
 
-int rados_kv_set_param_from_conf(config_file_t parse_tree,
+int rados_load_config_from_parse(config_file_t parse_tree,
 				 struct config_error_type *err_type)
 {
 	(void) load_config_from_parse(parse_tree,

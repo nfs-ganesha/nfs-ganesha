@@ -687,7 +687,8 @@ static struct {
 	void (*kv_init)(struct nfs4_recovery_backend **);
 	void (*ng_init)(struct nfs4_recovery_backend **);
 	void (*cluster_init)(struct nfs4_recovery_backend **);
-	int (*kv_set_param)(config_file_t, struct config_error_type *);
+	int (*load_config_from_parse)(config_file_t,
+				      struct config_error_type *);
 } rados = { NULL,};
 
 static int load_rados_recov(void)
@@ -704,11 +705,11 @@ static int load_rados_recov(void)
 		rados.ng_init = dlsym(rados.dl, "rados_ng_backend_init");
 		rados.cluster_init = dlsym(rados.dl,
 					   "rados_cluster_backend_init");
-		rados.kv_set_param = dlsym(rados.dl,
-					   "rados_kv_set_param_from_conf");
+		rados.load_config_from_parse = dlsym(rados.dl,
+					   "rados_load_config_from_parse");
 
 		if (!rados.kv_init || !rados.ng_init || !rados.cluster_init ||
-		    !rados.kv_set_param) {
+		    !rados.load_config_from_parse) {
 			dlclose(rados.dl);
 			rados.dl = NULL;
 			return -1;
@@ -726,30 +727,11 @@ static int load_backend(const char *name)
 		fs_backend_init(&recovery_backend);
 #ifdef USE_RADOS_RECOV
 	} else if (!strcmp(name, "rados_kv")) {
-		/*
-		 * we are here because the config (explicitly) calls
-		 * for this recovery class. If we can't do it because
-		 * the package with the libganesha_rados_recovery
-		 * library wasn't installed, then we should return
-		 * an error and eventually die. Because otherwise the
-		 * recovery will fail when it might otherwise succeed.
-		 */
-		if (rados.kv_init)
-			rados.kv_init(&recovery_backend);
-		else
-			return -1;
+		rados.kv_init(&recovery_backend);
 	} else if (!strcmp(name, "rados_ng")) {
-		/* likewise */
-		if (rados.ng_init)
-			rados.ng_init(&recovery_backend);
-		else
-			return -1;
+		rados.ng_init(&recovery_backend);
 	} else if (!strcmp(name, "rados_cluster")) {
-		/* ditto */
-		if (rados.cluster_init)
-			rados.cluster_init(&recovery_backend);
-		else
-			return -1;
+		rados.cluster_init(&recovery_backend);
 #endif
 	} else if (!strcmp(name, "fs_ng"))
 		fs_ng_backend_init(&recovery_backend);
@@ -1081,15 +1063,30 @@ int gsh_rados_kv_set_param_from_conf(config_file_t parse_tree,
 				     struct config_error_type *err_type)
 {
 #ifdef USE_RADOS_RECOV
-	if (!rados.dl)
-		if (load_rados_recov() == -1)
+	int need_rados = 0;
+
+	/*
+	 * see if we actually need the rados_recovery shlib loaded
+	 *
+	 * we are here because the config (explicitly) calls
+	 * for this recovery class. If we can't do it because
+	 * the (package with the) libganesha_rados_recovery
+	 * library wasn't installed, then we should return
+	 * an error and eventually die.
+	 */
+	if (!strcmp(nfs_param.nfsv4_param.recovery_backend, "rados_kv") ||
+	    !strcmp(nfs_param.nfsv4_param.recovery_backend, "rados_ng") ||
+	    !strcmp(nfs_param.nfsv4_param.recovery_backend, "rados_cluster"))
+		need_rados = 1;
+
+	if (!rados.dl && need_rados)
+		if (load_rados_recov() < 0)
 			return -1;
 
-	return rados.kv_set_param ?
-		rados.kv_set_param(parse_tree, err_type) : -1;
-#else
-	return -1;
+	if (need_rados)
+		return rados.load_config_from_parse(parse_tree, err_type);
 #endif
+	return 0;
 }
 
 /** @} */
