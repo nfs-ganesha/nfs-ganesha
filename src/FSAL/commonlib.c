@@ -1073,15 +1073,6 @@ static void posix_create_file_system(struct mntent *mnt)
 	struct fsal_filesystem *fs;
 	struct avltree_node *node;
 
-	if (strncasecmp(mnt->mnt_type, "nfs", 3) == 0 ||
-	    strcasecmp(mnt->mnt_type, "autofs") == 0) {
-		LogDebug(COMPONENT_FSAL,
-			 "Ignoring %s because type %s",
-			 mnt->mnt_dir,
-			 mnt->mnt_type);
-		return;
-	}
-
 	fs = gsh_calloc(1, sizeof(*fs));
 
 	fs->path = gsh_strdup(mnt->mnt_dir);
@@ -1293,6 +1284,20 @@ int populate_posix_file_systems(bool force)
 	while ((mnt = getmntent(fp)) != NULL) {
 		if (mnt->mnt_dir == NULL)
 			continue;
+
+		/* stat() on NFS mount points is prone to get stuck in
+		 * kernel due to unavailable NFS servers. Since we don't
+		 * support them anyway, check this early and avoid
+		 * hangs!
+		 */
+		if (strcasecmp(mnt->mnt_type, "nfs") == 0 ||
+		    strcasecmp(mnt->mnt_type, "autofs") == 0) {
+			LogDebug(COMPONENT_FSAL,
+				 "Ignoring %s because type %s",
+				 mnt->mnt_dir,
+				 mnt->mnt_type);
+			continue;
+		}
 
 		if (stat(mnt->mnt_dir, &st) < 0 || !S_ISDIR(st.st_mode)) {
 			continue;
