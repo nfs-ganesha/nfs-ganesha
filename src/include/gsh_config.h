@@ -434,10 +434,18 @@ typedef struct nfs_core_param {
  */
 #define DELEG_RECALL_RETRY_DELAY_DEFAULT 1
 
+enum recovery_backend {
+	RECOVERY_BACKEND_FS,
+	RECOVERY_BACKEND_FS_NG,
+	RECOVERY_BACKEND_RADOS_KV,
+	RECOVERY_BACKEND_RADOS_NG,
+	RECOVERY_BACKEND_RADOS_CLUSTER,
+};
+
 /**
  * @brief Default value of recovery_backend.
  */
-#define RECOVERY_BACKEND_DEFAULT "fs"
+#define RECOVERY_BACKEND_DEFAULT RECOVERY_BACKEND_FS
 
 /**
  * @brief NFSv4 minor versions
@@ -490,7 +498,7 @@ typedef struct nfs_version4_parameter {
 	/** Whether this a pNFS DS server. Defaults to false */
 	bool pnfs_ds;
 	/** Recovery backend */
-	char *recovery_backend;
+	enum recovery_backend recovery_backend;
 	/** List of supported NFSV4 minor versions */
 	unsigned int minor_versions;
 	/** Number of allowed slots in the 4.1 slot table */

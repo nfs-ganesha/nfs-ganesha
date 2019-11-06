@@ -721,23 +721,22 @@ static int load_rados_recov(void)
 }
 #endif
 
-static int load_backend(const char *name)
+const char *recovery_backend_str(enum recovery_backend recovery_backend)
 {
-	if (!strcmp(name, "fs")) {
-		fs_backend_init(&recovery_backend);
-#ifdef USE_RADOS_RECOV
-	} else if (!strcmp(name, "rados_kv")) {
-		rados.kv_init(&recovery_backend);
-	} else if (!strcmp(name, "rados_ng")) {
-		rados.ng_init(&recovery_backend);
-	} else if (!strcmp(name, "rados_cluster")) {
-		rados.cluster_init(&recovery_backend);
-#endif
-	} else if (!strcmp(name, "fs_ng"))
-		fs_ng_backend_init(&recovery_backend);
-	else
-		return -1;
-	return 0;
+	switch (recovery_backend) {
+	case RECOVERY_BACKEND_FS:
+		return "fs";
+	case RECOVERY_BACKEND_FS_NG:
+		return "fs_ng";
+	case RECOVERY_BACKEND_RADOS_KV:
+		return "rados_kv";
+	case RECOVERY_BACKEND_RADOS_NG:
+		return "rados_ng";
+	case RECOVERY_BACKEND_RADOS_CLUSTER:
+		return "rados_cluster";
+	}
+
+	return "Unknown recovery backend";
 }
 
 /**
@@ -749,10 +748,38 @@ static int load_backend(const char *name)
  */
 int nfs4_recovery_init(void)
 {
-	if (load_backend(nfs_param.nfsv4_param.recovery_backend)) {
-		LogCrit(COMPONENT_CLIENTID, "Unknown recovery backend");
+	LogInfo(COMPONENT_CLIENTID, "Recovery Backend Init for %s",
+		recovery_backend_str(nfs_param.nfsv4_param.recovery_backend));
+
+	switch (nfs_param.nfsv4_param.recovery_backend) {
+	case RECOVERY_BACKEND_FS:
+		fs_backend_init(&recovery_backend);
+		break;
+	case RECOVERY_BACKEND_FS_NG:
+		fs_ng_backend_init(&recovery_backend);
+		break;
+#ifdef USE_RADOS_RECOV
+	case RECOVERY_BACKEND_RADOS_KV:
+		rados.kv_init(&recovery_backend);
+		break;
+	case RECOVERY_BACKEND_RADOS_NG:
+		rados.ng_init(&recovery_backend);
+		break;
+	case RECOVERY_BACKEND_RADOS_CLUSTER:
+		rados.cluster_init(&recovery_backend);
+		break;
+#else
+	case RECOVERY_BACKEND_RADOS_KV:
+	case RECOVERY_BACKEND_RADOS_NG:
+	case RECOVERY_BACKEND_RADOS_CLUSTER:
+#endif
+	default:
+		LogCrit(COMPONENT_CLIENTID, "Unsupported Backend %s",
+			recovery_backend_str(
+				nfs_param.nfsv4_param.recovery_backend));
 		return -ENOENT;
 	}
+
 	return recovery_backend->recovery_init();
 }
 
@@ -1059,34 +1086,39 @@ restart:
 	}
 }
 
-int gsh_rados_kv_set_param_from_conf(config_file_t parse_tree,
-				     struct config_error_type *err_type)
+int load_recovery_param_from_conf(config_file_t parse_tree,
+				  struct config_error_type *err_type)
 {
+	switch (nfs_param.nfsv4_param.recovery_backend) {
+	case RECOVERY_BACKEND_FS:
+	case RECOVERY_BACKEND_FS_NG:
+		return 0;
+
+	case RECOVERY_BACKEND_RADOS_KV:
+	case RECOVERY_BACKEND_RADOS_NG:
+	case RECOVERY_BACKEND_RADOS_CLUSTER:
 #ifdef USE_RADOS_RECOV
-	int need_rados = 0;
-
-	/*
-	 * see if we actually need the rados_recovery shlib loaded
-	 *
-	 * we are here because the config (explicitly) calls
-	 * for this recovery class. If we can't do it because
-	 * the (package with the) libganesha_rados_recovery
-	 * library wasn't installed, then we should return
-	 * an error and eventually die.
-	 */
-	if (!strcmp(nfs_param.nfsv4_param.recovery_backend, "rados_kv") ||
-	    !strcmp(nfs_param.nfsv4_param.recovery_backend, "rados_ng") ||
-	    !strcmp(nfs_param.nfsv4_param.recovery_backend, "rados_cluster"))
-		need_rados = 1;
-
-	if (!rados.dl && need_rados)
-		if (load_rados_recov() < 0)
+		/*
+		 * see if we actually need the rados_recovery shlib loaded
+		 *
+		 * we are here because the config (explicitly) calls
+		 * for this recovery class. If we can't do it because
+		 * the (package with the) libganesha_rados_recovery
+		 * library wasn't installed, then we should return
+		 * an error and eventually die.
+		 */
+		if (!rados.dl && load_rados_recov() < 0)
 			return -1;
 
-	if (need_rados)
 		return rados.load_config_from_parse(parse_tree, err_type);
 #endif
-	return 0;
+	default:
+		LogCrit(COMPONENT_CLIENTID, "Unsupported Backend %s",
+			recovery_backend_str(
+				nfs_param.nfsv4_param.recovery_backend));
+	}
+
+	return -1;
 }
 
 /** @} */

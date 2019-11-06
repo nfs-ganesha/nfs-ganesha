@@ -444,10 +444,8 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	if (mdcache_set_param_from_conf(parse_tree, err_type) < 0)
 		return -1;
 
-#ifdef USE_RADOS_RECOV
-	if (gsh_rados_kv_set_param_from_conf(parse_tree, err_type) < 0)
+	if (load_recovery_param_from_conf(parse_tree, err_type) < 0)
 		return -1;
-#endif
 
 #ifdef USE_RADOS_URLS
 	if (rados_url_setup_watch() != 0)

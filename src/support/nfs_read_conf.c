@@ -253,6 +253,16 @@ static struct config_item_list minor_versions[] = {
 	CONFIG_LIST_TOK("2", NFSV4_MINOR_VERSION_TWO),
 	CONFIG_LIST_EOL
 };
+
+static struct config_item_list recovery_backend_types[] = {
+	CONFIG_LIST_TOK("fs",			RECOVERY_BACKEND_FS),
+	CONFIG_LIST_TOK("fs_ng",		RECOVERY_BACKEND_FS_NG),
+	CONFIG_LIST_TOK("rados_kv",		RECOVERY_BACKEND_RADOS_KV),
+	CONFIG_LIST_TOK("rados_ng",		RECOVERY_BACKEND_RADOS_NG),
+	CONFIG_LIST_TOK("rados_cluster",	RECOVERY_BACKEND_RADOS_CLUSTER),
+	CONFIG_LIST_EOL
+};
+
 static struct config_item version4_params[] = {
 	CONF_ITEM_BOOL("Graceless", false,
 		       nfs_version4_parameter, graceless),
@@ -279,9 +289,9 @@ static struct config_item version4_params[] = {
 		       nfs_version4_parameter, pnfs_mds),
 	CONF_ITEM_BOOL("PNFS_DS", true,
 		       nfs_version4_parameter, pnfs_ds),
-	CONF_ITEM_STR("RecoveryBackend", 1, MAXPATHLEN,
-		      RECOVERY_BACKEND_DEFAULT,
-		      nfs_version4_parameter, recovery_backend),
+	CONF_ITEM_TOKEN("RecoveryBackend", RECOVERY_BACKEND_DEFAULT,
+			recovery_backend_types, nfs_version4_parameter,
+			recovery_backend),
 	CONF_ITEM_LIST("minor_versions", NFSV4_MINOR_VERSION_ALL,
 		       minor_versions, nfs_version4_parameter, minor_versions),
 	CONF_ITEM_UI32("slot_table_size", 1, 1024, NFS41_NB_SLOTS_DEF,

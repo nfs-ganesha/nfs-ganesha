@@ -896,6 +896,8 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *, nfs_fh4 *);
 void nfs4_record_revoke(nfs_client_id_t *, nfs_fh4 *);
 
 /* Recovery backend management */
+enum recovery_backend;
+const char *recovery_backend_str(enum recovery_backend recovery_backend);
 int nfs4_recovery_init(void);
 void nfs4_recovery_shutdown(void);
 
@@ -945,9 +947,7 @@ struct nfs4_recovery_backend {
 
 void fs_backend_init(struct nfs4_recovery_backend **);
 void fs_ng_backend_init(struct nfs4_recovery_backend **);
-#ifdef USE_RADOS_RECOV
-int gsh_rados_kv_set_param_from_conf(config_file_t, struct config_error_type *);
-#endif
+int load_recovery_param_from_conf(config_file_t, struct config_error_type *);
 
 #endif				/* SAL_FUNCTIONS_H */
 
