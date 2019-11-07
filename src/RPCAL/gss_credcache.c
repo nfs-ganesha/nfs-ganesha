@@ -287,6 +287,7 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 		printerr(0,
 			 "ERROR: %s while initializing credential cache '%s'\n",
 			 k5err, cc_name);
+		goto out;
 	}
 	code = krb5_cc_store_cred(context, ccache, &my_creds);
 	if (code != 0) {
