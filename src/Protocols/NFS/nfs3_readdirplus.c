@@ -137,13 +137,13 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_readdir3.READDIR3res_u.resfail.dir_attributes.attributes_follow
 		= FALSE;
 
+	memset(&tracker, 0, sizeof(tracker));
+
 	if (op_ctx_export_has_option(EXPORT_OPTION_NO_READDIR_PLUS)) {
 		res->res_readdirplus3.status = NFS3ERR_NOTSUPP;
 		LogDebug(COMPONENT_NFS_READDIR, "Request not supported");
 		goto out;
 	}
-
-	memset(&tracker, 0, sizeof(tracker));
 
 	/* Figure out how much memory we have available for the dirlist3.
 	 * Subtract:
