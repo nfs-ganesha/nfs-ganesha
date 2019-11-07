@@ -298,7 +298,7 @@ int foreach_gsh_client(bool(*cb) (struct gsh_client *cl, void *state),
 static bool arg_ipaddr(DBusMessageIter *args, sockaddr_t *sp, char **errormsg)
 {
 	char *client_addr;
-	unsigned char cl_addrbuf[16];
+	unsigned char cl_addrbuf[sizeof(struct in6_addr)];
 	bool success = true;
 
 	/* XXX AF_VSOCK addresses are not self-describing--and one might
@@ -316,11 +316,11 @@ static bool arg_ipaddr(DBusMessageIter *args, sockaddr_t *sp, char **errormsg)
 		if (inet_pton(AF_INET, client_addr, cl_addrbuf) == 1) {
 			sp->ss_family = AF_INET;
 			memcpy(&((struct sockaddr_in *)sp)->sin_addr,
-			       cl_addrbuf, sizeof(struct sockaddr_in));
+			       cl_addrbuf, sizeof(struct in_addr));
 		} else if (inet_pton(AF_INET6, client_addr, cl_addrbuf) == 1) {
 			sp->ss_family = AF_INET6;
 			memcpy(&((struct sockaddr_in6 *)sp)->sin6_addr,
-			       cl_addrbuf, sizeof(struct sockaddr_in6));
+			       cl_addrbuf, sizeof(struct in6_addr));
 		} else {
 			success = false;
 			*errormsg = "can't decode client address";
