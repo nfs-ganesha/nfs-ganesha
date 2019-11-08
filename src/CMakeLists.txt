@@ -20,7 +20,7 @@ set(GANESHA_MAJOR_VERSION 3)
 # Minor version is blank for development.  On release, it becomes ".0".  On a
 # stable maintenance branch, this becomes ".N" where N is monotonically
 # increasing starting at 1. Remember to include the "." !!
-set(GANESHA_MINOR_VERSION )
+set(GANESHA_MINOR_VERSION .0)
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 set(GANESHA_BUILD_RELEASE 1)
@@ -43,7 +43,7 @@ ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQU
 # Extra version is for naming development/RC.  It is blank in master/stable branches
 # so it can be available to end-users to name local variants/versions
 # If used, it is always of the form "-whateveryouwant"
-set(GANESHA_EXTRA_VERSION -rc5)
+set(GANESHA_EXTRA_VERSION )
 
 set(GANESHA_VERSION ${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}${GANESHA_EXTRA_VERSION})
 set(GANESHA_BASE_VERSION ${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION})
