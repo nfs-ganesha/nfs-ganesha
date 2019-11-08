@@ -485,20 +485,6 @@ static int pxy_connect(struct pxy_export *pxy_exp,
 	int sock;
 	int socklen;
 
-	if (pxy_exp->info.use_privileged_client_port) {
-		int priv_port = 0;
-
-		sock = rresvport_af(&priv_port, dest->ss_family);
-		if (sock < 0)
-			LogCrit(COMPONENT_FSAL,
-				"Cannot create TCP socket on privileged port");
-	} else {
-		sock = socket(dest->ss_family, SOCK_STREAM, IPPROTO_TCP);
-		if (sock < 0)
-			LogCrit(COMPONENT_FSAL, "Cannot create TCP socket - %d",
-				errno);
-	}
-
 	switch (dest->ss_family) {
 	case AF_INET:
 		((struct sockaddr_in *)dest)->sin_port = htons(port);
@@ -511,8 +497,21 @@ static int pxy_connect(struct pxy_export *pxy_exp,
 	default:
 		LogCrit(COMPONENT_FSAL, "Unknown address family %d",
 			dest->ss_family);
-		close(sock);
 		return -1;
+	}
+
+	if (pxy_exp->info.use_privileged_client_port) {
+		int priv_port = 0;
+
+		sock = rresvport_af(&priv_port, dest->ss_family);
+		if (sock < 0)
+			LogCrit(COMPONENT_FSAL,
+				"Cannot create TCP socket on privileged port");
+	} else {
+		sock = socket(dest->ss_family, SOCK_STREAM, IPPROTO_TCP);
+		if (sock < 0)
+			LogCrit(COMPONENT_FSAL, "Cannot create TCP socket - %d",
+				errno);
 	}
 
 	if (sock >= 0) {
