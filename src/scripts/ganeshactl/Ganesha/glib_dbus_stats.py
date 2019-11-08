@@ -337,6 +337,7 @@ class ExportDetails():
             return ("GANESHA RESPONSE STATUS: " + self.status)
         else:
             output += "\nExport last accessed at: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs"
+            output += "\n   Latency is in milliseconds for Read/Write/Other Operations"
             j = 0
             while j<4:
                 if self.stats[cnt]:
@@ -714,7 +715,7 @@ class DumpFULLV3Stats():
             output += "NFSv3 Detailed statistics \n"
             output += "Stats collected since: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs\n"
             output += "Duration: " + "%.10f" % self.duration + " seconds\n"
-            output += "\nOperation Details                         |  Operation Latency           "
+            output += "\nOperation Details                         |  Operation Latency (in milliseconds)"
             output += "\n==========================================|========================================"
             output += "\nName            Total     Error      Dups |       Avg          Min           Max   "
             i = 0
@@ -747,7 +748,7 @@ class DumpFULLV4Stats():
             output += "NFSv4 Detailed statistics \n"
             output += "Stats collected since: " + time.ctime(self.stats[2][0]) + str(self.stats[2][1]) + " nsecs\n"
             output += "Duration: " + "%.10f" % self.duration + " seconds\n"
-            output += "\nOperation Details                            |  Operation Latency                     "
+            output += "\nOperation Details                            |  Operation Latency (in milliseconds)"
             output += "\n=============================================|========================================"
             output += "\nName                        Total     Error  |       Avg          Min           Max   "
             i = 0
