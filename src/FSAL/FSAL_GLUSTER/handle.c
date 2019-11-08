@@ -3053,7 +3053,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 
 		retval = clock_gettime(CLOCK_REALTIME, &timestamp);
 		if (retval != 0) {
-			status = gluster2fsal_error(retval);
+			status = gluster2fsal_error(errno);
 			goto out;
 		}
 		buffxstat.buffstat.st_mtim = timestamp;
