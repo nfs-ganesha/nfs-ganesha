@@ -1938,9 +1938,9 @@ int cbgetattr_impl(struct fsal_obj_handle *obj,
 	 */
 	PTHREAD_MUTEX_lock(&cbg_ctx->clid->cid_mutex);
 	if (!reserve_lease(cbg_ctx->clid)) {
+		PTHREAD_MUTEX_unlock(&cbg_ctx->clid->cid_mutex);
 		gsh_free(cbg_ctx);
 		*cb_state = CB_GETATTR_FAILED;
-		PTHREAD_MUTEX_unlock(&cbg_ctx->clid->cid_mutex);
 		goto out;
 	}
 	PTHREAD_MUTEX_unlock(&cbg_ctx->clid->cid_mutex);
