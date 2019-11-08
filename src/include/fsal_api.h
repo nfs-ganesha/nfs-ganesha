@@ -303,9 +303,12 @@ struct state_t;
  *
  * Increment this whenever any part of the existing API is changed,
  * e.g.  the argument list changed or a method is removed.
+ *
+ * Technically this should also change if the libganesha_nfsd.so exported API
+ * changes.
  */
 
-#define FSAL_MAJOR_VERSION 9
+#define FSAL_MAJOR_VERSION 10
 
 /**
  * @brief Minor Version
