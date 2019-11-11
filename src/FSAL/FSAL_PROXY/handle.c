@@ -2251,7 +2251,7 @@ static fsal_status_t pxy_open2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t st; /* return code of fsal call */
 	char padfilehandle[NFS4_FHSIZE]; /* gotten FH */
 	char owner_val[128];
-	unsigned int owner_len = 0;
+	int owner_len = 0;
 	uint32_t share_access = 0;
 	uint32_t share_deny = 0;
 	openflag4 openhow;
