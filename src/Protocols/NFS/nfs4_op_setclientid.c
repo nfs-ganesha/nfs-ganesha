@@ -317,7 +317,6 @@ enum nfs_req_result nfs4_op_setclientid(struct nfs_argop4 *op,
 		LogCrit(COMPONENT_CLIENTID, "Callback r_addr %s too long",
 			arg_SETCLIENTID4->callback.cb_location.r_addr);
 
-		free_client_id(unconf);
 		res_SETCLIENTID4->status = NFS4ERR_INVAL;
 
 		free_client_id(unconf);
