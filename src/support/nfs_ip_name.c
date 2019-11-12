@@ -151,8 +151,6 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 	char *hn = hostname;
 	hash_error_t hash_rc;
 
-	nfs_ip_name = gsh_malloc(sizeof(nfs_ip_name_t));
-
 	gettimeofday(&tv0, NULL);
 
 	/* Speculatively get the hostname into our caller's buffer... */
