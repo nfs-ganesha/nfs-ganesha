@@ -21,7 +21,7 @@ The configuration file consists of following parts:
 
 Comments
 --------------------------------------------------------------------------------
-Empty lines and lines starting with ‘#’ are comments.::
+Empty lines and lines starting with '#' are comments.::
 
     # This whole line is a comment
     Protocol = TCP; # The rest of this line is a comment
