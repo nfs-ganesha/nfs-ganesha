@@ -134,7 +134,6 @@ static void nfs3_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			  void *write_data, void *caller_data)
 {
 	struct nfs3_write_data *data = caller_data;
-	SVCXPRT *xprt = data->req->rq_xprt;
 	uint32_t flags;
 
 
@@ -168,7 +167,7 @@ static void nfs3_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		/* nfs3_write has already exited, we will need to reschedule
 		 * the request for completion.
 		 */
-		xprt->xp_resume_cb = nfs3_write_resume;
+		data->req->rq_resume_cb = nfs3_write_resume;
 		svc_resume(data->req);
 	}
 }

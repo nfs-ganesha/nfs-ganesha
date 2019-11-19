@@ -179,7 +179,6 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			  void *read_data, void *caller_data)
 {
 	struct nfs3_read_data *data = caller_data;
-	SVCXPRT *xprt = data->req->rq_xprt;
 	uint32_t flags;
 
 	if (ret.major == ERR_FSAL_SHARE_DENIED) {
@@ -209,7 +208,7 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		/* nfs3_read has already exited, we will need to reschedule
 		 * the request for completion.
 		 */
-		xprt->xp_resume_cb = nfs3_read_resume;
+		data->req->rq_resume_cb = nfs3_read_resume;
 		svc_resume(data->req);
 	}
 }

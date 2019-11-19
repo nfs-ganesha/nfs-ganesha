@@ -1143,7 +1143,6 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	nfs_argop4 * const argarray = arg->arg_compound4.argarray.argarray_val;
 	bool drop = false;
 	nfs_request_t *reqdata = container_of(req, nfs_request_t, svc);
-	SVCXPRT *xprt = req->rq_xprt;
 	struct COMPOUND4res *res_compound4;
 	enum nfs_req_result result = NFS_REQ_OK;
 
@@ -1316,7 +1315,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * this now because after we have been suspended, it's too late, the
 	 * request might have already been resumed on another worker thread.
 	 */
-	xprt->xp_resume_cb = nfs4_compound_resume;
+	data->req->rq_resume_cb = nfs4_compound_resume;
 
 	/**********************************************************************
 	 * Now start processing the compound ops.
