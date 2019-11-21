@@ -82,6 +82,7 @@
   fsal_set_credentials;
   fsal_set_credentials_only_one_user;
   fsal_supported_attrs;
+  fsal_test_access;
   fsal_write;
   fsal2posix_openflags;
   fsal2unix_mode;
