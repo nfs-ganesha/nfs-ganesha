@@ -1190,8 +1190,8 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	copy_tag(&res_compound4->tag, &arg->arg_compound4.tag);
 
 	if (res_compound4->tag.utf8string_len > 0) {
-		/* Check if the tag is a valid utf8 string */
-		if (nfs4_utf8string_scan(&res_compound4->tag, UTF8_SCAN_ALL)
+		/* Check if the tag is a valid utf8 string (., .., and / ok) */
+		if (nfs4_utf8string_scan(&res_compound4->tag, UTF8_SCAN_STRICT)
 		    != 0) {
 			char str[LOG_BUFF_LEN];
 			struct display_buffer dspbuf = {sizeof(str), str, str};

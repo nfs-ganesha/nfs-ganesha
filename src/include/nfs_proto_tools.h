@@ -252,31 +252,34 @@ nfsstat4 nfs4_return_one_state(struct fsal_obj_handle *obj,
 			       size_t body_len, const void *body_val,
 			       bool *deleted);
 
-typedef enum {
-	UTF8_SCAN_NONE = 0,	/* do no validation other than size */
-	UTF8_SCAN_NOSLASH = 1,	/* disallow '/' */
-	UTF8_SCAN_NODOT = 2,	/* disallow '.' and '..' */
-	UTF8_SCAN_CKUTF8 = 4,	/* validate utf8 */
-	UTF8_SCAN_PATH = 8,	/* validate path */
-	UTF8_SCAN_NAME = 3,	/* a name (no embedded /, "." or "..") */
-	UTF8_SCAN_ALL = 7,	/* do the whole thing, name+valid utf8 */
-	UTF8_SCAN_SYMLINK = 12	/* a symlink, allow '/', ".", "..", utf8 */
-} utf8_scantype_t;
+#define UTF8_SCAN_NONE    0x00	/* do no validation other than size */
+#define UTF8_SCAN_NOSLASH 0x01	/* disallow '/' */
+#define UTF8_SCAN_NODOT   0x02	/* disallow '.' and '..' */
+#define UTF8_SCAN_CKUTF8  0x04	/* validate utf8 */
+#define UTF8_SCAN_PATH    0x10	/* validate path length */
 
-nfsstat4 path_filter(const char *name, utf8_scantype_t scan);
+/** @todo this will be modified by checking config in a subsequent patch. */
+#define UTF8_SCAN_STRICT UTF8_SCAN_CKUTF8
+
+/* Validate path components, with optional UTF-8 validation */
+#define UTF8_SCAN_PATH_COMP \
+	(UTF8_SCAN_NOSLASH | UTF8_SCAN_NODOT | UTF8_SCAN_STRICT)
+
+nfsstat4 path_filter(const char *name, int scan);
 
 static inline
-nfsstat4 nfs4_utf8string_scan(const utf8string *input, utf8_scantype_t scan)
+nfsstat4 nfs4_utf8string_scan(const utf8string *input, int scan)
 {
 	if (input->utf8string_val == NULL || input->utf8string_len == 0)
 		return NFS4ERR_INVAL;
 
-	if (scan == UTF8_SCAN_NONE)
-		return NFS4_OK;
-
 	if (((scan & UTF8_SCAN_PATH) && input->utf8string_len > MAXPATHLEN) ||
 	    (!(scan & UTF8_SCAN_PATH) && input->utf8string_len > MAXNAMLEN))
 		return NFS4ERR_NAMETOOLONG;
+
+	/* Nothing else to do */
+	if (scan == UTF8_SCAN_NONE || scan == UTF8_SCAN_PATH)
+		return NFS4_OK;
 
 	/* utf8strings are now NUL terminated, so it's ok to call the filter */
 	return path_filter(input->utf8string_val, scan);

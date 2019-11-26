@@ -126,7 +126,7 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Validate and convert the UFT8 objname to a regular string */
 	res_CREATE4->status = nfs4_utf8string_scan(&arg_CREATE4->objname,
-						   UTF8_SCAN_ALL);
+						   UTF8_SCAN_PATH_COMP);
 
 	if (res_CREATE4->status != NFS4_OK)
 		goto out;
@@ -164,11 +164,13 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	/* Create either a symbolic link or a directory */
 	switch (arg_CREATE4->objtype.type) {
 	case NF4LNK:
-		/* Validate the symbolic link content */
+		/* Validate the symbolic link length, specifically do NOT
+		 * validate the content (per RFC 7530 Section 12.4)
+		 */
 		type = SYMBOLIC_LINK;
 		res_CREATE4->status = nfs4_utf8string_scan(
 				&arg_CREATE4->objtype.createtype4_u.linkdata,
-				UTF8_SCAN_SYMLINK);
+				UTF8_SCAN_PATH);
 
 		if (res_CREATE4->status != NFS4_OK)
 			goto out;

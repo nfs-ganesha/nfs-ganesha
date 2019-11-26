@@ -302,7 +302,8 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 			return false;
 		}
 		/* Check if filename is correct */
-		res_OPEN4->status = nfs4_utf8string_scan(utfile, UTF8_SCAN_ALL);
+		res_OPEN4->status =
+			nfs4_utf8string_scan(utfile, UTF8_SCAN_PATH_COMP);
 
 		if (res_OPEN4->status != NFS4_OK)
 			return false;
@@ -367,7 +368,7 @@ static nfsstat4 open4_claim_deleg(OPEN4args *arg, compound_data_t *data)
 		 utfname->utf8string_val);
 
 	/* Check if filename is correct */
-	status = nfs4_utf8string_scan(utfname, UTF8_SCAN_ALL);
+	status = nfs4_utf8string_scan(utfname, UTF8_SCAN_PATH_COMP);
 	if (status != NFS4_OK) {
 		LogDebug(COMPONENT_NFS_V4, "Invalid filename");
 		return status;
@@ -772,7 +773,7 @@ static void open4_ex(OPEN4args *arg,
 		/* Validate the utf8 filename */
 		res_OPEN4->status = nfs4_utf8string_scan(
 						&arg->claim.open_claim4_u.file,
-						UTF8_SCAN_ALL);
+						UTF8_SCAN_PATH_COMP);
 
 		if (res_OPEN4->status != NFS4_OK)
 			goto out;

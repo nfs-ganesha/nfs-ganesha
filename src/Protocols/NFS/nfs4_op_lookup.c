@@ -89,7 +89,7 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 
 	/* Validate and convert the UFT8 objname to a regular string */
 	res_LOOKUP4->status = nfs4_utf8string_scan(&arg_LOOKUP4->objname,
-						   UTF8_SCAN_ALL);
+						   UTF8_SCAN_PATH_COMP);
 
 	if (res_LOOKUP4->status != NFS4_OK)
 		goto out;

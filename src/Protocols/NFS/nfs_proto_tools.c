@@ -3394,7 +3394,7 @@ const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
  *
  */
 
-nfsstat4 path_filter(const char *name, utf8_scantype_t scan)
+nfsstat4 path_filter(const char *name, int scan)
 {
 	const unsigned char *np = (const unsigned char *)name;
 	nfsstat4 status = NFS4_OK;

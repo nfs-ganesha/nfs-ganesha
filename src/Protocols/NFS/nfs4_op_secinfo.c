@@ -89,7 +89,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	 * NFS4ERR_INVAL
 	 */
 	res_SECINFO4->status = nfs4_utf8string_scan(&arg_SECINFO4->name,
-						    UTF8_SCAN_ALL);
+						    UTF8_SCAN_PATH_COMP);
 
 	if (res_SECINFO4->status != NFS4_OK)
 		goto out;
