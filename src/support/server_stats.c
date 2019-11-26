@@ -1807,7 +1807,7 @@ static void server_dbus_transportstats(struct transport_stats *tstats,
 }
 #endif
 
-void server_dbus_client_details(DBusMessageIter *iter,
+void server_dbus_client_io_ops(DBusMessageIter *iter,
 				struct gsh_client *client)
 {
 	struct server_stats *svr = NULL;

@@ -21,7 +21,7 @@ def usage():
     message += " inode | iov3 [export id] | iov4 [export id] | export |"
     message += " total [export id] | fast | pnfs [export id] |"
     message += " fsal <fsal name> | v3_full | v4_full | auth |"
-    message += " client_details <ip address> | export_details <export id>] \n"
+    message += " client_io_ops <ip address> | export_details <export id>] \n"
     message += "To reset stat counters use \n"
     message += "%s reset \n" % (sys.argv[0])
     message += "To enable/disable stat counters use \n"
@@ -37,13 +37,13 @@ else:
 # check arguments
 commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
             'export', 'total', 'fast', 'pnfs', 'fsal', 'reset', 'enable',
-            'disable', 'status', 'v3_full', 'v4_full', 'auth', 'client_details',
+            'disable', 'status', 'v3_full', 'v4_full', 'auth', 'client_io_ops',
             'export_details')
 if command not in commands:
     print("Option '%s' is not correct." % command)
     usage()
 # requires an IP address
-elif command in ('deleg', 'client_details'):
+elif command in ('deleg', 'client_io_ops'):
     if not len(sys.argv) == 3:
         print("Option '%s' must be followed by an ip address." % command)
         usage()
@@ -100,8 +100,8 @@ elif command == "list_clients":
     print(cl_interface.list_clients())
 elif command == "deleg":
     print(cl_interface.deleg_stats(command_arg))
-elif command == "client_details":
-    print(cl_interface.client_details_stats(command_arg))
+elif command == "client_io_ops":
+    print(cl_interface.client_io_ops_stats(command_arg))
 elif command == "iov3":
     print(exp_interface.v3io_stats(command_arg))
 elif command == "iov4":

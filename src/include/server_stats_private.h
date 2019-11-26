@@ -367,7 +367,7 @@ extern struct timespec v3_full_stats_time;
 extern struct timespec v4_full_stats_time;
 
 void server_stats_summary(DBusMessageIter * iter, struct gsh_stats *st);
-void server_dbus_client_details(DBusMessageIter *iter,
+void server_dbus_client_io_ops(DBusMessageIter *iter,
 				struct gsh_client *client);
 void server_dbus_export_details(DBusMessageIter *iter,
 				struct gsh_export *g_export);

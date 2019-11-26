@@ -174,10 +174,10 @@ class RetrieveClientStats():
                                                      self.dbus_clientmgr_name)
         return Clients(stats_op())
     # Clients specific stats
-    def client_details_stats(self, ip):
-        stats_op = self.clientmgrobj.get_dbus_method("GetClientDetails",
+    def client_io_ops_stats(self, ip):
+        stats_op = self.clientmgrobj.get_dbus_method("GetClientIOops",
                           self.dbus_clientstats_name)
-        return ClientDetails(stats_op(ip))
+        return ClientIOops(stats_op(ip))
 
 class Clients():
     def __init__(self, clients):
@@ -221,7 +221,7 @@ class DelegStats():
                 "\nCurrent Failed Recalls: " + str(self.fail_recall) +
                 "\nCurrent Number of Revokes: " + str(self.num_revokes))
 
-class ClientDetails():
+class ClientIOops():
     def __init__(self, stats):
         self.stats = stats
         self.status = stats[1]
