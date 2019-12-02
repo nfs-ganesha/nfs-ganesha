@@ -900,6 +900,10 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			     str_gc_proc(gc->gc_proc));
 		if (no_dispatch)
 			return SVC_STAT(xprt);
+	} else if (no_dispatch) {
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "RPCSEC_GSS no_dispatch=%d", no_dispatch);
+		return SVC_STAT(xprt);
 #endif
 	}
 
