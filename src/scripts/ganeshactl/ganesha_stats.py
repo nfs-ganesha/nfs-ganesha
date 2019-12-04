@@ -21,12 +21,13 @@ def usage():
     message += " inode | iov3 [export id] | iov4 [export id] | export |"
     message += " total [export id] | fast | pnfs [export id] |"
     message += " fsal <fsal name> | v3_full | v4_full | auth |"
-    message += " client_io_ops <ip address> | export_details <export id>] \n"
+    message += " client_io_ops <ip address> | export_details <export id> |"
+    message += " client_all_ops <ip address>] \n"
     message += "To reset stat counters use \n"
     message += "%s reset \n" % (sys.argv[0])
     message += "To enable/disable stat counters use \n"
     message += "%s [enable | disable] [all | nfs | fsal | v3_full | " % (sys.argv[0])
-    message += "v4_full | auth] \n"
+    message += "v4_full | auth | client_all_ops] \n"
     sys.exit(message)
 
 if (len(sys.argv) < 2):
@@ -38,12 +39,12 @@ else:
 commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
             'export', 'total', 'fast', 'pnfs', 'fsal', 'reset', 'enable',
             'disable', 'status', 'v3_full', 'v4_full', 'auth', 'client_io_ops',
-            'export_details')
+            'export_details', 'client_all_ops')
 if command not in commands:
     print("Option '%s' is not correct." % command)
     usage()
 # requires an IP address
-elif command in ('deleg', 'client_io_ops'):
+elif command in ('deleg', 'client_io_ops', 'client_all_ops'):
     if not len(sys.argv) == 3:
         print("Option '%s' must be followed by an ip address." % command)
         usage()
@@ -74,13 +75,13 @@ elif command in ('fsal'):
     command_arg = sys.argv[2]
 elif command in ('enable', 'disable'):
     if not len(sys.argv) == 3:
-        print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth" %
-              command)
+        print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth/client_all_ops" %
+            command)
         usage()
     command_arg = sys.argv[2]
-    if command_arg not in ('all', 'nfs', 'fsal', 'v3_full', 'v4_full', 'auth'):
-        print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth" %
-              command)
+    if command_arg not in ('all', 'nfs', 'fsal', 'v3_full', 'v4_full', 'auth', 'client_all_ops'):
+        print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth/client_all_ops" %
+            command)
         usage()
 elif command == "help":
     usage()
@@ -102,6 +103,8 @@ elif command == "deleg":
     print(cl_interface.deleg_stats(command_arg))
 elif command == "client_io_ops":
     print(cl_interface.client_io_ops_stats(command_arg))
+elif command == "client_all_ops":
+    print(cl_interface.client_all_ops_stats(command_arg))
 elif command == "iov3":
     print(exp_interface.v3io_stats(command_arg))
 elif command == "iov4":

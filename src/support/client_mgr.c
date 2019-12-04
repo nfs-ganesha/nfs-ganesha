@@ -255,6 +255,9 @@ int remove_gsh_client(sockaddr_t *client_ipaddr)
 	if (removed == 0) {
 		server_st = container_of(cl, struct server_stats, client);
 		server_stats_free(&server_st->st);
+		server_stats_allops_free(&server_st->c_all);
+		if (cl->hostaddr_str != NULL)
+			gsh_free(cl->hostaddr_str);
 		gsh_free(server_st);
 	}
 	return removed;
@@ -492,6 +495,27 @@ void reset_client_stats(void)
 					  node_k);
 		clnt = container_of(cl, struct server_stats, client);
 		reset_gsh_stats(&clnt->st);
+		/* reset stats counter for allops structs */
+		reset_gsh_allops_stats(&clnt->c_all);
+	}
+	PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
+}
+
+/* Reset Client specific stats counters for allops
+ */
+void reset_clnt_allops_stats(void)
+{
+	struct avltree_node *client_node;
+	struct gsh_client *cl;
+	struct server_stats *clnt;
+
+	PTHREAD_RWLOCK_rdlock(&client_by_ip.lock);
+	for (client_node = avltree_first(&client_by_ip.t); client_node != NULL;
+	     client_node = avltree_next(client_node)) {
+		cl = avltree_container_of(client_node, struct gsh_client,
+					  node_k);
+		clnt = container_of(cl, struct server_stats, client);
+		reset_gsh_allops_stats(&clnt->c_all);
 	}
 	PTHREAD_RWLOCK_unlock(&client_by_ip.lock);
 }
@@ -533,7 +557,7 @@ static struct gsh_client *lookup_client(DBusMessageIter *args, char **errormsg)
 }
 
 /**
- * DBUS method to detailed client statistics
+ * DBUS method to get client IO ops statistics
  */
 static bool gsh_client_io_ops(DBusMessageIter *args,
 				  DBusMessage *reply,
@@ -568,6 +592,49 @@ static struct gsh_dbus_method cltmgr_client_io_ops = {
 		 STATUS_REPLY,
 		 TIMESTAMP_REPLY,
 		 CE_STATS_REPLY,
+		 END_ARG_LIST}
+};
+
+/**
+ * DBUS method to get all ops statistics for a client
+ */
+static bool gsh_client_all_ops(DBusMessageIter *args,
+				  DBusMessage *reply,
+				  DBusError *error)
+{
+	char *errormsg = "OK";
+	struct gsh_client *client = NULL;
+	bool success = true;
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	if (!nfs_param.core_param.enable_CLNTALLSTATS) {
+		errormsg = "Stat counting for all ops for a client is disabled";
+		success = false;
+	} else {
+		client = lookup_client(args, &errormsg);
+		if (client == NULL) {
+			success = false;
+			errormsg = "Client IP address not found";
+		}
+	}
+
+	gsh_dbus_status_reply(&iter, success, errormsg);
+	if (success) {
+		server_dbus_client_all_ops(&iter, client);
+		put_gsh_client(client);
+	}
+
+	return true;
+}
+
+static struct gsh_dbus_method cltmgr_client_all_ops = {
+	.name = "GetClientAllops",
+	.method = gsh_client_all_ops,
+	.args = {IPADDR_ARG,
+		 STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 CLNT_ALL_OPS_REPLY,
 		 END_ARG_LIST}
 };
 
@@ -969,6 +1036,7 @@ static struct gsh_dbus_method *cltmgr_stats_methods[] = {
 	&cltmgr_show_v41_layouts,
 	&cltmgr_show_delegations,
 	&cltmgr_client_io_ops,
+	&cltmgr_client_all_ops,
 #ifdef _USE_9P
 	&cltmgr_show_9p_io,
 	&cltmgr_show_9p_trans,

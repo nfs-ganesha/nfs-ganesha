@@ -61,6 +61,10 @@ struct nfsv42_stats;
 struct deleg_stats;
 struct _9p_stats;
 
+struct clnt_allops_v3_stats;
+struct clnt_allops_v4_stats;
+struct clnt_allops_nlm4_stats;
+
 struct gsh_stats {
 	struct nfsv3_stats *nfsv3;
 	struct mnt_stats *mnt;
@@ -72,6 +76,13 @@ struct gsh_stats {
 	struct deleg_stats *deleg;
 	struct _9p_stats *_9p;
 };
+
+struct gsh_clnt_allops_stats {
+	struct clnt_allops_v3_stats *nfsv3;
+	struct clnt_allops_v4_stats *nfsv4;
+	struct clnt_allops_nlm_stats *nlm4;
+};
+
 
 /**
  * @brief Server by client IP statistics
@@ -89,6 +100,7 @@ struct gsh_stats {
 
 struct server_stats {
 	struct gsh_stats st;
+	struct gsh_clnt_allops_stats c_all; /* for all ops stats */
 	struct gsh_client client;	/* must be last element! */
 };
 
@@ -197,6 +209,55 @@ CELOSTATS_REPLY,            \
 CEIOSTATS_REPLY,            \
 CELOSTATS_REPLY
 
+
+#define CLNT_V3NLM_OPS_REPLY		\
+{					\
+	.name = "clnt_v3nlm_ops_stats",	\
+	.type = "a(sttt)",		\
+	.direction = "out"		\
+}
+
+#define CLNT_V4_OPS_REPLY		\
+{					\
+	.name = "clnt_v4_ops_stats",	\
+	.type = "a(stt)",		\
+	.direction = "out"		\
+}
+
+#define CLNT_CMP_OPS_REPLY		\
+{					\
+	.name = "clnt_cmp_ops_stats",	\
+	.type = "ttt",			\
+	.direction = "out"		\
+}
+
+#define CLNT_ALL_OPS_REPLY		\
+{					\
+	.name = "clnt_v3",		\
+	.type = "b",			\
+	.direction = "out"		\
+},					\
+CLNT_V3NLM_OPS_REPLY,			\
+{					\
+	.name = "clnt_nlm",		\
+	.type = "b",			\
+	.direction = "out"		\
+},					\
+CLNT_V3NLM_OPS_REPLY,			\
+{					\
+	.name = "clnt_v4",		\
+	.type = "b",			\
+	.direction = "out"		\
+},					\
+CLNT_V4_OPS_REPLY,			\
+{					\
+	.name = "clnt_cmp",		\
+	.type = "b",			\
+	.direction = "out"		\
+},					\
+CLNT_CMP_OPS_REPLY
+
+
 #define TRANSPORT_REPLY    \
 {                          \
 	.name = "rx_bytes",\
@@ -276,6 +337,11 @@ CELOSTATS_REPLY
 },				\
 {                               \
 	.name = "auth_status",  \
+	.type = "b(tt)",        \
+	.direction = "out"      \
+},				\
+{                               \
+	.name = "clnt_allops_status",  \
 	.type = "b(tt)",        \
 	.direction = "out"      \
 }
@@ -369,6 +435,8 @@ extern struct timespec v4_full_stats_time;
 void server_stats_summary(DBusMessageIter * iter, struct gsh_stats *st);
 void server_dbus_client_io_ops(DBusMessageIter *iter,
 				struct gsh_client *client);
+void server_dbus_client_all_ops(DBusMessageIter *iter,
+				struct gsh_client *client);
 void server_dbus_export_details(DBusMessageIter *iter,
 				struct gsh_export *g_export);
 void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter);
@@ -391,9 +459,11 @@ void reset_server_stats(void);
 void reset_export_stats(void);
 void reset_client_stats(void);
 void reset_gsh_stats(struct gsh_stats *st);
+void reset_gsh_allops_stats(struct gsh_clnt_allops_stats *st);
 void reset_v3_full_stats(void);
 void reset_v4_full_stats(void);
 void reset_auth_stats(void);
+void reset_clnt_allops_stats(void);
 
 #ifdef _USE_9P
 void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter);
@@ -409,6 +479,7 @@ extern struct glist_head fsal_list;
 #endif				/* USE_DBUS */
 
 void server_stats_free(struct gsh_stats *statsp);
+void server_stats_allops_free(struct gsh_clnt_allops_stats *statsp);
 
 void server_stats_init(void);
 

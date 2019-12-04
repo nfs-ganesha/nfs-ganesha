@@ -71,6 +71,7 @@ struct timespec fsal_stats_time;
 struct timespec v3_full_stats_time;
 struct timespec v4_full_stats_time;
 struct timespec auth_stats_time;
+struct timespec clnt_allops_stats_time;
 /**
  * @brief Exports are stored in an AVL tree with front-end cache.
  *
@@ -2149,7 +2150,7 @@ static bool stats_status(DBusMessageIter *args,
 {
 	bool success = true;
 	char *errormsg = "OK";
-	DBusMessageIter iter, nfsstatus, fsalstatus;
+	DBusMessageIter iter, nfsstatus, fsalstatus, clnt_allops_status;
 	DBusMessageIter v3_full_status, v4_full_status, authstatus;
 	dbus_bool_t value;
 
@@ -2199,6 +2200,15 @@ static bool stats_status(DBusMessageIter *args,
 	gsh_dbus_append_timestamp(&authstatus, &auth_stats_time);
 	dbus_message_iter_close_container(&iter, &authstatus);
 
+	/* Send info about client allops stats */
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
+						&clnt_allops_status);
+	value = nfs_param.core_param.enable_CLNTALLSTATS;
+	dbus_message_iter_append_basic(&clnt_allops_status, DBUS_TYPE_BOOLEAN,
+						&value);
+	gsh_dbus_append_timestamp(&clnt_allops_status, &clnt_allops_stats_time);
+	dbus_message_iter_close_container(&iter, &clnt_allops_status);
+
 	return true;
 }
 
@@ -2242,6 +2252,7 @@ static bool stats_disable(DBusMessageIter *args,
 		nfs_param.core_param.enable_FULLV3STATS = false;
 		nfs_param.core_param.enable_FULLV4STATS = false;
 		nfs_param.core_param.enable_AUTHSTATS = false;
+		nfs_param.core_param.enable_CLNTALLSTATS = false;
 		LogEvent(COMPONENT_CONFIG,
 			 "Disabling NFS server statistics counting");
 		LogEvent(COMPONENT_CONFIG,
@@ -2259,6 +2270,7 @@ static bool stats_disable(DBusMessageIter *args,
 		nfs_param.core_param.enable_NFSSTATS = false;
 		nfs_param.core_param.enable_FULLV3STATS = false;
 		nfs_param.core_param.enable_FULLV4STATS = false;
+		nfs_param.core_param.enable_CLNTALLSTATS = false;
 		LogEvent(COMPONENT_CONFIG,
 			 "Disabling NFS server statistics counting");
 		/* reset server stats counters */
@@ -2285,13 +2297,19 @@ static bool stats_disable(DBusMessageIter *args,
 		/* reset v4_full stats counters */
 		reset_v4_full_stats();
 	}
-
 	if (strcmp(stat_type, "auth") == 0) {
 		nfs_param.core_param.enable_AUTHSTATS = false;
 		LogEvent(COMPONENT_CONFIG,
 			"Disabling auth statistics counting");
 		/* reset auth counters */
 		reset_auth_stats();
+	}
+	if (strcmp(stat_type, "client_all_ops") == 0) {
+		nfs_param.core_param.enable_CLNTALLSTATS = false;
+		LogEvent(COMPONENT_CONFIG,
+			"Disabling client all ops statistics counting");
+		/* reset client all ops counters */
+		reset_clnt_allops_stats();
 	}
 
 	gsh_dbus_status_reply(&iter, true, errormsg);
@@ -2368,6 +2386,12 @@ static bool stats_enable(DBusMessageIter *args,
 					"Enabling auth statistics counting");
 			now(&auth_stats_time);
 		}
+		if (!nfs_param.core_param.enable_CLNTALLSTATS) {
+			nfs_param.core_param.enable_CLNTALLSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling client all ops statistics counting");
+			now(&clnt_allops_stats_time);
+		}
 
 	}
 	if (strcmp(stat_type, "nfs") == 0 &&
@@ -2406,6 +2430,18 @@ static bool stats_enable(DBusMessageIter *args,
 			LogEvent(COMPONENT_CONFIG,
 			 "Enabling NFSv4 Detailed statistics counting");
 			now(&v4_full_stats_time);
+		}
+	}
+	if (strcmp(stat_type, "client_all_ops") == 0 &&
+			!nfs_param.core_param.enable_CLNTALLSTATS) {
+		if (!nfs_param.core_param.enable_NFSSTATS) {
+			errormsg = "First enable NFS stats counting";
+			goto error;
+		} else {
+			nfs_param.core_param.enable_CLNTALLSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+			 "Enabling client all ops statistics counting");
+			now(&clnt_allops_stats_time);
 		}
 	}
 

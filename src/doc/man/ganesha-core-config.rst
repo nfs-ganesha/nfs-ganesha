@@ -84,6 +84,11 @@ Enable_FULLV4_Stats(bool, default false)
     Enable_FULLV4_Stats can be enabled or disabled dynamically via
     ganesha_stats.
 
+Enable_CLNT_AllOps_Stats(bool, default false)
+    Whether to count and collect statistics for all NFS operations requested
+    by NFS clients. Enable_CLNT_AllOps_Stats can be enabled or disabled
+    dynamically via ganesha_stats.
+
 Short_File_Handle(bool, default false)
     Whether to use short NFS file handle to accommodate VMware NFS client.
     Enable this if you have a VMware NFSv3 client. VMware NFSv3 client has a max
