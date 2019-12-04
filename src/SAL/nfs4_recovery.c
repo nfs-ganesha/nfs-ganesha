@@ -1107,8 +1107,13 @@ int load_recovery_param_from_conf(config_file_t parse_tree,
 		 * library wasn't installed, then we should return
 		 * an error and eventually die.
 		 */
-		if (!rados.dl && load_rados_recov() < 0)
+		if (!rados.dl && load_rados_recov() < 0) {
+			LogCrit(COMPONENT_CLIENTID,
+				"Failed to load Backend %s. Please install the appropriate package",
+				recovery_backend_str(
+				       nfs_param.nfsv4_param.recovery_backend));
 			return -1;
+		}
 
 		return rados.load_config_from_parse(parse_tree, err_type);
 #endif
