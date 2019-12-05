@@ -65,6 +65,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
       OUTPUT_VARIABLE SYS_RELEASE
       ERROR_QUIET
    )
+  EXECUTE_PROCESS(
+      COMMAND awk -F=  "/^ID_LIKE=/ { print $2 }" /etc/os-release
+      OUTPUT_VARIABLE ID_LIKE
+   )
 # Red Hat Enterprise Linux versions before 7.0 will be detected as UNKNOWN
 
   if( ${SYS_RELEASE} MATCHES "Red Hat" )
@@ -90,8 +94,14 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
      set(DISTRO "DEBIAN")
      set(LIBEXECDIR "/${CMAKE_INSTALL_PREFIX}/lib")
   else( ${SYS_RELEASE} MATCHES "Red Hat" )
-     message( STATUS "Detected an UNKNOWN Linux machine" )
-     set(DISTRO "UNKNOWN")
+     if( ${ID_LIKE} MATCHES "suse" )
+         message( STATUS "Detected a SUSE Build server machine" )
+         set(DISTRO "SLES")
+         set(LIBEXECDIR "/usr/lib")
+     else( ${ID_LIKE} MATCHES "suse" )
+         message( STATUS "Detected an UNKNOWN Linux machine" )
+         set(DISTRO "UNKNOWN")
+     endif( ${ID_LIKE} MATCHES "suse" )
   endif( ${SYS_RELEASE} MATCHES "Red Hat" )
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
