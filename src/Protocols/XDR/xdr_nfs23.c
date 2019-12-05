@@ -820,7 +820,7 @@ struct xdr_uio *xdr_READ3res_uio_setup(struct READ3resok *objp)
 			objp->data.data_val[i] = 0;
 	}
 
-	uio = gsh_calloc(1, sizeof(struct xdr_uio) + sizeof(struct xdr_uio));
+	uio = gsh_calloc(1, sizeof(struct xdr_uio) + sizeof(struct xdr_vio));
 	uio->uio_release = xdr_READ3res_uio_release;
 	uio->uio_count = 1;
 	uio->uio_vio[0].vio_base = objp->data.data_val;
