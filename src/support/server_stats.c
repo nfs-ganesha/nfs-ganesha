@@ -1017,19 +1017,13 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		switch (nfsv40_optype[proto_op]) {
 		case READ_OP:
 			if (is_export)
-				record_op(&sp->read.cmd, request_time,
-					status == NFS4_OK, false);
-			else
-				record_op_only(&sp->read.cmd,
-					status == NFS4_OK, false);
+				record_latency(&sp->read.cmd, request_time,
+					       false);
 			break;
 		case WRITE_OP:
 			if (is_export)
-				record_op(&sp->write.cmd, request_time,
-					status == NFS4_OK, false);
-			else
-				record_op_only(&sp->write.cmd,
-					status == NFS4_OK, false);
+				record_latency(&sp->write.cmd, request_time,
+					       false);
 			break;
 		default:
 			if (is_export)
@@ -1046,19 +1040,13 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		switch (nfsv41_optype[proto_op]) {
 		case READ_OP:
 			if (is_export)
-				record_op(&sp->read.cmd, request_time,
-					status == NFS4_OK, false);
-			else
-				record_op_only(&sp->read.cmd,
-					status == NFS4_OK, false);
+				record_latency(&sp->read.cmd, request_time,
+					       false);
 			break;
 		case WRITE_OP:
 			if (is_export)
-				record_op(&sp->write.cmd, request_time,
-					status == NFS4_OK, false);
-			else
-				record_op_only(&sp->write.cmd,
-					status == NFS4_OK, false);
+				record_latency(&sp->write.cmd, request_time,
+					       false);
 			break;
 		case LAYOUT_OP:
 			record_layout(sp, proto_op, status);
@@ -1078,19 +1066,13 @@ static void record_nfsv4_op(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		switch (nfsv42_optype[proto_op]) {
 		case READ_OP:
 			if (is_export)
-				record_op(&sp->read.cmd, request_time,
-					status == NFS4_OK, false);
-			else
-				record_op_only(&sp->read.cmd,
-					status == NFS4_OK, false);
+				record_latency(&sp->read.cmd, request_time,
+					       false);
 			break;
 		case WRITE_OP:
 			if (is_export)
-				record_op(&sp->write.cmd, request_time,
-					status == NFS4_OK, false);
-			else
-				record_op_only(&sp->write.cmd,
-					status == NFS4_OK, false);
+				record_latency(&sp->write.cmd, request_time,
+					       false);
 			break;
 		case LAYOUT_OP:
 			record_layout(sp, proto_op, status);
@@ -1167,11 +1149,9 @@ static void record_clnt_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 
 			/* record stuff */
 			switch (nfsv3_optype[proto_op]) {
+			/* op count for READ & WRITE is already done */
 			case READ_OP:
-				record_op_only(&sp->read.cmd, success, dup);
-				break;
 			case WRITE_OP:
-				record_op_only(&sp->write.cmd, success, dup);
 				break;
 			default:
 				record_op_only(&sp->cmds, success, dup);
@@ -1266,12 +1246,12 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 					  success, dup);
 			switch (nfsv3_optype[proto_op]) {
 			case READ_OP:
-				record_op(&sp->read.cmd, request_time,
-					   success, dup);
+				record_latency(&sp->read.cmd, request_time,
+					       dup);
 				break;
 			case WRITE_OP:
-				record_op(&sp->write.cmd, request_time,
-					  success, dup);
+				record_latency(&sp->write.cmd, request_time,
+					       dup);
 				break;
 			default:
 				record_op(&sp->cmds, request_time,
