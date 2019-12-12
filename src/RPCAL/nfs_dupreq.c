@@ -50,7 +50,8 @@
 #include "gsh_intrinsic.h"
 #include "gsh_wait_queue.h"
 
-#define DUPREQ_NOCACHE   0x02
+#define DUPREQ_NOCACHE     ((void *)0x02)
+#define DUPREQ_PROCESSING  ((void *)0x03)
 #define DUPREQ_MAX_RETRIES 5
 
 #define NFS_pcp nfs_param.core_param
@@ -1085,6 +1086,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 			dv = opr_containerof(nv, dupreq_entry_t, rbt_k);
 			PTHREAD_MUTEX_lock(&dv->mtx);
 			if (unlikely(dv->state == DUPREQ_START)) {
+				req->rq_u1 = DUPREQ_PROCESSING;
 				status = DUPREQ_BEING_PROCESSED;
 			} else {
 				/* satisfy req from the DRC, incref,
@@ -1142,7 +1144,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 	return status;
 
 no_cache:
-	req->rq_u1 = (void *)DUPREQ_NOCACHE;
+	req->rq_u1 = DUPREQ_NOCACHE;
 	reqnfs->res_nfs = req->rq_u2 = alloc_nfs_res();
 	return DUPREQ_SUCCESS;
 }
@@ -1182,7 +1184,7 @@ dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 	int16_t cnt = 0;
 
 	/* do nothing if req is marked no-cache */
-	if (dv == (void *)DUPREQ_NOCACHE)
+	if (dv == DUPREQ_NOCACHE)
 		goto out;
 
 	PTHREAD_MUTEX_lock(&dv->mtx);
@@ -1295,7 +1297,7 @@ dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
 	drc_t *drc;
 
 	/* do nothing if req is marked no-cache */
-	if (dv == (void *)DUPREQ_NOCACHE)
+	if (dv == DUPREQ_NOCACHE)
 		goto out;
 
 	PTHREAD_MUTEX_lock(&dv->mtx);
@@ -1359,11 +1361,17 @@ void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func)
 	drc_t *drc;
 
 	/* no-cache cleanup */
-	if (dv == (void *)DUPREQ_NOCACHE) {
+	if (dv == DUPREQ_NOCACHE) {
 		LogFullDebug(COMPONENT_DUPREQ, "releasing no-cache res %p",
 			     req->rq_u2);
 		func->free_function(req->rq_u2);
 		free_nfs_res(req->rq_u2);
+		goto out;
+	}
+
+	/* being processed cleanup */
+	if (dv == DUPREQ_PROCESSING) {
+		LogFullDebug(COMPONENT_DUPREQ, "releasing being processed");
 		goto out;
 	}
 
