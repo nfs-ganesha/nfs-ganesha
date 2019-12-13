@@ -697,3 +697,224 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 
 	return allow_acl;
 }
+
+/*
+ * @brief Calculate the ACL xattr size by quantity of ACL entries
+ *
+ * @param[in]  count Quantity of ACL entries
+ *
+ * @return ACL xattr size
+ */
+
+size_t posix_acl_xattr_size(int count)
+{
+	return sizeof(struct acl_ea_header) +
+	    count * sizeof(struct acl_ea_entry);
+}
+
+/*
+ * @brief Calculate the quantity of ACL entries by xattr size
+ *
+ * @param[in]  size Length of extented attribute
+ *
+ * @return Quantity of ACL entries on success, -1 on failure.
+ */
+
+int posix_acl_entries_count(size_t size)
+{
+	if (size < sizeof(struct acl_ea_header))
+		return -1;
+	size -= sizeof(struct acl_ea_header);
+	if (size % sizeof(struct acl_ea_entry))
+		return -1;
+	return size / sizeof(struct acl_ea_entry);
+}
+
+/*
+ * @brief Convert extented attribute to POSIX ACL
+ *
+ * @param[in]  value	Extented attribute
+ * @param[in]  size	Size of the extented attribute
+ *
+ * @return Posix ACL on success, NULL on failure.
+ */
+
+acl_t xattr_2_posix_acl(const struct acl_ea_header *ea_header, size_t size)
+{
+	const struct acl_ea_entry *ea_entry = &ea_header->a_entries[0], *end;
+
+	int count;
+	int ret = 0;
+	acl_t acl = NULL;
+	acl_entry_t acl_entry;
+	acl_tag_t tag;
+	acl_permset_t permset;
+	uid_t uid;
+	gid_t gid;
+
+	count = posix_acl_entries_count(size);
+	if (count < 0) {
+		LogMajor(COMPONENT_FSAL,
+			"Invalid parameter: size = %d", (int)size);
+		return NULL;
+	}
+
+	if (count == 0)
+		return NULL;
+
+	if (ea_header->a_version != htole32(ACL_EA_VERSION)) {
+		LogMajor(COMPONENT_FSAL, "ACL ea version is inconsistent");
+		return NULL;
+	}
+
+	acl = acl_init(count);
+	if (!acl) {
+		LogMajor(COMPONENT_FSAL,
+			"Failed to ACL INIT: count = %d", count);
+		return NULL;
+	}
+
+	for (end = ea_entry + count; ea_entry != end; ea_entry++) {
+		ret = acl_create_entry(&acl, &acl_entry);
+		if (ret) {
+			LogMajor(COMPONENT_FSAL, "Failed to create acl entry");
+			goto out;
+		}
+
+		tag = le16toh(ea_entry->e_tag);
+		ret = acl_set_tag_type(acl_entry, tag);
+		if (ret) {
+			LogMajor(COMPONENT_FSAL, "Failed to set acl tag type");
+			goto out;
+		}
+
+		ret = acl_get_permset(acl_entry, &permset);
+		if (ret) {
+			LogWarn(COMPONENT_FSAL, "Failed to get acl permset");
+			goto out;
+		}
+
+		ret = acl_add_perm(permset, le16toh(ea_entry->e_perm));
+		if (ret) {
+			LogWarn(COMPONENT_FSAL, "Failed to add acl permission");
+			goto out;
+		}
+
+		switch (tag) {
+		case ACL_USER_OBJ:
+		case ACL_GROUP_OBJ:
+		case ACL_MASK:
+		case ACL_OTHER:
+			break;
+
+		case ACL_USER:
+			uid = le32toh(ea_entry->e_id);
+			ret = acl_set_qualifier(acl_entry, &uid);
+			if (ret) {
+				LogMajor(COMPONENT_FSAL, "Failed to set uid");
+				goto out;
+			}
+
+			break;
+
+		case ACL_GROUP:
+			gid = le32toh(ea_entry->e_id);
+			ret = acl_set_qualifier(acl_entry, &gid);
+			if (ret) {
+				LogMajor(COMPONENT_FSAL, "Failed to set gid");
+				goto out;
+			}
+
+			break;
+
+		default:
+			goto out;
+		}
+	}
+
+	return acl;
+
+out:
+	if (acl) {
+		acl_free((void *)acl);
+	}
+
+	return NULL;
+}
+
+/*
+ * @brief Convert POSIX ACL to extented attribute
+ *
+ * @param[in]  acl	Posix ACL
+ * @param[in]  size	Size of the extented attribute buffer
+ * @param[out] buf	Buffer of the extented attribute
+ *
+ * @return Real size of extented attribute on success, -1 on failure.
+ */
+
+int posix_acl_2_xattr(acl_t acl, void *buf, size_t size)
+{
+	struct acl_ea_header *ea_header = buf;
+	struct acl_ea_entry *ea_entry;
+	acl_entry_t acl_entry;
+	acl_tag_t tag;
+	acl_permset_t permset;
+	int real_size, count, entry_id;
+	int ret = 0;
+
+	count = acl_entries(acl);
+	real_size = sizeof(*ea_header) + count * sizeof(*ea_entry);
+
+	if (!buf)
+		return real_size;
+	if (real_size > size)
+		return -1;
+
+	ea_entry = (void *)(ea_header + 1);
+	ea_header->a_version = htole32(ACL_EA_VERSION);
+
+	for (entry_id = ACL_FIRST_ENTRY; ; entry_id = ACL_NEXT_ENTRY,
+	     ea_entry++) {
+		ret = acl_get_entry(acl, entry_id, &acl_entry);
+		if (ret == 0 || ret == -1) {
+			LogDebug(COMPONENT_FSAL,
+				"No more ACL entries remaining");
+			break;
+		}
+		if (acl_get_tag_type(acl_entry, &tag) == -1) {
+			LogWarn(COMPONENT_FSAL, "No entry tag for ACL Entry");
+			continue;
+		}
+
+		ret = acl_get_permset(acl_entry, &permset);
+		if (ret) {
+			LogWarn(COMPONENT_FSAL,
+			"Cannot retrieve permission set for the ACL Entry");
+			continue;
+		}
+
+		ea_entry->e_tag = htole16(tag);
+		if (acl_get_perm(permset, ACL_READ))
+			ea_entry->e_perm |= htole16(ACL_READ);
+		if (acl_get_perm(permset, ACL_WRITE))
+			ea_entry->e_perm |= htole16(ACL_WRITE);
+		if (acl_get_perm(permset, ACL_EXECUTE))
+			ea_entry->e_perm |= htole16(ACL_EXECUTE);
+
+		switch (tag) {
+		case ACL_USER:
+			ea_entry->e_id =
+				htole32(*(uid_t *)acl_get_qualifier(acl_entry));
+			break;
+		case ACL_GROUP:
+			ea_entry->e_id =
+				htole32(*(gid_t *)acl_get_qualifier(acl_entry));
+			break;
+		default:
+			ea_entry->e_id = htole32(ACL_UNDEFINED_ID);
+			break;
+		}
+	}
+
+	return real_size;
+}

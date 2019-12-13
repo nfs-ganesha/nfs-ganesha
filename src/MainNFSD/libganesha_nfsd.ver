@@ -174,6 +174,9 @@
   posix2fsal_type;
   posix2nfs4_error;
   posix_acl_2_fsal_acl;
+  posix_acl_2_xattr;
+  posix_acl_entries_count;
+  posix_acl_xattr_size;
   ReadDataServers;
   ReadExports;
   reaper_wake;
@@ -215,6 +218,7 @@
   vfs_readents;
   vfs_utimes;
   vfs_utimesat;
+  xattr_2_posix_acl;
   xdr_notify;
   xdr_READ4res_uio_setup;
   _get_gsh_export_ref;
