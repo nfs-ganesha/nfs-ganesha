@@ -996,6 +996,20 @@ check_library_exists(
 	HAVE_DAEMON
 	)
 
+# Needs to be before ntirpc
+add_custom_target( rpm DEPENDS dist)
+add_custom_command(TARGET rpm
+                  COMMAND sh -c "rpmbuild -ta ${PKG_NAME}"
+		  VERBATIM
+		  DEPENDS dist)
+
+set(RPMDEST "--define '_srcrpmdir ${CMAKE_CURRENT_BINARY_DIR}'")
+add_custom_target( srpm DEPENDS dist)
+add_custom_command(TARGET srpm
+                  COMMAND sh -c "rpmbuild ${RPMDEST} -ts ${PKG_NAME}"
+		  VERBATIM
+		  DEPENDS dist)
+
 # Roll up required libraries
 
 if(USE_9P_RDMA)
@@ -1421,19 +1435,6 @@ configure_file(
   "${PROJECT_SOURCE_DIR}/scripts/systemd/nfs-ganesha-config.service-in.cmake"
   "${PROJECT_SOURCE_DIR}/scripts/systemd/nfs-ganesha-config.service"
 )
-
-add_custom_target( rpm DEPENDS dist)
-add_custom_command(TARGET rpm
-                  COMMAND sh -c "rpmbuild -ta ${PKG_NAME}"
-		  VERBATIM
-		  DEPENDS dist)
-
-set(RPMDEST "--define '_srcrpmdir ${CMAKE_CURRENT_BINARY_DIR}'")
-add_custom_target( srpm DEPENDS dist)
-add_custom_command(TARGET srpm
-                  COMMAND sh -c "rpmbuild ${RPMDEST} -ts ${PKG_NAME}"
-		  VERBATIM
-		  DEPENDS dist)
 
 # Make a docker image
 set(DOCKER_TMP_INSTALL_PATH "${PROJECT_BINARY_DIR}/docker/root")
