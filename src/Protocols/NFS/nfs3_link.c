@@ -55,8 +55,8 @@
 static enum nfsstat3
 nfs3_verify_exportid(struct LINK3args *l3_arg, struct svc_req *req)
 {
-	const short to_exportid = nfs3_FhandleToExportId(&l3_arg->link.dir);
-	const short from_exportid = nfs3_FhandleToExportId(&l3_arg->file);
+	const int to_exportid = nfs3_FhandleToExportId(&l3_arg->link.dir);
+	const int from_exportid = nfs3_FhandleToExportId(&l3_arg->file);
 
 	if (to_exportid < 0 || from_exportid < 0) {
 		LogInfo(COMPONENT_DISPATCH,
