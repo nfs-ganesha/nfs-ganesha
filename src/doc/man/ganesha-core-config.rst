@@ -217,7 +217,7 @@ MaxRPCSendBufferSize(uint32, range 1 to 1048576*9, default 1048576)
 MaxRPCRecvBufferSize(uint32, range 1 to 1048576*9, default 1048576)
     Size of RPC receive buffer.
 
-RPC_Ioq_ThrdMax(uint32, range 1 to 1024*128 default 200)
+RPC_Ioq_ThrdMax(uint32, range 1 to 1024*128 default 512)
     TIRPC ioq max simultaneous io threads
 
 RPC_GSS_Npart(uint32, range 1 to 1021, default 13)
