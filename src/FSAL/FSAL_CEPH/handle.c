@@ -639,6 +639,10 @@ static fsal_status_t ceph_fsal_getattrs(struct fsal_obj_handle *handle_pub,
 		container_of(handle_pub, struct ceph_handle, handle);
 	/* Stat buffer */
 	struct ceph_statx stx;
+#ifdef CEPHFS_POSIX_ACL
+	/* Object file type */
+	bool is_dir;
+#endif				/* CEPHFS_POSIX_ACL */
 
 	rc = fsal_ceph_ll_getattr(export->cmount, handle->i, &stx,
 				CEPH_STATX_ATTR_MASK, op_ctx->creds);
@@ -648,6 +652,17 @@ static fsal_status_t ceph_fsal_getattrs(struct fsal_obj_handle *handle_pub,
 	rc = ceph_fsal_get_sec_label(handle, attrs);
 	if (rc < 0)
 		goto out_err;
+
+#ifdef CEPHFS_POSIX_ACL
+	if (attrs->request_mask & ATTR_ACL) {
+		is_dir = (bool)(handle_pub->type == DIRECTORY);
+		rc = ceph_get_acl(export, handle, is_dir, attrs);
+		if (rc < 0) {
+			LogDebug(COMPONENT_FSAL, "failed to get acl: %d", rc);
+			goto out_err;
+		}
+	}
+#endif				/* CEPHFS_POSIX_ACL */
 
 	ceph2fsal_attributes(&stx, attrs);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -2270,6 +2285,26 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE))
 		attrib_set->mode &=
 		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+
+#ifdef CEPHFS_POSIX_ACL
+	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ACL)) {
+		status = ceph_set_acl(export, myself, false, attrib_set);
+		if (FSAL_IS_ERROR(status)) {
+			LogMajor(COMPONENT_FSAL, "set access acl status = %s",
+							fsal_err_txt(status));
+			goto out;
+		}
+
+		if (obj_hdl->type == DIRECTORY) {
+			status = ceph_set_acl(export, myself, true, attrib_set);
+			if (FSAL_IS_ERROR(status)) {
+				LogWarn(COMPONENT_FSAL,
+						"set default acl status = %s",
+						fsal_err_txt(status));
+			}
+		}
+	}
+#endif				/* CEPHFS_POSIX_ACL */
 
 	/* Test if size is being set, make sure file is regular and if so,
 	 * require a read/write file descriptor.

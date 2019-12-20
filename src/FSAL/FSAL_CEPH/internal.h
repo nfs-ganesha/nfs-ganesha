@@ -149,13 +149,24 @@ struct ds {
 
 #endif				/* CEPH_PNFS */
 
+#ifdef CEPHFS_POSIX_ACL
+#define CEPH_SUPPORTED_ATTRS ((const attrmask_t) (		\
+	ATTRS_POSIX | ATTR4_SEC_LABEL | ATTR_ACL))
+#else				/* CEPHFS_POSIX_ACL */
 #define CEPH_SUPPORTED_ATTRS ((const attrmask_t) (ATTRS_POSIX|ATTR4_SEC_LABEL))
+#endif				/* CEPHFS_POSIX_ACL */
 
+#ifdef CEPHFS_POSIX_ACL
+#define CEPH_SETTABLE_ATTRIBUTES ((const attrmask_t) (          \
+	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME    |  \
+	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |  \
+	ATTR_ATIME_SERVER | ATTR4_SEC_LABEL | ATTR_ACL))
+#else				/* CEPHFS_POSIX_ACL */
 #define CEPH_SETTABLE_ATTRIBUTES ((const attrmask_t) (			\
 	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |	\
 	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |	\
 	ATTR_ATIME_SERVER | ATTR4_SEC_LABEL))
-
+#endif				/* CEPHFS_POSIX_ACL */
 /* Prototypes */
 
 void construct_handle(const struct ceph_statx *stx,
