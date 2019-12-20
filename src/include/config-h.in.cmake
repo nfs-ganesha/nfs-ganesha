@@ -46,6 +46,7 @@
 #cmakedefine USE_LTTNG 1
 #cmakedefine ENABLE_VFS_DEBUG_ACL 1
 #cmakedefine ENABLE_RFC_ACL 1
+#cmakedefine CEPHFS_POSIX_ACL 1
 #cmakedefine USE_GLUSTER_XREADDIRPLUS 1
 #cmakedefine USE_GLUSTER_UPCALL_REGISTER 1
 #cmakedefine USE_GLUSTER_DELEGATION 1

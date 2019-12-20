@@ -198,4 +198,11 @@ struct state_t *ceph_alloc_state(struct fsal_export *exp_hdl,
 
 void ceph_free_state(struct fsal_export *exp_hdl, struct state_t *state);
 
+#ifdef CEPHFS_POSIX_ACL
+fsal_status_t ceph_set_acl(struct ceph_export *export,
+	struct ceph_handle *objhandle, bool is_dir, struct attrlist *attrs);
+
+int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
+	bool is_dir, struct attrlist *attrs);
+#endif				/* CEPHFS_POSIX_ACL */
 #endif				/* !FSAL_CEPH_INTERNAL_INTERNAL__ */

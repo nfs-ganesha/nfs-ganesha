@@ -37,6 +37,10 @@
  */
 
 #include <sys/stat.h>
+#ifdef CEPHFS_POSIX_ACL
+#include <sys/acl.h>
+#include <acl/libacl.h>
+#endif				/* CEPHFS_POSIX_ACL */
 #include <cephfs/libcephfs.h>
 #include "fsal_types.h"
 #include "fsal.h"
@@ -45,6 +49,9 @@
 #include "statx_compat.h"
 #include "nfs_exports.h"
 #include "internal.h"
+#ifdef CEPHFS_POSIX_ACL
+#include "posix_acls.h"
+#endif				/* CEPHFS_POSIX_ACL */
 
 /**
  * @brief Construct a new filehandle
@@ -197,3 +204,228 @@ void ceph2fsal_attributes(const struct ceph_statx *stx,
 		fsalattr->change = stx->stx_version;
 	}
 }
+
+#ifdef CEPHFS_POSIX_ACL
+/*
+ * @brief Get posix acl from cephfs
+ * @param[in]  export        Export on which the object lives
+ * @param[in]  objhandle     Object
+ * @param[in]  name          Name of the extended attribute
+ * @param[out] p_acl         Posix ACL
+ *
+ * @return 0 on success, negative error codes on failure.
+ */
+
+int ceph_get_posix_acl(struct ceph_export *export,
+	struct ceph_handle *objhandle, const char *name, acl_t *p_acl)
+{
+	char *value = NULL;
+	int rc = 0, size;
+	acl_t acl_tmp = NULL;
+
+	LogFullDebug(COMPONENT_FSAL, "get POSIX ACL");
+
+	/* Get extended attribute size */
+	size = fsal_ceph_ll_getxattr(export->cmount, objhandle->i, name,
+				NULL, 0, op_ctx->creds);
+	if (size <= 0) {
+		LogFullDebug(COMPONENT_FSAL, "getxattr returned %d", size);
+		return 0;
+	}
+
+	value = gsh_malloc(size);
+
+	/* Read extended attribute's value */
+	rc = fsal_ceph_ll_getxattr(export->cmount, objhandle->i, name,
+				value, size, op_ctx->creds);
+	if (rc < 0) {
+		LogMajor(COMPONENT_FSAL, "getxattr returned %d", rc);
+		if (rc == -ENODATA) {
+			rc = 0;
+		}
+
+		goto out;
+	}
+
+	/* Convert extended attribute to posix acl */
+	acl_tmp = xattr_2_posix_acl((struct acl_ea_header *)value, size);
+	if (!acl_tmp) {
+		LogMajor(COMPONENT_FSAL,
+				"failed to convert xattr to posix acl");
+		rc = -EFAULT;
+		goto out;
+	}
+
+	*p_acl = acl_tmp;
+
+out:
+	gsh_free(value);
+	return rc;
+}
+
+/*
+ * @brief Set Posix ACL
+ * @param[in]  export        Export on which the object lives
+ * @param[in]  objhandle     Object
+ * @param[in]  is_dir        True when object type is directory
+ * @param[in]  attrs         Attributes
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t ceph_set_acl(struct ceph_export *export,
+	struct ceph_handle *objhandle, bool is_dir, struct attrlist *attrs)
+{
+	int size = 0, count, rc;
+	acl_t acl = NULL;
+	acl_type_t type;
+	char *name = NULL;
+	void *value = NULL;
+	fsal_status_t status = {0, 0};
+
+	if (!attrs->acl) {
+		LogWarn(COMPONENT_FSAL, "acl is empty");
+		status = fsalstat(ERR_FSAL_FAULT, 0);
+		goto out;
+	}
+
+	if (is_dir) {
+		type = ACL_TYPE_DEFAULT;
+		name = ACL_EA_DEFAULT;
+	} else {
+		type = ACL_TYPE_ACCESS;
+		name = ACL_EA_ACCESS;
+	}
+
+	acl = fsal_acl_2_posix_acl(attrs->acl, type);
+	if (acl_valid(acl) != 0) {
+		LogWarn(COMPONENT_FSAL,
+				"failed to convert fsal acl to posix acl");
+		status = fsalstat(ERR_FSAL_FAULT, 0);
+		goto out;
+	}
+
+	count = acl_entries(acl);
+	if (count > 0) {
+		size = posix_acl_xattr_size(count);
+		value = gsh_malloc(size);
+
+		rc = posix_acl_2_xattr(acl, value, size);
+		if (rc < 0) {
+			LogMajor(COMPONENT_FSAL,
+					"failed to convert posix acl to xattr");
+			status = fsalstat(ERR_FSAL_FAULT, 0);
+			goto out;
+		}
+	}
+
+	rc = fsal_ceph_ll_setxattr(export->cmount, objhandle->i,
+				name, value, size, 0, op_ctx->creds);
+	if (rc < 0) {
+		status = ceph2fsal_error(rc);
+	}
+
+out:
+	if (acl) {
+		acl_free((void *)acl);
+	}
+
+	if (value) {
+		gsh_free(value);
+	}
+
+	return status;
+}
+
+/*
+ * @brief Get FSAL ACL
+ * @param[in]  export        Export on which the object lives
+ * @param[in]  objhandle     Object
+ * @param[in]  is_dir        True when object type is directory
+ * @param[out] attrs         Attributes
+ *
+ * @return 0 on success, negative error codes on failure.
+ */
+
+int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
+	bool is_dir, struct attrlist *attrs)
+{
+	acl_t e_acl = NULL, i_acl = NULL;
+	fsal_acl_data_t acldata;
+	fsal_ace_t *pace = NULL;
+	fsal_acl_status_t aclstatus;
+	int e_count = 0, i_count = 0, new_count = 0, new_i_count = 0;
+	int rc = 0;
+
+	rc = ceph_get_posix_acl(export, objhandle, ACL_EA_ACCESS, &e_acl);
+	if (rc < 0) {
+		LogMajor(COMPONENT_FSAL,
+				"failed to get posix acl: %s", ACL_EA_ACCESS);
+		goto out;
+	}
+	e_count = ace_count(e_acl);
+
+	if (is_dir) {
+		rc = ceph_get_posix_acl(export,
+					objhandle, ACL_EA_DEFAULT, &i_acl);
+		if (rc < 0) {
+			LogMajor(COMPONENT_FSAL,
+				"failed to get posix acl: %s", ACL_EA_DEFAULT);
+		} else {
+			i_count = ace_count(i_acl);
+		}
+	}
+
+	acldata.naces = 2 * (e_count + i_count);
+	LogDebug(COMPONENT_FSAL,
+			"No of aces present in fsal_acl_t = %d", acldata.naces);
+	if (!acldata.naces) {
+		rc = 0;
+		goto out;
+	}
+
+	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
+	pace = acldata.aces;
+
+	new_count = posix_acl_2_fsal_acl(e_acl, is_dir, false, &pace);
+	if (new_count < 0) {
+		rc = -EFAULT;
+		goto out;
+	}
+
+	if (i_count > 0) {
+		new_i_count = posix_acl_2_fsal_acl(i_acl, true, true, &pace);
+		if (new_i_count > 0)
+			new_count += new_i_count;
+		else
+			LogDebug(COMPONENT_FSAL,
+					"Inherit acl is not set for this directory");
+	}
+
+	/* Reallocating acldata into the required size */
+	acldata.aces = (fsal_ace_t *) gsh_realloc(acldata.aces,
+					new_count*sizeof(fsal_ace_t));
+	acldata.naces = new_count;
+
+	attrs->acl = nfs4_acl_new_entry(&acldata, &aclstatus);
+	if (attrs->acl == NULL) {
+		LogCrit(COMPONENT_FSAL, "failed to create a new acl entry");
+		rc = -EFAULT;
+		goto out;
+	}
+
+	rc = 0;
+	attrs->valid_mask |= ATTR_ACL;
+
+out:
+	if (e_acl) {
+		acl_free((void *)e_acl);
+	}
+
+	if (i_acl) {
+		acl_free((void *)i_acl);
+	}
+
+	return rc;
+}
+#endif				/* CEPHFS_POSIX_ACL */

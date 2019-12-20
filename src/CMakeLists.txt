@@ -371,6 +371,9 @@ goption(USE_RADOS_RECOV "Enable Rados KV Recovery" ON)
 # Enable RADOS URL config file sections
 goption(RADOS_URLS "Enable config file inclusion from RADOS objects" ON)
 
+# Enable CephFS POSIX ACL
+goption(CEPHFS_POSIX_ACL "Enable CephFS POSIX ACL" OFF)
+
 # Enable NFSv4 and POSIX acls mapping
 option(USE_ACL_MAPPING "Build NFSv4 to POSIX ACL mapping" OFF)
 
@@ -619,6 +622,17 @@ if(USE_FSAL_CEPH)
     message(WARNING "Cannot find CEPH runtime.  Disabling CEPH fsal build")
     set(USE_FSAL_CEPH OFF)
   endif(NOT CEPHFS_FOUND)
+  gopt_test(CEPHFS_POSIX_ACL)
+  if(CEPHFS_POSIX_ACL)
+    check_include_files("acl/libacl.h" HAVE_ACL_H)
+    if(HAVE_ACL_H)
+      set(USE_ACL_MAPPING ON)
+      set(LibACL_FIND_REQUIRED TRUE)
+    else()
+      set(CEPHFS_POSIX_ACL OFF)
+      message(STATUS "Could not find libacl, disabling CephFS POSIX ACL")
+    endif(HAVE_ACL_H)
+  endif(CEPHFS_POSIX_ACL)
 endif(USE_FSAL_CEPH)
 
 gopt_test(USE_FSAL_GPFS)
@@ -1149,6 +1163,7 @@ message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
 message(STATUS "ENABLE_VFS_DEBUG_ACL = ${ENABLE_VFS_DEBUG_ACL}")
 message(STATUS "ENABLE_RFC_ACL = ${ENABLE_RFC_ACL}")
+message(STATUS "CEPHFS_POSIX_ACL = ${CEPHFS_POSIX_ACL}")
 message(STATUS "USE_CAPS = ${USE_CAPS}")
 message(STATUS "USE_BLKID = ${USE_BLKID}")
 message(STATUS "DISTNAME_HAS_GIT_DATA = ${DISTNAME_HAS_GIT_DATA}" )
