@@ -3136,15 +3136,15 @@ bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 
 		status = obj_hdl->obj_ops->getattrs(obj_hdl, attrs);
 		if (FSAL_IS_ERROR(status)) {
-			LogEvent(COMPONENT_FSAL,
-				 "Failed to get attrs for referral, "
-				 "handle: %p, valid_mask: %" PRIx64
-				 ", request_mask: %" PRIx64
-				 ", supported: %" PRIx64
-				 ", error: %s",
-				 obj_hdl, attrs->valid_mask,
-				 attrs->request_mask, attrs->supported,
-				 fsal_err_txt(status));
+			LogEventLimited(COMPONENT_FSAL,
+					"Failed to get attrs for referral, "
+					"handle: %p, valid_mask: %" PRIx64
+					", request_mask: %" PRIx64
+					", supported: %" PRIx64
+					", error: %s",
+					obj_hdl, attrs->valid_mask,
+					attrs->request_mask, attrs->supported,
+					fsal_err_txt(status));
 			return false;
 		}
 	}
