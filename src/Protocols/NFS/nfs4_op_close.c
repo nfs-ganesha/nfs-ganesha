@@ -159,6 +159,8 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	struct glist_head *glist = NULL;
 	/* Secondary safe iterator to continue traversal on delete */
 	struct glist_head *glistn = NULL;
+	struct fsal_obj_handle *state_obj;
+	bool ok;
 
 	LogDebug(COMPONENT_STATE,
 		 "Entering NFS v4 CLOSE handler ----------------------------");
@@ -191,8 +193,21 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		return NFS_REQ_ERROR;
 	}
 
-	if (state_found == NULL) {
+	/* We hold the state, but not its object handle. Its object
+	 * handle could be freed as soon as the state gets deleted from
+	 * the hashtable.
+	 *
+	 * If there are multiple threads trying to delete the state at
+	 * the same time, the object handle could be NULL here.
+	 *
+	 * Get a ref on the object handle and the open owner.
+	 */
+	ok = get_state_obj_export_owner_refs(state_found, &state_obj, NULL,
+					     &open_owner);
+	if (!ok) {
 		/* Assume this is a replayed close */
+		if (state_found)
+			dec_state_t_ref(state_found);
 		res_CLOSE4->status = NFS4_OK;
 		memcpy(res_CLOSE4->CLOSE4res_u.open_stateid.other,
 		       arg_CLOSE4->open_stateid.other,
@@ -210,13 +225,6 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		return NFS_REQ_OK;
 	}
 
-	open_owner = get_state_owner_ref(state_found);
-
-	if (open_owner == NULL) {
-		/* Unexpected, but something just went stale. */
-		res_CLOSE4->status = NFS4ERR_STALE;
-		goto out3;
-	}
 
 	PTHREAD_MUTEX_lock(&open_owner->so_mutex);
 
@@ -225,7 +233,7 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		if (!Check_nfs4_seqid(open_owner,
 				      arg_CLOSE4->seqid,
 				      op,
-				      data->current_obj,
+				      state_obj,
 				      resp,
 				      close_tag)) {
 			/* Response is all setup for us and LogDebug
@@ -238,7 +246,7 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 
-	PTHREAD_RWLOCK_wrlock(&data->current_obj->state_hdl->state_lock);
+	PTHREAD_RWLOCK_wrlock(&state_obj->state_hdl->state_lock);
 
 	/* Check is held locks remain */
 	glist_for_each(glist, &state_found->state_data.share.share_lockstates) {
@@ -255,7 +263,7 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 			res_CLOSE4->status = NFS4ERR_LOCKS_HELD;
 
 			PTHREAD_RWLOCK_unlock(
-				&data->current_obj->state_hdl->state_lock);
+				&state_obj->state_hdl->state_lock);
 			LogDebug(COMPONENT_STATE,
 				 "NFS4 Close with existing locks");
 			goto out;
@@ -303,16 +311,10 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->minorversion > 0)
 		cleanup_layouts(data);
 
-	/* Fill in the clientid for NFSv4.0 */
-	if (data->minorversion == 0) {
-		op_ctx->clientid =
-		    &open_owner->so_owner.so_nfs4_owner.so_clientid;
-	}
-
 	if (data->minorversion == 0)
 		op_ctx->clientid = NULL;
 
-	PTHREAD_RWLOCK_unlock(&data->current_obj->state_hdl->state_lock);
+	PTHREAD_RWLOCK_unlock(&state_obj->state_hdl->state_lock);
 	res_CLOSE4->status = NFS4_OK;
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS)) {
@@ -325,15 +327,12 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	/* Save the response in the open owner */
 	if (data->minorversion == 0) {
 		Copy_nfs4_state_req(open_owner, arg_CLOSE4->seqid, op,
-				    data->current_obj, resp, close_tag);
+				    state_obj, resp, close_tag);
 	}
 
  out2:
-
 	dec_state_owner_ref(open_owner);
-
- out3:
-
+	state_obj->obj_ops->put_ref(state_obj);
 	dec_state_t_ref(state_found);
 
 	return nfsstat4_to_nfs_req_result(res_CLOSE4->status);
