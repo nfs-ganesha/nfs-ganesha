@@ -51,6 +51,7 @@
   fridgethr_init;
   fridgethr_submit;
   fridgethr_sync_command;
+  fsal_acl_support;
   fsal_acl_2_posix_acl;
   fsal_attach_export;
   fsal_common_is_referral;
