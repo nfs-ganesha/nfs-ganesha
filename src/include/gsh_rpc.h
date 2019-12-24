@@ -142,7 +142,7 @@ void log_sperror_gss(char *, OM_uint32, OM_uint32);
 const char *str_gc_proc(rpc_gss_proc_t);
 #endif /* _HAVE_GSSAPI */
 
-bool copy_xprt_addr(sockaddr_t *, SVCXPRT *);
+void copy_xprt_addr(sockaddr_t *, SVCXPRT *);
 
 int display_sockaddr_port(struct display_buffer *dspbuf, sockaddr_t *addr,
 			  bool ignore_port);

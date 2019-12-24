@@ -103,14 +103,12 @@ const char *xprt_type_to_str(xprt_type_t type)
  * @retval false if not.
  */
 
-bool copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
+void copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
 {
 	struct netbuf *phostaddr = svc_getcaller_netbuf(xprt);
 
-	if (phostaddr->len > sizeof(sockaddr_t) || phostaddr->buf == NULL)
-		return 0;
+	assert(phostaddr->len <= sizeof(sockaddr_t) && phostaddr->buf != NULL);
 	memcpy(addr, phostaddr->buf, phostaddr->len);
-	return 1;
 }
 
 /**

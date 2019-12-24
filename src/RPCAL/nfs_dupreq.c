@@ -63,10 +63,8 @@ pool_t *tcp_drc_pool;		/* pool of per-connection DRC objects */
 
 const char *dupreq_status_table[] = {
 	"DUPREQ_SUCCESS",
-	"DUPREQ_INSERT_MALLOC_ERROR",
 	"DUPREQ_BEING_PROCESSED",
 	"DUPREQ_EXISTS",
-	"DUPREQ_ERROR",
 };
 
 const char *dupreq_state_table[] = {
@@ -607,7 +605,7 @@ retry:
 			 * copy the address. Read operation of constant data,
 			 * no xprt lock required.
 			 */
-			(void)copy_xprt_addr(&drc_k.d_u.tcp.addr, req->rq_xprt);
+			copy_xprt_addr(&drc_k.d_u.tcp.addr, req->rq_xprt);
 
 			drc_k.d_u.tcp.hk =
 			    CityHash64WithSeed((char *)&drc_k.d_u.tcp.addr,
@@ -1016,7 +1014,6 @@ static inline bool nfs_dupreq_v4_cacheable(nfs_request_t *reqnfs)
  * @param[in] req     The request to be cached
  *
  * @retval DUPREQ_SUCCESS if successful.
- * @retval DUPREQ_INSERT_MALLOC_ERROR if an error occured during insertion.
  */
 dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 				 struct svc_req *req)
@@ -1054,20 +1051,13 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 		break;
 	case DRC_UDP_V234:
 		dk->hin.tcp.rq_xid = req->rq_msg.rm_xid;
-		if (unlikely(!copy_xprt_addr(&dk->hin.addr, req->rq_xprt))) {
-			nfs_dupreq_put_drc(drc);
-			nfs_dupreq_free_dupreq(dk);
-			return DUPREQ_INSERT_MALLOC_ERROR;
-		}
+		copy_xprt_addr(&dk->hin.addr, req->rq_xprt);
 		dk->hin.rq_prog = req->rq_msg.cb_prog;
 		dk->hin.rq_vers = req->rq_msg.cb_vers;
 		dk->hin.rq_proc = req->rq_msg.cb_proc;
 		break;
 	default:
-		/* @todo: should this be an assert? */
-		nfs_dupreq_put_drc(drc);
-		nfs_dupreq_free_dupreq(dk);
-		return DUPREQ_INSERT_MALLOC_ERROR;
+		assert(0);
 	}
 
 	dk->hk = req->rq_cksum; /* TI-RPC computed checksum */
@@ -1173,7 +1163,6 @@ no_cache:
  * @param[in] res_nfs The response
  *
  * @return DUPREQ_SUCCESS if successful.
- * @return DUPREQ_INSERT_MALLOC_ERROR if an error occured.
  */
 dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 {

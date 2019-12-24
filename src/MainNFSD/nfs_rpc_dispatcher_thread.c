@@ -1379,10 +1379,8 @@ static void free_nfs_request(struct svc_req *req, enum xprt_stat stat)
 		struct display_buffer dspbuf = {
 					sizeof(addrbuf), addrbuf, addrbuf};
 
-		if (copy_xprt_addr(&addr, xprt) == 1)
-			display_sockaddr(&dspbuf, &addr);
-		else
-			display_cat(&dspbuf, "<unresolved>");
+		copy_xprt_addr(&addr, xprt);
+		display_sockaddr(&dspbuf, &addr);
 
 		LogDebug(COMPONENT_DISPATCH,
 			 "SVC_DECODE on %p fd %d (%s) xid=%" PRIu32

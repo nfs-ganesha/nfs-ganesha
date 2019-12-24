@@ -1068,21 +1068,6 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			/* Ignore the request, send no error */
 			break;
 
-			/* something is very wrong with
-			 * the duplicate request cache */
-		case DUPREQ_ERROR:
-			LogCrit(COMPONENT_DISPATCH,
-				"DUP: Did not find the request in the duplicate request cache and couldn't add the request.");
-			svcerr_systemerr(&reqdata->svc);
-			break;
-
-			/* oom */
-		case DUPREQ_INSERT_MALLOC_ERROR:
-			LogCrit(COMPONENT_DISPATCH,
-				"DUP: Cannot process request, not enough memory available!");
-			svcerr_systemerr(&reqdata->svc);
-			break;
-
 		default:
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Unknown duplicate request cache status. This should never be reached!");

@@ -119,10 +119,8 @@ static inline void free_nfs_res(nfs_res_t *res)
 
 typedef enum dupreq_status {
 	DUPREQ_SUCCESS = 0,
-	DUPREQ_INSERT_MALLOC_ERROR,
 	DUPREQ_BEING_PROCESSED,
 	DUPREQ_EXISTS,
-	DUPREQ_ERROR,
 } dupreq_status_t;
 
 void dupreq2_pkginit(void);
