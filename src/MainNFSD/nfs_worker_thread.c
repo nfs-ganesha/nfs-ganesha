@@ -1587,38 +1587,45 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 
 	reqdata->funcdesc = &invalid_funcdesc;
 
-	if (req->rq_msg.cb_prog == NFS_program[P_NFS]) {
-		if (req->rq_msg.cb_vers == NFS_V4) {
-			if ((NFS_options & CORE_OPTION_NFSV4)
-			    && req->rq_msg.cb_proc <= NFSPROC4_COMPOUND) {
-				reqdata->funcdesc =
-					&nfs4_func_desc[req->rq_msg.cb_proc];
-				return nfs_rpc_process_request(reqdata);
-			}
-			return nfs_rpc_noproc(reqdata);
+	if (req->rq_msg.cb_prog != NFS_program[P_NFS]) {
+		return nfs_rpc_noprog(reqdata);
+	}
+
+	if (req->rq_msg.cb_vers == NFS_V4 && NFS_options & CORE_OPTION_NFSV4) {
+		if (req->rq_msg.cb_proc <= NFSPROC4_COMPOUND) {
+			reqdata->funcdesc =
+				&nfs4_func_desc[req->rq_msg.cb_proc];
+			return nfs_rpc_process_request(reqdata);
 		}
-		if (req->rq_msg.cb_vers == NFS_V3) {
+		return nfs_rpc_noproc(reqdata);
+	}
+
 #ifdef _USE_NFS3
-			if ((NFS_options & CORE_OPTION_NFSV3)
-			    && req->rq_msg.cb_proc <= NFSPROC3_COMMIT) {
-				reqdata->funcdesc =
-					&nfs3_func_desc[req->rq_msg.cb_proc];
-				return nfs_rpc_process_request(reqdata);
-			}
-#endif /* _USE_NFS3 */
-			return nfs_rpc_noproc(reqdata);
+	if (req->rq_msg.cb_vers == NFS_V3 && NFS_options & CORE_OPTION_NFSV3) {
+		if (req->rq_msg.cb_proc <= NFSPROC3_COMMIT) {
+			reqdata->funcdesc =
+				&nfs3_func_desc[req->rq_msg.cb_proc];
+			return nfs_rpc_process_request(reqdata);
 		}
-		lo_vers = NFS_V4;
+		return nfs_rpc_noproc(reqdata);
+	}
+#endif /* _USE_NFS3 */
+
+	/* Unsupported version! Set low and high versions correctly */
+	if (NFS_options & CORE_OPTION_NFSV4)
+		hi_vers = NFS_V4;
+	else
 		hi_vers = NFS_V3;
 #ifdef _USE_NFS3
-		if (NFS_options & CORE_OPTION_NFSV3)
-			lo_vers = NFS_V3;
-#endif /* _USE_NFS3 */
-		if (NFS_options & CORE_OPTION_NFSV4)
-			hi_vers = NFS_V4;
-		return nfs_rpc_novers(reqdata, lo_vers, hi_vers);
-	}
-	return nfs_rpc_noprog(reqdata);
+	if (NFS_options & CORE_OPTION_NFSV3)
+		lo_vers = NFS_V3;
+	else
+		lo_vers = NFS_V4;
+#else
+	lo_vers = NFS_V4;
+#endif
+
+	return nfs_rpc_novers(reqdata, lo_vers, hi_vers);
 }
 
 enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
