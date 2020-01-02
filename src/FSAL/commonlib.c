@@ -92,6 +92,8 @@
 static struct blkid_struct_cache *cache;
 #endif
 
+pthread_rwlock_t fs_lock;
+
 /* fsal_attach_export
  * called from the FSAL's create_export method with a reference on the fsal.
  */

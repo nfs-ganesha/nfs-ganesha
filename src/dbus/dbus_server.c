@@ -669,6 +669,8 @@ int32_t gsh_dbus_register_path(const char *name,
 	return code;
 }
 
+pthread_t gsh_dbus_thrid;
+
 void gsh_dbus_pkgshutdown(void)
 {
 	struct avltree_node *node, *next_node;

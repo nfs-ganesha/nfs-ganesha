@@ -97,12 +97,12 @@ void fsal_ds_handle_fini(struct fsal_ds_handle *dsh);
 
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat);
 
-struct avltree avl_fsid;
-struct avltree avl_dev;
+extern struct avltree avl_fsid;
+extern struct avltree avl_dev;
 
-struct glist_head posix_file_systems;
+extern struct glist_head posix_file_systems;
 
-pthread_rwlock_t fs_lock;
+extern pthread_rwlock_t fs_lock;
 
 void free_fs(struct fsal_filesystem *fs);
 
