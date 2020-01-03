@@ -614,18 +614,14 @@ fail:
 
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
 
-	if (obj != NULL && *obj != NULL) {
-		*obj = NULL;
-	}
-
 	if (export != NULL && *export != NULL) {
 		put_gsh_export(*export);
 		*export = NULL;
 	}
 
-	if (owner != NULL && *owner != NULL) {
-		dec_state_owner_ref(*owner);
-		*owner = NULL;
+	if (obj != NULL && *obj != NULL) {
+		(*obj)->obj_ops->put_ref(*obj);
+		*obj = NULL;
 	}
 
 	return false;
