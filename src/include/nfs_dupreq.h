@@ -78,7 +78,6 @@ typedef struct drc {
 typedef enum dupreq_state {
 	DUPREQ_START = 0,
 	DUPREQ_COMPLETE,
-	DUPREQ_DELETED
 } dupreq_state_t;
 
 struct dupreq_entry {
@@ -100,7 +99,6 @@ struct dupreq_entry {
 	dupreq_state_t state;
 	uint32_t refcnt;
 	nfs_res_t *res;
-	time_t timestamp;
 };
 
 typedef struct dupreq_entry dupreq_entry_t;
