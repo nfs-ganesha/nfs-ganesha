@@ -344,7 +344,7 @@ class ClientAllops():
                 cnt += 1
             if self.stats[cnt]:
                 output += "\n\t\tNFSv4 Compound Operations"
-                output += "\n      total \t errors \t Ops in compond\n"
+                output += "\n      total \t errors \t Ops in compound\n"
                 output += " %s" % (str(self.stats[cnt+1][0]).rjust(9))
                 output += " %s" % (str(self.stats[cnt+1][1]).rjust(9))
                 output += " %s" % (str(self.stats[cnt+1][2]).rjust(9))
