@@ -990,9 +990,12 @@ bool nfs_health(void)
 	dequeue_diff = newdeq - healthstats.dequeued_reqs;
 
 	/* Consider healthy and making progress if we have dequeued some
-	 * requests or there is nothing to dequeue.
+	 * requests or there is one or less to dequeue.  Don't check
+	 * enqueue_diff == 0 here, as there will be suprious warnings during
+	 * times of low traffic, when an enqueue happens to coincide with the
+	 * heartbeat firing.
 	 */
-	healthy = dequeue_diff > 0 || enqueue_diff == 0;
+	healthy = dequeue_diff > 0 || enqueue_diff <= 1;
 
 	if (!healthy) {
 		LogWarn(COMPONENT_DBUS,
