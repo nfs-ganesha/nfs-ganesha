@@ -753,6 +753,10 @@ class DumpAuth():
             self.wblatency = stats[3][5]
             self.wbmax = stats[3][6]
             self.wbmin = stats[3][7]
+            self.dnstotal = stats[3][8]
+            self.dnslatency = stats[3][9]
+            self.dnsmax = stats[3][10]
+            self.dnsmin = stats[3][11]
     def __str__(self):
         output = ""
         if not self.success:
@@ -773,7 +777,12 @@ class DumpAuth():
                    "\n\tTotal ops: " + str(self.wbtotal) +
                    "\n\tAve Latency: " + str(self.wblatency) +
                    "\n\tMax Latency: " + str(self.wbmax) +
-                   "\n\tMin Latency: " + str(self.wbmin))
+                   "\n\tMin Latency: " + str(self.wbmin) +
+                   "\n\nDNS" +
+                   "\n\tTotal ops: " + str(self.dnstotal) +
+                   "\n\tAve Latency: " + str(self.dnslatency) +
+                   "\n\tMax Latency: " + str(self.dnsmax) +
+                   "\n\tMin Latency: " + str(self.dnsmin))
         return output
 
 

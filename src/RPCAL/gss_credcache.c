@@ -454,7 +454,8 @@ static int get_full_hostname(const char *inhost, char *outhost, int outhostlen)
 	hints.ai_flags = AI_CANONNAME;
 
 	/* Get full target hostname */
-	retval = getaddrinfo(inhost, NULL, &hints, &addrs);
+	retval = gsh_getaddrinfo(inhost, NULL, &hints, &addrs,
+			nfs_param.core_param.enable_AUTHSTATS);
 
 	if (retval) {
 		printerr(1, "%s while getting full hostname for '%s'\n",
@@ -666,7 +667,8 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 		goto out;
 
 	/* Get full local hostname */
-	retval = gethostname(myhostname, sizeof(myhostname));
+	retval = gsh_gethostname(myhostname, sizeof(myhostname),
+			nfs_param.core_param.enable_AUTHSTATS);
 	if (retval) {
 		k5err = gssd_k5_err_msg(context, retval);
 		printerr(1, "%s while getting local hostname\n", k5err);

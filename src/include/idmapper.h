@@ -80,6 +80,7 @@ bool name2gid(const struct gsh_buffdesc *, gid_t *, const gid_t);
 
 void winbind_stats_update(struct timespec *, struct timespec *);
 void gc_stats_update(struct timespec *, struct timespec *);
+void dns_stats_update(struct timespec *, struct timespec *);
 
 #ifdef _HAVE_GSSAPI
 #ifdef _MSPAC_SUPPORT
