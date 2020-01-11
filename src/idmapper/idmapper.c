@@ -83,6 +83,10 @@ void idmapper_cleanup(void)
 	idmapper_clear_cache();
 }
 
+/*DNS auth stats information */
+struct auth_stats dns_auth_stats;
+pthread_rwlock_t dns_auth_lock = PTHREAD_RWLOCK_INITIALIZER;
+
 /**
  * @brief Initialize the ID Mapper
  *
@@ -685,6 +689,25 @@ void gc_stats_update(struct timespec *s_time, struct timespec *e_time)
 	PTHREAD_RWLOCK_unlock(&gc_auth_lock);
 }
 
+void dns_stats_update(struct timespec *s_time, struct timespec *e_time)
+{
+	nsecs_elapsed_t resp_time;
+
+	resp_time = timespec_diff(s_time, e_time);
+
+	PTHREAD_RWLOCK_wrlock(&dns_auth_lock);
+	(void)atomic_inc_uint64_t(&dns_auth_stats.total);
+	(void)atomic_add_uint64_t(&dns_auth_stats.latency,
+					resp_time);
+	if (dns_auth_stats.max < resp_time)
+		dns_auth_stats.max = resp_time;
+	if (dns_auth_stats.min == 0 ||
+	    dns_auth_stats.min > resp_time)
+		dns_auth_stats.min = resp_time;
+	PTHREAD_RWLOCK_unlock(&dns_auth_lock);
+}
+
+
 void reset_auth_stats(void)
 {
 	PTHREAD_RWLOCK_wrlock(&winbind_auth_lock);
@@ -700,6 +723,13 @@ void reset_auth_stats(void)
 	gc_auth_stats.max = 0;
 	gc_auth_stats.min = 0;
 	PTHREAD_RWLOCK_unlock(&gc_auth_lock);
+
+	PTHREAD_RWLOCK_wrlock(&dns_auth_lock);
+	dns_auth_stats.total = 0;
+	dns_auth_stats.latency = 0;
+	dns_auth_stats.max = 0;
+	dns_auth_stats.min = 0;
+	PTHREAD_RWLOCK_unlock(&dns_auth_lock);
 }
 
 #ifdef _HAVE_GSSAPI
@@ -952,8 +982,32 @@ static bool all_auth_stats(DBusMessageIter *args, DBusMessage *reply,
 		res = (double) winbind_auth_stats.min * 0.000001;
 	dbus_message_iter_append_basic(&struct_iter,
 		DBUS_TYPE_DOUBLE, &res);
-	dbus_message_iter_close_container(&iter, &struct_iter);
 	PTHREAD_RWLOCK_unlock(&winbind_auth_lock);
+
+	stats_exist = false;
+	res = 0.0;
+
+	/* DNS stats */
+	PTHREAD_RWLOCK_rdlock(&dns_auth_lock);
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_UINT64, &dns_auth_stats.total);
+	if (dns_auth_stats.total > 0) {
+		stats_exist = true;
+		res = (double) dns_auth_stats.latency /
+			dns_auth_stats.total * 0.000001;
+	}
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_DOUBLE, &res);
+	if (stats_exist)
+		res = (double) dns_auth_stats.max * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_DOUBLE, &res);
+	if (stats_exist)
+		res = (double) dns_auth_stats.min * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter,
+		DBUS_TYPE_DOUBLE, &res);
+	PTHREAD_RWLOCK_unlock(&dns_auth_lock);
+	dbus_message_iter_close_container(&iter, &struct_iter);
 
 	return true;
 }

@@ -363,7 +363,7 @@ CLNT_CMP_OPS_REPLY
 #define AUTH_REPLY		\
 {                               \
 	.name = "auth",		\
-	.type = "a(tdddtddd)",  \
+	.type = "a(tdddtdddtddd)",  \
 	.direction = "out"      \
 }
 

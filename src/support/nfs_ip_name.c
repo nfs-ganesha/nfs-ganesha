@@ -154,9 +154,10 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 	gettimeofday(&tv0, NULL);
 
 	/* Speculatively get the hostname into our caller's buffer... */
-	rc = getnameinfo((struct sockaddr *)ipaddr, sizeof(sockaddr_t),
-			 hostname, maxsize,
-			 NULL, 0, 0);
+	rc = gsh_getnameinfo((struct sockaddr *)pipaddr, sizeof(sockaddr_t),
+			 nfs_ip_name->hostname, sizeof(nfs_ip_name->hostname),
+			 NULL, 0, 0,
+			 nfs_param.core_param.enable_AUTHSTATS);
 	gettimeofday(&tv1, NULL);
 	timersub(&tv1, &tv0, &dur);
 

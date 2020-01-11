@@ -462,7 +462,8 @@ int nfs_recovery_get_nodeid(char **pnodeid)
 	 */
 	maxlen = sysconf(_SC_HOST_NAME_MAX);
 	nodeid = gsh_malloc(maxlen);
-	rc = gethostname(nodeid, maxlen);
+	rc = gsh_gethostname(nodeid, maxlen,
+			nfs_param.core_param.enable_AUTHSTATS);
 	if (rc != 0) {
 		LogEvent(COMPONENT_CLIENTID, "gethostname failed: %d", errno);
 		rc = -errno;

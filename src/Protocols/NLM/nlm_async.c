@@ -123,6 +123,7 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 	int retval, retry;
 	char *caller_name = host->slc_nsm_client->ssc_nlm_caller_name;
 	const char *client_type_str = xprt_type_to_str(host->slc_client_type);
+	bool stats = nfs_param.core_param.enable_AUTHSTATS;
 
 	for (retry = 0; retry < MAX_ASYNC_RETRY; retry++) {
 		if (host->slc_callback_clnt == NULL) {
@@ -188,10 +189,11 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 				gsh_free(buf);
 
 				/* get the IPv4 mapped IPv6 address */
-				retval = getaddrinfo(caller_name,
+				retval = gsh_getaddrinfo(caller_name,
 						     port_str,
 						     &hints,
-						     &result);
+						     &result,
+						     stats);
 
 				/* retry for spurious EAI_NONAME errors */
 				if (retval == EAI_NONAME ||

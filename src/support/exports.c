@@ -499,7 +499,8 @@ static int add_client(struct glist_head *client_list,
 		cli->type = WILDCARDHOST_CLIENT;
 		break;
 	case TERM_TOKEN: /* only dns names now. */
-		rc = getaddrinfo(client_tok, NULL, NULL, &info);
+		rc = gsh_getaddrinfo(client_tok, NULL, NULL, &info,
+				nfs_param.core_param.enable_AUTHSTATS);
 		if (rc == 0) {
 			struct addrinfo *ap, *ap_last = NULL;
 			struct in_addr in_addr_last;
