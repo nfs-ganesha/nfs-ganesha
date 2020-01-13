@@ -1289,9 +1289,6 @@ dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
 	if (dv == DUPREQ_NOCACHE)
 		goto out;
 
-	PTHREAD_MUTEX_lock(&dv->mtx);
-	dv->state = DUPREQ_DELETED;
-	PTHREAD_MUTEX_unlock(&dv->mtx);
 	drc = req->rq_xprt->xp_u2;
 
 	LogFullDebug(COMPONENT_DUPREQ,
