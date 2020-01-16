@@ -518,6 +518,11 @@ int main(int argc, char *argv[])
 	/* Everything seems to be OK! We can now start service threads */
 	nfs_start(&my_nfs_start_info);
 
+	if (tempo_exec_name)
+		free(exec_name);
+	if (log_path)
+		free(log_path);
+
 	return 0;
 
 fatal_die:
