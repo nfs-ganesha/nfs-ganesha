@@ -136,6 +136,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	void **cache_slot;
 	uint64_t hash = hash_sockaddr(client_ipaddr, true);
 
+	memcpy(&v.cl_addrbuf, client_ipaddr, sizeof(v.cl_addrbuf));
 	PTHREAD_RWLOCK_rdlock(&client_by_ip.lock);
 
 	/* check cache */
