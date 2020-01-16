@@ -152,8 +152,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* to avoid setting it on each error case */
-	res->res_readdir3.READDIR3res_u.resfail.dir_attributes.attributes_follow
-		= FALSE;
+	resfail->dir_attributes.attributes_follow = FALSE;
 
 	if (op_ctx_export_has_option(EXPORT_OPTION_NO_READDIR_PLUS)) {
 		res->res_readdirplus3.status = NFS3ERR_NOTSUPP;
@@ -224,7 +223,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 */
 	if (use_cookie_verifier) {
 		if (attrs_dir.valid_mask == ATTR_RDATTR_ERR) {
-			res->res_readdir3.status = NFS3ERR_SERVERFAULT;
+			res->res_readdirplus3.status = NFS3ERR_SERVERFAULT;
 			LogDebug(COMPONENT_NFS_READDIR,
 				 "Could not fetch ctime");
 			goto out_fail;
@@ -260,12 +259,12 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (begin_cookie == 0) {
 		/* Fill in "." */
-		res->res_readdir3.status =
+		res->res_readdirplus3.status =
 			nfs_readdir_dot_entry(dir_obj, ".", 1,
 					      nfs3_readdirplus_callback,
 					      &tracker, &attrs_dir);
 
-		if (res->res_readdir3.status != NFS3_OK) {
+		if (res->res_readdirplus3.status != NFS3_OK) {
 			rc = NFS_REQ_OK;
 			goto out_fail;
 		}
@@ -286,7 +285,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			goto out_fail;
 		}
 
-		res->res_readdir3.status =
+		res->res_readdirplus3.status =
 		    nfs_readdir_dot_entry(parent_dir_obj,
 					  "..",
 					  2,
@@ -296,7 +295,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		parent_dir_obj->obj_ops->put_ref(parent_dir_obj);
 
-		if (res->res_readdir3.status != NFS3_OK) {
+		if (res->res_readdirplus3.status != NFS3_OK) {
 			rc = NFS_REQ_OK;
 			goto out_fail;
 		}
@@ -323,7 +322,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	if (tracker.error != NFS3_OK) {
-		res->res_readdir3.status = tracker.error;
+		res->res_readdirplus3.status = tracker.error;
 		goto out_fail;
 	}
 
@@ -360,7 +359,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (dir_obj)
 		dir_obj->obj_ops->put_ref(dir_obj);
 
-	if (((res->res_readdir3.status != NFS3_OK) || (rc != NFS_REQ_OK))
+	if (((res->res_readdirplus3.status != NFS3_OK) || (rc != NFS_REQ_OK))
 	    && (tracker.entries != NULL))
 		free_entryplus3s(tracker.entries);
 
