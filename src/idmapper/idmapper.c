@@ -70,6 +70,19 @@ pthread_rwlock_t winbind_auth_lock = PTHREAD_RWLOCK_INITIALIZER;
 struct auth_stats gc_auth_stats;
 pthread_rwlock_t gc_auth_lock = PTHREAD_RWLOCK_INITIALIZER;
 
+/* Cleanup on shutdown */
+struct cleanup_list_element idmapper_cleanup_element;
+
+/**
+ * @brief Cleanup idmapper on shutdown
+ */
+void idmapper_cleanup(void)
+{
+	gsh_free(owner_domain.addr);
+
+	idmapper_clear_cache();
+}
+
 /**
  * @brief Initialize the ID Mapper
  *
@@ -101,6 +114,10 @@ bool idmapper_init(void)
 	}
 
 	idmapper_cache_init();
+
+	idmapper_cleanup_element.clean = idmapper_cleanup;
+	RegisterCleanup(&idmapper_cleanup_element);
+
 	return true;
 }
 
