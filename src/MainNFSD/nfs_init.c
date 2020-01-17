@@ -289,7 +289,7 @@ void nfs_prereq_init(const char *program_name, const char *host_name,
 		     int debug_level, const char *log_path, bool dump_trace)
 {
 	healthstats.enqueued_reqs = nfs_health_.enqueued_reqs = 0;
-	healthstats.enqueued_reqs = nfs_health_.dequeued_reqs = 0;
+	healthstats.dequeued_reqs = nfs_health_.dequeued_reqs = 0;
 
 	/* Initialize logging */
 	SetNamePgm(program_name);
