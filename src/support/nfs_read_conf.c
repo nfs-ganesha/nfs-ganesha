@@ -128,7 +128,7 @@ static struct config_item core_params[] = {
 		       nfs_core_param, drc.udp.hiwat),
 	CONF_ITEM_BOOL("DRC_UDP_Checksum", DRC_UDP_CHECKSUM,
 		       nfs_core_param, drc.udp.checksum),
-	CONF_ITEM_UI32("RPC_Max_Connections", 1, 10000, 1024,
+	CONF_ITEM_UI32("RPC_Max_Connections", 1, UINT32_MAX, 1024,
 		       nfs_core_param, rpc.max_connections),
 	CONF_ITEM_UI32("RPC_Idle_Timeout_S", 0, 60*60, 300,
 		       nfs_core_param, rpc.idle_timeout_s),

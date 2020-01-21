@@ -205,7 +205,7 @@ DRC_UDP_Checksum(bool, default true)
 Parameters affecting the relation with TIRPC:
 --------------------------------------------------------------------------------
 
-RPC_Max_Connections(uint32, range 1 to 10000, default 1024)
+RPC_Max_Connections(uint32, range 1 to UINT32_MAX, default 1024)
     Maximum number of connections for TIRPC.
 
 RPC_Idle_Timeout_S(uint32, range 0 to 60*60, default 300)
