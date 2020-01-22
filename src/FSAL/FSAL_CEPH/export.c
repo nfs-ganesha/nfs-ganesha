@@ -191,10 +191,7 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		/* wire handles */
-		if (key->chk_fscid)
-			fh_desc->len = sizeof(*key);
-		else
-			fh_desc->len = sizeof(key->chk_vi);
+		fh_desc->len = sizeof(*key);
 		break;
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);

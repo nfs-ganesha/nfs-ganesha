@@ -2526,10 +2526,7 @@ ceph_fsal_handle_to_wire(const struct fsal_obj_handle *handle_pub,
 				 sizeof(handle->key), fh_desc->len);
 			return fsalstat(ERR_FSAL_TOOSMALL, 0);
 		} else {
-			if (handle->key.chk_fscid)
-				fh_desc->len = sizeof(handle->key);
-			else
-				fh_desc->len = sizeof(handle->key.chk_vi);
+			fh_desc->len = sizeof(handle->key);
 			memcpy(fh_desc->addr, &handle->key, fh_desc->len);
 		}
 		break;
@@ -2559,10 +2556,7 @@ ceph_fsal_handle_to_key(struct fsal_obj_handle *handle_pub,
 		container_of(handle_pub, struct ceph_handle, handle);
 
 	fh_desc->addr = &handle->key;
-	if (handle->key.chk_fscid)
-		fh_desc->len = sizeof(handle->key);
-	else
-		fh_desc->len = sizeof(handle->key.chk_vi);
+	fh_desc->len = sizeof(handle->key);
 }
 
 #ifdef USE_CEPH_LL_FALLOCATE
