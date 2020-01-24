@@ -154,7 +154,7 @@ int gsh_rados_url_setup_watch(void)
 #ifdef RADOS_URLS
 	return rados_urls.setup_watch ? rados_urls.setup_watch() : -1;
 #else
-	return -1;
+	return 0;
 #endif
 }
 
