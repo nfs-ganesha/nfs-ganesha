@@ -75,6 +75,7 @@
 #include "common_utils.h"
 #include "nfs_init.h"
 #include <urcu-bp.h>
+#include "conf_url.h"
 
 /**
  * @brief init_complete used to indicate if ganesha is during
@@ -447,10 +448,10 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	if (load_recovery_param_from_conf(parse_tree, err_type) < 0)
 		return -1;
 
-#ifdef USE_RADOS_URLS
-	if (rados_url_setup_watch() != 0)
+	if (gsh_rados_url_setup_watch() != 0) {
+		LogEvent(COMPONENT_INIT, "Couldn't setup rados_urls");
 		return -1;
-#endif
+	}
 
 	LogEvent(COMPONENT_INIT, "Configuration file successfully parsed");
 
