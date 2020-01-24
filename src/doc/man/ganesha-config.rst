@@ -152,6 +152,10 @@ PROXY {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-proxy-config <ganesha-proxy-config>`\(8) for usage
 
+PROXY_V3 {}
+--------------------------------------------------------------------------------
+Refer to :doc:`ganesha-proxy-v3-config <ganesha-proxy-v3-config>`\(8) for usage
+
 RGW {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-rgw-config <ganesha-rgw-config>`\(8) for usage
@@ -183,6 +187,7 @@ See also
 :doc:`ganesha-gluster-config <ganesha-gluster-config>`\(8)
 :doc:`ganesha-9p-config <ganesha-9p-config>`\(8)
 :doc:`ganesha-proxy-config <ganesha-proxy-config>`\(8)
+:doc:`ganesha-proxy-v3-config <ganesha-proxy-v3-config>`\(8)
 :doc:`ganesha-ceph-config <ganesha-ceph-config>`\(8)
 :doc:`ganesha-core-config <ganesha-core-config>`\(8)
 :doc:`ganesha-export-config <ganesha-export-config>`\(8)

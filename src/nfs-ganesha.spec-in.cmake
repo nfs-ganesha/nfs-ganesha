@@ -227,6 +227,17 @@ Requires: nfs-ganesha = %{version}-%{release}
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support PROXY_V4 based filesystems
 
+%package proxy-v3
+Summary: The NFS-GANESHA PROXY_V3 FSAL
+Group: Applications/System
+BuildRequires: libattr-devel
+Requires: nfs-ganesha = %{version}-%{release}
+
+%description proxy-v3
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support PROXY_V3 based filesystems
+
+
 %if %{with utils}
 %package utils
 Summary: The NFS-GANESHA util scripts
@@ -711,6 +722,13 @@ exit 0
 %if %{with man_page}
 %{_mandir}/*/ganesha-proxy-config.8.gz
 %endif
+
+%files proxy-v3
+%{_libdir}/ganesha/libfsalproxy_v3*
+%if %{with man_page}
+%{_mandir}/*/ganesha-proxy-v3-config.8.gz
+%endif
+
 
 # Optional packages
 %if %{with lustre}

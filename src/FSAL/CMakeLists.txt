@@ -10,6 +10,10 @@ if(USE_FSAL_PROXY_V4)
   add_subdirectory(FSAL_PROXY_V4)
 endif(USE_FSAL_PROXY_V4)
 
+if(USE_FSAL_PROXY_V3)
+  add_subdirectory(FSAL_PROXY_V3)
+endif(USE_FSAL_PROXY_V3)
+
 if(USE_FSAL_CEPH)
   add_subdirectory(FSAL_CEPH)
 endif(USE_FSAL_CEPH)
