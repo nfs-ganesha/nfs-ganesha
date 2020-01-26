@@ -89,47 +89,50 @@ elif command == "help":
     print_usage_exit(0)
 
 # retrieve and print stats
-exp_interface = Ganesha.glib_dbus_stats.RetrieveExportStats()
-cl_interface = Ganesha.glib_dbus_stats.RetrieveClientStats()
-if command == "global":
-    print(exp_interface.global_stats())
-elif command == "export":
-    print(exp_interface.export_stats())
-elif command == "inode":
-    print(exp_interface.inode_stats())
-elif command == "fast":
-    print(exp_interface.fast_stats())
-elif command == "list_clients":
-    print(cl_interface.list_clients())
-elif command == "deleg":
-    print(cl_interface.deleg_stats(command_arg))
-elif command == "client_io_ops":
-    print(cl_interface.client_io_ops_stats(command_arg))
-elif command == "client_all_ops":
-    print(cl_interface.client_all_ops_stats(command_arg))
-elif command == "iov3":
-    print(exp_interface.v3io_stats(command_arg))
-elif command == "iov4":
-    print(exp_interface.v4io_stats(command_arg))
-elif command == "total":
-    print(exp_interface.total_stats(command_arg))
-elif command == "export_details":
-    print(exp_interface.export_details_stats(command_arg))
-elif command == "pnfs":
-    print(exp_interface.pnfs_stats(command_arg))
-elif command == "reset":
-    print(exp_interface.reset_stats())
-elif command == "fsal":
-    print(exp_interface.fsal_stats(command_arg))
-elif command == "v3_full":
-    print(exp_interface.v3_full_stats())
-elif command == "v4_full":
-    print(exp_interface.v4_full_stats())
-elif command == "auth":
-    print(exp_interface.auth_stats())
-elif command == "enable":
-    print(exp_interface.enable_stats(command_arg))
-elif command == "disable":
-    print(exp_interface.disable_stats(command_arg))
-elif command == "status":
-    print(exp_interface.status_stats())
+try:
+    exp_interface = Ganesha.glib_dbus_stats.RetrieveExportStats()
+    cl_interface = Ganesha.glib_dbus_stats.RetrieveClientStats()
+    if command == "global":
+        print(exp_interface.global_stats())
+    elif command == "export":
+        print(exp_interface.export_stats())
+    elif command == "inode":
+        print(exp_interface.inode_stats())
+    elif command == "fast":
+        print(exp_interface.fast_stats())
+    elif command == "list_clients":
+        print(cl_interface.list_clients())
+    elif command == "deleg":
+        print(cl_interface.deleg_stats(command_arg))
+    elif command == "client_io_ops":
+        print(cl_interface.client_io_ops_stats(command_arg))
+    elif command == "client_all_ops":
+        print(cl_interface.client_all_ops_stats(command_arg))
+    elif command == "iov3":
+        print(exp_interface.v3io_stats(command_arg))
+    elif command == "iov4":
+        print(exp_interface.v4io_stats(command_arg))
+    elif command == "total":
+        print(exp_interface.total_stats(command_arg))
+    elif command == "export_details":
+        print(exp_interface.export_details_stats(command_arg))
+    elif command == "pnfs":
+        print(exp_interface.pnfs_stats(command_arg))
+    elif command == "reset":
+        print(exp_interface.reset_stats())
+    elif command == "fsal":
+        print(exp_interface.fsal_stats(command_arg))
+    elif command == "v3_full":
+        print(exp_interface.v3_full_stats())
+    elif command == "v4_full":
+        print(exp_interface.v4_full_stats())
+    elif command == "auth":
+        print(exp_interface.auth_stats())
+    elif command == "enable":
+        print(exp_interface.enable_stats(command_arg))
+    elif command == "disable":
+        print(exp_interface.disable_stats(command_arg))
+    elif command == "status":
+        print(exp_interface.status_stats())
+except dbus.exceptions.DBusException:
+    sys.exit("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")
