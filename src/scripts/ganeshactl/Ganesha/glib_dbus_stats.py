@@ -26,12 +26,8 @@ class RetrieveExportStats():
         self.export_interface = "/org/ganesha/nfsd/ExportMgr"
 
         self.bus = dbus.SystemBus()
-        try:
-            self.exportmgrobj = self.bus.get_object(self.dbus_service_name,
-                                                    self.export_interface)
-        except:
-            print("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")
-            sys.exit()
+        self.exportmgrobj = self.bus.get_object(self.dbus_service_name,
+                                                self.export_interface)
 
     # NFSv3/NFSv4/NLM/MNT/QUOTA stats over all exports
     def fast_stats(self):
@@ -157,12 +153,8 @@ class RetrieveClientStats():
         self.client_interface = "/org/ganesha/nfsd/ClientMgr"
 
         self.bus = dbus.SystemBus()
-        try:
-            self.clientmgrobj = self.bus.get_object(self.dbus_service_name,
-                                                    self.client_interface)
-        except:
-            print("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")
-            sys.exit()
+        self.clientmgrobj = self.bus.get_object(self.dbus_service_name,
+                                                self.client_interface)
 
     # delegation stats related to a single client ip
     def deleg_stats(self, ip_):
