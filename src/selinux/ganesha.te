@@ -110,3 +110,145 @@ tunable_policy(`ganesha_use_fusefs',`
     fs_read_fusefs_symlinks(ganesha_t)
     fs_getattr_fusefs(ganesha_t)
 ')
+
+########################################
+#
+# ganesha local policy rhbz#1796160, FSAL_RGW
+#
+
+type ceph_log_t;
+type ceph_var_lib_t;
+type ceph_var_run_t;
+type cgroup_t;
+type usr_t;
+
+#============= ganesha_t ==============
+allow ganesha_t ceph_log_t:dir { add_name search write };
+allow ganesha_t ceph_log_t:file { create open };
+allow ganesha_t ceph_var_lib_t:dir search;
+allow ganesha_t ceph_var_lib_t:file { getattr open read };
+allow ganesha_t ceph_var_run_t:dir { add_name write };
+allow ganesha_t ceph_var_run_t:sock_file create;
+allow ganesha_t cgroup_t:dir search;
+allow ganesha_t cgroup_t:file { getattr open read };
+
+#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
+allow ganesha_t usr_t:file map;
+
+#============= init_t ==============
+allow init_t var_lib_nfs_t:dir create;
+
+
+########################################
+#
+# ganesha local policy rhbz#1788541, FSAL_VFS
+#
+
+type var_lib_nfs_t;
+type apm_bios_t;
+type autofs_device_t;
+type bpf_t;
+type clock_device_t;
+type configfs_t;
+type cpu_device_t;
+type debugfs_t;
+type device_t;
+type devpts_t;
+type dri_device_t;
+type event_device_t;
+type fixed_disk_device_t;
+type framebuf_device_t;
+type fs_t;
+type gluster_port_t;
+type hugetlbfs_t;
+type initctl_t;
+type kmsg_device_t;
+type kvm_device_t;
+type lvm_control_t;
+type memory_device_t;
+type mouse_device_t;
+type netcontrol_device_t;
+type nvram_device_t;
+type proc_kcore_t;
+type proc_t;
+type pstore_t;
+type ptmx_t;
+type removable_device_t;
+type rpc_pipefs_t;
+type scsi_generic_device_t;
+type sound_device_t;
+type sysfs_t;
+type tmpfs_t;
+type usb_device_t;
+type usbmon_device_t;
+type virtio_device_t;
+type watchdog_device_t;
+type wireless_device_t;
+type xserver_misc_device_t;
+type rpcbind_t;
+
+#============= ganesha_t ==============
+dontaudit ganesha_t apm_bios_t:chr_file getattr;
+dontaudit ganesha_t autofs_device_t:chr_file getattr;
+dontaudit ganesha_t bpf_t:dir getattr;
+dontaudit ganesha_t bpf_t:filesystem getattr;
+dontaudit ganesha_t cgroup_t:dir getattr;
+dontaudit ganesha_t cgroup_t:filesystem getattr;
+dontaudit ganesha_t clock_device_t:chr_file getattr;
+dontaudit ganesha_t configfs_t:dir getattr;
+dontaudit ganesha_t configfs_t:filesystem getattr;
+dontaudit ganesha_t cpu_device_t:chr_file getattr;
+dontaudit ganesha_t debugfs_t:filesystem getattr;
+dontaudit ganesha_t device_t:chr_file getattr;
+dontaudit ganesha_t device_t:filesystem getattr;
+dontaudit ganesha_t devpts_t:filesystem getattr;
+dontaudit ganesha_t dri_device_t:chr_file getattr;
+dontaudit ganesha_t event_device_t:chr_file getattr;
+allow ganesha_t fixed_disk_device_t:blk_file { getattr ioctl open read };
+dontaudit ganesha_t fixed_disk_device_t:chr_file getattr;
+dontaudit ganesha_t framebuf_device_t:chr_file getattr;
+dontaudit ganesha_t fs_t:filesystem getattr;
+allow ganesha_t hugetlbfs_t:dir { getattr open read };
+dontaudit ganesha_t hugetlbfs_t:filesystem getattr;
+dontaudit ganesha_t initctl_t:fifo_file getattr;
+
+#!!!! This avc can be allowed using the boolean 'domain_can_write_kmsg'
+dontaudit ganesha_t kmsg_device_t:chr_file getattr;
+dontaudit ganesha_t kvm_device_t:chr_file getattr;
+dontaudit ganesha_t lvm_control_t:chr_file getattr;
+dontaudit ganesha_t memory_device_t:chr_file getattr;
+dontaudit ganesha_t mouse_device_t:chr_file getattr;
+dontaudit ganesha_t netcontrol_device_t:chr_file getattr;
+dontaudit ganesha_t nvram_device_t:chr_file getattr;
+dontaudit ganesha_t proc_kcore_t:file getattr;
+dontaudit ganesha_t proc_t:filesystem getattr;
+dontaudit ganesha_t pstore_t:dir getattr;
+dontaudit ganesha_t pstore_t:filesystem getattr;
+dontaudit ganesha_t ptmx_t:chr_file getattr;
+dontaudit ganesha_t removable_device_t:blk_file getattr;
+dontaudit ganesha_t rpc_pipefs_t:dir getattr;
+dontaudit ganesha_t rpc_pipefs_t:filesystem getattr;
+dontaudit ganesha_t scsi_generic_device_t:chr_file getattr;
+dontaudit ganesha_t sound_device_t:chr_file getattr;
+allow ganesha_t sysfs_t:dir read;
+allow ganesha_t sysfs_t:file { getattr open read };
+dontaudit ganesha_t sysfs_t:filesystem getattr;
+allow ganesha_t sysfs_t:lnk_file read;
+allow ganesha_t tmpfs_t:dir read;
+dontaudit ganesha_t tmpfs_t:filesystem getattr;
+dontaudit ganesha_t usb_device_t:chr_file getattr;
+dontaudit ganesha_t usbmon_device_t:chr_file getattr;
+dontaudit ganesha_t virtio_device_t:chr_file getattr;
+dontaudit ganesha_t watchdog_device_t:chr_file getattr;
+dontaudit ganesha_t wireless_device_t:chr_file getattr;
+dontaudit ganesha_t xserver_misc_device_t:chr_file getattr;
+
+#============= init_t ==============
+allow init_t ganesha_var_log_t:dir setattr;
+allow init_t var_lib_nfs_t:dir create;
+
+#============= rpcbind_t ==============
+
+#!!!! This avc can be allowed using the boolean 'nis_enabled'
+allow rpcbind_t unreserved_port_t:udp_socket name_bind;
+
