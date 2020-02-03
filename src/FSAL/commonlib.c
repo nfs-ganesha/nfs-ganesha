@@ -1100,10 +1100,10 @@ static void posix_create_file_system(struct mntent *mnt)
 
 		LogDebug(COMPONENT_FSAL,
 			 "Skipped duplicate %s namelen=%d fsid=0x%016"PRIx64
-			 ".0x%016"PRIx64" %"PRIu64".%"PRIu64,
+			 ".0x%016"PRIx64" %"PRIu64".%"PRIu64" type=%s",
 			 fs->path, (int) fs->namelen,
 			 fs->fsid.major, fs->fsid.minor,
-			 fs->fsid.major, fs->fsid.minor);
+			 fs->fsid.major, fs->fsid.minor, fs->type);
 
 		if (fs1->device[0] != '/' && fs->device[0] == '/') {
 			LogDebug(COMPONENT_FSAL,
@@ -1136,9 +1136,9 @@ static void posix_create_file_system(struct mntent *mnt)
 
 		LogDebug(COMPONENT_FSAL,
 			 "Skipped duplicate %s namelen=%d dev=%"
-			 PRIu64".%"PRIu64,
+			 PRIu64".%"PRIu64" type=%s",
 			 fs->path, (int) fs->namelen,
-			 fs->dev.major, fs->dev.minor);
+			 fs->dev.major, fs->dev.minor, fs->type);
 
 		if (fs1->device[0] != '/' && fs->device[0] == '/') {
 			LogDebug(COMPONENT_FSAL,
@@ -1165,11 +1165,12 @@ static void posix_create_file_system(struct mntent *mnt)
 
 	LogInfo(COMPONENT_FSAL,
 		"Added filesystem %s namelen=%d dev=%"PRIu64".%"PRIu64
-		" fsid=0x%016"PRIx64".0x%016"PRIx64" %"PRIu64".%"PRIu64,
+		" fsid=0x%016"PRIx64".0x%016"PRIx64" %"PRIu64".%"PRIu64
+		" type=%s",
 		fs->path, (int) fs->namelen,
 		fs->dev.major, fs->dev.minor,
 		fs->fsid.major, fs->fsid.minor,
-		fs->fsid.major, fs->fsid.minor);
+		fs->fsid.major, fs->fsid.minor, fs->type);
 }
 
 static void posix_find_parent(struct fsal_filesystem *this)
