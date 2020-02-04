@@ -14,7 +14,7 @@ from its official location on github.com into the place in my home directory
 where I keep my git trees.
 
    $ cd ~/git
-   $ git clone --recursive git://github.com/nfs-ganesha.git
+   $ git clone --recursive git://github.com/nfs-ganesha/nfs-ganesha.git
 
 Note the '--recursive' option which clones and initializes the submodule
 for libntirpc.  If you do not use this option, you will have to use the
