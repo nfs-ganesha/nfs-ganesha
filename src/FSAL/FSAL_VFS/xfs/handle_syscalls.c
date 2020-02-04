@@ -75,9 +75,10 @@ void display_xfs_handle(struct display_buffer *dspbuf,
 		}							\
 	} while (0)
 
-static int xfs_fsal_bulkstat_inode(int fd, xfs_ino_t ino, xfs_bstat_t *bstat)
+static int xfs_fsal_bulkstat_inode(int fd, xfs_ino_t ino,
+		struct xfs_bstat *bstat)
 {
-	xfs_fsop_bulkreq_t bulkreq;
+	struct xfs_fsop_bulkreq bulkreq;
 	__u64 i = ino;
 
 	bulkreq.lastip = &i;
@@ -89,7 +90,7 @@ static int xfs_fsal_bulkstat_inode(int fd, xfs_ino_t ino, xfs_bstat_t *bstat)
 
 static int xfs_fsal_inode2handle(int fd, ino_t ino, vfs_file_handle_t *fh)
 {
-	xfs_bstat_t bstat;
+	struct xfs_bstat bstat;
 	xfs_handle_t *hdl = (xfs_handle_t *) fh->handle_data;
 	void *data;
 	size_t sz;
