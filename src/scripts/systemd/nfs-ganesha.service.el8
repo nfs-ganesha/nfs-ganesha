@@ -1,0 +1,36 @@
+# This file is part of nfs-ganesha.
+#
+# There can only be one NFS-server active on a system. When NFS-Ganesha is
+# started, the kernel NFS-server should have been stopped. This is achieved by
+# the 'Conflicts' directive in this unit.
+#
+# The Network Locking Manager (rpc.statd) is provided by the nfs-utils package.
+# NFS-Ganesha comes with its own nfs-ganesha-lock.service to resolve potential
+# conflicts in starting multiple rpc.statd processes. See the comments in the
+# nfs-ganesha-lock.service for more details.
+#
+
+[Unit]
+Description=NFS-Ganesha file server
+Documentation=http://github.com/nfs-ganesha/nfs-ganesha/wiki
+After=rpcbind.service
+Wants=rpcbind.service
+Conflicts=nfs.target
+
+After=nfs-ganesha-config.service
+Wants=nfs-ganesha-config.service
+
+[Service]
+Type=forking
+# Let systemd create /run/ganesha, /var/log/ganesha and /var/lib/nfs/ganesha
+# directories
+RuntimeDirectory=ganesha
+LogsDirectory=ganesha
+StateDirectory=nfs/ganesha
+EnvironmentFile=-/run/sysconfig/ganesha
+ExecStart=/bin/bash -c "${ENV_OPTIONS} ${MALLOC_ARENA_MAX} ${NUMACTL} ${NUMAOPTS} /usr/bin/gpfs.ganesha.nfsd -C ${OPTIONS} ${EPOCH}"
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/dbus-send --system   --dest=org.ganesha.nfsd --type=method_call /org/ganesha/nfsd/admin org.ganesha.nfsd.admin.shutdown
+
+[Install]
+WantedBy=multi-user.target
