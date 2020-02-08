@@ -3289,6 +3289,7 @@ again:
 			/* When called with whence, the caller always wants the
 			 * next entry, skip this entry. */
 			mdcache_put(entry);
+			reload_chunk = false;
 			continue;
 		}
 
