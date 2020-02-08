@@ -787,6 +787,12 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 
 		refcnt = atomic_fetch_int32_t(&lru->refcnt);
 		assert(refcnt);
+		if (refcnt != (LRU_SENTINEL_REFCOUNT)) {
+			/* We can't reap a chunk with a ref */
+			QUNLOCK(qlane);
+			continue;
+		}
+
 		/* Get the chunk and parent entry that owns the chunk, all of
 		 * this is valid because we hold the QLANE lock, the chunk was
 		 * in the LRU, and thus the chunk is not yet being destroyed,
@@ -795,39 +801,38 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 		chunk = container_of(lru, struct dir_chunk, chunk_lru);
 		entry = chunk->parent;
 
-		if (refcnt != (LRU_SENTINEL_REFCOUNT)) {
-			/* We can't reap a chunk with a ref */
-			QUNLOCK(qlane);
-			continue;
-		}
-
-		/* If this chunk belongs to the parent seeking another chunk,
-		 * or if we can get the content_lock for the chunk's parent,
-		 * we can reap this chunk.
+		/* We need entry's content_lock to clean this chunk.
+		 * The usual lock order is content_lock followed by
+		 * chunk QLANE lock. Here we already have chunk QLANE
+		 * lock, so we try to acquire content_lock. If we fail
+		 * to acquire it, we just look for another chunk to
+		 * reap!
+		 *
+		 * Note that the entry is valid but it could be in the
+		 * process of getting destroyed (refcnt could be 0)! If
+		 * we do get the content_lock, it should continue to be
+		 * valid until we release the lock!
+		 *
+		 * If the entry is same as parent, we should already
+		 * have the content lock.
 		 */
 		if (entry == parent ||
 		    pthread_rwlock_trywrlock(&entry->content_lock) == 0) {
-			/* This chunk is eligible for reaping, we can proceed.
-			 */
-			if (entry != parent) {
-				/* We need an LRU ref on parent entry to protect
-				 * it while we do work on it's chunk.
-				 */
-				(void) atomic_inc_int32_t(&entry->lru.refcnt);
-			}
-
 			/* Dequeue the chunk so it won't show up anymore */
 			CHUNK_LRU_DQ_SAFE(lru, lq);
 			chunk->chunk_lru.qid = LRU_ENTRY_NONE;
 
 #ifdef USE_LTTNG
-				tracepoint(mdcache, mdc_lru_reap_chunk,
-					   __func__, __LINE__,
-					   &entry->obj_handle, chunk);
+			tracepoint(mdcache, mdc_lru_reap_chunk,
+				   __func__, __LINE__,
+				   &entry->obj_handle, chunk);
 #endif
 
-			/* Clean the chunk out and indicate the directory is no
-			 * longer completely populated.
+			/* Clean the chunk out and indicate the directory
+			 * is no longer completely populated.  We don't
+			 * need to hold a ref on the entry as we hold its
+			 * content_lock and the chunk is valid under QLANE
+			 * lock.
 			 */
 			mdcache_clean_dirent_chunk(chunk);
 			atomic_clear_uint32_t_bits(&entry->mde_flags,
@@ -839,7 +844,6 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 				 * acquiring a new chunk for.
 				 */
 				PTHREAD_RWLOCK_unlock(&entry->content_lock);
-				mdcache_put(entry);
 			}
 			QUNLOCK(qlane);
 			return lru;
