@@ -2383,7 +2383,8 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 				mdcache_put(new_dir_entry->entry);
 				new_dir_entry->entry = NULL;
 			}
-			if (state->prev_chunk) {
+			if (state->prev_chunk &&
+			    state->prev_chunk != state->cur_chunk) {
 				state->prev_chunk->next_ck = new_dir_entry->ck;
 			}
 		} else {
