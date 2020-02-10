@@ -12,23 +12,25 @@ from __future__ import print_function
 import sys
 import Ganesha.glib_dbus_stats
 
-def usage():
-    message = "Command displays global stats by default.\n"
-    message += "To display current status regarding stat counting use \n"
-    message += "%s status \n" % (sys.argv[0])
-    message += "To display stat counters use \n"
-    message += "%s [list_clients | deleg <ip address> | " % (sys.argv[0])
-    message += " inode | iov3 [export id] | iov4 [export id] | export |"
-    message += " total [export id] | fast | pnfs [export id] |"
-    message += " fsal <fsal name> | v3_full | v4_full | auth |"
-    message += " client_io_ops <ip address> | export_details <export id> |"
-    message += " client_all_ops <ip address>] \n"
-    message += "To reset stat counters use \n"
-    message += "%s reset \n" % (sys.argv[0])
-    message += "To enable/disable stat counters use \n"
-    message += "%s [enable | disable] [all | nfs | fsal | v3_full | " % (sys.argv[0])
-    message += "v4_full | auth | client_all_ops] \n"
-    sys.exit(message)
+def print_usage_exit(return_code):
+    message = "\nUsage: \n"
+    message += "Command displays global stats by default.\n"
+    message += "\nTo display current status regarding stat counting use: \n"
+    message += "  %s status \n" % (sys.argv[0])
+    message += "\nTo display stat counters use: \n"
+    message += "  %s [ list_clients | deleg <ip address> |\n" % (sys.argv[0])
+    message += "          inode | iov3 [export id] | iov4 [export id] | export |\n"
+    message += "          total [export id] | fast | pnfs [export id] |\n"
+    message += "          fsal <fsal name> | v3_full | v4_full | auth |\n"
+    message += "          client_io_ops <ip address> | export_details <export id> |\n"
+    message += "          client_all_ops <ip address>] \n"
+    message += "\nTo reset stat counters use: \n"
+    message += "  %s reset \n" % (sys.argv[0])
+    message += "\nTo enable/disable stat counters use: \n"
+    message += "  %s [ enable | disable] [all | nfs | fsal | v3_full |\n" % (sys.argv[0])
+    message += "           v4_full | auth | client_all_ops] \n"
+    print(message)
+    sys.exit(return_code)
 
 if (len(sys.argv) < 2):
     command = 'global'
@@ -41,24 +43,24 @@ commands = ('help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
             'disable', 'status', 'v3_full', 'v4_full', 'auth', 'client_io_ops',
             'export_details', 'client_all_ops')
 if command not in commands:
-    print("Option '%s' is not correct." % command)
-    usage()
+    print("\nError: Option '%s' is not correct." % command)
+    print_usage_exit(1)
 # requires an IP address
 elif command in ('deleg', 'client_io_ops', 'client_all_ops'):
     if not len(sys.argv) == 3:
-        print("Option '%s' must be followed by an ip address." % command)
-        usage()
+        print("\nError: Option '%s' must be followed by an ip address." % command)
+        print_usage_exit(1)
     command_arg = sys.argv[2]
 # requires an export id
 elif command == 'export_details':
     if not len(sys.argv) == 3:
-        print("Option '%s' must be followed by an export id." % command)
-        usage()
+        print("\nError: Option '%s' must be followed by an export id." % command)
+        print_usage_exit(1)
     if sys.argv[2].isdigit():
         command_arg = int(sys.argv[2])
     else:
-        print("Argument '%s' must be numeric." % sys.argv[2])
-        usage()
+        print("\nError: Argument '%s' must be numeric." % sys.argv[2])
+        print_usage_exit(1)
 # optionally accepts an export id
 elif command in ('iov3', 'iov4', 'total', 'pnfs'):
     if (len(sys.argv) == 2):
@@ -66,25 +68,25 @@ elif command in ('iov3', 'iov4', 'total', 'pnfs'):
     elif (len(sys.argv) == 3) and sys.argv[2].isdigit():
         command_arg = int(sys.argv[2])
     else:
-        usage()
+        print_usage_exit(1)
 # requires fsal name
 elif command in ('fsal'):
     if not len(sys.argv) == 3:
-        print("Option '%s' must be followed by fsal name." % command)
-        usage()
+        print("\nError: Option '%s' must be followed by fsal name." % command)
+        print_usage_exit(1)
     command_arg = sys.argv[2]
 elif command in ('enable', 'disable'):
     if not len(sys.argv) == 3:
-        print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth/client_all_ops" %
+        print("\nError: Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth/client_all_ops" %
             command)
-        usage()
+        print_usage_exit(1)
     command_arg = sys.argv[2]
     if command_arg not in ('all', 'nfs', 'fsal', 'v3_full', 'v4_full', 'auth', 'client_all_ops'):
-        print("Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth/client_all_ops" %
+        print("\nError: Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth/client_all_ops" %
             command)
-        usage()
+        print_usage_exit(1)
 elif command == "help":
-    usage()
+    print_usage_exit(0)
 
 # retrieve and print stats
 exp_interface = Ganesha.glib_dbus_stats.RetrieveExportStats()
