@@ -447,7 +447,6 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	   stateid is all-0 or all-1 */
 
 	if (state_found != NULL) {
-		struct state_deleg *sdeleg;
 
 		if (info)
 			info->io_advise = state_found->state_data.io_advise;
@@ -473,20 +472,11 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 			break;
 
 		case STATE_TYPE_DELEG:
-			/* Check if the delegation state allows READ or
-			 * if the open share state allows READ access
-			 * in case of WRITE delegation */
-			sdeleg = &state_found->state_data.deleg;
-			if (!((sdeleg->sd_type & OPEN_DELEGATE_READ) ||
-			    (sdeleg->share_access & OPEN4_SHARE_ACCESS_READ))) {
-				/* Invalid delegation for this operation. */
-				LogDebug(COMPONENT_STATE,
-					"Delegation type:%d state:%d",
-					sdeleg->sd_type,
-					sdeleg->sd_state);
-				res_READ4->status = NFS4ERR_BAD_STATEID;
-				goto out;
-			}
+			/* While doing read operation, we need not check
+			 * for deleg state or share access. If share access
+			 * is write or read or both, we will always allow
+			 * reads as per page 112 in RFC 7530.
+			 */
 
 			state_open = NULL;
 			break;
