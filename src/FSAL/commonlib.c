@@ -1291,9 +1291,27 @@ int populate_posix_file_systems(bool force)
 		 * kernel due to unavailable NFS servers. Since we don't
 		 * support them anyway, check this early and avoid
 		 * hangs!
+		 *
+		 * Also skip some other filesystem types that we would never
+		 * export.
 		 */
-		if (strcasecmp(mnt->mnt_type, "nfs") == 0 ||
-		    strcasecmp(mnt->mnt_type, "autofs") == 0) {
+		if (strncasecmp(mnt->mnt_type, "nfs", 3) == 0 ||
+		    strcasecmp(mnt->mnt_type, "autofs") == 0 ||
+		    strcasecmp(mnt->mnt_type, "sysfs") == 0 ||
+		    strcasecmp(mnt->mnt_type, "proc") == 0 ||
+		    strcasecmp(mnt->mnt_type, "devtmpfs") == 0 ||
+		    strcasecmp(mnt->mnt_type, "securityfs") == 0 ||
+		    strcasecmp(mnt->mnt_type, "cgroup") == 0 ||
+		    strcasecmp(mnt->mnt_type, "selinuxfs") == 0 ||
+		    strcasecmp(mnt->mnt_type, "debugfs") == 0 ||
+		    strcasecmp(mnt->mnt_type, "hugetlbfs") == 0 ||
+		    strcasecmp(mnt->mnt_type, "mqueue") == 0 ||
+		    strcasecmp(mnt->mnt_type, "pstore") == 0 ||
+		    strcasecmp(mnt->mnt_type, "devpts") == 0 ||
+		    strcasecmp(mnt->mnt_type, "configfs") == 0 ||
+		    strcasecmp(mnt->mnt_type, "binfmt_misc") == 0 ||
+		    strcasecmp(mnt->mnt_type, "rpc_pipefs") == 0 ||
+		    strcasecmp(mnt->mnt_type, "vboxsf") == 0) {
 			LogDebug(COMPONENT_FSAL,
 				 "Ignoring %s because type %s",
 				 mnt->mnt_dir,
