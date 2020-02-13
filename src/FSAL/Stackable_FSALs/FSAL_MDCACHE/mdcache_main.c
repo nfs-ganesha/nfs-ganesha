@@ -395,32 +395,93 @@ void mdcache_dbus_show(DBusMessageIter *iter)
 
 	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
 					 &struct_iter);
-	type = "cache_req";
+	type = " Cache Requests: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&cache_st.inode_req);
-	type = "cache_hit";
+	type = " Cache Hits: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&cache_st.inode_hit);
-	type = "cache_miss";
+	type = " Cache Misses: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&cache_st.inode_miss);
-	type = "cache_conf";
+	type = " Cache Conflicts: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&cache_st.inode_conf);
-	type = "cache_added";
+	type = " Cache Adds: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&cache_st.inode_added);
-	type = "cache_mapping";
+	type = " Cache Mapping: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&cache_st.inode_mapping);
 
 	dbus_message_iter_close_container(iter, &struct_iter);
+}
+
+/* lru data utilization */
+void mdcache_utilization(DBusMessageIter *iter)
+{
+	DBusMessageIter struct_iter;
+	char *type;
+	uint64_t entries_used, chunks_used;
+	uint32_t fd_limit, fd_state;
+	size_t open_fds;
+
+
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &struct_iter);
+	/* Gather the data */
+	open_fds = atomic_fetch_size_t(&open_fd_count);
+	entries_used = atomic_fetch_uint64_t(&lru_state.entries_used);
+	chunks_used = atomic_fetch_uint64_t(&lru_state.chunks_used);
+	fd_state = atomic_fetch_uint32_t(&lru_state.fd_state);
+	fd_limit = atomic_fetch_uint32_t(&lru_state.fds_system_imposed);
+
+	type = " FSAL opened FD count : ";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &open_fds);
+
+	type = " System limit on FDs : ";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &fd_limit);
+
+	type = " FD usage : ";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	switch (fd_state) {
+	case FD_LOW:
+		type = " Below Low Water Mark ";
+		break;
+	case FD_MIDDLE:
+		type = " Below High Water Mark ";
+		break;
+	case FD_HIGH:
+		type = " Above High Water Mark ";
+		break;
+	case FD_LIMIT:
+		type = " Hard Limit reached ";
+		break;
+	}
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+
+	type = " LRU entries in use : ";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &entries_used);
+
+	type = " Chunks in use : ";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &chunks_used);
+
+	dbus_message_iter_close_container(iter, &struct_iter);
+
 }
 #endif /* USE_DBUS */
 
