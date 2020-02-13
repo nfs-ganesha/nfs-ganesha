@@ -35,6 +35,8 @@
 #include <boost/program_options.hpp>
 
 extern "C" {
+/* Don't include rpcent.h; it has C++ issues, and is unneeded */
+#define _RPC_RPCENT_H
 
 #include <intrinsic.h>
 #include <misc/rbtree_x.h>
