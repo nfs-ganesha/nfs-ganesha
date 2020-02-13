@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2019 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2020 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -2405,6 +2405,8 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		 * filled in.
 		 */
 		result = DIR_READAHEAD;
+	} else if (state->cur_chunk->num_entries == 1 && state->prev_chunk) {
+		state->prev_chunk->next_ck = cookie;
 	}
 
 	if (new_entry->obj_handle.type == DIRECTORY) {
