@@ -27,6 +27,8 @@
 extern "C" {
 /* Manually forward this, an 9P is not C++ safe */
 void admin_halt(void);
+/* Don't include rpcent.h; it has C++ issues, and is unneeded */
+#define _RPC_RPCENT_H
 /* Ganesha headers */
 #include "nfs_lib.h"
 #include "fsal.h"

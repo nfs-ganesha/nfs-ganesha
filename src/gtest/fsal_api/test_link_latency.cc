@@ -33,6 +33,8 @@
 #include <boost/filesystem/exception.hpp>
 #include <boost/program_options.hpp>
 
+#include "gtest.hh"
+
 extern "C" {
 /* Manually forward this, as 9P is not C++ safe */
 void admin_halt(void);
@@ -45,8 +47,6 @@ void admin_halt(void);
 /* For MDCACHE bypass.  Use with care */
 #include "../FSAL/Stackable_FSALs/FSAL_MDCACHE/mdcache_debug.h"
 }
-
-#include "gtest.hh"
 
 #define TEST_ROOT "link_latency"
 #define TEST_FILE "link_source"

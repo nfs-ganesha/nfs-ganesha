@@ -25,6 +25,8 @@
 #include "gtest.hh"
 
 extern "C" {
+/* Don't include rpcent.h; it has C++ issues, and is unneeded */
+#define _RPC_RPCENT_H
 /* Ganesha headers */
 #include "nfs_lib.h"
 #include "nfs_file_handle.h"
