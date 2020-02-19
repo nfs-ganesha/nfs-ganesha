@@ -99,12 +99,12 @@ static inline void nfs_check_malloc(void)
 	p = malloc(0);
 	if (p == NULL)
 		LogFatal(COMPONENT_MAIN,
-			 "Ganesha assumes malloc(0) returns a non-NULL pointer.");
+			 "Ganesha's assumption that malloc(0) returns a non-NULL pointer is not true, Ganesha can not work with the memory allocator in use. Aborting.");
 	free(p);
 	p = calloc(0, 0);
 	if (p == NULL)
 		LogFatal(COMPONENT_MAIN,
-			 "Ganesha assumes calloc(0, 0) returns a non-NULL pointer.");
+			 "Ganesha's assumption that calloc(0, 0) returns a non-NULL pointer is not true, Ganesha can not work with the memory allocator in use. Aborting.");
 	free(p);
 }
 
