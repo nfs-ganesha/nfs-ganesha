@@ -965,6 +965,17 @@ static void open4_ex(OPEN4args *arg,
 		LogFullDebug(COMPONENT_STATE,
 			     "Calling open2 for %s", filename);
 
+		if (state_lock_held) {
+			/* Make sure we don't do cleanup holding the state_lock.
+			 * Because in case FSAL open2(..) fails with ESTALE then
+			 * ganesha will call mdcache_kill_entry(..). This may
+			 * lead to a crash if there is a call to
+			 * state_wipe_file(..) where we would try to take the
+			 * same state_lock again.
+			 */
+			in_obj->state_hdl->no_cleanup = true;
+		}
+
 		status = fsal_open2(in_obj,
 				    *file_state,
 				    openflags,
@@ -974,6 +985,9 @@ static void open4_ex(OPEN4args *arg,
 				    verifier,
 				    &out_obj,
 				    NULL);
+
+		if (state_lock_held)
+			in_obj->state_hdl->no_cleanup = false;
 
 		if (FSAL_IS_ERROR(status)) {
 			res_OPEN4->status = nfs4_Errno_status(status);
