@@ -527,6 +527,12 @@ int main(int argc, char *argv[])
 
 fatal_die:
 	report_config_errors(&err_type, NULL, config_errs_to_log);
+
+	if (tempo_exec_name)
+		free(exec_name);
+	if (log_path)
+		free(log_path);
+
 	LogFatal(COMPONENT_INIT,
 		 "Fatal errors.  Server exiting...");
 	/* NOT REACHED */
