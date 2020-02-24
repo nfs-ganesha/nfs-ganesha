@@ -2749,7 +2749,9 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&status_stats,
 	&v3_full_statistics,
 	&v4_full_statistics,
+#ifdef _HAVE_GSSAPI
 	&auth_statistics,
+#endif /* _HAVE_GSSAPI */
 	&export_details,
 	NULL
 };
