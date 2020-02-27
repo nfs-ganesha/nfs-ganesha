@@ -171,6 +171,7 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 						   bool exact_match);
 struct gsh_export *get_gsh_export_by_tag(char *tag);
 bool mount_gsh_export(struct gsh_export *exp);
+void unmount_gsh_export(struct gsh_export *exp);
 void remove_gsh_export(uint16_t export_id);
 bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 			bool wrlock, void *state);

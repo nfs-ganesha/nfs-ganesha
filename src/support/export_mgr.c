@@ -657,6 +657,23 @@ bool mount_gsh_export(struct gsh_export *exp)
 }
 
 /**
+ * @brief unmount the export in pseudo FS
+ *
+ */
+
+void unmount_gsh_export(struct gsh_export *exp)
+{
+	struct root_op_context root_op_context;
+
+	/* Initialize req_ctx */
+	init_root_op_context(&root_op_context, NULL, NULL,
+				NFS_V4, 0, NFS_REQUEST);
+
+	pseudo_unmount_export(exp);
+	release_root_op_context();
+}
+
+/**
  * @brief Take a reference to an export.
  */
 

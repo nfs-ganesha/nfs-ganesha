@@ -1003,6 +1003,32 @@ static inline void update_atomic_fields(struct gsh_export *export,
 	atomic_store_uint32_t(&export->options_set, src->options_set);
 }
 
+static inline void copy_gsh_export(struct gsh_export *dest,
+				   struct gsh_export *src)
+{
+	/* Update atomic fields */
+	update_atomic_fields(dest, src);
+
+	/* Now take lock and swap out client list and export_perms... */
+	PTHREAD_RWLOCK_wrlock(&dest->lock);
+
+	/* Copy the export perms into the existing export. */
+	dest->export_perms = src->export_perms;
+
+	/* Swap the client list from the src export and the dest
+	 * export. When we then dispose of the new export, the
+	 * old client list will also be disposed of.
+	 */
+	LogFullDebug(COMPONENT_EXPORT,
+		     "Original clients = (%p,%p) New clients = (%p,%p)",
+		     dest->clients.next, dest->clients.prev,
+		     src->clients.next, src->clients.prev);
+
+	glist_swap_lists(&dest->clients, &src->clients);
+
+	PTHREAD_RWLOCK_unlock(&dest->lock);
+}
+
 /**
  * @brief Commit an export block
  *
@@ -1095,6 +1121,9 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	probe_exp = get_gsh_export(export->export_id);
 
 	if (commit_type == update_export && probe_exp != NULL) {
+		bool mount_pseudo_export = false, unmount_pseudo_export = false;
+		struct gsh_export *exp_copy = NULL;
+
 		/* We have an actual update case, probe_exp is the target
 		 * to update. Check all the options that MUST match.
 		 * Note that Path/fullpath will not be NULL, but we compare
@@ -1180,27 +1209,31 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		/* Grab config_generation for this config */
 		probe_exp->config_gen = get_parse_root_generation(node);
 
-		/* Update atomic fields */
-		update_atomic_fields(probe_exp, export);
+		if ((export->export_perms.options & EXPORT_OPTION_NFSV4) &&
+		 (probe_exp->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
+			mount_pseudo_export = true;
+			exp_copy = alloc_export();
+			memcpy(exp_copy, probe_exp, sizeof(struct gsh_export));
+		} else if (
+		    (probe_exp->export_perms.options & EXPORT_OPTION_NFSV4) &&
+		    (export->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
+			unmount_pseudo_export = true;
+		}
 
-		/* Now take lock and swap out client list and export_perms... */
-		PTHREAD_RWLOCK_wrlock(&probe_exp->lock);
+		copy_gsh_export(probe_exp, export);
 
-		/* Copy the export perms into the existing export. */
-		probe_exp->export_perms = export->export_perms;
+		if (mount_pseudo_export && !mount_gsh_export(probe_exp)) {
+			err_type->internal = true;
+			errcnt++;
 
-		/* Swap the client list from the new export and the existing
-		 * export. When we then dispose of the new export, the
-		 * old client list will also be disposed of.
-		 */
-		LogFullDebug(COMPONENT_EXPORT,
-			     "Original clients = (%p,%p) New clients = (%p,%p)",
-			     probe_exp->clients.next, probe_exp->clients.prev,
-			     export->clients.next, export->clients.prev);
+			/* Restoring the old export properties */
+			copy_gsh_export(probe_exp, exp_copy);
+			gsh_free(exp_copy);
 
-		glist_swap_lists(&probe_exp->clients, &export->clients);
-
-		PTHREAD_RWLOCK_unlock(&probe_exp->lock);
+			return errcnt;
+		} else if (unmount_pseudo_export) {
+			unmount_gsh_export(probe_exp);
+		}
 
 		/* We will need to dispose of the config export since we
 		 * updated the existing export.
