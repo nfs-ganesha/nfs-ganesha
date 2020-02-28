@@ -246,12 +246,16 @@ static void close_rpc_fd(void)
 	for (p = P_NFS; p < P_COUNT; p++) {
 		if (udp_socket[p] != -1)
 			close(udp_socket[p]);
-		if (udp_xprt[p])
+		if (udp_xprt[p]) {
 			SVC_DESTROY(udp_xprt[p]);
+			SVC_RELEASE(udp_xprt[p], SVC_REF_FLAG_NONE);
+		}
 		if (tcp_socket[p] != -1)
 			close(tcp_socket[p]);
-		if (tcp_xprt[p])
+		if (tcp_xprt[p]) {
 			SVC_DESTROY(tcp_xprt[p]);
+			SVC_RELEASE(tcp_xprt[p], SVC_REF_FLAG_NONE);
+		}
 	}
 	/* no need for special tcp_xprt[P_NFS_VSOCK] treatment */
 }
