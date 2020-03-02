@@ -29,6 +29,7 @@
 from __future__ import print_function
 import sys
 import Ganesha.glib_dbus_stats
+import dbus
 
 def print_usage_exit(return_code):
     message = (
@@ -193,5 +194,5 @@ try:
         result = exp_interface.status_stats()
 
     print(result.json()) if output_json else print(result)
-except:
+except dbus.exceptions.DBusException:
     sys.exit("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")
