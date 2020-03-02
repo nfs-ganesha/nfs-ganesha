@@ -11,6 +11,7 @@
 from __future__ import print_function
 import sys
 import Ganesha.glib_dbus_stats
+import dbus
 
 def print_usage_exit(return_code):
     message = "\nUsage: \n"
