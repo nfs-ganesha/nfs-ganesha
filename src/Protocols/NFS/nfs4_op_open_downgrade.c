@@ -269,11 +269,15 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	if ((args->share_deny & OPEN4_SHARE_DENY_WRITE) != 0)
 		openflags |= FSAL_O_DENY_WRITE_MAND;
 
+	/* Make sure we don't do cleanup holding the state_lock. */
+	data->current_obj->state_hdl->no_cleanup = true;
 
 	fsal_status = fsal_reopen2(data->current_obj,
 				   state,
 				   openflags,
 				   true);
+
+	data->current_obj->state_hdl->no_cleanup = false;
 
 	state_status = state_error_convert(fsal_status);
 
