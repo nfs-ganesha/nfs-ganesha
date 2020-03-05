@@ -3110,6 +3110,10 @@ again:
 	} else {
 		fsal_cookie_t *name;
 
+		if (chunk) {
+			mdcache_lru_unref_chunk(chunk);
+		}
+
 		/* We found the dirent... If next_ck is NOT whence, we SHOULD
 		 * have found the first dirent in the chunk, if not, then
 		 * something went wrong at some point. That chunk is valid,
