@@ -415,8 +415,6 @@ void vfs_unclaim_filesystem(struct fsal_filesystem *fs)
 		}
 
 		free_vfs_filesystem(vfs_fs);
-
-		fs->private_data = NULL;
 	}
 
 	LogInfo(COMPONENT_FSAL,
@@ -441,13 +439,46 @@ void vfs_unexport_filesystems(struct vfs_fsal_export *exp)
 		/* Remove this file system from mapping */
 		glist_del(&map->on_filesystems);
 		glist_del(&map->on_exports);
+
 		if (glist_empty(&map->fs->exports)) {
-			release_posix_file_system(map->fs->fs);
+			struct fsal_filesystem *fs = map->fs->fs;
+
+			/* No other VFS exports use this file system, unclaim
+			 * it, release any unclaimed file systems later.
+			 *
+			 * Note that we can NOT use unclaim_fs or
+			 * vfs_unclaim_filesystem since the map is used there
+			 * also.
+			 */
+			LogInfo(COMPONENT_FSAL,
+				"VFS Unclaiming %s",
+				fs->path);
+
+			/* Unclaim the fsal_filesystem */
+			fs->fsal = NULL;
+			fs->unclaim = NULL;
+			fs->exported = false;
+			fs->private_data = NULL;
+
+			/* And free the vfs_filesystem (and close the fs open on
+			 * the root of the fs that we use for open_by_handle).
+			 */
+			free_vfs_filesystem(map->fs);
 		}
 
-		/* And free it */
+		/* And free the map entry */
 		gsh_free(map);
 	} while (true);
+
+	/* Now that we've unclaimed all fsal_fileststem objects, see if we can
+	 * release any. Once we're done with this, any unclaimed file systems
+	 * should be able to be unmounted by the sysadmin (though note that if
+	 * they are sub-mounted in another VFS export, they could become claimed
+	 * by navigation into them). If there are any nested exports, the file
+	 * systems they export will still be claimed. The nested exports will at
+	 * least still be mountable via NFS v3.
+	 */
+	(void) release_posix_file_system(exp->root_fs, UNCLAIM_SKIP);
 
 	PTHREAD_RWLOCK_unlock(&fs_lock);
 }

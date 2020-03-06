@@ -106,14 +106,7 @@ extern pthread_rwlock_t fs_lock;
 
 void free_fs(struct fsal_filesystem *fs);
 
-int populate_posix_file_systems(bool force);
-
-int reload_posix_filesystems(const char *path,
-			     struct fsal_module *fsal,
-			     struct fsal_export *exp,
-			     claim_filesystem_cb claim,
-			     unclaim_filesystem_cb unclaim,
-			     struct fsal_filesystem **root_fs);
+int populate_posix_file_systems(const char *path);
 
 int resolve_posix_filesystem(const char *path,
 			     struct fsal_module *fsal,
@@ -124,7 +117,13 @@ int resolve_posix_filesystem(const char *path,
 
 void release_posix_file_systems(void);
 
-void release_posix_file_system(struct fsal_filesystem *fs);
+enum release_claims {
+	UNCLAIM_WARN,
+	UNCLAIM_SKIP,
+};
+
+bool release_posix_file_system(struct fsal_filesystem *fs,
+			       enum release_claims release_claims);
 
 int re_index_fs_fsid(struct fsal_filesystem *fs,
 		     enum fsid_type fsid_type,
@@ -150,7 +149,8 @@ int claim_posix_filesystems(const char *path,
 			    struct fsal_export *exp,
 			    claim_filesystem_cb claim,
 			    unclaim_filesystem_cb unclaim,
-			    struct fsal_filesystem **root_fs);
+			    struct fsal_filesystem **root_fs,
+			    struct stat *statbuf);
 
 int encode_fsid(char *buf,
 		int max,

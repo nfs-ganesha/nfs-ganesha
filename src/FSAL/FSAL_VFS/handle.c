@@ -261,12 +261,25 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 	struct vfs_fsal_export *myexp_hdl =
 	    container_of(op_ctx->fsal_export, struct vfs_fsal_export, export);
 
+again:
+
 	retval = fstatat(dirfd, path, stat, AT_SYMLINK_NOFOLLOW);
 
 	if (retval < 0) {
 		retval = errno;
 		LogDebug(COMPONENT_FSAL, "Failed to open stat %s: %s", path,
 			 msg_fsal_err(posix2fsal_error(retval)));
+
+		if (errno == EAGAIN) {
+			/* autofs can cause EAGAIN if the file system is not
+			 * yet mounted.
+			 */
+			/** @todo FSF: should we retry forever
+			 *             is there any other reason for EAGAIN?
+			 */
+			goto again;
+		}
+
 		status = posix2fsal_status(retval);
 		goto out;
 	}
@@ -290,16 +303,12 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 			PRIu64".%"PRIu64" - reloading filesystems to find it",
 			path, dev.major, dev.minor);
 
-		retval = reload_posix_filesystems(CTX_FULLPATH(op_ctx),
-						  parent_hdl->obj_handle.fsal,
-						  op_ctx->fsal_export,
-						  vfs_claim_filesystem,
-						  vfs_unclaim_filesystem,
-						  &myexp_hdl->root_fs);
+		retval = populate_posix_file_systems(path);
 
 		if (retval != 0) {
-			LogFullDebug(COMPONENT_FSAL,
-				     "resolve_posix_filesystem failed");
+			LogCrit(COMPONENT_FSAL,
+				"populate_posix_file_systems returned %s (%d)",
+				strerror(retval), retval);
 			status = posix2fsal_status(EXDEV);
 			goto out;
 		}
@@ -312,8 +321,13 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 			status = posix2fsal_status(EXDEV);
 			goto out;
 		} else {
+			/* We have now found the file system, since it was
+			 * just added, fs->fsal will be NULL so the next if
+			 * block below will be executed to claim the file system
+			 * and carry on.
+			 */
 			LogInfo(COMPONENT_FSAL,
-				"Filesystem %s has been added to export %d:%s",
+				"Filesystem %s will be added to export %d:%s",
 				fs->path, op_ctx->ctx_export->export_id,
 				op_ctx_export_path(op_ctx));
 		}
@@ -332,7 +346,8 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 						 op_ctx->fsal_export,
 						 vfs_claim_filesystem,
 						 vfs_unclaim_filesystem,
-						 &myexp_hdl->root_fs);
+						 &myexp_hdl->root_fs,
+						 stat);
 
 		if (retval != 0) {
 			LogFullDebug(COMPONENT_FSAL,
