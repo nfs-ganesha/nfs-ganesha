@@ -1,0 +1,14 @@
+Description=NFS status monitor for NFSv2/3 locking.
+DefaultDependencies=no
+Conflicts=umount.target
+Requires=nss-lookup.target rpcbind.socket
+Wants=network-online.target
+After=network-online.target nss-lookup.target rpcbind.socket
+
+PartOf=nfs-utils.service
+
+[Service]
+Environment=RPC_STATD_NO_NOTIFY=1
+Type=forking
+PIDFile=/var/run/rpc.statd.pid
+ExecStart=/usr/sbin/rpc.statd
