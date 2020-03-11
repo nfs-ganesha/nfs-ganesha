@@ -1986,7 +1986,16 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 	if (c_all->nfsv3) {
 		dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT,
 						 NULL, &array_iter);
-		for (i = 0; i < NFSPROC3_COMMIT + 1; i++) {
+		/* Workaround to handle reset of stats */
+		dbus_message_iter_append_basic(&array_iter,
+					DBUS_TYPE_STRING, &optabv3[0].name);
+		dbus_message_iter_append_basic(&array_iter, DBUS_TYPE_UINT64,
+					&c_all->nfsv3->cmds[0].total);
+		dbus_message_iter_append_basic(&array_iter, DBUS_TYPE_UINT64,
+					&c_all->nfsv3->cmds[0].errors);
+		dbus_message_iter_append_basic(&array_iter, DBUS_TYPE_UINT64,
+					&c_all->nfsv3->cmds[0].dups);
+		for (i = 1; i < NFSPROC3_COMMIT + 1; i++) {
 			if (c_all->nfsv3->cmds[i].total) {
 				dbus_message_iter_append_basic(&array_iter,
 					DBUS_TYPE_STRING, &optabv3[i].name);
@@ -2011,7 +2020,16 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 	if (c_all->nlm4) {
 		dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT,
 						 NULL, &array_iter);
-		for (i = 0; i < NLMPROC4_FREE_ALL + 1; i++) {
+		/* Workaround to handle reset of stats */
+		dbus_message_iter_append_basic(&array_iter,
+					DBUS_TYPE_STRING, &optnlm[0].name);
+		dbus_message_iter_append_basic(&array_iter, DBUS_TYPE_UINT64,
+					&c_all->nlm4->cmds[0].total);
+		dbus_message_iter_append_basic(&array_iter, DBUS_TYPE_UINT64,
+					&c_all->nlm4->cmds[0].errors);
+		dbus_message_iter_append_basic(&array_iter, DBUS_TYPE_UINT64,
+					&c_all->nlm4->cmds[0].dups);
+		for (i = 1; i < NLMPROC4_FREE_ALL + 1; i++) {
 			if (c_all->nlm4->cmds[i].total) {
 				dbus_message_iter_append_basic(&array_iter,
 					DBUS_TYPE_STRING, &optnlm[i].name);
@@ -2036,7 +2054,14 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 	if (c_all->nfsv4) {
 		dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT,
 						 NULL, &array_iter);
-		for (i = 0; i < NFS4_OP_LAST_ONE; i++) {
+		/* Workaround to handle reset of stats */
+		dbus_message_iter_append_basic(&array_iter,
+					DBUS_TYPE_STRING, &optabv4[3].name);
+		dbus_message_iter_append_basic(&array_iter, DBUS_TYPE_UINT64,
+					&c_all->nfsv4->cmds[3].total);
+		dbus_message_iter_append_basic(&array_iter, DBUS_TYPE_UINT64,
+					&c_all->nfsv4->cmds[3].errors);
+		for (i = 4; i < NFS4_OP_LAST_ONE; i++) {
 			if (c_all->nfsv4->cmds[i].total) {
 				dbus_message_iter_append_basic(&array_iter,
 					DBUS_TYPE_STRING, &optabv4[i].name);
