@@ -220,8 +220,10 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 				    result->ai_addrlen;
 
 				host->slc_callback_clnt =
-				    clnt_vc_ncreate(fd, &local_buf, NLMPROG,
-						    NLM4_VERS, 0, 0);
+				    clnt_vc_ncreatef(fd, &local_buf, NLMPROG,
+						     NLM4_VERS, 0, 0,
+						     CLNT_CREATE_FLAG_CLOSE |
+						     CLNT_CREATE_FLAG_CONNECT);
 				freeaddrinfo(result);
 			} else {
 
