@@ -186,10 +186,12 @@ void nfs_put_grace_status(void)
 {
 	uint32_t cur;
 
-	cur = __sync_fetch_and_sub(&grace_status, GRACE_STATUS_REF_INCREMENT);
+	cur = __sync_sub_and_fetch(&grace_status, GRACE_STATUS_REF_INCREMENT);
 	if (cur & GRACE_STATUS_CHANGE_REQ &&
-	    !(cur >> GRACE_STATUS_COUNTER_SHIFT))
+	    !(cur >> GRACE_STATUS_COUNTER_SHIFT)) {
+		nfs_notify_grace_norefs_waiters();
 		reaper_wake();
+	}
 }
 
 /**
@@ -232,10 +234,11 @@ static void nfs4_set_enforcing(void)
  * will be passed to this routine inside of the grace start structure.
  *
  * @param[in] gsp Grace period start information
+ * Returns 0 on success, -EAGAIN on failure to enforce grace.
  */
-void nfs_start_grace(nfs_grace_start_t *gsp)
+int nfs_start_grace(nfs_grace_start_t *gsp)
 {
-	int ret;
+	int ret = 0;
 	bool was_grace;
 	uint32_t cur, old, pro;
 
@@ -300,9 +303,15 @@ void nfs_start_grace(nfs_grace_start_t *gsp)
 	/*
 	 * If we were not in a grace period before and there were still
 	 * references outstanding, then we can't do anything else.
+	 * Fail with -EAGAIN so that caller can retry if needed.
 	 */
-	if (!was_grace && (old & GRACE_STATUS_COUNT_MASK))
+	if (!was_grace && (old & GRACE_STATUS_COUNT_MASK)) {
+		LogEvent(COMPONENT_STATE,
+			 "Unable to start grace, grace status 0x%x",
+			 grace_status);
+		ret = -EAGAIN;
 		goto out;
+	}
 
 	__sync_synchronize();
 
@@ -345,7 +354,7 @@ void nfs_start_grace(nfs_grace_start_t *gsp)
 			if (gsp->event == EVENT_RELEASE_IP) {
 				PTHREAD_MUTEX_unlock(&grace_mutex);
 				nfs_release_v4_clients(gsp->ipaddr);
-				return;
+				return ret;
 			}
 			else {
 				nfs4_recovery_load_clids(gsp);
@@ -354,6 +363,7 @@ void nfs_start_grace(nfs_grace_start_t *gsp)
 	}
 out:
 	PTHREAD_MUTEX_unlock(&grace_mutex);
+	return ret;
 }
 
 /**
@@ -561,6 +571,26 @@ void nfs_notify_grace_waiters(void)
 	pthread_mutex_lock(&enforcing_mutex);
 	pthread_cond_broadcast(&enforcing_cond);
 	pthread_mutex_unlock(&enforcing_mutex);
+}
+
+static pthread_cond_t norefs_cond = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t norefs_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void nfs_wait_for_grace_norefs(void)
+{
+	pthread_mutex_lock(&norefs_mutex);
+	struct timespec	timeo = { .tv_sec = time(NULL) + 5,
+				  .tv_nsec = 0 };
+	pthread_cond_timedwait(&norefs_cond, &norefs_mutex,
+			       &timeo);
+	pthread_mutex_unlock(&norefs_mutex);
+}
+
+void nfs_notify_grace_norefs_waiters(void)
+{
+	pthread_mutex_lock(&norefs_mutex);
+	pthread_cond_broadcast(&norefs_cond);
+	pthread_mutex_unlock(&norefs_mutex);
 }
 
 /**
