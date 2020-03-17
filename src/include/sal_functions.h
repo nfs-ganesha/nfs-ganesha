@@ -991,7 +991,7 @@ void blocked_lock_polling(struct fridgethr_context *ctx);
 
 /* Grace period handling */
 extern int32_t reclaim_completes; /* atomic */
-void nfs_start_grace(nfs_grace_start_t *gsp);
+int nfs_start_grace(nfs_grace_start_t *gsp);
 void nfs_end_grace(void);
 bool nfs_in_grace(void);
 bool nfs_get_grace_status(bool want_grace);
@@ -1002,6 +1002,8 @@ int nfs_recovery_get_nodeid(char **pnodeid);
 void nfs_try_lift_grace(void);
 void nfs_wait_for_grace_enforcement(void);
 void nfs_notify_grace_waiters(void);
+void nfs_wait_for_grace_norefs(void);
+void nfs_notify_grace_norefs_waiters(void);
 
 /* v4 Client stable-storage database management */
 void nfs4_add_clid(nfs_client_id_t *);

@@ -135,6 +135,7 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 	nfs_grace_start_t gsp;
 	char *input = NULL;
 	char *ip;
+	int ret;
 
 	dbus_message_iter_init_append(reply, &iter);
 	if (args == NULL) {
@@ -170,7 +171,24 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 		if (gsp.event == EVENT_TAKE_NODEID)
 			gsp.nodeid = atoi(gsp.ipaddr);
 	}
-	nfs_start_grace(&gsp);
+
+	do {
+		ret = nfs_start_grace(&gsp);
+		/*
+		 * grace could fail if there are refs taken.
+		 * wait for no refs and retry.
+		 */
+		if (ret == -EAGAIN) {
+			LogEvent(COMPONENT_DBUS, "Retry grace");
+			nfs_wait_for_grace_norefs();
+		} else if (ret) {
+			LogCrit(COMPONENT_DBUS, "Start grace failed %d",
+				ret);
+			success = false;
+			errormsg = "Unable to start grace";
+			break;
+		}
+	} while (ret);
  out:
 	dbus_status_reply(&iter, success, errormsg);
 	return success;
