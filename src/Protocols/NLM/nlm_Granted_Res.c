@@ -87,7 +87,7 @@ int nlm4_Granted_Res(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 */
 	if (arg->stat.stat != NLM4_GRANTED ||
 		!export_ready(op_ctx->ctx_export)) {
-		LogMajor(COMPONENT_NLM,
+		LogEvent(COMPONENT_NLM,
 			 "Granted call failed due to %s, releasing lock",
 			 arg->stat.stat != NLM4_GRANTED
 				? "client error"
