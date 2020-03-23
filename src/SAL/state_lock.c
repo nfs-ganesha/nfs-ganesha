@@ -2340,17 +2340,23 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 			 * export.
 			 */
 			if (found_entry->sle_export != op_ctx->ctx_export) {
+				struct tmp_export_paths tmp = {NULL, NULL};
+
+				tmp_get_exp_paths(&tmp,
+						  found_entry->sle_export);
+
 				LogEvent(COMPONENT_STATE,
 					 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
 					 found_entry->sle_export->export_id,
-					 op_ctx_export_path(
-						found_entry->sle_export),
+					 op_ctx_tmp_export_path(op_ctx, &tmp),
 					 op_ctx->ctx_export->export_id,
-					 op_ctx_export_path(
-							op_ctx->ctx_export));
+					 op_ctx_export_path(op_ctx));
 				LogEntry(
 					"Found lock entry belonging to another export",
 					found_entry);
+
+				tmp_put_exp_paths(&tmp);
+
 				status = STATE_INVALID_ARGUMENT;
 				return status;
 			}
@@ -2378,15 +2384,21 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		 */
 		if (found_entry->sle_export != op_ctx->ctx_export
 		    && !different_owners(found_entry->sle_owner, owner)) {
+			struct tmp_export_paths tmp = {NULL, NULL};
+
+			tmp_get_exp_paths(&tmp, found_entry->sle_export);
+
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
 				 found_entry->sle_export->export_id,
-				 op_ctx_export_path(found_entry->sle_export),
+				 op_ctx_tmp_export_path(op_ctx, &tmp),
 				 op_ctx->ctx_export->export_id,
-				 op_ctx_export_path(op_ctx->ctx_export));
+				 op_ctx_export_path(op_ctx));
 
 			LogEntry("Found lock entry belonging to another export",
 				 found_entry);
+
+			tmp_put_exp_paths(&tmp);
 
 			status = STATE_INVALID_ARGUMENT;
 			return status;
@@ -3326,7 +3338,7 @@ void state_export_unlock_all(void)
 	if (errcnt == STATE_ERR_MAX) {
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of locks for %s",
-			 op_ctx_export_path(op_ctx->ctx_export));
+			 op_ctx_export_path(op_ctx));
 	}
 }
 

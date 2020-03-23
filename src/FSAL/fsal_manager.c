@@ -148,6 +148,7 @@ static void load_fsal_static(const char *name, void (*init)(void))
 
 void start_fsals(void)
 {
+	init_ctx_refstr();
 
 	/* .init was a long time ago... */
 	load_state = idle;

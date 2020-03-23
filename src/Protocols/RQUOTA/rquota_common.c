@@ -37,15 +37,34 @@ char *check_handle_lead_slash(char *quota_path, char *temp_path,
 		struct gsh_export *exp;
 		int pathlen;
 		int qpathlen;
+		struct gsh_refstr *ref_fullpath;
 
 		exp = get_gsh_export_by_pseudo("/", true);
-		assert(exp);
-		pathlen = strlen(exp->fullpath);
-		if (pathlen >= temp_path_size) {
+
+		if (exp == NULL)
+			return NULL;
+
+		rcu_read_lock();
+
+		ref_fullpath = gsh_refstr_get(rcu_dereference(exp->fullpath));
+
+		rcu_read_unlock();
+
+		if (ref_fullpath == NULL) {
 			put_gsh_export(exp);
 			return NULL;
 		}
-		memcpy(temp_path, exp->fullpath, pathlen);
+
+		pathlen = strlen(ref_fullpath->gr_val);
+
+		if (pathlen >= temp_path_size) {
+			gsh_refstr_put(ref_fullpath);
+			put_gsh_export(exp);
+			return NULL;
+		}
+		memcpy(temp_path, ref_fullpath->gr_val, pathlen);
+
+		gsh_refstr_put(ref_fullpath);
 		put_gsh_export(exp);
 
 		/* Add trailing slash if it is missing */

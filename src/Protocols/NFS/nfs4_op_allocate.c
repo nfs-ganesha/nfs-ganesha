@@ -63,7 +63,7 @@ static enum nfs_req_result allocate_deallocate(compound_data_t *data,
 	   allows block allocation */
 	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
 						op_ctx->fsal_export,
-						op_ctx->ctx_export->fullpath,
+						CTX_FULLPATH(op_ctx),
 						FSAL_QUOTA_BLOCKS);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		*status = NFS4ERR_DQUOT;

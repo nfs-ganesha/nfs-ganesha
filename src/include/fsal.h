@@ -95,6 +95,9 @@ extern int g_nodeid;
 
 extern size_t open_fd_count;
 
+void init_ctx_refstr(void);
+void destroy_ctx_refstr(void);
+
 void init_op_context(struct req_op_context *ctx,
 		     struct gsh_export *exp,
 		     struct fsal_export *fsal_exp,

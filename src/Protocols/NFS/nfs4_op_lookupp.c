@@ -102,7 +102,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		LogDebug(COMPONENT_EXPORT,
 			 "Handling reverse junction from Export_Id %d Pseudo %s Parent=%p",
 			 original_export->export_id,
-			 original_export->pseudopath,
+			 CTX_PSEUDOPATH(op_ctx),
 			 original_export->exp_parent_exp);
 
 		if (original_export->exp_parent_exp == NULL) {
@@ -148,7 +148,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 			LogCrit(COMPONENT_EXPORT,
 				"Reverse junction from Export_Id %d Pseudo %s Parent=%p is stale",
 				original_export->export_id,
-				original_export->pseudopath,
+				CTX_PSEUDOPATH(op_ctx),
 				parent_exp);
 			res_LOOKUPP4->status = NFS4ERR_STALE;
 			return NFS_REQ_ERROR;
@@ -190,7 +190,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
 				 parent_exp->export_id,
-				 parent_exp->pseudopath);
+				 CTX_PSEUDOPATH(op_ctx));
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return NFS_REQ_ERROR;
 		}

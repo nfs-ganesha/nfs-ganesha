@@ -696,25 +696,25 @@ void clean_export_paths(struct gsh_export *export)
 	 * with. But only if it's a non-root path starting
 	 * with /.
 	 */
-	if (export->fullpath && export->fullpath[0] == '/') {
+	if (export->cfg_fullpath && export->cfg_fullpath[0] == '/') {
 		int pathlen;
 
-		pathlen = strlen(export->fullpath);
-		while ((export->fullpath[pathlen - 1] == '/') &&
+		pathlen = strlen(export->cfg_fullpath);
+		while ((export->cfg_fullpath[pathlen - 1] == '/') &&
 		       (pathlen > 1))
 			pathlen--;
-		export->fullpath[pathlen] = '\0';
+		export->cfg_fullpath[pathlen] = '\0';
 	}
 
 	/* Remove trailing slash */
-	if (export->pseudopath && export->pseudopath[0] == '/') {
+	if (export->cfg_pseudopath && export->cfg_pseudopath[0] == '/') {
 		int pathlen;
 
-		pathlen = strlen(export->pseudopath);
-		while ((export->pseudopath[pathlen - 1] == '/') &&
+		pathlen = strlen(export->cfg_pseudopath);
+		while ((export->cfg_pseudopath[pathlen - 1] == '/') &&
 		       (pathlen > 1))
 			pathlen--;
-		export->pseudopath[pathlen] = '\0';
+		export->cfg_pseudopath[pathlen] = '\0';
 	}
 }
 
@@ -751,6 +751,12 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 
 	clean_export_paths(export);
 
+	/* Since as yet, we don't have gsh_refstr for op_ctx, we need to
+	 * create temporary ones here.
+	 */
+	op_ctx->ctx_fullpath = gsh_refstr_dup(export->cfg_fullpath);
+	op_ctx->ctx_pseudopath = gsh_refstr_dup(export->cfg_pseudopath);
+
 	/* The handle cache (currently MDCACHE) must be at the top of the stack
 	 * of FSALs.  To achieve this, call directly into MDCACHE, passing the
 	 * sub-FSAL's fsal_module.  MDCACHE will stack itself on top of that
@@ -761,8 +767,8 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 		fsal_put(fsal);
 		LogCrit(COMPONENT_CONFIG,
 			"Could not create export for (%s) to (%s)",
-			export->pseudopath,
-			export->fullpath);
+			export->cfg_pseudopath,
+			export->cfg_fullpath);
 		LogFullDebug(COMPONENT_FSAL,
 			     "FSAL %s refcount %"PRIu32,
 			     fsal->name,
@@ -863,8 +869,8 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 		fsal_put(fsal);
 		LogCrit(COMPONENT_CONFIG,
 			"Could not update export for (%s) to (%s)",
-			export->pseudopath,
-			export->fullpath);
+			export->cfg_pseudopath,
+			export->cfg_fullpath);
 		LogFullDebug(COMPONENT_FSAL,
 			     "FSAL %s refcount %"PRIu32,
 			     fsal->name,
@@ -1046,17 +1052,17 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 
 	/* validate the export now */
 	if (export->export_perms.options & EXPORT_OPTION_NFSV4) {
-		if (export->pseudopath == NULL) {
+		if (export->cfg_pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Exporting to NFSv4 but no Pseudo path defined");
 			err_type->invalid = true;
 			errcnt++;
 			return errcnt;
 		} else if (export->export_id == 0 &&
-			   strcmp(export->pseudopath, "/") != 0) {
+			   strcmp(export->cfg_pseudopath, "/") != 0) {
 			LogCrit(COMPONENT_CONFIG,
 				"Export id 0 can only export \"/\" not (%s)",
-				export->pseudopath);
+				export->cfg_pseudopath);
 			err_type->invalid = true;
 			errcnt++;
 			return errcnt;
@@ -1066,7 +1072,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	/* If we are using mount_path_pseudo = true we MUST have a Pseudo Path.
 	 */
 	if (nfs_param.core_param.mount_path_pseudo &&
-	    export->pseudopath == NULL) {
+	    export->cfg_pseudopath == NULL) {
 		LogCrit(COMPONENT_CONFIG,
 			"NFS_CORE_PARAM mount_path_pseudo is TRUE but no Pseudo path defined");
 		err_type->invalid = true;
@@ -1074,20 +1080,20 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		return errcnt;
 	}
 
-	if (export->pseudopath != NULL &&
-	    export->pseudopath[0] != '/') {
+	if (export->cfg_pseudopath != NULL &&
+	    export->cfg_pseudopath[0] != '/') {
 		LogCrit(COMPONENT_CONFIG,
 			"A Pseudo path must be an absolute path");
 		err_type->invalid = true;
 		errcnt++;
 	}
 	if (export->export_id == 0) {
-		if (export->pseudopath == NULL) {
+		if (export->cfg_pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Pseudo path must be \"/\" for export id 0");
 			err_type->invalid = true;
 			errcnt++;
-		} else if (export->pseudopath[1] != '\0') {
+		} else if (export->cfg_pseudopath[1] != '\0') {
 			LogCrit(COMPONENT_CONFIG,
 				"Pseudo path must be \"/\" for export id 0");
 			err_type->invalid = true;
@@ -1119,6 +1125,9 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		 * Note that Path/fullpath will not be NULL, but we compare
 		 * the same way as the other string options for code
 		 * consistency.
+		 *
+		 * It's ok in here to directly access the gsh_refstr because we
+		 * can't be racing with another thread for this export...
 		 */
 		LogFullDebug(COMPONENT_EXPORT, "Updating %p", probe_exp);
 
@@ -1141,28 +1150,30 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			errcnt++;
 		}
 
-		if (strcmp_null(export->pseudopath,
-				probe_exp->pseudopath) != 0) {
+		if (strcmp_null(export->cfg_pseudopath,
+				probe_exp->pseudopath->gr_val) != 0) {
 			/* Pseudo does not match, currently not a candidate for
 			 * update.
 			 */
 			LogCrit(COMPONENT_CONFIG,
 				"Pseudo for export update %d %s doesn't match %s",
 				export->export_id,
-				export->pseudopath, probe_exp->pseudopath);
+				export->cfg_pseudopath,
+				probe_exp->pseudopath->gr_val);
 			err_type->invalid = true;
 			errcnt++;
 		}
 
-		if (strcmp_null(export->fullpath,
-				probe_exp->fullpath) != 0) {
+		if (strcmp_null(export->cfg_fullpath,
+				probe_exp->fullpath->gr_val) != 0) {
 			/* Path does not match, currently not a candidate for
 			 * update.
 			 */
 			LogCrit(COMPONENT_CONFIG,
 				"Path for export update %d %s doesn't match %s",
 				export->export_id,
-				export->fullpath, probe_exp->fullpath);
+				export->cfg_fullpath,
+				probe_exp->fullpath->gr_val);
 			err_type->invalid = true;
 			errcnt++;
 		}
@@ -1266,12 +1277,13 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		}
 	}
 
-	if (export->pseudopath != NULL) {
-		probe_exp = get_gsh_export_by_pseudo(export->pseudopath, true);
+	if (export->cfg_pseudopath != NULL) {
+		probe_exp =
+			get_gsh_export_by_pseudo(export->cfg_pseudopath, true);
 		if (probe_exp != NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Pseudo path (%s) is a duplicate",
-				export->pseudopath);
+				export->cfg_pseudopath);
 			if (!err_type->exists)
 				err_type->invalid = true;
 			errcnt++;
@@ -1279,14 +1291,14 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		}
 	}
 
-	probe_exp = get_gsh_export_by_path(export->fullpath, true);
+	probe_exp = get_gsh_export_by_path(export->cfg_fullpath, true);
 
 	if (probe_exp != NULL) {
-		if (export->pseudopath == NULL &&
+		if (export->cfg_pseudopath == NULL &&
 		    export->FS_tag == NULL) {
 			LogCrit(COMPONENT_CONFIG,
 				"Duplicate path (%s) without unique tag or Pseudo path",
-				export->fullpath);
+				export->cfg_fullpath);
 			err_type->invalid = true;
 			errcnt++;
 		}
@@ -1307,6 +1319,12 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 				 export->export_id);
 		return errcnt;  /* have errors. don't init or load a fsal */
 	}
+
+	/* Convert fullpath and pseudopath into gsh_refstr. Do this now so that
+	 * init_export_root() has them available when it creates root context.
+	 */
+	export->fullpath = gsh_refstr_dup(export->cfg_fullpath);
+	export->pseudopath = gsh_refstr_dup(export->cfg_pseudopath);
 
 	if (commit_type != initial_export) {
 		/* add_export or update_export with new export_id. */
@@ -1364,12 +1382,16 @@ success:
 
 	(void) StrExportOptions(&dspbuf, &export->export_perms);
 
+	/* It's ok below to directly access the gsh_refstr without an additional
+	 * reference because we can't be racing with another thread on this
+	 * export...
+	 */
 	LogInfo(COMPONENT_CONFIG,
 		"Export %d %s at pseudo (%s) with path (%s) and tag (%s) perms (%s)",
 		export->export_id,
 		commit_type == update_export ? "updated" : "created",
-		export->pseudopath,
-		export->fullpath, export->FS_tag, perms);
+		export->cfg_pseudopath,
+		export->cfg_fullpath, export->FS_tag, perms);
 
 	LogInfo(COMPONENT_CONFIG,
 		"Export %d has %zd defined clients", export->export_id,
@@ -1417,8 +1439,8 @@ static void export_display(const char *step, void *node,
 
 	LogMidDebug(COMPONENT_EXPORT,
 		    "%s %p Export %d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
-		    step, export, export->export_id, export->pseudopath,
-		    export->fullpath, export->FS_tag, perms);
+		    step, export, export->export_id, export->cfg_pseudopath,
+		    export->cfg_fullpath, export->FS_tag, perms);
 }
 
 /**
@@ -1740,9 +1762,9 @@ static struct config_item fsal_params[] = {
 	CONF_MAND_UI16("Export_id", 0, UINT16_MAX, 1,			\
 		       _struct_, export_id),				\
 	CONF_MAND_PATH("Path", 1, MAXPATHLEN, NULL,			\
-		       _struct_, fullpath), /* must chomp '/' */	\
+		       _struct_, cfg_fullpath), /* must chomp '/' */	\
 	CONF_UNIQ_PATH("Pseudo", 1, MAXPATHLEN, NULL,			\
-		       _struct_, pseudopath),				\
+		       _struct_, cfg_pseudopath),			\
 	CONF_ITEM_UI64_SET("MaxRead", 512, FSAL_MAXIOSIZE,		\
 			FSAL_MAXIOSIZE, _struct_, MaxRead,		\
 			EXPORT_OPTION_MAXREAD_SET, options_set),	\
@@ -1971,10 +1993,13 @@ static int build_default_root(struct config_error_type *err_type)
 			      EXPORT_OPTION_PREFWRITE_SET;
 
 	/* Set the fullpath to "/" */
-	export->fullpath = gsh_strdup("/");
+	export->cfg_fullpath = gsh_strdup("/");
 
 	/* Set Pseudo Path to "/" */
-	export->pseudopath = gsh_strdup("/");
+	export->cfg_pseudopath = gsh_strdup("/");
+
+	export->pseudopath = gsh_refstr_dup("/");
+	export->fullpath = gsh_refstr_dup("/");
 
 	/* Initialize req_ctx with the export reasomnably constructed */
 	init_op_context_simple(&op_context, export, NULL);
@@ -1996,7 +2021,7 @@ static int build_default_root(struct config_error_type *err_type)
 			fsal_put(fsal_hdl);
 			LogCrit(COMPONENT_CONFIG,
 				"Could not create FSAL export for %s",
-				export->fullpath);
+				export->cfg_fullpath);
 			LogFullDebug(COMPONENT_FSAL,
 				     "FSAL %s refcount %"PRIu32,
 				     fsal_hdl->name,
@@ -2197,17 +2222,31 @@ void free_export_resources(struct gsh_export *export)
 			     fsal->name,
 			     atomic_fetch_int32_t(&fsal->refcount));
 	}
+
 	export->fsal_export = NULL;
+
 	/* free strings here */
+	gsh_free(export->cfg_fullpath);
+	gsh_free(export->cfg_pseudopath);
+	gsh_free(export->FS_tag);
+
+	/* Release the refstr if they have been created. Note that we
+	 * normally expect a refstr to be created, but we could be freeing an
+	 * export for which config failed before we were able to create the
+	 * refstr for it.
+	 */
 	if (export->fullpath != NULL)
-		gsh_free(export->fullpath);
+		gsh_refstr_put(export->fullpath);
+
 	if (export->pseudopath != NULL)
-		gsh_free(export->pseudopath);
-	if (export->FS_tag != NULL)
-		gsh_free(export->FS_tag);
+		gsh_refstr_put(export->pseudopath);
 
 	/* At this point the export is no longer usable so poison the op
 	 * context (whether the one set up above or a pre-existing one.
+	 * However, we leave the refstr in the op context alone, they will be
+	 * cleaned up by the eventual clear_op_context_export() on the current
+	 * op context (either the original one or the temporary one created
+	 * above).
 	 */
 	op_ctx->ctx_export = NULL;
 	op_ctx->fsal_export = NULL;
@@ -2383,20 +2422,20 @@ int init_export_root(struct gsh_export *export)
 	/* Lookup for the FSAL Path */
 	LogDebug(COMPONENT_EXPORT,
 		 "About to lookup_path for ExportId=%u Path=%s",
-		 export->export_id, export->fullpath);
+		 export->export_id, CTX_FULLPATH(op_ctx));
 
 	/* This takes a reference, which will keep the root object around for
 	 * the lifetime of the export. */
-	fsal_status =
-	    export->fsal_export->exp_ops.lookup_path(export->fsal_export,
-						  export->fullpath, &obj, NULL);
+	fsal_status = export->fsal_export->exp_ops.lookup_path(
+				export->fsal_export, CTX_FULLPATH(op_ctx),
+				&obj, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		my_status = EINVAL;
 
 		LogCrit(COMPONENT_EXPORT,
 			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
-			export->export_id, export->fullpath,
+			export->export_id, CTX_FULLPATH(op_ctx),
 			msg_fsal_err(fsal_status.major), fsal_status.minor);
 		goto out;
 	}
@@ -2438,12 +2477,12 @@ int init_export_root(struct gsh_export *export)
 	if (isDebug(COMPONENT_EXPORT)) {
 		LogDebug(COMPONENT_EXPORT,
 			 "Added root obj %p FSAL %s for path %s on export_id=%d",
-			 obj, obj->fsal->name, export->fullpath,
+			 obj, obj->fsal->name, CTX_FULLPATH(op_ctx),
 			 export->export_id);
 	} else {
 		LogInfo(COMPONENT_EXPORT,
 			"Added root obj for path %s on export_id=%d",
-			export->fullpath, export->export_id);
+			CTX_FULLPATH(op_ctx), export->export_id);
 	}
 
 	my_status = 0;
@@ -2466,7 +2505,7 @@ void release_export(struct gsh_export *export)
 
 	LogDebug(COMPONENT_EXPORT,
 		 "Unexport %s, Pseduo %s",
-		 export->fullpath, export->pseudopath);
+		 CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx));
 
 	/* Get a reference to the root entry */
 	fsal_status = nfs_export_get_root_entry(export, &obj);
@@ -2496,8 +2535,9 @@ void release_export(struct gsh_export *export)
 	PTHREAD_RWLOCK_unlock(&export->lock);
 
 	LogDebug(COMPONENT_EXPORT,
-		 "Released root obj %p for path %s on export_id=%d",
-		 obj, export->fullpath, export->export_id);
+		 "Released root obj %p for path %s, pseudo %s on export_id=%d",
+		 obj, CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx),
+		 export->export_id);
 
 	/* Make export unreachable via pseudo fs.
 	 * We keep the export in the export hash table through the following
@@ -2683,7 +2723,7 @@ bool export_check_security(struct svc_req *req)
 		     EXPORT_OPTION_AUTH_NONE) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support AUTH_NONE",
-				op_ctx_export_path(op_ctx->ctx_export));
+				op_ctx_export_path(op_ctx));
 			return false;
 		}
 		break;
@@ -2693,7 +2733,7 @@ bool export_check_security(struct svc_req *req)
 		     EXPORT_OPTION_AUTH_UNIX) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support AUTH_UNIX",
-				op_ctx_export_path(op_ctx->ctx_export));
+				op_ctx_export_path(op_ctx));
 			return false;
 		}
 		break;
@@ -2706,7 +2746,7 @@ bool export_check_security(struct svc_req *req)
 				 EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support RPCSEC_GSS",
-				op_ctx_export_path(op_ctx->ctx_export));
+				op_ctx_export_path(op_ctx));
 			return false;
 		} else {
 			struct rpc_gss_cred *gc = (struct rpc_gss_cred *)
@@ -2721,8 +2761,7 @@ bool export_check_security(struct svc_req *req)
 				     EXPORT_OPTION_RPCSEC_GSS_NONE) == 0) {
 					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support RPCSEC_GSS_SVC_NONE",
-						op_ctx_export_path(
-							op_ctx->ctx_export));
+						op_ctx_export_path(op_ctx));
 					return false;
 				}
 				break;
@@ -2732,8 +2771,7 @@ bool export_check_security(struct svc_req *req)
 				     EXPORT_OPTION_RPCSEC_GSS_INTG) == 0) {
 					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support RPCSEC_GSS_SVC_INTEGRITY",
-						op_ctx_export_path(
-							op_ctx->ctx_export));
+						op_ctx_export_path(op_ctx));
 					return false;
 				}
 				break;
@@ -2743,8 +2781,7 @@ bool export_check_security(struct svc_req *req)
 				     EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0) {
 					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support RPCSEC_GSS_SVC_PRIVACY",
-						op_ctx_export_path(
-							op_ctx->ctx_export));
+						op_ctx_export_path(op_ctx));
 					return false;
 				}
 				break;
@@ -2752,7 +2789,7 @@ bool export_check_security(struct svc_req *req)
 			default:
 				LogInfo(COMPONENT_EXPORT,
 					"Export %s does not support unknown RPCSEC_GSS_SVC %d",
-					op_ctx_export_path(op_ctx->ctx_export),
+					op_ctx_export_path(op_ctx),
 					(int)svc);
 				return false;
 			}
@@ -2762,7 +2799,7 @@ bool export_check_security(struct svc_req *req)
 	default:
 		LogInfo(COMPONENT_EXPORT,
 			"Export %s does not support unknown oa_flavor %d",
-			op_ctx_export_path(op_ctx->ctx_export),
+			op_ctx_export_path(op_ctx),
 			(int)req->rq_msg.cb_cred.oa_flavor);
 		return false;
 	}
@@ -2927,7 +2964,7 @@ void export_check_access(void)
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Check for address %s for export id %u path %s",
 			    ipstring, op_ctx->ctx_export->export_id,
-			    op_ctx_export_path(op_ctx->ctx_export));
+			    op_ctx_export_path(op_ctx));
 	}
 
 	/* Does the client match anyone on the client list? */

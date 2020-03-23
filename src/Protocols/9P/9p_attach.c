@@ -65,6 +65,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct fsal_obj_handle *pfsal_handle;
 	int port;
 	struct gsh_export *export;
+	const char *path;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -183,8 +184,9 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		goto errout;
 	}
 
-	if (exppath[0] != '/' ||
-	    !strcmp(exppath, export_path(op_ctx->ctx_export))) {
+	path = ctx_export_path(op_ctx);
+
+	if (exppath[0] != '/' || !strcmp(exppath, path)) {
 		/* Check if root object is correctly set, fetch it, and take an
 		 * LRU reference.
 		 */

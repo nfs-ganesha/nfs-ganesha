@@ -69,6 +69,7 @@ static void lzfs_fsal_release(struct fsal_export *export_hdl)
 
 	liz_destroy(lzfs_export->lzfs_instance);
 	lzfs_export->lzfs_instance = NULL;
+	gsh_free(lzfs_export->lzfs_params.subfolder);
 	gsh_free(lzfs_export);
 }
 
@@ -111,11 +112,11 @@ static fsal_status_t lzfs_fsal_lookup_path(struct fsal_export *export_hdl,
 	} else {
 		real_path = path;
 	}
-	if (strstr(real_path, op_ctx->ctx_export->fullpath) != real_path) {
+	if (strstr(real_path, CTX_FULLPATH(op_ctx)) != real_path) {
 		LogFullDebug(COMPONENT_FSAL, "no fullpath match");
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-	real_path += strlen(op_ctx->ctx_export->fullpath);
+	real_path += strlen(CTX_FULLPATH(op_ctx));
 	if (*real_path == '\0') {
 		real_path = root_dir_path;
 	}

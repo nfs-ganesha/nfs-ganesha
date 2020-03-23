@@ -69,13 +69,10 @@ static void export_release(struct fsal_export *exp_hdl)
 
 	glusterfs_free_fs(glfs_export->gl_fs);
 
-	glfs_export->gl_fs = NULL;
+	gsh_free(glfs_export->mount_path);
 	gsh_free(glfs_export->export_path);
-	glfs_export->export_path = NULL;
 	gsh_free(glfs_export->sec_label_xattr);
-	glfs_export->sec_label_xattr = NULL;
 	gsh_free(glfs_export);
-	glfs_export = NULL;
 }
 
 /**
@@ -731,7 +728,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		.glfs_log = NULL};
 
 	LogDebug(COMPONENT_FSAL, "In args: export path = %s",
-		 op_ctx->ctx_export->fullpath);
+		 CTX_FULLPATH(op_ctx));
 
 	glfsexport = gsh_calloc(1, sizeof(struct glusterfs_export));
 
@@ -743,7 +740,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Incorrect or missing parameters for export %s",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		status.major = ERR_FSAL_INVAL;
 		goto out;
 	}
@@ -763,12 +760,12 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (rc != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL, "Unable to attach export. Export: %s",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		goto out;
 	}
 	fsal_attached = true;
 
-	glfsexport->mount_path = op_ctx->ctx_export->fullpath;
+	glfsexport->mount_path = gsh_strdup(CTX_FULLPATH(op_ctx));
 	glfsexport->export_path = params.glvolpath;
 	glfsexport->saveduid = geteuid();
 	glfsexport->savedgid = getegid();
@@ -804,7 +801,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 		LogDebug(COMPONENT_PNFS,
 			 "glusterfs_fsal_create: pnfs ds was enabled for [%s]",
-			 op_ctx->ctx_export->fullpath);
+			 CTX_FULLPATH(op_ctx));
 	}
 
 	glfsexport->pnfs_mds_enabled =
@@ -813,7 +810,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (glfsexport->pnfs_mds_enabled) {
 		LogDebug(COMPONENT_PNFS,
 			 "glusterfs_fsal_create: pnfs mds was enabled for [%s]",
-			 op_ctx->ctx_export->fullpath);
+			 CTX_FULLPATH(op_ctx));
 		export_ops_pnfs(&glfsexport->export.exp_ops);
 		fsal_ops_pnfs(&glfsexport->export.fsal->m_ops);
 	}

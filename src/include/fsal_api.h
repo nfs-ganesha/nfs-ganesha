@@ -40,12 +40,14 @@
 #ifndef FSAL_API
 #define FSAL_API
 
+#include <urcu-bp.h>
 #include "fsal_types.h"
 #include "fsal_pnfs.h"
 #include "sal_shared.h"
 #include "config_parsing.h"
 #include "avltree.h"
 #include "abstract_atomic.h"
+#include "gsh_refstr.h"
 
 /**
 ** Forward declarations to resolve circular dependency conflicts
@@ -387,6 +389,13 @@ enum request_type {
  * operation for V2,3 and the compound for V4+.  All elements and what
  * they point to are invariant for the lifetime.
  *
+ * If an op context is active, ctx_export MAY be NULL (very rare conditions)
+ * but ctx_fullpath and ctx_pseudopath must always be valid. The function
+ * init_op_context() assures this and init_op_context() and resum_op_context()
+ * are the only functions that can ever set op_ctx to a non-NULL value, and
+ * resume_op_context() must be setting it to point to an op context initialized
+ * with init_op_context().
+ *
  * NOTE: This is an across-the-api shared structure.  Changing it implies a
  *       change in the FSAL API.
  *
@@ -406,6 +415,20 @@ enum request_type {
  *       The functions that manage a saved_export_context maintain a reference
  *       to the gsh_export and thus discard_op_context_export will clean that
  *       up since the saved req_op_context will not be restored.
+ *
+ * NOTE: In support of exports having fullpath and pseudopath changeable,
+ *       those strings are now accessed by gsh_refstr. In order to simplify
+ *       the bulk of access to those strings for op_cxt->ctx_export, whenever
+ *       ctx_export is changed, proper references to those strings are taken
+ *       and stored in the req_op_context. Since those references can not be
+ *       changed by any other thread, they are safe to access without RCU
+ *       protection. Further if for any reason, those strings are not available,
+ *       particularly when no export is attached, a reference to a "No Export"
+ *       string is taken, so it is ALWAYS safe to use these strings, there is
+ *       ALWAYS a valid reference which is safe to use in the context of the
+ *       thread owning the req_op_context. There are a set of functions that
+ *       make it easy to access these strings, and to access the "best" string
+ *       in the context of which string is used for NFS v3 MOUNT requests.
  */
 
 struct req_op_context {
@@ -426,6 +449,8 @@ struct req_op_context {
 	struct gsh_export *ctx_export;	/*< current export, this MUST only
 					    be changed by one of the functions
 					    in commonlib.c. */
+	struct gsh_refstr *ctx_fullpath;	/*< current fullpath */
+	struct gsh_refstr *ctx_pseudopath;	/*< current pseudopath */
 	struct fsal_export *fsal_export;	/*< current fsal export */
 	struct export_perms export_perms;	/*< Effective export perms */
 	nsecs_elapsed_t start_time;	/*< start time of this op/request */
@@ -444,10 +469,18 @@ struct req_op_context {
  */
 struct saved_export_context {
 	struct gsh_export *saved_export;
+	struct gsh_refstr *saved_fullpath;	/*< saved fullpath */
+	struct gsh_refstr *saved_pseudopath;	/*< saved pseudopath */
 	struct fsal_export *saved_fsal_export;
 	struct fsal_module *saved_fsal_module;
 	struct export_perms saved_export_perms;
 };
+
+/* Anything using these expects a valid op context and a valid op context
+ * always had at least a reference to the no_export string.
+ */
+#define CTX_PSEUDOPATH(ctx) (ctx->ctx_pseudopath->gr_val)
+#define CTX_FULLPATH(ctx) (ctx->ctx_fullpath->gr_val)
 
 /**
  * @brief FSAL module methods

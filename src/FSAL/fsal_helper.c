@@ -405,7 +405,7 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 		LogFullDebug(COMPONENT_FSAL,
 			     "FSAL %d %s returned %s",
 			     (int) op_ctx->ctx_export->export_id,
-			     op_ctx->ctx_export->fullpath,
+			     CTX_FULLPATH(op_ctx),
 			     fsal_err_txt(status));
 		return status;
 	}
@@ -989,11 +989,25 @@ populate_dirent(const char *name,
 							   &junction_obj);
 
 			if (FSAL_IS_ERROR(status)) {
+				struct gsh_refstr *ref_fullpath;
+
+				rcu_read_lock();
+
+				ref_fullpath = gsh_refstr_get(
+				    rcu_dereference(junction_export->fullpath));
+
+				rcu_read_unlock();
+
 				LogMajor(COMPONENT_FSAL,
 					 "Failed to get root for %s, id=%d, status = %s",
-					 junction_export->fullpath,
+					 ref_fullpath
+						? ref_fullpath->gr_val
+						: "",
 					 junction_export->export_id,
 					 fsal_err_txt(status));
+
+				gsh_refstr_put(ref_fullpath);
+
 				/* Need to signal problem to callback */
 				state->cb_state = CB_PROBLEM;
 				(void) state->cb(&state->cb_parms, NULL, NULL,

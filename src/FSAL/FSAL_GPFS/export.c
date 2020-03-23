@@ -506,18 +506,18 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	glist_add_tail(&map->exp->filesystems, &map->on_filesystems);
 	PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 
-	map->exp->export_fd = open(op_ctx->ctx_export->fullpath,
-						O_RDONLY | O_DIRECTORY);
+	map->exp->export_fd = open(CTX_FULLPATH(op_ctx),
+				   O_RDONLY | O_DIRECTORY);
 	if (map->exp->export_fd < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
 			"Could not open GPFS export point %s: rc = %s (%d)",
-			op_ctx->ctx_export->fullpath, strerror(retval), retval);
+			CTX_FULLPATH(op_ctx), strerror(retval), retval);
 		goto errout;
 	}
 
 	LogFullDebug(COMPONENT_FSAL, "export_fd %d path %s",
-			map->exp->export_fd, op_ctx->ctx_export->fullpath);
+			map->exp->export_fd, CTX_FULLPATH(op_ctx));
 
 	/* We have set up the export. If the file system is already claimed,
 	 * we are done.
@@ -729,7 +729,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Incorrect or missing parameters for export %s",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		status.major = ERR_FSAL_INVAL;
 		goto free;
 	}
@@ -744,7 +744,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	exp->up_ops = up_ops;
 	op_ctx->fsal_export = exp;
 
-	status.minor = resolve_posix_filesystem(op_ctx->ctx_export->fullpath,
+	status.minor = resolve_posix_filesystem(CTX_FULLPATH(op_ctx),
 						fsal_hdl, exp,
 						gpfs_claim_filesystem,
 						gpfs_unclaim_filesystem,
@@ -753,7 +753,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	if (status.minor != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"resolve_posix_filesystem(%s) returned %s (%d)",
-			op_ctx->ctx_export->fullpath,
+			CTX_FULLPATH(op_ctx),
 			strerror(status.minor), status.minor);
 		status.major = posix2fsal_error(status.minor);
 		goto detach;
@@ -809,7 +809,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 
 		LogInfo(COMPONENT_FSAL,
 			"gpfs_fsal_create: pnfs ds was enabled for [%s]",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		export_ops_pnfs(&exp->exp_ops);
 	}
 	gpfs_exp->use_acl =

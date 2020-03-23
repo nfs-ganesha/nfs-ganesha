@@ -1067,7 +1067,7 @@ static void release_export_nfs4_state(enum state_type type)
 	if (errcnt == STATE_ERR_MAX) {
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of layouts for export %s",
-			 op_ctx->ctx_export->pseudopath);
+			 CTX_PSEUDOPATH(op_ctx));
 	}
 }
 

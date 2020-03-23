@@ -1341,8 +1341,7 @@ static fattr_xdr_result encode_fs_locations(XDR *xdr,
 		 * If we don't have an fs_locations structure, just assume that
 		 * the fs_root corresponds to the root of the export.
 		 */
-		nfs4_pathname4_alloc(&fs_locs.fs_root,
-					op_ctx->ctx_export->pseudopath);
+		nfs4_pathname4_alloc(&fs_locs.fs_root, CTX_PSEUDOPATH(op_ctx));
 	}
 
 	if (!xdr_fs_locations4(xdr, &fs_locs)) {

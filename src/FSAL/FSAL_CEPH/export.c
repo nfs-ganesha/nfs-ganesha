@@ -138,13 +138,13 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	 * must be a superset of the export fullpath, or the string
 	 * handling will be broken.
 	 */
-	if (strstr(realpath, op_ctx->ctx_export->fullpath) != realpath) {
+	if (strstr(realpath, CTX_FULLPATH(op_ctx)) != realpath) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		return status;
 	}
 
 	/* Advance past the export's fullpath */
-	realpath += strlen(op_ctx->ctx_export->fullpath);
+	realpath += strlen(CTX_FULLPATH(op_ctx));
 
 	/* special case the root */
 	if (strcmp(realpath, "/") == 0) {

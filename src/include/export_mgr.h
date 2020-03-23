@@ -88,9 +88,16 @@ struct gsh_export {
 	/** Pointer to the fsal_export associated with this export */
 	struct fsal_export *fsal_export;
 	/** CFG: Exported path - static option */
-	char *fullpath;
+	struct gsh_refstr *fullpath;
 	/** CFG: PseudoFS path for export - static option */
-	char *pseudopath;
+	struct gsh_refstr *pseudopath;
+	/** CFG: The following two strings are ONLY used during configuration
+	 *       of an export, once the export config is complete, the
+	 *       strings will be assigned to the gsh_refstr and these pointers
+	 *       will be set to NULL.
+	 */
+	char *cfg_fullpath;
+	char *cfg_pseudopath;
 	/** CFG: Tag for direct NFS v3 mounting of export - static option */
 	char *FS_tag;
 	/** Node id this is mounted on. Protected by lock */
@@ -131,19 +138,77 @@ struct gsh_export {
 };
 
 /* Use macro to define this to get around include file order. */
-#define export_path(export) \
+#define ctx_export_path(ctx) \
 	((nfs_param.core_param.mount_path_pseudo) \
-		? ((export)->pseudopath) \
-		: ((export)->fullpath))
+		? CTX_PSEUDOPATH(ctx) \
+		: CTX_FULLPATH(ctx))
 
 /* If op_ctx request is NFS_V4 always use pseudopath, otherwise use fullpath
  * for export.
  */
-#define op_ctx_export_path(export) \
-	((op_ctx->nfs_vers == NFS_V4) || \
+#define op_ctx_export_path(ctx) \
+	((ctx->nfs_vers == NFS_V4) || \
 	 (nfs_param.core_param.mount_path_pseudo) \
-		? ((export)->pseudopath) \
-		: ((export)->fullpath))
+		? CTX_PSEUDOPATH(ctx) \
+		: CTX_FULLPATH(ctx))
+
+/**
+ * @brief Structure to make it easier to access the fullpath and pseudopath for
+ *        an export that isn't op_ctx->ctx_export or where an op context may not
+ *        be available.
+ *
+ * NOTE: This structure is not intended to be re-used and it is expected to
+ *       only be used for an actual export.
+ */
+struct tmp_export_paths {
+	struct gsh_refstr *tmp_fullpath;
+	struct gsh_refstr *tmp_pseudopath;
+};
+
+#define TMP_PSEUDOPATH(tmp) ((tmp)->tmp_pseudopath->gr_val)
+
+#define TMP_FULLPATH(tmp) ((tmp)->tmp_fullpath->gr_val)
+
+#define tmp_export_path(tmp) \
+	((nfs_param.core_param.mount_path_pseudo) \
+		? TMP_PSEUDOPATH(tmp) \
+		: TMP_FULLPATH(tmp))
+
+#define op_ctx_tmp_export_path(ctx, tmp) \
+	((ctx->nfs_vers == NFS_V4) || \
+	 (nfs_param.core_param.mount_path_pseudo) \
+		? TMP_PSEUDOPATH(tmp) \
+		: TMP_FULLPATH(tmp))
+
+static inline void tmp_get_exp_paths(struct tmp_export_paths *tmp,
+				     struct gsh_export *exp)
+{
+	struct gsh_refstr *gr;
+
+	rcu_read_lock();
+
+	gr = rcu_dereference(exp->fullpath);
+
+	if (gr != NULL)
+		tmp->tmp_fullpath = gsh_refstr_get(gr);
+	else
+		tmp->tmp_fullpath = gsh_refstr_dup(exp->cfg_fullpath);
+
+	gr = rcu_dereference(exp->pseudopath);
+
+	if (gr != NULL)
+		tmp->tmp_pseudopath = gsh_refstr_get(gr);
+	else
+		tmp->tmp_pseudopath = gsh_refstr_dup(exp->cfg_pseudopath);
+
+	rcu_read_unlock();
+}
+
+static inline void tmp_put_exp_paths(struct tmp_export_paths *tmp)
+{
+	gsh_refstr_put(tmp->tmp_fullpath);
+	gsh_refstr_put(tmp->tmp_pseudopath);
+}
 
 static inline bool op_ctx_export_has_option(uint32_t option)
 {

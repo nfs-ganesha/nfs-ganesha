@@ -114,10 +114,10 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
-	fsal_status =
-	    op_ctx->fsal_export->exp_ops.check_quota(op_ctx->fsal_export,
-						   op_ctx->ctx_export->fullpath,
-						   FSAL_QUOTA_INODES);
+	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
+							op_ctx->fsal_export,
+							CTX_FULLPATH(op_ctx),
+							FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_create3.status = NFS3ERR_DQUOT;

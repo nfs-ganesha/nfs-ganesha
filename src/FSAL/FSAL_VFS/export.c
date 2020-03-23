@@ -79,7 +79,7 @@ static void release(struct fsal_export *exp_hdl)
 		LogDebug(COMPONENT_FSAL, "Releasing VFS export %"PRIu16
 			 " for %s",
 			 exp_hdl->export_id,
-			 export_path(op_ctx->ctx_export));
+			 ctx_export_path(op_ctx));
 	} else {
 		LogDebug(COMPONENT_FSAL, "Releasing VFS export %"PRIu16
 			 " on filesystem %s",
@@ -487,7 +487,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		goto err_free;
 	}
 	myself->export.fsal = fsal_hdl;
-	vfs_sub_init_export_ops(myself, op_ctx->ctx_export->fullpath);
+	vfs_sub_init_export_ops(myself, CTX_FULLPATH(op_ctx));
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0) {
@@ -495,7 +495,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 		goto err_free;	/* seriously bad */
 	}
 
-	retval = resolve_posix_filesystem(op_ctx->ctx_export->fullpath,
+	retval = resolve_posix_filesystem(CTX_FULLPATH(op_ctx),
 					  fsal_hdl, &myself->export,
 					  vfs_claim_filesystem,
 					  vfs_unclaim_filesystem,
@@ -504,7 +504,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"resolve_posix_filesystem(%s) returned %s (%d)",
-			op_ctx->ctx_export->fullpath,
+			CTX_FULLPATH(op_ctx),
 			strerror(retval), retval);
 		fsal_status = posix2fsal_status(retval);
 		goto err_cleanup;

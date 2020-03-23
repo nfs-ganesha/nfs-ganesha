@@ -6,6 +6,8 @@
 #ifndef _MOUNT_H_RPCGEN
 #define	_MOUNT_H_RPCGEN
 
+#include "gsh_refstr.h"
+
 #define	MNTPATHLEN 1024
 #define	MNTNAMLEN 255
 
@@ -56,6 +58,7 @@ typedef struct groupnode groupnode;
 typedef struct exportnode *mnt3_exports;
 
 struct exportnode {
+	struct gsh_refstr *ex_refdir;
 	mnt3_dirpath ex_dir;
 	mnt3_groups ex_groups;
 	mnt3_exports ex_next;

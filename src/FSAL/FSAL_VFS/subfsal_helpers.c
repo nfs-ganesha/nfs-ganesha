@@ -83,12 +83,9 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 	/* If Path and Pseudo path are not equal replace path with
 	 * pseudo path.
 	 */
-	if (strcmp(op_ctx->ctx_export->fullpath,
-				op_ctx->ctx_export->pseudopath) != 0) {
-		size_t pseudo_length = strlen(
-				op_ctx->ctx_export->pseudopath);
-		size_t fullpath_length = strlen(
-				op_ctx->ctx_export->fullpath);
+	if (strcmp(CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx)) != 0) {
+		size_t pseudo_length = strlen(CTX_PSEUDOPATH(op_ctx));
+		size_t fullpath_length = strlen(CTX_FULLPATH(op_ctx));
 		size_t dirpath_len = r - fullpath_length;
 		size_t total_length = pseudo_length + dirpath_len;
 		char *dirpath = spath + fullpath_length;
@@ -97,12 +94,11 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 			st = posix2fsal_status(EINVAL);
 			LogCrit(COMPONENT_FSAL,
 				"Fixed up referral path %s%s too long",
-				op_ctx->ctx_export->pseudopath, dirpath);
+				CTX_PSEUDOPATH(op_ctx), dirpath);
 			goto out;
 		}
 
-		memcpy(proclnk, op_ctx->ctx_export->pseudopath,
-				pseudo_length);
+		memcpy(proclnk, CTX_PSEUDOPATH(op_ctx), pseudo_length);
 		memcpy(proclnk + pseudo_length, dirpath, dirpath_len + 1);
 		spath = proclnk;
 	}

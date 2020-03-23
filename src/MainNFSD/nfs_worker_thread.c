@@ -1144,7 +1144,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 
 			LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				    "Found export entry for path=%s as exportid=%d",
-				    op_ctx_export_path(op_ctx->ctx_export),
+				    op_ctx_export_path(op_ctx),
 				    op_ctx->ctx_export->export_id);
 		}
 #endif /* _USE_NFS3 */
@@ -1233,8 +1233,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 					LogMidDebugAlt(COMPONENT_DISPATCH,
 						COMPONENT_EXPORT,
 						"Found export entry for dirname=%s as exportid=%d",
-						op_ctx_export_path(
-							op_ctx->ctx_export),
+						ctx_export_path(op_ctx),
 						op_ctx->ctx_export->export_id);
 				}
 			}
@@ -1262,7 +1261,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				PRIu32 ", proc=%" PRIu32,
 				client_ip,
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export),
+				op_ctx_export_path(op_ctx),
 				reqdata->svc.rq_msg.cb_vers,
 				reqdata->svc.rq_msg.cb_proc);
 
@@ -1278,7 +1277,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				progname,
 				reqdata->svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export),
+				op_ctx_export_path(op_ctx),
 				client_ip);
 
 			auth_failure(reqdata, AUTH_FAILED);
@@ -1299,7 +1298,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				reqdata->svc.rq_msg.cb_vers,
 				xprt_type_to_str(xprt_type),
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export),
+				op_ctx_export_path(op_ctx),
 				client_ip);
 
 			auth_failure(reqdata, AUTH_FAILED);
@@ -1315,7 +1314,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				progname,
 				reqdata->svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export),
+				op_ctx_export_path(op_ctx),
 				client_ip);
 
 			auth_failure(reqdata, AUTH_TOOWEAK);
@@ -1331,7 +1330,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 				port, op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export),
+				op_ctx_export_path(op_ctx),
 				client_ip);
 
 			auth_failure(reqdata, AUTH_TOOWEAK);
@@ -1411,7 +1410,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			"Client %s is not allowed to access Export_Id %d %s, vers=%"
 			PRIu32 ", proc=%" PRIu32,
 			client_ip, op_ctx->ctx_export->export_id,
-			op_ctx_export_path(op_ctx->ctx_export),
+			op_ctx_export_path(op_ctx),
 			reqdata->svc.rq_msg.cb_vers,
 			reqdata->svc.rq_msg.cb_proc);
 		auth_failure(reqdata, AUTH_TOOWEAK);

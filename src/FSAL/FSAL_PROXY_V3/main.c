@@ -767,7 +767,7 @@ fsal_status_t proxyv3_lookup_path(struct fsal_export *export_handle,
 	LogDebug(COMPONENT_FSAL, "Looking up path '%s'", path);
 
 	/* Check that the first part of the path matches our root. */
-	const char *root_path = op_ctx->ctx_export->fullpath;
+	const char *root_path = CTX_FULLPATH(op_ctx);
 	const size_t root_len = strlen(root_path);
 
 	const char *p = path;
@@ -2549,7 +2549,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	if (ret != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Bad params for export %s",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		gsh_free(export);
 		return fsalstat(ERR_FSAL_INVAL, ret);
 	}
@@ -2566,7 +2566,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	if (ret != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Failed to attach export %s",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		gsh_free(export);
 		return fsalstat(ERR_FSAL_INVAL, ret);
 	}
@@ -2610,7 +2610,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	export->params.nfsd_port = nfsd_port;
 	export->params.nlm_port = nlm_port;
 
-	mnt3_dirpath dirpath = op_ctx->ctx_export->fullpath;
+	mnt3_dirpath dirpath = CTX_FULLPATH(op_ctx);
 	mountres3 result;
 
 	memset(&result, 0, sizeof(result));

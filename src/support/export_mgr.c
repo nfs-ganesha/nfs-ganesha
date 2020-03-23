@@ -359,14 +359,30 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		     path);
 
 	glist_for_each(glist, &exportlist) {
+		struct gsh_refstr *ref_fullpath;
+
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
-		len_export = strlen(export->fullpath);
+		rcu_read_lock();
+
+		ref_fullpath =
+			gsh_refstr_get(rcu_dereference(export->fullpath));
+
+		rcu_read_unlock();
+
+		if (ref_fullpath == NULL) {
+			LogFatal(COMPONENT_EXPORT,
+				 "Export %d has no fullpath",
+				 export->export_id);
+		}
+
+		len_export = strlen(ref_fullpath->gr_val);
 
 		if (len_path == 0 && len_export == 1) {
 			/* Special case for root match */
 			ret_exp = export;
 			len_ret = len_export;
+			gsh_refstr_put(ref_fullpath);
 			break;
 		}
 
@@ -375,30 +391,38 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		 * the previous match.
 		 */
 		if (len_path < len_export ||
-		    len_export < len_ret)
+		    len_export < len_ret) {
+			gsh_refstr_put(ref_fullpath);
 			continue;
+		}
 
 		/* If partial match is not allowed, lengths must be the same */
-		if (exact_match && len_path != len_export)
+		if (exact_match && len_path != len_export) {
+			gsh_refstr_put(ref_fullpath);
 			continue;
+		}
 
 		/* if the char in fullpath just after the end of path is not '/'
 		 * it is a name token longer, i.e. /mnt/foo != /mnt/foob/
 		 */
 		if (len_export > 1 &&
 		    path[len_export] != '/' &&
-		    path[len_export] != '\0')
+		    path[len_export] != '\0') {
+			gsh_refstr_put(ref_fullpath);
 			continue;
+		}
 
 		/* we agree on size, now compare the leading substring
 		 */
-		if (strncmp(export->fullpath, path, len_export) == 0) {
+		if (strncmp(ref_fullpath->gr_val, path, len_export) == 0) {
 			ret_exp = export;
 			len_ret = len_export;
 
 			/* If we have found an exact match, exit loop. */
-			if (len_export == len_path)
+			if (len_export == len_path) {
+				gsh_refstr_put(ref_fullpath);
 				break;
+			}
 		}
 	}
 
@@ -466,22 +490,38 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		     path);
 
 	glist_for_each(glist, &exportlist) {
+		struct gsh_refstr *ref_pseudopath;
+
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
 		if (export->pseudopath == NULL)
 			continue;
 
-		len_export = strlen(export->pseudopath);
+		rcu_read_lock();
+
+		ref_pseudopath =
+			gsh_refstr_get(rcu_dereference(export->pseudopath));
+
+		rcu_read_unlock();
+
+		if (ref_pseudopath == NULL) {
+			LogFatal(COMPONENT_EXPORT,
+				 "Export %d has no pseudopath",
+				 export->export_id);
+		}
+
+		len_export = strlen(ref_pseudopath->gr_val);
 
 		LogFullDebug(COMPONENT_EXPORT,
 			     "Comparing %s %d to %s %d",
 			     path, len_path,
-			     export->pseudopath, len_export);
+			     ref_pseudopath->gr_val, len_export);
 
 		if (len_path == 0 && len_export == 1) {
 			/* Special case for Pseudo root match */
 			ret_exp = export;
 			len_ret = len_export;
+			gsh_refstr_put(ref_pseudopath);
 			break;
 		}
 
@@ -490,31 +530,39 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		 * the previous match.
 		 */
 		if (len_path < len_export ||
-		    len_export < len_ret)
+		    len_export < len_ret) {
+			gsh_refstr_put(ref_pseudopath);
 			continue;
+		}
 
 		/* If partial match is not allowed, lengths must be the same */
-		if (exact_match && len_path != len_export)
+		if (exact_match && len_path != len_export) {
+			gsh_refstr_put(ref_pseudopath);
 			continue;
+		}
 
 		/* if the char in pseudopath just after the end of path is not
 		 * '/' it is a name token longer, i.e. /mnt/foo != /mnt/foob/
 		 */
 		if (len_export > 1 &&
 		    path[len_export] != '/' &&
-		    path[len_export] != '\0')
+		    path[len_export] != '\0') {
+			gsh_refstr_put(ref_pseudopath);
 			continue;
+		}
 
 		/* we agree on size, now compare the leading substring
 		 */
-		if (strncmp(export->pseudopath, path, len_export)
+		if (strncmp(ref_pseudopath->gr_val, path, len_export)
 		    == 0) {
 			ret_exp = export;
 			len_ret = len_export;
 
 			/* If we have found an exact match, exit loop. */
-			if (len_export == len_path)
+			if (len_export == len_path) {
+				gsh_refstr_put(ref_pseudopath);
 				break;
+			}
 		}
 	}
 
@@ -625,13 +673,19 @@ void _get_gsh_export_ref(struct gsh_export *a_export,
 	int64_t refcount = atomic_inc_int64_t(&a_export->refcnt);
 
 	if (isFullDebug(COMPONENT_EXPORT)) {
+		struct tmp_export_paths tmp_path = {NULL, NULL};
+
+		tmp_get_exp_paths(&tmp_path, a_export);
+
 		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
 			NIV_FULL_DEBUG,
 			"get export ref for id %" PRIu16 " %s, refcount = %"
 			PRIi64,
 			a_export->export_id,
-			export_path(a_export),
+			tmp_export_path(&tmp_path),
 			refcount);
+
+		tmp_put_exp_paths(&tmp_path);
 	}
 }
 
@@ -648,13 +702,19 @@ void _put_gsh_export(struct gsh_export *export,
 	struct export_stats *export_st;
 
 	if (isFullDebug(COMPONENT_EXPORT)) {
+		struct tmp_export_paths tmp_path = {NULL, NULL};
+
+		tmp_get_exp_paths(&tmp_path, export);
+
 		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
 			NIV_FULL_DEBUG,
 			"put export ref for id %" PRIu16 " %s, refcount = %"
 			PRIi64,
 			export->export_id,
-			export_path(export),
+			tmp_export_path(&tmp_path),
 			refcount);
+
+		tmp_put_exp_paths(&tmp_path);
 	}
 
 	if (refcount != 0) {
@@ -856,8 +916,21 @@ static bool get_all_export_io(struct gsh_export *export_node, void *array_iter)
 {
 	struct export_stats *export_statistics;
 
-	LogFullDebug(COMPONENT_DBUS, "export id: %i, path: %s",
-		     export_node->export_id, export_node->fullpath);
+	if (isFullDebug(COMPONENT_DBUS)) {
+		struct gsh_refstr *ref_fullpath;
+
+		rcu_read_lock();
+
+		ref_fullpath =
+			gsh_refstr_get(rcu_dereference(export_node->fullpath));
+
+		rcu_read_unlock();
+
+		LogFullDebug(COMPONENT_DBUS, "export id: %i, path: %s",
+			     export_node->export_id, ref_fullpath->gr_val);
+
+		gsh_refstr_put(ref_fullpath);
+	}
 
 	export_statistics = container_of(export_node, struct export_stats,
 					 export);
@@ -1322,6 +1395,7 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 	char *path;
 	struct showexports_state client_array_iter;
 	struct glist_head *glist;
+	struct tmp_export_paths tmp = {NULL, NULL};
 
 	export = lookup_export(args, &errormsg);
 	if (export == NULL) {
@@ -1334,16 +1408,27 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 		goto out;
 	}
 
+	tmp_get_exp_paths(&tmp, export);
+
 	/* create a reply from the message */
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_UINT16,
 				       &export->export_id);
-	path = (export->fullpath != NULL) ? export->fullpath : "";
+	path = TMP_FULLPATH(&tmp);
+
+	if (path == NULL)
+		path = "";
+
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_STRING,
 				       &path);
-	path = (export->pseudopath != NULL) ? export->pseudopath : "";
+
+	path = TMP_PSEUDOPATH(&tmp);
+
+	if (path == NULL)
+		path = "";
+
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_STRING,
 				       &path);
@@ -1366,6 +1451,7 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 	dbus_message_iter_close_container(&iter,
 					  &client_array_iter.export_iter);
 
+	tmp_put_exp_paths(&tmp);
 	put_gsh_export(export);
 
 out:
@@ -1388,10 +1474,23 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	DBusMessageIter struct_iter;
 	struct timespec last_as_ts = nfs_ServerBootTime;
 	const char *path;
+	struct tmp_export_paths tmp = {NULL, NULL};
+
+	tmp_get_exp_paths(&tmp, exp_node);
+
+	path = TMP_PSEUDOPATH(&tmp);
+
+	if (path == NULL) {
+
+		path = TMP_FULLPATH(&tmp);
+		if (path == NULL)
+			path = "";
+	}
+
+	tmp_put_exp_paths(&tmp);
 
 	exp = container_of(exp_node, struct export_stats, export);
-	path = (exp_node->pseudopath != NULL) ?
-		exp_node->pseudopath : exp_node->fullpath;
+
 	timespec_add_nsecs(exp_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->export_iter,
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);

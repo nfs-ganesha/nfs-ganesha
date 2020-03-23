@@ -290,7 +290,7 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 			PRIu64".%"PRIu64" - reloading filesystems to find it",
 			path, dev.major, dev.minor);
 
-		retval = reload_posix_filesystems(op_ctx->ctx_export->fullpath,
+		retval = reload_posix_filesystems(CTX_FULLPATH(op_ctx),
 						  parent_hdl->obj_handle.fsal,
 						  op_ctx->fsal_export,
 						  vfs_claim_filesystem,
@@ -315,7 +315,7 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 			LogInfo(COMPONENT_FSAL,
 				"Filesystem %s has been added to export %d:%s",
 				fs->path, op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export));
+				op_ctx_export_path(op_ctx));
 		}
 	}
 
@@ -327,7 +327,7 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 			"Lookup of %s crosses filesystem boundary to unclaimed file system %s - attempt to claim it",
 			path, fs->path);
 
-		retval = claim_posix_filesystems(op_ctx->ctx_export->fullpath,
+		retval = claim_posix_filesystems(CTX_FULLPATH(op_ctx),
 						 parent_hdl->obj_handle.fsal,
 						 op_ctx->fsal_export,
 						 vfs_claim_filesystem,

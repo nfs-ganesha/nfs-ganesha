@@ -236,6 +236,7 @@ void destroy_fsals(void)
 	}
 
 	release_posix_file_systems();
+	destroy_ctx_refstr();
 }
 
 /**

@@ -928,6 +928,8 @@ struct state_dir {
 	/** If this is a junction, the export this node points to.
 	 * Protected by jct_lock. */
 	struct gsh_export *junction_export;
+	/** gsh_refstr to stash copy of the export's pseudopath */
+	struct gsh_refstr *jct_pseudopath;
 	/** List of exports that have this cache inode as their root.
 	 * Protected by jct_lock */
 	struct glist_head export_roots;
@@ -981,6 +983,9 @@ struct state_hdl {
 		struct state_dir	dir;
 	};
 };
+
+#define JCT_PSEUDOPATH(shdl) (shdl->dir.jct_pseudopath ? \
+	shdl->dir.jct_pseudopath->gr_val : NULL)
 
 /**
  * @brief Description of a layout segment

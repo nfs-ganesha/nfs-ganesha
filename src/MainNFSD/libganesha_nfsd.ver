@@ -195,6 +195,7 @@
   release_log_facility;
   release_op_context;
   release_posix_file_system;
+  release_root_op_context;
   read_log_config;
   report_config_errors;
   resume_op_context;
