@@ -1006,18 +1006,13 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 
 	if (cih_latch_entry(&entry->fh_hk.key, &latch, CIH_GET_WLOCK,
 			    __func__, __LINE__)) {
-		uint32_t refcnt;
-
 		QLOCK(qlane);
 
-		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
-		/* there are two cases which permit reclaim,
-		 * entry is:
-		 * 1. reachable but unref'd (refcnt==2)
-		 * 2. unreachable, being removed (plus refcnt==0)
-		 *    for safety, take only the former
-		 */
-		if (LRU_ENTRY_RECLAIMABLE(entry, refcnt)) {
+		/* Take the attr lock, so we can check that this entry is still
+		 * not in any export */
+		PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+
+		if (glist_empty(&entry->export_list)) {
 			/* it worked */
 			struct lru_q *q = lru_queue_of(entry);
 
@@ -1026,17 +1021,18 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 			atomic_set_uint32_t_bits(&entry->lru.flags,
 						 LRU_CLEANUP);
 			/* Note: we didn't take a ref here, so the only ref left
-			 * is the one owned by mdcache_unexport().  When it
-			 * unref's, that will free this object. */
+			 * in this callpath is the one owned by
+			 * mdcache_unexport().  When it unref's, that may free
+			 * this object; otherwise, it will be freed when the
+			 * last op is done, as it's unreachable. */
 
-			/* Now we can safely clean out the first_export_id to
-			 * indicate this entry is unmapped.
-			 */
-			atomic_store_int32_t(&entry->first_export_id, -1);
-
+			/* It's safe to drop the attr lock here, as we have the
+			 * latch, so no one can look up the entry */
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 			QUNLOCK(qlane);
 			cih_remove_latched(entry, &latch, CIH_REMOVE_NONE);
 		} else {
+			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 			QUNLOCK(qlane);
 		}
 
