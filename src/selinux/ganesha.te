@@ -252,3 +252,12 @@ allow init_t var_lib_nfs_t:dir create;
 #!!!! This avc can be allowed using the boolean 'nis_enabled'
 allow rpcbind_t unreserved_port_t:udp_socket name_bind;
 
+########################################
+#
+# ganesha local policy rhbz#1816501
+#
+
+type glusterd_t;
+
+allow glusterd_t ganesha_unit_file_t:service start;
+
