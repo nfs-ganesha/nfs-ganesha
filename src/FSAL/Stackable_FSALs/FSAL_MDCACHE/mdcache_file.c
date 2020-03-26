@@ -171,6 +171,20 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 
 	} /* else UNGUARDED, go ahead and open the file. */
 
+	/* Check if the object type is REGULAR_FILE. If not then give error. */
+	if (entry->obj_handle.type != REGULAR_FILE) {
+		LogDebug(COMPONENT_CACHE_INODE,
+			 "Trying to open a non-regular file");
+		if (entry->obj_handle.type == DIRECTORY) {
+			/* Trying to open2 a directory */
+			mdcache_put(entry);
+			return fsalstat(ERR_FSAL_ISDIR, 0);
+		} else {
+			/* Trying to open2 any other non-regular file */
+			mdcache_put(entry);
+			return fsalstat(ERR_FSAL_SYMLINK, 0);
+		}
+	}
 	subcall(
 		status = entry->sub_handle->obj_ops->open2(
 			entry->sub_handle, state, openflags, createmode,
