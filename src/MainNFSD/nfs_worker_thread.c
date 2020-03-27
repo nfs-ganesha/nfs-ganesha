@@ -776,7 +776,10 @@ void complete_request(nfs_request_t *reqdata,
 				 reqdata->svc.rq_msg.cb_proc,
 				 errno);
 			SVC_DESTROY(xprt);
-			return;
+			/* We failed to send the response, but the
+			 * request is complete, so we should mark
+			 * the same in our DRC.
+			 */
 		}
 
 		LogFullDebug(COMPONENT_DISPATCH,
