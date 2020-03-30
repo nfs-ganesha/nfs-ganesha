@@ -1,6 +1,6 @@
 # Only build VFS fsal for FreeBSD 10.1
 
-set(USE_FSAL_PROXY  OFF)
+set(USE_FSAL_PROXY_V4 OFF)
 set(USE_FSAL_CEPH OFF)
 set(USE_FSAL_GPFS OFF)
 set(_MSPAC_SUPPORT OFF)

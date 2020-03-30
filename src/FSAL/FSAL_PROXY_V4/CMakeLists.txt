@@ -23,7 +23,7 @@ endif(PROXY_HANDLE_MAPPING)
 add_library(fsalproxy MODULE ${fsalproxy_LIB_SRCS})
 add_sanitizers(fsalproxy)
 
-target_link_libraries(fsalproxy 
+target_link_libraries(fsalproxy
   ganesha_nfsd
   ${SYSTEM_LIBRARIES}
   "-Wl,--no-undefined"

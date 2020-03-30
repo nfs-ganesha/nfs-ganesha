@@ -5,7 +5,7 @@ set(CMAKE_PREFIX_PATH "/usr/")
 # FSAL's to build
 set(USE_FSAL_GPFS ON)
 set(USE_FSAL_VFS ON)
-set(USE_FSAL_PROXY  ON)
+set(USE_FSAL_PROXY_V4 ON)
 
 set(USE_DBUS ON)
 

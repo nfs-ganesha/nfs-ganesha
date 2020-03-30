@@ -217,15 +217,15 @@ Requires: nfs-ganesha = %{version}-%{release}
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support VFS based filesystems
 
-%package proxy
-Summary: The NFS-GANESHA PROXY FSAL
+%package proxy-v4
+Summary: The NFS-GANESHA PROXY_V4 FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
 Requires: nfs-ganesha = %{version}-%{release}
 
-%description proxy
+%description proxy-v4
 This package contains a FSAL shared object to
-be used with NFS-Ganesha to support PROXY based filesystems
+be used with NFS-Ganesha to support PROXY_V4 based filesystems
 
 %if %{with utils}
 %package utils
@@ -505,7 +505,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_RADOS_RECOV=%{use_rados_recov}		\
 	-DRADOS_URLS=%{use_rados_urls}			\
 	-DUSE_FSAL_VFS=ON				\
-	-DUSE_FSAL_PROXY=ON				\
+	-DUSE_FSAL_PROXY_V4=ON				\
 	-DUSE_DBUS=ON					\
 	-DUSE_9P=%{use_9P}				\
 	-DDISTNAME_HAS_GIT_DATA=OFF			\
@@ -705,8 +705,9 @@ exit 0
 %{_mandir}/*/ganesha-vfs-config.8.gz
 %endif
 
-%files proxy
-%{_libdir}/ganesha/libfsalproxy*
+# Put a . after libfsalproxy to avoid libfsalproxy_v3.*.
+%files proxy-v4
+%{_libdir}/ganesha/libfsalproxy.*
 %if %{with man_page}
 %{_mandir}/*/ganesha-proxy-config.8.gz
 %endif

@@ -223,7 +223,7 @@ endif ()
 # FSAL selection
 # FSALs which are enabled by default but could be disabled
 # during the build
-goption(USE_FSAL_PROXY "build PROXY FSAL shared library" ON)
+goption(USE_FSAL_PROXY_V4 "build PROXY_V4 FSAL shared library" ON)
 goption(USE_FSAL_VFS "build VFS FSAL shared library" ON)
 goption(USE_FSAL_LUSTRE "build LUSTRE FSAL shared library" ON)
 goption(USE_FSAL_LIZARDFS "build LIZARDFS FSAL shared library" ON)
@@ -559,8 +559,8 @@ endif(USE_MAN_PAGE)
 
 # Validate fsal dependencies
 
-gopt_test(USE_FSAL_PROXY)
-if (USE_FSAL_PROXY)
+gopt_test(USE_FSAL_PROXY_V4)
+if (USE_FSAL_PROXY_V4)
   # PROXY has no deps of it's own, but it has a dependent option
   # PROXY handle mapping needs sqlite3
   gopt_test(PROXY_HANDLE_MAPPING)
@@ -581,7 +581,7 @@ if (USE_FSAL_PROXY)
       endif(PROXY_HANDLE_MAPPING_REQUIRED)
     endif(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
   endif(PROXY_HANDLE_MAPPING)
-endif (USE_FSAL_PROXY)
+endif (USE_FSAL_PROXY_V4)
 
 gopt_test(USE_FSAL_VFS)
 # VFS has no dependencies
@@ -1135,7 +1135,7 @@ message(STATUS "ARCH = ${ARCH}")
 message(STATUS "VERSION = ${GANESHA_VERSION}")
 message(STATUS "BUILD HOST = ${BUILD_HOST_NAME}")
 message(STATUS "-------------------------------------------------------")
-message(STATUS "USE_FSAL_PROXY = ${USE_FSAL_PROXY}")
+message(STATUS "USE_FSAL_PROXY_V4 = ${USE_FSAL_PROXY_V4}")
 message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
 message(STATUS "USE_FSAL_LUSTRE = ${USE_FSAL_LUSTRE}")
 message(STATUS "USE_FSAL_LIZARDFS = ${USE_FSAL_LIZARDFS}")

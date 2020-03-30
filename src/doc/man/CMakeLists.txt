@@ -42,7 +42,7 @@ if(USE_FSAL_LUSTRE)
         ganesha-lustre-config.rst)
 endif()
 
-if(USE_FSAL_PROXY)
+if(USE_FSAL_PROXY_V4)
    list(APPEND man_srcs
         ganesha-proxy-config.rst)
 endif()

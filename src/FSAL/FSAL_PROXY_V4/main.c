@@ -110,6 +110,16 @@ struct config_block proxy_param = {
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
+struct config_block proxy_param_v4 = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.proxy",
+	.blk_desc.name = "PROXY_V4",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = proxy_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
+
 static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 				     config_file_t config_struct,
 				     struct config_error_type *err_type)
@@ -131,7 +141,7 @@ static fsal_status_t pxy_init_config(struct fsal_module *fsal_hdl,
 
 MODULE_INIT void pxy_init(void)
 {
-	if (register_fsal(&PROXY.module, "PROXY", FSAL_MAJOR_VERSION,
+	if (register_fsal(&PROXY.module, "PROXY_V4", FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS) != 0)
 		return;
 	PROXY.module.m_ops.init_config = pxy_init_config;

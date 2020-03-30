@@ -6,10 +6,9 @@ add_subdirectory(FSAL_PSEUDO)
 
 # All we need to do here is control the
 # build of chosen fsals
-
-if(USE_FSAL_PROXY)
-  add_subdirectory(FSAL_PROXY)
-endif(USE_FSAL_PROXY)
+if(USE_FSAL_PROXY_V4)
+  add_subdirectory(FSAL_PROXY_V4)
+endif(USE_FSAL_PROXY_V4)
 
 if(USE_FSAL_CEPH)
   add_subdirectory(FSAL_CEPH)
