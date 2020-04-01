@@ -257,8 +257,6 @@ int remove_gsh_client(sockaddr_t *client_ipaddr)
 		server_st = container_of(cl, struct server_stats, client);
 		server_stats_free(&server_st->st);
 		server_stats_allops_free(&server_st->c_all);
-		if (cl->hostaddr_str != NULL)
-			gsh_free(cl->hostaddr_str);
 		gsh_free(server_st);
 	}
 	return removed;
