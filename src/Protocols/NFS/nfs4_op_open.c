@@ -1113,9 +1113,9 @@ static void open4_ex(OPEN4args *arg,
 			/* Need to release the state_lock before the put_ref
 			 * call.
 			 */
-			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
 			file_obj->state_hdl->no_cleanup = false;
 			state_lock_held = false;
+			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
 
 			/* Release the extra LRU reference on file_obj. */
 			file_obj->obj_ops->put_ref(file_obj);
@@ -1175,8 +1175,8 @@ static void open4_ex(OPEN4args *arg,
 	fsal_release_attrs(&sattr);
 
 	if (state_lock_held) {
-		PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
 		file_obj->state_hdl->no_cleanup = false;
+		PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
 	}
 
 	if (res_OPEN4->status != NFS4_OK) {
