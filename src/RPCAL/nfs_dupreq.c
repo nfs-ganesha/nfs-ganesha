@@ -1163,17 +1163,16 @@ no_cache:
  *
  * @return DUPREQ_SUCCESS if successful.
  */
-dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
+void nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 {
 	dupreq_entry_t *ov = NULL, *dv = (dupreq_entry_t *)req->rq_u1;
-	dupreq_status_t status = DUPREQ_SUCCESS;
 	struct rbtree_x_part *t;
 	drc_t *drc = NULL;
 	int16_t cnt = 0;
 
 	/* do nothing if req is marked no-cache */
 	if (dv == DUPREQ_NOCACHE)
-		goto out;
+		return;
 
 	PTHREAD_MUTEX_lock(&dv->mtx);
 	assert(dv->res == res_nfs);
@@ -1185,10 +1184,10 @@ dupreq_status_t nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 
 	LogFullDebug(COMPONENT_DUPREQ,
 		     "completing dv=%p xid=%" PRIu32
-		     " on DRC=%p state=%s, status=%s, refcnt=%d, drc->size=%d",
-		dv, dv->hin.tcp.rq_xid, drc,
-		dupreq_state_table[dv->state], dupreq_status_table[status],
-		dv->refcnt, drc->size);
+		     " on DRC=%p state=%s, refcnt=%d, drc->size=%d",
+		     dv, dv->hin.tcp.rq_xid, drc,
+		     dupreq_state_table[dv->state],
+		     dv->refcnt, drc->size);
 
 	/* (all) finished requests count against retwnd */
 	drc_dec_retwnd(drc);
@@ -1236,10 +1235,10 @@ dq_again:
 
 			LogDebug(COMPONENT_DUPREQ,
 				 "retiring ov=%p xid=%" PRIu32
-				 " on DRC=%p state=%s, status=%s, refcnt=%d",
+				 " on DRC=%p state=%s, refcnt=%d",
 				 ov, ov->hin.tcp.rq_xid,
 				 drc, dupreq_state_table[ov->state],
-				 dupreq_status_table[status], ov->refcnt);
+				 ov->refcnt);
 
 			/* release hashtable ref count */
 			dupreq_entry_put(ov);
@@ -1249,15 +1248,12 @@ dq_again:
 				PTHREAD_MUTEX_lock(&drc->mtx);
 				goto dq_again; /* calls drc_should_retire() */
 			}
-			goto out;
+			return;
 		}
 	}
 
  unlock:
 	PTHREAD_MUTEX_unlock(&drc->mtx);
-
- out:
-	return status;
 }
 
 /**
@@ -1276,24 +1272,23 @@ dq_again:
  * @return DUPREQ_SUCCESS if successful.
  *
  */
-dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
+void nfs_dupreq_delete(struct svc_req *req)
 {
 	dupreq_entry_t *dv = (dupreq_entry_t *)req->rq_u1;
-	dupreq_status_t status = DUPREQ_SUCCESS;
 	struct rbtree_x_part *t;
 	drc_t *drc;
 
 	/* do nothing if req is marked no-cache */
 	if (dv == DUPREQ_NOCACHE)
-		goto out;
+		return;
 
 	drc = req->rq_xprt->xp_u2;
 
 	LogFullDebug(COMPONENT_DUPREQ,
 		     "deleting dv=%p xid=%" PRIu32
-		     " on DRC=%p state=%s, status=%s, refcnt=%d",
+		     " on DRC=%p state=%s, refcnt=%d",
 		     dv, dv->hin.tcp.rq_xid, drc,
-		     dupreq_state_table[dv->state], dupreq_status_table[status],
+		     dupreq_state_table[dv->state],
 		     dv->refcnt);
 
 	/* This function is called to remove this dupreq from the
@@ -1310,7 +1305,7 @@ dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
 	PTHREAD_MUTEX_lock(&drc->mtx);
 	if (!TAILQ_IS_ENQUEUED(dv, fifo_q)) {
 		PTHREAD_MUTEX_unlock(&drc->mtx);
-		goto out; /* no more in the hash table/list, nothing todo */
+		return; /* no more in the hash table/list, nothing todo */
 	}
 	TAILQ_REMOVE(&drc->dupreq_q, dv, fifo_q);
 	TAILQ_INIT_ENTRY(dv, fifo_q);
@@ -1325,9 +1320,6 @@ dupreq_status_t nfs_dupreq_delete(struct svc_req *req)
 
 	/* we removed the dupreq from hashtable, release a ref */
 	dupreq_entry_put(dv);
-
- out:
-	return status;
 }
 
 /**

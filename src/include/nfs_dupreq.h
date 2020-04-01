@@ -130,8 +130,8 @@ void nfs_dupreq_put_drc(drc_t *drc);
 
 dupreq_status_t nfs_dupreq_start(nfs_request_t *,
 				 struct svc_req *);
-dupreq_status_t nfs_dupreq_finish(struct svc_req *, nfs_res_t *);
-dupreq_status_t nfs_dupreq_delete(struct svc_req *);
+void nfs_dupreq_finish(struct svc_req *, nfs_res_t *);
+void nfs_dupreq_delete(struct svc_req *);
 void nfs_dupreq_rele(struct svc_req *, const nfs_function_desc_t *);
 
 #endif /* NFS_DUPREQ_H */
