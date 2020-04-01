@@ -298,10 +298,10 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			       &export->rgw_fs,
 			       RGW_MOUNT_FLAG_NONE);
 #else
-	const char *fullpath = op_ctx->ctx_export->fullpath;
+	const char *rgw_fullpath = op_ctx->ctx_export->fullpath;
 
-	if (strcmp(fullpath, "/") && strchr(fullpath, '/') &&
-		(strchr(fullpath, '/') - fullpath) > 1) {
+	if (strcmp(rgw_fullpath, "/") && strchr(rgw_fullpath, '/') &&
+		(strchr(rgw_fullpath, '/') - rgw_fullpath) > 1) {
 		/* case : "bucket_name/dir" */
 		rgw_status = rgw_mount(RGWFSM.rgw,
 					export->rgw_user_id,
@@ -311,15 +311,15 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 					RGW_MOUNT_FLAG_NONE);
 	} else {
 		/* case : "/" of "bucket_name" or "/bucket_name" */
-		if (strcmp(fullpath, "/") && strchr(fullpath, '/') &&
-			(strchr(fullpath, '/') - fullpath) == 0) {
-			fullpath = op_ctx->ctx_export->fullpath + 1;
+		if (strcmp(rgw_fullpath, "/") && strchr(rgw_fullpath, '/') &&
+			(strchr(rgw_fullpath, '/') - rgw_fullpath) == 0) {
+			rgw_fullpath = rgw_fullpath + 1;
 		}
 	  rgw_status = rgw_mount2(RGWFSM.rgw,
 					export->rgw_user_id,
 					export->rgw_access_key_id,
 					export->rgw_secret_access_key,
-					fullpath,
+					rgw_fullpath,
 					&export->rgw_fs,
 					RGW_MOUNT_FLAG_NONE);
 	}

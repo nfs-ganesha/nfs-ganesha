@@ -144,13 +144,13 @@ static void package_pseudo_handle(char *buff,
  *
  * @return void
  */
-static int fullpath(struct display_buffer *pathbuf,
-		    struct pseudo_fsal_obj_handle *this_node)
+static int create_fullpath(struct display_buffer *pathbuf,
+			   struct pseudo_fsal_obj_handle *this_node)
 {
 	int b_left;
 
 	if (this_node->parent != NULL)
-		b_left = fullpath(pathbuf, this_node->parent);
+		b_left = create_fullpath(pathbuf, this_node->parent);
 	else
 		b_left = display_start(pathbuf);
 
@@ -199,7 +199,7 @@ static struct pseudo_fsal_obj_handle
 	hdl->handle = (char *) &hdl[1];
 
 	/* Create the full path */
-	rc = fullpath(&pathbuf, hdl);
+	rc = create_fullpath(&pathbuf, hdl);
 
 	if (rc < 0) {
 		LogDebug(COMPONENT_FSAL,
