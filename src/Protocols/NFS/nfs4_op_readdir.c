@@ -449,7 +449,7 @@ not_junction:
 		/* Oops, what broke... */
 		LogCrit(COMPONENT_NFS_READDIR,
 			"Unexpected XDR failure processing readdir result");
-		tracker->error = NFS3ERR_SERVERFAULT;
+		tracker->error = NFS4ERR_SERVERFAULT;
 	}
 
 	cb_parms->in_result = false;
@@ -702,7 +702,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 				/* Oops... */
 				LogCrit(COMPONENT_NFS_READDIR,
 					"Encode of no next entry failed.");
-				res_READDIR4->status = NFS3ERR_SERVERFAULT;
+				res_READDIR4->status = NFS4ERR_SERVERFAULT;
 				goto out_destroy;
 			}
 		}
@@ -713,7 +713,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 			/* Oops... */
 			LogCrit(COMPONENT_NFS_READDIR,
 				"Encode of EOD failed.");
-			res_READDIR4->status = NFS3ERR_SERVERFAULT;
+			res_READDIR4->status = NFS4ERR_SERVERFAULT;
 			goto out_destroy;
 		}
 
