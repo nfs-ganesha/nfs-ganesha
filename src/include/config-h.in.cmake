@@ -23,7 +23,7 @@
 #cmakedefine _USE_CB_SIMULATOR 1
 #cmakedefine USE_CAPS 1
 #cmakedefine USE_BLKID 1
-#cmakedefine PROXY_HANDLE_MAPPING 1
+#cmakedefine PROXYV4_HANDLE_MAPPING 1
 #cmakedefine _USE_9P 1
 #cmakedefine _USE_9P_RDMA 1
 #cmakedefine _USE_NFS_RDMA 1

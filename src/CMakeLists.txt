@@ -262,7 +262,7 @@ option(RPCBIND "enable registration with rpcbind" ON)
 option(DEBUG_SAL "enable debugging of SAL by keeping list of all locks, stateids, and state owners" OFF)
 option(_VALGRIND_MEMCHECK "Initialize buffers passed to GPFS ioctl that valgrind doesn't understand" OFF)
 option(ENABLE_LOCKTRACE "Enable lock trace" OFF)
-goption(PROXY_HANDLE_MAPPING "enable NFSv3 handle mapping for PROXY FSAL" OFF)
+goption(PROXYV4_HANDLE_MAPPING "enable NFSv3 handle mapping for PROXY_V4 FSAL" OFF)
 option(DEBUG_MDCACHE "Add various asserts to mdcache" OFF)
 
 # Debug symbols (-g) build flag
@@ -561,10 +561,10 @@ endif(USE_MAN_PAGE)
 
 gopt_test(USE_FSAL_PROXY_V4)
 if (USE_FSAL_PROXY_V4)
-  # PROXY has no deps of it's own, but it has a dependent option
-  # PROXY handle mapping needs sqlite3
-  gopt_test(PROXY_HANDLE_MAPPING)
-  if(PROXY_HANDLE_MAPPING)
+  # PROXY_V4 has no deps of it's own, but it has a dependent option
+  # PROXY_V4 handle mapping needs sqlite3
+  gopt_test(PROXYV4_HANDLE_MAPPING)
+  if(PROXYV4_HANDLE_MAPPING)
     check_include_files(sqlite3.h HAVE_SQLITE3_H)
     check_library_exists(
       sqlite3
@@ -573,14 +573,14 @@ if (USE_FSAL_PROXY_V4)
       HAVE_SQLITE3
       )
     if(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
-      if(PROXY_HANDLE_MAPPING_REQUIRED)
-	message(FATAL_ERROR "Cannot find sqlite3.h or the library but proxy handle mapping requested on command line")
-      else(PROXY_HANDLE_MAPPING_REQUIRED)
-	message(WARNING "Cannot find sqlite3.h or the library. Disabling proxy handle mapping")
-	set(PROXY_HANDLE_MAPPING OFF)
-      endif(PROXY_HANDLE_MAPPING_REQUIRED)
+      if(PROXYV4_HANDLE_MAPPING_REQUIRED)
+	message(FATAL_ERROR "Cannot find sqlite3.h or the library but proxyv4 handle mapping requested on command line")
+      else(PROXYV4_HANDLE_MAPPING_REQUIRED)
+	message(WARNING "Cannot find sqlite3.h or the library. Disabling proxyv4 handle mapping")
+	set(PROXYV4_HANDLE_MAPPING OFF)
+      endif(PROXYV4_HANDLE_MAPPING_REQUIRED)
     endif(NOT HAVE_SQLITE3 OR NOT HAVE_SQLITE3_H)
-  endif(PROXY_HANDLE_MAPPING)
+  endif(PROXYV4_HANDLE_MAPPING)
 endif (USE_FSAL_PROXY_V4)
 
 gopt_test(USE_FSAL_VFS)
@@ -1174,7 +1174,7 @@ message(STATUS "RPCBIND = ${RPCBIND}")
 message(STATUS "DEBUG_SAL = ${DEBUG_SAL}")
 message(STATUS "_VALGRIND_MEMCHECK = ${_VALGRIND_MEMCHECK}")
 message(STATUS "ENABLE_LOCKTRACE = ${ENABLE_LOCKTRACE}")
-message(STATUS "PROXY_HANDLE_MAPPING = ${PROXY_HANDLE_MAPPING}")
+message(STATUS "PROXYV4_HANDLE_MAPPING = ${PROXYV4_HANDLE_MAPPING}")
 message(STATUS "DEBUG_MDCACHE = ${DEBUG_MDCACHE}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "COVERAGE = ${COVERAGE}")

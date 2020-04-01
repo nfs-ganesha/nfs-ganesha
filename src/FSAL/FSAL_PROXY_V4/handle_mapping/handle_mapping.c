@@ -28,8 +28,8 @@
 /**
  * \file handle_mapping.c
  *
- * \brief  This module is used for managing a persistent
- *         map between PROXY FSAL handles (including NFSv4 handles from server)
+ * \brief  This module is used for managing a persistent map
+ *         between PROXY_V4 FSAL handles (including NFSv4 handles from server)
  *         and nfsv3 handles digests (sent to client).
  */
 #include "config.h"

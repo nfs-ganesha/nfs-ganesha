@@ -321,7 +321,7 @@ static int init_database_access(db_thread_info_t *p_thr_info)
 		return HANDLEMAP_DB_ERROR;
 	} else if (rc >= sizeof(db_file)) {
 		LogCrit(COMPONENT_FSAL,
-			"PROXY HANDLE DB path %s/%s.%u too long",
+			"PROXY_V4 HANDLE DB path %s/%s.%u too long",
 			dbmap_dir, DB_FILE_PREFIX, p_thr_info->thr_index);
 		return HANDLEMAP_DB_ERROR;
 	}

@@ -6,7 +6,7 @@
  * @file    fsal_nfsv4_macros.h
  * @author  Author: deniel
  * @date    06/05/2007
- * @brief   Usefull macros to manage NFSv4 call from FSAL_PROXY
+ * @brief   Useful macros to manage NFSv4 call from FSAL_PROXY_V4
  *
  *
  */
@@ -46,8 +46,8 @@ do {gsh_free(argcompound.argarray_val); } while (0)
 /**
  * Notice about NFS4_OP_SEQUENCE argop filling :
  * As rpc_context and slot are mutualized, sa_slotid and related sa_sequenceid
- * are place holder filled later on pxy_compoundv4_execute function, only when
- * the free pxy_rpc_io_context is chosen.
+ * are place holder filled later on proxyv4_compoundv4_execute function, only
+ * when the free proxyv4_rpc_io_context is chosen.
  */
 #define COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, argarray, sessionid, nb_slot) \
 do {									\
