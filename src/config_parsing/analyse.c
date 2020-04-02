@@ -57,7 +57,7 @@ char *save_token(char *token, bool esc, struct parser_state *st)
 	for (tokp = st->root_node->tokens;
 	     tokp != NULL;
 	     tokp = tokp->next) {
-		if (strcasecmp(token, tokp->token) == 0)
+		if (strcmp(token, tokp->token) == 0)
 			return tokp->token;
 	}
 	new_tok = gsh_calloc(1, (sizeof(struct token_tab) +
