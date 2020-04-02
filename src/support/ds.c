@@ -266,7 +266,8 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
 
 	/* removal has a once-only semantic */
 	if (pds != NULL) {
-		if (pds->mds_export != NULL)
+		if (pds->mds_export != NULL) {
+			struct root_op_context ctx;
 			/* special case: avoid lookup of related export.
 			 * get_gsh_export_ref() was bumped in pnfs_ds_insert()
 			 *
@@ -274,7 +275,12 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
 			 * do not pre-clear related export (mds_export).
 			 * always check pnfs_ds_status instead.
 			 */
+			init_root_op_context(&ctx, pds->mds_export,
+					     pds->mds_export->fsal_export,
+					     0, 0, UNKNOWN_REQUEST);
 			put_gsh_export(pds->mds_export);
+			release_root_op_context();
+		}
 
 		/* Release table reference to the server.
 		 * Release of resources will occur on last reference.
