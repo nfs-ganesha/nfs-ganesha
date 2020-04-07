@@ -101,18 +101,6 @@ static struct config_item proxyv4_params[] = {
 	CONFIG_EOL
 };
 
-// NOTE(boulos): Retain the previous config options key here as well, so that
-// people who have PROXY {} in their Ganesha configs still get a working
-// configuration.
-struct config_block original_proxy_param = {
-	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.proxy",
-	.blk_desc.name = "PROXY",
-	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.u.blk.init = noop_conf_init,
-	.blk_desc.u.blk.params = proxyv4_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
-};
-
 struct config_block proxy_param_v4 = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.proxy",
 	.blk_desc.name = "PROXY_V4",
@@ -130,16 +118,6 @@ static fsal_status_t proxyv4_init_config(struct fsal_module *fsal_hdl,
 	struct proxyv4_fsal_module *proxyv4 =
 	    container_of(fsal_hdl, struct proxyv4_fsal_module, module);
 
-	// First try to load the previous PROXY block.
-	(void) load_config_from_parse(config_struct,
-				      &original_proxy_param,
-				      proxyv4,
-				      true,
-				      err_type);
-	if (!config_error_is_harmless(err_type))
-		return fsalstat(ERR_FSAL_INVAL, 0);
-
-	// Then let PROXY_V4 take precedence.
 	(void) load_config_from_parse(config_struct,
 				      &proxy_param_v4,
 				      proxyv4,

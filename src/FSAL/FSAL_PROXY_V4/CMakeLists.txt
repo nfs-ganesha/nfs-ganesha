@@ -20,20 +20,20 @@ if(PROXYV4_HANDLE_MAPPING)
     )
 endif(PROXYV4_HANDLE_MAPPING)
 
-add_library(fsalproxy MODULE ${fsalproxy_v4_LIB_SRCS})
-add_sanitizers(fsalproxy)
+add_library(fsalproxy_v4 MODULE ${fsalproxy_v4_LIB_SRCS})
+add_sanitizers(fsalproxy_v4)
 
-target_link_libraries(fsalproxy
+target_link_libraries(fsalproxy_v4
   ganesha_nfsd
   ${SYSTEM_LIBRARIES}
   "-Wl,--no-undefined"
 )
 
 if(PROXYV4_HANDLE_MAPPING)
-  target_link_libraries(fsalproxy sqlite3)
+  target_link_libraries(fsalproxy_v4 sqlite3)
 endif(PROXYV4_HANDLE_MAPPING)
 
-set_target_properties(fsalproxy PROPERTIES VERSION 4.2.0 SOVERSION 4)
-install(TARGETS fsalproxy COMPONENT fsal DESTINATION  ${FSAL_DESTINATION} )
+set_target_properties(fsalproxy_v4 PROPERTIES VERSION 4.2.0 SOVERSION 4)
+install(TARGETS fsalproxy_v4 COMPONENT fsal DESTINATION ${FSAL_DESTINATION})
 
 ########### install files ###############

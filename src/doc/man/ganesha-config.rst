@@ -148,9 +148,9 @@ Refer to :doc:`ganesha-log-config <ganesha-log-config>`\(8) for usage
 1.**LOG { FACILITY {} }**
 2.**LOG { FORMAT {} }**
 
-PROXY {}
+PROXY_V4 {}
 --------------------------------------------------------------------------------
-Refer to :doc:`ganesha-proxy-config <ganesha-proxy-config>`\(8) for usage
+Refer to :doc:`ganesha-proxy-config <ganesha-proxy-v4-config>`\(8) for usage
 
 PROXY_V3 {}
 --------------------------------------------------------------------------------

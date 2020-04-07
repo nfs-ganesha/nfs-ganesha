@@ -716,11 +716,10 @@ exit 0
 %{_mandir}/*/ganesha-vfs-config.8.gz
 %endif
 
-# Put a . after libfsalproxy to avoid libfsalproxy_v3.*.
 %files proxy-v4
-%{_libdir}/ganesha/libfsalproxy.*
+%{_libdir}/ganesha/libfsalproxy_v4*
 %if %{with man_page}
-%{_mandir}/*/ganesha-proxy-config.8.gz
+%{_mandir}/*/ganesha-proxy-v4-config.8.gz
 %endif
 
 %files proxy-v3

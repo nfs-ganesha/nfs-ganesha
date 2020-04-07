@@ -23,13 +23,14 @@ MEM {}
 RGW {}
 VFS {}
 XFS {}
-PROXY {}
+PROXY_V3 {}
+PROXY_V4 {}
 RADOS_KV {}
 RADOS_URLS {}
 
 Notably the following FSALs do not have a global config block:
 
-PSEUDO, PROXY, NULL, GLUSTER
+PSEUDO, NULL, GLUSTER
 
 NFS_CORE_PARAM {}
 -----------------
@@ -384,7 +385,12 @@ EXPORT { FSAL {} }
 	------------
 	async_hsm_restore(bool, default true)
 
-	FSAL_PROXY:
+	FSAL_PROXY_V3:
+	-----------
+
+	Srv_Addr(ipv4_addr default "127.0.0.1")
+
+	FSAL_PROXY_V4:
 	-----------
 
 	Retry_SleepTime(uint32, range 0 to 60, default 10)
@@ -713,7 +719,19 @@ XFS {}
 
 	auth_xdev_export(bool, default false)
 
-PROXY {}
+PROXY_V3 {}
+--------
+
+	/*MAX_READ_WRITE_SIZE == 1MB*/
+	/*FSAL_MAXIOSIZE = 64 MB*/
+	/*maxread and maxwrite will be clamped by the backend's FSINFO*/
+	maxread(uint64, range 1024 to FSAL_MAXIOSIZE,
+		default MAX_READ_WRITE_SIZE)
+
+	maxwrite(uint64, range 1024 to FSAL_MAXIOSIZE,
+		 default MAX_READ_WRITE_SIZE)
+
+PROXY_V4 {}
 --------
 
 	link_support(bool, default true)

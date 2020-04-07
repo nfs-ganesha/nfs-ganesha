@@ -1,8 +1,8 @@
 ===================================================================
-ganesha-proxy-config -- NFS Ganesha Proxy Configuration File
+ganesha-proxy-v4-config -- NFS Ganesha Proxy V4 Configuration File
 ===================================================================
 
-.. program:: ganesha-proxy-config
+.. program:: ganesha-proxy-v4-config
 
 
 SYNOPSIS
@@ -13,16 +13,16 @@ SYNOPSIS
 DESCRIPTION
 ==========================================================
 
-NFS-Ganesha install the following config file for Proxy FSAL:
+NFS-Ganesha install the following config file for Proxy V4 FSAL:
 | /etc/ganesha/ganesha.conf
 
-This file lists Proxy specific config options.
+This file lists Proxy V4 specific config options.
 
 EXPORT { FSAL {} }
 --------------------------------------------------------------------------------
 
-Name(string, "proxy")
-    Name of FSAL should always be proxy.
+Name(string, "proxy_v4")
+    Name of FSAL should always be proxy_v4.
 
 **Retry_SleepTime(uint32, range 0 to 60, default 10)**
 
@@ -74,7 +74,7 @@ NFS_RecvSize(uint64, default MAX_READ_WRITE_SIZE + SEND_RECV_HEADER_SPACE)
 
 **HandleMap_HashTable_Size(uint32, range 1 to 127, default 103)**
 
-PROXY {}
+PROXY_V4 {}
 --------------------------------------------------------------------------------
 
 **link_support(bool, default true)**

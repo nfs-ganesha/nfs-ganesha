@@ -36,8 +36,12 @@ PROXY_V3 {}
 **maxread(uint64, default 1 MB)**
     range 1024 to FSAL_MAXIOSIZE
 
+    Note that this value will get clamped to the backend's FSINFO response.
+
 **maxwrite(uint64, default 1 MB)**
     range 1024 to FSAL_MAXIOSIZE
+
+    Note that this value will get clamped to the backend's FSINFO response.
 
 See also
 ==============================
