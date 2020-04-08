@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2020 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2021 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -2479,25 +2479,27 @@ mdc_readdir_chunked_cb(const char *name, struct fsal_obj_handle *sub_handle,
  * @brief Skip directory chunks while re-filling dirent cache in search of
  *        a specific cookie that is not in cache.
  *
+ * This will return with a ref on the returned chunk
+ *
+ * @note @a chunk will have it's ref dropped
  * @note The content lock MUST be held for write
  *
  * @param[in] directory  The directory being read
- * @param[in] next_ck    The next cookie to find the next chunk
+ * @param[in] chunk	 Current chunk to skip
  *
  * @returns The chunk found, or NULL.
  */
 static struct dir_chunk *mdcache_skip_chunks(mdcache_entry_t *directory,
-					     fsal_cookie_t next_ck)
+					     struct dir_chunk *chunk)
 {
 	mdcache_dir_entry_t *dirent = NULL;
-	struct dir_chunk *chunk = NULL;
 
 	/* We need to skip chunks that are already cached. */
-	while (next_ck != 0 &&
-	       mdcache_avl_lookup_ck(directory, next_ck, &dirent)) {
-		chunk = dirent->chunk;
+	while (chunk->next_ck != 0 &&
+	       mdcache_avl_lookup_ck(directory, chunk->next_ck, &dirent)) {
+		/* Drop ref on chunk; dirent->chunk has a new ref from above */
 		mdcache_lru_unref_chunk(chunk);
-		next_ck = chunk->next_ck;
+		chunk = dirent->chunk;
 	}
 
 	/* At this point, we have the last cached chunk before a gap. */
@@ -2759,9 +2761,6 @@ again:
 				PRIx64, state.cookie);
 
 		if (state.cur_chunk->next_ck != 0) {
-			fsal_cookie_t next_ck = state.cur_chunk->next_ck;
-
-			mdcache_lru_unref_chunk(state.cur_chunk);
 			/* In the collision case, chunk->next_ck was set,
 			 * so now start skipping.
 			 */
@@ -2769,9 +2768,11 @@ again:
 					COMPONENT_CACHE_INODE,
 					"Search skipping from cookie %"PRIx64,
 					state.cur_chunk->next_ck);
+
+			/* Pass the ref on cur_chunk; it will be dropped, and
+			 * the returned chunk will have a ref. */
 			state.cur_chunk = mdcache_skip_chunks(directory,
-							      next_ck);
-			mdcache_lru_ref_chunk(state.cur_chunk);
+							      state.cur_chunk);
 		}
 
 		/* drop refs on state, except cur_chunk which we're saving */
