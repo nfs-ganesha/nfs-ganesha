@@ -58,6 +58,8 @@ Squash(enum, default root_sqaush)
 
     Each line of defaults above are synonyms
 
+Security_Label(bool, default false)
+
 **NFS_Commit(bool, default false)**
 
 Delegations(enum, default None)
