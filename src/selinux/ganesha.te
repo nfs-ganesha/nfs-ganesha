@@ -141,6 +141,17 @@ allow init_t var_lib_nfs_t:dir create;
 
 ########################################
 #
+# ganesha local policy rhbz#1821612, FSAL_RGW
+#
+
+type ceph_log_t;
+
+#!!!! This avc can be allowed using the boolean 'daemons_enable_cluster_mode'
+allow ganesha_t ceph_t:unix_stream_socket connectto;
+
+
+########################################
+#
 # ganesha local policy rhbz#1788541, FSAL_VFS
 #
 
