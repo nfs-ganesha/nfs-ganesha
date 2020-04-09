@@ -37,6 +37,8 @@ Name(string, "GLUSTER")
 
 **transport(enum, values [tcp, rdma], default tcp)**
 
+**sec_label_xattr(char, default "security.selinux xattr of the file")**
+
 GLUSTER {}
 --------------------------------------------------------------------------------
 

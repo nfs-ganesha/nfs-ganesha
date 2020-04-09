@@ -301,7 +301,7 @@ EXPORT {}
 		* Disable_ACL is processed at create_export time currently
 		  which makes it effectively a static option.
 
-	Security_Label(bool, default false)
+	sec_label_xattr(char, default "security.selinux xattr of the file")
 
 		* Enable NFSv4.2 security label attribute. Ganesha supports
 		  "Limited Server Mode" as detailed in RFC 7204. Note that
@@ -376,6 +376,8 @@ EXPORT { FSAL {} }
 	enable_upcall(bool, default true)
 
 	transport(enum, values [tcp, rdma], default tcp)
+
+	Security_Label(bool, default false)
 
 	FSAL_VFS or FSAL_LUSTRE:
 	------------------------
