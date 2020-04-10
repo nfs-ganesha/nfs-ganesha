@@ -1,5 +1,70 @@
 policy_module(ganesha, 1.0.0)
 
+require {
+	type glusterd_t;
+
+	type var_lib_nfs_t;
+	type apm_bios_t;
+	type autofs_device_t;
+	type bpf_t;
+	type clock_device_t;
+	type configfs_t;
+	type cpu_device_t;
+	type debugfs_t;
+	type device_t;
+	type devpts_t;
+	type dri_device_t;
+	type event_device_t;
+	type fixed_disk_device_t;
+	type framebuf_device_t;
+	type fs_t;
+	type gluster_port_t;
+	type hugetlbfs_t;
+	type initctl_t;
+	type kmsg_device_t;
+	type kvm_device_t;
+	type lvm_control_t;
+	type memory_device_t;
+	type mouse_device_t;
+	type netcontrol_device_t;
+	type nvram_device_t;
+	type proc_kcore_t;
+	type proc_t;
+	type pstore_t;
+	type ptmx_t;
+	type removable_device_t;
+	type rpc_pipefs_t;
+	type scsi_generic_device_t;
+	type sound_device_t;
+	type sysfs_t;
+	type tmpfs_t;
+	type usb_device_t;
+	type usbmon_device_t;
+	type virtio_device_t;
+	type watchdog_device_t;
+	type wireless_device_t;
+	type xserver_misc_device_t;
+	type rpcbind_t;
+
+	type cgroup_t;
+	type usr_t;
+}
+
+# ceph_*_t types are only "available" if the ceph-selinux package is
+# installed. But we don't want to require ceph-selinux to be installed
+# when Ceph is not being used. In order to compile the policy though
+# these types must be declared/defined, which creates (redundant) roles
+# in selinux. AFAICT though this doesn't appear to hurt anything.
+type ceph_t;
+type ceph_log_t;
+type ceph_var_lib_t;
+type ceph_var_run_t;
+
+# Note: gluster*_t types are still, at the time of this writing, all
+# defined in the Fedora/CentOS/RHEL base selinux policy (because
+# gluster never got their act together and rolled their own -selinux
+# package.
+
 ########################################
 #
 # Declarations
@@ -116,12 +181,6 @@ tunable_policy(`ganesha_use_fusefs',`
 # ganesha local policy rhbz#1796160, FSAL_RGW
 #
 
-type ceph_log_t;
-type ceph_var_lib_t;
-type ceph_var_run_t;
-type cgroup_t;
-type usr_t;
-
 #============= ganesha_t ==============
 allow ganesha_t ceph_log_t:dir { add_name search write };
 allow ganesha_t ceph_log_t:file { create open };
@@ -144,8 +203,6 @@ allow init_t var_lib_nfs_t:dir create;
 # ganesha local policy rhbz#1821612, FSAL_RGW
 #
 
-type ceph_log_t;
-
 #!!!! This avc can be allowed using the boolean 'daemons_enable_cluster_mode'
 allow ganesha_t ceph_t:unix_stream_socket connectto;
 
@@ -154,49 +211,6 @@ allow ganesha_t ceph_t:unix_stream_socket connectto;
 #
 # ganesha local policy rhbz#1788541, FSAL_VFS
 #
-
-type var_lib_nfs_t;
-type apm_bios_t;
-type autofs_device_t;
-type bpf_t;
-type clock_device_t;
-type configfs_t;
-type cpu_device_t;
-type debugfs_t;
-type device_t;
-type devpts_t;
-type dri_device_t;
-type event_device_t;
-type fixed_disk_device_t;
-type framebuf_device_t;
-type fs_t;
-type gluster_port_t;
-type hugetlbfs_t;
-type initctl_t;
-type kmsg_device_t;
-type kvm_device_t;
-type lvm_control_t;
-type memory_device_t;
-type mouse_device_t;
-type netcontrol_device_t;
-type nvram_device_t;
-type proc_kcore_t;
-type proc_t;
-type pstore_t;
-type ptmx_t;
-type removable_device_t;
-type rpc_pipefs_t;
-type scsi_generic_device_t;
-type sound_device_t;
-type sysfs_t;
-type tmpfs_t;
-type usb_device_t;
-type usbmon_device_t;
-type virtio_device_t;
-type watchdog_device_t;
-type wireless_device_t;
-type xserver_misc_device_t;
-type rpcbind_t;
 
 #============= ganesha_t ==============
 dontaudit ganesha_t apm_bios_t:chr_file getattr;
@@ -267,8 +281,6 @@ allow rpcbind_t unreserved_port_t:udp_socket name_bind;
 #
 # ganesha local policy rhbz#1816501, rhbz#1822500
 #
-
-type glusterd_t;
 
 allow glusterd_t ganesha_unit_file_t:service { start status stop };
 
