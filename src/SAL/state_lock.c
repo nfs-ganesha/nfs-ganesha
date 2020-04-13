@@ -2007,6 +2007,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
 	state_lock_entry_t *lock_entry;
 	struct fsal_obj_handle *obj;
 	state_status_t status = STATE_SUCCESS;
+	bool release;
 
 	lock_entry = cookie_entry->sce_lock_entry;
 	obj = cookie_entry->sce_obj;
@@ -2054,12 +2055,14 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
 	/* Check to see if we can grant any blocked locks. */
 	grant_blocked_locks(obj->state_hdl);
 
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
-
 	/* In case all locks have wound up free,
 	 * we must release the object reference.
 	 */
-	if (glist_empty(&obj->state_hdl->file.lock_list))
+	release = glist_empty(&obj->state_hdl->file.lock_list);
+
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+
+	if (release)
 		obj->obj_ops->put_ref(obj);
 
 
