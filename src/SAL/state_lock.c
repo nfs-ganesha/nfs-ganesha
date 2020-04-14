@@ -1693,7 +1693,7 @@ void state_complete_grant(state_cookie_entry_t *cookie_entry)
 	 * entry MUST be pinned.
 	 */
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 
 	/* We need to make sure lock is ready to be granted */
 	if (lock_entry->sle_blocked == STATE_GRANTING) {
@@ -1716,7 +1716,7 @@ void state_complete_grant(state_cookie_entry_t *cookie_entry)
 	 */
 	free_cookie(cookie_entry, true);
 
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 }
 
 /**
@@ -1802,11 +1802,11 @@ void process_blocked_lock_upcall(state_block_data_t *block_data)
 	state_lock_entry_t *lock_entry = block_data->sbd_lock_entry;
 
 	lock_entry_inc_ref(lock_entry);
-	PTHREAD_RWLOCK_wrlock(&lock_entry->sle_obj->state_hdl->state_lock);
+	STATELOCK_lock(lock_entry->sle_obj);
 
 	try_to_grant_lock(lock_entry);
 
-	PTHREAD_RWLOCK_unlock(&lock_entry->sle_obj->state_hdl->state_lock);
+	STATELOCK_unlock(lock_entry->sle_obj);
 	lock_entry_dec_ref(lock_entry);
 }
 
@@ -2012,7 +2012,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
 	lock_entry = cookie_entry->sce_lock_entry;
 	obj = cookie_entry->sce_obj;
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 
 	/* We need to make sure lock is only "granted" once...
 	 * It's (remotely) possible that due to latency, we might end up
@@ -2060,7 +2060,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
 	 */
 	release = glist_empty(&obj->state_hdl->file.lock_list);
 
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	if (release)
 		obj->obj_ops->put_ref(obj);
@@ -2268,7 +2268,7 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 
 	LogLock(COMPONENT_STATE, NIV_FULL_DEBUG, "TEST", obj, owner, lock);
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 
 	found_entry = get_overlapping_entry(obj->state_hdl, owner, lock);
 
@@ -2302,7 +2302,7 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
 		LogList("Lock List", obj, &obj->state_hdl->file.lock_list);
 
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	return status;
 }
@@ -2689,7 +2689,7 @@ state_status_t state_unlock(struct fsal_obj_handle *obj,
 		return STATE_BAD_TYPE;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 
 	/* If lock list is empty, there really isn't any work for us to do. */
 	if (glist_empty(&obj->state_hdl->file.lock_list)) {
@@ -2772,7 +2772,7 @@ state_status_t state_unlock(struct fsal_obj_handle *obj,
 		dump_all_locks("All locks (after unlock)");
 
  out_unlock:
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	return status;
 }
@@ -2799,7 +2799,7 @@ state_status_t state_cancel(struct fsal_obj_handle *obj,
 		return STATE_BAD_TYPE;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 
 	/* If lock list is empty, there really isn't any work for us to do. */
 	if (glist_empty(&obj->state_hdl->file.lock_list)) {
@@ -2832,7 +2832,7 @@ state_status_t state_cancel(struct fsal_obj_handle *obj,
 	}
 
  out_unlock:
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	return STATE_SUCCESS;
 }

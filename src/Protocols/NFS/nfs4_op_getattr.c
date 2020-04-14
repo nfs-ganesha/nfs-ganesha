@@ -119,14 +119,14 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 	 * Till then send EDELAY error.
 	 */
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 	if (is_write_delegated(obj, &deleg_client) &&
 	    deleg_client && (deleg_client->gsh_client != op_ctx->client)) {
 
 		res_GETATTR4->status = handle_deleg_getattr(obj, deleg_client);
 
 		if (res_GETATTR4->status != NFS4_OK) {
-			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+			STATELOCK_unlock(obj);
 			goto out;
 		} else {
 			/* CB_GETATTR response handler must have updated the
@@ -138,7 +138,7 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 		}
 	}
 	/* release state_lock */
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	res_GETATTR4->status = file_To_Fattr(
 			data, mask, &attrs,

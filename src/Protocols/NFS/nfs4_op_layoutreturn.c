@@ -153,8 +153,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 		spec.offset = lr_layout->lrf_offset;
 		spec.length = lr_layout->lrf_length;
 
-		PTHREAD_RWLOCK_wrlock(
-			&data->current_obj->state_hdl->state_lock);
+		STATELOCK_lock(data->current_obj);
 
 		res_LAYOUTRETURN4->lorr_status = nfs4_return_one_state(
 			data->current_obj,
@@ -168,8 +167,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 			lr_layout->lrf_body.lrf_body_val,
 			&deleted);
 
-		PTHREAD_RWLOCK_unlock(
-			&data->current_obj->state_hdl->state_lock);
+		STATELOCK_unlock(data->current_obj);
 
 		if (res_LAYOUTRETURN4->lorr_status == NFS4_OK) {
 			if (deleted) {
@@ -309,7 +307,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 				}
 			}
 
-			PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+			STATELOCK_lock(obj);
 
 			res_LAYOUTRETURN4->lorr_status = nfs4_return_one_state(
 			    obj,
@@ -322,7 +320,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 			    NULL,
 			    &deleted);
 
-			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+			STATELOCK_unlock(obj);
 
 			/* Release the state_t reference */
 			dec_state_t_ref(layout_state);

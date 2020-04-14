@@ -79,6 +79,30 @@ void free_state_owner(state_owner_t *owner);
 		} \
 	} while (0)
 
+/**
+ * @brief Acquire exclusive state_lock and set no_cleanup=true
+ *
+ * @param[in,out] obj the object whose state_hdl->state_lock is to be
+ *		      acquired and state_hdl->no_cleanup needs to be set
+ */
+#define STATELOCK_lock(obj)						\
+	do {								\
+		PTHREAD_RWLOCK_wrlock(&(obj)->state_hdl->state_lock);	\
+		(obj)->state_hdl->no_cleanup = true;			\
+	} while (0)
+
+/**
+ * @brief Drop state_lock and set no_cleanup=false
+ *
+ * @param[in,out] obj the object whose state_hdl->state_lock is to be
+ *		      dropped and state_hdl->no_cleanup needs to be cleared
+ */
+#define STATELOCK_unlock(obj)						\
+	do {								\
+		(obj)->state_hdl->no_cleanup = false;			\
+		PTHREAD_RWLOCK_unlock(&(obj)->state_hdl->state_lock);	\
+	} while (0)
+
 state_owner_t *get_state_owner(care_t care, state_owner_t *pkey,
 			       state_owner_init_t init_owner, bool_t *isnew);
 

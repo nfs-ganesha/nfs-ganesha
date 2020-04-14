@@ -109,7 +109,7 @@ enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
 	op_ctx->ctx_export = export;
 	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 	if (state->state_type == STATE_TYPE_LOCK &&
 	    glist_empty(&state->state_data.lock.state_locklist)) {
 		/* At the moment, only return success for a lock stateid with
@@ -122,7 +122,7 @@ enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
 	} else {
 		res_FREE_STATEID4->fsr_status = NFS4ERR_LOCKS_HELD;
 	}
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	dec_state_t_ref(state);
 
