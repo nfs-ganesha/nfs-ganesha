@@ -220,7 +220,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 		     args->share_access,
 		     args->share_deny);
 
-	PTHREAD_RWLOCK_wrlock(&data->current_obj->state_hdl->state_lock);
+	STATELOCK_lock(data->current_obj);
 
 	/* Check if given share access is subset of current share access */
 	if ((state->state_data.share.share_access & args->share_access) !=
@@ -229,8 +229,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 		 * downgrade share access
 		 */
 		*cause = " (invalid share access for downgrade)";
-		PTHREAD_RWLOCK_unlock(
-			&data->current_obj->state_hdl->state_lock);
+		STATELOCK_unlock(data->current_obj);
 		return NFS4ERR_INVAL;
 	}
 
@@ -241,8 +240,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 		 * downgrade share deny
 		 */
 		*cause = " (invalid share deny for downgrade)";
-		PTHREAD_RWLOCK_unlock(
-			&data->current_obj->state_hdl->state_lock);
+		STATELOCK_unlock(data->current_obj);
 		return NFS4ERR_INVAL;
 	}
 
@@ -252,8 +250,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	     ((state->state_data.share.share_deny_prev &
 	      (1 << args->share_deny)) == 0)) {
 		*cause = " (share access or deny never seen before)";
-		PTHREAD_RWLOCK_unlock(
-			&data->current_obj->state_hdl->state_lock);
+		STATELOCK_unlock(data->current_obj);
 		return NFS4ERR_INVAL;
 	}
 
@@ -269,19 +266,14 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	if ((args->share_deny & OPEN4_SHARE_DENY_WRITE) != 0)
 		openflags |= FSAL_O_DENY_WRITE_MAND;
 
-	/* Make sure we don't do cleanup holding the state_lock. */
-	data->current_obj->state_hdl->no_cleanup = true;
-
 	fsal_status = fsal_reopen2(data->current_obj,
 				   state,
 				   openflags,
 				   true);
 
-	data->current_obj->state_hdl->no_cleanup = false;
-
 	state_status = state_error_convert(fsal_status);
 
-	PTHREAD_RWLOCK_unlock(&data->current_obj->state_hdl->state_lock);
+	STATELOCK_unlock(data->current_obj);
 
 	if (state_status != STATE_SUCCESS) {
 		*cause = " (state_share_downgrade failed)";

@@ -598,9 +598,9 @@ bool state_deleg_conflict(struct fsal_obj_handle *obj, bool write)
 {
 	bool status = false;
 
-	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 	status = state_deleg_conflict_impl(obj, write);
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 	return status;
 }
 

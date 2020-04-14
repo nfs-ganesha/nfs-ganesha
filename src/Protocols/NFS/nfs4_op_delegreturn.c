@@ -115,7 +115,7 @@ enum nfs_req_result nfs4_op_delegreturn(struct nfs_argop4 *op,
 	/* Release reference taken above. */
 	dec_state_owner_ref(owner);
 
-	PTHREAD_RWLOCK_wrlock(&data->current_obj->state_hdl->state_lock);
+	STATELOCK_lock(data->current_obj);
 	/* Now we have a lock owner and a stateid.
 	 * Go ahead and push unlock into SAL (and FSAL) to return
 	 * the delegation.
@@ -130,7 +130,7 @@ enum nfs_req_result nfs4_op_delegreturn(struct nfs_argop4 *op,
 
 		state_del_locked(state_found);
 	}
-	PTHREAD_RWLOCK_unlock(&data->current_obj->state_hdl->state_lock);
+	STATELOCK_unlock(data->current_obj);
 
  out_unlock:
 

@@ -313,11 +313,11 @@ state_status_t _state_add(struct fsal_obj_handle *obj,
 		return STATE_BAD_TYPE;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 	status =
 	    _state_add_impl(obj, state_type, state_data, owner_input, state,
 			    refer, func, line);
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	return status;
 }
@@ -491,11 +491,6 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	PTHREAD_MUTEX_unlock(&all_state_v4_mutex);
 #endif
 
-	/* Don't cleanup when ref is dropped, as this could recurse into here.
-	 * Caller must have a ref anyway.
-	 */
-	obj->state_hdl->no_cleanup = true;
-
 	/* Remove from the list of states for a particular file */
 	PTHREAD_MUTEX_lock(&state->state_mutex);
 	glist_del(&state->state_list);
@@ -515,8 +510,6 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	dec_state_t_ref(state);
 
 	obj->obj_ops->put_ref(obj);
-	/* Can cleanup now */
-	obj->state_hdl->no_cleanup = false;
 }
 
 /**
@@ -535,11 +528,11 @@ void state_del(state_t *state)
 		return;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 
 	state_del_locked(state);
 
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	obj->obj_ops->put_ref(obj);
 }
@@ -830,7 +823,7 @@ void release_openstate(state_owner_t *owner)
 
 		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+		STATELOCK_lock(obj);
 
 		/* In case op_ctx->export is not NULL... */
 		if (op_ctx->ctx_export != NULL) {
@@ -849,7 +842,7 @@ void release_openstate(state_owner_t *owner)
 
 		dec_state_t_ref(state);
 
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		STATELOCK_unlock(obj);
 
 		/* Release refs we held during state_del */
 		obj->obj_ops->put_ref(obj);
@@ -936,7 +929,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		/* If FSAL supports extended operations, file will be closed by
 		 * state_del_locked which is called from deleg_revoke.
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+		STATELOCK_lock(obj);
 
 		/* Initialize req_ctx */
 		init_root_op_context(&ctx, export, export->fsal_export,
@@ -948,7 +941,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		op_ctx->ctx_export = NULL;
 		op_ctx->fsal_export = NULL;
 
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		STATELOCK_unlock(obj);
 
 		/* Release refs we held */
 		obj->obj_ops->put_ref(obj);
@@ -1032,7 +1025,7 @@ static void release_export_nfs4_state(enum state_type type)
 				.length = NFS4_UINT64_MAX
 			};
 
-			PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+			STATELOCK_lock(obj);
 
 			/* this deletes the state too */
 			(void) nfs4_return_one_state(obj,
@@ -1048,7 +1041,7 @@ static void release_export_nfs4_state(enum state_type type)
 					"Layout state not destroyed during export cleanup.");
 				errcnt++;
 			}
-			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+			STATELOCK_unlock(obj);
 		} else
 			state_del(state);
 

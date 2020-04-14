@@ -414,12 +414,12 @@ state_status_t layoutrecall(const struct fsal_up_vector *vec,
 	if (rc != STATE_SUCCESS)
 		return rc;
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 	/* We build up the list before consuming it so that we have
 	   every state on the list before we start executing returns. */
 	rc = create_file_recall(obj, layout_type, segment, cookie, spec,
 				&recall);
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 	if (rc != STATE_SUCCESS)
 		goto out;
 
@@ -626,7 +626,7 @@ static void layoutrec_completion(rpc_call_t *call)
 		 * return, otherwise we count it as an error.
 		 */
 
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+		STATELOCK_lock(obj);
 
 		root_op_context.req_ctx.clientid =
 			&owner->so_owner.so_nfs4_owner.so_clientid;
@@ -638,7 +638,7 @@ static void layoutrec_completion(rpc_call_t *call)
 				      state, cb_data->segment, 0, NULL,
 				      &deleted);
 
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		STATELOCK_unlock(obj);
 	}
 
 	if (state != NULL) {
@@ -697,7 +697,7 @@ static void return_one_async(void *arg)
 	ok = get_state_obj_export_owner_refs(state, &obj, &export, &owner);
 
 	if (ok) {
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+		STATELOCK_lock(obj);
 
 		root_op_context.req_ctx.clientid =
 			&owner->so_owner.so_nfs4_owner.so_clientid;
@@ -708,7 +708,7 @@ static void return_one_async(void *arg)
 				      circumstance_revoke, state,
 				      cb_data->segment, 0, NULL, &deleted);
 
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		STATELOCK_unlock(obj);
 	}
 
 	release_root_op_context();
@@ -761,7 +761,7 @@ static void layoutrecall_one_call(void *arg)
 	ok = get_state_obj_export_owner_refs(state, &obj, &export, &owner);
 
 	if (ok) {
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+		STATELOCK_lock(obj);
 
 		root_op_context.req_ctx.clientid =
 		    &owner->so_owner.so_nfs4_owner.so_clientid;
@@ -819,7 +819,7 @@ static void layoutrecall_one_call(void *arg)
 			++cb_data->attempts;
 		}
 
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		STATELOCK_unlock(obj);
 
 	} else {
 		gsh_free(cb_data);
@@ -1191,9 +1191,9 @@ out_revoke:
 	inc_revokes(deleg_ctx->drc_clid->gsh_client);
 
 	/* state_del_locked is called from deleg_revoke, take the lock. */
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 	rc = deleg_revoke(obj, state);
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	if (rc != NFS4_OK) {
 		LogCrit(COMPONENT_NFS_V4,
@@ -1375,9 +1375,9 @@ static void delegrevoke_check(void *ctx)
 		/* state_del_locked is called from deleg_revoke,
 		 * take the lock.
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+		STATELOCK_lock(obj);
 		rc = deleg_revoke(obj, state);
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		STATELOCK_unlock(obj);
 
 		if (rc != NFS4_OK) {
 			if (!str_valid)
@@ -1454,9 +1454,9 @@ static void delegrecall_task(void *ctx)
 	op_ctx->fsal_export = export->fsal_export;
 
 	/* state_del_locked is called from deleg_revoke, take the lock. */
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 	delegrecall_one(obj, state, deleg_ctx);
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	/* Release the obj ref and export ref. */
 	obj->obj_ops->put_ref(obj);
@@ -1512,7 +1512,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 		 "FSAL_UP_DELEG: obj %p type %u",
 		 obj, obj->type);
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 	glist_for_each_safe(glist, glist_n,
 			    &obj->state_hdl->file.list_of_states) {
 		state = glist_entry(glist, struct state_t, state_list);
@@ -1582,7 +1582,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 
 		delegrecall_one(obj, state, drc_ctx);
 	}
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	op_ctx = save_ctx;
 	return rc;
@@ -1766,7 +1766,7 @@ static void cbgetattr_completion_func(rpc_call_t *call)
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
 		 !(call->states & NFS_CB_CALL_ABORTED) ? "Success" : "Failed");
 
-	PTHREAD_RWLOCK_wrlock(&cbg_ctx->obj->state_hdl->state_lock);
+	STATELOCK_lock(cbg_ctx->obj);
 
 	cbgetattr_state = &cbg_ctx->obj->state_hdl->file.cbgetattr.state;
 
@@ -1805,7 +1805,7 @@ static void cbgetattr_completion_func(rpc_call_t *call)
 	}
 
 out:
-	PTHREAD_RWLOCK_unlock(&cbg_ctx->obj->state_hdl->state_lock);
+	STATELOCK_unlock(cbg_ctx->obj);
 	if (cbg_ctx->clid->cid_minorversion == 0) {
 		opcbgetattr = &call->cbt.v_u.v4.args.argarray.argarray_val[0]
 				.nfs_cb_argop4_u.opcbgetattr;
@@ -1913,7 +1913,7 @@ int cbgetattr_impl(struct fsal_obj_handle *obj,
 	LogDebug(COMPONENT_FSAL_UP, "CB_GETATTR: obj %p type %u",
 		 obj, obj->type);
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 
 	cb_state = &obj->state_hdl->file.cbgetattr.state;
 
@@ -1952,7 +1952,7 @@ out:
 	if (rc)
 		*cb_state = CB_GETATTR_FAILED;
 
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	return rc;
 }

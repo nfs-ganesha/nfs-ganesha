@@ -553,12 +553,12 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 			 * the client is claiming a new lock owner to get a
 			 * new stateid, we will attempt to recycle.
 			 */
-			PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+			STATELOCK_lock(obj);
 			state_lock_held = true;
 			lock_state = nfs4_State_Get_Obj(obj, lock_owner);
 		} else {
 			/* Take the state_lock now */
-			PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+			STATELOCK_lock(obj);
 			state_lock_held = true;
 		}
 
@@ -598,7 +598,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 		}
 	} else {
 		/* Take the state_lock now */
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+		STATELOCK_lock(obj);
 		state_lock_held = true;
 	}
 
@@ -709,7 +709,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 
 	if (state_lock_held) {
 		/* Now release the state_lock */
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		STATELOCK_unlock(obj);
 	}
 
 	if (state_open != NULL)
