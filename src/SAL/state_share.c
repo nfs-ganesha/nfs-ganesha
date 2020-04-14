@@ -126,7 +126,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 	int i, acount = 0, dcount = 0;
 	fsal_accessflags_t access_mask = 0;
 
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 
 	old_access = nlm_share->share_access;
 	old_deny = nlm_share->share_deny;
@@ -329,7 +329,7 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 
  out_unlock:
 
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	return state_error_convert(fsal_status);
 }

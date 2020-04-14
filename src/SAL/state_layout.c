@@ -226,7 +226,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 		so_mutex_held = false;
 
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+		STATELOCK_lock(obj);
 
 		(void) nfs4_return_one_state(obj,
 					     LAYOUTRETURN4_FILE,
@@ -243,7 +243,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 				"Layout state not destroyed during lease expiry.");
 		}
 
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		STATELOCK_unlock(obj);
 
 		/* Release the reference taken above */
 		obj->obj_ops->put_ref(obj);

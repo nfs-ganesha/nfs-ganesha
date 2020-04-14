@@ -246,7 +246,7 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 
-	PTHREAD_RWLOCK_wrlock(&state_obj->state_hdl->state_lock);
+	STATELOCK_lock(state_obj);
 
 	/* Check is held locks remain */
 	glist_for_each(glist, &state_found->state_data.share.share_lockstates) {
@@ -262,8 +262,7 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 			 */
 			res_CLOSE4->status = NFS4ERR_LOCKS_HELD;
 
-			PTHREAD_RWLOCK_unlock(
-				&state_obj->state_hdl->state_lock);
+			STATELOCK_unlock(state_obj);
 			LogDebug(COMPONENT_STATE,
 				 "NFS4 Close with existing locks");
 			goto out;
@@ -314,7 +313,7 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->minorversion == 0)
 		op_ctx->clientid = NULL;
 
-	PTHREAD_RWLOCK_unlock(&state_obj->state_hdl->state_lock);
+	STATELOCK_unlock(state_obj);
 	res_CLOSE4->status = NFS4_OK;
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS)) {

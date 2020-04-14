@@ -142,7 +142,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 * locks from a client that has rebooted from the SM_NOTIFY
 	 * that will release old locks
 	 */
-	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+	STATELOCK_lock(obj);
 	state_status = state_lock(obj,
 				  nlm_owner,
 				  nlm_state,
@@ -152,7 +152,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 				  &lock,
 				  NULL, /* We don't need conflict info */
 				  NULL);
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	STATELOCK_unlock(obj);
 
 	/* We prevented delegations from being granted while trying to acquire
 	 * the lock. However, when attempting to get a delegation in the
