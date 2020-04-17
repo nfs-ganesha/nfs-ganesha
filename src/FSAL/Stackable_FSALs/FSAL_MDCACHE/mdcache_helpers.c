@@ -835,9 +835,11 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	/* Validate the attributes we just set. */
 	mdc_fixup_md(nentry, &nentry->attrs);
 
-	/* Hash and insert entry, after this would need attr_lock to
+	/* Insert and hash entry, after this would need attr_lock to
 	 * access attributes.
 	 */
+	mdcache_lru_insert(nentry, reason);
+
 	rc = cih_set_latched(nentry, &latch,
 			     op_ctx->fsal_export->fsal, &fh_desc,
 			     CIH_SET_UNLOCK | CIH_SET_HASHED);
@@ -864,7 +866,6 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	} else {
 		LogDebug(COMPONENT_CACHE_INODE, "New entry %p added", nentry);
 	}
-	mdcache_lru_insert(nentry, reason);
 	*entry = nentry;
 	(void)atomic_inc_uint64_t(&cache_stp->inode_added);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
