@@ -511,7 +511,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 
 		if (lock_owner == NULL) {
 			res_LOCK4->status = NFS4ERR_RESOURCE;
-			LogLock(COMPONENT_NFS_V4_LOCK, NIV_EVENT,
+			LogLock(COMPONENT_NFS_V4_LOCK, NIV_DEBUG,
 				"LOCK failed to create new lock owner",
 				obj, open_owner, &lock_desc);
 			goto out2;

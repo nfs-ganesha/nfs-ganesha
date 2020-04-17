@@ -474,7 +474,7 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 			display_owner(&dspbuf1, related_owner);
 			display_owner(&dspbuf2, owner);
 
-			LogCrit(COMPONENT_NFS_V4_LOCK,
+			LogDebug(COMPONENT_NFS_V4_LOCK,
 				"Related {%s} doesn't match for {%s}", str1,
 				str2);
 			PTHREAD_MUTEX_unlock(&owner->so_mutex);
