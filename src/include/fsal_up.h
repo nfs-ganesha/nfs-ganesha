@@ -265,6 +265,23 @@ struct fsal_up_vector {
 	fsal_status_t (*invalidate_close)(const struct fsal_up_vector *vec,
 					  struct gsh_buffdesc *obj,
 					  uint32_t flags);
+
+	/** Remove a cache entry, if otherwise unused
+	 *
+	 * Attempt to shrink this entry from the cache immediately. If the
+	 * refcount indicates that it's not otherwise in use (either by an
+	 * active call or state held against it), then remove the entry from
+	 * the hash and put the sentinel reference.
+	 *
+	 * @param[in] vec	Up ops vector
+	 * @param[in] obj	The object to remove
+	 * @param[in] flags	Unused, for future expansion
+	 *
+	 * @return FSAL status. ERR_FSAL_NO_ERROR means that an entry was
+	 *	   released. Any other error means that one wasn't.
+	 */
+	fsal_status_t (*try_release)(const struct fsal_up_vector *vec,
+				     struct gsh_buffdesc *obj, uint32_t flags);
 };
 
 extern struct fsal_up_vector fsal_up_top;

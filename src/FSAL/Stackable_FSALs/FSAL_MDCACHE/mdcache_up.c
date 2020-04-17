@@ -89,6 +89,67 @@ out:
 	return status;
 }
 
+/** Release a cache entry if it's otherwise idle.
+ *
+ * @param[in] vec    Up ops vector
+ * @param[in] handle Handle that should be vetted and possibly removed
+ * @param[in] flags  Unused, for future expansion
+ *
+ * @return FSAL status. (ERR_FSAL_NO_ERROR indicates that one was released)
+ */
+static fsal_status_t
+mdc_up_try_release(const struct fsal_up_vector *vec,
+		   struct gsh_buffdesc *handle, uint32_t flags)
+{
+	mdcache_entry_t *entry;
+	mdcache_key_t key;
+	cih_latch_t latch;
+	int32_t refcnt;
+	fsal_status_t ret;
+
+	/* flags are for future expansion. For now, we don't accept any. */
+	if (flags)
+		return fsalstat(ERR_FSAL_INVAL, 0);
+
+	/*
+	 * Find the entry, and keep the wrlock on the partition. This ensures
+	 * that no other caller can find this entry in the hashtable and
+	 * race in to take a reference.
+	 */
+	key.fsal = vec->up_fsal_export->sub_export->fsal;
+	cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
+		     CIH_HASH_KEY_PROTOTYPE);
+
+	entry = cih_get_by_key_latch(&key, &latch,
+				     CIH_GET_WLOCK | CIH_GET_UNLOCK_ON_MISS,
+				     __func__, __LINE__);
+	if (!entry) {
+		LogDebug(COMPONENT_CACHE_INODE, "no entry found");
+		return fsalstat(ERR_FSAL_STALE, 0);
+	}
+
+	/*
+	 * We can remove it if the only ref is the sentinel. We can't put
+	 * the last ref while holding the latch though, so we must take an
+	 * extra reference, remove it and then put the extra ref after
+	 * releasing the latch.
+	 */
+	refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
+	LogDebug(COMPONENT_CACHE_INODE, "entry %p has refcnt of %d", entry,
+		 refcnt);
+	if (refcnt == 1) {
+		mdcache_get(entry);
+		cih_remove_latched(entry, &latch, 0);
+		ret = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	} else {
+		ret = fsalstat(ERR_FSAL_STILL_IN_USE, 0);
+	}
+	cih_hash_release(&latch);
+	if (refcnt == 1)
+		mdcache_put(entry);
+	return ret;
+}
+
 /**
  * @brief Update cached attributes
  *
@@ -504,6 +565,7 @@ mdcache_export_up_ops_init(struct fsal_up_vector *my_up_ops,
 	my_up_ops->invalidate = mdc_up_invalidate;
 	my_up_ops->update = mdc_up_update;
 	my_up_ops->invalidate_close = mdc_up_invalidate_close;
+	my_up_ops->try_release = mdc_up_try_release;
 
 	/* These are pass-through calls that set op_ctx */
 	my_up_ops->lock_grant = mdc_up_lock_grant;
