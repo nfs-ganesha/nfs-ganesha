@@ -349,6 +349,17 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 out:
 
+	if (error == ERR_FSAL_NOENT && is_export_update_in_progress()) {
+		/* An export update may be the cause of the failure. Tell the
+		 * client to retry.
+		 */
+		LogDebug(COMPONENT_EXPORT,
+			 "PseudoFS LOOKUP of %s may have failed due to export update",
+			 path);
+
+		error = ERR_FSAL_DELAY;
+	}
+
 	if (op_ctx->fsal_private != parent)
 		PTHREAD_RWLOCK_unlock(&parent->obj_lock);
 
@@ -800,6 +811,18 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
+	}
+
+	if (is_export_update_in_progress()) {
+		/* An export update may be the cause of the failure. Tell the
+		 * client to retry.
+		 */
+		PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
+
+		LogDebug(COMPONENT_EXPORT,
+			 "PseudoFS create handle may have failed due to export update");
+
+		return fsalstat(ERR_FSAL_DELAY, 0);
 	}
 
 	LogDebug(COMPONENT_FSAL,

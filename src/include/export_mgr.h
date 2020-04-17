@@ -44,6 +44,80 @@
 #ifndef EXPORT_MGR_H
 #define EXPORT_MGR_H
 
+extern pthread_mutex_t export_admin_mutex;
+
+/* The following counter is used to implement a seqlock protecting code that
+ * needs to look at exports that are being changed up by an in progress update.
+ * Such code should generally return an error causing the client to retry since
+ * an export update may take way too much time to retry in line.
+ *
+ * Any code that modifies exports must increment this counter after taking the
+ * above lock and again before releasing the above lock.
+ */
+extern uint64_t export_admin_counter;
+
+static inline void EXPORT_ADMIN_LOCK(void)
+{
+	PTHREAD_MUTEX_lock(&export_admin_mutex);
+	export_admin_counter++;
+}
+
+static inline void EXPORT_ADMIN_UNLOCK(void)
+{
+	export_admin_counter++;
+	PTHREAD_MUTEX_unlock(&export_admin_mutex);
+}
+
+static inline int EXPORT_ADMIN_TRYLOCK(void)
+{
+	int rc = PTHREAD_MUTEX_trylock(&export_admin_mutex);
+
+	if (rc == 0)
+		export_admin_counter++;
+
+	return rc;
+}
+
+/**
+ * @brief Implement seqlock verification
+ *
+ * To use the export_admin_counter, a process that might get bad results due
+ * to an in progress export update should save the export_admin_counter as
+ * start_export_admin_counter before executing the code that could be confused.
+ * The after the code is complete, the code can call
+ * is_export_admin_counter_valid(start_export_admin_counter) to determine if
+ * and export update might have upended things.
+ *
+ * Depending on how the code functions, it may only need to perform this check
+ * if an unexpected result occurred. On the other hand the check is cheap, while
+ * a false negative is possible, that still requires the code have been
+ * executing parallel with an export update which are expected to be extremely
+ * rare so even if the code catches a half-updated counter (due to NOT using
+ * atomics) it just results in a false negative.
+ */
+static inline
+bool is_export_admin_counter_valid(uint64_t start_export_admin_counter)
+{
+	return (start_export_admin_counter % 2) == 0 &&
+		start_export_admin_counter == export_admin_counter;
+}
+
+/**
+ * @brief Simple check if an export update is in progress
+ *
+ * If code uses locks in a way that guarantee that an export update can not
+ * upset their world while the code is executing then a simple check after
+ * failure that an update is in progress (seqlock value is odd) is sufficient.
+ * For example, code implementing a lookup in a pseudo fs where lookup holds a
+ * lock that prevents the update from changing the pseudo fs while the lookup
+ * in in progress means that any update that will upset this lookups apple cart
+ * can not start AND end while the lookup is in progress.
+ */
+static inline bool is_export_update_in_progress(void)
+{
+	return (export_admin_counter % 2) != 0;
+}
+
 enum export_status {
 	EXPORT_READY,		/*< searchable, usable */
 	EXPORT_STALE,		/*< export is no longer valid */
@@ -92,9 +166,12 @@ struct gsh_export {
 	/** CFG: PseudoFS path for export - static option */
 	struct gsh_refstr *pseudopath;
 	/** CFG: The following two strings are ONLY used during configuration
-	 *       of an export, once the export config is complete, the
-	 *       strings will be assigned to the gsh_refstr and these pointers
-	 *       will be set to NULL.
+	 *       where they are guaranteed not to change. They can only be
+	 *       changed while updating an export which can only happen while
+	 *       the export_admin_mutex is held. Note that when doing an update,
+	 *       the existing export is fetched, and it is safe to use these
+	 *       strings from that export also. They will be safely updated as
+	 *       part of the update.
 	 */
 	char *cfg_fullpath;
 	char *cfg_pseudopath;
@@ -135,6 +212,13 @@ struct gsh_export {
 
 	uint8_t export_status;		/*< current condition */
 	bool has_pnfs_ds;		/*< id_servers matches export_id */
+	/* Due to an update, during the prune phase, this export must be
+	 * unmounted. It will then be added to the mount work done during the
+	 * remount phase. This flag WILL be cleared during prune.
+	 */
+	bool update_prune_unmount;
+	/* Due to an update, this export will need to be remounted. */
+	bool update_remount;
 };
 
 /* Use macro to define this to get around include file order. */

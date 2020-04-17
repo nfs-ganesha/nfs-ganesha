@@ -41,6 +41,7 @@
   encode_fsid;
   err_type;
   err_type_str;
+  export_admin_counter;
   fgetxattr;
   flistxattr;
   fhlink;

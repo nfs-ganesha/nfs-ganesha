@@ -87,13 +87,13 @@ static bool is_export_pseudo(struct gsh_export *export)
 /**
  * @brief Delete the unecessary directories from pseudo FS
  *
- * @param pseudopath [IN] full path of the node
+ * @param pseudo_path [IN] full path of the node
  * @param entry [IN] cache entry for the last directory in the path
  *
  * If this entry is present is pseudo FSAL, and is unnecessary, then remove it.
  * Check recursively if the parent entry is needed.
  *
- * The pseudopath is deconstructed in place to create the subsequently shorter
+ * The pseudo_path is deconstructed in place to create the subsequently shorter
  * pseudo paths.
  *
  * When called the first time, entry is the mount point of an export that has
@@ -130,7 +130,8 @@ void cleanup_pseudofs_node(char *pseudo_path,
 	name = pos + 1;
 
 	LogDebug(COMPONENT_EXPORT,
-		 "Checking if pseudo node %s is needed", pseudo_path);
+		 "Checking if pseudo node %s is needed from path %s",
+		 name, pseudo_path);
 
 	fsal_status = fsal_lookupp(obj, &parent_obj, NULL);
 
@@ -533,16 +534,38 @@ void create_pseudofs(void)
 void pseudo_unmount_export(struct gsh_export *export)
 {
 	struct gsh_export *mounted_on_export;
-	struct gsh_export *sub_mounted_export;
 	struct fsal_obj_handle *junction_inode;
 	struct req_op_context op_context;
 	struct gsh_refstr *ref_pseudopath;
 
-	rcu_read_lock();
+	/* Take the export write lock to get the junction inode.
+	 * We take write lock because if there is no junction inode,
+	 * we jump straight to cleaning up our presence in parent
+	 * export.
+	 */
+	PTHREAD_RWLOCK_wrlock(&export->lock);
 
-	ref_pseudopath = gsh_refstr_get(rcu_dereference(export->pseudopath));
+	junction_inode = export->exp_junction_obj;
+	mounted_on_export = export->exp_parent_exp;
 
-	rcu_read_unlock();
+	if (junction_inode == NULL || mounted_on_export == NULL) {
+		/* This must be the Pseudo Root or a non-NFSv4 export, nothing
+		 * to do then. Both better actually be NULL.
+		 */
+		assert(junction_inode == NULL && mounted_on_export == NULL);
+
+		LogDebug(COMPONENT_EXPORT,
+			 "Unmount of export %d unnecessary it should be pseudo root",
+			 export->export_id);
+
+		PTHREAD_RWLOCK_unlock(&export->lock);
+		return;
+	}
+
+	/* Take over the reference to the junction pseudopath - it has the
+	 * correct path. export->pseudopath may have been changed by update.
+	 */
+	ref_pseudopath = junction_inode->state_hdl->dir.jct_pseudopath;
 
 	if (ref_pseudopath == NULL) {
 		LogFatal(COMPONENT_EXPORT,
@@ -550,8 +573,78 @@ void pseudo_unmount_export(struct gsh_export *export)
 			 export->export_id);
 	}
 
+	LogDebug(COMPONENT_EXPORT,
+		 "Unmount %s",
+		 ref_pseudopath->gr_val);
+
+	/* Clean up the junction inode */
+	LogDebug(COMPONENT_EXPORT,
+		 "Cleanup junction inode %p pseudopath %s",
+		 junction_inode, ref_pseudopath->gr_val);
+
+	/* Make the node not accessible from the junction node. */
+	PTHREAD_RWLOCK_wrlock(&junction_inode->state_hdl->jct_lock);
+	junction_inode->state_hdl->dir.jct_pseudopath = NULL;
+	junction_inode->state_hdl->dir.junction_export = NULL;
+	PTHREAD_RWLOCK_unlock(&junction_inode->state_hdl->jct_lock);
+
+	/* Detach the export from the inode */
+	export_root_object_put(export->exp_junction_obj);
+	export->exp_junction_obj = NULL;
+
+	/* Detach the export from the export it's mounted on */
+	LogDebug(COMPONENT_EXPORT,
+		 "Remove from mounted on export %d pseudopath %s",
+		 mounted_on_export->export_id,
+		 mounted_on_export->pseudopath->gr_val);
+
+	export->exp_parent_exp = NULL;
+
+	/* Remove ourselves from the list of exports mounted on parent */
+	PTHREAD_RWLOCK_wrlock(&mounted_on_export->lock);
+	glist_del(&export->mounted_exports_node);
+	PTHREAD_RWLOCK_unlock(&mounted_on_export->lock);
+
+	/* Release the export lock */
+	PTHREAD_RWLOCK_unlock(&export->lock);
+
+	if (is_export_pseudo(mounted_on_export) && junction_inode != NULL) {
+		char *pseudo_path = gsh_strdup(ref_pseudopath->gr_val);
+
+		/* Get a ref to the mounted_on_export and initialize op_context
+		 */
+		get_gsh_export_ref(mounted_on_export);
+		init_op_context(&op_context, mounted_on_export,
+				mounted_on_export->fsal_export, NULL,
+				NFS_V4, 0, NFS_REQUEST);
+
+		/* Remove the unused PseudoFS nodes */
+		cleanup_pseudofs_node(pseudo_path, junction_inode);
+
+		gsh_free(pseudo_path);
+		release_op_context();
+	}
+
+	/* Release our reference to the export we are mounted on. */
+	put_gsh_export(mounted_on_export);
+
+	/* Release the LRU reference */
+	junction_inode->obj_ops->put_ref(junction_inode);
+
+	gsh_refstr_put(ref_pseudopath);
+}
+
+/**
+ * @brief  Unmount an export and its descendants from the Pseudo FS.
+ *
+ * @param exp     [IN] export in question
+ */
+void pseudo_unmount_export_tree(struct gsh_export *export)
+{
 	/* Unmount any exports mounted on us */
 	while (true) {
+		struct gsh_export *sub_mounted_export;
+
 		PTHREAD_RWLOCK_rdlock(&export->lock);
 		/* Find a sub_mounted export */
 		sub_mounted_export =
@@ -574,99 +667,49 @@ void pseudo_unmount_export(struct gsh_export *export)
 		PTHREAD_RWLOCK_unlock(&export->lock);
 
 		/* And unmount it */
-		pseudo_unmount_export(sub_mounted_export);
+		pseudo_unmount_export_tree(sub_mounted_export);
 
 		/* And put the reference */
 		put_gsh_export(sub_mounted_export);
 	}
 
-	LogDebug(COMPONENT_EXPORT,
-		 "Unmount %s",
-		 ref_pseudopath->gr_val);
-
-	/* Take the export write lock to get the junction inode.
-	 * We take write lock because if there is no junction inode,
-	 * we jump straight to cleaning up our presence in parent
-	 * export.
-	 */
-	PTHREAD_RWLOCK_wrlock(&export->lock);
-
-	junction_inode = export->exp_junction_obj;
-
-	if (junction_inode != NULL) {
-		/* Clean up the junction inode */
-
-		/* Don't take a reference; there is a sentinal one */
-
-		/* Make the node not accessible from the junction node. */
-		PTHREAD_RWLOCK_wrlock(&junction_inode->state_hdl->jct_lock);
-		if (junction_inode->state_hdl->dir.jct_pseudopath != NULL)
-			gsh_refstr_put(
-				junction_inode->state_hdl->dir.jct_pseudopath);
-		junction_inode->state_hdl->dir.junction_export = NULL;
-		PTHREAD_RWLOCK_unlock(&junction_inode->state_hdl->jct_lock);
-
-		/* Detach the export from the inode */
-		export_root_object_put(export->exp_junction_obj);
-		export->exp_junction_obj = NULL;
-	}
-
-	/* Detach the export from the export it's mounted on */
-	mounted_on_export = export->exp_parent_exp;
-
-	if (mounted_on_export != NULL) {
-		export->exp_parent_exp = NULL;
-		/* Remove ourselves from the list of exports mounted on
-		 * parent
-		 */
-		PTHREAD_RWLOCK_wrlock(&mounted_on_export->lock);
-		glist_del(&export->mounted_exports_node);
-		PTHREAD_RWLOCK_unlock(&mounted_on_export->lock);
-	}
-
-	/* Release the export lock */
-	PTHREAD_RWLOCK_unlock(&export->lock);
-
-	if (mounted_on_export != NULL) {
-		if (is_export_pseudo(mounted_on_export)
-		    && junction_inode != NULL) {
-			char *pseudo_path = gsh_strdup(ref_pseudopath->gr_val);
-
-			/* Get a ref to the mounted_on_export and initialize
-			 * op_context
-			 */
-			get_gsh_export_ref(mounted_on_export);
-			init_op_context(&op_context, mounted_on_export,
-					mounted_on_export->fsal_export, NULL,
-					NFS_V4, 0, NFS_REQUEST);
-
-			/* Remove the unused PseudoFS nodes */
-			cleanup_pseudofs_node(pseudo_path,
-					      junction_inode);
-
-			gsh_free(pseudo_path);
-
-			/* Release reference to the export we are mounted on. */
-			release_op_context();
-		} else {
-			/* Release reference to the export we are mounted on. */
-			put_gsh_export(mounted_on_export);
-		}
-	}
-
-	if (junction_inode != NULL) {
-		/* Release the LRU reference */
-		junction_inode->obj_ops->put_ref(junction_inode);
-	}
-
-	gsh_refstr_put(ref_pseudopath);
+	pseudo_unmount_export(export);
 }
 
-bool export_is_defunct(struct gsh_export *export, uint64_t generation)
+/**
+ * @brief  Do a depth first search of an export and its descendants seeking any
+ *         defunct descendants, and unmounting them and any descendants of those
+ *         exports.
+ *
+ * Special inputs of generation 0 and ancestor_is_defunct true causes the
+ * export and all descendants to be unmounted and added to the list to be
+ * remounted. Note that if this was because the export in question is no longer
+ * an NFS v4 export, it will not be remounted but any descendants that are still
+ * NFS v4 exports will be remounted. Thus accomplishing the intended task.
+ *
+ * @param export              [IN] export in question, if NULL, prune from root
+ * @param generation          [IN] generation of config
+ * @param ancestor_is_defunct [IN] flag indicating an ancestor is defunct
+ */
+void prune_pseudofs_subtree(struct gsh_export *export,
+			    uint64_t generation,
+			    bool ancestor_is_defunct)
 {
-	bool ok = false;
-	struct glist_head *cur;
+	struct gsh_export *child_export;
+	struct glist_head *glist, *glistn;
+	bool defunct, need_put = false;
 	struct gsh_refstr *ref_pseudopath;
+
+	if (export == NULL) {
+		/* Get a reference to the PseudoFS Root Export */
+		export = get_gsh_export_by_pseudo("/", true);
+		if (export == NULL) {
+			/* No pseudo root? */
+			return;
+		}
+
+		need_put = true;
+	}
 
 	rcu_read_lock();
 
@@ -676,43 +719,102 @@ bool export_is_defunct(struct gsh_export *export, uint64_t generation)
 
 	if (ref_pseudopath == NULL) {
 		LogFatal(COMPONENT_EXPORT,
-			 "Defunct check of Export Id %d failed no pseudopath",
+			 "Unmount of Export Id %d failed no pseudopath",
 			 export->export_id);
 	}
 
-	if (export->config_gen >= generation) {
-		LogDebug(COMPONENT_EXPORT,
-			 "%s can't be unmounted (conf=%lu gen=%lu)",
-			 ref_pseudopath->gr_val,
-			 export->config_gen, generation);
-		goto out;
-	}
+	defunct = ancestor_is_defunct || export->config_gen < generation ||
+		  export->update_prune_unmount;
 
-	ok = strcmp(ref_pseudopath->gr_val, "/");
-	if (!ok) {
-		LogDebug(COMPONENT_EXPORT, "Refusing to unmount /");
-		goto out;
-	}
+	LogDebug(COMPONENT_EXPORT,
+		 "Exxport %d pseudo %s export gen %"PRIu64
+		 " current gen %"PRIu64
+		 " prune unmount %s ancestor_is_defunct %s",
+		 export->export_id, ref_pseudopath->gr_val,
+		 export->config_gen, generation,
+		 export->update_prune_unmount ? "yes" : "no",
+		 ancestor_is_defunct ? "yes" : "no");
 
+	/* Prune any exports mounted on us. Note that the list WILL change as
+	 * child exports are pruned, and note that we drop the lock, however,
+	 * this is safe because we hold the export_admin_mutex and that mutex is
+	 * held by any thread that will be modifying the PseudoFS structure.
+	 * Therefor, glistn will be safe because while the prune may eventually
+	 * unmount child_export, it is impossible for any other child exports to
+	 * be unmounted during this time, so glistn continues to be valid.
+	 */
 	PTHREAD_RWLOCK_rdlock(&export->lock);
-	glist_for_each(cur, &export->mounted_exports_list) {
-		struct gsh_export *sub = container_of(cur, struct gsh_export,
-							mounted_exports_node);
+	glist_for_each_safe(glist, glistn, &export->mounted_exports_list) {
+		/* Find a sub_mounted export */
+		child_export = glist_entry(glist,
+					   struct gsh_export,
+					   mounted_exports_node);
 
-		/* Test each submount */
-		ok = export_is_defunct(sub, generation);
-		if (!ok) {
-			LogCrit(COMPONENT_EXPORT,
-				"%s can't be unmounted (child export remains)",
-				ref_pseudopath->gr_val);
-			break;
-		}
+		/* Take a reference to that export. Export may be dead
+		 * already, but we should see if we can speed along its
+		 * unmounting.
+		 */
+		get_gsh_export_ref(child_export);
+
+		/* Drop the lock */
+		PTHREAD_RWLOCK_unlock(&export->lock);
+		/* And prune this child */
+		prune_pseudofs_subtree(child_export, generation, defunct);
+
+		/* And put the reference */
+		put_gsh_export(child_export);
+
+		/* And take the lock again. */
+		PTHREAD_RWLOCK_rdlock(&export->lock);
 	}
+
+	/* Drop the lock */
 	PTHREAD_RWLOCK_unlock(&export->lock);
 
-out:
+	if (defunct) {
+		LogDebug(COMPONENT_EXPORT,
+			 "Exxport %d pseudo %s unmounted because %s",
+			 export->export_id, ref_pseudopath->gr_val,
+			 export->config_gen < generation
+				? "it is defunct"
+				: export->update_prune_unmount
+					? "update indicates unmount"
+					: ancestor_is_defunct
+						? "ancestor is defunct"
+						: "????");
+
+		pseudo_unmount_export(export);
+
+		if (export->config_gen >= generation &&
+		    (export->export_perms.options & EXPORT_OPTION_NFSV4) != 0 &&
+		    ref_pseudopath->gr_val != NULL &&
+		    export->export_id != 0 &&
+		    ref_pseudopath->gr_val[1] != '\0') {
+			export->update_remount = true;
+		}
+	} else {
+		LogDebug(COMPONENT_EXPORT,
+			 "Export %d Pseudo %s not unmounted",
+			 export->export_id, ref_pseudopath->gr_val);
+	}
+
+	if (export->update_remount) {
+		LogDebug(COMPONENT_EXPORT,
+			 "Export %d Pseudo %s is to be remounted",
+			 export->export_id, ref_pseudopath->gr_val);
+
+		/* Add to mount work */
+		export_add_to_mount_work(export);
+	}
+
+	/* Clear flags */
+	export->update_prune_unmount = false;
+	export->update_remount = false;
+
+	if (need_put) {
+		/* Put the pseudo root export we found above */
+		put_gsh_export(export);
+	}
 
 	gsh_refstr_put(ref_pseudopath);
-
-	return ok;
 }

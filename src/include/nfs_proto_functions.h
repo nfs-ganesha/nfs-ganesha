@@ -570,8 +570,10 @@ bool xdr_COMPOUND4res_extended(XDR *xdrs, struct COMPOUND4res_extended **objp);
 /* Pseudo FS functions */
 bool pseudo_mount_export(struct gsh_export *exp);
 void create_pseudofs(void);
-void pseudo_unmount_export(struct gsh_export *exp);
-bool export_is_defunct(struct gsh_export *exp, uint64_t generation);
+void pseudo_unmount_export_tree(struct gsh_export *export);
+void prune_pseudofs_subtree(struct gsh_export *export,
+			    uint64_t generation,
+			    bool ancestor_is_defunct);
 
 /* Slot functions */
 static inline void release_slot(nfs41_session_slot_t *slot)

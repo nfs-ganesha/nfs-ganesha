@@ -66,6 +66,11 @@
 #include "pnfs_utils.h"
 #include "idmapper.h"
 
+/** Mutex to serialize export admin operations.
+ */
+pthread_mutex_t export_admin_mutex = PTHREAD_MUTEX_INITIALIZER;
+uint64_t export_admin_counter;
+
 struct timespec nfs_stats_time;
 struct timespec fsal_stats_time;
 struct timespec v3_full_stats_time;
@@ -88,51 +93,38 @@ struct export_by_id {
 static struct export_by_id export_by_id;
 
 /** List of all active exports,
-  * protected by export_by_id.lock
+  * protected by export_admin_mutex
   */
-static struct glist_head exportlist;
+static struct glist_head exportlist = GLIST_HEAD_INIT(exportlist);
 
 /** List of exports to be mounted in PseudoFS,
-  * protected by export_by_id.lock
+  * protected by export_admin_mutex
   */
-static struct glist_head mount_work;
+static struct glist_head mount_work = GLIST_HEAD_INIT(mount_work);
 
 /** List of exports to be cleaned up on unexport,
-  * protected by export_by_id.lock
+  * protected by export_admin_mutex
   */
-static struct glist_head unexport_work;
+static struct glist_head unexport_work = GLIST_HEAD_INIT(unexport_work);
 
 void export_add_to_mount_work(struct gsh_export *export)
 {
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	glist_add_tail(&mount_work, &export->exp_work);
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-}
-
-void export_add_to_unexport_work_locked(struct gsh_export *export)
-{
-	glist_add_tail(&unexport_work, &export->exp_work);
 }
 
 void export_add_to_unexport_work(struct gsh_export *export)
 {
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
-	export_add_to_unexport_work_locked(export);
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	glist_add_tail(&unexport_work, &export->exp_work);
 }
 
 struct gsh_export *export_take_mount_work(void)
 {
 	struct gsh_export *export;
 
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
-
 	export = glist_first_entry(&mount_work, struct gsh_export, exp_work);
 
 	if (export != NULL)
 		glist_del(&export->exp_work);
-
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
 	return export;
 }
@@ -659,7 +651,7 @@ void unmount_gsh_export(struct gsh_export *exp)
 	/* Initialize op_context */
 	init_op_context(&op_context, NULL, NULL, NULL, NFS_V4, 0, NFS_REQUEST);
 
-	pseudo_unmount_export(exp);
+	pseudo_unmount_export_tree(exp);
 	release_op_context();
 }
 
@@ -814,7 +806,7 @@ bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 
 bool remove_one_export(struct gsh_export *export, void *state)
 {
-	export_add_to_unexport_work_locked(export);
+	export_add_to_unexport_work(export);
 	return true;
 }
 
@@ -824,23 +816,21 @@ static void process_unexports(void)
 
 	/* Now process all the unexports */
 	while (true) {
-		PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
-
 		export = glist_first_entry(&unexport_work, struct gsh_export,
 					   exp_work);
-
-		if (export != NULL) {
-			glist_del(&export->exp_work);
-			get_gsh_export_ref(export);
-		}
-
-		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
 		if (export == NULL)
 			break;
 
+		glist_del(&export->exp_work);
+
+		/* Get reference to export and add it to op_ctx */
+		get_gsh_export_ref(export);
 		set_op_context_export(export);
+
+		/* Do the actual unexport work */
 		release_export(export);
+
 		clear_op_context_export();
 	}
 }
@@ -854,6 +844,8 @@ void remove_all_exports(void)
 	struct gsh_export *export;
 	struct req_op_context op_context;
 
+	EXPORT_ADMIN_LOCK();
+
 	/* Get a reference to the PseudoFS Root Export and initialize the
 	 * op_context.
 	 */
@@ -863,7 +855,7 @@ void remove_all_exports(void)
 			NULL, NFS_V4, 0, NFS_REQUEST);
 
 	/* Clean up the whole PseudoFS */
-	pseudo_unmount_export(export);
+	pseudo_unmount_export_tree(export);
 	clear_op_context_export();
 
 	/* Put all exports on the unexport work list.
@@ -872,15 +864,31 @@ void remove_all_exports(void)
 	(void) foreach_gsh_export(remove_one_export, true, NULL);
 
 	process_unexports();
-	release_op_context();
+
+	EXPORT_ADMIN_UNLOCK();
 }
 
 static bool prune_defunct_export(struct gsh_export *exp, void *state)
 {
-	uint64_t *pgen = state;
+	uint64_t generation = *((uint64_t *)state);
 
-	if (export_is_defunct(exp, *pgen))
-		export_add_to_unexport_work_locked(exp);
+	if (exp->config_gen < generation) {
+		if (isDebug(COMPONENT_EXPORT)) {
+			struct tmp_export_paths tmp;
+
+			tmp_get_exp_paths(&tmp, exp);
+
+			LogDebug(COMPONENT_EXPORT,
+				 "Pruning export %d path %s pseudo %s",
+				 exp->export_id,
+				 TMP_FULLPATH(&tmp),
+				 TMP_PSEUDOPATH(&tmp));
+
+			tmp_put_exp_paths(&tmp);
+		}
+
+		export_add_to_unexport_work(exp);
+	}
 	return true;
 }
 
@@ -1064,12 +1072,20 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		status = false;
 		goto out;
 	}
+
+	if (EXPORT_ADMIN_TRYLOCK() != 0) {
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "another export admin operation is in progress, try again later");
+		status = false;
+		goto out;
+	}
+
 	LogInfo(COMPONENT_EXPORT, "Adding export from file: %s with %s",
 		file_path, export_expr);
 
 	/* Create a memstream for parser+processing error messages */
 	if (!init_error_type(&err_type))
-		goto out;
+		goto out_unlock;
 
 	config_struct = config_ParseFile(file_path, &err_type);
 	if (!config_error_is_harmless(&err_type)) {
@@ -1087,7 +1103,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 			       err_detail != NULL ? err_detail : "unknown",
 			       conf_errs.buf);
 		status = false;
-		goto out;
+		goto out_unlock;
 	}
 
 	rc = find_config_nodes(config_struct, export_expr,
@@ -1105,7 +1121,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 			       "Error finding exports: %s because %s",
 			       export_expr, strerror(rc));
 		status = false;
-		goto out;
+		goto out_unlock;
 	}
 	/* Load export entries from list */
 	for (lp = config_list; lp != NULL; lp = lp_next) {
@@ -1168,7 +1184,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 				       file_path);
 			status = false;
 		}
-		goto out;
+		goto out_unlock;
 	} else {
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
@@ -1182,6 +1198,10 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 			       err_detail != NULL ? err_detail : "unknown",
 			       conf_errs.buf);
 	}
+
+out_unlock:
+
+	EXPORT_ADMIN_UNLOCK();
 
 out:
 	if (conf_errs.buf)
@@ -1237,6 +1257,13 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 		goto out;
 	}
 
+	if (EXPORT_ADMIN_TRYLOCK() != 0) {
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "another export admin operation is in progress, try again later");
+		rc = false;
+		goto out;
+	}
+
 	PTHREAD_RWLOCK_rdlock(&export->lock);
 	rc = glist_empty(&export->mounted_exports_list);
 	PTHREAD_RWLOCK_unlock(&export->lock);
@@ -1246,7 +1273,7 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 		put_gsh_export(export);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
 			       "Cannot remove export with submounts");
-		goto out;
+		goto out_unlock;
 	}
 
 	/* Lots of obj_ops may be called during cleanup; make sure that an
@@ -1259,6 +1286,10 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 		export->export_id);
 
 	release_op_context();
+
+out_unlock:
+
+	EXPORT_ADMIN_UNLOCK();
 
 out:
 	return rc;
@@ -2999,10 +3030,6 @@ void export_pkginit(void)
 	PTHREAD_RWLOCK_init(&export_by_id.lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
 	memset(&export_by_id.cache, 0, sizeof(export_by_id.cache));
-
-	glist_init(&exportlist);
-	glist_init(&mount_work);
-	glist_init(&unexport_work);
 
 	pthread_rwlockattr_destroy(&rwlock_attr);
 }

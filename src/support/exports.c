@@ -688,8 +688,10 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 void clean_export_paths(struct gsh_export *export)
 {
 	LogFullDebug(COMPONENT_EXPORT,
-		     "Cleaning paths for %d",
-		     export->export_id);
+		     "Cleaning paths for %d fullpath %s pseudopath %s",
+		     export->export_id,
+		     export->cfg_fullpath,
+		     export->cfg_pseudopath);
 
 	/* Some admins stuff a '/' at  the end for some reason.
 	 * chomp it so we have a /dir/path/basename to work
@@ -716,6 +718,12 @@ void clean_export_paths(struct gsh_export *export)
 			pathlen--;
 		export->cfg_pseudopath[pathlen] = '\0';
 	}
+
+	LogFullDebug(COMPONENT_EXPORT,
+		     "Final paths for %d fullpath %s pseudopath %s",
+		     export->export_id,
+		     export->cfg_fullpath,
+		     export->cfg_pseudopath);
 }
 
 /**
@@ -1009,6 +1017,35 @@ static inline void copy_gsh_export(struct gsh_export *dest,
 	/* Now take lock and swap out client list and export_perms... */
 	PTHREAD_RWLOCK_wrlock(&dest->lock);
 
+	/* Put references to old refstr */
+	if (dest->fullpath != NULL)
+		gsh_refstr_put(dest->fullpath);
+
+	if (dest->pseudopath != NULL)
+		gsh_refstr_put(dest->pseudopath);
+
+	/* Free old cfg_fullpath and cfg_pseudopath */
+	gsh_free(dest->cfg_fullpath);
+	gsh_free(dest->cfg_pseudopath);
+
+	/* Copy config fullpath and create new refstr */
+	if (src->cfg_fullpath != NULL) {
+		dest->cfg_fullpath = gsh_strdup(src->cfg_fullpath);
+		dest->fullpath = gsh_refstr_dup(dest->cfg_fullpath);
+	} else {
+		dest->cfg_fullpath = NULL;
+		dest->fullpath = NULL;
+	}
+
+	/* Copy config pseudopath and create new refstr */
+	if (src->cfg_pseudopath != NULL) {
+		dest->cfg_pseudopath = gsh_strdup(src->cfg_pseudopath);
+		dest->pseudopath = gsh_refstr_dup(dest->cfg_pseudopath);
+	} else {
+		dest->cfg_pseudopath = NULL;
+		dest->pseudopath = NULL;
+	}
+
 	/* Copy the export perms into the existing export. */
 	dest->export_perms = src->export_perms;
 
@@ -1024,6 +1061,14 @@ static inline void copy_gsh_export(struct gsh_export *dest,
 	glist_swap_lists(&dest->clients, &src->clients);
 
 	PTHREAD_RWLOCK_unlock(&dest->lock);
+}
+
+static inline bool export_can_be_mounted(struct gsh_export *export)
+{
+	return (export->export_perms.options & EXPORT_OPTION_NFSV4) != 0
+	       && export->cfg_pseudopath != NULL
+	       && export->export_id != 0
+	       && export->cfg_pseudopath[1] != '\0';
 }
 
 /**
@@ -1118,7 +1163,8 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	probe_exp = get_gsh_export(export->export_id);
 
 	if (commit_type == update_export && probe_exp != NULL) {
-		bool mount_pseudo_export = false, unmount_pseudo_export = false;
+		bool mount_export = false;
+		bool unmount_export = false;
 
 		/* We have an actual update case, probe_exp is the target
 		 * to update. Check all the options that MUST match.
@@ -1151,21 +1197,21 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		}
 
 		if (strcmp_null(export->cfg_pseudopath,
-				probe_exp->pseudopath->gr_val) != 0) {
-			/* Pseudo does not match, currently not a candidate for
-			 * update.
+				probe_exp->cfg_pseudopath) != 0) {
+			/* Pseudo does not match, mark to unmount old and
+			 * mount at new location.
 			 */
-			LogCrit(COMPONENT_CONFIG,
-				"Pseudo for export update %d %s doesn't match %s",
+			LogInfo(COMPONENT_EXPORT,
+				"Pseudo for export %d changing to %s from to %s",
 				export->export_id,
 				export->cfg_pseudopath,
-				probe_exp->pseudopath->gr_val);
-			err_type->invalid = true;
-			errcnt++;
+				probe_exp->cfg_pseudopath);
+			unmount_export |= export_can_be_mounted(probe_exp);
+			mount_export |= export_can_be_mounted(export);
 		}
 
 		if (strcmp_null(export->cfg_fullpath,
-				probe_exp->fullpath->gr_val) != 0) {
+				probe_exp->cfg_fullpath) != 0) {
 			/* Path does not match, currently not a candidate for
 			 * update.
 			 */
@@ -1173,7 +1219,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 				"Path for export update %d %s doesn't match %s",
 				export->export_id,
 				export->cfg_fullpath,
-				probe_exp->fullpath->gr_val);
+				probe_exp->cfg_fullpath);
 			err_type->invalid = true;
 			errcnt++;
 		}
@@ -1207,27 +1253,40 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			return errcnt;
 		}
 
+		if ((export->export_perms.options & EXPORT_OPTION_NFSV4) !=
+		    (probe_exp->export_perms.options & EXPORT_OPTION_NFSV4)) {
+			LogDebug(COMPONENT_EXPORT,
+				 "Export %d NFSv4 changing from %s to %s",
+				 probe_exp->export_id,
+				 (probe_exp->export_perms.options &
+					EXPORT_OPTION_NFSV4) != 0
+					? "enabled" : "disabled",
+				 (export->export_perms.options &
+					EXPORT_OPTION_NFSV4) != 0
+					? "enabled" : "disabled");
+			unmount_export |= export_can_be_mounted(probe_exp);
+			mount_export |= export_can_be_mounted(export);
+		}
+
+		if (mount_export) {
+			/* This export has changed in a way that it needs to be
+			 * remounted.
+			 */
+			probe_exp->update_remount = true;
+		}
+
+		if (unmount_export) {
+			/* Mark this export to be unmounted during the prune
+			 * phase, it will also be added to the remount work if
+			 * appropriate.
+			 */
+			probe_exp->update_prune_unmount = true;
+		}
+
 		/* Grab config_generation for this config */
 		probe_exp->config_gen = get_parse_root_generation(node);
 
-		if ((export->export_perms.options & EXPORT_OPTION_NFSV4) &&
-		 (probe_exp->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
-			mount_pseudo_export = true;
-		} else if (
-		    (probe_exp->export_perms.options & EXPORT_OPTION_NFSV4) &&
-		    (export->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
-			unmount_pseudo_export = true;
-		}
-
 		copy_gsh_export(probe_exp, export);
-
-		if (mount_pseudo_export && !mount_gsh_export(probe_exp)) {
-			err_type->internal = true;
-			errcnt++;
-			return errcnt;
-		} else if (unmount_pseudo_export) {
-			unmount_gsh_export(probe_exp);
-		}
 
 		/* We will need to dispose of the config export since we
 		 * updated the existing export.
@@ -1961,6 +2020,7 @@ static int build_default_root(struct config_error_type *err_type)
 	export->PrefWrite = FSAL_MAXIOSIZE;
 	export->PrefRead = FSAL_MAXIOSIZE;
 	export->PrefReaddir = 16384;
+	export->config_gen = UINT64_MAX;
 
 	/*Don't set anonymous uid and gid, they will actually be ignored */
 
@@ -2067,6 +2127,26 @@ err_out:
 	return -1;
 }
 
+bool log_info_export(struct gsh_export *exp, void *state)
+{
+	char perms[1024] = "\0";
+	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
+
+	(void) StrExportOptions(&dspbuf, &exp->export_perms);
+
+	LogInfo(COMPONENT_EXPORT,
+		"Export %5d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
+		exp->export_id, exp->cfg_pseudopath,
+		exp->cfg_fullpath, exp->FS_tag, perms);
+
+	return true;
+}
+
+void log_info_exports(void)
+{
+	foreach_gsh_export(log_info_export, false, NULL);
+}
+
 /**
  * @brief Read the export entries from the parsed configuration file.
  *
@@ -2107,6 +2187,8 @@ int ReadExports(config_file_t in_config,
 		return -1;
 	}
 
+	log_info_exports();
+
 	return num_exp;
 }
 
@@ -2123,8 +2205,11 @@ int reread_exports(config_file_t in_config,
 		   struct config_error_type *err_type)
 {
 	int rc, num_exp;
+	uint64_t generation;
 
-	LogInfo(COMPONENT_CONFIG, "Reread exports");
+	EXPORT_ADMIN_LOCK();
+
+	LogEvent(COMPONENT_CONFIG, "Reread exports");
 
 	rc = load_config_from_parse(in_config,
 				    &export_defaults_param,
@@ -2134,7 +2219,8 @@ int reread_exports(config_file_t in_config,
 
 	if (rc < 0) {
 		LogCrit(COMPONENT_CONFIG, "Export defaults block error");
-		return -1;
+		num_exp = -1;
+		goto out;
 	}
 
 	num_exp = load_config_from_parse(in_config,
@@ -2145,10 +2231,29 @@ int reread_exports(config_file_t in_config,
 
 	if (num_exp < 0) {
 		LogCrit(COMPONENT_CONFIG, "Export block error");
-		return -1;
+		num_exp = -1;
+		goto out;
 	}
 
-	prune_defunct_exports(get_config_generation(in_config));
+	log_info_exports();
+
+	generation = get_config_generation(in_config);
+
+	/* Prune the pseudofs of all exports that will be unexported (defunct)
+	 * as well as any descendant exports. Then unexport all defunct exports.
+	 * Finally remount all the exports that were unmounted. If that fails,
+	 * create_pseudofs() will LogFatal and abort.
+	 */
+	prune_pseudofs_subtree(NULL, generation, false);
+	prune_defunct_exports(generation);
+	create_pseudofs();
+
+	log_info_exports();
+
+out:
+
+	EXPORT_ADMIN_UNLOCK();
+
 	return num_exp;
 }
 
@@ -2544,7 +2649,7 @@ void release_export(struct gsh_export *export)
 	 * so that the underlying FSALs have access to the export while
 	 * performing the various cleanup operations.
 	 */
-	pseudo_unmount_export(export);
+	pseudo_unmount_export_tree(export);
 
 	export->fsal_export->exp_ops.prepare_unexport(export->fsal_export);
 
