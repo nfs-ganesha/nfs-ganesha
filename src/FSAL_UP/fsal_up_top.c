@@ -181,7 +181,7 @@ static state_status_t lock_avail(const struct fsal_up_vector *vec,
 	return STATE_SUCCESS;
 }
 
-/* @note The state_lock MUST be held for write */
+/* @note The st_lock MUST be held */
 static void destroy_recall(struct state_layout_recall_file *recall)
 {
 	if (recall == NULL)
@@ -209,7 +209,7 @@ static void destroy_recall(struct state_layout_recall_file *recall)
  * This function creates the layout recall state and work list for a
  * LAYOUTRECALL operation on a file.
  *
- * @note the state_lock MUST be held for write
+ * @note the st_lock MUST be held
  *
  * @param[in,out] obj     The file on which to send the recall
  * @param[in]     type    The layout type
@@ -1236,7 +1236,7 @@ out_free:
  * @brief Send one delegation recall to one client.
  *
  * This function sends a cb_recall for one delegation, the caller has to lock
- * cache_entry->state_lock before calling this function.
+ * cache_entry->st_lock before calling this function.
  *
  * @param[in] obj The file being delegated
  * @param[in] deleg_entry Lock entry covering the delegation
@@ -1823,7 +1823,7 @@ out:
  * @brief Send CB_GETATTR to write_delegated client.
  *
  * This function sends a CB_GETATTR, the caller has to lock
- * cache_entry->state_lock before calling this function.
+ * cache_entry->st_lock before calling this function.
  *
  * @param[in] obj The file holding delegation
  * @param[in] cbgetattr_context

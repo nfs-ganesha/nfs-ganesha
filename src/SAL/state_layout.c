@@ -54,7 +54,7 @@
  * each segment returned by FSAL_layoutget to an existing state of
  * type STATE_TYPE_LAYOUT.
  *
- * @note state_lock must be held for write.
+ * @note st_lock must be held.
  *
  * @param[in] state           The layout state.
  * @param[in] segment         Layout segment itself granted by the FSAL
@@ -122,7 +122,7 @@ state_status_t state_delete_segment(state_layout_segment_t *segment)
  * This function finds a layout corresponding to a given file,
  * clientid, and layout type if one exists.
  *
- * @note state_lock MUST be held for read
+ * @note st_lock MUST be held
  *
  * @param[in]  obj    File
  * @param[in]  owner  The state owner.  This must be a clientid owner.

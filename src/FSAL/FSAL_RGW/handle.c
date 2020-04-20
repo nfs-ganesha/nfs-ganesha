@@ -1187,7 +1187,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
  * @brief Return open status of a state.
  *
  * This function returns open flags representing the current open
- * status for a state. The state_lock must be held.
+ * status for a state. The st_lock must be held.
  *
  * @param[in] obj_hdl     File on which to operate
  * @param[in] state       File state to interrogate
@@ -1210,7 +1210,7 @@ fsal_openflags_t rgw_fsal_status2(struct fsal_obj_handle *obj_hdl,
  * @brief Re-open a file that may be already opened
  *
  * This function supports changing the access mode of a share reservation and
- * thus should only be called with a share state. The state_lock must be held.
+ * thus should only be called with a share state. The st_lock must be held.
  *
  * This MAY be used to open a file the first time if there is no need for
  * open by name or create semantics. One example would be 9P lopen.

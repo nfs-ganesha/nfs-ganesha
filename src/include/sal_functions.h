@@ -80,27 +80,27 @@ void free_state_owner(state_owner_t *owner);
 	} while (0)
 
 /**
- * @brief Acquire exclusive state_lock and set no_cleanup=true
+ * @brief Acquire exclusive st_lock and set no_cleanup=true
  *
- * @param[in,out] obj the object whose state_hdl->state_lock is to be
+ * @param[in,out] obj the object whose state_hdl->st_lock is to be
  *		      acquired and state_hdl->no_cleanup needs to be set
  */
 #define STATELOCK_lock(obj)						\
 	do {								\
-		PTHREAD_RWLOCK_wrlock(&(obj)->state_hdl->state_lock);	\
+		PTHREAD_MUTEX_lock(&(obj)->state_hdl->st_lock);	\
 		(obj)->state_hdl->no_cleanup = true;			\
 	} while (0)
 
 /**
- * @brief Drop state_lock and set no_cleanup=false
+ * @brief Drop st_lock and set no_cleanup=false
  *
- * @param[in,out] obj the object whose state_hdl->state_lock is to be
+ * @param[in,out] obj the object whose state_hdl->st_lock is to be
  *		      dropped and state_hdl->no_cleanup needs to be cleared
  */
 #define STATELOCK_unlock(obj)						\
 	do {								\
 		(obj)->state_hdl->no_cleanup = false;			\
-		PTHREAD_RWLOCK_unlock(&(obj)->state_hdl->state_lock);	\
+		PTHREAD_MUTEX_unlock(&(obj)->state_hdl->st_lock);	\
 	} while (0)
 
 state_owner_t *get_state_owner(care_t care, state_owner_t *pkey,
@@ -128,9 +128,9 @@ static inline void state_hdl_init(struct state_hdl *ostate,
 				  struct fsal_obj_handle *obj)
 {
 	memset(ostate, 0, sizeof(*ostate));
-	PTHREAD_RWLOCK_init(&ostate->state_lock, NULL);
 	switch (type) {
 	case REGULAR_FILE:
+		PTHREAD_MUTEX_init(&ostate->st_lock, NULL);
 		glist_init(&ostate->file.list_of_states);
 		glist_init(&ostate->file.layoutrecall_list);
 		glist_init(&ostate->file.lock_list);
@@ -138,6 +138,7 @@ static inline void state_hdl_init(struct state_hdl *ostate,
 		ostate->file.obj = obj;
 		break;
 	case DIRECTORY:
+		PTHREAD_RWLOCK_init(&ostate->jct_lock, NULL);
 		glist_init(&ostate->dir.export_roots);
 		break;
 	default:
@@ -150,9 +151,19 @@ static inline void state_hdl_init(struct state_hdl *ostate,
  *
  * @param[in] state_hdl	State handle to clean up
  */
-static inline void state_hdl_cleanup(struct state_hdl *state_hdl)
+static inline void state_hdl_cleanup(struct state_hdl *state_hdl,
+				     object_file_type_t type)
 {
-	PTHREAD_RWLOCK_destroy(&state_hdl->state_lock);
+	switch (type) {
+	case REGULAR_FILE:
+		PTHREAD_MUTEX_destroy(&state_hdl->st_lock);
+		break;
+	case DIRECTORY:
+		PTHREAD_RWLOCK_destroy(&state_hdl->jct_lock);
+		break;
+	default:
+		break;
+	}
 }
 
 /*****************************************************************************
@@ -940,12 +951,12 @@ static inline bool obj_is_junction(struct fsal_obj_handle *obj)
 	if (obj->type != DIRECTORY)
 		return false;
 
-	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
+	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->jct_lock);
 
 	if ((obj->state_hdl->dir.junction_export != NULL ||
 	     atomic_fetch_int32_t(&obj->state_hdl->dir.exp_root_refcount) != 0))
 		res = true;
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 
 	return res;
 }

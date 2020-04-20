@@ -112,7 +112,7 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 	}
 
 	if (file_obj->type == DIRECTORY) {
-		PTHREAD_RWLOCK_rdlock(&file_obj->state_hdl->state_lock);
+		PTHREAD_RWLOCK_rdlock(&file_obj->state_hdl->jct_lock);
 
 		if (file_obj->state_hdl->dir.junction_export != NULL) {
 			/* Handle junction */
@@ -124,14 +124,14 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 			if (!export_ready(
 				file_obj->state_hdl->dir.junction_export)) {
 				/* If we could not get a reference, return
-				 * stale.  Release state_lock
+				 * stale.  Release jct_lock
 				 */
 				LogDebug(COMPONENT_EXPORT,
 					 "NFS4ERR_STALE on LOOKUP of %s",
 					 arg_LOOKUP4->objname.utf8string_val);
 				res_LOOKUP4->status = NFS4ERR_STALE;
 				PTHREAD_RWLOCK_unlock(
-					&file_obj->state_hdl->state_lock);
+					&file_obj->state_hdl->jct_lock);
 				goto out;
 			}
 
@@ -147,7 +147,7 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 				file_obj->state_hdl->dir.junction_export;
 			op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
-			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
+			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->jct_lock);
 			/* Build credentials */
 			res_LOOKUP4->status =
 				nfs4_export_check_access(data->req);
@@ -209,7 +209,7 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 			file_obj->obj_ops->put_ref(file_obj);
 			file_obj = obj;
 		} else {
-			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
+			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->jct_lock);
 		}
 	}
 

@@ -122,16 +122,6 @@ extern pool_t *mdcache_entry_pool;
 #define LRU_UNREF_QLOCKED 0x0008
 
 /**
- * entry->state_lock is held
- *
- * This will prevent cleanup on unref. The calling thread MUST hold another
- * reference that will be release without holding the state_lock (which SHOULD
- * be true in order to even be able to reference entry->state_lock), which
- * release will allow cleanup if necessary.
- */
-#define LRU_UNREF_STATE_LOCK_HELD 0x0010
-
-/**
  * The minimum reference count for a cache entry not being recycled.
  */
 

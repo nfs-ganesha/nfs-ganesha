@@ -46,7 +46,7 @@ static const char *close_tag = "CLOSE";
 /**
  * @brief Clean up the current layouts
  *
- * @note state_lock MUST be held for write
+ * @note st_lock MUST be held
  *
  * @param[in] data	Current compound data
  */

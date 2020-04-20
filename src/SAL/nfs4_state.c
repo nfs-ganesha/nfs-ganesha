@@ -71,7 +71,7 @@ pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
  * The caller may have already allocated a state, in which case state
  * need not be NULL.
  *
- * @note state_lock MUST be held for write
+ * @note st_lock MUST be held
  *
  * @param[in,out] obj         file to operate on
  * @param[in]     state_type  State to be defined
@@ -161,7 +161,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	/* We need to initialize state_owner, state_export, and state_obj now so
 	 * that the state can be indexed by owner/entry. We don't insert into
 	 * lists and take references yet since no one else can see this state
-	 * until we are completely done since we hold the state_lock.  Might as
+	 * until we are completely done since we hold the st_lock.  Might as
 	 * well grab export now also...
 	 */
 	pnew_state->state_export = op_ctx->ctx_export;
@@ -189,7 +189,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	 * because we always want state_mutex to be the last lock taken.
 	 *
 	 * NOTE: We don't have to worry about state_del/state_del_locked being
-	 *       called in the midst of things because the state_lock is held.
+	 *       called in the midst of things because the st_lock is held.
 	 */
 
 	/* Attach this to an export */
@@ -325,7 +325,7 @@ state_status_t _state_add(struct fsal_obj_handle *obj,
 /**
  * @brief Remove a state from a file
  *
- * @note The state_lock MUST be held for write.
+ * @note The st_lock MUST be held.
  *
  * @param[in]     state The state to remove
  *
@@ -450,7 +450,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 
 	/* Remove from the list of lock states for a particular open state.
 	 * This is safe to do without any special checks. If we are not on
-	 * the list, glist_del does nothing, and the state_lock protects the
+	 * the list, glist_del does nothing, and the st_lock protects the
 	 * open state's state_sharelist.
 	 */
 	if (state->state_type == STATE_TYPE_LOCK)
@@ -626,7 +626,7 @@ fail:
  * Used by cache_inode_kill_entry in the event that the FSAL says a
  * handle is stale.
  *
- * @note state_lock MUST be held for write
+ * @note st_lock MUST be held
  *
  * @param[in,out] ostate File state to wipe
  */

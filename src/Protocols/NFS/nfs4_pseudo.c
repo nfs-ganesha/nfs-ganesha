@@ -412,9 +412,9 @@ bool pseudo_mount_export(struct gsh_export *export)
 	/* Now that all entries are added to pseudofs tree, and we are pointing
 	 * to the final node, make it a proper junction.
 	 */
-	PTHREAD_RWLOCK_wrlock(&state.obj->state_hdl->state_lock);
+	PTHREAD_RWLOCK_wrlock(&state.obj->state_hdl->jct_lock);
 	state.obj->state_hdl->dir.junction_export = export;
-	PTHREAD_RWLOCK_unlock(&state.obj->state_hdl->state_lock);
+	PTHREAD_RWLOCK_unlock(&state.obj->state_hdl->jct_lock);
 
 	/* And fill in the mounted on information for the export. */
 	PTHREAD_RWLOCK_wrlock(&export->lock);
@@ -531,16 +531,12 @@ void pseudo_unmount_export(struct gsh_export *export)
 
 		/* Don't take a reference; there is a sentinal one */
 
-		/* Release the export lock so we can take take it write */
-		PTHREAD_RWLOCK_unlock(&export->lock);
-
 		/* Make the node not accessible from the junction node. */
-		PTHREAD_RWLOCK_wrlock(&junction_inode->state_hdl->state_lock);
+		PTHREAD_RWLOCK_wrlock(&junction_inode->state_hdl->jct_lock);
 		junction_inode->state_hdl->dir.junction_export = NULL;
-		PTHREAD_RWLOCK_unlock(&junction_inode->state_hdl->state_lock);
+		PTHREAD_RWLOCK_unlock(&junction_inode->state_hdl->jct_lock);
 
 		/* Detach the export from the inode */
-		PTHREAD_RWLOCK_wrlock(&export->lock);
 		export_root_object_put(export->exp_junction_obj);
 		export->exp_junction_obj = NULL;
 	}

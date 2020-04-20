@@ -146,7 +146,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 	 *       that root inode to proceed rather than getting stuck in a
 	 *       junction crossing infinite loop.
 	 */
-	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
+	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->jct_lock);
 	if (cb_parms->attr_allowed &&
 	    obj->type == DIRECTORY &&
 	    obj->state_hdl->dir.junction_export != NULL &&
@@ -202,7 +202,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 
 			/* Indicate success without adding another entry */
 			cb_parms->in_result = true;
-			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+			PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 			return ERR_FSAL_NO_ERROR;
 		}
 
@@ -268,7 +268,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 				    "Need to cross junction to Export_Id %d Pseudo %s",
 				    op_ctx->ctx_export->export_id,
 				    op_ctx->ctx_export->pseudopath);
-			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+			PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 			return ERR_FSAL_CROSS_JUNCTION;
 		}
 
@@ -285,7 +285,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 	}
 
 not_junction:
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 
 	args.attrs = (struct attrlist *)attr;
 	args.data = data;

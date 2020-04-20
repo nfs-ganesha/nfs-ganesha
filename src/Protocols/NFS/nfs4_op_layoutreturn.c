@@ -389,7 +389,7 @@ void nfs4_op_layoutreturn_Free(nfs_resop4 *resp)
 /**
  * @brief Handle recalls corresponding to one stateid
  *
- * @note the state_lock MUST be held for write
+ * @note the st_lock MUST be held
  *
  * @param[in]     args         Layout return args
  * @param[in]     ostate       File state
@@ -483,7 +483,7 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg,
  * the specified range and iomode.  If all layouts have been returned,
  * it deletes the state.
  *
- * @note The state_lock MUST be held for write
+ * @note The st_lock MUST be held
  *
  * @param[in]     obj          File whose layouts we return
  * @param[in]     return_type  Whether this is a file, fs, or server return

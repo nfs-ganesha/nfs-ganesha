@@ -1284,7 +1284,7 @@ bool hold_state_owner(state_owner_t *owner)
  * @brief Release all state on a file
  *
  * This function may not be called in any context which could hold
- * entry->state_lock.  It will now be reliably called in cleanup
+ * entry->st_lock.  It will now be reliably called in cleanup
  * processing.
  *
  * @param[in,out] obj File to be wiped

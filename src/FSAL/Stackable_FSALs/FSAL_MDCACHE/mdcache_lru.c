@@ -660,7 +660,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 	PTHREAD_RWLOCK_destroy(&entry->content_lock);
 	PTHREAD_RWLOCK_destroy(&entry->attr_lock);
 
-	state_hdl_cleanup(entry->obj_handle.state_hdl);
+	state_hdl_cleanup(entry->obj_handle.state_hdl, entry->obj_handle.type);
 
 	if (entry->obj_handle.type == DIRECTORY)
 		pthread_spin_destroy(&entry->fsobj.fsdir.spin);

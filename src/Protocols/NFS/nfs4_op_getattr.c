@@ -131,13 +131,13 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 		} else {
 			/* CB_GETATTR response handler must have updated the
 			 * attributes in md-cache. reset cbgetattr state and
-			 * fall through. state_lock is held till we finish
+			 * fall through. st_lock is held till we finish
 			 * sending response*/
 			cbgetattr = &obj->state_hdl->file.cbgetattr;
 			cbgetattr->state = CB_GETATTR_NONE;
 		}
 	}
-	/* release state_lock */
+	/* release st_lock */
 	STATELOCK_unlock(obj);
 
 	res_GETATTR4->status = file_To_Fattr(

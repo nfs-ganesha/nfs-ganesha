@@ -104,7 +104,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 	bool_t have_grace_ref = false;
 	int rc;
 	struct fsal_obj_handle *obj = data->current_obj;
-	bool state_lock_held = false;
+	bool st_lock_held = false;
 	uint64_t maxfilesize =
 	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
 
@@ -554,12 +554,12 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 			 * new stateid, we will attempt to recycle.
 			 */
 			STATELOCK_lock(obj);
-			state_lock_held = true;
+			st_lock_held = true;
 			lock_state = nfs4_State_Get_Obj(obj, lock_owner);
 		} else {
-			/* Take the state_lock now */
+			/* Take the st_lock now */
 			STATELOCK_lock(obj);
-			state_lock_held = true;
+			st_lock_held = true;
 		}
 
 		if (lock_state == NULL) {
@@ -597,9 +597,9 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 
 		}
 	} else {
-		/* Take the state_lock now */
+		/* Take the st_lock now */
 		STATELOCK_lock(obj);
-		state_lock_held = true;
+		st_lock_held = true;
 	}
 
 	if (data->minorversion == 0) {
@@ -707,8 +707,8 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 	if (have_grace_ref)
 		nfs_put_grace_status();
 
-	if (state_lock_held) {
-		/* Now release the state_lock */
+	if (st_lock_held) {
+		/* Now release the st_lock */
 		STATELOCK_unlock(obj);
 	}
 

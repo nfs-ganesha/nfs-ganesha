@@ -730,7 +730,7 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 /**
  * @brief Find a conflicting entry
  *
- * @note The state_lock MUST be held for read
+ * @note The st_lock MUST be held
  *
  * @param[in] ostate File state to search
  * @param[in] owner The lock owner
@@ -785,7 +785,7 @@ static state_lock_entry_t *get_overlapping_entry(struct state_hdl *ostate,
  * any mapping entry. And l_offset = 0 and sle_lock.lock_length = 0 lock_entry
  * implies remove all entries
  *
- * @note The state_lock MUST be held for write
+ * @note The st_lock MUST be held
  *
  * @param[in,out] ostate     File state to operate on
  * @param[in]     lock_entry Lock to add
@@ -2079,7 +2079,7 @@ static inline const char *fsal_lock_op_str(fsal_lock_op_t op)
  * We do state management and call down to the FSAL as appropriate, so
  * that the caller has a single entry point.
  *
- * @note The state_lock MUST be held for write
+ * @note The st_lock MUST be held
  *
  * @param[in]  obj      File on which to operate
  * @param[in]  state    state_t associated with lock if any
@@ -2289,7 +2289,7 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 /**
  * @brief Attempt to acquire a lock
  *
- * Must hold the state_lock
+ * Must hold the st_lock
  *
  * @param[in]     obj        File to lock
  * @param[in]     owner      Lock owner
