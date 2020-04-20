@@ -11,6 +11,7 @@ require {
 	type configfs_t;
 	type cpu_device_t;
 	type debugfs_t;
+	type default_t;
 	type device_t;
 	type devpts_t;
 	type dri_device_t;
@@ -19,6 +20,7 @@ require {
 	type framebuf_device_t;
 	type fs_t;
 	type gluster_port_t;
+	type glusterd_brick_t;
 	type hugetlbfs_t;
 	type initctl_t;
 	type kmsg_device_t;
@@ -48,6 +50,8 @@ require {
 
 	type cgroup_t;
 	type usr_t;
+
+	class dbus send_msg;
 }
 
 # ceph_*_t types are only "available" if the ceph-selinux package is
@@ -99,7 +103,7 @@ systemd_unit_file(ganesha_unit_file_t)
 #
 dontaudit ganesha_t self:capability net_admin;
 
-allow ganesha_t self:capability { dac_read_search dac_override };
+allow ganesha_t self:capability { dac_read_search dac_override fowner setgid setuid };
 allow ganesha_t self:capability2 block_suspend;
 allow ganesha_t self:process { setcap setrlimit };
 allow ganesha_t self:fifo_file rw_fifo_file_perms;
@@ -270,6 +274,7 @@ dontaudit ganesha_t xserver_misc_device_t:chr_file getattr;
 
 #============= init_t ==============
 allow init_t ganesha_var_log_t:dir setattr;
+allow init_t ganesha_var_log_t:file setattr;
 allow init_t var_lib_nfs_t:dir create;
 
 #============= rpcbind_t ==============
@@ -279,8 +284,26 @@ allow rpcbind_t unreserved_port_t:udp_socket name_bind;
 
 ########################################
 #
-# ganesha local policy rhbz#1816501, rhbz#1822500
-#
+# ganesha local policy rhbz#1816501, rhbz#1822500, rhbz#1826101,
+# rhbz#1826627
 
 allow glusterd_t ganesha_unit_file_t:service { start status stop };
+allow glusterd_t ganesha_t:dbus send_msg;
+allow ganesha_t glusterd_t:dbus send_msg;
+
+
+########################################
+#
+# ganesha local policy, nfs-ganesha-2.8.4
+#
+
+allow ganesha_t default_t:dir { add_name getattr open read write remove_name search };
+allow ganesha_t default_t:file { create getattr open read write unlink };
+allow ganesha_t self:capability { fowner setgid setuid };
+
+# if you want to export old gluster brick dirs directly, e.g. because
+# maybe you're no longer using gluster. selinux knows about gluster brick
+# volumes in /bricks/...
+# allow ganesha_t glusterd_brick_t:dir { add_name getattr open read write remove_name search };
+# allow ganesha_t glusterd_brick_t:file { create getattr open read write unlink };
 
