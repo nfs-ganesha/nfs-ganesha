@@ -293,6 +293,40 @@ static int select_filesystem(struct ceph_export *export)
 }
 #endif /* USE_FSAL_CEPH_GET_FS_CID */
 
+#ifdef USE_FSAL_CEPH_REGISTER_CALLBACKS
+static void ino_release_cb(void *handle, vinodeno_t vino)
+{
+	struct ceph_export *export = handle;
+	struct ceph_handle_key key;
+	struct gsh_buffdesc fh_desc;
+
+	LogDebug(COMPONENT_FSAL,
+		 "libcephfs asking to release 0x%lx:0x%lx:0x%lx",
+		 export->fscid, vino.snapid.val, vino.ino.val);
+	key.chk_vi = vino;
+	key.chk_fscid = export->fscid;
+	fh_desc.addr = &key;
+	fh_desc.len = sizeof(key);
+
+	export->export.up_ops->try_release(export->export.up_ops, &fh_desc, 0);
+}
+
+static void register_callbacks(struct ceph_export *export)
+{
+	struct ceph_client_callback_args args = {
+						.handle = export,
+						.ino_release_cb = ino_release_cb
+					};
+	ceph_ll_register_callbacks(export->cmount, &args);
+}
+#else /* USE_FSAL_CEPH_REGISTER_CALLBACKS */
+static void register_callbacks(struct ceph_export *export)
+{
+	LogWarnOnce(COMPONENT_FSAL,
+		    "This libcephfs does not support registering callbacks. Ganesha will be unable to respond to MDS cache pressure.");
+}
+#endif /* USE_FSAL_CEPH_REGISTER_CALLBACKS */
+
 /**
  * @brief Create a new export under this FSAL
  *
@@ -404,6 +438,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			op_ctx->ctx_export->fullpath);
 		goto error;
 	}
+
+	register_callbacks(export);
 
 	ceph_status = select_filesystem(export);
 	if (ceph_status != 0) {
