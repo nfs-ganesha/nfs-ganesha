@@ -103,7 +103,7 @@ static void load_rados_config(void)
 			LogCrit(COMPONENT_CONFIG, "Unknown urls backend");
 		}
 	} else {
-		LogCrit(COMPONENT_CONFIG, "Unknown urls backend");
+		LogWarn(COMPONENT_CONFIG, "Missing RADOS URLs backend library");
 	}
 }
 
@@ -152,7 +152,7 @@ void config_url_shutdown(void)
 int gsh_rados_url_setup_watch(void)
 {
 #ifdef RADOS_URLS
-	return rados_urls.setup_watch ? rados_urls.setup_watch() : -1;
+	return rados_urls.setup_watch ? rados_urls.setup_watch() : 0;
 #else
 	return 0;
 #endif
