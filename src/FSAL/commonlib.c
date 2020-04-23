@@ -299,6 +299,8 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		return "Permission denied";
 	case ERR_FSAL_FAULT:
 		return "Bad address";
+	case ERR_FSAL_STILL_IN_USE:
+		return "Device or resource busy";
 	case ERR_FSAL_EXIST:
 		return "This object already exists";
 	case ERR_FSAL_XDEV:
