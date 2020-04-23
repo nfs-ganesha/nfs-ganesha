@@ -903,6 +903,15 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	} else if (no_dispatch) {
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "RPCSEC_GSS no_dispatch=%d", no_dispatch);
+		if (reqdata->svc.rq_msg.cb_cred.oa_flavor
+			== RPCSEC_GSS) {
+			struct rpc_gss_cred *gc = (struct rpc_gss_cred *)
+				reqdata->svc.rq_msg.rq_cred_body;
+
+			if (gc->gc_proc == RPCSEC_GSS_DATA)
+				return svcerr_auth(&reqdata->svc,
+						   RPCSEC_GSS_CREDPROBLEM);
+		}
 		return SVC_STAT(xprt);
 #endif
 	}
