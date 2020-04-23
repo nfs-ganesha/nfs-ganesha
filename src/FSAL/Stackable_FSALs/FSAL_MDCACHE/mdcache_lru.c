@@ -665,49 +665,44 @@ lru_reap_impl(enum lru_q_id qid)
 		}
 		/* potentially reclaimable */
 		/* entry must be unreachable from CIH when recycled */
-		if (cih_latch_entry(&entry->fh_hk.key, &latch, CIH_GET_WLOCK,
-				    __func__, __LINE__)) {
-			QLOCK(qlane);
-			refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
-			/* there are two cases which permit reclaim,
-			 * entry is:
-			 * 1. reachable but unref'd (refcnt==2)
-			 * 2. unreachable, being removed (plus refcnt==0)
-			 *  for safety, take only the former
-			 */
-			if (LRU_ENTRY_RECLAIMABLE(entry, refcnt)) {
-				/* it worked */
-				struct lru_q *q = lru_queue_of(entry);
+		cih_latch_entry(&entry->fh_hk.key, &latch, CIH_GET_WLOCK,
+				    __func__, __LINE__);
+		QLOCK(qlane);
+		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
+		/* there are two cases which permit reclaim,
+		 * entry is:
+		 * 1. reachable but unref'd (refcnt==2)
+		 * 2. unreachable, being removed (plus refcnt==0)
+		 *  for safety, take only the former
+		 */
+		if (LRU_ENTRY_RECLAIMABLE(entry, refcnt)) {
+			/* it worked */
+			struct lru_q *q = lru_queue_of(entry);
 
 #ifdef USE_LTTNG
-				tracepoint(mdcache, mdc_lru_reap, __func__,
-					   __LINE__, &entry->obj_handle,
-					   entry->lru.refcnt);
+			tracepoint(mdcache, mdc_lru_reap, __func__,
+				   __LINE__, &entry->obj_handle,
+				   entry->lru.refcnt);
 #endif
-				LRU_DQ_SAFE(lru, q);
-				entry->lru.qid = LRU_ENTRY_NONE;
-				QUNLOCK(qlane);
-				cih_remove_latched(entry, &latch,
-						   CIH_REMOVE_UNLOCK);
-				/* Note, we're not releasing our ref here.
-				 * cih_remove_latched() called
-				 * mdcache_lru_unref(), which released the
-				 * sentinal ref, leaving just the one ref we
-				 * took earlier.  Returning this as is leaves it
-				 * with a ref of 1 (ie, just the sentinal ref)
-				 * */
-				goto out;
-			}
-			cih_hash_release(&latch);
+			LRU_DQ_SAFE(lru, q);
+			entry->lru.qid = LRU_ENTRY_NONE;
 			QUNLOCK(qlane);
-			/* return the ref we took above--unref deals
-			 * correctly with reclaim case */
-			mdcache_lru_unref(entry);
-		} else {
-			/* ! QLOCKED but needs to be Unref'ed */
-			mdcache_lru_unref(entry);
-			continue;
+			cih_remove_latched(entry, &latch,
+					   CIH_REMOVE_UNLOCK);
+			/* Note, we're not releasing our ref here.
+			 * cih_remove_latched() called
+			 * mdcache_lru_unref(), which released the
+			 * sentinal ref, leaving just the one ref we
+			 * took earlier.  Returning this as is leaves it
+			 * with a ref of 1 (ie, just the sentinal ref)
+			 * */
+			goto out;
 		}
+		cih_hash_release(&latch);
+		QUNLOCK(qlane);
+		/* return the ref we took above--unref deals
+		 * correctly with reclaim case */
+		mdcache_lru_unref(entry);
 	}			/* foreach lane */
 
 	/* ! reclaimable */
@@ -1004,40 +999,39 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 	cih_latch_t latch;
 
-	if (cih_latch_entry(&entry->fh_hk.key, &latch, CIH_GET_WLOCK,
-			    __func__, __LINE__)) {
-		QLOCK(qlane);
+	cih_latch_entry(&entry->fh_hk.key, &latch, CIH_GET_WLOCK,
+			    __func__, __LINE__);
+	QLOCK(qlane);
 
-		/* Take the attr lock, so we can check that this entry is still
-		 * not in any export */
-		PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
+	/* Take the attr lock, so we can check that this entry is still
+	 * not in any export */
+	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 
-		if (glist_empty(&entry->export_list)) {
-			/* it worked */
-			struct lru_q *q = lru_queue_of(entry);
+	if (glist_empty(&entry->export_list)) {
+		/* it worked */
+		struct lru_q *q = lru_queue_of(entry);
 
-			LRU_DQ_SAFE(lru, q);
-			entry->lru.qid = LRU_ENTRY_CLEANUP;
-			atomic_set_uint32_t_bits(&entry->lru.flags,
-						 LRU_CLEANUP);
-			/* Note: we didn't take a ref here, so the only ref left
-			 * in this callpath is the one owned by
-			 * mdcache_unexport().  When it unref's, that may free
-			 * this object; otherwise, it will be freed when the
-			 * last op is done, as it's unreachable. */
+		LRU_DQ_SAFE(lru, q);
+		entry->lru.qid = LRU_ENTRY_CLEANUP;
+		atomic_set_uint32_t_bits(&entry->lru.flags,
+					 LRU_CLEANUP);
+		/* Note: we didn't take a ref here, so the only ref left
+		 * in this callpath is the one owned by
+		 * mdcache_unexport().  When it unref's, that may free
+		 * this object; otherwise, it will be freed when the
+		 * last op is done, as it's unreachable. */
 
-			/* It's safe to drop the attr lock here, as we have the
-			 * latch, so no one can look up the entry */
-			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-			QUNLOCK(qlane);
-			cih_remove_latched(entry, &latch, CIH_REMOVE_NONE);
-		} else {
-			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
-			QUNLOCK(qlane);
-		}
-
-		cih_hash_release(&latch);
+		/* It's safe to drop the attr lock here, as we have the
+		 * latch, so no one can look up the entry */
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		QUNLOCK(qlane);
+		cih_remove_latched(entry, &latch, CIH_REMOVE_NONE);
+	} else {
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		QUNLOCK(qlane);
 	}
+
+	cih_hash_release(&latch);
 }
 
 /**

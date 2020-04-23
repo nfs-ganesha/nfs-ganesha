@@ -242,10 +242,8 @@ cih_hash_release(cih_latch_t *latch)
  * @param key	[in] The key
  * @param latch [inout] Latch
  * @param flags [in] Flags
- *
- * @return true on success, false on failure
  */
-static inline bool
+static inline void
 cih_latch_entry(mdcache_key_t *key, cih_latch_t *latch, uint32_t flags,
 		const char *func, int line)
 {
@@ -263,8 +261,6 @@ cih_latch_entry(mdcache_key_t *key, cih_latch_t *latch, uint32_t flags,
 	cp->locktrace.func = (char *)func;
 	cp->locktrace.line = line;
 #endif
-
-	return true;
 }
 
 /**
@@ -288,8 +284,7 @@ cih_get_by_key_latch(mdcache_key_t *key, cih_latch_t *latch,
 	struct avltree_node *node;
 	void **cache_slot;
 
-	if (!cih_latch_entry(key, latch, flags, func, line))
-		return NULL;
+	cih_latch_entry(key, latch, flags, func, line);
 
 	k_entry.fh_hk.key = *key;
 
