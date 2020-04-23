@@ -221,6 +221,7 @@ bool nfs_RetryableError(fsal_errors_t fsal_errors)
 	case ERR_FSAL_NOTDIR:
 	case ERR_FSAL_SYMLINK:
 	case ERR_FSAL_BADTYPE:
+	case ERR_FSAL_STILL_IN_USE:
 	case ERR_FSAL_EXIST:
 	case ERR_FSAL_NOTEMPTY:
 	case ERR_FSAL_NOENT:

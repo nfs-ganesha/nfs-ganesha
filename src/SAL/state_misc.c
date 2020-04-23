@@ -276,6 +276,7 @@ state_status_t state_error_convert(fsal_status_t fsal_status)
 
 	case ERR_FSAL_DQUOT:
 	case ERR_FSAL_NAMETOOLONG:
+	case ERR_FSAL_STILL_IN_USE:
 	case ERR_FSAL_EXIST:
 	case ERR_FSAL_NOTEMPTY:
 	case ERR_FSAL_NOTDIR:

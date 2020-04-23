@@ -633,6 +633,7 @@ nfsstat4 nfs4_Errno_verbose(fsal_errors_t error, const char *where)
 
 	case ERR_FSAL_CROSS_JUNCTION:
 	case ERR_FSAL_NO_ACE:
+	case ERR_FSAL_STILL_IN_USE:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFS_V4,
 			 "Line %u should never be reached in nfs4_Errno from %s for cache_status=%u",
@@ -796,6 +797,7 @@ nfsstat3 nfs3_Errno_verbose(fsal_errors_t error, const char *where)
 	case ERR_FSAL_TIMEOUT:
 	case ERR_FSAL_NO_ACE:
 	case ERR_FSAL_BAD_RANGE:
+	case ERR_FSAL_STILL_IN_USE:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFSPROTO,
 			 "Line %u should never be reached in nfs3_Errno from %s for FSAL error=%s",
