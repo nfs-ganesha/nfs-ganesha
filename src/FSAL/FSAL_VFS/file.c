@@ -729,7 +729,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	/* Become the user because we are creating an object in this dir.
 	 */
 	if (createmode != FSAL_NO_CREATE)
-		if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+		if (!vfs_set_credentials(&op_ctx->creds, obj_hdl->fsal)) {
 			status = posix2fsal_status(EPERM);
 			goto direrr;
 		}
@@ -1352,7 +1352,7 @@ void vfs_write2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, obj_hdl->fsal)) {
 		retval = EPERM;
 		status = fsalstat(ERR_FSAL_PERM, EPERM);
 		goto out;
@@ -1522,7 +1522,7 @@ fsal_status_t vfs_fallocate(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status))
 		goto out;
 
-	if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, obj_hdl->fsal)) {
 		status = posix2fsal_status(EPERM);
 		goto out;
 	}
@@ -1602,7 +1602,7 @@ fsal_status_t vfs_commit2(struct fsal_obj_handle *obj_hdl,
 
 	if (!FSAL_IS_ERROR(status)) {
 
-		if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+		if (!vfs_set_credentials(&op_ctx->creds, obj_hdl->fsal)) {
 			retval = EPERM;
 			status = fsalstat(ERR_FSAL_PERM, EPERM);
 			goto out;

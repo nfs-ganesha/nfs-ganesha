@@ -49,15 +49,12 @@ struct gpfs_filesystem {
 	bool up_thread_started;
 	pthread_t up_thread; /* upcall thread */
 
-	/* we have an upcall thread for each file system. The upcall
-	 * thread needs a valid export/op_ctx for processing some of the
-	 * upcall requests. We use upvector_mutex to get an export from
-	 * the list of exports in a file system. The following
-	 * up_vector points to up_ops in such an export.
+	/* we have an upcall thread for each file system. We use upvector_mutex
+	 * to get an export from the list of exports in a file system. The
+	 * following up_vector points to up_ops in such an export.
 	 */
 	pthread_mutex_t upvector_mutex;
 	struct fsal_up_vector *up_vector;
-	struct req_op_context req_ctx;
 };
 
 /*

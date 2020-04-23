@@ -205,10 +205,10 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 				     struct glusterfs_export, export);
 		struct glfs_fd *glfd = NULL;
 
-		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-				  &op_ctx->creds->caller_gid,
-				  op_ctx->creds->caller_glen,
-				  op_ctx->creds->caller_garray,
+		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+				  &op_ctx->creds.caller_gid,
+				  op_ctx->creds.caller_glen,
+				  op_ctx->creds.caller_garray,
 				  socket_addr(&op_ctx->client->cl_addrbuf),
 				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 

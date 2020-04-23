@@ -159,7 +159,7 @@ get_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	args.qid = quota_id;
 	args.bufferP = &gpfs_quota;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	if (gpfs_ganesha(OPENHANDLE_QUOTA, &args) < 0)
 		retval = errno;
 	fsal_restore_ganesha_credentials();
@@ -224,7 +224,7 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	args.qid = quota_id;
 	args.bufferP = &gpfs_quota;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	if (gpfs_ganesha(OPENHANDLE_QUOTA, &args) < 0)
 		retval = errno;
 	fsal_restore_ganesha_credentials();
@@ -714,8 +714,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 
 	status.minor = fsal_internal_version();
 	LogInfo(COMPONENT_FSAL, "GPFS get version is %d options 0x%X id %d",
-		status.minor,
-		op_ctx->export_perms ?  op_ctx->export_perms->options : 0,
+		status.minor, op_ctx->export_perms.options,
 		op_ctx->ctx_export->export_id);
 
 	fsal_export_init(exp);

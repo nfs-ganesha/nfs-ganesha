@@ -569,7 +569,7 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 
 	/* Check if delegations are supported */
 	if (!deleg_supported(data->current_obj, op_ctx->fsal_export,
-			     op_ctx->export_perms, arg_OPEN4->share_access)) {
+			     &op_ctx->export_perms, arg_OPEN4->share_access)) {
 		resok->delegation.open_delegation4_u.od_whynone.ond_why =
 							WND4_NOT_SUPP_FTYPE;
 		LogFullDebug(COMPONENT_STATE, "Delegation type not supported.");
@@ -1249,7 +1249,7 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check export permissions if OPEN4_CREATE */
 	if ((arg_OPEN4->openhow.opentype == OPEN4_CREATE) &&
-	    ((op_ctx->export_perms->options &
+	    ((op_ctx->export_perms.options &
 	      EXPORT_OPTION_MD_WRITE_ACCESS) == 0)) {
 		res_OPEN4->status = NFS4ERR_ROFS;
 
@@ -1261,7 +1261,7 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check export permissions if OPEN4_SHARE_ACCESS_WRITE */
 	if (((arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE) != 0) &&
-	    ((op_ctx->export_perms->options &
+	    ((op_ctx->export_perms.options &
 	      EXPORT_OPTION_WRITE_ACCESS) == 0)) {
 		res_OPEN4->status = NFS4ERR_ROFS;
 

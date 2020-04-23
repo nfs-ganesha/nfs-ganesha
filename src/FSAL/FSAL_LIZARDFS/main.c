@@ -267,7 +267,7 @@ static fsal_status_t lzfs_fsal_create_export(
 	liz_attr_reply_t ret;
 
 	rc = liz_cred_getattr(lzfs_export->lzfs_instance,
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      SPECIAL_INODE_ROOT,
 			      &ret);
 	if (rc < 0) {

@@ -594,7 +594,7 @@ static fsal_status_t mdcache_test_access(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 
-	if (owner_skip && entry->attrs.owner == op_ctx->creds->caller_uid)
+	if (owner_skip && entry->attrs.owner == op_ctx->creds.caller_uid)
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	return fsal_test_access(obj_hdl, access_type, allowed, denied,

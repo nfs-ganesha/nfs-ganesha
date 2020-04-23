@@ -81,8 +81,7 @@ int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	_9p_init_opctx(pdfid, req9p);
 
-	if ((op_ctx->export_perms->options &
-				 EXPORT_OPTION_WRITE_ACCESS) == 0)
+	if ((op_ctx->export_perms.options & EXPORT_OPTION_WRITE_ACCESS) == 0)
 		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
 	if (*targetfid >= _9P_FID_PER_CONN)

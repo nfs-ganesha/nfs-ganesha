@@ -856,11 +856,10 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 		 */
 		LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			       "Check export perms export = %08x req = %08x",
-			       op_ctx->export_perms->options &
+			       op_ctx->export_perms.options &
 					EXPORT_OPTION_ACCESS_MASK,
 			       perm_flags);
-		if ((op_ctx->export_perms->options &
-		     perm_flags) != perm_flags) {
+		if ((op_ctx->export_perms.options & perm_flags) != perm_flags) {
 			/* Export doesn't allow requested
 			 * access for this client.
 			 */
@@ -1061,7 +1060,8 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 	compound_data_t *data = reqdata->proc_data;
 	enum nfs_req_result result;
 
-	op_ctx = &reqdata->req_ctx;
+	/* Restore the op_ctx */
+	resume_op_context(&reqdata->op_context);
 
 	/* Start by resuming the operation that suspended. */
 	result = (optabv4[data->opcode].resume)

@@ -65,28 +65,27 @@ size_t open_fd_count;
 
 static bool fsal_not_in_group_list(gid_t gid)
 {
-	const struct user_cred *creds = op_ctx->creds;
 	int i;
 
-	if (creds->caller_gid == gid) {
+	if (op_ctx->creds.caller_gid == gid) {
 
 		LogDebug(COMPONENT_FSAL,
-			 "User %u is has active group %u", creds->caller_uid,
-			 gid);
+			 "User %u is has active group %u",
+			 op_ctx->creds.caller_uid, gid);
 		return false;
 	}
-	for (i = 0; i < creds->caller_glen; i++) {
-		if (creds->caller_garray[i] == gid) {
+	for (i = 0; i < op_ctx->creds.caller_glen; i++) {
+		if (op_ctx->creds.caller_garray[i] == gid) {
 			LogDebug(COMPONENT_FSAL,
 				 "User %u is member of group %u",
-				 creds->caller_uid, gid);
+				 op_ctx->creds.caller_uid, gid);
 			return false;
 		}
 	}
 
 	LogDebug(COMPONENT_FSAL,
-		 "User %u IS NOT member of group %u", creds->caller_uid,
-		 gid);
+		 "User %u IS NOT member of group %u",
+		 op_ctx->creds.caller_uid, gid);
 	return true;
 }
 
@@ -181,12 +180,11 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 	fsal_accessflags_t access_check = 0;
 	bool not_owner;
 	char *note = "";
-	const struct user_cred *creds = op_ctx->creds;
 
 	/* Shortcut, if current user is root, then we can just bail out with
 	 * success. */
 	if (op_ctx->fsal_export->exp_ops.is_superuser(op_ctx->fsal_export,
-						      creds)) {
+						      &op_ctx->creds)) {
 		note = " (Ok for root user)";
 		goto out;
 	}
@@ -201,12 +199,12 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-	not_owner = (creds->caller_uid != current->owner);
+	not_owner = (op_ctx->creds.caller_uid != current->owner);
 
 	/* Only ownership change need to be checked for owner */
 	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_OWNER)) {
 		/* non-root is only allowed to "take ownership of file" */
-		if (attr->owner != creds->caller_uid) {
+		if (attr->owner != op_ctx->creds.caller_uid) {
 			status = fsalstat(ERR_FSAL_PERM, 0);
 			note = " (new OWNER was not user)";
 			goto out;
@@ -470,7 +468,6 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 			   struct state_t *state, struct attrlist *attr)
 {
 	fsal_status_t status = { 0, 0 };
-	const struct user_cred *creds = op_ctx->creds;
 	struct attrlist current;
 	bool is_superuser;
 
@@ -504,7 +501,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 		return status;
 
 	is_superuser = op_ctx->fsal_export->exp_ops.is_superuser(
-					op_ctx->fsal_export, creds);
+					op_ctx->fsal_export, &op_ctx->creds);
 	/* Test for the following condition from chown(2):
 	 *
 	 *     When the owner or group of an executable file are changed by an
@@ -812,11 +809,11 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 	 * if they are the same as the credentials.
 	 */
 	if ((attrs->valid_mask & ATTR_OWNER) &&
-	    attrs->owner == op_ctx->creds->caller_uid)
+	    attrs->owner == op_ctx->creds.caller_uid)
 		FSAL_UNSET_MASK(attrs->valid_mask, ATTR_OWNER);
 
 	if ((attrs->valid_mask & ATTR_GROUP) &&
-	    attrs->group == op_ctx->creds->caller_gid)
+	    attrs->group == op_ctx->creds.caller_gid)
 		FSAL_UNSET_MASK(attrs->valid_mask, ATTR_GROUP);
 
 	/* Permission checking will be done by the FSAL operation. */

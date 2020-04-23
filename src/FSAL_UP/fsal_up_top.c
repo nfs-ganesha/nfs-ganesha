@@ -530,15 +530,14 @@ static void layoutrec_completion(rpc_call_t *call)
 	struct layoutrecall_cb_data *cb_data = call->call_arg;
 	bool deleted = false;
 	state_t *state = NULL;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct fsal_obj_handle *obj = NULL;
 	struct gsh_export *export = NULL;
 	state_owner_t *owner = NULL;
 	bool ok = false;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     0, 0, UNKNOWN_REQUEST);
+	/* Initialize op_context */
+	init_op_context_simple(&op_context, NULL, NULL);
 
 	LogFullDebug(COMPONENT_NFS_CB, "status %d cb_data %p",
 		     call->cbt.v_u.v4.res.status, cb_data);
@@ -628,10 +627,9 @@ static void layoutrec_completion(rpc_call_t *call)
 
 		STATELOCK_lock(obj);
 
-		root_op_context.req_ctx.clientid =
-			&owner->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.ctx_export = export;
-		root_op_context.req_ctx.fsal_export = export->fsal_export;
+		op_ctx->clientid = &owner->so_owner.so_nfs4_owner.so_clientid;
+		op_ctx->ctx_export = export;
+		op_ctx->fsal_export = export->fsal_export;
 
 		nfs4_return_one_state(obj,
 				      LAYOUTRETURN4_FILE, circumstance,
@@ -651,7 +649,6 @@ static void layoutrec_completion(rpc_call_t *call)
 	gsh_free(cb_data);
 
 out:
-	release_root_op_context();
 
 	if (ok) {
 		/* Release the export */
@@ -663,6 +660,7 @@ out:
 		/* Release the owner */
 		dec_state_owner_ref(owner);
 	}
+	release_op_context();
 }
 
 /**
@@ -682,27 +680,24 @@ static void return_one_async(void *arg)
 	struct layoutrecall_cb_data *cb_data = arg;
 	state_t *state;
 	bool deleted = false;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct fsal_obj_handle *obj = NULL;
 	struct gsh_export *export = NULL;
 	state_owner_t *owner = NULL;
 	bool ok = false;
-
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     0, 0, UNKNOWN_REQUEST);
 
 	state = nfs4_State_Get_Pointer(cb_data->stateid_other);
 
 	ok = get_state_obj_export_owner_refs(state, &obj, &export, &owner);
 
 	if (ok) {
+		/* Initialize op_context */
+		init_op_context_simple(&op_context, export,
+				       export->fsal_export);
+
 		STATELOCK_lock(obj);
 
-		root_op_context.req_ctx.clientid =
-			&owner->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.ctx_export = export;
-		root_op_context.req_ctx.fsal_export = export->fsal_export;
+		op_ctx->clientid = &owner->so_owner.so_nfs4_owner.so_clientid;
 
 		nfs4_return_one_state(obj, LAYOUTRETURN4_FILE,
 				      circumstance_revoke, state,
@@ -711,7 +706,6 @@ static void return_one_async(void *arg)
 		STATELOCK_unlock(obj);
 	}
 
-	release_root_op_context();
 	gsh_free(cb_data);
 
 	if (state != NULL) {
@@ -728,6 +722,8 @@ static void return_one_async(void *arg)
 
 		/* Release the owner */
 		dec_state_owner_ref(owner);
+
+		release_op_context();
 	}
 }
 
@@ -743,15 +739,11 @@ static void layoutrecall_one_call(void *arg)
 	struct layoutrecall_cb_data *cb_data = arg;
 	state_t *state;
 	int code;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct fsal_obj_handle *obj = NULL;
 	struct gsh_export *export = NULL;
 	state_owner_t *owner = NULL;
 	bool ok = false;
-
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     0, 0, UNKNOWN_REQUEST);
 
 	if (cb_data->attempts == 0)
 		now(&cb_data->first_recall);
@@ -761,12 +753,13 @@ static void layoutrecall_one_call(void *arg)
 	ok = get_state_obj_export_owner_refs(state, &obj, &export, &owner);
 
 	if (ok) {
+		/* Initialize op_context */
+		init_op_context_simple(&op_context, export,
+				       export->fsal_export);
+
 		STATELOCK_lock(obj);
 
-		root_op_context.req_ctx.clientid =
-		    &owner->so_owner.so_nfs4_owner.so_clientid;
-		root_op_context.req_ctx.ctx_export = export;
-		root_op_context.req_ctx.fsal_export = export->fsal_export;
+		op_ctx->clientid = &owner->so_owner.so_nfs4_owner.so_clientid;
 
 		code = nfs_rpc_cb_single(cb_data->client, &cb_data->arg,
 					  &state->state_refer,
@@ -825,8 +818,6 @@ static void layoutrecall_one_call(void *arg)
 		gsh_free(cb_data);
 	}
 
-	release_root_op_context();
-
 	if (state != NULL) {
 		/* Release the reference taken above */
 		dec_state_t_ref(state);
@@ -841,6 +832,8 @@ static void layoutrecall_one_call(void *arg)
 
 		/* Release the owner */
 		dec_state_owner_ref(owner);
+
+		release_op_context();
 	}
 }
 
@@ -1105,9 +1098,10 @@ static void delegrecall_completion_func(rpc_call_t *call)
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	CB_RECALL4args *opcbrecall;
-	struct req_op_context *save_ctx = op_ctx, req_ctx = {0};
+	struct req_op_context op_context;
 	struct gsh_export *export = NULL;
 	bool ret = false;
+	bool used_ctx = false;
 
 	LogDebug(COMPONENT_NFS_CB, "%p %s", call,
 		 !(call->states & NFS_CB_CALL_ABORTED) ? "Success" : "Failed");
@@ -1119,19 +1113,16 @@ static void delegrecall_completion_func(rpc_call_t *call)
 		goto out_free_drc;
 	}
 
-	op_ctx = &req_ctx;
-
-	ret = get_state_obj_export_owner_refs(state, &obj,
-					     &export,
-					     NULL);
+	ret = get_state_obj_export_owner_refs(state, &obj, &export, NULL);
 
 	if (!ret || obj == NULL) {
 		LogDebug(COMPONENT_NFS_CB, "Stale file");
 		goto out_free_drc;
 	}
 
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = export->fsal_export;
+
+	init_op_context_simple(&op_context, export, export->fsal_export);
+	used_ctx = true;
 
 	if (isDebug(COMPONENT_NFS_CB)) {
 		char str[LOG_BUFF_LEN] = "\0";
@@ -1229,7 +1220,8 @@ out_free:
 	if (export != NULL)
 		put_gsh_export(export);
 
-	op_ctx = save_ctx;
+	if (used_ctx)
+		release_op_context();
 }
 
 /**
@@ -1336,9 +1328,10 @@ static void delegrevoke_check(void *ctx)
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
-	struct req_op_context *save_ctx = op_ctx, req_ctx = {0};
+	struct req_op_context op_context;
 	struct gsh_export *export = NULL;
-	bool   ret = false;
+	bool ret = false;
+	bool used_ctx = false;
 
 	state = nfs4_State_Get_Pointer(deleg_ctx->drc_stateid.other);
 
@@ -1352,20 +1345,15 @@ static void delegrevoke_check(void *ctx)
 		str_valid = true;
 	}
 
-	/* op_ctx may be used by state_del_locked and others */
-	op_ctx = &req_ctx;
-
-	ret = get_state_obj_export_owner_refs(state, &obj,
-					     &export,
-					     NULL);
+	ret = get_state_obj_export_owner_refs(state, &obj, &export, NULL);
 
 	if (!ret || obj == NULL) {
 		LogDebug(COMPONENT_NFS_CB, "Stale file");
 		goto out;
 	}
 
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = export->fsal_export;
+	init_op_context_simple(&op_context, export, export->fsal_export);
+	used_ctx = true;
 
 	if (eval_deleg_revoke(state)) {
 		if (str_valid)
@@ -1417,7 +1405,8 @@ static void delegrevoke_check(void *ctx)
 	if (export != NULL)
 		put_gsh_export(export);
 
-	op_ctx = save_ctx;
+	if (used_ctx)
+		release_op_context();
 }
 
 static void delegrecall_task(void *ctx)
@@ -1426,7 +1415,7 @@ static void delegrecall_task(void *ctx)
 	struct state_t *state;
 	struct fsal_obj_handle *obj;
 	bool   ret = false;
-	struct req_op_context *save_ctx, req_ctx = {0};
+	struct req_op_context op_context;
 	struct gsh_export *export = NULL;
 
 	state = nfs4_State_Get_Pointer(deleg_ctx->drc_stateid.other);
@@ -1437,21 +1426,14 @@ static void delegrecall_task(void *ctx)
 		return;
 	}
 
-	/* op_ctx may be used by state_del_locked and others */
-	save_ctx = op_ctx;
-	op_ctx = &req_ctx;
-
-	ret = get_state_obj_export_owner_refs(state, &obj,
-					     &export,
-					     NULL);
+	ret = get_state_obj_export_owner_refs(state, &obj, &export, NULL);
 	if (!ret || obj == NULL) {
 		LogDebug(COMPONENT_NFS_CB,
 			 "Delgation recall skipped due to stale file");
 		goto out;
 	}
 
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = export->fsal_export;
+	init_op_context_simple(&op_context, export, export->fsal_export);
 
 	/* state_del_locked is called from deleg_revoke, take the lock. */
 	STATELOCK_lock(obj);
@@ -1463,9 +1445,9 @@ static void delegrecall_task(void *ctx)
 	put_gsh_export(export);
 	op_ctx->ctx_export = NULL;
 	op_ctx->fsal_export = NULL;
+	release_op_context();
 out:
 	dec_state_t_ref(state);
-	op_ctx = save_ctx;
 }
 
 static int schedule_delegrecall_task(struct delegrecall_context *ctx,
@@ -1506,7 +1488,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 	struct state_t *state;
 	state_owner_t *owner;
 	struct delegrecall_context *drc_ctx;
-	struct req_op_context *save_ctx = op_ctx, req_ctx = {0};
+	struct req_op_context op_context;
 
 	LogDebug(COMPONENT_FSAL_UP,
 		 "FSAL_UP_DELEG: obj %p type %u",
@@ -1553,9 +1535,8 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 		}
 
 		/* op_ctx may be used by state_del_locked and others */
-		op_ctx = &req_ctx;
-		op_ctx->ctx_export = drc_ctx->drc_exp;
-		op_ctx->fsal_export = drc_ctx->drc_exp->fsal_export;
+		init_op_context_simple(&op_context, drc_ctx->drc_exp,
+				       drc_ctx->drc_exp->fsal_export);
 
 		drc_ctx->drc_clid = owner->so_owner.so_nfs4_owner.so_clientrec;
 		COPY_STATEID(&drc_ctx->drc_stateid, state);
@@ -1576,15 +1557,16 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 			put_gsh_export(drc_ctx->drc_exp);
 			dec_client_id_ref(drc_ctx->drc_clid);
 			gsh_free(drc_ctx);
+			release_op_context();
 			continue;
 		}
 		PTHREAD_MUTEX_unlock(&drc_ctx->drc_clid->cid_mutex);
 
 		delegrecall_one(obj, state, drc_ctx);
+		release_op_context();
 	}
 	STATELOCK_unlock(obj);
 
-	op_ctx = save_ctx;
 	return rc;
 }
 
@@ -1678,7 +1660,7 @@ cbgetattr_state handle_getattr_response(struct cbgetattr_context *cbg_ctx,
 	uint32_t upflags = 0;
 	struct gsh_buffdesc key;
 	fsal_status_t fsal_status = {0,};
-	struct root_op_context root_ctx;
+	struct req_op_context op_context;
 	struct timespec	timeo = { .tv_sec = time(NULL) + 5,
 				  .tv_nsec = 0 };
 
@@ -1720,9 +1702,8 @@ cbgetattr_state handle_getattr_response(struct cbgetattr_context *cbg_ctx,
 
 	event_func = (cbg_ctx->ctx_export->fsal_export->up_ops);
 
-	init_root_op_context(&root_ctx, cbg_ctx->ctx_export,
-			 cbg_ctx->ctx_export->fsal_export,
-			 0, 0, UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, cbg_ctx->ctx_export,
+			       cbg_ctx->ctx_export->fsal_export);
 
 	/* @todo : log message if event_func is NULL */
 	obj->obj_ops->handle_to_key(obj, &key);
@@ -1739,7 +1720,7 @@ cbgetattr_state handle_getattr_response(struct cbgetattr_context *cbg_ctx,
 	fsal_status = event_func->update(event_func, &key,
 					 &up_attr, upflags);
 
-	release_root_op_context();
+	release_op_context();
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		cb_state = CB_GETATTR_FAILED;
@@ -1837,11 +1818,10 @@ int send_cbgetattr(struct fsal_obj_handle *obj,
 	int ret = 0;
 	nfs_cb_argop4 argop;
 	bitmap4	*cb_attr_req;
-	struct root_op_context root_ctx;
+	struct req_op_context op_context;
 
-	init_root_op_context(&root_ctx, p_cargs->ctx_export,
-			     p_cargs->ctx_export->fsal_export,
-			     0, 0, UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, p_cargs->ctx_export,
+			       p_cargs->ctx_export->fsal_export);
 
 	LogDebug(COMPONENT_FSAL_UP, "Sending CB_GETATTR to client %s",
 		 p_cargs->clid->gsh_client->hostaddr_str);
@@ -1883,7 +1863,7 @@ out:
 		p_cargs->clid->gsh_client->hostaddr_str);
 
 	free_cbgetattr_context(p_cargs);
-	release_root_op_context();
+	release_op_context();
 	return ret;
 }
 

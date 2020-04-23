@@ -48,11 +48,6 @@ static bool setup_up_vector(struct gpfs_filesystem *gpfs_fs)
 	/* wait for upcall readiness */
 	up_ready_wait(gpfs_fs->up_vector);
 
-	/* Set up op_ctx for the thread */
-	op_ctx = &gpfs_fs->req_ctx;
-	op_ctx->fsal_export = gpfs_fs->up_vector->up_fsal_export;
-	op_ctx->ctx_export = gpfs_fs->up_vector->up_gsh_export;
-
 	return true;
 }
 
@@ -82,6 +77,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	uint32_t upflags;
 	int errsv = 0;
 	fsal_status_t fsal_status = {0,};
+	struct req_op_context op_context;
 
 	rcu_register_thread();
 
@@ -210,6 +206,12 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 			goto out;
 		}
+
+		/* Set up op_ctx for the thread */
+		init_op_context_simple(&op_context,
+				       gpfs_fs->up_vector->up_gsh_export,
+				       gpfs_fs->up_vector->up_fsal_export);
+
 		event_func = gpfs_fs->up_vector;
 
 		switch (reason) {
@@ -431,6 +433,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			LogDebug(COMPONENT_FSAL_UP,
 				"Terminating the GPFS up call thread for %d",
 				gpfs_fs->root_fd);
+			release_op_context();
 			PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 			goto out;
 
@@ -452,15 +455,18 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			 * eventually get other errors that stop this
 			 * thread.
 			 */
+			release_op_context();
 			PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 			continue; /* get next event */
 
 		default:
+			release_op_context();
 			PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 			LogWarn(COMPONENT_FSAL_UP, "Unknown event: %d", reason);
 			continue;
 		}
 
+		release_op_context();
 		PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 
 		if (FSAL_IS_ERROR(fsal_status) &&

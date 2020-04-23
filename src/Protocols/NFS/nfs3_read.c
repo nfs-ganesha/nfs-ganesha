@@ -153,7 +153,7 @@ static enum xprt_stat nfs3_read_resume(struct svc_req *req)
 	int rc;
 
 	/* Restore the op_ctx */
-	op_ctx = &reqdata->req_ctx;
+	resume_op_context(&reqdata->op_context);
 
 	/* Complete the read */
 	rc = nfs3_complete_read(data);

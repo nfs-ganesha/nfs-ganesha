@@ -179,12 +179,11 @@ static inline uint16_t eid_cache_offsetof(uint16_t k)
  */
 void export_cleanup(struct gsh_export *export)
 {
-	struct root_op_context ctx;
+	struct req_op_context op_context;
 
-	init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
-			     UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, export, export->fsal_export);
 	free_export(export);
-	release_root_op_context();
+	release_op_context();
 }
 
 /**
@@ -197,7 +196,7 @@ void export_revert(struct gsh_export *export)
 	struct avltree_node *cnode;
 	void **cache_slot = (void **)
 	     &(export_by_id.cache[eid_cache_offsetof(export->export_id)]);
-	struct root_op_context ctx;
+	struct req_op_context op_context;
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 
@@ -210,8 +209,7 @@ void export_revert(struct gsh_export *export)
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
-	init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
-			     UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, export, export->fsal_export);
 
 	if (export->has_pnfs_ds) {
 		/* once-only, so no need for lock here */
@@ -220,7 +218,7 @@ void export_revert(struct gsh_export *export)
 	}
 	put_gsh_export(export); /* Release sentinel ref */
 
-	release_root_op_context();
+	release_op_context();
 }
 
 /**
@@ -643,16 +641,15 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 
 bool mount_gsh_export(struct gsh_export *exp)
 {
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	bool rc = true;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-				NFS_V4, 0, NFS_REQUEST);
+	/* Initialize op_context */
+	init_op_context(&op_context, NULL, NULL, NULL, NFS_V4, 0, NFS_REQUEST);
 
 	if (!pseudo_mount_export(exp))
 		rc = false;
-	release_root_op_context();
+	release_op_context();
 	return rc;
 }
 
@@ -663,14 +660,13 @@ bool mount_gsh_export(struct gsh_export *exp)
 
 void unmount_gsh_export(struct gsh_export *exp)
 {
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-				NFS_V4, 0, NFS_REQUEST);
+	/* Initialize op_context */
+	init_op_context(&op_context, NULL, NULL, NULL, NFS_V4, 0, NFS_REQUEST);
 
 	pseudo_unmount_export(exp);
-	release_root_op_context();
+	release_op_context();
 }
 
 /**
@@ -840,11 +836,10 @@ static void process_unexports(void)
 void remove_all_exports(void)
 {
 	struct gsh_export *export;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-				NFS_V4, 0, NFS_REQUEST);
+	/* Initialize op_context */
+	init_op_context(&op_context, NULL, NULL, NULL, NFS_V4, 0, NFS_REQUEST);
 
 	/* Get a reference to the PseudoFS Root Export */
 	export = get_gsh_export_by_pseudo("/", true);
@@ -866,7 +861,7 @@ void remove_all_exports(void)
 	(void) foreach_gsh_export(remove_one_export, true, NULL);
 
 	process_unexports();
-	release_root_op_context();
+	release_op_context();
 }
 
 static bool prune_defunct_export(struct gsh_export *exp, void *state)
@@ -880,20 +875,20 @@ static bool prune_defunct_export(struct gsh_export *exp, void *state)
 
 void prune_defunct_exports(uint64_t generation)
 {
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
 	/*
-	 * Initialize req_ctx, we use NFSv4 types here to make paths show
+	 * Initialize op_context, we use NFSv4 types here to make paths show
 	 * up sanely in the logs.
 	 */
-	init_root_op_context(&root_op_context, NULL, NULL,
-				NFS_V4, 0, NFS_REQUEST);
+	init_op_context(&op_context, NULL, NULL, NULL,
+			NFS_V4, 0, NFS_REQUEST);
 
 	(void)foreach_gsh_export(prune_defunct_export, true, &generation);
 
 	/* now run the work */
 	process_unexports();
-	release_root_op_context();
+	release_op_context();
 }
 
 #ifdef USE_DBUS
@@ -1198,7 +1193,7 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 	char *errormsg;
 	bool rc = false;
 	bool op_ctx_set = false;
-	struct root_op_context ctx;
+	struct req_op_context op_context;
 
 	export = lookup_export(args, &errormsg);
 	if (export == NULL) {
@@ -1234,8 +1229,8 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 	/* Lots of obj_ops may be called during cleanup; make sure that an
 	 * op_ctx exists */
 	if (!op_ctx) {
-		init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
-				UNKNOWN_REQUEST);
+		init_op_context_simple(&op_context,
+				       export, export->fsal_export);
 		op_ctx_set = true;
 	}
 
@@ -1247,7 +1242,7 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 	put_gsh_export(export);
 
 	if (op_ctx_set)
-		release_root_op_context();
+		release_op_context();
 
 out:
 	return rc;
@@ -2647,7 +2642,7 @@ static bool stats_fsal(DBusMessageIter *args,
 	char *fsal_name;
 	DBusMessageIter iter;
 	struct fsal_module *fsal_hdl;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
 	dbus_message_iter_init_append(reply, &iter);
 
@@ -2666,10 +2661,10 @@ static bool stats_fsal(DBusMessageIter *args,
 		goto error;
 	}
 
-	init_root_op_context(&root_op_context, NULL, NULL,
-				     0, 0, UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, NULL, NULL);
 	fsal_hdl = lookup_fsal(fsal_name);
-	release_root_op_context();
+	release_op_context();
+
 	if (fsal_hdl == NULL) {
 		errormsg = "Incorrect FSAL name";
 		goto error;

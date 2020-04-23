@@ -347,10 +347,10 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 
 	mask |= GLAPI_SET_ATTR_MTIME;
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 

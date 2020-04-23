@@ -560,8 +560,8 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 		 * we can use the first_export_id to get a valid export for
 		 * a reaping case.
 		 */
-		struct root_op_context ctx;
-		struct req_op_context *saved_ctx = op_ctx;
+		struct req_op_context op_context;
+		bool used_ctx = false;
 		int32_t export_id;
 		struct gsh_export *export;
 
@@ -603,8 +603,9 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 				     PRIi32,
 				     export_id);
 
-			init_root_op_context(&ctx, export, export->fsal_export,
-					     0, 0, UNKNOWN_REQUEST);
+			init_op_context_simple(&op_context, export,
+					       export->fsal_export);
+			used_ctx = true;
 		} else {
 			/* We MUST have a valid op_ctx based on the conditions
 			 * we could get here. first_export_id coild be -1 or it
@@ -635,12 +636,12 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 		       );
 		entry->sub_handle = NULL;
 
-		if (op_ctx != saved_ctx) {
+		if (used_ctx) {
 			/* We had to use our own op_ctx, clean it up and revert
 			 * to the saved op_ctx.
 			 */
 			put_gsh_export(op_ctx->ctx_export);
-			op_ctx = saved_ctx;
+			release_op_context();
 		}
 	}
 
@@ -1136,8 +1137,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 	 * the iteration also adjusts glist and (in particular) glistn */
 	glist_for_each_safe(qlane->iter.glist, qlane->iter.glistn, &q->q) {
 		struct lru_q *q;
-		struct root_op_context ctx;
-		struct req_op_context *saved_ctx = op_ctx;
+		struct req_op_context op_context;
 		int32_t export_id;
 		struct gsh_export *export;
 
@@ -1190,8 +1190,8 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		   refcnt);
 #endif
 
-		init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
-				     UNKNOWN_REQUEST);
+		init_op_context_simple(&op_context, export,
+				       export->fsal_export);
 
 		/* check refcnt in range */
 		if (unlikely(refcnt > 2)) {
@@ -1232,7 +1232,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 next_lru:
 		QLOCK(qlane); /* QLOCKED */
 		put_gsh_export(export);
-		op_ctx = saved_ctx;
+		release_op_context();
 
 		++workdone;
 	} /* for_each_safe lru */

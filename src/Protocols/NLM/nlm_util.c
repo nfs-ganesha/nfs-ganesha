@@ -165,7 +165,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 	state_cookie_entry_t *cookie_entry;
 	state_nlm_async_data_t *nlm_arg =
 	    &arg->state_async_data.state_nlm_async_data;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct gsh_export *export;
 	nlm4_testargs *nlm_async_grant;
 
@@ -230,13 +230,12 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 	export = cookie_entry->sce_lock_entry->sle_export;
 	get_gsh_export_ref(export);
 
-	init_root_op_context(&root_op_context,
-			     export, export->fsal_export,
-			     NFS_V3, 0, NFS_REQUEST);
+	init_op_context(&op_context, export, export->fsal_export, NULL,
+			NFS_V3, 0, NFS_REQUEST);
 
 	state_status = state_release_grant(cookie_entry);
 
-	release_root_op_context();
+	release_op_context();
 	put_gsh_export(export);
 
 	if (state_status != STATE_SUCCESS) {

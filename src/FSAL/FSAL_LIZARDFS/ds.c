@@ -353,8 +353,8 @@ static void lzfs_fsal_pds_release(struct fsal_pnfs_ds *const pds)
 static nfsstat4 lzfs_fsal_pds_permissions(struct fsal_pnfs_ds *const pds,
 					  struct svc_req *req)
 {
-	op_ctx->export_perms->set = root_op_export_set;
-	op_ctx->export_perms->options = root_op_export_options;
+	op_ctx->export_perms.set = root_op_export_set;
+	op_ctx->export_perms.options = root_op_export_options;
 	return NFS4_OK;
 }
 

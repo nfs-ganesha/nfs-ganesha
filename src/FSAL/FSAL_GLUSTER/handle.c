@@ -284,10 +284,10 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -308,10 +308,10 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		struct dirent de;
 		struct fsal_obj_handle *obj;
 
-		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-				  &op_ctx->creds->caller_gid,
-				  op_ctx->creds->caller_glen,
-				  op_ctx->creds->caller_garray,
+		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+				  &op_ctx->creds.caller_gid,
+				  op_ctx->creds.caller_glen,
+				  op_ctx->creds.caller_garray,
 				  socket_addr(&op_ctx->client->cl_addrbuf),
 				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -430,10 +430,10 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	if (xstat)
 		glfs_free(xstat);
 #endif
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -475,10 +475,10 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -603,10 +603,10 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -706,10 +706,10 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -802,10 +802,10 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 	link_content->len = MAXPATHLEN; /* Max link path */
 	link_content->addr = gsh_malloc(link_content->len);
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -985,10 +985,10 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	now(&s_time);
 #endif
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -1036,10 +1036,10 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 	now(&s_time);
 #endif
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -1082,10 +1082,10 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	now(&s_time);
 #endif
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -1189,10 +1189,10 @@ glusterfs_create_my_fd(struct glusterfs_handle *parenthandle, const char *name,
 		     "openflags = %x, posix_flags = %x",
 		     openflags, posix_flags);
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -1209,9 +1209,9 @@ glusterfs_create_my_fd(struct glusterfs_handle *parenthandle, const char *name,
 	}
 
 	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
-	my_fd->creds.caller_uid = op_ctx->creds->caller_uid;
-	my_fd->creds.caller_gid = op_ctx->creds->caller_gid;
-	my_fd->creds.caller_glen = op_ctx->creds->caller_glen;
+	my_fd->creds.caller_uid = op_ctx->creds.caller_uid;
+	my_fd->creds.caller_gid = op_ctx->creds.caller_gid;
+	my_fd->creds.caller_glen = op_ctx->creds.caller_glen;
 	garray_copy = &my_fd->creds.caller_garray;
 
 	if ((*garray_copy) != NULL) {
@@ -1220,11 +1220,11 @@ glusterfs_create_my_fd(struct glusterfs_handle *parenthandle, const char *name,
 		*garray_copy = NULL;
 	}
 
-	if (op_ctx->creds->caller_glen) {
-		(*garray_copy) = gsh_malloc(op_ctx->creds->caller_glen
+	if (op_ctx->creds.caller_glen) {
+		(*garray_copy) = gsh_malloc(op_ctx->creds.caller_glen
 					    * sizeof(gid_t));
-		memcpy((*garray_copy), op_ctx->creds->caller_garray,
-			op_ctx->creds->caller_glen * sizeof(gid_t));
+		memcpy((*garray_copy), op_ctx->creds.caller_garray,
+			op_ctx->creds.caller_glen * sizeof(gid_t));
 	}
 
 #ifdef USE_GLUSTER_DELEGATION
@@ -1272,10 +1272,10 @@ fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
 		     "openflags = %x, posix_flags = %x",
 		     openflags, posix_flags);
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -1292,9 +1292,9 @@ fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
 
 	my_fd->glfd = glfd;
 	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
-	my_fd->creds.caller_uid = op_ctx->creds->caller_uid;
-	my_fd->creds.caller_gid = op_ctx->creds->caller_gid;
-	my_fd->creds.caller_glen = op_ctx->creds->caller_glen;
+	my_fd->creds.caller_uid = op_ctx->creds.caller_uid;
+	my_fd->creds.caller_gid = op_ctx->creds.caller_gid;
+	my_fd->creds.caller_glen = op_ctx->creds.caller_glen;
 	garray_copy = &my_fd->creds.caller_garray;
 
 	if ((*garray_copy) != NULL) {
@@ -1303,11 +1303,11 @@ fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
 		*garray_copy = NULL;
 	}
 
-	if (op_ctx->creds->caller_glen) {
-		(*garray_copy) = gsh_malloc(op_ctx->creds->caller_glen
+	if (op_ctx->creds.caller_glen) {
+		(*garray_copy) = gsh_malloc(op_ctx->creds.caller_glen
 					    * sizeof(gid_t));
-		memcpy((*garray_copy), op_ctx->creds->caller_garray,
-			op_ctx->creds->caller_glen * sizeof(gid_t));
+		memcpy((*garray_copy), op_ctx->creds.caller_garray,
+			op_ctx->creds.caller_glen * sizeof(gid_t));
 	}
 
 #ifdef USE_GLUSTER_DELEGATION
@@ -1910,10 +1910,10 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	/* Become the user because we are creating an object in this dir.
 	 */
 	/* set proper credentials */
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -2123,10 +2123,10 @@ direrr:
 
 	/* Delete the file if we actually created it. */
 	if (created) {
-		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-				  &op_ctx->creds->caller_gid,
-				  op_ctx->creds->caller_glen,
-				  op_ctx->creds->caller_garray,
+		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+				  &op_ctx->creds.caller_gid,
+				  op_ctx->creds.caller_glen,
+				  op_ctx->creds.caller_garray,
 				  socket_addr(&op_ctx->client->cl_addrbuf),
 				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -2315,10 +2315,10 @@ static void glusterfs_read2(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status))
 		goto out;
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -2426,10 +2426,10 @@ static void glusterfs_write2(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status))
 		goto out;
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -2516,10 +2516,10 @@ static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			&op_ctx->creds->caller_gid,
-			op_ctx->creds->caller_glen,
-			op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			&op_ctx->creds.caller_gid,
+			op_ctx->creds.caller_glen,
+			op_ctx->creds.caller_garray,
 			socket_addr(&op_ctx->client->cl_addrbuf),
 			socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -2603,10 +2603,10 @@ static fsal_status_t glusterfs_commit2(struct fsal_obj_handle *obj_hdl,
 
 	if (!FSAL_IS_ERROR(status)) {
 
-		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-				  &op_ctx->creds->caller_gid,
-				  op_ctx->creds->caller_glen,
-				  op_ctx->creds->caller_garray,
+		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+				  &op_ctx->creds.caller_gid,
+				  op_ctx->creds.caller_glen,
+				  op_ctx->creds.caller_garray,
 				  socket_addr(&op_ctx->client->cl_addrbuf),
 				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 #ifdef USE_GLUSTER_STAT_FETCH_API
@@ -3061,10 +3061,10 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		if (FSAL_IS_ERROR(status))
 			goto out;
 
-		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-				  &op_ctx->creds->caller_gid,
-				  op_ctx->creds->caller_glen,
-				  op_ctx->creds->caller_garray,
+		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+				  &op_ctx->creds.caller_gid,
+				  op_ctx->creds.caller_glen,
+				  op_ctx->creds.caller_garray,
 				  socket_addr(&op_ctx->client->cl_addrbuf),
 				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 #ifdef USE_GLUSTER_STAT_FETCH_API
@@ -3158,10 +3158,10 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-			  &op_ctx->creds->caller_gid,
-			  op_ctx->creds->caller_glen,
-			  op_ctx->creds->caller_garray,
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
 			  socket_addr(&op_ctx->client->cl_addrbuf),
 			  socket_addr_len(&op_ctx->client->cl_addrbuf));
 

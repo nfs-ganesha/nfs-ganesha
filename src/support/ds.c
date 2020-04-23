@@ -267,7 +267,7 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
 	/* removal has a once-only semantic */
 	if (pds != NULL) {
 		if (pds->mds_export != NULL) {
-			struct root_op_context ctx;
+			struct req_op_context op_context;
 			/* special case: avoid lookup of related export.
 			 * get_gsh_export_ref() was bumped in pnfs_ds_insert()
 			 *
@@ -275,11 +275,10 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
 			 * do not pre-clear related export (mds_export).
 			 * always check pnfs_ds_status instead.
 			 */
-			init_root_op_context(&ctx, pds->mds_export,
-					     pds->mds_export->fsal_export,
-					     0, 0, UNKNOWN_REQUEST);
+			init_op_context_simple(&op_context, pds->mds_export,
+					       pds->mds_export->fsal_export);
 			put_gsh_export(pds->mds_export);
-			release_root_op_context();
+			release_op_context();
 		}
 
 		/* Release table reference to the server.
@@ -342,13 +341,12 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	struct fsal_pnfs_ds *pds =
 		container_of(pds_fsal, struct fsal_pnfs_ds, fsal);
 	struct fsal_module *fsal;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	fsal_status_t status;
 	int errcnt;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL, 0, 0,
-			     UNKNOWN_REQUEST);
+	/* Initialize op_context */
+	init_op_context_simple(&op_context, NULL, NULL);
 
 	errcnt = fsal_load_init(node, fp->name, &fsal, err_type);
 	if (errcnt > 0)
@@ -372,7 +370,7 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 		 pds->id_servers, pds->fsal->name, pds->fsal->path);
 
 err:
-	release_root_op_context();
+	release_op_context();
 	/* Don't leak the FSAL block */
 	err_type->dispose = true;
 	return errcnt;

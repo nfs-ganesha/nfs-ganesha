@@ -689,12 +689,12 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 	if ((attrs && attrs->valid_mask & ATTR_OWNER) != 0)
 		hdl->attrs.owner = attrs->owner;
 	else
-		hdl->attrs.owner = op_ctx->creds->caller_uid;
+		hdl->attrs.owner = op_ctx->creds.caller_uid;
 
 	if ((attrs && attrs->valid_mask & ATTR_GROUP) != 0)
 		hdl->attrs.group = attrs->group;
 	else
-		hdl->attrs.group = op_ctx->creds->caller_gid;
+		hdl->attrs.group = op_ctx->creds.caller_gid;
 
 	/* Use full timer resolution */
 	now(&hdl->attrs.ctime);
@@ -1786,7 +1786,7 @@ static void
 mem_async_complete(struct fridgethr_context *ctx)
 {
 	struct mem_async_arg *async_arg = ctx->arg;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct mem_fsal_export *mem_export =
 	   container_of(async_arg->fsal_export, struct mem_fsal_export, export);
 	uint32_t async_delay = atomic_fetch_uint32_t(&mem_export->async_delay);
@@ -1803,14 +1803,13 @@ mem_async_complete(struct fridgethr_context *ctx)
 	}
 
 	/* Need an op context for the call back */
-	init_root_op_context(&root_op_context, async_arg->ctx_export,
-			     async_arg->fsal_export, 0, 0,
-			     UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, async_arg->ctx_export,
+			       async_arg->fsal_export);
 
 	async_arg->done_cb(async_arg->obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0),
 			   async_arg->io_arg, async_arg->caller_arg);
 
-	release_root_op_context();
+	release_op_context();
 
 	gsh_free(async_arg);
 }

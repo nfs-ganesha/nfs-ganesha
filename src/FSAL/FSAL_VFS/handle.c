@@ -601,7 +601,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	/* Become the user because we are creating an object in this dir.
 	 */
 
-	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, dir_hdl->fsal)) {
 		retval = EPERM;
 		status = posix2fsal_status(retval);
 		goto direrr;
@@ -813,7 +813,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		goto direrr;
 	}
 
-	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, dir_hdl->fsal)) {
 		retval = EPERM;
 		status = posix2fsal_status(retval);
 		goto direrr;
@@ -1003,7 +1003,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	/* Become the user because we are creating an object in this dir.
 	 */
-	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, dir_hdl->fsal)) {
 		retval = EPERM;
 		status = posix2fsal_status(retval);
 		goto direrr;
@@ -1454,7 +1454,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 	/* Become the user because we are creating/removing objects
 	 * in these dirs which messes with quotas and perms.
 	 */
-	if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, obj_hdl->fsal)) {
 		retval = EPERM;
 		fsal_error = posix2fsal_error(retval);
 		goto out;
@@ -1657,7 +1657,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 		goto errout;
 	}
 
-	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, dir_hdl->fsal)) {
 		retval = EPERM;
 		fsal_error = posix2fsal_error(retval);
 		goto errout;

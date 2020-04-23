@@ -323,7 +323,7 @@ static nfsstat4 one_segment(struct fsal_obj_handle *obj,
 	 * @todo This is where you would want to record layoutget
 	 * operation.  You can get the details of every segment added
 	 * here, including the segment description in
-	 * res->fsal_seg_data and clientid in *req_ctx->clientid.
+	 * res->fsal_seg_data and clientid in *op_ctx->clientid.
 	 */
 
  out:

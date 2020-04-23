@@ -322,7 +322,7 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	    || !op_ctx->fsal_export->exp_ops.fs_supports(
 					op_ctx->fsal_export,
 					fso_delegations_r)
-	    || !(op_ctx->export_perms->options & EXPORT_OPTION_DELEGATIONS)
+	    || !(op_ctx->export_perms.options & EXPORT_OPTION_DELEGATIONS)
 	    || (!owner->so_owner.so_nfs4_owner.so_confirmed
 		&& claim == CLAIM_NULL)
 	    || claim == CLAIM_DELEGATE_CUR) {
@@ -420,7 +420,7 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
 	state_status_t state_status;
 	struct nfs_client_id_t *clid;
 	nfs_fh4 fhandle;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct gsh_export *export;
 	state_owner_t *owner;
 
@@ -444,16 +444,11 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
 	reset_cbgetattr_stats(obj);
 
 	/* Build op_context for state_unlock_locked */
-	init_root_op_context(&root_op_context, NULL, NULL, 0, 0,
-			     UNKNOWN_REQUEST);
-	root_op_context.req_ctx.clientid = &clid->cid_clientid;
-	root_op_context.req_ctx.ctx_export = export;
-	root_op_context.req_ctx.fsal_export = export->fsal_export;
+	init_op_context_simple(&op_context, export, export->fsal_export);
+	op_ctx->clientid = &clid->cid_clientid;
 
 	/* release_lease_lock() returns delegation to FSAL */
 	state_status = release_lease_lock(obj, deleg_state);
-
-	release_root_op_context();
 
 	if (state_status != STATE_SUCCESS) {
 		LogDebug(COMPONENT_NFS_V4_LOCK, "state unlock failed: %d",
@@ -469,6 +464,7 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
 	/* Release references taken above */
 	dec_state_owner_ref(owner);
 	put_gsh_export(export);
+	release_op_context();
 
 	return NFS4_OK;
 }

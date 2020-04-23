@@ -133,7 +133,7 @@ static fsal_status_t lzfs_fsal_lookup_path(struct fsal_export *export_hdl,
 
 	liz_entry_t result;
 
-	rc = liz_cred_lookup(lzfs_export->lzfs_instance, op_ctx->creds,
+	rc = liz_cred_lookup(lzfs_export->lzfs_instance, &op_ctx->creds,
 			     SPECIAL_INODE_ROOT, real_path, &result);
 
 	if (rc < 0) {
@@ -215,7 +215,7 @@ static fsal_status_t lzfs_fsal_create_handle(
 
 	liz_attr_reply_t result;
 
-	rc = liz_cred_getattr(lzfs_export->lzfs_instance, op_ctx->creds,
+	rc = liz_cred_getattr(lzfs_export->lzfs_instance, &op_ctx->creds,
 			      *inode, &result);
 
 	if (rc < 0) {

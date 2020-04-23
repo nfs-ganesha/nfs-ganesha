@@ -333,8 +333,8 @@ static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	memset(&st, 0, sizeof(struct stat));
 
-	st.st_uid = op_ctx->creds->caller_uid;
-	st.st_gid = op_ctx->creds->caller_gid;
+	st.st_uid = op_ctx->creds.caller_uid;
+	st.st_gid = op_ctx->creds.caller_gid;
 	st.st_mode = fsal2unix_mode(attrs_in->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
@@ -1017,8 +1017,8 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 	memset(&st, 0, sizeof(struct stat)); /* XXX needed? */
 
-	st.st_uid = op_ctx->creds->caller_uid;
-	st.st_gid = op_ctx->creds->caller_gid;
+	st.st_uid = op_ctx->creds.caller_uid;
+	st.st_gid = op_ctx->creds.caller_gid;
 	st.st_mode = unix_mode;
 
 	uint32_t create_mask =

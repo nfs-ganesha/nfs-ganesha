@@ -234,12 +234,12 @@ static struct pseudo_fsal_obj_handle
 	if ((attrs->valid_mask & ATTR_OWNER) != 0)
 		hdl->attributes.owner = attrs->owner;
 	else
-		hdl->attributes.owner = op_ctx->creds->caller_uid;
+		hdl->attributes.owner = op_ctx->creds.caller_uid;
 
 	if ((attrs->valid_mask & ATTR_GROUP) != 0)
 		hdl->attributes.group = attrs->group;
 	else
-		hdl->attributes.group = op_ctx->creds->caller_gid;
+		hdl->attributes.group = op_ctx->creds.caller_gid;
 
 	/* Use full timer resolution */
 	now(&hdl->attributes.ctime);

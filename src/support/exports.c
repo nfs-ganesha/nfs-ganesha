@@ -736,14 +736,13 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	    container_of(exp_hdl, struct gsh_export, fsal_export);
 	struct fsal_args *fp = self_struct;
 	struct fsal_module *fsal;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	uint64_t MaxRead, MaxWrite;
 	fsal_status_t status;
 	int errcnt;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, export, NULL, 0, 0,
-			     UNKNOWN_REQUEST);
+	/* Initialize op_context */
+	init_op_context_simple(&op_context, export, NULL);
 
 	errcnt = fsal_load_init(node, fp->name, &fsal, err_type);
 	if (errcnt > 0)
@@ -772,8 +771,8 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 		goto err;
 	}
 
-	assert(root_op_context.req_ctx.fsal_export != NULL);
-	export->fsal_export = root_op_context.req_ctx.fsal_export;
+	assert(op_ctx->fsal_export != NULL);
+	export->fsal_export = op_ctx->fsal_export;
 
 	/* We are connected up to the fsal side.  Now
 	 * validate maxread/write etc with fsal params
@@ -799,7 +798,7 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	}
 
 err:
-	release_root_op_context();
+	release_op_context();
 	/* Don't leak the FSAL block */
 	err_type->dispose = true;
 	return errcnt;
@@ -823,7 +822,7 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 	struct gsh_export *export =
 	    container_of(exp_hdl, struct gsh_export, fsal_export);
 	struct fsal_args *fp = self_struct;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	uint64_t MaxRead, MaxWrite;
 	struct fsal_module *fsal;
 	fsal_status_t status;
@@ -837,9 +836,8 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 		return fsal_cfg_commit(node, link_mem, self_struct, err_type);
 	}
 
-	/* Initialize req_ctx from the probe_exp */
-	init_root_op_context(&root_op_context, probe_exp,
-			     probe_exp->fsal_export, 0, 0, UNKNOWN_REQUEST);
+	/* Initialize op_context from the probe_exp */
+	init_op_context_simple(&op_context, probe_exp, probe_exp->fsal_export);
 
 	errcnt = fsal_load_init(node, fp->name, &fsal, err_type);
 
@@ -907,7 +905,7 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 		 "Export %d FSAL config update processed",
 		 export->export_id);
 
-	release_root_op_context();
+	release_op_context();
 
 	put_gsh_export(probe_exp);
 
@@ -918,7 +916,7 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 
 err:
 
-	release_root_op_context();
+	release_op_context();
 
 	/* Don't leak the FSAL block */
 	err_type->dispose = true;
@@ -1910,7 +1908,7 @@ static int build_default_root(struct config_error_type *err_type)
 {
 	struct gsh_export *export;
 	struct fsal_module *fsal_hdl = NULL;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
 	/* See if export_id = 0 has already been specified */
 	export = get_gsh_export(0);
@@ -1940,9 +1938,8 @@ static int build_default_root(struct config_error_type *err_type)
 		 "Allocating Pseudo root export");
 	export = alloc_export();
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, export, NULL, 0, 0,
-			     UNKNOWN_REQUEST);
+	/* Initialize op_context */
+	init_op_context_simple(&op_context, export, NULL);
 
 	export->filesystem_id.major = 152;
 	export->filesystem_id.minor = 152;
@@ -2015,8 +2012,8 @@ static int build_default_root(struct config_error_type *err_type)
 
 	}
 
-	assert(root_op_context.req_ctx.fsal_export != NULL);
-	export->fsal_export = root_op_context.req_ctx.fsal_export;
+	assert(op_ctx->fsal_export != NULL);
+	export->fsal_export = op_ctx->fsal_export;
 
 	if (!insert_gsh_export(export)) {
 		export->fsal_export->exp_ops.release(export->fsal_export);
@@ -2037,12 +2034,12 @@ static int build_default_root(struct config_error_type *err_type)
 		"Export 0 (/) successfully created");
 
 	put_gsh_export(export);	/* all done, let go */
-	release_root_op_context();
+	release_op_context();
 	return 1;
 
 err_out:
 	free_export(export);
-	release_root_op_context();
+	release_op_context();
 	return -1;
 }
 
@@ -2330,34 +2327,33 @@ int init_export_root(struct gsh_export *export)
 {
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *obj;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	int my_status;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, export, export->fsal_export,
-			     0, 0, UNKNOWN_REQUEST);
+	/* Initialize op_context */
+	init_op_context_simple(&op_context, export, export->fsal_export);
 
 	/* set expire_time_attr if appropriate */
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_EXPIRE_SET) == 0 &&
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_EXPIRE_SET) == 0 &&
 	    (op_ctx->ctx_export->export_perms.set &
 	     EXPORT_OPTION_EXPIRE_SET) != 0) {
-		op_ctx->export_perms->expire_time_attr =
+		op_ctx->export_perms.expire_time_attr =
 			op_ctx->ctx_export->export_perms.expire_time_attr;
-		op_ctx->export_perms->set |= EXPORT_OPTION_EXPIRE_SET;
+		op_ctx->export_perms.set |= EXPORT_OPTION_EXPIRE_SET;
 	}
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_EXPIRE_SET) == 0 &&
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_EXPIRE_SET) == 0 &&
 	    (export_opt.conf.set & EXPORT_OPTION_EXPIRE_SET) != 0) {
-		op_ctx->export_perms->expire_time_attr =
+		op_ctx->export_perms.expire_time_attr =
 			export_opt.conf.expire_time_attr;
-		op_ctx->export_perms->set |= EXPORT_OPTION_EXPIRE_SET;
+		op_ctx->export_perms.set |= EXPORT_OPTION_EXPIRE_SET;
 	}
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_EXPIRE_SET) == 0)
-		op_ctx->export_perms->expire_time_attr =
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_EXPIRE_SET) == 0)
+		op_ctx->export_perms.expire_time_attr =
 					export_opt.def.expire_time_attr;
 
 	/* set the EXPORT_OPTION_EXPIRE_SET bit from the export
 	 * into the op_ctx */
-	op_ctx->export_perms->options |= EXPORT_OPTION_EXPIRE_SET;
+	op_ctx->export_perms.options |= EXPORT_OPTION_EXPIRE_SET;
 
 	/* Lookup for the FSAL Path */
 	LogDebug(COMPONENT_EXPORT,
@@ -2427,7 +2423,7 @@ int init_export_root(struct gsh_export *export)
 
 	my_status = 0;
 out:
-	release_root_op_context();
+	release_op_context();
 	return my_status;
 }
 
@@ -2498,7 +2494,7 @@ static void release_export(struct gsh_export *export)
 void unexport(struct gsh_export *export)
 {
 	bool op_ctx_set = false;
-	struct root_op_context ctx;
+	struct req_op_context op_context;
 
 	/* Make the export unreachable */
 	LogDebug(COMPONENT_EXPORT,
@@ -2508,15 +2504,15 @@ void unexport(struct gsh_export *export)
 	/* Lots of obj_ops may be called during cleanup; make sure that an
 	 * op_ctx exists */
 	if (!op_ctx) {
-		init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
-				UNKNOWN_REQUEST);
+		init_op_context_simple(&op_context, export,
+				       export->fsal_export);
 		op_ctx_set = true;
 	}
 
 	release_export(export);
 
 	if (op_ctx_set)
-		release_root_op_context();
+		release_op_context();
 }
 
 /**
@@ -2617,7 +2613,7 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 
 				/** @todo this change from 1.5 is not IPv6
 				 * useful.  come back to this and use the
-				 * string from client mgr inside req_ctx...
+				 * string from client mgr inside op_context...
 				 */
 				rc = nfs_ip_name_add(hostaddr,
 						     hostname,
@@ -2677,7 +2673,7 @@ bool export_check_security(struct svc_req *req)
 {
 	switch (req->rq_msg.cb_cred.oa_flavor) {
 	case AUTH_NONE:
-		if ((op_ctx->export_perms->options &
+		if ((op_ctx->export_perms.options &
 		     EXPORT_OPTION_AUTH_NONE) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support AUTH_NONE",
@@ -2687,7 +2683,7 @@ bool export_check_security(struct svc_req *req)
 		break;
 
 	case AUTH_UNIX:
-		if ((op_ctx->export_perms->options &
+		if ((op_ctx->export_perms.options &
 		     EXPORT_OPTION_AUTH_UNIX) == 0) {
 			LogInfo(COMPONENT_EXPORT,
 				"Export %s does not support AUTH_UNIX",
@@ -2698,7 +2694,7 @@ bool export_check_security(struct svc_req *req)
 
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
-		if ((op_ctx->export_perms->options &
+		if ((op_ctx->export_perms.options &
 				(EXPORT_OPTION_RPCSEC_GSS_NONE |
 				 EXPORT_OPTION_RPCSEC_GSS_INTG |
 				 EXPORT_OPTION_RPCSEC_GSS_PRIV)) == 0) {
@@ -2715,7 +2711,7 @@ bool export_check_security(struct svc_req *req)
 				     (int)svc);
 			switch (svc) {
 			case RPCSEC_GSS_SVC_NONE:
-				if ((op_ctx->export_perms->options &
+				if ((op_ctx->export_perms.options &
 				     EXPORT_OPTION_RPCSEC_GSS_NONE) == 0) {
 					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support RPCSEC_GSS_SVC_NONE",
@@ -2726,7 +2722,7 @@ bool export_check_security(struct svc_req *req)
 				break;
 
 			case RPCSEC_GSS_SVC_INTEGRITY:
-				if ((op_ctx->export_perms->options &
+				if ((op_ctx->export_perms.options &
 				     EXPORT_OPTION_RPCSEC_GSS_INTG) == 0) {
 					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support RPCSEC_GSS_SVC_INTEGRITY",
@@ -2737,7 +2733,7 @@ bool export_check_security(struct svc_req *req)
 				break;
 
 			case RPCSEC_GSS_SVC_PRIVACY:
-				if ((op_ctx->export_perms->options &
+				if ((op_ctx->export_perms.options &
 				     EXPORT_OPTION_RPCSEC_GSS_PRIV) == 0) {
 					LogInfo(COMPONENT_EXPORT,
 						"Export %s does not support RPCSEC_GSS_SVC_PRIVACY",
@@ -2830,9 +2826,10 @@ uid_t get_anonymous_uid(void)
 {
 	uid_t anon_uid;
 
-	if (op_ctx != NULL &&  op_ctx->export_perms != NULL) {
+	if (op_ctx != NULL &&
+	    (op_ctx->export_perms.set & EXPORT_OPTION_ANON_UID_SET) != 0) {
 		/* We have export_perms, use it. */
-		return op_ctx->export_perms->anonymous_uid;
+		return op_ctx->export_perms.anonymous_uid;
 	}
 
 	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
@@ -2863,9 +2860,10 @@ gid_t get_anonymous_gid(void)
 	/* Default to code default. */
 	gid_t anon_gid = export_opt.def.anonymous_gid;
 
-	if (op_ctx != NULL &&  op_ctx->export_perms != NULL) {
+	if (op_ctx != NULL &&
+	    (op_ctx->export_perms.set & EXPORT_OPTION_ANON_GID_SET) != 0) {
 		/* We have export_perms, use it. */
-		return op_ctx->export_perms->anonymous_gid;
+		return op_ctx->export_perms.anonymous_gid;
 	}
 
 	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
@@ -2898,13 +2896,10 @@ void export_check_access(void)
 	sockaddr_t alt_hostaddr;
 	sockaddr_t *hostaddr = NULL;
 
-	assert(op_ctx != NULL);
-	assert(op_ctx->export_perms != NULL);
-
 	/* Initialize permissions to allow nothing, anonymous_uid and
 	 * anonymous_gid will get set farther down.
 	 */
-	memset(op_ctx->export_perms, 0, sizeof(*op_ctx->export_perms));
+	memset(&op_ctx->export_perms, 0, sizeof(op_ctx->export_perms));
 
 	if (op_ctx->ctx_export != NULL) {
 		/* Take lock */
@@ -2933,45 +2928,45 @@ void export_check_access(void)
 	client = client_match(hostaddr, op_ctx->ctx_export);
 	if (client != NULL) {
 		/* Take client options */
-		op_ctx->export_perms->options = client->client_perms.options &
+		op_ctx->export_perms.options = client->client_perms.options &
 						 client->client_perms.set;
 
 		if (client->client_perms.set & EXPORT_OPTION_ANON_UID_SET)
-			op_ctx->export_perms->anonymous_uid =
+			op_ctx->export_perms.anonymous_uid =
 					client->client_perms.anonymous_uid;
 
 		if (client->client_perms.set & EXPORT_OPTION_ANON_GID_SET)
-			op_ctx->export_perms->anonymous_gid =
+			op_ctx->export_perms.anonymous_gid =
 					client->client_perms.anonymous_gid;
 
-		op_ctx->export_perms->set = client->client_perms.set;
+		op_ctx->export_perms.set = client->client_perms.set;
 	}
 
 	/* Any options not set by the client, take from the export */
-	op_ctx->export_perms->options |=
+	op_ctx->export_perms.options |=
 				op_ctx->ctx_export->export_perms.options &
 				op_ctx->ctx_export->export_perms.set &
-				~op_ctx->export_perms->set;
+				~op_ctx->export_perms.set;
 
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
 	    (op_ctx->ctx_export->export_perms.set &
 	     EXPORT_OPTION_ANON_UID_SET) != 0)
-		op_ctx->export_perms->anonymous_uid =
+		op_ctx->export_perms.anonymous_uid =
 			op_ctx->ctx_export->export_perms.anonymous_uid;
 
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
 	    (op_ctx->ctx_export->export_perms.set &
 	     EXPORT_OPTION_ANON_GID_SET) != 0)
-		op_ctx->export_perms->anonymous_gid =
+		op_ctx->export_perms.anonymous_gid =
 			op_ctx->ctx_export->export_perms.anonymous_gid;
 
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_EXPIRE_SET) == 0 &&
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_EXPIRE_SET) == 0 &&
 	    (op_ctx->ctx_export->export_perms.set &
 	     EXPORT_OPTION_EXPIRE_SET) != 0)
-		op_ctx->export_perms->expire_time_attr =
+		op_ctx->export_perms.expire_time_attr =
 			op_ctx->ctx_export->export_perms.expire_time_attr;
 
-	op_ctx->export_perms->set |= op_ctx->ctx_export->export_perms.set;
+	op_ctx->export_perms.set |= op_ctx->ctx_export->export_perms.set;
 
  no_export:
 
@@ -2980,44 +2975,44 @@ void export_check_access(void)
 	/* Any options not set by the client or export, take from the
 	 *  EXPORT_DEFAULTS block.
 	 */
-	op_ctx->export_perms->options |= export_opt.conf.options &
+	op_ctx->export_perms.options |= export_opt.conf.options &
 					  export_opt.conf.set &
-					  ~op_ctx->export_perms->set;
+					  ~op_ctx->export_perms.set;
 
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_ANON_UID_SET) == 0 &&
 	    (export_opt.conf.set & EXPORT_OPTION_ANON_UID_SET) != 0)
-		op_ctx->export_perms->anonymous_uid =
+		op_ctx->export_perms.anonymous_uid =
 					export_opt.conf.anonymous_uid;
 
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_ANON_GID_SET) == 0 &&
 	    (export_opt.conf.set & EXPORT_OPTION_ANON_GID_SET) != 0)
-		op_ctx->export_perms->anonymous_gid =
+		op_ctx->export_perms.anonymous_gid =
 					export_opt.conf.anonymous_gid;
 
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_EXPIRE_SET) == 0 &&
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_EXPIRE_SET) == 0 &&
 	    (export_opt.conf.set & EXPORT_OPTION_EXPIRE_SET) != 0)
-		op_ctx->export_perms->expire_time_attr =
+		op_ctx->export_perms.expire_time_attr =
 			export_opt.conf.expire_time_attr;
 
-	op_ctx->export_perms->set |= export_opt.conf.set;
+	op_ctx->export_perms.set |= export_opt.conf.set;
 
 	/* And finally take any options not yet set from global defaults */
-	op_ctx->export_perms->options |= export_opt.def.options &
-					  ~op_ctx->export_perms->set;
+	op_ctx->export_perms.options |= export_opt.def.options &
+					  ~op_ctx->export_perms.set;
 
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_ANON_UID_SET) == 0)
-		op_ctx->export_perms->anonymous_uid =
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_ANON_UID_SET) == 0)
+		op_ctx->export_perms.anonymous_uid =
 					export_opt.def.anonymous_uid;
 
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_ANON_GID_SET) == 0)
-		op_ctx->export_perms->anonymous_gid =
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_ANON_GID_SET) == 0)
+		op_ctx->export_perms.anonymous_gid =
 					export_opt.def.anonymous_gid;
 
-	if ((op_ctx->export_perms->set & EXPORT_OPTION_EXPIRE_SET) == 0)
-		op_ctx->export_perms->expire_time_attr =
+	if ((op_ctx->export_perms.set & EXPORT_OPTION_EXPIRE_SET) == 0)
+		op_ctx->export_perms.expire_time_attr =
 					export_opt.def.expire_time_attr;
 
-	op_ctx->export_perms->set |= export_opt.def.set;
+	op_ctx->export_perms.set |= export_opt.def.set;
 
 	if (isMidDebug(COMPONENT_EXPORT)) {
 		char perms[1024] = "\0";
@@ -3052,7 +3047,7 @@ void export_check_access(void)
 			    perms);
 		display_reset_buffer(&dspbuf);
 
-		(void) StrExportOptions(&dspbuf, op_ctx->export_perms);
+		(void) StrExportOptions(&dspbuf, &op_ctx->export_perms);
 		LogMidDebug(COMPONENT_EXPORT,
 			    "Final options   (%s)",
 			    perms);

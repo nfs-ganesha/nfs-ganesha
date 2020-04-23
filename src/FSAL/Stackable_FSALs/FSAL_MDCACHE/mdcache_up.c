@@ -46,13 +46,11 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 {
 	mdcache_entry_t *entry;
 	fsal_status_t status;
-	struct req_op_context *save_ctx, req_ctx = {0};
+	struct req_op_context op_context;
 	mdcache_key_t key;
 
-	req_ctx.ctx_export = vec->up_gsh_export;
-	req_ctx.fsal_export = vec->up_fsal_export;
-	save_ctx = op_ctx;
-	op_ctx = &req_ctx;
+	init_op_context_simple(&op_context, vec->up_gsh_export,
+			       vec->up_fsal_export);
 
 	key.fsal = vec->up_fsal_export->sub_export->fsal;
 	cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
@@ -85,7 +83,8 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	mdcache_put(entry);
 
 out:
-	op_ctx = save_ctx;
+
+	release_op_context();
 	return status;
 }
 
@@ -169,7 +168,7 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	fsal_status_t status;
 	/* Have necessary changes been made? */
 	bool mutatis_mutandis = false;
-	struct req_op_context *save_ctx, req_ctx = {0};
+	struct req_op_context op_context;
 	mdcache_key_t key;
 	attrmask_t mask_set = 0;
 
@@ -192,10 +191,8 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	req_ctx.ctx_export = vec->up_gsh_export;
-	req_ctx.fsal_export = vec->up_fsal_export;
-	save_ctx = op_ctx;
-	op_ctx = &req_ctx;
+	init_op_context_simple(&op_context, vec->up_gsh_export,
+			       vec->up_fsal_export);
 
 	key.fsal = vec->up_fsal_export->sub_export->fsal;
 	cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
@@ -395,7 +392,8 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 put:
 	mdcache_put(entry);
 out:
-	op_ctx = save_ctx;
+
+	release_op_context();
 	return status;
 }
 
@@ -440,16 +438,16 @@ state_status_t mdc_up_lock_grant(const struct fsal_up_vector *vec,
 {
 	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;
-	struct root_op_context root_ctx;
+	struct req_op_context op_context;
 
 	/* Initialize op context */
-	init_root_op_context(&root_ctx, vec->up_gsh_export,
-		vec->up_fsal_export, 0, 0, UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, vec->up_gsh_export,
+			       vec->up_fsal_export);
 
 	rc = myself->super_up_ops.lock_grant(vec, file, owner,
 					     lock_param);
 
-	release_root_op_context();
+	release_op_context();
 
 	return rc;
 }
@@ -471,16 +469,16 @@ state_status_t mdc_up_lock_avail(const struct fsal_up_vector *vec,
 {
 	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;
-	struct root_op_context root_ctx;
+	struct req_op_context op_context;
 
 	/* Initialize op context */
-	init_root_op_context(&root_ctx, vec->up_gsh_export,
-		vec->up_fsal_export, 0, 0, UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, vec->up_gsh_export,
+			       vec->up_fsal_export);
 
 	rc = myself->super_up_ops.lock_avail(vec, file, owner,
 					     lock_param);
 
-	release_root_op_context();
+	release_op_context();
 
 	return rc;
 }
@@ -511,17 +509,15 @@ state_status_t mdc_up_layoutrecall(const struct fsal_up_vector *vec,
 {
 	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;
-	struct req_op_context *save_ctx, req_ctx = {0};
+	struct req_op_context op_context;
 
-	req_ctx.ctx_export = vec->up_gsh_export;
-	req_ctx.fsal_export = vec->up_fsal_export;
-	save_ctx = op_ctx;
-	op_ctx = &req_ctx;
+	init_op_context_simple(&op_context, vec->up_gsh_export,
+			       vec->up_fsal_export);
 
 	rc = myself->super_up_ops.layoutrecall(vec, handle, layout_type,
 					       changed, segment, cookie, spec);
 
-	op_ctx = save_ctx;
+	release_op_context();
 
 	return rc;
 }
@@ -538,16 +534,14 @@ state_status_t mdc_up_delegrecall(const struct fsal_up_vector *vec,
 {
 	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;
-	struct req_op_context *save_ctx, req_ctx = {0};
+	struct req_op_context op_context;
 
-	req_ctx.ctx_export = vec->up_gsh_export;
-	req_ctx.fsal_export = vec->up_fsal_export;
-	save_ctx = op_ctx;
-	op_ctx = &req_ctx;
+	init_op_context_simple(&op_context, vec->up_gsh_export,
+			       vec->up_fsal_export);
 
 	rc = myself->super_up_ops.delegrecall(vec, handle);
 
-	op_ctx = save_ctx;
+	release_op_context();
 
 	return rc;
 }

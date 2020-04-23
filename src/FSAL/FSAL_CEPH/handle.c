@@ -100,7 +100,7 @@ static fsal_status_t ceph_fsal_lookup(struct fsal_obj_handle *dir_pub,
 	LogFullDebug(COMPONENT_FSAL, "Lookup %s", path);
 
 	rc = fsal_ceph_ll_lookup(export->cmount, dir->i, path, &i, &stx,
-					!!attrs_out, op_ctx->creds);
+					!!attrs_out, &op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -196,7 +196,7 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
 
 	rc = fsal_ceph_ll_opendir(export->cmount, dir->i, &dir_desc,
-				  op_ctx->creds);
+				  &op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -212,7 +212,7 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 
 		rc = fsal_ceph_readdirplus(export->cmount, dir_desc, dir->i,
 					   &de, &stx, want, 0, &i,
-					   op_ctx->creds);
+					   &op_ctx->creds);
 		if (rc < 0) {
 			fsal_status = ceph2fsal_error(rc);
 			goto closedir;
@@ -316,14 +316,14 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "mode = %o uid=%d gid=%d",
-		     attrib->mode, (int) op_ctx->creds->caller_uid,
-		     (int) op_ctx->creds->caller_gid);
+		     attrib->mode, (int) op_ctx->creds.caller_uid,
+		     (int) op_ctx->creds.caller_gid);
 
 	unix_mode = fsal2unix_mode(attrib->mode)
 		& ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	rc = fsal_ceph_ll_mkdir(export->cmount, dir->i, name, unix_mode, &i,
-			&stx, !!attrs_out, op_ctx->creds);
+			&stx, !!attrs_out, &op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -445,7 +445,7 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 	}
 
 	rc = fsal_ceph_ll_mknod(export->cmount, dir->i, name, unix_mode,
-			unix_dev, &i, &stx, !!attrs_out, op_ctx->creds);
+			unix_dev, &i, &stx, !!attrs_out, &op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -532,7 +532,7 @@ static fsal_status_t ceph_fsal_symlink(struct fsal_obj_handle *dir_hdl,
 	fsal_status_t status;
 
 	rc = fsal_ceph_ll_symlink(export->cmount, dir->i, name, link_path,
-			      &i, &stx, !!attrs_out, op_ctx->creds);
+			      &i, &stx, !!attrs_out, &op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -604,7 +604,7 @@ static fsal_status_t ceph_fsal_readlink(struct fsal_obj_handle *link_pub,
 	char content[PATH_MAX];
 
 	rc = fsal_ceph_ll_readlink(export->cmount, link->i, content,
-				   PATH_MAX, op_ctx->creds);
+				   PATH_MAX, &op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -647,7 +647,7 @@ static fsal_status_t ceph_fsal_getattrs(struct fsal_obj_handle *handle_pub,
 #endif				/* CEPHFS_POSIX_ACL */
 
 	rc = fsal_ceph_ll_getattr(export->cmount, handle->i, &stx,
-				CEPH_STATX_ATTR_MASK, op_ctx->creds);
+				CEPH_STATX_ATTR_MASK, &op_ctx->creds);
 	if (rc < 0)
 		goto out_err;
 
@@ -706,7 +706,7 @@ static fsal_status_t ceph_fsal_link(struct fsal_obj_handle *handle_pub,
 		container_of(destdir_pub, struct ceph_handle, handle);
 
 	rc = fsal_ceph_ll_link(export->cmount, handle->i, destdir->i, name,
-				op_ctx->creds);
+				&op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -746,7 +746,7 @@ static fsal_status_t ceph_fsal_rename(struct fsal_obj_handle *obj_hdl,
 		container_of(newdir_pub, struct ceph_handle, handle);
 
 	rc = fsal_ceph_ll_rename(export->cmount, olddir->i, old_name,
-					newdir->i, new_name, op_ctx->creds);
+					newdir->i, new_name, &op_ctx->creds);
 	if (rc < 0) {
 		/*
 		 * RFC5661, section 18.26.3 - renaming on top of a non-empty
@@ -792,10 +792,10 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
 
 	if (obj_pub->type != DIRECTORY) {
 		rc = fsal_ceph_ll_unlink(export->cmount, dir->i, name,
-					op_ctx->creds);
+					&op_ctx->creds);
 	} else {
 		rc = fsal_ceph_ll_rmdir(export->cmount, dir->i, name,
-					op_ctx->creds);
+					&op_ctx->creds);
 	}
 
 	if (rc < 0) {
@@ -839,7 +839,7 @@ static fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
 		     openflags, posix_flags);
 
 	rc = fsal_ceph_ll_open(export->cmount, myself->i, posix_flags,
-				&my_fd->fd, op_ctx->creds);
+				&my_fd->fd, &op_ctx->creds);
 
 	if (rc < 0) {
 		my_fd->fd = NULL;
@@ -1208,7 +1208,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			/* Refresh the attributes */
 			retval = fsal_ceph_ll_getattr(export->cmount,
 					myself->i, &stx, !!attrs_out,
-					op_ctx->creds);
+					&op_ctx->creds);
 
 			if (retval == 0) {
 				LogFullDebug(COMPONENT_FSAL,
@@ -1370,7 +1370,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 	retval = fsal_ceph_ll_create(export->cmount,  myself->i, name,
 				unix_mode, posix_flags, &i, &fd, &stx,
-				!!attrs_out, op_ctx->creds);
+				!!attrs_out, &op_ctx->creds);
 
 	if (retval < 0) {
 		LogFullDebug(COMPONENT_FSAL,
@@ -1392,7 +1392,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		posix_flags &= ~O_EXCL;
 		retval = fsal_ceph_ll_create(export->cmount,  myself->i,
 				name, unix_mode, posix_flags, &i, &fd,
-				&stx, !!attrs_out, op_ctx->creds);
+				&stx, !!attrs_out, &op_ctx->creds);
 		if (retval < 0) {
 			LogFullDebug(COMPONENT_FSAL,
 				     "Non-exclusive Create %s failed with %s",
@@ -1520,7 +1520,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	if (created) {
 		/* Remove the file we just created */
 		fsal_ceph_ll_unlink(export->cmount, myself->i, name,
-					op_ctx->creds);
+					&op_ctx->creds);
 	}
 
 	return status;
@@ -1918,8 +1918,7 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 	bool closefd = false;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
-	struct user_cred root_creds = {};
-	struct user_cred *saved_creds = op_ctx->creds;
+	struct user_cred saved_creds = op_ctx->creds;
 
 
 	/*
@@ -1928,7 +1927,7 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 	 * permissions since it was opened by the writer, so open the file
 	 * with root creds here since we're just doing a fsync.
 	 */
-	op_ctx->creds = &root_creds;
+	memset(&op_ctx->creds, 0, sizeof(op_ctx->creds));
 	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_WRITE,
 				 (struct fsal_fd *)&myself->fd, &myself->share,
 				 ceph_open_func, ceph_close_func,
@@ -2410,7 +2409,7 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 #endif
 
 	rc = fsal_ceph_ll_setattr(export->cmount, myself->i, &stx, mask,
-					op_ctx->creds);
+					&op_ctx->creds);
 	if (rc < 0) {
 		LogDebug(COMPONENT_FSAL,
 			 "setattrx returned %s (%d)",
@@ -2423,7 +2422,7 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 				export->sec_label_xattr,
 				attrib_set->sec_label.slai_data.slai_data_val,
 				attrib_set->sec_label.slai_data.slai_data_len,
-				0, op_ctx->creds);
+				0, &op_ctx->creds);
 		if (rc < 0) {
 			status = ceph2fsal_error(rc);
 			goto out;

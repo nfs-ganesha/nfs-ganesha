@@ -258,7 +258,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 		}
 		ceph_status = fsal_ceph_ll_open(
 			export->cmount, ds->wire.wire.vi,
-			O_WRONLY, &descriptor, op_ctx->creds);
+			O_WRONLY, &descriptor, &op_ctx->creds);
 		if (ceph_status != 0) {
 			LogMajor(COMPONENT_FSAL,
 				 "Open failed with: %d", ceph_status);

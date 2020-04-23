@@ -58,7 +58,7 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	getquota_rslt *qres = &res->res_rquota_getquota;
 	char path[MAXPATHLEN];
 	int quota_id;
-	struct root_op_context root_ctx;
+	struct req_op_context op_context;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling RQUOTA_GETQUOTA");
@@ -112,11 +112,7 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	init_root_op_context(&root_ctx, exp, exp->fsal_export, 0, 0,
-			     UNKNOWN_REQUEST);
-
-	op_ctx->ctx_export = exp;
-	op_ctx->fsal_export = exp->fsal_export;
+	init_op_context_simple(&op_context, exp, exp->fsal_export);
 
 	/* Get creds */
 	if (nfs_req_creds(req) == NFS4ERR_ACCESS) {
@@ -157,7 +153,7 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (exp != NULL) {
 		put_gsh_export(exp);
-		release_root_op_context();
+		release_op_context();
 	}
 
 	return NFS_REQ_OK;

@@ -128,7 +128,7 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 */
 	export_check_access();
 
-	if ((op_ctx->export_perms->options & EXPORT_OPTION_NFSV3) == 0) {
+	if ((op_ctx->export_perms.options & EXPORT_OPTION_NFSV3) == 0) {
 		LogInfo(COMPONENT_NFSPROTO,
 			"MOUNT: Export entry %s does not support NFS v3 for client %s",
 			export_path(export),
@@ -180,20 +180,20 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 */
 #ifdef _HAVE_GSSAPI
 	if (nfs_param.krb5_param.active_krb5 == true) {
-		if (op_ctx->export_perms->options &
+		if (op_ctx->export_perms.options &
 		    EXPORT_OPTION_RPCSEC_GSS_PRIV)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
-		if (op_ctx->export_perms->options &
+		if (op_ctx->export_perms.options &
 		    EXPORT_OPTION_RPCSEC_GSS_INTG)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
-		if (op_ctx->export_perms->options &
+		if (op_ctx->export_perms.options &
 		    EXPORT_OPTION_RPCSEC_GSS_NONE)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
 	}
 #endif
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
 		auth_flavor[index_auth++] = AUTH_UNIX;
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_NONE)
 		auth_flavor[index_auth++] = AUTH_NONE;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {

@@ -182,7 +182,7 @@ mem_rand_obj(struct mem_fsal_export *mfe)
  *
  * - Pick a random obj in each export, and invalidate it
  *
- * @param[in] ctx	Thread context
+ * @param[in] ctx	Thread fridge context
  * @return Return description
  */
 static void

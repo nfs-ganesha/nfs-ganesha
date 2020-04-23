@@ -231,7 +231,7 @@ int ceph_get_posix_acl(struct ceph_export *export,
 
 	/* Get extended attribute size */
 	size = fsal_ceph_ll_getxattr(export->cmount, objhandle->i, name,
-				NULL, 0, op_ctx->creds);
+				NULL, 0, &op_ctx->creds);
 	if (size <= 0) {
 		LogFullDebug(COMPONENT_FSAL, "getxattr returned %d", size);
 		return 0;
@@ -241,7 +241,7 @@ int ceph_get_posix_acl(struct ceph_export *export,
 
 	/* Read extended attribute's value */
 	rc = fsal_ceph_ll_getxattr(export->cmount, objhandle->i, name,
-				value, size, op_ctx->creds);
+				value, size, &op_ctx->creds);
 	if (rc < 0) {
 		LogMajor(COMPONENT_FSAL, "getxattr returned %d", rc);
 		if (rc == -ENODATA) {
@@ -324,7 +324,7 @@ fsal_status_t ceph_set_acl(struct ceph_export *export,
 	}
 
 	rc = fsal_ceph_ll_setxattr(export->cmount, objhandle->i,
-				name, value, size, 0, op_ctx->creds);
+				name, value, size, 0, &op_ctx->creds);
 	if (rc < 0) {
 		status = ceph2fsal_error(rc);
 	}

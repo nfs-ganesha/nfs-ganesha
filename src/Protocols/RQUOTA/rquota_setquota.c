@@ -93,7 +93,7 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	struct gsh_export *exp = NULL;
 	char *qpath;
 	char path[MAXPATHLEN];
-	struct root_op_context root_ctx;
+	struct req_op_context op_context;
 
 	qres->status = Q_EPERM;
 
@@ -138,11 +138,7 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 		goto out;
 	}
 
-	init_root_op_context(&root_ctx, exp, exp->fsal_export, 0, 0,
-			     UNKNOWN_REQUEST);
-
-	op_ctx->ctx_export = exp;
-	op_ctx->fsal_export = exp->fsal_export;
+	init_op_context_simple(&op_context, exp, exp->fsal_export);
 
 	/* Get creds */
 	if (nfs_req_creds(req) == NFS4ERR_ACCESS) {
@@ -200,7 +196,7 @@ out:
 
 	if (exp != NULL) {
 		put_gsh_export(exp);
-		release_root_op_context();
+		release_op_context();
 	}
 
 	return NFS_REQ_OK;

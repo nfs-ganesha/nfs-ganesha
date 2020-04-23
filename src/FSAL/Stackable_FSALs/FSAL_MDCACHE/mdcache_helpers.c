@@ -819,7 +819,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	if (nentry->attrs.expire_time_attr == 0) {
 		nentry->attrs.expire_time_attr =
-		    op_ctx->export_perms->expire_time_attr;
+		    op_ctx->export_perms.expire_time_attr;
 	}
 
 	/* Validate the attributes we just set. */

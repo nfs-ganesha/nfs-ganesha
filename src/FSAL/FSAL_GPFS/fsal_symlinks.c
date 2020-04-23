@@ -124,7 +124,7 @@ GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl, const char *linkname,
 	 * for proper ownership assignment.
 	 */
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 
 	rc = symlinkat(linkcontent, fd, linkname);
 	errsv = errno;

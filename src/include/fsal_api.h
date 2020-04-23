@@ -363,6 +363,15 @@ struct io_hints {
 	uint32_t hints;
 };
 
+enum request_type {
+	UNKNOWN_REQUEST,
+	NFS_CALL,
+	NFS_REQUEST,
+#ifdef _USE_9P
+	_9P_REQUEST,
+#endif				/* _USE_9P */
+};
+
 /**
  * @brief request op context
  *
@@ -378,26 +387,13 @@ struct io_hints {
  * operation for V2,3 and the compound for V4+.  All elements and what
  * they point to are invariant for the lifetime.
  *
- * NOTE: This is an across-the-api shared structure.  It must survive with
- *       older consumers of its contents.  Future development can change
- *       this struct so long as it follows the rules:
- *
- *       1. New elements are appended at the end, never inserted in the middle.
- *
- *       2. This structure _only_ contains pointers and simple scalar values.
- *
- *       3. Changing an already defined struct pointer is strictly not allowed.
- *
- *       4. This struct is always passed by reference, never by value.
- *
- *       5. This struct is never copied/saved.
- *
- *       6. Code changes are first introduced in the core.  Assume the fsal
- *          module does not know and the code will still do the right thing.
+ * NOTE: This is an across-the-api shared structure.  Changing it implies a
+ *       change in the FSAL API.
  */
 
 struct req_op_context {
-	struct user_cred *creds;	/*< resolved user creds from request */
+	struct req_op_context *saved_op_ctx; /* saved op_ctx */
+	struct user_cred creds;	/*< resolved user creds from request */
 	struct user_cred original_creds;	/*< Saved creds */
 	struct group_data *caller_gdata;
 	gid_t *caller_garray_copy;	/*< Copied garray from AUTH_SYS */
@@ -408,16 +404,16 @@ struct req_op_context {
 					   unknown/not applicable. */
 	uint32_t nfs_vers;	/*< NFS protocol version of request */
 	uint32_t nfs_minorvers;	/*< NFSv4 minor version */
-	uint32_t req_type;	/*< request_type NFS | 9P */
+	enum request_type req_type;	/*< request_type NFS | 9P */
 	struct gsh_client *client;	/*< client host info including stats */
 	struct gsh_export *ctx_export;	/*< current export */
 	struct fsal_export *fsal_export;	/*< current fsal export */
-	struct export_perms *export_perms;	/*< Effective export perms */
+	struct export_perms export_perms;	/*< Effective export perms */
 	nsecs_elapsed_t start_time;	/*< start time of this op/request */
 	void *fsal_private;		/*< private for FSAL use */
+	void *proto_private;		/*< private for protocol layer use */
 	struct fsal_module *fsal_module;	/*< current fsal module */
 	struct fsal_pnfs_ds *fsal_pnfs_ds;	/*< current pNFS DS */
-	/* add new context members here */
 };
 
 /**

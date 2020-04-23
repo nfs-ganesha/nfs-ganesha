@@ -49,7 +49,7 @@ GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
 
 	/* call to filesystem */
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_create(dir_hdl, filename, unix_mode | S_IFREG,
 				      0, gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
@@ -77,7 +77,7 @@ GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
 
 	/* call to filesystem */
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_create(dir_hdl, filename, unix_mode | S_IFREG,
 				      posix_flags, gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
@@ -126,7 +126,7 @@ GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
 
 	/* creates the directory and get its handle */
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_create(dir_hdl, dir_name, unix_mode | S_IFDIR,
 				      0, gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
@@ -170,7 +170,7 @@ GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
 
 	/* Create the link on the filesystem */
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_link_fh(export_fd, gpfs_fh,
 				       dest_dir->handle, linkname);
 
@@ -241,7 +241,7 @@ GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_mknode(dir_hdl, node_name, unix_mode, unix_dev,
 				      gpfs_fh, NULL);
 

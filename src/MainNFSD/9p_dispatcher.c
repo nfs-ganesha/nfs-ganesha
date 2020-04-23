@@ -303,15 +303,11 @@ static void _9p_enqueue_req(struct _9p_request_data *reqdata)
  */
 static void _9p_execute(struct _9p_request_data *req9p)
 {
-	struct req_op_context req_ctx;
-	struct export_perms export_perms;
+	struct req_op_context op_context;
 
-	memset(&req_ctx, 0, sizeof(struct req_op_context));
-	memset(&export_perms, 0, sizeof(struct export_perms));
-	op_ctx = &req_ctx;
-	op_ctx->caller_addr = (sockaddr_t *)&req9p->pconn->addrpeer;
-	op_ctx->req_type = _9P_REQUEST;
-	op_ctx->export_perms = &export_perms;
+	init_op_context(&op_context, NULL, NULL,
+			(sockaddr_t *)&req9p->pconn->addrpeer,
+			0, 0, _9P_REQUEST);
 
 	if (req9p->pconn->trans_type == _9P_TCP)
 		_9p_tcp_process_request(req9p);
@@ -319,7 +315,7 @@ static void _9p_execute(struct _9p_request_data *req9p)
 	else if (req9p->pconn->trans_type == _9P_RDMA)
 		_9p_rdma_process_request(req9p);
 #endif
-	op_ctx = NULL;
+	release_op_context();
 }				/* _9p_execute */
 
 /**

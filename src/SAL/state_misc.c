@@ -1362,18 +1362,17 @@ void dump_all_owners(void)
 
 void state_release_export(struct gsh_export *export)
 {
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, export, export->fsal_export,
-			     0, 0, UNKNOWN_REQUEST);
+	/* Initialize op_context */
+	init_op_context_simple(&op_context, export, export->fsal_export);
 
 	state_export_unlock_all();
 	state_export_release_nfs4_state();
 #ifdef _USE_NLM
 	state_export_unshare_all();
 #endif /* _USE_NLM */
-	release_root_op_context();
+	release_op_context();
 }
 
 /** @} */

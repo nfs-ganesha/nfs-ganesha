@@ -1116,7 +1116,7 @@ gpfs_commit2(struct fsal_obj_handle *obj_hdl, off_t offset, size_t len)
 
 	if (!FSAL_IS_ERROR(status)) {
 
-		fsal_set_credentials(op_ctx->creds);
+		fsal_set_credentials(&op_ctx->creds);
 
 		status = gpfs_commit_fd(out_fd->fd, obj_hdl, offset, len);
 

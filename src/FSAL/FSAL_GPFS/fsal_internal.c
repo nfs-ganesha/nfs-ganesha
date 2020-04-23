@@ -313,7 +313,7 @@ fsal_internal_unlink(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	statarg.handle = gpfs_fh;
 	statarg.buf = buf;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 
 	rc = gpfs_ganesha(OPENHANDLE_UNLINK_BY_NAME, &statarg);
 	errsv = errno;
@@ -432,7 +432,7 @@ fsal_internal_rename_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_old,
 	renamearg.old_fh = gpfs_fh_old;
 	renamearg.new_fh = gpfs_fh_new;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 
 	rc = gpfs_ganesha(OPENHANDLE_RENAME_BY_FH, &renamearg);
 	errsv = errno;
@@ -644,7 +644,7 @@ fsal_set_xstat_by_handle(int dirfd,
 	   implements sparse files, so blocks of all 0 will not actually
 	   be allocated.
 	 */
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 
 	rc = gpfs_ganesha(OPENHANDLE_SET_XSTAT, &xstatarg);
 	errsv = errno;

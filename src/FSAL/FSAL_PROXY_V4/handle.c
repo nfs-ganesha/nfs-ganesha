@@ -1552,7 +1552,7 @@ static fsal_status_t proxyv4_lookup(struct fsal_obj_handle *parent,
 				    struct attrlist *attrs_out)
 {
 	return proxyv4_lookup_impl(parent, op_ctx->fsal_export,
-				   op_ctx->creds, path, handle, attrs_out);
+				   &op_ctx->creds, path, handle, attrs_out);
 }
 
 /* TODO: make this per-export */
@@ -1607,7 +1607,7 @@ static fsal_status_t proxyv4_mkdir(struct fsal_obj_handle *dir_hdl,
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 				      proxyv4_bitmap_getattr);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	nfs4_Fattr_Free(&input_attr);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
@@ -1694,7 +1694,7 @@ static fsal_status_t proxyv4_mknod(struct fsal_obj_handle *dir_hdl,
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 				      proxyv4_bitmap_getattr);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	nfs4_Fattr_Free(&input_attr);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
@@ -1758,7 +1758,7 @@ static fsal_status_t proxyv4_symlink(struct fsal_obj_handle *dir_hdl,
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 				      proxyv4_bitmap_getattr);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	nfs4_Fattr_Free(&input_attr);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
@@ -1803,7 +1803,7 @@ static fsal_status_t proxyv4_readlink(struct fsal_obj_handle *obj_hdl,
 	rlok->link.utf8string_len = link_content->len;
 	COMPOUNDV4_ARG_ADD_OP_READLINK(opcnt, argoparray);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK) {
 		gsh_free(link_content->addr);
 		link_content->addr = NULL;
@@ -1845,7 +1845,7 @@ static fsal_status_t proxyv4_link(struct fsal_obj_handle *obj_hdl,
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, dst->fh4);
 	COMPOUNDV4_ARG_ADD_OP_LINK(opcnt, argoparray, (char *)name);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	return nfsstat4_to_fsal(rc);
 }
 
@@ -1902,7 +1902,7 @@ static fsal_status_t proxyv4_do_readdir(struct proxyv4_obj_handle *ph,
 	COMPOUNDV4_ARG_ADD_OP_READDIR(opcnt, argoparray, *cookie,
 				      proxyv4_bitmap_getattr);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
 
@@ -1936,7 +1936,8 @@ static fsal_status_t proxyv4_do_readdir(struct proxyv4_obj_handle *ph,
 		 *             avoid over large READDIR response.
 		 */
 		st = proxyv4_lookup_impl(&ph->obj, op_ctx->fsal_export,
-					 op_ctx->creds, e4->name.utf8string_val,
+					 &op_ctx->creds,
+					 e4->name.utf8string_val,
 					 &handle, NULL);
 		if (FSAL_IS_ERROR(st))
 			break;
@@ -2019,7 +2020,7 @@ static fsal_status_t proxyv4_rename(struct fsal_obj_handle *obj_hdl,
 	COMPOUNDV4_ARG_ADD_OP_RENAME(opcnt, argoparray, (char *)old_name,
 				     (char *)new_name);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	return nfsstat4_to_fsal(rc);
 }
 
@@ -2060,7 +2061,7 @@ static fsal_status_t proxyv4_getattrs(struct fsal_obj_handle *obj_hdl,
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 				      proxyv4_bitmap_getattr);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 
 	if (rc != NFS4_OK) {
 		if (attrs->request_mask & ATTR_RDATTR_ERR) {
@@ -2109,7 +2110,7 @@ static fsal_status_t proxyv4_unlink(struct fsal_obj_handle *dir_hdl,
 				      proxyv4_bitmap_getattr);
 #endif
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
 
@@ -2477,7 +2478,7 @@ static fsal_status_t proxyv4_open2(struct fsal_obj_handle *obj_hdl,
 						      proxyv4_bitmap_getattr);
 		}
 		/* nfs call*/
-		rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray,
+		rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray,
 					resoparray);
 		if (rc != NFS4_OK) {
 			nfs4_Fattr_Free(&inattrs);
@@ -2525,7 +2526,7 @@ static fsal_status_t proxyv4_open2(struct fsal_obj_handle *obj_hdl,
 		}
 
 		/* nfs call*/
-		rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt,
+		rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt,
 					setattr_argoparray,
 					setattr_resoparray);
 		if (rc != NFS4_OK) {
@@ -2624,7 +2625,7 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* nfs call */
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK) {
 		done_cb(obj_hdl, nfsstat4_to_fsal(rc), read_arg, caller_arg);
 		return;
@@ -2703,7 +2704,7 @@ static void proxyv4_write2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* nfs call */
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK) {
 		done_cb(obj_hdl, nfsstat4_to_fsal(rc), write_arg, caller_arg);
 		return;
@@ -2760,7 +2761,7 @@ static fsal_status_t proxyv4_close2(struct fsal_obj_handle *obj_hdl,
 	else
 		COMPOUNDV4_ARG_ADD_OP_CLOSE_4_1_STATELESS(opcnt, argoparray);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK) {
 		return nfsstat4_to_fsal(rc);
 	}
@@ -2833,7 +2834,7 @@ static fsal_status_t proxyv4_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* nfs call */
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	nfs4_Fattr_Free(&input_attr);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
@@ -2884,7 +2885,7 @@ static fsal_status_t proxyv4_commit2(struct fsal_obj_handle *obj_hdl,
 	COMPOUNDV4_ARG_ADD_OP_COMMIT(opcnt, argoparray, offset, len);
 
 	/* nfs call */
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
 
@@ -3030,7 +3031,7 @@ fsal_status_t proxyv4_lookup_path(struct fsal_export *exp_hdl,
 	char *saved;
 	char *pcopy;
 	char *p, *pnext;
-	struct user_cred *creds = op_ctx->creds;
+	struct user_cred *creds = &op_ctx->creds;
 
 	pcopy = gsh_strdup(path);
 
@@ -3121,7 +3122,7 @@ fsal_status_t proxyv4_create_handle(struct fsal_export *exp_hdl,
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 				      proxyv4_bitmap_getattr);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
@@ -3160,7 +3161,7 @@ fsal_status_t proxyv4_get_dynamic_info(struct fsal_export *exp_hdl,
 					   sizeof(fattr_blob));
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, proxyv4_bitmap_fsinfo);
 
-	rc = proxyv4_nfsv4_call(op_ctx->creds, opcnt, argoparray, resoparray);
+	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
 	if (rc != NFS4_OK)
 		return nfsstat4_to_fsal(rc);
 

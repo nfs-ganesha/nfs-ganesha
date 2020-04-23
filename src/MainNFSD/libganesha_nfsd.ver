@@ -116,6 +116,8 @@
   ht_confirmed_client_id;
   infs_set_param_from_conf;
   init_error_type;
+  init_op_context;
+  init_op_context_simple;
   init_server_pkgs;
   load_config_from_node;
   load_config_from_parse;
@@ -190,9 +192,11 @@
   register_fsal;
   register_url_provider;
   release_log_facility;
+  release_op_context;
   release_posix_file_system;
   read_log_config;
   report_config_errors;
+  resume_op_context;
   claim_posix_filesystems;
   reload_posix_filesystems;
   resolve_posix_filesystem;
@@ -208,6 +212,7 @@
   state_err_str;
   strlcpy;
   subfsal_commit;
+  suspend_op_context;
   to_vfs_dirent;
   unclaim_fs;
   unix2fsal_mode;

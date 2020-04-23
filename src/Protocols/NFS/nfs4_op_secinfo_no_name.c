@@ -99,25 +99,22 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 
 	/* Get the number of entries */
 #ifdef _HAVE_GSSAPI
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_NONE)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE)
 		num_entry++;
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_INTG)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG)
 		num_entry++;
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
 		num_entry++;
 
 	resp_size += (RNDUP(krb5oid.length) + GSS_RESP_SIZE) * num_entry;
 #endif
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_NONE)
 		num_entry++;
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
 		num_entry++;
 
 	/* Check for space in response. */
@@ -141,8 +138,7 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 	int idx = 0;
 
 #ifdef _HAVE_GSSAPI
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
 		resok_val[idx].flavor = RPCSEC_GSS;
 		resok_val[idx].secinfo4_u.flavor_info.service =
 			RPCSEC_GSS_SVC_PRIVACY;
@@ -150,8 +146,7 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 		resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
 	}
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_INTG) {
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
 		resok_val[idx].flavor = RPCSEC_GSS;
 		resok_val[idx].secinfo4_u.flavor_info.service =
 			RPCSEC_GSS_SVC_INTEGRITY;
@@ -159,8 +154,7 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 		resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
 	}
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_NONE) {
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
 		resok_val[idx].flavor = RPCSEC_GSS;
 		resok_val[idx].secinfo4_u.flavor_info.service =
 			RPCSEC_GSS_SVC_NONE;
@@ -169,10 +163,10 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 	}
 #endif /* _HAVE_GSSAPI */
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
 		resok_val[idx++].flavor = AUTH_UNIX;
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_NONE)
 		resok_val[idx++].flavor = AUTH_NONE;
 
 	res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;

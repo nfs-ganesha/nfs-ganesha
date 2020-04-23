@@ -154,7 +154,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	}
 
 	rc = fsal_ceph_ll_walk(export->cmount, realpath, &i, &stx,
-				!!attrs_out, op_ctx->creds);
+				!!attrs_out, &op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -278,7 +278,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 
 	rc = fsal_ceph_ll_getattr(export->cmount, i, &stx,
 		attrs_out ? CEPH_STATX_ATTR_MASK : CEPH_STATX_HANDLE_MASK,
-		op_ctx->creds);
+		&op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 

@@ -72,7 +72,7 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl, int posix_flags, int *file_desc)
 	LogFullDebug(COMPONENT_FSAL, "posix_flags 0x%X export_fd %d",
 						posix_flags, export_fd);
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_handle2fd(export_fd, myself->handle,
 					 file_desc, posix_flags);
 	fsal_restore_ganesha_credentials();
@@ -124,7 +124,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
 	rarg.length = buf_size;
 	rarg.options = 0;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
 	errsv = errno;
 	fsal_restore_ganesha_credentials();
@@ -187,7 +187,7 @@ GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void *buf,
 	warg.stability_got = &stability_got;
 	warg.options = 0;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	nb_write = gpfs_ganesha(OPENHANDLE_WRITE_BY_FD, &warg);
 	errsv = errno;
 	fsal_restore_ganesha_credentials();
@@ -226,7 +226,7 @@ GPFSFSAL_alloc(int fd, uint64_t offset, uint64_t length, bool allocate)
 	aarg.length = length;
 	aarg.options = (allocate) ? IO_ALLOCATE : IO_DEALLOCATE;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	rc = gpfs_ganesha(OPENHANDLE_ALLOCATE_BY_FD, &aarg);
 	errsv = errno;
 	fsal_restore_ganesha_credentials();

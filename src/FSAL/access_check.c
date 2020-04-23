@@ -834,18 +834,18 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status))
 		goto out;
 
-	if (owner_skip && attrs.owner == op_ctx->creds->caller_uid) {
+	if (owner_skip && attrs.owner == op_ctx->creds.caller_uid) {
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		goto out;
 	}
 
 	if (IS_FSAL_ACE4_REQ(access_type) ||
 	    (attrs.acl != NULL && IS_FSAL_ACE4_MASK_VALID(access_type))) {
-		status = fsal_check_access_acl(op_ctx->creds,
+		status = fsal_check_access_acl(&op_ctx->creds,
 					       FSAL_ACE4_MASK(access_type),
 					       allowed, denied, &attrs);
 	} else {		/* fall back to use mode to check access. */
-		status = fsal_check_access_no_acl(op_ctx->creds,
+		status = fsal_check_access_no_acl(&op_ctx->creds,
 						  FSAL_MODE_MASK(access_type),
 						  allowed, denied, &attrs);
 	}
@@ -875,8 +875,8 @@ void fsal_set_credentials(const struct user_cred *creds)
 
 bool fsal_set_credentials_only_one_user(const struct user_cred *creds)
 {
-	if (creds->caller_uid == ganesha_uid
-		    && creds->caller_gid == ganesha_gid)
+	if (creds->caller_uid == ganesha_uid &&
+	    creds->caller_gid == ganesha_gid)
 		return true;
 	else
 		return false;

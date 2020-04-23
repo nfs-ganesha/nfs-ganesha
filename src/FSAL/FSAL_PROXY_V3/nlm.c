@@ -240,7 +240,7 @@ proxyv3_nlm_commonrpc(rpcproc_t nlmProc, const char *procName,
 	if (!proxyv3_nlm_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nlm_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      nlmProc,
 			      encFunc, args,
 			      decFunc, result)) {

@@ -322,7 +322,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 	    || export->pseudopath[1] == '\0')
 		return true;
 
-	/* Initialize state and it's req_ctx.
+	/* Initialize state and it's op_context.
 	 * Note that a zeroed creds works just fine as root creds.
 	 */
 	state.export = export;
@@ -453,12 +453,12 @@ bool pseudo_mount_export(struct gsh_export *export)
 
 void create_pseudofs(void)
 {
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct gsh_export *export;
 
 	/* Initialize a root context */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     NFS_V4, 0, NFS_REQUEST);
+	init_op_context(&op_context, NULL, NULL, NULL,
+			NFS_V4, 0, NFS_REQUEST);
 
 	while (true) {
 		export = export_take_mount_work();
@@ -468,7 +468,7 @@ void create_pseudofs(void)
 			LogFatal(COMPONENT_EXPORT,
 				 "Could not complete creating PseudoFS");
 	}
-	release_root_op_context();
+	release_op_context();
 }
 
 /**
@@ -481,7 +481,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 	struct gsh_export *mounted_on_export;
 	struct gsh_export *sub_mounted_export;
 	struct fsal_obj_handle *junction_inode;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
 	/* Unmount any exports mounted on us */
 	while (true) {
@@ -562,19 +562,17 @@ void pseudo_unmount_export(struct gsh_export *export)
 		    && junction_inode != NULL) {
 			char *pseudopath = gsh_strdup(export->pseudopath);
 
-			/* Initialize req_ctx */
-			init_root_op_context(
-				&root_op_context,
-				mounted_on_export,
-				mounted_on_export->fsal_export,
-				NFS_V4, 0, NFS_REQUEST);
+			/* Initialize op_context */
+			init_op_context(&op_context, mounted_on_export,
+					mounted_on_export->fsal_export, NULL,
+					NFS_V4, 0, NFS_REQUEST);
 
 			/* Remove the unused PseudoFS nodes */
 			cleanup_pseudofs_node(pseudopath,
 					      junction_inode);
 
 			gsh_free(pseudopath);
-			release_root_op_context();
+			release_op_context();
 		}
 
 		/* Release our reference to the export we are mounted on. */

@@ -726,11 +726,10 @@ void free_args(nfs_request_t *reqdata)
 
 	if (op_ctx->ctx_export != NULL) {
 		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
 	}
 
 	clean_credentials();
-	op_ctx = NULL;
+	release_op_context();
 
 #ifdef USE_LTTNG
 	tracepoint(nfs_rpc, end, reqdata);
@@ -966,12 +965,9 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 
 	/* set up the request context
 	 */
-	op_ctx = &reqdata->req_ctx;
-	op_ctx->creds = &reqdata->req_user_credentials;
-	op_ctx->caller_addr = (sockaddr_t *)svc_getrpccaller(xprt);
-	op_ctx->nfs_vers = reqdata->svc.rq_msg.cb_vers;
-	op_ctx->req_type = NFS_REQUEST;
-	op_ctx->export_perms = &reqdata->req_export_perms;
+	init_op_context(&reqdata->op_context, NULL, NULL,
+			(sockaddr_t *)svc_getrpccaller(xprt),
+			reqdata->svc.rq_msg.cb_vers, 0, NFS_REQUEST);
 
 	/* Set up initial export permissions that don't allow anything. */
 	export_check_access();
@@ -1271,7 +1267,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 
 		export_check_access();
 
-		if ((reqdata->req_export_perms.options &
+		if ((op_ctx->export_perms.options &
 		     EXPORT_OPTION_ACCESS_MASK) == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Client %s is not allowed to access Export_Id %d %s, vers=%"
@@ -1286,7 +1282,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			goto freeargs;
 		}
 
-		if ((reqdata->req_export_perms.options &
+		if ((op_ctx->export_perms.options &
 		     EXPORT_OPTION_NFSV3) == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %" PRIu32
@@ -1303,10 +1299,10 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 
 		/* Check transport type */
 		if (((xprt_type == XPRT_UDP)
-		     && ((reqdata->req_export_perms.options &
+		     && ((op_ctx->export_perms.options &
 			  EXPORT_OPTION_UDP) == 0))
 		    || ((xprt_type == XPRT_TCP)
-			&& ((reqdata->req_export_perms.options &
+			&& ((op_ctx->export_perms.options &
 			     EXPORT_OPTION_TCP) == 0))) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %" PRIu32
@@ -1341,7 +1337,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 		/* Check if client is using a privileged port,
 		 * but only for NFS protocol */
 		if ((reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS])
-		    && (reqdata->req_export_perms.options &
+		    && (op_ctx->export_perms.options &
 			EXPORT_OPTION_PRIVILEGED_PORT)
 		    && (port >= IPPORT_RESERVED)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1361,7 +1357,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	 */
 	if (op_ctx->ctx_export != NULL
 	    && (reqdesc->dispatch_behaviour & MAKES_IO)
-	    && !(reqdata->req_export_perms.options & EXPORT_OPTION_RW_ACCESS)) {
+	    && !(op_ctx->export_perms.options & EXPORT_OPTION_RW_ACCESS)) {
 		/* Request of type MDONLY_RO were rejected at the
 		 * nfs_rpc_dispatcher level.
 		 * This is done by replying EDQUOT
@@ -1393,7 +1389,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 		}
 	} else if (op_ctx->ctx_export != NULL
 		   && (reqdesc->dispatch_behaviour & MAKES_WRITE)
-		   && (reqdata->req_export_perms.options
+		   && (op_ctx->export_perms.options
 		       & (EXPORT_OPTION_WRITE_ACCESS
 			| EXPORT_OPTION_MD_WRITE_ACCESS)) == 0) {
 		if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS])
@@ -1420,7 +1416,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			rc = NFS_REQ_DROP;
 		}
 	} else if (op_ctx->ctx_export != NULL
-		   && (reqdata->req_export_perms.options
+		   && (op_ctx->export_perms.options
 		       & (EXPORT_OPTION_READ_ACCESS
 			 | EXPORT_OPTION_MD_READ_ACCESS)) == 0) {
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1437,7 +1433,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 		if (reqdesc->dispatch_behaviour & NEEDS_CRED) {
 			/* If we don't have an export, don't squash */
 			if (op_ctx->fsal_export == NULL) {
-				reqdata->req_export_perms.options &=
+				op_ctx->export_perms.options &=
 					~EXPORT_OPTION_SQUASH_TYPES;
 			} else if (nfs_req_creds(&reqdata->svc) != NFS4_OK) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1512,7 +1508,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			 * already been set up before we started proecessing
 			 * ops on this request at all.
 			 */
-			op_ctx = NULL;
+			suspend_op_context();
 			return XPRT_SUSPEND;
 		}
 

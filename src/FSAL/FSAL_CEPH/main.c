@@ -494,7 +494,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 
 	rc = fsal_ceph_ll_getattr(export->cmount, i, &stx,
-				CEPH_STATX_HANDLE_MASK, op_ctx->creds);
+				  CEPH_STATX_HANDLE_MASK, &op_ctx->creds);
 	if (rc < 0) {
 		status = ceph2fsal_error(rc);
 		goto error;

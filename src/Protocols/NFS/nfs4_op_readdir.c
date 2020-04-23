@@ -67,7 +67,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	if (op_ctx->ctx_export)
 		put_gsh_export(op_ctx->ctx_export);
 
-	*op_ctx->export_perms = tracker->save_export_perms;
+	op_ctx->export_perms = tracker->save_export_perms;
 	op_ctx->ctx_export = tracker->saved_gsh_export;
 	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 	tracker->saved_gsh_export = NULL;
@@ -177,7 +177,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 		get_gsh_export_ref(obj->state_hdl->dir.junction_export);
 
 		/* Save the compound data context */
-		tracker->save_export_perms = *op_ctx->export_perms;
+		tracker->save_export_perms = op_ctx->export_perms;
 		tracker->saved_gsh_export = op_ctx->ctx_export;
 
 		/* Cross the junction */

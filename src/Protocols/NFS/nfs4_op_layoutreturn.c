@@ -110,7 +110,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 	/* Referenced export */
 	struct gsh_export *export = NULL;
 	/* Root op context for returning fsid or all layouts */
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	/* Keep track of so_mutex */
 	bool so_mutex_locked = false;
 	state_t *first;
@@ -209,9 +209,8 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 
 		clientid_owner = &data->session->clientid_record->cid_owner;
 
-		/* Initialize req_ctx */
-		init_root_op_context(&root_op_context, NULL, NULL,
-				     0, 0, UNKNOWN_REQUEST);
+		/* Initialize op_context */
+		init_op_context_simple(&op_context, NULL, NULL);
 
 		/* We need the safe version because return_one_state
 		 * can delete the current state.
@@ -277,11 +276,10 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 			}
 
 			/* Set up the root op context for this state */
-			root_op_context.req_ctx.clientid =
+			op_ctx->clientid =
 			    &clientid_owner->so_owner.so_nfs4_owner.so_clientid;
-			root_op_context.req_ctx.ctx_export = export;
-			root_op_context.req_ctx.fsal_export =
-							export->fsal_export;
+			op_ctx->ctx_export = export;
+			op_ctx->fsal_export = export->fsal_export;
 
 			/* Take a reference on the state_t */
 			inc_state_t_ref(layout_state);
@@ -355,7 +353,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 							LAYOUTRETURN4_ALL
 	    ) {
 		/* Release the root op context we setup above */
-		release_root_op_context();
+		release_op_context();
 	}
 
 	if (obj != NULL) {

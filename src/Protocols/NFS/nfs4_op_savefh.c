@@ -122,7 +122,7 @@ enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Save the export information (reference already taken above). */
 	data->saved_export = op_ctx->ctx_export;
-	data->saved_export_perms = *op_ctx->export_perms;
+	data->saved_export_perms = op_ctx->export_perms;
 
 	LogHandleNFS4("SAVE FH: Saved FH ", &data->savedFH);
 

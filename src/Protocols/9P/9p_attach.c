@@ -127,12 +127,12 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* We store the export_perms in pconn so we only have to evaluate
 	 * them once.
 	 */
-	op_ctx->export_perms = &req9p->pconn->export_perms;
+	op_ctx->export_perms = req9p->pconn->export_perms;
 
 	/* And fill in the op_ctx export_perms and then check them. */
 	export_check_access();
 
-	if ((op_ctx->export_perms->options & EXPORT_OPTION_9P) == 0) {
+	if ((op_ctx->export_perms.options & EXPORT_OPTION_9P) == 0) {
 		LogInfo(COMPONENT_9P,
 			"9P is not allowed for this export entry, rejecting client");
 		err = EACCES;
@@ -141,7 +141,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	port = get_port(&req9p->pconn->addrpeer);
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_PRIVILEGED_PORT &&
+	if (op_ctx->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT &&
 	    port >= IPPORT_RESERVED) {
 		LogInfo(COMPONENT_9P,
 			"Port %d is too high for this export entry, rejecting client",

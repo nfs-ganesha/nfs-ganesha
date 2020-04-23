@@ -64,18 +64,18 @@ static struct _9p_user_cred *new_9p_user_creds()
 }
 
 /**
- * @brief Get a new reference of user credential.
+ * @brief Get a new reference of user credential into the op_ctx.
  *
  * This function increments the refcount of the argument. Any reference returned
  * by this function must be released.
  *
- * @param[in,out] creds The 9P credential containing the wanted credentials.
- * @return A reference to the credentials.
+ * @param[in,out] pfid The _9p_fid containing the wanted credentials.
  */
-static struct user_cred *get_user_cred_ref(struct _9p_user_cred *creds)
+static void set_op_ctx_creds_from_fid(struct _9p_fid *pfid)
 {
-	(void) atomic_inc_int64_t(&creds->refcount);
-	return &creds->creds;
+	(void) atomic_inc_int64_t(&pfid->ucred->refcount);
+	op_ctx->proto_private = pfid->ucred;
+	op_ctx->creds = pfid->ucred->creds;
 }
 
 void get_9p_user_cred_ref(struct _9p_user_cred *creds)
@@ -96,18 +96,20 @@ void release_9p_user_cred_ref(struct _9p_user_cred *creds)
 }
 
 /**
- * @brief Release a reference obtained with get_user_cred_ref.
+ * @brief Release a reference obtained with set_op_ctx_creds_from_fid.
  *
  * This function decrements the refcounter of the containing _9p_user_cred
  * structure. If this counter reaches 0, the structure is freed.
- *
- * @param creds The reference that is released.
  */
-static void release_user_cred_ref(struct user_cred *creds)
+static void release_op_ctx_creds_ref_to_fid_creds(void)
 {
-	struct _9p_user_cred *cred_9p =
-		container_of(creds, struct _9p_user_cred, creds);
+	struct _9p_user_cred *cred_9p = op_ctx->proto_private;
 
+	if (cred_9p == NULL)
+		return;
+
+	memset(&op_ctx->creds, 0, sizeof(op_ctx->creds));
+	op_ctx->proto_private = NULL;
 	release_9p_user_cred_ref(cred_9p);
 }
 
@@ -141,9 +143,9 @@ void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
 	}
 
 	if (req9p != NULL)
-		op_ctx->export_perms = &req9p->pconn->export_perms;
+		op_ctx->export_perms = req9p->pconn->export_perms;
 
-	op_ctx->creds = get_user_cred_ref(pfid->ucred);
+	set_op_ctx_creds_from_fid(pfid);
 }
 
 void _9p_release_opctx(void)
@@ -153,10 +155,7 @@ void _9p_release_opctx(void)
 		op_ctx->ctx_export = NULL;
 	}
 
-	if (op_ctx->creds != NULL) {
-		release_user_cred_ref(op_ctx->creds);
-		op_ctx->creds = NULL;
-	}
+	release_op_ctx_creds_ref_to_fid_creds();
 }
 
 int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid)
@@ -174,9 +173,8 @@ int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid)
 	pfid->ucred->creds.caller_glen = grpdata->nbgroups;
 	pfid->ucred->creds.caller_garray = grpdata->groups;
 
-	if (op_ctx->creds != NULL)
-		release_user_cred_ref(op_ctx->creds);
-	op_ctx->creds = get_user_cred_ref(pfid->ucred);
+	release_op_ctx_creds_ref_to_fid_creds();
+	set_op_ctx_creds_from_fid(pfid);
 
 	op_ctx->req_type = _9P_REQUEST;
 
@@ -203,9 +201,8 @@ int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 	pfid->ucred->creds.caller_glen = grpdata->nbgroups;
 	pfid->ucred->creds.caller_garray = grpdata->groups;
 
-	if (op_ctx->creds != NULL)
-		release_user_cred_ref(op_ctx->creds);
-	op_ctx->creds = get_user_cred_ref(pfid->ucred);
+	release_op_ctx_creds_ref_to_fid_creds();
+	set_op_ctx_creds_from_fid(pfid);
 
 	op_ctx->req_type = _9P_REQUEST;
 
@@ -416,12 +413,13 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 void _9p_cleanup_fids(struct _9p_conn *conn)
 {
 	int i;
+	struct req_op_context op_context;
 
-	/* Allocate op_ctx, is should always be NULL here
+	/* Initialize op context.
 	 * Note we only need it if there is a non-null fid,
 	 * might be worth optimizing for huge clusters
 	 */
-	op_ctx = gsh_calloc(1, sizeof(struct req_op_context));
+	init_op_context(&op_context, NULL, NULL, NULL, 0, 0, _9P_REQUEST);
 
 	for (i = 0; i < _9P_FID_PER_CONN; i++) {
 		if (conn->fids[i]) {
@@ -432,6 +430,5 @@ void _9p_cleanup_fids(struct _9p_conn *conn)
 		}
 	}
 
-	gsh_free(op_ctx);
-	op_ctx = NULL;
+	release_op_context();
 }

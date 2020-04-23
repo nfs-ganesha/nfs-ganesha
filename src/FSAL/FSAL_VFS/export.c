@@ -166,7 +166,7 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 	memset((char *)&fs_quota, 0, sizeof(struct dqblk));
 
-	if (!vfs_set_credentials(op_ctx->creds, exp_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, exp_hdl->fsal)) {
 		fsal_error = ERR_FSAL_PERM;
 		retval = EPERM;
 		goto out;
@@ -247,7 +247,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 		fs_quota.dqb_valid |= QIF_ITIME;
 #endif
 
-	if (!vfs_set_credentials(op_ctx->creds, exp_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, exp_hdl->fsal)) {
 		fsal_error = ERR_FSAL_PERM;
 		retval = EPERM;
 		goto err;

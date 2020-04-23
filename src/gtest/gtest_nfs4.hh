@@ -104,7 +104,7 @@ namespace gtest {
       /* Save the export information and take reference. */
       get_gsh_export_ref(op_ctx->ctx_export);
       data->saved_export = op_ctx->ctx_export;
-      data->saved_export_perms = *op_ctx->export_perms;
+      data->saved_export_perms = op_ctx->export_perms;
     }
 
     void setup_lookup(int pos, const char *name) {

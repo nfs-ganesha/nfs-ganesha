@@ -222,18 +222,7 @@ namespace gtest {
       ASSERT_NE(root_entry, nullptr);
 
       /* Ganesha call paths need real or forged context info */
-      memset(&user_credentials, 0, sizeof(struct user_cred));
-      memset(&req_ctx, 0, sizeof(struct req_op_context));
-      memset(&attrs, 0, sizeof(attrs));
-      memset(&exp_perms, 0, sizeof(struct export_perms));
-
-      req_ctx.ctx_export = a_export;
-      req_ctx.fsal_export = a_export->fsal_export;
-      req_ctx.creds = &user_credentials;
-      req_ctx.export_perms = &exp_perms;
-
-      /* stashed in tls */
-      op_ctx = &req_ctx;
+      init_op_context_simple(&op_context, a_export, a_export->fsal_export);
 
       // create root directory for test
       FSAL_SET_MASK(attrs.valid_mask,
@@ -265,8 +254,9 @@ namespace gtest {
 
       put_gsh_export(a_export);
       a_export = NULL;
-      req_ctx.ctx_export = NULL;
-      req_ctx.fsal_export = NULL;
+      op_ctx->ctx_export = NULL;
+      op_ctx->fsal_export = NULL;
+      release_op_context();
 
       gtest::GaneshaBaseTest::TearDown();
     }
@@ -327,10 +317,8 @@ namespace gtest {
       }
     }
 
-    struct req_op_context req_ctx;
-    struct user_cred user_credentials;
+    struct req_op_context op_context;
     struct attrlist attrs;
-    struct export_perms exp_perms;
 
     struct gsh_export* a_export = nullptr;
     struct fsal_obj_handle *root_entry = nullptr;

@@ -91,16 +91,8 @@ TEST(CI_HASH_DIST1, INIT)
   ASSERT_NE(root_entry, nullptr);
 
   /* Ganesha call paths need real or forged context info */
-  memset(&user_credentials, 0, sizeof(struct user_cred));
-  memset(&req_ctx, 0, sizeof(struct req_op_context));
+  init_op_context_simple(&req_ctx, a_export, a_export->fsal_export);
   memset(&object_attributes, 0, sizeof(object_attributes));
-
-  req_ctx.ctx_export = a_export;
-  req_ctx.fsal_export = a_export->fsal_export;
-  req_ctx.creds = &user_credentials;
-
-  /* stashed in tls */
-  op_ctx = &req_ctx;
 }
 
 TEST(CI_HASH_DIST1, CREATE_ROOT)

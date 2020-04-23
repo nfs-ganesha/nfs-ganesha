@@ -219,9 +219,7 @@ typedef struct nfs_function_desc__ {
 typedef struct nfs_request {
 	struct svc_req svc;
 	struct nfs_request_lookahead lookahead;
-	struct req_op_context req_ctx;
-	struct export_perms req_export_perms;
-	struct user_cred req_user_credentials;
+	struct req_op_context op_context;
 	nfs_arg_t arg_nfs;
 	nfs_res_t *res_nfs;
 	const nfs_function_desc_t *funcdesc;
@@ -428,7 +426,7 @@ static inline void set_saved_entry(compound_data_t *data,
 				   struct fsal_obj_handle *obj)
 {
 	struct gsh_export *current_export = op_ctx->ctx_export;
-	struct export_perms current_export_perms = *op_ctx->export_perms;
+	struct export_perms current_export_perms = op_ctx->export_perms;
 	bool restore_op_ctx = false;
 
 	if (data->saved_ds != NULL || data->saved_obj != NULL) {
@@ -437,7 +435,7 @@ static inline void set_saved_entry(compound_data_t *data,
 		op_ctx->fsal_export = data->saved_export
 					? data->saved_export->fsal_export
 					: NULL;
-		*op_ctx->export_perms = data->saved_export_perms;
+		op_ctx->export_perms = data->saved_export_perms;
 		restore_op_ctx = true;
 	}
 
@@ -461,7 +459,7 @@ static inline void set_saved_entry(compound_data_t *data,
 		op_ctx->fsal_export = current_export
 					? current_export->fsal_export
 					: NULL;
-		*op_ctx->export_perms = current_export_perms;
+		op_ctx->export_perms = current_export_perms;
 	}
 
 	data->saved_obj = obj;

@@ -2846,13 +2846,12 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	struct glist_head newlocks;
 	state_t *found_share;
 	state_status_t status = 0;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct gsh_export *export;
 	state_t *state;
 
 	/* Initialize a context */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     0, 0, UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, NULL, NULL);
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		char str[LOG_BUFF_LEN] = "\0";
@@ -2934,8 +2933,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		export = found_entry->sle_export;
 		state = found_entry->sle_state;
 
-		root_op_context.req_ctx.ctx_export = export;
-		root_op_context.req_ctx.fsal_export = export->fsal_export;
+		op_ctx->ctx_export = export;
+		op_ctx->fsal_export = export->fsal_export;
 
 		/* Get a reference to the export while we still hold the
 		 * ssc_mutex. This assures that the export definitely can
@@ -3037,8 +3036,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		owner = found_share->state_owner;
 		export = found_share->state_export;
 
-		root_op_context.req_ctx.ctx_export = export;
-		root_op_context.req_ctx.fsal_export = export->fsal_export;
+		op_ctx->ctx_export = export;
+		op_ctx->fsal_export = export->fsal_export;
 
 		/* Get a reference to the export while we still hold the
 		 * ssc_mutex. This assures that the export definitely can
@@ -3124,7 +3123,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 	LogFullDebug(COMPONENT_STATE, "DONE");
 
-	release_root_op_context();
+	release_op_context();
 	return status;
 }
 #endif /* _USE_NLM */
@@ -3512,10 +3511,10 @@ void cancel_all_nlm_blocked(void)
 {
 	state_lock_entry_t *found_entry;
 	state_block_data_t *pblock;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
 	/* Initialize context */
-	init_root_op_context(&root_op_context, NULL, NULL, 0, 0, NFS_REQUEST);
+	init_op_context(&op_context, NULL, NULL, NULL, 0, 0, NFS_REQUEST);
 
 	LogDebug(COMPONENT_STATE, "Cancel all blocked locks");
 
@@ -3540,11 +3539,10 @@ void cancel_all_nlm_blocked(void)
 
 		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
-		root_op_context.req_ctx.ctx_export = found_entry->sle_export;
-		root_op_context.req_ctx.fsal_export =
-			root_op_context.req_ctx.ctx_export->fsal_export;
+		op_ctx->ctx_export = found_entry->sle_export;
+		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
-		get_gsh_export_ref(root_op_context.req_ctx.ctx_export);
+		get_gsh_export_ref(op_ctx->ctx_export);
 
 		/** @todo also look at the LRU ref for pentry */
 
@@ -3558,7 +3556,7 @@ void cancel_all_nlm_blocked(void)
 
 		LogEntry("Canceled Lock", found_entry);
 
-		put_gsh_export(root_op_context.req_ctx.ctx_export);
+		put_gsh_export(op_ctx->ctx_export);
 
 		lock_entry_dec_ref(found_entry);
 
@@ -3573,7 +3571,7 @@ void cancel_all_nlm_blocked(void)
 out:
 
 	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
-	release_root_op_context();
+	release_op_context();
 }
 
 /**

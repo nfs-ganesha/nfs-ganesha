@@ -1582,10 +1582,10 @@ static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
 				struct svc_req *req)
 {
 	/* FIX ME!!! Replace with a non-export dependent system.
-	 * For now, reset per init_root_op_context()
+	 * For now, reset per init_op_context()
 	 */
-	op_ctx->export_perms->set = root_op_export_set;
-	op_ctx->export_perms->options = root_op_export_options;
+	op_ctx->export_perms.set = root_op_export_set;
+	op_ctx->export_perms.options = root_op_export_options;
 	return NFS4_OK;
 }
 
