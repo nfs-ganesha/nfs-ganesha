@@ -3267,6 +3267,11 @@ again:
 			continue;
 		}
 
+		next_ck = dirent->ck;
+		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+				"Setting next_ck=%"PRIx64,
+				next_ck);
+
 		if (dirent->ck == whence) {
 			/* When called with whence, the caller always wants the
 			 * next entry, skip this entry. */
@@ -3274,11 +3279,6 @@ again:
 			reload_chunk = false;
 			continue;
 		}
-
-		next_ck = dirent->ck;
-		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
-				"Setting next_ck=%"PRIx64,
-				next_ck);
 
 		/* Ensure the attribute cache is valid.  The simplest way to do
 		 * this is to call getattrs().  We need a copy anyway, to ensure
