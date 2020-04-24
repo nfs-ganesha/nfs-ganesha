@@ -2433,10 +2433,14 @@ out:
  * @param exp [IN] the export
  */
 
-static void release_export(struct gsh_export *export)
+void release_export(struct gsh_export *export)
 {
 	struct fsal_obj_handle *obj = NULL;
 	fsal_status_t fsal_status;
+
+	LogDebug(COMPONENT_EXPORT,
+		 "Unexport %s, Pseduo %s",
+		 export->fullpath, export->pseudopath);
 
 	/* Get a reference to the root entry */
 	fsal_status = nfs_export_get_root_entry(export, &obj);
@@ -2489,30 +2493,6 @@ static void release_export(struct gsh_export *export)
 
 	/* Release ref taken above */
 	obj->obj_ops->put_ref(obj);
-}
-
-void unexport(struct gsh_export *export)
-{
-	bool op_ctx_set = false;
-	struct req_op_context op_context;
-
-	/* Make the export unreachable */
-	LogDebug(COMPONENT_EXPORT,
-		 "Unexport %s, Pseduo %s",
-		 export->fullpath, export->pseudopath);
-
-	/* Lots of obj_ops may be called during cleanup; make sure that an
-	 * op_ctx exists */
-	if (!op_ctx) {
-		init_op_context_simple(&op_context, export,
-				       export->fsal_export);
-		op_ctx_set = true;
-	}
-
-	release_export(export);
-
-	if (op_ctx_set)
-		release_op_context();
 }
 
 /**

@@ -821,7 +821,7 @@ static void process_unexports(void)
 		op_ctx->ctx_export = export;
 		op_ctx->fsal_export = export->fsal_export;
 
-		unexport(export);
+		release_export(export);
 		put_gsh_export(export);
 
 		op_ctx->ctx_export = NULL;
@@ -1192,7 +1192,6 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 	struct gsh_export *export = NULL;
 	char *errormsg;
 	bool rc = false;
-	bool op_ctx_set = false;
 	struct req_op_context op_context;
 
 	export = lookup_export(args, &errormsg);
@@ -1228,21 +1227,16 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 
 	/* Lots of obj_ops may be called during cleanup; make sure that an
 	 * op_ctx exists */
-	if (!op_ctx) {
-		init_op_context_simple(&op_context,
-				       export, export->fsal_export);
-		op_ctx_set = true;
-	}
+	init_op_context_simple(&op_context, export, export->fsal_export);
 
-	unexport(export);
+	release_export(export);
 
 	LogInfo(COMPONENT_EXPORT, "Removed export with id %d",
 		export->export_id);
 
 	put_gsh_export(export);
 
-	if (op_ctx_set)
-		release_op_context();
+	release_op_context();
 
 out:
 	return rc;
