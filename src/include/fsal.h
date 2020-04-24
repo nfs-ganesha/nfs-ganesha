@@ -116,6 +116,11 @@ void resume_op_context(struct req_op_context *ctx);
 void set_op_context_export_fsal(struct gsh_export *exp,
 				struct fsal_export *fsal_exp);
 void clear_op_context_export(void);
+void save_op_context_export_and_clear(struct saved_export_context *saved);
+void save_op_context_export_and_set_export(struct saved_export_context *saved,
+					   struct gsh_export *exp);
+void restore_op_context_export(struct saved_export_context *saved);
+void discard_op_context_export(struct saved_export_context *saved);
 
 #define set_op_context_export(exp) \
 	set_op_context_export_fsal((exp), (exp) ? (exp)->fsal_export : NULL)

@@ -3138,7 +3138,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 	struct fsal_obj_handle *obj;
 	int errcnt = 0;
 	state_status_t status = 0;
-	struct gsh_export *saved_export = op_ctx->ctx_export;
+	struct saved_export_context saved;
 	struct gsh_export *export;
 	state_t *state;
 	bool ok;
@@ -3184,7 +3184,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		}
 
 		/* Set up the op_context with the proper export */
-		set_op_context_export(export);
+		save_op_context_export_and_set_export(&saved, export);
 
 		/* Make lock that covers the whole file.
 		 * type doesn't matter for unlock
@@ -3214,6 +3214,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		/* Release the obj ref and export ref. */
 		obj->obj_ops->put_ref(obj);
 		put_gsh_export(export);
+		restore_op_context_export(&saved);
 	}
 
 	if (errcnt == STATE_ERR_MAX) {
@@ -3226,8 +3227,6 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 			 "Could not complete cleanup of lock state for lock owner %s",
 			 str);
 	}
-
-	set_op_context_export(saved_export);
 }
 
 /**

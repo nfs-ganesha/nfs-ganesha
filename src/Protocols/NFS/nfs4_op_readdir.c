@@ -52,13 +52,12 @@ struct nfs4_readdir_cb_data {
 	struct bitmap4 *req_attr;	/*< The requested attributes */
 	compound_data_t *data;	/*< The compound data, so we can produce
 				   nfs_fh4s. */
-	struct export_perms save_export_perms;	/*< Saved export perms. */
-	struct gsh_export *saved_gsh_export;	/*< Saved export */
+	struct saved_export_context saved;
 };
 
 static void restore_data(struct nfs4_readdir_cb_data *tracker)
 {
-	if (tracker->saved_gsh_export == NULL) {
+	if (tracker->saved.saved_export == NULL) {
 		LogCrit(COMPONENT_NFS_READDIR, "Nothing to restore!");
 		return;
 	}
@@ -67,9 +66,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	if (op_ctx->ctx_export)
 		put_gsh_export(op_ctx->ctx_export);
 
-	op_ctx->export_perms = tracker->save_export_perms;
-	set_op_context_export(tracker->saved_gsh_export);
-	tracker->saved_gsh_export = NULL;
+	restore_op_context_export(&tracker->saved);
 
 	/* Restore creds */
 	if (nfs_req_creds(tracker->data->req) != NFS4_OK) {
@@ -175,12 +172,9 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 
 		get_gsh_export_ref(obj->state_hdl->dir.junction_export);
 
-		/* Save the compound data context */
-		tracker->save_export_perms = op_ctx->export_perms;
-		tracker->saved_gsh_export = op_ctx->ctx_export;
-
-		/* Cross the junction */
-		set_op_context_export(obj->state_hdl->dir.junction_export);
+		/* Save the compound data context and cross the junction */
+		save_op_context_export_and_set_export(
+			&tracker->saved, obj->state_hdl->dir.junction_export);
 
 		/* Build the credentials */
 		args.rdattr_error = nfs4_export_check_access(data->req);

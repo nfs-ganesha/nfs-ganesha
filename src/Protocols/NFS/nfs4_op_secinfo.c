@@ -77,8 +77,8 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
 #endif /* _HAVE_GSSAPI */
 	int num_entry = 0;
-	struct export_perms save_export_perms = { 0, };
-	struct gsh_export *saved_gsh_export = NULL;
+	struct saved_export_context saved;
+	bool restore_op_ctx = false;
 	uint32_t resp_size = RESP_SIZE;
 	int idx = 0;
 
@@ -138,10 +138,8 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->jct_lock);
 
 		/* Save the compound data context */
-		save_export_perms = op_ctx->export_perms;
-		saved_gsh_export = op_ctx->ctx_export;
-
-		set_op_context_export(junction_export);
+		save_op_context_export_and_set_export(&saved, junction_export);
+		restore_op_ctx = true;
 
 		/* Build credentials */
 		res_SECINFO4->status = nfs4_export_check_access(data->req);
@@ -274,13 +272,16 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		/* Release CurrentFH reference to export. */
 		if (op_ctx->ctx_export) {
 			put_gsh_export(op_ctx->ctx_export);
-			clear_op_context_export();
 		}
 
-		if (saved_gsh_export != NULL) {
+		clear_op_context_export();
+
+		if (restore_op_ctx) {
 			/* Don't need saved export */
-			put_gsh_export(saved_gsh_export);
-			saved_gsh_export = NULL;
+			if (saved.saved_export)
+				put_gsh_export(saved.saved_export);
+			discard_op_context_export(&saved);
+			restore_op_ctx = false;
 		}
 	}
 
@@ -288,13 +289,12 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 
  out:
 
-	if (saved_gsh_export != NULL) {
+	if (restore_op_ctx) {
 		/* Restore export stuff */
 		if (op_ctx->ctx_export)
 			put_gsh_export(op_ctx->ctx_export);
 
-		op_ctx->export_perms = save_export_perms;
-		set_op_context_export(saved_gsh_export);
+		restore_op_context_export(&saved);
 
 		/* Restore creds */
 		if (nfs_req_creds(data->req) != NFS4_OK) {

@@ -419,6 +419,20 @@ struct req_op_context {
 };
 
 /**
+ * @brief Structure to save export context from op_context
+ *
+ * When we need to temporarily change the export in op_context, we can save
+ * the context here. Use of this is cheaper than using set_op_context_export
+ * to restore the op context since various references need not be retaken.
+ */
+struct saved_export_context {
+	struct gsh_export *saved_export;
+	struct fsal_export *saved_fsal_export;
+	struct fsal_module *saved_fsal_module;
+	struct export_perms saved_export_perms;
+};
+
+/**
  * @brief FSAL module methods
  */
 

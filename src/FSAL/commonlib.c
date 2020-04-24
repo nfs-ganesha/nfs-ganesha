@@ -3175,11 +3175,46 @@ void set_op_context_export_fsal(struct gsh_export *exp,
 		op_ctx->fsal_module = op_ctx->saved_op_ctx->fsal_module;
 }
 
-
 void clear_op_context_export(void)
 {
 	op_ctx->ctx_export = NULL;
 	op_ctx->fsal_export = NULL;
+}
+
+static void save_op_context_export(struct saved_export_context *saved)
+{
+	saved->saved_export = op_ctx->ctx_export;
+	saved->saved_fsal_export = op_ctx->fsal_export;
+	saved->saved_fsal_module = op_ctx->fsal_module;
+	saved->saved_export_perms = op_ctx->export_perms;
+}
+
+void save_op_context_export_and_set_export(struct saved_export_context *saved,
+					   struct gsh_export *exp)
+{
+	save_op_context_export(saved);
+	set_op_context_export_fsal(exp, exp->fsal_export);
+}
+
+void save_op_context_export_and_clear(struct saved_export_context *saved)
+{
+	save_op_context_export(saved);
+	op_ctx->ctx_export = NULL;
+	op_ctx->fsal_export = NULL;
+}
+
+void restore_op_context_export(struct saved_export_context *saved)
+{
+	clear_op_context_export();
+	op_ctx->ctx_export = saved->saved_export;
+	op_ctx->fsal_export = saved->saved_fsal_export;
+	op_ctx->fsal_module = saved->saved_fsal_module;
+	op_ctx->export_perms = saved->saved_export_perms;
+}
+
+void discard_op_context_export(struct saved_export_context *saved)
+{
+	/* currently empty */
 }
 
 void init_op_context(struct req_op_context *ctx,

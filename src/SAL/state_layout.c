@@ -166,7 +166,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 {
 	state_t *state, *first;
 	struct fsal_obj_handle *obj;
-	struct gsh_export *saved_export = op_ctx->ctx_export;
+	struct saved_export_context saved;
 	struct gsh_export *export;
 	int errcnt = 0;
 	struct glist_head *glist, *glistn;
@@ -221,7 +221,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 
 		/* Get a ref to the proper export and add it to op_ctx */
 		get_gsh_export_ref(export);
-		set_op_context_export(export);
+		save_op_context_export_and_set_export(&saved, export);
 
 		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 		so_mutex_held = false;
@@ -247,8 +247,9 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 
 		/* Release the reference taken above */
 		obj->obj_ops->put_ref(obj);
-		put_gsh_export(export);
 		dec_state_t_ref(state);
+		put_gsh_export(export);
+		restore_op_context_export(&saved);
 
 		if (errcnt < STATE_ERR_MAX) {
 			/* Loop again, but since we droped the so_mutex, we
@@ -274,9 +275,6 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 			 "Could not complete cleanup of layouts for client owner %s",
 			 str);
 	}
-
-	put_gsh_export(op_ctx->ctx_export);
-	set_op_context_export(saved_export);
 }
 
 /** @} */
