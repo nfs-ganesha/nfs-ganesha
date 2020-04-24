@@ -44,9 +44,6 @@
  * released.
  *
  * @param[in,out] export The export to be released
- *
- * @retval ERR_FSAL_NO_ERROR on success.
- * @retval ERR_FSAL_BUSY if the export is in use.
  */
 
 static void release(struct fsal_export *export_pub)
