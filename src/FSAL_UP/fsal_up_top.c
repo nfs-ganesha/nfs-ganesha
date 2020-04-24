@@ -628,8 +628,7 @@ static void layoutrec_completion(rpc_call_t *call)
 		STATELOCK_lock(obj);
 
 		op_ctx->clientid = &owner->so_owner.so_nfs4_owner.so_clientid;
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+		set_op_context_export(export);
 
 		nfs4_return_one_state(obj,
 				      LAYOUTRETURN4_FILE, circumstance,
@@ -1443,8 +1442,7 @@ static void delegrecall_task(void *ctx)
 	/* Release the obj ref and export ref. */
 	obj->obj_ops->put_ref(obj);
 	put_gsh_export(export);
-	op_ctx->ctx_export = NULL;
-	op_ctx->fsal_export = NULL;
+	clear_op_context_export();
 	release_op_context();
 out:
 	dec_state_t_ref(state);

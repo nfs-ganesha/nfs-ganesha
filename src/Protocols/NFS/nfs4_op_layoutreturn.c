@@ -278,8 +278,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 			/* Set up the root op context for this state */
 			op_ctx->clientid =
 			    &clientid_owner->so_owner.so_nfs4_owner.so_clientid;
-			op_ctx->ctx_export = export;
-			op_ctx->fsal_export = export->fsal_export;
+			set_op_context_export(export);
 
 			/* Take a reference on the state_t */
 			inc_state_t_ref(layout_state);

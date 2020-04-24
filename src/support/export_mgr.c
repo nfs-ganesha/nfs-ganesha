@@ -818,14 +818,10 @@ static void process_unexports(void)
 		if (export == NULL)
 			break;
 
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
-
+		set_op_context_export(export);
 		release_export(export);
 		put_gsh_export(export);
-
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
+		clear_op_context_export();
 	}
 }
 
@@ -844,16 +840,12 @@ void remove_all_exports(void)
 	/* Get a reference to the PseudoFS Root Export */
 	export = get_gsh_export_by_pseudo("/", true);
 
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = export->fsal_export;
+	set_op_context_export(export);
 
 	/* Clean up the whole PseudoFS */
 	pseudo_unmount_export(export);
-
 	put_gsh_export(export);
-
-	op_ctx->ctx_export = NULL;
-	op_ctx->fsal_export = NULL;
+	clear_op_context_export();
 
 	/* Put all exports on the unexport work list.
 	 * Ignore return since remove_one_export can't fail.

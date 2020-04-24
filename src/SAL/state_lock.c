@@ -2933,8 +2933,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		export = found_entry->sle_export;
 		state = found_entry->sle_state;
 
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+		set_op_context_export(export);
 
 		/* Get a reference to the export while we still hold the
 		 * ssc_mutex. This assures that the export definitely can
@@ -3036,8 +3035,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		owner = found_share->state_owner;
 		export = found_share->state_export;
 
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+		set_op_context_export(export);
 
 		/* Get a reference to the export while we still hold the
 		 * ssc_mutex. This assures that the export definitely can
@@ -3186,8 +3184,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		}
 
 		/* Set up the op_context with the proper export */
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+		set_op_context_export(export);
 
 		/* Make lock that covers the whole file.
 		 * type doesn't matter for unlock
@@ -3230,10 +3227,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 			 str);
 	}
 
-	op_ctx->ctx_export = saved_export;
-
-	if (saved_export != NULL)
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+	set_op_context_export(saved_export);
 }
 
 /**
@@ -3539,9 +3533,7 @@ void cancel_all_nlm_blocked(void)
 
 		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
-		op_ctx->ctx_export = found_entry->sle_export;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
-
+		set_op_context_export(found_entry->sle_export);
 		get_gsh_export_ref(op_ctx->ctx_export);
 
 		/** @todo also look at the LRU ref for pentry */

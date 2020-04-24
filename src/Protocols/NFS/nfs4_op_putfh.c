@@ -87,19 +87,16 @@ static int nfs4_ds_putfh(compound_data_t *data)
 
 	if (pds->mds_export == NULL) {
 		/* most likely */
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
+		clear_op_context_export();
 	} else if (pds->pnfs_ds_status == PNFS_DS_READY) {
 		/* special case: avoid lookup of related export.
 		 * get_gsh_export_ref() was bumped in pnfs_ds_get()
 		 */
-		op_ctx->ctx_export = pds->mds_export;
-		op_ctx->fsal_export = pds->mds_fsal_export;
+		set_op_context_export(pds->mds_export);
 	} else {
 		/* export reference has been dropped. */
 		put_gsh_export(pds->mds_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
+		clear_op_context_export();
 		return NFS4ERR_STALE;
 	}
 
@@ -179,8 +176,8 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	set_current_entry(data, NULL);
 
 	/* update _ctx fields needed by nfs4_export_check_access */
-	op_ctx->ctx_export = exporting;
-	op_ctx->fsal_export = export = exporting->fsal_export;
+	set_op_context_export(exporting);
+	export = exporting->fsal_export;
 
 	if (changed) {
 		int status;

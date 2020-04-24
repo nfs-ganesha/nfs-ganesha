@@ -63,9 +63,9 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	/* If client does not have any access to the export,
 	 * don't add it to the list
 	 */
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = export->fsal_export;
+	set_op_context_export(export);
 	export_check_access();
+
 	if (!(op_ctx->export_perms.options & EXPORT_OPTION_ACCESS_MASK)) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Client is not allowed to access Export_Id %d %s",
@@ -171,8 +171,7 @@ int mnt_Export(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			"Processing exports failed. error = \"%s\" (%d)",
 			strerror(proc_state.retval), proc_state.retval);
 	}
-	op_ctx->ctx_export = NULL;
-	op_ctx->fsal_export = NULL;
+	clear_op_context_export();
 	res->res_mntexport = proc_state.head;
 	return NFS_REQ_OK;
 }				/* mnt_Export */

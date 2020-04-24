@@ -64,6 +64,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct gsh_buffdesc fh_desc;
 	struct fsal_obj_handle *pfsal_handle;
 	int port;
+	struct gsh_export *export;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -101,27 +102,27 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		LogFullDebug(COMPONENT_9P,
 			     "Searching for export by tag for %s",
 			     exppath);
-		op_ctx->ctx_export = get_gsh_export_by_tag(exppath);
+		export = get_gsh_export_by_tag(exppath);
 	} else if (nfs_param.core_param.mount_path_pseudo) {
 		LogFullDebug(COMPONENT_9P,
 			     "Searching for export by pseudo for %s",
 			     exppath);
-		op_ctx->ctx_export = get_gsh_export_by_pseudo(exppath, false);
+		export = get_gsh_export_by_pseudo(exppath, false);
 	} else {
 		LogFullDebug(COMPONENT_9P,
 			     "Searching for export by path for %s",
 			     exppath);
-		op_ctx->ctx_export = get_gsh_export_by_path(exppath, false);
+		export = get_gsh_export_by_path(exppath, false);
 	}
 
 	/* Did we find something ? */
-	if (op_ctx->ctx_export == NULL) {
+	if (export == NULL) {
 		err = ENOENT;
 		goto errout;
 	}
 
 	/* Fill in more of the op_ctx */
-	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+	set_op_context_export(export);
 	op_ctx->caller_addr = &req9p->pconn->addrpeer;
 
 	/* We store the export_perms in pconn so we only have to evaluate

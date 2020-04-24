@@ -42,6 +42,63 @@
 #include "export_mgr.h"
 
 /**
+ * @brief Set the saved entry in the context
+ *
+ * This manages refcounting on the object being stored in data.  This means it
+ * takes a ref on a new object, and releases it's ref on any old object.  If the
+ * caller has it's own ref, it must release it itself.
+ *
+ * @param[in] data	Compound data to set entry in
+ * @param[in] obj	Object to set
+ */
+void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj)
+{
+	struct gsh_export *current_export = op_ctx->ctx_export;
+	struct export_perms current_export_perms = op_ctx->export_perms;
+	bool restore_op_ctx = false;
+
+	if (data->saved_ds != NULL || data->saved_obj != NULL) {
+		/* Setup correct op_ctx for releasing old saved */
+		set_op_context_export(data->saved_export);
+		op_ctx->export_perms = data->saved_export_perms;
+		restore_op_ctx = true;
+	}
+
+	/* Mark saved_stateid as invalid */
+	data->saved_stateid_valid = false;
+
+	/* Clear out the saved_ds */
+	if (data->saved_ds) {
+		ds_handle_put(data->saved_ds);
+		data->saved_ds = NULL;
+	}
+
+	if (data->saved_obj) {
+		/* Release ref on old object */
+		data->saved_obj->obj_ops->put_ref(data->saved_obj);
+	}
+
+	if (restore_op_ctx) {
+		/* Restore op_ctx */
+		set_op_context_export(current_export);
+		op_ctx->export_perms = current_export_perms;
+	}
+
+	data->saved_obj = obj;
+
+	if (obj == NULL) {
+		data->saved_filetype = NO_FILE_TYPE;
+		return;
+	}
+
+	/* Get our ref on the new object */
+	data->saved_obj->obj_ops->get_ref(data->saved_obj);
+
+	/* Set the saved file type */
+	data->saved_filetype = obj->type;
+}
+
+/**
  *
  * @brief the NFS4_OP_SAVEFH operation
  *

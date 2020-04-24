@@ -168,8 +168,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 
 		/* Stash parent export in opctx while still holding the lock.
 		 */
-		op_ctx->ctx_export = parent_exp;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+		set_op_context_export(parent_exp);
 
 		/* Now we are safely transitioned to the parent export and can
 		 * release the lock.

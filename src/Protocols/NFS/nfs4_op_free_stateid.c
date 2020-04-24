@@ -106,8 +106,7 @@ enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
 	}
 
 	save_exp = op_ctx->ctx_export;
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+	set_op_context_export(export);
 
 	STATELOCK_lock(obj);
 	if (state->state_type == STATE_TYPE_LOCK &&
@@ -125,12 +124,9 @@ enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
 	STATELOCK_unlock(obj);
 
 	dec_state_t_ref(state);
-
-	op_ctx->ctx_export = save_exp;
-	op_ctx->fsal_export = save_exp != NULL ? save_exp->fsal_export : NULL;
-
 	obj->obj_ops->put_ref(obj);
 	put_gsh_export(export);
+	set_op_context_export(save_exp);
 
 	return nfsstat4_to_nfs_req_result(res_FREE_STATEID4->fsr_status);
 

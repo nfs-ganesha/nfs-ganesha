@@ -13,6 +13,7 @@
   check_verifier_attrlist;
   check_verifier_stat;
   CityHash64;
+  clear_op_context_export;
   compound_data_Free;
   component_log_level;
   config_error_no_error;
@@ -206,6 +207,8 @@
   root_op_export_options;
   set_common_verifier;
   set_const_log_str;
+  set_op_context_export;
+  set_op_context_export_fsal;
   SetNameFunction;
   sprint_sockip;
   start_fsals;

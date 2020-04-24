@@ -220,8 +220,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		inc_state_t_ref(state);
 
 		/* Set up the op_context with the proper export */
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+		set_op_context_export(export);
 
 		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 		so_mutex_held = false;
@@ -275,10 +274,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 			 str);
 	}
 
-	op_ctx->ctx_export = saved_export;
-
-	if (saved_export != NULL)
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+	set_op_context_export(saved_export);
 }
 
 /** @} */

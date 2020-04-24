@@ -1133,7 +1133,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				goto req_error;
 			}
 
-			op_ctx->ctx_export = get_gsh_export(exportid);
+			set_op_context_export(get_gsh_export(exportid));
 
 			if (op_ctx->ctx_export == NULL) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1145,8 +1145,6 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
-
-			op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
 			LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				    "Found export entry for path=%s as exportid=%d",
@@ -1206,12 +1204,6 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			exportid = nlm4_FhandleToExportId(pfh3);
 
 			if (exportid < 0) {
-				LogInfo(COMPONENT_DISPATCH,
-					"NLM4 Request from client %s has badly formed handle",
-					client_ip);
-				op_ctx->ctx_export = NULL;
-				op_ctx->fsal_export = NULL;
-
 				/* We need to send a NLM4_STALE_FH response
 				 * (NLM doesn't have an error code for
 				 * BADHANDLE), but we don't know how to do that
@@ -1219,8 +1211,12 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				 * routine to let it know what to do since it
 				 * can respond to ASYNC calls.
 				 */
+				LogInfo(COMPONENT_DISPATCH,
+					"NLM4 Request from client %s has badly formed handle",
+					client_ip);
+
 			} else {
-				op_ctx->ctx_export = get_gsh_export(exportid);
+				set_op_context_export(get_gsh_export(exportid));
 
 				if (op_ctx->ctx_export == NULL) {
 					LogInfoAlt(COMPONENT_DISPATCH,
@@ -1237,11 +1233,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 					 * to let it know what to do since it
 					 * can respond to ASYNC calls.
 					 */
-					op_ctx->fsal_export = NULL;
 				} else {
-					op_ctx->fsal_export =
-					    op_ctx->ctx_export->fsal_export;
-
 					LogMidDebugAlt(COMPONENT_DISPATCH,
 						COMPONENT_EXPORT,
 						"Found export entry for dirname=%s as exportid=%d",

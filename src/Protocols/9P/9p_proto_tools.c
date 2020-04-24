@@ -137,8 +137,7 @@ void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
 			}
 
 			get_gsh_export_ref(pfid->fid_export);
-			op_ctx->ctx_export = pfid->fid_export;
-			op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+			set_op_context_export(pfid->fid_export);
 		}
 	}
 
@@ -152,7 +151,7 @@ void _9p_release_opctx(void)
 {
 	if (op_ctx->ctx_export != NULL) {
 		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
+		clear_op_context_export();
 	}
 
 	release_op_ctx_creds_ref_to_fid_creds();

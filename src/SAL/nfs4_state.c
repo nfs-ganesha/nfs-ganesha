@@ -667,6 +667,9 @@ void state_nfs4_state_wipe(struct state_hdl *ostate)
  */
 enum nfsstat4 release_lock_owner(state_owner_t *owner)
 {
+	struct gsh_export *save_export = op_ctx->ctx_export;
+	struct fsal_export *save_exp = op_ctx->fsal_export;
+
 	PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 	if (!glist_empty(&owner->so_lock_list)) {
@@ -685,8 +688,6 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 
 	while (true) {
 		state_t *state;
-		struct fsal_export *save_exp;
-		struct gsh_export *save_export;
 
 		state = glist_first_entry(&owner->so_owner.so_nfs4_owner
 								.so_state_list,
@@ -695,6 +696,8 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 
 		if (state == NULL) {
 			PTHREAD_MUTEX_unlock(&owner->so_mutex);
+			/* Restore export */
+			set_op_context_export_fsal(save_export, save_exp);
 			return NFS4_OK;
 		}
 
@@ -703,19 +706,13 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 
 		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
-		/* Set the fsal_export properly, since this can be called from
-		 * ops that don't do a putfh */
-		save_exp = op_ctx->fsal_export;
-		save_export = op_ctx->ctx_export;
-		op_ctx->fsal_export = state->state_exp;
-		op_ctx->ctx_export = state->state_export;
+		/* Set the op_context properly, since this can be called from
+		 * ops that don't do a putfh
+		 */
+		set_op_context_export_fsal(state->state_export,
+					   state->state_exp);
 
 		state_del(state);
-
-		/* Restore export */
-		op_ctx->fsal_export = save_exp;
-		op_ctx->ctx_export = save_export;
-
 		dec_state_t_ref(state);
 
 		PTHREAD_MUTEX_lock(&owner->so_mutex);
@@ -831,8 +828,7 @@ void release_openstate(state_owner_t *owner)
 		}
 
 		/* op_ctx may be used by state_del_locked and others */
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+		set_op_context_export(export);
 
 		/* If FSAL supports extended operations, file will be closed by
 		 * state_del_locked.
@@ -847,8 +843,7 @@ void release_openstate(state_owner_t *owner)
 		/* Release refs we held during state_del */
 		obj->obj_ops->put_ref(obj);
 		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
+		clear_op_context_export();
 	}
 
 	if (errcnt == STATE_ERR_MAX) {
@@ -938,8 +933,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		state_deleg_revoke(obj, state);
 
 		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
+		clear_op_context_export();
 
 		STATELOCK_unlock(obj);
 

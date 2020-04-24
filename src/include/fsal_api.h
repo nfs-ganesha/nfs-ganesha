@@ -406,7 +406,9 @@ struct req_op_context {
 	uint32_t nfs_minorvers;	/*< NFSv4 minor version */
 	enum request_type req_type;	/*< request_type NFS | 9P */
 	struct gsh_client *client;	/*< client host info including stats */
-	struct gsh_export *ctx_export;	/*< current export */
+	struct gsh_export *ctx_export;	/*< current export, this MUST only
+					    be changed by one of the functions
+					    in commonlib.c. */
 	struct fsal_export *fsal_export;	/*< current fsal export */
 	struct export_perms export_perms;	/*< Effective export perms */
 	nsecs_elapsed_t start_time;	/*< start time of this op/request */

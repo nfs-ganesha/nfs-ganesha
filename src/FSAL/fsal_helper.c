@@ -967,7 +967,7 @@ populate_dirent(const char *name,
 	if (status.major == ERR_FSAL_CROSS_JUNCTION) {
 		struct fsal_obj_handle *junction_obj;
 		struct gsh_export *junction_export = NULL;
-		struct fsal_export *saved_export;
+		struct gsh_export *saved_export;
 		struct attrlist attrs2;
 
 		PTHREAD_RWLOCK_rdlock(&obj->state_hdl->jct_lock);
@@ -1016,8 +1016,8 @@ populate_dirent(const char *name,
 		}
 
 		/* Now we need to get the cross-junction attributes. */
-		saved_export = op_ctx->fsal_export;
-		op_ctx->fsal_export = junction_export->fsal_export;
+		saved_export = op_ctx->ctx_export;
+		set_op_context_export(junction_export);
 
 		fsal_prepare_attrs(&attrs2,
 				   op_ctx->fsal_export->exp_ops
@@ -1042,11 +1042,10 @@ populate_dirent(const char *name,
 
 		fsal_release_attrs(&attrs2);
 
-		/* Release our refs */
-		op_ctx->fsal_export = saved_export;
-
+		/* Release our refs and restore op_context */
 		junction_obj->obj_ops->put_ref(junction_obj);
 		put_gsh_export(junction_export);
+		set_op_context_export(saved_export);
 
 		/* state->cb (nfs4_readdir_callback) saved op_ctx
 		 * ctx_export and fsal_export. Restore them here

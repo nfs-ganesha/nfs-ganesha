@@ -1103,8 +1103,7 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 	/* release current active export in op_ctx. */
 	if (op_ctx->ctx_export) {
 		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
+		clear_op_context_export();
 	}
 
 
@@ -1346,8 +1345,7 @@ out:
 	/* release current active export in op_ctx. */
 	if (op_ctx->ctx_export) {
 		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
+		clear_op_context_export();
 	}
 
 	return drop ? NFS_REQ_DROP : NFS_REQ_OK;

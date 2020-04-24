@@ -141,8 +141,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		save_export_perms = op_ctx->export_perms;
 		saved_gsh_export = op_ctx->ctx_export;
 
-		op_ctx->ctx_export = junction_export;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+		set_op_context_export(junction_export);
 
 		/* Build credentials */
 		res_SECINFO4->status = nfs4_export_check_access(data->req);
@@ -275,8 +274,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		/* Release CurrentFH reference to export. */
 		if (op_ctx->ctx_export) {
 			put_gsh_export(op_ctx->ctx_export);
-			op_ctx->ctx_export = NULL;
-			op_ctx->fsal_export = NULL;
+			clear_op_context_export();
 		}
 
 		if (saved_gsh_export != NULL) {
@@ -296,8 +294,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 			put_gsh_export(op_ctx->ctx_export);
 
 		op_ctx->export_perms = save_export_perms;
-		op_ctx->ctx_export = saved_gsh_export;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+		set_op_context_export(saved_gsh_export);
 
 		/* Restore creds */
 		if (nfs_req_creds(data->req) != NFS4_OK) {

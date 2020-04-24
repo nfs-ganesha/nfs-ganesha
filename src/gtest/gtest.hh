@@ -254,8 +254,6 @@ namespace gtest {
 
       put_gsh_export(a_export);
       a_export = NULL;
-      op_ctx->ctx_export = NULL;
-      op_ctx->fsal_export = NULL;
       release_op_context();
 
       gtest::GaneshaBaseTest::TearDown();

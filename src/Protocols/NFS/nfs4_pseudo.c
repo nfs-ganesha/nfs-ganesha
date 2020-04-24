@@ -312,6 +312,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 	char *tok;
 	char *saveptr = NULL;
 	int rc;
+	bool result = false;
 
 	/* skip exports that aren't for NFS v4
 	 * Also, nothing to actually do for Pseudo Root
@@ -351,15 +352,13 @@ bool pseudo_mount_export(struct gsh_export *export)
 		 tmp_pseudopath);
 
 	/* Now find the export we are mounted on */
-	op_ctx->ctx_export = get_gsh_export_by_pseudo(tmp_pseudopath, false);
+	set_op_context_export(get_gsh_export_by_pseudo(tmp_pseudopath, false));
 
 	if (op_ctx->ctx_export == NULL) {
 		LogFatal(COMPONENT_EXPORT,
 			 "Could not find mounted on export for %s, tmp=%s",
 			 export->pseudopath, tmp_pseudopath);
 	}
-
-	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
 	/* Put the slash back in */
 	*last_slash = '/';
@@ -389,7 +388,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 
 		/* Release the reference on the mounted on export. */
 		put_gsh_export(op_ctx->ctx_export);
-		return false;
+		goto out;
 	}
 
 	/* Now we need to process the rest of the path, creating directories
@@ -405,7 +404,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 			 */
 			state.obj->obj_ops->put_ref(state.obj);
 			put_gsh_export(op_ctx->ctx_export);
-			return false;
+			goto out;
 		}
 	}
 
@@ -420,9 +419,12 @@ bool pseudo_mount_export(struct gsh_export *export)
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	export->exp_mounted_on_file_id = state.obj->fileid;
-	/* Pass ref off to export */
+	/* Pass object ref off to export */
 	export->exp_junction_obj = state.obj;
 	export_root_object_get(export->exp_junction_obj);
+
+	/* Take an export ref for the parent export */
+	get_gsh_export_ref(op_ctx->ctx_export);
 	export->exp_parent_exp = op_ctx->ctx_export;
 
 	/* Add ourselves to the list of exports mounted on parent */
@@ -440,7 +442,13 @@ bool pseudo_mount_export(struct gsh_export *export)
 		 state.export->pseudopath,
 		 state.obj->state_hdl->dir.junction_export);
 
-	return true;
+	result = true;
+
+out:
+
+	put_gsh_export(op_ctx->ctx_export);
+	clear_op_context_export();
+	return result;
 }
 
 /**

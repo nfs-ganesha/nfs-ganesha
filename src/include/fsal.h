@@ -113,6 +113,12 @@ static inline void init_op_context_simple(struct req_op_context *ctx,
 void release_op_context(void);
 void suspend_op_context(void);
 void resume_op_context(struct req_op_context *ctx);
+void set_op_context_export_fsal(struct gsh_export *exp,
+				struct fsal_export *fsal_exp);
+void clear_op_context_export(void);
+
+#define set_op_context_export(exp) \
+	set_op_context_export_fsal((exp), (exp) ? (exp)->fsal_export : NULL)
 
 /******************************************************
  *                Structure used to define a fsal

@@ -120,8 +120,7 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* set the export in the context */
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+	set_op_context_export(export);
 
 	/* Check access based on client. Don't bother checking TCP/UDP as some
 	 * clients use UDP for MOUNT even when they will use TCP for NFS.
@@ -221,9 +220,8 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out:
 	if (export != NULL) {
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
 		put_gsh_export(export);
+		clear_op_context_export();
 	}
 	return retval;
 

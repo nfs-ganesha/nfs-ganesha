@@ -80,11 +80,8 @@ enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
 	if (op_ctx->ctx_export != NULL)
 		put_gsh_export(op_ctx->ctx_export);
 
-	op_ctx->ctx_export = NULL;
-	op_ctx->fsal_export = NULL;
-
 	/* Get the root export of the Pseudo FS */
-	op_ctx->ctx_export = get_gsh_export_by_pseudo("/", true);
+	set_op_context_export(get_gsh_export_by_pseudo("/", true));
 
 	if (op_ctx->ctx_export == NULL) {
 		LogCrit(COMPONENT_EXPORT,
@@ -93,8 +90,6 @@ enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
 		res_PUTROOTFH4->status = NFS4ERR_NOENT;
 		return NFS_REQ_ERROR;
 	}
-
-	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
 	/* Build credentials */
 	res_PUTROOTFH4->status = nfs4_export_check_access(data->req);

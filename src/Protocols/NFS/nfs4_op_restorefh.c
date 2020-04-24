@@ -115,10 +115,7 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 		put_gsh_export(op_ctx->ctx_export);
 
 	/* Restore the export information */
-	op_ctx->ctx_export = data->saved_export;
-	if (op_ctx->ctx_export != NULL)
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
-
+	set_op_context_export(data->saved_export);
 	op_ctx->export_perms = data->saved_export_perms;
 
 	/* No need to call nfs4_SetCompoundExport or nfs4_MakeCred

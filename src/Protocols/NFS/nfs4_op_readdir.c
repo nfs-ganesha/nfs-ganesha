@@ -68,8 +68,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 		put_gsh_export(op_ctx->ctx_export);
 
 	op_ctx->export_perms = tracker->save_export_perms;
-	op_ctx->ctx_export = tracker->saved_gsh_export;
-	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+	set_op_context_export(tracker->saved_gsh_export);
 	tracker->saved_gsh_export = NULL;
 
 	/* Restore creds */
@@ -181,8 +180,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 		tracker->saved_gsh_export = op_ctx->ctx_export;
 
 		/* Cross the junction */
-		op_ctx->ctx_export = obj->state_hdl->dir.junction_export;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+		set_op_context_export(obj->state_hdl->dir.junction_export);
 
 		/* Build the credentials */
 		args.rdattr_error = nfs4_export_check_access(data->req);

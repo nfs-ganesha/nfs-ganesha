@@ -3163,6 +3163,25 @@ bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 	return true;
 }
 
+void set_op_context_export_fsal(struct gsh_export *exp,
+				struct fsal_export *fsal_exp)
+{
+	op_ctx->ctx_export = exp;
+	op_ctx->fsal_export = fsal_exp;
+
+	if (fsal_exp)
+		op_ctx->fsal_module = fsal_exp->fsal;
+	else if (!op_ctx->fsal_module && op_ctx->saved_op_ctx)
+		op_ctx->fsal_module = op_ctx->saved_op_ctx->fsal_module;
+}
+
+
+void clear_op_context_export(void)
+{
+	op_ctx->ctx_export = NULL;
+	op_ctx->fsal_export = NULL;
+}
+
 void init_op_context(struct req_op_context *ctx,
 		     struct gsh_export *exp,
 		     struct fsal_export *fsal_exp,
@@ -3175,29 +3194,26 @@ void init_op_context(struct req_op_context *ctx,
 	 * Note that a zeroed creds works just fine as root creds.
 	 */
 	memset(ctx, 0, sizeof(*ctx));
+
+	ctx->saved_op_ctx = op_ctx;
+	op_ctx = ctx;
+
 	ctx->nfs_vers = nfs_vers;
 	ctx->nfs_minorvers = nfs_minorvers;
 	ctx->req_type = req_type;
 	ctx->caller_addr = caller_data;
 
-	ctx->ctx_export = exp;
-	ctx->fsal_export = fsal_exp;
-	if (fsal_exp)
-		ctx->fsal_module = fsal_exp->fsal;
-	else if (op_ctx)
-		ctx->fsal_module = op_ctx->fsal_module;
+	set_op_context_export_fsal(exp, fsal_exp);
 
 	ctx->export_perms.set = root_op_export_set;
 	ctx->export_perms.options = root_op_export_options;
-
-	ctx->saved_op_ctx = op_ctx;
-	op_ctx = ctx;
 }
 
 void release_op_context(void)
 {
 	struct req_op_context *cur_ctx = op_ctx;
 
+	clear_op_context_export();
 	op_ctx = op_ctx->saved_op_ctx;
 	cur_ctx->saved_op_ctx = NULL;
 }
