@@ -219,7 +219,8 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 
 		inc_state_t_ref(state);
 
-		/* Set up the op_context with the proper export */
+		/* Get a ref to the proper export and add it to op_ctx */
+		get_gsh_export_ref(export);
 		set_op_context_export(export);
 
 		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
@@ -274,6 +275,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 			 str);
 	}
 
+	put_gsh_export(op_ctx->ctx_export);
 	set_op_context_export(saved_export);
 }
 

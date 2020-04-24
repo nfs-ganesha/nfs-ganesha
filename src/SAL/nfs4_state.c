@@ -686,6 +686,8 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 		LogDebug(COMPONENT_STATE, "Removing state for %s", str);
 	}
 
+	clear_op_context_export();
+
 	while (true) {
 		state_t *state;
 
@@ -697,6 +699,8 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 		if (state == NULL) {
 			PTHREAD_MUTEX_unlock(&owner->so_mutex);
 			/* Restore export */
+			if (op_ctx->ctx_export != NULL)
+				put_gsh_export(op_ctx->ctx_export);
 			set_op_context_export_fsal(save_export, save_exp);
 			return NFS4_OK;
 		}
@@ -709,6 +713,7 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 		/* Set the op_context properly, since this can be called from
 		 * ops that don't do a putfh
 		 */
+		get_gsh_export_ref(state->state_export);
 		set_op_context_export_fsal(state->state_export,
 					   state->state_exp);
 
@@ -827,7 +832,11 @@ void release_openstate(state_owner_t *owner)
 			put_gsh_export(op_ctx->ctx_export);
 		}
 
-		/* op_ctx may be used by state_del_locked and others */
+		/* op_ctx may be used by state_del_locked and others set export
+		 * from the state and release any old ctx_export reference.
+		 * Reference was taken above and will be release by
+		 * clear_op_context_export below.
+		 */
 		set_op_context_export(export);
 
 		/* If FSAL supports extended operations, file will be closed by
@@ -926,20 +935,18 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		 */
 		STATELOCK_lock(obj);
 
-		/* Initialize op_context */
+		/* Initialize the op_context (refcount taken above) */
 		init_op_context_simple(&op_context, export,
 				       export->fsal_export);
 
 		state_deleg_revoke(obj, state);
-
-		put_gsh_export(op_ctx->ctx_export);
-		clear_op_context_export();
 
 		STATELOCK_unlock(obj);
 
 		/* Release refs we held */
 		obj->obj_ops->put_ref(obj);
 
+		put_gsh_export(op_ctx->ctx_export);
 		release_op_context();
 		/* Since we dropped so_mutex, we must restart the loop. */
 		goto again;

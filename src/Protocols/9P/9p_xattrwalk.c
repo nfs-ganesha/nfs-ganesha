@@ -237,13 +237,13 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	req9p->pconn->fids[*attrfid] = pxattrfid;
 
 	/* Increments refcount as we're manually making a new copy */
-	pfid->pentry->obj_ops->get_ref(pfid->pentry);
+	pxattrfid->pentry->obj_ops->get_ref(pxattrfid->pentry);
 
 	/* hold reference on gdata */
 	uid2grp_hold_group_data(pxattrfid->gdata);
 
-	get_gsh_export_ref(pfid->fid_export);
-	get_9p_user_cred_ref(pfid->ucred);
+	get_gsh_export_ref(pxattrfid->fid_export);
+	get_9p_user_cred_ref(pxattrfid->ucred);
 
 	if (pxattrfid->ppentry != NULL) {
 		/* Increments refcount for ppentry */

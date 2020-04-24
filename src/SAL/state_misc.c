@@ -1364,7 +1364,8 @@ void state_release_export(struct gsh_export *export)
 {
 	struct req_op_context op_context;
 
-	/* Initialize op_context */
+	/* Get a ref to the export and initialize op_context */
+	get_gsh_export_ref(export);
 	init_op_context_simple(&op_context, export, export->fsal_export);
 
 	state_export_unlock_all();
@@ -1372,6 +1373,7 @@ void state_release_export(struct gsh_export *export)
 #ifdef _USE_NLM
 	state_export_unshare_all();
 #endif /* _USE_NLM */
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 }
 

@@ -154,6 +154,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 			return NFS_REQ_ERROR;
 		}
 
+		/* Get reference to parent_exp for op context. */
 		get_gsh_export_ref(parent_exp);
 
 		dir_obj->obj_ops->get_ref(dir_obj);
@@ -166,17 +167,16 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		/* Put our ref */
 		dir_obj->obj_ops->put_ref(dir_obj);
 
-		/* Stash parent export in opctx while still holding the lock.
-		 */
-		set_op_context_export(parent_exp);
-
-		/* Now we are safely transitioned to the parent export and can
-		 * release the lock.
+		/* We are now done with original_export->lock, nothing following
+		 * depends on it being held.
 		 */
 		PTHREAD_RWLOCK_unlock(&original_export->lock);
 
-		/* Release old export reference that was held by opctx. */
+		/* Release the original_export and put the parent_exp into
+		 * the op context.
+		 */
 		put_gsh_export(original_export);
+		set_op_context_export(parent_exp);
 
 		/* Build credentials */
 		res_LOOKUPP4->status = nfs4_export_check_access(data->req);

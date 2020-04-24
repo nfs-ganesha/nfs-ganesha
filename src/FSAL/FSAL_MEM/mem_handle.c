@@ -1802,13 +1802,17 @@ mem_async_complete(struct fridgethr_context *ctx)
 		usleep(async_delay);
 	}
 
-	/* Need an op context for the call back */
+	/* Get a ref to the async_arg->ctx_export and initialize op_context for
+	 * the call back
+	 */
+	get_gsh_export_ref(async_arg->ctx_export);
 	init_op_context_simple(&op_context, async_arg->ctx_export,
 			       async_arg->fsal_export);
 
 	async_arg->done_cb(async_arg->obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0),
 			   async_arg->io_arg, async_arg->caller_arg);
 
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	gsh_free(async_arg);

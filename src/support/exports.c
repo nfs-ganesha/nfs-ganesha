@@ -741,7 +741,8 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	fsal_status_t status;
 	int errcnt;
 
-	/* Initialize op_context */
+	/* Get a ref to the export and initialize op_context */
+	get_gsh_export_ref(export);
 	init_op_context_simple(&op_context, export, NULL);
 
 	errcnt = fsal_load_init(node, fp->name, &fsal, err_type);
@@ -798,6 +799,7 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	}
 
 err:
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 	/* Don't leak the FSAL block */
 	err_type->dispose = true;
@@ -905,9 +907,8 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 		 "Export %d FSAL config update processed",
 		 export->export_id);
 
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
-
-	put_gsh_export(probe_exp);
 
 	/* Don't leak the FSAL block */
 	err_type->dispose = true;
@@ -916,6 +917,7 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 
 err:
 
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	/* Don't leak the FSAL block */
@@ -2330,7 +2332,8 @@ int init_export_root(struct gsh_export *export)
 	struct req_op_context op_context;
 	int my_status;
 
-	/* Initialize op_context */
+	/* Get a ref to the export and initialize op_context */
+	get_gsh_export_ref(export);
 	init_op_context_simple(&op_context, export, export->fsal_export);
 
 	/* set expire_time_attr if appropriate */
@@ -2423,6 +2426,8 @@ int init_export_root(struct gsh_export *export)
 
 	my_status = 0;
 out:
+
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 	return my_status;
 }

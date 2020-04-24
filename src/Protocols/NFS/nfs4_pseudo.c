@@ -424,8 +424,8 @@ bool pseudo_mount_export(struct gsh_export *export)
 	export_root_object_get(export->exp_junction_obj);
 
 	/* Take an export ref for the parent export */
-	get_gsh_export_ref(op_ctx->ctx_export);
 	export->exp_parent_exp = op_ctx->ctx_export;
+	get_gsh_export_ref(export->exp_parent_exp);
 
 	/* Add ourselves to the list of exports mounted on parent */
 	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
@@ -570,7 +570,10 @@ void pseudo_unmount_export(struct gsh_export *export)
 		    && junction_inode != NULL) {
 			char *pseudopath = gsh_strdup(export->pseudopath);
 
-			/* Initialize op_context */
+			/* Get a ref to the mounted_on_export and initialize
+			 * op_context
+			 */
+			get_gsh_export_ref(mounted_on_export);
 			init_op_context(&op_context, mounted_on_export,
 					mounted_on_export->fsal_export, NULL,
 					NFS_V4, 0, NFS_REQUEST);
@@ -580,6 +583,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 					      junction_inode);
 
 			gsh_free(pseudopath);
+			put_gsh_export(op_ctx->ctx_export);
 			release_op_context();
 		}
 

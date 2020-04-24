@@ -59,6 +59,7 @@ void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj)
 
 	if (data->saved_ds != NULL || data->saved_obj != NULL) {
 		/* Setup correct op_ctx for releasing old saved */
+		get_gsh_export_ref(data->saved_export);
 		set_op_context_export(data->saved_export);
 		op_ctx->export_perms = data->saved_export_perms;
 		restore_op_ctx = true;
@@ -80,6 +81,7 @@ void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj)
 
 	if (restore_op_ctx) {
 		/* Restore op_ctx */
+		put_gsh_export(op_ctx->ctx_export);
 		set_op_context_export(current_export);
 		op_ctx->export_perms = current_export_perms;
 	}

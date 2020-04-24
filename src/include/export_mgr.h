@@ -214,7 +214,6 @@ void export_add_to_mount_work(struct gsh_export *a_export);
 void export_add_to_unexport_work_locked(struct gsh_export *a_export);
 void export_add_to_unexport_work(struct gsh_export *a_export);
 struct gsh_export *export_take_mount_work(void);
-struct gsh_export *export_take_unexport_work(void);
 
 extern struct config_block add_export_param;
 extern struct config_block update_export_param;

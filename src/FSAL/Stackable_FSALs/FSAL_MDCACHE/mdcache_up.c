@@ -49,6 +49,10 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	struct req_op_context op_context;
 	mdcache_key_t key;
 
+	/* Get a ref to the vec->up_gsh_export and initialize op_context for the
+	 * upcall
+	 */
+	get_gsh_export_ref(vec->up_gsh_export);
 	init_op_context_simple(&op_context, vec->up_gsh_export,
 			       vec->up_fsal_export);
 
@@ -84,6 +88,7 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 
 out:
 
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 	return status;
 }
@@ -191,6 +196,10 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
+	/* Get a ref to the vec->up_gsh_export and initialize op_context for the
+	 * upcall
+	 */
+	get_gsh_export_ref(vec->up_gsh_export);
 	init_op_context_simple(&op_context, vec->up_gsh_export,
 			       vec->up_fsal_export);
 
@@ -393,6 +402,7 @@ put:
 	mdcache_put(entry);
 out:
 
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 	return status;
 }
@@ -440,13 +450,16 @@ state_status_t mdc_up_lock_grant(const struct fsal_up_vector *vec,
 	state_status_t rc;
 	struct req_op_context op_context;
 
-	/* Initialize op context */
+	/* Get a ref to the vec->up_gsh_export and initialize op_context for the
+	 * upcall
+	 */
+	get_gsh_export_ref(vec->up_gsh_export);
 	init_op_context_simple(&op_context, vec->up_gsh_export,
 			       vec->up_fsal_export);
 
-	rc = myself->super_up_ops.lock_grant(vec, file, owner,
-					     lock_param);
+	rc = myself->super_up_ops.lock_grant(vec, file, owner, lock_param);
 
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	return rc;
@@ -472,12 +485,16 @@ state_status_t mdc_up_lock_avail(const struct fsal_up_vector *vec,
 	struct req_op_context op_context;
 
 	/* Initialize op context */
+	/* Get a ref to the vec->up_gsh_export and initialize op_context for the
+	 * upcall
+	 */
+	get_gsh_export_ref(vec->up_gsh_export);
 	init_op_context_simple(&op_context, vec->up_gsh_export,
 			       vec->up_fsal_export);
 
-	rc = myself->super_up_ops.lock_avail(vec, file, owner,
-					     lock_param);
+	rc = myself->super_up_ops.lock_avail(vec, file, owner, lock_param);
 
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	return rc;
@@ -511,12 +528,17 @@ state_status_t mdc_up_layoutrecall(const struct fsal_up_vector *vec,
 	state_status_t rc;
 	struct req_op_context op_context;
 
+	/* Get a ref to the vec->up_gsh_export and initialize op_context for the
+	 * upcall
+	 */
+	get_gsh_export_ref(vec->up_gsh_export);
 	init_op_context_simple(&op_context, vec->up_gsh_export,
 			       vec->up_fsal_export);
 
 	rc = myself->super_up_ops.layoutrecall(vec, handle, layout_type,
 					       changed, segment, cookie, spec);
 
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	return rc;
@@ -536,11 +558,16 @@ state_status_t mdc_up_delegrecall(const struct fsal_up_vector *vec,
 	state_status_t rc;
 	struct req_op_context op_context;
 
+	/* Get a ref to the vec->up_gsh_export and initialize op_context for the
+	 * upcall
+	 */
+	get_gsh_export_ref(vec->up_gsh_export);
 	init_op_context_simple(&op_context, vec->up_gsh_export,
 			       vec->up_fsal_export);
 
 	rc = myself->super_up_ops.delegrecall(vec, handle);
 
+	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	return rc;

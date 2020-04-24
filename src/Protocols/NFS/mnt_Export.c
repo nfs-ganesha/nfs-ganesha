@@ -63,6 +63,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	/* If client does not have any access to the export,
 	 * don't add it to the list
 	 */
+	get_gsh_export_ref(export);
 	set_op_context_export(export);
 	export_check_access();
 
@@ -71,7 +72,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 			     "Client is not allowed to access Export_Id %d %s",
 			     export->export_id, export_path(export));
 
-		return true;
+		goto out;
 	}
 
 	if (!(op_ctx->export_perms.options & EXPORT_OPTION_NFSV3)) {
@@ -79,7 +80,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 			     "Not exported for NFSv3, Export_Id %d %s",
 			     export->export_id, export_path(export));
 
-		return true;
+		goto out;
 	}
 
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
@@ -143,6 +144,9 @@ static bool proc_export(struct gsh_export *export, void *arg)
 
 	state->tail = new_expnode;
 
+out:
+	put_gsh_export(op_ctx->ctx_export);
+	clear_op_context_export();
 	return true;
 }
 
@@ -171,7 +175,6 @@ int mnt_Export(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			"Processing exports failed. error = \"%s\" (%d)",
 			strerror(proc_state.retval), proc_state.retval);
 	}
-	clear_op_context_export();
 	res->res_mntexport = proc_state.head;
 	return NFS_REQ_OK;
 }				/* mnt_Export */

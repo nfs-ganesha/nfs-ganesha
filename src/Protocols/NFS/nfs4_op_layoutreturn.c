@@ -295,6 +295,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 					obj->obj_ops->put_ref(obj);
 					put_gsh_export(export);
 					dec_state_t_ref(layout_state);
+					clear_op_context_export();
 
 					/* Since we had to drop so_mutex, the
 					 * list may have changed under us, we
@@ -322,14 +323,16 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 			/* Release the state_t reference */
 			dec_state_t_ref(layout_state);
 
+			obj->obj_ops->put_ref(obj);
+			put_gsh_export(export);
+			clear_op_context_export();
+
 			if (res_LAYOUTRETURN4->lorr_status != NFS4_OK)
 				break;
 
 			/* Since we had to drop so_mutex, the list may have
 			 * changed under us, we MUST start over.
 			 */
-			obj->obj_ops->put_ref(obj);
-			put_gsh_export(export);
 			goto again;
 		}
 
@@ -353,16 +356,6 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 	    ) {
 		/* Release the root op context we setup above */
 		release_op_context();
-	}
-
-	if (obj != NULL) {
-		/* Release object ref */
-		obj->obj_ops->put_ref(obj);
-	}
-
-	if (export != NULL) {
-		/* Release the export */
-		put_gsh_export(export);
 	}
 
 	return nfsstat4_to_nfs_req_result(res_LAYOUTRETURN4->lorr_status);
