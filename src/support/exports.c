@@ -1122,7 +1122,6 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 
 	if (commit_type == update_export && probe_exp != NULL) {
 		bool mount_pseudo_export = false, unmount_pseudo_export = false;
-		struct gsh_export *exp_copy = NULL;
 
 		/* We have an actual update case, probe_exp is the target
 		 * to update. Check all the options that MUST match.
@@ -1212,8 +1211,6 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		if ((export->export_perms.options & EXPORT_OPTION_NFSV4) &&
 		 (probe_exp->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
 			mount_pseudo_export = true;
-			exp_copy = alloc_export();
-			memcpy(exp_copy, probe_exp, sizeof(struct gsh_export));
 		} else if (
 		    (probe_exp->export_perms.options & EXPORT_OPTION_NFSV4) &&
 		    (export->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
@@ -1225,11 +1222,6 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		if (mount_pseudo_export && !mount_gsh_export(probe_exp)) {
 			err_type->internal = true;
 			errcnt++;
-
-			/* Restoring the old export properties */
-			copy_gsh_export(probe_exp, exp_copy);
-			gsh_free(exp_copy);
-
 			return errcnt;
 		} else if (unmount_pseudo_export) {
 			unmount_gsh_export(probe_exp);
