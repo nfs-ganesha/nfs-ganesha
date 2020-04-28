@@ -160,7 +160,6 @@ void export_pkginit(void);
 void dbus_export_init(void);
 #endif
 struct gsh_export *alloc_export(void);
-void free_export(struct gsh_export *a_export);
 bool insert_gsh_export(struct gsh_export *a_export);
 struct gsh_export *get_gsh_export(uint16_t export_id);
 struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match);
@@ -208,7 +207,6 @@ void _put_gsh_export(struct gsh_export *a_export,
 	_put_gsh_export(a_export, \
 	(char *) __FILE__, __LINE__, (char *) __func__)
 
-void export_cleanup(struct gsh_export *a_export);
 void export_revert(struct gsh_export *a_export);
 void export_add_to_mount_work(struct gsh_export *a_export);
 void export_add_to_unexport_work_locked(struct gsh_export *a_export);

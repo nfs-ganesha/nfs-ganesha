@@ -153,22 +153,6 @@ static inline uint16_t eid_cache_offsetof(uint16_t k)
 }
 
 /**
- * @brief Clean up an export
- *
- * This is used when an export needs to be freed but op_ctx isn't set up.
- *
- * @param[in] export	Export to clean up
- */
-void export_cleanup(struct gsh_export *export)
-{
-	struct req_op_context op_context;
-
-	init_op_context_simple(&op_context, export, export->fsal_export);
-	free_export(export);
-	release_op_context();
-}
-
-/**
  * @brief Revert export_commit()
  *
  * @param export [in] the export just inserted/committed
@@ -246,32 +230,13 @@ struct gsh_export *alloc_export(void)
 	glist_init(&export->mounted_exports_list);
 	glist_init(&export->clients);
 
+	/* Take an initial refcount */
+	export->refcnt = 1;
+
 	PTHREAD_RWLOCK_init(&export->lock, NULL);
 
 	return export;
 }
-
-/**
- * @brief Free an exportlist entry.
- *
- * This is for returning exportlists not yet in the export manager.
- * Once they get inserted into the export manager, it will release it.
- */
-
-void free_export(struct gsh_export *export)
-{
-	struct export_stats *export_st;
-
-	assert(export->refcnt == 0);
-
-	/* free resources */
-	free_export_resources(export);
-	export_st = container_of(export, struct export_stats, export);
-	server_stats_free(&export_st->st);
-	PTHREAD_RWLOCK_destroy(&export->lock);
-	gsh_free(export_st);
-}
-
 
 /**
  * @brief Insert an export list entry into the export manager
@@ -299,13 +264,12 @@ bool insert_gsh_export(struct gsh_export *export)
 		return false;
 	}
 
-	/* we will hold a ref starting out... */
+	/* take an additional ref for the sentinel reference... */
 	get_gsh_export_ref(export);
 
 	/* update cache */
 	atomic_store_voidptr(cache_slot, &export->node_k);
 	glist_add_tail(&exportlist, &export->exp_list);
-	get_gsh_export_ref(export);		/* == 2 */
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return true;
@@ -681,6 +645,7 @@ void _put_gsh_export(struct gsh_export *export,
 		     char *file, int line, char *function)
 {
 	int64_t refcount = atomic_dec_int64_t(&export->refcnt);
+	struct export_stats *export_st;
 
 	if (isFullDebug(COMPONENT_EXPORT)) {
 		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
@@ -697,9 +662,12 @@ void _put_gsh_export(struct gsh_export *export,
 		return;
 	}
 
-	/* Releasing last reference */
-
-	free_export(export);
+	/* Released last reference, free resources */
+	free_export_resources(export);
+	export_st = container_of(export, struct export_stats, export);
+	server_stats_free(&export_st->st);
+	PTHREAD_RWLOCK_destroy(&export->lock);
+	gsh_free(export_st);
 }
 
 /**

@@ -961,8 +961,8 @@ static void *export_init(void *link_mem, void *self_struct)
 			export->has_pnfs_ds = false;
 			pnfs_ds_remove(export->export_id, true);
 		} else {
-			assert(export->refcnt == 0);
-			export_cleanup(export);
+			/* Release the export allocated above */
+			put_gsh_export(export);
 		}
 
 		return NULL;
@@ -1385,10 +1385,11 @@ success:
 		glist_length(&export->clients));
 
 	if (commit_type != update_export) {
-		/* For initial or add export, insert_gsh_export gave out
-		 * two references, a sentinel reference for the export's
-		 * presence in the export table, and one reference for our
-		 * use here, drop that second reference now.
+		/* For initial or add export, the alloc_export in export_init
+		 * gave a reference to the export for use during the
+		 * configuration. Above insert_gsh_export added a sentinel
+		 * reference. Now, since this export commit is final, we can
+		 * drop the reference from the alloc_export.
 		 *
 		 * In the case of update_export, we already dropped the
 		 * reference to the updated export, and this export has
@@ -1940,9 +1941,6 @@ static int build_default_root(struct config_error_type *err_type)
 		 "Allocating Pseudo root export");
 	export = alloc_export();
 
-	/* Initialize op_context */
-	init_op_context_simple(&op_context, export, NULL);
-
 	export->filesystem_id.major = 152;
 	export->filesystem_id.minor = 152;
 	export->MaxWrite = FSAL_MAXIOSIZE;
@@ -1986,6 +1984,9 @@ static int build_default_root(struct config_error_type *err_type)
 
 	/* Set Pseudo Path to "/" */
 	export->pseudopath = gsh_strdup("/");
+
+	/* Initialize req_ctx with the export reasomnably constructed */
+	init_op_context_simple(&op_context, export, NULL);
 
 	/* Assign FSAL_PSEUDO */
 	fsal_hdl = lookup_fsal("PSEUDO");
@@ -2035,12 +2036,19 @@ static int build_default_root(struct config_error_type *err_type)
 	LogInfo(COMPONENT_CONFIG,
 		"Export 0 (/) successfully created");
 
-	put_gsh_export(export);	/* all done, let go */
+	/* Release the reference from alloc_export() above, since the
+	 * insert worked, a sentinel reference has been taken, so this
+	 * reference release won't result in freeing the export.
+	 */
+	put_gsh_export(export);
 	release_op_context();
 	return 1;
 
 err_out:
-	free_export(export);
+	/* Release the export reference from alloc_export() above which will
+	 * result in cleaning up and freeing the export.
+	 */
+	put_gsh_export(export);
 	release_op_context();
 	return -1;
 }
@@ -2175,6 +2183,20 @@ static void FreeClientList(struct glist_head *clients)
 
 void free_export_resources(struct gsh_export *export)
 {
+	struct req_op_context op_context;
+	bool restore_op_ctx = false;
+
+	if (op_ctx->ctx_export != export) {
+		/* We need to complete export cleanup with this export.
+		 * Otherewise we SHOULD be being called in the final throes
+		 * of releasing an op context, or at least the export so
+		 * attached.
+		 */
+		init_op_context_simple(&op_context, export,
+				       export->fsal_export);
+		restore_op_ctx = true;
+	}
+
 	FreeClientList(&export->clients);
 	if (export->fsal_export != NULL) {
 		struct fsal_module *fsal = export->fsal_export->fsal;
@@ -2194,6 +2216,17 @@ void free_export_resources(struct gsh_export *export)
 		gsh_free(export->pseudopath);
 	if (export->FS_tag != NULL)
 		gsh_free(export->FS_tag);
+
+	/* At this point the export is no longer usable so poison the op
+	 * context (whether the one set up above or a pre-existing one.
+	 */
+	op_ctx->ctx_export = NULL;
+	op_ctx->fsal_export = NULL;
+
+	if (restore_op_ctx) {
+		/* And restore to the original op context */
+		release_op_context();
+	}
 }
 
 /**
