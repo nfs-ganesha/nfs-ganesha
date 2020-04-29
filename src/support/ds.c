@@ -277,7 +277,6 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
 			 */
 			init_op_context_simple(&op_context, pds->mds_export,
 					       pds->mds_export->fsal_export);
-			put_gsh_export(pds->mds_export);
 			release_op_context();
 		}
 

@@ -252,7 +252,6 @@ namespace gtest {
       root_entry->obj_ops->put_ref(root_entry);
       root_entry = NULL;
 
-      put_gsh_export(a_export);
       a_export = NULL;
       release_op_context();
 

@@ -138,11 +138,9 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 			get_gsh_export_ref(
 				file_obj->state_hdl->dir.junction_export);
 
-			/* Release any old export reference */
-			if (op_ctx->ctx_export != NULL)
-				put_gsh_export(op_ctx->ctx_export);
-
-			/* Stash the new export in the compound data. */
+			/* Stash the new export in the compound data, releasing
+			 * any old export reference.
+			 */
 			set_op_context_export(
 				file_obj->state_hdl->dir.junction_export);
 

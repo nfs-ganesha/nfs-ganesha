@@ -1373,7 +1373,6 @@ void state_release_export(struct gsh_export *export)
 #ifdef _USE_NLM
 	state_export_unshare_all();
 #endif /* _USE_NLM */
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 }
 

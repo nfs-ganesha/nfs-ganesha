@@ -1101,11 +1101,8 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 
 	compound_data_Free(data);
 	/* release current active export in op_ctx. */
-	if (op_ctx->ctx_export) {
-		put_gsh_export(op_ctx->ctx_export);
+	if (op_ctx->ctx_export)
 		clear_op_context_export();
-	}
-
 
 	nfs_rpc_complete_async_request(reqdata, NFS_REQ_OK);
 
@@ -1343,10 +1340,8 @@ out:
 	compound_data_Free(data);
 
 	/* release current active export in op_ctx. */
-	if (op_ctx->ctx_export) {
-		put_gsh_export(op_ctx->ctx_export);
+	if (op_ctx->ctx_export)
 		clear_op_context_export();
-	}
 
 	return drop ? NFS_REQ_DROP : NFS_REQ_OK;
 }				/* nfs4_Compound */

@@ -145,7 +145,6 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	state->tail = new_expnode;
 
 out:
-	put_gsh_export(op_ctx->ctx_export);
 	clear_op_context_export();
 	return true;
 }

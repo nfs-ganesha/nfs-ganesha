@@ -1043,7 +1043,6 @@ populate_dirent(const char *name,
 
 		/* Release our refs and restore op_context */
 		junction_obj->obj_ops->put_ref(junction_obj);
-		put_gsh_export(junction_export);
 		restore_op_context_export(&saved);
 
 		/* state->cb (nfs4_readdir_callback) saved op_ctx

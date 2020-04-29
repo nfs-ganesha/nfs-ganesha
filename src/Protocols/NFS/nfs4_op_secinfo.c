@@ -270,16 +270,10 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		data->currentFH.nfs_fh4_len = 0;
 
 		/* Release CurrentFH reference to export. */
-		if (op_ctx->ctx_export) {
-			put_gsh_export(op_ctx->ctx_export);
-		}
-
 		clear_op_context_export();
 
 		if (restore_op_ctx) {
 			/* Don't need saved export */
-			if (saved.saved_export)
-				put_gsh_export(saved.saved_export);
 			discard_op_context_export(&saved);
 			restore_op_ctx = false;
 		}
@@ -291,9 +285,6 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 
 	if (restore_op_ctx) {
 		/* Restore export stuff */
-		if (op_ctx->ctx_export)
-			put_gsh_export(op_ctx->ctx_export);
-
 		restore_op_context_export(&saved);
 
 		/* Restore creds */

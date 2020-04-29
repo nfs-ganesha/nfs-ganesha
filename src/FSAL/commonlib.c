@@ -3163,8 +3163,8 @@ bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 	return true;
 }
 
-void set_op_context_export_fsal(struct gsh_export *exp,
-				struct fsal_export *fsal_exp)
+static void set_op_context_export_fsal_no_release(struct gsh_export *exp,
+						  struct fsal_export *fsal_exp)
 {
 	op_ctx->ctx_export = exp;
 	op_ctx->fsal_export = fsal_exp;
@@ -3175,8 +3175,20 @@ void set_op_context_export_fsal(struct gsh_export *exp,
 		op_ctx->fsal_module = op_ctx->saved_op_ctx->fsal_module;
 }
 
+void set_op_context_export_fsal(struct gsh_export *exp,
+				struct fsal_export *fsal_exp)
+{
+	if (op_ctx->ctx_export != NULL)
+		put_gsh_export(op_ctx->ctx_export);
+
+	set_op_context_export_fsal_no_release(exp, fsal_exp);
+}
+
 void clear_op_context_export(void)
 {
+	if (op_ctx->ctx_export != NULL)
+		put_gsh_export(op_ctx->ctx_export);
+
 	op_ctx->ctx_export = NULL;
 	op_ctx->fsal_export = NULL;
 }
@@ -3193,7 +3205,9 @@ void save_op_context_export_and_set_export(struct saved_export_context *saved,
 					   struct gsh_export *exp)
 {
 	save_op_context_export(saved);
-	set_op_context_export_fsal(exp, exp->fsal_export);
+
+	/* Don't release op_ctx->ctx_export since it's saved */
+	set_op_context_export_fsal_no_release(exp, exp->fsal_export);
 }
 
 void save_op_context_export_and_clear(struct saved_export_context *saved)
@@ -3214,7 +3228,8 @@ void restore_op_context_export(struct saved_export_context *saved)
 
 void discard_op_context_export(struct saved_export_context *saved)
 {
-	/* currently empty */
+	if (saved->saved_export)
+		put_gsh_export(saved->saved_export);
 }
 
 void init_op_context(struct req_op_context *ctx,

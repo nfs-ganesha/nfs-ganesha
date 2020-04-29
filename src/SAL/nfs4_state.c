@@ -703,8 +703,6 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 		if (state == NULL) {
 			PTHREAD_MUTEX_unlock(&owner->so_mutex);
 			/* Restore export */
-			if (op_ctx->ctx_export != NULL)
-				put_gsh_export(op_ctx->ctx_export);
 			restore_op_context_export(&saved);
 			return NFS4_OK;
 		}
@@ -836,11 +834,6 @@ void release_openstate(state_owner_t *owner)
 
 		STATELOCK_lock(obj);
 
-		/* In case op_ctx->export is not NULL... */
-		if (op_ctx->ctx_export != NULL) {
-			put_gsh_export(op_ctx->ctx_export);
-		}
-
 		/* op_ctx may be used by state_del_locked and others set export
 		 * from the state and release any old ctx_export reference.
 		 * Reference was taken above and will be release by
@@ -860,7 +853,6 @@ void release_openstate(state_owner_t *owner)
 
 		/* Release refs we held during state_del */
 		obj->obj_ops->put_ref(obj);
-		put_gsh_export(op_ctx->ctx_export);
 		clear_op_context_export();
 	}
 
@@ -955,7 +947,6 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		/* Release refs we held */
 		obj->obj_ops->put_ref(obj);
 
-		put_gsh_export(op_ctx->ctx_export);
 		release_op_context();
 		/* Since we dropped so_mutex, we must restart the loop. */
 		goto again;

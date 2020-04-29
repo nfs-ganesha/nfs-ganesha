@@ -177,10 +177,8 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 	data->currentFH.nfs_fh4_len = 0;
 
 	/* Release CurrentFH reference to export. */
-	if (op_ctx->ctx_export) {
-		put_gsh_export(op_ctx->ctx_export);
-		clear_op_context_export();
-	}
+	clear_op_context_export();
+
 
 	res_SECINFO_NO_NAME4->status = NFS4_OK;
 

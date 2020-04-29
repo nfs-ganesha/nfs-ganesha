@@ -2974,8 +2974,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			/* The export is being removed, we didn't bother
 			 * calling state_unlock() because export cleanup
 			 * will remove all the state. This is assured by
-			 * the call to put_gsh_export immediately following.
-			 * Pretend succes.
+			 * the call to put_gsh_export from
+			 * clear_op_context_export. Pretend succes.
 			 */
 			status = STATE_SUCCESS;
 		}
@@ -2983,7 +2983,6 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* Release the refcounts we took above. */
 		dec_state_owner_ref(owner);
 		obj->obj_ops->put_ref(obj);
-		put_gsh_export(export);
 		clear_op_context_export();
 
 		if (!state_unlock_err_ok(status)) {
@@ -3073,8 +3072,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			/* The export is being removed, we didn't bother
 			 * calling state_unlock() because export cleanup
 			 * will remove all the state. This is assured by
-			 * the call to put_gsh_export immediately following.
-			 * Pretend succes.
+			 * the call to put_gsh_export from
+			 * clear_op_context_export. Pretend succes.
 			 */
 			status = STATE_SUCCESS;
 		}
@@ -3083,7 +3082,6 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		dec_state_owner_ref(owner);
 		obj->obj_ops->put_ref(obj);
 		dec_state_t_ref(found_share);
-		put_gsh_export(export);
 		clear_op_context_export();
 
 		if (!state_unlock_err_ok(status)) {
@@ -3213,7 +3211,6 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 
 		/* Release the obj ref and export ref. */
 		obj->obj_ops->put_ref(obj);
-		put_gsh_export(export);
 		restore_op_context_export(&saved);
 	}
 
@@ -3549,7 +3546,6 @@ void cancel_all_nlm_blocked(void)
 
 		lock_entry_dec_ref(found_entry);
 
-		put_gsh_export(op_ctx->ctx_export);
 		clear_op_context_export();
 
 		PTHREAD_MUTEX_lock(&blocked_locks_mutex);

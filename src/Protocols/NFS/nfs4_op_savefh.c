@@ -93,7 +93,6 @@ void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj)
 
 	if (restore_op_ctx) {
 		/* Restore op_ctx */
-		put_gsh_export(op_ctx->ctx_export);
 		restore_op_context_export(&saved);
 	}
 }

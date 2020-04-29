@@ -724,10 +724,6 @@ void free_args(nfs_request_t *reqdata)
 		op_ctx->client = NULL;
 	}
 
-	if (op_ctx->ctx_export != NULL) {
-		put_gsh_export(op_ctx->ctx_export);
-	}
-
 	clean_credentials();
 	release_op_context();
 

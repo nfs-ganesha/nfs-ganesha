@@ -386,8 +386,8 @@ bool pseudo_mount_export(struct gsh_export *export)
 			export->export_id, export->fullpath,
 			export->pseudopath);
 
-		/* Release the reference on the mounted on export. */
-		put_gsh_export(op_ctx->ctx_export);
+		/* Goto out to release the reference on the mounted on export.
+		 */
 		goto out;
 	}
 
@@ -399,11 +399,10 @@ bool pseudo_mount_export(struct gsh_export *export)
 	     tok = strtok_r(NULL, "/", &saveptr)) {
 		rc = make_pseudofs_node(tok, &state);
 		if (!rc) {
-			/* Release reference on mount point inode
-			 * and the mounted on export
+			/* Release reference on mount point inode and goto out
+			 * to release the reference on the mounted on export
 			 */
 			state.obj->obj_ops->put_ref(state.obj);
-			put_gsh_export(op_ctx->ctx_export);
 			goto out;
 		}
 	}
@@ -446,7 +445,6 @@ bool pseudo_mount_export(struct gsh_export *export)
 
 out:
 
-	put_gsh_export(op_ctx->ctx_export);
 	clear_op_context_export();
 	return result;
 }
@@ -583,12 +581,11 @@ void pseudo_unmount_export(struct gsh_export *export)
 					      junction_inode);
 
 			gsh_free(pseudopath);
-			put_gsh_export(op_ctx->ctx_export);
 			release_op_context();
+		} else {
+			/* Release reference to the export we are mounted on. */
+			put_gsh_export(mounted_on_export);
 		}
-
-		/* Release our reference to the export we are mounted on. */
-		put_gsh_export(mounted_on_export);
 	}
 
 	if (junction_inode != NULL) {

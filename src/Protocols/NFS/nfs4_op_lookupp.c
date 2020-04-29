@@ -175,7 +175,6 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		/* Release the original_export and put the parent_exp into
 		 * the op context.
 		 */
-		put_gsh_export(original_export);
 		set_op_context_export(parent_exp);
 
 		/* Build credentials */

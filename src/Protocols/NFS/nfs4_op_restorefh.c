@@ -111,10 +111,8 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 
 	data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
-	if (op_ctx->ctx_export != NULL)
-		put_gsh_export(op_ctx->ctx_export);
-
-	/* Restore the export information */
+	/* Restore the export information and release any old export reference
+	 */
 	set_op_context_export(data->saved_export);
 	op_ctx->export_perms = data->saved_export_perms;
 

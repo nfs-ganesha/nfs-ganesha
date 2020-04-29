@@ -248,7 +248,6 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		/* Release the reference taken above */
 		obj->obj_ops->put_ref(obj);
 		dec_state_t_ref(state);
-		put_gsh_export(export);
 		restore_op_context_export(&saved);
 
 		if (errcnt < STATE_ERR_MAX) {

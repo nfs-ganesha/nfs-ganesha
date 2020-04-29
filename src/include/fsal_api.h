@@ -389,6 +389,23 @@ enum request_type {
  *
  * NOTE: This is an across-the-api shared structure.  Changing it implies a
  *       change in the FSAL API.
+ *
+ * NOTE: There is a set of functions in fsal.h to initialize and manage the
+ *       req_op_context. Please use them...
+ *
+ * NOTE: Usually a gsh_export is referenced by the req_op_context, it is
+ *       expected that a reference to that gsh_export will be held for the
+ *       duration of the time it's attached to the req_op_context or the life
+ *       of the req_op_context. To this extent, the responsibility to make the
+ *       put_gsh_export is now borne by the req_op_context management functions.
+ *       Specifically release_op_contextm, clear_op_context_export,
+ *       set_op_context_export, set_op_context_export_fsal, and
+ *       restore_op_context_export will all call put_gsh_export if there is an
+ *       attached export.
+ *
+ *       The functions that manage a saved_export_context maintain a reference
+ *       to the gsh_export and thus discard_op_context_export will clean that
+ *       up since the saved req_op_context will not be restored.
  */
 
 struct req_op_context {

@@ -151,10 +151,8 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out:
 
-	if (exp != NULL) {
-		put_gsh_export(exp);
+	if (exp != NULL)
 		release_op_context();
-	}
 
 	return NFS_REQ_OK;
 }				/* rquota_getquota */

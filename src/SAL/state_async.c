@@ -80,10 +80,8 @@ static void state_blocked_lock_caller(struct fridgethr_context *ctx)
 
 	process_blocked_lock_upcall(block);
 
-	if (set_op_ctx) {
-		put_gsh_export(export);
+	if (set_op_ctx)
 		release_op_context();
-	}
 }
 
 /**

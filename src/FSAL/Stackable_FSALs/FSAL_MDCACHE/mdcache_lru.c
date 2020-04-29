@@ -640,7 +640,6 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 			/* We had to use our own op_ctx, clean it up and revert
 			 * to the saved op_ctx.
 			 */
-			put_gsh_export(op_ctx->ctx_export);
 			release_op_context();
 		}
 	}
@@ -1231,7 +1230,6 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 
 next_lru:
 		QLOCK(qlane); /* QLOCKED */
-		put_gsh_export(export);
 		release_op_context();
 
 		++workdone;

@@ -124,7 +124,6 @@ enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
 
 	dec_state_t_ref(state);
 	obj->obj_ops->put_ref(obj);
-	put_gsh_export(export);
 	restore_op_context_export(&saved);
 
 	return nfsstat4_to_nfs_req_result(res_FREE_STATEID4->fsr_status);

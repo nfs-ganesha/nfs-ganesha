@@ -219,10 +219,9 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		    auth_flavor[i];
 
  out:
-	if (export != NULL) {
-		put_gsh_export(export);
+	if (export != NULL)
 		clear_op_context_export();
-	}
+
 	return retval;
 
 }				/* mnt_Mnt */

@@ -650,9 +650,6 @@ static void layoutrec_completion(rpc_call_t *call)
 out:
 
 	if (ok) {
-		/* Release the export */
-		put_gsh_export(export);
-
 		/* Release object ref */
 		obj->obj_ops->put_ref(obj);
 
@@ -713,9 +710,6 @@ static void return_one_async(void *arg)
 	}
 
 	if (ok) {
-		/* Release the export */
-		put_gsh_export(export);
-
 		/* Release object ref */
 		obj->obj_ops->put_ref(obj);
 
@@ -823,9 +817,6 @@ static void layoutrecall_one_call(void *arg)
 	}
 
 	if (ok) {
-		/* Release the export */
-		put_gsh_export(export);
-
 		/* Release object ref */
 		obj->obj_ops->put_ref(obj);
 
@@ -1215,9 +1206,6 @@ out_free:
 	if (obj != NULL)
 		obj->obj_ops->put_ref(obj);
 
-	if (export != NULL)
-		put_gsh_export(export);
-
 	if (used_ctx)
 		release_op_context();
 }
@@ -1400,9 +1388,6 @@ static void delegrevoke_check(void *ctx)
 	if (obj != NULL)
 		obj->obj_ops->put_ref(obj);
 
-	if (export != NULL)
-		put_gsh_export(export);
-
 	if (used_ctx)
 		release_op_context();
 }
@@ -1440,8 +1425,6 @@ static void delegrecall_task(void *ctx)
 
 	/* Release the obj ref and export ref. */
 	obj->obj_ops->put_ref(obj);
-	put_gsh_export(export);
-	clear_op_context_export();
 	release_op_context();
 out:
 	dec_state_t_ref(state);
@@ -1554,7 +1537,6 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 		PTHREAD_MUTEX_lock(&drc_ctx->drc_clid->cid_mutex);
 		if (!reserve_lease(drc_ctx->drc_clid)) {
 			PTHREAD_MUTEX_unlock(&drc_ctx->drc_clid->cid_mutex);
-			put_gsh_export(drc_ctx->drc_exp);
 			dec_client_id_ref(drc_ctx->drc_clid);
 			gsh_free(drc_ctx);
 			release_op_context();
@@ -1563,7 +1545,6 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 		PTHREAD_MUTEX_unlock(&drc_ctx->drc_clid->cid_mutex);
 
 		delegrecall_one(obj, state, drc_ctx);
-		put_gsh_export(op_ctx->ctx_export);
 		release_op_context();
 	}
 	STATELOCK_unlock(obj);
@@ -1723,7 +1704,6 @@ cbgetattr_state handle_getattr_response(struct cbgetattr_context *cbg_ctx,
 	fsal_status = event_func->update(event_func, &key,
 					 &up_attr, upflags);
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	if (FSAL_IS_ERROR(fsal_status)) {
@@ -1874,7 +1854,6 @@ out:
 
 out_exp:
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 	return ret;
 }

@@ -194,10 +194,8 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 
 out:
 
-	if (exp != NULL) {
-		put_gsh_export(exp);
+	if (exp != NULL)
 		release_op_context();
-	}
 
 	return NFS_REQ_OK;
 }				/* do_rquota_setquota */

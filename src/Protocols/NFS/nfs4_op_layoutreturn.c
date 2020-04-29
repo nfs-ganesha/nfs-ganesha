@@ -293,7 +293,6 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 				if (!memcmp(&fsid, &data->current_obj->fsid,
 					    sizeof(fsid))) {
 					obj->obj_ops->put_ref(obj);
-					put_gsh_export(export);
 					dec_state_t_ref(layout_state);
 					clear_op_context_export();
 
@@ -324,7 +323,6 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 			dec_state_t_ref(layout_state);
 
 			obj->obj_ops->put_ref(obj);
-			put_gsh_export(export);
 			clear_op_context_export();
 
 			if (res_LAYOUTRETURN4->lorr_status != NFS4_OK)

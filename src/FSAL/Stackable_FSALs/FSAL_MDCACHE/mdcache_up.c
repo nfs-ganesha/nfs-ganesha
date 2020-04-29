@@ -88,7 +88,6 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 
 out:
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 	return status;
 }
@@ -402,7 +401,6 @@ put:
 	mdcache_put(entry);
 out:
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 	return status;
 }
@@ -459,7 +457,6 @@ state_status_t mdc_up_lock_grant(const struct fsal_up_vector *vec,
 
 	rc = myself->super_up_ops.lock_grant(vec, file, owner, lock_param);
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	return rc;
@@ -494,7 +491,6 @@ state_status_t mdc_up_lock_avail(const struct fsal_up_vector *vec,
 
 	rc = myself->super_up_ops.lock_avail(vec, file, owner, lock_param);
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	return rc;
@@ -538,7 +534,6 @@ state_status_t mdc_up_layoutrecall(const struct fsal_up_vector *vec,
 	rc = myself->super_up_ops.layoutrecall(vec, handle, layout_type,
 					       changed, segment, cookie, spec);
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	return rc;
@@ -567,7 +562,6 @@ state_status_t mdc_up_delegrecall(const struct fsal_up_vector *vec,
 
 	rc = myself->super_up_ops.delegrecall(vec, handle);
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	return rc;

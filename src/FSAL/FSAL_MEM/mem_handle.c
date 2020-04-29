@@ -1812,7 +1812,6 @@ mem_async_complete(struct fridgethr_context *ctx)
 	async_arg->done_cb(async_arg->obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0),
 			   async_arg->io_arg, async_arg->caller_arg);
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	gsh_free(async_arg);

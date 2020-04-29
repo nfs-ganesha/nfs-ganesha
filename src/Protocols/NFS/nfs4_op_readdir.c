@@ -63,9 +63,6 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	}
 
 	/* Restore export stuff */
-	if (op_ctx->ctx_export)
-		put_gsh_export(op_ctx->ctx_export);
-
 	restore_op_context_export(&tracker->saved);
 
 	/* Restore creds */

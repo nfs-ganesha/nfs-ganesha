@@ -799,7 +799,7 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	}
 
 err:
-	put_gsh_export(op_ctx->ctx_export);
+
 	release_op_context();
 	/* Don't leak the FSAL block */
 	err_type->dispose = true;
@@ -907,17 +907,8 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 		 "Export %d FSAL config update processed",
 		 export->export_id);
 
-	put_gsh_export(op_ctx->ctx_export);
-	release_op_context();
-
-	/* Don't leak the FSAL block */
-	err_type->dispose = true;
-
-	return 0;
-
 err:
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 
 	/* Don't leak the FSAL block */
@@ -2040,7 +2031,6 @@ static int build_default_root(struct config_error_type *err_type)
 	 * insert worked, a sentinel reference has been taken, so this
 	 * reference release won't result in freeing the export.
 	 */
-	put_gsh_export(export);
 	release_op_context();
 	return 1;
 
@@ -2048,7 +2038,6 @@ err_out:
 	/* Release the export reference from alloc_export() above which will
 	 * result in cleaning up and freeing the export.
 	 */
-	put_gsh_export(export);
 	release_op_context();
 	return -1;
 }
@@ -2460,7 +2449,6 @@ int init_export_root(struct gsh_export *export)
 	my_status = 0;
 out:
 
-	put_gsh_export(op_ctx->ctx_export);
 	release_op_context();
 	return my_status;
 }

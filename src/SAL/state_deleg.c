@@ -463,7 +463,6 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
 
 	/* Release references taken above */
 	dec_state_owner_ref(owner);
-	put_gsh_export(export);
 	release_op_context();
 
 	return NFS4_OK;
