@@ -358,6 +358,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	bool created = false;
 	fsal_status_t status;
 	mode_t unix_mode;
+	bool ignore_perm_check;
 
 	LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG, "attrs ", attr_set, false);
 
@@ -506,9 +507,16 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 	/* Restore posix_flags as it was modified for create above */
 	fsal2posix_openflags(openflags, &posix_flags);
+	/* We created a file with the caller's credentials active, so as such
+	 * permission check was done. So we don't need the caller to do
+	 * permission check again (for that we have already set
+	 * *caller_perm_check=false). Passing ignore_perm_check to
+	 * open_by_handle() as we don't want to modify the value at
+	 * caller_perm_check.
+	 */
 	return open_by_handle(&hdl->obj_handle, state, openflags, posix_flags,
 			verifier, attrs_out, createmode,
-			caller_perm_check);
+			&ignore_perm_check);
 
  fileerr:
 	if (hdl != NULL) {
