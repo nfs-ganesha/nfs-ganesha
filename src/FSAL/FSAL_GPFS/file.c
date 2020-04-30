@@ -56,7 +56,7 @@ gpfs_open_func(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd->fd);
+	status = GPFSFSAL_open(obj_hdl, posix_flags, &my_fd->fd);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -174,7 +174,7 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		my_fd = &gpfs_hdl->u.file.fd;
 	}
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &fd);
+	status = GPFSFSAL_open(obj_hdl, posix_flags, &fd);
 
 	if (FSAL_IS_ERROR(status)) {
 		if (state == NULL)
@@ -197,7 +197,7 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 	if (attrs_out && (createmode >= FSAL_EXCLUSIVE || truncated)) {
 		/* Refresh the attributes */
-		status = GPFSFSAL_getattrs(export, gpfs_fs, op_ctx,
+		status = GPFSFSAL_getattrs(export, gpfs_fs,
 					   gpfs_hdl->handle, attrs_out);
 
 		if (!FSAL_IS_ERROR(status)) {
@@ -418,7 +418,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		posix_flags |= O_EXCL;
 	}
 
-	status = GPFSFSAL_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
+	status = GPFSFSAL_create2(obj_hdl, name, unix_mode, &fh,
 				  posix_flags, attrs_out);
 
 	if (status.major == ERR_FSAL_EXIST && createmode == FSAL_UNCHECKED &&
@@ -435,7 +435,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		 * attributes.
 		 */
 		posix_flags &= ~O_EXCL;
-		status = GPFSFSAL_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
+		status = GPFSFSAL_create2(obj_hdl, name, unix_mode, &fh,
 					  posix_flags, attrs_out);
 	}
 
@@ -529,7 +529,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		fsal_status_t status2;
 
 		/* Remove the file we just created */
-		status2 = GPFSFSAL_unlink(obj_hdl, name, op_ctx);
+		status2 = GPFSFSAL_unlink(obj_hdl, name);
 		if (FSAL_IS_ERROR(status2)) {
 			LogEvent(COMPONENT_FSAL,
 				 "GPFSFSAL_unlink failed, error: %s",
@@ -678,7 +678,7 @@ gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd);
+	status = GPFSFSAL_open(obj_hdl, posix_flags, &my_fd);
 
 	if (!FSAL_IS_ERROR(status)) {
 		/* Close the existing file descriptor and copy the new
@@ -958,7 +958,7 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl,
 				write_arg->iov[0].iov_base,
 				&write_arg->io_amount,
 				&write_arg->fsal_stable,
-				op_ctx, export_fd);
+				export_fd);
 
 	if (gpfs_fd)
 		PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);

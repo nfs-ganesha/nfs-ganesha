@@ -612,7 +612,6 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *  @brief Set NFS4 ACL as well as stat.
  *
  *  @param dirfd Open file descriptor of parent directory
- *  @param op_ctx Context
  *  @param gpfs_fh file handle of file
  *  @param attr_valid Attributes valid
  *  @param attr_changed Attributes changed
@@ -621,7 +620,7 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *  @return status of operation
  */
 fsal_status_t
-fsal_set_xstat_by_handle(int dirfd, const struct req_op_context *op_ctx,
+fsal_set_xstat_by_handle(int dirfd,
 			 struct gpfs_file_handle *gpfs_fh, int attr_valid,
 			 int attr_changed, gpfsfsal_xstat_t *buffxstat,
 			 gpfs_acl_t *acl_buf)
@@ -666,14 +665,13 @@ fsal_set_xstat_by_handle(int dirfd, const struct req_op_context *op_ctx,
 
 /**
  *  @param dirfd Open file descriptor of parent directory
- *  @param op_ctx Context
  *  @param gpfs_fh file handle of file
  *  @param size Size
  *
  *  @return status of operation
  */
 fsal_status_t
-fsal_trucate_by_handle(int dirfd, const struct req_op_context *op_ctx,
+fsal_trucate_by_handle(int dirfd,
 		       struct gpfs_file_handle *gpfs_fh, u_int64_t size)
 {
 	gpfsfsal_xstat_t buffxstat = {0};
@@ -683,7 +681,7 @@ fsal_trucate_by_handle(int dirfd, const struct req_op_context *op_ctx,
 
 	buffxstat.buffstat.st_size = size;
 
-	return fsal_set_xstat_by_handle(dirfd, op_ctx, gpfs_fh, XATTR_STAT,
+	return fsal_set_xstat_by_handle(dirfd, gpfs_fh, XATTR_STAT,
 					XATTR_SIZE, &buffxstat, NULL);
 }
 

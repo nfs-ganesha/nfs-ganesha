@@ -1225,7 +1225,6 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
  *
  * @param[in]     obj_hdl  The handle of the file on which the layout is
  *                         requested.
- * @param[in]     req_ctx  Request context
  * @param[out]    loc_body An XDR stream to which the FSAL must encode
  *                         the layout specific portion of the granted
  *                         layout segment.
@@ -1235,7 +1234,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
  * @return NFS4ERR_LAYOUTUNAVAILABLE
  */
 static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
-			  struct req_op_context *req_ctx, XDR *loc_body,
+			  XDR *loc_body,
 			  const struct fsal_layoutget_arg *arg,
 			  struct fsal_layoutget_res *res)
 {
@@ -1246,7 +1245,6 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
  * @brief Don't return a layout segment
  *
  * @param[in] obj_hdl  The object on which a segment is to be returned
- * @param[in] req_ctx  Request context
  * @param[in] lrf_body In the case of a non-synthetic return, this is
  *                     an XDR stream corresponding to the layout
  *                     type-specific argument to LAYOUTRETURN.  In
@@ -1257,7 +1255,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
  * @return NFS4ERR_NOTSUPP
  */
 static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR *lrf_body,
+			     XDR *lrf_body,
 			     const struct fsal_layoutreturn_arg *arg)
 {
 	return NFS4ERR_NOTSUPP;
@@ -1267,7 +1265,6 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
  * @brief Fail to commit a segment of a layout
  *
  * @param[in]     obj_hdl  The object on which to commit
- * @param[in]     req_ctx  Request context
  * @param[in]     lou_body An XDR stream containing the layout
  *                         type-specific portion of the LAYOUTCOMMIT
  *                         arguments.
@@ -1277,7 +1274,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
  * @return Valid error codes in RFC 5661, p. 366.
  */
 static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR *lou_body,
+			     XDR *lou_body,
 			     const struct fsal_layoutcommit_arg *arg,
 			     struct fsal_layoutcommit_res *res)
 {
@@ -1653,7 +1650,6 @@ static void ds_release(struct fsal_ds_handle *const ds_hdl)
  * @brief Fail to read from a data-server handle.
  *
  * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -1665,7 +1661,6 @@ static void ds_release(struct fsal_ds_handle *const ds_hdl)
  * @return NFS4ERR_NOTSUPP.
  */
 static nfsstat4 ds_read(struct fsal_ds_handle *const ds_hdl,
-			struct req_op_context *const req_ctx,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
 			count4 * const supplied_length,
@@ -1676,7 +1671,6 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_hdl,
 }
 
 static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_hdl,
-			struct req_op_context *const req_ctx,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
 			const count4 supplied_length,
@@ -1691,7 +1685,6 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_hdl,
  * @brief Fail to write to a data-server handle.
  *
  * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -1706,7 +1699,6 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_hdl,
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
-			 struct req_op_context *const req_ctx,
 			 const stateid4 *stateid, const offset4 offset,
 			 const count4 write_length, const void *buffer,
 			 const stable_how4 stability_wanted,
@@ -1722,7 +1714,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
  * @brief Fail to commit a byte range on a DS handle.
  *
  * @param[in]  ds_hdl    FSAL DS handle
- * @param[in]  req_ctx   Credentials
  * @param[in]  offset    Start of commit window
  * @param[in]  count     Length of commit window
  * @param[out] writeverf Write verifier
@@ -1730,7 +1721,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_hdl,
-			  struct req_op_context *const req_ctx,
 			  const offset4 offset, const count4 count,
 			  verifier4 * const writeverf)
 {

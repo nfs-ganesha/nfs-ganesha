@@ -295,7 +295,6 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
 
 	nfs_status = data->current_ds->dsh_ops.read(
 				data->current_ds,
-				op_ctx,
 				&arg_READ4->stateid,
 				arg_READ4->offset,
 				arg_READ4->count,
@@ -366,7 +365,6 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 
 	nfs_status = data->current_ds->dsh_ops.read_plus(
 				data->current_ds,
-				op_ctx,
 				&arg_READ4->stateid,
 				arg_READ4->offset,
 				arg_READ4->count,

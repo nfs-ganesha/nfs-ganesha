@@ -47,7 +47,6 @@ fsal_acl_2_gpfs_acl(struct fsal_obj_handle *, fsal_acl_t *, gpfsfsal_xstat_t *,
  *
  *  @param export FSAL export
  *  @param gpfs_fs GPFS filesystem
- *  @param op_ctx Request op context
  *  @param gpfs_fh GPFS file handle
  *  @param attrs Object attributes (fs_locations is initialized
  *                                  on a successful return)
@@ -56,7 +55,6 @@ fsal_acl_2_gpfs_acl(struct fsal_obj_handle *, fsal_acl_t *, gpfsfsal_xstat_t *,
  */
 fsal_status_t
 GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
-		const struct req_op_context *op_ctx,
 		struct gpfs_file_handle *gpfs_fh, struct attrlist *attrs)
 {
 	char root[MAXPATHLEN];
@@ -108,14 +106,12 @@ GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
  *
  *  @param export FSAL export
  *  @param gpfs_fs GPFS filesystem
- *  @param op_ctx Request op context
  *  @param gpfs_fh GPFS file handle
  *  @param obj_attr Object attributes
  *  @return FSAL status
  */
 fsal_status_t
 GPFSFSAL_getattrs(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
-		  const struct req_op_context *op_ctx,
 		  struct gpfs_file_handle *gpfs_fh, struct attrlist *obj_attr)
 {
 	fsal_status_t st;
@@ -251,7 +247,6 @@ GPFSFSAL_statfs(int mountdirfd, struct fsal_obj_handle *obj_hdl,
  *  @brief Set attributes for the object specified by its filehandle.
  *
  *  @param dir_hdl The handle of the object to get parameters.
- *  @param ro_ctx Authentication context for the operation (user,...).
  *  @param obj_attr The post operation attributes for the object.
  *                 As input, it defines the attributes that the caller
  *                 wants to retrieve (by positioning flags into this structure)
@@ -262,7 +257,6 @@ GPFSFSAL_statfs(int mountdirfd, struct fsal_obj_handle *obj_hdl,
  */
 fsal_status_t
 GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
-		  const struct req_op_context *ro_ctx,
 		  struct attrlist *obj_attr)
 {
 	fsal_status_t status;
@@ -272,7 +266,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 	gpfs_acl_t *acl_buf = NULL;
 	unsigned int acl_buflen = 0;
 	bool use_acl;
-	struct gpfs_fsal_export *exp = container_of(ro_ctx->fsal_export,
+	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
@@ -283,7 +277,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 	int attr_changed = 0;
 
 	myself = container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-	gpfs_export = container_of(ro_ctx->fsal_export,
+	gpfs_export = container_of(op_ctx->fsal_export,
 				   struct gpfs_fsal_export, export);
 	use_acl = gpfs_export->use_acl;
 
@@ -291,7 +285,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 
 	/* Is it allowed to change times ? */
 
-	if (!ro_ctx->fsal_export->exp_ops.fs_supports(ro_ctx->fsal_export,
+	if (!op_ctx->fsal_export->exp_ops.fs_supports(op_ctx->fsal_export,
 						      fso_cansettime)) {
 		if (obj_attr->valid_mask &
 			(ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME
@@ -304,7 +298,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_MODE)) {
 		obj_attr->mode &=
-		    ~ro_ctx->fsal_export->exp_ops.fs_umask(ro_ctx->fsal_export);
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 	}
 
   /**************
@@ -434,7 +428,7 @@ GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 
 	/* If there is any change in stat or acl or both, send it down to fs. */
 	if (attr_valid != 0) {
-		status = fsal_set_xstat_by_handle(export_fd, ro_ctx,
+		status = fsal_set_xstat_by_handle(export_fd,
 						  myself->handle, attr_valid,
 						  attr_changed, &buffxstat,
 						  acl_buf);

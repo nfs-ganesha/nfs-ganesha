@@ -237,7 +237,6 @@ void export_ops_pnfs(struct export_ops *ops)
  * ignore it otherwise.
  *
  * @param[in]     obj_pub  Public object handle
- * @param[in]     req_ctx  Request context
  * @param[out]    loc_body An XDR stream to which the FSAL must encode
  *                         the layout specific portion of the granted
  *                         layout segment.
@@ -247,7 +246,7 @@ void export_ops_pnfs(struct export_ops *ops)
  * @return Valid error codes in RFC 5661, pp. 366-7.
  */
 static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
-			  struct req_op_context *req_ctx, XDR *loc_body,
+			  XDR *loc_body,
 			  const struct fsal_layoutget_arg *arg,
 			  struct fsal_layoutget_res *res)
 {
@@ -352,7 +351,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 	nfs_status =
 	     FSAL_encode_file_layout(loc_body, &deviceid, util,
 				     file_layout.lg_first_stripe_index, 0,
-				     &req_ctx->ctx_export->export_id, 1,
+				     &op_ctx->ctx_export->export_id, 1,
 				     &ds_desc);
 	if (nfs_status) {
 		if (arg->maxcount <=
@@ -403,14 +402,13 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
  * pins to release, always succeed
  *
  * @param[in] obj_pub  Public object handle
- * @param[in] req_ctx  Request context
  * @param[in] lrf_body Nothing for us
  * @param[in] arg      Input arguments of the function
  *
  * @return Valid error codes in RFC 5661, p. 367.
  */
 static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR *lrf_body,
+			     XDR *lrf_body,
 			     const struct fsal_layoutreturn_arg *arg)
 {
 	struct layoutreturn_arg larg;
@@ -466,7 +464,6 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
  * Update the size and time for a file accessed through a layout.
  *
  * @param[in]     obj_pub  Public object handle
- * @param[in]     req_ctx  Request context
  * @param[in]     lou_body An XDR stream containing the layout
  *                         type-specific portion of the LAYOUTCOMMIT
  *                         arguments.
@@ -476,7 +473,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
  * @return Valid error codes in RFC 5661, p. 366.
  */
 static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR *lou_body,
+			     XDR *lou_body,
 			     const struct fsal_layoutcommit_arg *arg,
 			     struct fsal_layoutcommit_res *res)
 {

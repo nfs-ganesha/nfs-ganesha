@@ -2057,7 +2057,6 @@ struct fsal_obj_ops {
  *
  * @param[in]     obj_hdl  The handle of the file on which the layout is
  *                         requested.
- * @param[in]     req_ctx  Request context
  * @param[out]    loc_body An XDR stream to which the FSAL must encode
  *                         the layout specific portion of the granted
  *                         layout segment.
@@ -2067,7 +2066,6 @@ struct fsal_obj_ops {
  * @return Valid error codes in RFC 5661, pp. 366-7.
  */
 	 nfsstat4(*layoutget)(struct fsal_obj_handle *obj_hdl,
-			      struct req_op_context *req_ctx,
 			      XDR * loc_body,
 			      const struct fsal_layoutget_arg *arg,
 			      struct fsal_layoutget_res *res);
@@ -2087,7 +2085,6 @@ struct fsal_obj_ops {
  * layout must be freed.
  *
  * @param[in] obj_hdl  The object on which a segment is to be returned
- * @param[in] req_ctx  Request context
  * @param[in] lrf_body In the case of a non-synthetic return, this is
  *                     an XDR stream corresponding to the layout
  *                     type-specific argument to LAYOUTRETURN.  In
@@ -2098,7 +2095,6 @@ struct fsal_obj_ops {
  * @return Valid error codes in RFC 5661, p. 367.
  */
 	 nfsstat4(*layoutreturn)(struct fsal_obj_handle *obj_hdl,
-				 struct req_op_context *req_ctx,
 				 XDR * lrf_body,
 				 const struct fsal_layoutreturn_arg *arg);
 
@@ -2114,7 +2110,6 @@ struct fsal_obj_ops {
  * FSAL_layoutcommit.
  *
  * @param[in]     obj_hdl  The object on which to commit
- * @param[in]     req_ctx  Request context
  * @param[in]     lou_body An XDR stream containing the layout
  *                         type-specific portion of the LAYOUTCOMMIT
  *                         arguments.
@@ -2124,7 +2119,6 @@ struct fsal_obj_ops {
  * @return Valid error codes in RFC 5661, p. 366.
  */
 	 nfsstat4(*layoutcommit)(struct fsal_obj_handle *obj_hdl,
-				 struct req_op_context *req_ctx,
 				 XDR * lou_body,
 				 const struct fsal_layoutcommit_arg *arg,
 				 struct fsal_layoutcommit_res *res);
@@ -2652,7 +2646,6 @@ struct fsal_dsh_ops {
  * normal way.
  *
  * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -2664,7 +2657,6 @@ struct fsal_dsh_ops {
  * @return An NFSv4.1 status code.
  */
 	 nfsstat4(*read)(struct fsal_ds_handle *const ds_hdl,
-			 struct req_op_context *const req_ctx,
 			 const stateid4 * stateid,
 			 const offset4 offset,
 			 const count4 requested_length,
@@ -2681,7 +2673,6 @@ struct fsal_dsh_ops {
  * normal way.
  *
  * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -2694,7 +2685,6 @@ struct fsal_dsh_ops {
  * @return An NFSv4.2 status code.
  */
 	 nfsstat4(*read_plus)(struct fsal_ds_handle *const ds_hdl,
-			      struct req_op_context *const req_ctx,
 			      const stateid4 * stateid,
 			      const offset4 offset,
 			      const count4 requested_length,
@@ -2713,7 +2703,6 @@ struct fsal_dsh_ops {
  * normal way.
  *
  * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -2728,7 +2717,6 @@ struct fsal_dsh_ops {
  * @return An NFSv4.1 status code.
  */
 	 nfsstat4(*write)(struct fsal_ds_handle *const ds_hdl,
-			  struct req_op_context *const req_ctx,
 			  const stateid4 * stateid,
 			  const offset4 offset,
 			  const count4 write_length,
@@ -2747,7 +2735,6 @@ struct fsal_dsh_ops {
  * normal way.
  *
  * @param[in]  ds_hdl    FSAL DS handle
- * @param[in]  req_ctx   Credentials
  * @param[in]  offset    Start of commit window
  * @param[in]  count     Length of commit window
  * @param[out] writeverf Write verifier
@@ -2755,7 +2742,6 @@ struct fsal_dsh_ops {
  * @return An NFSv4.1 status code.
  */
 	 nfsstat4(*commit)(struct fsal_ds_handle *const ds_hdl,
-			   struct req_op_context *const req_ctx,
 			   const offset4 offset,
 			   const count4 count,
 			   verifier4 * const writeverf);

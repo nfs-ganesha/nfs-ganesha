@@ -31,7 +31,6 @@
  * \see fsal_api.h for more information
  */
 static nfsstat4 lzfs_fsal_layoutget(struct fsal_obj_handle *obj_pub,
-				    struct req_op_context *req_ctx,
 				    XDR *loc_body,
 				    const struct fsal_layoutget_arg *arg,
 				    struct fsal_layoutget_res *res)
@@ -65,7 +64,7 @@ static nfsstat4 lzfs_fsal_layoutget(struct fsal_obj_handle *obj_pub,
 
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, layout_util,
 					     0, 0,
-					     &req_ctx->ctx_export->export_id,
+					     &op_ctx->ctx_export->export_id,
 					     1, &ds_desc);
 	if (nfs_status) {
 		LogMajor(COMPONENT_PNFS, "Failed to encode "
@@ -83,10 +82,9 @@ static nfsstat4 lzfs_fsal_layoutget(struct fsal_obj_handle *obj_pub,
  *
  * \see fsal_api.h for more information
  */
-static nfsstat4 lzfs_fsal_layoutreturn(
-				struct fsal_obj_handle *obj_pub,
-				struct req_op_context *req_ctx, XDR *lrf_body,
-				const struct fsal_layoutreturn_arg *arg)
+static nfsstat4 lzfs_fsal_layoutreturn(struct fsal_obj_handle *obj_pub,
+				       XDR *lrf_body,
+				       const struct fsal_layoutreturn_arg *arg)
 {
 	if (arg->lo_type != LAYOUT4_NFSV4_1_FILES) {
 		LogDebug(COMPONENT_PNFS, "Unsupported layout type: %x",
@@ -101,11 +99,10 @@ static nfsstat4 lzfs_fsal_layoutreturn(
  *
  * \see fsal_api.h for more information
  */
-static nfsstat4 lzfs_fsal_layoutcommit(
-				struct fsal_obj_handle *obj_pub,
-				struct req_op_context *req_ctx, XDR *lou_body,
-				const struct fsal_layoutcommit_arg *arg,
-				struct fsal_layoutcommit_res *res)
+static nfsstat4 lzfs_fsal_layoutcommit(struct fsal_obj_handle *obj_pub,
+				       XDR *lou_body,
+				       const struct fsal_layoutcommit_arg *arg,
+				       struct fsal_layoutcommit_res *res)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_hdl;
@@ -122,7 +119,7 @@ static nfsstat4 lzfs_fsal_layoutcommit(
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 
-	lzfs_export = container_of(req_ctx->fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export,
 				   struct lzfs_fsal_export,
 				   export);
 	lzfs_hdl = container_of(obj_pub, struct lzfs_fsal_handle, handle);

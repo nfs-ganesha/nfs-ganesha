@@ -175,7 +175,6 @@ static enum nfs_req_result op_dswrite(struct nfs_argop4 *op,
 
 	res_WRITE4->status = data->current_ds->dsh_ops.write(
 				data->current_ds,
-				op_ctx,
 				&arg_WRITE4->stateid,
 				arg_WRITE4->offset,
 				arg_WRITE4->data.data_len,

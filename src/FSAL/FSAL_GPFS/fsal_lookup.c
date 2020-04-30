@@ -53,7 +53,6 @@ uint64_t get_handle2inode(struct gpfs_file_handle *gfh)
  *        if parent handle and filename are NULL,
  *        this retrieves root's handle.
  *
- *  @param op_ctx Authentication context for the operation (user,...).
  *  @param parent Handle of the parent directory to search the object in.
  *  @param filename The name of the object to find.
  *  @param fsal_attr Pointer to the attributes of the object we found.
@@ -65,8 +64,7 @@ uint64_t get_handle2inode(struct gpfs_file_handle *gfh)
  */
 #define GPFS_ROOT_INODE  3
 fsal_status_t
-GPFSFSAL_lookup(const struct req_op_context *op_ctx,
-		struct fsal_obj_handle *parent, const char *filename,
+GPFSFSAL_lookup(struct fsal_obj_handle *parent, const char *filename,
 		struct attrlist *fsal_attr, struct gpfs_file_handle *fh,
 		struct fsal_filesystem **new_fs)
 {
@@ -198,8 +196,7 @@ GPFSFSAL_lookup(const struct req_op_context *op_ctx,
 	}
 
 	/* get object attributes */
-	status = GPFSFSAL_getattrs(op_ctx->fsal_export, gpfs_fs,
-				   op_ctx, fh, fsal_attr);
+	status = GPFSFSAL_getattrs(op_ctx->fsal_export, gpfs_fs, fh, fsal_attr);
 
 	/* lookup complete ! */
 	return status;

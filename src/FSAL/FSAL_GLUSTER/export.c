@@ -445,46 +445,6 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 }
 
 /**
- * @brief Implements GLUSTER FSAL exportoperation check_quota
- */
-/*
-static fsal_status_t check_quota(struct fsal_export *exp_hdl,
-				 const char * filepath,
-				 int quota_type,
-				 struct req_op_context *req_ctx)
-{
-	return fsalstat(ERR_FSAL_NO_ERROR, 0) ;
-}
-*/
-/**
- * @brief Implements GLUSTER FSAL exportoperation get_quota
- */
-/*
-static fsal_status_t get_quota(struct fsal_export *exp_hdl,
-			       const char * filepath,
-			       int quota_type,
-			       struct req_op_context *req_ctx,
-			       fsal_quota_t *pquota)
-{
-	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
-}
-*/
-/**
- * @brief Implements GLUSTER FSAL exportoperation set_quota
- */
-/*
-static fsal_status_t set_quota(struct fsal_export *exp_hdl,
-			       const char *filepath,
-			       int quota_type,
-			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota,
-			       fsal_quota_t * presquota)
-{
-	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
-}
-*/
-
-/**
  * @brief Registers GLUSTER FSAL exportoperation vector
  *
  * This function overrides operations that we've implemented, leaving

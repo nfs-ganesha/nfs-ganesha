@@ -35,7 +35,6 @@
 
 /** @fn fsal_status_t
  *       GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
- *                     const struct req_op_context *op_ctx,
  *                     fsal_openflags_t openflags, int *file_desc,
  *                     struct attrlist *fsal_attr)
  *
@@ -56,9 +55,7 @@
  * @return ERR_FSAL_NO_ERROR on success, error otherwise
  */
 fsal_status_t
-GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
-	      const struct req_op_context *op_ctx, int posix_flags,
-	      int *file_desc)
+GPFSFSAL_open(struct fsal_obj_handle *obj_hdl, int posix_flags, int *file_desc)
 {
 	struct gpfs_fsal_obj_handle *myself;
 	fsal_status_t status;
@@ -157,8 +154,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
 
 /** @fn fsal_status_t
  *	GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void * buf,
- *		       size_t *write_amount, bool *fsal_stable,
- *		       const struct req_op_context *op_ctx)
+ *		       size_t *write_amount, bool *fsal_stable)
  *  @brief Perform a write operation on an opened file.
  *
  *  @param fd The file descriptor returned by FSAL_open.
@@ -171,8 +167,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
  */
 fsal_status_t
 GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void *buf,
-	       size_t *write_amount, bool *fsal_stable,
-	       const struct req_op_context *op_ctx, int expfd)
+	       size_t *write_amount, bool *fsal_stable, int expfd)
 {
 	struct write_arg warg = {0};
 	uint32_t stability_got = 0;

@@ -591,7 +591,6 @@ nfsstat4 nfs4_return_one_state(struct fsal_obj_handle *obj,
 
 			nfs_status = obj->obj_ops->layoutreturn(
 						obj,
-						op_ctx,
 						body_val ? &lrf_body : NULL,
 						arg);
 
@@ -637,7 +636,7 @@ nfsstat4 nfs4_return_one_state(struct fsal_obj_handle *obj,
 
 		nfs_status = obj->obj_ops->layoutreturn(
 					obj,
-					op_ctx, body_val ? &lrf_body : NULL,
+					body_val ? &lrf_body : NULL,
 					arg);
 
 		if (nfs_status != NFS4_OK)

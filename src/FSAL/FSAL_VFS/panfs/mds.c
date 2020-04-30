@@ -195,7 +195,7 @@ size_t fs_loc_body_size(struct fsal_export *exp_hdl)
 /*================================= handle ops ===============================*/
 static
 nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
-		   struct req_op_context *req_ctx, XDR *loc_body,
+		   XDR *loc_body,
 		   const struct fsal_layoutget_arg *arg,
 		   struct fsal_layoutget_res *res)
 {
@@ -203,7 +203,7 @@ nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 							  typeof(*myself),
 							  obj_handle);
 	struct pan_ioctl_xdr pixdr;
-	uint64_t clientid = req_ctx->clientid ? *req_ctx->clientid : 0;
+	uint64_t clientid = op_ctx->clientid ? *op_ctx->clientid : 0;
 	nfsstat4 ret;
 
 	res->last_segment = true;
@@ -227,7 +227,7 @@ nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
 
 static
 nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
-		      struct req_op_context *req_ctx, XDR *lrf_body,
+		      XDR *lrf_body,
 		      const struct fsal_layoutreturn_arg *arg)
 {
 	struct pan_ioctl_xdr pixdr;
@@ -256,7 +256,7 @@ nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
 
 static
 nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
-		      struct req_op_context *req_ctx, XDR *lou_body,
+		      XDR *lou_body,
 		      const struct fsal_layoutcommit_arg *arg,
 		      struct fsal_layoutcommit_res *res)
 {

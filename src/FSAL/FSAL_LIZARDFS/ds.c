@@ -119,7 +119,6 @@ static nfsstat4 lzfs_int_openfile(struct lzfs_fsal_export *lzfs_export,
  * \see fsal_api.h for more information
  */
 static nfsstat4 lzfs_fsal_ds_handle_read(struct fsal_ds_handle *const ds_hdl,
-					 struct req_op_context *const req_ctx,
 					 const stateid4 *stateid,
 					 const offset4 offset,
 					 const count4 requested_length,
@@ -166,7 +165,6 @@ static nfsstat4 lzfs_fsal_ds_handle_read(struct fsal_ds_handle *const ds_hdl,
  * \see fsal_api.h for more information
  */
 static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
-					 struct req_op_context *const req_ctx,
 					 const stateid4 *stateid,
 					 const offset4 offset,
 					 const count4 write_length,
@@ -222,12 +220,10 @@ static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
  *
  * \see fsal_api.h for more information
  */
-static nfsstat4 lzfs_fsal_ds_handle_commit(
-					struct fsal_ds_handle *const ds_hdl,
-					struct req_op_context *const req_ctx,
-					const offset4 offset,
-					const count4 count,
-					verifier4 * const writeverf)
+static nfsstat4 lzfs_fsal_ds_handle_commit(struct fsal_ds_handle *const ds_hdl,
+					   const offset4 offset,
+					   const count4 count,
+					   verifier4 * const writeverf)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_ds_handle *lzfs_ds;
@@ -271,7 +267,6 @@ static nfsstat4 lzfs_fsal_ds_handle_commit(
  * \see fsal_api.h for more information
  */
 static nfsstat4 lzfs_fsal_ds_read_plus(struct fsal_ds_handle *const ds_hdl,
-				       struct req_op_context *const req_ctx,
 				       const stateid4 *stateid,
 				       const offset4 offset,
 				       const count4 requested_length,

@@ -155,7 +155,7 @@ static enum nfs_req_result op_dscommit(struct nfs_argop4 *op,
 	/* Call the commit operation */
 	res_COMMIT4->status =
 	    data->current_ds->dsh_ops.commit(
-				data->current_ds, op_ctx,
+				data->current_ds,
 				arg_COMMIT4->offset,
 				arg_COMMIT4->count,
 				&res_COMMIT4->COMMIT4res_u.resok4.writeverf);

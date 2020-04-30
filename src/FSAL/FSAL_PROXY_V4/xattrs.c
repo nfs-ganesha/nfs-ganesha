@@ -27,7 +27,6 @@
 
 fsal_status_t
 proxyv4_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-		       const struct req_op_context *opctx,
 		       unsigned int cookie,
 		       fsal_xattrent_t *xattrs_tab,
 		       unsigned int xattrs_tabsize,
@@ -38,7 +37,6 @@ proxyv4_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t
 proxyv4_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
-			      const struct req_op_context *opctx,
 			      const char *xattr_name,
 			      unsigned int *pxattr_id)
 {
@@ -47,7 +45,6 @@ proxyv4_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t
 proxyv4_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-				 const struct req_op_context *opctx,
 				 const char *xattr_name,
 				 void *buffer_addr,
 				 size_t buffer_size,
@@ -58,7 +55,6 @@ proxyv4_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t
 proxyv4_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       unsigned int xattr_id,
 			       void *buffer_addr,
 			       size_t buffer_size,
@@ -69,7 +65,6 @@ proxyv4_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t
 proxyv4_setextattr_value(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx,
 			 const char *xattr_name,
 			 void *buffer_addr,
 			 size_t buffer_size,
@@ -80,7 +75,6 @@ proxyv4_setextattr_value(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t
 proxyv4_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       unsigned int xattr_id,
 			       void *buffer_addr,
 			       size_t buffer_size)
@@ -90,7 +84,6 @@ proxyv4_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t
 proxyv4_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-			 const struct req_op_context *opctx,
 			 unsigned int xattr_id,
 			 struct attrlist *p_attrs)
 {
@@ -99,7 +92,6 @@ proxyv4_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t
 proxyv4_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
-			     const struct req_op_context *opctx,
 			     unsigned int xattr_id)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -107,7 +99,6 @@ proxyv4_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t
 proxyv4_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
-			       const struct req_op_context *opctx,
 			       const char *xattr_name)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);

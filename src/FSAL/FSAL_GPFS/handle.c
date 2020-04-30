@@ -132,7 +132,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	if (attrs_out != NULL)
 		attrib.request_mask |= attrs_out->request_mask;
 
-	status = GPFSFSAL_lookup(op_ctx, parent, path, &attrib, fh, &fs);
+	status = GPFSFSAL_lookup(parent, path, &attrib, fh, &fs);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -182,7 +182,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		attrib.request_mask |= attrs_out->request_mask;
 
 	status =
-	    GPFSFSAL_mkdir(dir_hdl, name, op_ctx, attr_in->mode, fh, &attrib);
+	    GPFSFSAL_mkdir(dir_hdl, name, attr_in->mode, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -252,7 +252,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		attrib.request_mask |= attrs_out->request_mask;
 
 	status =
-	    GPFSFSAL_mknode(dir_hdl, name, op_ctx, attr_in->mode, nodetype,
+	    GPFSFSAL_mknode(dir_hdl, name, attr_in->mode, nodetype,
 			    &attr_in->rawdev, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -326,7 +326,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	if (attrs_out != NULL)
 		attrib.request_mask |= attrs_out->request_mask;
 
-	status = GPFSFSAL_symlink(dir_hdl, name, link_path, op_ctx,
+	status = GPFSFSAL_symlink(dir_hdl, name, link_path,
 				  attr_in->mode, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -389,7 +389,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 			myself->u.symlink.link_size = 0;
 		}
 
-		status = GPFSFSAL_readlink(obj_hdl, op_ctx, link_buff,
+		status = GPFSFSAL_readlink(obj_hdl, link_buff,
 					   sizeof(link_buff));
 
 		if (FSAL_IS_ERROR(status))
@@ -417,7 +417,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
-	status = GPFSFSAL_link(destdir_hdl, myself->handle, name, op_ctx);
+	status = GPFSFSAL_link(destdir_hdl, myself->handle, name);
 
 	return status;
 }
@@ -538,9 +538,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 {
 	fsal_status_t status;
 
-	status =
-	    GPFSFSAL_rename(olddir_hdl, old_name, newdir_hdl, new_name,
-			    op_ctx);
+	status = GPFSFSAL_rename(olddir_hdl, old_name, newdir_hdl, new_name);
 	return status;
 }
 
@@ -562,7 +560,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 
 	status = GPFSFSAL_getattrs(op_ctx->fsal_export,
 				   obj_hdl->fs->private_data,
-				   op_ctx, myself->handle,
+				   myself->handle,
 				   attrs);
 	if (FSAL_IS_ERROR(status)) {
 		goto out;
@@ -577,7 +575,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 
 	fsal_status_t fs_loc_status = GPFSFSAL_fs_loc(op_ctx->fsal_export,
 						      obj_hdl->fs->private_data,
-						      op_ctx, myself->handle,
+						      myself->handle,
 						      attrs);
 
 	if (FSAL_IS_SUCCESS(fs_loc_status)) {
@@ -834,7 +832,7 @@ fsal_status_t gpfs_setattr2(struct fsal_obj_handle *obj_hdl,
 {
 	fsal_status_t status;
 
-	status = GPFSFSAL_setattrs(obj_hdl, op_ctx, attrs);
+	status = GPFSFSAL_setattrs(obj_hdl, attrs);
 
 	return status;
 }
@@ -848,7 +846,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 {
 	fsal_status_t status;
 
-	status = GPFSFSAL_unlink(dir_hdl, name, op_ctx);
+	status = GPFSFSAL_unlink(dir_hdl, name);
 
 	return status;
 }
@@ -1218,7 +1216,7 @@ fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 	if (attrs_out != NULL)
 		attrib.request_mask |= attrs_out->request_mask;
 
-	status = GPFSFSAL_getattrs(exp_hdl, gpfs_fs, op_ctx, fh, &attrib);
+	status = GPFSFSAL_getattrs(exp_hdl, gpfs_fs, fh, &attrib);
 	if (FSAL_IS_ERROR(status))
 		return status;
 

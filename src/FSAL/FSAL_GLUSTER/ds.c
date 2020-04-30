@@ -68,7 +68,6 @@ static void release(struct fsal_ds_handle *const ds_pub)
  * normal way.
  *
  * @param[in]  ds_pub           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -80,7 +79,6 @@ static void release(struct fsal_ds_handle *const ds_pub)
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
-			struct req_op_context *const req_ctx,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
 			count4 * const supplied_length,
@@ -118,7 +116,6 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
  * @brief Write to a data-server handle.
  *
  * @param[in]  ds_pub           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -133,7 +130,6 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
-			 struct req_op_context *const req_ctx,
 			 const stateid4 *stateid, const offset4 offset,
 			 const count4 write_length, const void *buffer,
 			 const stable_how4 stability_wanted,
@@ -187,7 +183,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
  * normal way.
  *
  * @param[in]  ds_pub    FSAL DS handle
- * @param[in]  req_ctx   Credentials
  * @param[in]  offset    Start of commit window
  * @param[in]  count     Length of commit window
  * @param[out] writeverf Write verifier
@@ -195,7 +190,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
-			  struct req_op_context *const req_ctx,
 			  const offset4 offset, const count4 count,
 			  verifier4 * const writeverf)
 {

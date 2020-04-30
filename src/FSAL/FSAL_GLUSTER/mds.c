@@ -131,7 +131,6 @@ int glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object,
  * Grants whole layout of the file requested.
  *
  * @param[in]     obj_pub  Public object handle
- * @param[in]     req_ctx  Request context
  * @param[out]    loc_body An XDR stream to which the FSAL must encode
  *                         the layout specific portion of the granted
  *                         layout segment.
@@ -142,14 +141,13 @@ int glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object,
  */
 
 static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
-				struct req_op_context           *req_ctx,
 				XDR                             *loc_body,
 				const struct fsal_layoutget_arg *arg,
 				struct fsal_layoutget_res       *res)
 {
 
 	struct glusterfs_export *export =
-		container_of(req_ctx->fsal_export,
+		container_of(op_ctx->fsal_export,
 			     struct glusterfs_export, export);
 
 	struct glusterfs_handle *handle =
@@ -228,7 +226,7 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 	ds_desc.addr     = &ds_wire;
 	ds_desc.len      = sizeof(struct glfs_ds_wire);
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
-					     &req_ctx->ctx_export->export_id, 1,
+					     &op_ctx->ctx_export->export_id, 1,
 					     &ds_desc);
 	if (nfs_status) {
 		LogMajor(COMPONENT_PNFS,
@@ -253,7 +251,6 @@ out:
  * pins to release, always succeed
  *
  * @param[in] obj_pub  Public object handle
- * @param[in] req_ctx  Request context
  * @param[in] lrf_body Nothing for us
  * @param[in] arg      Input arguments of the function
  *
@@ -261,7 +258,6 @@ out:
  */
 
 static nfsstat4 pnfs_layout_return(struct fsal_obj_handle *obj_pub,
-				   struct req_op_context *req_ctx,
 				   XDR *lrf_body,
 				   const struct fsal_layoutreturn_arg *arg)
 {
@@ -281,7 +277,6 @@ static nfsstat4 pnfs_layout_return(struct fsal_obj_handle *obj_pub,
  * Update the size and time for a file accessed through a layout.
  *
  * @param[in]     obj_pub  Public object handle
- * @param[in]     req_ctx  Request context
  * @param[in]     lou_body An XDR stream containing the layout
  *                         type-specific portion of the LAYOUTCOMMIT
  *                         arguments.
@@ -292,7 +287,6 @@ static nfsstat4 pnfs_layout_return(struct fsal_obj_handle *obj_pub,
  */
 
 static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
-				   struct req_op_context *req_ctx,
 				   XDR *lou_body,
 				   const struct fsal_layoutcommit_arg *arg,
 				   struct fsal_layoutcommit_res *res)
