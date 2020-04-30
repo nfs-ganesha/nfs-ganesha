@@ -51,6 +51,9 @@ require {
 	type cgroup_t;
 	type usr_t;
 
+	systemd_logind_t;
+	cloud_init_t;
+
 	class dbus send_msg;
 }
 
@@ -183,6 +186,7 @@ tunable_policy(`ganesha_use_fusefs',`
 ########################################
 #
 # ganesha local policy rhbz#1796160, FSAL_RGW
+# rhbz#1829804
 #
 
 #============= ganesha_t ==============
@@ -199,7 +203,7 @@ allow ganesha_t cgroup_t:file { getattr open read };
 allow ganesha_t usr_t:file map;
 
 #============= init_t ==============
-allow init_t var_lib_nfs_t:dir create;
+allow init_t var_lib_nfs_t:dir { create setattr };
 
 
 ########################################
@@ -214,6 +218,7 @@ allow ganesha_t ceph_t:unix_stream_socket connectto;
 ########################################
 #
 # ganesha local policy rhbz#1788541, FSAL_VFS
+# rhbz#1829804
 #
 
 #============= ganesha_t ==============
@@ -273,7 +278,7 @@ dontaudit ganesha_t wireless_device_t:chr_file getattr;
 dontaudit ganesha_t xserver_misc_device_t:chr_file getattr;
 
 #============= init_t ==============
-allow init_t ganesha_var_log_t:dir setattr;
+allow init_t ganesha_var_log_t:dir { read setattr };
 allow init_t ganesha_var_log_t:file setattr;
 allow init_t var_lib_nfs_t:dir create;
 
@@ -291,6 +296,13 @@ allow glusterd_t ganesha_unit_file_t:service { start status stop };
 allow glusterd_t ganesha_t:dbus send_msg;
 allow ganesha_t glusterd_t:dbus send_msg;
 
+########################################
+#
+# ganesha local policy, temporary for ceph/ganesha/ansible until
+# RHEL ships updated policy (rhbz#1829804)
+
+allow systemd_logind_t cloud_init_t:dbus send_msg;
+allow cloud_init_t systemd_logind_t:dbus send_msg;
 
 ########################################
 #
