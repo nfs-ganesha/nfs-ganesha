@@ -39,7 +39,7 @@
 
 /* defined the set of attributes supported with POSIX */
 #define GLUSTERFS_SUPPORTED_ATTRIBUTES (ATTRS_POSIX | ATTR_ACL | \
-					ATTR4_SEC_LABEL)
+					ATTR4_SEC_LABEL | ATTR4_XATTR)
 
 /**
  * The attributes this FSAL can set.
@@ -49,7 +49,7 @@
 ATTR_MODE     | ATTR_OWNER	  | ATTR_GROUP	      |  \
 ATTR_ATIME    | ATTR_CTIME	  | ATTR_MTIME	      |  \
 ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER |  \
-ATTR_ACL      | ATTR4_SEC_LABEL)
+ATTR_ACL      | ATTR4_SEC_LABEL   | ATTR4_XATTR)
 
 /**
  * Override internal Gluster defines for the time being.

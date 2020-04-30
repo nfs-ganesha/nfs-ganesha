@@ -3283,6 +3283,254 @@ static fsal_status_t glusterfs_close2(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
+/*
+ * getxattrs
+ */
+static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
+				xattrname4 *xa_name,
+				xattrvalue4 *xa_value)
+{
+	int rc = 0;
+	int errsv = 0;
+	fsal_status_t status;
+	struct glusterfs_export *export =
+		container_of(op_ctx->fsal_export,
+			     struct glusterfs_export, export);
+	struct glusterfs_handle *glhandle =
+		container_of(obj_hdl, struct glusterfs_handle, handle);
+
+	rc = glfs_h_getxattrs(export->gl_fs->fs, glhandle->glhandle,
+			      xa_name->utf8string_val,
+			      xa_value->utf8string_val,
+			      xa_value->utf8string_len);
+
+	if (rc < 0) {
+		errsv = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "GETXATTRS returned rc %d errsv %d",
+			 rc, errsv);
+
+		if (errsv == ERANGE) {
+			status = fsalstat(ERR_FSAL_TOOSMALL, 0);
+			goto out;
+		}
+		if (errsv == ENODATA) {
+			status = fsalstat(ERR_FSAL_NOENT, 0);
+			goto out;
+		}
+		status = fsalstat(posix2fsal_error(errsv), errsv);
+		goto out;
+	}
+
+	/* Make sure utf8string is null terminated */
+	xa_value->utf8string_val[xa_value->utf8string_len] = '\0';
+
+	LogDebug(COMPONENT_FSAL,
+		 "GETXATTRS returned value %s length %d rc %d",
+		 xa_value->utf8string_val,
+		 xa_value->utf8string_len, rc);
+
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+out:
+	return status;
+}
+
+/*
+ * setxattrs
+ */
+
+static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
+				setxattr_type4 sa_type,
+				xattrname4 *xa_name,
+				xattrvalue4 *xa_value)
+{
+	int rc = 0;
+	int errsv = 0;
+	fsal_status_t status = {0, 0};
+	struct glusterfs_export *export =
+		container_of(op_ctx->fsal_export,
+			     struct glusterfs_export, export);
+	struct glusterfs_handle *glhandle =
+		container_of(obj_hdl, struct glusterfs_handle, handle);
+
+	rc = glfs_h_setxattrs(export->gl_fs->fs, glhandle->glhandle,
+			      xa_name->utf8string_val,
+			      xa_value->utf8string_val,
+			      xa_value->utf8string_len, sa_type);
+
+	if (rc < 0) {
+		errsv = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "SETXATTRS returned rc %d errsv %d",
+			 rc, errsv);
+		status = fsalstat(posix2fsal_error(errsv), errsv);
+		goto out;
+	}
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+out:
+	return status;
+}
+
+/*
+ * removexattrs
+ */
+
+static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
+				   xattrname4 *xa_name)
+{
+	int rc = 0;
+	int errsv = 0;
+	fsal_status_t status = {0, 0};
+	struct glusterfs_export *export =
+		container_of(op_ctx->fsal_export,
+			     struct glusterfs_export, export);
+	struct glusterfs_handle *glhandle =
+		container_of(obj_hdl, struct glusterfs_handle, handle);
+
+	rc = glfs_h_removexattrs(export->gl_fs->fs,
+				 glhandle->glhandle,
+				 xa_name->utf8string_val);
+	if (rc < 0) {
+		errsv = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "REMOVEXATTRS returned rc %d errsv %d",
+			 rc, errsv);
+		status = fsalstat(posix2fsal_error(errsv), errsv);
+		goto out;
+	}
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+out:
+	return status;
+}
+
+/*
+ * listxattrs
+ */
+
+static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
+				count4 la_maxcount,
+				nfs_cookie4 *la_cookie,
+				verifier4 *la_cookieverf,
+				bool_t *lr_eof,
+				xattrlist4 *lr_names)
+{
+	int rc = 0;
+	int errsv = 0;
+	int entryCount = 0;
+	char *name, *next, *end, *val, *valstart;
+	char *buf = NULL;
+	component4 *entry = lr_names->entries;
+	fsal_status_t status = {0, 0};
+	struct glusterfs_export *export =
+		container_of(op_ctx->fsal_export,
+			     struct glusterfs_export, export);
+	struct glusterfs_handle *glhandle =
+		container_of(obj_hdl, struct glusterfs_handle, handle);
+
+	val = (char *)entry + la_maxcount;
+	valstart = val;
+
+	#define MAXCOUNT (1024*64)
+	buf = gsh_malloc(MAXCOUNT);
+
+	/* Log Message */
+	LogFullDebug(COMPONENT_FSAL,
+			"in cookie %llu length %d cookieverf %llx",
+			(unsigned long long)la_cookie, la_maxcount,
+			(unsigned long long)la_cookieverf);
+
+	rc = glfs_h_getxattrs(export->gl_fs->fs, glhandle->glhandle,
+			      NULL, &buf, MAXCOUNT);
+
+	if (rc < 0) {
+		errsv = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "LISTXATTRS returned rc %d errsv %d",
+			 rc, errsv);
+		if (errsv == ERANGE) {
+			status = fsalstat(ERR_FSAL_TOOSMALL, 0);
+			goto out;
+		}
+		status = fsalstat(posix2fsal_error(errsv), errsv);
+		goto out;
+	}
+
+	name = buf;
+	end = buf + rc;
+	entry->utf8string_len = 0;
+	entry->utf8string_val = NULL;
+
+	while (name < end) {
+		next = strchr(name, '\0');
+		next += 1;
+
+		LogDebug(COMPONENT_FSAL,
+			 "name %s at offset %td", name, (next - name));
+
+		if (entryCount >= *la_cookie) {
+			if ((((char *)entry - (char *)lr_names->entries) +
+			     sizeof(component4) > la_maxcount) ||
+			     ((val - valstart)+(next - name) > la_maxcount)) {
+
+				gsh_free(buf);
+				*lr_eof = false;
+
+				lr_names->entryCount = entryCount - *la_cookie;
+				*la_cookie += entryCount;
+				LogFullDebug(COMPONENT_FSAL,
+					"out1 cookie %llu off"
+					"%td eof %d cookieverf %llx",
+					(unsigned long long)*la_cookie,
+					(next - name), *lr_eof,
+					(unsigned long long)*
+					((uint64_t *)la_cookieverf));
+
+				if (lr_names->entryCount == 0) {
+					status = fsalstat(ERR_FSAL_TOOSMALL,
+							0);
+					goto out;
+				}
+				status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+				goto out;
+			}
+			entry->utf8string_len = next - name;
+			entry->utf8string_val = val;
+			memcpy(entry->utf8string_val, name,
+					entry->utf8string_len);
+			entry->utf8string_val[entry->utf8string_len] = '\0';
+
+			LogFullDebug(COMPONENT_FSAL,
+					"entry %d val %p at %p len %d at %p name %s",
+					entryCount, val, entry,
+					entry->utf8string_len,
+					entry->utf8string_val,
+					entry->utf8string_val);
+
+			val += entry->utf8string_len;
+			entry += 1;
+		}
+		name = next;
+		entryCount += 1;
+	}
+	lr_names->entryCount = entryCount - *la_cookie;
+	*la_cookie = 0;
+	*lr_eof = true;
+	gsh_free(buf);
+
+	LogFullDebug(COMPONENT_FSAL,
+			"out2 cookie %llu eof %d cookieverf %llx",
+			(unsigned long long)*la_cookie, *lr_eof,
+			(unsigned long long)*((uint64_t *)la_cookieverf));
+
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+out:
+	return status;
+}
+
 /**
  * @brief Implements GLUSTER FSAL objectoperation list_ext_attrs
  */
@@ -3491,6 +3739,10 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->symlink = makesymlink;
 	ops->readlink = readsymlink;
 	ops->getattrs = getattrs;
+	ops->getxattrs = getxattrs;
+	ops->setxattrs = setxattrs;
+	ops->removexattrs = removexattrs;
+	ops->listxattrs = listxattrs;
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
