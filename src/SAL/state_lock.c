@@ -2265,6 +2265,11 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 				"Conflict from FSAL",
 				obj, *holder, conflict);
 			break;
+		case STATE_ESTALE:
+			LogDebug(COMPONENT_STATE,
+				 "Got error %s from FSAL lock operation",
+				 state_err_str(status));
+			break;
 		default:
 			LogMajor(COMPONENT_STATE,
 				 "Got error from FSAL lock operation, error=%s",
@@ -2626,8 +2631,14 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 
 		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 	} else {
-		LogMajor(COMPONENT_STATE, "Unable to lock FSAL, error=%s",
-			 state_err_str(status));
+		if (status == STATE_ESTALE)
+			LogDebug(COMPONENT_STATE,
+				 "Unable to lock FSAL, error=%s",
+				 state_err_str(status));
+		else
+			LogMajor(COMPONENT_STATE,
+				 "Unable to lock FSAL, error=%s",
+				 state_err_str(status));
 
 		/* Discard lock entry */
 		remove_from_locklist(found_entry);
