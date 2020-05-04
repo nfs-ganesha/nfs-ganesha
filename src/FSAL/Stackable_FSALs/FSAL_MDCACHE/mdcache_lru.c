@@ -1826,6 +1826,8 @@ mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle)
 		nentry = alloc_cache_entry();
 	}
 
+	nentry->attr_generation = 0;
+
 	/* Since the entry isn't in a queue, nobody can bump refcnt. */
 	nentry->lru.refcnt = 2;
 	nentry->lru.cf = 0;
