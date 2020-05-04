@@ -51,9 +51,6 @@ require {
 	type cgroup_t;
 	type usr_t;
 
-	systemd_logind_t;
-	cloud_init_t;
-
 	class dbus send_msg;
 }
 
@@ -295,14 +292,6 @@ allow rpcbind_t unreserved_port_t:udp_socket name_bind;
 allow glusterd_t ganesha_unit_file_t:service { start status stop };
 allow glusterd_t ganesha_t:dbus send_msg;
 allow ganesha_t glusterd_t:dbus send_msg;
-
-########################################
-#
-# ganesha local policy, temporary for ceph/ganesha/ansible until
-# RHEL ships updated policy (rhbz#1829804)
-
-allow systemd_logind_t cloud_init_t:dbus send_msg;
-allow cloud_init_t systemd_logind_t:dbus send_msg;
 
 ########################################
 #
