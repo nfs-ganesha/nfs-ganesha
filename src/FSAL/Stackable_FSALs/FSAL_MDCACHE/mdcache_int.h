@@ -281,6 +281,8 @@ struct mdcache_fsal_obj_handle {
 	struct fsal_obj_handle *sub_handle;
 	/** Cached attributes */
 	struct attrlist attrs;
+	/** Attribute generation, increased for every write */
+	uint32_t attr_generation;
 	/** FH hash linkage */
 	struct {
 		struct avltree_node node_k;	/*< AVL node in tree */

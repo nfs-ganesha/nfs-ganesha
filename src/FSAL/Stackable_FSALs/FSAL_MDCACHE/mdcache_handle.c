@@ -813,6 +813,7 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 	struct timespec oldmtime;
 	bool file_deleg = false;
 	cbgetattr_t *cbgetattr;
+	uint32_t original_generation;
 
 	/* Use this to detect if we should invalidate a directory. */
 	oldmtime = entry->attrs.mtime;
@@ -860,6 +861,7 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 		entry->attrs.request_mask |= ATTR_ACL;
 	}
 
+	original_generation = atomic_fetch_int32_t(&entry->attr_generation);
 	subcall(
 		status = entry->sub_handle->obj_ops->getattrs(
 			entry->sub_handle, &attrs)
@@ -873,6 +875,11 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 	}
 
 	mdc_update_attr_cache(entry, &attrs);
+	if (atomic_fetch_int32_t(&entry->attr_generation) !=
+		original_generation) {
+		atomic_clear_uint32_t_bits(&entry->mde_flags,
+				MDCACHE_TRUST_ATTRS);
+	}
 
 out:
 	/* Done with the attrs (we didn't need to call this since the

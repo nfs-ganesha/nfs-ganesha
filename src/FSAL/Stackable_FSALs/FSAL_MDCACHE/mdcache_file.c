@@ -646,10 +646,16 @@ static void mdc_write_super_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		 */
 		mdcache_get(entry);
 		mdcache_kill_entry(entry);
-	}
-	else
+	} else {
+		/*
+		 * attr_generation must be increased prior to
+		 * MDCACHE_TRUST_ATTRS to prevent a case where this flag
+		 * was queried before the generation was updated
+		 */
+		atomic_inc_uint32_t(&entry->attr_generation);
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
 					   MDCACHE_TRUST_ATTRS);
+	}
 
 	arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
 
