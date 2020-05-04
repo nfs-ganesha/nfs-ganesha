@@ -676,6 +676,9 @@ exit 0
 %{_unitdir}/nfs-ganesha.service
 %{_unitdir}/nfs-ganesha-lock.service
 %{_unitdir}/nfs-ganesha-config.service
+%if ( 0%{?fedora} ) || ( 0%{?rhel} && 0%{?rhel} >= 8 )
+%{_sysconfdir}/systemd/system/nfs-ganesha.d/rpc-statd.conf
+%endif
 
 %if %{with man_page}
 %{_mandir}/*/ganesha-config.8.gz
