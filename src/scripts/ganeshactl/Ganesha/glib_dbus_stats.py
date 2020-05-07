@@ -9,6 +9,7 @@ except ImportError:
     from gi.repository import GObject as gobject
 import sys
 import time
+import json
 
 gobject.threads_init()
 
@@ -17,6 +18,82 @@ glib.init_threads()
 
 # Create a session bus.
 import dbus
+
+def dbus_to_std(v):
+    ctor = None
+
+    if (isinstance(v, dbus.UInt16)
+        or isinstance(v, dbus.UInt32)
+        or isinstance(v, dbus.UInt64)):
+        ctor = int
+    elif isinstance(v, dbus.Boolean):
+        ctor = bool
+    elif isinstance(v, dbus.Double):
+        ctor = float
+    elif isinstance(v, dbus.String):
+        ctor = str
+
+    assert ctor is not None, "{}".format(v.__class__.__name__)
+    return ctor(v)
+
+def timestr(t):
+    timestamp = t[0] + float(t[1]) / 1e9
+    return time.strftime('%FT%TZ', time.gmtime(timestamp))
+
+class Report():
+    def __init__(self, result):
+        self.result = result
+
+    def json(self):
+        output = self.report()
+        return json.dumps(output)
+
+    def report(self):
+        report, success = self._header(self.result)
+        if not success:
+            return report
+
+        self.fill_report(report)
+        return report
+
+    def fill_report(self, report):
+        pass
+
+    def _header(self, result):
+        # Unfortunately, there is no established way to read the response
+        # from the various endpoint. This tries to cover the most common
+        # cases, if you are in a specific case, feel free to implement the
+        # custom logic separately.
+        def is_timestamp_struct(t):
+            return (isinstance(result[2], dbus.Struct)
+                    and len(result[2]) == 2
+                    and isinstance(result[2][0], dbus.UInt64)
+                    and isinstance(result[2][1], dbus.UInt64))
+
+        header = {
+            'status': {},
+        }
+
+        if not isinstance(result[0], dbus.Boolean):
+            # The header is missing the status field so we just return the time
+            header['status']['time'] = timestr(result[0])
+            success = True
+            return header, success
+
+        status = result[0]
+        success = status
+        if not success:
+            header['status']['error'] = result[1]
+        elif result[2] and is_timestamp_struct(result[2]):
+            header['status']['time'] = timestr(result[2])
+
+        return header, success
+
+def report_key_value(values, report):
+    for i in range(int(len(values) / 2)):
+        key = str(values[i*2 + 0])
+        value = values[i*2 + 1]
+        report[key] = dbus_to_std(value)
 
 class RetrieveExportStats():
     def __init__(self):
@@ -176,9 +253,30 @@ class RetrieveClientStats():
         return ClientAllops(stats_op(ip))
 
 
-class Clients():
+class Clients(Report):
     def __init__(self, clients):
+        super().__init__(clients)
         self._clients = clients
+
+    def fill_report(self, report):
+        clients = []
+        for client in self._clients[1]:
+            clients.append({
+                'address': dbus_to_std(client[0]),
+                'nfsv3_stats': dbus_to_std(client[1]),
+                'mnt_stats': dbus_to_std(client[2]),
+                'nlm4_stats': dbus_to_std(client[3]),
+                'rquota_stats': dbus_to_std(client[4]),
+                'nfsv40_stats': dbus_to_std(client[5]),
+                'nfsv41_stats': dbus_to_std(client[6]),
+                'nfsv42_stats': dbus_to_std(client[7]),
+                '9p_stats': dbus_to_std(client[8]),
+            })
+
+        report['clients'] = clients
+
+        return report
+
     def __str__(self):
         output = ("\nTimestamp: " + time.ctime(self._clients[0][0]) +
                   str(self._clients[0][1]) + " nsecs" +
@@ -195,16 +293,25 @@ class Clients():
                        "\n\t9P stats available: " + str(client[8]))
         return output
 
-class DelegStats():
+class DelegStats(Report):
     def __init__(self, stats):
+        super().__init__(stats)
+
         self.curtime = time.time()
         self.status = stats[1]
         if stats[1] == "OK":
             self.timestamp = (stats[2][0], stats[2][1])
             self.curr_deleg = stats[3][0]
-            self.curr_recall = stats[3][1]
+            self.tot_recalls = stats[3][1]
             self.fail_recall = stats[3][2]
             self.num_revokes = stats[3][3]
+
+    def fill_report(self, report):
+        report['curr_deleg_grants'] = dbus_to_std(self.curr_deleg);
+        report['tot_recalls'] = dbus_to_std(self.tot_recalls);
+        report['failed_recalls'] = dbus_to_std(self.fail_recall);
+        report['num_revokes'] = dbus_to_std(self.num_revokes);
+
     def __str__(self):
         if self.status != "OK":
             return "GANESHA RESPONSE STATUS: " + self.status
@@ -214,16 +321,68 @@ class DelegStats():
                 "\nStats collected since: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs \n" +
                 "\nDuration: " + "%.10f" % self.duration + " seconds" +
                 "\nCurrent Delegations: " + str(self.curr_deleg) +
-                "\nCurrent Recalls: " + str(self.curr_recall) +
+                "\nCurrent Recalls: " + str(self.tot_recalls) +
                 "\nCurrent Failed Recalls: " + str(self.fail_recall) +
                 "\nCurrent Number of Revokes: " + str(self.num_revokes))
 
-class ClientIOops():
+class ClientIOops(Report):
     def __init__(self, stats):
+        super().__init__(stats)
+
         self.stats = stats
         self.status = stats[1]
         if stats[1] == "OK":
             self.timestamp = (stats[2][0], stats[2][1])
+
+    def fill_report(self, report):
+        proto_table = [
+            'nfsv3',
+            'nfsv40',
+            'nfsv41',
+            'nfsv42'
+        ]
+        op_table = [
+            'read',
+            'write',
+            'other',
+            'layout'
+        ]
+        stats = self.result[3:]
+
+        def op_stats(stats):
+            counters = [
+                'total',
+                'errors',
+                'transferred'
+            ]
+
+            result = {}
+            for i in range(len(stats)):
+                result[counters[i]] = dbus_to_std(stats[i])
+
+            return result
+
+        i = 0
+        for proto in proto_table:
+            # Checks that the current stat field is a boolean
+            # indicating if stats are available for the given protocol.
+            available = stats[i]
+            i += 1
+            assert isinstance(available, dbus.Boolean)
+
+            if not available:
+                continue
+
+            # Now greedily takes stats until we reach the next boolean (and so
+            # the next protocol).
+            ops = iter(op_table)
+            found_stats = []
+            report[proto] = {}
+            while i < len(stats) and not isinstance(stats[i], dbus.Boolean):
+                op_name = next(ops)
+                report[proto][op_name] = op_stats(stats[i])
+                i += 1
+
     def __str__(self):
         output = ""
         cnt = 3
@@ -277,12 +436,72 @@ class ClientIOops():
                 j += 1
             return output
 
-class ClientAllops():
+class ClientAllops(Report):
     def __init__(self, stats):
+        super().__init__(stats)
+
         self.stats = stats
         self.status = stats[1]
         if stats[1] == "OK":
             self.timestamp = (stats[2][0], stats[2][1])
+
+    def fill_report(self, report):
+        proto_table = iter([
+            'nfsv3',
+            'nlmv4',
+            'nfsv4',
+            'nfsv4_compounds'
+        ])
+        headers = iter([
+            ['total', 'errors', 'dups'],
+            ['total', 'errors', 'dups'],
+            ['total', 'errors'],
+            ['total', 'errors', 'op_in_compounds']
+        ])
+
+        def named_ops_stats(stats, header, span):
+            result = {}
+            op_count = int(len(stats) / span)
+            for op_idx in range(op_count):
+                name = dbus_to_std(stats[op_idx * span + 0])
+                counters = {}
+
+                for i in range(counter_count):
+                    counter_idx = op_idx * span + i + 1
+                    counters[header[i]] = dbus_to_std(
+                        stats[counter_idx]
+                    )
+
+                result[name] = counters
+
+            return result
+
+        stats = iter(self.stats[3:])
+        for stats_available in stats:
+            assert isinstance(stats_available, dbus.Boolean)
+
+            proto = next(proto_table)
+            header = next(headers)
+            if stats_available:
+                proto_stats = next(stats)
+                result = {}
+                counter_count = len(header)
+                if isinstance(proto_stats[0], dbus.String):
+                    # the number of op is the number of stats field
+                    # for the protocol divided by the number of counter per op
+                    # plus the name of the op itself (the span).
+                    span = counter_count + 1
+                    result = named_ops_stats(
+                        proto_stats,
+                        header,
+                        span
+                    )
+                else:
+                    for counter_idx, counter in enumerate(proto_stats):
+                        result[header[counter_idx]] = dbus_to_std(counter)
+
+                report[proto] = result
+
     def __str__(self):
         output = ""
         cnt = 3
@@ -346,7 +565,7 @@ class ClientAllops():
                 cnt += 1
             return output
 
-class Export():
+class Export:
     def __init__(self, export):
         self.exportid = export[0]
         self.path = export[1]
@@ -358,6 +577,7 @@ class Export():
         self.nlmv4_stats_avail = export[4]
         self.rquota_stats_avail = export[5]
         self._9p_stats_avail = export[9]
+
     def __str__(self):
         return ("\nExport id: " + str(self.exportid) +
                 "\n\tPath: " + self.path +
@@ -370,14 +590,36 @@ class Export():
                 "\n\tRQUOTA stats available: " + str(self.rquota_stats_avail) +
                 "\n\t9p stats available: " + str(self._9p_stats_avail) + "\n")
 
-class ExportStats():
-    def __init__(self, exports):
+class ExportStats(Report):
+    def __init__(self, stats):
+        super().__init__(stats)
+
+        self.stats = stats
         self.curtime = time.time()
-        self.timestamp = (exports[0][0], exports[0][1])
+        self.timestamp = (stats[0][0], stats[0][1])
         self.exports = {}
-        for export in exports[1]:
+        for export in stats[1]:
             exportid = export[0]
             self.exports[exportid] = Export(export)
+
+    def fill_report(self, report):
+        report['exports'] = []
+
+        for exportid, export in self.exports.items():
+            export_report = {
+                'id': dbus_to_std(exportid),
+                'path': dbus_to_std(export.path),
+                'nfsv3_stats': dbus_to_std(export.nfsv3_stats_avail),
+                'nfsv40_stats': dbus_to_std(export.nfsv40_stats_avail),
+                'nfsv41_stats': dbus_to_std(export.nfsv41_stats_avail),
+                'nfsv42_stats': dbus_to_std(export.nfsv42_stats_avail),
+                'mnt_stats': dbus_to_std(export.mnt_stats_avail),
+                'nlmv4_stats': dbus_to_std(export.nlmv4_stats_avail),
+                'rquota_stats': dbus_to_std(export.rquota_stats_avail),
+                '9p_stats': dbus_to_std(export._9p_stats_avail),
+            }
+            report['exports'].append(export_report)
+
     def __str__(self):
         self.starttime = self.timestamp[0] + self.timestamp[1] / 1e9
         self.duration = self.curtime - self.starttime
@@ -387,15 +629,69 @@ class ExportStats():
         for exportid in self.exports:
             output += str(self.exports[exportid])
         return output
+
     def exportids(self):
         return self.exports.keys()
 
-class ExportDetails():
+class ExportDetails(Report):
     def __init__(self, stats):
+        super().__init__(stats)
+
         self.stats = stats
         self.status = stats[1]
         if stats[1] == "OK":
             self.timestamp = (stats[2][0], stats[2][1])
+
+    def fill_report(self, report):
+        proto_table = [
+            'nfsv3',
+            'nfsv40',
+            'nfsv41',
+            'nfsv42'
+        ]
+        op_table = [
+            'read',
+            'write',
+            'other',
+            'layout'
+        ]
+        stats = self.result[3:]
+
+        def op_stats(stats):
+            counters = [
+                'total',
+                'errors',
+                'latency',
+                'transferred'
+            ]
+
+            result = {}
+            for i in range(len(stats)):
+                result[counters[i]] = dbus_to_std(stats[i])
+
+            return result
+
+        i = 0
+        for proto in proto_table:
+            # Checks that the current stat field is a boolean
+            # indicating if stats are available for the given protocol.
+            available = stats[i]
+            i += 1
+            assert isinstance(available, dbus.Boolean)
+
+            if not available:
+                continue
+
+            # Now greedily takes stats until we reach the next boolean (and so
+            # the next protocol).
+            ops = iter(op_table)
+            found_stats = []
+            report[proto] = {}
+            while i < len(stats) and not isinstance(stats[i], dbus.Boolean):
+                op_name = next(ops)
+                report[proto][op_name] = op_stats(stats[i])
+                i += 1
+
     def __str__(self):
         output = ""
         cnt = 3
@@ -454,8 +750,10 @@ class ExportDetails():
                 j += 1
             return output
 
-class GlobalStats():
+class GlobalStats(Report):
     def __init__(self, stats):
+        super().__init__(stats)
+
         self.curtime = time.time()
         self.success = stats[0]
         self.status = stats[1]
@@ -465,6 +763,10 @@ class GlobalStats():
             self.nfsv40_total = stats[3][3]
             self.nfsv41_total = stats[3][5]
             self.nfsv42_total = stats[3][7]
+
+    def fill_report(self, report):
+        report_key_value(self.result[3], report)
+
     def __str__(self):
         output = ""
         if not self.success:
@@ -482,9 +784,14 @@ class GlobalStats():
                    "\nTotal NFSv4.2 ops: " + str(self.nfsv42_total))
         return output
 
-class InodeStats():
+class InodeStats(Report):
     def __init__(self, stats):
+        super().__init__(stats)
         self.stats = stats
+
+    def fill_report(self, report):
+        report_key_value(self.result[3], report)
+
     def __str__(self):
         output = ""
         if self.stats[1] != "OK":
@@ -507,10 +814,34 @@ class InodeStats():
         return output
 
 
-class FastStats():
+class FastStats(Report):
     def __init__(self, stats):
+        super().__init__(stats)
+
         self.curtime = time.time()
         self.stats = stats
+
+    def fill_report(self, report):
+        stats = self.stats[3]
+        current_category = None
+        current_op = None
+
+        for i in range(0, len(stats)):
+            if FastStats.is_header_string(stats[i]):
+                category = str(stats[i])
+                name = str(category)[:-1].strip()
+                report[name] = {}
+                current_category = name
+            else:
+                assert current_category is not None
+
+                if FastStats.is_stat_value(stats[i]):
+                    assert current_op is not None
+                    report[current_category][current_op] = int(stats[i])
+                    current_op = None
+                else:
+                    current_op = str(stats[i])
+
     def __str__(self):
         if not self.stats[0]:
             return "No NFS activity, GANESHA RESPONSE STATUS: " + self.stats[1]
@@ -526,18 +857,30 @@ class FastStats():
                        "\nDuration: " + "%.10f" % self.duration + " seconds" +
                        "\nGlobal ops:\n")
             # NFSv3, NFSv4, NLM, MNT, QUOTA self.stats
-            for i in range(0, len(self.stats[3])-1):
-                if ":" in str(self.stats[3][i]):
+            for i in range(len(self.stats[3])):
+                if FastStats.is_header_string(self.stats[3][i]):
                     output += self.stats[3][i] + "\n"
-                elif str(self.stats[3][i]).isdigit():
+                elif FastStats.is_stat_value(self.stats[3][i]):
                     output += "\t%s" % (str(self.stats[3][i]).rjust(8)) + "\n"
                 else:
                     output += "%s: " % (self.stats[3][i].ljust(20))
         return output
 
-class ExportIOv3Stats():
+    def is_header_string(x):
+        return (isinstance(x, dbus.String)
+                and x[-1] == ':')
+
+    def is_stat_value(x):
+        return isinstance(x, dbus.UInt64)
+
+class ExportIOv3Stats(Report):
     def __init__(self, stats):
+        super().__init__(stats)
         self.stats = stats
+
+    def report(self):
+        return export_io_stats_report(self._header, self.result)
+
     def __str__(self):
         output = ""
         for key in self.stats:
@@ -556,9 +899,14 @@ class ExportIOv3Stats():
                 output += "\t" + str(stat).rjust(8)
         return output
 
-class ExportIOv4Stats():
+class ExportIOv4Stats(Report):
     def __init__(self, stats):
+        super().__init__(stats)
         self.stats = stats
+
+    def report(self):
+        return export_io_stats_report(self._header, self.result)
+
     def __str__(self):
         output = ""
         for key in self.stats:
@@ -578,10 +926,64 @@ class ExportIOv4Stats():
             output += "\n\n"
         return output
 
-class TotalStats():
+def export_io_stats_report(header, stats):
+    reports = []
+
+    ops = [
+        'read',
+        'write',
+    ]
+
+    counters = [
+        'requested',
+        'transferred',
+        'total',
+        'errors',
+        'latency',
+    ]
+
+    for exportid, export_stats in stats.items():
+        report, success = header(export_stats)
+        reports.append(report)
+        report['id'] = exportid
+
+        if not success:
+            continue
+
+        ops_stats = export_stats[3]
+        for i, op in enumerate(ops):
+            result = {}
+
+
+            for i, counter in enumerate(counters):
+                result[counter] = dbus_to_std(ops_stats[i])
+
+            report[op] = result
+
+    return reports
+
+class TotalStats(Report):
     def __init__(self, stats):
+        super().__init__(stats)
+
         self.curtime = time.time()
         self.stats = stats
+
+    def report(self):
+        reports = []
+
+        for exportid in self.result:
+            export = self.result[exportid]
+            report, success = super()._header(export)
+            reports.append(report)
+
+            if not success:
+                continue
+
+            report_key_value(export[3], report)
+
+        return reports
+
     def __str__(self):
         output = ""
         key = next(iter(self.stats))
@@ -601,10 +1003,47 @@ class TotalStats():
                 output += "\n\t%s: %s" % (self.stats[key][3][i], self.stats[key][3][i+1])
         return output
 
-class PNFSStats():
+class PNFSStats(Report):
     def __init__(self, stats):
+        super().__init__(stats)
+
         self.curtime = time.time()
         self.stats = stats
+
+    def report(self):
+        reports = []
+
+        ops = [
+            'layout_get',
+            'layout_commit',
+            'layout_return',
+            'recall'
+        ]
+
+        counters = [
+            'total',
+            'errors',
+            'delays'
+        ]
+
+        for exportid, export_stats in self.stats.items():
+            report, success = self._header(export_stats)
+            reports.append(report)
+
+            if not success:
+                continue
+
+            stats_offset = 3
+            for i, op in enumerate(ops):
+                result = {}
+                report[op] = result
+
+                stats = export_stats[stats_offset + i]
+                for i_counter, counter in enumerate(counters):
+                    result[counter] = dbus_to_std(stats[i_counter])
+
+        return reports
+
     def __str__(self):
         output = "PNFS stats for export(s)"
         for key in self.stats:
@@ -614,36 +1053,62 @@ class PNFSStats():
             self.duration = self.curtime - self.starttime
             output += ("\nStats collected since: " + time.ctime(self.stats[key][2][0]) + str(self.stats[key][2][1]) + " nsecs" +
                        "\nDuration: " + "%.10f" % self.duration + " seconds\n")
-            output += "\nStatistics for:" + str(exports[1]) +" export id: "+ str(key)
-            output += "\n\t\ttotal\terrors\tdelays" + "getdevinfo "
+            output += "\nStatistics for export id: "+ str(key)
+            output += "\n\t\ttotal\terrors\tdelays"
+            output += "\ngetdevinfo "
             for stat in self.stats[key][3]:
-                output += "\t" + stat
-            output += "layout_get "
+                output += "\t" + str(stat)
+            output += "\nlayout_get "
             for stat in self.stats[key][4]:
-                output += "\t" + stat
-            output += "layout_commit "
+                output += "\t" + str(stat)
+            output += "\nlayout_commit "
             for stat in self.stats[key][5]:
-                output += "\t" + stat
-            output += "layout_return "
+                output += "\t" + str(stat)
+            output += "\nlayout_return "
             for stat in self.stats[key][6]:
-                output += "\t" + stat
-            output += "recall "
+                output += "\t" + str(stat)
+            output += "\nrecall \t"
             for stat in self.stats[key][7]:
-                output += "\t" + stat
+                output += "\t" + str(stat)
         return output
 
 class StatsReset():
     def __init__(self, status):
         self.status = status
+
     def __str__(self):
         if self.status[1] != "OK":
             return "Failed to reset statistics, GANESHA RESPONSE STATUS: " + self.status[1]
         else:
             return "Successfully resetted statistics counters"
 
-class StatsStatus():
+class StatsStatus(Report):
     def __init__(self, status):
+        super().__init__(status)
+
         self.status = status
+
+    def fill_report(self, report):
+        proto_table = [
+            'nfs',
+            'fsal',
+            'nfsv3',
+            'nfsv4',
+            'auth',
+            'client'
+        ]
+
+        for (i, status) in enumerate(self.result[2:]):
+            enabled = dbus_to_std(status[0])
+
+            result = {
+                "enabled": enabled
+            }
+            report[proto_table[i]] = result
+
+            if enabled:
+                result["since"] = timestr(status[1])
+
     def __str__(self):
         output = ""
         if not self.status[0]:
@@ -682,10 +1147,11 @@ class StatsStatus():
             return output
 
 
-class DumpFSALStats():
+class DumpFSALStats(Report):
     def __init__(self, stats):
         self.curtime = time.time()
         self.stats = stats
+
     def __str__(self):
         output = ""
         if not self.stats[0]:
@@ -716,6 +1182,7 @@ class DumpFSALStats():
 class StatsEnable():
     def __init__(self, status):
         self.status = status
+
     def __str__(self):
         if self.status[1] != "OK":
             return "Failed to enable statistics counting, GANESHA RESPONSE STATUS: " + self.status[1]
@@ -725,14 +1192,17 @@ class StatsEnable():
 class StatsDisable():
     def __init__(self, status):
         self.status = status
+
     def __str__(self):
         if self.status[1] != "OK":
             return "Failed to disable statistics counting, GANESHA RESPONSE STATUS: " + self.status[1]
         else:
             return "Successfully disabled statistics counting"
 
-class DumpAuth():
+class DumpAuth(Report):
     def __init__(self, stats):
+        super().__init__(stats)
+
         self.curtime = time.time()
         self.success = stats[0]
         self.status = stats[1]
@@ -750,6 +1220,27 @@ class DumpAuth():
             self.dnslatency = stats[3][9]
             self.dnsmax = stats[3][10]
             self.dnsmin = stats[3][11]
+
+    def fill_report(self, report):
+        report["gc"] = {
+            "total": dbus_to_std(self.gctotal),
+            "latency": dbus_to_std(self.gclatency),
+            "max": dbus_to_std(self.gcmax),
+            "min": dbus_to_std(self.gcmin),
+        }
+        report["wb"] = {
+            "total": dbus_to_std(self.wbtotal),
+            "latency": dbus_to_std(self.wblatency),
+            "max": dbus_to_std(self.wbmax),
+            "min": dbus_to_std(self.wbmin),
+        }
+        report["dns"] = {
+            "total": dbus_to_std(self.dnstotal),
+            "latency": dbus_to_std(self.dnslatency),
+            "max": dbus_to_std(self.dnsmax),
+            "min": dbus_to_std(self.dnsmin)
+        }
+
     def __str__(self):
         output = ""
         if not self.success:
@@ -779,10 +1270,32 @@ class DumpAuth():
         return output
 
 
-class DumpFULLV3Stats():
+class DumpFULLV3Stats(Report):
     def __init__(self, status):
+        super().__init__(status)
+
         self.curtime = time.time()
         self.stats = status
+
+    def fill_report(self, report):
+        if self.result[4] == 'None':
+            return
+
+        for op_stats in self.result[3]:
+            name = dbus_to_std(op_stats[0])
+            report[name] = {
+                "details": {
+                    "total": dbus_to_std(op_stats[1]),
+                    "error": dbus_to_std(op_stats[2]),
+                    "dups": dbus_to_std(op_stats[3])
+                },
+                "latency": {
+                    "average": dbus_to_std(op_stats[4]),
+                    "min": dbus_to_std(op_stats[5]),
+                    "max": dbus_to_std(op_stats[6])
+                }
+            }
+
     def __str__(self):
         output = ""
         if not self.stats[0]:
@@ -812,10 +1325,31 @@ class DumpFULLV3Stats():
                 i += 1
             return output
 
-class DumpFULLV4Stats():
+class DumpFULLV4Stats(Report):
     def __init__(self, status):
+        super().__init__(status)
+
         self.curtime = time.time()
         self.stats = status
+
+    def fill_report(self, report):
+        if self.result[4] == 'None':
+            return
+
+        for op_stats in self.result[3]:
+            name = dbus_to_std(op_stats[0])
+            report[name] = {
+                "details": {
+                    "total": dbus_to_std(op_stats[1]),
+                    "error": dbus_to_std(op_stats[2]),
+                },
+                "latency": {
+                    "average": dbus_to_std(op_stats[3]),
+                    "min": dbus_to_std(op_stats[4]),
+                    "max": dbus_to_std(op_stats[5])
+                }
+            }
+
     def __str__(self):
         output = ""
         if not self.stats[0]:
