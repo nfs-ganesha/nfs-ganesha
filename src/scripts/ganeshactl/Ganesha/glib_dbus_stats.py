@@ -801,15 +801,15 @@ class DumpFULLV3Stats():
             output += "\nName            Total     Error      Dups |       Avg          Min           Max   "
             i = 0
             tot_len = len(self.stats[3])
-            while (i+7) <= tot_len:
-                output += "\n" + (self.stats[3][i+0]).ljust(11)
-                output += " %s" % (str(self.stats[3][i+1]).rjust(9))
-                output += " %s" % (str(self.stats[3][i+2]).rjust(9))
-                output += " %s |" % (str(self.stats[3][i+3]).rjust(9))
-                output += " %12.6f" % (self.stats[3][i+4])
-                output += " %12.6f" % (self.stats[3][i+5])
-                output += " %12.6f" % (self.stats[3][i+6])
-                i += 7
+            while i < tot_len:
+                output += "\n" + (self.stats[3][i][0]).ljust(11)
+                output += " %s" % (str(self.stats[3][i][1]).rjust(9))
+                output += " %s" % (str(self.stats[3][i][2]).rjust(9))
+                output += " %s |" % (str(self.stats[3][i][3]).rjust(9))
+                output += " %12.6f" % (self.stats[3][i][4])
+                output += " %12.6f" % (self.stats[3][i][5])
+                output += " %12.6f" % (self.stats[3][i][6])
+                i += 1
             return output
 
 class DumpFULLV4Stats():
@@ -834,12 +834,12 @@ class DumpFULLV4Stats():
             output += "\nName                        Total     Error  |       Avg          Min           Max   "
             i = 0
             tot_len = len(self.stats[3])
-            while (i+6) <= tot_len:
-                output += "\n" + (self.stats[3][i+0]).ljust(23)
-                output += " %s" % (str(self.stats[3][i+1]).rjust(9))
-                output += " %s  |" % (str(self.stats[3][i+2]).rjust(9))
-                output += " %12.6f" % (self.stats[3][i+3])
-                output += " %12.6f" % (self.stats[3][i+4])
-                output += " %12.6f" % (self.stats[3][i+5])
-                i += 6
+            while i < tot_len:
+                output += "\n" + (self.stats[3][i][0]).ljust(23)
+                output += " %s" % (str(self.stats[3][i][1]).rjust(9))
+                output += " %s  |" % (str(self.stats[3][i][2]).rjust(9))
+                output += " %12.6f" % (self.stats[3][i][3])
+                output += " %12.6f" % (self.stats[3][i][4])
+                output += " %12.6f" % (self.stats[3][i][5])
+                i += 1
             return output
