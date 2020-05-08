@@ -42,8 +42,7 @@ bool proxyv3_nlm_init(void)
 		const char *kClientName = "127.0.0.1";
 
 		LogCrit(COMPONENT_FSAL,
-			"gethostname() failed. Errno %d (%s)."
-			"Hardcoding a client IP instead.",
+			"gethostname() failed. Errno %d (%s). Hardcoding a client IP instead.",
 			errno, strerror(errno));
 		memcpy(nlmMachineName, kClientName,
 		       strlen(kClientName) + 1 /* For NUL */);
@@ -77,8 +76,7 @@ proxyv3_is_valid_lockop(struct fsal_obj_handle *obj_hdl,
 {
 	if (lock_op == FSAL_OP_LOCKB) {
 		LogCrit(COMPONENT_FSAL,
-			"Asked to perform an async lock request. "
-			"We told Ganesha we can't handle those...");
+			"Asked to perform an async lock request. We told Ganesha we can't handle those...");
 		return false;
 	}
 
@@ -101,15 +99,13 @@ proxyv3_is_valid_lockop(struct fsal_obj_handle *obj_hdl,
 
 	if (lock_op == FSAL_OP_LOCKT && conflicting_lock == NULL) {
 		LogCrit(COMPONENT_FSAL,
-			"ERROR: Ganesha asked for NLM4_TEST, "
-			"but output is NULL");
+			"ERROR: Ganesha asked for NLM4_TEST, but output is NULL");
 		return false;
 	}
 
 	if (proxyv3_nlm_port() == 0) {
 		LogCrit(COMPONENT_FSAL,
-			"Got a lock op request, but we don't have a "
-			"lockmanagerd port!");
+			"Got a lock op request, but we don't have a lockmanagerd port!");
 		return false;
 	}
 
@@ -238,7 +234,7 @@ proxyv3_nlm_commonrpc(rpcproc_t nlmProc, const char *procName,
 		      struct nlm4_lock *lock)
 {
 	LogDebug(COMPONENT_FSAL,
-		 "Issuing an %s. Lock info: offset %zu and len %zu",
+		 "Issuing an %s. Lock info: offset %" PRIu64 ", len %" PRIu64,
 		 procName, lock->l_offset, lock->l_len);
 
 	if (!proxyv3_nlm_call(proxyv3_sockaddr(),
@@ -450,9 +446,7 @@ proxyv3_clear_conflicting_lock(fsal_lock_op_t lock_op,
 		 * waste our time.
 		 */
 		LogDebug(COMPONENT_FSAL,
-			 "Lock op is %s, but Ganesha wants to know about "
-			 "the conflict. Report the whole file as locked "
-			 "like nlm_process_conflict.",
+			 "Lock op is %s, but Ganesha wants to know about the conflict. Report the whole file as locked like nlm_process_conflict.",
 			 lock_op_to_cstr(lock_op));
 	}
 

@@ -20,6 +20,7 @@
  * -------------
  */
 
+#include <inttypes.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
@@ -74,8 +75,7 @@ bool proxyv3_rpc_init(void)
 		const char *kClientName = "127.0.0.1";
 
 		LogCrit(COMPONENT_FSAL,
-			"gethostname() failed. Errno %d (%s)."
-			"Hardcoding a client IP instead.",
+			"gethostname() failed. Errno %d (%s). Hardcoding a client IP instead.",
 			errno, strerror(errno));
 		memcpy(rpcMachineName, kClientName,
 		       strlen(kClientName) + 1 /* For NUL */);
@@ -160,7 +160,7 @@ proxyv3_openfd(const struct sockaddr *host,
 	if ((ipv6 && hostv6->sin6_port != 0) ||
 	    (!ipv6 && hostv4->sin_port != 0)) {
 		LogCrit(COMPONENT_FSAL,
-			"passed an address (%s) with non-zero port %u",
+			"passed an address (%s) with non-zero port %" PRIu16,
 			addrForErrors,
 			(ipv6) ? hostv6->sin6_port : hostv4->sin_port);
 		return -1;
@@ -280,9 +280,9 @@ proxyv3_getfdentry(const struct sockaddr *host,
 		return NULL;
 	}
 
-	LogDebug(COMPONENT_FSAL,
-		 "Looking for an open socket for port %u",
-		 port);
+	LogFullDebug(COMPONENT_FSAL,
+		     "Looking for an open socket for port %" PRIu16,
+		     port);
 
 	/* Find the first free, preferably open socket */
 	struct fd_entry *first_free = NULL;
@@ -317,9 +317,8 @@ proxyv3_getfdentry(const struct sockaddr *host,
 			if (entry->socklen == socklen &&
 			    entry->port == port &&
 			    memcmp(&entry->socket, host, socklen) == 0) {
-				LogDebug(COMPONENT_FSAL,
-					 "Found an already open socket, "
-					 "will reuse that");
+				LogFullDebug(COMPONENT_FSAL,
+					     "Found an already open socket, will reuse that");
 				first_open = entry;
 				break;
 			}
@@ -328,8 +327,8 @@ proxyv3_getfdentry(const struct sockaddr *host,
 
 	/* The list is full! The caller needs to block. */
 	if (first_free == NULL) {
-		LogDebug(COMPONENT_FSAL,
-			 "No available sockets. Tell the caller to wait");
+		LogFullDebug(COMPONENT_FSAL,
+			     "No available sockets. Tell the caller to wait");
 
 		if (pthread_mutex_unlock(&rpcLock) != 0) {
 			LogCrit(COMPONENT_FSAL,
@@ -371,13 +370,12 @@ proxyv3_getfdentry(const struct sockaddr *host,
 
 	if (result->is_open) {
 		/* We should first close the existing socket. */
-		LogDebug(COMPONENT_FSAL,
-			 "Closing fd %d before we re-use the slot",
-			 result->fd);
+		LogFullDebug(COMPONENT_FSAL,
+			     "Closing fd %d before we re-use the slot",
+			     result->fd);
 		if (close(result->fd) != 0) {
 			LogCrit(COMPONENT_FSAL,
-				"close(%d) of re-used fd failed."
-				" Continuing. Errno %d (%s)",
+				"close(%d) of re-used fd failed. Continuing. Errno %d (%s)",
 				result->fd, errno, strerror(errno));
 		}
 
@@ -477,9 +475,9 @@ proxyv3_getfd_blocking(const struct sockaddr *host,
 			.tv_nsec = (numMicros % 1000000) * 1000
 		};
 
-		LogDebug(COMPONENT_FSAL,
-			 "Going to sleep for %zu microseconds",
-			 numMicros);
+		LogFullDebug(COMPONENT_FSAL,
+			     "Going to sleep for %zu microseconds",
+			     numMicros);
 
 		if (nanosleep(&how_long, NULL) != 0) {
 			/*
@@ -489,8 +487,7 @@ proxyv3_getfd_blocking(const struct sockaddr *host,
 
 			if (errno != EINTR) {
 				LogCrit(COMPONENT_FSAL,
-					"nanosleep failed."
-					" Asked for %zu micros. Errno %d (%s)",
+					"nanosleep failed. Asked for %zu micros. Errno %d (%s)",
 					numMicros, errno, strerror(errno));
 				return NULL;
 			}
@@ -517,9 +514,9 @@ proxyv3_getfd_blocking(const struct sockaddr *host,
 
 static bool proxyv3_release_fdentry(struct fd_entry *entry, bool force_close)
 {
-	LogDebug(COMPONENT_FSAL,
-		 "Releasing fd %d back into the pool (close = %s)",
-		 entry->fd, (force_close) ? "T" : "F");
+	LogFullDebug(COMPONENT_FSAL,
+		     "Releasing fd %d back into the pool (close = %s)",
+		     entry->fd, (force_close) ? "T" : "F");
 
 	if (pthread_mutex_lock(&rpcLock) != 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -601,7 +598,17 @@ bool proxyv3_call(const struct sockaddr *host,
 	XDR x;
 	struct rpc_msg rmsg;
 	struct rpc_msg reply;
-	struct fd_entry *fd_entry = proxyv3_getfd_blocking(host, socklen, port);
+	struct fd_entry *fd_entry;
+
+	/* Log on entry, so we know what we were doing before we open the fd. */
+	LogFullDebug(COMPONENT_FSAL,
+		     "Sending an RPC: "
+		     "Program = %" PRIu32 ", "
+		     "Version = %" PRIu32 ", "
+		     "Procedure = %" PRIu32,
+		     rpcProgram, rpcVersion, rpcProc);
+
+	fd_entry = proxyv3_getfd_blocking(host, socklen, port);
 
 	if (fd_entry == NULL) {
 		/*
@@ -626,8 +633,8 @@ bool proxyv3_call(const struct sockaddr *host,
 		 * Let ganesha do lots of syscalls to figure out our machiine
 		 * name, uid, gid and so on.
 		 */
-		LogDebug(COMPONENT_FSAL,
-			 "rpc, no creds given => authunix_ncreate_default()");
+		LogFullDebug(COMPONENT_FSAL,
+			     "rpc, no creds => authunix_ncreate_default()");
 		au = authunix_ncreate_default();
 	}
 
@@ -689,8 +696,7 @@ bool proxyv3_call(const struct sockaddr *host,
 	 */
 	if (fd_entry->rpc_buf.capacity < bytes_to_send) {
 		LogCrit(COMPONENT_FSAL,
-			"xdrmem_create produced %zu bytes to send "
-			"for our %zu-byte buffer",
+			"xdrmem_create produced %zu bytes to send for our %zu-byte buffer",
 			bytes_to_send, fd_entry->rpc_buf.capacity);
 		proxyv3_release_fdentry(fd_entry, true /* force close */);
 		AUTH_DESTROY(au);
@@ -700,9 +706,9 @@ bool proxyv3_call(const struct sockaddr *host,
 	/* Do the actual "resize". */
 	(void) proxyv3_rpcBuf_resize(&fd_entry->rpc_buf, bytes_to_send);
 
-	LogDebug(COMPONENT_FSAL,
-		 "Sending XID %u with %zu bytes",
-		 rmsg.rm_xid, bytes_to_send);
+	LogFullDebug(COMPONENT_FSAL,
+		     "Sending XID %" PRIu32 " with %zu bytes",
+		     rmsg.rm_xid, bytes_to_send);
 
 	size_t total_bytes_written = 0;
 
@@ -714,8 +720,7 @@ bool proxyv3_call(const struct sockaddr *host,
 			      remaining);
 		if (bytes_written < 0) {
 			LogCrit(COMPONENT_FSAL,
-				"Write at %zu failed (remaining was %zu). "
-				"Errno %d (%s)",
+				"Write at %zu failed (remaining was %zu). Errno %d (%s)",
 				total_bytes_written, remaining,
 				errno, strerror(errno));
 			proxyv3_release_fdentry(fd_entry,
@@ -745,8 +750,8 @@ bool proxyv3_call(const struct sockaddr *host,
 		uint xid;
 	} response_header;
 
-	LogDebug(COMPONENT_FSAL,
-		 "Let's go ask for a response.");
+	LogFullDebug(COMPONENT_FSAL,
+		     "Let's go ask for a response.");
 
 	/* First try to read just the response "header". */
 	if (read(fd, &response_header, 8) != 8) {
@@ -761,15 +766,15 @@ bool proxyv3_call(const struct sockaddr *host,
 	response_header.recmark = ntohl(response_header.recmark);
 	response_header.xid = ntohl(response_header.xid);
 
-	LogDebug(COMPONENT_FSAL,
-		 "Got back recmark %x (%u bytes), xid %u\n",
-		 response_header.recmark,
-		 response_header.recmark & ~(1U << 31),
-		 response_header.xid);
+	LogFullDebug(COMPONENT_FSAL,
+		     "Got recmark %" PRIx32 " (%" PRIu32 " bytes) xid %" PRIu32,
+		     response_header.recmark,
+		     response_header.recmark & ~(1U << 31),
+		     response_header.xid);
 
 	if (response_header.xid != xid) {
 		LogCrit(COMPONENT_FSAL,
-			"Response xid (%u) doesn't match request %u",
+			"Response xid %" PRIu32 " != request %" PRIu32,
 			response_header.xid, xid);
 		proxyv3_release_fdentry(fd_entry, true /* force close */);
 		return false;
@@ -779,7 +784,7 @@ bool proxyv3_call(const struct sockaddr *host,
 	response_header.recmark &= ~(1U << 31);
 	if (response_header.recmark < 8) {
 		LogCrit(COMPONENT_FSAL,
-			"Response claims to only have %u bytes",
+			"Response claims to only have %" PRIu32 " bytes",
 			response_header.recmark);
 		proxyv3_release_fdentry(fd_entry, true /* force close */);
 		return false;
@@ -799,9 +804,9 @@ bool proxyv3_call(const struct sockaddr *host,
 	/* Write the xid into the buffer. */
 	memcpy(msgBuf, &xid, sizeof(xid));
 
-	LogDebug(COMPONENT_FSAL,
-		 "Going to read the remaining %zu bytes",
-		 bytes_to_read - total_bytes_read);
+	LogFullDebug(COMPONENT_FSAL,
+		     "Going to read the remaining %zu bytes",
+		     bytes_to_read - total_bytes_read);
 
 	while (total_bytes_read < bytes_to_read) {
 		ssize_t bytes_read =
@@ -831,8 +836,8 @@ bool proxyv3_call(const struct sockaddr *host,
 		return false;
 	}
 
-	LogDebug(COMPONENT_FSAL,
-		 "Got all the bytes, time to decode");
+	LogFullDebug(COMPONENT_FSAL,
+		     "Got all the bytes, time to decode");
 
 	/* Lets decode the reply. */
 	memset(&x, 0, sizeof(x));
@@ -870,11 +875,16 @@ bool proxyv3_call(const struct sockaddr *host,
 		return false;
 	}
 
+	/* Return our socket and buffer to the pool. */
 	proxyv3_release_fdentry(fd_entry,
 				false /* let's reuse the socket */);
-	LogDebug(COMPONENT_FSAL,
-		 "RPC completed successfully");
 
+	LogFullDebug(COMPONENT_FSAL,
+		     "RPC Completed Successfully: "
+		     "Program = %" PRIu32 ", "
+		     "Version = %" PRIu32 ", "
+		     "Procedure = %" PRIu32,
+		     rpcProgram, rpcVersion, rpcProc);
 	return true;
 }
 
@@ -1004,7 +1014,7 @@ bool proxyv3_find_ports(const struct sockaddr *host,
 		}
 
 		LogDebug(COMPONENT_FSAL,
-			 "Got back %s port %u",
+			 "Got back %s port %" PRIu32,
 			 queries[i].name, *queries[i].port);
 	}
 

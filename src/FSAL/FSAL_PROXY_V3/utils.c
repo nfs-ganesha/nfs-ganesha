@@ -168,7 +168,9 @@ bool attrmask_is_nfs3(attrmask_t mask)
 
 	if (FSAL_UNSET_MASK(mask, ATTRS_NFS3 | ATTR_RDATTR_ERR) != 0) {
 		LogDebug(COMPONENT_FSAL,
-			 "requested = %0lx\tNFS3 = %0lx\tExtra = %0lx",
+			 "requested = %0" PRIx64
+			 "\tNFS3 = %0" PRIx64
+			 "\tExtra = %0" PRIx64,
 			 orig, (attrmask_t) ATTRS_NFS3, mask);
 		return false;
 	}
@@ -193,7 +195,9 @@ static bool attrmask_valid_setattr(const attrmask_t mask)
 
 	if (FSAL_UNSET_MASK(temp, possible)) {
 		LogDebug(COMPONENT_FSAL,
-			 "requested = %0lx\tNFS3 = %0lx\tExtra = %0lx",
+			 "requested = %0" PRIx64
+			 "\tNFS3 = %0" PRIx64
+			 "\tExtra = %0" PRIx64,
 			 mask, possible, temp);
 		return false;
 	}
@@ -202,7 +206,8 @@ static bool attrmask_valid_setattr(const attrmask_t mask)
 	if (FSAL_TEST_MASK(mask, ATTR_ATIME) &&
 	    FSAL_TEST_MASK(mask, ATTR_ATIME_SERVER)) {
 		LogDebug(COMPONENT_FSAL,
-			 "Error: mask %0lx has both ATIME and ATIME_SERVER",
+			 "Error: mask %0" PRIx64 " has both "
+			 "ATIME and ATIME_SERVER",
 			 mask);
 		return false;
 	}
@@ -211,7 +216,8 @@ static bool attrmask_valid_setattr(const attrmask_t mask)
 	if (FSAL_TEST_MASK(mask, ATTR_MTIME) &&
 	    FSAL_TEST_MASK(mask, ATTR_MTIME_SERVER)) {
 		LogDebug(COMPONENT_FSAL,
-			 "Error: mask %0lx has both MTIME and MTIME_SERVER",
+			 "Error: mask %0" PRIx64 " has both "
+			 "MTIME and MTIME_SERVER",
 			 mask);
 		return false;
 	}
