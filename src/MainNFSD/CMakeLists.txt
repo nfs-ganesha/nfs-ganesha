@@ -94,13 +94,8 @@ if (USE_ACL_MAPPING)
   )
 endif(USE_ACL_MAPPING)
 
-add_library(FsalCore OBJECT ${fsal_CORE_SRCS})
-add_sanitizers(FsalCore)
-set_target_properties(FsalCore PROPERTIES COMPILE_FLAGS "-fPIC")
-
 set(ganesha_nfsd_OBJS
     $<TARGET_OBJECTS:MainServices>
-    $<TARGET_OBJECTS:FsalCore>
     $<TARGET_OBJECTS:avltree>
     $<TARGET_OBJECTS:cidr>
     $<TARGET_OBJECTS:config_parsing>
@@ -145,8 +140,10 @@ if(USE_9P)
 endif(USE_9P)
 
 add_library(ganesha_nfsd SHARED
-    ${ganesha_nfsd_OBJS}
+  ${ganesha_nfsd_OBJS} ${fsal_CORE_SRCS}
 )
+
+add_sanitizers(ganesha_nfsd)
 
 target_link_libraries(ganesha_nfsd
   ${LIBTIRPC_LIBRARIES}
@@ -158,8 +155,12 @@ if(USE_9P_RDMA)
   target_link_libraries(ganesha_nfsd ${MOOSHIKA_LIBRARIES})
 endif(USE_9P_RDMA)
 
-add_sanitizers(ganesha_nfsd)
-set_target_properties(ganesha_nfsd PROPERTIES LINK_FLAGS "-Wl,--version-script=${CMAKE_SOURCE_DIR}/MainNFSD/libganesha_nfsd.ver -Wl,--no-undefined")
+if(SANITIZE_ADDRESS)
+	set_target_properties(ganesha_nfsd PROPERTIES LINK_FLAGS "-Wl,--version-script=${CMAKE_SOURCE_DIR}/MainNFSD/libganesha_nfsd.ver")
+else(SANITIZE_ADDRESS)
+	set_target_properties(ganesha_nfsd PROPERTIES LINK_FLAGS "-Wl,--version-script=${CMAKE_SOURCE_DIR}/MainNFSD/libganesha_nfsd.ver -Wl,--no-undefined")
+endif(SANITIZE_ADDRESS)
+
 set_target_properties(ganesha_nfsd PROPERTIES
   VERSION "${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}"
   SOVERSION "${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}"
