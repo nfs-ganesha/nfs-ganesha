@@ -847,12 +847,17 @@ bool proxyv3_call(const struct sockaddr *host,
 	reply.RPCM_ack.ar_results.proc = decodeFunc;
 	reply.RPCM_ack.ar_results.where = output;
 
-	if (!xdr_replymsg(&x, &reply)) {
+	bool decoded = xdr_replymsg(&x, &reply);
+
+	bool success =
+		decoded &&
+		reply.rm_reply.rp_stat == MSG_ACCEPTED &&
+		reply.rm_reply.rp_acpt.ar_stat == SUCCESS;
+
+	/* If we failed to decode, say so. */
+	if (!decoded) {
 		LogCrit(COMPONENT_FSAL,
 			"Failed to do xdr_replymsg");
-		proxyv3_release_fdentry(fd_entry,
-					true /* force close */);
-		return false;
 	}
 
 	/* Check that it was accepted, if not, say why not. */
@@ -860,9 +865,6 @@ bool proxyv3_call(const struct sockaddr *host,
 		LogCrit(COMPONENT_FSAL,
 			"Reply received but not accepted. REJ %d",
 			reply.rm_reply.rp_rjct.rj_stat);
-		proxyv3_release_fdentry(fd_entry,
-					true /* force close */);
-		return false;
 	}
 
 	/* Check that it was accepted with success. */
@@ -870,22 +872,30 @@ bool proxyv3_call(const struct sockaddr *host,
 		LogCrit(COMPONENT_FSAL,
 			"Reply accepted but unsuccesful. Reason %d",
 			reply.rm_reply.rp_acpt.ar_stat);
-		proxyv3_release_fdentry(fd_entry,
-					true /* force close */);
-		return false;
 	}
+
+	/*
+	 * Clean up whatever xdr_replymsg may have allocated, but don't smash
+	 * the data in the output buffer.
+	 */
+
+	reply.RPCM_ack.ar_results.proc = (xdrproc_t) xdr_void;
+	reply.RPCM_ack.ar_results.where = NULL;
+	xdr_free((xdrproc_t) xdr_replymsg, &reply);
 
 	/* Return our socket and buffer to the pool. */
 	proxyv3_release_fdentry(fd_entry,
 				false /* let's reuse the socket */);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "RPC Completed Successfully: "
+		     "RPC Completed %s: "
 		     "Program = %" PRIu32 ", "
 		     "Version = %" PRIu32 ", "
 		     "Procedure = %" PRIu32,
+		     (success) ? "SUCCESSFULLY" : " but FAILED",
 		     rpcProgram, rpcVersion, rpcProc);
-	return true;
+
+	return success;
 }
 
 /**

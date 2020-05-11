@@ -510,6 +510,8 @@ proxyv3_lookup_internal(struct fsal_export *export_handle,
 
 	/* We really need the attributes. Fail if we didn't get them. */
 	if (!resok->obj_attributes.attributes_follow) {
+		/* Clean up, even though we're exiting early. */
+		xdr_free((xdrproc_t) xdr_LOOKUP3res, &result);
 		LogDebug(COMPONENT_FSAL,
 			 "LOOKUP3 didn't return attributes");
 		return fsalstat(ERR_FSAL_INVAL, 0);
@@ -525,6 +527,9 @@ proxyv3_lookup_internal(struct fsal_export *export_handle,
 				     obj_attrs,
 				     parent_obj,
 				     attrs_out);
+
+	/* At this point, we've copied out the result. Clean up. */
+	xdr_free((xdrproc_t) xdr_LOOKUP3res, &result);
 
 	if (result_handle == NULL) {
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -870,6 +875,9 @@ proxyv3_issue_createlike(struct proxyv3_obj_handle *parent_obj,
 	/* We need both the handle and attributes to fill in the results. */
 	if (!op_attr->attributes_follow ||
 	    !op_fh3->handle_follows) {
+		/* Since status was NFS3_OK, we may have allocated something. */
+		xdr_free(decFunc, decArgs);
+
 		LogDebug(COMPONENT_FSAL,
 			 "%s didn't return obj attributes (%s) or handle (%s)",
 			 procName,
@@ -887,6 +895,9 @@ proxyv3_issue_createlike(struct proxyv3_obj_handle *parent_obj,
 				     obj_attrs,
 				     parent_obj,
 				     attrs_out);
+
+	/* At this point, we've copied out the result. Clean up. */
+	xdr_free(decFunc, decArgs);
 
 	if (result_handle == NULL) {
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -1623,6 +1634,9 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 			}
 		}
 
+		/* Cleanup any memory that READDIRPLUS3res allocated for us. */
+		xdr_free(decFunc, &result);
+
 		LogFullDebug(COMPONENT_FSAL,
 			     "Finished reading %d entries. EOF is %s",
 			     count, (*eof) ? "T" : "F");
@@ -1724,6 +1738,14 @@ proxyv3_read2(struct fsal_obj_handle *obj_hdl,
 	args.offset = offset;
 	args.count = bytes_to_read;
 
+	/*
+	 * Setup the resok struct to fill in bytes on success. This avoids an
+	 * unnecessary allocation (on xdr_decode of the READ3res) and memcpy
+	 * afterwards.
+	 */
+	resok->data.data_val = dst;
+	resok->data.data_len = bytes_to_read;
+
 	/* Issue the read. */
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
@@ -1762,11 +1784,9 @@ proxyv3_read2(struct fsal_obj_handle *obj_hdl,
 		return;
 	}
 
+	/* We already filled in the actual bytes by setting up resok.data */
 	read_arg->end_of_file = resok->eof;
 	read_arg->io_amount = resok->count;
-
-	/* Copy the bytes into the output buffer. */
-	memcpy(dst, resok->data.data_val, resok->data.data_len);
 
 	/* Let the caller know that we're done. */
 	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), read_arg, cb_arg);
