@@ -236,7 +236,7 @@ CLEAN=0
 DIR="."
 
 ALWAYS="libtirpc|libntirpc|CMakeFiles|tools/test_findlog.c|include/config.h"
-ALWAYS="$ALWAYS|nfsv41.h|nlm4.h|nsm.h|rquota.h"
+ALWAYS="$ALWAYS|nfsv41.h|nlm4.h|nsm.h|rquota.h|nfsacl.h"
 
 EXTERNAL="murmur3.h|cidr.h|cidr/|atomic_x86_64.h|include/city|avltree.h"
 EXTERNAL="$EXTERNAL|test/test_atomic_x86_86.c|avl/|FSAL/FSAL_GPFS/include"
@@ -258,7 +258,7 @@ COMMIT=HEAD
 TYPEDEF=""
 NO_CRUFT=0
 
-NO_SPACING_FILES="nfs23.h|nfsv41.h|nlm4.h|nsm.h|rquota.h"
+NO_SPACING_FILES="nfs23.h|nfsv41.h|nlm4.h|nsm.h|rquota.h|nfsacl.h"
 
 NO_COMPLEX_MACRO_FILES="include/ganesha_dbus.h|include/server_stats_private.h"
 NO_COMPLEX_MACRO_FILES="$NO_COMPLEX_MACRO_FILES|include/gsh_intrinsic.h"

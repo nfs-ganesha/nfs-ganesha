@@ -310,4 +310,26 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 		} \
 	} while (0)
 
+#define LogNFSACL_Operation(component, req, fh, format, args...) \
+	do { \
+		if (unlikely(component_log_level[component] >= NIV_DEBUG)) { \
+			char str[LEN_FH_STR]; \
+			struct display_buffer dspbuf = { \
+				sizeof(str), str, str}; \
+			\
+			display_opaque_bytes(&dspbuf, (fh)->data.data_val, \
+					     (fh)->data.data_len); \
+			\
+			DisplayLogComponentLevel( \
+				component,  __FILE__, __LINE__, __func__, \
+				NIV_DEBUG, \
+				"REQUEST PROCESSING: Calling %s " \
+				"File Handle V3: Len=%u %s" \
+				format, \
+			    nfsacl_func_desc[req->rq_msg.cb_proc].funcname, \
+				(fh)->data.data_len, str, \
+				## args); \
+		} \
+	} while (0)
+
 #endif				/* NFS_FILE_HANDLE_H */

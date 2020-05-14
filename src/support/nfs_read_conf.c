@@ -93,6 +93,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, program[P_NLM]),
 	CONF_ITEM_UI32("Rquota_Program", 1, INT32_MAX, RQUOTAPROG,
 		       nfs_core_param, program[P_RQUOTA]),
+	CONF_ITEM_UI32("NFSACL_Program", 1, INT32_MAX, NFSACLPROG,
+		       nfs_core_param, program[P_NFSACL]),
 	CONF_ITEM_DEPRECATED("Nb_Worker",
 			     "This parameter has been replaced with _9P { Nb_Worker}"
 			     ),
@@ -160,6 +162,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, enable_NLM),
 	CONF_ITEM_BOOL("Enable_RQUOTA", true,
 		       nfs_core_param, enable_RQUOTA),
+	CONF_ITEM_BOOL("Enable_NFSACL", false,
+		       nfs_core_param, enable_NFSACL),
 	CONF_ITEM_BOOL("Enable_TCP_keepalive", true,
 		       nfs_core_param, enable_tcp_keepalive),
 	CONF_ITEM_UI32("TCP_KEEPCNT", 0, 255, 0,

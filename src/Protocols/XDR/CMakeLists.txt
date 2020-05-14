@@ -8,6 +8,7 @@ SET(nfs_mnt_xdr_STAT_SRCS
    xdr_rquota.c
    xdr_nlm4.c
    xdr_nsm.c
+   xdr_nfsacl.c
 )
 
 add_library(nfs_mnt_xdr OBJECT ${nfs_mnt_xdr_STAT_SRCS})

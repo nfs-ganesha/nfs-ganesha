@@ -114,5 +114,6 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *);
 enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *);
 enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *);
 enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *);
+enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *);
 
 #endif				/* !NFS_INIT_H */

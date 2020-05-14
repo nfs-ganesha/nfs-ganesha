@@ -54,6 +54,7 @@
 #include "mount.h"
 #include "nlm4.h"
 #include "rquota.h"
+#include "nfsacl.h"
 #include "nfs_init.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
@@ -122,6 +123,7 @@ const char *tags[] = {
 	"MNT",
 	"NLM",
 	"RQUOTA",
+	"NFSACL",
 	"NFS_VSOCK",
 	"NFS_RDMA",
 };
@@ -194,6 +196,10 @@ static void unregister_rpc(void)
 	if (nfs_param.core_param.enable_RQUOTA) {
 		unregister(NFS_program[P_RQUOTA], RQUOTAVERS, EXT_RQUOTAVERS);
 	}
+
+	if (nfs_param.core_param.enable_NFSACL) {
+		unregister(NFS_program[P_NFSACL], NFSACL_V3, NFSACL_V3);
+	}
 }
 
 static inline bool nfs_protocol_enabled(protos p)
@@ -219,6 +225,11 @@ static inline bool nfs_protocol_enabled(protos p)
 	case P_RQUOTA:
 		if (nfs_param.core_param.enable_RQUOTA)
 			return true;
+		break;
+	case P_NFSACL: /* valid only for NFSv3 environments */
+		if (nfsv3 && nfs_param.core_param.enable_NFSACL) {
+			return true;
+		}
 		break;
 
 	default:
@@ -315,11 +326,21 @@ static enum xprt_stat nfs_rpc_dispatch_udp_RQUOTA(SVCXPRT *xprt)
 	return SVC_RECV(xprt);
 }
 
+static enum xprt_stat nfs_rpc_dispatch_udp_NFSACL(SVCXPRT *xprt)
+{
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "NFSACL UDP request for SVCXPRT %p fd %d",
+		     xprt, xprt->xp_fd);
+	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFSACL;
+	return SVC_RECV(xprt);
+}
+
 const svc_xprt_fun_t udp_dispatch[] = {
 	nfs_rpc_dispatch_udp_NFS,
 	nfs_rpc_dispatch_udp_MNT,
 	nfs_rpc_dispatch_udp_NLM,
 	nfs_rpc_dispatch_udp_RQUOTA,
+	nfs_rpc_dispatch_udp_NFSACL,
 	NULL,
 	NULL,
 };
@@ -360,6 +381,15 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_RQUOTA(SVCXPRT *xprt)
 	return nfs_rpc_tcp_user_data(xprt);
 }
 
+static enum xprt_stat nfs_rpc_dispatch_tcp_NFSACL(SVCXPRT *xprt)
+{
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "NFSACL TCP request on SVCXPRT %p fd %d",
+		     xprt, xprt->xp_fd);
+	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFSACL;
+	return nfs_rpc_tcp_user_data(xprt);
+}
+
 static enum xprt_stat nfs_rpc_dispatch_tcp_VSOCK(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -374,6 +404,7 @@ const svc_xprt_fun_t tcp_dispatch[] = {
 	nfs_rpc_dispatch_tcp_MNT,
 	nfs_rpc_dispatch_tcp_NLM,
 	nfs_rpc_dispatch_tcp_RQUOTA,
+	nfs_rpc_dispatch_tcp_NFSACL,
 	nfs_rpc_dispatch_tcp_VSOCK,
 	NULL,
 };
@@ -1270,6 +1301,9 @@ void nfs_Init_svc(void)
 		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS,
 				 EXT_RQUOTAVERS);
 	}
+	if (nfs_param.core_param.enable_NFSACL)
+		Register_program(P_NFSACL, CORE_OPTION_NFSV3, NFSACL_V3);
+
 #endif	/* RPCBIND */
 
 }

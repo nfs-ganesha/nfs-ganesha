@@ -43,6 +43,11 @@
 #include "nfs_file_handle.h"
 #include "sal_data.h"
 #include "fsal.h"
+#include "posix_acls.h"
+#ifdef USE_NFSACL3
+#include <sys/acl.h>
+#endif				/* USE_NFSACL3 */
+
 
 /* Hard and soft limit for nfsv4 quotas */
 #define NFS_V4_MAX_QUOTA_SOFT 4294967296LL	/*  4 GB */
@@ -340,5 +345,16 @@ uint32_t resp_room(compound_data_t *data);
 nfsstat4 check_resp_room(compound_data_t *data, uint32_t op_resp_size);
 
 void get_mounted_on_fileid(compound_data_t *data, uint64_t *mounted_on_fileid);
+
+#ifdef USE_NFSACL3
+posix_acl *encode_posix_acl(const acl_t acl, uint32_t type,
+		struct attrlist *attrs);
+
+acl_t decode_posix_acl(posix_acl *nfs3_acl, uint32_t type);
+
+int nfs3_acl_2_fsal_acl(struct attrlist *attr, nfs3_int32 mask,
+		posix_acl *a_acl, posix_acl *d_acl, bool is_dir);
+#endif				/* USE_NFSACL3 */
+
 
 #endif				/* _NFS_PROTO_TOOLS_H */
