@@ -894,6 +894,7 @@ int posix_acl_2_xattr(acl_t acl, void *buf, size_t size)
 		}
 
 		ea_entry->e_tag = htole16(tag);
+		ea_entry->e_perm = 0;
 		if (acl_get_perm(permset, ACL_READ))
 			ea_entry->e_perm |= htole16(ACL_READ);
 		if (acl_get_perm(permset, ACL_WRITE))
