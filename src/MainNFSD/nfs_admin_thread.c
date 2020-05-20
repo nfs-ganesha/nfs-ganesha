@@ -628,6 +628,16 @@ static void do_shutdown(void)
 	LogEvent(COMPONENT_MAIN, "Shutting down RPC services");
 	(void)svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
 
+	LogEvent(COMPONENT_MAIN, "Stopping reaper threads");
+	rc = reaper_shutdown();
+	if (rc != 0) {
+		LogMajor(COMPONENT_THREAD,
+			 "Error shutting down reaper thread: %d", rc);
+		disorderly = true;
+	} else {
+		LogEvent(COMPONENT_THREAD, "Reaper thread shut down.");
+	}
+
 	LogEvent(COMPONENT_MAIN, "Stopping worker threads");
 #ifdef _USE_9P
 	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
@@ -651,15 +661,6 @@ static void do_shutdown(void)
 		disorderly = true;
 	} else {
 		LogEvent(COMPONENT_THREAD, "General fridge shut down.");
-	}
-
-	rc = reaper_shutdown();
-	if (rc != 0) {
-		LogMajor(COMPONENT_THREAD,
-			 "Error shutting down reaper thread: %d", rc);
-		disorderly = true;
-	} else {
-		LogEvent(COMPONENT_THREAD, "Reaper thread shut down.");
 	}
 
 	LogEvent(COMPONENT_MAIN, "Removing all exports.");
