@@ -158,6 +158,14 @@ class RetrieveExportStats():
         stats_op = self.exportmgrobj.get_dbus_method("GetNFSv40IO",
                                                      self.dbus_exportstats_name)
         return ExportIOv4Stats(self.io_stats(stats_op, export_id))
+    def v41io_stats(self, export_id):
+        stats_op = self.exportmgrobj.get_dbus_method("GetNFSv41IO",
+                                                     self.dbus_exportstats_name)
+        return ExportIOv41Stats(self.io_stats(stats_op, export_id))
+    def v42io_stats(self, export_id):
+        stats_op = self.exportmgrobj.get_dbus_method("GetNFSv42IO",
+                                                     self.dbus_exportstats_name)
+        return ExportIOv42Stats(self.io_stats(stats_op, export_id))
     def pnfs_stats(self, export_id):
         stats_op = self.exportmgrobj.get_dbus_method("GetNFSv41Layouts",
                                                      self.dbus_exportstats_name)
@@ -921,6 +929,60 @@ class ExportIOv4Stats(Report):
             for stat in self.stats[key][3]:
                 output += "\t" + str(stat).rjust(8)
             output += "\nWRITEv4: "
+            for stat in self.stats[key][4]:
+                output += "\t" + str(stat).rjust(8)
+            output += "\n\n"
+        return output
+
+class ExportIOv41Stats(Report):
+    def __init__(self, stats):
+        super().__init__(stats)
+        self.stats = stats
+
+    def report(self):
+        return export_io_stats_report(self._header, self.result)
+
+    def __str__(self):
+        output = ""
+        for key in self.stats:
+            if not self.stats[key][0]:
+                output += "\nEXPORT %s: %s\n" % (key, self.stats[key][1])
+                continue
+            if self.stats[key][1] != "OK":
+                output += self.stats[key][1] + "\n"
+            output += ("EXPORT %s:" % (key) +
+                       "\n\t\trequested\ttransferred\t     total\t    errors\t   latency" +
+                       "\nREADv41: ")
+            for stat in self.stats[key][3]:
+                output += "\t" + str(stat).rjust(8)
+            output += "\nWRITEv41: "
+            for stat in self.stats[key][4]:
+                output += "\t" + str(stat).rjust(8)
+            output += "\n\n"
+        return output
+
+class ExportIOv42Stats(Report):
+    def __init__(self, stats):
+        super().__init__(stats)
+        self.stats = stats
+
+    def report(self):
+        return export_io_stats_report(self._header, self.result)
+
+    def __str__(self):
+        output = ""
+        for key in self.stats:
+            if not self.stats[key][0]:
+                output += "\nEXPORT %s: %s\n" % (key, self.stats[key][1])
+                continue
+            if self.stats[key][1] != "OK":
+                output += self.stats[key][1] + "\n"
+            output += ("EXPORT %s:" % (key) +
+                       "\n\t\trequested\ttransferred\t     total\t    errors\t   latency" +
+                       "\nREADv42: ")
+            for stat in self.stats[key][3]:
+                output += "\t" + str(stat).rjust(8)
+            output += "\nWRITEv42: "
             for stat in self.stats[key][4]:
                 output += "\t" + str(stat).rjust(8)
             output += "\n\n"

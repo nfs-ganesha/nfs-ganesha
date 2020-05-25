@@ -25,7 +25,7 @@ To display current status regarding stat counting use:
 
 To display stat counters use:
   {progname} [list_clients | deleg <ip address>
-              inode | iov3 [export id] | iov4 [export id] |
+              inode | iov3 [export id] | iov4 [export id] | iov41 [export id] | iov42 [export id] |
               export | total [export id] | fast | pnfs [export id] |
               fsal <fsal name> | v3_full | v4_full | auth |
               client_io_ops <ip address> | export_details <export id> |
@@ -68,9 +68,9 @@ if output_json and command in json_not_available:
 # check arguments
 commands = (
     'help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
-    'export', 'total', 'fast', 'pnfs', 'fsal', 'reset', 'enable',
-    'disable', 'status', 'v3_full', 'v4_full', 'auth', 'client_io_ops',
-    'export_details', 'client_all_ops', 'json'
+    'iov41', 'iov42', 'export', 'total', 'fast', 'pnfs', 'fsal', 'reset',
+    'enable', 'disable', 'status', 'v3_full', 'v4_full', 'auth',
+    'client_io_ops', 'export_details', 'client_all_ops', 'json'
 )
 
 if command not in commands:
@@ -93,7 +93,7 @@ elif command == 'export_details':
         print("\nError: Argument '%s' must be numeric." % opts[0])
         print_usage_exit(1)
 # optionally accepts an export id
-elif command in ('iov3', 'iov4', 'total', 'pnfs'):
+elif command in ('iov3', 'iov4', 'iov41', 'iov42', 'total', 'pnfs'):
     if (len(opts) == 0):
         command_arg = -1
     elif (len(opts) == 1) and opts[0].isdigit():
@@ -145,6 +145,10 @@ try:
         result = exp_interface.v3io_stats(command_arg)
     elif command == "iov4":
         result = exp_interface.v4io_stats(command_arg)
+    elif command == "iov41":
+        result = exp_interface.v41io_stats(command_arg)
+    elif command == "iov42":
+        result = exp_interface.v42io_stats(command_arg)
     elif command == "total":
         result = exp_interface.total_stats(command_arg)
     elif command == "export_details":

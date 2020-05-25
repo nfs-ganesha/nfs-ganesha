@@ -1940,6 +1940,92 @@ static bool get_nfsv41_export_layouts(DBusMessageIter *args,
 }
 
 /**
+ * DBUS method to report NFSv42 I/O statistics
+ *
+ */
+
+static bool get_nfsv42_export_io(DBusMessageIter *args,
+				 DBusMessage *reply,
+				 DBusError *error)
+{
+	struct gsh_export *export = NULL;
+	struct export_stats *export_st = NULL;
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	export = lookup_export(args, &errormsg);
+	if (!nfs_param.core_param.enable_NFSSTATS)
+		errormsg = "NFS stat counting disabled";
+	if (export == NULL) {
+		success = false;
+	} else {
+		export_st = container_of(export, struct export_stats,
+					 export);
+		if (export_st->st.nfsv42 == NULL) {
+			success = false;
+			errormsg = "Export does not have any NFSv4.2 activity";
+		}
+	}
+	gsh_dbus_status_reply(&iter, success, errormsg);
+	if (success)
+		server_dbus_v42_iostats(export_st->st.nfsv42, &iter);
+
+	if (export != NULL)
+		put_gsh_export(export);
+	return true;
+}
+
+static struct gsh_dbus_method export_show_v42_io = {
+	.name = "GetNFSv42IO",
+	.method = get_nfsv42_export_io,
+	.args = {EXPORT_ID_ARG,
+		 STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 IOSTATS_REPLY,
+		 END_ARG_LIST}
+};
+
+/**
+ * DBUS method to report NFSv42 layout statistics
+ *
+ */
+
+static bool get_nfsv42_export_layouts(DBusMessageIter *args,
+				      DBusMessage *reply,
+				      DBusError *error)
+{
+	struct gsh_export *export = NULL;
+	struct export_stats *export_st = NULL;
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+	export = lookup_export(args, &errormsg);
+	if (!nfs_param.core_param.enable_NFSSTATS)
+		errormsg = "NFS stat counting disabled";
+	if (export == NULL) {
+		success = false;
+	} else {
+		export_st = container_of(export, struct export_stats,
+					 export);
+		if (export_st->st.nfsv42 == NULL) {
+			success = false;
+			errormsg = "Export does not have any NFSv4.2 activity";
+		}
+	}
+	gsh_dbus_status_reply(&iter, success, errormsg);
+	if (success)
+		server_dbus_v42_layouts(export_st->st.nfsv42, &iter);
+
+	if (export != NULL)
+		put_gsh_export(export);
+	return true;
+}
+
+/**
  * DBUS method to report total ops statistics
  *
  */
@@ -2030,6 +2116,16 @@ static bool show_cache_inode_stats(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_v41_layouts = {
 	.name = "GetNFSv41Layouts",
 	.method = get_nfsv41_export_layouts,
+	.args = {EXPORT_ID_ARG,
+		 STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 LAYOUTS_REPLY,
+		 END_ARG_LIST}
+};
+
+static struct gsh_dbus_method export_show_v42_layouts = {
+	.name = "GetNFSv42Layouts",
+	.method = get_nfsv42_export_layouts,
 	.args = {EXPORT_ID_ARG,
 		 STATUS_REPLY,
 		 TIMESTAMP_REPLY,
@@ -2754,7 +2850,9 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&export_show_v3_io,
 	&export_show_v40_io,
 	&export_show_v41_io,
+	&export_show_v42_io,
 	&export_show_v41_layouts,
+	&export_show_v42_layouts,
 	&export_show_total_ops,
 #ifdef _USE_9P
 	&export_show_9p_io,
