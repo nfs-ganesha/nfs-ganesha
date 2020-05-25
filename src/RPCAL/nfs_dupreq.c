@@ -63,7 +63,6 @@ pool_t *tcp_drc_pool;		/* pool of per-connection DRC objects */
 
 const char *dupreq_status_table[] = {
 	"DUPREQ_SUCCESS",
-	"DUPREQ_BEING_PROCESSED",
 	"DUPREQ_EXISTS",
 };
 
@@ -72,6 +71,8 @@ const char *dupreq_state_table[] = {
 	"DUPREQ_COMPLETE",
 	"DUPREQ_DELETED",
 };
+
+static pthread_cond_t dup_cond = PTHREAD_COND_INITIALIZER;
 
 /* drc_t holds the request/response cache. There is a single drc_t for
  * all udp connections. There is a drc_t for each tcp connection (aka
@@ -1039,6 +1040,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 
 	drc = nfs_dupreq_get_drc(req);
 	dk = alloc_dupreq();
+	dk->wait_processing = false;
 
 	switch (drc->type) {
 	case DRC_TCP_V4:
@@ -1074,24 +1076,29 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 			nfs_dupreq_free_dupreq(dk);
 			dv = opr_containerof(nv, dupreq_entry_t, rbt_k);
 			PTHREAD_MUTEX_lock(&dv->mtx);
-			if (unlikely(dv->state != DUPREQ_COMPLETE)) {
-				req->rq_u1 = DUPREQ_PROCESSING;
-				status = DUPREQ_BEING_PROCESSED;
-			} else {
-				/* satisfy req from the DRC, incref,
-				   extend window */
-				req->rq_u1 = dv;
-				reqnfs->res_nfs = req->rq_u2 = dv->res;
-				status = DUPREQ_EXISTS;
-				dupreq_entry_get(dv);
+			while (DUPREQ_START == dv->state) {
+				struct timespec	timeo = { .tv_sec = time(NULL) + 30,
+							  .tv_nsec = 0 };
+				LogEvent(COMPONENT_DUPREQ,
+					 "dupreq wait processing dv=%p, dv xid=%" PRIu32
+					 " cksum %" PRIu64 " state=%s",
+					 dv, dv->hin.tcp.rq_xid, dv->hk,
+					 dupreq_state_table[dv->state]);
+				dv->wait_processing = true;
+				pthread_cond_timedwait(&dup_cond, &dv->mtx,
+					&timeo);
 			}
+
+			dv->wait_processing = false;
+			req->rq_u1 = dv;
+			reqnfs->res_nfs = req->rq_u2 = dv->res;
+			status = DUPREQ_EXISTS;
+			dupreq_entry_get(dv);
 			PTHREAD_MUTEX_unlock(&dv->mtx);
 
-			if (status == DUPREQ_EXISTS) {
-				PTHREAD_MUTEX_lock(&drc->mtx);
-				drc_inc_retwnd(drc);
-				PTHREAD_MUTEX_unlock(&drc->mtx);
-			}
+			PTHREAD_MUTEX_lock(&drc->mtx);
+			drc_inc_retwnd(drc);
+			PTHREAD_MUTEX_unlock(&drc->mtx);
 
 			LogDebug(COMPONENT_DUPREQ,
 				 "dupreq hit dv=%p, dv xid=%" PRIu32
@@ -1177,6 +1184,9 @@ void nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 	PTHREAD_MUTEX_lock(&dv->mtx);
 	assert(dv->res == res_nfs);
 	dv->state = DUPREQ_COMPLETE;
+	if (dv->wait_processing) {
+		pthread_cond_broadcast(&dup_cond);
+	}
 	PTHREAD_MUTEX_unlock(&dv->mtx);
 
 	drc = req->rq_xprt->xp_u2; /* req holds a ref on drc */

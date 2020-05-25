@@ -1053,16 +1053,6 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			}
 			break;
 
-			/* Another thread owns the request */
-		case DUPREQ_BEING_PROCESSED:
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "DUP: Request xid=%" PRIu32
-				     " is already being processed; the active thread will reply",
-				     reqdata->svc.rq_msg.rm_xid);
-			/* Free the arguments */
-			/* Ignore the request, send no error */
-			break;
-
 		default:
 			LogCrit(COMPONENT_DISPATCH,
 				"DUP: Unknown duplicate request cache status. This should never be reached!");

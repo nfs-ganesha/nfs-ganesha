@@ -99,6 +99,7 @@ struct dupreq_entry {
 	dupreq_state_t state;
 	uint32_t refcnt;
 	nfs_res_t *res;
+	bool wait_processing;
 };
 
 typedef struct dupreq_entry dupreq_entry_t;
@@ -117,7 +118,6 @@ static inline void free_nfs_res(nfs_res_t *res)
 
 typedef enum dupreq_status {
 	DUPREQ_SUCCESS = 0,
-	DUPREQ_BEING_PROCESSED,
 	DUPREQ_EXISTS,
 } dupreq_status_t;
 
