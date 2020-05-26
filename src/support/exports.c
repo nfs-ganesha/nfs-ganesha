@@ -2345,6 +2345,28 @@ int init_export_root(struct gsh_export *export)
 	init_root_op_context(&root_op_context, export, export->fsal_export,
 			     0, 0, UNKNOWN_REQUEST);
 
+	/* set expire_time_attr if appropriate */
+	if ((op_ctx->export_perms->set & EXPORT_OPTION_EXPIRE_SET) == 0 &&
+	    (op_ctx->ctx_export->export_perms.set &
+	     EXPORT_OPTION_EXPIRE_SET) != 0) {
+		op_ctx->export_perms->expire_time_attr =
+			op_ctx->ctx_export->export_perms.expire_time_attr;
+		op_ctx->export_perms->set |= EXPORT_OPTION_EXPIRE_SET;
+	}
+	if ((op_ctx->export_perms->set & EXPORT_OPTION_EXPIRE_SET) == 0 &&
+	    (export_opt.conf.set & EXPORT_OPTION_EXPIRE_SET) != 0) {
+		op_ctx->export_perms->expire_time_attr =
+			export_opt.conf.expire_time_attr;
+		op_ctx->export_perms->set |= EXPORT_OPTION_EXPIRE_SET;
+	}
+	if ((op_ctx->export_perms->set & EXPORT_OPTION_EXPIRE_SET) == 0)
+		op_ctx->export_perms->expire_time_attr =
+					export_opt.def.expire_time_attr;
+
+	/* set the EXPORT_OPTION_EXPIRE_SET bit from the export
+	 * into the op_ctx */
+	op_ctx->export_perms->options |= EXPORT_OPTION_EXPIRE_SET;
+
 	/* Lookup for the FSAL Path */
 	LogDebug(COMPONENT_EXPORT,
 		 "About to lookup_path for ExportId=%u Path=%s",
