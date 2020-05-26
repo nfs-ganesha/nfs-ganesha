@@ -2917,6 +2917,8 @@ struct fsal_obj_handle {
 				   the scope of the fsid, (e.g. inode number) */
 
 	struct state_hdl *state_hdl;	/*< State related to this handle */
+	int32_t exp_refcnt;	/*< ref count by export root nodes or
+				    export junction nodes*/
 };
 
 /**
@@ -2977,6 +2979,48 @@ struct fsal_ds_handle {
 
 	int64_t refcount;		/*< Reference count */
 };
+
+/**
+ * @brief Get a reference on a fsal object handle by export
+ *
+ * This function increments the reference count on export root object
+ * or PseudoFS export junction nodes.
+ *
+ */
+static inline void export_root_object_get(struct fsal_obj_handle *obj_hdl)
+{
+	(void) atomic_inc_int32_t (&obj_hdl->exp_refcnt);
+}
+
+/**
+ * @brief Put a reference on a fsal object handle by export
+ *
+ * This function releases the reference count on export root object
+ * or PseudoFS export junction nodes.
+ *
+ */
+static inline void export_root_object_put(struct fsal_obj_handle *obj_hdl)
+{
+	int32_t ref = atomic_dec_int32_t (&obj_hdl->exp_refcnt);
+
+	assert(ref >= 0);
+}
+
+/**
+ * @brief Determines whether the object handle is referenced
+ * by one or more exports root
+ *
+ * @param[in] obj_hdl  object handle need to be judged
+ * @return true if referenced by export, false otherwise
+ */
+static inline bool is_export_pin(struct fsal_obj_handle *obj_hdl)
+{
+	int32_t ref = atomic_fetch_int32_t (&obj_hdl->exp_refcnt);
+
+	if (ref > 0)
+		return true;    /* pin */
+	return false; /* unpin */
+}
 
 /**
  * @brief Get a reference on a DS handle

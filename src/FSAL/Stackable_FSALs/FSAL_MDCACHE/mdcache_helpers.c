@@ -184,6 +184,7 @@ static mdcache_entry_t *_mdcache_alloc_handle(
 	result->obj_handle.fsid = sub_handle->fsid;
 	result->obj_handle.fileid = sub_handle->fileid;
 	result->obj_handle.fs = fs;
+	result->obj_handle.exp_refcnt = 0;
 
 	/* default handlers */
 	fsal_obj_handle_init(&result->obj_handle, &export->mfe_exp,
