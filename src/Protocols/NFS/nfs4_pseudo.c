@@ -422,6 +422,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 	export->exp_mounted_on_file_id = state.obj->fileid;
 	/* Pass ref off to export */
 	export->exp_junction_obj = state.obj;
+	export_root_object_get(export->exp_junction_obj);
 	export->exp_parent_exp = op_ctx->ctx_export;
 
 	/* Add ourselves to the list of exports mounted on parent */
@@ -540,6 +541,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 
 		/* Detach the export from the inode */
 		PTHREAD_RWLOCK_wrlock(&export->lock);
+		export_root_object_put(export->exp_junction_obj);
 		export->exp_junction_obj = NULL;
 	}
 

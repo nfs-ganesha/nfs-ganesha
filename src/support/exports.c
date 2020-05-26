@@ -2378,6 +2378,7 @@ int init_export_root(struct gsh_export *export)
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	/* Pass ref off to export */
+	export_root_object_get(obj);
 	export->exp_root_obj = obj;
 	glist_add_tail(&obj->state_hdl->dir.export_roots,
 		       &export->exp_root_list);
@@ -2433,6 +2434,7 @@ static void release_export(struct gsh_export *export)
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	glist_del(&export->exp_root_list);
+	export_root_object_put(export->exp_root_obj);
 	export->exp_root_obj->obj_ops->put_ref(export->exp_root_obj);
 	export->exp_root_obj = NULL;
 

@@ -451,6 +451,65 @@ lru_insert_chunk(struct dir_chunk *chunk, struct lru_q *q, enum lru_edge edge)
 	QUNLOCK(qlane);
 }
 
+/*
+ * @brief Adjust the order of LRU entries
+ *
+ * @param [in] entry  Entry to adjust.
+ */
+static inline void
+adjust_lru(mdcache_entry_t *entry)
+{
+	mdcache_lru_t *lru = &entry->lru;
+	struct lru_q_lane *qlane = &LRU[lru->lane];
+	struct lru_q *q;
+
+	QLOCK(qlane);
+	switch (lru->qid) {
+	case LRU_ENTRY_L1:
+		q = lru_queue_of(entry);
+		/* advance entry to MRU (of L1) */
+		LRU_DQ_SAFE(lru, q);
+		lru_insert(lru, q, LRU_MRU);
+		break;
+	case LRU_ENTRY_L2:
+		q = lru_queue_of(entry);
+		/* move entry to LRU of L1 */
+		glist_del(&lru->q);     /* skip L1 fixups */
+		--(q->size);
+		q = &qlane->L1;
+		lru_insert(lru, q, LRU_LRU);
+		break;
+	default:
+		/* do nothing */
+		break;
+	}	/* switch qid */
+	QUNLOCK(qlane);
+}
+
+/*
+ * @brief Adjust the order of LRU entries if it is root object of export
+ *
+ * During the entries release process，the root object of export
+ * may block the LRU of LRU queue，we can adjust it to MRU of
+ * LRU and let next entry be released.
+ *
+ * @param [in] entry  Entry to adjust.
+ * @return FSAL status
+ */
+static inline void
+adjust_lru_root_object(mdcache_entry_t *entry)
+{
+	struct lru_q *q = lru_queue_of(entry);
+
+	/* not adjust */
+	if (q->size < 2)
+		return;
+
+	/* adjust export root or junction nodes */
+	if (is_export_pin(&entry->obj_handle))
+		adjust_lru(entry);
+}
+
 /**
  * @brief Clean an entry for recycling.
  *
@@ -660,6 +719,7 @@ lru_reap_impl(enum lru_q_id qid)
 
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
 			/* cant use it. */
+			adjust_lru_root_object(entry);
 			mdcache_put(entry);
 			continue;
 		}
@@ -1894,9 +1954,6 @@ fsal_status_t
 _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		 int line)
 {
-	mdcache_lru_t *lru = &entry->lru;
-	struct lru_q_lane *qlane = &LRU[lru->lane];
-	struct lru_q *q;
 #ifdef USE_LTTNG
 	int32_t refcnt =
 #endif
@@ -1909,29 +1966,7 @@ _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 
 	/* adjust LRU on initial refs */
 	if (flags & LRU_REQ_INITIAL) {
-
-		QLOCK(qlane);
-
-		switch (lru->qid) {
-		case LRU_ENTRY_L1:
-			q = lru_queue_of(entry);
-			/* advance entry to MRU (of L1) */
-			LRU_DQ_SAFE(lru, q);
-			lru_insert(lru, q, LRU_MRU);
-			break;
-		case LRU_ENTRY_L2:
-			q = lru_queue_of(entry);
-			/* move entry to LRU of L1 */
-			glist_del(&lru->q);	/* skip L1 fixups */
-			--(q->size);
-			q = &qlane->L1;
-			lru_insert(lru, q, LRU_LRU);
-			break;
-		default:
-			/* do nothing */
-			break;
-		}		/* switch qid */
-		QUNLOCK(qlane);
+		adjust_lru(entry);
 	}			/* initial ref */
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
