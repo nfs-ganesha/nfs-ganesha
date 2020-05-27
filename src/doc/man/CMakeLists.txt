@@ -44,7 +44,12 @@ endif()
 
 if(USE_FSAL_PROXY_V4)
    list(APPEND man_srcs
-        ganesha-proxy-config.rst)
+        ganesha-proxy-v4-config.rst)
+endif()
+
+if(USE_FSAL_PROXY_V3)
+    list(APPEND man_srcs
+        ganesha-proxy-v3-config.rst)
 endif()
 
 if(USE_FSAL_GPFS)
