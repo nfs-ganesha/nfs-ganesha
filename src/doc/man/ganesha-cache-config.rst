@@ -44,6 +44,10 @@ Detached_Mult(uint32, range 1 to UINT32_MAX, default 1)
 Entries_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
     The point at which object cache entries will start being reused.
 
+Entries_Release_Size(uint32, range 0 to UINT32_MAX, default 100)
+    The number of entries attempted to release each time when the handle
+    cache has exceeded the entries high water mark.
+
 Chunks_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
     The point at which dirent cache chunks will start being reused.
 
