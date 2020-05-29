@@ -124,7 +124,7 @@ namespace {
       }
 
       /* Clean up extra entries */
-      lru_cleanup_entries();
+      mdcache_lru_release_entries(-1);
     }
 
     virtual void TearDown() {
