@@ -23,8 +23,6 @@ Build-Depends: debhelper (>= 9),
                python-dev,
                dh-python,
                dh-systemd,
-               python-qt4,
-               pyqt4-dev-tools,
                pkgconf
 Vcs-Git: https://github.com/nfs-ganesha/nfs-ganesha.git
 
@@ -65,7 +63,6 @@ Architecture: all
 Section: python
 Depends: python-dbus,
          python-gobject,
-         python-qt4,
          ${python:Depends}
 Description: Python bindings for nfs-ganesha
  NFS-GANESHA is a NFS Server running in user space with a large cache.
