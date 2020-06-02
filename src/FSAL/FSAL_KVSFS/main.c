@@ -35,11 +35,16 @@
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
-#include "gsh_list.h"
 #include "fsal.h"
+#include "fsal_api.h"
+#include "fsal_types.h"
+#include "fsal_pnfs.h"
+#include "FSAL/fsal_commonlib.h"
+#include "FSAL/fsal_init.h"
+#include "pnfs_utils.h"
+
 #include "fsal_internal.h"
 #include "kvsfs_methods.h"
-#include "FSAL/fsal_init.h"
 
 const char myname[] = "KVSFS";
 
@@ -50,22 +55,25 @@ static struct fsal_staticfsinfo_t default_kvsfs_info = {
 	.maxnamelen = MAXNAMLEN,		/* max filename */
 	.maxpathlen = MAXPATHLEN,		/* min filename */
 	.no_trunc = true,			/* no_trunc */
-	.chown_restricted = true,		/* chown restricted */
+	.chown_restricted = false,		/* chown restricted */
 	.case_insensitive = false,		/* case insensitivity */
 	.case_preserving = true,		/* case preserving */
+	.link_support = true,
+	.symlink_support = true,
 	.lock_support = false,	/* lock support */
-	.lock_support_owner = false,		/* lock owners */
 	.lock_support_async_block = false,	/* async blocking locks */
 	.named_attr = true,			/* named attributes */
 	.unique_handles = true,		/* handles are unique and persistent */
-	.lease_time = {10, 0},	/* Duration of lease at FS in seconds */
 	.acl_support = FSAL_ACLSUPPORT_ALLOW,	/* ACL support */
 	.cansettime = true,
 	.homogenous = true,			/* homogenous */
 	.supported_attrs = KVSFS_SUPPORTED_ATTRIBUTES, /* supp attributes */
 	.link_supports_permission_checks = true,
-	.pnfs_mds = true,
-	.pnfs_ds = true,
+	.pnfs_mds = false,
+	.pnfs_ds = false,
+	.fsal_trace = false,
+	.fsal_grace = false,
+	.link_supports_permission_checks = true,
 };
 
 static struct config_item kvsfs_params[] = {
@@ -83,8 +91,8 @@ static struct config_item kvsfs_params[] = {
 		       kvsfs_fsal_module, fs_info.umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false,
 		       kvsfs_fsal_module, fs_info.auth_exportpath_xdev),
-	CONF_ITEM_MODE("xattr_access_rights", 0400,
-		       kvsfs_fsal_module, fs_info.xattr_access_rights),
+	CONF_ITEM_BOOL("fsal_trace", true, fsal_staticfsinfo_t, fsal_trace),
+	CONF_ITEM_BOOL("fsal_grace", false, fsal_staticfsinfo_t, fsal_grace),
 	CONFIG_EOL
 };
 
@@ -130,7 +138,7 @@ static fsal_status_t kvsfs_init_config(struct fsal_module *fsal_hdl,
 				      err_type);
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
-	display_fsinfo(&kvsfs_me->fs_info);
+	display_fsinfo(&kvsfs_me->fsal);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
 		     (uint64_t) KVSFS_SUPPORTED_ATTRIBUTES);

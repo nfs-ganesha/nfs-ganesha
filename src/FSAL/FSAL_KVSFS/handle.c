@@ -5,7 +5,7 @@
  * Author: Jim Lieb jlieb@panasas.com
  *
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
- *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *		Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -55,10 +55,10 @@
  * allocate and fill in a handle
  * this uses malloc/free for the time being.
  */
-static struct kvsfs_fsal_obj_handle *alloc_handle(struct kvsfs_file_handle *fh,
-						struct stat *stat,
-						const char *link_content,
-						struct fsal_export *exp_hdl)
+struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
+					 	 struct attrlist *attr,
+						 const char *link_content,
+						 struct fsal_export *exp_hdl)
 {
 	struct kvsfs_fsal_export *myself =
 		container_of(exp_hdl, struct kvsfs_fsal_export, export);
@@ -73,8 +73,7 @@ static struct kvsfs_fsal_obj_handle *alloc_handle(struct kvsfs_file_handle *fh,
 	hdl->handle = (struct kvsfs_file_handle *)&hdl[1];
 	memcpy(hdl->handle, fh, sizeof(struct kvsfs_file_handle));
 
-	hdl->obj_handle.attrs = &hdl->attributes;
-	hdl->obj_handle.type = posix2fsal_type(stat->st_mode);
+	hdl->obj_handle.type = attr->type;
 
 	if ((hdl->obj_handle.type == SYMBOLIC_LINK) &&
 	    (link_content != NULL)) {
@@ -84,19 +83,26 @@ static struct kvsfs_fsal_obj_handle *alloc_handle(struct kvsfs_file_handle *fh,
 		memcpy(hdl->u.symlink.link_content, link_content, len);
 		hdl->u.symlink.link_size = len;
 	}
-
-	hdl->attributes.mask = exp_hdl->exp_ops.fs_supported_attrs(exp_hdl);
-
-	posix2fsal_attributes(stat, &hdl->attributes);
-
 	fsal_obj_handle_init(&hdl->obj_handle,
 			     exp_hdl,
-			     posix2fsal_type(stat->st_mode));
-	kvsfs_handle_ops_init(&hdl->obj_handle.obj_ops);
+			     attr->type);
+	kvsfs_handle_ops_init(hdl->obj_handle.obj_ops);
 	if (myself->pnfs_mds_enabled)
-		handle_ops_pnfs(&hdl->obj_handle.obj_ops);
+		handle_ops_pnfs(hdl->obj_handle.obj_ops);
 	return hdl;
 }
+
+static struct kvsfs_fsal_obj_handle *alloc_handle(struct kvsfs_file_handle *fh,
+						 struct stat *stat,
+						 const char *link_content,
+						 struct fsal_export *exp_hdl)
+{
+	struct attrlist attr;
+	posix2fsal_attributes_all(stat, &attr);
+	
+	return kvsfs_alloc_handle(fh, &attr, link_content, exp_hdl);
+}
+
 
 /* handle methods
  */
@@ -107,7 +113,8 @@ static struct kvsfs_fsal_obj_handle *alloc_handle(struct kvsfs_file_handle *fh,
 
 static fsal_status_t kvsfs_lookup(struct fsal_obj_handle *parent,
 				 const char *path,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	struct kvsfs_fsal_obj_handle *parent_hdl, *hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -123,7 +130,7 @@ static fsal_status_t kvsfs_lookup(struct fsal_obj_handle *parent,
 	memset(&fh, 0, sizeof(struct kvsfs_file_handle));
 	parent_hdl =
 	    container_of(parent, struct kvsfs_fsal_obj_handle, obj_handle);
-	if (!parent->obj_ops.handle_is(parent, DIRECTORY)) {
+	if (!fsal_obj_handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
@@ -151,6 +158,9 @@ static fsal_status_t kvsfs_lookup(struct fsal_obj_handle *parent,
 
 	hdl->handle->kvsfs_handle = object;
 
+	if (attrs_out != NULL)
+		posix2fsal_attributes_all(&stat, attrs_out);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  errout:
@@ -162,7 +172,8 @@ static fsal_status_t kvsfs_lookup(struct fsal_obj_handle *parent,
 
 fsal_status_t kvsfs_lookup_path(struct fsal_export *exp_hdl,
 			       const char *path,
-			       struct fsal_obj_handle **handle)
+			       struct fsal_obj_handle **handle,
+			       struct attrlist *attrs_out)
 {
 	kvsns_ino_t object;
 	int rc = 0;
@@ -192,9 +203,72 @@ fsal_status_t kvsfs_lookup_path(struct fsal_export *exp_hdl,
 
 	*handle = &hdl->obj_handle;
 
+	if (attrs_out != NULL)
+		posix2fsal_attributes_all(&stat, attrs_out);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+fsal_status_t kvsfs_create2(struct fsal_obj_handle *dir_hdl,
+			    const char *filename,
+			    const struct req_op_context *op_ctx,
+			    mode_t unix_mode,
+			    struct kvsfs_file_handle *kvsfs_fh,
+			    int posix_flags,
+			    struct attrlist *fsal_attr)
+{
+	struct kvsfs_fsal_obj_handle *myself, *hdl;
+	int retval = 0;
+	kvsns_cred_t cred;
+	kvsns_ino_t object;
+	struct stat stat;
+
+	/* note : fsal_attr is optional. */
+	if (!dir_hdl || !op_ctx || !kvsfs_fh || !filename)
+		return fsalstat(ERR_FSAL_FAULT, 0);
+
+	LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", unix_mode);
+
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
+		LogCrit(COMPONENT_FSAL,
+			"Parent handle is not a directory. hdl = 0x%p",
+			dir_hdl);
+		return fsalstat(ERR_FSAL_NOTDIR, 0);
+	}
+	memset(kvsfs_fh, 0, sizeof(struct kvsfs_file_handle));
+	myself = container_of(dir_hdl, struct kvsfs_fsal_obj_handle,
+			      obj_handle);
+
+	cred.uid = op_ctx->creds->caller_uid;
+	cred.gid = op_ctx->creds->caller_gid;
+
+	retval = kvsns_creat(&cred, &myself->handle->kvsfs_handle, (char *)filename,
+			     unix_mode, &object);
+	if (retval)
+		goto fileerr;
+
+	retval = kvsns_getattr(&cred, &object, &stat);
+	if (retval)
+		goto fileerr;
+
+	/* allocate an obj_handle and fill it up */
+	hdl = alloc_handle(kvsfs_fh, &stat, NULL, op_ctx->fsal_export);
+
+	/* >> set output handle << */
+	hdl->handle->kvsfs_handle = object;
+	kvsfs_fh->kvsfs_handle = object; /* Useful ? */
+
+	if (fsal_attr != NULL)
+		posix2fsal_attributes(&stat, fsal_attr);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+ fileerr:
+	return fsalstat(posix2fsal_error(-retval), -retval);
+}
+
+
+#if 0
 /* create
  * create a regular file and set its attributes
  */
@@ -211,7 +285,7 @@ static fsal_status_t kvsfs_create(struct fsal_obj_handle *dir_hdl,
 	struct stat stat;
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -234,7 +308,7 @@ static fsal_status_t kvsfs_create(struct fsal_obj_handle *dir_hdl,
 		goto fileerr;
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_handle(&fh, &stat, NULL, op_ctx->fsal_export);
+	hdl = kvsfs_alloc_handle(&fh, &stat, NULL, op_ctx->fsal_export);
 
 	/* >> set output handle << */
 	hdl->handle->kvsfs_handle = object;
@@ -245,10 +319,13 @@ static fsal_status_t kvsfs_create(struct fsal_obj_handle *dir_hdl,
  fileerr:
 	return fsalstat(posix2fsal_error(-retval), -retval);
 }
+#endif
 
 static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
-				const char *name, struct attrlist *attrib,
-				struct fsal_obj_handle **handle)
+				const char *name,
+				struct attrlist *attrib,
+				struct fsal_obj_handle **handle,
+				struct attrlist *attrs_out)
 {
 	struct kvsfs_fsal_obj_handle *myself, *hdl;
 	int retval = 0;
@@ -258,7 +335,7 @@ static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 	struct stat stat;
 
 	*handle = NULL;		/* poison it */
-	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -286,6 +363,9 @@ static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 	hdl->handle->kvsfs_handle = object;
 	*handle = &hdl->obj_handle;
 
+	if (attrs_out != NULL)
+		posix2fsal_attributes_all(&stat, attrs_out);
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  fileerr:
@@ -295,11 +375,42 @@ static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t kvsfs_makenode(struct fsal_obj_handle *dir_hdl,
 				   const char *name,
 				   object_file_type_t nodetype,	/* IN */
-				   fsal_dev_t *dev,	/* IN */
 				   struct attrlist *attrib,
-				   struct fsal_obj_handle **handle)
+				   struct fsal_obj_handle **handle,
+				   struct attrlist *attrsout)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
+}
+
+/*! \brief Merge a duplicate handle with an original handle
+ *  *
+ *   * \see fsal_api.h for more information
+ *    */
+static fsal_status_t kvsfs_merge(struct fsal_obj_handle *orig_hdl,
+				 struct fsal_obj_handle *dupe_hdl)
+{
+	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	if (orig_hdl->type == REGULAR_FILE && dupe_hdl->type == REGULAR_FILE) {
+		struct kvsfs_fsal_obj_handle *orig;
+		struct kvsfs_fsal_obj_handle *dupe;
+
+		orig = container_of(orig_hdl,
+				    struct kvsfs_fsal_obj_handle,
+				    obj_handle);
+		dupe = container_of(dupe_hdl,
+				    struct kvsfs_fsal_obj_handle,
+				    obj_handle);
+
+		PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
+
+		status = merge_share(&orig->u.file.share,
+				     &dupe->u.file.share);
+
+		PTHREAD_RWLOCK_unlock(&orig_hdl->obj_lock);
+	}
+
+	return status;
 }
 
 /** makesymlink
@@ -312,7 +423,8 @@ static fsal_status_t kvsfs_makenode(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t kvsfs_makesymlink(struct fsal_obj_handle *dir_hdl,
 				      const char *name, const char *link_path,
 				      struct attrlist *attrib,
-				      struct fsal_obj_handle **handle)
+				      struct fsal_obj_handle **handle,
+				      struct attrlist *attrsout)
 {
 	struct kvsfs_fsal_obj_handle *myself, *hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -324,7 +436,7 @@ static fsal_status_t kvsfs_makesymlink(struct fsal_obj_handle *dir_hdl,
 	struct kvsfs_file_handle fh;
 
 	*handle = NULL;		/* poison it first */
-	if (!dir_hdl->obj_ops.handle_is(dir_hdl, DIRECTORY)) {
+	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p",
 			dir_hdl);
@@ -350,6 +462,9 @@ static fsal_status_t kvsfs_makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	*handle = &hdl->obj_handle;
 	hdl->handle->kvsfs_handle = object;
+
+	if (attrsout != NULL)
+		posix2fsal_attributes_all(&stat, attrsout);	
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
@@ -383,9 +498,7 @@ static fsal_status_t kvsfs_readsymlink(struct fsal_obj_handle *obj_hdl,
 
 	/* The link length should be cached in the file handle */
 
-	link_content->len =
-	    myself->attributes.filesize ? (myself->attributes.filesize +
-					   1) : fsal_default_linksize;
+	link_content->len = fsal_default_linksize;
 	link_content->addr = gsh_malloc(link_content->len);
 
 	retlink = kvsns_readlink(&cred, &myself->handle->kvsfs_handle,
@@ -443,8 +556,11 @@ static fsal_status_t kvsfs_linkfile(struct fsal_obj_handle *obj_hdl,
  * @param eof [OUT] eof marker true == end of dir
  */
 static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
-				  fsal_cookie_t *whence, void *dir_state,
-				  fsal_readdir_cb cb, bool *eof)
+				   fsal_cookie_t *whence,
+				   void *dir_state,
+				   fsal_readdir_cb cb,
+				   attrmask_t attrmask,
+				   bool *eof)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	int retval = 0;
@@ -454,6 +570,10 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 	unsigned int index = 0;
 	int size = 0;
 	kvsns_dir_t ddir;
+	struct attrlist attrs;
+	fsal_status_t status;
+	struct fsal_obj_handle *hdl;
+	int cb_rc;
 
 	if (whence != NULL)
 		seekloc = (off_t) *whence;
@@ -483,10 +603,28 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 				goto done;
 			}
 
+			fsal_prepare_attrs(&attrs, attrmask);
+
+			status = kvsfs_lookup(dir_hdl,
+					      dirents[index].name, 
+					      &hdl,
+					      &attrs);
+
+			if (FSAL_IS_ERROR(status)) {
+				kvsns_closedir(&ddir);
+				return status;
+			}
+
 			/* callback to cache inode */
-			if (!cb(dirents[index].name,
-				dir_state,
-				(fsal_cookie_t) index))
+			cb_rc = cb(dirents[index].name,
+				   hdl,
+				   &attrs,
+				   dir_state,
+				   (fsal_cookie_t) index);
+
+			fsal_release_attrs(&attrs);
+
+			if (cb_rc >= DIR_READAHEAD)
 				goto done;
 		}
 
@@ -538,7 +676,8 @@ static fsal_status_t kvsfs_rename(struct fsal_obj_handle *obj_hdl,
  * cache entry.
  */
 
-static fsal_status_t kvsfs_getattrs(struct fsal_obj_handle *obj_hdl)
+static fsal_status_t kvsfs_getattrs(struct fsal_obj_handle *obj_hdl,
+				    struct attrlist *attrs)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	struct stat stat;
@@ -575,9 +714,12 @@ static fsal_status_t kvsfs_getattrs(struct fsal_obj_handle *obj_hdl)
 	if (retval)
 		goto errout;
 
-	/* convert attributes */
  ok_file_opened_and_deleted:
-	posix2fsal_attributes(&stat, &myself->attributes);
+	/* convert attributes */
+	if (attrs != NULL)
+		posix2fsal_attributes(&stat, attrs);
+
+
 	goto out;
 
  errout:
@@ -594,8 +736,10 @@ static fsal_status_t kvsfs_getattrs(struct fsal_obj_handle *obj_hdl)
  * in the cache entry.
  */
 
-static fsal_status_t kvsfs_setattrs(struct fsal_obj_handle *obj_hdl,
-				   struct attrlist *attrs)
+static fsal_status_t kvsfs_setattr2(struct fsal_obj_handle *obj_hdl,
+				    bool bypass,
+				    struct state_t *state,
+				    struct attrlist *attrs)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	struct stat stats = { 0 };
@@ -605,14 +749,14 @@ static fsal_status_t kvsfs_setattrs(struct fsal_obj_handle *obj_hdl,
 	kvsns_cred_t cred;
 
 	/* apply umask, if mode attribute is to be changed */
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE))
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MODE))
 		attrs->mode &= ~op_ctx->fsal_export->exp_ops.
 				fs_umask(op_ctx->fsal_export);
 	myself =
 		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
 	/* First, check that FSAL attributes */
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_SIZE)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_SIZE)) {
 		if (obj_hdl->type != REGULAR_FILE) {
 			fsal_error = ERR_FSAL_INVAL;
 			return fsalstat(fsal_error, retval);
@@ -620,23 +764,23 @@ static fsal_status_t kvsfs_setattrs(struct fsal_obj_handle *obj_hdl,
 		flags |= STAT_SIZE_SET;
 		stats.st_size = attrs->filesize;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_MODE)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MODE)) {
 		flags |= STAT_MODE_SET;
 		stats.st_mode = fsal2unix_mode(attrs->mode);
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_OWNER)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_OWNER)) {
 		flags |= STAT_UID_SET;
 		stats.st_uid = attrs->owner;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_GROUP)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_GROUP)) {
 		flags |= STAT_GID_SET;
 		stats.st_gid = attrs->group;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_ATIME)) {
 		flags |= STAT_ATIME_SET;
 		stats.st_atime = attrs->atime.tv_sec;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_ATIME_SERVER)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_ATIME_SERVER)) {
 		flags |= STAT_ATIME_SET;
 		struct timespec timestamp;
 
@@ -645,11 +789,11 @@ static fsal_status_t kvsfs_setattrs(struct fsal_obj_handle *obj_hdl,
 			goto out;
 		stats.st_atim = timestamp;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MTIME)) {
 		flags |= STAT_MTIME_SET;
 		stats.st_mtime = attrs->mtime.tv_sec;
 	}
-	if (FSAL_TEST_MASK(attrs->mask, ATTR_MTIME_SERVER)) {
+	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MTIME_SERVER)) {
 		flags |= STAT_MTIME_SET;
 		struct timespec timestamp;
 
@@ -676,18 +820,39 @@ static fsal_status_t kvsfs_setattrs(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(fsal_error, -retval);
 }
 
+
+static fsal_status_t kvsfs_close(struct fsal_obj_handle *obj_hdl)
+{
+	struct kvsfs_fsal_obj_handle *myself;
+	int retval = 0;
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+
+	assert(obj_hdl->type == REGULAR_FILE);
+	myself = container_of(obj_hdl,
+			      struct kvsfs_fsal_obj_handle, obj_handle);
+
+	if (myself->u.file.openflags != FSAL_O_CLOSED) {
+		retval = kvsns_close(&myself->u.file.fd);
+		if (retval < 0)
+			fsal_error = posix2fsal_error(-retval);
+
+		myself->u.file.openflags = FSAL_O_CLOSED;
+	}
+
+	return fsalstat(fsal_error, -retval);
+}
+
 /* file_unlink
  * unlink the named file in the directory
  */
 static fsal_status_t kvsfs_unlink(struct fsal_obj_handle *dir_hdl,
-				 const char *name)
+				  struct fsal_obj_handle *obj_hdl,
+				  const char *name)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 	kvsns_cred_t cred;
-	kvsns_ino_t object;
-	struct stat stat;
 
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
@@ -695,28 +860,15 @@ static fsal_status_t kvsfs_unlink(struct fsal_obj_handle *dir_hdl,
 	myself =
 		container_of(dir_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
-	/* check for presence of file and get its type */
-	retval = kvsns_lookup(&cred, &myself->handle->kvsfs_handle,
-			      (char *)name, &object);
-
-	if (retval == 0) {
-
-		retval = kvsns_getattr(&cred, &object, &stat);
-		if (retval) {
-			fsal_error = posix2fsal_error(-retval);
-			return fsalstat(fsal_error, -retval);
-		}
-
-		if ((stat.st_mode & S_IFDIR) == S_IFDIR)
-			retval = kvsns_rmdir(&cred,
-					     &myself->handle->kvsfs_handle,
-					     (char *)name);
-		else
-			retval = kvsns_unlink(
-					&cred,
-					&myself->handle->kvsfs_handle,
-					(char *)name);
-	}
+	if (obj_hdl->type != DIRECTORY)
+		retval = kvsns_rmdir(&cred,
+				     &myself->handle->kvsfs_handle,
+				     (char *)name);
+	else
+		retval = kvsns_unlink(
+				&cred,
+				&myself->handle->kvsfs_handle,
+				(char *)name);
 
 	if (retval)
 		fsal_error = posix2fsal_error(-retval);
@@ -731,9 +883,9 @@ static fsal_status_t kvsfs_unlink(struct fsal_obj_handle *dir_hdl,
  * the whole struct.
  */
 
-static fsal_status_t kvsfs_handle_digest(const struct fsal_obj_handle *obj_hdl,
-					fsal_digesttype_t output_type,
-					struct gsh_buffdesc *fh_desc)
+static fsal_status_t kvsfs_handle_to_wire(const struct fsal_obj_handle *obj_hdl,
+					  fsal_digesttype_t output_type,
+					  struct gsh_buffdesc *fh_desc)
 {
 	const struct kvsfs_fsal_obj_handle *myself;
 	struct kvsfs_file_handle *fh;
@@ -838,7 +990,8 @@ static void kvsfs_handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t kvsfs_create_handle(struct fsal_export *exp_hdl,
 				 struct gsh_buffdesc *hdl_desc,
-				 struct fsal_obj_handle **handle)
+				 struct fsal_obj_handle **handle,
+				 struct attrlist *attrs_out)
 {
 	struct kvsfs_fsal_obj_handle *hdl;
 	struct kvsfs_file_handle fh;
@@ -876,35 +1029,42 @@ fsal_status_t kvsfs_create_handle(struct fsal_export *exp_hdl,
 
 	*handle = &hdl->obj_handle;
 
+	if (attrs_out != NULL)
+		posix2fsal_attributes_all(&stat, attrs_out);
+
 	return fsalstat(fsal_error, 0);
 }
 
 void kvsfs_handle_ops_init(struct fsal_obj_ops *ops)
 {
 	ops->release = release;
+	ops->merge = kvsfs_merge;
 	ops->lookup = kvsfs_lookup;
-	ops->readdir = kvsfs_readdir;
-	ops->create = kvsfs_create;
 	ops->mkdir = kvsfs_mkdir;
 	ops->mknode = kvsfs_makenode;
+	ops->readdir = kvsfs_readdir;
 	ops->symlink = kvsfs_makesymlink;
 	ops->readlink = kvsfs_readsymlink;
-	ops->test_access = fsal_test_access;
 	ops->getattrs = kvsfs_getattrs;
-	ops->setattrs = kvsfs_setattrs;
 	ops->link = kvsfs_linkfile;
 	ops->rename = kvsfs_rename;
 	ops->unlink = kvsfs_unlink;
-	ops->open = kvsfs_open;
-	ops->status = kvsfs_status;
-	ops->read = kvsfs_read;
-	ops->write = kvsfs_write;
-	ops->commit = kvsfs_commit;
-	ops->lock_op = kvsfs_lock_op;
 	ops->close = kvsfs_close;
-	ops->lru_cleanup = kvsfs_lru_cleanup;
-	ops->handle_digest = kvsfs_handle_digest;
+	ops->handle_to_wire = kvsfs_handle_to_wire;
 	ops->handle_to_key = kvsfs_handle_to_key;
+
+	ops->open2 = kvsfs_open2;
+	ops->status2 = kvsfs_status2;
+	ops->reopen2 = kvsfs_reopen2;
+	ops->read2 = kvsfs_read2;
+	ops->write2 = kvsfs_write2;
+	ops->commit2 = kvsfs_commit2;
+	ops->setattr2 = kvsfs_setattr2;
+	ops->close2 = kvsfs_close2;
+	ops->lock_op2 = kvsfs_lock_op2;
+
+	// ops->create = kvsfs_create;
+	// ops->test_access = fsal_test_access;
 
 	/* xattr related functions */
 	ops->list_ext_attrs = kvsfs_list_ext_attrs;
@@ -913,7 +1073,6 @@ void kvsfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->getextattr_value_by_id = kvsfs_getextattr_value_by_id;
 	ops->setextattr_value = kvsfs_setextattr_value;
 	ops->setextattr_value_by_id = kvsfs_setextattr_value_by_id;
-	ops->getextattr_attrs = kvsfs_getextattr_attrs;
 	ops->remove_extattr_by_id = kvsfs_remove_extattr_by_id;
 	ops->remove_extattr_by_name = kvsfs_remove_extattr_by_name;
 }

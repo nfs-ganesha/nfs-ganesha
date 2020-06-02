@@ -5,7 +5,7 @@
  * Author: Jim Lieb jlieb@panasas.com
  *
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
- *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *		Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -42,11 +42,505 @@
 #include "kvsfs_methods.h"
 #include <stdbool.h>
 
-/** kvsfs_open
- * called with appropriate locks taken at the cache inode level
+static fsal_status_t kvsfs_open_by_handle(struct fsal_obj_handle *obj_hdl,
+					 struct state_t *state,
+	       				 fsal_openflags_t openflags,
+					 int posix_flags,
+	       				 fsal_verifier_t verifier,
+					 struct attrlist *attrs_out,
+	      				 enum fsal_create_mode createmode,
+					 bool *cpm_check)
+{
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+static fsal_status_t kvsfs_open_by_name(struct fsal_obj_handle *obj_hdl,
+					struct state_t *state,
+	     				const char *name,
+					fsal_openflags_t openflags,
+					int posix_flags,
+	     				fsal_verifier_t verifier,
+					struct attrlist *attrs_out,
+	     				bool *cpm_check)
+{
+        struct fsal_obj_handle *temp = NULL;
+        fsal_status_t status;
+
+        /* We don't have open by name... */
+        status = obj_hdl->obj_ops->lookup(obj_hdl, name, &temp, NULL);
+
+        if (FSAL_IS_ERROR(status)) {
+                LogFullDebug(COMPONENT_FSAL, "lookup returned %s",
+                             fsal_err_txt(status));
+                return status;
+        }
+
+        if (temp->type != REGULAR_FILE) {
+                if (temp->type == DIRECTORY) {
+                        /* Trying to open2 a directory */
+                        status = fsalstat(ERR_FSAL_ISDIR, 0);
+                } else {
+                        /* Trying to open2 any other non-regular file */
+                        status = fsalstat(ERR_FSAL_SYMLINK, 0);
+                }
+
+                /* Release the object we found by lookup. */
+                temp->obj_ops->release(temp);
+                LogFullDebug(COMPONENT_FSAL,
+                             "open returned %s",
+                             fsal_err_txt(status));
+                return status;
+        }
+
+        status = kvsfs_open_by_handle(temp,
+				      state,
+				      openflags,
+				      posix_flags,
+                                      verifier,
+				      attrs_out,
+				      FSAL_NO_CREATE,
+				      cpm_check);
+
+        if (FSAL_IS_ERROR(status)) {
+                /* Release the object we found by lookup. */
+                temp->obj_ops->release(temp);
+                LogFullDebug(COMPONENT_FSAL, "open returned %s",
+                             fsal_err_txt(status));
+        }
+
+        return status;
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/** @fn fsal_status_t
+ *       kvsfs_open(struct fsal_obj_handle *obj_hdl,
+ *		     const struct req_op_context *op_ctx,
+ *		     fsal_openflags_t openflags)
+ *
+ *  @brief Open a regular file for reading/writing its data content.
+ *
+ * @param obj_hdl Handle of the file to be read/modified.
+ * @param op_ctx Authentication context for the operation (user,...).
+ * @param openflags Flags that indicates behavior for file opening and access.
+ *	This is an inclusive OR of the following values
+ *	( such of them are not compatible) :
+ *	- FSAL_O_RDONLY: opening file for reading only.
+ *	- FSAL_O_RDWR: opening file for reading and writing.
+ *	- FSAL_O_WRONLY: opening file for writting only.
+ *	- FSAL_O_APPEND: always write at the end of the file.
+ *	- FSAL_O_TRUNC: truncate the file to 0 on opening.
+ * @param file_desc The file descriptor to be used for FSAL_read/write ops.
+ *
+ * @return ERR_FSAL_NO_ERROR on success, error otherwise
+ */
+static fsal_status_t kvsfs_open(struct fsal_obj_handle *obj_hdl,
+				const struct req_op_context *op_ctx,
+				int posix_flags,
+				kvsns_file_open_t *fd)
+{
+	struct kvsfs_fsal_obj_handle *myself;
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	int rc = 0;
+	kvsns_cred_t cred;
+
+	cred.uid = op_ctx->creds->caller_uid;
+	cred.gid = op_ctx->creds->caller_gid;
+
+	myself = container_of(obj_hdl,
+			      struct kvsfs_fsal_obj_handle, obj_handle);
+
+	rc = kvsns_open(&cred, &myself->handle->kvsfs_handle, O_RDWR,
+			0777, fd);
+
+	if (rc) {
+		fsal_error = posix2fsal_error(-rc);
+		return fsalstat(fsal_error, -rc);
+	}
+
+	myself->u.file.fd = *fd;
+
+	/* save the stat */
+	rc = kvsns_getattr(&cred, &myself->handle->kvsfs_handle,
+			   &myself->u.file.saved_stat);
+
+	if (rc) {
+		fsal_error = posix2fsal_error(-rc);
+		return fsalstat(fsal_error, -rc);
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+}
+
+/**
+ * @brief Open a file descriptor for read or write and possibly create
+ *
+ * This function opens a file for read or write, possibly creating it.
+ * If the caller is passing a state, it must hold the state_lock
+ * exclusive.
+ *
+ * state can be NULL which indicates a stateless open (such as via the
+ * NFS v3 CREATE operation), in which case the FSAL must assure protection
+ * of any resources. If the file is being created, such protection is
+ * simple since no one else will have access to the object yet, however,
+ * in the case of an exclusive create, the common resources may still need
+ * protection.
+ *
+ * If Name is NULL, obj_hdl is the file itself, otherwise obj_hdl is the
+ * parent directory.
+ *
+ * On an exclusive create, the upper layer may know the object handle
+ * already, so it MAY call with name == NULL. In this case, the caller
+ * expects just to check the verifier.
+ *
+ * On a call with an existing object handle for an UNCHECKED create,
+ * we can set the size to 0.
+ *
+ * At least the mode attribute must be set if createmode is not FSAL_NO_CREATE.
+ * Some FSALs may still have to pass a mode on a create call for exclusive,
+ * and even with FSAL_NO_CREATE, and empty set of attributes MUST be passed.
+ *
+ * If an open by name succeeds and did not result in Ganesha creating a file,
+ * the caller will need to do a subsequent permission check to confirm the
+ * open. This is because the permission attributes were not available
+ * beforehand.
+ *
+ * @param[in] obj_hdl	       File to open or parent directory
+ * @param[in,out] state	     state_t to use for this operation
+ * @param[in] openflags	     Mode for open
+ * @param[in] createmode	    Mode for create
+ * @param[in] name		  Name for file if being created or opened
+ * @param[in] attr_set	      Attributes to set on created file
+ * @param[in] verifier	      Verifier to use for exclusive create
+ * @param[in,out] new_obj	   Newly created object
+ * @param[in,out] attrs_out	 Newly created object attributes
+ * @param[in,out] caller_perm_check The caller must do a permission check
+ *
+ * @return FSAL status.
  */
 
-fsal_status_t kvsfs_open(struct fsal_obj_handle *obj_hdl,
+fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
+			  struct state_t *state,
+			  fsal_openflags_t openflags,
+			  enum fsal_create_mode createmode,
+			  const char *name,
+			  struct attrlist *attr_set,
+			  fsal_verifier_t verifier,
+			  struct fsal_obj_handle **new_obj,
+			  struct attrlist *attrs_out,
+			  bool *caller_perm_check)
+{
+	struct fsal_export *export = op_ctx->fsal_export;
+	struct kvsfs_fsal_obj_handle *hdl = NULL;
+	struct kvsfs_file_handle fh;
+	int posix_flags = 0;
+	bool created = false;	
+	fsal_status_t status;
+	mode_t unix_mode;
+	bool ignore_perm_check;
+
+	LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG, "attrs ", attr_set, false);
+
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	if (createmode >= FSAL_EXCLUSIVE)
+		/* Now fixup attrs for verifier if exclusive create */
+		set_common_verifier(attr_set, verifier);
+
+	if (name == NULL)
+		return kvsfs_open_by_handle(obj_hdl,
+					    state,
+					    openflags,
+					    posix_flags,
+					    verifier, attrs_out, createmode,
+					    caller_perm_check);
+
+	/* In this path where we are opening by name, we can't check share
+	 * reservation yet since we don't have an object_handle yet. If we
+	 *indeed create the object handle (there is no race with another
+	 * open by name), then there CAN NOT be a share conflict, otherwise
+	 * the share conflict will be resolved when the object handles are
+	 * merged.
+	 */
+
+	/* Non creation case, libgpfs doesn't have open by name so we
+	 * have to do a lookup and then handle as an open by handle.
+	*/
+	if (createmode == FSAL_NO_CREATE)
+		return kvsfs_open_by_name(obj_hdl, state, name,
+					  openflags,
+					  posix_flags,
+					  verifier,
+					  attrs_out,
+					  caller_perm_check);
+
+	/** @todo: to proceed past here, we need a struct attrlist in order to
+	 *	 create the fsal_obj_handle, so if it actually is NULL (it
+	 *	 will actually never be since mdcache will always ask for
+	 *	 attributes) we really should create a temporary attrlist...
+	 */
+
+	posix_flags |= O_CREAT;
+
+	/* And if we are at least FSAL_GUARDED, do an O_EXCL create. */
+	if (createmode >= FSAL_GUARDED)
+		posix_flags |= O_EXCL;
+
+       /* Fetch the mode attribute to use in the openat system call. */
+	unix_mode = fsal2unix_mode(attr_set->mode) &
+			~export->exp_ops.fs_umask(export);
+
+	/* Don't set the mode if we later set the attributes */
+	FSAL_UNSET_MASK(attr_set->valid_mask, ATTR_MODE);
+
+	if (createmode == FSAL_UNCHECKED && (attr_set->valid_mask != 0)) {
+	/* If we have FSAL_UNCHECKED and want to set more attributes
+	 * than the mode, we attempt an O_EXCL create first, if that
+	 * succeeds, then we will be allowed to set the additional
+	 * attributes, otherwise, we don't know we created the file
+	 * and this can NOT set the attributes.
+	*/
+		posix_flags |= O_EXCL;
+	}
+
+	status = kvsfs_create2(obj_hdl,
+			       name,
+			       op_ctx,
+			       unix_mode,
+			       &fh,
+			       posix_flags,
+			       attrs_out);
+
+	if (status.major == ERR_FSAL_EXIST && createmode == FSAL_UNCHECKED &&
+	    (posix_flags & O_EXCL) != 0) {
+		/* If we tried to create O_EXCL to set attributes and
+		 * failed. Remove O_EXCL and retry, also remember not
+		 * to set attributes. We still try O_CREAT again just
+		 * in case file disappears out from under us.
+		 *
+		 * Note that because we have dropped O_EXCL, later on we
+		 * will not assume we created the file, and thus will
+		 * not set additional attributes. We don't need to
+		 * separately track the condition of not wanting to set
+		 * attributes.
+		 */
+		posix_flags &= ~O_EXCL;
+		status = kvsfs_create2(obj_hdl,
+				       name,
+				       op_ctx,
+				       unix_mode,
+				       &fh,
+				       posix_flags,
+				       attrs_out);
+	}
+
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	/* Remember if we were responsible for creating the file.
+	 * Note that in an UNCHECKED retry we MIGHT have re-created the
+	 * file and won't remember that. Oh well, so in that rare case we
+	 * leak a partially created file if we have a subsequent error in here.
+	 * Since we were able to do the permission check even if we were not
+	 * creating the file, let the caller know the permission check has
+	 * already been done. Note it IS possible in the case of a race between
+	 * an UNCHECKED open and an external unlink, we did create the file.
+	 */
+	created = (posix_flags & O_EXCL) != 0;
+	*caller_perm_check = false;
+
+	/* Check if the object type is SYMBOLIC_LINK for a state object.
+	 * If yes, then give error ERR_FSAL_SYMLINK.
+	 */
+	if (state != NULL &&
+		attrs_out != NULL && attrs_out->type != REGULAR_FILE) {
+		LogDebug(COMPONENT_FSAL, "Trying to open a non-regular file");
+			if (attrs_out->type == DIRECTORY) {
+				/* Trying to open2 a directory */
+				status = fsalstat(ERR_FSAL_ISDIR, 0);
+			} else {
+				/* Trying to open2 any other non-regular file */
+				status = fsalstat(ERR_FSAL_SYMLINK, 0);
+			}
+		goto fileerr;
+	}
+
+	/* allocate an obj_handle and fill it up */
+	hdl = kvsfs_alloc_handle(&fh, attrs_out, NULL, export);
+	if (hdl == NULL) {
+		status = fsalstat(posix2fsal_error(ENOMEM), ENOMEM);
+		goto fileerr;
+	}
+
+	*new_obj = &hdl->obj_handle;
+
+       if (created && attr_set->valid_mask != 0) {
+		/* Set attributes using our newly opened file descriptor as the
+	 * share_fd if there are any left to set (mode and truncate
+	 * have already been handled).
+	 *
+	 * Note that we only set the attributes if we were responsible
+	 * for creating the file.
+	 */
+		status = (*new_obj)->obj_ops->setattr2(*new_obj, false, state,
+						      attr_set);
+		if (FSAL_IS_ERROR(status))
+			goto fileerr;
+
+		if (attrs_out != NULL) {
+			status = (*new_obj)->obj_ops->getattrs(*new_obj,
+							      attrs_out);
+			if (FSAL_IS_ERROR(status) &&
+			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0)
+				/* Get attributes failed and caller expected
+	 			* to get the attributes. Otherwise continue
+	 			* with attrs_out indicating ATTR_RDATTR_ERR.
+	 			*/
+				goto fileerr;
+		}
+	}
+
+	/* Restore posix_flags as it was modified for create above */
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	/* We created a file with the caller's credentials active, so as such
+ 	 * permission check was done. So we don't need the caller to do
+	  * permission check again (for that we have already set
+	  * *caller_perm_check=false). Passing ignore_perm_check to
+	  * open_by_handle() as we don't want to modify the value at
+	  * caller_perm_check.
+	  */
+	return kvsfs_open_by_handle(&hdl->obj_handle,
+				    state,
+				    openflags,
+				    posix_flags,
+				    verifier,
+				    attrs_out,
+				    createmode,
+				    &ignore_perm_check);
+
+ fileerr:
+	if (hdl != NULL) {
+		/* Release the handle we just allocated. */
+		(*new_obj)->obj_ops->release(*new_obj);
+		*new_obj = NULL;
+	}
+
+	if (created) {
+		fsal_status_t status2;
+		kvsns_cred_t cred;
+		struct kvsfs_fsal_obj_handle *myself;
+		int retval = 0;
+
+		myself = container_of(obj_hdl,
+				      struct kvsfs_fsal_obj_handle,
+				      obj_handle);
+
+		cred.uid = op_ctx->creds->caller_uid;
+		cred.gid = op_ctx->creds->caller_gid;
+
+		/* Remove the file we just created */
+		retval = kvsns_unlink(&cred, 
+				      &myself->handle->kvsfs_handle,
+				      (char *)name);
+		status2 = fsalstat(posix2fsal_error(-retval), -retval);
+		if (FSAL_IS_ERROR(status2)) {
+			LogEvent(COMPONENT_FSAL,
+				 "kvsns_unlink failed, error: %s",
+				 msg_fsal_err(status2.major));
+		}
+	}
+	return status;
+}
+
+/**
+ * @brief Re-open a file that may be already opened
+ *
+ * This function supports changing the access mode of a share reservation and
+ * thus should only be called with a share state. The state_lock must be held.
+ *
+ * This MAY be used to open a file the first time if there is no need for
+ * open by name or create semantics. One example would be 9P lopen.
+ *
+ * @param[in] obj_hdl     File on which to operate
+ * @param[in] state       state_t to use for this operation
+ * @param[in] openflags   Mode for re-open
+ *
+ * @return FSAL status.
+ */
+fsal_status_t kvsfs_reopen2(struct fsal_obj_handle *obj_hdl,
+			    struct state_t *state,
+	    		    fsal_openflags_t openflags)
+{
+	struct kvsfs_fd *my_share_fd = &container_of(state, struct kvsfs_state_fd,
+						    state)->kvsfs_fd;
+	fsal_status_t status;
+	int posix_flags = 0;
+	kvsns_file_open_t my_fd;
+	struct fsal_share *share = &container_of(obj_hdl,
+						 struct kvsfs_fsal_obj_handle,
+						 obj_handle)->u.file.share;
+
+	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
+		LogDebug(COMPONENT_FSAL,
+			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
+			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
+		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
+	}
+
+	/* This can block over an I/O operation. */
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+	/* We can conflict with old share, so go ahead and check now. */
+	status = check_share_conflict(share, openflags, false);
+
+	if (FSAL_IS_ERROR(status)) {
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+		return status;
+	}
+
+	/* Set up the new share so we can drop the lock and not have a
+	* conflicting share be asserted, updating the share counters.
+	*/
+	update_share_counters(share, my_share_fd->openflags, openflags);
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	status = kvsfs_open(obj_hdl, op_ctx, posix_flags, &my_fd);
+
+	if (!FSAL_IS_ERROR(status)) {
+		/* Close the existing file descriptor and copy the new
+	 	 * one over. Make sure no one is using the fd that we are
+		 * about to close!
+	 	 */
+		PTHREAD_RWLOCK_wrlock(&my_share_fd->fdlock);
+
+		(void)kvsns_close(&my_share_fd->fd);
+
+		my_share_fd->fd = my_fd;
+		my_share_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
+
+		PTHREAD_RWLOCK_unlock(&my_share_fd->fdlock);
+	} else {
+		/* We had a failure on open - we need to revert the share.
+		 * This can block over an I/O operation.
+		 */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+		update_share_counters(share, openflags, my_share_fd->openflags);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	}
+
+	return status;
+}
+
+
+
+fsal_status_t ___kvsfs_open(struct fsal_obj_handle *obj_hdl,
 			fsal_openflags_t openflags)
 {
 	struct kvsfs_fsal_obj_handle *myself;
@@ -89,10 +583,12 @@ fsal_status_t kvsfs_open(struct fsal_obj_handle *obj_hdl,
  * Let the caller peek into the file's open/close state.
  */
 
-fsal_openflags_t kvsfs_status(struct fsal_obj_handle *obj_hdl)
+fsal_openflags_t kvsfs_status2(struct fsal_obj_handle *obj_hdl,
+			       struct state_t *state)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 
+	/** @todo better management of state_t */
 	myself = container_of(obj_hdl,
 			      struct kvsfs_fsal_obj_handle,
 			      obj_handle);
@@ -185,13 +681,22 @@ fsal_status_t kvsfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* kvsfs_close
- * Close the file if it is still open.
- * Yes, we ignor lock status.  Closing a file in POSIX
- * releases all locks but that is state and cache inode's problem.
+/**
+ * @brief Manage closing a file when a state is no longer needed.
+ *
+ * When the upper layers are ready to dispense with a state, this method is
+ * called to allow the FSAL to close any file descriptors or release any other
+ * resources associated with the state. A call to free_state should be assumed
+ * to follow soon.
+ *
+ * @param[in] obj_hdl    File on which to operate
+ * @param[in] state      state_t to use for this operation
+ * 
+ * @return FSAL status.
  */
 
-fsal_status_t kvsfs_close(struct fsal_obj_handle *obj_hdl)
+fsal_status_t kvsfs_close2(struct fsal_obj_handle *obj_hdl,
+			   struct state_t *state)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	int retval = 0;
@@ -200,6 +705,21 @@ fsal_status_t kvsfs_close(struct fsal_obj_handle *obj_hdl)
 	assert(obj_hdl->type == REGULAR_FILE);
 	myself = container_of(obj_hdl,
 			      struct kvsfs_fsal_obj_handle, obj_handle);
+
+	if (state->state_type == STATE_TYPE_SHARE ||
+	    state->state_type == STATE_TYPE_NLM_SHARE ||
+	    state->state_type == STATE_TYPE_9P_FID) {
+		/* This is a share state, we must update the share counters */
+
+		/* This can block over an I/O operation. */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+		update_share_counters(&myself->u.file.share,
+				      myself->u.file.openflags,
+				      FSAL_O_CLOSED);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	}
 
 	if (myself->u.file.openflags != FSAL_O_CLOSED) {
 		retval = kvsns_close(&myself->u.file.fd);
@@ -212,23 +732,17 @@ fsal_status_t kvsfs_close(struct fsal_obj_handle *obj_hdl)
 	return fsalstat(fsal_error, -retval);
 }
 
-/* kvsfs_lru_cleanup
- * free non-essential resources at the request of cache inode's
- * LRU processing identifying this handle as stale enough for resource
- * trimming.
+/*
+ * FSAL_KVSFS has no lock support
  */
-
-fsal_status_t kvsfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-			       lru_actions_t requests)
+fsal_status_t kvsfs_lock_op2(struct fsal_obj_handle *obj_hdl,
+			     struct state_t *state,
+			     void *owner,
+			     fsal_lock_op_t lock_op,
+			     fsal_lock_param_t *req_lock,
+			     fsal_lock_param_t *conflicting_lock)
 {
+	/* KVSFS has no lock */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t kvsfs_lock_op(struct fsal_obj_handle *obj_hdl,
-			   void *p_owner,
-			   fsal_lock_op_t lock_op,
-			   fsal_lock_param_t *request_lock,
-			   fsal_lock_param_t *conflicting_lock)
-{
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}

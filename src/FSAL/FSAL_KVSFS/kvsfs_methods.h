@@ -8,11 +8,13 @@ void kvsfs_handle_ops_init(struct fsal_obj_ops *ops);
 
 fsal_status_t kvsfs_lookup_path(struct fsal_export *exp_hdl,
 			       const char *path,
-			       struct fsal_obj_handle **handle);
+			       struct fsal_obj_handle **handle,
+			       struct attrlist *attrs_out);
 
 fsal_status_t kvsfs_create_handle(struct fsal_export *exp_hdl,
-				 struct gsh_buffdesc *hdl_desc,
-				 struct fsal_obj_handle **handle);
+				  struct gsh_buffdesc *hdl_desc,
+				  struct fsal_obj_handle **handle,
+				  struct attrlist *attrs_out);
 
 /* this needs to be refactored to put ipport inside sockaddr_in */
 struct kvsfs_pnfs_ds_parameter {
@@ -51,6 +53,17 @@ struct kvsfs_fsal_export {
 	struct kvsfs_exp_pnfs_parameter pnfs_param;
 };
 
+struct kvsfs_fd {
+        fsal_openflags_t openflags;
+	pthread_rwlock_t fdlock;
+	kvsns_file_open_t fd;
+};
+
+struct kvsfs_state_fd {
+        struct state_t state;
+        struct kvsfs_fd kvsfs_fd;
+};
+
 /*
  * KVSFS internal object handle
  * handle is a pointer because
@@ -62,10 +75,10 @@ struct kvsfs_fsal_export {
 
 struct kvsfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
-	struct attrlist attributes;
 	struct kvsfs_file_handle *handle;
 	union {
 		struct {
+			struct fsal_share share;
 			kvsns_ino_t inode;
 			fsal_openflags_t openflags;
 			struct stat saved_stat;
@@ -79,25 +92,61 @@ struct kvsfs_fsal_obj_handle {
 	} u;
 };
 
+struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
+						 struct attrlist *attr,
+						 const char *link_content,
+						 struct fsal_export *exp_hdl);
 	/* I/O management */
-fsal_status_t kvsfs_open(struct fsal_obj_handle *obj_hdl,
-			fsal_openflags_t openflags);
-fsal_status_t kvsfs_commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			  off_t offset, size_t len);
-fsal_openflags_t kvsfs_status(struct fsal_obj_handle *obj_hdl);
-fsal_status_t kvsfs_read(struct fsal_obj_handle *obj_hdl,
-			uint64_t offset,
-			size_t buffer_size, void *buffer, size_t *read_amount,
-			bool *end_of_file);
-fsal_status_t kvsfs_write(struct fsal_obj_handle *obj_hdl,
-			 uint64_t offset,
-			 size_t buffer_size, void *buffer,
-			 size_t *write_amount, bool *fsal_stable);
+/* OK */
+fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
+			  struct state_t *state,
+			  fsal_openflags_t openflags,
+			  enum fsal_create_mode createmode,
+			  const char *name,
+			  struct attrlist *attr_set,
+			  fsal_verifier_t verifier,
+			  struct fsal_obj_handle **new_obj,
+			  struct attrlist *attrs_out,
+			  bool *caller_perm_check);
+fsal_status_t kvsfs_reopen2(struct fsal_obj_handle *obj_hdl,
+			    struct state_t *state,
+			    fsal_openflags_t openflags);
+fsal_status_t kvsfs_commit2(struct fsal_obj_handle *obj_hdl,	/* sync */
+			    off_t offset,
+			    size_t len);
+/* OK */
+fsal_openflags_t kvsfs_status2(struct fsal_obj_handle *obj_hdl,
+			       struct state_t *state);
+void kvsfs_read2(struct fsal_obj_handle *obj_hdl,
+	 	 bool bypass,
+		 fsal_async_cb done_cb,
+		 struct fsal_io_arg *read_arg,
+		 void *caller_arg);
+void kvsfs_write2(struct fsal_obj_handle *obj_hdl,
+		  bool bypass,
+		  fsal_async_cb done_cb,
+		  struct fsal_io_arg *write_arg,
+		  void *caller_arg);
+/* OK */
+fsal_status_t kvsfs_close2(struct fsal_obj_handle *obj_hdl,
+			   struct state_t *state);
+/* OK */
+fsal_status_t kvsfs_lock_op2(struct fsal_obj_handle *obj_hdl,
+			     struct state_t *state,
+			     void *owner, fsal_lock_op_t lock_op,
+			     fsal_lock_param_t *request_lock,
+			     fsal_lock_param_t *conflicting_lock);
+/* OK */
+fsal_status_t kvsfs_create2(struct fsal_obj_handle *dir_hdl,
+			    const char *filename,
+			    const struct req_op_context *op_ctx,
+			    mode_t unix_mode,
+			    struct kvsfs_file_handle *kvsfs_fh,
+			    int posix_flags,
+			    struct attrlist *fsal_attr);
+
 fsal_status_t kvsfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			    fsal_share_param_t request_share);
-fsal_status_t kvsfs_close(struct fsal_obj_handle *obj_hdl);
-fsal_status_t kvsfs_lru_cleanup(struct fsal_obj_handle *obj_hdl,
-			       lru_actions_t requests);
 
 /* extended attributes management */
 fsal_status_t kvsfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
@@ -111,20 +160,22 @@ fsal_status_t kvsfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 					 unsigned int *pxattr_id);
 fsal_status_t kvsfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
 					    const char *xattr_name,
-					    caddr_t buffer_addr,
+					    void  *buffer_addr,
 					    size_t buffer_size,
 					    size_t *p_output_size);
 fsal_status_t kvsfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					  unsigned int xattr_id,
-					  caddr_t buffer_addr,
+					  void  *buffer_addr,
 					  size_t buffer_size,
 					  size_t *p_output_size);
 fsal_status_t kvsfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
-				    const char *xattr_name, caddr_t buffer_addr,
-				    size_t buffer_size, int create);
+				     const char *xattr_name,
+				     void *buffer_addr,
+				     size_t buffer_size,
+				     int create);
 fsal_status_t kvsfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					  unsigned int xattr_id,
-					  caddr_t buffer_addr,
+					  void  *buffer_addr,
 					  size_t buffer_size);
 fsal_status_t kvsfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 				    unsigned int xattr_id,

@@ -31,19 +31,21 @@
 
 #include "config.h"
 
+#include <libgen.h>             /* used for 'dirname' */
+#include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
-#include "gsh_list.h"
 #include "fsal.h"
-#include "fsal_internal.h"
-#include "fsal_convert.h"
+#include "fsal_api.h"
+#include "fsal_types.h"
+#include "fsal_pnfs.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/fsal_init.h"
 #include "FSAL/fsal_config.h"
-#include "kvsfs_methods.h"
-#include "nfs_exports.h"
-#include "export_mgr.h"
 #include "pnfs_utils.h"
 
+#include "fsal_internal.h"
+#include "kvsfs_methods.h"
 
 struct fsal_staticfsinfo_t *kvsfs_staticinfo(struct fsal_module *hdl);
 
@@ -126,14 +128,6 @@ static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 	return fsal_maxpathlen(info);
 }
 
-static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
-{
-	struct fsal_staticfsinfo_t *info;
-
-	info = kvsfs_staticinfo(exp_hdl->fsal);
-	return fsal_lease_time(info);
-}
-
 static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
 {
 	struct fsal_staticfsinfo_t *info;
@@ -158,14 +152,6 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 	return fsal_umask(info);
 }
 
-static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
-{
-	struct fsal_staticfsinfo_t *info;
-
-	info = kvsfs_staticinfo(exp_hdl->fsal);
-	return fsal_xattr_access_rights(info);
-}
-
 /* extract a file handle from a buffer.
  * do verification checks and flag any and all suspicious bits.
  * Return an updated fh_desc into whatever was passed.  The most
@@ -173,10 +159,10 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
  * is the option to also adjust the start pointer.
  */
 
-static fsal_status_t kvsfs_extract_handle(struct fsal_export *exp_hdl,
-					 fsal_digesttype_t in_type,
-					 struct gsh_buffdesc *fh_desc,
-					 int flags)
+static fsal_status_t kvsfs_wire_to_host(struct fsal_export *exp_hdl,
+					fsal_digesttype_t in_type,
+					struct gsh_buffdesc *fh_desc,
+					int flags)
 {
 	struct kvsfs_file_handle *hdl;
 	size_t fh_size;
@@ -207,7 +193,7 @@ void kvsfs_export_ops_init(struct export_ops *ops)
 {
 	ops->release = release;
 	ops->lookup_path = kvsfs_lookup_path;
-	ops->extract_handle = kvsfs_extract_handle;
+	ops->wire_to_host = kvsfs_wire_to_host;
 	ops->create_handle = kvsfs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supports = fs_supports;
@@ -217,11 +203,9 @@ void kvsfs_export_ops_init(struct export_ops *ops)
 	ops->fs_maxlink = fs_maxlink;
 	ops->fs_maxnamelen = fs_maxnamelen;
 	ops->fs_maxpathlen = fs_maxpathlen;
-	ops->fs_lease_time = fs_lease_time;
 	ops->fs_acl_support = fs_acl_support;
 	ops->fs_supported_attrs = fs_supported_attrs;
 	ops->fs_umask = fs_umask;
-	ops->fs_xattr_access_rights = fs_xattr_access_rights;
 }
 
 static int kvsfs_conf_pnfs_commit(void *node,
@@ -240,7 +224,7 @@ static int kvsfs_conf_pnfs_commit(void *node,
 static struct config_item ds_array_params[] = {
 	CONF_MAND_IP_ADDR("DS_Addr", "127.0.0.1",
 			  kvsfs_pnfs_ds_parameter, ipaddr),
-	CONF_ITEM_INET_PORT("DS_Port", 1024, UINT16_MAX, 2049,
+	CONF_ITEM_UI16("DS_Port", 1024, UINT16_MAX, 2049,
 		       kvsfs_pnfs_ds_parameter, ipport), /* default is nfs */
 	CONFIG_EOL
 };
@@ -356,8 +340,8 @@ fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
 			goto err_locked;
 
 		/* special case: server_id matches export_id */
-		pds->id_servers = op_ctx->export->export_id;
-		pds->mds_export = op_ctx->export;
+		pds->id_servers = op_ctx->ctx_export->export_id;
+		pds->mds_export = op_ctx->ctx_export;
 
 		if (!pnfs_ds_insert(pds)) {
 			LogCrit(COMPONENT_CONFIG,
@@ -371,13 +355,13 @@ fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
 
 		LogInfo(COMPONENT_FSAL,
 			"kvsfs_fsal_create: pnfs DS was enabled for [%s]",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 	}
 
 	if (myself->pnfs_mds_enabled) {
 		LogInfo(COMPONENT_FSAL,
 			"kvsfs_fsal_create: pnfs MDS was enabled for [%s]",
-			op_ctx->export->fullpath);
+			op_ctx->ctx_export->fullpath);
 		export_ops_pnfs(&myself->export.exp_ops);
 	}
 

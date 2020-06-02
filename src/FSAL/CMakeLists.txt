@@ -38,6 +38,10 @@ if(USE_FSAL_LIZARDFS)
   add_subdirectory(FSAL_LIZARDFS)
 endif(USE_FSAL_LIZARDFS)
 
+if(USE_FSAL_KVSFS)
+  add_subdirectory(FSAL_KVSFS)
+endif(USE_FSAL_KVSFS)
+
 if(USE_FSAL_MEM)
   add_subdirectory(FSAL_MEM)
 endif(USE_FSAL_MEM)

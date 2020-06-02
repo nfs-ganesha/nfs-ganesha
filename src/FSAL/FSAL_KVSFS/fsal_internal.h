@@ -37,7 +37,7 @@ struct kvsfs_ds {
 		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     |	\
 		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    |	\
 		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED |	\
-		ATTR_CHGTIME)
+		ATTR_CHANGE )
 
 static inline size_t kvsfs_sizeof_handle(struct kvsfs_file_handle *hdl)
 {
