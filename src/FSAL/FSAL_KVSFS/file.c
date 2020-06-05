@@ -51,7 +51,131 @@ static fsal_status_t kvsfs_open_by_handle(struct fsal_obj_handle *obj_hdl,
 	      				 enum fsal_create_mode createmode,
 					 bool *cpm_check)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	struct kvsfs_fsal_obj_handle *kvsfs_hdl;
+	fsal_status_t status;
+	const bool truncated = (posix_flags & O_TRUNC) != 0;
+	struct kvsfs_fd *my_fd;
+	kvsns_file_open_t fd;
+	int retval = 0;
+	kvsns_cred_t cred;
+
+	/* This can block over an I/O operation. */
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+	kvsfs_hdl = container_of(obj_hdl,
+				 struct kvsfs_fsal_obj_handle,
+				 obj_handle);
+
+	if (state != NULL) {
+		my_fd = &container_of(state,
+				      struct kvsfs_state_fd,
+				      state)->kvsfs_fd;
+
+	       /* Prepare to take the share reservation, but only if we
+ 		* are called with a valid state (if state is NULL the
+		* caller is a stateless create such as NFS v3 CREATE).
+		*/
+
+		/* Check share reservation conflicts. */
+		status = check_share_conflict(&kvsfs_hdl->u.file.share,
+					      openflags, false);
+
+		if (FSAL_IS_ERROR(status))
+			goto out;
+
+		/* Take the share reservation now by updating the counters. */
+		update_share_counters(&kvsfs_hdl->u.file.share, FSAL_O_CLOSED,
+				      openflags);
+
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	} else {
+		/* We need to use the global fd to continue. */
+		my_fd = &kvsfs_hdl->u.file.fd;
+	}
+
+	retval = kvsns_open(&cred, &kvsfs_hdl->handle->kvsfs_handle,
+			    posix_flags, 0777, &fd);
+	status = fsalstat(posix2fsal_error(-retval), -retval);
+
+	if (FSAL_IS_ERROR(status)) {
+		if (state == NULL)
+			goto out;
+		else
+			goto undo_share;
+	}
+	/* Close any old open file descriptor and update with the new
+	 * one. There shouldn't be any old open for state based call.
+	 */
+		if (my_fd->openflags != FSAL_O_CLOSED)
+		(void)kvsns_close(&my_fd->fd);
+
+	my_fd->fd = fd;
+	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
+
+	if (attrs_out && (createmode >= FSAL_EXCLUSIVE || truncated)) {
+		/* Refresh the attributes */
+		struct stat stat;
+
+		cred.uid = op_ctx->creds->caller_uid;
+		cred.gid = op_ctx->creds->caller_gid;
+
+		retval = kvsns_getattr(&cred, 
+				       &kvsfs_hdl->handle->kvsfs_handle, 
+				       &stat);
+		status = fsalstat(posix2fsal_error(-retval), -retval);
+
+		if (!FSAL_IS_ERROR(status)) {
+			if (attrs_out != NULL)
+				posix2fsal_attributes_all(&stat, attrs_out);
+
+			LogFullDebug(COMPONENT_FSAL, "New size = %"PRIx64,
+				     attrs_out->filesize);
+
+			/* Now check verifier for exclusive */
+			if (createmode >= FSAL_EXCLUSIVE &&
+			    !check_verifier_attrlist(attrs_out, verifier))
+				/* Verifier didn't match, return EEXIST */
+				status = fsalstat(posix2fsal_error(EEXIST),
+						  EEXIST);
+		}
+	} else if (attrs_out && attrs_out->request_mask & ATTR_RDATTR_ERR) {
+		attrs_out->valid_mask = ATTR_RDATTR_ERR;
+	}
+
+	if (state == NULL) {
+		/* If no state, return status. If success, we haven't done
+		 * any permission check so ask the caller to do so.
+		 */
+		*cpm_check = !FSAL_IS_ERROR(status);
+		goto out;
+	}
+
+	if (!FSAL_IS_ERROR(status)) {
+		/* Return success. We haven't done any permission
+		 * check so ask the caller to do so.
+		 */
+		*cpm_check = true;
+		return status;
+	}
+
+	(void)kvsns_close(&my_fd->fd);
+	my_fd->openflags = FSAL_O_CLOSED;
+
+ undo_share:
+	/* On error we need to release our share reservation
+	 * and undo the update of the share counters.
+	 * This can block over an I/O operation.
+	 */
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+	update_share_counters(&kvsfs_hdl->u.file.share, openflags,
+			      FSAL_O_CLOSED);
+ out:
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	return status;
+	
 }
 
 static fsal_status_t kvsfs_open_by_name(struct fsal_obj_handle *obj_hdl,
@@ -63,54 +187,52 @@ static fsal_status_t kvsfs_open_by_name(struct fsal_obj_handle *obj_hdl,
 					struct attrlist *attrs_out,
 	     				bool *cpm_check)
 {
-        struct fsal_obj_handle *temp = NULL;
-        fsal_status_t status;
+	struct fsal_obj_handle *temp = NULL;
+	fsal_status_t status;
 
-        /* We don't have open by name... */
-        status = obj_hdl->obj_ops->lookup(obj_hdl, name, &temp, NULL);
+	/* We don't have open by name... */
+	status = obj_hdl->obj_ops->lookup(obj_hdl, name, &temp, NULL);
 
-        if (FSAL_IS_ERROR(status)) {
-                LogFullDebug(COMPONENT_FSAL, "lookup returned %s",
-                             fsal_err_txt(status));
-                return status;
-        }
+	if (FSAL_IS_ERROR(status)) {
+		LogFullDebug(COMPONENT_FSAL, "lookup returned %s",
+			     fsal_err_txt(status));
+		return status;
+	}
 
-        if (temp->type != REGULAR_FILE) {
-                if (temp->type == DIRECTORY) {
-                        /* Trying to open2 a directory */
-                        status = fsalstat(ERR_FSAL_ISDIR, 0);
-                } else {
-                        /* Trying to open2 any other non-regular file */
-                        status = fsalstat(ERR_FSAL_SYMLINK, 0);
-                }
+	if (temp->type != REGULAR_FILE) {
+		if (temp->type == DIRECTORY) {
+			/* Trying to open2 a directory */
+			status = fsalstat(ERR_FSAL_ISDIR, 0);
+		} else {
+			/* Trying to open2 any other non-regular file */
+			status = fsalstat(ERR_FSAL_SYMLINK, 0);
+		}
 
-                /* Release the object we found by lookup. */
-                temp->obj_ops->release(temp);
-                LogFullDebug(COMPONENT_FSAL,
-                             "open returned %s",
-                             fsal_err_txt(status));
-                return status;
-        }
+		/* Release the object we found by lookup. */
+		temp->obj_ops->release(temp);
+		LogFullDebug(COMPONENT_FSAL,
+			     "open returned %s",
+			     fsal_err_txt(status));
+		return status;
+	}
 
-        status = kvsfs_open_by_handle(temp,
+	status = kvsfs_open_by_handle(temp,
 				      state,
 				      openflags,
 				      posix_flags,
-                                      verifier,
+				      verifier,
 				      attrs_out,
 				      FSAL_NO_CREATE,
 				      cpm_check);
 
-        if (FSAL_IS_ERROR(status)) {
-                /* Release the object we found by lookup. */
-                temp->obj_ops->release(temp);
-                LogFullDebug(COMPONENT_FSAL, "open returned %s",
-                             fsal_err_txt(status));
-        }
+	if (FSAL_IS_ERROR(status)) {
+		/* Release the object we found by lookup. */
+		temp->obj_ops->release(temp);
+		LogFullDebug(COMPONENT_FSAL, "open returned %s",
+			     fsal_err_txt(status));
+	}
 
-        return status;
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return status;
 }
 
 /** @fn fsal_status_t
@@ -158,7 +280,7 @@ static fsal_status_t kvsfs_open(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(fsal_error, -rc);
 	}
 
-	myself->u.file.fd = *fd;
+	myself->u.file.fd.fd = *fd;
 
 	/* save the stat */
 	rc = kvsns_getattr(&cred, &myself->handle->kvsfs_handle,
@@ -538,46 +660,31 @@ fsal_status_t kvsfs_reopen2(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
+/**
+ * @brief Commit written data
+ *
+ * This function flushes possibly buffered data to a file. This method
+ * differs from commit due to the need to interact with share reservations
+ * and the fact that the FSAL manages the state of "file descriptors". The
+ * FSAL must be able to perform this operation without being passed a specific
+ * state.
+ *
+ * @param[in] obj_hdl          File on which to operate
+ * @param[in] state            state_t to use for this operation
+ * @param[in] offset           Start of range to commit
+ * @param[in] len              Length of range to commit
+ *
+ * @return FSAL status.
+ */
 
-
-fsal_status_t ___kvsfs_open(struct fsal_obj_handle *obj_hdl,
-			fsal_openflags_t openflags)
+fsal_status_t kvsfs_commit2(struct fsal_obj_handle *obj_hdl,    /* sync */
+			    off_t offset,
+			    size_t len)
 {
-	struct kvsfs_fsal_obj_handle *myself;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	int rc = 0;
-	kvsns_cred_t cred;
-
-	cred.uid = op_ctx->creds->caller_uid;
-	cred.gid = op_ctx->creds->caller_gid;
-
-	myself = container_of(obj_hdl,
-			      struct kvsfs_fsal_obj_handle, obj_handle);
-
-	assert(myself->u.file.openflags == FSAL_O_CLOSED);
-
-	rc = kvsns_open(&cred, &myself->handle->kvsfs_handle, O_RDWR,
-			0777, &myself->u.file.fd);
-
-	if (rc) {
-		fsal_error = posix2fsal_error(-rc);
-		return fsalstat(fsal_error, -rc);
-	}
-
-	/* >> fill output struct << */
-	myself->u.file.openflags = openflags;
-
-	/* save the stat */
-	rc = kvsns_getattr(&cred, &myself->handle->kvsfs_handle,
-			   &myself->u.file.saved_stat);
-
-	if (rc) {
-		fsal_error = posix2fsal_error(-rc);
-		return fsalstat(fsal_error, -rc);
-	}
-
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
+
+
 
 /* kvsfs_status
  * Let the caller peek into the file's open/close state.
@@ -617,7 +724,7 @@ fsal_status_t kvsfs_read(struct fsal_obj_handle *obj_hdl,
 
 	assert(myself->u.file.openflags != FSAL_O_CLOSED);
 
-	retval = kvsns_read(&cred, &myself->u.file.fd,
+	retval = kvsns_read(&cred, &myself->u.file.fd.fd,
 			    buffer, buffer_size, offset);
 
 
@@ -659,7 +766,7 @@ fsal_status_t kvsfs_write(struct fsal_obj_handle *obj_hdl,
 
 	assert(myself->u.file.openflags != FSAL_O_CLOSED);
 
-	retval = kvsns_write(&cred, &myself->u.file.fd,
+	retval = kvsns_write(&cred, &myself->u.file.fd.fd,
 			     buffer, buffer_size, offset);
 
 	if (retval < 0)
@@ -722,7 +829,7 @@ fsal_status_t kvsfs_close2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (myself->u.file.openflags != FSAL_O_CLOSED) {
-		retval = kvsns_close(&myself->u.file.fd);
+		retval = kvsns_close(&myself->u.file.fd.fd);
 		if (retval < 0)
 			fsal_error = posix2fsal_error(-retval);
 

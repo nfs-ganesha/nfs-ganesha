@@ -832,7 +832,7 @@ static fsal_status_t kvsfs_close(struct fsal_obj_handle *obj_hdl)
 			      struct kvsfs_fsal_obj_handle, obj_handle);
 
 	if (myself->u.file.openflags != FSAL_O_CLOSED) {
-		retval = kvsns_close(&myself->u.file.fd);
+		retval = kvsns_close(&myself->u.file.fd.fd);
 		if (retval < 0)
 			fsal_error = posix2fsal_error(-retval);
 
