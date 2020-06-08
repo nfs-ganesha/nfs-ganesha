@@ -735,11 +735,11 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	struct gsh_export *export =
 	    container_of(exp_hdl, struct gsh_export, fsal_export);
 	struct fsal_args *fp = self_struct;
-	struct fsal_module *fsal;
 	struct root_op_context root_op_context;
 	uint64_t MaxRead, MaxWrite;
 	fsal_status_t status;
 	int errcnt;
+	struct fsal_module *fsal;
 
 	/* Initialize req_ctx */
 	init_root_op_context(&root_op_context, export, NULL, 0, 0,
