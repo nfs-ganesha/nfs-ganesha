@@ -2340,6 +2340,7 @@ void server_nfsmon_export_iostats(struct export_stats *export_st,
 				  struct xfer_op *opwrite)
 {
 	struct gsh_stats gsh_st = export_st->st;
+
 	if (gsh_st.nfsv3 != NULL) {
 		(void)atomic_add_uint64_t(&opread->cmd.total,
 					  gsh_st.nfsv3->read.cmd.total);
@@ -2429,10 +2430,10 @@ void server_dbus_nfsmon_iostats(struct export_stats *export_st,
 	struct xfer_op *op_read = NULL;
 	struct xfer_op *op_write = NULL;
 
-	op_preread = (struct xfer_op*)gsh_calloc(1, sizeof(struct xfer_op));
-	op_prewrite = (struct xfer_op*)gsh_calloc(1, sizeof(struct xfer_op));
-	op_read = (struct xfer_op*)gsh_calloc(1, sizeof(struct xfer_op));
-	op_write = (struct xfer_op*)gsh_calloc(1, sizeof(struct xfer_op));
+	op_preread = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op));
+	op_prewrite = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op));
+	op_read = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op));
+	op_write = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op));
 
 	server_nfsmon_export_iostats(export_st, op_preread, op_prewrite);
 	sleep(1);
