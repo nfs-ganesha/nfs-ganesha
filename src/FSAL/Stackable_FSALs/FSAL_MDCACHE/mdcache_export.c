@@ -95,7 +95,6 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 	mdcache_entry_t *entry;
 	struct entry_export_map *expmap;
 	fsal_status_t status;
-	bool rc;
 
 	/* Indicate this export is going away so we don't create any new
 	 * export map entries.
@@ -168,10 +167,6 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 	subcall_raw(exp,
 		sub_export->exp_ops.unexport(sub_export, root_entry->sub_handle)
 	);
-
-	/* Unhash the root object */
-	rc = cih_remove_checked(root_entry);
-	assert(!rc);
 }
 
 /**
