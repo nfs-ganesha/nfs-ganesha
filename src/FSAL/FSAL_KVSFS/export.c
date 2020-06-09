@@ -168,7 +168,7 @@ static struct config_item pnfs_params[] = {
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_STR("kvsns_config", 0, MAXPATHLEN, NULL,
+	CONF_ITEM_STR("kvsns_config", 0, MAXPATHLEN, KVSNS_DEFAULT_CONFIG,
 		      kvsfs_fsal_export, kvsns_config),
 	CONF_ITEM_BLOCK("PNFS", pnfs_params,
 			noop_conf_init, kvsfs_conf_pnfs_commit,
@@ -219,7 +219,8 @@ fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
 
 	retval = kvsns_start(myself->kvsns_config);
 	if (retval != 0) {
-		LogMajor(COMPONENT_FSAL, "Can't start KVSNS API");
+		LogMajor(COMPONENT_FSAL, "Can't start KVSNS API: %d (%s)",
+			 retval, strerror(-retval));
 		goto errout;
 	} else
 		LogEvent(COMPONENT_FSAL, "KVSNS API is running");

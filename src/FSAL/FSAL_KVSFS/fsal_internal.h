@@ -30,6 +30,8 @@ struct kvsfs_ds {
 	bool connected; /*< True if the handle has been connected */
 };
 
+#define KVSNS_DEFAULT_CONFIG "/etc/kvsns.d/kvsns.ini"
+
 /* defined the set of attributes supported with POSIX */
 #define KVSFS_SUPPORTED_ATTRIBUTES (				       \
 		ATTR_TYPE     | ATTR_SIZE     |		   	       \
