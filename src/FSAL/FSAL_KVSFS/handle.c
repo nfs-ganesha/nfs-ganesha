@@ -182,8 +182,11 @@ fsal_status_t kvsfs_lookup_path(struct fsal_export *exp_hdl,
 	kvsns_cred_t cred;
 	struct kvsfs_fsal_obj_handle *hdl;
 
-	if (strcmp(path, "/"))
+	if (strcmp(path, "/")) {
+		LogMajor(COMPONENT_FSAL,
+			 "KVSFS can only mount /, no subdirectory");
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+	}
 
 	rc = kvsns_get_root(&object);
 	if (rc != 0)
