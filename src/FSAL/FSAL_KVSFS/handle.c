@@ -69,6 +69,9 @@ struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
 				 struct kvsfs_fsal_module,
 				 fsal);
 
+	LogDebug(COMPONENT_FSAL, "kvsfs_alloc_handle: inode=%d",
+		 (unsigned int)fh->kvsfs_handle);
+
 	hdl = gsh_malloc(sizeof(struct kvsfs_fsal_obj_handle) +
 			 sizeof(struct kvsfs_file_handle));
 
@@ -135,6 +138,10 @@ static fsal_status_t kvsfs_lookup(struct fsal_obj_handle *parent,
 	memset(&fh, 0, sizeof(struct kvsfs_file_handle));
 	parent_hdl =
 	    container_of(parent, struct kvsfs_fsal_obj_handle, obj_handle);
+
+	LogDebug(COMPONENT_FSAL, "kvsfs_lookup: %d/%s",
+		 (unsigned int)parent_hdl->handle->kvsfs_handle, path);
+
 	if (!fsal_obj_handle_is(parent, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
@@ -193,6 +200,8 @@ fsal_status_t kvsfs_lookup_path(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
+	LogDebug(COMPONENT_FSAL, "kvsfs_lookup_path: %s", path);
+
 	rc = kvsns_get_root(&object);
 	if (rc != 0)
 		return fsalstat(posix2fsal_error(-rc), -rc);
@@ -246,6 +255,10 @@ fsal_status_t kvsfs_create2(struct fsal_obj_handle *dir_hdl,
 	memset(kvsfs_fh, 0, sizeof(struct kvsfs_file_handle));
 	myself = container_of(dir_hdl, struct kvsfs_fsal_obj_handle,
 			      obj_handle);
+
+	LogDebug(COMPONENT_FSAL, "kvsfs_create2: %d/%s mode=0%o",
+		 (unsigned int)myself->handle->kvsfs_handle, filename,
+		 unix_mode);
 
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
@@ -353,6 +366,9 @@ static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 	myself = container_of(dir_hdl, struct kvsfs_fsal_obj_handle,
 			      obj_handle);
 
+	LogDebug(COMPONENT_FSAL, "kvsfs_mkdir: %d/%s",
+		 (unsigned int)myself->handle->kvsfs_handle, name);
+
 	cred.uid = attrib->owner;
 	cred.gid = attrib->group;
 
@@ -453,6 +469,12 @@ static fsal_status_t kvsfs_makesymlink(struct fsal_obj_handle *dir_hdl,
 	memset(&fh, 0, sizeof(struct kvsfs_file_handle));
 	myself = container_of(dir_hdl, struct kvsfs_fsal_obj_handle,
 			      obj_handle);
+
+
+	LogDebug(COMPONENT_FSAL, "kvsfs_makesymlink: %d/%s -> %s",
+		 (unsigned int)myself->handle->kvsfs_handle, name,
+		 link_path);
+
 	cred.uid = attrib->owner;
 	cred.gid = attrib->group;
 
@@ -501,6 +523,9 @@ static fsal_status_t kvsfs_readsymlink(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle,
 			      obj_handle);
 
+	LogDebug(COMPONENT_FSAL, "kvsfs_readsymlink: %d",
+		 (unsigned int)myself->handle->kvsfs_handle);
+
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
 
@@ -539,6 +564,10 @@ static fsal_status_t kvsfs_linkfile(struct fsal_obj_handle *obj_hdl,
 
 	destdir =
 	    container_of(destdir_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
+
+	LogDebug(COMPONENT_FSAL, "kvsfs_linkfile: %d -> %d/%s",
+		 (unsigned int)myself->handle->kvsfs_handle,
+		 (unsigned int)destdir->handle->kvsfs_handle, name);
 
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
@@ -587,6 +616,9 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 		seekloc = (off_t) *whence;
 	myself =
 		container_of(dir_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
+
+	LogDebug(COMPONENT_FSAL, "kvsfs_readdir: %d",
+		 (unsigned int)myself->handle->kvsfs_handle);
 
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
@@ -665,6 +697,10 @@ static fsal_status_t kvsfs_rename(struct fsal_obj_handle *obj_hdl,
 	newdir =
 	    container_of(newdir_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
+	LogDebug(COMPONENT_FSAL, "kvsfs_rename: %d/%s -> %d/%s",
+		 (unsigned int)olddir->handle->kvsfs_handle, old_name,
+		 (unsigned int)newdir->handle->kvsfs_handle, new_name);
+
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
 
@@ -695,6 +731,9 @@ static fsal_status_t kvsfs_getattrs(struct fsal_obj_handle *obj_hdl,
 
 	myself =
 		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
+
+LogDebug(COMPONENT_FSAL, "kvsfs_getattrs: %d",
+		 (unsigned int)myself->handle->kvsfs_handle);
 
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
@@ -762,6 +801,9 @@ static fsal_status_t kvsfs_setattr2(struct fsal_obj_handle *obj_hdl,
 				fs_umask(op_ctx->fsal_export);
 	myself =
 		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
+
+	LogDebug(COMPONENT_FSAL, "kvsfs_setattrs2: %d",
+		 (unsigned int)myself->handle->kvsfs_handle);
 
 	/* First, check that FSAL attributes */
 	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_SIZE)) {
@@ -867,6 +909,9 @@ static fsal_status_t kvsfs_unlink(struct fsal_obj_handle *dir_hdl,
 
 	myself =
 		container_of(dir_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
+
+	LogDebug(COMPONENT_FSAL, "kvsfs_unlink: %d/%s",
+		 (unsigned int)myself->handle->kvsfs_handle, name);
 
 	if (obj_hdl->type != DIRECTORY)
 		retval = kvsns_rmdir(&cred,
@@ -1016,6 +1061,9 @@ fsal_status_t kvsfs_create_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	memcpy(&fh, hdl_desc->addr, hdl_desc->len);  /* struct aligned copy */
+
+	LogDebug(COMPONENT_FSAL, "kvsfs_create_handle: %d",
+		 (unsigned int)fh.kvsfs_handle);
 
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
