@@ -63,6 +63,11 @@ struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
 	struct kvsfs_fsal_export *myself =
 		container_of(exp_hdl, struct kvsfs_fsal_export, export);
 	struct kvsfs_fsal_obj_handle *hdl;
+	struct kvsfs_fsal_module *my_module;
+
+	my_module = container_of(exp_hdl->fsal,
+				 struct kvsfs_fsal_module,
+				 fsal);
 
 	hdl = gsh_malloc(sizeof(struct kvsfs_fsal_obj_handle) +
 			 sizeof(struct kvsfs_file_handle));
@@ -86,7 +91,7 @@ struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
 	fsal_obj_handle_init(&hdl->obj_handle,
 			     exp_hdl,
 			     attr->type);
-	kvsfs_handle_ops_init(hdl->obj_handle.obj_ops);
+	hdl->obj_handle.obj_ops = &my_module->handle_ops;
 	if (myself->pnfs_mds_enabled)
 		handle_ops_pnfs(hdl->obj_handle.obj_ops);
 	return hdl;

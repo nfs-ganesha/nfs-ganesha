@@ -29,6 +29,7 @@ struct kvsfs_pnfs_ds_parameter {
 
 struct kvsfs_fsal_module {
 	struct fsal_module fsal;
+	struct fsal_obj_ops handle_ops;
 	struct fsal_staticfsinfo_t fs_info;
 };
 

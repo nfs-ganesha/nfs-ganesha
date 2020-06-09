@@ -131,6 +131,7 @@ static fsal_status_t kvsfs_init_config(struct fsal_module *fsal_hdl,
 	    container_of(fsal_hdl, struct kvsfs_fsal_module, fsal);
 
 	kvsfs_me->fs_info = default_kvsfs_info;	/* copy the consts */
+#if 0
 	(void) load_config_from_parse(config_struct,
 				      &kvsfs_param,
 				      &kvsfs_me,
@@ -138,6 +139,7 @@ static fsal_status_t kvsfs_init_config(struct fsal_module *fsal_hdl,
 				      err_type);
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
+#endif
 	display_fsinfo(&kvsfs_me->fsal);
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
@@ -190,6 +192,8 @@ MODULE_INIT void kvsfs_load(void)
 	myself->m_ops.fsal_pnfs_ds_ops = kvsfs_pnfs_ds_ops_init;
 	myself->m_ops.getdeviceinfo = kvsfs_getdeviceinfo;
 	myself->m_ops.fs_da_addr_size = kvsfs_fs_da_addr_size;
+
+	kvsfs_handle_ops_init(&KVSFS.handle_ops);
 }
 
 MODULE_FINI void kvsfs_unload(void)
