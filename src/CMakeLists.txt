@@ -43,7 +43,7 @@ ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQU
 # Extra version is for naming development/RC.  It is blank in master/stable branches
 # so it can be available to end-users to name local variants/versions
 # If used, it is always of the form "-whateveryouwant"
-set(GANESHA_EXTRA_VERSION -dev.19)
+set(GANESHA_EXTRA_VERSION -dev.20)
 
 set(GANESHA_VERSION ${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}${GANESHA_EXTRA_VERSION})
 set(GANESHA_BASE_VERSION ${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION})
@@ -345,6 +345,9 @@ option(USE_NFS3 "enable NFSv3 support" ON)
 # Enable NLM Support
 option(USE_NLM "enable NLM support" ON)
 
+# Enable NFSACL3 protocol extension support
+option(USE_NFSACL3 "enable NFSACLv3 support" ON)
+
 # AF_VSOCK host support (NFS)
 option(USE_VSOCK "enable AF_VSOCK listener" OFF)
 if(USE_VSOCK)
@@ -373,7 +376,7 @@ goption(USE_RADOS_RECOV "Enable Rados KV Recovery" ON)
 goption(RADOS_URLS "Enable config file inclusion from RADOS objects" ON)
 
 # Enable CephFS POSIX ACL
-goption(CEPHFS_POSIX_ACL "Enable CephFS POSIX ACL" OFF)
+goption(CEPHFS_POSIX_ACL "Enable CephFS POSIX ACL" ON)
 
 # Enable NFSv4 and POSIX acls mapping
 option(USE_ACL_MAPPING "Build NFSv4 to POSIX ACL mapping" OFF)
@@ -635,6 +638,18 @@ if(USE_FSAL_CEPH)
     endif(HAVE_ACL_H)
   endif(CEPHFS_POSIX_ACL)
 endif(USE_FSAL_CEPH)
+
+gopt_test(USE_NFSACL3)
+  if(USE_NFSACL3)
+    check_include_files("acl/libacl.h" HAVE_ACL_H)
+    if(HAVE_ACL_H)
+      set(USE_ACL_MAPPING ON)
+      set(LibACL_FIND_REQUIRED TRUE)
+    else()
+      set(USE_NFSACL3 OFF)
+      message(STATUS "Could not find libacl, disabling USE_NFSACL3")
+    endif(HAVE_ACL_H)
+  endif(USE_NFSACL3)
 
 gopt_test(USE_FSAL_GPFS)
 # GPFS has no dependencies
@@ -1190,6 +1205,7 @@ message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
 message(STATUS "USE_NFS_RDMA = ${USE_NFS_RDMA}")
 message(STATUS "USE_NFS3 = ${USE_NFS3}")
 message(STATUS "USE_NLM = ${USE_NLM}")
+message(STATUS "USE_NFSACL3 = ${USE_NFSACL3}")
 message(STATUS "USE_ACL_MAPPING = ${USE_ACL_MAPPING}")
 message(STATUS "KRB5_PREFIX = ${KRB5_PREFIX}")
 message(STATUS "CEPH_PREFIX = ${CEPH_PREFIX}")

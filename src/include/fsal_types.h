@@ -155,6 +155,9 @@ typedef uint32_t fsal_aceflag_t;
 #define FSAL_ACE_FLAG_FAILED          0x00000020
 #define FSAL_ACE_FLAG_GROUP_ID        0x00000040
 #define FSAL_ACE_FLAG_INHERITED       0x00000080
+#define FSAL_ACE_FLAG_MASK_READ_DENY    0x00000100
+#define FSAL_ACE_FLAG_MASK_WRITE_DENY   0x00000200
+#define FSAL_ACE_FLAG_MASK_EXECUTE_DENY 0x00000400
 
 /** ACE internal flags */
 
@@ -195,6 +198,7 @@ typedef uint32_t fsal_aceperm_t;
 #define FSAL_ACE_SPECIAL_OWNER              1
 #define FSAL_ACE_SPECIAL_GROUP              2
 #define FSAL_ACE_SPECIAL_EVERYONE           3
+#define FSAL_ACE_SPECIAL_MASK               4
 
 typedef struct fsal_ace__ {
 
@@ -283,6 +287,8 @@ typedef struct fsal_acl_data__ {
 	IS_FSAL_ACE_USER(ACE, FSAL_ACE_SPECIAL_GROUP)
 #define IS_FSAL_ACE_SPECIAL_EVERYONE(ACE) \
 	  IS_FSAL_ACE_USER(ACE, FSAL_ACE_SPECIAL_EVERYONE)
+#define IS_FSAL_ACE_SPECIAL_MASK(ACE) \
+	IS_FSAL_ACE_USER(ACE, FSAL_ACE_SPECIAL_MASK)
 #define IS_FSAL_ACE_SPECIAL(ACE) \
 	(IS_FSAL_ACE_SPECIAL_OWNER(ACE) || \
 	 IS_FSAL_ACE_SPECIAL_GROUP(ACE) || \
@@ -302,6 +308,8 @@ typedef struct fsal_acl_data__ {
 #define IS_FSAL_DIR_APPLICABLE(ACE)  \
 	(!IS_FSAL_ACE_BIT(GET_FSAL_ACE_IFLAG(ACE),	\
 			  FSAL_ACE_IFLAG_EXCLUDE_DIRS))
+#define IS_FSAL_ACE_IFLAG(ACE, BIT) \
+	IS_FSAL_ACE_BIT(GET_FSAL_ACE_IFLAG(ACE), (BIT))
 
 /* Macros for NFS4 ACE permissions. */
 
@@ -428,6 +436,8 @@ typedef uint64_t attrmask_t;
 		      ATTR_ATIME    | ATTR_MTIME     | \
 		      ATTR_CTIME    | ATTR_SPACEUSED | \
 		      ATTR_FSID)
+
+#define ATTRS_NFS3_ACL (ATTRS_NFS3 | ATTR_ACL)
 
 #define ATTRS_TIME (ATTR_ATIME | ATTR_MTIME | ATTR_CTIME)
 #define ATTRS_CREDS (ATTR_OWNER | ATTR_GROUP)

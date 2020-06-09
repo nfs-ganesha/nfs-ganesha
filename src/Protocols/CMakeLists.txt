@@ -4,6 +4,7 @@ if(USE_NLM)
 	add_subdirectory(NLM)
 endif(USE_NLM)
 add_subdirectory(RQUOTA)
+add_subdirectory(NFSACL)
 
 if(USE_9P)
   add_subdirectory(9P)

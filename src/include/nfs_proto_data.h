@@ -47,6 +47,7 @@
 #include "nfs23.h"
 #include "nfs4.h"
 #include "nlm4.h"
+#include "nfsacl.h"
 
 /* ------------------------------ Typedefs and structs----------------------- */
 
@@ -98,6 +99,10 @@ typedef union nfs_arg__ {
 	ext_getquota_args arg_ext_rquota_getactivequota;
 	ext_setquota_args arg_ext_rquota_setquota;
 	ext_setquota_args arg_ext_rquota_setactivequota;
+
+	/* NFSACL */
+	getaclargs arg_getacl;
+	setaclargs arg_setacl;
 } nfs_arg_t;
 
 struct COMPOUND4res_extended {
@@ -151,6 +156,10 @@ typedef union nfs_res__ {
 	getquota_rslt res_ext_rquota_getactivequota;
 	setquota_rslt res_ext_rquota_setquota;
 	setquota_rslt res_ext_rquota_setactivequota;
+
+	/* NFSACL */
+	getaclres res_getacl;
+	setaclres res_setacl;
 } nfs_res_t;
 
 /* flags related to the behaviour of the requests

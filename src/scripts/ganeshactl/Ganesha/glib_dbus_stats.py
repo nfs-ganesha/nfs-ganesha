@@ -166,6 +166,10 @@ class RetrieveExportStats():
         stats_op = self.exportmgrobj.get_dbus_method("GetNFSv42IO",
                                                      self.dbus_exportstats_name)
         return ExportIOv42Stats(self.io_stats(stats_op, export_id))
+    def iomon_stats(self, export_id):
+        stats_op = self.exportmgrobj.get_dbus_method("GetNFSIOMon",
+                                                     self.dbus_exportstats_name)
+        return ExportIOMonStats(self.io_stats(stats_op, export_id))
     def pnfs_stats(self, export_id):
         stats_op = self.exportmgrobj.get_dbus_method("GetNFSv41Layouts",
                                                      self.dbus_exportstats_name)
@@ -985,6 +989,33 @@ class ExportIOv42Stats(Report):
             output += "\nWRITEv42: "
             for stat in self.stats[key][4]:
                 output += "\t" + str(stat).rjust(8)
+            output += "\n\n"
+        return output
+
+class ExportIOMonStats(Report):
+    def __init__(self, stats):
+        super().__init__(stats)
+        self.stats = stats
+
+    def report(self):
+        return export_io_stats_report(self._header, self.result)
+
+    def __str__(self):
+        output = ""
+        for key in self.stats:
+            if not self.stats[key][0]:
+                output += "\nEXPORT %s: %s\n" % (key, self.stats[key][1])
+                continue
+            if self.stats[key][1] != "OK":
+                output += self.stats[key][1] + "\n"
+            output += ("EXPORT %s:" % (key) +
+                       "\t    BW(MB/s)\t" +
+                       "\nREAD: ")
+            output += "\t\t" + str(self.stats[key][3][2]).rjust(8)
+            output += "\nWRITE: "
+            output += "\t\t" + str(self.stats[key][4][2]).rjust(8)
+            output += "\nTotal: "
+            output += "\t\t" + str(self.stats[key][3][2] + self.stats[key][4][2]).rjust(8)
             output += "\n\n"
         return output
 

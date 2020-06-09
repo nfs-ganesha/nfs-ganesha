@@ -454,6 +454,8 @@ void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter *iter);
 void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter);
 void server_dbus_v42_iostats(struct nfsv41_stats *v42p, DBusMessageIter *iter);
 void server_dbus_v42_layouts(struct nfsv41_stats *v42p, DBusMessageIter *iter);
+void server_dbus_nfsmon_iostats(struct export_stats *export_st,
+				DBusMessageIter *iter);
 void server_dbus_delegations(struct deleg_stats *ds, DBusMessageIter *iter);
 void server_dbus_all_iostats(struct export_stats *export_statistics,
 			     DBusMessageIter *iter);

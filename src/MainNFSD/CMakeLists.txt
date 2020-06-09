@@ -114,6 +114,7 @@ set(ganesha_nfsd_OBJS
     $<TARGET_OBJECTS:nfs4callbacks>
     $<TARGET_OBJECTS:rquota>
     $<TARGET_OBJECTS:nfs_mnt_xdr>
+    $<TARGET_OBJECTS:nfsacl>
     $<TARGET_OBJECTS:fsalpseudo>
     $<TARGET_OBJECTS:fsalmdcache>
 )

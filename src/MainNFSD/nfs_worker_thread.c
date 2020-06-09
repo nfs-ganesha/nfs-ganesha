@@ -660,6 +660,34 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 				       .dispatch_behaviour = NEEDS_CRED}
 };
 
+const nfs_function_desc_t nfsacl_func_desc[] = {
+	[0] = {
+	       .service_function = nfsacl_Null,
+	       .free_function = nfsacl_Null_Free,
+	       .xdr_decode_func = (xdrproc_t) xdr_void,
+	       .xdr_encode_func = (xdrproc_t) xdr_void,
+	       .funcname = "NFSACL_NULL",
+	       .dispatch_behaviour = NOTHING_SPECIAL},
+	[NFSACLPROC_GETACL] = {
+				 .service_function = nfsacl_getacl,
+				 .free_function = nfsacl_getacl_Free,
+				 .xdr_decode_func =
+				 (xdrproc_t) xdr_getaclargs,
+				 .xdr_encode_func =
+				 (xdrproc_t) xdr_getaclres,
+				 .funcname = "NFSACL_GETACL",
+				 .dispatch_behaviour = NEEDS_CRED},
+	[NFSACLPROC_SETACL] = {
+				 .service_function = nfsacl_setacl,
+				 .free_function = nfsacl_setacl_Free,
+				 .xdr_decode_func =
+				 (xdrproc_t) xdr_setaclargs,
+				 .xdr_encode_func =
+				 (xdrproc_t) xdr_setaclres,
+				 .funcname = "NFSACL_SETACL",
+				 .dispatch_behaviour = NEEDS_CRED}
+};
+
 void auth_failure(nfs_request_t *reqdata, enum auth_stat auth_rc)
 {
 	svcerr_auth(&reqdata->svc, auth_rc);
@@ -1083,7 +1111,8 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	    || reqdata->svc.rq_msg.cb_proc == NFSPROC_NULL)
 		goto null_op;
 	/* Get the export entry */
-	if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS]) {
+	if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS] ||
+		reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFSACL]) {
 		/* The NFSv3 functions' arguments always begin with the file
 		 * handle (but not the NULL function).  This hook is used to
 		 * get the fhandle with the arguments and so determine the
@@ -1582,6 +1611,18 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 
 	reqdata->funcdesc = &invalid_funcdesc;
 
+#ifdef USE_NFSACL3
+	if (req->rq_msg.cb_prog == NFS_program[P_NFSACL]) {
+		if (req->rq_msg.cb_vers == NFSACL_V3 && CORE_OPTION_NFSV3) {
+			if (req->rq_msg.cb_proc <= NFSACLPROC_SETACL) {
+				reqdata->funcdesc =
+					&nfsacl_func_desc[req->rq_msg.cb_proc];
+				return nfs_rpc_process_request(reqdata);
+			}
+		}
+	}
+#endif /* USE_NFSACL3 */
+
 	if (req->rq_msg.cb_prog != NFS_program[P_NFS]) {
 		return nfs_rpc_noprog(reqdata);
 	}
@@ -1711,6 +1752,27 @@ enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 			return nfs_rpc_noproc(reqdata);
 		}
 		return nfs_rpc_novers(reqdata, RQUOTAVERS, EXT_RQUOTAVERS);
+	}
+	return nfs_rpc_noprog(reqdata);
+}
+
+enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *req)
+{
+	nfs_request_t *reqdata =
+			container_of(req, struct nfs_request, svc);
+
+	reqdata->funcdesc = &invalid_funcdesc;
+
+	if (req->rq_msg.cb_prog == NFS_program[P_NFSACL]) {
+		if (req->rq_msg.cb_vers == NFSACL_V3) {
+			if (req->rq_msg.cb_proc <= NFSACLPROC_SETACL) {
+				reqdata->funcdesc =
+					&nfsacl_func_desc[req->rq_msg.cb_proc];
+				return nfs_rpc_process_request(reqdata);
+			}
+			return nfs_rpc_noproc(reqdata);
+		}
+		return nfs_rpc_novers(reqdata, NFSACL_V3, NFSACL_V3);
 	}
 	return nfs_rpc_noprog(reqdata);
 }

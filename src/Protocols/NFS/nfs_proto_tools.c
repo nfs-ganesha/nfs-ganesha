@@ -4684,3 +4684,320 @@ err:
 
 	return status;
 }
+
+#ifdef USE_NFSACL3
+/**
+ * @brief Conversion the posix acl to NFSACL rpc struct
+ *
+ * @param[in]  acl	  Posix ACL
+ * @param[in]  type	  Represents type of posix acl( ACCESS/DEFAULT )
+ * @param[in]  attrs      Attribute list for file
+ * @param[out] posix_acl  Point to Posix ACL rpc transmission structure
+ *
+ */
+posix_acl *encode_posix_acl(const acl_t acl, uint32_t type,
+				struct attrlist *attrs)
+{
+	acl_entry_t acl_entry;
+	acl_tag_t tag;
+	acl_permset_t permset;
+	size_t real_size;
+	uint32_t count;
+	int entry_id = 0;
+	int ret = 0;
+
+	posix_acl *encode_acl;
+	posix_acl_entry *encode_acl_e;
+
+	count = (uint32_t)acl_entries(acl);
+	if (count < 0) {
+		LogDebug(COMPONENT_NFSPROTO,
+				"The acl is not a valid pointer to an ACL.");
+		return NULL;
+	}
+
+	real_size = sizeof(struct posix_acl) +
+		count * sizeof(struct posix_acl_entry);
+
+	encode_acl = gsh_malloc(real_size);
+	if (!encode_acl)
+		return NULL;
+
+	encode_acl->count = count;
+	encode_acl_e = encode_acl->entries;
+
+	for (entry_id = ACL_FIRST_ENTRY; ; entry_id = ACL_NEXT_ENTRY,
+	     encode_acl_e++) {
+		ret = acl_get_entry(acl, entry_id, &acl_entry);
+		if (ret == 0 || ret == -1) {
+			LogDebug(COMPONENT_NFSPROTO,
+				"No more ACL entries remaining");
+			break;
+		}
+		if (acl_get_tag_type(acl_entry, &tag) == -1) {
+			LogWarn(COMPONENT_NFSPROTO,
+					"No entry tag for ACL Entry");
+			continue;
+		}
+
+		ret = acl_get_permset(acl_entry, &permset);
+		if (ret) {
+			LogWarn(COMPONENT_NFSPROTO,
+			"Cannot retrieve permission set for the ACL Entry");
+			continue;
+		}
+
+		encode_acl_e->e_tag = tag;
+
+		encode_acl_e->e_perm = 0;
+		if (acl_get_perm(permset, ACL_READ))
+			encode_acl_e->e_perm |= ACL_READ;
+		if (acl_get_perm(permset, ACL_WRITE))
+			encode_acl_e->e_perm |= ACL_WRITE;
+		if (acl_get_perm(permset, ACL_EXECUTE))
+			encode_acl_e->e_perm |= ACL_EXECUTE;
+
+		switch (tag) {
+		case ACL_USER_OBJ:
+			encode_acl_e->e_id = attrs->owner;
+			break;
+		case ACL_GROUP_OBJ:
+			encode_acl_e->e_id = attrs->group;
+			break;
+		case ACL_MASK:
+		case ACL_OTHER:
+			encode_acl_e->e_id = 0;
+			break;
+		case ACL_USER:
+			encode_acl_e->e_id =
+				*(uid_t *)acl_get_qualifier(acl_entry);
+			break;
+		case ACL_GROUP:
+			encode_acl_e->e_id =
+				*(gid_t *)acl_get_qualifier(acl_entry);
+			break;
+		default:
+			encode_acl_e->e_id = ACL_UNDEFINED_ID;
+			break;
+		}
+
+		if (type == ACL_TYPE_DEFAULT)
+			encode_acl_e->e_tag |= NFS_DFACL_MASK;
+	}
+
+	return encode_acl;
+}
+
+/**
+ * @brief convert ACL rpc struct into equivalent posix acl
+ *
+ *
+ * @param[in]  posix_acl  Point to Posix ACL rpc transmission structure
+ * @param[in]  type	  Represents type of posix acl( ACCESS/DEFAULT )
+ * @param[out] acl	  Posix ACL
+ *
+ */
+acl_t decode_posix_acl(posix_acl *nfs3_acl, uint32_t type)
+{
+	posix_acl_entry *entry = nfs3_acl->entries, *end;
+
+	int count;
+	int ret = 0;
+	acl_t acl = NULL;
+	acl_entry_t acl_entry;
+	acl_tag_t tag;
+	acl_permset_t permset;
+	uid_t uid;
+	gid_t gid;
+
+	count = nfs3_acl->count;
+
+	if (!nfs3_acl->count) {
+		LogDebug(COMPONENT_NFSPROTO,
+			"No entries present in posix_acl");
+		return NULL;
+	}
+
+	acl = acl_init(count);
+	if (!acl) {
+		LogMajor(COMPONENT_NFSPROTO,
+			"Failed to ACL INIT: count = %d", count);
+		return NULL;
+	}
+
+	for (end = entry + count; entry != end; entry++) {
+		ret = acl_create_entry(&acl, &acl_entry);
+		if (ret) {
+			LogMajor(COMPONENT_FSAL, "Failed to create acl entry");
+			goto out;
+		}
+
+		tag = entry->e_tag;
+		if (type == ACL_TYPE_DEFAULT)
+			tag = NFS_ACL_MASK & tag;
+
+		ret = acl_set_tag_type(acl_entry, tag);
+		if (ret) {
+			LogMajor(COMPONENT_FSAL, "Failed to set acl tag type");
+			goto out;
+		}
+
+		ret = acl_get_permset(acl_entry, &permset);
+		if (ret) {
+			LogWarn(COMPONENT_FSAL, "Failed to get acl permset");
+			goto out;
+		}
+
+		ret = acl_add_perm(permset, entry->e_perm);
+		if (ret) {
+			LogWarn(COMPONENT_FSAL, "Failed to add acl permission");
+			goto out;
+		}
+
+		switch (tag) {
+		case ACL_USER_OBJ:
+		case ACL_GROUP_OBJ:
+		case ACL_MASK:
+		case ACL_OTHER:
+			break;
+
+		case ACL_USER:
+			uid = entry->e_id;
+			ret = acl_set_qualifier(acl_entry, &uid);
+			if (ret) {
+				LogMajor(COMPONENT_FSAL, "Failed to set uid");
+				goto out;
+			}
+			break;
+
+		case ACL_GROUP:
+			gid = entry->e_id;
+			ret = acl_set_qualifier(acl_entry, &gid);
+			if (ret) {
+				LogMajor(COMPONENT_FSAL, "Failed to set gid");
+				goto out;
+			}
+			break;
+
+		default:
+			LogDebug(COMPONENT_FSAL, "Undefined ACL type");
+			goto out;
+		}
+	}
+
+	return acl;
+
+out:
+	if (acl) {
+		acl_free((void *)acl);
+	}
+
+	return NULL;
+}
+
+
+/*
+ *  @brief convert ACL rpc struct into an equivalent FSAL ACL
+ *
+ * @param[in]  attrs	NFSv3 attr to be set.
+ * @param[in]  mask	Mask of acl( ACCESS/DEFAULT ) and count
+ * @param[in]  a_acl	Point to access Posix ACL rpc transmission structure
+ * @param[in]  d_acl	Point to default Posix ACL rpc transmission structure
+ * @param[in]  is_dir	Represents file/directory
+ * @param[out] rc	errno
+ *
+ * @returns 0 on success and -Errno on failure
+ */
+int nfs3_acl_2_fsal_acl(struct attrlist *attr, nfs3_int32 mask,
+		posix_acl *a_acl, posix_acl *d_acl, bool is_dir)
+{
+	acl_t e_acl = NULL, i_acl = NULL;
+	fsal_acl_data_t acldata;
+	fsal_ace_t *pace = NULL;
+	fsal_acl_status_t aclstatus;
+	int e_count = 0, i_count = 0, new_count = 0, new_i_count = 0;
+	int rc = 0;
+
+
+	attr->valid_mask = 0;
+
+
+	/* Decode access acl */
+	if (mask & (NFS_ACL|NFS_ACLCNT)) {
+		e_acl = decode_posix_acl(a_acl, ACL_TYPE_ACCESS);
+		if (!e_acl) {
+			LogMajor(COMPONENT_NFSPROTO,
+				"failed to decode access posix acl");
+			rc = -EINVAL;
+			goto out;
+		}
+		e_count = ace_count(e_acl);
+	}
+
+	/* Decode default acl */
+	if (is_dir && (mask & (NFS_DFACL|NFS_DFACLCNT))) {
+		i_acl = decode_posix_acl(d_acl, ACL_TYPE_DEFAULT);
+		if (!e_acl) {
+			LogMajor(COMPONENT_NFSPROTO,
+					"failed to decode default posix acl");
+			rc = -EINVAL;
+			goto out;
+		}
+		i_count = ace_count(i_acl);
+	}
+
+	acldata.naces = 2 * (e_count + i_count);
+	LogDebug(COMPONENT_NFSPROTO,
+			"No of aces present in fsal_acl_t = %d", acldata.naces);
+	if (!acldata.naces) {
+		rc = 0;
+		goto out;
+	}
+
+	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
+	pace = acldata.aces;
+
+	if (e_count > 0) {
+		new_count = posix_acl_2_fsal_acl(e_acl, is_dir, false, &pace);
+	} else {
+		LogDebug(COMPONENT_NFSPROTO,
+			"No acl set for access acl");
+	}
+
+	if (i_count > 0) {
+		new_i_count = posix_acl_2_fsal_acl(i_acl, true, true, &pace);
+		new_count += new_i_count;
+	} else {
+		LogDebug(COMPONENT_NFSPROTO,
+			"No acl set for default acl");
+	}
+
+	/* Reallocating acldata into the required size */
+	acldata.aces = (fsal_ace_t *) gsh_realloc(acldata.aces,
+					new_count*sizeof(fsal_ace_t));
+	acldata.naces = new_count;
+
+	//Cache?
+	attr->acl = nfs4_acl_new_entry(&acldata, &aclstatus);
+	if (attr->acl == NULL) {
+		LogCrit(COMPONENT_NFSPROTO, "failed to create a new acl entry");
+		rc = -EFAULT;
+		goto out;
+	}
+
+	rc = 0;
+	attr->valid_mask |= ATTR_ACL;
+
+out:
+	if (e_acl) {
+		acl_free((void *)e_acl);
+	}
+
+	if (i_acl) {
+		acl_free((void *)i_acl);
+	}
+
+	return rc;
+
+}
+#endif				/* USE_NFSACL3 */

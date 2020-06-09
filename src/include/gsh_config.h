@@ -58,6 +58,7 @@ typedef enum protos {
 	P_MNT,			/*< Mount (for v3) */
 	P_NLM,			/*< NLM (for v3) */
 	P_RQUOTA,		/*< RQUOTA (for v3) */
+	P_NFSACL,		/*< NFSACL (for v3) */
 	P_NFS_VSOCK,		/*< NFS over vmware, qemu vmci sockets */
 	P_NFS_RDMA,		/*< NFS over RPC/RDMA */
 	P_COUNT			/*< Number of protocols */
@@ -353,6 +354,8 @@ typedef struct nfs_core_param {
 	/** Whether to support the Remote Quota protocol.  Defaults
 	    to true and is settable with Enable_RQUOTA. */
 	bool enable_RQUOTA;
+	/* Whether to support the POSIX ACL. Defaults to false. */
+	bool enable_NFSACL;
 	/** Whether to collect NFS stats.  Defaults to true. */
 	bool enable_NFSSTATS;
 	/** Whether to use fast stats.  Defaults to false. */

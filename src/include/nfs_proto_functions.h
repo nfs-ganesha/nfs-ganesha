@@ -55,6 +55,8 @@ extern const nfs_function_desc_t mnt3_func_desc[];
 extern const nfs_function_desc_t nlm4_func_desc[];
 extern const nfs_function_desc_t rquota1_func_desc[];
 extern const nfs_function_desc_t rquota2_func_desc[];
+extern const nfs_function_desc_t nfsacl_func_desc[];
+
 
 int mnt_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
@@ -116,7 +118,17 @@ int rquota_setactivequota(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 /* @}
  *  * -- End of RQUOTA protocol functions. --
- *   */
+ *  */
+
+int nfsacl_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
+
+int nfsacl_getacl(nfs_arg_t *, struct svc_req *, nfs_res_t *);
+
+int nfsacl_setacl(nfs_arg_t *, struct svc_req *, nfs_res_t *);
+
+/* @}
+ *  * -- End of NFSACL protocol functions. --
+ *  */
 
 int nfs_null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
@@ -448,6 +460,10 @@ void rquota_getquota_Free(nfs_res_t *);
 void rquota_getactivequota_Free(nfs_res_t *);
 void rquota_setquota_Free(nfs_res_t *);
 void rquota_setactivequota_Free(nfs_res_t *);
+
+void nfsacl_Null_Free(nfs_res_t *);
+void nfsacl_getacl_Free(nfs_res_t *);
+void nfsacl_setacl_Free(nfs_res_t *);
 
 void nfs_null_free(nfs_res_t *);
 

@@ -829,6 +829,12 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 			func = &rquota2_func_desc[dv->hin.rq_proc];
 			break;
 		}
+	} else if (dv->hin.rq_prog == NFS_program[P_NFSACL]) {
+		switch (dv->hin.rq_vers) {
+		case NFSACL_V3:
+			func = &nfsacl_func_desc[dv->hin.rq_proc];
+		break;
+	}
 	} else {
 		/* not reached */
 		LogMajor(COMPONENT_DUPREQ,

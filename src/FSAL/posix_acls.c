@@ -263,10 +263,6 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			continue;
 		}
 
-		/* Mask is not converted to a fsal_acl entry , skipping */
-		if (tag == ACL_MASK)
-			continue;
-
 		pace_deny->type = FSAL_ACE_TYPE_DENY;
 		pace_allow->type = FSAL_ACE_TYPE_ALLOW;
 
@@ -306,6 +302,12 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			pace_allow->flag = pace_deny->flag |=
 						FSAL_ACE_FLAG_GROUP_ID;
 			break;
+		case  ACL_MASK:
+			pace_allow->who.uid = pace_deny->who.uid =
+						FSAL_ACE_SPECIAL_MASK;
+			pace_allow->iflag = pace_deny->iflag =
+						FSAL_ACE_IFLAG_SPECIAL_ID;
+			break;
 		default:
 			LogWarn(COMPONENT_FSAL, "Invalid tag for the acl");
 		}
@@ -337,6 +339,10 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 		if (acl_get_perm(p_permset, ACL_READ)) {
 			if (tag == ACL_USER_OBJ || tag == ACL_OTHER || readmask)
 				pace_allow->perm |= FSAL_ACE_PERM_READ_DATA;
+			if ((tag == ACL_USER || tag == ACL_GROUP ||
+					tag == ACL_GROUP_OBJ) && (!readmask))
+				pace_allow->iflag |=
+						FSAL_ACE_FLAG_MASK_READ_DENY;
 		} else
 			readcurrent = false;
 
@@ -351,6 +357,10 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			if (is_dir)
 				pace_allow->perm |=
 					FSAL_ACE_PERM_DELETE_CHILD;
+			if ((tag == ACL_USER || tag == ACL_GROUP ||
+					tag == ACL_GROUP_OBJ) && (!writemask))
+				pace_allow->iflag |=
+					FSAL_ACE_FLAG_MASK_WRITE_DENY;
 		} else
 			writecurrent = false;
 
@@ -358,6 +368,10 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			if (tag == ACL_USER_OBJ || tag == ACL_OTHER ||
 						executemask)
 				pace_allow->perm |= FSAL_ACE_PERM_EXECUTE;
+			if ((tag == ACL_USER || tag == ACL_GROUP ||
+					tag == ACL_GROUP_OBJ) && (!executemask))
+				pace_allow->iflag |=
+					FSAL_ACE_FLAG_MASK_EXECUTE_DENY;
 		} else
 			executecurrent = false;
 
@@ -482,7 +496,7 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 	acl_tag_t tag = -1;
 	char *acl_str;
 	unsigned int id;
-	bool mask = false;
+	bool mask = false, mask_set = false;
 	bool deny_e_r = false, deny_e_w = false, deny_e_x = false;
 
 
@@ -615,6 +629,8 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 				tag = ACL_USER_OBJ;
 			if (IS_FSAL_ACE_SPECIAL_GROUP(*f_ace))
 				tag = ACL_GROUP_OBJ;
+			if (IS_FSAL_ACE_SPECIAL_MASK(*f_ace))
+				tag = ACL_MASK;
 		} else {
 			id = GET_FSAL_ACE_WHO(*f_ace);
 			if (IS_FSAL_ACE_GROUP_ID(*f_ace))
@@ -654,19 +670,36 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 		}
 		ret = acl_get_permset(a_entry, &a_permset);
 
-		if (isallow(f_ace, e_a_permset, ACL_READ)
+		if (IS_FSAL_ACE_SPECIAL_MASK(*f_ace)) {
+			if (IS_FSAL_ACE_ALLOW(*f_ace)) {
+				if IS_FSAL_ACE_READ_DATA(*f_ace)
+					acl_add_perm(a_permset, ACL_READ);
+				if IS_FSAL_ACE_WRITE_DATA(*f_ace)
+					acl_add_perm(a_permset, ACL_WRITE);
+				if IS_FSAL_ACE_EXECUTE(*f_ace)
+					acl_add_perm(a_permset, ACL_EXECUTE);
+			}
+			mask_set = true;
+			continue;
+		}
+
+		if ((isallow(f_ace, e_a_permset, ACL_READ)
 		    && !isdeny(d_permset, e_d_permset, ACL_READ))
+		    || IS_FSAL_ACE_IFLAG(*f_ace, FSAL_ACE_FLAG_MASK_READ_DENY))
 			acl_add_perm(a_permset, ACL_READ);
 
-		if (isallow(f_ace, e_a_permset, ACL_WRITE)
+		if ((isallow(f_ace, e_a_permset, ACL_WRITE)
 		    && !isdeny(d_permset, e_d_permset, ACL_WRITE))
+		    || IS_FSAL_ACE_IFLAG(*f_ace, FSAL_ACE_FLAG_MASK_WRITE_DENY))
 			acl_add_perm(a_permset, ACL_WRITE);
 
-		if (isallow(f_ace, e_a_permset, ACL_EXECUTE)
+		if ((isallow(f_ace, e_a_permset, ACL_EXECUTE)
 		    && !isdeny(d_permset, e_d_permset, ACL_EXECUTE))
+		    || IS_FSAL_ACE_IFLAG(*f_ace,
+				FSAL_ACE_FLAG_MASK_EXECUTE_DENY))
 			acl_add_perm(a_permset, ACL_EXECUTE);
 	}
-	if (mask) {
+	if (!mask_set && mask) {
 		ret = acl_calc_mask(&allow_acl);
 		if (ret)
 			LogWarn(COMPONENT_FSAL,
@@ -751,6 +784,7 @@ acl_t xattr_2_posix_acl(const struct acl_ea_header *ea_header, size_t size)
 	acl_permset_t permset;
 	uid_t uid;
 	gid_t gid;
+	char *acl_str;
 
 	count = posix_acl_entries_count(size);
 	if (count < 0) {
@@ -832,6 +866,9 @@ acl_t xattr_2_posix_acl(const struct acl_ea_header *ea_header, size_t size)
 		}
 	}
 
+	acl_str = acl_to_any_text(acl, NULL, ',',
+				TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
+	LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
 	return acl;
 
 out:
@@ -861,6 +898,11 @@ int posix_acl_2_xattr(acl_t acl, void *buf, size_t size)
 	acl_permset_t permset;
 	int real_size, count, entry_id;
 	int ret = 0;
+	char *acl_str;
+
+	acl_str = acl_to_any_text(acl, NULL, ',',
+				TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
+	LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
 
 	count = acl_entries(acl);
 	real_size = sizeof(*ea_header) + count * sizeof(*ea_entry);
