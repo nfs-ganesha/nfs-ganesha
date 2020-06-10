@@ -689,7 +689,12 @@ gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		 */
 		PTHREAD_RWLOCK_wrlock(&my_share_fd->fdlock);
 
-		fsal_internal_close(my_share_fd->fd, NULL, 0);
+		/* Can someone else close the old file descriptor in
+		 * my_share_fd? Found this to be -1 in NFSv4.1 with
+		 * failovers!
+		 */
+		if (my_share_fd->fd != -1)
+			fsal_internal_close(my_share_fd->fd, NULL, 0);
 
 		my_share_fd->fd = my_fd;
 		my_share_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
