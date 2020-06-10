@@ -47,8 +47,6 @@
 #include "fsal_internal.h"
 #include "kvsfs_methods.h"
 
-struct fsal_staticfsinfo_t *kvsfs_staticinfo(struct fsal_module *hdl);
-
 /* export object methods
  */
 
@@ -104,6 +102,17 @@ static fsal_status_t kvsfs_wire_to_host(struct fsal_export *exp_hdl,
 
 }
 
+static attrmask_t kvsfs_supported_attrs(struct fsal_export *exp_hdl)
+{
+        attrmask_t supported_mask;
+
+        supported_mask = fsal_supported_attrs(&exp_hdl->fsal->fs_info);
+
+        supported_mask &= ~ATTR_ACL;
+
+        return supported_mask;
+}
+
 /* kvsfs_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -115,6 +124,7 @@ void kvsfs_export_ops_init(struct export_ops *ops)
 	ops->wire_to_host = kvsfs_wire_to_host;
 	ops->create_handle = kvsfs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
+	ops->fs_supported_attrs = kvsfs_supported_attrs;
 }
 
 static int kvsfs_conf_pnfs_commit(void *node,
