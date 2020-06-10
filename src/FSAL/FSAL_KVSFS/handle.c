@@ -977,7 +977,7 @@ static fsal_status_t kvsfs_handle_to_wire(const struct fsal_obj_handle *obj_hdl,
  * release
  * release our export first so they know we are gone
  */
-static void release(struct fsal_obj_handle *obj_hdl)
+static void kvsfs_release(struct fsal_obj_handle *obj_hdl)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	object_file_type_t type = obj_hdl->type;
@@ -1093,7 +1093,9 @@ fsal_status_t kvsfs_create_handle(struct fsal_export *exp_hdl,
 
 void kvsfs_handle_ops_init(struct fsal_obj_ops *ops)
 {
-	ops->release = release;
+	fsal_default_obj_ops_init(ops);
+
+	ops->release = kvsfs_release;
 	ops->merge = kvsfs_merge;
 	ops->lookup = kvsfs_lookup;
 	ops->mkdir = kvsfs_mkdir;
