@@ -301,7 +301,6 @@ static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	struct kvsfs_file_handle fh;
 	kvsns_cred_t cred;
-	kvsns_ino_t object;
 	struct stat stat;
 
 	*handle = NULL;		/* poison it */
@@ -322,10 +321,10 @@ static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 	cred.gid = attrib->group;
 
 	retval = kvsns_mkdir(&cred, &myself->handle->kvsfs_handle, (char *)name,
-			     fsal2unix_mode(attrib->mode), &object);
+			     fsal2unix_mode(attrib->mode), &fh.kvsfs_handle);
 	if (retval)
 		goto fileerr;
-	retval = kvsns_getattr(&cred, &object, &stat);
+	retval = kvsns_getattr(&cred, &fh.kvsfs_handle, &stat);
 	if (retval)
 		goto fileerr;
 
@@ -333,7 +332,6 @@ static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 	hdl = alloc_handle(&fh, &stat, NULL, op_ctx->fsal_export);
 
 	/* >> set output handle << */
-	hdl->handle->kvsfs_handle = object;
 	*handle = &hdl->obj_handle;
 
 	if (attrs_out != NULL)
