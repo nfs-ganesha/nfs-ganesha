@@ -82,6 +82,7 @@ struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
 	memcpy(hdl->handle, fh, sizeof(struct kvsfs_file_handle));
 
 	hdl->obj_handle.type = attr->type;
+	hdl->obj_handle.fileid = attr->fileid;
 
 	if ((hdl->obj_handle.type == SYMBOLIC_LINK) &&
 	    (link_content != NULL)) {
@@ -94,6 +95,7 @@ struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
 	fsal_obj_handle_init(&hdl->obj_handle,
 			     exp_hdl,
 			     attr->type);
+
 	hdl->obj_handle.obj_ops = &my_module->handle_ops;
 	if (myself->pnfs_mds_enabled)
 		handle_ops_pnfs(hdl->obj_handle.obj_ops);
@@ -288,59 +290,6 @@ fsal_status_t kvsfs_create2(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(posix2fsal_error(-retval), -retval);
 }
 
-
-#if 0
-/* create
- * create a regular file and set its attributes
- */
-
-static fsal_status_t kvsfs_create(struct fsal_obj_handle *dir_hdl,
-				 const char *name, struct attrlist *attrib,
-				 struct fsal_obj_handle **handle)
-{
-	struct kvsfs_fsal_obj_handle *myself, *hdl;
-	int retval = 0;
-	struct kvsfs_file_handle fh;
-	kvsns_cred_t cred;
-	kvsns_ino_t object;
-	struct stat stat;
-
-	*handle = NULL;		/* poison it */
-	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
-		LogCrit(COMPONENT_FSAL,
-			"Parent handle is not a directory. hdl = 0x%p",
-			dir_hdl);
-		return fsalstat(ERR_FSAL_NOTDIR, 0);
-	}
-	memset(&fh, 0, sizeof(struct kvsfs_file_handle));
-	myself = container_of(dir_hdl, struct kvsfs_fsal_obj_handle,
-			      obj_handle);
-
-	cred.uid = attrib->owner;
-	cred.gid = attrib->group;
-
-	retval = kvsns_creat(&cred, &myself->handle->kvsfs_handle, (char *)name,
-			     fsal2unix_mode(attrib->mode), &object);
-	if (retval)
-		goto fileerr;
-
-	retval = kvsns_getattr(&cred, &object, &stat);
-	if (retval)
-		goto fileerr;
-
-	/* allocate an obj_handle and fill it up */
-	hdl = kvsfs_alloc_handle(&fh, &stat, NULL, op_ctx->fsal_export);
-
-	/* >> set output handle << */
-	hdl->handle->kvsfs_handle = object;
-	*handle = &hdl->obj_handle;
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
- fileerr:
-	return fsalstat(posix2fsal_error(-retval), -retval);
-}
-#endif
 
 static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 				const char *name,
@@ -984,21 +933,6 @@ static void kvsfs_release(struct fsal_obj_handle *obj_hdl)
 
 	myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle,
 			      obj_handle);
-
-#if 0
-	/** @todo : to be done as file content is supported */
-
-	if (type == REGULAR_FILE &&
-	    myself->u.file.openflags != FSAL_O_CLOSED) {
-		fsal_status_t st = tank_close(obj_hdl);
-
-		if (FSAL_IS_ERROR(st)) {
-			LogCrit(COMPONENT_FSAL,
-				"Could not close, error %s(%d)",
-				strerror(st.minor), st.minor);
-		}
-	}
-#endif
 
 	fsal_obj_handle_fini(obj_hdl);
 
