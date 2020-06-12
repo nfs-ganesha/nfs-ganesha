@@ -284,7 +284,7 @@ fsal_status_t kvsfs_create2(struct fsal_obj_handle *dir_hdl,
 	kvsfs_fh->kvsfs_handle = object; /* Useful ? */
 
 	if (fsal_attr != NULL)
-		posix2fsal_attributes(&stat, fsal_attr);
+		posix2fsal_attributes_all(&stat, fsal_attr);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
