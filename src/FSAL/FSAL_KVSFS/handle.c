@@ -69,8 +69,7 @@ struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
 				 struct kvsfs_fsal_module,
 				 fsal);
 
-	LogDebug(COMPONENT_FSAL, "kvsfs_alloc_handle: inode=%d",
-		 (unsigned int)fh->kvsfs_handle);
+	LogDebug(COMPONENT_FSAL, "kvsfs_alloc_handle");
 
 	hdl = gsh_malloc(sizeof(struct kvsfs_fsal_obj_handle) +
 			 sizeof(struct kvsfs_file_handle));
@@ -571,8 +570,9 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 	myself =
 		container_of(dir_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
-	LogDebug(COMPONENT_FSAL, "kvsfs_readdir: %d",
-		 (unsigned int)myself->handle->kvsfs_handle);
+	LogDebug(COMPONENT_FSAL, "kvsfs_readdir: %d seekloc = %lld",
+		 (unsigned int)myself->handle->kvsfs_handle,
+		 (long long)seekloc);
 
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
@@ -614,7 +614,7 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 				   hdl,
 				   &attrs,
 				   dir_state,
-				   (fsal_cookie_t) index);
+				   (fsal_cookie_t) index+1);
 
 			fsal_release_attrs(&attrs);
 
