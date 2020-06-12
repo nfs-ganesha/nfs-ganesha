@@ -82,6 +82,9 @@ struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
 	memcpy(hdl->handle, fh, sizeof(struct kvsfs_file_handle));
 
 	hdl->obj_handle.type = attr->type;
+	/* hdl->obj_handle.fsid = attr->fsid; */ /* To be implemented */
+	hdl->obj_handle.fsid.major = 777; 
+	hdl->obj_handle.fsid.minor = 0; 
 	hdl->obj_handle.fileid = attr->fileid;
 
 	if ((hdl->obj_handle.type == SYMBOLIC_LINK) &&
@@ -372,6 +375,10 @@ static fsal_status_t kvsfs_merge(struct fsal_obj_handle *orig_hdl,
 		dupe = container_of(dupe_hdl,
 				    struct kvsfs_fsal_obj_handle,
 				    obj_handle);
+
+		LogDebug(COMPONENT_FSAL, "kvsfs_merge: inodes=%d|%d",
+			 (unsigned int)orig->handle->kvsfs_handle,
+			 (unsigned int)dupe->handle->kvsfs_handle);
 
 		PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
 
@@ -828,6 +835,9 @@ static fsal_status_t kvsfs_close(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl,
 			      struct kvsfs_fsal_obj_handle, obj_handle);
 
+	LogDebug(COMPONENT_FSAL, "kvsfs_close: %d",
+		 (unsigned int)myself->handle->kvsfs_handle);
+
 	if (myself->u.file.openflags != FSAL_O_CLOSED) {
 		retval = kvsns_close(&myself->u.file.fd.fd);
 		if (retval < 0)
@@ -899,6 +909,9 @@ static fsal_status_t kvsfs_handle_to_wire(const struct fsal_obj_handle *obj_hdl,
 			 obj_handle);
 	fh = myself->handle;
 
+	LogDebug(COMPONENT_FSAL, "kvsfs_handle_to_wire: %d",
+		 (unsigned int)myself->handle->kvsfs_handle);
+
 	switch (output_type) {
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
@@ -932,6 +945,9 @@ static void kvsfs_release(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle,
 			      obj_handle);
 
+	LogDebug(COMPONENT_FSAL, "kvsfs_release: %d",
+		 (unsigned int)myself->handle->kvsfs_handle);
+
 	fsal_obj_handle_fini(obj_hdl);
 
 	if (type == SYMBOLIC_LINK) {
@@ -958,6 +974,10 @@ static void kvsfs_handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 	myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle,
 			      obj_handle);
+
+	LogDebug(COMPONENT_FSAL, "kvsfs_handle_to_key: %d",
+		 (unsigned int)myself->handle->kvsfs_handle);
+
 	fh_desc->addr = myself->handle;
 	fh_desc->len = kvsfs_sizeof_handle(myself->handle);
 }

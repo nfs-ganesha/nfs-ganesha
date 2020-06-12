@@ -50,11 +50,13 @@
 /* export object methods
  */
 
-static void release(struct fsal_export *exp_hdl)
+static void kvsfs_export_release(struct fsal_export *exp_hdl)
 {
 	struct kvsfs_fsal_export *myself;
 
 	myself = container_of(exp_hdl, struct kvsfs_fsal_export, export);
+
+        LogDebug(COMPONENT_FSAL, "kvsfs_export_release: exp=%p", exp_hdl);
 
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
@@ -88,6 +90,8 @@ static fsal_status_t kvsfs_wire_to_host(struct fsal_export *exp_hdl,
 	if (!fh_desc || !fh_desc->addr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
+        LogDebug(COMPONENT_FSAL, "kvsfs_wire_to_host: exp=%p", exp_hdl);
+
 	hdl = (struct kvsfs_file_handle *)fh_desc->addr;
 	fh_size = kvsfs_sizeof_handle(hdl);
 	if (fh_desc->len != fh_size) {
@@ -106,6 +110,8 @@ static attrmask_t kvsfs_supported_attrs(struct fsal_export *exp_hdl)
 {
         attrmask_t supported_mask;
 
+        LogDebug(COMPONENT_FSAL, "kvsfs_supported_attrs");
+
         supported_mask = fsal_supported_attrs(&exp_hdl->fsal->fs_info);
 
         supported_mask &= ~ATTR_ACL;
@@ -119,7 +125,7 @@ static attrmask_t kvsfs_supported_attrs(struct fsal_export *exp_hdl)
 
 void kvsfs_export_ops_init(struct export_ops *ops)
 {
-	ops->release = release;
+	ops->release = kvsfs_export_release;
 	ops->lookup_path = kvsfs_lookup_path;
 	ops->wire_to_host = kvsfs_wire_to_host;
 	ops->create_handle = kvsfs_create_handle;
@@ -218,6 +224,8 @@ fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
 	fsal_export_init(&myself->export);
 	kvsfs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
+
+        LogDebug(COMPONENT_FSAL, "kvsfs_create_export");
 
 	retval = load_config_from_node(parse_node,
 				       &export_param,
