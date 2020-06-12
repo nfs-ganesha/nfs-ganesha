@@ -250,6 +250,8 @@ int fsal2posix_testperm(fsal_accessflags_t testperm)
 
 object_file_type_t posix2fsal_type(mode_t posix_type_in)
 {
+	LogDebug(COMPONENT_FSAL, "===============> posix2fsal_type: POSIX Type = %o",
+		 posix_type_in);
 
 	switch (posix_type_in & S_IFMT) {
 	case S_IFIFO:

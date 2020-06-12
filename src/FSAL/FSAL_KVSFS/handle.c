@@ -686,7 +686,7 @@ static fsal_status_t kvsfs_getattrs(struct fsal_obj_handle *obj_hdl,
 	myself =
 		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
-LogDebug(COMPONENT_FSAL, "kvsfs_getattrs: %d",
+	LogDebug(COMPONENT_FSAL, "kvsfs_getattrs: %d",
 		 (unsigned int)myself->handle->kvsfs_handle);
 
 	cred.uid = op_ctx->creds->caller_uid;
@@ -718,7 +718,7 @@ LogDebug(COMPONENT_FSAL, "kvsfs_getattrs: %d",
  ok_file_opened_and_deleted:
 	/* convert attributes */
 	if (attrs != NULL)
-		posix2fsal_attributes(&stat, attrs);
+		posix2fsal_attributes_all(&stat, attrs);
 
 
 	goto out;
