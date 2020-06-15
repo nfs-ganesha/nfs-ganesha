@@ -567,6 +567,7 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 
 	if (whence != NULL)
 		seekloc = (off_t) *whence;
+
 	myself =
 		container_of(dir_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
@@ -589,6 +590,7 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 				       dirents, &size);
 		if (retval)
 			goto out;
+
 		for (index = 0; index < MAX_ENTRIES; index++) {
 			/* If psz_filename is NULL,
 			 * that's the end of the list */

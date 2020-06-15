@@ -94,6 +94,10 @@ static fsal_errors_t _9p_readdir_callback(void *opaque,
 	int name_len = strlen(cb_parms->name);
 	u8 qid_type, d_type;
 
+	LogDebug(COMPONENT_9P, "_9p_readdir_callback: fileid=%llu cookie=%llu",
+		(unsigned long long)obj->fileid, 
+		(unsigned long long)cookie);
+
 	if (tracker == NULL) {
 		cb_parms->in_result = false;
 		return ERR_FSAL_NO_ERROR;
