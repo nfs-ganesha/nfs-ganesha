@@ -559,12 +559,14 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 	kvsns_cred_t cred;
 	kvsns_dentry_t dirents[MAX_ENTRIES];
 	unsigned int index = 0;
+	unsigned int nb_rddir_done = 0;
 	int size = 0;
 	kvsns_dir_t ddir;
 	struct attrlist attrs;
 	fsal_status_t status;
 	struct fsal_obj_handle *hdl;
 	int cb_rc;
+	fsal_cookie_t cookie;
 
 	if (whence != NULL)
 		seekloc = (off_t) *whence;
@@ -585,6 +587,7 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 		goto out;
 
 	/* Open the directory */
+	nb_rddir_done = 0;
 	do {
 		size = MAX_ENTRIES;
 		
@@ -613,16 +616,18 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 			}
 
 			/* callback to cache inode */
+			cookie = seekloc + index + 
+				 nb_rddir_done * MAX_ENTRIES + 1;
 			cb_rc = cb(dirents[index].name,
 				   hdl,
 				   &attrs,
 				   dir_state,
-				   (fsal_cookie_t)index+1);
+				   cookie);
 
 			LogDebug(COMPONENT_FSAL, 
-				 "kvsfs_readdir: %s cookie=%d",
-				 dirents[index].name,
-				 index);
+				 "kvsfs_readdir: %s cookie=%llu",
+				 dirents[index].name, 
+				 (unsigned long long)cookie);
 				
 			fsal_release_attrs(&attrs);
 
@@ -631,6 +636,7 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 		}
 
 		seekloc += MAX_ENTRIES;
+		nb_rddir_done += 1;
 	} while (size != 0 && *eof == false);
 
 	*eof = true;
