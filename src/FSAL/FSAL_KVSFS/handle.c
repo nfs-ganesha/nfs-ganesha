@@ -534,6 +534,7 @@ static fsal_status_t kvsfs_linkfile(struct fsal_obj_handle *obj_hdl,
 }
 
 #define MAX_ENTRIES 256
+
 /**
  * read_dirents
  * read the directory and call through the callback function for
@@ -586,18 +587,18 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 	/* Open the directory */
 	do {
 		size = MAX_ENTRIES;
+		
+		memset(dirents, 0, sizeof(kvsns_dentry_t) * MAX_ENTRIES);		
+
 		retval = kvsns_readdir(&cred, &ddir, seekloc,
 				       dirents, &size);
 		if (retval)
 			goto out;
 
-		for (index = 0; index < MAX_ENTRIES; index++) {
-			/* If psz_filename is NULL,
-			 * that's the end of the list */
-			if (dirents[index].name[0] == '\0') {
-				*eof = true;
-				goto done;
-			}
+		if (size < MAX_ENTRIES)
+			*eof = true;
+
+		for (index = 0; index < size; index++) {
 
 			fsal_prepare_attrs(&attrs, attrmask);
 
@@ -616,8 +617,13 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 				   hdl,
 				   &attrs,
 				   dir_state,
-				   (fsal_cookie_t) index+1);
+				   (fsal_cookie_t)index+1);
 
+			LogDebug(COMPONENT_FSAL, 
+				 "kvsfs_readdir: %s cookie=%d",
+				 dirents[index].name,
+				 index);
+				
 			fsal_release_attrs(&attrs);
 
 			if (cb_rc >= DIR_READAHEAD)
@@ -625,8 +631,9 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 		}
 
 		seekloc += MAX_ENTRIES;
-	} while (size != 0);
+	} while (size != 0 && *eof == false);
 
+	*eof = true;
  done:
 	retval = kvsns_closedir(&ddir);
 	if (retval < 0)
