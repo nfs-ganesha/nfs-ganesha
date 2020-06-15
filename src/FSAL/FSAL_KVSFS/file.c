@@ -604,13 +604,6 @@ fsal_status_t kvsfs_reopen2(struct fsal_obj_handle *obj_hdl,
 						 struct kvsfs_fsal_obj_handle,
 						 obj_handle)->u.file.share;
 
-	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
-		LogDebug(COMPONENT_FSAL,
-			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
-			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
-		return fsalstat(posix2fsal_error(EXDEV), EXDEV);
-	}
-
 	/* This can block over an I/O operation. */
 	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
