@@ -924,9 +924,6 @@ static fsal_status_t kvsfs_handle_to_wire(const struct fsal_obj_handle *obj_hdl,
 			 obj_handle);
 	fh = myself->handle;
 
-	LogDebug(COMPONENT_FSAL, "kvsfs_handle_to_wire: %d",
-		 (unsigned int)myself->handle->kvsfs_handle);
-
 	switch (output_type) {
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
@@ -989,9 +986,6 @@ static void kvsfs_handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 	myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle,
 			      obj_handle);
-
-	LogDebug(COMPONENT_FSAL, "kvsfs_handle_to_key: %d",
-		 (unsigned int)myself->handle->kvsfs_handle);
 
 	fh_desc->addr = myself->handle;
 	fh_desc->len = kvsfs_sizeof_handle(myself->handle);

@@ -110,8 +110,6 @@ static attrmask_t kvsfs_supported_attrs(struct fsal_export *exp_hdl)
 {
         attrmask_t supported_mask;
 
-        LogDebug(COMPONENT_FSAL, "kvsfs_supported_attrs");
-
         supported_mask = fsal_supported_attrs(&exp_hdl->fsal->fs_info);
 
         supported_mask &= ~ATTR_ACL;
