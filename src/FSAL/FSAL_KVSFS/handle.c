@@ -629,7 +629,7 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 
 			/* callback to cache inode */
 			cookie = seekloc + index + 
-				 (nb_rddir_done * MAX_ENTRIES) + 1;
+				 (nb_rddir_done * MAX_ENTRIES) + 3;
 			cb_rc = cb(dirents[index].name,
 				   hdl,
 				   &attrs,
