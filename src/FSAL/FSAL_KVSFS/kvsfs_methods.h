@@ -81,8 +81,6 @@ struct kvsfs_fsal_obj_handle {
 		struct {
 			struct fsal_share share;
 			kvsns_ino_t inode;
-			fsal_openflags_t openflags;
-			struct stat saved_stat;
 			struct kvsfs_fd fd;
 			kvsns_cred_t cred;
 		} file;

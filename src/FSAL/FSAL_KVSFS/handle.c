@@ -721,28 +721,9 @@ static fsal_status_t kvsfs_getattrs(struct fsal_obj_handle *obj_hdl,
 
 	retval = kvsns_getattr(&cred, &myself->handle->kvsfs_handle, &stat);
 
-	/* An explanation is required here.
-	 * This is an exception management.
-	 * when a file is opened, then deleted without being closed,
-	 * FSAL_VFS can still getattr on it, because it uses fstat
-	 * on a cached FD. This is not possible
-	 * to do this with KVSFS, because you can't fstat on a vnode.
-	 * To handle this, stat are
-	 * cached as the file is opened and used here,
-	 * to emulate a successful fstat */
-	if ((retval == ENOENT)
-	    && (myself->u.file.openflags != FSAL_O_CLOSED)
-	    && (S_ISREG(myself->u.file.saved_stat.st_mode))) {
-		memcpy(&stat, &myself->u.file.saved_stat,
-		       sizeof(struct stat));
-		retval = 0;	/* remove the error */
-		goto ok_file_opened_and_deleted;
-	}
-
 	if (retval)
 		goto errout;
 
- ok_file_opened_and_deleted:
 	/* convert attributes */
 	if (attrs != NULL)
 		posix2fsal_attributes_all(&stat, attrs);
@@ -865,12 +846,12 @@ static fsal_status_t kvsfs_close(struct fsal_obj_handle *obj_hdl)
 	LogDebug(COMPONENT_FSAL, "kvsfs_close: %d",
 		 (unsigned int)myself->handle->kvsfs_handle);
 
-	if (myself->u.file.openflags != FSAL_O_CLOSED) {
+	if (myself->u.file.fd.openflags != FSAL_O_CLOSED) {
 		retval = kvsns_close(&myself->u.file.fd.fd);
 		if (retval < 0)
 			fsal_error = posix2fsal_error(-retval);
 
-		myself->u.file.openflags = FSAL_O_CLOSED;
+		myself->u.file.fd.openflags = FSAL_O_CLOSED;
 	}
 
 	return fsalstat(fsal_error, -retval);

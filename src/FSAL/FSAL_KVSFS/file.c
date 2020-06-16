@@ -282,10 +282,6 @@ static fsal_status_t kvsfs_open(struct fsal_obj_handle *obj_hdl,
 
 	myself->u.file.fd.fd = *fd;
 
-	/* save the stat */
-	rc = kvsns_getattr(&cred, &myself->handle->kvsfs_handle,
-			   &myself->u.file.saved_stat);
-
 	if (rc) {
 		fsal_error = posix2fsal_error(-rc);
 		return fsalstat(fsal_error, -rc);
@@ -692,7 +688,7 @@ fsal_openflags_t kvsfs_status2(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl,
 			      struct kvsfs_fsal_obj_handle,
 			      obj_handle);
-	return myself->u.file.openflags;
+	return myself->u.file.fd.openflags;
 }
 
 /* kvsfs_read
@@ -715,7 +711,7 @@ fsal_status_t kvsfs_read(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl,
 			      struct kvsfs_fsal_obj_handle, obj_handle);
 
-	assert(myself->u.file.openflags != FSAL_O_CLOSED);
+	assert(myself->u.file.fd.openflags != FSAL_O_CLOSED);
 
 	retval = kvsns_read(&cred, &myself->u.file.fd.fd,
 			    buffer, buffer_size, offset);
@@ -757,7 +753,7 @@ fsal_status_t kvsfs_write(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl,
 			      struct kvsfs_fsal_obj_handle, obj_handle);
 
-	assert(myself->u.file.openflags != FSAL_O_CLOSED);
+	assert(myself->u.file.fd.openflags != FSAL_O_CLOSED);
 
 	retval = kvsns_write(&cred, &myself->u.file.fd.fd,
 			     buffer, buffer_size, offset);
@@ -801,11 +797,18 @@ fsal_status_t kvsfs_close2(struct fsal_obj_handle *obj_hdl,
 	struct kvsfs_fsal_obj_handle *myself;
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	struct kvsfs_fd *my_fd = NULL;
 
 	assert(obj_hdl->type == REGULAR_FILE);
+	assert(state != NULL);
+
 	myself = container_of(obj_hdl,
 			      struct kvsfs_fsal_obj_handle, obj_handle);
 
+	my_fd = &container_of(state,
+			      struct kvsfs_state_fd,
+			      state)->kvsfs_fd;
+	
 	if (state->state_type == STATE_TYPE_SHARE ||
 	    state->state_type == STATE_TYPE_NLM_SHARE ||
 	    state->state_type == STATE_TYPE_9P_FID) {
@@ -815,22 +818,24 @@ fsal_status_t kvsfs_close2(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
 		update_share_counters(&myself->u.file.share,
-				      myself->u.file.openflags,
+				      my_fd->openflags,
 				      FSAL_O_CLOSED);
 
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 	}
 
-	if (myself->u.file.openflags != FSAL_O_CLOSED) {
-		retval = kvsns_close(&myself->u.file.fd.fd);
-		if (retval < 0)
-			fsal_error = posix2fsal_error(-retval);
+	PTHREAD_RWLOCK_wrlock(&my_fd->fdlock);
+	retval = kvsns_close(&my_fd->fd);
+	PTHREAD_RWLOCK_unlock(&my_fd->fdlock);
 
-		myself->u.file.openflags = FSAL_O_CLOSED;
-	}
+	if (retval < 0)
+		fsal_error = posix2fsal_error(-retval);
+
+	my_fd->openflags = FSAL_O_CLOSED;
 
 	return fsalstat(fsal_error, -retval);
 }
+
 
 /*
  * FSAL_KVSFS has no lock support
