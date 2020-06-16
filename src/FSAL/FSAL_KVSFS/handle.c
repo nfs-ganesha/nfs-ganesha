@@ -154,8 +154,20 @@ static fsal_status_t kvsfs_lookup(struct fsal_obj_handle *parent,
 
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
-	retval = kvsns_lookup(&cred, &parent_hdl->handle->kvsfs_handle,
-			      (char *)path, &object);
+
+	/* Do we lookup for parent or current directory ? */
+	if (!strcmp(path, ".")) {
+		retval = 0;
+		object = parent_hdl->handle->kvsfs_handle;
+	} else if (!strcmp(path, ".."))
+		retval = kvsns_lookupp(&cred, 
+				       &parent_hdl->handle->kvsfs_handle,
+				       &object);
+	else
+		retval = kvsns_lookup(&cred,
+				      &parent_hdl->handle->kvsfs_handle,
+				      (char *)path, &object);
+
 	if (retval) {
 		fsal_error = posix2fsal_error(-retval);
 		goto errout;
