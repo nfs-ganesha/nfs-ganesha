@@ -291,6 +291,59 @@ static fsal_status_t kvsfs_open(struct fsal_obj_handle *obj_hdl,
 
 }
 
+static fsal_status_t kvsfs_open_func(struct fsal_obj_handle *obj_hdl,
+				     fsal_openflags_t openflags,
+				     struct fsal_fd *fd)
+{
+	fsal_status_t status;
+	struct kvsfs_fd *my_fd = (struct kvsfs_fd *)fd;
+	int posix_flags = 0;
+	kvsns_cred_t cred;
+	int retval = 0;
+	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	struct kvsfs_fsal_obj_handle *myself;
+
+	myself = container_of(obj_hdl,
+			      struct kvsfs_fsal_obj_handle,
+			      obj_handle);
+
+	cred.uid = op_ctx->creds->caller_uid;
+	cred.gid = op_ctx->creds->caller_gid;
+
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	retval = kvsns_open(&cred,
+			    &myself->handle->kvsfs_handle,
+			    posix_flags, 
+			    0777,
+			    &my_fd->fd);
+
+	fsal_error = posix2fsal_error(-retval);
+	status = fsalstat(fsal_error, -retval);
+
+	if (FSAL_IS_ERROR(status))
+		return status;
+
+	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
+
+	return status;
+}
+
+static fsal_status_t kvsfs_close_func(struct fsal_obj_handle *obj_hdl,
+				      struct fsal_fd *fd)
+{
+	struct kvsfs_fd *my_fd = (struct kvsfs_fd *)fd;
+	int retval;
+
+	retval = kvsns_close(&my_fd->fd);
+
+	memset(&my_fd->fd, 0, sizeof(kvsns_file_open_t));
+	my_fd->openflags = FSAL_O_CLOSED;
+
+	return fsalstat(posix2fsal_error(-retval), -retval);
+}
+
+
 /**
  * @brief Open a file descriptor for read or write and possibly create
  *
@@ -658,10 +711,10 @@ fsal_status_t kvsfs_reopen2(struct fsal_obj_handle *obj_hdl,
  * FSAL must be able to perform this operation without being passed a specific
  * state.
  *
- * @param[in] obj_hdl          File on which to operate
- * @param[in] state            state_t to use for this operation
- * @param[in] offset           Start of range to commit
- * @param[in] len              Length of range to commit
+ * @param[in] obj_hdl	  File on which to operate
+ * @param[in] state	    state_t to use for this operation
+ * @param[in] offset	   Start of range to commit
+ * @param[in] len	      Length of range to commit
  *
  * @return FSAL status.
  */
@@ -851,6 +904,58 @@ fsal_status_t kvsfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+static fsal_status_t kvsfs_find_fd(struct kvsfs_fd *fd,
+				   struct fsal_obj_handle *obj_hdl,
+				   bool bypass,
+				   struct state_t *state,
+				   fsal_openflags_t openflags,
+				   bool *has_lock,
+				   bool *closefd,
+				   bool open_for_locks)
+{
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	struct kvsfs_fsal_obj_handle *myself;
+	struct kvsfs_fd temp_fd; 
+	struct kvsfs_fd *out_fd;
+	int posix_flags;
+	bool reusing_open_state_fd = false;
+
+	myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
+
+	memset(&temp_fd, 0, sizeof(struct kvsfs_fd));
+	(void)pthread_rwlock_destroy(&temp_fd.fdlock);
+	temp_fd.openflags = FSAL_O_CLOSED;
+
+	out_fd = &temp_fd;	
+
+	fsal2posix_openflags(openflags, &posix_flags);
+
+	LogFullDebug(COMPONENT_FSAL, "openflags 0x%X posix_flags 0x%X",
+			openflags, posix_flags);
+
+	if (obj_hdl->type != REGULAR_FILE)
+		return fsalstat(posix2fsal_error(EINVAL), EINVAL);
+
+	status = fsal_find_fd((struct fsal_fd **)&out_fd,
+			      obj_hdl,
+			      (struct fsal_fd *)&myself->u.file.fd,
+			      &myself->u.file.share,
+			      bypass, 
+			      state,
+			      openflags,
+			      kvsfs_open_func,
+			      kvsfs_close_func,
+			      has_lock,
+			      closefd,
+			      open_for_locks,
+			      &reusing_open_state_fd);
+
+	if (FSAL_IS_SUCCESS(status))
+		*fd = *out_fd;
+
+	return status;
+}
+
 
 void kvsfs_read2(struct fsal_obj_handle *obj_hdl,
 	 	 bool bypass,
@@ -858,6 +963,61 @@ void kvsfs_read2(struct fsal_obj_handle *obj_hdl,
 		 struct fsal_io_arg *read_arg,
 		 void *caller_arg)
 {
+	struct kvsfs_fd kvsfs_fd;
+	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	bool has_lock = false;
+	bool closefd = false;
+	ssize_t nb_read;
+	uint64_t offset = read_arg->offset;
+	kvsns_cred_t cred;
+	int i;
+
+	cred.uid = op_ctx->creds->caller_uid;
+	cred.gid = op_ctx->creds->caller_gid;
+
+	if (read_arg->info != NULL) {
+		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), read_arg,
+					caller_arg);
+		return;
+	}
+
+	status =
+		kvsfs_find_fd(&kvsfs_fd,
+			      obj_hdl,
+			      bypass,
+			      read_arg->state,
+			      FSAL_O_READ,
+			      &has_lock,
+			      &closefd,
+			      false);
+
+	if (FSAL_IS_ERROR(status)) {
+		goto out;
+	}
+
+	for (i = 0; i < read_arg->iov_count; i++) {
+		nb_read = kvsns_read(&cred,
+				     &kvsfs_fd.fd,
+				     read_arg->iov[i].iov_base,
+				     read_arg->iov[i].iov_len,
+				     offset);
+
+		read_arg->io_amount += nb_read;
+		offset += nb_read;
+	}
+
+	read_arg->end_of_file = (read_arg->io_amount == 0);
+
+out:
+	if (closefd)
+		kvsns_close(&kvsfs_fd.fd);
+
+	if (has_lock) {
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	}
+
+	done_cb(obj_hdl, status, read_arg, caller_arg);
+
 	return;
 }
 
@@ -867,6 +1027,58 @@ void kvsfs_write2(struct fsal_obj_handle *obj_hdl,
 		  struct fsal_io_arg *write_arg,
 		  void *caller_arg)
 {
+	struct kvsfs_fd kvsfs_fd;
+	fsal_status_t status;
+	bool has_lock = false;
+	bool closefd = false;
+	ssize_t nb_written;
+	uint64_t offset = write_arg->offset;
+	kvsns_cred_t cred;
+	int i;
+
+	cred.uid = op_ctx->creds->caller_uid;
+	cred.gid = op_ctx->creds->caller_gid;
+
+	if (write_arg->info)
+		return done_cb(obj_hdl,
+			       fsalstat(ERR_FSAL_NOTSUPP, 0),
+			       write_arg,
+			       caller_arg);
+
+	status = kvsfs_find_fd(&kvsfs_fd,
+			       obj_hdl,
+			       bypass,
+			       write_arg->state,
+			       FSAL_O_WRITE,
+			       &has_lock,
+			       &closefd,
+			       false);
+
+	if (FSAL_IS_ERROR(status))
+		goto out;
+
+	for (i = 0; i < write_arg->iov_count; i++) {
+		nb_written = kvsns_write(&cred,
+					 &kvsfs_fd.fd,
+					 write_arg->iov[i].iov_base,
+					 write_arg->iov[i].iov_len,
+					 offset);
+					
+		if (nb_written < 0)
+			goto out;
+
+		write_arg->io_amount += nb_written;
+		offset += nb_written;
+	}
+
+out:
+	if (closefd)
+		kvsns_close(&kvsfs_fd.fd);
+
+	if (has_lock)
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	done_cb(obj_hdl, status, write_arg, caller_arg);
 	return;
 }
 
