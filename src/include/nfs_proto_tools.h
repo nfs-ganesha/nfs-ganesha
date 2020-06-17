@@ -43,8 +43,8 @@
 #include "nfs_file_handle.h"
 #include "sal_data.h"
 #include "fsal.h"
-#include "posix_acls.h"
 #ifdef USE_NFSACL3
+#include "posix_acls.h"
 #include <sys/acl.h>
 #endif				/* USE_NFSACL3 */
 
