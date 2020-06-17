@@ -166,15 +166,10 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Set the NFS return */
-	/* Build Weak Cache Coherency data */
 	res->res_setattr3.status = NFS3_OK;
-	if (arg->arg_setattr3.new_attributes.size.set_it
-	    && !(setattr.valid_mask ^ ATTR_SIZE)) {
-		resfail->obj_wcc.before.attributes_follow = FALSE;
-		resfail->obj_wcc.after.attributes_follow = FALSE;
-	} else {
-		nfs_SetWccData(&pre_attr, obj, &resok->obj_wcc);
-	}
+
+	/* Build Weak Cache Coherency data */
+	nfs_SetWccData(&pre_attr, obj, &resok->obj_wcc);
 
 	rc = NFS_REQ_OK;
 
