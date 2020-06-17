@@ -581,6 +581,9 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 	if (whence != NULL)
 		seekloc = (off_t) *whence;
 
+	if (seekloc > 0)
+		seekloc = seekloc -3 + 1;
+
 	myself =
 		container_of(dir_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
@@ -615,6 +618,10 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 
 			fsal_prepare_attrs(&attrs, attrmask);
 
+			LogDebug(COMPONENT_FSAL,
+				 "lookup in readdir path=#%s#",
+				 dirents[index].name);
+
 			status = kvsfs_lookup(dir_hdl,
 					      dirents[index].name, 
 					      &hdl,
@@ -624,10 +631,10 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 				kvsns_closedir(&ddir);
 				return status;
 			}
-
+	
 			/* callback to cache inode */
 			cookie = seekloc + index + 
-				 (nb_rddir_done * MAX_ENTRIES) + MAX_ENTRIES + 1;
+				 (nb_rddir_done * MAX_ENTRIES) + 3;
 			cb_rc = cb(dirents[index].name,
 				   hdl,
 				   &attrs,
