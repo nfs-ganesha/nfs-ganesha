@@ -878,7 +878,7 @@ static fsal_status_t kvsfs_unlink(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "kvsfs_unlink: %d/%s",
 		 (unsigned int)myself->handle->kvsfs_handle, name);
 
-	if (obj_hdl->type != DIRECTORY)
+	if (obj_hdl->type == DIRECTORY)
 		retval = kvsns_rmdir(&cred,
 				     &myself->handle->kvsfs_handle,
 				     (char *)name);
