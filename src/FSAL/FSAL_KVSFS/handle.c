@@ -637,9 +637,10 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 				   cookie);
 
 			LogDebug(COMPONENT_FSAL, 
-				 "kvsfs_readdir: %s cookie=%llu",
+				 "kvsfs_readdir: %s cookie=%llu seekloc=%lld",
 				 dirents[index].name, 
-				 (unsigned long long)cookie);
+				 (unsigned long long)cookie,
+				 (long long)seekloc);
 				
 			fsal_release_attrs(&attrs);
 
