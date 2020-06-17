@@ -69,8 +69,6 @@ struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
 				 struct kvsfs_fsal_module,
 				 fsal);
 
-	LogDebug(COMPONENT_FSAL, "kvsfs_alloc_handle");
-
 	hdl = gsh_malloc(sizeof(struct kvsfs_fsal_obj_handle) +
 			 sizeof(struct kvsfs_file_handle));
 
@@ -629,7 +627,7 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 
 			/* callback to cache inode */
 			cookie = seekloc + index + 
-				 (nb_rddir_done * MAX_ENTRIES) + 1;
+				 (nb_rddir_done * MAX_ENTRIES) + MAX_ENTRIES + 1;
 			cb_rc = cb(dirents[index].name,
 				   hdl,
 				   &attrs,
@@ -714,9 +712,6 @@ static fsal_status_t kvsfs_getattrs(struct fsal_obj_handle *obj_hdl,
 	myself =
 		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
-	LogDebug(COMPONENT_FSAL, "kvsfs_getattrs: %d",
-		 (unsigned int)myself->handle->kvsfs_handle);
-
 	cred.uid = op_ctx->creds->caller_uid;
 	cred.gid = op_ctx->creds->caller_gid;
 
@@ -764,9 +759,6 @@ static fsal_status_t kvsfs_setattr2(struct fsal_obj_handle *obj_hdl,
 				fs_umask(op_ctx->fsal_export);
 	myself =
 		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
-
-	LogDebug(COMPONENT_FSAL, "kvsfs_setattrs2: %d",
-		 (unsigned int)myself->handle->kvsfs_handle);
 
 	/* First, check that FSAL attributes */
 	if (FSAL_TEST_MASK(attrs->valid_mask, ATTR_SIZE)) {
@@ -875,9 +867,6 @@ static fsal_status_t kvsfs_unlink(struct fsal_obj_handle *dir_hdl,
 
 	myself =
 		container_of(dir_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
-
-	LogDebug(COMPONENT_FSAL, "kvsfs_unlink: %d/%s",
-		 (unsigned int)myself->handle->kvsfs_handle, name);
 
 	if (obj_hdl->type == DIRECTORY)
 		retval = kvsns_rmdir(&cred,
