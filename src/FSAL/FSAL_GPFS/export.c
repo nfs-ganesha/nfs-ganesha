@@ -537,6 +537,8 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 		goto errout;
 	}
 
+	gpfs_fs->stop_thread = false;
+
 	if (pthread_attr_init(&attr_thr) != 0)
 		LogCrit(COMPONENT_THREAD, "can't init pthread's attributes");
 
@@ -623,6 +625,12 @@ void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 			fs->path, gpfs_fs->root_fd, errno);
 	else
 		LogFullDebug(COMPONENT_FSAL, "Thread STOP successful");
+
+	/* Prior to calling pthread_join(), we should set stop_thread=true.
+	 * Its not being set atomically because the synchronization requirement
+	 * is not critical enough.
+	 */
+	gpfs_fs->stop_thread = true;
 
 	pthread_join(gpfs_fs->up_thread, NULL);
 	free_gpfs_filesystem(gpfs_fs);

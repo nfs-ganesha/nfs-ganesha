@@ -104,7 +104,23 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	/* wait for nfs init completion to get general_fridge
 	 * initialized which is needed for processing some upcall events
 	 */
-	nfs_init_wait();
+	while (1) {
+		rc = nfs_init_wait_timeout(1);
+
+		/* First check if the thread needs to be stopped */
+		if (gpfs_fs->stop_thread)
+			return NULL;
+		if (rc == 0)
+			break;
+		else if (rc == ETIMEDOUT)
+			continue;
+		else {
+			LogEvent(COMPONENT_FSAL_UP,
+				 "nfs_init_wait_timeout() completed with "
+				 "rc %d", rc);
+			return NULL;
+		}
+	}
 
 	/* Start querying for events and processing. */
 	while (1) {
