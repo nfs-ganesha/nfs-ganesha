@@ -5,7 +5,7 @@
  * Author: Jim Lieb jlieb@panasas.com
  *
  * contributeur : Philippe DENIEL   philippe.deniel@cea.fr
- *                Thomas LEIBOVICI  thomas.leibovici@cea.fr
+ *		Thomas LEIBOVICI  thomas.leibovici@cea.fr
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 
 #include "config.h"
 
-#include <libgen.h>             /* used for 'dirname' */
+#include <libgen.h>	     /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
@@ -56,7 +56,7 @@ static void kvsfs_export_release(struct fsal_export *exp_hdl)
 
 	myself = container_of(exp_hdl, struct kvsfs_fsal_export, export);
 
-        LogDebug(COMPONENT_FSAL, "kvsfs_export_release: exp=%p", exp_hdl);
+	LogDebug(COMPONENT_FSAL, "kvsfs_export_release: exp=%p", exp_hdl);
 
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
@@ -90,7 +90,7 @@ static fsal_status_t kvsfs_wire_to_host(struct fsal_export *exp_hdl,
 	if (!fh_desc || !fh_desc->addr)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-        LogDebug(COMPONENT_FSAL, "kvsfs_wire_to_host: exp=%p", exp_hdl);
+	LogDebug(COMPONENT_FSAL, "kvsfs_wire_to_host: exp=%p", exp_hdl);
 
 	hdl = (struct kvsfs_file_handle *)fh_desc->addr;
 	fh_size = kvsfs_sizeof_handle(hdl);
@@ -108,13 +108,65 @@ static fsal_status_t kvsfs_wire_to_host(struct fsal_export *exp_hdl,
 
 static attrmask_t kvsfs_supported_attrs(struct fsal_export *exp_hdl)
 {
-        attrmask_t supported_mask;
+	attrmask_t supported_mask;
 
-        supported_mask = fsal_supported_attrs(&exp_hdl->fsal->fs_info);
+	supported_mask = fsal_supported_attrs(&exp_hdl->fsal->fs_info);
 
-        supported_mask &= ~ATTR_ACL;
+	supported_mask &= ~ATTR_ACL;
 
-        return supported_mask;
+	return supported_mask;
+}
+
+/**
+ * @brief Allocate a state_t structure
+ *
+ * Note that this is not expected to fail since memory allocation is
+ * expected to abort on failure.
+ *
+ * @param[in] exp_hdl	       Export state_t will be associated with
+ * @param[in] state_type	    Type of state to allocate
+ * @param[in] related_state	 Related state if appropriate
+ *
+ * @returns a state structure.
+ */
+
+static struct state_t * kvsfs_alloc_state(struct fsal_export *exp_hdl,
+					 enum state_type state_type,
+		 			 struct state_t *related_state)
+{
+	struct state_t *state;
+	struct kvsfs_fd *my_fd;
+
+	state = init_state(gsh_calloc(1, sizeof(struct kvsfs_state_fd)),
+			   exp_hdl, state_type, related_state);
+
+	my_fd = &container_of(state, struct kvsfs_state_fd, state)->kvsfs_fd;
+
+	memset(&my_fd->fd, 0, sizeof(kvsns_file_open_t));
+	my_fd->openflags = FSAL_O_CLOSED;
+	PTHREAD_RWLOCK_init(&my_fd->fdlock, NULL);
+
+	return state;
+
+}
+
+/**
+ * @brief free a gpfs_state_fd structure
+ *
+ * @param[in] exp_hdl  Export state_t will be associated with
+ * @param[in] state    Related state if appropriate
+ *
+ */
+static void kvsfs_free_state(struct fsal_export *exp_hdl,
+			    struct state_t *state)
+{
+	struct kvsfs_state_fd *state_fd = container_of(state,
+						       struct kvsfs_state_fd,
+						       state);
+	struct kvsfs_fd *my_fd = &state_fd->kvsfs_fd;
+
+	PTHREAD_RWLOCK_destroy(&my_fd->fdlock);
+	gsh_free(state_fd);
 }
 
 /* kvsfs_export_ops_init
@@ -129,6 +181,9 @@ void kvsfs_export_ops_init(struct export_ops *ops)
 	ops->create_handle = kvsfs_create_handle;
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supported_attrs = kvsfs_supported_attrs;
+	ops->alloc_state = kvsfs_alloc_state;
+	ops->free_state = kvsfs_free_state;
+
 }
 
 static int kvsfs_conf_pnfs_commit(void *node,
@@ -223,7 +278,7 @@ fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
 	kvsfs_export_ops_init(&myself->export.exp_ops);
 	myself->export.up_ops = up_ops;
 
-        LogDebug(COMPONENT_FSAL, "kvsfs_create_export");
+	LogDebug(COMPONENT_FSAL, "kvsfs_create_export");
 
 	retval = load_config_from_node(parse_node,
 				       &export_param,
