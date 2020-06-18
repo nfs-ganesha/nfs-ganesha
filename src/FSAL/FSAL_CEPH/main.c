@@ -482,14 +482,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	enable_delegations(export);
 
-	if (fsal_attach_export(module_in, &export->export.exports) != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to attach export for %s.",
-			op_ctx->ctx_export->fullpath);
-		goto error;
-	}
-
 	export->export.fsal = module_in;
 	export->export.up_ops = up_ops;
 
@@ -512,8 +504,15 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	export->root = handle;
 	op_ctx->fsal_export = &export->export;
 
-	return status;
+	if (fsal_attach_export(module_in, &export->export.exports) != 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to attach export for %s.",
+			op_ctx->ctx_export->fullpath);
+		goto error;
+	}
 
+	return status;
  error:
 	if (i)
 		ceph_ll_put(export->cmount, i);
