@@ -160,6 +160,7 @@
   nfs_grace_is_member;
   nfs_init_init;
   nfs_init_wait;
+  nfs_init_wait_timeout;
   nfs_libmain;
   nfs_param;
   nfs_pidfile_path;
