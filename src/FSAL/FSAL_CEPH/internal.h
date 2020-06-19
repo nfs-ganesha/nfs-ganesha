@@ -100,17 +100,22 @@ struct ceph_state_fd {
  * The 'private' Ceph FSAL handle
  */
 
-struct ceph_handle_key {
+struct ceph_host_handle {
 	vinodeno_t	chk_vi;
 	int64_t		chk_fscid;
 } __attribute__ ((__packed__));
+
+struct ceph_handle_key {
+	struct ceph_host_handle hhdl;
+	uint16_t export_id;
+};
 
 struct ceph_handle {
 	struct fsal_obj_handle handle;	/*< The public handle */
 	struct ceph_fd fd;
 	struct Inode *i;	/*< The Ceph inode */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
-	/*< The first export this handle belongs to */
+	/*< The export this handle belongs to */
 	struct ceph_export *export;
 	struct ceph_handle_key key;
 	struct fsal_share share;
