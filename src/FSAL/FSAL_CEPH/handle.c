@@ -2155,8 +2155,8 @@ static void ceph_deleg_cb(Fh *fh, void *vhdl)
 	struct ceph_handle *hdl =
 		container_of(obj_hdl, struct ceph_handle, handle);
 	struct gsh_buffdesc key = {
-		.addr = &hdl->key,
-		.len = sizeof(hdl->key)
+		.addr = &hdl->key.hhdl,
+		.len = sizeof(hdl->key.hhdl)
 	};
 
 	LogDebug(COMPONENT_FSAL, "Recalling delegations on %p", hdl);
@@ -2520,14 +2520,15 @@ ceph_fsal_handle_to_wire(const struct fsal_obj_handle *handle_pub,
 		/* Digested Handles */
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
-		if (fh_desc->len < sizeof(handle->key)) {
+		if (fh_desc->len < sizeof(handle->key.hhdl)) {
 			LogMajor(COMPONENT_FSAL,
 				 "digest_handle: space too small for handle.  Need %zu, have %zu",
-				 sizeof(handle->key), fh_desc->len);
+				 sizeof(handle->key.hhdl), fh_desc->len);
 			return fsalstat(ERR_FSAL_TOOSMALL, 0);
 		} else {
-			fh_desc->len = sizeof(handle->key);
-			memcpy(fh_desc->addr, &handle->key, fh_desc->len);
+			fh_desc->len = sizeof(handle->key.hhdl);
+			memcpy(fh_desc->addr, &handle->key.hhdl,
+			       fh_desc->len);
 		}
 		break;
 

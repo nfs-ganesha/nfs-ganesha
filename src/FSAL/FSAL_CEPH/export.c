@@ -187,7 +187,17 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 		/* Digested Handles */
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
-		/* wire handles */
+		/*
+		 * Ganesha automatically mixes the export_id in with the
+		 * filehandle and strips that out before calling this
+		 * function.
+		 *
+		 * Most FSALs don't factor in the export_id with the handle_key,
+		 * but we want to do that for FSAL_CEPH, primarily because we
+		 * want to do accesses via different exports via different cephx
+		 * creds. Mix the export_id back in here.
+		 */
+		key->export_id = op_ctx->ctx_export->export_id;
 		fh_desc->len = sizeof(*key);
 		break;
 	default:
@@ -220,7 +230,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	/* FSAL status to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The FSAL specific portion of the handle received by the client */
-	struct ceph_handle_key *key = desc->addr;
+	struct ceph_host_handle *key = desc->addr;
 	/* Ceph return code */
 	int rc = 0;
 	/* Stat buffer */

@@ -301,7 +301,7 @@ static int select_filesystem(struct ceph_export *export)
 static void ino_release_cb(void *handle, vinodeno_t vino)
 {
 	struct ceph_export *export = handle;
-	struct ceph_handle_key key;
+	struct ceph_host_handle key;
 	struct gsh_buffdesc fh_desc;
 
 	LogDebug(COMPONENT_FSAL,
