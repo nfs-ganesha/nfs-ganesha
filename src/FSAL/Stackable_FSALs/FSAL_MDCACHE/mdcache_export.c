@@ -162,7 +162,10 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 				     entry);
 
 			/* There are no exports referencing this entry, attempt
-			 * to push it to cleanup queue.  */
+			 * to push it to cleanup queue. Note that if the export
+			 * root is in fact only used by one export, it will
+			 * be unhashed here.
+			 */
 			mdcache_lru_cleanup_try_push(entry);
 		} else {
 			/* Make sure first export pointer is still valid */
@@ -186,6 +189,11 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 	subcall_raw(exp,
 		sub_export->exp_ops.unexport(sub_export, root_entry->sub_handle)
 	);
+
+	/* NOTE: we do NOT need to unhash the root entry, it was unhashed above
+	 *       (if it was not used by another export) in the loop since it is
+	 *       an entry that belongs to the export.
+	 */
 }
 
 /**
