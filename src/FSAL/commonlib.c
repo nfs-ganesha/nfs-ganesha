@@ -1159,10 +1159,10 @@ static void posix_create_file_system(struct mntent *mnt, struct stat *mnt_stat)
 	glist_init(&fs->children);
 
 	LogInfo(COMPONENT_FSAL,
-		"Added filesystem %s namelen=%d dev=%"PRIu64".%"PRIu64
+		"Added filesystem %p %s namelen=%d dev=%"PRIu64".%"PRIu64
 		" fsid=0x%016"PRIx64".0x%016"PRIx64" %"PRIu64".%"PRIu64
 		" type=%s",
-		fs->path, (int) fs->namelen,
+		fs, fs->path, (int) fs->namelen,
 		fs->dev.major, fs->dev.minor,
 		fs->fsid.major, fs->fsid.minor,
 		fs->fsid.major, fs->fsid.minor, fs->type);
@@ -1530,10 +1530,10 @@ bool release_posix_file_system(struct fsal_filesystem *fs,
 	}
 
 	LogInfo(COMPONENT_FSAL,
-		"Removed filesystem %s namelen=%d dev=%"PRIu64".%"PRIu64
+		"Removed filesystem %p %s namelen=%d dev=%"PRIu64".%"PRIu64
 		" fsid=0x%016"PRIx64".0x%016"PRIx64" %"PRIu64".%"PRIu64
 		" type=%s",
-		fs->path, (int) fs->namelen, fs->dev.major, fs->dev.minor,
+		fs, fs->path, (int) fs->namelen, fs->dev.major, fs->dev.minor,
 		fs->fsid.major, fs->fsid.minor, fs->fsid.major, fs->fsid.minor,
 		fs->type);
 	remove_fs(fs);
@@ -1673,12 +1673,12 @@ int process_claim(const char *path,
 
 	if (already_claimed) {
 		LogDebug(COMPONENT_FSAL,
-			 "FSAL %s Repeat Claiming %s",
-			 fsal->name, this->path);
+			 "FSAL %s Repeat Claiming %p %s",
+			 fsal->name, this, this->path);
 	} else {
 		LogInfo(COMPONENT_FSAL,
-			"FSAL %s Claiming %s",
-			fsal->name, this->path);
+			"FSAL %s Claiming %p %s",
+			fsal->name, this, this->path);
 	}
 
 	/* Complete the claim */

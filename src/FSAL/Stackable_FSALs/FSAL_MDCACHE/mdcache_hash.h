@@ -396,6 +396,8 @@ cih_remove_checked(mdcache_entry_t *entry)
 	PTHREAD_RWLOCK_wrlock(&cp->lock);
 	node = cih_fhcache_inline_lookup(&cp->t, &entry->fh_hk.node_k);
 	if (entry->fh_hk.inavl && node) {
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Unhashing entry %p", entry);
 #ifdef USE_LTTNG
 		tracepoint(mdcache, mdc_lru_remove, __func__, __LINE__,
 			   &entry->obj_handle, entry->lru.refcnt);
@@ -440,6 +442,8 @@ cih_remove_latched(mdcache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
 	    cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
 
 	if (entry->fh_hk.inavl) {
+		LogFullDebug(COMPONENT_CACHE_INODE,
+			     "Unhashing entry %p", entry);
 #ifdef USE_LTTNG
 		tracepoint(mdcache, mdc_lru_remove, __func__, __LINE__,
 			   &entry->obj_handle, entry->lru.refcnt);

@@ -105,6 +105,9 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
+	LogFullDebug(COMPONENT_FSAL, "About to check obj %p fs %p",
+		     obj_hdl, obj_hdl->fs);
+
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",

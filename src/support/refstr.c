@@ -18,5 +18,8 @@ void gsh_refstr_release(struct urcu_ref *ref)
 {
 	struct gsh_refstr *gr = container_of(ref, struct gsh_refstr, gr_ref);
 
+	LogFullDebug(COMPONENT_EXPORT,
+		     "Releasing refstr %s", gr->gr_val);
+
 	gsh_free(gr);
 }

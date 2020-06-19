@@ -114,6 +114,18 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 		}
 
 		entry = expmap->entry;
+
+		if (entry == root_entry) {
+			LogDebug(COMPONENT_EXPORT,
+				 "About to unmap root entry %p and possibly free it for export %d path %s pseudo %s",
+				 root_entry, op_ctx->ctx_export->export_id,
+				 CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx));
+		} else {
+			LogDebug(COMPONENT_EXPORT,
+				 "About to unmap entry %p and possibly free it",
+				 entry);
+		}
+
 		/* Get a ref across cleanup.  This must be an initial ref, so
 		 * that it takes the LRU lane lock, keeping it from racing with
 		 * lru_lane_run() */
@@ -145,6 +157,9 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 			 * try_cleanup_push (LRU lane lock order) */
 			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+			LogFullDebug(COMPONENT_EXPORT,
+				     "Disposing of entry %p",
+				     entry);
 
 			/* There are no exports referencing this entry, attempt
 			 * to push it to cleanup queue.  */
@@ -157,6 +172,10 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 
 			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+			LogFullDebug(COMPONENT_EXPORT,
+				     "entry %p is still exported by export id %d",
+				     entry, expmap->exp->mfe_exp.export_id);
 		}
 
 		/* Release above ref */
