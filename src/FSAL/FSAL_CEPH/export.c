@@ -239,17 +239,20 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	struct ceph_handle *handle = NULL;
 	/* Inode pointer */
 	struct Inode *i;
+	vinodeno_t vi;
 
 	*pub_handle = NULL;
 
-	if (desc->len != sizeof(*key) &&
-	    desc->len != sizeof(key->chk_vi)) {
+	if (desc->len != sizeof(*key)) {
 		status.major = ERR_FSAL_INVAL;
 		return status;
 	}
 
+	vi.ino.val = key->chk_ino;
+	vi.snapid.val = key->chk_snap;
+
 	/* Check our local cache first */
-	i = ceph_ll_get_inode(export->cmount, key->chk_vi);
+	i = ceph_ll_get_inode(export->cmount, vi);
 	if (!i) {
 		/*
 		 * Try the slow way, may not be in cache now.
@@ -257,10 +260,10 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		 * Currently, there is no interface for looking up a snapped
 		 * inode, so we just bail here in that case.
 		 */
-		if (key->chk_vi.snapid.val != CEPH_NOSNAP)
+		if (key->chk_snap != CEPH_NOSNAP)
 			return ceph2fsal_error(-ESTALE);
 
-		rc = ceph_ll_lookup_inode(export->cmount, key->chk_vi.ino, &i);
+		rc = ceph_ll_lookup_inode(export->cmount, vi.ino, &i);
 		if (rc)
 			return ceph2fsal_error(rc);
 	}

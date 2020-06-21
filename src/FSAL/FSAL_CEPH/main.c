@@ -307,7 +307,8 @@ static void ino_release_cb(void *handle, vinodeno_t vino)
 	LogDebug(COMPONENT_FSAL,
 		 "libcephfs asking to release 0x%lx:0x%lx:0x%lx",
 		 export->fscid, vino.snapid.val, vino.ino.val);
-	key.chk_vi = vino;
+	key.chk_ino = vino.ino.val;
+	key.chk_snap = vino.snapid.val;
 	key.chk_fscid = export->fscid;
 	fh_desc.addr = &key;
 	fh_desc.len = sizeof(key);
