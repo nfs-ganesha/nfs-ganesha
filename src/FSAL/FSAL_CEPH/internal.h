@@ -101,7 +101,8 @@ struct ceph_state_fd {
  */
 
 struct ceph_host_handle {
-	vinodeno_t	chk_vi;
+	uint64_t	chk_ino;
+	uint64_t	chk_snap;
 	int64_t		chk_fscid;
 } __attribute__ ((__packed__));
 
