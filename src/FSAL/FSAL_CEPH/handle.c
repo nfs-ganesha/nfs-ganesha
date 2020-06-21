@@ -2526,9 +2526,13 @@ ceph_fsal_handle_to_wire(const struct fsal_obj_handle *handle_pub,
 				 sizeof(handle->key.hhdl), fh_desc->len);
 			return fsalstat(ERR_FSAL_TOOSMALL, 0);
 		} else {
-			fh_desc->len = sizeof(handle->key.hhdl);
-			memcpy(fh_desc->addr, &handle->key.hhdl,
-			       fh_desc->len);
+			struct ceph_host_handle *hhdl = fh_desc->addr;
+
+			/* See comments in wire_to_host */
+			hhdl->chk_ino = htole64(handle->key.hhdl.chk_ino);
+			hhdl->chk_snap = htole64(handle->key.hhdl.chk_snap);
+			hhdl->chk_fscid = htole64(handle->key.hhdl.chk_fscid);
+			fh_desc->len = sizeof(*hhdl);
 		}
 		break;
 
