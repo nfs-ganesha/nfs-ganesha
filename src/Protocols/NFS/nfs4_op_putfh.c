@@ -134,6 +134,7 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	struct file_handle_v4 *v4_handle =
 		(struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
 	struct gsh_export *exporting;
+	char fhbuf[NFS4_FHSIZE];
 	struct fsal_export *export;
 	struct gsh_buffdesc fh_desc;
 	struct fsal_obj_handle *new_hdl;
@@ -193,8 +194,15 @@ static int nfs4_mds_putfh(compound_data_t *data)
 		}
 	}
 
+	/*
+	 * FIXME: the wire handle can obviously be no larger than NFS4_FHSIZE,
+	 * but there is no such limit on a host handle. Here, we assume that as
+	 * the size limit. Eventually it might be nice to call into the FSAL to
+	 * ask how large a buffer it needs for a host handle.
+	 */
+	memcpy(fhbuf, &v4_handle->fsopaque, v4_handle->fs_len);
 	fh_desc.len = v4_handle->fs_len;
-	fh_desc.addr = &v4_handle->fsopaque;
+	fh_desc.addr = fhbuf;
 
 	/* adjust the handle opaque into a cache key */
 	fsal_status = export->exp_ops.wire_to_host(export,
