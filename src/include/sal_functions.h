@@ -682,23 +682,6 @@ static inline struct fsal_obj_handle *get_state_obj_ref(state_t *state)
 	return obj;
 }
 
-static inline struct gsh_export *get_state_export_ref(state_t *state)
-{
-	struct gsh_export *export = NULL;
-
-	PTHREAD_MUTEX_lock(&state->state_mutex);
-
-	if (state->state_export != NULL &&
-	    export_ready(state->state_export)) {
-		get_gsh_export_ref(state->state_export);
-		export = state->state_export;
-	}
-
-	PTHREAD_MUTEX_unlock(&state->state_mutex);
-
-	return export;
-}
-
 static inline bool state_same_export(state_t *state, struct gsh_export *export)
 {
 	bool same = false;
