@@ -687,11 +687,13 @@ void _get_gsh_export_ref(struct gsh_export *a_export,
  * We are done with it, let it go.
  */
 
-void _put_gsh_export(struct gsh_export *export,
+void _put_gsh_export(struct gsh_export *export, bool config,
 		     char *file, int line, char *function)
 {
 	int64_t refcount = atomic_dec_int64_t(&export->refcnt);
 	struct export_stats *export_st;
+
+	assert(refcount >= 0);
 
 	if (isFullDebug(COMPONENT_EXPORT)) {
 		struct tmp_export_paths tmp_path = {NULL, NULL};
@@ -709,13 +711,11 @@ void _put_gsh_export(struct gsh_export *export,
 		tmp_put_exp_paths(&tmp_path);
 	}
 
-	if (refcount != 0) {
-		assert(refcount > 0);
+	if (refcount != 0)
 		return;
-	}
 
 	/* Released last reference, free resources */
-	free_export_resources(export);
+	free_export_resources(export, config);
 	export_st = container_of(export, struct export_stats, export);
 	server_stats_free(&export_st->st);
 	PTHREAD_RWLOCK_destroy(&export->lock);
@@ -829,7 +829,7 @@ static void process_unexports(void)
 		set_op_context_export(export);
 
 		/* Do the actual unexport work */
-		release_export(export);
+		release_export(export, false);
 
 		clear_op_context_export();
 	}
@@ -864,6 +864,8 @@ void remove_all_exports(void)
 	(void) foreach_gsh_export(remove_one_export, true, NULL);
 
 	process_unexports();
+
+	release_op_context();
 
 	EXPORT_ADMIN_UNLOCK();
 }
@@ -1280,7 +1282,7 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 	 * op_ctx exists */
 	init_op_context_simple(&op_context, export, export->fsal_export);
 
-	release_export(export);
+	release_export(export, false);
 
 	LogInfo(COMPONENT_EXPORT, "Removed export with id %d",
 		export->export_id);

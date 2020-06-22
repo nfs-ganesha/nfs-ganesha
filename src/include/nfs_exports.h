@@ -223,7 +223,7 @@ int init_export_root(struct gsh_export *exp);
 
 fsal_status_t nfs_export_get_root_entry(struct gsh_export *exp,
 					struct fsal_obj_handle **obj);
-void release_export(struct gsh_export *exp);
+void release_export(struct gsh_export *exp, bool config);
 /* XXX */
 /*void kill_export_root_entry(cache_entry_t *entry);*/
 /*void kill_export_junction_entry(cache_entry_t *entry);*/
@@ -232,7 +232,7 @@ int ReadExports(config_file_t in_config,
 		struct config_error_type *err_type);
 int reread_exports(config_file_t in_config,
 		struct config_error_type *err_type);
-void free_export_resources(struct gsh_export *exp);
+void free_export_resources(struct gsh_export *exp, bool config);
 
 void exports_pkginit(void);
 

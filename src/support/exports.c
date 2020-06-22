@@ -951,6 +951,8 @@ static void *export_init(void *link_mem, void *self_struct)
 
 	if (self_struct == NULL) {
 		export = alloc_export();
+		LogInfo(COMPONENT_EXPORT,
+			"Allocated export %p", export);
 		return export;
 	} else { /* free resources case */
 		export = self_struct;
@@ -967,7 +969,9 @@ static void *export_init(void *link_mem, void *self_struct)
 			pnfs_ds_remove(export->export_id, true);
 		} else {
 			/* Release the export allocated above */
-			put_gsh_export(export);
+			LogInfo(COMPONENT_EXPORT,
+				"Releasing export %p", export);
+			put_gsh_export_config(export);
 		}
 
 		return NULL;
@@ -2061,7 +2065,9 @@ static int build_default_root(struct config_error_type *err_type)
 	export->pseudopath = gsh_refstr_dup("/");
 	export->fullpath = gsh_refstr_dup("/");
 
-	/* Initialize req_ctx with the export reasomnably constructed */
+	/* Initialize req_ctx with the export reasomnably constructed using the
+	 * reference provided above by alloc_export().
+	 */
 	init_op_context_simple(&op_context, export, NULL);
 
 	/* Assign FSAL_PSEUDO */
@@ -2300,21 +2306,32 @@ static void FreeClientList(struct glist_head *clients)
  * @return true if all went well
  */
 
-void free_export_resources(struct gsh_export *export)
+void free_export_resources(struct gsh_export *export, bool config)
 {
 	struct req_op_context op_context;
 	bool restore_op_ctx = false;
 
-	if (op_ctx->ctx_export != export) {
+	LogDebug(COMPONENT_EXPORT,
+		 "Free resources for export %p id %d path %s",
+		 export, export->export_id, export->cfg_fullpath);
+
+	if (op_ctx == NULL || op_ctx->ctx_export != export) {
 		/* We need to complete export cleanup with this export.
 		 * Otherewise we SHOULD be being called in the final throes
 		 * of releasing an op context, or at least the export so
-		 * attached.
+		 * attached. We don't need a reference to the export because we
+		 * are already inside freeing it.
 		 */
 		init_op_context_simple(&op_context, export,
 				       export->fsal_export);
 		restore_op_ctx = true;
 	}
+
+	LogDebug(COMPONENT_EXPORT, "Export root %p", export->exp_root_obj);
+
+	release_export(export, config);
+
+	LogDebug(COMPONENT_EXPORT, "release_export complete");
 
 	FreeClientList(&export->clients);
 	if (export->fsal_export != NULL) {
@@ -2355,6 +2372,10 @@ void free_export_resources(struct gsh_export *export)
 	 */
 	op_ctx->ctx_export = NULL;
 	op_ctx->fsal_export = NULL;
+
+	LogDebug(COMPONENT_EXPORT,
+		 "Goodbye export %p path %s pseudo %s",
+		 export, CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx));
 
 	if (restore_op_ctx) {
 		/* And restore to the original op context */
@@ -2600,17 +2621,20 @@ out:
 /**
  * @brief Release all the export state, including the root object
  *
- * @param exp [IN] the export
+ * @param exp [IN]     the export
+ * @param config [IN]  this export is only a config object
  */
 
-void release_export(struct gsh_export *export)
+void release_export(struct gsh_export *export, bool config)
 {
 	struct fsal_obj_handle *obj = NULL;
 	fsal_status_t fsal_status;
 
-	LogDebug(COMPONENT_EXPORT,
-		 "Unexport %s, Pseduo %s",
-		 CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx));
+	if (!config) {
+		LogDebug(COMPONENT_EXPORT,
+			 "Unexport %s, Pseduo %s",
+			 CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx));
+	}
 
 	/* Get a reference to the root entry */
 	fsal_status = nfs_export_get_root_entry(export, &obj);
@@ -2644,25 +2668,43 @@ void release_export(struct gsh_export *export)
 		 obj, CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx),
 		 export->export_id);
 
-	/* Make export unreachable via pseudo fs.
-	 * We keep the export in the export hash table through the following
-	 * so that the underlying FSALs have access to the export while
-	 * performing the various cleanup operations.
-	 */
-	pseudo_unmount_export_tree(export);
+	if (!config) {
+		/* Make export unreachable via pseudo fs.
+		 * We keep the export in the export hash table through the
+		 * following so that the underlying FSALs have access to the
+		 * export while performing the various cleanup operations.
+		 */
+		pseudo_unmount_export_tree(export);
+	}
 
 	export->fsal_export->exp_ops.prepare_unexport(export->fsal_export);
 
-	/* Release state belonging to this export */
-	state_release_export(export);
+	if (!config) {
+		/* Release state belonging to this export */
+		state_release_export(export);
+	}
 
 	/* Flush FSAL-specific state */
+	LogFullDebug(COMPONENT_EXPORT,
+		     "About to unexport from FSAL root obj %p for path %s, pseudo %s on export_id=%d",
+		     obj, CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx),
+		     export->export_id);
+
 	export->fsal_export->exp_ops.unexport(export->fsal_export, obj);
 
-	/* Remove the mapping to the export now that cleanup is complete. */
-	remove_gsh_export(export->export_id);
+	if (!config) {
+		/* Remove the mapping to the export now that cleanup is
+		 * complete.
+		 */
+		remove_gsh_export(export->export_id);
+	}
 
 	/* Release ref taken above */
+	LogFullDebug(COMPONENT_EXPORT,
+		     "About to put_ref root obj %p for path %s, pseudo %s on export_id=%d",
+		     obj, CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx),
+		     export->export_id);
+
 	obj->obj_ops->put_ref(obj);
 }
 

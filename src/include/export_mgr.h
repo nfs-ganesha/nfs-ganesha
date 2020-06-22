@@ -349,11 +349,15 @@ void _get_gsh_export_ref(struct gsh_export *a_export,
 	_get_gsh_export_ref(a_export, \
 	(char *) __FILE__, __LINE__, (char *) __func__)
 
-void _put_gsh_export(struct gsh_export *a_export,
+void _put_gsh_export(struct gsh_export *a_export, bool config,
 		     char *file, int line, char *function);
 
 #define put_gsh_export(a_export) \
-	_put_gsh_export(a_export, \
+	_put_gsh_export(a_export, false, \
+	(char *) __FILE__, __LINE__, (char *) __func__)
+
+#define put_gsh_export_config(a_export) \
+	_put_gsh_export(a_export, true, \
 	(char *) __FILE__, __LINE__, (char *) __func__)
 
 void export_revert(struct gsh_export *a_export);
