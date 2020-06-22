@@ -156,6 +156,8 @@ bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
  * Server ids are assigned by the config file and carried about
  * by file handles.
  *
+ * NOTE: DOES NOT take a reference on mds_export
+ *
  * @param id_servers   [IN] the server id extracted from the handle
  *
  * @return pointer to ref locked server
@@ -197,9 +199,6 @@ struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers)
 
  out:
 	pnfs_ds_get_ref(pds);
-	if (pds->mds_export != NULL)
-		/* also bump related export for duration */
-		get_gsh_export_ref(pds->mds_export);
 
 	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
 	return pds;
@@ -222,17 +221,16 @@ void pnfs_ds_put(struct fsal_pnfs_ds *pds)
 
 	/* free resources */
 	fsal_pnfs_ds_fini(pds);
-	gsh_free(pds);
+	pnfs_ds_free(pds);
 }
 
 /**
- * @brief Remove the pDS entry from the AVL tree.
+ * @brief Remove the pDS entry from the AVL tree and from the FSAL.
  *
  * @param id_servers   [IN] the server id extracted from the handle
- * @param final        [IN] Also drop from FSAL.
  */
 
-void pnfs_ds_remove(uint16_t id_servers, bool final)
+void pnfs_ds_remove(uint16_t id_servers)
 {
 	struct fsal_pnfs_ds v;
 	struct avltree_node *node;
@@ -257,9 +255,6 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
 
 		/* Remove the DS from the DS list */
 		glist_del(&pds->ds_list);
-
-		/* Eliminate repeated locks during draining. Idempotent. */
-		pds->pnfs_ds_status = PNFS_DS_STALE;
 	}
 
 	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
@@ -274,6 +269,11 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
 			 * once-only, so no need for lock here.
 			 * do not pre-clear related export (mds_export).
 			 * always check pnfs_ds_status instead.
+			 *
+			 * We need an op_context to release an export ref, since
+			 * we are using this op context to release a reference
+			 * via release_op_context, we don't need to take a
+			 * reference here.
 			 */
 			init_op_context_simple(&op_context, pds->mds_export,
 					       pds->mds_export->fsal_export);
@@ -283,15 +283,17 @@ void pnfs_ds_remove(uint16_t id_servers, bool final)
 		/* Release table reference to the server.
 		 * Release of resources will occur on last reference.
 		 * Which may or may not be from this call.
+		 *
+		 * Releases the reference taken in pnfs_ds_insert
 		 */
 		pnfs_ds_put(pds);
 
-		if (final) {
-			/* Also drop from FSAL.  Instead of pDS thread,
-			 * relying on export cleanup thread.
-			 */
-			pnfs_ds_put(pds);
-		}
+		/* Also drop from FSAL.  Instead of pDS thread,
+		 * relying on export cleanup thread.
+		 *
+		 * Releases the reference taken in fsal_pnfs_ds_init
+		 */
+		pnfs_ds_put(pds);
 	}
 }
 
@@ -318,7 +320,9 @@ void remove_all_dss(void)
 	/* Now we can safely process the list without the lock */
 	glist_for_each_safe(glist, glistn, &tmplist) {
 		pds = glist_entry(glist, struct fsal_pnfs_ds, ds_list);
-		pnfs_ds_remove(pds->id_servers, true);
+
+		/* Remove and destroy the fsal_pnfs_ds */
+		pnfs_ds_remove(pds->id_servers);
 	}
 }
 
@@ -347,13 +351,23 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	/* Initialize op_context */
 	init_op_context_simple(&op_context, NULL, NULL);
 
+	/* The following returns a reference to the FSAL, if ds creation
+	 * succeeds the reference will be passed off to the ds, otherwise it
+	 * will be put below.
+	 */
 	errcnt = fsal_load_init(node, fp->name, &fsal, err_type);
 	if (errcnt > 0)
 		goto err;
 
 	status = fsal->m_ops.create_fsal_pnfs_ds(fsal, node, &pds);
+
+	/* If the create succeeded, an additional FSAL reference was taken,
+	 * since otherwise we are done with the FSAL, put the reference given
+	 * by fsal_load_init.
+	 */
+	fsal_put(fsal);
+
 	if (status.major != ERR_FSAL_NO_ERROR) {
-		fsal_put(fsal);
 		LogCrit(COMPONENT_CONFIG,
 			"Could not create pNFS DS");
 		LogFullDebug(COMPONENT_FSAL,
@@ -362,6 +376,7 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 			     atomic_fetch_int32_t(&fsal->refcount));
 		err_type->init = true;
 		errcnt++;
+		goto err;
 	}
 
 	LogEvent(COMPONENT_CONFIG,
@@ -370,8 +385,6 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 
 err:
 	release_op_context();
-	/* Don't leak the FSAL block */
-	err_type->dispose = true;
 	return errcnt;
 }
 

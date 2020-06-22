@@ -267,7 +267,7 @@ static inline void pnfs_ds_get_ref(struct fsal_pnfs_ds *pds)
 }
 
 void pnfs_ds_put(struct fsal_pnfs_ds *pds);
-void pnfs_ds_remove(uint16_t id_servers, bool final);
+void pnfs_ds_remove(uint16_t id_servers);
 
 int ReadDataServers(config_file_t in_config,
 		    struct config_error_type *err_type);

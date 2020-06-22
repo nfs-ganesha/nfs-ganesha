@@ -811,8 +811,9 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 				"Server id %d already in use.",
 				pds->id_servers);
 			status.major = ERR_FSAL_EXIST;
-			fsal_pnfs_ds_fini(pds);
-			gsh_free(pds);
+
+			/* Return the ref taken by create_fsal_pnfs_ds */
+			pnfs_ds_put(pds);
 			goto unexport;
 		}
 

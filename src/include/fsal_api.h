@@ -473,6 +473,7 @@ struct saved_export_context {
 	struct gsh_refstr *saved_pseudopath;	/*< saved pseudopath */
 	struct fsal_export *saved_fsal_export;
 	struct fsal_module *saved_fsal_module;
+	struct fsal_pnfs_ds *saved_pnfs_ds;	/*< saved pNFS DS */
 	struct export_perms saved_export_perms;
 };
 
@@ -2980,16 +2981,15 @@ struct fsal_obj_handle {
  *
  */
 
-enum pnfs_ds_status {
-	PNFS_DS_READY,			/*< searchable, usable */
-	PNFS_DS_STALE,			/*< is no longer valid */
-};
-
 /**
  * @brief PNFS Data Server
  *
  * This represents a Data Server for PNFS.  It may be stand-alone, or may be
  * associated with an export (which represents an MDS).
+ *
+ * NOTE: While a fsal_pnfs_ds is stored in a lookup table, if it has an
+ *       mds_export attached, an export reference MUST be held. This is
+ *       accomplished by pnfs_ds_insert and pnfs_ds_remove.
  */
 struct fsal_pnfs_ds {
 	struct glist_head ds_list;	/**< Entry in list of all DSs */
@@ -3007,7 +3007,6 @@ struct fsal_pnfs_ds {
 					    manipulating its list (above). */
 	int32_t ds_refcount;		/**< Reference count */
 	uint16_t id_servers;		/**< Identifier */
-	uint8_t pnfs_ds_status;		/**< current condition */
 };
 
 /**

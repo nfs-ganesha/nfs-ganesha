@@ -663,11 +663,14 @@ static void do_shutdown(void)
 		LogEvent(COMPONENT_THREAD, "General fridge shut down.");
 	}
 
-	LogEvent(COMPONENT_MAIN, "Removing all exports.");
-	remove_all_exports();
-
+	/* We have to remove DS before exports, DS refer to exports but
+	 * exports do not refer to DS. This SHOULD remove every single DS.
+	 */
 	LogEvent(COMPONENT_MAIN, "Removing all DSs.");
 	remove_all_dss();
+
+	LogEvent(COMPONENT_MAIN, "Removing all exports.");
+	remove_all_exports();
 
 	nfs4_recovery_shutdown();
 

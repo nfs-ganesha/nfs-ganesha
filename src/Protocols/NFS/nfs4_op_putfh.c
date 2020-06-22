@@ -72,41 +72,33 @@ static int nfs4_ds_putfh(compound_data_t *data)
 		return NFS4ERR_STALE;
 	}
 
-	/* If old CurrentFH had a related server, release reference. */
+	/* If old CurrentFH had a related server, note if there is a change,
+	 * the reference to the old fsal_pnfs_ds will be released below.
+	 */
 	if (op_ctx->ctx_pnfs_ds != NULL) {
 		changed = ntohs(v4_handle->id.servers)
 			!= op_ctx->ctx_pnfs_ds->id_servers;
-		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
 	}
 
 	/* If old CurrentFH had a related export, note the change, the reference
 	 * to the old export will be released below.
 	 */
 	if (op_ctx->ctx_export != NULL) {
-		changed = op_ctx->ctx_export != pds->mds_export;
-		put_gsh_export(op_ctx->ctx_export);
+		changed |= op_ctx->ctx_export != pds->mds_export;
 	}
 
-	if (pds->mds_export == NULL) {
-		/* most likely, export reference will be dropped. */
-		clear_op_context_export();
-	} else if (pds->pnfs_ds_status == PNFS_DS_READY) {
-		/* special case: avoid lookup of related export.
-		 * get_gsh_export_ref() was bumped in pnfs_ds_get()
-		 * Also drop any original export reference.
-		 */
-		set_op_context_export(pds->mds_export);
-	} else {
-		/* export reference will be dropped. */
-		clear_op_context_export();
-		return NFS4ERR_STALE;
-	}
+	/* Take export reference if any */
+	if (pds->mds_export != NULL)
+		get_gsh_export_ref(pds->mds_export);
+
+	/* Set up the op_context with fsal_pnfs_ds, and export if any.
+	 * Will also clean out any old export or fsal_pnfs_ds, dropping
+	 * references if any.
+	 */
+	set_op_context_pnfs_ds(pds);
 
 	/* Clear out current entry for now */
 	set_current_entry(data, NULL);
-
-	/* update _ctx fields */
-	op_ctx->ctx_pnfs_ds = pds;
 
 	if (changed) {
 		int status;
@@ -169,17 +161,12 @@ static int nfs4_mds_putfh(compound_data_t *data)
 				 op_ctx->ctx_export->export_id;
 	}
 
-	/* If old CurrentFH had a related server, release reference. */
-	if (op_ctx->ctx_pnfs_ds != NULL) {
-		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
-		op_ctx->ctx_pnfs_ds = NULL;
-	}
-
 	/* Clear out current entry for now */
 	set_current_entry(data, NULL);
 
 	/* update _ctx fields needed by nfs4_export_check_access and release
-	 * any old ctx_export reference.
+	 * any old ctx_export reference. Will also clean up any old
+	 * fsal_pnfs_ds that was attached.
 	 */
 	set_op_context_export(exporting);
 	export = exporting->fsal_export;

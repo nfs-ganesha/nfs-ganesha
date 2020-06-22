@@ -40,6 +40,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 #include "export_mgr.h"
+#include "pnfs_utils.h"
 
 /**
  * @brief Set the saved entry in the context
@@ -176,9 +177,20 @@ enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->saved_export != NULL)
 		put_gsh_export(data->saved_export);
 
-	/* Save the export information (reference already taken above). */
+	/* If old saved_pnfs_ds is present, release reference. */
+	if (data->saved_pnfs_ds != NULL)
+		pnfs_ds_put(data->saved_pnfs_ds);
+
+	/* Save the export information (reference already taken above) and
+	 * the pnfs_ds (if any, otherwise clear it, reference taken below).
+	 */
 	data->saved_export = op_ctx->ctx_export;
 	data->saved_export_perms = op_ctx->export_perms;
+	data->saved_pnfs_ds = op_ctx->ctx_pnfs_ds;
+
+	/* If ctx_pnfs_ds is present, take a ref and save it. */
+	if (op_ctx->ctx_pnfs_ds != NULL)
+		pnfs_ds_get_ref(data->saved_pnfs_ds);
 
 	LogHandleNFS4("SAVE FH: Saved FH ", &data->savedFH);
 

@@ -797,6 +797,9 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				"Server id %d already in use.",
 				pds->id_servers);
 			status.major = ERR_FSAL_EXIST;
+
+			/* Return the ref taken by create_fsal_pnfs_ds */
+			pnfs_ds_put(pds);
 			goto out;
 		}
 

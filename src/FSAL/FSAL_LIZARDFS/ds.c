@@ -335,34 +335,9 @@ static nfsstat4 lzfs_fsal_make_ds_handle(struct fsal_pnfs_ds *const pds,
 	return NFS4_OK;
 }
 
-/*! \brief Clean up a server
- *
- * \see fsal_api.h for more information
- */
-static void lzfs_fsal_pds_release(struct fsal_pnfs_ds *const pds)
-{
-	LogDebug(COMPONENT_PNFS, "pNFS DS release!");
-	fsal_pnfs_ds_fini(pds);
-	gsh_free(pds);
-}
-
-/*! \brief Initialize FSAL specific permissions per pNFS DS
- *
- * \see fsal_api.h for more information
- */
-static nfsstat4 lzfs_fsal_pds_permissions(struct fsal_pnfs_ds *const pds,
-					  struct svc_req *req)
-{
-	op_ctx->export_perms.set = root_op_export_set;
-	op_ctx->export_perms.options = root_op_export_options;
-	return NFS4_OK;
-}
-
 void lzfs_fsal_ds_handle_ops_init(struct fsal_pnfs_ds_ops *ops)
 {
-	memset(ops, 0, sizeof(struct fsal_pnfs_ds_ops));
+	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
 	ops->make_ds_handle = lzfs_fsal_make_ds_handle;
 	ops->fsal_dsh_ops = lzfs_fsal_dsh_ops_init;
-	ops->ds_release = lzfs_fsal_pds_release;
-	ops->ds_permissions = lzfs_fsal_pds_permissions;
 }

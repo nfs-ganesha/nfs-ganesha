@@ -335,6 +335,7 @@ struct compound_data {
 	object_file_type_t saved_filetype;	/*< File type of saved entry */
 	struct gsh_export *saved_export; /*< Export entry related to the
 					     savedFH */
+	struct fsal_pnfs_ds *saved_pnfs_ds; /*< DS related to the savedFH */
 	struct export_perms saved_export_perms; /*< Permissions for export for
 					       savedFH */
 	struct svc_req *req;	/*< RPC Request related to the compound */

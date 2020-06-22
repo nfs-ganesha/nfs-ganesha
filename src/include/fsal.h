@@ -124,6 +124,7 @@ void save_op_context_export_and_set_export(struct saved_export_context *saved,
 					   struct gsh_export *exp);
 void restore_op_context_export(struct saved_export_context *saved);
 void discard_op_context_export(struct saved_export_context *saved);
+void set_op_context_pnfs_ds(struct fsal_pnfs_ds *pds);
 
 #define set_op_context_export(exp) \
 	set_op_context_export_fsal((exp), (exp) ? (exp)->fsal_export : NULL)

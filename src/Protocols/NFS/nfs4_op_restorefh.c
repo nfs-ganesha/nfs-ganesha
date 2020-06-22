@@ -40,6 +40,7 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 #include "export_mgr.h"
+#include "pnfs_utils.h"
 
 /**
  *
@@ -112,9 +113,18 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 	data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
 	/* Restore the export information and release any old export reference
+	 * and any old fsal_pnfs_ds reference.
 	 */
 	set_op_context_export(data->saved_export);
 	op_ctx->export_perms = data->saved_export_perms;
+
+	/* If saved_pnfs_ds is present, get an additional reference and restore
+	 * it.
+	 */
+	if (data->saved_pnfs_ds != NULL) {
+		op_ctx->ctx_pnfs_ds = data->saved_pnfs_ds;
+		pnfs_ds_get_ref(op_ctx->ctx_pnfs_ds);
+	}
 
 	/* No need to call nfs4_SetCompoundExport or nfs4_MakeCred
 	 * because we are restoring saved information, and the

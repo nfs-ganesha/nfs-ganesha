@@ -966,7 +966,9 @@ static void *export_init(void *link_mem, void *self_struct)
 			 * other thread racing here. So no need
 			 * to take lock. */
 			export->has_pnfs_ds = false;
-			pnfs_ds_remove(export->export_id, true);
+
+			/* Remove and destroy the fsal_pnfs_ds */
+			pnfs_ds_remove(export->export_id);
 		} else {
 			/* Release the export allocated above */
 			LogInfo(COMPONENT_EXPORT,

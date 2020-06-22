@@ -86,6 +86,7 @@
 #endif
 #include "server_stats_private.h"
 #include "idmapper.h"
+#include "pnfs_utils.h"
 
 
 #ifdef USE_BLKID
@@ -221,6 +222,7 @@ void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal)
 	pds->ds_refcount = 1;	/* we start out with a reference */
 	fsal->m_ops.fsal_pnfs_ds_ops(&pds->s_ops);
 	pds->fsal = fsal;
+	fsal_get(fsal); /* Take a reference for the FSAL */
 
 	pthread_rwlockattr_init(&attrs);
 #ifdef GLIBC
@@ -245,7 +247,10 @@ void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds)
 	PTHREAD_RWLOCK_unlock(&pds->fsal->lock);
 	PTHREAD_RWLOCK_destroy(&pds->lock);
 	memset(&pds->s_ops, 0, sizeof(pds->s_ops));	/* poison myself */
-	pds->fsal = NULL;
+	if (pds->fsal != NULL) {
+		fsal_put(pds->fsal);
+		pds->fsal = NULL;
+	}
 }
 
 /* fsal_pnfs_ds to fsal_ds_handle helpers
@@ -3262,6 +3267,7 @@ void destroy_ctx_refstr(void)
 
 static void set_op_context_export_fsal_no_release(struct gsh_export *exp,
 						  struct fsal_export *fsal_exp,
+						  struct fsal_pnfs_ds *pds,
 						  bool discard_refstr)
 {
 	if (discard_refstr) {
@@ -3271,6 +3277,7 @@ static void set_op_context_export_fsal_no_release(struct gsh_export *exp,
 
 	op_ctx->ctx_export = exp;
 	op_ctx->fsal_export = fsal_exp;
+	op_ctx->ctx_pnfs_ds = pds;
 
 	rcu_read_lock();
 
@@ -3312,13 +3319,33 @@ void set_op_context_export_fsal(struct gsh_export *exp,
 	if (op_ctx->ctx_export != NULL)
 		put_gsh_export(op_ctx->ctx_export);
 
-	set_op_context_export_fsal_no_release(exp, fsal_exp, true);
+	if (op_ctx->ctx_pnfs_ds != NULL)
+		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
+
+	set_op_context_export_fsal_no_release(exp, fsal_exp, NULL, true);
+}
+
+void set_op_context_pnfs_ds(struct fsal_pnfs_ds *pds)
+{
+	if (op_ctx->ctx_export != NULL)
+		put_gsh_export(op_ctx->ctx_export);
+
+	if (op_ctx->ctx_pnfs_ds != NULL)
+		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
+
+	set_op_context_export_fsal_no_release(pds->mds_export,
+					      pds->mds_fsal_export,
+					      pds,
+					      true);
 }
 
 static inline void clear_op_context_export_impl(void)
 {
 	if (op_ctx->ctx_export != NULL)
 		put_gsh_export(op_ctx->ctx_export);
+
+	if (op_ctx->ctx_pnfs_ds != NULL)
+		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
 
 	if (op_ctx->ctx_fullpath != NULL)
 		gsh_refstr_put(op_ctx->ctx_fullpath);
@@ -3346,6 +3373,7 @@ static void save_op_context_export(struct saved_export_context *saved)
 	saved->saved_pseudopath = op_ctx->ctx_pseudopath;
 	saved->saved_fsal_export = op_ctx->fsal_export;
 	saved->saved_fsal_module = op_ctx->fsal_module;
+	saved->saved_pnfs_ds = op_ctx->ctx_pnfs_ds;
 	saved->saved_export_perms = op_ctx->export_perms;
 }
 
@@ -3355,7 +3383,8 @@ void save_op_context_export_and_set_export(struct saved_export_context *saved,
 	save_op_context_export(saved);
 
 	/* Don't release op_ctx->ctx_export since it's saved */
-	set_op_context_export_fsal_no_release(exp, exp->fsal_export, false);
+	set_op_context_export_fsal_no_release(exp, exp->fsal_export, NULL,
+					      false);
 }
 
 void save_op_context_export_and_clear(struct saved_export_context *saved)
@@ -3363,6 +3392,7 @@ void save_op_context_export_and_clear(struct saved_export_context *saved)
 	save_op_context_export(saved);
 	op_ctx->ctx_export = NULL;
 	op_ctx->fsal_export = NULL;
+	op_ctx->ctx_pnfs_ds = NULL;
 }
 
 void restore_op_context_export(struct saved_export_context *saved)
@@ -3373,6 +3403,7 @@ void restore_op_context_export(struct saved_export_context *saved)
 	op_ctx->ctx_pseudopath = saved->saved_pseudopath;
 	op_ctx->fsal_export = saved->saved_fsal_export;
 	op_ctx->fsal_module = saved->saved_fsal_module;
+	op_ctx->ctx_pnfs_ds = saved->saved_pnfs_ds;
 	op_ctx->export_perms = saved->saved_export_perms;
 }
 
@@ -3380,6 +3411,9 @@ void discard_op_context_export(struct saved_export_context *saved)
 {
 	if (saved->saved_export)
 		put_gsh_export(saved->saved_export);
+
+	if (saved->saved_pnfs_ds != NULL)
+		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
 
 	if (saved->saved_fullpath != NULL)
 		gsh_refstr_put(saved->saved_fullpath);
@@ -3411,7 +3445,7 @@ void init_op_context(struct req_op_context *ctx,
 
 	/* Since this is a brand new op context, no need to release anything.
 	 */
-	set_op_context_export_fsal_no_release(exp, fsal_exp, false);
+	set_op_context_export_fsal_no_release(exp, fsal_exp, NULL, false);
 
 	ctx->export_perms.set = root_op_export_set;
 	ctx->export_perms.options = root_op_export_options;

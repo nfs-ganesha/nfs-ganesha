@@ -42,6 +42,7 @@
 #include "server_stats.h"
 #include "export_mgr.h"
 #include "nfs_creds.h"
+#include "pnfs_utils.h"
 
 #ifdef USE_LTTNG
 #include "gsh_lttng/nfs_rpc.h"
@@ -1452,6 +1453,12 @@ void compound_data_Free(compound_data_t *data)
 	if (data->saved_export) {
 		put_gsh_export(data->saved_export);
 		data->saved_export = NULL;
+	}
+
+	/* If there was a saved_pnfs_ds is present, release reference. */
+	if (data->saved_pnfs_ds != NULL) {
+		pnfs_ds_put(data->saved_pnfs_ds);
+		data->saved_pnfs_ds = NULL;
 	}
 
 	if (data->currentFH.nfs_fh4_val != NULL)

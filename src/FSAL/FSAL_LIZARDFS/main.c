@@ -168,6 +168,7 @@ static fsal_status_t lzfs_fsal_create_export(
 	struct lzfs_fsal_export *lzfs_export;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	int rc;
+	struct fsal_pnfs_ds *pds = NULL;
 
 	lzfs_export = gsh_calloc(1, sizeof(struct lzfs_fsal_export));
 
@@ -229,8 +230,6 @@ static fsal_status_t lzfs_fsal_create_export(
 			goto error;
 		}
 
-		struct fsal_pnfs_ds *pds = NULL;
-
 		status = fsal_hdl->m_ops.create_fsal_pnfs_ds(fsal_hdl,
 							     parse_node,
 							     &pds);
@@ -247,6 +246,9 @@ static fsal_status_t lzfs_fsal_create_export(
 			LogCrit(COMPONENT_CONFIG, "Server id %d already in "
 				"use.", pds->id_servers);
 			status.major = ERR_FSAL_EXIST;
+
+			/* Return the ref taken by create_fsal_pnfs_ds */
+			pnfs_ds_put(pds);
 			goto error;
 		}
 
@@ -273,7 +275,12 @@ static fsal_status_t lzfs_fsal_create_export(
 			      &ret);
 	if (rc < 0) {
 		status = lzfs_fsal_last_err();
-		goto error;
+
+		if (pds != NULL) {
+			/* Remove and destroy the fsal_pnfs_ds */
+			pnfs_ds_remove(pds->id_servers);
+		}
+		goto error_pds;
 	}
 
 	lzfs_export->root = lzfs_fsal_new_handle(&ret.attr, lzfs_export);
@@ -284,6 +291,12 @@ static fsal_status_t lzfs_fsal_create_export(
 		 CTX_FULLPATH(op_ctx));
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+error_pds:
+	if (pds != NULL)
+		/* Return the ref taken by create_fsal_pnfs_ds */
+		pnfs_ds_put(pds);
+
 error:
 	if (lzfs_export) {
 		if (lzfs_export->lzfs_instance) {

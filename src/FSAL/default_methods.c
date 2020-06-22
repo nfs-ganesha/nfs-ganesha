@@ -234,7 +234,6 @@ static fsal_status_t create_fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
 		*handle = pnfs_ds_alloc();
 
 	fsal_pnfs_ds_init(*handle, fsal_hdl);
-	op_ctx->ctx_pnfs_ds = *handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -1566,7 +1565,7 @@ static void pds_release(struct fsal_pnfs_ds *const pds)
 {
 	LogDebug(COMPONENT_PNFS, "Default pNFS DS release!");
 	fsal_pnfs_ds_fini(pds);
-	gsh_free(pds);
+	pnfs_ds_free(pds);
 }
 
 /**

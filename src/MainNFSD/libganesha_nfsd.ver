@@ -178,6 +178,8 @@
   op_ctx;
   open_dir_by_path_walk;
   pnfs_ds_insert;
+  pnfs_ds_put;
+  pnfs_ds_remove;
   posix2fsal_attributes;
   posix2fsal_attributes_all;
   posix2fsal_devt;
