@@ -93,14 +93,13 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	struct gsh_export *exp = NULL;
 	char *qpath;
 	char path[MAXPATHLEN];
-	struct req_op_context op_context;
 
 	qres->status = Q_EPERM;
 
 	qpath = check_handle_lead_slash(quota_path, path,
 					MAXPATHLEN);
 	if (qpath == NULL)
-		goto out;
+		return NFS_REQ_OK;
 
 	/*  Find the export for the dirname (using as well Path, Pseudo, or Tag)
 	 */
@@ -127,10 +126,11 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 			 "Export entry for %s not found", qpath);
 
 		/* entry not found. */
-		goto out;
+		return NFS_REQ_OK;
 	}
 
-	init_op_context_simple(&op_context, exp, exp->fsal_export);
+	/* Add export to op_ctx, will be released in free_args */
+	set_op_context_export(exp);
 
 	/* Get creds */
 	if (nfs_req_creds(req) == NFS4ERR_ACCESS) {
@@ -140,7 +140,7 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 		LogInfo(COMPONENT_NFSPROTO,
 			"could not get uid and gid, rejecting client %s",
 			client_ip);
-		goto out;
+		return NFS_REQ_OK;
 	}
 
 	memset(&fsal_quota_in, 0, sizeof(fsal_quota_t));
@@ -162,7 +162,7 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_NO_QUOTA)
 			qres->status = Q_NOQUOTA;
-		goto out;
+		return NFS_REQ_OK;
 	}
 
 	/* is success */
@@ -183,11 +183,6 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	qres->setquota_rslt_u.sqr_rquota.rq_ftimeleft =
 	    fsal_quota_out.ftimeleft;
 	qres->status = Q_OK;
-
-out:
-
-	if (exp != NULL)
-		release_op_context();
 
 	return NFS_REQ_OK;
 }				/* do_rquota_setquota */
