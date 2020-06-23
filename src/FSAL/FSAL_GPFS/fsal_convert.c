@@ -74,10 +74,13 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 		if (fsal_attr->acl != NULL) {
 			/* We should never be passed attributes that have an
 			 * ACL attached, but just in case some future code
-			 * path changes that assumption, let's not release the
+			 * path changes that assumption, let's release the
 			 * old ACL properly.
 			 */
 			int acl_status;
+
+			LogCrit(COMPONENT_FSAL,
+				"attrs passed in with acl, shouldn't happen");
 
 			acl_status = nfs4_acl_release_entry(fsal_attr->acl);
 
