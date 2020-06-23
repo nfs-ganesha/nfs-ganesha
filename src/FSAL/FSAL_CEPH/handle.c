@@ -846,8 +846,7 @@ static fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t ceph_close_my_fd(struct ceph_handle *handle,
-				      struct ceph_fd *my_fd)
+static fsal_status_t ceph_close_my_fd(struct ceph_fd *my_fd)
 {
 	int rc = 0;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -900,8 +899,7 @@ static fsal_status_t ceph_open_func(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t ceph_close_func(struct fsal_obj_handle *obj_hdl,
 				     struct fsal_fd *fd)
 {
-	return ceph_close_my_fd(container_of(obj_hdl,
-		struct ceph_handle, handle), (struct ceph_fd *)fd);
+	return ceph_close_my_fd((struct ceph_fd *)fd);
 }
 
 /**
@@ -930,7 +928,7 @@ static fsal_status_t ceph_fsal_close(struct fsal_obj_handle *obj_hdl)
 	if (handle->fd.openflags == FSAL_O_CLOSED)
 		status = fsalstat(ERR_FSAL_NOT_OPENED, 0);
 	else
-		status = ceph_close_my_fd(handle, &handle->fd);
+		status = ceph_close_my_fd(&handle->fd);
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
@@ -1174,7 +1172,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		}
 
 		if (my_fd->openflags != FSAL_O_CLOSED) {
-			ceph_close_my_fd(myself, my_fd);
+			ceph_close_my_fd(my_fd);
 		}
 		status = ceph_open_my_fd(myself, openflags, posix_flags, my_fd);
 
@@ -1247,7 +1245,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			return status;
 		}
 
-		(void) ceph_close_my_fd(myself, my_fd);
+		(void) ceph_close_my_fd(my_fd);
 
  undo_share:
 
@@ -1498,8 +1496,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
  fileerr:
 
 	/* Close the file we just opened. */
-	(void) ceph_close_my_fd(container_of(*new_obj,
-		struct ceph_handle, handle), my_fd);
+	(void)ceph_close_my_fd(my_fd);
 
 	/* Release the handle we just allocated. */
 	(*new_obj)->obj_ops->release(*new_obj);
@@ -1598,7 +1595,7 @@ static fsal_status_t ceph_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 		 */
 		PTHREAD_RWLOCK_wrlock(&my_share_fd->fdlock);
 
-		ceph_close_my_fd(myself, my_share_fd);
+		ceph_close_my_fd(my_share_fd);
 		my_share_fd->fd = my_fd->fd;
 		my_share_fd->openflags = my_fd->openflags;
 
@@ -2450,7 +2447,7 @@ static fsal_status_t ceph_fsal_close2(struct fsal_obj_handle *obj_hdl,
 	 * is operating on the fd while we close it.
 	 */
 	PTHREAD_RWLOCK_wrlock(&my_fd->fdlock);
-	status = ceph_close_my_fd(myself, my_fd);
+	status = ceph_close_my_fd(my_fd);
 	PTHREAD_RWLOCK_unlock(&my_fd->fdlock);
 
 	return status;
