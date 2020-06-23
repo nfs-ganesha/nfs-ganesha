@@ -62,8 +62,10 @@ static void ceph_fsal_release(struct fsal_obj_handle *obj_pub)
 	/* The private 'full' handle */
 	struct ceph_handle *obj =
 			container_of(obj_pub, struct ceph_handle, handle);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 
-	if (obj != obj->export->root)
+	if (obj != export->root)
 		deconstruct_handle(obj);
 }
 
@@ -849,9 +851,11 @@ static fsal_status_t ceph_close_my_fd(struct ceph_handle *handle,
 {
 	int rc = 0;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 
 	if (my_fd->fd != NULL && my_fd->openflags != FSAL_O_CLOSED) {
-		rc = ceph_ll_close(handle->export->cmount, my_fd->fd);
+		rc = ceph_ll_close(export->cmount, my_fd->fd);
 		if (rc < 0)
 			status = ceph2fsal_error(rc);
 		my_fd->fd = NULL;
@@ -1672,8 +1676,6 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			    fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 			    void *caller_arg)
 {
-	struct ceph_handle *myself =
-			container_of(obj_hdl, struct ceph_handle, handle);
 	Fh *my_fd = NULL;
 	ssize_t nb_read;
 	fsal_status_t status;
@@ -1750,7 +1752,7 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
 
 	if (closefd)
-		(void) ceph_ll_close(myself->export->cmount, my_fd);
+		(void) ceph_ll_close(export->cmount, my_fd);
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -1781,8 +1783,6 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			     fsal_async_cb done_cb,
 			     struct fsal_io_arg *write_arg, void *caller_arg)
 {
-	struct ceph_handle *myself =
-			container_of(obj_hdl, struct ceph_handle, handle);
 	ssize_t nb_written;
 	fsal_status_t status;
 	int i, retval = 0;
@@ -1847,7 +1847,7 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
 
 	if (closefd)
-		(void) ceph_ll_close(myself->export->cmount, my_fd);
+		(void) ceph_ll_close(export->cmount, my_fd);
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -1932,7 +1932,7 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (closefd)
-		(void) ceph_ll_close(myself->export->cmount, out_fd->fd);
+		(void) ceph_ll_close(export->cmount, out_fd->fd);
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -1969,8 +1969,6 @@ static fsal_status_t ceph_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 					fsal_lock_param_t *request_lock,
 					fsal_lock_param_t *conflicting_lock)
 {
-	struct ceph_handle *myself =
-			container_of(obj_hdl, struct ceph_handle, handle);
 	struct flock lock_args;
 	fsal_status_t status = {0, 0};
 	int retval = 0;
@@ -2123,7 +2121,7 @@ static fsal_status_t ceph_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
 
 	if (closefd)
-		(void) ceph_ll_close(myself->export->cmount, my_fd);
+		(void) ceph_ll_close(export->cmount, my_fd);
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -2158,8 +2156,6 @@ static fsal_status_t ceph_fsal_lease_op2(struct fsal_obj_handle *obj_hdl,
 					 state_t *state, void *owner,
 					 fsal_deleg_t deleg)
 {
-	struct ceph_handle *myself =
-		container_of(obj_hdl, struct ceph_handle, handle);
 	fsal_status_t status = {0, 0};
 	int retval = 0;
 	Fh *my_fd = NULL;
@@ -2169,6 +2165,8 @@ static fsal_status_t ceph_fsal_lease_op2(struct fsal_obj_handle *obj_hdl,
 	bool bypass = false;
 	fsal_openflags_t openflags = FSAL_O_READ;
 	struct ceph_fd *ceph_fd = NULL;
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 
 	switch (deleg) {
 	case FSAL_DELEG_NONE:
@@ -2208,14 +2206,14 @@ static fsal_status_t ceph_fsal_lease_op2(struct fsal_obj_handle *obj_hdl,
 		return status;
 	}
 
-	retval = ceph_ll_delegation(myself->export->cmount, my_fd, cmd,
-				    ceph_deleg_cb, obj_hdl);
+	retval = ceph_ll_delegation(export->cmount, my_fd, cmd, ceph_deleg_cb,
+				    obj_hdl);
 
 	if (ceph_fd)
 		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
 
 	if (closefd)
-		(void) ceph_ll_close(myself->export->cmount, my_fd);
+		(void) ceph_ll_close(export->cmount, my_fd);
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
@@ -2534,8 +2532,6 @@ static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 					 state_t *state, uint64_t offset,
 					 uint64_t length, bool allocate)
 {
-	struct ceph_handle *myself =
-			container_of(obj_hdl, struct ceph_handle, handle);
 	fsal_status_t status;
 	int retval = 0;
 	Fh *my_fd = NULL;
@@ -2582,7 +2578,7 @@ static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
 
 	if (closefd)
-		(void) ceph_ll_close(myself->export->cmount, my_fd);
+		(void) ceph_ll_close(export->cmount, my_fd);
 
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);

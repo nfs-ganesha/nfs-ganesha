@@ -85,8 +85,6 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 	constructing->handle.fsid = posix2fsal_fsid(stx->stx_dev);
 	constructing->handle.fileid = stx->stx_ino;
 
-	constructing->export = export;
-
 	*obj = constructing;
 }
 
@@ -98,7 +96,12 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 
 void deconstruct_handle(struct ceph_handle *obj)
 {
-	ceph_ll_put(obj->export->cmount, obj->i);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+
+	assert(op_ctx->fsal_export->export_id == obj->key.export_id);
+
+	ceph_ll_put(export->cmount, obj->i);
 	fsal_obj_handle_fini(&obj->handle);
 	gsh_free(obj);
 }
