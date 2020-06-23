@@ -1376,13 +1376,16 @@ static fsal_status_t mdcache_merge(struct fsal_obj_handle *orig_hdl,
 
 
 static bool mdcache_is_referral(struct fsal_obj_handle *obj_hdl,
-				struct attrlist *attrs,
+				struct attrlist *unused,
 				bool cache_attrs)
 {
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	bool result, locked, write_locked;
 	attrmask_t valid_request_mask = 0;
+	struct attrlist attrs[1];
+
+	fsal_prepare_attrs(attrs, ATTR_MODE | ATTR_TYPE);
 
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 	locked = true;
@@ -1452,6 +1455,7 @@ out:
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	}
 
+	fsal_release_attrs(attrs);
 	return result;
 }
 

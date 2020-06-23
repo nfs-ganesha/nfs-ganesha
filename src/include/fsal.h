@@ -492,6 +492,11 @@ static inline void fsal_copy_attrs(struct attrlist *dest,
 {
 	attrmask_t save_request_mask = dest->request_mask;
 
+	if (dest == src || dest->acl != NULL) {
+		LogCrit(COMPONENT_FSAL, "Invalid dest pointer, dest: %p, "
+			"src: %p, ac: %p", dest, src, dest->acl);
+	}
+
 	/* Copy source to dest, but retain dest->request_mask */
 	*dest = *src;
 	dest->request_mask = save_request_mask;

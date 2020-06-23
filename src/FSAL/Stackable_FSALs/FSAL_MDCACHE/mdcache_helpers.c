@@ -3307,7 +3307,7 @@ again:
 			   __func__, __LINE__, dirent->name, &entry->obj_handle,
 			   entry->sub_handle, entry->lru.refcnt);
 #endif
-		cb_result = cb(dirent->name, &entry->obj_handle, &entry->attrs,
+		cb_result = cb(dirent->name, &entry->obj_handle, &attrs,
 			       dir_state, dirent->ck);
 
 		fsal_release_attrs(&attrs);
