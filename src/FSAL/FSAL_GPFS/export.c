@@ -794,8 +794,9 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	if (gpfs_exp->pnfs_ds_enabled) {
 		struct fsal_pnfs_ds *pds = NULL;
 
-		status = fsal_hdl->m_ops.fsal_pnfs_ds(fsal_hdl, parse_node,
-						      &pds);
+		status = fsal_hdl->m_ops.create_fsal_pnfs_ds(fsal_hdl,
+							     parse_node,
+							     &pds);
 
 		if (status.major != ERR_FSAL_NO_ERROR)
 			goto unexport;

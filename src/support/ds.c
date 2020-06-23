@@ -103,7 +103,7 @@ struct fsal_pnfs_ds *pnfs_ds_alloc(void)
 
 void pnfs_ds_free(struct fsal_pnfs_ds *pds)
 {
-	if (!pds->refcount)
+	if (!pds->ds_refcount)
 		return;
 
 	gsh_free(pds);
@@ -124,7 +124,7 @@ bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
 		&(server_by_id.cache[id_cache_offsetof(pds->id_servers)]);
 
 	/* we will hold a ref starting out... */
-	assert(pds->refcount == 1);
+	assert(pds->ds_refcount == 1);
 
 	PTHREAD_RWLOCK_wrlock(&server_by_id.lock);
 	node = avltree_insert(&pds->ds_node, &server_by_id.t);
@@ -213,7 +213,7 @@ struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers)
 
 void pnfs_ds_put(struct fsal_pnfs_ds *pds)
 {
-	int32_t refcount = atomic_dec_int32_t(&pds->refcount);
+	int32_t refcount = atomic_dec_int32_t(&pds->ds_refcount);
 
 	if (refcount != 0) {
 		assert(refcount > 0);
@@ -351,7 +351,7 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	if (errcnt > 0)
 		goto err;
 
-	status = fsal->m_ops.fsal_pnfs_ds(fsal, node, &pds);
+	status = fsal->m_ops.create_fsal_pnfs_ds(fsal, node, &pds);
 	if (status.major != ERR_FSAL_NO_ERROR) {
 		fsal_put(fsal);
 		LogCrit(COMPONENT_CONFIG,

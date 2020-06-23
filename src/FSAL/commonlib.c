@@ -218,7 +218,7 @@ void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal)
 {
 	pthread_rwlockattr_t attrs;
 
-	pds->refcount = 1;	/* we start out with a reference */
+	pds->ds_refcount = 1;	/* we start out with a reference */
 	fsal->m_ops.fsal_pnfs_ds_ops(&pds->s_ops);
 	pds->fsal = fsal;
 

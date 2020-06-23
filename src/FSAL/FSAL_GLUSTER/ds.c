@@ -41,7 +41,7 @@
  *
  * @return NFS Status codes.
  */
-static void release(struct fsal_ds_handle *const ds_pub)
+static void dsh_release(struct fsal_ds_handle *const ds_pub)
 {
 	int    rc                 = 0;
 	struct glfs_ds_handle *ds =
@@ -245,11 +245,11 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 /* Initialise DS operations */
 void dsh_ops_init(struct fsal_dsh_ops *ops)
 {
-	ops->release = release;
-	ops->read = ds_read;
-	ops->write = ds_write;
-	ops->commit = ds_commit;
-};
+	ops->dsh_release = dsh_release;
+	ops->dsh_read = ds_read;
+	ops->dsh_write = ds_write;
+	ops->dsh_commit = ds_commit;
+}
 
 /**
  * @brief Create a FSAL data server handle from a wire handle

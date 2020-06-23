@@ -457,7 +457,7 @@ struct req_op_context {
 	void *fsal_private;		/*< private for FSAL use */
 	void *proto_private;		/*< private for protocol layer use */
 	struct fsal_module *fsal_module;	/*< current fsal module */
-	struct fsal_pnfs_ds *fsal_pnfs_ds;	/*< current pNFS DS */
+	struct fsal_pnfs_ds *ctx_pnfs_ds;	/*< current pNFS DS */
 };
 
 /**
@@ -700,9 +700,10 @@ struct fsal_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t (*fsal_pnfs_ds)(struct fsal_module *const fsal_hdl,
-				       void *parse_node,
-				       struct fsal_pnfs_ds **const handle);
+	 fsal_status_t (*create_fsal_pnfs_ds)(
+					struct fsal_module *const fsal_hdl,
+					void *parse_node,
+					struct fsal_pnfs_ds **const handle);
 
 /**
  * @brief Initialize FSAL specific values for pNFS data server
@@ -2625,7 +2626,7 @@ struct fsal_pnfs_ds_ops {
  *
  * @param[in]  pds	FSAL pNFS DS to release
  */
-	 void (*release)(struct fsal_pnfs_ds *const pds);
+	 void (*ds_release)(struct fsal_pnfs_ds *const pds);
 
 /**
  * @brief Initialize FSAL specific permissions per pNFS DS
@@ -2636,7 +2637,7 @@ struct fsal_pnfs_ds_ops {
  * @return NFSv4.1 error codes:
  *			NFS4_OK, NFS4ERR_ACCESS, NFS4ERR_WRONGSEC.
  */
-	 nfsstat4(*permissions)(struct fsal_pnfs_ds *const pds,
+	 nfsstat4(*ds_permissions)(struct fsal_pnfs_ds *const pds,
 				struct svc_req *req);
 /**@}*/
 
@@ -2690,7 +2691,7 @@ struct fsal_dsh_ops {
  *
  * @param[in] ds_hdl Handle to release
  */
-	 void (*release)(struct fsal_ds_handle *const ds_hdl);
+	 void (*dsh_release)(struct fsal_ds_handle *const ds_hdl);
 /**@}*/
 
 /**@{*/
@@ -2718,13 +2719,13 @@ struct fsal_dsh_ops {
  *
  * @return An NFSv4.1 status code.
  */
-	 nfsstat4(*read)(struct fsal_ds_handle *const ds_hdl,
-			 const stateid4 * stateid,
-			 const offset4 offset,
-			 const count4 requested_length,
-			 void *const buffer,
-			 count4 * const supplied_length,
-			 bool *const end_of_file);
+	 nfsstat4 (*dsh_read)(struct fsal_ds_handle *const ds_hdl,
+			      const stateid4 *stateid,
+			      const offset4 offset,
+			      const count4 requested_length,
+			      void *const buffer,
+			      count4 * const supplied_length,
+			      bool *const end_of_file);
 
 /**
  * @brief Read plus from a data-server handle.
@@ -2746,14 +2747,14 @@ struct fsal_dsh_ops {
  *
  * @return An NFSv4.2 status code.
  */
-	 nfsstat4(*read_plus)(struct fsal_ds_handle *const ds_hdl,
-			      const stateid4 * stateid,
-			      const offset4 offset,
-			      const count4 requested_length,
-			      void *const buffer,
-			      const count4 supplied_length,
-			      bool *const end_of_file,
-			      struct io_info *info);
+	 nfsstat4 (*dsh_read_plus)(struct fsal_ds_handle *const ds_hdl,
+				   const stateid4 *stateid,
+				   const offset4 offset,
+				   const count4 requested_length,
+				   void *const buffer,
+				   const count4 supplied_length,
+				   bool *const end_of_file,
+				   struct io_info *info);
 
 /**
  *
@@ -2778,15 +2779,15 @@ struct fsal_dsh_ops {
  *
  * @return An NFSv4.1 status code.
  */
-	 nfsstat4(*write)(struct fsal_ds_handle *const ds_hdl,
-			  const stateid4 * stateid,
-			  const offset4 offset,
-			  const count4 write_length,
-			  const void *buffer,
-			  const stable_how4 stability_wanted,
-			  count4 * const written_length,
-			  verifier4 * const writeverf,
-			  stable_how4 * const stability_got);
+	 nfsstat4 (*dsh_write)(struct fsal_ds_handle *const ds_hdl,
+			       const stateid4 *stateid,
+			       const offset4 offset,
+			       const count4 write_length,
+			       const void *buffer,
+			       const stable_how4 stability_wanted,
+			       count4 * const written_length,
+			       verifier4 * const writeverf,
+			       stable_how4 * const stability_got);
 
 /**
  * @brief Commit a byte range to a DS handle.
@@ -2803,10 +2804,10 @@ struct fsal_dsh_ops {
  *
  * @return An NFSv4.1 status code.
  */
-	 nfsstat4(*commit)(struct fsal_ds_handle *const ds_hdl,
-			   const offset4 offset,
-			   const count4 count,
-			   verifier4 * const writeverf);
+	 nfsstat4 (*dsh_commit)(struct fsal_ds_handle *const ds_hdl,
+				const offset4 offset,
+				const count4 count,
+				verifier4 * const writeverf);
 /**@}*/
 };
 
@@ -3004,7 +3005,7 @@ struct fsal_pnfs_ds {
 	struct avltree_node ds_node;	/**< Node in tree of all Data Servers */
 	pthread_rwlock_t lock;		/**< Lock to be held when
 					    manipulating its list (above). */
-	int32_t refcount;		/**< Reference count */
+	int32_t ds_refcount;		/**< Reference count */
 	uint16_t id_servers;		/**< Identifier */
 	uint8_t pnfs_ds_status;		/**< current condition */
 };
@@ -3102,7 +3103,7 @@ static inline void ds_handle_put(struct fsal_ds_handle *const ds_hdl)
 		return;
 	}
 
-	ds_hdl->dsh_ops.release(ds_hdl);
+	ds_hdl->dsh_ops.dsh_release(ds_hdl);
 }
 
 /**

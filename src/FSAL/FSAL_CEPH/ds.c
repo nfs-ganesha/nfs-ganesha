@@ -73,7 +73,7 @@ static inline void local_invalidate(struct ds *ds, struct fsal_export *export)
  *
  * @param[in] ds_pub The object to release
  */
-static void ds_release(struct fsal_ds_handle *const ds_pub)
+static void ds_handle_release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
 	struct ds *ds = container_of(ds_pub, struct ds, ds);
@@ -365,10 +365,10 @@ static void dsh_ops_init(struct fsal_dsh_ops *ops)
 {
 	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
 
-	ops->release = ds_release;
-	ops->read = ds_read;
-	ops->write = ds_write;
-	ops->commit = ds_commit;
+	ops->dsh_release = ds_handle_release;
+	ops->dsh_read = ds_read;
+	ops->dsh_write = ds_write;
+	ops->dsh_commit = ds_commit;
 }
 
 /**

@@ -287,11 +287,11 @@ static void lzfs_fsal_dsh_ops_init(struct fsal_dsh_ops *ops)
 {
 	memset(ops, 0, sizeof(struct fsal_dsh_ops));
 
-	ops->release = lzfs_fsal_ds_handle_release;
-	ops->read = lzfs_fsal_ds_handle_read;
-	ops->write = lzfs_fsal_ds_handle_write;
-	ops->commit = lzfs_fsal_ds_handle_commit;
-	ops->read_plus = lzfs_fsal_ds_read_plus;
+	ops->dsh_release = lzfs_fsal_ds_handle_release;
+	ops->dsh_read = lzfs_fsal_ds_handle_read;
+	ops->dsh_write = lzfs_fsal_ds_handle_write;
+	ops->dsh_commit = lzfs_fsal_ds_handle_commit;
+	ops->dsh_read_plus = lzfs_fsal_ds_read_plus;
 }
 
 /*! \brief Create a FSAL data server handle from a wire handle
@@ -363,6 +363,6 @@ void lzfs_fsal_ds_handle_ops_init(struct fsal_pnfs_ds_ops *ops)
 	memset(ops, 0, sizeof(struct fsal_pnfs_ds_ops));
 	ops->make_ds_handle = lzfs_fsal_make_ds_handle;
 	ops->fsal_dsh_ops = lzfs_fsal_dsh_ops_init;
-	ops->release = lzfs_fsal_pds_release;
-	ops->permissions = lzfs_fsal_pds_permissions;
+	ops->ds_release = lzfs_fsal_pds_release;
+	ops->ds_permissions = lzfs_fsal_pds_permissions;
 }

@@ -225,16 +225,16 @@ static size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
-				  void *parse_node,
-				  struct fsal_pnfs_ds **const handle)
+static fsal_status_t create_fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
+					 void *parse_node,
+					 struct fsal_pnfs_ds **const handle)
 {
 	LogDebug(COMPONENT_PNFS, "Default pNFS DS creation!");
 	if (*handle == NULL)
 		*handle = pnfs_ds_alloc();
 
 	fsal_pnfs_ds_init(*handle, fsal_hdl);
-	op_ctx->fsal_pnfs_ds = *handle;
+	op_ctx->ctx_pnfs_ds = *handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -285,7 +285,7 @@ struct fsal_ops def_fsal_ops = {
 	.emergency_cleanup = emergency_cleanup,
 	.getdeviceinfo = getdeviceinfo,
 	.fs_da_addr_size = fs_da_addr_size,
-	.fsal_pnfs_ds = fsal_pnfs_ds,
+	.create_fsal_pnfs_ds = create_fsal_pnfs_ds,
 	.fsal_pnfs_ds_ops = fsal_pnfs_ds_ops,
 	.fsal_extract_stats = fsal_extract_stats,
 	.fsal_reset_stats = fsal_reset_stats,
@@ -1623,8 +1623,8 @@ static void pds_handle_ops(struct fsal_dsh_ops *ops)
 }
 
 struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
-	.release = pds_release,
-	.permissions = pds_permissions,
+	.ds_release = pds_release,
+	.ds_permissions = pds_permissions,
 	.make_ds_handle = pds_handle,
 	.fsal_dsh_ops = pds_handle_ops,
 };
@@ -1639,7 +1639,7 @@ struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
  *
  * @param[in] release Handle to release
  */
-static void ds_release(struct fsal_ds_handle *const ds_hdl)
+static void ds_handle_release(struct fsal_ds_handle *const ds_hdl)
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle release!");
 	fsal_ds_handle_fini(ds_hdl);
@@ -1729,11 +1729,11 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_hdl,
 }
 
 struct fsal_dsh_ops def_dsh_ops = {
-	.release = ds_release,
-	.read = ds_read,
-	.read_plus = ds_read_plus,
-	.write = ds_write,
-	.commit = ds_commit
+	.dsh_release = ds_handle_release,
+	.dsh_read = ds_read,
+	.dsh_read_plus = ds_read_plus,
+	.dsh_write = ds_write,
+	.dsh_commit = ds_commit
 };
 
 /** @} */

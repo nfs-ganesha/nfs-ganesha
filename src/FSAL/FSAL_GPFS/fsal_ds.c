@@ -55,7 +55,7 @@
  *
  * @param[in] ds_pub The object to release
  */
-static void ds_release(struct fsal_ds_handle *const ds_pub)
+static void ds_handle_release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
@@ -338,11 +338,11 @@ static void dsh_ops_init(struct fsal_dsh_ops *ops)
 	/* redundant copy, but you never know about the future... */
 	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
 
-	ops->release = ds_release;
-	ops->read = ds_read;
-	ops->read_plus = ds_read_plus;
-	ops->write = ds_write;
-	ops->commit = ds_commit;
+	ops->dsh_release = ds_handle_release;
+	ops->dsh_read = ds_read;
+	ops->dsh_read_plus = ds_read_plus;
+	ops->dsh_write = ds_write;
+	ops->dsh_commit = ds_commit;
 }
 
 /**
@@ -443,7 +443,7 @@ static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
 void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
 {
 	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
-	ops->permissions = pds_permissions;
+	ops->ds_permissions = pds_permissions;
 	ops->make_ds_handle = make_ds_handle;
 	ops->fsal_dsh_ops = dsh_ops_init;
 }

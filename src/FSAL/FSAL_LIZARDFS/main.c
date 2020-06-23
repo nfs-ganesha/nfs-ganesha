@@ -231,9 +231,9 @@ static fsal_status_t lzfs_fsal_create_export(
 
 		struct fsal_pnfs_ds *pds = NULL;
 
-		status = fsal_hdl->m_ops.fsal_pnfs_ds(fsal_hdl,
-						      parse_node,
-						      &pds);
+		status = fsal_hdl->m_ops.create_fsal_pnfs_ds(fsal_hdl,
+							     parse_node,
+							     &pds);
 		if (status.major != ERR_FSAL_NO_ERROR) {
 			goto error;
 		}

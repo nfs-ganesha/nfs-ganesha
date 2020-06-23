@@ -263,7 +263,7 @@ struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers);
 
 static inline void pnfs_ds_get_ref(struct fsal_pnfs_ds *pds)
 {
-	(void) atomic_inc_int32_t(&pds->refcount);
+	(void) atomic_inc_int32_t(&pds->ds_refcount);
 }
 
 void pnfs_ds_put(struct fsal_pnfs_ds *pds);

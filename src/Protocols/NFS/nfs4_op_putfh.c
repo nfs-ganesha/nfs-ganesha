@@ -73,10 +73,10 @@ static int nfs4_ds_putfh(compound_data_t *data)
 	}
 
 	/* If old CurrentFH had a related server, release reference. */
-	if (op_ctx->fsal_pnfs_ds != NULL) {
+	if (op_ctx->ctx_pnfs_ds != NULL) {
 		changed = ntohs(v4_handle->id.servers)
-			!= op_ctx->fsal_pnfs_ds->id_servers;
-		pnfs_ds_put(op_ctx->fsal_pnfs_ds);
+			!= op_ctx->ctx_pnfs_ds->id_servers;
+		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
 	}
 
 	/* If old CurrentFH had a related export, note the change, the reference
@@ -106,12 +106,12 @@ static int nfs4_ds_putfh(compound_data_t *data)
 	set_current_entry(data, NULL);
 
 	/* update _ctx fields */
-	op_ctx->fsal_pnfs_ds = pds;
+	op_ctx->ctx_pnfs_ds = pds;
 
 	if (changed) {
 		int status;
 		/* permissions may have changed */
-		status = pds->s_ops.permissions(pds, data->req);
+		status = pds->s_ops.ds_permissions(pds, data->req);
 		if (status != NFS4_OK)
 			return status;
 	}
@@ -170,9 +170,9 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	}
 
 	/* If old CurrentFH had a related server, release reference. */
-	if (op_ctx->fsal_pnfs_ds != NULL) {
-		pnfs_ds_put(op_ctx->fsal_pnfs_ds);
-		op_ctx->fsal_pnfs_ds = NULL;
+	if (op_ctx->ctx_pnfs_ds != NULL) {
+		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
+		op_ctx->ctx_pnfs_ds = NULL;
 	}
 
 	/* Clear out current entry for now */
