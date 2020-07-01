@@ -178,6 +178,7 @@ tunable_policy(`ganesha_use_fusefs',`
     fs_manage_fusefs_files(ganesha_t)
     fs_read_fusefs_symlinks(ganesha_t)
     fs_getattr_fusefs(ganesha_t)
+    fs_search_fusefs(ganesha_t)
 ')
 
 ########################################
