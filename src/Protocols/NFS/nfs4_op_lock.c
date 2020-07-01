@@ -107,6 +107,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 	bool state_lock_held = false;
 	uint64_t maxfilesize =
 	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
+	bool new_lock_state = false;
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCK handler ----------------------");
@@ -587,6 +588,8 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 				goto out2;
 			}
 
+			new_lock_state = true;
+
 			glist_init(&lock_state->state_data.lock.state_locklist);
 
 			/* Add lock state to the list of lock states belonging
@@ -670,7 +673,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 					    lock_tag);
 		}
 
-		if (arg_LOCK4->locker.new_lock_owner) {
+		if (new_lock_state) {
 			/* Need to destroy new state */
 			state_del_locked(lock_state);
 		}
