@@ -1471,7 +1471,7 @@ void server_stats_nfsv4_op_done(int proto_op,
 	stop_time = timespec_diff(&nfs_ServerBootTime, &current_time);
 
 	if (nfs_param.core_param.enable_FULLV4STATS)
-		record_v4_full_stats(proto_op, stop_time - op_ctx->start_time,
+		record_v4_full_stats(proto_op, stop_time - start_time,
 			    status == NFS4_OK);
 
 	if (client != NULL) {
