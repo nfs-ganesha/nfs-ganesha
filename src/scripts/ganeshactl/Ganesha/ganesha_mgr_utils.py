@@ -20,19 +20,11 @@
 # Author: Allison Henderson <achender@vnet.linux.ibm.com>
 #-*- coding: utf-8 -*-
 
-try:
-    import gobject
-except ImportError:
-    from gi.repository import GObject as gobject
-
 import sys
-import dbus.mainloop.glib
+import time
+import traceback
 import dbus
-from dbus import glib
 from collections import namedtuple
-
-gobject.threads_init()
-glib.init_threads()
 
 Client = namedtuple('Client',
                     ['ClientIP',

@@ -1,21 +1,10 @@
 #!/usr/bin/python3
 
-# You must initialize the gobject/dbus support for threading
-# before doing anything.
 from __future__ import print_function
-try:
-    import gobject
-except ImportError:
-    from gi.repository import GObject as gobject
 import sys
 import time
 
-gobject.threads_init()
-
-from dbus import glib
-glib.init_threads()
-
-# Create a session bus.
+# Create a system bus object.
 import dbus
 
 class RetrieveExportStats():
