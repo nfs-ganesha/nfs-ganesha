@@ -379,7 +379,6 @@ struct _9p_conn {
 	unsigned long sequence;
 	pthread_mutex_t sock_lock;
 	struct sockaddr_storage addrpeer;
-	struct export_perms export_perms;
 	unsigned int msize;
 };
 

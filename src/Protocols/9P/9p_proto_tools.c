@@ -141,9 +141,6 @@ void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
 		}
 	}
 
-	if (req9p != NULL)
-		op_ctx->export_perms = req9p->pconn->export_perms;
-
 	set_op_ctx_creds_from_fid(pfid);
 }
 

@@ -126,12 +126,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	set_op_context_export(export);
 	op_ctx->caller_addr = &req9p->pconn->addrpeer;
 
-	/* We store the export_perms in pconn so we only have to evaluate
-	 * them once.
-	 */
-	op_ctx->export_perms = req9p->pconn->export_perms;
-
-	/* And fill in the op_ctx export_perms and then check them. */
+	/* check export_perms. */
 	export_check_access();
 
 	if ((op_ctx->export_perms.options & EXPORT_OPTION_9P) == 0) {
