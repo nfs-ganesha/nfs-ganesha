@@ -1145,8 +1145,8 @@ void nfs_Init_svc(void)
 	    nfs_param.core_param.rpc.max_send_buffer_size;
 	svc_params.channels = N_EVENT_CHAN;
 	svc_params.idle_timeout = nfs_param.core_param.rpc.idle_timeout_s;
-	svc_params.ioq_thrd_max = /* max ioq worker threads */
-		nfs_param.core_param.rpc.ioq_thrd_max;
+	svc_params.ioq_thrd_min = nfs_param.core_param.rpc.ioq_thrd_min;
+	svc_params.ioq_thrd_max = nfs_param.core_param.rpc.ioq_thrd_max;
 	/* GSS ctx cache tuning, expiration */
 	svc_params.gss_ctx_hash_partitions =
 		nfs_param.core_param.rpc.gss.ctx_hash_partitions;
