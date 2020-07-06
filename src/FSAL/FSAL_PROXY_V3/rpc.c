@@ -211,6 +211,66 @@ proxyv3_openfd(const struct sockaddr *host,
 	return fd;
 }
 
+
+/**
+ * @brief Check that an fd (from a socket) is open and ready.
+ *
+ * @param fd The file descriptor for our socket.
+ *
+ * @return - True if the socket is open, false otherwise.
+ */
+
+static bool
+proxyv3_fd_is_open(int fd)
+{
+	/*
+	 * If it's been a long time since we opened the socket, the
+	 * other end probably hung up. We peek at the recv buffer here,
+	 * to ensure that the socket is still open. If we happen to find
+	 * bytes, something horrible must have happened.
+	 */
+
+	char buf[1];
+	ssize_t bytes_read;
+
+	/*
+	 * We need both DONTWAIT for non-blocking and PEEK, so we don't
+	 * actually pull any data off.
+	 */
+
+	bytes_read = recv(fd, buf, sizeof(buf),
+			  MSG_DONTWAIT | MSG_PEEK);
+
+	if (bytes_read == -1 &&
+	    ((errno == EAGAIN || errno == EWOULDBLOCK))) {
+		/* We would block => the socket is open! */
+		LogFullDebug(COMPONENT_FSAL,
+			     "Socket %d was still open. Reusing.", fd);
+		return true;
+	}
+
+	/*
+	 * Okay, we can't just re-use the existing socket. So we'll need
+	 * a new one, but first report why we did.
+	 */
+
+	if (bytes_read == 0) {
+		/* The other end closed at some point. */
+		LogDebug(COMPONENT_FSAL,
+			 "Socket %d was closed by the backend.", fd);
+	} else if (bytes_read > 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unexpected data left in socket %d.", fd);
+	} else {
+		/* Some other error. Log and exit. */
+		LogCrit(COMPONENT_FSAL,
+			"Checking that socket %d was open had an error: %d '%s'.",
+			fd, errno, strerror(errno));
+	}
+
+	return false;
+}
+
 /**
  * @brief Create an rpc_buf with a given capacity.
  *
@@ -358,13 +418,8 @@ proxyv3_getfdentry(const struct sockaddr *host,
 		return NULL;
 	}
 
-	/* If we already got one, return it. */
-	if (first_open != NULL) {
-		/*
-		 * @todo If it's been a long time since we opened the socket,
-		 * the other end probably hung up. We should probably test here,
-		 * so that callers receive a definitely open socket.
-		 */
+	/* If we already got one, return it, if it's still open. */
+	if (first_open != NULL && proxyv3_fd_is_open(result->fd)) {
 		return result;
 	}
 
