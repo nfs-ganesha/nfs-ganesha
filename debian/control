@@ -20,11 +20,12 @@ Build-Depends: debhelper (>= 9),
                libcap-dev,
                gpfs.smb (>=4.5.4),
                gpfs.smb-dev (>=4.5.4),
-               python-dev,
                dh-python,
+               python3-all,
+               python3-setuptools,
                dh-systemd,
                pkgconf
-Vcs-Git: https://github.com/nfs-ganesha/nfs-ganesha.git
+Vcs-Git: https://github.com/ganltc/nfs-ganesha.git
 
 Package: gpfs.nfs-ganesha
 Conflicts: nfs-ganesha
@@ -61,9 +62,9 @@ Replaces: python-nfs-ganesha
 Pre-Depends: ${misc:Pre-Depends}
 Architecture: all
 Section: python
-Depends: python-dbus,
-         python-gobject,
-         ${python:Depends}
+Depends: python3-dbus,
+         python3-gi,
+         ${python3:Depends}
 Description: Python bindings for nfs-ganesha
  NFS-GANESHA is a NFS Server running in user space with a large cache.
  It comes with various backend modules to support different file systems

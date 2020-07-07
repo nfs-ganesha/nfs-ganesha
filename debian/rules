@@ -7,6 +7,7 @@
 #   $ cd nfs-ganesha/src
 #   $ dpkg-buildpackage -uc -us
 #
+#export DH_VERBOSE = 1
 export PREFIX=/usr
 export DESTDIR=$(CURDIR)/debian/tmp
 
@@ -16,7 +17,7 @@ CFLAGS += -g -O0 -Wno-error=date-time
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
 %:
-	 dh $@ --with python2,systemd
+	 dh $@ --with python3,systemd
 
 override_dh_auto_configure:
 	 cd src && ln -s ../debian .
@@ -72,7 +73,7 @@ override_dh_install:
 	cp src/config_samples/gpfs.ganesha.exports.conf debian/tmp/etc/ganesha
 	cp src/config_samples/logrotate_ganesha debian/tmp/etc/logrotate.d/ganesha
 	cp src/scripts/nfs-ganesha-config.sh debian/tmp/usr/lib/ganesha/
-	cp src/scripts/gpfs-epoch debian/tmp/usr/lib/ganesha/
+	cp src/scripts/gpfs-epoch/gpfs-epoch.py debian/tmp/usr/lib/ganesha/gpfs-epoch
 	cp src/scripts/systemd/nfs-ganesha.service.debian8 debian/tmp/lib/systemd/system/nfs-ganesha.service
 	cp src/scripts/systemd/nfs-ganesha-lock.service.debian8 debian/tmp/lib/systemd/system/nfs-ganesha-lock.service
 	cp src/scripts/systemd/nfs-ganesha-config.service debian/tmp/lib/systemd/system/
