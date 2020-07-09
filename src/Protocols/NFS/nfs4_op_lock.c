@@ -610,6 +610,28 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 		    &lock_owner->so_owner.so_nfs4_owner.so_clientid;
 	}
 
+	/* Handle race with CLOSE and LOCK. Buggy clients could send
+	 * CLOSE and LOCK requests at the same time for the same open
+	 * stateid.  Make sure the open state is still in the hash
+	 * table.  If we win here, CLOSE will fail. If CLOSE wins, we
+	 * fail this LOCK request as though the open state wasn't
+	 * available.
+	 *
+	 * A state is removed from the hash table while holding
+	 * state_lock, and state_owner field is set to NULL in
+	 * _state_del_locked()). We already have the state_lock so we
+	 * can safely check if the state_owner is still valid.
+	 */
+	if (state_open->state_owner == NULL) {
+		if (new_lock_state) {
+			/* Need to destroy new state */
+			state_del_locked(lock_state);
+		}
+
+		res_LOCK4->status = NFS4ERR_BAD_STATEID;
+		goto out2;
+	}
+
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	 * lock into SAL (and FSAL). */
 	state_status = state_lock(obj,
