@@ -683,7 +683,7 @@ void *_9p_socket_thread(void *Arg)
 		tag = *(u16 *) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
 		_9p_AddFlushHook(req, tag, sequence++);
 		LogFullDebug(COMPONENT_9P,
-			     "Request tag is %d\n", tag);
+			     "Request tag is %d", tag);
 
 		/* Message was OK push it */
 		DispatchWork9P(req);
