@@ -30,6 +30,7 @@ require {
 	type mouse_device_t;
 	type netcontrol_device_t;
 	type nvram_device_t;
+	type portmap_port_t;
 	type proc_kcore_t;
 	type proc_t;
 	type pstore_t;
@@ -293,6 +294,12 @@ allow rpcbind_t unreserved_port_t:udp_socket name_bind;
 allow glusterd_t ganesha_unit_file_t:service { start status stop };
 allow glusterd_t ganesha_t:dbus send_msg;
 allow ganesha_t glusterd_t:dbus send_msg;
+
+########################################
+#
+# ganesha local policy rhbz#1857170
+
+allow ganesha_t portmap_port_t:tcp_socket name_connect;
 
 ########################################
 #
