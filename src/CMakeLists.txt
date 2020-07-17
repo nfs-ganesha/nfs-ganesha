@@ -43,6 +43,8 @@ ELSE()
 	SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files")
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
 
+SET(RUNTIMEDIR "${SYSSTATEDIR}/run/ganesha" CACHE PATH "Runtime directory (for things like pid file, not touched by install)")
+
 # Extra version is for naming development/RC.  It is blank in stable branches
 # so it can be available to end-users to name local variants/versions
 # If used, it is always of the form "-whateveryouwant"
@@ -1120,8 +1122,6 @@ set(SYSTEM_LIBRARIES
 # Config file; make sure it doesn't clobber an existing one
 include(${GANESHA_TOP_CMAKE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
 InstallPackageConfigFile(${GANESHA_TOP_CMAKE_DIR}/config_samples/ganesha.conf.example ${SYSCONFDIR}/ganesha ganesha.conf)
-# pre-create PREFIX/var/run/ganesha
-install(DIRECTORY DESTINATION ${SYSSTATEDIR}/run/ganesha)
 
 add_subdirectory(log)
 add_subdirectory(config_parsing)

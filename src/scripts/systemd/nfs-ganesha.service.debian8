@@ -20,6 +20,7 @@ Conflicts=nfs.target
 
 [Service]
 Type=forking
+RuntimeDirectory=ganesha
 EnvironmentFile=-/etc/default/nfs-ganesha
 ExecStart=/bin/bash -c "${NUMACTL} ${NUMAOPTS} /usr/bin/ganesha.nfsd ${OPTIONS} ${EPOCH}"
 ExecReload=/bin/kill -HUP $MAINPID

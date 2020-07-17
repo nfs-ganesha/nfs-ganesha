@@ -47,6 +47,7 @@ start() {
                 RETVAL=1
                 failure
         else
+		mkdir -p "$(dirname "$PID_FILE")"
 		ulimit -n $NOFILE
 		log_daemon_msg "Starting nfs-ganesha daemon" nfs-ganesha
 		if ! start-stop-daemon --start --oknodo --quiet --pidfile $PID_FILE --exec $PATHPROG -- $OPTIONS; then

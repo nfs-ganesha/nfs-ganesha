@@ -563,7 +563,6 @@ mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_libdir}/ganesha
-mkdir -p %{buildroot}%{_rundir}/ganesha
 mkdir -p %{buildroot}%{_localstatedir}/log/ganesha
 mkdir -p %{buildroot}%{_libexecdir}/ganesha
 install -m 644 config_samples/logrotate_ganesha	%{buildroot}%{_sysconfdir}/logrotate.d/ganesha
@@ -686,7 +685,6 @@ exit 0
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
 %dir %{_sysconfdir}/ganesha/
 %config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
-%dir %attr(0775,ganesha,ganesha) %{_rundir}/ganesha
 %dir %{_libexecdir}/ganesha
 %{_libexecdir}/ganesha/nfs-ganesha-config.sh
 %dir %attr(0775,ganesha,root) %{_localstatedir}/log/ganesha

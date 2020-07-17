@@ -48,6 +48,7 @@ start() {
                 RETVAL=1
                 failure
         else
+		mkdir -p "$(dirname "$PID_FILE")"
 		ulimit -n $NOFILE
                 daemon --pidfile $PID_FILE $PATHPROG $OPTIONS
                 RETVAL=$?
