@@ -3209,17 +3209,19 @@ bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier)
 bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 			     struct attrlist *attrs, bool cache_attrs)
 {
+	attrmask_t req_mask = ATTR_TYPE | ATTR_MODE;
+
 	LogDebug(COMPONENT_FSAL, "Checking attrs for referral"
 		 ", handle: %p, valid_mask: %" PRIx64
 		 ", request_mask: %" PRIx64 ", supported: %" PRIx64,
 		 obj_hdl, attrs->valid_mask,
 		 attrs->request_mask, attrs->supported);
 
-	if ((attrs->valid_mask & (ATTR_TYPE | ATTR_MODE)) == 0) {
+	if ((attrs->valid_mask & req_mask) != req_mask) {
 		/* Required attributes are not available, need to fetch them */
 		fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 
-		attrs->request_mask |= (ATTR_TYPE | ATTR_MODE);
+		attrs->request_mask |= req_mask;
 
 		status = obj_hdl->obj_ops->getattrs(obj_hdl, attrs);
 		if (FSAL_IS_ERROR(status)) {
