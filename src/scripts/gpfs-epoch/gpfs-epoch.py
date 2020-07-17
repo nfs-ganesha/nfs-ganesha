@@ -37,7 +37,7 @@ def put_genid(genid):
         f.write("%s" % genid)
 
 def get_mount():
-    output = Popen("mount", shell=True, stdout=PIPE).communicate()[0]
+    output = Popen("mount", shell=True, stdout=PIPE).communicate()[0].decode()
     for line in output.splitlines():
         # the mount output line format is
         #
