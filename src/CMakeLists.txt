@@ -40,7 +40,7 @@ ELSE()
 	SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files")
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
 
-# Extra version is for naming development/RC.  It is blank in master/stable branches
+# Extra version is for naming development/RC.  It is blank in stable branches
 # so it can be available to end-users to name local variants/versions
 # If used, it is always of the form "-whateveryouwant"
 set(GANESHA_EXTRA_VERSION )
