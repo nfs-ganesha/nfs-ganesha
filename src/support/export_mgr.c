@@ -1090,7 +1090,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		goto out_unlock;
 
 	config_struct = config_ParseFile(file_path, &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+	if (!cur_exp_config_error_is_harmless(&err_type)) {
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
 			"Error while parsing %s", file_path);
@@ -1134,7 +1134,8 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 						   NULL,
 						   false,
 						   &err_type);
-			if (rc == 0 || config_error_is_harmless(&err_type))
+			if (rc == 0 ||
+			    cur_exp_config_error_is_harmless(&err_type))
 				exp_cnt++;
 			else if (!err_type.exists)
 				status = false;
@@ -1676,7 +1677,7 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 		goto out;
 
 	config_struct = config_ParseFile(file_path, &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+	if (!cur_exp_config_error_is_harmless(&err_type)) {
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
 			"Error while parsing %s", file_path);
@@ -1720,7 +1721,8 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 						   NULL,
 						   false,
 						   &err_type);
-			if (rc == 0 || config_error_is_harmless(&err_type))
+			if (rc == 0 ||
+			    cur_exp_config_error_is_harmless(&err_type))
 				exp_cnt++;
 			else if (!err_type.exists)
 				status = false;

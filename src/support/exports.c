@@ -781,7 +781,7 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 			     "FSAL %s refcount %"PRIu32,
 			     fsal->name,
 			     atomic_fetch_int32_t(&fsal->refcount));
-		err_type->export_ = true;
+		err_type->cur_exp_create_err = true;
 		errcnt++;
 		goto err;
 	}
@@ -883,7 +883,7 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 			     "FSAL %s refcount %"PRIu32,
 			     fsal->name,
 			     atomic_fetch_int32_t(&fsal->refcount));
-		err_type->export_ = true;
+		err_type->cur_exp_create_err = true;
 		errcnt++;
 		goto err;
 	}
