@@ -451,8 +451,8 @@ QUIT
 Returns OK. A client should response to QUIT before closing the connection
 with the console.
 
-MASTER SCRIPTING
-----------------
+CONSOLE SCRIPTING
+-----------------
 
 --------------------------------------------------------------------------------
 The console implements a simple script language which allows commands to be
