@@ -50,7 +50,7 @@
 struct nfs3_write_data {
 	/** Results for write */
 	nfs_res_t *res;
-	/** RPC Request for this READ */
+	/** RPC Request for this WRITE */
 	struct svc_req *req;
 	/** Object being acted on */
 	struct fsal_obj_handle *obj;
