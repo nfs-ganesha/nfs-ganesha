@@ -51,7 +51,6 @@
  * Validates and Converts a V3 file handle and then gets the FSAL obj.
  *
  * @param fh3 [IN] pointer to the file handle to be converted
- * @param exp_list [IN] export fsal to use
  * @param status [OUT] protocol status
  * @param rc [OUT] operation status
  *
