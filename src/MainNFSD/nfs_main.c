@@ -247,6 +247,14 @@ int main(int argc, char *argv[])
 
 		case 'E':
 			nfs_ServerEpoch = (time_t) atoll(optarg);
+			/* In clustered GPFS environment we need to know
+			 * the node id upfront, so that the recovery dirs
+			 * can be created at right path on the stable
+			 * storage. The epoch already has the node id
+			 * inside it, so used same instead of introducing
+			 * a new option
+			 */
+			g_nodeid = nfs_ServerEpoch >> 16;
 			break;
 
 		case 'h':
@@ -271,6 +279,7 @@ int main(int argc, char *argv[])
 		 "Ganesha Version " _GIT_DESCRIBE ", built at "
 		 __DATE__ " " __TIME__ " on " BUILD_HOST);
 #endif
+	LogEvent(COMPONENT_MAIN, "nodeid %d", g_nodeid);
 
 	/* initialize nfs_init */
 	nfs_init_init();
