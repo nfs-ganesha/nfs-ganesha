@@ -284,6 +284,7 @@ const nfs_function_desc_t nfs4_func_desc[] = {
 	 .dispatch_behaviour = CAN_BE_DUP}
 };
 
+#ifdef _USE_NFS3
 const nfs_function_desc_t mnt1_func_desc[] = {
 	{
 	 .service_function = mnt_Null,
@@ -373,11 +374,13 @@ const nfs_function_desc_t mnt3_func_desc[] = {
 	 .funcname = "MNT_EXPORT",
 	 .dispatch_behaviour = NOTHING_SPECIAL}
 };
+#endif
+
+#ifdef _USE_NLM
 
 #define nlm4_Unsupported nlm_Null
 #define nlm4_Unsupported_Free nlm_Null_Free
 
-#ifdef _USE_NLM
 const nfs_function_desc_t nlm4_func_desc[] = {
 	[NLMPROC4_NULL] = {
 			   .service_function = nlm_Null,
@@ -660,6 +663,7 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 				       .dispatch_behaviour = NEEDS_CRED}
 };
 
+#ifdef USE_NFSACL3
 const nfs_function_desc_t nfsacl_func_desc[] = {
 	[0] = {
 	       .service_function = nfsacl_Null,
@@ -687,6 +691,7 @@ const nfs_function_desc_t nfsacl_func_desc[] = {
 				 .funcname = "NFSACL_SETACL",
 				 .dispatch_behaviour = NEEDS_CRED}
 };
+#endif
 
 void auth_failure(nfs_request_t *reqdata, enum auth_stat auth_rc)
 {
@@ -1103,8 +1108,11 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	    || reqdata->svc.rq_msg.cb_proc == NFSPROC_NULL)
 		goto null_op;
 	/* Get the export entry */
-	if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS] ||
-		reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFSACL]) {
+	if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS]
+#ifdef USE_NFSACL3
+	    || reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFSACL]
+#endif
+	    ) {
 		/* The NFSv3 functions' arguments always begin with the file
 		 * handle (but not the NULL function).  This hook is used to
 		 * get the fhandle with the arguments and so determine the
@@ -1239,8 +1247,10 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			}
 		}
 #endif /* _USE_NLM */
+#ifdef _USE_NFS3
 	} else if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_MNT]) {
 		progname = "MNT";
+#endif /* _USE_NFS3 */
 	}
 
 	/* Only do access check if we have an export. */
@@ -1647,6 +1657,7 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 	return nfs_rpc_novers(reqdata, lo_vers, hi_vers);
 }
 
+#ifdef _USE_NLM
 enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 {
 	nfs_request_t *reqdata =
@@ -1654,7 +1665,6 @@ enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 
 	reqdata->funcdesc = &invalid_funcdesc;
 
-#ifdef _USE_NLM
 	if (req->rq_msg.cb_prog == NFS_program[P_NLM]
 	     && (NFS_options & CORE_OPTION_NFSV3)) {
 		if (req->rq_msg.cb_vers == NLM4_VERS) {
@@ -1667,10 +1677,11 @@ enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 		}
 		return nfs_rpc_novers(reqdata, NLM4_VERS, NLM4_VERS);
 	}
-#endif /* _USE_NLM */
 	return nfs_rpc_noprog(reqdata);
 }
+#endif /* _USE_NLM */
 
+#ifdef _USE_NFS3
 enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 {
 	nfs_request_t *reqdata =
@@ -1709,6 +1720,7 @@ enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 	}
 	return nfs_rpc_noprog(reqdata);
 }
+#endif
 
 enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 {
@@ -1739,6 +1751,7 @@ enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 	return nfs_rpc_noprog(reqdata);
 }
 
+#ifdef USE_NFSACL3
 enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *req)
 {
 	nfs_request_t *reqdata =
@@ -1759,3 +1772,4 @@ enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *req)
 	}
 	return nfs_rpc_noprog(reqdata);
 }
+#endif

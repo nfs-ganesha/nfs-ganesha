@@ -481,7 +481,9 @@ void nfs_try_lift_grace(void)
 	 */
 	PTHREAD_MUTEX_lock(&grace_mutex);
 	rc_count = atomic_fetch_int32_t(&reclaim_completes);
+#ifdef _USE_NLM
 	if (!nfs_param.core_param.enable_NLM)
+#endif
 		in_grace = (rc_count != clid_count);
 
 	/* Otherwise, wait for the timeout */

@@ -316,7 +316,9 @@ void nfs_print_param_config(void)
 	printf("NFS_Core_Param\n{\n");
 
 	printf("\tNFS_Port = %u ;\n", nfs_param.core_param.port[P_NFS]);
+#ifdef _USE_NFS3
 	printf("\tMNT_Port = %u ;\n", nfs_param.core_param.port[P_MNT]);
+#endif
 	printf("\tNFS_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
 	printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
 	printf("\tDRC_TCP_Npart = %u ;\n", nfs_param.core_param.drc.tcp.npart);

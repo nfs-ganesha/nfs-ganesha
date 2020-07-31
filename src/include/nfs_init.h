@@ -112,9 +112,15 @@ static inline void nfs_check_malloc(void)
 /* in nfs_worker_thread.c */
 
 enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *);
+#ifdef _USE_NLM
 enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *);
+#endif
+#ifdef _USE_NFS3
 enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *);
+#endif
 enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *);
+#ifdef USE_NFSACL3
 enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *);
+#endif
 
 #endif				/* !NFS_INIT_H */

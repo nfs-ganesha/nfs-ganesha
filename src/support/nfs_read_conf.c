@@ -59,42 +59,100 @@
 
 static struct config_item_list protocols[] = {
 	CONFIG_LIST_TOK("none", CORE_OPTION_NONE),
+#ifdef _USE_NFS3
 	CONFIG_LIST_TOK("3", CORE_OPTION_NFSV3),
 	CONFIG_LIST_TOK("v3", CORE_OPTION_NFSV3),
 	CONFIG_LIST_TOK("nfs3", CORE_OPTION_NFSV3),
 	CONFIG_LIST_TOK("nfsv3", CORE_OPTION_NFSV3),
+#endif
 	CONFIG_LIST_TOK("4", CORE_OPTION_NFSV4),
 	CONFIG_LIST_TOK("v4", CORE_OPTION_NFSV4),
 	CONFIG_LIST_TOK("nfs4", CORE_OPTION_NFSV4),
 	CONFIG_LIST_TOK("nfsv4", CORE_OPTION_NFSV4),
+#ifdef RPC_VSOCK
 	CONFIG_LIST_TOK("nfsvsock", CORE_OPTION_NFS_VSOCK),
+#endif
+#ifdef _USE_NFS_RDMA
 	CONFIG_LIST_TOK("nfsrdma", CORE_OPTION_NFS_RDMA),
 	CONFIG_LIST_TOK("rpcrdma", CORE_OPTION_NFS_RDMA),
+#endif
+#ifdef _USE_9P
 	CONFIG_LIST_TOK("9p", CORE_OPTION_9P),
+#endif
 	CONFIG_LIST_EOL
 };
+
+/**
+ * @brief Support all protocols
+ */
+#ifdef _USE_NFS3
+#define DEFAULT_INCLUDES_NFSV3		CORE_OPTION_NFSV3
+#else
+#define DEFAULT_INCLUDES_NFSV3		CORE_OPTION_NONE
+#endif
+
+
+#define DEFAULT_INCLUDES_NFSV4		CORE_OPTION_NFSV4
+
+#ifdef RPC_VSOCK
+#define DEFAULT_INCLUDES_VSOCK		CORE_OPTION_NFS_VSOCK
+#else
+#define DEFAULT_INCLUDES_VSOCK		CORE_OPTION_NONE
+#endif
+
+#ifdef _USE_NFS_RDMA
+#define DEFAULT_INCLUDES_NFS_RDMA	CORE_OPTION_NFS_RDMA
+#else
+#define DEFAULT_INCLUDES_NFS_RDMA	CORE_OPTION_NONE
+#endif
+#ifdef _USE_9P
+#define DEFAULT_INCLUDES_9P		CORE_OPTION_9P
+#else
+#define DEFAULT_INCLUDES_9P		CORE_OPTION_NONE
+#endif
+#ifdef RPC_VSOCK
+#define DEFAULT_INCLUDES_VSOCK		CORE_OPTION_NFS_VSOCK
+#else
+#define DEFAULT_INCLUDES_VSOCK		CORE_OPTION_NONE
+#endif
+
+#define DEFAULT_ALL_PROTOCOLS  (DEFAULT_INCLUDES_NFSV3 | \
+				DEFAULT_INCLUDES_NFSV4 | \
+				DEFAULT_INCLUDES_NFS_RDMA | \
+				DEFAULT_INCLUDES_9P | \
+				DEFAULT_INCLUDES_VSOCK)
 
 static struct config_item core_params[] = {
 	CONF_ITEM_UI16("NFS_Port", 0, UINT16_MAX, NFS_PORT,
 		       nfs_core_param, port[P_NFS]),
+#ifdef _USE_NFS3
 	CONF_ITEM_UI16("MNT_Port", 0, UINT16_MAX, 0,
 		       nfs_core_param, port[P_MNT]),
+#endif
+#ifdef _USE_NLM
 	CONF_ITEM_UI16("NLM_Port", 0, UINT16_MAX, 0,
 		       nfs_core_param, port[P_NLM]),
+#endif
 	CONF_ITEM_UI16("Rquota_Port", 0, UINT16_MAX, RQUOTA_PORT,
 		       nfs_core_param, port[P_RQUOTA]),
 	CONF_ITEM_IP_ADDR("Bind_Addr", "0.0.0.0",
 			  nfs_core_param, bind_addr),
 	CONF_ITEM_UI32("NFS_Program", 1, INT32_MAX, NFS_PROGRAM,
 		       nfs_core_param, program[P_NFS]),
+#ifdef _USE_NFS3
 	CONF_ITEM_UI32("MNT_Program", 1, INT32_MAX, MOUNTPROG,
 				nfs_core_param, program[P_MNT]),
+#endif
+#ifdef _USE_NLM
 	CONF_ITEM_UI32("NLM_Program", 1, INT32_MAX, NLMPROG,
 		       nfs_core_param, program[P_NLM]),
+#endif
 	CONF_ITEM_UI32("Rquota_Program", 1, INT32_MAX, RQUOTAPROG,
 		       nfs_core_param, program[P_RQUOTA]),
+#ifdef USE_NFSACL3
 	CONF_ITEM_UI32("NFSACL_Program", 1, INT32_MAX, NFSACLPROG,
 		       nfs_core_param, program[P_NFSACL]),
+#endif
 	CONF_ITEM_DEPRECATED("Nb_Worker",
 			     "This parameter has been replaced with _9P { Nb_Worker}"
 			     ),
@@ -152,20 +210,24 @@ static struct config_item core_params[] = {
 		       nfs_core_param, rpc.gss.max_gc),
 	CONF_ITEM_I64("Blocked_Lock_Poller_Interval", 0, 180, 10,
 		      nfs_core_param, blocked_lock_poller_interval),
-	CONF_ITEM_LIST("NFS_Protocols", CORE_OPTION_ALL_VERS, protocols,
+	CONF_ITEM_LIST("NFS_Protocols", DEFAULT_ALL_PROTOCOLS, protocols,
 		       nfs_core_param, core_options),
-	CONF_ITEM_LIST("Protocols", CORE_OPTION_ALL_VERS, protocols,
+	CONF_ITEM_LIST("Protocols", DEFAULT_ALL_PROTOCOLS, protocols,
 		       nfs_core_param, core_options),
-	CONF_ITEM_BOOL("NSM_Use_Caller_Name", false,
-		       nfs_core_param, nsm_use_caller_name),
 	CONF_ITEM_BOOL("Clustered", true,
 		       nfs_core_param, clustered),
+#ifdef _USE_NLM
 	CONF_ITEM_BOOL("Enable_NLM", true,
 		       nfs_core_param, enable_NLM),
+	CONF_ITEM_BOOL("NSM_Use_Caller_Name", false,
+		       nfs_core_param, nsm_use_caller_name),
+#endif
 	CONF_ITEM_BOOL("Enable_RQUOTA", true,
 		       nfs_core_param, enable_RQUOTA),
+#ifdef USE_NFSACL3
 	CONF_ITEM_BOOL("Enable_NFSACL", false,
 		       nfs_core_param, enable_NFSACL),
+#endif
 	CONF_ITEM_BOOL("Enable_TCP_keepalive", true,
 		       nfs_core_param, enable_tcp_keepalive),
 	CONF_ITEM_UI32("TCP_KEEPCNT", 0, 255, 0,
@@ -180,8 +242,10 @@ static struct config_item core_params[] = {
 		       nfs_core_param, enable_FASTSTATS),
 	CONF_ITEM_BOOL("Enable_FSAL_Stats", false,
 		       nfs_core_param, enable_FSALSTATS),
+#ifdef _USE_NFS3
 	CONF_ITEM_BOOL("Enable_FULLV3_Stats", false,
 		       nfs_core_param, enable_FULLV3STATS),
+#endif
 	CONF_ITEM_BOOL("Enable_FULLV4_Stats", false,
 		       nfs_core_param, enable_FULLV4STATS),
 	CONF_ITEM_BOOL("Enable_AUTH_Stats", false,

@@ -48,16 +48,25 @@ static inline enum nfs_req_result nfsstat4_to_nfs_req_result(nfsstat4 stat)
 void nfs_rpc_complete_async_request(nfs_request_t *reqdata,
 				    enum nfs_req_result rc);
 
+#ifdef _USE_NFS3
 extern const nfs_function_desc_t nfs3_func_desc[];
+#endif
 extern const nfs_function_desc_t nfs4_func_desc[];
+#ifdef _USE_NFS3
 extern const nfs_function_desc_t mnt1_func_desc[];
 extern const nfs_function_desc_t mnt3_func_desc[];
+#endif
+#ifdef _USE_NLM
 extern const nfs_function_desc_t nlm4_func_desc[];
+#endif
 extern const nfs_function_desc_t rquota1_func_desc[];
 extern const nfs_function_desc_t rquota2_func_desc[];
+#ifdef USE_NFSACL3
 extern const nfs_function_desc_t nfsacl_func_desc[];
+#endif
 
 
+#ifdef _USE_NFS3
 int mnt_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 int mnt_Mnt(nfs_arg_t *, struct svc_req *, nfs_res_t *);
@@ -73,7 +82,9 @@ int mnt_Export(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 /* @}
  * -- End of MNT protocol functions. --
  */
+#endif
 
+#ifdef _USE_NLM
 int nlm_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 int nlm4_Test(nfs_arg_t *, struct svc_req *, nfs_res_t *);
@@ -105,6 +116,7 @@ int nlm4_Free_All(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 /* @}
  * -- End of NLM protocol functions. --
  */
+#endif
 
 int rquota_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
@@ -120,6 +132,7 @@ int rquota_setactivequota(nfs_arg_t *, struct svc_req *, nfs_res_t *);
  *  * -- End of RQUOTA protocol functions. --
  *  */
 
+#ifdef USE_NFSACL3
 int nfsacl_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 int nfsacl_getacl(nfs_arg_t *, struct svc_req *, nfs_res_t *);
@@ -129,9 +142,11 @@ int nfsacl_setacl(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 /* @}
  *  * -- End of NFSACL protocol functions. --
  *  */
+#endif
 
 int nfs_null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
+#ifdef _USE_NFS3
 int nfs3_getattr(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 int nfs3_setattr(nfs_arg_t *, struct svc_req *, nfs_res_t *);
@@ -173,6 +188,7 @@ int nfs3_pathconf(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 int nfs3_commit(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 int nfs3_mknod(nfs_arg_t *, struct svc_req *, nfs_res_t *);
+#endif
 
 /* Functions needed for nfs v4 */
 
@@ -434,6 +450,7 @@ void nfs4_op_removexattr_Free(nfs_resop4 *resp);
  */
 
 /* Free functions */
+#ifdef _USE_NFS3
 void mnt1_Mnt_Free(nfs_res_t *);
 void mnt3_Mnt_Free(nfs_res_t *);
 
@@ -442,7 +459,9 @@ void mnt_Export_Free(nfs_res_t *);
 void mnt_Null_Free(nfs_res_t *);
 void mnt_Umnt_Free(nfs_res_t *);
 void mnt_UmntAll_Free(nfs_res_t *);
+#endif
 
+#ifdef _USE_NLM
 void nlm_Null_Free(nfs_res_t *);
 void nlm4_Test_Free(nfs_res_t *);
 void nlm4_Lock_Free(nfs_res_t *);
@@ -454,6 +473,7 @@ void nlm4_Unlock_Free(nfs_res_t *);
 void nlm4_Sm_Notify_Free(nfs_res_t *);
 void nlm4_Granted_Res_Free(nfs_res_t *);
 void nlm4_Free_All_Free(nfs_res_t *);
+#endif
 
 void rquota_Null_Free(nfs_res_t *);
 void rquota_getquota_Free(nfs_res_t *);
@@ -461,12 +481,15 @@ void rquota_getactivequota_Free(nfs_res_t *);
 void rquota_setquota_Free(nfs_res_t *);
 void rquota_setactivequota_Free(nfs_res_t *);
 
+#ifdef USE_NFSACL3
 void nfsacl_Null_Free(nfs_res_t *);
 void nfsacl_getacl_Free(nfs_res_t *);
 void nfsacl_setacl_Free(nfs_res_t *);
+#endif
 
 void nfs_null_free(nfs_res_t *);
 
+#ifdef _USE_NFS3
 void nfs3_getattr_free(nfs_res_t *);
 void nfs3_setattr_free(nfs_res_t *);
 void nfs3_lookup_free(nfs_res_t *);
@@ -488,6 +511,7 @@ void nfs3_fsinfo_free(nfs_res_t *);
 void nfs3_pathconf_free(nfs_res_t *);
 void nfs3_commit_free(nfs_res_t *);
 void nfs3_read_free(nfs_res_t *);
+#endif
 
 void nfs4_Compound_FreeOne(nfs_resop4 *);
 void release_nfs4_res_compound(struct COMPOUND4res_extended *res_compound4_ex);

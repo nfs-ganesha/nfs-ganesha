@@ -51,36 +51,56 @@
 /* Forward references to build pointers to private defs.
  */
 
+#ifdef _USE_NFS3
 struct nfsv3_stats;
 struct mnt_stats;
+#endif
+#ifdef _USE_NLM
 struct nlmv4_stats;
+#endif
 struct rquota_stats;
 struct nfsv40_stats;
 struct nfsv41_stats;
 struct nfsv42_stats;
 struct deleg_stats;
+#ifdef _USE_9P
 struct _9p_stats;
+#endif
 
+#ifdef _USE_NFS3
 struct clnt_allops_v3_stats;
+#endif
 struct clnt_allops_v4_stats;
+#ifdef _USE_NLM
 struct clnt_allops_nlm4_stats;
+#endif
 
 struct gsh_stats {
+#ifdef _USE_NFS3
 	struct nfsv3_stats *nfsv3;
 	struct mnt_stats *mnt;
+#endif
+#ifdef _USE_NLM
 	struct nlmv4_stats *nlm4;
+#endif
 	struct rquota_stats *rquota;
 	struct nfsv40_stats *nfsv40;
 	struct nfsv41_stats *nfsv41;
 	struct nfsv41_stats *nfsv42;
 	struct deleg_stats *deleg;
+#ifdef _USE_9P
 	struct _9p_stats *_9p;
+#endif
 };
 
 struct gsh_clnt_allops_stats {
+#ifdef _USE_NFS3
 	struct clnt_allops_v3_stats *nfsv3;
+#endif
 	struct clnt_allops_v4_stats *nfsv4;
+#ifdef _USE_NLM
 	struct clnt_allops_nlm_stats *nlm4;
+#endif
 };
 
 
@@ -181,6 +201,7 @@ struct auth_stats {
 	.direction = "out" \
 }
 
+#ifdef _USE_NFS3
 #define CE_STATS_REPLY      \
 {                           \
 	.name = "clnt_v3",  \
@@ -208,14 +229,39 @@ CELOSTATS_REPLY,            \
 },                          \
 CEIOSTATS_REPLY,            \
 CELOSTATS_REPLY
+#else
+#define CE_STATS_REPLY      \
+CEIOSTATS_REPLY,            \
+{                           \
+	.name = "clnt_v40", \
+	.type = "b",        \
+	.direction = "out"  \
+},                          \
+CEIOSTATS_REPLY,            \
+{                           \
+	.name = "clnt_v41", \
+	.type = "b",        \
+	.direction = "out"  \
+},                          \
+CEIOSTATS_REPLY,            \
+CELOSTATS_REPLY,            \
+{                           \
+	.name = "clnt_v42", \
+	.type = "b",        \
+	.direction = "out"  \
+},                          \
+CEIOSTATS_REPLY,            \
+CELOSTATS_REPLY
+#endif
 
-
+#ifdef _USE_NFS3
 #define CLNT_V3NLM_OPS_REPLY		\
 {					\
 	.name = "clnt_v3nlm_ops_stats",	\
 	.type = "a(sttt)",		\
 	.direction = "out"		\
 }
+#endif
 
 #define CLNT_V4_OPS_REPLY		\
 {					\
@@ -230,33 +276,6 @@ CELOSTATS_REPLY
 	.type = "ttt",			\
 	.direction = "out"		\
 }
-
-#define CLNT_ALL_OPS_REPLY		\
-{					\
-	.name = "clnt_v3",		\
-	.type = "b",			\
-	.direction = "out"		\
-},					\
-CLNT_V3NLM_OPS_REPLY,			\
-{					\
-	.name = "clnt_nlm",		\
-	.type = "b",			\
-	.direction = "out"		\
-},					\
-CLNT_V3NLM_OPS_REPLY,			\
-{					\
-	.name = "clnt_v4",		\
-	.type = "b",			\
-	.direction = "out"		\
-},					\
-CLNT_V4_OPS_REPLY,			\
-{					\
-	.name = "clnt_cmp",		\
-	.type = "b",			\
-	.direction = "out"		\
-},					\
-CLNT_CMP_OPS_REPLY
-
 
 #define TRANSPORT_REPLY    \
 {                          \
@@ -314,6 +333,7 @@ CLNT_CMP_OPS_REPLY
 	.direction = "out"   \
 }
 
+#ifdef _USE_NFS3
 #define STATS_STATUS_REPLY      \
 {                               \
 	.name = "nfs_status",   \
@@ -345,13 +365,43 @@ CLNT_CMP_OPS_REPLY
 	.type = "b(tt)",        \
 	.direction = "out"      \
 }
+#else
+#define STATS_STATUS_REPLY      \
+{                               \
+	.name = "nfs_status",   \
+	.type = "b(tt)",        \
+	.direction = "out"      \
+},                              \
+{                               \
+	.name = "fsal_status",  \
+	.type = "b(tt)",        \
+	.direction = "out"      \
+},				\
+{                               \
+	.name = "v4_full_status",  \
+	.type = "b(tt)",        \
+	.direction = "out"      \
+},				\
+{                               \
+	.name = "auth_status",  \
+	.type = "b(tt)",        \
+	.direction = "out"      \
+},				\
+{                               \
+	.name = "clnt_allops_status",  \
+	.type = "b(tt)",        \
+	.direction = "out"      \
+}
+#endif
 
+#ifdef _USE_NFS3
 #define V3_FULL_REPLY		\
 {				\
 	.name = "v3_full_stats",	\
 	.type = "a(stttddd)",	\
 	.direction = "out"	\
 }
+#endif
 
 #define V4_FULL_REPLY		\
 {				\
@@ -413,13 +463,14 @@ CLNT_CMP_OPS_REPLY
 }						\
 
 
+#ifdef _USE_9P
 #define _9P_OP_ARG           \
 {                            \
 	.name = "_9p_opname",\
 	.type = "s",         \
 	.direction = "in"    \
 }
-
+#endif
 
 #define OP_STATS_REPLY      \
 {                           \
@@ -437,7 +488,9 @@ CLNT_CMP_OPS_REPLY
 
 
 extern struct timespec auth_stats_time;
+#ifdef _USE_NFS3
 extern struct timespec v3_full_stats_time;
+#endif
 extern struct timespec v4_full_stats_time;
 
 
@@ -448,7 +501,9 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 				struct gsh_client *client);
 void server_dbus_export_details(DBusMessageIter *iter,
 				struct gsh_export *g_export);
+#ifdef _USE_NFS3
 void server_dbus_v3_iostats(struct nfsv3_stats *v3p, DBusMessageIter *iter);
+#endif
 void server_dbus_v40_iostats(struct nfsv40_stats *v40p, DBusMessageIter *iter);
 void server_dbus_v41_iostats(struct nfsv41_stats *v41p, DBusMessageIter *iter);
 void server_dbus_v41_layouts(struct nfsv41_stats *v41p, DBusMessageIter *iter);
@@ -465,14 +520,18 @@ void global_dbus_total_ops(DBusMessageIter *iter);
 void server_dbus_fast_ops(DBusMessageIter *iter);
 void mdcache_dbus_show(DBusMessageIter *iter);
 void mdcache_utilization(DBusMessageIter *iter);
+#ifdef _USE_NFS3
 void server_dbus_v3_full_stats(DBusMessageIter *iter);
+#endif
 void server_dbus_v4_full_stats(DBusMessageIter *iter);
 void reset_server_stats(void);
 void reset_export_stats(void);
 void reset_client_stats(void);
 void reset_gsh_stats(struct gsh_stats *st);
 void reset_gsh_allops_stats(struct gsh_clnt_allops_stats *st);
+#ifdef _USE_NFS3
 void reset_v3_full_stats(void);
+#endif
 void reset_v4_full_stats(void);
 void reset_auth_stats(void);
 void reset_clnt_allops_stats(void);

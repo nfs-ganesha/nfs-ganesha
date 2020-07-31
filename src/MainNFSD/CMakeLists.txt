@@ -114,7 +114,6 @@ set(ganesha_nfsd_OBJS
     $<TARGET_OBJECTS:nfs4callbacks>
     $<TARGET_OBJECTS:rquota>
     $<TARGET_OBJECTS:nfs_mnt_xdr>
-    $<TARGET_OBJECTS:nfsacl>
     $<TARGET_OBJECTS:fsalpseudo>
     $<TARGET_OBJECTS:fsalmdcache>
 )
@@ -132,6 +131,13 @@ if(USE_NLM)
     $<TARGET_OBJECTS:nlm>
   )
 endif(USE_NLM)
+
+if(USE_NFSACL3)
+  set(ganesha_nfsd_OBJS
+    ${ganesha_nfsd_OBJS}
+  $<TARGET_OBJECTS:nfsacl>
+  )
+endif(USE_NFSACL3)
 
 if(USE_9P)
   set(ganesha_nfsd_OBJS

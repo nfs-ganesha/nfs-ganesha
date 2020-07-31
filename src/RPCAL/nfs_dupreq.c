@@ -797,6 +797,7 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 				 "NFS Protocol version %" PRIu32 " unknown",
 				 dv->hin.rq_vers);
 		}
+#ifdef _USE_NFS3
 	} else if (dv->hin.rq_prog == NFS_program[P_MNT]) {
 		switch (dv->hin.rq_vers) {
 		case MOUNT_V1:
@@ -812,6 +813,7 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 				 dv->hin.rq_vers);
 			break;
 		}
+#endif
 #ifdef _USE_NLM
 	} else if (dv->hin.rq_prog == NFS_program[P_NLM]) {
 		switch (dv->hin.rq_vers) {
@@ -829,12 +831,14 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 			func = &rquota2_func_desc[dv->hin.rq_proc];
 			break;
 		}
+#ifdef USE_NFSACL3
 	} else if (dv->hin.rq_prog == NFS_program[P_NFSACL]) {
 		switch (dv->hin.rq_vers) {
 		case NFSACL_V3:
 			func = &nfsacl_func_desc[dv->hin.rq_proc];
 		break;
-	}
+		}
+#endif
 	} else {
 		/* not reached */
 		LogMajor(COMPONENT_DUPREQ,

@@ -1828,6 +1828,7 @@ static struct gsh_dbus_interface export_mgr_table = {
 /* org.ganesha.nfsd.exportstats interface
  */
 
+#ifdef _USE_NFS3
 /**
  * DBUS method to report NFSv3 I/O statistics
  *
@@ -1876,6 +1877,7 @@ static struct gsh_dbus_method export_show_v3_io = {
 		 IOSTATS_REPLY,
 		 END_ARG_LIST}
 };
+#endif
 
 /**
  * DBUS method to report NFSv40 I/O statistics
@@ -2309,6 +2311,7 @@ static struct gsh_dbus_method reset_statistics = {
 };
 
 
+#ifdef _USE_NFS3
 /**
  * DBUS method to get NFSv3 Detailed stats
  */
@@ -2342,6 +2345,7 @@ static struct gsh_dbus_method v3_full_statistics = {
 		 MESSAGE_REPLY,
 		 END_ARG_LIST}
 };
+#endif
 
 /**
  * DBUS method to get NFSv4 Detailed stats
@@ -2387,7 +2391,10 @@ static bool stats_status(DBusMessageIter *args,
 	bool success = true;
 	char *errormsg = "OK";
 	DBusMessageIter iter, nfsstatus, fsalstatus, clnt_allops_status;
-	DBusMessageIter v3_full_status, v4_full_status, authstatus;
+#ifdef _USE_NFS3
+	DBusMessageIter v3_full_status;
+#endif
+	DBusMessageIter v4_full_status, authstatus;
 	dbus_bool_t value;
 
 	dbus_message_iter_init_append(reply, &iter);
@@ -2409,6 +2416,7 @@ static bool stats_status(DBusMessageIter *args,
 	gsh_dbus_append_timestamp(&fsalstatus, &fsal_stats_time);
 	dbus_message_iter_close_container(&iter, &fsalstatus);
 
+#ifdef _USE_NFS3
 	/* Send info about NFSv3 Detailed stats */
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
 					 &v3_full_status);
@@ -2417,6 +2425,7 @@ static bool stats_status(DBusMessageIter *args,
 					&value);
 	gsh_dbus_append_timestamp(&v3_full_status, &v3_full_stats_time);
 	dbus_message_iter_close_container(&iter, &v3_full_status);
+#endif
 
 	/* Send info about NFSv4 Detailed stats */
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
@@ -2485,7 +2494,9 @@ static bool stats_disable(DBusMessageIter *args,
 	if (strcmp(stat_type, "all") == 0) {
 		nfs_param.core_param.enable_NFSSTATS = false;
 		nfs_param.core_param.enable_FSALSTATS = false;
+#ifdef _USE_NFS3
 		nfs_param.core_param.enable_FULLV3STATS = false;
+#endif
 		nfs_param.core_param.enable_FULLV4STATS = false;
 		nfs_param.core_param.enable_AUTHSTATS = false;
 		nfs_param.core_param.enable_CLNTALLSTATS = false;
@@ -2504,7 +2515,9 @@ static bool stats_disable(DBusMessageIter *args,
 	}
 	if (strcmp(stat_type, "nfs") == 0) {
 		nfs_param.core_param.enable_NFSSTATS = false;
+#ifdef _USE_NFS3
 		nfs_param.core_param.enable_FULLV3STATS = false;
+#endif
 		nfs_param.core_param.enable_FULLV4STATS = false;
 		nfs_param.core_param.enable_CLNTALLSTATS = false;
 		LogEvent(COMPONENT_CONFIG,
@@ -2519,6 +2532,7 @@ static bool stats_disable(DBusMessageIter *args,
 		/* reset fsal stats counters */
 		reset_fsal_stats();
 	}
+#ifdef _USE_NFS3
 	if (strcmp(stat_type, "v3_full") == 0) {
 		nfs_param.core_param.enable_FULLV3STATS = false;
 		LogEvent(COMPONENT_CONFIG,
@@ -2526,6 +2540,7 @@ static bool stats_disable(DBusMessageIter *args,
 		/* reset v3_full stats counters */
 		reset_v3_full_stats();
 	}
+#endif
 	if (strcmp(stat_type, "v4_full") == 0) {
 		nfs_param.core_param.enable_FULLV4STATS = false;
 		LogEvent(COMPONENT_CONFIG,
@@ -2604,12 +2619,14 @@ static bool stats_enable(DBusMessageIter *args,
 				 "Enabling FSAL statistics counting");
 			now(&fsal_stats_time);
 		}
+#ifdef _USE_NFS3
 		if (!nfs_param.core_param.enable_FULLV3STATS) {
 			nfs_param.core_param.enable_FULLV3STATS = true;
 			LogEvent(COMPONENT_CONFIG,
 				 "Enabling NFSv3 Detailed statistics counting");
 			now(&v3_full_stats_time);
 		}
+#endif
 		if (!nfs_param.core_param.enable_FULLV4STATS) {
 			nfs_param.core_param.enable_FULLV4STATS = true;
 			LogEvent(COMPONENT_CONFIG,
@@ -2644,6 +2661,7 @@ static bool stats_enable(DBusMessageIter *args,
 			 "Enabling FSAL statistics counting");
 		now(&fsal_stats_time);
 	}
+#ifdef _USE_NFS3
 	if (strcmp(stat_type, "v3_full") == 0 &&
 			!nfs_param.core_param.enable_FULLV3STATS) {
 		if (!nfs_param.core_param.enable_NFSSTATS) {
@@ -2656,6 +2674,7 @@ static bool stats_enable(DBusMessageIter *args,
 			now(&v3_full_stats_time);
 		}
 	}
+#endif
 	if (strcmp(stat_type, "v4_full") == 0 &&
 			!nfs_param.core_param.enable_FULLV4STATS) {
 		if (!nfs_param.core_param.enable_NFSSTATS) {
@@ -2967,7 +2986,9 @@ static struct gsh_dbus_method export_show_all_io = {
 };
 
 static struct gsh_dbus_method *export_stats_methods[] = {
+#ifdef _USE_NFS3
 	&export_show_v3_io,
+#endif
 	&export_show_v40_io,
 	&export_show_v41_io,
 	&export_show_v42_io,
@@ -2988,7 +3009,9 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&enable_statistics,
 	&disable_statistics,
 	&status_stats,
+#ifdef _USE_NFS3
 	&v3_full_statistics,
+#endif
 	&v4_full_statistics,
 #ifdef _HAVE_GSSAPI
 	&auth_statistics,
