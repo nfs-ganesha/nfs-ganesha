@@ -1043,7 +1043,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 				 DBusMessage *reply,
 				 DBusError *error)
 {
-	int rc, exp_cnt = 0;
+	int rc, exp_cnt = 0, err;
 	bool status = true;
 	char *file_path = NULL;
 	char *export_expr = NULL;
@@ -1053,6 +1053,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	DBusMessageIter iter;
 	char *err_detail = NULL;
 	struct error_detail conf_errs = {NULL, 0, NULL};
+	struct stat st;
 
 	/* Get path */
 	if (dbus_message_iter_get_arg_type(args) == DBUS_TYPE_STRING)
@@ -1088,6 +1089,26 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	/* Create a memstream for parser+processing error messages */
 	if (!init_error_type(&err_type))
 		goto out_unlock;
+
+	/* The parser fatal errors if file_path is a directory, so check it
+	 * before calling parser.
+	 */
+	rc = stat(file_path, &st);
+	if (rc < 0) {
+		err = errno;
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "error %d (%s) when attempting to stat config file %s",
+			       err, strerror(err));
+		status = false;
+		goto out_unlock;
+	}
+	if ((st.st_mode & S_IFMT) != S_IFREG) {
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "config file path %s is not a regular file",
+			       file_path);
+		status = false;
+		goto out_unlock;
+	}
 
 	config_struct = config_ParseFile(file_path, &err_type);
 	if (!cur_exp_config_error_is_harmless(&err_type)) {
