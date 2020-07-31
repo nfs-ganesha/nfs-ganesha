@@ -58,7 +58,9 @@ struct mnt_stats;
 #ifdef _USE_NLM
 struct nlmv4_stats;
 #endif
+#ifdef _USE_RQUOTA
 struct rquota_stats;
+#endif
 struct nfsv40_stats;
 struct nfsv41_stats;
 struct nfsv42_stats;
@@ -83,7 +85,9 @@ struct gsh_stats {
 #ifdef _USE_NLM
 	struct nlmv4_stats *nlm4;
 #endif
+#ifdef _USE_RQUOTA
 	struct rquota_stats *rquota;
+#endif
 	struct nfsv40_stats *nfsv40;
 	struct nfsv41_stats *nfsv41;
 	struct nfsv41_stats *nfsv42;

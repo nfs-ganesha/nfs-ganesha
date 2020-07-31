@@ -124,7 +124,9 @@ const char *tags[P_COUNT] = {
 #endif
 #ifdef _USE_NLM
 	"NLM",
+#ifdef _USE_RQUOTA
 	"RQUOTA",
+#endif
 #endif
 #ifdef USE_NFSACL3
 	"NFSACL",
@@ -204,9 +206,11 @@ static void unregister_rpc(void)
 	if (nfs_param.core_param.enable_NLM)
 		unregister(NFS_program[P_NLM], 1, NLM4_VERS);
 #endif /* _USE_NLM */
+#ifdef _USE_RQUOTA
 	if (nfs_param.core_param.enable_RQUOTA) {
 		unregister(NFS_program[P_RQUOTA], RQUOTAVERS, EXT_RQUOTAVERS);
 	}
+#endif
 
 #ifdef USE_NFSACL3
 	if (nfs_param.core_param.enable_NFSACL) {
@@ -239,10 +243,12 @@ static inline bool nfs_protocol_enabled(protos p)
 		break;
 #endif
 
+#ifdef _USE_RQUOTA
 	case P_RQUOTA:
 		if (nfs_param.core_param.enable_RQUOTA)
 			return true;
 		break;
+#endif
 
 #ifdef USE_NFSACL3
 	case P_NFSACL: /* valid only for NFSv3 environments */
@@ -338,6 +344,7 @@ static enum xprt_stat nfs_rpc_dispatch_udp_NLM(SVCXPRT *xprt)
 }
 #endif
 
+#ifdef _USE_RQUOTA
 static enum xprt_stat nfs_rpc_dispatch_udp_RQUOTA(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -349,6 +356,7 @@ static enum xprt_stat nfs_rpc_dispatch_udp_RQUOTA(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_RQUOTA;
 	return SVC_RECV(xprt);
 }
+#endif
 
 #ifdef USE_NFSACL3
 static enum xprt_stat nfs_rpc_dispatch_udp_NFSACL(SVCXPRT *xprt)
@@ -369,7 +377,9 @@ const svc_xprt_fun_t udp_dispatch[] = {
 #ifdef _USE_NLM
 	nfs_rpc_dispatch_udp_NLM,
 #endif
+#ifdef _USE_RQUOTA
 	nfs_rpc_dispatch_udp_RQUOTA,
+#endif
 #ifdef USE_NFSACL3
 	nfs_rpc_dispatch_udp_NFSACL,
 #endif
@@ -412,6 +422,7 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_NLM(SVCXPRT *xprt)
 }
 #endif
 
+#ifdef _USE_RQUOTA
 static enum xprt_stat nfs_rpc_dispatch_tcp_RQUOTA(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -420,6 +431,7 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_RQUOTA(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_RQUOTA;
 	return nfs_rpc_tcp_user_data(xprt);
 }
+#endif
 
 #ifdef USE_NFSACL3
 static enum xprt_stat nfs_rpc_dispatch_tcp_NFSACL(SVCXPRT *xprt)
@@ -451,7 +463,9 @@ const svc_xprt_fun_t tcp_dispatch[P_COUNT] = {
 #ifdef _USE_NLM
 	nfs_rpc_dispatch_tcp_NLM,
 #endif
+#ifdef _USE_RQUOTA
 	nfs_rpc_dispatch_tcp_RQUOTA,
+#endif
 #ifdef USE_NFSACL3
 	nfs_rpc_dispatch_tcp_NFSACL,
 #endif
@@ -1353,11 +1367,13 @@ void nfs_Init_svc(void)
 	if (NFS_options & CORE_OPTION_NFSV4)
 		__Register_program(P_NFS, NFS_V4);
 
+#ifdef _USE_RQUOTA
 	if (nfs_param.core_param.enable_RQUOTA &&
 	    (NFS_options & CORE_OPTION_ALL_NFS_VERS)) {
 		Register_program(P_RQUOTA, RQUOTAVERS);
 		Register_program(P_RQUOTA, EXT_RQUOTAVERS);
 	}
+#endif
 #endif	/* RPCBIND */
 }
 

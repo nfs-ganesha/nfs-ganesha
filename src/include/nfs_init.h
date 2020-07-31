@@ -118,7 +118,9 @@ enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *);
 #ifdef _USE_NFS3
 enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *);
 #endif
+#ifdef _USE_RQUOTA
 enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *);
+#endif
 #ifdef USE_NFSACL3
 enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *);
 #endif

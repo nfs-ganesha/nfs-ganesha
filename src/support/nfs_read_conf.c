@@ -133,8 +133,10 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI16("NLM_Port", 0, UINT16_MAX, 0,
 		       nfs_core_param, port[P_NLM]),
 #endif
+#ifdef _USE_RQUOTA
 	CONF_ITEM_UI16("Rquota_Port", 0, UINT16_MAX, RQUOTA_PORT,
 		       nfs_core_param, port[P_RQUOTA]),
+#endif
 	CONF_ITEM_IP_ADDR("Bind_Addr", "0.0.0.0",
 			  nfs_core_param, bind_addr),
 	CONF_ITEM_UI32("NFS_Program", 1, INT32_MAX, NFS_PROGRAM,
@@ -147,8 +149,10 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI32("NLM_Program", 1, INT32_MAX, NLMPROG,
 		       nfs_core_param, program[P_NLM]),
 #endif
+#ifdef _USE_RQUOTA
 	CONF_ITEM_UI32("Rquota_Program", 1, INT32_MAX, RQUOTAPROG,
 		       nfs_core_param, program[P_RQUOTA]),
+#endif
 #ifdef USE_NFSACL3
 	CONF_ITEM_UI32("NFSACL_Program", 1, INT32_MAX, NFSACLPROG,
 		       nfs_core_param, program[P_NFSACL]),
@@ -222,8 +226,10 @@ static struct config_item core_params[] = {
 	CONF_ITEM_BOOL("NSM_Use_Caller_Name", false,
 		       nfs_core_param, nsm_use_caller_name),
 #endif
+#ifdef _USE_RQUOTA
 	CONF_ITEM_BOOL("Enable_RQUOTA", true,
 		       nfs_core_param, enable_RQUOTA),
+#endif
 #ifdef USE_NFSACL3
 	CONF_ITEM_BOOL("Enable_NFSACL", false,
 		       nfs_core_param, enable_NFSACL),

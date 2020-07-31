@@ -822,6 +822,7 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 			break;
 		}
 #endif /* _USE_NLM */
+#ifdef _USE_RQUOTA
 	} else if (dv->hin.rq_prog == NFS_program[P_RQUOTA]) {
 		switch (dv->hin.rq_vers) {
 		case RQUOTAVERS:
@@ -831,6 +832,7 @@ static inline const nfs_function_desc_t *nfs_dupreq_func(dupreq_entry_t *dv)
 			func = &rquota2_func_desc[dv->hin.rq_proc];
 			break;
 		}
+#endif
 #ifdef USE_NFSACL3
 	} else if (dv->hin.rq_prog == NFS_program[P_NFSACL]) {
 		switch (dv->hin.rq_vers) {

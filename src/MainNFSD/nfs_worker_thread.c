@@ -563,6 +563,7 @@ const nfs_function_desc_t nlm4_func_desc[] = {
 };
 #endif /* _USE_NLM */
 
+#ifdef _USE_RQUOTA
 const nfs_function_desc_t rquota1_func_desc[] = {
 	[0] = {
 	       .service_function = rquota_Null,
@@ -662,6 +663,7 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 				       .funcname = "RQUOTA_EXT_GETACTIVEQUOTA",
 				       .dispatch_behaviour = NEEDS_CRED}
 };
+#endif
 
 #ifdef USE_NFSACL3
 const nfs_function_desc_t nfsacl_func_desc[] = {
@@ -1722,6 +1724,7 @@ enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 }
 #endif
 
+#ifdef _USE_RQUOTA
 enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 {
 	nfs_request_t *reqdata =
@@ -1750,6 +1753,7 @@ enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 	}
 	return nfs_rpc_noprog(reqdata);
 }
+#endif
 
 #ifdef USE_NFSACL3
 enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *req)

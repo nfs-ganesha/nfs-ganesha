@@ -354,6 +354,9 @@ else(USE_NFS3)
     set(USE_NFSACL3 OFF)
 endif(USE_NFS3)
 
+# Enable RQUOTA support
+option(USE_RQUOTA "enable RQUOTA support" ON)
+
 # AF_VSOCK host support (NFS)
 option(USE_VSOCK "enable AF_VSOCK listener" OFF)
 if(USE_VSOCK)
@@ -962,6 +965,7 @@ set(_USE_9P ${USE_9P})
 set(_USE_9P_RDMA ${USE_9P_RDMA})
 set(_USE_NFS3 ${USE_NFS3})
 set(_USE_NLM ${USE_NLM})
+set(_USE_RQUOTA ${USE_RQUOTA})
 set(_USE_CB_SIMULATOR ${USE_CB_SIMULATOR})
 
 ########### add a "make dist" and a "make rpm"  ###############

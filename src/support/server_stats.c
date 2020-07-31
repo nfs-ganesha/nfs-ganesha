@@ -81,12 +81,14 @@ struct op_name {
 	char *name;
 };
 
+#ifdef _USE_RQUOTA
 static const struct op_name optqta[] = {
 	[RQUOTAPROC_GETQUOTA] = {.name = "GETQUOTA", },
 	[RQUOTAPROC_GETACTIVEQUOTA] = {.name = "GETACTIVEQUOTA", },
 	[RQUOTAPROC_SETQUOTA] = {.name = "SETQUOTA", },
 	[RQUOTAPROC_SETACTIVEQUOTA] = {.name = "SETACTIVEQUOTA", },
 };
+#endif
 
 #ifdef _USE_NFS3
 static const struct op_name optmnt[] = {
@@ -292,11 +294,13 @@ struct nfsv3_ops {
 };
 #endif
 
+#ifdef _USE_RQUOTA
 /* quota ops
  */
 struct qta_ops {
 	uint64_t op[RQUOTAPROC_SETACTIVEQUOTA+1];
 };
+#endif
 
 #ifdef _USE_NLM
 /* nlm ops
@@ -388,6 +392,7 @@ struct clnt_allops_nlm_stats {
 };
 #endif
 
+#ifdef _USE_RQUOTA
 /* Quota counters
  */
 
@@ -395,6 +400,7 @@ struct rquota_stats {
 	struct proto_op ops;
 	struct proto_op ext_ops;
 };
+#endif
 
 /* NFSv4 statistics counters
  */
@@ -449,7 +455,9 @@ struct global_stats {
 #ifdef _USE_NLM
 	struct nlmv4_stats nlm4;
 #endif
+#ifdef _USE_RQUOTA
 	struct rquota_stats rquota;
+#endif
 	struct nfsv40_stats nfsv40;
 	struct nfsv41_stats nfsv41;
 	struct nfsv41_stats nfsv42; /* Uses v41 stats */
@@ -463,7 +471,9 @@ struct global_stats {
 #ifdef _USE_NFS3
 	struct mnt_ops mn;
 #endif
+#ifdef _USE_RQUOTA
 	struct qta_ops qt;
+#endif
 };
 
 struct deleg_stats {
@@ -571,6 +581,7 @@ static struct clnt_allops_nlm_stats *get_nlm4_all(
 }
 #endif
 
+#ifdef _USE_RQUOTA
 static struct rquota_stats *get_rquota(struct gsh_stats *stats,
 				       pthread_rwlock_t *lock)
 {
@@ -583,6 +594,7 @@ static struct rquota_stats *get_rquota(struct gsh_stats *stats,
 	}
 	return stats->rquota;
 }
+#endif
 
 static struct nfsv40_stats *get_v40(struct gsh_stats *stats,
 				    pthread_rwlock_t *lock)
@@ -946,6 +958,7 @@ static void reset_mnt_stats(struct mnt_stats *mnt)
 }
 #endif
 
+#ifdef _USE_RQUOTA
 /**
  * @brief reset the counts rquota_stats
  * Use atomic ops to avoid locks.
@@ -958,6 +971,7 @@ static void reset_rquota_stats(struct rquota_stats *rquota)
 	reset_op(&rquota->ops);
 	reset_op(&rquota->ext_ops);
 }
+#endif
 
 #ifdef _USE_NLM
 /**
@@ -1215,6 +1229,7 @@ static void record_clnt_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 
 		record_op_only(&sp->ops, success, dup);
 #endif
+#ifdef _USE_RQUOTA
 	} else if (program_op == NFS_program[P_RQUOTA]) {
 		struct rquota_stats *sp = get_rquota(gsh_st, lock);
 
@@ -1222,6 +1237,7 @@ static void record_clnt_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			record_op_only(&sp->ops, success, dup);
 		else
 			record_op_only(&sp->ext_ops, success, dup);
+#endif
 	}
 }
 
@@ -1333,6 +1349,7 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		/* record stuff */
 		record_op(&sp->ops, request_time, success, dup);
 #endif
+#ifdef _USE_RQUOTA
 	} else if (program_op == NFS_program[P_RQUOTA]) {
 		struct rquota_stats *sp = get_rquota(gsh_st, lock);
 
@@ -1344,6 +1361,7 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 			record_op(&sp->ops, request_time, success, dup);
 		else
 			record_op(&sp->ext_ops, request_time, success, dup);
+#endif
 	}
 }
 
@@ -1465,8 +1483,10 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
 	else if (program_op == NFS_program[P_MNT])
 		global_st.mn.op[proto_op]++;
 #endif
+#ifdef _USE_RQUOTA
 	else if (program_op == NFS_program[P_RQUOTA])
 		global_st.qt.op[proto_op]++;
+#endif
 
 	if (nfs_param.core_param.enable_FASTSTATS)
 		return;
@@ -1754,9 +1774,11 @@ void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
 #endif
+#ifdef _USE_RQUOTA
 	stats_available = st->rquota != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
+#endif
 	stats_available = st->nfsv40 != 0;
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
 				       &stats_available);
@@ -2307,11 +2329,13 @@ void global_dbus_total(DBusMessageIter *iter)
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&global_st.mnt.v3_ops.total);
 #endif
+#ifdef _USE_RQUOTA
 	version = "RQUOTA";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 					&global_st.rquota.ops.total);
+#endif
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
@@ -2379,6 +2403,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 		}
 	}
 #endif
+#ifdef _USE_RQUOTA
 	version = "\nQUOTA:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
@@ -2391,6 +2416,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 					DBUS_TYPE_UINT64, &global_st.qt.op[i]);
 		}
 	}
+#endif
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
@@ -2634,8 +2660,10 @@ void reset_gsh_stats(struct gsh_stats *st)
 	if (st->mnt)
 		reset_mnt_stats(st->mnt);
 #endif
+#ifdef _USE_RQUOTA
 	if (st->rquota)
 		reset_rquota_stats(st->rquota);
+#endif
 #ifdef _USE_NLM
 	if (st->nlm4)
 		reset_nlmv4_stats(st->nlm4);
@@ -2698,10 +2726,12 @@ void reset_global_stats(void)
 		(void)atomic_store_uint64_t(&global_st.mn.op[i], 0);
 	}
 #endif
+#ifdef _USE_RQUOTA
 	/* Reset all ops counters of rquotad */
 	for (i = 0; i < RQUOTAPROC_SETACTIVEQUOTA; i++) {
 		(void)atomic_store_uint64_t(&global_st.qt.op[i], 0);
 	}
+#endif
 #ifdef _USE_NFS3
 	reset_nfsv3_stats(&global_st.nfsv3);
 #endif
@@ -2711,7 +2741,9 @@ void reset_global_stats(void)
 #ifdef _USE_NFS3
 	reset_mnt_stats(&global_st.mnt);
 #endif
+#ifdef _USE_RQUOTA
 	reset_rquota_stats(&global_st.rquota);
+#endif
 #ifdef _USE_NLM
 	reset_nlmv4_stats(&global_st.nlm4);
 #endif
@@ -3020,10 +3052,12 @@ void server_stats_free(struct gsh_stats *statsp)
 		statsp->nlm4 = NULL;
 	}
 #endif
+#ifdef _USE_RQUOTA
 	if (statsp->rquota != NULL) {
 		gsh_free(statsp->rquota);
 		statsp->rquota = NULL;
 	}
+#endif
 	if (statsp->nfsv40 != NULL) {
 		gsh_free(statsp->nfsv40);
 		statsp->nfsv40 = NULL;

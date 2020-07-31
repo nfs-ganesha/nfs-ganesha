@@ -61,7 +61,9 @@ typedef enum protos {
 #ifdef _USE_NLM
 	P_NLM,			/*< NLM (for v3) */
 #endif
+#ifdef _USE_RQUOTA
 	P_RQUOTA,		/*< RQUOTA (for v3) */
+#endif
 #ifdef USE_NFSACL3
 	P_NFSACL,		/*< NFSACL (for v3) */
 #endif
@@ -361,9 +363,11 @@ typedef struct nfs_core_param {
 	    NSM_Use_Caller_Name. */
 	bool nsm_use_caller_name;
 #endif
+#ifdef _USE_RQUOTA
 	/** Whether to support the Remote Quota protocol.  Defaults
 	    to true and is settable with Enable_RQUOTA. */
 	bool enable_RQUOTA;
+#endif
 #ifdef USE_NFSACL3
 	/* Whether to support the POSIX ACL. Defaults to false. */
 	bool enable_NFSACL;
