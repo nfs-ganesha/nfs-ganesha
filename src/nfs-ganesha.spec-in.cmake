@@ -51,6 +51,9 @@ Requires: openSUSE-release
 @BCOND_PANFS@ panfs
 %global use_fsal_panfs %{on_off_switch panfs}
 
+@BCOND_KVSFS@ kvsfs
+%global use_fsal_kvsfs %{on_off_switch kvsfs}
+
 @BCOND_RDMA@ rdma
 %global use_rdma %{on_off_switch rdma}
 
@@ -415,6 +418,20 @@ This package contains a FSAL shared object to
 be used with NFS-Ganesha to support PANFS
 %endif
 
+#KVSFS
+%if %{with kvsfs}
+%package kvsfs
+Summary: The NFS-GANESHA KVSFS FSAL
+Group: Applications/System
+Requires:       nfs-ganesha = %{version}-%{release}
+Requires:	libkvsns >= 1.2.0
+BuildRequires:  libkvsns-devel >= 1.2.0
+
+%description kvsfs
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support KVSFS/libkvsns
+%endif
+
 # GLUSTER
 %if %{with gluster}
 %package gluster
@@ -509,6 +526,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_RGW=%{use_fsal_rgw}			\
 	-DUSE_FSAL_GPFS=%{use_fsal_gpfs}		\
 	-DUSE_FSAL_PANFS=%{use_fsal_panfs}		\
+	-DUSE_FSAL_KVSFS=%{use_fsal_kvsfs}		\
 	-DUSE_FSAL_GLUSTER=%{use_fsal_gluster}		\
 	-DUSE_SYSTEM_NTIRPC=%{use_system_ntirpc}	\
 	-DUSE_9P_RDMA=%{use_rdma}			\
@@ -828,6 +846,11 @@ exit 0
 %if %{with panfs}
 %files panfs
 %{_libdir}/ganesha/libfsalpanfs*
+%endif
+
+%if %{with kvsfs}
+%files kvsfs
+%{_libdir}/ganesha/libfsalkvsfs*
 %endif
 
 %if %{with pt}
