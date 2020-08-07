@@ -47,7 +47,6 @@ static void dsh_release(struct fsal_ds_handle *const ds_pub)
 	struct glfs_ds_handle *ds =
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 
-	fsal_ds_handle_fini(&ds->ds);
 	if (ds->glhandle) {
 		rc = glfs_h_close(ds->glhandle);
 		if (rc) {
@@ -89,7 +88,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 	int    rc = 0;
 	struct glusterfs_export *glfs_export =
-	container_of(ds_pub->pds->mds_fsal_export,
+	container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
 		     struct glusterfs_export, export);
 
 	if (ds->glhandle == NULL)
@@ -140,7 +139,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	struct glfs_ds_handle *ds =
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 	struct glusterfs_export *glfs_export =
-	container_of(ds_pub->pds->mds_fsal_export,
+	container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
 		     struct glusterfs_export, export);
 	int    rc = 0;
 
@@ -201,7 +200,7 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 
 	if (ds->stability_got == FILE_SYNC4) {
 		struct glusterfs_export *glfs_export =
-			container_of(ds_pub->pds->mds_fsal_export,
+			container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
 				     struct glusterfs_export, export);
 		struct glfs_fd *glfd = NULL;
 
@@ -242,15 +241,6 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 	return NFS4_OK;
 }
 
-/* Initialise DS operations */
-void dsh_ops_init(struct fsal_dsh_ops *ops)
-{
-	ops->dsh_release = dsh_release;
-	ops->dsh_read = ds_read;
-	ops->dsh_write = ds_write;
-	ops->dsh_commit = ds_commit;
-}
-
 /**
  * @brief Create a FSAL data server handle from a wire handle
  *
@@ -287,7 +277,6 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	ds = gsh_calloc(1, sizeof(struct glfs_ds_handle));
 
 	*handle = &ds->ds;
-	fsal_ds_handle_init(*handle, pds);
 
 	memcpy(globjhdl, hdl_desc->addr, GFAPI_HANDLE_LENGTH);
 
@@ -313,5 +302,8 @@ void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
 {
 	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
 	ops->make_ds_handle = make_ds_handle;
-	ops->fsal_dsh_ops = dsh_ops_init;
+	ops->dsh_release = dsh_release;
+	ops->dsh_read = ds_read;
+	ops->dsh_write = ds_write;
+	ops->dsh_commit = ds_commit;
 }

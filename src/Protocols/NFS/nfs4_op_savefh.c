@@ -69,10 +69,14 @@ void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj)
 	/* Mark saved_stateid as invalid */
 	data->saved_stateid_valid = false;
 
-	/* Clear out the saved_ds */
-	if (data->saved_ds) {
-		ds_handle_put(data->saved_ds);
-		data->saved_ds = NULL;
+	if (data->saved_ds != NULL && data->saved_ds != data->current_ds) {
+		/* Release the saved_ds because it's different. We don't
+		 * bother with refcounting because a ds handle has a limited
+		 * lifetime and it's either current_ds or saved_ds. So as long
+		 * as current_ds is not the same one here, we can release since
+		 * there is no other reference.
+		 */
+		data->saved_pnfs_ds->s_ops.dsh_release(data->saved_ds);
 	}
 
 	if (data->saved_obj) {
@@ -96,6 +100,9 @@ void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj)
 		/* Restore op_ctx */
 		restore_op_context_export(&saved);
 	}
+
+	/* Copy the new current_ds if any */
+	data->saved_ds = data->current_ds;
 }
 
 /**
@@ -159,14 +166,7 @@ enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* If saved and current entry are equal, skip the following. */
 	if (data->saved_obj != data->current_obj) {
-
 		set_saved_entry(data, data->current_obj);
-
-		/* Make SAVEFH work right for DS handle */
-		if (data->current_ds != NULL) {
-			data->saved_ds = data->current_ds;
-			ds_handle_get_ref(data->saved_ds);
-		}
 	}
 
 	/* Save the current stateid */

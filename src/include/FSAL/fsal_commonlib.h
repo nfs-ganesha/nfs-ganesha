@@ -92,9 +92,6 @@ static inline bool fsal_obj_handle_is(struct fsal_obj_handle *obj_hdl,
 void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal);
 void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds);
 
-void fsal_ds_handle_init(struct fsal_ds_handle *dsh, struct fsal_pnfs_ds *pds);
-void fsal_ds_handle_fini(struct fsal_ds_handle *dsh);
-
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat);
 
 extern struct avltree avl_fsid;

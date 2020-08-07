@@ -217,27 +217,10 @@ void fsal_obj_handle_fini(struct fsal_obj_handle *obj)
 
 void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal)
 {
-	pthread_rwlockattr_t attrs;
-
 	pds->ds_refcount = 1;	/* we start out with a reference */
 	fsal->m_ops.fsal_pnfs_ds_ops(&pds->s_ops);
 	pds->fsal = fsal;
 	fsal_get(fsal); /* Take a reference for the FSAL */
-
-	pthread_rwlockattr_init(&attrs);
-#ifdef GLIBC
-	pthread_rwlockattr_setkind_np(
-		&attrs,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
-	PTHREAD_RWLOCK_init(&pds->lock, &attrs);
-	glist_init(&pds->ds_handles);
-
-	PTHREAD_RWLOCK_wrlock(&fsal->lock);
-	glist_add(&fsal->servers, &pds->server);
-	PTHREAD_RWLOCK_unlock(&fsal->lock);
-
-	pthread_rwlockattr_destroy(&attrs);
 }
 
 void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds)
@@ -245,36 +228,12 @@ void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds)
 	PTHREAD_RWLOCK_wrlock(&pds->fsal->lock);
 	glist_del(&pds->server);
 	PTHREAD_RWLOCK_unlock(&pds->fsal->lock);
-	PTHREAD_RWLOCK_destroy(&pds->lock);
+
 	memset(&pds->s_ops, 0, sizeof(pds->s_ops));	/* poison myself */
 	if (pds->fsal != NULL) {
 		fsal_put(pds->fsal);
 		pds->fsal = NULL;
 	}
-}
-
-/* fsal_pnfs_ds to fsal_ds_handle helpers
- */
-
-void fsal_ds_handle_init(struct fsal_ds_handle *dsh, struct fsal_pnfs_ds *pds)
-{
-	dsh->refcount = 1;	/* we start out with a reference */
-	pds->s_ops.fsal_dsh_ops(&dsh->dsh_ops);
-	dsh->pds = pds;
-
-	PTHREAD_RWLOCK_wrlock(&pds->lock);
-	glist_add(&pds->ds_handles, &dsh->ds_handle);
-	PTHREAD_RWLOCK_unlock(&pds->lock);
-}
-
-void fsal_ds_handle_fini(struct fsal_ds_handle *dsh)
-{
-	PTHREAD_RWLOCK_wrlock(&dsh->pds->lock);
-	glist_del(&dsh->ds_handle);
-	PTHREAD_RWLOCK_unlock(&dsh->pds->lock);
-
-	memset(&dsh->dsh_ops, 0, sizeof(dsh->dsh_ops));	/* poison myself */
-	dsh->pds = NULL;
 }
 
 /**

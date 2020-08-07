@@ -142,7 +142,6 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 	if (data->current_ds != NULL) {
 		data->current_ds = data->saved_ds;
 		data->current_filetype = data->saved_filetype;
-		ds_handle_get_ref(data->current_ds);
 	}
 
 	LogHandleNFS4("RESTORE FH: Current FH ", &data->currentFH);

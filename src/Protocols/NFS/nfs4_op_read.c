@@ -293,7 +293,7 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
 
 	res_READ4->READ4res_u.resok4.data.data_val = buffer;
 
-	nfs_status = data->current_ds->dsh_ops.dsh_read(
+	nfs_status = op_ctx->ctx_pnfs_ds->s_ops.dsh_read(
 				data->current_ds,
 				&arg_READ4->stateid,
 				arg_READ4->offset,
@@ -363,7 +363,7 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 
 	buffer = gsh_malloc_aligned(4096, RNDUP(arg_READ4->count));
 
-	nfs_status = data->current_ds->dsh_ops.dsh_read_plus(
+	nfs_status = op_ctx->ctx_pnfs_ds->s_ops.dsh_read_plus(
 				data->current_ds,
 				&arg_READ4->stateid,
 				arg_READ4->offset,

@@ -1430,7 +1430,13 @@ void compound_data_Free(compound_data_t *data)
 	if (data == NULL)
 		return;
 
-	/* Release refcounted cache entries */
+	/* Release refcounted cache entries. A note on current_ds and saved_ds,
+	 * If both are in use and the same, it will be released during
+	 * set_saved_entry since set_current_entry will have set current_ds to
+	 * NULL. If both are non-NULL and different, current_ds will be
+	 * release by set_current_entry and saved_ds will be released by
+	 * set_saved_entry.
+	 */
 	set_current_entry(data, NULL);
 	set_saved_entry(data, NULL);
 

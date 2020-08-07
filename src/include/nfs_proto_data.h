@@ -388,9 +388,16 @@ static inline void set_current_entry(compound_data_t *data,
 	/* Mark current_stateid as invalid */
 	data->current_stateid_valid = false;
 
-	/* Clear out the current_ds */
-	if (data->current_ds) {
-		ds_handle_put(data->current_ds);
+	if (data->current_ds && data->current_ds != data->saved_ds) {
+		/* Release the current_ds because it's different We don't
+		 * bother with refcounting because a ds handle has a limited
+		 * lifetime and it's either current_ds or saved_ds. So as long
+		 * as saved_ds is not the same one here, we can release since
+		 * there is no other reference.
+		 */
+		op_ctx->ctx_pnfs_ds->s_ops.dsh_release(data->current_ds);
+
+		/* Clear out the current_ds */
 		data->current_ds = NULL;
 	}
 
@@ -412,6 +419,7 @@ static inline void set_current_entry(compound_data_t *data,
 	/* Set the current file type */
 	data->current_filetype = obj->type;
 }
+
 void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj);
 
 #endif				/* NFS_PROTO_DATA_H */

@@ -1606,27 +1606,8 @@ static nfsstat4 pds_handle(struct fsal_pnfs_ds *const pds,
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle creation!");
 	*handle = gsh_calloc(1, sizeof(struct fsal_ds_handle));
 
-	fsal_ds_handle_init(*handle, pds);
 	return NFS4_OK;
 }
-
-/**
- * @brief Initialize FSAL specific values for data server handle
- *
- * @param[in]  ops	FSAL DS handle operations vector
- */
-
-static void pds_handle_ops(struct fsal_dsh_ops *ops)
-{
-	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
-}
-
-struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
-	.ds_release = pds_release,
-	.ds_permissions = pds_permissions,
-	.make_ds_handle = pds_handle,
-	.fsal_dsh_ops = pds_handle_ops,
-};
 
 /* fsal_ds_handle common methods */
 
@@ -1641,7 +1622,6 @@ struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
 static void ds_handle_release(struct fsal_ds_handle *const ds_hdl)
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle release!");
-	fsal_ds_handle_fini(ds_hdl);
 	gsh_free(ds_hdl);
 }
 
@@ -1727,7 +1707,10 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_hdl,
 	return NFS4ERR_NOTSUPP;
 }
 
-struct fsal_dsh_ops def_dsh_ops = {
+struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
+	.ds_release = pds_release,
+	.ds_permissions = pds_permissions,
+	.make_ds_handle = pds_handle,
 	.dsh_release = ds_handle_release,
 	.dsh_read = ds_read,
 	.dsh_read_plus = ds_read_plus,

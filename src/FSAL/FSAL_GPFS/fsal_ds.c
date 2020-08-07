@@ -60,7 +60,6 @@ static void ds_handle_release(struct fsal_ds_handle *const ds_pub)
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
 
-	fsal_ds_handle_fini(&ds->ds);
 	gsh_free(ds);
 }
 
@@ -333,18 +332,6 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 	return NFS4ERR_INVAL;
 }
 
-static void dsh_ops_init(struct fsal_dsh_ops *ops)
-{
-	/* redundant copy, but you never know about the future... */
-	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
-
-	ops->dsh_release = ds_handle_release;
-	ops->dsh_read = ds_read;
-	ops->dsh_read_plus = ds_read_plus;
-	ops->dsh_write = ds_write;
-	ops->dsh_commit = ds_commit;
-}
-
 /**
  * @brief Try to create a FSAL data server handle from a wire handle
  *
@@ -417,7 +404,6 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	ds = gsh_calloc(1, sizeof(struct gpfs_ds));
 
 	*handle = &ds->ds;
-	fsal_ds_handle_init(*handle, pds);
 
 	/* Connect lazily when a FILE_SYNC4 write forces us to, not
 	   here. */
@@ -445,5 +431,9 @@ void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
 	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
 	ops->ds_permissions = pds_permissions;
 	ops->make_ds_handle = make_ds_handle;
-	ops->fsal_dsh_ops = dsh_ops_init;
+	ops->dsh_release = ds_handle_release;
+	ops->dsh_read = ds_read;
+	ops->dsh_read_plus = ds_read_plus;
+	ops->dsh_write = ds_write;
+	ops->dsh_commit = ds_commit;
 }

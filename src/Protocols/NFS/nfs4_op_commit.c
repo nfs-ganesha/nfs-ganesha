@@ -153,8 +153,7 @@ static enum nfs_req_result op_dscommit(struct nfs_argop4 *op,
 	/* Construct the FSAL file handle */
 
 	/* Call the commit operation */
-	res_COMMIT4->status =
-	    data->current_ds->dsh_ops.dsh_commit(
+	res_COMMIT4->status = op_ctx->ctx_pnfs_ds->s_ops.dsh_commit(
 				data->current_ds,
 				arg_COMMIT4->offset,
 				arg_COMMIT4->count,

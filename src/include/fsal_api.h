@@ -2663,24 +2663,7 @@ struct fsal_pnfs_ds_ops {
 				   int flags);
 
 /**
- * @brief Initialize FSAL specific values for DS handle
- *
- * @param[in]  ops	FSAL DS handle operations vector
- */
-	 void (*fsal_dsh_ops)(struct fsal_dsh_ops *ops);
-
-/**@}*/
-};
-
-/**
- * @brief FSAL DS handle operations vector
- */
-
-struct fsal_dsh_ops {
-/**@{*/
-
-/**
- * Lifecycle management.
+ * DS handle Lifecycle management.
  */
 
 /**
@@ -2698,7 +2681,7 @@ struct fsal_dsh_ops {
 /**@{*/
 
 /**
- * I/O Functions
+ * DS handle I/O Functions
  */
 
 /**
@@ -2995,7 +2978,6 @@ struct fsal_pnfs_ds {
 	struct glist_head ds_list;	/**< Entry in list of all DSs */
 	struct glist_head server;	/**< Link in list of Data Servers under
 					   the same FSAL. */
-	struct glist_head ds_handles;	/**< Head of list of DS handles */
 	struct fsal_module *fsal;	/**< Link back to fsal module */
 	struct fsal_pnfs_ds_ops s_ops;	/**< Operations vector */
 	struct gsh_export *mds_export;	/**< related export */
@@ -3003,8 +2985,6 @@ struct fsal_pnfs_ds {
 						  MDS stacking) */
 
 	struct avltree_node ds_node;	/**< Node in tree of all Data Servers */
-	pthread_rwlock_t lock;		/**< Lock to be held when
-					    manipulating its list (above). */
 	int32_t ds_refcount;		/**< Reference count */
 	uint16_t id_servers;		/**< Identifier */
 };
@@ -3020,12 +3000,6 @@ struct fsal_pnfs_ds {
  */
 
 struct fsal_ds_handle {
-	struct glist_head ds_handle;	/*< Link in list of DS handles under
-					   the same pDS. */
-	struct fsal_pnfs_ds *pds;	/*< Link back to pDS */
-	struct fsal_dsh_ops dsh_ops;	/*< Operations vector */
-
-	int64_t refcount;		/*< Reference count */
 };
 
 /**
@@ -3068,41 +3042,6 @@ static inline bool is_export_pin(struct fsal_obj_handle *obj_hdl)
 	if (ref > 0)
 		return true;    /* pin */
 	return false; /* unpin */
-}
-
-/**
- * @brief Get a reference on a DS handle
- *
- * This function increments the reference count on a DS handle.
- *
- * @param[in] ds_hdl The handle to reference
- */
-
-static inline void ds_handle_get_ref(struct fsal_ds_handle *const ds_hdl)
-{
-	(void) atomic_inc_int64_t (&ds_hdl->refcount);
-}
-
-/**
- * @brief Release a reference on a DS handle
- *
- * This function releases a reference to a DS handle.  Once a caller's
- * reference is released they should make no attempt to access the
- * handle or even dereference a pointer to it.
- *
- * @param[in] ds_hdl The handle to relinquish
- */
-
-static inline void ds_handle_put(struct fsal_ds_handle *const ds_hdl)
-{
-	int64_t refcount = atomic_dec_int64_t (&ds_hdl->refcount);
-
-	if (refcount != 0) {
-		assert(refcount > 0);
-		return;
-	}
-
-	ds_hdl->dsh_ops.dsh_release(ds_hdl);
 }
 
 /**
