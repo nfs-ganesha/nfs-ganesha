@@ -212,6 +212,7 @@ class ServerAdmin():
                 pass
         else:
             self.status_message(status, msg)
+
     def trim_enable(self):
         status, msg = self.admin.trim_enable()
         self.status_message(status, msg)
