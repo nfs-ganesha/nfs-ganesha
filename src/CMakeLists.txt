@@ -67,6 +67,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
    )
   EXECUTE_PROCESS(
      COMMAND awk -F=  "/^VERSION_ID=/ { print $2 }" /etc/os-release
+     # Remove quotes and other chars for version comparison
+     COMMAND tr -dc "[0-9.]"
      OUTPUT_VARIABLE SYS_VERSION
      ERROR_QUIET
    )
@@ -75,6 +77,17 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   if( ${SYS_RELEASE} MATCHES "Red Hat" )
      message( STATUS "Detected a Linux Red Hat machine" )
      set(DISTRO "RED_HAT")
+     # Use python2 on RHEL7.x
+     if (${SYS_VERSION} VERSION_LESS "8.0")
+	     set(USE_PYTHON2 ON CACHE BOOL "Use Python2")
+     endif()
+  elseif( ${SYS_RELEASE} MATCHES "CentOS Linux" )
+     message( STATUS "Detected a Linux CentOS machine" )
+     set(DISTRO "CENTOS")
+     # Use python2 on CentOS7.x
+     if (${SYS_VERSION} VERSION_LESS "8.0")
+	     set(USE_PYTHON2 ON CACHE BOOL "Use Python2")
+     endif()
   elseif( ${SYS_RELEASE} MATCHES "Fedora" )
      message( STATUS "Detected a Linux Fedora machine" )
      set(DISTRO "FEDORA")
@@ -515,7 +528,13 @@ endif(USE_GSS)
 
 gopt_test(USE_ADMIN_TOOLS)
 if (USE_ADMIN_TOOLS)
-  find_package(PythonInterp ${USE_ADMIN_TOOLS_REQUIRED})
+   if (USE_PYTHON2)
+      find_package(PythonInterp 2.7 ${USE_ADMIN_TOOLS_REQUIRED})
+      find_package(PythonLibs 2.7 ${USE_ADMIN_TOOLS_REQUIRED})
+  else()
+      find_package(PythonInterp ${USE_ADMIN_TOOLS_REQUIRED})
+      find_package(PythonLibs ${USE_ADMIN_TOOLS_REQUIRED})
+  endif()
   if (NOT PYTHONINTERP_FOUND)
     message(WARNING "Cannot find python. Disablin admin tools")
     set(USE_ADMIN_TOOLS OFF)

@@ -255,6 +255,7 @@ Requires: 	gpfs.nfs-ganesha = %{version}-%{release}, python3
 BuildRequires:  python3-devel
 %endif
 %endif
+Requires: 	gpfs.nfs-ganesha = %{version}-%{release}
 
 %if %{with gui_utils}
 %if ( 0%{?suse_version} )
@@ -628,8 +629,13 @@ install -p -m 644 selinux/ganesha.if %{buildroot}%{_selinux_store_path}/devel/in
 install -m 0644 selinux/ganesha.pp.bz2 %{buildroot}%{_selinux_store_path}/packages
 %endif
 
+%if (0%{?rhel} && 0%{?rhel} < 8)
+rm -f %{buildroot}/%{python2_sitelib}/gpfs*
+rm -f %{buildroot}/%{python2_sitelib}/__init__.*
+%else
 rm -f %{buildroot}/%{python3_sitelib}/gpfs*
 rm -f %{buildroot}/%{python3_sitelib}/__init__.*
+%endif
 
 %post
 %if ( 0%{?suse_version} )
@@ -843,13 +849,14 @@ exit 0
 
 %if %{with utils}
 %files utils
-%if ( 0%{?rhel} && 0%{?rhel} < 8 )
-%{python_sitelib}/Ganesha/*
-%{python_sitelib}/ganeshactl-*-info
+%if (0%{?rhel} && 0%{?rhel} < 8)
+%{python2_sitelib}/Ganesha/*
+%{python2_sitelib}/ganeshactl-*-info
 %else
 %{python3_sitelib}/Ganesha/*
 %{python3_sitelib}/ganeshactl-*-info
 %endif
+
 %if %{with gui_utils}
 %{_bindir}/ganesha-admin
 %{_bindir}/manage_clients
