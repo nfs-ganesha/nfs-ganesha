@@ -64,7 +64,7 @@ enum nfs_req_result nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 {
 	ACCESS4args * const arg_ACCESS4 = &op->nfs_argop4_u.opaccess;
 	ACCESS4res * const res_ACCESS4 = &resp->nfs_resop4_u.opaccess;
-	fsal_errors_t fsal_status;
+	fsal_status_t status;
 	uint32_t max_access = (ACCESS4_READ | ACCESS4_LOOKUP |
 			       ACCESS4_MODIFY | ACCESS4_EXTEND |
 			       ACCESS4_DELETE | ACCESS4_EXECUTE);
@@ -88,16 +88,15 @@ enum nfs_req_result nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Perform the 'access' call */
-	fsal_status =
-	    nfs_access_op(data->current_obj, arg_ACCESS4->access,
+	status = nfs_access_op(data->current_obj, arg_ACCESS4->access,
 			  &res_ACCESS4->ACCESS4res_u.resok4.access,
 			  &res_ACCESS4->ACCESS4res_u.resok4.supported);
 
-	if (fsal_status == ERR_FSAL_NO_ERROR
-	    || fsal_status == ERR_FSAL_ACCESS)
+	if (status.major == ERR_FSAL_NO_ERROR
+	    || status.major == ERR_FSAL_ACCESS)
 		res_ACCESS4->status = NFS4_OK;
 	else
-		res_ACCESS4->status = nfs4_Errno(fsal_status);
+		res_ACCESS4->status = nfs4_Errno_status(status);
 
 	return nfsstat4_to_nfs_req_result(res_ACCESS4->status);
 }				/* nfs4_op_access */
