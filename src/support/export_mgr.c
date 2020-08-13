@@ -1102,7 +1102,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		err = errno;
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
 			       "error %d (%s) when attempting to stat config file %s",
-			       err, strerror(err));
+			       err, strerror(err), file_path);
 		status = false;
 		goto out_unlock;
 	}
