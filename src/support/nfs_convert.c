@@ -460,19 +460,19 @@ const char *auth_stat2str(enum auth_stat why)
 /* Error conversion routines */
 
 /**
- * @brief Convert a FSAL error to a nfsv4 status.
+ * @brief Convert a FSAL status.major error to a nfsv4 status.
  *
- * @param[in] error The FSAL error
+ * @param[in] status The FSAL status
  * @param[in] where String identifying the caller
  *
  * @return the converted NFSv4 status.
  *
  */
-nfsstat4 nfs4_Errno_verbose(fsal_errors_t error, const char *where)
+nfsstat4 nfs4_Errno_verbose(fsal_status_t status, const char *where)
 {
 	nfsstat4 nfserror = NFS4ERR_INVAL;
 
-	switch (error) {
+	switch (status.major) {
 	case ERR_FSAL_NO_ERROR:
 		nfserror = NFS4_OK;
 		break;
@@ -516,9 +516,17 @@ nfsstat4 nfs4_Errno_verbose(fsal_errors_t error, const char *where)
 	case ERR_FSAL_TIMEOUT:
 	case ERR_FSAL_IO:
 	case ERR_FSAL_NXIO:
-		LogCrit(COMPONENT_NFS_V4,
-			"Error %s in %s converted to NFS4ERR_IO but was set non-retryable",
-			msg_fsal_err(error), where);
+		if (status.major == ERR_FSAL_IO && status.minor != 0)
+			LogCrit(COMPONENT_NFS_V4,
+				"Error %s with error code %d in %s converted "
+				"to NFS4ERR_IO but was set non-retryable",
+				msg_fsal_err(status.major), status.minor,
+				where);
+		else
+			LogCrit(COMPONENT_NFS_V4,
+				"Error %s in %s converted to NFS4ERR_IO but "
+				"was set non-retryable",
+				msg_fsal_err(status.major), where);
 		nfserror = NFS4ERR_IO;
 		break;
 
@@ -637,7 +645,7 @@ nfsstat4 nfs4_Errno_verbose(fsal_errors_t error, const char *where)
 		/* Should not occur */
 		LogDebug(COMPONENT_NFS_V4,
 			 "Line %u should never be reached in nfs4_Errno from %s for cache_status=%u",
-			 __LINE__, where, error);
+			 __LINE__, where, status.major);
 		nfserror = NFS4ERR_INVAL;
 		break;
 	}
@@ -647,20 +655,20 @@ nfsstat4 nfs4_Errno_verbose(fsal_errors_t error, const char *where)
 
 /**
  *
- * @brief Convert a FSAL error status to a nfsv3 status.
+ * @brief Convert a FSAL status.major error to a nfsv3 status.
  *
- * @param[in] error Input FSAL error
+ * @param[in] status Input FSAL status
  * @param[in] where String identifying caller
  *
  * @return the converted NFSv3 status.
  *
  */
 #ifdef _USE_NFS3
-nfsstat3 nfs3_Errno_verbose(fsal_errors_t error, const char *where)
+nfsstat3 nfs3_Errno_verbose(fsal_status_t status, const char *where)
 {
 	nfsstat3 nfserror = NFS3ERR_INVAL;
 
-	switch (error) {
+	switch (status.major) {
 	case ERR_FSAL_NO_ERROR:
 		nfserror = NFS3_OK;
 		break;
@@ -670,9 +678,17 @@ nfsstat3 nfs3_Errno_verbose(fsal_errors_t error, const char *where)
 	case ERR_FSAL_NOT_OPENED:
 	case ERR_FSAL_IO:
 	case ERR_FSAL_NXIO:
-		LogCrit(COMPONENT_NFSPROTO,
-			"Error %s in %s converted to NFS3ERR_IO but was set non-retryable",
-			msg_fsal_err(error), where);
+		if (status.major == ERR_FSAL_IO && status.minor != 0)
+			LogCrit(COMPONENT_NFSPROTO,
+				"Error %s with error code %d in %s converted "
+				"to NFS3ERR_IO but was set non-retryable",
+				msg_fsal_err(status.major), status.minor,
+				where);
+		else
+			LogCrit(COMPONENT_NFSPROTO,
+				"Error %s in %s converted to NFS3ERR_IO but "
+				"was set non-retryable",
+				msg_fsal_err(status.major), where);
 		nfserror = NFS3ERR_IO;
 		break;
 
@@ -801,7 +817,7 @@ nfsstat3 nfs3_Errno_verbose(fsal_errors_t error, const char *where)
 		/* Should not occur */
 		LogDebug(COMPONENT_NFSPROTO,
 			 "Line %u should never be reached in nfs3_Errno from %s for FSAL error=%s",
-			 __LINE__, where, msg_fsal_err(error));
+			 __LINE__, where, msg_fsal_err(status.major));
 		nfserror = NFS3ERR_INVAL;
 		break;
 	}

@@ -64,7 +64,7 @@
 
 int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	fsal_errors_t fsal_errors;
+	fsal_status_t status;
 	struct fsal_obj_handle *entry = NULL;
 	int rc = NFS_REQ_OK;
 
@@ -86,12 +86,11 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Perform the 'access' call */
-	fsal_errors =
-	    nfs_access_op(entry, arg->arg_access3.access,
+	status = nfs_access_op(entry, arg->arg_access3.access,
 			  &res->res_access3.ACCESS3res_u.resok.access, NULL);
 
-	if (fsal_errors == ERR_FSAL_NO_ERROR ||
-	    fsal_errors == ERR_FSAL_ACCESS) {
+	if (status.major == ERR_FSAL_NO_ERROR ||
+	    status.major == ERR_FSAL_ACCESS) {
 		/* Build Post Op Attributes */
 		nfs_SetPostOpAttr(
 			entry,
@@ -104,12 +103,12 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* If we are here, there was an error */
-	if (nfs_RetryableError(fsal_errors)) {
+	if (nfs_RetryableError(status.major)) {
 		rc = NFS_REQ_DROP;
 		goto out;
 	}
 
-	res->res_access3.status = nfs3_Errno(fsal_errors);
+	res->res_access3.status = nfs3_Errno_status(status);
 	nfs_SetPostOpAttr(entry,
 			  &res->res_access3.ACCESS3res_u.resfail.obj_attributes,
 			  NULL);

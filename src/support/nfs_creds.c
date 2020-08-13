@@ -635,14 +635,14 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
  * @param[out] granted_access   The bits granted
  * @param[out] supported_access The bits supported for this inode
  *
- * @return FSAL error
- * @retval ERR_FSAL_NO_ERROR all access was granted
- * @retval ERR_FSAL_ACCESS one or more access bits were denied
- * @retval other values indicate a FSAL failure
+ * @return FSAL status which may have in 'status.major':
+ *	   - ERR_FSAL_NO_ERROR all access was granted
+ *	   - ERR_FSAL_ACCESS one or more access bits were denied
+ *	   - other values indicate a FSAL failure
  *
  */
 
-fsal_errors_t nfs_access_op(struct fsal_obj_handle *obj,
+fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 				   uint32_t requested_access,
 				   uint32_t *granted_access,
 				   uint32_t *supported_access)
@@ -827,5 +827,5 @@ fsal_errors_t nfs_access_op(struct fsal_obj_handle *obj,
 					   ACCESS3_EXECUTE) ? "EXECUTE" : "-");
 	}
 
-	return fsal_status.major;
+	return fsal_status;
 }
