@@ -126,6 +126,8 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
 	rarg.offset = offset;
 	rarg.length = buf_size;
 	rarg.options = 0;
+	if (op_ctx && op_ctx->client)
+		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	fsal_set_credentials(op_ctx->creds);
 	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
@@ -191,6 +193,8 @@ GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void *buf,
 	warg.stability_wanted = *fsal_stable;
 	warg.stability_got = &stability_got;
 	warg.options = 0;
+	if (op_ctx && op_ctx->client)
+		warg.cli_ip = op_ctx->client->hostaddr_str;
 
 	fsal_set_credentials(op_ctx->creds);
 	nb_write = gpfs_ganesha(OPENHANDLE_WRITE_BY_FD, &warg);

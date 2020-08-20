@@ -158,6 +158,8 @@ get_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	args.cmd = GPFS_QCMD(Q_GETQUOTA, quota_type);
 	args.qid = quota_id;
 	args.bufferP = &gpfs_quota;
+	if (op_ctx && op_ctx->client)
+		args.cli_ip = op_ctx->client->hostaddr_str;
 
 	fsal_set_credentials(op_ctx->creds);
 	if (gpfs_ganesha(OPENHANDLE_QUOTA, &args) < 0)
@@ -223,6 +225,8 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	args.cmd = GPFS_QCMD(Q_SETQUOTA, quota_type);
 	args.qid = quota_id;
 	args.bufferP = &gpfs_quota;
+	if (op_ctx && op_ctx->client)
+		args.cli_ip = op_ctx->client->hostaddr_str;
 
 	fsal_set_credentials(op_ctx->creds);
 	if (gpfs_ganesha(OPENHANDLE_QUOTA, &args) < 0)
