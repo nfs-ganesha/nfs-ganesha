@@ -51,6 +51,7 @@ struct flock
 
 #define OPENHANDLE_GET_VERSION    100
 #define OPENHANDLE_GET_VERSION2   1002
+#define OPENHANDLE_GET_VERSION3   1003
 #define OPENHANDLE_NAME_TO_HANDLE 101
 #define OPENHANDLE_OPEN_BY_HANDLE 102
 #define OPENHANDLE_LAYOUT_TYPE    106
@@ -101,6 +102,9 @@ struct flock
 #define OPENHANDLE_QUOTA          151
 #define OPENHANDLE_FS_LOCATIONS   152
 
+#define OPENHANDLE_TRACE_UTIL     155
+#define OPENHANDLE_TRACE_COS      156
+
 /* If there is any change in above constants, then update below values.
  * Currently ignoring opcode 1002 */
 #define GPFS_MIN_OP		 OPENHANDLE_GET_VERSION
@@ -125,6 +129,7 @@ struct trace_arg
 
 #define ganesha_v1 1
 #define ganesha_v2 2
+#define ganesha_v3 3
 
 int gpfs_ganesha(int op, void *oarg);
 
@@ -182,7 +187,7 @@ struct open_arg
   int flags;
   int openfd;
   struct gpfs_file_handle *handle;
-	const char *cli_ip;
+  const char *cli_ip;
 };
 
 struct link_fh_arg
@@ -192,6 +197,7 @@ struct link_fh_arg
   const char *name;
   struct gpfs_file_handle *dir_fh;
   struct gpfs_file_handle *dst_fh;
+  const char *cli_ip;
 };
 
 struct rename_fh_arg
@@ -203,6 +209,7 @@ struct rename_fh_arg
   const char *new_name;
   struct gpfs_file_handle *old_fh;
   struct gpfs_file_handle *new_fh;
+  const char *cli_ip;
 };
 
 struct glock
@@ -221,6 +228,7 @@ struct set_get_lock_arg
   int mountdirfd;
   struct glock *lock;
   int reclaim;
+  const char *cli_ip;
 };
 
 struct open_share_arg
@@ -232,6 +240,7 @@ struct open_share_arg
   int share_access;
   int share_deny;
   int reclaim;
+  const char *cli_ip;
 };
 
 struct share_reserve_arg
@@ -240,6 +249,7 @@ struct share_reserve_arg
   int openfd;
   int share_access;
   int share_deny;
+  const char *cli_ip;
 };
 
 struct fadvise_arg
@@ -272,6 +282,7 @@ struct close_file_arg
   int close_fd;
   int close_flags;
   void *close_owner;
+  const char *cli_ip;
 };
 
 struct link_arg
@@ -279,6 +290,7 @@ struct link_arg
   int file_fd;
   int dir_fd;
   const char *name;
+  const char *cli_ip;
 };
 
 struct readlink_arg
@@ -486,6 +498,7 @@ struct dsread_arg
   uint64_t length;
   uint64_t *filesize;
   int options;
+  const char *cli_ip;
 };
 
 /* define flags for options */
@@ -505,6 +518,7 @@ struct dswrite_arg
   uint32_t *stability_got;
   uint32_t *verifier4;
   int options;
+  const char *cli_ip;
 };
 
 struct read_arg
@@ -518,6 +532,7 @@ struct read_arg
   uint32_t *stability_got;
   uint32_t *verifier4;
   int options;
+  const char *cli_ip;
 };
 
 struct write_arg
@@ -531,6 +546,7 @@ struct write_arg
   uint32_t *stability_got;
   uint32_t *verifier4;
   int options;
+  const char *cli_ip;
 };
 
 struct alloc_arg
@@ -599,6 +615,7 @@ struct create_name_arg
     int attr_valid;                 /* in     */
     int attr_changed;               /* in     */
     struct gpfs_acl *acl;           /* in/out  */
+    const char *cli_ip;
 };
 
 struct stat_name_arg
@@ -705,6 +722,7 @@ struct setxattr_arg {
 	char *name;
 	uint32_t value_len;
 	void *value;
+	const char *cli_ip;
 };
 
 struct removexattr_arg {
@@ -712,6 +730,7 @@ struct removexattr_arg {
 	struct gpfs_file_handle *handle;
 	uint32_t name_len;
 	char *name;
+	const char *cli_ip;
 };
 
 struct listxattr_arg {
@@ -722,6 +741,7 @@ struct listxattr_arg {
 	uint32_t eof;
 	uint32_t name_len;
 	void *names;
+	const char *cli_ip;
 };
 
 struct fs_loc_arg {
@@ -752,6 +772,7 @@ struct quotactl_arg
     int cmd;
     int qid;
     void *bufferP;
+    const char *cli_ip;
 };
 
 #ifdef __cplusplus
