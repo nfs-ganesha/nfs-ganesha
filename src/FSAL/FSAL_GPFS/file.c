@@ -578,6 +578,8 @@ gpfs_read_plus_fd(int my_fd, uint64_t offset,
 	rarg.offset = offset;
 	rarg.length = buffer_size;
 	rarg.options = IO_SKIP_HOLE;
+	if (op_ctx && op_ctx->client)
+		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
 	errsv = errno;
@@ -1287,6 +1289,8 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	gpfs_sg_arg.lock = &glock_args;
 	gpfs_sg_arg.reclaim = req_lock->lock_reclaim;
 	gpfs_sg_arg.mountdirfd = export_fd;
+	if (op_ctx && op_ctx->client)
+		gpfs_sg_arg.cli_ip = op_ctx->client->hostaddr_str;
 
 	status = GPFSFSAL_lock_op(export, lock_op, req_lock, conflicting_lock,
 				  &gpfs_sg_arg);

@@ -658,6 +658,8 @@ static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
 	sxarg.name = xa_name->utf8string_val;
 	sxarg.value_len = xa_value->utf8string_len;
 	sxarg.value = xa_value->utf8string_val;
+	if (op_ctx && op_ctx->client)
+		sxarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	rc = gpfs_ganesha(OPENHANDLE_SETXATTRS, &sxarg);
 	if (rc < 0) {
@@ -688,6 +690,8 @@ static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
 	rxarg.handle = myself->handle;
 	rxarg.name_len = xa_name->utf8string_len;
 	rxarg.name = xa_name->utf8string_val;
+	if (op_ctx && op_ctx->client)
+		rxarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	rc = gpfs_ganesha(OPENHANDLE_REMOVEXATTRS, &rxarg);
 	if (rc < 0) {
@@ -734,6 +738,8 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 	lxarg.eof = false;
 	lxarg.name_len = MAXCOUNT;
 	lxarg.names = buf;
+	if (op_ctx && op_ctx->client)
+		lxarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	LogFullDebug(COMPONENT_FSAL,
 		"in cookie %llu len %d cookieverf %llx",
