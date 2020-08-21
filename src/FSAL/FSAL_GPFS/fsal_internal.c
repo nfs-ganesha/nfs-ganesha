@@ -572,7 +572,7 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 					"GET_XSTAT returned buffer too small, passed len: %u, required len: %u, ",
 					acl_buflen, acl_buf->acl_len);
 				errno = 0;
-				break;
+				return fsalstat(ERR_FSAL_NO_ERROR, 0);
 			}
 
 			LogWarn(COMPONENT_FSAL,
