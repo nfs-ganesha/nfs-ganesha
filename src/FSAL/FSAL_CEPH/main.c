@@ -317,12 +317,22 @@ static void ino_release_cb(void *handle, vinodeno_t vino)
 	export->export.up_ops->try_release(export->export.up_ops, &fh_desc, 0);
 }
 
+static mode_t umask_cb(void *handle)
+{
+	mode_t umask = CephFSM.fsal.fs_info.umask;
+
+	LogDebug(COMPONENT_FSAL,
+		"libcephfs set umask = %04o by umask callback", umask);
+	return umask;
+}
+
 static void register_callbacks(struct ceph_export *export)
 {
 	struct ceph_client_callback_args args = {
-						.handle = export,
-						.ino_release_cb = ino_release_cb
-					};
+					.handle = export,
+					.ino_release_cb = ino_release_cb,
+					.umask_cb = umask_cb
+				};
 	ceph_ll_register_callbacks(export->cmount, &args);
 }
 #else /* USE_FSAL_CEPH_REGISTER_CALLBACKS */
