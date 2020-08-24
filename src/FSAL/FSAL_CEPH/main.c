@@ -301,15 +301,16 @@ static int select_filesystem(struct ceph_export *export)
 static void ino_release_cb(void *handle, vinodeno_t vino)
 {
 	struct ceph_export *export = handle;
-	struct ceph_host_handle key;
+	struct ceph_handle_key key;
 	struct gsh_buffdesc fh_desc;
 
 	LogDebug(COMPONENT_FSAL,
 		 "libcephfs asking to release 0x%lx:0x%lx:0x%lx",
 		 export->fscid, vino.snapid.val, vino.ino.val);
-	key.chk_ino = vino.ino.val;
-	key.chk_snap = vino.snapid.val;
-	key.chk_fscid = export->fscid;
+	key.hhdl.chk_ino = vino.ino.val;
+	key.hhdl.chk_snap = vino.snapid.val;
+	key.hhdl.chk_fscid = export->fscid;
+	key.export_id = export->export.export_id;
 	fh_desc.addr = &key;
 	fh_desc.len = sizeof(key);
 
