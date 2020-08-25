@@ -238,11 +238,11 @@ BuildRequires:  python-devel
 %else
 Requires:	python3-gobject, python3-pyparsing
 BuildRequires:  python3-devel
-%endif
 %if ( 0%{?suse_version} )
 Requires:	dbus-1-python
 %else
 Requires:	python3-dbus
+%endif
 %endif
 
 %if %{with gui_utils}
