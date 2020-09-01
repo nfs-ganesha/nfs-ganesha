@@ -94,7 +94,7 @@ namespace {
 TEST_F(GetattrsEmptyLatencyTest, SIMPLE)
 {
   fsal_status_t status;
-  struct attrlist outattrs;
+  struct fsal_attrlist outattrs;
 
   status = test_root->obj_ops->getattrs(test_root, &outattrs);
   EXPECT_EQ(status.major, 0);
@@ -104,7 +104,7 @@ TEST_F(GetattrsEmptyLatencyTest, SIMPLE_BYPASS)
 {
   fsal_status_t status;
   struct fsal_obj_handle *sub_hdl;
-  struct attrlist outattrs;
+  struct fsal_attrlist outattrs;
 
   sub_hdl = mdcdb_get_sub_handle(test_root);
   ASSERT_NE(sub_hdl, nullptr);
@@ -116,7 +116,7 @@ TEST_F(GetattrsEmptyLatencyTest, SIMPLE_BYPASS)
 TEST_F(GetattrsEmptyLatencyTest, GET_OPTIONAL_ATTRS)
 {
   fsal_status_t status;
-  struct attrlist outattrs;
+  struct fsal_attrlist outattrs;
   struct timespec s_time, e_time;
 
   now(&s_time);
@@ -135,7 +135,7 @@ TEST_F(GetattrsEmptyLatencyTest, GET_OPTIONAL_ATTRS)
 TEST_F(GetattrsFullLatencyTest, BIG_CACHED)
 {
   fsal_status_t status;
-  struct attrlist outattrs;
+  struct fsal_attrlist outattrs;
   struct timespec s_time, e_time;
 
   now(&s_time);
@@ -154,7 +154,7 @@ TEST_F(GetattrsFullLatencyTest, BIG_CACHED)
 TEST_F(GetattrsFullLatencyTest, BIG_UNCACHED)
 {
   fsal_status_t status;
-  struct attrlist outattrs;
+  struct fsal_attrlist outattrs;
   struct fsal_obj_handle *obj[LOOP_COUNT];
   char fname[NAMELEN];
   struct timespec s_time, e_time;
@@ -188,7 +188,7 @@ TEST_F(GetattrsFullLatencyTest, BIG_BYPASS_CACHED)
 {
   fsal_status_t status;
   struct fsal_obj_handle *sub_hdl;
-  struct attrlist outattrs;
+  struct fsal_attrlist outattrs;
   struct timespec s_time, e_time;
 
   sub_hdl = mdcdb_get_sub_handle(test_root);
@@ -209,7 +209,7 @@ TEST_F(GetattrsFullLatencyTest, BIG_BYPASS_UNCACHED)
 {
   fsal_status_t status;
   struct fsal_obj_handle *sub_hdl[LOOP_COUNT];
-  struct attrlist outattrs;
+  struct fsal_attrlist outattrs;
   struct fsal_obj_handle *obj;
   char fname[NAMELEN];
   struct timespec s_time, e_time;

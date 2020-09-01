@@ -192,7 +192,7 @@ bool make_pseudofs_node(char *name, struct pseudofs_state *state)
 	struct fsal_obj_handle *new_node = NULL;
 	fsal_status_t fsal_status;
 	bool retried = false;
-	struct attrlist sattr;
+	struct fsal_attrlist sattr;
 	char const *fsal_name;
 
 retry:

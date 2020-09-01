@@ -70,7 +70,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	pre_op_attr pre_parent = {
 		.attributes_follow = false
 	};
-	struct attrlist sattr, attrs;
+	struct fsal_attrlist sattr, attrs;
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
 	fsal_verifier_t verifier;
@@ -84,7 +84,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 */
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
-	memset(&sattr, 0, sizeof(struct attrlist));
+	memset(&sattr, 0, sizeof(struct fsal_attrlist));
 
 	/* to avoid setting it on each error case */
 	res->res_create3.CREATE3res_u.resfail.dir_wcc.before.attributes_follow =

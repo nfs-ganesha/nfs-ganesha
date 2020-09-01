@@ -835,7 +835,7 @@ struct export_ops {
 	 fsal_status_t (*lookup_path)(struct fsal_export *exp_hdl,
 				      const char *path,
 				      struct fsal_obj_handle **handle,
-				      struct attrlist *attrs_out);
+				      struct fsal_attrlist *attrs_out);
 
 /**
  * @brief Look up a junction
@@ -931,7 +931,7 @@ struct export_ops {
 	 fsal_status_t (*create_handle)(struct fsal_export *exp_hdl,
 					struct gsh_buffdesc *fh_desc,
 					struct fsal_obj_handle **handle,
-					struct attrlist *attrs_out);
+					struct fsal_attrlist *attrs_out);
 /**@}*/
 
 /**@{*/
@@ -1046,7 +1046,7 @@ struct export_ops {
  *
  * This function returns a list of all attributes that this FSAL will
  * support.  Be aware that this is specifically the attributes in
- * struct attrlist, other NFS attributes (fileid and so forth) are
+ * struct fsal_attrlist, other NFS attributes (fileid and so forth) are
  * supported through other means.
  *
  * @param[in] exp_hdl Filesystem to interrogate
@@ -1384,7 +1384,7 @@ const char *fsal_dir_result_str(enum fsal_dir_result result);
  */
 typedef enum fsal_dir_result (*fsal_readdir_cb)(
 				const char *name, struct fsal_obj_handle *obj,
-				struct attrlist *attrs,
+				struct fsal_attrlist *attrs,
 				void *dir_state, fsal_cookie_t cookie);
 
 /**
@@ -1506,7 +1506,7 @@ struct fsal_obj_ops {
 	 fsal_status_t (*lookup)(struct fsal_obj_handle *dir_hdl,
 				 const char *path,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out);
+				 struct fsal_attrlist *attrs_out);
 
 /**
  * @brief Read a directory
@@ -1620,9 +1620,10 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t (*mkdir)(struct fsal_obj_handle *dir_hdl,
-				const char *name, struct attrlist *attrs_in,
+				const char *name,
+				struct fsal_attrlist *attrs_in,
 				struct fsal_obj_handle **new_obj,
-				struct attrlist *attrs_out);
+				struct fsal_attrlist *attrs_out);
 
 /**
  * @brief Create a special file
@@ -1665,9 +1666,9 @@ struct fsal_obj_ops {
 	 fsal_status_t (*mknode)(struct fsal_obj_handle *dir_hdl,
 				 const char *name,
 				 object_file_type_t nodetype,
-				 struct attrlist *attrs_in,
+				 struct fsal_attrlist *attrs_in,
 				 struct fsal_obj_handle **new_obj,
-				 struct attrlist *attrs_out);
+				 struct fsal_attrlist *attrs_out);
 
 /**
  * @brief Create a symbolic link
@@ -1707,9 +1708,9 @@ struct fsal_obj_ops {
 	 fsal_status_t (*symlink)(struct fsal_obj_handle *dir_hdl,
 				  const char *name,
 				  const char *link_path,
-				  struct attrlist *attrs_in,
+				  struct fsal_attrlist *attrs_in,
 				  struct fsal_obj_handle **new_obj,
-				  struct attrlist *attrs_out);
+				  struct fsal_attrlist *attrs_out);
 /**@}*/
 
 /**@{*/
@@ -1790,7 +1791,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t (*getattrs)(struct fsal_obj_handle *obj_hdl,
-				   struct attrlist *attrs_out);
+				   struct fsal_attrlist *attrs_out);
 
 /**
  * @brief Create a new link
@@ -2350,10 +2351,10 @@ struct fsal_obj_ops {
 				fsal_openflags_t openflags,
 				enum fsal_create_mode createmode,
 				const char *name,
-				struct attrlist *attrs_in,
+				struct fsal_attrlist *attrs_in,
 				fsal_verifier_t verifier,
 				struct fsal_obj_handle **new_obj,
-				struct attrlist *attrs_out,
+				struct fsal_attrlist *attrs_out,
 				bool *caller_perm_check);
 
 /**
@@ -2564,7 +2565,7 @@ struct fsal_obj_ops {
 	 fsal_status_t (*setattr2)(struct fsal_obj_handle *obj_hdl,
 				   bool bypass,
 				   struct state_t *state,
-				   struct attrlist *attrib_set);
+				   struct fsal_attrlist *attrib_set);
 
 /**
  * @brief Manage closing a file when a state is no longer needed.
@@ -2595,7 +2596,7 @@ struct fsal_obj_ops {
  */
 
 	 bool (*is_referral)(struct fsal_obj_handle *obj_hdl,
-			     struct attrlist *attrs,
+			     struct fsal_attrlist *attrs,
 			     bool cache_attrs);
 
 /**@{*/

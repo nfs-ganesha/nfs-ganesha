@@ -216,10 +216,10 @@ void start_fsals(void);
 void display_fsinfo(struct fsal_module *fsal);
 
 int display_attrlist(struct display_buffer *dspbuf,
-		     struct attrlist *attr, bool is_obj);
+		     struct fsal_attrlist *attr, bool is_obj);
 
 void log_attrlist(log_components_t component, log_levels_t level,
-		  const char *reason, struct attrlist *attr, bool is_obj,
+		  const char *reason, struct fsal_attrlist *attr, bool is_obj,
 		  char *file, int line, char *function);
 
 #define LogAttrlist(component, level, reason, attr, is_obj)                  \
@@ -246,7 +246,7 @@ enum cb_state {
 typedef fsal_errors_t (*helper_readdir_cb)
 	(void *opaque,
 	 struct fsal_obj_handle *obj,
-	 const struct attrlist *attr,
+	 const struct fsal_attrlist *attr,
 	 uint64_t mounted_on_fileid,
 	 uint64_t cookie,
 	 enum cb_state cb_state);
@@ -274,7 +274,7 @@ struct fsal_readdir_cb_parms {
 };
 
 fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
-			   struct state_t *state, struct attrlist *attr);
+			   struct state_t *state, struct fsal_attrlist *attr);
 
 /**
  *
@@ -305,20 +305,20 @@ fsal_status_t fsal_readlink(struct fsal_obj_handle *obj,
 fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 			  const char *name,
 			  struct fsal_obj_handle **obj,
-			  struct attrlist *attrs_out);
+			  struct fsal_attrlist *attrs_out);
 fsal_status_t fsal_lookup_path(const char *path,
 			       struct fsal_obj_handle **dirobj);
 fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
 			   struct fsal_obj_handle **parent,
-			   struct attrlist *attrs_out);
+			   struct fsal_attrlist *attrs_out);
 fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 			  const char *name,
 			  object_file_type_t type,
-			  struct attrlist *attrs,
+			  struct fsal_attrlist *attrs,
 			  const char *link_content,
 			  struct fsal_obj_handle **obj,
-			  struct attrlist *attrs_out);
-void fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
+			  struct fsal_attrlist *attrs_out);
+void fsal_create_set_verifier(struct fsal_attrlist *sattr, uint32_t verf_hi,
 			      uint32_t verf_lo);
 bool fsal_create_verify(struct fsal_obj_handle *obj, uint32_t verf_hi,
 			uint32_t verf_lo);
@@ -337,16 +337,16 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 			 fsal_openflags_t openflags,
 			 enum fsal_create_mode createmode,
 			 const char *name,
-			 struct attrlist *attr,
+			 struct fsal_attrlist *attr,
 			 fsal_verifier_t verifier,
 			 struct fsal_obj_handle **obj,
-			 struct attrlist *attrs_out);
+			 struct fsal_attrlist *attrs_out);
 fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
 			   struct state_t *state,
 			   fsal_openflags_t openflags,
 			   bool check_permission);
 fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
-				 struct attrlist *attrs_out);
+				 struct fsal_attrlist *attrs_out);
 /**
  * @brief Close a file
  *
@@ -410,14 +410,14 @@ fsal_status_t fsal_verify2(struct fsal_obj_handle *obj,
 			   fsal_verifier_t verifier);
 
 /**
- * @brief Pepare an attrlist for fetching attributes.
+ * @brief Pepare an fsal_attrlist for fetching attributes.
  *
- * @param[in,out] attrs   The attrlist to work with
+ * @param[in,out] attrs   The fsal_attrlist to work with
  * @param[in]             The mask to use for the fetch
  *
  */
 
-static inline void fsal_prepare_attrs(struct attrlist *attrs,
+static inline void fsal_prepare_attrs(struct fsal_attrlist *attrs,
 				      attrmask_t request_mask)
 {
 	memset(attrs, 0, sizeof(*attrs));
@@ -425,13 +425,13 @@ static inline void fsal_prepare_attrs(struct attrlist *attrs,
 }
 
 /**
- * @brief Release any extra resources from an attrlist.
+ * @brief Release any extra resources from an fsal_attrlist.
  *
- * @param[in] attrs   The attrlist to work with
+ * @param[in] attrs   The fsal_attrlist to work with
  *
  */
 
-static inline void fsal_release_attrs(struct attrlist *attrs)
+static inline void fsal_release_attrs(struct fsal_attrlist *attrs)
 {
 	if (attrs->acl != NULL) {
 		int acl_status;
@@ -465,14 +465,15 @@ static inline void fsal_release_attrs(struct attrlist *attrs)
  * If ACL is requested in dest->request_mask, then ACL reference is acquired,
  * otherwise acl pointer is set to NULL.
  *
- * @param[in,out] dest       The attrlist to receive the copy (mask must be set)
- * @param[in]     src        The attrlist to make a copy of
+ * @param[in,out] dest       The fsal_attrlist to receive the copy (mask must be
+ *                           set)
+ * @param[in]     src        The fsal_attrlist to make a copy of
  * @param[in]     pass_refs  If true, pass the ACL reference to dest.
  *
  */
 
-static inline void fsal_copy_attrs(struct attrlist *dest,
-				   struct attrlist *src,
+static inline void fsal_copy_attrs(struct fsal_attrlist *dest,
+				   struct fsal_attrlist *src,
 				   bool pass_refs)
 {
 	attrmask_t save_request_mask = dest->request_mask;
@@ -546,7 +547,7 @@ static inline void fsal_copy_attrs(struct attrlist *dest,
 static inline changeid4
 fsal_get_changeid4(struct fsal_obj_handle *obj)
 {
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_status_t status;
 	changeid4 change;
 

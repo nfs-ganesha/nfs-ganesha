@@ -280,7 +280,7 @@ struct mdcache_fsal_obj_handle {
 	/** Sub-FSAL handle */
 	struct fsal_obj_handle *sub_handle;
 	/** Cached attributes */
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	/** Attribute generation, increased for every write */
 	uint32_t attr_generation;
 	/** FH hash linkage */
@@ -473,8 +473,8 @@ fsal_status_t mdcache_alloc_and_check_handle(
 		struct fsal_obj_handle *sub_handle,
 		struct fsal_obj_handle **new_obj,
 		bool new_directory,
-		struct attrlist *attrs_in,
-		struct attrlist *attrs_out,
+		struct fsal_attrlist *attrs_in,
+		struct fsal_attrlist *attrs_out,
 		const char *tag,
 		mdcache_entry_t *parent,
 		const char *name,
@@ -486,8 +486,8 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 
 fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *exp,
 				struct fsal_obj_handle *sub_handle,
-				struct attrlist *attrs_in,
-				struct attrlist *attrs_out,
+				struct fsal_attrlist *attrs_in,
+				struct fsal_attrlist *attrs_out,
 				bool new_directory,
 				mdcache_entry_t **entry,
 				struct state_t *state,
@@ -500,16 +500,16 @@ fsal_status_t mdcache_find_keyed_reason(mdcache_key_t *key,
 fsal_status_t mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 				  struct mdcache_fsal_export *exp,
 				  mdcache_entry_t **entry,
-				  struct attrlist *attrs_out);
+				  struct fsal_attrlist *attrs_out);
 fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent, const char *name,
 				 mdcache_entry_t **entry);
 fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 			 bool uncached, mdcache_entry_t **new_entry,
-			 struct attrlist *attrs_out);
+			 struct fsal_attrlist *attrs_out);
 fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent,
 				  const char *name,
 				  mdcache_entry_t **new_entry,
-				  struct attrlist *attrs_out);
+				  struct fsal_attrlist *attrs_out);
 void mdcache_src_dest_lock(mdcache_entry_t *src, mdcache_entry_t *dest);
 void mdcache_src_dest_unlock(mdcache_entry_t *src, mdcache_entry_t *dest);
 void mdcache_dirent_remove(mdcache_entry_t *parent, const char *name);
@@ -538,7 +538,7 @@ fsal_status_t mdc_get_parent(struct mdcache_fsal_export *exp,
 		    mdcache_entry_t *entry,
 		    struct gsh_buffdesc *parent_out);
 
-void mdc_update_attr_cache(mdcache_entry_t *entry, struct attrlist *attrs);
+void mdc_update_attr_cache(mdcache_entry_t *entry, struct fsal_attrlist *attrs);
 
 static inline void mdcache_free_fh(struct gsh_buffdesc *fh_desc);
 
@@ -754,7 +754,7 @@ mdcache_free_fh(struct gsh_buffdesc *fh_desc)
  */
 
 static inline void
-mdc_fixup_md(mdcache_entry_t *entry, struct attrlist *attrs)
+mdc_fixup_md(mdcache_entry_t *entry, struct fsal_attrlist *attrs)
 {
 	uint32_t flags = 0;
 
@@ -1016,12 +1016,12 @@ struct mdcache_readdir_state {
 fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 				 const char *path,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out);
+				 struct fsal_attrlist *attrs_out);
 
 fsal_status_t mdcache_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out);
+				   struct fsal_attrlist *attrs_out);
 
 int mdcache_fsal_open(struct mdcache_fsal_obj_handle *, int, fsal_errors_t *);
 int mdcache_fsal_readlink(struct mdcache_fsal_obj_handle *, fsal_errors_t *);
@@ -1047,10 +1047,10 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 			   fsal_openflags_t openflags,
 			   enum fsal_create_mode createmode,
 			   const char *name,
-			   struct attrlist *attrib_set,
+			   struct fsal_attrlist *attrib_set,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
-			   struct attrlist *attrs_out,
+			   struct fsal_attrlist *attrs_out,
 			   bool *caller_perm_check);
 bool mdcache_check_verifier(struct fsal_obj_handle *obj_hdl,
 				     fsal_verifier_t verifier);

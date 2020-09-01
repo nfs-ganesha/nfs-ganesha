@@ -276,7 +276,7 @@ fsal_status_t vfs_merge(struct fsal_obj_handle *orig_hdl,
 }
 
 static fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
-				 int my_fd, struct attrlist *attrs)
+				 int my_fd, struct fsal_attrlist *attrs)
 {
 	struct stat stat;
 	int retval = 0;
@@ -359,9 +359,9 @@ static fsal_status_t vfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 					 struct state_t *state,
 					 fsal_openflags_t openflags,
 					 enum fsal_create_mode createmode,
-					 struct attrlist *attrib_set,
+					 struct fsal_attrlist *attrib_set,
 					 fsal_verifier_t verifier,
-					 struct attrlist *attrs_out,
+					 struct fsal_attrlist *attrs_out,
 					 bool *caller_perm_check)
 {
 	fsal_status_t status = {0, 0};
@@ -467,7 +467,7 @@ static fsal_status_t vfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 
 	if (createmode >= FSAL_EXCLUSIVE || truncated) {
 		/* Refresh the attributes */
-		struct attrlist attrs;
+		struct fsal_attrlist attrs;
 		attrmask_t attrs_mask = ATTR_ATIME | ATTR_MTIME;
 
 		if (attrs_out)
@@ -603,10 +603,10 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			fsal_openflags_t openflags,
 			enum fsal_create_mode createmode,
 			const char *name,
-			struct attrlist *attrib_set,
+			struct fsal_attrlist *attrib_set,
 			fsal_verifier_t verifier,
 			struct fsal_obj_handle **new_obj,
-			struct attrlist *attrs_out,
+			struct fsal_attrlist *attrs_out,
 			bool *caller_perm_check)
 {
 	int posix_flags = 0;
@@ -657,7 +657,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * set later. We also need to test for permission to create
 		 * since there might be an ACL.
 		 */
-		struct attrlist attrs;
+		struct fsal_attrlist attrs;
 		fsal_accessflags_t access_type;
 
 		access_type = FSAL_MODE_MASK_SET(FSAL_W_OK) |
@@ -1421,7 +1421,7 @@ fsal_status_t vfs_seek2(struct fsal_obj_handle *obj_hdl,
 	fsal_openflags_t openflags = FSAL_O_ANY;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	int my_fd = -1;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
@@ -1840,7 +1840,7 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
  */
 
 fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
-			   struct attrlist *attrs)
+			   struct fsal_attrlist *attrs)
 {
 	struct vfs_fsal_obj_handle *myself;
 	fsal_status_t status = {0, 0};
@@ -1926,7 +1926,7 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			   bool bypass,
 			   struct state_t *state,
-			   struct attrlist *attrib_set)
+			   struct fsal_attrlist *attrib_set)
 {
 	struct vfs_fsal_obj_handle *myself;
 	fsal_status_t status = {0, 0};
@@ -1960,7 +1960,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE) &&
 	    !FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_ACL)) {
 		/* Set ACL from MODE */
-		struct attrlist attrs;
+		struct fsal_attrlist attrs;
 
 		fsal_prepare_attrs(&attrs, ATTR_ACL);
 

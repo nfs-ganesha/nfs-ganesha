@@ -65,7 +65,7 @@
 
 int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
-	struct attrlist setattr;
+	struct fsal_attrlist setattr;
 	struct fsal_obj_handle *obj = NULL;
 	pre_op_attr pre_attr = {
 		.attributes_follow = false

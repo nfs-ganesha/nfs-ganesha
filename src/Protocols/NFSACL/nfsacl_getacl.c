@@ -59,7 +59,7 @@ int nfsacl_getacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 #ifdef USE_NFSACL3
 	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
-	struct attrlist *attrs;
+	struct fsal_attrlist *attrs;
 	fsal_status_t status;
 	acl_t acl = NULL;
 	acl_t d_acl = NULL;

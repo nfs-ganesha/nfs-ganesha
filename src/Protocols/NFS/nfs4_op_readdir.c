@@ -94,7 +94,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 
 fsal_errors_t nfs4_readdir_callback(void *opaque,
 				    struct fsal_obj_handle *obj,
-				    const struct attrlist *attr,
+				    const struct fsal_attrlist *attr,
 				    uint64_t mounted_on_fileid,
 				    uint64_t cookie,
 				    enum cb_state cb_state)
@@ -276,7 +276,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 not_junction:
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 
-	args.attrs = (struct attrlist *)attr;
+	args.attrs = (struct fsal_attrlist *)attr;
 	args.data = data;
 	args.hdl4 = &entryFH;
 	args.mounted_on_fileid = mounted_on_fileid;
@@ -373,7 +373,8 @@ not_junction:
 	/* Tell is_referral to not cache attrs as it will affect readdir
 	 * performance
 	 */
-	if (obj->obj_ops->is_referral(obj, (struct attrlist *) attr, false)) {
+	if (obj->obj_ops->is_referral(obj, (struct fsal_attrlist *) attr,
+				      false)) {
 		args.rdattr_error = NFS4ERR_MOVED;
 		LogDebug(COMPONENT_NFS_READDIR,
 			 "Skipping because of %s",
@@ -568,7 +569,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	 * only a set of zeros is returned (trivial value)
 	 */
 	if (use_cookie_verifier) {
-		struct attrlist attrs;
+		struct fsal_attrlist attrs;
 
 		fsal_prepare_attrs(&attrs, ATTR_CHANGE);
 

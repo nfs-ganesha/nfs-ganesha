@@ -64,7 +64,7 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	fsal_dynamicfsinfo_t dynamicinfo;
 	fsal_status_t fsal_status;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);

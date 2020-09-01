@@ -431,11 +431,12 @@ static void fsal_print_access_by_acl(int naces, int ace_number,
  * @return ERR_FSAL_NO_ERROR, ERR_FSAL_ACCESS, or ERR_FSAL_NO_ACE
  */
 
-static fsal_status_t fsal_check_access_acl(struct user_cred *creds,
-					   fsal_aceperm_t v4mask,
-					   fsal_accessflags_t *allowed,
-					   fsal_accessflags_t *denied,
-					   struct attrlist *p_object_attributes)
+static fsal_status_t fsal_check_access_acl(
+				struct user_cred *creds,
+				fsal_aceperm_t v4mask,
+				fsal_accessflags_t *allowed,
+				fsal_accessflags_t *denied,
+				struct fsal_attrlist *p_object_attributes)
 {
 	fsal_aceperm_t missing_access;
 	fsal_aceperm_t tperm;
@@ -693,7 +694,7 @@ fsal_check_access_no_acl(struct user_cred *creds,
 			 fsal_accessflags_t access_type,
 			 fsal_accessflags_t *allowed,
 			 fsal_accessflags_t *denied,
-			 struct attrlist *p_object_attributes)
+			 struct fsal_attrlist *p_object_attributes)
 {
 	uid_t uid;
 	gid_t gid;
@@ -821,7 +822,7 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 			       fsal_accessflags_t *denied,
 			       bool owner_skip)
 {
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_status_t status;
 
 	fsal_prepare_attrs(&attrs,

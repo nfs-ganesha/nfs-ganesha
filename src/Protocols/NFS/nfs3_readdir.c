@@ -47,7 +47,7 @@
 
 fsal_errors_t nfs3_readdir_callback(void *opaque,
 				    struct fsal_obj_handle *obj,
-				    const struct attrlist *attr,
+				    const struct fsal_attrlist *attr,
 				    uint64_t mounted_on_fileid,
 				    uint64_t cookie,
 				    enum cb_state cb_state);
@@ -186,7 +186,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * only a set of zeros is returned (trivial value)
 	 */
 	if (use_cookie_verifier) {
-		struct attrlist attrs;
+		struct fsal_attrlist attrs;
 
 		fsal_prepare_attrs(&attrs, ATTR_CTIME);
 
@@ -363,7 +363,7 @@ void nfs3_readdir_free(nfs_res_t *resp)
 
 fsal_errors_t nfs3_readdir_callback(void *opaque,
 				    struct fsal_obj_handle *obj,
-				    const struct attrlist *attr,
+				    const struct fsal_attrlist *attr,
 				    uint64_t mounted_on_fileid,
 				    uint64_t cookie,
 				    enum cb_state cb_state)

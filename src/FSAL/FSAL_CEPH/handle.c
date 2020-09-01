@@ -84,7 +84,7 @@ static void ceph_fsal_release(struct fsal_obj_handle *obj_pub)
 static fsal_status_t ceph_fsal_lookup(struct fsal_obj_handle *dir_pub,
 				      const char *path,
 				      struct fsal_obj_handle **obj_pub,
-				      struct attrlist *attrs_out)
+				      struct fsal_attrlist *attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -116,7 +116,7 @@ static fsal_status_t ceph_fsal_lookup(struct fsal_obj_handle *dir_pub,
 }
 
 static int
-ceph_fsal_get_sec_label(struct ceph_handle *handle, struct attrlist *attrs)
+ceph_fsal_get_sec_label(struct ceph_handle *handle, struct fsal_attrlist *attrs)
 {
 	int rc = 0;
 	struct ceph_export *export =
@@ -219,7 +219,7 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 			goto closedir;
 		} else if (rc == 1) {
 			struct ceph_handle *obj;
-			struct attrlist attrs;
+			struct fsal_attrlist attrs;
 			enum fsal_dir_result cb_rc;
 
 			/* skip . and .. */
@@ -295,9 +295,9 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
  */
 
 static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
-				const char *name, struct attrlist *attrib,
+				const char *name, struct fsal_attrlist *attrib,
 				struct fsal_obj_handle **new_obj,
-				struct attrlist *attrs_out)
+				struct fsal_attrlist *attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -398,9 +398,9 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 				      const char *name,
 				      object_file_type_t nodetype,
-				      struct attrlist *attrib,
+				      struct fsal_attrlist *attrib,
 				      struct fsal_obj_handle **new_obj,
-				      struct attrlist *attrs_out)
+				      struct fsal_attrlist *attrs_out)
 {
 #ifdef USE_FSAL_CEPH_MKNOD
 	/* Generic status return */
@@ -513,9 +513,9 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t ceph_fsal_symlink(struct fsal_obj_handle *dir_hdl,
 				  const char *name, const char *link_path,
-				  struct attrlist *attrib,
+				  struct fsal_attrlist *attrib,
 				  struct fsal_obj_handle **new_obj,
-				  struct attrlist *attrs_out)
+				  struct fsal_attrlist *attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -630,7 +630,7 @@ static fsal_status_t ceph_fsal_readlink(struct fsal_obj_handle *link_pub,
  */
 
 static fsal_status_t ceph_fsal_getattrs(struct fsal_obj_handle *handle_pub,
-					struct attrlist *attrs)
+					struct fsal_attrlist *attrs)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -1121,10 +1121,10 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 				 fsal_openflags_t openflags,
 				 enum fsal_create_mode createmode,
 				 const char *name,
-				 struct attrlist *attrib_set,
+				 struct fsal_attrlist *attrib_set,
 				 fsal_verifier_t verifier,
 				 struct fsal_obj_handle **new_obj,
-				 struct attrlist *attrs_out,
+				 struct fsal_attrlist *attrs_out,
 				 bool *caller_perm_check)
 {
 	int posix_flags = 0;
@@ -2256,7 +2256,7 @@ static fsal_status_t ceph_fsal_lease_op2(struct fsal_obj_handle *obj_hdl,
  */
 static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 					bool bypass, struct state_t *state,
-					struct attrlist *attrib_set)
+					struct fsal_attrlist *attrib_set)
 {
 	struct ceph_handle *myself =
 		container_of(obj_hdl, struct ceph_handle, handle);

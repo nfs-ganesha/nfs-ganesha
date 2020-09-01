@@ -200,7 +200,7 @@ namespace gtest {
   protected:
     static fsal_errors_t readdir_callback(void *opaque,
                                           struct fsal_obj_handle *obj,
-                                          const struct attrlist *attr,
+                                          const struct fsal_attrlist *attr,
                                           uint64_t mounted_on_fileid,
                                           uint64_t cookie,
                                           enum cb_state cb_state)
@@ -210,7 +210,7 @@ namespace gtest {
 
     virtual void SetUp() {
       fsal_status_t status;
-      struct attrlist attrs_out;
+      struct fsal_attrlist attrs_out;
 
       gtest::GaneshaBaseTest::SetUp();
 
@@ -263,7 +263,7 @@ namespace gtest {
 			       struct fsal_obj_handle *directory = NULL) {
       fsal_status_t status;
       char fname[NAMELEN];
-      struct attrlist attrs_out;
+      struct fsal_attrlist attrs_out;
       unsigned int num_entries;
       bool eod_met;
       attrmask_t attrmask = 0;
@@ -315,7 +315,7 @@ namespace gtest {
     }
 
     struct req_op_context op_context;
-    struct attrlist attrs;
+    struct fsal_attrlist attrs;
 
     struct gsh_export* a_export = nullptr;
     struct fsal_obj_handle *root_entry = nullptr;

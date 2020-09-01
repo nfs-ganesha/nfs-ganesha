@@ -608,7 +608,7 @@ static void open4_ex_create_args(OPEN4args *arg,
 				 OPEN4res *res_OPEN4,
 				 void *verifier,
 				 enum fsal_create_mode *createmode,
-				 struct attrlist *sattr)
+				 struct fsal_attrlist *sattr)
 {
 	createhow4 *createhow = &arg->openhow.openflag4_u.how;
 	fattr4 *arg_attrs = NULL;
@@ -721,7 +721,7 @@ static void open4_ex(OPEN4args *arg,
 	/* The supplied calim type */
 	open_claim_type4 claim = arg->claim.claim;
 	fsal_verifier_t verifier;
-	struct attrlist sattr;
+	struct fsal_attrlist sattr;
 	/* Status for fsal calls */
 	fsal_status_t status = {0, 0};
 	/* The open state for the file */

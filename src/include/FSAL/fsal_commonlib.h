@@ -159,7 +159,7 @@ int decode_fsid(char *buf,
 		struct fsal_fsid__ *fsid,
 		enum fsid_type fsid_type);
 
-fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
+fsal_errors_t fsal_inherit_acls(struct fsal_attrlist *attrs, fsal_acl_t *sacl,
 			       fsal_aceflag_t inherit);
 fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 				 struct fsal_obj_handle *rem_hdl,
@@ -169,10 +169,10 @@ fsal_status_t fsal_rename_access(struct fsal_obj_handle *old_dir_hdl,
 				 struct fsal_obj_handle *new_dir_hdl,
 				 struct fsal_obj_handle *dst_obj_hdl,
 				 bool isdir);
-fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl);
-fsal_status_t fsal_acl_to_mode(struct attrlist *attrs);
+fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl);
+fsal_status_t fsal_acl_to_mode(struct fsal_attrlist *attrs);
 
-void set_common_verifier(struct attrlist *attrs, fsal_verifier_t verifier);
+void set_common_verifier(struct fsal_attrlist *attrs, fsal_verifier_t verifier);
 
 void update_share_counters(struct fsal_share *share,
 			   fsal_openflags_t old_openflags,
@@ -265,10 +265,11 @@ static inline struct state_t *init_state(struct state_t *state,
 
 bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier);
 
-bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier);
+bool check_verifier_attrlist(struct fsal_attrlist *attrs,
+			     fsal_verifier_t verifier);
 
 bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
-			     struct attrlist *attrs, bool cache_attrs);
+			     struct fsal_attrlist *attrs, bool cache_attrs);
 
 fsal_status_t update_export(struct fsal_module *fsal_hdl,
 			    void *parse_node,

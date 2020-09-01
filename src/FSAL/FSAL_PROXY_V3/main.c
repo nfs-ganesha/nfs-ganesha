@@ -278,11 +278,11 @@ proxyv3_alloc_handle(struct fsal_export *export_handle,
 		     const nfs_fh3 *fh3,
 		     const fattr3 *attrs,
 		     const struct proxyv3_obj_handle *parent,
-		     struct attrlist *fsal_attrs_out)
+		     struct fsal_attrlist *fsal_attrs_out)
 {
 	/* Fill the attributes first to avoid an alloc on failure. */
-	struct attrlist local_attributes;
-	struct attrlist *attrs_out;
+	struct fsal_attrlist local_attributes;
+	struct fsal_attrlist *attrs_out;
 
 	LogDebug(COMPONENT_FSAL,
 		 "Making handle from fh3 %p with parent %p",
@@ -297,7 +297,7 @@ proxyv3_alloc_handle(struct fsal_export *export_handle,
 		attrs_out = fsal_attrs_out;
 	} else {
 		/* Say we only want NFSv3 attributes. */
-		memset(&local_attributes, 0, sizeof(struct attrlist));
+		memset(&local_attributes, 0, sizeof(struct fsal_attrlist));
 		attrs_out = &local_attributes;
 		FSAL_SET_MASK(attrs_out->request_mask, ATTRS_NFS3);
 	}
@@ -378,7 +378,7 @@ proxyv3_lookup_internal(struct fsal_export *export_handle,
 			const char *path,
 			struct fsal_obj_handle *parent,
 			struct fsal_obj_handle **handle,
-			struct attrlist *attrs_out)
+			struct fsal_attrlist *attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "Doing a lookup of '%s'", path);
@@ -551,7 +551,7 @@ proxyv3_lookup_internal(struct fsal_export *export_handle,
 
 static fsal_status_t
 proxyv3_getattr_from_fh3(struct nfs_fh3 *fh3,
-			 struct attrlist *attrs_out)
+			 struct fsal_attrlist *attrs_out)
 {
 	GETATTR3args args;
 	GETATTR3res result;
@@ -610,7 +610,7 @@ proxyv3_getattr_from_fh3(struct nfs_fh3 *fh3,
 
 static fsal_status_t
 proxyv3_getattrs(struct fsal_obj_handle *obj_hdl,
-		 struct attrlist *attrs_out)
+		 struct fsal_attrlist *attrs_out)
 {
 	struct proxyv3_obj_handle *handle =
 		container_of(obj_hdl, struct proxyv3_obj_handle, obj);
@@ -637,7 +637,7 @@ static fsal_status_t
 proxyv3_setattr2(struct fsal_obj_handle *obj_hdl,
 		 bool bypass /* ignored, since we'll happily "bypass" */,
 		 struct state_t *state,
-		 struct attrlist *attrib_set)
+		 struct fsal_attrlist *attrib_set)
 {
 	struct proxyv3_obj_handle *handle =
 		container_of(obj_hdl, struct proxyv3_obj_handle, obj);
@@ -703,13 +703,13 @@ proxyv3_setattr2(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t proxyv3_lookup_root(struct fsal_export *export_handle,
 				  struct fsal_obj_handle **handle,
-				  struct attrlist *attrs_out)
+				  struct fsal_attrlist *attrs_out)
 {
 	struct proxyv3_export *export =
 		container_of(export_handle, struct proxyv3_export, export);
 
 	nfs_fh3 fh3;
-	struct attrlist tmp_attrs;
+	struct fsal_attrlist tmp_attrs;
 
 	fh3.data.data_val = export->root_handle;
 	fh3.data.data_len = export->root_handle_len;
@@ -759,7 +759,7 @@ fsal_status_t proxyv3_lookup_root(struct fsal_export *export_handle,
 fsal_status_t proxyv3_lookup_path(struct fsal_export *export_handle,
 				  const char *path,
 				  struct fsal_obj_handle **handle,
-				  struct attrlist *attrs_out)
+				  struct fsal_attrlist *attrs_out)
 {
 	struct proxyv3_export *export =
 		container_of(export_handle, struct proxyv3_export, export);
@@ -808,7 +808,7 @@ static fsal_status_t
 proxyv3_lookup_handle(struct fsal_obj_handle *parent,
 		      const char *path,
 		      struct fsal_obj_handle **handle,
-		      struct attrlist *attrs_out)
+		      struct fsal_attrlist *attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "lookup_handle for path '%s'", path);
@@ -848,7 +848,7 @@ proxyv3_issue_createlike(struct proxyv3_obj_handle *parent_obj,
 			 struct post_op_fh3 *op_fh3,
 			 struct post_op_attr *op_attr,
 			 struct fsal_obj_handle **new_obj,
-			 struct attrlist *attrs_out)
+			 struct fsal_attrlist *attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "Issuing a %s", procName);
@@ -923,10 +923,10 @@ proxyv3_open_by_handle(struct fsal_obj_handle *obj_hdl,
 		       struct state_t *state,
 		       fsal_openflags_t openflags,
 		       enum fsal_create_mode createmode,
-		       struct attrlist *attrib_set,
+		       struct fsal_attrlist *attrib_set,
 		       fsal_verifier_t verifier,
 		       struct fsal_obj_handle **out_obj,
-		       struct attrlist *attrs_out,
+		       struct fsal_attrlist *attrs_out,
 		       bool *caller_perm_check)
 {
 	LogDebug(COMPONENT_FSAL,
@@ -957,10 +957,10 @@ proxyv3_open2(struct fsal_obj_handle *obj_hdl,
 	      fsal_openflags_t openflags,
 	      enum fsal_create_mode createmode,
 	      const char *name,
-	      struct attrlist *attrib_set,
+	      struct fsal_attrlist *attrib_set,
 	      fsal_verifier_t verifier,
 	      struct fsal_obj_handle **out_obj,
-	      struct attrlist *attrs_out,
+	      struct fsal_attrlist *attrs_out,
 	      bool *caller_perm_check)
 {
 	/* If name is NULL => open by handle. */
@@ -1068,9 +1068,9 @@ static fsal_status_t
 proxyv3_symlink(struct fsal_obj_handle *dir_hdl,
 		const char *name,
 		const char *link_path,
-		struct attrlist *attrs_in,
+		struct fsal_attrlist *attrs_in,
 		struct fsal_obj_handle **new_obj,
-		struct attrlist *attrs_out)
+		struct fsal_attrlist *attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "symlink of parent %p, name %s to => %s",
@@ -1300,9 +1300,9 @@ proxyv3_close2(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t
 proxyv3_mkdir(struct fsal_obj_handle *dir_hdl,
-	      const char *name, struct attrlist *attrs_in,
+	      const char *name, struct fsal_attrlist *attrs_in,
 	      struct fsal_obj_handle **new_obj,
-	      struct attrlist *attrs_out)
+	      struct fsal_attrlist *attrs_out)
 {
 	struct proxyv3_obj_handle *parent_obj =
 		container_of(dir_hdl, struct proxyv3_obj_handle, obj);
@@ -1350,9 +1350,9 @@ static fsal_status_t
 proxyv3_mknode(struct fsal_obj_handle *dir_hdl,
 	       const char *name,
 	       object_file_type_t nodetype,
-	       struct attrlist *attrs_in,
+	       struct fsal_attrlist *attrs_in,
 	       struct fsal_obj_handle **new_obj,
-	       struct attrlist *attrs_out)
+	       struct fsal_attrlist *attrs_out)
 {
 	struct proxyv3_obj_handle *parent_obj =
 		container_of(dir_hdl, struct proxyv3_obj_handle, obj);
@@ -1556,7 +1556,7 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 				&entry->name_attributes;
 			fattr3 *attrs =
 				&post_op_attr->post_op_attr_u.attributes;
-			struct attrlist cb_attrs;
+			struct fsal_attrlist cb_attrs;
 			struct proxyv3_obj_handle *result_handle;
 			enum fsal_dir_result cb_rc;
 
@@ -1613,7 +1613,6 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 			 * Tell alloc_handle we just want the requested
 			 * attributes.
 			 */
-
 			memset(&cb_attrs, 0, sizeof(cb_attrs));
 			FSAL_SET_MASK(cb_attrs.request_mask, attrmask);
 
@@ -2309,7 +2308,7 @@ static fsal_status_t
 proxyv3_create_handle(struct fsal_export *export_handle,
 		      struct gsh_buffdesc *hdl_desc,
 		      struct fsal_obj_handle **handle,
-		      struct attrlist *attrs_out)
+		      struct fsal_attrlist *attrs_out)
 {
 	struct nfs_fh3 fh3;
 
@@ -2326,7 +2325,7 @@ proxyv3_create_handle(struct fsal_export *export_handle,
 	fh3.data.data_val = hdl_desc->addr;
 	fh3.data.data_len = hdl_desc->len;
 
-	struct attrlist tmp_attrs;
+	struct fsal_attrlist tmp_attrs;
 
 	memset(&tmp_attrs, 0, sizeof(tmp_attrs));
 	if (attrs_out != NULL) {

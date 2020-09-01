@@ -197,7 +197,7 @@ static inline fsal_status_t ceph2fsal_error(const int ceph_errorcode)
 
 unsigned int attrmask2ceph_want(attrmask_t mask);
 void ceph2fsal_attributes(const struct ceph_statx *stx,
-			  struct attrlist *fsalattr);
+			  struct fsal_attrlist *fsalattr);
 
 void export_ops_init(struct export_ops *ops);
 void handle_ops_init(struct fsal_obj_ops *ops);
@@ -215,9 +215,10 @@ void ceph_free_state(struct fsal_export *exp_hdl, struct state_t *state);
 
 #ifdef CEPHFS_POSIX_ACL
 fsal_status_t ceph_set_acl(struct ceph_export *export,
-	struct ceph_handle *objhandle, bool is_dir, struct attrlist *attrs);
+			   struct ceph_handle *objhandle, bool is_dir,
+			   struct fsal_attrlist *attrs);
 
 int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
-	bool is_dir, struct attrlist *attrs);
+	bool is_dir, struct fsal_attrlist *attrs);
 #endif				/* CEPHFS_POSIX_ACL */
 #endif				/* !FSAL_CEPH_INTERNAL_INTERNAL__ */

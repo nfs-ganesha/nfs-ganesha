@@ -39,7 +39,7 @@ static fsal_status_t panfs_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 		int fd, attrmask_t request_mask)
 {
 	struct panfs_fsal_obj_handle *panfs_hdl = OBJ_PANFS_FROM_VFS(vfs_hdl);
-	struct attrlist *attrib = &vfs_hdl->attributes;
+	struct fsal_attrlist *attrib = &vfs_hdl->attributes;
 	fsal_status_t st;
 
 	/*if (FSAL_TEST_MASK(request_mask, ATTR_ACL)) {*/
@@ -54,7 +54,7 @@ static fsal_status_t panfs_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 
 static fsal_status_t panfs_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 		int fd, attrmask_t request_mask,
-		struct attrlist *attrib_set)
+		struct fsal_attrlist *attrib_set)
 {
 	struct panfs_fsal_obj_handle *panfs_hdl = OBJ_PANFS_FROM_VFS(vfs_hdl);
 	fsal_status_t st;

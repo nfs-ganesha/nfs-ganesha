@@ -66,7 +66,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status;
 	char *name = NULL;
 	int rc = NFS_REQ_OK;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	LOOKUP3resfail *resfail = &res->res_lookup3.LOOKUP3res_u.resfail;
 	LOOKUP3resok *resok = &res->res_lookup3.LOOKUP3res_u.resok;
 

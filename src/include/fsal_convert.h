@@ -61,9 +61,9 @@ int fsal2posix_testperm(fsal_accessflags_t testperm);
  * (fsal_attrib_list_t)
  */
 void posix2fsal_attributes(const struct stat *buffstat,
-			   struct attrlist *fsalattr_out);
+			   struct fsal_attrlist *fsalattr_out);
 void posix2fsal_attributes_all(const struct stat *buffstat,
-			       struct attrlist *fsalattr_out);
+			       struct fsal_attrlist *fsalattr_out);
 
 /* mode bits are a uint16_t and chmod masks off type */
 

@@ -67,12 +67,12 @@ struct nullfs_fsal_export {
 fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,
 				 const char *path,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out);
+				 struct fsal_attrlist *attrs_out);
 
 fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out);
+				   struct fsal_attrlist *attrs_out);
 
 fsal_status_t nullfs_alloc_and_check_handle(
 		struct nullfs_fsal_export *export,
@@ -122,10 +122,10 @@ fsal_status_t nullfs_open2(struct fsal_obj_handle *obj_hdl,
 			   fsal_openflags_t openflags,
 			   enum fsal_create_mode createmode,
 			   const char *name,
-			   struct attrlist *attrs_in,
+			   struct fsal_attrlist *attrs_in,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
-			   struct attrlist *attrs_out,
+			   struct fsal_attrlist *attrs_out,
 			   bool *caller_perm_check);
 bool nullfs_check_verifier(struct fsal_obj_handle *obj_hdl,
 			   fsal_verifier_t verifier);

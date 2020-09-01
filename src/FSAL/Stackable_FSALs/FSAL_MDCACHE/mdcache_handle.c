@@ -86,8 +86,8 @@ fsal_status_t mdcache_alloc_and_check_handle(
 		struct fsal_obj_handle *sub_handle,
 		struct fsal_obj_handle **new_obj,
 		bool new_directory,
-		struct attrlist *attrs_in,
-		struct attrlist *attrs_out,
+		struct fsal_attrlist *attrs_in,
+		struct fsal_attrlist *attrs_out,
 		const char *tag,
 		mdcache_entry_t *parent,
 		const char *name,
@@ -169,7 +169,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 static fsal_status_t mdcache_lookup(struct fsal_obj_handle *parent,
 				    const char *name,
 				    struct fsal_obj_handle **handle,
-				    struct attrlist *attrs_out)
+				    struct fsal_attrlist *attrs_out)
 {
 	mdcache_entry_t *mdc_parent =
 		container_of(parent, mdcache_entry_t, obj_handle);
@@ -197,9 +197,9 @@ static fsal_status_t mdcache_lookup(struct fsal_obj_handle *parent,
  * @return FSAL status
  */
 static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
-			     const char *name, struct attrlist *attrib,
+			     const char *name, struct fsal_attrlist *attrib,
 			     struct fsal_obj_handle **handle,
-			     struct attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out)
 {
 	mdcache_entry_t *parent =
 		container_of(dir_hdl, mdcache_entry_t,
@@ -207,7 +207,7 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 	struct mdcache_fsal_export *export = mdc_cur_export();
 	struct fsal_obj_handle *sub_handle;
 	fsal_status_t status;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	bool invalidate = true;
 
 	*handle = NULL;
@@ -276,9 +276,9 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
  */
 static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
-			      struct attrlist *attrib,
+			      struct fsal_attrlist *attrib,
 			      struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	mdcache_entry_t *parent =
 		container_of(dir_hdl, mdcache_entry_t,
@@ -286,7 +286,7 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 	struct mdcache_fsal_export *export = mdc_cur_export();
 	struct fsal_obj_handle *sub_handle;
 	fsal_status_t status;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	bool invalidate = true;
 
 	*handle = NULL;
@@ -356,9 +356,9 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
  */
 static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
-				 struct attrlist *attrib,
+				 struct fsal_attrlist *attrib,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	mdcache_entry_t *parent =
 		container_of(dir_hdl, mdcache_entry_t,
@@ -366,7 +366,7 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 	struct mdcache_fsal_export *export = mdc_cur_export();
 	struct fsal_obj_handle *sub_handle;
 	fsal_status_t status;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	bool invalidate = true;
 
 	*handle = NULL;
@@ -808,7 +808,7 @@ out:
 fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 				    bool need_fslocations, bool invalidate)
 {
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_status_t status = {0, 0};
 	struct timespec oldmtime;
 	bool file_deleg = false;
@@ -922,7 +922,7 @@ out:
  * @return FSAL status
  */
 static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
-				      struct attrlist *attrs_out)
+				      struct fsal_attrlist *attrs_out)
 {
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
@@ -988,7 +988,7 @@ unlock_no_attrs:
 static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 				      bool bypass,
 				      struct state_t *state,
-				      struct attrlist *attrs)
+				      struct fsal_attrlist *attrs)
 {
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
@@ -1370,14 +1370,14 @@ static fsal_status_t mdcache_merge(struct fsal_obj_handle *orig_hdl,
 
 
 static bool mdcache_is_referral(struct fsal_obj_handle *obj_hdl,
-				struct attrlist *unused,
+				struct fsal_attrlist *unused,
 				bool cache_attrs)
 {
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	bool result, locked, write_locked;
 	attrmask_t valid_request_mask = 0;
-	struct attrlist attrs[1];
+	struct fsal_attrlist attrs[1];
 
 	fsal_prepare_attrs(attrs, ATTR_MODE | ATTR_TYPE);
 
@@ -1536,14 +1536,14 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 				 const char *path,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	struct fsal_obj_handle *sub_handle = NULL;
 	struct mdcache_fsal_export *export =
 		container_of(exp_hdl, struct mdcache_fsal_export, mfe_exp);
 	struct fsal_export *sub_export = export->mfe_exp.sub_export;
 	fsal_status_t status;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	mdcache_entry_t *new_entry;
 
 	*handle = NULL;
@@ -1607,7 +1607,7 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 fsal_status_t mdcache_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *fh_desc,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	struct mdcache_fsal_export *export =
 		container_of(exp_hdl, struct mdcache_fsal_export, mfe_exp);

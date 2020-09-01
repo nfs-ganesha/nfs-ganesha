@@ -64,7 +64,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	fsal_status_t fsal_status;
 	fsal_openflags_t openflags = 0;
 
-	struct attrlist sattr;
+	struct fsal_attrlist sattr;
 	fsal_verifier_t verifier;
 	enum fsal_create_mode createmode = FSAL_UNCHECKED;
 

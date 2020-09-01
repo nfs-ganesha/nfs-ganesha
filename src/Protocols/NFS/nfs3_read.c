@@ -97,7 +97,7 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 			 * will just see a short read and continue reading and
 			 * then get the EOF flag as 0 bytes are returned.
 			 */
-			struct attrlist attrs;
+			struct fsal_attrlist attrs;
 			fsal_status_t status;
 
 			fsal_prepare_attrs(&attrs, ATTR_SIZE);

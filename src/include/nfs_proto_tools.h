@@ -73,7 +73,7 @@ typedef enum {
 } fattr_xdr_result;
 
 struct xdr_attrs_args {
-	struct attrlist *attrs;
+	struct fsal_attrlist *attrs;
 	nfs_fh4 *hdl4;
 	uint32_t rdattr_error;
 	uint64_t mounted_on_fileid;	/*< If this is the root directory
@@ -237,7 +237,7 @@ void nfs_SetWccData(const struct pre_op_attr *before_attr,
 
 void nfs_SetPostOpAttr(struct fsal_obj_handle *entry,
 		       post_op_attr *attr,
-		       struct attrlist *attrs);
+		       struct fsal_attrlist *attrs);
 
 void nfs_SetPreOpAttr(struct fsal_obj_handle *entry,
 		      pre_op_attr *attr);
@@ -245,7 +245,7 @@ void nfs_SetPreOpAttr(struct fsal_obj_handle *entry,
 
 bool nfs_RetryableError(fsal_errors_t fsal_errors);
 
-int nfs3_Sattr_To_FSAL_attr(struct attrlist *pFSALattr, sattr3 *psattr);
+int nfs3_Sattr_To_FSAL_attr(struct fsal_attrlist *pFSALattr, sattr3 *psattr);
 
 void nfs4_Fattr_Free(fattr4 *fattr);
 
@@ -295,7 +295,7 @@ int bitmap4_to_attrmask_t(bitmap4 *bitmap4, attrmask_t *mask);
 
 nfsstat4 file_To_Fattr(compound_data_t *data,
 		       attrmask_t mask,
-		       struct attrlist *attr,
+		       struct fsal_attrlist *attr,
 		       fattr4 *Fattr,
 		       struct bitmap4 *Bitmap);
 
@@ -305,14 +305,15 @@ bool nfs4_Fattr_Supported(fattr4 *);
 int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
 
 bool nfs3_Fixup_FSALattr(struct fsal_obj_handle *obj,
-			 const struct attrlist *FSAL_attr);
+			 const struct fsal_attrlist *FSAL_attr);
 
 bool is_sticky_bit_set(struct fsal_obj_handle *obj,
-		       const struct attrlist *attr);
+		       const struct fsal_attrlist *attr);
 
-bool nfs3_Sattr_To_FSALattr(struct attrlist *, sattr3 *);
+bool nfs3_Sattr_To_FSALattr(struct fsal_attrlist *, sattr3 *);
 
-int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *, compound_data_t *);
+int nfs4_Fattr_To_FSAL_attr(struct fsal_attrlist *, fattr4 *,
+			    compound_data_t *);
 
 int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *, fattr4 *);
 
@@ -348,11 +349,11 @@ void get_mounted_on_fileid(compound_data_t *data, uint64_t *mounted_on_fileid);
 
 #ifdef USE_NFSACL3
 posix_acl *encode_posix_acl(const acl_t acl, uint32_t type,
-		struct attrlist *attrs);
+		struct fsal_attrlist *attrs);
 
 acl_t decode_posix_acl(posix_acl *nfs3_acl, uint32_t type);
 
-int nfs3_acl_2_fsal_acl(struct attrlist *attr, nfs3_int32 mask,
+int nfs3_acl_2_fsal_acl(struct fsal_attrlist *attr, nfs3_int32 mask,
 		posix_acl *a_acl, posix_acl *d_acl, bool is_dir);
 #endif				/* USE_NFSACL3 */
 

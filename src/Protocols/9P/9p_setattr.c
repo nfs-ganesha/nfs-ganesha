@@ -60,7 +60,7 @@ int _9p_setattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	struct _9p_fid *pfid = NULL;
 
-	struct attrlist fsalattr;
+	struct fsal_attrlist fsalattr;
 	fsal_status_t fsal_status;
 
 	struct timeval t;

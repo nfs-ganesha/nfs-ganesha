@@ -113,7 +113,7 @@ mem_update(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
 	const struct fsal_up_vector *up_ops = mfe->export.up_ops;
 	fsal_status_t status;
 	struct gsh_buffdesc fh_desc;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	LogFullDebug(COMPONENT_FSAL_UP, "updating %s", hdl->m_name);
 

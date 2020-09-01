@@ -145,7 +145,7 @@ attrmask2ceph_want(attrmask_t mask)
 }
 
 void ceph2fsal_attributes(const struct ceph_statx *stx,
-			  struct attrlist *fsalattr)
+			  struct fsal_attrlist *fsalattr)
 {
 	/* These are always considered to be available */
 	fsalattr->valid_mask |= ATTR_TYPE|ATTR_FSID|ATTR_RAWDEV|ATTR_FILEID;
@@ -278,7 +278,7 @@ out:
  */
 
 fsal_status_t ceph_set_acl(struct ceph_export *export,
-	struct ceph_handle *objhandle, bool is_dir, struct attrlist *attrs)
+	struct ceph_handle *objhandle, bool is_dir, struct fsal_attrlist *attrs)
 {
 	int size = 0, count, rc;
 	acl_t acl = NULL;
@@ -352,7 +352,7 @@ out:
  */
 
 int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
-	bool is_dir, struct attrlist *attrs)
+	bool is_dir, struct fsal_attrlist *attrs)
 {
 	acl_t e_acl = NULL, i_acl = NULL;
 	fsal_acl_data_t acldata;

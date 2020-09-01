@@ -55,7 +55,7 @@ static void lzfs_fsal_release(struct fsal_obj_handle *obj_hdl)
 static fsal_status_t lzfs_fsal_lookup(struct fsal_obj_handle *dir_hdl,
 				      const char *path,
 				      struct fsal_obj_handle **obj_hdl,
-				      struct attrlist *attrs_out)
+				      struct fsal_attrlist *attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_obj, *lzfs_dir;
@@ -104,7 +104,7 @@ static fsal_status_t lzfs_fsal_readdir(struct fsal_obj_handle *dir_hdl,
 	struct lzfs_fsal_handle *lzfs_dir, *lzfs_obj;
 	struct liz_direntry buffer[kBatchSize];
 	struct liz_fileinfo *dir_desc;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	off_t direntry_offset = 2;
 	enum fsal_dir_result cb_rc;
 	int rc;
@@ -182,9 +182,9 @@ static fsal_status_t lzfs_fsal_readdir(struct fsal_obj_handle *dir_hdl,
  */
 static fsal_status_t lzfs_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 				     const char *name,
-				     struct attrlist *attrib,
+				     struct fsal_attrlist *attrib,
 				     struct fsal_obj_handle **new_obj,
-				     struct attrlist *attrs_out)
+				     struct fsal_attrlist *attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_dir, *lzfs_obj;
@@ -245,9 +245,9 @@ static fsal_status_t lzfs_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t lzfs_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 				      const char *name,
 				      object_file_type_t nodetype,
-				      struct attrlist *attrib,
+				      struct fsal_attrlist *attrib,
 				      struct fsal_obj_handle **new_obj,
-				      struct attrlist *attrs_out)
+				      struct fsal_attrlist *attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_dir, *lzfs_obj;
@@ -333,9 +333,9 @@ static fsal_status_t lzfs_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t lzfs_fsal_symlink(struct fsal_obj_handle *dir_hdl,
 				       const char *name,
 				       const char *link_path,
-				       struct attrlist *attrib,
+				       struct fsal_attrlist *attrib,
 				       struct fsal_obj_handle **new_obj,
-				       struct attrlist *attrs_out)
+				       struct fsal_attrlist *attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_dir, *lzfs_obj;
@@ -423,7 +423,7 @@ static fsal_status_t lzfs_fsal_readlink(struct fsal_obj_handle *link_hdl,
  * \see fsal_api.h for more information
  */
 static fsal_status_t lzfs_fsal_getattrs(struct fsal_obj_handle *obj_hdl,
-					struct attrlist *attrs)
+					struct fsal_attrlist *attrs)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_obj;
@@ -645,7 +645,7 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 					     fsal_openflags_t openflags,
 					     enum fsal_create_mode createmode,
 					     fsal_verifier_t verifier,
-					     struct attrlist *attrs_out,
+					     struct fsal_attrlist *attrs_out,
 					     bool *caller_perm_check,
 					     bool after_mknod)
 {
@@ -759,7 +759,7 @@ static fsal_status_t lzfs_int_open_by_name(struct fsal_obj_handle *obj_hdl,
 					   fsal_openflags_t openflags,
 					   const char *name,
 					   fsal_verifier_t verifier,
-					   struct attrlist *attrs_out,
+					   struct fsal_attrlist *attrs_out,
 					   bool *caller_perm_check)
 {
 	struct fsal_obj_handle *temp = NULL;
@@ -795,10 +795,10 @@ static fsal_status_t lzfs_fsal_open2(struct fsal_obj_handle *obj_hdl,
 				     fsal_openflags_t openflags,
 				     enum fsal_create_mode createmode,
 				     const char *name,
-				     struct attrlist *attr_set,
+				     struct fsal_attrlist *attr_set,
 				     fsal_verifier_t verifier,
 				     struct fsal_obj_handle **new_obj,
-				     struct attrlist *attrs_out,
+				     struct fsal_attrlist *attrs_out,
 				     bool *caller_perm_check)
 {
 	struct lzfs_fsal_export *lzfs_export;
@@ -1291,7 +1291,7 @@ static fsal_status_t lzfs_fsal_merge(struct fsal_obj_handle *orig_hdl,
 static fsal_status_t lzfs_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 					bool bypass,
 					struct state_t *state,
-					struct attrlist *attrib_set)
+					struct fsal_attrlist *attrib_set)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_obj;

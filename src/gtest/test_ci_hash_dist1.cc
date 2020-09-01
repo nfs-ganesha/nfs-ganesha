@@ -56,7 +56,7 @@ namespace {
 
   struct req_op_context req_ctx;
   struct user_cred user_credentials;
-  struct attrlist object_attributes;
+  struct fsal_attrlist object_attributes;
 
   struct gsh_export* a_export = nullptr;
   struct fsal_obj_handle *root_entry = nullptr;
@@ -98,7 +98,7 @@ TEST(CI_HASH_DIST1, INIT)
 TEST(CI_HASH_DIST1, CREATE_ROOT)
 {
   fsal_status_t status;
-  struct attrlist *attrs_out = nullptr;
+  struct fsal_attrlist *attrs_out = nullptr;
 
   // create root directory for test
   FSAL_SET_MASK(object_attributes.request_mask,

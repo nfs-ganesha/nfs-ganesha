@@ -175,8 +175,8 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
  * @return FSAL status
  */
 static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
-					      struct attrlist *attr,
-					      struct attrlist *current)
+					      struct fsal_attrlist *attr,
+					      struct fsal_attrlist *current)
 {
 	fsal_status_t status = {0, 0};
 	fsal_accessflags_t access_check = 0;
@@ -364,10 +364,10 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 			    fsal_openflags_t openflags,
 			    enum fsal_create_mode createmode,
 			    const char *name,
-			    struct attrlist *attr,
+			    struct fsal_attrlist *attr,
 			    fsal_verifier_t verifier,
 			    struct fsal_obj_handle **obj,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
 	fsal_status_t close_status = { 0, 0 };
@@ -467,10 +467,10 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
  * @return FSAL status
  */
 fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
-			   struct state_t *state, struct attrlist *attr)
+			   struct state_t *state, struct fsal_attrlist *attr)
 {
 	fsal_status_t status = { 0, 0 };
-	struct attrlist current;
+	struct fsal_attrlist current;
 	bool is_superuser;
 
 	if ((attr->valid_mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED))
@@ -667,7 +667,7 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 			  const char *name,
 			  struct fsal_obj_handle **obj,
-			  struct attrlist *attrs_out)
+			  struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t fsal_status = { 0, 0 };
 	fsal_accessflags_t access_mask =
@@ -876,7 +876,7 @@ skip:
  */
 fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
 			   struct fsal_obj_handle **parent,
-			   struct attrlist *attrs_out)
+			   struct fsal_attrlist *attrs_out)
 {
 	*parent = NULL;
 
@@ -923,13 +923,13 @@ fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
  * This function sets the mtime/atime attributes according to the create
  * verifier
  *
- * @param[in] sattr   attrlist to be managed.
+ * @param[in] sattr   fsal_attrlist to be managed.
  * @param[in] verf_hi High long of verifier
  * @param[in] verf_lo Low long of verifier
  *
  */
 void
-fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
+fsal_create_set_verifier(struct fsal_attrlist *sattr, uint32_t verf_hi,
 			 uint32_t verf_lo)
 {
 	sattr->atime.tv_sec = verf_hi;
@@ -969,10 +969,10 @@ fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
 fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 			  const char *name,
 			  object_file_type_t type,
-			  struct attrlist *attrs,
+			  struct fsal_attrlist *attrs,
 			  const char *link_content,
 			  struct fsal_obj_handle **obj,
-			  struct attrlist *attrs_out)
+			  struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
 	attrmask_t orig_mask = attrs->valid_mask;
@@ -1090,7 +1090,7 @@ bool fsal_create_verify(struct fsal_obj_handle *obj, uint32_t verf_hi,
 {
 	/* True if the verifier matches */
 	bool verified = false;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
 
@@ -1121,7 +1121,7 @@ struct fsal_populate_cb_state {
 static enum fsal_dir_result
 populate_dirent(const char *name,
 		struct fsal_obj_handle *obj,
-		struct attrlist *attrs,
+		struct fsal_attrlist *attrs,
 		void *dir_state,
 		fsal_cookie_t cookie)
 {
@@ -1140,7 +1140,7 @@ populate_dirent(const char *name,
 		struct fsal_obj_handle *junction_obj;
 		struct gsh_export *junction_export = NULL;
 		struct saved_export_context saved;
-		struct attrlist attrs2;
+		struct fsal_attrlist attrs2;
 
 		PTHREAD_RWLOCK_rdlock(&obj->state_hdl->jct_lock);
 
@@ -1559,10 +1559,10 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 			 fsal_openflags_t openflags,
 			 enum fsal_create_mode createmode,
 			 const char *name,
-			 struct attrlist *attr,
+			 struct fsal_attrlist *attr,
 			 fsal_verifier_t verifier,
 			 struct fsal_obj_handle **obj,
-			 struct attrlist *attrs_out)
+			 struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
 	bool caller_perm_check = false;
@@ -1745,7 +1745,7 @@ fsal_status_t fsal_verify2(struct fsal_obj_handle *obj,
  * @return FSAL status.
  **/
 fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status;
 

@@ -72,7 +72,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	};
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
-	struct attrlist sattr, attrs;
+	struct fsal_attrlist sattr, attrs;
 	MKDIR3resfail *resfail = &res->res_mkdir3.MKDIR3res_u.resfail;
 	MKDIR3resok *resok = &res->res_mkdir3.MKDIR3res_u.resok;
 

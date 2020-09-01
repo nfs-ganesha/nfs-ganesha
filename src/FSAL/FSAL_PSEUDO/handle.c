@@ -175,7 +175,7 @@ static struct pseudo_fsal_obj_handle
 *alloc_directory_handle(struct pseudo_fsal_obj_handle *parent,
 			const char *name,
 			struct fsal_export *exp_hdl,
-			struct attrlist *attrs)
+			struct fsal_attrlist *attrs)
 {
 	struct pseudo_fsal_obj_handle *hdl;
 	char path[MAXPATHLEN] = "\0";
@@ -300,7 +300,7 @@ static struct pseudo_fsal_obj_handle
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path,
 			    struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl = NULL;
 	struct pseudo_fsal_obj_handle key[1];
@@ -395,9 +395,9 @@ out:
  */
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name,
-			     struct attrlist *attrs_in,
+			     struct fsal_attrlist *attrs_in,
 			     struct fsal_obj_handle **handle,
-			     struct attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
 	uint32_t numlinks;
@@ -458,7 +458,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	struct pseudo_fsal_obj_handle *myself, *hdl;
 	struct avltree_node *node;
 	fsal_cookie_t seekloc;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	enum fsal_dir_result cb_rc;
 
 	if (whence != NULL)
@@ -516,7 +516,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 }
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *outattrs)
+			      struct fsal_attrlist *outattrs)
 {
 	struct pseudo_fsal_obj_handle *myself;
 
@@ -717,10 +717,10 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
 fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 				 const char *path,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	struct pseudofs_fsal_export *myself;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	myself = container_of(exp_hdl, struct pseudofs_fsal_export, export);
 
@@ -767,7 +767,7 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	struct glist_head *glist;
 	struct fsal_obj_handle *hdl;

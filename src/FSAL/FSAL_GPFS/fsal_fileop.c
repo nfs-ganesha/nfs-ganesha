@@ -36,7 +36,7 @@
 /** @fn fsal_status_t
  *       GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
  *                     fsal_openflags_t openflags, int *file_desc,
- *                     struct attrlist *fsal_attr)
+ *                     struct fsal_attrlist *fsal_attr)
  *
  *  @brief Open a regular file for reading/writing its data content.
  *

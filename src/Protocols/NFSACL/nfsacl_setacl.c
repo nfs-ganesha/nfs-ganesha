@@ -53,8 +53,8 @@
 int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 #ifdef USE_NFSACL3
-	struct attrlist setacl;
-	struct attrlist *attrs;
+	struct fsal_attrlist setacl;
+	struct fsal_attrlist *attrs;
 	struct fsal_obj_handle *obj = NULL;
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;

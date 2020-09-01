@@ -55,7 +55,7 @@
  * this uses malloc/free for the time being.
  */
 struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
-						 struct attrlist *attr,
+						 struct fsal_attrlist *attr,
 						 const char *link_content,
 						 struct fsal_export *exp_hdl)
 {
@@ -104,7 +104,7 @@ static struct kvsfs_fsal_obj_handle *alloc_handle(struct kvsfs_file_handle *fh,
 						 const char *link_content,
 						 struct fsal_export *exp_hdl)
 {
-	struct attrlist attr;
+	struct fsal_attrlist attr;
 
 	posix2fsal_attributes_all(stat, &attr);
 
@@ -122,7 +122,7 @@ static struct kvsfs_fsal_obj_handle *alloc_handle(struct kvsfs_file_handle *fh,
 static fsal_status_t kvsfs_lookup(struct fsal_obj_handle *parent,
 				 const char *path,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	struct kvsfs_fsal_obj_handle *parent_hdl, *hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -197,7 +197,7 @@ static fsal_status_t kvsfs_lookup(struct fsal_obj_handle *parent,
 fsal_status_t kvsfs_lookup_path(struct fsal_export *exp_hdl,
 			       const char *path,
 			       struct fsal_obj_handle **handle,
-			       struct attrlist *attrs_out)
+			       struct fsal_attrlist *attrs_out)
 {
 	kvsns_ino_t object;
 	int rc = 0;
@@ -244,7 +244,7 @@ fsal_status_t kvsfs_create2(struct fsal_obj_handle *dir_hdl,
 			    mode_t unix_mode,
 			    struct kvsfs_file_handle *kvsfs_fh,
 			    int posix_flags,
-			    struct attrlist *fsal_attr)
+			    struct fsal_attrlist *fsal_attr)
 {
 	struct kvsfs_fsal_obj_handle *myself, *hdl;
 	int retval = 0;
@@ -306,9 +306,9 @@ fsal_status_t kvsfs_create2(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 				const char *name,
-				struct attrlist *attrib,
+				struct fsal_attrlist *attrib,
 				struct fsal_obj_handle **handle,
-				struct attrlist *attrs_out)
+				struct fsal_attrlist *attrs_out)
 {
 	struct kvsfs_fsal_obj_handle *myself, *hdl;
 	int retval = 0;
@@ -359,9 +359,9 @@ static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t kvsfs_makenode(struct fsal_obj_handle *dir_hdl,
 				   const char *name,
 				   object_file_type_t nodetype,	/* IN */
-				   struct attrlist *attrib,
+				   struct fsal_attrlist *attrib,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrsout)
+				   struct fsal_attrlist *attrsout)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -406,9 +406,9 @@ static fsal_status_t kvsfs_merge(struct fsal_obj_handle *orig_hdl,
 
 static fsal_status_t kvsfs_makesymlink(struct fsal_obj_handle *dir_hdl,
 				      const char *name, const char *link_path,
-				      struct attrlist *attrib,
+				      struct fsal_attrlist *attrib,
 				      struct fsal_obj_handle **handle,
-				      struct attrlist *attrsout)
+				      struct fsal_attrlist *attrsout)
 {
 	struct kvsfs_fsal_obj_handle *myself, *hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -569,7 +569,7 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 	unsigned int nb_rddir_done = 0;
 	int size = 0;
 	kvsns_dir_t ddir;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_status_t status;
 	struct fsal_obj_handle *hdl;
 	int cb_rc;
@@ -702,7 +702,7 @@ static fsal_status_t kvsfs_rename(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t kvsfs_getattrs(struct fsal_obj_handle *obj_hdl,
-				    struct attrlist *attrs)
+				    struct fsal_attrlist *attrs)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	struct stat stat;
@@ -745,7 +745,7 @@ static fsal_status_t kvsfs_getattrs(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t kvsfs_setattr2(struct fsal_obj_handle *obj_hdl,
 				    bool bypass,
 				    struct state_t *state,
-				    struct attrlist *attrs)
+				    struct fsal_attrlist *attrs)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	struct stat stats = { 0 };
@@ -988,7 +988,7 @@ static void kvsfs_handle_to_key(struct fsal_obj_handle *obj_hdl,
 fsal_status_t kvsfs_create_handle(struct fsal_export *exp_hdl,
 				 struct gsh_buffdesc *hdl_desc,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	struct kvsfs_fsal_obj_handle *hdl;
 	struct kvsfs_file_handle fh;

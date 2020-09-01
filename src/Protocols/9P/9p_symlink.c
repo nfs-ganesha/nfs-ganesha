@@ -63,7 +63,7 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	char *link_content = NULL;
 	fsal_status_t fsal_status;
 	uint32_t mode = 0777;
-	struct attrlist object_attributes;
+	struct fsal_attrlist object_attributes;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);

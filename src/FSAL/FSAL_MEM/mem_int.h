@@ -68,12 +68,12 @@ struct mem_fsal_export {
 fsal_status_t mem_lookup_path(struct fsal_export *exp_hdl,
 				const char *path,
 				struct fsal_obj_handle **handle,
-				struct attrlist *attrs_out);
+				struct fsal_attrlist *attrs_out);
 
 fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
 				  struct gsh_buffdesc *hdl_desc,
 				  struct fsal_obj_handle **handle,
-				  struct attrlist *attrs_out);
+				  struct fsal_attrlist *attrs_out);
 
 /*
  * MEM internal object handle
@@ -83,7 +83,7 @@ fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
 
 struct mem_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	uint64_t inode;
 	char handle[V4_FH_OPAQUE_SIZE];
 	union {

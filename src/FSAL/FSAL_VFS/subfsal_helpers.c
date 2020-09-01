@@ -39,7 +39,7 @@
 
 fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 				   int fd,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	char *xattr_content = NULL;
 	size_t attrsize = 0;

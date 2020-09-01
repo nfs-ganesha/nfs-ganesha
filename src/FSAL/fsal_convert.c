@@ -388,7 +388,7 @@ const char *object_file_type_to_str(object_file_type_t type)
 }
 
 void posix2fsal_attributes_all(const struct stat *buffstat,
-			       struct attrlist *fsalattr)
+			       struct fsal_attrlist *fsalattr)
 {
 	fsalattr->valid_mask |= ATTRS_POSIX;
 	posix2fsal_attributes(buffstat, fsalattr);
@@ -399,7 +399,7 @@ void posix2fsal_attributes_all(const struct stat *buffstat,
  * correctly for converting the attributes from POSIX to FSAL.
  */
 void posix2fsal_attributes(const struct stat *buffstat,
-			   struct attrlist *fsalattr)
+			   struct fsal_attrlist *fsalattr)
 {
 	fsalattr->supported = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
 							op_ctx->fsal_export);

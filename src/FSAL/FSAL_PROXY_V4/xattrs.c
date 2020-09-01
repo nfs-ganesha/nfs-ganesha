@@ -85,7 +85,7 @@ proxyv4_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t
 proxyv4_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 			 unsigned int xattr_id,
-			 struct attrlist *p_attrs)
+			 struct fsal_attrlist *p_attrs)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }

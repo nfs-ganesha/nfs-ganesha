@@ -73,7 +73,7 @@ uint32_t root_op_export_set = EXPORT_OPTION_SQUASH_TYPES |
 			      EXPORT_OPTION_PROTOCOLS |
 			      EXPORT_OPTION_TRANSPORTS;
 
-void squash_setattr(struct attrlist *attr)
+void squash_setattr(struct fsal_attrlist *attr)
 {
 	if (attr->valid_mask & ATTR_OWNER &&
 	    op_ctx->export_perms.anonymous_uid != 0) {

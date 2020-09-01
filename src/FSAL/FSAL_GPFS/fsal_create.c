@@ -29,7 +29,8 @@
 fsal_status_t
 GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
 		uint32_t accessmode,
-		struct gpfs_file_handle *gpfs_fh, struct attrlist *fsal_attr)
+		struct gpfs_file_handle *gpfs_fh,
+		struct fsal_attrlist *fsal_attr)
 {
 	fsal_status_t status;
 	mode_t unix_mode;
@@ -65,7 +66,7 @@ fsal_status_t
 GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
 		mode_t unix_mode,
 		struct gpfs_file_handle *gpfs_fh, int posix_flags,
-		struct attrlist *fsal_attr)
+		struct fsal_attrlist *fsal_attr)
 {
 	fsal_status_t status;
 
@@ -106,7 +107,7 @@ GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
 fsal_status_t
 GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
 	       uint32_t accessmode,
-	       struct gpfs_file_handle *gpfs_fh, struct attrlist *obj_attr)
+	       struct gpfs_file_handle *gpfs_fh, struct fsal_attrlist *obj_attr)
 {
 	mode_t unix_mode;
 	fsal_status_t status;
@@ -196,7 +197,8 @@ fsal_status_t
 GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
 		uint32_t accessmode,
 		mode_t nodetype, fsal_dev_t *dev,
-		struct gpfs_file_handle *gpfs_fh, struct attrlist *fsal_attr)
+		struct gpfs_file_handle *gpfs_fh,
+		struct fsal_attrlist *fsal_attr)
 {
 	fsal_status_t status;
 	mode_t unix_mode = 0;

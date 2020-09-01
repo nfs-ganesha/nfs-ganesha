@@ -76,9 +76,9 @@ static struct {
  */
 void nfs_SetPostOpAttr(struct fsal_obj_handle *obj,
 		       post_op_attr *Fattr,
-		       struct attrlist *attrs)
+		       struct fsal_attrlist *attrs)
 {
-	struct attrlist attr_buf, *pattrs = attrs;
+	struct fsal_attrlist attr_buf, *pattrs = attrs;
 
 	if (attrs == NULL) {
 		pattrs = &attr_buf;
@@ -112,7 +112,7 @@ void nfs_SetPostOpAttr(struct fsal_obj_handle *obj,
 void nfs_SetPreOpAttr(struct fsal_obj_handle *obj, pre_op_attr *attr)
 {
 	fsal_status_t status;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	fsal_prepare_attrs(&attrs, ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
 
@@ -3510,7 +3510,7 @@ void get_mounted_on_fileid(compound_data_t *data, uint64_t *mounted_on_fileid)
  *
  * @param[in]     data          NFSv4 compoud request's data
  * @param[in]     request_mask  The original request attribute mask
- * @param[in/out] attr          attrlist to fill in and mask to request
+ * @param[in/out] attr          fsal_attrlist to fill in and mask to request
  * @param[out]    Fattr         NFSv4 Fattr buffer
  * @param[in]     Bitmap        Bitmap of attributes being requested
  *
@@ -3519,7 +3519,7 @@ void get_mounted_on_fileid(compound_data_t *data, uint64_t *mounted_on_fileid)
 
 nfsstat4 file_To_Fattr(compound_data_t *data,
 		       attrmask_t request_mask,
-		       struct attrlist *attr,
+		       struct fsal_attrlist *attr,
 		       fattr4 *Fattr,
 		       struct bitmap4 *Bitmap)
 {
@@ -3896,7 +3896,7 @@ int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *args, struct bitmap4 *Bitmap,
  * @retval false on failure.
  *
  */
-bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
+bool nfs3_Sattr_To_FSALattr(struct fsal_attrlist *FSAL_attr, sattr3 *sattr)
 {
 	FSAL_attr->valid_mask = 0;
 
@@ -3999,7 +3999,7 @@ bool nfs3_Sattr_To_FSALattr(struct attrlist *FSAL_attr, sattr3 *sattr)
  *
  */
 bool nfs3_Fixup_FSALattr(struct fsal_obj_handle *obj,
-			 const struct attrlist *FSAL_attr)
+			 const struct fsal_attrlist *FSAL_attr)
 {
 	/* We want to override the FSAL fsid with the export's configured fsid
 	 */
@@ -4021,7 +4021,7 @@ bool nfs3_Fixup_FSALattr(struct fsal_obj_handle *obj,
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
-		((struct attrlist *) FSAL_attr)->fsid3 =
+		((struct fsal_attrlist *) FSAL_attr)->fsid3 =
 				squash_fsid(&op_ctx->ctx_export->filesystem_id);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
@@ -4038,7 +4038,7 @@ bool nfs3_Fixup_FSALattr(struct fsal_obj_handle *obj,
 		/* xor filesystem_id major and rotated minor to create unique
 		 * on-wire fsid.
 		 */
-		((struct attrlist *) FSAL_attr)->fsid3 =
+		((struct fsal_attrlist *) FSAL_attr)->fsid3 =
 							squash_fsid(&obj->fsid);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
@@ -4194,7 +4194,7 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 	len = 0;
 
 	if (Fattr1->attr_vals.attrlist4_len == 0) {
-		/* Could have no attrlist if all the flags in bitmask
+		/* Could have no fsal_attrlist if all the flags in bitmask
 		 * are invalid, both buffers are empty so equal */
 		return 1;
 	}
@@ -4218,8 +4218,8 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 
 		if (LastOffset + sizeof(uint32_t) >
 		    Fattr1->attr_vals.attrlist4_len) {
-			/* Minimum attribute size is 4, given attrlist has bits
-			 * set but no values. */
+			/* Minimum attribute size is 4, given fsal_attrlist has
+			 * bits set but no values. */
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "Attrlist missing values for %s",
 				     fattr4tab[attr1].name);
@@ -4416,7 +4416,7 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
  *
  */
 
-static int Fattr4_To_FSAL_attr(struct attrlist *attrs, fattr4 *Fattr,
+static int Fattr4_To_FSAL_attr(struct fsal_attrlist *attrs, fattr4 *Fattr,
 			       nfs_fh4 *hdl4, fsal_dynamicfsinfo_t *dinfo,
 			       compound_data_t *data)
 {
@@ -4548,10 +4548,10 @@ int bitmap4_to_attrmask_t(bitmap4 *bitmap4, attrmask_t *mask)
  * @return NFS4_OK if successful, NFS4ERR codes if not.
  *
  */
-int nfs4_Fattr_To_FSAL_attr(struct attrlist *FSAL_attr, fattr4 *Fattr,
+int nfs4_Fattr_To_FSAL_attr(struct fsal_attrlist *FSAL_attr, fattr4 *Fattr,
 			    compound_data_t *data)
 {
-	memset(FSAL_attr, 0, sizeof(struct attrlist));
+	memset(FSAL_attr, 0, sizeof(struct fsal_attrlist));
 	return Fattr4_To_FSAL_attr(FSAL_attr, Fattr, NULL, NULL, data);
 }
 
@@ -4582,7 +4582,7 @@ int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *dinfo, fattr4 *Fattr)
  *
  */
 bool is_sticky_bit_set(struct fsal_obj_handle *obj,
-		       const struct attrlist *attr)
+		       const struct fsal_attrlist *attr)
 {
 	if (attr->mode & (S_IXUSR|S_IXGRP|S_IXOTH))
 		return false;
@@ -4695,7 +4695,7 @@ err:
  *
  */
 posix_acl *encode_posix_acl(const acl_t acl, uint32_t type,
-				struct attrlist *attrs)
+				struct fsal_attrlist *attrs)
 {
 	acl_entry_t acl_entry;
 	acl_tag_t tag;
@@ -4907,7 +4907,7 @@ out:
  *
  * @returns 0 on success and -Errno on failure
  */
-int nfs3_acl_2_fsal_acl(struct attrlist *attr, nfs3_int32 mask,
+int nfs3_acl_2_fsal_acl(struct fsal_attrlist *attr, nfs3_int32 mask,
 		posix_acl *a_acl, posix_acl *d_acl, bool is_dir)
 {
 	acl_t e_acl = NULL, i_acl = NULL;

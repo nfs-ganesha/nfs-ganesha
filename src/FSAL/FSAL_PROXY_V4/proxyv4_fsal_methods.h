@@ -164,7 +164,7 @@ fsal_status_t proxyv4_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t proxyv4_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 				       unsigned int xattr_id,
-				       struct attrlist *attrs);
+				       struct fsal_attrlist *attrs);
 
 fsal_status_t proxyv4_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					   unsigned int xattr_id);
@@ -175,12 +175,12 @@ fsal_status_t proxyv4_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 fsal_status_t proxyv4_lookup_path(struct fsal_export *exp_hdl,
 				  const char *path,
 				  struct fsal_obj_handle **handle,
-				  struct attrlist *attrs_out);
+				  struct fsal_attrlist *attrs_out);
 
 fsal_status_t proxyv4_create_handle(struct fsal_export *exp_hdl,
 				    struct gsh_buffdesc *hdl_desc,
 				    struct fsal_obj_handle **handle,
-				    struct attrlist *attrs_out);
+				    struct fsal_attrlist *attrs_out);
 
 fsal_status_t proxyv4_create_export(struct fsal_module *fsal_hdl,
 				    void *parse_node,

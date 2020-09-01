@@ -123,7 +123,7 @@ static struct proxyv4_obj_handle *
 proxyv4_alloc_handle(struct fsal_export *exp,
 		     const nfs_fh4 *fh,
 		     fattr4 *obj_attributes,
-		     struct attrlist *attrs_out);
+		     struct fsal_attrlist *attrs_out);
 
 struct proxyv4_state {
 	struct state_t state;
@@ -328,7 +328,7 @@ static struct bitmap4 empty_bitmap = {
 };
 
 static int
-proxyv4_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 *data)
+proxyv4_fsalattr_to_fattr4(const struct fsal_attrlist *attrs, fattr4 *data)
 {
 	int i;
 	struct bitmap4 bmap = empty_bitmap;
@@ -348,7 +348,7 @@ proxyv4_fsalattr_to_fattr4(const struct attrlist *attrs, fattr4 *data)
 	}
 
 	memset(&args, 0, sizeof(args));
-	args.attrs = (struct attrlist *)attrs;
+	args.attrs = (struct fsal_attrlist *)attrs;
 	args.data = NULL;
 
 	return nfs4_FSALattr_To_Fattr(&args, &bmap, data);
@@ -1392,7 +1392,7 @@ static fsal_status_t proxyv4_make_object(struct fsal_export *export,
 					 fattr4 *obj_attributes,
 					 const nfs_fh4 *fh,
 					 struct fsal_obj_handle **handle,
-					 struct attrlist *attrs_out)
+					 struct fsal_attrlist *attrs_out)
 {
 	struct proxyv4_obj_handle *proxyv4_hdl;
 
@@ -1456,7 +1456,7 @@ static fsal_status_t proxyv4_lookup_impl(struct fsal_obj_handle *parent,
 					 const struct user_cred *cred,
 					 const char *path,
 					 struct fsal_obj_handle **handle,
-					 struct attrlist *attrs_out)
+					 struct fsal_attrlist *attrs_out)
 {
 	int rc;
 	uint32_t opcnt = 0;
@@ -1549,7 +1549,7 @@ static fsal_status_t proxyv4_lookup_impl(struct fsal_obj_handle *parent,
 static fsal_status_t proxyv4_lookup(struct fsal_obj_handle *parent,
 				    const char *path,
 				    struct fsal_obj_handle **handle,
-				    struct attrlist *attrs_out)
+				    struct fsal_attrlist *attrs_out)
 {
 	return proxyv4_lookup_impl(parent, op_ctx->fsal_export,
 				   &op_ctx->creds, path, handle, attrs_out);
@@ -1559,9 +1559,10 @@ static fsal_status_t proxyv4_lookup(struct fsal_obj_handle *parent,
 static uint64_t fcnt;
 
 static fsal_status_t proxyv4_mkdir(struct fsal_obj_handle *dir_hdl,
-				   const char *name, struct attrlist *attrib,
+				   const char *name,
+				   struct fsal_attrlist *attrib,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -1623,9 +1624,9 @@ static fsal_status_t proxyv4_mkdir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t proxyv4_mknod(struct fsal_obj_handle *dir_hdl,
 				   const char *name,
 				   object_file_type_t nodetype,
-				   struct attrlist *attrib,
+				   struct fsal_attrlist *attrib,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -1709,9 +1710,9 @@ static fsal_status_t proxyv4_mknod(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t proxyv4_symlink(struct fsal_obj_handle *dir_hdl,
 				     const char *name, const char *link_path,
-				     struct attrlist *attrib,
+				     struct fsal_attrlist *attrib,
 				     struct fsal_obj_handle **handle,
-				     struct attrlist *attrs_out)
+				     struct fsal_attrlist *attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -1909,7 +1910,7 @@ static fsal_status_t proxyv4_do_readdir(struct proxyv4_obj_handle *ph,
 	*eof = rdok->reply.eof;
 
 	for (e4 = rdok->reply.entries; e4; e4 = e4->nextentry) {
-		struct attrlist attrs;
+		struct fsal_attrlist attrs;
 		struct fsal_obj_handle *handle;
 		enum fsal_dir_result cb_rc;
 
@@ -2024,9 +2025,10 @@ static fsal_status_t proxyv4_rename(struct fsal_obj_handle *obj_hdl,
 	return nfsstat4_to_fsal(rc);
 }
 
-static inline int nfs4_Fattr_To_FSAL_attr_savreqmask(struct attrlist *FSAL_attr,
-						     fattr4 *Fattr,
-						     compound_data_t *data)
+static inline int nfs4_Fattr_To_FSAL_attr_savreqmask(
+						struct fsal_attrlist *FSAL_attr,
+						fattr4 *Fattr,
+						compound_data_t *data)
 {
 	int rc = 0;
 	attrmask_t saved_request_mask = FSAL_attr->request_mask;
@@ -2037,7 +2039,7 @@ static inline int nfs4_Fattr_To_FSAL_attr_savreqmask(struct attrlist *FSAL_attr,
 }
 
 static fsal_status_t proxyv4_getattrs(struct fsal_obj_handle *obj_hdl,
-				      struct attrlist *attrs)
+				      struct fsal_attrlist *attrs)
 {
 	struct proxyv4_obj_handle *ph;
 	int rc;
@@ -2092,7 +2094,7 @@ static fsal_status_t proxyv4_unlink(struct fsal_obj_handle *dir_hdl,
 #if GETATTR_AFTER
 	GETATTR4resok *atok;
 	char fattr_blob[FATTR_BLOB_SZ];
-	struct attrlist dirattr;
+	struct fsal_attrlist dirattr;
 #endif
 
 	ph = container_of(dir_hdl, struct proxyv4_obj_handle, obj);
@@ -2331,10 +2333,10 @@ static fsal_status_t proxyv4_open2(struct fsal_obj_handle *obj_hdl,
 				   fsal_openflags_t openflags,
 				   enum fsal_create_mode createmode,
 				   const char *name,
-				   struct attrlist *attrs_in,
+				   struct fsal_attrlist *attrs_in,
 				   fsal_verifier_t verifier,
 				   struct fsal_obj_handle **new_obj,
-				   struct attrlist *attrs_out,
+				   struct fsal_attrlist *attrs_out,
 				   bool *caller_perm_check)
 {
 	struct proxyv4_obj_handle *ph;
@@ -2776,7 +2778,7 @@ static fsal_status_t proxyv4_close2(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t proxyv4_setattr2(struct fsal_obj_handle *obj_hdl,
 				      bool bypass,
 				      struct state_t *state,
-				      struct attrlist *attrib_set)
+				      struct fsal_attrlist *attrib_set)
 {
 	int rc;
 	fattr4 input_attr;
@@ -2958,13 +2960,13 @@ static struct proxyv4_obj_handle *
 proxyv4_alloc_handle(struct fsal_export *exp,
 		     const nfs_fh4 *fh,
 		     fattr4 *obj_attributes,
-		     struct attrlist *attrs_out)
+		     struct fsal_attrlist *attrs_out)
 {
 	struct proxyv4_obj_handle *n =
 		gsh_calloc(1, sizeof(*n) + fh->nfs_fh4_len);
 
 	compound_data_t data;
-	struct attrlist attributes;
+	struct fsal_attrlist attributes;
 
 	memset(&attributes, 0, sizeof(attributes));
 	memset(&data, 0, sizeof(data));
@@ -3024,7 +3026,7 @@ proxyv4_alloc_handle(struct fsal_export *exp,
 fsal_status_t proxyv4_lookup_path(struct fsal_export *exp_hdl,
 				  const char *path,
 				  struct fsal_obj_handle **handle,
-				  struct attrlist *attrs_out)
+				  struct fsal_attrlist *attrs_out)
 {
 	struct fsal_obj_handle *next;
 	struct fsal_obj_handle *parent = NULL;
@@ -3091,7 +3093,7 @@ fsal_status_t proxyv4_lookup_path(struct fsal_export *exp_hdl,
 fsal_status_t proxyv4_create_handle(struct fsal_export *exp_hdl,
 				    struct gsh_buffdesc *hdl_desc,
 				    struct fsal_obj_handle **handle,
-				    struct attrlist *attrs_out)
+				    struct fsal_attrlist *attrs_out)
 {
 	nfs_fh4 fh4;
 	struct proxyv4_obj_handle *ph;

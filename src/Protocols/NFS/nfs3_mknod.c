@@ -71,7 +71,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	const char *file_name = arg->arg_mknod3.where.name;
 	int rc = NFS_REQ_OK;
 	fsal_status_t fsal_status;
-	struct attrlist sattr, attrs;
+	struct fsal_attrlist sattr, attrs;
 	MKNOD3resfail *resfail = &res->res_mknod3.MKNOD3res_u.resfail;
 	MKNOD3resok * const rok = &res->res_mknod3.MKNOD3res_u.resok;
 

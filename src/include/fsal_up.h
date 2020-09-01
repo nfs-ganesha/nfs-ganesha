@@ -177,7 +177,7 @@ struct fsal_up_vector {
 	 */
 	fsal_status_t (*update)(const struct fsal_up_vector *vec,
 				struct gsh_buffdesc *obj,
-				struct attrlist *attr,
+				struct fsal_attrlist *attr,
 				uint32_t flags);
 
 	/** Grant a lock to a client
@@ -298,7 +298,8 @@ fsal_status_t up_async_invalidate(struct fridgethr *fr,
 				  void *cb_arg);
 fsal_status_t up_async_update(struct fridgethr *fr,
 			      const struct fsal_up_vector *vec,
-			      struct gsh_buffdesc *obj, struct attrlist *attr,
+			      struct gsh_buffdesc *obj,
+			      struct fsal_attrlist *attr,
 			      uint32_t flags,
 			      void (*cb)(void *, fsal_status_t),
 			      void *cb_arg);

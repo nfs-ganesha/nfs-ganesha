@@ -128,7 +128,7 @@ fsal_status_t kvsfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t kvsfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 				    unsigned int xattr_id,
-				    struct attrlist *p_attrs)
+				    struct fsal_attrlist *p_attrs)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

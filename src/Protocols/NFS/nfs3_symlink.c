@@ -71,7 +71,7 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	pre_op_attr pre_parent;
 	fsal_status_t fsal_status;
 	int rc = NFS_REQ_OK;
-	struct attrlist sattr, attrs;
+	struct fsal_attrlist sattr, attrs;
 	SYMLINK3resfail *resfail = &res->res_symlink3.SYMLINK3res_u.resfail;
 	SYMLINK3resok *resok = &res->res_symlink3.SYMLINK3res_u.resok;
 

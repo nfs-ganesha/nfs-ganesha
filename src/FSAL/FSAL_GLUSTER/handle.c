@@ -121,7 +121,7 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path, struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -209,7 +209,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 static int
 glusterfs_fsal_get_sec_label(struct glusterfs_handle *glhandle,
-			     struct attrlist *attrs)
+			     struct fsal_attrlist *attrs)
 {
 	int rc = 0;
 	struct glusterfs_export *export =
@@ -333,7 +333,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			goto out;
 		}
 
-		struct attrlist attrs;
+		struct fsal_attrlist attrs;
 		enum fsal_dir_result cb_rc;
 
 		/* skip . and .. */
@@ -454,9 +454,9 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const char *name, struct attrlist *attrib,
+			     const char *name, struct fsal_attrlist *attrib,
 			     struct fsal_obj_handle **handle,
-			     struct attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -558,9 +558,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
-			      struct attrlist *attrib,
+			      struct fsal_attrlist *attrib,
 			      struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -685,9 +685,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
-				 struct attrlist *attrib,
+				 struct fsal_attrlist *attrib,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -848,7 +848,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
+			      struct fsal_attrlist *attrs)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -1593,10 +1593,10 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 				     fsal_openflags_t openflags,
 				     enum fsal_create_mode createmode,
 				     const char *name,
-				     struct attrlist *attrib_set,
+				     struct fsal_attrlist *attrib_set,
 				     fsal_verifier_t verifier,
 				     struct fsal_obj_handle **new_obj,
-				     struct attrlist *attrs_out,
+				     struct fsal_attrlist *attrs_out,
 				     bool *caller_perm_check)
 {
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -2994,7 +2994,7 @@ err:
 static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 					bool bypass,
 					struct state_t *state,
-					struct attrlist *attrib_set)
+					struct fsal_attrlist *attrib_set)
 {
 	struct glusterfs_handle *myself;
 	fsal_status_t status = {0, 0};
@@ -3621,7 +3621,7 @@ static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 				      const struct req_op_context *opctx,
 				      unsigned int xattr_id,
-				      struct attrlist* p_attrs)
+				      struct fsal_attrlist *p_attrs)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }

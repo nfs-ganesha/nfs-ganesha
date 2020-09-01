@@ -55,7 +55,7 @@ fsal_acl_2_gpfs_acl(struct fsal_obj_handle *, fsal_acl_t *, gpfsfsal_xstat_t *,
  */
 fsal_status_t
 GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
-		struct gpfs_file_handle *gpfs_fh, struct attrlist *attrs)
+		struct gpfs_file_handle *gpfs_fh, struct fsal_attrlist *attrs)
 {
 	char root[MAXPATHLEN];
 	char path[MAXPATHLEN];
@@ -112,7 +112,8 @@ GPFSFSAL_fs_loc(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
  */
 fsal_status_t
 GPFSFSAL_getattrs(struct fsal_export *export, struct gpfs_filesystem *gpfs_fs,
-		  struct gpfs_file_handle *gpfs_fh, struct attrlist *obj_attr)
+		  struct gpfs_file_handle *gpfs_fh,
+		  struct fsal_attrlist *obj_attr)
 {
 	fsal_status_t st;
 	gpfsfsal_xstat_t buffxstat;
@@ -257,7 +258,7 @@ GPFSFSAL_statfs(int mountdirfd, struct fsal_obj_handle *obj_hdl,
  */
 fsal_status_t
 GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
-		  struct attrlist *obj_attr)
+		  struct fsal_attrlist *obj_attr)
 {
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *myself;

@@ -463,7 +463,7 @@ typedef uint64_t attrmask_t;
  * @brief A list of FS object's attributes.
  */
 
-struct attrlist {
+struct fsal_attrlist {
 	attrmask_t request_mask; /*< Indicates the requested from the FSAL. */
 	attrmask_t valid_mask;	/*< Indicates the attributes to be set or
 				   that have been filled in by the FSAL. */

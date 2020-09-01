@@ -45,7 +45,7 @@
 void init_credentials(void);
 void clean_credentials(void);
 
-void squash_setattr(struct attrlist *attr);
+void squash_setattr(struct fsal_attrlist *attr);
 
 nfsstat4 nfs_req_creds(struct svc_req *req);
 

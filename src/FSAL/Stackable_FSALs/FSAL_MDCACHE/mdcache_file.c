@@ -126,8 +126,8 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 				       fsal_openflags_t openflags,
 				       enum fsal_create_mode createmode,
 				       const char *name,
-				       struct attrlist *attrib_set,
-				       struct attrlist *attrs_out,
+				       struct fsal_attrlist *attrib_set,
+				       struct fsal_attrlist *attrs_out,
 				       fsal_verifier_t verifier,
 				       mdcache_entry_t **new_entry,
 				       bool *caller_perm_check)
@@ -214,7 +214,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 	if (attrs_out) {
 		/* Handle attribute request */
 		if (!(attrs_out->valid_mask & ATTR_RDATTR_ERR)) {
-			struct attrlist attrs;
+			struct fsal_attrlist attrs;
 
 			/* open2() gave us attributes.  Update the cache */
 			fsal_prepare_attrs(
@@ -318,10 +318,10 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 			   fsal_openflags_t openflags,
 			   enum fsal_create_mode createmode,
 			   const char *name,
-			   struct attrlist *attrs_in,
+			   struct fsal_attrlist *attrs_in,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
-			   struct attrlist *attrs_out,
+			   struct fsal_attrlist *attrs_out,
 			   bool *caller_perm_check)
 {
 	mdcache_entry_t *mdc_parent =
@@ -329,7 +329,7 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *new_entry = NULL;
 	struct fsal_obj_handle *sub_handle = NULL;
 	fsal_status_t status;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	const char *dispname = name != NULL ? name : "<by-handle>";
 	struct mdcache_fsal_export *export = mdc_cur_export();
 	bool invalidate;

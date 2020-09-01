@@ -54,7 +54,7 @@
 
 struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 					 struct fsal_filesystem *fs,
-					 struct attrlist *attributes,
+					 struct fsal_attrlist *attributes,
 					 const char *link_content,
 					 struct fsal_export *exp_hdl)
 {
@@ -97,13 +97,13 @@ struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
  */
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path, struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *hdl;
-	struct attrlist attrib;
+	struct fsal_attrlist attrib;
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 	struct fsal_filesystem *fs;
 
@@ -156,15 +156,15 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 }
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const char *name, struct attrlist *attr_in,
+			     const char *name, struct fsal_attrlist *attr_in,
 			     struct fsal_obj_handle **handle,
-			     struct attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out)
 {
 	struct gpfs_fsal_obj_handle *hdl;
 	fsal_status_t status;
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
-	/* Use a separate attrlist to getch the actual attributes into */
-	struct attrlist attrib;
+	/* Use a separate fsal_attrlist to getch the actual attributes into */
+	struct fsal_attrlist attrib;
 
 	*handle = NULL;		/* poison it */
 	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
@@ -225,15 +225,15 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
-			      struct attrlist *attr_in,
+			      struct fsal_attrlist *attr_in,
 			      struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *hdl;
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
-	/* Use a separate attrlist to getch the actual attributes into */
-	struct attrlist attrib;
+	/* Use a separate fsal_attrlist to getch the actual attributes into */
+	struct fsal_attrlist attrib;
 
 	*handle = NULL;		/* poison it */
 	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
@@ -301,15 +301,15 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
  */
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
-				 struct attrlist *attr_in,
+				 struct fsal_attrlist *attr_in,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *hdl;
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
-	/* Use a separate attrlist to getch the actual attributes into */
-	struct attrlist attrib;
+	/* Use a separate fsal_attrlist to getch the actual attributes into */
+	struct fsal_attrlist attrib;
 
 	*handle = NULL;		/* poison it first */
 	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
@@ -478,7 +478,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 			break;
 		for (bpos = 0; bpos < nread;) {
 			struct fsal_obj_handle *hdl;
-			struct attrlist attrs;
+			struct fsal_attrlist attrs;
 			enum fsal_dir_result cb_rc;
 
 			dentry = (struct dirent64 *)(buf + bpos);
@@ -550,7 +550,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
+			      struct fsal_attrlist *attrs)
 {
 	struct gpfs_fsal_obj_handle *myself;
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
@@ -834,7 +834,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 fsal_status_t gpfs_setattr2(struct fsal_obj_handle *obj_hdl,
 				   bool bypass,
 				   struct state_t *state,
-				   struct attrlist *attrs)
+				   struct fsal_attrlist *attrs)
 {
 	fsal_status_t status;
 
@@ -1005,14 +1005,14 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 			       const char *path,
 			       struct fsal_obj_handle **handle,
-			       struct attrlist *attrs_out)
+			       struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t fsal_status;
 	int retval = 0;
 	int dir_fd;
 	struct fsal_filesystem *fs;
 	struct gpfs_fsal_obj_handle *hdl;
-	struct attrlist attributes;
+	struct fsal_attrlist attributes;
 	gpfsfsal_xstat_t buffxstat;
 	struct gpfs_file_handle *fh = alloca(sizeof(struct gpfs_file_handle));
 	struct fsal_fsid__ fsid;
@@ -1174,12 +1174,12 @@ errout:
 fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 				 struct gsh_buffdesc *hdl_desc,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *hdl;
 	struct gpfs_file_handle *fh;
-	struct attrlist attrib;
+	struct fsal_attrlist attrib;
 	char link_buff[PATH_MAX];
 	struct fsal_fsid__ fsid;
 	struct fsal_filesystem *fs;

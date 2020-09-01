@@ -119,7 +119,7 @@ fsal_status_t invalidate(const struct fsal_up_vector *vec,
 
 static fsal_status_t update(const struct fsal_up_vector *vec,
 			    struct gsh_buffdesc *obj,
-			    struct attrlist *attr, uint32_t flags)
+			    struct fsal_attrlist *attr, uint32_t flags)
 {
 	/* No need to update with no cache */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1630,7 +1630,7 @@ cbgetattr_state handle_getattr_response(struct cbgetattr_context *cbg_ctx,
 					rpc_call_t *call)
 {
 	fattr4 attr;
-	struct attrlist rsp_attr;
+	struct fsal_attrlist rsp_attr;
 	int rc = 0;
 	enum cbgetattr_state cb_state;
 	struct fsal_obj_handle *obj = cbg_ctx->obj;
@@ -1638,7 +1638,7 @@ cbgetattr_state handle_getattr_response(struct cbgetattr_context *cbg_ctx,
 	nfs_cb_resop4 *cbr = NULL;
 	CB_GETATTR4res *res = NULL;
 	const struct fsal_up_vector *event_func;
-	struct attrlist up_attr = {0, };
+	struct fsal_attrlist up_attr = {0, };
 	uint32_t upflags = 0;
 	struct gsh_buffdesc key;
 	fsal_status_t fsal_status = {0,};

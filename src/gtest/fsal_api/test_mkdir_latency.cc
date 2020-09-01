@@ -80,7 +80,7 @@ namespace {
       fsal_status_t status;
       char fname[NAMELEN];
       struct fsal_obj_handle *obj;
-      struct attrlist attrs_out;
+      struct fsal_attrlist attrs_out;
 
       MkdirEmptyLatencyTest::SetUp();
 

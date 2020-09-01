@@ -444,7 +444,7 @@ void display_fsinfo(struct fsal_module *fsal)
 }
 
 int display_attrlist(struct display_buffer *dspbuf,
-		     struct attrlist *attr, bool is_obj)
+		     struct fsal_attrlist *attr, bool is_obj)
 {
 	int b_left = display_start(dspbuf);
 
@@ -510,7 +510,7 @@ int display_attrlist(struct display_buffer *dspbuf,
 }
 
 void log_attrlist(log_components_t component, log_levels_t level,
-		  const char *reason, struct attrlist *attr, bool is_obj,
+		  const char *reason, struct fsal_attrlist *attr, bool is_obj,
 		  char *file, int line, char *function)
 {
 	char str[LOG_BUFF_LEN] = "\0";
@@ -1950,7 +1950,7 @@ static fsal_errors_t dup_ace(fsal_ace_t *sace, fsal_ace_t *dace)
 	return ERR_FSAL_NO_ERROR;
 }
 
-fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
+fsal_errors_t fsal_inherit_acls(struct fsal_attrlist *attrs, fsal_acl_t *sacl,
 				fsal_aceflag_t inherit)
 {
 	int naces;
@@ -2191,7 +2191,7 @@ fsal_mode_gen_set(fsal_ace_t *ace, uint32_t mode)
 }
 
 static fsal_status_t
-fsal_mode_gen_acl(struct attrlist *attrs)
+fsal_mode_gen_acl(struct fsal_attrlist *attrs)
 {
 	if (attrs->acl != NULL) {
 		/* We should never be passed attributes that have an
@@ -2220,7 +2220,7 @@ fsal_mode_gen_acl(struct attrlist *attrs)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl)
+fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 {
 	int naces;
 	fsal_ace_t *sace, *dace;
@@ -2345,7 +2345,8 @@ static uint32_t ace_modes[3][3] = {
 	}
 };
 
-static inline void set_mode(struct attrlist *attrs, uint32_t mode, bool allow)
+static inline void set_mode(struct fsal_attrlist *attrs, uint32_t mode,
+			    bool allow)
 {
 	if (allow)
 		attrs->mode |= mode;
@@ -2353,7 +2354,7 @@ static inline void set_mode(struct attrlist *attrs, uint32_t mode, bool allow)
 		attrs->mode &= ~(mode);
 }
 
-fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
+fsal_status_t fsal_acl_to_mode(struct fsal_attrlist *attrs)
 {
 	fsal_ace_t *ace = NULL;
 	uint32_t *modes;
@@ -2388,7 +2389,7 @@ fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-void set_common_verifier(struct attrlist *attrs, fsal_verifier_t verifier)
+void set_common_verifier(struct fsal_attrlist *attrs, fsal_verifier_t verifier)
 {
 	uint32_t verf_hi = 0, verf_lo = 0;
 
@@ -3131,13 +3132,14 @@ bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier)
  *
  * The default behavior is to check verifier against atime and mtime.
  *
- * @param[in] attrlist    Attributes for the file
+ * @param[in] attrs       Attributes for the file
  * @param[in] verifier    Verifier to use for exclusive create
  *
  * @retval true if verifier matches
  */
 
-bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier)
+bool check_verifier_attrlist(struct fsal_attrlist *attrs,
+			     fsal_verifier_t verifier)
 {
 	uint32_t verf_hi = 0, verf_lo = 0;
 
@@ -3171,7 +3173,7 @@ bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier)
  * that and returns true if it is a referral.
  */
 bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
-			     struct attrlist *attrs, bool cache_attrs)
+			     struct fsal_attrlist *attrs, bool cache_attrs)
 {
 	attrmask_t req_mask = ATTR_TYPE | ATTR_MODE;
 

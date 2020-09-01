@@ -166,7 +166,7 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 
 static fsal_status_t
 mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
-	      struct attrlist *attr, uint32_t flags)
+	      struct fsal_attrlist *attr, uint32_t flags)
 {
 	mdcache_entry_t *entry;
 	fsal_status_t status;

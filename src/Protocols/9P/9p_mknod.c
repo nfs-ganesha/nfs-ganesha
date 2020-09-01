@@ -63,7 +63,7 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	uint64_t fileid = 0LL;
 	fsal_status_t fsal_status;
 	object_file_type_t nodetype;
-	struct attrlist object_attributes;
+	struct fsal_attrlist object_attributes;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);

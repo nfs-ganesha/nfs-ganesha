@@ -35,12 +35,12 @@ void kvsfs_handle_ops_init(struct fsal_obj_ops *ops);
 fsal_status_t kvsfs_lookup_path(struct fsal_export *exp_hdl,
 			       const char *path,
 			       struct fsal_obj_handle **handle,
-			       struct attrlist *attrs_out);
+			       struct fsal_attrlist *attrs_out);
 
 fsal_status_t kvsfs_create_handle(struct fsal_export *exp_hdl,
 				  struct gsh_buffdesc *hdl_desc,
 				  struct fsal_obj_handle **handle,
-				  struct attrlist *attrs_out);
+				  struct fsal_attrlist *attrs_out);
 
 /* this needs to be refactored to put ipport inside sockaddr_in */
 struct kvsfs_pnfs_ds_parameter {
@@ -118,7 +118,7 @@ struct kvsfs_fsal_obj_handle {
 };
 
 struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
-						 struct attrlist *attr,
+						 struct fsal_attrlist *attr,
 						 const char *link_content,
 						 struct fsal_export *exp_hdl);
 	/* I/O management */
@@ -128,10 +128,10 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 			  fsal_openflags_t openflags,
 			  enum fsal_create_mode createmode,
 			  const char *name,
-			  struct attrlist *attr_set,
+			  struct fsal_attrlist *attr_set,
 			  fsal_verifier_t verifier,
 			  struct fsal_obj_handle **new_obj,
-			  struct attrlist *attrs_out,
+			  struct fsal_attrlist *attrs_out,
 			  bool *caller_perm_check);
 fsal_status_t kvsfs_reopen2(struct fsal_obj_handle *obj_hdl,
 			    struct state_t *state,
@@ -168,7 +168,7 @@ fsal_status_t kvsfs_create2(struct fsal_obj_handle *dir_hdl,
 			    mode_t unix_mode,
 			    struct kvsfs_file_handle *kvsfs_fh,
 			    int posix_flags,
-			    struct attrlist *fsal_attr);
+			    struct fsal_attrlist *fsal_attr);
 
 fsal_status_t kvsfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			    fsal_share_param_t request_share);
@@ -204,7 +204,7 @@ fsal_status_t kvsfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					  size_t buffer_size);
 fsal_status_t kvsfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
 				    unsigned int xattr_id,
-				    struct attrlist *p_attrs);
+				    struct fsal_attrlist *p_attrs);
 fsal_status_t kvsfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					unsigned int xattr_id);
 fsal_status_t kvsfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,

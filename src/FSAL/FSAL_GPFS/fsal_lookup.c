@@ -65,7 +65,7 @@ uint64_t get_handle2inode(struct gpfs_file_handle *gfh)
 #define GPFS_ROOT_INODE  3
 fsal_status_t
 GPFSFSAL_lookup(struct fsal_obj_handle *parent, const char *filename,
-		struct attrlist *fsal_attr, struct gpfs_file_handle *fh,
+		struct fsal_attrlist *fsal_attr, struct gpfs_file_handle *fh,
 		struct fsal_filesystem **new_fs)
 {
 	fsal_status_t status;

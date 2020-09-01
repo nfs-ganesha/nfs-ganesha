@@ -73,7 +73,7 @@ namespace {
 
     virtual void SetUp() {
       fsal_status_t status;
-      struct attrlist attrs_out;
+      struct fsal_attrlist attrs_out;
 
       gtest::GaneshaFSALBaseTest::SetUp();
 
@@ -156,7 +156,7 @@ namespace {
   }
 
   enum fsal_dir_result trc_populate_dirent(const char *name,
-      struct fsal_obj_handle *obj, struct attrlist *attrs, void *dir_state,
+      struct fsal_obj_handle *obj, struct fsal_attrlist *attrs, void *dir_state,
       fsal_cookie_t cookie) {
     rd_state_t *st = (rd_state_t*)dir_state;
     struct gsh_buffdesc fh_desc;

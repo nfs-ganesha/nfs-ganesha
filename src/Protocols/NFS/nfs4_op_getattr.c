@@ -65,7 +65,7 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 	GETATTR4args * const arg_GETATTR4 = &op->nfs_argop4_u.opgetattr;
 	GETATTR4res * const res_GETATTR4 = &resp->nfs_resop4_u.opgetattr;
 	attrmask_t mask;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	bool current_obj_is_referral = false;
 	fattr4 *obj_attributes =
 		&res_GETATTR4->GETATTR4res_u.resok4.obj_attributes;

@@ -89,7 +89,7 @@ fsal_status_t
 GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl, const char *linkname,
 		 const char *linkcontent,
 		 uint32_t accessmode, struct gpfs_file_handle *gpfs_fh,
-		 struct attrlist *link_attr)
+		 struct fsal_attrlist *link_attr)
 {
 
 	int rc, errsv;

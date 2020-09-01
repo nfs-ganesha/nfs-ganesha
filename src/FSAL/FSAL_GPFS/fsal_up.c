@@ -340,7 +340,7 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 		case INODE_UPDATE:	/* Update Event */
 			{
-				struct attrlist attr;
+				struct fsal_attrlist attr;
 
 				LogMidDebug(COMPONENT_FSAL_UP,
 					    "inode update: flags:%x update ino %"

@@ -80,7 +80,7 @@ static void lzfs_fsal_release(struct fsal_export *export_hdl)
 static fsal_status_t lzfs_fsal_lookup_path(struct fsal_export *export_hdl,
 					   const char *path,
 					   struct fsal_obj_handle **pub_handle,
-					   struct attrlist *attrs_out)
+					   struct fsal_attrlist *attrs_out)
 {
 	static const char *root_dir_path = "/";
 
@@ -199,7 +199,7 @@ static fsal_status_t lzfs_fsal_create_handle(
 					struct fsal_export *exp_hdl,
 					struct gsh_buffdesc *desc,
 					struct fsal_obj_handle **pub_handle,
-					struct attrlist *attrs_out)
+					struct fsal_attrlist *attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *handle = NULL;

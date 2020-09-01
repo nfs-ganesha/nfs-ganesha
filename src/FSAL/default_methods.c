@@ -337,7 +337,7 @@ static void export_release(struct fsal_export *exp_hdl)
 fsal_status_t lookup_path(struct fsal_export *exp_hdl,
 			  const char *path,
 			  struct fsal_obj_handle **handle,
-			  struct attrlist *attrs_out)
+			  struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -382,7 +382,7 @@ static fsal_status_t exp_host_to_key(struct fsal_export *exp_hdl,
 static fsal_status_t create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -808,7 +808,7 @@ static fsal_status_t handle_merge(struct fsal_obj_handle *orig_hdl,
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path, struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -857,9 +857,9 @@ int dirent_cmp(struct fsal_obj_handle *parent,
  */
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const char *name, struct attrlist *attrib,
+			     const char *name, struct fsal_attrlist *attrib,
 			     struct fsal_obj_handle **handle,
-			     struct attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -872,9 +872,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
-			      struct attrlist *attrib,
+			      struct fsal_attrlist *attrib,
 			      struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -887,9 +887,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
-				 struct attrlist *attrib,
+				 struct fsal_attrlist *attrib,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -969,7 +969,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
+			      struct fsal_attrlist *attrs)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -1291,10 +1291,10 @@ static fsal_status_t open2(struct fsal_obj_handle *obj_hdl,
 			   fsal_openflags_t openflags,
 			   enum fsal_create_mode createmode,
 			   const char *name,
-			   struct attrlist *attrib_set,
+			   struct fsal_attrlist *attrib_set,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
-			   struct attrlist *attrs_out,
+			   struct fsal_attrlist *attrs_out,
 			   bool *caller_perm_check)
 {
 	LogCrit(COMPONENT_FSAL,
@@ -1316,7 +1316,7 @@ static fsal_status_t open2(struct fsal_obj_handle *obj_hdl,
 static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 			   fsal_verifier_t verifier)
 {
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	bool result;
 
 	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
@@ -1465,7 +1465,7 @@ static fsal_status_t lease_op2(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t setattr2(struct fsal_obj_handle *obj_hdl,
 			      bool bypass,
 			      struct state_t *state,
-			      struct attrlist *attrs)
+			      struct fsal_attrlist *attrs)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -1488,7 +1488,7 @@ static fsal_status_t close2(struct fsal_obj_handle *obj_hdl,
  * default case not a referral
  */
 static bool is_referral(struct fsal_obj_handle *obj_hdl,
-			struct attrlist *attrs,
+			struct fsal_attrlist *attrs,
 			bool cache_attrs)
 {
 	return false;

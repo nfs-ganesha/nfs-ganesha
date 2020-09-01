@@ -204,7 +204,7 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 }
 
 static fsal_status_t populate_fs_locations(struct vfs_fsal_obj_handle *hdl,
-					   struct attrlist *attrs_out)
+					   struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status;
 	uint64 hash;
@@ -383,7 +383,7 @@ out:
 static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 				    int dirfd, const char *path,
 				    struct fsal_obj_handle **handle,
-				    struct attrlist *attrs_out)
+				    struct fsal_attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *hdl;
 	int retval;
@@ -486,7 +486,7 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path, struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *parent_hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -529,9 +529,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 }
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const char *name, struct attrlist *attrib,
+			     const char *name, struct fsal_attrlist *attrib,
 			     struct fsal_obj_handle **handle,
-			     struct attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd;
@@ -541,7 +541,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS;
 #ifdef ENABLE_VFS_DEBUG_ACL
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_accessflags_t access_type;
 #endif /* ENABLE_VFS_DEBUG_ACL */
 	vfs_file_handle_t *fh = NULL;
@@ -720,9 +720,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name,
 			      object_file_type_t nodetype,	/* IN */
-			      struct attrlist *attrib,
+			      struct fsal_attrlist *attrib,
 			      struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd = -1;
@@ -733,7 +733,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	dev_t unix_dev = 0;
 	int flags = O_PATH | O_NOACCESS;
 #ifdef ENABLE_VFS_DEBUG_ACL
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_accessflags_t access_type;
 #endif /* ENABLE_VFS_DEBUG_ACL */
 	vfs_file_handle_t *fh = NULL;
@@ -937,9 +937,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
-				 struct attrlist *attrib,
+				 struct fsal_attrlist *attrib,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd = -1;
@@ -948,7 +948,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS;
 #ifdef ENABLE_VFS_DEBUG_ACL
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_accessflags_t access_type;
 #endif /* ENABLE_VFS_DEBUG_ACL */
 	vfs_file_handle_t *fh = NULL;
@@ -1359,7 +1359,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 #endif
 		for (bpos = 0; bpos < nread;) {
 			struct fsal_obj_handle *hdl;
-			struct attrlist attrs;
+			struct fsal_attrlist attrs;
 			enum fsal_dir_result cb_rc;
 
 			if (!to_vfs_dirent(buf, bpos, dentryp, baseloc))
@@ -1836,7 +1836,7 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 
 fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 			      const char *path, struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	int dir_fd = -1;
 	struct stat stat;
@@ -2017,7 +2017,7 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 				struct gsh_buffdesc *hdl_desc,
 				struct fsal_obj_handle **handle,
-				struct attrlist *attrs_out)
+				struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status;
 	struct vfs_fsal_obj_handle *hdl;

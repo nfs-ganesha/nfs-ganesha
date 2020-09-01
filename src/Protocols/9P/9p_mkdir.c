@@ -59,7 +59,7 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct fsal_obj_handle *pentry_newdir = NULL;
 	char dir_name[MAXNAMLEN+1];
 	fsal_status_t fsal_status;
-	struct attrlist sattr;
+	struct fsal_attrlist sattr;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);

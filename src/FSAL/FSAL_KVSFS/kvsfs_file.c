@@ -47,7 +47,7 @@ static fsal_status_t kvsfs_open_by_handle(struct fsal_obj_handle *obj_hdl,
 					 fsal_openflags_t openflags,
 					 int posix_flags,
 					 fsal_verifier_t verifier,
-					 struct attrlist *attrs_out,
+					 struct fsal_attrlist *attrs_out,
 					 enum fsal_create_mode createmode,
 					 bool *cpm_check)
 {
@@ -173,7 +173,7 @@ static fsal_status_t kvsfs_open_by_name(struct fsal_obj_handle *obj_hdl,
 					fsal_openflags_t openflags,
 					int posix_flags,
 					fsal_verifier_t verifier,
-					struct attrlist *attrs_out,
+					struct fsal_attrlist *attrs_out,
 					bool *cpm_check)
 {
 	struct fsal_obj_handle *temp = NULL;
@@ -385,10 +385,10 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 			  fsal_openflags_t openflags,
 			  enum fsal_create_mode createmode,
 			  const char *name,
-			  struct attrlist *attr_set,
+			  struct fsal_attrlist *attr_set,
 			  fsal_verifier_t verifier,
 			  struct fsal_obj_handle **new_obj,
-			  struct attrlist *attrs_out,
+			  struct fsal_attrlist *attrs_out,
 			  bool *caller_perm_check)
 {
 	struct fsal_export *export = op_ctx->fsal_export;
@@ -435,10 +435,11 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 					  attrs_out,
 					  caller_perm_check);
 
-	/** @todo: to proceed past here, we need a struct attrlist in order to
-	 *	 create the fsal_obj_handle, so if it actually is NULL (it
-	 *	 will actually never be since mdcache will always ask for
-	 *	 attributes) we really should create a temporary attrlist...
+	/** @todo: to proceed past here, we need a struct fsal_attrlist in order
+	 *         to create the fsal_obj_handle, so if it actually is NULL (it
+	 *	   will actually never be since mdcache will always ask for
+	 *	   attributes) we really should create a temporary fsal_attrlist
+	 *         ...
 	 */
 
 	posix_flags |= O_CREAT;
