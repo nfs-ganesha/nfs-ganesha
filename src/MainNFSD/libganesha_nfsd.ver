@@ -24,7 +24,6 @@
   config_url_init;
   create_log_facility;
   decode_fsid;
-  def_dsh_ops;
   def_pnfs_ds_ops;
   deleg_types;
   disable_log_facility;
