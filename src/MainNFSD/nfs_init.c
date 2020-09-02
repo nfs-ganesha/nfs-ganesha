@@ -944,7 +944,7 @@ void nfs_start(nfs_start_info_t *p_start_info)
 		 "-------------------------------------------------");
 
 	/* Set the time of NFS stat counting */
-	now(&nfs_stats_time);
+	nfs_init_stats_time();
 
 	/* Wait for dispatcher to exit */
 	LogDebug(COMPONENT_THREAD, "Wait for admin thread to exit");

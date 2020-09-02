@@ -373,5 +373,6 @@ void prune_defunct_exports(uint64_t generation);
 void remove_all_exports(void);
 
 extern struct timespec nfs_stats_time;
+void nfs_init_stats_time(void);
 #endif				/* !EXPORT_MGR_H */
 /** @} */
