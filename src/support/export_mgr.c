@@ -2040,6 +2040,21 @@ static void reset_fsal_stats(void)
 	}
 }
 
+
+/**
+ * Initialize all stats at startup time.
+ *
+ */
+void nfs_init_stats_time(void)
+{
+	now(&nfs_stats_time);
+	fsal_stats_time = v3_full_stats_time
+			= v4_full_stats_time
+			= auth_stats_time
+			= clnt_allops_stats_time
+			= nfs_stats_time;
+}
+
 /**
  * DBUS method to reset all ops statistics
  *
@@ -2063,9 +2078,7 @@ static bool stats_reset(DBusMessageIter *args,
 	reset_auth_stats();
 
 	/* update the stats counting time */
-	now(&nfs_stats_time);
-	fsal_stats_time = v3_full_stats_time = v4_full_stats_time =
-		auth_stats_time = nfs_stats_time;
+	nfs_init_stats_time();
 	return true;
 }
 
