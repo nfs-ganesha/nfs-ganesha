@@ -127,9 +127,7 @@
   lookup_dev;
   lookup_fsal;
   lookup_fsid;
-  LogCrit;
   LogMallocFailure;
-  LogWarn;
   lru_cleanup_entries;
   mdcache_param;
   merge_share;
@@ -212,7 +210,6 @@
   root_op_export_options;
   set_common_verifier;
   set_const_log_str;
-  set_op_context_export;
   set_op_context_export_fsal;
   SetNameFunction;
   sprint_sockip;
