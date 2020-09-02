@@ -61,8 +61,6 @@
   fsal_create;
   fsal_default_obj_ops_init;
   fsal_detach_export;
-  fsal_ds_handle_init;
-  fsal_ds_handle_fini;
   fsal_export_init;
   fsal_export_stack;
   fsal_find_fd;
@@ -115,7 +113,6 @@
   hashtable_releaselatched;
   hashtable_test_and_set;
   ht_confirmed_client_id;
-  infs_set_param_from_conf;
   init_error_type;
   init_op_context;
   init_op_context_simple;
@@ -127,7 +124,6 @@
   lookup_fsal;
   lookup_fsid;
   LogMallocFailure;
-  lru_cleanup_entries;
   mdcache_param;
   merge_share;
   msg_fsal_err;
@@ -196,7 +192,6 @@
   release_log_facility;
   release_op_context;
   release_posix_file_system;
-  release_root_op_context;
   read_log_config;
   report_config_errors;
   resume_op_context;
