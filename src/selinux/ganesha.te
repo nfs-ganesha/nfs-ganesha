@@ -316,3 +316,12 @@ allow ganesha_t self:capability { fowner setgid setuid };
 # allow ganesha_t glusterd_brick_t:dir { add_name getattr open read write remove_name search };
 # allow ganesha_t glusterd_brick_t:file { create getattr open read write unlink };
 
+########################################
+#
+# ganesha local policy rhbz#1855350
+
+ifdef(`ceph_read_lib_files',`
+       optional_policy(`
+               ceph_read_lib_files(ganesha_t)
+       ')
+')
