@@ -668,8 +668,6 @@ exit 0
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
 %dir %{_sysconfdir}/ganesha/
 %config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
-%dir %{_defaultdocdir}/ganesha/
-%{_defaultdocdir}/ganesha/*
 %dir %{_localstatedir}/run/ganesha
 %dir %{_libexecdir}/ganesha
 %{_libexecdir}/ganesha/nfs-ganesha-config.sh
