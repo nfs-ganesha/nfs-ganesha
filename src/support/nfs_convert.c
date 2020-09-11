@@ -515,7 +515,6 @@ nfsstat4 nfs4_Errno_verbose(fsal_status_t status, const char *where)
 	case ERR_FSAL_BAD_INIT:
 	case ERR_FSAL_TIMEOUT:
 	case ERR_FSAL_IO:
-	case ERR_FSAL_NXIO:
 		if (status.major == ERR_FSAL_IO && status.minor != 0)
 			LogCrit(COMPONENT_NFS_V4,
 				"Error %s with error code %d in %s converted "
@@ -528,6 +527,10 @@ nfsstat4 nfs4_Errno_verbose(fsal_status_t status, const char *where)
 				"was set non-retryable",
 				msg_fsal_err(status.major), where);
 		nfserror = NFS4ERR_IO;
+		break;
+
+	case ERR_FSAL_NXIO:
+		nfserror = NFS4ERR_NXIO;
 		break;
 
 	case ERR_FSAL_ACCESS:
@@ -677,7 +680,6 @@ nfsstat3 nfs3_Errno_verbose(fsal_status_t status, const char *where)
 	case ERR_FSAL_FILE_OPEN:
 	case ERR_FSAL_NOT_OPENED:
 	case ERR_FSAL_IO:
-	case ERR_FSAL_NXIO:
 		if (status.major == ERR_FSAL_IO && status.minor != 0)
 			LogCrit(COMPONENT_NFSPROTO,
 				"Error %s with error code %d in %s converted "
@@ -690,6 +692,10 @@ nfsstat3 nfs3_Errno_verbose(fsal_status_t status, const char *where)
 				"was set non-retryable",
 				msg_fsal_err(status.major), where);
 		nfserror = NFS3ERR_IO;
+		break;
+
+	case ERR_FSAL_NXIO:
+		nfserror = NFS3ERR_NXIO;
 		break;
 
 	case ERR_FSAL_INVAL:
