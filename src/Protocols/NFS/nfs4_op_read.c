@@ -1050,7 +1050,7 @@ enum nfs_req_result nfs4_op_seek(struct nfs_argop4 *op,
 
 		fsal_status = obj->obj_ops->seek2(obj, state_found, &info);
 		if (FSAL_IS_ERROR(fsal_status)) {
-			res_SEEK->sr_status = NFS4ERR_NXIO;
+			res_SEEK->sr_status = nfs4_Errno_status(fsal_status);
 			goto done;
 		}
 		res_SEEK->sr_resok4.sr_eof = info.io_eof;
