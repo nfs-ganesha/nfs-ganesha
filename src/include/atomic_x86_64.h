@@ -181,7 +181,7 @@ static inline uint64_t atomic_postset_uint64_t_bits(uint64_t * p, uint64_t v)
 \torq %2, %%rdx\n\
 \tlock cmpxchgq	%%rdx, %0\n\
 \tjne 1b\n\
-\tmovq %%rcx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovq %%rcx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%rcx", "%rdx");
 	return t;
@@ -214,7 +214,7 @@ static inline uint64_t atomic_postclear_uint64_t_bits(uint64_t * p, uint64_t v)
 \tandq %2, %%rdx\n\
 \tlock cmpxchgq	%%rdx, %0\n\
 \tjne 1b\n\
-\tmovq %%rcx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovq %%rcx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%rcx", "%rdx");
 	return t;
@@ -230,7 +230,7 @@ static inline uint64_t atomic_clear_uint64_t_bits(uint64_t * p, uint64_t v)
 \tandq %2, %%rdx\n\
 \tlock cmpxchgq	%%rdx, %0\n\
 \tjne 1b\n\
-\tmovq %%rdx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovq %%rdx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%rdx");
 	return t;
@@ -337,7 +337,7 @@ static inline uint32_t atomic_postset_uint32_t_bits(uint32_t * p, uint32_t v)
 \torl %2, %%edx\n\
 \tlock cmpxchgl	%%edx, %0\n\
 \tjne 1b\n\
-\tmovl %%ecx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%ecx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%ecx", "%edx");
 	return t;
@@ -352,7 +352,7 @@ static inline uint32_t atomic_set_uint32_t_bits(uint32_t * p, uint32_t v)
 \torl %2, %%edx\n\
 \tlock cmpxchgl	%%edx, %0\n\
 \tjne 1b\n\
-\tmovl %%edx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%edx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%edx");
 	return t;
@@ -370,7 +370,7 @@ static inline uint32_t atomic_postclear_uint32_t_bits(uint32_t * p, uint32_t v)
 \tandl %2, %%edx\n\
 \tlock cmpxchgl	%%edx, %0\n\
 \tjne 1b\n\
-\tmovl %%ecx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%ecx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%ecx", "%edx");
 	return t;
@@ -386,7 +386,7 @@ static inline uint32_t atomic_clear_uint32_t_bits(uint32_t * p, uint32_t v)
 \tandl %2, %%edx\n\
 \tlock cmpxchgl	%%edx, %0\n\
 \tjne 1b\n\
-\tmovl %%edx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%edx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%edx");
 	return t;
@@ -494,7 +494,7 @@ static inline uint16_t atomic_postset_uint16_t_bits(uint16_t * p, uint16_t v_)
 \torl %2, %%edx\n\
 \tlock cmpxchgw	%%dx, %0\n\
 \tjne 1b\n\
-\tmovl %%ecx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%ecx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%ecx", "%edx");
 	return t;
@@ -510,7 +510,7 @@ static inline uint16_t atomic_set_uint16_t_bits(uint16_t * p, uint16_t v_)
 \torl %2, %%edx\n\
 \tlock cmpxchgw	%%dx, %0\n\
 \tjne 1b\n\
-\tmovl %%edx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%edx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%edx");
 	return t;
@@ -528,7 +528,7 @@ static inline uint16_t atomic_postclear_uint16_t_bits(uint16_t * p, uint16_t v_)
 \tandl %2, %%edx\n\
 \tlock cmpxchgw	%%dx, %0\n\
 \tjne 1b\n\
-\tmovl %%ecx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%ecx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%ecx", "%edx");
 	return t;
@@ -544,7 +544,7 @@ static inline uint16_t atomic_clear_uint16_t_bits(uint16_t * p, uint16_t v_)
 \tandl %2, %%edx\n\
 \tlock cmpxchgw	%%dx, %0\n\
 \tjne 1b\n\
-\tmovl %%edx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%edx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%edx");
 	return t;
@@ -652,7 +652,7 @@ static inline uint8_t atomic_postset_uint8_t_bits(uint8_t * p, uint8_t v_)
 \torl %2, %%edx\n\
 \tlock cmpxchgb	%%dl, %0\n\
 \tjne 1b\n\
-\tmovl %%ecx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%ecx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%ecx", "%edx");
 	return t;
@@ -668,7 +668,7 @@ static inline uint8_t atomic_set_uint8_t_bits(uint8_t * p, uint8_t v_)
 \torl %2, %%edx\n\
 \tlock cmpxchgb	%%dl, %0\n\
 \tjne 1b\n\
-\tmovl %%edx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%edx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%edx");
 	return t;
@@ -686,7 +686,7 @@ static inline uint8_t atomic_postclear_uint8_t_bits(uint8_t * p, uint8_t v_)
 \tandl %2, %%edx\n\
 \tlock cmpxchgb	%%dl, %0\n\
 \tjne 1b\n\
-\tmovl %%ecx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%ecx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%ecx", "%edx");
 	return t;
@@ -702,7 +702,7 @@ static inline uint8_t atomic_clear_uint8_t_bits(uint8_t * p, uint8_t v_)
 \tandl %2, %%edx\n\
 \tlock cmpxchgb	%%dl, %0\n\
 \tjne 1b\n\
-\tmovl %%edx, %1\n":"=m" (*p), "=a"(t), "=r"(v)
+\tmovl %%edx, %1\n":"=m" (*p), "=&a"(t), "=r"(v)
 		      :"2"(v)
 		      :"memory", "%edx");
 	return t;
