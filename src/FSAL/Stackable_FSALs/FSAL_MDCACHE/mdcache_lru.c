@@ -60,6 +60,7 @@
 #ifdef USE_LTTNG
 #include "gsh_lttng/mdcache.h"
 #endif
+#include "sys_resource.h"
 
 /**
  *
@@ -1691,7 +1692,7 @@ void init_fds_limit(void)
 	};
 
 	/* Find out the system-imposed file descriptor limit */
-	if (getrlimit(RLIMIT_NOFILE, &rlim) != 0) {
+	if (get_open_file_limit(&rlim) != 0) {
 		code = errno;
 		LogCrit(COMPONENT_CACHE_INODE_LRU,
 			"Call to getrlimit failed with error %d. This should not happen.  Assigning default of %d.",

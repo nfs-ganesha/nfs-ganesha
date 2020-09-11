@@ -10,6 +10,12 @@ if(FREEBSD)
   )
 endif(FREEBSD)
 
+if(DARWIN)
+  SET(gos_STAT_SRCS
+      darwin/sys_resource.c
+  )
+endif(DARWIN)
+
 if(LINUX)
   SET(gos_STAT_SRCS
       linux/subr.c
