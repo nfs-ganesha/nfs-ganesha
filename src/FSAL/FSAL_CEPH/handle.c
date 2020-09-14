@@ -45,6 +45,7 @@
 #include "nfs_exports.h"
 #include "sal_data.h"
 #include "statx_compat.h"
+#include "nfs_core.h"
 #include "linux/falloc.h"
 
 /**
@@ -863,15 +864,22 @@ static fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
 
 static fsal_status_t ceph_close_my_fd(struct ceph_fd *my_fd)
 {
-	int rc = 0;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
 
 	if (my_fd->fd != NULL && my_fd->openflags != FSAL_O_CLOSED) {
-		rc = ceph_ll_close(export->cmount, my_fd->fd);
-		if (rc < 0)
+		int rc = ceph_ll_close(export->cmount, my_fd->fd);
+
+		if (rc < 0) {
+			/*
+			 * We expect -ENOTCONN errors on shutdown. Ignore
+			 * them so we don't spam the logs.
+			 */
+			if (rc == -ENOTCONN && admin_shutdown)
+				rc = 0;
 			status = ceph2fsal_error(rc);
+		}
 		my_fd->fd = NULL;
 		my_fd->openflags = FSAL_O_CLOSED;
 	}
