@@ -34,6 +34,7 @@
 static unsigned int rand_seed = 123451;
 static char rpcMachineName[MAXHOSTNAMELEN + 1] = { 0 };
 static pthread_mutex_t rpcLock;
+
 const unsigned int kMaxSockets = 32;
 
 /* Resizable buffer (capacity is allocated, len is used). */
@@ -181,10 +182,32 @@ proxyv3_openfd(const struct sockaddr *host,
 	 * NOTE(boulos): NFS daemons like nfsd in Linux require that the
 	 * clients come from a privileged port, so that they "must" be run
 	 * as root on the client.
+	 *
+	 * NOTE(boulos): Some bindresvport_sa implementations are *also* not
+	 * thread-safe (including libntirpc). So we need to hold a lock around
+	 * calling it. Our only caller (proxyv3_getfdentry) no longer holds the
+	 * rpcLock, so we can use that one.
 	 */
+
+	if (pthread_mutex_lock(&rpcLock) != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"pthread_mutex_lock falied %d %s",
+			errno, strerror(errno));
+		close(fd);
+		return -1;
+	}
+
 	if (bindresvport_sa(fd, NULL) < 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Failed to reserve a privileged port. %d %s",
+			errno, strerror(errno));
+		close(fd);
+		return -1;
+	}
+
+	if (pthread_mutex_unlock(&rpcLock) != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"pthread_mutex_unlock falied %d %s",
 			errno, strerror(errno));
 		close(fd);
 		return -1;
@@ -505,6 +528,8 @@ proxyv3_getfd_blocking(const struct sockaddr *host,
 	 *  we'll back off quickly enough anyway.
 	 */
 	size_t numMicros = 256;
+	/* Don't back off to more than 10 ms aka 10000 microsecond sleeps. */
+	const size_t maxMicros = 10000;
 	size_t i;
 
 	for (i = 0; i < kMaxIterations; i++) {
@@ -550,6 +575,9 @@ proxyv3_getfd_blocking(const struct sockaddr *host,
 
 		/* Next time around, double it. */
 		numMicros *= 2;
+		if (numMicros > maxMicros) {
+			numMicros = maxMicros;
+		}
 	}
 
 	LogCrit(COMPONENT_FSAL,
