@@ -916,6 +916,25 @@ void prune_defunct_exports(uint64_t generation)
 	release_op_context();
 }
 
+/**
+ * @brief Initialize all stats at startup time.
+ *
+ * Note: This function needs to be in all builds, not just USE_DBUS enabled
+ * ones.
+ *
+ */
+
+void nfs_init_stats_time(void)
+{
+	now(&nfs_stats_time);
+	fsal_stats_time = v3_full_stats_time
+			= v4_full_stats_time
+			= auth_stats_time
+			= clnt_allops_stats_time
+			= nfs_stats_time;
+}
+
+
 #ifdef USE_DBUS
 
 /* DBUS interfaces
@@ -2296,21 +2315,6 @@ static void reset_fsal_stats(void)
 		if (m->stats != NULL)
 			m->m_ops.fsal_reset_stats(m);
 	}
-}
-
-
-/**
- * Initialize all stats at startup time.
- *
- */
-void nfs_init_stats_time(void)
-{
-	now(&nfs_stats_time);
-	fsal_stats_time = v3_full_stats_time
-			= v4_full_stats_time
-			= auth_stats_time
-			= clnt_allops_stats_time
-			= nfs_stats_time;
 }
 
 /**
