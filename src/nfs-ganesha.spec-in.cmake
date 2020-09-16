@@ -227,16 +227,6 @@ Requires: nfs-ganesha = %{version}-%{release}
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support VFS based filesystems
 
-%package proxy
-Summary: The NFS-GANESHA PROXY FSAL
-Group: Applications/System
-BuildRequires: libattr-devel
-Requires: nfs-ganesha = %{version}-%{release}
-
-%description proxy
-This package contains a FSAL shared object to
-be used with NFS-Ganesha to support PROXY based filesystems
-
 %if %{with utils}
 %package utils
 Summary: The NFS-GANESHA util scripts
@@ -524,9 +514,9 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_RADOS_RECOV=%{use_rados_recov}		\
 	-DRADOS_URLS=%{use_rados_urls}			\
 	-DUSE_FSAL_VFS=ON				\
-	-DUSE_FSAL_PROXY=ON				\
+	-DUSE_FSAL_PROXY=OFF				\
 	-DUSE_DBUS=ON					\
-	-DUSE_9P=%{use_9P}				\
+	-DUSE_9P=OFF					\
 	-DDISTNAME_HAS_GIT_DATA=OFF			\
 	-DUSE_MAN_PAGE=%{use_man_page}                  \
 	-DRPCBIND=%{use_rpcbind}			\
@@ -547,11 +537,6 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 
 make %{?_smp_mflags} || make %{?_smp_mflags} || make
 
-%if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
-make -C selinux -f /usr/share/selinux/devel/Makefile ganesha.pp
-pushd selinux && bzip2 -9 ganesha.pp && popd
-%endif
-
 %install
 mkdir -p %{buildroot}%{_sysconfdir}/ganesha/
 mkdir -p %{buildroot}%{_sysconfdir}/dbus-1/system.d
@@ -569,7 +554,6 @@ install -m 755 scripts/nfs-ganesha-config.sh %{buildroot}%{_libexecdir}/ganesha
 %if %{with 9P}
 install -m 755 tools/mount.9P	%{buildroot}%{_sbindir}/mount.9P
 %endif
-
 install -m 644 config_samples/vfs.conf %{buildroot}%{_sysconfdir}/ganesha
 
 mkdir -p %{buildroot}%{_unitdir}
@@ -732,12 +716,6 @@ exit 0
 %config(noreplace) %{_sysconfdir}/ganesha/vfs.conf
 %if %{with man_page}
 %{_mandir}/*/ganesha-vfs-config.8.gz
-%endif
-
-%files proxy
-%{_libdir}/ganesha/libfsalproxy*
-%if %{with man_page}
-%{_mandir}/*/ganesha-proxy-config.8.gz
 %endif
 
 # Optional packages
