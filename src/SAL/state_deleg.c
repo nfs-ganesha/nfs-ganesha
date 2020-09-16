@@ -517,7 +517,7 @@ bool is_write_delegated(struct fsal_obj_handle *obj, nfs_client_id_t **client)
 
 	deleg_stats = &obj->state_hdl->file.fdeleg_stats;
 
-	if (deleg_stats->fds_curr_delegations < 0)
+	if (deleg_stats->fds_curr_delegations == 0)
 		return false;
 
 	write_delegated = obj->state_hdl->file.write_delegated;
