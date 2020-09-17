@@ -2445,15 +2445,18 @@ fsal_status_t nfs_export_get_root_entry(struct gsh_export *export,
 	if (export->exp_root_obj)
 		export->exp_root_obj->obj_ops->get_ref(export->exp_root_obj);
 
-	PTHREAD_RWLOCK_unlock(&export->lock);
-
 	*obj = export->exp_root_obj;
+
+	PTHREAD_RWLOCK_unlock(&export->lock);
 
 	if (!(*obj))
 		return fsalstat(ERR_FSAL_NOENT, 0);
 
-	if ((*obj)->type != DIRECTORY)
+	if ((*obj)->type != DIRECTORY) {
+		(*obj)->obj_ops->put_ref(*obj);
+		*obj = NULL;
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
+	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
