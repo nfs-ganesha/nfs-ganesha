@@ -306,6 +306,8 @@ fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 			  const char *name,
 			  struct fsal_obj_handle **obj,
 			  struct attrlist *attrs_out);
+fsal_status_t fsal_lookup_path(const char *path,
+			       struct fsal_obj_handle **dirobj);
 fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
 			   struct fsal_obj_handle **parent,
 			   struct attrlist *attrs_out);

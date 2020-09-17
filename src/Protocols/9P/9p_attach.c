@@ -61,11 +61,8 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	fsal_status_t fsal_status;
 	char exppath[MAXPATHLEN+1];
-	struct gsh_buffdesc fh_desc;
-	struct fsal_obj_handle *pfsal_handle;
 	int port;
 	struct gsh_export *export;
-	const char *path;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -179,39 +176,22 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		goto errout;
 	}
 
-	path = ctx_export_path(op_ctx);
-
-	if (exppath[0] != '/' || !strcmp(exppath, path)) {
-		/* Check if root object is correctly set, fetch it, and take an
-		 * LRU reference.
+	if (exppath[0] != '/') {
+		/* The client used the Tag. Use the export root object is
+		 * correctly set, fetch it, and take an LRU reference.
 		 */
-		fsal_status =
-		    nfs_export_get_root_entry(op_ctx->ctx_export,
-					    &pfid->pentry);
-
-		if (FSAL_IS_ERROR(fsal_status)) {
-			err = _9p_tools_errno(fsal_status);
-			goto errout;
-		}
+		fsal_status = nfs_export_get_root_entry(op_ctx->ctx_export,
+							&pfid->pentry);
 	} else {
-		fsal_status = op_ctx->fsal_export->exp_ops.lookup_path(
-						op_ctx->fsal_export,
-						exppath,
-						&pfsal_handle, NULL);
-		if (FSAL_IS_ERROR(fsal_status)) {
-			err = _9p_tools_errno(fsal_status);
-			goto errout;
-		}
+		/* Note that we call this even if exppath is just the path to
+		 * the export. It resolves that efficiently.
+		 */
+		fsal_status = fsal_lookup_path(exppath, &pfid->pentry);
+	}
 
-		pfsal_handle->obj_ops->handle_to_key(pfsal_handle,
-						 &fh_desc);
-		fsal_status = op_ctx->fsal_export->exp_ops.create_handle(
-				 op_ctx->fsal_export, &fh_desc, &pfid->pentry,
-				 NULL);
-		if (FSAL_IS_ERROR(fsal_status)) {
-			err = _9p_tools_errno(fsal_status);
-			goto errout;
-		}
+	if (FSAL_IS_ERROR(fsal_status)) {
+		err = _9p_tools_errno(fsal_status);
+		goto errout;
 	}
 
 	/* Initialize state_t embeded in fid. The refcount is initialized

@@ -804,8 +804,13 @@ struct export_ops {
 /**
  * @brief Look up a path
  *
- * This function looks up a path within the export, it is typically
+ * This function looks up a path within the export, it is now exclusively
  * used to get a handle for the root directory of the export.
+ *
+ * NOTE: This method will eventually be replaced by a method that simply
+ *       requests the root obj_handle be instantiated. The single caller
+ *       doesn't request attributes (nor did the two callers that were removed
+ *       in favor of calling fsal_lookup_path).
  *
  * The caller will set the request_mask in attrs_out to indicate the attributes
  * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If

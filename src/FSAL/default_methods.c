@@ -329,7 +329,9 @@ static void export_release(struct fsal_export *exp_hdl)
 }
 
 /* lookup_path
- * default case is not supported
+ * default case is not supported, note that with lookup_path ONLY being
+ * used to instantiate the export's root obj_handle, there can not be any
+ * useful default method.
  */
 
 fsal_status_t lookup_path(struct fsal_export *exp_hdl,

@@ -139,20 +139,19 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* retrieve the associated NFS handle */
-	if (arg->arg_mnt[0] != '/' ||
-	    !strcmp(arg->arg_mnt, ctx_export_path(op_ctx))) {
+	if (arg->arg_mnt[0] != '/') {
+		/* We found the export by tag. Use the root entry of the
+		 * export.
+		 */
 		if (FSAL_IS_ERROR(nfs_export_get_root_entry(export, &obj))) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
 		}
 	} else {
-		LogInfo(COMPONENT_NFSPROTO,
-			 "MOUNT: Performance warning: Export entry is not cached");
-
-		if (FSAL_IS_ERROR(op_ctx->fsal_export->exp_ops.lookup_path(
-						op_ctx->fsal_export,
-						arg->arg_mnt,
-						&obj, NULL))) {
+		/* Note that we call this even if arg_mnt is just the path to
+		 * the export. It resolves that efficiently.
+		 */
+		if (FSAL_IS_ERROR(fsal_lookup_path(arg->arg_mnt, &obj))) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
 		}
