@@ -110,6 +110,8 @@ proxyv3_openfd(const struct sockaddr *host,
 	       const socklen_t socklen,
 	       uint16_t port)
 {
+	int rc;
+
 	LogDebug(COMPONENT_FSAL,
 		 "Opening a new socket");
 
@@ -197,17 +199,20 @@ proxyv3_openfd(const struct sockaddr *host,
 		return -1;
 	}
 
-	if (bindresvport_sa(fd, NULL) < 0) {
+	rc = bindresvport_sa(fd, NULL);
+
+	/* Unlock the rpclock before we exit, even if bindresvport_sa failed */
+	if (pthread_mutex_unlock(&rpcLock) != 0) {
 		LogCrit(COMPONENT_FSAL,
-			"Failed to reserve a privileged port. %d %s",
+			"pthread_mutex_unlock falied %d %s",
 			errno, strerror(errno));
 		close(fd);
 		return -1;
 	}
 
-	if (pthread_mutex_unlock(&rpcLock) != 0) {
+	if (rc < 0) {
 		LogCrit(COMPONENT_FSAL,
-			"pthread_mutex_unlock falied %d %s",
+			"Failed to reserve a privileged port. %d %s",
 			errno, strerror(errno));
 		close(fd);
 		return -1;
