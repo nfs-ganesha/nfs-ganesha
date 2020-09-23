@@ -991,6 +991,9 @@ static void nfs_release_nlm_state(char *release_ip)
 	char serverip[SOCK_NAME_MAX];
 	int i;
 
+	if (!nfs_param.core_param.enable_NLM)
+		return;
+
 	LogDebug(COMPONENT_STATE, "Release all NLM locks");
 
 	cancel_all_nlm_blocked();
