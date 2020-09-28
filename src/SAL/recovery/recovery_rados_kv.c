@@ -151,7 +151,7 @@ char *rados_kv_create_val(nfs_client_id_t *clientid, size_t *size)
 	val[total_len] = ':';
 	total_len += 1;
 	memcpy(val + total_len, cidstr, cidstr_len);
-	total_len += cidstr_lenx_len;
+	total_len += cidstr_len;
 	memcpy(val + total_len, ")", 2);
 
 	LogDebug(COMPONENT_CLIENTID, "Created client name [%s]", val);
