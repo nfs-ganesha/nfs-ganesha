@@ -2465,7 +2465,7 @@ fsal_status_t mem_lookup_path(struct fsal_export *exp_hdl,
 	}
 
 	attrs.valid_mask = ATTR_MODE;
-	attrs.mode = 0755;
+	attrs.mode = 0777;
 
 	if (mfe->root_handle == NULL) {
 		mfe->root_handle = mem_alloc_handle(NULL,
