@@ -336,6 +336,7 @@ int nfs_start_grace(nfs_grace_start_t *gsp)
 	 * existing grace period.
 	 */
 	if (!gsp && !was_grace) {
+		nfs4_cleanup_clid_entries();
 		nfs4_recovery_load_clids(NULL);
 	} else if (gsp && gsp->event != EVENT_JUST_GRACE) {
 		/*
@@ -357,6 +358,14 @@ int nfs_start_grace(nfs_grace_start_t *gsp)
 				return ret;
 			}
 			else {
+				/*
+				 * If we're already in a grace period,
+				 * it can not break the existing count,
+				 * other case, which should not be affected
+				 * by the last count, should be cleanup.
+				 */
+				if (!was_grace)
+					nfs4_cleanup_clid_entries();
 				nfs4_recovery_load_clids(gsp);
 			}
 		}
@@ -707,9 +716,6 @@ static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp)
 {
 	LogDebug(COMPONENT_STATE, "Load recovery cli %p", gsp);
 
-	/* A NULL gsp pointer indicates an initial startup grace period */
-	if (gsp == NULL)
-		nfs4_cleanup_clid_entries();
 	recovery_backend->recovery_read_clids(gsp, nfs4_add_clid_entry,
 						nfs4_add_rfh_entry);
 }
