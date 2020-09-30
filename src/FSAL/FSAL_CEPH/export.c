@@ -238,7 +238,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	/* FSAL status to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The FSAL specific portion of the handle received by the client */
-	struct ceph_host_handle *key = desc->addr;
+	struct ceph_handle_key *key = desc->addr;
+	struct ceph_host_handle *hhdl = &key->hhdl;
 	/* Ceph return code */
 	int rc = 0;
 	/* Stat buffer */
@@ -256,8 +257,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		return status;
 	}
 
-	vi.ino.val = key->chk_ino;
-	vi.snapid.val = key->chk_snap;
+	vi.ino.val = hhdl->chk_ino;
+	vi.snapid.val = hhdl->chk_snap;
 
 	/* Check our local cache first */
 	i = ceph_ll_get_inode(export->cmount, vi);
@@ -268,7 +269,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		 * Currently, there is no interface for looking up a snapped
 		 * inode, so we just bail here in that case.
 		 */
-		if (key->chk_snap != CEPH_NOSNAP)
+		if (hhdl->chk_snap != CEPH_NOSNAP)
 			return ceph2fsal_error(-ESTALE);
 
 		rc = ceph_ll_lookup_inode(export->cmount, vi.ino, &i);
