@@ -18,7 +18,7 @@
 }
 
 /* Options and variants */
-%pure-parser
+%define api.pure
 %lex-param {struct parser_state *st}
 %parse-param {struct parser_state *st}
 %locations
