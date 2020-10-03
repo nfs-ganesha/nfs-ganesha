@@ -1550,6 +1550,16 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 		for (entry = resok->reply.entries;
 		     entry != NULL;
 		     entry = entry->nextentry, count++) {
+			struct nfs_fh3 *fh3 =
+				&entry->name_handle.post_op_fh3_u.handle;
+			post_op_attr *post_op_attr =
+				&entry->name_attributes;
+			fattr3 *attrs =
+				&post_op_attr->post_op_attr_u.attributes;
+			struct attrlist cb_attrs;
+			struct proxyv3_obj_handle *result_handle;
+			enum fsal_dir_result cb_rc;
+
 			/*
 			 * Don't forget to update the cookie, as long as we're
 			 * not just doing readahead.
@@ -1576,29 +1586,38 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 			}
 
 			if (!entry->name_attributes.attributes_follow) {
-				LogCrit(COMPONENT_FSAL,
-					"READDIRPLUS didn't return attributes for '%s'",
-					entry->name);
-				return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-			}
+				/*
+				 * We didn't get back attributes, so attrs is
+				 * currently not filled in / filled with
+				 * garbage. Let's do an explicit GETATTR as a
+				 * last chance.
+				 */
 
-			struct nfs_fh3 *fh3 =
-				&entry->name_handle.post_op_fh3_u.handle;
-			post_op_attr *post_op_attr =
-				&entry->name_attributes;
-			fattr3 *attrs =
-				&post_op_attr->post_op_attr_u.attributes;
+				fsal_status_t rc;
+
+				LogFullDebug(COMPONENT_FSAL,
+					     "READDIRPLUS didn't return attributes for '%s'. Trying GETATTR",
+					     entry->name);
+
+				rc = proxyv3_getattr_from_fh3(fh3, attrs);
+
+				if (FSAL_IS_ERROR(rc)) {
+					LogCrit(COMPONENT_FSAL,
+						"Last chance GETATTR failed for READDIRPLUS entry '%s'",
+						entry->name);
+					return rc;
+				}
+			}
 
 			/*
 			 * Tell alloc_handle we just want the requested
 			 * attributes.
 			 */
-			struct attrlist cb_attrs;
 
 			memset(&cb_attrs, 0, sizeof(cb_attrs));
 			FSAL_SET_MASK(cb_attrs.request_mask, attrmask);
 
-			struct proxyv3_obj_handle *result_handle =
+			result_handle =
 				proxyv3_alloc_handle(op_ctx->fsal_export,
 						     fh3, attrs, dir,
 						     &cb_attrs);
@@ -1610,8 +1629,7 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 				return fsalstat(ERR_FSAL_FAULT, 0);
 			}
 
-			enum fsal_dir_result cb_rc =
-				cb(entry->name,
+			cb_rc = cb(entry->name,
 				   &result_handle->obj,
 				   &cb_attrs, cbarg, entry->cookie);
 
