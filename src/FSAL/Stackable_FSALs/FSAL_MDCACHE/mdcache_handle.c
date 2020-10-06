@@ -901,7 +901,7 @@ out:
 		    "attrs ", &entry->attrs, true);
 
 	if (invalidate && entry->obj_handle.type == DIRECTORY &&
-	    gsh_time_cmp(&oldmtime, &entry->attrs.mtime) < 0) {
+	    gsh_time_cmp(&oldmtime, &entry->attrs.mtime) != 0) {
 
 		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
 		mdcache_dirent_invalidate_all(entry);
