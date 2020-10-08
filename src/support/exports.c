@@ -317,10 +317,9 @@ static char *client_types[] = {
 	 };
 
 void LogClientListEntry(log_levels_t level,
-			log_components_t component,
 			int line,
-			char *func,
-			char *tag,
+			const char *func,
+			const char *tag,
 			exportlist_client_entry_t *entry)
 {
 	char buf[1024] = "\0";
@@ -328,8 +327,14 @@ void LogClientListEntry(log_levels_t level,
 	char *paddr = NULL;
 	char *free_paddr = NULL;
 
-	if (!isLevel(component, level))
+	if (!isLevel(COMPONENT_EXPORT, level))
 		return;
+
+	if (tag != NULL)
+		display_cat(&dspbuf, tag);
+
+	if (level >= NIV_DEBUG)
+		display_printf(&dspbuf, "%p ", entry);
 
 	switch (entry->type) {
 	case NETWORK_CLIENT:
@@ -375,13 +380,21 @@ void LogClientListEntry(log_levels_t level,
 
 	display_cat(&dspbuf, ")");
 
-	DisplayLogComponentLevel(component, (char *) __FILE__, line, func,
-				 level, "%s%p %s", tag, entry, buf);
+	DisplayLogComponentLevel(COMPONENT_EXPORT,
+				 (char *) __FILE__, line, func, level,
+				 "%s", buf);
 
 	gsh_free(free_paddr);
 }
 
-static void display_clients(struct gsh_export *export)
+#define LogMidDebug_ClientListEntry(tag, cli) \
+	LogClientListEntry(NIV_MID_DEBUG, __LINE__, (char *) __func__, tag, cli)
+
+static void LogClients(log_levels_t level,
+		       int line,
+		       const char *func,
+		       const char *tag,
+		       struct gsh_export *export)
 {
 	struct glist_head *glist;
 
@@ -392,16 +405,14 @@ static void display_clients(struct gsh_export *export)
 
 		client = glist_entry(glist, exportlist_client_entry_t,
 				     cle_list);
-		LogClientListEntry(NIV_MID_DEBUG,
-				   COMPONENT_EXPORT,
-				   __LINE__,
-				   (char *) __func__,
-				   "",
-				   client);
+		LogClientListEntry(level, line, func, tag, client);
 	}
 
 	PTHREAD_RWLOCK_unlock(&export->lock);
 }
+
+#define LogMidDebug_Clients(export) \
+	LogClients(NIV_MID_DEBUG, __LINE__, __func__, NULL, export)
 
 /**
  * @brief Expand the client name token into one or more client entries
@@ -562,12 +573,7 @@ static int add_client(struct glist_head *client_list,
 				} else
 					continue;
 				cli->client_perms = *perms;
-				LogClientListEntry(NIV_MID_DEBUG,
-						   COMPONENT_EXPORT,
-						   __LINE__,
-						   (char *) __func__,
-						   "",
-						   cli);
+				LogMidDebug_ClientListEntry("", cli);
 				glist_add_tail(client_list, &cli->cle_list);
 				cli = NULL; /* let go of it */
 			}
@@ -591,12 +597,7 @@ static int add_client(struct glist_head *client_list,
 		goto out;
 	}
 	cli->client_perms = *perms;
-	LogClientListEntry(NIV_MID_DEBUG,
-			   COMPONENT_EXPORT,
-			   __LINE__,
-			   (char *) __func__,
-			   "",
-			   cli);
+	LogMidDebug_ClientListEntry("", cli);
 	glist_add_tail(client_list, &cli->cle_list);
 	cli = NULL;
 out:
@@ -951,8 +952,8 @@ static void *export_init(void *link_mem, void *self_struct)
 
 	if (self_struct == NULL) {
 		export = alloc_export();
-		LogInfo(COMPONENT_EXPORT,
-			"Allocated export %p", export);
+		LogFullDebug(COMPONENT_EXPORT,
+			     "Allocated export %p", export);
 		return export;
 	} else { /* free resources case */
 		export = self_struct;
@@ -971,8 +972,8 @@ static void *export_init(void *link_mem, void *self_struct)
 			pnfs_ds_remove(export->export_id);
 		} else {
 			/* Release the export allocated above */
-			LogInfo(COMPONENT_EXPORT,
-				"Releasing export %p", export);
+			LogFullDebug(COMPONENT_EXPORT,
+				     "Releasing export %p", export);
 			put_gsh_export_config(export);
 		}
 
@@ -1184,10 +1185,10 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		LogFullDebug(COMPONENT_EXPORT, "Updating %p", probe_exp);
 
 		LogMidDebug(COMPONENT_EXPORT, "Old Client List");
-		display_clients(probe_exp);
+		LogMidDebug_Clients(probe_exp);
 
 		LogMidDebug(COMPONENT_EXPORT, "New Client List");
-		display_clients(export);
+		LogMidDebug_Clients(export);
 
 		if (strcmp_null(export->FS_tag,
 				probe_exp->FS_tag) != 0) {
@@ -1438,7 +1439,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	    export->export_perms.options & EXPORT_OPTION_NFSV4)
 		export_add_to_mount_work(export);
 
-	display_clients(export);
+	LogMidDebug_Clients(export);
 
 	/* Copy the generation */
 	export->config_gen = get_parse_root_generation(node);
@@ -2135,24 +2136,39 @@ err_out:
 	return -1;
 }
 
-bool log_info_export(struct gsh_export *exp, void *state)
+struct log_exports_parms {
+	log_levels_t level;
+	int line;
+	const char *func;
+	const char *tag;
+};
+
+bool log_an_export(struct gsh_export *exp, void *state)
 {
+	struct log_exports_parms *lep = state;
 	char perms[1024] = "\0";
 	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
 	(void) StrExportOptions(&dspbuf, &exp->export_perms);
 
-	LogInfo(COMPONENT_EXPORT,
-		"Export %5d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
-		exp->export_id, exp->cfg_pseudopath,
-		exp->cfg_fullpath, exp->FS_tag, perms);
+	if (isLevel(COMPONENT_EXPORT, lep->level)) {
+		DisplayLogComponentLevel(COMPONENT_EXPORT,
+					 (char *) __FILE__, lep->line,
+					 lep->func, lep->level,
+					 "Export %5d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
+					 exp->export_id, exp->cfg_pseudopath,
+					 exp->cfg_fullpath, exp->FS_tag, perms);
+	}
+	LogClients(lep->level, lep->line, lep->func, "   ", exp);
 
 	return true;
 }
 
-void log_info_exports(void)
+void log_all_exports(log_levels_t level, int line, const char *func)
 {
-	foreach_gsh_export(log_info_export, false, NULL);
+	struct log_exports_parms lep = {level, line, func};
+
+	foreach_gsh_export(log_an_export, false, &lep);
 }
 
 /**
@@ -2195,7 +2211,7 @@ int ReadExports(config_file_t in_config,
 		return -1;
 	}
 
-	log_info_exports();
+	log_all_exports(NIV_INFO, __LINE__, __func__);
 
 	return num_exp;
 }
@@ -2217,7 +2233,7 @@ int reread_exports(config_file_t in_config,
 
 	EXPORT_ADMIN_LOCK();
 
-	LogEvent(COMPONENT_CONFIG, "Reread exports");
+	LogInfo(COMPONENT_CONFIG, "Reread exports starting");
 
 	rc = load_config_from_parse(in_config,
 				    &export_defaults_param,
@@ -2243,7 +2259,8 @@ int reread_exports(config_file_t in_config,
 		goto out;
 	}
 
-	log_info_exports();
+	LogDebug(COMPONENT_EXPORT, "Exports before update");
+	log_all_exports(NIV_DEBUG, __LINE__, __func__);
 
 	generation = get_config_generation(in_config);
 
@@ -2256,7 +2273,9 @@ int reread_exports(config_file_t in_config,
 	prune_defunct_exports(generation);
 	create_pseudofs();
 
-	log_info_exports();
+	LogEvent(COMPONENT_CONFIG, "Reread exports complete");
+	LogInfo(COMPONENT_EXPORT, "Exports after update");
+	log_all_exports(NIV_INFO, __LINE__, __func__);
 
 out:
 
@@ -2605,16 +2624,10 @@ int init_export_root(struct gsh_export *export)
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 	PTHREAD_RWLOCK_unlock(&export->lock);
 
-	if (isDebug(COMPONENT_EXPORT)) {
-		LogDebug(COMPONENT_EXPORT,
-			 "Added root obj %p FSAL %s for path %s on export_id=%d",
-			 obj, obj->fsal->name, CTX_FULLPATH(op_ctx),
-			 export->export_id);
-	} else {
-		LogInfo(COMPONENT_EXPORT,
-			"Added root obj for path %s on export_id=%d",
-			CTX_FULLPATH(op_ctx), export->export_id);
-	}
+	LogDebug(COMPONENT_EXPORT,
+		 "Added root obj %p FSAL %s for path %s on export_id=%d",
+		 obj, obj->fsal->name, CTX_FULLPATH(op_ctx),
+		 export->export_id);
 
 	my_status = 0;
 out:
@@ -2737,12 +2750,7 @@ static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
 	glist_for_each(glist, &export->clients) {
 		client = glist_entry(glist, exportlist_client_entry_t,
 				     cle_list);
-		LogClientListEntry(NIV_MID_DEBUG,
-				   COMPONENT_EXPORT,
-				   __LINE__,
-				   (char *) __func__,
-				   "Match V4: ",
-				   client);
+		LogMidDebug_ClientListEntry("Match V4: ", client);
 
 		switch (client->type) {
 		case NETWORK_CLIENT:
