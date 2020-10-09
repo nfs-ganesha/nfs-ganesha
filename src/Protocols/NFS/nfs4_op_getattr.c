@@ -71,7 +71,6 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 		&res_GETATTR4->GETATTR4res_u.resok4.obj_attributes;
 	nfs_client_id_t *deleg_client = NULL;
 	struct fsal_obj_handle *obj = data->current_obj;
-	cbgetattr_t *cbgetattr = NULL;
 
 	/* This is a NFS4_OP_GETTAR */
 	resp->resop = NFS4_OP_GETATTR;
@@ -109,36 +108,42 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 
 	nfs4_bitmap4_Remove_Unsupported(&arg_GETATTR4->attr_request);
 
-	/* As per rfc 7530, section:10.4.3
-	 * The server needs to employ special handling for a GETATTR where the
-	 * target is a file that has an OPEN_DELEGATE_WRITE delegation in
-	 * effect.
-	 *
-	 * The server may use CB_GETATTR to fetch the right attributes from the
-	 * client holding the delegation or may simply recall the delegation.
-	 * Till then send EDELAY error.
-	 */
+	if (obj->type == REGULAR_FILE) {
+		/* As per rfc 7530, section:10.4.3
+		 * The server needs to employ special handling for a GETATTR
+		 * where the target is a file that has an OPEN_DELEGATE_WRITE
+		 * delegation in effect.
+		 *
+		 * The server may use CB_GETATTR to fetch the right attributes
+		 * from the client holding the delegation or may simply recall
+		 * the delegation. Till then send EDELAY error.
+		 */
+		STATELOCK_lock(obj);
 
-	STATELOCK_lock(obj);
-	if (is_write_delegated(obj, &deleg_client) &&
-	    deleg_client && (deleg_client->gsh_client != op_ctx->client)) {
+		if (is_write_delegated(obj, &deleg_client) &&
+		    deleg_client &&
+		    (deleg_client->gsh_client != op_ctx->client)) {
+			res_GETATTR4->status =
+					handle_deleg_getattr(obj, deleg_client);
 
-		res_GETATTR4->status = handle_deleg_getattr(obj, deleg_client);
+			if (res_GETATTR4->status != NFS4_OK) {
+				STATELOCK_unlock(obj);
+				goto out;
+			} else {
+				cbgetattr_t *cbgetattr = NULL;
 
-		if (res_GETATTR4->status != NFS4_OK) {
-			STATELOCK_unlock(obj);
-			goto out;
-		} else {
-			/* CB_GETATTR response handler must have updated the
-			 * attributes in md-cache. reset cbgetattr state and
-			 * fall through. st_lock is held till we finish
-			 * sending response*/
-			cbgetattr = &obj->state_hdl->file.cbgetattr;
-			cbgetattr->state = CB_GETATTR_NONE;
+				/* CB_GETATTR response handler must have updated
+				 * the attributes in md-cache. reset cbgetattr
+				 * state and fall through. st_lock is held till
+				 * we finish ending response*/
+				cbgetattr = &obj->state_hdl->file.cbgetattr;
+				cbgetattr->state = CB_GETATTR_NONE;
+			}
 		}
+
+		/* release st_lock */
+		STATELOCK_unlock(obj);
 	}
-	/* release st_lock */
-	STATELOCK_unlock(obj);
 
 	res_GETATTR4->status = file_To_Fattr(
 			data, mask, &attrs,
