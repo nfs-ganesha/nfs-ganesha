@@ -1429,6 +1429,169 @@ proxyv3_mknode(struct fsal_obj_handle *dir_hdl,
 }
 
 /**
+ * @brief Process the entries from a READDIR3 response.
+ */
+
+static fsal_status_t
+proxyv3_readdir_process_entries(entryplus3 *entry,
+				cookie3 *cookie,
+				struct proxyv3_obj_handle *parent_dir,
+				fsal_readdir_cb cb,
+				void *cbarg,
+				attrmask_t attrmask)
+{
+	int count = 0;
+	bool readahead = false;
+
+	/*
+	 * Loop over all the entries, making fsal objects from the
+	 * results and calling the given callback.
+	 */
+	for (; entry != NULL; entry = entry->nextentry, count++) {
+		struct nfs_fh3 *fh3 =
+			&entry->name_handle.post_op_fh3_u.handle;
+		post_op_attr *post_op_attr =
+			&entry->name_attributes;
+		fattr3 *attrs =
+			&post_op_attr->post_op_attr_u.attributes;
+		struct fsal_attrlist cb_attrs;
+		struct proxyv3_obj_handle *result_handle;
+		enum fsal_dir_result cb_rc;
+
+		/*
+		 * Don't forget to update the cookie, as long as we're
+		 * not just doing readahead.
+		 */
+
+		if (!readahead) {
+			*cookie = entry->cookie;
+		}
+
+		if (strcmp(entry->name, ".") == 0 ||
+		    strcmp(entry->name, "..") == 0) {
+			LogFullDebug(COMPONENT_FSAL,
+				     "Skipping special value of '%s'",
+				     entry->name);
+			continue;
+		}
+
+
+		if (!entry->name_handle.handle_follows) {
+			/*
+			 * We didn't even get back a handle, so neither fh3 nor
+			 * attrs are going to be filled in. NFS clients seem to
+			 * issue a LOOKUP3 in response to that, so we'll do the
+			 * same (since Ganesha doesn't let us say "no fh3").
+			 */
+
+			fsal_status_t rc;
+			struct fsal_obj_handle *lookup_handle;
+			struct proxyv3_obj_handle *lookup_obj;
+
+			LogFullDebug(COMPONENT_FSAL,
+				     "READDIRPLUS didn't return a handle for '%s'. Trying LOOKUP",
+				     entry->name);
+
+			rc = proxyv3_lookup_internal(op_ctx->fsal_export,
+						     entry->name,
+						     &parent_dir->obj,
+						     &lookup_handle,
+						     NULL /* drop attrs */);
+
+			if (FSAL_IS_ERROR(rc)) {
+				LogCrit(COMPONENT_FSAL,
+					"Last chance LOOKUP failed for READDIRPLUS entry '%s'",
+					entry->name);
+				return rc;
+			}
+
+			/* Pull the fh3 out of the lookup_handle */
+			lookup_obj =
+				container_of(lookup_handle,
+					     struct proxyv3_obj_handle,
+					     obj);
+
+			memcpy(fh3, &lookup_obj->fh3, sizeof(struct nfs_fh3));
+
+			/*
+			 * We could use the attrs from the LOOKUP. But we're
+			 * also hoping that this code is temporary. So just fall
+			 * through and let the last-chance GETATTR below handle
+			 * it.
+			 */
+		}
+
+		if (!entry->name_attributes.attributes_follow) {
+			/*
+			 * We didn't get back attributes, so attrs is
+			 * currently not filled in / filled with
+			 * garbage. Let's do an explicit GETATTR as a
+			 * last chance.
+			 */
+
+			fsal_status_t rc;
+
+			LogFullDebug(COMPONENT_FSAL,
+				     "READDIRPLUS didn't return attributes for '%s'. Trying GETATTR",
+				     entry->name);
+
+			rc = proxyv3_getattr_from_fh3(fh3, attrs);
+
+			if (FSAL_IS_ERROR(rc)) {
+				LogCrit(COMPONENT_FSAL,
+					"Last chance GETATTR failed for READDIRPLUS entry '%s'",
+					entry->name);
+				return rc;
+			}
+		}
+
+		/*
+		 * Tell alloc_handle we just want the requested
+		 * attributes.
+		 */
+
+		memset(&cb_attrs, 0, sizeof(cb_attrs));
+		FSAL_SET_MASK(cb_attrs.request_mask, attrmask);
+
+		result_handle =
+			proxyv3_alloc_handle(op_ctx->fsal_export,
+					     fh3, attrs, parent_dir,
+					     &cb_attrs);
+
+		if (result_handle == NULL) {
+			LogCrit(COMPONENT_FSAL,
+				"Failed to make a handle for READDIRPLUS result for entry '%s'",
+				entry->name);
+			return fsalstat(ERR_FSAL_FAULT, 0);
+		}
+
+		cb_rc = cb(entry->name,
+			   &result_handle->obj,
+			   &cb_attrs, cbarg, entry->cookie);
+
+		/*
+		 * Other FSALs do this as >= DIR_READAHEAD, but I prefer
+		 * an explicit switch with no default.
+		 */
+
+		switch (cb_rc) {
+		case DIR_CONTINUE:
+			/* Next entry. */
+			continue;
+		case DIR_READAHEAD:
+			/* Keep processing the entries we've got. */
+			readahead = true;
+			continue;
+		case DIR_TERMINATE:
+			/* Okay, all done. */
+			break;
+		}
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
  * @brief Do a READDIR3 for a given directory.
  *
  *        Do a READDIR3 for a given directory, calling a callback for each
@@ -1488,6 +1651,7 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 		/* @todo Move this entire block to a helper function. */
 		READDIRPLUS3args args;
 		READDIRPLUS3res result;
+		fsal_status_t rc;
 
 		memset(&result, 0, sizeof(result));
 
@@ -1534,129 +1698,23 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 		LogFullDebug(COMPONENT_FSAL,
 			     "READDIRPLUS succeeded, looping over dirents");
 
-		entryplus3 *entry;
+
 		READDIRPLUS3resok *resok = &result.READDIRPLUS3res_u.resok;
-		int count = 0;
-		bool readahead = false;
 		/* Mark EOF now, if true. */
 		*eof = resok->reply.eof;
 		/* Update the cookie verifier for the next iteration. */
 		memcpy(&cookie_verf, &resok->cookieverf, sizeof(cookie_verf));
 
-		/*
-		 * Loop over all the entries, making fsal objects from the
-		 * results and calling the given callback.
-		 */
-		for (entry = resok->reply.entries;
-		     entry != NULL;
-		     entry = entry->nextentry, count++) {
-			struct nfs_fh3 *fh3 =
-				&entry->name_handle.post_op_fh3_u.handle;
-			post_op_attr *post_op_attr =
-				&entry->name_attributes;
-			fattr3 *attrs =
-				&post_op_attr->post_op_attr_u.attributes;
-			struct fsal_attrlist cb_attrs;
-			struct proxyv3_obj_handle *result_handle;
-			enum fsal_dir_result cb_rc;
-
-			/*
-			 * Don't forget to update the cookie, as long as we're
-			 * not just doing readahead.
-			 */
-
-			if (!readahead) {
-				cookie = entry->cookie;
-			}
-
-			if (strcmp(entry->name, ".") == 0 ||
-			    strcmp(entry->name, "..") == 0) {
-				LogFullDebug(COMPONENT_FSAL,
-					     "Skipping special value of '%s'",
-					     entry->name);
-				continue;
-			}
-
-
-			if (!entry->name_handle.handle_follows) {
-				LogCrit(COMPONENT_FSAL,
-					"READDIRPLUS didn't return a handle for '%s'",
-					entry->name);
-				return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-			}
-
-			if (!entry->name_attributes.attributes_follow) {
-				/*
-				 * We didn't get back attributes, so attrs is
-				 * currently not filled in / filled with
-				 * garbage. Let's do an explicit GETATTR as a
-				 * last chance.
-				 */
-
-				fsal_status_t rc;
-
-				LogFullDebug(COMPONENT_FSAL,
-					     "READDIRPLUS didn't return attributes for '%s'. Trying GETATTR",
-					     entry->name);
-
-				rc = proxyv3_getattr_from_fh3(fh3, attrs);
-
-				if (FSAL_IS_ERROR(rc)) {
-					LogCrit(COMPONENT_FSAL,
-						"Last chance GETATTR failed for READDIRPLUS entry '%s'",
-						entry->name);
-					return rc;
-				}
-			}
-
-			/*
-			 * Tell alloc_handle we just want the requested
-			 * attributes.
-			 */
-			memset(&cb_attrs, 0, sizeof(cb_attrs));
-			FSAL_SET_MASK(cb_attrs.request_mask, attrmask);
-
-			result_handle =
-				proxyv3_alloc_handle(op_ctx->fsal_export,
-						     fh3, attrs, dir,
-						     &cb_attrs);
-
-			if (result_handle == NULL) {
-				LogCrit(COMPONENT_FSAL,
-					"Failed to make a handle for READDIRPLUS result for entry '%s'",
-					entry->name);
-				return fsalstat(ERR_FSAL_FAULT, 0);
-			}
-
-			cb_rc = cb(entry->name,
-				   &result_handle->obj,
-				   &cb_attrs, cbarg, entry->cookie);
-
-			/*
-			 * Other FSALs do this as >= DIR_READAHEAD, but I prefer
-			 * an explicit switch with no default.
-			 */
-
-			switch (cb_rc) {
-			case DIR_CONTINUE:
-				/* Next entry. */
-				continue;
-			case DIR_READAHEAD:
-				/* Keep processing the entries we've got. */
-				readahead = true;
-				continue;
-			case DIR_TERMINATE:
-				/* Okay, all done. */
-				break;
-			}
-		}
+		/* Lookup over the entries, calling our callback for each. */
+		rc = proxyv3_readdir_process_entries(resok->reply.entries,
+						     &cookie, dir,
+						     cb, cbarg, attrmask);
 
 		/* Cleanup any memory that READDIRPLUS3res allocated for us. */
 		xdr_free(decFunc, &result);
 
-		LogFullDebug(COMPONENT_FSAL,
-			     "Finished reading %d entries. EOF is %s",
-			     count, (*eof) ? "T" : "F");
+		if (FSAL_IS_ERROR(rc))
+			return rc;
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
