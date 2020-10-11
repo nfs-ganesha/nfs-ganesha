@@ -26,8 +26,8 @@ Here is a list of things that may be useful with Ganesha.
 
  * PyNFS
    Client and server libraries for NFSv4.0 and NFSv4.1 with a
-   collection of tests.  By CITI, available from
-   git://git.linux-nfs.org/projects/iisaman/newpynfs.git
+   collection of tests.  Originally by CITI, available from
+   git://git.linux-nfs.org/projects/bfields/pynfs.git
 
  * NFS Shell
    A user-mode NFSv3 client and call exerciser, available from
