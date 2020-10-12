@@ -47,6 +47,9 @@
 #include "statx_compat.h"
 #include "nfs_core.h"
 #include "linux/falloc.h"
+#ifdef USE_LTTNG
+#include "gsh_lttng/fsal_ceph.h"
+#endif
 
 /**
  * @brief Release an object
@@ -100,6 +103,11 @@ static fsal_status_t ceph_fsal_lookup(struct fsal_obj_handle *dir_pub,
 
 	LogFullDebug(COMPONENT_FSAL, "Lookup %s", path);
 
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_lookup, __func__, __LINE__,
+		   path, NULL, 0);
+#endif
+
 	rc = fsal_ceph_ll_lookup(export->cmount, dir->i, path, &i, &stx,
 					!!attrs_out, &op_ctx->creds);
 	if (rc < 0)
@@ -111,6 +119,11 @@ static fsal_status_t ceph_fsal_lookup(struct fsal_obj_handle *dir_pub,
 		ceph2fsal_attributes(&stx, attrs_out);
 
 	*obj_pub = &obj->handle;
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_lookup, __func__, __LINE__,
+		   path, &obj->handle, stx.stx_ino);
+#endif
 
 	return fsalstat(0, 0);
 }
@@ -195,6 +208,9 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 	unsigned int want = attrmask2ceph_want(attrmask);
 	/* Return status */
 	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
+	/* local rfiles in target dir */
+	uint64_t rfiles = 0;
+
 
 	rc = fsal_ceph_ll_opendir(export->cmount, dir->i, &dir_desc,
 				  &op_ctx->creds);
@@ -256,6 +272,7 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 			/* Read ahead not supported by this FSAL. */
 			if (cb_rc >= DIR_READAHEAD)
 				goto closedir;
+			rfiles += 1;
 
 		} else if (rc == 0) {
 			*eof = true;
@@ -264,6 +281,11 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 			abort();
 		}
 	}
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_readdir, __func__, __LINE__,
+		   dir_pub->fileid, rfiles);
+#endif
 
  closedir:
 
@@ -339,6 +361,7 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
+
 		status = (*new_obj)->obj_ops->setattr2(*new_obj, false, NULL,
 						      attrib);
 		if (FSAL_IS_ERROR(status)) {
@@ -370,6 +393,11 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 	}
 
 	FSAL_SET_MASK(attrib->valid_mask, ATTR_MODE);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_mkdir, __func__, __LINE__,
+		   name, &obj->handle, stx.stx_ino);
+#endif
 
 	return status;
 }
@@ -484,6 +512,11 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 	}
 
 	FSAL_SET_MASK(attrib->valid_mask, ATTR_MODE);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_mknod, __func__, __LINE__,
+		   name, nodetype, &obj->handle, stx.stx_ino);
+#endif
 
 	return status;
 #else
@@ -667,6 +700,11 @@ static fsal_status_t ceph_fsal_getattrs(struct fsal_obj_handle *handle_pub,
 	}
 #endif				/* CEPHFS_POSIX_ACL */
 
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_getattrs, __func__, __LINE__,
+		   stx.stx_ino, stx.stx_size, stx.stx_mode);
+#endif
+
 	ceph2fsal_attributes(&stx, attrs);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 out_err:
@@ -805,6 +843,11 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
 			 name, strerror(-rc), -rc);
 		return ceph2fsal_error(rc);
 	}
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_unlink, __func__, __LINE__,
+		   name, object_file_type_to_str(obj_pub->type));
+#endif
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -954,6 +997,11 @@ static fsal_status_t ceph_fsal_close(struct fsal_obj_handle *obj_hdl)
 		status = ceph_close_my_fd(&handle->fd);
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_close, __func__, __LINE__,
+		   obj_hdl->fileid);
+#endif
 
 	return status;
 }
@@ -1161,6 +1209,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (name == NULL) {
 		/* This is an open by handle */
+		/* **TODO** split open by handle to another function */
 		if (state != NULL) {
 			/* Prepare to take the share reservation, but only if we
 			 * are called with a valid state (if state is NULL the
@@ -1343,6 +1392,11 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 				     fsal_err_txt(status));
 		}
 
+#ifdef USE_LTTNG
+		tracepoint(fsalceph, ceph_open, __func__, __LINE__,
+			   name, *new_obj, stx.stx_ino, "opend");
+#endif
+
 		return status;
 	}
 
@@ -1462,6 +1516,11 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
 
 	*new_obj = &hdl->handle;
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_open, __func__, __LINE__,
+		   name, &hdl->handle, stx.stx_ino, "created");
+#endif
 
 	if (created && attrib_set->valid_mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
@@ -1750,6 +1809,11 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		offset += nb_read;
 	}
 
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_read, __func__, __LINE__,
+		   obj_hdl->fileid, nb_read);
+#endif
+
 #if 0
 	/** @todo
 	 *
@@ -1861,6 +1925,11 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		}
 	}
 
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_write, __func__, __LINE__,
+		   obj_hdl->fileid, nb_written);
+#endif
+
  out:
 
 	if (ceph_fd)
@@ -1908,6 +1977,12 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 	 * altogether.
 	 */
 	retval = ceph_ll_sync_inode(export->cmount, myself->i, 0);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_commit, __func__, __LINE__,
+		   obj_hdl->fileid);
+#endif
+
 	return ceph2fsal_error(retval);
 }
 #else
@@ -1949,6 +2024,11 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 		if (retval < 0)
 			status = ceph2fsal_error(retval);
 	}
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_commit, __func__, __LINE__,
+		   obj_hdl->fileid);
+#endif
 
 	if (closefd)
 		(void) ceph_ll_close(export->cmount, out_fd->fd);
@@ -2134,6 +2214,11 @@ static fsal_status_t ceph_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	/* Fall through (retval == 0) */
 
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_lock, __func__, __LINE__,
+		   obj_hdl->fileid, lock_op);
+#endif
+
  err:
 
 	if (ceph_fd)
@@ -2227,6 +2312,11 @@ static fsal_status_t ceph_fsal_lease_op2(struct fsal_obj_handle *obj_hdl,
 
 	retval = ceph_ll_delegation(export->cmount, my_fd, cmd, ceph_deleg_cb,
 				    obj_hdl);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_lease, __func__, __LINE__,
+		   obj_hdl->fileid, cmd);
+#endif
 
 	if (ceph_fd)
 		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
@@ -2418,6 +2508,12 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 
 	rc = fsal_ceph_ll_setattr(export->cmount, myself->i, &stx, mask,
 					&op_ctx->creds);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_setattrs, __func__, __LINE__,
+		   stx.stx_ino, stx.stx_size, stx.stx_mode);
+#endif
+
 	if (rc < 0) {
 		LogDebug(COMPONENT_FSAL,
 			 "setattrx returned %s (%d)",
@@ -2576,6 +2672,7 @@ static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 	Fh *my_fd = NULL;
 	bool has_lock = false;
 	bool closefd = false;
+	int mode;
 	fsal_openflags_t openflags = FSAL_O_WRITE;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
@@ -2600,10 +2697,10 @@ static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	retval = ceph_ll_fallocate(export->cmount, my_fd,
-				   allocate ? 0 :
-				   FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+	mode = allocate ? 0 : FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE;
+	retval = ceph_ll_fallocate(export->cmount, my_fd, mode,
 				   offset, length);
+
 	if (retval < 0) {
 		status = ceph2fsal_error(retval);
 		goto out;
@@ -2612,6 +2709,12 @@ static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 	retval = ceph_ll_fsync(export->cmount, my_fd, false);
 	if (retval < 0)
 		status = ceph2fsal_error(retval);
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_falloc, __func__, __LINE__,
+		   obj_hdl->fileid, mode, offset, length);
+#endif
+
  out:
 	if (ceph_fd)
 		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);

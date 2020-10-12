@@ -3,6 +3,7 @@ include_directories(
 )
 
 set(ganesha_trace_LIB_SRCS
+  fsal_ceph.c
   fsal_mem.c
   logger.c
   mdcache.c

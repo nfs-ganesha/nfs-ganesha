@@ -29,6 +29,7 @@ target_link_libraries(fsalceph
   ganesha_nfsd
   ${CEPHFS_LIBRARIES}
   ${SYSTEM_LIBRARIES}
+  ${LTTNG_LIBRARIES}
   "-Wl,--no-undefined"
 )
 

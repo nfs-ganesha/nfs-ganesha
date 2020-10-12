@@ -256,6 +256,22 @@
   __tracepoint_fsalgl___open_fd;
   __tracepoint_fsalgl___close_fd;
   __tracepoint_fsalgl___gl_handle;
+  __tracepoint_fsalceph___ceph_create_handle;
+  __tracepoint_fsalceph___ceph_close;
+  __tracepoint_fsalceph___ceph_commit;
+  __tracepoint_fsalceph___ceph_falloc;
+  __tracepoint_fsalceph___ceph_getattrs;
+  __tracepoint_fsalceph___ceph_lease;
+  __tracepoint_fsalceph___ceph_lock;
+  __tracepoint_fsalceph___ceph_lookup;
+  __tracepoint_fsalceph___ceph_mkdir;
+  __tracepoint_fsalceph___ceph_mknod;
+  __tracepoint_fsalceph___ceph_open;
+  __tracepoint_fsalceph___ceph_read;
+  __tracepoint_fsalceph___ceph_readdir;
+  __tracepoint_fsalceph___ceph_setattrs;
+  __tracepoint_fsalceph___ceph_unlink;
+  __tracepoint_fsalceph___ceph_write;
 local:
   *;
 };

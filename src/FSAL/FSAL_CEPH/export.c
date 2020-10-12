@@ -52,6 +52,9 @@
 #ifdef CEPHFS_POSIX_ACL
 #include "nfs_exports.h"
 #endif				/* CEPHFS_POSIX_ACL */
+#ifdef USE_LTTNG
+#include "gsh_lttng/fsal_ceph.h"
+#endif
 
 /**
  * @brief Clean up an export
@@ -164,6 +167,10 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		ceph2fsal_attributes(&stx, attrs_out);
 
 	*pub_handle = &handle->handle;
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_create_handle, __func__, __LINE__,
+		   &handle->handle);
+#endif
 	return status;
 }
 
@@ -289,6 +296,10 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		ceph2fsal_attributes(&stx, attrs_out);
 
 	*pub_handle = &handle->handle;
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_create_handle, __func__, __LINE__,
+		   &handle->handle);
+#endif
 	return status;
 }
 
