@@ -115,15 +115,33 @@ static void nfs_release_v4_clients(char *ip);
 
 
 
-clid_entry_t *nfs4_add_clid_entry(char *cl_name)
+int nfs4_add_clid_entry(char *cl_name, clid_entry_t *cli_entry)
 {
-	clid_entry_t *new_ent = gsh_malloc(sizeof(clid_entry_t));
+	struct glist_head *node;
+	char *old_cl_name;
 
-	glist_init(&new_ent->cl_rfh_list);
-	(void) strlcpy(new_ent->cl_name, cl_name, sizeof(new_ent->cl_name));
-	glist_add(&clid_list, &new_ent->cl_list);
+	assert(cl_name != NULL);
+	glist_for_each(node, &clid_list) {
+		cli_entry = glist_entry(node, clid_entry_t, cl_list);
+		old_cl_name = cli_entry->cl_name;
+		if (strcmp(cl_name, old_cl_name) == 0) {
+			/*
+			 * if client entry already exists in
+			 * clid_list,don't need to add new entry
+			 */
+			LogDebug(COMPONENT_CLIENTID,
+				"Try to Add an already existing client entry: %s",
+				cl_name);
+			return -1;
+		}
+	}
+
+	cli_entry = gsh_malloc(sizeof(clid_entry_t));
+	glist_init(&cli_entry->cl_rfh_list);
+	(void) strlcpy(cli_entry->cl_name, cl_name, sizeof(cli_entry->cl_name));
+	glist_add(&clid_list, &cli_entry->cl_list);
 	++clid_count;
-	return new_ent;
+	return 0;
 }
 
 rdel_fh_t *nfs4_add_rfh_entry(clid_entry_t *clid_ent, char *rfh_name)

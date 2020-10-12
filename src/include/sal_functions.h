@@ -944,7 +944,7 @@ static inline bool obj_is_junction(struct fsal_obj_handle *obj)
 	return res;
 }
 
-typedef clid_entry_t * (*add_clid_entry_hook)(char *);
+typedef int (*add_clid_entry_hook)(char *, clid_entry_t *);
 typedef rdel_fh_t * (*add_rfh_entry_hook)(clid_entry_t *, char *);
 
 struct nfs4_recovery_backend {

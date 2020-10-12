@@ -237,7 +237,7 @@ void rados_ng_pop_clid_entry(char *key, char *val, size_t val_len,
 {
 	char *dupval, *cl_name;
 	char *rfh_names, *rfh_name;
-	clid_entry_t *clid_ent;
+	clid_entry_t *clid_ent = NULL;
 	add_clid_entry_hook add_clid_entry = pop_args->add_clid_entry;
 	add_rfh_entry_hook add_rfh_entry = pop_args->add_rfh_entry;
 
@@ -248,13 +248,15 @@ void rados_ng_pop_clid_entry(char *key, char *val, size_t val_len,
 	cl_name = strtok(dupval, "#");
 	if (!cl_name)
 		cl_name = dupval;
-	clid_ent = add_clid_entry(cl_name);
+	int rc = add_clid_entry(cl_name, clid_ent);
 
-	rfh_names = strtok(NULL, "#");
-	rfh_name = strtok(rfh_names, "#");
-	while (rfh_name) {
-		add_rfh_entry(clid_ent, rfh_name);
-		rfh_name = strtok(NULL, "#");
+	if (rc == 0) {
+		rfh_names = strtok(NULL, "#");
+		rfh_name = strtok(rfh_names, "#");
+		while (rfh_name) {
+			add_rfh_entry(clid_ent, rfh_name);
+			rfh_name = strtok(NULL, "#");
+		}
 	}
 	gsh_free(dupval);
 }

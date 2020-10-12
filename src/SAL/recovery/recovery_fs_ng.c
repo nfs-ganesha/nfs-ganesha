@@ -201,7 +201,7 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path,
 {
 	struct dirent *dentp;
 	DIR *dp;
-	clid_entry_t *new_ent;
+	clid_entry_t *new_ent = NULL;
 	char *sub_path = NULL;
 	char *build_clid = NULL;
 	int rc = 0;
@@ -308,10 +308,13 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path,
 			cid_len = atoi(temp);
 			len = strlen(ptr2);
 			if ((len == (cid_len+2)) && (ptr2[len-1] == ')')) {
-				new_ent = add_clid_entry(build_clid);
-				LogDebug(COMPONENT_CLIENTID,
-					 "added %s to clid list",
-					 new_ent->cl_name);
+				int rc = add_clid_entry(build_clid, new_ent);
+
+				if (rc == 0) {
+					LogDebug(COMPONENT_CLIENTID,
+						 "added %s to clid list",
+						 new_ent->cl_name);
+				}
 			}
 		}
 		gsh_free(build_clid);

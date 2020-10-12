@@ -544,7 +544,7 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 {
 	struct dirent *dentp;
 	DIR *dp;
-	clid_entry_t *new_ent;
+	clid_entry_t *new_ent = NULL;
 	char *sub_path = NULL;
 	char *new_path = NULL;
 	char *build_clid = NULL;
@@ -674,15 +674,18 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 			cid_len = atoi(temp);
 			len = strlen(ptr2);
 			if ((len == (cid_len+2)) && (ptr2[len-1] == ')')) {
-				new_ent = add_clid_entry(build_clid);
-				fs_cp_pop_revoked_delegs(new_ent,
-							 sub_path,
-							 tgtdir,
-							 !takeover,
-							 add_rfh_entry);
-				LogDebug(COMPONENT_CLIENTID,
-					 "added %s to clid list",
-					 new_ent->cl_name);
+				int rc = add_clid_entry(build_clid, new_ent);
+
+				if (rc == 0) {
+					fs_cp_pop_revoked_delegs(new_ent,
+								 sub_path,
+								 tgtdir,
+								 !takeover,
+								 add_rfh_entry);
+					LogDebug(COMPONENT_CLIENTID,
+						 "added %s to clid list",
+						 new_ent->cl_name);
+				}
 			}
 		}
 		gsh_free(build_clid);
