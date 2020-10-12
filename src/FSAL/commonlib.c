@@ -2646,7 +2646,9 @@ fsal_status_t merge_share(struct fsal_share *orig_share,
  * @param[in]  my_fd       The file descriptor associated with the object
  * @param[in]  share       The fsal_share associated with the object
  * @param[in]  open_func   Function to open a file descriptor
- * @param[in]  close_func  Function to close a file descriptor
+ * @param[in]  close_func  Function to close a file descriptor. This will only
+ *                         ever be called when there is already a rwlock held on
+ *                         the object handle.
  * @param[in,out] out_fd   File descriptor that is to be used
  * @param[out] has_lock    Indicates that obj_hdl->lock is held read
  * @param[out] closefd     Indicates that file descriptor must be closed
@@ -2944,7 +2946,9 @@ again:
  * @param[in]     state          state_t to use for this operation
  * @param[in]     openflags      Mode for open
  * @param[in]     open_func      Function to open a file descriptor
- * @param[in]     close_func     Function to close a file descriptor
+ * @param[in]     close_func     Function to close a file descriptor. This will
+ *                               only ever be called when there is already a
+ *                               rwlock held on the object handle.
  * @param[out]    has_lock       Indicates that obj_hdl->obj_lock is held read
  * @param[out]    closefd        Indicates that file descriptor must be closed
  * @param[in]     open_for_locks Indicates file is open for locks
