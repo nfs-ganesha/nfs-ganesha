@@ -126,8 +126,11 @@ void restore_op_context_export(struct saved_export_context *saved);
 void discard_op_context_export(struct saved_export_context *saved);
 void set_op_context_pnfs_ds(struct fsal_pnfs_ds *pds);
 
-#define set_op_context_export(exp) \
-	set_op_context_export_fsal((exp), (exp) ? (exp)->fsal_export : NULL)
+#define set_op_context_export(exp_expr) \
+	do { \
+		struct gsh_export *ex = exp_expr; \
+		set_op_context_export_fsal(ex, ex ? ex->fsal_export : NULL); \
+	} while (0)
 
 /******************************************************
  *                Structure used to define a fsal
