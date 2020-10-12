@@ -615,15 +615,8 @@ static fsal_status_t mem_open_func(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t mem_close_func(struct fsal_obj_handle *obj_hdl,
 				    struct fsal_fd *fd)
 {
-	fsal_status_t status;
-
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-	status = mem_close_my_fd(fd);
-
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-	return status;
+	(void) obj_hdl;
+	return mem_close_my_fd(fd);
 }
 
 #define mem_alloc_handle(p, n, t, e, a) \
