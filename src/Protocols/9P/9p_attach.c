@@ -61,9 +61,8 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	fsal_status_t fsal_status;
 	char exppath[MAXPATHLEN+1];
-	struct gsh_buffdesc fh_desc;
-	struct fsal_obj_handle *pfsal_handle;
 	int port;
+	struct gsh_export *export;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -101,38 +100,33 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		LogFullDebug(COMPONENT_9P,
 			     "Searching for export by tag for %s",
 			     exppath);
-		op_ctx->ctx_export = get_gsh_export_by_tag(exppath);
+		export = get_gsh_export_by_tag(exppath);
 	} else if (nfs_param.core_param.mount_path_pseudo) {
 		LogFullDebug(COMPONENT_9P,
 			     "Searching for export by pseudo for %s",
 			     exppath);
-		op_ctx->ctx_export = get_gsh_export_by_pseudo(exppath, false);
+		export = get_gsh_export_by_pseudo(exppath, false);
 	} else {
 		LogFullDebug(COMPONENT_9P,
 			     "Searching for export by path for %s",
 			     exppath);
-		op_ctx->ctx_export = get_gsh_export_by_path(exppath, false);
+		export = get_gsh_export_by_path(exppath, false);
 	}
 
 	/* Did we find something ? */
-	if (op_ctx->ctx_export == NULL) {
+	if (export == NULL) {
 		err = ENOENT;
 		goto errout;
 	}
 
 	/* Fill in more of the op_ctx */
-	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+	set_op_context_export(export);
 	op_ctx->caller_addr = &req9p->pconn->addrpeer;
 
-	/* We store the export_perms in pconn so we only have to evaluate
-	 * them once.
-	 */
-	op_ctx->export_perms = &req9p->pconn->export_perms;
-
-	/* And fill in the op_ctx export_perms and then check them. */
+	/* check export_perms. */
 	export_check_access();
 
-	if ((op_ctx->export_perms->options & EXPORT_OPTION_9P) == 0) {
+	if ((op_ctx->export_perms.options & EXPORT_OPTION_9P) == 0) {
 		LogInfo(COMPONENT_9P,
 			"9P is not allowed for this export entry, rejecting client");
 		err = EACCES;
@@ -141,7 +135,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	port = get_port(&req9p->pconn->addrpeer);
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_PRIVILEGED_PORT &&
+	if (op_ctx->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT &&
 	    port >= IPPORT_RESERVED) {
 		LogInfo(COMPONENT_9P,
 			"Port %d is too high for this export entry, rejecting client",
@@ -182,38 +176,22 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		goto errout;
 	}
 
-	if (exppath[0] != '/' ||
-	    !strcmp(exppath, export_path(op_ctx->ctx_export))) {
-		/* Check if root object is correctly set, fetch it, and take an
-		 * LRU reference.
+	if (exppath[0] != '/') {
+		/* The client used the Tag. Use the export root object is
+		 * correctly set, fetch it, and take an LRU reference.
 		 */
-		fsal_status =
-		    nfs_export_get_root_entry(op_ctx->ctx_export,
-					    &pfid->pentry);
-
-		if (FSAL_IS_ERROR(fsal_status)) {
-			err = _9p_tools_errno(fsal_status);
-			goto errout;
-		}
+		fsal_status = nfs_export_get_root_entry(op_ctx->ctx_export,
+							&pfid->pentry);
 	} else {
-		fsal_status = op_ctx->fsal_export->exp_ops.lookup_path(
-						op_ctx->fsal_export,
-						exppath,
-						&pfsal_handle, NULL);
-		if (FSAL_IS_ERROR(fsal_status)) {
-			err = _9p_tools_errno(fsal_status);
-			goto errout;
-		}
+		/* Note that we call this even if exppath is just the path to
+		 * the export. It resolves that efficiently.
+		 */
+		fsal_status = fsal_lookup_path(exppath, &pfid->pentry);
+	}
 
-		pfsal_handle->obj_ops->handle_to_key(pfsal_handle,
-						 &fh_desc);
-		fsal_status = op_ctx->fsal_export->exp_ops.create_handle(
-				 op_ctx->fsal_export, &fh_desc, &pfid->pentry,
-				 NULL);
-		if (FSAL_IS_ERROR(fsal_status)) {
-			err = _9p_tools_errno(fsal_status);
-			goto errout;
-		}
+	if (FSAL_IS_ERROR(fsal_status)) {
+		err = _9p_tools_errno(fsal_status);
+		goto errout;
 	}
 
 	/* Initialize state_t embeded in fid. The refcount is initialized

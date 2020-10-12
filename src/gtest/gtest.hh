@@ -200,7 +200,7 @@ namespace gtest {
   protected:
     static fsal_errors_t readdir_callback(void *opaque,
                                           struct fsal_obj_handle *obj,
-                                          const struct attrlist *attr,
+                                          const struct fsal_attrlist *attr,
                                           uint64_t mounted_on_fileid,
                                           uint64_t cookie,
                                           enum cb_state cb_state)
@@ -210,7 +210,7 @@ namespace gtest {
 
     virtual void SetUp() {
       fsal_status_t status;
-      struct attrlist attrs_out;
+      struct fsal_attrlist attrs_out;
 
       gtest::GaneshaBaseTest::SetUp();
 
@@ -222,18 +222,7 @@ namespace gtest {
       ASSERT_NE(root_entry, nullptr);
 
       /* Ganesha call paths need real or forged context info */
-      memset(&user_credentials, 0, sizeof(struct user_cred));
-      memset(&req_ctx, 0, sizeof(struct req_op_context));
-      memset(&attrs, 0, sizeof(attrs));
-      memset(&exp_perms, 0, sizeof(struct export_perms));
-
-      req_ctx.ctx_export = a_export;
-      req_ctx.fsal_export = a_export->fsal_export;
-      req_ctx.creds = &user_credentials;
-      req_ctx.export_perms = &exp_perms;
-
-      /* stashed in tls */
-      op_ctx = &req_ctx;
+      init_op_context_simple(&op_context, a_export, a_export->fsal_export);
 
       // create root directory for test
       FSAL_SET_MASK(attrs.valid_mask,
@@ -263,10 +252,8 @@ namespace gtest {
       root_entry->obj_ops->put_ref(root_entry);
       root_entry = NULL;
 
-      put_gsh_export(a_export);
       a_export = NULL;
-      req_ctx.ctx_export = NULL;
-      req_ctx.fsal_export = NULL;
+      release_op_context();
 
       gtest::GaneshaBaseTest::TearDown();
     }
@@ -276,7 +263,7 @@ namespace gtest {
 			       struct fsal_obj_handle *directory = NULL) {
       fsal_status_t status;
       char fname[NAMELEN];
-      struct attrlist attrs_out;
+      struct fsal_attrlist attrs_out;
       unsigned int num_entries;
       bool eod_met;
       attrmask_t attrmask = 0;
@@ -327,10 +314,8 @@ namespace gtest {
       }
     }
 
-    struct req_op_context req_ctx;
-    struct user_cred user_credentials;
-    struct attrlist attrs;
-    struct export_perms exp_perms;
+    struct req_op_context op_context;
+    struct fsal_attrlist attrs;
 
     struct gsh_export* a_export = nullptr;
     struct fsal_obj_handle *root_entry = nullptr;

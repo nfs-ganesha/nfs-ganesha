@@ -127,7 +127,7 @@ fsal_status_t nullfs_alloc_and_check_handle(
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path, struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	/** Parent as nullfs handle.*/
 	struct nullfs_fsal_obj_handle *null_parent =
@@ -155,9 +155,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 }
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const char *name, struct attrlist *attrs_in,
+			     const char *name, struct fsal_attrlist *attrs_in,
 			     struct fsal_obj_handle **new_obj,
-			     struct attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out)
 {
 	*new_obj = NULL;
 	/** Parent directory nullfs handle. */
@@ -186,9 +186,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name,
 			      object_file_type_t nodetype,
-			      struct attrlist *attrs_in,
+			      struct fsal_attrlist *attrs_in,
 			      struct fsal_obj_handle **new_obj,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	/** Parent directory nullfs handle. */
 	struct nullfs_fsal_obj_handle *nullfs_dir =
@@ -225,9 +225,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name,
 				 const char *link_path,
-				 struct attrlist *attrs_in,
+				 struct fsal_attrlist *attrs_in,
 				 struct fsal_obj_handle **new_obj,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	/** Parent directory nullfs handle. */
 	struct nullfs_fsal_obj_handle *nullfs_dir =
@@ -312,7 +312,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 static enum fsal_dir_result nullfs_readdir_cb(
 					const char *name,
 					struct fsal_obj_handle *sub_handle,
-					struct attrlist *attrs,
+					struct fsal_attrlist *attrs,
 					void *dir_state, fsal_cookie_t cookie)
 {
 	struct nullfs_readdir_state *state =
@@ -488,7 +488,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrib_get)
+			      struct fsal_attrlist *attrib_get)
 {
 	struct nullfs_fsal_obj_handle *handle =
 		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
@@ -511,7 +511,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t nullfs_setattr2(struct fsal_obj_handle *obj_hdl,
 				     bool bypass,
 				     struct state_t *state,
-				     struct attrlist *attrs)
+				     struct fsal_attrlist *attrs)
 {
 	struct nullfs_fsal_obj_handle *handle =
 		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
@@ -635,7 +635,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 }
 
 static bool nullfs_is_referral(struct fsal_obj_handle *obj_hdl,
-			       struct attrlist *attrs,
+			       struct fsal_attrlist *attrs,
 			       bool cache_attrs)
 {
 	struct nullfs_fsal_obj_handle *hdl =
@@ -716,7 +716,7 @@ void nullfs_handle_ops_init(struct fsal_obj_ops *ops)
 fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,
 				 const char *path,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	/** Handle given by the subfsal. */
 	struct fsal_obj_handle *sub_handle = NULL;
@@ -758,7 +758,7 @@ fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,
 fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	/** Current nullfs export. */
 	struct nullfs_fsal_export *export =

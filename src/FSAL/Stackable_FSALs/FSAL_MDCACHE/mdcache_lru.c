@@ -451,6 +451,65 @@ lru_insert_chunk(struct dir_chunk *chunk, struct lru_q *q, enum lru_edge edge)
 	QUNLOCK(qlane);
 }
 
+/*
+ * @brief Adjust the order of LRU entries
+ *
+ * @param [in] entry  Entry to adjust.
+ */
+static inline void
+adjust_lru(mdcache_entry_t *entry)
+{
+	mdcache_lru_t *lru = &entry->lru;
+	struct lru_q_lane *qlane = &LRU[lru->lane];
+	struct lru_q *q;
+
+	QLOCK(qlane);
+	switch (lru->qid) {
+	case LRU_ENTRY_L1:
+		q = lru_queue_of(entry);
+		/* advance entry to MRU (of L1) */
+		LRU_DQ_SAFE(lru, q);
+		lru_insert(lru, q, LRU_MRU);
+		break;
+	case LRU_ENTRY_L2:
+		q = lru_queue_of(entry);
+		/* move entry to LRU of L1 */
+		glist_del(&lru->q);     /* skip L1 fixups */
+		--(q->size);
+		q = &qlane->L1;
+		lru_insert(lru, q, LRU_LRU);
+		break;
+	default:
+		/* do nothing */
+		break;
+	}	/* switch qid */
+	QUNLOCK(qlane);
+}
+
+/*
+ * @brief Adjust the order of LRU entries if it is root object of export
+ *
+ * During the entries release process，the root object of export
+ * may block the LRU of LRU queue，we can adjust it to MRU of
+ * LRU and let next entry be released.
+ *
+ * @param [in] entry  Entry to adjust.
+ * @return FSAL status
+ */
+static inline void
+adjust_lru_root_object(mdcache_entry_t *entry)
+{
+	struct lru_q *q = lru_queue_of(entry);
+
+	/* not adjust */
+	if (q->size < 2)
+		return;
+
+	/* adjust export root or junction nodes */
+	if (is_export_pin(&entry->obj_handle))
+		adjust_lru(entry);
+}
+
 /**
  * @brief Clean an entry for recycling.
  *
@@ -501,8 +560,8 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 		 * we can use the first_export_id to get a valid export for
 		 * a reaping case.
 		 */
-		struct root_op_context ctx;
-		struct req_op_context *saved_ctx = op_ctx;
+		struct req_op_context op_context;
+		bool used_ctx = false;
 		int32_t export_id;
 		struct gsh_export *export;
 
@@ -544,8 +603,9 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 				     PRIi32,
 				     export_id);
 
-			init_root_op_context(&ctx, export, export->fsal_export,
-					     0, 0, UNKNOWN_REQUEST);
+			init_op_context_simple(&op_context, export,
+					       export->fsal_export);
+			used_ctx = true;
 		} else {
 			/* We MUST have a valid op_ctx based on the conditions
 			 * we could get here. first_export_id coild be -1 or it
@@ -576,12 +636,11 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 		       );
 		entry->sub_handle = NULL;
 
-		if (op_ctx != saved_ctx) {
+		if (used_ctx) {
 			/* We had to use our own op_ctx, clean it up and revert
 			 * to the saved op_ctx.
 			 */
-			put_gsh_export(op_ctx->ctx_export);
-			op_ctx = saved_ctx;
+			release_op_context();
 		}
 	}
 
@@ -601,7 +660,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 	PTHREAD_RWLOCK_destroy(&entry->content_lock);
 	PTHREAD_RWLOCK_destroy(&entry->attr_lock);
 
-	state_hdl_cleanup(entry->obj_handle.state_hdl);
+	state_hdl_cleanup(entry->obj_handle.state_hdl, entry->obj_handle.type);
 
 	if (entry->obj_handle.type == DIRECTORY)
 		pthread_spin_destroy(&entry->fsobj.fsdir.spin);
@@ -660,6 +719,7 @@ lru_reap_impl(enum lru_q_id qid)
 
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
 			/* cant use it. */
+			adjust_lru_root_object(entry);
 			mdcache_put(entry);
 			continue;
 		}
@@ -1076,8 +1136,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 	 * the iteration also adjusts glist and (in particular) glistn */
 	glist_for_each_safe(qlane->iter.glist, qlane->iter.glistn, &q->q) {
 		struct lru_q *q;
-		struct root_op_context ctx;
-		struct req_op_context *saved_ctx = op_ctx;
+		struct req_op_context op_context;
 		int32_t export_id;
 		struct gsh_export *export;
 
@@ -1130,8 +1189,8 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		   refcnt);
 #endif
 
-		init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
-				     UNKNOWN_REQUEST);
+		init_op_context_simple(&op_context, export,
+				       export->fsal_export);
 
 		/* check refcnt in range */
 		if (unlikely(refcnt > 2)) {
@@ -1171,8 +1230,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 
 next_lru:
 		QLOCK(qlane); /* QLOCKED */
-		put_gsh_export(export);
-		op_ctx = saved_ctx;
+		release_op_context();
 
 		++workdone;
 	} /* for_each_safe lru */
@@ -1375,6 +1433,34 @@ lru_run(struct fridgethr_context *ctx)
 		}
 	}
 
+	/* We're trying to release the entry cache if the amount
+	 * used is higher than the water level. every time we can
+	 * try best to release the number of entries until entries
+	 * cache below the high water mark. the max number of entries
+	 * released per time is entries_release_size.
+	 */
+	if (lru_state.entries_release_size > 0) {
+		if (lru_state.entries_used > lru_state.entries_hiwat) {
+			size_t released = 0;
+
+			LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+				"Entries used is %" PRIu64
+				" and above water mark, LRU want release %d entries",
+				lru_state.entries_used,
+				lru_state.entries_release_size);
+
+			released = mdcache_lru_release_entries(
+					lru_state.entries_release_size);
+			LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+				"Actually release %zd entries", released);
+		} else {
+			LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+				"Entries used is %" PRIu64
+				" and low water mark: not releasing",
+				lru_state.entries_used);
+		}
+	}
+
 	/* The following calculation will progressively garbage collect
 	 * more frequently as these two factors increase:
 	 * 1. current number of open file descriptors
@@ -1559,30 +1645,40 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 		 ((uint64_t) new_thread_wait), totalwork);
 }
 
-/**
- * @brief Remove reapable entries until we are below the high-water mark
+/* @brief Release reapable entries until we are below the high-water mark
  *
  * If something refs a lot of entries at the same time, this can put the number
- * of entries above the high water mark.  They will slowly fall, as entries are
- * actually freed, but this may take a very long time.
+ * of entries above the high water mark. Every time we want try best to release
+ * the number of entries, the max number is want_release.
  *
- * This is a big hammer, that will clean up anything it can until either it
- * can't anymore, or we're back below the high water mark.
+ * Normally, want_release equals Entries_Relesase_Size, If it is set to -1
+ * or negative, this going to be a big hammer, that will clean up anything it
+ * can until either it can't anymore, or we're back below the high water mark.
  *
- * @param[in] parm     Parameter description
- * @return Return description
+ * @param[in] want_release Maximum number of entries released. Note that if set
+ *	      negative number, it indicates release all until can't release
+ * @return Return the number of really released
  */
-void lru_cleanup_entries(void)
+size_t mdcache_lru_release_entries(int32_t want_release)
 {
 	mdcache_lru_t *lru;
 	mdcache_entry_t *entry = NULL;
+	size_t released = 0;
+
+	/*release nothing*/
+	if (want_release == 0)
+		return released;
 
 	while ((lru = lru_try_reap_entry())) {
-		if (lru) {
-			entry = container_of(lru, mdcache_entry_t, lru);
-			mdcache_lru_unref(entry);
-		}
+		entry = container_of(lru, mdcache_entry_t, lru);
+		mdcache_lru_unref(entry);
+		++released;
+
+		if (want_release > 0 && released >= want_release)
+			break;
 	}
+
+	return released;
 }
 
 void init_fds_limit(void)
@@ -1714,6 +1810,9 @@ mdcache_lru_pkginit(void)
 	   bit fishy, so come back and revisit this. */
 	lru_state.entries_hiwat = mdcache_param.entries_hwmark;
 	lru_state.entries_used = 0;
+
+	/* set lru release entries size */
+	lru_state.entries_release_size = mdcache_param.entries_release_size;
 
 	/* Set high and low watermark for chunks.  XXX This seems a
 	   bit fishy, so come back and revisit this. */
@@ -1888,9 +1987,6 @@ fsal_status_t
 _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		 int line)
 {
-	mdcache_lru_t *lru = &entry->lru;
-	struct lru_q_lane *qlane = &LRU[lru->lane];
-	struct lru_q *q;
 #ifdef USE_LTTNG
 	int32_t refcnt =
 #endif
@@ -1903,29 +1999,7 @@ _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 
 	/* adjust LRU on initial refs */
 	if (flags & LRU_REQ_INITIAL) {
-
-		QLOCK(qlane);
-
-		switch (lru->qid) {
-		case LRU_ENTRY_L1:
-			q = lru_queue_of(entry);
-			/* advance entry to MRU (of L1) */
-			LRU_DQ_SAFE(lru, q);
-			lru_insert(lru, q, LRU_MRU);
-			break;
-		case LRU_ENTRY_L2:
-			q = lru_queue_of(entry);
-			/* move entry to LRU of L1 */
-			glist_del(&lru->q);	/* skip L1 fixups */
-			--(q->size);
-			q = &qlane->L1;
-			lru_insert(lru, q, LRU_LRU);
-			break;
-		default:
-			/* do nothing */
-			break;
-		}		/* switch qid */
-		QUNLOCK(qlane);
+		adjust_lru(entry);
 	}			/* initial ref */
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

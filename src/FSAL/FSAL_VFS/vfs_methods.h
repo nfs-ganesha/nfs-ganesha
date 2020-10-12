@@ -114,12 +114,12 @@ fsal_status_t vfs_update_export(struct fsal_module *fsal_hdl,
 fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 			      const char *path,
 			      struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out);
+			      struct fsal_attrlist *attrs_out);
 
 fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 				struct gsh_buffdesc *hdl_desc,
 				struct fsal_obj_handle **handle,
-				struct attrlist *attrs_out);
+				struct fsal_attrlist *attrs_out);
 
 struct vfs_subfsal_obj_ops {
 /**
@@ -132,7 +132,7 @@ struct vfs_subfsal_obj_ops {
  */
 	fsal_status_t (*getattrs)(struct vfs_fsal_obj_handle *vfs_hdl,
 				  int fd, attrmask_t request_mask,
-				  struct attrlist *attrs);
+				  struct fsal_attrlist *attrs);
 /**
  * @brief Set sub-fsal attributes on an object
  *
@@ -144,7 +144,7 @@ struct vfs_subfsal_obj_ops {
  */
 	fsal_status_t (*setattrs)(struct vfs_fsal_obj_handle *vfs_hdl,
 				  int fd, attrmask_t request_mask,
-				  struct attrlist *attrib_set);
+				  struct fsal_attrlist *attrib_set);
 };
 
 struct vfs_fd {
@@ -305,10 +305,10 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			fsal_openflags_t openflags,
 			enum fsal_create_mode createmode,
 			const char *name,
-			struct attrlist *attrib_set,
+			struct fsal_attrlist *attrib_set,
 			fsal_verifier_t verifier,
 			struct fsal_obj_handle **new_obj,
-			struct attrlist *attrs_out,
+			struct fsal_attrlist *attrs_out,
 			bool *caller_perm_check);
 
 fsal_status_t vfs_reopen2(struct fsal_obj_handle *obj_hdl,
@@ -353,12 +353,12 @@ fsal_status_t vfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t getattr2(struct fsal_obj_handle *obj_hdl);
 
 fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
-			   struct attrlist *attrs);
+			   struct fsal_attrlist *attrs);
 
 fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			   bool bypass,
 			   struct state_t *state,
-			   struct attrlist *attrib_set);
+			   struct fsal_attrlist *attrib_set);
 
 fsal_status_t vfs_close2(struct fsal_obj_handle *obj_hdl,
 			 struct state_t *state);
@@ -406,7 +406,7 @@ fsal_status_t check_hsm_by_fd(int fd);
 
 fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 				   int fd,
-				   struct attrlist *attrs_out);
+				   struct fsal_attrlist *attrs_out);
 
 static inline bool vfs_set_credentials(const struct user_cred *creds,
 					  const struct fsal_module *fsal_module)

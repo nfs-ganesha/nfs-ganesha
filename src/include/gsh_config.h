@@ -55,12 +55,24 @@
 
 typedef enum protos {
 	P_NFS,			/*< NFS, of course. */
+#ifdef _USE_NFS3
 	P_MNT,			/*< Mount (for v3) */
+#endif
+#ifdef _USE_NLM
 	P_NLM,			/*< NLM (for v3) */
+#endif
+#ifdef _USE_RQUOTA
 	P_RQUOTA,		/*< RQUOTA (for v3) */
+#endif
+#ifdef USE_NFSACL3
 	P_NFSACL,		/*< NFSACL (for v3) */
+#endif
+#ifdef RPC_VSOCK
 	P_NFS_VSOCK,		/*< NFS over vmware, qemu vmci sockets */
+#endif
+#ifdef _USE_NFS_RDMA
 	P_NFS_RDMA,		/*< NFS over RPC/RDMA */
+#endif
 	P_COUNT			/*< Number of protocols */
 } protos;
 
@@ -190,16 +202,11 @@ typedef enum protos {
 /**
  * @brief Support NFSv3 and NFSv4.
  */
+#ifdef _USE_NFS3
 #define CORE_OPTION_ALL_NFS_VERS (CORE_OPTION_NFSV3 | CORE_OPTION_NFSV4)
-
-/**
- * @brief Support all protocols
- */
-#define CORE_OPTION_ALL_VERS (CORE_OPTION_NFSV3 |			\
-				CORE_OPTION_NFSV4 |			\
-				CORE_OPTION_NFS_VSOCK |			\
-				CORE_OPTION_NFS_RDMA |			\
-				CORE_OPTION_9P)
+#else
+#define CORE_OPTION_ALL_NFS_VERS CORE_OPTION_NFSV4
+#endif
 
 typedef struct nfs_core_param {
 	/** An array of port numbers, one for each protocol.  Set by
@@ -318,6 +325,9 @@ typedef struct nfs_core_param {
 		uint32_t max_recv_buffer_size;
 		/** Idle timeout (seconds).  Defaults to 5m */
 		uint32_t idle_timeout_s;
+		/** TIRPC ioq min simultaneous io threads.  Defaults to
+		    2 and settable by rpc_ioq_thrdmin. */
+		uint32_t ioq_thrd_min;
 		/** TIRPC ioq max simultaneous io threads.  Defaults to
 		    200 and settable by RPC_Ioq_ThrdMax. */
 		uint32_t ioq_thrd_max;
@@ -340,30 +350,38 @@ typedef struct nfs_core_param {
 	    Defaults to CORE_OPTION_ALL_VERS and is settable with
 	    NFS_Protocols (as a comma-separated list of 3 and 4.) */
 	unsigned int core_options;
-	/** Whether to use the supplied name rather than the IP
-	    address in NSM operations.  Settable with
-	    NSM_Use_Caller_Name. */
-	bool nsm_use_caller_name;
 	/** Whether this Ganesha is part of a cluster of Ganeshas.
 	    This is somewhat vendor-specific and should probably be
 	    moved somewhere else.  Settable with Clustered. */
 	bool clustered;
+#ifdef _USE_NLM
 	/** Whether to support the Network Lock Manager protocol.
 	    Defaults to true and is settable with Enable_NLM. */
 	bool enable_NLM;
+	/** Whether to use the supplied name rather than the IP
+	    address in NSM operations.  Settable with
+	    NSM_Use_Caller_Name. */
+	bool nsm_use_caller_name;
+#endif
+#ifdef _USE_RQUOTA
 	/** Whether to support the Remote Quota protocol.  Defaults
 	    to true and is settable with Enable_RQUOTA. */
 	bool enable_RQUOTA;
+#endif
+#ifdef USE_NFSACL3
 	/* Whether to support the POSIX ACL. Defaults to false. */
 	bool enable_NFSACL;
+#endif
 	/** Whether to collect NFS stats.  Defaults to true. */
 	bool enable_NFSSTATS;
 	/** Whether to use fast stats.  Defaults to false. */
 	bool enable_FASTSTATS;
 	/** Whether to collect FSAL stats.  Defaults to false. */
 	bool enable_FSALSTATS;
+#ifdef _USE_NFS3
 	/** Whether to collect NFSv3 Detailed stats.  Defaults to false. */
 	bool enable_FULLV3STATS;
+#endif
 	/** Whether to collect NFSv4 Detailed stats.  Defaults to false. */
 	bool enable_FULLV4STATS;
 	/** Whether to collect Auth related stats. Defaults to false. */

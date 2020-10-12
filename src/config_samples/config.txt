@@ -93,7 +93,9 @@ NFS_CORE_PARAM {}
 
 	MaxRPCRecvBufferSize(uint32, range 1 to 1048576*9, default 1048576)
 
-	RPC_Ioq_ThrdMax(uint32, range 1 to 1024*128 default 200)
+	RPC_Ioq_ThrdMax(uint32, range 2 to 1024*128 default 200)
+
+	rpc_ioq_thrdmin(uint32, range 2 to 1024*128 default 2)
 
 	RPC_GSS_Npart(uint32, range 1 to 1021, default 13)
 
@@ -575,6 +577,8 @@ MDCACHE / CACHEINODE
 	Chunks_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
 
 	Entries_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
+
+	Entries_Release_Size(uint32, range 0 to UINT32_MAX, default 100)
 
 	LRU_Run_Interval(uint32, range 1 to 24 * 3600, default 90)
 

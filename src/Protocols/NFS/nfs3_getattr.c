@@ -64,7 +64,7 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
-	struct attrlist *attrs;
+	struct fsal_attrlist *attrs;
 	fsal_status_t status;
 
 	attrs = &res->res_getattr3.GETATTR3res_u.resok.obj_attributes;

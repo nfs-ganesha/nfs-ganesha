@@ -86,6 +86,7 @@
 #endif
 #include "server_stats_private.h"
 #include "idmapper.h"
+#include "pnfs_utils.h"
 
 
 #ifdef USE_BLKID
@@ -216,26 +217,10 @@ void fsal_obj_handle_fini(struct fsal_obj_handle *obj)
 
 void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal)
 {
-	pthread_rwlockattr_t attrs;
-
-	pds->refcount = 1;	/* we start out with a reference */
+	pds->ds_refcount = 1;	/* we start out with a reference */
 	fsal->m_ops.fsal_pnfs_ds_ops(&pds->s_ops);
 	pds->fsal = fsal;
-
-	pthread_rwlockattr_init(&attrs);
-#ifdef GLIBC
-	pthread_rwlockattr_setkind_np(
-		&attrs,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
-	PTHREAD_RWLOCK_init(&pds->lock, &attrs);
-	glist_init(&pds->ds_handles);
-
-	PTHREAD_RWLOCK_wrlock(&fsal->lock);
-	glist_add(&fsal->servers, &pds->server);
-	PTHREAD_RWLOCK_unlock(&fsal->lock);
-
-	pthread_rwlockattr_destroy(&attrs);
+	fsal_get(fsal); /* Take a reference for the FSAL */
 }
 
 void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds)
@@ -243,33 +228,12 @@ void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds)
 	PTHREAD_RWLOCK_wrlock(&pds->fsal->lock);
 	glist_del(&pds->server);
 	PTHREAD_RWLOCK_unlock(&pds->fsal->lock);
-	PTHREAD_RWLOCK_destroy(&pds->lock);
+
 	memset(&pds->s_ops, 0, sizeof(pds->s_ops));	/* poison myself */
-	pds->fsal = NULL;
-}
-
-/* fsal_pnfs_ds to fsal_ds_handle helpers
- */
-
-void fsal_ds_handle_init(struct fsal_ds_handle *dsh, struct fsal_pnfs_ds *pds)
-{
-	dsh->refcount = 1;	/* we start out with a reference */
-	pds->s_ops.fsal_dsh_ops(&dsh->dsh_ops);
-	dsh->pds = pds;
-
-	PTHREAD_RWLOCK_wrlock(&pds->lock);
-	glist_add(&pds->ds_handles, &dsh->ds_handle);
-	PTHREAD_RWLOCK_unlock(&pds->lock);
-}
-
-void fsal_ds_handle_fini(struct fsal_ds_handle *dsh)
-{
-	PTHREAD_RWLOCK_wrlock(&dsh->pds->lock);
-	glist_del(&dsh->ds_handle);
-	PTHREAD_RWLOCK_unlock(&dsh->pds->lock);
-
-	memset(&dsh->dsh_ops, 0, sizeof(dsh->dsh_ops));	/* poison myself */
-	dsh->pds = NULL;
+	if (pds->fsal != NULL) {
+		fsal_put(pds->fsal);
+		pds->fsal = NULL;
+	}
 }
 
 /**
@@ -480,7 +444,7 @@ void display_fsinfo(struct fsal_module *fsal)
 }
 
 int display_attrlist(struct display_buffer *dspbuf,
-		     struct attrlist *attr, bool is_obj)
+		     struct fsal_attrlist *attr, bool is_obj)
 {
 	int b_left = display_start(dspbuf);
 
@@ -546,7 +510,7 @@ int display_attrlist(struct display_buffer *dspbuf,
 }
 
 void log_attrlist(log_components_t component, log_levels_t level,
-		  const char *reason, struct attrlist *attr, bool is_obj,
+		  const char *reason, struct fsal_attrlist *attr, bool is_obj,
 		  char *file, int line, char *function)
 {
 	char str[LOG_BUFF_LEN] = "\0";
@@ -681,6 +645,7 @@ struct glist_head posix_file_systems = {
 	&posix_file_systems, &posix_file_systems
 };
 
+bool fs_initialized;
 struct avltree avl_fsid;
 struct avltree avl_dev;
 
@@ -972,10 +937,9 @@ int change_fsid_type(struct fsal_filesystem *fs,
 	return re_index_fs_fsid(fs, fsid_type, &fsid);
 }
 
-static bool posix_get_fsid(struct fsal_filesystem *fs)
+static bool posix_get_fsid(struct fsal_filesystem *fs, struct stat *mnt_stat)
 {
 	struct statfs stat_fs;
-	struct stat mnt_stat;
 #ifdef USE_BLKID
 	char *dev_name;
 	char *uuid_str;
@@ -995,14 +959,7 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 	fs->namelen = stat_fs.f_namelen;
 #endif
 
-	if (stat(fs->path, &mnt_stat) != 0) {
-		LogEvent(COMPONENT_FSAL,
-			"stat of %s resulted in error %s(%d)",
-			fs->path, strerror(errno), errno);
-		return false;
-	}
-
-	fs->dev = posix2fsal_devt(mnt_stat.st_dev);
+	fs->dev = posix2fsal_devt(mnt_stat->st_dev);
 
 	if (nfs_param.core_param.fsid_device) {
 		fs->fsid_type = FSID_DEVICE;
@@ -1015,13 +972,13 @@ static bool posix_get_fsid(struct fsal_filesystem *fs)
 	if (cache == NULL)
 		goto out;
 
-	dev_name = blkid_devno_to_devname(mnt_stat.st_dev);
+	dev_name = blkid_devno_to_devname(mnt_stat->st_dev);
 
 	if (dev_name == NULL) {
 		LogDebug(COMPONENT_FSAL,
 			 "blkid_devno_to_devname of %s failed for dev %d.%d",
-			 fs->path, major(mnt_stat.st_dev),
-			 minor(mnt_stat.st_dev));
+			 fs->path, major(mnt_stat->st_dev),
+			 minor(mnt_stat->st_dev));
 		goto out;
 	}
 
@@ -1072,7 +1029,7 @@ out:
 	return true;
 }
 
-static void posix_create_file_system(struct mntent *mnt)
+static void posix_create_file_system(struct mntent *mnt, struct stat *mnt_stat)
 {
 	struct fsal_filesystem *fs;
 	struct avltree_node *node;
@@ -1083,7 +1040,7 @@ static void posix_create_file_system(struct mntent *mnt)
 	fs->device = gsh_strdup(mnt->mnt_fsname);
 	fs->type = gsh_strdup(mnt->mnt_type);
 
-	if (!posix_get_fsid(fs)) {
+	if (!posix_get_fsid(fs, mnt_stat)) {
 		free_fs(fs);
 		return;
 	}
@@ -1166,10 +1123,10 @@ static void posix_create_file_system(struct mntent *mnt)
 	glist_init(&fs->children);
 
 	LogInfo(COMPONENT_FSAL,
-		"Added filesystem %s namelen=%d dev=%"PRIu64".%"PRIu64
+		"Added filesystem %p %s namelen=%d dev=%"PRIu64".%"PRIu64
 		" fsid=0x%016"PRIx64".0x%016"PRIx64" %"PRIu64".%"PRIu64
 		" type=%s",
-		fs->path, (int) fs->namelen,
+		fs, fs->path, (int) fs->namelen,
 		fs->dev.major, fs->dev.minor,
 		fs->fsid.major, fs->fsid.minor,
 		fs->fsid.major, fs->fsid.minor, fs->type);
@@ -1230,45 +1187,122 @@ static void posix_find_parent(struct fsal_filesystem *this)
 		this->path, this->parent->path);
 }
 
-void show_tree(struct fsal_filesystem *this, int nest)
+bool path_is_subset(const char *path, const char *of)
 {
-	struct glist_head *glist;
-	char blanks[1024];
+	int len_path = strlen(path);
+	int len_of = strlen(of);
+	int len_cmp = MIN(len_path, len_of);
 
-	memset(blanks, ' ', nest * 2);
-	blanks[nest * 2] = '\0';
-
-	LogInfo(COMPONENT_FSAL,
-		"%s%s",
-		blanks, this->path);
-
-	/* Claim the children now */
-	glist_for_each(glist, &this->children) {
-		show_tree(glist_entry(glist,
-				      struct fsal_filesystem,
-				      siblings),
-			  nest + 1);
+	/* We can handle special case of "/" trivially, so check for it */
+	if ((len_path == 1 && path[0] == '/') ||
+	    (len_of == 1 && of[0] == '/')) {
+		/* One of the paths is "/" so subset MUST be true */
+		return true;
 	}
+
+
+	if (len_path != len_of &&
+	    ((len_cmp != len_path && path[len_cmp] != '/') ||
+	     (len_cmp != len_of && of[len_cmp] != '/'))) {
+		/* The character in the longer path just past the length of the
+		 * shorter path must be '/' in order to be a valid subset path.
+		 */
+		return false;
+	}
+
+	/* Compare the two strings to the length of the shorter one */
+	if (strncmp(path, of, len_cmp) != 0) {
+		/* Since the shortest doesn't match to the start of the longer
+		 * neither path is a subset of the other.
+		 */
+		return false;
+	}
+
+	return true;
 }
 
-int populate_posix_file_systems(bool force)
+int populate_posix_file_systems(const char *path)
 {
 	FILE *fp;
 	struct mntent *mnt;
 	struct stat st;
 	int retval = 0;
-	struct glist_head *glist;
-	struct fsal_filesystem *fs;
+	struct glist_head *glist, *glistn;
+	struct fsal_filesystem *fs, *fsn;
 
 	PTHREAD_RWLOCK_wrlock(&fs_lock);
 
-	if (glist_empty(&posix_file_systems)) {
+	if (!fs_initialized) {
 		LogDebug(COMPONENT_FSAL, "Initializing posix file systems");
 		avltree_init(&avl_fsid, fsal_fs_cmpf_fsid, 0);
 		avltree_init(&avl_dev, fsal_fs_cmpf_dev, 0);
-	} else if (!force) {
-		LogDebug(COMPONENT_FSAL, "File systems are initialized");
-		goto out;
+		fs_initialized = true;
+	}
+
+	/* We are about to rescan mtab, remove unclaimed file systems.
+	 * release_posix_file_system will actually do the depth first
+	 * search for unclaimed file systems.
+	 */
+
+	glist = posix_file_systems.next;
+
+	/* Scan the list for the first top level file system that is not
+	 * claimed.
+	 *
+	 * NOTE: the following two loops are similar to glist_for_each_safe but
+	 *       instead of just taking the next list entry, we take the next
+	 *       list entry that is a top level file system. This way even if
+	 *       the glist->next was a descendant file system that was going to
+	 *       be released, before we release a file system or it's
+	 *       descendants, we look for the next top level file system, since
+	 *       it's a top level file system it WILL NOT be released when we
+	 *       release fs or it's descendants.
+	 */
+	while (glist != &posix_file_systems) {
+		fs = glist_entry(glist,
+				 struct fsal_filesystem,
+				 filesystems);
+
+		if (fs->parent == NULL) {
+			/* Top level file system done */
+			break;
+		}
+
+		glist = glist->next;
+	}
+
+	/* Now, while we still have a top level file system to process
+	 */
+	while (glist != &posix_file_systems) {
+		/* First, find the NEXT top level file system. */
+		glistn = glist->next;
+
+		while (glistn != &posix_file_systems) {
+			fsn = glist_entry(glistn,
+					  struct fsal_filesystem,
+					  filesystems);
+			if (fsn->parent == NULL) {
+				/* Top level file system done */
+				break;
+			}
+
+			glistn = glistn->next;
+		}
+
+		/* Now glistn/fsn is either the next top level file
+		 * system or glistn is &posix_file_systems.
+		 *
+		 * fs is the file system to try releasing on, try to
+		 * release this file system or it's descendants.
+		 */
+
+		(void) release_posix_file_system(fs, UNCLAIM_SKIP);
+
+		/* Now ready to start processing the next top level
+		 * file system that is not claimed.
+		 */
+		glist = glistn;
+		fs = fsn;
 	}
 
 	/* start looking for the mount point */
@@ -1289,6 +1323,13 @@ int populate_posix_file_systems(bool force)
 	while ((mnt = getmntent(fp)) != NULL) {
 		if (mnt->mnt_dir == NULL)
 			continue;
+
+		if (!path_is_subset(path, mnt->mnt_dir)) {
+			LogDebug(COMPONENT_FSAL,
+				 "Ignoring %s because is is not a subset or superset of path %s",
+				 mnt->mnt_dir, path);
+			continue;
+		}
 
 		/* stat() on NFS mount points is prone to get stuck in
 		 * kernel due to unavailable NFS servers. Since we don't
@@ -1326,7 +1367,7 @@ int populate_posix_file_systems(bool force)
 			continue;
 		}
 
-		posix_create_file_system(mnt);
+		posix_create_file_system(mnt, &st);
 	}
 
 #ifdef USE_BLKID
@@ -1343,47 +1384,8 @@ int populate_posix_file_systems(bool force)
 		posix_find_parent(glist_entry(glist, struct fsal_filesystem,
 					      filesystems));
 
-	/* show tree */
-	glist_for_each(glist, &posix_file_systems) {
-		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
-		if (fs->parent == NULL)
-			show_tree(fs, 0);
-	}
-
  out:
 	PTHREAD_RWLOCK_unlock(&fs_lock);
-	return retval;
-}
-
-int reload_posix_filesystems(const char *path,
-			     struct fsal_module *fsal,
-			     struct fsal_export *exp,
-			     claim_filesystem_cb claim,
-			     unclaim_filesystem_cb unclaim,
-			     struct fsal_filesystem **root_fs)
-{
-	int retval = 0;
-
-	retval = populate_posix_file_systems(true);
-
-	if (retval != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"populate_posix_file_systems returned %s (%d)",
-			strerror(retval), retval);
-		return retval;
-	}
-
-	retval = claim_posix_filesystems(path, fsal, exp,
-					 claim, unclaim, root_fs);
-
-	if (retval != 0) {
-		if (retval == EAGAIN)
-			retval = ENOENT;
-		LogCrit(COMPONENT_FSAL,
-			"claim_posix_filesystems(%s) returned %s (%d)",
-			path, strerror(retval), retval);
-	}
-
 	return retval;
 }
 
@@ -1394,9 +1396,35 @@ int resolve_posix_filesystem(const char *path,
 			     unclaim_filesystem_cb unclaim,
 			     struct fsal_filesystem **root_fs)
 {
-	int retval = 0;
+	int retval = EAGAIN;
+	struct stat statbuf;
 
-	retval = populate_posix_file_systems(false);
+	while (retval == EAGAIN) {
+		/* Need to retry stat on path until we don't get EAGAIN in case
+		 * autofs needed to mount the file system.
+		 */
+		retval = stat(path, &statbuf);
+		if (retval != 0) {
+			retval = errno;
+			LogDebug(COMPONENT_FSAL,
+				 "stat returned %s (%d) while resolving export path %s %s",
+				 strerror(retval), retval, path,
+				 retval == EAGAIN ? "(may retry)" : "(failed)");
+		}
+	}
+
+	if (retval != 0) {
+		/* Since we failed a stat on the path, we might as well bail
+		 * now...
+		 */
+		LogCrit(COMPONENT_FSAL,
+			"stat returned %s (%d) while resolving export path %s",
+			strerror(retval), retval, path);
+		return retval;
+	}
+
+	retval = populate_posix_file_systems(path);
+
 	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"populate_posix_file_systems returned %s (%d)",
@@ -1405,53 +1433,77 @@ int resolve_posix_filesystem(const char *path,
 	}
 
 	retval = claim_posix_filesystems(path, fsal, exp,
-					 claim, unclaim, root_fs);
-
-	/* second attempt to resolve file system with force option in case of
-	 * ganesha isn't during startup.
-	 */
-	if (!nfs_init.init_complete || retval != EAGAIN) {
-		LogDebug(COMPONENT_FSAL,
-			 "Not trying to claim filesystems again because %s %s(%d)",
-			 nfs_init.init_complete
-				? "retval != EAGAIN"
-				: "init is not complete",
-			 strerror(retval), retval);
-		return retval;
-	}
-
-	LogDebug(COMPONENT_FSAL,
-		 "Attempting to find a filesystem for %s, reload filesystems",
-		 path);
-
-	retval =
-	    reload_posix_filesystems(path, fsal, exp, claim, unclaim, root_fs);
+					 claim, unclaim, root_fs, &statbuf);
 
 	return retval;
 }
 
-void release_posix_file_system(struct fsal_filesystem *fs)
+/**
+ * @brief release a POSIX file system and all it's descendants
+ *
+ * @param[in] fs             the file system to release
+ * @param[in] release_claims what to do about claimed file systems
+ *
+ * @returns true if a descendant was not released because it was a claimed
+ *          file system or a descendant underneath was a claimed file system.
+ *
+ */
+bool release_posix_file_system(struct fsal_filesystem *fs,
+			       enum release_claims release_claims)
 {
-	struct fsal_filesystem *child_fs;
+	bool claimed = false; /* Assume no claimed children. */
+	struct glist_head *glist, *glistn;
+
+	/* Note: Check this file system AFTER we check the descendants, we will
+	 *       thus release any descendants that are not claimed.
+	 */
+
+	glist_for_each_safe(glist, glistn, &fs->children) {
+		struct fsal_filesystem *child_fs;
+
+		child_fs = glist_entry(glist, struct fsal_filesystem, siblings);
+
+		/* If a child or child underneath was not released because it
+		 * was claimed, propagate that up.
+		 */
+		claimed |= release_posix_file_system(child_fs, release_claims);
+	}
 
 	if (fs->unclaim != NULL) {
-		LogWarn(COMPONENT_FSAL,
-			"Filesystem %s is still claimed",
-			fs->path);
-		unclaim_fs(fs);
+		if (release_claims == UNCLAIM_WARN)
+			LogWarn(COMPONENT_FSAL,
+				"Filesystem %s is still claimed",
+				fs->path);
+		else
+			LogDebug(COMPONENT_FSAL,
+				 "Filesystem %s is still claimed",
+				 fs->path);
+		return true;
 	}
 
-	while ((child_fs = glist_first_entry(&fs->children,
-					     struct fsal_filesystem,
-					     siblings))) {
-		release_posix_file_system(child_fs);
+	if (claimed) {
+		if (release_claims == UNCLAIM_WARN)
+			LogWarn(COMPONENT_FSAL,
+				"Filesystem %s had at least one child still claimed",
+				fs->path);
+		else
+			LogDebug(COMPONENT_FSAL,
+				 "Filesystem %s had at least one child still claimed",
+				 fs->path);
+		return true;
 	}
 
-	LogDebug(COMPONENT_FSAL,
-		 "Releasing filesystem %s (%p)",
-		 fs->path, fs);
+	LogInfo(COMPONENT_FSAL,
+		"Removed filesystem %p %s namelen=%d dev=%"PRIu64".%"PRIu64
+		" fsid=0x%016"PRIx64".0x%016"PRIx64" %"PRIu64".%"PRIu64
+		" type=%s",
+		fs, fs->path, (int) fs->namelen, fs->dev.major, fs->dev.minor,
+		fs->fsid.major, fs->fsid.minor, fs->fsid.major, fs->fsid.minor,
+		fs->type);
 	remove_fs(fs);
 	free_fs(fs);
+
+	return false;
 }
 
 void release_posix_file_systems(void)
@@ -1462,7 +1514,7 @@ void release_posix_file_systems(void)
 
 	while ((fs = glist_first_entry(&posix_file_systems,
 				       struct fsal_filesystem, filesystems))) {
-		release_posix_file_system(fs);
+		(void) release_posix_file_system(fs, UNCLAIM_WARN);
 	}
 
 	PTHREAD_RWLOCK_unlock(&fs_lock);
@@ -1525,6 +1577,7 @@ void unclaim_fs(struct fsal_filesystem *this)
 	this->fsal = NULL;
 	this->unclaim = NULL;
 	this->exported = false;
+	this->private_data = NULL;
 }
 
 int process_claim(const char *path,
@@ -1584,12 +1637,12 @@ int process_claim(const char *path,
 
 	if (already_claimed) {
 		LogDebug(COMPONENT_FSAL,
-			 "FSAL %s Repeat Claiming %s",
-			 fsal->name, this->path);
+			 "FSAL %s Repeat Claiming %p %s",
+			 fsal->name, this, this->path);
 	} else {
 		LogInfo(COMPONENT_FSAL,
-			"FSAL %s Claiming %s",
-			fsal->name, this->path);
+			"FSAL %s Claiming %p %s",
+			fsal->name, this, this->path);
 	}
 
 	/* Complete the claim */
@@ -1640,23 +1693,17 @@ int claim_posix_filesystems(const char *path,
 			    struct fsal_export *exp,
 			    claim_filesystem_cb claim,
 			    unclaim_filesystem_cb unclaim,
-			    struct fsal_filesystem **root_fs)
+			    struct fsal_filesystem **root_fs,
+			    struct stat *statbuf)
 {
 	int retval = 0;
 	struct fsal_filesystem *fs, *root = NULL;
 	struct glist_head *glist;
-	struct stat statbuf;
 	struct fsal_dev__ dev;
 
 	PTHREAD_RWLOCK_wrlock(&fs_lock);
 
-	if (stat(path, &statbuf) != 0) {
-		retval = errno;
-		LogCrit(COMPONENT_FSAL,
-			"Could not stat directory for path %s", path);
-		goto out;
-	}
-	dev = posix2fsal_devt(statbuf.st_dev);
+	dev = posix2fsal_devt(statbuf->st_dev);
 
 	/* Scan POSIX file systems to find export root fs */
 	glist_for_each(glist, &posix_file_systems) {
@@ -1669,7 +1716,7 @@ int claim_posix_filesystems(const char *path,
 
 	/* Check if we found a filesystem */
 	if (root == NULL) {
-		retval = EAGAIN;
+		retval = ENOENT;
 		goto out;
 	}
 
@@ -1903,7 +1950,7 @@ static fsal_errors_t dup_ace(fsal_ace_t *sace, fsal_ace_t *dace)
 	return ERR_FSAL_NO_ERROR;
 }
 
-fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
+fsal_errors_t fsal_inherit_acls(struct fsal_attrlist *attrs, fsal_acl_t *sacl,
 				fsal_aceflag_t inherit)
 {
 	int naces;
@@ -2144,7 +2191,7 @@ fsal_mode_gen_set(fsal_ace_t *ace, uint32_t mode)
 }
 
 static fsal_status_t
-fsal_mode_gen_acl(struct attrlist *attrs)
+fsal_mode_gen_acl(struct fsal_attrlist *attrs)
 {
 	if (attrs->acl != NULL) {
 		/* We should never be passed attributes that have an
@@ -2173,7 +2220,7 @@ fsal_mode_gen_acl(struct attrlist *attrs)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl)
+fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 {
 	int naces;
 	fsal_ace_t *sace, *dace;
@@ -2298,7 +2345,8 @@ static uint32_t ace_modes[3][3] = {
 	}
 };
 
-static inline void set_mode(struct attrlist *attrs, uint32_t mode, bool allow)
+static inline void set_mode(struct fsal_attrlist *attrs, uint32_t mode,
+			    bool allow)
 {
 	if (allow)
 		attrs->mode |= mode;
@@ -2306,7 +2354,7 @@ static inline void set_mode(struct attrlist *attrs, uint32_t mode, bool allow)
 		attrs->mode &= ~(mode);
 }
 
-fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
+fsal_status_t fsal_acl_to_mode(struct fsal_attrlist *attrs)
 {
 	fsal_ace_t *ace = NULL;
 	uint32_t *modes;
@@ -2341,7 +2389,7 @@ fsal_status_t fsal_acl_to_mode(struct attrlist *attrs)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-void set_common_verifier(struct attrlist *attrs, fsal_verifier_t verifier)
+void set_common_verifier(struct fsal_attrlist *attrs, fsal_verifier_t verifier)
 {
 	uint32_t verf_hi = 0, verf_lo = 0;
 
@@ -3084,13 +3132,14 @@ bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier)
  *
  * The default behavior is to check verifier against atime and mtime.
  *
- * @param[in] attrlist    Attributes for the file
+ * @param[in] attrs       Attributes for the file
  * @param[in] verifier    Verifier to use for exclusive create
  *
  * @retval true if verifier matches
  */
 
-bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier)
+bool check_verifier_attrlist(struct fsal_attrlist *attrs,
+			     fsal_verifier_t verifier)
 {
 	uint32_t verf_hi = 0, verf_lo = 0;
 
@@ -3124,19 +3173,21 @@ bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier)
  * that and returns true if it is a referral.
  */
 bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
-			     struct attrlist *attrs, bool cache_attrs)
+			     struct fsal_attrlist *attrs, bool cache_attrs)
 {
+	attrmask_t req_mask = ATTR_TYPE | ATTR_MODE;
+
 	LogDebug(COMPONENT_FSAL, "Checking attrs for referral"
 		 ", handle: %p, valid_mask: %" PRIx64
 		 ", request_mask: %" PRIx64 ", supported: %" PRIx64,
 		 obj_hdl, attrs->valid_mask,
 		 attrs->request_mask, attrs->supported);
 
-	if ((attrs->valid_mask & (ATTR_TYPE | ATTR_MODE)) == 0) {
+	if ((attrs->valid_mask & req_mask) != req_mask) {
 		/* Required attributes are not available, need to fetch them */
 		fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 
-		attrs->request_mask |= (ATTR_TYPE | ATTR_MODE);
+		attrs->request_mask |= req_mask;
 
 		status = obj_hdl->obj_ops->getattrs(obj_hdl, attrs);
 		if (FSAL_IS_ERROR(status)) {
@@ -3161,6 +3212,233 @@ bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 
 	LogDebug(COMPONENT_FSAL, "Referral found for handle: %p", obj_hdl);
 	return true;
+}
+
+struct gsh_refstr *no_export;
+
+void init_ctx_refstr(void)
+{
+	no_export = gsh_refstr_dup("No Export");
+}
+
+void destroy_ctx_refstr(void)
+{
+	gsh_refstr_put(no_export);
+}
+
+static void set_op_context_export_fsal_no_release(struct gsh_export *exp,
+						  struct fsal_export *fsal_exp,
+						  struct fsal_pnfs_ds *pds,
+						  bool discard_refstr)
+{
+	if (discard_refstr) {
+		gsh_refstr_put(op_ctx->ctx_fullpath);
+		gsh_refstr_put(op_ctx->ctx_pseudopath);
+	}
+
+	op_ctx->ctx_export = exp;
+	op_ctx->fsal_export = fsal_exp;
+	op_ctx->ctx_pnfs_ds = pds;
+
+	rcu_read_lock();
+
+	if (op_ctx->ctx_export != NULL &&
+	    op_ctx->ctx_export->fullpath) {
+		op_ctx->ctx_fullpath = gsh_refstr_get(rcu_dereference(
+					op_ctx->ctx_export->fullpath));
+	} else {
+		/* Normally an export always has a fullpath refstr, however
+		 * we might be called from free_export_resources before the
+		 * refstr is set up. Or we may be called with no export.
+		 */
+		op_ctx->ctx_fullpath = gsh_refstr_get(no_export);
+	}
+
+	if (op_ctx->ctx_export != NULL &&
+	    op_ctx->ctx_export->pseudopath != NULL) {
+		op_ctx->ctx_pseudopath = gsh_refstr_get(rcu_dereference(
+					op_ctx->ctx_export->pseudopath));
+	} else {
+		/* Normally an export always has a pseudopath refstr, however
+		 * we might be called from free_export_resources before the
+		 * refstr is set up. Or we may be called with no export.
+		 */
+		op_ctx->ctx_pseudopath = gsh_refstr_get(no_export);
+	}
+
+	rcu_read_unlock();
+
+	if (fsal_exp)
+		op_ctx->fsal_module = fsal_exp->fsal;
+	else if (!op_ctx->fsal_module && op_ctx->saved_op_ctx)
+		op_ctx->fsal_module = op_ctx->saved_op_ctx->fsal_module;
+}
+
+void set_op_context_export_fsal(struct gsh_export *exp,
+				struct fsal_export *fsal_exp)
+{
+	if (op_ctx->ctx_export != NULL)
+		put_gsh_export(op_ctx->ctx_export);
+
+	if (op_ctx->ctx_pnfs_ds != NULL)
+		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
+
+	set_op_context_export_fsal_no_release(exp, fsal_exp, NULL, true);
+}
+
+void set_op_context_pnfs_ds(struct fsal_pnfs_ds *pds)
+{
+	if (op_ctx->ctx_export != NULL)
+		put_gsh_export(op_ctx->ctx_export);
+
+	if (op_ctx->ctx_pnfs_ds != NULL)
+		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
+
+	set_op_context_export_fsal_no_release(pds->mds_export,
+					      pds->mds_fsal_export,
+					      pds,
+					      true);
+}
+
+static inline void clear_op_context_export_impl(void)
+{
+	if (op_ctx->ctx_export != NULL)
+		put_gsh_export(op_ctx->ctx_export);
+
+	if (op_ctx->ctx_pnfs_ds != NULL)
+		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
+
+	if (op_ctx->ctx_fullpath != NULL)
+		gsh_refstr_put(op_ctx->ctx_fullpath);
+
+	if (op_ctx->ctx_pseudopath != NULL)
+		gsh_refstr_put(op_ctx->ctx_pseudopath);
+
+	op_ctx->ctx_export = NULL;
+	op_ctx->fsal_export = NULL;
+}
+
+void clear_op_context_export(void)
+{
+	clear_op_context_export_impl();
+
+	/* An active op context will always have refstr */
+	op_ctx->ctx_fullpath = gsh_refstr_get(no_export);
+	op_ctx->ctx_pseudopath = gsh_refstr_get(no_export);
+}
+
+static void save_op_context_export(struct saved_export_context *saved)
+{
+	saved->saved_export = op_ctx->ctx_export;
+	saved->saved_fullpath = op_ctx->ctx_fullpath;
+	saved->saved_pseudopath = op_ctx->ctx_pseudopath;
+	saved->saved_fsal_export = op_ctx->fsal_export;
+	saved->saved_fsal_module = op_ctx->fsal_module;
+	saved->saved_pnfs_ds = op_ctx->ctx_pnfs_ds;
+	saved->saved_export_perms = op_ctx->export_perms;
+}
+
+void save_op_context_export_and_set_export(struct saved_export_context *saved,
+					   struct gsh_export *exp)
+{
+	save_op_context_export(saved);
+
+	/* Don't release op_ctx->ctx_export since it's saved */
+	set_op_context_export_fsal_no_release(exp, exp->fsal_export, NULL,
+					      false);
+}
+
+void save_op_context_export_and_clear(struct saved_export_context *saved)
+{
+	save_op_context_export(saved);
+	op_ctx->ctx_export = NULL;
+	op_ctx->fsal_export = NULL;
+	op_ctx->ctx_pnfs_ds = NULL;
+}
+
+void restore_op_context_export(struct saved_export_context *saved)
+{
+	clear_op_context_export();
+	op_ctx->ctx_export = saved->saved_export;
+	op_ctx->ctx_fullpath = saved->saved_fullpath;
+	op_ctx->ctx_pseudopath = saved->saved_pseudopath;
+	op_ctx->fsal_export = saved->saved_fsal_export;
+	op_ctx->fsal_module = saved->saved_fsal_module;
+	op_ctx->ctx_pnfs_ds = saved->saved_pnfs_ds;
+	op_ctx->export_perms = saved->saved_export_perms;
+}
+
+void discard_op_context_export(struct saved_export_context *saved)
+{
+	if (saved->saved_export)
+		put_gsh_export(saved->saved_export);
+
+	if (saved->saved_pnfs_ds != NULL)
+		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
+
+	if (saved->saved_fullpath != NULL)
+		gsh_refstr_put(saved->saved_fullpath);
+
+	if (saved->saved_pseudopath != NULL)
+		gsh_refstr_put(saved->saved_pseudopath);
+}
+
+void init_op_context(struct req_op_context *ctx,
+		     struct gsh_export *exp,
+		     struct fsal_export *fsal_exp,
+		     sockaddr_t *caller_data,
+		     uint32_t nfs_vers,
+		     uint32_t nfs_minorvers,
+		     enum request_type req_type)
+{
+	/* Initialize ctx.
+	 * Note that a zeroed creds works just fine as root creds.
+	 */
+	memset(ctx, 0, sizeof(*ctx));
+
+	ctx->saved_op_ctx = op_ctx;
+	op_ctx = ctx;
+
+	ctx->nfs_vers = nfs_vers;
+	ctx->nfs_minorvers = nfs_minorvers;
+	ctx->req_type = req_type;
+	ctx->caller_addr = caller_data;
+
+	/* Since this is a brand new op context, no need to release anything.
+	 */
+	set_op_context_export_fsal_no_release(exp, fsal_exp, NULL, false);
+
+	ctx->export_perms.set = root_op_export_set;
+	ctx->export_perms.options = root_op_export_options;
+}
+
+void release_op_context(void)
+{
+	struct req_op_context *cur_ctx = op_ctx;
+
+	clear_op_context_export_impl();
+
+	/* And now we're done with the gsh_refstr */
+	op_ctx->ctx_fullpath = NULL;
+	op_ctx->ctx_pseudopath = NULL;
+
+	/* And restore the saved op_ctx */
+	op_ctx = op_ctx->saved_op_ctx;
+	cur_ctx->saved_op_ctx = NULL;
+}
+
+void suspend_op_context(void)
+{
+	struct req_op_context *cur_ctx = op_ctx;
+
+	op_ctx = op_ctx->saved_op_ctx;
+	cur_ctx->saved_op_ctx = NULL;
+}
+
+void resume_op_context(struct req_op_context *ctx)
+{
+	ctx->saved_op_ctx = op_ctx;
+	op_ctx = ctx;
 }
 
 /** @} */

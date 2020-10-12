@@ -69,7 +69,7 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 
 	struct fsal_obj_handle *obj_parent = NULL;
 	struct fsal_obj_handle *obj_new = NULL;
-	struct attrlist sattr;
+	struct fsal_attrlist sattr;
 	int convrc = 0;
 	char *link_content = NULL;
 	struct fsal_export *exp_hdl;
@@ -91,8 +91,8 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	exp_hdl = op_ctx->fsal_export;
 
 	fsal_status = exp_hdl->exp_ops.check_quota(exp_hdl,
-						op_ctx->ctx_export->fullpath,
-						FSAL_QUOTA_INODES);
+						   CTX_FULLPATH(op_ctx),
+						   FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_CREATE4->status = NFS4ERR_DQUOT;

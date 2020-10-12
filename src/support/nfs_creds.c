@@ -73,41 +73,39 @@ uint32_t root_op_export_set = EXPORT_OPTION_SQUASH_TYPES |
 			      EXPORT_OPTION_PROTOCOLS |
 			      EXPORT_OPTION_TRANSPORTS;
 
-void squash_setattr(struct attrlist *attr)
+void squash_setattr(struct fsal_attrlist *attr)
 {
 	if (attr->valid_mask & ATTR_OWNER &&
-	    op_ctx->export_perms->anonymous_uid != 0) {
-		if (op_ctx->export_perms->options &
-		    EXPORT_OPTION_ALL_ANONYMOUS)
-			attr->owner = op_ctx->export_perms->anonymous_uid;
-		else if (((op_ctx->export_perms->options &
+	    op_ctx->export_perms.anonymous_uid != 0) {
+		if (op_ctx->export_perms.options & EXPORT_OPTION_ALL_ANONYMOUS)
+			attr->owner = op_ctx->export_perms.anonymous_uid;
+		else if (((op_ctx->export_perms.options &
 			   EXPORT_OPTION_ROOT_SQUASH) ||
-			  (op_ctx->export_perms->options &
+			  (op_ctx->export_perms.options &
 			   EXPORT_OPTION_ROOT_ID_SQUASH))
 			 && (attr->owner == 0)
 			 && ((op_ctx->cred_flags & UID_SQUASHED) != 0))
-			attr->owner = op_ctx->export_perms->anonymous_uid;
+			attr->owner = op_ctx->export_perms.anonymous_uid;
 	}
 
 	if (attr->valid_mask & ATTR_GROUP &&
-	    op_ctx->export_perms->anonymous_gid != 0) {
+	    op_ctx->export_perms.anonymous_gid != 0) {
 		/* If all squashed, then always squash the owner_group.
 		 *
 		 * If root squashed, then squash owner_group if
 		 * caller_gid has been squashed or one of the caller's
 		 * alternate groups has been squashed.
 		 */
-		if (op_ctx->export_perms->options &
-		    EXPORT_OPTION_ALL_ANONYMOUS)
-			attr->group = op_ctx->export_perms->anonymous_gid;
-		else if (((op_ctx->export_perms->options &
+		if (op_ctx->export_perms.options & EXPORT_OPTION_ALL_ANONYMOUS)
+			attr->group = op_ctx->export_perms.anonymous_gid;
+		else if (((op_ctx->export_perms.options &
 			   EXPORT_OPTION_ROOT_SQUASH) ||
-			  (op_ctx->export_perms->options &
+			  (op_ctx->export_perms.options &
 			   EXPORT_OPTION_ROOT_ID_SQUASH))
 			 && (attr->group == 0)
 			 && ((op_ctx->cred_flags & (GID_SQUASHED |
 						     GARRAY_SQUASHED)) != 0))
-			attr->group = op_ctx->export_perms->anonymous_gid;
+			attr->group = op_ctx->export_perms.anonymous_gid;
 	}
 }
 
@@ -291,10 +289,10 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		}
 
 		/* Copy original_creds creds */
-		*op_ctx->creds = op_ctx->original_creds;
+		op_ctx->creds = op_ctx->original_creds;
 
 		/* Do we trust AUTH_SYS creds for groups or not ? */
-		if ((op_ctx->export_perms->options & EXPORT_OPTION_MANAGE_GIDS)
+		if ((op_ctx->export_perms.options & EXPORT_OPTION_MANAGE_GIDS)
 		    != 0) {
 			op_ctx->cred_flags |= MANAGED_GIDS;
 			garray_copy = &op_ctx->managed_garray_copy;
@@ -369,51 +367,46 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 	/* Now check for anon creds or id squashing			*/
 	/****************************************************************/
 	if ((op_ctx->cred_flags & CREDS_ANON) != 0 ||
-	    ((op_ctx->export_perms->options &
-	      EXPORT_OPTION_ALL_ANONYMOUS) != 0) ||
-	    ((op_ctx->export_perms->options & EXPORT_OPTION_ROOT_SQUASH) != 0 &&
+	    ((op_ctx->export_perms.options & EXPORT_OPTION_ALL_ANONYMOUS) != 0)
+	    ||
+	    ((op_ctx->export_perms.options & EXPORT_OPTION_ROOT_SQUASH) != 0 &&
 	      op_ctx->fsal_export->exp_ops.is_superuser(op_ctx->fsal_export,
 					      &op_ctx->original_creds))) {
 		/* Squash uid, gid, and discard groups */
-		op_ctx->creds->caller_uid =
-					op_ctx->export_perms->anonymous_uid;
-		op_ctx->creds->caller_gid =
-					op_ctx->export_perms->anonymous_gid;
-		op_ctx->creds->caller_glen = 0;
+		op_ctx->creds.caller_uid = op_ctx->export_perms.anonymous_uid;
+		op_ctx->creds.caller_gid = op_ctx->export_perms.anonymous_gid;
+		op_ctx->creds.caller_glen = 0;
 		LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			    "%s creds squashed to uid=%u, gid=%u",
 			    auth_label,
-			    op_ctx->creds->caller_uid,
-			    op_ctx->creds->caller_gid);
+			    op_ctx->creds.caller_uid,
+			    op_ctx->creds.caller_gid);
 		op_ctx->cred_flags |= UID_SQUASHED | GID_SQUASHED;
 		return NFS4_OK;
-	} else if ((op_ctx->export_perms->options &
+	} else if ((op_ctx->export_perms.options &
 		    EXPORT_OPTION_ROOT_ID_SQUASH) != 0 &&
 		   op_ctx->fsal_export->exp_ops.is_superuser(
 			op_ctx->fsal_export, &op_ctx->original_creds)) {
 		/* Only squash root id, leave gid and groups alone for now */
-		op_ctx->creds->caller_uid =
-					op_ctx->export_perms->anonymous_uid;
+		op_ctx->creds.caller_uid = op_ctx->export_perms.anonymous_uid;
 		op_ctx->cred_flags |= UID_SQUASHED;
 	} else {
 		/* Use original_creds uid */
-		op_ctx->creds->caller_uid = op_ctx->original_creds.caller_uid;
+		op_ctx->creds.caller_uid = op_ctx->original_creds.caller_uid;
 	}
 
 	/****************************************************************/
 	/* Now sqush group or use original_creds gid			*/
 	/****************************************************************/
-	if (((op_ctx->export_perms->options & EXPORT_OPTION_ROOT_SQUASH) != 0 ||
-	     (op_ctx->export_perms->options &
-	      EXPORT_OPTION_ROOT_ID_SQUASH) != 0) &&
-	    op_ctx->original_creds.caller_gid == 0) {
+	if (((op_ctx->export_perms.options & EXPORT_OPTION_ROOT_SQUASH) != 0 ||
+	     (op_ctx->export_perms.options & EXPORT_OPTION_ROOT_ID_SQUASH) != 0)
+	     && op_ctx->original_creds.caller_gid == 0) {
 		/* Squash gid */
-		op_ctx->creds->caller_gid =
-					op_ctx->export_perms->anonymous_gid;
+		op_ctx->creds.caller_gid = op_ctx->export_perms.anonymous_gid;
 		op_ctx->cred_flags |= GID_SQUASHED;
 	} else {
 		/* Use original_creds gid */
-		op_ctx->creds->caller_gid = op_ctx->original_creds.caller_gid;
+		op_ctx->creds.caller_gid = op_ctx->original_creds.caller_gid;
 	}
 
 	/****************************************************************/
@@ -430,13 +423,12 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 			return NFS4ERR_ACCESS;
 		}
 
-		op_ctx->creds->caller_glen = op_ctx->caller_gdata->nbgroups;
-		op_ctx->creds->caller_garray = op_ctx->caller_gdata->groups;
+		op_ctx->creds.caller_glen = op_ctx->caller_gdata->nbgroups;
+		op_ctx->creds.caller_garray = op_ctx->caller_gdata->groups;
 	} else {
 		/* Use the original_creds group list */
-		op_ctx->creds->caller_glen   =
-					op_ctx->original_creds.caller_glen;
-		op_ctx->creds->caller_garray =
+		op_ctx->creds.caller_glen = op_ctx->original_creds.caller_glen;
+		op_ctx->creds.caller_garray =
 					op_ctx->original_creds.caller_garray;
 	}
 
@@ -445,22 +437,22 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 	/****************************************************************/
 
 	/* If no root squashing in caller_garray, return now */
-	if ((op_ctx->export_perms->options & EXPORT_OPTION_SQUASH_TYPES) == 0 ||
-	    op_ctx->creds->caller_glen == 0)
+	if ((op_ctx->export_perms.options & EXPORT_OPTION_SQUASH_TYPES) == 0 ||
+	    op_ctx->creds.caller_glen == 0)
 		goto out;
 
-	for (i = 0; i < op_ctx->creds->caller_glen; i++) {
-		if (op_ctx->creds->caller_garray[i] == 0) {
+	for (i = 0; i < op_ctx->creds.caller_glen; i++) {
+		if (op_ctx->creds.caller_garray[i] == 0) {
 			/* Meed to make a copy, or use the old copy */
 			if ((*garray_copy) == NULL) {
 				/* Make a copy of the active garray */
 				(*garray_copy) =
-					gsh_malloc(op_ctx->creds->caller_glen *
+					gsh_malloc(op_ctx->creds.caller_glen *
 						   sizeof(gid_t));
 
 				memcpy((*garray_copy),
-				       op_ctx->creds->caller_garray,
-				       op_ctx->creds->caller_glen *
+				       op_ctx->creds.caller_garray,
+				       op_ctx->creds.caller_glen *
 				       sizeof(gid_t));
 			}
 
@@ -469,8 +461,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 			 * the same place, so even if using a copy that had a
 			 * different anonymous_gid, we're fine.
 			 */
-			(*garray_copy)[i] =
-					op_ctx->export_perms->anonymous_gid;
+			(*garray_copy)[i] = op_ctx->export_perms.anonymous_gid;
 
 			/* Indicate we squashed the caller_garray */
 			op_ctx->cred_flags |= GARRAY_SQUASHED;
@@ -479,22 +470,22 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 
 	/* If we squashed the caller_garray, use the squashed copy */
 	if ((op_ctx->cred_flags & GARRAY_SQUASHED) != 0)
-		op_ctx->creds->caller_garray = *garray_copy;
+		op_ctx->creds.caller_garray = *garray_copy;
 
 out:
 
 	LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 		    "%s creds mapped to uid=%u%s, gid=%u%s, glen=%d%s",
 		    auth_label,
-		    op_ctx->creds->caller_uid,
+		    op_ctx->creds.caller_uid,
 		    (op_ctx->cred_flags & UID_SQUASHED) != 0
 			? " (squashed)"
 			: "",
-		    op_ctx->creds->caller_gid,
+		    op_ctx->creds.caller_gid,
 		    (op_ctx->cred_flags & GID_SQUASHED) != 0
 			? " (squashed)"
 			: "",
-		    op_ctx->creds->caller_glen,
+		    op_ctx->creds.caller_glen,
 		    (op_ctx->cred_flags & MANAGED_GIDS) != 0
 			? ((op_ctx->cred_flags & GARRAY_SQUASHED) != 0
 				? " (managed and squashed)"
@@ -512,10 +503,10 @@ out:
  */
 void init_credentials(void)
 {
-	memset(op_ctx->creds, 0, sizeof(*op_ctx->creds));
+	memset(&op_ctx->creds, 0, sizeof(op_ctx->creds));
 	memset(&op_ctx->original_creds, 0, sizeof(op_ctx->original_creds));
-	op_ctx->creds->caller_uid = op_ctx->export_perms->anonymous_uid;
-	op_ctx->creds->caller_gid = op_ctx->export_perms->anonymous_gid;
+	op_ctx->creds.caller_uid = op_ctx->export_perms.anonymous_uid;
+	op_ctx->creds.caller_gid = op_ctx->export_perms.anonymous_gid;
 	op_ctx->caller_gdata = NULL;
 	op_ctx->caller_garray_copy = NULL;
 	op_ctx->managed_garray_copy = NULL;
@@ -562,12 +553,11 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 	export_check_access();
 
 	/* Check if any access at all */
-	if ((op_ctx->export_perms->options &
-	     EXPORT_OPTION_ACCESS_MASK) == 0) {
+	if ((op_ctx->export_perms.options & EXPORT_OPTION_ACCESS_MASK) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Access not allowed on Export_Id %d %s for client %s",
 			op_ctx->ctx_export->export_id,
-			op_ctx->ctx_export->pseudopath,
+			CTX_PSEUDOPATH(op_ctx),
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -575,11 +565,11 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 	}
 
 	/* Check protocol version */
-	if ((op_ctx->export_perms->options & EXPORT_OPTION_NFSV4) == 0) {
+	if ((op_ctx->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 not allowed on Export_Id %d %s for client %s",
 			op_ctx->ctx_export->export_id,
-			op_ctx->ctx_export->pseudopath,
+			CTX_PSEUDOPATH(op_ctx),
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -588,17 +578,14 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 
 	/* Check transport type */
 	if (((xprt_type == XPRT_UDP) &&
-	    ((op_ctx->export_perms->options &
-	      EXPORT_OPTION_UDP) == 0))
-	    ||
+	    ((op_ctx->export_perms.options & EXPORT_OPTION_UDP) == 0)) ||
 	    ((xprt_type == XPRT_TCP) &&
-	    ((op_ctx->export_perms->options &
-	      EXPORT_OPTION_TCP) == 0))) {
+	    ((op_ctx->export_perms.options & EXPORT_OPTION_TCP) == 0))) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 over %s not allowed on Export_Id %d %s for client %s",
 			xprt_type_to_str(xprt_type),
 			op_ctx->ctx_export->export_id,
-			op_ctx->ctx_export->pseudopath,
+			CTX_PSEUDOPATH(op_ctx),
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -606,13 +593,13 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 	}
 
 	/* Check if client is using a privileged port. */
-	if (((op_ctx->export_perms->options &
+	if (((op_ctx->export_perms.options &
 	      EXPORT_OPTION_PRIVILEGED_PORT) != 0)
 	    && (port >= IPPORT_RESERVED)) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 			port, op_ctx->ctx_export->export_id,
-			op_ctx->ctx_export->pseudopath,
+			CTX_PSEUDOPATH(op_ctx),
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -624,7 +611,7 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
 			op_ctx->ctx_export->export_id,
-			op_ctx->ctx_export->pseudopath,
+			CTX_PSEUDOPATH(op_ctx),
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -648,14 +635,14 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
  * @param[out] granted_access   The bits granted
  * @param[out] supported_access The bits supported for this inode
  *
- * @return FSAL error
- * @retval ERR_FSAL_NO_ERROR all access was granted
- * @retval ERR_FSAL_ACCESS one or more access bits were denied
- * @retval other values indicate a FSAL failure
+ * @return FSAL status which may have in 'status.major':
+ *	   - ERR_FSAL_NO_ERROR all access was granted
+ *	   - ERR_FSAL_ACCESS one or more access bits were denied
+ *	   - other values indicate a FSAL failure
  *
  */
 
-fsal_errors_t nfs_access_op(struct fsal_obj_handle *obj,
+fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 				   uint32_t requested_access,
 				   uint32_t *granted_access,
 				   uint32_t *supported_access)
@@ -797,7 +784,7 @@ fsal_errors_t nfs_access_op(struct fsal_obj_handle *obj,
 		/* Allow only read if client has read only access
 		 * on this share.
 		 */
-		if (!(op_ctx->export_perms->options &
+		if (!(op_ctx->export_perms.options &
 		    EXPORT_OPTION_WRITE_ACCESS))
 			*granted_access &= ~(ACCESS3_EXTEND | ACCESS3_MODIFY |
 					   ACCESS3_DELETE);
@@ -840,5 +827,5 @@ fsal_errors_t nfs_access_op(struct fsal_obj_handle *obj,
 					   ACCESS3_EXECUTE) ? "EXECUTE" : "-");
 	}
 
-	return fsal_status.major;
+	return fsal_status;
 }

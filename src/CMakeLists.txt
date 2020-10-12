@@ -40,10 +40,10 @@ ELSE()
 	SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files")
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
 
-# Extra version is for naming development/RC.  It is blank in master/stable branches
+# Extra version is for naming development/RC.  It is blank in stable branches
 # so it can be available to end-users to name local variants/versions
 # If used, it is always of the form "-whateveryouwant"
-set(GANESHA_EXTRA_VERSION -dev.20)
+set(GANESHA_EXTRA_VERSION -dev.37)
 
 set(GANESHA_VERSION ${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}${GANESHA_EXTRA_VERSION})
 set(GANESHA_BASE_VERSION ${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION})
@@ -228,6 +228,7 @@ goption(USE_FSAL_PROXY_V3 "build PROXY_V3 FSAL shared library" ON)
 goption(USE_FSAL_VFS "build VFS FSAL shared library" ON)
 goption(USE_FSAL_LUSTRE "build LUSTRE FSAL shared library" ON)
 goption(USE_FSAL_LIZARDFS "build LIZARDFS FSAL shared library" ON)
+goption(USE_FSAL_KVSFS "build KVSFS FSAL shared library" ON)
 goption(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 goption(USE_FSAL_GPFS "build GPFS FSAL" ON)
 goption(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
@@ -342,11 +343,20 @@ option(USE_9P_RDMA "enable 9P_RDMA support" OFF)
 # Enable NFSv3 Support
 option(USE_NFS3 "enable NFSv3 support" ON)
 
-# Enable NLM Support
-option(USE_NLM "enable NLM support" ON)
+if(USE_NFS3)
+    # Enable NLM Support
+    option(USE_NLM "enable NLM support" ON)
+    # Enable NFSACL3 protocol extension support
+    option(USE_NFSACL3 "enable NFSACLv3 support" ON)
+else(USE_NFS3)
+    # Disable NLM Support
+    set(USE_NLM OFF)
+    # Disable NFSACL3 protocol extension support
+    set(USE_NFSACL3 OFF)
+endif(USE_NFS3)
 
-# Enable NFSACL3 protocol extension support
-option(USE_NFSACL3 "enable NFSACLv3 support" ON)
+# Enable RQUOTA support
+option(USE_RQUOTA "enable RQUOTA support" ON)
 
 # AF_VSOCK host support (NFS)
 option(USE_VSOCK "enable AF_VSOCK listener" OFF)
@@ -518,11 +528,11 @@ endif(USE_GSS)
 
 gopt_test(USE_ADMIN_TOOLS)
 if (USE_ADMIN_TOOLS)
-  find_package(PythonInterp ${USE_ADMIN_TOOLS_REQUIRED})
-  if (NOT PYTHONINTERP_FOUND)
+  find_package (Python COMPONENTS Interpreter Development)
+  if (NOT Python_Interpreter_FOUND)
     message(WARNING "Cannot find python. Disablin admin tools")
     set(USE_ADMIN_TOOLS OFF)
-  endif (NOT PYTHONINTERP_FOUND)
+  endif (NOT Python_Interpreter_FOUND)
 endif (USE_ADMIN_TOOLS)
 
 gopt_test(USE_GUI_ADMIN_TOOLS)
@@ -617,6 +627,17 @@ if(USE_FSAL_LIZARDFS)
     set(USE_FSAL_LIZARDFS OFF)
   endif(LIZARDFS_CLIENT_LIB)
 endif(USE_FSAL_LIZARDFS)
+
+gopt_test(USE_FSAL_KVSFS)
+if(USE_FSAL_KVSFS)
+  find_library(KVSNS_LIB kvsns)
+  if (KVSNS_LIB)
+    message(STATUS "Found KVSNS library: ${KVSNS_LIB}")
+  else (KVSNS_LIB)
+    message(WARNING "Cannot find libkvsns. Disabling KVSNS fsal")
+    set(USE_FSAL_KVSFS OFF)
+  endif (KVSNS_LIB)
+endif(USE_FSAL_KVSFS)
 
 gopt_test(USE_FSAL_CEPH)
 if(USE_FSAL_CEPH)
@@ -956,6 +977,7 @@ set(_USE_9P ${USE_9P})
 set(_USE_9P_RDMA ${USE_9P_RDMA})
 set(_USE_NFS3 ${USE_NFS3})
 set(_USE_NLM ${USE_NLM})
+set(_USE_RQUOTA ${USE_RQUOTA})
 set(_USE_CB_SIMULATOR ${USE_CB_SIMULATOR})
 
 ########### add a "make dist" and a "make rpm"  ###############
@@ -1101,12 +1123,6 @@ set(SYSTEM_LIBRARIES
 # Config file; make sure it doesn't clobber an existing one
 include(${CMAKE_SOURCE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
 InstallPackageConfigFile(${CMAKE_SOURCE_DIR}/config_samples/ganesha.conf.example ${SYSCONFDIR}/ganesha ganesha.conf)
-# Sample config files
-if( ${DISTRO} MATCHES "SLES" )
-  install(DIRECTORY config_samples DESTINATION share/doc/packages/ganesha)
-else( ${DISTRO} MATCHES "SLES" )
-  install(DIRECTORY config_samples DESTINATION share/doc/ganesha)
-endif( ${DISTRO} MATCHES "SLES" )
 # pre-create PREFIX/var/run/ganesha
 install(DIRECTORY DESTINATION ${SYSSTATEDIR}/run/ganesha)
 
@@ -1156,6 +1172,7 @@ message(STATUS "USE_FSAL_PROXY_V3 = ${USE_FSAL_PROXY_V3}")
 message(STATUS "USE_FSAL_VFS = ${USE_FSAL_VFS}")
 message(STATUS "USE_FSAL_LUSTRE = ${USE_FSAL_LUSTRE}")
 message(STATUS "USE_FSAL_LIZARDFS = ${USE_FSAL_LIZARDFS}")
+message(STATUS "USE_FSAL_KVSFS = ${USE_FSAL_KVSFS}")
 message(STATUS "USE_FSAL_CEPH = ${USE_FSAL_CEPH}")
 message(STATUS "USE_FSAL_CEPH_MKNOD = ${USE_FSAL_CEPH_MKNOD}")
 message(STATUS "USE_FSAL_CEPH_SETLK = ${USE_FSAL_CEPH_SETLK}")
@@ -1349,6 +1366,12 @@ if(USE_FSAL_LIZARDFS)
 else(USE_FSAL_LIZARDFS)
     set(BCOND_LIZARDFS "%bcond_with")
 endif(USE_FSAL_LIZARDFS)
+
+if(USE_FSAL_KVSFS)
+    set(BCOND_KVSFS "%bcond_without")
+else(USE_FSAL_KVSFS)
+    set(BCOND_KVSFS "%bcond_with")
+endif(USE_FSAL_KVSFS)
 
 if(USE_FSAL_CEPH)
     set(BCOND_CEPH "%bcond_without")

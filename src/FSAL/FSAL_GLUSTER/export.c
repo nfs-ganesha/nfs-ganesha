@@ -69,13 +69,10 @@ static void export_release(struct fsal_export *exp_hdl)
 
 	glusterfs_free_fs(glfs_export->gl_fs);
 
-	glfs_export->gl_fs = NULL;
+	gsh_free(glfs_export->mount_path);
 	gsh_free(glfs_export->export_path);
-	glfs_export->export_path = NULL;
 	gsh_free(glfs_export->sec_label_xattr);
-	glfs_export->sec_label_xattr = NULL;
 	gsh_free(glfs_export);
-	glfs_export = NULL;
 }
 
 /**
@@ -85,7 +82,7 @@ static void export_release(struct fsal_export *exp_hdl)
 static fsal_status_t lookup_path(struct fsal_export *export_pub,
 				 const char *path,
 				 struct fsal_obj_handle **pub_handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -218,7 +215,7 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 static fsal_status_t create_handle(struct fsal_export *export_pub,
 				   struct gsh_buffdesc *fh_desc,
 				   struct fsal_obj_handle **pub_handle,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -292,7 +289,7 @@ fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
 			       struct glfs_object *glhandle,
 			       struct fsal_obj_handle **pub_handle,
 			       struct stat *sb,
-			       struct attrlist *attrs_out)
+			       struct fsal_attrlist *attrs_out)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -443,46 +440,6 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 		supported_mask &= ~ATTR_ACL;
 	return supported_mask;
 }
-
-/**
- * @brief Implements GLUSTER FSAL exportoperation check_quota
- */
-/*
-static fsal_status_t check_quota(struct fsal_export *exp_hdl,
-				 const char * filepath,
-				 int quota_type,
-				 struct req_op_context *req_ctx)
-{
-	return fsalstat(ERR_FSAL_NO_ERROR, 0) ;
-}
-*/
-/**
- * @brief Implements GLUSTER FSAL exportoperation get_quota
- */
-/*
-static fsal_status_t get_quota(struct fsal_export *exp_hdl,
-			       const char * filepath,
-			       int quota_type,
-			       struct req_op_context *req_ctx,
-			       fsal_quota_t *pquota)
-{
-	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
-}
-*/
-/**
- * @brief Implements GLUSTER FSAL exportoperation set_quota
- */
-/*
-static fsal_status_t set_quota(struct fsal_export *exp_hdl,
-			       const char *filepath,
-			       int quota_type,
-			       struct req_op_context *req_ctx,
-			       fsal_quota_t * pquota,
-			       fsal_quota_t * presquota)
-{
-	return fsalstat(ERR_FSAL_NOTSUPP, 0) ;
-}
-*/
 
 /**
  * @brief Registers GLUSTER FSAL exportoperation vector
@@ -771,7 +728,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 		.glfs_log = NULL};
 
 	LogDebug(COMPONENT_FSAL, "In args: export path = %s",
-		 op_ctx->ctx_export->fullpath);
+		 CTX_FULLPATH(op_ctx));
 
 	glfsexport = gsh_calloc(1, sizeof(struct glusterfs_export));
 
@@ -783,7 +740,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Incorrect or missing parameters for export %s",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		status.major = ERR_FSAL_INVAL;
 		goto out;
 	}
@@ -803,12 +760,12 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (rc != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL, "Unable to attach export. Export: %s",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		goto out;
 	}
 	fsal_attached = true;
 
-	glfsexport->mount_path = op_ctx->ctx_export->fullpath;
+	glfsexport->mount_path = gsh_strdup(CTX_FULLPATH(op_ctx));
 	glfsexport->export_path = params.glvolpath;
 	glfsexport->saveduid = geteuid();
 	glfsexport->savedgid = getegid();
@@ -823,8 +780,9 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (glfsexport->pnfs_ds_enabled) {
 		struct fsal_pnfs_ds *pds = NULL;
 
-		status =
-		    fsal_hdl->m_ops.fsal_pnfs_ds(fsal_hdl, parse_node, &pds);
+		status = fsal_hdl->m_ops.create_fsal_pnfs_ds(fsal_hdl,
+							     parse_node,
+							     &pds);
 
 		if (status.major != ERR_FSAL_NO_ERROR)
 			goto out;
@@ -839,12 +797,15 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				"Server id %d already in use.",
 				pds->id_servers);
 			status.major = ERR_FSAL_EXIST;
+
+			/* Return the ref taken by create_fsal_pnfs_ds */
+			pnfs_ds_put(pds);
 			goto out;
 		}
 
 		LogDebug(COMPONENT_PNFS,
 			 "glusterfs_fsal_create: pnfs ds was enabled for [%s]",
-			 op_ctx->ctx_export->fullpath);
+			 CTX_FULLPATH(op_ctx));
 	}
 
 	glfsexport->pnfs_mds_enabled =
@@ -853,7 +814,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	if (glfsexport->pnfs_mds_enabled) {
 		LogDebug(COMPONENT_PNFS,
 			 "glusterfs_fsal_create: pnfs mds was enabled for [%s]",
-			 op_ctx->ctx_export->fullpath);
+			 CTX_FULLPATH(op_ctx));
 		export_ops_pnfs(&glfsexport->export.exp_ops);
 		fsal_ops_pnfs(&glfsexport->export.fsal->m_ops);
 	}

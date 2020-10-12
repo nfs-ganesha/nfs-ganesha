@@ -58,7 +58,6 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	getquota_rslt *qres = &res->res_rquota_getquota;
 	char path[MAXPATHLEN];
 	int quota_id;
-	struct root_op_context root_ctx;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling RQUOTA_GETQUOTA");
@@ -74,7 +73,7 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	quota_path = check_handle_lead_slash(arg->arg_rquota_getquota.gqa_pathp,
 					     path, MAXPATHLEN);
 	if (quota_path == NULL)
-		goto out;
+		return NFS_REQ_OK;
 
 	/*  Find the export for the dirname (using as well Path, Pseudo, or Tag)
 	 */
@@ -83,19 +82,11 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			     "Searching for export by tag for %s",
 			     quota_path);
 		exp = get_gsh_export_by_tag(quota_path);
-		if (exp != NULL) {
-			/* By Tag must use fullpath for actual request. */
-			quota_path = exp->fullpath;
-		}
 	} else if (nfs_param.core_param.mount_path_pseudo) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Searching for export by pseudo for %s",
 			     quota_path);
 		exp = get_gsh_export_by_pseudo(quota_path, false);
-		if (exp != NULL) {
-			/* By Pseudo must use fullpath for actual request. */
-			quota_path = exp->fullpath;
-		}
 	} else {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Searching for export by path for %s",
@@ -109,14 +100,11 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			 "Export entry for %s not found", quota_path);
 
 		/* entry not found. */
-		goto out;
+		return NFS_REQ_OK;
 	}
 
-	init_root_op_context(&root_ctx, exp, exp->fsal_export, 0, 0,
-			     UNKNOWN_REQUEST);
-
-	op_ctx->ctx_export = exp;
-	op_ctx->fsal_export = exp->fsal_export;
+	/* Add export to op_ctx, will be released in free_args */
+	set_op_context_export(exp);
 
 	/* Get creds */
 	if (nfs_req_creds(req) == NFS4ERR_ACCESS) {
@@ -126,17 +114,17 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		LogInfo(COMPONENT_NFSPROTO,
 			"could not get uid and gid, rejecting client %s",
 			client_ip);
-		goto out;
+		return NFS_REQ_OK;
 	}
 
-	fsal_status =
-	    exp->fsal_export->exp_ops.get_quota(exp->fsal_export,
-					     quota_path, quota_type,
-					     quota_id, &fsal_quota);
+	fsal_status = exp->fsal_export->exp_ops.get_quota(
+				exp->fsal_export, CTX_FULLPATH(op_ctx),
+				quota_type, quota_id, &fsal_quota);
+
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_NO_QUOTA)
 			qres->status = Q_NOQUOTA;
-		goto out;
+		return NFS_REQ_OK;
 	}
 
 	/* success */
@@ -152,13 +140,6 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	qres->getquota_rslt_u.gqr_rquota.rq_btimeleft = fsal_quota.btimeleft;
 	qres->getquota_rslt_u.gqr_rquota.rq_ftimeleft = fsal_quota.ftimeleft;
 	qres->status = Q_OK;
-
- out:
-
-	if (exp != NULL) {
-		put_gsh_export(exp);
-		release_root_op_context();
-	}
 
 	return NFS_REQ_OK;
 }				/* rquota_getquota */

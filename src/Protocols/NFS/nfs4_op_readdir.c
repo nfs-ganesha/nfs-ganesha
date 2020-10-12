@@ -52,25 +52,18 @@ struct nfs4_readdir_cb_data {
 	struct bitmap4 *req_attr;	/*< The requested attributes */
 	compound_data_t *data;	/*< The compound data, so we can produce
 				   nfs_fh4s. */
-	struct export_perms save_export_perms;	/*< Saved export perms. */
-	struct gsh_export *saved_gsh_export;	/*< Saved export */
+	struct saved_export_context saved;
 };
 
 static void restore_data(struct nfs4_readdir_cb_data *tracker)
 {
-	if (tracker->saved_gsh_export == NULL) {
+	if (tracker->saved.saved_export == NULL) {
 		LogCrit(COMPONENT_NFS_READDIR, "Nothing to restore!");
 		return;
 	}
 
 	/* Restore export stuff */
-	if (op_ctx->ctx_export)
-		put_gsh_export(op_ctx->ctx_export);
-
-	*op_ctx->export_perms = tracker->save_export_perms;
-	op_ctx->ctx_export = tracker->saved_gsh_export;
-	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
-	tracker->saved_gsh_export = NULL;
+	restore_op_context_export(&tracker->saved);
 
 	/* Restore creds */
 	if (nfs_req_creds(tracker->data->req) != NFS4_OK) {
@@ -101,7 +94,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 
 fsal_errors_t nfs4_readdir_callback(void *opaque,
 				    struct fsal_obj_handle *obj,
-				    const struct attrlist *attr,
+				    const struct fsal_attrlist *attr,
 				    uint64_t mounted_on_fileid,
 				    uint64_t cookie,
 				    enum cb_state cb_state)
@@ -146,7 +139,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 	 *       that root inode to proceed rather than getting stuck in a
 	 *       junction crossing infinite loop.
 	 */
-	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
+	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->jct_lock);
 	if (cb_parms->attr_allowed &&
 	    obj->type == DIRECTORY &&
 	    obj->state_hdl->dir.junction_export != NULL &&
@@ -162,7 +155,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 			    "Offspring DIR %s is a junction Export_id %d Pseudo %s",
 			    cb_parms->name,
 			    obj->state_hdl->dir.junction_export->export_id,
-			    obj->state_hdl->dir.junction_export->pseudopath);
+			    JCT_PSEUDOPATH(obj->state_hdl));
 
 		/* Get a reference to the export and stash it in
 		 * compound data.
@@ -176,13 +169,9 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 
 		get_gsh_export_ref(obj->state_hdl->dir.junction_export);
 
-		/* Save the compound data context */
-		tracker->save_export_perms = *op_ctx->export_perms;
-		tracker->saved_gsh_export = op_ctx->ctx_export;
-
-		/* Cross the junction */
-		op_ctx->ctx_export = obj->state_hdl->dir.junction_export;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+		/* Save the compound data context and cross the junction */
+		save_op_context_export_and_set_export(
+			&tracker->saved, obj->state_hdl->dir.junction_export);
 
 		/* Build the credentials */
 		args.rdattr_error = nfs4_export_check_access(data->req);
@@ -195,14 +184,14 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 			LogDebugAlt(COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
 				    "NFS4ERR_ACCESS Skipping Export_Id %d Pseudo %s",
 				    op_ctx->ctx_export->export_id,
-				    op_ctx->ctx_export->pseudopath);
+				    CTX_PSEUDOPATH(op_ctx));
 
 			/* Restore export and creds */
 			restore_data(tracker);
 
 			/* Indicate success without adding another entry */
 			cb_parms->in_result = true;
-			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+			PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 			return ERR_FSAL_NO_ERROR;
 		}
 
@@ -226,7 +215,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 					    COMPONENT_NFS_READDIR,
 					    "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
 					    op_ctx->ctx_export->export_id,
-					    op_ctx->ctx_export->pseudopath);
+					    CTX_PSEUDOPATH(op_ctx));
 
 				/* Because we are not asking for any attributes
 				 * which are a property of the exported file
@@ -253,7 +242,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 					    COMPONENT_NFS_READDIR,
 					    "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Pseudo %s",
 					    op_ctx->ctx_export->export_id,
-					    op_ctx->ctx_export->pseudopath);
+					    CTX_PSEUDOPATH(op_ctx));
 			}
 		} else if (args.rdattr_error == NFS4_OK) {
 			/* Now we must traverse the junction to get the
@@ -267,8 +256,8 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 			LogDebugAlt(COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
 				    "Need to cross junction to Export_Id %d Pseudo %s",
 				    op_ctx->ctx_export->export_id,
-				    op_ctx->ctx_export->pseudopath);
-			PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+				    CTX_PSEUDOPATH(op_ctx));
+			PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 			return ERR_FSAL_CROSS_JUNCTION;
 		}
 
@@ -280,14 +269,14 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 		LogDebugAlt(COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
 			    "Need to report error for junction to Export_Id %d Pseudo %s",
 			    op_ctx->ctx_export->export_id,
-			    op_ctx->ctx_export->pseudopath);
+			    CTX_PSEUDOPATH(op_ctx));
 		restore_data(tracker);
 	}
 
 not_junction:
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 
-	args.attrs = (struct attrlist *)attr;
+	args.attrs = (struct fsal_attrlist *)attr;
 	args.data = data;
 	args.hdl4 = &entryFH;
 	args.mounted_on_fileid = mounted_on_fileid;
@@ -384,7 +373,8 @@ not_junction:
 	/* Tell is_referral to not cache attrs as it will affect readdir
 	 * performance
 	 */
-	if (obj->obj_ops->is_referral(obj, (struct attrlist *) attr, false)) {
+	if (obj->obj_ops->is_referral(obj, (struct fsal_attrlist *) attr,
+				      false)) {
 		args.rdattr_error = NFS4ERR_MOVED;
 		LogDebug(COMPONENT_NFS_READDIR,
 			 "Skipping because of %s",
@@ -579,7 +569,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	 * only a set of zeros is returned (trivial value)
 	 */
 	if (use_cookie_verifier) {
-		struct attrlist attrs;
+		struct fsal_attrlist attrs;
 
 		fsal_prepare_attrs(&attrs, ATTR_CHANGE);
 

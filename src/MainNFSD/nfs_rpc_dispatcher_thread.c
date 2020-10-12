@@ -66,9 +66,8 @@
 #include "gsh_lttng/nfs_rpc.h"
 #endif
 
-#define NFS_pcp nfs_param.core_param
-#define NFS_options NFS_pcp.core_options
-#define NFS_program NFS_pcp.program
+#define NFS_options nfs_param.core_param.core_options
+#define NFS_program nfs_param.core_param.program
 
 /**
  * TI-RPC event channels.  Each channel is a thread servicing an event
@@ -118,14 +117,26 @@ void nfs_rpc_dispatch_dummy(struct svc_req *req)
 		 __func__);
 }
 
-const char *tags[] = {
+const char *tags[P_COUNT] = {
 	"NFS",
+#ifdef _USE_NFS3
 	"MNT",
+#endif
+#ifdef _USE_NLM
 	"NLM",
+#ifdef _USE_RQUOTA
 	"RQUOTA",
+#endif
+#endif
+#ifdef USE_NFSACL3
 	"NFSACL",
+#endif
+#ifdef RPC_VSOCK
 	"NFS_VSOCK",
+#endif
+#ifdef _USE_NFS_RDMA
 	"NFS_RDMA",
+#endif
 };
 
 typedef struct proto_data {
@@ -184,8 +195,10 @@ static void unregister(const rpcprog_t prog, const rpcvers_t vers1,
 static void unregister_rpc(void)
 {
 	if ((NFS_options & CORE_OPTION_NFSV3) != 0) {
+#ifdef _USE_NFS3
 		unregister(NFS_program[P_NFS], NFS_V3, NFS_V4);
 		unregister(NFS_program[P_MNT], MOUNT_V1, MOUNT_V3);
+#endif
 	} else {
 		unregister(NFS_program[P_NFS], NFS_V4, NFS_V4);
 	}
@@ -193,27 +206,35 @@ static void unregister_rpc(void)
 	if (nfs_param.core_param.enable_NLM)
 		unregister(NFS_program[P_NLM], 1, NLM4_VERS);
 #endif /* _USE_NLM */
+#ifdef _USE_RQUOTA
 	if (nfs_param.core_param.enable_RQUOTA) {
 		unregister(NFS_program[P_RQUOTA], RQUOTAVERS, EXT_RQUOTAVERS);
 	}
+#endif
 
+#ifdef USE_NFSACL3
 	if (nfs_param.core_param.enable_NFSACL) {
 		unregister(NFS_program[P_NFSACL], NFSACL_V3, NFSACL_V3);
 	}
+#endif
 }
 
 static inline bool nfs_protocol_enabled(protos p)
 {
+#ifdef _USE_NFS3
 	bool nfsv3 = NFS_options & CORE_OPTION_NFSV3;
+#endif
 
 	switch (p) {
 	case P_NFS:
 		return true;
 
+#ifdef _USE_NFS3
 	case P_MNT: /* valid only for NFSv3 environments */
 		if (nfsv3)
 			return true;
 		break;
+#endif
 
 #ifdef _USE_NLM
 	case P_NLM: /* valid only for NFSv3 environments */
@@ -222,15 +243,20 @@ static inline bool nfs_protocol_enabled(protos p)
 		break;
 #endif
 
+#ifdef _USE_RQUOTA
 	case P_RQUOTA:
 		if (nfs_param.core_param.enable_RQUOTA)
 			return true;
 		break;
+#endif
+
+#ifdef USE_NFSACL3
 	case P_NFSACL: /* valid only for NFSv3 environments */
 		if (nfsv3 && nfs_param.core_param.enable_NFSACL) {
 			return true;
 		}
 		break;
+#endif
 
 	default:
 		break;
@@ -290,6 +316,7 @@ static enum xprt_stat nfs_rpc_dispatch_udp_NFS(SVCXPRT *xprt)
 	return SVC_RECV(xprt);
 }
 
+#ifdef _USE_NFS3
 static enum xprt_stat nfs_rpc_dispatch_udp_MNT(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -301,7 +328,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_MNT(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_MNT;
 	return SVC_RECV(xprt);
 }
+#endif
 
+#ifdef _USE_NLM
 static enum xprt_stat nfs_rpc_dispatch_udp_NLM(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -313,7 +342,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_NLM(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NLM;
 	return SVC_RECV(xprt);
 }
+#endif
 
+#ifdef _USE_RQUOTA
 static enum xprt_stat nfs_rpc_dispatch_udp_RQUOTA(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -325,7 +356,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_RQUOTA(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_RQUOTA;
 	return SVC_RECV(xprt);
 }
+#endif
 
+#ifdef USE_NFSACL3
 static enum xprt_stat nfs_rpc_dispatch_udp_NFSACL(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -334,15 +367,28 @@ static enum xprt_stat nfs_rpc_dispatch_udp_NFSACL(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFSACL;
 	return SVC_RECV(xprt);
 }
+#endif
 
 const svc_xprt_fun_t udp_dispatch[] = {
 	nfs_rpc_dispatch_udp_NFS,
+#ifdef _USE_NFS3
 	nfs_rpc_dispatch_udp_MNT,
+#endif
+#ifdef _USE_NLM
 	nfs_rpc_dispatch_udp_NLM,
+#endif
+#ifdef _USE_RQUOTA
 	nfs_rpc_dispatch_udp_RQUOTA,
+#endif
+#ifdef USE_NFSACL3
 	nfs_rpc_dispatch_udp_NFSACL,
+#endif
+#ifdef RPC_VSOCK
 	NULL,
+#endif
+#ifdef _USE_NFS_RDMA
 	NULL,
+#endif
 };
 
 static enum xprt_stat nfs_rpc_dispatch_tcp_NFS(SVCXPRT *xprt)
@@ -354,6 +400,7 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_NFS(SVCXPRT *xprt)
 	return nfs_rpc_tcp_user_data(xprt);
 }
 
+#ifdef _USE_NFS3
 static enum xprt_stat nfs_rpc_dispatch_tcp_MNT(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -362,7 +409,9 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_MNT(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_MNT;
 	return nfs_rpc_tcp_user_data(xprt);
 }
+#endif
 
+#ifdef _USE_NLM
 static enum xprt_stat nfs_rpc_dispatch_tcp_NLM(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -371,7 +420,9 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_NLM(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NLM;
 	return nfs_rpc_tcp_user_data(xprt);
 }
+#endif
 
+#ifdef _USE_RQUOTA
 static enum xprt_stat nfs_rpc_dispatch_tcp_RQUOTA(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -380,7 +431,9 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_RQUOTA(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_RQUOTA;
 	return nfs_rpc_tcp_user_data(xprt);
 }
+#endif
 
+#ifdef USE_NFSACL3
 static enum xprt_stat nfs_rpc_dispatch_tcp_NFSACL(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -389,7 +442,9 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_NFSACL(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFSACL;
 	return nfs_rpc_tcp_user_data(xprt);
 }
+#endif
 
+#ifdef RPC_VSOCK
 static enum xprt_stat nfs_rpc_dispatch_tcp_VSOCK(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -398,15 +453,28 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_VSOCK(SVCXPRT *xprt)
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFS;
 	return nfs_rpc_tcp_user_data(xprt);
 }
+#endif
 
-const svc_xprt_fun_t tcp_dispatch[] = {
+const svc_xprt_fun_t tcp_dispatch[P_COUNT] = {
 	nfs_rpc_dispatch_tcp_NFS,
+#ifdef _USE_NFS3
 	nfs_rpc_dispatch_tcp_MNT,
+#endif
+#ifdef _USE_NLM
 	nfs_rpc_dispatch_tcp_NLM,
+#endif
+#ifdef _USE_RQUOTA
 	nfs_rpc_dispatch_tcp_RQUOTA,
+#endif
+#ifdef USE_NFSACL3
 	nfs_rpc_dispatch_tcp_NFSACL,
+#endif
+#ifdef RPC_VSOCK
 	nfs_rpc_dispatch_tcp_VSOCK,
+#endif
+#ifdef _USE_NFS_RDMA
 	NULL,
+#endif
 };
 
 void Create_udp(protos prot)
@@ -1067,64 +1135,62 @@ void Clean_RPC(void)
 		nfs_rpc_dispatch_dummy, netconfig)
 
 #ifdef RPCBIND
-static bool __Register_program(protos prot, int flag, int vers)
+static bool __Register_program(protos prot, int vers)
 {
-	if ((NFS_options & flag) != 0) {
-		if (nfs_param.core_param.enable_UDP) {
-			LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/UDP",
-				tags[prot], (int)vers);
-
-			/* XXXX fix svc_register! */
-			if (!UDP_REGISTER(prot, vers, netconfig_udpv4)) {
-				LogMajor(COMPONENT_DISPATCH,
-					 "Cannot register %s V%d on UDP",
-					 tags[prot], (int)vers);
-				return false;
-			}
-
-			if (!v6disabled && netconfig_udpv6) {
-				LogInfo(COMPONENT_DISPATCH,
-					"Registering %s V%d/UDPv6",
-					tags[prot], (int)vers);
-				if (!UDP_REGISTER(prot, vers,
-						  netconfig_udpv6)) {
-					LogMajor(COMPONENT_DISPATCH,
-						 "Cannot register %s V%d on UDPv6",
-						 tags[prot], (int)vers);
-					return false;
-				}
-			}
-		}
-
-#ifndef _NO_TCP_REGISTER
-		LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/TCP",
+	if (nfs_param.core_param.enable_UDP) {
+		LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/UDP",
 			tags[prot], (int)vers);
 
-		if (!TCP_REGISTER(prot, vers, netconfig_tcpv4)) {
+		/* XXXX fix svc_register! */
+		if (!UDP_REGISTER(prot, vers, netconfig_udpv4)) {
 			LogMajor(COMPONENT_DISPATCH,
-				 "Cannot register %s V%d on TCP", tags[prot],
-				 (int)vers);
+				 "Cannot register %s V%d on UDP",
+				 tags[prot], (int)vers);
 			return false;
 		}
 
-		if (!v6disabled && netconfig_tcpv6) {
-			LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/TCPv6",
+		if (!v6disabled && netconfig_udpv6) {
+			LogInfo(COMPONENT_DISPATCH,
+				"Registering %s V%d/UDPv6",
 				tags[prot], (int)vers);
-			if (!TCP_REGISTER(prot, vers, netconfig_tcpv6)) {
+			if (!UDP_REGISTER(prot, vers,
+					  netconfig_udpv6)) {
 				LogMajor(COMPONENT_DISPATCH,
-					 "Cannot register %s V%d on TCPv6",
+					 "Cannot register %s V%d on UDPv6",
 					 tags[prot], (int)vers);
 				return false;
 			}
 		}
-#endif				/* _NO_TCP_REGISTER */
 	}
+
+#ifndef _NO_TCP_REGISTER
+	LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/TCP",
+		tags[prot], (int)vers);
+
+	if (!TCP_REGISTER(prot, vers, netconfig_tcpv4)) {
+		LogMajor(COMPONENT_DISPATCH,
+			 "Cannot register %s V%d on TCP", tags[prot],
+			 (int)vers);
+		return false;
+	}
+
+	if (!v6disabled && netconfig_tcpv6) {
+		LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/TCPv6",
+			tags[prot], (int)vers);
+		if (!TCP_REGISTER(prot, vers, netconfig_tcpv6)) {
+			LogMajor(COMPONENT_DISPATCH,
+				 "Cannot register %s V%d on TCPv6",
+				 tags[prot], (int)vers);
+			return false;
+		}
+	}
+#endif				/* _NO_TCP_REGISTER */
 	return true;
 }
 
-static void Register_program(protos prot, int flag, int vers)
+static inline void Register_program(protos prot, int vers)
 {
-	if (!__Register_program(prot, flag, vers))
+	if (!__Register_program(prot, vers))
 		Fatal();
 }
 #endif /* RPCBIND */
@@ -1172,8 +1238,8 @@ void nfs_Init_svc(void)
 	    nfs_param.core_param.rpc.max_send_buffer_size;
 	svc_params.channels = N_EVENT_CHAN;
 	svc_params.idle_timeout = nfs_param.core_param.rpc.idle_timeout_s;
-	svc_params.ioq_thrd_max = /* max ioq worker threads */
-		nfs_param.core_param.rpc.ioq_thrd_max;
+	svc_params.ioq_thrd_min = nfs_param.core_param.rpc.ioq_thrd_min;
+	svc_params.ioq_thrd_max = nfs_param.core_param.rpc.ioq_thrd_max;
 	/* GSS ctx cache tuning, expiration */
 	svc_params.gss_ctx_hash_partitions =
 		nfs_param.core_param.rpc.gss.ctx_hash_partitions;
@@ -1283,29 +1349,32 @@ void nfs_Init_svc(void)
 	 */
 #ifdef _USE_NFS3
 	if (NFS_options & CORE_OPTION_NFSV3) {
-		Register_program(P_NFS, CORE_OPTION_NFSV3, NFS_V3);
-		Register_program(P_MNT, CORE_OPTION_NFSV3, MOUNT_V1);
-		Register_program(P_MNT, CORE_OPTION_NFSV3, MOUNT_V3);
+		Register_program(P_NFS, NFS_V3);
+		Register_program(P_MNT, MOUNT_V1);
+		Register_program(P_MNT, MOUNT_V3);
+#ifdef _USE_NLM
+		if (nfs_param.core_param.enable_NLM)
+			Register_program(P_NLM, NLM4_VERS);
+#endif /* _USE_NLM */
+#ifdef USE_NFSACL3
+		if (nfs_param.core_param.enable_NFSACL)
+			Register_program(P_NFSACL, NFSACL_V3);
+#endif
 	}
 #endif /* _USE_NFS3 */
+
 	/* v4 registration is optional */
 	if (NFS_options & CORE_OPTION_NFSV4)
-		__Register_program(P_NFS, CORE_OPTION_NFSV4, NFS_V4);
-#ifdef _USE_NLM
-	if (nfs_param.core_param.enable_NLM)
-		Register_program(P_NLM, CORE_OPTION_NFSV3, NLM4_VERS);
-#endif /* _USE_NLM */
+		__Register_program(P_NFS, NFS_V4);
+
+#ifdef _USE_RQUOTA
 	if (nfs_param.core_param.enable_RQUOTA &&
 	    (NFS_options & CORE_OPTION_ALL_NFS_VERS)) {
-		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS, RQUOTAVERS);
-		Register_program(P_RQUOTA, CORE_OPTION_ALL_VERS,
-				 EXT_RQUOTAVERS);
+		Register_program(P_RQUOTA, RQUOTAVERS);
+		Register_program(P_RQUOTA, EXT_RQUOTAVERS);
 	}
-	if (nfs_param.core_param.enable_NFSACL)
-		Register_program(P_NFSACL, CORE_OPTION_NFSV3, NFSACL_V3);
-
+#endif
 #endif	/* RPCBIND */
-
 }
 
 /**

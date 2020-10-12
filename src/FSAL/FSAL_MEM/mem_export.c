@@ -289,7 +289,7 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 	myself->export.up_ops = up_ops;
 
 	/* Save the export path. */
-	myself->export_path = gsh_strdup(op_ctx->ctx_export->fullpath);
+	myself->export_path = gsh_strdup(CTX_FULLPATH(op_ctx));
 	op_ctx->fsal_export = &myself->export;
 
 	/* Insert into exports list */

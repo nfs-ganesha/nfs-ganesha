@@ -1,3 +1,4 @@
+[Unit]
 Description=NFS status monitor for NFSv2/3 locking.
 DefaultDependencies=no
 Conflicts=umount.target
@@ -10,5 +11,5 @@ PartOf=nfs-utils.service
 [Service]
 Environment=RPC_STATD_NO_NOTIFY=1
 Type=forking
-PIDFile=/var/run/rpc.statd.pid
+PIDFile=/run/rpc.statd.pid
 ExecStart=/usr/sbin/rpc.statd

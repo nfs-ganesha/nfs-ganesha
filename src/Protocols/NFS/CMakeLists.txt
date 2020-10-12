@@ -2,13 +2,6 @@
 ########### next target ###############
 
 SET(nfsproto_STAT_SRCS
-   mnt_Dump.c
-   mnt_Export.c
-   mnt_Mnt.c
-   mnt_Null.c
-   mnt_Umnt.c
-   mnt_UmntAll.c
-   nfs_null.c
    nfs4_Compound.c
    nfs4_op_access.c
    nfs4_op_allocate.c
@@ -68,11 +61,18 @@ SET(nfsproto_STAT_SRCS
    nfs4_op_write.c
    nfs4_pseudo.c
    nfs_proto_tools.c
+   nfs_null.c
 )
 
 if(USE_NFS3)
   SET(nfsproto_STAT_SRCS
     ${nfsproto_STAT_SRCS}
+    mnt_Dump.c
+    mnt_Export.c
+    mnt_Mnt.c
+    mnt_Null.c
+    mnt_Umnt.c
+    mnt_UmntAll.c
     nfs3_access.c
     nfs3_commit.c
     nfs3_create.c

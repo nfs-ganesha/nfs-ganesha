@@ -166,7 +166,7 @@ fsal_status_t lzfs_int_getacl(struct lzfs_fsal_export *lzfs_export,
 	}
 
 	liz_acl_t *acl = NULL;
-	int rc = liz_cred_getacl(lzfs_export->lzfs_instance, op_ctx->creds,
+	int rc = liz_cred_getacl(lzfs_export->lzfs_instance, &op_ctx->creds,
 				 inode, &acl);
 	if (rc < 0) {
 		LogFullDebug(COMPONENT_FSAL, "getacl status=%s export=%" PRIu16
@@ -205,7 +205,7 @@ fsal_status_t lzfs_int_setacl(struct lzfs_fsal_export *lzfs_export,
 		LogFullDebug(COMPONENT_FSAL, "failed to convert acl");
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	}
-	int rc = liz_cred_setacl(lzfs_export->lzfs_instance, op_ctx->creds,
+	int rc = liz_cred_setacl(lzfs_export->lzfs_instance, &op_ctx->creds,
 				 inode, lzfs_acl);
 	liz_destroy_acl(lzfs_acl);
 

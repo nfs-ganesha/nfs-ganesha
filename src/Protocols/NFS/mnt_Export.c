@@ -63,27 +63,27 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	/* If client does not have any access to the export,
 	 * don't add it to the list
 	 */
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = export->fsal_export;
+	get_gsh_export_ref(export);
+	set_op_context_export(export);
 	export_check_access();
-	if (!(op_ctx->export_perms->options & EXPORT_OPTION_ACCESS_MASK)) {
+
+	if (!(op_ctx->export_perms.options & EXPORT_OPTION_ACCESS_MASK)) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Client is not allowed to access Export_Id %d %s",
-			     export->export_id, export_path(export));
+			     export->export_id, ctx_export_path(op_ctx));
 
-		return true;
+		goto out;
 	}
 
-	if (!(op_ctx->export_perms->options & EXPORT_OPTION_NFSV3)) {
+	if (!(op_ctx->export_perms.options & EXPORT_OPTION_NFSV3)) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Not exported for NFSv3, Export_Id %d %s",
-			     export->export_id, export_path(export));
+			     export->export_id, ctx_export_path(op_ctx));
 
-		return true;
+		goto out;
 	}
 
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
-	new_expnode->ex_dir = gsh_strdup(export_path(export));
 
 	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
 
@@ -128,13 +128,24 @@ static bool proc_export(struct gsh_export *export, void *arg)
 		}
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Export %s client %s",
-			     export_path(export), grp_name);
+			     ctx_export_path(op_ctx), grp_name);
 		group->gr_name = gsh_strdup(grp_name);
 		if (free_grp_name)
 			gsh_free(grp_name);
 	}
 
 	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+
+	/* Now that we are almost done, get a gsh_refstr to the path for ex_dir.
+	 * The op context has a reference but we don't want to play games with
+	 * it to keep the code understandable.
+	 */
+	if (nfs_param.core_param.mount_path_pseudo)
+		new_expnode->ex_refdir = gsh_refstr_get(op_ctx->ctx_pseudopath);
+	else
+		new_expnode->ex_refdir = gsh_refstr_get(op_ctx->ctx_fullpath);
+
+	new_expnode->ex_dir = new_expnode->ex_refdir->gr_val;
 
 	if (state->head == NULL)
 		state->head = new_expnode;
@@ -143,6 +154,8 @@ static bool proc_export(struct gsh_export *export, void *arg)
 
 	state->tail = new_expnode;
 
+out:
+	clear_op_context_export();
 	return true;
 }
 
@@ -171,8 +184,6 @@ int mnt_Export(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			"Processing exports failed. error = \"%s\" (%d)",
 			strerror(proc_state.retval), proc_state.retval);
 	}
-	op_ctx->ctx_export = NULL;
-	op_ctx->fsal_export = NULL;
 	res->res_mntexport = proc_state.head;
 	return NFS_REQ_OK;
 }				/* mnt_Export */
@@ -201,7 +212,8 @@ void mnt_Export_Free(nfs_res_t *res)
 			gsh_free(grp);
 			grp = next_grp;
 		}
-		gsh_free(exp->ex_dir);
+		if (exp->ex_refdir != NULL)
+			gsh_refstr_put(exp->ex_refdir);
 		gsh_free(exp);
 		exp = next_exp;
 	}

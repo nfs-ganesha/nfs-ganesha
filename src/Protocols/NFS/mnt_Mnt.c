@@ -120,18 +120,17 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* set the export in the context */
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+	set_op_context_export(export);
 
 	/* Check access based on client. Don't bother checking TCP/UDP as some
 	 * clients use UDP for MOUNT even when they will use TCP for NFS.
 	 */
 	export_check_access();
 
-	if ((op_ctx->export_perms->options & EXPORT_OPTION_NFSV3) == 0) {
+	if ((op_ctx->export_perms.options & EXPORT_OPTION_NFSV3) == 0) {
 		LogInfo(COMPONENT_NFSPROTO,
 			"MOUNT: Export entry %s does not support NFS v3 for client %s",
-			export_path(export),
+			ctx_export_path(op_ctx),
 			op_ctx->client
 				? op_ctx->client->hostaddr_str
 				: "unknown client");
@@ -140,20 +139,19 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* retrieve the associated NFS handle */
-	if (arg->arg_mnt[0] != '/' ||
-	    !strcmp(arg->arg_mnt, export_path(export))) {
+	if (arg->arg_mnt[0] != '/') {
+		/* We found the export by tag. Use the root entry of the
+		 * export.
+		 */
 		if (FSAL_IS_ERROR(nfs_export_get_root_entry(export, &obj))) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
 		}
 	} else {
-		LogInfo(COMPONENT_NFSPROTO,
-			 "MOUNT: Performance warning: Export entry is not cached");
-
-		if (FSAL_IS_ERROR(op_ctx->fsal_export->exp_ops.lookup_path(
-						op_ctx->fsal_export,
-						arg->arg_mnt,
-						&obj, NULL))) {
+		/* Note that we call this even if arg_mnt is just the path to
+		 * the export. It resolves that efficiently.
+		 */
+		if (FSAL_IS_ERROR(fsal_lookup_path(arg->arg_mnt, &obj))) {
 			res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 			goto out;
 		}
@@ -180,20 +178,20 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 */
 #ifdef _HAVE_GSSAPI
 	if (nfs_param.krb5_param.active_krb5 == true) {
-		if (op_ctx->export_perms->options &
+		if (op_ctx->export_perms.options &
 		    EXPORT_OPTION_RPCSEC_GSS_PRIV)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_PRIVACY;
-		if (op_ctx->export_perms->options &
+		if (op_ctx->export_perms.options &
 		    EXPORT_OPTION_RPCSEC_GSS_INTG)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_INTEGRITY;
-		if (op_ctx->export_perms->options &
+		if (op_ctx->export_perms.options &
 		    EXPORT_OPTION_RPCSEC_GSS_NONE)
 			auth_flavor[index_auth++] = MNT_RPC_GSS_NONE;
 	}
 #endif
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
 		auth_flavor[index_auth++] = AUTH_UNIX;
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_NONE)
 		auth_flavor[index_auth++] = AUTH_NONE;
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
@@ -220,11 +218,9 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		    auth_flavor[i];
 
  out:
-	if (export != NULL) {
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
-		put_gsh_export(export);
-	}
+	if (export != NULL)
+		clear_op_context_export();
+
 	return retval;
 
 }				/* mnt_Mnt */

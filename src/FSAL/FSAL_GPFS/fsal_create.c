@@ -20,7 +20,6 @@
  *
  *  @param dir_hdl Handle of parent directory where the file is to be created.
  *  @param filename Pointer to the name of the file to be created.
- *  @param op_ctx Authentication context for the operation (user,...).
  *  @param accessmode Mode for the file to be created.
  *  @param gpfs_fh Pointer to the handle of the created file.
  *  @param fsal_attr Attributes of the created file.
@@ -29,8 +28,9 @@
  */
 fsal_status_t
 GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
-		const struct req_op_context *op_ctx, uint32_t accessmode,
-		struct gpfs_file_handle *gpfs_fh, struct attrlist *fsal_attr)
+		uint32_t accessmode,
+		struct gpfs_file_handle *gpfs_fh,
+		struct fsal_attrlist *fsal_attr)
 {
 	fsal_status_t status;
 	mode_t unix_mode;
@@ -50,7 +50,7 @@ GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
 
 	/* call to filesystem */
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_create(dir_hdl, filename, unix_mode | S_IFREG,
 				      0, gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
@@ -59,14 +59,14 @@ GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
 
 	/* retrieve file attributes */
 	return GPFSFSAL_getattrs(op_ctx->fsal_export, dir_hdl->fs->private_data,
-				 op_ctx, gpfs_fh, fsal_attr);
+				 gpfs_fh, fsal_attr);
 }
 
 fsal_status_t
 GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
-		const struct req_op_context *op_ctx, mode_t unix_mode,
+		mode_t unix_mode,
 		struct gpfs_file_handle *gpfs_fh, int posix_flags,
-		struct attrlist *fsal_attr)
+		struct fsal_attrlist *fsal_attr)
 {
 	fsal_status_t status;
 
@@ -78,7 +78,7 @@ GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
 
 	/* call to filesystem */
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_create(dir_hdl, filename, unix_mode | S_IFREG,
 				      posix_flags, gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
@@ -87,7 +87,7 @@ GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
 		/* retrieve file attributes */
 		status = GPFSFSAL_getattrs(op_ctx->fsal_export,
 					   dir_hdl->fs->private_data,
-					   op_ctx, gpfs_fh, fsal_attr);
+					   gpfs_fh, fsal_attr);
 	}
 
 	return status;
@@ -98,7 +98,6 @@ GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
  *
  *  @param dir_hdl Handle of the parent directory
  *  @param dir_name Pointer to the name of the directory to be created.
- *  @param op_ctx Authentication context for the operation (user,...).
  *  @param accessmode Mode for the directory to be created.
  *  @param gpfs_fh Pointer to the handle of the created directory.
  *  @param fsal_attr Attributes of the created directory.
@@ -107,8 +106,8 @@ GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
  */
 fsal_status_t
 GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
-	       const struct req_op_context *op_ctx, uint32_t accessmode,
-	       struct gpfs_file_handle *gpfs_fh, struct attrlist *obj_attr)
+	       uint32_t accessmode,
+	       struct gpfs_file_handle *gpfs_fh, struct fsal_attrlist *obj_attr)
 {
 	mode_t unix_mode;
 	fsal_status_t status;
@@ -128,7 +127,7 @@ GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
 
 	/* creates the directory and get its handle */
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_create(dir_hdl, dir_name, unix_mode | S_IFDIR,
 				      0, gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
@@ -139,7 +138,7 @@ GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
 	/* retrieve file attributes */
 	return GPFSFSAL_getattrs(op_ctx->fsal_export,
 				dir_hdl->fs->private_data,
-				op_ctx, gpfs_fh, obj_attr);
+				gpfs_fh, obj_attr);
 }
 
 /**
@@ -148,13 +147,12 @@ GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
  *  @param dir_hdl Handle of the target object.
  *  @param gpfs_fh Pointer to the dire handle where hardlink is to be created.
  *  @param linkname Pointer to the name of the hardlink to be created.
- *  @param op_ctx Authentication context for the operation (user,...).
  *  @return ERR_FSAL_NO_ERROR on success, error otherwise
  *
  */
 fsal_status_t
 GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
-	      const char *linkname, const struct req_op_context *op_ctx)
+	      const char *linkname)
 {
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *dest_dir;
@@ -173,7 +171,7 @@ GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
 
 	/* Create the link on the filesystem */
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_link_fh(export_fd, gpfs_fh,
 				       dest_dir->handle, linkname);
 
@@ -187,7 +185,6 @@ GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
  *
  *  @param dir_hdl Handle of the parent dir where the file is to be created.
  *  @param node_name Pointer to the name of the file to be created.
- *  @param op_ctx Authentication context for the operation (user,...).
  *  @param accessmode Mode for the file to be created.
  *  @param node_type Type of file to create.
  *  @param dev Device id of file to create.
@@ -198,9 +195,10 @@ GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
  */
 fsal_status_t
 GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
-		const struct req_op_context *op_ctx, uint32_t accessmode,
+		uint32_t accessmode,
 		mode_t nodetype, fsal_dev_t *dev,
-		struct gpfs_file_handle *gpfs_fh, struct attrlist *fsal_attr)
+		struct gpfs_file_handle *gpfs_fh,
+		struct fsal_attrlist *fsal_attr)
 {
 	fsal_status_t status;
 	mode_t unix_mode = 0;
@@ -245,7 +243,7 @@ GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_mknode(dir_hdl, node_name, unix_mode, unix_dev,
 				      gpfs_fh, NULL);
 
@@ -257,5 +255,5 @@ GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
 	/* Fills the attributes */
 	return GPFSFSAL_getattrs(op_ctx->fsal_export,
 				dir_hdl->fs->private_data,
-				op_ctx, gpfs_fh, fsal_attr);
+				gpfs_fh, fsal_attr);
 }

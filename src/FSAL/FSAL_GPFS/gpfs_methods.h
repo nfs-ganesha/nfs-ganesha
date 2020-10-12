@@ -17,12 +17,12 @@
 fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
 			       const char *path,
 			       struct fsal_obj_handle **handle,
-			       struct attrlist *attrs_out);
+			       struct fsal_attrlist *attrs_out);
 
 fsal_status_t gpfs_create_handle(struct fsal_export *exp_hdl,
 				 struct gsh_buffdesc *hdl_desc,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out);
+				 struct fsal_attrlist *attrs_out);
 
 /*
  * GPFS internal export
@@ -46,18 +46,15 @@ struct gpfs_filesystem {
 	struct fsal_filesystem *fs;
 	int root_fd;
 	struct glist_head exports;
-	bool up_thread_started;
+	bool stop_thread;
 	pthread_t up_thread; /* upcall thread */
 
-	/* we have an upcall thread for each file system. The upcall
-	 * thread needs a valid export/op_ctx for processing some of the
-	 * upcall requests. We use upvector_mutex to get an export from
-	 * the list of exports in a file system. The following
-	 * up_vector points to up_ops in such an export.
+	/* we have an upcall thread for each file system. We use upvector_mutex
+	 * to get an export from the list of exports in a file system. The
+	 * following up_vector points to up_ops in such an export.
 	 */
 	pthread_mutex_t upvector_mutex;
 	struct fsal_up_vector *up_vector;
-	struct req_op_context req_ctx;
 };
 
 /*
@@ -110,7 +107,7 @@ struct gpfs_fsal_obj_handle {
 	/* I/O management */
 struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 					  struct fsal_filesystem *fs,
-					  struct attrlist *attributes,
+					  struct fsal_attrlist *attributes,
 					  const char *link_content,
 					  struct fsal_export *exp_hdl);
 fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
@@ -118,10 +115,10 @@ fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
 			 fsal_openflags_t openflags,
 			 enum fsal_create_mode createmode,
 			 const char *name,
-			 struct attrlist *attrib_set,
+			 struct fsal_attrlist *attrib_set,
 			 fsal_verifier_t verifier,
 			 struct fsal_obj_handle **new_obj,
-			 struct attrlist *attrs_out,
+			 struct fsal_attrlist *attrs_out,
 			 bool *caller_perm_check);
 fsal_status_t gpfs_reopen2(struct fsal_obj_handle *obj_hdl,
 			   struct state_t *state,
@@ -150,7 +147,7 @@ fsal_status_t gpfs_close2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t gpfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			    bool bypass,
 			    struct state_t *state,
-			    struct attrlist *attrib_set);
+			    struct fsal_attrlist *attrib_set);
 fsal_status_t gpfs_read_plus_fd(int my_fs,
 			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,

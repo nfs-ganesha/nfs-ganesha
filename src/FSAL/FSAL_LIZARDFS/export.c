@@ -69,6 +69,7 @@ static void lzfs_fsal_release(struct fsal_export *export_hdl)
 
 	liz_destroy(lzfs_export->lzfs_instance);
 	lzfs_export->lzfs_instance = NULL;
+	gsh_free(lzfs_export->lzfs_params.subfolder);
 	gsh_free(lzfs_export);
 }
 
@@ -79,7 +80,7 @@ static void lzfs_fsal_release(struct fsal_export *export_hdl)
 static fsal_status_t lzfs_fsal_lookup_path(struct fsal_export *export_hdl,
 					   const char *path,
 					   struct fsal_obj_handle **pub_handle,
-					   struct attrlist *attrs_out)
+					   struct fsal_attrlist *attrs_out)
 {
 	static const char *root_dir_path = "/";
 
@@ -111,11 +112,11 @@ static fsal_status_t lzfs_fsal_lookup_path(struct fsal_export *export_hdl,
 	} else {
 		real_path = path;
 	}
-	if (strstr(real_path, op_ctx->ctx_export->fullpath) != real_path) {
+	if (strstr(real_path, CTX_FULLPATH(op_ctx)) != real_path) {
 		LogFullDebug(COMPONENT_FSAL, "no fullpath match");
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-	real_path += strlen(op_ctx->ctx_export->fullpath);
+	real_path += strlen(CTX_FULLPATH(op_ctx));
 	if (*real_path == '\0') {
 		real_path = root_dir_path;
 	}
@@ -133,7 +134,7 @@ static fsal_status_t lzfs_fsal_lookup_path(struct fsal_export *export_hdl,
 
 	liz_entry_t result;
 
-	rc = liz_cred_lookup(lzfs_export->lzfs_instance, op_ctx->creds,
+	rc = liz_cred_lookup(lzfs_export->lzfs_instance, &op_ctx->creds,
 			     SPECIAL_INODE_ROOT, real_path, &result);
 
 	if (rc < 0) {
@@ -198,7 +199,7 @@ static fsal_status_t lzfs_fsal_create_handle(
 					struct fsal_export *exp_hdl,
 					struct gsh_buffdesc *desc,
 					struct fsal_obj_handle **pub_handle,
-					struct attrlist *attrs_out)
+					struct fsal_attrlist *attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *handle = NULL;
@@ -215,7 +216,7 @@ static fsal_status_t lzfs_fsal_create_handle(
 
 	liz_attr_reply_t result;
 
-	rc = liz_cred_getattr(lzfs_export->lzfs_instance, op_ctx->creds,
+	rc = liz_cred_getattr(lzfs_export->lzfs_instance, &op_ctx->creds,
 			      *inode, &result);
 
 	if (rc < 0) {

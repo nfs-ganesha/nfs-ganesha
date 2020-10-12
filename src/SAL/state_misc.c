@@ -1284,7 +1284,7 @@ bool hold_state_owner(state_owner_t *owner)
  * @brief Release all state on a file
  *
  * This function may not be called in any context which could hold
- * entry->state_lock.  It will now be reliably called in cleanup
+ * entry->st_lock.  It will now be reliably called in cleanup
  * processing.
  *
  * @param[in,out] obj File to be wiped
@@ -1362,18 +1362,18 @@ void dump_all_owners(void)
 
 void state_release_export(struct gsh_export *export)
 {
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, export, export->fsal_export,
-			     0, 0, UNKNOWN_REQUEST);
+	/* Get a ref to the export and initialize op_context */
+	get_gsh_export_ref(export);
+	init_op_context_simple(&op_context, export, export->fsal_export);
 
 	state_export_unlock_all();
 	state_export_release_nfs4_state();
 #ifdef _USE_NLM
 	state_export_unshare_all();
 #endif /* _USE_NLM */
-	release_root_op_context();
+	release_op_context();
 }
 
 /** @} */

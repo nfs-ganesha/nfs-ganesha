@@ -146,8 +146,8 @@ char *err_type_str(struct config_error_type *err_type)
 		fputs("block init, ", fp);
 	if (err_type->fsal)
 		fputs("fsal load, ", fp);
-	if (err_type->export_)
-		fputs("export create, ", fp);
+	if (err_type->all_exp_create_err)
+		fputs("export create error, ", fp);
 	if (err_type->resource)
 		fputs("resource alloc, ", fp);
 	if (err_type->unique)
@@ -1381,7 +1381,7 @@ static bool proc_block(struct config_node *node,
 			   item->u.blk.params,
 			   (item->flags & CONFIG_RELAX) ? true : false,
 			   param_struct, err_type);
-	if (errors > 0 && !config_error_is_harmless(err_type)) {
+	if (errors > 0 && !cur_exp_config_error_is_harmless(err_type)) {
 		config_proc_error(node, err_type,
 				  "%d errors while processing parameters for %s",
 				  errors,
@@ -1394,7 +1394,7 @@ static bool proc_block(struct config_node *node,
 		     node->linenumber,
 		     item->name);
 	errors = item->u.blk.commit(node, link_mem, param_struct, err_type);
-	if (errors > 0 && !config_error_is_harmless(err_type)) {
+	if (errors > 0 && !cur_exp_config_error_is_harmless(err_type)) {
 		config_proc_error(node, err_type,
 				  "%d validation errors in block %s",
 				  errors,
@@ -1980,6 +1980,10 @@ int load_config_from_parse(config_file_t config,
 						  "Only one %s block allowed",
 						  blkname);
 			} else {
+				/* Reset cur_exp_create_err which may be used
+				 * if an EXPORT block is processed. */
+				err_type->cur_exp_create_err = false;
+
 				if (!proc_block(node,
 						&conf_blk->blk_desc,
 						blk_mem,
@@ -1989,6 +1993,14 @@ int load_config_from_parse(config_file_t config,
 							  blkname);
 				else
 					found++;
+
+				/* If EXPORT block was handled and export
+				 * creation failed then set
+				 * all_exp_create_err = true */
+				if (strcmp(blkname, "EXPORT") == 0 &&
+				    err_type->cur_exp_create_err == true) {
+					err_type->all_exp_create_err = true;
+				}
 			}
 		}
 	}

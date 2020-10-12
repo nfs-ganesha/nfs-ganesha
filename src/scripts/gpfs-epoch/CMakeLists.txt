@@ -1,7 +1,6 @@
 
 if(USE_FSAL_GPFS)
-  find_program(PYTHON NAMES "python3" "python")
-  if(PYTHON)
+  if(Python_FOUND)
     set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
     set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
     set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build/gpfs_epoch_timestamp")
@@ -39,7 +38,7 @@ if(USE_FSAL_GPFS)
     add_custom_command(
       OUTPUT ${OUTPUT}
       COMMAND ${CMAKE_COMMAND} -E touch __init__.py
-      COMMAND ${PYTHON} "${SETUP_PY}"  build
+      COMMAND ${Python_EXECUTABLE} "${SETUP_PY}"  build
       COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
       DEPENDS ${GPFS_EPOCH_SRCS} ${SCRIPTS}
       )
@@ -48,7 +47,7 @@ if(USE_FSAL_GPFS)
 
     install(
       CODE
-      "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${PYTHON} ${SETUP_PY} install --skip-build --no-compile --prefix=\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} --install-scripts=\$ENV{DESTDIR}${LIBEXECDIR}/ganesha)"
+      "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${Python_EXECUTABLE} ${SETUP_PY} install --skip-build --no-compile --prefix=\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} --install-scripts=\$ENV{DESTDIR}${LIBEXECDIR}/ganesha)"
       )
-  endif(PYTHON)
+  endif(Python_FOUND)
 endif(USE_FSAL_GPFS)

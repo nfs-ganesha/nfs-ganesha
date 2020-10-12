@@ -194,8 +194,8 @@ struct fattr3_wire {
 	nfstime3 ctime;
 };
 
-/* We use the fsal_types.h struct attrlist to avoid copying */
-typedef struct attrlist fattr3;
+/* We use the fsal_types.h struct fsal_attrlist to avoid copying */
+typedef struct fsal_attrlist fattr3;
 
 struct post_op_attr {
 	bool_t attributes_follow;

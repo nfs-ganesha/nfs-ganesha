@@ -72,47 +72,38 @@ static int nfs4_ds_putfh(compound_data_t *data)
 		return NFS4ERR_STALE;
 	}
 
-	/* If old CurrentFH had a related server, release reference. */
-	if (op_ctx->fsal_pnfs_ds != NULL) {
+	/* If old CurrentFH had a related server, note if there is a change,
+	 * the reference to the old fsal_pnfs_ds will be released below.
+	 */
+	if (op_ctx->ctx_pnfs_ds != NULL) {
 		changed = ntohs(v4_handle->id.servers)
-			!= op_ctx->fsal_pnfs_ds->id_servers;
-		pnfs_ds_put(op_ctx->fsal_pnfs_ds);
+			!= op_ctx->ctx_pnfs_ds->id_servers;
 	}
 
-	/* If old CurrentFH had a related export, release reference. */
+	/* If old CurrentFH had a related export, note the change, the reference
+	 * to the old export will be released below.
+	 */
 	if (op_ctx->ctx_export != NULL) {
-		changed = op_ctx->ctx_export != pds->mds_export;
-		put_gsh_export(op_ctx->ctx_export);
+		changed |= op_ctx->ctx_export != pds->mds_export;
 	}
 
-	if (pds->mds_export == NULL) {
-		/* most likely */
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
-	} else if (pds->pnfs_ds_status == PNFS_DS_READY) {
-		/* special case: avoid lookup of related export.
-		 * get_gsh_export_ref() was bumped in pnfs_ds_get()
-		 */
-		op_ctx->ctx_export = pds->mds_export;
-		op_ctx->fsal_export = pds->mds_fsal_export;
-	} else {
-		/* export reference has been dropped. */
-		put_gsh_export(pds->mds_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
-		return NFS4ERR_STALE;
-	}
+	/* Take export reference if any */
+	if (pds->mds_export != NULL)
+		get_gsh_export_ref(pds->mds_export);
+
+	/* Set up the op_context with fsal_pnfs_ds, and export if any.
+	 * Will also clean out any old export or fsal_pnfs_ds, dropping
+	 * references if any.
+	 */
+	set_op_context_pnfs_ds(pds);
 
 	/* Clear out current entry for now */
 	set_current_entry(data, NULL);
 
-	/* update _ctx fields */
-	op_ctx->fsal_pnfs_ds = pds;
-
 	if (changed) {
 		int status;
 		/* permissions may have changed */
-		status = pds->s_ops.permissions(pds, data->req);
+		status = pds->s_ops.ds_permissions(pds, data->req);
 		if (status != NFS4_OK)
 			return status;
 	}
@@ -134,6 +125,7 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	struct file_handle_v4 *v4_handle =
 		(struct file_handle_v4 *)data->currentFH.nfs_fh4_val;
 	struct gsh_export *exporting;
+	char fhbuf[NFS4_FHSIZE];
 	struct fsal_export *export;
 	struct gsh_buffdesc fh_desc;
 	struct fsal_obj_handle *new_hdl;
@@ -161,25 +153,23 @@ static int nfs4_mds_putfh(compound_data_t *data)
 		return NFS4ERR_STALE;
 	}
 
-	/* If old CurrentFH had a related export, release reference. */
+	/* If old CurrentFH had a related export, check if it changed. The
+	 * reference will be released below.
+	 */
 	if (op_ctx->ctx_export != NULL) {
 		changed = ntohs(v4_handle->id.exports) !=
 				 op_ctx->ctx_export->export_id;
-		put_gsh_export(op_ctx->ctx_export);
-	}
-
-	/* If old CurrentFH had a related server, release reference. */
-	if (op_ctx->fsal_pnfs_ds != NULL) {
-		pnfs_ds_put(op_ctx->fsal_pnfs_ds);
-		op_ctx->fsal_pnfs_ds = NULL;
 	}
 
 	/* Clear out current entry for now */
 	set_current_entry(data, NULL);
 
-	/* update _ctx fields needed by nfs4_export_check_access */
-	op_ctx->ctx_export = exporting;
-	op_ctx->fsal_export = export = exporting->fsal_export;
+	/* update _ctx fields needed by nfs4_export_check_access and release
+	 * any old ctx_export reference. Will also clean up any old
+	 * fsal_pnfs_ds that was attached.
+	 */
+	set_op_context_export(exporting);
+	export = exporting->fsal_export;
 
 	if (changed) {
 		int status;
@@ -193,8 +183,15 @@ static int nfs4_mds_putfh(compound_data_t *data)
 		}
 	}
 
+	/*
+	 * FIXME: the wire handle can obviously be no larger than NFS4_FHSIZE,
+	 * but there is no such limit on a host handle. Here, we assume that as
+	 * the size limit. Eventually it might be nice to call into the FSAL to
+	 * ask how large a buffer it needs for a host handle.
+	 */
+	memcpy(fhbuf, &v4_handle->fsopaque, v4_handle->fs_len);
 	fh_desc.len = v4_handle->fs_len;
-	fh_desc.addr = &v4_handle->fsopaque;
+	fh_desc.addr = fhbuf;
 
 	/* adjust the handle opaque into a cache key */
 	fsal_status = export->exp_ops.wire_to_host(export,

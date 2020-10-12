@@ -63,7 +63,7 @@ fsal_status_t gluster2fsal_error(const int err)
 }
 
 /**
- * @brief Convert a struct stat from Gluster to a struct attrlist
+ * @brief Convert a struct stat from Gluster to a struct fsal_attrlist
  *
  * This function writes the content of the supplied struct stat to the
  * struct fsalsattr.
@@ -73,7 +73,7 @@ fsal_status_t gluster2fsal_error(const int err)
  */
 
 void stat2fsal_attributes(const struct stat *buffstat,
-			  struct attrlist *fsalattr)
+			  struct fsal_attrlist *fsalattr)
 {
 	/* Indicate which atrributes we have set without affecting the
 	 * other bits in the mask.
@@ -223,7 +223,7 @@ void setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
 fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 				struct glfs_object *glhandle,
 				glusterfs_fsal_xstat_t *buffxstat,
-				struct attrlist *fsalattr)
+				struct fsal_attrlist *fsalattr)
 {
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	fsal_acl_data_t acldata;
@@ -354,7 +354,7 @@ fsal_status_t glusterfs_set_acl(struct glusterfs_export *glfs_export,
  */
 fsal_status_t glusterfs_process_acl(struct glfs *fs,
 				    struct glfs_object *object,
-				    struct attrlist *attrs,
+				    struct fsal_attrlist *attrs,
 				    glusterfs_fsal_xstat_t *buffxstat)
 {
 	LogDebug(COMPONENT_FSAL, "setattr acl = %p", attrs->acl);

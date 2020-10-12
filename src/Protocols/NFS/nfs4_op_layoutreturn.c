@@ -110,7 +110,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 	/* Referenced export */
 	struct gsh_export *export = NULL;
 	/* Root op context for returning fsid or all layouts */
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	/* Keep track of so_mutex */
 	bool so_mutex_locked = false;
 	state_t *first;
@@ -209,9 +209,8 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 
 		clientid_owner = &data->session->clientid_record->cid_owner;
 
-		/* Initialize req_ctx */
-		init_root_op_context(&root_op_context, NULL, NULL,
-				     0, 0, UNKNOWN_REQUEST);
+		/* Initialize op_context */
+		init_op_context_simple(&op_context, NULL, NULL);
 
 		/* We need the safe version because return_one_state
 		 * can delete the current state.
@@ -277,11 +276,9 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 			}
 
 			/* Set up the root op context for this state */
-			root_op_context.req_ctx.clientid =
+			op_ctx->clientid =
 			    &clientid_owner->so_owner.so_nfs4_owner.so_clientid;
-			root_op_context.req_ctx.ctx_export = export;
-			root_op_context.req_ctx.fsal_export =
-							export->fsal_export;
+			set_op_context_export(export);
 
 			/* Take a reference on the state_t */
 			inc_state_t_ref(layout_state);
@@ -296,8 +293,8 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 				if (!memcmp(&fsid, &data->current_obj->fsid,
 					    sizeof(fsid))) {
 					obj->obj_ops->put_ref(obj);
-					put_gsh_export(export);
 					dec_state_t_ref(layout_state);
+					clear_op_context_export();
 
 					/* Since we had to drop so_mutex, the
 					 * list may have changed under us, we
@@ -325,14 +322,15 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 			/* Release the state_t reference */
 			dec_state_t_ref(layout_state);
 
+			obj->obj_ops->put_ref(obj);
+			clear_op_context_export();
+
 			if (res_LAYOUTRETURN4->lorr_status != NFS4_OK)
 				break;
 
 			/* Since we had to drop so_mutex, the list may have
 			 * changed under us, we MUST start over.
 			 */
-			obj->obj_ops->put_ref(obj);
-			put_gsh_export(export);
 			goto again;
 		}
 
@@ -355,17 +353,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 							LAYOUTRETURN4_ALL
 	    ) {
 		/* Release the root op context we setup above */
-		release_root_op_context();
-	}
-
-	if (obj != NULL) {
-		/* Release object ref */
-		obj->obj_ops->put_ref(obj);
-	}
-
-	if (export != NULL) {
-		/* Release the export */
-		put_gsh_export(export);
+		release_op_context();
 	}
 
 	return nfsstat4_to_nfs_req_result(res_LAYOUTRETURN4->lorr_status);
@@ -389,7 +377,7 @@ void nfs4_op_layoutreturn_Free(nfs_resop4 *resp)
 /**
  * @brief Handle recalls corresponding to one stateid
  *
- * @note the state_lock MUST be held for write
+ * @note the st_lock MUST be held
  *
  * @param[in]     args         Layout return args
  * @param[in]     ostate       File state
@@ -483,7 +471,7 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg,
  * the specified range and iomode.  If all layouts have been returned,
  * it deletes the state.
  *
- * @note The state_lock MUST be held for write
+ * @note The st_lock MUST be held
  *
  * @param[in]     obj          File whose layouts we return
  * @param[in]     return_type  Whether this is a file, fs, or server return
@@ -591,7 +579,6 @@ nfsstat4 nfs4_return_one_state(struct fsal_obj_handle *obj,
 
 			nfs_status = obj->obj_ops->layoutreturn(
 						obj,
-						op_ctx,
 						body_val ? &lrf_body : NULL,
 						arg);
 
@@ -637,7 +624,7 @@ nfsstat4 nfs4_return_one_state(struct fsal_obj_handle *obj,
 
 		nfs_status = obj->obj_ops->layoutreturn(
 					obj,
-					op_ctx, body_val ? &lrf_body : NULL,
+					body_val ? &lrf_body : NULL,
 					arg);
 
 		if (nfs_status != NFS4_OK)

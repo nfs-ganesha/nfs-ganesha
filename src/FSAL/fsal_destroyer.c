@@ -68,39 +68,6 @@ static void shutdown_handles(struct fsal_module *fsal)
 }
 
 /**
- * @brief Dispose of lingering DS handles
- *
- * @param[in] pds pNFS DS to clean up
- */
-
-static void shutdown_ds_handles(struct fsal_pnfs_ds *pds)
-{
-	/* Handle iterator */
-	struct glist_head *hi = NULL;
-	/* Next pointer in handle iteration */
-	struct glist_head *hn = NULL;
-
-	if (glist_empty(&pds->ds_handles))
-		return;
-
-	LogDebug(COMPONENT_FSAL, "Extra DS file handles hanging around.");
-	glist_for_each_safe(hi, hn, &pds->ds_handles) {
-		struct fsal_ds_handle *h = glist_entry(hi,
-						       struct fsal_ds_handle,
-						       ds_handle);
-		int64_t refcount = atomic_fetch_int64_t(&h->refcount);
-
-		if (refcount != 0) {
-			LogDebug(COMPONENT_FSAL,
-				 "Extra references (%"PRIi64") hanging around.",
-				 refcount);
-			atomic_store_int64_t(&h->refcount, 0);
-		}
-		h->dsh_ops.release(h);
-	}
-}
-
-/**
  * @brief Dispose of lingering pNFS Data Servers
  *
  * @param[in] fsal fsal module to clean up
@@ -109,30 +76,29 @@ static void shutdown_ds_handles(struct fsal_pnfs_ds *pds)
 static void shutdown_pnfs_ds(struct fsal_module *fsal)
 {
 	/* Handle iterator */
-	struct glist_head *hi = NULL;
+	struct glist_head *glist = NULL;
 	/* Next pointer in handle iteration */
-	struct glist_head *hn = NULL;
+	struct glist_head *glistn = NULL;
 
 	if (glist_empty(&fsal->servers))
 		return;
 
 	LogDebug(COMPONENT_FSAL, "Extra pNFS Data Servers hanging around.");
-	glist_for_each_safe(hi, hn, &fsal->servers) {
-		struct fsal_pnfs_ds *h = glist_entry(hi,
-						     struct fsal_pnfs_ds,
-						     server);
+	glist_for_each_safe(glist, glistn, &fsal->servers) {
+		struct fsal_pnfs_ds *ds = glist_entry(glist,
+						      struct fsal_pnfs_ds,
+						      server);
 		int32_t refcount;
 
-		shutdown_ds_handles(h);
-		refcount = atomic_fetch_int32_t(&h->refcount);
+		refcount = atomic_fetch_int32_t(&ds->ds_refcount);
 
 		if (refcount != 0) {
 			LogDebug(COMPONENT_FSAL,
 				 "Extra references (%"PRIi32") hanging around.",
 				 refcount);
-			atomic_store_int32_t(&h->refcount, 0);
+			atomic_store_int32_t(&ds->ds_refcount, 0);
 		}
-		h->s_ops.release(h);
+		ds->s_ops.ds_release(ds);
 	}
 }
 
@@ -236,6 +202,7 @@ void destroy_fsals(void)
 	}
 
 	release_posix_file_systems();
+	destroy_ctx_refstr();
 }
 
 /**

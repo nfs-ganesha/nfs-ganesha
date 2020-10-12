@@ -34,6 +34,7 @@
 static unsigned int rand_seed = 123451;
 static char rpcMachineName[MAXHOSTNAMELEN + 1] = { 0 };
 static pthread_mutex_t rpcLock;
+
 const unsigned int kMaxSockets = 32;
 
 /* Resizable buffer (capacity is allocated, len is used). */
@@ -109,6 +110,8 @@ proxyv3_openfd(const struct sockaddr *host,
 	       const socklen_t socklen,
 	       uint16_t port)
 {
+	int rc;
+
 	LogDebug(COMPONENT_FSAL,
 		 "Opening a new socket");
 
@@ -181,8 +184,33 @@ proxyv3_openfd(const struct sockaddr *host,
 	 * NOTE(boulos): NFS daemons like nfsd in Linux require that the
 	 * clients come from a privileged port, so that they "must" be run
 	 * as root on the client.
+	 *
+	 * NOTE(boulos): Some bindresvport_sa implementations are *also* not
+	 * thread-safe (including libntirpc). So we need to hold a lock around
+	 * calling it. Our only caller (proxyv3_getfdentry) no longer holds the
+	 * rpcLock, so we can use that one.
 	 */
-	if (bindresvport_sa(fd, NULL) < 0) {
+
+	if (pthread_mutex_lock(&rpcLock) != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"pthread_mutex_lock falied %d %s",
+			errno, strerror(errno));
+		close(fd);
+		return -1;
+	}
+
+	rc = bindresvport_sa(fd, NULL);
+
+	/* Unlock the rpclock before we exit, even if bindresvport_sa failed */
+	if (pthread_mutex_unlock(&rpcLock) != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"pthread_mutex_unlock falied %d %s",
+			errno, strerror(errno));
+		close(fd);
+		return -1;
+	}
+
+	if (rc < 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Failed to reserve a privileged port. %d %s",
 			errno, strerror(errno));
@@ -209,6 +237,66 @@ proxyv3_openfd(const struct sockaddr *host,
 		 fd, addrForErrors);
 
 	return fd;
+}
+
+
+/**
+ * @brief Check that an fd (from a socket) is open and ready.
+ *
+ * @param fd The file descriptor for our socket.
+ *
+ * @return - True if the socket is open, false otherwise.
+ */
+
+static bool
+proxyv3_fd_is_open(int fd)
+{
+	/*
+	 * If it's been a long time since we opened the socket, the
+	 * other end probably hung up. We peek at the recv buffer here,
+	 * to ensure that the socket is still open. If we happen to find
+	 * bytes, something horrible must have happened.
+	 */
+
+	char buf[1];
+	ssize_t bytes_read;
+
+	/*
+	 * We need both DONTWAIT for non-blocking and PEEK, so we don't
+	 * actually pull any data off.
+	 */
+
+	bytes_read = recv(fd, buf, sizeof(buf),
+			  MSG_DONTWAIT | MSG_PEEK);
+
+	if (bytes_read == -1 &&
+	    ((errno == EAGAIN || errno == EWOULDBLOCK))) {
+		/* We would block => the socket is open! */
+		LogFullDebug(COMPONENT_FSAL,
+			     "Socket %d was still open. Reusing.", fd);
+		return true;
+	}
+
+	/*
+	 * Okay, we can't just re-use the existing socket. So we'll need
+	 * a new one, but first report why we did.
+	 */
+
+	if (bytes_read == 0) {
+		/* The other end closed at some point. */
+		LogDebug(COMPONENT_FSAL,
+			 "Socket %d was closed by the backend.", fd);
+	} else if (bytes_read > 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unexpected data left in socket %d.", fd);
+	} else {
+		/* Some other error. Log and exit. */
+		LogCrit(COMPONENT_FSAL,
+			"Checking that socket %d was open had an error: %d '%s'.",
+			fd, errno, strerror(errno));
+	}
+
+	return false;
 }
 
 /**
@@ -358,13 +446,8 @@ proxyv3_getfdentry(const struct sockaddr *host,
 		return NULL;
 	}
 
-	/* If we already got one, return it. */
-	if (first_open != NULL) {
-		/*
-		 * @todo If it's been a long time since we opened the socket,
-		 * the other end probably hung up. We should probably test here,
-		 * so that callers receive a definitely open socket.
-		 */
+	/* If we already got one, return it, if it's still open. */
+	if (first_open != NULL && proxyv3_fd_is_open(result->fd)) {
 		return result;
 	}
 
@@ -450,6 +533,8 @@ proxyv3_getfd_blocking(const struct sockaddr *host,
 	 *  we'll back off quickly enough anyway.
 	 */
 	size_t numMicros = 256;
+	/* Don't back off to more than 10 ms aka 10000 microsecond sleeps. */
+	const size_t maxMicros = 10000;
 	size_t i;
 
 	for (i = 0; i < kMaxIterations; i++) {
@@ -495,6 +580,9 @@ proxyv3_getfd_blocking(const struct sockaddr *host,
 
 		/* Next time around, double it. */
 		numMicros *= 2;
+		if (numMicros > maxMicros) {
+			numMicros = maxMicros;
+		}
 	}
 
 	LogCrit(COMPONENT_FSAL,

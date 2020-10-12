@@ -76,7 +76,7 @@ namespace {
       gtest::GaneshaFSALBaseTest::TearDown();
     }
 
-    struct attrlist attrs_in;
+    struct fsal_attrlist attrs_in;
   };
 
   class Open2LoopLatencyTest : public Open2EmptyLatencyTest {

@@ -88,14 +88,14 @@ struct pan_attrs {
 	struct pan_fs_acl_s acls;
 };
 
-struct attrlist;
+struct fsal_attrlist;
 struct panfs_fsal_obj_handle;
 
 fsal_status_t PanFS_getattrs(struct panfs_fsal_obj_handle *panfs_hdl,
 		int fd,
-		struct attrlist *attrib);
+		struct fsal_attrlist *attrib);
 fsal_status_t PanFS_setattrs(struct panfs_fsal_obj_handle *panfs_hdl,
 		int fd,
-		struct attrlist *attrib);
+		struct fsal_attrlist *attrib);
 
 #endif /* __PANFS_ATTRS_H */

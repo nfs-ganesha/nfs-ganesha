@@ -50,7 +50,7 @@
 struct nfs3_write_data {
 	/** Results for write */
 	nfs_res_t *res;
-	/** RPC Request for this READ */
+	/** RPC Request for this WRITE */
 	struct svc_req *req;
 	/** Object being acted on */
 	struct fsal_obj_handle *obj;
@@ -108,7 +108,7 @@ static enum xprt_stat nfs3_write_resume(struct svc_req *req)
 	int rc = data->rc;
 
 	/* Restore the op_ctx */
-	op_ctx = &reqdata->req_ctx;
+	resume_op_context(&reqdata->op_context);
 
 	/* Complete the write */
 	rc = nfs3_complete_write(data);
@@ -254,10 +254,10 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
-	fsal_status =
-	    op_ctx->fsal_export->exp_ops.check_quota(op_ctx->fsal_export,
-						   op_ctx->ctx_export->fullpath,
-						   FSAL_QUOTA_BLOCKS);
+	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
+							op_ctx->fsal_export,
+							CTX_FULLPATH(op_ctx),
+							FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_write3.status = NFS3ERR_DQUOT;

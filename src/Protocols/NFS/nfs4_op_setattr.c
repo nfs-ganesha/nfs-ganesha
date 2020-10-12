@@ -62,7 +62,7 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 {
 	SETATTR4args * const arg_SETATTR4 = &op->nfs_argop4_u.opsetattr;
 	SETATTR4res * const res_SETATTR4 = &resp->nfs_resop4_u.opsetattr;
-	struct attrlist sattr;
+	struct fsal_attrlist sattr;
 	fsal_status_t fsal_status = {0, 0};
 	const char *tag = "SETATTR";
 	state_t *state_found = NULL;

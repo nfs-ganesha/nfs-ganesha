@@ -66,6 +66,11 @@
 #include "pnfs_utils.h"
 #include "idmapper.h"
 
+/** Mutex to serialize export admin operations.
+ */
+pthread_mutex_t export_admin_mutex = PTHREAD_MUTEX_INITIALIZER;
+uint64_t export_admin_counter;
+
 struct timespec nfs_stats_time;
 struct timespec fsal_stats_time;
 struct timespec v3_full_stats_time;
@@ -88,69 +93,38 @@ struct export_by_id {
 static struct export_by_id export_by_id;
 
 /** List of all active exports,
-  * protected by export_by_id.lock
+  * protected by export_admin_mutex
   */
-static struct glist_head exportlist;
+static struct glist_head exportlist = GLIST_HEAD_INIT(exportlist);
 
 /** List of exports to be mounted in PseudoFS,
-  * protected by export_by_id.lock
+  * protected by export_admin_mutex
   */
-static struct glist_head mount_work;
+static struct glist_head mount_work = GLIST_HEAD_INIT(mount_work);
 
 /** List of exports to be cleaned up on unexport,
-  * protected by export_by_id.lock
+  * protected by export_admin_mutex
   */
-static struct glist_head unexport_work;
+static struct glist_head unexport_work = GLIST_HEAD_INIT(unexport_work);
 
 void export_add_to_mount_work(struct gsh_export *export)
 {
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 	glist_add_tail(&mount_work, &export->exp_work);
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-}
-
-void export_add_to_unexport_work_locked(struct gsh_export *export)
-{
-	glist_add_tail(&unexport_work, &export->exp_work);
 }
 
 void export_add_to_unexport_work(struct gsh_export *export)
 {
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
-	export_add_to_unexport_work_locked(export);
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	glist_add_tail(&unexport_work, &export->exp_work);
 }
 
 struct gsh_export *export_take_mount_work(void)
 {
 	struct gsh_export *export;
 
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
-
 	export = glist_first_entry(&mount_work, struct gsh_export, exp_work);
 
 	if (export != NULL)
 		glist_del(&export->exp_work);
-
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
-
-	return export;
-}
-
-struct gsh_export *export_take_unexport_work(void)
-{
-	struct gsh_export *export;
-
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
-
-	export = glist_first_entry(&unexport_work, struct gsh_export, exp_work);
-
-	if (export != NULL) {
-		glist_del(&export->exp_work);
-		get_gsh_export_ref(export);
-	}
-
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
 	return export;
 }
@@ -171,23 +145,6 @@ static inline uint16_t eid_cache_offsetof(uint16_t k)
 }
 
 /**
- * @brief Clean up an export
- *
- * This is used when an export needs to be freed but op_ctx isn't set up.
- *
- * @param[in] export	Export to clean up
- */
-void export_cleanup(struct gsh_export *export)
-{
-	struct root_op_context ctx;
-
-	init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
-			     UNKNOWN_REQUEST);
-	free_export(export);
-	release_root_op_context();
-}
-
-/**
  * @brief Revert export_commit()
  *
  * @param export [in] the export just inserted/committed
@@ -197,7 +154,7 @@ void export_revert(struct gsh_export *export)
 	struct avltree_node *cnode;
 	void **cache_slot = (void **)
 	     &(export_by_id.cache[eid_cache_offsetof(export->export_id)]);
-	struct root_op_context ctx;
+	struct req_op_context op_context;
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
 
@@ -210,17 +167,18 @@ void export_revert(struct gsh_export *export)
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 
-	init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
-			     UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, export, export->fsal_export);
 
 	if (export->has_pnfs_ds) {
 		/* once-only, so no need for lock here */
 		export->has_pnfs_ds = false;
-		pnfs_ds_remove(export->export_id, true);
-	}
-	put_gsh_export(export); /* Release sentinel ref */
 
-	release_root_op_context();
+		/* Remove and destroy the fsal_pnfs_ds */
+		pnfs_ds_remove(export->export_id);
+	}
+
+	/* Release the sentinel refcount */
+	release_op_context();
 }
 
 /**
@@ -266,32 +224,13 @@ struct gsh_export *alloc_export(void)
 	glist_init(&export->mounted_exports_list);
 	glist_init(&export->clients);
 
+	/* Take an initial refcount */
+	export->refcnt = 1;
+
 	PTHREAD_RWLOCK_init(&export->lock, NULL);
 
 	return export;
 }
-
-/**
- * @brief Free an exportlist entry.
- *
- * This is for returning exportlists not yet in the export manager.
- * Once they get inserted into the export manager, it will release it.
- */
-
-void free_export(struct gsh_export *export)
-{
-	struct export_stats *export_st;
-
-	assert(export->refcnt == 0);
-
-	/* free resources */
-	free_export_resources(export);
-	export_st = container_of(export, struct export_stats, export);
-	server_stats_free(&export_st->st);
-	PTHREAD_RWLOCK_destroy(&export->lock);
-	gsh_free(export_st);
-}
-
 
 /**
  * @brief Insert an export list entry into the export manager
@@ -319,13 +258,12 @@ bool insert_gsh_export(struct gsh_export *export)
 		return false;
 	}
 
-	/* we will hold a ref starting out... */
+	/* take an additional ref for the sentinel reference... */
 	get_gsh_export_ref(export);
 
 	/* update cache */
 	atomic_store_voidptr(cache_slot, &export->node_k);
 	glist_add_tail(&exportlist, &export->exp_list);
-	get_gsh_export_ref(export);		/* == 2 */
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
 	return true;
@@ -415,14 +353,30 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		     path);
 
 	glist_for_each(glist, &exportlist) {
+		struct gsh_refstr *ref_fullpath;
+
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
-		len_export = strlen(export->fullpath);
+		rcu_read_lock();
+
+		ref_fullpath =
+			gsh_refstr_get(rcu_dereference(export->fullpath));
+
+		rcu_read_unlock();
+
+		if (ref_fullpath == NULL) {
+			LogFatal(COMPONENT_EXPORT,
+				 "Export %d has no fullpath",
+				 export->export_id);
+		}
+
+		len_export = strlen(ref_fullpath->gr_val);
 
 		if (len_path == 0 && len_export == 1) {
 			/* Special case for root match */
 			ret_exp = export;
 			len_ret = len_export;
+			gsh_refstr_put(ref_fullpath);
 			break;
 		}
 
@@ -431,30 +385,38 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		 * the previous match.
 		 */
 		if (len_path < len_export ||
-		    len_export < len_ret)
+		    len_export < len_ret) {
+			gsh_refstr_put(ref_fullpath);
 			continue;
+		}
 
 		/* If partial match is not allowed, lengths must be the same */
-		if (exact_match && len_path != len_export)
+		if (exact_match && len_path != len_export) {
+			gsh_refstr_put(ref_fullpath);
 			continue;
+		}
 
 		/* if the char in fullpath just after the end of path is not '/'
 		 * it is a name token longer, i.e. /mnt/foo != /mnt/foob/
 		 */
 		if (len_export > 1 &&
 		    path[len_export] != '/' &&
-		    path[len_export] != '\0')
+		    path[len_export] != '\0') {
+			gsh_refstr_put(ref_fullpath);
 			continue;
+		}
 
 		/* we agree on size, now compare the leading substring
 		 */
-		if (strncmp(export->fullpath, path, len_export) == 0) {
+		if (strncmp(ref_fullpath->gr_val, path, len_export) == 0) {
 			ret_exp = export;
 			len_ret = len_export;
 
 			/* If we have found an exact match, exit loop. */
-			if (len_export == len_path)
+			if (len_export == len_path) {
+				gsh_refstr_put(ref_fullpath);
 				break;
+			}
 		}
 	}
 
@@ -522,22 +484,38 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		     path);
 
 	glist_for_each(glist, &exportlist) {
+		struct gsh_refstr *ref_pseudopath;
+
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
 		if (export->pseudopath == NULL)
 			continue;
 
-		len_export = strlen(export->pseudopath);
+		rcu_read_lock();
+
+		ref_pseudopath =
+			gsh_refstr_get(rcu_dereference(export->pseudopath));
+
+		rcu_read_unlock();
+
+		if (ref_pseudopath == NULL) {
+			LogFatal(COMPONENT_EXPORT,
+				 "Export %d has no pseudopath",
+				 export->export_id);
+		}
+
+		len_export = strlen(ref_pseudopath->gr_val);
 
 		LogFullDebug(COMPONENT_EXPORT,
 			     "Comparing %s %d to %s %d",
 			     path, len_path,
-			     export->pseudopath, len_export);
+			     ref_pseudopath->gr_val, len_export);
 
 		if (len_path == 0 && len_export == 1) {
 			/* Special case for Pseudo root match */
 			ret_exp = export;
 			len_ret = len_export;
+			gsh_refstr_put(ref_pseudopath);
 			break;
 		}
 
@@ -546,31 +524,39 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		 * the previous match.
 		 */
 		if (len_path < len_export ||
-		    len_export < len_ret)
+		    len_export < len_ret) {
+			gsh_refstr_put(ref_pseudopath);
 			continue;
+		}
 
 		/* If partial match is not allowed, lengths must be the same */
-		if (exact_match && len_path != len_export)
+		if (exact_match && len_path != len_export) {
+			gsh_refstr_put(ref_pseudopath);
 			continue;
+		}
 
 		/* if the char in pseudopath just after the end of path is not
 		 * '/' it is a name token longer, i.e. /mnt/foo != /mnt/foob/
 		 */
 		if (len_export > 1 &&
 		    path[len_export] != '/' &&
-		    path[len_export] != '\0')
+		    path[len_export] != '\0') {
+			gsh_refstr_put(ref_pseudopath);
 			continue;
+		}
 
 		/* we agree on size, now compare the leading substring
 		 */
-		if (strncmp(export->pseudopath, path, len_export)
+		if (strncmp(ref_pseudopath->gr_val, path, len_export)
 		    == 0) {
 			ret_exp = export;
 			len_ret = len_export;
 
 			/* If we have found an exact match, exit loop. */
-			if (len_export == len_path)
+			if (len_export == len_path) {
+				gsh_refstr_put(ref_pseudopath);
 				break;
+			}
 		}
 	}
 
@@ -643,16 +629,15 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 
 bool mount_gsh_export(struct gsh_export *exp)
 {
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	bool rc = true;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-				NFS_V4, 0, NFS_REQUEST);
+	/* Initialize op_context */
+	init_op_context(&op_context, NULL, NULL, NULL, NFS_V4, 0, NFS_REQUEST);
 
 	if (!pseudo_mount_export(exp))
 		rc = false;
-	release_root_op_context();
+	release_op_context();
 	return rc;
 }
 
@@ -663,14 +648,13 @@ bool mount_gsh_export(struct gsh_export *exp)
 
 void unmount_gsh_export(struct gsh_export *exp)
 {
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-				NFS_V4, 0, NFS_REQUEST);
+	/* Initialize op_context */
+	init_op_context(&op_context, NULL, NULL, NULL, NFS_V4, 0, NFS_REQUEST);
 
-	pseudo_unmount_export(exp);
-	release_root_op_context();
+	pseudo_unmount_export_tree(exp);
+	release_op_context();
 }
 
 /**
@@ -683,13 +667,19 @@ void _get_gsh_export_ref(struct gsh_export *a_export,
 	int64_t refcount = atomic_inc_int64_t(&a_export->refcnt);
 
 	if (isFullDebug(COMPONENT_EXPORT)) {
+		struct tmp_export_paths tmp_path = {NULL, NULL};
+
+		tmp_get_exp_paths(&tmp_path, a_export);
+
 		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
 			NIV_FULL_DEBUG,
 			"get export ref for id %" PRIu16 " %s, refcount = %"
 			PRIi64,
 			a_export->export_id,
-			export_path(a_export),
+			tmp_export_path(&tmp_path),
 			refcount);
+
+		tmp_put_exp_paths(&tmp_path);
 	}
 }
 
@@ -699,29 +689,39 @@ void _get_gsh_export_ref(struct gsh_export *a_export,
  * We are done with it, let it go.
  */
 
-void _put_gsh_export(struct gsh_export *export,
+void _put_gsh_export(struct gsh_export *export, bool config,
 		     char *file, int line, char *function)
 {
 	int64_t refcount = atomic_dec_int64_t(&export->refcnt);
+	struct export_stats *export_st;
+
+	assert(refcount >= 0);
 
 	if (isFullDebug(COMPONENT_EXPORT)) {
+		struct tmp_export_paths tmp_path = {NULL, NULL};
+
+		tmp_get_exp_paths(&tmp_path, export);
+
 		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
 			NIV_FULL_DEBUG,
 			"put export ref for id %" PRIu16 " %s, refcount = %"
 			PRIi64,
 			export->export_id,
-			export_path(export),
+			tmp_export_path(&tmp_path),
 			refcount);
+
+		tmp_put_exp_paths(&tmp_path);
 	}
 
-	if (refcount != 0) {
-		assert(refcount > 0);
+	if (refcount != 0)
 		return;
-	}
 
-	/* Releasing last reference */
-
-	free_export(export);
+	/* Released last reference, free resources */
+	free_export_resources(export, config);
+	export_st = container_of(export, struct export_stats, export);
+	server_stats_free(&export_st->st);
+	PTHREAD_RWLOCK_destroy(&export->lock);
+	gsh_free(export_st);
 }
 
 /**
@@ -767,7 +767,9 @@ void remove_gsh_export(uint16_t export_id)
 		if (export->has_pnfs_ds) {
 			/* once-only, so no need for lock here */
 			export->has_pnfs_ds = false;
-			pnfs_ds_remove(export->export_id, true);
+
+			/* Remove and destroy the fsal_pnfs_ds */
+			pnfs_ds_remove(export->export_id);
 		}
 
 		/* Release sentinel reference to the export.
@@ -808,7 +810,7 @@ bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 
 bool remove_one_export(struct gsh_export *export, void *state)
 {
-	export_add_to_unexport_work_locked(export);
+	export_add_to_unexport_work(export);
 	return true;
 }
 
@@ -818,18 +820,22 @@ static void process_unexports(void)
 
 	/* Now process all the unexports */
 	while (true) {
-		export = export_take_unexport_work();
+		export = glist_first_entry(&unexport_work, struct gsh_export,
+					   exp_work);
+
 		if (export == NULL)
 			break;
 
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+		glist_del(&export->exp_work);
 
-		unexport(export);
-		put_gsh_export(export);
+		/* Get reference to export and add it to op_ctx */
+		get_gsh_export_ref(export);
+		set_op_context_export(export);
 
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
+		/* Do the actual unexport work */
+		release_export(export, false);
+
+		clear_op_context_export();
 	}
 }
 
@@ -840,25 +846,21 @@ static void process_unexports(void)
 void remove_all_exports(void)
 {
 	struct gsh_export *export;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-				NFS_V4, 0, NFS_REQUEST);
+	EXPORT_ADMIN_LOCK();
 
-	/* Get a reference to the PseudoFS Root Export */
+	/* Get a reference to the PseudoFS Root Export and initialize the
+	 * op_context.
+	 */
 	export = get_gsh_export_by_pseudo("/", true);
 
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = export->fsal_export;
+	init_op_context(&op_context, export, export->fsal_export,
+			NULL, NFS_V4, 0, NFS_REQUEST);
 
 	/* Clean up the whole PseudoFS */
-	pseudo_unmount_export(export);
-
-	put_gsh_export(export);
-
-	op_ctx->ctx_export = NULL;
-	op_ctx->fsal_export = NULL;
+	pseudo_unmount_export_tree(export);
+	clear_op_context_export();
 
 	/* Put all exports on the unexport work list.
 	 * Ignore return since remove_one_export can't fail.
@@ -866,35 +868,72 @@ void remove_all_exports(void)
 	(void) foreach_gsh_export(remove_one_export, true, NULL);
 
 	process_unexports();
-	release_root_op_context();
+
+	release_op_context();
+
+	EXPORT_ADMIN_UNLOCK();
 }
 
 static bool prune_defunct_export(struct gsh_export *exp, void *state)
 {
-	uint64_t *pgen = state;
+	uint64_t generation = *((uint64_t *)state);
 
-	if (export_is_defunct(exp, *pgen))
-		export_add_to_unexport_work_locked(exp);
+	if (exp->config_gen < generation) {
+		if (isDebug(COMPONENT_EXPORT)) {
+			struct tmp_export_paths tmp;
+
+			tmp_get_exp_paths(&tmp, exp);
+
+			LogDebug(COMPONENT_EXPORT,
+				 "Pruning export %d path %s pseudo %s",
+				 exp->export_id,
+				 TMP_FULLPATH(&tmp),
+				 TMP_PSEUDOPATH(&tmp));
+
+			tmp_put_exp_paths(&tmp);
+		}
+
+		export_add_to_unexport_work(exp);
+	}
 	return true;
 }
 
 void prune_defunct_exports(uint64_t generation)
 {
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
 	/*
-	 * Initialize req_ctx, we use NFSv4 types here to make paths show
+	 * Initialize op_context, we use NFSv4 types here to make paths show
 	 * up sanely in the logs.
 	 */
-	init_root_op_context(&root_op_context, NULL, NULL,
-				NFS_V4, 0, NFS_REQUEST);
+	init_op_context(&op_context, NULL, NULL, NULL,
+			NFS_V4, 0, NFS_REQUEST);
 
 	(void)foreach_gsh_export(prune_defunct_export, true, &generation);
 
 	/* now run the work */
 	process_unexports();
-	release_root_op_context();
+	release_op_context();
 }
+
+/**
+ * @brief Initialize all stats at startup time.
+ *
+ * Note: This function needs to be in all builds, not just USE_DBUS enabled
+ * ones.
+ *
+ */
+
+void nfs_init_stats_time(void)
+{
+	now(&nfs_stats_time);
+	fsal_stats_time = v3_full_stats_time
+			= v4_full_stats_time
+			= auth_stats_time
+			= clnt_allops_stats_time
+			= nfs_stats_time;
+}
+
 
 #ifdef USE_DBUS
 
@@ -910,8 +949,21 @@ static bool get_all_export_io(struct gsh_export *export_node, void *array_iter)
 {
 	struct export_stats *export_statistics;
 
-	LogFullDebug(COMPONENT_DBUS, "export id: %i, path: %s",
-		     export_node->export_id, export_node->fullpath);
+	if (isFullDebug(COMPONENT_DBUS)) {
+		struct gsh_refstr *ref_fullpath;
+
+		rcu_read_lock();
+
+		ref_fullpath =
+			gsh_refstr_get(rcu_dereference(export_node->fullpath));
+
+		rcu_read_unlock();
+
+		LogFullDebug(COMPONENT_DBUS, "export id: %i, path: %s",
+			     export_node->export_id, ref_fullpath->gr_val);
+
+		gsh_refstr_put(ref_fullpath);
+	}
 
 	export_statistics = container_of(export_node, struct export_stats,
 					 export);
@@ -1014,7 +1066,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 				 DBusMessage *reply,
 				 DBusError *error)
 {
-	int rc, exp_cnt = 0;
+	int rc, exp_cnt = 0, err;
 	bool status = true;
 	char *file_path = NULL;
 	char *export_expr = NULL;
@@ -1024,6 +1076,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	DBusMessageIter iter;
 	char *err_detail = NULL;
 	struct error_detail conf_errs = {NULL, 0, NULL};
+	struct stat st;
 
 	/* Get path */
 	if (dbus_message_iter_get_arg_type(args) == DBUS_TYPE_STRING)
@@ -1045,15 +1098,43 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		status = false;
 		goto out;
 	}
+
+	if (EXPORT_ADMIN_TRYLOCK() != 0) {
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "another export admin operation is in progress, try again later");
+		status = false;
+		goto out;
+	}
+
 	LogInfo(COMPONENT_EXPORT, "Adding export from file: %s with %s",
 		file_path, export_expr);
 
 	/* Create a memstream for parser+processing error messages */
 	if (!init_error_type(&err_type))
-		goto out;
+		goto out_unlock;
+
+	/* The parser fatal errors if file_path is a directory, so check it
+	 * before calling parser.
+	 */
+	rc = stat(file_path, &st);
+	if (rc < 0) {
+		err = errno;
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "error %d (%s) when attempting to stat config file %s",
+			       err, strerror(err), file_path);
+		status = false;
+		goto out_unlock;
+	}
+	if ((st.st_mode & S_IFMT) != S_IFREG) {
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "config file path %s is not a regular file",
+			       file_path);
+		status = false;
+		goto out_unlock;
+	}
 
 	config_struct = config_ParseFile(file_path, &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+	if (!cur_exp_config_error_is_harmless(&err_type)) {
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
 			"Error while parsing %s", file_path);
@@ -1068,7 +1149,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 			       err_detail != NULL ? err_detail : "unknown",
 			       conf_errs.buf);
 		status = false;
-		goto out;
+		goto out_unlock;
 	}
 
 	rc = find_config_nodes(config_struct, export_expr,
@@ -1086,7 +1167,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 			       "Error finding exports: %s because %s",
 			       export_expr, strerror(rc));
 		status = false;
-		goto out;
+		goto out_unlock;
 	}
 	/* Load export entries from list */
 	for (lp = config_list; lp != NULL; lp = lp_next) {
@@ -1097,7 +1178,8 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 						   NULL,
 						   false,
 						   &err_type);
-			if (rc == 0 || config_error_is_harmless(&err_type))
+			if (rc == 0 ||
+			    cur_exp_config_error_is_harmless(&err_type))
 				exp_cnt++;
 			else if (!err_type.exists)
 				status = false;
@@ -1149,7 +1231,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 				       file_path);
 			status = false;
 		}
-		goto out;
+		goto out_unlock;
 	} else {
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
@@ -1163,6 +1245,10 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 			       err_detail != NULL ? err_detail : "unknown",
 			       conf_errs.buf);
 	}
+
+out_unlock:
+
+	EXPORT_ADMIN_UNLOCK();
 
 out:
 	if (conf_errs.buf)
@@ -1197,8 +1283,7 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 	struct gsh_export *export = NULL;
 	char *errormsg;
 	bool rc = false;
-	bool op_ctx_set = false;
-	struct root_op_context ctx;
+	struct req_op_context op_context;
 
 	export = lookup_export(args, &errormsg);
 	if (export == NULL) {
@@ -1219,6 +1304,13 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 		goto out;
 	}
 
+	if (EXPORT_ADMIN_TRYLOCK() != 0) {
+		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
+			       "another export admin operation is in progress, try again later");
+		rc = false;
+		goto out;
+	}
+
 	PTHREAD_RWLOCK_rdlock(&export->lock);
 	rc = glist_empty(&export->mounted_exports_list);
 	PTHREAD_RWLOCK_unlock(&export->lock);
@@ -1228,26 +1320,23 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 		put_gsh_export(export);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
 			       "Cannot remove export with submounts");
-		goto out;
+		goto out_unlock;
 	}
 
 	/* Lots of obj_ops may be called during cleanup; make sure that an
 	 * op_ctx exists */
-	if (!op_ctx) {
-		init_root_op_context(&ctx, export, export->fsal_export, 0, 0,
-				UNKNOWN_REQUEST);
-		op_ctx_set = true;
-	}
+	init_op_context_simple(&op_context, export, export->fsal_export);
 
-	unexport(export);
+	release_export(export, false);
 
 	LogInfo(COMPONENT_EXPORT, "Removed export with id %d",
 		export->export_id);
 
-	put_gsh_export(export);
+	release_op_context();
 
-	if (op_ctx_set)
-		release_root_op_context();
+out_unlock:
+
+	EXPORT_ADMIN_UNLOCK();
 
 out:
 	return rc;
@@ -1384,6 +1473,7 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 	char *path;
 	struct showexports_state client_array_iter;
 	struct glist_head *glist;
+	struct tmp_export_paths tmp = {NULL, NULL};
 
 	export = lookup_export(args, &errormsg);
 	if (export == NULL) {
@@ -1396,16 +1486,27 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 		goto out;
 	}
 
+	tmp_get_exp_paths(&tmp, export);
+
 	/* create a reply from the message */
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_UINT16,
 				       &export->export_id);
-	path = (export->fullpath != NULL) ? export->fullpath : "";
+	path = TMP_FULLPATH(&tmp);
+
+	if (path == NULL)
+		path = "";
+
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_STRING,
 				       &path);
-	path = (export->pseudopath != NULL) ? export->pseudopath : "";
+
+	path = TMP_PSEUDOPATH(&tmp);
+
+	if (path == NULL)
+		path = "";
+
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_STRING,
 				       &path);
@@ -1428,6 +1529,7 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 	dbus_message_iter_close_container(&iter,
 					  &client_array_iter.export_iter);
 
+	tmp_put_exp_paths(&tmp);
 	put_gsh_export(export);
 
 out:
@@ -1450,10 +1552,23 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	DBusMessageIter struct_iter;
 	struct timespec last_as_ts = nfs_ServerBootTime;
 	const char *path;
+	struct tmp_export_paths tmp = {NULL, NULL};
+
+	tmp_get_exp_paths(&tmp, exp_node);
+
+	path = TMP_PSEUDOPATH(&tmp);
+
+	if (path == NULL) {
+
+		path = TMP_FULLPATH(&tmp);
+		if (path == NULL)
+			path = "";
+	}
+
+	tmp_put_exp_paths(&tmp);
 
 	exp = container_of(exp_node, struct export_stats, export);
-	path = (exp_node->pseudopath != NULL) ?
-		exp_node->pseudopath : exp_node->fullpath;
+
 	timespec_add_nsecs(exp_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->export_iter,
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
@@ -1606,7 +1721,7 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 		goto out;
 
 	config_struct = config_ParseFile(file_path, &err_type);
-	if (!config_error_is_harmless(&err_type)) {
+	if (!cur_exp_config_error_is_harmless(&err_type)) {
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
 			"Error while parsing %s", file_path);
@@ -1650,7 +1765,8 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 						   NULL,
 						   false,
 						   &err_type);
-			if (rc == 0 || config_error_is_harmless(&err_type))
+			if (rc == 0 ||
+			    cur_exp_config_error_is_harmless(&err_type))
 				exp_cnt++;
 			else if (!err_type.exists)
 				status = false;
@@ -1756,6 +1872,7 @@ static struct gsh_dbus_interface export_mgr_table = {
 /* org.ganesha.nfsd.exportstats interface
  */
 
+#ifdef _USE_NFS3
 /**
  * DBUS method to report NFSv3 I/O statistics
  *
@@ -1804,6 +1921,7 @@ static struct gsh_dbus_method export_show_v3_io = {
 		 IOSTATS_REPLY,
 		 END_ARG_LIST}
 };
+#endif
 
 /**
  * DBUS method to report NFSv40 I/O statistics
@@ -2222,9 +2340,7 @@ static bool stats_reset(DBusMessageIter *args,
 	reset_auth_stats();
 
 	/* update the stats counting time */
-	now(&nfs_stats_time);
-	fsal_stats_time = v3_full_stats_time = v4_full_stats_time =
-		auth_stats_time = nfs_stats_time;
+	nfs_init_stats_time();
 	return true;
 }
 
@@ -2237,6 +2353,7 @@ static struct gsh_dbus_method reset_statistics = {
 };
 
 
+#ifdef _USE_NFS3
 /**
  * DBUS method to get NFSv3 Detailed stats
  */
@@ -2270,6 +2387,7 @@ static struct gsh_dbus_method v3_full_statistics = {
 		 MESSAGE_REPLY,
 		 END_ARG_LIST}
 };
+#endif
 
 /**
  * DBUS method to get NFSv4 Detailed stats
@@ -2315,7 +2433,10 @@ static bool stats_status(DBusMessageIter *args,
 	bool success = true;
 	char *errormsg = "OK";
 	DBusMessageIter iter, nfsstatus, fsalstatus, clnt_allops_status;
-	DBusMessageIter v3_full_status, v4_full_status, authstatus;
+#ifdef _USE_NFS3
+	DBusMessageIter v3_full_status;
+#endif
+	DBusMessageIter v4_full_status, authstatus;
 	dbus_bool_t value;
 
 	dbus_message_iter_init_append(reply, &iter);
@@ -2337,6 +2458,7 @@ static bool stats_status(DBusMessageIter *args,
 	gsh_dbus_append_timestamp(&fsalstatus, &fsal_stats_time);
 	dbus_message_iter_close_container(&iter, &fsalstatus);
 
+#ifdef _USE_NFS3
 	/* Send info about NFSv3 Detailed stats */
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
 					 &v3_full_status);
@@ -2345,6 +2467,7 @@ static bool stats_status(DBusMessageIter *args,
 					&value);
 	gsh_dbus_append_timestamp(&v3_full_status, &v3_full_stats_time);
 	dbus_message_iter_close_container(&iter, &v3_full_status);
+#endif
 
 	/* Send info about NFSv4 Detailed stats */
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
@@ -2413,7 +2536,9 @@ static bool stats_disable(DBusMessageIter *args,
 	if (strcmp(stat_type, "all") == 0) {
 		nfs_param.core_param.enable_NFSSTATS = false;
 		nfs_param.core_param.enable_FSALSTATS = false;
+#ifdef _USE_NFS3
 		nfs_param.core_param.enable_FULLV3STATS = false;
+#endif
 		nfs_param.core_param.enable_FULLV4STATS = false;
 		nfs_param.core_param.enable_AUTHSTATS = false;
 		nfs_param.core_param.enable_CLNTALLSTATS = false;
@@ -2432,7 +2557,9 @@ static bool stats_disable(DBusMessageIter *args,
 	}
 	if (strcmp(stat_type, "nfs") == 0) {
 		nfs_param.core_param.enable_NFSSTATS = false;
+#ifdef _USE_NFS3
 		nfs_param.core_param.enable_FULLV3STATS = false;
+#endif
 		nfs_param.core_param.enable_FULLV4STATS = false;
 		nfs_param.core_param.enable_CLNTALLSTATS = false;
 		LogEvent(COMPONENT_CONFIG,
@@ -2447,6 +2574,7 @@ static bool stats_disable(DBusMessageIter *args,
 		/* reset fsal stats counters */
 		reset_fsal_stats();
 	}
+#ifdef _USE_NFS3
 	if (strcmp(stat_type, "v3_full") == 0) {
 		nfs_param.core_param.enable_FULLV3STATS = false;
 		LogEvent(COMPONENT_CONFIG,
@@ -2454,6 +2582,7 @@ static bool stats_disable(DBusMessageIter *args,
 		/* reset v3_full stats counters */
 		reset_v3_full_stats();
 	}
+#endif
 	if (strcmp(stat_type, "v4_full") == 0) {
 		nfs_param.core_param.enable_FULLV4STATS = false;
 		LogEvent(COMPONENT_CONFIG,
@@ -2532,12 +2661,14 @@ static bool stats_enable(DBusMessageIter *args,
 				 "Enabling FSAL statistics counting");
 			now(&fsal_stats_time);
 		}
+#ifdef _USE_NFS3
 		if (!nfs_param.core_param.enable_FULLV3STATS) {
 			nfs_param.core_param.enable_FULLV3STATS = true;
 			LogEvent(COMPONENT_CONFIG,
 				 "Enabling NFSv3 Detailed statistics counting");
 			now(&v3_full_stats_time);
 		}
+#endif
 		if (!nfs_param.core_param.enable_FULLV4STATS) {
 			nfs_param.core_param.enable_FULLV4STATS = true;
 			LogEvent(COMPONENT_CONFIG,
@@ -2572,6 +2703,7 @@ static bool stats_enable(DBusMessageIter *args,
 			 "Enabling FSAL statistics counting");
 		now(&fsal_stats_time);
 	}
+#ifdef _USE_NFS3
 	if (strcmp(stat_type, "v3_full") == 0 &&
 			!nfs_param.core_param.enable_FULLV3STATS) {
 		if (!nfs_param.core_param.enable_NFSSTATS) {
@@ -2584,6 +2716,7 @@ static bool stats_enable(DBusMessageIter *args,
 			now(&v3_full_stats_time);
 		}
 	}
+#endif
 	if (strcmp(stat_type, "v4_full") == 0 &&
 			!nfs_param.core_param.enable_FULLV4STATS) {
 		if (!nfs_param.core_param.enable_NFSSTATS) {
@@ -2647,7 +2780,7 @@ static bool stats_fsal(DBusMessageIter *args,
 	char *fsal_name;
 	DBusMessageIter iter;
 	struct fsal_module *fsal_hdl;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
 	dbus_message_iter_init_append(reply, &iter);
 
@@ -2666,10 +2799,10 @@ static bool stats_fsal(DBusMessageIter *args,
 		goto error;
 	}
 
-	init_root_op_context(&root_op_context, NULL, NULL,
-				     0, 0, UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, NULL, NULL);
 	fsal_hdl = lookup_fsal(fsal_name);
-	release_root_op_context();
+	release_op_context();
+
 	if (fsal_hdl == NULL) {
 		errormsg = "Incorrect FSAL name";
 		goto error;
@@ -2895,7 +3028,9 @@ static struct gsh_dbus_method export_show_all_io = {
 };
 
 static struct gsh_dbus_method *export_stats_methods[] = {
+#ifdef _USE_NFS3
 	&export_show_v3_io,
+#endif
 	&export_show_v40_io,
 	&export_show_v41_io,
 	&export_show_v42_io,
@@ -2916,7 +3051,9 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&enable_statistics,
 	&disable_statistics,
 	&status_stats,
+#ifdef _USE_NFS3
 	&v3_full_statistics,
+#endif
 	&v4_full_statistics,
 #ifdef _HAVE_GSSAPI
 	&auth_statistics,
@@ -2962,10 +3099,6 @@ void export_pkginit(void)
 	PTHREAD_RWLOCK_init(&export_by_id.lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
 	memset(&export_by_id.cache, 0, sizeof(export_by_id.cache));
-
-	glist_init(&exportlist);
-	glist_init(&mount_work);
-	glist_init(&unexport_work);
 
 	pthread_rwlockattr_destroy(&rwlock_attr);
 }

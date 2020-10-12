@@ -158,8 +158,10 @@ get_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	args.cmd = GPFS_QCMD(Q_GETQUOTA, quota_type);
 	args.qid = quota_id;
 	args.bufferP = &gpfs_quota;
+	if (op_ctx && op_ctx->client)
+		args.cli_ip = op_ctx->client->hostaddr_str;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	if (gpfs_ganesha(OPENHANDLE_QUOTA, &args) < 0)
 		retval = errno;
 	fsal_restore_ganesha_credentials();
@@ -223,8 +225,10 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	args.cmd = GPFS_QCMD(Q_SETQUOTA, quota_type);
 	args.qid = quota_id;
 	args.bufferP = &gpfs_quota;
+	if (op_ctx && op_ctx->client)
+		args.cli_ip = op_ctx->client->hostaddr_str;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	if (gpfs_ganesha(OPENHANDLE_QUOTA, &args) < 0)
 		retval = errno;
 	fsal_restore_ganesha_credentials();
@@ -506,18 +510,18 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 	glist_add_tail(&map->exp->filesystems, &map->on_filesystems);
 	PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 
-	map->exp->export_fd = open(op_ctx->ctx_export->fullpath,
-						O_RDONLY | O_DIRECTORY);
+	map->exp->export_fd = open(CTX_FULLPATH(op_ctx),
+				   O_RDONLY | O_DIRECTORY);
 	if (map->exp->export_fd < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
 			"Could not open GPFS export point %s: rc = %s (%d)",
-			op_ctx->ctx_export->fullpath, strerror(retval), retval);
+			CTX_FULLPATH(op_ctx), strerror(retval), retval);
 		goto errout;
 	}
 
 	LogFullDebug(COMPONENT_FSAL, "export_fd %d path %s",
-			map->exp->export_fd, op_ctx->ctx_export->fullpath);
+			map->exp->export_fd, CTX_FULLPATH(op_ctx));
 
 	/* We have set up the export. If the file system is already claimed,
 	 * we are done.
@@ -536,6 +540,8 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 		}
 		goto errout;
 	}
+
+	gpfs_fs->stop_thread = false;
 
 	if (pthread_attr_init(&attr_thr) != 0)
 		LogCrit(COMPONENT_THREAD, "can't init pthread's attributes");
@@ -623,6 +629,12 @@ void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 			fs->path, gpfs_fs->root_fd, errno);
 	else
 		LogFullDebug(COMPONENT_FSAL, "Thread STOP successful");
+
+	/* Prior to calling pthread_join(), we should set stop_thread=true.
+	 * Its not being set atomically because the synchronization requirement
+	 * is not critical enough.
+	 */
+	gpfs_fs->stop_thread = true;
 
 	pthread_join(gpfs_fs->up_thread, NULL);
 	free_gpfs_filesystem(gpfs_fs);
@@ -714,8 +726,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 
 	status.minor = fsal_internal_version();
 	LogInfo(COMPONENT_FSAL, "GPFS get version is %d options 0x%X id %d",
-		status.minor,
-		op_ctx->export_perms ?  op_ctx->export_perms->options : 0,
+		status.minor, op_ctx->export_perms.options,
 		op_ctx->ctx_export->export_id);
 
 	fsal_export_init(exp);
@@ -730,7 +741,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Incorrect or missing parameters for export %s",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		status.major = ERR_FSAL_INVAL;
 		goto free;
 	}
@@ -745,7 +756,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	exp->up_ops = up_ops;
 	op_ctx->fsal_export = exp;
 
-	status.minor = resolve_posix_filesystem(op_ctx->ctx_export->fullpath,
+	status.minor = resolve_posix_filesystem(CTX_FULLPATH(op_ctx),
 						fsal_hdl, exp,
 						gpfs_claim_filesystem,
 						gpfs_unclaim_filesystem,
@@ -754,7 +765,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	if (status.minor != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"resolve_posix_filesystem(%s) returned %s (%d)",
-			op_ctx->ctx_export->fullpath,
+			CTX_FULLPATH(op_ctx),
 			strerror(status.minor), status.minor);
 		status.major = posix2fsal_error(status.minor);
 		goto detach;
@@ -787,8 +798,9 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	if (gpfs_exp->pnfs_ds_enabled) {
 		struct fsal_pnfs_ds *pds = NULL;
 
-		status = fsal_hdl->m_ops.fsal_pnfs_ds(fsal_hdl, parse_node,
-						      &pds);
+		status = fsal_hdl->m_ops.create_fsal_pnfs_ds(fsal_hdl,
+							     parse_node,
+							     &pds);
 
 		if (status.major != ERR_FSAL_NO_ERROR)
 			goto unexport;
@@ -803,14 +815,15 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 				"Server id %d already in use.",
 				pds->id_servers);
 			status.major = ERR_FSAL_EXIST;
-			fsal_pnfs_ds_fini(pds);
-			gsh_free(pds);
+
+			/* Return the ref taken by create_fsal_pnfs_ds */
+			pnfs_ds_put(pds);
 			goto unexport;
 		}
 
 		LogInfo(COMPONENT_FSAL,
 			"gpfs_fsal_create: pnfs ds was enabled for [%s]",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		export_ops_pnfs(&exp->exp_ops);
 	}
 	gpfs_exp->use_acl =

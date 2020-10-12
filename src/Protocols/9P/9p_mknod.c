@@ -63,7 +63,7 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	uint64_t fileid = 0LL;
 	fsal_status_t fsal_status;
 	object_file_type_t nodetype;
-	struct attrlist object_attributes;
+	struct fsal_attrlist object_attributes;
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -93,8 +93,7 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	_9p_init_opctx(pfid, req9p);
 
-	if ((op_ctx->export_perms->options &
-				 EXPORT_OPTION_WRITE_ACCESS) == 0)
+	if ((op_ctx->export_perms.options & EXPORT_OPTION_WRITE_ACCESS) == 0)
 		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
 	if (*name_len >= sizeof(obj_name)) {

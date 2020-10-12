@@ -71,7 +71,7 @@ pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
  * The caller may have already allocated a state, in which case state
  * need not be NULL.
  *
- * @note state_lock MUST be held for write
+ * @note st_lock MUST be held
  *
  * @param[in,out] obj         file to operate on
  * @param[in]     state_type  State to be defined
@@ -161,7 +161,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	/* We need to initialize state_owner, state_export, and state_obj now so
 	 * that the state can be indexed by owner/entry. We don't insert into
 	 * lists and take references yet since no one else can see this state
-	 * until we are completely done since we hold the state_lock.  Might as
+	 * until we are completely done since we hold the st_lock.  Might as
 	 * well grab export now also...
 	 */
 	pnew_state->state_export = op_ctx->ctx_export;
@@ -189,7 +189,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	 * because we always want state_mutex to be the last lock taken.
 	 *
 	 * NOTE: We don't have to worry about state_del/state_del_locked being
-	 *       called in the midst of things because the state_lock is held.
+	 *       called in the midst of things because the st_lock is held.
 	 */
 
 	/* Attach this to an export */
@@ -325,7 +325,7 @@ state_status_t _state_add(struct fsal_obj_handle *obj,
 /**
  * @brief Remove a state from a file
  *
- * @note The state_lock MUST be held for write.
+ * @note The st_lock MUST be held.
  *
  * @param[in]     state The state to remove
  *
@@ -450,7 +450,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 
 	/* Remove from the list of lock states for a particular open state.
 	 * This is safe to do without any special checks. If we are not on
-	 * the list, glist_del does nothing, and the state_lock protects the
+	 * the list, glist_del does nothing, and the st_lock protects the
 	 * open state's state_sharelist.
 	 */
 	if (state->state_type == STATE_TYPE_LOCK)
@@ -626,7 +626,7 @@ fail:
  * Used by cache_inode_kill_entry in the event that the FSAL says a
  * handle is stale.
  *
- * @note state_lock MUST be held for write
+ * @note st_lock MUST be held
  *
  * @param[in,out] ostate File state to wipe
  */
@@ -667,6 +667,8 @@ void state_nfs4_state_wipe(struct state_hdl *ostate)
  */
 enum nfsstat4 release_lock_owner(state_owner_t *owner)
 {
+	struct saved_export_context saved;
+
 	PTHREAD_MUTEX_lock(&owner->so_mutex);
 
 	if (!glist_empty(&owner->so_lock_list)) {
@@ -683,10 +685,15 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 		LogDebug(COMPONENT_STATE, "Removing state for %s", str);
 	}
 
+	/* Save the current export and clear it from op context (so if there is
+	 * no call to set_op_context_export_fsal before a call to
+	 * restore_op_context_export we don't call clear_op_context_export() on
+	 * the saved export...
+	 */
+	save_op_context_export_and_clear(&saved);
+
 	while (true) {
 		state_t *state;
-		struct fsal_export *save_exp;
-		struct gsh_export *save_export;
 
 		state = glist_first_entry(&owner->so_owner.so_nfs4_owner
 								.so_state_list,
@@ -695,6 +702,8 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 
 		if (state == NULL) {
 			PTHREAD_MUTEX_unlock(&owner->so_mutex);
+			/* Restore export */
+			restore_op_context_export(&saved);
 			return NFS4_OK;
 		}
 
@@ -703,22 +712,22 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 
 		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
-		/* Set the fsal_export properly, since this can be called from
-		 * ops that don't do a putfh */
-		save_exp = op_ctx->fsal_export;
-		save_export = op_ctx->ctx_export;
-		op_ctx->fsal_export = state->state_exp;
-		op_ctx->ctx_export = state->state_export;
+		/* Set the op_context properly, since this can be called from
+		 * ops that don't do a putfh
+		 */
+		get_gsh_export_ref(state->state_export);
+		set_op_context_export_fsal(state->state_export,
+					   state->state_exp);
 
 		state_del(state);
-
-		/* Restore export */
-		op_ctx->fsal_export = save_exp;
-		op_ctx->ctx_export = save_export;
-
 		dec_state_t_ref(state);
 
 		PTHREAD_MUTEX_lock(&owner->so_mutex);
+
+		/* Note the op context set above will either be cleaned up by
+		 * the set_op_context_export_fsal for the next state or by
+		 * restore_op_context_export just before exiting the loop.
+		 */
 	}
 }
 
@@ -825,14 +834,12 @@ void release_openstate(state_owner_t *owner)
 
 		STATELOCK_lock(obj);
 
-		/* In case op_ctx->export is not NULL... */
-		if (op_ctx->ctx_export != NULL) {
-			put_gsh_export(op_ctx->ctx_export);
-		}
-
-		/* op_ctx may be used by state_del_locked and others */
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+		/* op_ctx may be used by state_del_locked and others set export
+		 * from the state and release any old ctx_export reference.
+		 * Reference was taken above and will be release by
+		 * clear_op_context_export below.
+		 */
+		set_op_context_export(export);
 
 		/* If FSAL supports extended operations, file will be closed by
 		 * state_del_locked.
@@ -846,9 +853,7 @@ void release_openstate(state_owner_t *owner)
 
 		/* Release refs we held during state_del */
 		obj->obj_ops->put_ref(obj);
-		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
+		clear_op_context_export();
 	}
 
 	if (errcnt == STATE_ERR_MAX) {
@@ -875,7 +880,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 	struct fsal_obj_handle *obj;
 	bool so_mutex_held;
 	struct gsh_export *export = NULL;
-	struct root_op_context ctx;
+	struct req_op_context op_context;
 	bool ok;
 
  again:
@@ -931,22 +936,18 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		 */
 		STATELOCK_lock(obj);
 
-		/* Initialize req_ctx */
-		init_root_op_context(&ctx, export, export->fsal_export,
-				     0, 0, UNKNOWN_REQUEST);
+		/* Initialize the op_context (refcount taken above) */
+		init_op_context_simple(&op_context, export,
+				       export->fsal_export);
 
 		state_deleg_revoke(obj, state);
-
-		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
 
 		STATELOCK_unlock(obj);
 
 		/* Release refs we held */
 		obj->obj_ops->put_ref(obj);
 
-		release_root_op_context();
+		release_op_context();
 		/* Since we dropped so_mutex, we must restart the loop. */
 		goto again;
 	}
@@ -1066,7 +1067,7 @@ static void release_export_nfs4_state(enum state_type type)
 	if (errcnt == STATE_ERR_MAX) {
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of layouts for export %s",
-			 op_ctx->ctx_export->pseudopath);
+			 CTX_PSEUDOPATH(op_ctx));
 	}
 }
 

@@ -61,7 +61,7 @@ enum nfs_req_result nfs4_op_nverify(struct nfs_argop4 *op,
 	NVERIFY4res * const res_NVERIFY4 = &resp->nfs_resop4_u.opnverify;
 	fattr4 file_attr4;
 	int rc = 0;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	resp->resop = NFS4_OP_NVERIFY;
 	res_NVERIFY4->status = NFS4_OK;

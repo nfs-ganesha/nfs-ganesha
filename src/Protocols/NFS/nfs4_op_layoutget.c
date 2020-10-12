@@ -131,8 +131,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 		memset(&layout_data, 0, sizeof(layout_data));
 
-		PTHREAD_RWLOCK_wrlock(
-			&data->current_obj->state_hdl->state_lock);
+		STATELOCK_lock(data->current_obj);
 		lock_held = true;
 
 		/* See if a layout state already exists */
@@ -215,8 +214,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	dec_state_t_ref(supplied_state);
 
 	if (lock_held)
-		PTHREAD_RWLOCK_unlock(
-			&data->current_obj->state_hdl->state_lock);
+		STATELOCK_unlock(data->current_obj);
 
 	return nfs_status;
 }
@@ -295,7 +293,7 @@ static nfsstat4 one_segment(struct fsal_obj_handle *obj,
 
 	++layout_state->state_data.layout.granting;
 
-	nfs_status = obj->obj_ops->layoutget(obj, op_ctx, &loc_body, arg, res);
+	nfs_status = obj->obj_ops->layoutget(obj, &loc_body, arg, res);
 
 	--layout_state->state_data.layout.granting;
 
@@ -325,7 +323,7 @@ static nfsstat4 one_segment(struct fsal_obj_handle *obj,
 	 * @todo This is where you would want to record layoutget
 	 * operation.  You can get the details of every segment added
 	 * here, including the segment description in
-	 * res->fsal_seg_data and clientid in *req_ctx->clientid.
+	 * res->fsal_seg_data and clientid in *op_ctx->clientid.
 	 */
 
  out:

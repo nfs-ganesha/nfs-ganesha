@@ -51,7 +51,6 @@
  * Validates and Converts a V3 file handle and then gets the FSAL obj.
  *
  * @param fh3 [IN] pointer to the file handle to be converted
- * @param exp_list [IN] export fsal to use
  * @param status [OUT] protocol status
  * @param rc [OUT] operation status
  *
@@ -67,6 +66,7 @@ struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	struct fsal_export *export;
 	struct fsal_obj_handle *obj = NULL;
 	struct gsh_buffdesc fh_desc;
+	char fhbuf[NFS3_FHSIZE];
 
 	/* Default behaviour */
 	*rc = NFS_REQ_OK;
@@ -84,9 +84,15 @@ struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
 
 	export = op_ctx->fsal_export;
 
-	/* Give the export a crack at it */
+	/*
+	 * FIXME: the wire handle can obviously be no larger than NFS4_FHSIZE,
+	 * but there is no such limit on a host handle. Here, we assume that as
+	 * the size limit. Eventually it might be nice to call into the FSAL to
+	 * ask how large a buffer it needs for a host handle.
+	 */
+	memcpy(fhbuf, &v3_handle->fsopaque, v3_handle->fs_len);
 	fh_desc.len = v3_handle->fs_len;
-	fh_desc.addr = &v3_handle->fsopaque;
+	fh_desc.addr = fhbuf;
 
 	/* adjust the wire handle opaque into a host-handle */
 	fsal_status =

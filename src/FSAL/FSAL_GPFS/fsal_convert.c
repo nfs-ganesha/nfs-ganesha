@@ -18,7 +18,7 @@
 #include <fcntl.h>
 
 static fsal_status_t
-gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
+gpfs_acl_2_fsal_acl(struct fsal_attrlist *p_object_attributes,
 		    gpfs_acl_t *p_gpfsacl);
 
 /**
@@ -34,7 +34,7 @@ gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
  */
 fsal_status_t
 gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
-				 struct attrlist *fsal_attr,
+				 struct fsal_attrlist *fsal_attr,
 				 gpfs_acl_t *acl_buf, bool use_acl)
 {
 	struct stat *p_buffstat;
@@ -74,10 +74,13 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 		if (fsal_attr->acl != NULL) {
 			/* We should never be passed attributes that have an
 			 * ACL attached, but just in case some future code
-			 * path changes that assumption, let's not release the
+			 * path changes that assumption, let's release the
 			 * old ACL properly.
 			 */
 			int acl_status;
+
+			LogCrit(COMPONENT_FSAL,
+				"attrs passed in with acl, shouldn't happen");
 
 			acl_status = nfs4_acl_release_entry(fsal_attr->acl);
 
@@ -215,7 +218,7 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 /* Covert GPFS NFS4 ACLs to FSAL ACLs, and set the ACL
  * pointer of attribute. */
 static fsal_status_t
-gpfs_acl_2_fsal_acl(struct attrlist *p_object_attributes,
+gpfs_acl_2_fsal_acl(struct fsal_attrlist *p_object_attributes,
 		    gpfs_acl_t *p_gpfsacl)
 {
 	fsal_acl_status_t status;

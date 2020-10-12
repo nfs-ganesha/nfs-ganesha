@@ -219,9 +219,7 @@ typedef struct nfs_function_desc__ {
 typedef struct nfs_request {
 	struct svc_req svc;
 	struct nfs_request_lookahead lookahead;
-	struct req_op_context req_ctx;
-	struct export_perms req_export_perms;
-	struct user_cred req_user_credentials;
+	struct req_op_context op_context;
 	nfs_arg_t arg_nfs;
 	nfs_res_t *res_nfs;
 	const nfs_function_desc_t *funcdesc;
@@ -337,6 +335,7 @@ struct compound_data {
 	object_file_type_t saved_filetype;	/*< File type of saved entry */
 	struct gsh_export *saved_export; /*< Export entry related to the
 					     savedFH */
+	struct fsal_pnfs_ds *saved_pnfs_ds; /*< DS related to the savedFH */
 	struct export_perms saved_export_perms; /*< Permissions for export for
 					       savedFH */
 	struct svc_req *req;	/*< RPC Request related to the compound */
@@ -389,9 +388,16 @@ static inline void set_current_entry(compound_data_t *data,
 	/* Mark current_stateid as invalid */
 	data->current_stateid_valid = false;
 
-	/* Clear out the current_ds */
-	if (data->current_ds) {
-		ds_handle_put(data->current_ds);
+	if (data->current_ds && data->current_ds != data->saved_ds) {
+		/* Release the current_ds because it's different We don't
+		 * bother with refcounting because a ds handle has a limited
+		 * lifetime and it's either current_ds or saved_ds. So as long
+		 * as saved_ds is not the same one here, we can release since
+		 * there is no other reference.
+		 */
+		op_ctx->ctx_pnfs_ds->s_ops.dsh_release(data->current_ds);
+
+		/* Clear out the current_ds */
 		data->current_ds = NULL;
 	}
 
@@ -414,69 +420,7 @@ static inline void set_current_entry(compound_data_t *data,
 	data->current_filetype = obj->type;
 }
 
-/**
- * @brief Set the saved entry in the context
- *
- * This manages refcounting on the object being stored in data.  This means it
- * takes a ref on a new object, and releases it's ref on any old object.  If the
- * caller has it's own ref, it must release it itself.
- *
- * @param[in] data	Compound data to set entry in
- * @param[in] obj	Object to set
- */
-static inline void set_saved_entry(compound_data_t *data,
-				   struct fsal_obj_handle *obj)
-{
-	struct gsh_export *current_export = op_ctx->ctx_export;
-	struct export_perms current_export_perms = *op_ctx->export_perms;
-	bool restore_op_ctx = false;
-
-	if (data->saved_ds != NULL || data->saved_obj != NULL) {
-		/* Setup correct op_ctx for releasing old saved */
-		op_ctx->ctx_export = data->saved_export;
-		op_ctx->fsal_export = data->saved_export
-					? data->saved_export->fsal_export
-					: NULL;
-		*op_ctx->export_perms = data->saved_export_perms;
-		restore_op_ctx = true;
-	}
-
-	/* Mark saved_stateid as invalid */
-	data->saved_stateid_valid = false;
-
-	/* Clear out the saved_ds */
-	if (data->saved_ds) {
-		ds_handle_put(data->saved_ds);
-		data->saved_ds = NULL;
-	}
-
-	if (data->saved_obj) {
-		/* Release ref on old object */
-		data->saved_obj->obj_ops->put_ref(data->saved_obj);
-	}
-
-	if (restore_op_ctx) {
-		/* Restore op_ctx */
-		op_ctx->ctx_export = current_export;
-		op_ctx->fsal_export = current_export
-					? current_export->fsal_export
-					: NULL;
-		*op_ctx->export_perms = current_export_perms;
-	}
-
-	data->saved_obj = obj;
-
-	if (obj == NULL) {
-		data->saved_filetype = NO_FILE_TYPE;
-		return;
-	}
-
-	/* Get our ref on the new object */
-	data->saved_obj->obj_ops->get_ref(data->saved_obj);
-
-	/* Set the saved file type */
-	data->saved_filetype = obj->type;
-}
+void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj);
 
 #endif				/* NFS_PROTO_DATA_H */
 /** @} */

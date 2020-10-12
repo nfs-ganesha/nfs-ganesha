@@ -496,8 +496,8 @@ void mem_clean_all_dirents(struct mem_fsal_obj_handle *parent)
 	PTHREAD_RWLOCK_unlock(&parent->obj_handle.obj_lock);
 }
 
-static void mem_copy_attrs_mask(struct attrlist *attrs_in,
-				struct attrlist *attrs_out)
+static void mem_copy_attrs_mask(struct fsal_attrlist *attrs_in,
+				struct fsal_attrlist *attrs_out)
 {
 	/* Use full timer resolution */
 	now(&attrs_out->ctime);
@@ -643,7 +643,7 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		  const char *name,
 		  object_file_type_t type,
 		  struct mem_fsal_export *mfe,
-		  struct attrlist *attrs,
+		  struct fsal_attrlist *attrs,
 		  const char *func, int line)
 {
 	struct mem_fsal_obj_handle *hdl;
@@ -689,12 +689,12 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 	if ((attrs && attrs->valid_mask & ATTR_OWNER) != 0)
 		hdl->attrs.owner = attrs->owner;
 	else
-		hdl->attrs.owner = op_ctx->creds->caller_uid;
+		hdl->attrs.owner = op_ctx->creds.caller_uid;
 
 	if ((attrs && attrs->valid_mask & ATTR_GROUP) != 0)
 		hdl->attrs.group = attrs->group;
 	else
-		hdl->attrs.group = op_ctx->creds->caller_gid;
+		hdl->attrs.group = op_ctx->creds.caller_gid;
 
 	/* Use full timer resolution */
 	now(&hdl->attrs.ctime);
@@ -823,9 +823,9 @@ static fsal_status_t _mem_int_lookup(struct mem_fsal_obj_handle *dir,
 static fsal_status_t mem_create_obj(struct mem_fsal_obj_handle *parent,
 				    object_file_type_t type,
 				    const char *name,
-				    struct attrlist *attrs_in,
+				    struct fsal_attrlist *attrs_in,
 				    struct fsal_obj_handle **new_obj,
-				    struct attrlist *attrs_out)
+				    struct fsal_attrlist *attrs_out)
 {
 	struct mem_fsal_export *mfe = container_of(op_ctx->fsal_export,
 						   struct mem_fsal_export,
@@ -883,7 +883,7 @@ static fsal_status_t mem_create_obj(struct mem_fsal_obj_handle *parent,
 static fsal_status_t mem_lookup(struct fsal_obj_handle *parent,
 				const char *path,
 				struct fsal_obj_handle **handle,
-				struct attrlist *attrs_out)
+				struct fsal_attrlist *attrs_out)
 {
 	struct mem_fsal_obj_handle *myself, *hdl = NULL;
 	fsal_status_t status;
@@ -944,7 +944,7 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
 	struct mem_fsal_obj_handle *myself;
 	struct mem_dirent *dirent, *dirent_next;
 	fsal_cookie_t cookie = 0;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	enum fsal_dir_result cb_rc;
 	int count = 0;
 
@@ -1039,9 +1039,9 @@ static fsal_status_t mem_readdir(struct fsal_obj_handle *dir_hdl,
  */
 static fsal_status_t mem_mkdir(struct fsal_obj_handle *dir_hdl,
 			       const char *name,
-			       struct attrlist *attrs_in,
+			       struct fsal_attrlist *attrs_in,
 			       struct fsal_obj_handle **new_obj,
-			       struct attrlist *attrs_out)
+			       struct fsal_attrlist *attrs_out)
 {
 	struct mem_fsal_obj_handle *parent =
 		container_of(dir_hdl, struct mem_fsal_obj_handle, obj_handle);
@@ -1071,9 +1071,9 @@ static fsal_status_t mem_mkdir(struct fsal_obj_handle *dir_hdl,
  */
 static fsal_status_t mem_mknode(struct fsal_obj_handle *dir_hdl,
 				const char *name, object_file_type_t nodetype,
-				struct attrlist *attrs_in,
+				struct fsal_attrlist *attrs_in,
 				struct fsal_obj_handle **new_obj,
-				struct attrlist *attrs_out)
+				struct fsal_attrlist *attrs_out)
 {
 	struct mem_fsal_obj_handle *hdl, *parent =
 		container_of(dir_hdl, struct mem_fsal_obj_handle, obj_handle);
@@ -1108,9 +1108,9 @@ static fsal_status_t mem_mknode(struct fsal_obj_handle *dir_hdl,
  */
 static fsal_status_t mem_symlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
-				 struct attrlist *attrs_in,
+				 struct fsal_attrlist *attrs_in,
 				 struct fsal_obj_handle **new_obj,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	struct mem_fsal_obj_handle *hdl, *parent =
 		container_of(dir_hdl, struct mem_fsal_obj_handle, obj_handle);
@@ -1166,7 +1166,7 @@ static fsal_status_t mem_readlink(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status
  */
 static fsal_status_t mem_getattrs(struct fsal_obj_handle *obj_hdl,
-				  struct attrlist *outattrs)
+				  struct fsal_attrlist *outattrs)
 {
 	struct mem_fsal_obj_handle *myself =
 		container_of(obj_hdl, struct mem_fsal_obj_handle, obj_handle);
@@ -1217,7 +1217,7 @@ static fsal_status_t mem_getattrs(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mem_setattr2(struct fsal_obj_handle *obj_hdl,
 			   bool bypass,
 			   struct state_t *state,
-			   struct attrlist *attrs_set)
+			   struct fsal_attrlist *attrs_set)
 {
 	struct mem_fsal_obj_handle *myself =
 		container_of(obj_hdl, struct mem_fsal_obj_handle, obj_handle);
@@ -1496,10 +1496,10 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 			fsal_openflags_t openflags,
 			enum fsal_create_mode createmode,
 			const char *name,
-			struct attrlist *attrs_set,
+			struct fsal_attrlist *attrs_set,
 			fsal_verifier_t verifier,
 			struct fsal_obj_handle **new_obj,
-			struct attrlist *attrs_out,
+			struct fsal_attrlist *attrs_out,
 			bool *caller_perm_check)
 {
 	fsal_status_t status = {0, 0};
@@ -1508,7 +1508,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 	bool truncated;
 	bool setattrs = attrs_set != NULL;
 	bool created = false;
-	struct attrlist verifier_attr;
+	struct fsal_attrlist verifier_attr;
 
 	if (state != NULL)
 		my_fd = (struct fsal_fd *)(state + 1);
@@ -1720,7 +1720,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
  * @brief Re-open a file that may be already opened
  *
  * This function supports changing the access mode of a share reservation and
- * thus should only be called with a share state. The state_lock must be held.
+ * thus should only be called with a share state. The st_lock must be held.
  *
  * This MAY be used to open a file the first time if there is no need for
  * open by name or create semantics. One example would be 9P lopen.
@@ -1786,7 +1786,7 @@ static void
 mem_async_complete(struct fridgethr_context *ctx)
 {
 	struct mem_async_arg *async_arg = ctx->arg;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct mem_fsal_export *mem_export =
 	   container_of(async_arg->fsal_export, struct mem_fsal_export, export);
 	uint32_t async_delay = atomic_fetch_uint32_t(&mem_export->async_delay);
@@ -1802,15 +1802,17 @@ mem_async_complete(struct fridgethr_context *ctx)
 		usleep(async_delay);
 	}
 
-	/* Need an op context for the call back */
-	init_root_op_context(&root_op_context, async_arg->ctx_export,
-			     async_arg->fsal_export, 0, 0,
-			     UNKNOWN_REQUEST);
+	/* Get a ref to the async_arg->ctx_export and initialize op_context for
+	 * the call back
+	 */
+	get_gsh_export_ref(async_arg->ctx_export);
+	init_op_context_simple(&op_context, async_arg->ctx_export,
+			       async_arg->fsal_export);
 
 	async_arg->done_cb(async_arg->obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0),
 			   async_arg->io_arg, async_arg->caller_arg);
 
-	release_root_op_context();
+	release_op_context();
 
 	gsh_free(async_arg);
 }
@@ -2447,10 +2449,10 @@ void mem_handle_ops_init(struct fsal_obj_ops *ops)
 fsal_status_t mem_lookup_path(struct fsal_export *exp_hdl,
 			      const char *path,
 			      struct fsal_obj_handle **obj_hdl,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	struct mem_fsal_export *mfe;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	mfe = container_of(exp_hdl, struct mem_fsal_export, export);
 
@@ -2496,7 +2498,7 @@ fsal_status_t mem_lookup_path(struct fsal_export *exp_hdl,
 fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
 				struct gsh_buffdesc *hdl_desc,
 				struct fsal_obj_handle **obj_hdl,
-				struct attrlist *attrs_out)
+				struct fsal_attrlist *attrs_out)
 {
 	struct glist_head *glist;
 	struct fsal_obj_handle *hdl;

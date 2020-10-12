@@ -144,13 +144,13 @@ static void package_pseudo_handle(char *buff,
  *
  * @return void
  */
-static int fullpath(struct display_buffer *pathbuf,
-		    struct pseudo_fsal_obj_handle *this_node)
+static int create_fullpath(struct display_buffer *pathbuf,
+			   struct pseudo_fsal_obj_handle *this_node)
 {
 	int b_left;
 
 	if (this_node->parent != NULL)
-		b_left = fullpath(pathbuf, this_node->parent);
+		b_left = create_fullpath(pathbuf, this_node->parent);
 	else
 		b_left = display_start(pathbuf);
 
@@ -175,7 +175,7 @@ static struct pseudo_fsal_obj_handle
 *alloc_directory_handle(struct pseudo_fsal_obj_handle *parent,
 			const char *name,
 			struct fsal_export *exp_hdl,
-			struct attrlist *attrs)
+			struct fsal_attrlist *attrs)
 {
 	struct pseudo_fsal_obj_handle *hdl;
 	char path[MAXPATHLEN] = "\0";
@@ -199,7 +199,7 @@ static struct pseudo_fsal_obj_handle
 	hdl->handle = (char *) &hdl[1];
 
 	/* Create the full path */
-	rc = fullpath(&pathbuf, hdl);
+	rc = create_fullpath(&pathbuf, hdl);
 
 	if (rc < 0) {
 		LogDebug(COMPONENT_FSAL,
@@ -234,12 +234,12 @@ static struct pseudo_fsal_obj_handle
 	if ((attrs->valid_mask & ATTR_OWNER) != 0)
 		hdl->attributes.owner = attrs->owner;
 	else
-		hdl->attributes.owner = op_ctx->creds->caller_uid;
+		hdl->attributes.owner = op_ctx->creds.caller_uid;
 
 	if ((attrs->valid_mask & ATTR_GROUP) != 0)
 		hdl->attributes.group = attrs->group;
 	else
-		hdl->attributes.group = op_ctx->creds->caller_gid;
+		hdl->attributes.group = op_ctx->creds.caller_gid;
 
 	/* Use full timer resolution */
 	now(&hdl->attributes.ctime);
@@ -300,7 +300,7 @@ static struct pseudo_fsal_obj_handle
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path,
 			    struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl = NULL;
 	struct pseudo_fsal_obj_handle key[1];
@@ -349,6 +349,17 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 out:
 
+	if (error == ERR_FSAL_NOENT && is_export_update_in_progress()) {
+		/* An export update may be the cause of the failure. Tell the
+		 * client to retry.
+		 */
+		LogDebug(COMPONENT_EXPORT,
+			 "PseudoFS LOOKUP of %s may have failed due to export update",
+			 path);
+
+		error = ERR_FSAL_DELAY;
+	}
+
 	if (op_ctx->fsal_private != parent)
 		PTHREAD_RWLOCK_unlock(&parent->obj_lock);
 
@@ -384,9 +395,9 @@ out:
  */
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name,
-			     struct attrlist *attrs_in,
+			     struct fsal_attrlist *attrs_in,
 			     struct fsal_obj_handle **handle,
-			     struct attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
 	uint32_t numlinks;
@@ -447,7 +458,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	struct pseudo_fsal_obj_handle *myself, *hdl;
 	struct avltree_node *node;
 	fsal_cookie_t seekloc;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	enum fsal_dir_result cb_rc;
 
 	if (whence != NULL)
@@ -505,7 +516,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 }
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *outattrs)
+			      struct fsal_attrlist *outattrs)
 {
 	struct pseudo_fsal_obj_handle *myself;
 
@@ -706,10 +717,10 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
 fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 				 const char *path,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	struct pseudofs_fsal_export *myself;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	myself = container_of(exp_hdl, struct pseudofs_fsal_export, export);
 
@@ -756,7 +767,7 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	struct glist_head *glist;
 	struct fsal_obj_handle *hdl;
@@ -800,6 +811,18 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 
 			return fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
+	}
+
+	if (is_export_update_in_progress()) {
+		/* An export update may be the cause of the failure. Tell the
+		 * client to retry.
+		 */
+		PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
+
+		LogDebug(COMPONENT_EXPORT,
+			 "PseudoFS create handle may have failed due to export update");
+
+		return fsalstat(ERR_FSAL_DELAY, 0);
 	}
 
 	LogDebug(COMPONENT_FSAL,

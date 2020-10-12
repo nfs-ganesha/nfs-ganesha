@@ -92,9 +92,6 @@ static inline bool fsal_obj_handle_is(struct fsal_obj_handle *obj_hdl,
 void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal);
 void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds);
 
-void fsal_ds_handle_init(struct fsal_ds_handle *dsh, struct fsal_pnfs_ds *pds);
-void fsal_ds_handle_fini(struct fsal_ds_handle *dsh);
-
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat);
 
 extern struct avltree avl_fsid;
@@ -106,14 +103,7 @@ extern pthread_rwlock_t fs_lock;
 
 void free_fs(struct fsal_filesystem *fs);
 
-int populate_posix_file_systems(bool force);
-
-int reload_posix_filesystems(const char *path,
-			     struct fsal_module *fsal,
-			     struct fsal_export *exp,
-			     claim_filesystem_cb claim,
-			     unclaim_filesystem_cb unclaim,
-			     struct fsal_filesystem **root_fs);
+int populate_posix_file_systems(const char *path);
 
 int resolve_posix_filesystem(const char *path,
 			     struct fsal_module *fsal,
@@ -124,7 +114,13 @@ int resolve_posix_filesystem(const char *path,
 
 void release_posix_file_systems(void);
 
-void release_posix_file_system(struct fsal_filesystem *fs);
+enum release_claims {
+	UNCLAIM_WARN,
+	UNCLAIM_SKIP,
+};
+
+bool release_posix_file_system(struct fsal_filesystem *fs,
+			       enum release_claims release_claims);
 
 int re_index_fs_fsid(struct fsal_filesystem *fs,
 		     enum fsid_type fsid_type,
@@ -150,7 +146,8 @@ int claim_posix_filesystems(const char *path,
 			    struct fsal_export *exp,
 			    claim_filesystem_cb claim,
 			    unclaim_filesystem_cb unclaim,
-			    struct fsal_filesystem **root_fs);
+			    struct fsal_filesystem **root_fs,
+			    struct stat *statbuf);
 
 int encode_fsid(char *buf,
 		int max,
@@ -162,7 +159,7 @@ int decode_fsid(char *buf,
 		struct fsal_fsid__ *fsid,
 		enum fsid_type fsid_type);
 
-fsal_errors_t fsal_inherit_acls(struct attrlist *attrs, fsal_acl_t *sacl,
+fsal_errors_t fsal_inherit_acls(struct fsal_attrlist *attrs, fsal_acl_t *sacl,
 			       fsal_aceflag_t inherit);
 fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
 				 struct fsal_obj_handle *rem_hdl,
@@ -172,10 +169,10 @@ fsal_status_t fsal_rename_access(struct fsal_obj_handle *old_dir_hdl,
 				 struct fsal_obj_handle *new_dir_hdl,
 				 struct fsal_obj_handle *dst_obj_hdl,
 				 bool isdir);
-fsal_status_t fsal_mode_to_acl(struct attrlist *attrs, fsal_acl_t *sacl);
-fsal_status_t fsal_acl_to_mode(struct attrlist *attrs);
+fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl);
+fsal_status_t fsal_acl_to_mode(struct fsal_attrlist *attrs);
 
-void set_common_verifier(struct attrlist *attrs, fsal_verifier_t verifier);
+void set_common_verifier(struct fsal_attrlist *attrs, fsal_verifier_t verifier);
 
 void update_share_counters(struct fsal_share *share,
 			   fsal_openflags_t old_openflags,
@@ -268,10 +265,11 @@ static inline struct state_t *init_state(struct state_t *state,
 
 bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier);
 
-bool check_verifier_attrlist(struct attrlist *attrs, fsal_verifier_t verifier);
+bool check_verifier_attrlist(struct fsal_attrlist *attrs,
+			     fsal_verifier_t verifier);
 
 bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
-			     struct attrlist *attrs, bool cache_attrs);
+			     struct fsal_attrlist *attrs, bool cache_attrs);
 
 fsal_status_t update_export(struct fsal_module *fsal_hdl,
 			    void *parse_node,

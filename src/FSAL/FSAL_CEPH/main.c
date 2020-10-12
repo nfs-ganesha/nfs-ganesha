@@ -208,7 +208,7 @@ static void enable_delegations(struct ceph_export *export)
 			export_perms->options &= ~EXPORT_OPTION_DELEGATIONS;
 			LogWarn(COMPONENT_FSAL,
 				"Unable to set delegation timeout for %s. Disabling delegation support: %d",
-				op_ctx->ctx_export->fullpath, ceph_status);
+				CTX_FULLPATH(op_ctx), ceph_status);
 		}
 	}
 }
@@ -307,20 +307,32 @@ static void ino_release_cb(void *handle, vinodeno_t vino)
 	LogDebug(COMPONENT_FSAL,
 		 "libcephfs asking to release 0x%lx:0x%lx:0x%lx",
 		 export->fscid, vino.snapid.val, vino.ino.val);
-	key.chk_vi = vino;
-	key.chk_fscid = export->fscid;
+	key.hhdl.chk_ino = vino.ino.val;
+	key.hhdl.chk_snap = vino.snapid.val;
+	key.hhdl.chk_fscid = export->fscid;
+	key.export_id = export->export.export_id;
 	fh_desc.addr = &key;
 	fh_desc.len = sizeof(key);
 
 	export->export.up_ops->try_release(export->export.up_ops, &fh_desc, 0);
 }
 
+static mode_t umask_cb(void *handle)
+{
+	mode_t umask = CephFSM.fsal.fs_info.umask;
+
+	LogDebug(COMPONENT_FSAL,
+		"libcephfs set umask = %04o by umask callback", umask);
+	return umask;
+}
+
 static void register_callbacks(struct ceph_export *export)
 {
 	struct ceph_client_callback_args args = {
-						.handle = export,
-						.ino_release_cb = ino_release_cb
-					};
+					.handle = export,
+					.ino_release_cb = ino_release_cb,
+					.umask_cb = umask_cb
+				};
 	ceph_ll_register_callbacks(export->cmount, &args);
 }
 #else /* USE_FSAL_CEPH_REGISTER_CALLBACKS */
@@ -394,7 +406,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to create Ceph handle for %s.",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		goto error;
 	}
 
@@ -403,7 +415,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to read Ceph configuration for %s.",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		goto error;
 	}
 
@@ -414,7 +426,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			status.major = ERR_FSAL_INVAL;
 			LogCrit(COMPONENT_FSAL,
 				"Unable to set Ceph secret key for %s: %d",
-				op_ctx->ctx_export->fullpath, ceph_status);
+				CTX_FULLPATH(op_ctx), ceph_status);
 			goto error;
 		}
 	}
@@ -425,12 +437,12 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	 * libcephfs as well (see http://tracker.ceph.com/issues/18254).
 	 */
 	ceph_status = ceph_conf_set(export->cmount, "client_mountpoint",
-				    op_ctx->ctx_export->fullpath);
+				    CTX_FULLPATH(op_ctx));
 	if (ceph_status) {
 		status.major = ERR_FSAL_INVAL;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to set Ceph client_mountpoint for %s: %d",
-			op_ctx->ctx_export->fullpath, ceph_status);
+			CTX_FULLPATH(op_ctx), ceph_status);
 		goto error;
 	}
 
@@ -439,7 +451,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to init Ceph handle for %s.",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		goto error;
 	}
 
@@ -456,16 +468,16 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to do reclaim_reset for %s.",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		goto error;
 	}
 
-	ceph_status = ceph_mount(export->cmount, op_ctx->ctx_export->fullpath);
+	ceph_status = ceph_mount(export->cmount, CTX_FULLPATH(op_ctx));
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to mount Ceph cluster for %s.",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		goto error;
 	}
 
@@ -482,26 +494,18 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	enable_delegations(export);
 
-	if (fsal_attach_export(module_in, &export->export.exports) != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to attach export for %s.",
-			op_ctx->ctx_export->fullpath);
-		goto error;
-	}
-
 	export->export.fsal = module_in;
 	export->export.up_ops = up_ops;
 
 	LogDebug(COMPONENT_FSAL, "Ceph module export %s.",
-		 op_ctx->ctx_export->fullpath);
+		 CTX_FULLPATH(op_ctx));
 
 	status = find_cephfs_root(export->cmount, &i);
 	if (FSAL_IS_ERROR(status))
 		goto error;
 
 	rc = fsal_ceph_ll_getattr(export->cmount, i, &stx,
-				CEPH_STATX_HANDLE_MASK, op_ctx->creds);
+				  CEPH_STATX_HANDLE_MASK, &op_ctx->creds);
 	if (rc < 0) {
 		status = ceph2fsal_error(rc);
 		goto error;
@@ -512,8 +516,15 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	export->root = handle;
 	op_ctx->fsal_export = &export->export;
 
-	return status;
+	if (fsal_attach_export(module_in, &export->export.exports) != 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to attach export for %s.",
+			CTX_FULLPATH(op_ctx));
+		goto error;
+	}
 
+	return status;
  error:
 	if (i)
 		ceph_ll_put(export->cmount, i);

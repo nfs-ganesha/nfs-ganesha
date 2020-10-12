@@ -30,7 +30,7 @@
 
 char options[] = "ekdqfsp:h?x:";
 char usage[] =
-	"Usage: ml_master [-p port] [-s] [-f] [-q] [-x script] [-d]\n" "\n"
+	"Usage: ml_console [-p port] [-s] [-f] [-q] [-x script] [-d]\n" "\n"
 	"  -p port   - specify the port to listen to clients on\n"
 	"  -s        - specify strict mode (clients are not polled without EXPECT)\n"
 	"  -f        - specify errors are fatal mode\n"
@@ -347,7 +347,7 @@ struct response *process_client_response(struct client *client)
 	return client_resp;
 }
 
-static void master_command(void);
+static void console_command(void);
 
 struct response *receive_response(bool watchin, long int timeout_secs)
 {
@@ -402,40 +402,40 @@ struct response *receive_response(bool watchin, long int timeout_secs)
 	}
 }
 
-enum master_cmd {
-	MCMD_QUIT,
-	MCMD_STRICT,
-	MCMD_CLIENT_CMD,
-	MCMD_EXPECT,
-	MCMD_FATAL,
-	MCMD_SLEEP,
-	MCMD_OPEN_BRACE,
-	MCMD_CLOSE_BRACE,
-	MCMD_SIMPLE_OK,
-	MCMD_SIMPLE_AVAILABLE,
-	MCMD_SIMPLE_GRANTED,
-	MCMD_SIMPLE_DENIED,
-	MCMD_SIMPLE_DEADLOCK,
-	MCMD_CLIENTS,
-	MCMD_FORK,
+enum console_cmd {
+	CCMD_QUIT,
+	CCMD_STRICT,
+	CCMD_CLIENT_CMD,
+	CCMD_EXPECT,
+	CCMD_FATAL,
+	CCMD_SLEEP,
+	CCMD_OPEN_BRACE,
+	CCMD_CLOSE_BRACE,
+	CCMD_SIMPLE_OK,
+	CCMD_SIMPLE_AVAILABLE,
+	CCMD_SIMPLE_GRANTED,
+	CCMD_SIMPLE_DENIED,
+	CCMD_SIMPLE_DEADLOCK,
+	CCMD_CLIENTS,
+	CCMD_FORK,
 };
 
-struct token master_commands[] = {
-	{"QUIT", 4, MCMD_QUIT},
-	{"STRICT", 6, MCMD_STRICT},
-	{"EXPECT", 6, MCMD_EXPECT},
-	{"FATAL", 5, MCMD_FATAL},
-	{"SLEEP", 5, MCMD_SLEEP},
-	{"{", 1, MCMD_OPEN_BRACE},
-	{"}", 1, MCMD_CLOSE_BRACE},
-	{"OK", 2, MCMD_SIMPLE_OK},
-	{"AVAILABLE", 9, MCMD_SIMPLE_AVAILABLE},
-	{"GRANTED", 7, MCMD_SIMPLE_GRANTED},
-	{"DENIED", 6, MCMD_SIMPLE_DENIED},
-	{"DEADLOCK", 8, MCMD_SIMPLE_DEADLOCK},
-	{"CLIENTS", 7, MCMD_CLIENTS},
-	{"FORK", 4, MCMD_FORK},
-	{"", 0, MCMD_CLIENT_CMD}
+struct token console_commands[] = {
+	{"QUIT", 4, CCMD_QUIT},
+	{"STRICT", 6, CCMD_STRICT},
+	{"EXPECT", 6, CCMD_EXPECT},
+	{"FATAL", 5, CCMD_FATAL},
+	{"SLEEP", 5, CCMD_SLEEP},
+	{"{", 1, CCMD_OPEN_BRACE},
+	{"}", 1, CCMD_CLOSE_BRACE},
+	{"OK", 2, CCMD_SIMPLE_OK},
+	{"AVAILABLE", 9, CCMD_SIMPLE_AVAILABLE},
+	{"GRANTED", 7, CCMD_SIMPLE_GRANTED},
+	{"DENIED", 6, CCMD_SIMPLE_DENIED},
+	{"DEADLOCK", 8, CCMD_SIMPLE_DEADLOCK},
+	{"CLIENTS", 7, CCMD_CLIENTS},
+	{"FORK", 4, CCMD_FORK},
+	{"", 0, CCMD_CLIENT_CMD}
 };
 
 static void handle_quit(void);
@@ -593,7 +593,7 @@ bool expect_one_response(struct response *expect_resp, const char *last)
 	return result;
 }
 
-struct master_state {
+struct console_state {
 	char *rest;
 	char line[MAXXFER];
 	char out[MAXXFER];
@@ -607,36 +607,36 @@ struct master_state {
 	int count;
 };
 
-void mcmd_client_cmd(struct master_state *ms)
+void ccmd_client_cmd(struct console_state *cs)
 {
-	ms->rest = get_client(ms->line, &ms->client, syntax, REQUIRES_MORE);
+	cs->rest = get_client(cs->line, &cs->client, syntax, REQUIRES_MORE);
 
-	if (ms->rest == NULL)
+	if (cs->rest == NULL)
 		return;
 
 	if (script)
-		array_sprintf(ms->last, "Line %4ld: %s", lno, ms->line);
+		array_sprintf(cs->last, "Line %4ld: %s", lno, cs->line);
 	else
-		array_strcpy(ms->last, ms->line);
+		array_strcpy(cs->last, cs->line);
 
-	ms->client_cmd = alloc_resp(ms->client);
+	cs->client_cmd = alloc_resp(cs->client);
 
-	ms->rest = parse_request(ms->rest, ms->client_cmd, false);
+	cs->rest = parse_request(cs->rest, cs->client_cmd, false);
 
-	if (ms->rest != NULL && !syntax)
-		send_cmd(ms->client_cmd);
+	if (cs->rest != NULL && !syntax)
+		send_cmd(cs->client_cmd);
 
-	free_response(ms->client_cmd, NULL);
+	free_response(cs->client_cmd, NULL);
 }
 
-void mcmd_sleep(struct master_state *ms)
+void ccmd_sleep(struct console_state *cs)
 {
 	long int secs;
 	int t_end, t_now;
 
-	ms->rest = get_long(ms->rest, &secs, true, "Invalid sleep time");
+	cs->rest = get_long(cs->rest, &secs, true, "Invalid sleep time");
 
-	if (ms->rest == NULL)
+	if (cs->rest == NULL)
 		return;
 
 	if (syntax)
@@ -657,12 +657,12 @@ void mcmd_sleep(struct master_state *ms)
 			if (err_accounting)
 				fprintf(stderr,
 					"%s\n%s\n",
-					ms->last,
+					cs->last,
 					client_resp->r_original);
 
 			array_strcpy(errdetail, "Unexpected response");
 
-			ms->rest = NULL;
+			cs->rest = NULL;
 
 			free_response(client_resp, NULL);
 		}
@@ -673,243 +673,243 @@ void mcmd_sleep(struct master_state *ms)
 	}
 }
 
-void mcmd_open_brace(struct master_state *ms)
+void ccmd_open_brace(struct console_state *cs)
 {
-	if (ms->inbrace) {
+	if (cs->inbrace) {
 		errno = 0;
 		array_strcpy(errdetail, "Illegal nested brace");
-		ms->rest = NULL;
+		cs->rest = NULL;
 	}
 
-	ms->count = 0;
-	ms->inbrace = true;
+	cs->count = 0;
+	cs->inbrace = true;
 }
 
-void mcmd_close_brace(struct master_state *ms)
+void ccmd_close_brace(struct console_state *cs)
 {
-	if (!ms->inbrace) {
+	if (!cs->inbrace) {
 		errno = 0;
 		array_strcpy(errdetail, "Unmatched close brace");
-		ms->rest = NULL;
+		cs->rest = NULL;
 	} else if (!syntax) {
-		ms->inbrace = false;
+		cs->inbrace = false;
 		wait_for_expected_responses("responses",
-					    ms->count, ms->last, true);
+					    cs->count, cs->last, true);
 		fprintf(output,
 			"All responses received OK\n");
-		ms->count = 0;
+		cs->count = 0;
 	} else {
-		ms->inbrace = false;
+		cs->inbrace = false;
 	}
 }
 
-void mcmd_clients(struct master_state *ms)
+void ccmd_clients(struct console_state *cs)
 {
-	if (ms->inbrace) {
+	if (cs->inbrace) {
 		errno = 0;
 		array_strcpy(errdetail,
 			     "CLIENTS command not allowed inside brace");
-		ms->rest = NULL;
+		cs->rest = NULL;
 		return;
 	}
 
-	while (ms->rest != NULL && ms->rest[0] != '\0'
-	       && ms->rest[0] != '#') {
+	while (cs->rest != NULL && cs->rest[0] != '\0'
+	       && cs->rest[0] != '#') {
 		/* Get the next client to expect */
-		ms->rest = get_client(ms->rest,
-				      &ms->client,
+		cs->rest = get_client(cs->rest,
+				      &cs->client,
 				      true,
 				      REQUIRES_EITHER);
 
-		if (ms->rest == NULL)
+		if (cs->rest == NULL)
 			return;
 
 		/* Build an EXPECT client * HELLO OK "client" */
-		ms->expect_resp = alloc_resp(ms->client);
-		ms->expect_resp->r_cmd = CMD_HELLO;
-		ms->expect_resp->r_tag = -1;
-		ms->expect_resp->r_status = STATUS_OK;
+		cs->expect_resp = alloc_resp(cs->client);
+		cs->expect_resp->r_cmd = CMD_HELLO;
+		cs->expect_resp->r_tag = -1;
+		cs->expect_resp->r_status = STATUS_OK;
 
-		array_strcpy(ms->expect_resp->r_data, ms->client->c_name);
+		array_strcpy(cs->expect_resp->r_data, cs->client->c_name);
 
-		array_sprintf(ms->expect_resp->r_original,
+		array_sprintf(cs->expect_resp->r_original,
 			      "EXPECT %s * HELLO OK \"%s\"",
-			      ms->client->c_name, ms->client->c_name);
+			      cs->client->c_name, cs->client->c_name);
 
-		ms->count++;
+		cs->count++;
 
 		if (syntax) {
-			free_response(ms->expect_resp, NULL);
+			free_response(cs->expect_resp, NULL);
 		} else {
 			/* Add response to list of expected responses */
-			add_response(ms->expect_resp, &expected_responses);
+			add_response(cs->expect_resp, &expected_responses);
 		}
 	}
 
-	if (ms->count == 0) {
+	if (cs->count == 0) {
 		errno = 0;
 		array_strcpy(errdetail, "Expected at least one client");
-		ms->rest = NULL;
+		cs->rest = NULL;
 		return;
 	}
 
 	if (!syntax) {
 		wait_for_expected_responses("clients",
-					    ms->count,
-					    ms->last,
+					    cs->count,
+					    cs->last,
 					    true);
 		fprintf(output,
 			"All clients said HELLO OK\n");
 	}
 
-	ms->count = 0;
+	cs->count = 0;
 }
 
-void mcmd_fork(struct master_state *ms)
+void ccmd_fork(struct console_state *cs)
 {
-	if (ms->inbrace) {
+	if (cs->inbrace) {
 		errno = 0;
 		array_strcpy(errdetail,
 			     "FORK command not allowed inside brace");
-		ms->rest = NULL;
+		cs->rest = NULL;
 		return;
 	}
 
 	/* Get the client to send FORK to */
-	ms->rest = get_client(ms->rest,
-			      &ms->client,
+	cs->rest = get_client(cs->rest,
+			      &cs->client,
 			      syntax,
 			      REQUIRES_MORE);
 
-	if (ms->rest == NULL)
+	if (cs->rest == NULL)
 		return;
 
 	/* Build an EXPECT client * FORK OK "client" */
-	ms->client_cmd = alloc_resp(ms->client);
-	ms->client_cmd->r_cmd = CMD_FORK;
-	ms->client_cmd->r_tag = -1;
-	ms->client_cmd->r_status = STATUS_OK;
+	cs->client_cmd = alloc_resp(cs->client);
+	cs->client_cmd->r_cmd = CMD_FORK;
+	cs->client_cmd->r_tag = -1;
+	cs->client_cmd->r_status = STATUS_OK;
 
-	ms->count++;
+	cs->count++;
 
 	/* Get the client that will be created */
-	ms->rest = get_client(ms->rest,
-			      &ms->client,
+	cs->rest = get_client(cs->rest,
+			      &cs->client,
 			      true,
 			      REQUIRES_NO_MORE);
 
-	if (ms->rest == NULL)
+	if (cs->rest == NULL)
 		return;
 
 	/* Build an EXPECT client * HELLO OK "client" */
-	ms->expect_resp = alloc_resp(ms->client);
-	ms->expect_resp->r_cmd = CMD_HELLO;
-	ms->expect_resp->r_tag = -1;
-	ms->expect_resp->r_status = STATUS_OK;
+	cs->expect_resp = alloc_resp(cs->client);
+	cs->expect_resp->r_cmd = CMD_HELLO;
+	cs->expect_resp->r_tag = -1;
+	cs->expect_resp->r_status = STATUS_OK;
 
 	/* Use the created client's name as the FORK data */
-	array_strcpy(ms->client_cmd->r_data,
-		     ms->expect_resp->r_client->c_name);
+	array_strcpy(cs->client_cmd->r_data,
+		     cs->expect_resp->r_client->c_name);
 
-	array_strcpy(ms->expect_resp->r_data,
-		     ms->expect_resp->r_client->c_name);
+	array_strcpy(cs->expect_resp->r_data,
+		     cs->expect_resp->r_client->c_name);
 
-	array_sprintf(ms->client_cmd->r_original,
+	array_sprintf(cs->client_cmd->r_original,
 		      "EXPECT %s * FORK OK \"%s\"",
-		      ms->client->c_name, ms->client->c_name);
+		      cs->client->c_name, cs->client->c_name);
 
-	array_sprintf(ms->expect_resp->r_original,
+	array_sprintf(cs->expect_resp->r_original,
 		      "EXPECT %s * HELLO OK \"%s\"",
-		      ms->client->c_name, ms->client->c_name);
+		      cs->client->c_name, cs->client->c_name);
 
-	ms->count++;
+	cs->count++;
 
 	if (syntax) {
-		free_response(ms->client_cmd, NULL);
-		free_response(ms->expect_resp, NULL);
+		free_response(cs->client_cmd, NULL);
+		free_response(cs->expect_resp, NULL);
 	} else {
 		/* Send the command */
-		send_cmd(ms->client_cmd);
+		send_cmd(cs->client_cmd);
 
 		/* Now fixup to expect client name as FORK OK data */
-		array_strcpy(ms->client_cmd->r_data,
-			     ms->client_cmd->r_client->c_name);
+		array_strcpy(cs->client_cmd->r_data,
+			     cs->client_cmd->r_client->c_name);
 
 		/* Add responses to list of expected responses */
-		add_response(ms->client_cmd, &expected_responses);
-		add_response(ms->expect_resp, &expected_responses);
+		add_response(cs->client_cmd, &expected_responses);
+		add_response(cs->expect_resp, &expected_responses);
 	}
 
 	if (!syntax) {
 		wait_for_expected_responses("clients",
-					    ms->count,
-					    ms->last,
+					    cs->count,
+					    cs->last,
 					    true);
 		fprintf(output, "All clients responded OK\n");
 	}
 
-	ms->count = 0;
+	cs->count = 0;
 }
 
-void mcmd_expect(struct master_state *ms)
+void ccmd_expect(struct console_state *cs)
 {
-	ms->rest = get_client(ms->rest, &ms->client, true, REQUIRES_MORE);
+	cs->rest = get_client(cs->rest, &cs->client, true, REQUIRES_MORE);
 
-	if (ms->rest == NULL)
+	if (cs->rest == NULL)
 		return;
 
-	ms->expect_resp = alloc_resp(ms->client);
+	cs->expect_resp = alloc_resp(cs->client);
 
 	if (script) {
-		array_sprintf(ms->expect_resp->r_original,
+		array_sprintf(cs->expect_resp->r_original,
 			      "Line %4ld: EXPECT %s %s",
-			      lno, ms->client->c_name, ms->rest);
+			      lno, cs->client->c_name, cs->rest);
 	} else {
-		array_sprintf(ms->expect_resp->r_original,
+		array_sprintf(cs->expect_resp->r_original,
 			      "EXPECT %s %s",
-			      ms->client->c_name, ms->rest);
+			      cs->client->c_name, cs->rest);
 	}
 
-	ms->rest = parse_response(ms->rest, ms->expect_resp);
+	cs->rest = parse_response(cs->rest, cs->expect_resp);
 
-	if (ms->rest == NULL || syntax) {
-		free_response(ms->expect_resp, NULL);
-	} else if (ms->inbrace) {
-		add_response(ms->expect_resp, &expected_responses);
-		ms->count++;
-	} else if (expect_one_response(ms->expect_resp, ms->last))
-		ms->rest = NULL;
+	if (cs->rest == NULL || syntax) {
+		free_response(cs->expect_resp, NULL);
+	} else if (cs->inbrace) {
+		add_response(cs->expect_resp, &expected_responses);
+		cs->count++;
+	} else if (expect_one_response(cs->expect_resp, cs->last))
+		cs->rest = NULL;
 }
 
-void mcmd_simple(struct master_state *ms)
+void ccmd_simple(struct console_state *cs)
 {
-	array_strcpy(ms->last, ms->line);
-	ms->rest = get_client(ms->rest, &ms->client, syntax, REQUIRES_MORE);
+	array_strcpy(cs->last, cs->line);
+	cs->rest = get_client(cs->rest, &cs->client, syntax, REQUIRES_MORE);
 
-	if (ms->rest == NULL)
+	if (cs->rest == NULL)
 		return;
 
-	ms->client_cmd = alloc_resp(ms->client);
+	cs->client_cmd = alloc_resp(cs->client);
 
-	if (ms->cmd == MCMD_SIMPLE_OK)
-		ms->client_cmd->r_status = STATUS_OK;
-	else if (ms->cmd == MCMD_SIMPLE_AVAILABLE)
-		ms->client_cmd->r_status = STATUS_AVAILABLE;
-	else if (ms->cmd == MCMD_SIMPLE_GRANTED)
-		ms->client_cmd->r_status = STATUS_GRANTED;
-	else if (ms->cmd == MCMD_SIMPLE_DEADLOCK)
-		ms->client_cmd->r_status = STATUS_DEADLOCK;
+	if (cs->cmd == CCMD_SIMPLE_OK)
+		cs->client_cmd->r_status = STATUS_OK;
+	else if (cs->cmd == CCMD_SIMPLE_AVAILABLE)
+		cs->client_cmd->r_status = STATUS_AVAILABLE;
+	else if (cs->cmd == CCMD_SIMPLE_GRANTED)
+		cs->client_cmd->r_status = STATUS_GRANTED;
+	else if (cs->cmd == CCMD_SIMPLE_DEADLOCK)
+		cs->client_cmd->r_status = STATUS_DEADLOCK;
 	else
-		ms->client_cmd->r_status = STATUS_DENIED;
+		cs->client_cmd->r_status = STATUS_DENIED;
 
-	ms->rest = parse_request(ms->rest, ms->client_cmd, true);
+	cs->rest = parse_request(cs->rest, cs->client_cmd, true);
 
-	if (ms->rest == NULL) {
-		free_response(ms->client_cmd, NULL);
+	if (cs->rest == NULL) {
+		free_response(cs->client_cmd, NULL);
 		return;
 	}
 
-	switch (ms->client_cmd->r_cmd) {
+	switch (cs->client_cmd->r_cmd) {
 	case CMD_OPEN:
 	case CMD_CLOSE:
 	case CMD_SEEK:
@@ -918,73 +918,73 @@ void mcmd_simple(struct master_state *ms)
 	case CMD_ALARM:
 	case CMD_HELLO:
 	case CMD_QUIT:
-		if (ms->cmd != MCMD_SIMPLE_OK) {
+		if (cs->cmd != CCMD_SIMPLE_OK) {
 			array_sprintf(errdetail,
 				      "Simple %s command expects OK",
-				      commands[ms->client_cmd->r_cmd].cmd_name);
+				      commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
-			ms->rest = NULL;
+			cs->rest = NULL;
 		}
 		break;
 
 	case CMD_READ:
-		if (ms->cmd != MCMD_SIMPLE_OK) {
+		if (cs->cmd != CCMD_SIMPLE_OK) {
 			array_sprintf(errdetail,
 				      "Simple %s command expects OK",
-				      commands[ms->client_cmd->r_cmd].cmd_name);
+				      commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
-			ms->rest = NULL;
-		} else if (ms->client_cmd->r_length == 0
-			   || ms->client_cmd->r_data[0] == '\0') {
+			cs->rest = NULL;
+		} else if (cs->client_cmd->r_length == 0
+			   || cs->client_cmd->r_data[0] == '\0') {
 			array_strcpy(errdetail,
 				     "Simple READ must have compare data");
 			errno = 0;
-			ms->rest = NULL;
+			cs->rest = NULL;
 		}
 		break;
 
 	case CMD_LOCKW:
-		if (ms->cmd != MCMD_SIMPLE_DEADLOCK) {
+		if (cs->cmd != CCMD_SIMPLE_DEADLOCK) {
 			array_sprintf(errdetail,
 				      "%s command can not be a simple command",
-				      commands[ms->client_cmd->r_cmd].cmd_name);
+				      commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
-			ms->rest = NULL;
+			cs->rest = NULL;
 		}
 		break;
 
 	case CMD_LOCK:
 	case CMD_HOP:
-		if (ms->cmd != MCMD_SIMPLE_DENIED
-		    && ms->cmd != MCMD_SIMPLE_GRANTED) {
+		if (cs->cmd != CCMD_SIMPLE_DENIED
+		    && cs->cmd != CCMD_SIMPLE_GRANTED) {
 			array_sprintf(errdetail,
 				      "Simple %s command requires GRANTED or DENIED status",
-				      commands[ms->client_cmd->r_cmd].
+				      commands[cs->client_cmd->r_cmd].
 				      cmd_name);
 			errno = 0;
-			ms->rest = NULL;
+			cs->rest = NULL;
 		}
 		break;
 
 	case CMD_TEST:
 	case CMD_LIST:
-		if (ms->cmd != MCMD_SIMPLE_AVAILABLE) {
+		if (cs->cmd != CCMD_SIMPLE_AVAILABLE) {
 			array_sprintf(errdetail,
 				      "Simple %s command requires AVAILABLE status",
-				      commands[ms->client_cmd->r_cmd].cmd_name);
+				      commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
-			ms->rest = NULL;
+			cs->rest = NULL;
 		}
 		break;
 
 	case CMD_UNLOCK:
 	case CMD_UNHOP:
-		if (ms->cmd != MCMD_SIMPLE_GRANTED) {
+		if (cs->cmd != CCMD_SIMPLE_GRANTED) {
 			array_sprintf(errdetail,
 				      "Simple %s command requires GRANTED status",
-				      commands[ms->client_cmd->r_cmd].cmd_name);
+				      commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
-			ms->rest = NULL;
+			cs->rest = NULL;
 		}
 		break;
 
@@ -996,129 +996,129 @@ void mcmd_simple(struct master_state *ms)
 	case NUM_COMMANDS:
 		array_strcpy(errdetail, "Invalid command");
 		errno = 0;
-		ms->rest = NULL;
+		cs->rest = NULL;
 		break;
 	}
 
-	if (ms->rest == NULL || syntax) {
-		free_response(ms->client_cmd, NULL);
+	if (cs->rest == NULL || syntax) {
+		free_response(cs->client_cmd, NULL);
 		return;
 	}
 
-	send_cmd(ms->client_cmd);
+	send_cmd(cs->client_cmd);
 
 	/* We can't know what file descriptor will be returned */
-	ms->client_cmd->r_fno = -1;
-	sprintf_resp(ms->out, sizeof(ms->out), "EXPECT", ms->client_cmd);
-	fprintf(output, "%s", ms->out);
+	cs->client_cmd->r_fno = -1;
+	sprintf_resp(cs->out, sizeof(cs->out), "EXPECT", cs->client_cmd);
+	fprintf(output, "%s", cs->out);
 
-	if (expect_one_response(ms->client_cmd, ms->last))
-		ms->rest = NULL;
+	if (expect_one_response(cs->client_cmd, cs->last))
+		cs->rest = NULL;
 }
 
-void master_command(void)
+void console_command(void)
 {
-	struct master_state ms = {
+	struct console_state cs = {
 		.inbrace = false,
 		.count = 0,};
 
-	ms.last[0] = '\0';
+	cs.last[0] = '\0';
 
 	while (1) {
-		ms.len = readln(input, ms.line, sizeof(ms.line));
+		cs.len = readln(input, cs.line, sizeof(cs.line));
 		lno++;
 
-		if (ms.len < 0) {
-			array_sprintf(ms.line, "QUIT");
-			ms.len = strlen(ms.line);
+		if (cs.len < 0) {
+			array_sprintf(cs.line, "QUIT");
+			cs.len = strlen(cs.line);
 			if (!syntax)
 				fprintf(output, "QUIT\n");
 		}
 
-		ms.rest = SkipWhite(ms.line, REQUIRES_MORE, "Invalid line");
+		cs.rest = SkipWhite(cs.line, REQUIRES_MORE, "Invalid line");
 
 		/* Skip totally blank line and comments */
-		if (ms.rest == NULL || ms.rest[0] == '#')
+		if (cs.rest == NULL || cs.rest[0] == '#')
 			continue;
 
 		if (script && !syntax)
-			fprintf(output, "Line %4ld: %s\n", lno, ms.line);
+			fprintf(output, "Line %4ld: %s\n", lno, cs.line);
 
-		ms.rest = get_token_value(ms.rest,
-					  &ms.cmd,
-					  master_commands,
+		cs.rest = get_token_value(cs.rest,
+					  &cs.cmd,
+					  console_commands,
 					  true,
 					  REQUIRES_EITHER,
-					  "Invalid master command");
+					  "Invalid console command");
 
-		if (ms.rest != NULL)
-			switch ((enum master_cmd) ms.cmd) {
-			case MCMD_QUIT:
+		if (cs.rest != NULL)
+			switch ((enum console_cmd) cs.cmd) {
+			case CCMD_QUIT:
 				if (syntax)
 					return;
 				else
 					handle_quit();
 				break;
 
-			case MCMD_STRICT:
-				ms.rest = get_on_off(ms.rest, &strict);
+			case CCMD_STRICT:
+				cs.rest = get_on_off(cs.rest, &strict);
 				break;
 
-			case MCMD_FATAL:
-				ms.rest = get_on_off(ms.rest, &error_is_fatal);
+			case CCMD_FATAL:
+				cs.rest = get_on_off(cs.rest, &error_is_fatal);
 				break;
 
-			case MCMD_CLIENT_CMD:
-				mcmd_client_cmd(&ms);
+			case CCMD_CLIENT_CMD:
+				ccmd_client_cmd(&cs);
 				break;
 
-			case MCMD_SLEEP:
-				mcmd_sleep(&ms);
+			case CCMD_SLEEP:
+				ccmd_sleep(&cs);
 				break;
 
-			case MCMD_OPEN_BRACE:
-				mcmd_open_brace(&ms);
+			case CCMD_OPEN_BRACE:
+				ccmd_open_brace(&cs);
 				break;
 
-			case MCMD_CLOSE_BRACE:
-				mcmd_close_brace(&ms);
+			case CCMD_CLOSE_BRACE:
+				ccmd_close_brace(&cs);
 				break;
 
-			case MCMD_CLIENTS:
-				mcmd_clients(&ms);
+			case CCMD_CLIENTS:
+				ccmd_clients(&cs);
 				break;
 
-			case MCMD_EXPECT:
-				mcmd_expect(&ms);
+			case CCMD_EXPECT:
+				ccmd_expect(&cs);
 				break;
 
-			case MCMD_FORK:
-				mcmd_fork(&ms);
+			case CCMD_FORK:
+				ccmd_fork(&cs);
 				break;
 
-			case MCMD_SIMPLE_OK:
-			case MCMD_SIMPLE_AVAILABLE:
-			case MCMD_SIMPLE_GRANTED:
-			case MCMD_SIMPLE_DENIED:
-			case MCMD_SIMPLE_DEADLOCK:
-				mcmd_simple(&ms);
+			case CCMD_SIMPLE_OK:
+			case CCMD_SIMPLE_AVAILABLE:
+			case CCMD_SIMPLE_GRANTED:
+			case CCMD_SIMPLE_DENIED:
+			case CCMD_SIMPLE_DEADLOCK:
+				ccmd_simple(&cs);
 				break;
 
 			}
 
-		if (ms.rest == NULL) {
+		if (cs.rest == NULL) {
 			error();
 
 			if (syntax)
 				fprintf(output,
 					"Line %4ld: %s\n",
-					lno, ms.line);
+					lno, cs.line);
 
 			if ((error_is_fatal && !syntax) || terminate)
 				handle_quit();
 		}
 
-		if (!strict && !ms.inbrace && !script)
+		if (!strict && !cs.inbrace && !script)
 			break;
 
 		if (!script) {
@@ -1249,7 +1249,7 @@ int main(int argc, char **argv)
 	if (script) {
 		syntax = true;
 
-		master_command();
+		console_command();
 
 		if (num_errors != 0) {
 			fprintf(stdout, "Syntax checks fail\n");
@@ -1266,7 +1266,7 @@ int main(int argc, char **argv)
 		lno = 0;
 		rewind(input);
 
-		master_command();
+		console_command();
 		/* Never returns */
 	}
 
@@ -1283,7 +1283,7 @@ int main(int argc, char **argv)
 		}
 
 		free_response(resp, NULL);
-		master_command();
+		console_command();
 	}
 
 	/* Never get here */

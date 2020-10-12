@@ -168,6 +168,7 @@ static fsal_status_t lzfs_fsal_create_export(
 	struct lzfs_fsal_export *lzfs_export;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	int rc;
+	struct fsal_pnfs_ds *pds = NULL;
 
 	lzfs_export = gsh_calloc(1, sizeof(struct lzfs_fsal_export));
 
@@ -185,27 +186,28 @@ static fsal_status_t lzfs_fsal_create_export(
 		if (rc != 0) {
 			LogCrit(COMPONENT_FSAL, "Failed to parse export "
 				"configuration for %s",
-				op_ctx->ctx_export->fullpath);
+				CTX_FULLPATH(op_ctx));
 
 			status = fsalstat(ERR_FSAL_INVAL, 0);
 			goto error;
 		}
 	}
 
-	lzfs_export->lzfs_params.subfolder = op_ctx->ctx_export->fullpath;
+	lzfs_export->lzfs_params.subfolder = gsh_strdup(CTX_FULLPATH(op_ctx));
 	lzfs_export->lzfs_instance = liz_init_with_params(
 						&lzfs_export->lzfs_params);
 
 	if (lzfs_export->lzfs_instance == NULL) {
-		LogCrit(COMPONENT_FSAL, "Unable to mount LizardFS cluster for "
-			"%s.", op_ctx->ctx_export->fullpath);
+		LogCrit(COMPONENT_FSAL,
+			"Unable to mount LizardFS cluster for %s.",
+			CTX_FULLPATH(op_ctx));
 		status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		goto error;
 	}
 
 	if (fsal_attach_export(fsal_hdl, &lzfs_export->export.exports) != 0) {
 		LogCrit(COMPONENT_FSAL, "Unable to attach export for %s.",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		goto error;
 	}
@@ -223,16 +225,14 @@ static fsal_status_t lzfs_fsal_create_export(
 		if (lzfs_export->fileinfo_cache == NULL) {
 			LogCrit(COMPONENT_FSAL,
 				"Unable to create fileinfo cache for %s.",
-				op_ctx->ctx_export->fullpath);
+				CTX_FULLPATH(op_ctx));
 			status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
 			goto error;
 		}
 
-		struct fsal_pnfs_ds *pds = NULL;
-
-		status = fsal_hdl->m_ops.fsal_pnfs_ds(fsal_hdl,
-						      parse_node,
-						      &pds);
+		status = fsal_hdl->m_ops.create_fsal_pnfs_ds(fsal_hdl,
+							     parse_node,
+							     &pds);
 		if (status.major != ERR_FSAL_NO_ERROR) {
 			goto error;
 		}
@@ -246,11 +246,14 @@ static fsal_status_t lzfs_fsal_create_export(
 			LogCrit(COMPONENT_CONFIG, "Server id %d already in "
 				"use.", pds->id_servers);
 			status.major = ERR_FSAL_EXIST;
+
+			/* Return the ref taken by create_fsal_pnfs_ds */
+			pnfs_ds_put(pds);
 			goto error;
 		}
 
 		LogDebug(COMPONENT_PNFS, "pnfs ds was enabled for [%s]",
-			 op_ctx->ctx_export->fullpath);
+			 CTX_FULLPATH(op_ctx));
 	}
 
 	lzfs_export->pnfs_mds_enabled =
@@ -259,7 +262,7 @@ static fsal_status_t lzfs_fsal_create_export(
 	if (lzfs_export->pnfs_mds_enabled) {
 		LogDebug(COMPONENT_PNFS,
 			 "pnfs mds was enabled for [%s]",
-			 op_ctx->ctx_export->fullpath);
+			 CTX_FULLPATH(op_ctx));
 		lzfs_fsal_export_ops_pnfs(&lzfs_export->export.exp_ops);
 	}
 
@@ -267,12 +270,17 @@ static fsal_status_t lzfs_fsal_create_export(
 	liz_attr_reply_t ret;
 
 	rc = liz_cred_getattr(lzfs_export->lzfs_instance,
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      SPECIAL_INODE_ROOT,
 			      &ret);
 	if (rc < 0) {
 		status = lzfs_fsal_last_err();
-		goto error;
+
+		if (pds != NULL) {
+			/* Remove and destroy the fsal_pnfs_ds */
+			pnfs_ds_remove(pds->id_servers);
+		}
+		goto error_pds;
 	}
 
 	lzfs_export->root = lzfs_fsal_new_handle(&ret.attr, lzfs_export);
@@ -280,9 +288,15 @@ static fsal_status_t lzfs_fsal_create_export(
 
 	LogDebug(COMPONENT_FSAL,
 		 "LizardFS module export %s.",
-		 op_ctx->ctx_export->fullpath);
+		 CTX_FULLPATH(op_ctx));
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+error_pds:
+	if (pds != NULL)
+		/* Return the ref taken by create_fsal_pnfs_ds */
+		pnfs_ds_put(pds);
+
 error:
 	if (lzfs_export) {
 		if (lzfs_export->lzfs_instance) {

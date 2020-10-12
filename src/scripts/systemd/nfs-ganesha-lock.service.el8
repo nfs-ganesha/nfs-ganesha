@@ -17,7 +17,7 @@
 
 [Unit]
 Before=nfs-ganesha.service
-Conflicts=nfs-lock.service rpc-statd.service
+Conflicts=nfs-lock.service
 
 [Service]
 ExecStartPre=

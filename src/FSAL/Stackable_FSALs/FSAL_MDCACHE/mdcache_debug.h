@@ -33,6 +33,7 @@
 #define MDCACHE_DEBUG_H
 
 #include "mdcache_int.h"
+#include "mdcache_lru.h"
 
 /**
  * @brief Get the sub-FSAL handle from an MDCACHE handle
@@ -54,6 +55,5 @@ struct fsal_obj_handle *mdcdb_get_sub_handle(struct fsal_obj_handle *obj_hdl)
 	return entry->sub_handle;
 }
 
-void lru_cleanup_entries(void);
 
 #endif /* MDCACHE_DEBUG_H */

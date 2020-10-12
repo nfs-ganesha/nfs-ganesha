@@ -35,9 +35,9 @@
 void vfs_acl_init(void);
 fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 			       int fd, attrmask_t request_mask,
-			       struct attrlist *attrs);
+			       struct fsal_attrlist *attrs);
 fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 			       int fd, attrmask_t request_mask,
-			       struct attrlist *attrib_set);
+			       struct fsal_attrlist *attrib_set);
 
 #endif /* __VFS_ATTRS_H */

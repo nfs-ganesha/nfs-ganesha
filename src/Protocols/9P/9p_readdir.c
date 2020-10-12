@@ -84,7 +84,7 @@ static inline u8 *fill_entry(u8 *cursor, u8 qid_type, u64 qid_path, u64 cookie,
 
 static fsal_errors_t _9p_readdir_callback(void *opaque,
 					 struct fsal_obj_handle *obj,
-					 const struct attrlist *attr,
+					 const struct fsal_attrlist *attr,
 					 uint64_t mounted_on_fileid,
 					 uint64_t cookie,
 					 enum cb_state cb_state)

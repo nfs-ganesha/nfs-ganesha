@@ -78,6 +78,8 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
 	carg.close_fd = fd;
 	carg.close_flags = cflags;
 	carg.close_owner = owner;
+	if (op_ctx && op_ctx->client)
+		carg.cli_ip = op_ctx->client->hostaddr_str;
 
 	if (unlikely(gpfs_ganesha(OPENHANDLE_CLOSE_FILE, &carg) < 0))
 		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_CLOSE_FILE");
@@ -102,12 +104,11 @@ fsal_internal_handle2fd(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	struct open_arg oarg = {0};
 	int rc;
 
-	if (op_ctx && op_ctx->client)
-		oarg.cli_ip = op_ctx->client->hostaddr_str;
-
 	oarg.mountdirfd = dirfd;
 	oarg.handle = gpfs_fh;
 	oarg.flags = oflags;
+	if (op_ctx && op_ctx->client)
+		oarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	rc = gpfs_ganesha(OPENHANDLE_OPEN_BY_HANDLE, &oarg);
 	if (unlikely(rc < 0))
@@ -248,6 +249,8 @@ fsal_internal_link_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_tgt,
 	linkarg.name = link_name;
 	linkarg.dir_fh = gpfs_fh;
 	linkarg.dst_fh = gpfs_fh_tgt;
+	if (op_ctx && op_ctx->client)
+		linkarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	if (unlikely(gpfs_ganesha(OPENHANDLE_LINK_BY_FH, &linkarg) < 0))
 		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_LINK_BY_FH");
@@ -313,7 +316,7 @@ fsal_internal_unlink(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	statarg.handle = gpfs_fh;
 	statarg.buf = buf;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 
 	rc = gpfs_ganesha(OPENHANDLE_UNLINK_BY_NAME, &statarg);
 	errsv = errno;
@@ -363,6 +366,8 @@ fsal_internal_create(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 	crarg.buf = buf;
 	crarg.dir_fh = container_of(dir_hdl, struct gpfs_fsal_obj_handle,
 				    obj_handle)->handle;
+	if (op_ctx && op_ctx->client)
+		crarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	if (unlikely(gpfs_ganesha(OPENHANDLE_CREATE_BY_NAME, &crarg) < 0))
 		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_CREATE_BY_NAME");
@@ -395,6 +400,8 @@ fsal_internal_mknode(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 	crarg.buf = buf;
 	crarg.dir_fh = container_of(dir_hdl, struct gpfs_fsal_obj_handle,
 				    obj_handle)->handle;
+	if (op_ctx && op_ctx->client)
+		crarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	if (unlikely(gpfs_ganesha(OPENHANDLE_MKNODE_BY_NAME, &crarg) < 0))
 		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_MKNODE_BY_NAME");
@@ -431,8 +438,10 @@ fsal_internal_rename_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_old,
 	renamearg.new_name = new_name;
 	renamearg.old_fh = gpfs_fh_old;
 	renamearg.new_fh = gpfs_fh_new;
+	if (op_ctx && op_ctx->client)
+		renamearg.cli_ip = op_ctx->client->hostaddr_str;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 
 	rc = gpfs_ganesha(OPENHANDLE_RENAME_BY_FH, &renamearg);
 	errsv = errno;
@@ -486,12 +495,17 @@ int fsal_internal_version(void)
 {
 	int rc;
 
-	if (unlikely(gpfs_ganesha(OPENHANDLE_GET_VERSION2, &rc) < 0))
-		FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_GET_VERSION2");
-	else
-		LogDebug(COMPONENT_FSAL, "GPFS get version %d", rc);
+	/* Try VERSION3 first, followed by VERSION2 */
+	rc = gpfs_ganesha(OPENHANDLE_GET_VERSION3, NULL);
+	if (rc != -1)
+		return 0;
 
-	return rc;
+	rc = gpfs_ganesha(OPENHANDLE_GET_VERSION2, NULL);
+	if (rc != -1)
+		return 0;
+
+	LogMajor(COMPONENT_FSAL, "OPENHANDLE_GET_VERSION failed: %d", errno);
+	return errno;
 }
 
 /**
@@ -572,7 +586,7 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 					"GET_XSTAT returned buffer too small, passed len: %u, required len: %u, ",
 					acl_buflen, acl_buf->acl_len);
 				errno = 0;
-				break;
+				return fsalstat(ERR_FSAL_NO_ERROR, 0);
 			}
 
 			LogWarn(COMPONENT_FSAL,
@@ -612,7 +626,6 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *  @brief Set NFS4 ACL as well as stat.
  *
  *  @param dirfd Open file descriptor of parent directory
- *  @param op_ctx Context
  *  @param gpfs_fh file handle of file
  *  @param attr_valid Attributes valid
  *  @param attr_changed Attributes changed
@@ -621,7 +634,7 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *  @return status of operation
  */
 fsal_status_t
-fsal_set_xstat_by_handle(int dirfd, const struct req_op_context *op_ctx,
+fsal_set_xstat_by_handle(int dirfd,
 			 struct gpfs_file_handle *gpfs_fh, int attr_valid,
 			 int attr_changed, gpfsfsal_xstat_t *buffxstat,
 			 gpfs_acl_t *acl_buf)
@@ -645,7 +658,7 @@ fsal_set_xstat_by_handle(int dirfd, const struct req_op_context *op_ctx,
 	   implements sparse files, so blocks of all 0 will not actually
 	   be allocated.
 	 */
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 
 	rc = gpfs_ganesha(OPENHANDLE_SET_XSTAT, &xstatarg);
 	errsv = errno;
@@ -666,14 +679,13 @@ fsal_set_xstat_by_handle(int dirfd, const struct req_op_context *op_ctx,
 
 /**
  *  @param dirfd Open file descriptor of parent directory
- *  @param op_ctx Context
  *  @param gpfs_fh file handle of file
  *  @param size Size
  *
  *  @return status of operation
  */
 fsal_status_t
-fsal_trucate_by_handle(int dirfd, const struct req_op_context *op_ctx,
+fsal_trucate_by_handle(int dirfd,
 		       struct gpfs_file_handle *gpfs_fh, u_int64_t size)
 {
 	gpfsfsal_xstat_t buffxstat = {0};
@@ -683,7 +695,7 @@ fsal_trucate_by_handle(int dirfd, const struct req_op_context *op_ctx,
 
 	buffxstat.buffstat.st_size = size;
 
-	return fsal_set_xstat_by_handle(dirfd, op_ctx, gpfs_fh, XATTR_STAT,
+	return fsal_set_xstat_by_handle(dirfd, gpfs_fh, XATTR_STAT,
 					XATTR_SIZE, &buffxstat, NULL);
 }
 

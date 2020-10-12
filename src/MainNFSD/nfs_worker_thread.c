@@ -284,6 +284,7 @@ const nfs_function_desc_t nfs4_func_desc[] = {
 	 .dispatch_behaviour = CAN_BE_DUP}
 };
 
+#ifdef _USE_NFS3
 const nfs_function_desc_t mnt1_func_desc[] = {
 	{
 	 .service_function = mnt_Null,
@@ -373,11 +374,13 @@ const nfs_function_desc_t mnt3_func_desc[] = {
 	 .funcname = "MNT_EXPORT",
 	 .dispatch_behaviour = NOTHING_SPECIAL}
 };
+#endif
+
+#ifdef _USE_NLM
 
 #define nlm4_Unsupported nlm_Null
 #define nlm4_Unsupported_Free nlm_Null_Free
 
-#ifdef _USE_NLM
 const nfs_function_desc_t nlm4_func_desc[] = {
 	[NLMPROC4_NULL] = {
 			   .service_function = nlm_Null,
@@ -560,6 +563,7 @@ const nfs_function_desc_t nlm4_func_desc[] = {
 };
 #endif /* _USE_NLM */
 
+#ifdef _USE_RQUOTA
 const nfs_function_desc_t rquota1_func_desc[] = {
 	[0] = {
 	       .service_function = rquota_Null,
@@ -659,7 +663,9 @@ const nfs_function_desc_t rquota2_func_desc[] = {
 				       .funcname = "RQUOTA_EXT_GETACTIVEQUOTA",
 				       .dispatch_behaviour = NEEDS_CRED}
 };
+#endif
 
+#ifdef USE_NFSACL3
 const nfs_function_desc_t nfsacl_func_desc[] = {
 	[0] = {
 	       .service_function = nfsacl_Null,
@@ -687,6 +693,7 @@ const nfs_function_desc_t nfsacl_func_desc[] = {
 				 .funcname = "NFSACL_SETACL",
 				 .dispatch_behaviour = NEEDS_CRED}
 };
+#endif
 
 void auth_failure(nfs_request_t *reqdata, enum auth_stat auth_rc)
 {
@@ -724,13 +731,8 @@ void free_args(nfs_request_t *reqdata)
 		op_ctx->client = NULL;
 	}
 
-	if (op_ctx->ctx_export != NULL) {
-		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-	}
-
 	clean_credentials();
-	op_ctx = NULL;
+	release_op_context();
 
 #ifdef USE_LTTNG
 	tracepoint(nfs_rpc, end, reqdata);
@@ -966,12 +968,9 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 
 	/* set up the request context
 	 */
-	op_ctx = &reqdata->req_ctx;
-	op_ctx->creds = &reqdata->req_user_credentials;
-	op_ctx->caller_addr = (sockaddr_t *)svc_getrpccaller(xprt);
-	op_ctx->nfs_vers = reqdata->svc.rq_msg.cb_vers;
-	op_ctx->req_type = NFS_REQUEST;
-	op_ctx->export_perms = &reqdata->req_export_perms;
+	init_op_context(&reqdata->op_context, NULL, NULL,
+			(sockaddr_t *)svc_getrpccaller(xprt),
+			reqdata->svc.rq_msg.cb_vers, 0, NFS_REQUEST);
 
 	/* Set up initial export permissions that don't allow anything. */
 	export_check_access();
@@ -1111,8 +1110,11 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	    || reqdata->svc.rq_msg.cb_proc == NFSPROC_NULL)
 		goto null_op;
 	/* Get the export entry */
-	if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS] ||
-		reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFSACL]) {
+	if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS]
+#ifdef USE_NFSACL3
+	    || reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFSACL]
+#endif
+	    ) {
 		/* The NFSv3 functions' arguments always begin with the file
 		 * handle (but not the NULL function).  This hook is used to
 		 * get the fhandle with the arguments and so determine the
@@ -1137,7 +1139,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				goto req_error;
 			}
 
-			op_ctx->ctx_export = get_gsh_export(exportid);
+			set_op_context_export(get_gsh_export(exportid));
 
 			if (op_ctx->ctx_export == NULL) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1150,11 +1152,9 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				goto req_error;
 			}
 
-			op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
-
 			LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				    "Found export entry for path=%s as exportid=%d",
-				    op_ctx_export_path(op_ctx->ctx_export),
+				    op_ctx_export_path(op_ctx),
 				    op_ctx->ctx_export->export_id);
 		}
 #endif /* _USE_NFS3 */
@@ -1210,12 +1210,6 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			exportid = nlm4_FhandleToExportId(pfh3);
 
 			if (exportid < 0) {
-				LogInfo(COMPONENT_DISPATCH,
-					"NLM4 Request from client %s has badly formed handle",
-					client_ip);
-				op_ctx->ctx_export = NULL;
-				op_ctx->fsal_export = NULL;
-
 				/* We need to send a NLM4_STALE_FH response
 				 * (NLM doesn't have an error code for
 				 * BADHANDLE), but we don't know how to do that
@@ -1223,8 +1217,12 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				 * routine to let it know what to do since it
 				 * can respond to ASYNC calls.
 				 */
+				LogInfo(COMPONENT_DISPATCH,
+					"NLM4 Request from client %s has badly formed handle",
+					client_ip);
+
 			} else {
-				op_ctx->ctx_export = get_gsh_export(exportid);
+				set_op_context_export(get_gsh_export(exportid));
 
 				if (op_ctx->ctx_export == NULL) {
 					LogInfoAlt(COMPONENT_DISPATCH,
@@ -1241,23 +1239,20 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 					 * to let it know what to do since it
 					 * can respond to ASYNC calls.
 					 */
-					op_ctx->fsal_export = NULL;
 				} else {
-					op_ctx->fsal_export =
-					    op_ctx->ctx_export->fsal_export;
-
 					LogMidDebugAlt(COMPONENT_DISPATCH,
 						COMPONENT_EXPORT,
 						"Found export entry for dirname=%s as exportid=%d",
-						op_ctx_export_path(
-							op_ctx->ctx_export),
+						ctx_export_path(op_ctx),
 						op_ctx->ctx_export->export_id);
 				}
 			}
 		}
 #endif /* _USE_NLM */
+#ifdef _USE_NFS3
 	} else if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_MNT]) {
 		progname = "MNT";
+#endif /* _USE_NFS3 */
 	}
 
 	/* Only do access check if we have an export. */
@@ -1271,14 +1266,14 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 
 		export_check_access();
 
-		if ((reqdata->req_export_perms.options &
+		if ((op_ctx->export_perms.options &
 		     EXPORT_OPTION_ACCESS_MASK) == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Client %s is not allowed to access Export_Id %d %s, vers=%"
 				PRIu32 ", proc=%" PRIu32,
 				client_ip,
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export),
+				op_ctx_export_path(op_ctx),
 				reqdata->svc.rq_msg.cb_vers,
 				reqdata->svc.rq_msg.cb_proc);
 
@@ -1286,7 +1281,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			goto freeargs;
 		}
 
-		if ((reqdata->req_export_perms.options &
+		if ((op_ctx->export_perms.options &
 		     EXPORT_OPTION_NFSV3) == 0) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %" PRIu32
@@ -1294,7 +1289,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				progname,
 				reqdata->svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export),
+				op_ctx_export_path(op_ctx),
 				client_ip);
 
 			auth_failure(reqdata, AUTH_FAILED);
@@ -1303,10 +1298,10 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 
 		/* Check transport type */
 		if (((xprt_type == XPRT_UDP)
-		     && ((reqdata->req_export_perms.options &
+		     && ((op_ctx->export_perms.options &
 			  EXPORT_OPTION_UDP) == 0))
 		    || ((xprt_type == XPRT_TCP)
-			&& ((reqdata->req_export_perms.options &
+			&& ((op_ctx->export_perms.options &
 			     EXPORT_OPTION_TCP) == 0))) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %" PRIu32
@@ -1315,7 +1310,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				reqdata->svc.rq_msg.cb_vers,
 				xprt_type_to_str(xprt_type),
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export),
+				op_ctx_export_path(op_ctx),
 				client_ip);
 
 			auth_failure(reqdata, AUTH_FAILED);
@@ -1331,7 +1326,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				progname,
 				reqdata->svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export),
+				op_ctx_export_path(op_ctx),
 				client_ip);
 
 			auth_failure(reqdata, AUTH_TOOWEAK);
@@ -1341,13 +1336,13 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 		/* Check if client is using a privileged port,
 		 * but only for NFS protocol */
 		if ((reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS])
-		    && (reqdata->req_export_perms.options &
+		    && (op_ctx->export_perms.options &
 			EXPORT_OPTION_PRIVILEGED_PORT)
 		    && (port >= IPPORT_RESERVED)) {
 			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 				port, op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export),
+				op_ctx_export_path(op_ctx),
 				client_ip);
 
 			auth_failure(reqdata, AUTH_TOOWEAK);
@@ -1361,7 +1356,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	 */
 	if (op_ctx->ctx_export != NULL
 	    && (reqdesc->dispatch_behaviour & MAKES_IO)
-	    && !(reqdata->req_export_perms.options & EXPORT_OPTION_RW_ACCESS)) {
+	    && !(op_ctx->export_perms.options & EXPORT_OPTION_RW_ACCESS)) {
 		/* Request of type MDONLY_RO were rejected at the
 		 * nfs_rpc_dispatcher level.
 		 * This is done by replying EDQUOT
@@ -1393,7 +1388,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 		}
 	} else if (op_ctx->ctx_export != NULL
 		   && (reqdesc->dispatch_behaviour & MAKES_WRITE)
-		   && (reqdata->req_export_perms.options
+		   && (op_ctx->export_perms.options
 		       & (EXPORT_OPTION_WRITE_ACCESS
 			| EXPORT_OPTION_MD_WRITE_ACCESS)) == 0) {
 		if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS])
@@ -1420,14 +1415,14 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			rc = NFS_REQ_DROP;
 		}
 	} else if (op_ctx->ctx_export != NULL
-		   && (reqdata->req_export_perms.options
+		   && (op_ctx->export_perms.options
 		       & (EXPORT_OPTION_READ_ACCESS
 			 | EXPORT_OPTION_MD_READ_ACCESS)) == 0) {
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			"Client %s is not allowed to access Export_Id %d %s, vers=%"
 			PRIu32 ", proc=%" PRIu32,
 			client_ip, op_ctx->ctx_export->export_id,
-			op_ctx_export_path(op_ctx->ctx_export),
+			op_ctx_export_path(op_ctx),
 			reqdata->svc.rq_msg.cb_vers,
 			reqdata->svc.rq_msg.cb_proc);
 		auth_failure(reqdata, AUTH_TOOWEAK);
@@ -1437,7 +1432,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 		if (reqdesc->dispatch_behaviour & NEEDS_CRED) {
 			/* If we don't have an export, don't squash */
 			if (op_ctx->fsal_export == NULL) {
-				reqdata->req_export_perms.options &=
+				op_ctx->export_perms.options &=
 					~EXPORT_OPTION_SQUASH_TYPES;
 			} else if (nfs_req_creds(&reqdata->svc) != NFS4_OK) {
 				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
@@ -1512,7 +1507,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			 * already been set up before we started proecessing
 			 * ops on this request at all.
 			 */
-			op_ctx = NULL;
+			suspend_op_context();
 			return XPRT_SUSPEND;
 		}
 
@@ -1664,6 +1659,7 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 	return nfs_rpc_novers(reqdata, lo_vers, hi_vers);
 }
 
+#ifdef _USE_NLM
 enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 {
 	nfs_request_t *reqdata =
@@ -1671,7 +1667,6 @@ enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 
 	reqdata->funcdesc = &invalid_funcdesc;
 
-#ifdef _USE_NLM
 	if (req->rq_msg.cb_prog == NFS_program[P_NLM]
 	     && (NFS_options & CORE_OPTION_NFSV3)) {
 		if (req->rq_msg.cb_vers == NLM4_VERS) {
@@ -1684,10 +1679,11 @@ enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 		}
 		return nfs_rpc_novers(reqdata, NLM4_VERS, NLM4_VERS);
 	}
-#endif /* _USE_NLM */
 	return nfs_rpc_noprog(reqdata);
 }
+#endif /* _USE_NLM */
 
+#ifdef _USE_NFS3
 enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 {
 	nfs_request_t *reqdata =
@@ -1726,7 +1722,9 @@ enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 	}
 	return nfs_rpc_noprog(reqdata);
 }
+#endif
 
+#ifdef _USE_RQUOTA
 enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 {
 	nfs_request_t *reqdata =
@@ -1755,7 +1753,9 @@ enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 	}
 	return nfs_rpc_noprog(reqdata);
 }
+#endif
 
+#ifdef USE_NFSACL3
 enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *req)
 {
 	nfs_request_t *reqdata =
@@ -1776,3 +1776,4 @@ enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *req)
 	}
 	return nfs_rpc_noprog(reqdata);
 }
+#endif

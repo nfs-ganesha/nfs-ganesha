@@ -422,7 +422,7 @@ void state_export_unshare_all(void)
 	if (errcnt == STATE_ERR_MAX) {
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of NLM shares for %s",
-			 export_path(op_ctx->ctx_export));
+			 ctx_export_path(op_ctx));
 	}
 }
 #endif /* _USE_NLM */

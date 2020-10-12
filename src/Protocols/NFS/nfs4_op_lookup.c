@@ -112,7 +112,7 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 	}
 
 	if (file_obj->type == DIRECTORY) {
-		PTHREAD_RWLOCK_rdlock(&file_obj->state_hdl->state_lock);
+		PTHREAD_RWLOCK_rdlock(&file_obj->state_hdl->jct_lock);
 
 		if (file_obj->state_hdl->dir.junction_export != NULL) {
 			/* Handle junction */
@@ -124,30 +124,27 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 			if (!export_ready(
 				file_obj->state_hdl->dir.junction_export)) {
 				/* If we could not get a reference, return
-				 * stale.  Release state_lock
+				 * stale.  Release jct_lock
 				 */
 				LogDebug(COMPONENT_EXPORT,
 					 "NFS4ERR_STALE on LOOKUP of %s",
 					 arg_LOOKUP4->objname.utf8string_val);
 				res_LOOKUP4->status = NFS4ERR_STALE;
 				PTHREAD_RWLOCK_unlock(
-					&file_obj->state_hdl->state_lock);
+					&file_obj->state_hdl->jct_lock);
 				goto out;
 			}
 
 			get_gsh_export_ref(
 				file_obj->state_hdl->dir.junction_export);
 
-			/* Release any old export reference */
-			if (op_ctx->ctx_export != NULL)
-				put_gsh_export(op_ctx->ctx_export);
+			/* Stash the new export in the compound data, releasing
+			 * any old export reference.
+			 */
+			set_op_context_export(
+				file_obj->state_hdl->dir.junction_export);
 
-			/* Stash the new export in the compound data. */
-			op_ctx->ctx_export =
-				file_obj->state_hdl->dir.junction_export;
-			op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
-
-			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
+			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->jct_lock);
 			/* Build credentials */
 			res_LOOKUP4->status =
 				nfs4_export_check_access(data->req);
@@ -163,7 +160,7 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 				LogDebug(COMPONENT_EXPORT,
 					"NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
 					op_ctx->ctx_export->export_id,
-					op_ctx->ctx_export->pseudopath);
+					CTX_PSEUDOPATH(op_ctx));
 				res_LOOKUP4->status = NFS4ERR_NOENT;
 				goto out;
 			}
@@ -181,7 +178,7 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 				LogMajor(COMPONENT_EXPORT,
 					"PSEUDO FS JUNCTION TRAVERSAL: Failed with %s for %s, id=%d",
 					nfsstat4_to_str(res_LOOKUP4->status),
-					op_ctx->ctx_export->pseudopath,
+					CTX_PSEUDOPATH(op_ctx),
 					op_ctx->ctx_export->export_id);
 				goto out;
 			}
@@ -192,7 +189,7 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 			if (FSAL_IS_ERROR(status)) {
 				LogMajor(COMPONENT_EXPORT,
 					"PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-					op_ctx->ctx_export->pseudopath,
+					CTX_PSEUDOPATH(op_ctx),
 					op_ctx->ctx_export->export_id,
 					msg_fsal_err(status.major));
 
@@ -202,14 +199,14 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 
 			LogDebug(COMPONENT_EXPORT,
 				"PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-				op_ctx->ctx_export->pseudopath,
+				CTX_PSEUDOPATH(op_ctx),
 				op_ctx->ctx_export->export_id,
 				arg_LOOKUP4->objname.utf8string_val);
 
 			file_obj->obj_ops->put_ref(file_obj);
 			file_obj = obj;
 		} else {
-			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->state_lock);
+			PTHREAD_RWLOCK_unlock(&file_obj->state_hdl->jct_lock);
 		}
 	}
 

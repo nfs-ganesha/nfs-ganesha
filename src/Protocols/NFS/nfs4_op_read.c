@@ -91,7 +91,7 @@ static enum nfs_req_result nfs4_complete_read(struct nfs4_read_data *data)
 			 * will just see a short read and continue reading and
 			 * then get the EOF flag as 0 bytes are returned.
 			 */
-			struct attrlist attrs;
+			struct fsal_attrlist attrs;
 			fsal_status_t status;
 
 			fsal_prepare_attrs(&attrs, ATTR_SIZE);
@@ -293,9 +293,8 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
 
 	res_READ4->READ4res_u.resok4.data.data_val = buffer;
 
-	nfs_status = data->current_ds->dsh_ops.read(
+	nfs_status = op_ctx->ctx_pnfs_ds->s_ops.dsh_read(
 				data->current_ds,
-				op_ctx,
 				&arg_READ4->stateid,
 				arg_READ4->offset,
 				arg_READ4->count,
@@ -364,9 +363,8 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 
 	buffer = gsh_malloc_aligned(4096, RNDUP(arg_READ4->count));
 
-	nfs_status = data->current_ds->dsh_ops.read_plus(
+	nfs_status = op_ctx->ctx_pnfs_ds->s_ops.dsh_read_plus(
 				data->current_ds,
-				op_ctx,
 				&arg_READ4->stateid,
 				arg_READ4->offset,
 				arg_READ4->count,
@@ -1052,7 +1050,7 @@ enum nfs_req_result nfs4_op_seek(struct nfs_argop4 *op,
 
 		fsal_status = obj->obj_ops->seek2(obj, state_found, &info);
 		if (FSAL_IS_ERROR(fsal_status)) {
-			res_SEEK->sr_status = NFS4ERR_NXIO;
+			res_SEEK->sr_status = nfs4_Errno_status(fsal_status);
 			goto done;
 		}
 		res_SEEK->sr_resok4.sr_eof = info.io_eof;

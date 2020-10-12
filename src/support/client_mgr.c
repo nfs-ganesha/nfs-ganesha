@@ -630,13 +630,42 @@ static bool gsh_client_all_ops(DBusMessageIter *args,
 static struct gsh_dbus_method cltmgr_client_all_ops = {
 	.name = "GetClientAllops",
 	.method = gsh_client_all_ops,
-	.args = {IPADDR_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 CLNT_ALL_OPS_REPLY,
-		 END_ARG_LIST}
+	.args = {
+			IPADDR_ARG,
+			STATUS_REPLY,
+			TIMESTAMP_REPLY,
+#ifdef _USE_NFS3
+			{
+				.name = "clnt_v3",
+				.type = "b",
+				.direction = "out"
+			},
+			CLNT_V3NLM_OPS_REPLY,
+#endif
+#ifdef _USE_NLM
+			{
+				.name = "clnt_nlm",
+				.type = "b",
+				.direction = "out"
+			},
+			CLNT_V3NLM_OPS_REPLY,
+#endif
+			{
+				.name = "clnt_v4",
+				.type = "b",
+				.direction = "out"
+			},
+			CLNT_V4_OPS_REPLY,
+			{
+				.name = "clnt_cmp",
+				.type = "b",
+				.direction = "out"
+			},
+			CLNT_CMP_OPS_REPLY,
+			END_ARG_LIST}
 };
 
+#ifdef _USE_NFS3
 /**
  * DBUS method to report NFSv3 I/O statistics
  *
@@ -685,6 +714,7 @@ static struct gsh_dbus_method cltmgr_show_v3_io = {
 		 IOSTATS_REPLY,
 		 END_ARG_LIST}
 };
+#endif
 
 /**
  * DBUS method to report NFSv40 I/O statistics
@@ -1128,7 +1158,9 @@ static struct gsh_dbus_method cltmgr_show_9p_op_stats = {
 
 
 static struct gsh_dbus_method *cltmgr_stats_methods[] = {
+#ifdef _USE_NFS3
 	&cltmgr_show_v3_io,
+#endif
 	&cltmgr_show_v40_io,
 	&cltmgr_show_v41_io,
 	&cltmgr_show_v41_layouts,

@@ -316,7 +316,9 @@ void nfs_print_param_config(void)
 	printf("NFS_Core_Param\n{\n");
 
 	printf("\tNFS_Port = %u ;\n", nfs_param.core_param.port[P_NFS]);
+#ifdef _USE_NFS3
 	printf("\tMNT_Port = %u ;\n", nfs_param.core_param.port[P_MNT]);
+#endif
 	printf("\tNFS_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
 	printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
 	printf("\tDRC_TCP_Npart = %u ;\n", nfs_param.core_param.drc.tcp.npart);
@@ -942,7 +944,7 @@ void nfs_start(nfs_start_info_t *p_start_info)
 		 "-------------------------------------------------");
 
 	/* Set the time of NFS stat counting */
-	now(&nfs_stats_time);
+	nfs_init_stats_time();
 
 	/* Wait for dispatcher to exit */
 	LogDebug(COMPONENT_THREAD, "Wait for admin thread to exit");
@@ -977,6 +979,24 @@ void nfs_init_wait(void)
 		pthread_cond_wait(&nfs_init.init_cond, &nfs_init.init_mutex);
 	}
 	PTHREAD_MUTEX_unlock(&nfs_init.init_mutex);
+}
+
+int nfs_init_wait_timeout(int timeout)
+{
+	int rc = 0;
+
+	PTHREAD_MUTEX_lock(&nfs_init.init_mutex);
+	if (!nfs_init.init_complete) {
+		struct timespec ts;
+
+		ts.tv_sec = time(NULL) + timeout;
+		ts.tv_nsec = 0;
+		rc = pthread_cond_timedwait(&nfs_init.init_cond,
+					    &nfs_init.init_mutex, &ts);
+	}
+	PTHREAD_MUTEX_unlock(&nfs_init.init_mutex);
+
+	return rc;
 }
 
 bool nfs_health(void)

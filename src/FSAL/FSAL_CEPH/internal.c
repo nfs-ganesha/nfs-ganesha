@@ -77,11 +77,12 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 
 	constructing = gsh_calloc(1, sizeof(struct ceph_handle));
 
-	constructing->key.chk_vi.ino.val = stx->stx_ino;
+	constructing->key.hhdl.chk_ino = stx->stx_ino;
 #ifdef CEPH_NOSNAP
-	constructing->key.chk_vi.snapid.val = stx->stx_dev;
+	constructing->key.hhdl.chk_snap = stx->stx_dev;
 #endif /* CEPH_NOSNAP */
-	constructing->key.chk_fscid = export->fscid;
+	constructing->key.hhdl.chk_fscid = export->fscid;
+	constructing->key.export_id = export->export.export_id;
 	constructing->i = i;
 	constructing->up_ops = export->export.up_ops;
 
@@ -90,8 +91,6 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 	constructing->handle.obj_ops = &CephFSM.handle_ops;
 	constructing->handle.fsid = posix2fsal_fsid(stx->stx_dev);
 	constructing->handle.fileid = stx->stx_ino;
-
-	constructing->export = export;
 
 	*obj = constructing;
 }
@@ -104,7 +103,12 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 
 void deconstruct_handle(struct ceph_handle *obj)
 {
-	ceph_ll_put(obj->export->cmount, obj->i);
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+
+	assert(op_ctx->fsal_export->export_id == obj->key.export_id);
+
+	ceph_ll_put(export->cmount, obj->i);
 	fsal_obj_handle_fini(&obj->handle);
 	gsh_free(obj);
 }
@@ -141,7 +145,7 @@ attrmask2ceph_want(attrmask_t mask)
 }
 
 void ceph2fsal_attributes(const struct ceph_statx *stx,
-			  struct attrlist *fsalattr)
+			  struct fsal_attrlist *fsalattr)
 {
 	/* These are always considered to be available */
 	fsalattr->valid_mask |= ATTR_TYPE|ATTR_FSID|ATTR_RAWDEV|ATTR_FILEID;
@@ -227,7 +231,7 @@ int ceph_get_posix_acl(struct ceph_export *export,
 
 	/* Get extended attribute size */
 	size = fsal_ceph_ll_getxattr(export->cmount, objhandle->i, name,
-				NULL, 0, op_ctx->creds);
+				NULL, 0, &op_ctx->creds);
 	if (size <= 0) {
 		LogFullDebug(COMPONENT_FSAL, "getxattr returned %d", size);
 		return 0;
@@ -237,7 +241,7 @@ int ceph_get_posix_acl(struct ceph_export *export,
 
 	/* Read extended attribute's value */
 	rc = fsal_ceph_ll_getxattr(export->cmount, objhandle->i, name,
-				value, size, op_ctx->creds);
+				value, size, &op_ctx->creds);
 	if (rc < 0) {
 		LogMajor(COMPONENT_FSAL, "getxattr returned %d", rc);
 		if (rc == -ENODATA) {
@@ -274,7 +278,7 @@ out:
  */
 
 fsal_status_t ceph_set_acl(struct ceph_export *export,
-	struct ceph_handle *objhandle, bool is_dir, struct attrlist *attrs)
+	struct ceph_handle *objhandle, bool is_dir, struct fsal_attrlist *attrs)
 {
 	int size = 0, count, rc;
 	acl_t acl = NULL;
@@ -320,7 +324,7 @@ fsal_status_t ceph_set_acl(struct ceph_export *export,
 	}
 
 	rc = fsal_ceph_ll_setxattr(export->cmount, objhandle->i,
-				name, value, size, 0, op_ctx->creds);
+				name, value, size, 0, &op_ctx->creds);
 	if (rc < 0) {
 		status = ceph2fsal_error(rc);
 	}
@@ -348,7 +352,7 @@ out:
  */
 
 int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
-	bool is_dir, struct attrlist *attrs)
+	bool is_dir, struct fsal_attrlist *attrs)
 {
 	acl_t e_acl = NULL, i_acl = NULL;
 	fsal_acl_data_t acldata;

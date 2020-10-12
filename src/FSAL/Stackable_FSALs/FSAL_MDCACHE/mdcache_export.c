@@ -95,7 +95,6 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 	mdcache_entry_t *entry;
 	struct entry_export_map *expmap;
 	fsal_status_t status;
-	bool rc;
 
 	/* Indicate this export is going away so we don't create any new
 	 * export map entries.
@@ -115,6 +114,18 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 		}
 
 		entry = expmap->entry;
+
+		if (entry == root_entry) {
+			LogDebug(COMPONENT_EXPORT,
+				 "About to unmap root entry %p and possibly free it for export %d path %s pseudo %s",
+				 root_entry, op_ctx->ctx_export->export_id,
+				 CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx));
+		} else {
+			LogDebug(COMPONENT_EXPORT,
+				 "About to unmap entry %p and possibly free it",
+				 entry);
+		}
+
 		/* Get a ref across cleanup.  This must be an initial ref, so
 		 * that it takes the LRU lane lock, keeping it from racing with
 		 * lru_lane_run() */
@@ -146,9 +157,15 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 			 * try_cleanup_push (LRU lane lock order) */
 			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+			LogFullDebug(COMPONENT_EXPORT,
+				     "Disposing of entry %p",
+				     entry);
 
 			/* There are no exports referencing this entry, attempt
-			 * to push it to cleanup queue.  */
+			 * to push it to cleanup queue. Note that if the export
+			 * root is in fact only used by one export, it will
+			 * be unhashed here.
+			 */
 			mdcache_lru_cleanup_try_push(entry);
 		} else {
 			/* Make sure first export pointer is still valid */
@@ -158,6 +175,10 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 
 			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+			LogFullDebug(COMPONENT_EXPORT,
+				     "entry %p is still exported by export id %d",
+				     entry, expmap->exp->mfe_exp.export_id);
 		}
 
 		/* Release above ref */
@@ -169,9 +190,10 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 		sub_export->exp_ops.unexport(sub_export, root_entry->sub_handle)
 	);
 
-	/* Unhash the root object */
-	rc = cih_remove_checked(root_entry);
-	assert(!rc);
+	/* NOTE: we do NOT need to unhash the root entry, it was unhashed above
+	 *       (if it was not used by another export) in the loop since it is
+	 *       an entry that belongs to the export.
+	 */
 }
 
 /**
@@ -189,7 +211,7 @@ static void mdcache_exp_release(struct fsal_export *exp_hdl)
 
 	LogInfo(COMPONENT_FSAL, "Releasing %s export %" PRIu16 " for %s",
 		fsal_hdl->name, op_ctx->ctx_export->export_id,
-		export_path(op_ctx->ctx_export));
+		ctx_export_path(op_ctx));
 
 	/* Stop the dirmap thread */
 	dirmap_lru_stop(exp);

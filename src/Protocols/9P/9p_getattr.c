@@ -51,7 +51,7 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u32 *fid = NULL;
 	u64 *request_mask = NULL;
 	fsal_status_t fsal_status;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	struct _9p_fid *pfid = NULL;
 

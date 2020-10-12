@@ -158,7 +158,6 @@ enum nfs_req_result nfs4_op_layoutcommit(struct nfs_argop4 *op,
 
 		nfs_status = data->current_obj->obj_ops->layoutcommit(
 						data->current_obj,
-						op_ctx,
 						&lou_body,
 						&arg,
 						&res);

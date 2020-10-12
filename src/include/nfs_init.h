@@ -55,6 +55,7 @@ extern pthread_t gsh_dbus_thrid;
 void nfs_init_init(void);
 void nfs_init_complete(void);
 void nfs_init_wait(void);
+int nfs_init_wait_timeout(int timeout);
 
 /**
  * nfs_prereq_init:
@@ -111,9 +112,17 @@ static inline void nfs_check_malloc(void)
 /* in nfs_worker_thread.c */
 
 enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *);
+#ifdef _USE_NLM
 enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *);
+#endif
+#ifdef _USE_NFS3
 enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *);
+#endif
+#ifdef _USE_RQUOTA
 enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *);
+#endif
+#ifdef USE_NFSACL3
 enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *);
+#endif
 
 #endif				/* !NFS_INIT_H */

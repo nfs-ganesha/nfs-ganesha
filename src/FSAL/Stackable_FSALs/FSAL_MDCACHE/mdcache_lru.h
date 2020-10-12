@@ -74,6 +74,7 @@ enum fd_states {
 struct lru_state {
 	uint64_t entries_hiwat;
 	uint64_t entries_used;
+	uint32_t entries_release_size;
 	uint64_t chunks_hiwat;
 	uint64_t chunks_used;
 	uint32_t fds_system_imposed;
@@ -121,16 +122,6 @@ extern pool_t *mdcache_entry_pool;
 #define LRU_UNREF_QLOCKED 0x0008
 
 /**
- * entry->state_lock is held
- *
- * This will prevent cleanup on unref. The calling thread MUST hold another
- * reference that will be release without holding the state_lock (which SHOULD
- * be true in order to even be able to reference entry->state_lock), which
- * release will allow cleanup if necessary.
- */
-#define LRU_UNREF_STATE_LOCK_HELD 0x0010
-
-/**
  * The minimum reference count for a cache entry not being recycled.
  */
 
@@ -157,6 +148,8 @@ fsal_status_t _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags,
 void mdcache_lru_kill(mdcache_entry_t *entry);
 void mdcache_lru_cleanup_push(mdcache_entry_t *entry);
 void mdcache_lru_cleanup_try_push(mdcache_entry_t *entry);
+
+size_t mdcache_lru_release_entries(int32_t want_release);
 
 #define mdcache_lru_unref(e) _mdcache_lru_unref(e, LRU_FLAG_NONE, \
 						__func__, __LINE__)

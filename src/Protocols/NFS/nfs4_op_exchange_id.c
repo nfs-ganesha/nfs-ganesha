@@ -163,6 +163,19 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 	if (res_EXCHANGE_ID4->eir_status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
+	/*
+	 * https://tools.ietf.org/html/rfc5661#page-309
+	 * +--------------------------------------------------------+
+	 * | Acceptable Results from EXCHANGE_ID                    |
+	 * +--------------------------------------------------------+
+	 * | EXCHGID4_FLAG_USE_PNFS_MDS                             |
+	 * | EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS |
+	 * | EXCHGID4_FLAG_USE_PNFS_DS                              |
+	 * | EXCHGID4_FLAG_USE_NON_PNFS                             |
+	 * | EXCHGID4_FLAG_USE_PNFS_DS | EXCHGID4_FLAG_USE_NON_PNFS |
+	 * +--------------------------------------------------------+
+	 */
+
 	/* If client did not ask for pNFS related server roles than just set
 	   server roles */
 	pnfs_flags = arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_MASK_PNFS;
@@ -171,21 +184,26 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 			pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_MDS;
 		if (nfs_param.nfsv4_param.pnfs_ds)
 			pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_DS;
-		if (pnfs_flags == 0)
+		if ((pnfs_flags & EXCHGID4_FLAG_USE_PNFS_MDS) == 0)
 			pnfs_flags |= EXCHGID4_FLAG_USE_NON_PNFS;
 	}
 	/* If client did ask for pNFS related server roles than try to match the
 	   server roles to the client request. */
 	else {
+		uint32_t server_pnfs_flags = 0;
+
 		if ((arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_USE_PNFS_MDS)
 		    && (nfs_param.nfsv4_param.pnfs_mds))
-			pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_MDS;
+			server_pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_MDS;
 		if ((arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_USE_PNFS_DS)
 		    && (nfs_param.nfsv4_param.pnfs_ds))
-			pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_DS;
-		if (pnfs_flags == 0)
-			pnfs_flags |= EXCHGID4_FLAG_USE_NON_PNFS;
+			server_pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_DS;
+		if ((server_pnfs_flags & EXCHGID4_FLAG_USE_PNFS_MDS) == 0)
+			server_pnfs_flags |= EXCHGID4_FLAG_USE_NON_PNFS;
+
+		pnfs_flags &= server_pnfs_flags;
 	}
+
 	LogDebug(COMPONENT_CLIENTID,
 		"EXCHANGE_ID pnfs_flags 0x%08x eia_flags 0x%08x",
 		 pnfs_flags, arg_EXCHANGE_ID4->eia_flags);

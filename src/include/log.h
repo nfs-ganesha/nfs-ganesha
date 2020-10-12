@@ -520,4 +520,17 @@ bool _ratelimit(struct ratelimit_state *rs, int *missed);
 	}                                                                  \
 })
 
+#define LogWarnLimited(comp, fmt, args...) ({                             \
+	int missed;                                                       \
+									  \
+	static DEFINE_RATELIMIT_STATE(_rs,				  \
+		DEFAULT_RATELIMIT_INTERVAL,				  \
+		DEFAULT_RATELIMIT_BURST);				  \
+	if (_ratelimit(&(_rs), &missed)) {				  \
+		if (missed)						  \
+			LogWarn(comp, "message missed %d times", missed); \
+		LogWarn(comp, fmt, ## args);                              \
+	}								  \
+})
+
 #endif

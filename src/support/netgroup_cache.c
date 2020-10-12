@@ -282,9 +282,15 @@ bool ng_innetgr(const char *group, const char *host)
 	}
 	PTHREAD_RWLOCK_unlock(&ng_lock);
 
-	rc = innetgr(group, host, NULL, NULL);
-
+	/* Call innetgr() under a lock. It is supposed to be thread safe
+	 * but sssd doesn't handle multiple threads calling innetgr() at
+	 * the same time resulting in erratic returns. sssd team will
+	 * fix this behavior in a future release but we can make it
+	 * single threaded as a workaround.  Shouldn't be a performance
+	 * issue as this shouldn't happen often.
+	 */
 	PTHREAD_RWLOCK_wrlock(&ng_lock);
+	rc = innetgr(group, host, NULL, NULL);
 	if (rc)
 		ng_add(group, host, false);	/* positive lookup */
 	else

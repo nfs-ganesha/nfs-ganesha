@@ -128,7 +128,7 @@ void vfs_acl_release(struct gsh_buffdesc *key)
 
 fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 			       int fd, attrmask_t request_mask,
-			       struct attrlist *attrib)
+			       struct fsal_attrlist *attrib)
 {
 	fsal_status_t fsal_st = {ERR_FSAL_NO_ERROR, 0};
 
@@ -200,7 +200,7 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 
 fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 			       int fd, attrmask_t request_mask,
-			       struct attrlist *attrib)
+			       struct fsal_attrlist *attrib)
 {
 #ifdef ENABLE_VFS_DEBUG_ACL
 	struct vfs_acl_entry *fa;

@@ -42,6 +42,7 @@
 #include "server_stats.h"
 #include "export_mgr.h"
 #include "nfs_creds.h"
+#include "pnfs_utils.h"
 
 #ifdef USE_LTTNG
 #include "gsh_lttng/nfs_rpc.h"
@@ -856,11 +857,10 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 		 */
 		LogMidDebugAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			       "Check export perms export = %08x req = %08x",
-			       op_ctx->export_perms->options &
+			       op_ctx->export_perms.options &
 					EXPORT_OPTION_ACCESS_MASK,
 			       perm_flags);
-		if ((op_ctx->export_perms->options &
-		     perm_flags) != perm_flags) {
+		if ((op_ctx->export_perms.options & perm_flags) != perm_flags) {
 			/* Export doesn't allow requested
 			 * access for this client.
 			 */
@@ -1061,7 +1061,8 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 	compound_data_t *data = reqdata->proc_data;
 	enum nfs_req_result result;
 
-	op_ctx = &reqdata->req_ctx;
+	/* Restore the op_ctx */
+	resume_op_context(&reqdata->op_context);
 
 	/* Start by resuming the operation that suspended. */
 	result = (optabv4[data->opcode].resume)
@@ -1101,12 +1102,8 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 
 	compound_data_Free(data);
 	/* release current active export in op_ctx. */
-	if (op_ctx->ctx_export) {
-		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
-	}
-
+	if (op_ctx->ctx_export)
+		clear_op_context_export();
 
 	nfs_rpc_complete_async_request(reqdata, NFS_REQ_OK);
 
@@ -1344,11 +1341,8 @@ out:
 	compound_data_Free(data);
 
 	/* release current active export in op_ctx. */
-	if (op_ctx->ctx_export) {
-		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
-	}
+	if (op_ctx->ctx_export)
+		clear_op_context_export();
 
 	return drop ? NFS_REQ_DROP : NFS_REQ_OK;
 }				/* nfs4_Compound */
@@ -1436,7 +1430,13 @@ void compound_data_Free(compound_data_t *data)
 	if (data == NULL)
 		return;
 
-	/* Release refcounted cache entries */
+	/* Release refcounted cache entries. A note on current_ds and saved_ds,
+	 * If both are in use and the same, it will be released during
+	 * set_saved_entry since set_current_entry will have set current_ds to
+	 * NULL. If both are non-NULL and different, current_ds will be
+	 * release by set_current_entry and saved_ds will be released by
+	 * set_saved_entry.
+	 */
 	set_current_entry(data, NULL);
 	set_saved_entry(data, NULL);
 
@@ -1459,6 +1459,12 @@ void compound_data_Free(compound_data_t *data)
 	if (data->saved_export) {
 		put_gsh_export(data->saved_export);
 		data->saved_export = NULL;
+	}
+
+	/* If there was a saved_pnfs_ds is present, release reference. */
+	if (data->saved_pnfs_ds != NULL) {
+		pnfs_ds_put(data->saved_pnfs_ds);
+		data->saved_pnfs_ds = NULL;
 	}
 
 	if (data->currentFH.nfs_fh4_val != NULL)

@@ -104,9 +104,10 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 	bool_t have_grace_ref = false;
 	int rc;
 	struct fsal_obj_handle *obj = data->current_obj;
-	bool state_lock_held = false;
+	bool st_lock_held = false;
 	uint64_t maxfilesize =
 	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
+	bool new_lock_state = false;
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCK handler ----------------------");
@@ -554,12 +555,12 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 			 * new stateid, we will attempt to recycle.
 			 */
 			STATELOCK_lock(obj);
-			state_lock_held = true;
+			st_lock_held = true;
 			lock_state = nfs4_State_Get_Obj(obj, lock_owner);
 		} else {
-			/* Take the state_lock now */
+			/* Take the st_lock now */
 			STATELOCK_lock(obj);
-			state_lock_held = true;
+			st_lock_held = true;
 		}
 
 		if (lock_state == NULL) {
@@ -587,6 +588,8 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 				goto out2;
 			}
 
+			new_lock_state = true;
+
 			glist_init(&lock_state->state_data.lock.state_locklist);
 
 			/* Add lock state to the list of lock states belonging
@@ -597,14 +600,36 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 
 		}
 	} else {
-		/* Take the state_lock now */
+		/* Take the st_lock now */
 		STATELOCK_lock(obj);
-		state_lock_held = true;
+		st_lock_held = true;
 	}
 
 	if (data->minorversion == 0) {
 		op_ctx->clientid =
 		    &lock_owner->so_owner.so_nfs4_owner.so_clientid;
+	}
+
+	/* Handle race with CLOSE and LOCK. Buggy clients could send
+	 * CLOSE and LOCK requests at the same time for the same open
+	 * stateid.  Make sure the open state is still in the hash
+	 * table.  If we win here, CLOSE will fail. If CLOSE wins, we
+	 * fail this LOCK request as though the open state wasn't
+	 * available.
+	 *
+	 * A state is removed from the hash table while holding
+	 * state_lock, and state_owner field is set to NULL in
+	 * _state_del_locked()). We already have the state_lock so we
+	 * can safely check if the state_owner is still valid.
+	 */
+	if (state_open->state_owner == NULL) {
+		if (new_lock_state) {
+			/* Need to destroy new state */
+			state_del_locked(lock_state);
+		}
+
+		res_LOCK4->status = NFS4ERR_BAD_STATEID;
+		goto out2;
 	}
 
 	/* Now we have a lock owner and a stateid.  Go ahead and push
@@ -648,7 +673,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 					    lock_tag);
 		}
 
-		if (arg_LOCK4->locker.new_lock_owner) {
+		if (new_lock_state) {
 			/* Need to destroy new state */
 			state_del_locked(lock_state);
 		}
@@ -707,8 +732,8 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 	if (have_grace_ref)
 		nfs_put_grace_status();
 
-	if (state_lock_held) {
-		/* Now release the state_lock */
+	if (st_lock_held) {
+		/* Now release the st_lock */
 		STATELOCK_unlock(obj);
 	}
 

@@ -54,7 +54,7 @@
  * each segment returned by FSAL_layoutget to an existing state of
  * type STATE_TYPE_LAYOUT.
  *
- * @note state_lock must be held for write.
+ * @note st_lock must be held.
  *
  * @param[in] state           The layout state.
  * @param[in] segment         Layout segment itself granted by the FSAL
@@ -122,7 +122,7 @@ state_status_t state_delete_segment(state_layout_segment_t *segment)
  * This function finds a layout corresponding to a given file,
  * clientid, and layout type if one exists.
  *
- * @note state_lock MUST be held for read
+ * @note st_lock MUST be held
  *
  * @param[in]  obj    File
  * @param[in]  owner  The state owner.  This must be a clientid owner.
@@ -166,7 +166,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 {
 	state_t *state, *first;
 	struct fsal_obj_handle *obj;
-	struct gsh_export *saved_export = op_ctx->ctx_export;
+	struct saved_export_context saved;
 	struct gsh_export *export;
 	int errcnt = 0;
 	struct glist_head *glist, *glistn;
@@ -219,9 +219,9 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 
 		inc_state_t_ref(state);
 
-		/* Set up the op_context with the proper export */
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+		/* Get a ref to the proper export and add it to op_ctx */
+		get_gsh_export_ref(export);
+		save_op_context_export_and_set_export(&saved, export);
 
 		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
 		so_mutex_held = false;
@@ -247,8 +247,8 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 
 		/* Release the reference taken above */
 		obj->obj_ops->put_ref(obj);
-		put_gsh_export(export);
 		dec_state_t_ref(state);
+		restore_op_context_export(&saved);
 
 		if (errcnt < STATE_ERR_MAX) {
 			/* Loop again, but since we droped the so_mutex, we
@@ -274,11 +274,6 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 			 "Could not complete cleanup of layouts for client owner %s",
 			 str);
 	}
-
-	op_ctx->ctx_export = saved_export;
-
-	if (saved_export != NULL)
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 }
 
 /** @} */

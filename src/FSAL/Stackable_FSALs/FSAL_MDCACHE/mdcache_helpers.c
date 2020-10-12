@@ -184,6 +184,7 @@ static mdcache_entry_t *_mdcache_alloc_handle(
 	result->obj_handle.fsid = sub_handle->fsid;
 	result->obj_handle.fileid = sub_handle->fileid;
 	result->obj_handle.fs = fs;
+	result->obj_handle.exp_refcnt = 0;
 
 	/* default handlers */
 	fsal_obj_handle_init(&result->obj_handle, &export->mfe_exp,
@@ -655,8 +656,8 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
 fsal_status_t
 mdcache_new_entry(struct mdcache_fsal_export *export,
 		  struct fsal_obj_handle *sub_handle,
-		  struct attrlist *attrs_in,
-		  struct attrlist *attrs_out,
+		  struct fsal_attrlist *attrs_in,
+		  struct fsal_attrlist *attrs_out,
 		  bool new_directory,
 		  mdcache_entry_t **entry,
 		  struct state_t *state,
@@ -818,7 +819,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 	if (nentry->attrs.expire_time_attr == 0) {
 		nentry->attrs.expire_time_attr =
-		    op_ctx->export_perms->expire_time_attr;
+		    op_ctx->export_perms.expire_time_attr;
 	}
 
 	/* Validate the attributes we just set. */
@@ -1041,12 +1042,12 @@ fsal_status_t
 mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 		    struct mdcache_fsal_export *export,
 		    mdcache_entry_t **entry,
-		    struct attrlist *attrs_out)
+		    struct fsal_attrlist *attrs_out)
 {
 	struct fsal_export *sub_export = export->mfe_exp.sub_export;
 	mdcache_key_t key;
 	struct fsal_obj_handle *sub_handle;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_status_t status;
 
 	/* Copy the fh_desc into key, todo: is there a function for this? */
@@ -1214,7 +1215,7 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
  */
 fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 			 bool uncached, mdcache_entry_t **new_entry,
-			 struct attrlist *attrs_out)
+			 struct fsal_attrlist *attrs_out)
 {
 	*new_entry = NULL;
 	fsal_status_t status;
@@ -1346,12 +1347,12 @@ out:
 fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent,
 				  const char *name,
 				  mdcache_entry_t **new_entry,
-				  struct attrlist *attrs_out)
+				  struct fsal_attrlist *attrs_out)
 {
 	struct fsal_obj_handle *sub_handle = NULL, *new_obj = NULL;
 	fsal_status_t status;
 	struct mdcache_fsal_export *export = mdc_cur_export();
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	bool invalidate = false;
 
 	/* Ask for all supported attributes except ACL (we defer fetching ACL
@@ -1642,7 +1643,7 @@ struct mdcache_populate_cb_state {
 
 static enum fsal_dir_result
 mdc_readdir_uncached_cb(const char *name, struct fsal_obj_handle *sub_handle,
-			struct attrlist *attrs, void *dir_state,
+			struct fsal_attrlist *attrs, void *dir_state,
 			fsal_cookie_t cookie)
 {
 	struct mdcache_populate_cb_state *state = dir_state;
@@ -2144,7 +2145,7 @@ out:
 
 static enum fsal_dir_result
 mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
-			 struct attrlist *attrs_in, void *dir_state,
+			 struct fsal_attrlist *attrs_in, void *dir_state,
 			 fsal_cookie_t cookie)
 {
 	struct mdcache_populate_cb_state *state = dir_state;
@@ -2454,7 +2455,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 
 static enum fsal_dir_result
 mdc_readdir_chunked_cb(const char *name, struct fsal_obj_handle *sub_handle,
-		       struct attrlist *attrs, void *dir_state,
+		       struct fsal_attrlist *attrs, void *dir_state,
 		       fsal_cookie_t cookie)
 {
 	struct mdcache_populate_cb_state *state = dir_state;
@@ -3126,7 +3127,7 @@ again:
 		fsal_status_t status;
 		enum fsal_dir_result cb_result;
 		mdcache_entry_t *entry = NULL;
-		struct attrlist attrs;
+		struct fsal_attrlist attrs;
 
 		if (dirent->flags & DIR_ENTRY_FLAG_DELETED) {
 			/* Skip deleted entries */
@@ -3306,7 +3307,7 @@ again:
 			   __func__, __LINE__, dirent->name, &entry->obj_handle,
 			   entry->sub_handle, entry->lru.refcnt);
 #endif
-		cb_result = cb(dirent->name, &entry->obj_handle, &entry->attrs,
+		cb_result = cb(dirent->name, &entry->obj_handle, &attrs,
 			       dir_state, dirent->ck);
 
 		fsal_release_attrs(&attrs);
@@ -3483,7 +3484,7 @@ _mdcache_kill_entry(mdcache_entry_t *entry,
  * @param[in] attrs	New attributes to cache
  * @return FSAL status
  */
-void mdc_update_attr_cache(mdcache_entry_t *entry, struct attrlist *attrs)
+void mdc_update_attr_cache(mdcache_entry_t *entry, struct fsal_attrlist *attrs)
 {
 	if (entry->attrs.acl != NULL) {
 		/* We used to have an ACL... */

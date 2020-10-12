@@ -233,6 +233,35 @@ extern int portable_clock_gettime(struct timespec *ts);
 		}							\
 	} while (0)
 
+static inline int PTHREAD_mutex_trylock(pthread_mutex_t *mtx,
+					const char *mtx_name)
+{
+	int rc;
+
+	rc = pthread_mutex_trylock(mtx);
+	if (rc == 0) {
+		LogFullDebug(COMPONENT_RW_LOCK,
+			     "Acquired mutex %p (%s) at %s:%d",
+			     mtx, mtx_name,
+			     __FILE__, __LINE__);
+	} else if (rc == EBUSY) {
+		LogFullDebug(COMPONENT_RW_LOCK,
+			     "Busy mutex %p (%s) at %s:%d",
+			     mtx, mtx_name,
+			     __FILE__, __LINE__);
+	} else{
+		LogCrit(COMPONENT_RW_LOCK,
+			"Error %d, acquiring mutex %p (%s) at %s:%d",
+			rc, mtx, mtx_name,
+			__FILE__, __LINE__);
+		abort();
+	}
+
+	return rc;
+}
+
+#define PTHREAD_MUTEX_trylock(_mtx)  PTHREAD_mutex_trylock(_mtx, #_mtx)
+
 /**
  * @brief Logging mutex unlock
  *

@@ -99,7 +99,7 @@ static void release(struct fsal_export *export_pub)
 static fsal_status_t lookup_path(struct fsal_export *export_pub,
 				 const char *path,
 				 struct fsal_obj_handle **pub_handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	/* The 'private' full export handle */
 	struct ceph_export *export =
@@ -138,13 +138,13 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	 * must be a superset of the export fullpath, or the string
 	 * handling will be broken.
 	 */
-	if (strstr(realpath, op_ctx->ctx_export->fullpath) != realpath) {
+	if (strstr(realpath, CTX_FULLPATH(op_ctx)) != realpath) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		return status;
 	}
 
 	/* Advance past the export's fullpath */
-	realpath += strlen(op_ctx->ctx_export->fullpath);
+	realpath += strlen(CTX_FULLPATH(op_ctx));
 
 	/* special case the root */
 	if (strcmp(realpath, "/") == 0) {
@@ -154,7 +154,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	}
 
 	rc = fsal_ceph_ll_walk(export->cmount, realpath, &i, &stx,
-				!!attrs_out, op_ctx->creds);
+				!!attrs_out, &op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 
@@ -187,7 +187,25 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 		/* Digested Handles */
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
-		/* wire handles */
+		/*
+		 * Ganesha automatically mixes the export_id in with the
+		 * filehandle and strips that out before calling this
+		 * function.
+		 *
+		 * Most FSALs don't factor in the export_id with the handle_key,
+		 * but we want to do that for FSAL_CEPH, primarily because we
+		 * want to do accesses via different exports via different cephx
+		 * creds. Mix the export_id back in here.
+		 *
+		 * Note that we use a LE values in the filehandle. Earlier
+		 * versions treated those values as opaque, so this allows us to
+		 * maintain compatibility with legacy deployments (most of which
+		 * were on LE arch).
+		 */
+		key->export_id = op_ctx->ctx_export->export_id;
+		key->hhdl.chk_ino = le64toh(key->hhdl.chk_ino);
+		key->hhdl.chk_snap = le64toh(key->hhdl.chk_snap);
+		key->hhdl.chk_fscid = le64toh(key->hhdl.chk_fscid);
 		fh_desc->len = sizeof(*key);
 		break;
 	default:
@@ -212,7 +230,7 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 static fsal_status_t create_handle(struct fsal_export *export_pub,
 				   struct gsh_buffdesc *desc,
 				   struct fsal_obj_handle **pub_handle,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	/* Full 'private' export structure */
 	struct ceph_export *export =
@@ -221,6 +239,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The FSAL specific portion of the handle received by the client */
 	struct ceph_handle_key *key = desc->addr;
+	struct ceph_host_handle *hhdl = &key->hhdl;
 	/* Ceph return code */
 	int rc = 0;
 	/* Stat buffer */
@@ -229,17 +248,20 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	struct ceph_handle *handle = NULL;
 	/* Inode pointer */
 	struct Inode *i;
+	vinodeno_t vi;
 
 	*pub_handle = NULL;
 
-	if (desc->len != sizeof(*key) &&
-	    desc->len != sizeof(key->chk_vi)) {
+	if (desc->len != sizeof(*key)) {
 		status.major = ERR_FSAL_INVAL;
 		return status;
 	}
 
+	vi.ino.val = hhdl->chk_ino;
+	vi.snapid.val = hhdl->chk_snap;
+
 	/* Check our local cache first */
-	i = ceph_ll_get_inode(export->cmount, key->chk_vi);
+	i = ceph_ll_get_inode(export->cmount, vi);
 	if (!i) {
 		/*
 		 * Try the slow way, may not be in cache now.
@@ -247,17 +269,17 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		 * Currently, there is no interface for looking up a snapped
 		 * inode, so we just bail here in that case.
 		 */
-		if (key->chk_vi.snapid.val != CEPH_NOSNAP)
+		if (hhdl->chk_snap != CEPH_NOSNAP)
 			return ceph2fsal_error(-ESTALE);
 
-		rc = ceph_ll_lookup_inode(export->cmount, key->chk_vi.ino, &i);
+		rc = ceph_ll_lookup_inode(export->cmount, vi.ino, &i);
 		if (rc)
 			return ceph2fsal_error(rc);
 	}
 
 	rc = fsal_ceph_ll_getattr(export->cmount, i, &stx,
 		attrs_out ? CEPH_STATX_ATTR_MASK : CEPH_STATX_HANDLE_MASK,
-		op_ctx->creds);
+		&op_ctx->creds);
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 

@@ -51,6 +51,9 @@ Requires: openSUSE-release
 @BCOND_PANFS@ panfs
 %global use_fsal_panfs %{on_off_switch panfs}
 
+@BCOND_KVSFS@ kvsfs
+%global use_fsal_kvsfs %{on_off_switch kvsfs}
+
 @BCOND_RDMA@ rdma
 %global use_rdma %{on_off_switch rdma}
 
@@ -184,7 +187,8 @@ BuildRequires: python3-sphinx
 %endif
 %endif
 Requires(post): psmisc
-Requires(pre): shadow-utils
+Requires(pre): /usr/sbin/useradd
+Requires(pre): /usr/sbin/groupadd
 
 %if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
 Requires: nfs-ganesha-selinux = %{version}-%{release}
@@ -248,11 +252,11 @@ BuildRequires:  python-devel
 %else
 Requires:	python3-gobject, python3-pyparsing
 BuildRequires:  python3-devel
-%endif
 %if ( 0%{?suse_version} )
 Requires:	dbus-1-python
 %else
 Requires:	python3-dbus
+%endif
 %endif
 
 %if %{with gui_utils}
@@ -354,6 +358,7 @@ Summary: The NFS-GANESHA CephFS FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
 BuildRequires:	libcephfs-devel >= 10.2.0
+BuildRequires:	libacl-devel
 
 %description ceph
 This package contains a FSAL shared object to
@@ -411,6 +416,20 @@ Requires:	nfs-ganesha = %{version}-%{release}
 %description panfs
 This package contains a FSAL shared object to
 be used with NFS-Ganesha to support PANFS
+%endif
+
+#KVSFS
+%if %{with kvsfs}
+%package kvsfs
+Summary: The NFS-GANESHA KVSFS FSAL
+Group: Applications/System
+Requires:       nfs-ganesha = %{version}-%{release}
+Requires:	libkvsns >= 1.2.0
+BuildRequires:  libkvsns-devel >= 1.2.0
+
+%description kvsfs
+This package contains a FSAL shared object to
+be used with NFS-Ganesha to support KVSFS/libkvsns
 %endif
 
 # GLUSTER
@@ -507,6 +526,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_RGW=%{use_fsal_rgw}			\
 	-DUSE_FSAL_GPFS=%{use_fsal_gpfs}		\
 	-DUSE_FSAL_PANFS=%{use_fsal_panfs}		\
+	-DUSE_FSAL_KVSFS=%{use_fsal_kvsfs}		\
 	-DUSE_FSAL_GLUSTER=%{use_fsal_gluster}		\
 	-DUSE_SYSTEM_NTIRPC=%{use_system_ntirpc}	\
 	-DUSE_9P_RDMA=%{use_rdma}			\
@@ -557,13 +577,13 @@ install -m 644 config_samples/vfs.conf %{buildroot}%{_sysconfdir}/ganesha
 
 mkdir -p %{buildroot}%{_unitdir}
 %if ( 0%{?fedora} ) || ( 0%{?rhel} && 0%{?rhel} >= 8 )
-mkdir -p %{buildroot}%{_sysconfdir}/systemd/system/nfs-ganesha.d
+mkdir -p %{buildroot}%{_sysconfdir}/systemd/system/nfs-ganesha-lock.service.d
 %endif
 
 install -m 644 scripts/systemd/nfs-ganesha.service.el7	%{buildroot}%{_unitdir}/nfs-ganesha.service
 %if ( 0%{?fedora} ) || ( 0%{?rhel} && 0%{?rhel} >= 8 )
 install -m 644 scripts/systemd/nfs-ganesha-lock.service.el8	%{buildroot}%{_unitdir}/nfs-ganesha-lock.service
-install -m 644 scripts/systemd/rpc-statd.conf.el8	%{buildroot}%{_sysconfdir}/systemd/system/nfs-ganesha.d/rpc-statd.conf
+install -m 644 scripts/systemd/rpc-statd.conf.el8	%{buildroot}%{_sysconfdir}/systemd/system/nfs-ganesha-lock.service.d/rpc-statd.conf
 %else
 install -m 644 scripts/systemd/nfs-ganesha-lock.service.el7	%{buildroot}%{_unitdir}/nfs-ganesha-lock.service
 %endif
@@ -666,8 +686,6 @@ exit 0
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
 %dir %{_sysconfdir}/ganesha/
 %config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
-%dir %{_defaultdocdir}/ganesha/
-%{_defaultdocdir}/ganesha/*
 %dir %{_localstatedir}/run/ganesha
 %dir %{_libexecdir}/ganesha
 %{_libexecdir}/ganesha/nfs-ganesha-config.sh
@@ -677,7 +695,7 @@ exit 0
 %{_unitdir}/nfs-ganesha-lock.service
 %{_unitdir}/nfs-ganesha-config.service
 %if ( 0%{?fedora} ) || ( 0%{?rhel} && 0%{?rhel} >= 8 )
-%{_sysconfdir}/systemd/system/nfs-ganesha.d/rpc-statd.conf
+%{_sysconfdir}/systemd/system/nfs-ganesha-lock.service.d/rpc-statd.conf
 %endif
 
 %if %{with man_page}
@@ -760,7 +778,9 @@ exit 0
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.main.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.log.conf
 %config(noreplace) %{_sysconfdir}/ganesha/gpfs.ganesha.exports.conf
+%if %{with utils}
 %{_libexecdir}/ganesha/gpfs-epoch
+%endif
 %if %{with man_page}
 %{_mandir}/*/ganesha-gpfs-config.8.gz
 %endif
@@ -826,6 +846,11 @@ exit 0
 %if %{with panfs}
 %files panfs
 %{_libdir}/ganesha/libfsalpanfs*
+%endif
+
+%if %{with kvsfs}
+%files kvsfs
+%{_libdir}/ganesha/libfsalkvsfs*
 %endif
 
 %if %{with pt}

@@ -69,6 +69,11 @@ struct mdcache_parameter {
 	/** High water mark for cache entries.  Defaults to 100000,
 	    settable by Entries_HWMark. */
 	uint32_t entries_hwmark;
+	/** When the handle cache is over the high water mark, attempt to
+	    release this number of entries in each pass until it's back below
+	    the high water mark. Set it to 0 does not attempt to release
+	    entries. Defaults to 100, settable by Entries_Release_Size. */
+	uint32_t entries_release_size;
 	/** High water mark for chunks.  Defaults to 100000,
 	    settable by Chunks_HWMark. */
 	uint32_t chunks_hwmark;

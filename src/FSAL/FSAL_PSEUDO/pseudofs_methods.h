@@ -55,12 +55,12 @@ struct pseudofs_fsal_export {
 fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 				 const char *path,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out);
+				 struct fsal_attrlist *attrs_out);
 
 fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out);
+				   struct fsal_attrlist *attrs_out);
 
 /*
  * PSEUDOFS internal object handle
@@ -72,7 +72,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 
 struct pseudo_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle;
-	struct attrlist attributes;
+	struct fsal_attrlist attributes;
 	char *handle;
 	struct pseudo_fsal_obj_handle *parent;
 	struct avltree avl_name;

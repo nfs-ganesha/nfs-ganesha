@@ -86,6 +86,13 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 	if (res_GETXATTR4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
+	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs
+		(op_ctx->fsal_export) & ATTR4_XATTR)) {
+
+		res_GETXATTR4->status = NFS4ERR_NOTSUPP;
+		return NFS_REQ_ERROR;
+	}
+
 	fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
 						    &arg_GETXATTR4->ga_name,
 						    &gr_value);
@@ -189,6 +196,13 @@ enum nfs_req_result nfs4_op_setxattr(struct nfs_argop4 *op,
 	if (res_SETXATTR4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
+	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs
+		(op_ctx->fsal_export) & ATTR4_XATTR)) {
+
+		res_SETXATTR4->status = NFS4ERR_NOTSUPP;
+		return NFS_REQ_ERROR;
+	}
+
 	/* Don't allow attribute change while we are in grace period.
 	 * Required for delegation reclaims and may be needed for other
 	 * reclaimable states as well.
@@ -274,6 +288,13 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *op,
 									false);
 	if (res_LISTXATTR4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
+
+	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs
+		(op_ctx->fsal_export) & ATTR4_XATTR)) {
+
+		res_LISTXATTR4->status = NFS4ERR_NOTSUPP;
+		return NFS_REQ_ERROR;
+	}
 
 	/* Double buf size, one half for compound and on half for names. */
 	list.entries = (component4 *)gsh_malloc(2*arg_LISTXATTR4->la_maxcount);
@@ -374,6 +395,13 @@ enum nfs_req_result nfs4_op_removexattr(struct nfs_argop4 *op,
 							false);
 	if (res_REMOVEXATTR4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
+
+	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs
+		(op_ctx->fsal_export) & ATTR4_XATTR)) {
+
+		res_REMOVEXATTR4->status = NFS4ERR_NOTSUPP;
+		return NFS_REQ_ERROR;
+	}
 
 	/* Don't allow attribute change while we are in grace period.
 	 * Required for delegation reclaims and may be needed for other

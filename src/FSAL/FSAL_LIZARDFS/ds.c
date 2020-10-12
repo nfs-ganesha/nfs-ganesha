@@ -58,7 +58,7 @@ static void lzfs_fsal_ds_handle_release(struct fsal_ds_handle *const ds_pub)
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_ds_handle *lzfs_ds;
 
-	lzfs_export = container_of(ds_pub->pds->mds_fsal_export,
+	lzfs_export = container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
 				   struct lzfs_fsal_export, export);
 	lzfs_ds = container_of(ds_pub, struct lzfs_fsal_ds_handle, ds);
 
@@ -69,7 +69,6 @@ static void lzfs_fsal_ds_handle_release(struct fsal_ds_handle *const ds_pub)
 					   lzfs_ds->cache_handle);
 	}
 
-	fsal_ds_handle_fini(&lzfs_ds->ds);
 	gsh_free(lzfs_ds);
 
 	lzfs_int_clear_fileinfo_cache(lzfs_export, 5);
@@ -119,7 +118,6 @@ static nfsstat4 lzfs_int_openfile(struct lzfs_fsal_export *lzfs_export,
  * \see fsal_api.h for more information
  */
 static nfsstat4 lzfs_fsal_ds_handle_read(struct fsal_ds_handle *const ds_hdl,
-					 struct req_op_context *const req_ctx,
 					 const stateid4 *stateid,
 					 const offset4 offset,
 					 const count4 requested_length,
@@ -133,7 +131,7 @@ static nfsstat4 lzfs_fsal_ds_handle_read(struct fsal_ds_handle *const ds_hdl,
 	ssize_t nb_read;
 	nfsstat4 nfs_status;
 
-	lzfs_export = container_of(ds_hdl->pds->mds_fsal_export,
+	lzfs_export = container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
 				   struct lzfs_fsal_export, export);
 	lzfs_ds = container_of(ds_hdl, struct lzfs_fsal_ds_handle, ds);
 
@@ -166,7 +164,6 @@ static nfsstat4 lzfs_fsal_ds_handle_read(struct fsal_ds_handle *const ds_hdl,
  * \see fsal_api.h for more information
  */
 static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
-					 struct req_op_context *const req_ctx,
 					 const stateid4 *stateid,
 					 const offset4 offset,
 					 const count4 write_length,
@@ -182,7 +179,7 @@ static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
 	ssize_t nb_write;
 	nfsstat4 nfs_status;
 
-	lzfs_export = container_of(ds_hdl->pds->mds_fsal_export,
+	lzfs_export = container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
 				   struct lzfs_fsal_export, export);
 	lzfs_ds = container_of(ds_hdl, struct lzfs_fsal_ds_handle, ds);
 
@@ -222,12 +219,10 @@ static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
  *
  * \see fsal_api.h for more information
  */
-static nfsstat4 lzfs_fsal_ds_handle_commit(
-					struct fsal_ds_handle *const ds_hdl,
-					struct req_op_context *const req_ctx,
-					const offset4 offset,
-					const count4 count,
-					verifier4 * const writeverf)
+static nfsstat4 lzfs_fsal_ds_handle_commit(struct fsal_ds_handle *const ds_hdl,
+					   const offset4 offset,
+					   const count4 count,
+					   verifier4 * const writeverf)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_ds_handle *lzfs_ds;
@@ -237,7 +232,7 @@ static nfsstat4 lzfs_fsal_ds_handle_commit(
 
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
-	lzfs_export = container_of(ds_hdl->pds->mds_fsal_export,
+	lzfs_export = container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
 				   struct lzfs_fsal_export, export);
 	lzfs_ds = container_of(ds_hdl, struct lzfs_fsal_ds_handle, ds);
 
@@ -271,7 +266,6 @@ static nfsstat4 lzfs_fsal_ds_handle_commit(
  * \see fsal_api.h for more information
  */
 static nfsstat4 lzfs_fsal_ds_read_plus(struct fsal_ds_handle *const ds_hdl,
-				       struct req_op_context *const req_ctx,
 				       const stateid4 *stateid,
 				       const offset4 offset,
 				       const count4 requested_length,
@@ -282,21 +276,6 @@ static nfsstat4 lzfs_fsal_ds_read_plus(struct fsal_ds_handle *const ds_hdl,
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS read_plus!");
 	return NFS4ERR_NOTSUPP;
-}
-
-/*! \brief Initialize FSAL specific values for DS handle
- *
- * \see fsal_api.h for more information
- */
-static void lzfs_fsal_dsh_ops_init(struct fsal_dsh_ops *ops)
-{
-	memset(ops, 0, sizeof(struct fsal_dsh_ops));
-
-	ops->release = lzfs_fsal_ds_handle_release;
-	ops->read = lzfs_fsal_ds_handle_read;
-	ops->write = lzfs_fsal_ds_handle_write;
-	ops->commit = lzfs_fsal_ds_handle_commit;
-	ops->read_plus = lzfs_fsal_ds_read_plus;
 }
 
 /*! \brief Create a FSAL data server handle from a wire handle
@@ -321,7 +300,6 @@ static nfsstat4 lzfs_fsal_make_ds_handle(struct fsal_pnfs_ds *const pds,
 	lzfs_ds = gsh_calloc(1, sizeof(struct lzfs_fsal_ds_handle));
 
 	*handle = &lzfs_ds->ds;
-	fsal_ds_handle_init(*handle, pds);
 
 	if (flags & FH_FSAL_BIG_ENDIAN) {
 #if (BYTE_ORDER != BIG_ENDIAN)
@@ -340,34 +318,13 @@ static nfsstat4 lzfs_fsal_make_ds_handle(struct fsal_pnfs_ds *const pds,
 	return NFS4_OK;
 }
 
-/*! \brief Clean up a server
- *
- * \see fsal_api.h for more information
- */
-static void lzfs_fsal_pds_release(struct fsal_pnfs_ds *const pds)
-{
-	LogDebug(COMPONENT_PNFS, "pNFS DS release!");
-	fsal_pnfs_ds_fini(pds);
-	gsh_free(pds);
-}
-
-/*! \brief Initialize FSAL specific permissions per pNFS DS
- *
- * \see fsal_api.h for more information
- */
-static nfsstat4 lzfs_fsal_pds_permissions(struct fsal_pnfs_ds *const pds,
-					  struct svc_req *req)
-{
-	op_ctx->export_perms->set = root_op_export_set;
-	op_ctx->export_perms->options = root_op_export_options;
-	return NFS4_OK;
-}
-
 void lzfs_fsal_ds_handle_ops_init(struct fsal_pnfs_ds_ops *ops)
 {
-	memset(ops, 0, sizeof(struct fsal_pnfs_ds_ops));
+	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
 	ops->make_ds_handle = lzfs_fsal_make_ds_handle;
-	ops->fsal_dsh_ops = lzfs_fsal_dsh_ops_init;
-	ops->release = lzfs_fsal_pds_release;
-	ops->permissions = lzfs_fsal_pds_permissions;
+	ops->dsh_release = lzfs_fsal_ds_handle_release;
+	ops->dsh_read = lzfs_fsal_ds_handle_read;
+	ops->dsh_write = lzfs_fsal_ds_handle_write;
+	ops->dsh_commit = lzfs_fsal_ds_handle_commit;
+	ops->dsh_read_plus = lzfs_fsal_ds_read_plus;
 }

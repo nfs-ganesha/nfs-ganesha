@@ -13,6 +13,7 @@
    ganesha-vfs-config
    ganesha-lustre-config
    ganesha-xfs-config
+   ganesha-kvsfs-config
    ganesha-cache-config
    ganesha-export-config
    ganesha-core-config

@@ -102,7 +102,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		LogDebug(COMPONENT_EXPORT,
 			 "Handling reverse junction from Export_Id %d Pseudo %s Parent=%p",
 			 original_export->export_id,
-			 original_export->pseudopath,
+			 CTX_PSEUDOPATH(op_ctx),
 			 original_export->exp_parent_exp);
 
 		if (original_export->exp_parent_exp == NULL) {
@@ -148,12 +148,13 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 			LogCrit(COMPONENT_EXPORT,
 				"Reverse junction from Export_Id %d Pseudo %s Parent=%p is stale",
 				original_export->export_id,
-				original_export->pseudopath,
+				CTX_PSEUDOPATH(op_ctx),
 				parent_exp);
 			res_LOOKUPP4->status = NFS4ERR_STALE;
 			return NFS_REQ_ERROR;
 		}
 
+		/* Get reference to parent_exp for op context. */
 		get_gsh_export_ref(parent_exp);
 
 		dir_obj->obj_ops->get_ref(dir_obj);
@@ -166,18 +167,15 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		/* Put our ref */
 		dir_obj->obj_ops->put_ref(dir_obj);
 
-		/* Stash parent export in opctx while still holding the lock.
-		 */
-		op_ctx->ctx_export = parent_exp;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
-
-		/* Now we are safely transitioned to the parent export and can
-		 * release the lock.
+		/* We are now done with original_export->lock, nothing following
+		 * depends on it being held.
 		 */
 		PTHREAD_RWLOCK_unlock(&original_export->lock);
 
-		/* Release old export reference that was held by opctx. */
-		put_gsh_export(original_export);
+		/* Release the original_export and put the parent_exp into
+		 * the op context.
+		 */
+		set_op_context_export(parent_exp);
 
 		/* Build credentials */
 		res_LOOKUPP4->status = nfs4_export_check_access(data->req);
@@ -192,7 +190,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
 				 parent_exp->export_id,
-				 parent_exp->pseudopath);
+				 CTX_PSEUDOPATH(op_ctx));
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return NFS_REQ_ERROR;
 		}

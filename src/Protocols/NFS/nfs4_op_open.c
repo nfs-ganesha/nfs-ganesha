@@ -405,7 +405,7 @@ find_state:
  * Then attempt to get a LEASE lock to delegate the file
  * according to whether the client opened READ or READ/WRITE.
  *
- * @note state_lock must be held for WRITE
+ * @note st_lock must be held
  *
  * @param[in] data Compound data for this request
  * @param[in] op NFS arguments for the request
@@ -569,7 +569,7 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
 
 	/* Check if delegations are supported */
 	if (!deleg_supported(data->current_obj, op_ctx->fsal_export,
-			     op_ctx->export_perms, arg_OPEN4->share_access)) {
+			     &op_ctx->export_perms, arg_OPEN4->share_access)) {
 		resok->delegation.open_delegation4_u.od_whynone.ond_why =
 							WND4_NOT_SUPP_FTYPE;
 		LogFullDebug(COMPONENT_STATE, "Delegation type not supported.");
@@ -608,7 +608,7 @@ static void open4_ex_create_args(OPEN4args *arg,
 				 OPEN4res *res_OPEN4,
 				 void *verifier,
 				 enum fsal_create_mode *createmode,
-				 struct attrlist *sattr)
+				 struct fsal_attrlist *sattr)
 {
 	createhow4 *createhow = &arg->openhow.openflag4_u.how;
 	fattr4 *arg_attrs = NULL;
@@ -721,11 +721,11 @@ static void open4_ex(OPEN4args *arg,
 	/* The supplied calim type */
 	open_claim_type4 claim = arg->claim.claim;
 	fsal_verifier_t verifier;
-	struct attrlist sattr;
+	struct fsal_attrlist sattr;
 	/* Status for fsal calls */
 	fsal_status_t status = {0, 0};
 	/* The open state for the file */
-	bool state_lock_held = false;
+	bool st_lock_held = false;
 
 	/* Make sure the attributes are initialized */
 	memset(&sattr, 0, sizeof(sattr));
@@ -894,7 +894,7 @@ static void open4_ex(OPEN4args *arg,
 	if (file_obj != NULL) {
 		/* Go ahead and take the state lock now. */
 		STATELOCK_lock(file_obj);
-		state_lock_held = true;
+		st_lock_held = true;
 
 		in_obj = file_obj;
 
@@ -1022,10 +1022,10 @@ static void open4_ex(OPEN4args *arg,
 		/* We have a new cache inode entry, take the state lock. */
 		file_obj = out_obj;
 		STATELOCK_lock(file_obj);
-		state_lock_held = true;
+		st_lock_held = true;
 	}
 
-	/* Now the state_lock is held for sure and we have an extra LRU
+	/* Now the st_lock is held for sure and we have an extra LRU
 	 * reference to file_obj, which is the opened file.
 	 */
 
@@ -1103,11 +1103,11 @@ static void open4_ex(OPEN4args *arg,
 					fsal_err_txt(status));
 			}
 
-			/* Need to release the state_lock before the put_ref
+			/* Need to release the st_lock before the put_ref
 			 * call.
 			 */
 			STATELOCK_unlock(file_obj);
-			state_lock_held = false;
+			st_lock_held = false;
 
 			/* Release the extra LRU reference on file_obj. */
 			file_obj->obj_ops->put_ref(file_obj);
@@ -1154,10 +1154,10 @@ static void open4_ex(OPEN4args *arg,
 			     (*file_state)->state_data.share.share_deny_prev);
 	}
 
-	if (!state_lock_held) {
-		/* Acquire state_lock before adding deleg state */
+	if (!st_lock_held) {
+		/* Acquire st_lock before adding deleg state */
 		STATELOCK_lock(file_obj);
-		state_lock_held = true;
+		st_lock_held = true;
 	}
 
 	do_delegation(arg, res_OPEN4, data, owner, *file_state, clientid);
@@ -1166,7 +1166,7 @@ static void open4_ex(OPEN4args *arg,
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
 
-	if (state_lock_held) {
+	if (st_lock_held) {
 		STATELOCK_unlock(file_obj);
 	}
 
@@ -1249,7 +1249,7 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check export permissions if OPEN4_CREATE */
 	if ((arg_OPEN4->openhow.opentype == OPEN4_CREATE) &&
-	    ((op_ctx->export_perms->options &
+	    ((op_ctx->export_perms.options &
 	      EXPORT_OPTION_MD_WRITE_ACCESS) == 0)) {
 		res_OPEN4->status = NFS4ERR_ROFS;
 
@@ -1261,7 +1261,7 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check export permissions if OPEN4_SHARE_ACCESS_WRITE */
 	if (((arg_OPEN4->share_access & OPEN4_SHARE_ACCESS_WRITE) != 0) &&
-	    ((op_ctx->export_perms->options &
+	    ((op_ctx->export_perms.options &
 	      EXPORT_OPTION_WRITE_ACCESS) == 0)) {
 		res_OPEN4->status = NFS4ERR_ROFS;
 

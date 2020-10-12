@@ -56,7 +56,7 @@ gpfs_open_func(struct fsal_obj_handle *obj_hdl, fsal_openflags_t openflags,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd->fd);
+	status = GPFSFSAL_open(obj_hdl, posix_flags, &my_fd->fd);
 	if (FSAL_IS_ERROR(status))
 		return status;
 
@@ -129,7 +129,7 @@ fsal_status_t gpfs_merge(struct fsal_obj_handle *orig_hdl,
 static fsal_status_t
 open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	       fsal_openflags_t openflags, int posix_flags,
-	       fsal_verifier_t verifier, struct attrlist *attrs_out,
+	       fsal_verifier_t verifier, struct fsal_attrlist *attrs_out,
 	       enum fsal_create_mode createmode, bool *cpm_check)
 {
 	struct fsal_export *export = op_ctx->fsal_export;
@@ -174,7 +174,7 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		my_fd = &gpfs_hdl->u.file.fd;
 	}
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &fd);
+	status = GPFSFSAL_open(obj_hdl, posix_flags, &fd);
 
 	if (FSAL_IS_ERROR(status)) {
 		if (state == NULL)
@@ -197,7 +197,7 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 	if (attrs_out && (createmode >= FSAL_EXCLUSIVE || truncated)) {
 		/* Refresh the attributes */
-		status = GPFSFSAL_getattrs(export, gpfs_fs, op_ctx,
+		status = GPFSFSAL_getattrs(export, gpfs_fs,
 					   gpfs_hdl->handle, attrs_out);
 
 		if (!FSAL_IS_ERROR(status)) {
@@ -253,7 +253,7 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 static fsal_status_t
 open_by_name(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	     const char *name, fsal_openflags_t openflags, int posix_flags,
-	     fsal_verifier_t verifier, struct attrlist *attrs_out,
+	     fsal_verifier_t verifier, struct fsal_attrlist *attrs_out,
 	     bool *cpm_check)
 {
 	struct fsal_obj_handle *temp = NULL;
@@ -347,9 +347,9 @@ open_by_name(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 fsal_status_t
 gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	   fsal_openflags_t openflags, enum fsal_create_mode createmode,
-	   const char *name, struct attrlist *attr_set,
+	   const char *name, struct fsal_attrlist *attr_set,
 	   fsal_verifier_t verifier, struct fsal_obj_handle **new_obj,
-	   struct attrlist *attrs_out, bool *caller_perm_check)
+	   struct fsal_attrlist *attrs_out, bool *caller_perm_check)
 {
 	struct gpfs_fsal_obj_handle *hdl = NULL;
 	struct fsal_export *export = op_ctx->fsal_export;
@@ -389,10 +389,11 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 				    posix_flags, verifier, attrs_out,
 				    caller_perm_check);
 
-	/** @todo: to proceed past here, we need a struct attrlist in order to
-	 *         create the fsal_obj_handle, so if it actually is NULL (it
+	/** @todo: to proceed past here, we need a struct fsal_attrlist in order
+	 *         to create the fsal_obj_handle, so if it actually is NULL (it
 	 *         will actually never be since mdcache will always ask for
-	 *         attributes) we really should create a temporary attrlist...
+	 *         attributes) we really should create a temporary
+	 *         fsal_attrlist...
 	 */
 
 	posix_flags |= O_CREAT;
@@ -418,7 +419,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		posix_flags |= O_EXCL;
 	}
 
-	status = GPFSFSAL_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
+	status = GPFSFSAL_create2(obj_hdl, name, unix_mode, &fh,
 				  posix_flags, attrs_out);
 
 	if (status.major == ERR_FSAL_EXIST && createmode == FSAL_UNCHECKED &&
@@ -435,7 +436,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		 * attributes.
 		 */
 		posix_flags &= ~O_EXCL;
-		status = GPFSFSAL_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
+		status = GPFSFSAL_create2(obj_hdl, name, unix_mode, &fh,
 					  posix_flags, attrs_out);
 	}
 
@@ -529,7 +530,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		fsal_status_t status2;
 
 		/* Remove the file we just created */
-		status2 = GPFSFSAL_unlink(obj_hdl, name, op_ctx);
+		status2 = GPFSFSAL_unlink(obj_hdl, name);
 		if (FSAL_IS_ERROR(status2)) {
 			LogEvent(COMPONENT_FSAL,
 				 "GPFSFSAL_unlink failed, error: %s",
@@ -578,6 +579,8 @@ gpfs_read_plus_fd(int my_fd, uint64_t offset,
 	rarg.offset = offset;
 	rarg.length = buffer_size;
 	rarg.options = IO_SKIP_HOLE;
+	if (op_ctx && op_ctx->client)
+		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
 	errsv = errno;
@@ -626,7 +629,7 @@ gpfs_read_plus_fd(int my_fd, uint64_t offset,
  * @brief Re-open a file that may be already opened
  *
  * This function supports changing the access mode of a share reservation and
- * thus should only be called with a share state. The state_lock must be held.
+ * thus should only be called with a share state. The st_lock must be held.
  *
  * This MAY be used to open a file the first time if there is no need for
  * open by name or create semantics. One example would be 9P lopen.
@@ -678,7 +681,7 @@ gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	status = GPFSFSAL_open(obj_hdl, op_ctx, posix_flags, &my_fd);
+	status = GPFSFSAL_open(obj_hdl, posix_flags, &my_fd);
 
 	if (!FSAL_IS_ERROR(status)) {
 		/* Close the existing file descriptor and copy the new
@@ -958,7 +961,7 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl,
 				write_arg->iov[0].iov_base,
 				&write_arg->io_amount,
 				&write_arg->fsal_stable,
-				op_ctx, export_fd);
+				export_fd);
 
 	if (gpfs_fd)
 		PTHREAD_RWLOCK_unlock(&gpfs_fd->fdlock);
@@ -1116,7 +1119,7 @@ gpfs_commit2(struct fsal_obj_handle *obj_hdl, off_t offset, size_t len)
 
 	if (!FSAL_IS_ERROR(status)) {
 
-		fsal_set_credentials(op_ctx->creds);
+		fsal_set_credentials(&op_ctx->creds);
 
 		status = gpfs_commit_fd(out_fd->fd, obj_hdl, offset, len);
 
@@ -1287,6 +1290,8 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	gpfs_sg_arg.lock = &glock_args;
 	gpfs_sg_arg.reclaim = req_lock->lock_reclaim;
 	gpfs_sg_arg.mountdirfd = export_fd;
+	if (op_ctx && op_ctx->client)
+		gpfs_sg_arg.cli_ip = op_ctx->client->hostaddr_str;
 
 	status = GPFSFSAL_lock_op(export, lock_op, req_lock, conflicting_lock,
 				  &gpfs_sg_arg);

@@ -40,6 +40,70 @@
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
 #include "export_mgr.h"
+#include "pnfs_utils.h"
+
+/**
+ * @brief Set the saved entry in the context
+ *
+ * This manages refcounting on the object being stored in data.  This means it
+ * takes a ref on a new object, and releases it's ref on any old object.  If the
+ * caller has it's own ref, it must release it itself.
+ *
+ * @param[in] data	Compound data to set entry in
+ * @param[in] obj	Object to set
+ */
+void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj)
+{
+	struct saved_export_context saved;
+	bool restore_op_ctx = false;
+
+	if (data->saved_ds != NULL || data->saved_obj != NULL) {
+		/* Setup correct op_ctx for releasing old saved */
+		get_gsh_export_ref(data->saved_export);
+		save_op_context_export_and_set_export(&saved,
+						      data->saved_export);
+		op_ctx->export_perms = data->saved_export_perms;
+		restore_op_ctx = true;
+	}
+
+	/* Mark saved_stateid as invalid */
+	data->saved_stateid_valid = false;
+
+	if (data->saved_ds != NULL && data->saved_ds != data->current_ds) {
+		/* Release the saved_ds because it's different. We don't
+		 * bother with refcounting because a ds handle has a limited
+		 * lifetime and it's either current_ds or saved_ds. So as long
+		 * as current_ds is not the same one here, we can release since
+		 * there is no other reference.
+		 */
+		data->saved_pnfs_ds->s_ops.dsh_release(data->saved_ds);
+	}
+
+	if (data->saved_obj) {
+		/* Release ref on old object */
+		data->saved_obj->obj_ops->put_ref(data->saved_obj);
+	}
+
+	data->saved_obj = obj;
+
+	if (obj == NULL) {
+		data->saved_filetype = NO_FILE_TYPE;
+	} else {
+		/* Get our ref on the new object */
+		data->saved_obj->obj_ops->get_ref(data->saved_obj);
+
+		/* Set the saved file type */
+		data->saved_filetype = obj->type;
+	}
+
+	if (restore_op_ctx) {
+		/* Restore op_ctx */
+		restore_op_context_export(&saved);
+	}
+
+	/* Copy the new current_ds if any */
+	data->saved_ds = data->current_ds;
+}
 
 /**
  *
@@ -102,14 +166,7 @@ enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* If saved and current entry are equal, skip the following. */
 	if (data->saved_obj != data->current_obj) {
-
 		set_saved_entry(data, data->current_obj);
-
-		/* Make SAVEFH work right for DS handle */
-		if (data->current_ds != NULL) {
-			data->saved_ds = data->current_ds;
-			ds_handle_get_ref(data->saved_ds);
-		}
 	}
 
 	/* Save the current stateid */
@@ -120,9 +177,20 @@ enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->saved_export != NULL)
 		put_gsh_export(data->saved_export);
 
-	/* Save the export information (reference already taken above). */
+	/* If old saved_pnfs_ds is present, release reference. */
+	if (data->saved_pnfs_ds != NULL)
+		pnfs_ds_put(data->saved_pnfs_ds);
+
+	/* Save the export information (reference already taken above) and
+	 * the pnfs_ds (if any, otherwise clear it, reference taken below).
+	 */
 	data->saved_export = op_ctx->ctx_export;
-	data->saved_export_perms = *op_ctx->export_perms;
+	data->saved_export_perms = op_ctx->export_perms;
+	data->saved_pnfs_ds = op_ctx->ctx_pnfs_ds;
+
+	/* If ctx_pnfs_ds is present, take a ref and save it. */
+	if (op_ctx->ctx_pnfs_ds != NULL)
+		pnfs_ds_get_ref(data->saved_pnfs_ds);
 
 	LogHandleNFS4("SAVE FH: Saved FH ", &data->savedFH);
 

@@ -266,7 +266,7 @@ fsal_aceperm_t panace_perm_to_fsal_perm(pan_acl_permission_t perms)
  * @param[in] panacl	Target PanFS ACL set
  * @return FSAL Status
  */
-static fsal_status_t fsal_acl_2_panfs_acl(struct attrlist *attrib,
+static fsal_status_t fsal_acl_2_panfs_acl(struct fsal_attrlist *attrib,
 		struct pan_fs_acl_s *panacl)
 {
 	fsal_errors_t ret = ERR_FSAL_NO_ERROR;
@@ -313,7 +313,7 @@ fail:
  * @return FSAL Status
  */
 static fsal_status_t panfs_acl_2_fsal_acl(struct pan_fs_acl_s *panacl,
-		struct attrlist *attrib)
+		struct fsal_attrlist *attrib)
 {
 	fsal_acl_status_t status;
 	fsal_acl_data_t acldata;
@@ -381,7 +381,7 @@ static fsal_status_t panfs_acl_2_fsal_acl(struct pan_fs_acl_s *panacl,
  */
 fsal_status_t PanFS_getattrs(struct panfs_fsal_obj_handle *panfs_hdl,
 		int fd,
-		struct attrlist *attrib)
+		struct fsal_attrlist *attrib)
 {
 	fsal_status_t st;
 	struct pan_attrs pattrs;
@@ -413,7 +413,7 @@ fsal_status_t PanFS_getattrs(struct panfs_fsal_obj_handle *panfs_hdl,
  */
 fsal_status_t PanFS_setattrs(struct panfs_fsal_obj_handle *panfs_hdl,
 		int fd,
-		struct attrlist *attrib)
+		struct fsal_attrlist *attrib)
 {
 	fsal_status_t st;
 	struct pan_attrs pattrs;

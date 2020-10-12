@@ -32,7 +32,6 @@ extern struct fsal_ops def_fsal_ops;
 extern struct export_ops def_export_ops; /* freebsd gcc workaround */
 extern struct fsal_obj_ops def_handle_ops;
 extern struct fsal_pnfs_ds_ops def_pnfs_ds_ops;
-extern struct fsal_dsh_ops def_dsh_ops;
 
 /* Global lock for fsal list.
  * kept in fsal_manager.c

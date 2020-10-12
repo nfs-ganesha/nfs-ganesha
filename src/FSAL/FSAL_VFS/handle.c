@@ -146,8 +146,9 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 	hdl->obj_handle.fs = fs;
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "Creating object %p for file %s of type %s",
-		     hdl, path, object_file_type_to_str(hdl->obj_handle.type));
+		     "Creating object %p for file %s of type %s on filesystem %p %s",
+		     hdl, path, object_file_type_to_str(hdl->obj_handle.type),
+		     fs, fs->path);
 
 	if (hdl->obj_handle.type == REGULAR_FILE) {
 		hdl->u.file.fd.fd = -1;	/* no open on this yet */
@@ -203,7 +204,7 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 }
 
 static fsal_status_t populate_fs_locations(struct vfs_fsal_obj_handle *hdl,
-					   struct attrlist *attrs_out)
+					   struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status;
 	uint64 hash;
@@ -261,12 +262,25 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 	struct vfs_fsal_export *myexp_hdl =
 	    container_of(op_ctx->fsal_export, struct vfs_fsal_export, export);
 
+again:
+
 	retval = fstatat(dirfd, path, stat, AT_SYMLINK_NOFOLLOW);
 
 	if (retval < 0) {
 		retval = errno;
 		LogDebug(COMPONENT_FSAL, "Failed to open stat %s: %s", path,
 			 msg_fsal_err(posix2fsal_error(retval)));
+
+		if (errno == EAGAIN) {
+			/* autofs can cause EAGAIN if the file system is not
+			 * yet mounted.
+			 */
+			/** @todo FSF: should we retry forever
+			 *             is there any other reason for EAGAIN?
+			 */
+			goto again;
+		}
+
 		status = posix2fsal_status(retval);
 		goto out;
 	}
@@ -290,16 +304,12 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 			PRIu64".%"PRIu64" - reloading filesystems to find it",
 			path, dev.major, dev.minor);
 
-		retval = reload_posix_filesystems(op_ctx->ctx_export->fullpath,
-						  parent_hdl->obj_handle.fsal,
-						  op_ctx->fsal_export,
-						  vfs_claim_filesystem,
-						  vfs_unclaim_filesystem,
-						  &myexp_hdl->root_fs);
+		retval = populate_posix_file_systems(path);
 
 		if (retval != 0) {
-			LogFullDebug(COMPONENT_FSAL,
-				     "resolve_posix_filesystem failed");
+			LogCrit(COMPONENT_FSAL,
+				"populate_posix_file_systems returned %s (%d)",
+				strerror(retval), retval);
 			status = posix2fsal_status(EXDEV);
 			goto out;
 		}
@@ -312,10 +322,15 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 			status = posix2fsal_status(EXDEV);
 			goto out;
 		} else {
+			/* We have now found the file system, since it was
+			 * just added, fs->fsal will be NULL so the next if
+			 * block below will be executed to claim the file system
+			 * and carry on.
+			 */
 			LogInfo(COMPONENT_FSAL,
-				"Filesystem %s has been added to export %d:%s",
+				"Filesystem %s will be added to export %d:%s",
 				fs->path, op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx->ctx_export));
+				op_ctx_export_path(op_ctx));
 		}
 	}
 
@@ -327,12 +342,13 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 			"Lookup of %s crosses filesystem boundary to unclaimed file system %s - attempt to claim it",
 			path, fs->path);
 
-		retval = claim_posix_filesystems(op_ctx->ctx_export->fullpath,
+		retval = claim_posix_filesystems(CTX_FULLPATH(op_ctx),
 						 parent_hdl->obj_handle.fsal,
 						 op_ctx->fsal_export,
 						 vfs_claim_filesystem,
 						 vfs_unclaim_filesystem,
-						 &myexp_hdl->root_fs);
+						 &myexp_hdl->root_fs,
+						 stat);
 
 		if (retval != 0) {
 			LogFullDebug(COMPONENT_FSAL,
@@ -367,7 +383,7 @@ out:
 static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 				    int dirfd, const char *path,
 				    struct fsal_obj_handle **handle,
-				    struct attrlist *attrs_out)
+				    struct fsal_attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *hdl;
 	int retval;
@@ -470,7 +486,7 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle *parent_hdl,
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path, struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *parent_hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -513,9 +529,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 }
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const char *name, struct attrlist *attrib,
+			     const char *name, struct fsal_attrlist *attrib,
 			     struct fsal_obj_handle **handle,
-			     struct attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd;
@@ -525,7 +541,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS;
 #ifdef ENABLE_VFS_DEBUG_ACL
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_accessflags_t access_type;
 #endif /* ENABLE_VFS_DEBUG_ACL */
 	vfs_file_handle_t *fh = NULL;
@@ -601,7 +617,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	/* Become the user because we are creating an object in this dir.
 	 */
 
-	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, dir_hdl->fsal)) {
 		retval = EPERM;
 		status = posix2fsal_status(retval);
 		goto direrr;
@@ -704,9 +720,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name,
 			      object_file_type_t nodetype,	/* IN */
-			      struct attrlist *attrib,
+			      struct fsal_attrlist *attrib,
 			      struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd = -1;
@@ -717,7 +733,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	dev_t unix_dev = 0;
 	int flags = O_PATH | O_NOACCESS;
 #ifdef ENABLE_VFS_DEBUG_ACL
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_accessflags_t access_type;
 #endif /* ENABLE_VFS_DEBUG_ACL */
 	vfs_file_handle_t *fh = NULL;
@@ -813,7 +829,7 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 		goto direrr;
 	}
 
-	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, dir_hdl->fsal)) {
 		retval = EPERM;
 		status = posix2fsal_status(retval);
 		goto direrr;
@@ -921,9 +937,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
-				 struct attrlist *attrib,
+				 struct fsal_attrlist *attrib,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	struct vfs_fsal_obj_handle *myself, *hdl;
 	int dir_fd = -1;
@@ -932,7 +948,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS;
 #ifdef ENABLE_VFS_DEBUG_ACL
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	fsal_accessflags_t access_type;
 #endif /* ENABLE_VFS_DEBUG_ACL */
 	vfs_file_handle_t *fh = NULL;
@@ -1003,7 +1019,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 
 	/* Become the user because we are creating an object in this dir.
 	 */
-	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, dir_hdl->fsal)) {
 		retval = EPERM;
 		status = posix2fsal_status(retval);
 		goto direrr;
@@ -1343,7 +1359,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 #endif
 		for (bpos = 0; bpos < nread;) {
 			struct fsal_obj_handle *hdl;
-			struct attrlist attrs;
+			struct fsal_attrlist attrs;
 			enum fsal_dir_result cb_rc;
 
 			if (!to_vfs_dirent(buf, bpos, dentryp, baseloc))
@@ -1454,7 +1470,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 	/* Become the user because we are creating/removing objects
 	 * in these dirs which messes with quotas and perms.
 	 */
-	if (!vfs_set_credentials(op_ctx->creds, obj_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, obj_hdl->fsal)) {
 		retval = EPERM;
 		fsal_error = posix2fsal_error(retval);
 		goto out;
@@ -1657,7 +1673,7 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 		goto errout;
 	}
 
-	if (!vfs_set_credentials(op_ctx->creds, dir_hdl->fsal)) {
+	if (!vfs_set_credentials(&op_ctx->creds, dir_hdl->fsal)) {
 		retval = EPERM;
 		fsal_error = posix2fsal_error(retval);
 		goto errout;
@@ -1820,7 +1836,7 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 
 fsal_status_t vfs_lookup_path(struct fsal_export *exp_hdl,
 			      const char *path, struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	int dir_fd = -1;
 	struct stat stat;
@@ -2001,7 +2017,7 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 				struct gsh_buffdesc *hdl_desc,
 				struct fsal_obj_handle **handle,
-				struct attrlist *attrs_out)
+				struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status;
 	struct vfs_fsal_obj_handle *hdl;

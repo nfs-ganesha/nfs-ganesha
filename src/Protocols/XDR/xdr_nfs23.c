@@ -304,7 +304,7 @@ bool xdr_fattr3(XDR *xdrs, fattr3 *objp)
 		return (false);
 	if (!xdr_specdata3(xdrs, &rdev))
 		return (false);
-	if (!xdr_nfs3_uint64(xdrs, &objp->fsid.major))
+	if (!xdr_nfs3_uint64(xdrs, &objp->fsid3))
 		return (false);
 	if (!xdr_fileid3(xdrs, &objp->fileid))
 		return (false);

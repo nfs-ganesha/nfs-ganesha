@@ -35,9 +35,8 @@
 
 /** @fn fsal_status_t
  *       GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
- *                     const struct req_op_context *op_ctx,
  *                     fsal_openflags_t openflags, int *file_desc,
- *                     struct attrlist *fsal_attr)
+ *                     struct fsal_attrlist *fsal_attr)
  *
  *  @brief Open a regular file for reading/writing its data content.
  *
@@ -56,9 +55,7 @@
  * @return ERR_FSAL_NO_ERROR on success, error otherwise
  */
 fsal_status_t
-GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
-	      const struct req_op_context *op_ctx, int posix_flags,
-	      int *file_desc)
+GPFSFSAL_open(struct fsal_obj_handle *obj_hdl, int posix_flags, int *file_desc)
 {
 	struct gpfs_fsal_obj_handle *myself;
 	fsal_status_t status;
@@ -75,7 +72,7 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl,
 	LogFullDebug(COMPONENT_FSAL, "posix_flags 0x%X export_fd %d",
 						posix_flags, export_fd);
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	status = fsal_internal_handle2fd(export_fd, myself->handle,
 					 file_desc, posix_flags);
 	fsal_restore_ganesha_credentials();
@@ -126,8 +123,10 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
 	rarg.offset = offset;
 	rarg.length = buf_size;
 	rarg.options = 0;
+	if (op_ctx && op_ctx->client)
+		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	nb_read = gpfs_ganesha(OPENHANDLE_READ_BY_FD, &rarg);
 	errsv = errno;
 	fsal_restore_ganesha_credentials();
@@ -157,8 +156,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
 
 /** @fn fsal_status_t
  *	GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void * buf,
- *		       size_t *write_amount, bool *fsal_stable,
- *		       const struct req_op_context *op_ctx)
+ *		       size_t *write_amount, bool *fsal_stable)
  *  @brief Perform a write operation on an opened file.
  *
  *  @param fd The file descriptor returned by FSAL_open.
@@ -171,8 +169,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
  */
 fsal_status_t
 GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void *buf,
-	       size_t *write_amount, bool *fsal_stable,
-	       const struct req_op_context *op_ctx, int expfd)
+	       size_t *write_amount, bool *fsal_stable, int expfd)
 {
 	struct write_arg warg = {0};
 	uint32_t stability_got = 0;
@@ -191,8 +188,10 @@ GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void *buf,
 	warg.stability_wanted = *fsal_stable;
 	warg.stability_got = &stability_got;
 	warg.options = 0;
+	if (op_ctx && op_ctx->client)
+		warg.cli_ip = op_ctx->client->hostaddr_str;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	nb_write = gpfs_ganesha(OPENHANDLE_WRITE_BY_FD, &warg);
 	errsv = errno;
 	fsal_restore_ganesha_credentials();
@@ -231,7 +230,7 @@ GPFSFSAL_alloc(int fd, uint64_t offset, uint64_t length, bool allocate)
 	aarg.length = length;
 	aarg.options = (allocate) ? IO_ALLOCATE : IO_DEALLOCATE;
 
-	fsal_set_credentials(op_ctx->creds);
+	fsal_set_credentials(&op_ctx->creds);
 	rc = gpfs_ganesha(OPENHANDLE_ALLOCATE_BY_FD, &aarg);
 	errsv = errno;
 	fsal_restore_ganesha_credentials();

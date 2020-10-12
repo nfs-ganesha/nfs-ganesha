@@ -91,15 +91,6 @@ struct _rpc_call {
 	uint32_t flags;
 };
 
-typedef enum request_type {
-	UNKNOWN_REQUEST,
-	NFS_CALL,
-	NFS_REQUEST,
-#ifdef _USE_9P
-	_9P_REQUEST,
-#endif				/* _USE_9P */
-} request_type_t;
-
 /* in nfs_init.c */
 
 struct _nfs_health {

@@ -39,15 +39,13 @@
  *
  *  @param dir_hdl  Handle of the parent directory of the object to be deleted.
  *  @param object_name Name of the object to be removed.
- *  @param op_ctx Authentication context for the operation (user,...).
  *
  *  @return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occured.
  */
 fsal_status_t
-GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl, const char *object_name,
-		const struct req_op_context *op_ctx)
+GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl, const char *object_name)
 {
 
 	fsal_status_t status;

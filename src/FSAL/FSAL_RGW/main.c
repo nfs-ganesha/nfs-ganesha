@@ -298,10 +298,10 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			       &export->rgw_fs,
 			       RGW_MOUNT_FLAG_NONE);
 #else
-	const char *fullpath = op_ctx->ctx_export->fullpath;
+	const char *rgw_fullpath = CTX_FULLPATH(op_ctx);
 
-	if (strcmp(fullpath, "/") && strchr(fullpath, '/') &&
-		(strchr(fullpath, '/') - fullpath) > 1) {
+	if (strcmp(rgw_fullpath, "/") && strchr(rgw_fullpath, '/') &&
+		(strchr(rgw_fullpath, '/') - rgw_fullpath) > 1) {
 		/* case : "bucket_name/dir" */
 		rgw_status = rgw_mount(RGWFSM.rgw,
 					export->rgw_user_id,
@@ -311,15 +311,15 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 					RGW_MOUNT_FLAG_NONE);
 	} else {
 		/* case : "/" of "bucket_name" or "/bucket_name" */
-		if (strcmp(fullpath, "/") && strchr(fullpath, '/') &&
-			(strchr(fullpath, '/') - fullpath) == 0) {
-			fullpath = op_ctx->ctx_export->fullpath + 1;
+		if (strcmp(rgw_fullpath, "/") && strchr(rgw_fullpath, '/') &&
+			(strchr(rgw_fullpath, '/') - rgw_fullpath) == 0) {
+			rgw_fullpath = rgw_fullpath + 1;
 		}
 	  rgw_status = rgw_mount2(RGWFSM.rgw,
 					export->rgw_user_id,
 					export->rgw_access_key_id,
 					export->rgw_secret_access_key,
-					fullpath,
+					rgw_fullpath,
 					&export->rgw_fs,
 					RGW_MOUNT_FLAG_NONE);
 	}
@@ -328,7 +328,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to mount RGW cluster for %s.",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		if (rgw_status == -EINVAL) {
 			LogCrit(COMPONENT_FSAL,
 			"Authorization Failed for user %s ",
@@ -341,7 +341,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
 			"Unable to attach export for %s.",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		goto error;
 	}
 
@@ -350,7 +350,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 					RGW_REG_INVALIDATE_FLAG_NONE) != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Unable to register invalidates for %s.",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		goto error;
 	}
 
@@ -358,7 +358,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	LogDebug(COMPONENT_FSAL,
 		 "RGW module export %s.",
-		 op_ctx->ctx_export->fullpath);
+		 CTX_FULLPATH(op_ctx));
 
 	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh, &st,
 			RGW_GETATTR_FLAG_NONE);

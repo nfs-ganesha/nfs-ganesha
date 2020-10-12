@@ -30,6 +30,7 @@ require {
 	type mouse_device_t;
 	type netcontrol_device_t;
 	type nvram_device_t;
+	type portmap_port_t;
 	type proc_kcore_t;
 	type proc_t;
 	type pstore_t;
@@ -178,6 +179,7 @@ tunable_policy(`ganesha_use_fusefs',`
     fs_manage_fusefs_files(ganesha_t)
     fs_read_fusefs_symlinks(ganesha_t)
     fs_getattr_fusefs(ganesha_t)
+    fs_search_fusefs(ganesha_t)
 ')
 
 ########################################
@@ -295,6 +297,12 @@ allow ganesha_t glusterd_t:dbus send_msg;
 
 ########################################
 #
+# ganesha local policy rhbz#1857170
+
+allow ganesha_t portmap_port_t:tcp_socket name_connect;
+
+########################################
+#
 # ganesha local policy, nfs-ganesha-2.8.4
 #
 
@@ -308,3 +316,12 @@ allow ganesha_t self:capability { fowner setgid setuid };
 # allow ganesha_t glusterd_brick_t:dir { add_name getattr open read write remove_name search };
 # allow ganesha_t glusterd_brick_t:file { create getattr open read write unlink };
 
+########################################
+#
+# ganesha local policy rhbz#1855350
+
+ifdef(`ceph_read_lib_files',`
+       optional_policy(`
+               ceph_read_lib_files(ganesha_t)
+       ')
+')

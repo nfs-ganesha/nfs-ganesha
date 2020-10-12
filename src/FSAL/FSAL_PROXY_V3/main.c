@@ -278,11 +278,11 @@ proxyv3_alloc_handle(struct fsal_export *export_handle,
 		     const nfs_fh3 *fh3,
 		     const fattr3 *attrs,
 		     const struct proxyv3_obj_handle *parent,
-		     struct attrlist *fsal_attrs_out)
+		     struct fsal_attrlist *fsal_attrs_out)
 {
 	/* Fill the attributes first to avoid an alloc on failure. */
-	struct attrlist local_attributes;
-	struct attrlist *attrs_out;
+	struct fsal_attrlist local_attributes;
+	struct fsal_attrlist *attrs_out;
 
 	LogDebug(COMPONENT_FSAL,
 		 "Making handle from fh3 %p with parent %p",
@@ -297,7 +297,7 @@ proxyv3_alloc_handle(struct fsal_export *export_handle,
 		attrs_out = fsal_attrs_out;
 	} else {
 		/* Say we only want NFSv3 attributes. */
-		memset(&local_attributes, 0, sizeof(struct attrlist));
+		memset(&local_attributes, 0, sizeof(struct fsal_attrlist));
 		attrs_out = &local_attributes;
 		FSAL_SET_MASK(attrs_out->request_mask, ATTRS_NFS3);
 	}
@@ -378,7 +378,7 @@ proxyv3_lookup_internal(struct fsal_export *export_handle,
 			const char *path,
 			struct fsal_obj_handle *parent,
 			struct fsal_obj_handle **handle,
-			struct attrlist *attrs_out)
+			struct fsal_attrlist *attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "Doing a lookup of '%s'", path);
@@ -493,7 +493,7 @@ proxyv3_lookup_internal(struct fsal_export *export_handle,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_LOOKUP,
 			      (xdrproc_t) xdr_LOOKUP3args, &args,
 			      (xdrproc_t) xdr_LOOKUP3res, &result)) {
@@ -551,7 +551,7 @@ proxyv3_lookup_internal(struct fsal_export *export_handle,
 
 static fsal_status_t
 proxyv3_getattr_from_fh3(struct nfs_fh3 *fh3,
-			 struct attrlist *attrs_out)
+			 struct fsal_attrlist *attrs_out)
 {
 	GETATTR3args args;
 	GETATTR3res result;
@@ -572,7 +572,7 @@ proxyv3_getattr_from_fh3(struct nfs_fh3 *fh3,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_GETATTR,
 			      (xdrproc_t) xdr_GETATTR3args, &args,
 			      (xdrproc_t) xdr_GETATTR3res, &result)) {
@@ -610,7 +610,7 @@ proxyv3_getattr_from_fh3(struct nfs_fh3 *fh3,
 
 static fsal_status_t
 proxyv3_getattrs(struct fsal_obj_handle *obj_hdl,
-		 struct attrlist *attrs_out)
+		 struct fsal_attrlist *attrs_out)
 {
 	struct proxyv3_obj_handle *handle =
 		container_of(obj_hdl, struct proxyv3_obj_handle, obj);
@@ -637,7 +637,7 @@ static fsal_status_t
 proxyv3_setattr2(struct fsal_obj_handle *obj_hdl,
 		 bool bypass /* ignored, since we'll happily "bypass" */,
 		 struct state_t *state,
-		 struct attrlist *attrib_set)
+		 struct fsal_attrlist *attrib_set)
 {
 	struct proxyv3_obj_handle *handle =
 		container_of(obj_hdl, struct proxyv3_obj_handle, obj);
@@ -676,7 +676,7 @@ proxyv3_setattr2(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_SETATTR,
 			      (xdrproc_t) xdr_SETATTR3args, &args,
 			      (xdrproc_t) xdr_SETATTR3res, &result)) {
@@ -703,13 +703,13 @@ proxyv3_setattr2(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t proxyv3_lookup_root(struct fsal_export *export_handle,
 				  struct fsal_obj_handle **handle,
-				  struct attrlist *attrs_out)
+				  struct fsal_attrlist *attrs_out)
 {
 	struct proxyv3_export *export =
 		container_of(export_handle, struct proxyv3_export, export);
 
 	nfs_fh3 fh3;
-	struct attrlist tmp_attrs;
+	struct fsal_attrlist tmp_attrs;
 
 	fh3.data.data_val = export->root_handle;
 	fh3.data.data_len = export->root_handle_len;
@@ -759,7 +759,7 @@ fsal_status_t proxyv3_lookup_root(struct fsal_export *export_handle,
 fsal_status_t proxyv3_lookup_path(struct fsal_export *export_handle,
 				  const char *path,
 				  struct fsal_obj_handle **handle,
-				  struct attrlist *attrs_out)
+				  struct fsal_attrlist *attrs_out)
 {
 	struct proxyv3_export *export =
 		container_of(export_handle, struct proxyv3_export, export);
@@ -767,7 +767,7 @@ fsal_status_t proxyv3_lookup_path(struct fsal_export *export_handle,
 	LogDebug(COMPONENT_FSAL, "Looking up path '%s'", path);
 
 	/* Check that the first part of the path matches our root. */
-	const char *root_path = op_ctx->ctx_export->fullpath;
+	const char *root_path = CTX_FULLPATH(op_ctx);
 	const size_t root_len = strlen(root_path);
 
 	const char *p = path;
@@ -808,7 +808,7 @@ static fsal_status_t
 proxyv3_lookup_handle(struct fsal_obj_handle *parent,
 		      const char *path,
 		      struct fsal_obj_handle **handle,
-		      struct attrlist *attrs_out)
+		      struct fsal_attrlist *attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "lookup_handle for path '%s'", path);
@@ -848,7 +848,7 @@ proxyv3_issue_createlike(struct proxyv3_obj_handle *parent_obj,
 			 struct post_op_fh3 *op_fh3,
 			 struct post_op_attr *op_attr,
 			 struct fsal_obj_handle **new_obj,
-			 struct attrlist *attrs_out)
+			 struct fsal_attrlist *attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "Issuing a %s", procName);
@@ -856,7 +856,7 @@ proxyv3_issue_createlike(struct proxyv3_obj_handle *parent_obj,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      nfsProc,
 			      encFunc, encArgs,
 			      decFunc, decArgs)) {
@@ -923,10 +923,10 @@ proxyv3_open_by_handle(struct fsal_obj_handle *obj_hdl,
 		       struct state_t *state,
 		       fsal_openflags_t openflags,
 		       enum fsal_create_mode createmode,
-		       struct attrlist *attrib_set,
+		       struct fsal_attrlist *attrib_set,
 		       fsal_verifier_t verifier,
 		       struct fsal_obj_handle **out_obj,
-		       struct attrlist *attrs_out,
+		       struct fsal_attrlist *attrs_out,
 		       bool *caller_perm_check)
 {
 	LogDebug(COMPONENT_FSAL,
@@ -957,10 +957,10 @@ proxyv3_open2(struct fsal_obj_handle *obj_hdl,
 	      fsal_openflags_t openflags,
 	      enum fsal_create_mode createmode,
 	      const char *name,
-	      struct attrlist *attrib_set,
+	      struct fsal_attrlist *attrib_set,
 	      fsal_verifier_t verifier,
 	      struct fsal_obj_handle **out_obj,
-	      struct attrlist *attrs_out,
+	      struct fsal_attrlist *attrs_out,
 	      bool *caller_perm_check)
 {
 	/* If name is NULL => open by handle. */
@@ -1068,9 +1068,9 @@ static fsal_status_t
 proxyv3_symlink(struct fsal_obj_handle *dir_hdl,
 		const char *name,
 		const char *link_path,
-		struct attrlist *attrs_in,
+		struct fsal_attrlist *attrs_in,
 		struct fsal_obj_handle **new_obj,
-		struct attrlist *attrs_out)
+		struct fsal_attrlist *attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "symlink of parent %p, name %s to => %s",
@@ -1152,7 +1152,7 @@ proxyv3_hardlink(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_LINK,
 			      (xdrproc_t) xdr_LINK3args, &args,
 			      (xdrproc_t) xdr_LINK3res, &result)) {
@@ -1204,7 +1204,7 @@ proxyv3_readlink(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_READLINK,
 			      (xdrproc_t) xdr_READLINK3args, &args,
 			      (xdrproc_t) xdr_READLINK3res, &result)) {
@@ -1300,9 +1300,9 @@ proxyv3_close2(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t
 proxyv3_mkdir(struct fsal_obj_handle *dir_hdl,
-	      const char *name, struct attrlist *attrs_in,
+	      const char *name, struct fsal_attrlist *attrs_in,
 	      struct fsal_obj_handle **new_obj,
-	      struct attrlist *attrs_out)
+	      struct fsal_attrlist *attrs_out)
 {
 	struct proxyv3_obj_handle *parent_obj =
 		container_of(dir_hdl, struct proxyv3_obj_handle, obj);
@@ -1350,9 +1350,9 @@ static fsal_status_t
 proxyv3_mknode(struct fsal_obj_handle *dir_hdl,
 	       const char *name,
 	       object_file_type_t nodetype,
-	       struct attrlist *attrs_in,
+	       struct fsal_attrlist *attrs_in,
 	       struct fsal_obj_handle **new_obj,
-	       struct attrlist *attrs_out)
+	       struct fsal_attrlist *attrs_out)
 {
 	struct proxyv3_obj_handle *parent_obj =
 		container_of(dir_hdl, struct proxyv3_obj_handle, obj);
@@ -1514,7 +1514,7 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 		if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 				      proxyv3_socklen(),
 				      proxyv3_nfsd_port(),
-				      op_ctx->creds,
+				      &op_ctx->creds,
 				      NFSPROC3_READDIRPLUS,
 				      encFunc, &args,
 				      decFunc, &result)) {
@@ -1550,6 +1550,16 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 		for (entry = resok->reply.entries;
 		     entry != NULL;
 		     entry = entry->nextentry, count++) {
+			struct nfs_fh3 *fh3 =
+				&entry->name_handle.post_op_fh3_u.handle;
+			post_op_attr *post_op_attr =
+				&entry->name_attributes;
+			fattr3 *attrs =
+				&post_op_attr->post_op_attr_u.attributes;
+			struct fsal_attrlist cb_attrs;
+			struct proxyv3_obj_handle *result_handle;
+			enum fsal_dir_result cb_rc;
+
 			/*
 			 * Don't forget to update the cookie, as long as we're
 			 * not just doing readahead.
@@ -1576,29 +1586,37 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 			}
 
 			if (!entry->name_attributes.attributes_follow) {
-				LogCrit(COMPONENT_FSAL,
-					"READDIRPLUS didn't return attributes for '%s'",
-					entry->name);
-				return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-			}
+				/*
+				 * We didn't get back attributes, so attrs is
+				 * currently not filled in / filled with
+				 * garbage. Let's do an explicit GETATTR as a
+				 * last chance.
+				 */
 
-			struct nfs_fh3 *fh3 =
-				&entry->name_handle.post_op_fh3_u.handle;
-			post_op_attr *post_op_attr =
-				&entry->name_attributes;
-			fattr3 *attrs =
-				&post_op_attr->post_op_attr_u.attributes;
+				fsal_status_t rc;
+
+				LogFullDebug(COMPONENT_FSAL,
+					     "READDIRPLUS didn't return attributes for '%s'. Trying GETATTR",
+					     entry->name);
+
+				rc = proxyv3_getattr_from_fh3(fh3, attrs);
+
+				if (FSAL_IS_ERROR(rc)) {
+					LogCrit(COMPONENT_FSAL,
+						"Last chance GETATTR failed for READDIRPLUS entry '%s'",
+						entry->name);
+					return rc;
+				}
+			}
 
 			/*
 			 * Tell alloc_handle we just want the requested
 			 * attributes.
 			 */
-			struct attrlist cb_attrs;
-
 			memset(&cb_attrs, 0, sizeof(cb_attrs));
 			FSAL_SET_MASK(cb_attrs.request_mask, attrmask);
 
-			struct proxyv3_obj_handle *result_handle =
+			result_handle =
 				proxyv3_alloc_handle(op_ctx->fsal_export,
 						     fh3, attrs, dir,
 						     &cb_attrs);
@@ -1610,8 +1628,7 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 				return fsalstat(ERR_FSAL_FAULT, 0);
 			}
 
-			enum fsal_dir_result cb_rc =
-				cb(entry->name,
+			cb_rc = cb(entry->name,
 				   &result_handle->obj,
 				   &cb_attrs, cbarg, entry->cookie);
 
@@ -1750,7 +1767,7 @@ proxyv3_read2(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_READ,
 			      (xdrproc_t) xdr_READ3args, &args,
 			      (xdrproc_t) xdr_READ3res, &result)) {
@@ -1887,7 +1904,7 @@ proxyv3_write2(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_WRITE,
 			      (xdrproc_t) xdr_WRITE3args, &args,
 			      (xdrproc_t) xdr_WRITE3res, &result)) {
@@ -1944,7 +1961,7 @@ proxyv3_commit2(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_COMMIT,
 			      (xdrproc_t) xdr_COMMIT3args, &args,
 			      (xdrproc_t) xdr_COMMIT3res, &result)) {
@@ -2031,7 +2048,7 @@ proxyv3_unlink(struct fsal_obj_handle *dir_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      method,
 			      enc, args,
 			      dec, result)) {
@@ -2092,7 +2109,7 @@ proxyv3_rename(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_RENAME,
 			      (xdrproc_t) xdr_RENAME3args, &args,
 			      (xdrproc_t) xdr_RENAME3res, &result))  {
@@ -2139,7 +2156,7 @@ proxyv3_get_dynamic_info(struct fsal_export *export_handle,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_FSSTAT,
 			      (xdrproc_t) xdr_FSSTAT3args, &args,
 			      (xdrproc_t) xdr_FSSTAT3res, &result)) {
@@ -2291,7 +2308,7 @@ static fsal_status_t
 proxyv3_create_handle(struct fsal_export *export_handle,
 		      struct gsh_buffdesc *hdl_desc,
 		      struct fsal_obj_handle **handle,
-		      struct attrlist *attrs_out)
+		      struct fsal_attrlist *attrs_out)
 {
 	struct nfs_fh3 fh3;
 
@@ -2308,7 +2325,7 @@ proxyv3_create_handle(struct fsal_export *export_handle,
 	fh3.data.data_val = hdl_desc->addr;
 	fh3.data.data_len = hdl_desc->len;
 
-	struct attrlist tmp_attrs;
+	struct fsal_attrlist tmp_attrs;
 
 	memset(&tmp_attrs, 0, sizeof(tmp_attrs));
 	if (attrs_out != NULL) {
@@ -2400,7 +2417,7 @@ proxyv3_fill_fsinfo(nfs_fh3 *fh3)
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      op_ctx->creds,
+			      &op_ctx->creds,
 			      NFSPROC3_FSINFO,
 			      (xdrproc_t) xdr_FSINFO3args, &args,
 			      (xdrproc_t) xdr_FSINFO3res, &result)) {
@@ -2549,7 +2566,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	if (ret != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Bad params for export %s",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		gsh_free(export);
 		return fsalstat(ERR_FSAL_INVAL, ret);
 	}
@@ -2566,7 +2583,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	if (ret != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Failed to attach export %s",
-			op_ctx->ctx_export->fullpath);
+			CTX_FULLPATH(op_ctx));
 		gsh_free(export);
 		return fsalstat(ERR_FSAL_INVAL, ret);
 	}
@@ -2610,7 +2627,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	export->params.nfsd_port = nfsd_port;
 	export->params.nlm_port = nlm_port;
 
-	mnt3_dirpath dirpath = op_ctx->ctx_export->fullpath;
+	mnt3_dirpath dirpath = CTX_FULLPATH(op_ctx);
 	mountres3 result;
 
 	memset(&result, 0, sizeof(result));
@@ -2623,7 +2640,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	if (!proxyv3_mount_call(proxyv3_sockaddr(),
 				proxyv3_socklen(),
 				proxyv3_mountd_port(),
-				op_ctx->creds,
+				&op_ctx->creds,
 				MOUNTPROC3_NULL,
 				(xdrproc_t) xdr_void, NULL,
 				(xdrproc_t) xdr_void, NULL)) {
@@ -2640,7 +2657,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	if (!proxyv3_mount_call(proxyv3_sockaddr(),
 				proxyv3_socklen(),
 				proxyv3_mountd_port(),
-				op_ctx->creds,
+				&op_ctx->creds,
 				MOUNTPROC3_MNT,
 				(xdrproc_t) xdr_dirpath, &dirpath,
 				(xdrproc_t) xdr_mountres3, &result)) {
@@ -2673,7 +2690,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 		if (!proxyv3_nlm_call(proxyv3_sockaddr(),
 				      proxyv3_socklen(),
 				      proxyv3_nlm_port(),
-				      op_ctx->creds,
+				      &op_ctx->creds,
 				      NLMPROC4_NULL,
 				      (xdrproc_t) xdr_void, NULL,
 				      (xdrproc_t) xdr_void, NULL)) {

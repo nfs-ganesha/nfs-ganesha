@@ -40,12 +40,14 @@
 #ifndef FSAL_API
 #define FSAL_API
 
+#include <urcu-bp.h>
 #include "fsal_types.h"
 #include "fsal_pnfs.h"
 #include "sal_shared.h"
 #include "config_parsing.h"
 #include "avltree.h"
 #include "abstract_atomic.h"
+#include "gsh_refstr.h"
 
 /**
 ** Forward declarations to resolve circular dependency conflicts
@@ -363,6 +365,15 @@ struct io_hints {
 	uint32_t hints;
 };
 
+enum request_type {
+	UNKNOWN_REQUEST,
+	NFS_CALL,
+	NFS_REQUEST,
+#ifdef _USE_9P
+	_9P_REQUEST,
+#endif				/* _USE_9P */
+};
+
 /**
  * @brief request op context
  *
@@ -378,26 +389,51 @@ struct io_hints {
  * operation for V2,3 and the compound for V4+.  All elements and what
  * they point to are invariant for the lifetime.
  *
- * NOTE: This is an across-the-api shared structure.  It must survive with
- *       older consumers of its contents.  Future development can change
- *       this struct so long as it follows the rules:
+ * If an op context is active, ctx_export MAY be NULL (very rare conditions)
+ * but ctx_fullpath and ctx_pseudopath must always be valid. The function
+ * init_op_context() assures this and init_op_context() and resum_op_context()
+ * are the only functions that can ever set op_ctx to a non-NULL value, and
+ * resume_op_context() must be setting it to point to an op context initialized
+ * with init_op_context().
  *
- *       1. New elements are appended at the end, never inserted in the middle.
+ * NOTE: This is an across-the-api shared structure.  Changing it implies a
+ *       change in the FSAL API.
  *
- *       2. This structure _only_ contains pointers and simple scalar values.
+ * NOTE: There is a set of functions in fsal.h to initialize and manage the
+ *       req_op_context. Please use them...
  *
- *       3. Changing an already defined struct pointer is strictly not allowed.
+ * NOTE: Usually a gsh_export is referenced by the req_op_context, it is
+ *       expected that a reference to that gsh_export will be held for the
+ *       duration of the time it's attached to the req_op_context or the life
+ *       of the req_op_context. To this extent, the responsibility to make the
+ *       put_gsh_export is now borne by the req_op_context management functions.
+ *       Specifically release_op_contextm, clear_op_context_export,
+ *       set_op_context_export, set_op_context_export_fsal, and
+ *       restore_op_context_export will all call put_gsh_export if there is an
+ *       attached export.
  *
- *       4. This struct is always passed by reference, never by value.
+ *       The functions that manage a saved_export_context maintain a reference
+ *       to the gsh_export and thus discard_op_context_export will clean that
+ *       up since the saved req_op_context will not be restored.
  *
- *       5. This struct is never copied/saved.
- *
- *       6. Code changes are first introduced in the core.  Assume the fsal
- *          module does not know and the code will still do the right thing.
+ * NOTE: In support of exports having fullpath and pseudopath changeable,
+ *       those strings are now accessed by gsh_refstr. In order to simplify
+ *       the bulk of access to those strings for op_cxt->ctx_export, whenever
+ *       ctx_export is changed, proper references to those strings are taken
+ *       and stored in the req_op_context. Since those references can not be
+ *       changed by any other thread, they are safe to access without RCU
+ *       protection. Further if for any reason, those strings are not available,
+ *       particularly when no export is attached, a reference to a "No Export"
+ *       string is taken, so it is ALWAYS safe to use these strings, there is
+ *       ALWAYS a valid reference which is safe to use in the context of the
+ *       thread owning the req_op_context. There are a set of functions that
+ *       make it easy to access these strings, and to access the "best" string
+ *       in the context of which string is used for NFS v3 MOUNT requests.
  */
 
 struct req_op_context {
-	struct user_cred *creds;	/*< resolved user creds from request */
+	struct req_op_context *saved_op_ctx; /* saved op_ctx */
+	struct user_cred creds;	/*< resolved user creds from request */
 	struct user_cred original_creds;	/*< Saved creds */
 	struct group_data *caller_gdata;
 	gid_t *caller_garray_copy;	/*< Copied garray from AUTH_SYS */
@@ -408,17 +444,44 @@ struct req_op_context {
 					   unknown/not applicable. */
 	uint32_t nfs_vers;	/*< NFS protocol version of request */
 	uint32_t nfs_minorvers;	/*< NFSv4 minor version */
-	uint32_t req_type;	/*< request_type NFS | 9P */
+	enum request_type req_type;	/*< request_type NFS | 9P */
 	struct gsh_client *client;	/*< client host info including stats */
-	struct gsh_export *ctx_export;	/*< current export */
+	struct gsh_export *ctx_export;	/*< current export, this MUST only
+					    be changed by one of the functions
+					    in commonlib.c. */
+	struct gsh_refstr *ctx_fullpath;	/*< current fullpath */
+	struct gsh_refstr *ctx_pseudopath;	/*< current pseudopath */
 	struct fsal_export *fsal_export;	/*< current fsal export */
-	struct export_perms *export_perms;	/*< Effective export perms */
+	struct export_perms export_perms;	/*< Effective export perms */
 	nsecs_elapsed_t start_time;	/*< start time of this op/request */
 	void *fsal_private;		/*< private for FSAL use */
+	void *proto_private;		/*< private for protocol layer use */
 	struct fsal_module *fsal_module;	/*< current fsal module */
-	struct fsal_pnfs_ds *fsal_pnfs_ds;	/*< current pNFS DS */
-	/* add new context members here */
+	struct fsal_pnfs_ds *ctx_pnfs_ds;	/*< current pNFS DS */
 };
+
+/**
+ * @brief Structure to save export context from op_context
+ *
+ * When we need to temporarily change the export in op_context, we can save
+ * the context here. Use of this is cheaper than using set_op_context_export
+ * to restore the op context since various references need not be retaken.
+ */
+struct saved_export_context {
+	struct gsh_export *saved_export;
+	struct gsh_refstr *saved_fullpath;	/*< saved fullpath */
+	struct gsh_refstr *saved_pseudopath;	/*< saved pseudopath */
+	struct fsal_export *saved_fsal_export;
+	struct fsal_module *saved_fsal_module;
+	struct fsal_pnfs_ds *saved_pnfs_ds;	/*< saved pNFS DS */
+	struct export_perms saved_export_perms;
+};
+
+/* Anything using these expects a valid op context and a valid op context
+ * always had at least a reference to the no_export string.
+ */
+#define CTX_PSEUDOPATH(ctx) (ctx->ctx_pseudopath->gr_val)
+#define CTX_FULLPATH(ctx) (ctx->ctx_fullpath->gr_val)
 
 /**
  * @brief FSAL module methods
@@ -638,9 +701,10 @@ struct fsal_ops {
  *
  * @return FSAL status.
  */
-	 fsal_status_t (*fsal_pnfs_ds)(struct fsal_module *const fsal_hdl,
-				       void *parse_node,
-				       struct fsal_pnfs_ds **const handle);
+	 fsal_status_t (*create_fsal_pnfs_ds)(
+					struct fsal_module *const fsal_hdl,
+					void *parse_node,
+					struct fsal_pnfs_ds **const handle);
 
 /**
  * @brief Initialize FSAL specific values for pNFS data server
@@ -740,8 +804,13 @@ struct export_ops {
 /**
  * @brief Look up a path
  *
- * This function looks up a path within the export, it is typically
+ * This function looks up a path within the export, it is now exclusively
  * used to get a handle for the root directory of the export.
+ *
+ * NOTE: This method will eventually be replaced by a method that simply
+ *       requests the root obj_handle be instantiated. The single caller
+ *       doesn't request attributes (nor did the two callers that were removed
+ *       in favor of calling fsal_lookup_path).
  *
  * The caller will set the request_mask in attrs_out to indicate the attributes
  * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
@@ -766,7 +835,7 @@ struct export_ops {
 	 fsal_status_t (*lookup_path)(struct fsal_export *exp_hdl,
 				      const char *path,
 				      struct fsal_obj_handle **handle,
-				      struct attrlist *attrs_out);
+				      struct fsal_attrlist *attrs_out);
 
 /**
  * @brief Look up a junction
@@ -862,7 +931,7 @@ struct export_ops {
 	 fsal_status_t (*create_handle)(struct fsal_export *exp_hdl,
 					struct gsh_buffdesc *fh_desc,
 					struct fsal_obj_handle **handle,
-					struct attrlist *attrs_out);
+					struct fsal_attrlist *attrs_out);
 /**@}*/
 
 /**@{*/
@@ -977,7 +1046,7 @@ struct export_ops {
  *
  * This function returns a list of all attributes that this FSAL will
  * support.  Be aware that this is specifically the attributes in
- * struct attrlist, other NFS attributes (fileid and so forth) are
+ * struct fsal_attrlist, other NFS attributes (fileid and so forth) are
  * supported through other means.
  *
  * @param[in] exp_hdl Filesystem to interrogate
@@ -1315,7 +1384,7 @@ const char *fsal_dir_result_str(enum fsal_dir_result result);
  */
 typedef enum fsal_dir_result (*fsal_readdir_cb)(
 				const char *name, struct fsal_obj_handle *obj,
-				struct attrlist *attrs,
+				struct fsal_attrlist *attrs,
 				void *dir_state, fsal_cookie_t cookie);
 
 /**
@@ -1437,7 +1506,7 @@ struct fsal_obj_ops {
 	 fsal_status_t (*lookup)(struct fsal_obj_handle *dir_hdl,
 				 const char *path,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out);
+				 struct fsal_attrlist *attrs_out);
 
 /**
  * @brief Read a directory
@@ -1551,9 +1620,10 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t (*mkdir)(struct fsal_obj_handle *dir_hdl,
-				const char *name, struct attrlist *attrs_in,
+				const char *name,
+				struct fsal_attrlist *attrs_in,
 				struct fsal_obj_handle **new_obj,
-				struct attrlist *attrs_out);
+				struct fsal_attrlist *attrs_out);
 
 /**
  * @brief Create a special file
@@ -1596,9 +1666,9 @@ struct fsal_obj_ops {
 	 fsal_status_t (*mknode)(struct fsal_obj_handle *dir_hdl,
 				 const char *name,
 				 object_file_type_t nodetype,
-				 struct attrlist *attrs_in,
+				 struct fsal_attrlist *attrs_in,
 				 struct fsal_obj_handle **new_obj,
-				 struct attrlist *attrs_out);
+				 struct fsal_attrlist *attrs_out);
 
 /**
  * @brief Create a symbolic link
@@ -1638,9 +1708,9 @@ struct fsal_obj_ops {
 	 fsal_status_t (*symlink)(struct fsal_obj_handle *dir_hdl,
 				  const char *name,
 				  const char *link_path,
-				  struct attrlist *attrs_in,
+				  struct fsal_attrlist *attrs_in,
 				  struct fsal_obj_handle **new_obj,
-				  struct attrlist *attrs_out);
+				  struct fsal_attrlist *attrs_out);
 /**@}*/
 
 /**@{*/
@@ -1721,7 +1791,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t (*getattrs)(struct fsal_obj_handle *obj_hdl,
-				   struct attrlist *attrs_out);
+				   struct fsal_attrlist *attrs_out);
 
 /**
  * @brief Create a new link
@@ -2057,7 +2127,6 @@ struct fsal_obj_ops {
  *
  * @param[in]     obj_hdl  The handle of the file on which the layout is
  *                         requested.
- * @param[in]     req_ctx  Request context
  * @param[out]    loc_body An XDR stream to which the FSAL must encode
  *                         the layout specific portion of the granted
  *                         layout segment.
@@ -2067,7 +2136,6 @@ struct fsal_obj_ops {
  * @return Valid error codes in RFC 5661, pp. 366-7.
  */
 	 nfsstat4(*layoutget)(struct fsal_obj_handle *obj_hdl,
-			      struct req_op_context *req_ctx,
 			      XDR * loc_body,
 			      const struct fsal_layoutget_arg *arg,
 			      struct fsal_layoutget_res *res);
@@ -2087,7 +2155,6 @@ struct fsal_obj_ops {
  * layout must be freed.
  *
  * @param[in] obj_hdl  The object on which a segment is to be returned
- * @param[in] req_ctx  Request context
  * @param[in] lrf_body In the case of a non-synthetic return, this is
  *                     an XDR stream corresponding to the layout
  *                     type-specific argument to LAYOUTRETURN.  In
@@ -2098,7 +2165,6 @@ struct fsal_obj_ops {
  * @return Valid error codes in RFC 5661, p. 367.
  */
 	 nfsstat4(*layoutreturn)(struct fsal_obj_handle *obj_hdl,
-				 struct req_op_context *req_ctx,
 				 XDR * lrf_body,
 				 const struct fsal_layoutreturn_arg *arg);
 
@@ -2114,7 +2180,6 @@ struct fsal_obj_ops {
  * FSAL_layoutcommit.
  *
  * @param[in]     obj_hdl  The object on which to commit
- * @param[in]     req_ctx  Request context
  * @param[in]     lou_body An XDR stream containing the layout
  *                         type-specific portion of the LAYOUTCOMMIT
  *                         arguments.
@@ -2124,7 +2189,6 @@ struct fsal_obj_ops {
  * @return Valid error codes in RFC 5661, p. 366.
  */
 	 nfsstat4(*layoutcommit)(struct fsal_obj_handle *obj_hdl,
-				 struct req_op_context *req_ctx,
 				 XDR * lou_body,
 				 const struct fsal_layoutcommit_arg *arg,
 				 struct fsal_layoutcommit_res *res);
@@ -2287,10 +2351,10 @@ struct fsal_obj_ops {
 				fsal_openflags_t openflags,
 				enum fsal_create_mode createmode,
 				const char *name,
-				struct attrlist *attrs_in,
+				struct fsal_attrlist *attrs_in,
 				fsal_verifier_t verifier,
 				struct fsal_obj_handle **new_obj,
-				struct attrlist *attrs_out,
+				struct fsal_attrlist *attrs_out,
 				bool *caller_perm_check);
 
 /**
@@ -2308,7 +2372,7 @@ struct fsal_obj_ops {
  * @brief Return open status of a state.
  *
  * This function returns open flags representing the current open
- * status for a state. The state_lock must be held.
+ * status for a state. The st_lock must be held.
  *
  * @param[in] obj_hdl     File owning state
  * @param[in] state File state to interrogate
@@ -2322,7 +2386,7 @@ struct fsal_obj_ops {
  * @brief Re-open a file that may be already opened
  *
  * This function supports changing the access mode of a share reservation and
- * thus should only be called with a share state. The state_lock must be held.
+ * thus should only be called with a share state. The st_lock must be held.
  *
  * This MAY be used to open a file the first time if there is no need for
  * open by name or create semantics. One example would be 9P lopen.
@@ -2501,7 +2565,7 @@ struct fsal_obj_ops {
 	 fsal_status_t (*setattr2)(struct fsal_obj_handle *obj_hdl,
 				   bool bypass,
 				   struct state_t *state,
-				   struct attrlist *attrib_set);
+				   struct fsal_attrlist *attrib_set);
 
 /**
  * @brief Manage closing a file when a state is no longer needed.
@@ -2532,7 +2596,7 @@ struct fsal_obj_ops {
  */
 
 	 bool (*is_referral)(struct fsal_obj_handle *obj_hdl,
-			     struct attrlist *attrs,
+			     struct fsal_attrlist *attrs,
 			     bool cache_attrs);
 
 /**@{*/
@@ -2569,7 +2633,7 @@ struct fsal_pnfs_ds_ops {
  *
  * @param[in]  pds	FSAL pNFS DS to release
  */
-	 void (*release)(struct fsal_pnfs_ds *const pds);
+	 void (*ds_release)(struct fsal_pnfs_ds *const pds);
 
 /**
  * @brief Initialize FSAL specific permissions per pNFS DS
@@ -2580,7 +2644,7 @@ struct fsal_pnfs_ds_ops {
  * @return NFSv4.1 error codes:
  *			NFS4_OK, NFS4ERR_ACCESS, NFS4ERR_WRONGSEC.
  */
-	 nfsstat4(*permissions)(struct fsal_pnfs_ds *const pds,
+	 nfsstat4(*ds_permissions)(struct fsal_pnfs_ds *const pds,
 				struct svc_req *req);
 /**@}*/
 
@@ -2605,24 +2669,7 @@ struct fsal_pnfs_ds_ops {
 				   int flags);
 
 /**
- * @brief Initialize FSAL specific values for DS handle
- *
- * @param[in]  ops	FSAL DS handle operations vector
- */
-	 void (*fsal_dsh_ops)(struct fsal_dsh_ops *ops);
-
-/**@}*/
-};
-
-/**
- * @brief FSAL DS handle operations vector
- */
-
-struct fsal_dsh_ops {
-/**@{*/
-
-/**
- * Lifecycle management.
+ * DS handle Lifecycle management.
  */
 
 /**
@@ -2634,13 +2681,13 @@ struct fsal_dsh_ops {
  *
  * @param[in] ds_hdl Handle to release
  */
-	 void (*release)(struct fsal_ds_handle *const ds_hdl);
+	 void (*dsh_release)(struct fsal_ds_handle *const ds_hdl);
 /**@}*/
 
 /**@{*/
 
 /**
- * I/O Functions
+ * DS handle I/O Functions
  */
 
 /**
@@ -2652,7 +2699,6 @@ struct fsal_dsh_ops {
  * normal way.
  *
  * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -2663,14 +2709,13 @@ struct fsal_dsh_ops {
  *
  * @return An NFSv4.1 status code.
  */
-	 nfsstat4(*read)(struct fsal_ds_handle *const ds_hdl,
-			 struct req_op_context *const req_ctx,
-			 const stateid4 * stateid,
-			 const offset4 offset,
-			 const count4 requested_length,
-			 void *const buffer,
-			 count4 * const supplied_length,
-			 bool *const end_of_file);
+	 nfsstat4 (*dsh_read)(struct fsal_ds_handle *const ds_hdl,
+			      const stateid4 *stateid,
+			      const offset4 offset,
+			      const count4 requested_length,
+			      void *const buffer,
+			      count4 * const supplied_length,
+			      bool *const end_of_file);
 
 /**
  * @brief Read plus from a data-server handle.
@@ -2681,7 +2726,6 @@ struct fsal_dsh_ops {
  * normal way.
  *
  * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -2693,15 +2737,14 @@ struct fsal_dsh_ops {
  *
  * @return An NFSv4.2 status code.
  */
-	 nfsstat4(*read_plus)(struct fsal_ds_handle *const ds_hdl,
-			      struct req_op_context *const req_ctx,
-			      const stateid4 * stateid,
-			      const offset4 offset,
-			      const count4 requested_length,
-			      void *const buffer,
-			      const count4 supplied_length,
-			      bool *const end_of_file,
-			      struct io_info *info);
+	 nfsstat4 (*dsh_read_plus)(struct fsal_ds_handle *const ds_hdl,
+				   const stateid4 *stateid,
+				   const offset4 offset,
+				   const count4 requested_length,
+				   void *const buffer,
+				   const count4 supplied_length,
+				   bool *const end_of_file,
+				   struct io_info *info);
 
 /**
  *
@@ -2713,7 +2756,6 @@ struct fsal_dsh_ops {
  * normal way.
  *
  * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -2727,16 +2769,15 @@ struct fsal_dsh_ops {
  *
  * @return An NFSv4.1 status code.
  */
-	 nfsstat4(*write)(struct fsal_ds_handle *const ds_hdl,
-			  struct req_op_context *const req_ctx,
-			  const stateid4 * stateid,
-			  const offset4 offset,
-			  const count4 write_length,
-			  const void *buffer,
-			  const stable_how4 stability_wanted,
-			  count4 * const written_length,
-			  verifier4 * const writeverf,
-			  stable_how4 * const stability_got);
+	 nfsstat4 (*dsh_write)(struct fsal_ds_handle *const ds_hdl,
+			       const stateid4 *stateid,
+			       const offset4 offset,
+			       const count4 write_length,
+			       const void *buffer,
+			       const stable_how4 stability_wanted,
+			       count4 * const written_length,
+			       verifier4 * const writeverf,
+			       stable_how4 * const stability_got);
 
 /**
  * @brief Commit a byte range to a DS handle.
@@ -2747,18 +2788,16 @@ struct fsal_dsh_ops {
  * normal way.
  *
  * @param[in]  ds_hdl    FSAL DS handle
- * @param[in]  req_ctx   Credentials
  * @param[in]  offset    Start of commit window
  * @param[in]  count     Length of commit window
  * @param[out] writeverf Write verifier
  *
  * @return An NFSv4.1 status code.
  */
-	 nfsstat4(*commit)(struct fsal_ds_handle *const ds_hdl,
-			   struct req_op_context *const req_ctx,
-			   const offset4 offset,
-			   const count4 count,
-			   verifier4 * const writeverf);
+	 nfsstat4 (*dsh_commit)(struct fsal_ds_handle *const ds_hdl,
+				const offset4 offset,
+				const count4 count,
+				verifier4 * const writeverf);
 /**@}*/
 };
 
@@ -2917,6 +2956,8 @@ struct fsal_obj_handle {
 				   the scope of the fsid, (e.g. inode number) */
 
 	struct state_hdl *state_hdl;	/*< State related to this handle */
+	int32_t exp_refcnt;	/*< ref count by export root nodes or
+				    export junction nodes*/
 };
 
 /**
@@ -2929,22 +2970,20 @@ struct fsal_obj_handle {
  *
  */
 
-enum pnfs_ds_status {
-	PNFS_DS_READY,			/*< searchable, usable */
-	PNFS_DS_STALE,			/*< is no longer valid */
-};
-
 /**
  * @brief PNFS Data Server
  *
  * This represents a Data Server for PNFS.  It may be stand-alone, or may be
  * associated with an export (which represents an MDS).
+ *
+ * NOTE: While a fsal_pnfs_ds is stored in a lookup table, if it has an
+ *       mds_export attached, an export reference MUST be held. This is
+ *       accomplished by pnfs_ds_insert and pnfs_ds_remove.
  */
 struct fsal_pnfs_ds {
 	struct glist_head ds_list;	/**< Entry in list of all DSs */
 	struct glist_head server;	/**< Link in list of Data Servers under
 					   the same FSAL. */
-	struct glist_head ds_handles;	/**< Head of list of DS handles */
 	struct fsal_module *fsal;	/**< Link back to fsal module */
 	struct fsal_pnfs_ds_ops s_ops;	/**< Operations vector */
 	struct gsh_export *mds_export;	/**< related export */
@@ -2952,11 +2991,8 @@ struct fsal_pnfs_ds {
 						  MDS stacking) */
 
 	struct avltree_node ds_node;	/**< Node in tree of all Data Servers */
-	pthread_rwlock_t lock;		/**< Lock to be held when
-					    manipulating its list (above). */
-	int32_t refcount;		/**< Reference count */
+	int32_t ds_refcount;		/**< Reference count */
 	uint16_t id_servers;		/**< Identifier */
-	uint8_t pnfs_ds_status;		/**< current condition */
 };
 
 /**
@@ -2970,47 +3006,48 @@ struct fsal_pnfs_ds {
  */
 
 struct fsal_ds_handle {
-	struct glist_head ds_handle;	/*< Link in list of DS handles under
-					   the same pDS. */
-	struct fsal_pnfs_ds *pds;	/*< Link back to pDS */
-	struct fsal_dsh_ops dsh_ops;	/*< Operations vector */
-
-	int64_t refcount;		/*< Reference count */
 };
 
 /**
- * @brief Get a reference on a DS handle
+ * @brief Get a reference on a fsal object handle by export
  *
- * This function increments the reference count on a DS handle.
+ * This function increments the reference count on export root object
+ * or PseudoFS export junction nodes.
  *
- * @param[in] ds_hdl The handle to reference
  */
-
-static inline void ds_handle_get_ref(struct fsal_ds_handle *const ds_hdl)
+static inline void export_root_object_get(struct fsal_obj_handle *obj_hdl)
 {
-	(void) atomic_inc_int64_t (&ds_hdl->refcount);
+	(void) atomic_inc_int32_t (&obj_hdl->exp_refcnt);
 }
 
 /**
- * @brief Release a reference on a DS handle
+ * @brief Put a reference on a fsal object handle by export
  *
- * This function releases a reference to a DS handle.  Once a caller's
- * reference is released they should make no attempt to access the
- * handle or even dereference a pointer to it.
+ * This function releases the reference count on export root object
+ * or PseudoFS export junction nodes.
  *
- * @param[in] ds_hdl The handle to relinquish
  */
-
-static inline void ds_handle_put(struct fsal_ds_handle *const ds_hdl)
+static inline void export_root_object_put(struct fsal_obj_handle *obj_hdl)
 {
-	int64_t refcount = atomic_dec_int64_t (&ds_hdl->refcount);
+	int32_t ref = atomic_dec_int32_t (&obj_hdl->exp_refcnt);
 
-	if (refcount != 0) {
-		assert(refcount > 0);
-		return;
-	}
+	assert(ref >= 0);
+}
 
-	ds_hdl->dsh_ops.release(ds_hdl);
+/**
+ * @brief Determines whether the object handle is referenced
+ * by one or more exports root
+ *
+ * @param[in] obj_hdl  object handle need to be judged
+ * @return true if referenced by export, false otherwise
+ */
+static inline bool is_export_pin(struct fsal_obj_handle *obj_hdl)
+{
+	int32_t ref = atomic_fetch_int32_t (&obj_hdl->exp_refcnt);
+
+	if (ref > 0)
+		return true;    /* pin */
+	return false; /* unpin */
 }
 
 /**

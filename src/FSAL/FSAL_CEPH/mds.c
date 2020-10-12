@@ -318,7 +318,6 @@ void export_ops_pnfs(struct export_ops *ops)
  * ignore it otherwise.
  *
  * @param[in]     obj_pub  Public object handle
- * @param[in]     req_ctx  Request context
  * @param[out]    loc_body An XDR stream to which the FSAL must encode
  *                         the layout specific portion of the granted
  *                         layout segment.
@@ -329,13 +328,13 @@ void export_ops_pnfs(struct export_ops *ops)
  */
 
 static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
-			  struct req_op_context *req_ctx, XDR *loc_body,
+			  XDR *loc_body,
 			  const struct fsal_layoutget_arg *arg,
 			  struct fsal_layoutget_res *res)
 {
 	/* The private 'full' export */
 	struct ceph_export *export =
-		container_of(req_ctx->fsal_export, struct ceph_export, export);
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' object handle */
 	struct ceph_handle *handle =
 		container_of(obj_pub, struct ceph_handle, handle);
@@ -491,7 +490,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	ds_wire.snapseq = ceph_ll_snap_seq(export->cmount, handle->wire.vi);
 
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
-					     &req_ctx->export->export_id, 1,
+					     &op_ctx->export->export_id, 1,
 					     &ds_desc);
 	if (nfs_status != NFS4_OK) {
 		LogCrit(COMPONENT_PNFS,
@@ -544,7 +543,6 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
  * pins to release, always succeed
  *
  * @param[in] obj_pub  Public object handle
- * @param[in] req_ctx  Request context
  * @param[in] lrf_body Nothing for us
  * @param[in] arg      Input arguments of the function
  *
@@ -552,12 +550,12 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
  */
 
 static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
-			     struct req_op_context *req_ctx, XDR *lrf_body,
+			     XDR *lrf_body,
 			     const struct fsal_layoutreturn_arg *arg)
 {
 	/* The private 'full' export */
 	struct ceph_export *export =
-		container_of(req_ctx->fsal_export, struct ceph_export, export);
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' object handle */
 	struct ceph_handle *handle =
 		container_of(obj_pub, struct ceph_handle, handle);
@@ -602,7 +600,6 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
  * Update the size and time for a file accessed through a layout.
  *
  * @param[in]     obj_pub  Public object handle
- * @param[in]     req_ctx  Request context
  * @param[in]     lou_body An XDR stream containing the layout
  *                         type-specific portion of the LAYOUTCOMMIT
  *                         arguments.
@@ -613,13 +610,13 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
  */
 
 static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
-			     struct req_op_context *req_ctx, XDR *lou_body,
+			     XDR *lou_body,
 			     const struct fsal_layoutcommit_arg *arg,
 			     struct fsal_layoutcommit_res *res)
 {
 	/* The private 'full' export */
 	struct ceph_export *export =
-		container_of(req_ctx->fsal_export, struct ceph_export, export);
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* The private 'full' object handle */
 	struct ceph_handle *handle =
 		container_of(obj_pub, struct ceph_handle, handle);

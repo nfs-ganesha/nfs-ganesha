@@ -41,8 +41,10 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include "gsh_config.h"
 #include "log.h"
 #include "fsal.h"
+#include "fsal_convert.h"
 #include "nfs_convert.h"
 #include "nfs_exports.h"
 #include "nfs4_acls.h"
@@ -65,28 +67,27 @@ size_t open_fd_count;
 
 static bool fsal_not_in_group_list(gid_t gid)
 {
-	const struct user_cred *creds = op_ctx->creds;
 	int i;
 
-	if (creds->caller_gid == gid) {
+	if (op_ctx->creds.caller_gid == gid) {
 
 		LogDebug(COMPONENT_FSAL,
-			 "User %u is has active group %u", creds->caller_uid,
-			 gid);
+			 "User %u is has active group %u",
+			 op_ctx->creds.caller_uid, gid);
 		return false;
 	}
-	for (i = 0; i < creds->caller_glen; i++) {
-		if (creds->caller_garray[i] == gid) {
+	for (i = 0; i < op_ctx->creds.caller_glen; i++) {
+		if (op_ctx->creds.caller_garray[i] == gid) {
 			LogDebug(COMPONENT_FSAL,
 				 "User %u is member of group %u",
-				 creds->caller_uid, gid);
+				 op_ctx->creds.caller_uid, gid);
 			return false;
 		}
 	}
 
 	LogDebug(COMPONENT_FSAL,
-		 "User %u IS NOT member of group %u", creds->caller_uid,
-		 gid);
+		 "User %u IS NOT member of group %u",
+		 op_ctx->creds.caller_uid, gid);
 	return true;
 }
 
@@ -174,19 +175,18 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
  * @return FSAL status
  */
 static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
-					      struct attrlist *attr,
-					      struct attrlist *current)
+					      struct fsal_attrlist *attr,
+					      struct fsal_attrlist *current)
 {
 	fsal_status_t status = {0, 0};
 	fsal_accessflags_t access_check = 0;
 	bool not_owner;
 	char *note = "";
-	const struct user_cred *creds = op_ctx->creds;
 
 	/* Shortcut, if current user is root, then we can just bail out with
 	 * success. */
 	if (op_ctx->fsal_export->exp_ops.is_superuser(op_ctx->fsal_export,
-						      creds)) {
+						      &op_ctx->creds)) {
 		note = " (Ok for root user)";
 		goto out;
 	}
@@ -201,12 +201,12 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-	not_owner = (creds->caller_uid != current->owner);
+	not_owner = (op_ctx->creds.caller_uid != current->owner);
 
 	/* Only ownership change need to be checked for owner */
 	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_OWNER)) {
 		/* non-root is only allowed to "take ownership of file" */
-		if (attr->owner != creds->caller_uid) {
+		if (attr->owner != op_ctx->creds.caller_uid) {
 			status = fsalstat(ERR_FSAL_PERM, 0);
 			note = " (new OWNER was not user)";
 			goto out;
@@ -364,10 +364,10 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 			    fsal_openflags_t openflags,
 			    enum fsal_create_mode createmode,
 			    const char *name,
-			    struct attrlist *attr,
+			    struct fsal_attrlist *attr,
 			    fsal_verifier_t verifier,
 			    struct fsal_obj_handle **obj,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
 	fsal_status_t close_status = { 0, 0 };
@@ -407,7 +407,7 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 		LogFullDebug(COMPONENT_FSAL,
 			     "FSAL %d %s returned %s",
 			     (int) op_ctx->ctx_export->export_id,
-			     op_ctx->ctx_export->fullpath,
+			     CTX_FULLPATH(op_ctx),
 			     fsal_err_txt(status));
 		return status;
 	}
@@ -467,11 +467,10 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
  * @return FSAL status
  */
 fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
-			   struct state_t *state, struct attrlist *attr)
+			   struct state_t *state, struct fsal_attrlist *attr)
 {
 	fsal_status_t status = { 0, 0 };
-	const struct user_cred *creds = op_ctx->creds;
-	struct attrlist current;
+	struct fsal_attrlist current;
 	bool is_superuser;
 
 	if ((attr->valid_mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED))
@@ -504,7 +503,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 		return status;
 
 	is_superuser = op_ctx->fsal_export->exp_ops.is_superuser(
-					op_ctx->fsal_export, creds);
+					op_ctx->fsal_export, &op_ctx->creds);
 	/* Test for the following condition from chown(2):
 	 *
 	 *     When the owner or group of an executable file are changed by an
@@ -668,7 +667,7 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 			  const char *name,
 			  struct fsal_obj_handle **obj,
-			  struct attrlist *attrs_out)
+			  struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t fsal_status = { 0, 0 };
 	fsal_accessflags_t access_mask =
@@ -698,6 +697,176 @@ fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 }
 
 /**
+ * @brief Look up a directory using a fully qualified path that is contained
+ *        within the export in op_ctx->ctx_export.
+ *
+ * NOTE: This is pretty efficient to use even if the path IS the export. Our
+ *       caller would have to do about the same having found the export, so
+ *       we might as well have that logic in common code. In fact, we do it
+ *       without using strcmp (the function that found the export has already
+ *       done that...).
+ *
+ * @param[in]  path    Relative path to the directory
+ * @param[out] obj     Found directory
+ *
+ * @note On success, @a handle has been ref'd
+ *
+ * NOTE: Since this does the path walk through MDCACHE, any intermediary
+ *       nodes will be in the cache, since there are not extraneous LRU events
+ *       if the cache is full, the intermediary entries are likely to be reaped
+ *       as we walk the path, reducing churn in the cache.
+ *
+ * @return FSAL status
+ */
+
+fsal_status_t fsal_lookup_path(const char *path,
+			       struct fsal_obj_handle **dirobj)
+{
+	fsal_status_t fsal_status;
+	struct fsal_obj_handle *parent;
+	char *rest;
+	const char *start, *exppath;
+	int len;
+
+	/* First we need to strip off the export path, paying heed to
+	 * nfs_param.core_param.mount_path_pseudo. Since our callers have used
+	 * get_gsh_export_by_pseudo or get_gsh_export_by_path to find the
+	 * export, the path MUST be proper.
+	 */
+	exppath = ctx_export_path(op_ctx);
+	len = strlen(exppath);
+
+	/* For debug builds, assure the above statement is true. */
+	assert(strncmp(path, exppath, len) == 0);
+
+	/* So now we can point start at the portion of the path beyond the
+	 * export path. This will point start at the '\0' or '/' following the
+	 * export path. We will be nice and skip all '/' characters that follow
+	 * the export path.
+	 */
+	start = path + len;
+
+	while (*start == '/')
+		start++;
+
+	/* Now get the length of the remaining relative path */
+	len = strlen(start);
+
+	if (len > MAXPATHLEN) {
+		LogDebug(COMPONENT_FSAL,
+			 "Failed due path %s is too long",
+			 path);
+		return posix2fsal_status(EINVAL);
+	}
+
+	/* Initialize parent to root of export and get a ref to it. */
+	fsal_status = nfs_export_get_root_entry(op_ctx->ctx_export, &parent);
+
+	if (FSAL_IS_ERROR(fsal_status))
+		return fsal_status;
+
+	/* Strip terminating '/' by shrinking length */
+	while (len > 0 && start[len-1] == '/')
+		len--;
+
+	if (len == 0) {
+		/* The path we were passed is effectively the export path, so
+		 * just return the export root object with a reference.
+		 */
+		LogDebug(COMPONENT_FSAL,
+			 "Returning root of export %s", exppath);
+		*dirobj = parent;
+		return fsal_status;
+	}
+
+	/* Allocate space for duplicate */
+	rest = alloca(len + 1);
+
+	/* Copy the string without any extraneous '/' at begin or end. */
+	memcpy(rest, start, len);
+
+	/* Terminate it */
+	rest[len] = '\0';
+
+	while (*rest != '\0') {
+		struct fsal_obj_handle *obj;
+		char *next_slash;
+
+		/* Skip extra '/'. Note that since we trimmed trailing '/' there
+		 * MUST be a non-NUL character and thus another path component
+		 * following ANY '/' character in the path, so by skipping any
+		 * extraneous '/' characters, we advance to the start of the
+		 * next path component.
+		 */
+		while (*rest == '/')
+			rest++;
+
+		/* Find the end of this path element */
+		next_slash = strchr(rest, '/');
+
+		/* NUL terminate element if not at end of string. */
+		if (next_slash != NULL)
+			*next_slash = '\0';
+
+		/* Disallow .. elements... */
+		if (strcmp(rest, "..") == 0) {
+			parent->obj_ops->put_ref(parent);
+			LogInfo(COMPONENT_FSAL,
+				"Failed due to '..' element in path %s",
+				path);
+			return posix2fsal_status(EACCES);
+		}
+
+		/* Skip "." elements... */
+		if (rest[0] == '.' && rest[1] == '\0')
+			goto skip;
+
+		/* Open the next directory in the path */
+		fsal_status = parent->obj_ops->lookup(parent,
+						      rest,
+						      &obj,
+						      NULL);
+
+		/* No matter what, we're done with the parent reference */
+		parent->obj_ops->put_ref(parent);
+
+		if (FSAL_IS_ERROR(fsal_status)) {
+			LogDebug(COMPONENT_FSAL,
+				 "Failed due to %s element in path %s error %s",
+				 rest, path, fsal_err_txt(fsal_status));
+			return fsal_status;
+		}
+
+		if (obj->type != DIRECTORY) {
+			obj->obj_ops->put_ref(obj);
+			LogDebug(COMPONENT_FSAL,
+				 "Failed due to %s element in path %s not a directory",
+				 rest, path);
+			return posix2fsal_status(ENOTDIR);
+		}
+
+		/* Set up for next lookup */
+		parent = obj;
+
+skip:
+
+		/* Done, break out */
+		if (next_slash == NULL)
+			break;
+
+		/* Skip the '/' */
+		rest = next_slash + 1;
+	}
+
+	/* Now parent is the object we're looking for and we already knmow it's
+	 * a directory. Return it with the reference we are holding.
+	 */
+	*dirobj = parent;
+
+	return fsal_status;
+}
+
+/**
  * @brief Look up a directory's parent
  *
  * @param[in]  obj     File whose parent is to be obtained.
@@ -707,7 +876,7 @@ fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
  */
 fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
 			   struct fsal_obj_handle **parent,
-			   struct attrlist *attrs_out)
+			   struct fsal_attrlist *attrs_out)
 {
 	*parent = NULL;
 
@@ -754,13 +923,13 @@ fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
  * This function sets the mtime/atime attributes according to the create
  * verifier
  *
- * @param[in] sattr   attrlist to be managed.
+ * @param[in] sattr   fsal_attrlist to be managed.
  * @param[in] verf_hi High long of verifier
  * @param[in] verf_lo Low long of verifier
  *
  */
 void
-fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
+fsal_create_set_verifier(struct fsal_attrlist *sattr, uint32_t verf_hi,
 			 uint32_t verf_lo)
 {
 	sattr->atime.tv_sec = verf_hi;
@@ -800,10 +969,10 @@ fsal_create_set_verifier(struct attrlist *sattr, uint32_t verf_hi,
 fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 			  const char *name,
 			  object_file_type_t type,
-			  struct attrlist *attrs,
+			  struct fsal_attrlist *attrs,
 			  const char *link_content,
 			  struct fsal_obj_handle **obj,
-			  struct attrlist *attrs_out)
+			  struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
 	attrmask_t orig_mask = attrs->valid_mask;
@@ -812,11 +981,11 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 	 * if they are the same as the credentials.
 	 */
 	if ((attrs->valid_mask & ATTR_OWNER) &&
-	    attrs->owner == op_ctx->creds->caller_uid)
+	    attrs->owner == op_ctx->creds.caller_uid)
 		FSAL_UNSET_MASK(attrs->valid_mask, ATTR_OWNER);
 
 	if ((attrs->valid_mask & ATTR_GROUP) &&
-	    attrs->group == op_ctx->creds->caller_gid)
+	    attrs->group == op_ctx->creds.caller_gid)
 		FSAL_UNSET_MASK(attrs->valid_mask, ATTR_GROUP);
 
 	/* Permission checking will be done by the FSAL operation. */
@@ -921,7 +1090,7 @@ bool fsal_create_verify(struct fsal_obj_handle *obj, uint32_t verf_hi,
 {
 	/* True if the verifier matches */
 	bool verified = false;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 
 	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
 
@@ -952,7 +1121,7 @@ struct fsal_populate_cb_state {
 static enum fsal_dir_result
 populate_dirent(const char *name,
 		struct fsal_obj_handle *obj,
-		struct attrlist *attrs,
+		struct fsal_attrlist *attrs,
 		void *dir_state,
 		fsal_cookie_t cookie)
 {
@@ -970,21 +1139,21 @@ populate_dirent(const char *name,
 	if (status.major == ERR_FSAL_CROSS_JUNCTION) {
 		struct fsal_obj_handle *junction_obj;
 		struct gsh_export *junction_export = NULL;
-		struct fsal_export *saved_export;
-		struct attrlist attrs2;
+		struct saved_export_context saved;
+		struct fsal_attrlist attrs2;
 
-		PTHREAD_RWLOCK_rdlock(&obj->state_hdl->state_lock);
+		PTHREAD_RWLOCK_rdlock(&obj->state_hdl->jct_lock);
 
 		/* Get a reference to the junction_export and remember it
 		 * only if the junction export is valid.
 		 */
 		if (obj->state_hdl->dir.junction_export != NULL &&
 		    export_ready(obj->state_hdl->dir.junction_export)) {
-			get_gsh_export_ref(obj->state_hdl->dir.junction_export);
 			junction_export = obj->state_hdl->dir.junction_export;
+			get_gsh_export_ref(junction_export);
 		}
 
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 
 		/* Get the root of the export across the junction. */
 		if (junction_export != NULL) {
@@ -992,11 +1161,25 @@ populate_dirent(const char *name,
 							   &junction_obj);
 
 			if (FSAL_IS_ERROR(status)) {
+				struct gsh_refstr *ref_fullpath;
+
+				rcu_read_lock();
+
+				ref_fullpath = gsh_refstr_get(
+				    rcu_dereference(junction_export->fullpath));
+
+				rcu_read_unlock();
+
 				LogMajor(COMPONENT_FSAL,
 					 "Failed to get root for %s, id=%d, status = %s",
-					 junction_export->fullpath,
+					 ref_fullpath
+						? ref_fullpath->gr_val
+						: "",
 					 junction_export->export_id,
 					 fsal_err_txt(status));
+
+				gsh_refstr_put(ref_fullpath);
+
 				/* Need to signal problem to callback */
 				state->cb_state = CB_PROBLEM;
 				(void) state->cb(&state->cb_parms, NULL, NULL,
@@ -1019,8 +1202,7 @@ populate_dirent(const char *name,
 		}
 
 		/* Now we need to get the cross-junction attributes. */
-		saved_export = op_ctx->fsal_export;
-		op_ctx->fsal_export = junction_export->fsal_export;
+		save_op_context_export_and_set_export(&saved, junction_export);
 
 		fsal_prepare_attrs(&attrs2,
 				   op_ctx->fsal_export->exp_ops
@@ -1045,11 +1227,9 @@ populate_dirent(const char *name,
 
 		fsal_release_attrs(&attrs2);
 
-		/* Release our refs */
-		op_ctx->fsal_export = saved_export;
-
+		/* Release our refs and restore op_context */
 		junction_obj->obj_ops->put_ref(junction_obj);
-		put_gsh_export(junction_export);
+		restore_op_context_export(&saved);
 
 		/* state->cb (nfs4_readdir_callback) saved op_ctx
 		 * ctx_export and fsal_export. Restore them here
@@ -1379,10 +1559,10 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 			 fsal_openflags_t openflags,
 			 enum fsal_create_mode createmode,
 			 const char *name,
-			 struct attrlist *attr,
+			 struct fsal_attrlist *attr,
 			 fsal_verifier_t verifier,
 			 struct fsal_obj_handle **obj,
-			 struct attrlist *attrs_out)
+			 struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
 	bool caller_perm_check = false;
@@ -1565,7 +1745,7 @@ fsal_status_t fsal_verify2(struct fsal_obj_handle *obj,
  * @return FSAL status.
  **/
 fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t status;
 

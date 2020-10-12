@@ -39,7 +39,7 @@
 
 /* defined the set of attributes supported with POSIX */
 #define GLUSTERFS_SUPPORTED_ATTRIBUTES (ATTRS_POSIX | ATTR_ACL | \
-					ATTR4_SEC_LABEL)
+					ATTR4_SEC_LABEL | ATTR4_XATTR)
 
 /**
  * The attributes this FSAL can set.
@@ -49,7 +49,7 @@
 ATTR_MODE     | ATTR_OWNER	  | ATTR_GROUP	      |  \
 ATTR_ATIME    | ATTR_CTIME	  | ATTR_MTIME	      |  \
 ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER |  \
-ATTR_ACL      | ATTR4_SEC_LABEL)
+ATTR_ACL      | ATTR4_SEC_LABEL   | ATTR4_XATTR)
 
 /**
  * Override internal Gluster defines for the time being.
@@ -275,7 +275,7 @@ void handle_ops_init(struct fsal_obj_ops *ops);
 fsal_status_t gluster2fsal_error(const int gluster_errorcode);
 
 void stat2fsal_attributes(const struct stat *buffstat,
-			  struct attrlist *fsalattr);
+			  struct fsal_attrlist *fsalattr);
 
 void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 		      struct glfs_object *glhandle, unsigned char *globjhdl,
@@ -285,7 +285,7 @@ fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
 			       struct glfs_object *glhandle,
 			       struct fsal_obj_handle **pub_handle,
 			       struct stat *sb,
-			       struct attrlist *attrs_out);
+			       struct fsal_attrlist *attrs_out);
 
 fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 				      void *parse_node,
@@ -297,7 +297,7 @@ void gluster_cleanup_vars(struct glfs_object *glhandle);
 fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 				 struct glfs_object *objhandle,
 				 glusterfs_fsal_xstat_t *buffxstat,
-				 struct attrlist *fsalattr);
+				 struct fsal_attrlist *fsalattr);
 
 fsal_status_t glusterfs_set_acl(struct glusterfs_export *glfs_export,
 				 struct glusterfs_handle *objhandle,
@@ -305,7 +305,7 @@ fsal_status_t glusterfs_set_acl(struct glusterfs_export *glfs_export,
 
 fsal_status_t glusterfs_process_acl(struct glfs *fs,
 				    struct glfs_object *object,
-				    struct attrlist *attrs,
+				    struct fsal_attrlist *attrs,
 				    glusterfs_fsal_xstat_t *buffxstat);
 
 void glusterfs_free_fs(struct glusterfs_fs *gl_fs);

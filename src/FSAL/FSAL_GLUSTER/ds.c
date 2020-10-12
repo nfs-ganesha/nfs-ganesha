@@ -41,13 +41,12 @@
  *
  * @return NFS Status codes.
  */
-static void release(struct fsal_ds_handle *const ds_pub)
+static void dsh_release(struct fsal_ds_handle *const ds_pub)
 {
 	int    rc                 = 0;
 	struct glfs_ds_handle *ds =
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 
-	fsal_ds_handle_fini(&ds->ds);
 	if (ds->glhandle) {
 		rc = glfs_h_close(ds->glhandle);
 		if (rc) {
@@ -68,7 +67,6 @@ static void release(struct fsal_ds_handle *const ds_pub)
  * normal way.
  *
  * @param[in]  ds_pub           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -80,7 +78,6 @@ static void release(struct fsal_ds_handle *const ds_pub)
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
-			struct req_op_context *const req_ctx,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
 			count4 * const supplied_length,
@@ -91,7 +88,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 	int    rc = 0;
 	struct glusterfs_export *glfs_export =
-	container_of(ds_pub->pds->mds_fsal_export,
+	container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
 		     struct glusterfs_export, export);
 
 	if (ds->glhandle == NULL)
@@ -118,7 +115,6 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
  * @brief Write to a data-server handle.
  *
  * @param[in]  ds_pub           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -133,7 +129,6 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
-			 struct req_op_context *const req_ctx,
 			 const stateid4 *stateid, const offset4 offset,
 			 const count4 write_length, const void *buffer,
 			 const stable_how4 stability_wanted,
@@ -144,7 +139,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	struct glfs_ds_handle *ds =
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 	struct glusterfs_export *glfs_export =
-	container_of(ds_pub->pds->mds_fsal_export,
+	container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
 		     struct glusterfs_export, export);
 	int    rc = 0;
 
@@ -187,7 +182,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
  * normal way.
  *
  * @param[in]  ds_pub    FSAL DS handle
- * @param[in]  req_ctx   Credentials
  * @param[in]  offset    Start of commit window
  * @param[in]  count     Length of commit window
  * @param[out] writeverf Write verifier
@@ -195,7 +189,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
-			  struct req_op_context *const req_ctx,
 			  const offset4 offset, const count4 count,
 			  verifier4 * const writeverf)
 {
@@ -207,14 +200,14 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 
 	if (ds->stability_got == FILE_SYNC4) {
 		struct glusterfs_export *glfs_export =
-			container_of(ds_pub->pds->mds_fsal_export,
+			container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
 				     struct glusterfs_export, export);
 		struct glfs_fd *glfd = NULL;
 
-		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-				  &op_ctx->creds->caller_gid,
-				  op_ctx->creds->caller_glen,
-				  op_ctx->creds->caller_garray,
+		SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+				  &op_ctx->creds.caller_gid,
+				  op_ctx->creds.caller_glen,
+				  op_ctx->creds.caller_garray,
 				  socket_addr(&op_ctx->client->cl_addrbuf),
 				  socket_addr_len(&op_ctx->client->cl_addrbuf));
 
@@ -247,15 +240,6 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 
 	return NFS4_OK;
 }
-
-/* Initialise DS operations */
-void dsh_ops_init(struct fsal_dsh_ops *ops)
-{
-	ops->release = release;
-	ops->read = ds_read;
-	ops->write = ds_write;
-	ops->commit = ds_commit;
-};
 
 /**
  * @brief Create a FSAL data server handle from a wire handle
@@ -293,7 +277,6 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	ds = gsh_calloc(1, sizeof(struct glfs_ds_handle));
 
 	*handle = &ds->ds;
-	fsal_ds_handle_init(*handle, pds);
 
 	memcpy(globjhdl, hdl_desc->addr, GFAPI_HANDLE_LENGTH);
 
@@ -319,5 +302,8 @@ void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
 {
 	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
 	ops->make_ds_handle = make_ds_handle;
-	ops->fsal_dsh_ops = dsh_ops_init;
+	ops->dsh_release = dsh_release;
+	ops->dsh_read = ds_read;
+	ops->dsh_write = ds_write;
+	ops->dsh_commit = ds_commit;
 }

@@ -868,11 +868,10 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
-	/* Initialize req_ctx */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     0, 0, UNKNOWN_REQUEST);
+	/* Initialize op_context */
+	init_op_context_simple(&op_context, NULL, NULL);
 
 	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID) {
@@ -883,7 +882,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		}
 
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
-		release_root_op_context();
+		release_op_context();
 		return false;
 	}
 
@@ -1138,7 +1137,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 			     str);
 	}
 
-	release_root_op_context();
+	release_op_context();
 	return true;
 }
 

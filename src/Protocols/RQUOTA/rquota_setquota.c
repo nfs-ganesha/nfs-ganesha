@@ -93,14 +93,13 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	struct gsh_export *exp = NULL;
 	char *qpath;
 	char path[MAXPATHLEN];
-	struct root_op_context root_ctx;
 
 	qres->status = Q_EPERM;
 
 	qpath = check_handle_lead_slash(quota_path, path,
 					MAXPATHLEN);
 	if (qpath == NULL)
-		goto out;
+		return NFS_REQ_OK;
 
 	/*  Find the export for the dirname (using as well Path, Pseudo, or Tag)
 	 */
@@ -109,19 +108,11 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 			     "Searching for export by tag for %s",
 			     qpath);
 		exp = get_gsh_export_by_tag(qpath);
-		if (exp != NULL) {
-			/* By Tag must use fullpath for actual request. */
-			qpath = exp->fullpath;
-		}
 	} else if (nfs_param.core_param.mount_path_pseudo) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Searching for export by pseudo for %s",
 			     qpath);
 		exp = get_gsh_export_by_pseudo(qpath, false);
-		if (exp != NULL) {
-			/* By Pseudo must use fullpath for actual request. */
-			qpath = exp->fullpath;
-		}
 	} else {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Searching for export by path for %s",
@@ -135,14 +126,11 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 			 "Export entry for %s not found", qpath);
 
 		/* entry not found. */
-		goto out;
+		return NFS_REQ_OK;
 	}
 
-	init_root_op_context(&root_ctx, exp, exp->fsal_export, 0, 0,
-			     UNKNOWN_REQUEST);
-
-	op_ctx->ctx_export = exp;
-	op_ctx->fsal_export = exp->fsal_export;
+	/* Add export to op_ctx, will be released in free_args */
+	set_op_context_export(exp);
 
 	/* Get creds */
 	if (nfs_req_creds(req) == NFS4ERR_ACCESS) {
@@ -152,7 +140,7 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 		LogInfo(COMPONENT_NFSPROTO,
 			"could not get uid and gid, rejecting client %s",
 			client_ip);
-		goto out;
+		return NFS_REQ_OK;
 	}
 
 	memset(&fsal_quota_in, 0, sizeof(fsal_quota_t));
@@ -166,15 +154,15 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	fsal_quota_in.btimeleft = quota_dqblk->rq_btimeleft;
 	fsal_quota_in.ftimeleft = quota_dqblk->rq_ftimeleft;
 
-	fsal_status = exp->fsal_export->exp_ops.set_quota(exp->fsal_export,
-						       qpath, quota_type,
-						       quota_id,
-						       &fsal_quota_in,
-						       &fsal_quota_out);
+	fsal_status = exp->fsal_export->exp_ops.set_quota(
+				exp->fsal_export, CTX_FULLPATH(op_ctx),
+				quota_type, quota_id, &fsal_quota_in,
+				&fsal_quota_out);
+
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_NO_QUOTA)
 			qres->status = Q_NOQUOTA;
-		goto out;
+		return NFS_REQ_OK;
 	}
 
 	/* is success */
@@ -195,13 +183,6 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	qres->setquota_rslt_u.sqr_rquota.rq_ftimeleft =
 	    fsal_quota_out.ftimeleft;
 	qres->status = Q_OK;
-
-out:
-
-	if (exp != NULL) {
-		put_gsh_export(exp);
-		release_root_op_context();
-	}
 
 	return NFS_REQ_OK;
 }				/* do_rquota_setquota */

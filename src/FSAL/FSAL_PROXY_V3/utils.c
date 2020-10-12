@@ -226,7 +226,7 @@ static bool attrmask_valid_setattr(const attrmask_t mask)
 }
 
 /**
- * @brief Convert an fattr3 to FSAL attrlist.
+ * @brief Convert an fattr3 to fsal_attrlist.
  * @param attrs Input attributes as fattr3.
  * @param fsal_attrs_out Output attributes in FSAL form.
  *
@@ -235,14 +235,14 @@ static bool attrmask_valid_setattr(const attrmask_t mask)
  */
 
 bool fattr3_to_fsalattr(const fattr3 *attrs,
-			struct attrlist *fsal_attrs_out)
+			struct fsal_attrlist *fsal_attrs_out)
 {
 	if (!attrmask_is_nfs3(fsal_attrs_out->request_mask)) {
 		return false;
 	}
 
 	/*
-	 * NOTE(boulos): Since nfs23.h typedefs fattr3 to attrlist (leaving
+	 * NOTE(boulos): Since nfs23.h typedefs fattr3 to fsal_attrlist (leaving
 	 * fattr3_wire for the real fattr3 from the protocol) this is just a
 	 * simple copy.
 	 */
@@ -256,15 +256,16 @@ bool fattr3_to_fsalattr(const fattr3 *attrs,
 }
 
 /**
- * @brief Convert an FSAL attrlist to sattr3.
- * @param fsal_attrs Input attributes as in FSAL attrlist form.
+ * @brief Convert an fsal_attrlist to sattr3.
+ * @param fsal_attrs Input attributes as in fsal_attrlist form.
  * @param attrs_out Output attributes as sattr3.
  *
  * @return - True, if the attributes are suitable for SETATTR3.
  *         - False, otherwise.
  */
 
-bool fsalattr_to_sattr3(const struct attrlist *fsal_attrs, sattr3 *attrs_out)
+bool fsalattr_to_sattr3(const struct fsal_attrlist *fsal_attrs,
+			sattr3 *attrs_out)
 {
 	/*
 	 * Zero the struct so that all the "set_it" optionals are false by

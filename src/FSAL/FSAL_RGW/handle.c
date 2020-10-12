@@ -75,7 +75,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 static fsal_status_t lookup_int(struct fsal_obj_handle *dir_hdl,
 				const char *path,
 				struct fsal_obj_handle **obj_hdl,
-				struct attrlist *attrs_out,
+				struct fsal_attrlist *attrs_out,
 				struct stat *rcb_st,
 				uint32_t rcb_st_mask,
 				uint32_t flags)
@@ -120,7 +120,7 @@ static fsal_status_t lookup_int(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t lookup(struct fsal_obj_handle *dir_hdl,
 			const char *path, struct fsal_obj_handle **obj_hdl,
-			struct attrlist *attrs_out)
+			struct fsal_attrlist *attrs_out)
 {
 	return lookup_int(dir_hdl, path, obj_hdl, attrs_out, NULL, 0,
 			RGW_LOOKUP_FLAG_NONE);
@@ -139,7 +139,7 @@ static bool rgw_cb(const char *name, void *arg, uint64_t offset,
 	struct rgw_cb_arg *rgw_cb_arg = arg;
 	struct fsal_obj_handle *obj = NULL;
 	fsal_status_t status;
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	enum fsal_dir_result cb_rc;
 
 	fsal_prepare_attrs(&attrs, rgw_cb_arg->attrmask);
@@ -313,9 +313,10 @@ int rgw_fsal_dirent_cmp(
  */
 
 static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
-				const char *name, struct attrlist *attrs_in,
+				const char *name,
+				struct fsal_attrlist *attrs_in,
 				struct fsal_obj_handle **obj_hdl,
-				struct attrlist *attrs_out)
+				struct fsal_attrlist *attrs_out)
 {
 	int rc;
 	struct rgw_file_handle *rgw_fh;
@@ -333,8 +334,8 @@ static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	memset(&st, 0, sizeof(struct stat));
 
-	st.st_uid = op_ctx->creds->caller_uid;
-	st.st_gid = op_ctx->creds->caller_gid;
+	st.st_uid = op_ctx->creds.caller_uid;
+	st.st_gid = op_ctx->creds.caller_gid;
 	st.st_mode = fsal2unix_mode(attrs_in->mode)
 	    & ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
@@ -372,7 +373,7 @@ static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
  * @return FSAL status.
  */
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			struct attrlist *attrs)
+			struct fsal_attrlist *attrs)
 {
 	int rc;
 	struct stat st;
@@ -418,7 +419,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 				bool bypass,
 				struct state_t *state,
-				struct attrlist *attrib_set)
+				struct fsal_attrlist *attrib_set)
 {
 
 	fsal_status_t status = {0, 0};
@@ -751,10 +752,10 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			fsal_openflags_t openflags,
 			enum fsal_create_mode createmode,
 			const char *name,
-			struct attrlist *attrib_set,
+			struct fsal_attrlist *attrib_set,
 			fsal_verifier_t verifier,
 			struct fsal_obj_handle **new_obj,
-			struct attrlist *attrs_out,
+			struct fsal_attrlist *attrs_out,
 			bool *caller_perm_check)
 {
 	int posix_flags = 0;
@@ -765,7 +766,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	bool truncated;
 	bool setattrs = attrib_set != NULL;
 	bool created = false;
-	struct attrlist verifier_attr;
+	struct fsal_attrlist verifier_attr;
 	struct rgw_open_state *open_state = NULL;
 	struct rgw_file_handle *rgw_fh;
 	struct rgw_handle *obj;
@@ -1017,8 +1018,8 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 	memset(&st, 0, sizeof(struct stat)); /* XXX needed? */
 
-	st.st_uid = op_ctx->creds->caller_uid;
-	st.st_gid = op_ctx->creds->caller_gid;
+	st.st_uid = op_ctx->creds.caller_uid;
+	st.st_gid = op_ctx->creds.caller_gid;
 	st.st_mode = unix_mode;
 
 	uint32_t create_mask =
@@ -1187,7 +1188,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
  * @brief Return open status of a state.
  *
  * This function returns open flags representing the current open
- * status for a state. The state_lock must be held.
+ * status for a state. The st_lock must be held.
  *
  * @param[in] obj_hdl     File on which to operate
  * @param[in] state       File state to interrogate
@@ -1210,7 +1211,7 @@ fsal_openflags_t rgw_fsal_status2(struct fsal_obj_handle *obj_hdl,
  * @brief Re-open a file that may be already opened
  *
  * This function supports changing the access mode of a share reservation and
- * thus should only be called with a share state. The state_lock must be held.
+ * thus should only be called with a share state. The st_lock must be held.
  *
  * This MAY be used to open a file the first time if there is no need for
  * open by name or create semantics. One example would be 9P lopen.

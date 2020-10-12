@@ -40,7 +40,6 @@
  *  @param old_name Current name of the object to be moved/renamed.
  *  @param new_hdl Target parent directory for the object.
  *  @param new_name New name for the object.
- *  @param op_ctx Authentication context for the operation (user,...).
  *
  *  @return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
@@ -48,8 +47,7 @@
  */
 fsal_status_t
 GPFSFSAL_rename(struct fsal_obj_handle *old_hdl, const char *old_name,
-		struct fsal_obj_handle *new_hdl, const char *new_name,
-		const struct req_op_context *op_ctx)
+		struct fsal_obj_handle *new_hdl, const char *new_name)
 {
 
 	fsal_status_t status;

@@ -567,11 +567,11 @@ static state_lock_entry_t *create_state_lock_entry(struct fsal_obj_handle *obj,
 #endif /* _USE_NLM */
 
 	/* Add to list of locks owned by export */
-	PTHREAD_RWLOCK_wrlock(&export->lock);
-	glist_add_tail(&export->exp_lock_list,
+	PTHREAD_RWLOCK_wrlock(&new_entry->sle_export->lock);
+	glist_add_tail(&new_entry->sle_export->exp_lock_list,
 		       &new_entry->sle_export_locks);
-	PTHREAD_RWLOCK_unlock(&export->lock);
-	get_gsh_export_ref(export);
+	PTHREAD_RWLOCK_unlock(&new_entry->sle_export->lock);
+	get_gsh_export_ref(new_entry->sle_export);
 
 	/* Get ref for sle_obj */
 	obj->obj_ops->get_ref(obj);
@@ -730,7 +730,7 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 /**
  * @brief Find a conflicting entry
  *
- * @note The state_lock MUST be held for read
+ * @note The st_lock MUST be held
  *
  * @param[in] ostate File state to search
  * @param[in] owner The lock owner
@@ -785,7 +785,7 @@ static state_lock_entry_t *get_overlapping_entry(struct state_hdl *ostate,
  * any mapping entry. And l_offset = 0 and sle_lock.lock_length = 0 lock_entry
  * implies remove all entries
  *
- * @note The state_lock MUST be held for write
+ * @note The st_lock MUST be held
  *
  * @param[in,out] ostate     File state to operate on
  * @param[in]     lock_entry Lock to add
@@ -2079,7 +2079,7 @@ static inline const char *fsal_lock_op_str(fsal_lock_op_t op)
  * We do state management and call down to the FSAL as appropriate, so
  * that the caller has a single entry point.
  *
- * @note The state_lock MUST be held for write
+ * @note The st_lock MUST be held
  *
  * @param[in]  obj      File on which to operate
  * @param[in]  state    state_t associated with lock if any
@@ -2289,7 +2289,7 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 /**
  * @brief Attempt to acquire a lock
  *
- * Must hold the state_lock
+ * Must hold the st_lock
  *
  * @param[in]     obj        File to lock
  * @param[in]     owner      Lock owner
@@ -2340,17 +2340,23 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 			 * export.
 			 */
 			if (found_entry->sle_export != op_ctx->ctx_export) {
+				struct tmp_export_paths tmp = {NULL, NULL};
+
+				tmp_get_exp_paths(&tmp,
+						  found_entry->sle_export);
+
 				LogEvent(COMPONENT_STATE,
 					 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
 					 found_entry->sle_export->export_id,
-					 op_ctx_export_path(
-						found_entry->sle_export),
+					 op_ctx_tmp_export_path(op_ctx, &tmp),
 					 op_ctx->ctx_export->export_id,
-					 op_ctx_export_path(
-							op_ctx->ctx_export));
+					 op_ctx_export_path(op_ctx));
 				LogEntry(
 					"Found lock entry belonging to another export",
 					found_entry);
+
+				tmp_put_exp_paths(&tmp);
+
 				status = STATE_INVALID_ARGUMENT;
 				return status;
 			}
@@ -2378,15 +2384,21 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		 */
 		if (found_entry->sle_export != op_ctx->ctx_export
 		    && !different_owners(found_entry->sle_owner, owner)) {
+			struct tmp_export_paths tmp = {NULL, NULL};
+
+			tmp_get_exp_paths(&tmp, found_entry->sle_export);
+
 			LogEvent(COMPONENT_STATE,
 				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
 				 found_entry->sle_export->export_id,
-				 op_ctx_export_path(found_entry->sle_export),
+				 op_ctx_tmp_export_path(op_ctx, &tmp),
 				 op_ctx->ctx_export->export_id,
-				 op_ctx_export_path(op_ctx->ctx_export));
+				 op_ctx_export_path(op_ctx));
 
 			LogEntry("Found lock entry belonging to another export",
 				 found_entry);
+
+			tmp_put_exp_paths(&tmp);
 
 			status = STATE_INVALID_ARGUMENT;
 			return status;
@@ -2846,13 +2858,12 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	struct glist_head newlocks;
 	state_t *found_share;
 	state_status_t status = 0;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct gsh_export *export;
 	state_t *state;
 
 	/* Initialize a context */
-	init_root_op_context(&root_op_context, NULL, NULL,
-			     0, 0, UNKNOWN_REQUEST);
+	init_op_context_simple(&op_context, NULL, NULL);
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		char str[LOG_BUFF_LEN] = "\0";
@@ -2934,15 +2945,13 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		export = found_entry->sle_export;
 		state = found_entry->sle_state;
 
-		root_op_context.req_ctx.ctx_export = export;
-		root_op_context.req_ctx.fsal_export = export->fsal_export;
-
 		/* Get a reference to the export while we still hold the
 		 * ssc_mutex. This assures that the export definitely can
 		 * not have had it's last refcount released. We will check
 		 * later to see if the export is being removed.
 		 */
 		get_gsh_export_ref(export);
+		set_op_context_export(export);
 
 		/* Get a reference to the owner */
 		inc_state_owner_ref(owner);
@@ -2977,16 +2986,16 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			/* The export is being removed, we didn't bother
 			 * calling state_unlock() because export cleanup
 			 * will remove all the state. This is assured by
-			 * the call to put_gsh_export immediately following.
-			 * Pretend succes.
+			 * the call to put_gsh_export from
+			 * clear_op_context_export. Pretend succes.
 			 */
 			status = STATE_SUCCESS;
 		}
 
 		/* Release the refcounts we took above. */
-		put_gsh_export(export);
 		dec_state_owner_ref(owner);
 		obj->obj_ops->put_ref(obj);
+		clear_op_context_export();
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next lock,
@@ -3037,15 +3046,13 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		owner = found_share->state_owner;
 		export = found_share->state_export;
 
-		root_op_context.req_ctx.ctx_export = export;
-		root_op_context.req_ctx.fsal_export = export->fsal_export;
-
 		/* Get a reference to the export while we still hold the
 		 * ssc_mutex. This assures that the export definitely can
 		 * not have had it's last refcount released. We will check
 		 * later to see if the export is being removed.
 		 */
 		get_gsh_export_ref(export);
+		set_op_context_export(export);
 
 		/* Get a reference to the owner */
 		inc_state_owner_ref(owner);
@@ -3077,17 +3084,17 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			/* The export is being removed, we didn't bother
 			 * calling state_unlock() because export cleanup
 			 * will remove all the state. This is assured by
-			 * the call to put_gsh_export immediately following.
-			 * Pretend succes.
+			 * the call to put_gsh_export from
+			 * clear_op_context_export. Pretend succes.
 			 */
 			status = STATE_SUCCESS;
 		}
 
 		/* Release the refcounts we took above. */
-		put_gsh_export(export);
 		dec_state_owner_ref(owner);
 		obj->obj_ops->put_ref(obj);
 		dec_state_t_ref(found_share);
+		clear_op_context_export();
 
 		if (!state_unlock_err_ok(status)) {
 			/* Increment the error count and try the next share,
@@ -3124,7 +3131,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 	LogFullDebug(COMPONENT_STATE, "DONE");
 
-	release_root_op_context();
+	release_op_context();
 	return status;
 }
 #endif /* _USE_NLM */
@@ -3141,7 +3148,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 	struct fsal_obj_handle *obj;
 	int errcnt = 0;
 	state_status_t status = 0;
-	struct gsh_export *saved_export = op_ctx->ctx_export;
+	struct saved_export_context saved;
 	struct gsh_export *export;
 	state_t *state;
 	bool ok;
@@ -3187,8 +3194,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		}
 
 		/* Set up the op_context with the proper export */
-		op_ctx->ctx_export = export;
-		op_ctx->fsal_export = export->fsal_export;
+		save_op_context_export_and_set_export(&saved, export);
 
 		/* Make lock that covers the whole file.
 		 * type doesn't matter for unlock
@@ -3217,7 +3223,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 
 		/* Release the obj ref and export ref. */
 		obj->obj_ops->put_ref(obj);
-		put_gsh_export(export);
+		restore_op_context_export(&saved);
 	}
 
 	if (errcnt == STATE_ERR_MAX) {
@@ -3230,11 +3236,6 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 			 "Could not complete cleanup of lock state for lock owner %s",
 			 str);
 	}
-
-	op_ctx->ctx_export = saved_export;
-
-	if (saved_export != NULL)
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 }
 
 /**
@@ -3337,7 +3338,7 @@ void state_export_unlock_all(void)
 	if (errcnt == STATE_ERR_MAX) {
 		LogFatal(COMPONENT_STATE,
 			 "Could not complete cleanup of locks for %s",
-			 op_ctx_export_path(op_ctx->ctx_export));
+			 op_ctx_export_path(op_ctx));
 	}
 }
 
@@ -3512,10 +3513,10 @@ void cancel_all_nlm_blocked(void)
 {
 	state_lock_entry_t *found_entry;
 	state_block_data_t *pblock;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 
 	/* Initialize context */
-	init_root_op_context(&root_op_context, NULL, NULL, 0, 0, NFS_REQUEST);
+	init_op_context(&op_context, NULL, NULL, NULL, 0, 0, NFS_REQUEST);
 
 	LogDebug(COMPONENT_STATE, "Cancel all blocked locks");
 
@@ -3540,11 +3541,8 @@ void cancel_all_nlm_blocked(void)
 
 		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
-		root_op_context.req_ctx.ctx_export = found_entry->sle_export;
-		root_op_context.req_ctx.fsal_export =
-			root_op_context.req_ctx.ctx_export->fsal_export;
-
-		get_gsh_export_ref(root_op_context.req_ctx.ctx_export);
+		get_gsh_export_ref(found_entry->sle_export);
+		set_op_context_export(found_entry->sle_export);
 
 		/** @todo also look at the LRU ref for pentry */
 
@@ -3558,9 +3556,9 @@ void cancel_all_nlm_blocked(void)
 
 		LogEntry("Canceled Lock", found_entry);
 
-		put_gsh_export(root_op_context.req_ctx.ctx_export);
-
 		lock_entry_dec_ref(found_entry);
+
+		clear_op_context_export();
 
 		PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
@@ -3573,7 +3571,7 @@ void cancel_all_nlm_blocked(void)
 out:
 
 	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
-	release_root_op_context();
+	release_op_context();
 }
 
 /**

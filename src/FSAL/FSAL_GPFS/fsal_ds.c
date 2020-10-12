@@ -55,12 +55,11 @@
  *
  * @param[in] ds_pub The object to release
  */
-static void ds_release(struct fsal_ds_handle *const ds_pub)
+static void ds_handle_release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
 
-	fsal_ds_handle_fini(&ds->ds);
 	gsh_free(ds);
 }
 
@@ -73,7 +72,6 @@ static void ds_release(struct fsal_ds_handle *const ds_pub)
  * normal way.
  *
  * @param[in]  ds_pub           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -85,7 +83,6 @@ static void ds_release(struct fsal_ds_handle *const ds_pub)
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
-			struct req_op_context *const req_ctx,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
 			count4 * const supplied_length,
@@ -111,6 +108,8 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	rarg.offset = offset;
 	rarg.length = requested_length;
 	rarg.options = 0;
+	if (op_ctx && op_ctx->client)
+		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	LogDebug(COMPONENT_PNFS,
 		 "fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
@@ -143,7 +142,6 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
  * normal way.
  *
  * @param[in]  ds_pub           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -156,7 +154,6 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
  * @return An NFSv4.2 status code.
  */
 static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
-			struct req_op_context *const req_ctx,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
 			const count4 supplied_length,
@@ -185,6 +182,8 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 	rarg.length = requested_length;
 	rarg.filesize = &filesize;
 	rarg.options = IO_SKIP_HOLE;
+	if (op_ctx && op_ctx->client)
+		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	LogDebug(COMPONENT_PNFS,
 		 "fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
@@ -235,7 +234,6 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
  * and performs an MDS write.
  *
  * @param[in]  ds_pub           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -250,7 +248,6 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
-			 struct req_op_context *const req_ctx,
 			 const stateid4 *stateid, const offset4 offset,
 			 const count4 write_length, const void *buffer,
 			 const stable_how4 stability_wanted,
@@ -284,6 +281,8 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	warg.stability_got = stability_got;
 	warg.verifier4 = (int32_t *) writeverf;
 	warg.options = 0;
+	if (op_ctx && op_ctx->client)
+		warg.cli_ip = op_ctx->client->hostaddr_str;
 
 	LogDebug(COMPONENT_PNFS,
 		 "fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
@@ -304,8 +303,8 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 
 	key.addr = gpfs_handle;
 	key.len = gpfs_handle->handle_key_size;
-	req_ctx->fsal_export->up_ops->invalidate(
-			req_ctx->fsal_export->up_ops, &key,
+	op_ctx->fsal_export->up_ops->invalidate(
+			op_ctx->fsal_export->up_ops, &key,
 			FSAL_UP_INVALIDATE_CACHE);
 
 	*written_length = amount_written;
@@ -322,7 +321,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
  * normal way.
  *
  * @param[in]  ds_pub    FSAL DS handle
- * @param[in]  req_ctx   Credentials
  * @param[in]  offset    Start of commit window
  * @param[in]  count     Length of commit window
  * @param[out] writeverf Write verifier
@@ -330,7 +328,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
-			  struct req_op_context *const req_ctx,
 			  const offset4 offset, const count4 count,
 			  verifier4 * const writeverf)
 {
@@ -339,18 +336,6 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 	LogCrit(COMPONENT_PNFS, "Commits should go to MDS\n");
 	/* GPFS asked for COMMIT to go to the MDS */
 	return NFS4ERR_INVAL;
-}
-
-static void dsh_ops_init(struct fsal_dsh_ops *ops)
-{
-	/* redundant copy, but you never know about the future... */
-	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
-
-	ops->release = ds_release;
-	ops->read = ds_read;
-	ops->read_plus = ds_read_plus;
-	ops->write = ds_write;
-	ops->commit = ds_commit;
 }
 
 /**
@@ -425,7 +410,6 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	ds = gsh_calloc(1, sizeof(struct gpfs_ds));
 
 	*handle = &ds->ds;
-	fsal_ds_handle_init(*handle, pds);
 
 	/* Connect lazily when a FILE_SYNC4 write forces us to, not
 	   here. */
@@ -451,7 +435,11 @@ static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
 void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
 {
 	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
-	ops->permissions = pds_permissions;
+	ops->ds_permissions = pds_permissions;
 	ops->make_ds_handle = make_ds_handle;
-	ops->fsal_dsh_ops = dsh_ops_init;
+	ops->dsh_release = ds_handle_release;
+	ops->dsh_read = ds_read;
+	ops->dsh_read_plus = ds_read_plus;
+	ops->dsh_write = ds_write;
+	ops->dsh_commit = ds_commit;
 }

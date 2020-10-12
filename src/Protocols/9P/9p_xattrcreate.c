@@ -91,8 +91,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* set op_ctx, it will be useful if FSAL is later called */
 	_9p_init_opctx(pfid, req9p);
 
-	if ((op_ctx->export_perms->options &
-				 EXPORT_OPTION_WRITE_ACCESS) == 0)
+	if ((op_ctx->export_perms.options & EXPORT_OPTION_WRITE_ACCESS) == 0)
 		return _9p_rerror(req9p, msgtag, EROFS, plenout, preply);
 
 	if (*name_len >= sizeof(name)) {

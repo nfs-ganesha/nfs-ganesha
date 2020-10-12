@@ -22,6 +22,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <urcu/ref.h>
+#include <string.h>
 
 /**
  * @brief Refcounted strings
@@ -47,6 +48,23 @@ struct gsh_refstr {
  * @param[in]	len	Length of the embedded buffer
  */
 struct gsh_refstr *gsh_refstr_alloc(size_t len);
+
+/**
+ * @brief create a new gsh_refstr by duplicating an existing string
+ *
+ * Allocate a new gsh_refstr with a gr_val buffer to contain the duplicate.
+ *
+ * @param[in]	str	The string to be duplicated in the new gsh_refstr
+ */
+static inline struct gsh_refstr *gsh_refstr_dup(const char *str)
+{
+	size_t len = strlen(str) + 1;
+	struct gsh_refstr *refstr = gsh_refstr_alloc(len);
+
+	memcpy(refstr->gr_val, str, len);
+
+	return refstr;
+}
 
 /**
  * @brief free the given gsh_refstr

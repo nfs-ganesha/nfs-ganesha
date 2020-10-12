@@ -97,7 +97,7 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 			 * will just see a short read and continue reading and
 			 * then get the EOF flag as 0 bytes are returned.
 			 */
-			struct attrlist attrs;
+			struct fsal_attrlist attrs;
 			fsal_status_t status;
 
 			fsal_prepare_attrs(&attrs, ATTR_SIZE);
@@ -153,7 +153,7 @@ static enum xprt_stat nfs3_read_resume(struct svc_req *req)
 	int rc;
 
 	/* Restore the op_ctx */
-	op_ctx = &reqdata->req_ctx;
+	resume_op_context(&reqdata->op_context);
 
 	/* Complete the read */
 	rc = nfs3_complete_read(data);

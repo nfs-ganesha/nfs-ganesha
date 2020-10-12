@@ -120,7 +120,7 @@ state_status_t do_lease_op(struct fsal_obj_handle *obj,
 /**
  * @brief Attempt to acquire a lease lock (delegation)
  *
- * @note The state_lock MUST be held for write
+ * @note The st_lock MUST be held
  *
  * @param[in]  ostate     File state to get lease lock on
  * @param[in]  owner      Owner for the lease lock
@@ -155,7 +155,7 @@ state_status_t acquire_lease_lock(struct state_hdl *ostate,
  *
  * @param[in] state    Associated state
  *
- * state_lock must be held while calling this function
+ * st_lock must be held while calling this function
  */
 state_status_t release_lease_lock(struct fsal_obj_handle *obj, state_t *state)
 {
@@ -294,7 +294,7 @@ bool init_deleg_heuristics(struct fsal_obj_handle *obj)
  *
  * Decide if a delegation should be granted based on heuristics.
  *
- * @note The state_lock MUST be held for read
+ * @note The st_lock MUST be held
  *
  * @param[in] ostate File state the delegation will be on.
  * @param[in] client Client that would own the delegation.
@@ -322,7 +322,7 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	    || !op_ctx->fsal_export->exp_ops.fs_supports(
 					op_ctx->fsal_export,
 					fso_delegations_r)
-	    || !(op_ctx->export_perms->options & EXPORT_OPTION_DELEGATIONS)
+	    || !(op_ctx->export_perms.options & EXPORT_OPTION_DELEGATIONS)
 	    || (!owner->so_owner.so_nfs4_owner.so_confirmed
 		&& claim == CLAIM_NULL)
 	    || claim == CLAIM_DELEGATE_CUR) {
@@ -420,7 +420,7 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
 	state_status_t state_status;
 	struct nfs_client_id_t *clid;
 	nfs_fh4 fhandle;
-	struct root_op_context root_op_context;
+	struct req_op_context op_context;
 	struct gsh_export *export;
 	state_owner_t *owner;
 
@@ -444,16 +444,11 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
 	reset_cbgetattr_stats(obj);
 
 	/* Build op_context for state_unlock_locked */
-	init_root_op_context(&root_op_context, NULL, NULL, 0, 0,
-			     UNKNOWN_REQUEST);
-	root_op_context.req_ctx.clientid = &clid->cid_clientid;
-	root_op_context.req_ctx.ctx_export = export;
-	root_op_context.req_ctx.fsal_export = export->fsal_export;
+	init_op_context_simple(&op_context, export, export->fsal_export);
+	op_ctx->clientid = &clid->cid_clientid;
 
 	/* release_lease_lock() returns delegation to FSAL */
 	state_status = release_lease_lock(obj, deleg_state);
-
-	release_root_op_context();
 
 	if (state_status != STATE_SUCCESS) {
 		LogDebug(COMPONENT_NFS_V4_LOCK, "state unlock failed: %d",
@@ -468,7 +463,7 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
 
 	/* Release references taken above */
 	dec_state_owner_ref(owner);
-	put_gsh_export(export);
+	release_op_context();
 
 	return NFS4_OK;
 }
@@ -479,7 +474,7 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
  * Mark the delegation state revoked, further ops on this state should
  * return NFS4ERR_REVOKED or NFS4ERR_EXPIRED
  *
- * @note The state_lock MUST be held for write
+ * @note The st_lock MUST be held
  *
  * @param[in] obj   File
  * @param[in] state Delegation state
@@ -498,12 +493,12 @@ void state_deleg_revoke(struct fsal_obj_handle *obj, state_t *state)
 }
 
 /**
- * @brief Check if the file is write delegated under state_lock
+ * @brief Check if the file is write delegated under st_lock
  *
  * Check if the file is write delegated. If yes, take a ref and return
  * the client holding the delegation.
  *
- * @note: The caller should acquire state_lock before calling this
+ * @note: The caller should acquire st_lock before calling this
  * function.
  *
  * @param[in] obj File
@@ -522,7 +517,7 @@ bool is_write_delegated(struct fsal_obj_handle *obj, nfs_client_id_t **client)
 
 	deleg_stats = &obj->state_hdl->file.fdeleg_stats;
 
-	if (deleg_stats->fds_curr_delegations < 0)
+	if (deleg_stats->fds_curr_delegations == 0)
 		return false;
 
 	write_delegated = obj->state_hdl->file.write_delegated;
@@ -541,7 +536,7 @@ bool is_write_delegated(struct fsal_obj_handle *obj, nfs_client_id_t **client)
  * Return TRUE if there is a conflict and the delegations have been recalled.
  * Return FALSE if there is no conflict.
  *
- * @note The state_lock MUST be held for read
+ * @note The st_lock MUST be held
  *
  * @param[in] obj   File
  * @param[in] write a boolean indicating whether the operation will read or
@@ -584,7 +579,7 @@ bool state_deleg_conflict_impl(struct fsal_obj_handle *obj, bool write)
 }
 
 /**
- * @brief Acquire state_lock and check if an operation is conflicting
+ * @brief Acquire st_lock and check if an operation is conflicting
  *        with delegations.
  *
  * @param[in] obj   File
@@ -610,7 +605,7 @@ bool state_deleg_conflict(struct fsal_obj_handle *obj, bool write)
  * Send CB_GETATTR to the write_delegated client to fetch
  * right attributes. If not recall delegation.
  *
- * @note: should be called under state_lock.
+ * @note: should be called under st_lock.
  */
 nfsstat4 handle_deleg_getattr(struct fsal_obj_handle *obj,
 			      nfs_client_id_t *client)
@@ -701,7 +696,7 @@ bool deleg_supported(struct fsal_obj_handle *obj,
 /**
  * @brief Check to see if a delegation can be granted
  *
- * @note The state_lock MUST be held for read
+ * @note The st_lock MUST be held
  *
  * @param[in] ostate	State to check
  * @return true if can grant, false otherwise

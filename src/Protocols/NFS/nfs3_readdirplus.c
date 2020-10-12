@@ -48,7 +48,7 @@
 
 fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 					       struct fsal_obj_handle *obj,
-					       const struct attrlist *attr,
+					       const struct fsal_attrlist *attr,
 					       uint64_t mounted_on_fileid,
 					       uint64_t cookie,
 					       enum cb_state cb_state);
@@ -73,7 +73,7 @@ static
 nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj, const char *name,
 			       uint64_t cookie, helper_readdir_cb cb,
 			       struct nfs3_readdirplus_cb_data *tracker,
-			       struct attrlist *attrs)
+			       struct fsal_attrlist *attrs)
 {
 	struct fsal_readdir_cb_parms cb_parms;
 	fsal_status_t fsal_status;
@@ -117,7 +117,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status_gethandle = {0, 0};
 	int rc = NFS_REQ_OK;
 	struct nfs3_readdirplus_cb_data tracker;
-	struct attrlist attrs_dir, attrs_parent;
+	struct fsal_attrlist attrs_dir, attrs_parent;
 	bool use_cookie_verifier = op_ctx_export_has_option(
 					EXPORT_OPTION_USE_COOKIE_VERIFIER);
 	READDIRPLUS3resfail *resfail =
@@ -435,7 +435,7 @@ void nfs3_readdirplus_free(nfs_res_t *resp)
 
 fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 					struct fsal_obj_handle *obj,
-					const struct attrlist *attr,
+					const struct fsal_attrlist *attr,
 					uint64_t mounted_on_fileid,
 					uint64_t cookie,
 					enum cb_state cb_state)
@@ -478,9 +478,9 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 	/* Encode the entry into the xdrmem buffer and then assure there is
 	 * space for at least two booleans (one to be false to terminate the
 	 * entry ist, the other to encode EOD or not). Note we use the special
-	 * xdr_encode_entryplus3 that uses a passed in struct attrlist rather
-	 * than name_attributes from entryplus3, though we will use the boolean
-	 * attributes_follow from the entryplus3.
+	 * xdr_encode_entryplus3 that uses a passed in struct fsal_attrlist
+	 * rather than name_attributes from entryplus3, though we will use the
+	 * boolean attributes_follow from the entryplus3.
 	 */
 	if (!xdr_encode_entryplus3(&tracker->xdr, &ep3, attr) ||
 	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT)

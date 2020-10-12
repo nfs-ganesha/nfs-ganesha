@@ -225,16 +225,15 @@ static size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
-				  void *parse_node,
-				  struct fsal_pnfs_ds **const handle)
+static fsal_status_t create_fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
+					 void *parse_node,
+					 struct fsal_pnfs_ds **const handle)
 {
 	LogDebug(COMPONENT_PNFS, "Default pNFS DS creation!");
 	if (*handle == NULL)
 		*handle = pnfs_ds_alloc();
 
 	fsal_pnfs_ds_init(*handle, fsal_hdl);
-	op_ctx->fsal_pnfs_ds = *handle;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -285,7 +284,7 @@ struct fsal_ops def_fsal_ops = {
 	.emergency_cleanup = emergency_cleanup,
 	.getdeviceinfo = getdeviceinfo,
 	.fs_da_addr_size = fs_da_addr_size,
-	.fsal_pnfs_ds = fsal_pnfs_ds,
+	.create_fsal_pnfs_ds = create_fsal_pnfs_ds,
 	.fsal_pnfs_ds_ops = fsal_pnfs_ds_ops,
 	.fsal_extract_stats = fsal_extract_stats,
 	.fsal_reset_stats = fsal_reset_stats,
@@ -330,13 +329,15 @@ static void export_release(struct fsal_export *exp_hdl)
 }
 
 /* lookup_path
- * default case is not supported
+ * default case is not supported, note that with lookup_path ONLY being
+ * used to instantiate the export's root obj_handle, there can not be any
+ * useful default method.
  */
 
 fsal_status_t lookup_path(struct fsal_export *exp_hdl,
 			  const char *path,
 			  struct fsal_obj_handle **handle,
-			  struct attrlist *attrs_out)
+			  struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -381,7 +382,7 @@ static fsal_status_t exp_host_to_key(struct fsal_export *exp_hdl,
 static fsal_status_t create_handle(struct fsal_export *exp_hdl,
 				   struct gsh_buffdesc *hdl_desc,
 				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -807,7 +808,7 @@ static fsal_status_t handle_merge(struct fsal_obj_handle *orig_hdl,
 
 static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			    const char *path, struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+			    struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -856,9 +857,9 @@ int dirent_cmp(struct fsal_obj_handle *parent,
  */
 
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const char *name, struct attrlist *attrib,
+			     const char *name, struct fsal_attrlist *attrib,
 			     struct fsal_obj_handle **handle,
-			     struct attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -871,9 +872,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
-			      struct attrlist *attrib,
+			      struct fsal_attrlist *attrib,
 			      struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -886,9 +887,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
-				 struct attrlist *attrib,
+				 struct fsal_attrlist *attrib,
 				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -968,7 +969,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
  */
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
+			      struct fsal_attrlist *attrs)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -1225,7 +1226,6 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
  *
  * @param[in]     obj_hdl  The handle of the file on which the layout is
  *                         requested.
- * @param[in]     req_ctx  Request context
  * @param[out]    loc_body An XDR stream to which the FSAL must encode
  *                         the layout specific portion of the granted
  *                         layout segment.
@@ -1235,7 +1235,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
  * @return NFS4ERR_LAYOUTUNAVAILABLE
  */
 static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
-			  struct req_op_context *req_ctx, XDR *loc_body,
+			  XDR *loc_body,
 			  const struct fsal_layoutget_arg *arg,
 			  struct fsal_layoutget_res *res)
 {
@@ -1246,7 +1246,6 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
  * @brief Don't return a layout segment
  *
  * @param[in] obj_hdl  The object on which a segment is to be returned
- * @param[in] req_ctx  Request context
  * @param[in] lrf_body In the case of a non-synthetic return, this is
  *                     an XDR stream corresponding to the layout
  *                     type-specific argument to LAYOUTRETURN.  In
@@ -1257,7 +1256,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
  * @return NFS4ERR_NOTSUPP
  */
 static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR *lrf_body,
+			     XDR *lrf_body,
 			     const struct fsal_layoutreturn_arg *arg)
 {
 	return NFS4ERR_NOTSUPP;
@@ -1267,7 +1266,6 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
  * @brief Fail to commit a segment of a layout
  *
  * @param[in]     obj_hdl  The object on which to commit
- * @param[in]     req_ctx  Request context
  * @param[in]     lou_body An XDR stream containing the layout
  *                         type-specific portion of the LAYOUTCOMMIT
  *                         arguments.
@@ -1277,7 +1275,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
  * @return Valid error codes in RFC 5661, p. 366.
  */
 static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR *lou_body,
+			     XDR *lou_body,
 			     const struct fsal_layoutcommit_arg *arg,
 			     struct fsal_layoutcommit_res *res)
 {
@@ -1293,10 +1291,10 @@ static fsal_status_t open2(struct fsal_obj_handle *obj_hdl,
 			   fsal_openflags_t openflags,
 			   enum fsal_create_mode createmode,
 			   const char *name,
-			   struct attrlist *attrib_set,
+			   struct fsal_attrlist *attrib_set,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
-			   struct attrlist *attrs_out,
+			   struct fsal_attrlist *attrs_out,
 			   bool *caller_perm_check)
 {
 	LogCrit(COMPONENT_FSAL,
@@ -1318,7 +1316,7 @@ static fsal_status_t open2(struct fsal_obj_handle *obj_hdl,
 static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 			   fsal_verifier_t verifier)
 {
-	struct attrlist attrs;
+	struct fsal_attrlist attrs;
 	bool result;
 
 	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
@@ -1467,7 +1465,7 @@ static fsal_status_t lease_op2(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t setattr2(struct fsal_obj_handle *obj_hdl,
 			      bool bypass,
 			      struct state_t *state,
-			      struct attrlist *attrs)
+			      struct fsal_attrlist *attrs)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -1490,7 +1488,7 @@ static fsal_status_t close2(struct fsal_obj_handle *obj_hdl,
  * default case not a referral
  */
 static bool is_referral(struct fsal_obj_handle *obj_hdl,
-			struct attrlist *attrs,
+			struct fsal_attrlist *attrs,
 			bool cache_attrs)
 {
 	return false;
@@ -1569,7 +1567,7 @@ static void pds_release(struct fsal_pnfs_ds *const pds)
 {
 	LogDebug(COMPONENT_PNFS, "Default pNFS DS release!");
 	fsal_pnfs_ds_fini(pds);
-	gsh_free(pds);
+	pnfs_ds_free(pds);
 }
 
 /**
@@ -1585,10 +1583,10 @@ static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
 				struct svc_req *req)
 {
 	/* FIX ME!!! Replace with a non-export dependent system.
-	 * For now, reset per init_root_op_context()
+	 * For now, reset per init_op_context()
 	 */
-	op_ctx->export_perms->set = root_op_export_set;
-	op_ctx->export_perms->options = root_op_export_options;
+	op_ctx->export_perms.set = root_op_export_set;
+	op_ctx->export_perms.options = root_op_export_options;
 	return NFS4_OK;
 }
 
@@ -1610,27 +1608,8 @@ static nfsstat4 pds_handle(struct fsal_pnfs_ds *const pds,
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle creation!");
 	*handle = gsh_calloc(1, sizeof(struct fsal_ds_handle));
 
-	fsal_ds_handle_init(*handle, pds);
 	return NFS4_OK;
 }
-
-/**
- * @brief Initialize FSAL specific values for data server handle
- *
- * @param[in]  ops	FSAL DS handle operations vector
- */
-
-static void pds_handle_ops(struct fsal_dsh_ops *ops)
-{
-	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
-}
-
-struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
-	.release = pds_release,
-	.permissions = pds_permissions,
-	.make_ds_handle = pds_handle,
-	.fsal_dsh_ops = pds_handle_ops,
-};
 
 /* fsal_ds_handle common methods */
 
@@ -1642,10 +1621,9 @@ struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
  *
  * @param[in] release Handle to release
  */
-static void ds_release(struct fsal_ds_handle *const ds_hdl)
+static void ds_handle_release(struct fsal_ds_handle *const ds_hdl)
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle release!");
-	fsal_ds_handle_fini(ds_hdl);
 	gsh_free(ds_hdl);
 }
 
@@ -1653,7 +1631,6 @@ static void ds_release(struct fsal_ds_handle *const ds_hdl)
  * @brief Fail to read from a data-server handle.
  *
  * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -1665,7 +1642,6 @@ static void ds_release(struct fsal_ds_handle *const ds_hdl)
  * @return NFS4ERR_NOTSUPP.
  */
 static nfsstat4 ds_read(struct fsal_ds_handle *const ds_hdl,
-			struct req_op_context *const req_ctx,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
 			count4 * const supplied_length,
@@ -1676,7 +1652,6 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_hdl,
 }
 
 static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_hdl,
-			struct req_op_context *const req_ctx,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
 			const count4 supplied_length,
@@ -1691,7 +1666,6 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_hdl,
  * @brief Fail to write to a data-server handle.
  *
  * @param[in]  ds_hdl           FSAL DS handle
- * @param[in]  req_ctx          Credentials
  * @param[in]  stateid          The stateid supplied with the READ operation,
  *                              for validation
  * @param[in]  offset           The offset at which to read
@@ -1706,7 +1680,6 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_hdl,
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
-			 struct req_op_context *const req_ctx,
 			 const stateid4 *stateid, const offset4 offset,
 			 const count4 write_length, const void *buffer,
 			 const stable_how4 stability_wanted,
@@ -1722,7 +1695,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
  * @brief Fail to commit a byte range on a DS handle.
  *
  * @param[in]  ds_hdl    FSAL DS handle
- * @param[in]  req_ctx   Credentials
  * @param[in]  offset    Start of commit window
  * @param[in]  count     Length of commit window
  * @param[out] writeverf Write verifier
@@ -1730,7 +1702,6 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
  * @return An NFSv4.1 status code.
  */
 static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_hdl,
-			  struct req_op_context *const req_ctx,
 			  const offset4 offset, const count4 count,
 			  verifier4 * const writeverf)
 {
@@ -1738,12 +1709,15 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_hdl,
 	return NFS4ERR_NOTSUPP;
 }
 
-struct fsal_dsh_ops def_dsh_ops = {
-	.release = ds_release,
-	.read = ds_read,
-	.read_plus = ds_read_plus,
-	.write = ds_write,
-	.commit = ds_commit
+struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
+	.ds_release = pds_release,
+	.ds_permissions = pds_permissions,
+	.make_ds_handle = pds_handle,
+	.dsh_release = ds_handle_release,
+	.dsh_read = ds_read,
+	.dsh_read_plus = ds_read_plus,
+	.dsh_write = ds_write,
+	.dsh_commit = ds_commit
 };
 
 /** @} */

@@ -77,8 +77,8 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
 #endif /* _HAVE_GSSAPI */
 	int num_entry = 0;
-	struct export_perms save_export_perms = { 0, };
-	struct gsh_export *saved_gsh_export = NULL;
+	struct saved_export_context saved;
+	bool restore_op_ctx = false;
 	uint32_t resp_size = RESP_SIZE;
 	int idx = 0;
 
@@ -112,7 +112,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	}
 
 	/* Get state lock for junction_export */
-	PTHREAD_RWLOCK_rdlock(&obj_src->state_hdl->state_lock);
+	PTHREAD_RWLOCK_rdlock(&obj_src->state_hdl->jct_lock);
 
 	if (obj_src->type == DIRECTORY &&
 	    obj_src->state_hdl->dir.junction_export != NULL) {
@@ -127,22 +127,19 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_STALE On Export_Id %d Pseudo %s",
 				 junction_export->export_id,
-				 junction_export->pseudopath);
+				 JCT_PSEUDOPATH(obj_src->state_hdl));
 			res_SECINFO4->status = NFS4ERR_STALE;
-			PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
+			PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->jct_lock);
 			goto out;
 		}
 
 		get_gsh_export_ref(junction_export);
 
-		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
+		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->jct_lock);
 
 		/* Save the compound data context */
-		save_export_perms = *op_ctx->export_perms;
-		saved_gsh_export = op_ctx->ctx_export;
-
-		op_ctx->ctx_export = junction_export;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+		save_op_context_export_and_set_export(&saved, junction_export);
+		restore_op_ctx = true;
 
 		/* Build credentials */
 		res_SECINFO4->status = nfs4_export_check_access(data->req);
@@ -156,7 +153,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 			LogDebug(COMPONENT_EXPORT,
 				 "NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
 				 op_ctx->ctx_export->export_id,
-				 op_ctx->ctx_export->pseudopath);
+				 CTX_PSEUDOPATH(op_ctx));
 			res_SECINFO4->status = NFS4ERR_NOENT;
 			goto out;
 		}
@@ -170,7 +167,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		if (FSAL_IS_ERROR(fsal_status)) {
 			LogMajor(COMPONENT_EXPORT,
 				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 op_ctx->ctx_export->pseudopath,
+				 CTX_PSEUDOPATH(op_ctx),
 				 op_ctx->ctx_export->export_id,
 				 fsal_err_txt(fsal_status));
 
@@ -180,7 +177,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 
 		LogDebug(COMPONENT_EXPORT,
 			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			 op_ctx->ctx_export->pseudopath,
+			 CTX_PSEUDOPATH(op_ctx),
 			 op_ctx->ctx_export->export_id,
 			 arg_SECINFO4->name.utf8string_val);
 
@@ -190,30 +187,27 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		obj_src = obj;
 	} else {
 		/* Not a junction, release lock */
-		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
+		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->jct_lock);
 	}
 
 	/* Get the number of entries */
 #ifdef _HAVE_GSSAPI
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_NONE)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE)
 		num_entry++;
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_INTG)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG)
 		num_entry++;
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
 		num_entry++;
 
 	resp_size += (RNDUP(krb5oid.length) + GSS_RESP_SIZE) * num_entry;
 #endif
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_NONE)
 		num_entry++;
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
 		num_entry++;
 
 	/* Check for space in response. */
@@ -236,8 +230,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 
 	/* List the security flavors in the order we prefer */
 #ifdef _HAVE_GSSAPI
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_PRIV) {
 		resok_val[idx].flavor = RPCSEC_GSS;
 		resok_val[idx].secinfo4_u.flavor_info.service =
 			RPCSEC_GSS_SVC_PRIVACY;
@@ -245,8 +238,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
 	}
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_INTG) {
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_INTG) {
 		resok_val[idx].flavor = RPCSEC_GSS;
 		resok_val[idx].secinfo4_u.flavor_info.service =
 			RPCSEC_GSS_SVC_INTEGRITY;
@@ -254,8 +246,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		resok_val[idx++].secinfo4_u.flavor_info.oid = v5oid;
 	}
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_NONE) {
+	if (op_ctx->export_perms.options & EXPORT_OPTION_RPCSEC_GSS_NONE) {
 		resok_val[idx].flavor = RPCSEC_GSS;
 		resok_val[idx].secinfo4_u.flavor_info.service =
 			RPCSEC_GSS_SVC_NONE;
@@ -264,10 +255,10 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	}
 #endif /* _HAVE_GSSAPI */
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_UNIX)
 		resok_val[idx++].flavor = AUTH_UNIX;
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_NONE)
 		resok_val[idx++].flavor = AUTH_NONE;
 
 	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
@@ -279,16 +270,12 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		data->currentFH.nfs_fh4_len = 0;
 
 		/* Release CurrentFH reference to export. */
-		if (op_ctx->ctx_export) {
-			put_gsh_export(op_ctx->ctx_export);
-			op_ctx->ctx_export = NULL;
-			op_ctx->fsal_export = NULL;
-		}
+		clear_op_context_export();
 
-		if (saved_gsh_export != NULL) {
+		if (restore_op_ctx) {
 			/* Don't need saved export */
-			put_gsh_export(saved_gsh_export);
-			saved_gsh_export = NULL;
+			discard_op_context_export(&saved);
+			restore_op_ctx = false;
 		}
 	}
 
@@ -296,14 +283,9 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 
  out:
 
-	if (saved_gsh_export != NULL) {
+	if (restore_op_ctx) {
 		/* Restore export stuff */
-		if (op_ctx->ctx_export)
-			put_gsh_export(op_ctx->ctx_export);
-
-		*op_ctx->export_perms = save_export_perms;
-		op_ctx->ctx_export = saved_gsh_export;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+		restore_op_context_export(&saved);
 
 		/* Restore creds */
 		if (nfs_req_creds(data->req) != NFS4_OK) {
