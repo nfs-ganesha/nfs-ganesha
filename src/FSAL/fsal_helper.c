@@ -129,8 +129,12 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 		return status;
 	}
 
+	LogDebug(COMPONENT_FSAL,
+		 "test_access got %s",
+		 fsal_err_txt(status));
+
 	/* If non-permission error, return it. */
-	if (status.major != ERR_FSAL_PERM) {
+	if (status.major != ERR_FSAL_ACCESS) {
 		*reason = "fsal_access failed - ";
 		return status;
 	}
@@ -153,6 +157,10 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 	 *
 	 */
 	status = fsal_access(obj, FSAL_EXECUTE_ACCESS);
+
+	LogDebug(COMPONENT_FSAL,
+		 "fsal_access got %s",
+		 fsal_err_txt(status));
 
 	if (!FSAL_IS_ERROR(status))
 		*reason = "";
