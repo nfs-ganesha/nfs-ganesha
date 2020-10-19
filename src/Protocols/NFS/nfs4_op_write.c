@@ -35,6 +35,7 @@
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
+#include "nfs_exports.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
@@ -219,6 +220,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxWrite);
 	uint64_t MaxOffsetWrite =
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetWrite);
+	bool force_sync = op_ctx->export_perms.options & EXPORT_OPTION_COMMIT;
 	struct nfs4_write_data *write_data = NULL;
 	struct fsal_io_arg *write_arg;
 	/* In case we don't call write2, we indicate the I/O as already done
@@ -440,10 +442,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	write_arg->iov[0].iov_len = size;
 	write_arg->iov[0].iov_base = arg_WRITE4->data.data_val;
 	write_arg->io_amount = 0;
-	if (arg_WRITE4->stable == UNSTABLE4)
-		write_arg->fsal_stable = false;
-	else
-		write_arg->fsal_stable = true;
+	write_arg->fsal_stable = arg_WRITE4->stable != UNSTABLE4 || force_sync;
 
 
 	write_data->res_WRITE4 = res_WRITE4;

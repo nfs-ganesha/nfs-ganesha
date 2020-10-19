@@ -201,6 +201,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxWrite);
 	uint64_t MaxOffsetWrite =
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetWrite);
+	bool force_sync = op_ctx->export_perms.options & EXPORT_OPTION_COMMIT;
 	WRITE3resfail *resfail = &res->res_write3.WRITE3res_u.resfail;
 	struct nfs3_write_data *write_data = NULL;
 	struct fsal_io_arg *write_arg;
@@ -326,8 +327,8 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/** @todo for now pass NULL state */
 	write_arg->state = NULL;
 	write_arg->offset = offset;
-	write_arg->fsal_stable = (arg->arg_write3.stable == DATA_SYNC) ||
-				 (arg->arg_write3.stable == FILE_SYNC);
+	write_arg->fsal_stable = arg->arg_write3.stable != UNSTABLE ||
+				 force_sync;
 	write_arg->iov_count = 1;
 	write_arg->iov[0].iov_len = size;
 	write_arg->iov[0].iov_base = arg->arg_write3.data.data_val;
