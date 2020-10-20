@@ -761,6 +761,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 #ifdef _MSPAC_SUPPORT
 	struct timespec s_time, e_time;
 	bool stats = false;
+	struct passwd *pwd;
 #endif
 	uid_t gss_uid = -1;
 	gid_t gss_gid = -1;
@@ -857,35 +858,23 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 				}
 
 				now(&s_time);
-				/* 1st SID is account sid, see wbclient.h */
 				wbc_err =
-				    wbcSidToUid(&info->sids[0].sid, &gss_uid);
+					wbcGetpwsid(&info->sids[0].sid,
+						    &pwd);
 				now(&e_time);
 				if (stats)
 					winbind_stats_update(&s_time, &e_time);
 				if (!WBC_ERROR_IS_OK(wbc_err)) {
 					LogInfo(COMPONENT_IDMAPPER,
-						"wbcSidToUid for uid returned %s",
+						"wbcGetpwsid returned %s",
 						wbcErrorString(wbc_err));
 					wbcFreeMemory(info);
 					return false;
 				}
 
-				now(&s_time);
-				/* 2nd SID is primary_group sid, see
-				   wbclient.h */
-				wbc_err =
-				    wbcSidToGid(&info->sids[1].sid, &gss_gid);
-				now(&e_time);
-				if (stats)
-					winbind_stats_update(&s_time, &e_time);
-				if (!WBC_ERROR_IS_OK(wbc_err)) {
-					LogInfo(COMPONENT_IDMAPPER,
-						"wbcSidToGid for gid returned %s\n",
-						wbcErrorString(wbc_err));
-					wbcFreeMemory(info);
-					return false;
-				}
+				gss_uid = pwd->pw_uid;
+				gss_gid = pwd->pw_gid;
+
 				wbcFreeMemory(info);
 				found_uid = true;
 				found_gid = true;
