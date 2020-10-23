@@ -142,6 +142,14 @@ Enable_UDP(bool, default true)
     Whether to create UDP listeners for NFS, NLM, RQUOTA, and register
     them with portmapper. Set to false, e.g., to run as non-root.
 
+Max_Uid_To_Group_Reqs(uint32, range 0 to INT32_MAX, default 0)
+    Maximum number of concurrent uid2grp requests that can be made by ganesha.
+    In environments with a slow Directory Service Provider, where users are
+    part of large number of groups, and Manage_Gids is set to True, uid2grp
+    queries made by ganesha can fail if a large number of them are made in
+    parallel. This option throttles the number of concurrent uid2grp queries
+    that ganesha makes.
+
 Parameters controlling TCP DRC behavior:
 ----------------------------------------
 

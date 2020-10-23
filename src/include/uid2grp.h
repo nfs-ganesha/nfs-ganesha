@@ -41,6 +41,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "gsh_rpc.h"
 #include "gsh_types.h"
 
@@ -62,6 +63,7 @@ typedef struct group_data {
 } group_data_t;
 
 extern pthread_rwlock_t uid2grp_user_lock;
+extern sem_t uid2grp_sem;
 
 void uid2grp_cache_init(void);
 

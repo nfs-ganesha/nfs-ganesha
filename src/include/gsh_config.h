@@ -401,6 +401,13 @@ typedef struct nfs_core_param {
 	    ganesha instance. If this is set, dbus name will be
 	    <prefix>.org.ganesha.nfsd */
 	char *dbus_name_prefix;
+	/** Max parallel queries to Directory Server when Manage_Gids=True.
+	    Required if one does not want to overwhelm the directory server.
+	    The value limits the number of concurrent uid2grp requests.
+	    Useful when dealing with a slow Directory Service provider in an
+	    environment where users are part of large number of groups.
+	*/
+	uint32_t max_uid_to_grp_reqs;
 } nfs_core_parameter_t;
 
 /** @} */

@@ -48,6 +48,8 @@
 #include "uid2grp.h"
 #include "idmapper.h"
 
+sem_t uid2grp_sem;
+
 /* group_data has a reference counter. If it goes to zero, it implies
  * that it is out of the cache (AVL trees) and should be freed. The
  * reference count is 1 when we put it into AVL trees. We decrement when
@@ -90,30 +92,27 @@ static bool my_getgrouplist_alloc(char *user,
 				  gid_t gid,
 				  struct group_data *gdata)
 {
-	int ngroups = 0;
+	int ngroups = 1000;
 	gid_t *groups = NULL;
 	struct timespec s_time, e_time;
 	bool stats = nfs_param.core_param.enable_AUTHSTATS;
 
-	/* We call getgrouplist() with 0 ngroups first. This should always
-	 * return -1, and ngroups should be set to the actual number of
-	 * groups the user is in.  The manpage doesn't say anything
-	 * about errno value, it was usually zero but was set to 34
-	 * (ERANGE) under some environments. ngroups was set correctly
-	 * no matter what the errno value is!
+	/* We call getgrouplist() with ngroups set to 1000 first. This should
+	 * reduce the number of getgrouplist() calls made to 1, for most cases.
+	 * However, getgrouplist() return -1 if the actual number of groups the
+	 * user is in, is more than 1000 (very rare) and ngroups will be set to
+	 * the actual number of groups the user is in. We can then make a second
+	 * query to fetch all the groups when ngroups is greater than 1000.
 	 *
+	 * The manpage doesn't say anything about errno value, it was usually
+	 * zero but was set to 34 (ERANGE) under some environments. ngroups was
+	 * set correctly no matter what the errno value is!
 	 * We assume that ngroups is correctly set, no matter what the
 	 * errno value is. The man page says, "The ngroups argument
 	 * is a value-result argument: on  return  it always contains
 	 * the  number  of  groups found for user."
 	 */
-	(void)getgrouplist(user, gid, NULL, &ngroups);
-
-	/* Allocate gdata->groups with the right size then call
-	 * getgrouplist() a second time to get the actual group list.
-	 */
-	if (ngroups > 0)
-		groups = gsh_malloc(ngroups * sizeof(gid_t));
+	groups = gsh_malloc(ngroups * sizeof(gid_t));
 
 	now(&s_time);
 	if (getgrouplist(user, gid, groups, &ngroups) == -1) {
@@ -122,8 +121,8 @@ static bool my_getgrouplist_alloc(char *user,
 
 		gsh_free(groups);
 
-		/* Try with the largest ngroups we support */
-		ngroups = 1000;
+		/* Try with the actual ngroups if user is part of more than 1000
+		 * groups. */
 		groups = gsh_malloc(ngroups * sizeof(gid_t));
 
 		now(&s_time);
@@ -140,17 +139,17 @@ static bool my_getgrouplist_alloc(char *user,
 			gc_stats_update(&s_time, &e_time);
 			stats = false;
 		}
+	}
 
-		if (ngroups != 0) {
-			/* Resize the buffer, if it fails, gsh_realloc will
-			 * abort.
-			 */
-			groups = gsh_realloc(groups, ngroups * sizeof(gid_t));
-		} else {
-			/* We need to free groups because later code may not. */
-			gsh_free(groups);
-			groups = NULL;
-		}
+	if (ngroups != 0) {
+		/* Resize the buffer, if it fails, gsh_realloc will
+		 * abort.
+		 */
+		groups = gsh_realloc(groups, ngroups * sizeof(gid_t));
+	} else {
+		/* We need to free groups because later code may not. */
+		gsh_free(groups);
+		groups = NULL;
 	}
 
 	now(&e_time);
@@ -205,10 +204,20 @@ static struct group_data *uid2grp_allocate_by_name(
 	memcpy(gdata->uname.addr, p.pw_name, gdata->uname.len);
 	gdata->uid = p.pw_uid;
 	gdata->gid = p.pw_gid;
+
+	/* Throttle queries to getgrouplist Directory Server if required. */
+	if (nfs_param.core_param.max_uid_to_grp_reqs)
+		sem_wait(&uid2grp_sem);
+
 	if (!my_getgrouplist_alloc(p.pw_name, p.pw_gid, gdata)) {
 		gsh_free(gdata);
+		if (nfs_param.core_param.max_uid_to_grp_reqs)
+			sem_post(&uid2grp_sem);
 		return NULL;
 	}
+
+	if (nfs_param.core_param.max_uid_to_grp_reqs)
+		sem_post(&uid2grp_sem);
 
 	PTHREAD_MUTEX_init(&gdata->lock, NULL);
 	gdata->epoch = time(NULL);
