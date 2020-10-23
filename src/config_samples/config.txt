@@ -153,6 +153,8 @@ NFS_CORE_PARAM {}
 
 	Dbus_Name_Prefix(string, default NULL)
 
+	Max_Uid_To_Group_Reqs(uint32, range 0 to INT32_MAX, default 0)
+
 NFS_IP_NAME {}
 --------------
 

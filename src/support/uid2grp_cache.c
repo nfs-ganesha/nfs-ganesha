@@ -44,6 +44,7 @@
 #include "avltree.h"
 #include "uid2grp.h"
 #include "abstract_atomic.h"
+#include "nfs_core.h"
 
 /**
  * @brief User entry in the IDMapper cache
@@ -180,6 +181,9 @@ static int uid_comparator(const struct avltree_node *node1,
 
 void uid2grp_cache_init(void)
 {
+	if (nfs_param.core_param.max_uid_to_grp_reqs)
+		sem_init(&uid2grp_sem, 0,
+			 nfs_param.core_param.max_uid_to_grp_reqs);
 	avltree_init(&uname_tree, uname_comparator, 0);
 	avltree_init(&uid_tree, uid_comparator, 0);
 	memset(uid_grplist_cache, 0,
