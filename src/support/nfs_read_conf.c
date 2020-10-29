@@ -57,6 +57,17 @@
  * @brief Core configuration parameters
  */
 
+static struct config_item_list udp_listener_type[] = {
+	CONFIG_LIST_TOK("false", UDP_LISTENER_NONE),
+	CONFIG_LIST_TOK("no", UDP_LISTENER_NONE),
+	CONFIG_LIST_TOK("off", UDP_LISTENER_NONE),
+	CONFIG_LIST_TOK("true", UDP_LISTENER_ALL),
+	CONFIG_LIST_TOK("yes", UDP_LISTENER_ALL),
+	CONFIG_LIST_TOK("on", UDP_LISTENER_ALL),
+	CONFIG_LIST_TOK("mount", UDP_LISTENER_MOUNT),
+	CONFIG_LIST_EOL
+};
+
 static struct config_item_list protocols[] = {
 	CONFIG_LIST_TOK("none", CORE_OPTION_NONE),
 #ifdef _USE_NFS3
@@ -270,8 +281,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, fsid_device),
 	CONF_ITEM_BOOL("mount_path_pseudo", false,
 		       nfs_core_param, mount_path_pseudo),
-	CONF_ITEM_BOOL("Enable_UDP", true,
-		       nfs_core_param, enable_UDP),
+	CONF_ITEM_ENUM_BITS("Enable_UDP", UDP_LISTENER_ALL, UDP_LISTENER_MASK,
+		       udp_listener_type, nfs_core_param, enable_UDP),
 	CONF_ITEM_STR("Dbus_Name_Prefix", 1, 255, NULL,
 		       nfs_core_param, dbus_name_prefix),
 	CONFIG_EOL

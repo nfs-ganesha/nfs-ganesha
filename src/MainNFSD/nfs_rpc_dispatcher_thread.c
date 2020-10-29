@@ -939,6 +939,16 @@ static int alloc_socket_setopts(int p)
 	return 0;
 }
 
+static bool enable_udp_listener(protos prot)
+{
+	if (nfs_param.core_param.enable_UDP & UDP_LISTENER_ALL)
+		return true;
+	if (prot == P_MNT &&
+	    (nfs_param.core_param.enable_UDP & UDP_LISTENER_MOUNT))
+		return true;
+	return false;
+}
+
 /**
  * @brief Allocate the tcp and udp sockets for the nfs daemon
  * using V4 interfaces
@@ -946,7 +956,7 @@ static int alloc_socket_setopts(int p)
 static int Allocate_sockets_V4(int p)
 {
 	udp_socket[p] = tcp_socket[p] = -1;
-	if (nfs_param.core_param.enable_UDP) {
+	if (enable_udp_listener(p)) {
 		udp_socket[p] = socket(AF_INET,
 				       SOCK_DGRAM,
 				       IPPROTO_UDP);
@@ -1032,7 +1042,7 @@ static void Allocate_sockets(void)
 			if (v6disabled)
 				goto try_V4;
 
-			if (nfs_param.core_param.enable_UDP) {
+			if (enable_udp_listener(p)) {
 				udp_socket[p] = socket(AF_INET6,
 						       SOCK_DGRAM,
 						       IPPROTO_UDP);
@@ -1137,7 +1147,7 @@ void Clean_RPC(void)
 #ifdef RPCBIND
 static bool __Register_program(protos prot, int vers)
 {
-	if (nfs_param.core_param.enable_UDP) {
+	if (enable_udp_listener(prot)) {
 		LogInfo(COMPONENT_DISPATCH, "Registering %s V%d/UDP",
 			tags[prot], (int)vers);
 

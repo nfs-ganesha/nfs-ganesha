@@ -354,8 +354,7 @@ void nfs_print_param_config(void)
 	printf("\tDrop_Delay_Errors = %s ;\n",
 	       nfs_param.core_param.drop_delay_errors ? "true" : "false");
 
-	printf("\tEnable UDP = %s ;\n", nfs_param.core_param.enable_UDP ?
-	       "true" : "false");
+	printf("\tEnable UDP = %u ;\n", nfs_param.core_param.enable_UDP);
 
 	printf("}\n\n");
 }

@@ -208,6 +208,11 @@ typedef enum protos {
 #define CORE_OPTION_ALL_NFS_VERS CORE_OPTION_NFSV4
 #endif
 
+#define UDP_LISTENER_NONE	0
+#define UDP_LISTENER_ALL	0x00000001
+#define UDP_LISTENER_MOUNT	0x00000002
+#define UDP_LISTENER_MASK (UDP_LISTENER_ALL | UDP_LISTENER_MOUNT)
+
 typedef struct nfs_core_param {
 	/** An array of port numbers, one for each protocol.  Set by
 	    the NFS_Port, MNT_Port, NLM_Port, and Rquota_Port options. */
@@ -416,7 +421,7 @@ typedef struct nfs_core_param {
 	    mounts. */
 	bool mount_path_pseudo;
 	/** Whether to disable UDP listeners */
-	bool enable_UDP;
+	uint32_t enable_UDP;
 	/** DBus name prefix. Required if one wants to run multiple ganesha
 	    instances on single host. The prefix should be different for every
 	    ganesha instance. If this is set, dbus name will be

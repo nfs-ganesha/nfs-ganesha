@@ -138,9 +138,10 @@ Dbus_Name_Prefix
     single host. The prefix should be different for every ganesha instance. If
     this is set, the dbus name will be <prefix>.org.ganesha.nfsd
 
-Enable_UDP(bool, default true)
-    Whether to create UDP listeners for NFS, NLM, RQUOTA, and register
-    them with portmapper. Set to false, e.g., to run as non-root.
+Enable_UDP(enum, values [False, True, Mount], default True)
+    Whether to create UDP listeners for Mount, NFS, NLM, RQUOTA, and register
+    them with portmapper. Set to false, e.g., to run as non-root. Set to Mount
+    to enable only Mount UDP listener.
 
 Parameters controlling TCP DRC behavior:
 ----------------------------------------
