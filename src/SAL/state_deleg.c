@@ -550,9 +550,6 @@ bool state_deleg_conflict_impl(struct fsal_obj_handle *obj, bool write)
 	struct file_deleg_stats *deleg_stats;
 	struct gsh_client *deleg_client = NULL;
 
-	if (obj->type != REGULAR_FILE)
-		return false;
-
 	deleg_stats = &obj->state_hdl->file.fdeleg_stats;
 
 	if (obj->state_hdl->file.write_delegated)
@@ -592,6 +589,13 @@ bool state_deleg_conflict_impl(struct fsal_obj_handle *obj, bool write)
 bool state_deleg_conflict(struct fsal_obj_handle *obj, bool write)
 {
 	bool status = false;
+
+	/*
+	 * Check the type before grabbing the lock. Which lock in state_hdl is
+	 * valid depends on the object's type.
+	 */
+	if (obj->type != REGULAR_FILE)
+		return false;
 
 	STATELOCK_lock(obj);
 	status = state_deleg_conflict_impl(obj, write);
