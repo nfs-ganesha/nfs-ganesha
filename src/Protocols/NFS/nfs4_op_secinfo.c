@@ -81,6 +81,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	bool restore_op_ctx = false;
 	uint32_t resp_size = RESP_SIZE;
 	int idx = 0;
+	struct gsh_export *junction_export = NULL;
 
 	resp->resop = NFS4_OP_SECINFO;
 	res_SECINFO4->status = NFS4_OK;
@@ -112,14 +113,13 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	}
 
 	/* Get state lock for junction_export */
-	PTHREAD_RWLOCK_rdlock(&obj_src->state_hdl->jct_lock);
+	if (obj_src->type == DIRECTORY) {
+		PTHREAD_RWLOCK_rdlock(&obj_src->state_hdl->jct_lock);
+		junction_export = obj_src->state_hdl->dir.junction_export;
+	}
 
-	if (obj_src->type == DIRECTORY &&
-	    obj_src->state_hdl->dir.junction_export != NULL) {
-		/* Handle junction */
-		struct gsh_export *junction_export =
-			obj_src->state_hdl->dir.junction_export;
-		struct fsal_obj_handle *obj = NULL;
+	if (junction_export != NULL) {
+		/* Handle junction (first phase - junction lock required). */
 
 		/* Try to get a reference to the export. */
 		if (!export_ready(junction_export)) {
@@ -134,8 +134,15 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		}
 
 		get_gsh_export_ref(junction_export);
+	}
 
+	if (obj_src->type == DIRECTORY)
 		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->jct_lock);
+
+	if (junction_export != NULL) {
+		/* Handle junction (second phase - junction lock not needed). */
+
+		struct fsal_obj_handle *obj = NULL;
 
 		/* Save the compound data context */
 		save_op_context_export_and_set_export(&saved, junction_export);
@@ -185,9 +192,6 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		obj_src->obj_ops->put_ref(obj_src);
 
 		obj_src = obj;
-	} else {
-		/* Not a junction, release lock */
-		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->jct_lock);
 	}
 
 	/* Get the number of entries */
