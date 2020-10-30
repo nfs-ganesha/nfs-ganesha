@@ -486,14 +486,10 @@ void mem_clean_all_dirents(struct mem_fsal_obj_handle *parent)
 	struct avltree_node *node;
 	struct mem_dirent *dirent;
 
-	PTHREAD_RWLOCK_wrlock(&parent->obj_handle.obj_lock);
-
 	while ((node = avltree_first(&parent->mh_dir.avl_name))) {
 		dirent = avltree_container_of(node, struct mem_dirent, avl_n);
 		mem_remove_dirent_locked(parent, dirent);
 	}
-
-	PTHREAD_RWLOCK_unlock(&parent->obj_handle.obj_lock);
 }
 
 static void mem_copy_attrs_mask(struct fsal_attrlist *attrs_in,
