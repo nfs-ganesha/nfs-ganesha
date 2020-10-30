@@ -114,6 +114,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 	u_int mem_left = tracker->mem_avail - pos_start;
 	component4 name;
 	bool_t res_false = false;
+	bool_t lock_dir = false;
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
 		     "Entry %s pos %d mem_left %d",
@@ -139,11 +140,14 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 	 *       that root inode to proceed rather than getting stuck in a
 	 *       junction crossing infinite loop.
 	 */
-	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->jct_lock);
-	if (cb_parms->attr_allowed &&
-	    obj->type == DIRECTORY &&
-	    obj->state_hdl->dir.junction_export != NULL &&
+	if (obj->type == DIRECTORY && cb_parms->attr_allowed &&
 	    cb_state == CB_ORIGINAL) {
+		lock_dir = true;
+		PTHREAD_RWLOCK_rdlock(&obj->state_hdl->jct_lock);
+
+		if (obj->state_hdl->dir.junction_export == NULL)
+			goto not_junction;
+
 		/* This is a junction. Code used to not recognize this
 		 * which resulted in readdir giving different attributes
 		 * (including FH, FSid, etc...) to clients from a
@@ -274,7 +278,8 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 	}
 
 not_junction:
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
+	if (lock_dir)
+		PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 
 	args.attrs = (struct fsal_attrlist *)attr;
 	args.data = data;
