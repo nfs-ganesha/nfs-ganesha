@@ -13,12 +13,10 @@
 [Unit]
 Description=NFS-Ganesha file server
 Documentation=http://github.com/nfs-ganesha/nfs-ganesha/wiki
-After=rpcbind.service nfs-ganesha-lock.service
-Wants=rpcbind.service nfs-ganesha-lock.service
+After=rpcbind.service nfs-ganesha-lock.service nfs-ganesha-config.service
+Wants=rpcbind.service nfs-ganesha-lock.service nfs-ganesha-config.service
 Conflicts=nfs.target
 
-After=nfs-ganesha-config.service
-Wants=nfs-ganesha-config.service
 
 [Service]
 Type=forking
