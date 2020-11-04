@@ -225,45 +225,58 @@ retry:
 		return true;
 	}
 
-	if (fsal_status.major != ERR_FSAL_NOENT) {
-		/* An error occurred */
-		LogCrit(COMPONENT_EXPORT,
-			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s",
-			state->export->export_id,
-			state->st_fullpath,
-			state->st_pseudopath,
-			name,
-			msg_fsal_err(fsal_status.major));
-		return false;
-	}
-
+	/* Now check the FSAL, if it's not FSAL_PSEUDO, any error in the lookup
+	 * is a complete failure.
+	 */
 	fsal_name = op_ctx->ctx_export->fsal_export->exp_ops.get_name(
 				op_ctx->ctx_export->fsal_export);
+
 	/* fsal_name should be "PSEUDO" or "PSEUDO/<stacked-fsal-name>" */
 	if (strncmp(fsal_name, "PSEUDO", 6) != 0 ||
 	    (fsal_name[6] != '/' && fsal_name[6] != '\0')) {
-		/* Only allowed to create directories on FSAL_PSEUDO */
 		LogCrit(COMPONENT_EXPORT,
-			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s (can't create directory on non-PSEUDO FSAL)",
+			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s LOOKUP %s failed with %s%s",
 			state->export->export_id,
 			state->st_fullpath,
 			state->st_pseudopath,
 			name,
-			msg_fsal_err(fsal_status.major));
+			msg_fsal_err(fsal_status.major),
+			fsal_status.major == ERR_FSAL_NOENT
+				? " (can't create directory on non-PSEUDO FSAL)"
+				: ""
+			);
 		return false;
 	}
 
-	/* Node was not found and no other error, must create node. */
+	/* The only failure that FSAL_PSEUDO lookup can
+	 * have is the entry doesn't exist, however, when an export update is
+	 * in progress (which of course it is right now...) it will return
+	 * ERR_FSAL_DELAY instead of ERR_FSAL_NOENT. Since this is the ONLY
+	 * error condition, if it's FSAL_PSEUDO we just ignore the actual
+	 * error.
+	 *
+	 * Now create the missing node.
+	 *
+	 */
 	fsal_prepare_attrs(&sattr, ATTR_MODE);
 	sattr.mode = 0755;
 
 	fsal_status = fsal_create(state->obj, name, DIRECTORY, &sattr, NULL,
 				  &new_node, NULL);
 
-	/* Release the attributes (may release an inherited ACL) */
+	/* Release the attributes (may release an inherited ACL - which
+	 * FSAL_PSEUDO doesn't have...) */
 	fsal_release_attrs(&sattr);
 
 	if (fsal_status.major == ERR_FSAL_EXIST && !retried) {
+		/* This is ALMOST dead code... Since we now gate and only a
+		 * single export update can be in progress, no one should be
+		 * modifying the PseudoFS - EXCEPT - The PseudoFS COULD be
+		 * exported read/write and thus a client COULD have created the
+		 * directory we are looking for... Yea, not really going to
+		 * happen, but since we have the retry code to handle it, might
+		 * as well keep the code...
+		 */
 		LogDebug(COMPONENT_EXPORT,
 			 "BUILDING PSEUDOFS: Parent %p Node %p %s seems to already exist, try LOOKUP again",
 			 state->obj, new_node, name);
@@ -272,7 +285,11 @@ retry:
 	}
 
 	if (FSAL_IS_ERROR(fsal_status)) {
-		/* An error occurred */
+		/* An error occurred - this actually is technically impossible
+		 * for FSAL_PSEUDO unless the PseudoFS export is read/write and
+		 * a client manages to change the parent directory to a regular
+		 * file...
+		 */
 		LogCrit(COMPONENT_EXPORT,
 			"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s CREATE %s failed with %s",
 			state->export->export_id,
