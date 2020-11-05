@@ -264,12 +264,15 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 			release_slot(slot);
 		}
 
+		PTHREAD_RWLOCK_destroy(&session->conn_lock);
 		PTHREAD_COND_destroy(&session->cb_cond);
 		PTHREAD_MUTEX_destroy(&session->cb_mutex);
 
 		/* Destroy the session's back channel (if any) */
 		if (session->flags & session_bc_up)
 			nfs_rpc_destroy_chan(&session->cb_chan);
+
+		PTHREAD_MUTEX_destroy(&session->cb_chan.mtx);
 
 		/* Free the slot tables */
 		gsh_free(session->fc_slots);

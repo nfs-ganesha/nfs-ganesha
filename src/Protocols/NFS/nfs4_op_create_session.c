@@ -348,9 +348,12 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 	    arg_CREATE_SESSION4->csa_back_chan_attrs;
 	nfs41_session->flags = false;
 	nfs41_session->cb_program = 0;
+
 	PTHREAD_MUTEX_init(&nfs41_session->cb_mutex, NULL);
 	PTHREAD_COND_init(&nfs41_session->cb_cond, NULL);
 	PTHREAD_RWLOCK_init(&nfs41_session->conn_lock, NULL);
+	PTHREAD_MUTEX_init(&nfs41_session->cb_chan.mtx, NULL);
+
 	nfs41_session->nb_slots = MIN(nfs_param.nfsv4_param.nb_slots,
 			nfs41_session->fore_channel_attrs.ca_maxrequests);
 	nfs41_session->fc_slots = gsh_calloc(nfs41_session->nb_slots,
