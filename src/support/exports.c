@@ -764,7 +764,14 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	 * create temporary ones here.
 	 */
 	op_ctx->ctx_fullpath = gsh_refstr_dup(export->cfg_fullpath);
-	op_ctx->ctx_pseudopath = gsh_refstr_dup(export->cfg_pseudopath);
+	if (export->cfg_pseudopath != NULL) {
+		op_ctx->ctx_pseudopath = gsh_refstr_dup(export->cfg_pseudopath);
+	} else {
+		/* An export that does not export NFSv4 may not have a
+		 * Pseudo Path.
+		 */
+		op_ctx->ctx_pseudopath = gsh_refstr_get(no_export);
+	}
 
 	/* The handle cache (currently MDCACHE) must be at the top of the stack
 	 * of FSALs.  To achieve this, call directly into MDCACHE, passing the
@@ -1390,7 +1397,14 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	 * init_export_root() has them available when it creates root context.
 	 */
 	export->fullpath = gsh_refstr_dup(export->cfg_fullpath);
-	export->pseudopath = gsh_refstr_dup(export->cfg_pseudopath);
+	if (export->cfg_pseudopath != NULL) {
+		export->pseudopath = gsh_refstr_dup(export->cfg_pseudopath);
+	} else {
+		/* An export that does not export NFSv4 may not have a
+		 * Pseudo Path.
+		 */
+		export->pseudopath = NULL;
+	}
 
 	if (commit_type != initial_export) {
 		/* add_export or update_export with new export_id. */

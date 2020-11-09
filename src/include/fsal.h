@@ -94,6 +94,7 @@ extern uint32_t root_op_export_set;
 extern int g_nodeid;
 
 extern size_t open_fd_count;
+extern struct gsh_refstr *no_export;
 
 void init_ctx_refstr(void);
 void destroy_ctx_refstr(void);
