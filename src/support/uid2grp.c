@@ -205,7 +205,7 @@ static struct group_data *uid2grp_allocate_by_name(
 	gdata->uid = p.pw_uid;
 	gdata->gid = p.pw_gid;
 
-	/* Throttle queries to getgrouplist Directory Server if required. */
+	/* Throttle getgrouplist queries to Directory Server if required. */
 	if (nfs_param.core_param.max_uid_to_grp_reqs)
 		sem_wait(&uid2grp_sem);
 
@@ -261,10 +261,20 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	memcpy(gdata->uname.addr, p.pw_name, gdata->uname.len);
 	gdata->uid = p.pw_uid;
 	gdata->gid = p.pw_gid;
+
+	/* Throttle getgrouplist queries to Directory Server if required. */
+	if (nfs_param.core_param.max_uid_to_grp_reqs)
+		sem_wait(&uid2grp_sem);
+
 	if (!my_getgrouplist_alloc(p.pw_name, p.pw_gid, gdata)) {
 		gsh_free(gdata);
+		if (nfs_param.core_param.max_uid_to_grp_reqs)
+			sem_post(&uid2grp_sem);
 		return NULL;
 	}
+
+	if (nfs_param.core_param.max_uid_to_grp_reqs)
+		sem_post(&uid2grp_sem);
 
 	PTHREAD_MUTEX_init(&gdata->lock, NULL);
 	gdata->epoch = time(NULL);
