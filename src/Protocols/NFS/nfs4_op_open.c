@@ -189,7 +189,7 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
  * This function finds or creates an owner to be associated with the
  * requested open state.
  *
- * @param[in]     arg      Arguments to OPEN4 operation
+ * @param[in]     op       Arguments to OPEN4 operation
  * @param[in,out] data     Compound's data
  * @param[out]    res      Response to OPEN4 operation
  * @param[in]     clientid Clientid record for this request
