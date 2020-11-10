@@ -597,8 +597,18 @@ bool export_is_defunct(struct gsh_export *export, uint64_t generation)
 	if (export->config_gen >= generation) {
 		LogDebug(COMPONENT_EXPORT,
 			 "%s can't be unmounted (conf=%lu gen=%lu)",
-			 export->pseudopath, export->config_gen, generation);
+			 export->pseudopath != NULL
+			 	? export->pseudopath
+			 	: export->fullpath,
+			 export->config_gen, generation);
 		return false;
+	}
+
+	if ((export->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
+		LogFullDebug(COMPONENT_EXPORT,
+			     "%s isn't NFSv4 so automatically defunct",
+			     export->fullpath);
+		return true;
 	}
 
 	ok = strcmp(export->pseudopath, "/");
