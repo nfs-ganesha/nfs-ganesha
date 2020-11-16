@@ -48,6 +48,11 @@
 #include "nfs_core.h"
 #include "linux/falloc.h"
 
+typedef enum {
+	CEPH_AS_CALLER,
+	CEPH_AS_ROOT,
+} ceph_access_t;
+
 /**
  * @brief Release an object
  *
@@ -801,21 +806,36 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
  * @param[in] openflags   Mode for open
  * @param[in] posix_flags POSIX open flags for open
  * @param[in] my_fd       The ceph_fd to open
+ * @param[in] access      CEPH_AS_CALLER or CEPH_AS_ROOT
  *
  * @return FSAL status.
  */
 
 static fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
 				     fsal_openflags_t openflags,
-				     int posix_flags, struct ceph_fd *my_fd)
+				     int posix_flags, struct ceph_fd *my_fd,
+				     ceph_access_t access)
 {
 	int rc;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
+	/*
+	 * Optionally call fsal_ceph_ll_open() with root privileges.
+	 * Needed in reopen2() code path.
+	 */
+	struct user_cred root_creds = {
+		.caller_uid    = 0,
+		.caller_gid    = 0,
+		.caller_glen   = 0,
+		.caller_garray = NULL
+	};
+	struct user_cred *creds =
+		access == CEPH_AS_ROOT ? &root_creds : op_ctx->creds;
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "my_fd = %p my_fd->fd = %p openflags = %x, posix_flags = %x",
-		     my_fd, my_fd->fd, openflags, posix_flags);
+		     "my_fd = %p my_fd->fd = %p openflags = %x,"
+		     " posix_flags = %x, access = %d",
+		     my_fd, my_fd->fd, openflags, posix_flags, access);
 
 	assert(my_fd->fd == NULL
 	       && my_fd->openflags == FSAL_O_CLOSED && openflags != 0);
@@ -825,7 +845,7 @@ static fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
 		     openflags, posix_flags);
 
 	rc = fsal_ceph_ll_open(export->cmount, myself->i, posix_flags,
-				&my_fd->fd, op_ctx->creds);
+				&my_fd->fd, creds);
 
 	if (rc < 0) {
 		my_fd->fd = NULL;
@@ -892,7 +912,7 @@ static fsal_status_t ceph_open_func(struct fsal_obj_handle *obj_hdl,
 
 	return ceph_open_my_fd(container_of(obj_hdl,
 		struct ceph_handle, handle), openflags,
-		posix_flags, (struct ceph_fd *)fd);
+		posix_flags, (struct ceph_fd *)fd, CEPH_AS_CALLER);
 }
 
 /**
@@ -1182,7 +1202,8 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		if (my_fd->openflags != FSAL_O_CLOSED) {
 			ceph_close_my_fd(my_fd);
 		}
-		status = ceph_open_my_fd(myself, openflags, posix_flags, my_fd);
+		status = ceph_open_my_fd(myself, openflags, posix_flags,
+					 my_fd, CEPH_AS_CALLER);
 
 		if (FSAL_IS_ERROR(status)) {
 			if (state == NULL) {
@@ -1594,7 +1615,11 @@ static fsal_status_t ceph_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 
 	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	status = ceph_open_my_fd(myself, openflags, posix_flags, my_fd);
+	/* Open the fd with root privileges on reopen. This is safe
+	 * because permission is checked in fsal_helper:fsal_reopen2()
+	 */
+	status = ceph_open_my_fd(myself, openflags, posix_flags, my_fd,
+				 CEPH_AS_ROOT);
 
 	if (!FSAL_IS_ERROR(status)) {
 		/* Close the existing file descriptor and copy the new
