@@ -662,7 +662,7 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 	clid_entry_t *clid_ent;
 	*clid_ent_arg = NULL;
 
-	LogDebug(COMPONENT_CLIENTID, "chk for %lu",
+	LogDebug(COMPONENT_CLIENTID, "chk for %" PRIu64,
 		 clientid->cid_clientid);
 
 	/* If there were no clients at time of restart, we're done */

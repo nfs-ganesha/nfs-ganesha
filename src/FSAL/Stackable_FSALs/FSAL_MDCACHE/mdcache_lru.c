@@ -2266,7 +2266,8 @@ void mdc_lru_map_dirent(mdcache_dir_entry_t *dirent)
 	key.ck = dirent->ck;
 	node = avltree_lookup(&key.node, &exp->dirent_map.map);
 	if (node) {
-		LogFullDebug(COMPONENT_NFS_READDIR, "Already map for %s -> %lx",
+		LogFullDebug(COMPONENT_NFS_READDIR,
+			     "Already map for %s -> %" PRIx64,
 			     dirent->name, dirent->ck);
 		/* Move to MRU */
 		dmap = avltree_container_of(node, mdcache_dmap_entry_t, node);
@@ -2291,7 +2292,7 @@ void mdc_lru_map_dirent(mdcache_dir_entry_t *dirent)
 	dmap->ck = dirent->ck;
 	dmap->name = gsh_strdup(dirent->name);
 	now(&dmap->timestamp);
-	LogFullDebug(COMPONENT_NFS_READDIR, "Mapping %s -> %lx %p:%d",
+	LogFullDebug(COMPONENT_NFS_READDIR, "Mapping %s -> %" PRIx64 " %p:%d",
 		     dmap->name, dmap->ck, exp, exp->dirent_map.count);
 
 	mdc_lru_dirmap_add(exp, dmap);
@@ -2323,7 +2324,7 @@ fsal_cookie_t *mdc_lru_unmap_dirent(uint64_t ck)
 	key.ck = ck;
 	node = avltree_lookup(&key.node, &exp->dirent_map.map);
 	if (!node) {
-		LogFullDebug(COMPONENT_NFS_READDIR, "No map for %lx", ck);
+		LogFullDebug(COMPONENT_NFS_READDIR, "No map for %" PRIx64, ck);
 		PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
 		return NULL;
 	}
@@ -2335,8 +2336,8 @@ fsal_cookie_t *mdc_lru_unmap_dirent(uint64_t ck)
 
 	name = dmap->name;
 
-	LogFullDebug(COMPONENT_NFS_READDIR, "Unmapping %s -> %lx", dmap->name,
-		     dmap->ck);
+	LogFullDebug(COMPONENT_NFS_READDIR, "Unmapping %s -> %" PRIx64,
+		     dmap->name, dmap->ck);
 
 	/* Don't free name, we're passing it back to the caller */
 	gsh_free(dmap);
