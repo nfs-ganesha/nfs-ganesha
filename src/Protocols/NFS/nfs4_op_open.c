@@ -1091,9 +1091,8 @@ static void open4_ex(OPEN4args *arg,
 			*new_state = false;
 		} else {
 			/*Do an open downgrade to the old open flags */
-			status = file_obj->obj_ops->reopen2(file_obj,
-							   *file_state,
-							   old_openflags);
+			status = fsal_reopen2(file_obj, *file_state,
+					      old_openflags, false);
 			if (FSAL_IS_ERROR(status)) {
 				LogCrit(COMPONENT_NFS_V4,
 					"Failed to allocate handle, reopen2 failed with %s",
