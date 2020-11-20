@@ -1664,6 +1664,264 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 	fh_desc->len = sizeof(struct rgw_fh_hk);
 }
 
+#ifdef USE_FSAL_RGW_XATTRS
+
+static int getxattr_cb(rgw_xattrlist *attrs, void *arg, uint32_t flags)
+{
+	xattrvalue4 *cb_arg = (xattrvalue4 *)arg;
+
+	cb_arg->utf8string_val =
+		gsh_strldup(attrs->xattrs->val.val, attrs->xattrs->val.len,
+		&cb_arg->utf8string_len);
+	cb_arg->utf8string_len = attrs->xattrs->val.len;
+	return 0;
+}
+
+/**
+ * @brief Get Extended Attribute
+ *
+ * The function fetches the extended attr of the object.
+ *
+ * @param[in]  obj_hdl  Input object to query
+ * @param[in]  xa_name  Input xattr name
+ * @param[out] xa_value Output xattr value
+ */
+
+static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
+				xattrvalue4 *xa_name,
+				xattrvalue4 *xa_value)
+{
+	int rc = 0;
+	int errsv = 0;
+	fsal_status_t status;
+	rgw_xattrlist attrs = {NULL, 1};
+
+	struct rgw_export *export =
+		container_of(op_ctx->fsal_export,
+			     struct rgw_export, export);
+	struct rgw_handle *handle =
+		container_of(obj_hdl, struct rgw_handle, handle);
+
+	attrs.xattrs->key.val =
+		xa_name->utf8string_val;
+	attrs.xattrs->key.len = xa_name->utf8string_len;
+
+	rc = rgw_getxattrs(export->rgw_fs, handle->rgw_fh, &attrs,
+			   getxattr_cb, &xa_value,
+			   RGW_GETXATTR_FLAG_NONE);
+
+	if (rc < 0) {
+		errsv = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "GETEXATTRS returned rc %d errsv %d",
+			 rc, errsv);
+
+		if (errsv == ERANGE) {
+			status = fsalstat(ERR_FSAL_TOOSMALL, 0);
+			goto out;
+		}
+		if (errsv == ENODATA) {
+			status = fsalstat(ERR_FSAL_NOENT, 0);
+			goto out;
+		}
+		status = fsalstat(posix2fsal_error(errsv), errsv);
+		goto out;
+	}
+
+	LogDebug(COMPONENT_FSAL,
+		 "GETXATTRS returned value %s length %d rc %d",
+		 xa_value->utf8string_val,
+		 xa_value->utf8string_len, rc);
+
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+out:
+	return status;
+}
+
+/**
+ * @brief Set Extended Attribute
+ *
+ * The function sets the extended attr of the object.
+ *
+ * @param[in]  obj_hdl  The input object
+ * @param[in]  sa_type  Input xattr type
+ * @param[in]  xa_name  Input xattr name
+ * @param[in]  xa_value Input xattr value to be set
+ */
+
+
+static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
+				setxattr_option4 sa_type,
+				xattrvalue4 *xa_name,
+				xattrvalue4 *xa_value)
+{
+	int rc = 0;
+	int errsv = 0;
+	fsal_status_t status = {0, 0};
+	rgw_xattrlist attrs = {NULL, 1};
+
+	struct rgw_export *export =
+		container_of(op_ctx->fsal_export,
+			     struct rgw_export, export);
+	struct rgw_handle *handle = container_of(obj_hdl, struct rgw_handle,
+						 handle);
+
+	attrs.xattrs->key.val =
+		xa_name->utf8string_val;
+	attrs.xattrs->key.len = xa_name->utf8string_len;
+	attrs.xattrs->val.val =
+		xa_value->utf8string_val;
+	attrs.xattrs->val.len = xa_value->utf8string_len;
+
+	rc = rgw_setxattrs(export->rgw_fs, handle->rgw_fh, &attrs,
+			   RGW_SETXATTR_FLAG_NONE);
+
+	if (rc < 0) {
+		errsv = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "SETXATTRS returned rc %d errsv %d",
+			 rc, errsv);
+		status = fsalstat(posix2fsal_error(errsv), errsv);
+		goto out;
+	}
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+out:
+	return status;
+}
+
+/**
+ * @brief Remove Extended Attribute
+ *
+ * This function removes an extended attribute of the object.
+ *
+ * @param[in]  obj_hdl  The input object
+ * @param[in]  xa_name  Input xattr name to be removed
+ *
+ * @return FSAL status.
+ */
+
+static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
+				xattrvalue4 *xa_name)
+{
+	int rc = 0;
+	int errsv = 0;
+	fsal_status_t status = {0, 0};
+	rgw_xattrlist attrs = {NULL, 1};
+
+	struct rgw_export *export =
+		container_of(op_ctx->fsal_export,
+			     struct rgw_export, export);
+	struct rgw_handle *handle =
+		container_of(obj_hdl, struct rgw_handle, handle);
+
+	attrs.xattr_cnt = 1;
+	attrs.xattrs->key.val =
+		xa_name->utf8string_val;
+	attrs.xattrs->key.len = xa_name->utf8string_len;
+
+	rc = rgw_rmxattrs(export->rgw_fs,
+			  handle->rgw_fh,
+			  &attrs, RGW_RMXATTR_FLAG_NONE);
+
+	if (rc < 0) {
+		errsv = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "REMOVEXATTRS returned rc %d errsv %d",
+			 rc, errsv);
+		status = fsalstat(posix2fsal_error(errsv), errsv);
+		goto out;
+	}
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+out:
+	return status;
+}
+
+struct lxattr_cb_arg {
+	count4 max;
+	xattrlist4 *names;
+};
+
+static int lsxattr_cb(rgw_xattrlist *attrs, void *cb_arg, uint32_t flag)
+{
+	struct lxattr_cb_arg *cb = (struct lxattr_cb_arg *)cb_arg;
+
+	cb->names->xl4_entries[cb->names->xl4_count].utf8string_val =
+		gsh_strldup(attrs->xattrs[0].key.val, attrs->xattrs[0].key.len,
+		&cb->names->xl4_entries[cb->names->xl4_count].utf8string_len);
+
+	cb->names->xl4_count++;
+
+	if (cb->names->xl4_count == cb->max) {
+		flag = RGW_LSXATTR_FLAG_STOP;
+		return flag;
+	}
+
+	return 0;
+}
+
+/**
+ * @brief List Extended Attribute
+ *
+ * The function fetches the list of extended attribute of the object.
+ *
+ * @param[in]		obj_hdl		The input object
+ * @param[in]		la_maxcount	Input max number of bytes for names
+ * @param[in,out]	la_cookie	In/out cookie
+ * @param[out]		lr_eof		Output eof set if no more xattrs
+ * @param[out]		lr_names	Output list of xattr names this buffer
+ *					size is double the size of la_maxcount
+ *					to allow for component4 overhead
+ *
+ * @return FSAL status.
+ */
+
+static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
+				count4 la_maxcount,
+				nfs_cookie4 *la_cookie,
+				bool_t *lr_eof,
+				xattrlist4 *lr_names)
+{
+	int rc = 0;
+	int errsv = 0;
+	fsal_status_t status = {0, 0};
+	struct lxattr_cb_arg attrs;
+
+	attrs.names = lr_names;
+	attrs.max = la_maxcount;
+
+	struct rgw_export *export =
+		container_of(op_ctx->fsal_export,
+			     struct rgw_export, export);
+	struct rgw_handle *handle =
+		container_of(obj_hdl, struct rgw_handle, handle);
+
+	rc = rgw_lsxattrs(export->rgw_fs, handle->rgw_fh,
+			  NULL /* filter_prefix not yet implemented in RGW */,
+			  lsxattr_cb, &attrs, RGW_LSXATTR_FLAG_NONE);
+
+	if (rc < 0) {
+		errsv = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "LISTXATTRS returned rc %d errsv %d",
+			 rc, errsv);
+		status = fsalstat(posix2fsal_error(errsv), errsv);
+		goto out;
+	}
+
+	/* Setting true unconditionally since cookie isn't implemented yet */
+	*lr_eof = true;
+
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+out:
+	return status;
+}
+
+#endif
+
 /**
  * @brief Override functions in ops vector
  *
@@ -1680,6 +1938,12 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->release = release;
 	ops->merge = rgw_merge;
 	ops->lookup = lookup;
+#ifdef USE_FSAL_RGW_XATTRS
+	ops->getxattrs = getxattrs;
+	ops->setxattrs = setxattrs;
+	ops->removexattrs = removexattrs;
+	ops->listxattrs = listxattrs;
+#endif
 	ops->mkdir = rgw_fsal_mkdir;
 	ops->readdir = rgw_fsal_readdir;
 #if HAVE_DIRENT_OFFSETOF
