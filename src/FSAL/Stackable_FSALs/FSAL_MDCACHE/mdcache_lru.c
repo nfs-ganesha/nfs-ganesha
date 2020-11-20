@@ -2070,6 +2070,12 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 			goto out;
 		}
 
+		/*
+		 * The cih table holds a non-weak reference, so entry should no
+		 * longer be in it.
+		 */
+		assert(!entry->fh_hk.inavl);
+
 		/* Really zero.  Remove entry and mark it as dead. */
 		q = lru_queue_of(entry);
 		if (q) {
