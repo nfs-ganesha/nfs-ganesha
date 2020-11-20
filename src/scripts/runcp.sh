@@ -238,8 +238,8 @@ DIR="."
 ALWAYS="libtirpc|libntirpc|CMakeFiles|tools/test_findlog.c|include/config.h"
 ALWAYS="$ALWAYS|nfsv41.h|nlm4.h|nsm.h|rquota.h|nfsacl.h"
 
-EXTERNAL="murmur3.h|cidr.h|cidr/|atomic_x86_64.h|include/city|avltree.h"
-EXTERNAL="$EXTERNAL|test/test_atomic_x86_86.c|avl/|FSAL/FSAL_GPFS/include"
+EXTERNAL="murmur3.h|cidr.h|cidr/|include/city|avltree.h"
+EXTERNAL="$EXTERNAL|avl/|FSAL/FSAL_GPFS/include"
 
 NO_EXTERNAL=0
 
