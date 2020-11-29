@@ -539,6 +539,10 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 		LogWarn(COMPONENT_FSAL, "Cannot set tag for ACL Entry");
 
 	ret = acl_get_permset(a_entry, &e_a_permset);
+	if (ret) {
+		LogWarn(COMPONENT_FSAL,
+			"Cannot retrieve permission set");
+	}
 
 	/*
 	 * Deny entry for @EVERYONE created only because it will ease the
@@ -554,6 +558,10 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 		LogWarn(COMPONENT_FSAL, "Cannot set tag for ACL Entry");
 
 	ret = acl_get_permset(d_entry, &e_d_permset);
+	if (ret) {
+		LogWarn(COMPONENT_FSAL,
+			"Cannot retrieve permission set");
+	}
 
 	for (f_ace = p_fsalacl->aces;
 		f_ace < p_fsalacl->aces + p_fsalacl->naces; f_ace++) {
@@ -663,6 +671,10 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 		a_entry = get_entry(allow_acl, tag, id);
 		d_entry = get_entry(deny_acl, tag, id);
 		ret = acl_get_permset(d_entry, &d_permset);
+		if (ret) {
+			LogWarn(COMPONENT_FSAL,
+				"Cannot retrieve permission set");
+		}
 
 		if (IS_FSAL_ACE_DENY(*f_ace)) {
 			if (IS_FSAL_ACE_READ_DATA(*f_ace))
@@ -673,6 +685,10 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 				acl_add_perm(d_permset, ACL_EXECUTE);
 		}
 		ret = acl_get_permset(a_entry, &a_permset);
+		if (ret) {
+			LogWarn(COMPONENT_FSAL,
+				"Cannot retrieve permission set");
+		}
 
 		if (IS_FSAL_ACE_SPECIAL_MASK(*f_ace)) {
 			if (IS_FSAL_ACE_ALLOW(*f_ace)) {
