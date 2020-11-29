@@ -321,7 +321,6 @@ not_junction:
 		goto failure;
 	}
 
-	mem_left -= RNDUP(name.utf8string_len);
 
 	/* If we carried an error from above, now that we have
 	 * the name set up, go ahead and try and put error in

@@ -926,7 +926,6 @@ void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 			memcpy(path + pathpos + len + 2,
 			       rhdlstr,
 			       rhdlstr_len + 1);
-			pathpos = new_pathpos;
 			fd = creat(path, 0700);
 			if (fd < 0) {
 				LogEvent(COMPONENT_CLIENTID,
