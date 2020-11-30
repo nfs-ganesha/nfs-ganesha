@@ -3351,17 +3351,6 @@ again:
 							 MDCACHE_DIR_POPULATED);
 			}
 
-			if (whence_is_name && cb_result == DIR_TERMINATE) {
-				/* Save the mapping to continue the the readdir
-				 * from this point if the chunk is reaped.  Note
-				 * that the previous dirent is the last one sent
-				 * to the client. */
-				dirent = glist_prev_entry(&chunk->dirents,
-							  mdcache_dir_entry_t,
-							  chunk_list,
-							  &dirent->chunk_list);
-			}
-
 			if (has_write) {
 				/* We need to drop the ref on the rest of the
 				 * entries in this chunk, so that they don't
