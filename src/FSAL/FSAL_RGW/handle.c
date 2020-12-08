@@ -148,8 +148,15 @@ static bool rgw_cb(const char *name, void *arg, uint64_t offset,
 	status = lookup_int(rgw_cb_arg->dir_hdl, name, &obj, &attrs, st,
 			st_mask, RGW_LOOKUP_FLAG_RCB|
 			(flags & (RGW_LOOKUP_FLAG_DIR|RGW_LOOKUP_FLAG_FILE)));
-	if (FSAL_IS_ERROR(status))
-		return false;
+	if (FSAL_IS_ERROR(status)) {
+		LogWarn(COMPONENT_FSAL,
+			"%s attempt to lookup %s after rgw_readdir() failed "
+			"(%d, %d)",
+			__func__, name, status.major, status.minor);
+		fsal_release_attrs(&attrs);
+		return true; /* no entry is provided to ganesha, so the
+			      * readahead state is unchanged */
+	}
 
 	/** @todo FSF - when rgw gains mark capability, need to change this
 	 *              code...
