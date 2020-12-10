@@ -369,8 +369,8 @@ struct pnfstime4 {
 };
 
 struct nfsd4_pnfs_dev_iter_res {
-	uint64_t		gd_cookie;	/* request/repsonse */
-	uint64_t		gd_verf;	/* request/repsonse */
+	uint64_t		gd_cookie;	/* request/response */
+	uint64_t		gd_verf;	/* request/response */
 	uint64_t		gd_devid;	/* response */
 	uint32_t		gd_eof;		/* response */
 };
