@@ -123,6 +123,7 @@
   LogMallocFailure;
   LogWarn;
   lru_cleanup_entries;
+  mdcache_lru_release_entries;
   mdcache_param;
   merge_share;
   msg_fsal_err;
@@ -195,6 +196,7 @@
   root_op_export_options;
   set_common_verifier;
   set_const_log_str;
+  set_saved_entry;
   SetNameFunction;
   sprint_sockip;
   start_fsals;

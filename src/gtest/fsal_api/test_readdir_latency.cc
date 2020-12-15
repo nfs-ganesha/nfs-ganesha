@@ -124,7 +124,7 @@ namespace {
   }
 
   struct cb_data {
-        u8 *cursor;
+        uint8_t *cursor;
         unsigned int count;
         unsigned int max;
   };
@@ -161,7 +161,7 @@ TEST_F(ReaddirEmptyLatencyTest, FSALREADDIR)
   uint64_t cookie = 0LL;
   unsigned int num_entries = 0;
   bool eod_met = false;
-  struct cb_data tracker = { NULL };
+  struct cb_data tracker = { 0 };
   struct timespec s_time, e_time;
 
   now(&s_time);
