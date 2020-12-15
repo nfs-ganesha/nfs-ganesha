@@ -193,35 +193,62 @@ struct state_t;
  * Overview
  * ========
  *
- * In the FSAL, file handles can take four forms.  There is the full,
- * internal handle structure, compose of the @c fsal_obj_handle and
- * the FSAL-private structure that contains it.
+ * First off, there is the fsal_obj_handle which is usually extended by the
+ * FSAL. This is a memory object that describes an instance of a file within
+ * the Ganesha structure. It contains all the information the FSAL needs to
+ * interact with the underlying file system for that file.
  *
- * There is the wire-handle, the FSAL-generated portion of the
- * file handles exchanged between Ganesha and its clients through the
- * FS protocol.  The wire-handle should contain everything necessary
- * to find and use the file even if the file has been completely
- * purged from cache or Ganesha has restarted from nothing.  There may
- * be multiple wire-handles per @c fsal_obj_handle.  The wire-handle
- * is produced by the @c handle_to_wire method on @c fsal_obj_handle.
- * FSALs can produce big endian or little endian wire-handles depending
- * on the architecture.
+ * Next are three forms of what are more traditionally considered a file
+ * handle. The host handle, the handle-key, and the wire handle.
  *
- * A host-handle is a verion of the wire handle in host endian format.  It is
- * produced from wire-handle by @c wire_to_host to the host's native endian
- * type.  @c fsal_export operation @c create_handle produces a new @c
- * fsal_obj_handle from a host-handle.
+ * The host handle is the set of components the underlying file system
+ * needs to find a file object given only a handle and not path and file name.
+ * This might be information such as file system id, inode number, inode
+ * generation, and maybe even directory parent information.
  *
- * Finally, there is the handle-key, a portion of the handle that contains
- * all and only information that uniquely identifies the object within
- * the entire FSAL (it is insufficient if it only identifies it within
- * the export or within a filesystem.)  There are two functions that
- * generate a handle-key, one is the @c host_to_key method on @c
- * fsal_export.  It is used to get the key from a host-handle so that
- * it can be looked up in the cache.  The other is @c handle_to_key on
- * @c fsal_obj_handle.  This is used after lookup or some other
- * operation that produces a @c fsal_obj_handle so that it can be
- * stored or looked up in the cache.
+ * The wire handle is the handle form shared with NFS clients. The upper
+ * protocol layers encapsulate this handle with additional information including
+ * the export_id which allows the upper layer to find the FSAL that owns the
+ * handle. The wire handle may be byte swapped or have other transformations
+ * from the host handle.
+ *
+ * The final handle form is the handle-key or simply key. This is used by the
+ * MDACHE stackable FSAL (which is in fact always present). This handle may have
+ * less information than the wire or host handles for FSALs that have multiple
+ * forms of the same handle (for example, if directory parent is part of the
+ * host and wire handle, a moved or linked file might have different
+ * directory parents but we need a single cache object to reference the file.
+ * In this case, the key strips out that directory parent information.
+ *
+ * There are two methods that convert between these forms:
+ *
+ *    wire_to_host converts a wire handle to a host handle. It would handle any
+ *    byte swapping.
+ *
+ *    host_to_key converts a host handle into a handle-key.
+ *
+ * Note that there are no key_to_X methods. The mdcache (almost) always has a
+ * reference to a fsal_obj_handle (after all, that's what it's caching...). The
+ * exception is the dirent cache which caches host handles to provide a weak
+ * link to the file system object rather than a strong link to a
+ * fsal_obj_handle (if the object is in cache, a simple cache lookup will
+ * resolve the object, host_to_key will be used during this lookup process).
+ *
+ * The host_to_X transformations are handled by the methods below,
+ * handle_to_wire and handle_to_key.
+ *
+ * There are three methods that work to interface between handles and
+ * fsal_obj_handles:
+ *
+ *    create_handle takes a host handle and calls to the underlying file system
+ *    to instantiate a fsal_obj_handle for that object.
+ *
+ *    handle_to_wire takes a fsal_obj_handle and produces a wire handle to be
+ *    passed to the protocol layer to be encapsulated and passed to a client.
+ *
+ *    handle_to_key takes a fsal_obj_handle and produces a handle-key to allow
+ *    the object to be placed in the mdcache. Note that in some sense this does
+ *    the same conversion as host_to_key.
  *
  * The invariant to be maintained is that given an @c fsal_obj_handle,
  * obj_hdl, exp_ops.host_to_key(wire_to_host(handle_to_wire(obj_hdl)))

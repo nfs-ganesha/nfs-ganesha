@@ -95,7 +95,7 @@ out:
 /** Release a cache entry if it's otherwise idle.
  *
  * @param[in] vec    Up ops vector
- * @param[in] handle Handle that should be vetted and possibly removed
+ * @param[in] handle Handle-key that should be vetted and possibly removed
  * @param[in] flags  Unused, for future expansion
  *
  * @return FSAL status. (ERR_FSAL_NO_ERROR indicates that one was released)
