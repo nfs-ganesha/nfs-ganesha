@@ -124,6 +124,7 @@
   lookup_fsal;
   lookup_fsid;
   LogMallocFailure;
+  mdcache_lru_release_entries;
   mdcache_param;
   merge_share;
   msg_fsal_err;
@@ -205,6 +206,7 @@
   set_common_verifier;
   set_const_log_str;
   set_op_context_export_fsal;
+  set_saved_entry;
   SetNameFunction;
   sprint_sockip;
   start_fsals;

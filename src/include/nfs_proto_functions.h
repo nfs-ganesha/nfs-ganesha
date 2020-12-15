@@ -600,8 +600,8 @@ bool xdr_COMPOUND4res_extended(XDR *xdrs, struct COMPOUND4res_extended **objp);
 /* Pseudo FS functions */
 bool pseudo_mount_export(struct gsh_export *exp);
 void create_pseudofs(void);
-void pseudo_unmount_export_tree(struct gsh_export *export);
-void prune_pseudofs_subtree(struct gsh_export *export,
+void pseudo_unmount_export_tree(struct gsh_export *exp);
+void prune_pseudofs_subtree(struct gsh_export *exp,
 			    uint64_t generation,
 			    bool ancestor_is_defunct);
 

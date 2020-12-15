@@ -55,7 +55,6 @@ namespace {
   uint16_t export_id = 77;
 
   struct req_op_context req_ctx;
-  struct user_cred user_credentials;
   struct fsal_attrlist object_attributes;
 
   struct gsh_export* a_export = nullptr;
