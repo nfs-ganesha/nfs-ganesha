@@ -107,6 +107,7 @@ struct ceph_host_handle {
 } __attribute__ ((__packed__));
 
 struct ceph_handle_key {
+	/* NOTE: The ceph_host_handle MUST be first in this structure */
 	struct ceph_host_handle hhdl;
 	uint16_t export_id;
 };
@@ -116,7 +117,8 @@ struct ceph_handle {
 	struct ceph_fd fd;
 	struct Inode *i;	/*< The Ceph inode */
 	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
-	struct ceph_handle_key key;
+	struct ceph_handle_key key;	/*< The handle-key that includes the
+					    ceph_host_handle. */
 	struct fsal_share share;
 #ifdef CEPH_PNFS
 	uint64_t rd_issued;
