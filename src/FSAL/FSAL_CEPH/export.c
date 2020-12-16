@@ -188,7 +188,7 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 				  struct gsh_buffdesc *fh_desc,
 				  int flags)
 {
-	struct ceph_handle_key *key = fh_desc->addr;
+	struct ceph_host_handle *hhdl = fh_desc->addr;
 
 	switch (in_type) {
 		/* Digested Handles */
@@ -199,25 +199,57 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 		 * filehandle and strips that out before calling this
 		 * function.
 		 *
-		 * Most FSALs don't factor in the export_id with the handle_key,
-		 * but we want to do that for FSAL_CEPH, primarily because we
-		 * want to do accesses via different exports via different cephx
-		 * creds. Mix the export_id back in here.
-		 *
 		 * Note that we use a LE values in the filehandle. Earlier
 		 * versions treated those values as opaque, so this allows us to
 		 * maintain compatibility with legacy deployments (most of which
 		 * were on LE arch).
 		 */
-		key->export_id = op_ctx->ctx_export->export_id;
-		key->hhdl.chk_ino = le64toh(key->hhdl.chk_ino);
-		key->hhdl.chk_snap = le64toh(key->hhdl.chk_snap);
-		key->hhdl.chk_fscid = le64toh(key->hhdl.chk_fscid);
-		fh_desc->len = sizeof(*key);
+		hhdl->chk_ino = le64toh(hhdl->chk_ino);
+		hhdl->chk_snap = le64toh(hhdl->chk_snap);
+		hhdl->chk_fscid = le64toh(hhdl->chk_fscid);
+		fh_desc->len = sizeof(*hhdl);
 		break;
 	default:
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * @brief extract "key" from a host handle
+ *
+ * This function extracts a "key" from a host handle.  That is, when
+ * given a handle that is extracted from wire_to_host() above, this
+ * method will extract the unique bits used to index the inode cache.
+ *
+ * @param[in]     exp_hdl Export handle
+ * @param[in,out] fh_desc Buffer descriptor.  The address of the
+ *                        buffer is given in @c fh_desc->buf and must
+ *                        not be changed.  @c fh_desc->len is the length
+ *                        of the data contained in the buffer, @c
+ *                        fh_desc->len must be updated to the correct
+ *                        size. In other words, the key has to be placed
+ *                        at the beginning of the buffer!
+ */
+fsal_status_t host_to_key(struct fsal_export *exp_hdl,
+			  struct gsh_buffdesc *fh_desc)
+{
+	struct ceph_handle_key *key = fh_desc->addr;
+
+	/*
+	 * Ganesha automatically mixes the export_id in with the actual wire
+	 * filehandle and strips that out before transforming it to a host
+	 * handle. This method is called on a host handle which doesn't have
+	 * the export_id.
+	 *
+	 * Most FSALs don't factor in the export_id with the handle_key,
+	 * but we want to do that for FSAL_CEPH, primarily because we
+	 * want to do accesses via different exports via different cephx
+	 * creds. Mix the export_id back in here.
+	 */
+	key->export_id = op_ctx->ctx_export->export_id;
+	fh_desc->len = sizeof(*key);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -229,7 +261,7 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
  * looks like we shouldn't modify.
  *
  * @param[in]  export_pub Public export
- * @param[in]  desc       Handle buffer descriptor
+ * @param[in]  desc       Handle buffer descriptor (host handle)
  * @param[out] pub_handle The created handle
  *
  * @return FSAL status.
@@ -245,8 +277,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	/* FSAL status to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The FSAL specific portion of the handle received by the client */
-	struct ceph_handle_key *key = desc->addr;
-	struct ceph_host_handle *hhdl = &key->hhdl;
+	struct ceph_host_handle *hhdl = desc->addr;
 	/* Ceph return code */
 	int rc = 0;
 	/* Stat buffer */
@@ -259,7 +290,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 
 	*pub_handle = NULL;
 
-	if (desc->len != sizeof(*key)) {
+	if (desc->len != sizeof(*hhdl)) {
 		status.major = ERR_FSAL_INVAL;
 		return status;
 	}
@@ -389,6 +420,7 @@ void export_ops_init(struct export_ops *ops)
 	ops->prepare_unexport = ceph_prepare_unexport,
 	ops->release = release;
 	ops->lookup_path = lookup_path;
+	ops->host_to_key = host_to_key;
 	ops->wire_to_host = wire_to_host;
 	ops->create_handle = create_handle;
 	ops->get_fs_dynamic_info = get_fs_dynamic_info;
