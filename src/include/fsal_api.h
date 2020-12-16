@@ -218,14 +218,22 @@ struct state_t;
  * forms of the same handle (for example, if directory parent is part of the
  * host and wire handle, a moved or linked file might have different
  * directory parents but we need a single cache object to reference the file.
- * In this case, the key strips out that directory parent information.
+ * In this case, the key strips out that directory parent information. Other
+ * FSALs may actually need to have a separate cache object per export and thus
+ * ADD the export_id to the key. This does cause problems but at the moment is
+ * the best solution for the CEPH FSAL. A FSAL that has a larger key than the
+ * host handle MUST NOT make it larger by more than FSAL_KEY_EXTRA_BYTES.
  *
  * There are two methods that convert between these forms:
  *
  *    wire_to_host converts a wire handle to a host handle. It would handle any
  *    byte swapping.
  *
- *    host_to_key converts a host handle into a handle-key.
+ *    host_to_key converts a host handle into a handle-key. It is allowed to
+ *    return a larger key than the host handle, but it may only increase the
+ *    size by FSAL_KEY_EXTRA_BYTES defined below. NOTE that callers of
+ *    host_to_key MUST make room for at least this many bytes past the size of
+ *    the host handle.
  *
  * Note that there are no key_to_X methods. The mdcache (almost) always has a
  * reference to a fsal_obj_handle (after all, that's what it's caching...). The
@@ -363,6 +371,11 @@ struct fsal_pnfs_ds;
 struct fsal_pnfs_ds_ops;
 struct fsal_ds_handle;
 struct fsal_dsh_ops;
+
+/* Allow extra space in handle-key for expansion beyond the size of the host
+ * handle. Used by callers of host_to_key.
+ */
+#define FSAL_KEY_EXTRA_BYTES 8
 
 #ifndef SEEK_SET
 #define SEEK_SET 0
@@ -915,6 +928,10 @@ struct export_ops {
  * This function extracts a "key" from a host handle.  That is, when
  * given a handle that is extracted from wire_to_host() above, this
  * method will extract the unique bits used to index the inode cache.
+ *
+ * NOTE: Callers MUST make sure the passed in buffer has at least enough
+ *       room to hold the host handle PLUS FSAL_KEY_EXTRA_BYTES (defined
+ *       above).
  *
  * @param[in]     exp_hdl Export handle
  * @param[in,out] fh_desc Buffer descriptor.  The address of the

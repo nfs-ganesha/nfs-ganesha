@@ -1051,9 +1051,11 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 	fsal_status_t status;
 
 	/* Copy the fh_desc into key, todo: is there a function for this? */
-	/* We want to save fh_desc */
+	/* We want to save fh_desc so allocate a stack buffer. Allow for
+	 * FSAL_KEY_EXTRA_BYTES.
+	 */
 	key.kv.len = fh_desc->len;
-	key.kv.addr = alloca(key.kv.len);
+	key.kv.addr = alloca(fh_desc->len + FSAL_KEY_EXTRA_BYTES);
 	memcpy(key.kv.addr, fh_desc->addr, key.kv.len);
 	subcall_raw(export,
 		    status = sub_export->exp_ops.host_to_key(sub_export,
@@ -1062,6 +1064,8 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 
 	if (FSAL_IS_ERROR(status))
 		return status;
+
+	assert(key.kv.len <= fh_desc->len + FSAL_KEY_EXTRA_BYTES);
 
 	cih_hash_key(&key, sub_export->fsal, &key.kv, CIH_HASH_KEY_PROTOTYPE);
 
