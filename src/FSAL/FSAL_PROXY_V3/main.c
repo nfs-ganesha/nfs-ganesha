@@ -199,6 +199,15 @@ const uint proxyv3_nlm_port(void)
 }
 
 /**
+ * @brief Grab the user credentials from op_ctx.
+ */
+const struct user_cred *proxyv3_creds(void)
+{
+	/* We want the *original* credentials, so we reflect the client */
+	return &op_ctx->original_creds;
+}
+
+/**
  * @brief Grab the preferred bytes per READDIRPLUS from our params via op_ctx.
  */
 
@@ -493,7 +502,7 @@ proxyv3_lookup_internal(struct fsal_export *export_handle,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_LOOKUP,
 			      (xdrproc_t) xdr_LOOKUP3args, &args,
 			      (xdrproc_t) xdr_LOOKUP3res, &result)) {
@@ -572,7 +581,7 @@ proxyv3_getattr_from_fh3(struct nfs_fh3 *fh3,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_GETATTR,
 			      (xdrproc_t) xdr_GETATTR3args, &args,
 			      (xdrproc_t) xdr_GETATTR3res, &result)) {
@@ -676,7 +685,7 @@ proxyv3_setattr2(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_SETATTR,
 			      (xdrproc_t) xdr_SETATTR3args, &args,
 			      (xdrproc_t) xdr_SETATTR3res, &result)) {
@@ -856,7 +865,7 @@ proxyv3_issue_createlike(struct proxyv3_obj_handle *parent_obj,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      nfsProc,
 			      encFunc, encArgs,
 			      decFunc, decArgs)) {
@@ -1152,7 +1161,7 @@ proxyv3_hardlink(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_LINK,
 			      (xdrproc_t) xdr_LINK3args, &args,
 			      (xdrproc_t) xdr_LINK3res, &result)) {
@@ -1204,7 +1213,7 @@ proxyv3_readlink(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_READLINK,
 			      (xdrproc_t) xdr_READLINK3args, &args,
 			      (xdrproc_t) xdr_READLINK3res, &result)) {
@@ -1678,7 +1687,7 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 		if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 				      proxyv3_socklen(),
 				      proxyv3_nfsd_port(),
-				      &op_ctx->creds,
+				      proxyv3_creds(),
 				      NFSPROC3_READDIRPLUS,
 				      encFunc, &args,
 				      decFunc, &result)) {
@@ -1825,7 +1834,7 @@ proxyv3_read2(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_READ,
 			      (xdrproc_t) xdr_READ3args, &args,
 			      (xdrproc_t) xdr_READ3res, &result)) {
@@ -1962,7 +1971,7 @@ proxyv3_write2(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_WRITE,
 			      (xdrproc_t) xdr_WRITE3args, &args,
 			      (xdrproc_t) xdr_WRITE3res, &result)) {
@@ -2019,7 +2028,7 @@ proxyv3_commit2(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_COMMIT,
 			      (xdrproc_t) xdr_COMMIT3args, &args,
 			      (xdrproc_t) xdr_COMMIT3res, &result)) {
@@ -2106,7 +2115,7 @@ proxyv3_unlink(struct fsal_obj_handle *dir_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      method,
 			      enc, args,
 			      dec, result)) {
@@ -2167,7 +2176,7 @@ proxyv3_rename(struct fsal_obj_handle *obj_hdl,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_RENAME,
 			      (xdrproc_t) xdr_RENAME3args, &args,
 			      (xdrproc_t) xdr_RENAME3res, &result))  {
@@ -2214,7 +2223,7 @@ proxyv3_get_dynamic_info(struct fsal_export *export_handle,
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_FSSTAT,
 			      (xdrproc_t) xdr_FSSTAT3args, &args,
 			      (xdrproc_t) xdr_FSSTAT3res, &result)) {
@@ -2475,7 +2484,7 @@ proxyv3_fill_fsinfo(nfs_fh3 *fh3)
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
 			      proxyv3_socklen(),
 			      proxyv3_nfsd_port(),
-			      &op_ctx->creds,
+			      proxyv3_creds(),
 			      NFSPROC3_FSINFO,
 			      (xdrproc_t) xdr_FSINFO3args, &args,
 			      (xdrproc_t) xdr_FSINFO3res, &result)) {
@@ -2698,7 +2707,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	if (!proxyv3_mount_call(proxyv3_sockaddr(),
 				proxyv3_socklen(),
 				proxyv3_mountd_port(),
-				&op_ctx->creds,
+				proxyv3_creds(),
 				MOUNTPROC3_NULL,
 				(xdrproc_t) xdr_void, NULL,
 				(xdrproc_t) xdr_void, NULL)) {
@@ -2715,7 +2724,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	if (!proxyv3_mount_call(proxyv3_sockaddr(),
 				proxyv3_socklen(),
 				proxyv3_mountd_port(),
-				&op_ctx->creds,
+				proxyv3_creds(),
 				MOUNTPROC3_MNT,
 				(xdrproc_t) xdr_dirpath, &dirpath,
 				(xdrproc_t) xdr_mountres3, &result)) {
@@ -2748,7 +2757,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 		if (!proxyv3_nlm_call(proxyv3_sockaddr(),
 				      proxyv3_socklen(),
 				      proxyv3_nlm_port(),
-				      &op_ctx->creds,
+				      proxyv3_creds(),
 				      NLMPROC4_NULL,
 				      (xdrproc_t) xdr_void, NULL,
 				      (xdrproc_t) xdr_void, NULL)) {
