@@ -44,10 +44,9 @@
 #include <include/rados/librgw.h>
 #include <include/rados/rgw_file.h>
 
-
-#if ((LIBRGW_FILE_VER_MAJOR != 1) || (LIBRGW_FILE_VER_MINOR < 1) || \
-	(LIBRGW_FILE_VER_EXTRA < 7))
-#error rados/rgw_file.h version unsupported (require >= 1.1.1)
+#if (!GSH_CHECK_VERSION(1, 1, 7, LIBRGW_FILE_VER_MAJOR, LIBRGW_FILE_VER_MINOR, \
+			LIBRGW_FILE_VER_EXTRA))
+#error rados/rgw_file.h version unsupported (require >= 1.1.7)
 #endif
 
 /**

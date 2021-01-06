@@ -3,6 +3,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#define GSH_CHECK_VERSION(major,minor,micro,libmajor,libminor,libmicro) \
+	((libmajor) > (major) || \
+	((libmajor) == (major) && (libminor) > (minor)) || \
+	((libmajor) == (major) && (libminor) == (minor) && (libmicro) >= (micro)))
+
 #define GANESHA_VERSION_MAJOR @GANESHA_MAJOR_VERSION@
 #define GANESHA_VERSION_MINOR @GANESHA_MINOR_VERSION@
 #define GANESHA_EXTRA_VERSION @GANESHA_EXTRA_VERSION@
