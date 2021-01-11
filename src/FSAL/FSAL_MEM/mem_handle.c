@@ -1,7 +1,7 @@
 /*
  * vim:shiftwidth=8:tabstop=8:
  *
- * Copyright 2017-2019 Red Hat, Inc.
+ * Copyright 2017-2021 Red Hat, Inc.
  * Author: Daniel Gryniewicz  dang@redhat.com
  *
  *
@@ -1907,8 +1907,9 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	if (async_type > MEM_RANDOM_OR_INLINE ||
-	    ((async_type == MEM_RANDOM_OR_INLINE) && ((random() % 1) == 1))) {
+	if (MEM.async_threads > 0 &&
+	    (async_type > MEM_RANDOM_OR_INLINE ||
+	    ((async_type == MEM_RANDOM_OR_INLINE) && ((random() % 1) == 1)))) {
 		struct mem_async_arg *async_arg;
 
 		/* Was MEM_FIXED, MEM_RANDOM, or MEM_RANDOM_OR_INLINE and we
@@ -2044,8 +2045,9 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 	if (has_lock)
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
-	if (async_type > MEM_RANDOM_OR_INLINE ||
-	    ((async_type == MEM_RANDOM_OR_INLINE) && ((random() % 1) == 1))) {
+	if (MEM.async_threads > 0 &&
+	    (async_type > MEM_RANDOM_OR_INLINE ||
+	    ((async_type == MEM_RANDOM_OR_INLINE) && ((random() % 1) == 1)))) {
 		struct mem_async_arg *async_arg;
 
 		/* Was MEM_FIXED, MEM_RANDOM, or MEM_RANDOM_OR_INLINE and we
