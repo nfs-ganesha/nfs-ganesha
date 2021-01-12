@@ -1524,6 +1524,12 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 
 	free_args(reqdata);
 
+	/* Make sure no-one called init_op_context() without calling
+	 * release_op_context() */
+	assert(op_ctx == NULL);
+	/* Make sure we return to ntirpc without op_ctx set, or saved_op_ctx can
+	 * point to freed memory */
+	op_ctx = NULL;
 	return SVC_STAT(xprt);
 }
 

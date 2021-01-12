@@ -3433,10 +3433,9 @@ void release_op_context(void)
 
 void suspend_op_context(void)
 {
-	struct req_op_context *cur_ctx = op_ctx;
-
-	op_ctx = op_ctx->saved_op_ctx;
-	cur_ctx->saved_op_ctx = NULL;
+	/* We cannot touch the contents of op_ctx, because it may be already
+	 * freed by the async callback.  Just NULL out op_ctx here.  */
+	op_ctx = NULL;
 }
 
 void resume_op_context(struct req_op_context *ctx)

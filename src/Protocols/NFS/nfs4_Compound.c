@@ -1078,6 +1078,7 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 		 * already been set up before we started proecessing
 		 * ops on this request at all.
 		 */
+		suspend_op_context();
 		return XPRT_SUSPEND;
 	}
 
@@ -1094,6 +1095,7 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 			 * already been set up before we started proecessing
 			 * ops on this request at all.
 			 */
+			suspend_op_context();
 			return XPRT_SUSPEND;
 		}
 	}
