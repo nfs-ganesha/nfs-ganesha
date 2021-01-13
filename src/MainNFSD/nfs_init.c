@@ -151,12 +151,7 @@ struct config_error_type err_type;
 void reread_config(void)
 {
 	int status = 0;
-	int i;
 	config_file_t config_struct;
-
-	/* Clear out the flag indicating component was set from environment. */
-	for (i = COMPONENT_ALL; i < COMPONENT_COUNT; i++)
-		LogComponents[i].comp_env_set = false;
 
 	/* If no configuration file is given, then the caller must want to
 	 * reparse the configuration file from startup.

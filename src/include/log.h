@@ -203,7 +203,6 @@ void set_const_log_str(void);
 struct log_component_info {
 	const char *comp_name;	/* component name */
 	const char *comp_str;	/* shorter, more useful name */
-	bool comp_env_set;	/* level was set by env(), now RO */
 };
 
 extern log_levels_t *component_log_level;

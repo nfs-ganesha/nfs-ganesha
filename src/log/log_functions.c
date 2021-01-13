@@ -512,15 +512,6 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
 	assert(level_to_set < NB_LOG_LEVEL);
 	assert(component != COMPONENT_ALL);
 
-	if (LogComponents[component].comp_env_set) {
-		LogWarn(COMPONENT_CONFIG,
-			"LOG %s level %s from config is ignored because %s was set in environment",
-			LogComponents[component].comp_name,
-			ReturnLevelInt(level_to_set),
-			ReturnLevelInt(component_log_level[component]));
-		return;
-	}
-
 	if (component_log_level[component] == level_to_set)
 		return;
 
@@ -659,39 +650,6 @@ void set_const_log_str(void)
 	    date_time_fmt[strlen(date_time_fmt) - 1] == ' ')
 		date_time_fmt[strlen(date_time_fmt) - 1] = '\0';
 }
-
-static void set_logging_from_env(void)
-{
-	char *env_value;
-	int newlevel, component, oldlevel;
-
-	for (component = COMPONENT_ALL; component < COMPONENT_COUNT;
-	     component++) {
-		env_value = getenv(LogComponents[component].comp_name);
-		if (env_value == NULL)
-			continue;
-		newlevel = ReturnLevelAscii(env_value);
-		if (newlevel == -1) {
-			LogCrit(COMPONENT_LOG,
-				"Environment variable %s exists, but the value %s is not a valid log level.",
-				LogComponents[component].comp_name,
-				env_value);
-			continue;
-		}
-		oldlevel = component_log_level[component];
-		if (component == COMPONENT_ALL)
-			_SetLevelDebug(newlevel);
-		else
-			SetComponentLogLevel(component, newlevel);
-		LogComponents[component].comp_env_set = true;
-		LogChanges(
-		     "Using environment variable to switch log level for %s from %s to %s",
-		     LogComponents[component].comp_name,
-		     ReturnLevelInt(oldlevel),
-		     ReturnLevelInt(newlevel));
-	}
-
-}				/* InitLogging */
 
 /**
  *
@@ -1183,8 +1141,6 @@ void init_logging(const char *log_path, const int debug_level)
 	}
 	if (debug_level >= 0)
 		SetLevelDebug(debug_level);
-
-	set_logging_from_env();
 
 	ArmSignal(SIGUSR1, IncrementLevelDebug);
 	ArmSignal(SIGUSR2, DecrementLevelDebug);
