@@ -104,7 +104,7 @@ static const char usage[] =
 	"\t[-C]                dump trace when segfault\n"
 	"\t[-h]                display this help\n"
 	"----------------- Signals ----------------\n"
-	"SIGUSR1    : Enable/Disable File Content Cache forced flush\n"
+	"SIGHUP     : Reload LOG and EXPORT config\n"
 	"SIGTERM    : Cleanly terminate the program\n"
 	"------------- Default Values -------------\n"
 	"LogFile    : SYSLOG\n"
