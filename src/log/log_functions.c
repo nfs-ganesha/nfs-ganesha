@@ -414,33 +414,7 @@ void SetClientIP(char *ip_str)
 	clientip = ip_str;
 }
 
-/* Installs a signal handler */
-static void ArmSignal(int signal, void (*action) ())
-{
-	struct sigaction act;
-
-	/* Placing fields of struct sigaction */
-	act.sa_flags = 0;
-	act.sa_handler = action;
-	sigemptyset(&act.sa_mask);
-
-	if (sigaction(signal, &act, NULL) == -1)
-		LogCrit(COMPONENT_LOG, "Failed to arm signal %d, error %d (%s)",
-			signal, errno, strerror(errno));
-}				/* ArmSignal */
-
-/*
- * Five functions to manage debug level throug signal
- * handlers.
- *
- * InitLogging
- * IncrementLevelDebug
- * DecrementLevelDebug
- * SetLevelDebug
- * ReturnLevelDebug
- */
-
-static void _SetLevelDebug(int level_to_set)
+static void SetLevelDebug(int level_to_set)
 {
 	int i;
 
@@ -456,14 +430,6 @@ static void _SetLevelDebug(int level_to_set)
 		SetComponentLogLevel(i, level_to_set);
 	}
 }				/* _SetLevelDebug */
-
-static void SetLevelDebug(int level_to_set)
-{
-	_SetLevelDebug(level_to_set);
-
-	LogChanges("Setting log level for all components to %s",
-		   ReturnLevelInt(component_log_level[COMPONENT_ALL]));
-}
 
 uint32_t rpc_debug_flags = TIRPC_DEBUG_FLAG_ERROR |
 			   TIRPC_DEBUG_FLAG_WARN |
@@ -531,27 +497,6 @@ void SetComponentLogLevel(log_components_t component, int level_to_set)
 	if (component == COMPONENT_TIRPC)
 		SetNTIRPCLogLevel(level_to_set);
 }
-
-static inline int ReturnLevelDebug(void)
-{
-	return component_log_level[COMPONENT_ALL];
-}				/* ReturnLevelDebug */
-
-static void IncrementLevelDebug(void)
-{
-	_SetLevelDebug(ReturnLevelDebug() + 1);
-
-	LogChanges("SIGUSR1 Increasing log level for all components to %s",
-		   ReturnLevelInt(component_log_level[COMPONENT_ALL]));
-}				/* IncrementLevelDebug */
-
-static void DecrementLevelDebug(void)
-{
-	_SetLevelDebug(ReturnLevelDebug() - 1);
-
-	LogChanges("SIGUSR2 Decreasing log level for all components to %s",
-		   ReturnLevelInt(component_log_level[COMPONENT_ALL]));
-}				/* DecrementLevelDebug */
 
 void set_const_log_str(void)
 {
@@ -1146,13 +1091,13 @@ void init_logging(const char *log_path, const int debug_level)
 				 "Enable error (%s) for SYSLOG logging!",
 				 strerror(-rc));
 	}
+
 	if (debug_level >= 0) {
+		LogChanges("Setting log level for all components to %s",
+			   ReturnLevelInt(debug_level));
 		SetLevelDebug(debug_level);
 		original_log_level = debug_level;
 	}
-
-	ArmSignal(SIGUSR1, IncrementLevelDebug);
-	ArmSignal(SIGUSR2, DecrementLevelDebug);
 }
 
 /*
@@ -1743,9 +1688,9 @@ static bool dbus_prop_set(log_components_t component, DBusMessageIter *arg)
 	}
 
 	if (component == COMPONENT_ALL) {
-		_SetLevelDebug(log_level);
-		LogChanges("Dbus set log level for all components to %s",
+		LogChanges("Dbus setting log level for all components to %s",
 			   level_code);
+		SetLevelDebug(log_level);
 	} else {
 		LogChanges("Dbus set log level for %s from %s to %s.",
 			   LogComponents[component].comp_name,
