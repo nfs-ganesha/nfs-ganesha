@@ -18,9 +18,19 @@ NFS-Ganesha reads the configuration data from:
 
 This file lists NFS-Ganesha Log config options.
 
+These options may be dynamically updated by issuing a SIGHUP to the ganesha.nfsd
+process.
+
 LOG {}
 --------------------------------------------------------------------------------
 Default_log_level(token,default EVENT)
+
+   If this option is NOT set, the fall back log level will be that specified in
+   the -N option on the command line if that is set, otherwise the fallback
+   level is EVENT.
+
+    If a SIGHUP is issued, any components not specified in LOG { COMPONENTS {} }
+    will be reset to this value.
 
 The log levels are:
 
@@ -31,6 +41,8 @@ FULL_DEBUG, F_DBG
 RPC_Debug_Flags(uint32, range 0 to UINT32_MAX, default 7)
     Debug flags for TIRPC (default 7 matches log level default EVENT).
 
+    These flags are only used if the TIRPC component is set to DEBUG
+
 LOG { COMPONENTS {} }
 --------------------------------------------------------------------------------
 **Default_log_level(token,default EVENT)**
@@ -38,13 +50,13 @@ LOG { COMPONENTS {} }
         COMPONENT = LEVEL;
 
     The components are:
-        ALL, LOG, LOG_EMERG, MEMLEAKS, FSAL, NFSPROTO,
+        ALL, LOG, MEMLEAKS, FSAL, NFSPROTO,
         NFS_V4, EXPORT, FILEHANDLE, DISPATCH, CACHE_INODE,
         CACHE_INODE_LRU, HASHTABLE, HASHTABLE_CACHE, DUPREQ,
         INIT, MAIN, IDMAPPER, NFS_READDIR, NFS_V4_LOCK,
         CONFIG, CLIENTID, SESSIONS, PNFS, RW_LOCK, NLM, RPC,
-        NFS_CB, THREAD, NFS_V4_ACL, STATE, 9P, 9P_DISPATCH,
-        FSAL_UP, DBUS
+        TIRPC, NFS_CB, THREAD, NFS_V4_ACL, STATE, 9P,
+        9P_DISPATCH, FSAL_UP, DBUS, NFS_MSK
 
     Some synonyms are:
         FH = FILEHANDLE
@@ -66,7 +78,31 @@ LOG { COMPONENTS {} }
         INFO, DEBUG, MID_DEBUG, M_DBG,
         FULL_DEBUG, F_DBG
 
-        default EVENT
+        default none
+
+    ALL is a special component that when set, sets all components to the
+    specified value, overriding any that are explicitly set. Note that if
+    ALL is then removed from the config and SIGHUP is issued, all components
+    will revert to what is explicitly set, or Default_Log_Level if that is
+    specified, or the original log level from the -N command line option
+    if that was set, or the code default of EVENT.
+
+    TIRPC is a special component that also sets the active RPC_Debug_Flags.
+    If the level for TIRPC is DEBUG or MID_DEBUG, the custom RPC_Debug_Flags
+    set by that parameter will be used, otherwise flags will depend on the
+    level the TIRPC component is set to:
+
+        NULL or FATAL: 0
+
+        CRIT or MAJ: TIRPC_DEBUG_FLAG_ERROR
+
+        WARN: TIRPC_DEBUG_FLAG_ERROR | TIRPC_DEBUG_FLAG_WARN
+
+        EVENT or INFO: TIRPC_DEBUG_FLAG_ERROR | TIRPC_DEBUG_FLAG_WARN | TIRPC_DEBUG_FLAG_EVENT
+
+        DEBUG or MID_DEBUG: RPC_Debug_Flags
+
+        FULL_DEBUG: 0xffffffff
 
 LOG { FACILITY {} }
 --------------------------------------------------------------------------------

@@ -276,17 +276,13 @@ __thread char *clientip = NULL;
 
 /* threads keys */
 #define LogChanges(format, args...) \
-	do { \
-		if (component_log_level[COMPONENT_LOG] == \
-		    NIV_FULL_DEBUG) \
-			DisplayLogComponentLevel(COMPONENT_LOG, \
-						 __FILE__, \
-						 __LINE__, \
-						 __func__, \
-						 NIV_NULL, \
-						 "LOG: " format, \
-						 ## args); \
-	} while (0)
+	DisplayLogComponentLevel(COMPONENT_LOG, \
+				 __FILE__, \
+				 __LINE__, \
+				 __func__, \
+				 NIV_NULL, \
+				 "LOG: " format, \
+				 ## args)
 
 struct cleanup_list_element *cleanup_list;
 
@@ -469,8 +465,14 @@ static void SetLevelDebug(int level_to_set)
 		   ReturnLevelInt(component_log_level[COMPONENT_ALL]));
 }
 
+uint32_t rpc_debug_flags = TIRPC_DEBUG_FLAG_ERROR |
+			   TIRPC_DEBUG_FLAG_WARN |
+			   TIRPC_DEBUG_FLAG_EVENT;
+
 static void SetNTIRPCLogLevel(int level_to_set)
 {
+	uint32_t old = ntirpc_pp.debug_flags;
+
 	switch (level_to_set) {
 	case NIV_NULL:
 	case NIV_FATAL:
@@ -485,6 +487,7 @@ static void SetNTIRPCLogLevel(int level_to_set)
 					TIRPC_DEBUG_FLAG_WARN;
 		break;
 	case NIV_EVENT:
+	case NIV_INFO:
 		ntirpc_pp.debug_flags = TIRPC_DEBUG_FLAG_ERROR |
 					TIRPC_DEBUG_FLAG_WARN |
 					TIRPC_DEBUG_FLAG_EVENT;
@@ -492,6 +495,7 @@ static void SetNTIRPCLogLevel(int level_to_set)
 	case NIV_DEBUG:
 	case NIV_MID_DEBUG:
 		/* set by log_conf_commit() */
+		ntirpc_pp.debug_flags = rpc_debug_flags;
 		break;
 	case NIV_FULL_DEBUG:
 		ntirpc_pp.debug_flags = 0xFFFFFFFF; /* enable all flags */
@@ -503,6 +507,9 @@ static void SetNTIRPCLogLevel(int level_to_set)
 
 	if (!tirpc_control(TIRPC_SET_DEBUG_FLAGS, &ntirpc_pp.debug_flags))
 		LogCrit(COMPONENT_CONFIG, "Setting nTI-RPC debug_flags failed");
+	else if (old != ntirpc_pp.debug_flags)
+		LogChanges("Changed RPC_Debug_Flags from %"PRIx32" to %"PRIx32,
+			   old, ntirpc_pp.debug_flags);
 }
 
 void SetComponentLogLevel(log_components_t component, int level_to_set)
@@ -1139,8 +1146,10 @@ void init_logging(const char *log_path, const int debug_level)
 				 "Enable error (%s) for SYSLOG logging!",
 				 strerror(-rc));
 	}
-	if (debug_level >= 0)
+	if (debug_level >= 0) {
 		SetLevelDebug(debug_level);
+		original_log_level = debug_level;
+	}
 
 	ArmSignal(SIGUSR1, IncrementLevelDebug);
 	ArmSignal(SIGUSR2, DecrementLevelDebug);
@@ -1533,7 +1542,17 @@ static log_levels_t default_log_levels[] = {
 	[COMPONENT_NFS_MSK] = NIV_EVENT
 };
 
+/* Active set of log levels */
 log_levels_t *component_log_level = default_log_levels;
+
+/* Original log level set by -N or otherwise code default */
+log_levels_t original_log_level = NIV_EVENT;
+
+/* Default log level setby LOG { default_log_level }, setting to NB_LOG_LEVEL
+ * indicates it has not been specified in the config (in which case we fall
+ * back to original_log_level.
+ */
+log_levels_t default_log_level = NB_LOG_LEVEL;
 
 struct log_component_info LogComponents[COMPONENT_COUNT] = {
 	[COMPONENT_ALL] = {
@@ -1885,7 +1904,7 @@ struct logger_config {
 	struct glist_head facility_list;
 	struct logfields *logfields;
 	log_levels_t *comp_log_level;
-	log_levels_t default_level;
+	log_levels_t default_log_level;
 	uint32_t rpc_debug_flags;
 };
 
@@ -2191,22 +2210,11 @@ static int component_commit(void *node, void *link_mem, void *self_struct,
 	struct logger_config *logger;
 	log_levels_t *log_level = self_struct;
 
-	if (log_level[COMPONENT_ALL] != NB_LOG_LEVEL) {
-		SetLevelDebug(log_level[COMPONENT_ALL]);
-	} else {
-		int comp;
+	/* Save the log levels in logger for later use if all is well */
+	logger = container_of(log_lvls, struct logger_config, comp_log_level);
 
-		logger = container_of(log_lvls,
-				      struct logger_config,
-				      comp_log_level);
-		if (logger->default_level == NB_LOG_LEVEL)
-			logger->default_level = NIV_EVENT;
-		for (comp = COMPONENT_LOG; comp < COMPONENT_COUNT; comp++)
-			if (log_level[comp] == NB_LOG_LEVEL)
-				log_level[comp] = logger->default_level;
-		log_level[COMPONENT_ALL] = NIV_NULL;
-		logger->comp_log_level = log_level;
-	}
+	logger->comp_log_level = log_level;
+
 	return 0;
 }
 
@@ -2382,6 +2390,53 @@ static void *log_conf_init(void *link_mem, void *self_struct)
 	return NULL;
 }
 
+static void apply_logger_config_levels(struct logger_config *logger)
+{
+	enum log_components comp;
+	bool has_levels = logger->comp_log_level != NULL;
+	log_levels_t log_level_all = has_levels
+				? logger->comp_log_level[COMPONENT_ALL]
+				: NB_LOG_LEVEL;
+
+	/* Handle Default_Log_Level */
+	if (logger->default_log_level != default_log_level) {
+		/* Default log level has changed */
+
+		LogChanges("Changing Default_Log_Level from %s to %s",
+			   ReturnLevelInt(default_log_level),
+			   ReturnLevelInt(logger->default_log_level));
+
+		default_log_level = logger->default_log_level;
+	}
+
+	for (comp = COMPONENT_LOG; comp < COMPONENT_COUNT; comp++) {
+		log_levels_t level;
+
+		if (log_level_all != NB_LOG_LEVEL) {
+			/* COMPONENT { ALL } was set, so use that to override
+			 * all log levels.
+			 */
+			level = log_level_all;
+		} else if (has_levels &&
+			   logger->comp_log_level[comp] != NB_LOG_LEVEL) {
+			/* Individual component level was set, use it */
+			level = logger->comp_log_level[comp];
+		} else if (default_log_level != NB_LOG_LEVEL) {
+			/* No COMPONENT was set and Default_Log_Level is set use
+			 * it.
+			 */
+			level = default_log_level;
+		} else {
+			/* Nothing has been set, revert to original log level
+			 * from -N command line option or code default.
+			 */
+			level = original_log_level;
+		}
+
+		SetComponentLogLevel(comp, level);
+	}
+}
+
 static int log_conf_commit(void *node, void *link_mem, void *self_struct,
 			   struct config_error_type *err_type)
 {
@@ -2480,6 +2535,7 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct,
  done:
 		(void)facility_init(&logger->facility_list, conf);
 	}
+
 	if (errcnt == 0) {
 		if (logger->logfields != NULL) {
 			LogEvent(COMPONENT_CONFIG,
@@ -2496,21 +2552,17 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct,
 			/* rebuild const_log_str with new format params. */
 			set_const_log_str();
 		}
-		if (logger->comp_log_level != NULL) {
-			LogEvent(COMPONENT_CONFIG,
-				 "Switching to new component log levels");
-			if (component_log_level == default_log_levels) {
-				/* First time change from default log level */
-				component_log_level = logger->comp_log_level;
-				logger->comp_log_level = NULL;
-			} else {
-				/* update exisiting component_log_level */
-				memcpy(component_log_level,
-				  logger->comp_log_level,
-				  (sizeof(log_levels_t) * COMPONENT_COUNT));
-			}
-		}
-		ntirpc_pp.debug_flags = logger->rpc_debug_flags;
+
+		/* Apply any changes to Default_Log_Level or COMPONENTS */
+		apply_logger_config_levels(logger);
+
+		if (ntirpc_pp.debug_flags != logger->rpc_debug_flags)
+			LogChanges("Changing custom RPC_Debug_Flags from %"
+				   PRIx32" to %"PRIx32,
+				   rpc_debug_flags,
+				   logger->rpc_debug_flags);
+
+		rpc_debug_flags = logger->rpc_debug_flags;
 		SetNTIRPCLogLevel(component_log_level[COMPONENT_TIRPC]);
 	} else {
 		if (logger->logfields != NULL) {
@@ -2523,16 +2575,19 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct,
 			gsh_free(lf);
 		}
 	}
+
 	if (logger->comp_log_level != NULL)
 		gsh_free(logger->comp_log_level);
+
 	logger->logfields = NULL;
 	logger->comp_log_level = NULL;
+
 	return errcnt;
 }
 
 static struct config_item logging_params[] = {
-	CONF_ITEM_TOKEN("Default_log_level", NB_LOG_LEVEL, log_levels,
-			 logger_config, default_level),
+	CONF_ITEM_TOKEN("Default_Log_Level", NB_LOG_LEVEL, log_levels,
+			 logger_config, default_log_level),
 	CONF_ITEM_UI32("RPC_Debug_Flags", 0, UINT32_MAX,
 		       TIRPC_DEBUG_FLAG_DEFAULT,
 		       logger_config, rpc_debug_flags),

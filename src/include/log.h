@@ -206,6 +206,8 @@ struct log_component_info {
 };
 
 extern log_levels_t *component_log_level;
+extern log_levels_t original_log_level;
+extern log_levels_t default_log_level;
 
 extern struct log_component_info LogComponents[COMPONENT_COUNT];
 
