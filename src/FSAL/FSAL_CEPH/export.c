@@ -254,6 +254,26 @@ fsal_status_t host_to_key(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+#ifndef USE_FSAL_CEPH_LOOKUP_VINO
+static int ceph_ll_lookup_vino(struct ceph_mount_info *cmount, vinodeno_t vino,
+			       Inode **inode)
+{
+	/* Check the cache first */
+	*inode = ceph_ll_get_inode(cmount, vino);
+	if (*inode)
+		return 0;
+
+	/*
+	 * We can't look up snap inodes w/o ceph_ll_lookup_vino. Just
+	 * return -ESTALE if we get one that's not already in cache.
+	 */
+	if (vino.snapid.val != CEPH_NOSNAP)
+		return -ESTALE;
+
+	return ceph_ll_lookup_inode(cmount, vino.ino, inode);
+}
+#endif /* USE_FSAL_CEPH_LOOKUP_VINO */
+
 /**
  * @brief Create a handle object from a wire handle
  *
@@ -298,22 +318,9 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	vi.ino.val = hhdl->chk_ino;
 	vi.snapid.val = hhdl->chk_snap;
 
-	/* Check our local cache first */
-	i = ceph_ll_get_inode(export->cmount, vi);
-	if (!i) {
-		/*
-		 * Try the slow way, may not be in cache now.
-		 *
-		 * Currently, there is no interface for looking up a snapped
-		 * inode, so we just bail here in that case.
-		 */
-		if (hhdl->chk_snap != CEPH_NOSNAP)
-			return ceph2fsal_error(-ESTALE);
-
-		rc = ceph_ll_lookup_inode(export->cmount, vi.ino, &i);
-		if (rc)
-			return ceph2fsal_error(rc);
-	}
+	rc = ceph_ll_lookup_vino(export->cmount, vi, &i);
+	if (rc)
+		return ceph2fsal_error(rc);
 
 	rc = fsal_ceph_ll_getattr(export->cmount, i, &stx,
 		attrs_out ? CEPH_STATX_ATTR_MASK : CEPH_STATX_HANDLE_MASK,
