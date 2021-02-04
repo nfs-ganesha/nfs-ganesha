@@ -4512,7 +4512,7 @@ decodeerr:
 
 int bitmap4_to_attrmask_t(bitmap4 *bitmap4, attrmask_t *mask)
 {
-	int attribute_to_set = next_attr_from_bitmap(bitmap4, -1);
+	int attribute_to_set;
 	int nfs_status = NFS4_OK;
 
 	*mask = 0;

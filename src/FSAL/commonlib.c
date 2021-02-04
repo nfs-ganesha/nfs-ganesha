@@ -528,7 +528,7 @@ void log_attrlist(log_components_t component, log_levels_t level,
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 {
 	char *name, *rest, *p;
-	int fd = first_fd, len, rc, err;
+	int fd, len, rc, err;
 
 	/* Get length of the path */
 	len = strlen(path);
