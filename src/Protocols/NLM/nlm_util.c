@@ -286,6 +286,12 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		return NLM4_STALE_FH;
 	}
 
+	if ((*ppobj)->type != REGULAR_FILE) {
+		LogWarn(COMPONENT_STATE,
+			"NLM operation on non-REGULAR_FILE");
+		return NLM4_FAILED;
+	}
+
 	*ppnsm_client = get_nsm_client(care, ptr_svc, alock->caller_name);
 
 	if (*ppnsm_client == NULL) {
@@ -433,6 +439,12 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 	if (*ppobj == NULL) {
 		/* handle is not valid */
 		return NLM4_STALE_FH;
+	}
+
+	if ((*ppobj)->type != REGULAR_FILE) {
+		LogWarn(COMPONENT_STATE,
+			"NLM operation on non-REGULAR_FILE");
+		return NLM4_FAILED;
 	}
 
 	*ppnsm_client = get_nsm_client(care, ptr_svc, share->caller_name);
