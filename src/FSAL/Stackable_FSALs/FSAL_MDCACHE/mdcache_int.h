@@ -482,7 +482,8 @@ fsal_status_t mdcache_alloc_and_check_handle(
 		struct state_t *state);
 
 fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
-				    bool need_fslocations, bool invalidate);
+				    bool need_fslocations, bool need_seclabel,
+				    bool invalidate);
 
 fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *exp,
 				struct fsal_obj_handle *sub_handle,
@@ -1163,8 +1164,7 @@ fsal_status_t mdcache_refresh_attrs_no_invalidate(mdcache_entry_t *entry)
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
-	status = mdcache_refresh_attrs(entry, false /*need_acl*/,
-				       false /*need_fslocations*/, false);
+	status = mdcache_refresh_attrs(entry, false, false, false, false);
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
