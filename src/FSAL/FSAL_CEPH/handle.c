@@ -56,6 +56,14 @@ typedef enum {
 	CEPH_AS_ROOT,
 } ceph_access_t;
 
+/*
+ * If the inode has a mode that doesn't allow writes, then the follow-on
+ * setxattr for setting the security context can fail. We set this flag
+ * in op_ctx->fsal_private after a create to indicate that the setxattr
+ * should be done as root.
+ */
+#define CEPH_SETXATTR_AS_ROOT	((void *)(-1UL))
+
 /**
  * @brief Release an object
  *
@@ -365,10 +373,16 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 	if (attrib->valid_mask) {
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
+		 *
+		 * Must use root creds to override some permissions checks
+		 * when the mode is not writeable (e.g. when setxattr'ing
+		 * security labels).
 		 */
-
+		op_ctx->fsal_private = CEPH_SETXATTR_AS_ROOT;
 		status = (*new_obj)->obj_ops->setattr2(*new_obj, false, NULL,
 						      attrib);
+		op_ctx->fsal_private = NULL;
+
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the handle we just allocated. */
 			LogFullDebug(COMPONENT_FSAL,
@@ -494,8 +508,10 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
+		op_ctx->fsal_private = CEPH_SETXATTR_AS_ROOT;
 		status = (*new_obj)->obj_ops->setattr2(*new_obj, false, NULL,
 						      attrib);
+		op_ctx->fsal_private = NULL;
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the handle we just allocated. */
 			LogFullDebug(COMPONENT_FSAL,
@@ -586,8 +602,10 @@ static fsal_status_t ceph_fsal_symlink(struct fsal_obj_handle *dir_hdl,
 		/* Now per support_ex API, if there are any other attributes
 		 * set, go ahead and get them set now.
 		 */
+		op_ctx->fsal_private = CEPH_SETXATTR_AS_ROOT;
 		status = (*new_obj)->obj_ops->setattr2(*new_obj, false, NULL,
 						      attrib);
+		op_ctx->fsal_private = NULL;
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the handle we just allocated. */
 			LogFullDebug(COMPONENT_FSAL,
@@ -1551,10 +1569,12 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		 * Note that we only set the attributes if we were responsible
 		 * for creating the file and we have attributes to set.
 		 */
+		op_ctx->fsal_private = CEPH_SETXATTR_AS_ROOT;
 		status = (*new_obj)->obj_ops->setattr2(*new_obj,
 						      false,
 						      state,
 						      attrib_set);
+		op_ctx->fsal_private = NULL;
 
 		if (FSAL_IS_ERROR(status))
 			goto fileerr;
@@ -2547,11 +2567,16 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR4_SEC_LABEL)) {
+		struct user_cred creds = op_ctx->creds;
+
+		if (op_ctx->fsal_private == CEPH_SETXATTR_AS_ROOT)
+			memset(&creds, 0, sizeof(creds));
+
 		rc = fsal_ceph_ll_setxattr(export->cmount, myself->i,
 				export->sec_label_xattr,
 				attrib_set->sec_label.slai_data.slai_data_val,
 				attrib_set->sec_label.slai_data.slai_data_len,
-				0, &op_ctx->creds);
+				0, &creds);
 		if (rc < 0) {
 			status = ceph2fsal_error(rc);
 			goto out;
