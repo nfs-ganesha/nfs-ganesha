@@ -3690,7 +3690,7 @@ bool xdr_fattr4_encode(XDR *xdrs, struct xdr_attrs_args *args,
 		/* Check for special cases */
 		if (fattr4tab[attribute_to_set].encoded &&
 		    (args->data != NULL ||
-		     ((attribute_to_set != ATTR4_FS_LOCATIONS ||
+		     ((attribute_to_set != FATTR4_FS_LOCATIONS ||
 					args->data->current_obj != NULL) &&
 		      (attribute_to_set != FATTR4_FS_LAYOUT_TYPES) &&
 		      (attribute_to_set != FATTR4_LAYOUT_BLKSIZE)))) {
