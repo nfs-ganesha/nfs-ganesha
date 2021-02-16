@@ -36,6 +36,7 @@
 #include <sys/sysmacros.h> /* for makedev(3) */
 #endif
 #include <fcntl.h>
+#include <sys/xattr.h>
 #include <cephfs/libcephfs.h>
 #include "fsal.h"
 #include "fsal_types.h"
@@ -2779,6 +2780,222 @@ static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 }
 #endif
 
+static fsal_status_t ceph_fsal_getxattrs(struct fsal_obj_handle *handle_pub,
+					 xattrkey4 *xa_name,
+					 xattrvalue4 *xa_value)
+{
+	int rc = 0;
+	fsal_status_t status;
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+	const struct ceph_handle *handle =
+		container_of(handle_pub, const struct ceph_handle, handle);
+	char name[sizeof("user.") + NAME_MAX];
+
+	/*
+	 * The nfs client only deals with user.* xattrs, but doesn't send
+	 * the namespace on the wire. We have to add it in here.
+	 */
+	rc = snprintf(name, sizeof(name), "user.%.*s",
+		      xa_name->utf8string_len, xa_name->utf8string_val);
+	if (rc >= sizeof(name))
+		return ceph2fsal_error(-ENAMETOOLONG);
+
+	rc = fsal_ceph_ll_getxattr(export->cmount, handle->i, name,
+			      xa_value->utf8string_val,
+			      xa_value->utf8string_len,
+			      &op_ctx->creds);
+
+	if (rc < 0) {
+		LogDebug(COMPONENT_FSAL, "GETXATTRS returned rc %d", rc);
+
+		if (rc == -ERANGE) {
+			status = fsalstat(ERR_FSAL_XATTR2BIG, 0);
+			goto out;
+		}
+		if (rc == -ENODATA) {
+			status = fsalstat(ERR_FSAL_NOXATTR, 0);
+			goto out;
+		}
+		status = ceph2fsal_error(rc);
+		goto out;
+	}
+	xa_value->utf8string_len = rc;
+
+	LogDebug(COMPONENT_FSAL,
+		 "GETXATTRS %s is '%.*s'", name,
+		 xa_value->utf8string_len,
+		 xa_value->utf8string_val);
+
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+out:
+	return status;
+}
+
+static fsal_status_t ceph_fsal_setxattrs(struct fsal_obj_handle *handle_pub,
+					 setxattr_option4 option,
+					 xattrkey4 *xa_name,
+					 xattrvalue4 *xa_value)
+{
+	int rc = 0;
+	int flags;
+	fsal_status_t status = {0, 0};
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+	const struct ceph_handle *handle =
+		container_of(handle_pub, const struct ceph_handle, handle);
+	char name[sizeof("user.") + NAME_MAX];
+
+	/*
+	 * The nfs client only deals with user.* xattrs, but doesn't send
+	 * the namespace on the wire. We have to add it in here.
+	 */
+	rc = snprintf(name, sizeof(name), "user.%.*s",
+		      xa_name->utf8string_len, xa_name->utf8string_val);
+	if (rc >= sizeof(name))
+		return ceph2fsal_error(-ENAMETOOLONG);
+
+	switch (option) {
+	case SETXATTR4_EITHER:
+		flags = 0;
+		break;
+	case SETXATTR4_CREATE:
+		flags = XATTR_CREATE;
+		break;
+	case SETXATTR4_REPLACE:
+		flags = XATTR_REPLACE;
+		break;
+	default:
+		return ceph2fsal_error(-EINVAL);
+	}
+
+	LogDebug(COMPONENT_FSAL,
+			"SETXATTR of %s to %*.s", name,
+			xa_value->utf8string_len,
+			xa_value->utf8string_val);
+	rc = fsal_ceph_ll_setxattr(export->cmount, handle->i, name,
+			      xa_value->utf8string_val,
+			      xa_value->utf8string_len,
+			      flags, &op_ctx->creds);
+	if (rc < 0) {
+		LogDebug(COMPONENT_FSAL,
+			 "SETXATTRS returned rc %d", rc);
+		if (rc == -ERANGE) {
+			status = fsalstat(ERR_FSAL_XATTR2BIG, 0);
+			goto out;
+		}
+		if (rc == -ENODATA) {
+			status = fsalstat(ERR_FSAL_NOXATTR, 0);
+			goto out;
+		}
+		status = ceph2fsal_error(rc);
+		goto out;
+	}
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+out:
+	return status;
+}
+
+static fsal_status_t ceph_fsal_removexattrs(struct fsal_obj_handle *handle_pub,
+					    xattrkey4 *xa_name)
+{
+	int rc = 0;
+	fsal_status_t status = {0, 0};
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+	const struct ceph_handle *handle =
+		container_of(handle_pub, const struct ceph_handle, handle);
+	char name[sizeof("user.") + NAME_MAX];
+
+	/*
+	 * The nfs client only deals with user.* xattrs, but doesn't send
+	 * the namespace on the wire. We have to add it in here.
+	 */
+	rc = snprintf(name, sizeof(name), "user.%.*s",
+		      xa_name->utf8string_len, xa_name->utf8string_val);
+	if (rc >= sizeof(name))
+		return ceph2fsal_error(-ENAMETOOLONG);
+
+	rc = fsal_ceph_ll_removexattr(export->cmount, handle->i, name,
+				      &op_ctx->creds);
+	if (rc < 0) {
+		if (rc == -ERANGE) {
+			status = fsalstat(ERR_FSAL_XATTR2BIG, 0);
+			goto out;
+		}
+		if (rc == -ENODATA) {
+			status = fsalstat(ERR_FSAL_NOXATTR, 0);
+			goto out;
+		}
+		LogDebug(COMPONENT_FSAL,
+			 "REMOVEXATTR returned rc %d", rc);
+		status = ceph2fsal_error(rc);
+		goto out;
+	}
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+out:
+	return status;
+}
+
+static fsal_status_t ceph_fsal_listxattrs(struct fsal_obj_handle *handle_pub,
+					  uint32_t maxbytes,
+					  nfs_cookie4 *lxa_cookie,
+					  bool_t *lxr_eof,
+					  xattrlist4 *lxr_names)
+{
+	char *buf = NULL;
+	int rc, loop;
+	size_t listlen = 0;
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+	const struct ceph_handle *handle =
+		container_of(handle_pub, const struct ceph_handle, handle);
+	UserPerm *perms = user_cred2ceph(&op_ctx->creds);
+	fsal_status_t status;
+
+	if (!perms)
+		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
+
+	/* Log Message */
+	LogFullDebug(COMPONENT_FSAL,
+			"in cookie %llu length %d",
+			(unsigned long long)lxa_cookie, maxbytes);
+
+	/* Get a listing, but give up if we keep getting ERANGE back. */
+	loop = 0;
+	do {
+		rc = ceph_ll_listxattr(export->cmount, handle->i, NULL, 0,
+					&listlen, perms);
+		if (rc < 0) {
+			status = ceph2fsal_error(rc);
+			goto out;
+		}
+
+		gsh_free(buf);
+		buf = gsh_malloc(listlen);
+		rc = ceph_ll_listxattr(export->cmount, handle->i, buf, listlen,
+					&listlen, perms);
+	} while (rc == -ERANGE && loop++ < 5);
+
+	if (rc < 0) {
+		LogDebug(COMPONENT_FSAL, "ceph_ll_listxattr returned rc %d",
+				rc);
+		if (rc == -ERANGE) {
+			status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+			goto out;
+		}
+		status = ceph2fsal_error(rc);
+		goto out;
+	}
+
+	status = fsal_listxattr_helper(buf, listlen, maxbytes, lxa_cookie,
+				       lxr_eof, lxr_names);
+out:
+	gsh_free(buf);
+	ceph_userperm_destroy(perms);
+	return status;
+}
+
 /**
  * @brief Override functions in ops vector
  *
@@ -2827,4 +3044,8 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 #ifdef USE_CEPH_LL_FALLOCATE
 	ops->fallocate = ceph_fsal_fallocate;
 #endif
+	ops->getxattrs = ceph_fsal_getxattrs;
+	ops->setxattrs = ceph_fsal_setxattrs;
+	ops->listxattrs = ceph_fsal_listxattrs;
+	ops->removexattrs = ceph_fsal_removexattrs;
 }
