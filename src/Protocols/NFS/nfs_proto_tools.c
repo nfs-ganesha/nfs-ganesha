@@ -263,6 +263,8 @@ bool nfs_RetryableError(fsal_errors_t fsal_errors)
 	case ERR_FSAL_TIMEOUT:
 	case ERR_FSAL_NO_ACE:
 	case ERR_FSAL_BAD_RANGE:
+	case ERR_FSAL_NOXATTR:
+	case ERR_FSAL_XATTR2BIG:
 		/* Non retryable error, return error to client */
 		return false;
 	}

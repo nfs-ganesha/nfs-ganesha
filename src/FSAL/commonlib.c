@@ -353,6 +353,10 @@ const char *msg_fsal_err(fsal_errors_t fsal_err)
 		return "Crossed Junction";
 	case ERR_FSAL_BADNAME:
 		return "Invalid Name";
+	case ERR_FSAL_NOXATTR:
+		return "No such xattr";
+	case ERR_FSAL_XATTR2BIG:
+		return "Xattr too big";
 	}
 
 	return "Unknown FSAL error";

@@ -332,6 +332,12 @@ char *nfsstat4_to_str(nfsstat4 code)
 		return "NFS4ERR_UNION_NOTSUPP";
 	case NFS4ERR_REPLAY:
 		return "NFS4ERR_REPLAY";
+
+	/* NFSv4.3 */
+	case NFS4ERR_NOXATTR:
+		return "NFS4ERR_NOXATTR";
+	case NFS4ERR_XATTR2BIG:
+		return "NFS4ERR_XATTR2BIG";
 	}
 	return "UNKNOWN NFSv4 ERROR CODE";
 }
@@ -642,6 +648,14 @@ nfsstat4 nfs4_Errno_verbose(fsal_status_t status, const char *where)
 		nfserror = NFS4ERR_BADNAME;
 		break;
 
+	case ERR_FSAL_NOXATTR:
+		nfserror = NFS4ERR_NOXATTR;
+		break;
+
+	case ERR_FSAL_XATTR2BIG:
+		nfserror = NFS4ERR_XATTR2BIG;
+		break;
+
 	case ERR_FSAL_CROSS_JUNCTION:
 	case ERR_FSAL_NO_ACE:
 	case ERR_FSAL_STILL_IN_USE:
@@ -820,6 +834,8 @@ nfsstat3 nfs3_Errno_verbose(fsal_status_t status, const char *where)
 	case ERR_FSAL_NO_ACE:
 	case ERR_FSAL_BAD_RANGE:
 	case ERR_FSAL_STILL_IN_USE:
+	case ERR_FSAL_NOXATTR:
+	case ERR_FSAL_XATTR2BIG:
 		/* Should not occur */
 		LogDebug(COMPONENT_NFSPROTO,
 			 "Line %u should never be reached in nfs3_Errno from %s for FSAL error=%s",

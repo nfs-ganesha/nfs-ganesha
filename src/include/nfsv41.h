@@ -167,6 +167,10 @@ enum nfsstat4 {
 	NFS4ERR_BADLABEL = 10093,
 	NFS4ERR_OFFLOAD_NO_REQS = 10094,
 
+	/* RFC 8276 (NFSv4.3-ish) */
+	NFS4ERR_NOXATTR = 10095,
+	NFS4ERR_XATTR2BIG = 10096,
+
 	NFS4ERR_REPLAY = 11001,
 };
 typedef enum nfsstat4 nfsstat4;
