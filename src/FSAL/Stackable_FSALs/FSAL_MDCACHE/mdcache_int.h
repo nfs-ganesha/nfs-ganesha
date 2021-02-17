@@ -1136,8 +1136,7 @@ fsal_status_t mdcache_removexattrs(struct fsal_obj_handle *obj_hdl,
 				   xattrkey4 *name);
 fsal_status_t mdcache_listxattrs(struct fsal_obj_handle *obj_hdl,
 				 count4 len, nfs_cookie4 *cookie,
-				 verifier4 *verf, bool_t *eof,
-				 xattrlist4 *names);
+				 bool_t *eof, xattrlist4 *names);
 
 /* Handle functions */
 void mdcache_handle_ops_init(struct fsal_obj_ops *ops);

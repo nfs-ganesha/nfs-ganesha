@@ -371,8 +371,7 @@ fsal_status_t mdcache_removexattrs(struct fsal_obj_handle *obj_hdl,
  */
 fsal_status_t mdcache_listxattrs(struct fsal_obj_handle *obj_hdl,
 				 count4 len, nfs_cookie4 *cookie,
-				 verifier4 *verf, bool_t *eof,
-				 xattrlist4 *names)
+				 bool_t *eof, xattrlist4 *names)
 {
 	struct mdcache_fsal_obj_handle *handle =
 		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
@@ -381,7 +380,7 @@ fsal_status_t mdcache_listxattrs(struct fsal_obj_handle *obj_hdl,
 
 	subcall(
 		status = handle->sub_handle->obj_ops->listxattrs(
-			handle->sub_handle, len, cookie, verf, eof, names)
+			handle->sub_handle, len, cookie, eof, names)
 	       );
 
 	return status;

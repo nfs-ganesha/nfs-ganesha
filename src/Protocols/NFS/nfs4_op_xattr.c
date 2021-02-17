@@ -265,21 +265,19 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *op,
 	LISTXATTR4res * const res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *obj_handle = data->current_obj;
-	xattrlist4 list;
-	nfs_cookie4 la_cookie;
-	verifier4 la_cookieverf;
-	bool_t lr_eof;
+	xattrlist4 list = { 0 };
+	nfs_cookie4 lxa_cookie = arg_LISTXATTR4->lxa_cookie;
+	bool_t lxr_eof;
 	component4 *entry;
+	uint32_t maxcount, overhead, resp_size;
 	int i;
-	bool use_cookie_verifier = op_ctx_export_has_option(
-					EXPORT_OPTION_USE_COOKIE_VERIFIER);
 
 	resp->resop = NFS4_OP_LISTXATTR;
 	res_LISTXATTR4->status = NFS4_OK;
 
 	LogDebug(COMPONENT_NFS_V4,
 		 "SetXattr max count %d cookie %" PRIu64,
-		 arg_LISTXATTR4->la_maxcount, arg_LISTXATTR4->la_cookie);
+		 arg_LISTXATTR4->lxa_maxcount, lxa_cookie);
 
 	/* Do basic checks on a filehandle */
 	res_LISTXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
@@ -300,48 +298,59 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 	}
 
-	/* Double buf size, one half for compound and on half for names. */
-	list.entries = (component4 *)gsh_malloc(2*arg_LISTXATTR4->la_maxcount);
-	la_cookie = arg_LISTXATTR4->la_cookie;
-	memset(la_cookieverf, 0, NFS4_VERIFIER_SIZE);
+	/*
+	 * Send the FSAL a maxcount for the lxr_names field. Each name
+	 * takes 4 bytes (for the length field) + length of the actual
+	 * data (sans NULL terminators). The names returned should have
+	 * the qualifying prefix stripped off (that is, no "user." prefix
+	 * on the names).
+	 */
+	overhead = sizeof(nfs_cookie4) + RNDUP(sizeof(bool));
 
-	if (la_cookie == 0 && use_cookie_verifier) {
-		if (memcmp(la_cookieverf, arg_LISTXATTR4->la_cookieverf,
-			   NFS4_VERIFIER_SIZE) != 0) {
-			res_LISTXATTR4->status = NFS4ERR_BAD_COOKIE;
-			LogFullDebug(COMPONENT_NFS_V4,
-				     "Bad cookie");
-			return NFS_REQ_ERROR;
-		}
-	}
-	fsal_status = obj_handle->obj_ops->listxattrs(obj_handle,
-						arg_LISTXATTR4->la_maxcount,
-						&la_cookie,
-						&la_cookieverf,
-						&lr_eof,
-						&list);
-	if (FSAL_IS_ERROR(fsal_status)) {
-		res_LISTXATTR4->status =
-			nfs4_Errno_state(state_error_convert(fsal_status));
-		gsh_free(list.entries);
-		res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_names.entries = NULL;
+	/* Is this maxcount too small for even the tiniest xattr name? */
+	if (arg_LISTXATTR4->lxa_maxcount <
+			(overhead + sizeof(uint32_t) + RNDUP(1))) {
+		res_LISTXATTR4->status = NFS4ERR_TOOSMALL;
 		return NFS_REQ_ERROR;
 	}
 
-	res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_cookie = la_cookie;
-	res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_eof = lr_eof;
-	memcpy(res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_cookieverf,
-		la_cookieverf, NFS4_VERIFIER_SIZE);
-	res_LISTXATTR4->LISTXATTR4res_u.resok4.lr_names = list;
-	entry = list.entries;
+	maxcount = arg_LISTXATTR4->lxa_maxcount - overhead;
+	fsal_status = obj_handle->obj_ops->listxattrs(obj_handle,
+						maxcount,
+						&lxa_cookie,
+						&lxr_eof,
+						&list);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		res_LISTXATTR4->status = nfs4_Errno_status(fsal_status);
+		res_LISTXATTR4->LISTXATTR4res_u.resok4.lxr_names.xl4_entries
+									= NULL;
+		return NFS_REQ_ERROR;
+	}
 
-	for (i = 0; i < list.entryCount; i++) {
-		LogFullDebug(COMPONENT_FSAL,
-			"entry %d at %p len %d at %p name %s",
-			i, entry, entry->utf8string_len,
-			entry->utf8string_val, entry->utf8string_val);
+	entry = list.xl4_entries;
+	resp_size = sizeof(nfsstat4) + sizeof(nfs_cookie4) +
+				list.xl4_count * sizeof(uint32_t) +
+				RNDUP(sizeof(bool));
+
+	for (i = 0; i < list.xl4_count; i++) {
+		LogDebug(COMPONENT_FSAL, "entry %d len %d name %.*s",
+			i, entry->utf8string_len,
+			entry->utf8string_len, entry->utf8string_val);
+		resp_size += RNDUP(entry->utf8string_len);
 		entry += 1;
 	}
+
+	res_LISTXATTR4->status = check_resp_room(data, resp_size);
+	if (res_LISTXATTR4->status != NFS4_OK) {
+		for (i = 0; i < list.xl4_count; i++)
+			gsh_free(list.xl4_entries[i].utf8string_val);
+		gsh_free(list.xl4_entries);
+		return NFS_REQ_ERROR;
+	}
+
+	res_LISTXATTR4->LISTXATTR4res_u.resok4.lxr_cookie = lxa_cookie;
+	res_LISTXATTR4->LISTXATTR4res_u.resok4.lxr_eof = lxr_eof;
+	res_LISTXATTR4->LISTXATTR4res_u.resok4.lxr_names = list;
 
 	return NFS_REQ_OK;
 }
@@ -356,11 +365,14 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *op,
  */
 void nfs4_op_listxattr_Free(nfs_resop4 *resp)
 {
-	LISTXATTR4res *res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
-	LISTXATTR4resok *res = &res_LISTXATTR4->LISTXATTR4res_u.resok4;
+	LISTXATTR4res * const res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
+	xattrlist4 *names = &res_LISTXATTR4->LISTXATTR4res_u.resok4.lxr_names;
+	int i;
 
 	if (res_LISTXATTR4->status == NFS4_OK) {
-		gsh_free(res->lr_names.entries);
+		for (i = 0; i < names->xl4_count; i++)
+			gsh_free(names->xl4_entries[i].utf8string_val);
+		gsh_free(names->xl4_entries);
 	}
 }
 

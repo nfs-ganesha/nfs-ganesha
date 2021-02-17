@@ -2290,7 +2290,6 @@ struct fsal_obj_ops {
  * @param[in]      obj_hdl       Input object to list
  * @param[in]      la_maxcount   Input maximum number of bytes for names
  * @param[in,out]  la_cookie     In/out cookie
- * @param[in,out]  la_cookieverf In/out cookie verifier
  * @param[out]     lr_eof        Output eof set if no more extended attributes
  * @param[out]     lr_names      Output list of extended attribute names
  *				 this buffer size is double the size of
@@ -2301,7 +2300,6 @@ struct fsal_obj_ops {
 	 fsal_status_t (*listxattrs)(struct fsal_obj_handle *obj_hdl,
 				     count4 la_maxcount,
 				     nfs_cookie4 *la_cookie,
-				     verifier4 *la_cookieverf,
 				     bool_t *lr_eof,
 				     xattrlist4 * lr_names);
 

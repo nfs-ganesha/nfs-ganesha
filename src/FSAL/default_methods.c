@@ -955,7 +955,6 @@ static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 				count4 la_maxcount,
 				nfs_cookie4 *la_cookie,
-				verifier4 *la_cookieverf,
 				bool_t *lr_eof,
 				xattrlist4 *lr_names)
 {

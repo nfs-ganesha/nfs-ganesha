@@ -707,7 +707,6 @@ static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 				count4 la_maxcount,
 				nfs_cookie4 *la_cookie,
-				verifier4 *la_cookieverf,
 				bool_t *lr_eof,
 				xattrlist4 *lr_names)
 {
@@ -718,7 +717,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 	char *buf = NULL;
 	struct listxattr_arg lxarg;
 	struct gpfs_fsal_obj_handle *myself;
-	component4 *entry = lr_names->entries;
+	component4 *entry = lr_names->xl4_entries;
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
@@ -734,7 +733,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 	lxarg.mountdirfd = export_fd;
 	lxarg.handle = myself->handle;
 	lxarg.cookie = 0; /* For now gpfs doesn't support cookie */
-	lxarg.verifier = *((uint64_t *)la_cookieverf);
+	lxarg.verifier = 0; /* @todo: protocol has no verifier now */
 	lxarg.eof = false;
 	lxarg.name_len = MAXCOUNT;
 	lxarg.names = buf;
@@ -742,9 +741,8 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 		lxarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	LogFullDebug(COMPONENT_FSAL,
-		"in cookie %llu len %d cookieverf %llx",
-		(unsigned long long)lxarg.cookie, la_maxcount,
-		(unsigned long long)lxarg.verifier);
+		"in cookie %llu len %d",
+		(unsigned long long)lxarg.cookie, la_maxcount);
 
 	rc = gpfs_ganesha(OPENHANDLE_LISTXATTRS, &lxarg);
 	if (rc < 0) {
@@ -777,22 +775,20 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 			 "nameP %s at offset %td", name, (next - name));
 
 		if (entryCount >= *la_cookie) {
-			if ((((char *)entry - (char *)lr_names->entries) +
+			if ((((char *)entry - (char *)lr_names->xl4_entries) +
 			     sizeof(component4) > la_maxcount) ||
 			     ((val - valstart)+(next - name) > la_maxcount)) {
 				gsh_free(buf);
 				*lr_eof = false;
 
-				lr_names->entryCount = entryCount - *la_cookie;
+				lr_names->xl4_count = entryCount - *la_cookie;
 				*la_cookie += entryCount;
 				LogFullDebug(COMPONENT_FSAL,
-				   "out1 cookie %llu off %td eof %d cookieverf %llx",
+				   "out1 cookie %llu off %td eof %d",
 				   (unsigned long long)*la_cookie,
-				   (next - name), *lr_eof,
-				   (unsigned long long)*
-				   ((uint64_t *)la_cookieverf));
+				   (next - name), *lr_eof);
 
-				if (lr_names->entryCount == 0)
+				if (lr_names->xl4_count == 0)
 					return fsalstat(ERR_FSAL_TOOSMALL, 0);
 				return fsalstat(ERR_FSAL_NO_ERROR, 0);
 			}
@@ -814,16 +810,15 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 		name = next;
 		entryCount += 1;
 	}
-	lr_names->entryCount = entryCount - *la_cookie;
+	lr_names->xl4_count = entryCount - *la_cookie;
 	*la_cookie = 0;
 	*lr_eof = true;
 
 	gsh_free(buf);
 
 	LogFullDebug(COMPONENT_FSAL,
-		"out2 cookie %llu eof %d cookieverf %llx",
-		(unsigned long long)*la_cookie, *lr_eof,
-		(unsigned long long)*((uint64_t *)la_cookieverf));
+		"out2 cookie %llu eof %d",
+		(unsigned long long)*la_cookie, *lr_eof);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

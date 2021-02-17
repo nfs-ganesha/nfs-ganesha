@@ -2930,18 +2930,11 @@ enum setxattr_option4 {
 };
 typedef enum setxattr_option4 setxattr_option4;
 
-struct xattr4 {
-	xattrkey4 xa_name;
-	xattrvalue4 xa_value;
-};
-typedef struct xattr4 xattr4;
-
 struct xattrlist4 {
-	count4 entryCount;
-	component4 *entries;
+	count4 xl4_count;
+	xattrkey4 *xl4_entries;
 };
 typedef struct xattrlist4 xattrlist4;
-
 
 struct GETXATTR4args {
 	xattrkey4 gxa_name;
@@ -2982,17 +2975,15 @@ struct SETXATTR4res {
 typedef struct SETXATTR4res SETXATTR4res;
 
 struct LISTXATTR4args {
-	nfs_cookie4 la_cookie;
-	verifier4 la_cookieverf;
-	count4 la_maxcount;
+	nfs_cookie4	lxa_cookie;
+	count4		lxa_maxcount;
 };
 typedef struct LISTXATTR4args LISTXATTR4args;
 
 struct LISTXATTR4resok {
-	nfs_cookie4 lr_cookie;
-	verifier4 lr_cookieverf;
-	bool_t lr_eof;
-	xattrlist4 lr_names;
+	nfs_cookie4	lxr_cookie;
+	xattrlist4	lxr_names;
+	bool_t		lxr_eof;
 };
 typedef struct LISTXATTR4resok LISTXATTR4resok;
 
@@ -5667,20 +5658,18 @@ static inline bool xdr_SETXATTR4res(XDR *xdrs, SETXATTR4res *objp)
 }
 static inline bool xdr_LISTXATTR4args(XDR *xdrs, LISTXATTR4args *objp)
 {
-	if (!xdr_nfs_cookie4(xdrs, &objp->la_cookie))
+	if (!xdr_nfs_cookie4(xdrs, &objp->lxa_cookie))
 		return false;
-	if (!xdr_verifier4(xdrs, objp->la_cookieverf))
-		return false;
-	if (!xdr_count4(xdrs, &objp->la_maxcount))
+	if (!xdr_count4(xdrs, &objp->lxa_maxcount))
 		return false;
 	return true;
 }
 
-static inline bool xdr_listxattr4(XDR *xdrs, xattrlist4 *objp)
+static inline bool xdr_xattrlist4(XDR *xdrs, xattrlist4 *objp)
 {
 	if (!xdr_array(xdrs,
-	    (char **)&objp->entries,
-	    &objp->entryCount, XDR_ARRAY_MAXLEN, sizeof(component4),
+	    (char **)&objp->xl4_entries,
+	    &objp->xl4_count, XDR_ARRAY_MAXLEN, sizeof(xattrkey4),
 	    (xdrproc_t) xdr_component4))
 		return false;
 	return true;
@@ -5688,13 +5677,11 @@ static inline bool xdr_listxattr4(XDR *xdrs, xattrlist4 *objp)
 
 static inline bool xdr_LISTXATTR4resok(XDR *xdrs, LISTXATTR4resok *objp)
 {
-	if (!xdr_nfs_cookie4(xdrs, &objp->lr_cookie))
+	if (!xdr_nfs_cookie4(xdrs, &objp->lxr_cookie))
 		return false;
-	if (!xdr_verifier4(xdrs, objp->lr_cookieverf))
+	if (!xdr_xattrlist4(xdrs, &objp->lxr_names))
 		return false;
-	if (!inline_xdr_bool(xdrs, &objp->lr_eof))
-		return false;
-	if (!xdr_listxattr4(xdrs, &objp->lr_names))
+	if (!inline_xdr_bool(xdrs, &objp->lxr_eof))
 		return false;
 	return true;
 }
