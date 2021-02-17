@@ -3005,12 +3005,12 @@ struct LISTXATTR4res {
 typedef struct LISTXATTR4res LISTXATTR4res;
 
 struct REMOVEXATTR4args {
-	xattrkey4 ra_name;
+	xattrkey4 rxa_name;
 };
 typedef struct REMOVEXATTR4args REMOVEXATTR4args;
 
 struct REMOVEXATTR4resok {
-	change_info4 rr_info;
+	change_info4 rxr_info;
 };
 typedef struct REMOVEXATTR4resok REMOVEXATTR4resok;
 
@@ -5714,7 +5714,7 @@ static inline bool xdr_LISTXATTR4res(XDR *xdrs, LISTXATTR4res *objp)
 }
 static inline bool xdr_REMOVEXATTR4args(XDR *xdrs, REMOVEXATTR4args *objp)
 {
-	if (!xdr_component4(xdrs, &objp->ra_name))
+	if (!xdr_component4(xdrs, &objp->rxa_name))
 		return false;
 	return true;
 }
@@ -5725,7 +5725,7 @@ static inline bool xdr_REMOVEXATTR4res(XDR *xdrs, REMOVEXATTR4res *objp)
 	switch (objp->status) {
 	case NFS4_OK:
 		if (!xdr_change_info4(xdrs,
-			&objp->REMOVEXATTR4res_u.resok4.rr_info))
+			&objp->REMOVEXATTR4res_u.resok4.rxr_info))
 			return false;
 		break;
 	default:
