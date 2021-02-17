@@ -1128,12 +1128,12 @@ fsal_status_t mdcache_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mdcache_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					    const char *xattr_name);
 fsal_status_t mdcache_getxattrs(struct fsal_obj_handle *obj_hdl,
-				xattrname4 *name, xattrvalue4 *value);
+				xattrkey4 *name, xattrvalue4 *value);
 fsal_status_t mdcache_setxattrs(struct fsal_obj_handle *obj_hdl,
-				setxattr_type4 type, xattrname4 *name,
+				setxattr_type4 type, xattrkey4 *name,
 				xattrvalue4 *value);
 fsal_status_t mdcache_removexattrs(struct fsal_obj_handle *obj_hdl,
-				   xattrname4 *name);
+				   xattrkey4 *name);
 fsal_status_t mdcache_listxattrs(struct fsal_obj_handle *obj_hdl,
 				 count4 len, nfs_cookie4 *cookie,
 				 verifier4 *verf, bool_t *eof,

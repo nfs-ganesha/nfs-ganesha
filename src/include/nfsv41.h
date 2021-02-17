@@ -2914,7 +2914,7 @@ enum nfs_opnum4 {
 };
 typedef enum nfs_opnum4 nfs_opnum4;
 
-typedef component4 xattrname4;
+typedef component4 xattrkey4;
 typedef component4 xattrvalue4;
 
 enum setxattr_type4 {
@@ -2924,7 +2924,7 @@ enum setxattr_type4 {
 typedef enum setxattr_type4 setxattr_type4;
 
 struct xattr4 {
-	xattrname4 xa_name;
+	xattrkey4 xa_name;
 	xattrvalue4 xa_value;
 };
 typedef struct xattr4 xattr4;
@@ -2937,7 +2937,7 @@ typedef struct xattrlist4 xattrlist4;
 
 
 struct GETXATTR4args {
-	xattrname4 ga_name;
+	xattrkey4 ga_name;
 };
 typedef struct GETXATTR4args GETXATTR4args;
 
@@ -2997,7 +2997,7 @@ struct LISTXATTR4res {
 typedef struct LISTXATTR4res LISTXATTR4res;
 
 struct REMOVEXATTR4args {
-	xattrname4 ra_name;
+	xattrkey4 ra_name;
 };
 typedef struct REMOVEXATTR4args REMOVEXATTR4args;
 

@@ -288,7 +288,7 @@ fsal_status_t mdcache_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status
  */
 fsal_status_t mdcache_getxattrs(struct fsal_obj_handle *obj_hdl,
-				xattrname4 *name, xattrvalue4 *value)
+				xattrkey4 *name, xattrvalue4 *value)
 {
 	struct mdcache_fsal_obj_handle *handle =
 		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
@@ -315,7 +315,7 @@ fsal_status_t mdcache_getxattrs(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status
  */
 fsal_status_t mdcache_setxattrs(struct fsal_obj_handle *obj_hdl,
-				setxattr_type4 type, xattrname4 *name,
+				setxattr_type4 type, xattrkey4 *name,
 				xattrvalue4 *value)
 {
 	struct mdcache_fsal_obj_handle *handle =
@@ -341,7 +341,7 @@ fsal_status_t mdcache_setxattrs(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status
  */
 fsal_status_t mdcache_removexattrs(struct fsal_obj_handle *obj_hdl,
-				   xattrname4 *name)
+				   xattrkey4 *name)
 {
 	struct mdcache_fsal_obj_handle *handle =
 		container_of(obj_hdl, struct mdcache_fsal_obj_handle,

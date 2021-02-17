@@ -591,7 +591,7 @@ out:
 }
 
 static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
-				xattrname4 *xa_name,
+				xattrkey4 *xa_name,
 				xattrvalue4 *xa_value)
 {
 	int rc;
@@ -638,7 +638,7 @@ static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
 				setxattr_type4 sa_type,
-				xattrname4 *xa_name,
+				xattrkey4 *xa_name,
 				xattrvalue4 *xa_value)
 {
 	int rc;
@@ -673,7 +673,7 @@ static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
-				xattrname4 *xa_name)
+				xattrkey4 *xa_name)
 {
 	int rc;
 	int errsv;

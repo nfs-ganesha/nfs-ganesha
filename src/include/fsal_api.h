@@ -2249,7 +2249,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t (*getxattrs)(struct fsal_obj_handle *obj_hdl,
-				    xattrname4 *xa_name,
+				    xattrkey4 *xa_name,
 				    xattrvalue4 *xa_value);
 
 /**
@@ -2266,7 +2266,7 @@ struct fsal_obj_ops {
  */
 	 fsal_status_t (*setxattrs)(struct fsal_obj_handle *obj_hdl,
 				    setxattr_type4 sa_type,
-				    xattrname4 *xa_name,
+				    xattrkey4 *xa_name,
 				    xattrvalue4 *xa_value);
 
 /**
@@ -2280,7 +2280,7 @@ struct fsal_obj_ops {
  * @return FSAL status.
  */
 	 fsal_status_t (*removexattrs)(struct fsal_obj_handle *obj_hdl,
-				    xattrname4 *xa_name);
+				    xattrkey4 *xa_name);
 
 /**
  * @brief List Extended Attributes
