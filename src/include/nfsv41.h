@@ -2916,7 +2916,12 @@ enum nfs_opnum4 {
 typedef enum nfs_opnum4 nfs_opnum4;
 
 typedef component4 xattrkey4;
-typedef component4 xattrvalue4;
+/*
+ * This is not universally a utf8string, but rather a variable-length
+ * opaque sequence of bytes. We still call it a utf8string under the
+ * hood however, as those routines work just as well for this.
+ */
+typedef utf8string xattrvalue4;
 
 enum setxattr_type4 {
 	SETXATTR4_CREATE = 0,
@@ -2938,12 +2943,12 @@ typedef struct xattrlist4 xattrlist4;
 
 
 struct GETXATTR4args {
-	xattrkey4 ga_name;
+	xattrkey4 gxa_name;
 };
 typedef struct GETXATTR4args GETXATTR4args;
 
 struct GETXATTR4resok {
-	xattrvalue4 gr_value;
+	xattrvalue4 gxr_value;
 };
 typedef struct GETXATTR4resok GETXATTR4resok;
 
@@ -5613,7 +5618,7 @@ static inline bool xdr_DELEGRETURN4res(XDR *xdrs,
 /* NFSv4.2 */
 static inline bool xdr_GETXATTR4args(XDR *xdrs, GETXATTR4args *objp)
 {
-	if (!xdr_component4(xdrs, &objp->ga_name))
+	if (!xdr_component4(xdrs, &objp->gxa_name))
 		return false;
 	return true;
 }
@@ -5623,8 +5628,8 @@ static inline bool xdr_GETXATTR4res(XDR *xdrs, GETXATTR4res *objp)
 		return false;
 	switch (objp->status) {
 	case NFS4_OK:
-		if (!xdr_component4(xdrs,
-				&objp->GETXATTR4res_u.resok4.gr_value))
+		if (!xdr_utf8string(xdrs,
+				&objp->GETXATTR4res_u.resok4.gxr_value))
 			return false;
 		break;
 	default:

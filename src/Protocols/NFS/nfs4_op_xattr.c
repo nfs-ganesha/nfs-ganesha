@@ -62,23 +62,24 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 {
 	GETXATTR4args * const arg_GETXATTR4 = &op->nfs_argop4_u.opgetxattr;
 	GETXATTR4res * const res_GETXATTR4 = &resp->nfs_resop4_u.opgetxattr;
-	xattrvalue4 gr_value;
+	xattrvalue4 gxr_value;
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *obj_handle = data->current_obj;
+	uint32_t resp_size;
 
 	resp->resop = NFS4_OP_GETXATTR;
 	res_GETXATTR4->status = NFS4_OK;
 
 	LogDebug(COMPONENT_NFS_V4,
-		 "GetXattr len %d name: %s",
-		 arg_GETXATTR4->ga_name.utf8string_len,
-		 arg_GETXATTR4->ga_name.utf8string_val);
+		 "GetXattr name: %.*s",
+		 arg_GETXATTR4->gxa_name.utf8string_len,
+		 arg_GETXATTR4->gxa_name.utf8string_val);
 
-	res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_len = 0;
-	res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_val = NULL;
+	res_GETXATTR4->GETXATTR4res_u.resok4.gxr_value.utf8string_len = 0;
+	res_GETXATTR4->GETXATTR4res_u.resok4.gxr_value.utf8string_val = NULL;
 
-	gr_value.utf8string_len = XATTR_VALUE_SIZE;
-	gr_value.utf8string_val = gsh_malloc(gr_value.utf8string_len + 1);
+	gxr_value.utf8string_len = XATTR_VALUE_SIZE;
+	gxr_value.utf8string_val = gsh_malloc(gxr_value.utf8string_len + 1);
 
 	/* Do basic checks on a filehandle */
 	res_GETXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
@@ -94,20 +95,20 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 	}
 
 	fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
-						    &arg_GETXATTR4->ga_name,
-						    &gr_value);
+						    &arg_GETXATTR4->gxa_name,
+						    &gxr_value);
 	if (FSAL_IS_ERROR(fsal_status)) {
-		if (fsal_status.major == ERR_FSAL_TOOSMALL) {
+		if (fsal_status.major == ERR_FSAL_XATTR2BIG) {
 			LogDebug(COMPONENT_NFS_V4,
 				 "FSAL buffer len %d too small",
 				  XATTR_VALUE_SIZE);
 			/* Get size of xattr value  */
-			gsh_free(gr_value.utf8string_val);
-			gr_value.utf8string_len = 0;
-			gr_value.utf8string_val = NULL;
+			gsh_free(gxr_value.utf8string_val);
+			gxr_value.utf8string_len = 0;
+			gxr_value.utf8string_val = NULL;
 			fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
-						    &arg_GETXATTR4->ga_name,
-						    &gr_value);
+						    &arg_GETXATTR4->gxa_name,
+						    &gxr_value);
 
 			if (FSAL_IS_ERROR(fsal_status)) {
 				res_GETXATTR4->status = nfs4_Errno_state(
@@ -117,13 +118,13 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 
 			LogDebug(COMPONENT_NFS_V4,
 				 "FSAL buffer new len %d",
-				  gr_value.utf8string_len);
+				  gxr_value.utf8string_len);
 			/* Try again with a bigger buffer */
-			gr_value.utf8string_val = gsh_malloc(
-						gr_value.utf8string_len + 1);
+			gxr_value.utf8string_val = gsh_malloc(
+						gxr_value.utf8string_len + 1);
 			fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
-						    &arg_GETXATTR4->ga_name,
-						    &gr_value);
+						    &arg_GETXATTR4->gxa_name,
+						    &gxr_value);
 
 			if (FSAL_IS_ERROR(fsal_status)) {
 				res_GETXATTR4->status = nfs4_Errno_state(
@@ -131,17 +132,21 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 				return NFS_REQ_ERROR;
 			}
 		} else {
-			res_GETXATTR4->status = nfs4_Errno_state(
-					state_error_convert(fsal_status));
+			res_GETXATTR4->status = nfs4_Errno_status(fsal_status);
 			return NFS_REQ_ERROR;
 		}
 	}
 
-	res_GETXATTR4->status = NFS4_OK;
-	res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_len =
-							gr_value.utf8string_len;
-	res_GETXATTR4->GETXATTR4res_u.resok4.gr_value.utf8string_val =
-							gr_value.utf8string_val;
+
+	resp_size = sizeof(nfsstat4) + sizeof(uint32_t) +
+			RNDUP(gxr_value.utf8string_len);
+	res_GETXATTR4->status = check_resp_room(data, resp_size);
+	if (res_GETXATTR4->status != NFS4_OK) {
+		gsh_free(gxr_value.utf8string_val);
+		return NFS_REQ_ERROR;
+	}
+
+	res_GETXATTR4->GETXATTR4res_u.resok4.gxr_value = gxr_value;
 	return NFS_REQ_OK;
 }
 
@@ -159,7 +164,7 @@ void nfs4_op_getxattr_Free(nfs_resop4 *resp)
 	GETXATTR4resok *res = &res_GETXATTR4->GETXATTR4res_u.resok4;
 
 	if (res_GETXATTR4->status == NFS4_OK) {
-		gsh_free(res->gr_value.utf8string_val);
+		gsh_free(res->gxr_value.utf8string_val);
 	}
 }
 
