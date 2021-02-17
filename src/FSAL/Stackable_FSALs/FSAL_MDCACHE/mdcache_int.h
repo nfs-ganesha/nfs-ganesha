@@ -1130,7 +1130,7 @@ fsal_status_t mdcache_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mdcache_getxattrs(struct fsal_obj_handle *obj_hdl,
 				xattrkey4 *name, xattrvalue4 *value);
 fsal_status_t mdcache_setxattrs(struct fsal_obj_handle *obj_hdl,
-				setxattr_type4 type, xattrkey4 *name,
+				setxattr_option4 option, xattrkey4 *name,
 				xattrvalue4 *value);
 fsal_status_t mdcache_removexattrs(struct fsal_obj_handle *obj_hdl,
 				   xattrkey4 *name);

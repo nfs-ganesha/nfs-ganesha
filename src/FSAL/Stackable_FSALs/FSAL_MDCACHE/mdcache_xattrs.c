@@ -315,7 +315,7 @@ fsal_status_t mdcache_getxattrs(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status
  */
 fsal_status_t mdcache_setxattrs(struct fsal_obj_handle *obj_hdl,
-				setxattr_type4 type, xattrkey4 *name,
+				setxattr_option4 option, xattrkey4 *name,
 				xattrvalue4 *value)
 {
 	struct mdcache_fsal_obj_handle *handle =
@@ -325,7 +325,7 @@ fsal_status_t mdcache_setxattrs(struct fsal_obj_handle *obj_hdl,
 
 	subcall(
 		status = handle->sub_handle->obj_ops->setxattrs(
-			handle->sub_handle, type, name, value)
+			handle->sub_handle, option, name, value)
 	       );
 
 	return status;

@@ -637,7 +637,7 @@ static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
-				setxattr_type4 sa_type,
+				setxattr_option4 option,
 				xattrkey4 *xa_name,
 				xattrvalue4 *xa_value)
 {

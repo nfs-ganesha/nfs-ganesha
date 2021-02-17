@@ -191,10 +191,10 @@ enum nfs_req_result nfs4_op_setxattr(struct nfs_argop4 *op,
 	resp->resop = NFS4_OP_SETXATTR;
 
 	LogDebug(COMPONENT_NFS_V4,
-		 "SetXattr type %d len %d name: %s",
-		 arg_SETXATTR4->sa_type,
-		 arg_SETXATTR4->sa_xattr.xa_name.utf8string_len,
-		 arg_SETXATTR4->sa_xattr.xa_name.utf8string_val);
+		 "SetXattr option=%d key=%.*s",
+		 arg_SETXATTR4->sxa_option,
+		 arg_SETXATTR4->sxa_key.utf8string_len,
+		 arg_SETXATTR4->sxa_key.utf8string_val);
 
 	/* Do basic checks on a filehandle */
 	res_SETXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
@@ -217,18 +217,17 @@ enum nfs_req_result nfs4_op_setxattr(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 	}
 
-	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.atomic = false;
-	res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.before =
+	res_SETXATTR4->SETXATTR4res_u.resok4.sxr_info.atomic = false;
+	res_SETXATTR4->SETXATTR4res_u.resok4.sxr_info.before =
 				fsal_get_changeid4(data->current_obj);
 	fsal_status = obj_handle->obj_ops->setxattrs(obj_handle,
-					arg_SETXATTR4->sa_type,
-					&arg_SETXATTR4->sa_xattr.xa_name,
-					&arg_SETXATTR4->sa_xattr.xa_value);
+					arg_SETXATTR4->sxa_option,
+					&arg_SETXATTR4->sxa_key,
+					&arg_SETXATTR4->sxa_value);
 	if (FSAL_IS_ERROR(fsal_status))
-		res_SETXATTR4->status = nfs4_Errno_state(
-					state_error_convert(fsal_status));
+		res_SETXATTR4->status = nfs4_Errno_status(fsal_status);
 	else
-		res_SETXATTR4->SETXATTR4res_u.resok4.sr_info.after =
+		res_SETXATTR4->SETXATTR4res_u.resok4.sxr_info.after =
 				fsal_get_changeid4(data->current_obj);
 	nfs_put_grace_status();
 	return nfsstat4_to_nfs_req_result(res_SETXATTR4->status);

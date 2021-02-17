@@ -2923,11 +2923,12 @@ typedef component4 xattrkey4;
  */
 typedef utf8string xattrvalue4;
 
-enum setxattr_type4 {
-	SETXATTR4_CREATE = 0,
-	SETXATTR4_REPLACE = 1,
+enum setxattr_option4 {
+	SETXATTR4_EITHER	= 0,
+	SETXATTR4_CREATE	= 1,
+	SETXATTR4_REPLACE	= 2,
 };
-typedef enum setxattr_type4 setxattr_type4;
+typedef enum setxattr_option4 setxattr_option4;
 
 struct xattr4 {
 	xattrkey4 xa_name;
@@ -2961,13 +2962,14 @@ struct GETXATTR4res {
 typedef struct GETXATTR4res GETXATTR4res;
 
 struct SETXATTR4args {
-	setxattr_type4 sa_type;
-	xattr4 sa_xattr;
+	setxattr_option4	sxa_option;
+	xattrkey4		sxa_key;
+	xattrvalue4		sxa_value;
 };
 typedef struct SETXATTR4args SETXATTR4args;
 
 struct SETXATTR4resok {
-	change_info4 sr_info;
+	change_info4 sxr_info;
 };
 typedef struct SETXATTR4resok SETXATTR4resok;
 
@@ -5640,11 +5642,11 @@ static inline bool xdr_GETXATTR4res(XDR *xdrs, GETXATTR4res *objp)
 
 static inline bool xdr_SETXATTR4args(XDR *xdrs, SETXATTR4args *objp)
 {
-	if (!inline_xdr_enum(xdrs, (enum_t *) &objp->sa_type))
+	if (!inline_xdr_enum(xdrs, (enum_t *) &objp->sxa_option))
 		return false;
-	if (!xdr_component4(xdrs, &objp->sa_xattr.xa_name))
+	if (!xdr_component4(xdrs, &objp->sxa_key))
 		return false;
-	if (!xdr_component4(xdrs, &objp->sa_xattr.xa_value))
+	if (!xdr_utf8string(xdrs, &objp->sxa_value))
 		return false;
 	return true;
 }
@@ -5655,7 +5657,7 @@ static inline bool xdr_SETXATTR4res(XDR *xdrs, SETXATTR4res *objp)
 	switch (objp->status) {
 	case NFS4_OK:
 		if (!xdr_change_info4(xdrs,
-				      &objp->SETXATTR4res_u.resok4.sr_info))
+				      &objp->SETXATTR4res_u.resok4.sxr_info))
 			return false;
 		break;
 	default:

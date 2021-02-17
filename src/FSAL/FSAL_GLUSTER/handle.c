@@ -3410,7 +3410,7 @@ out:
  */
 
 static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
-				setxattr_type4 sa_type,
+				setxattr_option4 option,
 				xattrkey4 *xa_name,
 				xattrvalue4 *xa_value)
 {
@@ -3423,10 +3423,11 @@ static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
 	struct glusterfs_handle *glhandle =
 		container_of(obj_hdl, struct glusterfs_handle, handle);
 
+	/* @todo: ensure that the options/type is correct */
 	rc = glfs_h_setxattrs(export->gl_fs->fs, glhandle->glhandle,
 			      xa_name->utf8string_val,
 			      xa_value->utf8string_val,
-			      xa_value->utf8string_len, sa_type);
+			      xa_value->utf8string_len, option - 1);
 
 	if (rc < 0) {
 		errsv = errno;
