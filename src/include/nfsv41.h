@@ -876,6 +876,9 @@ typedef struct sec_label4 fattr4_sec_label;
 /* NFSv4.3 */
 #define FATTR4_XATTR_SUPPORT 82
 
+/* Largest defined attribute index */
+#define FATTR4_MAX_ATTR_INDEX	FATTR4_XATTR_SUPPORT
+
 /* Restricted attrs on an absent FS */
 #define FATTR4_RESTRICTED_ATTRS (		\
 		FATTR4_MOUNTED_ON_FILEID |	\

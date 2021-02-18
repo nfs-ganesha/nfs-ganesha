@@ -298,10 +298,10 @@ static inline int nfs4_max_attr_index(compound_data_t *data)
 		case NFS4_MINOR_VERS_1:
 			return FATTR4_FS_CHARSET_CAP;
 		case NFS4_MINOR_VERS_2:
-			return FATTR4_XATTR_SUPPORT;
+			return FATTR4_MAX_ATTR_INDEX;
 		}
 	} else {
-		return FATTR4_XATTR_SUPPORT;
+		return FATTR4_MAX_ATTR_INDEX;
 	}
 	/* Should never be here */
 	LogFatal(COMPONENT_NFS_V4, "Unexpected minor version for NFSv4");
@@ -2505,7 +2505,7 @@ static fattr_xdr_result encode_support_exclusive_create(XDR *xdr,
 	bool res;
 
 	memset(&bits, 0, sizeof(bits));
-	for (attr = FATTR4_SUPPORTED_ATTRS; attr <= FATTR4_XATTR_SUPPORT;
+	for (attr = FATTR4_SUPPORTED_ATTRS; attr <= FATTR4_MAX_ATTR_INDEX;
 	     attr++) {
 		if (fattr4tab[attr].supported) {
 			res = set_attribute_in_bitmap(&bits, attr);
@@ -2577,7 +2577,7 @@ static fattr_xdr_result decode_xattr_support(XDR *xdr,
  * indexed by attribute number
  */
 
-const struct fattr4_dent fattr4tab[FATTR4_XATTR_SUPPORT + 1] = {
+const struct fattr4_dent fattr4tab[FATTR4_MAX_ATTR_INDEX + 1] = {
 	[FATTR4_SUPPORTED_ATTRS] = {
 		.name = "FATTR4_SUPPORTED_ATTRS",
 		.supported = 1,
@@ -4083,7 +4083,7 @@ bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *bitmap, int access)
 
 	for (attribute = next_attr_from_bitmap(bitmap, -1); attribute != -1;
 	     attribute = next_attr_from_bitmap(bitmap, attribute)) {
-		if (attribute > FATTR4_XATTR_SUPPORT) {
+		if (attribute > FATTR4_MAX_ATTR_INDEX) {
 			/* Erroneous value... skip */
 			continue;
 		}
@@ -4126,7 +4126,7 @@ void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *bitmap)
 {
 	int attribute;
 
-	for (attribute = 0; attribute <= FATTR4_XATTR_SUPPORT; attribute++) {
+	for (attribute = 0; attribute <= FATTR4_MAX_ATTR_INDEX; attribute++) {
 		if (!fattr4tab[attribute].supported) {
 			if (!clear_attribute_in_bitmap(bitmap, attribute))
 				break;
@@ -4217,7 +4217,7 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 	attr2 = next_attr_from_bitmap(&Fattr2->attrmask, -1);
 
 	while (attr1 != -1 && attr2 != -1) {
-		if (attr1 > FATTR4_XATTR_SUPPORT) {
+		if (attr1 > FATTR4_MAX_ATTR_INDEX) {
 			/* Erroneous value... skip; Just advance attr1, since we
 			 * won't ever generate invalid values in our bitmask */
 			attr1 = next_attr_from_bitmap(&Fattr1->attrmask, attr1);
@@ -4459,7 +4459,7 @@ static int Fattr4_To_FSAL_attr(struct fsal_attrlist *attrs, fattr4 *Fattr,
 	     next_attr_from_bitmap(&Fattr->attrmask, attribute_to_set)) {
 		const struct fattr4_dent *f4e = fattr4tab + attribute_to_set;
 
-		if (attribute_to_set > FATTR4_XATTR_SUPPORT) {
+		if (attribute_to_set > FATTR4_MAX_ATTR_INDEX) {
 			nfs_status = NFS4ERR_BADXDR;	/* undefined attr */
 			goto decodeerr;
 		}
@@ -4532,7 +4532,7 @@ int bitmap4_to_attrmask_t(bitmap4 *bitmap4, attrmask_t *mask)
 	     next_attr_from_bitmap(bitmap4, attribute_to_set)) {
 		const struct fattr4_dent *f4e = fattr4tab + attribute_to_set;
 
-		if (attribute_to_set > FATTR4_XATTR_SUPPORT) {
+		if (attribute_to_set > FATTR4_MAX_ATTR_INDEX) {
 			nfs_status = NFS4ERR_BADXDR;	/* undefined attr */
 			break;
 		}
