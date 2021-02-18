@@ -1168,6 +1168,7 @@ typedef struct nfsv4_1_file_layout4 nfsv4_1_file_layout4;
 #define ACCESS4_EXECUTE 0x00000020
 #define ACCESS4_XAREAD  0x00000040
 #define ACCESS4_XAWRITE 0x00000080
+#define ACCESS4_XALIST 0x00000100
 
 struct ACCESS4args {
 	uint32_t access;

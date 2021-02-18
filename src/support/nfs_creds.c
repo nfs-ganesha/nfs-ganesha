@@ -675,7 +675,7 @@ fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 	 * NOTE: FSAL_ACE_PERM_LIST_DIR and FSAL_ACE_PERM_READ_DATA have
 	 *       the same bit value so we don't bother looking at file type.
 	 */
-	if (requested_access & ACCESS3_READ)
+	if (requested_access & (ACCESS3_READ | ACCESS4_XAREAD | ACCESS4_XALIST))
 		access_mask |= FSAL_R_OK | FSAL_ACE_PERM_READ_DATA;
 
 	if (requested_access & ACCESS3_LOOKUP) {
@@ -685,7 +685,7 @@ fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 			granted_mask &= ~ACCESS3_LOOKUP;
 	}
 
-	if (requested_access & ACCESS3_MODIFY) {
+	if (requested_access & (ACCESS3_MODIFY | ACCESS4_XAWRITE)) {
 		if (obj->type == DIRECTORY)
 			access_mask |= FSAL_W_OK | FSAL_ACE_PERM_DELETE_CHILD;
 		else
@@ -746,36 +746,49 @@ fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 	if (fsal_status.major == ERR_FSAL_NO_ERROR ||
 	    fsal_status.major == ERR_FSAL_ACCESS) {
 		/* Define granted access based on granted mode bits. */
-		if (access_allowed & FSAL_R_OK)
-			*granted_access |= ACCESS3_READ;
+		if (access_allowed & FSAL_R_OK) {
+			*granted_access |= ACCESS3_READ |
+					   ACCESS4_XAREAD |
+					   ACCESS4_XALIST;
+		}
 
-		if (access_allowed & FSAL_W_OK)
-			*granted_access |=
-			    ACCESS3_MODIFY | ACCESS3_EXTEND | ACCESS3_DELETE;
+		if (access_allowed & FSAL_W_OK) {
+			*granted_access |= ACCESS3_MODIFY |
+					   ACCESS3_EXTEND |
+					   ACCESS3_DELETE |
+					   ACCESS4_XAWRITE;
+		}
 
 		if (access_allowed & FSAL_X_OK)
 			*granted_access |= ACCESS3_LOOKUP | ACCESS3_EXECUTE;
 
 		/* Define granted access based on granted ACL bits. */
 		if (access_allowed & FSAL_ACE_PERM_READ_DATA)
-			*granted_access |= ACCESS3_READ;
+			*granted_access |= ACCESS3_READ |
+					   ACCESS4_XAREAD |
+					   ACCESS4_XALIST;
 
 		if (obj->type == DIRECTORY) {
 			if (access_allowed & FSAL_ACE_PERM_DELETE_CHILD)
-				*granted_access |=
-				    ACCESS3_MODIFY | ACCESS3_DELETE;
+				*granted_access |= ACCESS3_MODIFY |
+						   ACCESS3_DELETE |
+						   ACCESS4_XAWRITE;
 
 			if (access_allowed & FSAL_ACE_PERM_ADD_FILE)
-				*granted_access |= ACCESS3_EXTEND;
+				*granted_access |= ACCESS3_EXTEND |
+						   ACCESS4_XAWRITE;
 
 			if (access_allowed & FSAL_ACE_PERM_ADD_SUBDIRECTORY)
-				*granted_access |= ACCESS3_EXTEND;
+				*granted_access |= ACCESS3_EXTEND |
+						   ACCESS4_XAWRITE;
 		} else {
 			if (access_allowed & FSAL_ACE_PERM_WRITE_DATA)
-				*granted_access |= ACCESS3_MODIFY;
+				*granted_access |= ACCESS3_MODIFY |
+						   ACCESS4_XAWRITE;
 
 			if (access_allowed & FSAL_ACE_PERM_APPEND_DATA)
-				*granted_access |= ACCESS3_EXTEND;
+				*granted_access |= ACCESS3_EXTEND |
+						   ACCESS4_XAWRITE;
 		}
 
 		if (access_allowed & FSAL_ACE_PERM_EXECUTE)
@@ -786,8 +799,11 @@ fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 		 */
 		if (!(op_ctx->export_perms.options &
 		    EXPORT_OPTION_WRITE_ACCESS))
-			*granted_access &= ~(ACCESS3_EXTEND | ACCESS3_MODIFY |
-					   ACCESS3_DELETE);
+			*granted_access &= ~(ACCESS3_EXTEND |
+					     ACCESS3_MODIFY |
+					     ACCESS3_DELETE |
+					     ACCESS4_XAWRITE);
+
 		/* Don't allow any bits that weren't set on request or
 		 * allowed by the file type.
 		 */
