@@ -93,6 +93,7 @@ struct ceph_fsal_module CephFSM = {
 			.delegations = FSAL_OPTION_FILE_READ_DELEG,
 		#endif
 			.readdir_plus = true,
+			.xattr_support = true,
 			.expire_time_parent = -1,
 		}
 	}
