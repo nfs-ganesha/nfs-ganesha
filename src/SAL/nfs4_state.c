@@ -810,9 +810,8 @@ void release_openstate(state_owner_t *owner)
 		}
 
 		/* Move to end of list in case of error to ease retries */
-		glist_del(&state->state_owner_list);
-		glist_add_tail(&nfs4_owner->so_state_list,
-			       &state->state_owner_list);
+		glist_move_tail(&nfs4_owner->so_state_list,
+				&state->state_owner_list);
 
 		/* Get references to the file and export */
 		ok = get_state_obj_export_owner_refs(state, &obj, &export,
@@ -905,8 +904,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		/* Move entry to end of list to handle errors and skipping of
 		 * non-delegation states.
 		 */
-		glist_del(&state->state_owner_list);
-		glist_add_tail(
+		glist_move_tail(
 			&client_owner->so_owner.so_nfs4_owner.so_state_list,
 			&state->state_owner_list);
 
@@ -996,9 +994,8 @@ static void release_export_nfs4_state(enum state_type type)
 		 * from continually re-examining non-layout states when
 		 * we restart the loop.
 		 */
-		glist_del(&state->state_export_list);
-		glist_add_tail(&op_ctx->ctx_export->exp_state_list,
-			       &state->state_export_list);
+		glist_move_tail(&op_ctx->ctx_export->exp_state_list,
+				&state->state_export_list);
 
 		/* Release states of specific type. Skip all other states
 		 * STATE_TYPE_NONE is used to release ALL states

@@ -987,9 +987,8 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		/* Move owner to end of list in case it doesn't get
 		 * freed when we decrement the refcount.
 		 */
-		glist_del(&owner->so_owner.so_nfs4_owner.so_perclient);
-		glist_add_tail(&clientid->cid_lockowners,
-			       &owner->so_owner.so_nfs4_owner.so_perclient);
+		glist_move_tail(&clientid->cid_lockowners,
+				&owner->so_owner.so_nfs4_owner.so_perclient);
 
 		/* Hold a reference to the owner while we drop the cid_mutex. */
 		held = hold_state_owner(owner);
@@ -1053,9 +1052,8 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 		/* Move owner to end of list in case it doesn't get
 		 * freed when we decrement the refcount.
 		 */
-		glist_del(&owner->so_owner.so_nfs4_owner.so_perclient);
-		glist_add_tail(&clientid->cid_openowners,
-			       &owner->so_owner.so_nfs4_owner.so_perclient);
+		glist_move_tail(&clientid->cid_openowners,
+				&owner->so_owner.so_nfs4_owner.so_perclient);
 
 		/* Hold a reference to the owner while we drop the cid_mutex. */
 		held = hold_state_owner(owner);

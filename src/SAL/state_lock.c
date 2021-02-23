@@ -1001,8 +1001,7 @@ static state_status_t subtract_lock_from_entry(state_lock_entry_t *found_entry,
 	/* Remove the lock from the list it's
 	 * on and put it on the remove_list
 	 */
-	glist_del(&found_entry->sle_list);
-	glist_add_tail(remove_list, &(found_entry->sle_list));
+	glist_move_tail(remove_list, &(found_entry->sle_list));
 
 	*removed = true;
 	return status;
@@ -1085,8 +1084,7 @@ static state_status_t subtract_lock_from_list(state_owner_t *owner,
 		glist_for_each_safe(glist, glistn, &remove_list) {
 			found_entry =
 			    glist_entry(glist, state_lock_entry_t, sle_list);
-			glist_del(&found_entry->sle_list);
-			glist_add_tail(list, &(found_entry->sle_list));
+			glist_move_tail(list, &(found_entry->sle_list));
 		}
 	} else {
 		/* free the enttries on the remove_list */
@@ -3109,9 +3107,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* Move this entry to the end of the list
 		 * (this will help if errors occur)
 		 */
-		glist_del(&found_share->state_data.nlm_share.share_perclient);
-		glist_add_tail(&nsmclient->ssc_share_list,
-			  &found_share->state_data.nlm_share.share_perclient);
+		glist_move_tail(&nsmclient->ssc_share_list,
+			&found_share->state_data.nlm_share.share_perclient);
 
 		PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 
@@ -3222,9 +3219,8 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		/* Move this state to the end of the list
 		 * (this will help if errors occur)
 		 */
-		glist_del(&state->state_owner_list);
-		glist_add_tail(&owner->so_owner.so_nfs4_owner.so_state_list,
-			       &state->state_owner_list);
+		glist_move_tail(&owner->so_owner.so_nfs4_owner.so_state_list,
+				&state->state_owner_list);
 
 		/* Get references to the obj and export */
 		ok = get_state_obj_export_owner_refs(state, &obj, &export,
@@ -3340,9 +3336,8 @@ void state_export_unlock_all(void)
 		/* Move this entry to the end of the list
 		 * (this will help if errors occur)
 		 */
-		glist_del(&found_entry->sle_export_locks);
-		glist_add_tail(&op_ctx->ctx_export->exp_lock_list,
-			       &found_entry->sle_export_locks);
+		glist_move_tail(&op_ctx->ctx_export->exp_lock_list,
+				&found_entry->sle_export_locks);
 
 		/* Now we are done with this specific entry, release the lock.
 		 */

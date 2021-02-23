@@ -259,9 +259,8 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 			 * retries and push off dealing with non-layout
 			 * states (which should only be delegations).
 			 */
-			glist_del(&layout_state->state_owner_list);
-			glist_add_tail(state_list,
-				       &layout_state->state_owner_list);
+			glist_move_tail(state_list,
+					&layout_state->state_owner_list);
 
 			if (layout_state->state_type != STATE_TYPE_LAYOUT)
 				continue;

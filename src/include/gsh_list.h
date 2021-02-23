@@ -105,6 +105,32 @@ static inline void glist_del(struct glist_head *node)
 	node->prev = NULL;
 }
 
+
+/*
+ * @brief Move the node to list tail
+ *
+ * This function would help to move node to the tail of list.
+ * Calling `glist_del` and `glist_add_tail` would do extra
+ * operations when the node is already tail.
+ * This function does pre-check for the situation that node is
+ * already tail so that would reduce some operations.
+ *
+ * @param struct glist_head *head: The first element of list
+ * @param struct glist_head *node: The element that want to move to tail
+ *
+ * @return Nothing; The operation is done w/o return value.
+ */
+static inline void glist_move_tail(struct glist_head *head,
+				   struct glist_head *node)
+{
+	/* already tail */
+	if (node == head->prev)
+		return;
+
+	glist_del(node);
+	__glist_add(head->prev, head, node);
+}
+
 /**
  * @brief Test if the list in this head is empty
  */

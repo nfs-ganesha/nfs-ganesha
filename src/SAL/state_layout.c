@@ -201,8 +201,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		/* Move entry to end of list to handle errors and skipping of
 		 * non-layout states.
 		 */
-		glist_del(&state->state_owner_list);
-		glist_add_tail(
+		glist_move_tail(
 			&client_owner->so_owner.so_nfs4_owner.so_state_list,
 			&state->state_owner_list);
 
