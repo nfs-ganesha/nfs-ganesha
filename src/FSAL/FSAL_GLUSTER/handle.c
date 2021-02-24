@@ -1805,6 +1805,8 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 		return status;
 	}
 
+	LogFullDebug(COMPONENT_FSAL, "open2 processing %s", name);
+
 /* case name_not_null */
 	/* In this path where we are opening by name, we can't check share
 	 * reservation yet since we don't have an object_handle yet. If we
@@ -1856,6 +1858,10 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 						   new_obj,
 						   attrs_out);
 
+		LogFullDebug(COMPONENT_FSAL,
+			     "lookup %s returned %s",
+			     name, msg_fsal_err(status.major));
+
 		if (FSAL_IS_ERROR(status)) {
 			*new_obj = NULL;
 			goto direrr;
@@ -1898,6 +1904,10 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 					 p_flags, my_fd);
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 
+		LogFullDebug(COMPONENT_FSAL,
+			     "glusterfs_open_my_fd %s returned %s",
+			     name, msg_fsal_err(status.major));
+
 		if (FSAL_IS_ERROR(status))
 			goto direrr;
 		else
@@ -1923,7 +1933,13 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	glhandle = glusterfs_create_my_fd(parenthandle, name, openflags,
 					p_flags, unix_mode, &sb, my_fd);
 
-	if (glhandle == NULL && errno == EEXIST &&
+	retval = errno;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "glusterfs_create_my_fd %s returned %s (%d)",
+		     name, strerror(retval), retval);
+
+	if (glhandle == NULL && retval == EEXIST &&
 		 createmode == FSAL_UNCHECKED) {
 		/* We tried to create O_EXCL to set attributes and failed.
 		 * Remove O_EXCL and retry, also remember not to set attributes.
@@ -1939,7 +1955,12 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 		glhandle = glusterfs_create_my_fd(parenthandle, name, openflags,
 					p_flags, unix_mode, &sb, my_fd);
 
-	} else if (!errno) {
+		retval = errno;
+
+		LogFullDebug(COMPONENT_FSAL,
+			     "glusterfs_create_my_fd %s returned %s (%d)",
+			     name, strerror(retval), retval);
+	} else if (!retval) {
 		created = true;
 	}
 
@@ -1947,7 +1968,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL, NULL, 0);
 
 	if (glhandle == NULL || my_fd->glfd == NULL) {
-		status = gluster2fsal_error(errno);
+		status = gluster2fsal_error(retval);
 		goto out;
 	}
 
@@ -1993,14 +2014,26 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	retval = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
 	if (retval < 0) {
-		status = gluster2fsal_error(errno);
+		retval = errno;
+
+		LogFullDebug(COMPONENT_FSAL,
+			     "glfs_h_extract_handle %s returned %s (%d)",
+			     name, strerror(retval), retval);
+
+		status = gluster2fsal_error(retval);
 		goto direrr;
 	}
 
 	retval = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
 				   GLAPI_UUID_LENGTH);
 	if (retval < 0) {
-		status = gluster2fsal_error(errno);
+		retval = errno;
+
+		LogFullDebug(COMPONENT_FSAL,
+			     "glfs_get_volumeid %s returned %s (%d)",
+			     name, strerror(retval), retval);
+
+		status = gluster2fsal_error(retval);
 		goto direrr;
 	}
 
@@ -2026,6 +2059,10 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	status = glusterfs_copy_my_fd(my_fd, &myself->globalfd,
 				     (state != NULL));
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "glusterfs_copy_my_fd %s returned %s",
+		     name, msg_fsal_err(status.major));
 
 #ifdef USE_LTTNG
 	tracepoint(fsalgl, open_fd, __func__, __LINE__, p_flags,
@@ -2055,12 +2092,21 @@ open:
 						      state,
 						      attrib_set);
 
+		LogFullDebug(COMPONENT_FSAL,
+			     "setattr2 %s returned %s",
+			     name, msg_fsal_err(status.major));
+
 		if (FSAL_IS_ERROR(status))
 			goto fileerr;
 
 		if (attrs_out != NULL) {
 			status = (*new_obj)->obj_ops->getattrs(*new_obj,
 							      attrs_out);
+
+			LogFullDebug(COMPONENT_FSAL,
+				     "getattrs %s returned %s",
+				     name, msg_fsal_err(status.major));
+
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
 				/* Get attributes failed and caller expected
