@@ -82,6 +82,12 @@ static struct config_item proxyv3_params[] = {
 		       proxyv3_fsal_module,
 		       module.fs_info.maxwrite),
 
+	/* How many sockets for our rpc layer */
+	CONF_ITEM_UI32("num_sockets", 1, 1000,
+		       32,
+		       proxyv3_fsal_module,
+		       num_sockets),
+
 	CONFIG_EOL
 };
 
@@ -254,7 +260,7 @@ proxyv3_init_config(struct fsal_module *fsal_handle,
 		container_of(fsal_handle, struct proxyv3_fsal_module, module);
 
 	LogDebug(COMPONENT_FSAL,
-		 "Handling our config");
+		 "Loading the Proxy V3 Config");
 
 	(void) load_config_from_parse(config_file,
 				      &proxyv3_param,
@@ -266,6 +272,20 @@ proxyv3_init_config(struct fsal_module *fsal_handle,
 	}
 
 	display_fsinfo(&(proxy_v3->module));
+
+	/* Now that we have our config, try to setup our RPC layer. */
+	if (!proxyv3_rpc_init(proxy_v3->num_sockets)) {
+		LogCrit(COMPONENT_FSAL,
+			"ProxyV3 RPC failed to initialize");
+		return fsalstat(ERR_FSAL_INVAL, 0);
+	}
+
+	if (!proxyv3_nlm_init()) {
+		LogCrit(COMPONENT_FSAL,
+			"ProxyV3 NLM failed to initialize");
+		return fsalstat(ERR_FSAL_INVAL, 0);
+	}
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
@@ -2783,17 +2803,12 @@ MODULE_INIT void proxy_v3_init(void)
 		return;
 	}
 
-	if (!proxyv3_rpc_init()) {
-		LogCrit(COMPONENT_FSAL,
-			"ProxyV3 RPC failed to initialize");
-		return;
-	}
-
-	if (!proxyv3_nlm_init()) {
-		LogCrit(COMPONENT_FSAL,
-			"ProxyV3 NLM failed to initialize");
-		return;
-	}
+	/*
+	 * NOTE(boulos): We used to setup our RPC and NLM connections here
+	 * before exiting, but we need to wait for init_config in order to make
+	 * those configurable. The FSAL manager doesn't call anything else in
+	 * between anyway.
+	 */
 
 	PROXY_V3.module.m_ops.init_config = proxyv3_init_config;
 	PROXY_V3.module.m_ops.create_export = proxyv3_create_export;

@@ -43,6 +43,12 @@ PROXY_V3 {}
 
     Note that this value will get clamped to the backend's FSINFO response.
 
+**num_sockets(uint32, default 32)**
+    range 1 to 1000
+
+    Note that these sockets must be privileged ports, which may be limited on
+    a given system. It is unlikely that 1000 privileged ports are available.
+
 See also
 ==============================
 :doc:`ganesha-log-config <ganesha-log-config>`\(8)

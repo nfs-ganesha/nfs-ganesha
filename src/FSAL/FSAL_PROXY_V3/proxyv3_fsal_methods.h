@@ -31,6 +31,9 @@
 struct proxyv3_fsal_module {
 	struct fsal_module module;
 	struct fsal_obj_ops handle_ops;
+
+	/* The number of sockets in our connection pool. */
+	uint32_t num_sockets;
 };
 
 /* Our global PROXY_V3 struct */
@@ -81,7 +84,7 @@ struct proxyv3_export {
 
 
 
-bool proxyv3_rpc_init(void);
+bool proxyv3_rpc_init(const uint num_sockets);
 bool proxyv3_nlm_init(void);
 
 const struct sockaddr *proxyv3_sockaddr(void);

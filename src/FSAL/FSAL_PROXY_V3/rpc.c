@@ -34,8 +34,7 @@
 static unsigned int rand_seed = 123451;
 static char rpcMachineName[MAXHOSTNAMELEN + 1] = { 0 };
 static pthread_mutex_t rpcLock;
-
-const unsigned int kMaxSockets = 32;
+static unsigned int rpcNumSockets;
 
 /* Resizable buffer (capacity is allocated, len is used). */
 struct rpc_buf {
@@ -69,8 +68,10 @@ struct fd_entry *fd_entries;
  *         - False, with emitted warnings, otherwise.
  */
 
-bool proxyv3_rpc_init(void)
+bool proxyv3_rpc_init(const uint num_sockets)
 {
+	LogDebug(COMPONENT_FSAL,
+		 "Setting up connection pool with %u sockets", num_sockets);
 	/* Cache our hostname for client auth later. */
 	if (gethostname(rpcMachineName, sizeof(rpcMachineName)) != 0) {
 		const char *kClientName = "127.0.0.1";
@@ -90,8 +91,10 @@ bool proxyv3_rpc_init(void)
 	}
 
 	/* Initialize the fd_entries with not in_use sockets. */
-	fd_entries = gsh_calloc(kMaxSockets, sizeof(struct fd_entry));
-	return true;
+	rpcNumSockets = num_sockets;
+	fd_entries = gsh_calloc(rpcNumSockets, sizeof(struct fd_entry));
+	/* Just in case the alloc failed, bail. */
+	return fd_entries != NULL;
 }
 
 
@@ -378,7 +381,7 @@ proxyv3_getfdentry(const struct sockaddr *host,
 	struct fd_entry *result = NULL;
 	size_t i;
 
-	for (i = 0; i < kMaxSockets; i++) {
+	for (i = 0; i < rpcNumSockets; i++) {
 		struct fd_entry *entry = &fd_entries[i];
 
 		if (entry->in_use) {
