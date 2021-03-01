@@ -146,12 +146,18 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 				parenthandle->glhandle, path, &sb, 0);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
+		LogFullDebug(COMPONENT_FSAL,
+			     "glfs_h_lookupat %s returned %s",
+			     path, msg_fsal_err(status.major));
 		goto out;
 	}
 
 	rc = glfs_h_extract_handle(glhandle, globjhdl, GFAPI_HANDLE_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
+		LogFullDebug(COMPONENT_FSAL,
+			     "glfs_h_extract_handle %s returned %s",
+			     path, msg_fsal_err(status.major));
 		goto out;
 	}
 
@@ -159,6 +165,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			       GLAPI_UUID_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
+		LogFullDebug(COMPONENT_FSAL,
+			     "glfs_get_volumeid %s returned %s",
+			     path, msg_fsal_err(status.major));
 		goto out;
 	}
 
@@ -188,6 +197,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 					attrs_out->valid_mask = ATTR_RDATTR_ERR;
 
 				fsal_release_attrs(attrs_out);
+				LogFullDebug(COMPONENT_FSAL,
+					     "glusterfs_get_acl %s returned %s",
+					     path, msg_fsal_err(status.major));
 				goto out;
 			}
 		}
