@@ -142,8 +142,19 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	now(&s_time);
 #endif
 
+	/* set proper credentials */
+	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
+			  &op_ctx->creds.caller_gid,
+			  op_ctx->creds.caller_glen,
+			  op_ctx->creds.caller_garray,
+			  NULL,
+			  0);
+
 	glhandle = glfs_h_lookupat(glfs_export->gl_fs->fs,
 				parenthandle->glhandle, path, &sb, 0);
+
+	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL, NULL, 0);
+
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		LogFullDebug(COMPONENT_FSAL,
