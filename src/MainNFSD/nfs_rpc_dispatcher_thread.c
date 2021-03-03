@@ -750,7 +750,7 @@ static int Bind_sockets_V4(void)
 			       sizeof(pdatap->sinaddr_tcp));
 			pdatap->sinaddr_tcp.sin_family = AF_INET;
 			/* all interfaces */
-			pdatap->sinaddr_udp.sin_addr.s_addr =
+			pdatap->sinaddr_tcp.sin_addr.s_addr =
 			    ((struct sockaddr_in *)
 			    &nfs_param.core_param.bind_addr)->sin_addr.s_addr;
 			pdatap->sinaddr_tcp.sin_port =
