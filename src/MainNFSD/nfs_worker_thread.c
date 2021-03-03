@@ -813,13 +813,6 @@ void complete_request_instrumentation(nfs_request_t *reqdata)
 #ifdef USE_LTTNG
 	tracepoint(nfs_rpc, op_end, reqdata);
 #endif
-
-#if defined(HAVE_BLKIN)
-	BLKIN_TIMESTAMP(
-		&reqdata->svc.bl_trace,
-		&reqdata->svc.rq_xprt->blkin.endp,
-		"nfs_rpc_process_request-post-service");
-#endif
 }
 
 /** @brief Completion of async RPC dispatch
@@ -867,13 +860,6 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 
 #ifdef USE_LTTNG
 	tracepoint(nfs_rpc, start, reqdata);
-#endif
-
-#if defined(HAVE_BLKIN)
-	BLKIN_TIMESTAMP(
-		&reqdata->svc.bl_trace,
-		&reqdata->svc.rq_xprt->blkin.endp,
-		"nfs_rpc_process_request-start");
 #endif
 
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -1020,12 +1006,6 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			 reqdata->svc.rq_msg.rm_xid);
 	}
 
-#if defined(HAVE_BLKIN)
-	BLKIN_TIMESTAMP(
-		&reqdata->svc.bl_trace,
-		&reqdata->svc.rq_xprt->blkin.endp,
-		"nfs_rpc_process_request-have-clientid");
-#endif
 	/* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
 	 * nothing but allocate a result object and mark the request (ie, the
 	 * path is short, lockless, and does no hash/search). */
@@ -1477,26 +1457,6 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 			    ? op_ctx->ctx_export->export_id : -1));
 #endif
 
-#if defined(HAVE_BLKIN)
-		BLKIN_TIMESTAMP(
-			&reqdata->svc.bl_trace,
-			&reqdata->svc.rq_xprt->blkin.endp,
-			"nfs_rpc_process_request-pre-service");
-
-		BLKIN_KEYVAL_STRING(
-			&reqdata->svc.bl_trace,
-			&reqdata->svc.rq_xprt->blkin.endp,
-			"op-name",
-			reqdesc->funcname
-			);
-
-		BLKIN_KEYVAL_INTEGER(
-			&reqdata->svc.bl_trace,
-			&reqdata->svc.rq_xprt->blkin.endp,
-			"export-id",
-			(op_ctx->ctx_export != NULL)
-			? op_ctx->ctx_export->export_id : -1);
-#endif
 		rc = reqdesc->service_function(arg_nfs, &reqdata->svc,
 					res_nfs);
 

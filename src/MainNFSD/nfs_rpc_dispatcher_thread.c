@@ -1452,16 +1452,6 @@ static struct svc_req *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 	reqdata->svc.rq_xdrs = xdrs;
 	reqdata->svc.rq_refcnt = 1;
 
-#if HAVE_BLKIN
-	blkin_init_new_trace(&reqdata->svc.bl_trace, "nfs-ganesha",
-			&xprt->blkin.endp);
-#endif
-
-#if defined(HAVE_BLKIN)
-	BLKIN_TIMESTAMP(
-		&reqdata->svc.bl_trace, &xprt->blkin.endp, "pre-recv");
-#endif
-
 	return &reqdata->svc;
 }
 
@@ -1469,17 +1459,6 @@ static void free_nfs_request(struct svc_req *req, enum xprt_stat stat)
 {
 	nfs_request_t *reqdata = container_of(req, nfs_request_t, svc);
 	SVCXPRT *xprt = reqdata->svc.rq_xprt;
-
-#if defined(HAVE_BLKIN)
-	BLKIN_TIMESTAMP(
-		&reqdata->svc.bl_trace, &xprt->blkin.endp, "post-recv");
-
-	BLKIN_KEYVAL_INTEGER(
-		&reqdata->svc.bl_trace,
-		&reqdata->xprt->blkin.endp,
-		"rq-xid",
-		reqdata->svc.rq_xid);
-#endif
 
 	if (unlikely(stat > XPRT_DESTROYED)) {
 		LogInfo(COMPONENT_DISPATCH,
