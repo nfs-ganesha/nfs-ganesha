@@ -93,7 +93,7 @@ struct gpfs_state_fd {
 /* defined the set of attributes supported with POSIX */
 #define GPFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (         \
 		ATTRS_POSIX | ATTR_ACL | ATTR4_SPACE_RESERVED | \
-		ATTR4_FS_LOCATIONS | ATTR4_XATTR))
+		ATTR4_FS_LOCATIONS))
 
 #define GPFS_MAX_FH_SIZE OPENHANDLE_HANDLE_LEN
 

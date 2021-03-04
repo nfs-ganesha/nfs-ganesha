@@ -39,7 +39,7 @@
 
 /* defined the set of attributes supported with POSIX */
 #define GLUSTERFS_SUPPORTED_ATTRIBUTES (ATTRS_POSIX | ATTR_ACL | \
-					ATTR4_SEC_LABEL | ATTR4_XATTR)
+					ATTR4_SEC_LABEL)
 
 /**
  * The attributes this FSAL can set.
