@@ -2561,11 +2561,20 @@ static fattr_xdr_result encdec_sec_label(XDR *xdr,
 /*
  * FATTR4_XATTR_SUPPORT
  */
-
 static fattr_xdr_result encode_xattr_support(XDR *xdr,
 					     struct xdr_attrs_args *args)
 {
-	return FATTR_XDR_NOOP;
+	int xattr_support = FALSE;
+
+	if (args->data != NULL) {
+		struct fsal_export *exp = op_ctx->fsal_export;
+
+		xattr_support =
+		    exp->exp_ops.fs_supports(exp, fso_xattr_support);
+	}
+	if (!xdr_bool(xdr, &xattr_support))
+		return FATTR_XDR_FAILED;
+	return FATTR_XDR_SUCCESS;
 }
 
 static fattr_xdr_result decode_xattr_support(XDR *xdr,
@@ -3370,10 +3379,10 @@ const struct fattr4_dent fattr4tab[FATTR4_MAX_ATTR_INDEX + 1] = {
 	,
 	[FATTR4_XATTR_SUPPORT] = {
 		.name = "FATTR4_XATTR_SUPPORT",
-		.supported = 0,
-		.encoded = 0,
+		.supported = 1,
+		.encoded = 1,
 		.size_fattr4 = sizeof(fattr4_fs_charset_cap),
-		.attrmask = ATTR4_XATTR,
+		.attrmask = 0,
 		.encode = encode_xattr_support,
 		.decode = decode_xattr_support,
 		.access = FATTR4_ATTR_READ}
@@ -4380,6 +4389,7 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 		case FATTR4_TIME_MODIFY:
 		case FATTR4_TIME_MODIFY_SET:
 		case FATTR4_MOUNTED_ON_FILEID:
+		case FATTR4_XATTR_SUPPORT:
 			/* These are fixed size */
 			if (memcmp
 			    ((char *)(Fattr1->attr_vals.attrlist4_val +

@@ -106,6 +106,8 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->readdir_plus;
 	case fso_compliant_eof_behavior:
 		return !!info->compliant_eof_behavior;
+	case fso_xattr_support:
+		return !!info->xattr_support;
 	default:
 		return false;	/* whatever I don't know about,
 				 * you can't do

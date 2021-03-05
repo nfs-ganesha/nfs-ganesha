@@ -444,6 +444,8 @@ void display_fsinfo(struct fsal_module *fsal)
 		 fsal->fs_info.fsal_grace);
 	LogDebug(COMPONENT_FSAL, "  expire_time_parent = %d  ",
 		 fsal->fs_info.expire_time_parent);
+	LogDebug(COMPONENT_FSAL, "  xattr_support = %d  ",
+		 fsal->fs_info.xattr_support);
 	LogDebug(COMPONENT_FSAL, "}");
 }
 
