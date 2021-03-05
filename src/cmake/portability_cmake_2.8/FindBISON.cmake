@@ -94,7 +94,7 @@ if(BISON_EXECUTABLE)
       DEPENDS
       "${BISON_TARGET_output_path}/${BISON_TARGET_output_name}.output"
       COMMENT "[BISON][${Name}] Copying bison verbose table to ${filename}"
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+      WORKING_DIRECTORY ${GANESHA_TOP_CMAKE_DIR})
     set(BISON_${Name}_VERBOSE_FILE ${filename})
     list(APPEND BISON_TARGET_extraoutputs
       "${BISON_TARGET_output_path}/${BISON_TARGET_output_name}.output")
@@ -152,7 +152,7 @@ if(BISON_EXECUTABLE)
         ARGS ${BISON_TARGET_cmdopt} -o ${ARGV2} ${ARGV1}
         DEPENDS ${ARGV1}
         COMMENT "[BISON][${Name}] Building parser with bison ${BISON_VERSION}"
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        WORKING_DIRECTORY ${GANESHA_TOP_CMAKE_DIR})
 
       # define target variables
       set(BISON_${Name}_DEFINED TRUE)

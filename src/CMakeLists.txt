@@ -12,7 +12,10 @@ if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
   endif(COMMAND cmake_policy)
 endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
+# Set GANESHA_TOP_CMAKE_DIR to this CMakeLists.txt path
+set(GANESHA_TOP_CMAKE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${GANESHA_TOP_CMAKE_DIR}/cmake/modules/")
 
 project(nfs-ganesha C CXX)
 # Project versioning
@@ -127,37 +130,37 @@ find_package(Toolchain REQUIRED)
 find_package(Sanitizers)
 
 # Add maintainer mode for (mainly) strict builds
-include(${CMAKE_SOURCE_DIR}/cmake/maintainer_mode.cmake)
+include(${GANESHA_TOP_CMAKE_DIR}/cmake/maintainer_mode.cmake)
 
 # For libraries that provide pkg-config files
 include(FindPkgConfig)
 
 # For our option system
-include(${CMAKE_SOURCE_DIR}/cmake/goption.cmake)
+include(${GANESHA_TOP_CMAKE_DIR}/cmake/goption.cmake)
 
 # If we are in a git tree, then this CMakeLists.txt is in "src/" and go .git is in "src/.."
-IF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
+IF( EXISTS ${GANESHA_TOP_CMAKE_DIR}/../.git/HEAD  )
   message( STATUS "Compilation from within a git repository. Using git rev-parse HEAD")
   EXECUTE_PROCESS( COMMAND git rev-parse HEAD
-		   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		   WORKING_DIRECTORY ${GANESHA_TOP_CMAKE_DIR}
 		   OUTPUT_STRIP_TRAILING_WHITESPACE
 		   ERROR_QUIET
                    OUTPUT_VARIABLE _GIT_HEAD_COMMIT)
   EXECUTE_PROCESS( COMMAND git describe --long
-                   WORKING_DIRECTORY  ${CMAKE_SOURCE_DIR}
+                   WORKING_DIRECTORY  ${GANESHA_TOP_CMAKE_DIR}
 		   OUTPUT_STRIP_TRAILING_WHITESPACE
 		   ERROR_QUIET
                    OUTPUT_VARIABLE _GIT_DESCRIBE)
 
-ELSE( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
+ELSE( EXISTS ${GANESHA_TOP_CMAKE_DIR}/../.git/HEAD  )
   message( STATUS "Outside a git repository, use saved data" )
-  EXEC_PROGRAM(${CMAKE_SOURCE_DIR}/cmake/githead_from_path.sh ARGS ${CMAKE_SOURCE_DIR}
+  EXEC_PROGRAM(${GANESHA_TOP_CMAKE_DIR}/cmake/githead_from_path.sh ARGS ${GANESHA_TOP_CMAKE_DIR}
                 OUTPUT_VARIABLE  _GIT_HEAD_COMMIT)
 
-  EXEC_PROGRAM(${CMAKE_SOURCE_DIR}/cmake/gitdesc_from_path.sh ARGS ${CMAKE_SOURCE_DIR}
+  EXEC_PROGRAM(${GANESHA_TOP_CMAKE_DIR}/cmake/gitdesc_from_path.sh ARGS ${GANESHA_TOP_CMAKE_DIR}
                 OUTPUT_VARIABLE  _GIT_DESCRIBE)
 
-ENDIF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
+ENDIF( EXISTS ${GANESHA_TOP_CMAKE_DIR}/../.git/HEAD  )
 
 STRING(SUBSTRING ${_GIT_HEAD_COMMIT} 0  7 _GIT_HEAD_COMMIT_ABBREV )
 
@@ -287,7 +290,7 @@ else(USE_SYSTEM_NTIRPC)
 endif(USE_SYSTEM_NTIRPC)
 
 # Include custom config and cpack module
-include(${CMAKE_SOURCE_DIR}/cmake/cpack_config.cmake)
+include(${GANESHA_TOP_CMAKE_DIR}/cmake/cpack_config.cmake)
 include(CPack)
 
 # MSPAC support -lwbclient link flag
@@ -387,7 +390,7 @@ option(USE_ACL_MAPPING "Build NFSv4 to POSIX ACL mapping" OFF)
 
 IF(BUILD_CONFIG)
   INCLUDE(
-  ${CMAKE_SOURCE_DIR}/cmake/build_configurations/${BUILD_CONFIG}.cmake)
+  ${GANESHA_TOP_CMAKE_DIR}/cmake/build_configurations/${BUILD_CONFIG}.cmake)
 ENDIF()
 
 IF(DEBUG_SYMS)
@@ -938,7 +941,7 @@ endif(RADOS_URLS)
 if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
    message( status "CMake 2.6 detected, using portability hooks" )
    set(CMAKE_CURRENT_LIST_DIR /usr/share/cmake/Modules )
-   set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/portability_cmake_2.8  /usr/share/cmake/Modules ${CMAKE_MODULE_PATH})
+   set(CMAKE_MODULE_PATH ${GANESHA_TOP_CMAKE_DIR}/cmake/portability_cmake_2.8  /usr/share/cmake/Modules ${CMAKE_MODULE_PATH})
 endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
 
 include_directories(
@@ -1085,7 +1088,7 @@ else (USE_SYSTEM_NTIRPC)
   set(TIRPC_EPOLL ${TIRPC_EPOLL} CACHE BOOL "Use EPOLL")
   set(USE_GSS ${USE_GSS} CACHE BOOL "Use GSS")
   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-	  "${CMAKE_SOURCE_DIR}/libntirpc/cmake/modules/")
+	  "${GANESHA_TOP_CMAKE_DIR}/libntirpc/cmake/modules/")
   add_subdirectory(libntirpc)
   set(NTIRPC_LIBRARY ntirpc)
   if (USE_LTTNG)
@@ -1118,8 +1121,8 @@ set(SYSTEM_LIBRARIES
 )
 
 # Config file; make sure it doesn't clobber an existing one
-include(${CMAKE_SOURCE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
-InstallPackageConfigFile(${CMAKE_SOURCE_DIR}/config_samples/ganesha.conf.example ${SYSCONFDIR}/ganesha ganesha.conf)
+include(${GANESHA_TOP_CMAKE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
+InstallPackageConfigFile(${GANESHA_TOP_CMAKE_DIR}/config_samples/ganesha.conf.example ${SYSCONFDIR}/ganesha ganesha.conf)
 # pre-create PREFIX/var/run/ganesha
 install(DIRECTORY DESTINATION ${SYSSTATEDIR}/run/ganesha)
 
@@ -1608,7 +1611,7 @@ target_link_libraries(test_parsing
 ########### add a "make doc" target to call Doxygen
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
+  configure_file(${GANESHA_TOP_CMAKE_DIR}/Doxyfile.in
 		 ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
   add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
