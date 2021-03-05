@@ -669,5 +669,12 @@ extern void fsal_write(struct fsal_obj_handle *obj_hdl,
 		       struct fsal_io_arg *arg,
 		       struct async_process_data *data);
 
+fsal_status_t fsal_listxattr_helper(const char *buf,
+				    size_t listlen,
+				    uint32_t maxbytes,
+				    nfs_cookie4 *lxa_cookie,
+				    bool_t *lxr_eof,
+				    xattrlist4 *lxr_names);
+
 #endif				/* !FSAL_H */
 /** @} */

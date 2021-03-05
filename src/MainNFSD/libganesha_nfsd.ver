@@ -67,6 +67,7 @@
   fsal_inherit_acls;
   fsal_init;
   fsal_link;
+  fsal_listxattr_helper;
   fsal_lookup;
   fsal_mode_to_acl;
   fsal_obj_handle_init;

@@ -1841,4 +1841,138 @@ void fsal_write(struct fsal_obj_handle *obj_hdl,
 	PTHREAD_MUTEX_unlock(data->mutex);
 }
 
+#define XATTR_USER_PREFIX	"user."
+#define XATTR_USER_PREFIX_LEN	(sizeof(XATTR_USER_PREFIX) - 1)
+
+/**
+ * @brief Convert a flat list of xattr names to xattrlist4
+ *
+ * @param[in] buf		Populated buffer returned from listxattr()
+ * @param[in] listlen		Length of "buf"
+ * @param[in] maxbytes		Max size of the returned lxr_names array
+ * @param[in,out] lxa_cookie	Cookie from client, and returned cookie
+ * @param[out] lxr_eof		Is this is the end of the xattrs?
+ * @param[out] lxr_names	pointer to xattrlist4 that should be populated
+ *
+ * Most listxattr() implementations hand back a buffer with a concatenated set
+ * of NULL terminated names. This helper does the work of converting that into
+ * an xattrlist4, and handles the gory details of vetting the cookie and size
+ * limits.
+ */
+fsal_status_t fsal_listxattr_helper(const char *buf,
+			     size_t listlen,
+			     uint32_t maxbytes,
+			     nfs_cookie4 *lxa_cookie,
+			     bool_t *lxr_eof,
+			     xattrlist4 *lxr_names)
+{
+	int i, count = 0;
+	uint64_t cookie = 0;
+	uint32_t bytes = 0;
+	const char *name, *start;
+	const char *end = buf + listlen;
+	xattrkey4 *names = NULL;
+	fsal_status_t status;
+
+	/* Figure out how big an array we'll need, and vet the cookie */
+	name = buf;
+	start = NULL;
+	while (name < end) {
+		size_t len;
+
+		/* Do we have enough for "user.?" ? */
+		len = strnlen(name, end - name);
+		if (len <= XATTR_USER_PREFIX_LEN)
+			goto next_name1;
+
+		/* Does it start with "user." ? */
+		if (strncmp(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN))
+			goto next_name1;
+
+		/*
+		 * Valid "user." xattr. Bump the cookie value and compare
+		 * previous one to one passed in.
+		 */
+		if (cookie++ < *lxa_cookie)
+			goto next_name1;
+
+		/* Do we have room to encode this name? */
+		bytes += 4 + len - XATTR_USER_PREFIX_LEN;
+		if (bytes > maxbytes) {
+			/* Decrement cookie since we can't use this after all */
+			--cookie;
+			break;
+		}
+
+		/* We have a usable entry! */
+		++count;
+
+		/* Save pointer to first usable entry */
+		if (!start)
+			start = name;
+next_name1:
+		name += (len + 1);
+	}
+
+	/* No entries found? */
+	if (count == 0) {
+		/* We couldn't encode the first entry */
+		if (bytes > maxbytes)
+			return fsalstat(ERR_FSAL_TOOSMALL, 0);
+
+		/* Bogus cookie from client? */
+		if (cookie < *lxa_cookie)
+			return fsalstat(ERR_FSAL_BADCOOKIE, 0);
+
+		/* Otherwise, there just weren't any */
+		goto out;
+	}
+
+	names = gsh_calloc(count, sizeof(*names));
+
+	assert(start);
+	name = start;
+	i = 0;
+	while (name < end && i < count) {
+		size_t len;
+
+		len = strnlen(name, end - name);
+
+		/* Make sure it's the min length */
+		if (len < XATTR_USER_PREFIX_LEN + 1)
+			goto next_name2;
+
+		if (strncmp(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN))
+			goto next_name2;
+
+		/* advance past "user." prefix */
+		name += XATTR_USER_PREFIX_LEN;
+		len -= XATTR_USER_PREFIX_LEN;
+
+		names[i].utf8string_val = gsh_memdup(name, len);
+		names[i].utf8string_len = len;
+		++i;
+next_name2:
+		name += (len + 1);
+	}
+
+	/* Did we get everything? */
+	if (i != count) {
+		LogWarn(COMPONENT_FSAL, "LISTXATTRS encoding error!");
+		status = fsalstat(ERR_FSAL_SERVERFAULT, 0);
+		goto out_error;
+	}
+out:
+	*lxa_cookie = cookie;
+	*lxr_eof = (bytes <= maxbytes);
+	lxr_names->xl4_count = count;
+	lxr_names->xl4_entries = names;
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+out_error:
+	for (i = 0; i < count; ++i)
+		gsh_free(names[i].utf8string_val);
+	gsh_free(names);
+	return status;
+}
+
 /** @} */
