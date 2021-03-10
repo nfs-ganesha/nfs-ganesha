@@ -533,7 +533,8 @@ glusterfs_free_fs(struct glusterfs_fs *gl_fs)
 
 	if (refcnt) {
 		LogDebug(COMPONENT_FSAL,
-			 "There are still (%ld)active shares for volume(%s)",
+			 "There are still (%"PRIi64
+			 ")active shares for volume(%s)",
 			 gl_fs->refcnt, gl_fs->volname);
 		PTHREAD_MUTEX_unlock(&GlusterFS.lock);
 		return;

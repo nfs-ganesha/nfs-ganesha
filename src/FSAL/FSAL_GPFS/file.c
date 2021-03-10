@@ -540,7 +540,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	if (FSAL_IS_ERROR(status)) {
 		struct gpfs_file_handle *gfh = container_of(obj_hdl,
 			struct gpfs_fsal_obj_handle, obj_handle)->handle;
-		LogDebug(COMPONENT_FSAL, "Inode involved: %lu, error: %s",
+		LogDebug(COMPONENT_FSAL, "Inode involved: %"PRIu64", error: %s",
 			get_handle2inode(gfh), msg_fsal_err(status.major));
 	}
 	return status;
@@ -710,7 +710,7 @@ gpfs_reopen2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	if (FSAL_IS_ERROR(status)) {
 		struct gpfs_file_handle *gfh = container_of(obj_hdl,
 			struct gpfs_fsal_obj_handle, obj_handle)->handle;
-		LogDebug(COMPONENT_FSAL, "Inode involved: %lu, error: %s",
+		LogDebug(COMPONENT_FSAL, "Inode involved: %"PRIu64", error: %s",
 			get_handle2inode(gfh), msg_fsal_err(status.major));
 	}
 	return status;
@@ -883,7 +883,7 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, fsal_async_cb done_cb,
 	if (FSAL_IS_ERROR(status)) {
 		struct gpfs_file_handle *gfh = container_of(obj_hdl,
 			struct gpfs_fsal_obj_handle, obj_handle)->handle;
-		LogDebug(COMPONENT_FSAL, "Inode involved: %lu, error: %s",
+		LogDebug(COMPONENT_FSAL, "Inode involved: %"PRIu64", error: %s",
 			get_handle2inode(gfh), msg_fsal_err(status.major));
 	}
 
@@ -1043,7 +1043,7 @@ gpfs_fallocate(struct fsal_obj_handle *obj_hdl, state_t *state,
 	if (FSAL_IS_ERROR(status)) {
 		struct gpfs_file_handle *gfh = container_of(obj_hdl,
 			struct gpfs_fsal_obj_handle, obj_handle)->handle;
-		LogDebug(COMPONENT_FSAL, "Inode involved: %lu, error: %s",
+		LogDebug(COMPONENT_FSAL, "Inode involved: %"PRIu64", error: %s",
 			get_handle2inode(gfh), msg_fsal_err(status.major));
 	}
 	return status;
@@ -1134,7 +1134,7 @@ gpfs_commit2(struct fsal_obj_handle *obj_hdl, off_t offset, size_t len)
 	if (FSAL_IS_ERROR(status)) {
 		struct gpfs_file_handle *gfh = container_of(obj_hdl,
 			struct gpfs_fsal_obj_handle, obj_handle)->handle;
-		LogDebug(COMPONENT_FSAL, "Inode involved: %lu, error: %s",
+		LogDebug(COMPONENT_FSAL, "Inode involved: %"PRIu64", error: %s",
 			get_handle2inode(gfh), msg_fsal_err(status.major));
 	}
 	return status;
@@ -1213,8 +1213,8 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	 */
 	if (req_lock->lock_length > LONG_MAX) {
 		LogCrit(COMPONENT_FSAL,
-			"Requested lock length is out of range- MAX(%"PRIu64
-			"), req_lock_length(%" PRIu64 ")",
+			"Requested lock length is out of range- MAX(%lu), req_lock_length(%"
+			PRIu64")",
 			LONG_MAX, req_lock->lock_length);
 		return fsalstat(ERR_FSAL_BAD_RANGE, 0);
 	}
@@ -1316,7 +1316,7 @@ gpfs_lock_op2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	if (FSAL_IS_ERROR(status)) {
 		struct gpfs_file_handle *gfh = container_of(obj_hdl,
 			struct gpfs_fsal_obj_handle, obj_handle)->handle;
-		LogDebug(COMPONENT_FSAL, "Inode involved: %lu, error: %s",
+		LogDebug(COMPONENT_FSAL, "Inode involved: %"PRIu64", error: %s",
 			get_handle2inode(gfh), msg_fsal_err(status.major));
 	}
 	return status;
@@ -1501,7 +1501,7 @@ gpfs_close2(struct fsal_obj_handle *obj_hdl, struct state_t *state)
 	if (FSAL_IS_ERROR(status)) {
 		struct gpfs_file_handle *gfh = container_of(obj_hdl,
 			struct gpfs_fsal_obj_handle, obj_handle)->handle;
-		LogDebug(COMPONENT_FSAL, "Inode involved: %lu, error: %s",
+		LogDebug(COMPONENT_FSAL, "Inode involved: %"PRIu64", error: %s",
 			 get_handle2inode(gfh), msg_fsal_err(status.major));
 	}
 	return status;
