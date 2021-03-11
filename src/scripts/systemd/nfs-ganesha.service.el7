@@ -22,7 +22,6 @@ Conflicts=nfs.target
 Type=forking
 # Let systemd create /run/ganesha, /var/log/ganesha and /var/lib/nfs/ganesha
 # directories
-RuntimeDirectory=ganesha
 LogsDirectory=ganesha
 StateDirectory=nfs/ganesha
 EnvironmentFile=-/run/sysconfig/ganesha

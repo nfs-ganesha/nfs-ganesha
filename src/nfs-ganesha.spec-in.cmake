@@ -563,7 +563,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/logrotate.d
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_sbindir}
 mkdir -p %{buildroot}%{_libdir}/ganesha
-mkdir -p %{buildroot}%{_localstatedir}/run/ganesha
+mkdir -p %{buildroot}%{_rundir}/ganesha
 mkdir -p %{buildroot}%{_localstatedir}/log/ganesha
 mkdir -p %{buildroot}%{_libexecdir}/ganesha
 install -m 644 config_samples/logrotate_ganesha	%{buildroot}%{_sysconfdir}/logrotate.d/ganesha
@@ -660,7 +660,7 @@ killall -SIGHUP dbus-daemon >/dev/null 2>&1 || :
 
 %pre
 getent group ganesha > /dev/null || groupadd -r ganesha
-getent passwd ganesha > /dev/null || useradd -r -g ganesha -d /var/run/ganesha -s /sbin/nologin -c "NFS-Ganesha Daemon" ganesha
+getent passwd ganesha > /dev/null || useradd -r -g ganesha -d %{_rundir}/ganesha -s /sbin/nologin -c "NFS-Ganesha Daemon" ganesha
 exit 0
 
 %preun
@@ -686,7 +686,7 @@ exit 0
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
 %dir %{_sysconfdir}/ganesha/
 %config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
-%dir %{_localstatedir}/run/ganesha
+%dir %attr(0775,ganesha,ganesha) %{_rundir}/ganesha
 %dir %{_libexecdir}/ganesha
 %{_libexecdir}/ganesha/nfs-ganesha-config.sh
 %dir %attr(0775,ganesha,root) %{_localstatedir}/log/ganesha
