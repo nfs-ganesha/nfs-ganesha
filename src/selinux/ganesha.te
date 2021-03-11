@@ -52,6 +52,8 @@ require {
 	type cgroup_t;
 	type usr_t;
 
+	type cluster_t;
+
 	class dbus send_msg;
 }
 
@@ -325,3 +327,10 @@ ifdef(`ceph_read_lib_files',`
                ceph_read_lib_files(ganesha_t)
        ')
 ')
+
+########################################
+#
+# ganesha local policy rhbz#1938050
+
+allow ganesha_t cluster_t:dbus send_msg;
+allow init_t var_lib_nfs_t:lnk_file read;
