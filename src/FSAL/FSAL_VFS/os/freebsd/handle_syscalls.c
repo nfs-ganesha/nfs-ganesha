@@ -126,7 +126,7 @@ int vfs_name_to_handle(int atfd,
 	return error;
 }
 
-int vfs_open_by_handle(struct vfs_filesystem *fs,
+int vfs_open_by_handle(struct fsal_filesystem *fs,
 		       vfs_file_handle_t *fh, int openflags,
 		       fsal_errors_t *fsal_error)
 {
@@ -279,7 +279,7 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 	       (desc->len == vfs_sizeof_handle(hdl));
 }
 
-int vfs_re_index(struct vfs_filesystem *vfs_fs,
+int vfs_re_index(struct fsal_filesystem *fs,
 		 struct vfs_fsal_export *exp)
 {
 	enum fsid_type fsid_type;
@@ -289,13 +289,13 @@ int vfs_re_index(struct vfs_filesystem *vfs_fs,
 
 	vfs_alloc_handle(fh);
 
-	retval = vfs_fd_to_handle(vfs_fs->root_fd, vfs_fs->fs, fh);
+	retval = vfs_fd_to_handle(root_fd(fs), fs, fh);
 
 	if (retval != 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
 			 "Get root handle for %s failed with %s (%d)",
-			 vfs_fs->fs->path, strerror(retval), retval);
+			 fs->path, strerror(retval), retval);
 		goto errout;
 	}
 
@@ -305,12 +305,12 @@ int vfs_re_index(struct vfs_filesystem *vfs_fs,
 	 */
 	(void) vfs_extract_fsid(fh, &fsid_type, &fsid);
 
-	retval = re_index_fs_fsid(vfs_fs->fs, fsid_type, &fsid);
+	retval = re_index_fs_fsid(fs, fsid_type, &fsid);
 
 	if (retval < 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Could not re-index VFS file system fsid for %s",
-			vfs_fs->fs->path);
+			fs->path);
 		retval = -retval;
 	}
 

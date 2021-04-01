@@ -140,6 +140,8 @@ void fsal_export_init(struct fsal_export *exp)
 {
 	memcpy(&exp->exp_ops, &def_export_ops, sizeof(struct export_ops));
 	exp->export_id = op_ctx->ctx_export->export_id;
+	exp->owning_export = op_ctx->ctx_export;
+	glist_init(&exp->filesystems);
 }
 
 /**
@@ -664,33 +666,8 @@ fsal_fs_cmpf_fsid(const struct avltree_node *lhs,
 	lk = avltree_container_of(lhs, struct fsal_filesystem, avl_fsid);
 	rk = avltree_container_of(rhs, struct fsal_filesystem, avl_fsid);
 
-	if (lk->fsid_type < rk->fsid_type)
-		return -1;
-
-	if (lk->fsid_type > rk->fsid_type)
-		return 1;
-
-	if (lk->fsid.major < rk->fsid.major)
-		return -1;
-
-	if (lk->fsid.major > rk->fsid.major)
-		return 1;
-
-	/* No need to compare minors as they should be
-	 * zeros if the type is FSID_MAJOR_64
-	 */
-	if (lk->fsid_type == FSID_MAJOR_64) {
-		assert(rk->fsid_type == FSID_MAJOR_64);
-		return 0;
-	}
-
-	if (lk->fsid.minor < rk->fsid.minor)
-		return -1;
-
-	if (lk->fsid.minor > rk->fsid.minor)
-		return 1;
-
-	return 0;
+	return fsal_fs_compare_fsid(lk->fsid_type, &lk->fsid,
+				    rk->fsid_type, &rk->fsid);
 }
 
 static inline struct fsal_filesystem *
@@ -1045,6 +1022,7 @@ static void posix_create_file_system(struct mntent *mnt, struct stat *mnt_stat)
 	fs->path = gsh_strdup(mnt->mnt_dir);
 	fs->device = gsh_strdup(mnt->mnt_fsname);
 	fs->type = gsh_strdup(mnt->mnt_type);
+	glist_init(&fs->exports);
 
 	if (!posix_get_fsid(fs, mnt_stat)) {
 		free_fs(fs);
@@ -1398,7 +1376,7 @@ int populate_posix_file_systems(const char *path)
 int resolve_posix_filesystem(const char *path,
 			     struct fsal_module *fsal,
 			     struct fsal_export *exp,
-			     claim_filesystem_cb claim,
+			     claim_filesystem_cb claimfs,
 			     unclaim_filesystem_cb unclaim,
 			     struct fsal_filesystem **root_fs)
 {
@@ -1439,7 +1417,7 @@ int resolve_posix_filesystem(const char *path,
 	}
 
 	retval = claim_posix_filesystems(path, fsal, exp,
-					 claim, unclaim, root_fs, &statbuf);
+					 claimfs, unclaim, root_fs, &statbuf);
 
 	return retval;
 }
@@ -1459,6 +1437,8 @@ bool release_posix_file_system(struct fsal_filesystem *fs,
 {
 	bool claimed = false; /* Assume no claimed children. */
 	struct glist_head *glist, *glistn;
+
+	LogFilesystem("TRY RELEASE", "", fs);
 
 	/* Note: Check this file system AFTER we check the descendants, we will
 	 *       thus release any descendants that are not claimed.
@@ -1498,6 +1478,8 @@ bool release_posix_file_system(struct fsal_filesystem *fs,
 				 fs->path);
 		return true;
 	}
+
+	LogFilesystem("REMOVE", "", fs);
 
 	LogInfo(COMPONENT_FSAL,
 		"Removed filesystem %p %s namelen=%d dev=%"PRIu64".%"PRIu64
@@ -1570,58 +1552,234 @@ struct fsal_filesystem *lookup_dev(struct fsal_dev__ *dev)
 	return fs;
 }
 
-void unclaim_fs(struct fsal_filesystem *this)
+const char *str_claim_type(enum claim_type claim_type)
 {
-	/* One call to unclaim resolves all claims to the filesystem */
-	if (this->unclaim != NULL) {
-		LogDebug(COMPONENT_FSAL,
-			 "Have FSAL %s unclaim filesystem %s",
-			 this->fsal->name, this->path);
-		this->unclaim(this);
+	switch (claim_type) {
+	case CLAIM_ALL:
+		return "CLAIM_ALL";
+	case CLAIM_ROOT:
+		return "CLAIM_ROOT";
+	case CLAIM_SUBTREE:
+		return "CLAIM_SUBTREE";
+	case CLAIM_CHILD:
+		return "CLAIM_CHILD";
+	case CLAIM_TEMP:
+		return "CLAIM_TEMP";
+	case CLAIM_NUM:
+		return "CLAIM_NUM";
 	}
 
-	this->fsal = NULL;
-	this->unclaim = NULL;
-	this->exported = false;
-	this->private_data = NULL;
+	return "unknown claim type";
+}
+
+void unclaim_child_map(struct fsal_filesystem_export_map *this)
+{
+	LogFilesystem("UNCLAIM ", "(BEFORE)", this->fs);
+
+	/* Unclaim any child maps */
+	while (!glist_empty(&this->child_maps)) {
+		struct fsal_filesystem_export_map *map;
+
+		map = glist_first_entry(&this->child_maps,
+					struct fsal_filesystem_export_map,
+					on_parent);
+
+		unclaim_child_map(map);
+	}
+
+	LogFilesystem("Unclaim Child Map for Claim Type ",
+		      str_claim_type(this->claim_type),
+		      this->fs);
+
+	/* Remove this file system from mapping */
+	glist_del(&this->on_filesystems);
+	glist_del(&this->on_exports);
+	glist_del(&this->on_parent);
+
+	/* Reduce the claims on the filesystem */
+	--this->fs->claims[this->claim_type];
+	--this->fs->claims[CLAIM_ALL];
+
+	/* Don't actually unclaim from the FSAL if there are claims remaining or
+	 * a temporary claim.
+	 */
+	if (this->fs->claims[CLAIM_ALL] == 0 &&
+	    this->fs->claims[CLAIM_TEMP] == 0) {
+		/* This was the last claim on the filesystem */
+		assert(this->fs->claims[CLAIM_ROOT] == 0);
+		assert(this->fs->claims[CLAIM_SUBTREE] == 0);
+		assert(this->fs->claims[CLAIM_CHILD] == 0);
+
+		if (this->fs->unclaim != NULL) {
+			LogDebug(COMPONENT_FSAL,
+				 "Have FSAL %s unclaim filesystem %s",
+				 this->fs->fsal->name, this->fs->path);
+			this->fs->unclaim(this->fs);
+		}
+
+		this->fs->fsal = NULL;
+		this->fs->unclaim = NULL;
+		this->fs->private_data = NULL;
+	}
+
+	LogFilesystem("UNCLAIM ", "(AFTER)", this->fs);
+
+	/* And free this map */
+	gsh_free(this);
+}
+
+void unclaim_all_filesystem_maps(struct fsal_filesystem *this)
+{
+	while (!glist_empty(&this->exports)) {
+		struct fsal_filesystem_export_map *map;
+
+		map = glist_first_entry(&this->exports,
+					struct fsal_filesystem_export_map,
+					on_exports);
+
+		unclaim_child_map(map);
+	}
+}
+
+void unclaim_all_export_maps(struct fsal_export *exp)
+{
+	PTHREAD_RWLOCK_wrlock(&fs_lock);
+
+	while (!glist_empty(&exp->filesystems)) {
+		struct fsal_filesystem_export_map *map;
+
+		map = glist_first_entry(&exp->filesystems,
+					struct fsal_filesystem_export_map,
+					on_filesystems);
+
+		unclaim_child_map(map);
+	}
+
+	LogFilesystem("ROOT FS", "", exp->root_fs);
+
+	/* Now that we've unclaimed all fsal_fileststem objects, see if we can
+	 * release any. Once we're done with this, any unclaimed file systems
+	 * should be able to be unmounted by the sysadmin (though note that if
+	 * they are sub-mounted in another VFS export, they could become claimed
+	 * by navigation into them). If there are any nested exports, the file
+	 * systems they export will still be claimed. The nested exports will at
+	 * least still be mountable via NFS v3.
+	 */
+	(void) release_posix_file_system(exp->root_fs, UNCLAIM_SKIP);
+
+	PTHREAD_RWLOCK_unlock(&fs_lock);
+}
+
+#define HAS_CHILD_CLAIMS(this) (this->claims[CLAIM_CHILD])
+#define HAS_NON_CHILD_CLAIMS(this) \
+	(this->claims[CLAIM_ROOT] != 0 || this->claims[CLAIM_SUBTREE] != 0)
+
+static inline bool is_path_child(const char *possible_path,
+				 int possible_pathlen,
+				 const char *compare_path,
+				 int compare_pathlen) {
+	/* For a possible_path to represent a child of compare_path:
+	 * possible_pathlen MUST be longer (otherwise it can't be a child
+	 * the portion of possible_path up to compare_pathlen must be the same
+	 * AND the portion of possible_path that compares MUST end with a '/'
+	 *
+	 * Thus /short is NOT a child of /short/longer
+	 * and /some/path is NOT a child of /some/other/path
+	 * and /some/path2 is NOT a child of /some/path
+	 *
+	 * Since the '/' check is simple, check it before comparing strings
+	 */
+	return possible_pathlen > compare_pathlen &&
+	       possible_path[compare_pathlen] == '/' &&
+	       strncmp(possible_path, compare_path, compare_pathlen) == 0;
+}
+
+static inline bool is_filesystem_child(struct fsal_filesystem *fs,
+				       const char *path, int pathlen)
+{
+	return is_path_child(fs->path, fs->pathlen, path, pathlen);
+}
+
+/**
+ * @brief Validate that fs is exported by exp
+ *
+ * @note Must hold fs_lock
+ */
+bool is_filesystem_exported(struct fsal_filesystem *fs,
+			    struct fsal_export *exp)
+{
+	struct glist_head *glist, *glistn;
+	struct fsal_filesystem_export_map *map;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Checking if FileSystem %s belongs to export %"PRIu16,
+		     fs->path, exp->export_id);
+
+	glist_for_each_safe(glist, glistn, &fs->exports) {
+		map = glist_entry(glist,
+				  struct fsal_filesystem_export_map,
+				  on_exports);
+
+		if (map->exp == exp) {
+			/* We found a match! */
+			return true;
+		}
+	}
+
+	LogInfo(COMPONENT_FSAL,
+		 "FileSystem %s does not belong to export %"PRIu16,
+		 fs->path, exp->export_id);
+
+	return false;
 }
 
 int process_claim(const char *path,
 		  int pathlen,
+		  struct fsal_filesystem_export_map *parent_map,
 		  struct fsal_filesystem *this,
 		  struct fsal_module *fsal,
 		  struct fsal_export *exp,
-		  claim_filesystem_cb claim,
+		  claim_filesystem_cb claimfs,
 		  unclaim_filesystem_cb unclaim)
 {
 	struct glist_head *glist;
-	struct fsal_filesystem *fs;
+	struct fsal_filesystem_export_map *map;
 	int retval = 0;
 	bool already_claimed = this->fsal == fsal;
+	enum claim_type claim_type;
+	void *private_data;
+
+	LogFilesystem("PROCESS CLAIM", "", this);
+
+	if (path == NULL)
+		claim_type = CLAIM_CHILD;
+	else if (strcmp(path, this->path) == 0)
+		claim_type = CLAIM_ROOT;
+	else
+		claim_type = CLAIM_SUBTREE;
+
+	/* Either this filesystem must be claimed by a FSAL OR it must not have
+	 * any claims at all.
+	 */
+	assert(this->fsal != NULL || this->claims[CLAIM_ALL] == 0);
 
 	/* Check if the filesystem is already directly exported by some other
 	 * FSAL - note we can only get here is this is the root filesystem for
 	 * the export, once we start processing nested filesystems, we skip
 	 * any that are directly exported.
 	 */
-	if (this->fsal != NULL && this->fsal != fsal && this->exported) {
+	if (this->fsal != fsal && HAS_NON_CHILD_CLAIMS(this)) {
 		LogCrit(COMPONENT_FSAL,
 			"Filesystem %s already exported by FSAL %s for export path %s",
 			this->path, this->fsal->name, path);
 		return EINVAL;
 	}
 
-	/* Check if another FSAL had claimed this file system as a sub-mounted
-	 * file system.
-	 */
-	if (this->fsal != fsal)
-		unclaim_fs(this);
-
-	/* Now claim the file system (we may call claim multiple times */
-	retval = claim(this, exp);
+	/* Now claim the file system (we may call claim multiple times) */
+	retval = claimfs(this, exp, &private_data);
 
 	if (retval == ENXIO) {
-		if (path != NULL) {
+		if (claim_type != CLAIM_CHILD) {
 			LogCrit(COMPONENT_FSAL,
 				"FSAL %s could not to claim root file system %s for export %s",
 				fsal->name, this->path, path);
@@ -1641,6 +1799,9 @@ int process_claim(const char *path,
 		return retval;
 	}
 
+	/* Take a temporary claim to prevent call to unclaim */
+	this->claims[CLAIM_TEMP]++;
+
 	if (already_claimed) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s Repeat Claiming %p %s",
@@ -1651,45 +1812,343 @@ int process_claim(const char *path,
 			fsal->name, this, this->path);
 	}
 
+	LogFullDebug(COMPONENT_FSAL,
+		     "Attempting claim type %s by FSAL %s on filesystem %s",
+		     str_claim_type(claim_type), fsal->name, this->path);
+
+	/* Check for another FSAL holding child claims on this filesystem or
+	 * any child claims held by this FSAL when the new claim is a root claim
+	 */
+	if (HAS_CHILD_CLAIMS(this) &&
+	    (this->fsal != fsal || claim_type == CLAIM_ROOT)) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "FSAL %s trying to claim filesystem %s from FSAL %s",
+			     fsal->name, this->path, this->fsal->name);
+
+		if (claim_type == CLAIM_SUBTREE) {
+			/* Warn about situation where the claim directory
+			 * structure would suggest the other FSAL's child
+			 * claim should co-exist with a subtree claim.
+			 *
+			 * NOTE: this warning could be spurious depending on
+			 *       order of exports. For example, assume two
+			 *       filesystems:
+			 *           /export/fs1
+			 *           /export/fs1/some/path/fs2
+			 *       And the following exports:
+			 *       FSAL_XFS /export/fs1
+			 *       FSAL_VFS /export/fs1/some/path/fs2/another
+			 *       FSAL_VFS /export/fs1/some/path/fs2
+			 *
+			 *       Initially /export/fs1/some/path/fs2 will be
+			 *       claimed for FSAL_XFS as part of the /export/fs1
+			 *       export, but then the FSAL_VFS export
+			 *       /export/fs1/some/path/fs2/another will take it
+			 *       away, but at that point,
+			 *       /export/fs1/some/path/fs2 would still appear to
+			 *       be part of the XFS export, so the LogWarn fires
+			 *       but in fact, the final VFS export of
+			 *       /export/fs1/some/path/fs2 makes it all right.
+			 *       If this bothers someone, put the exports in
+			 *       order of longest/deepest path first...
+			 */
+			LogWarn(COMPONENT_FSAL,
+				"FSAL %s export path %s includes filesystem %s which had a subtree export from FSAL %s - unclaiming filesystem from FSAL %s",
+				fsal->name, path, this->path,
+				this->fsal->name, this->fsal->name);
+		}
+
+		/* Walk the child maps and unclaim them all */
+		unclaim_all_filesystem_maps(this);
+
+		assert(!HAS_CHILD_CLAIMS(this));
+	}
+
+	/* If this is a root claim and there are any child claims (which must
+	 * belong to this FSAL since we already disposed of child claims by
+	 * another FSAL above), unclaim all of them.
+	 */
+	if (claim_type == CLAIM_ROOT && HAS_CHILD_CLAIMS(this)) {
+		/* Walk the child maps and unclaim them all */
+		unclaim_all_filesystem_maps(this);
+	}
+
+	/* At this point, the claims that remain on this filesystem belong
+	 * to this FSAL, the following claims are allowed based on this claim:
+	 *
+	 * root claim: subtree and root claims are allowed
+	 * subtree claim: root, subtree, and child claims are allowed
+	 * child claim: subtree and child claims are allowed
+	 *
+	 * Note that two (or more) root claims ARE allowed as long as the
+	 * exports are differentiated. Multiple subtree claims ARE allowed
+	 * whether they are distinct or are the same directory (in which case
+	 * the exports MUST be differentiated). Multiple parent claims may
+	 * result in multiple child claims however the parent claims MUST be
+	 * the same directory (root or subtree) otherwise the parent claim with
+	 * the shorter path would have the parent claim with the longer path as
+	 * a sub-export, and only the sub-export would export the child
+	 * filesystems.
+	 *
+	 * Because of this, we need to check for overlapping subtree claims
+	 * below and either unclaim the child claims from the shorter path
+	 * or not make child claims when there are child claims from a longer
+	 * path already in existence.
+	 */
+
 	/* Complete the claim */
 	this->fsal = fsal;
 	this->unclaim = unclaim;
+	this->private_data = private_data;
 
-	/* If this was the root of the export, indicate this filesystem is
-	 * directly exported.
-	 */
-	if (path != NULL)
-		this->exported = true;
+	map = gsh_calloc(1, sizeof(*map));
+	map->exp = exp;
+	map->fs = this;
+	map->claim_type = claim_type;
+	glist_init(&map->child_maps);
+
+	if (claim_type == CLAIM_ROOT)
+		exp->root_fs = this;
 
 	/* If this has no children, done */
 	if (glist_empty(&this->children))
-		return 0;
+		goto account;
+
+	/* Now we may need to clean out some child claims on this filesystems
+	 * children. This happens when this export claim is a subtree with a
+	 * longer path that an already existing export claim which could be a
+	 * root or subtree claim.
+	 */
+	if (claim_type == CLAIM_SUBTREE) {
+		/* Look for other claims on this filesystem where this claim is
+		 * a subtree of the other claim. On such claims, look for any
+		 * child filesystems that are mapped by the other claim that
+		 * are children of our subtree. Such child claims must be
+		 * removed (they will become child claims of this claim).
+		 */
+		glist_for_each(glist, &this->exports) {
+			struct glist_head *glist, *glistn;
+			struct fsal_filesystem_export_map *other_map;
+			struct gsh_refstr *map_fullpath;
+			size_t map_pathlen;
+			bool child;
+
+			other_map = glist_entry(
+					glist,
+					struct fsal_filesystem_export_map,
+					on_exports);
+
+			if (glist_empty(&other_map->child_maps)) {
+				/* This map has no child claims under it, so
+				 * skip it.
+				 */
+				continue;
+			}
+
+			map_fullpath = gsh_refstr_get(rcu_dereference(
+				other_map->exp->owning_export->fullpath));
+
+			map_pathlen = strlen(map_fullpath->gr_val);
+
+			/* We're interested in when this claim is a subtree of
+			 * an existing claim, in which case we will take any
+			 * child claims that are without our subtree.
+			 *
+			 * NOTE the order of paths passed to is_path_child is
+			 *      reversed from other uses because we are checking
+			 *      if this claim is a subtree of the map claim.
+			 */
+			child = is_path_child(path, pathlen,
+					      map_fullpath->gr_val,
+					      map_pathlen);
+
+			/* And we're done with the refstr. */
+			gsh_refstr_put(map_fullpath);
+
+			if (!child) {
+				/* Since the map claim is not a subtree of this
+				 * claim, we don't care about it's children. Its
+				 * mapping some other portion of this filesystem
+				 */
+				continue;
+			}
+
+			glist_for_each_safe(glist, glistn,
+					    &other_map->child_maps) {
+				struct fsal_filesystem_export_map *child_map;
+
+				child_map = glist_entry(
+					glist,
+					struct fsal_filesystem_export_map,
+					on_parent);
+
+				if (is_path_child(child_map->fs->path,
+						  child_map->fs->pathlen,
+						  path, pathlen)) {
+					/* filesystem is a child of our
+					 * subtree, now we need to remove this
+					 * map's child_maps on the filesystem.
+					 */
+					unclaim_child_map(child_map);
+				}
+			}
+		}
+	}
 
 	/* Claim the children now */
 	glist_for_each(glist, &this->children) {
-		fs = glist_entry(glist, struct fsal_filesystem, siblings);
-		/* If path is provided, only consider children that are
+		struct fsal_filesystem *child_fs;
+
+		child_fs = glist_entry(glist, struct fsal_filesystem, siblings);
+
+		/* Any child filesystem can not have child claims from another
+		 * FSAL since that FSAL would have to have a claim on this
+		 * filesystem which would conflict with our claim.
+		 *
+		 * Child claims from our FSAL are fine.
+		 */
+		assert(!HAS_NON_CHILD_CLAIMS(child_fs) ||
+		       child_fs->fsal == fsal);
+
+		/* For subtree claims, only consider children that are
 		 * children of the provided directory. This handles the
 		 * case of an export of something other than the root
 		 * of a file system.
 		 */
-		if (path != NULL && (fs->pathlen < pathlen ||
-		    (strncmp(fs->path, path, pathlen) != 0)))
+		if (claim_type == CLAIM_SUBTREE &&
+		    !is_filesystem_child(child_fs, path, pathlen))
 			continue;
 
-		/* Test if this fs is directly exported, if so, no more
-		 * sub-mounted exports.
+		/* Test if the root of this fs is exported, if so, skip it. It
+		 * doesn't matter if the claim is for our FSAL or not.
 		 */
-		if (fs->exported)
+		if (child_fs->claims[CLAIM_ROOT])
 			continue;
 
-		/* Try to claim this child */
-		retval = process_claim(NULL, 0, fs, fsal,
-				       exp, claim, unclaim);
+		/* Test if there are subtree claims from a different FSAL */
+		if (child_fs->claims[CLAIM_SUBTREE] && child_fs->fsal != fsal) {
+			LogWarn(COMPONENT_FSAL,
+				"FSAL %s export path %s includes filesystem %s which has subtree exports from FSAL %s - not exporting it as a child filesystem",
+				fsal->name, path,
+				child_fs->path, child_fs->fsal->name);
+			continue;
+		}
 
-		if (retval != 0)
-			break;
+		/* Now we need to check if there is a claim deeper into this
+		 * filesystem that has a child claim on the child filesystem.
+		 * If so, the filesystem isn't a candidate.
+		 */
+		if (child_fs->claims[CLAIM_CHILD] != 0) {
+			struct glist_head *glist;
+			bool skip = false;
+
+			/* Examine the child claims of the child filesystem to
+			 * determinate if they are held by an export that has
+			 * the same path as ours (in which case we can also
+			 * make child claims) or not (in which case we know
+			 * that export is a subtree of this export and thus
+			 * that export gets the child claims).
+			 */
+			glist_for_each(glist, &child_fs->exports) {
+				struct fsal_filesystem_export_map *other_map;
+				struct gsh_refstr *map_fullpath;
+				size_t map_pathlen;
+
+				other_map = glist_entry(
+					glist,
+					struct fsal_filesystem_export_map,
+					on_exports);
+
+				if (other_map->claim_type == CLAIM_SUBTREE) {
+					/* A subtree claim doesn't block us
+					 * from taking a child claim.
+					 */
+					continue;
+				}
+
+				/* We already skipped the child filesystem if it
+				 * had any root claims on it, so we better not
+				 * find any in the map now... And therefore
+				 * the claim we are now looking at MUST be a
+				 * child claim.
+				 */
+				assert(other_map->claim_type == CLAIM_CHILD);
+
+				map_fullpath = gsh_refstr_get(rcu_dereference(
+				      other_map->exp->owning_export->fullpath));
+
+				map_pathlen = strlen(map_fullpath->gr_val);
+
+				/* Check if the child claim is from an export
+				 * with a matching path or not. If from a path
+				 * that doesn't match, it MUST be a subtree of
+				 * this export's path and therefore we can not
+				 * take child claims. Otherwise since it matches
+				 * child claims will be ok.
+				 */
+				if (map_pathlen != pathlen ||
+				    strcmp(map_fullpath->gr_val, path) != 0) {
+					/* Child claim is from an export that is
+					 * a subtree of this export so indicate
+					 * that we must skip the filesystem.
+					 */
+					skip = true;
+				}
+
+				/* And we're done with the refstr. */
+				gsh_refstr_put(map_fullpath);
+
+				/* Since we've hit a child claim and all child
+				 * claims must be from exports with the same
+				 * path, we know if the path was the same as
+				 * ours (in which case we can take a claim) or
+				 * not.
+				 */
+				break;
+			} /* end of glist_for_each */
+
+			if (skip) {
+				/* There is one or more exports with a path
+				 * that is a subtree of our path that have
+				 * child claims on the filesystem under
+				 * consideration, so we can't claim it.
+				 */
+				continue;
+			}
+		} /* end of if (child_fs->claims[CLAIM_CHILD] != 0) */
+
+		/* Try to claim this child, we dont' care about the return
+		 * it might be a child filesystem this FSAL can't export or
+		 * there might be some other problem, but it shouldn't cause
+		 * failure of the export as a whole.
+		 */
+		(void) process_claim(NULL, 0, map, child_fs, fsal,
+				     exp, claimfs, unclaim);
 	}
+
+account:
+
+	/* Account for the claim */
+	this->claims[claim_type]++;
+	this->claims[CLAIM_ALL]++;
+
+	/* Release the temporary claim */
+	this->claims[CLAIM_TEMP]--;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Completing claim type %s by FSAL %s on filesystem %s",
+		     str_claim_type(claim_type), fsal->name, this->path);
+
+	/* Now that we are done with all that, add this map into this
+	 * filesystem and export (doing this late like this saves looking at it
+	 * in loops above).
+	 */
+	glist_add_tail(&this->exports, &map->on_exports);
+	glist_add_tail(&exp->filesystems, &map->on_filesystems);
+	if (parent_map != NULL)
+		glist_add_tail(&parent_map->child_maps, &map->on_parent);
+
+	LogFilesystem("PROCESS CLAIM FINISHED", "", this);
 
 	return retval;
 }
@@ -1697,7 +2156,7 @@ int process_claim(const char *path,
 int claim_posix_filesystems(const char *path,
 			    struct fsal_module *fsal,
 			    struct fsal_export *exp,
-			    claim_filesystem_cb claim,
+			    claim_filesystem_cb claimfs,
 			    unclaim_filesystem_cb unclaim,
 			    struct fsal_filesystem **root_fs,
 			    struct stat *statbuf)
@@ -1727,8 +2186,8 @@ int claim_posix_filesystems(const char *path,
 	}
 
 	/* Claim this file system and it's children */
-	retval = process_claim(path, strlen(path), root, fsal,
-			       exp, claim, unclaim);
+	retval = process_claim(path, strlen(path), NULL, root, fsal,
+			       exp, claimfs, unclaim);
 
 	if (retval == 0) {
 		LogInfo(COMPONENT_FSAL,

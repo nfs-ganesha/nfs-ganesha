@@ -1084,7 +1084,6 @@ fsal_status_t find_fd(int *fd,
 		      bool open_for_locks)
 {
 	struct vfs_fsal_obj_handle *myself;
-	struct vfs_filesystem *vfs_fs;
 	struct vfs_fd temp_fd = {
 			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, -1 };
 	struct vfs_fd *out_fd = &temp_fd;
@@ -1093,7 +1092,6 @@ fsal_status_t find_fd(int *fd,
 	bool reusing_open_state_fd = false;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
-	vfs_fs = myself->obj_handle.fs->private_data;
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
@@ -1102,7 +1100,7 @@ fsal_status_t find_fd(int *fd,
 	case SOCKET_FILE:
 	case CHARACTER_FILE:
 	case BLOCK_FILE:
-		rc = vfs_open_by_handle(vfs_fs,
+		rc = vfs_open_by_handle(myself->obj_handle.fs,
 					myself->u.unopenable.dir,
 					O_PATH | O_NOACCESS,
 					&status.major);

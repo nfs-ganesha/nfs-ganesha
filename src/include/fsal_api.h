@@ -825,6 +825,24 @@ struct export_ops {
 			  struct fsal_obj_handle *root_obj);
 
 /**
+ * @brief Handle the unmounting of an export.
+ *
+ * This function is called when the export is unmounted.  The FSAL may need
+ * to clean up references to the junction_obj and parent export.
+ *
+ * Specifically, mdcache must remove the export mapping and possibly schedule
+ * the junction node for cleanup (which may be the same node as the unmounted
+ * export's root node).
+ *
+ * The caller is expected to hold a reference to the junction_obj.
+ *
+ * @param[in] parent_exp_hdl	The parent export of the mount.
+ * @param[in] junction_obj	The junction object the export was mounted on
+ */
+	 void (*unmount)(struct fsal_export *parent_exp_hdl,
+			 struct fsal_obj_handle *junction_obj);
+
+/**
  * @brief Finalize an export
  *
  * This function is called as part of cleanup when the last reference to
@@ -1337,8 +1355,35 @@ struct export_ops {
 typedef void (*fsal_async_cb)(struct fsal_obj_handle *obj, fsal_status_t ret,
 			      void *obj_data, void *caller_data);
 
+/** Types of filesystem claims, there can not be both CLAIM_ROOT and CLAIM_CHILD
+ *  for the same filesystem.
+ */
+enum claim_type {
+	/** tyoe used only for counts of all claims */
+	CLAIM_ALL,
+	/** Claim is the root of the file system */
+	CLAIM_ROOT,
+	/** Claim is a subtree of the file system */
+	CLAIM_SUBTREE,
+	/** Claim is due to the parent being claimed */
+	CLAIM_CHILD,
+	/** Temporary claim */
+	CLAIM_TEMP,
+	/** Number of claim types */
+	CLAIM_NUM
+};
+
+/** @brief FSAL method to claim a filesystem
+ *
+ * @param(in)  fs            filesystem to claim
+ * @param(in)  exp           export to claim for
+ * @param(out) private_data  private_data
+ *
+ * @retval errno or 0
+ */
 typedef int (*claim_filesystem_cb)(struct fsal_filesystem *fs,
-				   struct fsal_export *exp);
+				   struct fsal_export *exp,
+				   void **private_data);
 
 typedef void (*unclaim_filesystem_cb)(struct fsal_filesystem *fs);
 
@@ -2922,6 +2967,9 @@ struct fsal_export {
 	struct export_ops exp_ops;	/*< Vector of operations */
 	struct fsal_export *sub_export;	/*< Sub export for stacking */
 	struct fsal_export *super_export;/*< Super export for stacking */
+	struct gsh_export *owning_export; /*< The gsh_export this belongs to */
+	struct fsal_filesystem *root_fs;
+	struct glist_head filesystems;
 	uint16_t export_id; /*< Export ID copied from gsh_export, initialized
 				by  fsal_export_init */
 };
@@ -2943,6 +2991,7 @@ struct fsal_filesystem {
 					    file systems */
 	struct fsal_filesystem *parent;	/*< Parent file system */
 	struct fsal_module *fsal;	/*< Link back to fsal module */
+	struct glist_head exports;	/*< List of all the export maps */
 	void *private_data;		/*< Private data for owning FSAL */
 	char *path;			/*< Path to root of this file system */
 	char *device;			/*< Path to block device */
@@ -2959,7 +3008,22 @@ struct fsal_filesystem {
 	enum fsid_type fsid_type;	/*< type of fsid present */
 	bool in_fsid_avl;		/*< true if inserted in fsid avl */
 	bool in_dev_avl;		/*< true if inserted in dev avl */
-	bool exported;			/*< true if explicitly exported */
+	int claims[CLAIM_NUM];		/*< number of each type of claim */
+};
+
+/*
+ * Link fsal_filesystems and fsal_exports
+ * Supports a many-to-many relationship
+ */
+struct fsal_filesystem_export_map {
+	struct fsal_filesystem_export_map *parent_map;
+	struct fsal_export *exp;
+	struct fsal_filesystem *fs;
+	struct glist_head child_maps;
+	struct glist_head on_parent;
+	struct glist_head on_exports;
+	struct glist_head on_filesystems;
+	enum claim_type claim_type;
 };
 
 /**

@@ -56,16 +56,6 @@
 /* helpers to/from other VFS objects
  */
 
-int vfs_get_root_fd(struct fsal_export *exp_hdl)
-{
-	struct vfs_fsal_export *myself;
-	struct vfs_filesystem *my_root_fs;
-
-	myself = EXPORT_VFS_FROM_FSAL(exp_hdl);
-	my_root_fs = myself->root_fs->private_data;
-	return my_root_fs->root_fd;
-}
-
 /* export object methods
  */
 
@@ -84,12 +74,12 @@ static void release(struct fsal_export *exp_hdl)
 		LogDebug(COMPONENT_FSAL, "Releasing VFS export %"PRIu16
 			 " on filesystem %s",
 			 exp_hdl->export_id,
-			 myself->root_fs->path);
+			 exp_hdl->root_fs->path);
 	}
 
 	vfs_sub_fini(myself);
 
-	vfs_unexport_filesystems(myself);
+	unclaim_all_export_maps(exp_hdl);
 
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
@@ -152,13 +142,10 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       int quota_id,
 			       fsal_quota_t *pquota)
 {
-	struct vfs_fsal_export *myself;
 	struct dqblk fs_quota;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 	int errsv;
-
-	myself = EXPORT_VFS_FROM_FSAL(exp_hdl);
 
 	/** @todo	if we later have a config to disallow crossmnt, check
 	 *		that the quota is in the same file system as export.
@@ -176,7 +163,8 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 	}
 
 	/** @todo need to get the right file system... */
-	retval = QUOTACTL(QCMD(Q_GETQUOTA, quota_type), myself->root_fs->device,
+	retval = QUOTACTL(QCMD(Q_GETQUOTA, quota_type),
+			  exp_hdl->root_fs->device,
 			  quota_id, (caddr_t) &fs_quota);
 	errsv = errno;
 	vfs_restore_ganesha_credentials(exp_hdl->fsal);
@@ -209,13 +197,10 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       int quota_id,
 			       fsal_quota_t *pquota, fsal_quota_t *presquota)
 {
-	struct vfs_fsal_export *myself;
 	struct dqblk fs_quota;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval;
 	int errsv;
-
-	myself = EXPORT_VFS_FROM_FSAL(exp_hdl);
 
 	/** @todo	if we later have a config to disallow crossmnt, check
 	 *		that the quota is in the same file system as export.
@@ -257,7 +242,8 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 	}
 
 	/** @todo need to get the right file system... */
-	retval = QUOTACTL(QCMD(Q_SETQUOTA, quota_type), myself->root_fs->device,
+	retval = QUOTACTL(QCMD(Q_SETQUOTA, quota_type),
+			  exp_hdl->root_fs->device,
 			  quota_id, (caddr_t) &fs_quota);
 	errsv = errno;
 	vfs_restore_ganesha_credentials(exp_hdl->fsal);
@@ -319,27 +305,19 @@ void vfs_export_ops_init(struct export_ops *ops)
 	ops->free_state = vfs_free_state;
 }
 
-void free_vfs_filesystem(struct vfs_filesystem *vfs_fs)
+int vfs_claim_filesystem(struct fsal_filesystem *fs,
+			 struct fsal_export *exp,
+			 void **private_data)
 {
-	if (vfs_fs->root_fd >= 0)
-		close(vfs_fs->root_fd);
-	gsh_free(vfs_fs);
-}
-
-int vfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
-{
-	struct vfs_filesystem *vfs_fs = fs->private_data;
-	int retval;
+	int retval = 0, fd = root_fd(fs);
 	struct vfs_fsal_export *myself;
-	struct vfs_filesystem_export_map *map;
+
+	LogFilesystem("VFS CLAIM FS", "", fs);
 
 	myself = EXPORT_VFS_FROM_FSAL(exp);
 
-	map = gsh_calloc(1, sizeof(*map));
-
 	if (fs->fsal != NULL) {
-		vfs_fs = fs->private_data;
-		if (vfs_fs == NULL) {
+		if (fd <= 0) {
 			LogCrit(COMPONENT_FSAL,
 				"Something wrong with export, fs %s appears already claimed but doesn't have private data",
 				fs->path);
@@ -350,14 +328,7 @@ int vfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 		goto already_claimed;
 	}
 
-	vfs_fs = gsh_calloc(1, sizeof(*vfs_fs));
-
-	glist_init(&vfs_fs->exports);
-	vfs_fs->root_fd = -1;
-
-	vfs_fs->fs = fs;
-
-	retval = vfs_get_root_handle(vfs_fs, myself);
+	retval = vfs_get_root_handle(fs, myself, &fd);
 
 	if (retval != 0) {
 		if (retval == ENOTTY) {
@@ -369,121 +340,25 @@ int vfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 		goto errout;
 	}
 
-	fs->private_data = vfs_fs;
-
 already_claimed:
 
-	/* Now map the file system and export */
-	map->fs = vfs_fs;
-	map->exp = myself;
-	glist_add_tail(&vfs_fs->exports, &map->on_exports);
-	glist_add_tail(&myself->filesystems, &map->on_filesystems);
-
-	return 0;
+	*private_data = (void *) (long int) fd;
 
 errout:
-
-	gsh_free(map);
-
-	if (vfs_fs != NULL)
-		free_vfs_filesystem(vfs_fs);
 
 	return retval;
 }
 
 void vfs_unclaim_filesystem(struct fsal_filesystem *fs)
 {
-	struct vfs_filesystem *vfs_fs = fs->private_data;
-	struct glist_head *glist, *glistn;
-	struct vfs_filesystem_export_map *map;
+	LogFilesystem("VFS UNCLAIM FS", "", fs);
 
-	if (vfs_fs != NULL) {
-		glist_for_each_safe(glist, glistn, &vfs_fs->exports) {
-			map = glist_entry(glist,
-					  struct vfs_filesystem_export_map,
-					  on_exports);
-
-			/* Remove this file system from mapping */
-			glist_del(&map->on_filesystems);
-			glist_del(&map->on_exports);
-
-			if (map->exp->root_fs == fs) {
-				LogInfo(COMPONENT_FSAL,
-					"Removing root_fs %s from VFS export",
-					fs->path);
-			}
-
-			/* And free it */
-			gsh_free(map);
-		}
-
-		free_vfs_filesystem(vfs_fs);
-	}
+	if (root_fd(fs) > 0)
+		close(root_fd(fs));
 
 	LogInfo(COMPONENT_FSAL,
 		"VFS Unclaiming %s",
 		fs->path);
-}
-
-void vfs_unexport_filesystems(struct vfs_fsal_export *exp)
-{
-	struct vfs_filesystem_export_map *map;
-
-	PTHREAD_RWLOCK_wrlock(&fs_lock);
-
-	do {
-		map = glist_first_entry(&exp->filesystems,
-					struct vfs_filesystem_export_map,
-					on_filesystems);
-		if (map == NULL) {
-			break;
-		}
-
-		/* Remove this file system from mapping */
-		glist_del(&map->on_filesystems);
-		glist_del(&map->on_exports);
-
-		if (glist_empty(&map->fs->exports)) {
-			struct fsal_filesystem *fs = map->fs->fs;
-
-			/* No other VFS exports use this file system, unclaim
-			 * it, release any unclaimed file systems later.
-			 *
-			 * Note that we can NOT use unclaim_fs or
-			 * vfs_unclaim_filesystem since the map is used there
-			 * also.
-			 */
-			LogInfo(COMPONENT_FSAL,
-				"VFS Unclaiming %s",
-				fs->path);
-
-			/* Unclaim the fsal_filesystem */
-			fs->fsal = NULL;
-			fs->unclaim = NULL;
-			fs->exported = false;
-			fs->private_data = NULL;
-
-			/* And free the vfs_filesystem (and close the fs open on
-			 * the root of the fs that we use for open_by_handle).
-			 */
-			free_vfs_filesystem(map->fs);
-		}
-
-		/* And free the map entry */
-		gsh_free(map);
-	} while (true);
-
-	/* Now that we've unclaimed all fsal_fileststem objects, see if we can
-	 * release any. Once we're done with this, any unclaimed file systems
-	 * should be able to be unmounted by the sysadmin (though note that if
-	 * they are sub-mounted in another VFS export, they could become claimed
-	 * by navigation into them). If there are any nested exports, the file
-	 * systems they export will still be claimed. The nested exports will at
-	 * least still be mountable via NFS v3.
-	 */
-	(void) release_posix_file_system(exp->root_fs, UNCLAIM_SKIP);
-
-	PTHREAD_RWLOCK_unlock(&fs_lock);
 }
 
 /* create_export
@@ -505,8 +380,6 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	vfs_state_init();
 
 	myself = gsh_calloc(1, sizeof(struct vfs_fsal_export));
-
-	glist_init(&myself->filesystems);
 
 	fsal_export_init(&myself->export);
 	vfs_export_ops_init(&myself->export.exp_ops);
@@ -533,7 +406,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 					  fsal_hdl, &myself->export,
 					  vfs_claim_filesystem,
 					  vfs_unclaim_filesystem,
-					  &myself->root_fs);
+					  &myself->export.root_fs);
 
 	if (retval != 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -557,7 +430,7 @@ fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 err_cleanup:
-	vfs_unexport_filesystems(myself);
+	unclaim_all_export_maps(&myself->export);
 	fsal_detach_export(fsal_hdl, &myself->export.exports);
 err_free:
 	free_export_ops(&myself->export);

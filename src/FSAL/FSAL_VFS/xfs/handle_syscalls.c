@@ -126,7 +126,7 @@ static int xfs_fsal_inode2handle(int fd, ino_t ino, vfs_file_handle_t *fh)
 	return 0;
 }
 
-int vfs_open_by_handle(struct vfs_filesystem *fs,
+int vfs_open_by_handle(struct fsal_filesystem *fs,
 		       vfs_file_handle_t *fh, int openflags,
 		       fsal_errors_t *fsal_error)
 {
@@ -370,12 +370,12 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 				       sizeof(hdl->ha_fid.fid_len));
 }
 
-int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
-			struct vfs_fsal_export *exp)
+int vfs_get_root_handle(struct fsal_filesystem *fs,
+			struct vfs_fsal_export *exp,
+			int *root_fd)
 {
 	enum fsid_type fsid_type;
 	struct fsal_fsid__ fsid;
-	int fd;
 	int retval;
 	void *data;
 	size_t sz;
@@ -383,31 +383,31 @@ int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
 
 	vfs_alloc_handle(fh);
 
-	if (path_to_fshandle(vfs_fs->fs->path, &data, &sz) < 0) {
+	if (path_to_fshandle(fs->path, &data, &sz) < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
 			 "Export root %s could not be established for XFS error %s",
-			 vfs_fs->fs->path, strerror(retval));
+			 fs->path, strerror(retval));
 		return retval;
 	}
 
-	fd = open(vfs_fs->fs->path, O_RDONLY | O_DIRECTORY);
+	*root_fd = open(fs->path, O_RDONLY | O_DIRECTORY);
 
-	if (fd < 0) {
+	if (*root_fd < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
 			 "Could not open XFS mount point %s: rc = %s (%d)",
-			 vfs_fs->fs->path, strerror(retval), retval);
+			 fs->path, strerror(retval), retval);
 		return retval;
 	}
 
-	retval = vfs_fd_to_handle(fd, vfs_fs->fs, fh);
+	retval = vfs_fd_to_handle(*root_fd, fs, fh);
 
 	if (retval != 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
 			 "Get root handle for %s failed with %s (%d)",
-			 vfs_fs->fs->path, strerror(retval), retval);
+			 fs->path, strerror(retval), retval);
 		goto errout;
 	}
 
@@ -417,18 +417,20 @@ int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
 	 */
 	(void) vfs_extract_fsid(fh, &fsid_type, &fsid);
 
-	retval = re_index_fs_fsid(vfs_fs->fs, fsid_type, &fsid);
+	retval = re_index_fs_fsid(fs, fsid_type, &fsid);
 
 	if (retval < 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Could not re-index XFS file system fsid for %s",
-			vfs_fs->fs->path);
+			fs->path);
 		retval = -retval;
 	}
 
 errout:
 
-	close(fd);
+	close(*root_fd);
+
+	*root_fd = -1;
 
 	return retval;
 }

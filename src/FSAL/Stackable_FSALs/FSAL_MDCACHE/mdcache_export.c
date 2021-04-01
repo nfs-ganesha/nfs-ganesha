@@ -134,6 +134,9 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 
 		if (FSAL_IS_ERROR(status)) {
 			/* Entry was stale; skip it */
+			LogFullDebug(COMPONENT_EXPORT,
+				     "Error %s on entry %p",
+				     msg_fsal_err(status.major), entry);
 			continue;
 		}
 
@@ -194,6 +197,109 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 	 *       (if it was not used by another export) in the loop since it is
 	 *       an entry that belongs to the export.
 	 */
+}
+
+/**
+ * @brief Handle the unmounting of an export.
+ *
+ * This function is called when the export is unmounted.  The FSAL may need
+ * to clean up references to the root_obj and junction_obj and connections
+ * between them.
+ *
+ * Specifically, mdcache must remove the export mapping and schedule for
+ * cleanup the junction node (which may be the same node as the unmounted
+ * export's root node).
+ *
+ * @param[in] parent_exp_hdl	The parent export of the mount.
+ * @param[in] junction_obj	The junction object the export was mounted on
+ */
+static void mdcache_unmount(struct fsal_export *parent_exp_hdl,
+			    struct fsal_obj_handle *junction_obj)
+{
+	struct mdcache_fsal_export *exp = mdc_export(parent_exp_hdl);
+	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
+	mdcache_entry_t *entry = container_of(junction_obj, mdcache_entry_t,
+					      obj_handle);
+	struct glist_head *glist;
+	struct entry_export_map *expmap = NULL;
+
+	/* Take locks to perform unmap. Must get attr_lock before mdc_exp_lock
+	 */
+	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
+	PTHREAD_RWLOCK_wrlock(&exp->mdc_exp_lock);
+
+	glist_for_each(glist, &entry->export_list) {
+		expmap = glist_entry(glist,
+				     struct entry_export_map,
+				     export_per_entry);
+
+		if (expmap->exp == exp) {
+			/* Found it. */
+			break;
+		}
+
+		/* Not this one... */
+		expmap = NULL;
+	}
+
+	if (expmap == NULL) {
+		LogFatal(COMPONENT_EXPORT,
+			 "export map not found for export %p",
+			 parent_exp_hdl);
+	}
+
+	/* Next, clean up junction cache entry on the export */
+	LogDebug(COMPONENT_EXPORT,
+		 "About to unmap junction entry %p and possibly free it",
+		 entry);
+
+	/* Now remove the export map */
+	mdc_remove_export_map(expmap);
+
+	/* And look at the export map for the junction entry now */
+	expmap = glist_first_entry(&entry->export_list,
+				   struct entry_export_map,
+				   export_per_entry);
+
+	if (expmap == NULL) {
+		/* Entry is unmapped, clear first_export_id.  This is to
+		 * close a race caused by lru_run_lane() taking a ref
+		 * before we call mdcache_lru_cleanup_try_push() below.
+		 * */
+		atomic_store_int32_t(&entry->first_export_id, -1);
+
+		/* We must not hold entry->attr_lock across
+		 * try_cleanup_push (LRU lane lock order) */
+		PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+		LogFullDebug(COMPONENT_EXPORT,
+			     "Disposing of entry %p",
+			     entry);
+
+		/* There are no exports referencing this entry, attempt
+		 * to push it to cleanup queue. Note that if the export
+		 * root is in fact only used by one export, it will
+		 * be unhashed here.
+		 */
+		mdcache_lru_cleanup_try_push(entry);
+	} else {
+		/* Make sure first export pointer is still valid */
+		atomic_store_int32_t(
+			&entry->first_export_id,
+			(int32_t) expmap->exp->mfe_exp.export_id);
+
+		PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
+		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+		LogFullDebug(COMPONENT_EXPORT,
+			     "entry %p is still exported by export id %d",
+			     entry, expmap->exp->mfe_exp.export_id);
+	}
+
+	/* Last unmount for the sub-FSAL */
+	subcall_raw(exp,
+		sub_export->exp_ops.unmount(sub_export, entry->sub_handle)
+	);
 }
 
 /**
@@ -860,6 +966,7 @@ void mdcache_export_ops_init(struct export_ops *ops)
 	ops->get_name = mdcache_get_name;
 	ops->prepare_unexport = mdcache_prepare_unexport;
 	ops->unexport = mdcache_unexport;
+	ops->unmount = mdcache_unmount;
 	ops->release = mdcache_exp_release;
 	ops->lookup_path = mdcache_lookup_path;
 	/* lookup_junction unimplemented because deprecated */

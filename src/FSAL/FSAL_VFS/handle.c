@@ -58,9 +58,8 @@ int vfs_fsal_open(struct vfs_fsal_obj_handle *hdl,
 		  int openflags,
 		  fsal_errors_t *fsal_error)
 {
-	struct vfs_filesystem *vfs_fs = hdl->obj_handle.fs->private_data;
-
-	return vfs_open_by_handle(vfs_fs, hdl->handle, openflags, fsal_error);
+	return vfs_open_by_handle(hdl->obj_handle.fs, hdl->handle,
+				  openflags, fsal_error);
 }
 
 /**
@@ -259,8 +258,6 @@ static fsal_status_t check_filesystem(struct vfs_fsal_obj_handle *parent_hdl,
 	fsal_dev_t dev;
 	struct fsal_filesystem *fs = NULL;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct vfs_fsal_export *myexp_hdl =
-	    container_of(op_ctx->fsal_export, struct vfs_fsal_export, export);
 
 again:
 
@@ -288,6 +285,8 @@ again:
 	dev = posix2fsal_devt(stat->st_dev);
 
 	fs = parent_hdl->obj_handle.fs;
+
+	LogFilesystem("Parent", "", fs);
 
 	if ((dev.minor == parent_hdl->dev.minor) &&
 	    (dev.major == parent_hdl->dev.major)) {
@@ -334,6 +333,8 @@ again:
 		}
 	}
 
+	LogFilesystem("XDEV", "", fs);
+
 	if (fs->fsal == NULL) {
 		/* The filesystem wasn't claimed, it must have been added after
 		 * we created this export. Go ahead and try to get it claimed.
@@ -347,7 +348,7 @@ again:
 						 op_ctx->fsal_export,
 						 vfs_claim_filesystem,
 						 vfs_unclaim_filesystem,
-						 &myexp_hdl->root_fs,
+						 &op_ctx->fsal_export->root_fs,
 						 stat);
 
 		if (retval != 0) {
@@ -501,6 +502,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			"Parent handle is not a directory. hdl = 0x%p", parent);
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
+
+	LogFilesystem("About to check FSALs", "", parent->fs);
 
 	if (parent->fsal != parent->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
@@ -1532,7 +1535,6 @@ struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 	struct closefd cfd = { .fd = -1, .close_fd = false };
 	int retval = 0;
 	const char *func = "unknown";
-	struct vfs_filesystem *vfs_fs = myself->obj_handle.fs->private_data;
 	int open_flags;
 
 	fsal2posix_openflags(flags, &open_flags);
@@ -1541,7 +1543,7 @@ struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
 	case SOCKET_FILE:
 	case CHARACTER_FILE:
 	case BLOCK_FILE:
-		cfd.fd = vfs_open_by_handle(vfs_fs,
+		cfd.fd = vfs_open_by_handle(myself->obj_handle.fs,
 					    myself->u.unopenable.dir,
 					    O_PATH | O_NOACCESS,
 					    fsal_error);
@@ -1952,6 +1954,7 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 	int retval = 0;
 	struct fsal_fsid__ fsid;
 	enum fsid_type fsid_type;
+	bool fslocked = false;
 
 	*fs = NULL;
 
@@ -1965,8 +1968,27 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 
 	retval = vfs_extract_fsid(fh, &fsid_type, &fsid);
 
+
 	if (retval == 0) {
-		*fs = lookup_fsid(&fsid, fsid_type);
+		/* Since the root_fs is the most likely one, and it can't
+		 * change, we can check without locking.
+		 */
+		if (fsal_fs_compare_fsid(fsid_type,
+					 &fsid,
+					 exp_hdl->root_fs->fsid_type,
+					 &exp_hdl->root_fs->fsid) == 0) {
+			/* This is the root_fs of the export, all good. */
+			*fs = exp_hdl->root_fs;
+		} else {
+			/* Must lookup fs and check that it is exported by
+			 * the export.
+			 */
+			PTHREAD_RWLOCK_rdlock(&fs_lock);
+			fslocked = true;
+
+			*fs = lookup_fsid_locked(&fsid, fsid_type);
+		}
+
 		if (*fs == NULL) {
 			LogInfo(COMPONENT_FSAL,
 				"Could not map fsid=0x%016"PRIx64
@@ -1976,12 +1998,24 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 			fsal_error = posix2fsal_error(retval);
 			goto errout;
 		}
+
 		if (((*fs)->fsal != exp_hdl->fsal) && !(*dummy)) {
 			LogInfo(COMPONENT_FSAL,
 				"fsid=0x%016"PRIx64".0x%016"PRIx64
 				" in handle not a %s filesystem",
 				fsid.major, fsid.minor,
 				exp_hdl->fsal->name);
+			retval = ESTALE;
+			fsal_error = posix2fsal_error(retval);
+			goto errout;
+		}
+
+		/* If we had to lookup fs, then we must check that it is
+		 * exported by the export.
+		 */
+		if (fslocked && !(*dummy) &&
+		    !is_filesystem_exported(*fs, exp_hdl)) {
+			/* We've got a handle with a spoofed fsid/export_id */
 			retval = ESTALE;
 			fsal_error = posix2fsal_error(retval);
 			goto errout;
@@ -1999,6 +2033,8 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 	}
 
  errout:
+	if (fslocked)
+		PTHREAD_RWLOCK_unlock(&fs_lock);
 	return fsalstat(fsal_error, retval);
 }
 
@@ -2043,8 +2079,7 @@ fsal_status_t vfs_create_handle(struct fsal_export *exp_hdl,
 		fd = -1;
 		retval = stat(fs->path, &obj_stat);
 	} else {
-		fd = vfs_open_by_handle(fs->private_data, fh, flags,
-					&fsal_error);
+		fd = vfs_open_by_handle(fs, fh, flags, &fsal_error);
 
 		if (fd < 0) {
 			#ifdef __FreeBSD__

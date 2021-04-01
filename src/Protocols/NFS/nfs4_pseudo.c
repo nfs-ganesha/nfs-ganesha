@@ -424,9 +424,10 @@ bool pseudo_mount_export(struct gsh_export *export)
 		       strlen(CTX_PSEUDOPATH(op_ctx)) + 1;
 
 	LogDebug(COMPONENT_EXPORT,
-		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s Rest %s",
+		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s Rest %s Mounted on ID %d Path %s",
 		 export->export_id, state.st_fullpath,
-		 state.st_pseudopath, rest);
+		 state.st_pseudopath, rest,
+		 op_ctx->ctx_export->export_id, CTX_PSEUDOPATH(op_ctx));
 
 	/* Get the root inode of the mounted on export */
 	fsal_status = nfs_export_get_root_entry(op_ctx->ctx_export, &state.obj);
@@ -640,6 +641,22 @@ void pseudo_unmount_export(struct gsh_export *export)
 
 		gsh_free(pseudo_path);
 		release_op_context();
+	} else {
+		/* Get a ref to the mounted_on_export and initialize op_context
+		 */
+		get_gsh_export_ref(mounted_on_export);
+		init_op_context(&op_context, mounted_on_export,
+				mounted_on_export->fsal_export, NULL,
+				NFS_V4, 0, NFS_REQUEST);
+
+		/* Properly unmount at the FSAL layer - primarily this will
+		 * allow mdcache to unmap the junction inode from the parent
+		 * export.
+		 */
+		mounted_on_export->fsal_export->exp_ops.unmount(
+			mounted_on_export->fsal_export, junction_inode);
+
+		release_op_context();
 	}
 
 	/* Release our reference to the export we are mounted on. */
@@ -647,6 +664,9 @@ void pseudo_unmount_export(struct gsh_export *export)
 
 	/* Release the LRU reference */
 	junction_inode->obj_ops->put_ref(junction_inode);
+
+	LogFullDebug(COMPONENT_EXPORT,
+		     "Finish unexport %s", ref_pseudopath->gr_val);
 
 	gsh_refstr_put(ref_pseudopath);
 }

@@ -262,19 +262,19 @@ int vfs_map_name_to_handle_at(int fd,
 	return 0;
 }
 
-int vfs_open_by_handle(struct vfs_filesystem *vfs_fs,
+int vfs_open_by_handle(struct fsal_filesystem *fs,
 		       vfs_file_handle_t *fh, int openflags,
 		       fsal_errors_t *fsal_error)
 {
 	struct file_handle *kernel_fh;
-	uint8_t handle_cursor = sizeof_fsid(vfs_fs->fs->fsid_type) + 1;
+	uint8_t handle_cursor = sizeof_fsid(fs->fsid_type) + 1;
 	int16_t i16;
 	int32_t i32;
 	int fd;
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "vfs_fs = %s root_fd = %d",
-		     vfs_fs->fs->path, vfs_fs->root_fd);
+		     fs->path, root_fd(fs));
 
 	LogVFSHandle(fh);
 
@@ -312,7 +312,7 @@ int vfs_open_by_handle(struct vfs_filesystem *vfs_fs,
 	       fh->handle_data + handle_cursor,
 	       kernel_fh->handle_bytes);
 
-	fd = open_by_handle_at(vfs_fs->root_fd, kernel_fh, openflags);
+	fd = open_by_handle_at(root_fd(fs), kernel_fh, openflags);
 
 out:
 	if (fd < 0) {
@@ -481,7 +481,7 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 	return true;
 }
 
-int vfs_re_index(struct vfs_filesystem *vfs_fs,
+int vfs_re_index(struct fsal_filesystem *fs,
 		 struct vfs_fsal_export *exp)
 {
 	return 0;

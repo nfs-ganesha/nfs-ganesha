@@ -308,13 +308,22 @@ static void export_prepare_unexport(struct fsal_export *exp_hdl)
 	/* return */
 }
 
-
 /* export_unexport
  * Nothing to do in the default case
  */
 
 static void export_unexport(struct fsal_export *exp_hdl,
 			    struct fsal_obj_handle *root_obj)
+{
+	/* return */
+}
+
+/* export_unmount
+ * Nothing to do in the default case
+ */
+
+static void export_unmount(struct fsal_export *parent_exp_hdl,
+			   struct fsal_obj_handle *junction_obj)
 {
 	/* return */
 }
@@ -713,6 +722,7 @@ struct export_ops def_export_ops = {
 	.get_name = get_name,
 	.prepare_unexport = export_prepare_unexport,
 	.unexport = export_unexport,
+	.unmount = export_unmount,
 	.release = export_release,
 	.lookup_path = lookup_path,
 	.lookup_junction = lookup_junction,

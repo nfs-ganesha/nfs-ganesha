@@ -469,7 +469,9 @@ errout:
  *  @param exp FSAL export
  *  @return 0(zero) on success, otherwise error.
  */
-int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
+int gpfs_claim_filesystem(struct fsal_filesystem *fs,
+			  struct fsal_export *exp,
+			  void **private_data)
 {
 	struct gpfs_filesystem *gpfs_fs;
 	int retval;
@@ -565,7 +567,7 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp)
 		goto errout;
 	}
 
-	fs->private_data = gpfs_fs;
+	*private_data = gpfs_fs;
 
 	return 0;
 
@@ -669,7 +671,7 @@ void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp)
 			LogInfo(COMPONENT_FSAL,
 				"GPFS is no longer exporting filesystem %s",
 				map->fs->fs->path);
-			unclaim_fs(map->fs->fs);
+			//unclaim_fs(map->fs->fs);
 		}
 
 		/* And free it */

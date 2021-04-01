@@ -101,7 +101,7 @@ fsal_status_t check_hsm_by_fd(int fd)
 	hur->hur_user_item[0].hui_fid = fid;
 	hur->hur_user_item[0].hui_extent.offset = 0; /*file from start*/
 	hur->hur_user_item[0].hui_extent.length = -1; /*whole file*/
-	rc = llapi_hsm_request(vfs_export->root_fs->path, hur);
+	rc = llapi_hsm_request(op_ctx->fsal_export->root_fs->path, hur);
 	if (rc) {
 		LogEvent(COMPONENT_FSAL,
 			 "Error requesting a restore : %s",

@@ -37,7 +37,6 @@
 
 struct vfs_fsal_obj_handle;
 struct vfs_fsal_export;
-struct vfs_filesystem;
 
 /*
  * VFS internal module
@@ -53,8 +52,6 @@ struct vfs_fsal_module {
  */
 struct vfs_fsal_export {
 	struct fsal_export export;
-	struct fsal_filesystem *root_fs;
-	struct glist_head filesystems;
 	int fsid_type;
 	bool async_hsm_restore;
 };
@@ -62,39 +59,30 @@ struct vfs_fsal_export {
 #define EXPORT_VFS_FROM_FSAL(fsal) \
 	container_of((fsal), struct vfs_fsal_export, export)
 
-/*
- * VFS internal filesystem
- */
-struct vfs_filesystem {
-	struct fsal_filesystem *fs;
-	int root_fd;
-	struct glist_head exports;
-};
-
-/*
- * Link VFS file systems and exports
- * Supports a many-to-many relationship
- */
-struct vfs_filesystem_export_map {
-	struct vfs_fsal_export *exp;
-	struct vfs_filesystem *fs;
-	struct glist_head on_exports;
-	struct glist_head on_filesystems;
-};
-
-void vfs_unexport_filesystems(struct vfs_fsal_export *exp);
-
 /* private helpers from export
  */
 
 void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 
-int vfs_get_root_fd(struct fsal_export *exp_hdl);
+static inline int root_fd(struct fsal_filesystem *fs)
+{
+	int fd = (long int) fs->private_data;
+
+	return fd;
+}
+
+static inline int vfs_get_root_fd(struct fsal_export *exp_hdl)
+{
+	return root_fd(exp_hdl->root_fs);
+}
 
 /* Internal VFS method linkage to export object
  */
 
-int vfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp);
+int vfs_claim_filesystem(struct fsal_filesystem *fs,
+			 struct fsal_export *exp,
+			 void **private_data);
+
 void vfs_unclaim_filesystem(struct fsal_filesystem *fs);
 
 fsal_status_t vfs_create_export(struct fsal_module *fsal_hdl,
@@ -212,7 +200,7 @@ int vfs_name_to_handle(int atfd,
 		       const char *name,
 		       vfs_file_handle_t *fh);
 
-int vfs_open_by_handle(struct vfs_filesystem *fs,
+int vfs_open_by_handle(struct fsal_filesystem *fs,
 		       vfs_file_handle_t *fh, int openflags,
 		       fsal_errors_t *fsal_error);
 
@@ -236,10 +224,11 @@ int vfs_extract_fsid(vfs_file_handle_t *fh,
 		     enum fsid_type *fsid_type,
 		     struct fsal_fsid__ *fsid);
 
-int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
-			struct vfs_fsal_export *exp);
+int vfs_get_root_handle(struct fsal_filesystem *fs,
+			struct vfs_fsal_export *exp,
+			int *root_fd);
 
-int vfs_re_index(struct vfs_filesystem *vfs_fs,
+int vfs_re_index(struct fsal_filesystem *fs,
 		 struct vfs_fsal_export *exp);
 
 /*

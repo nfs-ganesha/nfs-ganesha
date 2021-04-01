@@ -94,12 +94,64 @@ void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds);
 
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat);
 
+static inline int fsal_fs_compare_fsid(enum fsid_type left_fsid_type,
+				       const struct fsal_fsid__ *left_fsid,
+				       enum fsid_type right_fsid_type,
+				       const struct fsal_fsid__ *right_fsid)
+{
+	if (left_fsid_type < right_fsid_type)
+		return -1;
+
+	if (left_fsid_type > right_fsid_type)
+		return 1;
+
+	if (left_fsid->major < right_fsid->major)
+		return -1;
+
+	if (left_fsid->major > right_fsid->major)
+		return 1;
+
+	/* No need to compare minors as they should be
+	 * zeros if the type is FSID_MAJOR_64
+	 */
+	if (left_fsid_type == FSID_MAJOR_64) {
+		assert(right_fsid_type == FSID_MAJOR_64);
+		return 0;
+	}
+
+	if (left_fsid->minor < right_fsid->minor)
+		return -1;
+
+	if (left_fsid->minor > right_fsid->minor)
+		return 1;
+
+	return 0;
+}
+
 extern struct avltree avl_fsid;
 extern struct avltree avl_dev;
 
 extern struct glist_head posix_file_systems;
 
 extern pthread_rwlock_t fs_lock;
+
+#define LogFilesystem(cmt, cmt2, fs) \
+	LogFullDebug(COMPONENT_FSAL, \
+		     "%s%s FS %p %s parent %p %s children? %s siblings? %s " \
+		     "FSAL %s exports? %s private %p " \
+		     "claims ALL %d ROOT %d SUBTREE %d CHILD %d TEMP %d", \
+		     (cmt), (cmt2), (fs), (fs)->path, (fs)->parent, \
+		     (fs)->parent ? (fs)->parent->path : "NONE", \
+		     glist_empty(&(fs)->children) ? "NO" : "YES", \
+		     glist_null(&(fs)->siblings) ? "NO" : "YES", \
+		     (fs)->fsal ? (fs)->fsal->name : "NONE", \
+		     glist_empty(&(fs)->exports) ? "NO" : "YES", \
+		     (fs)->private_data, \
+		     (fs)->claims[CLAIM_ALL], \
+		     (fs)->claims[CLAIM_ROOT], \
+		     (fs)->claims[CLAIM_SUBTREE], \
+		     (fs)->claims[CLAIM_CHILD], \
+		     (fs)->claims[CLAIM_TEMP])
 
 void free_fs(struct fsal_filesystem *fs);
 
@@ -108,7 +160,7 @@ int populate_posix_file_systems(const char *path);
 int resolve_posix_filesystem(const char *path,
 			     struct fsal_module *fsal,
 			     struct fsal_export *exp,
-			     claim_filesystem_cb claim,
+			     claim_filesystem_cb claimfs,
 			     unclaim_filesystem_cb unclaim,
 			     struct fsal_filesystem **root_fs);
 
@@ -139,12 +191,10 @@ struct fsal_filesystem *lookup_fsid(struct fsal_fsid__ *fsid,
 				    enum fsid_type fsid_type);
 struct fsal_filesystem *lookup_dev(struct fsal_dev__ *dev);
 
-void unclaim_fs(struct fsal_filesystem *this);
-
 int claim_posix_filesystems(const char *path,
 			    struct fsal_module *fsal,
 			    struct fsal_export *exp,
-			    claim_filesystem_cb claim,
+			    claim_filesystem_cb claimfs,
 			    unclaim_filesystem_cb unclaim,
 			    struct fsal_filesystem **root_fs,
 			    struct stat *statbuf);
@@ -158,6 +208,11 @@ int decode_fsid(char *buf,
 		int max,
 		struct fsal_fsid__ *fsid,
 		enum fsid_type fsid_type);
+
+bool is_filesystem_exported(struct fsal_filesystem *fs,
+			    struct fsal_export *exp);
+
+void unclaim_all_export_maps(struct fsal_export *exp);
 
 fsal_errors_t fsal_inherit_acls(struct fsal_attrlist *attrs, fsal_acl_t *sacl,
 			       fsal_aceflag_t inherit);

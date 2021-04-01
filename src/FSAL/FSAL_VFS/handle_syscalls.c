@@ -107,42 +107,40 @@ int vfs_readlink(struct vfs_fsal_obj_handle *myself,
 	return retval;
 }
 
-int vfs_get_root_handle(struct vfs_filesystem *vfs_fs,
-			struct vfs_fsal_export *exp)
+int vfs_get_root_handle(struct fsal_filesystem *fs,
+			struct vfs_fsal_export *exp,
+			int *root_fd)
 {
 	int retval = 0;
 
-	vfs_fs->root_fd = open(vfs_fs->fs->path, O_RDONLY | O_DIRECTORY);
+	*root_fd = open(fs->path, O_RDONLY | O_DIRECTORY);
 
-	if (vfs_fs->root_fd < 0) {
+	if (*root_fd < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
 			 "Could not open VFS mount point %s: rc = %s (%d)",
-			 vfs_fs->fs->path, strerror(retval), retval);
+			 fs->path, strerror(retval), retval);
 		return retval;
 	}
 
 	/* Check if we have to re-index the fsid based on config */
-	if (exp->fsid_type != FSID_NO_TYPE &&
-	    exp->fsid_type != vfs_fs->fs->fsid_type) {
-		retval = -change_fsid_type(vfs_fs->fs, exp->fsid_type);
+	if (exp->fsid_type != FSID_NO_TYPE && exp->fsid_type != fs->fsid_type) {
+		retval = -change_fsid_type(fs, exp->fsid_type);
+
 		if (retval != 0) {
 			LogCrit(COMPONENT_FSAL,
 				"Can not change fsid type of %s to %d, error %s",
-				vfs_fs->fs->path, exp->fsid_type,
-				strerror(retval));
+				fs->path, exp->fsid_type, strerror(retval));
 			return retval;
 		}
 
 		LogInfo(COMPONENT_FSAL,
 			"Reindexed filesystem %s to fsid=0x%016"
 			PRIx64".0x%016"PRIx64,
-			vfs_fs->fs->path,
-			vfs_fs->fs->fsid.major,
-			vfs_fs->fs->fsid.minor);
+			fs->path, fs->fsid.major, fs->fsid.minor);
 	}
 
 	/* May reindex for some platforms */
-	return vfs_re_index(vfs_fs, exp);
+	return vfs_re_index(fs, exp);
 }
 
