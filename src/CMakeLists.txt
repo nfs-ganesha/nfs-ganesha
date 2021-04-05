@@ -585,8 +585,17 @@ if (USE_FSAL_PROXY_V4)
   endif(PROXYV4_HANDLE_MAPPING)
 endif (USE_FSAL_PROXY_V4)
 
+# VFS has no required dependencies but has an optional dependency for
+# libbtrfsutil
 gopt_test(USE_FSAL_VFS)
-# VFS has no dependencies
+if(USE_FSAL_VFS)
+  find_library(BTRFSUTIL_LIB btrfsutil)
+  if (BTRFSUTIL_LIB)
+    message(STATUS "Found BTRFS Util library: ${BTRFSUTIL_LIB}")
+    set(USE_BTRFSUTIL ON)
+    set(SYSTEM_LIBRARIES ${BTRFSUTIL_LIB} ${SYSTEM_LIBRARIES})
+  endif (BTRFSUTIL_LIB)
+endif(USE_FSAL_VFS)
 
 gopt_test(USE_FSAL_LUSTRE)
 if(USE_FSAL_LUSTRE)
@@ -1181,6 +1190,7 @@ message(STATUS "USE_FSAL_MEM = ${USE_FSAL_MEM}")
 message(STATUS "USE_SYSTEM_NTIRPC = ${USE_SYSTEM_NTIRPC}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
+message(STATUS "USE_BTRFSUTIL = ${USE_BTRFSUTIL}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
 message(STATUS "ENABLE_VFS_DEBUG_ACL = ${ENABLE_VFS_DEBUG_ACL}")

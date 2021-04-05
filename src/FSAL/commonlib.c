@@ -87,7 +87,9 @@
 #include "server_stats_private.h"
 #include "idmapper.h"
 #include "pnfs_utils.h"
-
+#ifdef USE_BTRFSUTIL
+#include "btrfsutil.h"
+#endif
 
 #ifdef USE_BLKID
 static struct blkid_struct_cache *cache;
@@ -1012,7 +1014,108 @@ out:
 	return true;
 }
 
-static void posix_create_file_system(struct mntent *mnt, struct stat *mnt_stat)
+void posix_create_file_system(struct mntent *mnt, struct stat *mnt_stat);
+
+void posix_create_fs_btrfs_subvols(struct fsal_filesystem *fs)
+{
+#ifdef USE_BTRFSUTIL
+	struct mntent mnt;
+	struct stat st;
+	struct btrfs_util_subvolume_iterator *iter;
+	enum btrfs_util_error err = BTRFS_UTIL_OK;
+	uint64_t id, idsv;
+	size_t lenp = strlen(fs->path), lens;
+	char *path;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Attempting to add subvols for btfs filesystem %s",
+		     fs->path);
+
+	/* Setup common fields for fake mntent, many are NULL or 0.
+	 * type is set to fake btrfs_sv otherwise we would recurse into here.
+	 * fsname (device) is set to the same as the parent (fs->device only
+	 * gets used for quota manipulation.
+	 */
+	memset(&mnt, 0, sizeof(mnt));
+	mnt.mnt_fsname = fs->device;
+	mnt.mnt_type = "btrfs_sv";
+
+	err = btrfs_util_subvolume_id(fs->path, &id);
+
+	if (err != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"btrfs_util_subvolume_id err %s",
+			btrfs_util_strerror(err));
+		return;
+	}
+
+	err = btrfs_util_create_subvolume_iterator(fs->path, id, 0, &iter);
+
+	if (err != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"btrfs_util_create_subvolume_iterator err %s",
+			btrfs_util_strerror(err));
+		return;
+	}
+
+	err = btrfs_util_sync_fd(btrfs_util_subvolume_iterator_fd(iter));
+
+
+	if (err != 0) {
+		LogCrit(COMPONENT_FSAL,
+			"btrfs_util_sync_fd err %s",
+			btrfs_util_strerror(err));
+		goto out;
+	}
+
+	while (err == BTRFS_UTIL_OK) {
+		err = btrfs_util_subvolume_iterator_next(iter, &path, &idsv);
+
+		if (err == BTRFS_UTIL_OK) {
+			/* Construct fully qualified path */
+			lens = strlen(path);
+			mnt.mnt_dir = gsh_malloc(lenp + lens + 2);
+			memcpy(mnt.mnt_dir, fs->path, lenp);
+			mnt.mnt_dir[lenp] = '/';
+			memcpy(mnt.mnt_dir + lenp + 1, path, lens + 1);
+
+			if (stat(mnt.mnt_dir, &st) >= 0) {
+				LogInfo(COMPONENT_FSAL,
+					"Adding btrfs subvol %s",
+					mnt.mnt_dir);
+
+				posix_create_file_system(&mnt, &st);
+			} else {
+				int err = errno;
+
+				LogCrit(COMPONENT_FSAL,
+					"Could not stat btrfs subvol %s err = %s",
+					mnt.mnt_dir, strerror(err));
+			}
+
+			/* Free the path from the iterator and the fully
+			 * qualified path.
+			 */
+			free(path);
+			gsh_free(mnt.mnt_dir);
+		} else if (err != BTRFS_UTIL_ERROR_STOP_ITERATION) {
+			LogCrit(COMPONENT_FSAL,
+				"btrfs_util_subvolume_iterator_next err %s",
+				btrfs_util_strerror(err));
+		}
+	}
+
+out:
+
+	btrfs_util_destroy_subvolume_iterator(iter);
+#else
+	LogWarn(COMPONENT_FSAL,
+		"btfs filesystem %s may have unsupported subvols",
+		fs->path);
+#endif
+}
+
+void posix_create_file_system(struct mntent *mnt, struct stat *mnt_stat)
 {
 	struct fsal_filesystem *fs;
 	struct avltree_node *node;
@@ -1114,6 +1217,9 @@ static void posix_create_file_system(struct mntent *mnt, struct stat *mnt_stat)
 		fs->dev.major, fs->dev.minor,
 		fs->fsid.major, fs->fsid.minor,
 		fs->fsid.major, fs->fsid.minor, fs->type);
+
+	if (strcasecmp(mnt->mnt_type, "btrfs") == 0)
+		posix_create_fs_btrfs_subvols(fs);
 }
 
 static void posix_find_parent(struct fsal_filesystem *this)
