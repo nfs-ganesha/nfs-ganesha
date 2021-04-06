@@ -70,9 +70,15 @@ Delegations(enum, default None)
 
 EXPORT {}
 --------------------------------------------------------------------------------
+All options below are dynamically changeable with config update unless specified
+below.
+
 Export_id (required):
     An identifier for the export, must be unique and betweem 0 and 65535.
     If Export_Id 0 is specified, Pseudo must be the root path (/).
+
+    Export_id is not dynamic per se, changing it essentially removes the old
+    export and introduces a new export.
 
 Path (required)
     The directory in the exported file system this export is rooted on
@@ -82,6 +88,9 @@ Path (required)
     is not set true, a v3 mount using the path will ONLY be able to
     access the first export configured. To access other exports the
     Tag option would need to be used.
+
+    This option is NOT dunamically updateable since it fundamentally changes
+    the export. To change the path exported, export_id should be changed also.
 
 Pseudo (required v4)
     This option specifies the position in the Pseudo FS this export occupies if
@@ -103,6 +112,12 @@ Pseudo (required v4)
     FSALs (though directories to reach exports will ONLY be
     automatically created on FSAL PSEUDO exports).
 
+    This option is dynamically changeable and changing it will move the export
+    within the pseudo filesystem. This may be disruptive to clients. Note that
+    if the mount_path_pseudo NFS_CORE_PARAM option is true, the NFSv3 mount
+    path will also change (that should not be disruptive to clients that have
+    the export mounted).
+
 Tag (no default)
     This option allows an alternative access for NFS v3
     mounts. The option MUST not have a leading /. Clients
@@ -110,6 +125,8 @@ Tag (no default)
     client may not mount foo/baz). By using different
     Tag options, the same Path may be exported multiple
     times.
+
+    This option is not dynamically updatable.
 
 MaxRead (64*1024*1024)
     The maximum read size on this export
@@ -140,10 +157,20 @@ CLIENT (optional)
 FSAL (required)
     See the ``EXPORT { FSAL  {} }`` block.
 
+    The FSAL for an export can not be changed dynamically. In order to change
+    the FSAL, a new export must be created.
+
+    At this time, no FSAL actually supports any updatable options.
+
 EXPORT { CLIENT  {} }
 --------------------------------------------------------------------------------
 Take all the "export permissions" options from EXPORT_DEFAULTS.
 The client lists are dynamically updateable.
+
+Note that when the CLIENT blocks are processed on config reload, a new
+client access list is constructed and atomically swapped in. This allows
+adding, removing, and re-arranging clients as well as changing the access
+for any give client.
 
 
 Clients(client list, empty)
@@ -170,12 +197,18 @@ NFS-Ganesha supports the following FSALs:
 **Ceph**
 **Gluster**
 **GPFS**
-**Proxy**
+**PROXY_V3**
+**PROXY_V4**
 **RGW**
 **VFS**
+**XFS**
 **LUSTRE**
+**LIzardFS**
+**KVSFS**
 
 Refer to individual FSAL config file for list of config options.
+
+The FSAL blocks generally are less updatable
 
 
 .. FSAL PNFS

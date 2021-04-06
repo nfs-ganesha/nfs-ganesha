@@ -90,6 +90,15 @@ In the case of rados:// URLs, providing a two-component URL indicates that
 the default namespace should be used.
 
 
+Reloading Config
+--------------------------------------------------------------------------------
+A config reload can be triggered by sending the ganesha.nfsd process a SIGHUP.
+Not all config options may be changed with reload, those that can will be
+documented in the individual sections.
+
+In general, currently dynamic config is supported for EXPORT and LOG options.
+
+
 BLOCKS
 ==========================================================
 NFS-Ganesha supports the following blocks:

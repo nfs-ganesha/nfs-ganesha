@@ -133,6 +133,10 @@ mount_path_pseudo(bool, default false)
     new setups, it's strongly recommended to be set true since it then means
     the same server path for the mount is used for both v3 and v4.x.
 
+    Note that as an export related option, it seems very desireable to be
+    able to change this on config reload, unfortunately, at the moment it
+    is NOT changeable on config reload. A restart is necessary to change this.
+
 Dbus_Name_Prefix
     DBus name prefix. Required if one wants to run multiple ganesha instances on
     single host. The prefix should be different for every ganesha instance. If
