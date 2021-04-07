@@ -16,9 +16,7 @@
 #include "recovery_fs.h"
 #include <libgen.h>
 
-static char v4_recov_link[sizeof(NFS_V4_RECOV_ROOT) +
-			  sizeof(NFS_V4_RECOV_DIR) +
-			  NI_MAXHOST + 1];
+static char v4_recov_link[PATH_MAX];
 
 /*
  * If we have a "legacy" fs driver database, we can allow clients to recover
@@ -84,20 +82,23 @@ static int fs_ng_create_recov_dir(void)
 	char *newdir;
 	char host[NI_MAXHOST];
 
-	err = mkdir(NFS_V4_RECOV_ROOT, 0700);
+	err = mkdir(nfs_param.nfsv4_param.recov_root, 0700);
 	if (err == -1 && errno != EEXIST) {
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to create v4 recovery dir (%s): %s (%d)",
-			 NFS_V4_RECOV_ROOT, strerror(errno), errno);
+			 nfs_param.nfsv4_param.recov_root,
+			 strerror(errno), errno);
 	}
 
 	err = snprintf(v4_recov_dir, sizeof(v4_recov_dir), "%s/%s",
-		       NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR);
+		       nfs_param.nfsv4_param.recov_root,
+		       nfs_param.nfsv4_param.recov_dir);
 
 	if (unlikely(err >= sizeof(v4_recov_dir))) {
 		LogCrit(COMPONENT_CLIENTID,
 			"Path too long %s/%s",
-			NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR);
+			nfs_param.nfsv4_param.recov_root,
+			nfs_param.nfsv4_param.recov_dir);
 		return -EINVAL;
 	} else if (unlikely(err < 0)) {
 		int error = errno;
@@ -142,12 +143,14 @@ static int fs_ng_create_recov_dir(void)
 	}
 
 	err = snprintf(v4_recov_link, sizeof(v4_recov_link), "%s/%s/%s",
-		       NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, host);
+		       nfs_param.nfsv4_param.recov_root,
+		       nfs_param.nfsv4_param.recov_dir, host);
 
 	if (unlikely(err >= sizeof(v4_recov_link))) {
 		LogCrit(COMPONENT_CLIENTID,
 			"Path too long %s/%s/%s",
-			NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, host);
+			nfs_param.nfsv4_param.recov_root,
+			nfs_param.nfsv4_param.recov_dir, host);
 		return -EINVAL;
 	} else if (unlikely(err < 0)) {
 		int error = errno;
@@ -364,12 +367,14 @@ static void fs_ng_read_recov_clids(nfs_grace_start_t *gsp,
 	switch (gsp->event) {
 	case EVENT_TAKE_NODEID:
 		rc = snprintf(path, sizeof(path), "%s/%s/node%d",
-			      NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR, gsp->nodeid);
+			      nfs_param.nfsv4_param.recov_root,
+			      nfs_param.nfsv4_param.recov_dir, gsp->nodeid);
 
 		if (unlikely(rc >= sizeof(path))) {
 			LogCrit(COMPONENT_CLIENTID,
 				"Path too long %s/%s/node%d",
-				NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR,
+				nfs_param.nfsv4_param.recov_root,
+				nfs_param.nfsv4_param.recov_dir,
 				gsp->nodeid);
 		} else if (unlikely(rc < 0)) {
 			LogCrit(COMPONENT_CLIENTID,

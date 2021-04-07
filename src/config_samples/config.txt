@@ -198,6 +198,12 @@ NFSV4 {}
 	RecoveryBackend(enum, values [fs, fs_ng, rados_kv, rados_ng],
 			default fs)
 
+	RecoveryRoot(path, default "/var/lib/nfs/ganesha")
+
+	RecoveryDir(path, default "v4recov")
+
+	RecoveryOldDir(path, "v4old")
+
 	Minor_Versions(enum list, values [0, 1, 2], default [0, 1, 2])
 
 	Slot_Table_Size(uint32, range 1 to 1024, default 64)

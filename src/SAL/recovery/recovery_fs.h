@@ -3,7 +3,6 @@
 /*
  * Select bits from recovery_fs.c that we can reuse elsewhere
  */
-#define NFS_V4_RECOV_DIR "v4recov"
 
 extern char v4_recov_dir[PATH_MAX];
 

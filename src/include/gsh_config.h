@@ -509,6 +509,12 @@ typedef struct nfs_version4_parameter {
 	/** Path to the idmap configuration file.  Defaults to
 	    IDMAPCONF_DEFAULT, settable with IdMapConf */
 	char *idmapconf;
+	/** Full path to recovery root directory */
+	char *recov_root;
+	/** Name of recovery direcory */
+	char *recov_dir;
+	/** Name of recovery old dir (for legacy recovery_fs only */
+	char *recov_old_dir;
 	/** Whether to use local password (PAM, on Linux) rather than
 	    nfsidmap.  Defaults to false if nfsidmap support is
 	    compiled in and true if it isn't.  Settable with

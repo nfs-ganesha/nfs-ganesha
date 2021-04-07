@@ -84,6 +84,8 @@
 #define GANESHA_CONFIG_PATH "@SYSCONFDIR@/ganesha/ganesha.conf"
 #define GANESHA_PIDFILE_PATH "@SYSSTATEDIR@/run/ganesha.pid"
 #define NFS_V4_RECOV_ROOT "@SYSSTATEDIR@/lib/nfs/ganesha"
+#define NFS_V4_RECOV_DIR "v4recov"
+#define NFS_V4_OLD_DIR "v4old"
 /**
  * @brief Default value for krb5_param.ccache_dir
  */

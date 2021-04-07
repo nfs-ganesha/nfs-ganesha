@@ -318,7 +318,7 @@ pnfs_mds(bool, default false)
 pnfs_ds(bool, default false)
     Whether this a pNFS DS server.
 
-RecoveryBackend(path, default "fs")
+RecoveryBackend(enum, default "fs")
     Use different backend for client info:
 
     - fs : filesystem
@@ -326,6 +326,15 @@ RecoveryBackend(path, default "fs")
     - rados_kv : rados key-value
     - rados_ng : rados key-value (better resiliency)
     - rados_cluster: clustered rados backend (active/active)
+
+RecoveryRoot(path, default "/var/lib/nfs/ganesha")
+    Specify the root recovery directory for fs or fs_ng recovery backends.
+
+RecoveryDir(path, default "v4recov")
+    Specify the recovery directory name for fs or fs_ng recovery backends.
+
+RecoveryOldDir(path, "v4old")
+    Specify the recovery old directory name for fs recovery backend.
 
 Minor_Versions(enum list, values [0, 1, 2], default [0, 1, 2])
     List of supported NFSV4 minor version numbers.

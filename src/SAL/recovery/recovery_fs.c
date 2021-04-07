@@ -12,8 +12,6 @@
 #include "fsal.h"
 #include "recovery_fs.h"
 
-#define NFS_V4_OLD_DIR "v4old"
-
 char v4_recov_dir[PATH_MAX];
 int v4_recov_dir_len;
 char v4_old_dir[PATH_MAX];
@@ -137,9 +135,6 @@ static void fs_create_clid_name(nfs_client_id_t *clientid)
 int fs_create_recov_dir(void)
 {
 	int err, root_len, dir_len, old_len, node_size = 0;
-	char *nfs_v4_recov_root = NFS_V4_RECOV_ROOT;
-	char *nfs_v4_recov_dir = NFS_V4_RECOV_DIR;
-	char *nfs_v4_old_dir = NFS_V4_OLD_DIR;
 	char node[14];
 
 	if (nfs_param.core_param.clustered) {
@@ -154,25 +149,28 @@ int fs_create_recov_dir(void)
 		node_size++;
 	}
 
-	err = mkdir(nfs_v4_recov_root, 0755);
+	err = mkdir(nfs_param.nfsv4_param.recov_root, 0755);
 	if (err == -1 && errno != EEXIST) {
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to create v4 recovery dir (%s), errno: %s (%d)",
-			 nfs_v4_recov_root, strerror(errno), errno);
+			 nfs_param.nfsv4_param.recov_root,
+			 strerror(errno), errno);
 	}
 
-	root_len = strlen(nfs_v4_recov_root);
-	dir_len = strlen(nfs_v4_recov_dir);
+	root_len = strlen(nfs_param.nfsv4_param.recov_root);
+	dir_len = strlen(nfs_param.nfsv4_param.recov_dir);
 	v4_recov_dir_len = root_len + 1 + dir_len + node_size - 1;
 
 	if (v4_recov_dir_len >= sizeof(v4_recov_dir))
 		LogFatal(COMPONENT_CLIENTID,
 			 "v4 recovery dir path (%s/%s) is to long",
-			 nfs_v4_recov_root, nfs_v4_recov_dir);
+			 nfs_param.nfsv4_param.recov_root,
+			 nfs_param.nfsv4_param.recov_dir);
 
-	memcpy(v4_recov_dir, nfs_v4_recov_root, root_len);
+	memcpy(v4_recov_dir, nfs_param.nfsv4_param.recov_root, root_len);
 	v4_recov_dir[root_len] = '/';
-	memcpy(v4_recov_dir + 1 + root_len, nfs_v4_recov_dir, dir_len + 1);
+	memcpy(v4_recov_dir + 1 + root_len,
+	       nfs_param.nfsv4_param.recov_dir, dir_len + 1);
 	dir_len = 1 + root_len + dir_len;
 
 	LogDebug(COMPONENT_CLIENTID, "v4_recov_dir=%s", v4_recov_dir);
@@ -184,18 +182,20 @@ int fs_create_recov_dir(void)
 			 v4_recov_dir, strerror(errno), errno);
 	}
 
-	root_len = strlen(nfs_v4_recov_root);
-	old_len = strlen(nfs_v4_old_dir);
+	root_len = strlen(nfs_param.nfsv4_param.recov_root);
+	old_len = strlen(nfs_param.nfsv4_param.recov_old_dir);
 	v4_old_dir_len = root_len + 1 + dir_len + node_size - 1;
 
 	if (v4_old_dir_len >= sizeof(v4_old_dir))
 		LogFatal(COMPONENT_CLIENTID,
 			 "v4 recovery dir path (%s/%s) is to long",
-			 nfs_v4_recov_root, nfs_v4_old_dir);
+			 nfs_param.nfsv4_param.recov_root,
+			 nfs_param.nfsv4_param.recov_old_dir);
 
-	memcpy(v4_old_dir, nfs_v4_recov_root, root_len);
+	memcpy(v4_old_dir, nfs_param.nfsv4_param.recov_root, root_len);
 	v4_old_dir[root_len] = '/';
-	memcpy(v4_old_dir + 1 + root_len, nfs_v4_old_dir, old_len + 1);
+	memcpy(v4_old_dir + 1 + root_len,
+	       nfs_param.nfsv4_param.recov_old_dir, old_len + 1);
 	old_len = 1 + root_len + old_len;
 
 	LogDebug(COMPONENT_CLIENTID, "v4_old_dir=%s", v4_old_dir);
@@ -765,14 +765,14 @@ void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 		break;
 	case EVENT_TAKE_IP:
 		rc = snprintf(path, sizeof(path), "%s/%s/%s",
-			      NFS_V4_RECOV_ROOT, gsp->ipaddr,
-			      NFS_V4_RECOV_DIR);
+			      nfs_param.nfsv4_param.recov_root, gsp->ipaddr,
+			      nfs_param.nfsv4_param.recov_dir);
 
 		if (unlikely(rc >= sizeof(path))) {
 			LogCrit(COMPONENT_CLIENTID,
 				"Path %s/%s/%s too long",
-				NFS_V4_RECOV_ROOT, gsp->ipaddr,
-				NFS_V4_RECOV_DIR);
+				nfs_param.nfsv4_param.recov_root, gsp->ipaddr,
+				nfs_param.nfsv4_param.recov_dir);
 			return;
 		} else if (unlikely(rc < 0)) {
 			LogCrit(COMPONENT_CLIENTID,
@@ -782,13 +782,15 @@ void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 		break;
 	case EVENT_TAKE_NODEID:
 		rc = snprintf(path, sizeof(path), "%s/%s/node%d",
-			      NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR,
+			      nfs_param.nfsv4_param.recov_root,
+			      nfs_param.nfsv4_param.recov_dir,
 			      gsp->nodeid);
 
 		if (unlikely(rc >= sizeof(path))) {
 			LogCrit(COMPONENT_CLIENTID,
 				"Path %s/%s/node%d too long",
-				NFS_V4_RECOV_ROOT, NFS_V4_RECOV_DIR,
+				nfs_param.nfsv4_param.recov_root,
+				nfs_param.nfsv4_param.recov_dir,
 				gsp->nodeid);
 			return;
 		} else if (unlikely(rc < 0)) {
