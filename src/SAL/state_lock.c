@@ -1661,10 +1661,10 @@ void state_complete_grant(state_cookie_entry_t *cookie_entry)
 	lock_entry = cookie_entry->sce_lock_entry;
 	obj = cookie_entry->sce_obj;
 
-	/* This routine does not call cache_inode_inc_pin_ref() because there
+	/* This routine does not call obj->obj_ops->get_ref() because there
 	 * MUST be at least one lock present for there to be a cookie_entry
 	 * to even allow this routine to be called, and therefor the cache
-	 * entry MUST be pinned.
+	 * entry MUST be protected from being recycled.
 	 */
 
 	STATELOCK_lock(obj);
@@ -2710,7 +2710,7 @@ state_status_t state_unlock(struct fsal_obj_handle *obj,
 	cancel_blocked_locks_range(obj->state_hdl, owner, state_applies,
 				   nsm_state, lock);
 
-	/* Release the lock from cache inode lock list for entry */
+	/* Release the lock from lock list for entry */
 	status = subtract_lock_from_list(owner, state_applies, nsm_state, lock,
 					 &removed,
 					 &obj->state_hdl->file.lock_list);
@@ -3282,7 +3282,7 @@ void state_export_unlock_all(void)
 		/* take a reference on the state_t */
 		inc_state_t_ref(state);
 
-		/* Get a reference to the cache inode while we still hold
+		/* Get a reference to the file object while we still hold
 		 * the ssc_mutex (since we hold this mutex, any other function
 		 * that might be cleaning up this lock CAN NOT have released
 		 * the last LRU reference, thus it is safe to grab another. */

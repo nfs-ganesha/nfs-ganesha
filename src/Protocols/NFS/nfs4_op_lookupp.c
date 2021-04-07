@@ -77,7 +77,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 	if (res_LOOKUPP4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
-	/* Preparing for cache_inode_lookup ".." */
+	/* Preparing for fsal_lookupp */
 	file_obj = NULL;
 	dir_obj = data->current_obj;
 

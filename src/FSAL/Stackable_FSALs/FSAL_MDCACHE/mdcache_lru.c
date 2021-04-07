@@ -65,7 +65,7 @@
  *
  * @file mdcache_lru.c
  * @author Matt Benjamin <matt@linuxbox.com>
- * @brief Constant-time cache inode cache management implementation
+ * @brief Constant-time MDCACHE cache management implementation
  */
 
 /**
@@ -83,8 +83,8 @@
  * at the cold end of an lru queue if the cache is well-sized.
  *
  * As noted below, initial references to cache entries may only be granted
- * under the cache inode hash table latch.  Likewise, entries must first be
- * made unreachable to the cache inode hash table, then independently reach
+ * under the MDCACHE hash table latch.  Likewise, entries must first be
+ * made unreachable to the MDCACHE hash table, then independently reach
  * a refcnt of 0, before they may be disposed or recycled.
  */
 
@@ -1039,11 +1039,11 @@ mdcache_lru_cleanup_push(mdcache_entry_t *entry)
  * @brief Push an entry to the cleanup queue that may be unexported
  * for out-of-line cleanup
  *
- * This routine is used to try pushing a cache inode into the cleanup
+ * This routine is used to try pushing a cache entry into the cleanup
  * queue. If the entry ends up with another LRU reference before this
  * is accomplished, then don't push it to cleanup.
  *
- * This will be used when unexporting an export. Any cache inode entry
+ * This will be used when unexporting an export. Any cache entry
  * that only belonged to that export is a candidate for cleanup.
  * However, it is possible the entry is still accessible via another
  * export, and an LRU reference might be gained before we can lock the

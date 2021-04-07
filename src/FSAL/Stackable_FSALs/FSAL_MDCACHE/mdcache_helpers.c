@@ -319,7 +319,7 @@ void mdc_clean_entry(mdcache_entry_t *entry)
  * If an unexport is in progress, return ERR_FSAL_STALE to prevent the caller
  * from proceeding.
  *
- * @param[in]  entry     The cache inode
+ * @param[in]  entry     The cache entry
  *
  * @return FSAL Status
  *

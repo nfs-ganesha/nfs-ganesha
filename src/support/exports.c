@@ -2438,7 +2438,7 @@ static bool init_export_cb(struct gsh_export *exp, void *state)
 }
 
 /**
- * @brief Initialize exports over a live cache inode and fsal layer
+ * @brief Initialize exports over a live fsal layer
  */
 
 void exports_pkginit(void)
@@ -2541,7 +2541,7 @@ static void set_fs_max_rdwr_size(struct gsh_export *export, uint64_t maxread,
 }
 
 /**
- * @brief Initialize the root cache inode for an export.
+ * @brief Initialize the root object for an export.
  *
  * Assumes being called with the export_by_id.lock held.
  *

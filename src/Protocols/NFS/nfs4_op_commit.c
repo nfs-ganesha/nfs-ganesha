@@ -132,7 +132,7 @@ void nfs4_op_commit_Free(nfs_resop4 *resp)
  *
  * @brief Call pNFS data server commit
  *
- * This function bypasses cache_inode and calls down the FSAL to
+ * This function bypasses mdcache and calls down the FSAL to
  * perform a data-server commit.
  *
  * @param[in]     op   Arguments for nfs4_op

@@ -624,7 +624,7 @@ static fsal_status_t kvsfs_readdir(struct fsal_obj_handle *dir_hdl,
 				return status;
 			}
 
-			/* callback to cache inode */
+			/* callback to mdcache */
 			cookie = seekloc + index +
 				 (nb_rddir_done * MAX_ENTRIES) +
 				 DOTS_OFFSET + 1;
@@ -976,7 +976,7 @@ static void kvsfs_handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 /* create_handle
  * Does what original FSAL_ExpandHandle did (sort of)
- * returns a ref counted handle to be later used in cache_inode etc.
+ * returns a ref counted handle to be later used in mdcache etc.
  * NOTE! you must release this thing when done with it!
  * BEWARE! Thanks to some holes in the *AT syscalls implementation,
  * we cannot get an fd on an AF_UNIX socket.  Sorry, it just doesn't...

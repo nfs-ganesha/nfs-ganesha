@@ -745,7 +745,7 @@ fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,
 
 /* create_handle
  * Does what original FSAL_ExpandHandle did (sort of)
- * returns a ref counted handle to be later used in cache_inode etc.
+ * returns a ref counted handle to be later used in mdcache etc.
  * NOTE! you must release this thing when done with it!
  * BEWARE! Thanks to some holes in the *AT syscalls implementation,
  * we cannot get an fd on an AF_UNIX socket, nor reliably on block or

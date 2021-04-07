@@ -94,7 +94,7 @@ struct mdcache_fsal_export {
 	struct fsal_up_vector up_ops;
 	/** Higher level up_ops for ops we don't consume */
 	struct fsal_up_vector super_up_ops;
-	/** The list of cache inode entries belonging to this export */
+	/** The list of cache entries belonging to this export */
 	struct glist_head entry_list;
 	/** Lock protecting entry_list */
 	pthread_rwlock_t mdc_exp_lock;
@@ -179,7 +179,7 @@ typedef struct mdcache_lru__ {
 } mdcache_lru_t;
 
 /**
- * cache inode statistics.
+ * MDCACHE statistics.
  */
 struct mdcache_stats {
 	uint64_t inode_req;
@@ -198,7 +198,7 @@ extern struct mdcache_stats *cache_stp;
  */
 
 struct entry_export_map {
-	/** The relevant cache inode entry */
+	/** The relevant cache entry */
 	mdcache_entry_t *entry;
 	/** The export the entry belongs to */
 	struct mdcache_fsal_export *exp;

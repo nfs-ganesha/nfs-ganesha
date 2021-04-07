@@ -890,7 +890,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	 * There is a kind of race here when the glfd part of the
 	 * FSAL GLUSTER object handle is destroyed during a close
 	 * coming in from another NFSv3 WRITE thread which does
-	 * cache_inode_open(). Since the context/fd is destroyed
+	 * fsal_open(). Since the context/fd is destroyed
 	 * we cannot depend on glfs_fstat assuming glfd is valid.
 
 	 * Fixing the issue by removing the glfs_fstat call here.

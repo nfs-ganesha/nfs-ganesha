@@ -43,7 +43,7 @@
  */
 
 struct mdcache_parameter {
-	/** Partitions in the Cache_Inode tree.  Defaults to 7,
+	/** Partitions in the MDCACHE tree.  Defaults to 7,
 	 * settable with NParts. */
 	uint32_t nparts;
 	/** Per-partition hash table size.  Defaults to 32633,

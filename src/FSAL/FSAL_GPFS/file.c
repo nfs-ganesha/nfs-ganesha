@@ -1410,9 +1410,6 @@ gpfs_io_advise(struct fsal_obj_handle *obj_hdl, struct io_hints *hints)
  *
  *  @param obj_hdl FSAL object handle
  *  @return FSAL status
- *
- *  Yes, we ignor lock status.  Closing a file in POSIX
- *  releases all locks but that is state and cache inode's problem.
  */
 fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl)
 {

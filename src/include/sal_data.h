@@ -930,7 +930,7 @@ struct state_dir {
 	struct gsh_export *junction_export;
 	/** gsh_refstr to stash copy of the export's pseudopath */
 	struct gsh_refstr *jct_pseudopath;
-	/** List of exports that have this cache inode as their root.
+	/** List of exports that have this object as their root.
 	 * Protected by jct_lock */
 	struct glist_head export_roots;
 	/** There is one export root reference counted for each export

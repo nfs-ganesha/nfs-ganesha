@@ -34,7 +34,7 @@
 
 /**
  * @file mdcache_hash.h
- * @brief Cache inode hashed dictionary package
+ * @brief MDCACHE hashed dictionary package
  *
  * This module exports an interface for efficient lookup of cache entries
  * by file handle, (etc?).  Refactored from the prior abstract HashTable
@@ -131,7 +131,7 @@ cih_cache_offsetof(struct cih_lookup_table *lt, uint64_t k)
 }
 
 /**
- * @brief Cache inode FH hashed comparison function.
+ * @brief MDCACHE FH hashed comparison function.
  *
  * Entries are ordered by integer hash first, and second by bitwise
  * comparison of the corresponding file handle.

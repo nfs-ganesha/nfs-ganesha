@@ -94,7 +94,7 @@ int nlm4_Granted_Res(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		state_status = state_release_grant(cookie_entry);
 		if (state_status != STATE_SUCCESS) {
 			LogDebug(COMPONENT_NLM,
-				 "cache_inode_release_grant failed");
+				 "state_release_grant failed");
 		}
 	} else {
 		state_complete_grant(cookie_entry);

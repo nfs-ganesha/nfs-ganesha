@@ -1016,7 +1016,7 @@ static void open4_ex(OPEN4args *arg,
 	}
 
 	if (file_obj == NULL) {
-		/* We have a new cache inode entry, take the state lock. */
+		/* We have a file object, take the state lock. */
 		file_obj = out_obj;
 		STATELOCK_lock(file_obj);
 		st_lock_held = true;

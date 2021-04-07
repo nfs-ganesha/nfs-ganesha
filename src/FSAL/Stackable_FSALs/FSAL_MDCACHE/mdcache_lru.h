@@ -49,7 +49,7 @@ enum fd_states {
 /**
  * @file mdcache_lru.h
  * @author Matt Benjamin
- * @brief Constant-time cache inode cache management implementation
+ * @brief Constant-time MDCACHE cache management implementation
  *
  * @section DESCRIPTION
  *

@@ -59,7 +59,7 @@
  * This is preliminary expected to go away.  Problems with this method are that
  * it overcounts file descriptors for FSALs that don't use them for open files,
  * and, under the Lieb Rearchitecture, FSALs will be responsible for caching
- * their own file descriptors, with interfaces for Cache_Inode to interrogate
+ * their own file descriptors, with interfaces for MDCACHE to interrogate
  * them as to usage or instruct them to close them.
  */
 

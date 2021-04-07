@@ -86,7 +86,7 @@ static void ds_handle_release(struct fsal_ds_handle *const ds_pub)
  *
  * NFSv4.1 data server handles are disjount from normal
  * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
- * structure) and do not get loaded into cache_inode or processed the
+ * structure) and do not get loaded into mdcache or processed the
  * normal way.
  *
  * @param[in]  ds_pub           FSAL DS handle
@@ -321,7 +321,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
  *
  * NFSv4.1 data server filehandles are disjount from normal
  * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
- * structure) and do not get loaded into cache_inode or processed the
+ * structure) and do not get loaded into mdcache or processed the
  * normal way.
  *
  * @param[in]  ds_pub    FSAL DS handle

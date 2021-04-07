@@ -1399,7 +1399,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 				goto done;
 			}
 
-			/* callback to cache inode */
+			/* callback to MDCACHE */
 			cb_rc = cb(dentryp->vd_name, hdl, &attrs, dir_state,
 				(fsal_cookie_t) dentryp->vd_offset);
 
@@ -2040,7 +2040,7 @@ fsal_status_t vfs_check_handle(struct fsal_export *exp_hdl,
 
 /* create_handle
  * Does what original FSAL_ExpandHandle did (sort of)
- * returns a ref counted handle to be later used in cache_inode etc.
+ * returns a ref counted handle to be later used in mdcache etc.
  * NOTE! you must release this thing when done with it!
  * BEWARE! Thanks to some holes in the *AT syscalls implementation,
  * we cannot get an fd on an AF_UNIX socket, nor reliably on block or

@@ -623,7 +623,7 @@ fail:
 /**
  * @brief Remove all state from a file
  *
- * Used by cache_inode_kill_entry in the event that the FSAL says a
+ * Used by mdcache_kill_entry in the event that the FSAL says a
  * handle is stale.
  *
  * @note st_lock MUST be held
@@ -914,7 +914,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 		if (state->state_type != STATE_TYPE_DELEG)
 			continue;
 
-		/* Safely access the cache inode associated with the state.
+		/* Safely access the cache object associated with the state.
 		 * This will get an LRU reference protecting our access
 		 * even after state_deleg_revoke releases the reference it
 		 * holds.

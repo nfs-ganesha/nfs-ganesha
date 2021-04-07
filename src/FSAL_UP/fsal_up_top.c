@@ -1576,7 +1576,7 @@ state_status_t delegrecall(const struct fsal_up_vector *vec,
 							       &obj, NULL));
 	if (rc != STATE_SUCCESS) {
 		LogDebug(COMPONENT_FSAL_UP,
-			 "FSAL_UP_DELEG: cache inode get failed, rc %d", rc);
+			 "FSAL_UP_DELEG: create_handle failed, rc %d", rc);
 		/* Not an error. Expecting some nodes will not have it
 		 * in cache in a cluster. */
 		return rc;

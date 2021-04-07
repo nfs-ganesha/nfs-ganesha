@@ -100,7 +100,7 @@ struct state_t;
  * usage and state.  The reference counts are use to determine when
  * the object is "free".  Current use is for managing ref counts and
  * lists.  This will be expanded, though many cases are already
- * handled by the locks in Cache inode.
+ * handled by the locks in MDCACHE.
  *
  * Since we cannot create objects out of thin air, there is an order
  * based on one object being the "context" in which the other is
@@ -290,20 +290,13 @@ struct state_t;
  *    a host-handle. handle-key should be derived from @c host_to_key
  *    that MDCACHE can use to find an entry.
  *
- * 3. OBSOLETE - cache_inode_get takes an fh_desc argument which is not a
- *    handle but a _key_.  It is used to generate the hash and to do
- *    the secondary key compares.  That is all it is used for.  The
- *    end result _must_ be a cache entry and its associated
- *    @c fsal_obj_handle. See how @c cache_inode_get transitions to
- *    cache_inode_new to see how this works.
- *
- * 4. The @c handle_to_key method, a @c fsal_obj_handle method,
+ * 3. The @c handle_to_key method, a @c fsal_obj_handle method,
  *    generates a key for the MDCACHE hash table from the contents
  *    of the @c fsal_obj_handle.  It is an analogue of fsal export
  *    @c host_to_key method. Note where it is called to see why it is
  *    there.
  *
- * 5. The @c handle_to_wire method is similar in scope but it is the
+ * 4. The @c handle_to_wire method is similar in scope but it is the
  *    inverse of @c wire_to_host.  It's job is to fill in the opaque
  *    part of a protocol handle.  Note that it gets passed a @c gsh_buffdesc
  *    that describes the full opaque storage in whatever protocol
@@ -311,7 +304,7 @@ struct state_t;
  *    takes into the opaque so the second and third items in this list
  *    work.
  *
- * 6. Unlike the old API, a @c fsal_obj_handle is part of a FSAL
+ * 5. Unlike the old API, a @c fsal_obj_handle is part of a FSAL
  *    private structure for the object.  Note that there is no handle
  *    member of this public structure.  The bits necessary to both
  *    create a wire handle and use a filesystem handle go into this
@@ -1966,9 +1959,8 @@ struct fsal_obj_ops {
 /**
  * @brief Close a file
  *
- * This function closes a file.  It is protected by the Cache inode
- * content lock.  This should return ERR_FSAL_NOT_OPENED if the global FD for
- * this obj was not open.
+ * This function closes a file.  This should return ERR_FSAL_NOT_OPENED if
+ * the global FD for this obj was not open.
  *
  * @param[in] obj_hdl File to close
  *
@@ -2782,7 +2774,7 @@ struct fsal_pnfs_ds_ops {
  *
  * NFSv4.1 data server handles are disjount from normal
  * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
- * structure) and do not get loaded into cache_inode or processed the
+ * structure) and do not get loaded into mdcache or processed the
  * normal way.
  *
  * @param[in]  ds_hdl           FSAL DS handle
@@ -2809,7 +2801,7 @@ struct fsal_pnfs_ds_ops {
  *
  * NFSv4.2 data server handles are disjount from normal
  * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
- * structure) and do not get loaded into cache_inode or processed the
+ * structure) and do not get loaded into mdcache or processed the
  * normal way.
  *
  * @param[in]  ds_hdl           FSAL DS handle
@@ -2839,7 +2831,7 @@ struct fsal_pnfs_ds_ops {
  *
  * NFSv4.1 data server filehandles are disjount from normal
  * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
- * structure) and do not get loaded into cache_inode or processed the
+ * structure) and do not get loaded into mdcache or processed the
  * normal way.
  *
  * @param[in]  ds_hdl           FSAL DS handle
@@ -2871,7 +2863,7 @@ struct fsal_pnfs_ds_ops {
  *
  * NFSv4.1 data server filehandles are disjount from normal
  * filehandles (in Ganesha, there is a ds_flag in the filehandle_v4_t
- * structure) and do not get loaded into cache_inode or processed the
+ * structure) and do not get loaded into mdcache or processed the
  * normal way.
  *
  * @param[in]  ds_hdl    FSAL DS handle
@@ -3040,9 +3032,9 @@ struct fsal_filesystem_export_map {
  * object handle operations vector, public export, and file type.
  *
  * @note Do we actually need a lock and ref count on the fsal object
- * handle, since cache_inode is managing life cycle and concurrency?
+ * handle, since mdcache is managing life cycle and concurrency?
  * That is, do we expect fsal_obj_handle to have a reference count
- * that would be separate from that managed by cache_inode_lru?
+ * that would be separate from that managed by mdcache_lru?
  */
 
 struct fsal_obj_handle {

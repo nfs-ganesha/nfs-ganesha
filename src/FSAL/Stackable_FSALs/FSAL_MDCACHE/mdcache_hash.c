@@ -51,7 +51,7 @@
  *
  * @file mdcache_hash.c
  * @author Matt Benjamin
- * @brief Cache inode hashed dictionary package
+ * @brief MDCACHE hashed dictionary package
  *
  * @section Description
  *
@@ -111,7 +111,7 @@ cih_pkgdestroy(void)
 	for (ix = 0; ix < cih_fhcache.npart; ++ix) {
 		if (avltree_first(&cih_fhcache.partition[ix].t) != NULL)
 			LogMajor(COMPONENT_CACHE_INODE,
-				 "Cache inode AVL tree not empty");
+				 "MDCACHE AVL tree not empty");
 		PTHREAD_RWLOCK_destroy(&cih_fhcache.partition[ix].lock);
 		gsh_free(cih_fhcache.partition[ix].cache);
 	}

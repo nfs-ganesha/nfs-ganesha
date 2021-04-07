@@ -25,13 +25,13 @@
  */
 
 /**
- * @addtogroup cache_inode
+ * @addtogroup mdcache
  * @{
  */
 
 /**
- * @file cache_inode_read_conf.c
- * @brief Cache inode configuration parameter tables.
+ * @file mdcache_read_conf.c
+ * @brief MDCACHE configuration parameter tables.
  */
 #include "config.h"
 #include "log.h"
@@ -47,7 +47,7 @@
 #include <pthread.h>
 #include <string.h>
 
-/** File cache configuration, settable in the CacheInode
+/** File cache configuration, settable in the CacheInode/MDCACHE
     stanza. */
 
 struct mdcache_parameter mdcache_param;

@@ -608,18 +608,6 @@ static inline fsal_accessflags_t FSAL_ACE4_MASK(fsal_accessflags_t access)
 #define FSAL_EXECUTE_ACCESS (FSAL_MODE_MASK_SET(FSAL_X_OK) | \
 			  FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE))
 
-/* Object handle LRU resource actions
- */
-
-/**
- * @todo ACE: These should probably be moved to cache_inode_lru.h
- */
-
-typedef enum {
-	LRU_CLOSE_FILES = 0x1,
-	LRU_FREE_MEMORY = 0x2
-} lru_actions_t;
-
 /** FSAL_open behavior. */
 
 typedef uint16_t fsal_openflags_t;

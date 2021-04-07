@@ -270,7 +270,7 @@ enum nfs_req_result nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* The export and fsalid should be updated, but DS handles
 	 * don't support metadata operations.  Thus, we can't call into
-	 * cache_inode to populate the metadata cache.
+	 * mdcache to populate the metadata cache.
 	 */
 	if (nfs4_Is_Fh_DSHandle(&data->currentFH))
 		res_PUTFH4->status = nfs4_ds_putfh(data);

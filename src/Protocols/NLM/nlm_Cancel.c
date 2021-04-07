@@ -108,7 +108,7 @@ int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	if (state_status != STATE_SUCCESS) {
 		/* Cancel could fail in the FSAL and make a bit of a mess,
 		 * especially if we are in out of memory situation. Such an
-		 * error is logged by Cache Inode.
+		 * error is already logged.
 		 */
 		res->res_nlm4test.test_stat.stat =
 		    nlm_convert_state_error(state_status);

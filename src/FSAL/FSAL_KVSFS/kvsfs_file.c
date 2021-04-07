@@ -736,7 +736,7 @@ fsal_openflags_t kvsfs_status2(struct fsal_obj_handle *obj_hdl,
 }
 
 /* kvsfs_read
- * concurrency (locks) is managed in cache_inode_*
+ * concurrency (locks) is managed in mdcache_*
  */
 
 fsal_status_t kvsfs_read(struct fsal_obj_handle *obj_hdl,
@@ -779,7 +779,7 @@ fsal_status_t kvsfs_read(struct fsal_obj_handle *obj_hdl,
 }
 
 /* kvsfs_write
- * concurrency (locks) is managed in cache_inode_*
+ * concurrency (locks) is managed in mdcache_*
  */
 
 fsal_status_t kvsfs_write(struct fsal_obj_handle *obj_hdl,

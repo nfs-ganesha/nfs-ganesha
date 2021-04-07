@@ -154,7 +154,7 @@ static void nfs4_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 /**
  * @brief Write for a data server
  *
- * This function bypasses cache_inode and calls directly into the FSAL
+ * This function bypasses mdcache and calls directly into the FSAL
  * to perform a pNFS data server write.
  *
  * @param[in]     op    Arguments for nfs41_op

@@ -319,14 +319,14 @@ mdcache_fsal_unload(struct fsal_module *fsal_hdl)
 	fsal_status_t status;
 	int retval;
 
-	/* Destroy the cache inode AVL tree */
+	/* Destroy the MDCACHE AVL tree */
 	cih_pkgdestroy();
 
 	status = mdcache_lru_pkgshutdown();
 	if (FSAL_IS_ERROR(status))
 		fprintf(stderr, "MDCACHE LRU failed to shut down");
 
-	/* Destroy the cache inode entry pool */
+	/* Destroy the MDCACHE entry pool */
 	pool_destroy(mdcache_entry_pool);
 	mdcache_entry_pool = NULL;
 

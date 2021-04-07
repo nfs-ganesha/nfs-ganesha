@@ -76,8 +76,6 @@ void null_async_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 
 /* nullfs_close
  * Close the file if it is still open.
- * Yes, we ignor lock status.  Closing a file in POSIX
- * releases all locks but that is state and cache inode's problem.
  */
 
 fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl)

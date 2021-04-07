@@ -46,15 +46,16 @@ extern void netobj_to_string(netobj *obj, char *buffer, int maxlen);
  * alock:        nlm4_lock request structure
  * plock:        cache_lock_desc_t to fill in from alock
  * ppobj:        FSAL obj pointer to fill in
- * pexport:      the export of interest
- * pclient:      cache inode client
  * care:         TRUE if this caller cares if an owner is found (otherwise
  *               return NLM4_GRANTED
  *               because the caller will have nothing to do)
+ * ppnsm_client  NSM Client to fill in, returns a reference to the client
  * ppnlm_client: NLM Client to fill in, returns a reference to the client
  * ppowner:      NLM Owner to fill in, returns a reference to the owner
- * ppblock_data: Data required to make a call back to the client to grant a
+ * block_data:   Data required to make a call back to the client to grant a
  *               blocked lock
+ * nsm_state:    nsm_state value
+ * state:        state_t to fill in
  */
 int nlm_process_parameters(struct svc_req *req, bool exclusive,
 			   nlm4_lock *alock, fsal_lock_param_t *plock,

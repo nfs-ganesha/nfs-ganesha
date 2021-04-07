@@ -252,7 +252,7 @@ static void nfs4_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 /**
  * @brief Read on a pNFS pNFS data server
  *
- * This function bypasses cache_inode and calls directly into the FSAL
+ * This function bypasses mdcache and calls directly into the FSAL
  * to perform a data-server read.
  *
  * @param[in]     op   Arguments for nfs41_op
@@ -320,7 +320,7 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
 /**
  * @brief Read on a pNFS pNFS data server
  *
- * This function bypasses cache_inode and calls directly into the FSAL
+ * This function bypasses mdcache and calls directly into the FSAL
  * to perform a data-server read.
  *
  * @param[in]     op   Arguments for nfs41_op
