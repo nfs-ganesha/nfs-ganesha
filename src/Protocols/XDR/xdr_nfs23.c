@@ -1422,8 +1422,55 @@ bool xdr_entry3(XDR *xdrs, entry3 *objp)
 	return (true);
 }
 
+bool xdr_encode_entry3(XDR *xdrs, entry3 *objp)
+{
+	bool_t next = objp != NULL;
+
+	if (!xdr_bool(xdrs, &next))
+		return false;
+	if (!next)
+		return true;
+
+	if (!xdr_fileid3(xdrs, &objp->fileid))
+		return false;
+	if (!xdr_filename3(xdrs, &objp->name))
+		return false;
+	if (!xdr_cookie3(xdrs, &objp->cookie))
+		return false;
+
+	return true;
+}
+
+void xdr_dirlist3_uio_release(struct xdr_uio *uio, u_int flags)
+{
+	int ix;
+
+	LogFullDebug(COMPONENT_NFS_READDIR,
+		     "Releasing %p, references %"PRIi32", count %d",
+		     uio, uio->uio_references, (int) uio->uio_count);
+
+	if (!(--uio->uio_references)) {
+		for (ix = 0; ix < uio->uio_count; ix++) {
+			gsh_free(uio->uio_vio[ix].vio_base);
+		}
+		gsh_free(uio);
+	}
+}
+
+static inline bool xdr_dirlist3_encode(XDR *xdrs, dirlist3 *objp)
+{
+	if (!xdr_putbufs(xdrs, objp->uio, UIO_FLAG_NONE)) {
+		objp->uio->uio_release(objp->uio, UIO_FLAG_NONE);
+		return false;
+	}
+	return true;
+}
+
 bool xdr_dirlist3(XDR *xdrs, dirlist3 *objp)
 {
+	if (objp->uio != NULL)
+		return xdr_dirlist3_encode(xdrs, objp);
+
 	if (!xdr_pointer(xdrs, (void **)&objp->entries, sizeof(entry3),
 			 (xdrproc_t) xdr_entry3))
 		return (false);
@@ -1535,7 +1582,7 @@ void xdr_dirlistplus3_uio_release(struct xdr_uio *uio, u_int flags)
 {
 	int ix;
 
-	LogFullDebug(COMPONENT_NFS_V4,
+	LogFullDebug(COMPONENT_NFS_READDIR,
 		     "Releasing %p, references %"PRIi32", count %d",
 		     uio, uio->uio_references, (int) uio->uio_count);
 
