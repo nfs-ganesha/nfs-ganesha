@@ -111,6 +111,8 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	uint64_t fsal_cookie = 0;
 	cookieverf3 cookie_verifier;
 	unsigned int num_entries = 0;
+	uint64_t mem_avail = 0;
+	uint64_t max_mem = 0;
 	object_file_type_t dir_filetype = 0;
 	bool eod_met = false;
 	fsal_status_t fsal_status = {0, 0};
@@ -152,11 +154,13 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 *		struct fattr3_wire attributes
 	 *	cookieverf3 cookieverf (8 or sizeof(cookieverf3))
 	 */
-	tracker.mem_avail = arg->arg_readdirplus3.maxcount
+	mem_avail = arg->arg_readdirplus3.maxcount
 				- BYTES_PER_XDR_UNIT
 				- BYTES_PER_XDR_UNIT
 				- sizeof(struct fattr3_wire)
 				- sizeof(cookieverf3);
+	max_mem = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
+	tracker.mem_avail = MIN(mem_avail, max_mem);
 
 	begin_cookie = arg->arg_readdirplus3.cookie;
 
