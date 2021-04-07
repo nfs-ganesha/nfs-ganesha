@@ -534,6 +534,9 @@ fatal_die:
 	if (log_path)
 		free(log_path);
 
+	/* systemd journal won't display our errors without this */
+	sleep(1);
+
 	LogFatal(COMPONENT_INIT,
 		 "Fatal errors.  Server exiting...");
 	/* NOT REACHED */
