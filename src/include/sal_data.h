@@ -93,6 +93,13 @@ typedef struct state_t			state_t;
 #define STATE_ERR_MAX 100
 
 /**
+ * @brief Maximum number of operation in a compound request
+ *
+ * We cap the number of operation to this value for all V4 versions
+ */
+#define NFS4_MAX_OPERATIONS 100
+
+/**
  * @brief Indicate that lock extends to the entire range of the file
  *
  * This is true no matter what the beginning of the lock range is.

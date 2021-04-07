@@ -4618,13 +4618,21 @@ bool is_sticky_bit_set(struct fsal_obj_handle *obj,
 	return true;
 }
 
+#define COMPOUND_EXTRA_ROOM 4096
+static inline uint32_t default_max_resp_room(void)
+{
+	/* allow enough room for a compound like PUTFH, LOOKUP, OPEN, READ
+	 * with MaxRead read data (cannot be greater than XDR_BYTES_MAXLEN_IO)
+	 */
+	return XDR_BYTES_MAXLEN_IO + COMPOUND_EXTRA_ROOM;
+}
+
 uint32_t resp_room(compound_data_t *data)
 {
 	uint32_t room;
 
 	if (data->minorversion == 0 || data->session == NULL) {
-		/* No response size checking */
-		return UINT32_MAX;
+		return default_max_resp_room();
 	}
 
 	/* Start with max response size */
@@ -4646,8 +4654,11 @@ nfsstat4 check_resp_room(compound_data_t *data, uint32_t op_resp_size)
 				      sizeof(nfs_opnum4) + sizeof(nfsstat4);
 
 	if (data->minorversion == 0 || data->session == NULL) {
-		/* No response size checking */
-		return NFS4_OK;
+		if (test_response_size > default_max_resp_room()) {
+			return NFS4ERR_RESOURCE;
+		} else {
+			return NFS4_OK;
+		}
 	}
 
 	/* Check that op_resp_size plus nfs_opnum4 plus at least another
