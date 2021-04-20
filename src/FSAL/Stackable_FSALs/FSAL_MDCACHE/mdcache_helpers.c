@@ -642,7 +642,7 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
  * so all will be well.
  *
  * @param[in]     export         Export for this cache
- * @param[in]     sub_handle     Handle for sub-FSAL
+ * @param[in]     sub_handle     sub-FSAL's new obj handle
  * @param[in]     attrs_in       Attributes provided for the object
  * @param[in,out] attrs_out      Attributes requested for the object
  * @param[in]     new_directory  Indicate a new directory was created
@@ -893,7 +893,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		subcall_raw(export,
 			    status =
 			    old_sub_handle->obj_ops->merge(old_sub_handle,
-							  sub_handle)
+							   sub_handle)
 			   );
 
 		if (FSAL_IS_ERROR(status)) {
@@ -916,7 +916,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
 		subcall_raw(export,
 			    cstatus = sub_handle->obj_ops->close2(sub_handle,
-								 state)
+								  state)
 			   );
 
 		LogDebug(COMPONENT_CACHE_INODE,

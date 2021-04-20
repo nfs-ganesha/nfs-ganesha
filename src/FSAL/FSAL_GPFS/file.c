@@ -116,11 +116,8 @@ fsal_status_t gpfs_merge(struct fsal_obj_handle *orig_hdl,
 				    obj_handle);
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
-
-		status = merge_share(&orig->u.file.share, &dupe->u.file.share);
-
-		PTHREAD_RWLOCK_unlock(&orig_hdl->obj_lock);
+		status = merge_share(orig_hdl, &orig->u.file.share,
+				     &dupe->u.file.share);
 	}
 
 	return status;

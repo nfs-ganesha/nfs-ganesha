@@ -1274,11 +1274,9 @@ static fsal_status_t lzfs_fsal_merge(struct fsal_obj_handle *orig_hdl,
 			     lzfs_orig->unique_key.export_id, lzfs_orig->inode,
 			     lzfs_dupe->inode);
 
-		PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
-
-		status = merge_share(&lzfs_orig->share, &lzfs_dupe->share);
-
-		PTHREAD_RWLOCK_unlock(&orig_hdl->obj_lock);
+		/* This can block over an I/O operation. */
+		status = merge_share(orig_hdl, &lzfs_orig->share,
+				     &lzfs_dupe->share);
 	}
 
 	return status;

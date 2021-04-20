@@ -386,12 +386,9 @@ static fsal_status_t kvsfs_merge(struct fsal_obj_handle *orig_hdl,
 				    struct kvsfs_fsal_obj_handle,
 				    obj_handle);
 
-		PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
-
-		status = merge_share(&orig->u.file.share,
+		/* This can block over an I/O operation. */
+		status = merge_share(orig_hdl, &orig->u.file.share,
 				     &dupe->u.file.share);
-
-		PTHREAD_RWLOCK_unlock(&orig_hdl->obj_lock);
 	}
 
 	return status;

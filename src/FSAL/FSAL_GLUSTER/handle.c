@@ -1598,11 +1598,7 @@ fsal_status_t glusterfs_merge(struct fsal_obj_handle *orig_hdl,
 		dupe = container_of(dupe_hdl, struct glusterfs_handle, handle);
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
-
-		status = merge_share(&orig->share, &dupe->share);
-
-		PTHREAD_RWLOCK_unlock(&orig_hdl->obj_lock);
+		status = merge_share(orig_hdl, &orig->share, &dupe->share);
 	}
 
 	return status;
