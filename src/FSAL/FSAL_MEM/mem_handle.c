@@ -2383,12 +2383,8 @@ static fsal_status_t mem_merge(struct fsal_obj_handle *old_hdl,
 				    obj_handle);
 
 		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&old_hdl->obj_lock);
-
-		status = merge_share(&old->mh_file.share,
+		status = merge_share(old_hdl, &old->mh_file.share,
 				     &new->mh_file.share);
-
-		PTHREAD_RWLOCK_unlock(&old_hdl->obj_lock);
 	}
 
 	return status;

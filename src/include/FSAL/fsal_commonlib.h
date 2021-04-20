@@ -187,7 +187,8 @@ fsal_status_t check_share_conflict(struct fsal_share *share,
 				   fsal_openflags_t openflags,
 				   bool bypass);
 
-fsal_status_t merge_share(struct fsal_share *orig_share,
+fsal_status_t merge_share(struct fsal_obj_handle *orig_hdl,
+			  struct fsal_share *orig_share,
 			  struct fsal_share *dupe_share);
 
 /**

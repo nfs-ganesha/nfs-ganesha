@@ -2500,6 +2500,12 @@ fsal_status_t check_share_conflict(struct fsal_share *share,
  * check if the duplicate has a share conflict with the original. If
  * so, we will return ERR_FSAL_SHARE_DENIED.
  *
+ * NOTE: dupe_share should belong to a fsal_obj_handle that has just been
+ *       created and is not accessible. As such, each of the share counters
+ *       MUST be 0 or 1, and it MUST be ok to access them without holding the
+ *       obj_lock.
+ *
+ * @param[in] orig_hdl     fsal_obj_handle the orig_share belongs to
  * @param[in] orig_share   Original share
  * @param[in] dupe_share   Duplicate share
  *
@@ -2507,20 +2513,38 @@ fsal_status_t check_share_conflict(struct fsal_share *share,
  *
  */
 
-fsal_status_t merge_share(struct fsal_share *orig_share,
+fsal_status_t merge_share(struct fsal_obj_handle *orig_hdl,
+			  struct fsal_share *orig_share,
 			  struct fsal_share *dupe_share)
 {
-	char *cause = "";
+	fsal_status_t status = {ERR_FSAL_SHARE_DENIED, 0};
+
+	/* Check if dupe_share represents no share reservation at all, if
+	 * so, we can trivially exit. There's nothing to do and we don't
+	 * need the obj_lock.
+	 */
+	if (dupe_share->share_deny_read == 0 &&
+	    dupe_share->share_deny_write == 0 &&
+	    dupe_share->share_deny_write_mand == 0 &&
+	    dupe_share->share_access_read == 0 &&
+	    dupe_share->share_access_write == 0) {
+		/* No conflict and no update, just return success. */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+
+	PTHREAD_RWLOCK_wrlock(&orig_hdl->obj_lock);
 
 	if (dupe_share->share_access_read > 0 &&
 	    orig_share->share_deny_read > 0) {
-		cause = "access read denied by existing deny read";
+		LogDebug(COMPONENT_STATE,
+			 "Share conflict detected: access read denied by existing deny read");
 		goto out_conflict;
 	}
 
 	if (dupe_share->share_deny_read > 0 &&
 	    orig_share->share_access_read > 0) {
-		cause = "deny read denied by existing access read";
+		LogDebug(COMPONENT_STATE,
+			 "Share conflict detected: deny read denied by existing access read");
 		goto out_conflict;
 	}
 
@@ -2529,13 +2553,15 @@ fsal_status_t merge_share(struct fsal_share *orig_share,
 	 */
 	if (dupe_share->share_access_write > 0 &&
 	    orig_share->share_deny_write > 0) {
-		cause = "access write denied by existing deny write";
+		LogDebug(COMPONENT_STATE,
+			 "Share conflict detected: access write denied by existing deny write");
 		goto out_conflict;
 	}
 
 	if (dupe_share->share_deny_write > 0 &&
 	    orig_share->share_access_write > 0) {
-		cause = "deny write denied by existing access write";
+		LogDebug(COMPONENT_STATE,
+			 "Share conflict detected: deny write denied by existing access write");
 		goto out_conflict;
 	}
 
@@ -2546,13 +2572,13 @@ fsal_status_t merge_share(struct fsal_share *orig_share,
 	orig_share->share_deny_write += dupe_share->share_deny_write;
 	orig_share->share_deny_write_mand += dupe_share->share_deny_write_mand;
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  out_conflict:
 
-	LogDebug(COMPONENT_STATE, "Share conflict detected: %s", cause);
+	PTHREAD_RWLOCK_unlock(&orig_hdl->obj_lock);
 
-	return fsalstat(ERR_FSAL_SHARE_DENIED, 0);
+	return status;
 }
 
 /**
