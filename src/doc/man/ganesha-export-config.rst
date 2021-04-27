@@ -93,9 +93,9 @@ Path (required)
     the export. To change the path exported, export_id should be changed also.
 
 Pseudo (required v4)
-    This option specifies the position in the Pseudo FS this export occupies if
-    this is an NFS v4 export. It must be unique. By using different Pseudo options,
-    the same Path may be exported multiple times.
+    This option specifies the position in the Pseudo Filesystem this export
+    occupies if this is an NFS v4 export. It must be unique. By using different
+    Pseudo options, the same Path may be exported multiple times.
 
     This option is used to place the export within the NFS v4 Pseudo
     Filesystem. This creates a single name space for NFS v4. Clients may
@@ -108,7 +108,7 @@ Pseudo (required v4)
     export specified with Pseudo = /;. Note that if an export is
     specified with Pseudo = /;, it need not be export id 0. Specifying
     such an export with FSAL { name = PSEUDO; } may be used to create a
-    Pseudo FS with specific options. Such an export may also use other
+    Pseudo Filesystem with specific options. Such an export may also use other
     FSALs (though directories to reach exports will ONLY be
     automatically created on FSAL PSEUDO exports).
 
@@ -167,11 +167,21 @@ EXPORT { CLIENT  {} }
 Take all the "export permissions" options from EXPORT_DEFAULTS.
 The client lists are dynamically updateable.
 
+These blocks form an ordered "access control list" for the export. If no
+client block matches for a particular client, then the permissions in the
+EXPORT {} block will be used.
+
+Even when a CLIENT block matches a client, if a particular export permission
+is not explicit in that CLIENT block, the permission specified in the
+EXPORT block will be used, or if not specified there, from the
+EXPORT_DEFAULTS block, and if not specified there, the permission will
+default to the default code value noted in the permission option
+descriptions above.
+
 Note that when the CLIENT blocks are processed on config reload, a new
 client access list is constructed and atomically swapped in. This allows
 adding, removing, and re-arranging clients as well as changing the access
 for any give client.
-
 
 Clients(client list, empty)
     Client list entries can take on one of the following forms:
@@ -222,7 +232,188 @@ The FSAL blocks generally are less updatable
     EXPORT { FSAL { FSAL {} } }
     describes the stacked FSAL's parameters
 
-See also
+DISCUSSION
+==========================================================
+
+The EXPORT blocks define the file namespaces that are served by NFS-Ganesha.
+
+In best practice, each underlying filesystem has a single EXPORT defining how
+that filesystem is to be shared, however, in some cases, it is desirable to
+sub-divide a filesystem into multiple exports. The danger when this is done is
+that rogue clients may be able to spoof file handles and access portions of the
+filesystem not intended to be accessible to that client.
+
+Some FSALs (currently FSAL_VFS, FSAL_GPFS, FSAL_XFS, and FSAL_LUSTRE) are built
+to support nested filesystems, for example:
+
+    /export/fs1
+    /export/fs1/some/path/fs2
+
+In this case, it is possible to create a single export that exports both
+filesystems. There is a lot of complexity of what can be done there.
+
+In discussions of filesystems, btrfs filesystems exported by FSAL_VFS may have
+subvolumes. Starting in NFS-Ganesha V4.0 FSAL_VFS treats these as separate
+filesystems that are integrated with all the richness of FSAL_VFS exports.
+
+Another significant FSAL from an export point of view is FSAL_PSEUDO. This is
+used to build glue exports to build the unified NFSv4 name space. This name
+space may also be used by NFSv3 by setting the NFS_CORE_PARAM option:
+
+    mount_path_pseudo = TRUE;
+
+If no FSAL_PSEUDO export is explicitly defined, and there is no EXPORT with:
+
+    Pseudo = "/";
+
+NFS-Ganesha will build a FSAL_PSEUDO EXPORT with this Pseudo Path using
+Export_Id = 0. This automatic EXPORT may be replaced with an explicit EXPORT
+which need not have Export_Id = 0, it just must have Pseudo = "/" and
+Protocols = 4.
+
+In building the Pseudo Filesystem, there is a subtle gotcha. Since NFSv4
+clients actually moount the root of the Pseudo Filesystem and then use LOOKUP
+to traverse into the actual directory the sysadmin has mounted from the
+client, any EXPORTs from "/" to the desired EXPORT MUST have Protocols = 4
+specified either in EXPORT_DEFAULTS {}, EXPORT {}, or EXPORT { CLIENT {} }.
+This is to assure that the client is allowed to traverse each EXPORT.
+
+If Mount_Path_Pseudo = TRUE is being used and an export is desired to be
+NFSv3 only, Protocols = 3 MUST be specified in the EXPORT {} block. If
+Protocols is not specified in the EXPORT {} block and is only specified
+in an EXPORT { CLIENT {} } block, then that export will still be mounted
+in the Pseudo Filesystem but might not be traversable. Thus if the following
+two filesystems are exported:
+
+    /export/fs1
+    /export/fs1/some/path/fs2
+
+And the EXPORTs look something like this:
+
+    EXPORT
+    {
+        Export_Id = 1;
+        Path = /export/fs1;
+        Peudo = /export/fs1;
+
+        FSAL
+        {
+            Name = VFS;
+        }
+
+        CLIENT
+        {
+            Clients="*";
+            Protocols=3;
+        }
+    }
+
+    EXPORT
+    {
+        Export_Id = 1;
+        Path = /export/fs1/some/path/fs2;
+        Peudo = /export/fs1/some/path/fs2;
+
+        FSAL
+        {
+            Name = VFS;
+        }
+
+        CLIENT
+        {
+            Clients="*";
+            Protocols=3,4;
+        }
+    }
+
+NFSv4 clients will not be able to access /export/fs1/some/path/fs2. The
+correct way to accomplish this is:
+
+    EXPORT
+    {
+        Export_Id = 1;
+        Path = /export/fs1;
+        Peudo = /export/fs1;
+        Protocols=3;
+
+       FSAL
+        {
+            Name = VFS;
+        }
+    }
+
+Note that an EXPORT { CLIENT {} } block is not necessary if the default export
+pernmissions are workable.
+
+Note that in order for an EXPORT to be usable with NSFv4 it MUST either have
+Protcols = 4 specified in the EXPORT block, or the EXPORT block must not have
+the Protocols option at all such that it defaults to 3,4,9P. Note though that
+if it is not set and EXPORT_DEFAULTS just has Protocols = 3; then even though
+the export is mounted in the Pseudo Filesystem, it will not be accessible and
+the gotcha discussed above may be in play.
+
+CONFIGURATION RELOAD
+==============================
+In addition to the LOG {} configuration, EXPORT {} config is the main
+configuration that can be updated while NFS-Ganesha is running by issuing
+a SIGHUP.
+
+This causes all EXPORT and EXPORT_DEFAULTS blocks to be reloaded. NFS-Ganesha
+V4.0 and later have some significant improvements to this since it was
+introduced in NFS-Ganesha V2.4.0. V2.8.0 introduced the ability to remove
+EXPORTs via SIGHUP configuration reload.
+
+Significantly how things work now is:
+
+On SIGHUP all the EXPORT and EXPORT_DEFAULTS blocks are re-read. There are
+three conditions that may occur:
+
+    An export may be added
+    An export may be removed
+    An export may be updated
+
+A note on Export_Id and Path. These are the primary options that define an
+export. If Export_Id is changed, the change is treated as a remove of the
+old Export_Id and an addition of the new Export_Id. Path can not be changed
+without also changing Export_Id. The Tag and Pseudo options that also contribute
+to the uniqueness of an EXPORT may be changed.
+
+Any removed exports are removed from the internal tables and if they are NFSv4
+exports, unmounted from the Pseudo Filesystem, which will then be re-built as if
+those exports had not been present.
+
+Any new exports are added to the internal tables, and if the export is an NFSv4
+export, they are mounted into the Pseudo Filesystem.
+
+Any updated exports will be modified with the least disruption possible. If the
+Pseduo option is changed, the export is unmounted from the Pseduo Filesystem in
+it's original location, and re-mounted in it's new location. Other options are
+updated atomically, though serially, so for a short period of time, the options
+may be mixed between old and new. In most cases this should not cause problems.
+Notably though, the CLIENT blocks are processed to form a new access control
+list and that list is atomically swapped with the old list. If the Protocols
+for an EXPORT are changed to include or remove NFSv4, the Pseduo Filesystem will
+also be updated.
+
+Note that there is no pause in operations other than a lock being taken when the
+client list is being swapped out, however the export permissions are applied to
+an operation once. Notably for NFSv4, this is on a PUTFH or LOOKUP which changes
+the Current File Handle. As an example, if a write is in progress, having passed
+the permission check with the previous export permissions, the write will complete
+without interruption. If the write is part of an NFSv4 COMPOUND, the other
+operations in that COMPOUND that operate on the same file handle will also complete
+with the previous export permissions.
+
+An update of EXPORT_DEFAULTS changes the export options atomically. These options
+are only used for those options not otherwise set in an EXPORT {} or CLIENT {}
+block and are applied when export permissions are evaluated when a new file handle
+is encountered.
+
+The FSAL { Name } may not be changed and FSALs offer limited support for changing
+any options in the FSAL block. Some FSALs may validate and warn if any options
+in the FSAL block are changed when such a change is not supported.
+
+SEE ALSO
 ==============================
 :doc:`ganesha-config <ganesha-config>`\(8)
 :doc:`ganesha-rgw-config <ganesha-rgw-config>`\(8)
