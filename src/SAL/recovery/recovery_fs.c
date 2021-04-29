@@ -13,9 +13,9 @@
 #include "recovery_fs.h"
 
 char v4_recov_dir[PATH_MAX];
-int v4_recov_dir_len;
+unsigned int v4_recov_dir_len;
 char v4_old_dir[PATH_MAX];
-int v4_old_dir_len;
+unsigned int v4_old_dir_len;
 
 /**
  * @brief convert clientid opaque bytes as a hex string for mkdir purpose.
@@ -138,14 +138,13 @@ int fs_create_recov_dir(void)
 	char node[14];
 
 	if (nfs_param.core_param.clustered) {
-		node_size = snprintf(node, sizeof(node), "node%d", g_nodeid)
-			    + 1;
+		node_size = snprintf(node, sizeof(node), "node%d", g_nodeid);
 
 		if (unlikely(node_size >= sizeof(node) || node_size < 0)) {
 			LogFatal(COMPONENT_CLIENTID,
 				 "snprintf returned unexpected %d", node_size);
 		}
-		/* Now include the NUL */
+		/* Now include the '/' */
 		node_size++;
 	}
 
@@ -159,7 +158,7 @@ int fs_create_recov_dir(void)
 
 	root_len = strlen(nfs_param.nfsv4_param.recov_root);
 	dir_len = strlen(nfs_param.nfsv4_param.recov_dir);
-	v4_recov_dir_len = root_len + 1 + dir_len + node_size - 1;
+	v4_recov_dir_len = root_len + 1 + dir_len + node_size;
 
 	if (v4_recov_dir_len >= sizeof(v4_recov_dir))
 		LogFatal(COMPONENT_CLIENTID,
@@ -184,7 +183,7 @@ int fs_create_recov_dir(void)
 
 	root_len = strlen(nfs_param.nfsv4_param.recov_root);
 	old_len = strlen(nfs_param.nfsv4_param.recov_old_dir);
-	v4_old_dir_len = root_len + 1 + dir_len + node_size - 1;
+	v4_old_dir_len = root_len + 1 + dir_len + node_size;
 
 	if (v4_old_dir_len >= sizeof(v4_old_dir))
 		LogFatal(COMPONENT_CLIENTID,
@@ -211,8 +210,10 @@ int fs_create_recov_dir(void)
 		/* Now make the node specific directories */
 		v4_recov_dir[dir_len] = '/';
 		v4_old_dir[old_len] = '/';
-		memcpy(v4_recov_dir + 1 + dir_len, node, node_size);
-		memcpy(v4_old_dir + 1 + old_len, node, node_size);
+
+		/* Copy an extra byte to NUL terminate */
+		memcpy(v4_recov_dir + 1 + dir_len, node, node_size + 1);
+		memcpy(v4_old_dir + 1 + old_len, node, node_size + 1);
 
 		LogDebug(COMPONENT_CLIENTID, "v4_recov_dir=%s", v4_recov_dir);
 		LogDebug(COMPONENT_CLIENTID, "v4_old_dir=%s", v4_old_dir);
@@ -233,6 +234,13 @@ int fs_create_recov_dir(void)
 				 v4_old_dir, strerror(errno), errno);
 		}
 	}
+
+
+	LogInfo(COMPONENT_CLIENTID,
+		"NFSv4 Recovery Directory %s", v4_recov_dir);
+	LogInfo(COMPONENT_CLIENTID,
+		"NFSv4 Recovery Directory (old) %s", v4_old_dir);
+
 	return 0;
 }
 
@@ -891,7 +899,7 @@ void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 
 	assert(v4_recov_dir_len < sizeof(path));
 
-	memcpy(path, v4_recov_dir, v4_recov_dir_len + 1);
+	memcpy(path, v4_recov_dir, v4_recov_dir_len);
 	pathpos = v4_recov_dir_len;
 
 	length = strlen(delr_clid->cid_recov_tag);
