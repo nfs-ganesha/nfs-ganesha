@@ -175,7 +175,12 @@ long int get_global_tag(bool increment);
 	} while (0)
 
 #define array_sprintf(buf, fmt, args...)		\
-	snprintf(buf, sizeof(buf) - 1, fmt, ## args)	\
+	do {							\
+		int left = sizeof(buf);				\
+		int lx = snprintf(buf, left, fmt, ## args);	\
+								\
+		left -= lx;					\
+	} while (0)
 
 #define sprint_left(buf, left, fmt, args...)			\
 	do {							\
