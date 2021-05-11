@@ -428,19 +428,17 @@ static bool client_to_dbus(struct gsh_client *cl_node, void *state)
 	struct server_stats *cl;
 	char *ipaddr = alloca(SOCK_NAME_MAX);
 	DBusMessageIter struct_iter;
-	struct timespec last_as_ts = nfs_ServerBootTime;
 
 	cl = container_of(cl_node, struct server_stats, client);
 
 	if (!sprint_sockip(&cl_node->cl_addrbuf, ipaddr, SOCK_NAME_MAX))
 		(void) strlcpy(ipaddr, "<unknown>", SOCK_NAME_MAX);
 
-	timespec_add_nsecs(cl_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->client_iter,
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &ipaddr);
 	server_stats_summary(&struct_iter, &cl->st);
-	gsh_dbus_append_timestamp(&struct_iter, &last_as_ts);
+	gsh_dbus_append_timestamp(&struct_iter, &cl_node->last_update);
 	dbus_message_iter_close_container(&iter_state->client_iter,
 					  &struct_iter);
 	return true;

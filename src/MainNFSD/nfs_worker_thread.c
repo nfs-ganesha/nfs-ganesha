@@ -848,7 +848,6 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	XDR *xdrs = reqdata->svc.rq_xdrs;
 	nfs_res_t *res_nfs;
 	dupreq_status_t dpq_status;
-	struct timespec timer_start;
 	enum auth_stat auth_rc;
 	enum xprt_stat xprt_rc;
 	int port;
@@ -965,8 +964,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	 * we measure all time stats as intervals (elapsed nsecs) from
 	 * server boot time.  This gets high precision with simple 64 bit math.
 	 */
-	now(&timer_start);
-	op_ctx->start_time = timespec_diff(&nfs_ServerBootTime, &timer_start);
+	now(&op_ctx->start_time);
 
 	/* Initialized user_credentials */
 	init_credentials();

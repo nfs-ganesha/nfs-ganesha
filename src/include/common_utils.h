@@ -428,6 +428,20 @@ timespec_diff(const struct timespec *start,
 }
 
 /**
+ * @brief update timespec fields atomically.
+ *
+ */
+static inline void
+timespec_update(const struct timespec *dest,
+		const struct timespec *src)
+{
+	(void)atomic_store_uint64_t((uint64_t *)&dest->tv_sec,
+				    (uint64_t)src->tv_sec);
+	(void)atomic_store_uint64_t((uint64_t *)&dest->tv_nsec,
+				    (uint64_t)src->tv_nsec);
+}
+
+/**
  * @brief Convert a timespec to an elapsed time interval
  *
  * This will work for wallclock time until 2554.

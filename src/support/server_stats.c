@@ -1464,7 +1464,7 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
 {
 	struct gsh_client *client = op_ctx->client;
 	struct timespec current_time;
-	nsecs_elapsed_t stop_time;
+	nsecs_elapsed_t time_diff;
 	struct svc_req *req = &reqdata->svc;
 	uint32_t proto_op = req->rq_msg.cb_proc;
 	uint32_t program_op = req->rq_msg.cb_prog;
@@ -1492,11 +1492,11 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
 		return;
 
 	now(&current_time);
-	stop_time = timespec_diff(&nfs_ServerBootTime, &current_time);
+	time_diff = timespec_diff(&op_ctx->start_time, &current_time);
 
 #ifdef _USE_NFS3
 	if (nfs_param.core_param.enable_FULLV3STATS)
-		record_v3_full_stats(req, stop_time - op_ctx->start_time,
+		record_v3_full_stats(req, time_diff,
 			    rc == NFS_REQ_OK, dup);
 #endif
 	if (client != NULL) {
@@ -1509,7 +1509,7 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
 			record_clnt_all_stats(&server_st->c_all, &client->lock,
 					program_op, proto_op, NFS_V3,
 					rc == NFS_REQ_OK, dup);
-		(void)atomic_store_uint64_t(&client->last_update, stop_time);
+		timespec_update(&client->last_update, &current_time);
 	}
 	if (!dup && op_ctx->ctx_export != NULL) {
 		struct export_stats *exp_st;
@@ -1518,10 +1518,10 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
 		    container_of(op_ctx->ctx_export, struct export_stats,
 			    export);
 		record_stats(&exp_st->st, &op_ctx->ctx_export->lock, reqdata,
-			     stop_time - op_ctx->start_time,
+			     time_diff,
 			     rc == NFS_REQ_OK, dup, true);
-		(void)atomic_store_uint64_t(&op_ctx->ctx_export->last_update,
-					    stop_time);
+		timespec_update(&op_ctx->ctx_export->last_update,
+				&current_time);
 	}
 }
 
@@ -1532,11 +1532,11 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
  */
 
 void server_stats_nfsv4_op_done(int proto_op,
-				nsecs_elapsed_t start_time, int status)
+				struct timespec *start_time, int status)
 {
 	struct gsh_client *client = op_ctx->client;
 	struct timespec current_time;
-	nsecs_elapsed_t stop_time;
+	nsecs_elapsed_t time_diff;
 
 	if (!nfs_param.core_param.enable_NFSSTATS)
 		return;
@@ -1547,10 +1547,10 @@ void server_stats_nfsv4_op_done(int proto_op,
 		return;
 
 	now(&current_time);
-	stop_time = timespec_diff(&nfs_ServerBootTime, &current_time);
+	time_diff = timespec_diff(start_time, &current_time);
 
 	if (nfs_param.core_param.enable_FULLV4STATS)
-		record_v4_full_stats(proto_op, stop_time - start_time,
+		record_v4_full_stats(proto_op, time_diff,
 			    status == NFS4_OK);
 
 	if (client != NULL) {
@@ -1558,23 +1558,23 @@ void server_stats_nfsv4_op_done(int proto_op,
 
 		server_st = container_of(client, struct server_stats, client);
 		record_nfsv4_op(&server_st->st, &client->lock, proto_op,
-				op_ctx->nfs_minorvers, stop_time - start_time,
+				op_ctx->nfs_minorvers, time_diff,
 				status, false);
 		if (nfs_param.core_param.enable_CLNTALLSTATS)
 			record_clnt_all_stats(&server_st->c_all, &client->lock,
 				NFS_program[P_NFS], proto_op, NFS_V4,
 				status == NFS_REQ_OK, false);
-		(void)atomic_store_uint64_t(&client->last_update, stop_time);
+		timespec_update(&client->last_update, &current_time);
 	}
 
 	if (op_ctx->nfs_minorvers == 0)
-		record_op(&global_st.nfsv40.compounds, stop_time - start_time,
+		record_op(&global_st.nfsv40.compounds, time_diff,
 			  status == NFS4_OK, false);
 	else if (op_ctx->nfs_minorvers == 1)
-		record_op(&global_st.nfsv41.compounds, stop_time - start_time,
+		record_op(&global_st.nfsv41.compounds, time_diff,
 			  status == NFS4_OK, false);
 	else if (op_ctx->nfs_minorvers == 2)
-		record_op(&global_st.nfsv42.compounds, stop_time - start_time,
+		record_op(&global_st.nfsv42.compounds, time_diff,
 			  status == NFS4_OK, false);
 
 	if (op_ctx->ctx_export != NULL) {
@@ -1585,9 +1585,9 @@ void server_stats_nfsv4_op_done(int proto_op,
 			    export);
 		record_nfsv4_op(&exp_st->st, &op_ctx->ctx_export->lock,
 				proto_op, op_ctx->nfs_minorvers,
-				stop_time - start_time, status, true);
-		(void)atomic_store_uint64_t(&op_ctx->ctx_export->last_update,
-					    stop_time);
+				time_diff, status, true);
+		timespec_update(&op_ctx->ctx_export->last_update,
+				&current_time);
 	}
 }
 
@@ -1601,21 +1601,22 @@ void server_stats_compound_done(int num_ops, int status)
 {
 	struct gsh_client *client = op_ctx->client;
 	struct timespec current_time;
-	nsecs_elapsed_t stop_time;
+	nsecs_elapsed_t time_diff;
 
 	if (!nfs_param.core_param.enable_NFSSTATS)
 		return;
 	now(&current_time);
-	stop_time = timespec_diff(&nfs_ServerBootTime, &current_time);
+	time_diff = timespec_diff(&op_ctx->start_time, &current_time);
+
 	if (client != NULL) {
 		struct server_stats *server_st;
 
 		server_st = container_of(client, struct server_stats, client);
 		record_compound(&server_st->st, &client->lock,
 				op_ctx->nfs_minorvers,
-				num_ops, stop_time - op_ctx->start_time,
+				num_ops, time_diff,
 				status == NFS4_OK);
-		(void)atomic_store_uint64_t(&client->last_update, stop_time);
+		timespec_update(&client->last_update, &current_time);
 	}
 	if (op_ctx->ctx_export != NULL) {
 		struct export_stats *exp_st;
@@ -1625,10 +1626,10 @@ void server_stats_compound_done(int num_ops, int status)
 			    export);
 		record_compound(&exp_st->st, &op_ctx->ctx_export->lock,
 				op_ctx->nfs_minorvers, num_ops,
-				stop_time - op_ctx->start_time,
+				time_diff,
 				status == NFS4_OK);
-		(void)atomic_store_uint64_t(&op_ctx->ctx_export->last_update,
-					    stop_time);
+		timespec_update(&op_ctx->ctx_export->last_update,
+				&current_time);
 	}
 }
 
@@ -2000,13 +2001,11 @@ void server_dbus_client_io_ops(DBusMessageIter *iter,
 	struct server_stats *svr = NULL;
 	struct gsh_stats *st;
 	dbus_bool_t stats_available;
-	struct timespec last_as_ts = nfs_ServerBootTime;
 
 	svr = container_of(client, struct server_stats, client);
 	st = &svr->st;
-	timespec_add_nsecs(client->last_update, &last_as_ts);
 
-	gsh_dbus_append_timestamp(iter, &last_as_ts);
+	gsh_dbus_append_timestamp(iter, &client->last_update);
 
 #ifdef _USE_NFS3
 	stats_available = st->nfsv3 != 0;
@@ -2055,7 +2054,6 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 	struct server_stats *svr = NULL;
 	struct gsh_clnt_allops_stats *c_all;
 	dbus_bool_t stats_available;
-	struct timespec last_as_ts = nfs_ServerBootTime;
 	int i;
 	DBusMessageIter array_iter;
 	struct gsh_stats *st;
@@ -2064,9 +2062,8 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 	svr = container_of(client, struct server_stats, client);
 	c_all = &svr->c_all;
 	st = &svr->st;
-	timespec_add_nsecs(client->last_update, &last_as_ts);
 
-	gsh_dbus_append_timestamp(iter, &last_as_ts);
+	gsh_dbus_append_timestamp(iter, &client->last_update);
 
 #ifdef _USE_NFS3
 	/* Stats of NFSv3 ops */
@@ -2181,13 +2178,11 @@ void server_dbus_export_details(DBusMessageIter *iter,
 	struct export_stats *exp_st = NULL;
 	struct gsh_stats *st;
 	dbus_bool_t stats_available;
-	struct timespec last_as_ts = nfs_ServerBootTime;
 
 	exp_st = container_of(g_export, struct export_stats, export);
 	st = &exp_st->st;
-	timespec_add_nsecs(g_export->last_update, &last_as_ts);
 
-	gsh_dbus_append_timestamp(iter, &last_as_ts);
+	gsh_dbus_append_timestamp(iter, &g_export->last_update);
 
 #ifdef _USE_NFS3
 	stats_available = st->nfsv3 != 0;

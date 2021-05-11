@@ -49,7 +49,7 @@ struct gsh_client {
 	struct avltree_node node_k;
 	pthread_rwlock_t lock;
 	int64_t refcnt;
-	nsecs_elapsed_t last_update;
+	struct timespec last_update;
 	char hostaddr_str[SOCK_NAME_MAX];
 	sockaddr_t cl_addrbuf;
 };

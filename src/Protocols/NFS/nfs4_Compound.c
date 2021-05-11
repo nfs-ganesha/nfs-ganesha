@@ -744,7 +744,7 @@ enum nfs_req_result complete_op(compound_data_t *data, nfsstat4 *status,
 
 out:
 
-	server_stats_nfsv4_op_done(data->opcode, data->op_start_time, *status);
+	server_stats_nfsv4_op_done(data->opcode, &data->op_start_time, *status);
 
 	return result;
 }
@@ -752,7 +752,6 @@ out:
 enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 {
 	const char *bad_op_state_reason = "";
-	struct timespec ts;
 	int perm_flags;
 	log_components_t alt_component = COMPONENT_NFS_V4;
 	nfs_argop4 *thisarg = &data->argarray[data->oppos];
@@ -830,8 +829,7 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 	}
 
 	/* time each op */
-	now(&ts);
-	data->op_start_time = timespec_diff(&nfs_ServerBootTime, &ts);
+	now(&data->op_start_time);
 
 	if (data->minorversion > 0 && data->session != NULL &&
 	    data->session->fore_channel_attrs.ca_maxoperations ==

@@ -339,7 +339,7 @@ struct compound_data {
 	struct export_perms saved_export_perms; /*< Permissions for export for
 					       savedFH */
 	struct svc_req *req;	/*< RPC Request related to the compound */
-	nsecs_elapsed_t op_start_time;
+	struct timespec op_start_time;
 	nfs_argop4 *argarray;
 	nfs_res_t *res;
 	nfs_resop4 *resarray;

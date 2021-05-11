@@ -486,7 +486,7 @@ struct req_op_context {
 	struct gsh_refstr *ctx_pseudopath;	/*< current pseudopath */
 	struct fsal_export *fsal_export;	/*< current fsal export */
 	struct export_perms export_perms;	/*< Effective export perms */
-	nsecs_elapsed_t start_time;	/*< start time of this op/request */
+	struct timespec start_time;	/*< start time of this op/request */
 	void *fsal_private;		/*< private for FSAL use */
 	void *proto_private;		/*< private for protocol layer use */
 	struct fsal_module *fsal_module;	/*< current fsal module */

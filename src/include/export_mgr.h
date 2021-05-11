@@ -202,7 +202,7 @@ struct gsh_export {
 	/** CFG: available mount options - update protected by lock */
 	struct export_perms export_perms;
 	/** The last time the export stats were updated */
-	nsecs_elapsed_t last_update;
+	struct timespec last_update;
 	/** CFG: Export non-permission options - atomic changeable option */
 	uint32_t options;
 	/** CFG: Export non-permission options set - atomic changeable option */

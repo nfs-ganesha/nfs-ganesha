@@ -1550,7 +1550,6 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	    (struct showexports_state *)state;
 	struct export_stats *exp;
 	DBusMessageIter struct_iter;
-	struct timespec last_as_ts = nfs_ServerBootTime;
 	const char *path;
 	struct tmp_export_paths tmp = {NULL, NULL};
 
@@ -1569,14 +1568,13 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 
 	exp = container_of(exp_node, struct export_stats, export);
 
-	timespec_add_nsecs(exp_node->last_update, &last_as_ts);
 	dbus_message_iter_open_container(&iter_state->export_iter,
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT16,
 				       &exp_node->export_id);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &path);
 	server_stats_summary(&struct_iter, &exp->st);
-	gsh_dbus_append_timestamp(&struct_iter, &last_as_ts);
+	gsh_dbus_append_timestamp(&struct_iter, &exp_node->last_update);
 	dbus_message_iter_close_container(&iter_state->export_iter,
 					  &struct_iter);
 	return true;
