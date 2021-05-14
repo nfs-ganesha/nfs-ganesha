@@ -292,6 +292,7 @@ mem_dirent_lookup(struct mem_fsal_obj_handle *dir, const char *name)
 	struct mem_dirent key;
 	struct avltree_node *node;
 
+	memset(&key, 0, sizeof(key));
 	key.d_name = name;
 
 	node = avltree_lookup(&key.avl_n, &dir->mh_dir.avl_name);
@@ -355,6 +356,7 @@ mem_readdir_seekloc(struct mem_fsal_obj_handle *dir, fsal_cookie_t seekloc)
 	}
 
 
+	memset(&key, 0, sizeof(key));
 	key.d_index = seekloc;
 	node = avltree_lookup(&key.avl_i, &dir->mh_dir.avl_index);
 	if (!node) {

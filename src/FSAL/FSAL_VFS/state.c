@@ -66,6 +66,7 @@ static struct vfs_state_entry *vfs_state_lookup(struct gsh_buffdesc *key)
 	struct vfs_state_entry key_entry;
 	struct avltree_node *node;
 
+	memset(&key_entry, 0, sizeof(key_entry));
 	key_entry.fs_key = *key;
 	node = avltree_lookup(&key_entry.fs_node, &vfs_state_tree);
 	if (!node)
