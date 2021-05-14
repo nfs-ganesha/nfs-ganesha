@@ -81,6 +81,9 @@ uint64_t clientid_verifier;
  */
 pool_t *client_id_pool;
 
+
+static uint64_t num_confirmed_client_ids;
+
 /**
  * @brief Return the NFSv4 status for the client id error code
  *
@@ -596,6 +599,18 @@ clientid_status_t nfs_client_id_insert(nfs_client_id_t *clientid)
 	struct gsh_buffdesc buffdata;
 	int rc;
 
+	if (nfs_param.nfsv4_param.max_client_ids &&
+	    atomic_fetch_uint64_t(&num_confirmed_client_ids) >
+		 nfs_param.nfsv4_param.max_client_ids) {
+		LogDebug(COMPONENT_CLIENTID,
+			 "Max client_id limit reached - clientid %"
+			 PRIx64, clientid->cid_clientid);
+
+		/* Free the clientid record and return */
+		free_client_id(clientid);
+
+		return CLIENT_ID_INSERT_MALLOC_ERROR;
+	}
 	/* Create key from cid_clientid */
 	buffkey.addr = &clientid->cid_clientid;
 	buffkey.len = sizeof(clientid->cid_clientid);
@@ -671,6 +686,7 @@ int remove_confirmed_client_id(nfs_client_id_t *clientid)
 
 	/* Release hash table reference to the unconfirmed record */
 	(void)dec_client_id_ref(clientid);
+	atomic_dec_uint64_t(&num_confirmed_client_ids);
 
 	return rc;
 }
@@ -794,6 +810,7 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 
 		return CLIENT_ID_INSERT_MALLOC_ERROR;
 	}
+	atomic_inc_uint64_t(&num_confirmed_client_ids);
 
 	/* Add the clientid as the confirmed entry for the client
 	   record */
@@ -941,7 +958,8 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 				"Could not remove expired clientid %" PRIx64
 				" error=%s", clientid->cid_clientid,
 				hash_table_err_to_str(rc));
-		}
+		} else if (ht_expire == ht_confirmed_client_id)
+			atomic_dec_uint64_t(&num_confirmed_client_ids);
 	}
 
 	/* Traverse the client's lock owners, and release all

@@ -547,6 +547,8 @@ typedef struct nfs_version4_parameter {
 	/** whether to skip utf8 validation. defaults to false and settable
 	     with enforce_utf8_validation. */
 	bool enforce_utf8_vld;
+	/** Max number of Client IDs allowed on the system */
+	uint32_t max_client_ids;
 } nfs_version4_parameter_t;
 
 /** @} */

@@ -345,6 +345,14 @@ Slot_Table_Size(uint32, range 1 to 1024, default 64)
 Enforce_UTF8_Validation(bool, default false)
     Set true to enforce valid UTF-8 for path components and compound tags
 
+Max_Client_Ids(uint32, range 0 to UINT32_MAX, default 0)
+    Specify a max limit on number of NFS4 ClientIDs supported by the
+    server. With filesystem recovery backend, each ClientID translates to
+    one directory. With certain workloads, this could result in
+    reaching inode limits of the filesystem that /var/lib/nfs/ganesha
+    is part of. The above limit can be used as a guardrail to prevent
+    getting into this situation.
+
 RADOS_KV {}
 --------------------------------------------------------------------------------
 
