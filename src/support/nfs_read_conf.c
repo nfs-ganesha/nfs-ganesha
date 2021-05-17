@@ -261,6 +261,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, dbus_name_prefix),
 	CONF_ITEM_UI32("Max_Uid_To_Group_Reqs", 0, INT32_MAX, 0,
 		       nfs_core_param, max_uid_to_grp_reqs),
+	CONF_ITEM_BOOL("Enable_V3fh_Validation_For_V4", false,
+		       nfs_core_param, enable_v3_fh_for_v4),
 	CONFIG_EOL
 };
 

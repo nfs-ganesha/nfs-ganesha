@@ -434,6 +434,8 @@ typedef struct nfs_core_param {
 	    environment where users are part of large number of groups.
 	*/
 	uint32_t max_uid_to_grp_reqs;
+	/** Enable v3 filehandle to be used for v4 */
+	bool enable_v3_fh_for_v4;
 } nfs_core_parameter_t;
 
 /** @} */

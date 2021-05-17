@@ -155,6 +155,10 @@ Max_Uid_To_Group_Reqs(uint32, range 0 to INT32_MAX, default 0)
     parallel. This option throttles the number of concurrent uid2grp queries
     that ganesha makes.
 
+Enable_V3fh_Validation_For_V4(bool, default false)
+    Set true to enforce when v3 file handle used for v4
+
+
 Parameters controlling TCP DRC behavior:
 ----------------------------------------
 

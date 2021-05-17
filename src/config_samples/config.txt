@@ -155,6 +155,8 @@ NFS_CORE_PARAM {}
 
 	Max_Uid_To_Group_Reqs(uint32, range 0 to INT32_MAX, default 0)
 
+	Enable_V3fh_Validation_For_V4(bool, default false)
+
 NFS_IP_NAME {}
 --------------
 
