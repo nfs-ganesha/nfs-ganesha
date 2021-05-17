@@ -118,9 +118,25 @@ static inline void nfs4_freeFH(nfs_fh4 *fh)
  * @return The filehandle size
  */
 
+static inline size_t nfs4_sizeof_handle_nopadding(struct file_handle_v4 *hdl)
+{
+       return offsetof(struct file_handle_v4, fsopaque) + hdl->fs_len;
+}
+
 static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 {
-	return offsetof(struct file_handle_v4, fsopaque)+hdl->fs_len;
+
+       int hsize;
+       int aligned_hsize;
+
+       hsize = offsetof(struct file_handle_v4, fsopaque) + hdl->fs_len;
+
+       /* align on 4 byte block boundary */
+       aligned_hsize = roundup(hsize, 4);
+       if (aligned_hsize <= NFS4_FHSIZE)
+               hsize = aligned_hsize;
+
+       return hsize;
 }
 
 #define LEN_FH_STR OPAQUE_BYTES_SIZE(NFS4_FHSIZE)

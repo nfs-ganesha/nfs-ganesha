@@ -294,7 +294,8 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 	    || pfile_handle->fhversion != GANESHA_FH_VERSION
 	    || fh->nfs_fh4_len < offsetof(struct file_handle_v4, fsopaque)
 	    || fh->nfs_fh4_len > NFS4_FHSIZE
-	    || fh->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle)) {
+      || (fh->nfs_fh4_len != nfs4_sizeof_handle(pfile_handle) &&
+          fh->nfs_fh4_len != nfs4_sizeof_handle_nopadding(pfile_handle))) {
 		if (isInfo(COMPONENT_FILEHANDLE)) {
 			if (pfile_handle == NULL) {
 				LogInfo(COMPONENT_FILEHANDLE,
