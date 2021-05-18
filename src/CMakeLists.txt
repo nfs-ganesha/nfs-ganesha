@@ -1553,6 +1553,7 @@ install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
 if (USE_RADOS_RECOV)
   add_executable(ganesha-rados-grace
     ./tools/ganesha-rados-grace.c ./support/rados_grace.c)
+  add_sanitizers(ganesha-rados-grace)
   include_directories(${RADOS_INCLUDE_DIR})
   target_link_libraries(ganesha-rados-grace
     ganesha_nfsd
