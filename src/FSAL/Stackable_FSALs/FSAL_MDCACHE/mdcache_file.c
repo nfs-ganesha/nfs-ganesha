@@ -562,7 +562,7 @@ static void mdc_read_super_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 
 	if (!FSAL_IS_ERROR(ret))
 		mdc_set_time_current(&entry->attrs.atime);
-	else if (ret.major == ERR_FSAL_DELAY)
+	else if (ret.major == ERR_FSAL_STALE)
 		mdcache_kill_entry(entry);
 	mdcache_put(entry);
 	gsh_free(arg);
@@ -738,7 +738,7 @@ fsal_status_t mdcache_seek2(struct fsal_obj_handle *obj_hdl,
 			entry->sub_handle, state, info)
 	       );
 
-	if (status.major == ERR_FSAL_DELAY)
+	if (status.major == ERR_FSAL_STALE)
 		mdcache_kill_entry(entry);
 
 	return status;
@@ -767,7 +767,7 @@ fsal_status_t mdcache_io_advise2(struct fsal_obj_handle *obj_hdl,
 			entry->sub_handle, state, hints)
 	       );
 
-	if (status.major == ERR_FSAL_DELAY)
+	if (status.major == ERR_FSAL_STALE)
 		mdcache_kill_entry(entry);
 
 	return status;
