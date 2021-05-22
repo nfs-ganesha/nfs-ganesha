@@ -1578,43 +1578,33 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	return true;
 }
 
-
-void gen_exp_container_cont(char *export_contents)
-{
-	/* the header contents is `qs` */
-	strcpy(export_contents, "(qs");
-
-	/* do the status body content */
 #ifdef _USE_NFS3
-	/* nfsv3 status */
-	strcat(export_contents, "b");
-
-	/* nfsv3 mnt status */
-	strcat(export_contents, "b");
+#define STAT_TYPE_NFS3 "bb"
+#else
+#define STAT_TYPE_NFS3 ""
 #endif
+
 #ifdef _USE_NLM
-	/* nlm status */
-	strcat(export_contents, "b");
+#define STAT_TYPE_NLM "b"
+#else
+#define STAT_TYPE_NLM ""
 #endif
+
 #ifdef _USE_RQUOTA
-	/* rquota status */
-	strcat(export_contents, "b");
+#define STAT_TYPE_RQUOTA "b"
+#else
+#define STAT_TYPE_RQUOTA ""
 #endif
-	/* nfsv40 status */
-	strcat(export_contents, "b");
 
-	/* nfsv41 status */
-	strcat(export_contents, "b");
-
-	/* nfsv42 status */
-	strcat(export_contents, "b");
 #ifdef _USE_9P
-	/* 9p status */
-	strcat(export_contents, "b");
+#define STAT_TYPE_9P "b"
+#else
+#define STAT_TYPE_9P ""
 #endif
-	/* the footer content is `(tt)` */
-	strcat(export_contents, "(tt))");
-}
+
+#define EXPORT_CONTAINER \
+	"(qs" STAT_TYPE_NFS3 STAT_TYPE_NLM \
+	STAT_TYPE_RQUOTA "bbb" STAT_TYPE_9P "(tt))"
 
 static bool gsh_export_showexports(DBusMessageIter *args,
 				   DBusMessage *reply,
@@ -1622,14 +1612,12 @@ static bool gsh_export_showexports(DBusMessageIter *args,
 {
 	DBusMessageIter iter;
 	struct showexports_state iter_state;
-	char export_contents[16];
 
 	/* create a reply from the message */
 	dbus_message_iter_init_append(reply, &iter);
 	gsh_dbus_append_timestamp(&iter, &nfs_stats_time);
-	gen_exp_container_cont(export_contents);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-					 export_contents,
+					 EXPORT_CONTAINER,
 					 &iter_state.export_iter);
 
 	(void)foreach_gsh_export(export_to_dbus, false, (void *)&iter_state);
@@ -1643,59 +1631,9 @@ static struct gsh_dbus_method export_show_exports = {
 	.method = gsh_export_showexports,
 	.args = {TIMESTAMP_REPLY,
 		{
-		  .name = "exports_start_array",
-		  .type = "a",
-		  .direction = "out"},
-		{
-		 .name = "_struct_bgn",
-		 .type = "(",
-		 .direction = "out"},
-		{
-		 .name = "id_and_path",
-		 .type = "qs",
-		 .direction = "out"},
-#ifdef _USE_NFS3
-		{
-		 .name = "nfsv3_st",
-		 .type = "b",
-		 .direction = "out"},
-		{
-		 .name = "mnt_st",
-		 .type = "b",
-		 .direction = "out"},
-#endif
-#ifdef _USE_RQUOTA
-		{
-		 .name = "rquota_st",
-		 .type = "b",
-		 .direction = "out"},
-#endif
-		{
-		 .name = "nfsv40_st",
-		 .type = "b",
-		 .direction = "out"},
-		{
-		 .name = "nfsv41_st",
-		 .type = "b",
-		 .direction = "out"},
-		{
-		 .name = "nfsv42_st",
-		 .type = "b",
-		 .direction = "out"},
-#ifdef _USE_9P
-		{
-		 .name = "9p_st",
-		 .type = "b",
-		 .direction = "out"},
-#endif
-		{
-		 .name = "timestamp",
-		 .type = "(tt)",
-		 .direction = "out"},
-		{
-		 .name = "_struct_end",
-		 .type = ")",
-		 .direction = "out"},
+		.name = "exports",
+		.type = "a" EXPORT_CONTAINER,
+		.direction = "out"},
 		 END_ARG_LIST}
 };
 
