@@ -1066,9 +1066,6 @@ add_custom_command(TARGET srpm
 
 if(USE_9P_RDMA)
   find_package(PkgConfig)
-  IF(MOOSHIKA_PREFIX)
-    set(ENV{PKG_CONFIG_PATH} "${PKG_CONFIG_PATH}:${MOOSHIKA_PREFIX}/lib/pkgconfig")
-  ENDIF()
   pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.6)
 
   include_directories(${MOOSHIKA_INCLUDE_DIRS})

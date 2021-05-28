@@ -162,11 +162,8 @@ target_link_libraries(ganesha_nfsd
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
+  ${MOOSHIKA_LIBRARIES}
 )
-
-if(USE_9P_RDMA)
-  target_link_libraries(ganesha_nfsd ${MOOSHIKA_LIBRARIES})
-endif(USE_9P_RDMA)
 
 if(SANITIZE_ADDRESS)
 	set_target_properties(ganesha_nfsd PROPERTIES LINK_FLAGS "-Wl,--version-script=${GANESHA_TOP_CMAKE_DIR}/MainNFSD/libganesha_nfsd.ver")
