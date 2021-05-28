@@ -455,7 +455,7 @@ fsal_status_t vfs_getextattr_value(struct vfs_fsal_obj_handle *vfs_hdl,
 	/* is it an xattr? */
 	rc = fgetxattr(local_fd, xattr_name, buffer_addr, buffer_size);
 	if (rc < 0) {
-		st = fsalstat(posix2fsal_error(rc), errno);
+		st = fsalstat(posix2fsal_error(errno), errno);
 		goto out;
 	}
 
