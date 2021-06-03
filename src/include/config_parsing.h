@@ -376,6 +376,8 @@ struct config_item {
 			void (*display)(const char *step,
 					void *node, void *link_mem,
 					void *self_struct);
+			bool (*check)(void *self_struct,
+					struct config_error_type *err_type);
 		} blk;
 		struct { /* CONFIG_PROC */
 			size_t set_off;

@@ -1537,6 +1537,28 @@ static int add_export_commit(void *node, void *link_mem, void *self_struct,
 }
 
 /**
+ * @brief Check if the ExportId already exists and active
+ * Duplicate ExportID cannot be exported more than once
+ */
+
+static bool check_export_duplicate(void *self_struct,
+				   struct config_error_type *err_type)
+{
+	bool duplicate = false;
+	struct gsh_export *export = self_struct, *probe_exp;
+
+	probe_exp = get_gsh_export(export->export_id);
+	if (probe_exp != NULL) {
+		LogDebug(COMPONENT_EXPORT,
+			"Export %d already exists", export->export_id);
+		put_gsh_export(probe_exp);
+		err_type->exists = true;
+		duplicate = true;
+	}
+	return duplicate;
+}
+
+/**
  * @brief Commit an update export
  * commit the export
  * init export root and mount it in pseudo fs
@@ -1959,7 +1981,8 @@ struct config_block add_export_param = {
 	.blk_desc.u.blk.init = export_init,
 	.blk_desc.u.blk.params = export_params,
 	.blk_desc.u.blk.commit = add_export_commit,
-	.blk_desc.u.blk.display = export_display
+	.blk_desc.u.blk.display = export_display,
+	.blk_desc.u.blk.check = check_export_duplicate
 };
 
 /**
