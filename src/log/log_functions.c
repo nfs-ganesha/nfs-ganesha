@@ -233,6 +233,7 @@ log_header_t max_headers = LH_COMPONENT;
 
 char const_log_str[LOG_BUFF_LEN] = "\0";
 char date_time_fmt[MAX_TD_FMT_LEN] = "\0";
+static bool disp_utc_timestamp;
 
 typedef struct loglev {
 	char *str;
@@ -1229,7 +1230,10 @@ int display_timeval(struct display_buffer *dspbuf, struct timeval *tv)
 	if (logfields->datefmt == TD_NONE && logfields->timefmt == TD_NONE)
 		fmt = "%c ";
 
-	Localtime_r(&tm, &the_date);
+	if (disp_utc_timestamp)
+		gmtime_r(&tm, &the_date);
+	else
+		Localtime_r(&tm, &the_date);
 
 	/* Earlier we build the date/time format string in
 	 * date_time_fmt, now use that to format the time and/or date.
@@ -1851,6 +1855,7 @@ struct logger_config {
 	log_levels_t *comp_log_level;
 	log_levels_t default_log_level;
 	uint32_t rpc_debug_flags;
+	bool disp_utc_timestamp;
 };
 
 /**
@@ -2507,6 +2512,7 @@ static int log_conf_commit(void *node, void *link_mem, void *self_struct,
 				   rpc_debug_flags,
 				   logger->rpc_debug_flags);
 
+		disp_utc_timestamp = logger->disp_utc_timestamp;
 		rpc_debug_flags = logger->rpc_debug_flags;
 		SetNTIRPCLogLevel(component_log_level[COMPONENT_TIRPC]);
 	} else {
@@ -2545,6 +2551,8 @@ static struct config_item logging_params[] = {
 	CONF_ITEM_BLOCK("Components", component_levels,
 			component_init, component_commit,
 			logger_config, comp_log_level),
+	CONF_ITEM_BOOL("Display_UTC_Timestamp", false,
+			logger_config, disp_utc_timestamp),
 	CONFIG_EOL
 };
 

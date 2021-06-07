@@ -496,6 +496,11 @@ LOG {}
 
 		These flags are only used if the TIRPC component is set to DEBUG
 
+	Display_UTC_Timestamp(bool, default false)
+
+		If this is set to true, date and time in ganesha log file will
+		use UTC timezone.
+
 LOG { COMPONENTS {} }
 ---------------------
 
