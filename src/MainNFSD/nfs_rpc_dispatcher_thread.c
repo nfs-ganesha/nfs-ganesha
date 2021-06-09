@@ -943,9 +943,11 @@ static bool enable_udp_listener(protos prot)
 {
 	if (nfs_param.core_param.enable_UDP & UDP_LISTENER_ALL)
 		return true;
+#ifdef _USE_NFS3
 	if (prot == P_MNT &&
 	    (nfs_param.core_param.enable_UDP & UDP_LISTENER_MOUNT))
 		return true;
+#endif
 	return false;
 }
 
