@@ -44,13 +44,7 @@
 #include "nfs_exports.h"
 #include "nfs_core.h"
 #include "export_mgr.h"
-
-#ifdef __FreeBSD__
-#include <sys/endian.h>
-
-#define bswap_16(x)     bswap16((x))
-#define bswap_64(x)     bswap64((x))
-#endif
+#include <misc/portable.h>
 
 #ifdef USE_LTTNG
 #include "gsh_lttng/fsal_mem.h"

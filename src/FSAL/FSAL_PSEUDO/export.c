@@ -47,13 +47,7 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "mdcache.h"
-
-#ifdef __FreeBSD__
-#include <sys/endian.h>
-
-#define bswap_16(x)     bswap16((x))
-#define bswap_64(x)     bswap64((x))
-#endif
+#include <misc/portable.h>
 
 /* helpers to/from other PSEUDO objects
  */
