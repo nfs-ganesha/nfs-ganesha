@@ -45,6 +45,8 @@
 #cmakedefine USE_GSS_KRB5_CCACHE_NAME 1
 #cmakedefine LINUX 1
 #cmakedefine FREEBSD 1
+#cmakedefine BSDBASED 1
+#cmakedefine DARWIN 1
 #cmakedefine _HAVE_GSSAPI 1
 #cmakedefine HAVE_STRING_H 1
 #cmakedefine HAVE_STRNLEN 1

@@ -10,10 +10,10 @@
 #   cmake -DEPOLL_PATH_HINT=/DATA/ERIC/EPOLL /path/to/source
 
 # epoll is emulated on FreeBSD
-if (FREEBSD)
+if (BSDBASED)
     set (EPOLL_FOUND ON)
     return ()
-endif (FREEBSD)
+endif (BSDBASED)
 
 include(CheckIncludeFiles)
 include(CheckFunctionExists)

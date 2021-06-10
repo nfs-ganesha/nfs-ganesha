@@ -111,12 +111,20 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+  set(BSDBASED ON)
   set(FREEBSD ON)
   set(UNIX ON)
 # On FreeBSD libc doesn't directly provide libexecinfo, so we have to find it
   set(USE_EXECINFO ON)
   set(LIBEXECDIR "/${CMAKE_INSTALL_PREFIX}/libexec")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(BSDBASED ON)
+  set(DARWIN ON)
+  set(UNIX ON)
+  set(LIBEXECDIR "/${CMAKE_INSTALL_PREFIX}/libexec")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   set(WINDOWS ON)
@@ -166,16 +174,25 @@ ENDIF( EXISTS ${GANESHA_TOP_CMAKE_DIR}/../.git/HEAD  )
 
 STRING(SUBSTRING ${_GIT_HEAD_COMMIT} 0  7 _GIT_HEAD_COMMIT_ABBREV )
 
-if (FREEBSD)
+if (BSDBASED)
 #default gcc doesn't like using -Wuninitialized without -O on FreeBSD
-    set(PLATFORM "FREEBSD")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -ggdb")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-optimize-sibling-calls")
+    find_library(LIBDL c)  # libc suffices on FreeBSD and Darwin
+endif(BSDBASED)
+
+if (FREEBSD)
+    set(PLATFORM "FREEBSD")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--export-dynamic")
     set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/freebsd")
-    find_library(LIBDL c)  # libc suffices on freebsd
 endif(FREEBSD)
+
+if (DARWIN)
+    set(PLATFORM "DARWIN")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-export_dynamic")
+    set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/darwin")
+endif(DARWIN)
 
 if (LINUX)
     set(PLATFORM "LINUX")
@@ -970,6 +987,8 @@ elseif(FREEBSD)
   if (FREEBSD_VERSION GREATER 1200500)
     add_definitions(-DHAS_DOFF)
   endif()
+elseif(DARWIN)
+  # d_off unavailable on macOS
 else() # d_off is on by default for other cases
   add_definitions(-DHAS_DOFF)
 endif()

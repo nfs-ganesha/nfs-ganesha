@@ -430,7 +430,7 @@ void posix2fsal_attributes(const struct stat *buffstat,
 		fsalattr->group = buffstat->st_gid;
 
 	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_ATIME)) {
-#ifdef FREEBSD
+#ifdef BSDBASED
 		fsalattr->atime = buffstat->st_atimespec;
 #else
 		fsalattr->atime = buffstat->st_atim;
@@ -438,7 +438,7 @@ void posix2fsal_attributes(const struct stat *buffstat,
 	}
 
 	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_CTIME)) {
-#ifdef FREEBSD
+#ifdef BSDBASED
 		fsalattr->ctime = buffstat->st_ctimespec;
 #else
 		fsalattr->ctime = buffstat->st_ctim;
@@ -446,7 +446,7 @@ void posix2fsal_attributes(const struct stat *buffstat,
 	}
 
 	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_MTIME)) {
-#ifdef FREEBSD
+#ifdef BSDBASED
 		fsalattr->mtime = buffstat->st_mtimespec;
 #else
 		fsalattr->mtime = buffstat->st_mtim;
