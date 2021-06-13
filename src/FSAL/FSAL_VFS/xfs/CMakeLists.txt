@@ -26,7 +26,7 @@ endif(PATH_LIBHANDLE)
 target_link_libraries(fsalxfs
   ganesha_nfsd
   ${SYSTEM_LIBRARIES}
-  "-Wl,--no-undefined"
+  ${LDFLAG_DISALLOW_UNDEF}
 )
 target_link_libraries(fsalxfs handle)
 

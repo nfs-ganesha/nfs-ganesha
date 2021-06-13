@@ -36,7 +36,7 @@ add_sanitizers(fsalgpfs)
 target_link_libraries(fsalgpfs
   ganesha_nfsd
   ${SYSTEM_LIBRARIES}
-  "-Wl,--no-undefined"
+  ${LDFLAG_DISALLOW_UNDEF}
 )
 
 set_target_properties(fsalgpfs PROPERTIES VERSION 4.2.0 SOVERSION 4)

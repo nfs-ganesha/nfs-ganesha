@@ -166,10 +166,17 @@ target_link_libraries(ganesha_nfsd
 )
 
 if(SANITIZE_ADDRESS)
-	set_target_properties(ganesha_nfsd PROPERTIES LINK_FLAGS "-Wl,--version-script=${GANESHA_TOP_CMAKE_DIR}/MainNFSD/libganesha_nfsd.ver")
+  set(undef_flags ${LDFLAG_ALLOW_UNDEF})
 else(SANITIZE_ADDRESS)
-	set_target_properties(ganesha_nfsd PROPERTIES LINK_FLAGS "-Wl,--version-script=${GANESHA_TOP_CMAKE_DIR}/MainNFSD/libganesha_nfsd.ver -Wl,--no-undefined")
+  set(undef_flags ${LDFLAG_DISALLOW_UNDEF})
 endif(SANITIZE_ADDRESS)
+
+if(LINUX OR FREEBSD)
+  # Apple's /bin/ld does not support the --version-script flag.
+  set(ver_script_flags "-Wl,--version-script=${GANESHA_TOP_CMAKE_DIR}/MainNFSD/libganesha_nfsd.ver")
+endif(LINUX OR FREEBSD)
+
+set_target_properties(ganesha_nfsd PROPERTIES LINK_FLAGS "${undef_flags} ${ver_script_flags}")
 
 set_target_properties(ganesha_nfsd PROPERTIES
   VERSION "${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}"

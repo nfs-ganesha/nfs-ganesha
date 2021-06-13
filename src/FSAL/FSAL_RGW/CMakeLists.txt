@@ -21,7 +21,7 @@ target_link_libraries(fsalrgw
   ganesha_nfsd
   ${RGW_LIBRARIES}
   ${SYSTEM_LIBRARIES}
-  "-Wl,--no-undefined"
+  ${LDFLAG_DISALLOW_UNDEF}
 )
 
 set_target_properties(fsalrgw PROPERTIES VERSION 4.2.0 SOVERSION 4)

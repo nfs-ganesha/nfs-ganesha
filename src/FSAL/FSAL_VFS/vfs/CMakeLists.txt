@@ -35,7 +35,7 @@ if(USE_FSAL_VFS)
     target_link_libraries(fsalvfs
       ganesha_nfsd
       ${fsalvfs_TGT_LINK_LIB}
-      "-Wl,--no-undefined")
+      ${LDFLAG_DISALLOW_UNDEF})
     set_target_properties(fsalvfs PROPERTIES VERSION 4.2.0 SOVERSION 4)
     install(TARGETS fsalvfs COMPONENT fsal DESTINATION ${FSAL_DESTINATION} )
 endif(USE_FSAL_VFS)
@@ -58,7 +58,7 @@ if(USE_FSAL_LUSTRE)
           ganesha_nfsd
           ${fsalvfs_TGT_LINK_LIB}
           lustreapi
-          "-Wl,--no-undefined"
+          ${LDFLAG_DISALLOW_UNDEF}
         )
 
         set_target_properties(fsallustre PROPERTIES
@@ -88,7 +88,7 @@ if(USE_FSAL_LUSTRE)
         target_link_libraries(fsaldummylustre
           ganesha_nfsd
           ${fsalvfs_TGT_LINK_LIB}
-          "-Wl,--no-undefined"
+          ${LDFLAG_DISALLOW_UNDEF}
         )
 
         set_target_properties(fsaldummylustre PROPERTIES

@@ -130,6 +130,18 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   set(WINDOWS ON)
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
+if(DARWIN)
+  # Apple's /usr/bin/ld doesn't use the same flags for specifying treatment of
+  # undefined symbols, and its defaults are opposite of GNU's and LLVM's ld.
+  set(LDFLAG_ALLOW_UNDEF "-Wl,-undefined,suppress")
+  set(LDFLAG_DISALLOW_UNDEF "-Wl,-undefined,error")
+elseif(FREEBSD OR LINUX)
+  # llvm-ld seems to be missing a flag to explicitly allow undefined, but this
+  # is the default anyway for both llvm-ld and GNU ld.
+  set(LDFLAG_ALLOW_UNDEF "")
+  set(LDFLAG_DISALLOW_UNDEF "-Wl,--no-undefined")
+endif(DARWIN)
+
 # Identify the host we are building on
 EXECUTE_PROCESS( COMMAND hostname
   OUTPUT_VARIABLE BUILD_HOST_NAME
@@ -1559,7 +1571,7 @@ target_link_libraries(ganesha.nfsd
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
-  "-Wl,--no-undefined"
+  ${LDFLAG_DISALLOW_UNDEF}
 )
 set_target_properties(ganesha.nfsd PROPERTIES COMPILE_FLAGS "-fPIC")
 install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
@@ -1574,7 +1586,7 @@ if (USE_RADOS_RECOV)
   target_link_libraries(ganesha-rados-grace
     ganesha_nfsd
     ${RADOS_LIBRARIES}
-    "-Wl,--no-undefined"
+    ${LDFLAG_DISALLOW_UNDEF}
   )
   install(TARGETS ganesha-rados-grace COMPONENT tools DESTINATION bin)
 endif(USE_RADOS_RECOV)
@@ -1591,7 +1603,7 @@ if(LINUX)
     ${LIBTIRPC_LIBRARIES}
     ${SYSTEM_LIBRARIES}
     ${LTTNG_LIBRARIES}
-    "-Wl,--no-undefined"
+    ${LDFLAG_DISALLOW_UNDEF}
   )
 
   if( USE_ADMIN_TOOLS )
@@ -1609,7 +1621,7 @@ target_link_libraries(verif_syntax
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
-  "-Wl,--no-undefined"
+  ${LDFLAG_DISALLOW_UNDEF}
 )
 
 ########### next target ###############
@@ -1622,7 +1634,7 @@ target_link_libraries(test_parsing
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
-  "-Wl,--no-undefined"
+  ${LDFLAG_DISALLOW_UNDEF}
 )
 
 ########### add a "make doc" target to call Doxygen

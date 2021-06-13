@@ -50,7 +50,7 @@ if(USE_RADOS_RECOV)
     ganesha_nfsd
     ${SYSTEM_LIBRARIES}
     ${RADOS_LIBRARIES}
-    "-Wl,--no-undefined")
+    ${LDFLAG_DISALLOW_UNDEF})
   include_directories(${RADOS_INCLUDE_DIR})
   set_target_properties(ganesha_rados_recov PROPERTIES SOVERSION
     "${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}")

@@ -26,7 +26,7 @@ add_sanitizers(fsalproxy_v4)
 target_link_libraries(fsalproxy_v4
   ganesha_nfsd
   ${SYSTEM_LIBRARIES}
-  "-Wl,--no-undefined"
+  ${LDFLAG_DISALLOW_UNDEF}
 )
 
 if(PROXYV4_HANDLE_MAPPING)

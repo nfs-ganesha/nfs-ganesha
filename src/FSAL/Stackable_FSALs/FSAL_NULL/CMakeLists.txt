@@ -21,7 +21,7 @@ add_sanitizers(fsalnull)
 
 target_link_libraries(fsalnull
   ganesha_nfsd
-  "-Wl,--no-undefined"
+  ${LDFLAG_DISALLOW_UNDEF}
 )
 
 set_target_properties(fsalnull PROPERTIES VERSION 4.2.0 SOVERSION 4)
