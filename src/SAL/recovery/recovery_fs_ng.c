@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include "config.h"
 #include "log.h"
 #include "nfs_core.h"

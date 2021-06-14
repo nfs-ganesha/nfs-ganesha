@@ -1,6 +1,5 @@
 add_definitions(
   -D__USE_GNU
-  -D_GNU_SOURCE
 )
 
 SET(fsalxfs_LIB_SRCS

@@ -438,6 +438,12 @@ IF(ENFORCE_GCC)
     set(CMAKE_C_COMPILER gcc)
 ENDIF(ENFORCE_GCC)
 
+include(CheckSymbolExists)
+check_symbol_exists(__GLIBC__ features.h HAVE_GLIBC)
+if(HAVE_GLIBC)
+  add_definitions(-D_GNU_SOURCE=1)
+endif(HAVE_GLIBC)
+
 IF(USE_FSAL_GLUSTER)
   IF(GLUSTER_PREFIX)
     set(GLUSTER_PREFIX ${GLUSTER_PREFIX} CACHE PATH "Path to Gluster installation")
@@ -1134,9 +1140,6 @@ find_library(LIBURCU urcu-bp)
 if (NOT LIBURCU)
 	message(FATAL_ERROR "userspace-rcu library not found!")
 endif(NOT LIBURCU)
-if (CMAKE_MAJOR_VERSION VERSION_EQUAL 3 AND CMAKE_MINOR_VERSION VERSION_GREATER 14)
-  include(CheckSymbolExists)
-endif(CMAKE_MAJOR_VERSION VERSION_EQUAL 3 AND CMAKE_MINOR_VERSION VERSION_GREATER 14)
 check_symbol_exists(urcu_ref_get_unless_zero urcu/ref.h HAVE_URCU_REF_GET_UNLESS_ZERO)
 
 # All the plumbing in the basement

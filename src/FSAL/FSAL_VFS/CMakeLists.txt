@@ -1,6 +1,5 @@
 add_definitions(
   -D__USE_GNU
-  -D_GNU_SOURCE
 )
 
 # We explicitly need to include this directory for linking vfs/lustre subfsals

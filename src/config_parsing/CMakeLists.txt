@@ -3,7 +3,6 @@ find_package(FLEX)
 
 add_definitions(
   -D__USE_GNU
-  -D_GNU_SOURCE
 )
 
 BISON_TARGET(

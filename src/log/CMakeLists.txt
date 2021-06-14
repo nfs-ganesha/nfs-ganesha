@@ -1,6 +1,5 @@
 add_definitions(
   -D__USE_GNU
-  -D _GNU_SOURCE
 )
 
 if(USE_DBUS)
