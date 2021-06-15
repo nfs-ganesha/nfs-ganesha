@@ -59,7 +59,6 @@ SET(support_STAT_SRCS
    exports.c
    fridgethr.c
    delayed_exec.c
-   misc.c
    bsd-base64.c
    server_stats.c
    export_mgr.c
@@ -72,13 +71,6 @@ if(ERROR_INJECTION)
     err_inject.c
     )
 endif(ERROR_INJECTION)
-
-if(APPLE)
-  set(support_STAT_SRCS
-    ${support_STAT_SRCS}
-    misc.c
-    )
-endif(APPLE)
 
 add_library(support OBJECT ${support_STAT_SRCS})
 add_sanitizers(support)
