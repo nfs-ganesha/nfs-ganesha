@@ -1136,10 +1136,15 @@ endif (USE_SYSTEM_NTIRPC)
 message(${NTIRPC_INCLUDE_DIR})
 include_directories(${NTIRPC_INCLUDE_DIR})
 
-find_library(LIBURCU urcu-bp)
-if (NOT LIBURCU)
-	message(FATAL_ERROR "userspace-rcu library not found!")
-endif(NOT LIBURCU)
+find_library(LIBURCU_LIB urcu-bp)
+if (NOT LIBURCU_LIB)
+  message(FATAL_ERROR "userspace-rcu library not found!")
+endif(NOT LIBURCU_LIB)
+
+find_path(LIBURCU_INC urcu-bp.h)
+if (NOT LIBURCU_INC)
+  message(FATAL_ERROR "userspace-rcu includes not found!")
+endif(NOT LIBURCU_INC)
 check_symbol_exists(urcu_ref_get_unless_zero urcu/ref.h HAVE_URCU_REF_GET_UNLESS_ZERO)
 
 # All the plumbing in the basement
@@ -1150,8 +1155,10 @@ set(SYSTEM_LIBRARIES
   ${KRB5_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBRT}
-  ${LIBURCU}
+  ${LIBURCU_LIB}
 )
+
+include_directories(${LIBURCU_INC})
 
 # Config file; make sure it doesn't clobber an existing one
 include(${GANESHA_TOP_CMAKE_DIR}/cmake/modules/InstallPackageConfigFile.cmake)
