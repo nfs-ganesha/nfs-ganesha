@@ -201,16 +201,6 @@ static int setthreadgroups(size_t size, const gid_t *list)
 	return syscall(syscall_num, size, list);
 }
 
-uid_t getuser(void)
-{
-	return geteuid();
-}
-
-gid_t getgroup(void)
-{
-	return getegid();
-}
-
 void setuser(uid_t uid)
 {
 	int rc = setthreaduid(uid);

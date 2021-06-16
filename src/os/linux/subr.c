@@ -106,16 +106,6 @@ int vfs_utimes(int fd, const struct timespec *ts)
 	return futimens(fd, ts);
 }
 
-uid_t getuser(void)
-{
-	return geteuid();
-}
-
-gid_t getgroup(void)
-{
-	return getegid();
-}
-
 void setuser(uid_t uid)
 {
 	int rc = syscall(SYS_setresuid, -1, uid, -1);

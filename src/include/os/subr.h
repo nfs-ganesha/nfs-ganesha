@@ -31,6 +31,7 @@
 
 #include <stdbool.h>
 #include <extended_types.h>
+#include <unistd.h>
 
 #ifndef UTIME_NOW
 #define UTIME_NOW	-1
@@ -53,8 +54,10 @@ int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp);
 bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base);
 void setuser(uid_t uid);
 void setgroup(gid_t gid);
-uid_t getuser(void);
-gid_t getgroup(void);
 int set_threadgroups(size_t size, const gid_t *list);
+
+/* Define these aliases for all OSs for consistency with setuser/setgroup */
+#define getuser geteuid
+#define getgroup getegid
 
 #endif/* SUBR_OS_H */
