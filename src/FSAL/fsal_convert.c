@@ -429,29 +429,12 @@ void posix2fsal_attributes(const struct stat *buffstat,
 	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_GROUP))
 		fsalattr->group = buffstat->st_gid;
 
-	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_ATIME)) {
-#ifdef BSDBASED
-		fsalattr->atime = buffstat->st_atimespec;
-#else
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_ATIME))
 		fsalattr->atime = buffstat->st_atim;
-#endif
-	}
-
-	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_CTIME)) {
-#ifdef BSDBASED
-		fsalattr->ctime = buffstat->st_ctimespec;
-#else
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_CTIME))
 		fsalattr->ctime = buffstat->st_ctim;
-#endif
-	}
-
-	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_MTIME)) {
-#ifdef BSDBASED
-		fsalattr->mtime = buffstat->st_mtimespec;
-#else
+	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_MTIME))
 		fsalattr->mtime = buffstat->st_mtim;
-#endif
-	}
 
 	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_CHANGE)) {
 		fsalattr->change =

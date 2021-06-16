@@ -399,6 +399,13 @@ static inline int PTHREAD_mutex_trylock(pthread_mutex_t *mtx,
  * but too complicated to explain here).
  */
 
+#ifdef __APPLE__
+/* For accessing timespec values on 'struct stat' */
+#define st_atim st_atimespec
+#define st_mtim st_mtimespec
+#define st_ctim st_ctimespec
+#endif
+
 /**
  * @brief Get the abs difference between two timespecs in nsecs
  *
