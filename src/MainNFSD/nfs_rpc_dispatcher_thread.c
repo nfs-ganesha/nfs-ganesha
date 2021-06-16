@@ -66,6 +66,12 @@
 #include "gsh_lttng/nfs_rpc.h"
 #endif
 
+#ifdef __APPLE__
+#include <sys/socketvar.h>
+#include <netinet/tcp_var.h>
+#define TCP_KEEPIDLE TCPCTL_KEEPIDLE
+#endif
+
 #define NFS_options nfs_param.core_param.core_options
 #define NFS_program nfs_param.core_param.program
 
