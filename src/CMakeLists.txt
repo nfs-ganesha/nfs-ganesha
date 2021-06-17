@@ -272,6 +272,9 @@ goption(USE_FSAL_NULL "build NULL FSAL shared library" ON)
 goption(USE_FSAL_RGW "build RGW FSAL shared library" ON)
 goption(USE_FSAL_MEM "build Memory FSAL shared library" ON)
 
+# Internal capability required by some FSALs
+option(GSH_CAN_HOST_LOCAL_FS "Ganesha supports hosting local filesystems" ON)
+
 # nTIRPC
 option(USE_SYSTEM_NTIRPC "Use the system nTIRPC, rather than the submodule" OFF)
 option (USE_GSS "enable RPCSEC_GSS support" ON)
@@ -1226,6 +1229,7 @@ message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
 message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
 message(STATUS "USE_FSAL_NULL = ${USE_FSAL_NULL}")
 message(STATUS "USE_FSAL_MEM = ${USE_FSAL_MEM}")
+message(STATUS "GSH_CAN_HOST_LOCAL_FS = ${GSH_CAN_HOST_LOCAL_FS}")
 message(STATUS "USE_SYSTEM_NTIRPC = ${USE_SYSTEM_NTIRPC}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")

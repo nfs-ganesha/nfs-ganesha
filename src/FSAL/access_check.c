@@ -864,6 +864,7 @@ gid_t ganesha_gid;
 int ganesha_ngroups;
 gid_t *ganesha_groups;
 
+#if GSH_CAN_HOST_LOCAL_FS
 void fsal_set_credentials(const struct user_cred *creds)
 {
 	if (set_threadgroups(creds->caller_glen, creds->caller_garray) != 0)
@@ -873,6 +874,15 @@ void fsal_set_credentials(const struct user_cred *creds)
 	setgroup(creds->caller_gid);
 	setuser(creds->caller_uid);
 }
+
+void fsal_restore_ganesha_credentials(void)
+{
+	setuser(ganesha_uid);
+	setgroup(ganesha_gid);
+	if (set_threadgroups(ganesha_ngroups, ganesha_groups) != 0)
+		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
+}
+#endif		/* GSH_CAN_HOST_LOCAL_FS */
 
 bool fsal_set_credentials_only_one_user(const struct user_cred *creds)
 {
@@ -923,14 +933,6 @@ void fsal_save_ganesha_credentials(void)
 		(void) display_cat(&dspbuf, ")");
 
 	LogInfo(COMPONENT_FSAL, "%s", buffer);
-}
-
-void fsal_restore_ganesha_credentials(void)
-{
-	setuser(ganesha_uid);
-	setgroup(ganesha_gid);
-	if (set_threadgroups(ganesha_ngroups, ganesha_groups) != 0)
-		LogFatal(COMPONENT_FSAL, "Could not set Ganesha credentials");
 }
 
 /** @} */
