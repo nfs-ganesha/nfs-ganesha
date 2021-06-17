@@ -86,6 +86,13 @@ set(fsal_CORE_SRCS
    ../FSAL_UP/fsal_up_async.c
 )
 
+if (GSH_CAN_HOST_LOCAL_FS)
+  set(fsal_CORE_SRCS
+      ${fsal_CORE_SRCS}
+      ../FSAL/localfs.c
+  )
+endif(GSH_CAN_HOST_LOCAL_FS)
+
 if (USE_ACL_MAPPING)
   set(fsal_CORE_SRCS
       ${fsal_CORE_SRCS}

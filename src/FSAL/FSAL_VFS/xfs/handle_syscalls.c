@@ -38,6 +38,7 @@
 #include "gsh_list.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/fsal_localfs.h"
 #include "../vfs_methods.h"
 #include "handle_syscalls.h"
 

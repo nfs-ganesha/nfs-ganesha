@@ -38,6 +38,7 @@
 #include <fcntl.h>
 #include "fsal_api.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/fsal_localfs.h"
 #include "../fsal_private.h"
 #include "fsal_convert.h"
 #include "fsal_internal.h"

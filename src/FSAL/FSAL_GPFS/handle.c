@@ -41,6 +41,7 @@
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/fsal_localfs.h"
 #include "gpfs_methods.h"
 #include "nfs_proto_tools.h"
 

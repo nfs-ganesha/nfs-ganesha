@@ -31,6 +31,7 @@
 #include <string.h>
 #include "fsal.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/fsal_localfs.h"
 #include "fsal_internal.h"
 #include "fsal_convert.h"
 #include "gpfs_methods.h"

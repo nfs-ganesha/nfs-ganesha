@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include "fsal_convert.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/fsal_localfs.h"
 #include "vfs_methods.h"
 #include <os/subr.h>
 

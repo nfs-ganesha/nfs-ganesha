@@ -46,6 +46,7 @@
 #include "config_parsing.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"
+#include "FSAL/fsal_localfs.h"
 #include "fsal_handle_syscalls.h"
 #include "vfs_methods.h"
 #include "nfs_exports.h"

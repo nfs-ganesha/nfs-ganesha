@@ -33,6 +33,7 @@
 #include "nfs_core.h"
 #include "fsal_private.h"
 #include "FSAL/fsal_commonlib.h"
+#include "FSAL/fsal_localfs.h"
 
 /**
  * @file fsal_destroyer.c

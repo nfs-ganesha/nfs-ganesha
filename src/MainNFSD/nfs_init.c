@@ -76,6 +76,7 @@
 #include "nfs_init.h"
 #include <urcu-bp.h>
 #include "conf_url.h"
+#include "FSAL/fsal_localfs.h"
 
 /**
  * @brief init_complete used to indicate if ganesha is during
