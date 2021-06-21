@@ -36,6 +36,7 @@
 #include <utime.h>
 #include <sys/time.h>
 #include "export_mgr.h"
+#include "FSAL/fsal_localfs.h"
 
 extern fsal_status_t
 fsal_acl_2_gpfs_acl(struct fsal_obj_handle *, fsal_acl_t *, gpfsfsal_xstat_t *,

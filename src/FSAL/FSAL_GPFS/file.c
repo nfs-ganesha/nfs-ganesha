@@ -37,6 +37,7 @@
 #include <assert.h>
 #include "fsal.h"
 #include "FSAL/access_check.h"
+#include "FSAL/fsal_localfs.h"
 #include "fsal_convert.h"
 #include "fsal_internal.h"
 #include <unistd.h>

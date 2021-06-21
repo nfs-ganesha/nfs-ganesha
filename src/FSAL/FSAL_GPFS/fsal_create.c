@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <fsal_api.h>
 #include "FSAL/access_check.h"
+#include "FSAL/fsal_localfs.h"
 
 /**
  *  @brief Create a regular file.

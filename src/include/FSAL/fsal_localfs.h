@@ -36,7 +36,46 @@ static inline void release_posix_file_systems(void) {}
 static inline void dbus_cache_init(void) {}
 #endif
 
+struct fsal_filesystem;
+
 #else
+
+/**
+ * @brief Public structure for filesystem descriptions
+ *
+ * This stucture is provided along with a general interface to support those
+ * FSALs that map into a traditional file system model. Note that
+ * fsal_obj_handles do not link to an fsal_filesystem, that linkage is reserved
+ * for FSAL's private obj handle if appropriate.
+ *
+ */
+
+struct fsal_filesystem {
+	struct glist_head filesystems;	/*< List of file systems */
+	struct glist_head children;	/*< Child file systems */
+	struct glist_head siblings;	/*< Entry in list of parent's child
+					    file systems */
+	struct fsal_filesystem *parent;	/*< Parent file system */
+	struct fsal_module *fsal;	/*< Link back to fsal module */
+	struct glist_head exports;	/*< List of all the export maps */
+	void *private_data;		/*< Private data for owning FSAL */
+	char *path;			/*< Path to root of this file system */
+	char *device;			/*< Path to block device */
+	char *type;			/*< fs type */
+
+	unclaim_filesystem_cb unclaim;  /*< Call back to unclaim this fs */
+	uint32_t pathlen;		/*< Length of path */
+	uint32_t namelen;		/*< Name length from statfs */
+
+	struct avltree_node avl_fsid;	/*< AVL indexed by fsid */
+	struct avltree_node avl_dev;	/*< AVL indexed by dev */
+	struct fsal_fsid__ fsid;	/*< file system id */
+	fsal_dev_t dev;			/*< device filesystem is on */
+	enum fsid_type fsid_type;	/*< type of fsid present */
+	bool in_fsid_avl;		/*< true if inserted in fsid avl */
+	bool in_dev_avl;		/*< true if inserted in dev avl */
+	int claims[CLAIM_NUM];		/*< number of each type of claim */
+};
 
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat);
 

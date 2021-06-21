@@ -35,6 +35,7 @@
 #include "gpfs_methods.h"
 #include <string.h>
 #include <unistd.h>
+#include "FSAL/fsal_localfs.h"
 
 /**
  *  @brief Read the content of a symbolic link.
