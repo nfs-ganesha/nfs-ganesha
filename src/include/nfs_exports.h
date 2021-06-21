@@ -181,6 +181,7 @@ typedef struct exportlist_client_entry__ {
 				       EXPORT_OPTION_AUTH_UNIX)
 
 #define EXPORT_OPTION_EXPIRE_SET 0x00080000	/*< Inode expire was set */
+#define EXPORT_DEFAULT_CACHE_EXPIRY 60	/*< Default cache expiry */
 
 /* Protocol flags */
 #define EXPORT_OPTION_NFSV3 0x00100000	/*< NFSv3 operations are supported */

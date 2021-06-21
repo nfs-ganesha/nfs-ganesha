@@ -65,7 +65,7 @@ pthread_rwlock_t export_opt_lock = PTHREAD_RWLOCK_INITIALIZER;
 #define GLOBAL_EXPORT_PERMS_INITIALIZER				\
 	.def.anonymous_uid = ANON_UID,				\
 	.def.anonymous_gid = ANON_GID,				\
-	.def.expire_time_attr = 60,				\
+	.def.expire_time_attr = EXPORT_DEFAULT_CACHE_EXPIRY,	\
 	/* Note: Access_Type defaults to None on purpose */	\
 	.def.options = EXPORT_OPTION_ROOT_SQUASH |		\
 		       EXPORT_OPTION_NO_ACCESS |		\
@@ -1838,7 +1838,8 @@ static struct config_item client_params[] = {
 
 static struct config_item export_defaults_params[] = {
 	CONF_EXPORT_PERMS(global_export_perms, conf),
-	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX, 60,
+	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX,
+		       EXPORT_DEFAULT_CACHE_EXPIRY,
 		       global_export_perms, conf.expire_time_attr,
 		       EXPORT_OPTION_EXPIRE_SET, conf.set),
 	CONFIG_EOL
@@ -1913,7 +1914,8 @@ static struct config_item fsal_params[] = {
 static struct config_item export_params[] = {
 	CONF_EXPORT_PARAMS(gsh_export),
 	CONF_EXPORT_PERMS(gsh_export, export_perms),
-	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX, 60,
+	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX,
+		       EXPORT_DEFAULT_CACHE_EXPIRY,
 		       gsh_export, export_perms.expire_time_attr,
 		       EXPORT_OPTION_EXPIRE_SET, export_perms.set),
 
@@ -1938,7 +1940,8 @@ static struct config_item export_params[] = {
 static struct config_item export_update_params[] = {
 	CONF_EXPORT_PARAMS(gsh_export),
 	CONF_EXPORT_PERMS(gsh_export, export_perms),
-	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX, 60,
+	CONF_ITEM_I32_SET("Attr_Expiration_Time", -1, INT32_MAX,
+		       EXPORT_DEFAULT_CACHE_EXPIRY,
 		       gsh_export, export_perms.expire_time_attr,
 		       EXPORT_OPTION_EXPIRE_SET, export_perms.set),
 
