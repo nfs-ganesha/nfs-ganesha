@@ -628,8 +628,7 @@ if (USE_FSAL_PROXY_V4)
   endif(PROXYV4_HANDLE_MAPPING)
 endif (USE_FSAL_PROXY_V4)
 
-# VFS has no required dependencies but has an optional dependency for
-# libbtrfsutil
+# VFS has an optional dependency for libbtrfsutil
 gopt_test(USE_FSAL_VFS)
 if(USE_FSAL_VFS)
   find_library(BTRFSUTIL_LIB btrfsutil)
@@ -713,7 +712,6 @@ gopt_test(USE_NFSACL3)
   endif(USE_NFSACL3)
 
 gopt_test(USE_FSAL_GPFS)
-# GPFS has no dependencies
 
 gopt_test(USE_FSAL_XFS)
 if(USE_FSAL_XFS)
@@ -735,6 +733,24 @@ if(USE_FSAL_XFS)
     endif(USE_FSAL_XFS_REQUIRED)
   endif((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
 endif(USE_FSAL_XFS)
+
+# VFS, GPFS, LUSTRE, and XFS require GSH_CAN_HOST_LOCAL_FS
+if(NOT GSH_CAN_HOST_LOCAL_FS)
+  if((USE_FSAL_VFS AND USE_FSAL_VFS_REQUIRED) OR
+     (USE_FSAL_GPFS AND USE_FSAL_GPFS_REQUIRED) OR
+     (USE_FSAL_LUSTRE AND USE_FSAL_LUSTRE_REQUIRED) OR
+     (USE_FSAL_XFS AND USE_FSAL_XFS_REQUIRED))
+    message(FATAL_ERROR "USE_FSAL_VFS, _GPFS, _LUSTRE, or _XFS requested but local FS hosting is not enabled")
+  endif((USE_FSAL_VFS AND USE_FSAL_VFS_REQUIRED) OR
+        (USE_FSAL_GPFS AND USE_FSAL_GPFS_REQUIRED) OR
+        (USE_FSAL_LUSTRE AND USE_FSAL_LUSTRE_REQUIRED) OR
+        (USE_FSAL_XFS AND USE_FSAL_XFS_REQUIRED))
+
+  set(USE_FSAL_VFS OFF)
+  set(USE_FSAL_GPFS OFF)
+  set(USE_FSAL_LUSTRE OFF)
+  set(USE_FSAL_XFS OFF)
+endif(NOT GSH_CAN_HOST_LOCAL_FS)
 
 gopt_test(USE_FSAL_PANFS)
 # PANFS has no dependencies
