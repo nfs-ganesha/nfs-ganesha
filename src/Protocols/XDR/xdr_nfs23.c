@@ -827,7 +827,7 @@ struct xdr_uio *xdr_READ3res_uio_setup(struct READ3resok *objp)
 	uio->uio_vio[0].vio_head = objp->data.data_val;
 	uio->uio_vio[0].vio_tail = objp->data.data_val + size2;
 	uio->uio_vio[0].vio_wrap = objp->data.data_val + size2;
-	uio->uio_vio[0].vio_length = objp->data.data_len;
+	uio->uio_vio[0].vio_length = size2;
 	uio->uio_vio[0].vio_type = VIO_DATA;
 
 	/* Take over read data buffer */
