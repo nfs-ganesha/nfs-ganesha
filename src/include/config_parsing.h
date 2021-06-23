@@ -675,9 +675,9 @@ struct config_item {
 #define CONF_ITEM_I16(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_INT16,		    \
-	  .u.ui16.minval = _min_,		    \
-	  .u.ui16.maxval = _max_,		    \
-	  .u.ui16.def = _def_,			    \
+	  .u.i16.minval = _min_,		    \
+	  .u.i16.maxval = _max_,		    \
+	  .u.i16.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
