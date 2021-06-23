@@ -48,9 +48,6 @@ Requires: openSUSE-release
 @BCOND_GLUSTER@ gluster
 %global use_fsal_gluster %{on_off_switch gluster}
 
-@BCOND_PANFS@ panfs
-%global use_fsal_panfs %{on_off_switch panfs}
-
 @BCOND_KVSFS@ kvsfs
 %global use_fsal_kvsfs %{on_off_switch kvsfs}
 
@@ -406,18 +403,6 @@ This package contains a FSAL shared object to
 be used with NFS-Ganesha to support LUSTRE based filesystems
 %endif
 
-# PANFS
-%if %{with panfs}
-%package panfs
-Summary: The NFS-GANESHA PANFS FSAL
-Group: Applications/System
-Requires:	nfs-ganesha = %{version}-%{release}
-
-%description panfs
-This package contains a FSAL shared object to
-be used with NFS-Ganesha to support PANFS
-%endif
-
 #KVSFS
 %if %{with kvsfs}
 %package kvsfs
@@ -525,7 +510,6 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_CEPH=%{use_fsal_ceph}		\
 	-DUSE_FSAL_RGW=%{use_fsal_rgw}			\
 	-DUSE_FSAL_GPFS=%{use_fsal_gpfs}		\
-	-DUSE_FSAL_PANFS=%{use_fsal_panfs}		\
 	-DUSE_FSAL_KVSFS=%{use_fsal_kvsfs}		\
 	-DUSE_FSAL_GLUSTER=%{use_fsal_gluster}		\
 	-DUSE_SYSTEM_NTIRPC=%{use_system_ntirpc}	\
@@ -839,11 +823,6 @@ exit 0
 %{_libdir}/pkgconfig/libntirpc.pc
 %dir %{_includedir}/ntirpc
 %{_includedir}/ntirpc/*
-%endif
-
-%if %{with panfs}
-%files panfs
-%{_libdir}/ganesha/libfsalpanfs*
 %endif
 
 %if %{with kvsfs}

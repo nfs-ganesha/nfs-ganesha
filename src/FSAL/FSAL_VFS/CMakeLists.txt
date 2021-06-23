@@ -19,8 +19,5 @@ endif(USE_FSAL_VFS OR USE_FSAL_LUSTRE)
 if(USE_FSAL_XFS)
     add_subdirectory(xfs)
 endif(USE_FSAL_XFS)
-if(USE_FSAL_PANFS)
-    add_subdirectory(panfs)
-endif(USE_FSAL_PANFS)
 
 ########### install files ###############

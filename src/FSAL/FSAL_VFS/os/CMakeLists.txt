@@ -2,9 +2,6 @@
 # build of chosen platform
 
 if(FREEBSD)
-  if(USE_FSAL_PANFS)
-      add_definitions(-D__PanFS__)
-  endif(USE_FSAL_PANFS)
   SET(fsal_os_STAT_SRCS
       freebsd/handle_syscalls.c
   )

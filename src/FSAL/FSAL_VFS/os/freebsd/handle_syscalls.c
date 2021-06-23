@@ -51,9 +51,9 @@ static inline size_t vfs_sizeof_handle(struct v_fhandle *fh)
  * sizeof(fsid_t) == 8
  * sizeof(fid_len) == 2
  * sizeof(fid_reserved) == 2
- * fid_len == MAXFIDSIZE
+ * fid_len == MAXFIDSZ
  */
-#if VFS_HANDLE_LEN < (1 + 8 + 2 + 2 + MAXFIDSIZE)
+#if VFS_HANDLE_LEN < (1 + 8 + 2 + 2 + MAXFIDSZ)
 #error "VFS_HANDLE_LEN is too small"
 #endif
 
@@ -152,25 +152,6 @@ int vfs_extract_fsid(vfs_file_handle_t *fh,
 
 	LogVFSHandle(fh);
 
-#ifdef __PanFS__
-	if (hdl->fh_fid.fid_reserved != 0) {
-		int rc;
-
-		*fsid_type = (enum fsid_type) (hdl->fh_fid.fid_reserved - 1);
-
-		rc = decode_fsid(fh->handle_data,
-				 sizeof(fh->handle_data),
-				 fsid,
-				 *fsid_type);
-		if (rc < 0) {
-			errno = EINVAL;
-			return rc;
-		}
-
-		return 0;
-	}
-#endif
-
 	*fsid_type = FSID_TWO_UINT32;
 	fsid->major = hdl->fh_fsid.val[0];
 	fsid->minor = hdl->fh_fsid.val[1];
@@ -248,30 +229,6 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 
 		LogMidDebug(COMPONENT_FSAL, "%s", buf);
 	}
-
-#ifdef __PanFS__
-	if (hdl->fh_fid.fid_reserved != 0) {
-		bool fsid_type_ok = false;
-
-		switch ((enum fsid_type) (hdl->fh_fid.fid_reserved - 1)) {
-		case FSID_NO_TYPE:
-		case FSID_ONE_UINT64:
-		case FSID_MAJOR_64:
-		case FSID_TWO_UINT64:
-		case FSID_TWO_UINT32:
-		case FSID_DEVICE:
-			fsid_type_ok = true;
-			break;
-		}
-
-		if (!fsid_type_ok) {
-			LogDebug(COMPONENT_FSAL,
-				 "FSID Type %02"PRIu16" invalid",
-				 hdl->fh_fid.fid_reserved - 1);
-			return false;
-		}
-	}
-#endif
 
 	return (desc->len >= (sizeof(fsid_t) +
 			  sizeof(hdl->fh_fid.fid_len) +

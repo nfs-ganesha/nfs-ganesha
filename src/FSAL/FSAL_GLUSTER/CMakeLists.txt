@@ -5,8 +5,6 @@ add_definitions(
 
 set( LIB_PREFIX 64)
 
-#add_subdirectory(pnfs_panfs)
-
 #if(USE_FSAL_XFS)
 #    add_subdirectory(xfs)
 #endif(USE_FSAL_XFS)

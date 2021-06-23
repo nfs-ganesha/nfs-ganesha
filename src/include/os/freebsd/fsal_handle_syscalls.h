@@ -32,6 +32,7 @@
 #define HANDLE_FREEBSD_H
 
 #include <fsal_convert.h>
+#include <sys/mount.h>
 #include "syscalls.h"
 
 #ifndef O_PATH
@@ -49,27 +50,12 @@
 #define AT_EMPTY_PATH 0x1000
 #endif
 
-/*
- * Currently all FreeBSD versions define MAXFIDSZ to be 16 which is not
- * sufficient for PanFS file handle. Following scheme ensures that on FreeBSD
- * platform we always use big enough data structure for holding file handle by
- * using our own file handle data structure instead of struct fhandle from
- * mount.h
- *
- */
-
-#ifdef __PanFS__
-#define MAXFIDSIZE 36
-#else
-#define MAXFIDSIZE 16
-#endif
-
 #define HANDLE_DUMMY 0x20
 
 struct v_fid {
 	u_short fid_len;		/* length of data in bytes */
 	u_short fid_reserved;		/* force longword alignment */
-	char fid_data[MAXFIDSIZE];	/* data (variable length) */
+	char fid_data[MAXFIDSZ];	/* data (variable length) */
 };
 
 struct v_fhandle {
