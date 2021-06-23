@@ -298,6 +298,7 @@ static bool convert_number(struct config_node *node,
 	char *endptr;
 	int base;
 	bool signed_int = false;
+	bool zero_ok = false, inrange;
 
 	if (node->type != TYPE_TERM) {
 		config_proc_error(node, err_type,
@@ -332,38 +333,45 @@ static bool convert_number(struct config_node *node,
 	case CONFIG_INT16:
 		smin = item->u.i16.minval;
 		smax = item->u.i16.maxval;
+		zero_ok = item->u.i16.zero_ok;
 		signed_int = true;
 		break;
 	case CONFIG_UINT16:
 		mask = UINT16_MAX;
 		min = item->u.ui16.minval;
 		max = item->u.ui16.maxval;
+		zero_ok = item->u.ui16.zero_ok;
 		break;
 	case CONFIG_INT32:
 		smin = item->u.i32.minval;
 		smax = item->u.i32.maxval;
+		zero_ok = item->u.i32.zero_ok;
 		signed_int = true;
 		break;
 	case CONFIG_UINT32:
 		mask = UINT32_MAX;
 		min = item->u.ui32.minval;
 		max = item->u.ui32.maxval;
+		zero_ok = item->u.ui32.zero_ok;
 		break;
 	case CONFIG_ANON_ID:
 		/* Internal to config, anonymous id is treated as int64_t */
 		smin = item->u.i64.minval;
 		smax = item->u.i64.maxval;
+		zero_ok = item->u.i64.zero_ok;
 		signed_int = true;
 		break;
 	case CONFIG_INT64:
 		smin = item->u.i64.minval;
 		smax = item->u.i64.maxval;
+		zero_ok = item->u.i64.zero_ok;
 		signed_int = true;
 		break;
 	case CONFIG_UINT64:
 		mask = UINT64_MAX;
 		min = item->u.ui64.minval;
 		max = item->u.ui64.maxval;
+		zero_ok = item->u.ui64.zero_ok;
 		break;
 	default:
 		goto errout;
@@ -394,12 +402,17 @@ static bool convert_number(struct config_node *node,
 				  *node->u.term.op_code);
 			goto errout;
 		}
-		if (sval < smin || sval > smax) {
+
+		inrange = (sval >= smin && sval <= smax) ||
+			  (zero_ok && sval == 0);
+
+		if (!inrange) {
 			config_proc_error(node, err_type,
 				  "(%s) is out of range",
 				  node->u.term.varvalue);
 			goto errout;
 		}
+
 		val = (uint64_t) sval;
 	} else {
 		if (node->u.term.op_code != NULL &&
@@ -418,7 +431,11 @@ static bool convert_number(struct config_node *node,
 				  *node->u.term.op_code);
 			goto errout;
 		}
-		if (val < min || val > max) {
+
+		inrange = (val >= min && val <= max) ||
+			  (zero_ok && val == 0);
+
+		if (!inrange) {
 			config_proc_error(node, err_type,
 				  "(%s) is out of range",
 				  node->u.term.varvalue);

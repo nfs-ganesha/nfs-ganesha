@@ -317,16 +317,19 @@ struct config_item {
 			int16_t minval;
 			int16_t maxval;
 			int16_t def;
+			bool zero_ok;
 		} i16;
 		struct { /* CONFIG_UINT16 */
 			uint16_t minval;
 			uint16_t maxval;
 			uint16_t def;
+			bool zero_ok;
 		} ui16;
 		struct { /* CONFIG_INT32 */
 			int32_t minval;
 			int32_t maxval;
 			int32_t def;
+			bool zero_ok;
 			uint32_t bit;
 			size_t set_off;
 		} i32;
@@ -334,11 +337,13 @@ struct config_item {
 			uint32_t minval;
 			uint32_t maxval;
 			uint32_t def;
+			bool zero_ok;
 		} ui32;
 		struct { /* CONFIG_INT64 */
 			int64_t minval;
 			int64_t maxval;
 			int64_t def;
+			bool zero_ok;
 			uint32_t bit;
 			size_t set_off;
 		} i64;
@@ -346,6 +351,7 @@ struct config_item {
 			uint64_t minval;
 			uint64_t maxval;
 			uint64_t def;
+			bool zero_ok;
 			uint32_t bit;
 			size_t set_off;
 		} ui64;
@@ -678,6 +684,7 @@ struct config_item {
 	  .u.i16.minval = _min_,		    \
 	  .u.i16.maxval = _max_,		    \
 	  .u.i16.def = _def_,			    \
+	  .u.i16.zero_ok = (_min_ <= 0),	    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -687,6 +694,7 @@ struct config_item {
 	  .u.ui16.minval = _min_,		    \
 	  .u.ui16.maxval = _max_,		    \
 	  .u.ui16.def = _def_,			    \
+	  .u.ui16.zero_ok = (_min_ == 0),	    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -697,6 +705,7 @@ struct config_item {
 	  .u.ui16.minval = _min_,		    \
 	  .u.ui16.maxval = _max_,		    \
 	  .u.ui16.def = _def_,			    \
+	  .u.ui16.zero_ok = (_min_ == 0),	    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -706,6 +715,7 @@ struct config_item {
 	  .u.i32.minval = _min_,		    \
 	  .u.i32.maxval = _max_,		    \
 	  .u.i32.def = _def_,			    \
+	  .u.i32.zero_ok = (_min_ <= 0),	    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -717,6 +727,7 @@ struct config_item {
 	  .u.i32.minval = _min_,		    \
 	  .u.i32.maxval = _max_,		    \
 	  .u.i32.def = _def_,			    \
+	  .u.i32.zero_ok = (_min_ <= 0),	    \
 	  .u.i32.bit = _bit_,		   	    \
 	  .u.i32.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
@@ -730,6 +741,7 @@ struct config_item {
 	  .u.i64.minval = INT32_MIN,		    \
 	  .u.i64.maxval = UINT32_MAX,		    \
 	  .u.i64.def = _def_,			    \
+	  .u.i64.zero_ok = true,		    \
 	  .u.i64.bit = _bit_,			    \
 	  .u.i64.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
@@ -741,6 +753,17 @@ struct config_item {
 	  .u.ui32.minval = _min_,		    \
 	  .u.ui32.maxval = _max_,		    \
 	  .u.ui32.def = _def_,			    \
+	  .u.ui32.zero_ok = (_min_ == 0),	    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_ITEM_UI32_ZERO(_name_, _min_, _max_, _def_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_UINT32,		    \
+	  .u.ui32.minval = _min_,		    \
+	  .u.ui32.maxval = _max_,		    \
+	  .u.ui32.def = _def_,			    \
+	  .u.ui32.zero_ok = true,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -751,6 +774,7 @@ struct config_item {
 	  .u.ui32.minval = _min_,		    \
 	  .u.ui32.maxval = _max_,		    \
 	  .u.ui32.def = _def_,			    \
+	  .u.ui32.zero_ok = (_min_ == 0),	    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -761,15 +785,30 @@ struct config_item {
 	  .u.ui32.minval = 0,			    \
 	  .u.ui32.maxval = 0777,		    \
 	  .u.ui32.def = _def_,			    \
+	  .u.ui32.zero_ok = true,	    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
 #define CONF_ITEM_I64(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_INT64,		    \
+	  .type = CONFIG_INT64,			    \
 	  .u.i64.minval = _min_,		    \
 	  .u.i64.maxval = _max_,		    \
 	  .u.i64.def = _def_,			    \
+	  .u.i64.zero_ok = (_min_ <= 0),	    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+/* The following exists because I64 is used for time_t which are likely
+ * parameters to have a non-zero min but also allow 0.
+ */
+#define CONF_ITEM_I64_ZERO(_name_, _min_, _max_, _def_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_INT64,			    \
+	  .u.i64.minval = _min_,		    \
+	  .u.i64.maxval = _max_,		    \
+	  .u.i64.def = _def_,			    \
+	  .u.i64.zero_ok = true,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -779,6 +818,17 @@ struct config_item {
 	  .u.ui64.minval = _min_,		    \
 	  .u.ui64.maxval = _max_,		    \
 	  .u.ui64.def = _def_,			    \
+	  .u.ui64.zero_ok = (_min_ == 0),	    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
+#define CONF_ITEM_UI64_ZERO(_name_, _min_, _max_, _def_, _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_UINT64,		    \
+	  .u.ui64.minval = _min_,		    \
+	  .u.ui64.maxval = _max_,		    \
+	  .u.ui64.def = _def_,			    \
+	  .u.ui64.zero_ok = true,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -790,6 +840,7 @@ struct config_item {
 	  .u.ui64.minval = _min_,		    \
 	  .u.ui64.maxval = _max_,		    \
 	  .u.ui64.def = _def_,			    \
+	  .u.ui64.zero_ok = (_min_ == 0),	    \
 	  .u.ui64.bit = _bit_,			    \
 	  .u.ui64.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
