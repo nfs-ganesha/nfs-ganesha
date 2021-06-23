@@ -203,6 +203,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetWrite);
 	bool force_sync = op_ctx->export_perms.options & EXPORT_OPTION_COMMIT;
 	WRITE3resfail *resfail = &res->res_write3.WRITE3res_u.resfail;
+	WRITE3resok *resok = &res->res_write3.WRITE3res_u.resok;
 	struct nfs3_write_data *write_data = NULL;
 	struct fsal_io_arg *write_arg;
 	nfs_request_t *reqdata = container_of(req, nfs_request_t, svc);
@@ -307,6 +308,12 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_write3.status = NFS3_OK;
 		nfs_SetWccData(NULL, obj, &resfail->file_wcc);
 		rc = NFS_REQ_OK;
+		if ((arg->arg_write3.stable == DATA_SYNC) ||
+		    (arg->arg_write3.stable == FILE_SYNC))
+			resok->committed = FILE_SYNC;
+		else
+			resok->committed = UNSTABLE;
+		memcpy(resok->verf, NFS3_write_verifier, sizeof(writeverf3));
 		goto putref;
 	}
 
