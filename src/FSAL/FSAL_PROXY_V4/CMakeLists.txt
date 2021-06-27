@@ -13,7 +13,7 @@ SET(fsalproxy_v4_LIB_SRCS
 
 if(PROXYV4_HANDLE_MAPPING)
   SET(fsalproxy_v4_LIB_SRCS
-    ${fsalproxy_LIB_SRCS}
+    ${fsalproxy_v4_LIB_SRCS}
     handle_mapping/handle_mapping.c
     handle_mapping/handle_mapping_db.c
     )
