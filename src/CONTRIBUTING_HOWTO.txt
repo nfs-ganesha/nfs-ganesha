@@ -28,6 +28,8 @@ member of nfs-ganesha organisation on Github. If you'd like to help keeping
 the documentation up to date, ask the developers for an invite. It's not
 required for code contributions.
 
+FETCHING THE CODE:
+
 First you need to fetch the code you wish to work on:
 
     git clone git://github.com/codeleader/nfs-ganesha.git --branch new-unstable-dev-project
@@ -51,6 +53,8 @@ Now fetch the latest updates:
 You will also need to pull in the libntirpc submodule:
 
     git submodule update --init
+
+PREPARING FOR PATCH SUBMISSION:
 
 We also have several commit hooks, please install them:
 
@@ -91,6 +95,8 @@ There may be updates from other developers. Update to their new branch
 done:
 
     git rebase origin/more-stable-dev-project
+
+SUBMITTING PATCHES:
 
 To push to the project, we now use Gerrithub for code submission and review.
 
@@ -138,6 +144,42 @@ Please note that you can only push changes to another repo that you wrote,
 Gerrithub will check the mail address you're using and ask you to add any
 different mail address to your profile (settings -> Contact information).
 Well, just read the text if you get an error, it's usually clear enough :)
+
+PUSHING MULTIPLE PATCHES:
+
+If you have multiple patches to submit, you can either submit them separately
+to gerrithub, or you can submit them as a set of patches. If you have all
+the patches in a single branch on your github, the git push command above
+will submit them all as a group of patches. This is handy for the maintainer
+when merging because the patches may be pulled together. On the other hand,
+if you need to update any of the patches, you SHOULD push all of them again
+otherwise the maintainer risks not getting the latest version of the patches.
+For example, if you submitted 3 patches originally, and then only pushed updates
+to the first two, the 3rd patch which appears to be the "HEAD" when pulled
+from gerrithub will also pull the OLD versions of the first two patches.
+
+Pushing separate patches may make sense when they are truly independent but
+it does make more effort for the maintainer especially if they happen to
+conflict with each other and don't trivially merge. The maintainer appreciates
+when submitters resolve merge conflicts. For this reason you should also make
+sure your patches are based on the latest upstream next branch.
+
+If you are coordinating development with someone else, make sure one person
+pushes all the patches and has resolved any merge conflicts.
+
+gerrithub makes it easy to cherrypick patches, so if multiple independent
+patches have been submitted together and not all patches are ready for merge,
+the maintainer can simply cherrypick the patches that are ready for merge.
+
+PATCH UPDATES AND CHANGE ID:
+
+If you submit a new version of a patch, even if it's a very significant rewrite,
+please maintain the Change-Id. This allows gerrithub to keep all the comments
+and patch versions associated to better understand the history of the change.
+The multiple patch versions can easily be compared within gerrithub. If you do
+submit a new patch with a new Change-Id, perhaps because a completely different
+method is used to resolve the issue and is in a different section of code,
+make sure to abandon the old patch.
 
 Finally, if you're a new contributor and found a problem in this document,
 please submit fixes. Thank you!
