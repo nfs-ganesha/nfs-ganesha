@@ -71,6 +71,14 @@ typedef struct nfs23_map_handle__ {
 
 } nfs23_map_handle_t;
 
+/* The maximum length of a v4 proxy file handle. This is the
+ * length of an NFSv4 File Handle, plus 2 bytes to account
+ * for the fact that the handle is pulled from the
+ * proxyv4_handle_blob data structure, allowing enough
+ * room in memory to pull that entire structure and then
+ * parse out the actual file handle. */
+#define PROXYV4_HANDLE_MAXLEN (NFS4_FHSIZE + 2)
+
 /* Error codes */
 #define HANDLEMAP_SUCCESS        0
 #define HANDLEMAP_STALE          1
