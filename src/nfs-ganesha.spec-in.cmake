@@ -228,7 +228,7 @@ Summary: The NFS-GANESHA util scripts
 Group: Applications/System
 %if ( 0%{?rhel} && 0%{?rhel} < 8 )
 #python3-pyparsing not currently available on RHEL7.x
-Requires:       dbus-python, pygobject2, pyparsing, python3-dbus
+Requires:       dbus-python, pygobject2, pyparsing
 BuildRequires:  python-devel
 %else
 Requires:	python3-dbus, python3-gobject, python3-pyparsing
@@ -420,34 +420,6 @@ This package contains a FSAL shared object to
 be used with NFS-Ganesha to support Gluster
 %endif
 
-# SELINUX
-%if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
-%package selinux
-Summary: The NFS-GANESHA SELINUX targeted policy
-Group: Applications/System
-BuildArch:	noarch
-Requires:	nfs-ganesha = %{version}-%{release}
-BuildRequires: selinux-policy-devel
-%{?selinux_requires}
-
-%description selinux
-This package contains an selinux policy for running ganesha.nfsd
-
-%post selinux
-%selinux_modules_install %{_selinux_store_path}/packages/ganesha.pp.bz2
-
-%pre selinux
-%selinux_relabel_pre
-
-%postun selinux
-if [ $1 -eq 0 ]; then
-    %selinux_modules_uninstall ganesha
-fi
-
-%posttrans
-%selinux_relabel_post
-%endif
-
 %prep
 %setup -q -n %{sourcename}
 
@@ -562,13 +534,6 @@ install -m 644 config_samples/gpfs.ganesha.exports.conf	%{buildroot}%{_sysconfdi
 %endif
 
 make DESTDIR=%{buildroot} install
-
-%if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
-install -d %{buildroot}%{_selinux_store_path}/packages
-install -d -p %{buildroot}%{_selinux_store_path}/devel/include/contrib
-install -p -m 644 selinux/ganesha.if %{buildroot}%{_selinux_store_path}/devel/include/contrib
-install -m 0644 selinux/ganesha.pp.bz2 %{buildroot}%{_selinux_store_path}/packages
-%endif
 
 %if (0%{?rhel} && 0%{?rhel} < 8)
 rm -f %{buildroot}/%{python2_sitelib}/gpfs*
@@ -757,12 +722,6 @@ exit 0
 %if %{with man_page}
 %{_mandir}/*/ganesha-gluster-config.8.gz
 %endif
-%endif
-
-%if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
-%files selinux
-%attr(0644,root,root) %{_selinux_store_path}/packages/ganesha.pp.bz2
-%attr(0644,root,root) %{_selinux_store_path}/devel/include/contrib/ganesha.if
 %endif
 
 %if %{with panfs}
