@@ -497,7 +497,7 @@ static bool admin_dbus_trim_enable(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	LogEvent(COMPONENT_MEMLEAKS, "enabling malloc_trim");
 	nfs_param.core_param.enable_trim = true;
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 
 	return success;
 }
@@ -526,7 +526,7 @@ static bool admin_dbus_trim_disable(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	LogEvent(COMPONENT_MEMLEAKS, "disabling malloc_trim");
 	nfs_param.core_param.enable_trim = false;
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 
 	return success;
 }
@@ -555,7 +555,7 @@ static bool admin_dbus_trim_call(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	LogEvent(COMPONENT_MEMLEAKS, "Calling malloc_trim");
 	malloc_trim(0);
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 
 	return success;
 }
@@ -597,7 +597,7 @@ static bool admin_dbus_trim_status(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	if (!nfs_param.core_param.enable_trim)
 		errormsg = "Malloc trim status: disabled";
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 
 	return success;
 }
