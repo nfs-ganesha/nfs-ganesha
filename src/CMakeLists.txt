@@ -1501,18 +1501,18 @@ endif(COVERAGE)
 
 ########### next target ###############
 
-add_executable(ganesha.nfsd ./MainNFSD/nfs_main.c)
-add_sanitizers(ganesha.nfsd)
+add_executable(gpfs.ganesha.nfsd ./MainNFSD/nfs_main.c)
+add_sanitizers(gpfs.ganesha.nfsd)
 
-target_link_libraries(ganesha.nfsd
+target_link_libraries(gpfs.ganesha.nfsd
   ganesha_nfsd
   ${LIBTIRPC_LIBRARIES}
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
   "-Wl,--no-undefined"
 )
-set_target_properties(ganesha.nfsd PROPERTIES COMPILE_FLAGS "-fPIC")
-install(TARGETS ganesha.nfsd COMPONENT daemon DESTINATION bin)
+set_target_properties(gpfs.ganesha.nfsd PROPERTIES COMPILE_FLAGS "-fPIC")
+install(TARGETS gpfs.ganesha.nfsd COMPONENT daemon DESTINATION bin)
 
 ########### next target ###############
 

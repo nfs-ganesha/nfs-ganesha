@@ -617,8 +617,8 @@ exit 0
 %endif
 
 %files
-%{_libdir}/libganesha_nfsd.so*
 %{_bindir}/gpfs.ganesha.nfsd
+%{_libdir}/libganesha_nfsd.so*
 
 %if ! %{with system_ntirpc}
 %{_libdir}/libntirpc.so.@NTIRPC_VERSION_EMBED@
