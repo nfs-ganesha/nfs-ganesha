@@ -6,4 +6,4 @@ lib/systemd/system/nfs-ganesha*
 usr/lib/ganesha/*
 usr/bin/*
 usr/lib/libntirpc*
-
+usr/lib/libganesha_nfsd*
