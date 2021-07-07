@@ -1988,7 +1988,7 @@ static bool get_nfsv_global_total_ops(DBusMessageIter *args,
 		success = false;
 		errormsg = "NFS stat counting disabled";
 	}
-	dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	if (success)
 		global_dbus_total_ops(&iter);
 
