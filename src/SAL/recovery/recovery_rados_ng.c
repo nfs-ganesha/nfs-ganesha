@@ -179,7 +179,10 @@ static int rados_ng_init(void)
 	grace_op = rados_create_write_op();
 	rados_write_op_omap_clear(grace_op);
 
-	LogEvent(COMPONENT_CLIENTID, "Rados kv store init done");
+	LogEvent(COMPONENT_CLIENTID, 
+		 "rados_ng init done using rados://%s/%s/%s with nodeid %s as user %s",
+		 rados_kv_param.pool, rados_kv_param.namespace, rados_kv_param.grace_oid,
+		 recov_oid->gr_val, rados_kv_param.userid);
 	return 0;
 }
 
