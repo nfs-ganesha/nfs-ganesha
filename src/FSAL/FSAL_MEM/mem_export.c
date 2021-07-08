@@ -30,7 +30,7 @@
 #include "config.h"
 
 #include "fsal.h"
-#include <byteswap.h>           /* used for 'bswap*' */
+#include <misc/portable.h>	/* used for 'bswap*' */
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
