@@ -1147,15 +1147,11 @@ static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
  * Whereas if false, both src_fd and dst_fd contain single reference
  * to glfd. Hence closing one of the them shall destroy other fd too.
  */
-fsal_status_t glusterfs_copy_my_fd(struct glusterfs_fd *src_fd,
-				 struct glusterfs_fd *dst_fd,
-				 bool is_dup)
+void glusterfs_copy_my_fd(struct glusterfs_fd *src_fd,
+			  struct glusterfs_fd *dst_fd,
+			  bool is_dup)
 {
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-
-	if (!src_fd || !dst_fd) {
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
+	assert(src_fd != NULL && dst_fd != NULL);
 
 	if (is_dup) {
 		dst_fd->glfd = glfs_dup(src_fd->glfd);
@@ -1176,7 +1172,6 @@ fsal_status_t glusterfs_copy_my_fd(struct glusterfs_fd *src_fd,
 #ifdef USE_GLUSTER_DELEGATION
 	memcpy(dst_fd->lease_id, src_fd->lease_id, GLAPI_LEASE_ID_SIZE);
 #endif
-	return status;
 }
 
 struct glfs_object*
@@ -1933,8 +1928,15 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 			goto open;
 	}
 
-	if (!my_fd) /* case: state == NULL */
+	if (!my_fd) {
+		/* case: state == NULL
+		 * This only lasts long enough to get the file open and a new
+		 * fsal_obj_handle created with a globalfd that we can transfer
+		 * the tmp_fd to. Should we not get that far, my_fd will remain
+		 * pointing to tmp_fd and will result in proper cleanup.
+		 */
 		my_fd = &tmp_fd;
+	}
 
 	/* Become the user because we are creating an object in this dir.
 	 */
@@ -2076,20 +2078,25 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 	 *
 	 */
 
-	status = glusterfs_copy_my_fd(my_fd, &myself->globalfd,
-				     (state != NULL));
+	glusterfs_copy_my_fd(my_fd, &myself->globalfd, (state != NULL));
+
+	if (state == NULL) {
+		/* In this case my_fd == tmp_fd, which we shallow copied
+		 * caller_garray into globalfd. Since the two are now
+		 * equivalent, we no longer want any reference to tmp_fd. This
+		 * will prevent a double free of caller_garray if we wind up at
+		 * fileerr. This also properly manages the glfd.
+		 */
+		my_fd = &myself->globalfd;
+	}
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "glusterfs_copy_my_fd %s returned %s",
 		     name, msg_fsal_err(status.major));
 
 #ifdef USE_LTTNG
-	tracepoint(fsalgl, open_fd, __func__, __LINE__, p_flags,
-		   my_fd->glfd);
+	tracepoint(fsalgl, open_fd, __func__, __LINE__, p_flags, my_fd->glfd);
 #endif
-
-	if (FSAL_IS_ERROR(status))
-		goto fileerr;
 
 	/* Since we copied it to globalfd, increment
 	 * open_fd_count
