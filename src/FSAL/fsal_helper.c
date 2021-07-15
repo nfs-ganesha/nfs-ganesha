@@ -170,6 +170,45 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 	return status;
 }
 
+/* When creating a file, we must check that the owner and group to be set is
+ * OK for the caller to set.
+ */
+static fsal_status_t fsal_check_create_owner(struct fsal_attrlist *attr)
+{
+	fsal_status_t status = {0, 0};
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "attr->owner %"PRIu64" caller_uid %"PRIu64
+		     " attr->group %"PRIu64" caller_gid %"PRIu64"",
+		     attr->owner, (uint64_t) op_ctx->creds.caller_uid,
+		     attr->group, (uint64_t) op_ctx->creds.caller_gid);
+
+	if (op_ctx->creds.caller_uid == 0) {
+		/* No check for root. */
+	} else if (FSAL_TEST_MASK(attr->valid_mask, ATTR_OWNER) &&
+		   attr->owner != op_ctx->creds.caller_uid) {
+		/* non-root is only allowed to set ownership of file to itself.
+		 */
+		status = fsalstat(ERR_FSAL_PERM, 0);
+		LogDebug(COMPONENT_FSAL,
+			 "Access check failed (specified OWNER was not user)");
+	} else if (FSAL_TEST_MASK(attr->valid_mask, ATTR_GROUP) &&
+		   (attr->group != op_ctx->creds.caller_gid)) {
+		/* non-root is only allowed to set group_owner to a group the
+		 * user is a member of.
+		 */
+		int not_in_group = fsal_not_in_group_list(attr->group);
+
+		if (not_in_group) {
+			status = fsalstat(ERR_FSAL_PERM, 0);
+			LogDebug(COMPONENT_FSAL,
+				 "Access check failed (user is not member of specified GROUP)");
+		}
+	}
+
+	return status;
+}
+
 /**
  * @brief Checks permissions on an entry for setattrs
  *
@@ -1578,9 +1617,19 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 
 	*obj = NULL;
 
-	if (attr != NULL)
+	if (attr != NULL) {
 		LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
 			    "attrs ", attr, false);
+
+		status = fsal_check_create_owner(attr);
+
+		if (FSAL_IS_ERROR(status)) {
+			LogDebug(COMPONENT_FSAL,
+				 "Not opening file file %s%s",
+				 reason, fsal_err_txt(status));
+			return status;
+		}
+	}
 
 	/* Handle attribute size = 0 here, normalize to FSAL_O_TRUNC
 	 * instead of setting ATTR_SIZE.
