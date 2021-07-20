@@ -231,21 +231,20 @@ be used with NFS-Ganesha to support VFS based filesystems
 %package utils
 Summary: The NFS-GANESHA util scripts
 Group: Applications/System
-%if ( 0%{?rhel} && 0%{?rhel} < 8 )
-#python3-pyparsing not currently available on RHEL7.x
-Requires:       dbus-python, pygobject2, pyparsing
-BuildRequires:  python-devel
-%else
-Requires:	python3-dbus, python3-gobject, python3-pyparsing
-Requires:       gpfs.nfs-ganesha = %{version}-%{release}, python3
-BuildRequires:  python3-devel
 %if (0%{?suse_version} && 0%{?sle_version} >= 150000)
-Requires:	python3-dbus-python, python3-gobject, python3-pyparsing
-Requires: 	gpfs.nfs-ganesha = %{version}-%{release}, python3
+Requires:       python3-dbus-python, python3-pyparsing
 BuildRequires:  python3-devel
+%else
+%if (0%{?rhel} && 0%{?rhel} >= 8)
+Requires:       python3-dbus, python3-pyparsing
+BuildRequires:  python3-devel
+%else
+# RHEL7.x
+Requires:       dbus-python, pyparsing
+BuildRequires:  python-devel
 %endif
 %endif
-Requires: 	gpfs.nfs-ganesha = %{version}-%{release}
+Requires:       gpfs.nfs-ganesha = %{version}-%{release}
 
 %if %{with gui_utils}
 %if ( 0%{?suse_version} )
