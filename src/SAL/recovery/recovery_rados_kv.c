@@ -720,6 +720,14 @@ out:
 	gsh_free(cval);
 }
 
+int rados_kv_get_nodeid(char **pnodeid)
+{
+	/* return the nodeid if we have one */
+	if (rados_kv_param.nodeid)
+		*pnodeid = gsh_strdup(rados_kv_param.nodeid);
+	return 0;
+}
+
 struct nfs4_recovery_backend rados_kv_backend = {
 	.recovery_init = rados_kv_init,
 	.recovery_shutdown = rados_kv_shutdown,
@@ -728,6 +736,7 @@ struct nfs4_recovery_backend rados_kv_backend = {
 	.add_clid = rados_kv_add_clid,
 	.rm_clid = rados_kv_rm_clid,
 	.add_revoke_fh = rados_kv_add_revoke_fh,
+	.get_nodeid = rados_kv_get_nodeid,
 };
 
 void rados_kv_backend_init(struct nfs4_recovery_backend **backend)

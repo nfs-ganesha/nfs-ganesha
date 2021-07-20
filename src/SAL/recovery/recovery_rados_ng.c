@@ -328,6 +328,7 @@ struct nfs4_recovery_backend rados_ng_backend = {
 	.add_clid = rados_ng_add_clid,
 	.rm_clid = rados_ng_rm_clid,
 	.add_revoke_fh = rados_kv_add_revoke_fh,
+	.get_nodeid = rados_kv_get_nodeid,
 };
 
 void rados_ng_backend_init(struct nfs4_recovery_backend **backend)

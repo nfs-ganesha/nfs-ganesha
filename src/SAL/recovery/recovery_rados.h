@@ -94,4 +94,5 @@ void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle);
 
 void rados_ng_pop_clid_entry(char *key, char *val, size_t val_len,
 			     struct pop_args *pop_args);
+int rados_kv_get_nodeid(char **pnodeid);
 #endif	/* _RECOVERY_RADOS_H */
