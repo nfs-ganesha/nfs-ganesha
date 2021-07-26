@@ -49,6 +49,8 @@
 #endif
 #include "fsal.h"
 
+#define NFS_CONTAINERIZATION 1
+
 #include "include/gpfs_nfs.h"
 #include "gsh_config.h"
 
@@ -174,6 +176,12 @@ int gpfs_ganesha(int op, void *oarg)
 	struct timespec start_time;
 	struct timespec stop_time;
 	nsecs_elapsed_t resp_time;
+#ifdef NFS_CONTAINERIZATION
+	FILE *file = NULL;
+	bool readDone = false;
+	bool gotPath = false;
+	char *dirPath = NULL;
+#endif
 
 	if (gpfs_fd < 0) {
 		/* If we enable fsal_trace in the config, the following
@@ -191,6 +199,64 @@ int gpfs_ganesha(int op, void *oarg)
 
 		assert(gpfs_fd == -2);
 		gpfs_fd = open(GPFS_DEVNAMEX, O_RDONLY);
+
+#ifdef NFS_CONTAINERIZATION
+		if (gpfs_fd < 0) {
+
+			/* In containerization, /dev/ss0 may not be present.
+			 * So look for gpfs mount.
+			 */
+			file = fopen("/proc/mounts", "r");
+			if (file == NULL)
+				goto exit;
+
+			while (!readDone) {
+				char  lineBuf[2048];
+				char  *savePtr;
+				char  *type;
+				char  *ptr;
+				/* Read the next line from the file */
+				if (fgets(lineBuf, sizeof(lineBuf), file)
+						== NULL) {
+					readDone = true;
+					break;
+					/* Something is broken with the
+					 * command pipe,
+					 * maybe done or reached to EOF
+					 */
+				}
+				ptr = strtok_r(lineBuf, " ", &savePtr);
+				if (ptr == NULL)
+					continue;
+				/* 2nd is the mount point */
+				ptr = strtok_r(NULL, " ", &savePtr);
+				if (ptr == NULL)
+					continue;
+				else
+					dirPath = ptr;
+				/* 3rd is the type */
+				type = strtok_r(NULL, " ", &savePtr);
+				if (strcmp(type, "gpfs") == 0) {
+					readDone = true;
+					gotPath = true;
+				}
+			}
+			fclose(file);
+			if (gotPath) {
+				gpfs_fd = open(dirPath, O_RDONLY);
+
+				if (gpfs_fd >= 0)
+					LogEvent(COMPONENT_FSAL,
+				"%s GPFS file system found, fd %d,dirPath=%s\n",
+					__func__, gpfs_fd, dirPath);
+			}
+exit:
+			if (!gotPath)
+				LogEvent(COMPONENT_FSAL,
+				"%s no mounted GPFS file system found, fd %d\n",
+				__func__, gpfs_fd);
+		}
+#endif
 		if (gpfs_fd == -1)
 			LogFatal(COMPONENT_FSAL,
 				"open of %s failed with errno %d",
