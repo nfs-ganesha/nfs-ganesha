@@ -135,8 +135,10 @@ Requires:	dbus
 
 %if ( 0%{?suse_version} )
 BuildRequires:  liburcu-devel
+Requires:       liburcu
 %else
 BuildRequires: userspace-rcu-devel
+Requires:      userspace-rcu
 %endif
 
 %if ( 0%{?suse_version} )
