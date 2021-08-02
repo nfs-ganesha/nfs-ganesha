@@ -1625,8 +1625,8 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 
 		if (FSAL_IS_ERROR(status)) {
 			LogDebug(COMPONENT_FSAL,
-				 "Not opening file file %s%s",
-				 reason, fsal_err_txt(status));
+				 "Not opening file - %s",
+				 fsal_err_txt(status));
 			return status;
 		}
 	}
