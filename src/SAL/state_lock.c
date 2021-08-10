@@ -2106,6 +2106,12 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 	fsal_lock_param_t conflicting_lock;
 	struct fsal_export *fsal_export = op_ctx->fsal_export;
 	fsal_lock_op_t fsal_lock_op = lock_op;
+	struct gsh_client *saved_client = op_ctx->client;
+	struct gsh_client *owner_client = NULL;
+#ifdef _USE_NLM
+	struct state_nlm_client_t *nlm_client;
+#endif
+	struct nfs_client_id_t *nfs4_clientid;
 
 	lock->lock_sle_type = FSAL_POSIX_LOCK;
 
@@ -2146,10 +2152,50 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 		fsal_lock_op = FSAL_OP_LOCK;
 	}
 
+	/* Fetch the gsh_client associated with the lock owner if available */
+	switch (owner->so_type) {
+	case STATE_LOCK_OWNER_UNKNOWN:
+		/* Should never get here. */
+		break;
+
+#ifdef _USE_NLM
+	case STATE_LOCK_OWNER_NLM:
+		nlm_client = owner->so_owner.so_nlm_owner.so_client;
+		owner_client = nlm_client->slc_nsm_client->ssc_client;
+		break;
+#endif
+
+#ifdef _USE_9P
+	case STATE_LOCK_OWNER_9P:
+		/* OOPS - 9P won't work with FSALs that need
+		 * op_ctx->client because it doesn't set it...
+		 * They will crash soon enough...
+		 */
+		LogDebug(COMPONENT_STATE,
+			 "9P doesn't set op_ctx->client...");
+		break;
+#endif
+
+	case STATE_OPEN_OWNER_NFSV4:
+	case STATE_LOCK_OWNER_NFSV4:
+	case STATE_CLIENTID_OWNER_NFSV4:
+		nfs4_clientid = owner->so_owner.so_nfs4_owner.so_clientrec;
+		owner_client = nfs4_clientid->gsh_client;
+		break;
+	}
+
+	/* If the owner gsh_client doesn't match the op_ctx and is not NULL
+	 * then save the op_ctx->client and switch to owner_client.
+	 */
+	if (owner_client != op_ctx->client && owner_client != NULL)
+		op_ctx->client = owner_client;
+
 	/* Perform this lock operation using the support_ex lock op. */
 	fsal_status = obj->obj_ops->lock_op2(obj, state, owner,
 					    fsal_lock_op, lock,
 					    &conflicting_lock);
+
+	op_ctx->client = saved_client;
 
 	status = state_error_convert(fsal_status);
 
