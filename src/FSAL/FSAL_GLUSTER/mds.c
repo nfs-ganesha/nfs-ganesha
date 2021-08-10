@@ -347,19 +347,14 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 
 	mask |= GLAPI_SET_ATTR_MTIME;
 
-	SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds.caller_uid,
-			  &op_ctx->creds.caller_gid,
-			  op_ctx->creds.caller_glen,
-			  op_ctx->creds.caller_garray,
-			  socket_addr(&op_ctx->client->cl_addrbuf),
-			  socket_addr_len(&op_ctx->client->cl_addrbuf));
+	SET_GLUSTER_CREDS_OP_CTX(glfs_export);
 
 	rc = glfs_h_setattrs(glfs_export->gl_fs->fs,
 			     objhandle->glhandle,
 			     &new_stat,
 			     mask);
 
-	SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL, NULL, 0);
+	RESET_GLUSTER_CREDS(glfs_export);
 
 	if ((rc != 0) || (status.major != ERR_FSAL_NO_ERROR)) {
 		LogMajor(COMPONENT_PNFS,

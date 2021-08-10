@@ -250,12 +250,111 @@ void setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
 		     char *client_addr, unsigned int client_addr_len,
 		     char *file, int line, char *function);
 
-#define SET_GLUSTER_CREDS(glfs_export, uid, gid, glen, garray, client_addr, \
-			  client_addr_len)				    \
+#ifdef USE_GLUSTER_DELEGATION
+#define SET_GLUSTER_CREDS_OP_CTX(glfs_export)				    \
 do {									    \
 	int old_errno = errno;						    \
-	((void) setglustercreds(glfs_export, uid, gid, glen,		    \
-			       garray, client_addr, client_addr_len,	    \
+	void *sa = NULL;						    \
+	size_t sa_len = 0;						    \
+									    \
+	if (op_ctx->caller_addr != NULL) {				    \
+		sa = socket_addr(op_ctx->caller_addr);			    \
+		sa_len = socket_addr_len(op_ctx->caller_addr);		    \
+	} else if (op_ctx->client != NULL) {				    \
+		sa = socket_addr(&op_ctx->client->cl_addrbuf);		    \
+		sa_len = socket_addr_len(&op_ctx->client->cl_addrbuf);      \
+	}								    \
+									    \
+	((void) setglustercreds(glfs_export,				    \
+				&op_ctx->creds.caller_uid,		    \
+				&op_ctx->creds.caller_gid,		    \
+				op_ctx->creds.caller_glen,		    \
+				op_ctx->creds.caller_garray,		    \
+				sa, sa_len,				    \
+			       (char *) __FILE__,			    \
+			       __LINE__, (char *) __func__));		    \
+	errno = old_errno;						    \
+} while (0)
+
+#define SET_GLUSTER_CREDS_MY_FD(glfs_export, my_fd)			    \
+do {									    \
+	int old_errno = errno;						    \
+									    \
+	((void) setglustercreds(glfs_export,				    \
+				&(my_fd)->creds.caller_uid,		    \
+				&(my_fd)->creds.caller_gid,		    \
+				(my_fd)->creds.caller_glen,		    \
+				(my_fd)->creds.caller_garray,		    \
+				(my_fd)->lease_id, GLAPI_LEASE_ID_SIZE,	    \
+			       (char *) __FILE__,			    \
+			       __LINE__, (char *) __func__));		    \
+	errno = old_errno;						    \
+} while (0)
+
+/** @todo: This doesn't quite work right if op_ctx has no client, hopefully
+ *         in that case there won't actually ever be any leases...
+ */
+#define SET_GLUSTER_LEASE_ID(my_fd)					    \
+do {									    \
+	void *sa = NULL;						    \
+	size_t sa_len = 0;						    \
+									    \
+	if (op_ctx->caller_addr != NULL) {				    \
+		sa = socket_addr(op_ctx->caller_addr);			    \
+		sa_len = socket_addr_len(op_ctx->caller_addr);		    \
+	} else if (op_ctx->client != NULL) {				    \
+		sa = socket_addr(&op_ctx->client->cl_addrbuf);		    \
+		sa_len = socket_addr_len(&op_ctx->client->cl_addrbuf);      \
+	}								    \
+									    \
+	memset((my_fd)->lease_id, 0, GLAPI_LEASE_ID_SIZE);		    \
+									    \
+	if (sa_len != 0 && sa_len <= GLAPI_LEASE_ID_SIZE) {		    \
+		memcpy((my_fd)->lease_id, sa, sa_len);			    \
+	}								    \
+} while (0)
+
+#else
+#define SET_GLUSTER_CREDS_OP_CTX(glfs_export)				    \
+do {									    \
+	int old_errno = errno;						    \
+									    \
+	((void) setglustercreds(glfs_export,				    \
+				&op_ctx->creds.caller_uid,		    \
+				&op_ctx->creds.caller_gid,		    \
+				op_ctx->creds.caller_glen,		    \
+				op_ctx->creds.caller_garray,		    \
+				NULL, 0,				    \
+			       (char *) __FILE__,			    \
+			       __LINE__, (char *) __func__));		    \
+	errno = old_errno;						    \
+} while (0)
+
+#define SET_GLUSTER_CREDS_MY_FD(glfs_export, my_fd)			    \
+do {									    \
+	int old_errno = errno;						    \
+									    \
+	((void) setglustercreds(glfs_export,				    \
+				&(my_fd)->creds.caller_uid,		    \
+				&(my_fd)->creds.caller_gid,		    \
+				(my_fd)->creds.caller_glen,		    \
+				(my_fd)->creds.caller_garray,		    \
+				NULL, 0,				    \
+			       (char *) __FILE__,			    \
+			       __LINE__, (char *) __func__));		    \
+	errno = old_errno;						    \
+} while (0)
+
+#define SET_GLUSTER_LEASE_ID(my_fd)					    \
+do {									    \
+	/* NOTHING TO DO */						    \
+} while (0)
+#endif
+
+#define RESET_GLUSTER_CREDS(glfs_export) \
+do {									    \
+	int old_errno = errno;						    \
+	((void) setglustercreds(glfs_export, NULL, NULL, 0, NULL, NULL, 0,  \
 			       (char *) __FILE__,			    \
 			       __LINE__, (char *) __func__));		    \
 	errno = old_errno;						    \
