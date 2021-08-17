@@ -1286,17 +1286,20 @@ void unclaim_all_export_maps(struct fsal_export *exp)
 		unclaim_child_map(map);
 	}
 
-	LogFilesystem("ROOT FS", "", exp->root_fs);
+	if (exp->root_fs != NULL) {
+		LogFilesystem("ROOT FS", "", exp->root_fs);
 
-	/* Now that we've unclaimed all fsal_fileststem objects, see if we can
-	 * release any. Once we're done with this, any unclaimed file systems
-	 * should be able to be unmounted by the sysadmin (though note that if
-	 * they are sub-mounted in another VFS export, they could become claimed
-	 * by navigation into them). If there are any nested exports, the file
-	 * systems they export will still be claimed. The nested exports will at
-	 * least still be mountable via NFS v3.
-	 */
-	(void) release_posix_file_system(exp->root_fs, UNCLAIM_SKIP);
+		/* Now that we've unclaimed all fsal_fileststem objects, see if
+		 * we can release any. Once we're done with this, any unclaimed
+		 * file systems should be able to be unmounted by the sysadmin
+		 * (though note that if they are sub-mounted in another VFS
+		 * export, they could become claimed by navigation into them).
+		 * If there are any nested exports, the file systems they export
+		 * will still be claimed. The nested exports will at least still
+		 * be mountable via NFS v3.
+		 */
+		(void) release_posix_file_system(exp->root_fs, UNCLAIM_SKIP);
+	}
 
 	PTHREAD_RWLOCK_unlock(&fs_lock);
 }
