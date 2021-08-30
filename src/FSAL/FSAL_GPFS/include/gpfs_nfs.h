@@ -627,6 +627,7 @@ struct stat_name_arg
     const char *name;
     struct gpfs_file_handle *handle;
     struct stat *buf;
+    const char *cli_ip;
 };
 
 struct callback_arg
@@ -705,6 +706,7 @@ struct xstat_arg
     struct stat *buf;
     struct fsal_fsid *fsid;
     uint32_t *expire_attr;
+    const char *cli_ip;
 };
 
 struct getxattr_arg {

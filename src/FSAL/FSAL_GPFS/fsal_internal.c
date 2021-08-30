@@ -284,6 +284,8 @@ fsal_internal_stat_name(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	statarg.name = stat_name;
 	statarg.handle = gpfs_fh;
 	statarg.buf = buf;
+	if (op_ctx && op_ctx->client)
+		statarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	if (unlikely(gpfs_ganesha(OPENHANDLE_STAT_BY_NAME, &statarg) < 0))
 		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_STAT_BY_NAME");
@@ -316,6 +318,8 @@ fsal_internal_unlink(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	statarg.name = stat_name;
 	statarg.handle = gpfs_fh;
 	statarg.buf = buf;
+	if (op_ctx && op_ctx->client)
+		statarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	fsal_set_credentials(&op_ctx->creds);
 
@@ -556,6 +560,8 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	xstatarg.fsid = (struct fsal_fsid *)&buffxstat->fsal_fsid;
 	xstatarg.attr_valid |= XATTR_FSID;
 	xstatarg.expire_attr = expire_time_attr;
+	if (op_ctx && op_ctx->client)
+		xstatarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
 	errsv = errno;
@@ -653,6 +659,8 @@ fsal_set_xstat_by_handle(int dirfd,
 	xstatarg.acl = acl_buf;
 	xstatarg.attr_changed = attr_changed;
 	xstatarg.buf = &buffxstat->buffstat;
+	if (op_ctx && op_ctx->client)
+		xstatarg.cli_ip = op_ctx->client->hostaddr_str;
 
 	/* We explicitly do NOT do setfsuid/setfsgid here because truncate,
 	   even to enlarge a file, doesn't actually allocate blocks. GPFS
