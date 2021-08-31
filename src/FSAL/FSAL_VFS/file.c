@@ -335,6 +335,10 @@ static fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself,
 	}
 
 	posix2fsal_attributes_all(&stat, attrs);
+
+	/* Get correct fsid from the fsal_filesystem, it may
+	* not be the device major/minor from stat.
+	*/
 	attrs->fsid = myself->obj_handle.fs->fsid;
 
 	if (myself->sub_ops && myself->sub_ops->getattrs) {
@@ -922,6 +926,10 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * we used to create the fsal_obj_handle.
 		 */
 		posix2fsal_attributes_all(&stat, attrs_out);
+
+		/* Get correct fsid from the fsal_filesystem, it may
+		* not be the device major/minor from stat.
+		*/
 		attrs_out->fsid = myself->obj_handle.fs->fsid;
 	}
 
