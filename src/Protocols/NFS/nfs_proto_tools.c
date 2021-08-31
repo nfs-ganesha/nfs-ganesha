@@ -1138,12 +1138,20 @@ static fattr_xdr_result encode_fetch_fsinfo(struct xdr_attrs_args *args)
 		fsal_status = fsal_statfs(args->data->current_obj,
 					  args->dynamicinfo);
 	} else {
-		args->dynamicinfo->avail_files = 512;
-		args->dynamicinfo->free_files = 512;
-		args->dynamicinfo->total_files = 512;
+		/* We don't expect this to actually get used, but fill in
+		 * sensible values just as a precaution.
+		 */
 		args->dynamicinfo->total_bytes = 1024000;
-		args->dynamicinfo->free_bytes = 512000;
 		args->dynamicinfo->avail_bytes = 512000;
+		args->dynamicinfo->free_bytes = 512000;
+		args->dynamicinfo->total_files = 512;
+		args->dynamicinfo->free_files = 512;
+		args->dynamicinfo->avail_files = 512;
+		args->dynamicinfo->maxread = 65536;
+		args->dynamicinfo->maxwrite = 65536;
+		args->dynamicinfo->time_delta.tv_sec = 0;
+		args->dynamicinfo->time_delta.tv_nsec =
+						 FSAL_DEFAULT_TIME_DELTA_NSEC;
 	}
 	if (FSAL_IS_ERROR(fsal_status))
 		return FATTR_XDR_FAILED;
@@ -2080,16 +2088,15 @@ static fattr_xdr_result decode_createtime(XDR *xdr,
  */
 
 /* According to RFC3530, this is "the smallest usefull server time granularity".
- * I set this to 1s.  note: dynamicfsinfo has this value.  use it???
  */
 
 static fattr_xdr_result encode_deltatime(XDR *xdr, struct xdr_attrs_args *args)
 {
-	struct timespec ts;
+	if (!args->statfscalled)
+		if (!encode_fetch_fsinfo(args))
+			return FATTR_XDR_FAILED;
 
-	ts.tv_sec = 1LL;
-	ts.tv_nsec = 0;
-	return encode_time(xdr, &ts);
+	return encode_time(xdr, &args->dynamicinfo->time_delta);
 }
 
 static fattr_xdr_result decode_deltatime(XDR *xdr, struct xdr_attrs_args *args)

@@ -41,6 +41,7 @@
 #include "nfs_exports.h"
 #include "export_mgr.h"
 #include "nfs_proto_functions.h"
+#include "nfs_convert.h"
 #include "nfs_proto_tools.h"
 
 /**
@@ -66,6 +67,8 @@ int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	int rc = NFS_REQ_OK;
 	FSINFO3resok * const FSINFO_FIELD =
 		&res->res_fsinfo3.FSINFO3res_u.resok;
+	fsal_dynamicfsinfo_t dynamicinfo;
+	fsal_status_t fsal_status;
 
 	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_fsinfo3.fsroot,
 			  "");
@@ -80,6 +83,27 @@ int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
+		goto out;
+	}
+
+	/* Get statistics and convert from FSAL to get time_delta */
+	fsal_status = fsal_statfs(obj, &dynamicinfo);
+
+	if (FSAL_IS_ERROR(fsal_status)) {
+		/* At this point we met an error */
+		LogFullDebug(COMPONENT_NFSPROTO,
+			     "failed statfs: fsal_status=%s",
+			     fsal_err_txt(fsal_status));
+
+		if (nfs_RetryableError(fsal_status.major)) {
+			/* Drop retryable errors. */
+			rc = NFS_REQ_DROP;
+		} else {
+			res->res_fsstat3.status =
+						nfs3_Errno_status(fsal_status);
+			rc = NFS_REQ_OK;
+		}
+
 		goto out;
 	}
 
@@ -104,8 +128,8 @@ int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->PrefReaddir);
 	FSINFO_FIELD->maxfilesize =
 	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
-	FSINFO_FIELD->time_delta.tv_sec = 1;
-	FSINFO_FIELD->time_delta.tv_nsec = 0;
+	FSINFO_FIELD->time_delta.tv_sec = dynamicinfo.time_delta.tv_sec;
+	FSINFO_FIELD->time_delta.tv_nsec = dynamicinfo.time_delta.tv_nsec;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "rtmax = %d | rtpref = %d | trmult = %d",
