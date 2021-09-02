@@ -377,8 +377,8 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 	info->total_files = vfs_st.f_files;
 	info->free_files = vfs_st.f_ffree;
 	info->avail_files = vfs_st.f_favail;
-	info->time_delta.tv_sec = 1;
-	info->time_delta.tv_nsec = 0;
+	info->time_delta.tv_sec = 0;
+	info->time_delta.tv_nsec = FSAL_DEFAULT_TIME_DELTA_NSEC;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

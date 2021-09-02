@@ -92,8 +92,8 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	infop->avail_files = buffstatgpfs.f_ffree;
 	infop->maxread = buffstatgpfs.f_bsize;
 	infop->maxwrite = buffstatgpfs.f_bsize;
-	infop->time_delta.tv_sec = 1;
-	infop->time_delta.tv_nsec = 0;
+	infop->time_delta.tv_sec = 0;
+	infop->time_delta.tv_nsec = FSAL_DEFAULT_TIME_DELTA_NSEC;
 
  out:
 	return fsalstat(fsal_error, 0);

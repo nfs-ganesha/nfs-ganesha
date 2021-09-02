@@ -2271,8 +2271,13 @@ proxyv3_get_dynamic_info(struct fsal_export *export_handle,
 	 * maxread/maxwrite are *static* not dynamic info, we picked them up on
 	 * export init.
 	 */
-	infop->time_delta.tv_sec = result.FSSTAT3res_u.resok.invarsec;
-	infop->time_delta.tv_nsec = 0;
+	/* time_delta should actually come from an FSINFO call which has
+	 * a timespec for time_delta, HOWEVER, the kernel NFS server
+	 * just reports 1 sec for time_delta which is proving to cause a
+	 * problem for some clients. So we are just going to hard code for now.
+	 */
+	infop->time_delta.tv_sec = 0;
+	infop->time_delta.tv_nsec = FSAL_DEFAULT_TIME_DELTA_NSEC;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

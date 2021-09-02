@@ -65,6 +65,8 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      struct fsal_obj_handle *obj_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
+	/** @todo I'm not sure how this gets away without filling anything in.
+	 */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

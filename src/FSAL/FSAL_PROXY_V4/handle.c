@@ -3170,6 +3170,12 @@ fsal_status_t proxyv4_get_dynamic_info(struct fsal_export *exp_hdl,
 	if (nfs4_Fattr_To_fsinfo(infop, &atok->obj_attributes) != NFS4_OK)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
+	/* At the moment, we don't actually decode time_delta from the
+	 * proxied server, so let's just hardcode.
+	 */
+	infop->time_delta.tv_sec = 0;
+	infop->time_delta.tv_nsec = FSAL_DEFAULT_TIME_DELTA_NSEC;
+
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 

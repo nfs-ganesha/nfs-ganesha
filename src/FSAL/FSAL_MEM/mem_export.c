@@ -97,8 +97,8 @@ static fsal_status_t mem_get_dynamic_info(struct fsal_export *exp_hdl,
 	infop->total_files = 0;
 	infop->free_files = 0;
 	infop->avail_files = 0;
-	infop->time_delta.tv_sec = 1;
-	infop->time_delta.tv_nsec = 0;
+	infop->time_delta.tv_sec = 0;
+	infop->time_delta.tv_nsec = FSAL_DEFAULT_TIME_DELTA_NSEC;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

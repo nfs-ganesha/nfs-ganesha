@@ -367,8 +367,8 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	infop->total_files = vfssb.f_files;
 	infop->free_files = vfssb.f_ffree;
 	infop->avail_files = vfssb.f_favail;
-	infop->time_delta.tv_sec = 1;
-	infop->time_delta.tv_nsec = 0;
+	infop->time_delta.tv_sec = 0;
+	infop->time_delta.tv_nsec = FSAL_DEFAULT_TIME_DELTA_NSEC;
 
 	return status;
 }

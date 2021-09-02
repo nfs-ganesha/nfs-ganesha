@@ -262,8 +262,8 @@ static fsal_status_t lzfs_fsal_get_fs_dynamic_info(
 	info->total_files = MAX_REGULAR_INODE;
 	info->free_files = MAX_REGULAR_INODE - st.inodes;
 	info->avail_files = MAX_REGULAR_INODE - st.inodes;
-	info->time_delta.tv_sec = 1;
-	info->time_delta.tv_nsec = 0;
+	info->time_delta.tv_sec = 0;
+	info->time_delta.tv_nsec = FSAL_DEFAULT_TIME_DELTA_NSEC;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
