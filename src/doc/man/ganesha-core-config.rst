@@ -357,6 +357,10 @@ Max_Client_Ids(uint32, range 0 to UINT32_MAX, default 0)
     is part of. The above limit can be used as a guardrail to prevent
     getting into this situation.
 
+Server_Scope(string, default "")
+    Specify the value which is common for all cluster nodes.
+    For e.g., Name of the cluster or cluster-id.
+
 RADOS_KV {}
 --------------------------------------------------------------------------------
 

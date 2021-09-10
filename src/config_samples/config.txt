@@ -214,6 +214,8 @@ NFSV4 {}
 
 	Max_Client_Ids(uint32, range 0 to UINT32_MAX, default 0)
 
+	Server_Scope(string, default "")
+
 EXPORT_DEFAULTS {}
 ------------------
 

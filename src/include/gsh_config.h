@@ -505,6 +505,9 @@ typedef struct nfs_version4_parameter {
 	/** The NFS grace period.  Defaults to
 	    GRACE_PERIOD_DEFAULT and is settable with Grace_Period. */
 	uint32_t grace_period;
+	/** The eir_server_scope for lock recovery. Defaults to NULL
+	    and is settable with server_scope. */
+	char *server_scope;
 	/** Domain to use if we aren't using the nfsidmap.  Defaults
 	    to DOMAINNAME_DEFAULT and is set with DomainName. */
 	char *domainname;
