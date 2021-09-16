@@ -160,7 +160,6 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	darg.devid.device_id1 = deviceid->device_id1;
 	darg.devid.device_id2 = deviceid->device_id2;
 	darg.devid.device_id4 = deviceid->device_id4;
-	darg.devid.devid = deviceid->devid;
 
 	da_beginning = xdr_getpos(da_addr_body);
 	darg.xdr.p = xdr_inline_encode(da_addr_body, 0);
