@@ -39,7 +39,7 @@
  * int64_t
  * uint64_t
  * int32_t
- * uint21_t
+ * uint32_t
  * int16_t
  * uint16_t
  * int8_t
@@ -59,6 +59,10 @@
  * int64_t atomic_fetch_int64_t(int64_t *var)
  * void atomic_store_int64_t(int64_t *var, int64_t val)
  *
+ * The following is provided for int64_t, uint64_t, int32_t, and uint32_t
+ *
+ * bool atomic_add_unless_int64_t(int64_t *var, int64_t addend, int64_t unless)
+ *
  * The following bit mask operations are provided for
  * uint64_t, uint32_t, uint_16t, and uint8_t:
  *
@@ -74,6 +78,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
+#include <stdbool.h>
 
 #undef GCC_SYNC_FUNCTIONS
 #undef GCC_ATOMIC_FUNCTIONS
@@ -2134,6 +2139,57 @@ static inline int64_t atomic_fetch_int64_t(int64_t *var)
 #endif
 
 /**
+ * @brief Atomically add to an int64_t unless it has a flag value
+ *
+ * This function atomically adds to the supplied value unless the
+ * variable is equal to the flag value.
+ *
+ * @param[in,out] var    Number to be added to
+ * @param[in]     addend Number to add
+ * @param[in]     unless The flag value
+ *
+ * @return true if the addition occurred
+ */
+
+#ifdef GCC_ATOMIC_FUNCTIONS
+static inline bool atomic_add_unless_int64_t(int64_t *var,
+					     int64_t addend,
+					     int64_t unless)
+{
+	int64_t cur, newv;
+	bool changed;
+
+	cur = atomic_fetch_int64_t(var);
+	do {
+		if (cur == unless)
+			return false;
+		newv = cur + addend;
+		changed = __atomic_compare_exchange_n(var, &cur, newv, false,
+						      __ATOMIC_SEQ_CST,
+						      __ATOMIC_SEQ_CST);
+	} while (!changed);
+	return true;
+}
+#elif defined(GCC_SYNC_FUNCTIONS)
+static inline bool atomic_add_unless_int64_t(int64_t *var,
+					     int64_t addend,
+					     int64_t unless)
+{
+	int64_t cur, newv;
+	bool changed;
+
+	cur = atomic_fetch_int64_t(var);
+	do {
+		if (cur == unless)
+			return false;
+		newv = cur + addend;
+		changed = __sync_val_compare_and_swap(var, cur, newv) != cur;
+	} while (!changed);
+	return true;
+}
+#endif
+
+/**
  * @brief Atomically store an int64_t
  *
  * This function atomically fetches the value indicated by the
@@ -2175,6 +2231,57 @@ static inline uint64_t atomic_fetch_uint64_t(uint64_t *var)
 static inline uint64_t atomic_fetch_uint64_t(uint64_t *var)
 {
 	return __sync_fetch_and_add(var, 0);
+}
+#endif
+
+/**
+ * @brief Atomically add to an uint64_t unless it has a flag value
+ *
+ * This function atomically adds to the supplied value unless the
+ * variable is equal to the flag value.
+ *
+ * @param[in,out] var    Number to be added to
+ * @param[in]     addend Number to add
+ * @param[in]     unless The flag value
+ *
+ * @return true if the addition occurred
+ */
+
+#ifdef GCC_ATOMIC_FUNCTIONS
+static inline bool atomic_add_unless_uint64_t(uint64_t *var,
+					      uint64_t addend,
+					      uint64_t unless)
+{
+	uint64_t cur, newv;
+	bool changed;
+
+	cur = atomic_fetch_uint64_t(var);
+	do {
+		if (cur == unless)
+			return false;
+		newv = cur + addend;
+		changed = __atomic_compare_exchange_n(var, &cur, newv, false,
+						      __ATOMIC_SEQ_CST,
+						      __ATOMIC_SEQ_CST);
+	} while (!changed);
+	return true;
+}
+#elif defined(GCC_SYNC_FUNCTIONS)
+static inline bool atomic_add_unless_uint64_t(uint64_t *var,
+					      uint64_t addend,
+					      uint64_t unless)
+{
+	uint64_t cur, newv;
+	bool changed;
+
+	cur = atomic_fetch_uint64_t(var);
+	do {
+		if (cur == unless)
+			return false;
+		newv = cur + addend;
+		changed = __sync_val_compare_and_swap(var, cur, newv) != cur;
+	} while (!changed);
+	return true;
 }
 #endif
 
@@ -2224,6 +2331,57 @@ static inline int32_t atomic_fetch_int32_t(int32_t *var)
 #endif
 
 /**
+ * @brief Atomically add to an int32_t unless it has a flag value
+ *
+ * This function atomically adds to the supplied value unless the
+ * variable is equal to the flag value.
+ *
+ * @param[in,out] var    Number to be added to
+ * @param[in]     addend Number to add
+ * @param[in]     unless The flag value
+ *
+ * @return true if the addition occurred
+ */
+
+#ifdef GCC_ATOMIC_FUNCTIONS
+static inline bool atomic_add_unless_int32_t(int32_t *var,
+					     int32_t addend,
+					     int32_t unless)
+{
+	int32_t cur, newv;
+	bool changed;
+
+	cur = atomic_fetch_int32_t(var);
+	do {
+		if (cur == unless)
+			return false;
+		newv = cur + addend;
+		changed = __atomic_compare_exchange_n(var, &cur, newv, false,
+						      __ATOMIC_SEQ_CST,
+						      __ATOMIC_SEQ_CST);
+	} while (!changed);
+	return true;
+}
+#elif defined(GCC_SYNC_FUNCTIONS)
+static inline bool atomic_add_unless_int32_t(int32_t *var,
+					     int32_t addend,
+					     int32_t unless)
+{
+	int32_t cur, newv;
+	bool changed;
+
+	cur = atomic_fetch_int32_t(var);
+	do {
+		if (cur == unless)
+			return false;
+		newv = cur + addend;
+		changed = __sync_val_compare_and_swap(var, cur, newv) != cur;
+	} while (!changed);
+	return true;
+}
+#endif
+
+/**
  * @brief Atomically store an int32_t
  *
  * This function atomically fetches the value indicated by the
@@ -2265,6 +2423,57 @@ static inline uint32_t atomic_fetch_uint32_t(uint32_t *var)
 static inline uint32_t atomic_fetch_uint32_t(uint32_t *var)
 {
 	return __sync_fetch_and_add(var, 0);
+}
+#endif
+
+/**
+ * @brief Atomically add to an uint32_t unless it has a flag value
+ *
+ * This function atomically adds to the supplied value unless the
+ * variable is equal to the flag value.
+ *
+ * @param[in,out] var    Number to be added to
+ * @param[in]     addend Number to add
+ * @param[in]     unless The flag value
+ *
+ * @return true if the addition occurred
+ */
+
+#ifdef GCC_ATOMIC_FUNCTIONS
+static inline bool atomic_add_unless_uint32_t(uint32_t *var,
+					      uint32_t addend,
+					      uint32_t unless)
+{
+	uint32_t cur, newv;
+	bool changed;
+
+	cur = atomic_fetch_uint32_t(var);
+	do {
+		if (cur == unless)
+			return false;
+		newv = cur + addend;
+		changed = __atomic_compare_exchange_n(var, &cur, newv, false,
+						      __ATOMIC_SEQ_CST,
+						      __ATOMIC_SEQ_CST);
+	} while (!changed);
+	return true;
+}
+#elif defined(GCC_SYNC_FUNCTIONS)
+static inline bool atomic_add_unless_uint32_t(uint32_t *var,
+					      uint32_t addend,
+					      uint32_t unless)
+{
+	uint32_t cur, newv;
+	bool changed;
+
+	cur = atomic_fetch_uint32_t(var);
+	do {
+		if (cur == unless)
+			return false;
+		newv = cur + addend;
+		changed = __sync_val_compare_and_swap(var, cur, newv) != cur;
+	} while (!changed);
+	return true;
 }
 #endif
 
