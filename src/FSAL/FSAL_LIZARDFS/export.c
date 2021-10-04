@@ -69,7 +69,7 @@ static void lzfs_fsal_release(struct fsal_export *export_hdl)
 
 	liz_destroy(lzfs_export->lzfs_instance);
 	lzfs_export->lzfs_instance = NULL;
-	gsh_free(lzfs_export->lzfs_params.subfolder);
+	gsh_free((char *)lzfs_export->lzfs_params.subfolder);
 	gsh_free(lzfs_export);
 }
 

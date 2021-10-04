@@ -22,6 +22,7 @@
 #include "fsal_types.h"
 #include "fsal_up.h"
 #include "FSAL/fsal_commonlib.h"
+#include "../fsal_private.h"
 #include "nfs_exports.h"
 #include "pnfs_utils.h"
 
