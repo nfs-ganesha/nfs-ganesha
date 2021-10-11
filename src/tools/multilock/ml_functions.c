@@ -119,6 +119,12 @@ struct token open_flags[] = {
 	{"create", 6, O_CREAT},
 	{"creat", 5, O_CREAT},
 	{"O_CREAT", 7, O_CREAT},
+	{"exclusive", 9, O_EXCL},
+	{"excl", 4, O_EXCL},
+	{"O_EXCL", 6, O_EXCL},
+	{"truncate", 8, O_TRUNC},
+	{"trunc", 5, O_TRUNC},
+	{"O_TRUNC", 7, O_TRUNC},
 	{"", 0, 0}
 };
 
@@ -302,6 +308,27 @@ char *get_token_value(char *line, int *value, struct token *tokens,
 	array_strncpy(badtoken, t, len);
 	errno = EINVAL;
 	return NULL;
+}
+
+char *get_optional_token(char *line, bool *found, const char *token,
+			 enum requires_more requires_more, const char *invalid)
+{
+	char *t;
+	int len;
+	char *c = get_token(line, &t, &len, true, requires_more, invalid);
+
+	*found = false;
+
+	if (c == NULL || t == NULL)
+		return c;
+
+	if (strncasecmp(t, token, strlen(token)) == 0) {
+		*found = true;
+		return SkipWhite(c, requires_more, invalid);
+	}
+
+	/* optional token not found, rewind to before token */
+	return t;
 }
 
 char *get_client(char *line, struct client **pclient, bool create,
@@ -558,6 +585,7 @@ char *get_open_opts(char *line, long int *fpos, int *flags, int *mode,
 {
 	char *c;
 	int flag2 = -1;
+	bool has_mode = false;
 
 	/* Set default mode */
 	*mode = S_IRUSR | S_IWUSR;
@@ -583,6 +611,24 @@ char *get_open_opts(char *line, long int *fpos, int *flags, int *mode,
 			return c;
 
 		*flags |= flag2;
+	}
+
+	c = get_optional_token(c, &has_mode, "mode", REQUIRES_MORE,
+			       "Invalid optional open flag");
+
+	if (c == NULL)
+		return c;
+
+	if (has_mode) {
+		/* We got a mode, now get the mode value */
+		long int modev;
+
+		c = get_long(c, &modev, REQUIRES_MORE, "Invalid mode");
+
+		if (c == NULL)
+			return c;
+
+		*mode = modev;
 	}
 
 	/* Check optional lock mode, default to POSIX */

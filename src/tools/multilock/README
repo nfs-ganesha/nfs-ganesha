@@ -143,7 +143,7 @@ verification.
 
 The commands and specific parameters are:
 
-[tag] OPEN    file_pos rw|ro|wo|O_RDWR|O_RDONLY|O_WRONLY [create|creat|O_CREAT] [POSIX|OFD] "file-name"
+[tag] OPEN    file_pos rw|ro|wo|O_RDWR|O_RDONLY|O_WRONLY [create|creat|O_CREAT] [truncate|trunc|O_TRUNC] [exclusive|excl|O_EXCL] [mode modeval] [POSIX|OFD] "file-name"
 [tag] CLOSE   file_pos
 [tag] READ    file_pos length
 [tag] READ    file_pos "string"
