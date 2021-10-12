@@ -1250,7 +1250,7 @@ proxyv3_readlink(struct fsal_obj_handle *obj_hdl,
 
 	/* The result is a char*. */
 	link_content->addr = gsh_strdup(result.READLINK3res_u.resok.data);
-	link_content->len = strlen(link_content->addr);
+	link_content->len = strlen(link_content->addr) + 1;
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
