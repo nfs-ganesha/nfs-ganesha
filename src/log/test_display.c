@@ -2,7 +2,7 @@
 
 void show_display_buffer(struct display_buffer *dspbuf, char *cmt)
 {
-	printf("%s size=%d len=%d buffer=%s\n", cmt, dspbuf->b_size,
+	printf("%s size=%z len=%z buffer=%s\n", cmt, dspbuf->b_size,
 	       strlen(dspbuf->b_start), dspbuf->b_start);
 }
 
