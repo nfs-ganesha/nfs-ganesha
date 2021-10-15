@@ -2521,9 +2521,20 @@ static fattr_xdr_result encode_support_exclusive_create(XDR *xdr,
 			assert(res);
 		}
 	}
+
+	/* For exclusive create we use atime and mtime, indicate such in
+	 * FATTR4_SUPPATTR_EXCLCREAT. Note that the _SET attributes have a
+	 * time_how4 field to specify how to set the time while the other
+	 * attribute is used to fetch the time. For exclusive create we need
+	 * to indicate both sets of attributes are used.
+	 */
 	res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_ACCESS_SET);
 	assert(res);
+	res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_ACCESS);
+	assert(res);
 	res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_MODIFY_SET);
+	assert(res);
+	res = clear_attribute_in_bitmap(&bits, FATTR4_TIME_MODIFY);
 	assert(res);
 	if (!inline_xdr_u_int32_t(xdr, &bits.bitmap4_len))
 		return FATTR_XDR_FAILED;

@@ -600,6 +600,7 @@ static void do_delegation(OPEN4args *arg_OPEN4, OPEN4res *res_OPEN4,
  * @param[in,out] verifier    The verifier for exclusive create
  * @param[in,out] createmode  The method of create
  * @param[in,out] sattr       The attributes to set
+ * @param[in,out] attrset     The attributes set on open
  *
  */
 
@@ -608,7 +609,8 @@ static void open4_ex_create_args(OPEN4args *arg,
 				 OPEN4res *res_OPEN4,
 				 void *verifier,
 				 enum fsal_create_mode *createmode,
-				 struct fsal_attrlist *sattr)
+				 struct fsal_attrlist *sattr,
+				 struct bitmap4 *attrset)
 {
 	createhow4 *createhow = &arg->openhow.openflag4_u.how;
 	fattr4 *arg_attrs = NULL;
@@ -668,10 +670,27 @@ static void open4_ex_create_args(OPEN4args *arg,
 			}
 		}
 
+		/* Now fill in attrset with the attributes requested to be set.
+		 */
+		memcpy(attrset, &arg_attrs->attrmask, sizeof(*attrset));
+
 		/* If owner or owner_group are set, and the credential was
 		 * squashed, then we must squash the set owner and owner_group.
 		 */
 		squash_setattr(sattr);
+	}
+
+
+	if (createhow->mode == EXCLUSIVE4 ||
+	    createhow->mode == EXCLUSIVE4_1) {
+		/* For an exclusive create we must indicate atime and mtime have
+		 * been set for the verifier. The client will use this
+		 * indication to know it must use a separate SETATTR to set
+		 * these attributess. This is especially important for
+		 * EXCLUSIVE4_1 creates that come with attributes.
+		 */
+		set_attribute_in_bitmap(attrset, FATTR4_TIME_ACCESS);
+		set_attribute_in_bitmap(attrset, FATTR4_TIME_MODIFY);
 	}
 
 	if (!(sattr->valid_mask & ATTR_MODE)) {
@@ -692,6 +711,7 @@ static void open4_ex_create_args(OPEN4args *arg,
  * @param[out]    res_OPEN4   Results for nfs4_op
  * @param[out]    file_state  state_t created for this operation
  * @param[out]    new_state   Indicates if the state_t is new
+ * @param[in,out] attrset     The attrset bitmap to be passed down
  *
  */
 
@@ -701,7 +721,8 @@ static void open4_ex(OPEN4args *arg,
 		     nfs_client_id_t *clientid,
 		     state_owner_t *owner,
 		     state_t **file_state,
-		     bool *new_state)
+		     bool *new_state,
+		     struct bitmap4 *attrset)
 {
 	/* Parent directory in which to open the file. */
 	struct fsal_obj_handle *parent = NULL;
@@ -762,10 +783,10 @@ static void open4_ex(OPEN4args *arg,
 
 		filename = arg->claim.open_claim4_u.file.utf8string_val;
 
-		/* Set the createmode if appropriate) */
+		/* Set the createmode if appropriate), pass down attrset */
 		if (arg->openhow.opentype == OPEN4_CREATE) {
 			open4_ex_create_args(arg, data, res_OPEN4, verifier,
-					     &createmode, &sattr);
+					     &createmode, &sattr, attrset);
 
 			if (res_OPEN4->status != NFS4_OK)
 				goto out;
@@ -1369,24 +1390,20 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	/* Utilize the extended FSAL APU functionality to perform the open. */
-	open4_ex(arg_OPEN4, data, res_OPEN4, clientid,
-		 owner, &file_state, &new_state);
-
-	if (res_OPEN4->status != NFS4_OK)
-		goto out;
-
+	/* Prepare the attrset attribute */
 	memset(&res_OPEN4->OPEN4res_u.resok4.attrset,
 	       0,
 	       sizeof(struct bitmap4));
 
-	if (arg_OPEN4->openhow.openflag4_u.how.mode == EXCLUSIVE4 ||
-	    arg_OPEN4->openhow.openflag4_u.how.mode == EXCLUSIVE4_1) {
-		struct bitmap4 *bits = &res_OPEN4->OPEN4res_u.resok4.attrset;
+	/* Utilize the extended FSAL API functionality to perform the open.
+	 * The usage of atime/mtime for exclusive create verifier will be
+	 * handled in open4_ex, so pass in attrset to be handled there.
+	 */
+	open4_ex(arg_OPEN4, data, res_OPEN4, clientid, owner, &file_state,
+		 &new_state, &res_OPEN4->OPEN4res_u.resok4.attrset);
 
-		set_attribute_in_bitmap(bits, FATTR4_TIME_ACCESS);
-		set_attribute_in_bitmap(bits, FATTR4_TIME_MODIFY);
-	}
+	if (res_OPEN4->status != NFS4_OK)
+		goto out;
 
 	/* If server use OPEN_CONFIRM4, set the correct flag,
 	 * but not for 4.1 */
