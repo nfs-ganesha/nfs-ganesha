@@ -204,10 +204,12 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 			/* Now check verifier for exclusive */
 			if (createmode >= FSAL_EXCLUSIVE &&
-			    !check_verifier_attrlist(attrs_out, verifier))
+			    !check_verifier_attrlist(attrs_out, verifier, false)
+			   ) {
 				/* Verifier didn't match, return EEXIST */
 				status = fsalstat(posix2fsal_error(EEXIST),
 						  EEXIST);
+			}
 		}
 	} else if (attrs_out && attrs_out->request_mask & ATTR_RDATTR_ERR) {
 		attrs_out->valid_mask = ATTR_RDATTR_ERR;
@@ -364,7 +366,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 
 	if (createmode >= FSAL_EXCLUSIVE)
 		/* Now fixup attrs for verifier if exclusive create */
-		set_common_verifier(attr_set, verifier);
+		set_common_verifier(attr_set, verifier, false);
 
 	if (name == NULL)
 		return open_by_handle(obj_hdl, state, openflags, posix_flags,

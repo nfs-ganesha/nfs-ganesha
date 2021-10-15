@@ -484,7 +484,9 @@ static fsal_status_t vfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 
 			if (createmode >= FSAL_EXCLUSIVE &&
 			    createmode != FSAL_EXCLUSIVE_9P &&
-			    !check_verifier_attrlist(&attrs, verifier)) {
+			    !check_verifier_attrlist(&attrs, verifier,
+						     obj_hdl->fs->trunc_verif)
+			   ) {
 				/* Verifier didn't match, return EEXIST */
 				status = fsalstat(posix2fsal_error(EEXIST),
 						  EEXIST);
@@ -635,7 +637,8 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (createmode >= FSAL_EXCLUSIVE) {
 		/* Now fixup attrs for verifier if exclusive create */
-		set_common_verifier(attrib_set, verifier);
+		set_common_verifier(attrib_set, verifier,
+				    obj_hdl->fs->trunc_verif);
 	}
 
 	if (name == NULL) {
@@ -890,6 +893,9 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	*new_obj = &hdl->obj_handle;
 
 	if (created && attrib_set->valid_mask != 0) {
+
+retry_attr:
+
 		/* Set attributes using our newly opened file descriptor as the
 		 * share_fd if there are any left to set (mode and truncate
 		 * have already been handled).
@@ -900,17 +906,15 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * Note if we have ENABLE_VFS_DEBUG_ACL an inherited ACL might
 		 * be part of the attributes we are setting here.
 		 */
-		status = (*new_obj)->obj_ops->setattr2(*new_obj,
-						      false,
-						      state,
-						      attrib_set);
+		status = (*new_obj)->obj_ops->setattr2(*new_obj, false,
+						       state, attrib_set);
 
 		if (FSAL_IS_ERROR(status))
 			goto fileerr;
 
 		if (attrs_out != NULL) {
 			status = (*new_obj)->obj_ops->getattrs(*new_obj,
-							      attrs_out);
+							       attrs_out);
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
 				/* Get attributes failed and caller expected
@@ -918,6 +922,29 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 				 * with attrs_out indicating ATTR_RDATTR_ERR.
 				 */
 				goto fileerr;
+			}
+
+			LogFullDebug(COMPONENT_FSAL,
+				     "Set atime %llx %llx mtime %llx %llx",
+				     (long long int) attrs_out->atime.tv_sec,
+				     (long long int) attrs_out->atime.tv_nsec,
+				     (long long int) attrs_out->mtime.tv_sec,
+				     (long long int) attrs_out->mtime.tv_nsec);
+
+			if ((createmode >= FSAL_EXCLUSIVE) &&
+			    (!(*new_obj)->fs->trunc_verif) &&
+			    ((attrs_out->atime.tv_sec !=
+						attrib_set->atime.tv_sec) ||
+			     (attrs_out->mtime.tv_sec !=
+						attrib_set->mtime.tv_sec))) {
+				LogInfo(COMPONENT_FSAL,
+					"Verifier was not stored correctly for filesystem %s, trying again with truncated verifier",
+					(*new_obj)->fs->path);
+				(*new_obj)->fs->trunc_verif = true;
+				FSAL_UNSET_MASK(attrib_set->valid_mask,
+						ATTR_ATIME | ATTR_MTIME);
+				set_common_verifier(attrib_set, verifier, true);
+				goto retry_attr;
 			}
 		}
 	} else if (attrs_out != NULL) {
@@ -2157,6 +2184,12 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			timebuf[1].tv_sec = 0;
 			timebuf[1].tv_nsec = UTIME_OMIT;
 		}
+
+		LogFullDebug(COMPONENT_FSAL,
+			     "Setting atime %lx %lx mtime %lx %lx",
+			     timebuf[0].tv_sec, timebuf[0].tv_nsec,
+			     timebuf[1].tv_sec, timebuf[1].tv_nsec);
+
 		if (vfs_unopenable_type(obj_hdl->type))
 			retval = vfs_utimesat(my_fd, myself->u.unopenable.name,
 					      timebuf, AT_SYMLINK_NOFOLLOW);

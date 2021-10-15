@@ -406,7 +406,7 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (createmode >= FSAL_EXCLUSIVE)
 		/* Now fixup attrs for verifier if exclusive create */
-		set_common_verifier(attr_set, verifier);
+		set_common_verifier(attr_set, verifier, false);
 
 	if (name == NULL)
 		return kvsfs_open_by_handle(obj_hdl,

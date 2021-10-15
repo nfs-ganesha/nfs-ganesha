@@ -1522,7 +1522,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 			memset(&verifier_attr, 0, sizeof(verifier_attr));
 		}
 
-		set_common_verifier(attrs_set, verifier);
+		set_common_verifier(attrs_set, verifier, false);
 	}
 
 	if (name == NULL) {
@@ -1575,7 +1575,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 		 */
 		if (createmode >= FSAL_EXCLUSIVE &&
 		    createmode != FSAL_EXCLUSIVE_9P &&
-		    !check_verifier_attrlist(&myself->attrs, verifier)) {
+		    !check_verifier_attrlist(&myself->attrs, verifier, false)) {
 			/* Verifier didn't match, return EEXIST */
 			status = fsalstat(posix2fsal_error(EEXIST), EEXIST);
 		}

@@ -1239,7 +1239,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (createmode >= FSAL_EXCLUSIVE) {
 		/* Now fixup attrs for verifier if exclusive create */
-		set_common_verifier(attrib_set, verifier);
+		set_common_verifier(attrib_set, verifier, false);
 	}
 
 	if (name == NULL) {

@@ -48,6 +48,7 @@
 #include <dlfcn.h>
 #include "log.h"
 #include "fsal.h"
+#include "FSAL/fsal_localfs.h"
 #include "nfs_core.h"
 #include "config_parsing.h"
 #include "gsh_types.h"
@@ -1327,13 +1328,15 @@ static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 {
 	struct fsal_attrlist attrs;
 	bool result;
+	bool trunc_verif =
+		obj_hdl->fs != NULL ? obj_hdl->fs->trunc_verif : false;
 
 	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
 
 	if (FSAL_IS_ERROR(obj_hdl->obj_ops->getattrs(obj_hdl, &attrs)))
 		return false;
 
-	result = check_verifier_attrlist(&attrs, verifier);
+	result = check_verifier_attrlist(&attrs, verifier, trunc_verif);
 
 	/* Done with the attrs */
 	fsal_release_attrs(&attrs);

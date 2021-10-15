@@ -717,7 +717,7 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 		if (!FSAL_IS_ERROR(status) &&
 		    createmode >= FSAL_EXCLUSIVE &&
 		    createmode != FSAL_EXCLUSIVE_9P &&
-		    !check_verifier_stat(&lzfs_attrs.attr, verifier)) {
+		    !check_verifier_stat(&lzfs_attrs.attr, verifier, false)) {
 			// Verifier didn't match, return EEXIST
 			status = fsalstat(posix2fsal_error(EEXIST), EEXIST);
 		}
@@ -810,7 +810,7 @@ static fsal_status_t lzfs_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG, "attrs ", attr_set, false);
 
 	if (createmode >= FSAL_EXCLUSIVE) {
-		set_common_verifier(attr_set, verifier);
+		set_common_verifier(attr_set, verifier, false);
 	}
 
 	if (name == NULL) {

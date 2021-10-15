@@ -1555,7 +1555,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 
 	if (createmode >= FSAL_EXCLUSIVE) {
 		/* Now fixup attrs for verifier if exclusive create */
-		set_common_verifier(attrib_set, verifier);
+		set_common_verifier(attrib_set, verifier, false);
 	}
 
 	if (name == NULL) {
@@ -1678,8 +1678,7 @@ static fsal_status_t glusterfs_open2(struct fsal_obj_handle *obj_hdl,
 			if (!FSAL_IS_ERROR(status) &&
 			    createmode >= FSAL_EXCLUSIVE &&
 			    createmode != FSAL_EXCLUSIVE_9P &&
-			    !check_verifier_stat(&stat,
-						 verifier)) {
+			    !check_verifier_stat(&stat, verifier, false)) {
 				/* Verifier didn't match, return EEXIST */
 				status =
 				    fsalstat(posix2fsal_error(EEXIST), EEXIST);

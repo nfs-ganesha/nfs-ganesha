@@ -115,7 +115,9 @@ fsal_status_t fsal_rename_access(struct fsal_obj_handle *old_dir_hdl,
 fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl);
 fsal_status_t fsal_acl_to_mode(struct fsal_attrlist *attrs);
 
-void set_common_verifier(struct fsal_attrlist *attrs, fsal_verifier_t verifier);
+void set_common_verifier(struct fsal_attrlist *attrs,
+			 fsal_verifier_t verifier,
+			 bool trunc_verif);
 
 void update_share_counters(struct fsal_share *share,
 			   fsal_openflags_t old_openflags,
@@ -207,10 +209,13 @@ static inline struct state_t *init_state(struct state_t *state,
 	return state;
 }
 
-bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier);
+bool check_verifier_stat(struct stat *st,
+			 fsal_verifier_t verifier,
+			 bool trunc_verif);
 
 bool check_verifier_attrlist(struct fsal_attrlist *attrs,
-			     fsal_verifier_t verifier);
+			     fsal_verifier_t verifier,
+			     bool trunc_verif);
 
 bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 			     struct fsal_attrlist *attrs, bool cache_attrs);

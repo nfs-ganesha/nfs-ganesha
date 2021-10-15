@@ -803,7 +803,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			memset(&verifier_attr, 0, sizeof(verifier_attr));
 		}
 
-		set_common_verifier(attrib_set, verifier);
+		set_common_verifier(attrib_set, verifier, false);
 	}
 
 	if (!name) {

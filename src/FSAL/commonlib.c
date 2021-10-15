@@ -1064,7 +1064,19 @@ fsal_status_t fsal_acl_to_mode(struct fsal_attrlist *attrs)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-void set_common_verifier(struct fsal_attrlist *attrs, fsal_verifier_t verifier)
+/**
+ * @brief Set up a common verifier using atime and mtime.
+ *
+ * @param[in] attrs        Attributes for the file
+ * @param[in] verifier     Verifier to use for exclusive create
+ * @param[in] trunc_verif  Use onlu 31 bits of each half of the verifier
+ *
+ * @retval true if verifier matches
+ */
+
+void set_common_verifier(struct fsal_attrlist *attrs,
+			 fsal_verifier_t verifier,
+			 bool trunc_verif)
 {
 	uint32_t verf_hi = 0, verf_lo = 0;
 
@@ -1079,6 +1091,11 @@ void set_common_verifier(struct fsal_attrlist *attrs, fsal_verifier_t verifier)
 		     "Passed verifier %"PRIx32" %"PRIx32,
 		     verf_hi, verf_lo);
 
+	if (trunc_verif) {
+		verf_hi &= INT32_MAX;
+		verf_lo &= INT32_MAX;
+	}
+
 	if (isDebug(COMPONENT_FSAL) &&
 	    (FSAL_TEST_MASK(attrs->valid_mask, ATTR_ATIME) ||
 	    (FSAL_TEST_MASK(attrs->valid_mask, ATTR_MTIME)))) {
@@ -1089,8 +1106,14 @@ void set_common_verifier(struct fsal_attrlist *attrs, fsal_verifier_t verifier)
 			(uint32_t) attrs->mtime.tv_sec);
 	}
 
+	LogFullDebug(COMPONENT_FSAL,
+		     "Setting verifier atime %"PRIx32" mtime %"PRIx32,
+		     verf_hi, verf_lo);
+
 	attrs->atime.tv_sec = verf_hi;
+	attrs->atime.tv_nsec = 0;
 	attrs->mtime.tv_sec = verf_lo;
+	attrs->mtime.tv_nsec = 0;
 
 	FSAL_SET_MASK(attrs->valid_mask, ATTR_ATIME | ATTR_MTIME);
 }
@@ -1804,13 +1827,16 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
  *
  * The default behavior is to check verifier against atime and mtime.
  *
- * @param[in] st          POSIX attributes for the file (from stat)
- * @param[in] verifier    Verifier to use for exclusive create
+ * @param[in] st           POSIX attributes for the file (from stat)
+ * @param[in] verifier     Verifier to use for exclusive create
+ * @param[in] trunc_verif  Use onlu 31 bits of each half of the verifier
  *
  * @retval true if verifier matches
  */
 
-bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier)
+bool check_verifier_stat(struct stat *st,
+			 fsal_verifier_t verifier,
+			 bool trunc_verif)
 {
 	uint32_t verf_hi = 0, verf_lo = 0;
 
@@ -1820,6 +1846,11 @@ bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier)
 	memcpy(&verf_lo,
 	       verifier + sizeof(uint32_t),
 	       sizeof(uint32_t));
+
+	if (trunc_verif) {
+		verf_hi &= INT32_MAX;
+		verf_lo &= INT32_MAX;
+	}
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Passed verifier %"PRIx32" %"PRIx32
@@ -1837,14 +1868,16 @@ bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier)
  *
  * The default behavior is to check verifier against atime and mtime.
  *
- * @param[in] attrs       Attributes for the file
- * @param[in] verifier    Verifier to use for exclusive create
+ * @param[in] attrs        Attributes for the file
+ * @param[in] verifier     Verifier to use for exclusive create
+ * @param[in] trunc_verif  Use onlu 31 bits of each half of the verifier
  *
  * @retval true if verifier matches
  */
 
 bool check_verifier_attrlist(struct fsal_attrlist *attrs,
-			     fsal_verifier_t verifier)
+			     fsal_verifier_t verifier,
+			     bool trunc_verif)
 {
 	uint32_t verf_hi = 0, verf_lo = 0;
 
@@ -1854,6 +1887,11 @@ bool check_verifier_attrlist(struct fsal_attrlist *attrs,
 	memcpy(&verf_lo,
 	       verifier + sizeof(uint32_t),
 	       sizeof(uint32_t));
+
+	if (trunc_verif) {
+		verf_hi &= INT32_MAX;
+		verf_lo &= INT32_MAX;
+	}
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Passed verifier %"PRIx32" %"PRIx32

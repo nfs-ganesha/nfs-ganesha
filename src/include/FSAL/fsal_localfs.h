@@ -75,6 +75,9 @@ struct fsal_filesystem {
 	bool in_fsid_avl;		/*< true if inserted in fsid avl */
 	bool in_dev_avl;		/*< true if inserted in dev avl */
 	int claims[CLAIM_NUM];		/*< number of each type of claim */
+	bool trunc_verif;		/*< true if the filesystem needs
+					    atime/mtime to be truncated to 31
+					    bits when storing verifier. */
 };
 
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat);
