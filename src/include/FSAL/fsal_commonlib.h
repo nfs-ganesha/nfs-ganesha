@@ -55,7 +55,7 @@ void fsal_detach_export(struct fsal_module *fsal_hdl,
 /* fsal_export common methods
  */
 
-void fsal_export_init(struct fsal_export *export);
+void fsal_export_init(struct fsal_export *);
 
 void fsal_export_stack(struct fsal_export *sub_export,
 		       struct fsal_export *super_export);
