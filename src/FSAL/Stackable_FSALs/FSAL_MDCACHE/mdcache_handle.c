@@ -1,7 +1,7 @@
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
- * Copyright 2015-2019 Red Hat, Inc. and/or its affiliates.
+ * Copyright 2015-2021 Red Hat, Inc. and/or its affiliates.
  * Author: Daniel Gryniewicz <dang@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -865,6 +865,16 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 	if (entry->attrs.acl != NULL) {
 		/* request_mask & ATTR_ACL must match attrs.acl */
 		entry->attrs.request_mask |= ATTR_ACL;
+	}
+	if (entry->attrs.fs_locations != NULL) {
+		/* request_mask & ATTR_FS_LOCATIONS must match
+		 * attrs.fs_locations */
+		entry->attrs.request_mask |= ATTR4_FS_LOCATIONS;
+	}
+	if (entry->attrs.sec_label.slai_data.slai_data_val != NULL) {
+		/* request_mask & ATTR_ACL must match
+		 * attrs.sec_label.slai_data.slai_data_val */
+		entry->attrs.request_mask |= ~ATTR4_SEC_LABEL;
 	}
 
 	original_generation = atomic_fetch_int32_t(&entry->attr_generation);
