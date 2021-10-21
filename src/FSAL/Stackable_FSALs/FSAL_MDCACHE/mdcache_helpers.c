@@ -2289,6 +2289,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			/* This is the cookie we were looking for, but we want
 			 * the next dirent */
 			state->first_hit = true;
+			return DIR_CONTINUE;
 		} else if (state->first_hit) {
 			/* We have found the dirent the caller wanted */
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
