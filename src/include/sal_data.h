@@ -491,6 +491,15 @@ extern hash_table_t *ht_nlm_client;
 
 /**
  * @brief NSM (rpc.statd) state for a given client.
+ *
+ * All nsm clients have a caller name.
+ *
+ * When nsm_use_caller_name is true, the caller name comes from the NLM
+ * requests.
+ *
+ * When nsm_use_caller_name is false, the caller name is the string form of
+ * the IP address. If the IP address is IPv4 encapsulated in IPv6, the name
+ * will be the simple IPv4 version of the address.
  */
 
 typedef struct state_nsm_client_t {

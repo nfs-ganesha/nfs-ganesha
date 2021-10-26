@@ -150,11 +150,14 @@ int compare_nsm_client(state_nsm_client_t *client1,
 	if (client1 == client2)
 		return 0;
 
-	if (!nfs_param.core_param.nsm_use_caller_name) {
-		if (client1->ssc_client != client2->ssc_client)
-			return 1;
-		return 0;
-	}
+	/* Since we always have a caller name in the key and records whether
+	 * nsm_use_caller_name is true or not, we don't ever compare ssc_client,
+	 * we always just compare the caller name.
+	 *
+	 * This makes SM_NOTIFY work because we can't know the port number
+	 * which is part of identifing ssc_client. We only care about the
+	 * address.
+	 */
 
 	if (client1->ssc_nlm_caller_name_len !=
 	    client2->ssc_nlm_caller_name_len)
@@ -196,21 +199,23 @@ uint32_t nsm_client_value_hash_func(hash_parameter_t *hparam,
 {
 	unsigned long res;
 	state_nsm_client_t *pkey = key->addr;
+	unsigned int sum = 0;
+	unsigned int i;
 
-	if (nfs_param.core_param.nsm_use_caller_name) {
-		unsigned int sum = 0;
-		unsigned int i;
+	/* Since we always have a caller name in the key and records whether
+	 * nsm_use_caller_name is true or not, we don't ever compare ssc_client,
+	 * we always just compare the caller name.
+	 *
+	 * This makes SM_NOTIFY work because we can't know the port number
+	 * which is part of identifing ssc_client. We only care about the
+	 * address.
+	 */
 
-		/* Compute the sum of all the characters */
-		for (i = 0; i < pkey->ssc_nlm_caller_name_len; i++)
-			sum += (unsigned char)pkey->ssc_nlm_caller_name[i];
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->ssc_nlm_caller_name_len; i++)
+		sum += (unsigned char)pkey->ssc_nlm_caller_name[i];
 
-		res =
-		    (unsigned long)sum +
-		    (unsigned long)pkey->ssc_nlm_caller_name_len;
-	} else {
-		res = (unsigned long) pkey->ssc_client;
-	}
+	res = (unsigned long)sum + (unsigned long)pkey->ssc_nlm_caller_name_len;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "value = %lu",
@@ -234,21 +239,23 @@ uint64_t nsm_client_rbt_hash_func(hash_parameter_t *hparam,
 {
 	unsigned long res;
 	state_nsm_client_t *pkey = key->addr;
+	unsigned int sum = 0;
+	unsigned int i;
 
-	if (nfs_param.core_param.nsm_use_caller_name) {
-		unsigned int sum = 0;
-		unsigned int i;
+	/* Since we always have a caller name in the key and records whether
+	 * nsm_use_caller_name is true or not, we don't ever compare ssc_client,
+	 * we always just compare the caller name.
+	 *
+	 * This makes SM_NOTIFY work because we can't know the port number
+	 * which is part of identifing ssc_client. We only care about the
+	 * address.
+	 */
 
-		/* Compute the sum of all the characters */
-		for (i = 0; i < pkey->ssc_nlm_caller_name_len; i++)
-			sum += (unsigned char)pkey->ssc_nlm_caller_name[i];
+	/* Compute the sum of all the characters */
+	for (i = 0; i < pkey->ssc_nlm_caller_name_len; i++)
+		sum += (unsigned char)pkey->ssc_nlm_caller_name[i];
 
-		res =
-		    (unsigned long)sum +
-		    (unsigned long)pkey->ssc_nlm_caller_name_len;
-	} else {
-		res = (unsigned long) pkey->ssc_client;
-	}
+	res = (unsigned long)sum + (unsigned long)pkey->ssc_nlm_caller_name_len;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
@@ -873,11 +880,6 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 		LogFullDebug(COMPONENT_STATE,
 			     "Using caller_name %s",
 			     caller_name);
-	} else if (op_ctx->client == NULL) {
-		LogCrit(COMPONENT_STATE,
-			"No gsh_client for caller_name %s", caller_name);
-
-		return NULL;
 	} else {
 		key.ssc_nlm_caller_name = op_ctx->client->hostaddr_str;
 		key.ssc_nlm_caller_name_len = strlen(key.ssc_nlm_caller_name);
@@ -958,6 +960,7 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 
 	PTHREAD_MUTEX_init(&pclient->ssc_mutex, NULL);
 
+	/* Need deep copy of caller name */
 	pclient->ssc_nlm_caller_name = gsh_strdup(key.ssc_nlm_caller_name);
 
 	glist_init(&pclient->ssc_lock_list);
