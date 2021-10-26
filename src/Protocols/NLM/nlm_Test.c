@@ -197,9 +197,7 @@ int nlm4_Test_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Test_Message");
 
-	nsm_client = get_nsm_client(CARE_NO_MONITOR,
-				    req->rq_xprt,
-				    arg->alock.caller_name);
+	nsm_client = get_nsm_client(CARE_NO_MONITOR, arg->alock.caller_name);
 
 	if (nsm_client != NULL)
 		nlm_client = get_nlm_client(CARE_NO_MONITOR,

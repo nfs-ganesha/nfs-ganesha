@@ -292,7 +292,7 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		return NLM4_FAILED;
 	}
 
-	*ppnsm_client = get_nsm_client(care, ptr_svc, alock->caller_name);
+	*ppnsm_client = get_nsm_client(care, alock->caller_name);
 
 	if (*ppnsm_client == NULL) {
 		/* If NSM Client is not found, and we don't care (such as
@@ -447,7 +447,7 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 		return NLM4_FAILED;
 	}
 
-	*ppnsm_client = get_nsm_client(care, ptr_svc, share->caller_name);
+	*ppnsm_client = get_nsm_client(care, share->caller_name);
 
 	if (*ppnsm_client == NULL) {
 		/* If NSM Client is not found, and we don't care (for unshare),

@@ -802,13 +802,11 @@ void dec_nsm_client_ref(state_nsm_client_t *client)
  * @brief Get an NSM client
  *
  * @param[in] care        Care status
- * @param[in] xprt        RPC transport
  * @param[in] caller_name Caller name
  *
  * @return NSM client or NULL.
  */
-state_nsm_client_t *get_nsm_client(care_t care, SVCXPRT *xprt,
-				   char *caller_name)
+state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 {
 	state_nsm_client_t key;
 	state_nsm_client_t *pclient;

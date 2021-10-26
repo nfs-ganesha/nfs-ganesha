@@ -50,7 +50,8 @@ int nlm4_Free_All(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		 "REQUEST PROCESSING: Calling NLM4_FREE_ALL for %s",
 		 arg->name);
 
-	nsm_client = get_nsm_client(CARE_NOT, req->rq_xprt, arg->name);
+	nsm_client = get_nsm_client(CARE_NOT, arg->name);
+
 	if (nsm_client != NULL) {
 		/* NLM_FREE_ALL has the same semantics as handling SM_NOTIFY.
 		 *

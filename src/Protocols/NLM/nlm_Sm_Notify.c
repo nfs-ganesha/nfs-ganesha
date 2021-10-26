@@ -150,7 +150,7 @@ int nlm4_Sm_Notify(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	/* Check if the SM_NOTIFY request is from the 'localhost' */
 	check_use_caller_name_ip(arg->name);
 
-	nsm_client = get_nsm_client(CARE_NOT, NULL, arg->name);
+	nsm_client = get_nsm_client(CARE_NOT, arg->name);
 
 	if (nsm_client != NULL) {
 		/* Cast the state number into a state pointer to protect
