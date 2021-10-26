@@ -864,6 +864,7 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 	hash_error_t rc;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
+	char hostaddr_str[SOCK_NAME_MAX];
 
 	if (caller_name == NULL)
 		return NULL;
@@ -881,7 +882,34 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 			     "Using caller_name %s",
 			     caller_name);
 	} else {
-		key.ssc_nlm_caller_name = op_ctx->client->hostaddr_str;
+		sockaddr_t alt_host;
+		sockaddr_t *host = NULL;
+
+		if (isFullDebug(COMPONENT_STATE)) {
+			char str[LOG_BUFF_LEN] = "\0";
+			struct display_buffer db = {sizeof(str), str, str};
+
+			display_sockaddr(&db, op_ctx->caller_addr);
+			LogFullDebug(COMPONENT_STATE,
+				     "Using address %s as caller name",
+				     str);
+		}
+
+		/* Fixup any encapsulated IPv4 addresses */
+		host = convert_ipv6_to_ipv4(op_ctx->caller_addr, &alt_host);
+
+		/* Generate caller name from fixed up address */
+		if (!sprint_sockip(host, hostaddr_str, sizeof(hostaddr_str))) {
+			LogCrit(COMPONENT_STATE,
+				"Could not generate caller name");
+			return NULL;
+		}
+
+		LogFullDebug(COMPONENT_STATE,
+			     "Using caller address %s",
+			     hostaddr_str);
+
+		key.ssc_nlm_caller_name = hostaddr_str;
 		key.ssc_nlm_caller_name_len = strlen(key.ssc_nlm_caller_name);
 		key.ssc_client = op_ctx->client;
 	}
