@@ -222,4 +222,9 @@ struct READ4resok;
 struct xdr_uio *xdr_READ4res_uio_setup(struct READ4resok *objp);
 
 extern tirpc_pkg_params ntirpc_pp;
+
+sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);
+bool is_loopback(sockaddr_t *addr);
+
+
 #endif /* GSH_RPC_H */

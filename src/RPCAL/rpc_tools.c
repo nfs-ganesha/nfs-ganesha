@@ -372,3 +372,106 @@ int get_port(sockaddr_t *addr)
 		return -1;
 	}
 }
+
+static char ten_bytes_all_0[10];
+
+/**
+ * @brief Check if address is IPv4 encapsulated into IPv6, if so convert
+ *        the address to IPv4 and return that one, otherwise return the
+ *        supplied address.
+ *
+ * @param[in] ipv6  The input address which may be IPv4, IPV6, or encapsulated
+ * @param[in] ipv4  sockattr_t buffer to create IPv4 address into
+ *
+ * @returns ipv6 unless an encapsulated address was converted, then ipv4
+ */
+sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
+{
+	struct sockaddr_in *paddr = (struct sockaddr_in *)ipv4;
+	struct sockaddr_in6 *psockaddr_in6 = (struct sockaddr_in6 *)ipv6;
+
+	/* If the client socket is IPv4, then it is wrapped into a
+	 * ::ffff:a.b.c.d IPv6 address. We check this here.
+	 * This kind of address is shaped like this:
+	 * |---------------------------------------------------------------|
+	 * |   80 bits = 10 bytes  | 16 bits = 2 bytes | 32 bits = 4 bytes |
+	 * |---------------------------------------------------------------|
+	 * |            0          |        FFFF       |    IPv4 address   |
+	 * |---------------------------------------------------------------|
+	 */
+	if ((ipv6->ss_family == AF_INET6)
+	    && !memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10)
+	    && (psockaddr_in6->sin6_addr.s6_addr[10] == 0xFF)
+	    && (psockaddr_in6->sin6_addr.s6_addr[11] == 0xFF)) {
+		void *ab;
+
+		memset(ipv4, 0, sizeof(*ipv4));
+		ab = &(psockaddr_in6->sin6_addr.s6_addr[12]);
+
+		paddr->sin_port = psockaddr_in6->sin6_port;
+		paddr->sin_addr.s_addr = *(in_addr_t *) ab;
+		ipv4->ss_family = AF_INET;
+
+		if (isMidDebug(COMPONENT_EXPORT)) {
+			char ipstring4[SOCK_NAME_MAX];
+			char ipstring6[SOCK_NAME_MAX];
+			struct display_buffer dspbuf4 = {
+				sizeof(ipstring4), ipstring4, ipstring4};
+			struct display_buffer dspbuf6 = {
+				sizeof(ipstring6), ipstring6, ipstring6};
+
+			display_sockip(&dspbuf4, ipv4);
+			display_sockip(&dspbuf6, ipv6);
+			LogMidDebug(COMPONENT_EXPORT,
+				    "Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
+				    ipstring6, ipstring4);
+		}
+
+		return ipv4;
+	} else {
+		return ipv6;
+	}
+}
+
+/**
+ *
+ * @brief Test if addr is loopback
+ *
+ * @param[in] addr      Address
+ *
+ * @return Comparator true/false,
+ */
+bool is_loopback(sockaddr_t *addr)
+{
+	struct sockaddr_in6 *ip6addr = (struct sockaddr_in6 *)addr;
+
+	if (addr->ss_family == AF_INET) {
+		struct sockaddr_in *inaddr = (struct sockaddr_in *)addr;
+
+		return (inaddr->sin_addr.s_addr & 0xFF000000) == 0x7F000000;
+	} else if (addr->ss_family != AF_INET6) {
+		return false;
+	}
+
+	/* If the client socket is IPv4, then it is wrapped into a
+	 * ::ffff:a.b.c.d IPv6 address. We check this here.
+	 * This kind of address is shaped like this:
+	 * |---------------------------------------------------------------|
+	 * |   80 bits = 10 bytes  | 16 bits = 2 bytes | 32 bits = 4 bytes |
+	 * |---------------------------------------------------------------|
+	 * |            0          |        FFFF       |    IPv4 address   |
+	 * |---------------------------------------------------------------|
+	 *
+	 * An IPv4 loop back address is 127.b.c.d, so we only need to examine
+	 * the first byte past ::ffff, or s6_addr[12].
+	 *
+	 * Otherwise we compare to ::1
+	 */
+	return (!memcmp(ip6addr->sin6_addr.s6_addr, ten_bytes_all_0, 10)
+			&& (ip6addr->sin6_addr.s6_addr[10] == 0xFF)
+			&& (ip6addr->sin6_addr.s6_addr[11] == 0xFF)
+			&& (ip6addr->sin6_addr.s6_addr[12] == 0x7F))
+		|| (memcmp(ip6addr->sin6_addr.s6_addr,
+			   &in6addr_loopback,
+			   sizeof(in6addr_loopback)) == 0);
+}

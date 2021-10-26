@@ -3007,56 +3007,6 @@ bool export_check_security(struct svc_req *req)
 	return true;
 }
 
-static char ten_bytes_all_0[10];
-
-sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
-{
-	struct sockaddr_in *paddr = (struct sockaddr_in *)ipv4;
-	struct sockaddr_in6 *psockaddr_in6 = (struct sockaddr_in6 *)ipv6;
-
-	/* If the client socket is IPv4, then it is wrapped into a
-	 * ::ffff:a.b.c.d IPv6 address. We check this here.
-	 * This kind of adress is shaped like this:
-	 * |---------------------------------------------------------------|
-	 * |   80 bits = 10 bytes  | 16 bits = 2 bytes | 32 bits = 4 bytes |
-	 * |---------------------------------------------------------------|
-	 * |            0          |        FFFF       |    IPv4 address   |
-	 * |---------------------------------------------------------------|
-	 */
-	if ((ipv6->ss_family == AF_INET6)
-	    && !memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10)
-	    && (psockaddr_in6->sin6_addr.s6_addr[10] == 0xFF)
-	    && (psockaddr_in6->sin6_addr.s6_addr[11] == 0xFF)) {
-		void *ab;
-
-		memset(ipv4, 0, sizeof(*ipv4));
-		ab = &(psockaddr_in6->sin6_addr.s6_addr[12]);
-
-		paddr->sin_port = psockaddr_in6->sin6_port;
-		paddr->sin_addr.s_addr = *(in_addr_t *) ab;
-		ipv4->ss_family = AF_INET;
-
-		if (isMidDebug(COMPONENT_EXPORT)) {
-			char ipstring4[SOCK_NAME_MAX];
-			char ipstring6[SOCK_NAME_MAX];
-			struct display_buffer dspbuf4 = {
-				sizeof(ipstring4), ipstring4, ipstring4};
-			struct display_buffer dspbuf6 = {
-				sizeof(ipstring6), ipstring6, ipstring6};
-
-			display_sockip(&dspbuf4, ipv4);
-			display_sockip(&dspbuf6, ipv6);
-			LogMidDebug(COMPONENT_EXPORT,
-				    "Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
-				    ipstring6, ipstring4);
-		}
-
-		return ipv4;
-	} else {
-		return ipv6;
-	}
-}
-
 /**
  * @brief Get the best anonymous uid available.
  *
