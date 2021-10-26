@@ -192,8 +192,19 @@ int Init_9p_hash(void);
 void free_nsm_client(state_nsm_client_t *client);
 
 /* These refcount functions must not be called holding the ssc_mutex */
-void inc_nsm_client_ref(state_nsm_client_t *client);
-void dec_nsm_client_ref(state_nsm_client_t *client);
+void _inc_nsm_client_ref(state_nsm_client_t *client,
+			 char *file, int line, char *function);
+
+#define inc_nsm_client_ref(client) \
+	_inc_nsm_client_ref(client, \
+	(char *) __FILE__, __LINE__, (char *) __func__)
+
+void _dec_nsm_client_ref(state_nsm_client_t *client,
+			 char *file, int line, char *function);
+
+#define dec_nsm_client_ref(client) \
+	_dec_nsm_client_ref(client, \
+	(char *) __FILE__, __LINE__, (char *) __func__)
 
 int display_nsm_client(struct display_buffer *dspbuf, state_nsm_client_t *key);
 

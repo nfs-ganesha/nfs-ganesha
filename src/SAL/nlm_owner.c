@@ -702,9 +702,31 @@ int Init_nlm_hash(void)
  *
  * @param[in] client The client to ref
  */
-void inc_nsm_client_ref(state_nsm_client_t *client)
+void _inc_nsm_client_ref(state_nsm_client_t *client,
+			 char *file, int line, char *function)
 {
-	(void) atomic_inc_int32_t(&client->ssc_refcount);
+	char str[LOG_BUFF_LEN] = "\0";
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+	bool strvalid = false;
+	int32_t refcount;
+
+	if (isFullDebug(COMPONENT_STATE)) {
+		display_nsm_client(&dspbuf, client);
+		strvalid = true;
+		/* Note that the way the logging below works, we will log at
+		 * FullDebug even if it is turned off in the middle of the
+		 * execution of this function since we don't test subsequently.
+		 */
+	}
+
+	refcount = atomic_inc_int32_t(&client->ssc_refcount);
+
+	if (strvalid) {
+		DisplayLogComponentLevel(
+			COMPONENT_STATE, file, line, function, NIV_FULL_DEBUG,
+			"Increment refcount now=%" PRId32 " {%s}",
+			refcount, str);
+	}
 }
 
 /**
@@ -729,7 +751,8 @@ void free_nsm_client(state_nsm_client_t *client)
  *
  * @param[in] client The client to release
  */
-void dec_nsm_client_ref(state_nsm_client_t *client)
+void _dec_nsm_client_ref(state_nsm_client_t *client,
+			char *file, int line, char *function)
 {
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -740,24 +763,34 @@ void dec_nsm_client_ref(state_nsm_client_t *client)
 	struct gsh_buffdesc old_value;
 	int32_t refcount;
 
-	if (isDebug(COMPONENT_STATE)) {
+	if (isFullDebug(COMPONENT_STATE)) {
 		display_nsm_client(&dspbuf, client);
 		str_valid = true;
+		/* Note that the way the logging below works, we will log at
+		 * FullDebug even if it is turned off in the middle of the
+		 * execution of this function since we don't test subsequently.
+		 */
 	}
 
 	refcount = atomic_dec_int32_t(&client->ssc_refcount);
 
 	if (refcount > 0) {
-		if (str_valid)
-			LogFullDebug(COMPONENT_STATE,
-				     "Decrement refcount now=%" PRId32 " {%s}",
-				     refcount, str);
+		if (str_valid) {
+			DisplayLogComponentLevel(
+				COMPONENT_STATE, file, line, function,
+				NIV_FULL_DEBUG,
+				"Decrement refcount now=%" PRId32 " {%s}",
+				refcount, str);
+		}
 
 		return;
 	}
 
-	if (str_valid)
-		LogFullDebug(COMPONENT_STATE, "Try to remove {%s}", str);
+	if (str_valid) {
+		DisplayLogComponentLevel(
+			COMPONENT_STATE, file, line, function, NIV_FULL_DEBUG,
+			"Try to remove {%s}", str);
+	}
 
 	buffkey.addr = client;
 	buffkey.len = sizeof(*client);
@@ -784,15 +817,23 @@ void dec_nsm_client_ref(state_nsm_client_t *client)
 		if (!str_valid)
 			display_nsm_client(&dspbuf, client);
 
-		LogCrit(COMPONENT_STATE, "Error %s, could not find {%s}",
-			hash_table_err_to_str(rc), str);
+		if (isLevel(COMPONENT_STATE, NIV_CRIT)) {
+			DisplayLogComponentLevel(
+				COMPONENT_STATE, file, line, function, NIV_CRIT,
+				"Error %s, could not find {%s}",
+				hash_table_err_to_str(rc), str);
+		}
 
 		return;
 	}
 
 	hashtable_releaselatched(ht_nsm_client, &latch);
 
-	LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
+	if (str_valid) {
+		DisplayLogComponentLevel(
+			COMPONENT_STATE, file, line, function, NIV_FULL_DEBUG,
+			"Free {%s}", str);
+	}
 
 	nsm_unmonitor(client);
 	free_nsm_client(client);
@@ -829,6 +870,9 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 			return NULL;
 
 		key.ssc_nlm_caller_name = caller_name;
+		LogFullDebug(COMPONENT_STATE,
+			     "Using caller_name %s",
+			     caller_name);
 	} else if (op_ctx->client == NULL) {
 		LogCrit(COMPONENT_STATE,
 			"No gsh_client for caller_name %s", caller_name);
@@ -867,6 +911,8 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 
 		/* Return the found NSM Client */
 		if (isFullDebug(COMPONENT_STATE)) {
+			/* Clear out key and display found client */
+			display_reset_buffer(&dspbuf);
 			display_nsm_client(&dspbuf, pclient);
 			LogFullDebug(COMPONENT_STATE, "Found {%s}", str);
 		}
