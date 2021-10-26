@@ -303,8 +303,6 @@ void dec_nlm_state_ref(state_t *state)
 
 	LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
 
-	dec_state_owner_ref(state->state_owner);
-
 	put_gsh_export(state->state_export);
 
 	obj = get_state_obj_ref(state);
@@ -489,8 +487,6 @@ int get_nlm_state(enum state_type state_type,
 	}
 
 	get_gsh_export_ref(state->state_export);
-
-	inc_state_owner_ref(state->state_owner);
 
 	*pstate = state;
 
