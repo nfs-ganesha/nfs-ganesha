@@ -871,7 +871,12 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 
 	memset(&key, 0, sizeof(key));
 
-	if (nfs_param.core_param.nsm_use_caller_name) {
+	if (nfs_param.core_param.nsm_use_caller_name ||
+	    op_ctx->client == NULL) {
+		/* If nsm_use_caller_name is false but op_ctx->client is NULL
+		 * we are being called for SM_NOTIFY. caller name is supposed to
+		 * be an IP address.
+		 */
 		key.ssc_nlm_caller_name_len = strlen(caller_name);
 
 		if (key.ssc_nlm_caller_name_len > LM_MAXSTRLEN)
