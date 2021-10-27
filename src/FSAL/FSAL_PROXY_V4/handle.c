@@ -608,8 +608,6 @@ static void *proxyv4_rpc_recv(void *arg)
 		pfd.events = POLLIN | POLLRDHUP;
 
 		while (rpc->rpc_sock >= 0) {
-			enum clnt_stat rc;
-
 			switch (poll(&pfd, 1, millisec)) {
 			case 0:
 				LogDebug(COMPONENT_FSAL,
@@ -629,12 +627,10 @@ static void *proxyv4_rpc_recv(void *arg)
 						 "Socket is closed");
 				}
 
-				rc = proxyv4_rpc_read_reply(proxyv4_exp);
-				if (rc >= 0) {
+				if (proxyv4_rpc_read_reply(proxyv4_exp) >= 0)
 					continue;
-				} else {
-					break;
-				}
+
+				break;
 			}
 
 			PTHREAD_MUTEX_lock(list_lock);
