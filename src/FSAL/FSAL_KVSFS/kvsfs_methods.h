@@ -156,12 +156,6 @@ void kvsfs_write2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t kvsfs_close2(struct fsal_obj_handle *obj_hdl,
 			   struct state_t *state);
 /* OK */
-fsal_status_t kvsfs_lock_op2(struct fsal_obj_handle *obj_hdl,
-			     struct state_t *state,
-			     void *owner, fsal_lock_op_t lock_op,
-			     fsal_lock_param_t *request_lock,
-			     fsal_lock_param_t *conflicting_lock);
-/* OK */
 fsal_status_t kvsfs_create2(struct fsal_obj_handle *dir_hdl,
 			    const char *filename,
 			    const struct req_op_context *op_ctx,

@@ -53,13 +53,13 @@ struct kvsfs_fsal_module KVSFS = {
 		.fs_info = {
 			.maxfilesize = INT64_MAX,
 			.maxlink = _POSIX_LINK_MAX,
-			.maxnamelen = 1024,
-			.maxpathlen = 1024,
+			.maxnamelen = MAXNAMLEN,
+			.maxpathlen = MAXPATHLEN,
 			.no_trunc = true,
 			.chown_restricted = false,
 			.case_insensitive = false,
 			.case_preserving = true,
-			.link_support = false,
+			.link_support = true,
 			.symlink_support = false,
 			.lock_support = false,
 			.lock_support_async_block = false,
@@ -74,36 +74,6 @@ struct kvsfs_fsal_module KVSFS = {
 			.umask = 0,
 		}
 	}
-};
-
-static struct fsal_staticfsinfo_t default_kvsfs_info = {
-	.maxfilesize = UINT64_MAX,
-	.maxlink = 1024,
-	.maxnamelen = MAXNAMLEN,
-	.maxpathlen = MAXPATHLEN,
-	.no_trunc = true,
-	.chown_restricted = false,
-	.case_insensitive = false,
-	.case_preserving = true,
-	.link_support = true,
-	.symlink_support = true,
-	.lock_support = false,
-	.lock_support_async_block = false,
-	.named_attr = true,
-	.unique_handles = true,
-	.acl_support = FSAL_ACLSUPPORT_ALLOW,
-	.cansettime = true,
-	.homogenous = true,
-	.supported_attrs = KVSFS_SUPPORTED_ATTRIBUTES,
-	.maxread = FSAL_MAXIOSIZE,
-	.maxwrite = FSAL_MAXIOSIZE,
-	.umask = 0,
-	.auth_exportpath_xdev = false,
-	.pnfs_mds = false,
-	.pnfs_ds = false,
-	.fsal_trace = false,
-	.fsal_grace = false,
-	.link_supports_permission_checks = true,
 };
 
 /* Module methods
@@ -127,9 +97,6 @@ static fsal_status_t kvsfs_init_config(struct fsal_module *fsal_hdl,
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
 		     (uint64_t) KVSFS_SUPPORTED_ATTRIBUTES);
-	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes default = 0x%" PRIx64,
-		     default_kvsfs_info.supported_attrs);
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
 		 kvsfs_me->fsal.fs_info.supported_attrs);

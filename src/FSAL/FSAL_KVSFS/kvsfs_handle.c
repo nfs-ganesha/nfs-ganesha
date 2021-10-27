@@ -1060,7 +1060,6 @@ void kvsfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit2 = kvsfs_commit2;
 	ops->setattr2 = kvsfs_setattr2;
 	ops->close2 = kvsfs_close2;
-	ops->lock_op2 = kvsfs_lock_op2;
 
 	// ops->create = kvsfs_create;
 	// ops->test_access = fsal_test_access;
