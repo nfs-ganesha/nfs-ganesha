@@ -1328,8 +1328,12 @@ static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 {
 	struct fsal_attrlist attrs;
 	bool result;
-	bool trunc_verif =
-		obj_hdl->fs != NULL ? obj_hdl->fs->trunc_verif : false;
+	bool trunc_verif = false;
+
+#if GSH_CAN_HOST_LOCAL_FS
+	if (obj_hdl->fs != NULL)
+		trunc_verif = obj_hdl->fs->trunc_verif;
+#endif
 
 	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
 
