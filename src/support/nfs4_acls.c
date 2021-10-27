@@ -59,7 +59,11 @@ fsal_ace_t *nfs4_ace_alloc(int nace)
 
 fsal_acl_t *nfs4_acl_alloc()
 {
-	return pool_alloc(fsal_acl_pool);
+	fsal_acl_t *acl = pool_alloc(fsal_acl_pool);
+
+	PTHREAD_RWLOCK_init(&acl->lock, NULL);
+
+	return acl;
 }
 
 void nfs4_ace_free(fsal_ace_t *ace)
@@ -79,6 +83,8 @@ void nfs4_acl_free(fsal_acl_t *acl)
 
 	if (acl->aces)
 		nfs4_ace_free(acl->aces);
+
+	PTHREAD_RWLOCK_destroy(&acl->lock);
 
 	pool_free(fsal_acl_pool, acl);
 }
@@ -138,19 +144,6 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *acldata,
 
 	/* Adding the entry in the cache */
 	acl = nfs4_acl_alloc();
-	if (pthread_rwlock_init(&(acl->lock), NULL) != 0) {
-		nfs4_acl_free(acl);
-		LogCrit(COMPONENT_NFS_V4_ACL,
-			"New ACL RW lock init returned %d (%s)", errno,
-			strerror(errno));
-		*status = NFS_V4_ACL_INIT_ENTRY_FAILED;
-
-		nfs4_ace_free(acldata->aces);
-		hashtable_releaselatched(fsal_acl_hash, &latch);
-
-		return NULL;
-	}
-
 	acl->naces = acldata->naces;
 	acl->aces = acldata->aces;
 	acl->ref = 1;		/* We give out one reference */
