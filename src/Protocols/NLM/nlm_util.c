@@ -287,7 +287,7 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 	}
 
 	if ((*ppobj)->type != REGULAR_FILE) {
-		LogWarn(COMPONENT_STATE,
+		LogWarn(COMPONENT_NLM,
 			"NLM operation on non-REGULAR_FILE");
 		return NLM4_FAILED;
 	}
@@ -442,7 +442,7 @@ int nlm_process_share_parms(struct svc_req *req, nlm4_share *share,
 	}
 
 	if ((*ppobj)->type != REGULAR_FILE) {
-		LogWarn(COMPONENT_STATE,
+		LogWarn(COMPONENT_NLM,
 			"NLM operation on non-REGULAR_FILE");
 		return NLM4_FAILED;
 	}
