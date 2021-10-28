@@ -111,6 +111,86 @@ static void *resp_key;
 static const int MAX_ASYNC_RETRY = 2;
 static const struct timespec tout = { 0, 0 }; /* one-shot */
 
+int find_peer_addr(char *caller_name, in_port_t sin_port, sockaddr_t *client)
+{
+	struct addrinfo hints;
+	struct addrinfo *result;
+	char port_str[20];
+	int retval;
+	bool stats = nfs_param.core_param.enable_AUTHSTATS;
+	struct sockaddr_in *in;
+	struct sockaddr_in6 *in6;
+
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_INET6;	/* only INET6 */
+	hints.ai_socktype = SOCK_STREAM; /* TCP */
+	hints.ai_protocol = 0;	/* Any protocol */
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+
+	/* convert port to string format */
+	(void) sprintf(port_str, "%d", htons(sin_port));
+
+	/* get the IPv4 mapped IPv6 address */
+	retval = gsh_getaddrinfo(caller_name, port_str, &hints, &result, stats);
+
+	if (retval == 0) {
+		memcpy(client, result->ai_addr, result->ai_addrlen);
+		freeaddrinfo(result);
+		return retval;
+	}
+
+	if (retval == 0 || (retval != EAI_NONAME && retval != EAI_AGAIN))
+		return retval;
+
+	/* Couldn't find an AF_INET6 address, look for AF_INET address */
+	hints.ai_family = AF_INET;
+
+	retval = gsh_getaddrinfo(caller_name, port_str, &hints, &result, stats);
+
+	if (retval != 0)
+		return retval;
+
+	/* Format of an IPv4 address encapsulated in IPv6:
+	 * |---------------------------------------------------------------|
+	 * |   80 bits = 10 bytes  | 16 bits = 2 bytes | 32 bits = 4 bytes |
+	 * |---------------------------------------------------------------|
+	 * |            0          |        FFFF       |    IPv4 address   |
+	 * |---------------------------------------------------------------|
+	 *
+	 * An IPv4 loop back address is 127.b.c.d, so we only need to examine
+	 * the first byte past ::ffff, or s6_addr[12].
+	 *
+	 * Otherwise we compare to ::1
+	 */
+	in = (struct sockaddr_in *) result->ai_addr;
+	in6 = (struct sockaddr_in6 *) client;
+
+	/* Copy __SOCKADDR_COMMON part plus sin_port */
+	memcpy(in6, in, offsetof(struct sockaddr_in, sin_addr));
+
+	/* Change to AF_INET6 */
+	in6->sin6_family = AF_INET6;
+
+	/* Set all those 0s */
+	memset(&in6->sin6_addr, 0, 10);
+
+	/* Set those 16 "1" bits */
+	in6->sin6_addr.s6_addr16[5] = 0xFFFF;
+
+	/* And the IPv4 address goes at the end. */
+	in6->sin6_addr.s6_addr32[3] = in->sin_addr.s_addr;
+
+	/* Finish up the IPv6 address */
+	in6->sin6_flowinfo = 0;
+	in6->sin6_scope_id = 0;
+
+	freeaddrinfo(result);
+
+	return retval;
+}
+
 /* Client routine  to send the asynchrnous response,
  * key is used to wait for a response
  */
@@ -123,7 +203,6 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 	int retval, retry;
 	char *caller_name = host->slc_nsm_client->ssc_nlm_caller_name;
 	const char *client_type_str = xprt_type_to_str(host->slc_client_type);
-	bool stats = nfs_param.core_param.enable_AUTHSTATS;
 
 	for (retry = 0; retry < MAX_ASYNC_RETRY; retry++) {
 		if (host->slc_callback_clnt == NULL) {
@@ -134,10 +213,8 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 			if (host->slc_client_type == XPRT_TCP) {
 				int fd;
 				struct sockaddr_in6 server_addr;
+				sockaddr_t client_addr;
 				struct netbuf *buf, local_buf;
-				struct addrinfo *result;
-				struct addrinfo hints;
-				char port_str[20];
 
 				fd = socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
 				if (fd < 0)
@@ -147,6 +224,20 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 				       &(host->slc_server_addr),
 				       sizeof(struct sockaddr_in6));
 				server_addr.sin6_port = 0;
+
+				if (isFullDebug(COMPONENT_NLM)) {
+					char str[LOG_BUFF_LEN] = "\0";
+					struct display_buffer db = {
+							sizeof(str), str, str};
+
+					display_sockaddr(&db,
+							 (sockaddr_t *)
+								&server_addr);
+
+					LogFullDebug(COMPONENT_NLM,
+						     "Server address %s for NLM callback",
+						     str);
+				}
 
 				if (bind(fd,
 					 (struct sockaddr *)&server_addr,
@@ -171,29 +262,14 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 					return -1;
 				}
 
-				memset(&hints, 0, sizeof(struct addrinfo));
-				hints.ai_family = AF_INET6;	/* only INET6 */
-				hints.ai_socktype = SOCK_STREAM; /* TCP */
-				hints.ai_protocol = 0;	/* Any protocol */
-				hints.ai_canonname = NULL;
-				hints.ai_addr = NULL;
-				hints.ai_next = NULL;
-
-				/* convert port to string format */
-				(void) sprintf(port_str, "%d",
-					       htons(((struct sockaddr_in *)
-							buf->buf)->sin_port));
+				retval = find_peer_addr(caller_name,
+							((struct sockaddr_in *)
+							    buf->buf)->sin_port,
+							&client_addr);
 
 				/* buf with inet is only needed for the port */
 				gsh_free(buf->buf);
 				gsh_free(buf);
-
-				/* get the IPv4 mapped IPv6 address */
-				retval = gsh_getaddrinfo(caller_name,
-						     port_str,
-						     &hints,
-						     &result,
-						     stats);
 
 				/* retry for spurious EAI_NONAME errors */
 				if (retval == EAI_NONAME ||
@@ -215,14 +291,12 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 				}
 
 				/* setup the netbuf with in6 address */
-				local_buf.buf = result->ai_addr;
-				local_buf.len = local_buf.maxlen =
-				    result->ai_addrlen;
+				local_buf.buf = &client_addr;
+				local_buf.len = sizeof(struct sockaddr_in6);
 
 				host->slc_callback_clnt =
 				    clnt_vc_ncreate(fd, &local_buf, NLMPROG,
 						    NLM4_VERS, 0, 0);
-				freeaddrinfo(result);
 			} else {
 
 				host->slc_callback_clnt =
