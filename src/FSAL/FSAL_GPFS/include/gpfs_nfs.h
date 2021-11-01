@@ -53,6 +53,7 @@ struct flock
 #define OPENHANDLE_GET_VERSION    100
 #define OPENHANDLE_GET_VERSION2   1002
 #define OPENHANDLE_GET_VERSION3   1003
+#define OPENHANDLE_GET_VERSION4   1004
 #define OPENHANDLE_NAME_TO_HANDLE 101
 #define OPENHANDLE_OPEN_BY_HANDLE 102
 #define OPENHANDLE_LAYOUT_TYPE    106
@@ -131,6 +132,7 @@ struct trace_arg
 #define ganesha_v1 1
 #define ganesha_v2 2
 #define ganesha_v3 3
+#define ganesha_v4 4
 
 int gpfs_ganesha(int op, void *oarg);
 

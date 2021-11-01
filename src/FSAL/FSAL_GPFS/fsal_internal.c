@@ -500,7 +500,11 @@ int fsal_internal_version(void)
 {
 	int rc;
 
-	/* Try VERSION3 first, followed by VERSION2 */
+	/* Try VERSION4 first, followed by VERSION3,2 */
+	rc = gpfs_ganesha(OPENHANDLE_GET_VERSION4, NULL);
+	if (rc != -1)
+		return 0;
+
 	rc = gpfs_ganesha(OPENHANDLE_GET_VERSION3, NULL);
 	if (rc != -1)
 		return 0;
