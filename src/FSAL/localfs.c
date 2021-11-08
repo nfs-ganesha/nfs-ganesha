@@ -1376,7 +1376,7 @@ static int process_claim(const char *path,
 			 claim_filesystem_cb claimfs,
 			 unclaim_filesystem_cb unclaim)
 {
-	struct glist_head *glist;
+	struct glist_head *export_glist, *child_glist;
 	struct fsal_filesystem_export_map *map;
 	int retval = 0;
 	bool already_claimed = this->fsal == fsal;
@@ -1560,7 +1560,7 @@ static int process_claim(const char *path,
 		 * are children of our subtree. Such child claims must be
 		 * removed (they will become child claims of this claim).
 		 */
-		glist_for_each(glist, &this->exports) {
+		glist_for_each(export_glist, &this->exports) {
 			struct glist_head *glist, *glistn;
 			struct fsal_filesystem_export_map *other_map;
 			struct gsh_refstr *map_fullpath;
@@ -1568,7 +1568,7 @@ static int process_claim(const char *path,
 			bool child;
 
 			other_map = glist_entry(
-					glist,
+					export_glist,
 					struct fsal_filesystem_export_map,
 					on_exports);
 
@@ -1630,10 +1630,11 @@ static int process_claim(const char *path,
 	}
 
 	/* Claim the children now */
-	glist_for_each(glist, &this->children) {
+	glist_for_each(child_glist, &this->children) {
 		struct fsal_filesystem *child_fs;
 
-		child_fs = glist_entry(glist, struct fsal_filesystem, siblings);
+		child_fs = glist_entry(
+			child_glist, struct fsal_filesystem, siblings);
 
 		/* Any child filesystem can not have child claims from another
 		 * FSAL since that FSAL would have to have a claim on this
@@ -1673,7 +1674,6 @@ static int process_claim(const char *path,
 		 * If so, the filesystem isn't a candidate.
 		 */
 		if (child_fs->claims[CLAIM_CHILD] != 0) {
-			struct glist_head *glist;
 			bool skip = false;
 
 			/* Examine the child claims of the child filesystem to
@@ -1683,13 +1683,13 @@ static int process_claim(const char *path,
 			 * that export is a subtree of this export and thus
 			 * that export gets the child claims).
 			 */
-			glist_for_each(glist, &child_fs->exports) {
+			glist_for_each(export_glist, &child_fs->exports) {
 				struct fsal_filesystem_export_map *other_map;
 				struct gsh_refstr *map_fullpath;
 				size_t map_pathlen;
 
 				other_map = glist_entry(
-					glist,
+					export_glist,
 					struct fsal_filesystem_export_map,
 					on_exports);
 
