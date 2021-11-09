@@ -165,10 +165,11 @@ proxyv3_openfd(const struct sockaddr *host,
 	/* Check that the caller is letting us slip the port in. */
 	if ((ipv6 && hostv6->sin6_port != 0) ||
 	    (!ipv6 && hostv4->sin_port != 0)) {
+		unsigned int port = (ipv6) ?
+			hostv6->sin6_port : hostv4->sin_port;
 		LogCrit(COMPONENT_FSAL,
-			"passed an address (%s) with non-zero port %" PRIu16,
-			addrForErrors,
-			(ipv6) ? hostv6->sin6_port : hostv4->sin_port);
+			"passed an address (%s) with non-zero port %u",
+			addrForErrors, port);
 		return -1;
 	}
 
