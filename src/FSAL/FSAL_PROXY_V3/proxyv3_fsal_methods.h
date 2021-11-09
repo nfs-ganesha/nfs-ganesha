@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2020-2021 Google LLC
  * Author: Solomon Boulos <boulos@google.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -103,7 +103,7 @@ bool proxyv3_nfs_call(const struct sockaddr *host,
 		      const uint nfsdPort,
 		      const struct user_cred *creds,
 		      const rpcproc_t nfsProc,
-		      const xdrproc_t encodeFunc, const void *args,
+		      const xdrproc_t encodeFunc, void *args,
 		      const xdrproc_t decodeFunc, void *output);
 
 bool proxyv3_mount_call(const struct sockaddr *host,
@@ -111,7 +111,7 @@ bool proxyv3_mount_call(const struct sockaddr *host,
 			const uint mountdPort,
 			const struct user_cred *creds,
 			const rpcproc_t mountProc,
-			const xdrproc_t encodeFunc, const void *args,
+			const xdrproc_t encodeFunc, void *args,
 			const xdrproc_t decodeFunc, void *output);
 
 bool proxyv3_nlm_call(const struct sockaddr *host,
@@ -119,7 +119,7 @@ bool proxyv3_nlm_call(const struct sockaddr *host,
 		      const uint nlmPort,
 		      const struct user_cred *creds,
 		      const rpcproc_t nlmProc,
-		      const xdrproc_t encodeFunc, const void *args,
+		      const xdrproc_t encodeFunc, void *args,
 		      const xdrproc_t decodeFunc, void *output);
 
 /*

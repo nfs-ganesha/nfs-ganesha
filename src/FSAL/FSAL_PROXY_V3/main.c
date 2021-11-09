@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2020-2021 Google LLC
  * Author: Solomon Boulos <boulos@google.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -871,7 +871,7 @@ proxyv3_lookup_handle(struct fsal_obj_handle *parent,
 static fsal_status_t
 proxyv3_issue_createlike(struct proxyv3_obj_handle *parent_obj,
 			 const rpcproc_t nfsProc, const char *procName,
-			 xdrproc_t encFunc, const void *encArgs,
+			 xdrproc_t encFunc, void *encArgs,
 			 xdrproc_t decFunc, void *decArgs,
 			 nfsstat3 *status,
 			 struct post_op_fh3 *op_fh3,

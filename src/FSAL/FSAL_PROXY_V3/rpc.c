@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2020-2021 Google LLC
  * Author: Solomon Boulos <boulos@google.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -684,7 +684,7 @@ bool proxyv3_call(const struct sockaddr *host,
 		  const rpcprog_t rpcProgram,
 		  const rpcvers_t rpcVersion,
 		  const rpcproc_t rpcProc,
-		  const xdrproc_t encodeFunc, const void *args,
+		  const xdrproc_t encodeFunc, void *args,
 		  const xdrproc_t decodeFunc, void *output)
 {
 	XDR x;
@@ -766,7 +766,7 @@ bool proxyv3_call(const struct sockaddr *host,
 		return false;
 	}
 
-	if (!encodeFunc(&x, args)) {
+	if (!encodeFunc(&x, args, 0)) {
 		LogCrit(COMPONENT_FSAL,
 			"Failed to xdr-encode the args");
 		proxyv3_release_fdentry(fd_entry, true /* force close */);
@@ -998,7 +998,7 @@ bool proxyv3_nfs_call(const struct sockaddr *host,
 		      const uint nfsdPort,
 		      const struct user_cred *creds,
 		      const rpcproc_t nfsProc,
-		      const xdrproc_t encodeFunc, const void *args,
+		      const xdrproc_t encodeFunc, void *args,
 		      const xdrproc_t decodeFunc, void *output)
 {
 	const int kProgramNFS = NFS_PROGRAM;
@@ -1017,7 +1017,7 @@ bool proxyv3_mount_call(const struct sockaddr *host,
 			const uint mountdPort,
 			const struct user_cred *creds,
 			const rpcproc_t mountProc,
-			const xdrproc_t encodeFunc, const void *args,
+			const xdrproc_t encodeFunc, void *args,
 			const xdrproc_t decodeFunc, void *output)
 {
 	const int kProgramMount = MOUNTPROG;
@@ -1036,7 +1036,7 @@ bool proxyv3_nlm_call(const struct sockaddr *host,
 		      const uint nlmPort,
 		      const struct user_cred *creds,
 		      const rpcproc_t nlmProc,
-		      const xdrproc_t encodeFunc, const void *args,
+		      const xdrproc_t encodeFunc, void *args,
 		      const xdrproc_t decodeFunc, void *output)
 {
 	const int kProgramNLM = NLMPROG;
