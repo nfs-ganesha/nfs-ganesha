@@ -219,8 +219,7 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 	 * passing to inet_pton as is and will support a variety of formats.
 	 */
 
-	memset(&clientid->cid_cb.v40.cb_addr.ss, 0,
-	       sizeof(struct sockaddr_storage));
+	memset(&clientid->cid_cb.v40.cb_addr.ss, 0, sizeof(sockaddr_t));
 
 	switch (clientid->cid_cb.v40.cb_addr.nc) {
 	case _NC_TCP:

@@ -132,7 +132,7 @@ int compare_9p_owner(state_owner_t *owner1, state_owner_t *owner2)
 	if (memcmp
 	    (&owner1->so_owner.so_9p_owner.client_addr,
 	     &owner2->so_owner.so_9p_owner.client_addr,
-	     sizeof(struct sockaddr_storage)))
+	     sizeof(sockaddr_t)))
 		return 1;
 #endif
 
@@ -260,7 +260,7 @@ int Init_9p_hash(void)
  * @return The found owner or NULL.
  */
 
-state_owner_t *get_9p_owner(struct sockaddr_storage *client_addr,
+state_owner_t *get_9p_owner(sockaddr_t *client_addr,
 			    uint32_t proc_id)
 {
 	state_owner_t key;

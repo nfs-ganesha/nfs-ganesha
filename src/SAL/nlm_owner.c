@@ -1177,7 +1177,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 	hash_error_t rc;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
-	struct sockaddr_storage local_addr;
+	sockaddr_t local_addr;
 	socklen_t addr_len;
 	uint32_t refcount;
 
@@ -1195,8 +1195,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 	    == -1) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to get local addr.");
 	} else {
-		memcpy(&(key.slc_server_addr), &local_addr,
-		       sizeof(struct sockaddr_storage));
+		memcpy(&(key.slc_server_addr), &local_addr, sizeof(sockaddr_t));
 	}
 
 	if (key.slc_nlm_caller_name_len > LM_MAXSTRLEN)

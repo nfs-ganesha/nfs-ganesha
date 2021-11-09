@@ -41,7 +41,7 @@
 
 int get_raddr(SVCXPRT *xprt)
 {
-	struct sockaddr_storage *ss = svc_getrpclocal(xprt);
+	sockaddr_t *ss = svc_getrpclocal(xprt);
 	int addr = 0;
 
 	if (ss == NULL)

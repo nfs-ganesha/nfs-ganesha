@@ -525,7 +525,7 @@ struct state_nlm_client_t {
 	xprt_type_t slc_client_type;	/*< The transport type to this
 					   client */
 	int32_t slc_refcount;	/*< Reference count for disposal */
-	struct sockaddr_storage slc_server_addr; /*< local addr when request is
+	sockaddr_t slc_server_addr; /*< local addr when request is
 						     made */
 	int32_t slc_nlm_caller_name_len;	/*< Length of client name */
 	char *slc_nlm_caller_name;	/*< Client name */
@@ -550,7 +550,7 @@ typedef struct state_nlm_owner_t {
 #ifdef _USE_9P
 typedef struct state_9p_owner_t {
 	u32 proc_id;		/*< PID on the client */
-	struct sockaddr_storage client_addr;	/*< Network address of client */
+	sockaddr_t client_addr;	/*< Network address of client */
 } state_9p_owner_t;
 #endif				/* _USE_9P */
 

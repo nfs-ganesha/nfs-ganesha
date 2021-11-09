@@ -87,7 +87,7 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	char name[MAXNAMLEN+1];
 
 	struct addrinfo hints, *result;
-	struct sockaddr_storage client_addr;
+	sockaddr_t client_addr;
 
 	struct _9p_fid *pfid = NULL;
 

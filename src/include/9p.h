@@ -378,7 +378,7 @@ struct _9p_conn {
 	struct _9p_flush_bucket flush_buckets[FLUSH_BUCKETS];
 	unsigned long sequence;
 	pthread_mutex_t sock_lock;
-	struct sockaddr_storage addrpeer;
+	sockaddr_t addrpeer;
 	unsigned int msize;
 };
 

@@ -153,7 +153,7 @@ proxyv3_openfd(const struct sockaddr *host,
 		return -1;
 	}
 
-	struct sockaddr_storage hostAndPort;
+	sockaddr_t hostAndPort;
 
 	memset(&hostAndPort, 0, sizeof(hostAndPort));
 	/* Copy the input, and then override the port. */

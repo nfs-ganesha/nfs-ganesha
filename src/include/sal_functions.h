@@ -177,8 +177,7 @@ int compare_9p_owner(state_owner_t *owner1, state_owner_t *owner2);
 
 int display_9p_owner(struct display_buffer *dspbuf, state_owner_t *owner);
 
-state_owner_t *get_9p_owner(struct sockaddr_storage *client_addr,
-			    uint32_t proc_id);
+state_owner_t *get_9p_owner(sockaddr_t *client_addr, uint32_t proc_id);
 
 int Init_9p_hash(void);
 #endif

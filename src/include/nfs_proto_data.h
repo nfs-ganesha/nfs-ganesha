@@ -283,7 +283,7 @@ void nfs_set_client_location(nfs_client_id_t *pclientid,
 
 typedef struct gsh_addr {
 	nc_type nc;
-	struct sockaddr_storage ss;
+	sockaddr_t ss;
 	uint32_t port;
 } gsh_addr_t;
 
