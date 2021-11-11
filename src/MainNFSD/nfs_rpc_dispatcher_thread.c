@@ -604,6 +604,14 @@ static int Bind_sockets_V6(void)
 	protos p;
 	int    rc = 0;
 
+	if (isInfo(COMPONENT_DISPATCH)) {
+		char str[LOG_BUFF_LEN] = "\0";
+		struct display_buffer dbuf = {sizeof(str), str, str};
+
+		display_sockaddr(&dbuf, &nfs_param.core_param.bind_addr);
+		LogInfo(COMPONENT_DISPATCH, "Binding to address %s", str);
+	}
+
 	for (p = P_NFS; p < P_COUNT; p++) {
 		if (nfs_protocol_enabled(p)) {
 
@@ -637,6 +645,21 @@ static int Bind_sockets_V6(void)
 						tags[p], errno,
 						strerror(errno));
 					return -1;
+				}
+
+				if (isInfo(COMPONENT_DISPATCH)) {
+					char str[LOG_BUFF_LEN] = "\0";
+					struct display_buffer dbuf = {
+							sizeof(str), str, str};
+
+					display_sockaddr(
+					    &dbuf,
+					    (sockaddr_t *)
+					    pdatap->bindaddr_udp6.addr.buf);
+
+					LogInfo(COMPONENT_DISPATCH,
+						"Binding UDP socket to address %s for %s",
+						str, tags[p]);
 				}
 
 				rc = bind(udp_socket[p],
@@ -678,6 +701,21 @@ static int Bind_sockets_V6(void)
 				return -1;
 			}
 
+			if (isInfo(COMPONENT_DISPATCH)) {
+				char str[LOG_BUFF_LEN] = "\0";
+				struct display_buffer dbuf = {
+						sizeof(str), str, str};
+
+				display_sockaddr(
+				    &dbuf,
+				    (sockaddr_t *)
+				    pdatap->bindaddr_tcp6.addr.buf);
+
+				LogInfo(COMPONENT_DISPATCH,
+					"Binding TCP socket to address %s for %s",
+					str, tags[p]);
+			}
+
 			rc = bind(tcp_socket[p],
 				  (struct sockaddr *)
 				   pdatap->bindaddr_tcp6.addr.buf,
@@ -702,6 +740,14 @@ static int Bind_sockets_V4(void)
 {
 	protos p;
 	int    rc = 0;
+
+	if (isInfo(COMPONENT_DISPATCH)) {
+		char str[LOG_BUFF_LEN] = "\0";
+		struct display_buffer dbuf = {sizeof(str), str, str};
+
+		display_sockaddr(&dbuf, &nfs_param.core_param.bind_addr);
+		LogInfo(COMPONENT_DISPATCH, "Binding to address %s", str);
+	}
 
 	for (p = P_NFS; p < P_COUNT; p++) {
 		if (nfs_protocol_enabled(p)) {
@@ -737,6 +783,21 @@ static int Bind_sockets_V4(void)
 						tags[p], errno,
 						strerror(errno));
 					return -1;
+				}
+
+				if (isInfo(COMPONENT_DISPATCH)) {
+					char str[LOG_BUFF_LEN] = "\0";
+					struct display_buffer dbuf = {
+							sizeof(str), str, str};
+
+					display_sockaddr(
+					    &dbuf,
+					    (sockaddr_t *)
+					    pdatap->bindaddr_udp6.addr.buf);
+
+					LogInfo(COMPONENT_DISPATCH,
+						"Binding UDP socket to address %s for %s",
+						str, tags[p]);
 				}
 
 				rc = bind(udp_socket[p],
@@ -776,6 +837,21 @@ static int Bind_sockets_V4(void)
 					"V4 : Cannot get %s socket info for tcp socket error %d(%s)",
 					tags[p], errno, strerror(errno));
 				return -1;
+			}
+
+			if (isInfo(COMPONENT_DISPATCH)) {
+				char str[LOG_BUFF_LEN] = "\0";
+				struct display_buffer dbuf = {
+						sizeof(str), str, str};
+
+				display_sockaddr(
+				    &dbuf,
+				    (sockaddr_t *)
+				    pdatap->bindaddr_tcp6.addr.buf);
+
+				LogInfo(COMPONENT_DISPATCH,
+					"Binding TCP socket to address %s for %s",
+					str, tags[p]);
 			}
 
 			rc = bind(tcp_socket[p],
