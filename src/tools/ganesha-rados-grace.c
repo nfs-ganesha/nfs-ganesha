@@ -108,7 +108,7 @@ int main(int argc, char * const *argv)
 	char			*pool = DEFAULT_RADOS_GRACE_POOL;
 	char			*oid = DEFAULT_RADOS_GRACE_OID;
 	char			*ns = NULL;
-	char			c;
+	int			c;
 	const char * const	*nodeids;
 	bool			do_add;
 
