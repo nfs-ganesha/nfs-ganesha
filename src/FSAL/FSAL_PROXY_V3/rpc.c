@@ -766,7 +766,7 @@ bool proxyv3_call(const struct sockaddr *host,
 		return false;
 	}
 
-	if (!encodeFunc(&x, args, 0)) {
+	if (!encodeFunc(&x, args)) {
 		LogCrit(COMPONENT_FSAL,
 			"Failed to xdr-encode the args");
 		proxyv3_release_fdentry(fd_entry, true /* force close */);
