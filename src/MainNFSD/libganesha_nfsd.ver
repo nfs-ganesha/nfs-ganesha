@@ -169,6 +169,10 @@
   nfs_start;
   nfs_start_grace;
   nfs_wait_for_grace_enforcement;
+  nfsop4_to_str;
+  nfsproc3_to_str;
+  nfsstat3_to_str;
+  nfsstat4_to_str;
   noop_conf_commit;
   noop_conf_init;
   object_file_type_to_str;

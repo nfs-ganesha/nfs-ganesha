@@ -36,6 +36,139 @@
 #include "nfs4.h"
 #include "mount.h"
 
+struct op_name {
+	char *name;
+};
+
+#ifdef _USE_NFS3
+
+/* NFSv3 op_names *must* start with NFSPROC3_ */
+static const struct op_name op_names_v3[] = {
+	[NFSPROC3_NULL] = {.name = "NFSPROC3_NULL", },
+	[NFSPROC3_GETATTR] = {.name = "NFSPROC3_GETATTR", },
+	[NFSPROC3_SETATTR] = {.name = "NFSPROC3_SETATTR", },
+	[NFSPROC3_LOOKUP] = {.name = "NFSPROC3_LOOKUP", },
+	[NFSPROC3_ACCESS] = {.name = "NFSPROC3_ACCESS", },
+	[NFSPROC3_READLINK] = {.name = "NFSPROC3_READLINK", },
+	[NFSPROC3_READ] = {.name = "NFSPROC3_READ", },
+	[NFSPROC3_WRITE] = {.name = "NFSPROC3_WRITE", },
+	[NFSPROC3_CREATE] = {.name = "NFSPROC3_CREATE", },
+	[NFSPROC3_MKDIR] = {.name = "NFSPROC3_MKDIR", },
+	[NFSPROC3_SYMLINK] = {.name = "NFSPROC3_SYMLINK", },
+	[NFSPROC3_MKNOD] = {.name = "NFSPROC3_MKNOD", },
+	[NFSPROC3_REMOVE] = {.name = "NFSPROC3_REMOVE", },
+	[NFSPROC3_RMDIR] = {.name = "NFSPROC3_RMDIR", },
+	[NFSPROC3_RENAME] = {.name = "NFSPROC3_RENAME", },
+	[NFSPROC3_LINK] = {.name = "NFSPROC3_LINK", },
+	[NFSPROC3_READDIR] = {.name = "NFSPROC3_READDIR", },
+	[NFSPROC3_READDIRPLUS] = {.name = "NFSPROC3_READDIRPLUS", },
+	[NFSPROC3_FSSTAT] = {.name = "NFSPROC3_FSSTAT", },
+	[NFSPROC3_FSINFO] = {.name = "NFSPROC3_FSINFO", },
+	[NFSPROC3_PATHCONF] = {.name = "NFSPROC3_PATHCONF", },
+	[NFSPROC3_COMMIT] = {.name = "NFSPROC3_COMMIT", },
+};
+
+static const int MAX_NFS3_PROC = NFSPROC3_COMMIT;
+
+const char *nfsproc3_to_str(int nfsproc3)
+{
+	/* Add 9 to remove "NFSPROC3_" prefix. */
+	if (nfsproc3 < 0 || nfsproc3 > MAX_NFS3_PROC)
+		return op_names_v3[0].name + 9;
+	return op_names_v3[nfsproc3].name + 9;
+}
+
+#endif
+
+/* NFSv4 op_names *must* start with OP_ */
+static const struct op_name op_names_v4[] = {
+	[0] = {.name = "OP_ILLEGAL", },
+	[1] = {.name = "OP_ILLEGAL",},
+	[2] = {.name = "OP_ILLEGAL",},
+	[NFS4_OP_ACCESS] = {.name = "OP_ACCESS",},
+	[NFS4_OP_CLOSE] = {.name = "OP_CLOSE",},
+	[NFS4_OP_COMMIT] = {.name = "OP_COMMIT",},
+	[NFS4_OP_CREATE] = {.name = "OP_CREATE",},
+	[NFS4_OP_DELEGPURGE] = {.name = "OP_DELEGPURGE",},
+	[NFS4_OP_DELEGRETURN] = {.name = "OP_DELEGRETURN",},
+	[NFS4_OP_GETATTR] = {.name = "OP_GETATTR",},
+	[NFS4_OP_GETFH] = {.name = "OP_GETFH",},
+	[NFS4_OP_LINK] = {.name = "OP_LINK",},
+	[NFS4_OP_LOCK] = {.name = "OP_LOCK",},
+	[NFS4_OP_LOCKT] = {.name = "OP_LOCKT",},
+	[NFS4_OP_LOCKU] = {.name = "OP_LOCKU",},
+	[NFS4_OP_LOOKUP] = {.name = "OP_LOOKUP",},
+	[NFS4_OP_LOOKUPP] = {.name = "OP_LOOKUPP",},
+	[NFS4_OP_NVERIFY] = {.name = "OP_NVERIFY",},
+	[NFS4_OP_OPEN] = {.name = "OP_OPEN",},
+	[NFS4_OP_OPENATTR] = {.name = "OP_OPENATTR",},
+	[NFS4_OP_OPEN_CONFIRM] = {.name = "OP_OPEN_CONFIRM",},
+	[NFS4_OP_OPEN_DOWNGRADE] = {.name = "OP_OPEN_DOWNGRADE",},
+	[NFS4_OP_PUTFH] = {.name = "OP_PUTFH",},
+	[NFS4_OP_PUTPUBFH] = {.name = "OP_PUTPUBFH",},
+	[NFS4_OP_PUTROOTFH] = {.name = "OP_PUTROOTFH",},
+	[NFS4_OP_READ] = {.name = "OP_READ",},
+	[NFS4_OP_READDIR] = {.name = "OP_READDIR",},
+	[NFS4_OP_READLINK] = {.name = "OP_READLINK",},
+	[NFS4_OP_REMOVE] = {.name = "OP_REMOVE",},
+	[NFS4_OP_RENAME] = {.name = "OP_RENAME",},
+	[NFS4_OP_RENEW] = {.name = "OP_RENEW",},
+	[NFS4_OP_RESTOREFH] = {.name = "OP_RESTOREFH",},
+	[NFS4_OP_SAVEFH] = {.name = "OP_SAVEFH",},
+	[NFS4_OP_SECINFO] = {.name = "OP_SECINFO",},
+	[NFS4_OP_SETATTR] = {.name = "OP_SETATTR",},
+	[NFS4_OP_SETCLIENTID] = {.name = "OP_SETCLIENTID",},
+	[NFS4_OP_SETCLIENTID_CONFIRM] = {.name = "OP_SETCLIENTID_CONFIRM",},
+	[NFS4_OP_VERIFY] = {.name = "OP_VERIFY",},
+	[NFS4_OP_WRITE] = {.name = "OP_WRITE",},
+	[NFS4_OP_RELEASE_LOCKOWNER] = {.name = "OP_RELEASE_LOCKOWNER",},
+	[NFS4_OP_BACKCHANNEL_CTL] = {.name = "OP_BACKCHANNEL_CTL",},
+	[NFS4_OP_BIND_CONN_TO_SESSION] = {.name = "OP_BIND_CONN_TO_SESSION",},
+	[NFS4_OP_EXCHANGE_ID] = {.name = "OP_EXCHANGE_ID",},
+	[NFS4_OP_CREATE_SESSION] = {.name = "OP_CREATE_SESSION",},
+	[NFS4_OP_DESTROY_SESSION] = {.name = "OP_DESTROY_SESSION",},
+	[NFS4_OP_FREE_STATEID] = {.name = "OP_FREE_STATEID",},
+	[NFS4_OP_GET_DIR_DELEGATION] = {.name = "OP_GET_DIR_DELEGATION",},
+	[NFS4_OP_GETDEVICEINFO] = {.name = "OP_GETDEVICEINFO",},
+	[NFS4_OP_GETDEVICELIST] = {.name = "OP_GETDEVICELIST",},
+	[NFS4_OP_LAYOUTCOMMIT] = {.name = "OP_LAYOUTCOMMIT",},
+	[NFS4_OP_LAYOUTGET] = {.name = "OP_LAYOUTGET",},
+	[NFS4_OP_LAYOUTRETURN] = {.name = "OP_LAYOUTRETURN",},
+	[NFS4_OP_SECINFO_NO_NAME] = {.name = "OP_SECINFO_NO_NAME",},
+	[NFS4_OP_SEQUENCE] = {.name = "OP_SEQUENCE",},
+	[NFS4_OP_SET_SSV] = {.name = "OP_SET_SSV",},
+	[NFS4_OP_TEST_STATEID] = {.name = "OP_TEST_STATEID",},
+	[NFS4_OP_WANT_DELEGATION] = {.name = "OP_WANT_DELEGATION",},
+	[NFS4_OP_DESTROY_CLIENTID] = {.name = "OP_DESTROY_CLIENTID",},
+	[NFS4_OP_RECLAIM_COMPLETE] = {.name = "OP_RECLAIM_COMPLETE",},
+	/* NFSv4.2 */
+	[NFS4_OP_ALLOCATE] = {.name = "OP_ALLOCATE",},
+	[NFS4_OP_COPY] = {.name = "OP_COPY",},
+	[NFS4_OP_COPY_NOTIFY] = {.name = "OP_COPY_NOTIFY",},
+	[NFS4_OP_DEALLOCATE] = {.name = "OP_DEALLOCATE",},
+	[NFS4_OP_IO_ADVISE] = {.name = "OP_IO_ADVISE",},
+	[NFS4_OP_LAYOUTERROR] = {.name = "OP_LAYOUTERROR",},
+	[NFS4_OP_OFFLOAD_CANCEL] = {.name = "OP_OFFLOAD_CANCEL",},
+	[NFS4_OP_OFFLOAD_STATUS] = {.name = "OP_OFFLOAD_STATUS",},
+	[NFS4_OP_READ_PLUS] = {.name = "OP_READ_PLUS",},
+	[NFS4_OP_SEEK] = {.name = "OP_SEEK",},
+	[NFS4_OP_WRITE_SAME] = {.name = "OP_WRITE_SAME",},
+	[NFS4_OP_CLONE] = {.name = "OP_CLONE",},
+	/* NFSv4.3 */
+	[NFS4_OP_GETXATTR] = {.name = "OP_GETXATTR",},
+	[NFS4_OP_SETXATTR] = {.name = "OP_SETXATTR",},
+	[NFS4_OP_LISTXATTR] = {.name = "OP_LISTXATTR",},
+	[NFS4_OP_REMOVEXATTR] = {.name = "OP_REMOVEXATTR",},
+};
+
+const char *nfsop4_to_str(int nfsop4)
+{
+	/* Add 3 to remove "OP_" prefix. */
+	if (nfsop4 < 0 || nfsop4 >= NFS4_OP_LAST_ONE)
+		return op_names_v4[0].name + 3;
+	return op_names_v4[nfsop4].name + 3;
+}
+
 char *nfsstat3_to_str(nfsstat3 code)
 {
 	switch (code) {

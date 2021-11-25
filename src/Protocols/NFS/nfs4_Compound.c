@@ -109,6 +109,7 @@ struct nfs4_op_desc {
 /**
  * @brief  NFSv4 and 4.1 ops table.
  * indexed by opcode
+ * name *must* begin with OP_
  */
 
 static const struct nfs4_op_desc optabv4[] = {

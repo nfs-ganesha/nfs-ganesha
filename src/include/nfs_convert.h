@@ -46,6 +46,11 @@ char *nfsstat4_to_str(nfsstat4 code);
 char *nfstype3_to_str(ftype3 code);
 const char *auth_stat2str(enum auth_stat);
 
+#ifdef _USE_NFS3
+const char *nfsproc3_to_str(int nfsproc3);
+#endif
+const char *nfsop4_to_str(int nfsop4);
+
 uint64_t nfs_htonl64(uint64_t);
 uint64_t nfs_ntohl64(uint64_t);
 

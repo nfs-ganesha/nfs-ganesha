@@ -61,6 +61,7 @@
 #include "server_stats.h"
 #include <abstract_atomic.h>
 #include "nfs_proto_functions.h"
+#include "nfs_convert.h"
 
 #define NFS_V3_NB_COMMAND (NFSPROC3_COMMIT + 1)
 #define NFS_V4_NB_COMMAND 2
@@ -127,113 +128,6 @@ static const struct op_name optnlm[] = {
 	[NLMPROC4_FREE_ALL] = {.name = "FREE_ALL", },
 };
 #endif
-
-#ifdef _USE_NFS3
-static const struct op_name optabv3[] = {
-	[NFSPROC3_NULL] = {.name = "NULL", },
-	[NFSPROC3_GETATTR] = {.name = "GETATTR", },
-	[NFSPROC3_SETATTR] = {.name = "SETATTR", },
-	[NFSPROC3_LOOKUP] = {.name = "LOOKUP", },
-	[NFSPROC3_ACCESS] = {.name = "ACCESS", },
-	[NFSPROC3_READLINK] = {.name = "READLINK", },
-	[NFSPROC3_READ] = {.name = "READ", },
-	[NFSPROC3_WRITE] = {.name = "WRITE", },
-	[NFSPROC3_CREATE] = {.name = "CREATE", },
-	[NFSPROC3_MKDIR] = {.name = "MKDIR", },
-	[NFSPROC3_SYMLINK] = {.name = "SYMLINK", },
-	[NFSPROC3_MKNOD] = {.name = "MKNOD", },
-	[NFSPROC3_REMOVE] = {.name = "REMOVE", },
-	[NFSPROC3_RMDIR] = {.name = "RMDIR", },
-	[NFSPROC3_RENAME] = {.name = "RENAME", },
-	[NFSPROC3_LINK] = {.name = "LINK", },
-	[NFSPROC3_READDIR] = {.name = "READDIR", },
-	[NFSPROC3_READDIRPLUS] = {.name = "READDIRPLUS", },
-	[NFSPROC3_FSSTAT] = {.name = "FSSTAT", },
-	[NFSPROC3_FSINFO] = {.name = "FSINFO", },
-	[NFSPROC3_PATHCONF] = {.name = "PATHCONF", },
-	[NFSPROC3_COMMIT] = {.name = "COMMIT", },
-};
-#endif
-
-static const struct op_name optabv4[] = {
-	[0] = {.name = "ILLEGAL", },
-	[1] = {.name = "ILLEGAL",},
-	[2] = {.name = "ILLEGAL",},
-	[NFS4_OP_ACCESS] = {.name = "ACCESS",},
-	[NFS4_OP_CLOSE] = {.name = "CLOSE",},
-	[NFS4_OP_COMMIT] = {.name = "COMMIT",},
-	[NFS4_OP_CREATE] = {.name = "CREATE",},
-	[NFS4_OP_DELEGPURGE] = {.name = "DELEGPURGE",},
-	[NFS4_OP_DELEGRETURN] = {.name = "DELEGRETURN",},
-	[NFS4_OP_GETATTR] = {.name = "GETATTR",},
-	[NFS4_OP_GETFH] = {.name = "GETFH",},
-	[NFS4_OP_LINK] = {.name = "LINK",},
-	[NFS4_OP_LOCK] = {.name = "LOCK",},
-	[NFS4_OP_LOCKT] = {.name = "LOCKT",},
-	[NFS4_OP_LOCKU] = {.name = "LOCKU",},
-	[NFS4_OP_LOOKUP] = {.name = "LOOKUP",},
-	[NFS4_OP_LOOKUPP] = {.name = "LOOKUPP",},
-	[NFS4_OP_NVERIFY] = {.name = "NVERIFY",},
-	[NFS4_OP_OPEN] = {.name = "OPEN",},
-	[NFS4_OP_OPENATTR] = {.name = "OPENATTR",},
-	[NFS4_OP_OPEN_CONFIRM] = {.name = "OPEN_CONFIRM",},
-	[NFS4_OP_OPEN_DOWNGRADE] = {.name = "OPEN_DOWNGRADE",},
-	[NFS4_OP_PUTFH] = {.name = "PUTFH",},
-	[NFS4_OP_PUTPUBFH] = {.name = "PUTPUBFH",},
-	[NFS4_OP_PUTROOTFH] = {.name = "PUTROOTFH",},
-	[NFS4_OP_READ] = {.name = "READ",},
-	[NFS4_OP_READDIR] = {.name = "READDIR",},
-	[NFS4_OP_READLINK] = {.name = "READLINK",},
-	[NFS4_OP_REMOVE] = {.name = "REMOVE",},
-	[NFS4_OP_RENAME] = {.name = "RENAME",},
-	[NFS4_OP_RENEW] = {.name = "RENEW",},
-	[NFS4_OP_RESTOREFH] = {.name = "RESTOREFH",},
-	[NFS4_OP_SAVEFH] = {.name = "SAVEFH",},
-	[NFS4_OP_SECINFO] = {.name = "SECINFO",},
-	[NFS4_OP_SETATTR] = {.name = "SETATTR",},
-	[NFS4_OP_SETCLIENTID] = {.name = "SETCLIENTID",},
-	[NFS4_OP_SETCLIENTID_CONFIRM] = {.name = "SETCLIENTID_CONFIRM",},
-	[NFS4_OP_VERIFY] = {.name = "VERIFY",},
-	[NFS4_OP_WRITE] = {.name = "WRITE",},
-	[NFS4_OP_RELEASE_LOCKOWNER] = {.name = "RELEASE_LOCKOWNER",},
-	[NFS4_OP_BACKCHANNEL_CTL] = {.name = "BACKCHANNEL_CTL",},
-	[NFS4_OP_BIND_CONN_TO_SESSION] = {.name = "BIND_CONN_TO_SESSION",},
-	[NFS4_OP_EXCHANGE_ID] = {.name = "EXCHANGE_ID",},
-	[NFS4_OP_CREATE_SESSION] = {.name = "CREATE_SESSION",},
-	[NFS4_OP_DESTROY_SESSION] = {.name = "DESTROY_SESSION",},
-	[NFS4_OP_FREE_STATEID] = {.name = "FREE_STATEID",},
-	[NFS4_OP_GET_DIR_DELEGATION] = {.name = "GET_DIR_DELEGATION",},
-	[NFS4_OP_GETDEVICEINFO] = {.name = "GETDEVICEINFO",},
-	[NFS4_OP_GETDEVICELIST] = {.name = "GETDEVICELIST",},
-	[NFS4_OP_LAYOUTCOMMIT] = {.name = "LAYOUTCOMMIT",},
-	[NFS4_OP_LAYOUTGET] = {.name = "LAYOUTGET",},
-	[NFS4_OP_LAYOUTRETURN] = {.name = "LAYOUTRETURN",},
-	[NFS4_OP_SECINFO_NO_NAME] = {.name = "SECINFO_NO_NAME",},
-	[NFS4_OP_SEQUENCE] = {.name = "SEQUENCE",},
-	[NFS4_OP_SET_SSV] = {.name = "SET_SSV",},
-	[NFS4_OP_TEST_STATEID] = {.name = "TEST_STATEID",},
-	[NFS4_OP_WANT_DELEGATION] = {.name = "WANT_DELEGATION",},
-	[NFS4_OP_DESTROY_CLIENTID] = {.name = "DESTROY_CLIENTID",},
-	[NFS4_OP_RECLAIM_COMPLETE] = {.name = "RECLAIM_COMPLETE",},
-	/* NFSv4.2 */
-	[NFS4_OP_ALLOCATE] = {.name = "ALLOCATE",},
-	[NFS4_OP_COPY] = {.name = "COPY",},
-	[NFS4_OP_COPY_NOTIFY] = {.name = "COPY_NOTIFY",},
-	[NFS4_OP_DEALLOCATE] = {.name = "DEALLOCATE",},
-	[NFS4_OP_IO_ADVISE] = {.name = "IO_ADVISE",},
-	[NFS4_OP_LAYOUTERROR] = {.name = "LAYOUTERROR",},
-	[NFS4_OP_OFFLOAD_CANCEL] = {.name = "OFFLOAD_CANCEL",},
-	[NFS4_OP_OFFLOAD_STATUS] = {.name = "OFFLOAD_STATUS",},
-	[NFS4_OP_READ_PLUS] = {.name = "READ_PLUS",},
-	[NFS4_OP_SEEK] = {.name = "SEEK",},
-	[NFS4_OP_WRITE_SAME] = {.name = "WRITE_SAME",},
-	[NFS4_OP_CLONE] = {.name = "OP_CLONE",},
-	/* NFSv4.3 */
-	[NFS4_OP_GETXATTR] = {.name = "OP_GETXATTR",},
-	[NFS4_OP_SETXATTR] = {.name = "OP_SETXATTR",},
-	[NFS4_OP_LISTXATTR] = {.name = "OP_LISTXATTR",},
-	[NFS4_OP_REMOVEXATTR] = {.name = "OP_REMOVEXATTR",},
-};
 
 #endif
 
@@ -2093,6 +1987,7 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 	DBusMessageIter array_iter;
 	struct gsh_stats *st;
 	uint64_t tot_cmp = 0, err_cmp = 0, ops_in_cmp = 0;
+	char *op_name;
 
 	svr = container_of(client, struct server_stats, client);
 	c_all = &svr->c_all;
@@ -2110,8 +2005,9 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 						 NULL, &array_iter);
 		for (i = 0; i < NFSPROC3_COMMIT + 1; i++) {
 			if (c_all->nfsv3->cmds[i].total) {
+				op_name = (char *) nfsproc3_to_str(i);
 				dbus_message_iter_append_basic(&array_iter,
-					DBUS_TYPE_STRING, &optabv3[i].name);
+					DBUS_TYPE_STRING, &op_name);
 				dbus_message_iter_append_basic(&array_iter,
 					DBUS_TYPE_UINT64,
 					&c_all->nfsv3->cmds[i].total);
@@ -2163,8 +2059,9 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 						 NULL, &array_iter);
 		for (i = 0; i < NFS4_OP_LAST_ONE; i++) {
 			if (c_all->nfsv4->cmds[i].total) {
+				op_name = (char *) nfsop4_to_str(i);
 				dbus_message_iter_append_basic(&array_iter,
-					DBUS_TYPE_STRING, &optabv4[i].name);
+					DBUS_TYPE_STRING, &op_name);
 				dbus_message_iter_append_basic(&array_iter,
 					DBUS_TYPE_UINT64,
 					&c_all->nfsv4->cmds[i].total);
@@ -2385,7 +2282,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 				       &version);
 	for (i = 0; i <= NFSPROC3_COMMIT; i++) {
 		if (global_st.v3.op[i] > 0) {
-			op = optabv3[i].name;
+			op = (char *) nfsproc3_to_str(i);
 			dbus_message_iter_append_basic(&struct_iter,
 					DBUS_TYPE_STRING, &op);
 			dbus_message_iter_append_basic(&struct_iter,
@@ -2398,7 +2295,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 				       &version);
 	for (i = 0; i < NFS4_OP_LAST_ONE; i++) {
 		if (global_st.v4.op[i] > 0) {
-			op = optabv4[i].name;
+			op = (char *) nfsop4_to_str(i);
 			dbus_message_iter_append_basic(&struct_iter,
 					DBUS_TYPE_STRING, &op);
 			dbus_message_iter_append_basic(&struct_iter,
@@ -2924,18 +2821,19 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 	int op;
 	double res = 0.0;
 	uint64_t op_counter = 0;
-	char *message;
+	char *message, *op_name;
 
 	gsh_dbus_append_timestamp(iter, &v3_full_stats_time);
 	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
 					 "(stttddd)", &array_iter);
 	for (op = 1; op < NFSPROC3_COMMIT+1; op++) {
 		if (v3_full_stats[op].total) {
+			op_name = (char *) nfsproc3_to_str(op);
 			dbus_message_iter_open_container(&array_iter,
 							 DBUS_TYPE_STRUCT,
 							 NULL, &op_iter);
 			dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_STRING, &optabv3[op].name);
+				DBUS_TYPE_STRING, &op_name);
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &v3_full_stats[op].total);
 			dbus_message_iter_append_basic(&op_iter,
@@ -2946,10 +2844,12 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 					v3_full_stats[op].total * 0.000001;
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			res = (double) v3_full_stats[op].latency.min * 0.000001;
+			res = (double) v3_full_stats[op].latency.min *
+					0.000001;
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
-			res = (double) v3_full_stats[op].latency.max * 0.000001;
+			res = (double) v3_full_stats[op].latency.max *
+					0.000001;
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			dbus_message_iter_close_container(&array_iter,
@@ -2996,18 +2896,19 @@ void server_dbus_v4_full_stats(DBusMessageIter *iter)
 	int op;
 	double res = 0.0;
 	uint64_t op_counter = 0;
-	char *message;
+	char *message, *op_name;
 
 	gsh_dbus_append_timestamp(iter, &v4_full_stats_time);
 	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
 					 "(sttddd)", &array_iter);
 	for (op = 1; op < NFS_V42_NB_OPERATION+1; op++) {
 		if (v4_full_stats[op].total) {
+			op_name = (char *) nfsop4_to_str(op);
 			dbus_message_iter_open_container(&array_iter,
 							 DBUS_TYPE_STRUCT,
 							 NULL, &op_iter);
 			dbus_message_iter_append_basic(&op_iter,
-				DBUS_TYPE_STRING, &optabv4[op].name);
+				DBUS_TYPE_STRING, &op_name);
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &v4_full_stats[op].total);
 			dbus_message_iter_append_basic(&op_iter,
