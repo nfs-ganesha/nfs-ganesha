@@ -356,6 +356,7 @@ bool xdr_fattr3(XDR *xdrs, fattr3 *objp)
 		objp->mode = unix2fsal_mode(mode);
 		objp->rawdev.major = rdev.specdata1;
 		objp->rawdev.minor = rdev.specdata2;
+		objp->fsid.major = objp->fsid3;
 		objp->fsid.minor = 0;
 		objp->owner = uid;
 		objp->group = gid;
