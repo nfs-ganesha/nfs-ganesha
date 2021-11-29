@@ -152,6 +152,86 @@ struct auth_stats {
 
 #ifdef USE_DBUS
 
+/*
+ * Common definitions
+ */
+
+#define TYPE_ID "q"
+#define TYPE_STRING "s"
+
+/*
+ * Bits for exports/clients related info
+ *
+ * We may like the protocols related info like following:
+ *
+ * {
+ *     string <Protocols>
+ *     bool   <status>
+ * }
+ *      .
+ *      .
+ *      .
+ */
+
+#ifdef _USE_NFS3
+#define STAT_TYPE_NFSV3 "(sb)"
+#define STAT_TYPE_MNT "(sb)"
+#else
+#define STAT_TYPE_NFSV3 ""
+#define STAT_TYPE_MNT ""
+#endif
+
+#ifdef _USE_NLM
+#define STAT_TYPE_NLM "(sb)"
+#else
+#define STAT_TYPE_NLM ""
+#endif
+
+#ifdef _USE_RQUOTA
+#define STAT_TYPE_RQUOTA "(sb)"
+#else
+#define STAT_TYPE_RQUOTA ""
+#endif
+
+#define STAT_TYPE_NFSV40 "(sb)"
+#define STAT_TYPE_NFSV41 "(sb)"
+#define STAT_TYPE_NFSV42 "(sb)"
+
+#ifdef _USE_9P
+#define STAT_TYPE_9P "(sb)"
+#else
+#define STAT_TYPE_9P ""
+#endif
+
+#define PROTOCOLS_CONTAINER \
+	"(" STAT_TYPE_NFSV3 STAT_TYPE_MNT \
+	STAT_TYPE_NLM STAT_TYPE_RQUOTA \
+	STAT_TYPE_NFSV40 STAT_TYPE_NFSV41 \
+	STAT_TYPE_NFSV42 STAT_TYPE_9P ")"
+
+#define EXPORT_CONTAINER \
+	"(" TYPE_ID TYPE_STRING \
+	PROTOCOLS_CONTAINER "(tt))"
+
+#define CLIENT_CONTAINER \
+	"(" TYPE_STRING \
+	PROTOCOLS_CONTAINER "(tt))"
+
+#define EXPORTS_REPLY			\
+{					\
+	.name = "exports",		\
+	.type = "a"EXPORT_CONTAINER,	\
+	.direction = "out"		\
+}
+
+#define CLIENTS_REPLY			\
+{					\
+	.name = "clients",		\
+	.type = "a"CLIENT_CONTAINER,	\
+	.direction = "out"		\
+}
+
+
 /* Bits for introspect arg structures
  */
 

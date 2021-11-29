@@ -457,7 +457,7 @@ static bool gsh_client_showclients(DBusMessageIter *args,
 	dbus_message_iter_init_append(reply, &iter);
 	gsh_dbus_append_timestamp(&iter, &timestamp);
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-					 "(sbbbbbbbb(tt))",
+					 CLIENT_CONTAINER,
 					 &iter_state.client_iter);
 
 	(void)foreach_gsh_client(client_to_dbus, (void *)&iter_state);
@@ -470,10 +470,7 @@ static struct gsh_dbus_method cltmgr_show_clients = {
 	.name = "ShowClients",
 	.method = gsh_client_showclients,
 	.args = {TIMESTAMP_REPLY,
-		 {
-		  .name = "clients",
-		  .type = "a(sbbbbbbbb(tt))",
-		  .direction = "out"},
+		 CLIENTS_REPLY,
 		 END_ARG_LIST}
 };
 

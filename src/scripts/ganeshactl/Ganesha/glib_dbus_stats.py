@@ -242,7 +242,7 @@ class RetrieveClientStats():
     def list_clients(self):
         stats_op = self.clientmgrobj.get_dbus_method("ShowClients",
                                                      self.dbus_clientmgr_name)
-        return Clients(stats_op())
+        return ClientStats(stats_op())
     # Clients specific stats
     def client_io_ops_stats(self, ip):
         stats_op = self.clientmgrobj.get_dbus_method("GetClientIOops",
@@ -254,45 +254,86 @@ class RetrieveClientStats():
         return ClientAllops(stats_op(ip))
 
 
-class Clients(Report):
-    def __init__(self, clients):
-        super().__init__(clients)
-        self._clients = clients
+class ClientStats(Report):
+    def __init__(self, stats):
+        super().__init__(stats)
+        self.stats = stats
+        self.clients = {}
+        for client in stats[1]:
+            clientaddr = client[0]
+            self.clients[clientaddr] = Client(client)
 
     def fill_report(self, report):
-        clients = []
-        for client in self._clients[1]:
-            clients.append({
-                'address': dbus_to_std(client[0]),
-                'nfsv3_stats': dbus_to_std(client[1]),
-                'mnt_stats': dbus_to_std(client[2]),
-                'nlm4_stats': dbus_to_std(client[3]),
-                'rquota_stats': dbus_to_std(client[4]),
-                'nfsv40_stats': dbus_to_std(client[5]),
-                'nfsv41_stats': dbus_to_std(client[6]),
-                'nfsv42_stats': dbus_to_std(client[7]),
-                '9p_stats': dbus_to_std(client[8]),
-            })
+        report['clients'] = []
 
-        report['clients'] = clients
+        for addr, client in self.clients.items():
+            client_report = {
+                'addr': dbus_to_std(client.clientaddr),
+                'nfsv3_stats': dbus_to_std(client.nfsv3_stats_avail),
+                'nfsv40_stats': dbus_to_std(client.nfsv40_stats_avail),
+                'nfsv41_stats': dbus_to_std(client.nfsv41_stats_avail),
+                'nfsv42_stats': dbus_to_std(client.nfsv42_stats_avail),
+                'mnt_stats': dbus_to_std(client.mnt_stats_avail),
+                'nlmv4_stats': dbus_to_std(client.nlmv4_stats_avail),
+                'rquota_stats': dbus_to_std(client.rquota_stats_avail),
+                '9p_stats': dbus_to_std(client._9p_stats_avail),
+            }
+            report['clients'].append(client_report)
 
-        return report
+        return report['clients']
 
     def __str__(self):
-        output = ("\nTimestamp: " + time.ctime(self._clients[0][0]) +
-                  str(self._clients[0][1]) + " nsecs" +
+        output = ("\nTimestamp: " + time.ctime(self.stats[0][0]) +
+                  str(self.stats[0][1]) + " nsecs" +
                   "\nClient List:\n")
-        for client in self._clients[1]:
-            output += ("\nAddress: " + client[0] +
-                       "\n\tNFSv3 stats available: " + str(client[1]) +
-                       "\n\tMNT stats available: " + str(client[2]) +
-                       "\n\tNLM4 stats available: " + str(client[3]) +
-                       "\n\tRQUOTA stats available: " + str(client[4]) +
-                       "\n\tNFSv4.0 stats available " + str(client[5]) +
-                       "\n\tNFSv4.1 stats available: " + str(client[6]) +
-                       "\n\tNFSv4.2 stats available: " + str(client[7]) +
-                       "\n\t9P stats available: " + str(client[8]))
+        for add, client in self.clients.items():
+            output += str(client)
         return output
+
+
+class ProtocolsStats(object):
+    def __init__(self, protocols):
+        # init default protocol stats
+        self.protocols_stats = dict({'NFSv3': 0,
+                                     'NFSv40': 0,
+                                     'NFSv41': 0,
+                                     'NFSv42': 0,
+                                     'MNT': 0,
+                                     'NLMv4': 0,
+                                     'RQUOTA': 0,
+                                     '9P': 0})
+        self._update_protocols_stats(protocols)
+
+    def _update_protocols_stats(self, protocols):
+        for protocol in protocols:
+            name, enabled = protocol[0], protocol[1]
+            self.protocols_stats[name] = enabled
+
+
+class Client(ProtocolsStats):
+    def __init__(self, client):
+        super().__init__(client[1])
+        self.clientaddr = client[0]
+        self.nfsv3_stats_avail = self.protocols_stats['NFSv3']
+        self.nfsv40_stats_avail = self.protocols_stats['NFSv40']
+        self.nfsv41_stats_avail = self.protocols_stats['NFSv41']
+        self.nfsv42_stats_avail = self.protocols_stats['NFSv42']
+        self.mnt_stats_avail = self.protocols_stats['MNT']
+        self.nlmv4_stats_avail = self.protocols_stats['NLMv4']
+        self.rquota_stats_avail = self.protocols_stats['RQUOTA']
+        self._9p_stats_avail = self.protocols_stats['9P']
+
+    def __str__(self):
+        return ("\nClient Address: " + str(self.clientaddr) +
+                "\n\tNFSv3 stats available: " + str(self.nfsv3_stats_avail) +
+                "\n\tNFSv4.0 stats available: " + str(self.nfsv40_stats_avail) +
+                "\n\tNFSv4.1 stats available: " + str(self.nfsv41_stats_avail) +
+                "\n\tNFSv4.2 stats available: " + str(self.nfsv42_stats_avail) +
+                "\n\tMNT stats available: " + str(self.mnt_stats_avail) +
+                "\n\tNLMv4 stats available: " + str(self.nlmv4_stats_avail) +
+                "\n\tRQUOTA stats available: " + str(self.rquota_stats_avail) +
+                "\n\t9P stats available: " + str(self._9p_stats_avail) + "\n")
+
 
 class DelegStats(Report):
     def __init__(self, stats):
@@ -566,18 +607,19 @@ class ClientAllops(Report):
                 cnt += 1
             return output
 
-class Export:
+class Export(ProtocolsStats):
     def __init__(self, export):
+        super().__init__(export[2])
         self.exportid = export[0]
         self.path = export[1]
-        self.nfsv3_stats_avail = export[2]
-        self.nfsv40_stats_avail = export[6]
-        self.nfsv41_stats_avail = export[7]
-        self.nfsv42_stats_avail = export[8]
-        self.mnt_stats_avail = export[3]
-        self.nlmv4_stats_avail = export[4]
-        self.rquota_stats_avail = export[5]
-        self._9p_stats_avail = export[9]
+        self.nfsv3_stats_avail = self.protocols_stats['NFSv3']
+        self.nfsv40_stats_avail = self.protocols_stats['NFSv40']
+        self.nfsv41_stats_avail = self.protocols_stats['NFSv41']
+        self.nfsv42_stats_avail = self.protocols_stats['NFSv42']
+        self.mnt_stats_avail = self.protocols_stats['MNT']
+        self.nlmv4_stats_avail = self.protocols_stats['NLMv4']
+        self.rquota_stats_avail = self.protocols_stats['RQUOTA']
+        self._9p_stats_avail = self.protocols_stats['9P']
 
     def __str__(self):
         return ("\nExport id: " + str(self.exportid) +
@@ -589,7 +631,8 @@ class Export:
                 "\n\tMNT stats available: " + str(self.mnt_stats_avail) +
                 "\n\tNLMv4 stats available: " + str(self.nlmv4_stats_avail) +
                 "\n\tRQUOTA stats available: " + str(self.rquota_stats_avail) +
-                "\n\t9p stats available: " + str(self._9p_stats_avail) + "\n")
+                "\n\t9P stats available: " + str(self._9p_stats_avail) + "\n")
+
 
 class ExportStats(Report):
     def __init__(self, stats):

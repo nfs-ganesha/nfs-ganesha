@@ -1733,6 +1733,21 @@ void inc_failed_recalls(struct gsh_client *client)
 
 #ifdef USE_DBUS
 
+void dbus_message_iter_append_protocol_info(DBusMessageIter *niter,
+					    char **protocol,
+					    dbus_bool_t *enabled)
+{
+	DBusMessageIter p_iter;
+
+	dbus_message_iter_open_container(niter, DBUS_TYPE_STRUCT, NULL,
+					 &p_iter);
+	dbus_message_iter_append_basic(&p_iter, DBUS_TYPE_STRING,
+				       protocol);
+	dbus_message_iter_append_basic(&p_iter, DBUS_TYPE_BOOLEAN,
+				       enabled);
+	dbus_message_iter_close_container(niter, &p_iter);
+}
+
 /* Functions for marshalling statistics to DBUS
  */
 
@@ -1761,39 +1776,56 @@ void inc_failed_recalls(struct gsh_client *client)
 void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
 {
 	dbus_bool_t stats_available;
+	DBusMessageIter st_iter;
+	char *protocol;
+
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &st_iter);
 
 #ifdef _USE_NFS3
 	stats_available = st->nfsv3 != 0;
-	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
-				       &stats_available);
+	protocol = "NFSv3";
+	dbus_message_iter_append_protocol_info(&st_iter, &protocol,
+					       &stats_available);
+
 	stats_available = st->mnt != 0;
-	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
-				       &stats_available);
+	protocol = "MNT";
+	dbus_message_iter_append_protocol_info(&st_iter, &protocol,
+					       &stats_available);
 #endif
 #ifdef _USE_NLM
 	stats_available = st->nlm4 != 0;
-	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
-				       &stats_available);
+	protocol = "NMLv4";
+	dbus_message_iter_append_protocol_info(&st_iter, &protocol,
+					       &stats_available);
 #endif
 #ifdef _USE_RQUOTA
 	stats_available = st->rquota != 0;
-	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
-				       &stats_available);
+	protocol = "RQUOTA";
+	dbus_message_iter_append_protocol_info(&st_iter, &protocol,
+					       &stats_available);
+
 #endif
 	stats_available = st->nfsv40 != 0;
-	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
-				       &stats_available);
+	protocol = "NFSv40";
+	dbus_message_iter_append_protocol_info(&st_iter, &protocol,
+					       &stats_available);
 	stats_available = st->nfsv41 != 0;
-	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
-				       &stats_available);
+	protocol = "NFSv41";
+	dbus_message_iter_append_protocol_info(&st_iter, &protocol,
+					       &stats_available);
+
 	stats_available = st->nfsv42 != 0;
-	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
-				       &stats_available);
+	protocol = "NFSv42";
+	dbus_message_iter_append_protocol_info(&st_iter, &protocol,
+					       &stats_available);
 #ifdef _USE_9P
 	stats_available = st->_9p != 0;
-	dbus_message_iter_append_basic(iter, DBUS_TYPE_BOOLEAN,
-				       &stats_available);
+	protocol = "9P";
+	dbus_message_iter_append_protocol_info(&st_iter, &protocol,
+					       &stats_available);
 #endif
+	dbus_message_iter_close_container(iter, &st_iter);
 }
 
 #ifdef _USE_9P
