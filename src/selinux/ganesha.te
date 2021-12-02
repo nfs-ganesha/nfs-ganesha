@@ -1,8 +1,6 @@
 policy_module(ganesha, 1.0.0)
 
 require {
-	type glusterd_t;
-
 	type var_lib_nfs_t;
 	type apm_bios_t;
 	type autofs_device_t;
@@ -54,18 +52,13 @@ require {
 
 	type cluster_t;
 
+	type glusterd_t;
+
+	type ceph_t;
+	type ceph_log_t;
+
 	class dbus send_msg;
 }
-
-# ceph_*_t types are only "available" if the ceph-selinux package is
-# installed. But we don't want to require ceph-selinux to be installed
-# when Ceph is not being used. In order to compile the policy though
-# these types must be declared/defined, which creates (redundant) roles
-# in selinux. AFAICT though this doesn't appear to hurt anything.
-type ceph_t;
-type ceph_log_t;
-type ceph_var_lib_t;
-type ceph_var_run_t;
 
 # Note: gluster*_t types are still, at the time of this writing, all
 # defined in the Fedora/CentOS/RHEL base selinux policy (because
@@ -155,15 +148,27 @@ logging_send_syslog_msg(ganesha_t)
 sysnet_dns_name_resolve(ganesha_t)
 
 optional_policy(`
-	dbus_system_bus_client(ganesha_t)
-	dbus_connect_system_bus(ganesha_t)
+    dbus_system_bus_client(ganesha_t)
+    dbus_connect_system_bus(ganesha_t)
     unconfined_dbus_chat(ganesha_t)
 ')
 
-optional_policy(`
-    glusterd_read_conf(ganesha_t)
-    glusterd_read_lib_files(ganesha_t)
-    glusterd_manage_pid(ganesha_t)
+ifdef(`glusterd_read_conf',`
+    optional_policy(`
+        glusterd_read_conf(ganesha_t)
+    ')
+')
+
+ifdef(`glusterd_read_lib_files',`
+    optional_policy(`
+        glusterd_read_lib_files(ganesha_t)
+    ')
+')
+
+ifdef(`glusterd_manage_pid',`
+    optional_policy(`
+        glusterd_manage_pid(ganesha_t)
+    ')
 ')
 
 optional_policy(`
@@ -171,9 +176,9 @@ optional_policy(`
 ')
 
 optional_policy(`
-	rpc_manage_nfs_state_data_dir(ganesha_t)
+    rpc_manage_nfs_state_data_dir(ganesha_t)
     rpc_read_nfs_state_data(ganesha_t)
-	rpcbind_stream_connect(ganesha_t)
+    rpcbind_stream_connect(ganesha_t)
 ')
 
 tunable_policy(`ganesha_use_fusefs',`
@@ -193,12 +198,7 @@ tunable_policy(`ganesha_use_fusefs',`
 #============= ganesha_t ==============
 allow ganesha_t ceph_log_t:dir { add_name search write };
 allow ganesha_t ceph_log_t:file { create open };
-allow ganesha_t ceph_var_lib_t:dir search;
-allow ganesha_t ceph_var_lib_t:file { getattr open read };
-allow ganesha_t ceph_var_run_t:dir { add_name write };
-allow ganesha_t ceph_var_run_t:sock_file create;
-allow ganesha_t cgroup_t:dir search;
-allow ganesha_t cgroup_t:file { getattr open read };
+fs_read_cgroup_files(ganesha_t)
 
 #!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
 allow ganesha_t usr_t:file map;
@@ -323,9 +323,21 @@ allow ganesha_t self:capability { fowner setgid setuid };
 # ganesha local policy rhbz#1855350
 
 ifdef(`ceph_read_lib_files',`
-       optional_policy(`
-               ceph_read_lib_files(ganesha_t)
-       ')
+    optional_policy(`
+        ceph_read_lib_files(ganesha_t)
+    ')
+')
+
+ifdef(`ceph_search_lib',`
+    optional_policy(`
+        ceph_search_lib(ganesha_t)
+    ')
+')
+
+ifdef(`ceph_read_pid_files',`
+    optional_policy(`
+        ceph_read_pid_files(ganesha_t)
+    ')
 ')
 
 ########################################
