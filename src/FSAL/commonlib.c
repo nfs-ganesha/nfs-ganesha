@@ -2196,6 +2196,11 @@ void resume_op_context(struct req_op_context *ctx)
 {
 	ctx->saved_op_ctx = op_ctx;
 	op_ctx = ctx;
+
+	if (op_ctx->client != NULL) {
+		/* Set the Client IP for this thread */
+		SetClientIP(op_ctx->client->hostaddr_str);
+	}
 }
 
 /** @} */
