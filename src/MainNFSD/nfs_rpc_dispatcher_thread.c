@@ -1536,6 +1536,8 @@ static struct svc_req *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 	reqdata->svc.rq_xdrs = xdrs;
 	reqdata->svc.rq_refcnt = 1;
 
+	TAILQ_INIT_ENTRY(reqdata, dupes);
+
 	return &reqdata->svc;
 }
 

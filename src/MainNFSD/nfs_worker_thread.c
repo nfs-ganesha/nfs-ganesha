@@ -699,7 +699,7 @@ void auth_failure(nfs_request_t *reqdata, enum auth_stat auth_rc)
 {
 	svcerr_auth(&reqdata->svc, auth_rc);
 	/* nb, a no-op when req is uncacheable */
-	nfs_dupreq_delete(&reqdata->svc);
+	nfs_dupreq_delete(reqdata, NFS_REQ_AUTH_ERR);
 }
 
 void free_args(nfs_request_t *reqdata)
@@ -721,7 +721,7 @@ void free_args(nfs_request_t *reqdata)
 	}
 
 	/* Finalize the request. */
-	nfs_dupreq_rele(&reqdata->svc, reqdesc);
+	nfs_dupreq_rele(reqdata);
 
 	SetClientIP(NULL);
 
@@ -739,10 +739,10 @@ void free_args(nfs_request_t *reqdata)
 #endif
 }
 
-void complete_request(nfs_request_t *reqdata, int rc)
+enum nfs_req_result complete_request(nfs_request_t *reqdata,
+				     enum nfs_req_result rc)
 {
 	SVCXPRT *xprt = reqdata->svc.rq_xprt;
-	nfs_res_t *res_nfs = reqdata->res_nfs;
 	const nfs_function_desc_t *reqdesc = reqdata->funcdesc;
 
 	/* NFSv4 stats are handled in nfs4_compound() */
@@ -767,14 +767,14 @@ void complete_request(nfs_request_t *reqdata, int rc)
 		 * will be removed later.  We only remove a reply that is
 		 * normally cached that has been dropped.
 		 */
-		nfs_dupreq_delete(&reqdata->svc);
-		return;
+		nfs_dupreq_delete(reqdata, rc);
+		return rc;
 	}
 
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "Before svc_sendreply on socket %d", xprt->xp_fd);
 
-	reqdata->svc.rq_msg.RPCM_ack.ar_results.where = res_nfs;
+	reqdata->svc.rq_msg.RPCM_ack.ar_results.where = reqdata->res_nfs;
 	reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
 				reqdesc->xdr_encode_func;
 
@@ -799,13 +799,15 @@ void complete_request(nfs_request_t *reqdata, int rc)
 			 reqdata->svc.rq_msg.cb_proc,
 			 errno);
 		SVC_DESTROY(xprt);
+		rc = NFS_REQ_XPRT_DIED;
 	}
 
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "After svc_sendreply on socket %d", xprt->xp_fd);
 
 	/* Finish any request not already deleted */
-	nfs_dupreq_finish(&reqdata->svc, res_nfs);
+	nfs_dupreq_finish(reqdata, rc);
+	return rc;
 }
 
 void complete_request_instrumentation(nfs_request_t *reqdata)
@@ -828,17 +830,69 @@ void nfs_rpc_complete_async_request(nfs_request_t *reqdata,
 				    enum nfs_req_result rc)
 {
 	complete_request_instrumentation(reqdata);
-	complete_request(reqdata, rc);
+	rc = complete_request(reqdata, rc);
 	free_args(reqdata);
+}
+
+enum nfs_req_result process_dupreq(nfs_request_t *reqdata,
+				   const char *client_ip)
+{
+	enum xprt_stat xprt_rc;
+
+	/* Found the request in the dupreq cache.
+	 * Send cached reply. */
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "DUP: DupReq Cache Hit: using previous reply, rpcxid=%"
+		     PRIu32,
+		     reqdata->svc.rq_msg.rm_xid);
+
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "Before svc_sendreply on socket %d (dup req)",
+		     reqdata->svc.rq_xprt->xp_fd);
+
+	reqdata->svc.rq_msg.RPCM_ack.ar_results.where = reqdata->res_nfs;
+	reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
+				reqdata->funcdesc->xdr_encode_func;
+
+#ifdef USE_LTTNG
+	tracepoint(nfs_rpc, before_reply, __func__, __LINE__,
+		   reqdata->svc.rq_xprt);
+#endif
+	xprt_rc = svc_sendreply(&reqdata->svc);
+
+	if (xprt_rc >= XPRT_DIED) {
+		LogDebug(COMPONENT_DISPATCH,
+			 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a duplicate request. rpcxid=%"
+			 PRIu32
+			 " socket=%d function:%s client:%s program:%"
+			 PRIu32
+			 " nfs version:%" PRIu32
+			 " proc:%" PRIu32
+			 " errno: %d",
+			 reqdata->svc.rq_msg.rm_xid,
+			 reqdata->svc.rq_xprt->xp_fd,
+			 reqdata->funcdesc->funcname,
+			 client_ip,
+			 reqdata->svc.rq_msg.cb_prog,
+			 reqdata->svc.rq_msg.cb_vers,
+			 reqdata->svc.rq_msg.cb_proc,
+			 errno);
+		svcerr_systemerr(&reqdata->svc);
+		return NFS_REQ_XPRT_DIED;
+	}
+
+	return NFS_REQ_OK;
 }
 
 /**
  * @brief Main RPC dispatcher routine
  *
  * @param[in,out] reqdata	NFS request
+ * @param[in]     retry         True if a dupe request is coming back in
  *
  */
-static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
+static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
+					      bool retry)
 {
 	const char *client_ip = "<unknown client>";
 	const char *progname = "unknown";
@@ -846,16 +900,17 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	nfs_arg_t *arg_nfs = &reqdata->arg_nfs;
 	SVCXPRT *xprt = reqdata->svc.rq_xprt;
 	XDR *xdrs = reqdata->svc.rq_xdrs;
-	nfs_res_t *res_nfs;
 	dupreq_status_t dpq_status;
-	enum auth_stat auth_rc;
-	enum xprt_stat xprt_rc;
+	enum auth_stat auth_rc = AUTH_OK;
 	int port;
 	int rc = NFS_REQ_OK;
 #ifdef _USE_NFS3
 	int exportid = -1;
 #endif /* _USE_NFS3 */
 	bool no_dispatch = false;
+
+	if (retry)
+		goto retry_after_drc_suspend;
 
 #ifdef USE_LTTNG
 	tracepoint(nfs_rpc, start, reqdata);
@@ -978,8 +1033,8 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	 * this, we should sprint a buffer once, in when we're setting up
 	 * xprt private data. */
 
-	port = get_port(op_ctx->caller_addr);
 	op_ctx->client = get_gsh_client(op_ctx->caller_addr, false);
+
 	if (op_ctx->client == NULL) {
 		LogDebug(COMPONENT_DISPATCH,
 			 "Cannot get client block for Program %" PRIu32
@@ -1007,8 +1062,8 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	/* If req is uncacheable, or if req is v41+, nfs_dupreq_start will do
 	 * nothing but allocate a result object and mark the request (ie, the
 	 * path is short, lockless, and does no hash/search). */
-	dpq_status = nfs_dupreq_start(reqdata, &reqdata->svc);
-	res_nfs = reqdata->res_nfs;
+	dpq_status = nfs_dupreq_start(reqdata);
+
 	if (dpq_status == DUPREQ_SUCCESS) {
 		/* A new request, continue processing it. */
 		LogFullDebug(COMPONENT_DISPATCH,
@@ -1016,53 +1071,28 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	} else {
 		switch (dpq_status) {
 		case DUPREQ_EXISTS:
-			/* Found the request in the dupreq cache.
-			 * Send cached reply. */
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "DUP: DupReq Cache Hit: using previous reply, rpcxid=%"
-				     PRIu32,
-				     reqdata->svc.rq_msg.rm_xid);
-
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "Before svc_sendreply on socket %d (dup req)",
-				     xprt->xp_fd);
-
-			reqdata->svc.rq_msg.RPCM_ack.ar_results.where =
-						res_nfs;
-			reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
-						reqdesc->xdr_encode_func;
-
-#ifdef USE_LTTNG
-			tracepoint(nfs_rpc, before_reply, __func__, __LINE__,
-				   xprt);
-#endif
-			xprt_rc = svc_sendreply(&reqdata->svc);
-			if (xprt_rc >= XPRT_DIED) {
-				LogDebug(COMPONENT_DISPATCH,
-					 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a duplicate request. rpcxid=%"
-					 PRIu32
-					 " socket=%d function:%s client:%s program:%"
-					 PRIu32
-					 " nfs version:%" PRIu32
-					 " proc:%" PRIu32
-					 " errno: %d",
-					 reqdata->svc.rq_msg.rm_xid,
-					 xprt->xp_fd,
-					 reqdesc->funcname,
-					 client_ip,
-					 reqdata->svc.rq_msg.cb_prog,
-					 reqdata->svc.rq_msg.cb_vers,
-					 reqdata->svc.rq_msg.cb_proc,
-					 errno);
-				svcerr_systemerr(&reqdata->svc);
-			}
+			(void) process_dupreq(reqdata, client_ip);
 			break;
 
 			/* Another thread owns the request */
 		case DUPREQ_BEING_PROCESSED:
 			LogFullDebug(COMPONENT_DISPATCH,
-				     "DUP: Request xid=%" PRIu32
+				     "Suspending DUP: Request xid=%" PRIu32
 				     " is already being processed; the active thread will reply",
+				     reqdata->svc.rq_msg.rm_xid);
+			/* The request is suspended, don't touch the request in
+			 * any way because the resume may already be scheduled
+			 * and running on nother thread. The xp_resume_cb has
+			 * already been set up before we started proecessing
+			 * ops on this request at all.
+			 */
+			suspend_op_context();
+			return XPRT_SUSPEND;
+
+		case DUPREQ_DROP:
+			LogFullDebug(COMPONENT_DISPATCH,
+				     "DUP: Request xid=%" PRIu32
+				     " is already being processed and has too many dupes queued",
 				     reqdata->svc.rq_msg.rm_xid);
 			/* Free the arguments */
 			/* Ignore the request, send no error */
@@ -1077,6 +1107,14 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 		server_stats_nfs_done(reqdata, rc, true);
 		goto freeargs;
 	}
+
+retry_after_drc_suspend:
+	/* If we come here on a retry after drc suspend, then we already did
+	 * the stuff above.
+	 */
+
+	/* We need the port below. */
+	port = get_port(op_ctx->caller_addr);
 
 	/* Don't waste time for null or invalid ops
 	 * null op code in all valid protos == 0
@@ -1111,8 +1149,8 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 					client_ip);
 
 				/* Bad handle, report to client */
-				res_nfs->res_getattr3.status =
-				    NFS3ERR_BADHANDLE;
+				reqdata->res_nfs->res_getattr3.status =
+							NFS3ERR_BADHANDLE;
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
@@ -1125,7 +1163,8 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 					client_ip, exportid);
 
 				/* Bad export, report to client */
-				res_nfs->res_getattr3.status = NFS3ERR_STALE;
+				reqdata->res_nfs->res_getattr3.status =
+								NFS3ERR_STALE;
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
@@ -1348,7 +1387,8 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				LogDebugAlt(COMPONENT_DISPATCH,
 					    COMPONENT_EXPORT,
 					    "Returning NFS3ERR_DQUOT because request is on an MD Only export");
-				res_nfs->res_getattr3.status = NFS3ERR_DQUOT;
+				reqdata->res_nfs->res_getattr3.status =
+								NFS3ERR_DQUOT;
 				rc = NFS_REQ_OK;
 				break;
 #endif /* _USE_NFS3 */
@@ -1376,7 +1416,8 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 				LogDebugAlt(COMPONENT_DISPATCH,
 					    COMPONENT_EXPORT,
 					    "Returning NFS3ERR_ROFS because request is on a Read Only export");
-				res_nfs->res_getattr3.status = NFS3ERR_ROFS;
+				reqdata->res_nfs->res_getattr3.status =
+								NFS3ERR_ROFS;
 				rc = NFS_REQ_OK;
 				break;
 #endif /* _USE_NFS3 */
@@ -1456,7 +1497,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 #endif
 
 		rc = reqdesc->service_function(arg_nfs, &reqdata->svc,
-					res_nfs);
+					       reqdata->res_nfs);
 
 		if (rc == NFS_REQ_ASYNC_WAIT) {
 			/* The request is suspended, don't touch the request in
@@ -1476,7 +1517,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
  req_error:
 #endif /* _USE_NFS3 */
 
-	complete_request(reqdata, rc);
+	rc = complete_request(reqdata, rc);
 
  freeargs:
 
@@ -1489,6 +1530,86 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata)
 	 * point to freed memory */
 	op_ctx = NULL;
 	return SVC_STAT(xprt);
+}
+
+/** @brief Resume a duplicate request
+ *
+ * When a duplicate request comes in while still processing the original request
+ * we suspend it, and queue it in the dupreq_entry_t. Now the original request
+ * has been finished and we are ready to respond to the duplicate request.
+ *
+ */
+enum xprt_stat drc_resume(struct svc_req *req)
+{
+	nfs_request_t *reqdata = container_of(req, nfs_request_t, svc);
+	int rc = NFS_REQ_OK;
+
+	/* Restore the op_ctx */
+	resume_op_context(&reqdata->op_context);
+
+	/* Get the result of sending the response. Note that we are ONLY here
+	 * if this request came in as a dupe while we were processing the
+	 * original reqyest and it has now completed. So either we just sent a
+	 * response and there is no need to respond to this dupe OR something
+	 * went wrong that warrants further attention.
+	 */
+	rc = nfs_dupreq_reply_rc(reqdata);
+
+	server_stats_nfs_done(reqdata, rc, true);
+
+	switch(rc) {
+	case NFS_REQ_OK:
+	case NFS_REQ_ERROR:
+		/* In these cases, we don't need to respond */
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "Suspended DUP: Request xid=%" PRIu32
+			     " was processed and replied to",
+			     reqdata->svc.rq_msg.rm_xid);
+		break;
+
+	case NFS_REQ_DROP:
+		/* The original request was dropped for some reason, we actually
+		 * need to process now... Resubmit this request.
+		 */
+		return nfs_rpc_process_request(reqdata, true);
+
+	case NFS_REQ_REPLAY:
+	case NFS_REQ_ASYNC_WAIT:
+		/* These cases can never happen... */
+		break;
+
+	case NFS_REQ_XPRT_DIED:
+		/* The attempt to send a response failed because the XPRT died
+		 * so now we need to actually resend the response here.
+		 */
+		rc = process_dupreq(reqdata, op_ctx->client != NULL
+					     ? op_ctx->client->hostaddr_str
+					     : "<unknown client>");
+
+		/* And now we need to try and finish this request. If we had
+		 * another XPRT_DIED and there's yet another duplicate request
+		 * queued, we will be back around with that request shortly...
+		 */
+		nfs_dupreq_finish(reqdata, rc);
+		break;
+
+	case NFS_REQ_AUTH_ERR:
+		/* The original request failed due to an auth error. This retry
+		 * will probably also similarly fail, but we will re-submit
+		 * anyway.
+		 */
+		return nfs_rpc_process_request(reqdata, true);
+	}
+
+	free_args(reqdata);
+
+	/* Make sure no-one called init_op_context() without calling
+	 * release_op_context() */
+	assert(op_ctx == NULL);
+	/* Make sure we return to ntirpc without op_ctx set, or saved_op_ctx can
+	 * point to freed memory */
+	op_ctx = NULL;
+	return SVC_STAT(reqdata->svc.rq_xprt);
 }
 
 /**
@@ -1576,7 +1697,7 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 			if (req->rq_msg.cb_proc <= NFSACLPROC_SETACL) {
 				reqdata->funcdesc =
 					&nfsacl_func_desc[req->rq_msg.cb_proc];
-				return nfs_rpc_process_request(reqdata);
+				return nfs_rpc_process_request(reqdata, false);
 			}
 		}
 	}
@@ -1590,7 +1711,7 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 		if (req->rq_msg.cb_proc <= NFSPROC4_COMPOUND) {
 			reqdata->funcdesc =
 				&nfs4_func_desc[req->rq_msg.cb_proc];
-			return nfs_rpc_process_request(reqdata);
+			return nfs_rpc_process_request(reqdata, false);
 		}
 		return nfs_rpc_noproc(reqdata);
 	}
@@ -1600,7 +1721,7 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 		if (req->rq_msg.cb_proc <= NFSPROC3_COMMIT) {
 			reqdata->funcdesc =
 				&nfs3_func_desc[req->rq_msg.cb_proc];
-			return nfs_rpc_process_request(reqdata);
+			return nfs_rpc_process_request(reqdata, false);
 		}
 		return nfs_rpc_noproc(reqdata);
 	}
@@ -1637,7 +1758,7 @@ enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 			if (req->rq_msg.cb_proc <= NLMPROC4_FREE_ALL) {
 				reqdata->funcdesc =
 					&nlm4_func_desc[req->rq_msg.cb_proc];
-				return nfs_rpc_process_request(reqdata);
+				return nfs_rpc_process_request(reqdata, false);
 			}
 			return nfs_rpc_noproc(reqdata);
 		}
@@ -1669,7 +1790,7 @@ enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 			if (req->rq_msg.cb_proc <= MOUNTPROC3_EXPORT) {
 				reqdata->funcdesc =
 					&mnt3_func_desc[req->rq_msg.cb_proc];
-				return nfs_rpc_process_request(reqdata);
+				return nfs_rpc_process_request(reqdata, false);
 			}
 			return nfs_rpc_noproc(reqdata);
 		}
@@ -1678,7 +1799,7 @@ enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 			    && req->rq_msg.cb_proc != MOUNTPROC2_MNT) {
 				reqdata->funcdesc =
 					&mnt1_func_desc[req->rq_msg.cb_proc];
-				return nfs_rpc_process_request(reqdata);
+				return nfs_rpc_process_request(reqdata, false);
 			}
 			return nfs_rpc_noproc(reqdata);
 		}
@@ -1701,7 +1822,7 @@ enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 			if (req->rq_msg.cb_proc <= RQUOTAPROC_SETACTIVEQUOTA) {
 				reqdata->funcdesc =
 					&rquota2_func_desc[req->rq_msg.cb_proc];
-				return nfs_rpc_process_request(reqdata);
+				return nfs_rpc_process_request(reqdata, false);
 			}
 			return nfs_rpc_noproc(reqdata);
 		}
@@ -1709,7 +1830,7 @@ enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 			if (req->rq_msg.cb_proc <= RQUOTAPROC_SETACTIVEQUOTA) {
 				reqdata->funcdesc =
 					&rquota1_func_desc[req->rq_msg.cb_proc];
-				return nfs_rpc_process_request(reqdata);
+				return nfs_rpc_process_request(reqdata, false);
 			}
 			return nfs_rpc_noproc(reqdata);
 		}
@@ -1732,7 +1853,7 @@ enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *req)
 			if (req->rq_msg.cb_proc <= NFSACLPROC_SETACL) {
 				reqdata->funcdesc =
 					&nfsacl_func_desc[req->rq_msg.cb_proc];
-				return nfs_rpc_process_request(reqdata);
+				return nfs_rpc_process_request(reqdata, false);
 			}
 			return nfs_rpc_noproc(reqdata);
 		}

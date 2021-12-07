@@ -51,7 +51,6 @@
 #include "gsh_wait_queue.h"
 
 #define DUPREQ_NOCACHE     ((void *)0x02)
-#define DUPREQ_PROCESSING  ((void *)0x03)
 #define DUPREQ_MAX_RETRIES 5
 
 #define NFS_pcp nfs_param.core_param
@@ -69,8 +68,7 @@ const char *dupreq_status_table[] = {
 
 const char *dupreq_state_table[] = {
 	"DUPREQ_START",
-	"DUPREQ_COMPLETE",
-	"DUPREQ_DELETED",
+	"DUPREQ_COMPLETE"
 };
 
 /* drc_t holds the request/response cache. There is a single drc_t for
@@ -867,6 +865,7 @@ static inline dupreq_entry_t *alloc_dupreq(void)
 	dv = pool_alloc(dupreq_pool);
 	gsh_mutex_init(&dv->mtx, NULL);
 	TAILQ_INIT_ENTRY(dv, fifo_q);
+	TAILQ_INIT(&dv->dupes);
 
 	return dv;
 }
@@ -886,9 +885,9 @@ static inline void nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
 
 	LogDebug(COMPONENT_DUPREQ,
 		 "freeing dupreq entry dv=%p, dv xid=%" PRIu32
-		 " cksum %" PRIu64 " state=%s",
+		 " cksum %" PRIu64 " %s",
 		 dv, dv->hin.tcp.rq_xid, dv->hk,
-		 dupreq_state_table[dv->state]);
+		 dupreq_state_table[dv->complete]);
 	if (dv->res) {
 		func = nfs_dupreq_func(dv);
 		func->free_function(dv->res);
@@ -1023,12 +1022,10 @@ static inline bool nfs_dupreq_v4_cacheable(nfs_request_t *reqnfs)
  * of the corresponding entry is incremented.
  *
  * @param[in] reqnfs  The NFS request data
- * @param[in] req     The request to be cached
  *
  * @retval DUPREQ_SUCCESS if successful.
  */
-dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
-				 struct svc_req *req)
+dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs)
 {
 	dupreq_entry_t *dv = NULL, *dk = NULL;
 	drc_t *drc;
@@ -1049,31 +1046,30 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 		goto no_cache;
 	}
 
-	drc = nfs_dupreq_get_drc(req);
+	drc = nfs_dupreq_get_drc(&reqnfs->svc);
 	dk = alloc_dupreq();
 
 	switch (drc->type) {
 	case DRC_TCP_V4:
 	case DRC_TCP_V3:
-		dk->hin.tcp.rq_xid = req->rq_msg.rm_xid;
+		dk->hin.tcp.rq_xid = reqnfs->svc.rq_msg.rm_xid;
 		/* XXX needed? */
-		dk->hin.rq_prog = req->rq_msg.cb_prog;
-		dk->hin.rq_vers = req->rq_msg.cb_vers;
-		dk->hin.rq_proc = req->rq_msg.cb_proc;
+		dk->hin.rq_prog = reqnfs->svc.rq_msg.cb_prog;
+		dk->hin.rq_vers = reqnfs->svc.rq_msg.cb_vers;
+		dk->hin.rq_proc = reqnfs->svc.rq_msg.cb_proc;
 		break;
 	case DRC_UDP_V234:
-		dk->hin.tcp.rq_xid = req->rq_msg.rm_xid;
-		copy_xprt_addr(&dk->hin.addr, req->rq_xprt);
-		dk->hin.rq_prog = req->rq_msg.cb_prog;
-		dk->hin.rq_vers = req->rq_msg.cb_vers;
-		dk->hin.rq_proc = req->rq_msg.cb_proc;
+		dk->hin.tcp.rq_xid = reqnfs->svc.rq_msg.rm_xid;
+		copy_xprt_addr(&dk->hin.addr, reqnfs->svc.rq_xprt);
+		dk->hin.rq_prog = reqnfs->svc.rq_msg.cb_prog;
+		dk->hin.rq_vers = reqnfs->svc.rq_msg.cb_vers;
+		dk->hin.rq_proc = reqnfs->svc.rq_msg.cb_proc;
 		break;
 	default:
 		assert(0);
 	}
 
-	dk->hk = req->rq_cksum; /* TI-RPC computed checksum */
-	dk->state = DUPREQ_START;
+	dk->hk = reqnfs->svc.rq_cksum; /* TI-RPC computed checksum */
 
 	{
 		struct opr_rbtree_node *nv;
@@ -1086,35 +1082,62 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 			nfs_dupreq_free_dupreq(dk);
 			dv = opr_containerof(nv, dupreq_entry_t, rbt_k);
 			PTHREAD_MUTEX_lock(&dv->mtx);
-			if (unlikely(dv->state != DUPREQ_COMPLETE)) {
-				req->rq_u1 = DUPREQ_PROCESSING;
-				status = DUPREQ_BEING_PROCESSED;
-			} else {
-				/* satisfy req from the DRC, incref,
-				   extend window */
-				req->rq_u1 = dv;
-				reqnfs->res_nfs = req->rq_u2 = dv->res;
-				status = DUPREQ_EXISTS;
-				dupreq_entry_get(dv);
-			}
-			PTHREAD_MUTEX_unlock(&dv->mtx);
 
-			if (status == DUPREQ_EXISTS) {
-				PTHREAD_MUTEX_lock(&drc->mtx);
-				drc_inc_retwnd(drc);
-				PTHREAD_MUTEX_unlock(&drc->mtx);
+			/* Count the number of duplicate requests received. */
+			dv->dupe_cnt++;
+
+			/* Check if the original request is complete or not. If
+			 * not, we queue up the duplicate request for potential
+			 * response later, however, do not queue more than
+			 * DUPREQ_MAX_DUPES duplicates, any beyond before the
+			 * request is completed will just be dropped.
+			 */
+			if (unlikely(!dv->complete)
+			    && dv->dupe_cnt <= DUPREQ_MAX_DUPES) {
+				status = DUPREQ_BEING_PROCESSED;
+				TAILQ_INSERT_TAIL(&dv->dupes, reqnfs, dupes);
+				reqnfs->svc.rq_resume_cb = drc_resume;
+			} else if (unlikely(!dv->complete)) {
+				/* Signal to nfs_dupreq_rele this should be
+				 * ignored.
+				 */
+				reqnfs->svc.rq_u1 = DUPREQ_NOCACHE;
+				LogDebug(COMPONENT_DUPREQ,
+					 "dupreq hit dv=%p, dv xid=%" PRIu32
+					 " cksum %" PRIu64
+					 " state=%s dupe_count=%d",
+					 dv, dv->hin.tcp.rq_xid, dv->hk,
+					 dupreq_state_table[dv->complete],
+					 dv->dupe_cnt);
+				PTHREAD_MUTEX_unlock(&dv->mtx);
+				return DUPREQ_DROP;
+			} else {
+				status = DUPREQ_EXISTS;
 			}
+
+			/* satisfy req from the DRC, incref, extend window */
+			reqnfs->svc.rq_u1 = dv;
+			reqnfs->res_nfs = reqnfs->svc.rq_u2 = dv->res;
+			dupreq_entry_get(dv);
 
 			LogDebug(COMPONENT_DUPREQ,
 				 "dupreq hit dv=%p, dv xid=%" PRIu32
-				 " cksum %" PRIu64 " state=%s",
+				 " cksum %" PRIu64 " state=%s dupe_count=%d",
 				 dv, dv->hin.tcp.rq_xid, dv->hk,
-				 dupreq_state_table[dv->state]);
+				 dupreq_state_table[dv->complete],
+				 dv->dupe_cnt);
+
+			PTHREAD_MUTEX_unlock(&dv->mtx);
+
+			PTHREAD_MUTEX_lock(&drc->mtx);
+			/* Extend window */
+			drc_inc_retwnd(drc);
+			PTHREAD_MUTEX_unlock(&drc->mtx);
 		} else {
 			/* new request */
-			req->rq_u1 = dk;
+			reqnfs->svc.rq_u1 = dk;
 			dk->res = alloc_nfs_res();
-			reqnfs->res_nfs = req->rq_u2 = dk->res;
+			reqnfs->res_nfs = reqnfs->svc.rq_u2 = dk->res;
 
 			/* cache--can exceed drc->maxsize */
 			(void)rbtree_x_cached_insert(&drc->xt, t,
@@ -1135,7 +1158,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 				     "starting dk=%p xid=%" PRIu32
 				     " on DRC=%p state=%s, status=%s, refcnt=%d, drc->size=%d",
 				     dk, dk->hin.tcp.rq_xid, drc,
-				     dupreq_state_table[dk->state],
+				     dupreq_state_table[dk->complete],
 				     dupreq_status_table[status],
 				     dk->refcnt, drc->size);
 		}
@@ -1145,8 +1168,8 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs,
 	return status;
 
 no_cache:
-	req->rq_u1 = DUPREQ_NOCACHE;
-	reqnfs->res_nfs = req->rq_u2 = alloc_nfs_res();
+	reqnfs->svc.rq_u1 = DUPREQ_NOCACHE;
+	reqnfs->res_nfs = reqnfs->svc.rq_u2 = alloc_nfs_res();
 	return DUPREQ_SUCCESS;
 }
 
@@ -1170,14 +1193,13 @@ no_cache:
  * req->rq_u1 has either a magic value, or points to a duplicate request
  * cache entry allocated in nfs_dupreq_start.
  *
- * @param[in] req     The request
- * @param[in] res_nfs The response
+ * @param[in] reqnfs  The nfs_request_t.
+ * @param[in] rc      The nfs_req_result
  *
- * @return DUPREQ_SUCCESS if successful.
  */
-void nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
+void nfs_dupreq_finish(nfs_request_t *reqnfs, enum nfs_req_result rc)
 {
-	dupreq_entry_t *ov = NULL, *dv = (dupreq_entry_t *)req->rq_u1;
+	dupreq_entry_t *ov = NULL, *dv = reqnfs->svc.rq_u1;
 	struct rbtree_x_part *t;
 	drc_t *drc = NULL;
 	int16_t cnt = 0;
@@ -1187,18 +1209,35 @@ void nfs_dupreq_finish(struct svc_req *req, nfs_res_t *res_nfs)
 		return;
 
 	PTHREAD_MUTEX_lock(&dv->mtx);
-	assert(dv->res == res_nfs);
-	dv->state = DUPREQ_COMPLETE;
+
+	assert(dv->res == reqnfs->res_nfs);
+
+	/* Now see if there are any requests waiting. */
+	if (!TAILQ_EMPTY(&dv->dupes) && rc == NFS_REQ_XPRT_DIED) {
+		/* Return without marking complete. That will stave off any
+		 * additional dupes that come in and we will walk the dupes
+		 * in order attempting to respond.
+		 *
+		 * Dequeueing the next duplicate will be done by
+		 * nfs_dupreq_rele().
+		 */
+		PTHREAD_MUTEX_unlock(&dv->mtx);
+		return;
+	}
+
+	dv->complete = true;
+	dv->rc = rc;
+
 	PTHREAD_MUTEX_unlock(&dv->mtx);
 
-	drc = req->rq_xprt->xp_u2; /* req holds a ref on drc */
+	drc = reqnfs->svc.rq_xprt->xp_u2; /* req holds a ref on drc */
 	PTHREAD_MUTEX_lock(&drc->mtx);
 
 	LogFullDebug(COMPONENT_DUPREQ,
 		     "completing dv=%p xid=%" PRIu32
 		     " on DRC=%p state=%s, refcnt=%d, drc->size=%d",
 		     dv, dv->hin.tcp.rq_xid, drc,
-		     dupreq_state_table[dv->state],
+		     dupreq_state_table[dv->complete],
 		     dv->refcnt, drc->size);
 
 	/* (all) finished requests count against retwnd */
@@ -1249,7 +1288,7 @@ dq_again:
 				 "retiring ov=%p xid=%" PRIu32
 				 " on DRC=%p state=%s, refcnt=%d",
 				 ov, ov->hin.tcp.rq_xid,
-				 drc, dupreq_state_table[ov->state],
+				 drc, dupreq_state_table[ov->complete],
 				 ov->refcnt);
 
 			/* release hashtable ref count */
@@ -1279,14 +1318,13 @@ dq_again:
  * We assert req->rq_u1 now points to the corresonding duplicate request
  * cache entry.
  *
- * @param[in] req The svc_req structure.
- *
- * @return DUPREQ_SUCCESS if successful.
+ * @param[in] reqnfs  The nfs_request_t.
+ * @param[in] rc      The nfs_req_result
  *
  */
-void nfs_dupreq_delete(struct svc_req *req)
+void nfs_dupreq_delete(nfs_request_t *reqnfs, enum nfs_req_result rc)
 {
-	dupreq_entry_t *dv = (dupreq_entry_t *)req->rq_u1;
+	dupreq_entry_t *dv = reqnfs->svc.rq_u1;
 	struct rbtree_x_part *t;
 	drc_t *drc;
 
@@ -1294,13 +1332,36 @@ void nfs_dupreq_delete(struct svc_req *req)
 	if (dv == DUPREQ_NOCACHE)
 		return;
 
-	drc = req->rq_xprt->xp_u2;
+	/* Check if this entry has any duplicate requests queued against it. If
+	 * so, we will want to resubmit them and NOT delete this drc. It will
+	 * attach as primary to the next request in line.
+	 */
+	PTHREAD_MUTEX_lock(&dv->mtx);
+
+	if (!TAILQ_EMPTY(&dv->dupes)) {
+		/* Return without deleting, we are going to retry this request.
+		 * The entry will still be no complete which will
+		 * stave off any additional dupes that come in and we will walk
+		 * the dupes in order attempting to respond.
+		 *
+		 * Dequeueing the next duplicate will be done by
+		 * nfs_dupreq_rele().
+		 */
+		dv->rc = rc;
+
+		PTHREAD_MUTEX_unlock(&dv->mtx);
+		return;
+	}
+
+	PTHREAD_MUTEX_unlock(&dv->mtx);
+	
+	drc = reqnfs->svc.rq_xprt->xp_u2;
 
 	LogFullDebug(COMPONENT_DUPREQ,
 		     "deleting dv=%p xid=%" PRIu32
 		     " on DRC=%p state=%s, refcnt=%d",
 		     dv, dv->hin.tcp.rq_xid, drc,
-		     dupreq_state_table[dv->state],
+		     dupreq_state_table[dv->complete],
 		     dv->refcnt);
 
 	/* This function is called to remove this dupreq from the
@@ -1312,7 +1373,7 @@ void nfs_dupreq_delete(struct svc_req *req)
 	 * nothing.
 	 *
 	 * req holds a ref on drc, so it should be valid here.
-	 * assert(drc == (drc_t *)req->rq_xprt->xp_u2);
+	 * assert(drc == (drc_t *)reqnfs->svc.rq_xprt->xp_u2);
 	 */
 	PTHREAD_MUTEX_lock(&drc->mtx);
 	if (!TAILQ_IS_ENQUEUED(dv, fifo_q)) {
@@ -1337,47 +1398,68 @@ void nfs_dupreq_delete(struct svc_req *req)
 /**
  * @brief Decrement the call path refcnt on a cache entry.
  *
- * We assert req->rq_u1 now points to the corresonding duplicate request
+ * We assert reqnfs->svc.rq_u1 now points to the corresonding duplicate request
  * cache entry (dv).
  *
- * @param[in] req  The svc_req structure.
- * @param[in] func The function descriptor for this request type
+ * @param[in] reqnfs  The nfs_request_t.
  */
-void nfs_dupreq_rele(struct svc_req *req, const nfs_function_desc_t *func)
+void nfs_dupreq_rele(nfs_request_t *reqnfs)
 {
-	dupreq_entry_t *dv = (dupreq_entry_t *) req->rq_u1;
+	dupreq_entry_t *dv = reqnfs->svc.rq_u1;
 	drc_t *drc;
 
 	/* no-cache cleanup */
 	if (dv == DUPREQ_NOCACHE) {
 		LogFullDebug(COMPONENT_DUPREQ, "releasing no-cache res %p",
-			     req->rq_u2);
-		func->free_function(req->rq_u2);
-		free_nfs_res(req->rq_u2);
+			     reqnfs->svc.rq_u2);
+		reqnfs->funcdesc->free_function(reqnfs->svc.rq_u2);
+		free_nfs_res(reqnfs->svc.rq_u2);
 		goto out;
 	}
 
-	/* being processed cleanup */
-	if (dv == DUPREQ_PROCESSING) {
-		LogFullDebug(COMPONENT_DUPREQ, "releasing being processed");
-		goto out;
-	}
-
-	drc = req->rq_xprt->xp_u2;
+	drc = reqnfs->svc.rq_xprt->xp_u2;
 	LogFullDebug(COMPONENT_DUPREQ,
 		     "releasing dv=%p xid=%" PRIu32
 		     " on DRC=%p state=%s, refcnt=%d",
 		     dv, dv->hin.tcp.rq_xid, drc,
-		     dupreq_state_table[dv->state], dv->refcnt);
+		     dupreq_state_table[dv->complete], dv->refcnt);
 
 	/* release req's hold on dupreq and drc */
 	dupreq_entry_put(dv);
 	nfs_dupreq_put_drc(drc);
 
+	/* Now check if there are any duplicate requests waiting for this
+	 * one to resolve.
+	 */
+	PTHREAD_MUTEX_lock(&dv->mtx);
+
+	if (!TAILQ_EMPTY(&dv->dupes)) {
+		/* Pull the next request of the queue and resume it. If this
+		 * overall request has been satisfied with a final result, then
+		 * any resumed requests will just immediately be released. In
+		 * theory we COULD do something other than rescheduling if the
+		 * request was just going to be discarded, but there's a bunch
+		 * done in svc_resume_task() that needs to be done that isn't
+		 * easy for us to do. There could be an ntirpc change to
+		 * implement svc_inline_resume() that would just do the
+		 * necessary bits. This situation is pretty unlikely and when it
+		 * does happen, it's unlikely to be more than one queued request
+		 * so the "pain" of doing a full svc_resume() just to reture a
+		 * duplicate request is minor.
+		 */
+		nfs_request_t *req2 = TAILQ_FIRST(&dv->dupes);
+
+		TAILQ_REMOVE(&dv->dupes, req2, dupes);
+
+		svc_resume(&req2->svc);
+	}
+
+	PTHREAD_MUTEX_unlock(&dv->mtx);
+
  out:
 	/* dispose RPC header */
-	if (req->rq_auth)
-		SVCAUTH_RELEASE(req);
+	if (reqnfs->svc.rq_auth)
+		SVCAUTH_RELEASE(&reqnfs->svc);
 }
 
 /**

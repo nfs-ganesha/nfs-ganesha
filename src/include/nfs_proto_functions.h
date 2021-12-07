@@ -48,6 +48,8 @@ static inline enum nfs_req_result nfsstat4_to_nfs_req_result(nfsstat4 stat)
 void nfs_rpc_complete_async_request(nfs_request_t *reqdata,
 				    enum nfs_req_result rc);
 
+enum xprt_stat drc_resume(struct svc_req *req);
+
 #ifdef _USE_NFS3
 extern const nfs_function_desc_t nfs3_func_desc[];
 #endif

@@ -184,6 +184,8 @@ enum nfs_req_result {
 	NFS_REQ_ERROR,
 	NFS_REQ_REPLAY,
 	NFS_REQ_ASYNC_WAIT,
+	NFS_REQ_XPRT_DIED,
+	NFS_REQ_AUTH_ERR,
 };
 
 /* Async process synchronizations flags to be used with
@@ -224,6 +226,10 @@ typedef struct nfs_request {
 	nfs_res_t *res_nfs;
 	const nfs_function_desc_t *funcdesc;
 	void *proc_data;
+	/** This request may be queued up pending completion of the request
+	 *  this is a dupreq of.
+	 */
+	TAILQ_ENTRY(nfs_request) dupes;
 } nfs_request_t;
 
 enum rpc_chan_type {
