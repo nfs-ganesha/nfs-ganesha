@@ -338,7 +338,7 @@ struct state_t;
  * changes.
  */
 
-#define FSAL_MAJOR_VERSION 10
+#define FSAL_MAJOR_VERSION 11
 
 /**
  * @brief Minor Version
