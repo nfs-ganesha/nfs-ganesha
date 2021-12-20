@@ -1500,10 +1500,7 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 				       DBUS_TYPE_STRING,
 				       &path);
 
-	path = TMP_PSEUDOPATH(&tmp);
-
-	if (path == NULL)
-		path = "";
+	path = tmp_export_path(&tmp);
 
 	dbus_message_iter_append_basic(&iter,
 				       DBUS_TYPE_STRING,
@@ -1553,14 +1550,7 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 
 	tmp_get_exp_paths(&tmp, exp_node);
 
-	path = TMP_PSEUDOPATH(&tmp);
-
-	if (path == NULL) {
-
-		path = TMP_FULLPATH(&tmp);
-		if (path == NULL)
-			path = "";
-	}
+	path = tmp_export_path(&tmp);
 
 	tmp_put_exp_paths(&tmp);
 

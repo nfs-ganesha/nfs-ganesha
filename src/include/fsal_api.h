@@ -56,6 +56,7 @@ struct gsh_client;
 struct gsh_export;
 struct fsal_up_vector;		/* From fsal_up.h */
 struct state_t;
+extern struct gsh_refstr *no_export;
 
 /**
  * @page newapi New FSAL API
