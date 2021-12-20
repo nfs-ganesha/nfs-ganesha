@@ -338,7 +338,10 @@ if __name__ == '__main__':
        "         Example: \n"                                                      \
        "         update export /etc/ganesha/gpfs.conf \"EXPORT(Export_ID=77)\"\n\n"\
        "   display: \n"                                                            \
-       "      export export_id: Displays the export with the given ID\n\n"         \
+       "      export export_id: Displays the export with the given ID.\n"          \
+       "         export_id must be positive number\n"                              \
+       "         Example: \n"                                                      \
+       "         display export 10 \n\n"\
        "   purge: \n"                                                              \
        "      netgroups: Purges netgroups cache\n"                                 \
        "      idmap: Purges idmapper cache\n"                                      \
@@ -424,6 +427,10 @@ if __name__ == '__main__':
     elif sys.argv[1] == "display":
         if len(sys.argv) < 4:
             msg = 'display export requires an export ID. '
+            msg += 'Try "ganesha_mgr.py help" for more info'
+            sys.exit(msg)
+        elif sys.argv[3].isdigit() == False:
+            msg = 'export ID must be positive number. '
             msg += 'Try "ganesha_mgr.py help" for more info'
             sys.exit(msg)
         if sys.argv[2] == "export":
