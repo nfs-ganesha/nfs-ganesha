@@ -1159,18 +1159,28 @@ static void Allocate_sockets(void)
 					       SOCK_STREAM,
 					       IPPROTO_TCP);
 
-			/* We fail with LogFatal here on error because it
-			 * shouldn't be that we have managed to create a
-			 * V6 based udp socket and have failed for the tcp
-			 * sock. If it were a case of V6 being disabled,
-			 * then we would have encountered that case with
-			 * the first udp sock create and would have moved
-			 * on to create the V4 sockets.
-			 */
-			if (tcp_socket[p] == -1)
-				LogFatal(COMPONENT_DISPATCH,
-					 "Cannot allocate a tcp socket for %s, error %d(%s)",
-					 tags[p], errno, strerror(errno));
+			if (tcp_socket[p] == -1) {
+				/* We fail with LogFatal here on error because it
+				 * shouldn't be that we have managed to create a
+				 * V6 based udp socket and have failed for the tcp
+				 * sock. If it were a case of V6 being disabled,
+				 * then we would have encountered that case with
+				 * the first udp sock create and would have moved
+				 * on to create the V4 sockets.
+				 */
+				if (enable_udp_listener(p)) {
+					LogFatal(COMPONENT_DISPATCH,
+						 "Cannot allocate a tcp socket for %s, error %d(%s)",
+						 tags[p], errno, strerror(errno));
+				 }
+
+				v6disabled = true;
+				LogWarn(COMPONENT_DISPATCH,
+				    "System may not have V6 intfs configured error %d(%s)",
+				    errno, strerror(errno));
+
+				goto try_V4;
+			}
 
 try_V4:
 			if (v6disabled) {
