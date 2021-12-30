@@ -246,10 +246,12 @@ enum proto_op_type {
 	LAYOUT_OP
 };
 
+#ifdef _USE_NFS3
 static const uint32_t nfsv3_optype[NFS_V3_NB_COMMAND] = {
 	[NFSPROC3_READ] = READ_OP,
 	[NFSPROC3_WRITE] = WRITE_OP,
 };
+#endif
 
 static const uint32_t nfsv40_optype[NFS_V40_NB_OPERATION] = {
 	[NFS4_OP_READ] = READ_OP,
