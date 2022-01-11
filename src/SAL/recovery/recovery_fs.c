@@ -382,7 +382,8 @@ static void fs_rm_clid_impl(int position,
 
 	memcpy(path, parent_path, parent_len);
 	path[parent_len] = '/';
-	memcpy(path + parent_len + 1, recov_dir + position, segment_len + 1);
+	memcpy(path + parent_len + 1, recov_dir + position, segment_len);
+	path[total_len - 1] = '\0';
 
 	/* recursively remove the directory hirerchy which represent the
 	 *clientid
