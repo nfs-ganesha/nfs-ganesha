@@ -180,19 +180,27 @@ bool attrmask_is_nfs3(attrmask_t mask)
 }
 
 /**
- * @brief Determine if an attribute mask is valid for NFSv3 SETATTR3.
+ * @brief Determine if an attribute mask is valid for NFSv3.
  * @param mask Input attrmask_t of attributes.
+ * @param allow_rawdev If rawdev is allowed in Input.
  *
- * @return - True, if the attributes are suitable for SETATTR3.
+ * @return - True, if the attributes are suitable for NFSv3.
  *         - False, otherwise.
  */
 
-static bool attrmask_valid_setattr(const attrmask_t mask)
+static bool attrmask_valid(const attrmask_t mask, const bool allow_rawdev)
 {
 	attrmask_t temp = mask;
-	const attrmask_t possible =
+	attrmask_t possible =
 		/* mode, uid, gid, size, atime, mtime */
-		ATTRS_SET_TIME | ATTRS_CREDS | ATTR_SIZE | ATTR_MODE;
+		ATTRS_SET_TIME |
+		ATTRS_CREDS |
+		ATTR_SIZE |
+		ATTR_MODE;
+	if (allow_rawdev) {
+		possible |= ATTR_RAWDEV;
+	}
+
 
 	if (FSAL_UNSET_MASK(temp, possible)) {
 		LogDebug(COMPONENT_FSAL,
@@ -259,13 +267,15 @@ bool fattr3_to_fsalattr(const fattr3 *attrs,
 /**
  * @brief Convert an fsal_attrlist to sattr3.
  * @param fsal_attrs Input attributes as in fsal_attrlist form.
+ * @param allow_rawdev Input rawdev is a possible attribute.
  * @param attrs_out Output attributes as sattr3.
  *
- * @return - True, if the attributes are suitable for SETATTR3.
+ * @return - True, if the attributes are suitable for NFSv3.
  *         - False, otherwise.
  */
 
 bool fsalattr_to_sattr3(const struct fsal_attrlist *fsal_attrs,
+			const bool allow_rawdev,
 			sattr3 *attrs_out)
 {
 	/*
@@ -275,9 +285,8 @@ bool fsalattr_to_sattr3(const struct fsal_attrlist *fsal_attrs,
 	memset(attrs_out, 0, sizeof(*attrs_out));
 
 	/* Make sure there aren't any additional options we aren't expecting. */
-	if (!attrmask_valid_setattr(fsal_attrs->valid_mask)) {
+	if (!attrmask_valid(fsal_attrs->valid_mask, allow_rawdev))
 		return false;
-	}
 
 	if (FSAL_TEST_MASK(fsal_attrs->valid_mask, ATTR_MODE)) {
 		attrs_out->mode.set_it = true;

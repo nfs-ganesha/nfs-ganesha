@@ -149,6 +149,7 @@ bool attrmask_is_nfs3(attrmask_t mask);
 bool fattr3_to_fsalattr(const fattr3 *attrs,
 			struct fsal_attrlist *fsal_attrs_out);
 bool fsalattr_to_sattr3(const struct fsal_attrlist *fsal_attrs,
+			const bool allow_rawdev,
 			sattr3 *attrs_out);
 
 #endif
