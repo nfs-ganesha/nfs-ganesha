@@ -1045,8 +1045,7 @@ enum nfs_req_result nfs4_op_seek(struct nfs_argop4 *op,
 		if (arg_SEEK->sa_what == NFS4_CONTENT_DATA ||
 				arg_SEEK->sa_what == NFS4_CONTENT_HOLE) {
 			info.io_content.hole.di_offset = arg_SEEK->sa_offset;
-}
-		else
+		} else
 			info.io_content.adb.adb_offset = arg_SEEK->sa_offset;
 
 		fsal_status = obj->obj_ops->seek2(obj, state_found, &info);
