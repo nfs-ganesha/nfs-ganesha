@@ -144,3 +144,64 @@ interface(`ganesha_admin',`
 		systemd_read_fifo_file_passwd_run($1)
 	')
 ')
+
+#######################################
+## <summary>
+##	Start or stop ganesha service
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed access
+## </summary>
+## </param>
+#
+# Definition ensuring compatibility with systems that do not have this interface
+interface(`ganesha_service_start_stop',`
+	gen_require(`
+		type ganesha_unit_file_t;
+	')
+
+	allow $1 ganesha_unit_file_t:service { start stop };
+')
+
+#######################################
+## <summary>
+##	Get status of ganesha service
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed access
+## </summary>
+## </param>
+#
+# Definition ensuring compatibility with systems that do not have this interface
+
+interface(`ganesha_service_status',`
+	gen_require(`
+		type ganesha_unit_file_t;
+	')
+
+	allow $1 ganesha_unit_file_t:service status;
+')
+
+#######################################
+## <summary>
+##	Send and receive messages from glusterd over dbus.
+## </summary>
+## <param name="domain">
+## <summary>
+##	Domain allowed access
+## </summary>
+## </param>
+#
+# Definition ensuring compatibility with systems that do not have this interface
+ifndef(`glusterd_dbus_chat',`
+	interface(`glusterd_dbus_chat',`
+		gen_require(`
+			type glusterd_t;
+		')
+
+		allow $1 glusterd_t:dbus send_msg;
+		allow glusterd_t $1:dbus send_msg;
+	')
+')

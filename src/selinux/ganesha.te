@@ -17,8 +17,6 @@ require {
 	type fixed_disk_device_t;
 	type framebuf_device_t;
 	type fs_t;
-	type gluster_port_t;
-	type glusterd_brick_t;
 	type hugetlbfs_t;
 	type initctl_t;
 	type kmsg_device_t;
@@ -51,8 +49,6 @@ require {
 	type usr_t;
 
 	type cluster_t;
-
-	type glusterd_t;
 
 	type ceph_t;
 	type ceph_log_t;
@@ -290,15 +286,6 @@ allow rpcbind_t unreserved_port_t:udp_socket name_bind;
 
 ########################################
 #
-# ganesha local policy rhbz#1816501, rhbz#1822500, rhbz#1826101,
-# rhbz#1826627
-
-allow glusterd_t ganesha_unit_file_t:service { start status stop };
-allow glusterd_t ganesha_t:dbus send_msg;
-allow ganesha_t glusterd_t:dbus send_msg;
-
-########################################
-#
 # ganesha local policy rhbz#1857170
 
 allow ganesha_t portmap_port_t:tcp_socket name_connect;
@@ -315,8 +302,23 @@ allow ganesha_t self:capability { fowner setgid setuid };
 # if you want to export old gluster brick dirs directly, e.g. because
 # maybe you're no longer using gluster. selinux knows about gluster brick
 # volumes in /bricks/...
+# Needs to be used in an optional_policy block requiring type glusterd_brick_t
 # allow ganesha_t glusterd_brick_t:dir { add_name getattr open read write remove_name search };
 # allow ganesha_t glusterd_brick_t:file { create getattr open read write unlink };
+
+########################################
+#
+# ganesha local policy rhbz#1816501, rhbz#1822500, rhbz#1826101,
+# rhbz#1826627
+
+optional_policy(`
+	glusterd_dbus_chat(ganesha_t)
+
+	# the following interfaces can only be safely used together with an interface
+	# requiring glusterd_t type such as glusterd_dbus_chat
+	ganesha_service_status(glusterd_t)
+	ganesha_service_start_stop(glusterd_t)
+')
 
 ########################################
 #
