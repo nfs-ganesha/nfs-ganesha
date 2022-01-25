@@ -52,8 +52,6 @@ require {
 
 	type cluster_t;
 
-	type glusterd_t;
-
 	type ceph_t;
 	type ceph_log_t;
 
@@ -290,15 +288,6 @@ allow rpcbind_t unreserved_port_t:udp_socket name_bind;
 
 ########################################
 #
-# ganesha local policy rhbz#1816501, rhbz#1822500, rhbz#1826101,
-# rhbz#1826627
-
-allow glusterd_t ganesha_unit_file_t:service { start status stop };
-allow glusterd_t ganesha_t:dbus send_msg;
-allow ganesha_t glusterd_t:dbus send_msg;
-
-########################################
-#
 # ganesha local policy rhbz#1857170
 
 allow ganesha_t portmap_port_t:tcp_socket name_connect;
@@ -346,3 +335,15 @@ ifdef(`ceph_read_pid_files',`
 
 allow ganesha_t cluster_t:dbus send_msg;
 allow init_t var_lib_nfs_t:lnk_file read;
+
+########################################
+#
+# ganesha local policy rhbz#1816501, rhbz#1822500, rhbz#1826101,
+# rhbz#1826627
+
+optional_policy(`
+	glusterd_dbus_chat(ganesha_t)
+
+	glusterd_service_status(ganesha_t)
+	glusterd_service_start_stop(ganesha_t)
+')
