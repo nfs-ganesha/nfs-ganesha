@@ -233,6 +233,9 @@ int remove_gsh_client(sockaddr_t *client_ipaddr)
 	void **cache_slot;
 	uint64_t hash = hash_sockaddr(client_ipaddr, true);
 
+	/* Copy the search address into the key */
+	memcpy(&v.cl_addrbuf, client_ipaddr, sizeof(v.cl_addrbuf));
+
 	PTHREAD_RWLOCK_wrlock(&client_by_ip.lock);
 	node = avltree_lookup(&v.node_k, &client_by_ip.t);
 	if (node) {
