@@ -498,7 +498,6 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 	acl_entry_t a_entry, d_entry;
 	acl_permset_t a_permset, e_a_permset, d_permset, e_d_permset;
 	acl_tag_t tag = -1;
-	char *acl_str;
 	unsigned int id;
 	bool mask = false, mask_set = false;
 	bool deny_e_r = false, deny_e_w = false, deny_e_x = false;
@@ -740,11 +739,15 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 
 	}
 
-	acl_str = acl_to_any_text(allow_acl, NULL, ',',
-				TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
-	LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
+	if (isDebug(COMPONENT_FSAL)) {
+		char *acl_str;
 
-	acl_free(acl_str);
+		acl_str = acl_to_any_text(allow_acl, NULL, ',',
+				TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
+		LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
+		acl_free(acl_str);
+	}
+
 	if (deny_acl)
 		acl_free(deny_acl);
 
@@ -804,7 +807,6 @@ acl_t xattr_2_posix_acl(const struct acl_ea_header *ea_header, size_t size)
 	acl_permset_t permset;
 	uid_t uid;
 	gid_t gid;
-	char *acl_str;
 
 	count = posix_acl_entries_count(size);
 	if (count < 0) {
@@ -886,9 +888,15 @@ acl_t xattr_2_posix_acl(const struct acl_ea_header *ea_header, size_t size)
 		}
 	}
 
-	acl_str = acl_to_any_text(acl, NULL, ',',
+	if (isDebug(COMPONENT_FSAL)) {
+		char *acl_str;
+
+		acl_str = acl_to_any_text(acl, NULL, ',',
 				TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
-	LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
+		LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
+		acl_free(acl_str);
+	}
+
 	return acl;
 
 out:
@@ -918,11 +926,15 @@ int posix_acl_2_xattr(acl_t acl, void *buf, size_t size)
 	acl_permset_t permset;
 	int real_size, count, entry_id;
 	int ret = 0;
-	char *acl_str;
 
-	acl_str = acl_to_any_text(acl, NULL, ',',
+	if (isDebug(COMPONENT_FSAL)) {
+		char *acl_str;
+
+		acl_str = acl_to_any_text(acl, NULL, ',',
 				TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
-	LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
+		LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
+		acl_free(acl_str);
+	}
 
 	count = acl_entries(acl);
 	real_size = sizeof(*ea_header) + count * sizeof(*ea_entry);
