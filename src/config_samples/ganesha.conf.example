@@ -40,10 +40,10 @@
 	#Export_Id = 12345;
 
 	## Exported path (mandatory)
-	#Path = /nonexistant;
+	#Path = /nonexistent;
 
 	## Pseudo Path (required for NFSv4 or if mount_path_pseudo = true)
-	#Pseudo = /nonexistant;
+	#Pseudo = /nonexistent;
 
 	## Restrict the protocols that may use this export.  This cannot allow
 	## access that is denied in NFS_CORE_PARAM.

@@ -62,7 +62,7 @@ Plugins_Dir(path, default "/usr/lib64/ganesha")
     Path to the directory containing server specific modules
 
 Enable_NFS_Stats(bool, default true)
-    Whether to collect perfomance statistics. By default the perfomance
+    Whether to collect performance statistics. By default the performance
     counting is enabled. Enable_NFS_Stats can be enabled or disabled
     dynamically via ganesha_stats.
 
@@ -133,7 +133,7 @@ mount_path_pseudo(bool, default false)
     new setups, it's strongly recommended to be set true since it then means
     the same server path for the mount is used for both v3 and v4.x.
 
-    Note that as an export related option, it seems very desireable to be
+    Note that as an export related option, it seems very desirable to be
     able to change this on config reload, unfortunately, at the moment it
     is NOT changeable on config reload. A restart is necessary to change this.
 
@@ -248,7 +248,7 @@ Enable_TCP_keepalive(bool, default true)
 TCP_KEEPCNT(UINT32, range 0 to 255, default 0 -> use system defaults)
     Maximum number of TCP probes before dropping the connection
 
-TCP_KEEPIDLE(UINT32, range 0 to 65535, default 0 -> use system defautls)
+TCP_KEEPIDLE(UINT32, range 0 to 65535, default 0 -> use system defaults)
     Idle time before TCP starts to send keepalive probes
 
 TCP_KEEPINTVL(INT32, range 0 to 65535, default 0 -> use system defaults)

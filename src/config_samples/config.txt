@@ -121,7 +121,7 @@ NFS_CORE_PARAM {}
 
 	TCP_KEEPCNT(UINT32, range 0 to 255, default 0 -> use system defaults)
 
-	TCP_KEEPIDLE(UINT32, range 0 to 65535, default 0 -> use system defautls)
+	TCP_KEEPIDLE(UINT32, range 0 to 65535, default 0 -> use system defaults)
 
 	TCP_KEEPINTVL(INT32, range 0 to 65535, default 0 -> use system defaults)
 

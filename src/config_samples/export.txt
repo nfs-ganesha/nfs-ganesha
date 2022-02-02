@@ -100,7 +100,7 @@ EXPORT_DEFAULTS
 # All export permissions options are available, as well as the following:
 #
 # Export_id (required)	An identifier for the export, must be unique and
-#			betweem 0 and 65535. If Export_Id 0 is specified, Pseudo
+#			between 0 and 65535. If Export_Id 0 is specified, Pseudo
 #			must be the root path (/).
 #
 # Path (required)	The directory in the exported file system this export
@@ -277,7 +277,7 @@ EXPORT
 	Path = /;
 	Pseudo = /;
 	Squash = None;
-	Protcols = NFSV4;
+	Protocols = NFSV4;
 	Transports = TCP;
 	Access_Type = MDONLY_RO;
 	Filesystem_Id = 152.152;

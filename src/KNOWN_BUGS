@@ -5,6 +5,6 @@ This file references the known bugs (some of them are under investigation)
 ------------------
 Fixed bug 
 
-  - A deadlock may occur inbetween workers and tcp dispatchers in case of important traffic (fixed in 0.99.46)
+  - A deadlock may occur in between workers and tcp dispatchers in case of important traffic (fixed in 0.99.46)
 
  
