@@ -48,7 +48,7 @@ VFS {}
 
 **auth_xdev_export(bool, default false)**
 
-**only_one_user(bool, default fasle)**
+**only_one_user(bool, default false)**
 
 See also
 ==============================

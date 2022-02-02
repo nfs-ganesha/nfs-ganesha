@@ -13,7 +13,7 @@ SYNOPSIS
 DESCRIPTION
 ==========================================================
 
-NFS-Ganesha installa the config example for LUSTRE FSAL:
+NFS-Ganesha installs the config example for LUSTRE FSAL:
 | /etc/ganesha/lustre.conf
 
 This file lists LUSTRE specific config options.
@@ -26,7 +26,7 @@ Name(string, "lustre")
 
 **async_hsm_restore(bool, default true)**
 
-All options of VFS export and module could be used for a FSAL_LUSTRE exporti and module.
+All options of VFS export and module could be used for a FSAL_LUSTRE export and module.
 :doc:`ganesha-vfs-config <ganesha-vfs-config>`\(8)
 
 See also
