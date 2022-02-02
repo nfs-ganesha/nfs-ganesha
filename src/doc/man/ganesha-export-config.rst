@@ -89,7 +89,7 @@ Path (required)
     access the first export configured. To access other exports the
     Tag option would need to be used.
 
-    This option is NOT dunamically updateable since it fundamentally changes
+    This option is NOT dynamically updateable since it fundamentally changes
     the export. To change the path exported, export_id should be changed also.
 
 Pseudo (required v4)
@@ -343,7 +343,7 @@ correct way to accomplish this is:
     }
 
 Note that an EXPORT { CLIENT {} } block is not necessary if the default export
-pernmissions are workable.
+permissions are workable.
 
 Note that in order for an EXPORT to be usable with NSFv4 it MUST either have
 Protocols = 4 specified in the EXPORT block, or the EXPORT block must not have
