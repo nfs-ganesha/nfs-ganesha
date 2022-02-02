@@ -74,7 +74,7 @@ All options below are dynamically changeable with config update unless specified
 below.
 
 Export_id (required):
-    An identifier for the export, must be unique and betweem 0 and 65535.
+    An identifier for the export, must be unique and between 0 and 65535.
     If Export_Id 0 is specified, Pseudo must be the root path (/).
 
     Export_id is not dynamic per se, changing it essentially removes the old
@@ -346,7 +346,7 @@ Note that an EXPORT { CLIENT {} } block is not necessary if the default export
 pernmissions are workable.
 
 Note that in order for an EXPORT to be usable with NSFv4 it MUST either have
-Protcols = 4 specified in the EXPORT block, or the EXPORT block must not have
+Protocols = 4 specified in the EXPORT block, or the EXPORT block must not have
 the Protocols option at all such that it defaults to 3,4,9P. Note though that
 if it is not set and EXPORT_DEFAULTS just has Protocols = 3; then even though
 the export is mounted in the Pseudo Filesystem, it will not be accessible and

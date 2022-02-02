@@ -18,7 +18,7 @@ NFS-Ganesha reads the configuration data from:
 
 This file lists NFS-Ganesha Cache config options.  These options used to be
 configured in the CACHEINODE block.  They may still be used in that block, but
-it is deprecated and will go away.  The MDCACHE block takes precidence over the
+it is deprecated and will go away.  The MDCACHE block takes precedence over the
 CACHEINODE block.
 
 MDCACHE {}
@@ -72,7 +72,7 @@ Reaper_Work(uint32, range 1 to 2000, default 0)
     setting is deprecated.  Please use Reaper_Work_Per_Lane*
 
 Reaper_Work_Per_Lane(uint32, range 1 to UINT32_MAX, default 50)
-    This is the numer of handles per lane to scan when performing LRU
+    This is the number of handles per lane to scan when performing LRU
     maintenance.  This task is performed by the Reaper thread.
 
 Biggest_Window(uint32, range 1 to 100, default 40)

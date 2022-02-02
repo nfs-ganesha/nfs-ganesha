@@ -21,7 +21,7 @@ Here is a list of things that may be useful with Ganesha.
    http://www.citi.umich.edu/projects/nfsv4/linux/librpcsecgss/
 
  * locktests-net
-   An fcntl lock stress tester from Bull, targetting NFSv4 locks
+   An fcntl lock stress tester from Bull, targeting NFSv4 locks
    http://nfsv4.bullopensource.org/tools/tests/page39.php
 
  * PyNFS

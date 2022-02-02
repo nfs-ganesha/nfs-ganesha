@@ -115,7 +115,7 @@ FSAL
 
 The "FSAL" block has one sub-block, in this example "VFS", for each
 fsal it is to load.  There can be as many sub-blocks as make sense.
-This is the power of trhe new api, to support multiple fsals simultaneously.
+This is the power of the new api, to support multiple fsals simultaneously.
 There is also provision for FSAL global parameters although none are
 actually defined at this point.
 

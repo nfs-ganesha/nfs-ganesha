@@ -59,7 +59,7 @@ and a description of the return value.  If the function is void, do
 not include a @return tag.  As with files, if the @brief description
 conveys all information worth conveying about the function, do not
 include a long comment and skip directly from the @brief description
-to the paremters.  Here is an example:
+to the parameters.  Here is an example:
 
 /**
  * @brief Do some stuff

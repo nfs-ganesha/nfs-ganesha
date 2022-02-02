@@ -157,7 +157,7 @@ server typically manages its own flags.
 
 The rados_cluster backend stores all of this information in a single
 RADOS object that is modified using read/modify/write cycles. Typically
-we'll read the whole object, modify it, and then attept to write it
+we'll read the whole object, modify it, and then attempt to write it
 back. If something changes between the read and write, we redo the read
 and try it again.
 
