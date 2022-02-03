@@ -25,6 +25,10 @@ add_subdirectory(Stackable_FSALs)
 # Add the directory for Pseudo FSAL
 add_subdirectory(FSAL_PSEUDO)
 
+if(USE_FSAL_VFS OR USE_FSAL_LUSTRE OR USE_FSAL_XFS)
+  add_subdirectory(FSAL_VFS)
+endif(USE_FSAL_VFS OR USE_FSAL_LUSTRE OR USE_FSAL_XFS)
+
 # All we need to do here is control the
 # build of chosen fsals
 if(USE_FSAL_PROXY_V4)
@@ -46,10 +50,6 @@ endif(USE_FSAL_RGW)
 if(USE_FSAL_GPFS)
   add_subdirectory(FSAL_GPFS)
 endif(USE_FSAL_GPFS)
-
-if(USE_FSAL_VFS OR USE_FSAL_LUSTRE OR USE_FSAL_XFS)
-  add_subdirectory(FSAL_VFS)
-endif(USE_FSAL_VFS OR USE_FSAL_LUSTRE OR USE_FSAL_XFS)
 
 if(USE_FSAL_GLUSTER)
   add_subdirectory(FSAL_GLUSTER)
