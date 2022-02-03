@@ -152,8 +152,9 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 		     fs, fs->path);
 
 	if (hdl->obj_handle.type == REGULAR_FILE) {
+		init_fsal_fd(&hdl->u.file.fd.fsal_fd, FSAL_FD_GLOBAL,
+			     op_ctx->fsal_export);
 		hdl->u.file.fd.fd = -1;	/* no open on this yet */
-		hdl->u.file.fd.openflags = FSAL_O_CLOSED;
 	} else if (hdl->obj_handle.type == SYMBOLIC_LINK) {
 		ssize_t retlink;
 		size_t len = stat->st_size + 1;
@@ -1198,19 +1199,25 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			      const char *name)
 {
 	struct vfs_fsal_obj_handle *myself, *destdir;
-	int srcfd, destdirfd;
+	int destdirfd;
 	int retval = 0;
 	int flags = O_PATH | O_NOACCESS | O_NOFOLLOW;
-	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+	fsal_status_t status;
+	fsal_status_t status2 = {ERR_FSAL_NO_ERROR, 0};
+	struct vfs_fd *my_fd;
+	struct vfs_fd temp_fd = { FSAL_FD_INIT, -1 };
+	struct fsal_fd *out_fd;
 
 	LogFullDebug(COMPONENT_FSAL, "link to %s", name);
 
 	if (!op_ctx->fsal_export->exp_ops.fs_supports(
 				op_ctx->fsal_export, fso_link_support)) {
-		fsal_error = ERR_FSAL_NOTSUPP;
+		status = fsalstat(ERR_FSAL_NOTSUPP, 0);
 		goto out;
 	}
+
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
+
 	if (obj_hdl->fsal != obj_hdl->fs->fsal) {
 		LogDebug(COMPONENT_FSAL,
 			 "FSAL %s operation for handle belonging to FSAL %s, return EXDEV",
@@ -1218,30 +1225,66 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			 obj_hdl->fs->fsal != NULL
 				? obj_hdl->fs->fsal->name
 				: "(none)");
-		retval = EXDEV;
-		fsal_error = posix2fsal_error(retval);
+		status = posix2fsal_status(EXDEV);
 		goto out;
 	}
 
-	/* Take read lock on object to protect file descriptor.
-	 * We only take a read lock because we are not changing the state of
-	 * the file descriptor.
+	/* Get a usable file descriptor (don't need to bypass - FSAL_O_ANY
+	 * won't conflict with any share reservation).
 	 */
-	PTHREAD_RWLOCK_rdlock(&obj_hdl->obj_lock);
-
-	if (obj_hdl->type == REGULAR_FILE &&
-	    myself->u.file.fd.openflags != FSAL_O_CLOSED) {
-		srcfd = myself->u.file.fd.fd;
+	if (obj_hdl->type == REGULAR_FILE) {
+		/* For regular files, use fsal_start_global_io so that we use
+		 * the global fd if open otherwise we use temp_fd. We do this
+		 * instead of the code from before the re-work that just
+		 * used the global fd protected by the obj_lock which is
+		 * no longer the way to protect use of the global fd, instead
+		 * fsal_start_io uses the new protection mechanism.
+		 */
+		status = fsal_start_global_io(&out_fd, obj_hdl,
+					      &myself->u.file.fd.fsal_fd,
+					      &temp_fd.fsal_fd, FSAL_O_ANY,
+					      false, &myself->u.file.share);
 	} else {
-		srcfd = vfs_fsal_open(myself, flags, &fsal_error);
-		if (srcfd < 0) {
-			retval = -srcfd;
-			fsal_error = posix2fsal_error(retval);
+		/* For all other objects, we open the object itself. We don't
+		 * use find_fd because that doesn't always return an fd for the
+		 * object itself, For some object types, it returns an open fd
+		 * for the object's parent. For doing a link though, we CAN
+		 * open the actual object by handle and get an fd that works
+		 * for link. This matches the code from before the fsal_fd
+		 * re-work.
+		 */
+		temp_fd.fd = vfs_fsal_open(myself, flags, &status.major);
+		out_fd = &temp_fd.fsal_fd;
+
+		if (temp_fd.fd < 0) {
+			status = posix2fsal_status(-temp_fd.fd);
 			LogDebug(COMPONENT_FSAL,
-				 "open myself returned %d", retval);
-			goto out_unlock;
+				 "open myself returned %s (%d)",
+				 strerror(-temp_fd.fd), -temp_fd.fd);
+		} else {
+			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		}
 	}
+
+	if (FSAL_IS_ERROR(status)) {
+		if (obj_hdl->type == SYMBOLIC_LINK &&
+		    status.major == ERR_FSAL_PERM) {
+			/* You cannot open_by_handle (XFS on linux) a symlink
+			 * and it throws an EPERM error for it.
+			 * open_by_handle_at does not throw that error for
+			 * symlinks so we play a game here.  Since there is
+			 * not much we can do with symlinks anyway,
+			 * say that we did it but don't actually
+			 * do anything.  In this case, return the stat we got
+			 * at lookup time.  If you *really* want to tweek things
+			 * like owners, get a modern linux kernel...
+			 */
+			status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		}
+		goto out;
+	}
+
+	my_fd = container_of(out_fd, struct vfs_fd, fsal_fd);
 
 	destdir =
 	    container_of(destdir_hdl, struct vfs_fsal_obj_handle, obj_handle);
@@ -1253,43 +1296,55 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			 destdir_hdl->fs->fsal != NULL
 				? destdir_hdl->fs->fsal->name
 				: "(none)");
-		retval = EXDEV;
-		fsal_error = posix2fsal_error(retval);
-		goto fileerr;
+		status = posix2fsal_status(EXDEV);
+		goto no_destdir;
 	}
 
-	destdirfd = vfs_fsal_open(destdir, flags, &fsal_error);
+	destdirfd = vfs_fsal_open(destdir, flags, &status.major);
 
 	if (destdirfd < 0) {
-		retval = -destdirfd;
-		fsal_error = posix2fsal_error(retval);
+		status = posix2fsal_status(-destdirfd);
 		LogDebug(COMPONENT_FSAL,
 			 "open destdir returned %d", retval);
-		goto fileerr;
+		goto no_destdir;
 	}
 
-	retval = vfs_link_by_handle(myself->handle, srcfd, destdirfd, name);
+	retval = vfs_link_by_handle(myself->handle, my_fd->fd, destdirfd, name);
 
 	if (retval < 0) {
 		retval = errno;
+
 		LogFullDebug(COMPONENT_FSAL,
 			     "link returned %d", retval);
-		fsal_error = posix2fsal_error(retval);
+
+		status = posix2fsal_status(retval);
 	}
 
 	close(destdirfd);
 
- fileerr:
-	if (!(obj_hdl->type == REGULAR_FILE && myself->u.file.fd.fd >= 0))
-		close(srcfd);
+ no_destdir:
 
- out_unlock:
+	if (obj_hdl->type == REGULAR_FILE) {
+		status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+		LogFullDebug(COMPONENT_FSAL,
+			     "fsal_complete_io returned %s",
+			     fsal_err_txt(status2));
+	} else {
+		retval = close(temp_fd.fd);
+
+		if (retval < 0)
+			status2 = posix2fsal_status(errno);
+
+		LogFullDebug(COMPONENT_FSAL,
+			     "close returned %s",
+			     fsal_err_txt(status2));
+	}
 
  out:
-	LogFullDebug(COMPONENT_FSAL, "returning %d, %d", fsal_error, retval);
-	return fsalstat(fsal_error, retval);
+
+	LogFullDebug(COMPONENT_FSAL, "returning %s", fsal_err_txt(status));
+	return status;
 }
 
 /*
@@ -1661,20 +1716,26 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 	if (type == REGULAR_FILE) {
 		fsal_status_t st;
+		struct fsal_fd *fsal_fd = &myself->u.file.fd.fsal_fd;
 
-		/* Take write lock on object to protect file descriptor.
-		 * This can block over an I/O operation.
+		/* Indicate we want to do fd work (can't fail since not
+		 * reclaiming)
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+		(void) fsal_start_fd_work(fsal_fd, false);
 
-		st = vfs_close_my_fd(&myself->u.file.fd);
+		if (fsal_fd->openflags != FSAL_O_CLOSED)
+			st = vfs_close_my_fd(&myself->u.file.fd);
+		else
+			st = fsalstat(ERR_FSAL_NO_ERROR, 0);
 
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+		/* Indicate we are done with fd work and signal any waiters. */
+		fsal_complete_fd_work(fsal_fd);
 
 		if (FSAL_IS_ERROR(st)) {
 			LogCrit(COMPONENT_FSAL,
-				"Could not close hdl 0x%p, error %s(%d)",
-				obj_hdl, strerror(st.minor), st.minor);
+				"Could not close hdl 0x%p, status %s error %s(%d)",
+				obj_hdl, fsal_err_txt(st),
+				strerror(st.minor), st.minor);
 		}
 	}
 
@@ -1717,6 +1778,8 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 #endif
 	ops->setattr2 = vfs_setattr2;
 	ops->close2 = vfs_close2;
+	ops->close_func = vfs_close_func;
+	ops->reopen_func = vfs_reopen_func;
 
 	/* xattr related functions */
 	ops->list_ext_attrs = vfs_list_ext_attrs;

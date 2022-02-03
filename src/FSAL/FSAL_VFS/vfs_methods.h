@@ -138,10 +138,8 @@ struct vfs_subfsal_obj_ops {
 };
 
 struct vfs_fd {
-	/** The open and share mode etc. */
-	fsal_openflags_t openflags;
-	/* rw lock to protect the file descriptor */
-	pthread_rwlock_t fdlock;
+	/** open and share mode plus fd management */
+	struct fsal_fd fsal_fd;
 	/** The kernel file descriptor. */
 	int fd;
 };
@@ -246,6 +244,13 @@ struct closefd {
 int vfs_fsal_open(struct vfs_fsal_obj_handle *hdl,
 		  int openflags,
 		  fsal_errors_t *fsal_error);
+
+fsal_status_t vfs_close_func(struct fsal_obj_handle *obj_hdl,
+			     struct fsal_fd *fd);
+
+fsal_status_t vfs_reopen_func(struct fsal_obj_handle *obj_hdl,
+			      fsal_openflags_t openflags,
+			      struct fsal_fd *fsal_fd);
 
 struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 					 vfs_file_handle_t *fh,
