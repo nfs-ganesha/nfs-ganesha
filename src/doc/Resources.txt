@@ -22,7 +22,7 @@ Here is a list of things that may be useful with Ganesha.
 
  * locktests-net
    An fcntl lock stress tester from Bull, targeting NFSv4 locks
-   http://nfsv4.bullopensource.org/tools/tests/page39.php
+   https://sourceforge.net/projects/locktests/
 
  * PyNFS
    Client and server libraries for NFSv4.0 and NFSv4.1 with a
@@ -31,7 +31,7 @@ Here is a list of things that may be useful with Ganesha.
 
  * NFS Shell
    A user-mode NFSv3 client and call exerciser, available from
-   ftp://ftp.cs.vu.nl/pub/leendert/nfsshell.tar.gz
+   https://github.com/NetDirect/nfsshell
 
  * NFS Connectathon 04
    Test NFS servers through POSIX calls.  Available from
