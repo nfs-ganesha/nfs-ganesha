@@ -2667,6 +2667,41 @@ struct fsal_obj_ops {
 /**@}*/
 
 /**
+ * FSAL FD FUNCTIONS
+ *
+ * These functions are not to be called extrnal to FSAL, but instead are called
+ * by the fsal_fd management functions.
+ */
+
+/**
+ * @brief Function to close a fsal_fd.
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  fd          File handle to close
+ *
+ * @return FSAL status.
+ */
+
+	 fsal_status_t (*close_func)(struct fsal_obj_handle *obj_hdl,
+				     struct fsal_fd *fd);
+
+/**
+ * @brief Function to open or reopen a fsal_fd.
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  openflags   New mode for open
+ * @param[out] fd          File descriptor that is to be used
+ *
+ * @return FSAL status.
+ */
+
+	 fsal_status_t (*reopen_func)(struct fsal_obj_handle *obj_hdl,
+				      fsal_openflags_t openflags,
+				      struct fsal_fd *fd);
+
+/**@}*/
+
+/**
  * @brief Determine if the given handle is a referral point
  *
  * @param[in]	  obj_hdl	Handle on which to operate

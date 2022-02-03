@@ -933,7 +933,22 @@ struct fsal_fd {
 	 *  file descriptor structure.
 	 */
 	fsal_openflags_t openflags;
+	int32_t fd_work;
+	int32_t io_work;
+	int32_t want_read;
+	int32_t want_write;
+	/** work_mutex protects fd work */
+	pthread_mutex_t work_mutex;
+	/** condition to signal when fd work may commence */
+	pthread_cond_t work_cond;
+	/** Indicate if should be closed on complete. */
+	bool close_on_complete;
 };
+
+#define FSAL_FD_INIT { FSAL_O_CLOSED, 0, 0, 0, 0, \
+		       PTHREAD_MUTEX_INITIALIZER, \
+		       PTHREAD_COND_INITIALIZER, \
+		       false }
 
 /**
  * @brief The ref counted share reservation state.

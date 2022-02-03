@@ -405,6 +405,57 @@ static inline int PTHREAD_mutex_trylock(pthread_mutex_t *mtx,
 	} while (0)
 
 /**
+ * @brief Logging condtion variable wait
+ *
+ * @param[in,out] _cond The condition variable to wait for
+ * @param[in,out] _mutex The mutex associated with the condition variable
+ */
+
+#define PTHREAD_COND_wait(_cond, _mutex)				\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_cond_wait(_cond, _mutex);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Wait cond %p (%s) at %s:%d",	\
+				     _cond, #_cond,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Wait cond %p (%s) "		\
+				"at %s:%d", rc, _cond, #_cond,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging condtion variable signal
+ *
+ * @param[in,out] _cond The condition variable to destroy
+ */
+
+#define PTHREAD_COND_signal(_cond)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_cond_signal(_cond);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Wait cond %p (%s) at %s:%d",	\
+				     _cond, #_cond,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Wait cond %p (%s) "		\
+				"at %s:%d", rc, _cond, #_cond,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
  * @brief Inline functions for timespec math
  *
  * This is for timespec math.  If you want to

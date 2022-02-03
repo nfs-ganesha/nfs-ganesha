@@ -14,6 +14,7 @@
   check_verifier_stat;
   CityHash64;
   clear_op_context_export;
+  close_fsal_fd;
   compound_data_Free;
   component_log_level;
   config_error_no_error;
@@ -59,6 +60,8 @@
   fsal_attach_export;
   fsal_acl_to_mode;
   fsal_common_is_referral;
+  fsal_complete_fd_work;
+  fsal_complete_io;
   fsal_create;
   fsal_default_obj_ops_init;
   fsal_detach_export;
@@ -88,6 +91,9 @@
   fsal_setattr;
   fsal_set_credentials;
   fsal_set_credentials_only_one_user;
+  fsal_start_fd_work;
+  fsal_start_global_io;
+  fsal_start_io;
   fsal_supported_attrs;
   fsal_test_access;
   fsal_write;

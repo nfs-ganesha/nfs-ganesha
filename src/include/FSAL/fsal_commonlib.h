@@ -125,9 +125,59 @@ void update_share_counters(struct fsal_share *share,
 			   fsal_openflags_t old_openflags,
 			   fsal_openflags_t new_openflags);
 
+static inline void update_share_counters_locked(struct fsal_obj_handle *obj_hdl,
+						struct fsal_share *share,
+						fsal_openflags_t old_openflags,
+						fsal_openflags_t new_openflags)
+{
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+	update_share_counters(share, old_openflags, new_openflags);
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+}
+
 fsal_status_t check_share_conflict(struct fsal_share *share,
 				   fsal_openflags_t openflags,
 				   bool bypass);
+
+static inline
+fsal_status_t check_share_conflict_and_update(struct fsal_obj_handle *obj_hdl,
+					      struct fsal_share *share,
+					      fsal_openflags_t old_openflags,
+					      fsal_openflags_t new_openflags,
+					      bool bypass)
+{
+	fsal_status_t status;
+
+	status = check_share_conflict(share, new_openflags, bypass);
+
+	if (!FSAL_IS_ERROR(status)) {
+		/* Take the share reservation now by updating the counters. */
+		update_share_counters(share, old_openflags, new_openflags);
+	}
+
+	return status;
+}
+
+static inline fsal_status_t
+check_share_conflict_and_update_locked(struct fsal_obj_handle *obj_hdl,
+				       struct fsal_share *share,
+				       fsal_openflags_t old_openflags,
+				       fsal_openflags_t new_openflags,
+				       bool bypass)
+{
+	fsal_status_t status;
+
+	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+	status = check_share_conflict_and_update(obj_hdl, share, old_openflags,
+						 new_openflags, bypass);
+
+	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	return status;
+}
 
 fsal_status_t merge_share(struct fsal_obj_handle *orig_hdl,
 			  struct fsal_share *orig_share,
@@ -159,6 +209,44 @@ typedef fsal_status_t (*fsal_open_func)(struct fsal_obj_handle *obj_hdl,
 typedef fsal_status_t (*fsal_close_func)(struct fsal_obj_handle *obj_hdl,
 					 struct fsal_fd *fd);
 
+/**
+ * @brief Function to close a fsal_fd.
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  fd          File handle to close
+ *
+ * @return FSAL status.
+ */
+
+static inline
+fsal_status_t fsal_close_fd(struct fsal_obj_handle *obj_hdl,
+			    struct fsal_fd *fd)
+{
+	return obj_hdl->obj_ops->close_func(obj_hdl, fd);
+}
+
+/**
+ * @brief Function to open or reopen a fsal_fd.
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  openflags   New mode for open
+ * @param[out] fd          File descriptor that is to be used
+ *
+ * @return FSAL status.
+ */
+
+static inline
+fsal_status_t fsal_reopen_fd(struct fsal_obj_handle *obj_hdl,
+			     fsal_openflags_t openflags,
+			     struct fsal_fd *fd)
+{
+	return obj_hdl->obj_ops->reopen_func(obj_hdl, openflags, fd);
+}
+
+fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
+			    struct fsal_fd *fsal_fd,
+			    fsal_close_func close_func);
+
 fsal_status_t fsal_reopen_obj(struct fsal_obj_handle *obj_hdl,
 			      bool check_share,
 			      bool bypass,
@@ -184,6 +272,31 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 			   bool *closefd,
 			   bool open_for_locks,
 			   bool *reusing_open_state_fd);
+
+fsal_status_t fsal_start_global_io(struct fsal_fd **out_fd,
+				   struct fsal_obj_handle *obj_hdl,
+				   struct fsal_fd *my_fd,
+				   struct fsal_fd *tmp_fd,
+				   fsal_openflags_t openflags,
+				   bool bypass,
+				   struct fsal_share *share);
+
+fsal_status_t fsal_start_io(struct fsal_fd **out_fd,
+			    struct fsal_obj_handle *obj_hdl,
+			    struct fsal_fd *obj_fd,
+			    struct fsal_fd *tmp_fd,
+			    struct state_t *state,
+			    fsal_openflags_t openflags,
+			    bool open_for_locks,
+			    bool *reusing_open_state_fd,
+			    bool bypass,
+			    struct fsal_share *share);
+
+fsal_status_t fsal_complete_io(struct fsal_obj_handle *obj_hdl,
+			       struct fsal_fd *fsal_fd);
+
+fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd);
+void fsal_complete_fd_work(struct fsal_fd *fsal_fd);
 
 /**
  * @brief Initialize a state_t structure
