@@ -51,7 +51,7 @@
  * @author Lee Dobryden <lee@linuxbox.com>
  * @brief RPC callback dispatch package
  *
- * This module implements a stocastic dispatcher for callbacks, which
+ * This module implements a stochastic dispatcher for callbacks, which
  * works by traversing the list of connected clients and, dispatching
  * a callback at random in consideration of state.
  *

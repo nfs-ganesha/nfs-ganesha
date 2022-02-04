@@ -720,7 +720,7 @@ lru_reap_impl(enum lru_q_id qid)
 		QUNLOCK(qlane);
 
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
-			/* cant use it. */
+			/* can't use it. */
 			adjust_lru_root_object(entry);
 			mdcache_put(entry);
 			continue;
@@ -754,9 +754,9 @@ lru_reap_impl(enum lru_q_id qid)
 			/* Note, we're not releasing our ref here.
 			 * cih_remove_latched() called
 			 * mdcache_lru_unref(), which released the
-			 * sentinal ref, leaving just the one ref we
+			 * sentinel ref, leaving just the one ref we
 			 * took earlier.  Returning this as is leaves it
-			 * with a ref of 1 (ie, just the sentinal ref)
+			 * with a ref of 1 (ie, just the sentinel ref)
 			 * */
 			goto out;
 		}

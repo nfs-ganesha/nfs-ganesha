@@ -249,7 +249,7 @@ enum nfs_req_result nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 {
 	/* Convenience alias for args */
 	PUTFH4args * const arg_PUTFH4 = &op->nfs_argop4_u.opputfh;
-	/* Convenience alias for resopnse */
+	/* Convenience alias for response */
 	PUTFH4res * const res_PUTFH4 = &resp->nfs_resop4_u.opputfh;
 
 	resp->resop = NFS4_OP_PUTFH;

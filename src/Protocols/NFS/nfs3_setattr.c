@@ -58,7 +58,7 @@
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
- * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
  *
@@ -101,7 +101,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (arg->arg_setattr3.guard.check) {
 		/* This pack of lines implements the "guard check" setattr. This
 		 * feature of nfsv3 is used to avoid several setattr to occur
-		 * concurently on the same object, from different clients
+		 * concurrently on the same object, from different clients
 		 */
 		nfstime3 *obj_ctime =
 			&arg->arg_setattr3.guard.sattrguard3_u.obj_ctime;

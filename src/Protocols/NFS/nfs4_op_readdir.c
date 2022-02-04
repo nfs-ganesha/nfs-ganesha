@@ -86,7 +86,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
  * space for the name and attributes.  This space must be freed.
  *
  * @param[in,out] opaque A struct nfs4_readdir_cb_data that stores the
- *                       location of the array and other bookeeping
+ *                       location of the array and other bookkeeping
  *                       information
  * @param[in]     obj	 Current file
  * @param[in]     attrs  The current file's attributes
@@ -479,7 +479,7 @@ void xdr_dirlist4_uio_release(struct xdr_uio *uio, u_int flags)
 /**
  * @brief NFS4_OP_READDIR
  *
- * Implements the NFS4_OP_READDIR opeartion. If fh is a pseudo FH,
+ * Implements the NFS4_OP_READDIR operation. If fh is a pseudo FH,
  * then call is routed to routine nfs4_op_readdir_pseudo
  *
  * @param[in]     op   Arguments for nfs4_op

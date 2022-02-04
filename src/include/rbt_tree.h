@@ -487,7 +487,7 @@ iterators invalidated are those referring to the deleted node.
  *
  * When RBT_FIND returns, __node points to the node whose value is __val.
  * If multiple nodes have the value __val, only one is returned.
- * If no node has the value __val, __node points to the preceeding
+ * If no node has the value __val, __node points to the preceding
  * or the following node and __node cannot have two children.
  * After the call, if __node is NULL, the tree is empty.
  * To check for success :

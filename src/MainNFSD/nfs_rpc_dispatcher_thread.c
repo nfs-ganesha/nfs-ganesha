@@ -275,7 +275,7 @@ static inline bool nfs_protocol_enabled(protos p)
 /**
  * @brief Close transports and file descriptors used for RPC services.
  *
- * So that restarting the NFS server wont encounter issues of "Address
+ * So that restarting the NFS server won't encounter issues of "Address
  * Already In Use" - this has occurred even though we set the
  * SO_REUSEADDR option when restarting the server with a single export
  * (i.e.: a small config) & no logging at all, making the restart very

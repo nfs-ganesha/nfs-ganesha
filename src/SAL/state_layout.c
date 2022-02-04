@@ -191,7 +191,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 
 		/* We set first to the first state we look in this iteration.
 		 * If the current state matches the first state, it implies
-		 * that went through the entire list without droping the lock
+		 * that went through the entire list without dropping the lock
 		 * guarding the list. So nothing more left to process.
 		 */
 		if (first == NULL)
@@ -251,7 +251,7 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		restore_op_context_export(&saved);
 
 		if (errcnt < STATE_ERR_MAX) {
-			/* Loop again, but since we droped the so_mutex, we
+			/* Loop again, but since we dropped the so_mutex, we
 			 * must restart.
 			 */
 			goto again;

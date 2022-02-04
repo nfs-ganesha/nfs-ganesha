@@ -235,7 +235,7 @@ int vfs_re_index(struct fsal_filesystem *fs,
 		 struct vfs_fsal_export *exp);
 
 /*
- * VFS structure to tell subfunctions wether they should close the
+ * VFS structure to tell subfunctions whether they should close the
  * returned fd or not
  */
 struct closefd {

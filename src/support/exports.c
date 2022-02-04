@@ -2379,7 +2379,7 @@ void free_export_resources(struct gsh_export *export, bool config)
 
 	if (op_ctx == NULL || op_ctx->ctx_export != export) {
 		/* We need to complete export cleanup with this export.
-		 * Otherewise we SHOULD be being called in the final throes
+		 * Otherwise we SHOULD be being called in the final throes
 		 * of releasing an op context, or at least the export so
 		 * attached. We don't need a reference to the export because we
 		 * are already inside freeing it.

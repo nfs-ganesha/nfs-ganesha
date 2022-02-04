@@ -43,7 +43,7 @@
 /**
  * @brief Find the node for this path component
  *
- * If not found, create it.  Called from token_to_proc() interator
+ * If not found, create it.  Called from token_to_proc() iterator
  *
  * @param token [IN] path name component
  * @param arg   [IN] callback state
@@ -86,7 +86,7 @@ static bool is_export_pseudo(struct gsh_export *export)
 }
 
 /**
- * @brief Delete the unecessary directories from pseudo FS
+ * @brief Delete the unnecessary directories from pseudo FS
  *
  * @param pseudo_path [IN] full path of the node
  * @param entry [IN] cache entry for the last directory in the path

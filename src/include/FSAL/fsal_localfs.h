@@ -44,7 +44,7 @@ struct fsal_filesystem;
 /**
  * @brief Public structure for filesystem descriptions
  *
- * This stucture is provided along with a general interface to support those
+ * This structure is provided along with a general interface to support those
  * FSALs that map into a traditional file system model. Note that
  * fsal_obj_handles do not link to an fsal_filesystem, that linkage is reserved
  * for FSAL's private obj handle if appropriate.

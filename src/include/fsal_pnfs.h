@@ -47,7 +47,7 @@
  * that the @c fs_supports method returns @c true when queried with
  * @c fso_pnfs_mds_supported.
  *
- * You must implement @c getdeviceinfo on the export and may impelment
+ * You must implement @c getdeviceinfo on the export and may implement
  * @c getdevicelist, if you wish.  To let clients know what layouts
  * they may request, be sure to implement @c fs_layouttypes.  You
  * should implement @c fs_maximum_segments to inform the protocol
@@ -156,7 +156,7 @@ struct fsal_layoutget_arg {
 	/** The minimum length that must be granted if a layout is to be
 	 *  granted at all. */
 	uint64_t minlength;
-	/** Ths FSAL must use this value (in network byte order) as the
+	/** This FSAL must use this value (in network byte order) as the
 	 *  high quad of any deviceid4 it returns in the loc_body. */
 	uint64_t export_id;
 	/** The maximum number of bytes the client is willing to accept
@@ -265,7 +265,7 @@ struct fsal_layoutreturn_arg {
 	 *  satisfied. */
 	size_t ncookies;
 	/** Array of pointers to layout specific data supplied by
-	 *  LAYOUTRECALL.  If this LAYOUTRETURN completly satisfies
+	 *  LAYOUTRECALL.  If this LAYOUTRETURN completely satisfies
 	 *  one or more invoked LAYOUTRECALLs, the tokens of the
 	 *  recalls will be supplied. */
 	const void *recall_cookies[1];
@@ -291,7 +291,7 @@ struct fsal_layoutcommit_arg {
 	uint64_t last_write;
 	/** True if the client provided a new value for mtime */
 	bool time_changed;
-	/** If new_time is true, the client-supplied modification tiem
+	/** If new_time is true, the client-supplied modification time
 	 *  for the file.  otherwise, undefined. */
 	nfstime4 new_time;
 };

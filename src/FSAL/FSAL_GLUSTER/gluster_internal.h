@@ -55,8 +55,8 @@ ATTR_ACL      | ATTR4_SEC_LABEL   | ATTR4_XATTR)
 /**
  * Override internal Gluster defines for the time being.
  */
-/* Values for valid falgs to be used when using XXXsetattr, to set multiple
- a ttribute values passed via t*he related stat structure.
+/* Values for valid flags to be used when using XXXsetattr, to set multiple
+ * attribute values passed via the related stat structure.
  */
 #define GLAPI_SET_ATTR_MODE  GFAPI_SET_ATTR_MODE
 #define GLAPI_SET_ATTR_UID   GFAPI_SET_ATTR_UID

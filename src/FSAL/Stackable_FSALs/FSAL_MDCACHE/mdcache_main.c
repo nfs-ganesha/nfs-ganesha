@@ -362,9 +362,8 @@ void mdcache_fsal_init(void)
 /**
  * @brief Initialize the MDCACHE package.
  *
- * This shuold be called once at startup, after parsing config
+ * This should be called once at startup, after parsing config
  *
- * @param[in] parm	Parameter description
  * @return FSAL status
  */
 fsal_status_t mdcache_pkginit(void)

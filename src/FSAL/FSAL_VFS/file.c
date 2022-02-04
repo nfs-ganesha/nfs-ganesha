@@ -658,7 +658,7 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 
 #ifdef ENABLE_VFS_DEBUG_ACL
 	if (createmode != FSAL_NO_CREATE) {
-		/* Need to ammend attributes for inherited ACL, these will be
+		/* Need to amend attributes for inherited ACL, these will be
 		 * set later. We also need to test for permission to create
 		 * since there might be an ACL.
 		 */

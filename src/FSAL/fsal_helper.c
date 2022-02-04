@@ -96,7 +96,7 @@ static bool fsal_not_in_group_list(gid_t gid)
  * @brief Check permissions on opening a file.
  *
  * @param[in]  obj               The file being opened
- * @param[in]  openflags         The access reqested on opening the file
+ * @param[in]  openflags         The access requested on opening the file
  * @param[in]  exclusive_create  Indicates the file is being exclusive create
  * @param[out] reason            Description of why the access failed.
  *
@@ -343,7 +343,7 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		/* Any other changes to atime or mtime require owner, root, or
 		 * ACES4_WRITE_ATTRIBUTES.
 		 *
-		 * NOTE: we explicity do NOT check for update of atime only to
+		 * NOTE: we explicitly do NOT check for update of atime only to
 		 * "now". Section 10.6 of both RFC 3530 and RFC 5661 document
 		 * the reasons clients should not do atime updates.
 		 */
@@ -1826,7 +1826,7 @@ fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Callback to implement syncronous read and write
+ * @brief Callback to implement synchronous read and write
  *
  * @param[in] obj		Object being acted on
  * @param[in] ret		Return status of call

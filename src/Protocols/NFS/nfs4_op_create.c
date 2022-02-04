@@ -133,7 +133,7 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 
 	/* Convert current FH into a obj, the current_obj
-	   (assocated with the current FH will be used for this */
+	   (associated with the current FH will be used for this */
 	obj_parent = data->current_obj;
 
 	/* The currentFH must point to a directory
@@ -287,12 +287,12 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		     res_CREATE4->CREATE4res_u.resok4.cinfo.after,
 		     res_CREATE4->CREATE4res_u.resok4.cinfo.atomic);
 
-	/* @todo : BUGAZOMEU: fair ele free dans cette fonction */
+	/* @todo : BUGAZOMEU: faire le free dans cette fonction */
 
 	/* Keep the vnode entry for the file in the compound data */
 	set_current_entry(data, obj_new);
 
-	/* If you reach this point, then no error occured */
+	/* If you reach this point, then no error occurred */
 	res_CREATE4->status = NFS4_OK;
 
  out:

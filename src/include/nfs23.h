@@ -158,7 +158,7 @@ typedef struct specdata3 specdata3;
 
 /**
  * @todo Danger Will Robinson!!
- * this struct is overlayed with fhandle3 in mount.h!!
+ * this struct is overlaid with fhandle3 in mount.h!!
  * This needs to be fixed.
  */
 struct nfs_fh3 {

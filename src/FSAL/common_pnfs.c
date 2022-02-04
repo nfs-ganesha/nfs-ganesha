@@ -355,7 +355,7 @@ nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs, const uint32_t num_hosts,
  * @param[in]  ds_ids	 Server IDs of DSs for each file handle
  * @param[in]  fhs       Array if buffer descriptors holding opaque DS
  *                       handles
- * @param[in] ffds_efficiency MDS evalution of mirror's effectiveness
+ * @param[in] ffds_efficiency MDS evaluation of mirror's effectiveness
  * @param[in] ffds_user Synthetic uid to be used for RPC call to DS
  * @param[in] ffds_group Synthetic gid to be used for RPC call to DS
  * @return NFS status codes.
@@ -468,7 +468,7 @@ static nfsstat4 FSAL_encode_data_server(XDR *xdrs,
  * @param[in]  ds_ids	 Server IDs of DSs for each file handle
  * @param[in]  fhs       Array if buffer descriptors holding opaque DS
  *                       handles
- * @param[in] ffds_efficiency MDS evalution of mirror's effectiveness
+ * @param[in] ffds_efficiency MDS evaluation of mirror's effectiveness
  * @param[in] ffds_user Synthetic uid to be used for RPC call to DS
  * @param[in] ffds_group Synthetic gid to be used for RPC call to DS
  * @param[in] ffl_flags Bitmap flags

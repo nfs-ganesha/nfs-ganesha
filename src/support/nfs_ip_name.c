@@ -43,7 +43,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-/* Hashtable used to cache the hostname, accessed by their IP addess */
+/* Hashtable used to cache the hostname, accessed by their IP address */
 hash_table_t *ht_ip_name;
 unsigned int expiration_time;
 
@@ -197,8 +197,8 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 	 * with the hostname we would cache.
 	 */
 
-	/* I have to keep an integer as key, I wil use the pointer buffkey->addr
-	 * for this, this also means that buffkey->len will be 0
+	/* I have to keep an integer as key, I will use the pointer
+	 * buffkey->addr for this, this also means that buffkey->len will be 0
 	 */
 	buffkey.len = sizeof(sockaddr_t);
 	buffkey.addr = gsh_memdup(ipaddr, buffkey.len);
@@ -359,10 +359,10 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
 
 struct ip_name_cache {
 	/** Configuration for hash table for NFS Name/IP map.
-	    Defautl index size is PRIME_IP_NAME, settable with
+	    Default index size is PRIME_IP_NAME, settable with
 	    Index_Size. */
 	hash_parameter_t hash_param;
-	/** Expiration time for ip-name mappings.  Defautls to
+	/** Expiration time for ip-name mappings.  Defaults to
 	    IP_NAME_Expiration, and settable with Expiration_Time. */
 	uint32_t expiration_time;
 };

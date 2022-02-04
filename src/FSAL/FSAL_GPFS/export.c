@@ -373,7 +373,7 @@ gpfs_free_state(struct fsal_export *exp_hdl, struct state_t *state)
 
 /**
  *  @brief overwrite vector entries with the methods that we support
- *  @param ops tpye of struct export_ops
+ *  @param ops type of struct export_ops
  */
 void gpfs_export_ops_init(struct export_ops *ops)
 {

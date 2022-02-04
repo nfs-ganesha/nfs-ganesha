@@ -42,7 +42,7 @@
 
 /**
  *
- * @brief Implemtation of NFS4_OP_NVERIFY
+ * @brief Implementation of NFS4_OP_NVERIFY
  *
  * This function implements the NFS4_OP_NVERIFY operation.
  *

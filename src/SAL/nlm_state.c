@@ -319,7 +319,7 @@ void dec_nlm_state_ref(state_t *state)
 
 	state->state_exp->exp_ops.free_state(state->state_exp, state);
 
-	/* Release 2 refs: our sentinal one, plus the one from
+	/* Release 2 refs: our sentinel one, plus the one from
 	 * get_state_obj_ref() */
 	obj->obj_ops->put_ref(obj);
 	obj->obj_ops->put_ref(obj);

@@ -192,7 +192,7 @@ int find_peer_addr(char *caller_name, in_port_t sin_port, sockaddr_t *client)
 	return retval;
 }
 
-/* Client routine  to send the asynchrnous response,
+/* Client routine  to send the asynchronous response,
  * key is used to wait for a response
  */
 int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)

@@ -125,7 +125,7 @@ fsal_errors_t posix2fsal_error(int posix_errorcode)
 
       /**
        * @todo: The EBADF error also happens when file
-       *        is opened for reading, and we try writting in it.
+       *        is opened for reading, and we try writing in it.
        *        In this case, we return ERR_FSAL_NOT_OPENED,
        *        but it doesn't seems to be a correct error translation.
        */
@@ -187,7 +187,7 @@ fsal_errors_t posix2fsal_error(int posix_errorcode)
  * @warning
  * AIX returns EEXIST where BSD uses ENOTEMPTY;
  * We want ENOTEMPTY to be interpreted anyway on AIX plateforms.
- * Thus, we explicitely write its value (87).
+ * Thus, we explicitly write its value (87).
  */
 #ifdef _AIX
 	case 87:

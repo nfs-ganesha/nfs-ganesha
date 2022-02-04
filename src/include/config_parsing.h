@@ -138,7 +138,7 @@ static inline bool config_error_is_fatal(struct config_error_type *err_type)
 }
 
 /**
- * @brief Test for errors that make the processed block unuseable
+ * @brief Test for errors that make the processed block unusable
  */
 
 static inline bool config_error_is_crit(struct config_error_type *err_type)
@@ -159,7 +159,7 @@ static inline bool config_error_is_harmless(struct config_error_type *err_type)
 }
 
 /**
- * @brief Test for errors that make the processed block unuseable for current
+ * @brief Test for errors that make the processed block unusable for current
  *        export
  */
 
@@ -274,7 +274,7 @@ struct config_item_list {
  *   non-settable FSAL parameters.  It returns a pointer to the space.
  *
  *   link_mem != NULL, self_struct != NULL
- *   This call is to free or release any resouces in this allocated
+ *   This call is to free or release any resources in this allocated
  *   or referenced block. The link_mem argument is passed so that
  *   dereferences as above are possible.  It should not attempt to
  *   change the link_mem such as doing glist removes.  This is only

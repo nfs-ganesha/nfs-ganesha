@@ -62,7 +62,7 @@ typedef enum {
 } object_file_type_t;
 
 /* ---------------
- *  FS dependant :
+ *  FS dependent :
  * --------------*/
 
 /* export object
@@ -411,7 +411,7 @@ typedef uint64_t attrmask_t;
 #define ATTR_MTIME 0x0000000000008000LL
 /* space used by this file. */
 #define ATTR_SPACEUSED 0x0000000000010000LL
-/* This bit indicates that an error occured during getting object attributes */
+/* This bit indicates that an error occurred during getting object attributes */
 #define ATTR_RDATTR_ERR 0x8000000000000000LL
 /* Generation number */
 #define ATTR_GENERATION 0x0000000000080000LL
@@ -452,7 +452,7 @@ typedef uint64_t attrmask_t;
 #define ATTRS_SET_TIME (ATTR_ATIME | ATTR_MTIME | \
 			ATTR_ATIME_SERVER | ATTR_MTIME_SERVER)
 
-/** Define the set of attributes contained or derrived from struct stat that
+/** Define the set of attributes contained or derived from struct stat that
  *  are supplied by posix2fsal_attributes.
  */
 #define ATTRS_POSIX (ATTR_TYPE | ATTR_SIZE | ATTR_FSID | ATTR_FILEID |     \
@@ -535,7 +535,7 @@ struct fsal_attrlist {
 
 #define XATTR_NAME_SIZE (MAXNAMLEN + 1)
 
-/** An extented attribute entry */
+/** An extended attribute entry */
 typedef struct fsal_xattrent {
 	uint64_t xattr_id;	/*< xattr index */
 	uint64_t xattr_cookie;	/*< cookie for the next entry */
@@ -682,7 +682,7 @@ typedef enum enum_fsal_fsinfo_options {
 
 /* Default time_delta nanoseconds.
  * FSALs may set time_delta.tv_nsec to this value or override with a different
- * value or even fill in programatically with the result from some call.
+ * value or even fill in programmatically with the result from some call.
  */
 #define FSAL_DEFAULT_TIME_DELTA_NSEC 100
 
@@ -691,7 +691,7 @@ typedef struct fsal_staticfsinfo_t {
 	uint32_t maxlink;	/*< maximum hard links on a file */
 	uint32_t maxnamelen;	/*< maximum name length */
 	uint32_t maxpathlen;	/*< maximum path length */
-	bool no_trunc;		/*< is it errorneous when name>maxnamelen? */
+	bool no_trunc;		/*< is it erroneous when name>maxnamelen? */
 	bool chown_restricted;	/*< is chown limited to super-user. */
 	bool case_insensitive;	/*< case insensitive FS? */
 	bool case_preserving;	/*< FS preserves case? */

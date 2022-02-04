@@ -126,7 +126,7 @@ enum nfs_req_result nfs4_op_open_confirm(struct nfs_argop4 *op,
 		goto out;
 	}
 
-	/* If opened file is already confirmed, retrun NFS4ERR_BAD_STATEID */
+	/* If opened file is already confirmed, return NFS4ERR_BAD_STATEID */
 	if (open_owner->so_owner.so_nfs4_owner.so_confirmed) {
 		PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 		res_OPEN_CONFIRM4->status = NFS4ERR_BAD_STATEID;

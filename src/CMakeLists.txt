@@ -1078,7 +1078,7 @@ endif(USE_CAPS)
 # flag USE_BLKID
 
 check_include_files("blkid/blkid.h" HAVE_LIBBLKID_H)
-find_library(LIBBLKID blkid)  # Management of Capablilities
+find_library(LIBBLKID blkid)  # Management of Capabilities
 check_library_exists(
 	blkid
 	blkid_devno_to_devname
@@ -1087,7 +1087,7 @@ check_library_exists(
 	)
 
 check_include_files("uuid/uuid.h" HAVE_LIBUUID_H)
-find_library(LIBUUID uuid)  # Management of Capablilities
+find_library(LIBUUID uuid)  # Management of Capabilities
 check_library_exists(
 	uuid
 	uuid_parse
@@ -1397,7 +1397,7 @@ set(USE_ACL_MAPPING ${USE_ACL_MAPPING}
   FORCE)
 
 
-# Now create a useable config.h
+# Now create a usable config.h
 configure_file(
   "${PROJECT_SOURCE_DIR}/include/config-h.in.cmake"
   "${PROJECT_BINARY_DIR}/include/config.h"
@@ -1547,7 +1547,7 @@ else(SANITIZE_ADDRESS)
     set(BCOND_SANITIZE_ADDRESS "%bcond_with")
 endif(SANITIZE_ADDRESS)
 
-# Now create a useable specfile
+# Now create a usable specfile
 configure_file(
   "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"
   "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec"

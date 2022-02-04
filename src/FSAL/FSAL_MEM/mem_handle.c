@@ -482,7 +482,7 @@ void mem_clean_export(struct mem_fsal_obj_handle *root)
 /**
  * @brief Remove all children from a directory's tree
  *
- * @param[in] parent	Directroy to clean
+ * @param[in] parent	Directory to clean
  */
 void mem_clean_all_dirents(struct mem_fsal_obj_handle *parent)
 {

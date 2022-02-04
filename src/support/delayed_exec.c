@@ -114,7 +114,7 @@ static pthread_cond_t cv = PTHREAD_COND_INITIALIZER;
 static struct avltree tree;
 
 /**
- * @brief Posssible states for the delayed executor
+ * @brief Possible states for the delayed executor
  */
 enum delayed_state {
 	delayed_running,	/*< Executor is running */
@@ -212,7 +212,7 @@ void *delayed_thread(void *arg)
 	SetNameFunction("Async");
 	rcu_register_thread();
 
-	/* Excplicitly and definitely enable cancellation */
+	/* Explicitly and definitely enable cancellation */
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old_state);
 
 	/**

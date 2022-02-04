@@ -380,7 +380,7 @@ static inline int PTHREAD_mutex_trylock(pthread_mutex_t *mtx,
 	} while (0)
 
 /**
- * @brief Logging condtion variable destroy
+ * @brief Logging condition variable destroy
  *
  * @param[in,out] _cond The condition variable to destroy
  */

@@ -40,7 +40,7 @@ int nlm_send_async_res_nlm4(state_nlm_client_t *host, state_async_func_t func,
 int nlm_send_async_res_nlm4test(state_nlm_client_t *host,
 				state_async_func_t func, nfs_res_t *pres);
 
-/* Client routine  to send the asynchrnous response, key is used to wait for
+/* Client routine  to send the asynchronous response, key is used to wait for
  * a response
  */
 int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key);

@@ -561,7 +561,7 @@ static inline void drc_free_expired(void)
  *
  * @param[in] req  The svc_req being processed.
  *
- * @return The ref'd DRC if sucessfully located, else NULL.
+ * @return The ref'd DRC if successfully located, else NULL.
  */
 static /* inline */ drc_t *
 nfs_dupreq_get_drc(struct svc_req *req)
@@ -929,7 +929,7 @@ static inline void dupreq_entry_put(dupreq_entry_t *dv)
 /**
  * @page DRC_RETIRE DRC request retire heuristic.
  *
- * We add a new, per-drc semphore like counter, retwnd.  The value of
+ * We add a new, per-drc semaphore like counter, retwnd.  The value of
  * retwnd begins at 0, and is always >= 0.  The value of retwnd is increased
  * when a a duplicate req cache hit occurs.  If it was 0, it is increased by
  * some small constant, say, 16, otherwise, by 1.  And retwnd decreases by 1
@@ -981,7 +981,7 @@ static inline void dupreq_entry_put(dupreq_entry_t *dv)
  */
 static inline bool drc_should_retire(drc_t *drc)
 {
-	/* do not exeed the hard bound on cache size */
+	/* do not exceed the hard bound on cache size */
 	if (unlikely(drc->size > drc->maxsize))
 		return true;
 
@@ -1316,7 +1316,7 @@ dq_again:
  * only in error conditions.  The refcnt of the corresponding duplicate request
  * entry is unchanged (ie., the caller must still call nfs_dupreq_rele).
  *
- * We assert req->rq_u1 now points to the corresonding duplicate request
+ * We assert req->rq_u1 now points to the corresponding duplicate request
  * cache entry.
  *
  * @param[in] reqnfs  The nfs_request_t.
@@ -1399,7 +1399,7 @@ void nfs_dupreq_delete(nfs_request_t *reqnfs, enum nfs_req_result rc)
 /**
  * @brief Decrement the call path refcnt on a cache entry.
  *
- * We assert reqnfs->svc.rq_u1 now points to the corresonding duplicate request
+ * We assert reqnfs->svc.rq_u1 now points to the corresponding duplicate request
  * cache entry (dv).
  *
  * @param[in] reqnfs  The nfs_request_t.
@@ -1445,7 +1445,7 @@ void nfs_dupreq_rele(nfs_request_t *reqnfs)
 		 * implement svc_inline_resume() that would just do the
 		 * necessary bits. This situation is pretty unlikely and when it
 		 * does happen, it's unlikely to be more than one queued request
-		 * so the "pain" of doing a full svc_resume() just to reture a
+		 * so the "pain" of doing a full svc_resume() just to return a
 		 * duplicate request is minor.
 		 */
 		nfs_request_t *req2 = TAILQ_FIRST(&dv->dupes);

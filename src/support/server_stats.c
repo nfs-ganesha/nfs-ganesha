@@ -1841,7 +1841,7 @@ void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
  * }
  *
  * @param op    [IN] pointer to proto op sub-structure of interest
- * @param iter  [IN] interator in reply stream to fill
+ * @param iter  [IN] iterator in reply stream to fill
  */
 static void server_dbus_op_stats(struct proto_op *op, DBusMessageIter *iter)
 {
@@ -1871,7 +1871,7 @@ static void server_dbus_op_stats(struct proto_op *op, DBusMessageIter *iter)
  * }
  *
  * @param iop   [IN] pointer to xfer op sub-structure of interest
- * @param iter  [IN] interator in reply stream to fill
+ * @param iter  [IN] iterator in reply stream to fill
  */
 
 static void server_dbus_iostats(struct xfer_op *iop, DBusMessageIter *iter)
@@ -1907,7 +1907,7 @@ static void server_dbus_iostats(struct xfer_op *iop, DBusMessageIter *iter)
  * }
  *
  * @param iop   [IN] pointer to xfer op sub-structure of interest
- * @param iter  [IN] interator in reply stream to fill
+ * @param iter  [IN] iterator in reply stream to fill
  * @param for_export  [IN] boolean indicating whether it is for an export
  **/
 
@@ -1945,7 +1945,7 @@ static void server_dbus_cexop_stats(struct xfer_op *iop, DBusMessageIter *iter,
  * }
  *
  * @param iop   [IN] pointer to proto_op sub-structure of interest
- * @param iter  [IN] interator in reply stream to fill
+ * @param iter  [IN] iterator in reply stream to fill
  * @param for_export  [IN] boolean indicating whether it is for an export
  **/
 static void server_dbus_ceop_stats(struct proto_op *op, DBusMessageIter *iter,
@@ -1980,7 +1980,7 @@ static void server_dbus_ceop_stats(struct proto_op *op, DBusMessageIter *iter,
  * }
  *
  * @param sp   [IN] pointer to nfsv41_stats sub-structure of interest
- * @param iter  [IN] interator in reply stream to fill
+ * @param iter  [IN] iterator in reply stream to fill
  * @param for_export  [IN] boolean indicating whether it is for an export
  **/
 static void server_dbus_celo_stats(struct nfsv41_stats *sp,
@@ -2851,7 +2851,7 @@ void server_dbus_9p_opstats(struct _9p_stats *_9pp, u8 opcode,
  * }
  *
  * @param iop   [IN] pointer to xfer op sub-structure of interest
- * @param iter  [IN] interator in reply stream to fill
+ * @param iter  [IN] iterator in reply stream to fill
  */
 
 static void server_dbus_layouts(struct layout_op *lop, DBusMessageIter *iter)
@@ -2893,7 +2893,7 @@ void server_dbus_v42_layouts(struct nfsv41_stats *v42p, DBusMessageIter *iter)
  * @brief Report delegation statistics as a struct
  *
  * @param iop   [IN] pointer to xfer op sub-structure of interest
- * @param iter  [IN] interator in reply stream to fill
+ * @param iter  [IN] iterator in reply stream to fill
  */
 void server_dbus_delegations(struct deleg_stats *ds, DBusMessageIter *iter)
 {

@@ -92,7 +92,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 	nfs_client_id_t *clientid = NULL;
 	/* Name for the lock owner */
 	state_nfs4_owner_name_t owner_name;
-	/* Description of requrested lock */
+	/* Description of requested lock */
 	fsal_lock_param_t lock_desc;
 	/* Description of conflicting lock */
 	fsal_lock_param_t conflict_desc;

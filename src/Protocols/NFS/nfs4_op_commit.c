@@ -55,7 +55,7 @@ static enum nfs_req_result op_dscommit(struct nfs_argop4 *op,
 				       struct nfs_resop4 *resp);
 
 /**
- * @brief Implemtation of NFS4_OP_COMMIT
+ * @brief Implementation of NFS4_OP_COMMIT
  *
  * This function implemtats NFS4_OP_COMMIT.
  *
@@ -111,7 +111,7 @@ enum nfs_req_result nfs4_op_commit(struct nfs_argop4 *op, compound_data_t *data,
 		     "Commit verifier %d-%d",
 		     ((int *)verf_desc.addr)[0], ((int *)verf_desc.addr)[1]);
 
-	/* If you reach this point, then an error occured */
+	/* If you reach this point, then an error occurred */
 	res_COMMIT4->status = NFS4_OK;
 	return NFS_REQ_OK;
 }				/* nfs4_op_commit */

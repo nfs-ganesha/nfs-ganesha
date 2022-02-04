@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 		exit(EINVAL);
 	}
 
-	/* Exemple de parsing */
+	/* Parsing example */
 	config = config_ParseFile(fichier);
 
 	LogTest("config_pointer = %p", config);

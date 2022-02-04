@@ -66,7 +66,7 @@ static inline int _display_buffer_remain(struct display_buffer *dspbuf)
  *
  * @retval -1 if there is some problem rendering the buffer unusable.
  * @retval 0 if the buffer has overflowed.
- * @retval >0 indicates the bytes remaining (inlcuding one byte for '\0').
+ * @retval >0 indicates the bytes remaining (including one byte for '\0').
  */
 int display_buffer_remain(struct display_buffer *dspbuf)
 {
@@ -81,7 +81,7 @@ int display_buffer_remain(struct display_buffer *dspbuf)
 	    || dspbuf->b_current > (dspbuf->b_start + dspbuf->b_size))
 		dspbuf->b_current = dspbuf->b_start;
 
-	/* Buffer is too small, just make it an emptry
+	/* Buffer is too small, just make it an empty
 	 * string and mark the buffer as overrun.
 	 */
 	if (dspbuf->b_size < 4) {
@@ -108,7 +108,7 @@ int display_buffer_remain(struct display_buffer *dspbuf)
  * The result will be a proper UTF-8 string (assuming the rest of the string is
  * valid UTF-8...).
  *
- * Caller will make sure sufficent room is available in buffer for the "..."
+ * Caller will make sure sufficient room is available in buffer for the "..."
  * string. This leaves it up to the caller whether prt must be backed up
  * from b_current, or if the caller knows the next item won't fit in the buffer
  * but that there is room for the "..." string.
@@ -155,7 +155,7 @@ void _display_complete_overflow(struct display_buffer *dspbuf, char *ptr)
 	}
 	/* else last character is not valid, leave ptr to strip it. */
 
-	/* Now we know where to place the elipsis... */
+	/* Now we know where to place the ellipsis... */
 	strcpy(ptr, "...");
 }
 
@@ -556,7 +556,7 @@ int display_cat_trunc(struct display_buffer *dspbuf, char *str, size_t max)
 	}
 
 	/* we know dspbuf itself can not have overflowed
-	 * so just return the new remaing buffer space.
+	 * so just return the new remaining buffer space.
 	 */
 	return _display_buffer_remain(dspbuf);
 }

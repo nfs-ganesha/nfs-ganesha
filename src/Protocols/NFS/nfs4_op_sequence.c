@@ -220,7 +220,7 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	 */
 	op_ctx->clientid = &data->session->clientid;
 
-	/* Now check the response size (we check here because we could't check
+	/* Now check the response size (we check here because we couldn't check
 	 * in nfs4_Compound because the session wasn't established yet).
 	 */
 	res_SEQUENCE4->sr_status = check_resp_room(data, data->op_resp_size);

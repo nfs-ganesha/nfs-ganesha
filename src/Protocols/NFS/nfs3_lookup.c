@@ -54,7 +54,7 @@
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
- * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
  *

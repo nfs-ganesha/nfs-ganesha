@@ -162,7 +162,7 @@ static inline int check_for_rdattr_error(struct bitmap4 *attr_request)
  *     2nd bit = FATTR4_LINK_SUPPORT    = 5
  *     3rd bit = FATTR4_SYMLINK_SUPPORT = 6
  *
- *     Juste one uint32_t is necessay: 2**1 + 2**5 + 2**6 = 2 + 32 + 64 = 98
+ *     Juste one uint32_t is necessary: 2**1 + 2**5 + 2**6 = 2 + 32 + 64 = 98
  *   +---+----+
  *   | 1 | 98 |
  *   +---+----+

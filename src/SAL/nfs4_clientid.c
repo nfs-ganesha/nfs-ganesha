@@ -587,10 +587,10 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
  *
  * @param[in] clientid the client id record
  *
- * @retval CLIENT_ID_SUCCESS if successfull.
- * @retval CLIENT_ID_INSERT_MALLOC_ERROR if an error occured during
+ * @retval CLIENT_ID_SUCCESS if successful.
+ * @retval CLIENT_ID_INSERT_MALLOC_ERROR if an error occurred during
  *         the insertion process
- * @retval CLIENT_ID_NETDB_ERROR if an error occured during the netdb
+ * @retval CLIENT_ID_NETDB_ERROR if an error occurred during the netdb
  *         query (via gethostbyaddr).
  */
 
@@ -742,12 +742,12 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
  * @param[in] clientid  The client id record
  * @param[in] component The component ID for logging
  *
- * @retval CLIENT_ID_SUCCESS if successfull.
+ * @retval CLIENT_ID_SUCCESS if successful.
  * @retval CLIENT_ID_INVALID_ARGUMENT if unable to find record in
  *         unconfirmed table
  * @retval CLIENT_ID_INSERT_MALLOC_ERROR if unable to insert record
  *         into confirmed table
- * @retval CLIENT_ID_NETDB_ERROR if an error occured during the netdb
+ * @retval CLIENT_ID_NETDB_ERROR if an error occurred during the netdb
  *         query (via gethostbyaddr).
  */
 clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
@@ -1210,7 +1210,7 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 		pclientid = buffval.addr;
 
 		if (pclientid->cid_confirmed == STALE_CLIENT_ID) {
-			/* Stale client becuse of ip detach and attach to
+			/* Stale client because of ip detach and attach to
 			 * same node */
 			dec_client_id_ref(pclientid);
 			status = CLIENT_ID_STALE;

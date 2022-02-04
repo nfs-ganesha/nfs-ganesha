@@ -384,7 +384,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 
 		if ((offset + size) > MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFS_V4,
-				 "A client tryed to violate max file size %"
+				 "A client tried to violate max file size %"
 				 PRIu64 " for exportid #%hu",
 				 MaxOffsetWrite,
 				 op_ctx->ctx_export->export_id);

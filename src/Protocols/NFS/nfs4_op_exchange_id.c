@@ -456,7 +456,7 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 }
 
 /**
- * @brief free memory alocated for nfs4_op_exchange_id result
+ * @brief free memory allocated for nfs4_op_exchange_id result
  *
  * @param[in,out] resp Pointer to nfs4_op results
  */

@@ -299,7 +299,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto putref;
 	}
 
-	/* do not exceed maxium READ offset if set */
+	/* do not exceed maximum READ offset if set */
 	if (MaxOffsetRead < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Read offset=%" PRIu64
@@ -308,7 +308,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		if ((offset + size) > MaxOffsetRead) {
 			LogEvent(COMPONENT_NFSPROTO,
-				 "A client tryed to violate max file size %"
+				 "A client tried to violate max file size %"
 				 PRIu64 " for exportid #%hu",
 				 MaxOffsetRead,
 				 op_ctx->ctx_export->export_id);

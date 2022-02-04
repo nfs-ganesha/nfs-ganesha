@@ -43,7 +43,7 @@
  *
  *  @return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
- *        - Another error code if an error occured.
+ *        - Another error code if an error occurred.
  */
 fsal_status_t
 GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl, const char *object_name)

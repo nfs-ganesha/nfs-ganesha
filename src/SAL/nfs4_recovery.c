@@ -1108,7 +1108,7 @@ restart:
 				PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
 
 				/* nfs_client_id_expire requires cr_mutex
-				 * if not decoupled alread
+				 * if not decoupled already
 				 */
 				if (recp)
 					PTHREAD_MUTEX_lock(&recp->cr_mutex);

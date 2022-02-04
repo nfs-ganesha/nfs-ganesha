@@ -221,7 +221,7 @@ static fsal_status_t populate_fs_locations(struct vfs_fsal_obj_handle *hdl,
 
 	if (FSAL_TEST_MASK(attrs_out->valid_mask, ATTR4_FS_LOCATIONS)) {
 		/* on a referral the filesystem id has to change
-		 * it get's calculated via a hash from the referral
+		 * it gets calculated via a hash from the referral
 		 * and stored in the fsid object of the fsal_obj_handle
 		 */
 

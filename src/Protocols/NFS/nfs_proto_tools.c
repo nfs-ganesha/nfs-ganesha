@@ -277,9 +277,9 @@ bool nfs_RetryableError(fsal_errors_t fsal_errors)
 	return false;
 }
 /**
- * @brief Returns the maximun attribute index possbile for a 4.x protocol.
+ * @brief Returns the maximum attribute index possbile for a 4.x protocol.
  *
- * This function returns the maximun attribute index possbile for a
+ * This function returns the maximum attribute index possbile for a
  * 4.x protocol.
  * returns -1 if the protocol is not recognized.
  *
@@ -2088,7 +2088,7 @@ static fattr_xdr_result decode_createtime(XDR *xdr,
  * FATTR4_TIME_DELTA
  */
 
-/* According to RFC3530, this is "the smallest usefull server time granularity".
+/* According to RFC3530, this is "the smallest useful server time granularity".
  */
 
 static fattr_xdr_result encode_deltatime(XDR *xdr, struct xdr_attrs_args *args)
@@ -4292,7 +4292,7 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 			     (char *)(Fattr2->attr_vals.attrlist4_val +
 				      LastOffset), sizeof(u_int)) != 0) {
 				LogFullDebug(COMPONENT_NFS_V4,
-					     "Attr %s wrong len expexted %u got %u",
+					     "Attr %s wrong len expected %u got %u",
 					     fattr4tab[attr1].name, len,
 					     *((u_int *)
 					       (Fattr2->attr_vals.attrlist4_val
@@ -4333,7 +4333,7 @@ int nfs4_Fattr_cmp(fattr4 *Fattr1, fattr4 *Fattr2)
 			     (char *)(Fattr2->attr_vals.attrlist4_val +
 				      LastOffset), sizeof(u_int)) != 0) {
 				LogFullDebug(COMPONENT_NFS_V4,
-					     "Attr %s wrong len expexted %u got %u",
+					     "Attr %s wrong len expected %u got %u",
 					     fattr4tab[attr1].name, len,
 					     *((u_int *)
 					       (Fattr2->attr_vals.attrlist4_val

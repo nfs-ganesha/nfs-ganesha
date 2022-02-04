@@ -1323,7 +1323,7 @@ int proxyv4_init_rpc(struct proxyv4_export *proxyv4_exp)
 	/**
 	 * @todo this lock is not really necessary so long as we can
 	 *       only do one export at a time.  This is a reminder that
-	 *       there is work to do to get this fnctn to truely be
+	 *       there is work to do to get this fnctn to truly be
 	 *       per export.
 	 */
 	PTHREAD_MUTEX_lock(&rpc->listlock);
@@ -2232,7 +2232,7 @@ static fsal_status_t  fill_share_OPEN4args(uint32_t *share_access,
  * This function fills an openflags4 openhow field of an OPEN4args struct
  * to prepare an OPEN v4.1 call.
  *
- * @param[in]     attrs_in       open atributes
+ * @param[in]     attrs_in       open attributes
  * @param[in]     create_mode    open create mode
  * @param[in]     verifier       open verifier
  * @param[in,out] openhow        openhow field to be filled

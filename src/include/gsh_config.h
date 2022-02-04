@@ -129,7 +129,7 @@ typedef enum protos {
 #define DRC_TCP_RECYCLE_EXPIRE_S 600	/* 10m */
 
 /**
- * @brief Default value for core_param.drc.tcp.checkstum
+ * @brief Default value for core_param.drc.tcp.checksum
  */
 #define DRC_TCP_CHECKSUM true
 
@@ -521,7 +521,7 @@ typedef struct nfs_version4_parameter {
 	char *idmapconf;
 	/** Full path to recovery root directory */
 	char *recov_root;
-	/** Name of recovery direcory */
+	/** Name of recovery directory */
 	char *recov_dir;
 	/** Name of recovery old dir (for legacy recovery_fs only */
 	char *recov_old_dir;

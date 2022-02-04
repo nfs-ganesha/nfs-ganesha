@@ -131,9 +131,9 @@ void cleanup_layouts(compound_data_t *data)
 
 /**
  *
- * Brief Implemtation of NFS4_OP_CLOSE
+ * Brief Implementation of NFS4_OP_CLOSE
  *
- * This function implemtats the NFS4_OP_CLOSE
+ * This function implements the NFS4_OP_CLOSE
  * operation.
  *
  * @param[in]     op   Arguments for nfs4_op
@@ -259,7 +259,7 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 			/* Is this actually what we want to do, rather
 			 * than freeing all locks on close?
 			 * Especially since the next thing we do is
-			 * go through ane release any lock states.
+			 * go through and release any lock states.
 			 */
 			res_CLOSE4->status = NFS4ERR_LOCKS_HELD;
 

@@ -27,7 +27,7 @@
 
 /**
  * @file nfs_dupreq.h
- * @brief Prototypes for duplicate requst cache
+ * @brief Prototypes for duplicate request cache
  */
 
 #ifndef NFS_DUPREQ_H
@@ -99,7 +99,7 @@ typedef struct drc {
  *  occurs when there is an NFS_DROP result from a retryable error or
  *  an auth error.
  *
- *  Once the request is succesfully completed, any additional queued
+ *  Once the request is successfully completed, any additional queued
  *  requests are dropped.
  *
  *  We limit the queue to 3 duplicates. That should be more than enough

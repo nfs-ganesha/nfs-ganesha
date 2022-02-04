@@ -91,7 +91,7 @@ struct _nfs_health nfs_health_;
 
 static struct _nfs_health healthstats;
 
-/* ServerEpoch is ServerBootTime unless overriden by -E command line option */
+/* ServerEpoch is ServerBootTime unless overridden by -E command line option */
 struct timespec nfs_ServerBootTime;
 time_t nfs_ServerEpoch;
 
@@ -389,7 +389,9 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 		return -1;
 	}
 
-	/* Worker paramters: ip/name hash table and expiration for each entry */
+	/* Worker parameters: ip/name hash table and expiration
+	 * for each entry
+	 */
 	(void) load_config_from_parse(parse_tree,
 				      &nfs_ip_name,
 				      NULL,
@@ -875,7 +877,7 @@ static void lower_my_caps(void)
 
 	/* Print newly set capabilities (same as what CLI "getpcaps" displays */
 	cap_text = cap_to_text(cap, &capstrlen);
-	LogEvent(COMPONENT_INIT, "currenty set capabilities are: %s",
+	LogEvent(COMPONENT_INIT, "currently set capabilities are: %s",
 		 cap_text);
 	cap_free(cap_text);
 	cap_free(cap);
@@ -1008,7 +1010,7 @@ bool nfs_health(void)
 
 	/* Consider healthy and making progress if we have dequeued some
 	 * requests or there is one or less to dequeue.  Don't check
-	 * enqueue_diff == 0 here, as there will be suprious warnings during
+	 * enqueue_diff == 0 here, as there will be spurious warnings during
 	 * times of low traffic, when an enqueue happens to coincide with the
 	 * heartbeat firing.
 	 */

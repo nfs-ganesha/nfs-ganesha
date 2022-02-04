@@ -32,7 +32,7 @@
 
 /**
  * @file  fsal_commomnlib.h
- * @brief Miscelaneous FSAL common library routines
+ * @brief Miscellaneous FSAL common library routines
  */
 
 #ifndef FSAL_COMMONLIB_H

@@ -263,7 +263,7 @@ typedef fsal_errors_t (*helper_readdir_cb)
  * track of the structure it is filling, space used, and so forth.
  *
  * This function should return true if the entry has been added to the
- * caller's responde, or false if the structure is fulled and the
+ * caller's response, or false if the structure is fulled and the
  * structure has not been added.
  */
 
@@ -272,7 +272,7 @@ struct fsal_readdir_cb_parms {
 	const char *name;	/*< Dir entry name */
 	bool attr_allowed;	/*< True if caller has perm to getattr */
 	bool in_result;		/*< true if the entry has been added to the
-				 *< caller's responde, or false if the
+				 *< caller's response, or false if the
 				 *< structure is filled and the entry has not
 				 *< been added. */
 };
@@ -414,7 +414,7 @@ fsal_status_t fsal_verify2(struct fsal_obj_handle *obj,
 			   fsal_verifier_t verifier);
 
 /**
- * @brief Pepare an fsal_attrlist for fetching attributes.
+ * @brief Prepare an fsal_attrlist for fetching attributes.
  *
  * @param[in,out] attrs   The fsal_attrlist to work with
  * @param[in]             The mask to use for the fetch
@@ -587,7 +587,7 @@ enum fsal_create_mode nfs3_createmode_to_fsal(createmode3 createmode)
  * is not open in a mode usable by the caller.
  *
  * The caller may pass FSAL_O_ANY to indicate any mode of open (RDONLY,
- * WRONLY, or RDWR is useable - often just to fetch attributes or something).
+ * WRONLY, or RDWR is usable - often just to fetch attributes or something).
  *
  * @param[in] fd_openflags The openflags describing the fd
  * @param[in] to_openflags The openflags describing the desired mode
@@ -612,7 +612,7 @@ static inline bool not_open_usable(fsal_openflags_t fd_openflags,
  * is open in a mode usable by the caller.
  *
  * The caller may pass FSAL_O_ANY to indicate any mode of open (RDONLY,
- * WRONLY, or RDWR is useable - often just to fetch attributes or something).
+ * WRONLY, or RDWR is usable - often just to fetch attributes or something).
  *
  * Note that this function is not just an inversion of the above function
  * because O_SYNC is not considered.

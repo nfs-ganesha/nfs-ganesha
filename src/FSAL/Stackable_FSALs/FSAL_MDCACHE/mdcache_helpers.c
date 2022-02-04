@@ -231,8 +231,9 @@ static mdcache_entry_t *_mdcache_alloc_handle(
 		/* sub_handle will be freed by the caller */
 		result->sub_handle = NULL;
 		mdcache_put(result);
-		/* Handle is not yet in hash / LRU, so just put the sentinal
-		 * ref */
+		/* Handle is not yet in hash / LRU, so just put the sentinel
+		 * ref
+		 */
 		mdcache_put(result);
 		return NULL;
 	}
@@ -857,7 +858,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	/* We raced or failed, release the new entry we acquired, this will
 	 * result in inline deconstruction. This will release the attributes, we
 	 * may not have copied yet, in which case mask and acl are 0/NULL.  This
-	 * entry is not yet in the hash or LRU, so just put it's sentinal ref.
+	 * entry is not yet in the hash or LRU, so just put it's sentinel ref.
 	 */
 	nentry->sub_handle = NULL;
 	mdcache_put(nentry);
@@ -902,7 +903,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	if (!FSAL_IS_ERROR(status)) {
 		/* Give the FSAL a chance to merge new_obj into
 		 * oentry->obj_handle since we will be using
-		 * oentry->obj_handle for all access to the oject.
+		 * oentry->obj_handle for all access to the object.
 		 */
 		struct fsal_obj_handle *old_sub_handle = (*entry)->sub_handle;
 
@@ -2704,7 +2705,7 @@ again:
 
 		/* Put our ref */
 		mdcache_lru_unref_chunk(state.cur_chunk);
-		/* Put sentinal ref */
+		/* Put sentinel ref */
 		mdcache_lru_unref_chunk(state.cur_chunk);
 
 		if (state.cur_chunk == state.first_chunk) {

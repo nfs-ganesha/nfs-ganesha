@@ -42,7 +42,7 @@ In this case, I am preloading `libganesha_trace.so` which turns on tracing befor
 before the server starts.  If you do not preload, ganesha runs as if tracing is
 not there and the only overhead is the predicted missed branch to the tracer.
 LTTng supports the loading of the tracing module into a running application by
-loading (dlopen) the modul  This would be useful for production environments
+loading (dlopen) the module  This would be useful for production environments
 but that feature is on the TODO list.
 
 There are never enough tracepoints.  Like log messages, they get added from time

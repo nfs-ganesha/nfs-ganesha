@@ -60,7 +60,7 @@ struct cache_info {
 };
 
 /**
- * @brief Number of entires in the UID cache, should be prime.
+ * @brief Number of entries in the UID cache, should be prime.
  */
 
 #define id_cache_size 1009

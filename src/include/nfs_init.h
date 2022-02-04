@@ -87,7 +87,7 @@ int init_server_pkgs(void);
 void nfs_start(nfs_start_info_t *p_start_info);
 
 /**
- * check for useable malloc implementation
+ * check for usable malloc implementation
  */
 static inline void nfs_check_malloc(void)
 {

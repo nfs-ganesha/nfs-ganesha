@@ -58,7 +58,7 @@
  *
  * @see fsal_readlink
  *
- * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
  */

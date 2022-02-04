@@ -26,7 +26,7 @@
 
 /**
  * @file  9p_interpreter.c
- * @brief 9P interpretor
+ * @brief 9P interpreter
  */
 
 #include "config.h"

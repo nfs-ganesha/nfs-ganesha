@@ -362,7 +362,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	/* Protect extraction of all the referenced objects, we don't
 	 * actually need to test them or take references because we assure
 	 * that there is exactly one state_del_locked call that proceeds
-	 * this far, and thus if the refereces were non-NULL, they must still
+	 * this far, and thus if the references were non-NULL, they must still
 	 * be good. Holding the mutex is not strictly necessary for this
 	 * reason, however, static and dynamic code analysis have no way of
 	 * knowing this reference is safe.  In addition, get_state_obj_ref()
@@ -894,7 +894,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 
 		/* We set first to the first state we look in this iteration.
 		 * If the current state matches the first state, it implies
-		 * that went through the entire list without droping the lock
+		 * that went through the entire list without dropping the lock
 		 * guarding the list. So nothing more left to process.
 		 */
 		if (first == NULL)
@@ -982,7 +982,7 @@ static void release_export_nfs4_state(enum state_type type)
 
 		/* We set first to the first state we look in this iteration.
 		 * If the current state matches the first state, it implies
-		 * that went through the entire list without droping the lock
+		 * that went through the entire list without dropping the lock
 		 * guarding the list. So nothing more left to process.
 		 */
 		if (first == NULL)
@@ -1049,7 +1049,7 @@ static void release_export_nfs4_state(enum state_type type)
 		dec_state_owner_ref(owner);
 		dec_state_t_ref(state);
 		if (errcnt < STATE_ERR_MAX) {
-			/* Loop again, but since we droped the export lock, we
+			/* Loop again, but since we dropped the export lock, we
 			 * must restart.
 			 */
 			goto again;

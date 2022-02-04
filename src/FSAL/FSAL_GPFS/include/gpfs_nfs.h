@@ -370,8 +370,8 @@ struct pnfstime4 {
 };
 
 struct nfsd4_pnfs_dev_iter_res {
-	uint64_t		gd_cookie;	/* request/repsonse */
-	uint64_t		gd_verf;	/* request/repsonse */
+	uint64_t		gd_cookie;	/* request/response */
+	uint64_t		gd_verf;	/* request/response */
 	uint64_t		gd_devid;	/* response */
 	uint32_t		gd_eof;		/* response */
 };
@@ -399,7 +399,7 @@ struct nfsd4_pnfs_layoutget_arg {
 };
 
 struct nfsd4_pnfs_layoutget_res {
-	struct nfsd4_layout_seg	lg_seg;	/* request/resopnse */
+	struct nfsd4_layout_seg	lg_seg;	/* request/response */
 	uint32_t		lg_return_on_close;
 };
 
@@ -570,7 +570,8 @@ struct layoutcommit_arg
                                new_offset if set, otherwise undefined. */
   uint32_t time_changed; /* True if the client provided a new value for mtime */
   struct gpfs_time_t new_time;  /* If time_changed is true, the client-supplied
-                               modification tiem for the file.  otherwise, undefined. */
+				   modification time for the file.  otherwise,
+				   undefined. */
   struct gpfs_exp_xdr_stream *xdr;
 };
 

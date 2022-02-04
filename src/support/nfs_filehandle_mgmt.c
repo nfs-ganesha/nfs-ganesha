@@ -271,7 +271,7 @@ int nfs4_Is_Fh_DSHandle(nfs_fh4 *fh)
  *
  * @param[in] fh File handle to test.
  *
- * @return NFS4_OK if successfull.
+ * @return NFS4_OK if successful.
  */
 
 int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
@@ -344,7 +344,7 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
  *
  * @param[in] fh3 File handle to test.
  *
- * @return NFS4_OK if successfull.
+ * @return NFS4_OK if successful.
  *
  */
 int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)

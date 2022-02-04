@@ -25,7 +25,7 @@
 
 /**
  * @file    os/freebsd/xattr.h
- * @brief   Platform dependant utils for xattr support on FreeBSD
+ * @brief   Platform dependent utils for xattr support on FreeBSD
  *
  */
 

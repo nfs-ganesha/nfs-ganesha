@@ -102,7 +102,7 @@ struct _nfs_health {
 extern struct _nfs_health nfs_health_;
 bool nfs_health(void);
 
-/* ServerEpoch is ServerBootTime unless overriden by -E command line option */
+/* ServerEpoch is ServerBootTime unless overridden by -E command line option */
 extern struct timespec nfs_ServerBootTime;
 extern time_t nfs_ServerEpoch;
 

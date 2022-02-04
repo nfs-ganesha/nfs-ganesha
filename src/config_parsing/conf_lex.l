@@ -327,7 +327,7 @@ INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
 	return TOK_OCTNUM;
 }
 
-<TERM>{HEXNUM}  { /* a hexidecimal number */
+<TERM>{HEXNUM}  { /* a hexadecimal number */
 	DEBUG_LEX(" hex number:%s", yytext);
 	yylval->token = save_token(yytext, false, stp);
 	return TOK_HEXNUM;
@@ -372,7 +372,7 @@ INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
 	return TOK_NETGROUP;
 }
 
-   /* Last resort terminals. PATHAME is here because it can confuse */
+   /* Last resort terminals. PATHNAME is here because it can confuse */
    /* with a CIDR (precedence) and */
    /* TOKEN_CHARS gobbles anything other than white and ";" */
 

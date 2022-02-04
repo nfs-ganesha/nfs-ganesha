@@ -45,7 +45,7 @@
  * architecture).  Quadratic probing is used to emulate perfect
  * hashing.  Worst case behavior is challenging to reproduce.
  * Heuristic methods are used to detect worst-case scenarios and fall
- * back to tractable (e.g., lookup) algorthims.
+ * back to tractable (e.g., lookup) algorithms.
  *
  */
 

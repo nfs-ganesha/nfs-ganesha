@@ -23,7 +23,7 @@
 set(CPACK_PACKAGE_NAME "nfs-ganesha" )
 set(CPACK_PACKAGE_VERSION "${GANESHA_VERSION}" )
 set(CPACK_PACKAGE_VENDOR "NFS-Ganesha Project")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "NFS-Ganesha - A NFS Server runnning in user space")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "NFS-Ganesha - An NFS Server running in user space")
 
 # CPack's debian stuff
 SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "nfs-ganesha-devel@lists.sourceforge.net") 

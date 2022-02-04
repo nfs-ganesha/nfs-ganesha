@@ -13,7 +13,7 @@
 #
 # To export a GLUSTERFS volume, make sure
 # * the volume is online and healthy.
-# * gluster-nfs and kernel-nfs are disbaled.
+# * gluster-nfs and kernel-nfs are disabled.
 # * Create a sample .conf file with the Gluster
 #   volume related info. Sample config file is
 #   located at 'src/config_samples/gluster.conf'

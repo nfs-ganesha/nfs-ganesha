@@ -1382,7 +1382,7 @@ static int nfs_rpc_v40_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 /**
  * @brief Send CB_COMPOUND with a single operation
  *
- * In the case of v4.1+, this actually sends two opearations, a CB_SEQUENCE
+ * In the case of v4.1+, this actually sends two operations, a CB_SEQUENCE
  * and the supplied operation.  It works as a convenience function to handle
  * the details of callback management, finding a connection with a working
  * back channel, and so forth.

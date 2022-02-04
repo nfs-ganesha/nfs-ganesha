@@ -78,13 +78,13 @@ struct nfs4_op_desc {
 	 * Note that entries placed into the NFS v4.1 slot cache are marked so
 	 * the higher level operation completion will not release them. A deep
 	 * copy is made when the slot cache is replayed. If sa_cachethis
-	 * indicates a response will not be cached, the higher level operaiton
+	 * indicates a response will not be cached, the higher level operation
 	 * completion will call the free_res, HOWEVER, a shallow copy of the
 	 * SEQUENCE op and first operation responses are made. If the first
 	 * operation resulted in an error (other than NFS4_DENIED for LOCK and
 	 * LOCKT) the shallow copy preserves that error rather than replacing
 	 * it with NFS4ERR_RETRY_UNCACHED_REP. For this reason for any response
-	 * that includes dyanmically allocated data on NFS4_OK MUST check the
+	 * that includes dynamically allocated data on NFS4_OK MUST check the
 	 * response status before freeing any memory since the shallow copy will
 	 * mean the cached NFS4ERR_RETRY_UNCACHED_REP response will have copied
 	 * those pointers. It should only free data if the status is NFS4_OK
@@ -1296,7 +1296,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			 * If the COMPOUND request does not start with SEQUENCE,
 			 * and if DESTROY_SESSION is not the sole operation,
 			 * then server MUST return  NFS4ERR_NOT_ONLY_OP. See
-			 * 18.37.3 nd test DSESS9005 for details
+			 * 18.37.3 and test DSESS9005 for details
 			 */
 			if (argarray[0].argop == NFS4_OP_EXCHANGE_ID ||
 			    argarray[0].argop == NFS4_OP_CREATE_SESSION ||

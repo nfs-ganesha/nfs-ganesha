@@ -233,7 +233,7 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/* Covert GPFS NFS4 ACLs to FSAL ACLs, and set the ACL
+/* Convert GPFS NFS4 ACLs to FSAL ACLs, and set the ACL
  * pointer of attribute. */
 static fsal_status_t
 gpfs_acl_2_fsal_acl(struct fsal_attrlist *p_object_attributes,
@@ -303,7 +303,7 @@ gpfs_acl_2_fsal_acl(struct fsal_attrlist *p_object_attributes,
  *  @param gpfs_buf Reference to GPFS stat buffer
  *  @return FSAL status
  *
- *  @brief Covert FSAL ACLs to GPFS NFS4 ACLs.
+ *  @brief Convert FSAL ACLs to GPFS NFS4 ACLs.
  */
 fsal_status_t
 fsal_acl_2_gpfs_acl(struct fsal_obj_handle *dir_hdl, fsal_acl_t *fsal_acl,

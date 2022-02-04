@@ -355,7 +355,7 @@ proxyv3_nlm_lock(struct proxyv3_obj_handle *obj,
 }
 
 /*
- * NOTE(boulos): We should never currrently up end calling CANCEL, because we
+ * NOTE(boulos): We should never currently up end calling CANCEL, because we
  * tell Ganesha we aren't ready to deal with blocking locks (yet).
  */
 

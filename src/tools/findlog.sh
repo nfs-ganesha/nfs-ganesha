@@ -25,7 +25,7 @@
 #
 #-------------------------------------------------------------------------------
 #
-# This script is primarily intented to extract all the LogXXX functions calls
+# This script is primarily intended to extract all the LogXXX functions calls
 # from the source code, however it can also be used to find other function calls
 # given certain limitations.
 #

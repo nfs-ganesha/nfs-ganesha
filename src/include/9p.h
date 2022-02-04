@@ -100,8 +100,8 @@
  * @_9P_RCREATE: response with file access information
  * @_9P_TREAD: request to transfer data from a file or directory
  * @_9P_RREAD: response with data requested
- * @_9P_TWRITE: reuqest to transfer data to a file
- * @_9P_RWRITE: response with out much data was transfered to file
+ * @_9P_TWRITE: request to transfer data to a file
+ * @_9P_RWRITE: response with out much data was transferred to file
  * @_9P_TCLUNK: forget about a handle to an entity within the file system
  * @_9P_RCLUNK: response when server has forgotten about the handle
  * @_9P_TREMOVE: request to remove an entity from the hierarchy
@@ -208,7 +208,7 @@ enum _9p_xattr_write {
  * enum _9p_qid_t - QID types
  * @_9P_QTDIR: directory
  * @_9P_QTAPPEND: append-only
- * @_9P_QTEXCL: excluse use (only one open handle allowed)
+ * @_9P_QTEXCL: exclusive use (only one open handle allowed)
  * @_9P_QTMOUNT: mount points
  * @_9P_QTAUTH: authentication file
  * @_9P_QTTMP: non-backed-up files
@@ -218,7 +218,7 @@ enum _9p_xattr_write {
  *
  * QID types are a subset of permissions - they are primarily
  * used to differentiate semantics for a file system entity via
- * a jump-table.  Their value is also the most signifigant 16 bits
+ * a jump-table.  Their value is also the most significant 16 bits
  * of the permission_t
  *
  * See Also: http://plan9.bell-labs.com/magic/man2html/2/stat

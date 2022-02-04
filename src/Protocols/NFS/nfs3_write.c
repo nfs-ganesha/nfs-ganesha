@@ -275,7 +275,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto putref;
 	}
 
-	/* Do not exceed maxium WRITE offset if set */
+	/* Do not exceed maximum WRITE offset if set */
 	if (MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
 			     "Write offset=%" PRIu64 " size=%zu MaxOffSet=%"
@@ -284,7 +284,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		if ((offset + size) > MaxOffsetWrite) {
 			LogEvent(COMPONENT_NFSPROTO,
-				 "A client tryed to violate max file size %"
+				 "A client tried to violate max file size %"
 				 PRIu64 " for exportid #%hu",
 				 MaxOffsetWrite,
 				 op_ctx->ctx_export->export_id);

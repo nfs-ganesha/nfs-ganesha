@@ -23,7 +23,7 @@
 /**
  * @file os/linux/subr.c
  * @author Sachin Bhamare <sbhamare@panasas.com>
- * @brief Platform dependant subroutines for Linux
+ * @brief Platform dependent subroutines for Linux
  *
  */
 
@@ -95,7 +95,7 @@ int vfs_utimesat(int fd, const char *path, const struct timespec ts[2],
 }
 
 /**
- * @brief Platform specific wrapper fro futimens().
+ * @brief Platform specific wrapper for futimens().
  *
  * @param[in] fd File descriptor
  * @param[in] ts Array of struct timespec

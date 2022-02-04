@@ -440,7 +440,7 @@ void fs_rm_clid(nfs_client_id_t *clientid)
  * @brief Copy and Populate revoked delegations for this client.
  *
  * Even after delegation revoke, it is possible for the client to
- * contiue its leas and other operatoins. Sever saves revoked delegations
+ * continue its lease and other operations. Sever saves revoked delegations
  * in the memory so client will not be granted same delegation with
  * DELEG_CUR ; but it is possible that the server might reboot and has
  * no record of the delegatin. This list helps to reject delegations
@@ -624,7 +624,7 @@ static int fs_read_recov_clids_impl(const char *parent_path,
 
 			if ((rc == -1) && (errno != EEXIST)) {
 				LogEvent(COMPONENT_CLIENTID,
-					 "mkdir %s faied errno: %s (%d)",
+					 "mkdir %s failed errno: %s (%d)",
 					 new_path, strerror(errno), errno);
 			}
 		}

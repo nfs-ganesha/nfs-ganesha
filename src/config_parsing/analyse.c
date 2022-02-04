@@ -48,7 +48,7 @@
  * @param token [IN] pointer to the yytext token from flex
  * @param esc [IN] bool, filter if true
  * @param st [IN] pointer to parser state
- * @return pointer to persistant storage for token or NULL;
+ * @return pointer to persistent storage for token or NULL;
  */
 
 char *save_token(char *token, bool esc, struct parser_state *st)

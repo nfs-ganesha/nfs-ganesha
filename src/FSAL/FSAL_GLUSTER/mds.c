@@ -318,7 +318,7 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 
 	if (rc != 0) {
 		LogMajor(COMPONENT_PNFS,
-			 "Commit layout, stat unsucessfully completed");
+			 "Commit layout, stat unsuccessfully completed");
 		return NFS4ERR_INVAL;
 	}
 	memset(&new_stat, 0, sizeof(struct stat));
@@ -333,7 +333,7 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 					     res->new_size);
 			if (rc != 0) {
 				LogMajor(COMPONENT_PNFS,
-					 "Commit layout, size changed unsucessfully completed");
+					 "Commit layout, size change unsuccessfully completed");
 				return NFS4ERR_INVAL;
 			}
 		}
@@ -359,7 +359,7 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 
 	if ((rc != 0) || (status.major != ERR_FSAL_NO_ERROR)) {
 		LogMajor(COMPONENT_PNFS,
-			 "commit layout, setattr unsucessflly completed");
+			 "commit layout, setattr unsuccessfully completed");
 		return NFS4ERR_INVAL;
 	}
 	res->commit_done = true;

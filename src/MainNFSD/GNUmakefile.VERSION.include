@@ -1,4 +1,4 @@
-# This file is to be included in the GNUmakefile for versionning information
+# This file is to be included in the GNUmakefile for versioning information
 
 VERSION = "0.99-11-snmp-64bits-tcp--rpcsecgss"
 VERSION_COMMENT = "GANESHA 64 bits compliant. SNMP exported stats. New TCP connection management. Branch with RPCSEC_GSS support"

@@ -194,7 +194,7 @@ struct nfs41_session {
 	sockaddr_t connections[NFS41_MAX_CONNECTIONS];
 
 	nfs_client_id_t *clientid_record;	/*< Client record
-						   correspinding to ID */
+						   corresponding to ID */
 	clientid4 clientid;	/*< Clientid owning this session */
 	uint32_t cb_program;	/*< Callback program ID */
 	uint32_t flags;		/*< Flags pertaining to this session */
@@ -314,7 +314,7 @@ struct state_9p_fid {
 
 /* @brief Per client, per file stats */
 struct cf_deleg_stats {
-	time_t cfd_rs_time;                   /* time when the client responsed
+	time_t cfd_rs_time;                   /* time when the client responded
 						 NFS4_OK for a recall. */
 	time_t cfd_r_time;               /* time of the recall attempt */
 };
@@ -765,7 +765,7 @@ struct nfs_client_record_t {
 				     disjoint. Linux client stupidity
 				     forces us to do so. */
 	int cr_client_val_len;  /*< Length of owner */
-	char cr_client_val[];   /*< Suplied co_owner */
+	char cr_client_val[];   /*< Supplied co_owner */
 };
 
 extern pool_t *client_id_pool;

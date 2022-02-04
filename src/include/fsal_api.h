@@ -155,7 +155,7 @@ extern struct gsh_refstr *no_export;
  * @section vector Operation Vectors
  *
  * Each structure carries with it an @c ops pointer.  Default
- * operation vectors are created at FSAL moduel initialziation time,
+ * operation vectors are created at FSAL module initialziation time,
  * and may be overridden there.  Individual exports or handles may
  * have different operations vectors, but they should all be derived
  * from the module operations vector.
@@ -608,7 +608,7 @@ struct fsal_ops {
  * @param[in]     parse_node  opaque pointer to parse tree node for
  *                            export options to be passed to
  *                            load_config_from_node
- * @param[out]    err_type    config proocessing error reporting
+ * @param[out]    err_type    config processing error reporting
  * @param[in]     up_ops      Upcall ops
  *
  * @return FSAL status.
@@ -637,7 +637,7 @@ struct fsal_ops {
  * @param[in]     parse_node       opaque pointer to parse tree node for
  *                                 export options to be passed to
  *                                 load_config_from_node
- * @param[out]    err_type         config proocessing error reporting
+ * @param[out]    err_type         config processing error reporting
  * @param[in]     original         The original export that is being updated
  * @param[in]     updated_super    The updated super_export's FSAL
  *
@@ -669,7 +669,7 @@ struct fsal_ops {
  * has a list of attached exports and that can be traversed if
  * suitable.
  *
- * 2. It /must not/ take any mutices, reader-writer locks, spinlocks,
+ * 2. It /must not/ take any mutexes, reader-writer locks, spinlocks,
  * sleep on any condition variables, or similar. Since other threads
  * may have crashed or been cancelled, locks may be left held,
  * overwritten with random garbage, or be similarly awful. The point
@@ -1201,7 +1201,7 @@ struct export_ops {
  * caller.  it should continue calling @c cb until @c cb returns false
  * or it runs out of deviceids to make available.  If @c cb returns
  * false, it should assume that @c cb has not stored the most recent
- * deviceid and set @c res->cookie to a value that will begin witht he
+ * deviceid and set @c res->cookie to a value that will begin with the
  * most recently provided.
  *
  * If it wishes to return no deviceids, it may set @c res->eof to true
@@ -1459,7 +1459,7 @@ const char *fsal_dir_result_str(enum fsal_dir_result result);
  *
  * @param[in]      name         The name of the entry
  * @param[in]      obj          The fsal_obj_handle describing the entry
- * @param[in]      attrs        The requested attribues for the entry (see
+ * @param[in]      attrs        The requested attributes for the entry (see
  *                              readdir attrmask parameter)
  * @param[in]      dir_state    Opaque pointer to be passed to callback
  * @param[in]      cookie       An FSAL generated cookie for the entry
@@ -2229,8 +2229,8 @@ struct fsal_obj_ops {
  * This function is called once on each segment matching the IO mode
  * and intersecting the range specified in a LAYOUTRETURN operation or
  * for all layouts corresponding to a given stateid on last close,
- * leas expiry, or a layoutreturn with a return-type of FSID or ALL.
- * Whther it is called in the former or latter case is indicated by
+ * lease expiry, or a layoutreturn with a return-type of FSID or ALL.
+ * Whether it is called in the former or latter case is indicated by
  * the synthetic flag in the arg structure, with synthetic being true
  * in the case of last-close or lease expiry.
  *
@@ -2685,7 +2685,7 @@ struct fsal_obj_ops {
 /**
  * ASYNC API functions.
  *
- * These are asyncronous versions of some of the API functions.  FSALs are
+ * These are asynchronous versions of some of the API functions.  FSALs are
  * expected to implement these, but the upper layers are not expected to call
  * them.  Instead, they will be called by MDCACHE at the appropriate points.
  */

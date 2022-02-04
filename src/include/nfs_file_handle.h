@@ -211,7 +211,7 @@ static inline int nlm4_FhandleToExportId(netobj *pfh3)
  *
  * @param pfh [IN] file handle to test.
  *
- * @return NFS4_OK if successfull, NFS4ERR_NOFILEHANDLE is fh is empty.
+ * @return NFS4_OK if successful, NFS4ERR_NOFILEHANDLE is fh is empty.
  *
  */
 static inline int nfs4_Is_Fh_Empty(nfs_fh4 *pfh)

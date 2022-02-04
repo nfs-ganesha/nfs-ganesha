@@ -265,7 +265,7 @@ const nfs_function_desc_t nfs3_func_desc[] = {
 };
 #endif /* _USE_NFS3 */
 
-/* Remeber that NFSv4 manages authentication though junction crossing, and
+/* Remember that NFSv4 manages authentication though junction crossing, and
  * so does it for RO FS management (for each operation) */
 const nfs_function_desc_t nfs4_func_desc[] = {
 	{

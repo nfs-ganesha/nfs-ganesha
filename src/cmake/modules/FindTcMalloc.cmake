@@ -35,7 +35,7 @@ SET(_tcmalloc_SEARCH_DIRS
   /sw # Fink
   /opt/local # DarwinPorts
   /opt/csw # Blastwave
-  /usr/include/google # Debain tcmalloc minimal
+  /usr/include/google # Debian tcmalloc minimal
   /usr/include/gperftools # Debian gperftools
 )
 

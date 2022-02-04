@@ -494,7 +494,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 		    && (state_open->state_data.share.share_access &
 		    OPEN4_SHARE_ACCESS_READ) == 0) {
 			/* Even if file is open for write, the client
-			 * may do accidently read operation (caching).
+			 * may do accidentally read operation (caching).
 			 * Because of this, READ is allowed if not
 			 * explicitly denied.  See page 112 in RFC 7530
 			 * for more details.
@@ -599,7 +599,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 
 		if ((offset + size) > MaxOffsetRead) {
 			LogEvent(COMPONENT_NFS_V4,
-				 "A client tryed to violate max file size %"
+				 "A client tried to violate max file size %"
 				 PRIu64 " for exportid #%hu",
 				 MaxOffsetRead,
 				 op_ctx->ctx_export->export_id);

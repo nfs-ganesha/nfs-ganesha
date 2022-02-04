@@ -156,7 +156,7 @@ int compare_nsm_client(state_nsm_client_t *client1,
 	 * we always just compare the caller name.
 	 *
 	 * This makes SM_NOTIFY work because we can't know the port number
-	 * which is part of identifing ssc_client. We only care about the
+	 * which is part of identifying ssc_client. We only care about the
 	 * address.
 	 */
 
@@ -208,7 +208,7 @@ uint32_t nsm_client_value_hash_func(hash_parameter_t *hparam,
 	 * we always just compare the caller name.
 	 *
 	 * This makes SM_NOTIFY work because we can't know the port number
-	 * which is part of identifing ssc_client. We only care about the
+	 * which is part of identifying ssc_client. We only care about the
 	 * address.
 	 */
 
@@ -248,7 +248,7 @@ uint64_t nsm_client_rbt_hash_func(hash_parameter_t *hparam,
 	 * we always just compare the caller name.
 	 *
 	 * This makes SM_NOTIFY work because we can't know the port number
-	 * which is part of identifing ssc_client. We only care about the
+	 * which is part of identifying ssc_client. We only care about the
 	 * address.
 	 */
 

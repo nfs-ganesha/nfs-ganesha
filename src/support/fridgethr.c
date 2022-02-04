@@ -530,7 +530,7 @@ static void *fridgethr_start_routine(void *arg)
 	rcu_register_thread();
 	SetNameFunction(fr->s);
 
-	/* Excplicitly and definitely enable cancellation */
+	/* Explicitly and definitely enable cancellation */
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old_state);
 
 	/* The only time a thread would be cancelled is if it were to
@@ -539,7 +539,7 @@ static void *fridgethr_start_routine(void *arg)
 	   infinite loop or deadlocked or otherwise experienced some
 	   unfortunate state.  Since deferred cancellation is
 	   effective on condition waits, may be effective on
-	   read-write locks and won't be effective on mutices,
+	   read-write locks and won't be effective on mutexes,
 	   asynchronous seems the way to go.  We would only do this
 	   on the way to taking down the system in any case. */
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &old_type);

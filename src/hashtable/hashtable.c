@@ -135,7 +135,7 @@ hash_table_err_to_str(hash_error_t err)
  * @param[in]  rbthash Hash in red-black tree
  * @param[out] node    On success, the found node, NULL otherwise
  *
- * @retval HASHTABLE_SUCCESS if successfull
+ * @retval HASHTABLE_SUCCESS if successful
  * @retval HASHTABLE_NO_SUCH_KEY if key was not found
  */
 static hash_error_t
@@ -478,7 +478,7 @@ hashtable_getlatch(struct hash_table *ht,
 	uint32_t index = 0;
 	/* The node found for the key */
 	struct rbt_node *locator = NULL;
-	/* The buffer descritpros for the key and value for the found entry */
+	/* The buffer descriptors for the key and value for the found entry */
 	struct hash_data *data = NULL;
 	/* The hash value to be searched for within the Red-Black tree */
 	uint64_t rbt_hash = 0;
@@ -580,7 +580,7 @@ hashtable_releaselatched(struct hash_table *ht, struct hash_latch *latch)
  * @param[in]     val         A buffer descriptor locating the value to insert
  * @param[in]     latch       A pointer to a structure filled by a previous
  *                            call to hashtable_getlatched.
- * @param[in]     overwrite   If true, overwrite a prexisting key,
+ * @param[in]     overwrite   If true, overwrite a preexisting key,
  *                            otherwise return error on collision.
  * @param[out]    stored_key If non-NULL, a buffer descriptor for an
  *                           overwritten key as stored.
@@ -861,7 +861,7 @@ hashtable_delall(struct hash_table *ht,
 			/* Pointer to the key and value descriptors
 			   for each successive entry */
 			struct hash_data *data = NULL;
-			/* Aliased poitner to node, for freeing
+			/* Aliased pointer to node, for freeing
 			   buffers after removal from tree */
 			struct rbt_node *holder = cursor;
 			/* Buffer descriptor for key, as stored */
@@ -987,7 +987,7 @@ hashtable_log(log_components_t component, struct hash_table *ht)
  * @param[in]     how A value determining whether this is a test, a set
  *                    with overwrite, or a set without overwrite.
  *
- * @retval HASHTABLE_SUCCESS if successfull.
+ * @retval HASHTABLE_SUCCESS if successful.
  */
 
 hash_error_t

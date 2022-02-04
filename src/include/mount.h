@@ -36,7 +36,7 @@ typedef enum mountstat3 mountstat3;
 /**
  * @todo
  * Danger Will Robinson!!
- * this struct is overlayed with nfs_fh3 in nfs23.h!!
+ * this struct is overlaid with nfs_fh3 in nfs23.h!!
  * This needs to be fixed
  */
 typedef struct {

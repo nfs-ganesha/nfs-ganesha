@@ -2,7 +2,7 @@
 /*
  * @file  fsal_internal.c
  * @date  $Date: 2006/01/17 14:20:07 $
- * @brief Defines the datas that are to be accessed as extern by the fsal
+ * @brief Defines the data that are to be accessed as extern by the fsal
  *        modules
  *
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
@@ -57,7 +57,7 @@
 
 /*********************************************************************
  *
- *  GPFS FSAL char device driver interaces
+ *  GPFS FSAL char device driver interfaces
  *
  ********************************************************************/
 
@@ -93,7 +93,7 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
  *
  *  @param dirfd Open file descriptor of parent directory
  *  @param gpfs_fh Opaque filehandle
- *  @param fd File descriptor openned by the function
+ *  @param fd File descriptor opened by the function
  *  @param oflags Flags to open the file with
  *
  *  @return status of operation

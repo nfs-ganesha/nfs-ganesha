@@ -26,7 +26,7 @@
  * @brief Internal definitions for the RGW FSAL
  *
  * This file includes internal function definitions, constants, and
- * variable declarations used to impelment the RGW FSAL, but not
+ * variable declarations used to implement the RGW FSAL, but not
  * exposed as part of the API.
  */
 
@@ -89,7 +89,7 @@ fsal_status_t rgw2fsal_error(const int rgw_errorcode)
 	case EBADF:
 		/**
 		 * @todo: The EBADF error also happens when file is
-		 *	  opened for reading, and we try writting in
+		 *	  opened for reading, and we try writing in
 		 *	  it.  In this case, we return
 		 *	  ERR_FSAL_NOT_OPENED, but it doesn't seems to
 		 *	  be a correct error translation.
@@ -192,7 +192,7 @@ int construct_handle(struct rgw_export *export,
 		     struct rgw_handle **obj)
 
 {
-	/* Poitner to the handle under construction */
+	/* Pointer to the handle under construction */
 	struct rgw_handle *constructing = NULL;
 	*obj = NULL;
 

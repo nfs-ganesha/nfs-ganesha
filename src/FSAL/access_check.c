@@ -573,7 +573,7 @@ static fsal_status_t fsal_check_access_acl(
 		ace_number += 1;
 
 		LogFullDebug(COMPONENT_NFS_V4_ACL,
-			     "ace numnber: %d ace type 0x%X perm 0x%X flag 0x%X who %u",
+			     "ace number: %d ace type 0x%X perm 0x%X flag 0x%X who %u",
 			     ace_number, pace->type, pace->perm, pace->flag,
 			     GET_FSAL_ACE_WHO(*pace));
 

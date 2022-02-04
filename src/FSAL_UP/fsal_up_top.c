@@ -1405,7 +1405,7 @@ static void delegrecall_task(void *ctx)
 	state = nfs4_State_Get_Pointer(deleg_ctx->drc_stateid.other);
 
 	if (state == NULL) {
-		LogDebug(COMPONENT_NFS_CB, "Delgation is already returned");
+		LogDebug(COMPONENT_NFS_CB, "Delegation is already returned");
 		free_delegrecall_context(deleg_ctx);
 		return;
 	}
@@ -1413,7 +1413,7 @@ static void delegrecall_task(void *ctx)
 	ret = get_state_obj_export_owner_refs(state, &obj, &export, NULL);
 	if (!ret || obj == NULL) {
 		LogDebug(COMPONENT_NFS_CB,
-			 "Delgation recall skipped due to stale file");
+			 "Delegation recall skipped due to stale file");
 		goto out;
 	}
 
@@ -1676,7 +1676,7 @@ cbgetattr_state handle_getattr_response(struct cbgetattr_context *cbg_ctx,
 		obj->state_hdl->file.cbgetattr.modified = true;
 	}
 
-	/* everytime we need to update change number to let
+	/* every time we need to update change number to let
 	 * other clients know that file contents could have
 	 * been modified even if the filesize remains same
 	 */
@@ -1761,7 +1761,7 @@ static void cbgetattr_completion_func(rpc_call_t *call)
 	switch (call->cbt.v_u.v4.res.status) {
 	case NFS4_OK:
 		LogDebug(COMPONENT_NFS_CB,
-			 "CB_GEATTR succeded for client(%s)",
+			 "CB_GEATTR succeeded for client(%s)",
 			 cbg_ctx->clid->gsh_client->hostaddr_str);
 		*cbgetattr_state = handle_getattr_response(cbg_ctx,
 							   call);

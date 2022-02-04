@@ -178,7 +178,7 @@ static inline fsal_status_t mdcache_get(mdcache_entry_t *entry)
  *
  * The result is typically to decrement the reference count on entry,
  * but additional side effects include LRU adjustment, movement
- * to/from the protected LRU partition, or recyling if the caller has
+ * to/from the protected LRU partition, or recycling if the caller has
  * raced an operation which made entry unreachable (and this current
  * caller has the last reference).  Caller MUST NOT make further
  * accesses to the memory pointed to by entry.

@@ -333,7 +333,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 			if (flags & CIDR_NETMASK) {
 				/*
 				 * We already wrote how to build the whole v6 form, so
-				 * just call ourselves recurively for this.
+				 * just call ourselves recursively for this.
 				 */
 				nmtmp = cidr_alloc();
 

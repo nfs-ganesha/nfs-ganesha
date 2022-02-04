@@ -85,7 +85,7 @@ struct cache_group {
 		nfs_param.core_param.manage_gids_expiration)
 
 /**
- * @brief Number of entires in the UID cache, should be prime.
+ * @brief Number of entries in the UID cache, should be prime.
  */
 
 #define id_cache_size 1009

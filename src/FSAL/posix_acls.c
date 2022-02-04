@@ -244,9 +244,9 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 
 	/* *
 	 * Converts each entry in posix acl into fsal_ace by filling type, flag,
-	 * perm, iflag, flag and who(uid, gid) appropiately
+	 * perm, iflag, flag and who(uid, gid) appropriately
 	 *
-	 * Corresponding to each posix acl entry, there is a possiblity of two
+	 * Corresponding to each posix acl entry, there is a possibility of two
 	 * fsal_aces, it can either be ALLOW or DENY. The DENY added to list
 	 * depending on the permission set of other entries.
 	 *
@@ -612,7 +612,7 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 	if (ret)
 		LogWarn(COMPONENT_FSAL, "Cannot set tag for ACL Entry");
 
-	/** @todo: Annoymous users/groups (id = -1) should handle properly
+	/** @todo: Anonymous users/groups (id = -1) should handle properly
 	 */
 
 	/*
@@ -771,7 +771,7 @@ size_t posix_acl_xattr_size(int count)
 /*
  * @brief Calculate the quantity of ACL entries by xattr size
  *
- * @param[in]  size Length of extented attribute
+ * @param[in]  size Length of extended attribute
  *
  * @return Quantity of ACL entries on success, -1 on failure.
  */
@@ -787,10 +787,10 @@ int posix_acl_entries_count(size_t size)
 }
 
 /*
- * @brief Convert extented attribute to POSIX ACL
+ * @brief Convert extended attribute to POSIX ACL
  *
- * @param[in]  value	Extented attribute
- * @param[in]  size	Size of the extented attribute
+ * @param[in]  value	Extended attribute
+ * @param[in]  size	Size of the extended attribute
  *
  * @return Posix ACL on success, NULL on failure.
  */
@@ -908,13 +908,13 @@ out:
 }
 
 /*
- * @brief Convert POSIX ACL to extented attribute
+ * @brief Convert POSIX ACL to extended attribute
  *
  * @param[in]  acl	Posix ACL
- * @param[in]  size	Size of the extented attribute buffer
- * @param[out] buf	Buffer of the extented attribute
+ * @param[in]  size	Size of the extended attribute buffer
+ * @param[out] buf	Buffer of the extended attribute
  *
- * @return Real size of extented attribute on success, -1 on failure.
+ * @return Real size of extended attribute on success, -1 on failure.
  */
 
 int posix_acl_2_xattr(acl_t acl, void *buf, size_t size)

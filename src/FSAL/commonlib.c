@@ -36,7 +36,7 @@
  * @brief Common functions for and private to FSAL modules.
  *
  * The prime requirement for functions to be here is that they operate only
- * on the public part of the FSAL api and are therefore sharable by all fsal
+ * on the public part of the FSAL api and are therefore shareable by all fsal
  * implementations.
  */
 #include "config.h"
@@ -910,7 +910,7 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 	naces = 0;
 	for (sace = sacl->aces; sace < sacl->aces + sacl->naces; sace++) {
 		if (IS_FSAL_ACE_MODE_GEN(*sace)) {
-			/* Don't copy mode geneated ACEs; will be re-created */
+			/* Don't copy mode generated ACEs; will be re-created */
 			continue;
 		}
 
@@ -1355,7 +1355,7 @@ fsal_status_t merge_share(struct fsal_obj_handle *orig_hdl,
  * descriptor if it is open, otherwise it will use a temporary file descriptor.
  * The primary use of this is to not open long lasting global file descriptors
  * for getattr and setattr calls. The other users of FSAL_O_ANY are NFSv3 LOCKT
- * for which this behavior is also desireable and NFSv3 UNLOCK where there
+ * for which this behavior is also desirable and NFSv3 UNLOCK where there
  * SHOULD be an open file descriptor attached to state, but if not, a temporary
  * file descriptor will work fine (and the resulting unlock won't do anything
  * since we just opened the temporary file descriptor).
@@ -1649,7 +1649,7 @@ again:
 }
 
 /**
- * @brief Find a useable file descriptor for a regular file.
+ * @brief Find a usable file descriptor for a regular file.
  *
  * This function specifically does NOT return with the obj_handle's lock
  * held if the fd associated with a state_t is being used. These fds are
@@ -1809,7 +1809,7 @@ fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
 
  global:
 
-	/* No useable state_t so return the global file descriptor. */
+	/* No usable state_t so return the global file descriptor. */
 	LogFullDebug(COMPONENT_FSAL,
 		     "Use global fd openflags = %x",
 		     openflags);

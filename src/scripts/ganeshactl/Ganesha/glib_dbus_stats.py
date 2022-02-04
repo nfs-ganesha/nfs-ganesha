@@ -1223,7 +1223,7 @@ class StatsReset():
         if self.status[1] != "OK":
             return "Failed to reset statistics, GANESHA RESPONSE STATUS: " + self.status[1]
         else:
-            return "Successfully resetted statistics counters"
+            return "Successfully reset statistics counters"
 
 class StatsStatus(Report):
     def __init__(self, status):

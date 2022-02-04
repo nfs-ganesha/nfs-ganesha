@@ -6,7 +6,7 @@ const LM_MAXSTRLEN = 1024;
 const LM_MAXNAMELEN = 1025;
 const MAXNETOBJ_SZ = 1024;
 
-/* NSM related constatnts */
+/* NSM related constants */
 const SM_MAXSTRLEN = 1024;
 const SM_PRIV_SZ   = 16;
 /*

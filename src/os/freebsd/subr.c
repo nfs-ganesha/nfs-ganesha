@@ -26,7 +26,7 @@
 /**
  * @file os/freebsd/subr.c
  * @author Sachin Bhamare <sbhamare@panasas.com>
- * @brief Platform dependant subroutines for FreeBSD
+ * @brief Platform dependent subroutines for FreeBSD
  */
 
 #include <unistd.h>

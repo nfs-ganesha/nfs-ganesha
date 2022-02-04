@@ -398,7 +398,7 @@ void nfs3_readdir_free(nfs_res_t *resp)
  *
  * @param opaque [in] Pointer to a struct nfs3_readdir_cb_data that is
  *                    gives the location of the array and other
- *                    bookeeping information
+ *                    bookkeeping information
  * @param name [in] The filename for the current obj
  * @param handle [in] The current obj's filehandle
  * @param attrs [in] The current obj's attributes
@@ -425,7 +425,7 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
 
 	/* Encode the entry into the xdrmem buffer and then assure there is
 	 * space for at least two booleans (one to be false to terminate the
-	 * entry ist, the other to encode EOD or not).
+	 * entry list, the other to encode EOD or not).
 	 */
 	if (!xdr_encode_entry3(&tracker->xdr, &e3) ||
 	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT)

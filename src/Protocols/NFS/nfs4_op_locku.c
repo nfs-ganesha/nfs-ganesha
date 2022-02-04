@@ -75,7 +75,7 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	state_t *state_found = NULL;
 	/* Owner of lock state */
 	state_owner_t *lock_owner = NULL;
-	/* Descritpion of lock to free */
+	/* Description of lock to free */
 	fsal_lock_param_t lock_desc;
 	/*  */
 	nfsstat4 nfs_status = NFS4_OK;

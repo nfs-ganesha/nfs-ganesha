@@ -40,7 +40,7 @@
  */
 
 /**
- * @brief Structure to hold MDCACHE paramaters
+ * @brief Structure to hold MDCACHE parameters
  */
 
 struct mdcache_parameter {

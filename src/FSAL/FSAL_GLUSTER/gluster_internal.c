@@ -76,7 +76,7 @@ fsal_status_t gluster2fsal_error(const int err)
 void stat2fsal_attributes(const struct stat *buffstat,
 			  struct fsal_attrlist *fsalattr)
 {
-	/* Indicate which atrributes we have set without affecting the
+	/* Indicate which attributes we have set without affecting the
 	 * other bits in the mask.
 	 */
 	fsalattr->valid_mask |= ATTRS_POSIX;

@@ -24,7 +24,7 @@
 /**
  * @file subr.h
  * @author Sachin Bhamare <sbhamare@panasas.com>
- * @brief platform dependant subroutine type definitions
+ * @brief platform dependent subroutine type definitions
  */
 
 #ifndef SUBR_OS_H

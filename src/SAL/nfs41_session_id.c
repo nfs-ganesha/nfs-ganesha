@@ -461,7 +461,7 @@ retry:
 	}
 
 	if (!can_associate || num == NFS41_MAX_CONNECTIONS) {
-		/* We either aren't allowd to associate a new address or there
+		/* We either aren't allowed to associate a new address or there
 		 * is no room.
 		 */
 		PTHREAD_RWLOCK_unlock(&session->conn_lock);

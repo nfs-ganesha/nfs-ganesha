@@ -142,7 +142,7 @@ typedef struct nfs_krb5_param {
 	/** Kerberos keytab.  Defaults to DEFAULT_NFS_KEYTAB, settable
 	    with KeytabPath. */
 	char *keytab;
-	/** The ganesha credential cache.  Defautls to
+	/** The ganesha credential cache.  Defaults to
 	    DEFAULT_NFS_CCACHE_DIR, unsettable by user. */
 	char *ccache_dir;
 	/**

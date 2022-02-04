@@ -322,7 +322,7 @@ err_free:
  * @param[in]     parse_node       opaque pointer to parse tree node for
  *                                 export options to be passed to
  *                                 load_config_from_node
- * @param[out]    err_type         config proocessing error reporting
+ * @param[out]    err_type         config processing error reporting
  * @param[in]     original         The original export that is being updated
  * @param[in]     updated_super    The updated super_export's FSAL
  *

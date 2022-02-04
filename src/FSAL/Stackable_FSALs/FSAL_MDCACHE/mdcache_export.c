@@ -832,7 +832,7 @@ static void mdcache_get_write_verifier(struct fsal_export *exp_hdl,
  * @param[in] exp_hdl	Export to operate on
  * @param[in] in_type	Type of handle to extract
  * @param[in,out] fh_desc	Source/dest for extracted digest
- * @param[in] flags	Related flages (currently endian)
+ * @param[in] flags	Related flags (currently endian)
  * @return FSAL status
  */
 static fsal_status_t mdcache_wire_to_host(struct fsal_export *exp_hdl,

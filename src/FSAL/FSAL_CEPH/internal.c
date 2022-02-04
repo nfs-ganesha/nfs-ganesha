@@ -33,7 +33,7 @@
  * @brief Internal definitions for the Ceph FSAL
  *
  * This file includes internal function definitions, constants, and
- * variable declarations used to impelment the Ceph FSAL, but not
+ * variable declarations used to implement the Ceph FSAL, but not
  * exposed as part of the API.
  */
 
@@ -97,7 +97,7 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 }
 
 /**
- * @brief Release all resrouces for a handle
+ * @brief Release all resources for a handle
  *
  * @param[in] obj Handle to release
  */

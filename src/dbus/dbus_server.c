@@ -852,7 +852,7 @@ void gsh_dbus_wake_thread(uint32_t flags)
  *                      DBUS_TYPE_STRING, &charPtr,
  *                      DBUS_TYPE_BOOLEAN, &my_bool
  *
- * @return 0 on sucess or errno on failure
+ * @return 0 on success or errno on failure
  */
 int gsh_dbus_broadcast(char *obj_name, char *int_name,
 		       char *sig_name, int first_arg_type, ...)

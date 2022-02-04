@@ -12,10 +12,10 @@ are also python scripts that can be called from the shell to do most of the
 management functions.  Under both is a set of python classes that implement the
 details of the DBus transactions.
 
-The GUI is a basic Qt application.  I'm sure the useability people will be all
-over this thing complaining about my poor design taste and useability ignorance.
+The GUI is a basic Qt application.  I'm sure the usability people will be all
+over this thing complaining about my poor design taste and usability ignorance.
 Note two things.  First, this is a reference implementation to have a functioning
-set of core classes.  Second, see the next section, make it useable according
+set of core classes.  Second, see the next section, make it usable according
 to your designer sensibilities, and commit the resulting .ui file(s).
 
 Editing the UI

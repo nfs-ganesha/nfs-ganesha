@@ -23,7 +23,7 @@
 /**
  * @file os/xattr.h
  * @author Sachin Bhamare <sbhamare@panasas.com>
- * @brief Platform dependant utils for xattr support
+ * @brief Platform dependent utils for xattr support
  */
 
 #ifndef _XATTR_OS_H

@@ -44,7 +44,7 @@
  *
  *  @return Major error codes :
  *        - ERR_FSAL_NO_ERROR     (no error)
- *        - Another error code if an error occured.
+ *        - Another error code if an error occurred.
  */
 fsal_status_t
 GPFSFSAL_rename(struct fsal_obj_handle *old_hdl, const char *old_name,

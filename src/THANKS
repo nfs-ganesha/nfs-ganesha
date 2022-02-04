@@ -3,21 +3,20 @@ Their contributions were very helpful, so I guess they should have their names l
 
 Thanks to:
    Contributors that are not colleagues or students
-	- Tom "spot" Callaway <tcallawa@redhat.com>, for his experience and wiseness in RPM packaging. 
-	- People from maling-list nfsv4@linux-nfs.org (with special attention to J. Bruce Fields 
+	- Tom "spot" Callaway <tcallawa@redhat.com>, for his experience and wiseness in RPM packaging.
+	- People from mailing-list nfsv4@linux-nfs.org (with special attention to J. Bruce Fields
 	  and Trond Myklebust) for their help understanding the complex logic within NFSv4
 	- Eric Sesterhenn <eric.sesterhenn@lsexperts.de> who provided a nice patch fixing memleaks.
 	- Erik Levinson <erik@caneris.com> who did lots of work to make libnfsidmap work with gssrpc in nfs-ganesha
 	- Sean Dague <japh@us.ibm.com> who provides me with several typos and memleaks patches
 	- Aneesh Kumar K. V. <aneesh.kumar@linux.vnet.ibm.com> who implemented NLMv4 support (locking for NFSv3)
-	- Frank Filz <ffilzlnx@us.ibm.com> who provided me with several small fixes on the server's behavior. He idesigned i
+	- Frank Filz <ffilzlnx@us.ibm.com> who provided me with several small fixes on the server's behavior. He designed
           and wrote as well the new Log layer API.
 
-   Students that came to make an intership with us and worked on the project
+   Students that came to make an internship with us and worked on the project
 	- Mickael Guerin who wrote the first release of the FSAL_POSIX
-	- Laureline Provost who wrote a PERL library that had been very useful to quickly write benchmarks 
+	- Laureline Provost who wrote a PERL library that had been very useful to quickly write benchmarks
           and non-regression test
 	- Cedric Cabessa who worked on the SNMP admin module
 	- Adrien Grellier who provided us with the first TI-RPC support in the product
-        - Rémi Duraffort who wrote the FSAL_ZFS implementation as well as the libzfswrap contrib. He fixed many other small bugs too
-
+        - RÃ©mi Duraffort who wrote the FSAL_ZFS implementation as well as the libzfswrap contrib. He fixed many other small bugs too

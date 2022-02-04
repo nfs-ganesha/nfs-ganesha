@@ -469,7 +469,7 @@ static fsal_status_t mdcache_readlink(struct fsal_obj_handle *obj_hdl,
  * @brief Create a hard link
  *
  * @param[in] obj_hdl	Object to link to.
- * @param[in] destdir_hdl	Destination dirctory into which to link
+ * @param[in] destdir_hdl	Destination directory into which to link
  * @param[in] name	Name of new link
  * @return FSAL status
  */
@@ -520,7 +520,7 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * Read the contents of a dirctory
+ * Read the contents of a directory
  *
  * If necessary, populate the dirent cache from the underlying FSAL.  Then, walk
  * the dirent cache calling the callback.

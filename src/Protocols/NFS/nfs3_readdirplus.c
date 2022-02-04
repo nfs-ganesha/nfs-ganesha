@@ -100,7 +100,7 @@ nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj, const char *name,
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
- * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
@@ -439,7 +439,7 @@ void nfs3_readdirplus_free(nfs_res_t *resp)
  *
  * @param opaque [in] Pointer to a struct nfs3_readdirplus_cb_data that is
  *                    gives the location of the array and other
- *                    bookeeping information
+ *                    bookkeeping information
  * @param name [in] The filename for the current obj
  * @param handle [in] The current obj's filehandle
  * @param attrs [in] The current obj's attributes
@@ -490,7 +490,7 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 
 	/* Encode the entry into the xdrmem buffer and then assure there is
 	 * space for at least two booleans (one to be false to terminate the
-	 * entry ist, the other to encode EOD or not). Note we use the special
+	 * entry list, the other to encode EOD or not). Note we use the special
 	 * xdr_encode_entryplus3 that uses a passed in struct fsal_attrlist
 	 * rather than name_attributes from entryplus3, though we will use the
 	 * boolean attributes_follow from the entryplus3.

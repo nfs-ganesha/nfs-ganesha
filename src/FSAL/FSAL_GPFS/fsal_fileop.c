@@ -48,7 +48,7 @@
  *        ( such of them are not compatible) :
  *        - FSAL_O_RDONLY: opening file for reading only.
  *        - FSAL_O_RDWR: opening file for reading and writing.
- *        - FSAL_O_WRONLY: opening file for writting only.
+ *        - FSAL_O_WRONLY: opening file for writing only.
  *        - FSAL_O_APPEND: always write at the end of the file.
  *        - FSAL_O_TRUNC: truncate the file to 0 on opening.
  * @param file_desc The file descriptor to be used for FSAL_read/write ops.

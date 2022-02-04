@@ -991,7 +991,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 		else {
 			/* We had a valid stateid, but the entry was stale.
 			 * Check if lease is expired and reserve it so we
-			 * can distinguish betwen the state_t being in the
+			 * can distinguish between the state_t being in the
 			 * midst of tear down due to expired lease or if
 			 * in fact the entry is actually stale.
 			 */

@@ -2948,7 +2948,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	int mask = 0;
 	struct glusterfs_fd *glusterfs_fd = NULL;
 
-	/** @todo: Handle special file symblic links etc */
+	/** @todo: Handle special file symbolic links etc */
 	/* apply umask, if mode attribute is to be changed */
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE))
 		attrib_set->mode &=

@@ -52,7 +52,7 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 	int local_fd = fd;
 
 	/* the real path of the referral directory is needed.
-	 * it get's stored in attrs_out->fs_locations->path
+	 * it gets stored in attrs_out->fs_locations->path
 	 */
 
 	if (fd < 0) {

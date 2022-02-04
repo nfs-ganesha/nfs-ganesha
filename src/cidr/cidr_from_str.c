@@ -179,7 +179,7 @@ CIDR *cidr_from_str(const char *addr)
 		} else if (toret->proto == CIDR_IPV6) {
 			/*
 			 * This processing happens somewhat similarly to IPV4 above,
-			 * the format is simplier, and we need to be a little
+			 * the format is simpler, and we need to be a little
 			 * sneakier about the mask, since it can fall on a half-octet
 			 * boundary with .ip6.arpa format.
 			 */
@@ -809,7 +809,7 @@ CIDR *cidr_from_str(const char *addr)
 				 * At this point, 4 dotted-decimal octets should be
 				 * consumed.  i has gone back one step past the : before
 				 * the decimal, so addr[i+1] should be the ':' that
-				 * preceeds them.  Verify.
+				 * precedes them.  Verify.
 				 */
 				if (nocts != 4 || addr[i + 1] != ':') {
 					cidr_free(toret);

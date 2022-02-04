@@ -68,7 +68,7 @@ kvsfs_fs_layouttypes(struct fsal_export *export_hdl,
 	static const layouttype4 supported_layout_type = LAYOUT4_NFSV4_1_FILES;
 
 	/* FSAL_KVSFS currently supports only LAYOUT4_NFSV4_1_FILES */
-	/** @todo: do a switch that cheks which layout is OK */
+	/** @todo: do a switch that checks which layout is OK */
 	*types = &supported_layout_type;
 	*count = 1;
 }

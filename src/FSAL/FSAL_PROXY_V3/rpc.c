@@ -198,7 +198,7 @@ proxyv3_openfd(const struct sockaddr *host,
 
 	if (pthread_mutex_lock(&rpcLock) != 0) {
 		LogCrit(COMPONENT_FSAL,
-			"pthread_mutex_lock falied %d %s",
+			"pthread_mutex_lock failed %d %s",
 			errno, strerror(errno));
 		close(fd);
 		return -1;
@@ -209,7 +209,7 @@ proxyv3_openfd(const struct sockaddr *host,
 	/* Unlock the rpclock before we exit, even if bindresvport_sa failed */
 	if (pthread_mutex_unlock(&rpcLock) != 0) {
 		LogCrit(COMPONENT_FSAL,
-			"pthread_mutex_unlock falied %d %s",
+			"pthread_mutex_unlock failed %d %s",
 			errno, strerror(errno));
 		close(fd);
 		return -1;
@@ -962,7 +962,7 @@ bool proxyv3_call(const struct sockaddr *host,
 	/* Check that it was accepted with success. */
 	if (reply.rm_reply.rp_acpt.ar_stat != SUCCESS) {
 		LogCrit(COMPONENT_FSAL,
-			"Reply accepted but unsuccesful. Reason %d",
+			"Reply accepted but unsuccessful. Reason %d",
 			reply.rm_reply.rp_acpt.ar_stat);
 	}
 

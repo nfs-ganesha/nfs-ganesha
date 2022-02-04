@@ -106,11 +106,11 @@ struct hash_param {
 					      function such as 64 bit
 					      Lookup3 or Murmur. */
 	both_function_t hash_func_both;	/*< Index and partition
-					   calcualtor.  Returns false
+					   calculator.  Returns false
 					   on failure. A single
 					   function may replace the
 					   partition and hash
-					   funcions. */
+					   functions. */
 	hash_comparator_t compare_key;/*< Function to compare two
 					  keys.  This function
 					  returns 0 on equality. */
@@ -145,7 +145,7 @@ typedef struct hash_stat {
  */
 
 struct hash_partition {
-	size_t count; /*< Numer of entries in this partition */
+	size_t count; /*< Number of entries in this partition */
 	struct rbt_head rbt; /*< The red-black tree */
 	pthread_rwlock_t lock; /*< Lock for this partition */
 	struct rbt_node **cache; /*< Expected entry cache */
@@ -268,7 +268,7 @@ static inline hash_error_t HashTable_Get(struct hash_table *ht,
  * @param[in]     key The key to be set
  * @param[in]     val The value to be stored
  *
- * @retval HASHTABLE_SUCCESS if successfull
+ * @retval HASHTABLE_SUCCESS if successful
  * @retval HASHTABLE_KEY_ALREADY_EXISTS if the key already exists
  */
 

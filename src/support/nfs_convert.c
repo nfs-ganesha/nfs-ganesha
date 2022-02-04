@@ -39,7 +39,7 @@
 char *nfsstat3_to_str(nfsstat3 code)
 {
 	switch (code) {
-		/* no nead for break statments,
+		/* no need for break statements,
 		 * because we "return".
 		 */
 	case NFS3_OK:
@@ -346,7 +346,7 @@ char *nfsstat4_to_str(nfsstat4 code)
 char *nfstype3_to_str(ftype3 code)
 {
 	switch (code) {
-		/* no nead for break statments,
+		/* no need for break statements,
 		 * because we "return".
 		 */
 	case NF3REG:

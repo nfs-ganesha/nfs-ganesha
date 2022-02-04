@@ -1752,7 +1752,7 @@ static int process_claim(const char *path,
 			}
 		} /* end of if (child_fs->claims[CLAIM_CHILD] != 0) */
 
-		/* Try to claim this child, we dont' care about the return
+		/* Try to claim this child, we don't care about the return
 		 * it might be a child filesystem this FSAL can't export or
 		 * there might be some other problem, but it shouldn't cause
 		 * failure of the export as a whole.

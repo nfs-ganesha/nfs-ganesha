@@ -429,7 +429,7 @@ typedef struct mdcache_dir_entry__ {
 } mdcache_dir_entry_t;
 
 /**
- * @brief Move a detached dirent to MRU postion in LRU list.
+ * @brief Move a detached dirent to MRU position in LRU list.
  *
  * @param[in]     parent  Parent entry
  * @param[in]     dirent  Dirent to move to MRU

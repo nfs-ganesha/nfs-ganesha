@@ -57,7 +57,7 @@
  * @param[in]  req     SVC request related to this call
  * @param[out] res     Structure to contain the result of the call
  *
- * @retval NFS_REQ_OK if successfull
+ * @retval NFS_REQ_OK if successful
  * @retval NFS_REQ_DROP if failed but retryable
  * @retval NFS_REQ_FAILED if failed and not retryable
  *
@@ -235,7 +235,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 /**
  * @brief Free the result structure allocated for nfs3_create.
  *
- * Thsi function frees the result structure allocated for nfs3_create.
+ * This function frees the result structure allocated for nfs3_create.
  *
  * @param[in,out] res Result structure
  *
