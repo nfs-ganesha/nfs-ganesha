@@ -1327,9 +1327,11 @@ lru_run(struct fridgethr_context *ctx)
 
 	SetNameFunction("cache_lru");
 
+	/* fds_avg is the average *range* of fds instead absolute average
+	 * e.g. high water(10) and low water(5), the *range* between these is
+	 * `5` then avg of *range* should be `2.5`
+	 */
 	fds_avg = (lru_state.fds_hiwat - lru_state.fds_lowat) / 2;
-
-	extremis = atomic_fetch_size_t(&open_fd_count) > lru_state.fds_hiwat;
 
 	LogFullDebug(COMPONENT_CACHE_INODE_LRU, "LRU awakes.");
 
@@ -1354,17 +1356,29 @@ lru_run(struct fridgethr_context *ctx)
 
 	currentopen = atomic_fetch_size_t(&open_fd_count);
 
+	/* avoid to do more atomic fetch we could check with currentopen */
+	extremis = currentopen > lru_state.fds_hiwat;
+
 	if (currentopen < lru_state.fds_lowat) {
 		LogDebug(COMPONENT_CACHE_INODE_LRU,
 			 "FD count is %zd and low water mark is %d: not reaping.",
-			 atomic_fetch_size_t(&open_fd_count),
-			 lru_state.fds_lowat);
+			 currentopen, lru_state.fds_lowat);
 		if (atomic_fetch_uint32_t(&lru_state.fd_state) > FD_LOW) {
 			LogEvent(COMPONENT_CACHE_INODE_LRU,
 				 "Return to normal fd reaping.");
 			atomic_store_uint32_t(&lru_state.fd_state, FD_LOW);
 		}
 	} else {
+		/* Set state first because that does not realted
+		 * with following code flow
+		 */
+		if (currentopen < lru_state.fds_hiwat &&
+		    atomic_fetch_uint32_t(&lru_state.fd_state) == FD_LIMIT) {
+			LogEvent(COMPONENT_CACHE_INODE_LRU,
+				 "Count of fd is below high water mark.");
+			atomic_store_uint32_t(&lru_state.fd_state, FD_MIDDLE);
+		}
+
 		/* The count of open file descriptors before this run
 		   of the reaper. */
 		size_t formeropen = atomic_fetch_size_t(&open_fd_count);
@@ -1374,17 +1388,11 @@ lru_run(struct fridgethr_context *ctx)
 		size_t workpass = 0;
 		time_t curr_time = time(NULL);
 
-		if (currentopen < lru_state.fds_hiwat &&
-		    atomic_fetch_uint32_t(&lru_state.fd_state) == FD_LIMIT) {
-			LogEvent(COMPONENT_CACHE_INODE_LRU,
-				 "Count of fd is below high water mark.");
-			atomic_store_uint32_t(&lru_state.fd_state, FD_MIDDLE);
-		}
-
 		if ((curr_time >= lru_state.prev_time) &&
 		    (curr_time - lru_state.prev_time < fridgethr_getwait(ctx)))
 			threadwait = curr_time - lru_state.prev_time;
 
+		/* means increase rate or 1 */
 		fdratepersec = ((curr_time <= lru_state.prev_time) ||
 				(formeropen < lru_state.prev_fd_count))
 			? 1 : (formeropen - lru_state.prev_fd_count) /
@@ -1394,6 +1402,9 @@ lru_run(struct fridgethr_context *ctx)
 			     "fdrate:%u fdcount:%zd slept for %" PRIu64 " sec",
 			     fdratepersec, formeropen,
 			     ((uint64_t) (curr_time - lru_state.prev_time)));
+
+		/* `extremis` setup here again would be more exactly */
+		extremis = formeropen > lru_state.fds_hiwat;
 
 		if (extremis) {
 			LogDebug(COMPONENT_CACHE_INODE_LRU,
@@ -1419,6 +1430,7 @@ lru_run(struct fridgethr_context *ctx)
 		} while (extremis && (workpass >= lru_state.per_lane_work)
 			 && (totalwork < lru_state.biggest_window));
 
+		/* means latest current open fds after reap */
 		currentopen = atomic_fetch_size_t(&open_fd_count);
 		if (extremis &&
 		    ((currentopen > formeropen)
