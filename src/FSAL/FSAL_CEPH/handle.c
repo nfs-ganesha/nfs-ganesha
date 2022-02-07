@@ -53,11 +53,6 @@
 #include "gsh_lttng/fsal_ceph.h"
 #endif
 
-typedef enum {
-	CEPH_AS_CALLER,
-	CEPH_AS_ROOT,
-} ceph_access_t;
-
 /*
  * If the inode has a mode that doesn't allow writes, then the follow-on
  * setxattr for setting the security context can fail. We set this flag
@@ -877,80 +872,13 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/**
- * @brief Open a ceph_fd.
- *
- * @param[in] myself      The ceph internal object handle
- * @param[in] openflags   Mode for open
- * @param[in] posix_flags POSIX open flags for open
- * @param[in] my_fd       The ceph_fd to open
- * @param[in] access      CEPH_AS_CALLER or CEPH_AS_ROOT
- *
- * @return FSAL status.
- */
-
-static fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
-				     fsal_openflags_t openflags,
-				     int posix_flags, struct ceph_fd *my_fd,
-				     ceph_access_t access)
-{
-	int rc;
-	struct ceph_export *export =
-		container_of(op_ctx->fsal_export, struct ceph_export, export);
-	/*
-	 * Optionally call fsal_ceph_ll_open() with root privileges.
-	 * Needed in reopen2() code path.
-	 */
-	struct user_cred root_creds = {
-		.caller_uid    = 0,
-		.caller_gid    = 0,
-		.caller_glen   = 0,
-		.caller_garray = NULL
-	};
-	struct user_cred *creds =
-		access == CEPH_AS_ROOT ? &root_creds : &op_ctx->creds;
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "my_fd = %p my_fd->fd = %p openflags = %x, posix_flags = %x, access = %d",
-		     my_fd, my_fd->fd, openflags, posix_flags, access);
-
-	assert(my_fd->fd == NULL
-	       && my_fd->openflags == FSAL_O_CLOSED && openflags != 0);
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "openflags = %x, posix_flags = %x",
-		     openflags, posix_flags);
-
-	rc = fsal_ceph_ll_open(export->cmount, myself->i, posix_flags,
-				&my_fd->fd, creds);
-
-	if (rc < 0) {
-		my_fd->fd = NULL;
-		LogFullDebug(COMPONENT_FSAL,
-			     "open failed with %s",
-			     strerror(-rc));
-		return ceph2fsal_error(rc);
-	}
-
-	/* Save the file descriptor, make sure we only save the
-	 * open modes that actually represent the open file.
-	 */
-	LogFullDebug(COMPONENT_FSAL,
-		     "fd = %p, new openflags = %x",
-		     my_fd->fd, openflags);
-
-	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
 static fsal_status_t ceph_close_my_fd(struct ceph_fd *my_fd)
 {
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
 
-	if (my_fd->fd != NULL && my_fd->openflags != FSAL_O_CLOSED) {
+	if (my_fd->fd != NULL && my_fd->fsal_fd.openflags != FSAL_O_CLOSED) {
 		int rc = ceph_ll_close(export->cmount, my_fd->fd);
 
 		if (rc < 0) {
@@ -963,7 +891,9 @@ static fsal_status_t ceph_close_my_fd(struct ceph_fd *my_fd)
 			status = ceph2fsal_error(rc);
 		}
 		my_fd->fd = NULL;
-		my_fd->openflags = FSAL_O_CLOSED;
+		my_fd->fsal_fd.openflags = FSAL_O_CLOSED;
+	} else {
+		status = fsalstat(ERR_FSAL_NOT_OPENED, 0);
 	}
 
 	return status;
@@ -973,23 +903,71 @@ static fsal_status_t ceph_close_my_fd(struct ceph_fd *my_fd)
  * @brief Function to open an fsal_obj_handle's global file descriptor.
  *
  * @param[in]  obj_hdl     File on which to operate
- * @param[in]  openflags   Mode for open
+ * @param[in]  openflags   New mode for open
  * @param[out] fd          File descriptor that is to be used
  *
  * @return FSAL status.
  */
 
-static fsal_status_t ceph_open_func(struct fsal_obj_handle *obj_hdl,
-				    fsal_openflags_t openflags,
-				    struct fsal_fd *fd)
+static fsal_status_t ceph_reopen_func(struct fsal_obj_handle *obj_hdl,
+				      fsal_openflags_t openflags,
+				      struct fsal_fd *fsal_fd)
 {
+	struct ceph_handle *myself;
+	struct ceph_fd *my_fd;
 	int posix_flags = 0;
+	Fh *fd;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	int rc;
+	struct ceph_export *export;
+
+	export = container_of(op_ctx->fsal_export, struct ceph_export, export);
+	myself = container_of(obj_hdl, struct ceph_handle, handle);
+	my_fd = container_of(fsal_fd, struct ceph_fd, fsal_fd);
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	return ceph_open_my_fd(container_of(obj_hdl,
-		struct ceph_handle, handle), openflags,
-		posix_flags, (struct ceph_fd *)fd, CEPH_AS_CALLER);
+	LogFullDebug(COMPONENT_FSAL,
+		     "my_fd->fd = %p openflags = %x, posix_flags = %x",
+		     my_fd->fd, openflags, posix_flags);
+
+	rc = fsal_ceph_ll_open(export->cmount, myself->i, posix_flags,
+				&fd, &op_ctx->creds);
+
+	if (rc < 0) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "open failed with %s",
+			     strerror(-rc));
+		status = ceph2fsal_error(rc);
+	} else {
+		if (my_fd->fd != NULL) {
+			/* File was previously open, close old fd */
+			LogFullDebug(COMPONENT_FSAL,
+				     "close failed with %s",
+				     strerror(-rc));
+			rc = ceph_ll_close(export->cmount, my_fd->fd);
+
+			if (rc < 0) {
+				LogFullDebug(COMPONENT_FSAL,
+					     "close failed with %s",
+					     strerror(-rc));
+
+				status = ceph2fsal_error(rc);
+				/** @todo - what to do about error here... */
+			}
+		}
+
+		/* Save the file descriptor, make sure we only save the
+		 * open modes that actually represent the open file.
+		 */
+		LogFullDebug(COMPONENT_FSAL,
+			     "fd = %p, new openflags = %x",
+			     fd, openflags);
+		my_fd->fd = fd;
+		my_fd->fsal_fd.openflags = FSAL_O_NFS_FLAGS(openflags);
+	}
+
+	return status;
 }
 
 /**
@@ -1004,7 +982,7 @@ static fsal_status_t ceph_open_func(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t ceph_close_func(struct fsal_obj_handle *obj_hdl,
 				     struct fsal_fd *fd)
 {
-	return ceph_close_my_fd((struct ceph_fd *)fd);
+	return ceph_close_my_fd(container_of(fd, struct ceph_fd, fsal_fd));
 }
 
 /**
@@ -1025,17 +1003,7 @@ static fsal_status_t ceph_fsal_close(struct fsal_obj_handle *obj_hdl)
 	struct ceph_handle *handle =
 			container_of(obj_hdl, struct ceph_handle, handle);
 
-	/* Take write lock on object to protect file descriptor.
-	 * This can block over an I/O operation.
-	 */
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-	if (handle->fd.openflags == FSAL_O_CLOSED)
-		status = fsalstat(ERR_FSAL_NOT_OPENED, 0);
-	else
-		status = ceph_close_my_fd(&handle->fd);
-
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	status = close_fsal_fd(obj_hdl, &handle->fd.fsal_fd, false);
 
 #ifdef USE_LTTNG
 	tracepoint(fsalceph, ceph_close, __func__, __LINE__,
@@ -1070,9 +1038,8 @@ struct state_t *ceph_alloc_state(struct fsal_export *exp_hdl,
 
 	my_fd = &container_of(state, struct ceph_state_fd, state)->ceph_fd;
 
+	init_fsal_fd(&my_fd->fsal_fd, FSAL_FD_STATE, op_ctx->fsal_export);
 	my_fd->fd = NULL;
-	my_fd->openflags = FSAL_O_CLOSED;
-	PTHREAD_RWLOCK_init(&my_fd->fdlock, NULL);
 
 	return state;
 }
@@ -1089,9 +1056,6 @@ void ceph_free_state(struct fsal_export *exp_hdl, struct state_t *state)
 	struct ceph_state_fd *state_fd = container_of(state,
 						      struct ceph_state_fd,
 						      state);
-	struct ceph_fd *my_fd = &state_fd->ceph_fd;
-
-	PTHREAD_RWLOCK_destroy(&my_fd->fdlock);
 
 	gsh_free(state_fd);
 }
@@ -1152,6 +1116,162 @@ ceph_check_verifier_stat(struct ceph_statx *stx, fsal_verifier_t verifier)
 
 	return stx->stx_atime.tv_sec == verf_hi &&
 	       stx->stx_mtime.tv_sec == verf_lo;
+}
+
+static fsal_status_t ceph_open2_by_handle(struct fsal_obj_handle *obj_hdl,
+					  struct state_t *state,
+					  fsal_openflags_t openflags,
+					  enum fsal_create_mode createmode,
+					  fsal_verifier_t verifier,
+					  struct fsal_attrlist *attrs_out)
+{
+	struct ceph_fd *my_fd = NULL;
+	struct fsal_fd *fsal_fd;
+	struct ceph_handle *myself;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	fsal_openflags_t old_openflags;
+	bool truncated = openflags & FSAL_O_TRUNC;
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+
+	myself = container_of(obj_hdl, struct ceph_handle, handle);
+
+	if (state != NULL)
+		my_fd = &container_of(state, struct ceph_state_fd,
+				      state)->ceph_fd;
+	else
+		my_fd = &myself->fd;
+
+	fsal_fd = &my_fd->fsal_fd;
+
+	/* Indicate we want to do fd work (can't fail since not reclaiming) */
+	(void) fsal_start_fd_work(fsal_fd, false);
+
+	old_openflags = my_fd->fsal_fd.openflags;
+
+	if (state != NULL) {
+		/* Prepare to take the share reservation, but only if we are
+		 * called with a valid state (if state is NULL the caller is a
+		 * stateless create such as NFS v3 CREATE and we're just going
+		 * to ignore share reservation stuff).
+		 */
+
+		/* Now that we have the mutex, and no I/O is in progress so we
+		 * have exclusive access to the share's fsal_fd, we can look at
+		 * its openflags. We also need to work the share reservation so
+		 * take the obj_lock. NOTE: This is the ONLY sequence where both
+		 * a work_mutex and the obj_lock are taken, so there is no
+		 * opportunity for ABBA deadlock.
+		 *
+		 * Note that we do hold the obj_lock over an open and a close
+		 * which is longer than normal, but the previous iteration of
+		 * the code held the obj lock (read granted) over whole I/O
+		 * operations... We don't block over I/O because we've assured
+		 * that no I/O is in progress or can start before proceeding
+		 * past the above while loop.
+		 */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+		/* Now check the new share. */
+		status = check_share_conflict(&myself->share, openflags, false);
+
+		if (FSAL_IS_ERROR(status)) {
+			LogDebug(COMPONENT_FSAL,
+				 "check_share_conflict returned %s",
+				 fsal_err_txt(status));
+			goto exit;
+		}
+	}
+
+	/* Check for a genuine no-op open. That means we aren't trying to
+	 * create, the file is already open in the same mode with the same
+	 * deny flags, and we aren't trying to truncate. In this case we want
+	 * to avoid bouncing the fd. In the case of JUST changing the deny mode
+	 * or an replayed exclusive create, we might bounce the fd when we could
+	 * have avoided that, but those scenarios are much less common.
+	 */
+	if (FSAL_O_NFS_FLAGS(openflags) == FSAL_O_NFS_FLAGS(old_openflags) &&
+	    truncated == false && createmode == FSAL_NO_CREATE) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "no-op reopen2 my_fd->fd = %p openflags = %x",
+			     my_fd->fd, openflags);
+		goto exit;
+	}
+
+	/* No share conflict, re-open the share fd */
+	status = ceph_reopen_func(obj_hdl, openflags, fsal_fd);
+
+	if (FSAL_IS_ERROR(status)) {
+		LogDebug(COMPONENT_FSAL,
+			 "vfs_reopen_func returned %s",
+			 fsal_err_txt(status));
+		goto exit;
+	}
+
+	if (createmode >= FSAL_EXCLUSIVE || (truncated && attrs_out)) {
+		/* NOTE: won't come in here when called from ceph_reopen2...
+		 *       truncated might be set, but attrs_out will be NULL.
+		 */
+
+		/* Refresh the attributes */
+		struct ceph_statx stx;
+		int retval = fsal_ceph_ll_getattr(export->cmount, myself->i,
+						  &stx, !!attrs_out,
+						  &op_ctx->creds);
+
+		if (retval == 0) {
+			LogFullDebug(COMPONENT_FSAL,
+				     "New size = %"PRIx64,
+				     stx.stx_size);
+		} else {
+			/* Because we have an inode ref, we never
+			 * get EBADF like other FSALs might see.
+			 */
+			status = ceph2fsal_error(retval);
+		}
+
+		/* Now check verifier for exclusive, but not for
+		 * FSAL_EXCLUSIVE_9P.
+		 */
+		if (!FSAL_IS_ERROR(status) &&
+		    createmode >= FSAL_EXCLUSIVE &&
+		    createmode != FSAL_EXCLUSIVE_9P &&
+		    !ceph_check_verifier_stat(&stx, verifier)) {
+			/* Verifier didn't match, return EEXIST */
+			status = posix2fsal_status(EEXIST);
+		}
+
+		if (attrs_out) {
+			/* Save out new attributes */
+			ceph2fsal_attributes(&stx, attrs_out);
+		}
+	} else if (attrs_out && attrs_out->request_mask & ATTR_RDATTR_ERR) {
+		attrs_out->valid_mask = ATTR_RDATTR_ERR;
+	}
+
+	if (FSAL_IS_ERROR(status)) {
+		/*close fd*/
+		(void) ceph_close_my_fd(my_fd);
+	}
+
+exit:
+
+	if (state != NULL) {
+		if (!FSAL_IS_ERROR(status)) {
+			/* Success, establish the new share. */
+			update_share_counters(&myself->share,
+					      old_openflags,
+					      openflags);
+		}
+
+		/* Release obj_lock. */
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	}
+
+	/* Indicate we are done with fd work and signal any waiters. */
+	fsal_complete_fd_work(fsal_fd);
+
+	return status;
 }
 
 /**
@@ -1217,7 +1337,6 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	struct ceph_fd *my_fd = NULL;
 	struct ceph_handle *myself, *hdl = NULL;
 	struct ceph_statx stx;
-	bool truncated;
 	bool created = false;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
@@ -1235,140 +1354,17 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	truncated = (posix_flags & O_TRUNC) != 0;
-
 	if (createmode >= FSAL_EXCLUSIVE) {
 		/* Now fixup attrs for verifier if exclusive create */
 		set_common_verifier(attrib_set, verifier, false);
 	}
 
 	if (name == NULL) {
-		/* This is an open by handle */
-		/* **TODO** split open by handle to another function */
-		if (state != NULL) {
-			/* Prepare to take the share reservation, but only if we
-			 * are called with a valid state (if state is NULL the
-			 * caller is a stateless create such as NFS v3 CREATE).
-			 */
+		status = ceph_open2_by_handle(obj_hdl, state, openflags,
+					      createmode, verifier,
+					      attrs_out);
 
-			/* This can block over an I/O operation. */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-			/* Check share reservation conflicts. */
-			status = check_share_conflict(&myself->share,
-						      openflags, false);
-
-			if (FSAL_IS_ERROR(status)) {
-				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-				return status;
-			}
-
-			/* Take the share reservation now by updating the
-			 * counters.
-			 */
-			update_share_counters(&myself->share, FSAL_O_CLOSED,
-					      openflags);
-
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-		} else {
-			/* We need to use the global fd to continue, and take
-			 * the lock to protect it.
-			 */
-			my_fd = &myself->fd;
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-		}
-
-		if (my_fd->openflags != FSAL_O_CLOSED) {
-			ceph_close_my_fd(my_fd);
-		}
-		status = ceph_open_my_fd(myself, openflags, posix_flags,
-					 my_fd, CEPH_AS_CALLER);
-
-		if (FSAL_IS_ERROR(status)) {
-			if (state == NULL) {
-				/* Release the lock taken above, and return
-				 * since there is nothing to undo.
-				 */
-				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-				return status;
-			} else {
-				/* Error - need to release the share */
-				goto undo_share;
-			}
-		}
-
-		if (createmode >= FSAL_EXCLUSIVE || truncated) {
-			/* Refresh the attributes */
-			retval = fsal_ceph_ll_getattr(export->cmount,
-					myself->i, &stx, !!attrs_out,
-					&op_ctx->creds);
-
-			if (retval == 0) {
-				LogFullDebug(COMPONENT_FSAL,
-					     "New size = %"PRIx64,
-					     stx.stx_size);
-			} else {
-				/* Because we have an inode ref, we never
-				 * get EBADF like other FSALs might see.
-				 */
-				status = ceph2fsal_error(retval);
-			}
-
-			/* Now check verifier for exclusive, but not for
-			 * FSAL_EXCLUSIVE_9P.
-			 */
-			if (!FSAL_IS_ERROR(status) &&
-			    createmode >= FSAL_EXCLUSIVE &&
-			    createmode != FSAL_EXCLUSIVE_9P &&
-			    !ceph_check_verifier_stat(&stx, verifier)) {
-				/* Verifier didn't match, return EEXIST */
-				status =
-				    fsalstat(posix2fsal_error(EEXIST), EEXIST);
-			}
-
-			if (attrs_out) {
-				/* Save out new attributes */
-				ceph2fsal_attributes(&stx, attrs_out);
-			}
-		} else if (attrs_out && attrs_out->request_mask &
-			   ATTR_RDATTR_ERR) {
-			attrs_out->valid_mask = ATTR_RDATTR_ERR;
-		}
-
-		if (state == NULL) {
-			/* If no state, release the lock taken above and return
-			 * status. If success, we haven't done any permission
-			 * check so ask the caller to do so.
-			 */
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-			*caller_perm_check = !FSAL_IS_ERROR(status);
-			return status;
-		}
-
-		if (!FSAL_IS_ERROR(status)) {
-			/* Return success. We haven't done any permission
-			 * check so ask the caller to do so.
-			 */
-			*caller_perm_check = true;
-			return status;
-		}
-
-		(void) ceph_close_my_fd(my_fd);
-
- undo_share:
-
-		/* Can only get here with state not NULL and an error */
-
-		/* On error we need to release our share reservation
-		 * and undo the update of the share counters.
-		 * This can block over an I/O operation.
-		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-		update_share_counters(&myself->share, openflags, FSAL_O_CLOSED);
-
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
+		*caller_perm_check = FSAL_IS_SUCCESS(status);
 		return status;
 	}
 
@@ -1549,7 +1545,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		my_fd = &hdl->fd;
 
 	my_fd->fd = fd;
-	my_fd->openflags = FSAL_O_NFS_FLAGS(openflags);
+	my_fd->fsal_fd.openflags = FSAL_O_NFS_FLAGS(openflags);
 
 	*new_obj = &hdl->handle;
 
@@ -1602,13 +1598,9 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		 * a stateless create such as NFS v3 CREATE).
 		 */
 
-		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&(*new_obj)->obj_lock);
-
 		/* Take the share reservation now by updating the counters. */
-		update_share_counters(&hdl->share, FSAL_O_CLOSED, openflags);
-
-		PTHREAD_RWLOCK_unlock(&(*new_obj)->obj_lock);
+		update_share_counters_locked(&hdl->handle, &hdl->share,
+					     FSAL_O_CLOSED, openflags);
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1648,7 +1640,7 @@ static fsal_openflags_t ceph_fsal_status2(struct fsal_obj_handle *obj_hdl,
 {
 	struct ceph_fd *my_fd = (struct ceph_fd *)(state + 1);
 
-	return my_fd->openflags;
+	return my_fd->fsal_fd.openflags;
 }
 
 /**
@@ -1671,106 +1663,21 @@ static fsal_status_t ceph_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 				       struct state_t *state,
 				       fsal_openflags_t openflags)
 {
-	struct ceph_fd temp_fd = {
-			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, NULL };
-	struct ceph_fd *my_fd = &temp_fd, *my_share_fd;
-	struct ceph_handle *myself =
-			container_of(obj_hdl, struct ceph_handle, handle);
-	fsal_status_t status = {0, 0};
-	int posix_flags = 0;
-	fsal_openflags_t old_openflags;
+	fsal_status_t status;
+	struct user_cred root_creds = {};
+	struct user_cred saved_creds = op_ctx->creds;
 
-	my_share_fd = &container_of(state, struct ceph_state_fd,
-				    state)->ceph_fd;
-
-	fsal2posix_openflags(openflags, &posix_flags);
-
-	/* This can block over an I/O operation. */
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-	old_openflags = my_share_fd->openflags;
-
-	/* We can conflict with old share, so go ahead and check now. */
-	status = check_share_conflict(&myself->share, openflags, false);
-
-	if (FSAL_IS_ERROR(status)) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-		return status;
-	}
-
-	/* Set up the new share so we can drop the lock and not have a
-	 * conflicting share be asserted, updating the share counters.
+	/* Ultimately fsal_ceph_ll_open will have to be called using root
+	 * creds. See github issue #577.
 	 */
-	update_share_counters(&myself->share, old_openflags, openflags);
+	op_ctx->creds = root_creds;
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	status = ceph_open2_by_handle(obj_hdl, state, openflags, FSAL_NO_CREATE,
+				      NULL, NULL);
 
-	/* Open the fd with root privileges on reopen. This is safe
-	 * because permission is checked in fsal_helper:fsal_reopen2()
-	 */
-	status = ceph_open_my_fd(myself, openflags, posix_flags, my_fd,
-				 CEPH_AS_ROOT);
+	/* Restore the creds. */
+	op_ctx->creds = saved_creds;
 
-	if (!FSAL_IS_ERROR(status)) {
-		/* Close the existing file descriptor and copy the new
-		 * one over. Make sure no one is using the fd that we are
-		 * about to close!
-		 */
-		PTHREAD_RWLOCK_wrlock(&my_share_fd->fdlock);
-
-		ceph_close_my_fd(my_share_fd);
-		my_share_fd->fd = my_fd->fd;
-		my_share_fd->openflags = my_fd->openflags;
-
-		PTHREAD_RWLOCK_unlock(&my_share_fd->fdlock);
-	} else {
-		/* We had a failure on open - we need to revert the share.
-		 * This can block over an I/O operation.
-		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-		update_share_counters(&myself->share, openflags, old_openflags);
-
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-	}
-
-	return status;
-}
-
-/**
- * @brief Find a file descriptor for a read or write operation.
- *
- * We do not need file descriptors for non-regular files, so this never has to
- * handle them.
- */
-static fsal_status_t ceph_find_fd(Fh **fd,
-			   struct fsal_obj_handle *obj_hdl,
-			   bool bypass,
-			   struct state_t *state,
-			   fsal_openflags_t openflags,
-			   bool *has_lock,
-			   bool *closefd,
-			   bool open_for_locks)
-{
-	struct ceph_handle *myself =
-			container_of(obj_hdl, struct ceph_handle, handle);
-	struct ceph_fd temp_fd = {
-			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, NULL };
-	struct ceph_fd *out_fd = &temp_fd;
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-	bool reusing_open_state_fd = false;
-
-	status = fsal_find_fd((struct fsal_fd **)&out_fd, obj_hdl,
-			      (struct fsal_fd *)&myself->fd, &myself->share,
-			      bypass, state, openflags,
-			      ceph_open_func, ceph_close_func,
-			      has_lock, closefd, open_for_locks,
-			      &reusing_open_state_fd);
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "fd = %p", out_fd->fd);
-	*fd = out_fd->fd;
 	return status;
 }
 
@@ -1797,14 +1704,15 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			    fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 			    void *caller_arg)
 {
-	Fh *my_fd = NULL;
 	ssize_t nb_read;
-	fsal_status_t status;
-	bool has_lock = false;
-	bool closefd = false;
+	fsal_status_t status = {0, 0}, status2;
+	struct ceph_fd *my_fd;
+	struct ceph_fd temp_fd = { FSAL_FD_INIT, NULL };
+	struct fsal_fd *out_fd;
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
-	struct ceph_fd *ceph_fd = NULL;
 	uint64_t offset = read_arg->offset;
 	int i;
 
@@ -1815,27 +1723,24 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		return;
 	}
 
-	/* Acquire state's fdlock to prevent OPEN upgrade closing the
-	 * file descriptor while we use it.
-	 */
-	if (read_arg->state) {
-		ceph_fd = &container_of(read_arg->state, struct ceph_state_fd,
-					state)->ceph_fd;
+	/* Indicate a desire to start io and get a usable file descritor */
+	status = fsal_start_io(&out_fd, obj_hdl, &myself->fd.fsal_fd,
+			       &temp_fd.fsal_fd, read_arg->state, FSAL_O_READ,
+			       false, NULL, bypass, &myself->share);
 
-		PTHREAD_RWLOCK_rdlock(&ceph_fd->fdlock);
+	if (FSAL_IS_ERROR(status)) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "fsal_start_io failed returning %s",
+			     fsal_err_txt(status));
+		goto exit;
 	}
 
-	/* Get a usable file descriptor */
-	status = ceph_find_fd(&my_fd, obj_hdl, bypass, read_arg->state,
-			      FSAL_O_READ, &has_lock, &closefd, false);
-
-	if (FSAL_IS_ERROR(status))
-		goto out;
+	my_fd = container_of(out_fd, struct ceph_fd, fsal_fd);
 
 	read_arg->io_amount = 0;
 
 	for (i = 0; i < read_arg->iov_count; i++) {
-		nb_read = ceph_ll_read(export->cmount, my_fd, offset,
+		nb_read = ceph_ll_read(export->cmount, my_fd->fd, offset,
 				       read_arg->iov[i].iov_len,
 				       read_arg->iov[i].iov_base);
 
@@ -1874,14 +1779,24 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 
  out:
 
-	if (ceph_fd)
-		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
+	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	if (closefd)
-		(void) ceph_ll_close(export->cmount, my_fd);
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
 
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	if (read_arg->state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &myself->share,
+					     FSAL_O_READ, FSAL_O_CLOSED);
+	}
+
+ exit:
 
 	done_cb(obj_hdl, status, read_arg, caller_arg);
 }
@@ -1910,42 +1825,35 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			     struct fsal_io_arg *write_arg, void *caller_arg)
 {
 	ssize_t nb_written;
-	fsal_status_t status;
+	fsal_status_t status = {0, 0}, status2;
+	struct ceph_fd *my_fd;
+	struct ceph_fd temp_fd = { FSAL_FD_INIT, NULL };
+	struct fsal_fd *out_fd;
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	int i, retval = 0;
-	Fh *my_fd = NULL;
-	bool has_lock = false;
-	bool closefd = false;
-	fsal_openflags_t openflags = FSAL_O_WRITE;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
-	struct ceph_fd *ceph_fd = NULL;
 	uint64_t offset = write_arg->offset;
 
-	/* Acquire state's fdlock to prevent OPEN upgrade closing the
-	 * file descriptor while we use it.
-	 */
-	if (write_arg->state) {
-		ceph_fd = &container_of(write_arg->state, struct ceph_state_fd,
-					state)->ceph_fd;
-
-		PTHREAD_RWLOCK_rdlock(&ceph_fd->fdlock);
-	}
-
-	/* Get a usable file descriptor */
-	status = ceph_find_fd(&my_fd, obj_hdl, bypass, write_arg->state,
-			      openflags, &has_lock, &closefd, false);
+	/* Indicate a desire to start io and get a usable file descritor */
+	status = fsal_start_io(&out_fd, obj_hdl, &myself->fd.fsal_fd,
+			       &temp_fd.fsal_fd, write_arg->state, FSAL_O_WRITE,
+			       false, NULL, bypass, &myself->share);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL,
-			 "find_fd failed %s", msg_fsal_err(status.major));
-		goto out;
+		LogFullDebug(COMPONENT_FSAL,
+			     "fsal_start_io failed returning %s",
+			     fsal_err_txt(status));
+		goto exit;
 	}
 
+	my_fd = container_of(out_fd, struct ceph_fd, fsal_fd);
+
 	for (i = 0; i < write_arg->iov_count; i++) {
-		nb_written =
-			ceph_ll_write(export->cmount, my_fd, offset,
-				      write_arg->iov[i].iov_len,
-				      write_arg->iov[i].iov_base);
+		nb_written = ceph_ll_write(export->cmount, my_fd->fd, offset,
+					   write_arg->iov[i].iov_len,
+					   write_arg->iov[i].iov_base);
 
 		if (nb_written == 0) {
 			break;
@@ -1959,7 +1867,7 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	}
 
 	if (write_arg->fsal_stable) {
-		retval = ceph_ll_fsync(export->cmount, my_fd, false);
+		retval = ceph_ll_fsync(export->cmount, my_fd->fd, false);
 
 		if (retval < 0) {
 			status = ceph2fsal_error(retval);
@@ -1974,14 +1882,24 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 
  out:
 
-	if (ceph_fd)
-		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
+	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	if (closefd)
-		(void) ceph_ll_close(export->cmount, my_fd);
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
 
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	if (write_arg->state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &myself->share,
+					     FSAL_O_WRITE, FSAL_O_CLOSED);
+	}
+
+ exit:
 
 	done_cb(obj_hdl, status, write_arg, caller_arg);
 }
@@ -2016,7 +1934,8 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 
 	/*
 	 * If we have the ceph_ll_sync_inode call, then we can avoid opening
-	 * altogether.
+	 * altogether. Since we don't need to check share reservation, this
+	 * totally avoids dealing with the obj_lock or any fsal_fd.
 	 */
 	retval = ceph_ll_sync_inode(export->cmount, myself->i, 0);
 
@@ -2032,51 +1951,58 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 				       off_t offset,
 				       size_t len)
 {
-	struct ceph_handle *myself =
-			container_of(obj_hdl, struct ceph_handle, handle);
-	fsal_status_t status;
+	struct ceph_handle *myself;
+	fsal_status_t status, status2;
 	int retval;
-	struct ceph_fd temp_fd = {
-			FSAL_O_CLOSED, PTHREAD_RWLOCK_INITIALIZER, NULL };
-	struct ceph_fd *out_fd = &temp_fd;
-	bool has_lock = false;
-	bool closefd = false;
+	struct ceph_fd temp_fd = { FSAL_FD_INIT, NULL };
+	struct fsal_fd *out_fd;
+	struct ceph_fd *my_fd;
+	struct user_cred saved_creds = op_ctx->creds;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
-	struct user_cred saved_creds = op_ctx->creds;
 
+	myself = container_of(obj_hdl, struct ceph_handle, handle);
 
-	/*
-	 * Make sure file is open in appropriate mode, without checking for
-	 * share reservation. Also, it's possible that the file has changed
-	 * permissions since it was opened by the writer, so open the file
-	 * with root creds here since we're just doing a fsync.
+	/* It's possible that the file has changed permissions since it was
+	 * opened by the writer, so open the file with root creds here since
+	 * we're just doing a fsync.
 	 */
 	memset(&op_ctx->creds, 0, sizeof(op_ctx->creds));
-	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_ANY,
-				 (struct fsal_fd *)&myself->fd, &myself->share,
-				 ceph_open_func, ceph_close_func,
-				 (struct fsal_fd **)&out_fd, &has_lock,
-				 &closefd);
+
+	/* Make sure file is open in appropriate mode.
+	 * Do not check share reservation.
+	 */
+	status = fsal_start_global_io(&out_fd, obj_hdl,
+				      &myself->fd.fsal_fd,
+				      &temp_fd.fsal_fd,
+				      FSAL_O_ANY, false,
+				      NULL);
+
+	/* Restore creds */
 	op_ctx->creds = saved_creds;
 
-	if (!FSAL_IS_ERROR(status)) {
-		retval = ceph_ll_fsync(export->cmount, out_fd->fd, false);
+	if (FSAL_IS_ERROR(status))
+		return status;
 
-		if (retval < 0)
-			status = ceph2fsal_error(retval);
-	}
+	my_fd = container_of(out_fd, struct ceph_fd, fsal_fd);
+
+	retval = ceph_ll_fsync(export->cmount, my_fd->fd, false);
+
+	if (retval < 0)
+		status = ceph2fsal_error(retval);
 
 #ifdef USE_LTTNG
 	tracepoint(fsalceph, ceph_commit, __func__, __LINE__,
 		   obj_hdl->fileid);
 #endif
 
-	if (closefd)
-		(void) ceph_ll_close(export->cmount, out_fd->fd);
+	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
+
+	/* We did not do share reservation stuff... */
 
 	return status;
 }
@@ -2111,16 +2037,17 @@ static fsal_status_t ceph_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 					fsal_lock_param_t *conflicting_lock)
 {
 	struct flock lock_args;
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = {0, 0}, status2;
 	int retval = 0;
-	Fh *my_fd = NULL;
-	bool has_lock = false;
-	bool closefd = false;
+	struct ceph_fd *my_fd;
+	struct ceph_fd temp_fd = { FSAL_FD_INIT, NULL };
+	struct fsal_fd *out_fd;
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	bool bypass = false;
 	fsal_openflags_t openflags = FSAL_O_RDWR;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
-	struct ceph_fd *ceph_fd = NULL;
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Locking: op:%d type:%d start:%" PRIu64 " length:%"
@@ -2181,34 +2108,25 @@ static fsal_status_t ceph_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_BAD_RANGE, 0);
 	}
 
-	/* Acquire state's fdlock to prevent OPEN upgrade closing the
-	 * file descriptor while we use it.
-	 */
-	if (state) {
-		ceph_fd = &container_of(state, struct ceph_state_fd,
-					state)->ceph_fd;
-
-		PTHREAD_RWLOCK_rdlock(&ceph_fd->fdlock);
-	}
-
-	/* Get a usable file descriptor */
-	status = ceph_find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			      &has_lock, &closefd, true);
+	/* Indicate a desire to start io and get a usable file descritor */
+	status = fsal_start_io(&out_fd, obj_hdl, &myself->fd.fsal_fd,
+			       &temp_fd.fsal_fd, state, openflags,
+			       true, NULL, bypass, &myself->share);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock operation");
-
-		if (ceph_fd)
-			PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
-
-		return status;
+		LogCrit(COMPONENT_FSAL,
+			"fsal_start_io failed returning %s",
+			fsal_err_txt(status));
+		goto exit;
 	}
 
+	my_fd = container_of(out_fd, struct ceph_fd, fsal_fd);
+
 	if (lock_op == FSAL_OP_LOCKT) {
-		retval = ceph_ll_getlk(export->cmount, my_fd, &lock_args,
+		retval = ceph_ll_getlk(export->cmount, my_fd->fd, &lock_args,
 				       (uint64_t) owner);
 	} else {
-		retval = ceph_ll_setlk(export->cmount, my_fd, &lock_args,
+		retval = ceph_ll_setlk(export->cmount, my_fd->fd, &lock_args,
 				       (uint64_t) owner, false);
 	}
 
@@ -2223,7 +2141,7 @@ static fsal_status_t ceph_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 			int retval2;
 
 			/* Get the conflicting lock */
-			retval2 = ceph_ll_getlk(export->cmount, my_fd,
+			retval2 = ceph_ll_getlk(export->cmount, my_fd->fd,
 					       &lock_args, (uint64_t) owner);
 
 			if (retval2 < 0) {
@@ -2263,14 +2181,24 @@ static fsal_status_t ceph_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 
  err:
 
-	if (ceph_fd)
-		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
+	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	if (closefd)
-		(void) ceph_ll_close(export->cmount, my_fd);
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
 
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	if (state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &myself->share,
+					     openflags, FSAL_O_CLOSED);
+	}
+
+ exit:
 
 	return ceph2fsal_error(retval);
 }
@@ -2302,15 +2230,15 @@ static fsal_status_t ceph_fsal_lease_op2(struct fsal_obj_handle *obj_hdl,
 					 state_t *state, void *owner,
 					 fsal_deleg_t deleg)
 {
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = {0, 0}, status2;
 	int retval = 0;
-	Fh *my_fd = NULL;
 	unsigned int cmd;
-	bool has_lock = false;
-	bool closefd = false;
-	bool bypass = false;
+	struct ceph_fd *my_fd;
+	struct ceph_fd temp_fd = { FSAL_FD_INIT, NULL };
+	struct fsal_fd *out_fd;
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	fsal_openflags_t openflags = FSAL_O_READ;
-	struct ceph_fd *ceph_fd = NULL;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
 
@@ -2329,45 +2257,46 @@ static fsal_status_t ceph_fsal_lease_op2(struct fsal_obj_handle *obj_hdl,
 		return ceph2fsal_error(-EINVAL);
 	};
 
-	/* Acquire state's fdlock to prevent OPEN upgrade closing the
-	 * file descriptor while we use it.
-	 */
-	if (state) {
-		ceph_fd = &container_of(state, struct ceph_state_fd,
-					state)->ceph_fd;
-
-		PTHREAD_RWLOCK_rdlock(&ceph_fd->fdlock);
-	}
-
-	/* Get a usable file descriptor */
-	status = ceph_find_fd(&my_fd, obj_hdl, bypass, state, openflags,
-			      &has_lock, &closefd, false);
+	/* Indicate a desire to start io and get a usable file descritor */
+	status = fsal_start_io(&out_fd, obj_hdl, &myself->fd.fsal_fd,
+			       &temp_fd.fsal_fd, state, openflags,
+			       false, NULL, false, &myself->share);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogCrit(COMPONENT_FSAL, "Unable to find fd for lease op");
-
-		if (ceph_fd)
-			PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
-
-		return status;
+		LogCrit(COMPONENT_FSAL,
+			"fsal_start_io failed returning %s",
+			fsal_err_txt(status));
+		goto exit;
 	}
 
-	retval = ceph_ll_delegation(export->cmount, my_fd, cmd, ceph_deleg_cb,
-				    obj_hdl);
+	my_fd = container_of(out_fd, struct ceph_fd, fsal_fd);
+
+	retval = ceph_ll_delegation(export->cmount, my_fd->fd, cmd,
+				    ceph_deleg_cb, obj_hdl);
 
 #ifdef USE_LTTNG
 	tracepoint(fsalceph, ceph_lease, __func__, __LINE__,
 		   obj_hdl->fileid, cmd);
 #endif
 
-	if (ceph_fd)
-		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
+	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	if (closefd)
-		(void) ceph_ll_close(export->cmount, my_fd);
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
 
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	if (state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &myself->share,
+					     openflags, FSAL_O_CLOSED);
+	}
+
+ exit:
 
 	return ceph2fsal_error(retval);
 }
@@ -2394,15 +2323,13 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		container_of(obj_hdl, struct ceph_handle, handle);
 	fsal_status_t status = {0, 0};
 	int rc = 0;
-	bool has_lock = false;
-	bool closefd = false;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	/* Stat buffer */
 	struct ceph_statx stx;
 	/* Mask of attributes to set */
 	uint32_t mask = 0;
-	bool reusing_open_state_fd = false;
+	bool need_share = false;
 
 	if (attrib_set->valid_mask & ~CEPH_SETTABLE_ATTRIBUTES) {
 		LogDebug(COMPONENT_FSAL,
@@ -2443,27 +2370,29 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	/* Test if size is being set, make sure file is regular and if so,
 	 * require a read/write file descriptor.
 	 */
-	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
+	if (state != NULL &&
+	    FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
 		if (obj_hdl->type != REGULAR_FILE) {
 			LogFullDebug(COMPONENT_FSAL,
 				     "Setting size on non-regular file");
 			return fsalstat(ERR_FSAL_INVAL, EINVAL);
 		}
 
-		/* We don't actually need an open fd, we are just doing the
-		 * share reservation checking, thus the NULL parameters.
-		 */
-		status = fsal_find_fd(NULL, obj_hdl, NULL, &myself->share,
-				      bypass, state, FSAL_O_WRITE, NULL, NULL,
-				      &has_lock, &closefd, false,
-				      &reusing_open_state_fd);
+		/* Now check the new share and establish if OK. */
+		status = check_share_conflict_and_update_locked(obj_hdl,
+								&myself->share,
+								FSAL_O_CLOSED,
+								FSAL_O_RDWR,
+								false);
 
 		if (FSAL_IS_ERROR(status)) {
 			LogFullDebug(COMPONENT_FSAL,
-				     "fsal_find_fd status=%s",
+				     "check_share_conflict_and_update_locked status=%s",
 				     fsal_err_txt(status));
 			goto out;
 		}
+
+		need_share = true;
 	}
 
 	memset(&stx, 0, sizeof(stx));
@@ -2585,8 +2514,12 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
  out:
 
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	if (need_share) {
+		/* Release the temporary share. */
+		update_share_counters_locked(obj_hdl, &myself->share,
+					     FSAL_O_RDWR,
+					     FSAL_O_CLOSED);
+	}
 
 	return status;
 }
@@ -2608,7 +2541,6 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t ceph_fsal_close2(struct fsal_obj_handle *obj_hdl,
 				      struct state_t *state)
 {
-	fsal_status_t status = {0, 0};
 	struct ceph_handle *myself =
 		container_of(obj_hdl, struct ceph_handle, handle);
 	struct ceph_fd *my_fd = &container_of(state, struct ceph_state_fd,
@@ -2618,25 +2550,12 @@ static fsal_status_t ceph_fsal_close2(struct fsal_obj_handle *obj_hdl,
 	    state->state_type == STATE_TYPE_NLM_SHARE ||
 	    state->state_type == STATE_TYPE_9P_FID) {
 		/* This is a share state, we must update the share counters */
-
-		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-		update_share_counters(&myself->share,
-				      my_fd->openflags,
-				      FSAL_O_CLOSED);
-
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+		update_share_counters_locked(obj_hdl, &myself->share,
+					     my_fd->fsal_fd.openflags,
+					     FSAL_O_CLOSED);
 	}
 
-	/* Acquire state's fdlock to make sure no other thread
-	 * is operating on the fd while we close it.
-	 */
-	PTHREAD_RWLOCK_wrlock(&my_fd->fdlock);
-	status = ceph_close_my_fd(my_fd);
-	PTHREAD_RWLOCK_unlock(&my_fd->fdlock);
-
-	return status;
+	return close_fsal_fd(obj_hdl, &my_fd->fsal_fd, false);
 }
 
 /**
@@ -2715,38 +2634,33 @@ static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 					 state_t *state, uint64_t offset,
 					 uint64_t length, bool allocate)
 {
-	fsal_status_t status;
+	fsal_status_t status = {0, 0}, status2;
 	int retval = 0;
-	Fh *my_fd = NULL;
-	bool has_lock = false;
-	bool closefd = false;
+	struct ceph_fd *my_fd;
+	struct ceph_fd temp_fd = { FSAL_FD_INIT, NULL };
+	struct fsal_fd *out_fd;
+	struct ceph_handle *myself =
+			container_of(obj_hdl, struct ceph_handle, handle);
 	int mode;
-	fsal_openflags_t openflags = FSAL_O_WRITE;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
-	struct ceph_fd *ceph_fd = NULL;
 
-	/* Acquire state's fdlock to prevent OPEN upgrade closing the
-	 * file descriptor while we use it.
-	 */
-	if (state) {
-		ceph_fd = &container_of(state, struct ceph_state_fd,
-					state)->ceph_fd;
-		PTHREAD_RWLOCK_rdlock(&ceph_fd->fdlock);
-	}
-
-	/* Get a usable file descriptor */
-	status = ceph_find_fd(&my_fd, obj_hdl, false, state,
-			      openflags, &has_lock, &closefd, false);
+	/* Indicate a desire to start io and get a usable file descritor */
+	status = fsal_start_io(&out_fd, obj_hdl, &myself->fd.fsal_fd,
+			       &temp_fd.fsal_fd, state, FSAL_O_WRITE,
+			       false, NULL, false, &myself->share);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL,
-			 "find_fd failed %s", msg_fsal_err(status.major));
-		goto out;
+		LogFullDebug(COMPONENT_FSAL,
+			     "fsal_start_io failed returning %s",
+			     fsal_err_txt(status));
+		goto exit;
 	}
 
+	my_fd = container_of(out_fd, struct ceph_fd, fsal_fd);
+
 	mode = allocate ? 0 : FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE;
-	retval = ceph_ll_fallocate(export->cmount, my_fd, mode,
+	retval = ceph_ll_fallocate(export->cmount, my_fd->fd, mode,
 				   offset, length);
 
 	if (retval < 0) {
@@ -2754,7 +2668,7 @@ static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 
-	retval = ceph_ll_fsync(export->cmount, my_fd, false);
+	retval = ceph_ll_fsync(export->cmount, my_fd->fd, false);
 	if (retval < 0)
 		status = ceph2fsal_error(retval);
 
@@ -2764,14 +2678,25 @@ static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 #endif
 
  out:
-	if (ceph_fd)
-		PTHREAD_RWLOCK_unlock(&ceph_fd->fdlock);
 
-	if (closefd)
-		(void) ceph_ll_close(export->cmount, my_fd);
+	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
+
+	if (state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &myself->share,
+					     FSAL_O_WRITE, FSAL_O_CLOSED);
+	}
+
+ exit:
 
 	return status;
 }
@@ -3035,6 +2960,8 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 #endif
 	ops->setattr2 = ceph_fsal_setattr2;
 	ops->close2 = ceph_fsal_close2;
+	ops->close_func = ceph_close_func;
+	ops->reopen_func = ceph_reopen_func;
 #ifdef CEPH_PNFS
 	handle_ops_pnfs(ops);
 #endif				/* CEPH_PNFS */

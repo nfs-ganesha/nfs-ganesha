@@ -93,6 +93,11 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 	constructing->handle.fsid = posix2fsal_fsid(stx->stx_dev);
 	constructing->handle.fileid = stx->stx_ino;
 
+	if (constructing->handle.type == REGULAR_FILE) {
+		init_fsal_fd(&constructing->fd.fsal_fd, FSAL_FD_GLOBAL,
+			     op_ctx->fsal_export);
+	}
+
 	*obj = constructing;
 }
 
