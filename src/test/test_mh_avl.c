@@ -87,7 +87,7 @@ avl_unit_val_t *avl_unit_new_val(const char *name)
 static int qp_avl_insert(struct avltree *t, avl_unit_val_t *v)
 {
 	/*
-	 * Insert with quadatic, linear probing.  A unique k is assured for
+	 * Insert with quadratic, linear probing.  A unique k is assured for
 	 * any k whenever size(t) < max(uint64_t).
 	 *
 	 * First try quadratic probing, with coeff. 2 (since m = 2^n.)

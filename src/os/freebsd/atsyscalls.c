@@ -113,7 +113,7 @@ int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)
 
 #ifndef SYS_openat
 /*
- * Allow compliation (only) on FreeBSD versions without these syscalls
+ * Allow compilation (only) on FreeBSD versions without these syscalls
  * These numbers match the modified FreeBSD 10.1 used by Panasas
  *
  */

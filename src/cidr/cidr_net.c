@@ -70,7 +70,7 @@ CIDR *cidr_net_supernet(const CIDR * addr)
 	/*
 	 * Now zero out the host bits in the addr.  Do this manually instead
 	 * of calling cidr_addr_network() to save some extra copies and
-	 * allocationss and so forth.
+	 * allocations and so forth.
 	 */
 	for ( /* i */ ; i <= 15; i++) {
 		for ( /* j */ ; j >= 0; j--)

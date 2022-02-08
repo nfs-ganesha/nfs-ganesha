@@ -284,7 +284,7 @@ int vfs_open_by_handle(struct fsal_filesystem *fs,
 	switch (fh->handle_data[0] & HANDLE_TYPE_MASK) {
 	case 0:
 		LogDebug(COMPONENT_FSAL,
-			 "Invaliid handle type = 0");
+			 "Invalid handle type = 0");
 		errno = EINVAL;
 		fd = -1;
 		goto out;

@@ -577,7 +577,7 @@ select_ds(struct glfs_object *object, char *pathinfo, char *hostname,
 		tmp++;
 		no_of_ds++;
 		/* *
-		 * If no of dses reaches maxmium count, then
+		 * If no of dses reaches maximum count, then
 		 * perform load balance on current list
 		 */
 		if (no_of_ds == MAX_DS_COUNT)

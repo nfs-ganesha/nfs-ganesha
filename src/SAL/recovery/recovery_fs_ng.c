@@ -287,7 +287,7 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path,
 			 * make sure this reconstructed string is valid
 			 * by comparing clid-len and the actual
 			 * long-form-clid length in the string. This is
-			 * to prevent getting incompleted strings that
+			 * to prevent getting incomplete strings that
 			 * might exist due to program crash.
 			 */
 			if (strlen(build_clid) >= PATH_MAX) {

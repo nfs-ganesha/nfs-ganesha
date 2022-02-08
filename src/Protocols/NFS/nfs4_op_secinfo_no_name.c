@@ -54,7 +54,7 @@
 /**
  * @brief NFSv4 SECINFO_NO_NAME operation
  *
- * This function impelments the NFSv4 SECINFO_NO_NAME operation.
+ * This function implements the NFSv4 SECINFO_NO_NAME operation.
  *
  * @param[in]     op   Operation request
  * @param[in,out] data Compound data
@@ -133,7 +133,7 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 
 	/**
 	 * @todo We give here the order in which the client should try
-	 * different authentifications. Might want to give it in the
+	 * different authentications. Might want to give it in the
 	 * order given in the config.
 	 */
 	int idx = 0;

@@ -2109,7 +2109,7 @@ static int build_default_root(struct config_error_type *err_type)
 	export->pseudopath = gsh_refstr_dup("/");
 	export->fullpath = gsh_refstr_dup("/");
 
-	/* Initialize req_ctx with the export reasomnably constructed using the
+	/* Initialize req_ctx with the export reasonably constructed using the
 	 * reference provided above by alloc_export().
 	 */
 	init_op_context_simple(&op_context, export, NULL);
@@ -2691,7 +2691,7 @@ void release_export(struct gsh_export *export, bool config)
 
 	if (!config) {
 		LogDebug(COMPONENT_EXPORT,
-			 "Unexport %s, Pseduo %s",
+			 "Unexport %s, Pseudo %s",
 			 CTX_FULLPATH(op_ctx), CTX_PSEUDOPATH(op_ctx));
 	}
 

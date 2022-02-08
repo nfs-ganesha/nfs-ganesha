@@ -766,7 +766,7 @@ static void layoutrecall_one_call(void *arg)
 			 * ought to give the client at least one lease
 			 * period to establish a back channel before
 			 * we start revoking state.  We don't have the
-			 * infrasturcture to properly handle layout
+			 * infrastructure to properly handle layout
 			 * revocation, however.  Once we get the
 			 * capability to revoke layouts we should
 			 * queue requests on the clientid, obey the
@@ -950,7 +950,7 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
 /**
  * @brief Check if the delegation needs to be revoked.
  *
- * @param[in] deleg_entry SLE entry for the delegaion
+ * @param[in] deleg_entry SLE entry for the delegation
  *
  * @return true, if the delegation need to be revoked.
  * @return false, if the delegation should not be revoked.

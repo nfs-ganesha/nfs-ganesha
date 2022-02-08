@@ -1109,7 +1109,7 @@ static void release_v41(rpc_call_t *call)
  * Find and reserve a slot, if we can.  If @c wait is set to true, we
  * wait on the condition variable for a limited time.
  *
- * @param[in,out] session      Sesson on which to operate
+ * @param[in,out] session      Session on which to operate
  * @param[in]     wait         Whether to wait on the condition variable if
  *                             no slot can be found
  * @param[out]    slot         Slot to use

@@ -895,7 +895,7 @@ void fsal_set_credentials(const struct user_cred *creds)
 {
 	if (set_threadgroups(creds->caller_glen, creds->caller_garray) != 0)
 		LogFatal(COMPONENT_FSAL,
-			 "set_threadgroups() rerturned %s (%d)",
+			 "set_threadgroups() returned %s (%d)",
 			 strerror(errno), errno);
 	setgroup(creds->caller_gid);
 	setuser(creds->caller_uid);

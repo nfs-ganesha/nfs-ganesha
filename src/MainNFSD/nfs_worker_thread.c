@@ -1083,7 +1083,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 			/* The request is suspended, don't touch the request in
 			 * any way because the resume may already be scheduled
 			 * and running on nother thread. The xp_resume_cb has
-			 * already been set up before we started proecessing
+			 * already been set up before we started processing
 			 * ops on this request at all.
 			 */
 			suspend_op_context();
@@ -1503,7 +1503,7 @@ retry_after_drc_suspend:
 			/* The request is suspended, don't touch the request in
 			 * any way because the resume may already be scheduled
 			 * and running on nother thread. The xp_resume_cb has
-			 * already been set up before we started proecessing
+			 * already been set up before we started processing
 			 * ops on this request at all.
 			 */
 			suspend_op_context();

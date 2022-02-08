@@ -32,7 +32,7 @@
 
 /**
  * @file hashtable.c
- * @brief Implement an RBTree-based partitioend hash lookup
+ * @brief Implement an RBTree-based partitioned hash lookup
  *
  * This file implements a partitioned, tree-based, concurrent
  * hash-lookup structure.  For every key, two values are derived that

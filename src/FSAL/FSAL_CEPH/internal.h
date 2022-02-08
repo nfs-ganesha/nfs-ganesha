@@ -139,7 +139,7 @@ struct ceph_handle {
 struct ds_wire {
 	struct wire_handle wire; /*< All the information of a regular handle */
 	struct ceph_file_layout layout;	/*< Layout information */
-	uint64_t snapseq; /*< And a single entry giving a degernate
+	uint64_t snapseq; /*< And a single entry giving a degenerate
 			      snaprealm. */
 };
 

@@ -442,7 +442,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 }
 
 /**
- * @brief Unregisterx an FSAL
+ * @brief Unregisters an FSAL
  *
  * Verify that the fsal is not busy and release all its resources
  * owned at this level.  RW Lock is already freed.  Called from the

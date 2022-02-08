@@ -84,7 +84,7 @@ static struct client_by_ip client_by_ip;
  * @brief Compute cache slot for an entry
  *
  * This function computes a hash slot, taking an address modulo the
- * number of cache slotes (which should be prime).
+ * number of cache slots (which should be prime).
  *
  * @param wt [in] The table
  * @param ptr [in] Entry address

@@ -77,11 +77,11 @@
  * based on LRU.  Some ideas are taken from 2Q [Johnson and Shasha 1994]
  * and MQ [Zhou, Chen, Li 2004].  In this system, cache management does
  * interact with cache entry lifecycle, but the lru queue is not a garbage
- * collector. Most imporantly, cache management operations execute in constant
+ * collector. Most importantly, cache management operations execute in constant
  * time, as expected with LRU (and MQ).
  *
  * Cache entries in use by a currently-active protocol request (or other
- * operation) have a positive refcount, and threfore should not be present
+ * operation) have a positive refcount, and therefore should not be present
  * at the cold end of an lru queue if the cache is well-sized.
  *
  * As noted below, initial references to cache entries may only be granted

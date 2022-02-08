@@ -50,7 +50,7 @@
 /**
  * @brief NFS4_OP_ACCESS, checks for file's accessibility.
  *
- * This function impelments the NFS4_OP_ACCESS operation, which checks
+ * This function implements the NFS4_OP_ACCESS operation, which checks
  * for file's accessibility.
  *
  * @param[in]     op   Arguments for nfs4_op
@@ -113,7 +113,7 @@ enum nfs_req_result nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
  * @brief Free memory allocated for ACCESS result
  *
  * This function frees any memory allocated for the result of the
- * NFS4_OP_ACCESS operatino.
+ * NFS4_OP_ACCESS operation.
  *
  * @param[in,out] resp nfs4_op results
  */

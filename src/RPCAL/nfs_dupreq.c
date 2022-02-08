@@ -90,7 +90,7 @@ const char *dupreq_state_table[] = {
  * ref count goes up again. At the same time, the drc will be removed
  * from the recycle queue. Only drc's with ref count zero end up in the
  * recycle queue. If a reconnection doesn't happen in time, the drc gets
- * freed by drc_free_expired() after some period of inactivety.
+ * freed by drc_free_expired() after some period of inactivity.
  *
  * Most ref count methods assume that a ref count doesn't go up from
  * zero, so a thread that decrements the ref count to zero would be the

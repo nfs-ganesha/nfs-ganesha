@@ -869,7 +869,7 @@ void release_openstate(state_owner_t *owner)
 }
 
 /**
- * @brief Revoke delagtions belonging to the client owner.
+ * @brief Revoke delegations belonging to the client owner.
  *
  * @param[in,out] client owner
  */

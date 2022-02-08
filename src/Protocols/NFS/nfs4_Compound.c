@@ -90,7 +90,7 @@ struct nfs4_op_desc {
 	 * those pointers. It should only free data if the status is NFS4_OK
 	 * (or NFS4ERR_DENIED in the case of LOCK and LOCKT). Note that
 	 * SETCLIENTID also has dunamic data on a non-NFS4_OK status, and the
-	 * free_res function for that checks, howwever, we will never see
+	 * free_res function for that checks, however, we will never see
 	 * SETCLIENTID in NFS v4.1+, or if we do, it will get an error.
 	 *
 	 * At this time, LOCK and LOCKT are the only NFS v4.1 or v4.2 operations
@@ -1074,7 +1074,7 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 		/* The request is suspended, don't touch the request in
 		 * any way because the resume may already be scheduled
 		 * and running on nother thread. The xp_resume_cb has
-		 * already been set up before we started proecessing
+		 * already been set up before we started processing
 		 * ops on this request at all.
 		 */
 		suspend_op_context();
@@ -1091,7 +1091,7 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 			/* The request is suspended, don't touch the request in
 			 * any way because the resume may already be scheduled
 			 * and running on nother thread. The xp_resume_cb has
-			 * already been set up before we started proecessing
+			 * already been set up before we started processing
 			 * ops on this request at all.
 			 */
 			suspend_op_context();
@@ -1328,7 +1328,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			/* The request is suspended, don't touch the request in
 			 * any way because the resume may already be scheduled
 			 * and running on nother thread. The xp_resume_cb has
-			 * already been set up before we started proecessing
+			 * already been set up before we started processing
 			 * ops on this request at all.
 			 */
 			return result;

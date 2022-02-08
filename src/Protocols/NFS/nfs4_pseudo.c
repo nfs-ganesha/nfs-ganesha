@@ -765,7 +765,7 @@ void prune_pseudofs_subtree(struct gsh_export *export,
 		  export->update_prune_unmount;
 
 	LogDebug(COMPONENT_EXPORT,
-		 "Exxport %d pseudo %s export gen %"PRIu64
+		 "Export %d pseudo %s export gen %"PRIu64
 		 " current gen %"PRIu64
 		 " prune unmount %s ancestor_is_defunct %s",
 		 export->export_id, ref_pseudopath->gr_val,
@@ -811,7 +811,7 @@ void prune_pseudofs_subtree(struct gsh_export *export,
 
 	if (defunct) {
 		LogDebug(COMPONENT_EXPORT,
-			 "Exxport %d pseudo %s unmounted because %s",
+			 "Export %d pseudo %s unmounted because %s",
 			 export->export_id, ref_pseudopath->gr_val,
 			 export->config_gen < generation
 				? "it is defunct"

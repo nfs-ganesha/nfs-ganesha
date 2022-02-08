@@ -166,7 +166,7 @@ enum lru_q_id {
 
 typedef struct mdcache_lru__ {
 	struct glist_head q;	/*< Link in the physical deque
-				   impelmenting a portion of the logical
+				   implementing a portion of the logical
 				   LRU. */
 	enum lru_q_id qid;	/*< Queue identifier */
 	int32_t refcnt;		/*< Reference count.  This is signed to make

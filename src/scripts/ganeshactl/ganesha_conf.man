@@ -197,7 +197,7 @@ block above!
 .SH EXAMPLES:
 1. To change number of ganesha worker threads:
 .PP
-ganesha_conf set nfs_core_param --nb_wroker 256
+ganesha_conf set nfs_core_param --nb_worker 256
 .PP
 2. To change the date and time format of ganesha log messages:
 .PP
@@ -220,7 +220,7 @@ set of files), you can use
 .B CONFFILE
 environment variable to override the default configuration file.
 For example,
-"CONFFILE=/etc/ganesha/ganesha.main.conf ganesha_conf set nfs_core_param --nb_wroker 256"
+"CONFFILE=/etc/ganesha/ganesha.main.conf ganesha_conf set nfs_core_param --nb_worker 256"
 will use /etc/ganesha/ganesha.main.conf file for changing the worker threads.
 .PP
 .B ganesha_conf

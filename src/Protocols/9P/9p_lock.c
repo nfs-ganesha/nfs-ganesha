@@ -56,7 +56,7 @@
 char *strtype[] = { "RDLOCK", "WRLOCK", "UNLOCK" };
 
 /*
- * Remonder:
+ * Reminder:
  * LOCK_SUCCESS = 0
  * LOCK_BLOCKED = 1
  * LOCK_ERROR   = 2

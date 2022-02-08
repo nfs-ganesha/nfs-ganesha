@@ -51,7 +51,7 @@ int nlm4_Sm_Notify(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	nlm4_sm_notifyargs *arg = &args->arg_nlm4_sm_notify;
 	state_status_t state_status = STATE_SUCCESS;
 	state_nsm_client_t *nsm_client;
-	sockaddr_t *orginal_caller_addr = op_ctx->caller_addr;
+	sockaddr_t *original_caller_addr = op_ctx->caller_addr;
 	struct gsh_client *original_client = op_ctx->client;
 
 	if (!is_loopback(op_ctx->caller_addr)) {
@@ -108,8 +108,8 @@ int nlm4_Sm_Notify(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		dec_nsm_client_ref(nsm_client);
 	}
 
-	if (op_ctx->caller_addr != orginal_caller_addr)
-		op_ctx->caller_addr = orginal_caller_addr;
+	if (op_ctx->caller_addr != original_caller_addr)
+		op_ctx->caller_addr = original_caller_addr;
 
 	if (op_ctx->client != original_client) {
 		op_ctx->client = original_client;

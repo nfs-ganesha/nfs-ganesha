@@ -2239,7 +2239,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 	 *              would from EXT4 as far as I can tell from the EXT4
 	 *              code). We could never start a chunk with a duplicate
 	 *              so we would have to put all of them into the same
-	 *              chunk, posssibly making the chunk larger than normal.
+	 *              chunk, possibly making the chunk larger than normal.
 	 */
 
 	memcpy(&new_dir_entry->name_buffer, name, namesize);

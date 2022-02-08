@@ -407,7 +407,7 @@ static void mem_remove_dirent_locked(struct mem_fsal_obj_handle *parent,
 	avltree_remove(&dirent->avl_i, &parent->mh_dir.avl_index);
 
 	/* Take the child lock, to remove from the child.  This should not race
-	 * with @r mem_insert_obj since that takes the locks seqentially */
+	 * with @r mem_insert_obj since that takes the locks sequentially */
 	child = dirent->hdl;
 	PTHREAD_RWLOCK_wrlock(&child->obj_handle.obj_lock);
 	glist_del(&dirent->dlist);

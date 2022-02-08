@@ -73,7 +73,7 @@ void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle);
 /**
  * Convert a clientid into a rados key.
  *
- * @param(in)     clientid  The clientid to conevrt into a key
+ * @param(in)     clientid  The clientid to convert into a key
  * @param(in/out) key       The string buffer to put the key in
  * @param(in)     size      Buffer size - expected to be RADOS_KEY_MAX_LEN
  */

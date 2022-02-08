@@ -308,7 +308,7 @@ static void rados_cluster_maybe_start_grace(void)
 
 	/*
 	 * A new epoch has been started and a cluster-wide grace period has
-	 * been reqeuested. Make a new DB for "cur" that has all of the
+	 * been requested. Make a new DB for "cur" that has all of the
 	 * currently active clients in it.
 	 */
 

@@ -204,7 +204,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 		glist_init(&(*layout_state)->state_data.layout.state_segments);
 	} else {
-		/* A state eixsts but is of an invalid type. */
+		/* A state exists but is of an invalid type. */
 		nfs_status = NFS4ERR_BAD_STATEID;
 		goto out;
 	}

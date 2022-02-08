@@ -493,7 +493,7 @@ static bool dbus_reply_introspection(DBusMessage *reply,
  * logging but use the status bool for code flow.
  *
  * @param iter       [IN] the iterator to append to
- * @param success    [IN] the method stastus
+ * @param success    [IN] the method status
  * @param errmessage [IN] an error message string
  */
 

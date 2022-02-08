@@ -134,7 +134,7 @@ struct gsh_export *export_take_mount_work(void)
  * @brief Compute cache slot for an entry
  *
  * This function computes a hash slot, taking an address modulo the
- * number of cache slotes (which should be prime).
+ * number of cache slots (which should be prime).
  *
  * @param k [in] Entry index value
  *

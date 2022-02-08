@@ -73,7 +73,7 @@ int cidr_contains(const CIDR * big, const CIDR * little)
 	 * it's wasteful; it quadrules the amount of work needed to be done
 	 * to compare to v4 blocks, and this function may be useful in fairly
 	 * performance-sensitive parts of the application.  Sure, an extra 12
-	 * uint8_t compares better not be the make-or-break perforamnce point
+	 * uint8_t compares better not be the make-or-break performance point
 	 * for anything real, but why make it harder unnecessarily?
 	 */
 	if (big->proto == CIDR_IPV4) {

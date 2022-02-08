@@ -49,7 +49,7 @@
 /**
  * @brief Gets attributes for an entry in the FSAL.
  *
- * Impelments the NFS4_OP_GETATTR operation, which gets attributes for
+ * Implements the NFS4_OP_GETATTR operation, which gets attributes for
  * an entry in the FSAL.
  *
  * @param[in]     op   Arguments for nfs4_op

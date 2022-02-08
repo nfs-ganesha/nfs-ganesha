@@ -223,7 +223,7 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 		goto done;
 	}
 
-	/* Set the replyed structure */
+	/* Set the replied structure */
 	res_SETATTR4->attrsset = arg_SETATTR4->obj_attributes.attrmask;
 
 	/* Exit with no error */

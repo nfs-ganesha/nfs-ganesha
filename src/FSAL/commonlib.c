@@ -1620,7 +1620,7 @@ again:
 		 * We don't want to hold the write lock because that would
 		 * block other users of the file descriptor.
 		 * Since we dropped the lock, we need to verify mode is still'
-		 * good after we re-aquire the read lock, thus the retry.
+		 * good after we re-acquire the read lock, thus the retry.
 		 */
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 		PTHREAD_RWLOCK_rdlock(&obj_hdl->obj_lock);

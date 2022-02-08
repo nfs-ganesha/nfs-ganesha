@@ -24,7 +24,7 @@
 # ganesha_stats <subcommand> <args>
 #
 # ganesha_stats help
-#       To get detaled help
+#       To get detailed help
 #
 from __future__ import print_function
 import sys

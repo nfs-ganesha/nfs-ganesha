@@ -56,7 +56,7 @@
 /**
  * @brief NFSv4 SECINFO operation
  *
- * This function impelments the NFSv4 SECINFO operation.
+ * This function implements the NFSv4 SECINFO operation.
  *
  * @param[in]     op   Operation request
  * @param[in,out] data Compound data

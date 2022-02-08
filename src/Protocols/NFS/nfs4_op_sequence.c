@@ -209,7 +209,7 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	data->slot = slot;
 
 	LogFullDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
-			"%s sesson slot %" PRIu32 "=%p for DRC",
+			"%s session slot %" PRIu32 "=%p for DRC",
 			arg_SEQUENCE4->sa_cachethis
 				? "Use"
 				: "Don't use",

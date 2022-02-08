@@ -338,7 +338,7 @@ void delayed_shutdown(void)
  *
  * @param[in] func  The function to run
  * @param[in] arg   The argument to run it with
- * @param[in] delay The dleay in nanoseconds
+ * @param[in] delay The delay in nanoseconds
  *
  * @retval 0 on success.
  * @retval ENOMEM on inability to allocate memory causing other than success.

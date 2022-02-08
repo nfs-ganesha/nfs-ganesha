@@ -60,7 +60,7 @@
  *
  * @param[in]     op    Arguments for the nfs4_op
  * @param[in,out] data  Compound request's data
- * @param[out]    resp  Retuls for the nfs4_op
+ * @param[out]    resp  Results for the nfs4_op
  *
  * @return per RFC5661 p. 372
  *

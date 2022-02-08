@@ -58,7 +58,7 @@ int rquota_getactivequota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 /**
  * @brief Frees the result structure allocated for rquota_getactivequota
  *
- * @param[in,oujt] res Pointer to the result structure.
+ * @param[in,out] res Pointer to the result structure.
  *
  */
 void rquota_getactivequota_Free(nfs_res_t *res)

@@ -46,13 +46,13 @@
 # Anonymous_Uid (-2)	If a user id is squashed, this is the uid used
 #			Ranges from -2147483648 to 4294967295
 #			uid are traditionally uint32_t however, tradition
-#			has long been to specify NFS anonynmous uid as -2
+#			has long been to specify NFS anonymous uid as -2
 #			so negative values are allowed
 #
 # Anonymous_Gid (-2)	If a group id is squashed, this is the gid used
 #			Ranges from -2147483648 to 4294967295
 #			gid are traditionally uint32_t however, tradition
-#			has long been to specify NFS anonynmous gid as -2
+#			has long been to specify NFS anonymous gid as -2
 #			so negative values are allowed
 #
 # SecType (none, sys)	The RPC security flavors allowed, none (AUTH_NONE),
