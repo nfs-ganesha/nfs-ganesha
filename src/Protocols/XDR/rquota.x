@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: unknown license... */
 /* @(#)rquota.x	2.1 88/08/01 4.0 RPCSRC */
 /* @(#)rquota.x 1.2 87/09/20 Copyr 1987 Sun Micro */
 

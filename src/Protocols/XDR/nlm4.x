@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: unknown license... */
 
 /* The maximum length of the string identifying the caller. */
 const LM_MAXSTRLEN = 1024;

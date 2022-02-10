@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: unknown license... */
 /* NFSv3 ACLs definitions */
 
 union attr3 switch (bool attributes_follow)

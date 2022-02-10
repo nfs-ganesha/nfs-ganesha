@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: unknown license... */
 #ifndef _CONFIG_PARSING_H
 #define _CONFIG_PARSING_H
 

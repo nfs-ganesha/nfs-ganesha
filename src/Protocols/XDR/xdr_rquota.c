@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: unknown license... */
 /*
  * Hand updated.
  * It was generated using rpcgen.

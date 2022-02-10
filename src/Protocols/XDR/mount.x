@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: unknown license... */
 
 
 const MNTPATHLEN = 1024;  /* Maximum bytes in a path name */
