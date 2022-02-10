@@ -641,13 +641,14 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
  * the state of the source attributes still safe to call fsal_release_attrs,
  * so all will be well.
  *
- * @param[in]     export         Export for this cache
- * @param[in]     sub_handle     sub-FSAL's new obj handle
- * @param[in]     attrs_in       Attributes provided for the object
- * @param[in,out] attrs_out      Attributes requested for the object
- * @param[in]     new_directory  Indicate a new directory was created
- * @param[out]    entry          Newly instantiated cache entry
- * @param[in]     state          Optional state_t representing open file.
+ * @param[in]     export              Export for this cache
+ * @param[in]     sub_handle          sub-FSAL's new obj handle
+ * @param[in]     attrs_in            Attributes provided for the object
+ * @param[in]     prefer_attrs_in     Whether prefer attrs_in
+ * @param[in,out] attrs_out           Attributes requested for the object
+ * @param[in]     new_directory       Indicate a new directory was created
+ * @param[out]    entry               Newly instantiated cache entry
+ * @param[in]     state               Optional state_t representing open file.
  *
  * @note This returns an INITIAL ref'd entry on success
  *
@@ -657,6 +658,7 @@ fsal_status_t
 mdcache_new_entry(struct mdcache_fsal_export *export,
 		  struct fsal_obj_handle *sub_handle,
 		  struct fsal_attrlist *attrs_in,
+		  bool prefer_attrs_in,
 		  struct fsal_attrlist *attrs_out,
 		  bool new_directory,
 		  mdcache_entry_t **entry,
@@ -862,15 +864,24 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 
  out_no_new_entry_yet:
 
-	/* If attributes were requested, fetch them now if we still have a
+	/* If perfer attrs_in, we think attrs_in is latest. So use attrs_in to
+	 * override attr of existed entry, and copy attrs_in to attrs_out.
+	 * If don't prefer attrs_in, we don't think attrs_in is latest.
+	 * So when attributes were requested, fetch them now if we still have a
 	 * success return since we did not actually create a new object and
-	 * use the provided attributes (we can't trust that the provided
-	 * attributes are newer).
+	 * use the provided attributes.
 	 *
 	 * NOTE: There can not be an ABBA lock ordering issue since our caller
 	 *        does not hold a lock on the "new" entry.
 	 */
-	if (!FSAL_IS_ERROR(status) && attrs_out != NULL) {
+	if (prefer_attrs_in) {
+		PTHREAD_RWLOCK_wrlock(&(*entry)->attr_lock);
+		mdc_update_attr_cache(*entry, attrs_in);
+		PTHREAD_RWLOCK_unlock(&(*entry)->attr_lock);
+
+		if (!FSAL_IS_ERROR(status) && attrs_out != NULL)
+			fsal_copy_attrs(attrs_out, attrs_in, false);
+	} else if (!FSAL_IS_ERROR(status) && attrs_out != NULL) {
 		status = get_optional_attrs(&(*entry)->obj_handle,
 					    attrs_out);
 		if (FSAL_IS_ERROR(status)) {
@@ -880,6 +891,10 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 			 */
 			mdcache_put(*entry);
 			*entry = NULL;
+		} else {
+			PTHREAD_RWLOCK_wrlock(&(*entry)->attr_lock);
+			mdc_update_attr_cache(*entry, attrs_out);
+			PTHREAD_RWLOCK_unlock(&(*entry)->attr_lock);
 		}
 	}
 
@@ -1104,7 +1119,7 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 		return status;
 	}
 
-	status = mdcache_new_entry(export, sub_handle, &attrs, attrs_out,
+	status = mdcache_new_entry(export, sub_handle, &attrs, false, attrs_out,
 				   false, entry, NULL, MDC_REASON_DEFAULT);
 
 	fsal_release_attrs(&attrs);
@@ -1660,7 +1675,7 @@ mdc_readdir_uncached_cb(const char *name, struct fsal_obj_handle *sub_handle,
 	/* This is in the middle of a subcall. Do a supercall */
 	supercall_raw(state->export,
 		status = mdcache_new_entry(state->export, sub_handle, attrs,
-					   NULL, false, &new_entry, NULL,
+					   true, NULL, false, &new_entry, NULL,
 					   MDC_REASON_SCAN)
 	);
 
@@ -2192,7 +2207,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			" sub_handle=0x%p",
 			name, cookie, sub_handle);
 
-	status = mdcache_new_entry(export, sub_handle, attrs_in, NULL,
+	status = mdcache_new_entry(export, sub_handle, attrs_in, false, NULL,
 				   false, &new_entry, NULL, MDC_REASON_SCAN);
 
 	if (FSAL_IS_ERROR(status)) {

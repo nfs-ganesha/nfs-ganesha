@@ -97,8 +97,8 @@ fsal_status_t mdcache_alloc_and_check_handle(
 	fsal_status_t status;
 	mdcache_entry_t *new_entry;
 
-	status = mdcache_new_entry(export, sub_handle, attrs_in, attrs_out,
-				   new_directory, &new_entry, state,
+	status = mdcache_new_entry(export, sub_handle, attrs_in, false,
+				   attrs_out, new_directory, &new_entry, state,
 				   MDC_REASON_DEFAULT);
 
 	if (FSAL_IS_ERROR(status)) {
@@ -1584,7 +1584,7 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 		return status;
 	}
 
-	status = mdcache_new_entry(export, sub_handle, &attrs, attrs_out,
+	status = mdcache_new_entry(export, sub_handle, &attrs, false, attrs_out,
 				   false, &new_entry, NULL, MDC_REASON_DEFAULT);
 
 	fsal_release_attrs(&attrs);
