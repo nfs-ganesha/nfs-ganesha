@@ -107,7 +107,7 @@ struct mdcache_parameter {
 	    Defaults to 40, settable with Biggest_Window */
 	uint32_t biggest_window;
 	/** Percentage of progress toward the high water mark required
-	    in in a pass through the thread when in extremis.
+	    in a pass through the thread when in extremis.
 	    Defaults to 5, settable with Required_Progress. */
 	uint32_t required_progress;
 	/** Number of failures to approach the high watermark before

@@ -249,7 +249,7 @@ void free_layouts(layout4 *layouts, uint32_t numlayouts)
  * @param[in]     obj     File handle
  * @param[in]     arg     Input arguments to the FSAL
  * @param[in,out] res     Input/output and output arguments to the FSAL
- * @param[out]    current Current entry in the logr_layout array.
+ * @param[out]    current The current entry in the logr_layout array.
  *
  * @return NFS4_OK if successfull, other values show an error.
  */

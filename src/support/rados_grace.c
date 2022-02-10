@@ -595,7 +595,7 @@ rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		/*
 		 * Walk omap keys, see if it's in nodeids array. Add any that
 		 * are and have NEED_GRACE set to the "keys" array along with
-		 * the the flags field with the NEED_GRACE flag cleared.
+		 * the flags field with the NEED_GRACE flag cleared.
 		 *
 		 * If the remove flag is set, then just remove them from the
 		 * omap and don't bother with changing the flags.

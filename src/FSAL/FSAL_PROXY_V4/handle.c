@@ -583,8 +583,7 @@ static void *proxyv4_rpc_recv(void *arg)
 							 srv_addr);
 
 					LogCrit(COMPONENT_FSAL,
-						"Cannot connect to server "
-						"%s:%u",
+						"Cannot connect to server %s:%u",
 						addr, srv_port);
 				}
 				PTHREAD_MUTEX_unlock(list_lock);
@@ -593,8 +592,7 @@ static void *proxyv4_rpc_recv(void *arg)
 				PTHREAD_MUTEX_lock(list_lock);
 			} else {
 				LogDebug(COMPONENT_FSAL,
-					 "Connected after %d sleeps, resending "
-					 "outstanding calls",
+					 "Connected after %d sleeps, resending outstanding calls",
 					 nsleeps);
 			}
 		} while (rpc->rpc_sock < 0 &&
@@ -620,8 +618,7 @@ static void *proxyv4_rpc_recv(void *arg)
 			default:
 				if (pfd.revents & POLLRDHUP) {
 					LogEvent(COMPONENT_FSAL,
-						 "Other end has closed "
-						 "connection, reconnecting...");
+						 "Other end has closed connection, reconnecting...");
 				} else if (pfd.revents & POLLNVAL) {
 					LogEvent(COMPONENT_FSAL,
 						 "Socket is closed");
@@ -1192,8 +1189,8 @@ static void *proxyv4_clientid_renewer(void *arg)
 			} else if (rc == NFS4_OK &&
 				   s_resok->sr_status_flags) {
 				LogEvent(COMPONENT_FSAL,
-					 "sr_status_flags received on renewing"
-					 " session with seqop : %"PRIu32,
+					 "sr_status_flags received on renewing session with seqop : %"
+					 PRIu32,
 					 s_resok->sr_status_flags);
 				continue;
 			} else if (rc != NFS4_OK) {
@@ -1412,8 +1409,7 @@ proxyv4_check_maxread_maxwrite(struct fsal_export *export, fattr4 *f4)
 	rc = nfs4_Fattr_To_fsinfo(&info, f4);
 	if (rc != NFS4_OK) {
 		LogWarn(COMPONENT_FSAL,
-			"Unable to get maxread and maxwrite from "
-			"backend NFS server : %d",
+			"Unable to get maxread and maxwrite from backend NFS server : %d",
 			rc);
 	} else {
 		struct proxyv4_fsal_module *pm =
@@ -2424,8 +2420,7 @@ static fsal_status_t proxyv4_open2(struct fsal_obj_handle *obj_hdl,
 			int error = errno;
 
 			LogCrit(COMPONENT_FSAL,
-				"Unexpected return from snprintf %d error %s "
-				"(%d)",
+				"Unexpected return from snprintf %d error %s (%d)",
 				owner_len, strerror(error), error);
 			return posix2fsal_status(error);
 		} else if (owner_len >= sizeof(owner_val)) {
@@ -2694,6 +2689,7 @@ static void proxyv4_write2(struct fsal_obj_handle *obj_hdl,
 					    proxyv4_state_id->stateid.other);
 	} else {
 		char *base = write_arg->iov[0].iov_base;
+
 		COMPOUNDV4_ARG_ADD_OP_WRITE_STATELESS(opcnt, argoparray,
 						      write_arg->offset,
 						      base,

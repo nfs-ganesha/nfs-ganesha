@@ -356,8 +356,7 @@ int nfs_start_grace(nfs_grace_start_t *gsp)
 				PTHREAD_MUTEX_unlock(&grace_mutex);
 				nfs_release_v4_clients(gsp->ipaddr);
 				return ret;
-			}
-			else {
+			} else {
 				/*
 				 * If we're already in a grace period,
 				 * it can not break the existing count,

@@ -61,7 +61,7 @@
  * in and the handdle is up-to-date and usable.
  *
  * @param[in]  stx    ceph_statx data for the file
- * @param[in]  export Export on which the object lives
+ * @param[in]  export The export on which the object lives
  * @param[out] obj    Object created
  *
  * @return 0 on success, negative error codes on failure.

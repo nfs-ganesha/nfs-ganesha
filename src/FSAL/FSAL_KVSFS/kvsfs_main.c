@@ -45,7 +45,7 @@
 #include "kvsfs_fsal_internal.h"
 #include "kvsfs_methods.h"
 
-const char myname[] = "KVSFS";
+static const char myname[] = "KVSFS";
 
 /* filesystem info for your filesystem */
 struct kvsfs_fsal_module KVSFS = {

@@ -739,7 +739,7 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
  * @brief Confirm a client id record.
  *
  * @param[in] clientid  The client id record
- * @param[in] component Component ID for logging
+ * @param[in] component The component ID for logging
  *
  * @retval CLIENT_ID_SUCCESS if successfull.
  * @retval CLIENT_ID_INVALID_ARGUMENT if unable to find record in
@@ -1367,7 +1367,7 @@ int display_client_record(struct display_buffer *dspbuf,
 /**
  * @brief Increment the refcount on a client owner record
  *
- * @param[in] record Record on which to take a reference
+ * @param[in] record The record on which to take a reference
  */
 
 int32_t inc_client_record_ref(nfs_client_record_t *record)
@@ -1401,7 +1401,7 @@ void free_client_record(nfs_client_record_t *record)
 /**
  * @brief Decrement the refcount on a client owner record
  *
- * @param[in] record Record on which to release a reference
+ * @param[in] record The record on which to release a reference
  */
 
 int32_t dec_client_record_ref(nfs_client_record_t *record)
@@ -1425,7 +1425,7 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 
 	if (refcount > 0) {
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Decrement refcount refcount now=%" PRId32 " {%s}",
+			     "Decrement refcount now=%" PRId32 " {%s}",
 			     refcount, str);
 
 		return refcount;

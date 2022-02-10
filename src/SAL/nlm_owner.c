@@ -739,7 +739,7 @@ void _inc_nsm_client_ref(state_nsm_client_t *client,
 /**
  * @brief Free an NSM client
  *
- * @param[in] client Client to free
+ * @param[in] client The client to free
  */
 void free_nsm_client(state_nsm_client_t *client)
 {
@@ -1070,7 +1070,7 @@ void free_nlm_client(state_nlm_client_t *client)
 /**
  * @brief Take a reference on an NLM client
  *
- * @param[in] client Client to reference
+ * @param[in] client The client to reference
  */
 void inc_nlm_client_ref(state_nlm_client_t *client)
 {
@@ -1080,7 +1080,7 @@ void inc_nlm_client_ref(state_nlm_client_t *client)
 /**
  * @brief Relinquish a reference on an NLM client
  *
- * @param[in] client Client to release
+ * @param[in] client The client to release
  */
 void dec_nlm_client_ref(state_nlm_client_t *client)
 {

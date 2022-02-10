@@ -1048,9 +1048,9 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 			kill_entry = true;
 	} else if (change == entry->attrs.change) {
 		LogDebug(COMPONENT_CACHE_INODE,
-			 "setattr2 did not change change attribute before %lld after = %lld",
-			 (long long int) change,
-			 (long long int) entry->attrs.change);
+			 "setattr2 did not change attribute before %lld after = %lld",
+			 (long long) change,
+			 (long long) entry->attrs.change);
 		entry->attrs.change = change + 1;
 	}
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);

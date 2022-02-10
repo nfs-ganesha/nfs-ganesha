@@ -398,7 +398,7 @@ static void free_gpfs_filesystem(struct gpfs_filesystem *gpfs_fs)
 }
 
 /**
- *  @brief Extract major from from fsid
+ *  @brief Extract major from fsid
  *  @param fh GPFS file handle
  *  @param fsid FSAL ID
  */

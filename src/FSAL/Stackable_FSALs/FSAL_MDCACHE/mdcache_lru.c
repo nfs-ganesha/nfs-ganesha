@@ -1962,7 +1962,7 @@ mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle)
  * else, insert into LRU of L1, so that a single ref promotes to the MRU of L1.
  *
  * @param [in] entry  Entry to insert.
- * @param [in] reason Reason we're inserting
+ * @param [in] reason The Reason we're inserting
  */
 void mdcache_lru_insert(mdcache_entry_t *entry, mdc_reason_t reason)
 {

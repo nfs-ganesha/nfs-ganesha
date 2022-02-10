@@ -43,7 +43,7 @@
 
 
 /* FSAL name determines name of shared library: libfsal<name>.so */
-const char myname[] = "NULL";
+static const char myname[] = "NULL";
 
 /* my module private storage
  */
@@ -108,20 +108,6 @@ static fsal_status_t init_config(struct fsal_module *nullfs_fsal_module,
 		 nullfs_fsal_module->fs_info.supported_attrs);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
-
-/* Internal NULLFS method linkage to export object
- */
-
-fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
-				   void *parse_node,
-				   struct config_error_type *err_type,
-				   const struct fsal_up_vector *up_ops);
-
-fsal_status_t nullfs_update_export(struct fsal_module *fsal_hdl,
-				   void *parse_node,
-				   struct config_error_type *err_type,
-				   struct fsal_export *original,
-				   struct fsal_module *updated_super);
 
 /* Module initialization.
  * Called by dlopen() to register the module

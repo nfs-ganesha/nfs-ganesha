@@ -67,8 +67,8 @@ static nfsstat4 lzfs_fsal_layoutget(struct fsal_obj_handle *obj_pub,
 					     &op_ctx->ctx_export->export_id,
 					     1, &ds_desc);
 	if (nfs_status) {
-		LogMajor(COMPONENT_PNFS, "Failed to encode "
-			 "nfsv4_1_file_layout.");
+		LogMajor(COMPONENT_PNFS,
+			 "Failed to encode nfsv4_1_file_layout.");
 		return nfs_status;
 	}
 
@@ -127,8 +127,8 @@ static nfsstat4 lzfs_fsal_layoutcommit(struct fsal_obj_handle *obj_pub,
 	rc = liz_cred_getattr(lzfs_export->lzfs_instance, &op_ctx->creds,
 			      lzfs_hdl->inode, &lzfs_old);
 	if (rc < 0) {
-		LogCrit(COMPONENT_PNFS, "Error '%s' in attempt to get "
-			"attributes of file %lli.",
+		LogCrit(COMPONENT_PNFS,
+			"Error '%s' in attempt to get attributes of file %lli.",
 			liz_error_string(liz_last_err()),
 			(long long)lzfs_hdl->inode);
 		return lzfs_nfs4_last_err();
@@ -165,8 +165,8 @@ static nfsstat4 lzfs_fsal_layoutcommit(struct fsal_obj_handle *obj_pub,
 			      &reply);
 
 	if (rc < 0) {
-		LogCrit(COMPONENT_PNFS, "Error '%s' in attempt to set "
-			"attributes of file %lli.",
+		LogCrit(COMPONENT_PNFS,
+			"Error '%s' in attempt to set attributes of file %lli.",
 			liz_error_string(liz_last_err()),
 			(long long)lzfs_hdl->inode);
 		return lzfs_nfs4_last_err();

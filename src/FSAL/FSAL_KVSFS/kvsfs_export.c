@@ -94,7 +94,7 @@ static fsal_status_t kvsfs_wire_to_host(struct fsal_export *exp_hdl,
 	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %lu, got %u",
-			 (unsigned long int)fh_size,
+			 (unsigned long)fh_size,
 			 (unsigned int)fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}

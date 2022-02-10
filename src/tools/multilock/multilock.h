@@ -153,11 +153,11 @@ extern bool duperrors;
 extern bool strict;
 extern bool error_is_fatal;
 extern bool syntax;
-extern long int lno;
-extern long int global_tag;
+extern long lno;
+extern long global_tag;
 struct response;
 
-long int get_global_tag(bool increment);
+long get_global_tag(bool increment);
 
 #define array_strcpy(dest, src)				\
 	do {						\
@@ -220,11 +220,11 @@ char *get_tag(char *line, struct response *resp, int required,
 	      enum requires_more requires_more);
 char *get_rq_tag(char *line, struct response *req, int required,
 		 enum requires_more requires_more);
-char *get_long(char *line, long int *value, enum requires_more requires_more,
+char *get_long(char *line, long *value, enum requires_more requires_more,
 	       const char *invalid);
-char *get_longlong(char *line, long long int *value,
+char *get_longlong(char *line, long long *value,
 		   enum requires_more requires_more, const char *invalid);
-char *get_fpos(char *line, long int *fpos, enum requires_more requires_more);
+char *get_fpos(char *line, long *fpos, enum requires_more requires_more);
 char *get_rdata(char *line, struct response *resp, int max,
 		enum requires_more requires_more);
 char *get_lock_type(char *line, int *type);
@@ -236,7 +236,7 @@ char *get_token_value(char *line, int *value, struct token *tokens,
 		      bool optional, enum requires_more requires_more,
 		      const char *invalid);
 char *get_status(char *line, struct response *resp);
-char *get_open_opts(char *line, long int *fpos, int *flags, int *mode,
+char *get_open_opts(char *line, long *fpos, int *flags, int *mode,
 		    int *lock_mode);
 char *parse_response(char *line, struct response *resp);
 char *parse_request(char *line, struct response *req, int no_tag);
@@ -271,17 +271,17 @@ struct response {
 	struct client *r_client;
 	enum commands r_cmd;
 	enum status r_status;
-	long int r_tag;
-	long int r_fpos;
-	long int r_fno;
-	long int r_secs;
-	long long int r_start;
-	long long int r_length;
-	long int r_pid;
+	long r_tag;
+	long r_fpos;
+	long r_fno;
+	long r_secs;
+	long long r_start;
+	long long r_length;
+	long r_pid;
 	int r_lock_type;
 	int r_flags;
 	int r_mode;
-	long int r_errno;
+	long r_errno;
 	/**
 	 * @brief complex data for a request/response
 	 *

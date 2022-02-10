@@ -43,7 +43,7 @@
 /**
  * @brief The Mount proc mount function for MOUNT_V3 version
  *
- * The MOUNT proc proc function for MOUNT_V3 version
+ * The MOUNT proc function for MOUNT_V3 version
  *
  * @param[in]  arg     The export path to be mounted
  * @param[in]  req     ignored

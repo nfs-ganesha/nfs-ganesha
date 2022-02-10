@@ -363,7 +363,7 @@ fsal_status_t mdcache_removexattrs(struct fsal_obj_handle *obj_hdl,
  *
  * @param[in] obj_hdl	File to search
  * @param[in] len	Length of names buffer
- * @param[in,out] cookie cookie for list
+ * @param[in,out] cookie The cookie for list
  * @param[in,out] verf	cookie verifier
  * @param[out] eof	set if no more extended attributes
  * @param[out] names	list of extended attribute names

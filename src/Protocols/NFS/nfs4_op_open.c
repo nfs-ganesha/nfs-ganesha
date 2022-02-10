@@ -192,8 +192,8 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
  * @param[in]     op       Arguments to OPEN4 operation
  * @param[in,out] data     Compound's data
  * @param[out]    res      Response to OPEN4 operation
- * @param[in]     clientid Clientid record for this request
- * @param[out]    owner    The found/created owner owner
+ * @param[in]     clientid The cientid record for this request
+ * @param[out]    owner    The found/created owner
  *
  * @return false if error or replay (res_OPEN4->status is already set),
  *         true otherwise.
@@ -411,7 +411,7 @@ find_state:
  * @param[in] op NFS arguments for the request
  * @param[in] open_state Open state for the inode to be delegated.
  * @param[in] openowner Open owner of the open state.
- * @param[in] client Client that will own the delegation.
+ * @param[in] client The client that will own the delegation.
  * @param[in/out] resok Delegation attempt result to be returned to client.
  * @param[in] prerecall flag for reclaims.
  */

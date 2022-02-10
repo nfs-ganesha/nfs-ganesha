@@ -783,7 +783,7 @@ int display_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 /**
  * @brief Acquire a reference on a state owner
  *
- * @param[in] owner Owner to acquire
+ * @param[in] owner The owner to acquire
  */
 void inc_state_owner_ref(state_owner_t *owner)
 {
@@ -808,7 +808,7 @@ void inc_state_owner_ref(state_owner_t *owner)
 /**
  * @brief Free a state owner object
  *
- * @param[in] owner Owner to free
+ * @param[in] owner The owner to free
  */
 void free_state_owner(state_owner_t *owner)
 {
@@ -858,7 +858,7 @@ void free_state_owner(state_owner_t *owner)
 /**
  * @brief Get the hash table associated with a state owner object
  *
- * @param[in] owner Owner to get associated hash table for
+ * @param[in] owner The owner to get associated hash table for
  */
 hash_table_t *get_state_owner_hash_table(state_owner_t *owner)
 {
@@ -888,7 +888,7 @@ hash_table_t *get_state_owner_hash_table(state_owner_t *owner)
 /**
  * @brief Relinquish a reference on a state owner
  *
- * @param[in] owner Owner to release
+ * @param[in] owner The owner to release
  */
 void dec_state_owner_ref(state_owner_t *owner)
 {
@@ -1218,7 +1218,7 @@ not_found:
 /**
  * @brief Acquire a reference on a state owner that might be getting freed.
  *
- * @param[in] owner Owner to acquire
+ * @param[in] owner The owner to acquire
  *
  * inc_state_owner_ref() can be called to hold a reference provided
  * someone already has a valid refcount. In other words, one can't call

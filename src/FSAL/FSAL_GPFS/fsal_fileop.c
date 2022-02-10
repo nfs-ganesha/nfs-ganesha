@@ -212,9 +212,9 @@ GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void *buf,
  *	GPFSFSAL_alloc(int fd, uint64_t offset, uint64_t length, bool allocate)
  *  @brief Perform a de/allocc operation on an opened file.
  *  @param fd The file descriptor returned by FSAL_open.
- *  @param offset Offset
- *  @param length Length
- *  @param allocate Allocate
+ *  @param offset The offset to allocate at
+ *  @param length The length of the allocation
+ *  @param allocate Flag to indicate allocate or deallocate
  *
  *  @return ERR_FSAL_NO_ERROR on success, error otherwise
  */

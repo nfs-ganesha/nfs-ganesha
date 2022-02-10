@@ -556,8 +556,9 @@ static fsal_status_t lzfs_fsal_handle_to_wire(
 	liz_inode_t inode = lzfs_obj->inode;
 
 	if (fh_desc->len < sizeof(liz_inode_t)) {
-		LogMajor(COMPONENT_FSAL, "Space too small for handle. Need "
-			 "%zu, have %zu", sizeof(liz_inode_t), fh_desc->len);
+		LogMajor(COMPONENT_FSAL,
+			 "Space too small for handle. Need  %zu, have %zu",
+			 sizeof(liz_inode_t), fh_desc->len);
 		return fsalstat(ERR_FSAL_TOOSMALL, 0);
 	}
 
@@ -599,9 +600,9 @@ static fsal_status_t lzfs_int_open_fd(struct lzfs_fsal_handle *lzfs_obj,
 				   struct lzfs_fsal_export,
 				   export);
 
-	LogFullDebug(COMPONENT_FSAL, "fd = %p fd->fd = %p openflags = %x, "
-		     "posix_flags = %x", lzfs_fd, lzfs_fd->fd, openflags,
-		     posix_flags);
+	LogFullDebug(COMPONENT_FSAL,
+		     "fd = %p fd->fd = %p openflags = %x, posix_flags = %x",
+		     lzfs_fd, lzfs_fd->fd, openflags, posix_flags);
 
 	assert(lzfs_fd->fd == NULL &&
 	       lzfs_fd->openflags == FSAL_O_CLOSED &&
@@ -1468,8 +1469,8 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 	} else if (lock_op == FSAL_OP_UNLOCK) {
 		openflags = FSAL_O_ANY;
 	} else {
-		LogFullDebug(COMPONENT_FSAL, "ERROR: Lock operation requested "
-			     "was not TEST, READ, or WRITE.");
+		LogFullDebug(COMPONENT_FSAL,
+			     "ERROR: Lock operation requested was not TEST, READ, or WRITE.");
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
@@ -1483,8 +1484,8 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 	} else if (request_lock->lock_type == FSAL_LOCK_W) {
 		lock_info.l_type = F_WRLCK;
 	} else {
-		LogFullDebug(COMPONENT_FSAL, "ERROR: The requested lock type "
-			     "was not read or write.");
+		LogFullDebug(COMPONENT_FSAL,
+			     "ERROR: The requested lock type was not read or write.");
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
@@ -1507,8 +1508,8 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 					  true);
 	}
 	if (FSAL_IS_ERROR(status)) {
-		LogCrit(COMPONENT_FSAL, "Unable to find fd for lock "
-			"operation");
+		LogCrit(COMPONENT_FSAL,
+			"Unable to find fd for lock  operation");
 		return status;
 	}
 

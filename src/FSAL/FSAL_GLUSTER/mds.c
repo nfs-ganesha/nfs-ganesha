@@ -551,7 +551,7 @@ select_ds(struct glfs_object *object, char *pathinfo, char *hostname,
 	  size_t size)
 {
 	/* Represents starting of each server in the list*/
-	const char posix[10]    = "POSIX";
+	static const char posix[10]    = "POSIX";
 	/* Array of pathinfo of available dses */
 	char	*ds_path_info[MAX_DS_COUNT];
 	/* Key for hashing */

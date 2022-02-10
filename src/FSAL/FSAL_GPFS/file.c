@@ -550,7 +550,7 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
  *  @brief GPFS read plus
  *
  *  @param obj_hdl FSAL object handle / or fd
- *  @param offset Offset
+ *  @param offset The offset to read from
  *  @param buffer_size Size of buffer
  *  @param buffer void reference to buffer
  *  @param read_amount size_t reference to amount of data read

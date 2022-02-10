@@ -679,7 +679,7 @@ static void *database_worker_thread(void *arg)
 			/* still any entries in the list ? */
 			if (p_info->work_queue.highprio_first == NULL)
 				p_info->work_queue.highprio_last = NULL;
-			/* it it the last entry ? */
+			/* it is the last entry ? */
 			else if (p_info->work_queue.highprio_first->p_next ==
 				 NULL)
 				p_info->work_queue.highprio_last =
@@ -695,7 +695,7 @@ static void *database_worker_thread(void *arg)
 			/* still any entries in the list ? */
 			if (p_info->work_queue.lowprio_first == NULL)
 				p_info->work_queue.lowprio_last = NULL;
-			/* it it the last entry ? */
+			/* it is the last entry ? */
 			else if (p_info->work_queue.lowprio_first->p_next ==
 				 NULL)
 				p_info->work_queue.lowprio_last =

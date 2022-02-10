@@ -343,7 +343,7 @@ int vfs_claim_filesystem(struct fsal_filesystem *fs,
 
 already_claimed:
 
-	*private_data = (void *) (long int) fd;
+	*private_data = (void *) (long) fd;
 
 errout:
 

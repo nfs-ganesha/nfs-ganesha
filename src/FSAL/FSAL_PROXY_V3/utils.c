@@ -206,8 +206,8 @@ static bool attrmask_valid_setattr(const attrmask_t mask)
 	if (FSAL_TEST_MASK(mask, ATTR_ATIME) &&
 	    FSAL_TEST_MASK(mask, ATTR_ATIME_SERVER)) {
 		LogDebug(COMPONENT_FSAL,
-			 "Error: mask %0" PRIx64 " has both "
-			 "ATIME and ATIME_SERVER",
+			 "Error: mask %0" PRIx64
+			 " has both ATIME and ATIME_SERVER",
 			 mask);
 		return false;
 	}
@@ -216,8 +216,8 @@ static bool attrmask_valid_setattr(const attrmask_t mask)
 	if (FSAL_TEST_MASK(mask, ATTR_MTIME) &&
 	    FSAL_TEST_MASK(mask, ATTR_MTIME_SERVER)) {
 		LogDebug(COMPONENT_FSAL,
-			 "Error: mask %0" PRIx64 " has both "
-			 "MTIME and MTIME_SERVER",
+			 "Error: mask %0" PRIx64
+			 " has both MTIME and MTIME_SERVER",
 			 mask);
 		return false;
 	}

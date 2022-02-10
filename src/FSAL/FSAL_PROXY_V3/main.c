@@ -1009,8 +1009,8 @@ proxyv3_open2(struct fsal_obj_handle *obj_hdl,
 		container_of(obj_hdl, struct proxyv3_obj_handle, obj);
 
 	LogDebug(COMPONENT_FSAL,
-		 "open2 of obj_hdl %p, name %s "
-		 "with flags %" PRIx16 " and mode %u",
+		 "open2 of obj_hdl %p, name %s with flags %" PRIx16
+		 " and mode %u",
 		 obj_hdl, name, openflags, createmode);
 
 	/* @todo Do we need to check the openflags, too? */
@@ -2554,8 +2554,8 @@ proxyv3_fill_fsinfo(nfs_fh3 *fh3)
 	if (resok->maxfilesize != 0 &&
 	    fsinfo->maxfilesize > resok->maxfilesize) {
 		LogWarn(COMPONENT_FSAL,
-			"SKIPPING: Asked to change maxfilesize "
-			"from %" PRIu64 "to %" PRIu64,
+			"SKIPPING: Asked to change maxfilesize from %" PRIu64
+			"to %" PRIu64,
 			fsinfo->maxfilesize, resok->maxfilesize);
 
 		/*

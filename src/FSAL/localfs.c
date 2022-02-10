@@ -941,7 +941,7 @@ int populate_posix_file_systems(const char *path)
 
 		if (!path_is_subset(path, mnt->mnt_dir)) {
 			LogDebug(COMPONENT_FSAL,
-				 "Ignoring %s because is is not a subset or superset of path %s",
+				 "Ignoring %s because it is not a subset or superset of path %s",
 				 mnt->mnt_dir, path);
 			continue;
 		}

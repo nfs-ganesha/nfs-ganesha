@@ -217,7 +217,7 @@ static fsal_status_t fsal_check_create_owner(struct fsal_attrlist *attr)
  *
  * @param[in] obj     The file to be checked
  * @param[in] attr    Attributes to set
- * @param[in] current Current attributes for object
+ * @param[in] current The current attributes for object
  *
  * @return FSAL status
  */
@@ -508,7 +508,7 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
  * inherited ACL.
  *
  * @param[in]     obj    File to set attributes on
- * @param[in]     bypass Bypass share reservation checking
+ * @param[in]     bypass Indicate to bypass share reservation checking
  * @param[in]     state  Possible state associated with the entry
  * @param[in,out] attr   Attributes to set
  * @return FSAL status
@@ -1667,7 +1667,7 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
-			 "Not opening file file %s%s",
+			 "Not opening file %s%s",
 			 reason, fsal_err_txt(status));
 		return status;
 	}
@@ -1734,7 +1734,7 @@ fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
 
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
-			 "Not re-opening file file %s%s",
+			 "Not re-opening file %s%s",
 			 reason, fsal_err_txt(status));
 	}
 

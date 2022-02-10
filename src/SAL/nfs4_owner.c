@@ -311,7 +311,7 @@ uint64_t nfs4_owner_rbt_hash_func(hash_parameter_t *hparam,
 /**
  * @brief Free an NFS4 owner object
  *
- * @param[in] owner Owner to remove
+ * @param[in] owner The owner to remove
  */
 
 void free_nfs4_owner(state_owner_t *owner)
@@ -630,7 +630,7 @@ void Copy_nfs4_denied(LOCK4denied *denied_dst, LOCK4denied *denied_src)
  * operations for which it guarantees At-Most Once Semantics.
  *
  * @param[in,out] owner The owner to hold the operation
- * @param[in]     seqid Seqid of this operation
+ * @param[in]     seqid The seqid of this operation
  * @param[in]     args  Arguments of operation to copy
  * @param[in]     data  Compound data
  * @param[in]     resp  Response to copy
@@ -688,8 +688,8 @@ void Copy_nfs4_state_req(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
  * In either case, on a false return, the caller should send the
  * resulting response back to the client.
  *
- * @param[in]  owner Owner to check
- * @param[in]  seqid Seqid to check
+ * @param[in]  owner The owner to check
+ * @param[in]  seqid The seqid to check
  * @param[in]  args  Arguments of operation
  * @param[in]  data  Compound data
  * @param[out] resp  Cached request, if replay

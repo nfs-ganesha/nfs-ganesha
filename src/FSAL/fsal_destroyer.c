@@ -44,7 +44,7 @@
 /**
  * @brief Dispose of lingering file handles
  *
- * @param[in] fsal fsal module to clean up
+ * @param[in] fsal The fsal module to clean up
  */
 
 static void shutdown_handles(struct fsal_module *fsal)
@@ -71,7 +71,7 @@ static void shutdown_handles(struct fsal_module *fsal)
 /**
  * @brief Dispose of lingering pNFS Data Servers
  *
- * @param[in] fsal fsal module to clean up
+ * @param[in] fsal The fsal module to clean up
  */
 
 static void shutdown_pnfs_ds(struct fsal_module *fsal)

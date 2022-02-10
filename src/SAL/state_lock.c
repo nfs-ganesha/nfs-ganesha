@@ -141,7 +141,7 @@ bool lock_owner_is_nlm(state_lock_entry_t *lock_entry)
 /**
  * @brief Find the end of lock range
  *
- * @param[in] lock Lock to check
+ * @param[in] lock The lock to check
  *
  * @return Last byte of lock.
  */
@@ -176,7 +176,7 @@ const char *str_lockt(fsal_lock_t ltype)
 /**
  * @brief Return string for blocking status
  *
- * @param[in] blocking Blocking status
+ * @param[in] blocking The blocking status
  *
  * @return String for blocking status.
  */
@@ -411,7 +411,7 @@ static bool LogBlockedList(const char *reason, struct fsal_obj_handle *obj,
 /**
  * @brief Log a lock
  *
- * @param[in] component Component to log to
+ * @param[in] component The component to log to
  * @param[in] debug     Log level
  * @param[in] reason    Arbitrary string
  * @param[in] obj	File
@@ -452,7 +452,7 @@ void log_lock(log_components_t component,
 /**
  * @brief Log a lock description
  *
- * @param[in] component Component to log to
+ * @param[in] component The component to log to
  * @param[in] debug     Log level
  * @param[in] reason    Arbitrary string
  * @param[in] obj       FSAL obj handle
@@ -907,7 +907,7 @@ static void merge_lock_entry(struct state_hdl *ostate,
 /**
  * @brief Free a list of lock entries
  *
- * @param[in] list List of locks to free
+ * @param[in] list The list of locks to free
  */
 static void free_list(struct glist_head *list)
 {

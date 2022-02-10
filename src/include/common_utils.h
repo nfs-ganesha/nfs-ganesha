@@ -222,7 +222,7 @@ extern size_t gsh_strnlen(const char *s, size_t max);
 				     "Acquired mutex %p (%s) at %s:%d",	\
 				     _mtx, #_mtx,			\
 				     __FILE__, __LINE__);		\
-		} else{							\
+		} else {						\
 			LogCrit(COMPONENT_RW_LOCK,			\
 				"Error %d, acquiring mutex %p (%s) "	\
 				"at %s:%d", rc, _mtx, #_mtx,		\
@@ -247,7 +247,7 @@ static inline int PTHREAD_mutex_trylock(pthread_mutex_t *mtx,
 			     "Busy mutex %p (%s) at %s:%d",
 			     mtx, mtx_name,
 			     __FILE__, __LINE__);
-	} else{
+	} else {
 		LogCrit(COMPONENT_RW_LOCK,
 			"Error %d, acquiring mutex %p (%s) at %s:%d",
 			rc, mtx, mtx_name,
@@ -276,7 +276,7 @@ static inline int PTHREAD_mutex_trylock(pthread_mutex_t *mtx,
 				     "Released mutex %p (%s) at %s:%d",	\
 				     _mtx, #_mtx,			\
 				     __FILE__, __LINE__);		\
-		} else{							\
+		} else {						\
 			LogCrit(COMPONENT_RW_LOCK,			\
 				"Error %d, releasing mutex %p (%s) "	\
 				"at %s:%d", rc, _mtx, #_mtx,		\
@@ -389,7 +389,7 @@ static inline int PTHREAD_mutex_trylock(pthread_mutex_t *mtx,
 /**
  * @brief Inline functions for timespec math
  *
- * This is for timespec math.  If you want to do
+ * This is for timespec math.  If you want to
  * do the same kinds of math on timeval values,
  * See timeradd(3) in GLIBC.
  *

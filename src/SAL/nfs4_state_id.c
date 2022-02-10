@@ -1195,7 +1195,7 @@ void nfs_State_PrintAll(void)
  * We increment the seqid, handling wraparound, and copy the id into
  * the response.
  *
- * @param[in,out] state State to update
+ * @param[in,out] state The state to update
  * @param[out]    resp  Stateid in response
  * @param[in,out] data  Compound data to upddate with current stateid
  *                      (may be NULL)

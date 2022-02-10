@@ -39,7 +39,7 @@
 /* GLUSTERFS FSAL module private storage
  */
 
-const char glfsal_name[] = "GLUSTER";
+static const char glfsal_name[] = "GLUSTER";
 
 /**
  * Gluster global module object

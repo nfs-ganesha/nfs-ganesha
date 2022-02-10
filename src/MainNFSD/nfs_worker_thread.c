@@ -260,8 +260,7 @@ const nfs_function_desc_t nfs3_func_desc[] = {
 	 .xdr_decode_func = (xdrproc_t) xdr_COMMIT3args,
 	 .xdr_encode_func = (xdrproc_t) xdr_COMMIT3res,
 	 .funcname = "NFS3_COMMIT",
-	 .dispatch_behaviour = (MAKES_WRITE | NEEDS_CRED | SUPPORTS_GSS)
-	 }
+	 .dispatch_behaviour = (MAKES_WRITE | NEEDS_CRED | SUPPORTS_GSS)}
 };
 #endif /* _USE_NFS3 */
 
@@ -1557,7 +1556,7 @@ enum xprt_stat drc_resume(struct svc_req *req)
 
 	server_stats_nfs_done(reqdata, rc, true);
 
-	switch(rc) {
+	switch (rc) {
 	case NFS_REQ_OK:
 	case NFS_REQ_ERROR:
 		/* In these cases, we don't need to respond */

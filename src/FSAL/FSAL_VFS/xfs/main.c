@@ -52,7 +52,7 @@
 #define XFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX | ATTR_ACL))
 #endif
 
-const char myname[] = "XFS";
+static const char myname[] = "XFS";
 
 /* my module private storage
  */

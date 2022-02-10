@@ -127,7 +127,7 @@ void stat2fsal_attributes(const struct stat *buffstat,
  * in and the handdle is up-to-date and usable.
  *
  * @param[in]  st     Stat data for the file
- * @param[in]  export Export on which the object lives
+ * @param[in]  export The export on which the object lives
  * @param[out] obj    Object created
  *
  * @return 0 on success, negative error codes on failure.

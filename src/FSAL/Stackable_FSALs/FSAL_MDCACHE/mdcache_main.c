@@ -54,7 +54,7 @@ struct mdcache_stats cache_st;
 struct mdcache_stats *cache_stp = &cache_st;
 
 /* FSAL name determines name of shared library: libfsal<name>.so */
-const char mdcachename[] = "MDCACHE";
+static const char mdcachename[] = "MDCACHE";
 
 /* my module private storage
  */

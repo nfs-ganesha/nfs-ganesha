@@ -103,7 +103,7 @@ bool proxyv3_rpc_init(const uint num_sockets)
  *
  * @param host Backend NFS host (as a sockaddr)
  * @param socklen Length of the host sockaddr (for IPv6 vs IPv4).
- * @param port Port to connect to.
+ * @param port The Port to connect to.
  *
  * @return - A valid fd on success, -1 otherwise.
  */
@@ -350,7 +350,7 @@ proxyv3_rpcBuf_resize(struct rpc_buf *rpc_buf, size_t len)
  *
  * @param host Backend NFS host (as a sockaddr)
  * @param socklen Length of the host sockaddr (for IPv6 vs IPv4).
- * @param port Port to connect to.
+ * @param port The port to connect to.
  * @param retry Whether or not the caller should retry later.
  *
  * @return - A valid fd_entry on success, NULL otherwise.
@@ -517,7 +517,7 @@ proxyv3_getfdentry(const struct sockaddr *host,
  *
  * @param host Backend NFS host (as a sockaddr)
  * @param socklen Length of the host sockaddr (for IPv6 vs IPv4).
- * @param port Port to connect to.
+ * @param port The port to connect to.
  *
  * @return - A valid fd_entry pointer on success
  *         - NULL, otherwise.
@@ -663,7 +663,7 @@ static bool proxyv3_release_fdentry(struct fd_entry *entry, bool force_close)
  *
  * @param host Backend NFS host (as a sockaddr)
  * @param socklen Length of the host sockaddr (for IPv6 vs IPv4).
- * @param port Port to connect to.
+ * @param port The port to connect to.
  * @param creds Optional credentials for auth.
  * @param rpcProgram The RPC Program (e.g., MOUNTPROG).
  * @param rpcVersion The RPC Version (e.g., NFS_V3).
@@ -694,10 +694,9 @@ bool proxyv3_call(const struct sockaddr *host,
 
 	/* Log on entry, so we know what we were doing before we open the fd. */
 	LogFullDebug(COMPONENT_FSAL,
-		     "Sending an RPC: "
-		     "Program = %" PRIu32 ", "
-		     "Version = %" PRIu32 ", "
-		     "Procedure = %" PRIu32,
+		     "Sending an RPC: Program = %" PRIu32
+		     ", Version = %" PRIu32
+		     ", Procedure = %" PRIu32,
 		     rpcProgram, rpcVersion, rpcProc);
 
 	fd_entry = proxyv3_getfd_blocking(host, socklen, port);
@@ -980,10 +979,9 @@ bool proxyv3_call(const struct sockaddr *host,
 				false /* let's reuse the socket */);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "RPC Completed %s: "
-		     "Program = %" PRIu32 ", "
-		     "Version = %" PRIu32 ", "
-		     "Procedure = %" PRIu32,
+		     "RPC Completed %s: Program = %" PRIu32
+		     ", Version = %" PRIu32
+		     ", Procedure = %" PRIu32,
 		     (success) ? "SUCCESSFULLY" : " but FAILED",
 		     rpcProgram, rpcVersion, rpcProc);
 

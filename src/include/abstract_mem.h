@@ -381,7 +381,7 @@ pool_destroy(pool_t *pool)
  * it.
  *
  * @param[in] pool   Pool to which to return the object
- * @param[in] object Object to return.  This is a void pointer.
+ * @param[in] object The object to return.  This is a void pointer.
  *                   Programmers wishing more type safety could create
  *                   a static inline wrapper taking an object of a
  *                   specific type (and omitting the pool parameter.)

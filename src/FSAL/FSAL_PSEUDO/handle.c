@@ -659,8 +659,9 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 	fh_desc->len = V4_FH_OPAQUE_SIZE;
 }
 
-/*
- * release
+/**
+ * @brief release object handle
+ *
  * release our export first so they know we are gone
  */
 

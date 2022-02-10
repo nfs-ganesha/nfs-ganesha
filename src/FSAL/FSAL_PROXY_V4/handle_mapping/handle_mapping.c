@@ -60,7 +60,7 @@ static pthread_mutex_t handle_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* helpers for pool allocation */
 
-static digest_pool_entry_t *digest_alloc()
+static digest_pool_entry_t *digest_alloc(void)
 {
 	digest_pool_entry_t *p_new;
 
@@ -80,7 +80,7 @@ static void digest_free(digest_pool_entry_t *p_digest)
 	PTHREAD_MUTEX_unlock(&digest_pool_mutex);
 }
 
-static handle_pool_entry_t *handle_alloc()
+static handle_pool_entry_t *handle_alloc(void)
 {
 	handle_pool_entry_t *p_new;
 

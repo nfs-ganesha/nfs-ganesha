@@ -3407,8 +3407,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 				lr_names->xl4_count = entryCount - *la_cookie;
 				*la_cookie += entryCount;
 				LogFullDebug(COMPONENT_FSAL,
-					"out1 cookie %llu off"
-					"%td eof %d",
+					"out1 cookie %llu off %td eof %d",
 					(unsigned long long)*la_cookie,
 					(next - name), *lr_eof);
 

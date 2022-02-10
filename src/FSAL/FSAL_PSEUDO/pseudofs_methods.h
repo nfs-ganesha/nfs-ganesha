@@ -62,9 +62,10 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 				   struct fsal_obj_handle **handle,
 				   struct fsal_attrlist *attrs_out);
 
-/*
- * PSEUDOFS internal object handle
- * handle is a pointer because
+/**
+ * @brief PSEUDOFS internal object handle
+ *
+ * The handle is a pointer because
  *  a) the last element of file_handle is a char[] meaning variable len...
  *  b) we cannot depend on it *always* being last or being the only
  *     variable sized struct here...  a pointer is safer.

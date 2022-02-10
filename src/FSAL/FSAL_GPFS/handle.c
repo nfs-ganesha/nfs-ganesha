@@ -545,7 +545,7 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 
 /* FIXME: attributes are now merged into fsal_obj_handle.  This
  * spreads everywhere these methods are used.  eventually deprecate
- * everywhere except where we explicitly want to to refresh them.
+ * everywhere except where we explicitly want to refresh them.
  * NOTE: this is done under protection of the attributes rwlock in the
  * cache entry.
  */
@@ -916,8 +916,9 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 	fh_desc->len = myself->handle->handle_key_size;
 }
 
-/*
- * release
+/**
+ * @brief release object handle
+ *
  * release our export first so they know we are gone
  */
 static void release(struct fsal_obj_handle *obj_hdl)
@@ -992,7 +993,7 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 
 /**
  *  @param exp_hdl Handle
- *  @param path Path
+ *  @param path The path to lookup
  *  @param handle Reference to handle
  *
  *  modelled on old api except we don't stuff attributes.

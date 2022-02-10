@@ -57,12 +57,12 @@ bool quiet;
 bool duperrors;
 bool strict;
 bool error_is_fatal;
-long int global_tag;
-long int saved_tags[26];
+long global_tag;
+long saved_tags[26];
 bool syntax;
-long int lno;
+long lno;
 
-long int get_global_tag(bool increment)
+long get_global_tag(bool increment)
 {
 	if (script && increment)
 		global_tag = lno;
@@ -426,7 +426,7 @@ char *get_command(char *line, enum commands *cmd)
 
 
 
-char *get_long(char *line, long int *value, enum requires_more requires_more,
+char *get_long(char *line, long *value, enum requires_more requires_more,
 	       const char *invalid)
 {
 	char *c;
@@ -454,7 +454,7 @@ char *get_long(char *line, long int *value, enum requires_more requires_more,
 	return SkipWhite(c, requires_more, invalid);
 }
 
-char *get_longlong(char *line, long long int *value,
+char *get_longlong(char *line, long long *value,
 		   enum requires_more requires_more, const char *invalid)
 {
 	char *c;
@@ -500,7 +500,7 @@ char *get_on_off(char *line, bool *value)
 	return rest;
 }
 
-char *get_fpos(char *line, long int *fpos, enum requires_more requires_more)
+char *get_fpos(char *line, long *fpos, enum requires_more requires_more)
 {
 	char *c = line;
 
@@ -580,7 +580,7 @@ char *get_rdata(char *line, struct response *resp, int max,
 	return SkipWhite(c, requires_more, "get rdata 2");
 }
 
-char *get_open_opts(char *line, long int *fpos, int *flags, int *mode,
+char *get_open_opts(char *line, long *fpos, int *flags, int *mode,
 		    int *lock_mode)
 {
 	char *c;
@@ -621,7 +621,7 @@ char *get_open_opts(char *line, long int *fpos, int *flags, int *mode,
 
 	if (has_mode) {
 		/* We got a mode, now get the mode value */
-		long int modev;
+		long modev;
 
 		c = get_long(c, &modev, REQUIRES_MORE, "Invalid mode");
 
@@ -955,7 +955,7 @@ void respond(struct response *resp)
 char *parse_response(char *line, struct response *resp)
 {
 	char *rest;
-	long long int verify_len;
+	long long verify_len;
 
 	if (resp->r_original[0] == '\0')
 		array_strcpy(resp->r_original, line);

@@ -1501,7 +1501,7 @@ static inline size_t atomic_postdec_size_t(size_t *var)
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to clear
+ * @param[in]     bits The bits to clear
  *
  * @return The value after clearing.
  */
@@ -1524,7 +1524,7 @@ static inline uint64_t atomic_clear_uint64_t_bits(uint64_t *var, uint64_t bits)
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to set
+ * @param[in]     bits The bits to set
  *
  * @return The value after setting.
  */
@@ -1547,7 +1547,7 @@ static inline uint64_t atomic_set_uint64_t_bits(uint64_t *var, uint64_t bits)
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to clear
+ * @param[in]     bits The bits to clear
  *
  * @return The value after clearing.
  */
@@ -1570,7 +1570,7 @@ static inline uint32_t atomic_clear_uint32_t_bits(uint32_t *var, uint32_t bits)
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to set
+ * @param[in]     bits The bits to set
  *
  * @return The value after setting.
  */
@@ -1593,7 +1593,7 @@ static inline uint32_t atomic_set_uint32_t_bits(uint32_t *var, uint32_t bits)
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to clear
+ * @param[in]     bits The bits to clear
  *
  * @return The value after clearing.
  */
@@ -1616,7 +1616,7 @@ static inline uint16_t atomic_clear_uint16_t_bits(uint16_t *var, uint16_t bits)
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to set
+ * @param[in]     bits The bits to set
  *
  * @return The value after setting.
  */
@@ -1639,7 +1639,7 @@ static inline uint16_t atomic_set_uint16_t_bits(uint16_t *var, uint16_t bits)
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to clear
+ * @param[in]     bits The bits to clear
  *
  * @return The value after clearing.
  */
@@ -1662,7 +1662,7 @@ static inline uint8_t atomic_clear_uint8_t_bits(uint8_t *var, uint8_t bits)
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to set
+ * @param[in]     bits The bits to set
  *
  * @return The value after setting.
  */
@@ -1690,7 +1690,7 @@ static inline uint8_t atomic_set_uint8_t_bits(uint8_t *var, uint8_t bits)
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to clear
+ * @param[in]     bits The bits to clear
  *
  * @return The value before clearing.
  */
@@ -1715,7 +1715,7 @@ static inline uint64_t atomic_postclear_uint64_t_bits(uint64_t *var,
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to set
+ * @param[in]     bits The bits to set
  *
  * @return The value before setting.
  */
@@ -1740,7 +1740,7 @@ static inline uint64_t atomic_postset_uint64_t_bits(uint64_t *var,
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to clear
+ * @param[in]     bits The bits to clear
  *
  * @return The value before clearing.
  */
@@ -1765,7 +1765,7 @@ static inline uint32_t atomic_postclear_uint32_t_bits(uint32_t *var,
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to set
+ * @param[in]     bits The bits to set
  *
  * @return The value before setting.
  */
@@ -1790,7 +1790,7 @@ static inline uint32_t atomic_postset_uint32_t_bits(uint32_t *var,
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to clear
+ * @param[in]     bits The bits to clear
  *
  * @return The value before clearing.
  */
@@ -1815,7 +1815,7 @@ static inline uint16_t atomic_postclear_uint16_t_bits(uint16_t *var,
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to set
+ * @param[in]     bits The bits to set
  *
  * @return The value before setting.
  */
@@ -1840,7 +1840,7 @@ static inline uint16_t atomic_postset_uint16_t_bits(uint16_t *var,
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to clear
+ * @param[in]     bits The bits to clear
  *
  * @return The value before clearing.
  */
@@ -1863,7 +1863,7 @@ static inline uint8_t atomic_postclear_uint8_t_bits(uint8_t *var, uint8_t bits)
  * This function atomic clears the bits indicated.
  *
  * @param[in,out] var  Pointer to the value to modify
- * @param[in]     bits Bits to set
+ * @param[in]     bits The bits to set
  *
  * @return The value before setting.
  */

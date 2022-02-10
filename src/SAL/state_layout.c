@@ -105,7 +105,7 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
  *
  * This function must be called with the mutex lock held.
  *
- * @param[in] segment Segment to delete
+ * @param[in] segment The segment to delete
  *
  * @return State status.
  */

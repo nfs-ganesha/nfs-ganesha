@@ -57,7 +57,7 @@ fsal_ace_t *nfs4_ace_alloc(int nace)
 	return ace;
 }
 
-fsal_acl_t *nfs4_acl_alloc()
+fsal_acl_t *nfs4_acl_alloc(void)
 {
 	fsal_acl_t *acl = pool_alloc(fsal_acl_pool);
 

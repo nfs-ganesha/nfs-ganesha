@@ -91,9 +91,10 @@ struct kvsfs_state_fd {
 	struct kvsfs_fd kvsfs_fd;
 };
 
-/*
- * KVSFS internal object handle
- * handle is a pointer because
+/**
+ * @brief KVSFS internal object handle
+ *
+ * The handle is a pointer because
  *  a) the last element of file_handle is a char[] meaning variable len...
  *  b) we cannot depend on it *always* being last or being the only
  *     variable sized struct here...  a pointer is safer.

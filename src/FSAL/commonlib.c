@@ -1920,8 +1920,8 @@ bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 {
 	attrmask_t req_mask = ATTR_TYPE | ATTR_MODE;
 
-	LogDebug(COMPONENT_FSAL, "Checking attrs for referral"
-		 ", handle: %p, valid_mask: %" PRIx64
+	LogDebug(COMPONENT_FSAL,
+		 "Checking attrs for referral, handle: %p, valid_mask: %" PRIx64
 		 ", request_mask: %" PRIx64 ", supported: %" PRIx64,
 		 obj_hdl, attrs->valid_mask,
 		 attrs->request_mask, attrs->supported);
@@ -1939,8 +1939,8 @@ bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 			 */
 			if (status.major == ERR_FSAL_STALE) {
 				LogDebug(COMPONENT_FSAL,
-					"Failed to get attrs for referral, "
-					"handle: %p (probably deleted), valid_mask: %" PRIx64
+					"Failed to get attrs for referral, handle: %p (probably deleted), valid_mask: %"
+					PRIx64
 					", request_mask: %" PRIx64
 					", supported: %" PRIx64
 					", error: %s",
@@ -1949,8 +1949,8 @@ bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 					fsal_err_txt(status));
 			} else {
 				LogEvent(COMPONENT_FSAL,
-					"Failed to get attrs for referral, "
-					"handle: %p, valid_mask: %" PRIx64
+					"Failed to get attrs for referral, handle: %p, valid_mask: %"
+					PRIx64
 					", request_mask: %" PRIx64
 					", supported: %" PRIx64
 					", error: %s",

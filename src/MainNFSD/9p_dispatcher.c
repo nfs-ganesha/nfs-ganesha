@@ -292,8 +292,6 @@ static void _9p_enqueue_req(struct _9p_request_data *reqdata)
 			/* ! SPIN LOCKED */
 			pthread_spin_unlock(&_9p_req_st.reqs.sp);
 	}
-
-	return;
 }
 
 /**
@@ -523,7 +521,7 @@ void DispatchWork9P(struct _9p_request_data *req)
 
 void *_9p_socket_thread(void *Arg)
 {
-	long int tcp_sock = (long int)Arg;
+	long tcp_sock = (long)Arg;
 	int rc = -1;
 	struct pollfd fds[1];
 	int fdcount = 1;
@@ -944,7 +942,7 @@ void *_9p_dispatcher_thread(void *Arg)
 {
 	int _9p_socket;
 	int rc = 0;
-	long int newsock = -1;
+	long newsock = -1;
 	pthread_attr_t attr_thr;
 	pthread_t tcp_thrid;
 

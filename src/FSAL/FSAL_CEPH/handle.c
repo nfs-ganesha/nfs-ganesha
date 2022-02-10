@@ -910,8 +910,7 @@ static fsal_status_t ceph_open_my_fd(struct ceph_handle *myself,
 		access == CEPH_AS_ROOT ? &root_creds : &op_ctx->creds;
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "my_fd = %p my_fd->fd = %p openflags = %x,"
-		     " posix_flags = %x, access = %d",
+		     "my_fd = %p my_fd->fd = %p openflags = %x, posix_flags = %x, access = %d",
 		     my_fd, my_fd->fd, openflags, posix_flags, access);
 
 	assert(my_fd->fd == NULL

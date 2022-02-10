@@ -135,7 +135,7 @@ int reserve_lease(nfs_client_id_t *clientid)
  * function releases the lease reservation. Before releasing the last
  * reservation, cid_last_renew will be updated.
  *
- * @param[in] clientid Clientid record to update
+ * @param[in] clientid The clientid record to update
  *
  * @return 1 if lease is valid, 0 if not.
  *

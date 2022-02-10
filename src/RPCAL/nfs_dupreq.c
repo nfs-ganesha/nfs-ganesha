@@ -230,7 +230,7 @@ static inline int dupreq_tcp_cmpf(const struct opr_rbtree_node *lhs,
 {
 	dupreq_entry_t *lk, *rk;
 
-	LogDebug(COMPONENT_DUPREQ, "%s", __func__);
+	LogDebug(COMPONENT_DUPREQ, "Entering %s", __func__);
 
 	lk = opr_containerof(lhs, dupreq_entry_t, rbt_k);
 	rk = opr_containerof(rhs, dupreq_entry_t, rbt_k);
@@ -1354,7 +1354,7 @@ void nfs_dupreq_delete(nfs_request_t *reqnfs, enum nfs_req_result rc)
 	}
 
 	PTHREAD_MUTEX_unlock(&dv->mtx);
-	
+
 	drc = reqnfs->svc.rq_xprt->xp_u2;
 
 	LogFullDebug(COMPONENT_DUPREQ,

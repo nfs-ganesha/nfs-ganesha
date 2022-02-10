@@ -308,7 +308,7 @@ void fs_add_clid(nfs_client_id_t *clientid)
  * @brief Remove the revoked file handles created under a specific
  * client-id path on the stable storage.
  *
- * @param[in] path Path of the client-id on the stable storage.
+ * @param[in] path The path of the client-id on the stable storage.
  */
 static void fs_rm_revoked_handles(char *path)
 {
@@ -427,8 +427,8 @@ void fs_rm_clid(nfs_client_id_t *clientid)
  * no record of the delegatin. This list helps to reject delegations
  * client is obtaining through DELEG_PREV.
  *
- * @param[in] clientid Clientid that is being created.
- * @param[in] path Path of the directory structure.
+ * @param[in] clientid The clientid that is being created.
+ * @param[in] path The path of the directory structure.
  * @param[in] Target dir to copy.
  * @param[in] del Delete after populating
  */

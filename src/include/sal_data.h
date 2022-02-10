@@ -960,7 +960,7 @@ struct state_dir {
  *
  * LOCK ORDERING
  *
- * The state handle has has two overlapping locks for different purposes.
+ * The state handle has two overlapping locks for different purposes.
  *
  * The st_lock is used to protect byte range locks, opens, and such for regular
  * files. It is a mutex since there is no parallelism benefit to it being a

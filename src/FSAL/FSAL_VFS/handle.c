@@ -1765,8 +1765,9 @@ static fsal_status_t handle_to_wire(const struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-/*
- * release
+/**
+ * @brief release object handle
+ *
  * release our export first so they know we are gone
  */
 

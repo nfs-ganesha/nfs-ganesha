@@ -81,26 +81,26 @@ typedef struct drc {
  *  sent. Unfortunately, if a TCP connection is broken while the request
  *  is in progress, sending the response fails. The client never retries
  *  and gets stuck.
- *  
+ *
  *  Now when this occurs, we queue up the request and suspend it (utlizing
  *  the async infrastructure). When the original request processing
  *  completes and calls nfs_dupreq_finish() we track if there was an error
  *  sending the response. If so, we don't mark the DRC entry as complete
  *  and instead resume the first retry to attempt to send the response.
- *  
+ *
  *  That resumed retry will call nfs_dupreq_finish() after it tries to
  *  send the response, so if there is a queue of retries, there are more
  *  opportunities to re-send a failed response.
- *  
+ *
  *  The same retry logic is followed when nfs_dupreq_delete() is called
  *  if there are again queued duplicate requests, however, those retries
  *  instead are re-submitted for a new attempt to process. This logic
  *  occurs when there is an NFS_DROP result from a retryable error or
  *  an auth error.
- *  
+ *
  *  Once the request is succesfully completed, any additional queued
  *  requests are dropped.
- *  
+ *
  *  We limit the queue to 3 duplicates. That should be more than enough
  *  to get through an issue like this unless the server has severely
  *  stalled out on the original request.

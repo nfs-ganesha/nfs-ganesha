@@ -76,7 +76,7 @@ enum nfs_cb_call_states {
 	NFS_CB_CALL_ABORTED,
 };
 
-rpc_call_t *alloc_rpc_call();
+rpc_call_t *alloc_rpc_call(void);
 void free_rpc_call(rpc_call_t *call);
 
 static inline nfs_cb_argop4 *alloc_cb_argop(uint32_t cnt)

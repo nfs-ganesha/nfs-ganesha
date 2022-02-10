@@ -424,7 +424,7 @@ void ceph_prepare_unexport(struct fsal_export *export_pub)
 
 void export_ops_init(struct export_ops *ops)
 {
-	ops->prepare_unexport = ceph_prepare_unexport,
+	ops->prepare_unexport = ceph_prepare_unexport;
 	ops->release = release;
 	ops->lookup_path = lookup_path;
 	ops->host_to_key = host_to_key;

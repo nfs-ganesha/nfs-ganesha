@@ -45,7 +45,7 @@
 /* defined the set of attributes supported with POSIX */
 #define MEM_SUPPORTED_ATTRIBUTES (ATTRS_POSIX)
 
-const char memname[] = "MEM";
+static const char memname[] = "MEM";
 
 /* my module private storage */
 struct mem_fsal_module MEM = {

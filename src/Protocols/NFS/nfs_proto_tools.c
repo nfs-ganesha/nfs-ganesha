@@ -4097,7 +4097,7 @@ bool nfs3_Fixup_FSALattr(struct fsal_obj_handle *obj,
  * @brief Checks if attributes have READ or WRITE access
  *
  * @param[in] bitmap NFSv4 attribute bitmap
- * @param[in] access Access to be checked, either FATTR4_ATTR_READ or
+ * @param[in] access The file access to be checked, either FATTR4_ATTR_READ or
  *                   FATTR4_ATTR_WRITE
  *
  * @return true if successful, false otherwise.

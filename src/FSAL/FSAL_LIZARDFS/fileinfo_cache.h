@@ -38,7 +38,7 @@ liz_fileinfo_cache_t *liz_create_fileinfo_cache(unsigned int max_entries,
 
 /*!
  * \brief Reset cache parameters
- * \param cache cache to be modified
+ * \param cache The cache to be modified
  * \param max_entries max number of entries to be stored in cache
  * \param min_timeout_ms entries will not be removed until at least
  * min_timeout_ms ms has passed
@@ -55,8 +55,8 @@ void liz_destroy_fileinfo_cache(liz_fileinfo_cache_t *cache);
 
 /*!
 * \brief Acquire fileinfo from cache
-* \param cache cache to be modified
-* \param inode Inode of a file
+* \param cache The cache to be modified
+* \param inode The inode of a file
 * \return Cache entry if succeeded, NULL if cache is full
 * \attention entry->fileinfo will be NULL if file still needs to be open first
 * \post Set fileinfo to a valid pointer after opening a file with
@@ -67,7 +67,7 @@ liz_fileinfo_entry_t *liz_fileinfo_cache_acquire(liz_fileinfo_cache_t *cache,
 
 /*!
 * \brief Release fileinfo from cache
-* \param cache cache to be modified
+* \param cache The cache to be modified
 * \param entry pointer returned from previous acquire() call
 */
 void liz_fileinfo_cache_release(liz_fileinfo_cache_t *cache,
@@ -78,7 +78,7 @@ void liz_fileinfo_cache_release(liz_fileinfo_cache_t *cache,
 * \attention This function should be used if entry should not reside in cache
 * (i.e. opening a file
 * failed)
-* \param cache cache to be modified
+* \param cache The cache to be modified
 * \param entry pointer returned from previous acquire() call
 */
 void liz_fileinfo_cache_erase(liz_fileinfo_cache_t *cache,
@@ -86,7 +86,7 @@ void liz_fileinfo_cache_erase(liz_fileinfo_cache_t *cache,
 
 /*!
 * \brief Get expired fileinfo from cache
-* \param cache cache to be modified
+* \param cache The cache to be modified
 * \return entry removed from cache
 * \post use this entry to call release() on entry->fileinfo and free entry
 * afterwards with
@@ -97,21 +97,21 @@ liz_fileinfo_entry_t *liz_fileinfo_cache_pop_expired(
 
 /*!
  * \brief Free unused fileinfo cache entry
- * \param entry entry to be freed
+ * \param entry The entry to be freed
  */
 void liz_fileinfo_entry_free(liz_fileinfo_entry_t *entry);
 
 /*!
 * \brief Get fileinfo from cache entry
-* \param cache cache to be modified
+* \param cache The cache to be modified
 * \return fileinfo extracted from entry
 */
 liz_fileinfo_t *liz_extract_fileinfo(liz_fileinfo_entry_t *entry);
 
 /*!
 * \brief Attach fileinfo to an existing cache entry
-* \param entry entry to be modified
-* \param fileinfo fileinfo to be attached to entry
+* \param entry The entry to be modified
+* \param fileinfoThe  fileinfo to be attached to entry
 */
 void liz_attach_fileinfo(liz_fileinfo_entry_t *entry,
 			 liz_fileinfo_t *fileinfo);

@@ -609,8 +609,9 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 	op_ctx->fsal_export = &export->export;
 }
 
-/*
- * release
+/**
+ * @brief release object handle
+ *
  * release our handle first so they know we are gone
  */
 

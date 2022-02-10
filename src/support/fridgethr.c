@@ -1247,7 +1247,7 @@ int fridgethr_start(struct fridgethr *fr, pthread_mutex_t *mtx,
 /**
  * @brief Set a flag to true, to prevent racing condition variable
  *
- * @param[in,out] flag Flag to set
+ * @param[in,out] flag The flag to set
  */
 
 static void fridgethr_trivial_syncer(void *flag)
@@ -1262,7 +1262,7 @@ static void fridgethr_trivial_syncer(void *flag)
  * to complete.
  *
  * @param[in,out] fr      The fridge to change
- * @param[in]     command Command to issue
+ * @param[in]     command The command to issue
  * @param[in]     timeout Number of seconds to wait for change or 0
  *                        to wait forever.
  *

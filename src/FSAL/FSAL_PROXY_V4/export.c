@@ -111,8 +111,7 @@ static int remote_commit(void *node, void *link_mem, void *self_struct,
 	    SEND_RECV_HEADER_SPACE >
 	    pcp->srv_recvsize) {
 		LogCrit(COMPONENT_CONFIG,
-			"FSAL_PROXY_V4 CONF : maxwrite/maxread + header > "
-			"Max_SendSize/Max_RecvSize");
+			"FSAL_PROXY_V4 CONF : maxwrite/maxread + header > Max_SendSize/Max_RecvSize");
 		err_type->invalid = true;
 		return 1;
 	}

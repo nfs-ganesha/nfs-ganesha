@@ -184,8 +184,8 @@ static fsal_status_t lzfs_fsal_create_export(
 					   true,
 					   err_type);
 		if (rc != 0) {
-			LogCrit(COMPONENT_FSAL, "Failed to parse export "
-				"configuration for %s",
+			LogCrit(COMPONENT_FSAL,
+				"Failed to parse export configuration for %s",
 				CTX_FULLPATH(op_ctx));
 
 			status = fsalstat(ERR_FSAL_INVAL, 0);
@@ -243,8 +243,9 @@ static fsal_status_t lzfs_fsal_create_export(
 		pds->mds_fsal_export = &lzfs_export->export;
 
 		if (!pnfs_ds_insert(pds)) {
-			LogCrit(COMPONENT_CONFIG, "Server id %d already in "
-				"use.", pds->id_servers);
+			LogCrit(COMPONENT_CONFIG,
+				"Server id %d already in use.",
+				pds->id_servers);
 			status.major = ERR_FSAL_EXIST;
 
 			/* Return the ref taken by create_fsal_pnfs_ds */
@@ -356,8 +357,8 @@ MODULE_FINI void finish(void)
 	LogDebug(COMPONENT_FSAL, "LizardFS module finishing.");
 
 	if (unregister_fsal(&gLizardFSM.fsal) != 0) {
-		LogCrit(COMPONENT_FSAL, "Unable to unload LizardFS FSAL. "
-			"Dying with extreme prejudice.");
+		LogCrit(COMPONENT_FSAL,
+			"Unable to unload LizardFS FSAL. Dying with extreme prejudice.");
 		abort();
 	}
 }

@@ -53,7 +53,7 @@
  *
  * @return NULL if the allocation failed, else the new structure.
  */
-static struct _9p_user_cred *new_9p_user_creds()
+static struct _9p_user_cred *new_9p_user_creds(void)
 {
 	struct _9p_user_cred *result =
 		gsh_calloc(1, sizeof(struct _9p_user_cred));

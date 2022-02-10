@@ -67,7 +67,7 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops);
 
 static inline int root_fd(struct fsal_filesystem *fs)
 {
-	int fd = (long int) fs->private_data;
+	int fd = (long) fs->private_data;
 
 	return fd;
 }
@@ -150,9 +150,10 @@ struct vfs_state_fd {
 	struct vfs_fd vfs_fd;
 };
 
-/*
- * VFS internal object handle
- * handle is a pointer because
+/**
+ * @brief VFS internal object handle
+ *
+ * The handle is a pointer because
  *  a) the last element of file_handle is a char[] meaning variable len...
  *  b) we cannot depend on it *always* being last or being the only
  *     variable sized struct here...  a pointer is safer.

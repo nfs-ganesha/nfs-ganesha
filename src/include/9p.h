@@ -364,7 +364,7 @@ struct _9p_flush_bucket {
 
 struct _9p_conn {
 	union trans_data {
-		long int sockfd;
+		long sockfd;
 #ifdef _USE_9P_RDMA
 		msk_trans_t *rdma_trans;
 #endif

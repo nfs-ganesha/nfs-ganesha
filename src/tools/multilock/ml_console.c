@@ -182,7 +182,7 @@ struct client *find_client_by_name(const char *name)
 	return client;
 }
 
-int receive(bool watchin, long int timeout_secs)
+int receive(bool watchin, long timeout_secs)
 {
 	fd_set readfds, exceptfds;
 	struct timespec timeout;
@@ -349,7 +349,7 @@ struct response *process_client_response(struct client *client)
 
 static void console_command(void);
 
-struct response *receive_response(bool watchin, long int timeout_secs)
+struct response *receive_response(bool watchin, long timeout_secs)
 {
 	int fd;
 	struct client *client;
@@ -631,7 +631,7 @@ void ccmd_client_cmd(struct console_state *cs)
 
 void ccmd_sleep(struct console_state *cs)
 {
-	long int secs;
+	long secs;
 	int t_end, t_now;
 
 	cs->rest = get_long(cs->rest, &secs, true, "Invalid sleep time");
@@ -959,8 +959,7 @@ void ccmd_simple(struct console_state *cs)
 		    && cs->cmd != CCMD_SIMPLE_GRANTED) {
 			array_sprintf(errdetail,
 				      "Simple %s command requires GRANTED or DENIED status",
-				      commands[cs->client_cmd->r_cmd].
-				      cmd_name);
+				      commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
 			cs->rest = NULL;
 		}

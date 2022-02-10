@@ -120,16 +120,16 @@ static struct gsh_dbus_method cbsim_get_client_ids = {
 	.name = "get_client_ids",
 	.method = nfs_rpc_cbsim_get_v40_client_ids,
 	.args = {
-		 {
-		  .name = "time",
-		  .type = "(tt)",
-		  .direction = "out"},
-		 {
-		  .name = "clientids",
-		  .type = "at",
-		  .direction = "out"},
-		 {NULL, NULL, NULL}
-		 }
+			{
+				.name = "time",
+				.type = "(tt)",
+				.direction = "out"},
+			{
+				.name = "clientids",
+				.type = "at",
+				.direction = "out"},
+			{NULL, NULL, NULL}
+		}
 };
 
 /**
@@ -194,16 +194,16 @@ static struct gsh_dbus_method cbsim_get_session_ids = {
 	.name = "get_session_ids",
 	.method = nfs_rpc_cbsim_get_session_ids,
 	.args = {
-		 {
-		  .name = "time",
-		  .type = "(tt)",
-		  .direction = "out"},
-		 {
-		  .name = "sessionids",
-		  .type = "at",
-		  .direction = "out"},
-		 {NULL, NULL, NULL}
-		 }
+			{
+				.name = "time",
+				.type = "(tt)",
+				.direction = "out"},
+			{
+				.name = "sessionids",
+				.type = "at",
+				.direction = "out"},
+			{NULL, NULL, NULL}
+		}
 };
 
 static int cbsim_test_bchan(clientid4 clientid)
@@ -387,12 +387,12 @@ static struct gsh_dbus_method cbsim_fake_recall = {
 	.name = "fake_recall",
 	.method = nfs_rpc_cbsim_fake_recall,
 	.args = {
-		 {
-		  .name = "clientid",
-		  .type = "t",
-		  .direction = "in"},
-		 {NULL, NULL, NULL}
-		 }
+			{
+				.name = "clientid",
+				.type = "t",
+				.direction = "in"},
+			{NULL, NULL, NULL}
+		}
 };
 
 /* DBUS org.ganesha.nfsd.cbsim methods list

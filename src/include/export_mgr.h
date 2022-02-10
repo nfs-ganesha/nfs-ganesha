@@ -110,7 +110,7 @@ bool is_export_admin_counter_valid(uint64_t start_export_admin_counter)
  * failure that an update is in progress (seqlock value is odd) is sufficient.
  * For example, code implementing a lookup in a pseudo fs where lookup holds a
  * lock that prevents the update from changing the pseudo fs while the lookup
- * in in progress means that any update that will upset this lookups apple cart
+ * in progress means that any update that will upset this lookups apple cart
  * can not start AND end while the lookup is in progress.
  */
 static inline bool is_export_update_in_progress(void)

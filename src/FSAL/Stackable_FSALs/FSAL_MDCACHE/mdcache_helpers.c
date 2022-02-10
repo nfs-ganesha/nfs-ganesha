@@ -1649,7 +1649,7 @@ struct mdcache_populate_cb_state {
  *
  * Cache a sindle object, passing it up the stack to the caller.  This is for
  * handling readdir on a directory that is not being cached, for example because
- * is is too big.  Dirents are not created by this callback, just objects.
+ * is too big.  Dirents are not created by this callback, just objects.
  *
  * @param[in]     name       Name of the directory entry
  * @param[in]     sub_handle Object for entry

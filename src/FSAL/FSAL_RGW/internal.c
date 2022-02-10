@@ -176,7 +176,7 @@ fsal_status_t rgw2fsal_error(const int rgw_errorcode)
  * it to the export.  After this call the attributes have been filled
  * in and the handle is up-to-date and usable.
  *
- * @param[in]  export Export on which the object lives
+ * @param[in]  export The export on which the object lives
  * @param[in]  rgw_fh Concise representation of the object name,
  *                    in RGW notation
  * @param[inout] st   Object attributes

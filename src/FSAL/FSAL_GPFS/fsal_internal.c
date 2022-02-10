@@ -615,9 +615,9 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 			return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 		}
 		buffxstat->attr_valid = XATTR_FSID | XATTR_STAT | XATTR_ACL;
-	}
-	else
+	} else {
 		buffxstat->attr_valid = XATTR_FSID | XATTR_STAT;
+	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -680,7 +680,7 @@ fsal_set_xstat_by_handle(int dirfd,
 /**
  *  @param dirfd Open file descriptor of parent directory
  *  @param gpfs_fh file handle of file
- *  @param size Size
+ *  @param size The size to truncate the file to
  *
  *  @return status of operation
  */

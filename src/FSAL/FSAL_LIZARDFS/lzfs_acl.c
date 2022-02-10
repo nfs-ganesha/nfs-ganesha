@@ -76,8 +76,7 @@ liz_acl_t *lzfs_int_convert_fsal_acl(const fsal_acl_t *fsal_acl)
 			default:
 				LogFullDebug(
 					COMPONENT_FSAL,
-					"Invalid FSAL ACE special id "
-					"type (%d)",
+					"Invalid FSAL ACE special id type (%d)",
 					(int)GET_FSAL_ACE_USER(*fsal_ace));
 				continue;
 			}
@@ -138,8 +137,8 @@ fsal_acl_t *lzfs_int_convert_lzfs_acl(const liz_acl_t *lzfs_acl)
 				break;
 			default:
 				fsal_ace->who.uid = FSAL_ACE_NORMAL_WHO;
-				LogWarn(COMPONENT_FSAL, "Invalid LizardFS ACE "
-					"special id type (%u)",
+				LogWarn(COMPONENT_FSAL,
+					"Invalid LizardFS ACE special id type (%u)",
 					(unsigned int)lzfs_ace.id);
 			}
 		}
@@ -159,8 +158,9 @@ fsal_status_t lzfs_int_getacl(struct lzfs_fsal_export *lzfs_export,
 		int acl_status = nfs4_acl_release_entry(*fsal_acl);
 
 		if (acl_status != NFS_V4_ACL_SUCCESS) {
-			LogCrit(COMPONENT_FSAL, "Failed to release old acl, "
-				"status=%d", acl_status);
+			LogCrit(COMPONENT_FSAL,
+				"Failed to release old acl, status=%d",
+				acl_status);
 		}
 		*fsal_acl = NULL;
 	}
@@ -169,7 +169,8 @@ fsal_status_t lzfs_int_getacl(struct lzfs_fsal_export *lzfs_export,
 	int rc = liz_cred_getacl(lzfs_export->lzfs_instance, &op_ctx->creds,
 				 inode, &acl);
 	if (rc < 0) {
-		LogFullDebug(COMPONENT_FSAL, "getacl status=%s export=%" PRIu16
+		LogFullDebug(COMPONENT_FSAL,
+			     "getacl status=%s export=%" PRIu16
 			     " inode=%" PRIu32,
 			     liz_error_string(liz_last_err()),
 			     lzfs_export->export.export_id, inode);

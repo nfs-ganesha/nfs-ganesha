@@ -83,7 +83,7 @@ bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
  * @param[in] fd    File descriptor
  * @param[in] path  Name of a file
  * @param[in] ts    Array of struct timespec
- * @param[in] flags Flags
+ * @param[in] flags Set of flags for utimesat
  *
  * @return 0 on success, -1 on error (errno set to indicate the error).
  */

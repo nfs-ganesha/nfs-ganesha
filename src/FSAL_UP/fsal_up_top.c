@@ -74,7 +74,7 @@ static int schedule_delegrecall_task(struct delegrecall_context *ctx,
  * necessary.
  *
  * @param[in] vec    Up ops vector
- * @param[in] handle Handle being invalidated
+ * @param[in] handle The handle being invalidated
  * @param[in] flags  Flags governing invalidation
  *
  * @return FSAL status
@@ -91,7 +91,7 @@ static fsal_status_t invalidate_close(const struct fsal_up_vector *vec,
 /** Invalidate some or all of a cache entry
  *
  * @param[in] vec    Up ops vector
- * @param[in] handle Handle being invalidated
+ * @param[in] handle The handle being invalidated
  * @param[in] flags  Flags governing invalidation
  *
  * @return FSAL status
@@ -1500,7 +1500,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 
 		drc_ctx = gsh_malloc(sizeof(struct delegrecall_context));
 
-		/* Get references on the owner and the the export. The
+		/* Get references on the owner and the export. The
 		 * export reference we will hold while we perform the recall.
 		 * The owner reference will be used to get access to the
 		 * clientid and reserve the lease.
@@ -1555,7 +1555,7 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 /**
  * @brief Recall a delegation
  *
- * @param[in] handle Handle on which the delegation is held
+ * @param[in] handle The handle on which the delegation is held
  *
  * @return STATE_SUCCESS or errors.
  */
@@ -1867,7 +1867,7 @@ out_exp:
  * otherwise mark it as CB_GETATTR_FAILED.
  *
  * @param[in] obj file being operated on
- * @param[in] client client holding delegation
+ * @param[in] client   The client holding delegation
  * @param[in] ctx_exp current export reference
  *
  * @return: 0, success
@@ -1966,7 +1966,7 @@ void up_ready_wait(struct fsal_up_vector *up_ops)
 /** Release a mdcache entry if otherwise unused
  *
  * @param[in] vec    Up ops vector
- * @param[in] handle Handle being conditionally released
+ * @param[in] handle The handle being conditionally released
  * @param[in] flags  Unused, for future expansion
  */
 static fsal_status_t try_release(const struct fsal_up_vector *vec,

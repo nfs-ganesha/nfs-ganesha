@@ -248,7 +248,7 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 	 *
 	 * Corresponding to each posix acl entry, there is a possiblity of two
 	 * fsal_aces, it can either be ALLOW or DENY. The DENY added to list
-	 * depending on the permission set set of other entries.
+	 * depending on the permission set of other entries.
 	 *
 	 * Here both entries are created for a posix acl entry and filled up
 	 * correspondingly. Then at the end unnecessary DENY entries are removed

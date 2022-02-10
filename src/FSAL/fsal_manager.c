@@ -323,7 +323,7 @@ errout:
  * must be done before using any methods.  Once done, release it with
  * @c put_fsal.
  *
- * @param[in] name Name to look up
+ * @param[in] name The name to look up
  *
  * @return Module pointer or NULL if not found.
  */

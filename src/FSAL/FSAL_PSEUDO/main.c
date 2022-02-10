@@ -39,7 +39,7 @@
 #include "pseudofs_methods.h"
 #include "../fsal_private.h"
 
-const char pseudoname[] = "PSEUDO";
+static const char pseudoname[] = "PSEUDO";
 
 /* my module private storage
  */

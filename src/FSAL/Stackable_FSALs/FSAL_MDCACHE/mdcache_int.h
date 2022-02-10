@@ -269,7 +269,7 @@ static const uint32_t MDCACHE_UNREACHABLE = 0x100;
  * cache has moved into the handle as, well.  The mdcache_entry and
  * fsal_obj_handle are two parts of the same thing, a cached inode.
  * mdcache_entry holds the cache stuff and fsal_obj_handle holds the
- * stuff the the fsal has to manage, i.e. filesystem bits.
+ * stuff the fsal has to manage, i.e. filesystem bits.
  */
 
 struct mdcache_fsal_obj_handle {

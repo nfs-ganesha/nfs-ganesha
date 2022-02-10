@@ -113,8 +113,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			continue;
 		else {
 			LogEvent(COMPONENT_FSAL_UP,
-				 "nfs_init_wait_timeout() completed with "
-				 "rc %d", rc);
+				 "nfs_init_wait_timeout() completed with rc %d",
+				 rc);
 			return NULL;
 		}
 	}

@@ -643,7 +643,7 @@ static void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
  * Call the NFSv4 client's CB_NULL procedure.
  *
  * @param[in] chan    Channel on which to call
- * @param[in] timeout Timeout for client call
+ * @param[in] timeout The timeout for client call
  * @param[in] locked  True if the channel is already locked
  *
  * @return Client status.
@@ -961,7 +961,7 @@ static void nfs_rpc_call_process(struct clnt_req *cc)
  * @brief Dispatch a call
  *
  * @param[in,out] call  The call to dispatch
- * @param[in]     flags Flags governing call
+ * @param[in]     flags The flags governing call
  *
  * @return enum clnt_stat.
  */
@@ -1025,7 +1025,7 @@ int32_t nfs_rpc_abort_call(rpc_call_t *call)
  * This function constructs a compound with a CB_SEQUENCE and one
  * other operation.
  *
- * @param[in] session Session on whose back channel we make the call
+ * @param[in] session The session on whose back channel we make the call
  * @param[in] op      The operation to add
  * @param[in] refer   Referral data, NULL if none
  * @param[in] slot    Slot number to use
@@ -1169,7 +1169,7 @@ static bool find_cb_slot(nfs41_session_t *session, bool wait, slotid4 *slot,
 /**
  * @brief Release a reserved callback slot and wake waiters
  *
- * @param[in,out] session Session holding slot to release
+ * @param[in,out] session The session holding slot to release
  * @param[in]     slot    Slot to release
  * @param[in]     bool    Whether the operation was ever sent
  */

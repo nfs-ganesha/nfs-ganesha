@@ -63,7 +63,7 @@
  *
  * @param[in/out] deleg_state Delegation state struct to be init. Can't be NULL.
  * @param[in] sd_type Type of delegation, READ or WRITE.
- * @param[in] client Client that will own this delegation.
+ * @param[in] client The client that will own this delegation.
  */
 void init_new_deleg_state(union state_data *deleg_state,
 			  open_delegation_type4 deleg_type,
@@ -297,7 +297,7 @@ bool init_deleg_heuristics(struct fsal_obj_handle *obj)
  * @note The st_lock MUST be held
  *
  * @param[in] ostate File state the delegation will be on.
- * @param[in] client Client that would own the delegation.
+ * @param[in] client The client that would own the delegation.
  * @param[in] open_state The open state for the inode to be delegated.
  * @param[in/out] resok pointer to resok (for setting ond_why, primarily)
  * @param[in] owner state owner
@@ -389,7 +389,7 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
  * Form the ACE mask for the delegated file.
  *
  * @param[in,out] permissions ACE mask for delegated inode.
- * @param[in] type Type of delegation. Either READ or WRITE.
+ * @param[in] type The type of delegation. Either READ or WRITE.
  */
 void get_deleg_perm(nfsace4 *permissions, open_delegation_type4 type)
 {

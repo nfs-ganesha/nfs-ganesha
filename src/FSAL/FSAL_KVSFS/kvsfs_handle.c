@@ -693,7 +693,7 @@ static fsal_status_t kvsfs_rename(struct fsal_obj_handle *obj_hdl,
 
 /* FIXME: attributes are now merged into fsal_obj_handle.  This
  * spreads everywhere these methods are used.  eventually deprecate
- * everywhere except where we explicitly want to to refresh them.
+ * everywhere except where we explicitly want to refresh them.
  * NOTE: this is done under protection of the attributes rwlock in the
  * cache entry.
  */
@@ -928,8 +928,9 @@ static fsal_status_t kvsfs_handle_to_wire(const struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_TOOSMALL, 0);
 }
 
-/*
- * release
+/**
+ * @brief release object handle
+ *
  * release our export first so they know we are gone
  */
 static void kvsfs_release(struct fsal_obj_handle *obj_hdl)

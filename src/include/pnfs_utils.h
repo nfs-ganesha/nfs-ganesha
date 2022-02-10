@@ -49,7 +49,7 @@
  * @param segment1 [IN] A layout segment
  * @param segmenta [IN] A layout segment
  *
- * @return True if there is one or more byte contained in both both
+ * @return True if there is one or more byte contained in both
  *	   segments and the io_modes are compatible.
  */
 

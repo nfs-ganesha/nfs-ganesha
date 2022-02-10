@@ -299,7 +299,7 @@ state_status_t _state_add(struct fsal_obj_handle *obj,
 {
 	state_status_t status = 0;
 
-	/* Ensure that states are are associated only with the appropriate
+	/* Ensure that states are associated only with the appropriate
 	   owners */
 
 	if (((state_type == STATE_TYPE_SHARE)

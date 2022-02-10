@@ -544,7 +544,7 @@ state_status_t mdc_up_layoutrecall(const struct fsal_up_vector *vec,
  * Pass to upper layer
  *
  * @param[in] vec	Up ops vector
- * @param[in] handle Handle on which the delegation is held
+ * @param[in] handle    The handle on which the delegation is held
  */
 state_status_t mdc_up_delegrecall(const struct fsal_up_vector *vec,
 				  struct gsh_buffdesc *handle)

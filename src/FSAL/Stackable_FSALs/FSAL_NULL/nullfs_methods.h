@@ -41,6 +41,20 @@ extern struct null_fsal_module NULLFS;
 
 struct nullfs_fsal_obj_handle;
 
+/* Internal NULLFS method linkage to export object
+ */
+
+fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
+				   void *parse_node,
+				   struct config_error_type *err_type,
+				   const struct fsal_up_vector *up_ops);
+
+fsal_status_t nullfs_update_export(struct fsal_module *fsal_hdl,
+				   void *parse_node,
+				   struct config_error_type *err_type,
+				   struct fsal_export *original,
+				   struct fsal_module *updated_super);
+
 /**
  * Structure used to store data for read_dirents callback.
  *

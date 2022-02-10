@@ -926,10 +926,10 @@ retry_attr:
 
 			LogFullDebug(COMPONENT_FSAL,
 				     "Set atime %llx %llx mtime %llx %llx",
-				     (long long int) attrs_out->atime.tv_sec,
-				     (long long int) attrs_out->atime.tv_nsec,
-				     (long long int) attrs_out->mtime.tv_sec,
-				     (long long int) attrs_out->mtime.tv_nsec);
+				     (long long) attrs_out->atime.tv_sec,
+				     (long long) attrs_out->atime.tv_nsec,
+				     (long long) attrs_out->mtime.tv_sec,
+				     (long long) attrs_out->mtime.tv_nsec);
 
 			if ((createmode >= FSAL_EXCLUSIVE) &&
 			    (!(*new_obj)->fs->trunc_verif) &&

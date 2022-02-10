@@ -73,7 +73,7 @@ char name[MAXSTR];
 char portstr[MAXSTR];
 int port;
 char line[MAXXFER];
-long int alarmtag;
+long alarmtag;
 int fno[MAXFPOS + 1];
 enum lock_mode lock_mode[MAXFPOS + 1];
 
@@ -300,7 +300,7 @@ void do_open(struct response *resp)
 
 void do_write(struct response *resp)
 {
-	long long int rc;
+	long long rc;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
 		resp->r_status = STATUS_ERRNO;
@@ -333,7 +333,7 @@ void do_write(struct response *resp)
 
 void do_read(struct response *resp)
 {
-	long long int rc;
+	long long rc;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
 		resp->r_status = STATUS_ERRNO;
@@ -420,7 +420,7 @@ void cancel_work_item(struct work_item *work)
 	free_work(work);
 }
 
-static inline long long int lock_end(struct response *req)
+static inline long long lock_end(struct response *req)
 {
 	if (req->r_length == 0)
 		return LLONG_MAX;
@@ -852,8 +852,8 @@ void do_close(struct response *resp)
 
 struct test_list {
 	struct test_list *tl_next;
-	long long int tl_start;
-	long long int tl_end;
+	long long tl_start;
+	long long tl_end;
 };
 
 struct test_list *tl_head;
@@ -874,7 +874,7 @@ void remove_test_list_head(void)
 	free(item);
 }
 
-void make_test_item(long long int start, long long int end)
+void make_test_item(long long start, long long end)
 {
 	struct test_list *item = malloc(sizeof(*item));
 
@@ -894,9 +894,9 @@ void make_test_item(long long int start, long long int end)
 	tl_tail = item;
 }
 
-int list_locks(long long int start, long long int end, struct response *resp)
+int list_locks(long long start, long long end, struct response *resp)
 {
-	long long int conf_end;
+	long long conf_end;
 	struct flock lock;
 	int rc;
 
@@ -948,8 +948,8 @@ int list_locks(long long int start, long long int end, struct response *resp)
 
 void do_list(struct response *resp)
 {
-	long long int start = resp->r_start;
-	long long int length = resp->r_length;
+	long long start = resp->r_start;
+	long long length = resp->r_length;
 	int conflict = false;
 
 	if (resp->r_fpos != 0 && fno[resp->r_fpos] == 0) {
