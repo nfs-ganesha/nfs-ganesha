@@ -1,3 +1,33 @@
+/* SPDX-License-Identifier: LGPL-3.0-or-later */
+/*
+ * posix_acls.c
+ * vim:noexpandtab:shiftwidth=8:tabstop=8:
+ *
+ * Copyright (C) Red Hat  Inc., 2015
+ * Author: Niels de Vos <ndevos@redhat.com>
+ *	   Jiffin Tony Thottan <jthottan@redhat.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * Conversion routines for fsal_acl <-> POSIX ACl
+ *
+ * Routines based on the description from an Internet Draft that has also been
+ * used for the implementation of the conversion in the Linux kernel
+ * NFS-server.
+ *
+ *     Title: Mapping Between NFSv4 and Posix Draft ACLs
+ *   Authors: Marius Aamodt Eriksen & J. Bruce Fields
+ *       URL: http://tools.ietf.org/html/draft-ietf-nfsv4-acl-mapping-05
+ */
+
 #ifndef _POSIX_ACLS_H
 #define _POSIX_ACLS_H
 
