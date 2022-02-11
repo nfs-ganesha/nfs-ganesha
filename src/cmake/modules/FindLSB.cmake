@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
 # - Find Linux Standard Base Release Tools
 # This module defines the following variables:
 #  LSB_RELEASE_EXECUTABLE        - path to lsb_release program

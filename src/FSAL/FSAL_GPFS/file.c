@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /** @file file.c
  *  @brief GPFS FSAL module file I/O functions
  *

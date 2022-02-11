@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /**
  * @file handle.c
  * @brief GPFS object (file|dir) handle object

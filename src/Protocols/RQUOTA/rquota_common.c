@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * Copyright CEA/DAM/DIF  2016
  *  Author: Philippe Deniel (philippe.deniel@cea.fr)

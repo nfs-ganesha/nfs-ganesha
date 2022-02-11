@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * Copyright (C) IBM Inc., 2014
  * Author: Jeremy Bongio <jbongio@us.ibm.com>

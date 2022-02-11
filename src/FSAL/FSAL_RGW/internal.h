@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: LGPL-3.0-or-later */
 /*
  * Copyright © Red Hat 2015
  * Author: Orit Wasserman <owasserm@redhat.com>

@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # ganesha-admin.py - commandline tool for admin of nfs-ganesha.
 #

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  *  mntent
  *  mntent.h - compatability header for FreeBSD

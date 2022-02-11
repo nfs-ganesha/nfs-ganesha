@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # ganeshactl.py - PyQt4 GUI tool for admin of nfs-ganesha.
 #

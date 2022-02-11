@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * Copyright (C) CohortFS (2014)
  * contributor : William Allen Simpson <bill@CohortFS.com>

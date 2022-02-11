@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * Copyright ZTE Corporation, 2019
  *  Author: Muyao Luo (luo.muyao@zte.com.cn)

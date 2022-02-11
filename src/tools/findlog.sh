@@ -1,5 +1,5 @@
 #!/bin/sh
-
+# SPDX-License-Identifier: LGPL-3.0-or-later
 #-------------------------------------------------------------------------------
 #
 # Copyright IBM Corporation, 2011

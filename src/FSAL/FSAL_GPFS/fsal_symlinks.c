@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /**
  * @file    fsal_symlinks.c
  * @date    $Date: 2005/07/29 09:39:04 $

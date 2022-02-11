@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * @file  fsal_internal.c
  * @date  $Date: 2006/01/17 14:20:07 $

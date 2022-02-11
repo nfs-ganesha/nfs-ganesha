@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /** @file fsal_lock.s
  *
  * Copyright IBM Corporation, 2010

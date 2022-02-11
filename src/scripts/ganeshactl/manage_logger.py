@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # manage_logger.py - commandline tool for setting log levels of nfs-ganesha.
 #

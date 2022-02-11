@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: LGPL-3.0-or-later */
 /*
  * Copyright (C) 2010, Linux Box Corporation
  * All Rights Reserved

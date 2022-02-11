@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * vim:shiftwidth=8:tabstop=8:
  *

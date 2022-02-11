@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+#
 # From Gerrit Code Review 2.10-rc1-988-g333a9dd
 # Edited by Dominique Martinet to add Signed-off-by as we used to
 #

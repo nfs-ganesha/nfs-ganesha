@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: LGPL-3.0-or-later */
 /*
  * Copyright © CohortFS, LLC.
  * Author: Adam C. Emerson <aemerson@linuxbox.com>

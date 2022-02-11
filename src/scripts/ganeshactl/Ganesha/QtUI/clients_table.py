@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: LGPL-3.0-or-later
 #
 # clients_table.py - ClientTableModel model class.
 #

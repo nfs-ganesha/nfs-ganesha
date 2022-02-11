@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+#
 # The MIT License (MIT)
 #
 # Copyright (c)

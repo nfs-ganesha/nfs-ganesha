@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /* city-test.c - cityhash-c
  * CityHash on C
  * Copyright (c) 2011-2012, Alexander Nusov

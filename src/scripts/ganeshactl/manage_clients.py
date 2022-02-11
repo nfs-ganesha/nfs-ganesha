@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # manage_clients.py - commandline tool for managing clients of nfs-ganesha.
 #

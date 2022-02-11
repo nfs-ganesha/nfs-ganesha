@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * posix_acls.c
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
@@ -26,7 +27,6 @@
  *   Authors: Marius Aamodt Eriksen & J. Bruce Fields
  *       URL: http://tools.ietf.org/html/draft-ietf-nfsv4-acl-mapping-05
  */
-
 
 #include "posix_acls.h"
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 /*
  * avltree - Implements an AVL tree with parent pointers.
  *

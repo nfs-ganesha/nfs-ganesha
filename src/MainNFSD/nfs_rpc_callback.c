@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * Copyright (C) 2012, The Linux Box Corporation
  * Copyright (c) 2012-2018 Red Hat, Inc. and/or its affiliates.

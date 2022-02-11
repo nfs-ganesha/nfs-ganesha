@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: unknown 0BSD */
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
  *

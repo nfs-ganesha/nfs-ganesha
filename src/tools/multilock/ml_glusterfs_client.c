@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 /*
  * Copyright (C) Red Hat  Inc., 2017
  *  Contributor: Frank Filz <ffilzlnx@mindspring.com>

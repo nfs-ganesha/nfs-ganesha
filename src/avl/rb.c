@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 /*
  * rbtree - Implements a red-black tree with parent pointers.
  *

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
 /*
   Copyright (c) 2004 The Regents of the University of Michigan.
   All rights reserved.

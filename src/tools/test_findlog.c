@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-3.0-or-later
 // This is not a valid C file, it's just a bunch of Log function examples to test findlog.sh
 /* LogTest("/* comment"); */
 
