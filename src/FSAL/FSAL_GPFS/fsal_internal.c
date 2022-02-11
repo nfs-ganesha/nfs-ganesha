@@ -79,6 +79,8 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
 	carg.close_fd = fd;
 	carg.close_flags = cflags;
 	carg.close_owner = owner;
+	carg.cli_ip = NULL;
+
 	if (op_ctx && op_ctx->client)
 		carg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -108,6 +110,7 @@ fsal_internal_handle2fd(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	oarg.mountdirfd = dirfd;
 	oarg.handle = gpfs_fh;
 	oarg.flags = oflags;
+	oarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		oarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -250,6 +253,7 @@ fsal_internal_link_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_tgt,
 	linkarg.name = link_name;
 	linkarg.dir_fh = gpfs_fh;
 	linkarg.dst_fh = gpfs_fh_tgt;
+	linkarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		linkarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -284,6 +288,7 @@ fsal_internal_stat_name(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	statarg.name = stat_name;
 	statarg.handle = gpfs_fh;
 	statarg.buf = buf;
+	statarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		statarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -318,6 +323,7 @@ fsal_internal_unlink(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	statarg.name = stat_name;
 	statarg.handle = gpfs_fh;
 	statarg.buf = buf;
+	statarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		statarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -371,6 +377,7 @@ fsal_internal_create(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 	crarg.buf = buf;
 	crarg.dir_fh = container_of(dir_hdl, struct gpfs_fsal_obj_handle,
 				    obj_handle)->handle;
+	crarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		crarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -405,6 +412,7 @@ fsal_internal_mknode(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 	crarg.buf = buf;
 	crarg.dir_fh = container_of(dir_hdl, struct gpfs_fsal_obj_handle,
 				    obj_handle)->handle;
+	crarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		crarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -443,6 +451,7 @@ fsal_internal_rename_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_old,
 	renamearg.new_name = new_name;
 	renamearg.old_fh = gpfs_fh_old;
 	renamearg.new_fh = gpfs_fh_new;
+	renamearg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		renamearg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -564,6 +573,7 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 	xstatarg.fsid = (struct fsal_fsid *)&buffxstat->fsal_fsid;
 	xstatarg.attr_valid |= XATTR_FSID;
 	xstatarg.expire_attr = expire_time_attr;
+	xstatarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		xstatarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -663,6 +673,7 @@ fsal_set_xstat_by_handle(int dirfd,
 	xstatarg.acl = acl_buf;
 	xstatarg.attr_changed = attr_changed;
 	xstatarg.buf = &buffxstat->buffstat;
+	xstatarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		xstatarg.cli_ip = op_ctx->client->hostaddr_str;
 

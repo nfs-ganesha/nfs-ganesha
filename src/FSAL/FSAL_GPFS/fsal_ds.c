@@ -110,6 +110,7 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	rarg.offset = offset;
 	rarg.length = requested_length;
 	rarg.options = 0;
+	rarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -184,6 +185,7 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 	rarg.length = requested_length;
 	rarg.filesize = &filesize;
 	rarg.options = IO_SKIP_HOLE;
+	rarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -283,6 +285,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	warg.stability_got = stability_got;
 	warg.verifier4 = (int32_t *) writeverf;
 	warg.options = 0;
+	warg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		warg.cli_ip = op_ctx->client->hostaddr_str;
 

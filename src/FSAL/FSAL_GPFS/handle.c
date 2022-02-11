@@ -660,6 +660,7 @@ static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
 	sxarg.name = xa_name->utf8string_val;
 	sxarg.value_len = xa_value->utf8string_len;
 	sxarg.value = xa_value->utf8string_val;
+	sxarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		sxarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -692,6 +693,7 @@ static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
 	rxarg.handle = myself->handle;
 	rxarg.name_len = xa_name->utf8string_len;
 	rxarg.name = xa_name->utf8string_val;
+	rxarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		rxarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -739,6 +741,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 	lxarg.eof = false;
 	lxarg.name_len = MAXCOUNT;
 	lxarg.names = buf;
+	lxarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		lxarg.cli_ip = op_ctx->client->hostaddr_str;
 

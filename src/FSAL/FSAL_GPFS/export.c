@@ -160,6 +160,7 @@ get_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	args.cmd = GPFS_QCMD(Q_GETQUOTA, quota_type);
 	args.qid = quota_id;
 	args.bufferP = &gpfs_quota;
+	args.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		args.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -227,6 +228,7 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 	args.cmd = GPFS_QCMD(Q_SETQUOTA, quota_type);
 	args.qid = quota_id;
 	args.bufferP = &gpfs_quota;
+	args.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		args.cli_ip = op_ctx->client->hostaddr_str;
 

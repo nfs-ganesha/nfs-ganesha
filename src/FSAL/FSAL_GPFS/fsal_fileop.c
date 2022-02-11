@@ -124,6 +124,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
 	rarg.offset = offset;
 	rarg.length = buf_size;
 	rarg.options = 0;
+	rarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
@@ -189,6 +190,7 @@ GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void *buf,
 	warg.stability_wanted = *fsal_stable;
 	warg.stability_got = &stability_got;
 	warg.options = 0;
+	warg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		warg.cli_ip = op_ctx->client->hostaddr_str;
 
