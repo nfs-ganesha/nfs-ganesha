@@ -526,6 +526,10 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 
 	/* Dont over flow V4.1 maxresponsesize or maxcachedsize */
 	maxcount = resp_room(data);
+	if (nfs_param.core_param.readdir_res_size != 0 &&
+		nfs_param.core_param.readdir_res_size < maxcount) {
+		maxcount = nfs_param.core_param.readdir_res_size;
+	}
 
 	if (maxcount > (arg_READDIR4->maxcount + sizeof(nfsstat4)))
 		maxcount = arg_READDIR4->maxcount + sizeof(nfsstat4);

@@ -436,6 +436,10 @@ typedef struct nfs_core_param {
 	uint32_t max_uid_to_grp_reqs;
 	/** Enable v3 filehandle to be used for v4 */
 	bool enable_v3_fh_for_v4;
+	/** Readdir response size, default is 0(use maxcount from nfs request)
+	*  range 4K-32K
+	*/
+	uint32_t readdir_res_size;
 } nfs_core_parameter_t;
 
 /** @} */

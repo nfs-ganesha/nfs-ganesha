@@ -157,6 +157,8 @@ NFS_CORE_PARAM {}
 
 	Enable_V3fh_Validation_For_V4(bool, default false)
 
+	Readdir_Res_Size(uint32, range 4096 to 32768, default 0)
+
 NFS_IP_NAME {}
 --------------
 
