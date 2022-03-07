@@ -307,7 +307,7 @@ void Cleanup(void)
 void Fatal(void)
 {
 	Cleanup();
-	exit(2);
+	_exit(2);
 }
 
 #ifdef _DONT_HAVE_LOCALTIME_R
