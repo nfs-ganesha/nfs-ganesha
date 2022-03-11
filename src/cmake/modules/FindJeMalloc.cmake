@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
 # - Find JeMalloc library
 # Find the native JeMalloc includes and library
 # This module defines

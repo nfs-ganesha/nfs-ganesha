@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
 # - Find flex executable and provides a macro to generate custom build rules
 #
 # The module defines the following variables:

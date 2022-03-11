@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
 # FIND_PACKAGE_MESSAGE(<name> "message for user" "find result details")
 #
 # This macro is intended to be used in FindXXX.cmake modules files.

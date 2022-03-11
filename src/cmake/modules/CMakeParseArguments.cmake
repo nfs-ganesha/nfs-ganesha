@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
 # CMAKE_PARSE_ARGUMENTS(<prefix> <options> <one_value_keywords> <multi_value_keywords> args...)
 #
 # CMAKE_PARSE_ARGUMENTS() is intended to be used in macros or functions for

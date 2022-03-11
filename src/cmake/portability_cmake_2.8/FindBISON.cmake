@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
 # - Find bison executable and provides macros to generate custom build rules
 # The module defines the following variables:
 #

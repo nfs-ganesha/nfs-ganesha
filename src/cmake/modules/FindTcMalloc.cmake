@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
 # - Find Tcmalloc library
 # Find the native Tcmalloc includes and library
 # This module defines

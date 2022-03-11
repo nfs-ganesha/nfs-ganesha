@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
 # FIND_PACKAGE_HANDLE_STANDARD_ARGS(<name> ... )
 #
 # This function is intended to be used in FindXXX.cmake modules files.
