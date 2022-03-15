@@ -1425,10 +1425,6 @@ void nfs_dupreq_rele(nfs_request_t *reqnfs)
 		     dv, dv->hin.tcp.rq_xid, drc,
 		     dupreq_state_table[dv->complete], dv->refcnt);
 
-	/* release req's hold on dupreq and drc */
-	dupreq_entry_put(dv);
-	nfs_dupreq_put_drc(drc);
-
 	/* Now check if there are any duplicate requests waiting for this
 	 * one to resolve.
 	 */
@@ -1456,6 +1452,10 @@ void nfs_dupreq_rele(nfs_request_t *reqnfs)
 	}
 
 	PTHREAD_MUTEX_unlock(&dv->mtx);
+
+	/* release req's hold on dupreq and drc */
+	dupreq_entry_put(dv);
+	nfs_dupreq_put_drc(drc);
 
  out:
 	/* dispose RPC header */
