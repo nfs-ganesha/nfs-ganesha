@@ -23,3 +23,6 @@ Conflicts=nfs-lock.service
 ExecStartPre=
 ExecStopPost=
 
+[Install]
+WantedBy=nfs-ganesha.service
+
