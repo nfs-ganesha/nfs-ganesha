@@ -84,6 +84,7 @@
 #cmakedefine USE_LTTNG 1
 #cmakedefine HAVE_ACL_GET_FD_NP 1
 #cmakedefine HAVE_ACL_SET_FD_NP 1
+#cmakedefine ENABLE_VFS_POSIX_ACL 1
 #cmakedefine ENABLE_VFS_DEBUG_ACL 1
 #cmakedefine ENABLE_RFC_ACL 1
 #cmakedefine ENABLE_VFS_ACL 1

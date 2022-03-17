@@ -308,6 +308,7 @@ option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
 
 goption(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
 option(ENABLE_ERROR_INJECTION "enable error injection" OFF)
+goption(ENABLE_VFS_POSIX_ACL "Enable NFSv4 to POSIX ACL mapping for VFS" OFF)
 option(ENABLE_VFS_DEBUG_ACL "Enable debug ACL store for VFS" OFF)
 option(ENABLE_RFC_ACL "Use all RFC ACL checks" OFF)
 option(USE_TOOL_MULTILOCK "build multilock tool" OFF)
@@ -651,9 +652,9 @@ if (USE_FSAL_PROXY_V4)
   endif(PROXYV4_HANDLE_MAPPING)
 endif (USE_FSAL_PROXY_V4)
 
-# VFS has an optional dependency for libbtrfsutil
 gopt_test(USE_FSAL_VFS)
 if(USE_FSAL_VFS)
+  # VFS has an optional dependency for libbtrfsutil
   find_library(BTRFSUTIL_LIB btrfsutil)
   if (BTRFSUTIL_LIB)
     message(STATUS "Found BTRFS Util library: ${BTRFSUTIL_LIB}")
@@ -662,6 +663,43 @@ if(USE_FSAL_VFS)
   endif (BTRFSUTIL_LIB)
   if(ENABLE_VFS_DEBUG_ACL)
     set(ENABLE_VFS_ACL ON)
+    if(ENABLE_VFS_POSIX_ACL)
+      set(ENABLE_VFS_POSIX_ACL OFF)
+      message(WARNING "ENABLE_VFS_DEBUG_ACL is on, so disabling ENABLE_VFS_POSIX_ACL")
+    endif(ENABLE_VFS_POSIX_ACL)
+  else(ENABLE_VFS_DEBUG_ACL)
+    # POSIX ACL support?
+    gopt_test(ENABLE_VFS_POSIX_ACL)
+    if(ENABLE_VFS_POSIX_ACL)
+      if(NOT HAVE_LIBACL)
+	set(ENABLE_VFS_POSIX_ACL OFF)
+	message(WARNING "Could not find libacl")
+      endif(NOT HAVE_LIBACL)
+      if(NOT HAVE_SYS_ACL_H)
+	set(ENABLE_VFS_POSIX_ACL OFF)
+	message(WARNING "Could not find sys/acl.h")
+      endif(NOT HAVE_SYS_ACL_H)
+      if(NOT (HAVE_ACL_GET_FD_NP OR LINUX))
+	set(ENABLE_VFS_POSIX_ACL OFF)
+	message(WARNING "Could not find acl_get_fd_np() and not Linux")
+      endif(NOT (HAVE_ACL_GET_FD_NP OR LINUX))
+      if(NOT (HAVE_ACL_SET_FD_NP OR LINUX))
+	set(ENABLE_VFS_POSIX_ACL OFF)
+	message(WARNING "Could not find acl_set_fd_np() and not Linux")
+      endif(NOT (HAVE_ACL_SET_FD_NP OR LINUX))
+      if(ENABLE_VFS_POSIX_ACL)
+	set(ENABLE_VFS_ACL ON)
+	set(USE_ACL_MAPPING ON)
+	# libacl only required on Linux
+	set(LibACL_FIND_REQUIRED HAVE_LIBACL)
+      else(ENABLE_VFS_POSIX_ACL)
+	if(ENABLE_VFS_POSIX_ACL_REQUIRED)
+	  message(FATAL_ERROR "Missing VFS FSAL prerequisites, but requested on command line")
+	else(ENABLE_VFS_POSIX_ACL_REQUIRED)
+	  message(WARNING "Missing VFS FSAL prerequisites, disabling ENABLE_VFS_POSIX_ACL")
+	endif(ENABLE_VFS_POSIX_ACL_REQUIRED)
+      endif(ENABLE_VFS_POSIX_ACL)
+    endif(ENABLE_VFS_POSIX_ACL)
   endif(ENABLE_VFS_DEBUG_ACL)
 endif(USE_FSAL_VFS)
 
@@ -1268,6 +1306,7 @@ message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_BTRFSUTIL = ${USE_BTRFSUTIL}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")
 message(STATUS "ENABLE_ERROR_INJECTION = ${ENABLE_ERROR_INJECTION}")
+message(STATUS "ENABLE_VFS_POSIX_ACL = ${ENABLE_VFS_POSIX_ACL}")
 message(STATUS "ENABLE_VFS_DEBUG_ACL = ${ENABLE_VFS_DEBUG_ACL}")
 message(STATUS "ENABLE_RFC_ACL = ${ENABLE_RFC_ACL}")
 message(STATUS "CEPHFS_POSIX_ACL = ${CEPHFS_POSIX_ACL}")
@@ -1339,6 +1378,11 @@ set(_VALGRIND_MEMCHECK ${_VALGRIND_MEMCHECK}
 set(ENABLE_ERROR_INJECTION ${ENABLE_ERROR_INJECTION}
   CACHE BOOL
    "enable error injection"
+   FORCE)
+
+set(ENABLE_VFS_POSIX_ACL ${ENABLE_VFS_POSIX_ACL}
+  CACHE BOOL
+   "Enable NFSv4 to POSIX ACL mapping for VFS"
    FORCE)
 
 set(ENABLE_VFS_DEBUG_ACL ${ENABLE_VFS_DEBUG_ACL}
