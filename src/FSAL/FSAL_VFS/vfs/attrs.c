@@ -159,7 +159,7 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	if (attrib->acl != NULL) {
 		/* We should never be passed attributes that have an
 		 * ACL attached, but just in case some future code
-		 * path changes that assumption, let's not release the
+		 * path changes that assumption, let's release the
 		 * old ACL properly.
 		 */
 		int acl_status;
