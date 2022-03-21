@@ -38,6 +38,11 @@
 #include "attrs.h"
 #include "nfs4_acls.h"
 
+#ifdef ENABLE_VFS_POSIX_ACL
+#include "os/acl.h"
+#include "../../posix_acls.h"
+#endif /* ENABLE_VFS_POSIX_ACL */
+
 void vfs_sub_getattrs_common(struct vfs_fsal_obj_handle *vfs_hdl,
 			     int fd, attrmask_t request_mask,
 			     struct fsal_attrlist *attrib)
@@ -236,7 +241,172 @@ fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-#else /* NOT(ENABLE_VFS_DEBUG_ACL) */
+#elif defined(ENABLE_VFS_POSIX_ACL)
+fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
+			       int fd,
+			       attrmask_t request_mask,
+			       struct fsal_attrlist *attrib)
+{
+	struct fsal_obj_handle *obj_pub = &vfs_hdl->obj_handle;
+	bool is_dir = obj_pub->type == DIRECTORY;
+	acl_t e_acl = NULL, i_acl = NULL;
+	fsal_acl_data_t acldata;
+	fsal_ace_t *pace = NULL;
+	fsal_acl_status_t aclstatus;
+	int e_count = 0, i_count = 0, new_count = 0, new_i_count = 0;
+	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	vfs_sub_getattrs_common(vfs_hdl, fd, request_mask, attrib);
+
+	vfs_sub_getattrs_release(attrib);
+
+	e_acl = acl_get_fd(fd);
+	if (e_acl == (acl_t)NULL) {
+		status = fsalstat(posix2fsal_error(errno), errno);
+		goto out;
+	}
+
+	/*
+	 * Adapted from FSAL_CEPH/internal.c:ceph_get_acl() and
+	 * FSAL_GLUSTER/gluster_internal.c:glusterfs_get_acl()
+	 */
+
+	e_count = ace_count(e_acl);
+
+	if (is_dir) {
+		i_acl = acl_get_fd_np(fd, ACL_TYPE_DEFAULT);
+		if (i_acl == (acl_t)NULL) {
+			status = fsalstat(posix2fsal_error(errno), errno);
+			goto out;
+		}
+		i_count = ace_count(i_acl);
+	}
+
+	acldata.naces = 2 * (e_count + i_count);
+	LogDebug(COMPONENT_FSAL,
+			"No of aces present in fsal_acl_t = %d", acldata.naces);
+	if (acldata.naces == 0) {
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		goto out;
+	}
+
+	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
+	pace = acldata.aces;
+
+	if (e_count > 0) {
+		new_count = posix_acl_2_fsal_acl(e_acl, is_dir, false, &pace);
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			"effective acl is not set for this object");
+	}
+
+	if (i_count > 0) {
+		new_i_count = posix_acl_2_fsal_acl(i_acl, true, true, &pace);
+		new_count += new_i_count;
+	} else {
+		LogDebug(COMPONENT_FSAL,
+			"Inherit acl is not set for this directory");
+	}
+
+	/* Reallocating acldata into the required size */
+	acldata.aces = (fsal_ace_t *) gsh_realloc(acldata.aces,
+					new_count*sizeof(fsal_ace_t));
+	acldata.naces = new_count;
+
+	attrib->acl = nfs4_acl_new_entry(&acldata, &aclstatus);
+	if (attrib->acl == NULL) {
+		LogCrit(COMPONENT_FSAL, "failed to create a new acl entry");
+		status = fsalstat(posix2fsal_error(EFAULT), EFAULT);
+		goto out;
+	}
+
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	FSAL_SET_MASK(attrib->valid_mask, ATTR_ACL);
+
+out:
+	if (e_acl)
+		acl_free((void *)e_acl);
+
+	if (i_acl)
+		acl_free((void *)i_acl);
+
+	return status;
+}
+
+fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
+			       int fd,
+			       attrmask_t request_mask,
+			       struct fsal_attrlist *attrib)
+{
+	struct fsal_obj_handle *obj_pub = &vfs_hdl->obj_handle;
+	bool is_dir = obj_pub->type == DIRECTORY;
+	acl_t acl = NULL;
+	int ret;
+	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	if (!FSAL_TEST_MASK(request_mask, ATTR_ACL) || !attrib)
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+	/*
+	 * Adapted from FSAL_CEPH/internal.c:ceph_set_acl() and
+	 * FSAL_GLUSTER/gluster_internal.c:glusterfs_set_acl()
+	 */
+
+	/*
+	 * This should not happen.  In this case FSAL_GLUSTER does not
+	 * warn and just returns OK, as above.  However, FSAL_CEPH
+	 * warns and returns an error.  Adopt a sane middle-ground:
+	 * warn only.
+	 */
+	if (!attrib->acl) {
+		LogWarn(COMPONENT_FSAL, "acl is empty");
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		goto out;
+	}
+
+	acl = fsal_acl_2_posix_acl(attrib->acl, ACL_TYPE_ACCESS);
+	if (acl == NULL) {
+		LogMajor(COMPONENT_FSAL,
+			 "failed to set access type posix acl");
+		status = fsalstat(ERR_FSAL_FAULT, 0);
+		goto out;
+	}
+	ret = acl_set_fd(fd, acl);
+	if (ret != 0) {
+		status = fsalstat(errno, 0);
+		LogMajor(COMPONENT_FSAL, "failed to set access type posix acl");
+		goto out;
+	}
+	acl_free(acl);
+	acl = (acl_t)NULL;
+
+	if (!is_dir)
+		goto out;
+
+	acl = fsal_acl_2_posix_acl(attrib->acl, ACL_TYPE_DEFAULT);
+	if (acl == NULL) {
+		LogDebug(COMPONENT_FSAL,
+			 "inherited acl is not defined for directory");
+		goto out;
+	}
+	ret = acl_set_fd_np(fd, acl, ACL_TYPE_DEFAULT);
+	if (ret != 0) {
+		status = fsalstat(errno, 0);
+		LogMajor(COMPONENT_FSAL,
+			 "failed to set default type posix acl");
+		goto out;
+	}
+
+	status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+
+out:
+	if (acl)
+		acl_free((void *)acl);
+
+	return status;
+}
+
+#else /* NOT(ENABLE_VFS_DEBUG_ACL OR ENABLE_VFS_POSIX_ACL) */
 fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 			       int fd, attrmask_t request_mask,
 			       struct fsal_attrlist *attrib)
@@ -252,4 +422,4 @@ fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
-#endif /* NOT(ENABLE_VFS_DEBUG_ACL) */
+#endif /* NOT(ENABLE_VFS_DEBUG_ACL OR ENABLE_VFS_POSIX_ACL) */

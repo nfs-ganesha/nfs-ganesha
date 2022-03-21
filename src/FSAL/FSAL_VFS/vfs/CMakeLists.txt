@@ -36,6 +36,21 @@ SET(fsalvfs_LIB_SRCS_common
    attrs.c
 )
 
+set(fsalvfs_OBJS
+    $<TARGET_OBJECTS:fsal_os>
+)
+
+if(ENABLE_VFS_POSIX_ACL)
+    set(fsalvfs_LIB_SRCS_common
+        ${fsalvfs_LIB_SRCS_common}
+        ../../posix_acls.c
+    )
+    set(fsalvfs_OBJS
+        ${fsalvfs_OBJS}
+        $<TARGET_OBJECTS:gos>
+    )
+endif(ENABLE_VFS_POSIX_ACL)
+
 if(USE_FSAL_VFS)
 
     set(FSAL_LUSTRE_VFS_NAME "VFS")
@@ -46,7 +61,7 @@ if(USE_FSAL_VFS)
         main.c
     )
 
-    add_library(fsalvfs MODULE ${fsalvfs_LIB_SRCS} $<TARGET_OBJECTS:fsal_os>)
+    add_library(fsalvfs MODULE ${fsalvfs_LIB_SRCS} ${fsalvfs_OBJS})
     add_sanitizers(fsalvfs)
     set(fsalvfs_TGT_LINK_LIB
       ${SYSTEM_LIBRARIES}
@@ -72,7 +87,7 @@ if(USE_FSAL_LUSTRE)
           llapi_check_hsm.c
         )
 
-        add_library(fsallustre MODULE ${fsallustre_LIB_SRCS} $<TARGET_OBJECTS:fsal_os>)
+        add_library(fsallustre MODULE ${fsallustre_LIB_SRCS} ${fsalvfs_OBJS})
         add_sanitizers(fsallustre)
         target_link_libraries(fsallustre
           ganesha_nfsd
@@ -103,7 +118,7 @@ if(USE_FSAL_LUSTRE)
           llapi_check_hsm.c
         )
 
-        add_library(fsaldummylustre MODULE ${fsallustre_LIB_SRCS} $<TARGET_OBJECTS:fsal_os>)
+        add_library(fsaldummylustre MODULE ${fsallustre_LIB_SRCS} ${fsalvfs_OBJS})
         add_sanitizers(fsaldummylustre)
         target_link_libraries(fsaldummylustre
           ganesha_nfsd
