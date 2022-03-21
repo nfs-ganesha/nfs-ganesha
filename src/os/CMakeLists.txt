@@ -39,6 +39,7 @@ endif(DARWIN)
 
 if(LINUX)
   SET(gos_STAT_SRCS
+      linux/acl.c
       linux/subr.c
   )
 endif(LINUX)
