@@ -50,9 +50,6 @@ require {
 
 	type cluster_t;
 
-	type ceph_t;
-	type ceph_log_t;
-
 	class dbus send_msg;
 }
 
@@ -192,8 +189,6 @@ tunable_policy(`ganesha_use_fusefs',`
 #
 
 #============= ganesha_t ==============
-allow ganesha_t ceph_log_t:dir { add_name search write };
-allow ganesha_t ceph_log_t:file { create open };
 fs_read_cgroup_files(ganesha_t)
 
 #!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
@@ -209,8 +204,14 @@ allow init_t var_lib_nfs_t:dir { create setattr };
 #
 
 #!!!! This avc can be allowed using the boolean 'daemons_enable_cluster_mode'
-allow ganesha_t ceph_t:unix_stream_socket connectto;
+# there is no suitable interface in ceph policy module
+optional_policy(`
+    gen_require(`
+        type ceph_t;
+    ')
 
+    allow ganesha_t ceph_t:unix_stream_socket connectto;
+')
 
 ########################################
 #
@@ -324,22 +325,20 @@ optional_policy(`
 #
 # ganesha local policy rhbz#1855350
 
-ifdef(`ceph_read_lib_files',`
-    optional_policy(`
-        ceph_read_lib_files(ganesha_t)
-    ')
+optional_policy(`
+    ceph_read_lib_files(ganesha_t)
 ')
 
-ifdef(`ceph_search_lib',`
-    optional_policy(`
-        ceph_search_lib(ganesha_t)
-    ')
+optional_policy(`
+    ceph_search_lib(ganesha_t)
 ')
 
-ifdef(`ceph_read_pid_files',`
-    optional_policy(`
-        ceph_read_pid_files(ganesha_t)
-    ')
+optional_policy(`
+    ceph_read_pid_files(ganesha_t)
+')
+
+optional_policy(`
+    ceph_manage_log(ganesha_t)
 ')
 
 ########################################

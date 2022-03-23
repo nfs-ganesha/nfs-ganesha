@@ -205,3 +205,99 @@ ifndef(`glusterd_dbus_chat',`
 		allow glusterd_t $1:dbus send_msg;
 	')
 ')
+
+########################################
+#
+# Interface compatibility blocks
+#
+# The following definitions ensure compatibility with distribution policy
+# versions that do not contain given interfaces (epel, or older Fedora
+# releases).
+# Each block tests for existence of given interface and defines it if needed.
+#
+
+########################################
+## <summary>
+##	Read ceph lib files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+ifndef(`ceph_read_lib_files',`
+	interface(`ceph_read_lib_files',`
+		gen_require(`
+			type ceph_var_lib_t;
+		')
+
+		files_search_var_lib($1)
+		read_files_pattern($1, ceph_var_lib_t, ceph_var_lib_t)
+	')
+')
+
+########################################
+## <summary>
+##	Search ceph lib directories.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+ifndef(`ceph_search_lib',`
+	interface(`ceph_search_lib',`
+		gen_require(`
+			type ceph_var_lib_t;
+		')
+
+		allow $1 ceph_var_lib_t:dir search_dir_perms;
+		files_search_var_lib($1)
+	')
+')
+
+########################################
+## <summary>
+##	Read ceph PID files.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+ifndef(`ceph_read_pid_files',`
+	interface(`ceph_read_pid_files',`
+		gen_require(`
+			type ceph_var_run_t;
+		')
+
+		files_search_pids($1)
+		read_files_pattern($1, ceph_var_run_t, ceph_var_run_t)
+	')
+')
+
+########################################
+## <summary>
+##	Manage ceph log files
+## </summary>
+## <param name="domain">
+##	<summary>
+##	Domain allowed access.
+##	</summary>
+## </param>
+#
+ifndef(`ceph_manage_log',`
+	interface(`ceph_manage_log',`
+		gen_require(`
+			type ceph_log_t;
+		')
+
+		logging_search_logs($1)
+		manage_dirs_pattern($1, ceph_log_t, ceph_log_t)
+		manage_files_pattern($1, ceph_log_t, ceph_log_t)
+		manage_lnk_files_pattern($1, ceph_log_t, ceph_log_t)
+	')
+')
