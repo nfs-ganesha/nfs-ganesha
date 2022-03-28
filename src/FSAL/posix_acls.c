@@ -173,10 +173,12 @@ acl_entry_t get_entry(acl_t acl, acl_tag_t tag, unsigned int id)
 		ret = acl_set_tag_type(entry, tag);
 		if (ret)
 			LogWarn(COMPONENT_FSAL, "Cannot set tag for Entry");
-		ret = acl_set_qualifier(entry, &id);
-		if (ret) {
-			LogWarn(COMPONENT_FSAL, "Failed to set id");
-			return NULL;
+		if (tag == ACL_USER || tag == ACL_GROUP) {
+			ret = acl_set_qualifier(entry, &id);
+			if (ret) {
+				LogWarn(COMPONENT_FSAL, "Failed to set id");
+				return NULL;
+			}
 		}
 	}
 
