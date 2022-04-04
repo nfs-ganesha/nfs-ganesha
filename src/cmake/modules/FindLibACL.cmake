@@ -19,19 +19,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #-------------------------------------------------------------------------------
-FIND_PATH(LIBACL_INCLUDE_DIR acl/libacl.h)
-FIND_LIBRARY(LIBACL_LIBRARY NAMES acl)
 
-IF (LIBACL_INCLUDE_DIR AND LIBACL_LIBRARY)
-  SET(LIBACL_FOUND TRUE)
-ENDIF (LIBACL_INCLUDE_DIR AND LIBACL_LIBRARY)
+check_include_files("sys/acl.h" HAVE_SYS_ACL_H)
+check_include_files("acl/libacl.h" HAVE_ACL_LIBACL_H)
 
-IF (LIBACL_FOUND)
-  IF (NOT LIBACL_FIND_QUIETLY)
-    MESSAGE(STATUS "Found ACL library: ${LIBACL_LIBRARY}")
-  ENDIF (NOT LIBACL_FIND_QUIETLY)
-ELSE (LIBACL_FOUND)
-  IF (LibACL_FIND_REQUIRED)
-    MESSAGE(FATAL_ERROR "Could not find libacl")
-  ENDIF (LibACL_FIND_REQUIRED)
-ENDIF (LIBACL_FOUND)
+find_library(LIBACL_LIBRARY NAMES acl)
+
+if(HAVE_ACL_LIBACL_H)
+  # Partially repeats above check, but is a useful sanity check
+  check_library_exists(acl acl_get_file "" HAVE_LIBACL)
+endif(HAVE_ACL_LIBACL_H)
