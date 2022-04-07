@@ -1213,7 +1213,6 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		/* Move entry to MRU of L2 */
 		q = &qlane->L1;
 		LRU_DQ_SAFE(lru, q);
-		lru->qid = LRU_ENTRY_L2;
 		q = &qlane->L2;
 		lru_insert(lru, q, LRU_MRU);
 
@@ -1582,7 +1581,6 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 		/* Move lru object to MRU of L2 */
 		q = &qlane->L1;
 		CHUNK_LRU_DQ_SAFE(lru, q);
-		lru->qid = LRU_ENTRY_L2;
 		q = &qlane->L2;
 		lru_insert(lru, q, LRU_MRU);
 	} /* for_each_safe lru */
@@ -2051,14 +2049,18 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 	bool freed = false;
 
 	if (!other_lock_held) {
-		QLOCK(qlane);
-		if (((entry->lru.flags & LRU_CLEANED) == 0) &&
-		    (entry->lru.qid == LRU_ENTRY_CLEANUP)) {
-			do_cleanup = true;
-			atomic_set_uint32_t_bits(&entry->lru.flags,
-						 LRU_CLEANED);
+		/* pre-check about qid to avoid LOCK every time */
+		if (entry->lru.qid == LRU_ENTRY_CLEANUP) {
+			QLOCK(qlane);
+			/* Locked, check again with lock */
+			if (((entry->lru.flags & LRU_CLEANED) == 0) &&
+			    (entry->lru.qid == LRU_ENTRY_CLEANUP)) {
+				do_cleanup = true;
+				atomic_set_uint32_t_bits(&entry->lru.flags,
+							 LRU_CLEANED);
+			}
+			QUNLOCK(qlane);
 		}
-		QUNLOCK(qlane);
 
 		if (do_cleanup) {
 			LogDebug(COMPONENT_CACHE_INODE,
