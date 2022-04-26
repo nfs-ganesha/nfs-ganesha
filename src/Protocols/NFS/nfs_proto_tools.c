@@ -4491,7 +4491,8 @@ static int Fattr4_To_FSAL_attr(struct fsal_attrlist *attrs, fattr4 *Fattr,
 		const struct fattr4_dent *f4e = fattr4tab + attribute_to_set;
 
 		if (attribute_to_set > FATTR4_MAX_ATTR_INDEX) {
-			nfs_status = NFS4ERR_BADXDR;	/* undefined attr */
+			/* Undefined attribute */
+			nfs_status = NFS4ERR_ATTRNOTSUPP;
 			goto decodeerr;
 		}
 		xdr_res = f4e->decode(&attr_body, &args);
