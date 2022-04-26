@@ -875,7 +875,7 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 	if (entry->attrs.sec_label.slai_data.slai_data_val != NULL) {
 		/* request_mask & ATTR_ACL must match
 		 * attrs.sec_label.slai_data.slai_data_val */
-		entry->attrs.request_mask |= ~ATTR4_SEC_LABEL;
+		entry->attrs.request_mask |= ATTR4_SEC_LABEL;
 	}
 
 	original_generation = atomic_fetch_int32_t(&entry->attr_generation);
