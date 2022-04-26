@@ -96,11 +96,10 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 		goto out;
 	}
 
-	res_GETATTR4->status =
-	    bitmap4_to_attrmask_t(&arg_GETATTR4->attr_request, &mask);
-
-	if (res_GETATTR4->status != NFS4_OK)
-		goto out;
+	/* Ignore errors here as they just indicate that we got a request
+	 * for an unrecognized attribute. For GETATTR we just won't return it.
+	 */
+	bitmap4_to_attrmask_t(&arg_GETATTR4->attr_request, &mask);
 
 	/* Add mode to what we actually ask for so we can do fslocations
 	 * test.

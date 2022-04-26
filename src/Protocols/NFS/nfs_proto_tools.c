@@ -4565,7 +4565,8 @@ int bitmap4_to_attrmask_t(bitmap4 *bitmap4, attrmask_t *mask)
 		const struct fattr4_dent *f4e = fattr4tab + attribute_to_set;
 
 		if (attribute_to_set > FATTR4_MAX_ATTR_INDEX) {
-			nfs_status = NFS4ERR_BADXDR;	/* undefined attr */
+			/* Undefined attrbute */
+			nfs_status = NFS4ERR_ATTRNOTSUPP;
 			break;
 		}
 
