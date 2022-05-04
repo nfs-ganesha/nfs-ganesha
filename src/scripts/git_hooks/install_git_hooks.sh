@@ -1,8 +1,14 @@
 #!/bin/sh
 
-CURDIR=$(dirname "$(readlink -m "$0")")
-TOPDIR=$(git rev-parse --show-toplevel)
-HOOKDIR=$TOPDIR/.git/hooks
+if [[ $OSTYPE == 'darwin'* ]]; then
+	CURDIR=$(dirname "$(greadlink -m "$0")")
+	TOPDIR=$(git rev-parse --show-toplevel)
+	HOOKDIR=$TOPDIR/.git/hooks
+else
+	CURDIR=$(dirname "$(readlink -m "$0")")
+	TOPDIR=$(git rev-parse --show-toplevel)
+	HOOKDIR=$TOPDIR/.git/hooks
+fi
 
 # Link checkpatch script configuration file to top level working
 # directory.
