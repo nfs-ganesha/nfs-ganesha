@@ -4821,12 +4821,10 @@ posix_acl *encode_posix_acl(const acl_t acl, uint32_t type,
 			encode_acl_e->e_id = 0;
 			break;
 		case ACL_USER:
-			encode_acl_e->e_id =
-				*(uid_t *)acl_get_qualifier(acl_entry);
+			encode_acl_e->e_id = posix_acl_get_uid(acl_entry);
 			break;
 		case ACL_GROUP:
-			encode_acl_e->e_id =
-				*(gid_t *)acl_get_qualifier(acl_entry);
+			encode_acl_e->e_id = posix_acl_get_gid(acl_entry);
 			break;
 		default:
 			encode_acl_e->e_id = ACL_UNDEFINED_ID;

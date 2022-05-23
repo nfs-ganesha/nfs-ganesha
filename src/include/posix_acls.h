@@ -99,4 +99,22 @@ xattr_2_posix_acl(const struct acl_ea_header *ea_header, size_t size);
 int
 posix_acl_2_xattr(acl_t acl, void *buf, size_t size);
 
+static inline uid_t posix_acl_get_uid(acl_entry_t entry_d)
+{
+	void *q = acl_get_qualifier(entry_d);
+	uid_t u = *(uid_t *)q;
+
+	acl_free(q);
+	return u;
+}
+
+static inline gid_t posix_acl_get_gid(acl_entry_t entry_d)
+{
+	void *q = acl_get_qualifier(entry_d);
+	gid_t g = *(gid_t *)q;
+
+	acl_free(q);
+	return g;
+}
+
 #endif /* _POSIX_ACLS_H */

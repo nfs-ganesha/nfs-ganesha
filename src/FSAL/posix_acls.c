@@ -138,8 +138,7 @@ acl_entry_t find_entry(acl_t acl, acl_tag_t tag,  unsigned int id)
 		}
 		if (tag == entryTag) {
 			if (tag == ACL_USER || tag == ACL_GROUP)
-				if (id != *(unsigned int *)
-						acl_get_qualifier(entry))
+				if (id != posix_acl_get_uid(entry))
 					continue;
 			break;
 		}
@@ -300,11 +299,11 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			break;
 		case  ACL_USER:
 			pace_allow->who.uid = pace_deny->who.uid =
-					*(uid_t *)acl_get_qualifier(entry);
+					posix_acl_get_uid(entry);
 			break;
 		case  ACL_GROUP:
 			pace_allow->who.gid = pace_deny->who.gid =
-					*(gid_t *)acl_get_qualifier(entry);
+					posix_acl_get_gid(entry);
 			pace_allow->flag = pace_deny->flag |=
 						FSAL_ACE_FLAG_GROUP_ID;
 			break;
@@ -981,11 +980,11 @@ int posix_acl_2_xattr(acl_t acl, void *buf, size_t size)
 		switch (tag) {
 		case ACL_USER:
 			ea_entry->e_id =
-				htole32(*(uid_t *)acl_get_qualifier(acl_entry));
+				htole32(posix_acl_get_uid(acl_entry));
 			break;
 		case ACL_GROUP:
 			ea_entry->e_id =
-				htole32(*(gid_t *)acl_get_qualifier(acl_entry));
+				htole32(posix_acl_get_gid(acl_entry));
 			break;
 		default:
 			ea_entry->e_id = htole32(ACL_UNDEFINED_ID);
