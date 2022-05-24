@@ -1387,9 +1387,6 @@ static bool proc_block(struct config_node *node,
 		err_type->init = true;
 		goto err_out;
 	}
-	if (item->u.blk.check && item->u.blk.check(param_struct, err_type)) {
-		goto err_out;
-	}
 	if (item->u.blk.display != NULL)
 		item->u.blk.display("DEFAULTS", node,
 				      link_mem, param_struct);
@@ -1407,6 +1404,9 @@ static bool proc_block(struct config_node *node,
 				  "%d errors while processing parameters for %s",
 				  errors,
 				  item->name);
+		goto err_out;
+	}
+	if (item->u.blk.check && item->u.blk.check(param_struct, err_type)) {
 		goto err_out;
 	}
 	LogFullDebug(COMPONENT_CONFIG,
