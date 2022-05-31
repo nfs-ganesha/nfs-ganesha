@@ -1026,6 +1026,8 @@ static inline void update_atomic_fields(struct gsh_export *export,
 static inline void copy_gsh_export(struct gsh_export *dest,
 				   struct gsh_export *src)
 {
+	struct gsh_refstr *old_fullpath, *old_pseudopath;
+
 	/* Update atomic fields */
 	update_atomic_fields(dest, src);
 
@@ -1034,10 +1036,10 @@ static inline void copy_gsh_export(struct gsh_export *dest,
 
 	/* Put references to old refstr */
 	if (dest->fullpath != NULL)
-		gsh_refstr_put(dest->fullpath);
+		old_fullpath = rcu_dereference(dest->fullpath);
 
 	if (dest->pseudopath != NULL)
-		gsh_refstr_put(dest->pseudopath);
+		old_pseudopath = rcu_dereference(dest->pseudopath);
 
 	/* Free old cfg_fullpath and cfg_pseudopath */
 	gsh_free(dest->cfg_fullpath);
@@ -1046,20 +1048,30 @@ static inline void copy_gsh_export(struct gsh_export *dest,
 	/* Copy config fullpath and create new refstr */
 	if (src->cfg_fullpath != NULL) {
 		dest->cfg_fullpath = gsh_strdup(src->cfg_fullpath);
-		dest->fullpath = gsh_refstr_dup(dest->cfg_fullpath);
+		rcu_set_pointer(&(dest->fullpath),
+				gsh_refstr_dup(dest->cfg_fullpath));
 	} else {
 		dest->cfg_fullpath = NULL;
-		dest->fullpath = NULL;
+		rcu_set_pointer(&(dest->fullpath), NULL);
 	}
 
 	/* Copy config pseudopath and create new refstr */
 	if (src->cfg_pseudopath != NULL) {
 		dest->cfg_pseudopath = gsh_strdup(src->cfg_pseudopath);
-		dest->pseudopath = gsh_refstr_dup(dest->cfg_pseudopath);
+		rcu_set_pointer(&(dest->pseudopath),
+				gsh_refstr_dup(dest->cfg_pseudopath));
 	} else {
 		dest->cfg_pseudopath = NULL;
-		dest->pseudopath = NULL;
+		rcu_set_pointer(&(dest->pseudopath), NULL);
 	}
+
+	synchronize_rcu();
+
+	if (old_fullpath)
+		gsh_refstr_put(old_fullpath);
+
+	if (old_pseudopath)
+		gsh_refstr_put(old_pseudopath);
 
 	/* Copy the export perms into the existing export. */
 	dest->export_perms = src->export_perms;
