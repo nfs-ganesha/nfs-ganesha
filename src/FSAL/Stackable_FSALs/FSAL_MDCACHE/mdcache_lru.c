@@ -1069,7 +1069,11 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 	 * not in any export */
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 
-	if (glist_empty(&entry->export_list)) {
+	/* Make sure that the entry is not reaped by the time this
+	 * thread got the QLOCK
+	 */
+	if (glist_empty(&entry->export_list) &&
+	    entry->lru.qid != LRU_ENTRY_NONE) {
 		/* it worked */
 		struct lru_q *q = lru_queue_of(entry);
 
