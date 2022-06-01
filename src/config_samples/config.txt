@@ -802,6 +802,8 @@ PROXY_V3 {}
 	maxwrite(uint64, range 1024 to FSAL_MAXIOSIZE,
 		 default MAX_READ_WRITE_SIZE)
 
+	allow_lookup_optimization(bool, default true)
+
 PROXY_V4 {}
 --------
 

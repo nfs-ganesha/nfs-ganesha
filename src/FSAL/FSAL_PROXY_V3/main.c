@@ -89,6 +89,11 @@ static struct config_item proxyv3_params[] = {
 		       proxyv3_fsal_module,
 		       num_sockets),
 
+	CONF_ITEM_BOOL("allow_lookup_optimization",
+		       true,
+		       proxyv3_fsal_module,
+		       allow_lookup_optimization),
+
 	CONFIG_EOL
 };
 
@@ -410,6 +415,10 @@ proxyv3_lookup_internal(struct fsal_export *export_handle,
 			struct fsal_obj_handle **handle,
 			struct fsal_attrlist *attrs_out)
 {
+	const struct fsal_module *fsal_handle = export_handle->fsal;
+	const struct proxyv3_fsal_module *proxy_v3 =
+		container_of(fsal_handle, struct proxyv3_fsal_module, module);
+
 	LogDebug(COMPONENT_FSAL,
 		 "Doing a lookup of '%s'", path);
 
@@ -465,7 +474,8 @@ proxyv3_lookup_internal(struct fsal_export *export_handle,
 	 * Small optimization to avoid a network round-trip: if we already know
 	 * the answer, hand it back.
 	 */
-	if (true && /* @todo Turn this optimization into a flag */
+
+	if (proxy_v3->allow_lookup_optimization &&
 	    (strcmp(path, ".") == 0 ||
 	     /*
 	      * We may not have the parent pointer information (could be from a

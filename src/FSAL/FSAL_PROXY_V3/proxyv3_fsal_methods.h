@@ -35,6 +35,8 @@ struct proxyv3_fsal_module {
 
 	/* The number of sockets in our connection pool. */
 	uint32_t num_sockets;
+	/* Allow lookup optimization for CWD and CWD parent */
+	bool allow_lookup_optimization;
 };
 
 /* Our global PROXY_V3 struct */

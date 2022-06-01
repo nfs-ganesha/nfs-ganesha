@@ -49,6 +49,10 @@ PROXY_V3 {}
     Note that these sockets must be privileged ports, which may be limited on
     a given system. It is unlikely that 1000 privileged ports are available.
 
+**allow_lookup_optimization(bool, default true)**
+    Set this to false to disable lookup optimization for current working directory
+    and current working directory parent from the cache
+
 See also
 ==============================
 :doc:`ganesha-log-config <ganesha-log-config>`\(8)
