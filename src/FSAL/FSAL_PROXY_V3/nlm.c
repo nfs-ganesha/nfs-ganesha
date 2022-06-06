@@ -38,6 +38,12 @@ static pid_t nlmSvid;
 
 bool proxyv3_nlm_init(void)
 {
+	/* Initialise only once. */
+	static bool nlm_initialised;
+
+	if (nlm_initialised)
+		return true;
+
 	/* Cache our hostname for auth later. */
 	if (gethostname(nlmMachineName, sizeof(nlmMachineName)) != 0) {
 		const char *kClientName = "127.0.0.1";
@@ -46,10 +52,11 @@ bool proxyv3_nlm_init(void)
 			"gethostname() failed. Errno %d (%s). Hardcoding a client IP instead.",
 			errno, strerror(errno));
 		memcpy(nlmMachineName, kClientName,
-		       strlen(kClientName) + 1 /* For NUL */);
+		       strlen(kClientName) + 1 /* For NULL */);
 	}
 
 	nlmSvid = (int32_t) getpid();
+	nlm_initialised = true;
 	return true;
 }
 

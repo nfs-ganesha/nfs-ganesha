@@ -71,6 +71,12 @@ struct fd_entry *fd_entries;
 
 bool proxyv3_rpc_init(const uint num_sockets)
 {
+	/* Initialise only once. */
+	static bool rpc_initialised;
+
+	if (rpc_initialised)
+		return true;
+
 	LogDebug(COMPONENT_FSAL,
 		 "Setting up connection pool with %u sockets", num_sockets);
 	/* Cache our hostname for client auth later. */
@@ -95,7 +101,8 @@ bool proxyv3_rpc_init(const uint num_sockets)
 	rpcNumSockets = num_sockets;
 	fd_entries = gsh_calloc(rpcNumSockets, sizeof(struct fd_entry));
 	/* Just in case the alloc failed, bail. */
-	return fd_entries != NULL;
+	rpc_initialised = (fd_entries != NULL);
+	return rpc_initialised;
 }
 
 
