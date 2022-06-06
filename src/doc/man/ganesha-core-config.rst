@@ -163,6 +163,11 @@ Readdir_Res_Size(uint32, range 4096 to 32768, default 0)
     Suggested values are 4096,8192,16384 and 32768. Recommended 16384(16K) if
     readdir(ls command) operation performed on directory which has more files.
 
+Getattrs_In_Complete_Read(bool, default true)
+    Whether to call extra getattrs after read, in order to check file size and
+    validate the EOF flag correctness. Needed for ESXi client compatibility
+    when FSAL's don't set it correctly.
+
 Parameters controlling TCP DRC behavior:
 ----------------------------------------
 

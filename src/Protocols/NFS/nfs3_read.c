@@ -89,6 +89,7 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 	if (data->rc == NFS_REQ_OK) {
 		if (!op_ctx->fsal_export->exp_ops.fs_supports(
 		     op_ctx->fsal_export, fso_compliant_eof_behavior)
+			&& nfs_param.core_param.getattrs_in_complete_read
 		    && !read_arg->end_of_file) {
 			/*
 			 * NFS requires to set the EOF flag for all reads that

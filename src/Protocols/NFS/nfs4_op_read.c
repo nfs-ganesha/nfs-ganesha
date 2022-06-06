@@ -81,9 +81,8 @@ static enum nfs_req_result nfs4_complete_read(struct nfs4_read_data *data)
 	struct fsal_io_arg *read_arg = &data->read_arg;
 
 	if (data->res_READ4->status == NFS4_OK) {
-		if (!read_arg->end_of_file) {
-			/** @todo FSF: add a config option for this behavior?
-			*/
+		if (nfs_param.core_param.getattrs_in_complete_read &&
+				!read_arg->end_of_file) {
 			/*
 			 * NFS requires to set the EOF flag for all reads that
 			 * reach the EOF, i.e., even the ones returning data.

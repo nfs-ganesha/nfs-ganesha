@@ -266,6 +266,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, enable_v3_fh_for_v4),
 	CONF_ITEM_UI32("Readdir_Res_Size", 4096, 32768, 0,
 		       nfs_core_param, readdir_res_size),
+	CONF_ITEM_BOOL("Getattrs_In_Complete_Read", true,
+			   nfs_core_param, getattrs_in_complete_read),
 	CONFIG_EOL
 };
 

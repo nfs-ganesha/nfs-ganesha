@@ -441,6 +441,10 @@ typedef struct nfs_core_param {
 	*  range 4K-32K
 	*/
 	uint32_t readdir_res_size;
+	/** Whether to call getattrs in nfs4_complete_read and
+		nfs3_complete_read.
+		Defaults to true and settable by Getattrs_In_Complete_Read. */
+	bool getattrs_in_complete_read;
 } nfs_core_parameter_t;
 
 /** @} */

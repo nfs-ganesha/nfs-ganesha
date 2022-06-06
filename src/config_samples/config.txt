@@ -159,6 +159,8 @@ NFS_CORE_PARAM {}
 
 	Readdir_Res_Size(uint32, range 4096 to 32768, default 0)
 
+	Getattrs_In_Complete_Read(bool, default true)
+
 NFS_IP_NAME {}
 --------------
 
