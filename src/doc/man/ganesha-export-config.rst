@@ -135,10 +135,16 @@ MaxWrite (64*1024*1024)
     The maximum write size on this export
 
 PrefRead (64*1024*1024)
-    The preferred read size on this export
+    The preferred read size on this export. Note that some older nfs
+    client (e.g. libnfs 1.x) would not handle well for large preferred
+    read size. If so, please try to decrease this size (usually less
+    than 1M is suitable for older nfs client).
 
 PrefWrite (64*1024*1024)
-   The preferred write size on this export
+   The preferred write size on this export. Note that some older nfs
+   client (e.g. libnfs 1.x) would not handle well for large preferred
+   write size. If so, please try to decrease this size (usually less
+   than 1M is suitable for older nfs client).
 
 PrefReaddir (16384)
    The preferred readdir size on this export

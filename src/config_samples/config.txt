@@ -291,6 +291,11 @@ EXPORT {}
 
 	MaxWrite(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
 
+	* Note that some older nfs client (e.g. libnfs 1.x) would not handle
+	  well for large Prefer Read/Write size. If so, please try to decrease
+	  the Prefer Read/Write size  (usually less than 1M is suitable for
+	  older nfs client).
+
 	PrefRead(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
 
 	PrefWrite(uint64, range 512 to 64*1024*1024, default 64*1024*1024)
