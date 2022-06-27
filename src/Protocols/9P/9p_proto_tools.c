@@ -325,8 +325,8 @@ void free_fid(struct _9p_fid *pfid)
 						pfid->state);
 		}
 
-		pfid->state->state_exp->exp_ops.free_state(
-				pfid->state->state_exp, pfid->state);
+		op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
+							pfid->state);
 	}
 
 	if (pfid->pentry != NULL)

@@ -267,8 +267,8 @@ errout:
 		 */
 		(void) obj->obj_ops->close2(obj, pnew_state);
 
-		pnew_state->state_exp->exp_ops.free_state(pnew_state->state_exp,
-							  pnew_state);
+		op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
+							pnew_state);
 	}
 
 	if (got_export_ref)
@@ -717,8 +717,7 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 		 * ops that don't do a putfh
 		 */
 		get_gsh_export_ref(state->state_export);
-		set_op_context_export_fsal(state->state_export,
-					   state->state_exp);
+		set_op_context_export(state->state_export);
 
 		state_del(state);
 		dec_state_t_ref(state);

@@ -200,7 +200,6 @@ static inline struct state_t *init_state(struct state_t *state,
 					 enum state_type state_type,
 					 struct state_t *related_state)
 {
-	state->state_exp = exp_hdl;
 	state->state_type = state_type;
 
 	if (state_type == STATE_TYPE_LOCK ||

@@ -896,9 +896,6 @@ static struct state_t *mdcache_alloc_state(struct fsal_export *exp_hdl,
 							related_state)
 	       );
 
-	/* Replace stored export with ours so stacking works */
-	state->state_exp = exp_hdl;
-
 	return state;
 }
 

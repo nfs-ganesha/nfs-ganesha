@@ -400,7 +400,6 @@ struct state_t {
 	/* Don't re-order or move these next two.  They are used for hashing */
 	state_owner_t *state_owner;	/**< State Owner related to state */
 	struct fsal_obj_handle *state_obj; /**< owning object */
-	struct fsal_export *state_exp;  /**< FSAL export */
 	union state_data state_data;
 	enum state_type state_type;
 	u_int32_t state_seqid;		/**< The NFSv4 Sequence id */

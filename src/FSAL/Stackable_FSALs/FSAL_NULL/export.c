@@ -314,10 +314,7 @@ static struct state_t *nullfs_alloc_state(struct fsal_export *exp_hdl,
 	state_t *state =
 		exp->export.sub_export->exp_ops.alloc_state(
 			exp->export.sub_export, state_type, related_state);
-	op_ctx->fsal_export = &exp->export;
-
-	/* Replace stored export with ours so stacking works */
-	state->state_exp = exp_hdl;
+	op_ctx->fsal_export = exp_hdl;
 
 	return state;
 }
