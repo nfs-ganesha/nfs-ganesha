@@ -860,6 +860,7 @@ exit 0
 %else
 %{python3_sitelib}/Ganesha/*
 %{python3_sitelib}/ganeshactl-*-info
+%{python3_sitelib}/ganesha_top-*-info
 %endif
 %if %{with gui_utils}
 %{_bindir}/ganesha-admin
@@ -882,6 +883,7 @@ exit 0
 %{_bindir}/sm_notify.ganesha
 %{_bindir}/ganesha_mgr
 %{_bindir}/ganesha_conf
+%{_bindir}/ganesha-top
 %{_mandir}/*/ganesha_conf.8.gz
 %endif
 

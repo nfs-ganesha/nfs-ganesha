@@ -1,0 +1,13 @@
+#  -*-Python-*-
+
+from distutils.core import setup, Extension
+
+if __name__ == '__main__':
+        setup(name='ganesha-top',
+              version='${GANESHA_VERSION}',
+              author = "Vicente Cheng",
+              maintainer = "NFS-Ganesha Project",
+              maintainer_email = "devel@lists.nfs-ganesha.org",
+              description = "NFS Ganesha Administration tools",
+              package_dir = { '': '${CMAKE_CURRENT_SOURCE_DIR}' },
+              scripts = [${SCRIPTS_STRING}])
