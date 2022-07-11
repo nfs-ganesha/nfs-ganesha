@@ -21,7 +21,7 @@
 #-------------------------------------------------------------------------------
 # Building and packaging DBUS scripts for ganesha
 
-# Python was tested for in top level
+# Python3 was tested for in top level
 
 # PyQT based class modules
 set(GANESHA_BASE_SRCS
@@ -65,7 +65,7 @@ set(UI_SRC
   Ganesha/QtUI/ui_log_dialog.ui
   )
 
-if(Python_FOUND)
+if(Python3_FOUND)
   set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
   set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
   set(OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build/ganeshactl_timestamp")
@@ -139,7 +139,7 @@ if(Python_FOUND)
 
   add_custom_command(
     OUTPUT ${OUTPUT}
-    COMMAND ${Python_EXECUTABLE} "${SETUP_PY}"  build
+    COMMAND ${Python3_EXECUTABLE} "${SETUP_PY}"  build
     COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
     DEPENDS ${GANESHA_SRCS} ${UI_PY_FILES} ${SCRIPTS}
     )
@@ -148,9 +148,9 @@ if(Python_FOUND)
 
   install(
     CODE
-    "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${Python_EXECUTABLE} ${SETUP_PY} install --skip-build --no-compile --prefix=\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX})"
+    "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${Python3_EXECUTABLE} ${SETUP_PY} install --skip-build --no-compile --prefix=\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX})"
     )
-endif(Python_FOUND)
+endif(Python3_FOUND)
 
 # Man page
 set(man8_file ganesha_conf.man)
