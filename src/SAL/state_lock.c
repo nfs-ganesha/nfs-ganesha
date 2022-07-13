@@ -3071,7 +3071,6 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 		/* Release the refcounts we took above. */
 		dec_state_owner_ref(owner);
-		obj->obj_ops->put_ref(obj);
 		clear_op_context_export();
 
 		if (!state_unlock_err_ok(status)) {
