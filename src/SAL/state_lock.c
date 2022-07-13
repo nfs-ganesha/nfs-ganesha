@@ -1323,6 +1323,7 @@ void free_cookie(state_cookie_entry_t *cookie_entry, bool unblock)
 			lock_entry->sle_block_data->sbd_blocked_cookie = NULL;
 
 		lock_entry_dec_ref(lock_entry);
+		cookie_entry->sce_obj->obj_ops->put_ref(cookie_entry->sce_obj);
 	}
 
 	/* Free the memory for the cookie and the cookie entry */
@@ -1498,6 +1499,9 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 	lock_entry_inc_ref(lock_entry);
 	lock_entry->sle_block_data->sbd_blocked_cookie = hash_entry;
 	*cookie_entry = hash_entry;
+
+	/* Also take an obj reference. */
+	obj->obj_ops->get_ref(obj);
 	return status;
 }
 
@@ -1660,11 +1664,12 @@ void state_complete_grant(state_cookie_entry_t *cookie_entry)
 	lock_entry = cookie_entry->sce_lock_entry;
 	obj = cookie_entry->sce_obj;
 
-	/* This routine does not call obj->obj_ops->get_ref() because there
-	 * MUST be at least one lock present for there to be a cookie_entry
-	 * to even allow this routine to be called, and therefor the cache
-	 * entry MUST be protected from being recycled.
+	/* Call obj->obj_ops->get_ref() because even though there MUST be at
+	 * least one lock present for there to be a cookie_entry to even allow
+	 * this routine to be called, that may be cleaned up by free_cookie
+	 * and thus before we release the state lock.
 	 */
+	obj->obj_ops->get_ref(obj);
 
 	STATELOCK_lock(obj);
 
@@ -1690,6 +1695,9 @@ void state_complete_grant(state_cookie_entry_t *cookie_entry)
 	free_cookie(cookie_entry, true);
 
 	STATELOCK_unlock(obj);
+
+	/* Release the obj reference taken above. */
+	obj->obj_ops->put_ref(obj);
 }
 
 /**
