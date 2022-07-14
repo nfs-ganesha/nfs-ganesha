@@ -621,7 +621,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner);
 
 void state_export_unlock_all(void);
 
-bool state_lock_wipe(struct state_hdl *hstate);
+void state_lock_wipe(struct state_hdl *hstate);
 
 void cancel_all_nlm_blocked(void);
 
