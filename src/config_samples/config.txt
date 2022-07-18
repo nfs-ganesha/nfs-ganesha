@@ -43,6 +43,8 @@ NFS_CORE_PARAM {}
 
 	Rquota_Port (uint16, range 0 to UINT16_MAX, default 875)
 
+	Monitoring_Port (uint16, range 0 to UINT16_MAX, default 9587)
+
 	Bind_addr(IPv4 or IPv6 addr, default 0.0.0.0)
 
 	NFS_Program(uint32, range 1 to INT32_MAX, default  100003)

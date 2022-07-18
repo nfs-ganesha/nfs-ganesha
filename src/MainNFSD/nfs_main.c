@@ -77,6 +77,10 @@
 #include "gsh_lttng/fsal_ceph.h"
 #endif /* USE_LTTNG */
 
+#ifdef USE_MONITORING
+#include "monitoring.h"
+#endif  /* USE_MONITORING */
+
 /* parameters for NFSd startup and default values */
 
 static nfs_start_info_t my_nfs_start_info = {
@@ -485,6 +489,10 @@ int main(int argc, char *argv[])
 			 "Error setting parameters from configuration file.");
 		goto fatal_die;
 	}
+
+#ifdef USE_MONITORING
+	monitoring_init(nfs_param.core_param.monitoring_port);
+#endif  /* USE_MONITORING */
 
 	/* initialize core subsystems and data structures */
 	if (init_server_pkgs() != 0) {

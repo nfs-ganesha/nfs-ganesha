@@ -144,6 +144,13 @@ set(ganesha_nfsd_OBJS
     $<TARGET_OBJECTS:fsalmdcache>
 )
 
+if(USE_MONITORING)
+  set(ganesha_nfsd_OBJS
+    ${ganesha_nfsd_OBJS}
+    $<TARGET_OBJECTS:monitoring>
+  )
+endif(USE_MONITORING)
+
 if(USE_DBUS)
   set(ganesha_nfsd_OBJS
     ${ganesha_nfsd_OBJS}
@@ -190,6 +197,7 @@ target_link_libraries(ganesha_nfsd
   ${SYSTEM_LIBRARIES}
   ${LTTNG_LIBRARIES}
   ${MOOSHIKA_LIBRARIES}
+  ${MONITORING_LIBRARIES}
 )
 
 if(SANITIZE_ADDRESS)
