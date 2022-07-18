@@ -34,6 +34,9 @@ NLM_Port (uint16, range 0 to UINT16_MAX, default 0)
 Rquota_Port (uint16, range 0 to UINT16_MAX, default 875)
     Port number used by Rquota Protocol.
 
+Monitoring_Port (uint16, range 0 to UINT16_MAX, default 9587)
+    Port number used to export monitoring metrics.
+
 Bind_addr(IPv4 or IPv6 addr, default 0.0.0.0)
     The address to which to bind for our listening port.
 

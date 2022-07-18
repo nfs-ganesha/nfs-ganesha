@@ -1,0 +1,230 @@
+# SPDX-License-Identifier: LGPL-3.0-or-later
+# Copyright (C) Google Inc., 2021
+# Author: Bjorn Leffler leffler@google.com
+
+groups:
+- name: ganesha-rules
+  rules:
+
+  # RPCs.
+  - record: ganesha:rpcs_in_flight
+    expr: rpcs_in_flight
+  - record: ganesha:rpcs_completed:rate1m
+    expr: rate(rpcs_completed_total[1m])
+  - record: ganesha:rpcs_received:rate1m
+    expr: rate(rpcs_received_total[1m])
+
+  # Estimate "active clients" as "clients active in the last 60 seconds"
+  # For global client count, aggregate on last_client_update to avoid double counting.
+  - record: ganesha:last_client_update
+    expr: last_client_update
+  - record: ganesha:last_client_update_60s
+    expr: max by (client) (last_client_update > time() - 60)
+  - record: ganesha:active_clients_60s:sum
+    expr: count(ganesha:last_client_update_60s)
+
+  # QPS per {operation}.
+  - record: ganesha:nfs_requests:rate1m
+    expr: sum(rate(nfs_requests_total[1m])) without (instance, job)
+  - record: ganesha:client_requests:rate1m
+    expr: sum(rate(client_requests_total[1m])) without (instance, job)
+  - record: ganesha:nfs_requests_by_export:rate1m
+    expr: sum(rate(nfs_requests_by_export_total[1m])) without (instance, job)
+
+  # Total QPS across all operations.
+  - record: ganesha:nfs_requests:sum:rate1m
+    expr: sum(rate(nfs_requests_total[1m])) without (instance, job, operation)
+  - record: ganesha:client_requests:sum:rate1m
+    expr: sum(rate(client_requests_total[1m])) without (instance, job, operation)
+  - record: ganesha:nfs_requests_by_export:sum:rate1m
+    expr: sum(rate(nfs_requests_by_export_total[1m])) without (instance, job, operation)
+
+  # Bytes sent throughput per {operation}.
+  - record: ganesha:nfs_bytes_sent:rate1m
+    expr: sum(rate(nfs_bytes_sent_total[1m])) without (instance, job)
+  - record: ganesha:client_bytes_sent:rate1m
+    expr: sum(rate(client_bytes_sent_total[1m])) without (instance, job)
+  - record: ganesha:nfs_bytes_sent_by_export:rate1m
+    expr: sum(rate(nfs_bytes_sent_by_export_total[1m])) without (instance, job)
+
+  # Bytes received throughput per {operation}.
+  - record: ganesha:nfs_bytes_received:rate1m
+    expr: sum(rate(nfs_bytes_received_total[1m])) without (instance, job)
+  - record: ganesha:client_bytes_received:rate1m
+    expr: sum(rate(client_bytes_received_total[1m])) without (instance, job)
+  - record: ganesha:nfs_bytes_received_by_export:rate1m
+    expr: sum(rate(nfs_bytes_received_by_export_total[1m])) without (instance, job)
+
+  # Total bytes transferred throughput per {operation}.
+  - record: ganesha:nfs_bytes_transferred:rate1m
+    expr: ganesha:nfs_bytes_sent:rate1m + ganesha:nfs_bytes_received:rate1m
+  - record: ganesha:client_bytes_transferred:rate1m
+    expr: ganesha:client_bytes_sent:rate1m + ganesha:client_bytes_received:rate1m
+  - record: ganesha:nfs_bytes_transferred_by_export:rate1m
+    expr: ganesha:nfs_bytes_sent_by_export:rate1m + ganesha:nfs_bytes_received_by_export:rate1m
+
+  # Total bytes sent throughput across all operations.
+  - record: ganesha:nfs_bytes_sent:sum:rate1m
+    expr: sum(rate(nfs_bytes_sent_total[1m])) without (instance, job, operation)
+  - record: ganesha:nfs_bytes_sent_by_export:sum:rate1m
+    expr: sum(rate(nfs_bytes_sent_by_export_total[1m])) without (instance, job, operation)
+
+  # Total bytes received throughput across all operations.
+  - record: ganesha:nfs_bytes_received:sum:rate1m
+    expr: sum(rate(nfs_bytes_received_total[1m])) without (instance, job, operation)
+  - record: ganesha:nfs_bytes_received_by_export:sum:rate1m
+    expr: sum(rate(nfs_bytes_received_by_export_total[1m])) without (instance, job, operation)
+
+  # Total bytes transferred throughput across all operations.
+  - record: ganesha:nfs_bytes_transferred:sum:rate1m
+    expr: ganesha:nfs_bytes_sent:sum:rate1m + ganesha:nfs_bytes_received:sum:rate1m
+  - record: ganesha:nfs_bytes_transferred_by_export:sum:rate1m
+    expr: ganesha:nfs_bytes_sent_by_export:sum:rate1m + ganesha:nfs_bytes_received_by_export:sum:rate1m
+
+  # Request and response sizes.
+  - record: ganesha:nfs_request_size_bytes:rate1m
+    expr: sum(rate(nfs_request_size_bytes_bucket[1m])) without (instance, job)
+  - record: ganesha:nfs_response_size_bytes:rate1m
+    expr: sum(rate(nfs_response_size_bytes_bucket[1m])) without (instance, job)
+
+  # NFS error rates and ratios.
+  - record: ganesha:nfs_errors:rate1m
+    expr: sum(rate(nfs_errors_total[1m])) without (instance, job)
+  - record: ganesha:nfs_errors:sum:rate1m
+    expr: sum(rate(nfs_errors_total[1m])) without (instance, job, status)
+  - record: ganesha:nfs_errors:bad:rate1m
+    expr: sum(rate(nfs_errors_total{status!~"NFS3_OK|NFS4_OK"}[1m])) without (instance, job, status)
+  - record: ganesha:nfs_errors:good:rate1m
+    expr: sum(rate(nfs_errors_total{status=~"NFS3_OK|NFS4_OK"}[1m])) without (instance, job, status)
+  - record: ganesha:nfs_errors:ratio:rate1m
+    expr: ganesha:nfs_errors:bad:rate1m / ganesha:nfs_errors:sum:rate1m
+
+  # Total NFS error count.
+  - record: ganesha:nfs_errors:sum
+    expr: sum(nfs_errors_total) without (instance, job)
+
+  # MD cache hits and misses per {operation}.
+  - record: ganesha:mdcache_cache_hits:rate1m
+    expr: sum(rate(mdcache_cache_hits_total[1m])) without (instance, job)
+  - record: ganesha:mdcache_cache_misses:rate1m
+    expr: sum(rate(mdcache_cache_misses_total[1m])) without (instance, job)
+  - record: ganesha:mdcache_cache_hit_ratio:rate1m
+    expr: ganesha:mdcache_cache_hits:rate1m / (ganesha:mdcache_cache_hits:rate1m + ganesha:mdcache_cache_misses:rate1m)
+
+  # Cache hits and misses per {operation, export}.
+  - record: ganesha:mdcache_cache_hits_by_export:rate1m
+    expr: sum(rate(mdcache_cache_hits_by_export_total[1m])) without (instance, job)
+  - record: ganesha:mdcache_cache_misses_by_export:rate1m
+    expr: sum(rate(mdcache_cache_misses_by_export_total[1m])) without (instance, job)
+  - record: ganesha:mdcache_cache_hit_ratio_by_export:rate1m
+    expr: ganesha:mdcache_cache_hits_by_export:rate1m / (ganesha:mdcache_cache_hits_by_export:rate1m + ganesha:mdcache_cache_misses_by_export:rate1m)
+
+  # MDCache wait times.
+  - record: ganesha:mdcache_wait_time_ns:rate1m
+    expr: sum(rate(mdcache_wait_time_ns[1m])) without (instance, job)
+
+  # Latency per {operation}
+  - record: ganesha:latency_ms:rate1m
+    expr: sum(rate(nfs_latency_ms_bucket[1m])) without (instance, job)
+  - record: ganesha:latency_ms_by_export:rate1m
+    expr: sum(rate(nfs_latency_ms_by_export_bucket[1m])) without (instance, job)
+
+  # Latency percentiles [1m] per {operation}
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.01, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 1
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.10, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 10
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.20, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 20
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.30, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 30
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.40, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 40
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.50, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 50
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.60, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 60
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.70, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 70
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.80, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 80
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.90, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 90
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.95, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 95
+  - record: ganesha:latency_ms_percentile:rate1m
+    expr: histogram_quantile(0.99, ganesha:latency_ms:rate1m)
+    labels:
+      percentile: 99
+
+  # Latency percentiles [1m] per {operation, export}
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.01, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 1
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.10, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 10
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.20, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 20
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.30, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 30
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.40, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 40
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.50, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 50
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.60, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 60
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.70, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 70
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.80, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 80
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.90, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 90
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.95, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 95
+  - record: ganesha:latency_ms_by_export_percentile:rate1m
+    expr: histogram_quantile(0.99, ganesha:latency_ms_by_export:rate1m)
+    labels:
+      percentile: 99

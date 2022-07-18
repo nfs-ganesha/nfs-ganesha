@@ -269,7 +269,11 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI32("Readdir_Max_Count", 32, 1024*1024, 1024*1024,
 		       nfs_core_param, readdir_max_count),
 	CONF_ITEM_BOOL("Getattrs_In_Complete_Read", true,
-			   nfs_core_param, getattrs_in_complete_read),
+		       nfs_core_param, getattrs_in_complete_read),
+#ifdef USE_MONITORING
+	CONF_ITEM_UI16("Monitoring_Port", 0, UINT16_MAX, MONITORING_PORT,
+		       nfs_core_param, monitoring_port),
+#endif
 	CONFIG_EOL
 };
 

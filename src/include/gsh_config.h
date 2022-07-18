@@ -169,6 +169,11 @@ typedef enum protos {
 #define NFS_DEFAULT_RECV_BUFFER_SIZE 1048576
 
 /**
+ * @brief Default Monitoring Port.
+ */
+#define MONITORING_PORT 9587
+
+/**
  * @brief Turn off all protocols
  */
 
@@ -449,6 +454,10 @@ typedef struct nfs_core_param {
 		nfs3_complete_read.
 		Defaults to true and settable by Getattrs_In_Complete_Read. */
 	bool getattrs_in_complete_read;
+#ifdef USE_MONITORING
+	/** Monitoring port number. */
+	uint16_t monitoring_port;
+#endif
 } nfs_core_parameter_t;
 
 /** @} */

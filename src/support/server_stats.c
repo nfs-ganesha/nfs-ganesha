@@ -63,6 +63,10 @@
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
 
+#ifdef USE_MONITORING
+#include "monitoring.h"
+#endif
+
 #define NFS_V3_NB_COMMAND (NFSPROC3_COMMIT + 1)
 #define NFS_V4_NB_COMMAND 2
 #define MNT_V1_NB_COMMAND (MOUNTPROC3_EXPORT + 1)
@@ -1344,12 +1348,12 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 #ifdef _USE_NFS3
 static void record_v3_full_stats(struct svc_req *req,
 			       nsecs_elapsed_t request_time,
-			       bool success, bool dup);
+			       int status, bool dup);
 #endif
 
 static void record_v4_full_stats(uint32_t proc,
 			       nsecs_elapsed_t request_time,
-			       bool success);
+			       nfsstat4 status);
 
 /**
  * @brief record NFS op finished
@@ -1394,7 +1398,7 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
 #ifdef _USE_NFS3
 	if (nfs_param.core_param.enable_FULLV3STATS)
 		record_v3_full_stats(req, time_diff,
-			    rc == NFS_REQ_OK, dup);
+			    rc, dup);
 #endif
 	if (client != NULL) {
 		struct server_stats *server_st;
@@ -1447,8 +1451,7 @@ void server_stats_nfsv4_op_done(int proto_op,
 	time_diff = timespec_diff(start_time, &current_time);
 
 	if (nfs_param.core_param.enable_FULLV4STATS)
-		record_v4_full_stats(proto_op, time_diff,
-			    status == NFS4_OK);
+		record_v4_full_stats(proto_op, time_diff, status);
 
 	if (client != NULL) {
 		struct server_stats *server_st;
@@ -1560,6 +1563,20 @@ void server_stats_io_done(size_t requested,
 		record_io_stats(&exp_st->st, &op_ctx->ctx_export->lock,
 				requested, transferred, success, is_write);
 	}
+#ifdef USE_MONITORING
+	if (op_ctx->req_type == NFS_REQUEST) {
+		uint16_t export_id = 0;
+		struct fsal_export *export = op_ctx->fsal_export;
+		struct gsh_client *client = op_ctx->client;
+		const char *client_ip =
+			client == NULL ? "" : client->hostaddr_str;
+
+		if (export != NULL)
+			export_id = export->export_id;
+		monitoring_nfs_io(requested, transferred, success, is_write,
+				  export_id, client_ip);
+	}
+#endif
 }
 
 /**
@@ -3047,11 +3064,25 @@ void server_stats_allops_free(struct gsh_clnt_allops_stats *statsp)
 #ifdef _USE_NFS3
 static void record_v3_full_stats(struct svc_req *req,
 			       nsecs_elapsed_t request_time,
-			       bool success, bool dup)
+			       int status, bool dup)
 {
 	uint32_t prog = req->rq_msg.cb_prog;
 	uint32_t vers = req->rq_msg.cb_vers;
 	uint32_t proc = req->rq_msg.cb_proc;
+
+#ifdef USE_MONITORING
+	if (prog == NFS_PROGRAM) {
+		uint16_t export_id = 0;
+		struct fsal_export *export = op_ctx->fsal_export;
+		struct gsh_client *client = op_ctx->client;
+		const char *client_ip =
+			client == NULL ? "" : client->hostaddr_str;
+		if (export != NULL)
+			export_id = export->export_id;
+		monitoring_nfs3_request(proc, request_time, status,
+					export_id, client_ip);
+	}
+#endif
 
 	if (prog == NFS_program[P_NFS] && vers == NFS_V3) {
 		if (proc > NFSPROC3_COMMIT) {
@@ -3060,7 +3091,8 @@ static void record_v3_full_stats(struct svc_req *req,
 				proc);
 			return;
 		}
-		record_op(&v3_full_stats[proc], request_time, success, dup);
+		record_op(&v3_full_stats[proc], request_time,
+			  status == NFS_REQ_OK, dup);
 	}
 }
 
@@ -3081,15 +3113,26 @@ void reset_v3_full_stats(void)
 
 static void record_v4_full_stats(uint32_t proc,
 			       nsecs_elapsed_t request_time,
-			       bool success)
+			       nfsstat4 status)
 {
+#ifdef USE_MONITORING
+	uint16_t export_id = 0;
+	struct fsal_export *export = op_ctx->fsal_export;
+	struct gsh_client *client = op_ctx->client;
+	const char *client_ip = client == NULL ? "" : client->hostaddr_str;
+
+	if (export != NULL)
+		export_id = export->export_id;
+	monitoring_nfs4_request(proc, request_time, status, export_id,
+				client_ip);
+#endif
 	if (proc > NFS_V42_NB_OPERATION) {
 		LogCrit(COMPONENT_DBUS,
 			"proc is more than NFS4_OP_WRITE_SAME: %d\n",
 			proc);
 		return;
 	}
-	record_op(&v4_full_stats[proc], request_time, success, false);
+	record_op(&v4_full_stats[proc], request_time, status == NFS4_OK, false);
 }
 
 void reset_v4_full_stats(void)
