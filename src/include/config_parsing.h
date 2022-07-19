@@ -300,6 +300,7 @@ struct config_item_list {
 
 struct config_item {
 	char *name;
+	char *altname;
 	enum config_type type; /* switches union */
 	int flags;
 	union {

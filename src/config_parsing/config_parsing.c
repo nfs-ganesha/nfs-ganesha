@@ -1904,6 +1904,7 @@ int load_config_from_node(void *tree_node,
 {
 	struct config_node *node = (struct config_node *)tree_node;
 	char *blkname = conf_blk->blk_desc.name;
+	char *altblkname = conf_blk->blk_desc.altname;
 
 	if (node == NULL) {
 		config_proc_error(NULL, err_type,
@@ -1913,7 +1914,9 @@ int load_config_from_node(void *tree_node,
 		return -1;
 	}
 	if (node->type == TYPE_BLOCK) {
-		if (strcasecmp(node->u.nterm.name, blkname) != 0) {
+		if (strcasecmp(node->u.nterm.name, blkname) != 0 &&
+		    (altblkname == NULL ||
+		     strcasecmp(node->u.nterm.name, altblkname) != 0)) {
 			config_proc_error(node, err_type,
 					  "Looking for block (%s), got (%s)",
 					  blkname, node->u.nterm.name);
@@ -1963,6 +1966,7 @@ int load_config_from_parse(config_file_t config,
 	struct config_node *node = NULL;
 	struct glist_head *ns;
 	char *blkname = conf_blk->blk_desc.name;
+	char *altblkname = conf_blk->blk_desc.altname;
 	int found = 0;
 	int prev_errs = err_type->errors;
 	void *blk_mem = NULL;
@@ -1994,7 +1998,9 @@ int load_config_from_parse(config_file_t config,
 	glist_for_each(ns, &tree->root.u.nterm.sub_nodes) {
 		node = glist_entry(ns, struct config_node, node);
 		if (node->type == TYPE_BLOCK &&
-		    strcasecmp(blkname, node->u.nterm.name) == 0) {
+		    (strcasecmp(blkname, node->u.nterm.name) == 0 ||
+		     (altblkname != NULL &&
+		      strcasecmp(altblkname, node->u.nterm.name) == 0))) {
 			if (found > 0 &&
 			    (conf_blk->blk_desc.flags & CONFIG_UNIQUE)) {
 				config_proc_error(node, err_type,
