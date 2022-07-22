@@ -610,6 +610,22 @@ extern struct config_block mdcache_param_blk;
 	subcall_raw(__export, call); \
 } while (0)
 
+/* Call an async sub-FSAL function using it's export.
+ * op_ctx is undefined after this call.
+ */
+#define subcall_async_raw(myexp, call) do { \
+	op_ctx->fsal_export = (myexp)->mfe_exp.sub_export; \
+	call; \
+} while (0)
+
+/* Call an async sub-FSAL function using it's export.
+ * op_ctx is undefined after this call.
+ */
+#define subcall_async(call) do { \
+	struct mdcache_fsal_export *__export = mdc_cur_export(); \
+	subcall_async_raw(__export, call); \
+} while (0)
+
 /* During a callback from a sub-FSAL, call using MDCACHE's export */
 #define supercall_raw(myexp, call) do { \
 	LogFullDebug(COMPONENT_CACHE_INODE, "supercall %s", myexp->name); \
@@ -618,11 +634,12 @@ extern struct config_block mdcache_param_blk;
 	op_ctx->fsal_export = (myexp)->mfe_exp.sub_export; \
 } while (0)
 
-#define supercall(call) do { \
-	struct fsal_export *save_exp = op_ctx->fsal_export; \
-	op_ctx->fsal_export = save_exp->super_export; \
+/* During a callback from a sub-FSAL, call using MDCACHE's export.
+ * op_ctx is undefined after this call.
+ */
+#define supercall_async(call) do { \
+	op_ctx->fsal_export = op_ctx->fsal_export->super_export; \
 	call; \
-	op_ctx->fsal_export = save_exp; \
 } while (0)
 
 /**
