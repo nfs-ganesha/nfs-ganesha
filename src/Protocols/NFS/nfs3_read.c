@@ -148,14 +148,47 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 	return data->rc;
 }
 
+static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
+			  void *read_data, void *caller_data);
+
 static enum xprt_stat nfs3_read_resume(struct svc_req *req)
 {
 	nfs_request_t *reqdata = container_of(req, nfs_request_t, svc);
 	struct nfs3_read_data *data = reqdata->proc_data;
 	int rc;
+	uint32_t flags;
 
 	/* Restore the op_ctx */
 	resume_op_context(&reqdata->op_context);
+
+	if (data->read_arg.fsal_resume) {
+		/* FSAL is requesting another read2 call on resume */
+		atomic_postclear_uint32_t_bits(&data->flags,
+					       ASYNC_PROC_EXIT |
+					       ASYNC_PROC_DONE);
+
+		data->obj->obj_ops->read2(data->obj, true, nfs3_read_cb,
+					  &data->read_arg, data);
+
+		/* Only atomically set the flags if we actually call read2,
+		 * otherwise we will have indicated as having been DONE.
+		 */
+		flags =
+		    atomic_postset_uint32_t_bits(&data->flags, ASYNC_PROC_EXIT);
+
+		if ((flags & ASYNC_PROC_DONE) != ASYNC_PROC_DONE) {
+			/* The read was not finished before we got here. When
+			 * the read completes, nfs3_read_cb() will have to
+			 * reschedule the request for completion. The resume
+			 * will be resolved by nfs3_read_resume() which will
+			 * free read_data and return the appropriate return
+			 * result. We will NOT go async again for the read op
+			 * (but could for a subsequent op in the compound).
+			 */
+			suspend_op_context();
+			return XPRT_SUSPEND;
+		}
+	}
 
 	/* Complete the read */
 	rc = nfs3_complete_read(data);
@@ -361,6 +394,8 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	reqdata->proc_data = read_data;
 
+again:
+
 	/* Do the actual read */
 	obj->obj_ops->read2(obj, true, nfs3_read_cb, read_arg, read_data);
 
@@ -375,10 +410,20 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		 * read completes, nfs3_read_cb() will have to reschedule the
 		 * request for completion. The resume will be resolved by
 		 * nfs3_read_resume() which will free read_data and return
-		 * the appropriate return result. We will NOT go async again for
-		 * the read op (but could for a subsequent op in the compound).
+		 * the appropriate return result.
 		 */
 		return NFS_REQ_ASYNC_WAIT;
+	}
+
+	if (read_arg->fsal_resume) {
+		/* FSAL is requesting another read2 call */
+		atomic_postclear_uint32_t_bits(&read_data->flags,
+					       ASYNC_PROC_EXIT |
+					       ASYNC_PROC_DONE);
+		/* Make the call with the same params, though the FSAL will be
+		 * signaled by fsal_resume being set.
+		 */
+		goto again;
 	}
 
 	/* Complete the read */

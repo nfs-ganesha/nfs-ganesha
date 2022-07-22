@@ -98,29 +98,6 @@ done:
 	return nfsstat4_to_nfs_req_result(data->res_WRITE4->status);
 }
 
-enum nfs_req_result nfs4_op_write_resume(struct nfs_argop4 *op,
-					 compound_data_t *data,
-					 struct nfs_resop4 *resp)
-{
-	enum nfs_req_result rc = nfs4_complete_write(data->op_data);
-
-	/* NOTE: we do not expect rc == NFS_REQ_ASYNC_WAIT */
-	assert(rc != NFS_REQ_ASYNC_WAIT);
-
-	if (rc != NFS_REQ_ASYNC_WAIT) {
-		/* We are completely done with the request. This test wasn't
-		 * strictly necessary since nfs4_complete_read doesn't async but
-		 * at some future time, the getattr it does might go async so we
-		 * might as well be prepared here. Our caller is already
-		 * prepared for such a scenario.
-		 */
-		gsh_free(data->op_data);
-		data->op_data = NULL;
-	}
-
-	return rc;
-}
-
 /**
  * @brief Callback for NFS4 write done
  *
@@ -150,6 +127,64 @@ static void nfs4_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		 */
 		svc_resume(data->data->req);
 	}
+}
+
+enum nfs_req_result nfs4_op_write_resume(struct nfs_argop4 *op,
+					 compound_data_t *data,
+					 struct nfs_resop4 *resp)
+{
+	struct nfs4_write_data *write_data = data->op_data;
+	enum nfs_req_result rc;
+	uint32_t flags;
+
+	if (write_data->write_arg.fsal_resume) {
+		/* FSAL is requesting another write2 call on resume */
+		atomic_postclear_uint32_t_bits(&write_data->flags,
+					       ASYNC_PROC_EXIT |
+					       ASYNC_PROC_DONE);
+
+		write_data->obj->obj_ops->write2(write_data->obj, true,
+						 nfs4_write_cb,
+						 &write_data->write_arg,
+						 write_data);
+
+		/* Only atomically set the flags if we actually call write2,
+		 * otherwise we will have indicated as having been DONE.
+		 */
+		flags =
+		    atomic_postset_uint32_t_bits(&write_data->flags,
+						 ASYNC_PROC_EXIT);
+
+		if ((flags & ASYNC_PROC_DONE) != ASYNC_PROC_DONE) {
+			/* The write was not finished before we got here. When
+			 * the write completes, nfs4_write_cb() will have to
+			 * reschedule the request for completion. The resume
+			 * will be resolved by nfs4_op_write_resume() which will
+			 * free write_data and return the appropriate return
+			 * result. We will NOT go async again for the write op
+			 * (but could for a subsequent op in the compound).
+			 */
+			return NFS_REQ_ASYNC_WAIT;
+		}
+	}
+
+	rc = nfs4_complete_write(data->op_data);
+
+	/* NOTE: we do not expect rc == NFS_REQ_ASYNC_WAIT */
+	assert(rc != NFS_REQ_ASYNC_WAIT);
+
+	if (rc != NFS_REQ_ASYNC_WAIT) {
+		/* We are completely done with the request. This test wasn't
+		 * strictly necessary since nfs4_complete_write doesn't async
+		 * but at some future time, the getattr it does might go async
+		 * so we might as well be prepared here. Our caller is already
+		 * prepared for such a scenario.
+		 */
+		gsh_free(data->op_data);
+		data->op_data = NULL;
+	}
+
+	return rc;
 }
 
 /**
@@ -459,6 +494,8 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 
 	data->op_data = write_data;
 
+again:
+
 	/* Do the actual write */
 	obj->obj_ops->write2(obj, false, nfs4_write_cb, write_arg, write_data);
 
@@ -470,8 +507,10 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 
  out:
 
-	if (state_open != NULL)
+	if (state_open != NULL) {
 		dec_state_t_ref(state_open);
+		state_open = NULL;
+	}
 
 	if ((flags & ASYNC_PROC_DONE) != ASYNC_PROC_DONE) {
 		/* The write was not finished before we got here. When the
@@ -482,6 +521,17 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 		 * the write op (but could for a subsequent op in the compound).
 		 */
 		return NFS_REQ_ASYNC_WAIT;
+	}
+
+	if (write_data != NULL && write_arg->fsal_resume) {
+		/* FSAL is requesting another read2 call */
+		atomic_postclear_uint32_t_bits(&write_data->flags,
+					       ASYNC_PROC_EXIT |
+					       ASYNC_PROC_DONE);
+		/* Make the call with the same params, though the FSAL will be
+		 * signaled by fsal_resume being set.
+		 */
+		goto again;
 	}
 
 	if (data->op_data != NULL) {
