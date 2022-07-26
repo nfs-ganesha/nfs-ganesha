@@ -131,7 +131,7 @@ int nfsacl_getacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		} else {
 			encode_acl = encode_posix_acl(acl,
 				ACL_TYPE_ACCESS, attrs);
-			if (acl == NULL) {
+			if (encode_acl == NULL) {
 				LogFullDebug(COMPONENT_NFSPROTO,
 					"encode_posix_acl return NULL");
 				status = fsalstat(ERR_FSAL_FAULT, 0);
@@ -160,7 +160,7 @@ int nfsacl_getacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		} else {
 			encode_df_acl = encode_posix_acl(d_acl,
 				ACL_TYPE_DEFAULT, attrs);
-			if (acl == NULL) {
+			if (encode_df_acl == NULL) {
 				LogFullDebug(COMPONENT_NFSPROTO,
 					"encode_posix_acl return NULL");
 				status = fsalstat(ERR_FSAL_FAULT, 0);
