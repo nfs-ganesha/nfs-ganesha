@@ -283,12 +283,12 @@ void do_open(struct response *resp)
 		fprintf_stderr("path = '%s' name = '%s'\n", path, name);
 
 		rc = ceph_ll_walk(cmount, path, &parent, &stx, 0,
-				  AT_NO_ATTR_SYNC, cephperms);
+				  AT_STATX_DONT_SYNC, cephperms);
 
 		if (rc >= 0) {
 			rc = ceph_ll_create(cmount, parent, name, resp->r_mode,
 					    resp->r_flags, &inode, &filehandle,
-					    &stx, 0, AT_NO_ATTR_SYNC,
+					    &stx, 0, AT_STATX_DONT_SYNC,
 					    cephperms);
 
 			/* Release the parent directory. */
@@ -301,7 +301,7 @@ void do_open(struct response *resp)
 		}
 	} else {
 		rc = ceph_ll_walk(cmount, resp->r_data, &inode, &stx, 0,
-				  AT_NO_ATTR_SYNC, cephperms);
+				  AT_STATX_DONT_SYNC, cephperms);
 
 		if (rc >= 0) {
 			rc = ceph_ll_open(cmount, inode, resp->r_flags,
