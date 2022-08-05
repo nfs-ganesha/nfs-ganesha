@@ -122,12 +122,17 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 
 	if (pnew_state == NULL) {
 		if (state_type == STATE_TYPE_LOCK)
-			openstate = state_data->lock.openstate;
+			openstate = nfs4_State_Get_Pointer(
+				state_data->lock.openstate_key);
+
 
 		pnew_state = op_ctx->fsal_export->exp_ops.alloc_state(
 							op_ctx->fsal_export,
 							state_type,
 							openstate);
+
+		if (state_type == STATE_TYPE_LOCK && openstate)
+			dec_state_t_ref(openstate);
 	}
 
 	PTHREAD_MUTEX_init(&pnew_state->state_mutex, NULL);

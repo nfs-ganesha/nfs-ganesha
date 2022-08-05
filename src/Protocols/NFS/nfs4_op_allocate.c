@@ -94,8 +94,14 @@ static enum nfs_req_result allocate_deallocate(compound_data_t *data,
 		case STATE_TYPE_SHARE:
 			break;
 		case STATE_TYPE_LOCK:
-			state_open = state->state_data.lock.openstate;
-			inc_state_t_ref(state_open);
+			state_open = nfs4_State_Get_Pointer(
+				state->state_data.lock.openstate_key);
+
+			if (state_open == NULL) {
+				*status = NFS4ERR_BAD_STATEID;
+				goto out;
+			}
+
 			dec_state_t_ref(state);
 			state = state_open;
 			break;

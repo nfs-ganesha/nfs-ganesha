@@ -155,9 +155,15 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 				break;
 
 			case STATE_TYPE_LOCK:
-				state_open =
-				    state_found->state_data.lock.openstate;
-				inc_state_t_ref(state_open);
+				state_open = nfs4_State_Get_Pointer(
+				    state_found->state_data.lock.openstate_key);
+
+				if (state_open == NULL) {
+					res_SETATTR4->status =
+					    NFS4ERR_BAD_STATEID;
+					goto done;
+				}
+
 				break;
 
 			case STATE_TYPE_DELEG:

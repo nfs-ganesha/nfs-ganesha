@@ -357,8 +357,14 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 			lock_owner->so_owner.so_nfs4_owner.so_related_owner;
 		LogStateOwner("Open: ", open_owner);
 		inc_state_owner_ref(open_owner);
-		state_open = lock_state->state_data.lock.openstate;
-		inc_state_t_ref(state_open);
+		state_open = nfs4_State_Get_Pointer(
+			lock_state->state_data.lock.openstate_key);
+
+		if (state_open == NULL) {
+			res_LOCK4->status = NFS4ERR_BAD_STATEID;
+			goto out2;
+		}
+
 		resp_owner = lock_owner;
 		seqid = arg_LOCK4->locker.locker4_u.lock_owner.lock_seqid;
 
@@ -579,7 +585,8 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 
 			/* Prepare state management structure */
 			memset(&candidate_data, 0, sizeof(candidate_data));
-			candidate_data.lock.openstate = state_open;
+			memcpy(candidate_data.lock.openstate_key,
+				state_open->stateid_other, OTHERSIZE);
 
 			/* Add the lock state to the lock table */
 			state_status = state_add_impl(obj,

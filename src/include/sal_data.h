@@ -304,6 +304,16 @@ struct state_nlm_share {
 };
 
 /**
+ * @brief The number of bytes in the stateid.other
+ *
+ * The value 12 is fixed by RFC 3530/RFC 5661.
+ */
+#define OTHERSIZE 12
+
+extern char all_zero[OTHERSIZE];
+extern char all_ones[OTHERSIZE];
+
+/**
  * @brief Data for a set of locks
  */
 
@@ -313,7 +323,7 @@ struct state_lock {
 						   This field MUST be first */
 	struct glist_head state_sharelist;	/*< List of states related
 						   to a share */
-	state_t *openstate;	/*< The related open-state */
+	char openstate_key[OTHERSIZE]; /*< The hash key of related open-state */
 };
 
 /**
@@ -387,16 +397,6 @@ union state_data {
 	struct state_9p_fid fid;
 	uint32_t io_advise;
 };
-
-/**
- * @brief The number of bytes in the stateid.other
- *
- * The value 12 is fixed by RFC 3530/RFC 5661.
- */
-#define OTHERSIZE 12
-
-extern char all_zero[OTHERSIZE];
-extern char all_ones[OTHERSIZE];
 
 /**
  * @brief Structure representing a single NFSv4 state

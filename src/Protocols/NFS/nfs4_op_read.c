@@ -461,8 +461,14 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 			break;
 
 		case STATE_TYPE_LOCK:
-			state_open = state_found->state_data.lock.openstate;
-			inc_state_t_ref(state_open);
+			state_open = nfs4_State_Get_Pointer(
+			    state_found->state_data.lock.openstate_key);
+
+			if (state_open == NULL) {
+				res_READ4->status = NFS4ERR_BAD_STATEID;
+				goto out;
+			}
+
 			/**
 			 * @todo FSF: should check that write is in
 			 * range of an byte range lock...
