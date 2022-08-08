@@ -65,7 +65,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_obj_handle *obj_dir = NULL;
 	struct fsal_obj_handle *obj_file = NULL;
 	fsal_status_t fsal_status;
-	char *name = NULL;
+	char *name = arg->arg_lookup3.what.name;
 	int rc = NFS_REQ_OK;
 	struct fsal_attrlist attrs;
 	LOOKUP3resfail *resfail = &res->res_lookup3.LOOKUP3res_u.resfail;
@@ -89,8 +89,6 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
-
-	name = arg->arg_lookup3.what.name;
 
 	fsal_status = fsal_lookup(obj_dir, name, &obj_file, &attrs);
 
