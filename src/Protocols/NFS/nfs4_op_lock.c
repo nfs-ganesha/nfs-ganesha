@@ -565,6 +565,18 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 		}
 
 		if (lock_state == NULL) {
+			/* Check again whether state_open exist in hashtable
+			 * with the guard of STATELOCK. If does not exist,
+			 * it means file already closed.
+			 */
+			if (nfs4_State_Get_Pointer(
+				state_open->stateid_other) == NULL) {
+				res_LOCK4->status = NFS4ERR_BAD_STATEID;
+				goto out2;
+			}
+
+			dec_state_t_ref(state_open);
+
 			/* Prepare state management structure */
 			memset(&candidate_data, 0, sizeof(candidate_data));
 			candidate_data.lock.openstate = state_open;
