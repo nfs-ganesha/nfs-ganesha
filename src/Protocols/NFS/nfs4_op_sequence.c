@@ -129,8 +129,23 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 				 * Take a reference to the slot cached response.
 				 */
 				data->slot = slot;
+
+				/* Free the reply allocated originally */
+				release_nfs4_res_compound(
+					data->res->res_compound4_extended);
+
 				refcnt = atomic_inc_int32_t(
 					&slot->cached_result->res_refcnt);
+
+				/* Copy the reply from the cache (the reference
+				 * is already taken by SEQUENCE.
+				 */
+				data->res->res_compound4_extended =
+					data->slot->cached_result;
+
+				data->cached_result_status =
+					((COMPOUND4res *) data->slot->
+						cached_result)->status;
 
 				LogFullDebugAlt(COMPONENT_SESSIONS,
 						COMPONENT_CLIENTID,

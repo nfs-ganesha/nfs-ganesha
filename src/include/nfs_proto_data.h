@@ -356,6 +356,8 @@ struct compound_data {
 						   reserved, if any */
 	struct nfs41_session_slot__ *slot;	/*< NFv41: pointer to the
 							session's slot */
+	nfsstat4 cached_result_status; /* <NFv41: save the
+	    slot->cached_result->status for reply request */
 	bool sa_cachethis;	/*< True if cachethis was specified in
 				    SEQUENCE op. */
 	nfs_opnum4 opcode;	/*< Current NFS4 OP */
