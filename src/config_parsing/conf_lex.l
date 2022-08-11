@@ -235,12 +235,12 @@ INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
 	{
 		int c;
 
-		DEBUG_LEX("Calling new_file with unquoted %s\n", yytext);
+		DEBUG_LEX("Calling fetch_url with unquoted %s\n", yytext);
 		c = fetch_url(yytext, stp);
 		if (c == ENOMEM)
 			yyterminate();
 		BEGIN YY_INIT;
-		DEBUG_LEX("done new file\n");
+		DEBUG_LEX("done fetch url\n");
 	}
 }
 
@@ -248,12 +248,12 @@ INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
 	{
 		int c;
 
-		DEBUG_LEX("Calling new_file with quoted %s\n", yytext);
+		DEBUG_LEX("Calling fetch_url with quoted %s\n", yytext);
 		c = fetch_url(yytext, stp);
 		if (c == ENOMEM)
 			yyterminate();
 		BEGIN YY_INIT;
-		DEBUG_LEX("done new file\n");
+		DEBUG_LEX("done fetch url\n");
 	}
 }
 
