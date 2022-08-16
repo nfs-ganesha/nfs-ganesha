@@ -39,6 +39,89 @@
 #include "nfs_proto_functions.h"
 
 /**
+ * @brief check whether request is real a replay
+ *
+ * Check whether current request is a replay of slot's last request,
+ * by checking whether the operations are same.
+ *
+ *  @param[in]  data        Compound request's data
+ *  @param[in]  slot        current request's slot
+ *  @param[in]  slotid      current request's slotid
+ *  @param[in]  req_seq_id  current request's sequence id
+ *
+ */
+
+void check_replay_request(compound_data_t *data, nfs41_session_slot_t *slot,
+	sequenceid4 req_seq_id, uint32_t slotid)
+{
+	nfs_opnum4 opcodes[NFS4_MAX_OPERATIONS] = {0};
+	uint32_t req_xid, i, opcode_num;
+
+	req_xid = data->req->rq_msg.rm_xid;
+	if (slot->last_req.seq_id != req_seq_id)
+		return;
+
+	opcode_num = get_nfs4_opcodes(data,
+		opcodes, NFS4_MAX_OPERATIONS);
+
+	if (opcode_num != slot->last_req.opcode_num)
+		goto errout;
+
+	for (i = 0; i < opcode_num; i++)
+		if (opcodes[i] != slot->last_req.opcodes[i])
+			goto errout;
+
+	return;
+
+errout:
+
+	/* If this happens, maybe cause client hangs forever, and can not
+	 * recover, unless restart ganesha.
+	 * For example, if client use kernel 4.14.81 in https://kernel.org/,
+	 * OP_SEQUENCE comes first, and then comes OP_GETATTR which share
+	 * the same slot and sequenceid with the former OP_SEQUENCE, and
+	 * ganesha reply NFS4ERR_RETRY_UNCACHED_REP. Then nfs-client will
+	 * still send the OP_GETATTR with the same slot and sequenceid,
+	 * and ganesha still reply NFS4ERR_RETRY_UNCACHED_REP, ..., this
+	 * will last forever. This bug, i.e. different requests share the
+	 * same slot and sequenceid, disapper in kernel 5.4.xx, fixed
+	 * by some former version.
+	 */
+	if (likely(component_log_level[COMPONENT_SESSIONS] >= NIV_EVENT)) {
+		char last_operations[NFS4_COMPOUND_OPERATIONS_STR_LEN] = "\0";
+		char curr_operations[NFS4_COMPOUND_OPERATIONS_STR_LEN] = "\0";
+
+		struct display_buffer last_buf = {sizeof(last_operations),
+			last_operations, last_operations};
+		struct display_buffer curr_buf = {sizeof(curr_operations),
+			curr_operations, curr_operations};
+
+		display_nfs4_operations(&last_buf, slot->last_req.opcodes,
+			slot->last_req.opcode_num);
+		display_nfs4_operations(&curr_buf, opcodes, opcode_num);
+
+		LogEvent(COMPONENT_SESSIONS,
+			"Not a replay request, maybe caused by nfs-client's bug, please try upgrade the nfs-client's kernel");
+		LogEvent(COMPONENT_SESSIONS,
+			"Last request %s slotid %"PRIu32
+			" seqid %"PRIu32" xid %"PRIu32
+			" finish time_ms %"PRIu64,
+			last_operations,
+			slotid,
+			slot->last_req.seq_id,
+			slot->last_req.xid,
+			slot->last_req.finish_time_ms);
+		LogEvent(COMPONENT_SESSIONS,
+			"Current request %s slotid %"PRIu32
+			" seqid %"PRIu32" xid %"PRIu32,
+			curr_operations,
+			slotid,
+			req_seq_id,
+			req_xid);
+	}
+}
+
+/**
  * @brief the NFS4_OP_SEQUENCE operation
  *
  * @param[in]     op   nfs4_op arguments
@@ -120,6 +203,8 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	if (slot->sequence + 1 != arg_SEQUENCE4->sa_sequenceid) {
 		/* This sequence is NOT the next sequence */
 		if (slot->sequence == arg_SEQUENCE4->sa_sequenceid) {
+			check_replay_request(data, slot,
+				arg_SEQUENCE4->sa_sequenceid, slotid);
 			/* But it is the previous sequence */
 			if (slot->cached_result != NULL) {
 				int32_t refcnt;

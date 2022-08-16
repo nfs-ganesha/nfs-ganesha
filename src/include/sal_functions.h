@@ -335,6 +335,8 @@ nfs_client_record_t *get_client_record(const char *const value,
 
 int display_session_id(struct display_buffer *dspbuf, char *session_id);
 int display_session(struct display_buffer *dspbuf, nfs41_session_t *session);
+int display_nfs4_operations(struct display_buffer *dspbuf, nfs_opnum4 *opcodes,
+	uint32_t opcode_num);
 
 int32_t _inc_session_ref(nfs41_session_t *session, const char *func, int line);
 #define inc_session_ref(s)  _inc_session_ref(s, __func__, __LINE__)

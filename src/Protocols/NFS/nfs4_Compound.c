@@ -44,6 +44,7 @@
 #include "export_mgr.h"
 #include "nfs_creds.h"
 #include "pnfs_utils.h"
+#include <time.h>
 
 #ifdef USE_LTTNG
 #include "gsh_lttng/nfs_rpc.h"
@@ -920,6 +921,19 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 	return result;
 }
 
+void set_slot_last_req(compound_data_t *data)
+{
+	struct timespec curr_time;
+
+	data->slot->last_req.opcode_num = get_nfs4_opcodes(data,
+		data->slot->last_req.opcodes, NFS4_MAX_OPERATIONS);
+	data->slot->last_req.xid = data->req->rq_msg.rm_xid;
+	data->slot->last_req.seq_id = data->sequence;
+	now(&curr_time);
+	data->slot->last_req.finish_time_ms = curr_time.tv_sec * 1000 +
+		curr_time.tv_nsec / 1000000;
+}
+
 void complete_nfs4_compound(compound_data_t *data, int status,
 			    enum nfs_req_result result)
 {
@@ -950,6 +964,9 @@ void complete_nfs4_compound(compound_data_t *data, int status,
 		 */
 		data->slot->cached_result = data->res->res_compound4_extended;
 
+		/* record the latest request. */
+		set_slot_last_req(data);
+
 		/* Take a reference to indicate that this reply is cached. */
 		atomic_inc_int32_t(&data->slot->cached_result->res_refcnt);
 	} else if (data->minorversion > 0 &&
@@ -969,6 +986,9 @@ void complete_nfs4_compound(compound_data_t *data, int status,
 		/* Allocate (and zero) a new COMPOUND4res_extended */
 		data->slot->cached_result =
 			gsh_calloc(1, sizeof(*data->slot->cached_result));
+
+		/* record the latest request. */
+		set_slot_last_req(data);
 
 		/* Take initial reference to response. */
 		data->slot->cached_result->res_refcnt = 1;
@@ -1101,6 +1121,29 @@ static enum xprt_stat nfs4_compound_resume(struct svc_req *req)
 	nfs_rpc_complete_async_request(reqdata, NFS_REQ_OK);
 
 	return XPRT_IDLE;
+}
+
+/**
+ *
+ * @brief get the opcodes of compound
+ *
+ *  @param[in]  data               Compound request's data
+ *  @param[out] opcodes            all opcodes in Compound
+ *  @param[in]  opcodes_array_len  length of opcodes array
+ *
+ * @retval number of opcode in compound.
+ */
+uint32_t get_nfs4_opcodes(compound_data_t *data, nfs_opnum4 *opcodes,
+	 uint32_t opcodes_array_len)
+{
+	uint32_t i = 0;
+
+	assert(opcodes_array_len >= data->argarray_len);
+
+	for (i = 0; i < data->argarray_len; i++)
+		opcodes[i] = data->argarray[i].argop;
+
+	return data->argarray_len;
 }
 
 /**
@@ -1300,6 +1343,22 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				goto out;
 			}
 		}
+	}
+
+	if (likely(component_log_level[COMPONENT_NFS_V4] >= NIV_FULL_DEBUG)) {
+		nfs_opnum4 opcodes[NFS4_MAX_OPERATIONS] = {0};
+		uint32_t opcode_num = get_nfs4_opcodes(data,
+			opcodes, NFS4_MAX_OPERATIONS);
+
+		char operations[NFS4_COMPOUND_OPERATIONS_STR_LEN] = "\0";
+		struct display_buffer dspbuf = {sizeof(operations),
+			operations, operations};
+
+		display_nfs4_operations(&dspbuf, opcodes, opcode_num);
+
+		LogFullDebug(COMPONENT_NFS_V4,
+			"COMPOUND: There are %d operations %s",
+			argarray_len, operations);
 	}
 
 	/* Before we start running, we must prepare to be suspended. We must do
