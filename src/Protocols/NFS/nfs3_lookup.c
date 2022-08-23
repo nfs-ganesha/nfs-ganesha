@@ -75,6 +75,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 */
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
+	name = arg->arg_lookup3.what.name;
 	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_lookup3.what.dir,
 			  " name: %s", name);
 
@@ -89,8 +90,6 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
 	}
-
-	name = arg->arg_lookup3.what.name;
 
 	fsal_status = fsal_lookup(obj_dir, name, &obj_file, &attrs);
 
