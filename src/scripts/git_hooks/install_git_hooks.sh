@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [[ $OSTYPE == 'darwin'* ]]; then
 	CURDIR=$(dirname "$(greadlink -m "$0")")
