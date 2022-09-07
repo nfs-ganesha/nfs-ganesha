@@ -91,16 +91,16 @@ class ClientMgr():
         clients = []
         for client in client_array:
             cl_ = client
-            lasttime = cl_[9]
+            lasttime = cl_[2]
             clt = Client(ClientIP=str(cl_[0]),
-                         HasNFSv3=cl_[1],
-                         HasMNT=cl_[2],
-                         HasNLM4=cl_[3],
-                         HasRQUOTA=cl_[4],
-                         HasNFSv40=cl_[5],
-                         HasNFSv41=cl_[6],
-                         HasNFSv42=cl_[7],
-                         Has9P=cl_[8],
+                         HasNFSv3=cl_[1][0][1],
+                         HasMNT=cl_[1][1][1],
+                         HasNLM4=cl_[1][2][1],
+                         HasRQUOTA=cl_[1][3][1],
+                         HasNFSv40=cl_[1][4][1],
+                         HasNFSv41=cl_[1][5][1],
+                         HasNFSv42=cl_[1][6][1],
+                         Has9P=cl_[1][7][1],
                          LastTime=(lasttime[0],
                                    lasttime[1]))
             clients.append(clt)
@@ -220,17 +220,17 @@ class ExportMgr():
         exports = []
         for export in export_array:
             ex = export
-            lasttime = ex[10]
+            lasttime = ex[3]
             exp = Export(ExportID=ex[0],
                          ExportPath=str(ex[1]),
-                         HasNFSv3=ex[2],
-                         HasMNT=ex[3],
-                         HasNLM4=ex[4],
-                         HasRQUOTA=ex[5],
-                         HasNFSv40=ex[6],
-                         HasNFSv41=ex[7],
-                         HasNFSv42=ex[8],
-                         Has9P=ex[9],
+                         HasNFSv3=ex[2][0][1],
+                         HasMNT=ex[2][1][1],
+                         HasNLM4=ex[2][2][1],
+                         HasRQUOTA=ex[2][3][1],
+                         HasNFSv40=ex[2][4][1],
+                         HasNFSv41=ex[2][5][1],
+                         HasNFSv42=ex[2][6][1],
+                         Has9P=ex[2][7][1],
                          LastTime=(lasttime[0],
                                    lasttime[1]))
             exports.append(exp)
