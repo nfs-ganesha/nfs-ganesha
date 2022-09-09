@@ -1681,6 +1681,93 @@ static fsal_status_t ceph_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+struct ceph_fsal_cb_info {
+	struct fsal_io_arg *arg;
+	struct req_op_context *ctx;
+	struct ceph_ll_io_info io_info;
+	struct ceph_fd *my_fd;
+	struct fsal_obj_handle *obj_hdl;
+	fsal_async_cb done_cb;
+	void *caller_arg;
+	struct ceph_fd temp_fd;
+};
+
+void ceph_read2_cb(struct ceph_ll_io_info *cb_info)
+{
+	struct ceph_fsal_cb_info *cbi = cb_info->priv;
+	struct fsal_io_arg *read_arg = cbi->arg;
+	fsal_status_t status = {0, 0}, status2;
+	struct fsal_obj_handle *obj_hdl = cbi->obj_hdl;
+	struct ceph_handle *myself =
+			container_of(cbi->obj_hdl, struct ceph_handle, handle);
+
+	if (read_arg->fsal_resume) {
+		/* op context should already be set... */
+		assert(read_arg->fsal_resume == FSAL_CLOSEFD);
+		read_arg->fsal_resume = FSAL_NORESUME;
+		goto resume;
+	}
+
+	/* We need the op_ctx from the original call to call back into the
+	 * protocol layer callback.
+	 */
+	resume_op_context(cbi->ctx);
+
+	/* Check result of operation */
+	if (cb_info->result < 0) {
+		/* An error occurred. */
+		status = ceph2fsal_error(cb_info->result);
+		LogFullDebug(COMPONENT_FSAL,
+			     "Read returned %s",
+			     msg_fsal_err(status.major));
+	} else {
+		/* I/O completed. */
+		read_arg->io_amount = cb_info->result;
+		LogFullDebug(COMPONENT_FSAL,
+			     "Read returned %" PRIu64,
+			     cb_info->result);
+	}
+
+	if (cbi->my_fd->fsal_fd.close_on_complete) {
+		/* We need to ask to resume so we can complete I/O not on the
+		 * call back thread since we have to call close.
+		 */
+		read_arg->fsal_resume = FSAL_CLOSEFD;
+		cbi->done_cb(obj_hdl, status, read_arg, cbi->caller_arg);
+		return;
+	}
+
+resume:
+
+	status2 = fsal_complete_io(obj_hdl, &cbi->my_fd->fsal_fd);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
+
+	if (read_arg->state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &myself->share,
+					     FSAL_O_READ, FSAL_O_CLOSED);
+	}
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_read, __func__, __LINE__,
+		   obj_hdl->fileid, cb_info->result);
+#endif
+
+	cbi->done_cb(obj_hdl, status, read_arg, cbi->caller_arg);
+
+	gsh_free(cbi);
+}
+#endif
+
 /**
  * @brief Read data from a file
  *
@@ -1704,17 +1791,29 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			    fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 			    void *caller_arg)
 {
-	ssize_t nb_read;
 	fsal_status_t status = {0, 0}, status2;
 	struct ceph_fd *my_fd;
-	struct ceph_fd temp_fd = { FSAL_FD_INIT, NULL };
 	struct fsal_fd *out_fd;
 	struct ceph_handle *myself =
 			container_of(obj_hdl, struct ceph_handle, handle);
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	uint64_t offset = read_arg->offset;
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	struct ceph_fsal_cb_info *cbi;
+	int64_t result;
+#else
+	ssize_t nb_read;
+	struct ceph_fd temp_fd = { FSAL_FD_INIT, NULL };
 	int i;
+#endif
+
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	if (read_arg->fsal_resume) {
+		ceph_read2_cb(read_arg->cbi);
+		return;
+	}
+#endif
 
 	if (read_arg->info != NULL) {
 		/* Currently we don't support READ_PLUS */
@@ -1723,10 +1822,24 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		return;
 	}
 
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	/* Allocate ceph call back information */
+	cbi = gsh_calloc(1, sizeof(*cbi));
+
+	init_fsal_fd(&cbi->temp_fd.fsal_fd, FSAL_FD_TEMP, op_ctx->fsal_export);
+#endif
+
 	/* Indicate a desire to start io and get a usable file descritor */
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	status = fsal_start_io(&out_fd, obj_hdl, &myself->fd.fsal_fd,
+			       &cbi->temp_fd.fsal_fd, read_arg->state,
+			       FSAL_O_READ, false, NULL,
+			       bypass, &myself->share);
+#else
 	status = fsal_start_io(&out_fd, obj_hdl, &myself->fd.fsal_fd,
 			       &temp_fd.fsal_fd, read_arg->state, FSAL_O_READ,
 			       false, NULL, bypass, &myself->share);
+#endif
 
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL,
@@ -1739,6 +1852,45 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 
 	read_arg->io_amount = 0;
 
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	cbi->io_info.callback = ceph_read2_cb;
+	cbi->io_info.priv = cbi;
+	cbi->io_info.fh = my_fd->fd;
+	cbi->io_info.iov = read_arg->iov;
+	cbi->io_info.iovcnt = read_arg->iov_count;
+	cbi->io_info.off = offset;
+	cbi->io_info.write = false;
+	cbi->arg = read_arg;
+	cbi->ctx = op_ctx;
+	cbi->my_fd = my_fd;
+	cbi->obj_hdl = obj_hdl;
+	cbi->done_cb = done_cb;
+	cbi->caller_arg = caller_arg;
+	read_arg->cbi = cbi;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Calling ceph_ll_nonblocking_readv_writev for read");
+
+	result = ceph_ll_nonblocking_readv_writev(export->cmount,
+						  &cbi->io_info);
+
+	if (result < 0) {
+		/* An error occurred. */
+		status = ceph2fsal_error(result);
+	} else if (result == 0) {
+		/* I/O will complete async, suspend op_ctx and return. */
+		suspend_op_context();
+		return;
+	} else {
+		/* I/O actually completed... */
+		read_arg->io_amount = result;
+	}
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_read, __func__, __LINE__,
+		   obj_hdl->fileid, result);
+#endif
+#else
 	for (i = 0; i < read_arg->iov_count; i++) {
 		nb_read = ceph_ll_read(export->cmount, my_fd->fd, offset,
 				       read_arg->iov[i].iov_len,
@@ -1760,6 +1912,7 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	tracepoint(fsalceph, ceph_read, __func__, __LINE__,
 		   obj_hdl->fileid, nb_read);
 #endif
+#endif
 
 #if 0
 	/** @todo
@@ -1777,7 +1930,10 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	}
 #endif
 
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+#else
  out:
+#endif
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
 
@@ -1799,7 +1955,88 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
  exit:
 
 	done_cb(obj_hdl, status, read_arg, caller_arg);
+
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	gsh_free(cbi);
+#endif
 }
+
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+void ceph_write2_cb(struct ceph_ll_io_info *cb_info)
+{
+	struct ceph_fsal_cb_info *cbi = cb_info->priv;
+	struct fsal_io_arg *write_arg = cbi->arg;
+	fsal_status_t status = {0, 0}, status2;
+	struct fsal_obj_handle *obj_hdl = cbi->obj_hdl;
+	struct ceph_handle *myself =
+			container_of(cbi->obj_hdl, struct ceph_handle, handle);
+
+	if (write_arg->fsal_resume) {
+		/* op context should already be set... */
+		assert(write_arg->fsal_resume == FSAL_CLOSEFD);
+		write_arg->fsal_resume = FSAL_NORESUME;
+		goto resume;
+	}
+
+	/* We need the op_ctx from the original call to call back into the
+	 * protocol layer callback.
+	 */
+	resume_op_context(cbi->ctx);
+
+	/* Check result of operation */
+	if (cb_info->result < 0) {
+		/* An error occurred. */
+		status = ceph2fsal_error(cb_info->result);
+		LogFullDebug(COMPONENT_FSAL,
+			     "Write returned %s",
+			     msg_fsal_err(status.major));
+	} else {
+		/* I/O completed. */
+		write_arg->io_amount = cb_info->result;
+
+		LogFullDebug(COMPONENT_FSAL,
+			     "Write returned %" PRIu64,
+			     cb_info->result);
+	}
+
+	if (cbi->my_fd->fsal_fd.close_on_complete) {
+		/* We need to ask to resume so we can complete I/O not on the
+		 * call back thread since we have to call close.
+		 */
+		write_arg->fsal_resume = FSAL_CLOSEFD;
+		cbi->done_cb(obj_hdl, status, write_arg, cbi->caller_arg);
+		return;
+	}
+
+resume:
+
+	status2 = fsal_complete_io(obj_hdl, &cbi->my_fd->fsal_fd);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
+
+	if (write_arg->state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &myself->share,
+					     FSAL_O_WRITE, FSAL_O_CLOSED);
+	}
+
+#ifdef USE_LTTNG
+	tracepoint(fsalceph, ceph_write, __func__, __LINE__,
+		   obj_hdl->fileid, cb_info->result);
+#endif
+
+	cbi->done_cb(obj_hdl, status, write_arg, cbi->caller_arg);
+
+	gsh_free(cbi);
+}
+#endif
 
 /**
  * @brief Write data to a file
@@ -1824,22 +2061,46 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			     fsal_async_cb done_cb,
 			     struct fsal_io_arg *write_arg, void *caller_arg)
 {
-	ssize_t nb_written;
 	fsal_status_t status = {0, 0}, status2;
 	struct ceph_fd *my_fd;
-	struct ceph_fd temp_fd = { FSAL_FD_INIT, NULL };
 	struct fsal_fd *out_fd;
 	struct ceph_handle *myself =
 			container_of(obj_hdl, struct ceph_handle, handle);
-	int i, retval = 0;
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
 	uint64_t offset = write_arg->offset;
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	struct ceph_fsal_cb_info *cbi;
+	int64_t result;
+#else
+	ssize_t nb_written;
+	struct ceph_fd temp_fd = { FSAL_FD_INIT, NULL };
+	int i, retval = 0;
+#endif
+
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	if (write_arg->fsal_resume) {
+		ceph_write2_cb(write_arg->cbi);
+		return;
+	}
+
+	/* Allocate ceph call back information */
+	cbi = gsh_calloc(1, sizeof(*cbi));
+
+	init_fsal_fd(&cbi->temp_fd.fsal_fd, FSAL_FD_TEMP);
+#endif
 
 	/* Indicate a desire to start io and get a usable file descritor */
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	status = fsal_start_io(&out_fd, obj_hdl, &myself->fd.fsal_fd,
+			       &cbi->temp_fd.fsal_fd, write_arg->state,
+			       FSAL_O_WRITE, false, NULL,
+			       bypass, &myself->share);
+#else
 	status = fsal_start_io(&out_fd, obj_hdl, &myself->fd.fsal_fd,
 			       &temp_fd.fsal_fd, write_arg->state, FSAL_O_WRITE,
 			       false, NULL, bypass, &myself->share);
+#endif
 
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL,
@@ -1850,6 +2111,46 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 
 	my_fd = container_of(out_fd, struct ceph_fd, fsal_fd);
 
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	cbi->io_info.callback = ceph_write2_cb;
+	cbi->io_info.priv = cbi;
+	cbi->io_info.fh = my_fd->fd;
+	cbi->io_info.iov = write_arg->iov;
+	cbi->io_info.iovcnt = write_arg->iov_count;
+	cbi->io_info.off = offset;
+	cbi->io_info.write = true;
+	cbi->io_info.fsync = write_arg->fsal_stable;
+	cbi->io_info.syncdataonly = false;
+	cbi->arg = write_arg;
+	cbi->ctx = op_ctx;
+	cbi->my_fd = my_fd;
+	cbi->obj_hdl = obj_hdl;
+	cbi->done_cb = done_cb;
+	cbi->caller_arg = caller_arg;
+	write_arg->cbi = cbi;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "Calling ceph_ll_nonblocking_readv_writev for write");
+
+	result = ceph_ll_nonblocking_readv_writev(export->cmount,
+						  &cbi->io_info);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "ceph_ll_nonblocking_readv_writev for write returned %"
+		     PRIi64, result);
+
+	if (result < 0) {
+		/* An error occurred. */
+		status = ceph2fsal_error(result);
+	} else if (result == 0) {
+		/* I/O will complete async, suspend op_ctx and return. */
+		suspend_op_context();
+		return;
+	} else {
+		/* I/O actually completed... */
+		write_arg->io_amount = result;
+	}
+#else
 	for (i = 0; i < write_arg->iov_count; i++) {
 		nb_written = ceph_ll_write(export->cmount, my_fd->fd, offset,
 					   write_arg->iov[i].iov_len,
@@ -1874,13 +2175,17 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			write_arg->fsal_stable = false;
 		}
 	}
+#endif
 
 #ifdef USE_LTTNG
 	tracepoint(fsalceph, ceph_write, __func__, __LINE__,
 		   obj_hdl->fileid, nb_written);
 #endif
 
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+#else
  out:
+#endif
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
 
@@ -1902,6 +2207,10 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
  exit:
 
 	done_cb(obj_hdl, status, write_arg, caller_arg);
+
+#if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	gsh_free(cbi);
+#endif
 }
 
 /**
