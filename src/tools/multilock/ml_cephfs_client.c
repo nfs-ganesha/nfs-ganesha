@@ -256,6 +256,11 @@ void do_alarm(struct response *resp)
 	resp->r_status = STATUS_OK;
 }
 
+/* Hack for backwards compatibility */
+#ifndef AT_STATX_DONT_SYNC
+#define AT_STATX_DONT_SYNC AT_NO_ATTR_SYNC
+#endif
+
 void do_open(struct response *resp)
 {
 	int rc;
