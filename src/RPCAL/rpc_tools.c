@@ -448,8 +448,7 @@ bool is_loopback(sockaddr_t *addr)
 
 	if (addr->ss_family == AF_INET) {
 		struct sockaddr_in *inaddr = (struct sockaddr_in *)addr;
-
-		return (inaddr->sin_addr.s_addr & 0xFF000000) == 0x7F000000;
+		return (((char *)&(inaddr->sin_addr.s_addr))[0] == 0x7F);
 	} else if (addr->ss_family != AF_INET6) {
 		return false;
 	}
