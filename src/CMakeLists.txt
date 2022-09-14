@@ -1537,6 +1537,12 @@ else(${ALLOCATOR} STREQUAL "jemalloc")
     set(BCOND_JEMALLOC "%bcond_with")
 endif(${ALLOCATOR} STREQUAL "jemalloc")
 
+if(${ALLOCATOR} STREQUAL "tcmalloc")
+    set(BCOND_TCMALLOC "%bcond_without")
+else(${ALLOCATOR} STREQUAL "tcmalloc")
+    set(BCOND_TCMALLOC "%bcond_with")
+endif(${ALLOCATOR} STREQUAL "tcmalloc")
+
 if(USE_ADMIN_TOOLS)
     set(BCOND_UTILS "%bcond_without")
 else(USE_ADMIN_TOOLS)
