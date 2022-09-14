@@ -1808,6 +1808,8 @@ mdcache_lru_pkginit(void)
 	/* Return code from system calls */
 	int code = 0;
 	struct fridgethr_params frp;
+	fsal_status_t status;
+	struct fd_lru_parameter fd_lru_parameter;
 
 	memset(&frp, 0, sizeof(struct fridgethr_params));
 	frp.thr_max = 2;
@@ -1862,7 +1864,21 @@ mdcache_lru_pkginit(void)
 		return fsalstat(posix2fsal_error(code), code);
 	}
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	fd_lru_parameter.lru_run_interval = mdcache_param.lru_run_interval;
+	fd_lru_parameter.fd_limit_percent = mdcache_param.fd_limit_percent;
+	fd_lru_parameter.fd_hwmark_percent = mdcache_param.fd_hwmark_percent;
+	fd_lru_parameter.fd_lwmark_percent = mdcache_param.fd_lwmark_percent;
+	fd_lru_parameter.reaper_work = mdcache_param.reaper_work;
+	fd_lru_parameter.reaper_work_per_lane =
+					mdcache_param.reaper_work_per_lane;
+	fd_lru_parameter.biggest_window = mdcache_param.biggest_window;
+	fd_lru_parameter.required_progress = mdcache_param.required_progress;
+	fd_lru_parameter.futility_count = mdcache_param.futility_count;
+	fd_lru_parameter.fd_fallback_limit = FD_FALLBACK_LIMIT;
+
+	status = fd_lru_pkginit(&fd_lru_parameter);
+
+	return status;
 }
 
 /**
@@ -1873,6 +1889,7 @@ mdcache_lru_pkginit(void)
 fsal_status_t
 mdcache_lru_pkgshutdown(void)
 {
+	fsal_status_t status;
 	int rc = fridgethr_sync_command(lru_fridge,
 					fridgethr_comm_stop,
 					120);
@@ -1885,7 +1902,13 @@ mdcache_lru_pkgshutdown(void)
 		LogMajor(COMPONENT_CACHE_INODE_LRU,
 			 "Failed shutting down LRU thread: %d", rc);
 	}
-	return fsalstat(posix2fsal_error(rc), rc);
+
+	if (rc == 0)
+		status = fd_lru_pkgshutdown();
+	else
+		status = fsalstat(posix2fsal_error(rc), rc);
+
+	return status;
 }
 
 static inline void init_rw_locks(mdcache_entry_t *entry)

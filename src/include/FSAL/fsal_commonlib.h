@@ -245,7 +245,7 @@ fsal_status_t fsal_reopen_fd(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
 			    struct fsal_fd *fsal_fd,
-			    fsal_close_func close_func);
+			    bool is_reclaiming);
 
 fsal_status_t fsal_reopen_obj(struct fsal_obj_handle *obj_hdl,
 			      bool check_share,
@@ -295,7 +295,7 @@ fsal_status_t fsal_start_io(struct fsal_fd **out_fd,
 fsal_status_t fsal_complete_io(struct fsal_obj_handle *obj_hdl,
 			       struct fsal_fd *fsal_fd);
 
-fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd);
+fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd, bool is_reclaiming);
 void fsal_complete_fd_work(struct fsal_fd *fsal_fd);
 
 /**

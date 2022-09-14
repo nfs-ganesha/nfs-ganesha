@@ -70,6 +70,7 @@
 #include "idmapper.h"
 #include "pnfs_utils.h"
 #include "atomic_utils.h"
+#include "sys_resource.h"
 
 /* fsal_attach_export
  * called from the FSAL's create_export method with a reference on the fsal.
@@ -1874,25 +1875,599 @@ if decrement_and_lock fd_work
 	unlock mutex
 */
 
+pthread_mutex_t fsal_fd_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t fsal_fd_cond = PTHREAD_COND_INITIALIZER;
+struct glist_head fsal_fd_global_lru = GLIST_HEAD_INIT(fsal_fd_global_lru);
+int32_t fsal_fd_global_counter;
+uint32_t fsal_fd_state_counter;
+uint32_t fsal_fd_temp_counter;
+time_t lru_run_interval;
+static struct fridgethr *fd_lru_fridge;
+
+uint32_t lru_try_one(void)
+{
+	struct fsal_fd *fsal_fd;
+	fsal_status_t status;
+	struct req_op_context op_context;
+	struct fsal_obj_handle *obj_hdl;
+	int work = 0;
+
+	PTHREAD_MUTEX_lock(&fsal_fd_mutex);
+
+	fsal_fd = glist_last_entry(&fsal_fd_global_lru,
+				   struct fsal_fd,
+				   fd_lru);
+
+	if (fsal_fd != NULL) {
+		/* Protect the fsal_fd until we can get it's lock. */
+		atomic_inc_int32_t(&fsal_fd->lru_reclaim);
+		/* Drop the fsal_fd_mutex so we can take the work_mutex. */
+		PTHREAD_MUTEX_unlock(&fsal_fd_mutex);
+
+		/* Now we can safely work on the object, we want to close it. */
+		init_op_context_simple(&op_context,
+				       fsal_fd->fsal_export->owning_export,
+				       fsal_fd->fsal_export);
+
+		fsal_fd->fsal_export->exp_ops.get_fsal_obj_hdl(
+			fsal_fd->fsal_export, fsal_fd, &obj_hdl);
+
+		status = close_fsal_fd(obj_hdl, fsal_fd, true);
+
+		if (!FSAL_IS_ERROR(status))
+			work = 1;
+
+		release_op_context();
+
+		/* Now re-aquire the fsal_fd_mutex */
+		PTHREAD_MUTEX_lock(&fsal_fd_mutex);
+		/* And drop the flag */
+		atomic_dec_int32_t(&fsal_fd->lru_reclaim);
+		/* And let anyone waiting know we're ok... */
+		PTHREAD_COND_signal(&fsal_fd_cond);
+	}
+
+	PTHREAD_MUTEX_unlock(&fsal_fd_mutex);
+
+	return work;
+}
+
+enum fd_states {
+	FD_LOW,
+	FD_MIDDLE,
+	FD_HIGH,
+	FD_LIMIT,
+};
+
+struct fd_lru_state {
+	uint32_t fds_system_imposed;
+	uint32_t fds_hard_limit;
+	uint32_t fds_hiwat;
+	uint32_t fds_lowat;
+	/** This is the actual counter of 'futile' attempts at reaping
+	    made  in a given time period.  When it reaches the futility
+	    count, we turn off caching of file descriptors. */
+	uint32_t futility;
+	uint32_t per_lane_work;
+	uint32_t biggest_window; /* defaults to 40% of fd_limit */
+	uint64_t prev_fd_count;	/* previous # of open fds */
+	time_t prev_time;	/* previous time the gc thread was run. */
+	uint32_t fd_state;
+	uint32_t fd_fallback_limit;
+};
+
+struct fd_lru_state fd_lru_state;
+
+uint32_t futility_count;
+uint32_t required_progress;
+uint32_t reaper_work;
+time_t lru_run_interval;
+
+/**
+ * @brief Function that executes in the fd_lru thread
+ *
+ * This function is responsible for cleaning the FD cache.  It works
+ * by the following rules:
+ *
+ *  - If the number of open FDs is below the low water mark, do
+ *    nothing.
+ *
+ *  - If the number of open FDs is between the low and high water
+ *    mark, make one pass through...
+ *
+ *  - If the number of open FDs is greater than the high water mark,
+ *    we consider ourselves to be in extremis.  In this case we make a
+ *    number of passes through the queue not to exceed the number of
+ *    passes that would be required to process the number of entries
+ *    equal to a biggest_window percent of the system specified
+ *    maximum.
+ *
+ *  - If we are in extremis, and performing the maximum amount of work
+ *    allowed has not moved the open FD count required_progress%
+ *    toward the high water mark, increment fd_lru_state.futility.  If
+ *    fd_lru_state.futility reaches futility_count, temporarily disable
+ *    FD caching.
+ *
+ *  - Every time we wake through timeout, reset futility_count to 0.
+ *
+ *  - If we fall below the low water mark and FD caching has been
+ *    temporarily disabled, re-enable it.
+ *
+ * @param[in] ctx Fridge context
+ */
+
+void fd_lru_run(struct fridgethr_context *ctx)
+{
+	/* True if we were explicitly awakened. */
+	bool woke = ctx->woke;
+	/* Finalized */
+	uint32_t fdratepersec = 1, fds_avg, fddelta;
+	float fdnorm, fdwait_ratio, fdmulti;
+	time_t threadwait = lru_run_interval;
+	/* True if we are taking extreme measures to reclaim FDs */
+	bool extremis = false;
+	/* Total work done in all passes so far.  If this exceeds the
+	 * window, stop.
+	 */
+	uint32_t totalwork = 0;
+	/* The current count (after reaping) of open FDs */
+	int32_t currentopen = 0;
+	time_t new_thread_wait;
+	static bool first_time = TRUE;
+
+	if (first_time) {
+		/* Wait for NFS server to properly initialize */
+		nfs_init_wait();
+		first_time = FALSE;
+	}
+
+	SetNameFunction("fd_lru");
+
+	fds_avg = (fd_lru_state.fds_hiwat - fd_lru_state.fds_lowat) / 2;
+
+	currentopen = atomic_fetch_int32_t(&fsal_fd_global_counter);
+
+	extremis = currentopen > fd_lru_state.fds_hiwat;
+
+	LogFullDebug(COMPONENT_FSAL, "FD LRU awakes.");
+
+	if (!woke) {
+		/* If we make it all the way through a timed sleep
+		   without being woken, we assume we aren't racing
+		   against the impossible. */
+		if (fd_lru_state.futility >= futility_count)
+			LogInfo(COMPONENT_FSAL,
+				"Leaving FD futility mode.");
+
+		fd_lru_state.futility = 0;
+	}
+
+	/* Reap file descriptors.  This is a preliminary example of the
+	   L2 functionality rather than something we expect to be
+	   permanent.  (It will have to adapt heavily to the new FSAL
+	   API, for example.) */
+
+
+	if (currentopen < fd_lru_state.fds_lowat) {
+		LogDebug(COMPONENT_FSAL,
+			 "FD count fsal_fd_global_counter is %"PRIi32
+			 " and low water mark is %d: not reaping.",
+			 atomic_fetch_int32_t(&fsal_fd_global_counter),
+			 fd_lru_state.fds_lowat);
+		if (atomic_fetch_uint32_t(&fd_lru_state.fd_state) > FD_LOW) {
+			LogEvent(COMPONENT_FSAL,
+				 "Return to normal fd reaping.");
+			atomic_store_uint32_t(&fd_lru_state.fd_state, FD_LOW);
+		}
+	} else {
+		/* The count of open file descriptors before this run
+		   of the reaper. */
+		int32_t formeropen = currentopen;
+		/* Work done in the most recent pass of all queues.  if
+		   value is less than the work to do in a single queue,
+		   don't spin through more passes. */
+		uint32_t workpass = 0;
+		time_t curr_time = time(NULL);
+
+		if (currentopen < fd_lru_state.fds_hiwat &&
+		    atomic_fetch_uint32_t(&fd_lru_state.fd_state) == FD_LIMIT) {
+			LogEvent(COMPONENT_FSAL,
+				 "Count of fd is below high water mark.");
+			atomic_store_uint32_t(&fd_lru_state.fd_state,
+					      FD_MIDDLE);
+		}
+
+		if ((curr_time >= fd_lru_state.prev_time) &&
+		    (curr_time - fd_lru_state.prev_time <
+							fridgethr_getwait(ctx)))
+			threadwait = curr_time - fd_lru_state.prev_time;
+
+		fdratepersec = ((curr_time <= fd_lru_state.prev_time) ||
+				(formeropen < fd_lru_state.prev_fd_count))
+			? 1 : (formeropen - fd_lru_state.prev_fd_count) /
+					(curr_time - fd_lru_state.prev_time);
+
+		LogFullDebug(COMPONENT_FSAL,
+			     "fdrate:%u fdcount:%" PRIu32
+			     " slept for %" PRIu64 " sec",
+			     fdratepersec, formeropen,
+			     ((uint64_t) (curr_time - fd_lru_state.prev_time)));
+
+		if (extremis) {
+			LogDebug(COMPONENT_FSAL,
+				 "Open FDs over high water mark, reaping aggressively.");
+		}
+
+		/* Attempt to close fds. */
+		do {
+			int i;
+
+			workpass = 0;
+
+			LogDebug(COMPONENT_FSAL,
+				 "Reaping up to %" PRIu32 " fds",
+				 fd_lru_state.per_lane_work);
+
+			LogFullDebug(COMPONENT_FSAL,
+				     "formeropen=%" PRIu32
+				     " totalwork=%" PRIu32,
+				     formeropen, totalwork);
+
+			for (i = 0; i < reaper_work; ++i)
+				workpass += lru_try_one();
+
+			totalwork += workpass;
+		} while (extremis && (workpass >= fd_lru_state.per_lane_work)
+			 && (totalwork < fd_lru_state.biggest_window));
+
+		currentopen = atomic_fetch_int32_t(&fsal_fd_global_counter);
+
+		if (extremis &&
+		    ((currentopen > formeropen)
+		     || (formeropen - currentopen <
+			 (((formeropen - fd_lru_state.fds_hiwat) *
+			      required_progress) / 100)))) {
+			if (++fd_lru_state.futility ==
+			    futility_count) {
+				LogWarn(COMPONENT_FSAL,
+					"Futility count exceeded.  Client load is opening FDs faster than the LRU thread can close them. current_open = %"
+					PRIi32", former_open = %"PRIi32,
+					currentopen, formeropen);
+			}
+		}
+	}
+
+	/* The following calculation will progressively garbage collect
+	 * more frequently as these two factors increase:
+	 * 1. current number of open file descriptors
+	 * 2. rate at which file descriptors are being used.
+	 *
+	 * When there is little activity, this thread will sleep at the
+	 * "LRU_Run_Interval" from the config.
+	 *
+	 * When there is a lot of activity, the thread will sleep for a
+	 * much shorter time.
+	 */
+	fd_lru_state.prev_fd_count = currentopen;
+	fd_lru_state.prev_time = time(NULL);
+
+	fdnorm = (fdratepersec + fds_avg) / fds_avg;
+	fddelta = (currentopen > fd_lru_state.fds_lowat)
+			? (currentopen - fd_lru_state.fds_lowat) : 0;
+	fdmulti = (fddelta * 10) / fds_avg;
+	fdmulti = fdmulti ? fdmulti : 1;
+	fdwait_ratio = fd_lru_state.fds_hiwat /
+			((fd_lru_state.fds_hiwat + fdmulti * fddelta) * fdnorm);
+
+	new_thread_wait = threadwait * fdwait_ratio;
+
+	if (new_thread_wait < lru_run_interval / 10)
+		new_thread_wait = lru_run_interval / 10;
+
+	/* if new_thread_wait is 0, lru_run will not be scheduled */
+	if (new_thread_wait == 0)
+		new_thread_wait = 1;
+
+	fridgethr_setwait(ctx, new_thread_wait);
+
+	LogDebug(COMPONENT_FSAL,
+		 "After work, fsal_fd_global_counter:%" PRIi32
+		 " fdrate:%u new_thread_wait=%" PRIu64,
+		 atomic_fetch_int32_t(&fsal_fd_global_counter),
+		 fdratepersec, (uint64_t) new_thread_wait);
+	LogFullDebug(COMPONENT_FSAL,
+		     "currentopen=%" PRIu32
+		     " futility=%d totalwork=%" PRIu32
+		     " biggest_window=%d extremis=%d fds_lowat=%d ",
+		     currentopen, fd_lru_state.futility, totalwork,
+		     fd_lru_state.biggest_window, extremis,
+		     fd_lru_state.fds_lowat);
+}
+
+/**
+ * @brief Bump this fsal_fd in the fd LRU if this is a global fd.
+ *
+ * @param[in] fsal_fd  The fsal_fd to insert.
+ *
+ */
+
+static inline void bump_fd_lru(struct fsal_fd *fsal_fd)
+{
+	if (fsal_fd->fd_type == FSAL_FD_GLOBAL) {
+		PTHREAD_MUTEX_lock(&fsal_fd_mutex);
+
+		glist_del(&fsal_fd->fd_lru);
+		glist_add(&fsal_fd_global_lru, &fsal_fd->fd_lru);
+
+		PTHREAD_MUTEX_unlock(&fsal_fd_mutex);
+	}
+}
+
+/**
+ * @brief Increment the appropriate fd counter and insert into fd LRU if
+ *        this is a global fd.
+ *
+ * @param[in] fsal_fd  The fsal_fd to insert.
+ *
+ */
+
+static void insert_fd_lru(struct fsal_fd *fsal_fd)
+{
+	switch (fsal_fd->fd_type) {
+	case FSAL_FD_OLD_STYLE:
+		/* OOPS - we shouldn't get here... */
+		assert(fsal_fd->fd_type < FSAL_FD_GLOBAL);
+		break;
+	case FSAL_FD_GLOBAL:
+		atomic_inc_int32_t(&fsal_fd_global_counter);
+		bump_fd_lru(fsal_fd);
+		break;
+	case FSAL_FD_STATE:
+		atomic_inc_int32_t(&fsal_fd_state_counter);
+		break;
+	case FSAL_FD_TEMP:
+		atomic_inc_int32_t(&fsal_fd_temp_counter);
+		break;
+	}
+}
+
+/**
+ * @brief Decrement the appropriate fd counter and remove from fd LRU if
+ *        this is a global fd.
+ *
+ * @param[in] fsal_fd  The fsal_fd to insert.
+ *
+ */
+
+static void remove_fd_lru(struct fsal_fd *fsal_fd)
+{
+	int32_t count;
+
+	switch (fsal_fd->fd_type) {
+	case FSAL_FD_OLD_STYLE:
+		/* OOPS - we shouldn't get here... */
+		assert(fsal_fd->fd_type < FSAL_FD_GLOBAL);
+		break;
+	case FSAL_FD_GLOBAL:
+		count = atomic_dec_int32_t(&fsal_fd_global_counter);
+
+		if (count < 0) {
+			LogCrit(COMPONENT_FSAL,
+				"fsal_fd_global_counter is negative: %"PRIi32,
+				count);
+			abort();
+		}
+
+		PTHREAD_MUTEX_lock(&fsal_fd_mutex);
+
+		glist_del(&fsal_fd->fd_lru);
+
+		PTHREAD_MUTEX_unlock(&fsal_fd_mutex);
+		break;
+	case FSAL_FD_STATE:
+		atomic_dec_int32_t(&fsal_fd_state_counter);
+		break;
+	case FSAL_FD_TEMP:
+		atomic_dec_int32_t(&fsal_fd_temp_counter);
+		break;
+	}
+}
+
+void fsal_init_fds_limit(struct fd_lru_parameter *params)
+{
+	int code = 0;
+	/* Rlimit for open file descriptors */
+	struct rlimit rlim = {
+		.rlim_cur = RLIM_INFINITY,
+		.rlim_max = RLIM_INFINITY
+	};
+
+	fd_lru_state.fd_fallback_limit = params->fd_fallback_limit;
+
+	/* Find out the system-imposed file descriptor limit */
+	if (get_open_file_limit(&rlim) != 0) {
+		code = errno;
+		LogCrit(COMPONENT_CACHE_INODE_LRU,
+			"Call to getrlimit failed with error %d. This should not happen.  Assigning default of %d.",
+			code, fd_lru_state.fd_fallback_limit);
+		fd_lru_state.fds_system_imposed =
+						fd_lru_state.fd_fallback_limit;
+	} else {
+		if (rlim.rlim_cur < rlim.rlim_max) {
+			/* Save the old soft value so we can fall back to it
+			   if setrlimit fails. */
+			rlim_t old_soft = rlim.rlim_cur;
+
+			LogInfo(COMPONENT_CACHE_INODE_LRU,
+				"Attempting to increase soft limit from %"
+				PRIu64 " to hard limit of %" PRIu64,
+				(uint64_t) rlim.rlim_cur,
+				(uint64_t) rlim.rlim_max);
+			rlim.rlim_cur = rlim.rlim_max;
+			if (setrlimit(RLIMIT_NOFILE, &rlim) < 0) {
+				code = errno;
+				LogWarn(COMPONENT_CACHE_INODE_LRU,
+					"Attempt to raise soft FD limit to hard FD limit failed with error %d.  Sticking to soft limit.",
+					code);
+				rlim.rlim_cur = old_soft;
+			}
+		}
+
+		if (rlim.rlim_cur == RLIM_INFINITY) {
+			FILE *nr_open;
+
+			nr_open = fopen("/proc/sys/fs/nr_open", "r");
+			if (nr_open == NULL) {
+				code = errno;
+				LogWarn(COMPONENT_CACHE_INODE_LRU,
+					"Attempt to open /proc/sys/fs/nr_open failed (%d)",
+					code);
+				goto err_open;
+			}
+
+			code = fscanf(nr_open, "%" SCNu32 "\n",
+				      &fd_lru_state.fds_system_imposed);
+
+			if (code != 1) {
+				code = errno;
+
+				LogMajor(COMPONENT_CACHE_INODE_LRU,
+					 "The rlimit on open file descriptors is infinite and the attempt to find the system maximum failed with error %d.",
+					 code);
+				LogMajor(COMPONENT_CACHE_INODE_LRU,
+					 "Assigning the default fallback of %d which is almost certainly too small.",
+					 fd_lru_state.fd_fallback_limit);
+				LogMajor(COMPONENT_CACHE_INODE_LRU,
+					 "If you are on a Linux system, this should never happen.");
+				LogMajor(COMPONENT_CACHE_INODE_LRU,
+					 "If you are running some other system, please set an rlimit on file descriptors (for example, with ulimit) for this process and consider editing "
+					 __FILE__
+					 "to add support for finding your system's maximum.");
+
+				fd_lru_state.fds_system_imposed =
+				    fd_lru_state.fd_fallback_limit;
+			}
+
+			fclose(nr_open);
+err_open:
+			;
+		} else {
+			fd_lru_state.fds_system_imposed = rlim.rlim_cur;
+		}
+		LogInfo(COMPONENT_CACHE_INODE_LRU,
+			"Setting the system-imposed limit on FDs to %d.",
+			fd_lru_state.fds_system_imposed);
+	}
+
+	fd_lru_state.fds_hard_limit =
+	    (params->fd_limit_percent * fd_lru_state.fds_system_imposed) / 100;
+
+	fd_lru_state.fds_hiwat =
+	    (params->fd_hwmark_percent * fd_lru_state.fds_system_imposed) / 100;
+
+	fd_lru_state.fds_lowat =
+	    (params->fd_lwmark_percent * fd_lru_state.fds_system_imposed) / 100;
+
+	fd_lru_state.futility = 0;
+
+	if (params->reaper_work) {
+		/* Backwards compatibility */
+		fd_lru_state.per_lane_work = (params->reaper_work + 16) / 17;
+	} else {
+		/* New parameter */
+		fd_lru_state.per_lane_work = params->reaper_work_per_lane;
+	}
+
+	fd_lru_state.biggest_window =
+	      (params->biggest_window * fd_lru_state.fds_system_imposed) / 100;
+}
+
+/**
+ * Initialize subsystem
+ */
+fsal_status_t fd_lru_pkginit(struct fd_lru_parameter *params)
+{
+	/* Return code from system calls */
+	int code = 0;
+	struct fridgethr_params frp;
+
+	futility_count = params->futility_count;
+	required_progress = params->required_progress;
+	reaper_work = params->reaper_work;
+	lru_run_interval = params->lru_run_interval;
+
+	memset(&frp, 0, sizeof(struct fridgethr_params));
+	frp.thr_max = 1;
+	frp.thr_min = 1;
+	frp.thread_delay = params->lru_run_interval;
+	frp.flavor = fridgethr_flavor_looper;
+
+	atomic_store_int32_t(&fsal_fd_global_counter, 0);
+	fd_lru_state.prev_fd_count = 0;
+	atomic_store_uint32_t(&fd_lru_state.fd_state, FD_LOW);
+	fsal_init_fds_limit(params);
+
+	/* spawn LRU background thread */
+	code = fridgethr_init(&fd_lru_fridge, "FD_LRU_fridge", &frp);
+	if (code != 0) {
+		LogMajor(COMPONENT_CACHE_INODE_LRU,
+			 "Unable to initialize FD LRU fridge, error code %d.",
+			 code);
+		return fsalstat(posix2fsal_error(code), code);
+	}
+
+	code = fridgethr_submit(fd_lru_fridge, fd_lru_run, NULL);
+	if (code != 0) {
+		LogMajor(COMPONENT_CACHE_INODE_LRU,
+			 "Unable to start Entry LRU thread, error code %d.",
+			 code);
+		return fsalstat(posix2fsal_error(code), code);
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * Shutdown subsystem
+ *
+ * @return 0 on success, POSIX errors on failure.
+ */
+fsal_status_t fd_lru_pkgshutdown(void)
+{
+	int rc;
+
+	rc = fridgethr_sync_command(fd_lru_fridge, fridgethr_comm_stop, 120);
+
+	if (rc == ETIMEDOUT) {
+		LogMajor(COMPONENT_CACHE_INODE_LRU,
+			 "Shutdown timed out, cancelling threads.");
+		fridgethr_cancel(fd_lru_fridge);
+	} else if (rc != 0) {
+		LogMajor(COMPONENT_CACHE_INODE_LRU,
+			 "Failed shutting down LRU thread: %d", rc);
+	}
+	return fsalstat(posix2fsal_error(rc), rc);
+}
+
 /**
  * @brief Function to close a fsal_fd while protecting it, usually called on
  *        a global fd.
  *
- * @param[in]  obj_hdl     File on which to operate
- * @param[in]  fsal_fd     File handle to close
- * @param[in]  close_func  FSAL supplied close function
+ * @param[in]  obj_hdl        File on which to operate
+ * @param[in]  fsal_fd        File handle to close
+ * @param[in]  is_reclaiming  Indicates we are closing files to reclaim fd
  *
  * @return FSAL status.
  */
 
 fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
 			    struct fsal_fd *fsal_fd,
-			    fsal_close_func close_func)
+			    bool is_reclaiming)
 {
 	fsal_status_t status;
 
 	/* Indicate we want to do fd work */
-	status = fsal_start_fd_work(fsal_fd);
+	status = fsal_start_fd_work(fsal_fd, is_reclaiming);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL,
@@ -1904,9 +2479,40 @@ fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
 	/* Now we hold the mutex and no one is doing I/O so we can safely
 	 * close the fd.
 	 */
-	status = close_func(obj_hdl, fsal_fd);
+	status = obj_hdl->obj_ops->close_func(obj_hdl, fsal_fd);
+
+	if (status.major != ERR_FSAL_NOT_OPENED) {
+		/* Need to decrement the appropriate counter and remove from
+		 * LRU.
+		 */
+		remove_fd_lru(fsal_fd);
+	} else {
+		/* Wasn't open.  Not an error, but shouldn't remove from LRU. */
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
 
 	fsal_complete_fd_work(fsal_fd);
+
+	if (is_reclaiming) {
+		/* Drop the reclaim now and wake up any waiting threads. */
+		atomic_dec_int32_t(&fsal_fd->lru_reclaim);
+
+		PTHREAD_MUTEX_lock(&fsal_fd_mutex);
+		PTHREAD_COND_signal(&fsal_fd_cond);
+		PTHREAD_MUTEX_unlock(&fsal_fd_mutex);
+	} else {
+		while (atomic_fetch_int32_t(&fsal_fd->lru_reclaim)) {
+			/* Just in case FD LRU is trying to work on this fd,
+			 * wait until its done. Note it really won't have
+			 * anything to do since we have just closed the fd, but
+			 * this assures the lifetime of the fsal_fd is
+			 * maintained while LRU does its work.
+			 */
+			PTHREAD_MUTEX_lock(&fsal_fd_mutex);
+			PTHREAD_COND_wait(&fsal_fd_cond, &fsal_fd_mutex);
+			PTHREAD_MUTEX_unlock(&fsal_fd_mutex);
+		}
+	}
 
 	return status;
 }
@@ -1967,8 +2573,21 @@ fsal_status_t reopen_fsal_fd(struct fsal_obj_handle *obj_hdl,
 		openflags |= FSAL_O_WRITE;
 
 	/* And THEN check the combined mode against the current mode. */
-	if (!open_correct(fsal_fd->openflags, openflags))
+	if (!open_correct(fsal_fd->openflags, openflags)) {
+		if (fsal_fd->openflags == FSAL_O_CLOSED) {
+			/* This is actually an open, need to increment
+			 * appropriate counter and insert into LRU.
+			 */
+			insert_fd_lru(fsal_fd);
+		} else {
+			/* We are touching the file so bump it in the LRU
+			 * to help keep the LRU tail free of unreapable fds.
+			 */
+			bump_fd_lru(fsal_fd);
+		}
+
 		status = fsal_reopen_fd(obj_hdl, openflags, fsal_fd);
+	}
 
 	/* Indicate we are done with fd work and signal any waiters. */
 	atomic_dec_int32_t(&fsal_fd->fd_work);
@@ -1988,7 +2607,7 @@ fsal_status_t reopen_fsal_fd(struct fsal_obj_handle *obj_hdl,
 /**
  * @brief Check if allowed to open or re-open.
  *
- * @param[in] openflags  Mode the file was already open in (or not)
+ * @param[in] fsal_fd    The fsal_fd we are checking
  * @param[in] may_open   Allowed to open
  * @param[in] may_reopen Allowed to re-open
  *
@@ -1997,11 +2616,46 @@ fsal_status_t reopen_fsal_fd(struct fsal_obj_handle *obj_hdl,
  *
  */
 
-static inline bool cant_reopen(fsal_openflags_t openflags,
+static inline bool cant_reopen(struct fsal_fd *fsal_fd,
 			       bool may_open,
 			       bool may_reopen)
 {
-	if (may_open && openflags == 0) {
+	int32_t open_fds = atomic_fetch_int32_t(&fsal_fd_global_counter);
+
+	if (fsal_fd->fd_type == FSAL_FD_GLOBAL &&
+	    open_fds >= fd_lru_state.fds_hard_limit) {
+		LogAtLevel(COMPONENT_FSAL,
+			   atomic_fetch_uint32_t(&fd_lru_state.fd_state)
+								!= FD_LIMIT
+				? NIV_CRIT
+				: NIV_DEBUG,
+			   "FD Hard Limit (%"PRIu32
+			   ") Exceeded (fsal_fd_global_counter = %" PRIi32
+			   "), waking LRU thread.",
+			   fd_lru_state.fds_hard_limit, open_fds);
+		atomic_store_uint32_t(&fd_lru_state.fd_state, FD_LIMIT);
+		fridgethr_wake(fd_lru_fridge);
+
+		/* Too many open files, don't open any more. */
+		return true;
+	}
+
+	if (fsal_fd->fd_type == FSAL_FD_GLOBAL &&
+	    open_fds >= fd_lru_state.fds_hiwat) {
+		LogAtLevel(COMPONENT_FSAL,
+			   atomic_fetch_uint32_t(&fd_lru_state.fd_state)
+				== FD_LOW
+					? NIV_INFO
+					: NIV_DEBUG,
+			   "FDs above high water mark (%"PRIu32
+			   ", fsal_fd_global_counter = %" PRIi32
+			   "), waking LRU thread.",
+			   fd_lru_state.fds_hiwat, open_fds);
+		atomic_store_uint32_t(&fd_lru_state.fd_state, FD_HIGH);
+		fridgethr_wake(fd_lru_fridge);
+	}
+
+	if (may_open && fsal_fd->openflags == 0) {
 		/* Can open and was closed */
 		return false;
 	}
@@ -2112,8 +2766,7 @@ retry:
 			     (int) openflags);
 
 		if (!open_correct(fsal_fd->openflags, openflags)) {
-			if (cant_reopen(fsal_fd->openflags, may_open,
-					may_reopen)) {
+			if (cant_reopen(fsal_fd, may_open, may_reopen)) {
 				/* fsal_fd is in wrong mode and we aren't
 				 * allowed to reopen, so return EBUSY.
 				 */
@@ -2173,8 +2826,7 @@ retry:
 	if (!open_correct(fsal_fd->openflags, openflags)) {
 		bool can_start = false;
 
-		if (retried || cant_reopen(fsal_fd->openflags,
-					   may_open, may_reopen)) {
+		if (retried || cant_reopen(fsal_fd, may_open, may_reopen)) {
 			/* fsal_fd is in wrong mode and we aren't
 			 * allowed to reopen, so return EBUSY.
 			 * OR we've already been here.
@@ -2603,6 +3255,11 @@ fsal_status_t fsal_complete_io(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_COND_signal(&fsal_fd->work_cond);
 	}
 
+	/* We choose to bump the fd at the completion of I/O so we don't have
+	 * to introduce new locking.
+	 */
+	bump_fd_lru(fsal_fd);
+
 	PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
 
 	return status;
@@ -2615,15 +3272,28 @@ fsal_status_t fsal_complete_io(struct fsal_obj_handle *obj_hdl,
  *       conjunction with fsal_complete_fd_work.
  *
  * @param[in]  fsal_fd        The fd to do work on.
+ * @param[in]  is_reclaiming  Indicates we are closing files to reclaim fd
  *
  */
 
-fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd)
+fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd, bool is_reclaiming)
 {
 	/* Indicate we want to do fd work */
 	atomic_inc_int32_t(&fsal_fd->fd_work);
 
 	PTHREAD_MUTEX_lock(&fsal_fd->work_mutex);
+
+	if ((atomic_fetch_int32_t(&fsal_fd->want_read) != 0 ||
+	     atomic_fetch_int32_t(&fsal_fd->want_write) != 0) &&
+	    is_reclaiming) {
+		/* I/O is trying to start but needs to re-open, and we're trying
+		 * to reclaim, this isn't a good candidate to reclaim, bump it
+		 * so we can skip it.
+		 */
+		bump_fd_lru(fsal_fd);
+		PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
+		return posix2fsal_status(EBUSY);
+	}
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "%p try fd work - io_work = %"PRIi32" fd_work = %"PRIi32,
@@ -2639,6 +3309,15 @@ fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd)
 			     fsal_fd,
 			     atomic_fetch_int32_t(&fsal_fd->io_work),
 			     atomic_fetch_int32_t(&fsal_fd->fd_work));
+
+		if (is_reclaiming) {
+			/* We are trying to reclaim an in-use fsal_fd, bump
+			 * it so we skip it.
+			 */
+			bump_fd_lru(fsal_fd);
+			PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
+			return posix2fsal_status(EBUSY);
+		}
 
 		/* io work is in progress or trying to start, wait for it to
 		 * complete (or not start)

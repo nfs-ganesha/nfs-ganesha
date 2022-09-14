@@ -43,6 +43,8 @@
   err_type;
   err_type_str;
   export_admin_counter;
+  fd_lru_pkginit;
+  fd_lru_pkgshutdown;
   fgetxattr;
   flistxattr;
   fhlink;

@@ -669,5 +669,52 @@ fsal_status_t fsal_listxattr_helper(const char *buf,
 				    bool_t *lxr_eof,
 				    xattrlist4 *lxr_names);
 
+/**
+ * @brief Structure to hold FD LURU paramaters
+ */
+
+struct fd_lru_parameter {
+	/** Base interval in seconds between runs of the LRU cleaner
+	    thread. Defaults to 60, settable with LRU_Run_Interval. */
+	uint32_t lru_run_interval;
+	/** The percentage of the system-imposed maximum of file
+	    descriptors at which Ganesha will deny requests.
+	    Defaults to 99, settable with FD_Limit_Percent. */
+	uint32_t fd_limit_percent;
+	/** The percentage of the system-imposed maximum of file
+	    descriptors above which Ganesha will make greater efforts
+	    at reaping. Defaults to 90, settable with
+	    FD_HWMark_Percent. */
+	uint32_t fd_hwmark_percent;
+	/** The percentage of the system-imposed maximum of file
+	    descriptors below which Ganesha will not reap file
+	    descriptors.  Defaults to 50, settable with FD_LWMark_Percent. */
+	uint32_t fd_lwmark_percent;
+	/** Roughly, the amount of work to do on each pass through the
+	    thread under normal conditions.  (Ideally, a multiple of
+	    the number of lanes.)  Defaults to 1000, settable with
+	    Reaper_Work. */
+	uint32_t reaper_work;
+	/** The amount of work for the reaper thread to do per-lane
+	    under normal conditions. Settable with Repaper_Work_Per_Thread */
+	uint32_t reaper_work_per_lane;
+	/** The largest window (as a percentage of the system-imposed
+	    limit on FDs) of work that we will do in extremis.
+	    Defaults to 40, settable with Biggest_Window */
+	uint32_t biggest_window;
+	/** Percentage of progress toward the high water mark required
+	    in a pass through the thread when in extremis.
+	    Defaults to 5, settable with Required_Progress. */
+	uint32_t required_progress;
+	/** Number of failures to approach the high watermark before
+	    we disable caching, when in extremis.  Defaults to 8,
+	    settable with Futility_Count */
+	uint32_t futility_count;
+	uint32_t fd_fallback_limit;
+};
+
+fsal_status_t fd_lru_pkginit(struct fd_lru_parameter *params);
+fsal_status_t fd_lru_pkgshutdown(void);
+
 #endif				/* !FSAL_H */
 /** @} */

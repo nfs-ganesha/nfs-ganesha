@@ -925,6 +925,16 @@ typedef enum {
 
 typedef char fsal_verifier_t[NFS4_VERIFIER_SIZE];
 
+enum fsal_fd_type {
+	/** @todo FSF - to be removed when old style is deprecated */
+	FSAL_FD_OLD_STYLE,
+	FSAL_FD_GLOBAL,
+	FSAL_FD_STATE,
+	FSAL_FD_TEMP,
+};
+
+struct fsal_export;
+
 /**
  * @brief Generic file handle.
  */
@@ -937,18 +947,39 @@ struct fsal_fd {
 	int32_t io_work;
 	int32_t want_read;
 	int32_t want_write;
+	struct fsal_export *fsal_export;
+	/** LRU for open global fd **/
+	struct glist_head fd_lru;
 	/** work_mutex protects fd work */
 	pthread_mutex_t work_mutex;
 	/** condition to signal when fd work may commence */
 	pthread_cond_t work_cond;
 	/** Indicate if should be closed on complete. */
 	bool close_on_complete;
+	/** Inidcate if LRU reclaim wants to operate on this fd */
+	uint32_t lru_reclaim;
+	/** Type of fd */
+	enum fsal_fd_type fd_type;
 };
 
 #define FSAL_FD_INIT { FSAL_O_CLOSED, 0, 0, 0, 0, \
+		       op_ctx->fsal_export, \
+		       {NULL, NULL}, \
 		       PTHREAD_MUTEX_INITIALIZER, \
 		       PTHREAD_COND_INITIALIZER, \
-		       false }
+		       false, false, \
+		       FSAL_FD_TEMP }
+
+static inline void init_fsal_fd(struct fsal_fd *fsal_fd,
+				enum fsal_fd_type fd_type,
+				struct fsal_export *fsal_export)
+{
+	memset(fsal_fd, 0, sizeof(*fsal_fd));
+	PTHREAD_MUTEX_init(&fsal_fd->work_mutex, NULL);
+	PTHREAD_COND_init(&fsal_fd->work_cond, NULL);
+	fsal_fd->fd_type = fd_type;
+	fsal_fd->fsal_export = fsal_export;
+}
 
 /**
  * @brief The ref counted share reservation state.
