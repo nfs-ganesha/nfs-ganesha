@@ -212,7 +212,6 @@ if (BSDBASED)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -ggdb")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-optimize-sibling-calls")
-    find_library(LIBDL c)  # libc suffices on FreeBSD and Darwin
 endif(BSDBASED)
 
 if (FREEBSD)
@@ -232,7 +231,6 @@ if (LINUX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing")
     set(OS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/os/linux")
-    find_library(LIBDL dl)  # module loader
 endif(LINUX)
 
 if (MSVC)
@@ -1186,7 +1184,7 @@ check_symbol_exists(urcu_ref_get_unless_zero urcu/ref.h HAVE_URCU_REF_GET_UNLESS
 set(SYSTEM_LIBRARIES
   ${NTIRPC_LIBRARY}
   ${SYSTEM_LIBRARIES}
-  ${LIBDL}
+  ${CMAKE_DL_LIBS}
   ${KRB5_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${LIBURCU_LIB}
