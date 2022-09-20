@@ -108,19 +108,11 @@ extern pool_t *mdcache_entry_pool;
 #define LRU_FLAG_NONE  0x0000
 
 /**
- * The caller holds the lock on the LRU entry.
- */
-#define LRU_FLAG_LOCKED  0x0001
-
-/**
  * The caller is fetching an initial reference
  */
 #define LRU_REQ_INITIAL  0x0002
 
-/**
- * qlane is locked
- */
-#define LRU_UNREF_QLOCKED 0x0008
+#define LRU_PROMOTE 0x0008
 
 /**
  * The minimum reference count for a cache entry not being recycled.
@@ -140,10 +132,19 @@ fsal_status_t mdcache_lru_pkgshutdown(void);
 extern size_t open_fd_count;
 
 mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle);
-void mdcache_lru_insert(mdcache_entry_t *entry, mdc_reason_t reason);
+void mdcache_lru_insert(mdcache_entry_t *entry, uint32_t flags);
+
 #define mdcache_lru_ref(e, f) _mdcache_lru_ref(e, f, __func__, __LINE__)
-fsal_status_t _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags,
-			       const char *func, int line);
+
+/**
+ *
+ * @brief Get a logical reference to a cache entry
+ *
+ * @param[in] entry Cache entry being returned
+ * @param[in] flags Flags to specify type of reference
+ */
+void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags,
+		      const char *func, int line);
 
 /* XXX */
 void mdcache_lru_kill(mdcache_entry_t *entry);
@@ -152,22 +153,7 @@ void mdcache_lru_cleanup_try_push(mdcache_entry_t *entry);
 
 size_t mdcache_lru_release_entries(int32_t want_release);
 
-#define mdcache_lru_unref(e) _mdcache_lru_unref(e, LRU_FLAG_NONE, \
-						__func__, __LINE__)
-bool _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags,
-			const char *func, int line);
-void mdcache_lru_kill_for_shutdown(mdcache_entry_t *entry);
-
-/**
- *
- * @brief Get a logical reference to a cache entry
- *
- * @param[in] entry Cache entry being returned
- */
-static inline fsal_status_t mdcache_get(mdcache_entry_t *entry)
-{
-	return mdcache_lru_ref(entry, LRU_FLAG_NONE);
-}
+#define mdcache_lru_unref(e, f) _mdcache_lru_unref(e, f, __func__, __LINE__)
 
 /**
  *
@@ -184,11 +170,12 @@ static inline fsal_status_t mdcache_get(mdcache_entry_t *entry)
  * accesses to the memory pointed to by entry.
  *
  * @param[in] entry Cache entry being returned
+ * @param[in] flags Flag to indicate if the reference is a long term or not
  */
-static inline void mdcache_put(mdcache_entry_t *entry)
-{
-	mdcache_lru_unref(entry);
-}
+bool _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags,
+			const char *func, int line);
+
+void mdcache_lru_kill_for_shutdown(mdcache_entry_t *entry);
 
 #define mdcache_lru_ref_chunk(chunk) \
 	_mdcache_lru_ref_chunk(chunk, __func__, __LINE__)

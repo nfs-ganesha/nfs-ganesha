@@ -53,14 +53,6 @@ extern struct mdcache_fsal_module MDCACHE;
 
 #define MDC_UNEXPORT 1
 
-/**
- * @brief Reason an entry is being inserted/looked up
- */
-typedef enum {
-	MDC_REASON_DEFAULT,	/**< Default insertion */
-	MDC_REASON_SCAN		/**< Is being inserted by a scan */
-} mdc_reason_t;
-
 typedef struct mdcache_dmap_entry__ {
 	/** AVL node in tree by cookie */
 	struct avltree_node node;
@@ -494,12 +486,10 @@ fsal_status_t mdcache_new_entry(struct mdcache_fsal_export *exp,
 				bool new_directory,
 				mdcache_entry_t **entry,
 				struct state_t *state,
-				mdc_reason_t reason);
+				uint32_t flags);
 fsal_status_t mdcache_find_keyed_reason(mdcache_key_t *key,
 					mdcache_entry_t **entry,
-					mdc_reason_t reason);
-#define mdcache_find_keyed(key, entry) mdcache_find_keyed_reason((key), \
-					(entry), MDC_REASON_DEFAULT)
+					uint32_t flags);
 fsal_status_t mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 				  struct mdcache_fsal_export *exp,
 				  mdcache_entry_t **entry,

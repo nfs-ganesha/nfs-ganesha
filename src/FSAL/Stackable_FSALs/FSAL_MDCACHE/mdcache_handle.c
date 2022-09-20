@@ -104,7 +104,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 
 	status = mdcache_new_entry(export, sub_handle, attrs_in, false,
 				   attrs_out, new_directory, &new_entry, state,
-				   MDC_REASON_DEFAULT);
+				   LRU_PROMOTE);
 
 	if (FSAL_IS_ERROR(status)) {
 		*new_obj = NULL;
@@ -135,7 +135,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 				 "%s%s failed because add dirent failed",
 				 tag, name);
 
-			mdcache_put(new_entry);
+			mdcache_lru_unref(new_entry, LRU_FLAG_NONE);
 			*new_obj = NULL;
 			return status;
 		}
@@ -790,7 +790,7 @@ out:
 	}
 
 	if (mdc_lookup_dst)
-		mdcache_put(mdc_lookup_dst);
+		mdcache_lru_unref(mdc_lookup_dst, LRU_FLAG_NONE);
 
 	return status;
 }
@@ -1336,28 +1336,26 @@ static nfsstat4 mdcache_layoutcommit(struct fsal_obj_handle *obj_hdl,
  * @brief Get a reference to the handle
  *
  * @param[in] obj_hdl	Handle to ref
- * @return FSAL status
  */
 static void mdcache_get_ref(struct fsal_obj_handle *obj_hdl)
 {
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 
-	mdcache_get(entry);
+	mdcache_lru_ref(entry, LRU_FLAG_NONE);
 }
 
 /**
  * @brief Put a reference to the handle
  *
  * @param[in] obj_hdl	Handle to unref
- * @return FSAL status
  */
 static void mdcache_put_ref(struct fsal_obj_handle *obj_hdl)
 {
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 
-	mdcache_put(entry);
+	mdcache_lru_unref(entry, LRU_FLAG_NONE);
 }
 
 /**
@@ -1606,7 +1604,7 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 	}
 
 	status = mdcache_new_entry(export, sub_handle, &attrs, false, attrs_out,
-				   false, &new_entry, NULL, MDC_REASON_DEFAULT);
+				   false, &new_entry, NULL, LRU_PROMOTE);
 
 	fsal_release_attrs(&attrs);
 

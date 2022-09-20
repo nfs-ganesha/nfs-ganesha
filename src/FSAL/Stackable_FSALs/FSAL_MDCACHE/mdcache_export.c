@@ -95,7 +95,6 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 						   obj_handle);
 	mdcache_entry_t *entry;
 	struct entry_export_map *expmap;
-	fsal_status_t status;
 
 	/* Indicate this export is going away so we don't create any new
 	 * export map entries.
@@ -130,16 +129,8 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 		/* Get a ref across cleanup.  This must be an initial ref, so
 		 * that it takes the LRU lane lock, keeping it from racing with
 		 * lru_lane_run() */
-		status = mdcache_lru_ref(entry, LRU_REQ_INITIAL);
+		mdcache_lru_ref(entry, LRU_REQ_INITIAL);
 		PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
-
-		if (FSAL_IS_ERROR(status)) {
-			/* Entry was stale; skip it */
-			LogFullDebug(COMPONENT_EXPORT,
-				     "Error %s on entry %p",
-				     msg_fsal_err(status.major), entry);
-			continue;
-		}
 
 		/* Must get attr_lock before mdc_exp_lock */
 		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
@@ -186,7 +177,7 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 		}
 
 		/* Release above ref */
-		mdcache_put(entry);
+		mdcache_lru_unref(entry, LRU_FLAG_NONE);
 	};
 
 	/* Last unexport for the sub-FSAL */

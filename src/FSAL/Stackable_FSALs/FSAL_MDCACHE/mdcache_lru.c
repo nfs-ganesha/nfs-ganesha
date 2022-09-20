@@ -179,11 +179,6 @@ static struct lru_q_lane CHUNK_LRU[LRU_N_Q_LANES];
 
 static struct fridgethr *lru_fridge;
 
-enum lru_edge {
-	LRU_LRU,	/* LRU */
-	LRU_MRU		/* MRU */
-};
-
 static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 
 /* Some helper macros */
@@ -380,23 +375,17 @@ lru_lane_of(void *entry)
  *
  * @param[in] lru    The LRU entry to insert
  * @param[in] q      The queue to insert on
- * @param[in] edge   One of LRU_LRU or LRU_MRU
  */
 static inline void
-lru_insert(mdcache_lru_t *lru, struct lru_q *q, enum lru_edge edge)
+lru_insert(mdcache_lru_t *lru, struct lru_q *q)
 {
 	lru->qid = q->id;	/* initial */
-	if (lru->qid == LRU_ENTRY_CLEANUP)
+	if (lru->qid == LRU_ENTRY_CLEANUP) {
 		atomic_set_uint32_t_bits(&lru->flags, LRU_CLEANUP);
-
-	switch (edge) {
-	case LRU_LRU:
-		glist_add(&q->q, &lru->q);
-		break;
-	case LRU_MRU:
-	default:
+		/* Add to tail of cleanup queue */
 		glist_add_tail(&q->q, &lru->q);
-		break;
+	} else {
+		glist_add(&q->q, &lru->q);
 	}
 	++(q->size);
 }
@@ -412,17 +401,16 @@ lru_insert(mdcache_lru_t *lru, struct lru_q *q, enum lru_edge edge)
  *
  * @param[in] lru    The LRU entry to insert
  * @param[in] q      The queue to insert on
- * @param[in] edge   One of LRU_LRU or LRU_MRU
  */
 static inline void
-lru_insert_entry(mdcache_entry_t *entry, struct lru_q *q, enum lru_edge edge)
+lru_insert_entry(mdcache_entry_t *entry, struct lru_q *q)
 {
 	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 
 	QLOCK(qlane);
 
-	lru_insert(lru, q, edge);
+	lru_insert(lru, q);
 
 	QUNLOCK(qlane);
 }
@@ -438,17 +426,16 @@ lru_insert_entry(mdcache_entry_t *entry, struct lru_q *q, enum lru_edge edge)
  *
  * @param[in] lru    The LRU chunk to insert
  * @param[in] q      The queue to insert on
- * @param[in] edge   One of LRU_LRU or LRU_MRU
  */
 static inline void
-lru_insert_chunk(struct dir_chunk *chunk, struct lru_q *q, enum lru_edge edge)
+lru_insert_chunk(struct dir_chunk *chunk, struct lru_q *q)
 {
 	mdcache_lru_t *lru = &chunk->chunk_lru;
 	struct lru_q_lane *qlane = &CHUNK_LRU[lru->lane];
 
 	QLOCK(qlane);
 
-	lru_insert(lru, q, edge);
+	lru_insert(lru, q);
 
 	QUNLOCK(qlane);
 }
@@ -471,15 +458,15 @@ adjust_lru(mdcache_entry_t *entry)
 		q = lru_queue_of(entry);
 		/* advance entry to MRU (of L1) */
 		LRU_DQ_SAFE(lru, q);
-		lru_insert(lru, q, LRU_MRU);
+		lru_insert(lru, q);
 		break;
 	case LRU_ENTRY_L2:
 		q = lru_queue_of(entry);
-		/* move entry to LRU of L1 */
+		/* move entry to MRU of L1 */
 		glist_del(&lru->q);     /* skip L1 fixups */
 		--(q->size);
 		q = &qlane->L1;
-		lru_insert(lru, q, LRU_LRU);
+		lru_insert(lru, q);
 		break;
 	default:
 		/* do nothing */
@@ -719,7 +706,7 @@ lru_reap_impl(enum lru_q_id qid)
 			/* can't use it. */
 			if (adjustable_root_obj)
 				adjust_lru_root_object(entry);
-			mdcache_put(entry);
+			mdcache_lru_unref(entry, LRU_FLAG_NONE);
 			continue;
 		}
 		/* potentially reclaimable */
@@ -761,7 +748,7 @@ lru_reap_impl(enum lru_q_id qid)
 		QUNLOCK(qlane);
 		/* return the ref we took above--unref deals
 		 * correctly with reclaim case */
-		mdcache_lru_unref(entry);
+		mdcache_lru_unref(entry, LRU_FLAG_NONE);
 	}			/* foreach lane */
 
 	/* ! reclaimable */
@@ -998,7 +985,7 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 	 *       empty due to activity, and the readahead is significant, it
 	 *       is possible to cannibalize the chunks.
 	 */
-	lru_insert_chunk(chunk, &CHUNK_LRU[chunk->chunk_lru.lane].L2, LRU_MRU);
+	lru_insert_chunk(chunk, &CHUNK_LRU[chunk->chunk_lru.lane].L2);
 
 	return chunk;
 }
@@ -1019,7 +1006,7 @@ mdcache_lru_cleanup_push(mdcache_entry_t *entry)
 
 	QLOCK(qlane);
 
-	if (!(lru->qid == LRU_ENTRY_CLEANUP)) {
+	if (lru->qid != LRU_ENTRY_CLEANUP) {
 		struct lru_q *q;
 
 		/* out with the old queue */
@@ -1028,7 +1015,7 @@ mdcache_lru_cleanup_push(mdcache_entry_t *entry)
 
 		/* in with the new */
 		q = &qlane->cleanup;
-		lru_insert(lru, q, LRU_LRU);
+		lru_insert(lru, q);
 	}
 
 	QUNLOCK(qlane);
@@ -1197,13 +1184,8 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 
 		/* check refcnt in range */
 		if (unlikely(refcnt > 2)) {
-			/* This unref is ok to be done without a valid op_ctx
-			 * because we always map a new entry to an export before
-			 * we could possibly release references in
-			 * mdcache_new_entry.
-			 */
 			QUNLOCK(qlane);
-			mdcache_lru_unref(entry);
+			mdcache_lru_unref(entry, LRU_FLAG_NONE);
 			goto next_lru;
 		}
 
@@ -1211,7 +1193,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		q = &qlane->L1;
 		LRU_DQ_SAFE(lru, q);
 		q = &qlane->L2;
-		lru_insert(lru, q, LRU_MRU);
+		lru_insert(lru, q);
 
 		/* Drop the lane lock while performing (slow) operations on
 		 * entry */
@@ -1228,7 +1210,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 			++closed;
 		}
 
-		mdcache_lru_unref(entry);
+		mdcache_lru_unref(entry, LRU_FLAG_NONE);
 
 next_lru:
 		QLOCK(qlane); /* QLOCKED */
@@ -1579,7 +1561,7 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 		q = &qlane->L1;
 		CHUNK_LRU_DQ_SAFE(lru, q);
 		q = &qlane->L2;
-		lru_insert(lru, q, LRU_MRU);
+		lru_insert(lru, q);
 	} /* for_each_safe lru */
 
 next_lane:
@@ -1684,7 +1666,7 @@ size_t mdcache_lru_release_entries(int32_t want_release)
 
 	while ((lru = lru_try_reap_entry())) {
 		entry = container_of(lru, mdcache_entry_t, lru);
-		mdcache_lru_unref(entry);
+		mdcache_lru_unref(entry, LRU_FLAG_NONE);
 		++released;
 
 		if (want_release > 0 && released >= want_release)
@@ -1981,24 +1963,23 @@ mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle)
 /**
  * @brief Insert a new entry into the LRU.
  *
- * Entry is inserted the LRU.  For scans, insert into the MRU of L2, to avoid
- * having entries recycled before they're used during readdir.  For everything
- * else, insert into LRU of L1, so that a single ref promotes to the MRU of L1.
+ * Entry is inserted to the MRU of L2 by default, into MRU of L1 if LRU_PROMOTE
+ * is specified.
+ *
+ * LRU_PROMOTE should be used for most cases when an initial reference is
+ * taken or a new object is created. One exception is when a new entry is
+ * created as part of a directory scan.
  *
  * @param [in] entry  Entry to insert.
- * @param [in] reason The Reason we're inserting
+ * @param [in] flags  How to insert
  */
-void mdcache_lru_insert(mdcache_entry_t *entry, mdc_reason_t reason)
+void mdcache_lru_insert(mdcache_entry_t *entry, uint32_t flags)
 {
 	/* Enqueue. */
-	switch (reason) {
-	case MDC_REASON_DEFAULT:
-		lru_insert_entry(entry, &LRU[entry->lru.lane].L1, LRU_LRU);
-		break;
-	case MDC_REASON_SCAN:
-		lru_insert_entry(entry, &LRU[entry->lru.lane].L2, LRU_MRU);
-		break;
-	}
+	if (flags == LRU_PROMOTE)
+		lru_insert_entry(entry, &LRU[entry->lru.lane].L1);
+	else if (flags == LRU_FLAG_NONE)
+		lru_insert_entry(entry, &LRU[entry->lru.lane].L2);
 }
 
 /**
@@ -2017,12 +1998,9 @@ void mdcache_lru_insert(mdcache_entry_t *entry, mdc_reason_t reason)
  * and strongly influences LRU.  Essentially, the first ref during a callpath
  * should take an LRU_REQ_INITIAL ref, and all subsequent callpaths should take
  * LRU_FLAG_NONE refs.
- *
- * @return FSAL status
  */
-fsal_status_t
-_mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
-		 int line)
+void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
+		      int line)
 {
 #ifdef USE_LTTNG
 	int32_t refcnt =
@@ -2038,8 +2016,6 @@ _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 	if (flags & LRU_REQ_INITIAL) {
 		adjust_lru(entry);
 	}			/* initial ref */
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -2216,14 +2192,14 @@ void lru_bump_chunk(struct dir_chunk *chunk)
 	case LRU_ENTRY_L1:
 		/* advance chunk to MRU (of L1) */
 		CHUNK_LRU_DQ_SAFE(lru, q);
-		lru_insert(lru, q, LRU_MRU);
+		lru_insert(lru, q);
 		break;
 	case LRU_ENTRY_L2:
-		/* move chunk to LRU of L1 */
+		/* move chunk to MRU of L1 */
 		glist_del(&lru->q);	/* skip L1 fixups */
 		--(q->size);
 		q = &qlane->L1;
-		lru_insert(lru, q, LRU_LRU);
+		lru_insert(lru, q);
 		break;
 	default:
 		/* do nothing */

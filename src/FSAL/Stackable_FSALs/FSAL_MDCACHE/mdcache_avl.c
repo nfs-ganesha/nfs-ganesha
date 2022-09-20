@@ -223,7 +223,7 @@ void mdcache_avl_remove(mdcache_entry_t *parent,
 
 	if (dirent->entry) {
 		/* We have a ref'd entry, drop our ref */
-		mdcache_put(dirent->entry);
+		mdcache_lru_unref(dirent->entry, LRU_FLAG_NONE);
 		dirent->entry = NULL;
 	}
 
