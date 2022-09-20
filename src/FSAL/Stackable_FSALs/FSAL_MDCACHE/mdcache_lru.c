@@ -111,6 +111,7 @@ struct lru_q_lane {
 	struct lru_q L1;
 	struct lru_q L2;
 	struct lru_q cleanup;	/* deferred cleanup */
+	struct lru_q long_term;	/* long term references */
 	pthread_mutex_t mtx;
 	/* LRU thread scan position */
 	struct {
@@ -258,6 +259,7 @@ lru_init_queues(void)
 		lru_init_queue(&LRU[ix].L1, LRU_ENTRY_L1);
 		lru_init_queue(&LRU[ix].L2, LRU_ENTRY_L2);
 		lru_init_queue(&LRU[ix].cleanup, LRU_ENTRY_CLEANUP);
+		lru_init_queue(&LRU[ix].long_term, LRU_ENTRY_LONG_TERM);
 
 		/* Initialize dir_chunk LRU */
 		qlane = &CHUNK_LRU[ix];
@@ -302,6 +304,9 @@ lru_queue_of(mdcache_entry_t *entry)
 	case LRU_ENTRY_CLEANUP:
 		q = &LRU[(entry->lru.lane)].cleanup;
 		break;
+	case LRU_ENTRY_LONG_TERM:
+		q = &LRU[(entry->lru.lane)].long_term;
+		break;
 	default:
 		/* LRU_NO_LANE */
 		q = NULL;
@@ -337,6 +342,10 @@ chunk_lru_queue_of(struct dir_chunk *chunk)
 		break;
 	case LRU_ENTRY_CLEANUP:
 		q = &CHUNK_LRU[(chunk->chunk_lru.lane)].cleanup;
+		break;
+	case LRU_ENTRY_LONG_TERM:
+		/* Should never happen... */
+		q = &CHUNK_LRU[(chunk->chunk_lru.lane)].long_term;
 		break;
 	default:
 		/* LRU_NO_LANE */
@@ -466,6 +475,54 @@ adjust_lru(mdcache_entry_t *entry)
 		glist_del(&lru->q);     /* skip L1 fixups */
 		--(q->size);
 		q = &qlane->L1;
+		lru_insert(lru, q);
+		break;
+	case LRU_ENTRY_LONG_TERM:
+		q = lru_queue_of(entry);
+		/* advance entry to MRU (of long_term) */
+		LRU_DQ_SAFE(lru, q);
+		lru_insert(lru, q);
+		break;
+	default:
+		/* do nothing */
+		break;
+	}	/* switch qid */
+	QUNLOCK(qlane);
+}
+
+/*
+ * @brief Move an entry from LRU L1 or L2 queues to the long term queue.
+ *
+ * @param [in] entry  Entry to adjust.
+ */
+static inline void
+long_term_lru(mdcache_entry_t *entry)
+{
+	mdcache_lru_t *lru = &entry->lru;
+	struct lru_q_lane *qlane = &LRU[lru->lane];
+	struct lru_q *q;
+
+	QLOCK(qlane);
+	switch (lru->qid) {
+	case LRU_ENTRY_L1:
+		q = lru_queue_of(entry);
+		/* move entry to MRU of long_term */
+		LRU_DQ_SAFE(lru, q);
+		q = &qlane->long_term;
+		lru_insert(lru, q);
+		break;
+	case LRU_ENTRY_L2:
+		q = lru_queue_of(entry);
+		/* move entry to MRU of long_term */
+		glist_del(&lru->q);     /* skip L1 fixups */
+		--(q->size);
+		q = &qlane->long_term;
+		lru_insert(lru, q);
+		break;
+	case LRU_ENTRY_LONG_TERM:
+		q = lru_queue_of(entry);
+		/* advance entry to MRU (of long_term) */
+		LRU_DQ_SAFE(lru, q);
 		lru_insert(lru, q);
 		break;
 	default:
@@ -697,7 +754,7 @@ lru_reap_impl(enum lru_q_id qid)
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_ref,
 		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
-		   refcnt);
+		   refcnt, atomic_fetch_int32_t(&entry->lru.long_refcnt));
 #endif
 		adjustable_root_obj = (lq->size >= 2);
 		QUNLOCK(qlane);
@@ -1176,7 +1233,7 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_ref,
 		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
-		   refcnt);
+		   refcnt, atomic_fetch_int32_t(&entry->lru.long_refcnt));
 #endif
 
 		init_op_context_simple(&op_context, export,
@@ -1988,7 +2045,8 @@ void mdcache_lru_insert(mdcache_entry_t *entry, uint32_t flags)
  * This function acquires a reference on the given cache entry.
  *
  * @param[in] entry  The entry on which to get a reference
- * @param[in] flags  One of LRU_REQ_INITIAL, or LRU_FLAG_NONE
+ * @param[in] flags  One of LRU_REQ_INITIAL, LRU_FLAG_NONE, or
+ *                   LRU_LONG_TERM_REFERENCE
  *
  * A flags value of LRU_REQ_INITIAL indicates an initial
  * reference.  A non-initial reference is an "extra" reference in some call
@@ -2003,19 +2061,40 @@ void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		      int line)
 {
 #ifdef USE_LTTNG
-	int32_t refcnt =
+	int32_t refcnt, long_refcnt;
 #endif
-		atomic_inc_int32_t(&entry->lru.refcnt);
+
+	/* Always take a normal reference so unref to 0 works right */
+#ifdef USE_LTTNG
+	refcnt =
+#endif
+	atomic_inc_int32_t(&entry->lru.refcnt);
+
+	if (flags & LRU_LONG_TERM_REFERENCE) {
+		/* Each long term reference is in addition to a normal
+		 * reference. This allows the possibility of the final reference
+		 * to an entry being a long term reference such that when that
+		 * long term reference is dropped, cleanup will occur.
+		 */
+#ifdef USE_LTTNG
+		long_refcnt =
+#endif
+		atomic_inc_int32_t(&entry->lru.long_refcnt);
+	}
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_ref,
-		   func, line, &entry->obj_handle, entry->sub_handle, refcnt);
+		   func, line, &entry->obj_handle, entry->sub_handle,
+		   refcnt, long_refcnt);
 #endif
 
-	/* adjust LRU on initial refs */
-	if (flags & LRU_REQ_INITIAL) {
+	if (flags & LRU_LONG_TERM_REFERENCE) {
+		/* Move into long_term queue or adjust to MRU */
+		long_term_lru(entry);
+	} else if (flags & LRU_REQ_INITIAL) {
+		/* adjust LRU on initial refs */
 		adjust_lru(entry);
-	}			/* initial ref */
+	}
 }
 
 /**
@@ -2038,7 +2117,7 @@ bool
 _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		   int line)
 {
-	int32_t refcnt;
+	int32_t refcnt, long_refcnt;
 	bool do_cleanup = false;
 	uint32_t lane = entry->lru.lane;
 	struct lru_q_lane *qlane = &LRU[lane];
@@ -2067,11 +2146,46 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		}
 	}
 
-	refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
+	if (flags & LRU_LONG_TERM_REFERENCE) {
+		/* Each long term reference is in addition to a normal
+		 * reference. This allows the possibility of the final reference
+		 * to an entry being a long term reference such that when that
+		 * long term reference is dropped, cleanup will occur.
+		 * So release both references and check if the normal refcount
+		 * has reached 0.
+		 */
+		long_refcnt = atomic_dec_int32_t(&entry->lru.long_refcnt);
+		refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
+
+		if (unlikely(long_refcnt == 0)) {
+			struct lru_q *q;
+
+			/* we MUST recheck that refcount is still 0 */
+			QLOCK(qlane);
+
+			long_refcnt =
+				atomic_fetch_int32_t(&entry->lru.long_refcnt);
+
+			if (likely(long_refcnt == 0)) {
+				/* Move entry to MRU of L1 */
+				q = lru_queue_of(entry);
+				glist_del(&entry->lru.q);     /* skip fixups */
+				--(q->size);
+				q = &qlane->L1;
+				lru_insert(&entry->lru, q);
+			}
+
+			QUNLOCK(qlane);
+		}
+	} else {
+		refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
+		long_refcnt = atomic_fetch_int32_t(&entry->lru.long_refcnt);
+	}
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_unref,
-		   func, line, &entry->obj_handle, entry->sub_handle, refcnt);
+		   func, line, &entry->obj_handle, entry->sub_handle, refcnt,
+		   long_refcnt);
 #endif
 
 	if (unlikely(refcnt == 0)) {

@@ -1359,6 +1359,32 @@ static void mdcache_put_ref(struct fsal_obj_handle *obj_hdl)
 }
 
 /**
+ * @brief Get a long term reference to the handle
+ *
+ * @param[in] obj_hdl	Handle to ref long term
+ */
+static void mdcache_get_long_term_ref(struct fsal_obj_handle *obj_hdl)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+
+	mdcache_lru_ref(entry, LRU_LONG_TERM_REFERENCE);
+}
+
+/**
+ * @brief Put a long term reference to the handle
+ *
+ * @param[in] obj_hdl	Handle to unref from long term
+ */
+static void mdcache_put_long_term_ref(struct fsal_obj_handle *obj_hdl)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+
+	mdcache_lru_unref(entry, LRU_LONG_TERM_REFERENCE);
+}
+
+/**
  * @brief Release an object handle
  *
  * This force cleans-up.
@@ -1494,6 +1520,8 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 
 	ops->get_ref = mdcache_get_ref;
 	ops->put_ref = mdcache_put_ref;
+	ops->get_long_term_ref = mdcache_get_long_term_ref;
+	ops->put_long_term_ref = mdcache_put_long_term_ref;
 	ops->release = mdcache_hdl_release;
 	ops->merge = mdcache_merge;
 	ops->lookup = mdcache_lookup;

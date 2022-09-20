@@ -150,7 +150,8 @@ enum lru_q_id {
 	LRU_ENTRY_NONE = 0, /* entry not queued */
 	LRU_ENTRY_L1,
 	LRU_ENTRY_L2,
-	LRU_ENTRY_CLEANUP
+	LRU_ENTRY_CLEANUP,
+	LRU_ENTRY_LONG_TERM,
 };
 
 #define LRU_CLEANUP 0x00000001 /* Entry is on cleanup queue */
@@ -163,6 +164,8 @@ typedef struct mdcache_lru__ {
 	enum lru_q_id qid;	/*< Queue identifier */
 	int32_t refcnt;		/*< Reference count.  This is signed to make
 				   mistakes easy to see. */
+	int32_t long_refcnt;	/*< Long Term Reference count.  This is signed
+				    to make mistakes easy to see. */
 	uint32_t flags;		/*< Status flags; MUST use atomic ops */
 	uint32_t lane;		/*< The lane in which an entry currently
 				 *< resides, so we can lock the deque and

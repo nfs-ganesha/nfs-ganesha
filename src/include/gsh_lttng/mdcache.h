@@ -42,13 +42,16 @@ TRACEPOINT_EVENT(
 		int, line,
 		void *, obj_handle,
 		void *, sub_handle,
-		int32_t, refcnt),
+		int32_t, refcnt,
+		int32_t, long_refcnt),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, obj_handle, obj_handle)
 		ctf_integer_hex(void *, sub_handle, sub_handle)
+		ctf_string(long_ref, long_ref)
 		ctf_integer(int32_t, refcnt, refcnt)
+		ctf_integer(int32_t, long_refcnt, long_refcnt)
 	)
 )
 
@@ -72,13 +75,15 @@ TRACEPOINT_EVENT(
 		int, line,
 		void *, obj_handle,
 		void *, sub_handle,
-		int32_t, refcnt),
+		int32_t, refcnt,
+		int32_t, long_refcnt),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, obj_handle, obj_handle)
 		ctf_integer_hex(void *, sub_handle, sub_handle)
 		ctf_integer(int32_t, refcnt, refcnt)
+		ctf_integer(int32_t, long_refcnt, long_refcnt)
 	)
 )
 
