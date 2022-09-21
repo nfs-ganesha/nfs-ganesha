@@ -238,14 +238,7 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 		 * path changes that assumption, let's release the
 		 * old ACL properly.
 		 */
-		int acl_status;
-
-		acl_status = nfs4_acl_release_entry(fsalattr->acl);
-
-		if (acl_status != NFS_V4_ACL_SUCCESS)
-			LogCrit(COMPONENT_FSAL,
-				"Failed to release old acl, status=%d",
-				acl_status);
+		nfs4_acl_release_entry(fsalattr->acl);
 
 		fsalattr->acl = NULL;
 	}

@@ -156,13 +156,8 @@ fsal_status_t lzfs_int_getacl(struct lzfs_fsal_export *lzfs_export,
 			      fsal_acl_t **fsal_acl)
 {
 	if (*fsal_acl) {
-		int acl_status = nfs4_acl_release_entry(*fsal_acl);
+		nfs4_acl_release_entry(*fsal_acl);
 
-		if (acl_status != NFS_V4_ACL_SUCCESS) {
-			LogCrit(COMPONENT_FSAL,
-				"Failed to release old acl, status=%d",
-				acl_status);
-		}
 		*fsal_acl = NULL;
 	}
 

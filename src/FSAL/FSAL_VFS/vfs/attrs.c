@@ -72,14 +72,7 @@ void vfs_sub_getattrs_release(struct fsal_attrlist *attrib)
 		 * path changes that assumption, let's release the
 		 * old ACL properly.
 		 */
-		int acl_status;
-
-		acl_status = nfs4_acl_release_entry(attrib->acl);
-
-		if (acl_status != NFS_V4_ACL_SUCCESS)
-			LogCrit(COMPONENT_FSAL,
-				"Failed to release old acl, status=%d",
-				acl_status);
+		nfs4_acl_release_entry(attrib->acl);
 
 		attrib->acl = NULL;
 	}

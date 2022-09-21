@@ -95,17 +95,10 @@ gpfsfsal_xstat_2_fsal_attributes(gpfsfsal_xstat_t *gpfs_buf,
 			 * path changes that assumption, let's release the
 			 * old ACL properly.
 			 */
-			int acl_status;
-
 			LogCrit(COMPONENT_FSAL,
 				"attrs passed in with acl, shouldn't happen");
 
-			acl_status = nfs4_acl_release_entry(fsal_attr->acl);
-
-			if (acl_status != NFS_V4_ACL_SUCCESS)
-				LogCrit(COMPONENT_FSAL,
-					"Failed to release old acl, status=%d",
-					acl_status);
+			nfs4_acl_release_entry(fsal_attr->acl);
 
 			fsal_attr->acl = NULL;
 		}

@@ -655,14 +655,7 @@ fsal_errors_t fsal_inherit_acls(struct fsal_attrlist *attrs, fsal_acl_t *sacl,
 		 * path changes that assumption, let's not release the
 		 * old ACL properly.
 		 */
-		int acl_status;
-
-		acl_status = nfs4_acl_release_entry(attrs->acl);
-
-		if (acl_status != NFS_V4_ACL_SUCCESS)
-			LogCrit(COMPONENT_FSAL,
-				"Failed to release old acl, status=%d",
-				acl_status);
+		nfs4_acl_release_entry(attrs->acl);
 	}
 
 	attrs->acl = nfs4_acl_alloc();
@@ -875,14 +868,7 @@ fsal_mode_gen_acl(struct fsal_attrlist *attrs)
 		 * path changes that assumption, let's not release the
 		 * old ACL properly.
 		 */
-		int acl_status;
-
-		acl_status = nfs4_acl_release_entry(attrs->acl);
-
-		if (acl_status != NFS_V4_ACL_SUCCESS)
-			LogCrit(COMPONENT_FSAL,
-				"Failed to release old acl, status=%d",
-				acl_status);
+		nfs4_acl_release_entry(attrs->acl);
 	}
 
 	attrs->acl = nfs4_acl_alloc();
@@ -940,14 +926,7 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 		 * path changes that assumption, let's not release the
 		 * old ACL properly.
 		 */
-		int acl_status;
-
-		acl_status = nfs4_acl_release_entry(attrs->acl);
-
-		if (acl_status != NFS_V4_ACL_SUCCESS)
-			LogCrit(COMPONENT_FSAL,
-				"Failed to release old acl, status=%d",
-				acl_status);
+		nfs4_acl_release_entry(attrs->acl);
 	}
 
 	attrs->acl = nfs4_acl_alloc();

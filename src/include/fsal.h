@@ -438,14 +438,7 @@ static inline void fsal_prepare_attrs(struct fsal_attrlist *attrs,
 static inline void fsal_release_attrs(struct fsal_attrlist *attrs)
 {
 	if (attrs->acl != NULL) {
-		int acl_status;
-
-		acl_status = nfs4_acl_release_entry(attrs->acl);
-
-		if (acl_status != NFS_V4_ACL_SUCCESS)
-			LogCrit(COMPONENT_FSAL,
-				"Failed to release old acl, status=%d",
-				acl_status);
+		nfs4_acl_release_entry(attrs->acl);
 
 		/* Poison the acl since we no longer hold a reference. */
 		attrs->acl = NULL;

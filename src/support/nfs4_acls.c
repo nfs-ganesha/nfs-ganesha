@@ -194,22 +194,21 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *acldata,
 	return acl;
 }
 
-fsal_acl_status_t nfs4_acl_release_entry(fsal_acl_t *acl)
+void nfs4_acl_release_entry(fsal_acl_t *acl)
 {
 	struct gsh_buffdesc key, old_key;
 	struct gsh_buffdesc old_value;
 	int rc;
 	struct hash_latch latch;
-	fsal_acl_status_t status = NFS_V4_ACL_SUCCESS;
 
 	if (!acl)
-		return status;
+		return;
 
 	PTHREAD_RWLOCK_wrlock(&acl->lock);
 	if (acl->ref > 1) {
 		nfs4_acl_entry_dec_ref(acl);
 		PTHREAD_RWLOCK_unlock(&acl->lock);
-		return status;
+		return;
 	} else
 		LogDebug(COMPONENT_NFS_V4_ACL, "Free ACL %p", acl);
 
@@ -224,7 +223,7 @@ fsal_acl_status_t nfs4_acl_release_entry(fsal_acl_t *acl)
 	switch (rc) {
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
 		hashtable_releaselatched(fsal_acl_hash, &latch);
-		return status;
+		return;
 
 	case HASHTABLE_SUCCESS:
 		PTHREAD_RWLOCK_wrlock(&acl->lock);
@@ -233,7 +232,7 @@ fsal_acl_status_t nfs4_acl_release_entry(fsal_acl_t *acl)
 			/* Did not actually release last reference */
 			hashtable_releaselatched(fsal_acl_hash, &latch);
 			PTHREAD_RWLOCK_unlock(&acl->lock);
-			return status;
+			return;
 		}
 
 		/* use the key to delete the entry */
@@ -248,7 +247,7 @@ fsal_acl_status_t nfs4_acl_release_entry(fsal_acl_t *acl)
 		LogCrit(COMPONENT_NFS_V4_ACL,
 			"ACL entry could not be deleted, status=%s",
 			hash_table_err_to_str(rc));
-		return NFS_V4_ACL_ERROR;
+		return;
 	}
 
 	/* Sanity check: old_value.addr is expected to be equal to acl,
@@ -259,7 +258,7 @@ fsal_acl_status_t nfs4_acl_release_entry(fsal_acl_t *acl)
 
 	/* Release acl */
 	nfs4_acl_free(acl);
-	return status;
+	return;
 }
 
 int nfs4_acls_init(void)
