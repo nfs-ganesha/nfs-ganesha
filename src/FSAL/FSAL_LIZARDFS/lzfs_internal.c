@@ -80,19 +80,17 @@ liz_context_t *lzfs_fsal_create_context(liz_t *instance,
 
 	if (cred->caller_glen > 0) {
 		if (cred->caller_glen > kLocalGArraySize) {
-			gid_t *garray = malloc((cred->caller_glen + 1) *
+			gid_t *garray = gsh_malloc((cred->caller_glen + 1) *
 							sizeof(gid_t));
 
-			if (garray != NULL) {
-				garray[0] = gid;
-				memcpy(garray + 1,
-				       cred->caller_garray,
-				       sizeof(gid_t) * cred->caller_glen);
-				liz_update_groups(instance, ctx, garray,
-						  cred->caller_glen + 1);
-				free(garray);
-				return ctx;
-			}
+			garray[0] = gid;
+			memcpy(garray + 1,
+			       cred->caller_garray,
+			       sizeof(gid_t) * cred->caller_glen);
+			liz_update_groups(instance, ctx, garray,
+					  cred->caller_glen + 1);
+			free(garray);
+			return ctx;
 		}
 
 		gid_t garray[kLocalGArraySize + 1];
