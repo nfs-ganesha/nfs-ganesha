@@ -479,6 +479,10 @@ bool pseudo_mount_export(struct gsh_export *export)
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 
 	export->exp_mounted_on_file_id = state.obj->fileid;
+
+	/* Get a long term reference on the object */
+	state.obj->obj_ops->get_long_term_ref(state.obj);
+
 	/* Pass object ref off to export */
 	export->exp_junction_obj = state.obj;
 	export_root_object_get(export->exp_junction_obj);
@@ -634,37 +638,28 @@ void pseudo_unmount_export(struct gsh_export *export)
 	 */
 	export->is_mounted = false;
 
+	/* Get a ref to the mounted_on_export and initialize op_context
+	 */
+	get_gsh_export_ref(mounted_on_export);
+
+	init_op_context(&op_context, mounted_on_export,
+			mounted_on_export->fsal_export, NULL,
+			NFS_V4, 0, NFS_REQUEST);
+
 	if (is_export_pseudo(mounted_on_export) && junction_inode != NULL) {
 		char *pseudo_path = gsh_strdup(ref_pseudopath->gr_val);
-
-		/* Get a ref to the mounted_on_export and initialize op_context
-		 */
-		get_gsh_export_ref(mounted_on_export);
-		init_op_context(&op_context, mounted_on_export,
-				mounted_on_export->fsal_export, NULL,
-				NFS_V4, 0, NFS_REQUEST);
 
 		/* Remove the unused PseudoFS nodes */
 		cleanup_pseudofs_node(pseudo_path, junction_inode);
 
 		gsh_free(pseudo_path);
-		release_op_context();
 	} else {
-		/* Get a ref to the mounted_on_export and initialize op_context
-		 */
-		get_gsh_export_ref(mounted_on_export);
-		init_op_context(&op_context, mounted_on_export,
-				mounted_on_export->fsal_export, NULL,
-				NFS_V4, 0, NFS_REQUEST);
-
 		/* Properly unmount at the FSAL layer - primarily this will
 		 * allow mdcache to unmap the junction inode from the parent
 		 * export.
 		 */
 		mounted_on_export->fsal_export->exp_ops.unmount(
 			mounted_on_export->fsal_export, junction_inode);
-
-		release_op_context();
 	}
 
 	/* Release our reference to the export we are mounted on. */
@@ -672,6 +667,11 @@ void pseudo_unmount_export(struct gsh_export *export)
 
 	/* Release the LRU reference */
 	junction_inode->obj_ops->put_ref(junction_inode);
+
+	/* Release the long term reference */
+	junction_inode->obj_ops->put_long_term_ref(junction_inode);
+
+	release_op_context();
 
 	LogFullDebug(COMPONENT_EXPORT,
 		     "Finish unexport %s", ref_pseudopath->gr_val);

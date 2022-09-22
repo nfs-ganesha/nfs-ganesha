@@ -2637,6 +2637,9 @@ int init_export_root(struct gsh_export *export)
 	PTHREAD_RWLOCK_wrlock(&export->lock);
 	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->jct_lock);
 
+	/* Get a long term reference on the object */
+	obj->obj_ops->get_long_term_ref(obj);
+
 	/* Pass ref off to export */
 	export_root_object_get(obj);
 	export->exp_root_obj = obj;
@@ -2740,6 +2743,9 @@ void release_export(struct gsh_export *export, bool config)
 		 */
 		remove_gsh_export(export->export_id);
 	}
+
+	/* Release the long term reference */
+	obj->obj_ops->put_long_term_ref(obj);
 
 	/* Release ref taken above */
 	LogFullDebug(COMPONENT_EXPORT,

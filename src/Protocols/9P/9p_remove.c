@@ -93,6 +93,9 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
 		pfid->opens = 0;	/* dead */
 
+		/* Release the long term reference */
+		pfid->ppentry->obj_ops->put_long_term_ref(pfid->ppentry);
+
 		fsal_status = pfid->pentry->obj_ops->close2(pfid->pentry,
 							   pfid->state);
 

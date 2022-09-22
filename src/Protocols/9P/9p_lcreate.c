@@ -164,6 +164,9 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	pfid->xattr = NULL;
 	pfid->opens = 1;
 
+	/* Get a long term reference */
+	pfid->ppentry->obj_ops->get_long_term_ref(pfid->ppentry);
+
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RLCREATE);
 	_9p_setptr(cursor, msgtag, u16);

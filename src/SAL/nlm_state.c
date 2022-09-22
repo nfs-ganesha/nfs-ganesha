@@ -311,18 +311,20 @@ void dec_nlm_state_ref(state_t *state)
 	if (obj == NULL) {
 		LogDebug(COMPONENT_STATE,
 			 "Entry for state is stale");
-		return;
-	}
+	} else {
+		/* We need to close the state before freeing the state. */
+		(void) obj->obj_ops->close2(obj, state);
 
-	/* We need to close the state before freeing the state. */
-	(void) obj->obj_ops->close2(obj, state);
+		/* Release the reference just taken */
+		obj->obj_ops->put_ref(obj);
+	}
 
 	op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export, state);
 
-	/* Release 2 refs: our sentinel one, plus the one from
-	 * get_state_obj_ref() */
-	obj->obj_ops->put_ref(obj);
-	obj->obj_ops->put_ref(obj);
+	if (obj != NULL) {
+		/* Release the long term reference */
+		obj->obj_ops->put_long_term_ref(obj);
+	}
 }
 
 /**
@@ -462,7 +464,8 @@ int get_nlm_state(enum state_type state_type,
 	buffval.addr = state;
 	buffval.len = sizeof(*state);
 
-	state_obj->obj_ops->get_ref(state_obj);
+	/* Get long term ref for this state entry */
+	state_obj->obj_ops->get_long_term_ref(state_obj);
 
 	rc = hashtable_setlatched(ht_nlm_states, &buffval, &buffval, &latch,
 				  false, NULL, NULL);
@@ -481,7 +484,7 @@ int get_nlm_state(enum state_type state_type,
 		 */
 		op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
 							state);
-		state_obj->obj_ops->put_ref(state_obj);
+		state_obj->obj_ops->put_long_term_ref(state_obj);
 
 		*pstate = NULL;
 

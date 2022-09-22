@@ -323,6 +323,18 @@ void free_fid(struct _9p_fid *pfid)
 			(void) pfid->pentry->obj_ops->close2(
 						pfid->pentry,
 						pfid->state);
+
+			/* Now release the long term references, we do this
+			 * after the close to make sure the object lifetime is
+			 * preserved.
+			 */
+			while (pfid->opens > 0) {
+				/* Release the long term reference for each open
+				 */
+				pfid->ppentry->obj_ops->put_long_term_ref(
+								pfid->ppentry);
+				pfid->opens--;
+			}
 		}
 
 		op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
@@ -386,15 +398,23 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 
 	/* If object is an opened file, close it */
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
-		pfid->opens = 0;	/* dead */
-
 		LogDebug(COMPONENT_9P,
 			 "Calling close on %s entry %p",
 			 object_file_type_to_str(pfid->pentry->type),
 			 pfid->pentry);
 
 		fsal_status = pfid->pentry->obj_ops->close2(pfid->pentry,
-							   pfid->state);
+							    pfid->state);
+
+		/* Now release the long term references, we do this after the
+		 * close to make sure the object lifetime is preserved.
+		 */
+		while (pfid->opens > 0) {
+			/* Release the long term reference for each open */
+			pfid->ppentry->obj_ops->put_long_term_ref(
+								pfid->ppentry);
+			pfid->opens--;
+		}
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			free_fid(pfid);
