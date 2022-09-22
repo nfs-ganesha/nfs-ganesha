@@ -560,15 +560,13 @@ static void mem_copy_attrs_mask(struct fsal_attrlist *attrs_in,
 /**
  * @brief Open an FD
  *
- * @param[in] fd	FD to close
- * @return FSAL status
+ * @param[in] fd	  FD to open
+ * @param[in] openflags   New mode for open
  */
-static fsal_status_t mem_open_my_fd(struct fsal_fd *fd,
-				    fsal_openflags_t openflags)
+static inline
+void mem_open_my_fd(struct fsal_fd *fd, fsal_openflags_t openflags)
 {
 	fd->openflags = FSAL_O_NFS_FLAGS(openflags);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -588,24 +586,26 @@ static fsal_status_t mem_close_my_fd(struct fsal_fd *fd)
 }
 
 /**
- * @brief Function to open an fsal_obj_handle's global file descriptor.
+ * @brief MEM Function to open or reopen a fsal_fd.
  *
  * @param[in]  obj_hdl     File on which to operate
- * @param[in]  openflags   Mode for open
+ * @param[in]  openflags   New mode for open
  * @param[out] fd          File descriptor that is to be used
  *
  * @return FSAL status.
  */
 
-static fsal_status_t mem_open_func(struct fsal_obj_handle *obj_hdl,
-				   fsal_openflags_t openflags,
-				   struct fsal_fd *fd)
+fsal_status_t mem_reopen_func(struct fsal_obj_handle *obj_hdl,
+			      fsal_openflags_t openflags,
+			      struct fsal_fd *fsal_fd)
 {
-	return mem_open_my_fd(fd, openflags);
+	mem_open_my_fd(fsal_fd, openflags);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
- * @brief Close a global FD
+ * @brief MEM Function to close a global FD
  *
  * @param[in] obj_hdl	Object owning FD to close
  * @param[in] fd	FD to close
@@ -614,7 +614,6 @@ static fsal_status_t mem_open_func(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t mem_close_func(struct fsal_obj_handle *obj_hdl,
 				    struct fsal_fd *fd)
 {
-	(void) obj_hdl;
 	return mem_close_my_fd(fd);
 }
 
@@ -1372,14 +1371,7 @@ fsal_status_t mem_close(struct fsal_obj_handle *obj_hdl)
 
 	assert(obj_hdl->type == REGULAR_FILE);
 
-	/* Take write lock on object to protect file descriptor.
-	 * This can block over an I/O operation.
-	 */
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-	status = mem_close_my_fd(&myself->mh_file.fd);
-
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	status = close_fsal_fd(obj_hdl, &myself->mh_file.fd, false);
 
 	return status;
 }
@@ -1467,6 +1459,130 @@ static fsal_status_t mem_rename(struct fsal_obj_handle *obj_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+static fsal_status_t mem_open2_by_handle(struct fsal_obj_handle *obj_hdl,
+					 struct state_t *state,
+					 fsal_openflags_t openflags,
+					 enum fsal_create_mode createmode,
+					 fsal_verifier_t verifier,
+					 struct fsal_attrlist *attrs_out)
+{
+	struct fsal_fd *my_fd;
+	struct mem_fsal_obj_handle *myself;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	fsal_openflags_t old_openflags;
+	bool truncated = openflags & FSAL_O_TRUNC;
+
+	myself = container_of(obj_hdl, struct mem_fsal_obj_handle, obj_handle);
+
+	if (state != NULL)
+		my_fd = &container_of(state, struct mem_state_fd,
+				      state)->fsal_fd;
+	else
+		my_fd = &myself->mh_file.fd;
+
+	/* Indicate we want to do fd work (can't fail since not reclaiming) */
+	(void) fsal_start_fd_work(my_fd, false);
+
+	old_openflags = my_fd->openflags;
+
+	if (state != NULL) {
+		/* Prepare to take the share reservation, but only if we are
+		 * called with a valid state (if state is NULL the caller is a
+		 * stateless create such as NFS v3 CREATE and we're just going
+		 * to ignore share reservation stuff).
+		 */
+
+		/* Now that we have the mutex, and no I/O is in progress so we
+		 * have exclusive access to the share's fsal_fd, we can look at
+		 * its openflags. We also need to work the share reservation so
+		 * take the obj_lock. NOTE: This is the ONLY sequence where both
+		 * a work_mutex and the obj_lock are taken, so there is no
+		 * opportunity for ABBA deadlock.
+		 *
+		 * Note that we do hold the obj_lock over an open and a close
+		 * which is longer than normal, but the previous iteration of
+		 * the code held the obj lock (read granted) over whole I/O
+		 * operations... We don't block over I/O because we've assured
+		 * that no I/O is in progress or can start before proceeding
+		 * past the above while loop.
+		 */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+		/* Now check the new share. */
+		status = check_share_conflict(&myself->mh_file.share, openflags,
+					      false);
+
+		if (FSAL_IS_ERROR(status)) {
+			LogDebug(COMPONENT_FSAL,
+				 "check_share_conflict returned %s",
+				 fsal_err_txt(status));
+			goto exit;
+		}
+	}
+
+	/* Check for a genuine no-op open. That means we aren't trying to
+	 * create, the file is already open in the same mode with the same
+	 * deny flags, and we aren't trying to truncate. In this case we want
+	 * to avoid bouncing the fd. In the case of JUST changing the deny mode
+	 * or an replayed exclusive create, we might bounce the fd when we could
+	 * have avoided that, but those scenarios are much less common.
+	 */
+	if (FSAL_O_NFS_FLAGS(openflags) == FSAL_O_NFS_FLAGS(old_openflags) &&
+	    truncated == false && createmode == FSAL_NO_CREATE) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "no-op reopen2 my_fd = %p openflags = %x",
+			     my_fd, openflags);
+		goto exit;
+	}
+
+	/* No share conflict, re-open the share fd (can't fail) */
+	(void) mem_reopen_func(obj_hdl, openflags, my_fd);
+
+	if (truncated)
+		myself->attrs.filesize = myself->attrs.spaceused = 0;
+
+	/* Now check verifier for exclusive, but not for
+	 * FSAL_EXCLUSIVE_9P.
+	 */
+	if (createmode >= FSAL_EXCLUSIVE &&
+	    createmode != FSAL_EXCLUSIVE_9P &&
+	    !check_verifier_attrlist(&myself->attrs, verifier, false)) {
+		/* Verifier didn't match, return EEXIST */
+		status = posix2fsal_status(EEXIST);
+	} else if (attrs_out != NULL) {
+		/* Note, myself->attrs is usually protected by a
+		 * the attr_lock in MDCACHE.  It's not in this
+		 * case.  Since MEM is not a production FSAL,
+		 * this is deemed to be okay for the moment.
+		 */
+		fsal_copy_attrs(attrs_out, &myself->attrs, false);
+	}
+
+	if (FSAL_IS_ERROR(status)) {
+		/*close fd*/
+		(void) mem_close_my_fd(my_fd);
+	}
+
+exit:
+
+	if (state != NULL) {
+		if (!FSAL_IS_ERROR(status)) {
+			/* Success, establish the new share. */
+			update_share_counters(&myself->mh_file.share,
+					      old_openflags,
+					      openflags);
+		}
+
+		/* Release obj_lock. */
+		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	}
+
+	/* Indicate we are done with fd work and signal any waiters. */
+	fsal_complete_fd_work(my_fd);
+
+	return status;
+}
+
 /**
  * @brief Open a file descriptor for read or write and possibly create
  *
@@ -1532,90 +1648,12 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 		tracepoint(fsalmem, mem_open, __func__, __LINE__, obj_hdl,
 			   myself->m_name, state, truncated, setattrs);
 #endif
-		/* Need a lock to protect the FD */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
 
-		if (state != NULL) {
-			/* Prepare to take the share reservation, but only if we
-			 * are called with a valid state (if state is NULL the
-			 * caller is a stateless create such as NFS v3 CREATE).
-			 */
+		status = mem_open2_by_handle(obj_hdl, state, openflags,
+					     createmode, verifier,
+					     attrs_out);
 
-			/* Check share reservation conflicts. */
-			status = check_share_conflict(&myself->mh_file.share,
-						      openflags,
-						      false);
-
-			if (FSAL_IS_ERROR(status)) {
-				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-				return status;
-			}
-
-			/* Take the share reservation now by updating the
-			 * counters.
-			 */
-			update_share_counters(&myself->mh_file.share,
-					      FSAL_O_CLOSED,
-					      openflags);
-		} else {
-			/* We need to use the global fd to continue, and take
-			 * the lock to protect it.
-			 */
-			my_fd = &myself->mh_file.fd;
-		}
-
-		if (openflags & FSAL_O_WRITE)
-			openflags |= FSAL_O_READ;
-		mem_open_my_fd(my_fd, openflags);
-
-		if (truncated)
-			myself->attrs.filesize = myself->attrs.spaceused = 0;
-
-		/* Now check verifier for exclusive, but not for
-		 * FSAL_EXCLUSIVE_9P.
-		 */
-		if (createmode >= FSAL_EXCLUSIVE &&
-		    createmode != FSAL_EXCLUSIVE_9P &&
-		    !check_verifier_attrlist(&myself->attrs, verifier, false)) {
-			/* Verifier didn't match, return EEXIST */
-			status = fsalstat(posix2fsal_error(EEXIST), EEXIST);
-		}
-
-		if (!FSAL_IS_ERROR(status)) {
-			/* Return success. */
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-			if (attrs_out != NULL)
-				/* Note, myself->attrs is usually protected by a
-				 * the attr_lock in MDCACHE.  It's not in this
-				 * case.  Since MEM is not a production FSAL,
-				 * this is deemed to be okay for the moment.
-				 */
-				fsal_copy_attrs(attrs_out, &myself->attrs,
-						false);
-			return status;
-		}
-
-		(void) mem_close_my_fd(my_fd);
-
-		if (state == NULL) {
-			/* If no state, release the lock taken above and return
-			 * status.
-			 */
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-			return status;
-		}
-
-		/* Can only get here with state not NULL and an error */
-
-		/* On error we need to release our share reservation
-		 * and undo the update of the share counters.
-		 * This can block over an I/O operation.
-		 */
-		update_share_counters(&myself->mh_file.share,
-				      openflags,
-				      FSAL_O_CLOSED);
-
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+		*caller_perm_check = FSAL_IS_SUCCESS(status);
 		return status;
 	}
 
@@ -1694,15 +1732,10 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 		 * a stateless create such as NFS v3 CREATE).
 		 */
 
-		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&(*new_obj)->obj_lock);
-
 		/* Take the share reservation now by updating the counters. */
-		update_share_counters(&hdl->mh_file.share,
-				      FSAL_O_CLOSED,
-				      openflags);
-
-		PTHREAD_RWLOCK_unlock(&(*new_obj)->obj_lock);
+		update_share_counters_locked(obj_hdl, &hdl->mh_file.share,
+					     FSAL_O_CLOSED,
+					     openflags);
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1727,42 +1760,8 @@ fsal_status_t mem_reopen2(struct fsal_obj_handle *obj_hdl,
 			  struct state_t *state,
 			  fsal_openflags_t openflags)
 {
-	struct mem_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct mem_fsal_obj_handle, obj_handle);
-	fsal_status_t status = {0, 0};
-	struct fsal_fd *my_fd = (struct fsal_fd *)(state + 1);
-	fsal_openflags_t old_openflags;
-
-#ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_open, __func__, __LINE__, obj_hdl,
-			   myself->m_name, state, openflags & FSAL_O_TRUNC,
-			   false);
-#endif
-
-	old_openflags = my_fd->openflags;
-
-	/* This can block over an I/O operation. */
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-	/* We can conflict with old share, so go ahead and check now. */
-	status = check_share_conflict(&myself->mh_file.share, openflags, false);
-	if (FSAL_IS_ERROR(status)) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-		return status;
-	}
-
-	/* Set up the new share so we can drop the lock and not have a
-	 * conflicting share be asserted, updating the share counters.
-	 */
-	update_share_counters(&myself->mh_file.share, old_openflags, openflags);
-
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-	mem_open_my_fd(my_fd, openflags);
-	if (openflags & FSAL_O_TRUNC)
-		myself->attrs.filesize = myself->attrs.spaceused = 0;
-
-	return status;
+	return mem_open2_by_handle(obj_hdl, state, openflags, FSAL_NO_CREATE,
+				   NULL, NULL);
 }
 
 struct mem_async_arg {
@@ -1770,18 +1769,27 @@ struct mem_async_arg {
 	struct fsal_io_arg *io_arg;
 	fsal_async_cb done_cb;
 	void *caller_arg;
-	struct gsh_export *ctx_export;
 	struct fsal_export *fsal_export;
+	struct req_op_context *ctx;
+	struct fsal_fd *out_fd;
+	uint32_t share;
+	struct fsal_fd temp_fd;
 };
 
 static void
 mem_async_complete(struct fridgethr_context *ctx)
 {
 	struct mem_async_arg *async_arg = ctx->arg;
-	struct req_op_context op_context;
-	struct mem_fsal_export *mem_export =
-	   container_of(async_arg->fsal_export, struct mem_fsal_export, export);
+	struct mem_fsal_export *mem_export = container_of(
+						async_arg->ctx->fsal_export,
+						struct mem_fsal_export,
+						export);
 	uint32_t async_delay = atomic_fetch_uint32_t(&mem_export->async_delay);
+	fsal_status_t status;
+	struct mem_fsal_obj_handle *myself = container_of(
+						async_arg->obj_hdl,
+						struct mem_fsal_obj_handle,
+						obj_handle);
 
 	/* Now check if we need to delay the call back */
 	if (atomic_fetch_uint32_t(&mem_export->async_type) != MEM_FIXED) {
@@ -1794,17 +1802,30 @@ mem_async_complete(struct fridgethr_context *ctx)
 		usleep(async_delay);
 	}
 
-	/* Get a ref to the async_arg->ctx_export and initialize op_context for
-	 * the call back
+	/* We need the op_ctx from the original call to call back into the
+	 * protocol layer callback.
 	 */
-	get_gsh_export_ref(async_arg->ctx_export);
-	init_op_context_simple(&op_context, async_arg->ctx_export,
-			       async_arg->fsal_export);
+	resume_op_context(async_arg->ctx);
 
+	status = fsal_complete_io(async_arg->obj_hdl, async_arg->out_fd);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status));
+
+	if (async_arg->io_arg->state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(async_arg->obj_hdl,
+					     &myself->mh_file.share,
+					     async_arg->share, FSAL_O_CLOSED);
+	}
 	async_arg->done_cb(async_arg->obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0),
 			   async_arg->io_arg, async_arg->caller_arg);
-
-	release_op_context();
 
 	gsh_free(async_arg);
 }
@@ -1837,10 +1858,8 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 {
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
-	struct fsal_fd *fsal_fd;
-	bool has_lock, closefd = false;
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-	bool reusing_open_state_fd = false;
+	struct fsal_fd *out_fd;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0}, status2;
 	uint64_t offset = read_arg->offset;
 	int i;
 	struct mem_fsal_export *mem_export =
@@ -1848,6 +1867,7 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 	uint32_t async_type = atomic_fetch_uint32_t(&mem_export->async_type);
 	uint32_t async_stall_delay =
 			atomic_fetch_uint32_t(&mem_export->async_stall_delay);
+	struct mem_async_arg *async_arg;
 
 	if (read_arg->info != NULL) {
 		/* Currently we don't support READ_PLUS */
@@ -1856,15 +1876,24 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 		return;
 	}
 
-	/* Find an FD */
-	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
-			      &myself->mh_file.share, bypass, read_arg->state,
-			      FSAL_O_READ, mem_open_func, mem_close_func,
-			      &has_lock, &closefd, false,
-			      &reusing_open_state_fd);
+	/* We always meed async_arg because that's where temp_fd is located
+	 * and we may need temp_fd before we know we actually are going async.
+	 */
+	async_arg = gsh_calloc(1, sizeof(*async_arg));
+
+	init_fsal_fd(&async_arg->temp_fd, FSAL_FD_TEMP, op_ctx->fsal_export);
+
+	/* Indicate a desire to start io and get a usable file descritor */
+	status = fsal_start_io(&out_fd, obj_hdl, &myself->mh_file.fd,
+			       &async_arg->temp_fd, read_arg->state,
+			       FSAL_O_READ, false, NULL, bypass,
+			       &myself->mh_file.share);
+
 	if (FSAL_IS_ERROR(status)) {
-		done_cb(obj_hdl, status, read_arg, caller_arg);
-		return;
+		LogFullDebug(COMPONENT_FSAL,
+			     "fsal_start_io failed returning %s",
+			     fsal_err_txt(status));
+		goto exit;
 	}
 
 	read_arg->io_amount = 0;
@@ -1907,42 +1936,54 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 
 	now(&myself->attrs.atime);
 
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
 	if (MEM.async_threads > 0 &&
 	    (async_type > MEM_RANDOM_OR_INLINE ||
 	    ((async_type == MEM_RANDOM_OR_INLINE) && ((random() % 1) == 1)))) {
-		struct mem_async_arg *async_arg;
-
-		/* Was MEM_FIXED, MEM_RANDOM, or MEM_RANDOM_OR_INLINE and we
-		 * scored a non-inline.
-		 */
-		async_arg = gsh_malloc(sizeof(*async_arg));
-
+		/* Initialize the rest of async_arg */
 		async_arg->obj_hdl = obj_hdl;
 		async_arg->io_arg = read_arg;
 		async_arg->caller_arg = caller_arg;
 		async_arg->done_cb = done_cb;
-		async_arg->ctx_export = op_ctx->ctx_export;
-		async_arg->fsal_export = op_ctx->fsal_export;
+		async_arg->ctx = op_ctx;
+		async_arg->out_fd = out_fd;
+		async_arg->share = FSAL_O_READ;
 
 		if (fridgethr_submit(mem_async_fridge,
 				     mem_async_complete,
 				     async_arg) == 0) {
-			/* Async fired off... */
-			goto out;
+			/* Async fired off...
+			 * I/O will complete async, suspend op_ctx and return.
+			 */
+			suspend_op_context();
+			goto bye;
 		}
-
-		/* Could not schedule, fall through and do an immediate
-		 * call back.
-		 */
-		gsh_free(async_arg);
 	}
+
+	status2 = fsal_complete_io(obj_hdl, out_fd);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
+
+	if (read_arg->state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &myself->mh_file.share,
+					     FSAL_O_READ, FSAL_O_CLOSED);
+	}
+
+exit:
+
+	/* Now free the async arg since we are done with it. */
+	gsh_free(async_arg);
 
 	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), read_arg, caller_arg);
 
-out:
+bye:
 
 	if (async_stall_delay > 0) {
 		/* We have been asked to stall the calling thread, whether we
@@ -1979,10 +2020,8 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 {
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
-	struct fsal_fd *fsal_fd;
-	bool has_lock, closefd = false;
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-	bool reusing_open_state_fd = false;
+	struct fsal_fd *out_fd;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0}, status2;
 	uint64_t offset = write_arg->offset;
 	int i;
 	struct mem_fsal_export *mem_export =
@@ -1990,6 +2029,7 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 	uint32_t async_type = atomic_fetch_uint32_t(&mem_export->async_type);
 	uint32_t async_stall_delay =
 			atomic_fetch_uint32_t(&mem_export->async_stall_delay);
+	struct mem_async_arg *async_arg;
 
 	if (obj_hdl->type != REGULAR_FILE) {
 		/* Currently can only write to a file */
@@ -1998,15 +2038,24 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 		return;
 	}
 
-	/* Find an FD */
-	status = fsal_find_fd(&fsal_fd, obj_hdl, &myself->mh_file.fd,
-			      &myself->mh_file.share, bypass, write_arg->state,
-			      FSAL_O_WRITE, mem_open_func, mem_close_func,
-			      &has_lock, &closefd, false,
-			      &reusing_open_state_fd);
+	/* We always meed async_arg because that's where temp_fd is located
+	 * and we may need temp_fd before we know we actually are going async.
+	 */
+	async_arg = gsh_calloc(1, sizeof(*async_arg));
+
+	init_fsal_fd(&async_arg->temp_fd, FSAL_FD_TEMP, op_ctx->fsal_export);
+
+	/* Indicate a desire to start io and get a usable file descritor */
+	status = fsal_start_io(&out_fd, obj_hdl, &myself->mh_file.fd,
+			       &async_arg->temp_fd, write_arg->state,
+			       FSAL_O_WRITE, false, NULL, bypass,
+			       &myself->mh_file.share);
+
 	if (FSAL_IS_ERROR(status)) {
-		done_cb(obj_hdl, status, write_arg, caller_arg);
-		return;
+		LogFullDebug(COMPONENT_FSAL,
+			     "fsal_start_io failed returning %s",
+			     fsal_err_txt(status));
+		goto exit;
 	}
 
 	for (i = 0; i < write_arg->iov_count; i++) {
@@ -2045,9 +2094,6 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 	myself->attrs.change =
 		timespec_to_nsecs(&myself->attrs.mtime);
 
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
 	if (MEM.async_threads > 0 &&
 	    (async_type > MEM_RANDOM_OR_INLINE ||
 	    ((async_type == MEM_RANDOM_OR_INLINE) && ((random() % 1) == 1)))) {
@@ -2062,25 +2108,47 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 		async_arg->io_arg = write_arg;
 		async_arg->caller_arg = caller_arg;
 		async_arg->done_cb = done_cb;
-		async_arg->ctx_export = op_ctx->ctx_export;
-		async_arg->fsal_export = op_ctx->fsal_export;
+		async_arg->ctx = op_ctx;
+		async_arg->out_fd = out_fd;
+		async_arg->share = FSAL_O_WRITE;
 
 		if (fridgethr_submit(mem_async_fridge,
 				     mem_async_complete,
 				     async_arg) == 0) {
-			/* Async fired off... */
-			goto out;
+			/* Async fired off...
+			 * I/O will complete async, suspend op_ctx and return.
+			 */
+			suspend_op_context();
+			goto bye;
 		}
-
-		/* Could not schedule, fall through and do an immediate
-		 * call back.
-		 */
-		gsh_free(async_arg);
 	}
+
+
+	status2 = fsal_complete_io(obj_hdl, out_fd);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
+
+	if (write_arg->state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &myself->mh_file.share,
+					     FSAL_O_WRITE, FSAL_O_CLOSED);
+	}
+
+exit:
+
+	/* Now free the async arg since we are done with it. */
+	gsh_free(async_arg);
 
 	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), write_arg, caller_arg);
 
-out:
+bye:
 
 	if (async_stall_delay > 0) {
 		/* We have been asked to stall the calling thread, whether we
@@ -2134,31 +2202,22 @@ fsal_status_t mem_close2(struct fsal_obj_handle *obj_hdl,
 	struct fsal_fd *my_fd = (struct fsal_fd *)(state + 1);
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
-	fsal_status_t status;
 
 #ifdef USE_LTTNG
 	tracepoint(fsalmem, mem_close, __func__, __LINE__, obj_hdl,
 		   myself->m_name, state);
 #endif
 
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
 	if (state->state_type == STATE_TYPE_SHARE ||
 	    state->state_type == STATE_TYPE_NLM_SHARE ||
 	    state->state_type == STATE_TYPE_9P_FID) {
 		/* This is a share state, we must update the share counters */
-
-		/* This can block over an I/O operation. */
-		update_share_counters(&myself->mh_file.share,
-				      my_fd->openflags,
-				      FSAL_O_CLOSED);
+		update_share_counters_locked(obj_hdl, &myself->mh_file.share,
+					     my_fd->openflags,
+					     FSAL_O_CLOSED);
 	}
 
-	status = mem_close_my_fd(my_fd);
-
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-	return status;
+	return close_fsal_fd(obj_hdl, my_fd, false);
 }
 
 /**
@@ -2346,6 +2405,8 @@ void mem_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->write2 = mem_write2;
 	ops->commit2 = mem_commit2;
 	ops->close2 = mem_close2;
+	ops->close_func = mem_close_func;
+	ops->reopen_func = mem_reopen_func;
 	ops->handle_to_wire = mem_handle_to_wire;
 	ops->handle_to_key = mem_handle_to_key;
 }

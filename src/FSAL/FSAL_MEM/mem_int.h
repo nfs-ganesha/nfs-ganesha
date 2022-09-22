@@ -76,6 +76,11 @@ fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
 				  struct fsal_obj_handle **handle,
 				  struct fsal_attrlist *attrs_out);
 
+struct mem_state_fd {
+	struct state_t state;
+	struct fsal_fd fsal_fd;
+};
+
 /*
  * MEM internal object handle
  */
