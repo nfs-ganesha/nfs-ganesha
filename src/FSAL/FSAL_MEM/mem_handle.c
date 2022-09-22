@@ -2115,83 +2115,6 @@ fsal_status_t mem_commit2(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
- * @brief Perform a lock operation
- *
- * This function performs a lock operation (lock, unlock, test) on a
- * file. This method assumes the FSAL is able to support lock owners,
- * though it need not support asynchronous blocking locks. Passing the
- * lock state allows the FSAL to associate information with a specific
- * lock owner for each file (which may include use of a "file descriptor".
- *
- * @param[in]  obj_hdl          File on which to operate
- * @param[in]  state            state_t to use for this operation
- * @param[in]  owner            Lock owner
- * @param[in]  lock_op          Operation to perform
- * @param[in]  request_lock     Lock to take/release/test
- * @param[out] conflicting_lock Conflicting lock
- *
- * @return FSAL status.
- */
-fsal_status_t mem_lock_op2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *state,
-			   void *owner,
-			   fsal_lock_op_t lock_op,
-			   fsal_lock_param_t *request_lock,
-			   fsal_lock_param_t *conflicting_lock)
-{
-	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
-				  struct mem_fsal_obj_handle, obj_handle);
-	struct fsal_fd fsal_fd = {0}, *fdp = &fsal_fd;
-	bool has_lock, closefd = false;
-	bool bypass = false;
-	fsal_openflags_t openflags;
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-	bool reusing_open_state_fd = false;
-
-	if (obj_hdl->type != REGULAR_FILE) {
-		/* Currently can only lock a file */
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
-
-	switch (lock_op) {
-	case FSAL_OP_LOCKT:
-		/* We may end up using global fd, don't fail on a deny mode */
-		bypass = true;
-		openflags = FSAL_O_ANY;
-		break;
-	case FSAL_OP_LOCK:
-		if (request_lock->lock_type == FSAL_LOCK_R)
-			openflags = FSAL_O_READ;
-		else if (request_lock->lock_type == FSAL_LOCK_W)
-			openflags = FSAL_O_WRITE;
-		else
-			openflags = FSAL_O_RDWR;
-		break;
-	case FSAL_OP_UNLOCK:
-		openflags = FSAL_O_ANY;
-		break;
-	default:
-		LogDebug(COMPONENT_FSAL,
-			 "ERROR: The requested lock type was not read or write.");
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
-	}
-
-	status = fsal_find_fd(&fdp, obj_hdl, &myself->mh_file.fd,
-			      &myself->mh_file.share, bypass, state,
-			      openflags, mem_open_func, mem_close_func,
-			      &has_lock, &closefd, true,
-			      &reusing_open_state_fd);
-	if (FSAL_IS_ERROR(status)) {
-		return status;
-	}
-
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-	return status;
-}
-
-/**
  * @brief Manage closing a file when a state is no longer needed.
  *
  * When the upper layers are ready to dispense with a state, this method is
@@ -2422,7 +2345,6 @@ void mem_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->read2 = mem_read2;
 	ops->write2 = mem_write2;
 	ops->commit2 = mem_commit2;
-	ops->lock_op2 = mem_lock_op2;
 	ops->close2 = mem_close2;
 	ops->handle_to_wire = mem_handle_to_wire;
 	ops->handle_to_key = mem_handle_to_key;
