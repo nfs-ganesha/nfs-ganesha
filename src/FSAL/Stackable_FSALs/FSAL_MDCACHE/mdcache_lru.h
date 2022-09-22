@@ -40,13 +40,6 @@
 #include "log.h"
 #include "mdcache_int.h"
 
-enum fd_states {
-	FD_LOW,
-	FD_MIDDLE,
-	FD_HIGH,
-	FD_LIMIT,
-};
-
 /**
  * @file mdcache_lru.h
  * @author Matt Benjamin
@@ -78,19 +71,8 @@ struct lru_state {
 	uint32_t entries_release_size;
 	uint64_t chunks_hiwat;
 	uint64_t chunks_used;
-	uint32_t fds_system_imposed;
-	uint32_t fds_hard_limit;
-	uint32_t fds_hiwat;
-	uint32_t fds_lowat;
-	/** This is the actual counter of 'futile' attempts at reaping
-	    made  in a given time period.  When it reaches the futility
-	    count, we turn off caching of file descriptors. */
-	uint32_t futility;
 	uint32_t per_lane_work;
-	uint32_t biggest_window;
-	uint64_t prev_fd_count;	/* previous # of open fds */
 	time_t prev_time;	/* previous time the gc thread was run. */
-	uint32_t fd_state;
 };
 
 extern struct lru_state lru_state;
@@ -133,8 +115,6 @@ extern pool_t *mdcache_entry_pool;
 
 fsal_status_t mdcache_lru_pkginit(void);
 fsal_status_t mdcache_lru_pkgshutdown(void);
-
-extern size_t open_fd_count;
 
 mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle);
 void mdcache_lru_insert(mdcache_entry_t *entry, uint32_t flags);

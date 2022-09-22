@@ -437,11 +437,11 @@ void mdcache_utilization(DBusMessageIter *iter)
 	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
 					 &struct_iter);
 	/* Gather the data */
-	open_fds = atomic_fetch_size_t(&open_fd_count);
+	open_fds = atomic_fetch_int32_t(&fsal_fd_global_counter);
 	entries_used = atomic_fetch_uint64_t(&lru_state.entries_used);
 	chunks_used = atomic_fetch_uint64_t(&lru_state.chunks_used);
-	fd_state = atomic_fetch_uint32_t(&lru_state.fd_state);
-	fd_limit = atomic_fetch_uint32_t(&lru_state.fds_system_imposed);
+	fd_state = atomic_fetch_uint32_t(&fd_lru_state.fd_state);
+	fd_limit = atomic_fetch_uint32_t(&fd_lru_state.fds_system_imposed);
 
 	type = " FSAL opened FD count : ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);

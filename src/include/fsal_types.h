@@ -925,6 +925,30 @@ typedef enum {
 
 typedef char fsal_verifier_t[NFS4_VERIFIER_SIZE];
 
+enum fd_states {
+	FD_LOW,
+	FD_MIDDLE,
+	FD_HIGH,
+	FD_LIMIT,
+};
+
+struct fd_lru_state {
+	uint32_t fds_system_imposed;
+	uint32_t fds_hard_limit;
+	uint32_t fds_hiwat;
+	uint32_t fds_lowat;
+	/** This is the actual counter of 'futile' attempts at reaping
+	    made  in a given time period.  When it reaches the futility
+	    count, we turn off caching of file descriptors. */
+	uint32_t futility;
+	uint32_t per_lane_work;
+	uint32_t biggest_window; /* defaults to 40% of fd_limit */
+	uint64_t prev_fd_count;	/* previous # of open fds */
+	time_t prev_time;	/* previous time the gc thread was run. */
+	uint32_t fd_state;
+	uint32_t fd_fallback_limit;
+};
+
 enum fsal_fd_type {
 	/** @todo FSF - to be removed when old style is deprecated */
 	FSAL_FD_OLD_STYLE,
@@ -932,6 +956,8 @@ enum fsal_fd_type {
 	FSAL_FD_STATE,
 	FSAL_FD_TEMP,
 };
+
+extern struct fd_lru_state fd_lru_state;
 
 struct fsal_export;
 

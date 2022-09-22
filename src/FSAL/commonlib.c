@@ -1572,16 +1572,6 @@ again:
 				     "try_openflags = %x",
 				     try_openflags);
 
-			if (!mdcache_lru_fds_available()) {
-				PTHREAD_RWLOCK_unlock(
-						&obj_hdl->obj_lock);
-				*has_lock = false;
-				/* This seems the best idea, let the
-				 * client try again later after the reap.
-				 */
-				return fsalstat(ERR_FSAL_DELAY, 0);
-			}
-
 			/* Actually open the file */
 			status = open_func(obj_hdl, try_openflags, my_fd);
 
@@ -1931,30 +1921,6 @@ uint32_t lru_try_one(void)
 
 	return work;
 }
-
-enum fd_states {
-	FD_LOW,
-	FD_MIDDLE,
-	FD_HIGH,
-	FD_LIMIT,
-};
-
-struct fd_lru_state {
-	uint32_t fds_system_imposed;
-	uint32_t fds_hard_limit;
-	uint32_t fds_hiwat;
-	uint32_t fds_lowat;
-	/** This is the actual counter of 'futile' attempts at reaping
-	    made  in a given time period.  When it reaches the futility
-	    count, we turn off caching of file descriptors. */
-	uint32_t futility;
-	uint32_t per_lane_work;
-	uint32_t biggest_window; /* defaults to 40% of fd_limit */
-	uint64_t prev_fd_count;	/* previous # of open fds */
-	time_t prev_time;	/* previous time the gc thread was run. */
-	uint32_t fd_state;
-	uint32_t fd_fallback_limit;
-};
 
 struct fd_lru_state fd_lru_state;
 

@@ -58,6 +58,5 @@ fsal_status_t mdcache_pkginit(void);
 int mdcache_set_param_from_conf(config_file_t parse_tree,
 				struct config_error_type *err_type);
 
-bool mdcache_lru_fds_available(void);
 void init_fds_limit(void);
 #endif /* MDCACHE_H */

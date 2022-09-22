@@ -819,7 +819,8 @@ lru_try_reap_entry(void)
 {
 	mdcache_lru_t *lru;
 
-	if (lru_state.entries_used < lru_state.entries_hiwat)
+	if (atomic_fetch_uint64_t(&lru_state.entries_used) <
+	    lru_state.entries_hiwat)
 		return NULL;
 
 	/* XXX dang why not start with the cleanup list? */
@@ -1145,51 +1146,46 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
  * @brief Function that executes in the lru thread to process one lane
  *
  * @param[in]     lane          The lane to process
- * @param[in,out] totalclosed   Track the number of file closes
  *
  * @returns the number of files worked on (workdone)
  *
  */
 
-static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
+static inline int lru_run_lane(int lane)
 {
 	struct lru_q *q;
 	/* The amount of work done on this lane on this pass. */
 	size_t workdone = 0;
-	/* The entry being examined */
-	mdcache_lru_t *lru = NULL;
-	/* Number of entries closed in this run. */
-	size_t closed = 0;
-	fsal_status_t status;
-	/* a cache entry */
-	mdcache_entry_t *entry;
 	/* Current queue lane */
 	struct lru_q_lane *qlane = &LRU[lane];
-	/* entry refcnt */
-	uint32_t refcnt;
 
 	q = &qlane->L1;
 
 	LogDebug(COMPONENT_CACHE_INODE_LRU,
-		 "Reaping up to %d entries from lane %zd",
+		 "Reaping up to %d entries from lane %d",
 		 lru_state.per_lane_work, lane);
 
 	/* ACTIVE */
 	QLOCK(qlane);
 	qlane->iter.active = true;
 
+	/** @todo FSF - the following comment no longer applies, see subsequent
+	 *              patch that simplifies this stuff.
+	 */
 	/* While for_each_safe per se is NOT MT-safe, the iteration can be made
 	 * so by the convention that any competing thread which would invalidate
 	 * the iteration also adjusts glist and (in particular) glistn */
 	glist_for_each_safe(qlane->iter.glist, qlane->iter.glistn, &q->q) {
-		struct lru_q *q;
-		struct req_op_context op_context;
-		int32_t export_id;
-		struct gsh_export *export;
+		/* The entry being examined */
+		mdcache_lru_t *lru = NULL;
+		/* a cache entry */
+		mdcache_entry_t *entry;
+		/* entry refcnt */
+		uint32_t refcnt;
 
 		/* check per-lane work */
 		if (workdone >= lru_state.per_lane_work)
-			goto next_lane;
+			break;
 
 		lru = glist_entry(qlane->iter.glist, mdcache_lru_t, q);
 
@@ -1197,91 +1193,32 @@ static inline size_t lru_run_lane(size_t lane, uint64_t *const totalclosed)
 		 * the QLANE lock */
 		entry = container_of(lru, mdcache_entry_t, lru);
 
-		/* Get a reference to the first export and build an op context
-		 * with it. By holding the QLANE lock while we get the export
-		 * reference we assure that the entry doesn't get detached from
-		 * the export before we get an export reference, which
-		 * guarantees the export is good for the length of time we need
-		 * it to perform sub_fsal operations.
-		 */
-		export_id = atomic_fetch_int32_t(&entry->first_export_id);
-
-		if (export_id < 0) {
-			/* This entry is part of an export that's going away.
-			 * Just skip it. */
-			continue;
-		}
-
-		export = get_gsh_export(export_id);
-
-		if (export == NULL) {
-			/* Creating the root object of an export and inserting
-			 * the export are not atomic.  That is, we create the
-			 * root object (and it's inserted in the LRU), and then
-			 * we insert the export, to make it reachable.  This
-			 * creates a tiny window the root object is in the LRU
-			 * (and therefore visible in this function) but the
-			 * export is not yet inserted, and so the above lookup
-			 * will fail.  Skip such entries, as this is a
-			 * self-correcting situation.
-			 */
-			continue;
-		}
-
-		/* Get a ref on the entry now */
-		refcnt = atomic_inc_int32_t(&entry->lru.refcnt);
+		/* Get refcount of the entry now */
+		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_ref,
 		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
 		   refcnt, atomic_fetch_int32_t(&entry->lru.long_refcnt));
 #endif
 
-		init_op_context_simple(&op_context, export,
-				       export->fsal_export);
-
 		/* check refcnt in range */
-		if (unlikely(refcnt > 2)) {
-			QUNLOCK(qlane);
-			mdcache_lru_unref(entry, LRU_FLAG_NONE);
-			goto next_lru;
+		if (unlikely(refcnt == 1)) {
+			struct lru_q *q;
+
+			/* Move entry to MRU of L2 */
+			q = &qlane->L1;
+			LRU_DQ_SAFE(lru, q);
+			q = &qlane->L2;
+			lru_insert(lru, q);
+			++workdone;
 		}
-
-		/* Move entry to MRU of L2 */
-		q = &qlane->L1;
-		LRU_DQ_SAFE(lru, q);
-		q = &qlane->L2;
-		lru_insert(lru, q);
-
-		/* Drop the lane lock while performing (slow) operations on
-		 * entry */
-		QUNLOCK(qlane);
-
-		/* Make sure any FSAL global file descriptor is closed. */
-		status = fsal_close(&entry->obj_handle);
-
-		if (FSAL_IS_ERROR(status)) {
-			LogCrit(COMPONENT_CACHE_INODE_LRU,
-				"Error closing file in LRU thread.");
-		} else {
-			++(*totalclosed);
-			++closed;
-		}
-
-		mdcache_lru_unref(entry, LRU_FLAG_NONE);
-
-next_lru:
-		QLOCK(qlane); /* QLOCKED */
-		release_op_context();
-
-		++workdone;
 	} /* for_each_safe lru */
 
-next_lane:
 	qlane->iter.active = false; /* !ACTIVE */
 	QUNLOCK(qlane);
 	LogDebug(COMPONENT_CACHE_INODE_LRU,
-		 "Actually processed %zd entries on lane %zd closing %zd descriptors",
-		 workdone, lane, closed);
+		 "Actually processed %zd entries on lane %d",
+		 workdone, lane);
 
 	return workdone;
 }
@@ -1339,25 +1276,17 @@ next_lane:
 static void
 lru_run(struct fridgethr_context *ctx)
 {
-	/* Index */
-	size_t lane = 0;
-	/* True if we were explicitly awakened. */
-	bool woke = ctx->woke;
-	/* Finalized */
-	uint32_t fdratepersec = 1, fds_avg, fddelta;
-	float fdnorm, fdwait_ratio, fdmulti;
-	time_t threadwait = mdcache_param.lru_run_interval;
-	/* True if we are taking extreme measures to reclaim FDs */
-	bool extremis = false;
-	/* Total work done in all passes so far.  If this exceeds the
-	 * window, stop.
+	/** @todo FSF - this could use some additional effort on finding a
+	 *              new scheduling algorithm and tracking progress.
 	 */
-	size_t totalwork = 0;
-	uint64_t totalclosed = 0;
-	/* The current count (after reaping) of open FDs */
-	size_t currentopen = 0;
-	time_t new_thread_wait;
+
+	/* Index */
+	int lane = 0;
+	time_t threadwait = mdcache_param.lru_run_interval;
+	/* Total work done in all passes so far. */
+	int totalwork = 0;
 	static bool first_time = TRUE;
+	time_t curr_time;
 
 	if (first_time) {
 		/* Wait for NFS server to properly initialize */
@@ -1367,123 +1296,29 @@ lru_run(struct fridgethr_context *ctx)
 
 	SetNameFunction("cache_lru");
 
-	/* fds_avg is the average *range* of fds instead absolute average
-	 * e.g. high water(10) and low water(5), the *range* between these is
-	 * `5` then avg of *range* should be `2.5`
-	 */
-	fds_avg = (lru_state.fds_hiwat - lru_state.fds_lowat) / 2;
-
 	LogFullDebug(COMPONENT_CACHE_INODE_LRU, "LRU awakes.");
 
-	if (!woke) {
-		/* If we make it all the way through a timed sleep
-		   without being woken, we assume we aren't racing
-		   against the impossible. */
-		if (lru_state.futility >= mdcache_param.futility_count)
-			LogInfo(COMPONENT_CACHE_INODE_LRU,
-				"Leaving FD futility mode.");
-
-		lru_state.futility = 0;
-	}
-
 	LogFullDebug(COMPONENT_CACHE_INODE_LRU, "lru entries: %" PRIu64,
-		     lru_state.entries_used);
+		     atomic_fetch_uint64_t(&lru_state.entries_used));
 
-	/* Reap file descriptors.  This is a preliminary example of the
-	   L2 functionality rather than something we expect to be
-	   permanent.  (It will have to adapt heavily to the new FSAL
-	   API, for example.) */
+	curr_time = time(NULL);
 
-	currentopen = atomic_fetch_size_t(&open_fd_count);
+	if ((curr_time >= lru_state.prev_time) &&
+	    (curr_time - lru_state.prev_time < fridgethr_getwait(ctx)))
+		threadwait = curr_time - lru_state.prev_time;
 
-	/* avoid to do more atomic fetch we could check with currentopen */
-	extremis = currentopen > lru_state.fds_hiwat;
-
-	if (currentopen < lru_state.fds_lowat) {
+	/* Loop over all lanes to perform L1 to L2 demotion. Track the work
+	 * done for logging.
+	 */
+	for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
 		LogDebug(COMPONENT_CACHE_INODE_LRU,
-			 "FD count is %zd and low water mark is %d: not reaping.",
-			 currentopen, lru_state.fds_lowat);
-		if (atomic_fetch_uint32_t(&lru_state.fd_state) > FD_LOW) {
-			LogEvent(COMPONENT_CACHE_INODE_LRU,
-				 "Return to normal fd reaping.");
-			atomic_store_uint32_t(&lru_state.fd_state, FD_LOW);
-		}
-	} else {
-		/* Set state first because that does not realted
-		 * with following code flow
-		 */
-		if (currentopen < lru_state.fds_hiwat &&
-		    atomic_fetch_uint32_t(&lru_state.fd_state) == FD_LIMIT) {
-			LogEvent(COMPONENT_CACHE_INODE_LRU,
-				 "Count of fd is below high water mark.");
-			atomic_store_uint32_t(&lru_state.fd_state, FD_MIDDLE);
-		}
-
-		/* The count of open file descriptors before this run
-		   of the reaper. */
-		size_t formeropen = atomic_fetch_size_t(&open_fd_count);
-		/* Work done in the most recent pass of all queues.  if
-		   value is less than the work to do in a single queue,
-		   don't spin through more passes. */
-		size_t workpass = 0;
-		time_t curr_time = time(NULL);
-
-		if ((curr_time >= lru_state.prev_time) &&
-		    (curr_time - lru_state.prev_time < fridgethr_getwait(ctx)))
-			threadwait = curr_time - lru_state.prev_time;
-
-		/* means increase rate or 1 */
-		fdratepersec = ((curr_time <= lru_state.prev_time) ||
-				(formeropen < lru_state.prev_fd_count))
-			? 1 : (formeropen - lru_state.prev_fd_count) /
-					(curr_time - lru_state.prev_time);
+			 "Demoting up to %d entries from lane %d",
+			 lru_state.per_lane_work, lane);
 
 		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-			     "fdrate:%u fdcount:%zd slept for %" PRIu64 " sec",
-			     fdratepersec, formeropen,
-			     ((uint64_t) (curr_time - lru_state.prev_time)));
+			     "totalwork=%d", totalwork);
 
-		/* `extremis` setup here again would be more exactly */
-		extremis = formeropen > lru_state.fds_hiwat;
-
-		if (extremis) {
-			LogDebug(COMPONENT_CACHE_INODE_LRU,
-				 "Open FDs over high water mark, reapring aggressively.");
-		}
-
-		/* Total fds closed between all lanes and all current runs. */
-		do {
-			workpass = 0;
-			for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-				LogDebug(COMPONENT_CACHE_INODE_LRU,
-					 "Reaping up to %d entries from lane %zd",
-					 lru_state.per_lane_work, lane);
-
-				LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-					     "formeropen=%zd totalwork=%zd workpass=%zd totalclosed:%"
-					     PRIu64, formeropen, totalwork,
-					     workpass, totalclosed);
-
-				workpass += lru_run_lane(lane, &totalclosed);
-			}
-			totalwork += workpass;
-		} while (extremis && (workpass >= lru_state.per_lane_work)
-			 && (totalwork < lru_state.biggest_window));
-
-		/* means latest current open fds after reap */
-		currentopen = atomic_fetch_size_t(&open_fd_count);
-		if (extremis &&
-		    ((currentopen > formeropen)
-		     || (formeropen - currentopen <
-			 (((formeropen - lru_state.fds_hiwat) *
-			      mdcache_param.required_progress) / 100)))) {
-			if (++lru_state.futility ==
-			    mdcache_param.futility_count) {
-				LogWarn(COMPONENT_CACHE_INODE_LRU,
-					"Futility count exceeded.  Client load is opening FDs faster than the LRU thread can close them. current_open = %zu, former_open = %zu",
-					currentopen, formeropen);
-			}
-		}
+		totalwork += lru_run_lane(lane);
 	}
 
 	/* We're trying to release the entry cache if the amount
@@ -1493,13 +1328,14 @@ lru_run(struct fridgethr_context *ctx)
 	 * released per time is entries_release_size.
 	 */
 	if (lru_state.entries_release_size > 0) {
-		if (lru_state.entries_used > lru_state.entries_hiwat) {
+		if (atomic_fetch_uint64_t(&lru_state.entries_used) >
+		    lru_state.entries_hiwat) {
 			size_t released = 0;
 
 			LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 				"Entries used is %" PRIu64
 				" and above water mark, LRU want release %d entries",
-				lru_state.entries_used,
+				atomic_fetch_uint64_t(&lru_state.entries_used),
 				lru_state.entries_release_size);
 
 			released = mdcache_lru_release_entries(
@@ -1510,54 +1346,28 @@ lru_run(struct fridgethr_context *ctx)
 			LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 				"Entries used is %" PRIu64
 				" and low water mark: not releasing",
-				lru_state.entries_used);
+				atomic_fetch_uint64_t(&lru_state.entries_used));
 		}
 	}
 
-	/* The following calculation will progressively garbage collect
-	 * more frequently as these two factors increase:
-	 * 1. current number of open file descriptors
-	 * 2. rate at which file descriptors are being used.
-	 *
-	 * When there is little activity, this thread will sleep at the
-	 * "LRU_Run_Interval" from the config.
-	 *
-	 * When there is a lot of activity, the thread will sleep for a
-	 * much shorter time.
-	 */
-	lru_state.prev_fd_count = currentopen;
-	lru_state.prev_time = time(NULL);
+	if (atomic_fetch_uint64_t(&lru_state.entries_used) >
+	    lru_state.entries_hiwat) {
+		/* If we are still over the high water mark, try and reap
+		 * sooner.
+		 */
+		threadwait = threadwait / 2;
+	}
 
-	fdnorm = (fdratepersec + fds_avg) / fds_avg;
-	fddelta = (currentopen > lru_state.fds_lowat)
-			? (currentopen - lru_state.fds_lowat) : 0;
-	fdmulti = (fddelta * 10) / fds_avg;
-	fdmulti = fdmulti ? fdmulti : 1;
-	fdwait_ratio = lru_state.fds_hiwat /
-			((lru_state.fds_hiwat + fdmulti * fddelta) * fdnorm);
-
-	new_thread_wait = threadwait * fdwait_ratio;
-
-	if (new_thread_wait < mdcache_param.lru_run_interval / 10)
-		new_thread_wait = mdcache_param.lru_run_interval / 10;
-
-	/* if new_thread_wait is 0, lru_run will not be scheduled */
-	if (new_thread_wait == 0)
-		new_thread_wait = 1;
-
-	fridgethr_setwait(ctx, new_thread_wait);
+	fridgethr_setwait(ctx, threadwait);
 
 	LogDebug(COMPONENT_CACHE_INODE_LRU,
-		 "After work, open_fd_count:%zd  count:%" PRIu64
-		 " fdrate:%u new_thread_wait=%" PRIu64,
-		 atomic_fetch_size_t(&open_fd_count),
-		 lru_state.entries_used, fdratepersec,
-		 ((uint64_t) new_thread_wait));
+		 "After work, count:%" PRIu64
+		 " new_thread_wait=%" PRIu64,
+		 atomic_fetch_uint64_t(&lru_state.entries_used),
+		 ((uint64_t) threadwait));
 	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
-		     "currentopen=%zd futility=%d totalwork=%zd biggest_window=%d extremis=%d lanes=%d fds_lowat=%d ",
-		     currentopen, lru_state.futility, totalwork,
-		     lru_state.biggest_window, extremis, LRU_N_Q_LANES,
-		     lru_state.fds_lowat);
+		     "totalwork=%d lanes=%d",
+		     totalwork, LRU_N_Q_LANES);
 }
 
 /**
@@ -1733,110 +1543,26 @@ size_t mdcache_lru_release_entries(int32_t want_release)
 	return released;
 }
 
+/* Public functions */
+
 void init_fds_limit(void)
 {
-	int code = 0;
-	/* Rlimit for open file descriptors */
-	struct rlimit rlim = {
-		.rlim_cur = RLIM_INFINITY,
-		.rlim_max = RLIM_INFINITY
-	};
+	struct fd_lru_parameter fd_lru_parameter;
 
-	/* Find out the system-imposed file descriptor limit */
-	if (get_open_file_limit(&rlim) != 0) {
-		code = errno;
-		LogCrit(COMPONENT_CACHE_INODE_LRU,
-			"Call to getrlimit failed with error %d. This should not happen.  Assigning default of %d.",
-			code, FD_FALLBACK_LIMIT);
-		lru_state.fds_system_imposed = FD_FALLBACK_LIMIT;
-	} else {
-		if (rlim.rlim_cur < rlim.rlim_max) {
-			/* Save the old soft value so we can fall back to it
-			   if setrlimit fails. */
-			rlim_t old_soft = rlim.rlim_cur;
+	fd_lru_parameter.lru_run_interval = mdcache_param.lru_run_interval;
+	fd_lru_parameter.fd_limit_percent = mdcache_param.fd_limit_percent;
+	fd_lru_parameter.fd_hwmark_percent = mdcache_param.fd_hwmark_percent;
+	fd_lru_parameter.fd_lwmark_percent = mdcache_param.fd_lwmark_percent;
+	fd_lru_parameter.reaper_work = mdcache_param.reaper_work;
+	fd_lru_parameter.reaper_work_per_lane =
+					mdcache_param.reaper_work_per_lane;
+	fd_lru_parameter.biggest_window = mdcache_param.biggest_window;
+	fd_lru_parameter.required_progress = mdcache_param.required_progress;
+	fd_lru_parameter.futility_count = mdcache_param.futility_count;
+	fd_lru_parameter.fd_fallback_limit = FD_FALLBACK_LIMIT;
 
-			LogInfo(COMPONENT_CACHE_INODE_LRU,
-				"Attempting to increase soft limit from %"
-				PRIu64 " to hard limit of %" PRIu64,
-				(uint64_t) rlim.rlim_cur,
-				(uint64_t) rlim.rlim_max);
-			rlim.rlim_cur = rlim.rlim_max;
-			if (setrlimit(RLIMIT_NOFILE, &rlim) < 0) {
-				code = errno;
-				LogWarn(COMPONENT_CACHE_INODE_LRU,
-					"Attempt to raise soft FD limit to hard FD limit failed with error %d.  Sticking to soft limit.",
-					code);
-				rlim.rlim_cur = old_soft;
-			}
-		}
-		if (rlim.rlim_cur == RLIM_INFINITY) {
-			FILE *nr_open;
-
-			nr_open = fopen("/proc/sys/fs/nr_open", "r");
-			if (nr_open == NULL) {
-				code = errno;
-				LogWarn(COMPONENT_CACHE_INODE_LRU,
-					"Attempt to open /proc/sys/fs/nr_open failed (%d)",
-					code);
-				goto err_open;
-			}
-			code = fscanf(nr_open, "%" SCNu32 "\n",
-				      &lru_state.fds_system_imposed);
-			if (code != 1) {
-				code = errno;
-				LogMajor(COMPONENT_CACHE_INODE_LRU,
-					 "The rlimit on open file descriptors is infinite and the attempt to find the system maximum failed with error %d.",
-					 code);
-				LogMajor(COMPONENT_CACHE_INODE_LRU,
-					 "Assigning the default fallback of %d which is almost certainly too small.",
-					 FD_FALLBACK_LIMIT);
-				LogMajor(COMPONENT_CACHE_INODE_LRU,
-					 "If you are on a Linux system, this should never happen.");
-				LogMajor(COMPONENT_CACHE_INODE_LRU,
-					 "If you are running some other system, please set an rlimit on file descriptors (for example, with ulimit) for this process and consider editing "
-					 __FILE__
-					 "to add support for finding your system's maximum.");
-				lru_state.fds_system_imposed =
-				    FD_FALLBACK_LIMIT;
-			}
-			fclose(nr_open);
-err_open:
-			;
-		} else {
-			lru_state.fds_system_imposed = rlim.rlim_cur;
-		}
-	}
-
-	LogEvent(COMPONENT_CACHE_INODE_LRU,
-		 "Setting the system-imposed limit on FDs to %d.",
-		 lru_state.fds_system_imposed);
-
-	lru_state.fds_hard_limit =
-	    (mdcache_param.fd_limit_percent *
-	     lru_state.fds_system_imposed) / 100;
-	lru_state.fds_hiwat =
-	    (mdcache_param.fd_hwmark_percent *
-	     lru_state.fds_system_imposed) / 100;
-	lru_state.fds_lowat =
-	    (mdcache_param.fd_lwmark_percent *
-	     lru_state.fds_system_imposed) / 100;
-	lru_state.futility = 0;
-
-	if (mdcache_param.reaper_work) {
-		/* Backwards compatibility */
-		lru_state.per_lane_work = (mdcache_param.reaper_work +
-					   LRU_N_Q_LANES - 1) / LRU_N_Q_LANES;
-	} else {
-		/* New parameter */
-		lru_state.per_lane_work = mdcache_param.reaper_work_per_lane;
-	}
-
-	lru_state.biggest_window =
-	    (mdcache_param.biggest_window *
-	     lru_state.fds_system_imposed) / 100;
+	fsal_init_fds_limit(&fd_lru_parameter);
 }
-
-/* Public functions */
 
 /**
  * Initialize subsystem
@@ -1856,10 +1582,14 @@ mdcache_lru_pkginit(void)
 	frp.thread_delay = mdcache_param.lru_run_interval;
 	frp.flavor = fridgethr_flavor_looper;
 
-	atomic_store_size_t(&open_fd_count, 0);
-	lru_state.prev_fd_count = 0;
-	atomic_store_uint32_t(&lru_state.fd_state, FD_LOW);
-	init_fds_limit();
+	if (mdcache_param.reaper_work) {
+		/* Backwards compatibility */
+		lru_state.per_lane_work = (mdcache_param.reaper_work +
+					   LRU_N_Q_LANES - 1) / LRU_N_Q_LANES;
+	} else {
+		/* New parameter */
+		lru_state.per_lane_work = mdcache_param.reaper_work_per_lane;
+	}
 
 	/* Set high and low watermark for cache entries.  XXX This seems a
 	   bit fishy, so come back and revisit this. */
@@ -2321,49 +2051,6 @@ void lru_bump_chunk(struct dir_chunk *chunk)
 	}
 
 	QUNLOCK(qlane);
-}
-
-/**
- * @brief Check if FDs are available.
- *
- * This function checks if FDs are available to serve open
- * requests. This function also wakes the LRU thread if the
- * current FD count is above the high water mark.
- *
- * @return true if there are FDs available to serve open requests,
- * false otherwise.
- */
-bool mdcache_lru_fds_available(void)
-{
-	size_t open_fds = atomic_fetch_size_t(&open_fd_count);
-
-	if (open_fds >= lru_state.fds_hard_limit) {
-		LogAtLevel(COMPONENT_CACHE_INODE_LRU,
-			   atomic_fetch_uint32_t(&lru_state.fd_state)
-								!= FD_LIMIT
-				? NIV_CRIT
-				: NIV_DEBUG,
-			   "FD Hard Limit (%"PRIu32
-			   ") Exceeded (open_fd_count = %zu), waking LRU thread.",
-			   lru_state.fds_hard_limit, open_fds);
-		atomic_store_uint32_t(&lru_state.fd_state, FD_LIMIT);
-		fridgethr_wake(lru_fridge);
-		return false;
-	}
-
-	if (open_fds >= lru_state.fds_hiwat) {
-		LogAtLevel(COMPONENT_CACHE_INODE_LRU,
-			   atomic_fetch_uint32_t(&lru_state.fd_state) == FD_LOW
-				? NIV_INFO
-				: NIV_DEBUG,
-			   "FDs above high water mark (%"PRIu32
-			   ", open_fd_count = %zu), waking LRU thread.",
-			   lru_state.fds_hiwat, open_fds);
-		atomic_store_uint32_t(&lru_state.fd_state, FD_HIGH);
-		fridgethr_wake(lru_fridge);
-	}
-
-	return true;
 }
 
 static inline void mdc_lru_dirmap_add(struct mdcache_fsal_export *exp,
