@@ -344,7 +344,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 			break;
 
 		case STATE_TYPE_DELEG:
-			/* Check if the delegation state allows READ */
+			/* Check if the delegation state allows WRITE */
 			sdeleg = &state_found->state_data.deleg;
 			if (!(sdeleg->sd_type & OPEN_DELEGATE_WRITE)) {
 				/* Invalid delegation for this operation. */
