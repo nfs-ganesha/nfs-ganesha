@@ -76,6 +76,7 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u32 *proc_id = NULL;
 	u16 *client_id_len = NULL;
 	char *client_id_str = NULL;
+	fsal_openflags_t openflags;
 
 	u8 status = _9P_LOCK_SUCCESS;
 
@@ -163,7 +164,23 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			status = _9P_LOCK_GRACE;
 			break;
 		}
+
 		STATELOCK_lock(pfid->pentry);
+
+		/* Test that the file is open in the right mode for the lock */
+		openflags = pfid->pentry->obj_ops->status2(pfid->pentry,
+							   pfid->state);
+
+		if ((*type == _9P_LOCK_TYPE_RDLCK &&
+					((openflags & FSAL_O_READ) == 0)) ||
+		    (*type == _9P_LOCK_TYPE_WRLCK &&
+					((openflags & FSAL_O_WRITE) == 0))) {
+			/* Open in wrong mode - return error */
+			STATELOCK_unlock(pfid->pentry);
+			status = _9P_LOCK_ERROR;
+			break;
+		}
+
 		state_status = state_lock(pfid->pentry, powner, pfid->state,
 					  STATE_NON_BLOCKING, NULL, &lock,
 					  NULL, NULL);
