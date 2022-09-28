@@ -426,12 +426,10 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 
 	fsal_status_t status = {0, 0};
 	int rc = 0;
-	bool has_lock = false;
-	bool closefd = false;
+	bool has_share = false;
 	struct stat st;
 	/* Mask of attributes to set */
 	uint32_t mask = 0;
-	bool reusing_open_state_fd = false;
 
 	struct rgw_export *export =
 		container_of(op_ctx->fsal_export, struct rgw_export, export);
@@ -467,20 +465,24 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 				"Setting size on non-regular file");
 			return fsalstat(ERR_FSAL_INVAL, EINVAL);
 		}
+		if (state == NULL) {
+			/* Check share reservation and if OK, update the
+			 * counters.
+			 */
+			status = check_share_conflict_and_update_locked(
+						obj_hdl, &handle->share,
+						FSAL_O_CLOSED, FSAL_O_WRITE,
+						bypass);
 
-		/* We don't actually need an open fd, we are just doing the
-		 * share reservation checking, thus the NULL parameters.
-		 */
-		status = fsal_find_fd(NULL, obj_hdl, NULL, &handle->share,
-				bypass, state, FSAL_O_WRITE, NULL, NULL,
-				&has_lock, &closefd, false,
-				&reusing_open_state_fd);
+			if (FSAL_IS_ERROR(status)) {
+				LogDebug(COMPONENT_FSAL,
+					 "check_share_conflict_and_update_locked failed with %s",
+					 fsal_err_txt(status));
 
-		if (FSAL_IS_ERROR(status)) {
-			LogFullDebug(COMPONENT_FSAL,
-				"fsal_find_fd status=%s",
-				fsal_err_txt(status));
-			goto out;
+				return status;
+			}
+
+			has_share = true;
 		}
 	}
 
@@ -574,8 +576,12 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 
  out:
 
-	if (has_lock)
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	if (has_share) {
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &handle->share,
+					     FSAL_O_WRITE, FSAL_O_CLOSED);
+	}
 
 	return status;
 }
@@ -809,25 +815,13 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			 * caller is a stateless create such as NFS v3 CREATE).
 			 */
 
-			/* This can block over an I/O operation. */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+			status = check_share_conflict_and_update_locked(
+						obj_hdl, &handle->share,
+						FSAL_O_CLOSED, openflags,
+						false);
 
-			/* Check share reservation conflicts. */
-			status = check_share_conflict(&handle->share,
-						      openflags, false);
-
-			if (FSAL_IS_ERROR(status)) {
-				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+			if (FSAL_IS_ERROR(status))
 				return status;
-			}
-
-			/* Take the share reservation now by updating the
-			 * counters.
-			 */
-			update_share_counters(&handle->share, FSAL_O_CLOSED,
-					      openflags);
-
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 		} else {
 			/* RGW doesn't have a file descriptor/open abstraction,
 			 * and actually forbids concurrent opens;  This is
@@ -925,11 +919,8 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		 * and undo the update of the share counters.
 		 * This can block over an I/O operation.
 		 */
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-		update_share_counters(&handle->share, openflags, FSAL_O_CLOSED);
-
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+		update_share_counters_locked(obj_hdl, &handle->share,
+					     openflags, FSAL_O_CLOSED);
 
 		return status;
 	} /* !name */
@@ -1152,13 +1143,9 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		 * a stateless create such as NFS v3 CREATE).
 		 */
 
-		/* This can block over an I/O operation. */
-		PTHREAD_RWLOCK_wrlock(&(*new_obj)->obj_lock);
-
 		/* Take the share reservation now by updating the counters. */
-		update_share_counters(&obj->share, FSAL_O_CLOSED, openflags);
-
-		PTHREAD_RWLOCK_unlock(&(*new_obj)->obj_lock);
+		update_share_counters_locked(obj_hdl, &obj->share,
+					     FSAL_O_CLOSED, openflags);
 	}
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1251,26 +1238,18 @@ fsal_status_t rgw_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 
 	fsal2posix_openflags(openflags, &posix_flags);
 
-	/* This can block over an I/O operation. */
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
 	old_openflags = handle->openflags;
 
-	/* We can conflict with old share, so go ahead and check now. */
-	status = check_share_conflict(&handle->share, openflags, false);
-
-	if (FSAL_IS_ERROR(status)) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-		return status;
-	}
-
-	/* Set up the new share so we can drop the lock and not have a
+	/* We can conflict with old share, so go ahead and check now. If OK
+	 * set up the new share so we can drop the lock and not have a
 	 * conflicting share be asserted, updating the share counters.
 	 */
-	update_share_counters(&handle->share, old_openflags, openflags);
+	status = check_share_conflict_and_update_locked(obj_hdl, &handle->share,
+							old_openflags,
+							openflags, false);
 
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	if (FSAL_IS_ERROR(status))
+		return status;
 
 	/* perform a provider open iff not already open */
 	if (true) {
@@ -1285,14 +1264,10 @@ fsal_status_t rgw_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 
 		if (rc < 0) {
 			/* We had a failure on open - we need to revert the
-			 * share. This can block over an I/O operation.
+			 * share.
 			 */
-			PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-			update_share_counters(&handle->share, openflags,
-					old_openflags);
-
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+			update_share_counters_locked(obj_hdl, &handle->share,
+						     openflags, old_openflags);
 		}
 
 		status = rgw2fsal_error(rc);
@@ -1550,8 +1525,8 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 			 */
 
 			update_share_counters(&handle->share,
-					handle->openflags,
-					FSAL_O_CLOSED);
+					      handle->openflags,
+					      FSAL_O_CLOSED);
 
 		}
 
