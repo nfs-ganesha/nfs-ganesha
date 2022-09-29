@@ -166,6 +166,11 @@ fsal_status_t gpfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 			    fsal_lock_param_t *conflicting_lock);
 fsal_status_t gpfs_close2(struct fsal_obj_handle *obj_hdl,
 			  struct state_t *state);
+fsal_status_t gpfs_reopen_func(struct fsal_obj_handle *obj_hdl,
+			       fsal_openflags_t openflags,
+			       struct fsal_fd *fsal_fd);
+fsal_status_t gpfs_close_func(struct fsal_obj_handle *obj_hdl,
+			      struct fsal_fd *fd);
 fsal_status_t gpfs_setattr2(struct fsal_obj_handle *obj_hdl,
 			    bool bypass,
 			    struct state_t *state,
@@ -174,8 +179,9 @@ fsal_status_t gpfs_read_plus_fd(int my_fs,
 			uint64_t offset,
 			size_t buffer_size, void *buffer, size_t *read_amount,
 			bool *end_of_file, struct io_info *info, int expfd);
-fsal_status_t gpfs_seek(struct fsal_obj_handle *obj_hdl,
-			struct io_info *info);
+fsal_status_t gpfs_seek2(struct fsal_obj_handle *obj_hdl,
+			 struct state_t *state,
+			 struct io_info *info);
 fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
 			 struct io_hints *hints);
 fsal_status_t gpfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,

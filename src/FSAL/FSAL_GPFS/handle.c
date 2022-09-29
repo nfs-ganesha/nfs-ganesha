@@ -72,7 +72,7 @@ struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 	hdl->obj_handle.type = attributes->type;
 	if (hdl->obj_handle.type == REGULAR_FILE) {
 		hdl->u.file.fd.fd = -1;	/* no open on this yet */
-		hdl->u.file.fd.openflags = FSAL_O_CLOSED;
+		hdl->u.file.fd.fsal_fd.openflags = FSAL_O_CLOSED;
 	} else if (hdl->obj_handle.type == SYMBOLIC_LINK
 		   && link_content != NULL) {
 		size_t len = strlen(link_content) + 1;
@@ -934,15 +934,19 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 	LogFullDebug(COMPONENT_FSAL, "type %d", type);
 	if (type == REGULAR_FILE) {
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+		struct fsal_fd *fsal_fd = &myself->u.file.fd.fsal_fd;
 
-		if (myself->u.file.fd.openflags != FSAL_O_CLOSED) {
-			fsal_internal_close(myself->u.file.fd.fd, NULL, 0);
-			myself->u.file.fd.fd = -1;
-			myself->u.file.fd.openflags = FSAL_O_CLOSED;
-		}
+		/* Indicate we want to do fd work (can't fail since not
+		 * reclaiming)
+		 */
+		(void) fsal_start_fd_work(fsal_fd, false);
 
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+		if (fsal_fd->openflags != FSAL_O_CLOSED)
+			(void) fsal_internal_close(
+						myself->u.file.fd.fd, NULL, 0);
+
+		/* Indicate we are done with fd work and signal any waiters. */
+		fsal_complete_fd_work(fsal_fd);
 	}
 
 	fsal_obj_handle_fini(obj_hdl);
@@ -972,7 +976,7 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->link = linkfile;
 	ops->rename = renamefile;
 	ops->unlink = file_unlink;
-	ops->seek = gpfs_seek;
+	ops->seek2 = gpfs_seek2;
 	ops->io_advise = gpfs_io_advise;
 	ops->close = gpfs_close;
 	ops->handle_to_wire = handle_to_wire;
@@ -989,6 +993,8 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->commit2 = gpfs_commit2;
 	ops->setattr2 = gpfs_setattr2;
 	ops->close2 = gpfs_close2;
+	ops->close_func = gpfs_close_func;
+	ops->reopen_func = gpfs_reopen_func;
 	ops->lock_op2 = gpfs_lock_op2;
 	ops->merge = gpfs_merge;
 	ops->is_referral = fsal_common_is_referral;

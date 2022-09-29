@@ -78,10 +78,8 @@ struct gpfs_ds {
 };
 
 struct gpfs_fd {
-	/** The open and share mode etc. */
-	fsal_openflags_t openflags;
-	/* rw lock to protect the file descriptor */
-	pthread_rwlock_t fdlock;
+	/** open and share mode plus fd management */
+	struct fsal_fd fsal_fd;
 	/** The gpfsfs file descriptor. */
 	int fd;
 };

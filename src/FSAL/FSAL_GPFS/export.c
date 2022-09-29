@@ -347,9 +347,8 @@ gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
 
 	my_fd = &container_of(state, struct gpfs_state_fd, state)->gpfs_fd;
 
+	init_fsal_fd(&my_fd->fsal_fd, FSAL_FD_STATE, op_ctx->fsal_export);
 	my_fd->fd = -1;
-	my_fd->openflags = FSAL_O_CLOSED;
-	PTHREAD_RWLOCK_init(&my_fd->fdlock, NULL);
 
 	return state;
 }
@@ -367,9 +366,7 @@ gpfs_free_state(struct fsal_export *exp_hdl, struct state_t *state)
 	struct gpfs_state_fd *state_fd = container_of(state,
 						      struct gpfs_state_fd,
 						      state);
-	struct gpfs_fd *my_fd = &state_fd->gpfs_fd;
 
-	PTHREAD_RWLOCK_destroy(&my_fd->fdlock);
 	gsh_free(state_fd);
 }
 
