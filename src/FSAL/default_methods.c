@@ -1051,18 +1051,6 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-/* seek
- * default case not supported
- */
-
-static fsal_status_t file_seek(struct fsal_obj_handle *obj_hdl,
-				struct io_info *info)
-{
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
-}
-
 /* io advise
  * default case not supported
  */
@@ -1558,7 +1546,6 @@ struct fsal_obj_ops def_handle_ops = {
 	.link = linkfile,
 	.rename = renamefile,
 	.unlink = file_unlink,
-	.seek = file_seek,
 	.io_advise = file_io_advise,
 	.fallocate = file_fallocate,
 	.close = file_close,

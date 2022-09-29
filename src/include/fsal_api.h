@@ -2001,18 +2001,6 @@ struct fsal_obj_ops {
  */
 
 /**
- * @brief Seek to data or hole
- *
- * This function seek to data or hole in a file.
- *
- * @param[in]  obj_hdl      File to be written
- * @param[in,out] info      Information about the data
- *
- * @return FSAL status.
- */
-	 fsal_status_t (*seek)(struct fsal_obj_handle *obj_hdl,
-			       struct io_info *info);
-/**
  * @brief IO Advise
  *
  * This function give hints to fs.
