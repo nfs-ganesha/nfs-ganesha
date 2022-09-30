@@ -828,27 +828,12 @@ static fsal_status_t kvsfs_setattr2(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t kvsfs_close(struct fsal_obj_handle *obj_hdl)
 {
 	struct kvsfs_fsal_obj_handle *myself;
-	fsal_status_t status;
-	int retval = 0;
 
 	assert(obj_hdl->type == REGULAR_FILE);
 	myself = container_of(obj_hdl,
 			      struct kvsfs_fsal_obj_handle, obj_handle);
 
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-	if (myself->u.file.fd.openflags == FSAL_O_CLOSED)
-		status = fsalstat(ERR_FSAL_NOT_OPENED, 0);
-	else {
-		retval = kvsns_close(&myself->u.file.fd.fd);
-		status = fsalstat(posix2fsal_error(-retval), -retval);
-		memset(&myself->u.file.fd.fd, 0, sizeof(kvsns_file_open_t));
-		myself->u.file.fd.openflags = FSAL_O_CLOSED;
-	}
-
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-	return status;
+	return close_fsal_fd(obj_hdl, &myself->u.file.fd.fsal_fd, false);
 }
 
 /* file_unlink
@@ -1055,13 +1040,14 @@ void kvsfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->handle_to_key = kvsfs_handle_to_key;
 
 	ops->open2 = kvsfs_open2;
-	ops->status2 = kvsfs_status2;
 	ops->reopen2 = kvsfs_reopen2;
 	ops->read2 = kvsfs_read2;
 	ops->write2 = kvsfs_write2;
 	ops->commit2 = kvsfs_commit2;
 	ops->setattr2 = kvsfs_setattr2;
 	ops->close2 = kvsfs_close2;
+	ops->reopen_func = kvsfs_reopen_func;
+	ops->close_func = kvsfs_close_func;
 
 	// ops->create = kvsfs_create;
 	// ops->test_access = fsal_test_access;

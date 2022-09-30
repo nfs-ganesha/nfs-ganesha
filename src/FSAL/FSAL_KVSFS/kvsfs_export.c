@@ -141,8 +141,7 @@ static struct state_t *kvsfs_alloc_state(struct fsal_export *exp_hdl,
 	my_fd = &container_of(state, struct kvsfs_state_fd, state)->kvsfs_fd;
 
 	memset(&my_fd->fd, 0, sizeof(kvsns_file_open_t));
-	my_fd->openflags = FSAL_O_CLOSED;
-	PTHREAD_RWLOCK_init(&my_fd->fdlock, NULL);
+	my_fd->fsal_fd.openflags = FSAL_O_CLOSED;
 
 	return state;
 
@@ -158,13 +157,7 @@ static struct state_t *kvsfs_alloc_state(struct fsal_export *exp_hdl,
 static void kvsfs_free_state(struct fsal_export *exp_hdl,
 			    struct state_t *state)
 {
-	struct kvsfs_state_fd *state_fd = container_of(state,
-						       struct kvsfs_state_fd,
-						       state);
-	struct kvsfs_fd *my_fd = &state_fd->kvsfs_fd;
-
-	PTHREAD_RWLOCK_destroy(&my_fd->fdlock);
-	gsh_free(state_fd);
+	gsh_free(container_of(state, struct kvsfs_state_fd, state));
 }
 
 /* kvsfs_export_ops_init

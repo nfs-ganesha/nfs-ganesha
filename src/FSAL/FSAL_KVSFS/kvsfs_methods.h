@@ -82,10 +82,13 @@ struct kvsfs_fsal_export {
 };
 
 struct kvsfs_fd {
-	fsal_openflags_t openflags;
-	pthread_rwlock_t fdlock;
+	/** open and share mode plus fd management */
+	struct fsal_fd fsal_fd;
+	/** kvsns file descriptor */
 	kvsns_file_open_t fd;
 };
+
+#define KVSNS_FILE_OPEN_INIT {0, {0, 0}, 0}
 
 struct kvsfs_state_fd {
 	struct state_t state;
@@ -142,8 +145,11 @@ fsal_status_t kvsfs_commit2(struct fsal_obj_handle *obj_hdl,	/* sync */
 			    off_t offset,
 			    size_t len);
 /* OK */
-fsal_openflags_t kvsfs_status2(struct fsal_obj_handle *obj_hdl,
-			       struct state_t *state);
+fsal_status_t kvsfs_reopen_func(struct fsal_obj_handle *obj_hdl,
+				fsal_openflags_t openflags,
+				struct fsal_fd *fsal_fd);
+fsal_status_t kvsfs_close_func(struct fsal_obj_handle *obj_hdl,
+			       struct fsal_fd *fd);
 void kvsfs_read2(struct fsal_obj_handle *obj_hdl,
 		 bool bypass,
 		 fsal_async_cb done_cb,
