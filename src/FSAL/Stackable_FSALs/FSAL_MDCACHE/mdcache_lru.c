@@ -501,12 +501,6 @@ adjust_lru(mdcache_entry_t *entry)
 static inline void
 adjust_lru_root_object(mdcache_entry_t *entry)
 {
-	struct lru_q *q = lru_queue_of(entry);
-
-	/* not adjust */
-	if (q->size < 2)
-		return;
-
 	/* adjust export root or junction nodes */
 	if (is_export_pin(&entry->obj_handle))
 		adjust_lru(entry);
@@ -698,6 +692,7 @@ lru_reap_impl(enum lru_q_id qid)
 	uint32_t refcnt;
 	cih_latch_t latch;
 	int ix;
+	bool adjustable_root_obj;
 
 	lane = LRU_NEXT(reap_lane);
 	for (ix = 0; ix < LRU_N_Q_LANES; ++ix, lane = LRU_NEXT(reap_lane)) {
@@ -717,11 +712,13 @@ lru_reap_impl(enum lru_q_id qid)
 		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
 		   refcnt);
 #endif
+		adjustable_root_obj = (lq->size >= 2);
 		QUNLOCK(qlane);
 
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
 			/* can't use it. */
-			adjust_lru_root_object(entry);
+			if (adjustable_root_obj)
+				adjust_lru_root_object(entry);
 			mdcache_put(entry);
 			continue;
 		}
