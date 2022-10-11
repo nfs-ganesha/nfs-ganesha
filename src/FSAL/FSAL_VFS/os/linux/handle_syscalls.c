@@ -112,7 +112,7 @@ int display_vfs_handle(struct display_buffer *dspbuf,
 		       sizeof(u32));
 		handle_cursor += sizeof(u32);
 		b_left = display_printf(dspbuf,
-					"fsid=0x%016"PRIx64".0x%016"PRIx64,
+					"fsid=0x%016"PRIx32".0x%016"PRIx32,
 					u32[0], u32[1]);
 		break;
 	}
