@@ -1026,7 +1026,7 @@ static inline void update_atomic_fields(struct gsh_export *export,
 static inline void copy_gsh_export(struct gsh_export *dest,
 				   struct gsh_export *src)
 {
-	struct gsh_refstr *old_fullpath, *old_pseudopath;
+	struct gsh_refstr *old_fullpath = NULL, *old_pseudopath = NULL;
 
 	/* Update atomic fields */
 	update_atomic_fields(dest, src);
