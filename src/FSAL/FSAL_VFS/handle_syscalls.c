@@ -133,6 +133,8 @@ int vfs_get_root_handle(struct fsal_filesystem *fs,
 			LogCrit(COMPONENT_FSAL,
 				"Can not change fsid type of %s to %d, error %s",
 				fs->path, exp->fsid_type, strerror(retval));
+			(void) close(*root_fd);
+			*root_fd = -1;
 			return retval;
 		}
 
