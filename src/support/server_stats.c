@@ -1856,8 +1856,8 @@ static void server_dbus_ceop_stats(struct proto_op *op, DBusMessageIter *iter,
 				       &op->errors);
 	if (for_export) {
 		if (op->total)
-			res = (double) (op->latency.latency / op->total) *
-			       0.000001;
+			res = (double) (op->latency.latency * 0.000001) /
+								op->total;
 		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
 					       &res);
 	}
@@ -2840,8 +2840,8 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 				DBUS_TYPE_UINT64, &v3_full_stats[op].errors);
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &v3_full_stats[op].dups);
-			res = (double) v3_full_stats[op].latency.latency /
-					v3_full_stats[op].total * 0.000001;
+			res = (double) v3_full_stats[op].latency.latency *
+					0.000001 / v3_full_stats[op].total;
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			res = (double) v3_full_stats[op].latency.min *
@@ -2913,8 +2913,8 @@ void server_dbus_v4_full_stats(DBusMessageIter *iter)
 				DBUS_TYPE_UINT64, &v4_full_stats[op].total);
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_UINT64, &v4_full_stats[op].errors);
-			res = (double) v4_full_stats[op].latency.latency /
-					v4_full_stats[op].total * 0.000001;
+			res = (double) v4_full_stats[op].latency.latency *
+					0.000001 / v4_full_stats[op].total;
 			dbus_message_iter_append_basic(&op_iter,
 				DBUS_TYPE_DOUBLE, &res);
 			res = (double) v4_full_stats[op].latency.min * 0.000001;
