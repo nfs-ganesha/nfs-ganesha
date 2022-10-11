@@ -3200,22 +3200,6 @@ static inline void export_root_object_put(struct fsal_obj_handle *obj_hdl)
 }
 
 /**
- * @brief Determines whether the object handle is referenced
- * by one or more exports root
- *
- * @param[in] obj_hdl  object handle need to be judged
- * @return true if referenced by export, false otherwise
- */
-static inline bool is_export_pin(struct fsal_obj_handle *obj_hdl)
-{
-	int32_t ref = atomic_fetch_int32_t (&obj_hdl->exp_refcnt);
-
-	if (ref > 0)
-		return true;    /* pin */
-	return false; /* unpin */
-}
-
-/**
 ** Resolve forward declarations
 */
 #include "client_mgr.h"

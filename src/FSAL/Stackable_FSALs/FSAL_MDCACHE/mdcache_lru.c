@@ -504,24 +504,6 @@ long_term_lru(mdcache_entry_t *entry)
 	QUNLOCK(qlane);
 }
 
-/*
- * @brief Adjust the order of LRU entries if it is root object of export
- *
- * During the entries release process，the root object of export
- * may block the LRU of LRU queue，we can adjust it to MRU of
- * LRU and let next entry be released.
- *
- * @param [in] entry  Entry to adjust.
- * @return FSAL status
- */
-static inline void
-adjust_lru_root_object(mdcache_entry_t *entry)
-{
-	/* adjust export root or junction nodes */
-	if (is_export_pin(&entry->obj_handle))
-		adjust_lru(entry);
-}
-
 /**
  * @brief Clean an entry for recycling.
  *
@@ -708,7 +690,6 @@ lru_reap_impl(enum lru_q_id qid)
 	uint32_t refcnt;
 	cih_latch_t latch;
 	int ix;
-	bool adjustable_root_obj;
 
 	lane = LRU_NEXT(reap_lane);
 	for (ix = 0; ix < LRU_N_Q_LANES; ++ix, lane = LRU_NEXT(reap_lane)) {
@@ -728,13 +709,10 @@ lru_reap_impl(enum lru_q_id qid)
 		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
 		   refcnt, atomic_fetch_int32_t(&entry->lru.long_refcnt));
 #endif
-		adjustable_root_obj = (lq->size >= 2);
 		QUNLOCK(qlane);
 
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
 			/* can't use it. */
-			if (adjustable_root_obj)
-				adjust_lru_root_object(entry);
 			mdcache_lru_unref(entry, LRU_FLAG_NONE);
 			continue;
 		}
