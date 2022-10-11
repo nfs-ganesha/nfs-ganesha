@@ -202,15 +202,16 @@ void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal)
 
 void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds)
 {
+	assert(pds->fsal);
+
 	PTHREAD_RWLOCK_wrlock(&pds->fsal->lock);
 	glist_del(&pds->server);
 	PTHREAD_RWLOCK_unlock(&pds->fsal->lock);
 
 	memset(&pds->s_ops, 0, sizeof(pds->s_ops));	/* poison myself */
-	if (pds->fsal != NULL) {
-		fsal_put(pds->fsal);
-		pds->fsal = NULL;
-	}
+
+	fsal_put(pds->fsal);
+	pds->fsal = NULL;
 }
 
 /**
