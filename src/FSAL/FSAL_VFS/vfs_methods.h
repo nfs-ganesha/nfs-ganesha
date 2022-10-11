@@ -267,12 +267,6 @@ static inline bool vfs_unopenable_type(object_file_type_t type)
 	}
 }
 
-struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
-				      struct vfs_fsal_obj_handle *myself,
-				      struct stat *stat,
-				      fsal_openflags_t flags,
-				      fsal_errors_t *fsal_error);
-
 /* State storage */
 void vfs_state_init(void);
 void vfs_state_release(struct gsh_buffdesc *key);

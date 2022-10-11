@@ -833,8 +833,10 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 
 	dir_fd = vfs_fsal_open(myself, flags, &status.major);
 
-	if (dir_fd < 0)
+	if (dir_fd < 0) {
+		retval = -dir_fd;
 		goto errout;
+	}
 
 	retval = vfs_stat_by_handle(dir_fd, &stat);
 
@@ -1259,7 +1261,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	destdirfd = vfs_fsal_open(destdir, flags, &fsal_error);
 
 	if (destdirfd < 0) {
-		retval = destdirfd;
+		retval = -destdirfd;
 		fsal_error = posix2fsal_error(retval);
 		LogDebug(COMPONENT_FSAL,
 			 "open destdir returned %d", retval);
@@ -1530,128 +1532,6 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 	if (newfd >= 0)
 		close(newfd);
 	return fsalstat(fsal_error, retval);
-}
-
-/**
- * @brief Open file and get attributes.
- *
- * This function opens a file and returns the file descriptor and fetches
- * the attributes. The obj_hdl->obj_lock MUST be held for this call.
- *
- * @param[in]     exp         The fsal_export the file belongs to
- * @param[in]     myself      File to access
- * @param[in/out] stat        The struct stat to fetch attributes into
- * @param[in]     open_flags  The mode to open the file in
- * @param[out]    fsal_error  Place to return an error
- *
- * @return The file descriptor plus indication if it needs to be closed.
- *
- */
-struct closefd vfs_fsal_open_and_stat(struct fsal_export *exp,
-				      struct vfs_fsal_obj_handle *myself,
-				      struct stat *stat,
-				      fsal_openflags_t flags,
-				      fsal_errors_t *fsal_error)
-{
-	struct fsal_obj_handle *obj_hdl = &myself->obj_handle;
-	struct closefd cfd = { .fd = -1, .close_fd = false };
-	int retval = 0;
-	const char *func = "unknown";
-	int open_flags;
-
-	fsal2posix_openflags(flags, &open_flags);
-
-	switch (obj_hdl->type) {
-	case SOCKET_FILE:
-	case CHARACTER_FILE:
-	case BLOCK_FILE:
-		cfd.fd = vfs_open_by_handle(myself->obj_handle.fs,
-					    myself->u.unopenable.dir,
-					    O_PATH | O_NOACCESS,
-					    fsal_error);
-		if (cfd.fd < 0) {
-			LogDebug(COMPONENT_FSAL,
-				 "Failed with %s open_flags 0x%08x",
-				 strerror(-cfd.fd), O_PATH | O_NOACCESS);
-			return cfd;
-		}
-		cfd.close_fd = true;
-		retval =
-		    fstatat(cfd.fd, myself->u.unopenable.name, stat,
-			    AT_SYMLINK_NOFOLLOW);
-
-		func = "fstatat";
-		break;
-	case REGULAR_FILE:
-		/* Check if the file descriptor happens to be in a compatible
-		 * mode. If not, open a temporary file descriptor.
-		 *
-		 * Note that FSAL_O_REOPEN will never be set in
-		 * myself->u.file.fd.openflags and thus forces a re-open.
-		 */
-		if (((flags & FSAL_O_ANY) != 0 &&
-		     (myself->u.file.fd.openflags & FSAL_O_RDWR) == 0) ||
-		    ((myself->u.file.fd.openflags & flags) != flags)) {
-			/* no file open at the moment */
-			cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
-			if (cfd.fd < 0) {
-				LogDebug(COMPONENT_FSAL,
-					 "Failed with %s open_flags 0x%08x",
-					 strerror(-cfd.fd), open_flags);
-				return cfd;
-			}
-			cfd.close_fd = true;
-		} else {
-			cfd.fd = myself->u.file.fd.fd;
-		}
-		retval = fstat(cfd.fd, stat);
-		func = "fstat";
-		break;
-	case SYMBOLIC_LINK:
-		open_flags |= (O_PATH | O_RDWR | O_NOFOLLOW);
-		goto vfos_open;
-	case FIFO_FILE:
-		open_flags |= O_NONBLOCK;
-		/* fall through */
-	case DIRECTORY:
-	default:
- vfos_open:
-		cfd.fd = vfs_fsal_open(myself, open_flags, fsal_error);
-		if (cfd.fd < 0) {
-			LogDebug(COMPONENT_FSAL,
-				 "Failed with %s open_flags 0x%08x",
-				 strerror(-cfd.fd), open_flags);
-			return cfd;
-		}
-		cfd.close_fd = true;
-		retval = vfs_stat_by_handle(cfd.fd, stat);
-		func = "vfs_stat_by_handle";
-		break;
-	}
-
-	if (retval < 0) {
-		retval = errno;
-		if (cfd.close_fd) {
-			int rc;
-
-			rc = close(cfd.fd);
-
-			if (rc < 0) {
-				rc = errno;
-				LogDebug(COMPONENT_FSAL, "close failed with %s",
-					 strerror(rc));
-			}
-		}
-		if (retval == ENOENT)
-			retval = ESTALE;
-		*fsal_error = posix2fsal_error(retval);
-		LogDebug(COMPONENT_FSAL, "%s failed with %s", func,
-			 strerror(retval));
-		cfd.fd = -retval;
-		cfd.close_fd = false;
-		return cfd;
-	}
-	return cfd;
 }
 
 /* file_unlink
