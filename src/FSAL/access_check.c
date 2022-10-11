@@ -326,7 +326,7 @@ int display_fsal_ace(struct display_buffer *dspbuf, int ace_number,
 				" everyone@" : "");
 
 	if (b_left > 0 && !IS_FSAL_ACE_SPECIAL_ID(*pace)) {
-		if (IS_FSAL_ACE_SPECIAL_ID(*pace))
+		if (IS_FSAL_ACE_GROUP_ID(*pace))
 			b_left =
 			    display_printf(dspbuf, " gid %d", pace->who.gid);
 		else
