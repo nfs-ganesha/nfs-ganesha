@@ -240,8 +240,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_write3.status = nfs3_Errno_status(fsal_status);
-		rc = NFS_REQ_OK;
-		goto putref;
+		goto return_ok;
 	}
 
 	/* Sanity check: write only a regular file */
@@ -251,8 +250,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		else
 			res->res_write3.status = NFS3ERR_INVAL;
 
-		rc = NFS_REQ_OK;
-		goto putref;
+		goto return_ok;
 	}
 
 	/* if quota support is active, then we should check is the
@@ -264,15 +262,13 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_write3.status = NFS3ERR_DQUOT;
-		rc = NFS_REQ_OK;
-		goto putref;
+		goto return_ok;
 	}
 
 	if (size > arg->arg_write3.data.data_len) {
 		/* should never happen */
 		res->res_write3.status = NFS3ERR_INVAL;
-		rc = NFS_REQ_OK;
-		goto putref;
+		goto return_ok;
 	}
 
 	/* Do not exceed maximum WRITE offset if set */
@@ -293,8 +289,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 			nfs_SetWccData(NULL, obj, &resfail->file_wcc);
 
-			rc = NFS_REQ_OK;
-			goto putref;
+			goto return_ok;
 		}
 	}
 
@@ -308,14 +303,13 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		fsal_status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		res->res_write3.status = NFS3_OK;
 		nfs_SetWccData(NULL, obj, &resfail->file_wcc);
-		rc = NFS_REQ_OK;
 		if ((arg->arg_write3.stable == DATA_SYNC) ||
 		    (arg->arg_write3.stable == FILE_SYNC))
 			resok->committed = FILE_SYNC;
 		else
 			resok->committed = UNSTABLE;
 		memcpy(resok->verf, NFS3_write_verifier, sizeof(writeverf3));
-		goto putref;
+		goto return_ok;
 	}
 
 	/* An actual write is to be made, prepare it */
@@ -323,8 +317,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Check for delegation conflict. */
 	if (state_deleg_conflict(obj, true)) {
 		res->res_write3.status = NFS3ERR_JUKEBOX;
-		rc = NFS_REQ_OK;
-		goto putref;
+		goto return_ok;
 	}
 
 	/* Set up args, allocate from heap, iov_count will be 1 */
@@ -376,13 +369,14 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	return rc;
 
- putref:
+ return_ok:
+
 	/* return references */
 	obj->obj_ops->put_ref(obj);
 
-	server_stats_io_done(size, 0, (rc == NFS_REQ_OK ? true : false), true);
+	server_stats_io_done(size, 0, true, true);
 
-	return rc;
+	return NFS_REQ_OK;
 }				/* nfs3_write */
 
 /**

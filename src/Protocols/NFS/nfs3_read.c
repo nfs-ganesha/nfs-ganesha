@@ -267,7 +267,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		server_stats_io_done(size, 0, false, false);
-		goto putref;
+		return rc;
 	}
 
 	nfs_SetPreOpAttr(obj, &pre_attr);
@@ -285,8 +285,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_read3.status = nfs3_Errno_status(fsal_status);
-		rc = NFS_REQ_OK;
-		goto putref;
+		goto return_ok;
 	}
 
 	/* Sanity check: read only from a regular file */
@@ -296,8 +295,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		else
 			res->res_read3.status = NFS3ERR_INVAL;
 
-		rc = NFS_REQ_OK;
-		goto putref;
+		goto return_ok;
 	}
 
 	/* do not exceed maximum READ offset if set */
@@ -318,8 +316,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 			nfs_SetPostOpAttr(obj, &resfail->file_attributes, NULL);
 
-			rc = NFS_REQ_OK;
-			goto putref;
+			goto return_ok;
 		}
 	}
 
@@ -334,15 +331,13 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (size == 0) {
 		nfs_read_ok(res, NULL, 0, obj, 0);
-		rc = NFS_REQ_OK;
-		goto putref;
+		goto return_ok;
 	}
 
 	/* Check for delegation conflict. */
 	if (state_deleg_conflict(obj, false)) {
 		res->res_read3.status = NFS3ERR_JUKEBOX;
-		rc = NFS_REQ_OK;
-		goto putref;
+		goto return_ok;
 	}
 
 	/* Set up args, allocate from heap, iov_count will be 1 */
@@ -395,14 +390,15 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	return rc;
 
-putref:
+return_ok:
+
 	/* return references */
 	if (obj)
 		obj->obj_ops->put_ref(obj);
 
-	server_stats_io_done(size, 0, (rc == NFS_REQ_OK ? true : false), false);
+	server_stats_io_done(size, 0, true, false);
 
-	return rc;
+	return NFS_REQ_OK;
 }				/* nfs3_read */
 
 /**
