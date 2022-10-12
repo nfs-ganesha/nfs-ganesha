@@ -77,7 +77,7 @@ nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj, const char *name,
 			       struct fsal_attrlist *attrs)
 {
 	struct fsal_readdir_cb_parms cb_parms;
-	fsal_status_t fsal_status;
+	fsal_status_t fsal_status = {ERR_FSAL_NO_ERROR, 0};
 
 	cb_parms.opaque = tracker;
 	cb_parms.name = name;
