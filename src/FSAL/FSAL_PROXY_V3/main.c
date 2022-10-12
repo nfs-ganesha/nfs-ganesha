@@ -1107,6 +1107,23 @@ proxyv3_open2(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
+ * @brief Re-open a file that may be already opened
+ */
+static fsal_status_t
+proxyv3_reopen2(struct fsal_obj_handle *obj_hdl,
+		struct state_t *state,
+		fsal_openflags_t openflags)
+{
+	LogDebug(COMPONENT_FSAL,
+		 "reopen2 of obj_hdl %p flags %" PRIx16, obj_hdl, openflags);
+
+	/* Nothing to do here as Ganesha already did state and access checks.
+	 * Ganesha will call update_stateid so no need to worry about the
+	 * state_seqid. */
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
  * @brief Make a new symlink from dir/name => link_path.
  */
 
@@ -2878,6 +2895,7 @@ MODULE_INIT void proxy_v3_init(void)
 
 	/* Open/close. */
 	PROXY_V3.handle_ops.open2 = proxyv3_open2;
+	PROXY_V3.handle_ops.reopen2 = proxyv3_reopen2;
 	PROXY_V3.handle_ops.close = proxyv3_close;
 	PROXY_V3.handle_ops.close2 = proxyv3_close2;
 
