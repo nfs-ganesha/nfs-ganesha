@@ -154,17 +154,19 @@ static void fs_create_clid_name(nfs_client_id_t *clientid)
 int fs_create_recov_dir(void)
 {
 	int err, root_len, dir_len, old_len, node_size = 0;
-	char node[14];
+	char node[15];
+
+	/* Note below - all the size tests below are >= which assures space for
+	 *              the terminating NUL.
+	 */
 
 	if (nfs_param.core_param.clustered) {
-		node_size = snprintf(node, sizeof(node), "node%d", g_nodeid);
+		node_size = snprintf(node, sizeof(node), "/node%d", g_nodeid);
 
 		if (unlikely(node_size >= sizeof(node) || node_size < 0)) {
 			LogFatal(COMPONENT_CLIENTID,
 				 "snprintf returned unexpected %d", node_size);
 		}
-		/* Now include the '/' */
-		node_size++;
 	}
 
 	err = mkdir(nfs_param.nfsv4_param.recov_root, 0755);
@@ -177,6 +179,10 @@ int fs_create_recov_dir(void)
 
 	root_len = strlen(nfs_param.nfsv4_param.recov_root);
 	dir_len = strlen(nfs_param.nfsv4_param.recov_dir);
+
+	/* If not clustered: root + '/' + dir (nodesize = 0)
+	 * If clustered: root + '/' + dir + "/node%d" (nodesize != 0)
+	 */
 	v4_recov_dir_len = root_len + 1 + dir_len + node_size;
 
 	if (v4_recov_dir_len >= sizeof(v4_recov_dir))
@@ -202,7 +208,11 @@ int fs_create_recov_dir(void)
 
 	root_len = strlen(nfs_param.nfsv4_param.recov_root);
 	old_len = strlen(nfs_param.nfsv4_param.recov_old_dir);
-	v4_old_dir_len = root_len + 1 + dir_len + node_size;
+
+	/* If not clustered: root + '/' + old (nodesize = 0)
+	 * If clustered: root + '/' + old + "/node%d" (nodesize != 0)
+	 */
+	v4_old_dir_len = root_len + 1 + old_len + node_size;
 
 	if (v4_old_dir_len >= sizeof(v4_old_dir))
 		LogFatal(COMPONENT_CLIENTID,
@@ -226,13 +236,13 @@ int fs_create_recov_dir(void)
 			 v4_old_dir, strerror(errno), errno);
 	}
 	if (nfs_param.core_param.clustered) {
-		/* Now make the node specific directories */
-		v4_recov_dir[dir_len] = '/';
-		v4_old_dir[old_len] = '/';
+		/* Now make the node specific directory.
+		 * Note that node already includes the '/' path separator.
+		 */
 
 		/* Copy an extra byte to NUL terminate */
-		memcpy(v4_recov_dir + 1 + dir_len, node, node_size + 1);
-		memcpy(v4_old_dir + 1 + old_len, node, node_size + 1);
+		memcpy(v4_recov_dir + dir_len, node, node_size + 1);
+		memcpy(v4_old_dir + old_len, node, node_size + 1);
 
 		LogDebug(COMPONENT_CLIENTID, "v4_recov_dir=%s", v4_recov_dir);
 		LogDebug(COMPONENT_CLIENTID, "v4_old_dir=%s", v4_old_dir);
