@@ -1464,6 +1464,7 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 
 	if (status != STATE_SUCCESS) {
 		struct gsh_buffdesc buffused_key;
+		hash_error_t err;
 
 		/* Lock will be returned to right blocking type if it is
 		 * still blocking. We could lose a block if we failed for
@@ -1483,8 +1484,14 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 		LogEntry("Entry", lock_entry);
 
 		/* Remove the hashtable entry */
-		HashTable_Del(ht_lock_cookies, &buffkey, &buffused_key,
-			      &buffval);
+		err = HashTable_Del(ht_lock_cookies, &buffkey, &buffused_key,
+				    &buffval);
+
+		if (err != HASHTABLE_SUCCESS) {
+			LogCrit(COMPONENT_STATE,
+				 "Failure to delete lock cookie %s",
+				 hash_table_err_to_str(err));
+		}
 
 		/* And release the cookie without unblocking the lock.
 		 * grant_blocked_locks() will decide whether to keep or
