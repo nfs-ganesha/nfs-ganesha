@@ -377,8 +377,8 @@ static void fs_ng_read_recov_clids(nfs_grace_start_t *gsp,
 		return;
 	}
 
-	/*
-	 * FIXME: make the rest of this work
+	/**
+	 *  @todo: FIXME: make the rest of this work
 	 */
 	return;
 
