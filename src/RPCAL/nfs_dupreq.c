@@ -1111,6 +1111,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs)
 					 dupreq_state_table[dv->complete],
 					 dv->dupe_cnt);
 				PTHREAD_MUTEX_unlock(&dv->mtx);
+				PTHREAD_MUTEX_unlock(&t->mtx);
 				return DUPREQ_DROP;
 			} else {
 				status = DUPREQ_EXISTS;
