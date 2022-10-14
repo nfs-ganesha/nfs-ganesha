@@ -142,9 +142,6 @@ int find_peer_addr(char *caller_name, in_port_t sin_port, sockaddr_t *client)
 		return retval;
 	}
 
-	if (retval == 0 || (retval != EAI_NONAME && retval != EAI_AGAIN))
-		return retval;
-
 	/* Couldn't find an AF_INET6 address, look for AF_INET address */
 	hints.ai_family = AF_INET;
 
