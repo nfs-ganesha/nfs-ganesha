@@ -2725,9 +2725,7 @@ again:
 
 		/* If the empty chunk wasn't first, then prev_chunk is valid */
 		state.cur_chunk = state.prev_chunk;
-		if (state.cur_chunk) {
-			mdcache_lru_ref_chunk(state.cur_chunk);
-		}
+		mdcache_lru_ref_chunk(state.cur_chunk);
 	}
 
 	if (*eod_met) {
