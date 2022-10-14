@@ -4754,14 +4754,15 @@ posix_acl *encode_posix_acl(const acl_t acl, uint32_t type,
 	acl_tag_t tag;
 	acl_permset_t permset;
 	size_t real_size;
-	uint32_t count;
+	int count;
 	int entry_id = 0;
 	int ret = 0;
 
 	posix_acl *encode_acl;
 	posix_acl_entry *encode_acl_e;
 
-	count = (uint32_t)acl_entries(acl);
+	count = acl_entries(acl);
+
 	if (count < 0) {
 		LogDebug(COMPONENT_NFSPROTO,
 				"The acl is not a valid pointer to an ACL.");
@@ -4775,7 +4776,7 @@ posix_acl *encode_posix_acl(const acl_t acl, uint32_t type,
 	if (!encode_acl)
 		return NULL;
 
-	encode_acl->count = count;
+	encode_acl->count = (uint32_t) count;
 	encode_acl_e = encode_acl->entries;
 
 	for (entry_id = ACL_FIRST_ENTRY; ; entry_id = ACL_NEXT_ENTRY,
