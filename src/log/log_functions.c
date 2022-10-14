@@ -516,7 +516,7 @@ void set_const_log_str(void)
 
 	if (b_left > 0 && logfields->disp_epoch)
 		b_left = display_printf(&dspbuf,
-			": epoch %08x ", nfs_ServerEpoch);
+			": epoch %08lx ", (unsigned long) nfs_ServerEpoch);
 
 	if (b_left > 0 && logfields->disp_host)
 		b_left = display_printf(&dspbuf, ": %s ", hostname);
