@@ -2143,25 +2143,25 @@ static bool get_nfsmon_export_io(DBusMessageIter *args,
 	DBusMessageIter iter;
 
 	dbus_message_iter_init_append(reply, &iter);
+
 	export = lookup_export(args, &errormsg);
+
 	if (!nfs_param.core_param.enable_NFSSTATS)
 		errormsg = "NFS stat counting disabled";
-	if (export == NULL) {
+
+	if (export == NULL)
 		success = false;
-	} else {
-		export_st = container_of(export, struct export_stats,
-					 export);
-		if (export_st == NULL) {
-			success = false;
-			errormsg = "Export does not have any NFS activity";
-		}
-	}
+	else
+		export_st = container_of(export, struct export_stats, export);
+
 	gsh_dbus_status_reply(&iter, success, errormsg);
+
 	if (success)
 		server_dbus_nfsmon_iostats(export_st, &iter);
 
 	if (export != NULL)
 		put_gsh_export(export);
+
 	return true;
 }
 
