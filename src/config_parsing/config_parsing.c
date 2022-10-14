@@ -589,8 +589,6 @@ static bool convert_enum(struct config_node *node,
 	if (!found) {
 		config_proc_error(node, err_type,
 			 "Unknown token (%s)",
-			 node->filename,
-			 node->linenumber,
 			 node->u.term.varvalue);
 		err_type->bogus = true;
 		err_type->errors++;
