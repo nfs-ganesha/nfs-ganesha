@@ -1437,6 +1437,7 @@ proxyv3_mknode(struct fsal_obj_handle *dir_hdl,
 	MKNOD3res result;
 	sattr3 *attrs;
 	MKNOD3resok *resok = &result.MKNOD3res_u.resok;
+	const bool allow_rawdev = true;
 
 	memset(&result, 0, sizeof(result));
 
@@ -1448,38 +1449,26 @@ proxyv3_mknode(struct fsal_obj_handle *dir_hdl,
 	switch (nodetype) {
 	case CHARACTER_FILE:
 		args.what.type = NF3CHR;
+		attrs = &args.what.mknoddata3_u.device.dev_attributes;
 		break;
 	case BLOCK_FILE:
 		args.what.type = NF3BLK;
+		attrs = &args.what.mknoddata3_u.device.dev_attributes;
 		break;
 	case SOCKET_FILE:
 		args.what.type = NF3SOCK;
+		attrs = &args.what.mknoddata3_u.pipe_attributes;
 		break;
 	case FIFO_FILE:
 		args.what.type = NF3FIFO;
+		attrs = &args.what.mknoddata3_u.pipe_attributes;
 		break;
 	default:
 		LogWarn(COMPONENT_FSAL,
 			"mknode got invalid MKNOD type %d",
 			nodetype);
+		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
-
-	switch (nodetype) {
-	case CHARACTER_FILE:
-	case BLOCK_FILE:
-		attrs = &args.what.mknoddata3_u.device.dev_attributes;
-		break;
-	case SOCKET_FILE:
-	case FIFO_FILE:
-		attrs = &args.what.mknoddata3_u.pipe_attributes;
-		break;
-	default:
-		/* Unreachable.*/
-		attrs = NULL;
-		break;
-	}
-
-	const bool allow_rawdev = true;
 
 	if (!fsalattr_to_sattr3(attrs_in, allow_rawdev, attrs)) {
 		LogWarn(COMPONENT_FSAL,
