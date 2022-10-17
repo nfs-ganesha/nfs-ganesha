@@ -4988,7 +4988,7 @@ int nfs3_acl_2_fsal_acl(struct fsal_attrlist *attr, nfs3_int32 mask,
 	/* Decode default acl */
 	if (is_dir && (mask & (NFS_DFACL|NFS_DFACLCNT))) {
 		i_acl = decode_posix_acl(d_acl, ACL_TYPE_DEFAULT);
-		if (!e_acl) {
+		if (!i_acl) {
 			LogMajor(COMPONENT_NFSPROTO,
 					"failed to decode default posix acl");
 			rc = -EINVAL;
