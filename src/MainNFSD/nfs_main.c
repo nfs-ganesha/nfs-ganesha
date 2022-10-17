@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 	int c;
 	int dsc;
 	int rc;
-	int pidfile;
+	int pidfile = -1;               /* fd for file to store pid */
 	char *log_path = NULL;
 	char *exec_name = "nfs-ganesha";
 	int debug_level = -1;
@@ -374,29 +374,39 @@ int main(int argc, char *argv[])
 	signal(SIGXFSZ, SIG_IGN);
 #endif
 
-	/* Echo PID into pidfile */
+	/* Echo our PID into pidfile: this serves as a lock to prevent */
+	/* multiple instances from starting, so any failure creating   */
+	/* this file is a fatal error.                                 */
 	pidfile = open(nfs_pidfile_path, O_CREAT | O_RDWR, 0644);
 	if (pidfile == -1) {
-		LogFatal(COMPONENT_MAIN, "Can't open pid file %s for writing",
-			 nfs_pidfile_path);
+		LogFatal(COMPONENT_MAIN,
+			"open(%s, O_CREAT | O_RDWR, 0644) failed for pid file, errno was: %s (%d)",
+			 nfs_pidfile_path, strerror(errno), errno);
+		goto fatal_die;
 	} else {
 		struct flock lk;
 
-		/* Try to obtain a lock on the file */
+		/* Try to obtain a lock on the file: if we cannot lock it, */
+		/* Ganesha may already be running.                         */
 		lk.l_type = F_WRLCK;
 		lk.l_whence = SEEK_SET;
 		lk.l_start = (off_t) 0;
 		lk.l_len = (off_t) 0;
-		if (fcntl(pidfile, F_SETLK, &lk) == -1)
-			LogFatal(COMPONENT_MAIN, "Ganesha already started");
+		if (fcntl(pidfile, F_SETLK, &lk) == -1) {
+			LogFatal(COMPONENT_MAIN,
+				"fcntl(%d) failed, Ganesha already started",
+				pidfile);
+			goto fatal_die;
+		}
 
-		/* Put pid into file, then sync it */
+		/* Put our pid into the file, then explicitly sync it */
+		/* to ensure it winds up on the disk.                 */
 		if (dprintf(pidfile, "%u\n", getpid()) < 0 ||
 		    fsync(pidfile) < 0) {
-			close(pidfile);
-			LogCrit(COMPONENT_MAIN,
-				"Couldn't write pid to file %s error %s (%d)",
+			LogFatal(COMPONENT_MAIN,
+				"dprintf() or fsync() failed trying to write pid to file %s errno was: %s (%d)",
 				nfs_pidfile_path, strerror(errno), errno);
+			goto fatal_die;
 		}
 	}
 
@@ -407,9 +417,11 @@ int main(int argc, char *argv[])
 	sigaddset(&signals_to_block, SIGTERM);
 	sigaddset(&signals_to_block, SIGHUP);
 	sigaddset(&signals_to_block, SIGPIPE);
-	if (pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL) != 0)
+	if (pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL) != 0) {
 		LogFatal(COMPONENT_MAIN,
 			 "Could not start nfs daemon, pthread_sigmask failed");
+			goto fatal_die;
+	}
 
 	/* init URL package */
 	config_url_init();
@@ -527,7 +539,8 @@ int main(int argc, char *argv[])
 	if (log_path)
 		free(log_path);
 
-	close(pidfile);
+	if (pidfile != -1)
+		close(pidfile);
 
 	return 0;
 
@@ -538,8 +551,8 @@ fatal_die:
 		free(exec_name);
 	if (log_path)
 		free(log_path);
-
-	close(pidfile);
+	if (pidfile != -1)
+		close(pidfile);
 
 	/* systemd journal won't display our errors without this */
 	sleep(1);
