@@ -237,21 +237,32 @@ static int rados_url_parse(const char *url, char **pool, char **ns, char **obj)
 				/*
 				 * object only
 				 *
-				 * FIXME: should we reject this case? I don't
-				 * think there is such a thing as a default
-				 * pool
+				 * @todo FIXME: should we reject this case?
+				 *              I don't think there is such a
+				 *              thing as a default pool
 				 */
 				*obj = x1;
+				x1 = NULL;
 			} else {
 				*pool = x1;
+				x1 = NULL;
 				if (!x3) {
 					*obj = x2;
+					x2 = NULL;
 				} else {
 					*ns = x2;
 					*obj = x3;
+					x2 = NULL;
+					x3 = NULL;
 				}
 			}
 		}
+
+		/* If any of x1, x2, or x3 are not consumed, free them. */
+		gsh_free(x1);
+		gsh_free(x2);
+		gsh_free(x3);
+
 	} else if (ret == REG_NOMATCH) {
 		LogWarn(COMPONENT_CONFIG,
 			"%s: Failed to match %s as a config URL",
@@ -264,6 +275,7 @@ static int rados_url_parse(const char *url, char **pool, char **ns, char **obj)
 			"%s: Error in regexec: %s",
 			__func__, ebuf);
 	}
+
 	return ret;
 }
 
