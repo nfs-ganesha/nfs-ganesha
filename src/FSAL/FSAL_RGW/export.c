@@ -199,10 +199,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	}
 	st.st_dev = st_root.st_dev;
 #endif
-	rc = construct_handle(export, rgw_fh, &st, &handle);
-	if (rc < 0) {
-		return rgw2fsal_error(rc);
-	}
+	(void) construct_handle(export, rgw_fh, &st, &handle);
 
 	*pub_handle = &handle->handle;
 
@@ -293,10 +290,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
-	rc = construct_handle(export, rgw_fh, &st, &handle);
-	if (rc < 0) {
-		return rgw2fsal_error(rc);
-	}
+	(void) construct_handle(export, rgw_fh, &st, &handle);
 
 	*pub_handle = &handle->handle;
 

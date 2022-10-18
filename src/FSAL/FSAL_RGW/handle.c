@@ -104,10 +104,7 @@ static fsal_status_t lookup_int(struct fsal_obj_handle *dir_hdl,
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
-	rc = construct_handle(export, rgw_fh, &st, &obj);
-	if (rc < 0) {
-		return rgw2fsal_error(rc);
-	}
+	(void) construct_handle(export, rgw_fh, &st, &obj);
 
 	*obj_hdl = &obj->handle;
 
@@ -355,10 +352,7 @@ static fsal_status_t rgw_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
-	rc = construct_handle(export, rgw_fh, &st, &obj);
-	if (rc < 0) {
-		return rgw2fsal_error(rc);
-	}
+	(void) construct_handle(export, rgw_fh, &st, &obj);
 
 	*obj_hdl = &obj->handle;
 
@@ -1072,7 +1066,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	created = (posix_flags & O_EXCL) != 0;
 	*caller_perm_check = false;
 
-	construct_handle(export, rgw_fh, &st, &obj);
+	(void) construct_handle(export, rgw_fh, &st, &obj);
 
 	/* Check if the opened file is not a regular file. */
 	if (posix2fsal_type(st.st_mode) == DIRECTORY) {
