@@ -112,15 +112,26 @@ struct rgw_open_state {
  * Currently FSAL_RGW uses posix2fsal_attributes, so we should indicate support
  * for at least those attributes.
  */
+#ifdef USE_FSAL_RGW_XATTRS
 #define RGW_SUPPORTED_ATTRIBUTES ((ATTRS_POSIX | ATTR4_XATTR))
+#else
+#define RGW_SUPPORTED_ATTRIBUTES (ATTRS_POSIX)
+#endif
 
 /**
  * The attributes this FSAL can set.
  */
+#ifdef USE_FSAL_RGW_XATTRS
 #define RGW_SETTABLE_ATTRIBUTES ((const attrmask_t) (			\
 	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |\
 	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |\
 	ATTR_ATIME_SERVER | ATTR4_XATTR))
+#else
+#define RGW_SETTABLE_ATTRIBUTES ((const attrmask_t) (			\
+	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |\
+	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |\
+	ATTR_ATIME_SERVER))
+#endif
 
 /**
  * Linux supports a stripe pattern with no more than 4096 stripes, but

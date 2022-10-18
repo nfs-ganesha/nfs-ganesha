@@ -1661,6 +1661,12 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 #ifdef USE_FSAL_RGW_XATTRS
 
+/** @todo - the code below has some serious problems with dereferencing NULL
+ *          pointers. The CMake capability detection has been "nerfed" so this
+ *          code will never be enabled...
+ *
+ */
+
 static int getxattr_cb(rgw_xattrlist *attrs, void *arg, uint32_t flags)
 {
 	xattrvalue4 *cb_arg = (xattrvalue4 *)arg;
@@ -1697,6 +1703,7 @@ static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
 	struct rgw_handle *handle =
 		container_of(obj_hdl, struct rgw_handle, handle);
 
+	/** @todo - deref of NULL pointer set above! */
 	attrs.xattrs->key.val =
 		xa_name->utf8string_val;
 	attrs.xattrs->key.len = xa_name->utf8string_len;
@@ -1762,6 +1769,7 @@ static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
 	struct rgw_handle *handle = container_of(obj_hdl, struct rgw_handle,
 						 handle);
 
+	/** @todo - deref of NULL pointer set above! */
 	attrs.xattrs->key.val =
 		xa_name->utf8string_val;
 	attrs.xattrs->key.len = xa_name->utf8string_len;
@@ -1812,6 +1820,7 @@ static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
 		container_of(obj_hdl, struct rgw_handle, handle);
 
 	attrs.xattr_cnt = 1;
+	/** @todo - deref of NULL pointer set above! */
 	attrs.xattrs->key.val =
 		xa_name->utf8string_val;
 	attrs.xattrs->key.len = xa_name->utf8string_len;
