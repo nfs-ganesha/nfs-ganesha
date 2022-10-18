@@ -344,12 +344,23 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 		/* return--caller will release */
 		*f = stream;
 		*fbuf = streambuf;
+		stream = NULL;
+		streambuf = NULL;
 	}
 
 err:
 	rados_ioctx_destroy(io_ctx);
 
 out:
+
+	if (stream)
+		(void) fclose(stream);
+
+	if (streambuf) {
+		/* Was allocated via open_memstream so use free NOT gsh_free. */
+		free(streambuf);
+	}
+
 	/* allocated or NULL */
 	gsh_free(pool_name);
 	gsh_free(rados_ns);
