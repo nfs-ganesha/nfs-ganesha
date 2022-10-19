@@ -66,6 +66,8 @@ struct nfs3_readdirplus_cb_data {
 	uint8_t *entries;	/*< The array holding serialized entries */
 	size_t mem_avail;	/*< The amount of memory available before we
 				   hit maxcount */
+	int count;		/*< Number of entries accumulated so far. */
+	uint32_t max_count;	/*< Maximum number of entries allowed. */
 	nfsstat3 error;		/*< Set to a value other than NFS_OK if the
 				   callback function finds a fatal error. */
 };
@@ -112,6 +114,7 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	uint64_t fsal_cookie = 0;
 	uint32_t maxcount;
 	uint32_t cfg_readdir_size = nfs_param.core_param.readdir_res_size;
+	uint32_t cfg_readdir_count = nfs_param.core_param.readdir_max_count;
 	cookieverf3 cookie_verifier;
 	unsigned int num_entries = 0;
 	uint64_t mem_avail = 0;
@@ -157,27 +160,35 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 *		struct fattr3_wire attributes
 	 *	cookieverf3 cookieverf (8 or sizeof(cookieverf3))
 	 */
-	if (cfg_readdir_size != 0 &&
-	    cfg_readdir_size < arg->arg_readdirplus3.maxcount) {
+	if (cfg_readdir_size < arg->arg_readdirplus3.maxcount)
 		maxcount = cfg_readdir_size;
-	} else {
+	else
 		maxcount = arg->arg_readdirplus3.maxcount;
-	}
+
 	mem_avail = maxcount
 				- BYTES_PER_XDR_UNIT
 				- BYTES_PER_XDR_UNIT
 				- sizeof(struct fattr3_wire)
 				- sizeof(cookieverf3);
+
 	max_mem = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
 	tracker.mem_avail = MIN(mem_avail, max_mem);
+
+	/* Use the dircount from the request as the max number of entries if
+	 * lower than the configured max.
+	 */
+	if (arg->arg_readdirplus3.dircount < cfg_readdir_count)
+		tracker.max_count = arg->arg_readdirplus3.dircount;
+	else
+		tracker.max_count = cfg_readdir_count;
 
 	begin_cookie = arg->arg_readdirplus3.cookie;
 
 	LogDebug(COMPONENT_NFS_READDIR,
 		 "NFS3_READDIRPLUS: dircount=%u begin_cookie=%" PRIu64
-		 " mem_avail=%zd",
+		 " mem_avail=%zd max_count = %"PRIi32,
 		 arg->arg_readdirplus3.dircount, begin_cookie,
-		 tracker.mem_avail);
+		 tracker.mem_avail, tracker.max_count);
 
 	/* Convert file handle into a vnode */
 	dir_obj = nfs3_FhandleToCache(&(arg->arg_readdirplus3.dir),
@@ -494,8 +505,11 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 	 * xdr_encode_entryplus3 that uses a passed in struct fsal_attrlist
 	 * rather than name_attributes from entryplus3, though we will use the
 	 * boolean attributes_follow from the entryplus3.
+	 *
+	 * Before doing that though, check if the enty fits based on max_count.
 	 */
-	if (!xdr_encode_entryplus3(&tracker->xdr, &ep3, attr) ||
+	if (tracker->count >= tracker->max_count ||
+	    !xdr_encode_entryplus3(&tracker->xdr, &ep3, attr) ||
 	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT)
 	    >= tracker->mem_avail) {
 		bool_t res_false = false;
@@ -517,6 +531,7 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 	} else {
 		/* The entry fit, let the caller know it fit */
 		cb_parms->in_result = true;
+		tracker->count++;
 	}
 
 	/* Now we are done with anything allocated */

@@ -65,6 +65,8 @@ struct nfs3_readdir_cb_data {
 	uint8_t *entries;          /*< The array holding serialized entries */
 	size_t mem_avail;       /*< The amount of memory available before we
 				   hit maxcount */
+	int count;		/*< Number of entries accumulated so far. */
+	uint32_t max_count;	/*< Maximum number of entries allowed. */
 	nfsstat3 error;		/*< Set to a value other than NFS_OK if the
 				   callback function finds a fatal error. */
 };
@@ -116,6 +118,9 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	uint64_t fsal_cookie = 0;
 	cookieverf3 cookie_verifier;
 	unsigned int num_entries = 0;
+	uint32_t maxcount;
+	uint32_t cfg_readdir_size = nfs_param.core_param.readdir_res_size;
+	uint32_t cfg_readdir_count = nfs_param.core_param.readdir_max_count;
 	uint64_t mem_avail = 0;
 	uint64_t max_mem = 0;
 	object_file_type_t dir_filetype = 0;
@@ -172,18 +177,33 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 *		struct fattr3_wire attributes
 	 *	cookieverf3 cookieverf (8 or sizeof(cookieverf3))
 	 */
-	mem_avail = arg->arg_readdir3.count
+	if (cfg_readdir_size < arg->arg_readdir3.count)
+		maxcount = cfg_readdir_size;
+	else
+		maxcount = arg->arg_readdir3.count;
+
+	mem_avail = maxcount
 			- BYTES_PER_XDR_UNIT
 			- BYTES_PER_XDR_UNIT
 			- sizeof(struct fattr3_wire)
 			- sizeof(cookieverf3);
+
 	max_mem = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
 	tracker.mem_avail = MIN(mem_avail, max_mem);
 
+	/* Divide count by 8 to get a rough max number of entries per response
+	 * or use the configured number if lower.
+	 */
+	if (arg->arg_readdir3.count >> 3 < cfg_readdir_count)
+		tracker.max_count = arg->arg_readdir3.count >> 3;
+	else
+		tracker.max_count = cfg_readdir_count;
+
 	LogDebug(COMPONENT_NFS_READDIR,
 		 "---> NFS3_READDIR: count=%u  cookie=%" PRIu64
-		 " mem_avail=%zd",
-		 arg->arg_readdir3.count, cookie, tracker.mem_avail);
+		 " mem_avail=%zd max_count =%"PRIu32,
+		 arg->arg_readdir3.count, cookie, tracker.mem_avail,
+		 tracker.max_count);
 
 	/* To make or check the cookie verifier */
 	memset(cookie_verifier, 0, sizeof(cookie_verifier));
@@ -427,8 +447,11 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
 	/* Encode the entry into the xdrmem buffer and then assure there is
 	 * space for at least two booleans (one to be false to terminate the
 	 * entry list, the other to encode EOD or not).
+	 *
+	 * Before doing that though, check if the enty fits based on max_count.
 	 */
-	if (!xdr_encode_entry3(&tracker->xdr, &e3) ||
+	if (tracker->count >= tracker->max_count ||
+	    !xdr_encode_entry3(&tracker->xdr, &e3) ||
 	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT)
 	    >= tracker->mem_avail) {
 		bool_t res_false = false;
@@ -450,6 +473,7 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
 	} else {
 		/* The entry fit, let the caller know it fit */
 		cb_parms->in_result = true;
+		tracker->count++;
 	}
 
 	return ERR_FSAL_NO_ERROR;

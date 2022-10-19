@@ -157,7 +157,9 @@ NFS_CORE_PARAM {}
 
 	Enable_V3fh_Validation_For_V4(bool, default false)
 
-	Readdir_Res_Size(uint32, range 4096 to 32768, default 0)
+	Readdir_Res_Size(uint32, range 4096 to 64*1024*1024, default 64*1024*1024)
+
+	Readdir_Max_Count(uint32, range 32 to 1024*1024, default 1024*1024)
 
 	Getattrs_In_Complete_Read(bool, default true)
 
