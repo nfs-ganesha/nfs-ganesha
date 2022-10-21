@@ -67,11 +67,12 @@ pthread_rwlock_t export_opt_lock = PTHREAD_RWLOCK_INITIALIZER;
 	.def.anonymous_uid = ANON_UID,				\
 	.def.anonymous_gid = ANON_GID,				\
 	.def.expire_time_attr = EXPORT_DEFAULT_CACHE_EXPIRY,	\
-	/* Note: Access_Type defaults to None on purpose */	\
+	/* Note: Access_Type defaults to None on purpose     */	\
+	/*       And no PROTO is included - that is filled   */	\
+	/*       from nfs_param.core_param.core_options.     */ \
 	.def.options = EXPORT_OPTION_ROOT_SQUASH |		\
 		       EXPORT_OPTION_NO_ACCESS |		\
 		       EXPORT_OPTION_AUTH_DEFAULTS |		\
-		       EXPORT_OPTION_PROTO_DEFAULTS |		\
 		       EXPORT_OPTION_XPORT_DEFAULTS |		\
 		       EXPORT_OPTION_NO_DELEGATIONS,		\
 	.def.set = UINT32_MAX
@@ -669,14 +670,35 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 	int errcnt = 0;
 
 	export = container_of(link_mem, struct gsh_export, clients);
+
 	cli = self_struct;
+
 	assert(cli->type == PROTO_CLIENT);
+
 	if (glist_empty(&cli->cle_list)) {
 		LogCrit(COMPONENT_CONFIG,
 			"No clients specified");
 		err_type->invalid = true;
 		errcnt++;
 	} else {
+		uint32_t cl_perm_opt, def_opt;
+
+		cl_perm_opt = cli->client_perms.options;
+		def_opt = export_opt.def.options;
+
+		if ((cl_perm_opt & def_opt & EXPORT_OPTION_PROTOCOLS) !=
+		    (cl_perm_opt & EXPORT_OPTION_PROTOCOLS)) {
+			/* There is a protocol bit set in the options that was
+			 * not set by the core param Protocols.
+			 */
+			LogWarn(COMPONENT_CONFIG,
+				"A protocol is specified for a CLIENT block that is not enabled in NFS_CORE_PARAM, fixing up");
+
+			cli->client_perms.options =
+			    (cl_perm_opt & ~EXPORT_OPTION_PROTOCOLS) |
+			    (cl_perm_opt & def_opt & EXPORT_OPTION_PROTOCOLS);
+		}
+
 		glist_splice_tail(&export->clients, &cli->cle_list);
 	}
 	if (errcnt == 0)
@@ -1090,9 +1112,83 @@ static inline void copy_gsh_export(struct gsh_export *dest,
 	PTHREAD_RWLOCK_unlock(&dest->lock);
 }
 
+uint32_t export_check_options(struct gsh_export *exp)
+{
+	struct export_perms perms;
+
+	memset(&perms, 0, sizeof(perms));
+
+	/* Take lock */
+	PTHREAD_RWLOCK_rdlock(&exp->lock);
+
+	/* Start with options set for the export */
+	perms.options = exp->export_perms.options & exp->export_perms.set;
+
+	perms.set = exp->export_perms.set;
+
+	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
+
+	/* Any options not set by the export, take from the EXPORT_DEFAULTS
+	 * block.
+	 */
+	perms.options |= export_opt.conf.options & export_opt.conf.set &
+								~perms.set;
+
+	perms.set |= export_opt.conf.set;
+
+	/* And finally take any options not yet set from global defaults */
+	perms.options |= export_opt.def.options & ~perms.set;
+
+	perms.set |= export_opt.def.set;
+
+	if (isMidDebug(COMPONENT_EXPORT)) {
+		char str[1024] = "\0";
+		struct display_buffer dspbuf = {sizeof(str), str, str};
+
+		(void) StrExportOptions(&dspbuf, &exp->export_perms);
+
+		LogMidDebug(COMPONENT_EXPORT,
+			    "EXPORT          (%s)",
+			    str);
+
+		display_reset_buffer(&dspbuf);
+
+		(void) StrExportOptions(&dspbuf, &export_opt.conf);
+
+		LogMidDebug(COMPONENT_EXPORT,
+			    "EXPORT_DEFAULTS (%s)",
+			    str);
+
+		display_reset_buffer(&dspbuf);
+
+		(void) StrExportOptions(&dspbuf, &export_opt.def);
+
+		LogMidDebug(COMPONENT_EXPORT,
+			    "default options (%s)",
+			    str);
+
+		display_reset_buffer(&dspbuf);
+
+		(void) StrExportOptions(&dspbuf, &perms);
+
+		LogMidDebug(COMPONENT_EXPORT,
+			    "Final options   (%s)",
+			    str);
+	}
+
+	PTHREAD_RWLOCK_unlock(&export_opt_lock);
+
+	/* Release lock */
+	PTHREAD_RWLOCK_unlock(&exp->lock);
+
+	return perms.options;
+}
+
 static inline bool export_can_be_mounted(struct gsh_export *export)
 {
-	return (export->export_perms.options & EXPORT_OPTION_NFSV4) != 0
+	uint32_t options = export_check_options(export);
+
+	return (options & EXPORT_OPTION_NFSV4) != 0
 	       && export->cfg_pseudopath != NULL
 	       && export->export_id != 0
 	       && export->cfg_pseudopath[1] != '\0';
@@ -1119,26 +1215,89 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	int errcnt = 0;
 	char perms[1024] = "\0";
 	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
+	uint32_t options = export_check_options(export);
 
 	LogFullDebug(COMPONENT_EXPORT, "Processing %p", export);
 
+	/* Validate the pseudo path if present is an absolute path. */
+	if (export->cfg_pseudopath != NULL &&
+	    export->cfg_pseudopath[0] != '/') {
+		LogCrit(COMPONENT_CONFIG,
+			"A Pseudo path must be an absolute path");
+		err_type->invalid = true;
+		errcnt++;
+		return errcnt;
+	}
+
+	/* Validate, if export_id 0 is explicitly configured, the pseudopath
+	 * MUST be "/".
+	 */
+	if (export->export_id == 0 &&
+	    export->cfg_pseudopath != NULL &&
+	    export->cfg_pseudopath[1] != '\0') {
+		LogCrit(COMPONENT_CONFIG,
+			"Export id 0 can only export \"/\" not (%s)",
+			export->cfg_pseudopath);
+		err_type->invalid = true;
+		errcnt++;
+		return errcnt;
+	}
+
 	/* validate the export now */
-	if (export->export_perms.options & EXPORT_OPTION_NFSV4) {
-		if (export->cfg_pseudopath == NULL) {
-			LogCrit(COMPONENT_CONFIG,
-				"Exporting to NFSv4 but no Pseudo path defined");
-			err_type->invalid = true;
-			errcnt++;
-			return errcnt;
-		} else if (export->export_id == 0 &&
-			   strcmp(export->cfg_pseudopath, "/") != 0) {
-			LogCrit(COMPONENT_CONFIG,
-				"Export id 0 can only export \"/\" not (%s)",
-				export->cfg_pseudopath);
-			err_type->invalid = true;
-			errcnt++;
-			return errcnt;
-		}
+	if ((export->export_perms.options & EXPORT_OPTION_NFSV4) != 0 &&
+	    (export->export_perms.set & EXPORT_OPTION_NFSV4) != 0 &&
+	    export->cfg_pseudopath == NULL) {
+		/* This is only an error if the export is explicitly
+		 * exported NFSv4.
+		 */
+		LogCrit(COMPONENT_CONFIG,
+			"Export %d would be exported NFSv4 explicitly but no Pseudo path defined",
+			export->export_id);
+		err_type->invalid = true;
+		errcnt++;
+		return errcnt;
+	} else if ((options & EXPORT_OPTION_NFSV4) != 0 &&
+		   export->cfg_pseudopath == NULL) {
+		/* This is an export without a pseudopath when the default
+		 * options indicate all exports are to be exported NFSv4.
+		 */
+		LogWarn(COMPONENT_CONFIG,
+			"Export %d would be exported NFSv4 by default but no Pseudo path defined",
+			export->export_id);
+
+		export->export_perms.options =
+		    (export->export_perms.options & ~EXPORT_OPTION_PROTOCOLS) |
+		    (options & EXPORT_OPTION_PROTOCOLS & ~EXPORT_OPTION_NFSV4);
+
+		export->export_perms.set |= EXPORT_OPTION_PROTOCOLS;
+	}
+
+	/* Validate if export_id 0 is explicitly configured that it WILL be
+	 * exported NFSv4, even if due to defaults.
+	 */
+	if (export->export_id == 0 && (options & EXPORT_OPTION_NFSV4) == 0) {
+		LogCrit(COMPONENT_CONFIG,
+			"Export id 0 MUST be exported at least NFSv4");
+		err_type->invalid = true;
+		errcnt++;
+		return errcnt;
+	}
+
+	if ((export->export_perms.options & export_opt.def.options &
+	     export->export_perms.set & EXPORT_OPTION_PROTOCOLS) !=
+	    (export->export_perms.options & export->export_perms.set &
+						EXPORT_OPTION_PROTOCOLS)) {
+		/* There is a protocol bit set in the options that was not
+		 * set by the core param Protocols.
+		 */
+		LogWarn(COMPONENT_CONFIG,
+			"A protocol is specified for export %d that is not enabled in NFS_CORE_PARAM, fixing up",
+			export->export_id);
+
+		export->export_perms.options =
+		    (export->export_perms.options & ~EXPORT_OPTION_PROTOCOLS) |
+		    (export->export_perms.options & export_opt.def.options &
+						EXPORT_OPTION_PROTOCOLS);
 	}
 
 	/* If we are using mount_path_pseudo = true we MUST have a Pseudo Path.
@@ -1152,13 +1311,6 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		return errcnt;
 	}
 
-	if (export->cfg_pseudopath != NULL &&
-	    export->cfg_pseudopath[0] != '/') {
-		LogCrit(COMPONENT_CONFIG,
-			"A Pseudo path must be an absolute path");
-		err_type->invalid = true;
-		errcnt++;
-	}
 	if (export->export_id == 0) {
 		if (export->cfg_pseudopath == NULL) {
 			LogCrit(COMPONENT_CONFIG,
@@ -1171,14 +1323,15 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			err_type->invalid = true;
 			errcnt++;
 		}
-		if ((export->export_perms.options &
-		     EXPORT_OPTION_PROTOCOLS) != EXPORT_OPTION_NFSV4) {
+		if ((export->export_perms.options & export->export_perms.set &
+		     EXPORT_OPTION_NFSV4) != EXPORT_OPTION_NFSV4) {
 			LogCrit(COMPONENT_CONFIG,
 				"Export id 0 must include 4 in Protocols");
 			err_type->invalid = true;
 			errcnt++;
 		}
 	}
+
 	if (errcnt)
 		return errcnt;  /* have basic errors. don't even try more... */
 
@@ -1191,7 +1344,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 
 	if (commit_type == update_export && probe_exp != NULL) {
 		bool mount_export = false;
-		bool unmount_export = false;
+		bool mount_status_changed = false;
 
 		/* We have an actual update case, probe_exp is the target
 		 * to update. Check all the options that MUST match.
@@ -1233,7 +1386,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 				export->export_id,
 				export->cfg_pseudopath,
 				probe_exp->cfg_pseudopath);
-			unmount_export |= export_can_be_mounted(probe_exp);
+			mount_status_changed |= true;
 			mount_export |= export_can_be_mounted(export);
 		}
 
@@ -1280,19 +1433,23 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			return errcnt;
 		}
 
-		if ((export->export_perms.options & EXPORT_OPTION_NFSV4) !=
-		    (probe_exp->export_perms.options & EXPORT_OPTION_NFSV4)) {
+		if (((options & EXPORT_OPTION_NFSV4) == EXPORT_OPTION_NFSV4) !=
+		    probe_exp->is_mounted) {
+			/* The new options for NFSv4 probably don't match the
+			 * old options.
+			 */
+			bool mountable = export_can_be_mounted(export);
+
 			LogDebug(COMPONENT_EXPORT,
 				 "Export %d NFSv4 changing from %s to %s",
 				 probe_exp->export_id,
-				 (probe_exp->export_perms.options &
-					EXPORT_OPTION_NFSV4) != 0
-					? "enabled" : "disabled",
-				 (export->export_perms.options &
-					EXPORT_OPTION_NFSV4) != 0
-					? "enabled" : "disabled");
-			unmount_export |= export_can_be_mounted(probe_exp);
-			mount_export |= export_can_be_mounted(export);
+				 probe_exp->is_mounted
+					? "mounted" : "not mounted",
+				 mountable
+					? "can be mounted"
+					: "can not be mounted");
+			mount_status_changed |= true;
+			mount_export |= mountable;
 		}
 
 		if (mount_export) {
@@ -1302,7 +1459,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			probe_exp->update_remount = true;
 		}
 
-		if (unmount_export) {
+		if (mount_status_changed && export->is_mounted) {
 			/* Mark this export to be unmounted during the prune
 			 * phase, it will also be added to the remount work if
 			 * appropriate.
@@ -1463,7 +1620,8 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	 * is not a dynamically added export.
 	 */
 	if (commit_type == initial_export &&
-	    export->export_perms.options & EXPORT_OPTION_NFSV4)
+	    export->export_perms.options & export->export_perms.set &
+							EXPORT_OPTION_NFSV4)
 		export_add_to_mount_work(export);
 
 	LogMidDebug_Clients(export);
@@ -1757,6 +1915,7 @@ struct config_item_list deleg_types[] =  {
 		EXPORT_OPTION_NO_ACCESS,				\
 		EXPORT_OPTION_ACCESS_MASK,				\
 		access_types, _struct_, _perms_.options, _perms_.set),	\
+	/* Note: Protocols will now pick up from NFS Core Param */	\
 	CONF_ITEM_LIST_BITS_SET("Protocols",				\
 		EXPORT_OPTION_PROTO_DEFAULTS, EXPORT_OPTION_PROTOCOLS,	\
 		nfs_protocols, _struct_, _perms_.options, _perms_.set),	\
@@ -2232,11 +2391,26 @@ void log_all_exports(log_levels_t level, int line, const char *func)
  * @return A negative value on error,
  *         the number of export entries else.
  */
+#define NFS_options nfs_param.core_param.core_options
 
 int ReadExports(config_file_t in_config,
 		struct config_error_type *err_type)
 {
 	int rc, num_exp;
+
+	LogMidDebug(COMPONENT_EXPORT,
+		    "CORE_OPTION_NFSV3 %d CORE_OPTION_NFSV4 %d CORE_OPTION_9P %d",
+		    (NFS_options & CORE_OPTION_NFSV3) != 0,
+		    (NFS_options & CORE_OPTION_NFSV4) != 0,
+		    (NFS_options & CORE_OPTION_9P) != 0);
+
+	/* Set Protocols in export_opt.def.options from nfs_core_param. */
+	if (NFS_options & CORE_OPTION_NFSV3)
+		export_opt_cfg.def.options |= EXPORT_OPTION_NFSV3;
+	if (NFS_options & CORE_OPTION_NFSV4)
+		export_opt_cfg.def.options |= EXPORT_OPTION_NFSV4;
+	if (NFS_options & CORE_OPTION_9P)
+		export_opt_cfg.def.options |= EXPORT_OPTION_9P;
 
 	rc = load_config_from_parse(in_config,
 				    &export_defaults_param,
@@ -2246,6 +2420,23 @@ int ReadExports(config_file_t in_config,
 	if (rc < 0) {
 		LogCrit(COMPONENT_CONFIG, "Export defaults block error");
 		return -1;
+	}
+
+	if (isMidDebug(COMPONENT_EXPORT)) {
+		char perms[1024] = "\0";
+		struct display_buffer dspbuf = {sizeof(perms), perms, perms};
+
+		(void) StrExportOptions(&dspbuf, &export_opt.conf);
+		LogMidDebug(COMPONENT_EXPORT,
+			    "EXPORT_DEFAULTS (%s)",
+			    perms);
+		display_reset_buffer(&dspbuf);
+
+		(void) StrExportOptions(&dspbuf, &export_opt.def);
+		LogMidDebug(COMPONENT_EXPORT,
+			    "default options (%s)",
+			    perms);
+		display_reset_buffer(&dspbuf);
 	}
 
 	num_exp = load_config_from_parse(in_config,

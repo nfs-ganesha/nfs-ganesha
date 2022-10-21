@@ -30,7 +30,7 @@ Access_Type(enum, default None)
     Possible values:
         None, RW, RO, MDONLY, MDONLY_RO
 
-Protocols(enum list, default [3,4])
+Protocols(enum list, default none)
     Possible values:
         3, 4, NFS3, NFS4, V3, V4, NFSv3, NFSv4, 9P
 

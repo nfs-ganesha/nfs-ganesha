@@ -213,12 +213,14 @@ struct gsh_export {
 
 	uint8_t export_status;		/*< current condition */
 	bool has_pnfs_ds;		/*< id_servers matches export_id */
-	/* Due to an update, during the prune phase, this export must be
-	 * unmounted. It will then be added to the mount work done during the
-	 * remount phase. This flag WILL be cleared during prune.
+	/** Inidcator if the export is mounted in the pseudofs */
+	bool is_mounted;
+	/** Due to an update, during the prune phase, this export must be
+	 *  unmounted. It will then be added to the mount work done during the
+	 *  remount phase. This flag WILL be cleared during prune.
 	 */
 	bool update_prune_unmount;
-	/* Due to an update, this export will need to be remounted. */
+	/** Due to an update, this export will need to be remounted. */
 	bool update_remount;
 };
 

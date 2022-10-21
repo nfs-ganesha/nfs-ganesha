@@ -495,6 +495,9 @@ bool pseudo_mount_export(struct gsh_export *export)
 
 	PTHREAD_RWLOCK_unlock(&export->lock);
 
+	/* Set this outside the export->lock, protected by EXPORT_ADMIN_LOCK */
+	export->is_mounted = true;
+
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s junction %p",
 		 export->export_id,
@@ -574,7 +577,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 		assert(junction_inode == NULL && mounted_on_export == NULL);
 
 		LogDebug(COMPONENT_EXPORT,
-			 "Unmount of export %d unnecessary it should be pseudo root",
+			 "Unmount of export %d unnecessary",
 			 export->export_id);
 
 		PTHREAD_RWLOCK_unlock(&export->lock);
@@ -626,6 +629,10 @@ void pseudo_unmount_export(struct gsh_export *export)
 
 	/* Release the export lock */
 	PTHREAD_RWLOCK_unlock(&export->lock);
+
+	/* Clear this outside the export->lock, protected by EXPORT_ADMIN_LOCK
+	 */
+	export->is_mounted = false;
 
 	if (is_export_pseudo(mounted_on_export) && junction_inode != NULL) {
 		char *pseudo_path = gsh_strdup(ref_pseudopath->gr_val);
