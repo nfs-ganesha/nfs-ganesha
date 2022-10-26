@@ -549,7 +549,7 @@ static fattr_xdr_result encode_linksupport(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	int linksupport = FALSE;
+	bool_t linksupport = FALSE;
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
@@ -575,7 +575,7 @@ static fattr_xdr_result encode_symlinksupport(XDR *xdr,
 					      struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	int symlinksupport = FALSE;
+	bool_t symlinksupport = FALSE;
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
@@ -603,7 +603,7 @@ static fattr_xdr_result encode_namedattrsupport(XDR *xdr,
 						struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	int namedattrsupport = FALSE;
+	bool_t namedattrsupport = FALSE;
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
@@ -668,7 +668,7 @@ static fattr_xdr_result encode_uniquehandles(XDR *xdr,
 					     struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	int uniquehandles = FALSE;
+	bool_t uniquehandles = FALSE;
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
@@ -965,7 +965,7 @@ static fattr_xdr_result encode_cansettime(XDR *xdr,
 					  struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t cansettime = FALSE;
+	bool_t cansettime = FALSE;
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
@@ -992,7 +992,7 @@ static fattr_xdr_result encode_case_insensitive(XDR *xdr,
 						struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t caseinsensitive = FALSE;
+	bool_t caseinsensitive = FALSE;
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
@@ -1019,7 +1019,7 @@ static fattr_xdr_result encode_case_preserving(XDR *xdr,
 					       struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t casepreserving = FALSE;
+	bool_t casepreserving = FALSE;
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
@@ -1046,7 +1046,7 @@ static fattr_xdr_result encode_chown_restricted(XDR *xdr,
 						struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t chownrestricted = FALSE;
+	bool_t chownrestricted = FALSE;
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
@@ -1380,7 +1380,7 @@ static fattr_xdr_result decode_fs_locations(XDR *xdr,
 
 static fattr_xdr_result encode_hidden(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint32_t hidden = FALSE;
+	bool_t hidden = FALSE;
 
 	if (!inline_xdr_bool(xdr, &hidden))
 		return FATTR_XDR_FAILED;
@@ -1403,7 +1403,7 @@ static fattr_xdr_result encode_homogeneous(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t homogeneous = FALSE;
+	bool_t homogeneous = FALSE;
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
@@ -1552,7 +1552,7 @@ static fattr_xdr_result decode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_mimetype(XDR *xdr, struct xdr_attrs_args *args)
 {
-	int mimetype = FALSE;
+	bool_t mimetype = FALSE;
 
 	if (!inline_xdr_bool(xdr, &mimetype))
 		return FATTR_XDR_FAILED;
@@ -1594,7 +1594,7 @@ static fattr_xdr_result decode_mode(XDR *xdr, struct xdr_attrs_args *args)
 static fattr_xdr_result encode_no_trunc(XDR *xdr, struct xdr_attrs_args *args)
 {
 	struct fsal_export *export;
-	uint32_t no_trunc = FALSE;
+	bool_t no_trunc = FALSE;
 
 	if (args->data != NULL) {
 		export = op_ctx->fsal_export;
@@ -1925,7 +1925,7 @@ static fattr_xdr_result decode_spaceused(XDR *xdr, struct xdr_attrs_args *args)
 
 static fattr_xdr_result encode_system(XDR *xdr, struct xdr_attrs_args *args)
 {
-	uint32_t system = FALSE;
+	bool_t system = FALSE;
 
 	if (!inline_xdr_bool(xdr, &system))
 		return FATTR_XDR_FAILED;
@@ -2583,7 +2583,7 @@ static fattr_xdr_result encdec_sec_label(XDR *xdr,
 static fattr_xdr_result encode_xattr_support(XDR *xdr,
 					     struct xdr_attrs_args *args)
 {
-	int xattr_support = FALSE;
+	bool_t xattr_support = FALSE;
 
 	if (args->data != NULL) {
 		struct fsal_export *exp = op_ctx->fsal_export;

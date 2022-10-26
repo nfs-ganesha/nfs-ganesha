@@ -44,7 +44,7 @@
  */
 struct nfs4_readdir_cb_data {
 	XDR xdr;	/*< The xdrmem to serialize the entries */
-	char *entries;	/*< The array holding individual entries */
+	uint8_t *entries;	/*< The array holding individual entries */
 	size_t mem_avail;	/*< The amount of memory remaining before we
 				   hit maxcount */
 	bool has_entries;	/*< Track if at least one entry fit  */
@@ -628,7 +628,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	tracker.req_attr = &arg_READDIR4->attr_request;
 	tracker.data = data;
 
-	xdrmem_create(&tracker.xdr, tracker.entries, tracker.mem_avail,
+	xdrmem_create(&tracker.xdr, (char *)tracker.entries, tracker.mem_avail,
 		      XDR_ENCODE);
 
 	/* Assume we need at least the NFS v3 attr.

@@ -62,7 +62,7 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
 
 struct nfs3_readdir_cb_data {
 	XDR xdr;                /*< The xdrmem to serialize the entries */
-	char *entries;          /*< The array holding serialized entries */
+	uint8_t *entries;          /*< The array holding serialized entries */
 	size_t mem_avail;       /*< The amount of memory available before we
 				   hit maxcount */
 	nfsstat3 error;		/*< Set to a value other than NFS_OK if the
@@ -229,7 +229,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	tracker.entries = gsh_malloc(tracker.mem_avail);
-	xdrmem_create(&tracker.xdr, tracker.entries, tracker.mem_avail,
+	xdrmem_create(&tracker.xdr, (char *)tracker.entries, tracker.mem_avail,
 		      XDR_ENCODE);
 	tracker.error = NFS3_OK;
 

@@ -10,9 +10,7 @@
 #include "nfs23.h"
 #include "nfs_fh.h"
 
-bool xdr_mountstat3(xdrs, objp)
-register XDR *xdrs;
-mountstat3 *objp;
+bool xdr_mountstat3(XDR *xdrs, mountstat3 *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -26,9 +24,7 @@ mountstat3 *objp;
 	return (true);
 }
 
-bool xdr_fhandle3(xdrs, objp)
-register XDR *xdrs;
-fhandle3 *objp;
+bool xdr_fhandle3(XDR *xdrs, fhandle3 *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -44,9 +40,7 @@ fhandle3 *objp;
 	return (true);
 }
 
-bool xdr_dirpath(xdrs, objp)
-register XDR *xdrs;
-mnt3_dirpath *objp;
+bool xdr_dirpath(XDR *xdrs, mnt3_dirpath *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -60,9 +54,7 @@ mnt3_dirpath *objp;
 	return (true);
 }
 
-bool xdr_name(xdrs, objp)
-register XDR *xdrs;
-mnt3_name *objp;
+bool xdr_name(XDR *xdrs, mnt3_name *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -76,9 +68,7 @@ mnt3_name *objp;
 	return (true);
 }
 
-bool xdr_groups(xdrs, objp)
-register XDR *xdrs;
-mnt3_groups *objp;
+bool xdr_groups(XDR *xdrs, mnt3_groups *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -93,9 +83,7 @@ mnt3_groups *objp;
 	return (true);
 }
 
-bool xdr_groupnode(xdrs, objp)
-register XDR *xdrs;
-groupnode *objp;
+bool xdr_groupnode(XDR *xdrs, groupnode *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -111,9 +99,7 @@ groupnode *objp;
 	return (true);
 }
 
-bool xdr_exports(xdrs, objp)
-register XDR *xdrs;
-mnt3_exports *objp;
+bool xdr_exports(XDR *xdrs, mnt3_exports *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -128,9 +114,7 @@ mnt3_exports *objp;
 	return (true);
 }
 
-bool xdr_exportnode(xdrs, objp)
-register XDR *xdrs;
-exportnode *objp;
+bool xdr_exportnode(XDR *xdrs, exportnode *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -148,9 +132,7 @@ exportnode *objp;
 	return (true);
 }
 
-bool xdr_mountlist(xdrs, objp)
-register XDR *xdrs;
-mountlist *objp;
+bool xdr_mountlist(XDR *xdrs, mountlist *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -165,9 +147,7 @@ mountlist *objp;
 	return (true);
 }
 
-bool xdr_mountbody(xdrs, objp)
-register XDR *xdrs;
-mountbody *objp;
+bool xdr_mountbody(XDR *xdrs, mountbody *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -185,9 +165,7 @@ mountbody *objp;
 	return (true);
 }
 
-bool xdr_mountres3_ok(xdrs, objp)
-register XDR *xdrs;
-mountres3_ok *objp;
+bool xdr_mountres3_ok(XDR *xdrs, mountres3_ok *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
@@ -206,9 +184,7 @@ mountres3_ok *objp;
 	return (true);
 }
 
-bool xdr_mountres3(xdrs, objp)
-register XDR *xdrs;
-mountres3 *objp;
+bool xdr_mountres3(XDR *xdrs, mountres3 *objp)
 {
 
 #if defined(_LP64) || defined(_KERNEL)
