@@ -59,7 +59,7 @@ struct proxyv3_fsal_module PROXY_V3 = {
 			.unique_handles = true,
 			.acl_support = FSAL_ACLSUPPORT_ALLOW,
 			.homogenous = true,
-			.supported_attrs = ((const attrmask_t) ATTRS_NFS3),
+			.supported_attrs = ((const attrmask_t) ATTRS_POSIX),
 			.link_supports_permission_checks = true,
 			.readdir_plus = true,
 			.expire_time_parent = -1,
@@ -1699,7 +1699,7 @@ proxyv3_readdir(struct fsal_obj_handle *dir_hdl,
 		 dir, cookie);
 
 	/* Check that attrmask is at most NFSv3 */
-	if (!attrmask_is_nfs3(attrmask)) {
+	if (!attrmask_is_posix(attrmask)) {
 		LogWarn(COMPONENT_FSAL,
 			"readdir asked for incompatible output attrs");
 		return fsalstat(ERR_FSAL_INVAL, 0);
