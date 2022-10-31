@@ -84,6 +84,7 @@ nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj, const char *name,
 
 	/* NFS v3 READDIR does not use attributes, so pass NULL */
 	fsal_status.major = cb(&cb_parms, obj, NULL, 0, cookie, CB_ORIGINAL);
+	fsal_status.minor = 0;
 
 	if (FSAL_IS_ERROR(fsal_status))
 		return nfs3_Errno_status(fsal_status);
