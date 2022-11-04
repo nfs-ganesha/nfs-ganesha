@@ -1967,7 +1967,7 @@ out:
  * @param[in]     bypass         If state doesn't indicate a share reservation,
  *                               bypass any non-mandatory deny write
  * @param[in,out] done_cb	Callback to call when I/O is done
- * @param[in,out] read_arg	Info about read, passed back in callback
+ * @param[in,out] write_arg	Info about write, passed back in callback
  * @param[in,out] caller_arg	Opaque arg from the caller for callback
  */
 
