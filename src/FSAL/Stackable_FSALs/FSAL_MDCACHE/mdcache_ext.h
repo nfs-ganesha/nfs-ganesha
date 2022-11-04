@@ -70,6 +70,9 @@ struct mdcache_parameter {
 	/** High water mark for cache entries.  Defaults to 100000,
 	    settable by Entries_HWMark. */
 	uint32_t entries_hwmark;
+	/** Recovery time for readdir by chunk.  Defaults to 600s,
+	    settable by Recovery_Interval. */
+	uint32_t recovery_interval;
 	/** When the handle cache is over the high water mark, attempt to
 	    release this number of entries in each pass until it's back below
 	    the high water mark. Set it to 0 does not attempt to release

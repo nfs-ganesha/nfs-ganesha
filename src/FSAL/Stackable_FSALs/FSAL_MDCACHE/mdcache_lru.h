@@ -93,6 +93,22 @@ struct lru_state {
 	uint32_t fd_state;
 };
 
+/**
+ * @brief Chunk would be set dirty if entries cache exist in chunks but
+ * not in global avl. 
+ * @section DESCRIPTION
+ * This is chunk dirty management unit which manage when chunk set dirty
+ * and restored.
+ *
+ */
+struct chunk_dirty_manage{
+	bool dirty_enable;
+	struct timespec dirty_time;
+	uint32_t recovery_interval; /*In seconds*/
+};
+
+extern struct chunk_dirty_manage chunk_dirty_manage;
+
 extern struct lru_state lru_state;
 
 /** Cache entries pool */

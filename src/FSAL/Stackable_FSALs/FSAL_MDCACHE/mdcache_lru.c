@@ -92,6 +92,8 @@
 
 struct lru_state lru_state;
 
+struct chunk_dirty_manage chunk_dirty_manage;
+
 /**
  * A single queue structure.
  */
@@ -1593,6 +1595,45 @@ next_lane:
 }
 
 /**
+ * @brief Chunk dirty check scan
+ *
+ */
+
+static void chunk_dirty_scan(void)
+{
+	if(true == chunk_dirty_manage.dirty_enable)
+	{
+		struct timespec current_time;
+		struct timespec recovery_time = chunk_dirty_manage.dirty_time;
+		int time_expired;
+		uint64_t interval = chunk_dirty_manage.recovery_interval*NS_PER_SEC;
+		now(&current_time);
+		timespec_add_nsecs(interval, &recovery_time);
+		time_expired = gsh_time_cmp(&current_time, &recovery_time);
+		if(time_expired >= 0)
+		{
+			chunk_dirty_manage.dirty_enable = false;
+		}
+	}
+
+	return;
+}
+
+/**
+ * @brief Chunk dirty manage unit init
+ *
+ */
+
+static void chunk_dirty_manage_init(void)
+{
+	chunk_dirty_manage.recovery_interval = mdcache_param.recovery_interval;
+	chunk_dirty_manage.dirty_enable = false;
+	
+	return;
+}
+
+
+/**
  * @brief Function that executes in the lru thread
  *
  * This function reorganizes the L1 and L2 queues, demoting least recently
@@ -1625,6 +1666,7 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 	}
 
 	SetNameFunction("chunk_lru");
+	chunk_dirty_scan();
 
 	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 		     "LRU awakes, lru chunks used: %" PRIu64,
@@ -1832,6 +1874,7 @@ mdcache_lru_pkginit(void)
 	lru_state.chunks_hiwat = mdcache_param.chunks_hwmark;
 	lru_state.chunks_used = 0;
 
+	chunk_dirty_manage_init();
 
 	/* init queue complex */
 	lru_init_queues();

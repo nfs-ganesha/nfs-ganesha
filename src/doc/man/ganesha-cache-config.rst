@@ -51,6 +51,9 @@ Entries_Release_Size(uint32, range 0 to UINT32_MAX, default 100)
 Chunks_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
     The point at which dirent cache chunks will start being reused.
 
+Recovery_Interval(uint32, range 1 to 24 * 3600, default 600)
+    Readdir by chunk, if chunk is set dirty because of cache miss, recovery interval of readdir by chunk again.
+
 LRU_Run_Interval(uint32, range 1 to 24 * 3600, default 90)
     Base interval in seconds between runs of the LRU cleaner thread.
 
