@@ -147,7 +147,7 @@ fsal_status_t proxyv3_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 fsal_status_t nfsstat3_to_fsalstat(nfsstat3 status);
 fsal_status_t nlm4stat_to_fsalstat(nlm4_stats status);
-bool attrmask_is_nfs3(attrmask_t mask);
+bool attrmask_is_posix(attrmask_t mask);
 bool fattr3_to_fsalattr(const fattr3 *attrs,
 			struct fsal_attrlist *fsal_attrs_out);
 bool fsalattr_to_sattr3(const struct fsal_attrlist *fsal_attrs,

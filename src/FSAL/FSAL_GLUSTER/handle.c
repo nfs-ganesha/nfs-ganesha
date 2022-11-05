@@ -2972,7 +2972,7 @@ static fsal_status_t glusterfs_setattr2(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
 		if (obj_hdl->type != REGULAR_FILE)
 			return fsalstat(ERR_FSAL_INVAL, EINVAL);
-		openflags = FSAL_O_RDWR;
+		openflags = FSAL_O_WRITE;
 	}
 
 	/** TRUNCATE **/

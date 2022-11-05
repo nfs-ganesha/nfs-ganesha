@@ -472,7 +472,7 @@ fsal_status_t rgw_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		 * share reservation checking, thus the NULL parameters.
 		 */
 		status = fsal_find_fd(NULL, obj_hdl, NULL, &handle->share,
-				bypass, state, FSAL_O_RDWR, NULL, NULL,
+				bypass, state, FSAL_O_WRITE, NULL, NULL,
 				&has_lock, &closefd, false,
 				&reusing_open_state_fd);
 

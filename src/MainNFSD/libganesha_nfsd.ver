@@ -22,6 +22,7 @@
   config_GetBlockNode;
   config_ParseFile;
   config_url_init;
+  convert_ipv6_to_ipv4;
   create_log_facility;
   decode_fsid;
   def_pnfs_ds_ops;

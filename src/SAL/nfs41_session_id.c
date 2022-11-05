@@ -136,7 +136,7 @@ int display_nfs4_operations(struct display_buffer *dspbuf, nfs_opnum4 *opcodes,
 
 	while (b_left > 0 && i < opcode_num) {
 		if (i > 0)
-			b_left = display_cat(dspbuf, ",");
+			(void) display_cat(dspbuf, ", ");
 
 		b_left = display_cat(dspbuf, nfsop4_to_str(opcodes[i]));
 		i++;

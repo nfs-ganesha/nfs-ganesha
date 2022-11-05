@@ -1322,7 +1322,7 @@ static fsal_status_t lzfs_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		bool reusing_open_state_fd = false;
 
 		status = fsal_find_fd(NULL, obj_hdl, NULL, &lzfs_obj->share,
-				      bypass, state, FSAL_O_RDWR, NULL, NULL,
+				      bypass, state, FSAL_O_WRITE, NULL, NULL,
 				      &has_lock, &closefd, false,
 				      &reusing_open_state_fd);
 
