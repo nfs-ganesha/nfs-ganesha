@@ -2039,7 +2039,7 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 				     "Setting size on non-regular file");
 			return fsalstat(ERR_FSAL_INVAL, EINVAL);
 		}
-		openflags = FSAL_O_RDWR;
+		openflags = FSAL_O_WRITE;
 	}
 
 	/* Acquire state's fdlock to prevent OPEN upgrade closing the

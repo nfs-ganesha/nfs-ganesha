@@ -152,14 +152,15 @@ fsal_status_t nlm4stat_to_fsalstat(nlm4_stats status)
 }
 
 /**
- * @brief Determine if an attribute mask is NFSv3 only.
+ * @brief Determine if an attribute mask is POSIX which is NFS3 plus the change
+ * attr) only.
  * @param mask Input attrmask_t of attributes.
  *
  * @return - True, if the attributes are representable in NFSv3.
  *         - False, otherwise.
  */
 
-bool attrmask_is_nfs3(attrmask_t mask)
+bool attrmask_is_posix(attrmask_t mask)
 {
 	/*
 	 * NOTE(boulos): Consider contributing this as FSAL_ONLY_MASK or
@@ -167,7 +168,7 @@ bool attrmask_is_nfs3(attrmask_t mask)
 	 */
 	attrmask_t orig = mask;
 
-	if (FSAL_UNSET_MASK(mask, ATTRS_NFS3 | ATTR_RDATTR_ERR) != 0) {
+	if (FSAL_UNSET_MASK(mask, ATTRS_POSIX | ATTR_RDATTR_ERR) != 0) {
 		LogDebug(COMPONENT_FSAL,
 			 "requested = %0" PRIx64
 			 "\tNFS3 = %0" PRIx64
@@ -246,7 +247,7 @@ static bool attrmask_valid(const attrmask_t mask, const bool allow_rawdev)
 bool fattr3_to_fsalattr(const fattr3 *attrs,
 			struct fsal_attrlist *fsal_attrs_out)
 {
-	if (!attrmask_is_nfs3(fsal_attrs_out->request_mask)) {
+	if (!attrmask_is_posix(fsal_attrs_out->request_mask)) {
 		return false;
 	}
 
@@ -256,11 +257,16 @@ bool fattr3_to_fsalattr(const fattr3 *attrs,
 	 * simple copy.
 	 */
 	*fsal_attrs_out = *attrs;
+	/* Same logic like in posix2fsal_attributes */
+	fsal_attrs_out->change =
+			gsh_time_cmp(&fsal_attrs_out->mtime, &fsal_attrs_out->ctime) > 0
+				? timespec_to_nsecs(&fsal_attrs_out->mtime)
+				: timespec_to_nsecs(&fsal_attrs_out->ctime);
 
-	/* Claim that only the NFSv3 attributes are valid. */
-	FSAL_SET_MASK(fsal_attrs_out->valid_mask, ATTRS_NFS3);
+	/* Claim that only the POSIX attributes are valid. */
+	FSAL_SET_MASK(fsal_attrs_out->valid_mask, ATTRS_POSIX);
 	/* @todo Do we have to even do this? The CEPH FSAL does... */
-	FSAL_SET_MASK(fsal_attrs_out->supported, ATTRS_NFS3);
+	FSAL_SET_MASK(fsal_attrs_out->supported, ATTRS_POSIX);
 	return true;
 }
 

@@ -264,8 +264,10 @@ static struct config_item core_params[] = {
 		       nfs_core_param, max_uid_to_grp_reqs),
 	CONF_ITEM_BOOL("Enable_V3fh_Validation_For_V4", false,
 		       nfs_core_param, enable_v3_fh_for_v4),
-	CONF_ITEM_UI32("Readdir_Res_Size", 4096, 32768, 0,
+	CONF_ITEM_UI32("Readdir_Res_Size", 4096, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       nfs_core_param, readdir_res_size),
+	CONF_ITEM_UI32("Readdir_Max_Count", 32, 1024*1024, 1024*1024,
+		       nfs_core_param, readdir_max_count),
 	CONF_ITEM_BOOL("Getattrs_In_Complete_Read", true,
 			   nfs_core_param, getattrs_in_complete_read),
 	CONFIG_EOL

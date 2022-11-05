@@ -47,6 +47,8 @@ struct nfs4_readdir_cb_data {
 	uint8_t *entries;	/*< The array holding individual entries */
 	size_t mem_avail;	/*< The amount of memory remaining before we
 				   hit maxcount */
+	int count;		/*< Number of entries accumulated so far. */
+	uint32_t max_count;	/*< Maximum number of entries allowed. */
 	bool has_entries;	/*< Track if at least one entry fit  */
 	nfsstat4 error;		/*< Set to a value other than NFS4_OK if the
 				   callback function finds a fatal error. */
@@ -292,6 +294,14 @@ not_junction:
 	/* Now process the entry */
 	memset(val_fh, 0, NFS4_FHSIZE);
 
+	/* See if we have space based on max_count. */
+	if (tracker->count == tracker->max_count) {
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "Skipping because we already have %d entries",
+			 tracker->count);
+		goto failure;
+	}
+
 	/* Bits that don't require allocation */
 	if (mem_left < BASE_ENTRY_SIZE) {
 		if (!tracker->has_entries) {
@@ -428,6 +438,7 @@ not_junction:
 
 	tracker->has_entries = true;
 	cb_parms->in_result = true;
+	tracker->count++;
 	goto out;
 
  server_fault:
@@ -527,17 +538,18 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 
 	/* Dont over flow V4.1 maxresponsesize or maxcachedsize */
 	maxcount = resp_room(data);
-	if (nfs_param.core_param.readdir_res_size != 0 &&
-		nfs_param.core_param.readdir_res_size < maxcount) {
+
+	if (nfs_param.core_param.readdir_res_size < maxcount)
 		maxcount = nfs_param.core_param.readdir_res_size;
-	}
 
 	if (maxcount > (arg_READDIR4->maxcount + sizeof(nfsstat4)))
 		maxcount = arg_READDIR4->maxcount + sizeof(nfsstat4);
 
-	/* Dircount is considered meaningless by many nfsv4 client (like the
-	 * CITI one).  we use maxcount instead.
+	/* Use the dircount from the request as the max number of entries if
+	 * lower than the configured max.
 	 */
+	if (dircount > nfs_param.core_param.readdir_max_count)
+		dircount = nfs_param.core_param.readdir_max_count;
 
 	LogDebug(COMPONENT_NFS_READDIR,
 		 "dircount=%lu maxcount=%lu cookie=%" PRIu64,
@@ -623,6 +635,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 
 	/* Prepare to read the entries */
 	tracker.mem_avail = maxcount - READDIR_RESP_BASE_SIZE;
+	tracker.max_count = dircount;
 	tracker.entries = gsh_malloc(tracker.mem_avail);
 	tracker.error = NFS4_OK;
 	tracker.req_attr = &arg_READDIR4->attr_request;
