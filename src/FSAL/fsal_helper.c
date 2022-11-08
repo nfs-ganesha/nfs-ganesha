@@ -54,18 +54,6 @@
 #include "FSAL/fsal_commonlib.h"
 #include "sal_functions.h"
 
-/**
- * This is a global counter of files opened.
- *
- * This is preliminary expected to go away.  Problems with this method are that
- * it overcounts file descriptors for FSALs that don't use them for open files,
- * and, under the Lieb Rearchitecture, FSALs will be responsible for caching
- * their own file descriptors, with interfaces for MDCACHE to interrogate
- * them as to usage or instruct them to close them.
- */
-
-size_t open_fd_count;
-
 static bool fsal_not_in_group_list(gid_t gid)
 {
 	int i;
@@ -458,10 +446,6 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 			     CTX_FULLPATH(op_ctx),
 			     fsal_err_txt(status));
 		return status;
-	}
-
-	if (!state) {
-		(void) atomic_inc_size_t(&open_fd_count);
 	}
 
 	LogFullDebug(COMPONENT_FSAL,

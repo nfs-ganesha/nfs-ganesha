@@ -69,7 +69,6 @@
   fsal_detach_export;
   fsal_export_init;
   fsal_export_stack;
-  fsal_find_fd;
   fsal_inherit_acls;
   fsal_init;
   fsal_link;
@@ -88,7 +87,6 @@
   fsal_remove;
   fsal_rename;
   fsal_reopen2;
-  fsal_reopen_obj;
   fsal_restore_ganesha_credentials;
   fsal_setattr;
   fsal_set_credentials;

@@ -247,32 +247,6 @@ fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
 			    struct fsal_fd *fsal_fd,
 			    bool is_reclaiming);
 
-fsal_status_t fsal_reopen_obj(struct fsal_obj_handle *obj_hdl,
-			      bool check_share,
-			      bool bypass,
-			      fsal_openflags_t openflags,
-			      struct fsal_fd *my_fd,
-			      struct fsal_share *share,
-			      fsal_open_func open_func,
-			      fsal_close_func close_func,
-			      struct fsal_fd **out_fd,
-			      bool *has_lock,
-			      bool *closefd);
-
-fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
-			   struct fsal_obj_handle *obj_hdl,
-			   struct fsal_fd *my_fd,
-			   struct fsal_share *share,
-			   bool bypass,
-			   struct state_t *state,
-			   fsal_openflags_t openflags,
-			   fsal_open_func open_func,
-			   fsal_close_func close_func,
-			   bool *has_lock,
-			   bool *closefd,
-			   bool open_for_locks,
-			   bool *reusing_open_state_fd);
-
 fsal_status_t fsal_start_global_io(struct fsal_fd **out_fd,
 				   struct fsal_obj_handle *obj_hdl,
 				   struct fsal_fd *my_fd,

@@ -94,8 +94,6 @@ extern uint32_t root_op_export_set;
  */
 extern int g_nodeid;
 
-extern size_t open_fd_count;
-
 void init_ctx_refstr(void);
 void destroy_ctx_refstr(void);
 
@@ -374,15 +372,7 @@ static inline fsal_status_t fsal_close(struct fsal_obj_handle *obj_hdl)
 	/* Return the result of close method. */
 	fsal_status_t status = obj_hdl->obj_ops->close(obj_hdl);
 
-	if (status.major != ERR_FSAL_NOT_OPENED) {
-		ssize_t count;
-
-		count = atomic_dec_size_t(&open_fd_count);
-		if (count < 0) {
-			LogCrit(COMPONENT_FSAL,
-				"open_fd_count is negative: %zd", count);
-		}
-	} else {
+	if (status.major == ERR_FSAL_NOT_OPENED) {
 		/* Wasn't open.  Not an error, but shouldn't decrement */
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}

@@ -1311,506 +1311,6 @@ fsal_status_t merge_share(struct fsal_obj_handle *orig_hdl,
 }
 
 /**
- * @brief Reopen the fd associated with the object handle.
- *
- * This function assures that the fd is open in the mode requested. If
- * the fd was already open, it closes it and reopens with the OR of the
- * requested modes.
- *
- * This function will return with the object handle lock held for read
- * if successful, except in the case where a temporary file descriptor is
- * in use because of a conflict with another thread. By not holding the
- * lock in that case, it may allow yet a third thread to open the global
- * file descriptor in a usable mode reducing the use of temporary file
- * descriptors.
- *
- * On calling, out_fd must point to a temporary fd. On return, out_fd
- * will either still point to the temporary fd, which has now been opened
- * and must be closed when done, or it will point to the object handle's
- * global fd, which should be left open.
- *
- * Optionally, out_fd can be NULL in which case a file is not actually
- * opened, in this case, all that actually happens is the share reservation
- * check (which may result in the lock being held).
- *
- * If openflags is FSAL_O_ANY, the caller will utilize the global file
- * descriptor if it is open, otherwise it will use a temporary file descriptor.
- * The primary use of this is to not open long lasting global file descriptors
- * for getattr and setattr calls. The other users of FSAL_O_ANY are NFSv3 LOCKT
- * for which this behavior is also desirable and NFSv3 UNLOCK where there
- * SHOULD be an open file descriptor attached to state, but if not, a temporary
- * file descriptor will work fine (and the resulting unlock won't do anything
- * since we just opened the temporary file descriptor).
- *
- * @param[in]  obj_hdl     File on which to operate
- * @param[in]  check_share Indicates we must check for share conflict
- * @param[in]  bypass         If state doesn't indicate a share reservation,
- *                               bypass any deny read
- * @param[in] bypass       If check_share is true, indicates to bypass
- *                         share_deny_read and share_deny_write but
- *                         not share_deny_write_mand
- * @param[in]  openflags   Mode for open
- * @param[in]  my_fd       The file descriptor associated with the object
- * @param[in]  share       The fsal_share associated with the object
- * @param[in]  open_func   Function to open a file descriptor
- * @param[in]  close_func  Function to close a file descriptor. This will only
- *                         ever be called when there is already a rwlock held on
- *                         the object handle.
- * @param[in,out] out_fd   File descriptor that is to be used
- * @param[out] has_lock    Indicates that obj_hdl->lock is held read
- * @param[out] closefd     Indicates that file descriptor must be closed
- *
- * @return FSAL status.
- */
-
-fsal_status_t fsal_reopen_obj(struct fsal_obj_handle *obj_hdl,
-			      bool check_share,
-			      bool bypass,
-			      fsal_openflags_t openflags,
-			      struct fsal_fd *my_fd,
-			      struct fsal_share *share,
-			      fsal_open_func open_func,
-			      fsal_close_func close_func,
-			      struct fsal_fd **out_fd,
-			      bool *has_lock,
-			      bool *closefd)
-{
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-	bool retried = false;
-	fsal_openflags_t try_openflags;
-	int rc;
-
-	*closefd = false;
-
-	/* Take read lock on object to protect file descriptor.
-	 * We only take a read lock because we are not changing the
-	 * state of the file descriptor.
-	 */
-	PTHREAD_RWLOCK_rdlock(&obj_hdl->obj_lock);
-
-	if (check_share) {
-		/* Note we will check again if we drop and re-acquire the lock
-		 * just to be on the safe side.
-		 */
-		status = check_share_conflict(share, openflags, bypass);
-
-		if (FSAL_IS_ERROR(status)) {
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-			LogDebug(COMPONENT_FSAL,
-				 "check_share_conflict failed with %s",
-				 msg_fsal_err(status.major));
-			*has_lock = false;
-			return status;
-		}
-	}
-
-	if (out_fd == NULL) {
-		/* We are just checking share reservation if at all.
-		 * There is no need to proceed, we either passed the
-		 * share check, or didn't need it. In either case, there
-		 * is no need to open a file.
-		 */
-		*has_lock = true;
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
-again:
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "Open mode = %x, desired mode = %x",
-		     (int) my_fd->openflags,
-		     (int) openflags);
-
-	if (not_open_usable(my_fd->openflags, openflags)) {
-
-		/* Drop the read lock */
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-		if (openflags == FSAL_O_ANY) {
-			/* If caller is looking for any open descriptor, don't
-			 * bother trying to open global file descriptor if it
-			 * isn't already open, just go ahead an open a temporary
-			 * file descriptor.
-			 */
-			LogDebug(COMPONENT_FSAL,
-				 "Open in FSAL_O_ANY mode failed, just open temporary file descriptor.");
-
-			/* Although the global file descriptor isn't "busy" (we
-			 * can't acquire a write lock, re-use of EBUSY in this
-			 * case simplifies the code below.
-			 */
-			rc = EBUSY;
-		} else if (retried) {
-			/* Since we drop write lock for 'obj_hdl->obj_lock'
-			 * and acquire read lock for 'obj_hdl->obj_lock' after
-			 * opening the global file descriptor, some other
-			 * thread could have closed the file causing
-			 * verification of 'openflags' to fail.
-			 *
-			 * We will now attempt to just provide a temporary
-			 * file descriptor. EBUSY is sort of true...
-			 */
-			LogDebug(COMPONENT_FSAL,
-				 "Retry failed.");
-			rc = EBUSY;
-		} else {
-			/* Switch to write lock on object to protect file
-			 * descriptor.
-			 * By using trylock, we don't block if another thread
-			 * is using the file descriptor right now. In that
-			 * case, we just open a temporary file descriptor.
-			 *
-			 * This prevents us from blocking for the duration of
-			 * an I/O request.
-			 */
-			rc = pthread_rwlock_trywrlock(&obj_hdl->obj_lock);
-		}
-
-		if (rc == EBUSY) {
-			/* Someone else is using the file descriptor or it
-			 * isn't open at all and the caller is looking for
-			 * any mode of open so a temporary file descriptor will
-			 * work fine.
-			 *
-			 * Just provide a temporary file descriptor.
-			 * We still take a read lock so we can protect the
-			 * share reservation for the duration of the caller's
-			 * operation if we needed to check.
-			 */
-			if (check_share) {
-				PTHREAD_RWLOCK_rdlock(&obj_hdl->obj_lock);
-
-				status = check_share_conflict(share,
-							      openflags,
-							      bypass);
-
-				if (FSAL_IS_ERROR(status)) {
-					PTHREAD_RWLOCK_unlock(
-							&obj_hdl->obj_lock);
-					LogDebug(COMPONENT_FSAL,
-						 "check_share_conflict failed with %s",
-						 msg_fsal_err(status.major));
-					*has_lock = false;
-					return status;
-				}
-			}
-
-			status = open_func(obj_hdl, openflags, *out_fd);
-
-			if (FSAL_IS_ERROR(status)) {
-				if (check_share)
-					PTHREAD_RWLOCK_unlock(
-							&obj_hdl->obj_lock);
-				*has_lock = false;
-				return status;
-			}
-
-			/* Return the temp fd, with the lock only held if
-			 * share reservations were checked.
-			 */
-			*closefd = true;
-			*has_lock = check_share;
-
-			return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-		} else if (rc != 0) {
-			LogCrit(COMPONENT_RW_LOCK,
-				"Error %d, write locking %p", rc, obj_hdl);
-			abort();
-		}
-
-		if (check_share) {
-			status = check_share_conflict(share, openflags, bypass);
-
-			if (FSAL_IS_ERROR(status)) {
-				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-				LogDebug(COMPONENT_FSAL,
-					 "check_share_conflict failed with %s",
-					 msg_fsal_err(status.major));
-				*has_lock = false;
-				return status;
-			}
-		}
-
-		LogFullDebug(COMPONENT_FSAL,
-			     "Open mode = %x, desired mode = %x",
-			     (int) my_fd->openflags,
-			     (int) openflags);
-
-		if (not_open_usable(my_fd->openflags, openflags)) {
-			if (my_fd->openflags != FSAL_O_CLOSED) {
-				ssize_t count;
-
-				/* Add desired mode to existing mode. */
-				try_openflags = openflags | my_fd->openflags;
-
-				/* Now close the already open descriptor. */
-				status = close_func(obj_hdl, my_fd);
-
-				if (FSAL_IS_ERROR(status)) {
-					PTHREAD_RWLOCK_unlock(
-							&obj_hdl->obj_lock);
-					LogDebug(COMPONENT_FSAL,
-						 "close_func failed with %s",
-						 msg_fsal_err(status.major));
-					*has_lock = false;
-					return status;
-				}
-				count = atomic_dec_size_t(&open_fd_count);
-				if (count < 0) {
-					LogCrit(COMPONENT_FSAL,
-					    "open_fd_count is negative: %zd",
-					    count);
-				}
-			} else if (openflags == FSAL_O_ANY) {
-				try_openflags = FSAL_O_READ;
-			} else {
-				try_openflags = openflags;
-			}
-
-			LogFullDebug(COMPONENT_FSAL,
-				     "try_openflags = %x",
-				     try_openflags);
-
-			/* Actually open the file */
-			status = open_func(obj_hdl, try_openflags, my_fd);
-
-			if (FSAL_IS_ERROR(status)) {
-				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-				LogDebug(COMPONENT_FSAL,
-					 "open_func failed with %s",
-					 msg_fsal_err(status.major));
-				*has_lock = false;
-				return status;
-			}
-
-			(void) atomic_inc_size_t(&open_fd_count);
-		}
-
-		/* Ok, now we should be in the correct mode.
-		 * Switch back to read lock and try again.
-		 * We don't want to hold the write lock because that would
-		 * block other users of the file descriptor.
-		 * Since we dropped the lock, we need to verify mode is still'
-		 * good after we re-acquire the read lock, thus the retry.
-		 */
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-		PTHREAD_RWLOCK_rdlock(&obj_hdl->obj_lock);
-		retried = true;
-
-		if (check_share) {
-			status = check_share_conflict(share, openflags, bypass);
-
-			if (FSAL_IS_ERROR(status)) {
-				PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-				LogDebug(COMPONENT_FSAL,
-					 "check_share_conflict failed with %s",
-					 msg_fsal_err(status.major));
-				*has_lock = false;
-				return status;
-			}
-		}
-		goto again;
-	}
-
-	/* Return the global fd, with the lock held. */
-	*out_fd = my_fd;
-	*has_lock = true;
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
- * @brief Find a usable file descriptor for a regular file.
- *
- * This function specifically does NOT return with the obj_handle's lock
- * held if the fd associated with a state_t is being used. These fds are
- * considered totally separate from the global fd and don't need protection
- * and should not interfere with other operations on the object.
- *
- * Optionally, out_fd can be NULL in which case a file is not actually
- * opened, in this case, all that actually happens is the share reservation
- * check (which may result in the lock being held).
- *
- * Note that FSAL_O_ANY may be passed on to fsal_reopen_obj, see the
- * documentation of that function for the implications.
- *
- * @param[in,out] out_fd         File descriptor that is to be used
- * @param[in]     obj_hdl        File on which to operate
- * @param[in]     obj_fd         The file descriptor associated with the object
- * @param[in]     bypass         If state doesn't indicate a share reservation,
- *                               bypass any deny read
- * @param[in]     state          state_t to use for this operation
- * @param[in]     openflags      Mode for open
- * @param[in]     open_func      Function to open a file descriptor
- * @param[in]     close_func     Function to close a file descriptor. This will
- *                               only ever be called when there is already a
- *                               rwlock held on the object handle.
- * @param[out]    has_lock       Indicates that obj_hdl->obj_lock is held read
- * @param[out]    closefd        Indicates that file descriptor must be closed
- * @param[in]     open_for_locks Indicates file is open for locks
- * @param[out]    reusing_open_state_fd Indicates whether already opened fd
- *					can be reused
- *
- * @return FSAL status.
- */
-
-fsal_status_t fsal_find_fd(struct fsal_fd **out_fd,
-			   struct fsal_obj_handle *obj_hdl,
-			   struct fsal_fd *obj_fd,
-			   struct fsal_share *share,
-			   bool bypass,
-			   struct state_t *state,
-			   fsal_openflags_t openflags,
-			   fsal_open_func open_func,
-			   fsal_close_func close_func,
-			   bool *has_lock,
-			   bool *closefd,
-			   bool open_for_locks,
-			   bool *reusing_open_state_fd)
-{
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
-	struct fsal_fd *state_fd;
-	struct fsal_fd *related_fd;
-	struct state_t *openstate;
-
-	if (state == NULL)
-		goto global;
-
-	/* Check if we can use the fd in the state */
-	state_fd = (struct fsal_fd *) (state + 1);
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "state_fd->openflags = %d openflags = %d%s",
-		     state_fd->openflags, openflags,
-		     open_for_locks ? " Open For Locks" : "");
-
-	if (open_correct(state_fd->openflags, openflags)) {
-		/* It was valid, return it.
-		 * Since we found a valid fd in the state, no need to
-		 * check deny modes.
-		 */
-		LogFullDebug(COMPONENT_FSAL, "Use state_fd %p", state_fd);
-		if (out_fd)
-			*out_fd = state_fd;
-		*has_lock = false;
-		return status;
-	}
-
-	if (open_for_locks) {
-		if (state_fd->openflags != FSAL_O_CLOSED) {
-			LogCrit(COMPONENT_FSAL,
-				"Conflicting open, can not re-open fd with locks");
-			return fsalstat(posix2fsal_error(EINVAL), EINVAL);
-		}
-
-		/* This is being opened for locks, we will not be able to
-		 * re-open so open for read/write. If that fails permission
-		 * check and openstate is available, retry with that state's
-		 * access mode.
-		 */
-		openflags = FSAL_O_RDWR;
-
-		status = open_func(obj_hdl, openflags, state_fd);
-
-		if (status.major == ERR_FSAL_ACCESS &&
-		   (state->state_type == STATE_TYPE_LOCK ||
-		    state->state_type == STATE_TYPE_NLM_LOCK)) {
-			openstate = nfs4_State_Get_Pointer(
-				state->state_data.lock.openstate_key);
-
-			if (openstate != NULL) {
-				/* Got an EACCESS and openstate is available,
-				* try again with it's openflags.
-				*/
-				related_fd =
-					(struct fsal_fd *)(openstate + 1);
-
-				openflags = related_fd->openflags & FSAL_O_RDWR;
-
-				dec_state_t_ref(openstate);
-
-				status = open_func(
-				    obj_hdl, openflags, state_fd);
-			}
-		}
-
-		if (FSAL_IS_ERROR(status)) {
-			LogCrit(COMPONENT_FSAL,
-				"Open for locking failed for access %s",
-				openflags == FSAL_O_RDWR ? "Read/Write"
-				: openflags == FSAL_O_READ ? "Read"
-				: "Write");
-		} else {
-			LogFullDebug(COMPONENT_FSAL,
-				     "Opened state_fd %p", state_fd);
-			*out_fd = state_fd;
-		}
-
-		*has_lock = false;
-		return status;
-	}
-
-	/* Check if there is a related state, in which case, can we use it's
-	 * fd (this will support FSALs that have an open file per open state
-	 * but don't bother with opening a separate file for the lock state).
-	 */
-	if (state->state_type == STATE_TYPE_LOCK ||
-	     state->state_type == STATE_TYPE_NLM_LOCK) {
-		openstate = nfs4_State_Get_Pointer(
-			state->state_data.lock.openstate_key);
-
-		if (!openstate)
-			goto global;
-
-		related_fd = (struct fsal_fd *)(openstate + 1);
-
-		dec_state_t_ref(openstate);
-
-		LogFullDebug(COMPONENT_FSAL,
-			     "related_fd->openflags = %d openflags = %d",
-			     related_fd->openflags, openflags);
-
-		if (open_correct(related_fd->openflags, openflags)) {
-			/* It was valid, return it.
-			 * Since we found a valid fd in the open state, no
-			 * need to check deny modes.
-			 */
-			LogFullDebug(COMPONENT_FSAL,
-				     "Use related_fd %p", related_fd);
-			if (out_fd) {
-				*out_fd = related_fd;
-				/* The associated open state has an open fd,
-				 * however some FSALs can not use it and must
-				 * need to dup the fd into the lock state
-				 * instead. So to signal this to the caller
-				 * function the following flag
-				 */
-				*reusing_open_state_fd = true;
-			}
-
-			*has_lock = false;
-			return status;
-		}
-	}
-
- global:
-
-	/* No usable state_t so return the global file descriptor. */
-	LogFullDebug(COMPONENT_FSAL,
-		     "Use global fd openflags = %x",
-		     openflags);
-
-	/* Make sure global is open as necessary otherwise return a
-	 * temporary file descriptor. Check share reservation if not
-	 * opening FSAL_O_ANY.
-	 */
-	return fsal_reopen_obj(obj_hdl, openflags != FSAL_O_ANY, bypass,
-			       openflags, obj_fd, share, open_func, close_func,
-			       out_fd, has_lock, closefd);
-}
-
-/**
 this refinement gets rid of the rw lock in the I/O path and provides a bit
 more fairness to open/upgrade/downgrade/close and uses dec_and_lock to
 better prevent spurious wakeup due to a race that is not habdled above
@@ -2971,7 +2471,7 @@ fsal_status_t fsal_start_global_io(struct fsal_fd **out_fd,
 		 *out_fd == my_fd
 			? "wait_to_start_io"
 			: "fsal_reopen_fd",
-		 msg_fsal_err(status.major));
+		 fsal_err_txt(status));
 
 	if (!open_any && share != NULL) {
 		/* Release the share reservation now by updating the counters.
@@ -3040,9 +2540,17 @@ fsal_status_t fsal_start_io(struct fsal_fd **out_fd,
 		     state_fd->openflags, openflags,
 		     open_for_locks ? " Open For Locks" : "");
 
+	/* We don't want to open it if it's not yet open, see below... Note that
+	 * the fd associated with a non-lock state_t will already be open.
+	 *
+	 * Thus the return should be ERR_FSAL_DELAY because the fd is not yet
+	 * open OR we have success because the fd is open and useable.
+	 */
+	/** @todo FSF - oops, what about a delegation?
+	 */
 	status = wait_to_start_io(obj_hdl, state_fd, openflags, false, false);
 
-	if (!FSAL_IS_ERROR(status)) {
+	if (FSAL_IS_SUCCESS(status)) {
 		/* It was valid, return it.
 		 * Since we found a valid fd in the state, no need to
 		 * check deny modes.
@@ -3054,6 +2562,12 @@ fsal_status_t fsal_start_io(struct fsal_fd **out_fd,
 
 		return status;
 	}
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "wait_to_start_io failed returned %s",
+		     fsal_err_txt(status));
+
+	assert(status.major == ERR_FSAL_DELAY);
 
 	if (open_for_locks) {
 		/* This is being opened for locks, we will not be able to
@@ -3072,10 +2586,16 @@ fsal_status_t fsal_start_io(struct fsal_fd **out_fd,
 			 */
 			struct state_t *openstate;
 
-			/** @todo - Interesting question - what do we do if
-			 *          openstate is being re-opened??? I think we
-			 *          may also need to start I/O on the open state
-			 *          while we do this reopen of the lock state.
+			/** @todo FSF - interesting question - what do we do if
+			 *              openstate is being re-opened??? I think
+			 *              we may also need to start I/O on the
+			 *              open state while we do this reopen of
+			 *              the lock state.
+			 *
+			 *              Partial answer - operations on a
+			 *              stateid SHOULD be serialized. If we are
+			 *              opening for locks, it's the first lock,
+			 *              so the caller used the open stateid.
 			 */
 
 			openstate = nfs4_State_Get_Pointer(
@@ -3119,9 +2639,10 @@ fsal_status_t fsal_start_io(struct fsal_fd **out_fd,
 		return status;
 	}
 
-	/* Check if there is a related state, in which case, can we use it's
-	 * fd (this will support FSALs that have an open file per open state
-	 * but don't bother with opening a separate file for the lock state).
+	/* At this point, we have a state_t we are trying to use in a wrong
+	 * mode or it isn't open at all. If it's a lock state with an associated
+	 * open state, use the fd from that (this mode is used by some FSALs
+	 * that don't want to open a separate fd for lock states).
 	 */
 	if (state->state_type == STATE_TYPE_LOCK) {
 		struct state_t *openstate;
@@ -3155,7 +2676,7 @@ fsal_status_t fsal_start_io(struct fsal_fd **out_fd,
 		 */
 		dec_state_t_ref(openstate);
 
-		if (!FSAL_IS_ERROR(status)) {
+		if (FSAL_IS_SUCCESS(status)) {
 			/* It was valid, return it.
 			 * Since we found a valid fd in the open state, no
 			 * need to check deny modes.
@@ -3177,6 +2698,17 @@ fsal_status_t fsal_start_io(struct fsal_fd **out_fd,
 			return status;
 		}
 	}
+
+	/* At this point, we have an ERR_FSAL_DELAY because an open or
+	 * delegation state was being used the wrong way. This should only
+	 * happen for READs where we always allow a READ on a write-only open
+	 * or delegation. The READ will proceed effectively as an anonymous READ
+	 * including all share reservation activity including being blocked by
+	 * deny read.
+	 *
+	 * Note that we do not allow write locks on read-only opens and read
+	 * locks on write only opens.
+	 */
 
  global:
 
