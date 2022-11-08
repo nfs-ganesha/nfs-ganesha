@@ -161,13 +161,8 @@ struct glusterfs_export {
 #endif
 
 struct glusterfs_fd {
-	/** The open and share mode etc. This MUST be first in every
-	 *  file descriptor structure.
-	 */
-	fsal_openflags_t openflags;
-
-	/* rw lock to protect the file descriptor */
-	pthread_rwlock_t fdlock;
+	/** open and share mode plus fd management */
+	struct fsal_fd fsal_fd;
 
 	/** Gluster file descriptor. */
 	struct glfs_fd *glfd;
@@ -176,6 +171,8 @@ struct glusterfs_fd {
 	char lease_id[GLAPI_LEASE_ID_SIZE];
 #endif
 };
+
+#define GLUSTERFS_FD_INIT { FSAL_FD_INIT, NULL, { 0, 0, 0, NULL } }
 
 struct glusterfs_handle {
 	struct glfs_object *glhandle;
