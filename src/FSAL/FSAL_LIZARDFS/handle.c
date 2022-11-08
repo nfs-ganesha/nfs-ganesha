@@ -33,6 +33,11 @@
 #include "context_wrap.h"
 #include "lzfs_internal.h"
 
+/******************************************************************************
+ * @todo - FSF - this has been converted to the new fsal_fd handling but I am
+ *         very unsure of the conversion. It should not be trusted.
+ ******************************************************************************/
+
 /*! \brief Clean up a filehandle
  *
  * \see fsal_api.h for more information
@@ -584,16 +589,48 @@ static void lzfs_fsal_handle_to_key(struct fsal_obj_handle *obj_hdl,
 	fh_desc->len = sizeof(struct lzfs_fsal_key);
 }
 
-static fsal_status_t lzfs_int_open_fd(struct lzfs_fsal_handle *lzfs_obj,
-				      fsal_openflags_t openflags,
-				      struct lzfs_fsal_fd *lzfs_fd,
-				      bool no_access_check)
+static fsal_status_t lzfs_int_close_fd(struct lzfs_fsal_handle *lzfs_obj,
+				       struct lzfs_fsal_fd *fd)
 {
+	if (fd->fd != NULL && fd->fsal_fd.openflags != FSAL_O_CLOSED) {
+		int rc = liz_release(lzfs_obj->export->lzfs_instance, fd->fd);
+
+		fd->fd = NULL;
+		fd->fsal_fd.openflags = FSAL_O_CLOSED;
+		if (rc < 0)
+			return lzfs_fsal_last_err();
+	}
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * @brief LZFS Function to open or reopen a fsal_fd.
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  openflags   New mode for open
+ * @param[out] fsal_fd     File descriptor that is to be used
+ *
+ * @return FSAL status.
+ */
+
+fsal_status_t lzfs_reopen_func(struct fsal_obj_handle *obj_hdl,
+			       fsal_openflags_t openflags,
+			       struct fsal_fd *fsal_fd)
+{
+	struct lzfs_fsal_handle *myself;
+	struct lzfs_fsal_fd *lzfs_fd;
+	struct liz_fileinfo *fd;
 	struct lzfs_fsal_export *lzfs_export;
 	int posix_flags;
 
+	myself = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
+	lzfs_fd = container_of(fsal_fd, struct lzfs_fsal_fd, fsal_fd);
+
 	fsal2posix_openflags(openflags, &posix_flags);
-	if (no_access_check) {
+
+	if (openflags & 0x1000) {
+		/** @todo FSF - I don't think this is correct.... */
 		posix_flags |= O_CREAT;
 	}
 
@@ -606,40 +643,49 @@ static fsal_status_t lzfs_int_open_fd(struct lzfs_fsal_handle *lzfs_obj,
 		     lzfs_fd, lzfs_fd->fd, openflags, posix_flags);
 
 	assert(lzfs_fd->fd == NULL &&
-	       lzfs_fd->openflags == FSAL_O_CLOSED &&
+	       lzfs_fd->fsal_fd.openflags == FSAL_O_CLOSED &&
 	       openflags != 0);
 
-	lzfs_fd->fd = liz_cred_open(lzfs_export->lzfs_instance, &op_ctx->creds,
-				    lzfs_obj->inode, posix_flags);
+	fd = liz_cred_open(lzfs_export->lzfs_instance, &op_ctx->creds,
+			   myself->inode, posix_flags);
 
-	if (!lzfs_fd->fd) {
+	if (fd == NULL) {
 		LogFullDebug(COMPONENT_FSAL, "open failed with %s",
 			     liz_error_string(liz_last_err()));
 		return lzfs_fsal_last_err();
 	}
 
+	if (lzfs_fd->fd != NULL &&
+	    lzfs_fd->fsal_fd.openflags != FSAL_O_CLOSED) {
+		int rc;
+
+		rc  = liz_release(myself->export->lzfs_instance, lzfs_fd->fd);
+
+		if (rc < 0) {
+			LogFullDebug(COMPONENT_FSAL, "close failed with %s",
+				     liz_error_string(liz_last_err()));
+
+			/** @todo - what to do about error here... */
+		}
+	}
+
+	lzfs_fd->fd = fd;
+
 	LogFullDebug(COMPONENT_FSAL,
 		     "fd = %p, new openflags = %x", lzfs_fd->fd, openflags);
 
-	lzfs_fd->openflags = openflags;
+	lzfs_fd->fsal_fd.openflags = openflags;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t lzfs_int_close_fd(struct lzfs_fsal_handle *lzfs_obj,
-				       struct lzfs_fsal_fd *fd)
+static fsal_status_t lzfs_int_close_func(struct fsal_obj_handle *obj_hdl,
+					 struct fsal_fd *fd)
 {
-	if (fd->fd != NULL && fd->openflags != FSAL_O_CLOSED) {
-		int rc = liz_release(lzfs_obj->export->lzfs_instance, fd->fd);
+	struct lzfs_fsal_handle *lzfs_hdl;
 
-		fd->fd = NULL;
-		fd->openflags = FSAL_O_CLOSED;
-		if (rc < 0) {
-			return lzfs_fsal_last_err();
-		}
-	}
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	lzfs_hdl = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
+	return lzfs_int_close_fd(lzfs_hdl, (struct lzfs_fsal_fd *)fd);
 }
 
 static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
@@ -648,59 +694,106 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 					     enum fsal_create_mode createmode,
 					     fsal_verifier_t verifier,
 					     struct fsal_attrlist *attrs_out,
-					     bool *caller_perm_check,
 					     bool after_mknod)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_hdl;
 	struct lzfs_fsal_fd *lzfs_fd;
+	struct fsal_fd *fsal_fd;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	int posix_flags;
+	fsal_openflags_t old_openflags;
+	bool truncated = openflags & FSAL_O_TRUNC;
 
 	lzfs_hdl = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 	lzfs_export = container_of(op_ctx->fsal_export,
 				   struct lzfs_fsal_export, export);
 
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+	if (state != NULL)
+		lzfs_fd = &container_of(state, struct lzfs_fsal_state_fd,
+					state)->lzfs_fd;
+	else
+		lzfs_fd = &lzfs_hdl->fd;
+
+	fsal_fd = &lzfs_fd->fsal_fd;
+
+	/* Indicate we want to do fd work (can't fail since not reclaiming) */
+	(void) fsal_start_fd_work(fsal_fd, false);
+
+	old_openflags = lzfs_fd->fsal_fd.openflags;
 
 	if (state != NULL) {
-		lzfs_fd = &container_of(
-				state,
-				struct lzfs_fsal_state_fd, state)->lzfs_fd;
+		/* Prepare to take the share reservation, but only if we are
+		 * called with a valid state (if state is NULL the caller is a
+		 * stateless create such as NFS v3 CREATE and we're just going
+		 * to ignore share reservation stuff).
+		 */
 
-		status = check_share_conflict(&lzfs_hdl->share,
-					      openflags,
+		/* Now that we have the mutex, and no I/O is in progress so we
+		 * have exclusive access to the share's fsal_fd, we can look at
+		 * its openflags. We also need to work the share reservation so
+		 * take the obj_lock. NOTE: This is the ONLY sequence where both
+		 * a work_mutex and the obj_lock are taken, so there is no
+		 * opportunity for ABBA deadlock.
+		 *
+		 * Note that we do hold the obj_lcok over an open and a close
+		 * which is longer than normal, but the previous iteration of
+		 * the code held the obj lock (read granted) over whole I/O
+		 * operations... We don't block over I/O because we've assured
+		 * that no I/O is in progress or can start before proceeding
+		 * past the above while loop.
+		 */
+		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+		/* Now check the new share. */
+		status = check_share_conflict(&lzfs_hdl->share, openflags,
 					      false);
 
 		if (FSAL_IS_ERROR(status)) {
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-			return status;
+			LogDebug(COMPONENT_FSAL,
+				 "check_share_conflict returned %s",
+				 fsal_err_txt(status));
+			goto exit;
 		}
-
-		update_share_counters(&lzfs_hdl->share,
-				      FSAL_O_CLOSED,
-				      openflags);
-
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-	} else {
-		lzfs_fd = &lzfs_hdl->fd;
 	}
 
-	status = lzfs_int_open_fd(lzfs_hdl, openflags, lzfs_fd, after_mknod);
+	/* Check for a genuine no-op open. That means we aren't trying to
+	 * create, the file is already open in the same mode with the same
+	 * deny flags, and we aren't trying to truncate. In this case we want
+	 * to avoid bouncing the fd. In the case of JUST changing the deny mode
+	 * or an replayed exclusive create, we might bounce the fd when we could
+	 * have avoided that, but those scenarios are much less common.
+	 */
+	if (FSAL_O_NFS_FLAGS(openflags) == FSAL_O_NFS_FLAGS(old_openflags) &&
+	    truncated == false && createmode == FSAL_NO_CREATE) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "no-op reopen2 lzfs_fd->fd = %p openflags = %x",
+			     lzfs_fd->fd, openflags);
+		goto exit;
+	}
+
+	/* No share conflict, re-open the share fd */
+	status = lzfs_reopen_func(obj_hdl,
+				  openflags | after_mknod ? 0x1000 : 0,
+				  fsal_fd);
 
 	if (FSAL_IS_ERROR(status)) {
-		if (state != NULL) {
-			goto undo_share;
-		}
-
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-		return status;
+		LogDebug(COMPONENT_FSAL,
+			 "lzfs_reopen_func returned %s",
+			 fsal_err_txt(status));
+		goto exit;
 	}
 
 	fsal2posix_openflags(openflags, &posix_flags);
-	bool truncated = (posix_flags & O_TRUNC) != 0;
 
-	if (createmode >= FSAL_EXCLUSIVE || truncated || attrs_out) {
+	if (createmode >= FSAL_EXCLUSIVE || attrs_out) {
+		/* NOTE: won't come in here when called from vfs_reopen2...
+		 *       truncated might be set, but attrs_out will be NULL.
+		 *       We don't need to look at truncated since other callers
+		 *       are interested in attrs_out.
+		 */
+
+		/* Refresh the attributes */
 		struct liz_attr_reply lzfs_attrs;
 		int rc;
 
@@ -720,7 +813,7 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 		    createmode >= FSAL_EXCLUSIVE &&
 		    createmode != FSAL_EXCLUSIVE_9P &&
 		    !check_verifier_stat(&lzfs_attrs.attr, verifier, false)) {
-			// Verifier didn't match, return EEXIST
+			/* Verifier didn't match, return EEXIST */
 			status = fsalstat(posix2fsal_error(EEXIST), EEXIST);
 		}
 
@@ -729,29 +822,27 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 		}
 	}
 
-	if (state == NULL) {
+	if (FSAL_IS_ERROR(status)) {
+		/*close fd*/
+		(void) lzfs_int_close_fd(lzfs_hdl, lzfs_fd);
+	}
+
+exit:
+
+	if (state != NULL) {
+		if (!FSAL_IS_ERROR(status)) {
+			/* Success, establish the new share. */
+			update_share_counters(&lzfs_hdl->share,
+					      old_openflags,
+					      openflags);
+		}
+
+		/* Release obj_lock. */
 		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-		// If success, we haven't done any permission check so ask the
-		// caller to do so.
-		*caller_perm_check = !FSAL_IS_ERROR(status);
-		return status;
 	}
 
-	if (!FSAL_IS_ERROR(status)) {
-		// Return success. We haven't done any permission check so ask
-		// the caller to do so.
-		*caller_perm_check = true;
-		return status;
-	}
-
-	lzfs_int_close_fd(lzfs_hdl, lzfs_fd);
-
-undo_share:
-	// On error we need to release our share reservation
-	// and undo the update of the share counters.
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-	update_share_counters(&lzfs_hdl->share, openflags, FSAL_O_CLOSED);
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+	/* Indicate we are done with fd work and signal any waiters. */
+	fsal_complete_fd_work(fsal_fd);
 
 	return status;
 }
@@ -761,8 +852,7 @@ static fsal_status_t lzfs_int_open_by_name(struct fsal_obj_handle *obj_hdl,
 					   fsal_openflags_t openflags,
 					   const char *name,
 					   fsal_verifier_t verifier,
-					   struct fsal_attrlist *attrs_out,
-					   bool *caller_perm_check)
+					   struct fsal_attrlist *attrs_out)
 {
 	struct fsal_obj_handle *temp = NULL;
 	fsal_status_t status;
@@ -777,7 +867,7 @@ static fsal_status_t lzfs_int_open_by_name(struct fsal_obj_handle *obj_hdl,
 
 	status = lzfs_int_open_by_handle(temp, state, openflags,
 					 FSAL_NO_CREATE, verifier, attrs_out,
-					 caller_perm_check, false);
+					 false);
 
 	if (FSAL_IS_ERROR(status)) {
 		temp->obj_ops->release(temp);
@@ -816,20 +906,24 @@ static fsal_status_t lzfs_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (name == NULL) {
-		return lzfs_int_open_by_handle(obj_hdl, state, openflags,
-					       createmode, verifier, attrs_out,
-					       caller_perm_check, false);
+		status = lzfs_int_open_by_handle(obj_hdl, state, openflags,
+						 createmode, verifier,
+						 attrs_out, false);
+
+		*caller_perm_check = FSAL_IS_SUCCESS(status);
+		return status;
 	}
+
+	*caller_perm_check = createmode == FSAL_NO_CREATE;
 
 	if (createmode == FSAL_NO_CREATE) {
 		return lzfs_int_open_by_name(obj_hdl, state, openflags, name,
-					     verifier, attrs_out,
-					     caller_perm_check);
+					     verifier, attrs_out);
 	}
 
-	//
-	// Create file
-	//
+	/*
+	 * Create file
+	 */
 
 	lzfs_export = container_of(op_ctx->fsal_export,
 				   struct lzfs_fsal_export,
@@ -849,15 +943,14 @@ static fsal_status_t lzfs_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	if (rc < 0 && liz_last_err() == LIZARDFS_ERROR_EEXIST &&
 	    createmode == FSAL_UNCHECKED) {
 		return lzfs_int_open_by_name(obj_hdl, state, openflags, name,
-					     verifier, attrs_out,
-					     caller_perm_check);
+					     verifier, attrs_out);
 	}
 
 	if (rc < 0) {
 		return lzfs_fsal_last_err();
 	}
 
-	// File has been created by us.
+	/* File has been created by us. */
 	*caller_perm_check = false;
 	struct lzfs_fsal_handle *lzfs_new_obj = lzfs_fsal_new_handle(
 							&lzfs_attrs.attr,
@@ -889,8 +982,7 @@ static fsal_status_t lzfs_fsal_open2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	return lzfs_int_open_by_handle(*new_obj, state, openflags, createmode,
-				       verifier, NULL, caller_perm_check,
-				       true);
+				       verifier, NULL, true);
 
 fileerr:
 	(*new_obj)->obj_ops->release(*new_obj);
@@ -914,7 +1006,7 @@ static fsal_openflags_t lzfs_fsal_status2(struct fsal_obj_handle *obj_hdl,
 	lzfs_fd = &container_of(state,
 				struct lzfs_fsal_state_fd, state)->lzfs_fd;
 
-	return lzfs_fd->openflags;
+	return lzfs_fd->fsal_fd.openflags;
 }
 
 /*! \brief Re-open a file that may be already opened
@@ -925,99 +1017,8 @@ static fsal_status_t lzfs_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 				       struct state_t *state,
 				       fsal_openflags_t openflags)
 {
-	struct lzfs_fsal_handle *lzfs_hdl;
-	struct lzfs_fsal_fd fd, *lzfs_share_fd;
-	fsal_status_t status;
-	fsal_openflags_t old_openflags;
-
-	lzfs_hdl = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
-	lzfs_share_fd = &container_of(
-			state,
-			struct lzfs_fsal_state_fd, state)->lzfs_fd;
-
-	LogFullDebug(COMPONENT_FSAL, "export=%" PRIu16 " inode=%" PRIu32,
-		     lzfs_hdl->unique_key.export_id, lzfs_hdl->inode);
-
-	memset(&fd, 0, sizeof(fd));
-
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-	old_openflags = lzfs_share_fd->openflags;
-
-	status = check_share_conflict(&lzfs_hdl->share, openflags, false);
-
-	if (FSAL_IS_ERROR(status)) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-		return status;
-	}
-
-	update_share_counters(&lzfs_hdl->share, old_openflags, openflags);
-
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-	status = lzfs_int_open_fd(lzfs_hdl, openflags, &fd, true);
-
-	if (!FSAL_IS_ERROR(status)) {
-		lzfs_int_close_fd(lzfs_hdl, lzfs_share_fd);
-		*lzfs_share_fd = fd;
-	} else {
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-		update_share_counters(&lzfs_hdl->share, openflags,
-				      old_openflags);
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-	}
-
-	return status;
-}
-
-static fsal_status_t lzfs_int_open_func(struct fsal_obj_handle *obj_hdl,
-					fsal_openflags_t openflags,
-					struct fsal_fd *fd)
-{
-	struct lzfs_fsal_handle *lzfs_hdl;
-
-	lzfs_hdl = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
-	return lzfs_int_open_fd(lzfs_hdl,
-				openflags,
-				(struct lzfs_fsal_fd *)fd,
-				true);
-}
-
-static fsal_status_t lzfs_int_close_func(struct fsal_obj_handle *obj_hdl,
-					 struct fsal_fd *fd)
-{
-	struct lzfs_fsal_handle *lzfs_hdl;
-
-	lzfs_hdl = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
-	return lzfs_int_close_fd(lzfs_hdl, (struct lzfs_fsal_fd *)fd);
-}
-
-static fsal_status_t lzfs_int_find_fd(struct lzfs_fsal_fd *fd,
-				      struct fsal_obj_handle *obj_hdl,
-				      bool bypass,
-				      struct state_t *state,
-				      fsal_openflags_t openflags,
-				      bool *has_lock,
-				      bool *closefd,
-				      bool open_for_locks)
-{
-	struct lzfs_fsal_handle *lzfs_hdl = container_of(
-						obj_hdl,
-						struct lzfs_fsal_handle,
-						handle);
-	struct lzfs_fsal_fd temp_fd = {0, NULL}, *out_fd = &temp_fd;
-	fsal_status_t status;
-
-	bool reusing_open_state_fd = false;
-
-	status = fsal_find_fd((struct fsal_fd **)&out_fd, obj_hdl,
-			      (struct fsal_fd *)&lzfs_hdl->fd,
-			      &lzfs_hdl->share, bypass, state, openflags,
-			      lzfs_int_open_func, lzfs_int_close_func,
-			      has_lock, closefd, open_for_locks,
-			      &reusing_open_state_fd);
-	*fd = *out_fd;
-	return status;
+	return lzfs_int_open_by_handle(obj_hdl, state, openflags,
+				       FSAL_NO_CREATE, NULL, NULL, true);
 }
 
 /**
@@ -1033,10 +1034,10 @@ static void lzfs_fsal_read2(struct fsal_obj_handle *obj_hdl,
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_obj;
-	struct lzfs_fsal_fd lzfs_fd;
-	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-	bool has_lock = false;
-	bool closefd = false;
+	struct lzfs_fsal_fd *my_fd;
+	struct lzfs_fsal_fd temp_fd = { FSAL_FD_INIT, NULL };
+	struct fsal_fd *out_fd;
+	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0), status2;
 	ssize_t nb_read;
 	uint64_t offset = read_arg->offset;
 	int i;
@@ -1056,18 +1057,24 @@ static void lzfs_fsal_read2(struct fsal_obj_handle *obj_hdl,
 		return;
 	}
 
-	status =
-		lzfs_int_find_fd(&lzfs_fd, obj_hdl, bypass, read_arg->state,
-				FSAL_O_READ, &has_lock, &closefd, false);
+	/* Indicate a desire to start io and get a usable file descritor */
+	status = fsal_start_io(&out_fd, obj_hdl, &lzfs_obj->fd.fsal_fd,
+			       &temp_fd.fsal_fd, read_arg->state, FSAL_O_READ,
+			       false, NULL, bypass, &lzfs_obj->share);
 
 	if (FSAL_IS_ERROR(status)) {
-		goto out;
+		LogFullDebug(COMPONENT_FSAL,
+			     "fsal_start_io failed returning %s",
+			     fsal_err_txt(status));
+		goto exit;
 	}
+
+	my_fd = container_of(out_fd, struct lzfs_fsal_fd, fsal_fd);
 
 	for (i = 0; i < read_arg->iov_count; i++) {
 		nb_read = liz_cred_read(lzfs_export->lzfs_instance,
 					&op_ctx->creds,
-					lzfs_fd.fd, offset,
+					my_fd->fd, offset,
 					read_arg->iov[i].iov_len,
 					read_arg->iov[i].iov_base);
 
@@ -1085,13 +1092,25 @@ static void lzfs_fsal_read2(struct fsal_obj_handle *obj_hdl,
 	read_arg->end_of_file = (read_arg->io_amount == 0);
 
 out:
-	if (closefd) {
-		lzfs_int_close_fd(lzfs_obj, &lzfs_fd);
+
+	status2 = fsal_complete_io(obj_hdl, out_fd);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
+
+	if (read_arg->state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &lzfs_obj->share,
+					     FSAL_O_READ, FSAL_O_CLOSED);
 	}
 
-	if (has_lock) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-	}
+ exit:
 
 	done_cb(obj_hdl, status, read_arg, caller_arg);
 }
@@ -1106,12 +1125,12 @@ static void lzfs_fsal_write2(struct fsal_obj_handle *obj_hdl,
 			     struct fsal_io_arg *write_arg,
 			     void *caller_arg)
 {
-struct lzfs_fsal_export *lzfs_export;
-struct lzfs_fsal_handle *lzfs_obj;
-struct lzfs_fsal_fd lzfs_fd;
-	fsal_status_t status;
-	bool has_lock = false;
-	bool closefd = false;
+	struct lzfs_fsal_export *lzfs_export;
+	struct lzfs_fsal_handle *lzfs_obj;
+	struct lzfs_fsal_fd *my_fd;
+	struct lzfs_fsal_fd temp_fd = { FSAL_FD_INIT, NULL };
+	struct fsal_fd *out_fd;
+	fsal_status_t status, status2;
 	ssize_t nb_written;
 	uint64_t offset = write_arg->offset;
 	int i;
@@ -1130,16 +1149,23 @@ struct lzfs_fsal_fd lzfs_fd;
 			       write_arg, caller_arg);
 	}
 
-	status = lzfs_int_find_fd(&lzfs_fd, obj_hdl, bypass, write_arg->state,
-				  FSAL_O_WRITE, &has_lock, &closefd, false);
+	/* Indicate a desire to start io and get a usable file descritor */
+	status = fsal_start_io(&out_fd, obj_hdl, &lzfs_obj->fd.fsal_fd,
+			       &temp_fd.fsal_fd, write_arg->state, FSAL_O_WRITE,
+			       false, NULL, bypass, &lzfs_obj->share);
 
 	if (FSAL_IS_ERROR(status)) {
-		goto out;
+		LogFullDebug(COMPONENT_FSAL,
+			     "fsal_start_io failed returning %s",
+			     fsal_err_txt(status));
+		goto exit;
 	}
+
+	my_fd = container_of(out_fd, struct lzfs_fsal_fd, fsal_fd);
 
 	for (i = 0; i < write_arg->iov_count; i++) {
 		nb_written = liz_cred_write(lzfs_export->lzfs_instance,
-					    &op_ctx->creds, lzfs_fd.fd, offset,
+					    &op_ctx->creds, my_fd->fd, offset,
 					    write_arg->iov[i].iov_len,
 					    write_arg->iov[i].iov_base);
 
@@ -1151,7 +1177,7 @@ struct lzfs_fsal_fd lzfs_fd;
 			if (write_arg->fsal_stable) {
 				int rc = liz_cred_fsync(
 						lzfs_export->lzfs_instance,
-						&op_ctx->creds, lzfs_fd.fd);
+						&op_ctx->creds, my_fd->fd);
 
 				if (rc < 0) {
 					status = lzfs_fsal_last_err();
@@ -1164,13 +1190,25 @@ struct lzfs_fsal_fd lzfs_fd;
 	}
 
 out:
-	if (closefd) {
-		lzfs_int_close_fd(lzfs_obj, &lzfs_fd);
+
+	status2 = fsal_complete_io(obj_hdl, out_fd);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
+
+	if (write_arg->state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &lzfs_obj->share,
+					     FSAL_O_WRITE, FSAL_O_CLOSED);
 	}
 
-	if (has_lock) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-	}
+ exit:
 
 	done_cb(obj_hdl, status, write_arg, caller_arg);
 }
@@ -1184,10 +1222,11 @@ static fsal_status_t lzfs_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_obj;
-	struct lzfs_fsal_fd temp_fd = {0, NULL}, *out_fd = &temp_fd;
-	fsal_status_t status;
-	bool has_lock = false;
-	bool closefd = false;
+	fsal_status_t status, status2;
+	struct lzfs_fsal_fd temp_fd = { FSAL_FD_INIT, NULL };
+	struct fsal_fd *out_fd;
+	struct lzfs_fsal_fd *my_fd;
+	int rc;
 
 	lzfs_export = container_of(op_ctx->fsal_export,
 				   struct lzfs_fsal_export, export);
@@ -1197,33 +1236,33 @@ static fsal_status_t lzfs_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 		     " offset=%lli len=%zu", lzfs_export->export.export_id,
 		     lzfs_obj->inode, (long long)offset, len);
 
-	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_ANY,
-				 (struct fsal_fd *)&lzfs_obj->fd,
-				 &lzfs_obj->share, lzfs_int_open_func,
-				 lzfs_int_close_func,
-				 (struct fsal_fd **)&out_fd, &has_lock,
-				 &closefd);
+	/* Make sure file is open in appropriate mode.
+	 * Do not check share reservation.
+	 */
+	status = fsal_start_global_io(&out_fd, obj_hdl,
+				      &lzfs_obj->fd.fsal_fd,
+				      &temp_fd.fsal_fd,
+				      FSAL_O_ANY, false,
+				      NULL);
 
-	if (!FSAL_IS_ERROR(status)) {
-		int rc = liz_cred_fsync(lzfs_export->lzfs_instance,
-					&op_ctx->creds, out_fd->fd);
+	if (FSAL_IS_ERROR(status))
+		return status;
 
-		if (rc < 0) {
-			status = lzfs_fsal_last_err();
-		}
-	}
+	my_fd = container_of(out_fd, struct lzfs_fsal_fd, fsal_fd);
 
-	if (closefd) {
-		int rc = liz_release(lzfs_export->lzfs_instance, out_fd->fd);
+	rc = liz_cred_fsync(lzfs_export->lzfs_instance, &op_ctx->creds,
+			    my_fd->fd);
 
-		if (rc < 0) {
-			status = lzfs_fsal_last_err();
-		}
-	}
+	if (rc < 0)
+		status = lzfs_fsal_last_err();
 
-	if (has_lock) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-	}
+	status2 = fsal_complete_io(obj_hdl, out_fd);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
+
+	/* We did not do share reservation stuff... */
 
 	return status;
 }
@@ -1235,20 +1274,13 @@ static fsal_status_t lzfs_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t lzfs_fsal_close(struct fsal_obj_handle *obj_hdl)
 {
 	struct lzfs_fsal_handle *lzfs_obj;
-	fsal_status_t status;
 
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
 	LogFullDebug(COMPONENT_FSAL, "export=%" PRIu16 " inode=%" PRIu32,
 		     lzfs_obj->unique_key.export_id, lzfs_obj->inode);
 
-	PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-	status = lzfs_int_close_fd(lzfs_obj, &lzfs_obj->fd);
-
-	PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-
-	return status;
+	return close_fsal_fd(obj_hdl, &lzfs_obj->fd.fsal_fd, false);
 }
 
 /*! \brief Merge a duplicate handle with an original handle
@@ -1295,9 +1327,8 @@ static fsal_status_t lzfs_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_obj;
-	bool has_lock = false;
-	bool closefd = false;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	bool has_share = false;
 
 	lzfs_export = container_of(op_ctx->fsal_export,
 				   struct lzfs_fsal_export,
@@ -1319,17 +1350,24 @@ static fsal_status_t lzfs_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 			return fsalstat(ERR_FSAL_INVAL, EINVAL);
 		}
 
-		bool reusing_open_state_fd = false;
+		if (state == NULL) {
+			/* Check share reservation and if OK, update the
+			 * counters.
+			 */
+			status = check_share_conflict_and_update_locked(
+						obj_hdl, &lzfs_obj->share,
+						FSAL_O_CLOSED, FSAL_O_WRITE,
+						bypass);
 
-		status = fsal_find_fd(NULL, obj_hdl, NULL, &lzfs_obj->share,
-				      bypass, state, FSAL_O_WRITE, NULL, NULL,
-				      &has_lock, &closefd, false,
-				      &reusing_open_state_fd);
+			if (FSAL_IS_ERROR(status)) {
+				LogDebug(COMPONENT_FSAL,
+					 "check_share_conflict failed with %s",
+					 fsal_err_txt(status));
 
-		if (FSAL_IS_ERROR(status)) {
-			LogFullDebug(COMPONENT_FSAL, "fsal_find_fd status=%s",
-				     fsal_err_txt(status));
-			goto out;
+				return status;
+			}
+
+			has_share = true;
 		}
 	}
 
@@ -1395,8 +1433,12 @@ static fsal_status_t lzfs_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 out:
-	if (has_lock) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+
+	if (has_share) {
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &lzfs_obj->share,
+					     FSAL_O_WRITE, FSAL_O_CLOSED);
 	}
 
 	return status;
@@ -1410,6 +1452,9 @@ static fsal_status_t lzfs_fsal_close2(struct fsal_obj_handle *obj_hdl,
 				      struct state_t *state)
 {
 	struct lzfs_fsal_handle *lzfs_obj;
+	struct lzfs_fsal_fd *my_fd = &container_of(state,
+						   struct lzfs_fsal_state_fd,
+						   state)->lzfs_fd;
 
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
@@ -1419,15 +1464,12 @@ static fsal_status_t lzfs_fsal_close2(struct fsal_obj_handle *obj_hdl,
 	if (state->state_type == STATE_TYPE_SHARE ||
 	    state->state_type == STATE_TYPE_NLM_SHARE ||
 	    state->state_type == STATE_TYPE_9P_FID) {
-		PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
-
-		update_share_counters(&lzfs_obj->share, lzfs_obj->fd.openflags,
-				      FSAL_O_CLOSED);
-
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+		update_share_counters_locked(obj_hdl, &lzfs_obj->share,
+					     lzfs_obj->fd.fsal_fd.openflags,
+					     FSAL_O_CLOSED);
 	}
 
-	return lzfs_int_close_fd(lzfs_obj, &lzfs_obj->fd);
+	return close_fsal_fd(obj_hdl, &my_fd->fsal_fd, false);
 }
 
 fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
@@ -1436,29 +1478,31 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 				 fsal_lock_param_t *request_lock,
 				 fsal_lock_param_t *conflicting_lock)
 {
+	struct lzfs_fsal_handle *lzfs_obj;
 	struct lzfs_fsal_export *lzfs_export;
-
 	liz_err_t last_err;
 	liz_fileinfo_t *fileinfo;
 	liz_lock_info_t lock_info;
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = {0, 0}, status2;
 	int retval = 0;
-	struct lzfs_fsal_fd liz_fd;
-	bool has_lock = false;
-	bool closefd = false;
-	bool bypass = false;
 	fsal_openflags_t openflags = FSAL_O_RDWR;
+	struct lzfs_fsal_fd *my_fd;
+	struct lzfs_fsal_fd temp_fd = { FSAL_FD_INIT, NULL };
+	struct fsal_fd *out_fd;
+	bool bypass = false;
 
 	lzfs_export = container_of(op_ctx->fsal_export,
 				   struct lzfs_fsal_export,
 				   export);
+
+	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
 	LogFullDebug(COMPONENT_FSAL, "op:%d type:%d start:%" PRIu64 " length:%"
 		     PRIu64 " ", lock_op, request_lock->lock_type,
 		     request_lock->lock_start, request_lock->lock_length);
 
 	if (lock_op == FSAL_OP_LOCKT) {
-		// We may end up using global fd, don't fail on a deny mode
+		/* We may end up using global fd, don't fail on a deny mode */
 		bypass = true;
 		openflags = FSAL_O_ANY;
 	} else if (lock_op == FSAL_OP_LOCK) {
@@ -1498,23 +1542,22 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 	lock_info.l_len = request_lock->lock_length;
 	lock_info.l_start = request_lock->lock_start;
 
-	status = lzfs_int_find_fd(&liz_fd, obj_hdl, bypass, state, openflags,
-				  &has_lock, &closefd, true);
-	// IF lzfs_int_find_fd returned DELAY, then fd caching in mdcache is
-	// turned off, which means that the consecutive attempt is very likely
-	// to succeed immediately.
-	if (status.major == ERR_FSAL_DELAY) {
-		status = lzfs_int_find_fd(&liz_fd, obj_hdl, bypass, state,
-					  openflags, &has_lock, &closefd,
-					  true);
-	}
+
+	/* Indicate a desire to start io and get a usable file descritor */
+	status = fsal_start_io(&out_fd, obj_hdl, &lzfs_obj->fd.fsal_fd,
+			       &temp_fd.fsal_fd, state, openflags,
+			       true, NULL, bypass, &lzfs_obj->share);
+
 	if (FSAL_IS_ERROR(status)) {
 		LogCrit(COMPONENT_FSAL,
-			"Unable to find fd for lock  operation");
-		return status;
+			"fsal_start_io failed returning %s",
+			fsal_err_txt(status));
+		goto exit;
 	}
 
-	fileinfo = liz_fd.fd;
+	my_fd = container_of(out_fd, struct lzfs_fsal_fd, fsal_fd);
+
+	fileinfo = my_fd->fd;
 	liz_set_lock_owner(fileinfo, (uint64_t)owner);
 	if (lock_op == FSAL_OP_LOCKT) {
 		retval = liz_cred_getlk(lzfs_export->lzfs_instance,
@@ -1525,6 +1568,9 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (retval < 0) {
+		last_err = liz_last_err();
+		status = lizardfs2fsal_error(last_err);
+		LogFullDebug(COMPONENT_FSAL, "Returning error %d", last_err);
 		goto err;
 	}
 
@@ -1543,19 +1589,27 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 err:
 	last_err = liz_last_err();
-	if (closefd) {
-		liz_release(lzfs_export->lzfs_instance, fileinfo);
+
+	status2 = fsal_complete_io(obj_hdl, out_fd);
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "fsal_complete_io returned %s",
+		     fsal_err_txt(status2));
+
+	if (state == NULL) {
+		/* We did I/O without a state so we need to release the temp
+		 * share reservation acquired.
+		 */
+
+		/* Release the share reservation now by updating the counters.
+		 */
+		update_share_counters_locked(obj_hdl, &lzfs_obj->share,
+					     openflags, FSAL_O_CLOSED);
 	}
 
-	if (has_lock) {
-		PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
-	}
+ exit:
 
-	if (retval < 0) {
-		LogFullDebug(COMPONENT_FSAL, "Returning error %d", last_err);
-		return lizardfs2fsal_error(last_err);
-	}
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return status;
 }
 
 /*! \brief Create a new link
@@ -1620,6 +1674,8 @@ void lzfs_fsal_handle_ops_init(struct lzfs_fsal_export *lzfs_export,
 	ops->setattr2 = lzfs_fsal_setattr2;
 	ops->close2 = lzfs_fsal_close2;
 	ops->lock_op2 = lzfs_fsal_lock_op2;
+	ops->close_func = lzfs_int_close_func;
+	ops->reopen_func = lzfs_reopen_func;
 
 	if (lzfs_export->pnfs_mds_enabled) {
 		lzfs_fsal_handle_ops_pnfs(ops);

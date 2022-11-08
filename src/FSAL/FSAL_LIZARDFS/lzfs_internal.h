@@ -79,7 +79,9 @@ struct lzfs_fsal_export {
 };
 
 struct lzfs_fsal_fd {
-	fsal_openflags_t openflags;
+	/** open and share mode plus fd management */
+	struct fsal_fd fsal_fd;
+	/** The lizardfs file descriptor. */
 	struct liz_fileinfo *fd;
 };
 
