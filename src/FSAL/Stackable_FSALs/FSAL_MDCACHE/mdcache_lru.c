@@ -113,13 +113,7 @@ struct lru_q_lane {
 	struct lru_q cleanup;	/* deferred cleanup */
 	struct lru_q long_term;	/* long term references */
 	pthread_mutex_t mtx;
-	/* LRU thread scan position */
-	struct {
-		bool active;
-		struct glist_head *glist;
-		struct glist_head *glistn;
-	} iter;
-	 CACHE_PAD(0);
+	CACHE_PAD(0);
 };
 
 /* The queue lock and the partition lock interact.  The partition lock must
@@ -189,28 +183,14 @@ static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 /* Delete lru, use iif the current thread is not the LRU
  * thread.  The node being removed is lru, glist a pointer to L1's q,
  * qlane its lane. */
-#define LRU_DQ_SAFE(lru, q) \
+#define LRU_DQ(lru, q) \
 	do { \
-		if ((lru)->qid == LRU_ENTRY_L1) { \
-			struct lru_q_lane *qlane = &LRU[(lru)->lane]; \
-			if (unlikely((qlane->iter.active) && \
-				     ((&(lru)->q) == qlane->iter.glistn))) { \
-				qlane->iter.glistn = (lru)->q.next; \
-			} \
-		} \
 		glist_del(&(lru)->q); \
 		--((q)->size); \
 	} while (0)
 
-#define CHUNK_LRU_DQ_SAFE(lru, qq) \
+#define CHUNK_LRU_DQ(lru, qq) \
 	do { \
-		if ((lru)->qid == LRU_ENTRY_L1) { \
-			struct lru_q_lane *qlane = &CHUNK_LRU[(lru)->lane]; \
-			if (unlikely((qlane->iter.active) && \
-				     ((&(lru)->q) == qlane->iter.glistn))) { \
-				qlane->iter.glistn = (lru)->q.next; \
-			} \
-		} \
 		glist_del(&(lru)->q); \
 		--((qq)->size); \
 	} while (0)
@@ -252,9 +232,6 @@ lru_init_queues(void)
 		/* one mutex per lane */
 		PTHREAD_MUTEX_init(&qlane->mtx, NULL);
 
-		/* init iterator */
-		qlane->iter.active = false;
-
 		/* init lane queues */
 		lru_init_queue(&LRU[ix].L1, LRU_ENTRY_L1);
 		lru_init_queue(&LRU[ix].L2, LRU_ENTRY_L2);
@@ -266,9 +243,6 @@ lru_init_queues(void)
 
 		/* one mutex per lane */
 		PTHREAD_MUTEX_init(&qlane->mtx, NULL);
-
-		/* init iterator */
-		qlane->iter.active = false;
 
 		/* init lane queues */
 		lru_init_queue(&CHUNK_LRU[ix].L1, LRU_ENTRY_L1);
@@ -466,21 +440,20 @@ adjust_lru(mdcache_entry_t *entry)
 	case LRU_ENTRY_L1:
 		q = lru_queue_of(entry);
 		/* advance entry to MRU (of L1) */
-		LRU_DQ_SAFE(lru, q);
+		LRU_DQ(lru, q);
 		lru_insert(lru, q);
 		break;
 	case LRU_ENTRY_L2:
 		q = lru_queue_of(entry);
 		/* move entry to MRU of L1 */
-		glist_del(&lru->q);     /* skip L1 fixups */
-		--(q->size);
+		LRU_DQ(lru, q);
 		q = &qlane->L1;
 		lru_insert(lru, q);
 		break;
 	case LRU_ENTRY_LONG_TERM:
 		q = lru_queue_of(entry);
 		/* advance entry to MRU (of long_term) */
-		LRU_DQ_SAFE(lru, q);
+		LRU_DQ(lru, q);
 		lru_insert(lru, q);
 		break;
 	default:
@@ -507,22 +480,21 @@ long_term_lru(mdcache_entry_t *entry)
 	case LRU_ENTRY_L1:
 		q = lru_queue_of(entry);
 		/* move entry to MRU of long_term */
-		LRU_DQ_SAFE(lru, q);
+		LRU_DQ(lru, q);
 		q = &qlane->long_term;
 		lru_insert(lru, q);
 		break;
 	case LRU_ENTRY_L2:
 		q = lru_queue_of(entry);
 		/* move entry to MRU of long_term */
-		glist_del(&lru->q);     /* skip L1 fixups */
-		--(q->size);
+		LRU_DQ(lru, q);
 		q = &qlane->long_term;
 		lru_insert(lru, q);
 		break;
 	case LRU_ENTRY_LONG_TERM:
 		q = lru_queue_of(entry);
 		/* advance entry to MRU (of long_term) */
-		LRU_DQ_SAFE(lru, q);
+		LRU_DQ(lru, q);
 		lru_insert(lru, q);
 		break;
 	default:
@@ -787,7 +759,7 @@ lru_reap_impl(enum lru_q_id qid)
 				   __LINE__, &entry->obj_handle,
 				   entry->lru.refcnt);
 #endif
-			LRU_DQ_SAFE(lru, q);
+			LRU_DQ(lru, q);
 			entry->lru.qid = LRU_ENTRY_NONE;
 			QUNLOCK(qlane);
 			cih_remove_latched(entry, &latch,
@@ -918,7 +890,7 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 		if (entry == parent ||
 		    pthread_rwlock_trywrlock(&entry->content_lock) == 0) {
 			/* Dequeue the chunk so it won't show up anymore */
-			CHUNK_LRU_DQ_SAFE(lru, lq);
+			CHUNK_LRU_DQ(lru, lq);
 			chunk->chunk_lru.qid = LRU_ENTRY_NONE;
 
 #ifdef USE_LTTNG
@@ -1069,7 +1041,7 @@ mdcache_lru_cleanup_push(mdcache_entry_t *entry)
 
 		/* out with the old queue */
 		q = lru_queue_of(entry);
-		LRU_DQ_SAFE(lru, q);
+		LRU_DQ(lru, q);
 
 		/* in with the new */
 		q = &qlane->cleanup;
@@ -1119,7 +1091,7 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 		/* it worked */
 		struct lru_q *q = lru_queue_of(entry);
 
-		LRU_DQ_SAFE(lru, q);
+		LRU_DQ(lru, q);
 		entry->lru.qid = LRU_ENTRY_CLEANUP;
 		atomic_set_uint32_t_bits(&entry->lru.flags,
 					 LRU_CLEANUP);
@@ -1158,6 +1130,7 @@ static inline int lru_run_lane(int lane)
 	size_t workdone = 0;
 	/* Current queue lane */
 	struct lru_q_lane *qlane = &LRU[lane];
+	struct glist_head *glist, *glistn;
 
 	q = &qlane->L1;
 
@@ -1167,15 +1140,8 @@ static inline int lru_run_lane(int lane)
 
 	/* ACTIVE */
 	QLOCK(qlane);
-	qlane->iter.active = true;
 
-	/** @todo FSF - the following comment no longer applies, see subsequent
-	 *              patch that simplifies this stuff.
-	 */
-	/* While for_each_safe per se is NOT MT-safe, the iteration can be made
-	 * so by the convention that any competing thread which would invalidate
-	 * the iteration also adjusts glist and (in particular) glistn */
-	glist_for_each_safe(qlane->iter.glist, qlane->iter.glistn, &q->q) {
+	glist_for_each_safe(glist, glistn, &q->q) {
 		/* The entry being examined */
 		mdcache_lru_t *lru = NULL;
 		/* a cache entry */
@@ -1187,7 +1153,7 @@ static inline int lru_run_lane(int lane)
 		if (workdone >= lru_state.per_lane_work)
 			break;
 
-		lru = glist_entry(qlane->iter.glist, mdcache_lru_t, q);
+		lru = glist_entry(glist, mdcache_lru_t, q);
 
 		/* get entry early.  This is safe without a ref, because we have
 		 * the QLANE lock */
@@ -1207,14 +1173,13 @@ static inline int lru_run_lane(int lane)
 
 			/* Move entry to MRU of L2 */
 			q = &qlane->L1;
-			LRU_DQ_SAFE(lru, q);
+			LRU_DQ(lru, q);
 			q = &qlane->L2;
 			lru_insert(lru, q);
 			++workdone;
 		}
 	} /* for_each_safe lru */
 
-	qlane->iter.active = false; /* !ACTIVE */
 	QUNLOCK(qlane);
 	LogDebug(COMPONENT_CACHE_INODE_LRU,
 		 "Actually processed %zd entries on lane %d",
@@ -1392,6 +1357,7 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 	struct lru_q_lane *qlane = &CHUNK_LRU[lane];
 	struct dir_chunk *chunk;
 	uint32_t refcnt;
+	struct glist_head *glist, *glistn;
 
 	q = &qlane->L1;
 
@@ -1401,19 +1367,15 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 
 	/* ACTIVE */
 	QLOCK(qlane);
-	qlane->iter.active = true;
 
-	/* While for_each_safe per se is NOT MT-safe, the iteration can be made
-	 * so by the convention that any competing thread which would invalidate
-	 * the iteration also adjusts glist and (in particular) glistn */
-	glist_for_each_safe(qlane->iter.glist, qlane->iter.glistn, &q->q) {
+	glist_for_each_safe(glist, glistn, &q->q) {
 		struct lru_q *q;
 
 		/* check per-lane work */
 		if (workdone >= lru_state.per_lane_work)
-			goto next_lane;
+			break;
 
-		lru = glist_entry(qlane->iter.glist, mdcache_lru_t, q);
+		lru = glist_entry(glist, mdcache_lru_t, q);
 
 		chunk = container_of(lru, struct dir_chunk, chunk_lru);
 
@@ -1426,13 +1388,11 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 
 		/* Move lru object to MRU of L2 */
 		q = &qlane->L1;
-		CHUNK_LRU_DQ_SAFE(lru, q);
+		CHUNK_LRU_DQ(lru, q);
 		q = &qlane->L2;
 		lru_insert(lru, q);
 	} /* for_each_safe lru */
 
-next_lane:
-	qlane->iter.active = false; /* !ACTIVE */
 	QUNLOCK(qlane);
 	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
 		 "Actually processed %zd chunks on lane %zd",
@@ -1899,8 +1859,7 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 			if (likely(long_refcnt == 0)) {
 				/* Move entry to MRU of L1 */
 				q = lru_queue_of(entry);
-				glist_del(&entry->lru.q);     /* skip fixups */
-				--(q->size);
+				LRU_DQ(&entry->lru, q);
 				q = &qlane->L1;
 				lru_insert(&entry->lru, q);
 			}
@@ -1942,7 +1901,7 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		if (q) {
 			/* as of now, entries leaving the cleanup queue
 			 * are LRU_ENTRY_NONE */
-			LRU_DQ_SAFE(&entry->lru, q);
+			LRU_DQ(&entry->lru, q);
 		}
 
 		QUNLOCK(qlane);
@@ -1975,7 +1934,7 @@ static void lru_clean_chunk(struct dir_chunk *chunk)
 
 	if (lq) {
 		/* dequeue the chunk */
-		CHUNK_LRU_DQ_SAFE(&chunk->chunk_lru, lq);
+		CHUNK_LRU_DQ(&chunk->chunk_lru, lq);
 	}
 
 	(void) atomic_dec_int64_t(&lru_state.chunks_used);
@@ -2035,13 +1994,12 @@ void lru_bump_chunk(struct dir_chunk *chunk)
 	switch (lru->qid) {
 	case LRU_ENTRY_L1:
 		/* advance chunk to MRU (of L1) */
-		CHUNK_LRU_DQ_SAFE(lru, q);
+		CHUNK_LRU_DQ(lru, q);
 		lru_insert(lru, q);
 		break;
 	case LRU_ENTRY_L2:
 		/* move chunk to MRU of L1 */
-		glist_del(&lru->q);	/* skip L1 fixups */
-		--(q->size);
+		CHUNK_LRU_DQ(lru, q);
 		q = &qlane->L1;
 		lru_insert(lru, q);
 		break;
