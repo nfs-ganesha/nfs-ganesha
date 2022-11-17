@@ -32,7 +32,7 @@
 
 #include "proxyv3_fsal_methods.h"
 
-static unsigned int rand_seed = 123451;
+static uint32_t global_xid;
 static char rpcMachineName[MAXHOSTNAMELEN + 1] = { 0 };
 static pthread_mutex_t rpcLock;
 static unsigned int rpcNumSockets;
@@ -102,6 +102,11 @@ bool proxyv3_rpc_init(const uint num_sockets)
 	fd_entries = gsh_calloc(rpcNumSockets, sizeof(struct fd_entry));
 	/* Just in case the alloc failed, bail. */
 	rpc_initialised = (fd_entries != NULL);
+
+	/* Could be constant but just to be on the safe side */
+	srand(time(NULL));
+	global_xid = (uint32_t)rand();
+
 	return rpc_initialised;
 }
 
@@ -700,12 +705,16 @@ bool proxyv3_call(const struct sockaddr *host,
 	struct rpc_msg reply;
 	struct fd_entry *fd_entry;
 
+	/* Have a unique XID on each call */
+	uint32_t xid = atomic_inc_uint32_t(&global_xid);
+
 	/* Log on entry, so we know what we were doing before we open the fd. */
 	LogFullDebug(COMPONENT_FSAL,
 		     "Sending an RPC: Program = %" PRIu32
 		     ", Version = %" PRIu32
-		     ", Procedure = %" PRIu32,
-		     rpcProgram, rpcVersion, rpcProc);
+		     ", Procedure = %" PRIu32
+		     ", XID = %" PRIx32,
+		     rpcProgram, rpcVersion, rpcProc, xid);
 
 	fd_entry = proxyv3_getfd_blocking(host, socklen, port);
 
@@ -736,13 +745,6 @@ bool proxyv3_call(const struct sockaddr *host,
 			     "rpc, no creds => authunix_ncreate_default()");
 		au = authunix_ncreate_default();
 	}
-
-	/*
-	 * We need some transaction ID, so how about a random one. Note that
-	 * while this isn't threadsafe, we're not particularly concerned about
-	 * it since we just want random bytes.
-	 */
-	u_int xid = rand_r(&rand_seed);
 
 	rmsg.rm_xid = xid;
 	rmsg.rm_direction = CALL;
