@@ -23,6 +23,7 @@
 
 import sys
 import dbus
+import json
 from collections import namedtuple
 
 Client = namedtuple('Client',
@@ -90,17 +91,30 @@ class ClientMgr():
         ts_ = (time[0], time[1])
         clients = []
         for client in client_array:
-            cl_ = client
-            lasttime = cl_[9]
-            clt = Client(ClientIP=str(cl_[0]),
-                         HasNFSv3=cl_[1],
-                         HasMNT=cl_[2],
-                         HasNLM4=cl_[3],
-                         HasRQUOTA=cl_[4],
-                         HasNFSv40=cl_[5],
-                         HasNFSv41=cl_[6],
-                         HasNFSv42=cl_[7],
-                         Has9P=cl_[8],
+            '''
+            return format of ShowClients
+            [<client_ip>, [["NFSv3", <data>], ["MNT", <data>], ["NMLv4", <data>],
+            ["RQUOTA", <data>], ["NFSv40", <data>], ["NFSv41", <data>],
+            ["NFSv42", <data>], ["9P", <data>]], [<lastime>, <nsecs>]]
+            convert index:1 to dict and use it
+            '''
+            try:
+                cl_str = json.dumps(client)
+                data = json.loads(cl_str)
+            except ValueError as e:
+                return False, e, []
+
+            cl_ = dict(data[1])
+            lasttime = client[2]
+            clt = Client(ClientIP=str(client[0]),
+                         HasNFSv3=cl_['NFSv3'],
+                         HasMNT=cl_['MNT'],
+                         HasNLM4=cl_['NMLv4'],
+                         HasRQUOTA=cl_['RQUOTA'],
+                         HasNFSv40=cl_['NFSv40'],
+                         HasNFSv41=cl_['NFSv41'],
+                         HasNFSv42=cl_['NFSv42'],
+                         Has9P=cl_['9P'],
                          LastTime=(lasttime[0],
                                    lasttime[1]))
             clients.append(clt)
@@ -219,18 +233,31 @@ class ExportMgr():
         ts_ = (time[0], time[1])
         exports = []
         for export in export_array:
-            ex = export
-            lasttime = ex[10]
-            exp = Export(ExportID=ex[0],
-                         ExportPath=str(ex[1]),
-                         HasNFSv3=ex[2],
-                         HasMNT=ex[3],
-                         HasNLM4=ex[4],
-                         HasRQUOTA=ex[5],
-                         HasNFSv40=ex[6],
-                         HasNFSv41=ex[7],
-                         HasNFSv42=ex[8],
-                         Has9P=ex[9],
+            '''
+            export format from ShowExports
+            [exp_id, path, [["NFSv3", <data>], ["MNT", <data>], ["NMLv4", <data>],
+            ["RQUOTA", <data>], ["NFSv40", <data>], ["NFSv41", <data>],
+            ["NFSv42", <data>], ["9P", <data>]], [<lastime>, <nsecs>]]
+            convert index:2 to dict and use it
+            '''
+            try:
+                exp_str = json.dumps(export)
+                data = json.loads(exp_str)
+            except ValueError as e:
+                return False, e, []
+
+            exp_stat = dict(data[2])
+            lasttime = export[3]
+            exp = Export(ExportID=export[0],
+                         ExportPath=str(export[1]),
+                         HasNFSv3=exp_stat['NFSv3'],
+                         HasMNT=exp_stat['MNT'],
+                         HasNLM4=exp_stat['NMLv4'],
+                         HasRQUOTA=exp_stat['RQUOTA'],
+                         HasNFSv40=exp_stat['NFSv40'],
+                         HasNFSv41=exp_stat['NFSv41'],
+                         HasNFSv42=exp_stat['NFSv42'],
+                         Has9P=exp_stat['9P'],
                          LastTime=(lasttime[0],
                                    lasttime[1]))
             exports.append(exp)
