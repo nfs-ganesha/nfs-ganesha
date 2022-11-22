@@ -123,9 +123,10 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
 	nfsstat4 status = NFS4_OK;
 	/* does this claim require a grace period? */
 	bool want_grace = false;
-	/* do we need a reference on the current state of grace? */
-	bool take_ref = !op_ctx->fsal_export->exp_ops.fs_supports(
+	bool fsal_grace_support = op_ctx->fsal_export->exp_ops.fs_supports(
 					op_ctx->fsal_export, fso_grace_method);
+	/* do we need a reference on the current state of grace? */
+	bool take_ref = !fsal_grace_support;
 
 	switch (claim) {
 	case CLAIM_NULL:
@@ -145,7 +146,7 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
 
 	case CLAIM_PREVIOUS:
 		want_grace = true;
-		if (!clientid->cid_allow_reclaim ||
+		if ((!clientid->cid_allow_reclaim && !fsal_grace_support) ||
 		    ((data->minorversion > 0) &&
 		    clientid->cid_cb.v41.cid_reclaim_complete))
 			status = NFS4ERR_NO_GRACE;
