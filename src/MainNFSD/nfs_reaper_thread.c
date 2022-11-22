@@ -86,33 +86,23 @@ restart:
 				str_valid = true;
 			}
 
-			/* Get the client record */
+			/* Get the client record. It will not be NULL. */
 			client_rec = client_id->cid_client_record;
 
 			/* get a ref to client_id as we might drop the
-			 * last reference with expiring.
+			 * last reference with expiring. This also protects the
+			 * reference to the client_record.
 			 */
 			inc_client_id_ref(client_id);
-
-			/* if record is STALE, the linkage to client_record is
-			 * removed already. Acquire a ref on client record
-			 * before we drop the mutex on clientid
-			 */
-			if (client_rec != NULL)
-				inc_client_record_ref(client_rec);
 
 			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
 			PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
 
-			if (client_rec != NULL)
-				PTHREAD_MUTEX_lock(&client_rec->cr_mutex);
+			PTHREAD_MUTEX_lock(&client_rec->cr_mutex);
 
 			nfs_client_id_expire(client_id, false);
 
-			if (client_rec != NULL) {
-				PTHREAD_MUTEX_unlock(&client_rec->cr_mutex);
-				dec_client_record_ref(client_rec);
-			}
+			PTHREAD_MUTEX_unlock(&client_rec->cr_mutex);
 
 			if (isFullDebug(COMPONENT_CLIENTID)) {
 				if (!str_valid)

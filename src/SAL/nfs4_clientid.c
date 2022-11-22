@@ -193,13 +193,10 @@ int display_client_id_rec(struct display_buffer *dspbuf,
 	if (b_left <= 0)
 		return b_left;
 
-	if (clientid->cid_client_record != NULL) {
-		b_left = display_client_record(dspbuf,
-					       clientid->cid_client_record);
+	b_left = display_client_record(dspbuf, clientid->cid_client_record);
 
-		if (b_left <= 0)
-			return b_left;
-	}
+	if (b_left <= 0)
+		return b_left;
 
 	if (clientid->cid_lease_reservations > 0)
 		delta = 0;
@@ -237,9 +234,6 @@ int display_client_id_rec(struct display_buffer *dspbuf,
 int display_clientid_name(struct display_buffer *dspbuf,
 			  nfs_client_id_t *clientid)
 {
-	if (clientid->cid_client_record == NULL)
-		return display_start(dspbuf);
-
 	return display_opaque_value(
 		dspbuf,
 		clientid->cid_client_record->cr_client_val,
@@ -321,8 +315,8 @@ void free_client_id(nfs_client_id_t *clientid)
 {
 	assert(atomic_fetch_int32_t(&clientid->cid_refcount) == 0);
 
-	if (clientid->cid_client_record != NULL)
-		dec_client_record_ref(clientid->cid_client_record);
+	/* This is where we finally let go of the client record. */
+	dec_client_record_ref(clientid->cid_client_record);
 
 #ifdef _HAVE_GSSAPI
 	if (clientid->cid_credential.flavor == RPCSEC_GSS) {
@@ -679,8 +673,7 @@ int remove_confirmed_client_id(nfs_client_id_t *clientid)
 		return rc;
 	}
 
-	if (clientid->cid_client_record != NULL)
-		clientid->cid_client_record->cr_confirmed_rec = NULL;
+	clientid->cid_client_record->cr_confirmed_rec = NULL;
 
 	/* Set this up so this client id record will be freed. */
 	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
@@ -724,8 +717,7 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
 	/* XXX prevents calling remove_confirmed before removed_confirmed,
 	 * if we failed to maintain the invariant that the cases are
 	 * disjoint */
-	if (clientid->cid_client_record != NULL)
-		clientid->cid_client_record->cr_unconfirmed_rec = NULL;
+	clientid->cid_client_record->cr_unconfirmed_rec = NULL;
 
 	/* Set this up so this client id record will be freed. */
 	clientid->cid_confirmed = EXPIRED_CLIENT_ID;
@@ -882,7 +874,6 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 	struct gsh_buffdesc old_key;
 	struct gsh_buffdesc old_value;
 	hash_table_t *ht_expire;
-	nfs_client_record_t *record;
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
@@ -915,21 +906,12 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 	else
 		ht_expire = ht_unconfirmed_client_id;
 
-	/* Need to clean up the client record. */
-	record = clientid->cid_client_record;
-	clientid->cid_client_record = NULL;
+	/* Detach the clientid record from the client record */
+	if (clientid->cid_client_record->cr_confirmed_rec == clientid)
+		clientid->cid_client_record->cr_confirmed_rec = NULL;
 
-	if (record != NULL) {
-		/* Detach the clientid record from the client record */
-		if (record->cr_confirmed_rec == clientid)
-			record->cr_confirmed_rec = NULL;
-
-		if (record->cr_unconfirmed_rec == clientid)
-			record->cr_unconfirmed_rec = NULL;
-
-		/* the linkage was removed, update refcount */
-		dec_client_record_ref(record);
-	}
+	if (clientid->cid_client_record->cr_unconfirmed_rec == clientid)
+		clientid->cid_client_record->cr_unconfirmed_rec = NULL;
 
 	if (make_stale) {
 		/* Keep clientid hashed, but mark it as stale */

@@ -1094,31 +1094,19 @@ restart:
 			     && ip_match(ip, cp)) {
 				inc_client_id_ref(cp);
 
-				/* Take a reference to the client record
-				 * before we drop cid_mutex. client record
-				 * may be decoupled, so check if it is still
-				 * coupled!
-				 */
+				/* client_record is always non-NULL. */
 				recp = cp->cid_client_record;
-				if (recp)
-					inc_client_record_ref(recp);
 
 				PTHREAD_MUTEX_unlock(&cp->cid_mutex);
 
 				PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
 
-				/* nfs_client_id_expire requires cr_mutex
-				 * if not decoupled already
-				 */
-				if (recp)
-					PTHREAD_MUTEX_lock(&recp->cr_mutex);
+				/* nfs_client_id_expire requires cr_mutex */
+				PTHREAD_MUTEX_lock(&recp->cr_mutex);
 
 				nfs_client_id_expire(cp, true);
 
-				if (recp) {
-					PTHREAD_MUTEX_unlock(&recp->cr_mutex);
-					dec_client_record_ref(recp);
-				}
+				PTHREAD_MUTEX_unlock(&recp->cr_mutex);
 
 				dec_client_id_ref(cp);
 				goto restart;
