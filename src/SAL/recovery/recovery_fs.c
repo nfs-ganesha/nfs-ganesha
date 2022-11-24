@@ -187,7 +187,7 @@ int fs_create_recov_dir(void)
 
 	if (v4_recov_dir_len >= sizeof(v4_recov_dir))
 		LogFatal(COMPONENT_CLIENTID,
-			 "v4 recovery dir path (%s/%s) is to long",
+			 "v4 recovery dir path (%s/%s) is too long",
 			 nfs_param.nfsv4_param.recov_root,
 			 nfs_param.nfsv4_param.recov_dir);
 
@@ -216,7 +216,7 @@ int fs_create_recov_dir(void)
 
 	if (v4_old_dir_len >= sizeof(v4_old_dir))
 		LogFatal(COMPONENT_CLIENTID,
-			 "v4 recovery dir path (%s/%s) is to long",
+			 "v4 recovery dir path (%s/%s) is too long",
 			 nfs_param.nfsv4_param.recov_root,
 			 nfs_param.nfsv4_param.recov_old_dir);
 
