@@ -114,11 +114,8 @@ extern bool xdr_fhandle3(XDR *, fhandle3 *);
 extern bool xdr_dirpath(XDR *, mnt3_dirpath *);
 extern bool xdr_name(XDR *, mnt3_name *);
 extern bool xdr_groups(XDR *, mnt3_groups *);
-extern bool xdr_groupnode(XDR *, groupnode *);
 extern bool xdr_exports(XDR *, mnt3_exports *);
-extern bool xdr_exportnode(XDR *, exportnode *);
 extern bool xdr_mountlist(XDR *, mountlist *);
-extern bool xdr_mountbody(XDR *, mountbody *);
 extern bool xdr_mountres3_ok(XDR *, mountres3_ok *);
 extern bool xdr_mountres3(XDR *, mountres3 *);
 
