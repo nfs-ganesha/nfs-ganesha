@@ -1410,7 +1410,7 @@ bool xdr_READDIR3args(XDR *xdrs, READDIR3args *objp)
 	return (true);
 }
 
-bool xdr_entry3(XDR *xdrs, entry3 *objp)
+bool xdr_entry3_x(XDR *xdrs, entry3 *objp)
 {
 	if (!xdr_fileid3(xdrs, &objp->fileid))
 		return (false);
@@ -1418,10 +1418,45 @@ bool xdr_entry3(XDR *xdrs, entry3 *objp)
 		return (false);
 	if (!xdr_cookie3(xdrs, &objp->cookie))
 		return (false);
-	if (!xdr_pointer(xdrs, (void **)&objp->nextentry, sizeof(entry3),
-			 (xdrproc_t) xdr_entry3))
-		return (false);
 	return (true);
+}
+
+bool xdr_entry3(XDR *xdrs, struct entry3 *objp)
+{
+	/*
+	 * more_elements is pre-computed in case the direction is
+	 * XDR_ENCODE or XDR_FREE.  more_elements is overwritten by
+	 * xdr_bool when the direction is XDR_DECODE.
+	 */
+	int freeing;
+	struct entry3 **ent = &objp;
+	struct entry3 **next = NULL;	/* pacify gcc */
+	bool_t more_elements = false;	/* yes, bool_t */
+
+	assert(xdrs != NULL);
+	assert(objp != NULL);
+
+	freeing = (xdrs->x_op == XDR_FREE);
+
+	for (;;) {
+		more_elements = (bool_t) (*ent != NULL);
+		if (!xdr_bool(xdrs, &more_elements))
+			return (false);
+		if (!more_elements)
+			return (true);	/* we are done */
+		/*
+		 * the unfortunate side effect of non-recursion is that in
+		 * the case of freeing we must remember the next object
+		 * before we free the current object ...
+		 */
+		if (freeing)
+			next = &((*ent)->nextentry);
+		if (!xdr_reference(xdrs, (void **) ent,
+				   (u_int) sizeof(struct entry3),
+				   (xdrproc_t) xdr_entry3_x))
+			return (false);
+		ent = (freeing) ? next : &((*ent)->nextentry);
+	}
 }
 
 bool xdr_encode_entry3(XDR *xdrs, entry3 *objp)
@@ -1536,7 +1571,7 @@ bool xdr_READDIRPLUS3args(XDR *xdrs, READDIRPLUS3args *objp)
 	return (true);
 }
 
-bool xdr_entryplus3(XDR *xdrs, entryplus3 *objp)
+bool xdr_entryplus3_x(XDR *xdrs, entryplus3 *objp)
 {
 	if (!xdr_fileid3(xdrs, &objp->fileid))
 		return (false);
@@ -1548,10 +1583,45 @@ bool xdr_entryplus3(XDR *xdrs, entryplus3 *objp)
 		return (false);
 	if (!xdr_post_op_fh3(xdrs, &objp->name_handle))
 		return (false);
-	if (!xdr_pointer(xdrs, (void **)&objp->nextentry, sizeof(entryplus3),
-			 (xdrproc_t) xdr_entryplus3))
-		return (false);
 	return (true);
+}
+
+bool xdr_entryplus3(XDR *xdrs, struct entryplus3 *objp)
+{
+	/*
+	 * more_elements is pre-computed in case the direction is
+	 * XDR_ENCODE or XDR_FREE.  more_elements is overwritten by
+	 * xdr_bool when the direction is XDR_DECODE.
+	 */
+	int freeing;
+	struct entryplus3 **ent = &objp;
+	struct entryplus3 **next = NULL;	/* pacify gcc */
+	bool_t more_elements = false;		/* yes, bool_t */
+
+	assert(xdrs != NULL);
+	assert(objp != NULL);
+
+	freeing = (xdrs->x_op == XDR_FREE);
+
+	for (;;) {
+		more_elements = (bool_t) (*ent != NULL);
+		if (!xdr_bool(xdrs, &more_elements))
+			return (false);
+		if (!more_elements)
+			return (true);	/* we are done */
+		/*
+		 * the unfortunate side effect of non-recursion is that in
+		 * the case of freeing we must remember the next object
+		 * before we free the current object ...
+		 */
+		if (freeing)
+			next = &((*ent)->nextentry);
+		if (!xdr_reference(xdrs, (void **) ent,
+				   (u_int) sizeof(struct entryplus3),
+				   (xdrproc_t) xdr_entryplus3_x))
+			return (false);
+		ent = (freeing) ? next : &((*ent)->nextentry);
+	}
 }
 
 bool xdr_encode_entryplus3(XDR *xdrs, entryplus3 *objp, const fattr3 *attrs)
