@@ -90,7 +90,7 @@ char *nfs_host_name = "localhost";
 
 /* command line syntax */
 
-static const char options[] = "v@L:N:f:p:FRTE:Ch";
+static const char options[] = "v@L:N:f:p:FRTE:ChI:";
 static const char usage[] =
 	"Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
 	"\t[-v]                display version information\n"
@@ -101,7 +101,8 @@ static const char usage[] =
 	"\t[-F]                the program stays in foreground\n"
 	"\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
 	"\t[-T]                dump the default configuration on stdout\n"
-	"\t[-E] <epoch>]       overrides ServerBootTime for ServerEpoch\n"
+	"\t[-E <epoch>]        overrides ServerBootTime for ServerEpoch\n"
+	"\t[-I <nodeid>]       cluster nodeid\n"
 	"\t[-C]                dump trace when segfault\n"
 	"\t[-h]                display this help\n"
 	"----------------- Signals ----------------\n"
@@ -249,6 +250,10 @@ int main(int argc, char *argv[])
 
 		case 'E':
 			nfs_ServerEpoch = (time_t) atoll(optarg);
+			break;
+
+		case 'I':
+			g_nodeid = atoi(optarg);
 			break;
 
 		case 'h':

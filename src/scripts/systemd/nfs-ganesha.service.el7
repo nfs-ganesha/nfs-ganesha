@@ -26,7 +26,7 @@ RuntimeDirectory=ganesha
 LogsDirectory=ganesha
 StateDirectory=nfs/ganesha
 EnvironmentFile=-/run/sysconfig/ganesha
-ExecStart=/bin/bash -c "${NUMACTL} ${NUMAOPTS} /usr/bin/ganesha.nfsd -C ${OPTIONS} ${EPOCH}"
+ExecStart=/bin/bash -c "${NUMACTL} ${NUMAOPTS} /usr/bin/ganesha.nfsd -C ${OPTIONS} ${EPOCH} ${GNODEID}"
 ExecReload=/bin/kill -HUP $MAINPID
 ExecStop=/bin/dbus-send --system   --dest=org.ganesha.nfsd --type=method_call /org/ganesha/nfsd/admin org.ganesha.nfsd.admin.shutdown
 

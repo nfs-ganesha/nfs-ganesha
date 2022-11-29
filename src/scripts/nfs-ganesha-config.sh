@@ -16,7 +16,8 @@ fi
 
 if [ -r ${CONFIGFILE} ]; then
 	. ${CONFIGFILE}
-	[ -x ${EPOCH_EXEC} ] &&  EPOCHVALUE=`${EPOCH_EXEC}`
+	[ -x "${EPOCH_EXEC%% *}" ] &&  EPOCHVALUE=`${EPOCH_EXEC}`
+	[ -x "${NODEID_EXEC%% *}" ] &&  NODEID=`${NODEID_EXEC}`
 
 	NOFILE_CONF=/lib/systemd/system/nfs-ganesha.service.d/10-nofile.conf
 	if [ -n "$NOFILE" ]; then
@@ -29,6 +30,7 @@ if [ -r ${CONFIGFILE} ]; then
 	{
 		cat ${CONFIGFILE}
 		[ -n "${EPOCHVALUE}" ] && echo EPOCH=\"-E $EPOCHVALUE\"
+		[ -n "${NODEID}" ] && echo GNODEID=\"-I $NODEID\"
 
 		# Set NUMA options if numactl is present
 		NUMACTL=$(command -v numactl 2>/dev/null)

@@ -1,4 +1,5 @@
 %define __arch_install_post /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot
+%define _unpackaged_files_terminate_build 0
 
 %if ( 0%{?suse_version} )
 BuildRequires: distribution-release
@@ -560,6 +561,7 @@ mkdir -p %{buildroot}%{_libexecdir}/ganesha
 install -m 644 config_samples/logrotate_ganesha	%{buildroot}%{_sysconfdir}/logrotate.d/ganesha
 install -m 644 scripts/ganeshactl/org.ganesha.nfsd.conf	%{buildroot}%{_sysconfdir}/dbus-1/system.d
 install -m 755 scripts/nfs-ganesha-config.sh %{buildroot}%{_libexecdir}/ganesha
+install -m 755 scripts/gen_ctdb_epoch.py %{buildroot}%{_libexecdir}/ganesha/
 %if %{with 9P}
 install -m 755 tools/mount.9P	%{buildroot}%{_sbindir}/mount.9P
 %endif
@@ -679,6 +681,7 @@ exit 0
 %config(noreplace) %{_sysconfdir}/ganesha/ganesha.conf
 %dir %{_libexecdir}/ganesha
 %{_libexecdir}/ganesha/nfs-ganesha-config.sh
+%{_libexecdir}/ganesha/gen_ctdb_epoch.py
 %dir %attr(0775,ganesha,root) %{_localstatedir}/log/ganesha
 
 %{_unitdir}/nfs-ganesha.service
