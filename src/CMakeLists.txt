@@ -44,7 +44,7 @@ set(GANESHA_MAJOR_VERSION 4)
 # Minor version is blank for development.  On release, it becomes ".0".  On a
 # stable maintenance branch, this becomes ".N" where N is monotonically
 # increasing starting at 1. Remember to include the "." !!
-set(GANESHA_MINOR_VERSION .1)
+set(GANESHA_MINOR_VERSION .2)
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 set(GANESHA_BUILD_RELEASE 1)
