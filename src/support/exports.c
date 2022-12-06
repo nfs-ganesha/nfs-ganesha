@@ -1775,7 +1775,7 @@ static int export_defaults_commit(void *node, void *link_mem,
 
 	/* Update under lock. */
 	PTHREAD_RWLOCK_wrlock(&export_opt_lock);
-	export_opt = export_opt_cfg;
+	export_opt.conf = export_opt_cfg.conf;
 	PTHREAD_RWLOCK_unlock(&export_opt_lock);
 
 	return 0;
@@ -2417,11 +2417,11 @@ int ReadExports(config_file_t in_config,
 
 	/* Set Protocols in export_opt.def.options from nfs_core_param. */
 	if (NFS_options & CORE_OPTION_NFSV3)
-		export_opt_cfg.def.options |= EXPORT_OPTION_NFSV3;
+		export_opt.def.options |= EXPORT_OPTION_NFSV3;
 	if (NFS_options & CORE_OPTION_NFSV4)
-		export_opt_cfg.def.options |= EXPORT_OPTION_NFSV4;
+		export_opt.def.options |= EXPORT_OPTION_NFSV4;
 	if (NFS_options & CORE_OPTION_9P)
-		export_opt_cfg.def.options |= EXPORT_OPTION_9P;
+		export_opt.def.options |= EXPORT_OPTION_9P;
 
 	rc = load_config_from_parse(in_config,
 				    &export_defaults_param,
