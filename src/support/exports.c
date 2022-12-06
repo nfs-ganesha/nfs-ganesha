@@ -2348,37 +2348,48 @@ err_out:
 	return -1;
 }
 
-struct log_exports_parms {
-	log_levels_t level;
-	int line;
-	const char *func;
-	const char *tag;
-};
-
 bool log_an_export(struct gsh_export *exp, void *state)
 {
 	struct log_exports_parms *lep = state;
 	char perms[1024] = "\0";
 	struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
+	if (exp == NULL) {
+		if (isLevel(COMPONENT_EXPORT, lep->level)) {
+			DisplayLogComponentLevel(COMPONENT_EXPORT,
+						 (char *) lep->file, lep->line,
+						 lep->func, lep->level,
+						 "%s%sNO EXPORT",
+						 lep->tag ? lep->tag : "",
+						 lep->tag ? " " : "");
+		}
+
+		return false;
+	}
+
 	(void) StrExportOptions(&dspbuf, &exp->export_perms);
 
 	if (isLevel(COMPONENT_EXPORT, lep->level)) {
 		DisplayLogComponentLevel(COMPONENT_EXPORT,
-					 (char *) __FILE__, lep->line,
+					 (char *) lep->file, lep->line,
 					 lep->func, lep->level,
-					 "Export %5d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
+					 "%s%sExport %5d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
+					 lep->tag ? lep->tag : "",
+					 lep->tag ? " " : "",
 					 exp->export_id, exp->cfg_pseudopath,
 					 exp->cfg_fullpath, exp->FS_tag, perms);
 	}
-	LogClients(lep->level, lep->line, lep->func, "   ", exp);
+
+	if (lep->clients)
+		LogClients(lep->level, lep->line, lep->func, "   ", exp);
 
 	return true;
 }
 
 void log_all_exports(log_levels_t level, int line, const char *func)
 {
-	struct log_exports_parms lep = {level, line, func};
+	struct log_exports_parms lep = {
+				level, __FILE__, line, func, NULL, true};
 
 	foreach_gsh_export(log_an_export, false, &lep);
 }

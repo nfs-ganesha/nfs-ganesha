@@ -65,6 +65,7 @@ enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
 {
 	fsal_status_t status = {0, 0};
 	struct fsal_obj_handle *file_obj;
+	struct gsh_export *root_export;
 
 	PUTROOTFH4res * const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
 
@@ -80,7 +81,11 @@ enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
 	/* Get the root export of the Pseudo FS and release any old export
 	 * reference
 	 */
-	set_op_context_export(get_gsh_export_by_pseudo("/", true));
+	root_export = get_gsh_export_by_pseudo("/", true);
+
+	LOG_EXPORT(NIV_DEBUG, "PUTROOTFH", root_export, false);
+
+	set_op_context_export(root_export);
 
 	if (op_ctx->ctx_export == NULL) {
 		LogCrit(COMPONENT_EXPORT,

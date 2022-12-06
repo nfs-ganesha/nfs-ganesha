@@ -238,4 +238,23 @@ void free_export_resources(struct gsh_export *exp, bool config);
 
 void exports_pkginit(void);
 
+struct log_exports_parms {
+	log_levels_t level;
+	const char *file;
+	int line;
+	const char *func;
+	const char *tag;
+	bool clients;
+};
+
+bool log_an_export(struct gsh_export *exp, void *state);
+
+#define LOG_EXPORT(level, tag, exp, clients)				   \
+	do {								   \
+		struct log_exports_parms lep = {level, __FILE__, __LINE__, \
+						__func__, tag, clients};   \
+									   \
+		(void) log_an_export(exp, &lep);			   \
+	} while (0)
+
 #endif				/* !NFS_EXPORTS_H */

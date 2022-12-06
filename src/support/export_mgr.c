@@ -313,12 +313,21 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 		atomic_store_voidptr(cache_slot, node);
 	} else {
 		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
+
+		LOG_EXPORT(NIV_DEBUG, "Found", NULL, false);
+
 		return NULL;
 	}
 
  out:
 	get_gsh_export_ref(exp);
+
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
+
+	LOG_EXPORT(NIV_DEBUG, "Found", exp, false);
+
 	return exp;
 }
 
@@ -422,6 +431,9 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 
 	if (ret_exp != NULL)
 		get_gsh_export_ref(ret_exp);
+
+
+	LOG_EXPORT(NIV_DEBUG, "Found", ret_exp, false);
 
 	return ret_exp;
 }
@@ -562,6 +574,8 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 	if (ret_exp != NULL)
 		get_gsh_export_ref(ret_exp);
 
+	LOG_EXPORT(NIV_DEBUG, "Found", ret_exp, false);
+
 	return ret_exp;
 }
 
@@ -605,6 +619,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 	struct glist_head *glist;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
@@ -612,12 +627,21 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 		    !strcmp(export->FS_tag, tag))
 			goto out;
 	}
+
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
+
+	LOG_EXPORT(NIV_DEBUG, "Found", NULL, false);
+
 	return NULL;
 
  out:
 	get_gsh_export_ref(export);
+
 	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+
+	LOG_EXPORT(NIV_DEBUG, "Found", export, false);
+
 	return export;
 }
 

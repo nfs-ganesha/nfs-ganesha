@@ -143,6 +143,9 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	 * before releasing the old export (to prevent thrashing).
 	 */
 	exporting = get_gsh_export(ntohs(v4_handle->id.exports));
+
+	LOG_EXPORT(NIV_DEBUG, "PUTFH", exporting, false);
+
 	if (exporting == NULL) {
 		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
 			   "NFS4 Request from client (%s) has invalid export identifier %d",
