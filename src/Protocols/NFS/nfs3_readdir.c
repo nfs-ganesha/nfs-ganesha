@@ -397,6 +397,11 @@ out_destroy:
 	if (parent_dir_obj)
 		parent_dir_obj->obj_ops->put_ref(parent_dir_obj);
 
+	if (tracker.entries) {
+		gsh_free(tracker.entries);
+		tracker.entries = NULL;
+	}
+
 	return rc;
 }				/* nfs3_readdir */
 
