@@ -2529,7 +2529,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 					inc_state_t_ref(state);
 
 					if (old_state != NULL)
-						dec_nlm_state_ref(old_state);
+						dec_state_t_ref(old_state);
 
 					glist_add_tail(
 					 &state->state_data.lock.state_locklist,
