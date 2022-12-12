@@ -39,7 +39,10 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <libgen.h>
+#include <dirent.h>
+#include <fnmatch.h>
 #include "log.h"
+#include "common_utils.h"
 
 #if HAVE_STRING_H
 #   include <string.h>
@@ -79,6 +82,7 @@ struct bufstack {
 
 static char *filter_string(char *src, int esc);
 static int new_file(char *filename, struct parser_state *st);
+static int process_dir(char *d_name, struct parser_state *st);
 static int fetch_url(char *name_tok, struct parser_state *st);
 static int pop_file(struct parser_state *st);
 
@@ -130,6 +134,7 @@ INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
 PATHNAME     \/([a-zA-Z0-9\-\.\_]+\/?)?
 LONGPATH     (\/?[a-zA-Z0-9\-\.\_]+(\/[a-zA-Z0-9\-\.\_]+)+)\/?
 TOKEN_CHARS  [a-zA-Z_\?][a-zA-Z0-9\._\-]*
+DIR_PATH  \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_\*]+)*\/?
 
 WC           [a-zA-Z0-9\._\-]
 WR           \[{BANG}?({WC})+\]
@@ -145,7 +150,7 @@ URLTYPES     (rados)
 INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
 
 /* INCLUDE state is used for picking the name of the include file */
-%START YY_INIT DEFINITION TERM INCLUDE URL
+%START YY_INIT DEFINITION TERM INCLUDE URL INCL_DIR
 
 %%
 %{
@@ -183,6 +188,40 @@ INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
 		BEGIN YY_INIT;
 		DEBUG_LEX("done new file\n");
 	}
+}
+
+<YY_INIT>"%dir" { /* include file start */
+        DEBUG_LEX("INCL_DIR\n");
+        BEGIN INCL_DIR;
+        /* not a token, return nothing */
+}
+
+<INCL_DIR>{DIR_PATH} {
+        {
+                int rc;
+
+                DEBUG_LEX("Calling process_dir with unquoted %s\n", yytext);
+                rc = process_dir(yytext, stp);
+                if (rc) {
+                        yyterminate();
+		}
+                BEGIN YY_INIT;
+                DEBUG_LEX("done process_dir\n");
+        }
+}
+
+<INCL_DIR>\"{DIR_PATH}\" {
+        {
+                int rc;
+
+                DEBUG_LEX("Calling process_dir with unquoted %s\n", yytext);
+                rc = process_dir(yytext, stp);
+                if (rc) {
+                        yyterminate();
+		}
+                BEGIN YY_INIT;
+                DEBUG_LEX("done process_dir\n");
+        }
 }
 
 <YY_INIT>"%url" { /* URL include file start */
@@ -460,6 +499,116 @@ void ganeshun_yy_cleanup_parser(struct parser_state *st)
 		while(pop_file(st) != 0);
 	}
 	ganeshun_yylex_destroy(st->scanner);
+}
+
+static int is_pattern(const char *str)
+{
+	if (strchr(str, '*') != NULL ||
+		strchr(str, '?') != NULL ||
+		strchr(str, '[') != NULL)
+	return 1;
+
+	return 0;
+}
+
+static int process_dir(char *d_name, struct parser_state *st)
+{
+	DIR *d;
+	struct dirent *dir;
+	void *yyscanner = st->scanner;
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+	char fname[MAXPATHLEN], dname[MAXPATHLEN], *tmp_dpath = NULL;
+	char *pattern = NULL , *laststr = NULL, *dir_path = NULL;
+	int rc = 0, dir_strlen;
+
+	dir_strlen = strlen(d_name);
+	if (dir_strlen > MAXPATHLEN)
+	{
+		config_parse_error(yylloc, st,
+			"Error: Directory path length is > %d",
+                         MAXPATHLEN);
+		return 1;
+	}
+
+	if (*d_name == '\"') {
+		strlcpy(dname, d_name + 1 , dir_strlen-1);
+	} else {
+		/* strlcpy copies n-1 char, so +1 */
+		strlcpy(dname, d_name, dir_strlen+1);
+	}
+
+	DEBUG_LEX("Processing directory : %s\n", dname);
+
+	/* check last string in path is pattern or not */
+	tmp_dpath = gsh_strdupa(dname);
+	laststr = gsh_strdup(basename(tmp_dpath));
+	if (is_pattern(laststr))
+	{
+		pattern = laststr;
+		dir_path = gsh_strdup(dirname(tmp_dpath));
+	} else {
+		dir_path = gsh_strdup(tmp_dpath);
+	}
+
+	DEBUG_LEX("Processing directory : %s pattern : \"%s\" \n",
+						dir_path, pattern);
+
+	d = opendir(dir_path);
+	if (d)
+	{
+		while ((dir = readdir(d)) != NULL)
+		{
+			if (strlen(dir->d_name) + dir_strlen + 1 > MAXPATHLEN)
+			{
+				DEBUG_LEX("Warning: Path(%s/%s) length is > %d, \
+						ignored", dir_path, dir->d_name,
+						MAXPATHLEN);
+				config_parse_error(yylloc, st,
+					"Warning: Path(%s/%s) length is > %d, \
+					ignored", dir_path, dir->d_name,
+					MAXPATHLEN);
+				continue;
+			}
+
+			if (dir->d_type != DT_REG ||
+				strcmp(dir->d_name, ".") == 0 ||
+				strcmp(dir->d_name, "..") == 0)
+				continue;
+
+			if (pattern == NULL ||
+				fnmatch(pattern, dir->d_name, 0) == 0)
+			{
+				sprintf(fname, "%s/%s", dir_path, dir->d_name);
+				DEBUG_LEX("Processing File : %s \n", fname);
+
+				rc = new_file(fname, st);
+				if (rc == ENOMEM)
+				{
+					DEBUG_LEX("Error: %s", strerror(rc));
+					config_parse_error(yylloc, st,
+						"Error:  %s", strerror(rc));
+					rc = 1;
+					goto errout;
+				}
+			}
+		}
+		closedir(d);
+		goto out;
+	} else {
+		rc = errno;
+		DEBUG_LEX("opendir() failed :%s ", strerror(rc));
+		config_parse_error(yylloc, st,
+			"opendir(%s) failed. Error: %s, ignored",
+			dir_path, strerror(rc));
+		goto out;
+	}
+
+errout:
+	closedir(d);
+out:
+	gsh_free(dir_path);
+	gsh_free(pattern);
+	return rc;
 }
 
 static int new_file(char *name_tok,

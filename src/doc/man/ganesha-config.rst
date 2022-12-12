@@ -69,18 +69,21 @@ Protocols = 3, 4, 9p;
 
 Including other config files
 --------------------------------------------------------------------------------
-Additional files can be referenced in a configuration using '%include'
-and '%url' directives.::
+Additional files can be referenced in a configuration using '%include' or '%dir'
+or '%url' directives.::
 
 	%include <filename>
+	%dir <directory_name>
 	%url <url, e.g., rados://mypool/mynamespace/myobject>
 
 The included file is inserted into the configuration text in place of
-the %include or %url line. Sub-inclusions may be to any depth. Filenames and
-URLs may optionally use '"'::
+the %include or %dir or %url line. Sub-inclusions may be to any depth.
+Filenames or directory or URLs may optionally use '"'::
 
     %include base.conf
     %include "base.conf"
+    %dir /etc/ganesha/ganesha_config/
+    %dir "/etc/ganesha/ganesha_config/"
     %url rados://mypool/mynamespace/myobject
     %url "rados://mypool/mynamespace/myobject"
     %url rados://mypool/myobject
