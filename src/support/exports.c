@@ -1184,16 +1184,6 @@ uint32_t export_check_options(struct gsh_export *exp)
 	return perms.options;
 }
 
-static inline bool export_can_be_mounted(struct gsh_export *export)
-{
-	uint32_t options = export_check_options(export);
-
-	return (options & EXPORT_OPTION_NFSV4) != 0
-	       && export->cfg_pseudopath != NULL
-	       && export->export_id != 0
-	       && export->cfg_pseudopath[1] != '\0';
-}
-
 /**
  * @brief Commit an export block
  *
@@ -1616,12 +1606,11 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 
 	/* add_export_commit shouldn't add this export to mount work as
 	 * add_export_commit deals with creating pseudo mount directly.
-	 * So add this export to mount work only if NFSv4 exported and
-	 * is not a dynamically added export.
+	 * So add this export to mount work only if is not a dynamically
+	 * added export. We add all such exports because only once all the
+	 * export config load is complete can we be sure of all the options.
 	 */
-	if (commit_type == initial_export &&
-	    export->export_perms.options & export->export_perms.set &
-							EXPORT_OPTION_NFSV4)
+	if (commit_type == initial_export)
 		export_add_to_mount_work(export);
 
 	LogMidDebug_Clients(export);

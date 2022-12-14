@@ -337,13 +337,13 @@ bool pseudo_mount_export(struct gsh_export *export)
 	int rc;
 	bool result = false;
 
+	LOG_EXPORT(NIV_DEBUG, "Attempt pseudofs mount for", export, false);
+
 	/* skip exports that aren't for NFS v4
 	 * Also, nothing to actually do for Pseudo Root
 	 * (defer checking pseudopath for Pseudo Root until we have refstr.
 	 */
-	if ((export->export_perms.options & EXPORT_OPTION_NFSV4) == 0
-	    || export->pseudopath == NULL
-	    || export->export_id == 0)
+	if (!export_can_be_mounted(export) || export->export_id == 0)
 		return true;
 
 	/* Initialize state and it's op_context.
