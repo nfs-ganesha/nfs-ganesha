@@ -107,14 +107,14 @@ class ClientMgr():
             cl_ = dict(data[1])
             lasttime = client[2]
             clt = Client(ClientIP=str(client[0]),
-                         HasNFSv3=cl_['NFSv3'],
-                         HasMNT=cl_['MNT'],
-                         HasNLM4=cl_['NMLv4'],
-                         HasRQUOTA=cl_['RQUOTA'],
-                         HasNFSv40=cl_['NFSv40'],
-                         HasNFSv41=cl_['NFSv41'],
-                         HasNFSv42=cl_['NFSv42'],
-                         Has9P=cl_['9P'],
+                         HasNFSv3=cl_.get('NFSv3', 0),
+                         HasMNT=cl_.get('MNT', 0),
+                         HasNLM4=cl_.get('NMLv4', 0),
+                         HasRQUOTA=cl_.get('RQUOTA', 0),
+                         HasNFSv40=cl_.get('NFSv40', 0),
+                         HasNFSv41=cl_.get('NFSv41', 0),
+                         HasNFSv42=cl_.get('NFSv42', 0),
+                         Has9P=cl_.get('9P', 0),
                          LastTime=(lasttime[0],
                                    lasttime[1]))
             clients.append(clt)
@@ -250,14 +250,14 @@ class ExportMgr():
             lasttime = export[3]
             exp = Export(ExportID=export[0],
                          ExportPath=str(export[1]),
-                         HasNFSv3=exp_stat['NFSv3'],
-                         HasMNT=exp_stat['MNT'],
-                         HasNLM4=exp_stat['NMLv4'],
-                         HasRQUOTA=exp_stat['RQUOTA'],
-                         HasNFSv40=exp_stat['NFSv40'],
-                         HasNFSv41=exp_stat['NFSv41'],
-                         HasNFSv42=exp_stat['NFSv42'],
-                         Has9P=exp_stat['9P'],
+                         HasNFSv3=exp_stat.get('NFSv3', 0),
+                         HasMNT=exp_stat.get('MNT', 0),
+                         HasNLM4=exp_stat.get('NMLv4', 0),
+                         HasRQUOTA=exp_stat.get('RQUOTA', 0),
+                         HasNFSv40=exp_stat.get('NFSv40', 0),
+                         HasNFSv41=exp_stat.get('NFSv41', 0),
+                         HasNFSv42=exp_stat.get('NFSv42', 0),
+                         Has9P=exp_stat.get('9P', 0),
                          LastTime=(lasttime[0],
                                    lasttime[1]))
             exports.append(exp)
