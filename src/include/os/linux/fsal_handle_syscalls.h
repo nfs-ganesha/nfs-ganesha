@@ -54,7 +54,10 @@ struct file_handle {
 	unsigned char f_handle[0];
 };
 
-#if defined(__i386__)
+#if defined(__aarch64__)
+#define __NR_name_to_handle_at  264
+#define __NR_open_by_handle_at  265
+#elif defined(__i386__)
 #define __NR_name_to_handle_at  341
 #define __NR_open_by_handle_at  342
 #elif defined(__x86_64__)
