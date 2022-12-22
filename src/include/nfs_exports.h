@@ -46,10 +46,10 @@
 #endif
 
 #include "config_parsing.h"
+#include "client_mgr.h"
 #include "export_mgr.h"
 #include "fsal_types.h"
 #include "log.h"
-#include "cidr.h"
 
 /*
  * Export List structure
@@ -61,17 +61,6 @@
 #define EXPORT_LINESIZE 1024
 #define INPUT_SIZE 1024
 
-
-typedef enum exportlist_client_type__ {
-	PROTO_CLIENT = 0,
-	NETWORK_CLIENT = 1,
-	NETGROUP_CLIENT = 2,
-	WILDCARDHOST_CLIENT = 3,
-	GSSPRINCIPAL_CLIENT = 4,
-	MATCH_ANY_CLIENT = 5,
-	BAD_CLIENT = 6
-} exportlist_client_type_t;
-
 struct global_export_perms {
 	struct export_perms def;
 	struct export_perms conf;
@@ -79,25 +68,10 @@ struct global_export_perms {
 
 #define GSS_DEFINE_LEN_TEMP 255
 
-typedef struct exportlist_client_entry__ {
-	struct glist_head cle_list;
-	exportlist_client_type_t type;
-	union {
-		struct {
-			CIDR *cidr;
-		} network;
-		struct {
-			char *netgroupname;
-		} netgroup;
-		struct {
-			char *wildcard;
-		} wildcard;
-		struct {
-			char *princname;
-		} gssprinc;
-	} client;
+struct exportlist_client_entry {
+	struct base_client_entry client_entry;
 	struct export_perms client_perms;	/*< Available mount options */
-} exportlist_client_entry_t;
+};
 
 /* Constants for export options masks */
 #define EXPORT_OPTION_FSID_SET 0x00000001 /* Set if Filesystem_id is set */

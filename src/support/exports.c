@@ -34,13 +34,11 @@
 #include "nfs_core.h"
 #include "nfs_file_handle.h"
 #include "nfs_exports.h"
-#include "nfs_ip_stats.h"
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
 #include "config_parsing.h"
 #include "common_utils.h"
 #include <stdlib.h>
-#include <fnmatch.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -51,7 +49,6 @@
 #include "fsal_up.h"
 #include "sal_functions.h"
 #include "pnfs_utils.h"
-#include "netgroup_cache.h"
 #include "mdcache.h"
 
 /**
@@ -87,8 +84,6 @@ struct global_export_perms export_opt = {
 struct global_export_perms export_opt_cfg = {
 	GLOBAL_EXPORT_PERMS_INITIALIZER
 };
-
-static void FreeClientList(struct glist_head *clients);
 
 static int StrExportOptions(struct display_buffer *dspbuf,
 			    struct export_perms *p_perms)
@@ -308,304 +303,85 @@ static int StrExportOptions(struct display_buffer *dspbuf,
 	return b_left;
 }
 
-static char *client_types[] = {
-	[PROTO_CLIENT] = "PROTO_CLIENT",
-	[NETWORK_CLIENT] = "NETWORK_CLIENT",
-	[NETGROUP_CLIENT] = "NETGROUP_CLIENT",
-	[WILDCARDHOST_CLIENT] = "WILDCARDHOST_CLIENT",
-	[GSSPRINCIPAL_CLIENT] = "GSSPRINCIPAL_CLIENT",
-	[MATCH_ANY_CLIENT] = "MATCH_ANY_CLIENT",
-	[BAD_CLIENT] = "BAD_CLIENT"
-	 };
-
-void LogClientListEntry(log_levels_t level,
-			int line,
-			const char *func,
-			const char *tag,
-			exportlist_client_entry_t *entry)
+void LogExportClientListEntry(log_levels_t level,
+			      int line,
+			      const char *func,
+			      const char *tag,
+			      struct exportlist_client_entry *entry)
 {
 	char buf[1024] = "\0";
 	struct display_buffer dspbuf = {sizeof(buf), buf, buf};
-	char *paddr = NULL;
-	char *free_paddr = NULL;
+	int b_left = display_start(&dspbuf);
 
 	if (!isLevel(COMPONENT_EXPORT, level))
 		return;
 
-	if (tag != NULL)
-		display_cat(&dspbuf, tag);
+	if (b_left > 0 && tag != NULL)
+		b_left = display_cat(&dspbuf, tag);
 
-	if (level >= NIV_DEBUG)
-		display_printf(&dspbuf, "%p ", entry);
+	if (b_left > 0 && level >= NIV_DEBUG)
+		b_left = display_printf(&dspbuf, "%p ", entry);
 
-	switch (entry->type) {
-	case NETWORK_CLIENT:
-		free_paddr = cidr_to_str(entry->client.network.cidr,
-					 CIDR_NOFLAGS);
-		paddr = free_paddr;
-		break;
+	if (b_left > 0)
+		b_left = StrClient(&dspbuf, &entry->client_entry);
 
-	case NETGROUP_CLIENT:
-		paddr = entry->client.netgroup.netgroupname;
-		break;
+	if (b_left > 0)
+		b_left = display_cat(&dspbuf, " (");
 
-	case WILDCARDHOST_CLIENT:
-		paddr = entry->client.wildcard.wildcard;
-		break;
+	if (b_left > 0)
+		b_left = StrExportOptions(&dspbuf, &entry->client_perms);
 
-	case GSSPRINCIPAL_CLIENT:
-		paddr = entry->client.gssprinc.princname;
-		break;
-
-	case MATCH_ANY_CLIENT:
-		paddr = "*";
-		break;
-
-	case PROTO_CLIENT:
-	case BAD_CLIENT:
-		paddr = "<unknown>";
-		break;
-
-	default:
-		break;
-	}
-
-	if (entry->type > BAD_CLIENT) {
-		display_printf(&dspbuf, "UNKNOWN_CLIENT_TYPE: 0x%08x (",
-			       entry->type);
-	} else {
-		display_printf(&dspbuf, "%s: %s (",
-			       client_types[entry->type], paddr);
-	}
-
-	(void) StrExportOptions(&dspbuf, &entry->client_perms);
-
-	display_cat(&dspbuf, ")");
+	if (b_left > 0)
+		b_left = display_cat(&dspbuf, ")");
 
 	DisplayLogComponentLevel(COMPONENT_EXPORT,
 				 (char *) __FILE__, line, func, level,
 				 "%s", buf);
 
-	gsh_free(free_paddr);
 }
 
-#define LogMidDebug_ClientListEntry(tag, cli) \
-	LogClientListEntry(NIV_MID_DEBUG, __LINE__, (char *) __func__, tag, cli)
+#define LogMidDebug_ExportClientListEntry(tag, cli) \
+	LogExportClientListEntry(NIV_MID_DEBUG, \
+				 __LINE__, (char *) __func__, tag, cli)
 
-static void LogClients(log_levels_t level,
-		       int line,
-		       const char *func,
-		       const char *tag,
-		       struct gsh_export *export)
+static void LogExportClients(log_levels_t level,
+			     int line,
+			     const char *func,
+			     const char *tag,
+			     struct gsh_export *export)
 {
 	struct glist_head *glist;
 
 	PTHREAD_RWLOCK_rdlock(&export->lock);
 
 	glist_for_each(glist, &export->clients) {
-		exportlist_client_entry_t *client;
+		struct base_client_entry *client;
 
-		client = glist_entry(glist, exportlist_client_entry_t,
+		client = glist_entry(glist,
+				     struct base_client_entry,
 				     cle_list);
-		LogClientListEntry(level, line, func, tag, client);
+		LogExportClientListEntry(level, line, func, tag,
+					 container_of(
+						client,
+						struct exportlist_client_entry,
+						client_entry));
 	}
 
 	PTHREAD_RWLOCK_unlock(&export->lock);
 }
 
-#define LogMidDebug_Clients(export) \
-	LogClients(NIV_MID_DEBUG, __LINE__, __func__, NULL, export)
+#define LogMidDebug_ExportClients(export) \
+	LogExportClients(NIV_MID_DEBUG, __LINE__, __func__, NULL, export)
 
-/**
- * @brief Expand the client name token into one or more client entries
- *
- * @param client_list[IN] the client list this gets linked to (in tail order)
- * @param client_tok [IN] the name string.  We modify it.
- * @param type_hint  [IN] type hint from parser for client_tok
- * @param perms      [IN] pointer to the permissions to copy into each
- * @param cnode      [IN] opaque pointer needed for config_proc_error()
- * @param err_type   [OUT] error handling ref
- *
- * @returns 0 on success, error count on failure
- */
-
-static int add_client(struct glist_head *client_list,
-		      const char *client_tok,
-		      enum term_type type_hint,
-		      struct export_perms *perms,
-		      void *cnode,
-		      struct config_error_type *err_type)
+void FreeExportClient(struct base_client_entry *client)
 {
-	struct exportlist_client_entry__ *cli;
-	int errcnt = 0;
-	struct addrinfo *info;
-	CIDR *cidr;
-	int rc;
+	struct exportlist_client_entry *expclient = NULL;
 
-	cli = gsh_calloc(1, sizeof(struct exportlist_client_entry__));
+	expclient = container_of(client,
+				 struct exportlist_client_entry,
+				 client_entry);
 
-	cli->client.network.cidr = NULL;
-	glist_init(&cli->cle_list);
-	switch (type_hint) {
-	case TERM_V4_ANY:
-		cli->type = MATCH_ANY_CLIENT;
-		break;
-	case TERM_NETGROUP:
-		if (strlen(client_tok) > MAXHOSTNAMELEN) {
-			config_proc_error(cnode, err_type,
-					  "netgroup (%s) name too long",
-					  client_tok);
-			err_type->invalid = true;
-			errcnt++;
-			goto out;
-		}
-		cli->client.netgroup.netgroupname = gsh_strdup(client_tok + 1);
-		cli->type = NETGROUP_CLIENT;
-		break;
-	case TERM_V4CIDR:
-	case TERM_V6CIDR:
-	case TERM_V4ADDR:
-	case TERM_V6ADDR:
-		cidr = cidr_from_str(client_tok);
-		if (cidr == NULL) {
-			switch (type_hint) {
-			case TERM_V4CIDR:
-				config_proc_error(cnode, err_type,
-						  "Expected a IPv4 CIDR address, got (%s)",
-						  client_tok);
-				break;
-			case TERM_V6CIDR:
-				config_proc_error(cnode, err_type,
-						  "Expected a IPv6 CIDR address, got (%s)",
-						  client_tok);
-				break;
-			case TERM_V4ADDR:
-				config_proc_error(cnode, err_type,
-						  "IPv4 addr (%s) not in presentation format",
-						  client_tok);
-				break;
-			case TERM_V6ADDR:
-				config_proc_error(cnode, err_type,
-						  "IPv6 addr (%s) not in presentation format",
-						  client_tok);
-				break;
-			default:
-				break;
-			}
-			err_type->invalid = true;
-			errcnt++;
-			goto out;
-		}
-		cli->client.network.cidr = cidr;
-		cli->type = NETWORK_CLIENT;
-		break;
-	case TERM_REGEX:
-		if (strlen(client_tok) > MAXHOSTNAMELEN) {
-			config_proc_error(cnode, err_type,
-					  "Wildcard client (%s) name too long",
-					  client_tok);
-			err_type->invalid = true;
-			errcnt++;
-			goto out;
-		}
-		cli->client.wildcard.wildcard = gsh_strdup(client_tok);
-		cli->type = WILDCARDHOST_CLIENT;
-		break;
-	case TERM_TOKEN: /* only dns names now. */
-		rc = gsh_getaddrinfo(client_tok, NULL, NULL, &info,
-				nfs_param.core_param.enable_AUTHSTATS);
-		if (rc == 0) {
-			struct addrinfo *ap, *ap_last = NULL;
-			struct in_addr in_addr_last;
-			struct in6_addr in6_addr_last;
-
-			for (ap = info; ap != NULL; ap = ap->ai_next) {
-				LogFullDebug(COMPONENT_EXPORT,
-					     "flags=%d family=%d socktype=%d protocol=%d addrlen=%d name=%s",
-					     ap->ai_flags,
-					     ap->ai_family,
-					     ap->ai_socktype,
-					     ap->ai_protocol,
-					     (int) ap->ai_addrlen,
-					     ap->ai_canonname);
-				if (cli == NULL) {
-					cli = gsh_calloc(1,
-						sizeof(struct
-						    exportlist_client_entry__));
-					glist_init(&cli->cle_list);
-				}
-				if (ap->ai_family == AF_INET &&
-				    (ap->ai_socktype == SOCK_STREAM ||
-				     ap->ai_socktype == SOCK_DGRAM)) {
-					struct in_addr infoaddr =
-						((struct sockaddr_in *)
-						 ap->ai_addr)->sin_addr;
-					if (ap_last != NULL &&
-					    ap_last->ai_family
-					    == ap->ai_family &&
-					    memcmp(&infoaddr,
-						   &in_addr_last,
-						   sizeof(struct in_addr)) == 0)
-						continue;
-					cli->client.network.cidr =
-						cidr_from_inaddr(&infoaddr);
-					cli->type = NETWORK_CLIENT;
-					ap_last = ap;
-					in_addr_last = infoaddr;
-
-				} else if (ap->ai_family == AF_INET6 &&
-					   (ap->ai_socktype == SOCK_STREAM ||
-					    ap->ai_socktype == SOCK_DGRAM)) {
-					struct in6_addr infoaddr =
-						((struct sockaddr_in6 *)
-						 ap->ai_addr)->sin6_addr;
-
-					if (ap_last != NULL &&
-					    ap_last->ai_family == ap->ai_family
-					    &&  !memcmp(&infoaddr,
-						       &in6_addr_last,
-						       sizeof(struct in6_addr)))
-						continue;
-					/* IPv6 address */
-					cli->client.network.cidr =
-						cidr_from_in6addr(&infoaddr);
-					cli->type = NETWORK_CLIENT;
-					ap_last = ap;
-					in6_addr_last = infoaddr;
-				} else
-					continue;
-				cli->client_perms = *perms;
-				LogMidDebug_ClientListEntry("", cli);
-				glist_add_tail(client_list, &cli->cle_list);
-				cli = NULL; /* let go of it */
-			}
-			freeaddrinfo(info);
-			goto out;
-		} else {
-			config_proc_error(cnode, err_type,
-					  "Client (%s) not found because %s",
-					  client_tok, gai_strerror(rc));
-			err_type->bogus = true;
-			errcnt++;
-		}
-		break;
-	default:
-		config_proc_error(cnode, err_type,
-				  "Expected a client, got a %s for (%s)",
-				  config_term_desc(type_hint),
-				  client_tok);
-		err_type->bogus = true;
-		errcnt++;
-		goto out;
-	}
-	cli->client_perms = *perms;
-	LogMidDebug_ClientListEntry("", cli);
-	glist_add_tail(client_list, &cli->cle_list);
-	cli = NULL;
-out:
-	if (cli != NULL)
-		gsh_free(cli);
-	return errcnt;
+	gsh_free(expclient);
 }
 
 /**
@@ -624,25 +400,29 @@ out:
 
 static void *client_init(void *link_mem, void *self_struct)
 {
-	struct exportlist_client_entry__ *cli;
+	struct exportlist_client_entry *expcli;
+	struct base_client_entry *cli;
 
 	assert(link_mem != NULL || self_struct != NULL);
 
 	if (link_mem == NULL) {
 		return self_struct;
 	} else if (self_struct == NULL) {
-		cli = gsh_calloc(1, sizeof(struct exportlist_client_entry__));
+		expcli = gsh_calloc(1,
+				    sizeof(struct exportlist_client_entry));
 
+		cli = &expcli->client_entry;
 		glist_init(&cli->cle_list);
 		cli->type = PROTO_CLIENT;
-		return cli;
+		return expcli;
 	} else { /* free resources case */
-		cli = self_struct;
+		expcli = self_struct;
 
+		cli = &expcli->client_entry;
 		if (!glist_empty(&cli->cle_list))
-			FreeClientList(&cli->cle_list);
+			FreeClientList(&cli->cle_list, FreeExportClient);
 		assert(glist_empty(&cli->cle_list));
-		gsh_free(cli);
+		gsh_free(expcli);
 		return NULL;
 	}
 }
@@ -665,13 +445,15 @@ static void *client_init(void *link_mem, void *self_struct)
 static int client_commit(void *node, void *link_mem, void *self_struct,
 			 struct config_error_type *err_type)
 {
-	struct exportlist_client_entry__ *cli;
+	struct exportlist_client_entry *expcli;
+	struct base_client_entry *cli;
 	struct gsh_export *export;
 	int errcnt = 0;
 
 	export = container_of(link_mem, struct gsh_export, clients);
 
-	cli = self_struct;
+	expcli = self_struct;
+	cli = &expcli->client_entry;
 
 	assert(cli->type == PROTO_CLIENT);
 
@@ -683,7 +465,7 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 	} else {
 		uint32_t cl_perm_opt, def_opt;
 
-		cl_perm_opt = cli->client_perms.options;
+		cl_perm_opt = expcli->client_perms.options;
 		def_opt = export_opt.def.options;
 
 		if ((cl_perm_opt & def_opt & EXPORT_OPTION_PROTOCOLS) !=
@@ -694,7 +476,7 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 			LogWarn(COMPONENT_CONFIG,
 				"A protocol is specified for a CLIENT block that is not enabled in NFS_CORE_PARAM, fixing up");
 
-			cli->client_perms.options =
+			expcli->client_perms.options =
 			    (cl_perm_opt & ~EXPORT_OPTION_PROTOCOLS) |
 			    (cl_perm_opt & def_opt & EXPORT_OPTION_PROTOCOLS);
 		}
@@ -1348,10 +1130,10 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		LogFullDebug(COMPONENT_EXPORT, "Updating %p", probe_exp);
 
 		LogMidDebug(COMPONENT_EXPORT, "Old Client List");
-		LogMidDebug_Clients(probe_exp);
+		LogMidDebug_ExportClients(probe_exp);
 
 		LogMidDebug(COMPONENT_EXPORT, "New Client List");
-		LogMidDebug_Clients(export);
+		LogMidDebug_ExportClients(export);
 
 		if (strcmp_null(export->FS_tag,
 				probe_exp->FS_tag) != 0) {
@@ -1613,7 +1395,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	if (commit_type == initial_export)
 		export_add_to_mount_work(export);
 
-	LogMidDebug_Clients(export);
+	LogMidDebug_ExportClients(export);
 
 	/* Copy the generation */
 	export->config_gen = get_parse_root_generation(node);
@@ -1936,11 +1718,34 @@ struct config_item_list deleg_types[] =  {
 		EXPORT_OPTION_NO_DELEGATIONS, EXPORT_OPTION_DELEGATIONS,\
 		delegations, _struct_, _perms_.options, _perms_.set)
 
+void *export_client_allocator(void)
+{
+	struct exportlist_client_entry *expcli;
+
+	expcli = gsh_calloc(1, sizeof(struct exportlist_client_entry));
+
+	return &expcli->client_entry;
+}
+
+void export_client_filler(struct base_client_entry *client, void *private_data)
+{
+	struct exportlist_client_entry *expcli;
+	struct export_perms *perms = private_data;
+
+	expcli = container_of(client,
+			      struct exportlist_client_entry,
+			      client_entry);
+
+	expcli->client_perms = *perms;
+
+	LogMidDebug_ExportClientListEntry("", expcli);
+}
+
 /**
  * @brief Process a list of clients for a client block
  *
  * CONFIG_PROC handler that gets called for each token in the term list.
- * Create a exportlist_client_entry__ for each token and link it into
+ * Create a exportlist_client_entry for each token and link it into
  * the proto client's cle_list list head.  We will pass that head to the
  * export in commit.
  *
@@ -1963,16 +1768,26 @@ static int client_adder(const char *token,
 			void *cnode,
 			struct config_error_type *err_type)
 {
-	struct exportlist_client_entry__ *proto_cli;
+	struct base_client_entry *client;
+	struct exportlist_client_entry *proto_cli;
 	int rc;
 
-	proto_cli = container_of(param_addr,
-				 struct exportlist_client_entry__,
-				 cle_list);
+	client = container_of(param_addr,
+			      struct base_client_entry,
+			      cle_list);
+
+	proto_cli = container_of(client,
+				 struct exportlist_client_entry,
+				 client_entry);
+
 	LogMidDebug(COMPONENT_EXPORT, "Adding client %s", token);
-	rc = add_client(&proto_cli->cle_list,
-			token, type_hint,
-			&proto_cli->client_perms, cnode, err_type);
+
+	rc = add_client(COMPONENT_EXPORT,
+			&client->cle_list,
+			token, type_hint, cnode, err_type,
+			export_client_allocator,
+			export_client_filler,
+			&proto_cli->client_perms);
 	return rc;
 }
 
@@ -1985,9 +1800,9 @@ static int client_adder(const char *token,
  */
 
 static struct config_item client_params[] = {
-	CONF_EXPORT_PERMS(exportlist_client_entry__, client_perms),
+	CONF_EXPORT_PERMS(exportlist_client_entry, client_perms),
 	CONF_ITEM_PROC("Clients", noop_conf_init, client_adder,
-		       exportlist_client_entry__, cle_list),
+		       base_client_entry, cle_list),
 	CONFIG_EOL
 };
 
@@ -2370,7 +2185,7 @@ bool log_an_export(struct gsh_export *exp, void *state)
 	}
 
 	if (lep->clients)
-		LogClients(lep->level, lep->line, lep->func, "   ", exp);
+		LogExportClients(lep->level, lep->line, lep->func, "   ", exp);
 
 	return true;
 }
@@ -2528,41 +2343,6 @@ out:
 	return num_exp;
 }
 
-static void FreeClientList(struct glist_head *clients)
-{
-	struct glist_head *glist;
-	struct glist_head *glistn;
-
-	glist_for_each_safe(glist, glistn, clients) {
-		exportlist_client_entry_t *client;
-
-		client =
-		    glist_entry(glist, exportlist_client_entry_t, cle_list);
-		glist_del(&client->cle_list);
-		switch (client->type) {
-		case NETWORK_CLIENT:
-			if (client->client.network.cidr != NULL)
-				cidr_free(client->client.network.cidr);
-			break;
-		case NETGROUP_CLIENT:
-			gsh_free(client->client.netgroup.netgroupname);
-			break;
-		case WILDCARDHOST_CLIENT:
-			gsh_free(client->client.wildcard.wildcard);
-			break;
-		case GSSPRINCIPAL_CLIENT:
-			gsh_free(client->client.gssprinc.princname);
-			break;
-		case PROTO_CLIENT:
-		case MATCH_ANY_CLIENT:
-		case BAD_CLIENT:
-			/* Do nothing for these client types */
-			break;
-		}
-		gsh_free(client);
-	}
-}
-
 /**
  * @brief Free resources attached to an export
  *
@@ -2598,7 +2378,7 @@ void free_export_resources(struct gsh_export *export, bool config)
 
 	LogDebug(COMPONENT_EXPORT, "release_export complete");
 
-	FreeClientList(&export->clients);
+	FreeClientList(&export->clients, FreeExportClient);
 	if (export->fsal_export != NULL) {
 		struct fsal_module *fsal = export->fsal_export->fsal;
 
@@ -2971,146 +2751,6 @@ void release_export(struct gsh_export *export, bool config)
 }
 
 /**
- * @brief Match a specific option in the client export list
- *
- * @param[in]  hostaddr      Host to search for
- * @param[in]  clients       Client list to search
- * @param[out] client_found Matching entry
- * @param[in]  export_option Option to search for
- *
- * @return true if found, false otherwise.
- */
-static exportlist_client_entry_t *client_match(sockaddr_t *hostaddr,
-					       struct gsh_export *export)
-{
-	struct glist_head *glist;
-	int rc;
-	int ipvalid = -1;	/* -1 need to print, 0 - invalid, 1 - ok */
-	char hostname[NI_MAXHOST];
-	char ipstring[SOCK_NAME_MAX];
-	CIDR *host_prefix = NULL;
-	exportlist_client_entry_t *client;
-
-	glist_for_each(glist, &export->clients) {
-		client = glist_entry(glist, exportlist_client_entry_t,
-				     cle_list);
-		LogMidDebug_ClientListEntry("Match V4: ", client);
-
-		switch (client->type) {
-		case NETWORK_CLIENT:
-			if (host_prefix == NULL) {
-				if (hostaddr->ss_family == AF_INET6) {
-					host_prefix = cidr_from_in6addr(
-						&((struct sockaddr_in6 *)
-							hostaddr)->sin6_addr);
-				} else {
-					host_prefix = cidr_from_inaddr(
-						&((struct sockaddr_in *)
-							hostaddr)->sin_addr);
-				}
-			}
-
-			if (cidr_contains(client->client.network.cidr,
-					  host_prefix) == 0) {
-				goto out;
-			}
-			break;
-
-		case NETGROUP_CLIENT:
-			/* Try to get the entry from th IP/name cache */
-			rc = nfs_ip_name_get(hostaddr, hostname,
-					     sizeof(hostname));
-
-			if (rc == IP_NAME_NOT_FOUND) {
-				/* IPaddr was not cached, add it to the cache */
-				rc = nfs_ip_name_add(hostaddr,
-						     hostname,
-						     sizeof(hostname));
-			}
-
-			if (rc != IP_NAME_SUCCESS)
-				break; /* Fatal failure */
-
-			/* At this point 'hostname' should contain the
-			 * name that was found
-			 */
-			if (ng_innetgr(client->client.netgroup.netgroupname,
-				    hostname)) {
-				goto out;
-			}
-			break;
-
-		case WILDCARDHOST_CLIENT:
-			/* Now checking for IP wildcards */
-			if (ipvalid < 0)
-				ipvalid = sprint_sockip(hostaddr,
-							ipstring,
-							sizeof(ipstring));
-
-			if (ipvalid &&
-			    (fnmatch(client->client.wildcard.wildcard,
-				     ipstring,
-				     FNM_PATHNAME) == 0)) {
-				goto out;
-			}
-
-			/* Try to get the entry from th IP/name cache */
-			rc = nfs_ip_name_get(hostaddr, hostname,
-					     sizeof(hostname));
-
-			if (rc == IP_NAME_NOT_FOUND) {
-				/* IPaddr was not cached, add it to the cache */
-
-				/** @todo this change from 1.5 is not IPv6
-				 * useful.  come back to this and use the
-				 * string from client mgr inside op_context...
-				 */
-				rc = nfs_ip_name_add(hostaddr,
-						     hostname,
-						     sizeof(hostname));
-			}
-
-			if (rc != IP_NAME_SUCCESS)
-				break;
-
-			/* At this point 'hostname' should contain the
-			 * name that was found
-			 */
-			if (fnmatch
-			    (client->client.wildcard.wildcard, hostname,
-			     FNM_PATHNAME) == 0) {
-				goto out;
-			}
-			break;
-
-		case GSSPRINCIPAL_CLIENT:
-	  /** @todo BUGAZOMEU a completer lors de l'integration de RPCSEC_GSS */
-			LogCrit(COMPONENT_EXPORT,
-				"Unsupported type GSS_PRINCIPAL_CLIENT");
-			break;
-
-		case MATCH_ANY_CLIENT:
-			goto out;
-
-		case BAD_CLIENT:
-		default:
-			continue;
-		}
-	}
-
-	client = NULL;
-
-out:
-
-	if (host_prefix != NULL)
-		cidr_free(host_prefix);
-
-	/* no export found for this option */
-	return client;
-
-}
-
-/**
  * @brief Checks if request security flavor is suffcient for the requested
  *        export
  *
@@ -3289,9 +2929,10 @@ gid_t get_anonymous_gid(void)
 
 void export_check_access(void)
 {
-	exportlist_client_entry_t *client = NULL;
-	sockaddr_t alt_hostaddr;
-	sockaddr_t *hostaddr = NULL;
+	struct base_client_entry *client = NULL;
+	struct exportlist_client_entry *expclient = NULL;
+	char exp_str[PATH_MAX + 64];
+	struct display_buffer dspbuf = {sizeof(exp_str), exp_str, exp_str};
 
 	/* Initialize permissions to allow nothing, anonymous_uid and
 	 * anonymous_gid will get set farther down.
@@ -3306,37 +2947,36 @@ void export_check_access(void)
 		goto no_export;
 	}
 
-	hostaddr = convert_ipv6_to_ipv4(op_ctx->caller_addr, &alt_hostaddr);
-
 	if (isMidDebug(COMPONENT_EXPORT)) {
-		char ipstring[SOCK_NAME_MAX];
-		struct display_buffer dspbuf = {
-					sizeof(ipstring), ipstring, ipstring};
-
-		display_sockip(&dspbuf, hostaddr);
-
-		LogMidDebug(COMPONENT_EXPORT,
-			    "Check for address %s for export id %u path %s",
-			    ipstring, op_ctx->ctx_export->export_id,
-			    op_ctx_export_path(op_ctx));
+		display_printf(&dspbuf, " for export id %u path %s",
+			       op_ctx->ctx_export->export_id,
+			       op_ctx_export_path(op_ctx));
+	} else {
+		exp_str[0] = '\0';
 	}
 
 	/* Does the client match anyone on the client list? */
-	client = client_match(hostaddr, op_ctx->ctx_export);
+	client = client_match(COMPONENT_EXPORT, exp_str, op_ctx->caller_addr,
+			      &op_ctx->ctx_export->clients);
+
 	if (client != NULL) {
 		/* Take client options */
-		op_ctx->export_perms.options = client->client_perms.options &
-						 client->client_perms.set;
+		expclient = container_of(client,
+					 struct exportlist_client_entry,
+					 client_entry);
 
-		if (client->client_perms.set & EXPORT_OPTION_ANON_UID_SET)
+		op_ctx->export_perms.options = expclient->client_perms.options &
+						 expclient->client_perms.set;
+
+		if (expclient->client_perms.set & EXPORT_OPTION_ANON_UID_SET)
 			op_ctx->export_perms.anonymous_uid =
-					client->client_perms.anonymous_uid;
+					expclient->client_perms.anonymous_uid;
 
-		if (client->client_perms.set & EXPORT_OPTION_ANON_GID_SET)
+		if (expclient->client_perms.set & EXPORT_OPTION_ANON_GID_SET)
 			op_ctx->export_perms.anonymous_gid =
-					client->client_perms.anonymous_gid;
+					expclient->client_perms.anonymous_gid;
 
-		op_ctx->export_perms.set = client->client_perms.set;
+		op_ctx->export_perms.set = expclient->client_perms.set;
 	}
 
 	/* Any options not set by the client, take from the export */
@@ -3415,8 +3055,9 @@ void export_check_access(void)
 		char perms[1024] = "\0";
 		struct display_buffer dspbuf = {sizeof(perms), perms, perms};
 
-		if (client != NULL) {
-			(void) StrExportOptions(&dspbuf, &client->client_perms);
+		if (expclient != NULL) {
+			(void) StrExportOptions(&dspbuf,
+						&expclient->client_perms);
 			LogMidDebug(COMPONENT_EXPORT,
 				    "CLIENT          (%s)",
 				    perms);

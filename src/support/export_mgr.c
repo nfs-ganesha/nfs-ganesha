@@ -1399,12 +1399,14 @@ static struct gsh_dbus_method export_remove_export = {
 	.direction = "out",	\
 }
 
-static void client_of_export(exportlist_client_entry_t *client, void *state)
+static void client_of_export(struct exportlist_client_entry *expclient,
+			     void *state)
 {
 	struct showexports_state *client_array_iter =
 		(struct showexports_state *)state;
 	DBusMessageIter client_struct_iter;
 	const char *grp_name;
+	struct base_client_entry *client = &expclient->client_entry;
 
 	switch (client->type) {
 	case NETWORK_CLIENT:
@@ -1464,15 +1466,15 @@ static void client_of_export(exportlist_client_entry_t *client, void *state)
 	}
 	// Client Export Permissions
 	dbus_message_iter_append_basic(&client_struct_iter, DBUS_TYPE_UINT32,
-				       &client->client_perms.anonymous_uid);
+				       &expclient->client_perms.anonymous_uid);
 	dbus_message_iter_append_basic(&client_struct_iter, DBUS_TYPE_UINT32,
-				       &client->client_perms.anonymous_gid);
+				       &expclient->client_perms.anonymous_gid);
 	dbus_message_iter_append_basic(&client_struct_iter, DBUS_TYPE_UINT32,
-				       &client->client_perms.expire_time_attr);
+				     &expclient->client_perms.expire_time_attr);
 	dbus_message_iter_append_basic(&client_struct_iter, DBUS_TYPE_UINT32,
-				       &client->client_perms.options);
+				       &expclient->client_perms.options);
 	dbus_message_iter_append_basic(&client_struct_iter, DBUS_TYPE_UINT32,
-				       &client->client_perms.set);
+				       &expclient->client_perms.set);
 	dbus_message_iter_close_container(&client_array_iter->export_iter,
 					  &client_struct_iter);
 }
@@ -1539,11 +1541,16 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 					 &client_array_iter.export_iter);
 	PTHREAD_RWLOCK_rdlock(&export->lock);
 	glist_for_each(glist, &export->clients) {
-		exportlist_client_entry_t *client;
+		struct base_client_entry *client;
+		struct exportlist_client_entry *expclient;
 
-		client = glist_entry(glist, exportlist_client_entry_t,
-				     cle_list);
-		client_of_export(client, (void *)&client_array_iter);
+		client = glist_entry(glist, struct base_client_entry, cle_list);
+
+		expclient = container_of(client,
+					 struct exportlist_client_entry,
+					 client_entry);
+
+		client_of_export(expclient, (void *)&client_array_iter);
 	}
 	PTHREAD_RWLOCK_unlock(&export->lock);
 	dbus_message_iter_close_container(&iter,

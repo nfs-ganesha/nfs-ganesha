@@ -51,6 +51,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include <arpa/inet.h>
+#include <fnmatch.h>
 #include "gsh_list.h"
 #include "fsal.h"
 #include "nfs_core.h"
@@ -67,6 +68,8 @@
 #include "gsh_intrinsic.h"
 #include "server_stats.h"
 #include "sal_functions.h"
+#include "nfs_ip_stats.h"
+#include "netgroup_cache.h"
 
 /* Clients are stored in an AVL tree
  */
@@ -1219,6 +1222,502 @@ void client_pkginit(void)
 	client_by_ip.cache =
 	    gsh_calloc(client_by_ip.cache_sz, sizeof(struct avltree_node *));
 	pthread_rwlockattr_destroy(&rwlock_attr);
+}
+
+static char *client_types[] = {
+	[PROTO_CLIENT] = "PROTO_CLIENT",
+	[NETWORK_CLIENT] = "NETWORK_CLIENT",
+	[NETGROUP_CLIENT] = "NETGROUP_CLIENT",
+	[WILDCARDHOST_CLIENT] = "WILDCARDHOST_CLIENT",
+	[GSSPRINCIPAL_CLIENT] = "GSSPRINCIPAL_CLIENT",
+	[MATCH_ANY_CLIENT] = "MATCH_ANY_CLIENT",
+	[BAD_CLIENT] = "BAD_CLIENT"
+	 };
+
+int StrClient(struct display_buffer *dspbuf, struct base_client_entry *client)
+{
+	char *paddr = NULL;
+	char *free_paddr = NULL;
+	int b_left = display_start(dspbuf);
+
+	switch (client->type) {
+	case NETWORK_CLIENT:
+		free_paddr = cidr_to_str(client->client.network.cidr,
+					 CIDR_NOFLAGS);
+		paddr = free_paddr;
+		break;
+
+	case NETGROUP_CLIENT:
+		paddr = client->client.netgroup.netgroupname;
+		break;
+
+	case WILDCARDHOST_CLIENT:
+		paddr = client->client.wildcard.wildcard;
+		break;
+
+	case GSSPRINCIPAL_CLIENT:
+		paddr = client->client.gssprinc.princname;
+		break;
+
+	case MATCH_ANY_CLIENT:
+		paddr = "*";
+		break;
+
+	case PROTO_CLIENT:
+	case BAD_CLIENT:
+		paddr = "<unknown>";
+		break;
+
+	default:
+		break;
+	}
+
+	if (client->type > BAD_CLIENT) {
+		b_left = display_printf(dspbuf, "UNKNOWN_CLIENT_TYPE: 0x%08x",
+					client->type);
+	} else {
+		b_left = display_printf(dspbuf, "%s: %s",
+					client_types[client->type], paddr);
+	}
+
+	gsh_free(free_paddr);
+
+	return b_left;
+}
+
+void LogClientListEntry(enum log_components component,
+			log_levels_t level,
+			int line,
+			const char *func,
+			const char *tag,
+			struct base_client_entry *entry)
+{
+	char buf[1024] = "\0";
+	struct display_buffer dspbuf = {sizeof(buf), buf, buf};
+	int b_left = display_start(&dspbuf);
+
+	if (!isLevel(component, level))
+		return;
+
+	if (b_left > 0 && tag != NULL)
+		b_left = display_cat(&dspbuf, tag);
+
+	if (b_left > 0 && level >= NIV_DEBUG)
+		b_left = display_printf(&dspbuf, "%p ", entry);
+
+	if (b_left > 0)
+		b_left = StrClient(&dspbuf, entry);
+
+	DisplayLogComponentLevel(component,
+				 (char *) __FILE__, line, func, level,
+				 "%s", buf);
+
+}
+
+void FreeClientList(struct glist_head *clients, client_free_func free_func)
+{
+	struct glist_head *glist;
+	struct glist_head *glistn;
+
+	glist_for_each_safe(glist, glistn, clients) {
+		struct base_client_entry *client;
+
+		client = glist_entry(glist,
+				     struct base_client_entry,
+				     cle_list);
+
+		glist_del(&client->cle_list);
+		switch (client->type) {
+		case NETWORK_CLIENT:
+			if (client->client.network.cidr != NULL)
+				cidr_free(client->client.network.cidr);
+			break;
+		case NETGROUP_CLIENT:
+			gsh_free(client->client.netgroup.netgroupname);
+			break;
+		case WILDCARDHOST_CLIENT:
+			gsh_free(client->client.wildcard.wildcard);
+			break;
+		case GSSPRINCIPAL_CLIENT:
+			gsh_free(client->client.gssprinc.princname);
+			break;
+		case PROTO_CLIENT:
+		case MATCH_ANY_CLIENT:
+		case BAD_CLIENT:
+			/* Do nothing for these client types */
+			break;
+		}
+		free_func(client);
+	}
+}
+
+void *base_client_allocator(void)
+{
+	return gsh_calloc(1, sizeof(struct base_client_entry));
+}
+
+/**
+ * @brief Expand the client name token into one or more client entries
+ *
+ * @param component     [IN]  component for logging
+ * @param client_list   [IN]  the client list this gets linked to (in tail order)
+ * @param client_tok    [IN]  the name string.  We modify it.
+ * @param type_hint     [IN]  type hint from parser for client_tok
+ * @param cnode         [IN]  opaque pointer needed for config_proc_error()
+ * @param err_type      [OUT] error handling ref
+ * @param cle_allocator [IN]  function to allocate a list entry
+ * @param cle_filler    [IN]  function to fill in a list entry
+ * @param private_data  [IN]  data to be passed to cle_filler function
+ *
+ * @returns 0 on success, error count on failure
+ */
+
+int add_client(enum log_components component,
+	       struct glist_head *client_list,
+	       const char *client_tok,
+	       enum term_type type_hint,
+	       void *cnode,
+	       struct config_error_type *err_type,
+	       client_list_entry_allocator_t cle_allocator,
+	       client_list_entry_filler_t cle_filler,
+	       void *private_data)
+{
+	int errcnt = 0;
+	struct addrinfo *info;
+	CIDR *cidr;
+	int rc;
+	struct base_client_entry *cli;
+
+	if (cle_allocator == NULL)
+		cle_allocator = base_client_allocator;
+
+	cli = cle_allocator();
+
+	cli->client.network.cidr = NULL;
+	glist_init(&cli->cle_list);
+	switch (type_hint) {
+	case TERM_V4_ANY:
+		cli->type = MATCH_ANY_CLIENT;
+		break;
+	case TERM_NETGROUP:
+		if (strlen(client_tok) > MAXHOSTNAMELEN) {
+			config_proc_error(cnode, err_type,
+					  "netgroup (%s) name too long",
+					  client_tok);
+			err_type->invalid = true;
+			errcnt++;
+			goto out;
+		}
+		cli->client.netgroup.netgroupname = gsh_strdup(client_tok + 1);
+		cli->type = NETGROUP_CLIENT;
+		break;
+	case TERM_V4CIDR:
+	case TERM_V6CIDR:
+	case TERM_V4ADDR:
+	case TERM_V6ADDR:
+		cidr = cidr_from_str(client_tok);
+		if (cidr == NULL) {
+			switch (type_hint) {
+			case TERM_V4CIDR:
+				config_proc_error(cnode, err_type,
+						  "Expected a IPv4 CIDR address, got (%s)",
+						  client_tok);
+				break;
+			case TERM_V6CIDR:
+				config_proc_error(cnode, err_type,
+						  "Expected a IPv6 CIDR address, got (%s)",
+						  client_tok);
+				break;
+			case TERM_V4ADDR:
+				config_proc_error(cnode, err_type,
+						  "IPv4 addr (%s) not in presentation format",
+						  client_tok);
+				break;
+			case TERM_V6ADDR:
+				config_proc_error(cnode, err_type,
+						  "IPv6 addr (%s) not in presentation format",
+						  client_tok);
+				break;
+			default:
+				break;
+			}
+			err_type->invalid = true;
+			errcnt++;
+			goto out;
+		}
+		cli->client.network.cidr = cidr;
+		cli->type = NETWORK_CLIENT;
+		break;
+	case TERM_REGEX:
+		if (strlen(client_tok) > MAXHOSTNAMELEN) {
+			config_proc_error(cnode, err_type,
+					  "Wildcard client (%s) name too long",
+					  client_tok);
+			err_type->invalid = true;
+			errcnt++;
+			goto out;
+		}
+		cli->client.wildcard.wildcard = gsh_strdup(client_tok);
+		cli->type = WILDCARDHOST_CLIENT;
+		break;
+	case TERM_TOKEN: /* only dns names now. */
+		rc = gsh_getaddrinfo(client_tok, NULL, NULL, &info,
+				nfs_param.core_param.enable_AUTHSTATS);
+		if (rc == 0) {
+			struct addrinfo *ap, *ap_last = NULL;
+			struct in_addr in_addr_last;
+			struct in6_addr in6_addr_last;
+
+			for (ap = info; ap != NULL; ap = ap->ai_next) {
+				LogFullDebug(COMPONENT_EXPORT,
+					     "flags=%d family=%d socktype=%d protocol=%d addrlen=%d name=%s",
+					     ap->ai_flags,
+					     ap->ai_family,
+					     ap->ai_socktype,
+					     ap->ai_protocol,
+					     (int) ap->ai_addrlen,
+					     ap->ai_canonname);
+
+				if (cli == NULL) {
+					cli = cle_allocator();
+					glist_init(&cli->cle_list);
+				}
+
+				if (ap->ai_family == AF_INET &&
+				    (ap->ai_socktype == SOCK_STREAM ||
+				     ap->ai_socktype == SOCK_DGRAM)) {
+					struct in_addr infoaddr =
+						((struct sockaddr_in *)
+						 ap->ai_addr)->sin_addr;
+					if (ap_last != NULL &&
+					    ap_last->ai_family
+					    == ap->ai_family &&
+					    memcmp(&infoaddr,
+						   &in_addr_last,
+						   sizeof(struct in_addr)) == 0)
+						continue;
+					cli->client.network.cidr =
+						cidr_from_inaddr(&infoaddr);
+					cli->type = NETWORK_CLIENT;
+					ap_last = ap;
+					in_addr_last = infoaddr;
+
+				} else if (ap->ai_family == AF_INET6 &&
+					   (ap->ai_socktype == SOCK_STREAM ||
+					    ap->ai_socktype == SOCK_DGRAM)) {
+					struct in6_addr infoaddr =
+						((struct sockaddr_in6 *)
+						 ap->ai_addr)->sin6_addr;
+
+					if (ap_last != NULL &&
+					    ap_last->ai_family == ap->ai_family
+					    &&  !memcmp(&infoaddr,
+						       &in6_addr_last,
+						       sizeof(struct in6_addr)))
+						continue;
+					/* IPv6 address */
+					cli->client.network.cidr =
+						cidr_from_in6addr(&infoaddr);
+					cli->type = NETWORK_CLIENT;
+					ap_last = ap;
+					in6_addr_last = infoaddr;
+				} else {
+					continue;
+				}
+
+				if (cle_filler != NULL)
+					cle_filler(cli, private_data);
+				else
+					LogMidDebug_ClientListEntry(component,
+								    "", cli);
+
+				glist_add_tail(client_list, &cli->cle_list);
+				cli = NULL; /* let go of it */
+			}
+			freeaddrinfo(info);
+			goto out;
+		} else {
+			config_proc_error(cnode, err_type,
+					  "Client (%s) not found because %s",
+					  client_tok, gai_strerror(rc));
+			err_type->bogus = true;
+			errcnt++;
+		}
+		break;
+	default:
+		config_proc_error(cnode, err_type,
+				  "Expected a client, got a %s for (%s)",
+				  config_term_desc(type_hint),
+				  client_tok);
+		err_type->bogus = true;
+		errcnt++;
+		goto out;
+	}
+
+	if (cle_filler != NULL)
+		cle_filler(cli, private_data);
+	else
+		LogMidDebug_ClientListEntry(component, "", cli);
+
+	glist_add_tail(client_list, &cli->cle_list);
+	cli = NULL;
+out:
+	gsh_free(cli);
+	return errcnt;
+}
+
+/**
+ * @brief Match a specific client in a client list
+ *
+ * @param[in]  hostaddr      Host to search for
+ * @param[in]  clients       Client list to search
+ *
+ * @return the client entry or NULL if failure.
+ */
+struct base_client_entry *client_match(enum log_components component,
+				       const char *str,
+				       sockaddr_t *clientaddr,
+				       struct glist_head *clients)
+{
+	struct glist_head *glist;
+	int rc;
+	int ipvalid = -1;	/* -1 need to print, 0 - invalid, 1 - ok */
+	char hostname[NI_MAXHOST];
+	char ipstring[SOCK_NAME_MAX];
+	CIDR *host_prefix = NULL;
+	struct base_client_entry *client;
+	sockaddr_t alt_hostaddr;
+	sockaddr_t *hostaddr = NULL;
+
+	hostaddr = convert_ipv6_to_ipv4(clientaddr, &alt_hostaddr);
+
+	if (isMidDebug(component)) {
+		char ipstring[SOCK_NAME_MAX];
+		struct display_buffer dspbuf = {
+					sizeof(ipstring), ipstring, ipstring};
+
+		display_sockip(&dspbuf, hostaddr);
+
+		LogMidDebug(component,
+			    "Check for address %s%s",
+			    ipstring, str ? str : "");
+	}
+
+	glist_for_each(glist, clients) {
+		client = glist_entry(glist, struct base_client_entry, cle_list);
+		LogMidDebug_ClientListEntry(component, "Match V4: ", client);
+
+		switch (client->type) {
+		case NETWORK_CLIENT:
+			if (host_prefix == NULL) {
+				if (hostaddr->ss_family == AF_INET6) {
+					host_prefix = cidr_from_in6addr(
+						&((struct sockaddr_in6 *)
+							hostaddr)->sin6_addr);
+				} else {
+					host_prefix = cidr_from_inaddr(
+						&((struct sockaddr_in *)
+							hostaddr)->sin_addr);
+				}
+			}
+
+			if (cidr_contains(client->client.network.cidr,
+					  host_prefix) == 0) {
+				goto out;
+			}
+			break;
+
+		case NETGROUP_CLIENT:
+			/* Try to get the entry from th IP/name cache */
+			rc = nfs_ip_name_get(hostaddr, hostname,
+					     sizeof(hostname));
+
+			if (rc == IP_NAME_NOT_FOUND) {
+				/* IPaddr was not cached, add it to the cache */
+				rc = nfs_ip_name_add(hostaddr,
+						     hostname,
+						     sizeof(hostname));
+			}
+
+			if (rc != IP_NAME_SUCCESS)
+				break; /* Fatal failure */
+
+			/* At this point 'hostname' should contain the
+			 * name that was found
+			 */
+			if (ng_innetgr(client->client.netgroup.netgroupname,
+				    hostname)) {
+				goto out;
+			}
+			break;
+
+		case WILDCARDHOST_CLIENT:
+			/* Now checking for IP wildcards */
+			if (ipvalid < 0)
+				ipvalid = sprint_sockip(hostaddr,
+							ipstring,
+							sizeof(ipstring));
+
+			if (ipvalid &&
+			    (fnmatch(client->client.wildcard.wildcard,
+				     ipstring,
+				     FNM_PATHNAME) == 0)) {
+				goto out;
+			}
+
+			/* Try to get the entry from th IP/name cache */
+			rc = nfs_ip_name_get(hostaddr, hostname,
+					     sizeof(hostname));
+
+			if (rc == IP_NAME_NOT_FOUND) {
+				/* IPaddr was not cached, add it to the cache */
+
+				/** @todo this change from 1.5 is not IPv6
+				 * useful.  come back to this and use the
+				 * string from client mgr inside op_context...
+				 */
+				rc = nfs_ip_name_add(hostaddr,
+						     hostname,
+						     sizeof(hostname));
+			}
+
+			if (rc != IP_NAME_SUCCESS)
+				break;
+
+			/* At this point 'hostname' should contain the
+			 * name that was found
+			 */
+			if (fnmatch
+			    (client->client.wildcard.wildcard, hostname,
+			     FNM_PATHNAME) == 0) {
+				goto out;
+			}
+			break;
+
+		case GSSPRINCIPAL_CLIENT:
+	  /** @todo BUGAZOMEU a completer lors de l'integration de RPCSEC_GSS */
+			LogCrit(COMPONENT_EXPORT,
+				"Unsupported type GSS_PRINCIPAL_CLIENT");
+			break;
+
+		case MATCH_ANY_CLIENT:
+			goto out;
+
+		case BAD_CLIENT:
+		default:
+			continue;
+		}
+	}
+
+	client = NULL;
+
+out:
+
+	if (host_prefix != NULL)
+		cidr_free(host_prefix);
+
+	return client;
+
 }
 
 /** @} */

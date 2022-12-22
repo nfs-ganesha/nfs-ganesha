@@ -54,7 +54,6 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	struct proc_state *state = arg;
 	struct exportnode *new_expnode;
 	struct glist_head *glist_item;
-	exportlist_client_entry_t *client;
 	struct groupnode *group, *grp_tail = NULL;
 	char *grp_name;
 	bool free_grp_name;
@@ -89,9 +88,11 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
 
 	glist_for_each(glist_item, &export->clients) {
-		client =
-		    glist_entry(glist_item, exportlist_client_entry_t,
-				cle_list);
+		struct base_client_entry *client =
+					glist_entry(glist_item,
+						    struct base_client_entry,
+						    cle_list);
+
 		group = gsh_calloc(1, sizeof(struct groupnode));
 
 		if (grp_tail == NULL)
