@@ -955,6 +955,7 @@ static void nfs_rpc_call_process(struct clnt_req *cc)
 	if (call->call_hook)
 		call->call_hook(call);
 
+	LogDebug(COMPONENT_NFS_CB, "(rpc_call_t *)call = %p", call);
 	free_rpc_call(call);
 }
 
@@ -970,11 +971,12 @@ static void nfs_rpc_call_process(struct clnt_req *cc)
 enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 {
 	struct clnt_req *cc = &call->call_req;
-
+	rpc_call_channel_t *chan = call->chan;
+	enum clnt_stat re_status;
 	call->states = NFS_CB_CALL_DISPATCH;
 
 	/* XXX TI-RPC does the signal masking */
-	PTHREAD_MUTEX_lock(&call->chan->mtx);
+	PTHREAD_MUTEX_lock(&chan->mtx);
 
 	clnt_req_fill(cc, call->chan->clnt, call->chan->auth, CB_COMPOUND,
 		      (xdrproc_t) xdr_CB_COMPOUND4args, &call->cbt.v_u.v4.args,
@@ -984,25 +986,30 @@ enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 
 	if (!call->chan->clnt) {
 		cc->cc_error.re_status = RPC_INTR;
+		re_status = RPC_INTR;
 		goto unlock;
 	}
-	if (clnt_req_setup(cc, tout) == RPC_SUCCESS) {
+
+	re_status = clnt_req_setup(cc, tout);
+	if (re_status == RPC_SUCCESS) {
 		cc->cc_process_cb = nfs_rpc_call_process;
-		cc->cc_error.re_status = CLNT_CALL_BACK(cc);
+		re_status = CLNT_CALL_BACK(cc);
 	}
 
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
-	if (cc->cc_error.re_status != RPC_SUCCESS) {
+	if (re_status != RPC_SUCCESS) {
+		cc->cc_error.re_status = re_status;
 		_nfs_rpc_destroy_chan(call->chan);
 		call->states |= NFS_CB_CALL_ABORTED;
 	}
 
  unlock:
-	PTHREAD_MUTEX_unlock(&call->chan->mtx);
+	LogDebug(COMPONENT_NFS_CB, "(rpc_call_t *)call = %p", call);
+	PTHREAD_MUTEX_unlock(&chan->mtx);
 
 	/* any broadcast or signalling done in completion function */
-	return cc->cc_error.re_status;
+	return re_status;
 }
 
 /**
