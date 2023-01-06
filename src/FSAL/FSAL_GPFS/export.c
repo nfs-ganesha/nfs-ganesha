@@ -488,18 +488,9 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 		return ENXIO;
 	}
 
-	if (fs->fsal != NULL && fs->private_data == NULL)
-		LogFatal(COMPONENT_FSAL,
-			"Something wrong with export, fs %s appears already claimed but doesn't have private data",
-			fs->path);
+	gpfs_fs = *private_data;
 
-	if (fs->fsal == NULL && fs->private_data != NULL)
-		LogFatal(COMPONENT_FSAL,
-			"Something wrong with export, fs %s was not claimed but had non-NULL private",
-			fs->path);
-
-	gpfs_fs = fs->private_data;
-	if (!gpfs_fs) { /* first export */
+	if (gpfs_fs == NULL) { /* first export by GPFS */
 		gpfs_fs = gsh_calloc(1, sizeof(*gpfs_fs));
 		glist_init(&gpfs_fs->exports);
 		gpfs_fs->root_fd = -1;
@@ -511,13 +502,17 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 	map = gsh_calloc(1, sizeof(*map));
 	map->fs = gpfs_fs;
 	map->exp = container_of(exp, struct gpfs_fsal_export, export);
+
 	PTHREAD_MUTEX_lock(&gpfs_fs->upvector_mutex);
+
 	glist_add_tail(&gpfs_fs->exports, &map->on_exports);
 	glist_add_tail(&map->exp->filesystems, &map->on_filesystems);
+
 	PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 
 	map->exp->export_fd = open(CTX_FULLPATH(op_ctx),
 				   O_RDONLY | O_DIRECTORY);
+
 	if (map->exp->export_fd < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
@@ -532,8 +527,10 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 	/* We have set up the export. If the file system is already claimed,
 	 * we are done.
 	 */
-	if (fs->private_data) /* file system is already claimed */
+	if (*private_data != NULL) {
+		/* file system was already claimed, nothing more to do. */
 		return 0;
+	}
 
 	/* Get an fd for the root and create an upcall thread */
 	retval = open_root_fd(gpfs_fs);
@@ -576,6 +573,7 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 	return 0;
 
 errout:
+
 	if (map->exp->export_fd >= 0) {
 		close(map->exp->export_fd);
 		map->exp->export_fd = -1;

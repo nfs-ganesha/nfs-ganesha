@@ -1410,6 +1410,19 @@ static int process_claim(const char *path,
 		return EINVAL;
 	}
 
+	if (already_claimed) {
+		/* Since this fs is already claimed by the FSAL, we can share
+		 * any private_data already set.
+		 */
+		private_data = this->private_data;
+	} else {
+		/* This fs may be claimed by another FSAL, if so, we MUST pass
+		 * NULL for private_data since any private_data belongs to a
+		 * different FSAL.
+		 */
+		private_data = NULL;
+	}
+
 	/* Now claim the file system (we may call claim multiple times) */
 	retval = claimfs(this, exp, &private_data);
 
