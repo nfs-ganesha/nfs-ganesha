@@ -220,6 +220,11 @@ typedef enum protos {
 #define UDP_LISTENER_MASK (UDP_LISTENER_ALL | UDP_LISTENER_MOUNT)
 
 typedef struct nfs_core_param {
+	/** The list of hosts allowed to use the HAProxy protocol. These are
+	 *  the hosts running HAProxy, acting as load balancing/proxy. Actual
+	 *  end clients are handled in EXPORT CLIENT lists.
+	 */
+	struct glist_head haproxy_hosts;
 	/** An array of port numbers, one for each protocol.  Set by
 	    the NFS_Port, MNT_Port, NLM_Port, and Rquota_Port options. */
 	uint16_t port[P_COUNT];

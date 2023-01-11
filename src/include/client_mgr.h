@@ -137,5 +137,7 @@ int add_client(enum log_components component,
 	       client_list_entry_filler_t cle_filler,
 	       void *private_data);
 
+bool haproxy_match(SVCXPRT *xprt);
+
 #endif				/* !CLIENT_MGR_H */
 /** @} */

@@ -916,6 +916,24 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 	tracepoint(nfs_rpc, start, reqdata);
 #endif
 
+	if ((xprt->xp_proxy.ss.ss_family == AF_INET ||
+	     xprt->xp_proxy.ss.ss_family == AF_INET6) &&
+	    !haproxy_match(xprt)) {
+		/* We appear to have a connection via HAProxy from a proxy
+		 * that is not authorized.
+		 */
+		char addr[SOCK_NAME_MAX];
+		struct display_buffer dspbuf = {sizeof(addr), addr, addr};
+
+		(void) display_sockaddr(&dspbuf, &xprt->xp_proxy.ss);
+
+		LogWarn(COMPONENT_DISPATCH,
+			"HAProxy connection from %s rejected",
+			addr);
+
+		return svcerr_auth(&reqdata->svc, AUTH_FAILED);
+	}
+
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "About to authenticate Prog=%" PRIu32
 		     ", vers=%" PRIu32

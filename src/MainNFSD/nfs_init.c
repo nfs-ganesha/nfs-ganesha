@@ -356,6 +356,11 @@ void nfs_print_param_config(void)
 	printf("}\n\n");
 }
 
+static inline void core_pkginit(void)
+{
+	glist_init(&nfs_param.core_param.haproxy_hosts);
+}
+
 /**
  * @brief Load parameters from config file
  *
@@ -373,6 +378,7 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	 * Initialize exports and clients so config parsing can use them
 	 * early.
 	 */
+	core_pkginit();
 	client_pkginit();
 	export_pkginit();
 	server_pkginit();

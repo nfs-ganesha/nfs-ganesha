@@ -108,7 +108,52 @@ static struct config_item_list protocols[] = {
 #define DEFAULT_PROTOCOLS  (DEFAULT_INCLUDES_NFSV3 | \
 			    DEFAULT_INCLUDES_NFSV4)
 
+/**
+ * @brief Process a list of hosts for haproxy_hosts
+ *
+ * CONFIG_PROC handler that gets called for each token in the term list.
+ * Create a exportlist_client_entry for each token and link it into
+ * the proto host's cle_list list head.  We will pass that head to the
+ * export in commit.
+ *
+ * NOTES: this is the place to expand a node list with perhaps moving the
+ * call to add_client into the expander rather than build a list there
+ * to be then walked here...
+ *
+ * @param token [IN] pointer to token string from parse tree
+ * @param type_hint [IN] a type hint from what the parser recognized
+ * @param item [IN] pointer to the config item table entry
+ * @param param_addr [IN] pointer to prototype host entry
+ * @param err_type [OUT] error handling
+ * @return error count
+ */
+
+static int haproxy_host_adder(const char *token,
+			      enum term_type type_hint,
+			      struct config_item *item,
+			      void *param_addr,
+			      void *cnode,
+			      struct config_error_type *err_type)
+{
+	struct base_client_entry *host;
+	int rc;
+
+	host = container_of(param_addr,
+			      struct base_client_entry,
+			      cle_list);
+
+	LogMidDebug(COMPONENT_CONFIG, "Adding host %s", token);
+
+	rc = add_client(COMPONENT_CONFIG,
+			&host->cle_list,
+			token, type_hint, cnode, err_type,
+			NULL, NULL, NULL);
+	return rc;
+}
+
 static struct config_item core_params[] = {
+	CONF_ITEM_PROC("HAProxy_Hosts", noop_conf_init, haproxy_host_adder,
+		       base_client_entry, cle_list),
 	CONF_ITEM_UI16("NFS_Port", 0, UINT16_MAX, NFS_PORT,
 		       nfs_core_param, port[P_NFS]),
 #ifdef _USE_NFS3
