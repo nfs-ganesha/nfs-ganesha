@@ -191,10 +191,11 @@ for any give client.
 
 Clients(client list, empty)
     Client list entries can take on one of the following forms:
-    Match any client::
 
+        \*          Match any client
         @name       Netgroup name
-        x.x.x.x/y   IPv4 network address
+        x.x.x.x/y   IPv4 network address, IPv6 addresses are also allowed
+                    but the format is too complex to show here
         wildcarded  If the string contains at least one ? or *
                     character (and is not simply "*"), the string is
                     used to pattern match host names. Note that [] may
