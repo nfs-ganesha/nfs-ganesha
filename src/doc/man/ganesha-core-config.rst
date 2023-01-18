@@ -375,6 +375,10 @@ Server_Scope(string, default "")
     Specify the value which is common for all cluster nodes.
     For e.g., Name of the cluster or cluster-id.
 
+Server_Owner(string, default "")
+    Connections to servers with the same server owner can be shared by
+    the client. This is advertised to the client on EXCHANGE_ID.
+
 RADOS_KV {}
 --------------------------------------------------------------------------------
 

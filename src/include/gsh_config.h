@@ -521,6 +521,9 @@ typedef struct nfs_version4_parameter {
 	/** The eir_server_scope for lock recovery. Defaults to NULL
 	    and is settable with server_scope. */
 	char *server_scope;
+	/** The eir_server_owner. Defaults to NULL and is settable
+	    with server_owner. */
+	char *server_owner;
 	/** Domain to use if we aren't using the nfsidmap.  Defaults
 	    to DOMAINNAME_DEFAULT and is set with DomainName. */
 	char *domainname;

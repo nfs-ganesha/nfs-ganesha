@@ -346,6 +346,8 @@ static struct config_item version4_params[] = {
 		       nfs_version4_parameter, grace_period),
 	CONF_ITEM_STR("Server_Scope", 1, MAXNAMLEN, NULL,
 		      nfs_version4_parameter, server_scope),
+	CONF_ITEM_STR("Server_Owner", 1, MAXNAMLEN, NULL,
+		      nfs_version4_parameter, server_owner),
 	CONF_ITEM_STR("DomainName", 1, MAXPATHLEN, DOMAINNAME_DEFAULT,
 		      nfs_version4_parameter, domainname),
 	CONF_ITEM_PATH("IdmapConf", 1, MAXPATHLEN, IDMAPCONF_DEFAULT,
