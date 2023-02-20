@@ -429,7 +429,7 @@ be used with NFS-Ganesha to support KVSFS/libkvsns
 Summary: The NFS-GANESHA GLUSTER FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
-BuildRequires:        glusterfs-api-devel >= 3.8
+BuildRequires:        libgfapi-devel >= 7.0
 BuildRequires:        libattr-devel, libacl-devel
 
 %description gluster
