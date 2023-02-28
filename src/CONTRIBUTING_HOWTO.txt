@@ -32,12 +32,12 @@ FETCHING THE CODE:
 
 First you need to fetch the code you wish to work on:
 
-    git clone git://github.com/codeleader/nfs-ganesha.git --branch new-unstable-dev-project
+    git clone https://github.com/codeleader/nfs-ganesha.git --branch new-branch
     cd nfs-ganesha
 
 The current (as of 2019-02-07) branch for development is:
 
-    git clone git://github.com/nfs-ganesha/nfs-ganesha.git --branch next
+    git clone https://github.com/nfs-ganesha/nfs-ganesha.git --branch next
 
 Now check what you have:
 
