@@ -2560,6 +2560,7 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		LogDebug(COMPONENT_FSAL,
 			 "setattrx returned %s (%d)",
 			 strerror(-rc), -rc);
+		status = ceph2fsal_error(rc);
 		goto out;
 	}
 
