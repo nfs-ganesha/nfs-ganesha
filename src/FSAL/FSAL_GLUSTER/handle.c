@@ -2551,7 +2551,7 @@ static fsal_status_t glusterfs_commit2(struct fsal_obj_handle *obj_hdl,
 	/* Make sure file is open in appropriate mode.
 	 * Do not check share reservation.
 	 */
-	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_WRITE,
+	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_ANY,
 				 (struct fsal_fd *)&myself->globalfd,
 				 &myself->share, glusterfs_open_func,
 				 glusterfs_close_func,

@@ -1112,7 +1112,7 @@ gpfs_commit2(struct fsal_obj_handle *obj_hdl, off_t offset, size_t len)
 	/* Make sure file is open in appropriate mode.
 	 * Do not check share reservation.
 	 */
-	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_WRITE,
+	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_ANY,
 				 (struct fsal_fd *)&myself->u.file.fd,
 				 &myself->u.file.share,
 				 gpfs_open_func, gpfs_close_func,

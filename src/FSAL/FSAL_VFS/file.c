@@ -1624,7 +1624,7 @@ fsal_status_t vfs_commit2(struct fsal_obj_handle *obj_hdl,
 	/* Make sure file is open in appropriate mode.
 	 * Do not check share reservation.
 	 */
-	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_WRITE,
+	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_ANY,
 				 (struct fsal_fd *)&myself->u.file.fd,
 				 &myself->u.file.share,
 				 vfs_open_func, vfs_close_func,

@@ -1197,7 +1197,7 @@ static fsal_status_t lzfs_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 		     " offset=%lli len=%zu", lzfs_export->export.export_id,
 		     lzfs_obj->inode, (long long)offset, len);
 
-	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_WRITE,
+	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_ANY,
 				 (struct fsal_fd *)&lzfs_obj->fd,
 				 &lzfs_obj->share, lzfs_int_open_func,
 				 lzfs_int_close_func,
