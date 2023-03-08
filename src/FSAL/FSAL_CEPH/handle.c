@@ -2053,7 +2053,7 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 	 * with root creds here since we're just doing a fsync.
 	 */
 	memset(&op_ctx->creds, 0, sizeof(op_ctx->creds));
-	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_WRITE,
+	status = fsal_reopen_obj(obj_hdl, false, false, FSAL_O_ANY,
 				 (struct fsal_fd *)&myself->fd, &myself->share,
 				 ceph_open_func, ceph_close_func,
 				 (struct fsal_fd **)&out_fd, &has_lock,
