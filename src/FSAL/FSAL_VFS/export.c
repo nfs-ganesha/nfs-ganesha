@@ -304,7 +304,6 @@ void vfs_export_ops_init(struct export_ops *ops)
 	ops->get_quota = get_quota;
 	ops->set_quota = set_quota;
 	ops->alloc_state = vfs_alloc_state;
-	ops->free_state = vfs_free_state;
 }
 
 int vfs_claim_filesystem(struct fsal_filesystem *fs,

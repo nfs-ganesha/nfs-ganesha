@@ -403,18 +403,7 @@ struct state_t *lzfs_fsal_alloc_state(struct fsal_export *exp_hdl,
 				      struct state_t *related_state)
 {
 	return init_state(gsh_calloc(1, sizeof(struct lzfs_fsal_state_fd)),
-			  exp_hdl, state_type, related_state);
-}
-
-/*! \brief Free a state_t structure
- *
- * \see fsal_api.h for more information
- */
-void lzfs_fsal_free_state(struct fsal_export *exp_hdl, struct state_t *state)
-{
-	struct lzfs_fsal_state_fd *state_fd = container_of(
-				state, struct lzfs_fsal_state_fd, state);
-	gsh_free(state_fd);
+			  NULL, state_type, related_state);
 }
 
 void lzfs_fsal_export_ops_init(struct export_ops *ops)
@@ -435,6 +424,5 @@ void lzfs_fsal_export_ops_init(struct export_ops *ops)
 	ops->fs_supported_attrs = lzfs_fsal_fs_supported_attrs;
 	ops->fs_umask = lzfs_fsal_fs_umask;
 	ops->alloc_state = lzfs_fsal_alloc_state;
-	ops->free_state = lzfs_fsal_free_state;
 	lzfs_fsal_export_ops_pnfs(ops);
 }

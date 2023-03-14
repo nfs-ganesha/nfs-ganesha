@@ -319,7 +319,7 @@ void dec_nlm_state_ref(state_t *state)
 		obj->obj_ops->put_ref(obj);
 	}
 
-	op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export, state);
+	free_state(state);
 
 	if (obj != NULL) {
 		/* Release the long term reference */
@@ -482,8 +482,7 @@ int get_nlm_state(enum state_type state_type,
 		/* Free the ref taken above and the state.
 		 * No need to close here, the state was never opened.
 		 */
-		op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
-							state);
+		free_state(state);
 		state_obj->obj_ops->put_long_term_ref(state_obj);
 
 		*pstate = NULL;

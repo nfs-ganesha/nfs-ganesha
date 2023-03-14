@@ -86,6 +86,7 @@ struct lzfs_fsal_fd {
 };
 
 struct lzfs_fsal_state_fd {
+	/** state MUST be first to use default free_state */
 	struct state_t state;
 	struct lzfs_fsal_fd lzfs_fd;
 };

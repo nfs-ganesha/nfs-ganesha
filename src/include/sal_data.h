@@ -406,6 +406,7 @@ union state_data {
  *
  * The lists are protected by the st_lock
  */
+typedef void (state_free_t) (struct state_t *state);
 
 struct state_t {
 	struct glist_head state_list;	/**< List of states on a file */
@@ -416,6 +417,8 @@ struct state_t {
 	struct glist_head state_list_all;    /**< Global list of all stateids */
 #endif
 	pthread_mutex_t state_mutex; /**< Mutex protecting following pointers */
+	state_free_t *state_free; /**< function to free if default gsh_free
+				      doesn't work. */
 	struct gsh_export *state_export; /**< Export this entry belongs to */
 	/* Don't re-order or move these next two.  They are used for hashing */
 	state_owner_t *state_owner;	/**< State Owner related to state */
@@ -430,6 +433,14 @@ struct state_t {
 					   call that created a
 					   state. */
 };
+
+static inline void free_state(struct state_t *state)
+{
+	if (state->state_free != NULL)
+		state->state_free(state);
+	else
+		gsh_free(state);
+}
 
 /* Macros to compare and copy state_t to a struct stateid4 */
 #define SAME_STATEID(id4, state) \

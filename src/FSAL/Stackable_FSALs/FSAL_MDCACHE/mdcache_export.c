@@ -891,23 +891,6 @@ static struct state_t *mdcache_alloc_state(struct fsal_export *exp_hdl,
 }
 
 /**
- * @brief Free state_t structure
- *
- * @param[in] exp_hdl	Export state is associated with
- * @param[in] state	State to free
- */
-static void mdcache_free_state(struct fsal_export *exp_hdl,
-			       struct state_t *state)
-{
-	struct mdcache_fsal_export *exp = mdc_export(exp_hdl);
-	struct fsal_export *sub_export = exp->mfe_exp.sub_export;
-
-	subcall_raw(exp,
-		sub_export->exp_ops.free_state(sub_export, state)
-	       );
-}
-
-/**
  * @brief Check to see if a user is superuser
  *
  * @param[in] exp_hdl               Export state_t is associated with
@@ -983,7 +966,6 @@ void mdcache_export_ops_init(struct export_ops *ops)
 	ops->fs_loc_body_size = mdcache_fs_loc_body_size;
 	ops->get_write_verifier = mdcache_get_write_verifier;
 	ops->alloc_state = mdcache_alloc_state;
-	ops->free_state = mdcache_free_state;
 	ops->is_superuser = mdcache_is_superuser;
 	ops->fs_expiretimeparent = mdcache_fs_expiretimeparent;
 }

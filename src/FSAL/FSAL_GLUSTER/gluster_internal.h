@@ -239,6 +239,7 @@ static inline void glusterfs_fsal_clean_xstat(glusterfs_fsal_xstat_t *buffxstat)
 }
 
 struct glusterfs_state_fd {
+	/** state MUST be first to use default free_state */
 	struct state_t state;
 	struct glusterfs_fd glusterfs_fd;
 };

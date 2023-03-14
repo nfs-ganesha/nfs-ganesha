@@ -433,7 +433,6 @@ void export_ops_init(struct export_ops *ops)
 	ops->create_handle = create_handle;
 	ops->get_fs_dynamic_info = get_fs_dynamic_info;
 	ops->alloc_state = ceph_alloc_state;
-	ops->free_state = ceph_free_state;
 #ifdef CEPHFS_POSIX_ACL
 	ops->fs_acl_support = fs_acl_support;
 #endif				/* CEPHFS_POSIX_ACL */

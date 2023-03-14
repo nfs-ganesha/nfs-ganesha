@@ -238,7 +238,7 @@ struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,
 	struct vfs_fd *my_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct vfs_state_fd)),
-			   exp_hdl, state_type, related_state);
+			   NULL, state_type, related_state);
 
 	my_fd = &container_of(state, struct vfs_state_fd, state)->vfs_fd;
 
@@ -246,21 +246,6 @@ struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,
 	my_fd->fd = -1;
 
 	return state;
-}
-
-/**
- * @brief free a vfs_state_fd structure
- *
- * @param[in] exp_hdl  Export state_t will be associated with
- * @param[in] state    Related state if appropriate
- *
- */
-void vfs_free_state(struct fsal_export *exp_hdl, struct state_t *state)
-{
-	struct vfs_state_fd *state_fd = container_of(state, struct vfs_state_fd,
-						     state);
-
-	gsh_free(state_fd);
 }
 
 /**

@@ -158,7 +158,6 @@ void proxyv4_export_ops_init(struct export_ops *ops)
 	ops->get_fs_dynamic_info = proxyv4_get_dynamic_info;
 	ops->fs_supported_attrs = proxyv4_get_supported_attrs;
 	ops->alloc_state = proxyv4_alloc_state;
-	ops->free_state = proxyv4_free_state;
 }
 
 fsal_status_t proxyv4_create_export(struct fsal_module *fsal_hdl,

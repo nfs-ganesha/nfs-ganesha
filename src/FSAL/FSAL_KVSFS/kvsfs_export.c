@@ -136,7 +136,7 @@ static struct state_t *kvsfs_alloc_state(struct fsal_export *exp_hdl,
 	struct kvsfs_fd *my_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct kvsfs_state_fd)),
-			   exp_hdl, state_type, related_state);
+			   NULL, state_type, related_state);
 
 	my_fd = &container_of(state, struct kvsfs_state_fd, state)->kvsfs_fd;
 
@@ -145,19 +145,6 @@ static struct state_t *kvsfs_alloc_state(struct fsal_export *exp_hdl,
 
 	return state;
 
-}
-
-/**
- * @brief free a gpfs_state_fd structure
- *
- * @param[in] exp_hdl  Export state_t will be associated with
- * @param[in] state    Related state if appropriate
- *
- */
-static void kvsfs_free_state(struct fsal_export *exp_hdl,
-			    struct state_t *state)
-{
-	gsh_free(container_of(state, struct kvsfs_state_fd, state));
 }
 
 /* kvsfs_export_ops_init
@@ -173,7 +160,6 @@ void kvsfs_export_ops_init(struct export_ops *ops)
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supported_attrs = kvsfs_supported_attrs;
 	ops->alloc_state = kvsfs_alloc_state;
-	ops->free_state = kvsfs_free_state;
 
 }
 

@@ -199,8 +199,6 @@ struct state_t *proxyv4_alloc_state(struct fsal_export *exp_hdl,
 				    enum state_type state_type,
 				    struct state_t *related_state);
 
-void proxyv4_free_state(struct fsal_export *exp_hdl, struct state_t *state);
-
 int proxyv4_close_thread(struct proxyv4_export *proxyv4_exp);
 
 #endif

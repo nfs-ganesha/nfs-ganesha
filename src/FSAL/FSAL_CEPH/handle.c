@@ -1034,7 +1034,7 @@ struct state_t *ceph_alloc_state(struct fsal_export *exp_hdl,
 	struct ceph_fd *my_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct ceph_state_fd)),
-			   exp_hdl, state_type, related_state);
+			   NULL, state_type, related_state);
 
 	my_fd = &container_of(state, struct ceph_state_fd, state)->ceph_fd;
 
@@ -1042,22 +1042,6 @@ struct state_t *ceph_alloc_state(struct fsal_export *exp_hdl,
 	my_fd->fd = NULL;
 
 	return state;
-}
-
-/**
- * @brief free a ceph_state_fd structure
- *
- * @param[in] exp_hdl  Export state_t will be associated with
- * @param[in] state    Related state if appropriate
- *
- */
-void ceph_free_state(struct fsal_export *exp_hdl, struct state_t *state)
-{
-	struct ceph_state_fd *state_fd = container_of(state,
-						      struct ceph_state_fd,
-						      state);
-
-	gsh_free(state_fd);
 }
 
 /**

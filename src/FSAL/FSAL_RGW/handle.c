@@ -1474,7 +1474,7 @@ struct state_t *rgw_alloc_state(struct fsal_export *exp_hdl,
 				struct state_t *related_state)
 {
 	return init_state(gsh_calloc(1, sizeof(struct rgw_open_state)),
-			exp_hdl, state_type, related_state);
+			  NULL, state_type, related_state);
 }
 
 /**

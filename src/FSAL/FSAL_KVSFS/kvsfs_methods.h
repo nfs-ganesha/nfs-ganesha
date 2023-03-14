@@ -91,6 +91,7 @@ struct kvsfs_fd {
 #define KVSNS_FILE_OPEN_INIT {0, {0, 0}, 0}
 
 struct kvsfs_state_fd {
+	/** state MUST be first to use default free_state */
 	struct state_t state;
 	struct kvsfs_fd kvsfs_fd;
 };

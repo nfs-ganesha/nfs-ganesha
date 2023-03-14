@@ -284,11 +284,12 @@ void fsal_complete_fd_work(struct fsal_fd *fsal_fd);
  */
 
 static inline struct state_t *init_state(struct state_t *state,
-					 struct fsal_export *exp_hdl,
+					 state_free_t state_free,
 					 enum state_type state_type,
 					 struct state_t *related_state)
 {
 	state->state_type = state_type;
+	state->state_free = state_free;
 
 	if (related_state) {
 		memcpy(state->state_data.lock.openstate_key,

@@ -343,7 +343,7 @@ gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
 	struct gpfs_fd *my_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct gpfs_state_fd)),
-			   exp_hdl, state_type, related_state);
+			   NULL, state_type, related_state);
 
 	my_fd = &container_of(state, struct gpfs_state_fd, state)->gpfs_fd;
 
@@ -351,23 +351,6 @@ gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
 	my_fd->fd = -1;
 
 	return state;
-}
-
-/**
- * @brief free a gpfs_state_fd structure
- *
- * @param[in] exp_hdl  Export state_t will be associated with
- * @param[in] state    Related state if appropriate
- *
- */
-void
-gpfs_free_state(struct fsal_export *exp_hdl, struct state_t *state)
-{
-	struct gpfs_state_fd *state_fd = container_of(state,
-						      struct gpfs_state_fd,
-						      state);
-
-	gsh_free(state_fd);
 }
 
 /**
@@ -386,7 +369,6 @@ void gpfs_export_ops_init(struct export_ops *ops)
 	ops->get_quota = get_quota;
 	ops->set_quota = set_quota;
 	ops->alloc_state = gpfs_alloc_state;
-	ops->free_state = gpfs_free_state;
 }
 
 static void free_gpfs_filesystem(struct gpfs_filesystem *gpfs_fs)

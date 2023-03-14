@@ -91,6 +91,7 @@ struct ceph_fd {
 };
 
 struct ceph_state_fd {
+	/** state MUST be first to use default free_state */
 	struct state_t state;
 	struct ceph_fd ceph_fd;
 };
@@ -210,8 +211,6 @@ void handle_ops_pnfs(struct fsal_obj_ops *ops);
 struct state_t *ceph_alloc_state(struct fsal_export *exp_hdl,
 				 enum state_type state_type,
 				 struct state_t *related_state);
-
-void ceph_free_state(struct fsal_export *exp_hdl, struct state_t *state);
 
 #ifdef CEPHFS_POSIX_ACL
 fsal_status_t ceph_set_acl(struct ceph_export *export,

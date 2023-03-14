@@ -97,8 +97,7 @@ namespace {
 
     virtual void TearDown() {
       for (int i = 0; i < LOOP_COUNT; ++i) {
-	op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
-						file_state[i]);
+	free_state(file_state[i]);
       }
 
       Open2EmptyLatencyTest::TearDown();
@@ -135,7 +134,7 @@ TEST_F(Open2EmptyLatencyTest, SIMPLE)
   status = fsal_remove(test_root, TEST_FILE);
   ASSERT_EQ(status.major, 0);
   obj->obj_ops->put_ref(obj);
-  op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export, file_state);
+  free_state(file_state);
 }
 
 TEST_F(Open2EmptyLatencyTest, SIMPLE_BYPASS)
@@ -170,7 +169,7 @@ TEST_F(Open2EmptyLatencyTest, SIMPLE_BYPASS)
   status = fsal_remove(sub_hdl, TEST_FILE);
   ASSERT_EQ(status.major, 0);
   obj->obj_ops->put_ref(obj);
-  op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export, file_state);
+  free_state(file_state);
 }
 
 TEST_F(Open2LoopLatencyTest, FSAL_OPEN2)

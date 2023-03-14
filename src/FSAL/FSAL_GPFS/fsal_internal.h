@@ -85,6 +85,7 @@ struct gpfs_fd {
 };
 
 struct gpfs_state_fd {
+	/** state MUST be first to use default free_state */
 	struct state_t state;
 	struct gpfs_fd gpfs_fd;
 };

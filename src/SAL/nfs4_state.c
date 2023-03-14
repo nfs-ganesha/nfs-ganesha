@@ -272,8 +272,7 @@ errout:
 		 */
 		(void) obj->obj_ops->close2(obj, pnew_state);
 
-		op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
-							pnew_state);
+		free_state(pnew_state);
 	}
 
 	if (got_export_ref)

@@ -127,6 +127,7 @@ proxyv4_alloc_handle(struct fsal_export *exp,
 		     struct fsal_attrlist *attrs_out);
 
 struct proxyv4_state {
+	/** state MUST be first to use default free_state */
 	struct state_t state;
 	stateid4 stateid;
 };
@@ -135,16 +136,8 @@ struct state_t *proxyv4_alloc_state(struct fsal_export *exp_hdl,
 				    enum state_type state_type,
 				    struct state_t *related_state)
 {
-	return init_state(gsh_calloc(1, sizeof(struct proxyv4_state)), exp_hdl,
-			  state_type, related_state);
-}
-
-void proxyv4_free_state(struct fsal_export *exp_hdl, struct state_t *state)
-{
-	struct proxyv4_state *proxyv4_state_id =
-		container_of(state, struct proxyv4_state, state);
-
-	gsh_free(proxyv4_state_id);
+	return init_state(gsh_calloc(1, sizeof(struct proxyv4_state)),
+			  NULL, state_type, related_state);
 }
 
 #define FSAL_VERIFIER_T_TO_VERIFIER4(verif4, fsal_verif)		\

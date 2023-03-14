@@ -686,20 +686,7 @@ static struct state_t *alloc_state(struct fsal_export *exp_hdl,
 				   struct state_t *related_state)
 {
 	return init_state(gsh_calloc(1, sizeof(struct state_t)),
-			  exp_hdl, state_type, related_state);
-}
-
-/**
- * @brief Free a state_t structure
- *
- * @param[in] state                 state_t structure to free.
- *
- * @returns NULL on failure otherwise a state structure.
- */
-
-void free_state(struct fsal_export *exp_hdl, struct state_t *state)
-{
-	gsh_free(state);
+			  NULL, state_type, related_state);
 }
 
 /**
@@ -752,7 +739,6 @@ struct export_ops def_export_ops = {
 	.fs_loc_body_size = fs_loc_body_size,
 	.get_write_verifier = global_verifier,
 	.alloc_state = alloc_state,
-	.free_state = free_state,
 	.is_superuser = is_superuser,
 	.fs_expiretimeparent = fs_expiretimeparent,
 };

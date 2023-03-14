@@ -145,6 +145,7 @@ struct vfs_fd {
 };
 
 struct vfs_state_fd {
+	/** state MUST be first to use default free_state */
 	struct state_t state;
 	struct vfs_fd vfs_fd;
 };
@@ -286,7 +287,6 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl);
 struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,
 				enum state_type state_type,
 				struct state_t *related_state);
-void vfs_free_state(struct fsal_export *exp_hdl, struct state_t *state);
 
 fsal_status_t vfs_merge(struct fsal_obj_handle *orig_hdl,
 			struct fsal_obj_handle *dupe_hdl);

@@ -77,6 +77,7 @@ fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
 				  struct fsal_attrlist *attrs_out);
 
 struct mem_state_fd {
+	/** state MUST be first to use default free_state */
 	struct state_t state;
 	struct fsal_fd fsal_fd;
 };

@@ -94,8 +94,7 @@ namespace {
       status = test_file->obj_ops->close2(test_file, test_file_state);
       EXPECT_EQ(0, status.major);
 
-      op_ctx->fsal_export->exp_ops.free_state(op_ctx->fsal_export,
-					      test_file_state);
+      free_state(test_file_state);
       EXPECT_EQ(0, status.major);
 
       status = fsal_remove(test_root, TEST_FILE);
