@@ -52,6 +52,7 @@
 #include "gsh_wait_queue.h"
 
 #define DUPREQ_NOCACHE     ((void *)0x02)
+#define DUPREQ_NOCACHE_NORES ((void *)0x03)
 #define DUPREQ_MAX_RETRIES 5
 
 #define NFS_pcp nfs_param.core_param
@@ -1102,7 +1103,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs)
 				/* Signal to nfs_dupreq_rele this should be
 				 * ignored.
 				 */
-				reqnfs->svc.rq_u1 = DUPREQ_NOCACHE;
+				reqnfs->svc.rq_u1 = DUPREQ_NOCACHE_NORES;
 				LogDebug(COMPONENT_DUPREQ,
 					 "dupreq hit dv=%p, dv xid=%" PRIu32
 					 " cksum %" PRIu64
@@ -1207,7 +1208,7 @@ void nfs_dupreq_finish(nfs_request_t *reqnfs, enum nfs_req_result rc)
 	int16_t cnt = 0;
 
 	/* do nothing if req is marked no-cache */
-	if (dv == DUPREQ_NOCACHE)
+	if (dv == DUPREQ_NOCACHE || dv == DUPREQ_NOCACHE_NORES)
 		return;
 
 	PTHREAD_MUTEX_lock(&dv->mtx);
@@ -1331,7 +1332,7 @@ void nfs_dupreq_delete(nfs_request_t *reqnfs, enum nfs_req_result rc)
 	drc_t *drc;
 
 	/* do nothing if req is marked no-cache */
-	if (dv == DUPREQ_NOCACHE)
+	if (dv == DUPREQ_NOCACHE || dv == DUPREQ_NOCACHE_NORES)
 		return;
 
 	/* Check if this entry has any duplicate requests queued against it. If
@@ -1411,7 +1412,11 @@ void nfs_dupreq_rele(nfs_request_t *reqnfs)
 	drc_t *drc;
 
 	/* no-cache cleanup */
-	if (dv == DUPREQ_NOCACHE) {
+	if (dv == DUPREQ_NOCACHE_NORES) {
+		/* Response was never allocated, no need to clean it up. */
+		LogFullDebug(COMPONENT_DUPREQ, "no cache, no res to free");
+		goto out;
+	} else if (dv == DUPREQ_NOCACHE) {
 		LogFullDebug(COMPONENT_DUPREQ, "releasing no-cache res %p",
 			     reqnfs->svc.rq_u2);
 		reqnfs->funcdesc->free_function(reqnfs->svc.rq_u2);
