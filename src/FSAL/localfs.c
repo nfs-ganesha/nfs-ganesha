@@ -971,7 +971,8 @@ int populate_posix_file_systems(const char *path)
 		    strcasecmp(mnt->mnt_type, "configfs") == 0 ||
 		    strcasecmp(mnt->mnt_type, "binfmt_misc") == 0 ||
 		    strcasecmp(mnt->mnt_type, "rpc_pipefs") == 0 ||
-		    strcasecmp(mnt->mnt_type, "vboxsf") == 0) {
+		    strcasecmp(mnt->mnt_type, "vboxsf") == 0 ||
+		    strcasecmp(mnt->mnt_type, "tmpfs") == 0) {
 			LogDebug(COMPONENT_FSAL,
 				 "Ignoring %s because type %s",
 				 mnt->mnt_dir,
