@@ -83,23 +83,19 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 		 "BIND_CONN_TO_SESSION session=%p", session);
 
 	/* Check if lease is expired and reserve it */
-	PTHREAD_MUTEX_lock(&session->clientid_record->cid_mutex);
-
-	if (!reserve_lease(session->clientid_record)) {
-		PTHREAD_MUTEX_unlock(&session->clientid_record->cid_mutex);
-
+	if (!reserve_lease_or_expire(session->clientid_record, false)) {
 		dec_session_ref(session);
 		res_BIND_CONN_TO_SESSION4->bctsr_status = NFS4ERR_EXPIRED;
+
 		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
 			    "BIND_CONN_TO_SESSION returning status %s",
 			    nfsstat4_to_str(
 				res_BIND_CONN_TO_SESSION4->bctsr_status));
+
 		return NFS_REQ_ERROR;
 	}
 
 	data->preserved_clientid = session->clientid_record;
-
-	PTHREAD_MUTEX_unlock(&session->clientid_record->cid_mutex);
 
 	/* Keep memory of the session in the COMPOUND's data and indicate no
 	 * slot in use. We assume the server will never support UINT32_MAX + 1

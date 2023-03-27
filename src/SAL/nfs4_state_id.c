@@ -955,29 +955,28 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 				data->preserved_clientid = NULL;
 			}
 
-			/* Check if lease is expired and reserve it */
-			PTHREAD_MUTEX_lock(&pclientid->cid_mutex);
+			/* Check if lease is expired and reserve it. If it's
+			 * valid and this is STATEID_SPECIAL_CLOSE_40, update
+			 * the lease.
+			 */
+			if (!reserve_lease_or_expire(
+				    pclientid,
+				    (flags & STATEID_SPECIAL_CLOSE_40) != 0)) {
 
-			if (!reserve_lease(pclientid)) {
 				LogDebug(COMPONENT_STATE,
 					 "Returning NFS4ERR_EXPIRED");
-				PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
+
 				status = NFS4ERR_EXPIRED;
 				goto failure;
 			}
 
-			if ((flags & STATEID_SPECIAL_CLOSE_40) != 0) {
-				/* Just update the lease and leave the reserved
-				 * clientid NULL.
-				 */
-				update_lease(pclientid);
-			} else {
-				/* Remember the reserved clientid for the rest
-				 * of the compound.
+			if ((flags & STATEID_SPECIAL_CLOSE_40) == 0) {
+				/* Not STATEID_SPECIAL_CLOSE_40, remember the
+				 * reserved clientid for the rest of the
+				 * compound.
 				 */
 				data->preserved_clientid = pclientid;
 			}
-			PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
 
 			/* Replayed close, it's ok, but stateid doesn't exist */
 			LogDebug(COMPONENT_STATE,
@@ -994,13 +993,13 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			 * can distinguish between the state_t being in the
 			 * midst of tear down due to expired lease or if
 			 * in fact the entry is actually stale.
+			 *
+			 * If it's valid, Just update the lease and leave the
+			 * reserved clientid NULL.
 			 */
-			PTHREAD_MUTEX_lock(&pclientid->cid_mutex);
-
-			if (!reserve_lease(pclientid)) {
+			if (!reserve_lease_or_expire(pclientid, true)) {
 				LogDebug(COMPONENT_STATE,
 					 "Returning NFS4ERR_EXPIRED");
-				PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
 
 				/* Release the clientid reference we just
 				 * acquired.
@@ -1009,12 +1008,6 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 				status = NFS4ERR_EXPIRED;
 				goto failure;
 			}
-
-			/* Just update the lease and leave the reserved
-			 * clientid NULL.
-			 */
-			update_lease(pclientid);
-			PTHREAD_MUTEX_unlock(&pclientid->cid_mutex);
 
 			/* The lease was valid, so this must be a stale
 			 * entry.
@@ -1046,11 +1039,9 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 		}
 
 		/* Check if lease is expired and reserve it */
-		PTHREAD_MUTEX_lock(
-		    &owner2->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
-
-		if (!reserve_lease(
-				owner2->so_owner.so_nfs4_owner.so_clientrec)) {
+		if (!reserve_lease_or_expire(
+				owner2->so_owner.so_nfs4_owner.so_clientrec,
+				false)) {
 			LogDebug(COMPONENT_STATE, "Returning NFS4ERR_EXPIRED");
 
 			PTHREAD_MUTEX_unlock(&owner2->so_owner.so_nfs4_owner
@@ -1062,9 +1053,6 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 
 		data->preserved_clientid =
 		    owner2->so_owner.so_nfs4_owner.so_clientrec;
-
-		PTHREAD_MUTEX_unlock(
-		    &owner2->so_owner.so_nfs4_owner.so_clientrec->cid_mutex);
 	}
 
 	/* Sanity check : Is this the right file ? */

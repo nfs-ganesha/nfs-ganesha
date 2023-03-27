@@ -86,18 +86,12 @@ enum nfs_req_result nfs4_op_release_lockowner(struct nfs_argop4 *op,
 		goto out2;
 	}
 
-	PTHREAD_MUTEX_lock(&nfs_client_id->cid_mutex);
-
-	if (!reserve_lease(nfs_client_id)) {
-		PTHREAD_MUTEX_unlock(&nfs_client_id->cid_mutex);
-
+	if (!reserve_lease_or_expire(nfs_client_id, false)) {
 		dec_client_id_ref(nfs_client_id);
 
 		res_RELEASE_LOCKOWNER4->status = NFS4ERR_EXPIRED;
 		goto out2;
 	}
-
-	PTHREAD_MUTEX_unlock(&nfs_client_id->cid_mutex);
 
 	/* look up the lock owner and see if we can find it */
 	convert_nfs4_lock_owner(&arg_RELEASE_LOCKOWNER4->lock_owner,

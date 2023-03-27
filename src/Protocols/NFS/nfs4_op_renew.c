@@ -88,14 +88,14 @@ enum nfs_req_result nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 		return NFS_REQ_ERROR;
 	}
 
-	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
-
-	if (!reserve_lease(clientid)) {
+	/* Check if the lease is already expired, if not update it. */
+	if (!reserve_lease_or_expire(clientid, true)) {
 		res_RENEW4->status = NFS4ERR_EXPIRED;
 	} else {
-		update_lease(clientid);
-		/* update the lease, check the state of callback
-		 * path and return correct error */
+		/** @todo - it doesn't look like this cb_channel stuff is
+		 *          thread safe... Maybe it's actually OK?
+		 */
+		/* Check the state of callback path and return correct error */
 		if (nfs_param.nfsv4_param.allow_delegations &&
 		    get_cb_chan_down(clientid) && clientid->curr_deleg_grants) {
 			res_RENEW4->status =  NFS4ERR_CB_PATH_DOWN;
@@ -109,8 +109,6 @@ enum nfs_req_result nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 			clientid->first_path_down_resp_time = 0;
 		}
 	}
-
-	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 	dec_client_id_ref(clientid);
 

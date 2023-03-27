@@ -176,15 +176,11 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 	}
 
-	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
-
-	if (data->minorversion == 0 && !reserve_lease(clientid)) {
-		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+	if (data->minorversion == 0 &&
+	    !reserve_lease_or_expire(clientid, false)) {
 		res_LOCKT4->status = NFS4ERR_EXPIRED;
 		goto out_clientid;
 	}
-
-	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 	/* Is this lock_owner known ? */
 	convert_nfs4_lock_owner(&arg_LOCKT4->owner, &owner_name);
