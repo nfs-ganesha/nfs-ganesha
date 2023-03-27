@@ -2234,7 +2234,8 @@ retry:
 				 * allowed to reopen, so return EBUSY.
 				 */
 				PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
-				status = posix2fsal_status(EBUSY);
+				/* Use fsalstat to avoid LogInfo... */
+				status = fsalstat(ERR_FSAL_DELAY, EBUSY);
 				goto out;
 			}
 
@@ -2294,7 +2295,8 @@ retry:
 			 * allowed to reopen, so return EBUSY.
 			 * OR we've already been here.
 			 */
-			status = posix2fsal_status(EBUSY);
+			/* Use fsalstat to avoid LogInfo... */
+			status = fsalstat(ERR_FSAL_DELAY, EBUSY);
 
 			/* We no longer need to claim io work on fsal_fd
 			 * because we are going to continue with a temporary fd.
@@ -2787,7 +2789,8 @@ fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd, bool is_reclaiming)
 		 */
 		bump_fd_lru(fsal_fd);
 		PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
-		return posix2fsal_status(EBUSY);
+		/* Use fsalstat to avoid LogInfo... */
+		return fsalstat(ERR_FSAL_DELAY, EBUSY);
 	}
 
 	LogFullDebug(COMPONENT_FSAL,
@@ -2811,7 +2814,8 @@ fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd, bool is_reclaiming)
 			 */
 			bump_fd_lru(fsal_fd);
 			PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
-			return posix2fsal_status(EBUSY);
+			/* Use fsalstat to avoid LogInfo... */
+			return fsalstat(ERR_FSAL_DELAY, EBUSY);
 		}
 
 		/* io work is in progress or trying to start, wait for it to
