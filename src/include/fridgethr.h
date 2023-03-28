@@ -123,10 +123,6 @@ typedef enum {
 	fridgethr_defer_queue = 1, /*< If the fridge is full, queue
 				       requests for later and return
 				       immediately. */
-	fridgethr_defer_block = 2 /*< if the fridge is full, wait for
-				      a thread to become available and
-				      execute on it.  Optionally,
-				      return an error on timeout. */
 } fridgethr_defer_t;
 
 /**
@@ -152,8 +148,6 @@ struct fridgethr_params {
 				       fridge. */
 	fridgethr_defer_t deferment; /*< Deferment strategy for this
 					 fridge */
-	time_t block_delay; /*< How long to wait before a thread
-				becomes available. */
 	/**
 	 * If non-NULL, run after every submitted job.
 	 */
@@ -224,16 +218,7 @@ struct fridgethr {
 	pthread_cond_t *cb_cv;	/*< Condition variable, signalled on
 				   completion */
 	bool transitioning; /*< Changing state */
-	union {
-		struct glist_head work_q; /*< Work queued */
-		struct {
-			pthread_cond_t cond; /*< Condition variable on which
-						 we wait for a thread to become
-						 available. */
-			uint32_t waiters; /*< Requests blocked waiting for a
-					      thread. */
-		} block;
-	} deferment;
+	struct glist_head work_q; /*< Work queued */
 };
 
 #define fridgethr_flag_none 0x0000 /*< Null flag */

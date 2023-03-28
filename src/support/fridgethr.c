@@ -153,12 +153,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 		/* Deferment */
 		switch (frobj->p.deferment) {
 		case fridgethr_defer_queue:
-			glist_init(&frobj->deferment.work_q);
-			break;
-
-		case fridgethr_defer_block:
-			PTHREAD_COND_init(&frobj->deferment.block.cond, NULL);
-			frobj->deferment.block.waiters = 0;
+			glist_init(&frobj->work_q);
 			break;
 
 		case fridgethr_defer_fail:
@@ -285,11 +280,7 @@ static bool fridgethr_deferredwork(struct fridgethr *fr)
 
 	switch (fr->p.deferment) {
 	case fridgethr_defer_queue:
-		res = !glist_empty(&fr->deferment.work_q);
-		break;
-
-	case fridgethr_defer_block:
-		res = (fr->deferment.block.waiters > 0);
+		res = !glist_empty(&fr->work_q);
 		break;
 
 	case fridgethr_defer_fail:
@@ -318,13 +309,12 @@ static bool fridgethr_deferredwork(struct fridgethr *fr)
 
 static bool fridgethr_getwork(struct fridgethr *fr, struct fridgethr_entry *fe)
 {
-	if ((fr->p.deferment == fridgethr_defer_block)
-	    || (fr->p.deferment == fridgethr_defer_fail)
-	    || glist_empty(&fr->deferment.work_q)) {
+	if ((fr->p.deferment == fridgethr_defer_fail)
+	    || glist_empty(&fr->work_q)) {
 		return false;
 	} else {
 		struct fridgethr_work *q =
-		    glist_first_entry(&fr->deferment.work_q,
+		    glist_first_entry(&fr->work_q,
 				      struct fridgethr_work,
 				      link);
 		glist_del(&q->link);
@@ -404,11 +394,6 @@ static bool fridgethr_freeze(struct fridgethr *fr,
 	PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 	fe->frozen = true;
 	fe->flags |= fridgethr_flag_available;
-	/* Not ideal, but no ideal factoring occurred to me. */
-	if ((fr->p.deferment == fridgethr_defer_block)
-	    && (fr->deferment.block.waiters > 0)) {
-		pthread_cond_signal(&fr->deferment.block.cond);
-	}
 	PTHREAD_MUTEX_unlock(&fr->mtx);
 
 	/* It is a state machine, keep going until we have a
@@ -460,12 +445,6 @@ static bool fridgethr_freeze(struct fridgethr *fr,
 			PTHREAD_MUTEX_lock(&fe->ctx.mtx);
 			fe->frozen = true;
 			fe->flags |= fridgethr_flag_available;
-
-			/* Not ideal, but no ideal factoring occurred to me. */
-			if ((fr->p.deferment == fridgethr_defer_block)
-			    && (fr->deferment.block.waiters > 0)) {
-				pthread_cond_signal(&fr->deferment.block.cond);
-			}
 			PTHREAD_MUTEX_unlock(&fr->mtx);
 			continue;
 		}
@@ -690,7 +669,7 @@ static int fridgethr_queue(struct fridgethr *fr,
 	glist_init(&q->link);
 	q->func = func;
 	q->arg = arg;
-	glist_add_tail(&fr->deferment.work_q, &q->link);
+	glist_add_tail(&fr->work_q, &q->link);
 
 	return 0;
 }
@@ -743,72 +722,6 @@ static bool fridgethr_dispatch(struct fridgethr *fr,
 	}
 
 	return dispatched;
-}
-
-/**
- * @brief Block a request
- *
- * Block on thread availability and schedule a thread when one becomes
- * available.
- *
- * @note This function must be called with the fridge lock held.
- *
- * @param[in] fr   The fridge in which to find a thread
- * @param[in] func The thing to do
- * @param[in] arg  The thing to do it to
- *
- * @return 0 or POSIX errors.
- */
-
-static int fridgethr_block(struct fridgethr *fr,
-			   void (*func)(struct fridgethr_context *), void *arg)
-{
-	/* Successfully dispatched */
-	bool dispatched = true;
-	/* Return code */
-	int rc = 0;
-
-	++(fr->deferment.block.waiters);
-	do {
-		if (fr->p.block_delay > 0) {
-			struct timespec t;
-
-			clock_gettime(CLOCK_REALTIME, &t);
-			t.tv_sec += fr->p.block_delay > 0;
-			rc = pthread_cond_timedwait(&fr->deferment.block.cond,
-						    &fr->mtx, &t);
-		} else {
-			rc = pthread_cond_wait(&fr->deferment.block.cond,
-					       &fr->mtx);
-		}
-		if (rc == 0) {
-			switch (fr->command) {
-			case fridgethr_comm_run:
-				dispatched = fridgethr_dispatch(fr, func, arg);
-				break;
-
-			case fridgethr_comm_stop:
-				rc = EPIPE;
-				break;
-
-			case fridgethr_comm_pause:
-				/* Nothing, just go through the loop
-				   again. */
-				break;
-			}
-		}
-	} while (!dispatched && (rc == 0));
-	--(fr->deferment.block.waiters);
-	/* We check here, too, in case we get around to falling out
-	   after the last thread exited. */
-	if ((fr->nthreads == 0) && (fr->command == fridgethr_comm_stop)
-	    && (fr->transitioning) && !fridgethr_deferredwork(fr)) {
-		/* We're the last thread to exit, signal the
-		   transition to pause complete. */
-		fridgethr_finish_transition(fr, false);
-	}
-
-	return rc;
 }
 
 /**
@@ -876,9 +789,6 @@ int fridgethr_submit(struct fridgethr *fr,
 		case fridgethr_defer_fail:
 			rc = EWOULDBLOCK;
 			break;
-
-		case fridgethr_defer_block:
-			rc = fridgethr_block(fr, func, arg);
 		};
 		PTHREAD_MUTEX_unlock(&fr->mtx);
 	}
@@ -1076,13 +986,6 @@ int fridgethr_stop(struct fridgethr *fr, pthread_mutex_t *mtx,
 		return 0;
 	}
 
-	/* If we're a blocking fridge, let everyone know it's time to
-	   fail. */
-	if ((fr->p.deferment == fridgethr_defer_block)
-	    && (fr->deferment.block.waiters > 0)) {
-		pthread_cond_broadcast(&fr->deferment.block.cond);
-	}
-
 	if (fr->nthreads > 0) {
 		/* Wake the idle! */
 
@@ -1113,7 +1016,7 @@ int fridgethr_stop(struct fridgethr *fr, pthread_mutex_t *mtx,
 		assert(fr->p.deferment != fridgethr_defer_fail);
 		if (fr->p.deferment == fridgethr_defer_queue) {
 			struct fridgethr_work *q =
-			    glist_first_entry(&fr->deferment.work_q,
+			    glist_first_entry(&fr->work_q,
 					      struct fridgethr_work,
 					      link);
 			glist_del(&q->link);
@@ -1217,11 +1120,10 @@ int fridgethr_start(struct fridgethr *fr, pthread_mutex_t *mtx,
 
 	while (fridgethr_deferredwork(fr) && (maybe_spawn-- > 0)
 	       && ((fr->nthreads < fr->p.thr_max) || (fr->p.thr_max == 0))) {
-		assert(fr->p.deferment != fridgethr_defer_block);
 		/* Start some threads to finish the work */
 		if (fr->p.deferment == fridgethr_defer_queue) {
 			struct fridgethr_work *q =
-			    glist_first_entry(&fr->deferment.work_q,
+			    glist_first_entry(&fr->work_q,
 					      struct fridgethr_work,
 					      link);
 			glist_del(&q->link);
