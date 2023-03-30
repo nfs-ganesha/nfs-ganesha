@@ -140,11 +140,9 @@ static struct state_t *kvsfs_alloc_state(struct fsal_export *exp_hdl,
 
 	my_fd = &container_of(state, struct kvsfs_state_fd, state)->kvsfs_fd;
 
-	memset(&my_fd->fd, 0, sizeof(kvsns_file_open_t));
-	my_fd->fsal_fd.openflags = FSAL_O_CLOSED;
+	init_fsal_fd(&my_fd->fsal_fd, FSAL_FD_STATE, op_ctx->fsal_export);
 
 	return state;
-
 }
 
 /* kvsfs_export_ops_init

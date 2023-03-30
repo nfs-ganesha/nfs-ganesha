@@ -402,8 +402,17 @@ struct state_t *lzfs_fsal_alloc_state(struct fsal_export *exp_hdl,
 				      enum state_type state_type,
 				      struct state_t *related_state)
 {
-	return init_state(gsh_calloc(1, sizeof(struct lzfs_fsal_state_fd)),
-			  NULL, state_type, related_state);
+	struct state_t *state;
+	struct lzfs_fsal_fd *my_fd;
+
+	state = init_state(gsh_calloc(1, sizeof(struct lzfs_fsal_state_fd)),
+			   NULL, state_type, related_state);
+
+	my_fd = &container_of(state, struct lzfs_fsal_state_fd, state)->lzfs_fd;
+
+	init_fsal_fd(&my_fd->fsal_fd, FSAL_FD_STATE, op_ctx->fsal_export);
+
+	return state;
 }
 
 void lzfs_fsal_export_ops_init(struct export_ops *ops)

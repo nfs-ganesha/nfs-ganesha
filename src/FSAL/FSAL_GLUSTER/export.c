@@ -399,8 +399,8 @@ struct state_t *glusterfs_alloc_state(struct fsal_export *exp_hdl,
 	my_fd = &container_of(state, struct glusterfs_state_fd,
 			      state)->glusterfs_fd;
 
+	init_fsal_fd(&my_fd->fsal_fd, FSAL_FD_STATE, op_ctx->fsal_export);
 	my_fd->glfd = NULL;
-	my_fd->fsal_fd.openflags = FSAL_O_CLOSED;
 
 	return state;
 }

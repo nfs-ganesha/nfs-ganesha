@@ -162,10 +162,15 @@ static struct state_t *mem_alloc_state(struct fsal_export *exp_hdl,
 				       struct state_t *related_state)
 {
 	struct state_t *state;
+	struct fsal_fd *my_fd;
 
-	state = init_state(gsh_calloc(1, sizeof(struct state_t)
-				      + sizeof(struct fsal_fd)),
+	state = init_state(gsh_calloc(1, sizeof(struct mem_state_fd)),
 			   NULL, state_type, related_state);
+
+	my_fd = &container_of(state, struct mem_state_fd, state)->fsal_fd;
+
+	init_fsal_fd(my_fd, FSAL_FD_STATE, op_ctx->fsal_export);
+
 #ifdef USE_LTTNG
 	tracepoint(fsalmem, mem_alloc_state, __func__, __LINE__, state);
 #endif

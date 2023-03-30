@@ -2071,7 +2071,7 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	/* Allocate ceph call back information */
 	cbi = gsh_calloc(1, sizeof(*cbi));
 
-	init_fsal_fd(&cbi->temp_fd.fsal_fd, FSAL_FD_TEMP);
+	init_fsal_fd(&cbi->temp_fd.fsal_fd, FSAL_FD_TEMP, op_ctx->fsal_export);
 #endif
 
 	/* Indicate a desire to start io and get a usable file descritor */
