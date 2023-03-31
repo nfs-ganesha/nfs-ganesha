@@ -54,10 +54,7 @@ typedef struct handle_pool_entry__ {
 } handle_pool_entry_t;
 
 pool_t *digest_pool;
-static pthread_mutex_t digest_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 pool_t *handle_pool;
-static pthread_mutex_t handle_pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* helpers for pool allocation */
 
@@ -65,9 +62,7 @@ static digest_pool_entry_t *digest_alloc(void)
 {
 	digest_pool_entry_t *p_new;
 
-	PTHREAD_MUTEX_lock(&digest_pool_mutex);
 	p_new = pool_alloc(digest_pool);
-	PTHREAD_MUTEX_unlock(&digest_pool_mutex);
 
 	return p_new;
 }
@@ -76,18 +71,14 @@ static void digest_free(digest_pool_entry_t *p_digest)
 {
 	memset(p_digest, 0, sizeof(digest_pool_entry_t));
 
-	PTHREAD_MUTEX_lock(&digest_pool_mutex);
 	pool_free(digest_pool, p_digest);
-	PTHREAD_MUTEX_unlock(&digest_pool_mutex);
 }
 
 static handle_pool_entry_t *handle_alloc(void)
 {
 	handle_pool_entry_t *p_new;
 
-	PTHREAD_MUTEX_lock(&handle_pool_mutex);
 	p_new = pool_alloc(handle_pool);
-	PTHREAD_MUTEX_unlock(&handle_pool_mutex);
 
 	return p_new;
 }
@@ -96,9 +87,7 @@ static void handle_free(handle_pool_entry_t *p_handle)
 {
 	memset(p_handle, 0, sizeof(handle_pool_entry_t));
 
-	PTHREAD_MUTEX_lock(&handle_pool_mutex);
 	pool_free(handle_pool, p_handle);
-	PTHREAD_MUTEX_unlock(&handle_pool_mutex);
 }
 
 /* hash table functions */
