@@ -1013,6 +1013,15 @@ static fsal_status_t ceph_fsal_close(struct fsal_obj_handle *obj_hdl)
 	return status;
 }
 
+void ceph_free_state(struct state_t *state)
+{
+	struct ceph_fd *my_fd;
+
+	my_fd = &container_of(state, struct ceph_state_fd, state)->ceph_fd;
+
+	destroy_fsal_fd(&my_fd->fsal_fd);
+}
+
 /**
  * @brief Allocate a state_t structure
  *
@@ -1034,7 +1043,7 @@ struct state_t *ceph_alloc_state(struct fsal_export *exp_hdl,
 	struct ceph_fd *my_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct ceph_state_fd)),
-			   NULL, state_type, related_state);
+			   ceph_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct ceph_state_fd, state)->ceph_fd;
 
@@ -1941,6 +1950,7 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	done_cb(obj_hdl, status, read_arg, caller_arg);
 
 #if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	destroy_fsal_fd(&cbi->temp_fd.fsal_fd);
 	gsh_free(cbi);
 #endif
 }
@@ -2193,6 +2203,7 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	done_cb(obj_hdl, status, write_arg, caller_arg);
 
 #if USE_FSAL_CEPH_FS_NONBLOCKING_IO
+	destroy_fsal_fd(&cbi->temp_fd.fsal_fd);
 	gsh_free(cbi);
 #endif
 }

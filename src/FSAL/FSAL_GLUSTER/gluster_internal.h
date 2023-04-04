@@ -128,7 +128,7 @@ struct glusterfs_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_obj_ops handle_ops;
 	struct glist_head  fs_obj; /* list of glusterfs_fs filesystem objects */
-	pthread_mutex_t   lock; /* lock to protect above list */
+	pthread_mutex_t   glfs_lock; /* lock to protect above list */
 };
 extern struct glusterfs_fsal_module GlusterFS;
 

@@ -59,7 +59,7 @@
 
 #ifdef DEBUG_SAL
 struct glist_head state_v4_all = GLIST_HEAD_INIT(state_v4_all);
-pthread_mutex_t all_state_v4_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t all_state_v4_mutex;
 #endif
 
 /**
@@ -199,12 +199,12 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	 */
 
 	/* Attach this to an export */
-	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->exp_lock);
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 	glist_add_tail(&op_ctx->ctx_export->exp_state_list,
 		&pnew_state->state_export_list);
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
-	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 
 	/* Add state to list for file */
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
@@ -480,12 +480,12 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	 * is removed, and we have guaranteed we are the only thread
 	 * proceeding with state deletion.
 	 */
-	PTHREAD_RWLOCK_wrlock(&export->lock);
+	PTHREAD_RWLOCK_wrlock(&export->exp_lock);
 	PTHREAD_MUTEX_lock(&state->state_mutex);
 	glist_del(&state->state_export_list);
 	state->state_export = NULL;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 	put_gsh_export(export);
 
 #ifdef DEBUG_SAL
@@ -972,7 +972,7 @@ static void release_export_nfs4_state(enum state_type type)
 
  again:
 	first = NULL;
-	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->exp_lock);
 	hold_export_lock = true;
 
 	glist_for_each_safe(glist, glistn,
@@ -1017,7 +1017,7 @@ static void release_export_nfs4_state(enum state_type type)
 
 		inc_state_t_ref(state);
 
-		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 		hold_export_lock = false;
 
 		if (type == STATE_TYPE_LAYOUT) {
@@ -1063,7 +1063,7 @@ static void release_export_nfs4_state(enum state_type type)
 	}
 
 	if (hold_export_lock)
-		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 
 	if (errcnt == STATE_ERR_MAX) {
 		LogFatal(COMPONENT_STATE,

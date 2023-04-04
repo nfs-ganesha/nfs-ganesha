@@ -165,18 +165,18 @@ void cleanup_pseudofs_node(char *pseudo_path,
 	 * exp_root_obj so we can check if we have reached the root of
 	 * the mounted on export.
 	 */
-	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->exp_lock);
 
 	if (parent_obj == op_ctx->ctx_export->exp_root_obj) {
 		LogDebug(COMPONENT_EXPORT,
 			 "Reached root of PseudoFS %s",
 			 CTX_PSEUDOPATH(op_ctx));
 
-		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 		goto out;
 	}
 
-	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 
 	/* Truncate the pseudo_path to be the path to the parent */
 	*pos = '\0';
@@ -476,7 +476,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 	PTHREAD_RWLOCK_unlock(&state.obj->state_hdl->jct_lock);
 
 	/* And fill in the mounted on information for the export. */
-	PTHREAD_RWLOCK_wrlock(&export->lock);
+	PTHREAD_RWLOCK_wrlock(&export->exp_lock);
 
 	export->exp_mounted_on_file_id = state.obj->fileid;
 
@@ -492,14 +492,15 @@ bool pseudo_mount_export(struct gsh_export *export)
 	get_gsh_export_ref(export->exp_parent_exp);
 
 	/* Add ourselves to the list of exports mounted on parent */
-	PTHREAD_RWLOCK_wrlock(&export->exp_parent_exp->lock);
+	PTHREAD_RWLOCK_wrlock(&export->exp_parent_exp->exp_lock);
 	glist_add_tail(&export->exp_parent_exp->mounted_exports_list,
 		       &export->mounted_exports_node);
-	PTHREAD_RWLOCK_unlock(&export->exp_parent_exp->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_parent_exp->exp_lock);
 
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 
-	/* Set this outside the export->lock, protected by EXPORT_ADMIN_LOCK */
+	/* Set this outside the export->exp_lock, protected by EXPORT_ADMIN_LOCK
+	 */
 	export->is_mounted = true;
 
 	LogDebug(COMPONENT_EXPORT,
@@ -569,7 +570,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 	 * we jump straight to cleaning up our presence in parent
 	 * export.
 	 */
-	PTHREAD_RWLOCK_wrlock(&export->lock);
+	PTHREAD_RWLOCK_wrlock(&export->exp_lock);
 
 	junction_inode = export->exp_junction_obj;
 	mounted_on_export = export->exp_parent_exp;
@@ -584,7 +585,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 			 "Unmount of export %d unnecessary",
 			 export->export_id);
 
-		PTHREAD_RWLOCK_unlock(&export->lock);
+		PTHREAD_RWLOCK_unlock(&export->exp_lock);
 		return;
 	}
 
@@ -627,14 +628,15 @@ void pseudo_unmount_export(struct gsh_export *export)
 	export->exp_parent_exp = NULL;
 
 	/* Remove ourselves from the list of exports mounted on parent */
-	PTHREAD_RWLOCK_wrlock(&mounted_on_export->lock);
+	PTHREAD_RWLOCK_wrlock(&mounted_on_export->exp_lock);
 	glist_del(&export->mounted_exports_node);
-	PTHREAD_RWLOCK_unlock(&mounted_on_export->lock);
+	PTHREAD_RWLOCK_unlock(&mounted_on_export->exp_lock);
 
 	/* Release the export lock */
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 
-	/* Clear this outside the export->lock, protected by EXPORT_ADMIN_LOCK
+	/* Clear this outside the export->exp_lock, protected by
+	 * EXPORT_ADMIN_LOCK
 	 */
 	export->is_mounted = false;
 
@@ -690,7 +692,7 @@ void pseudo_unmount_export_tree(struct gsh_export *export)
 	while (true) {
 		struct gsh_export *sub_mounted_export;
 
-		PTHREAD_RWLOCK_rdlock(&export->lock);
+		PTHREAD_RWLOCK_rdlock(&export->exp_lock);
 		/* Find a sub_mounted export */
 		sub_mounted_export =
 			glist_first_entry(&export->mounted_exports_list,
@@ -698,7 +700,7 @@ void pseudo_unmount_export_tree(struct gsh_export *export)
 					  mounted_exports_node);
 		if (sub_mounted_export == NULL) {
 			/* If none, break out of the loop */
-			PTHREAD_RWLOCK_unlock(&export->lock);
+			PTHREAD_RWLOCK_unlock(&export->exp_lock);
 			break;
 		}
 
@@ -709,7 +711,7 @@ void pseudo_unmount_export_tree(struct gsh_export *export)
 		get_gsh_export_ref(sub_mounted_export);
 
 		/* Drop the lock */
-		PTHREAD_RWLOCK_unlock(&export->lock);
+		PTHREAD_RWLOCK_unlock(&export->exp_lock);
 
 		/* And unmount it */
 		pseudo_unmount_export_tree(sub_mounted_export);
@@ -788,7 +790,7 @@ void prune_pseudofs_subtree(struct gsh_export *export,
 	 * unmount child_export, it is impossible for any other child exports to
 	 * be unmounted during this time, so glistn continues to be valid.
 	 */
-	PTHREAD_RWLOCK_rdlock(&export->lock);
+	PTHREAD_RWLOCK_rdlock(&export->exp_lock);
 	glist_for_each_safe(glist, glistn, &export->mounted_exports_list) {
 		/* Find a sub_mounted export */
 		child_export = glist_entry(glist,
@@ -802,7 +804,7 @@ void prune_pseudofs_subtree(struct gsh_export *export,
 		get_gsh_export_ref(child_export);
 
 		/* Drop the lock */
-		PTHREAD_RWLOCK_unlock(&export->lock);
+		PTHREAD_RWLOCK_unlock(&export->exp_lock);
 		/* And prune this child */
 		prune_pseudofs_subtree(child_export, generation, defunct);
 
@@ -810,11 +812,11 @@ void prune_pseudofs_subtree(struct gsh_export *export,
 		put_gsh_export(child_export);
 
 		/* And take the lock again. */
-		PTHREAD_RWLOCK_rdlock(&export->lock);
+		PTHREAD_RWLOCK_rdlock(&export->exp_lock);
 	}
 
 	/* Drop the lock */
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 
 	if (defunct) {
 		LogDebug(COMPONENT_EXPORT,

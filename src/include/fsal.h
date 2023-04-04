@@ -637,9 +637,9 @@ struct async_process_data {
 	/** Indicator callback is done. */
 	bool done;
 	/** Mutex to protect done and condition variable. */
-	pthread_mutex_t *mutex;
+	pthread_mutex_t *fsa_mutex;
 	/** Condition variable to signal callback is done. */
-	pthread_cond_t *cond;
+	pthread_cond_t *fsa_cond;
 };
 
 extern void fsal_read(struct fsal_obj_handle *obj_hdl,

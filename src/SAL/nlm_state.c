@@ -319,6 +319,8 @@ void dec_nlm_state_ref(state_t *state)
 		obj->obj_ops->put_ref(obj);
 	}
 
+	PTHREAD_MUTEX_destroy(&state->state_mutex);
+
 	free_state(state);
 
 	if (obj != NULL) {

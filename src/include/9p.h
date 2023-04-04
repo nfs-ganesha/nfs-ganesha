@@ -357,7 +357,7 @@ struct _9p_flush_hook {
 };
 
 struct _9p_flush_bucket {
-	pthread_mutex_t lock;
+	pthread_mutex_t flb_lock;
 	struct glist_head list;
 };
 
@@ -386,8 +386,8 @@ struct _9p_conn {
 #ifdef _USE_9P_RDMA
 struct _9p_outqueue {
 	msk_data_t *data;
-	pthread_mutex_t lock;
-	pthread_cond_t cond;
+	pthread_mutex_t oq_lock;
+	pthread_cond_t oq_cond;
 };
 
 struct _9p_rdma_priv_pernic {
@@ -413,8 +413,8 @@ struct _9p_request_data {
 	msk_data_t *data;
 #endif
 	struct _9p_flush_hook flush_hook;
-	pthread_mutex_t *mutex;
-	pthread_cond_t *cond;
+	pthread_mutex_t *_9prq_mutex;
+	pthread_cond_t *_9prq_cond;
 };
 
 typedef int (*_9p_function_t) (struct _9p_request_data *req9p,

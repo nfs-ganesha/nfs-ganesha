@@ -36,8 +36,8 @@
 #include "nlm_util.h"
 #include "nlm_async.h"
 
-pthread_mutex_t nlm_async_resp_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t nlm_async_resp_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t nlm_async_resp_mutex;
+pthread_cond_t nlm_async_resp_cond;
 
 int nlm_send_async_res_nlm4(state_nlm_client_t *host, state_async_func_t func,
 			    nfs_res_t *pres)

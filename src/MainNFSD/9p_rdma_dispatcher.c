@@ -107,9 +107,9 @@ void _9p_rdma_cleanup_conn(msk_trans_t *trans)
 
 	/* Set the pthread attributes */
 	memset((char *)&attr_thr, 0, sizeof(attr_thr));
-	if (pthread_attr_init(&attr_thr) ||
-	    pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) ||
-	    pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED))
+	PTHREAD_ATTR_init(&attr_thr);
+	PTHREAD_ATTR_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
+	PTHREAD_ATTR_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);
 		return;
 
 	if (pthread_create(&thr_id, &attr_thr, _9p_rdma_cleanup_conn_thread,
@@ -121,6 +121,8 @@ void _9p_rdma_cleanup_conn(msk_trans_t *trans)
 			 "9P/RDMA: thread #%x spawned to cleanup trans [%p]",
 			 (unsigned int)thr_id,
 			 trans);
+
+	PTHREAD_ATTR_destroy(&attr_thr);
 }
 
 /**
@@ -155,7 +157,7 @@ void *_9p_rdma_thread(void *Arg)
 	priv->pconn = p_9p_conn;
 
 	for (i = 0; i < FLUSH_BUCKETS; i++) {
-		PTHREAD_MUTEX_init(&p_9p_conn->flush_buckets[i].lock, NULL);
+		PTHREAD_MUTEX_init(&p_9p_conn->flush_buckets[i].flb_lock, NULL);
 		glist_init(&p_9p_conn->flush_buckets[i].list);
 	}
 	p_9p_conn->sequence = 0;
@@ -195,6 +197,10 @@ void *_9p_rdma_thread(void *Arg)
 	}
 out:
 	rcu_unregister_thread();
+
+	for (i = 0; i < FLUSH_BUCKETS; i++)
+		PTHREAD_MUTEX_destroy(&p_9p_conn->flush_buckets[i].flb_lock);
+
 	pthread_exit(NULL);
 
 error:
@@ -303,12 +309,21 @@ static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 
 	outqueue = gsh_malloc(sizeof(*outqueue));
 
-	PTHREAD_MUTEX_init(&outqueue->lock, NULL);
-	PTHREAD_COND_init(&outqueue->cond, NULL);
+	PTHREAD_MUTEX_init(&outqueue->oq_lock, NULL);
+	PTHREAD_COND_init(&outqueue->oq_cond, NULL);
 	outqueue->data = wdata;
 	*poutqueue = outqueue;
 }
 
+static void _9p_rdma_cleanup_global(uint8_t *outrdmabuf, msk_data_t *wdata,
+				    struct _9p_outqueue *outqueue)
+{
+	PTHREAD_MUTEX_destroy(&outqueue->oq_lock);
+	PTHREAD_COND_destroy(&outqueue->oq_cond);
+	gsh_free(outrdmabuf);
+	gsh_free(wdata);
+	gsh_free(outqueue);
+}
 
 /**
  * _9p_rdma_dispatcher_thread: 9P/RDMA dispatcher
@@ -365,17 +380,9 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	memset((char *)&attr_thr, 0, sizeof(attr_thr));
 
 	/* Set the pthread attributes */
-	if (pthread_attr_init(&attr_thr))
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA dispatcher could not init pthread_attr_t");
-
-	if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM))
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA dispatcher could not set pthread_attr_t:scope_system");
-
-	if (pthread_attr_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED))
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA dispatcher could not set pthread_attr_t:create_joignable");
+	PTHREAD_ATTR_init(&attr_thr);
+	PTHREAD_ATTR_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
+	iPTHREAD_ATTR_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);
 
 	/* Init RDMA via mooshika */
 	if (msk_init(&trans, &trans_attr))
@@ -406,9 +413,6 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 				_9p_rdma_setup_global(&outrdmabuf,
 						      &wdata,
 						      &outqueue);
-				/* this means ENOMEM - abort */
-				if (!outrdmabuf || !wdata || !outqueue)
-					break;
 			}
 			_9p_rdma_setup_pernic(child_trans, outrdmabuf);
 			child_trans->private_data = outqueue;
@@ -427,6 +431,8 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 		}
 	}			/* for( ;; ) */
 
+	PTHREAD_ATTR_destroy(&attr_thr);
+	_9p_rdma_cleanup_global(outrdmabuf, wdata, outqueue);
 	rcu_unregister_thread();
 	pthread_exit(NULL);
 }				/* _9p_rdma_dispatcher_thread */

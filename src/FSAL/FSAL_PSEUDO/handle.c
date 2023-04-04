@@ -786,7 +786,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_BADHANDLE, 0);
 	}
 
-	PTHREAD_RWLOCK_rdlock(&exp_hdl->fsal->lock);
+	PTHREAD_RWLOCK_rdlock(&exp_hdl->fsal->fsm_lock);
 
 	glist_for_each(glist, &exp_hdl->fsal->handles) {
 		hdl = glist_entry(glist, struct fsal_obj_handle, handles);
@@ -804,7 +804,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 
 			*handle = hdl;
 
-			PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
+			PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->fsm_lock);
 
 			if (attrs_out != NULL) {
 				fsal_copy_attrs(attrs_out, &my_hdl->attributes,
@@ -819,7 +819,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 		/* An export update may be the cause of the failure. Tell the
 		 * client to retry.
 		 */
-		PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
+		PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->fsm_lock);
 
 		LogDebug(COMPONENT_EXPORT,
 			 "PseudoFS create handle may have failed due to export update");
@@ -830,7 +830,7 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 	LogDebug(COMPONENT_FSAL,
 		"Could not find handle");
 
-	PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
+	PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->fsm_lock);
 
 	return fsalstat(ERR_FSAL_STALE, ESTALE);
 }

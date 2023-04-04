@@ -107,9 +107,9 @@ struct delayed_thread {
 /** list of all threads */
 static struct delayed_threadlist thread_list;
 /** Mutex for delayed execution */
-static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t dle_mtx;
 /** Condition variable for delayed execution */
-static pthread_cond_t cv = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t dle_cv;
 /** The timer tree */
 static struct avltree tree;
 
@@ -222,7 +222,7 @@ void *delayed_thread(void *arg)
 
 	pthread_sigmask(SIG_SETMASK, NULL, &old_sigmask);
 
-	PTHREAD_MUTEX_lock(&mtx);
+	PTHREAD_MUTEX_lock(&dle_mtx);
 	while (delayed_state == delayed_running) {
 		struct timespec then;
 		void (*func)(void *);
@@ -230,25 +230,25 @@ void *delayed_thread(void *arg)
 
 		switch (delayed_get_work(&then, &func, &farg)) {
 		case delayed_unemployed:
-			pthread_cond_wait(&cv, &mtx);
+			pthread_cond_wait(&dle_cv, &dle_mtx);
 			break;
 
 		case delayed_on_break:
-			pthread_cond_timedwait(&cv, &mtx, &then);
+			pthread_cond_timedwait(&dle_cv, &dle_mtx, &then);
 			break;
 
 		case delayed_employed:
-			PTHREAD_MUTEX_unlock(&mtx);
+			PTHREAD_MUTEX_unlock(&dle_mtx);
 			func(farg);
-			PTHREAD_MUTEX_lock(&mtx);
+			PTHREAD_MUTEX_lock(&dle_mtx);
 			break;
 		}
 	}
 	LIST_REMOVE(thr, link);
 	if (LIST_EMPTY(&thread_list))
-		pthread_cond_broadcast(&cv);
+		pthread_cond_broadcast(&dle_cv);
 
-	PTHREAD_MUTEX_unlock(&mtx);
+	PTHREAD_MUTEX_unlock(&dle_mtx);
 	gsh_free(thr);
 
 	rcu_unregister_thread();
@@ -268,6 +268,8 @@ void delayed_start(void)
 	/* Thread index */
 	int i;
 
+	PTHREAD_MUTEX_init(&dle_mtx, NULL);
+	PTHREAD_COND_init(&dle_cv, NULL);
 	LIST_INIT(&thread_list);
 	avltree_init(&tree, comparator, 0);
 
@@ -276,13 +278,10 @@ void delayed_start(void)
 			 "You can't execute tasks with zero threads.");
 	}
 
-	if (pthread_attr_init(&attr) != 0)
-		LogFatal(COMPONENT_THREAD, "can't init pthread's attributes");
+	PTHREAD_ATTR_init(&attr);
+	PTHREAD_ATTR_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-	if (pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) != 0)
-		LogFatal(COMPONENT_THREAD, "can't set pthread's join state");
-
-	PTHREAD_MUTEX_lock(&mtx);
+	PTHREAD_MUTEX_lock(&dle_mtx);
 	delayed_state = delayed_running;
 
 	for (i = 0; i < threads_to_start; ++i) {
@@ -297,8 +296,8 @@ void delayed_start(void)
 		}
 		LIST_INSERT_HEAD(&thread_list, thread, link);
 	}
-	PTHREAD_MUTEX_unlock(&mtx);
-	pthread_attr_destroy(&attr);
+	PTHREAD_MUTEX_unlock(&dle_mtx);
+	PTHREAD_ATTR_destroy(&attr);
 }
 
 /**
@@ -313,11 +312,11 @@ void delayed_shutdown(void)
 	now(&then);
 	then.tv_sec += 120;
 
-	PTHREAD_MUTEX_lock(&mtx);
+	PTHREAD_MUTEX_lock(&dle_mtx);
 	delayed_state = delayed_stopping;
-	pthread_cond_broadcast(&cv);
+	pthread_cond_broadcast(&dle_cv);
 	while ((rc != ETIMEDOUT) && !LIST_EMPTY(&thread_list))
-		rc = pthread_cond_timedwait(&cv, &mtx, &then);
+		rc = pthread_cond_timedwait(&dle_cv, &dle_mtx, &then);
 
 	if (!LIST_EMPTY(&thread_list)) {
 		struct delayed_thread *thr;
@@ -330,7 +329,9 @@ void delayed_shutdown(void)
 			gsh_free(thr);
 		}
 	}
-	PTHREAD_MUTEX_unlock(&mtx);
+	PTHREAD_MUTEX_unlock(&dle_mtx);
+	PTHREAD_MUTEX_destroy(&dle_mtx);
+	PTHREAD_COND_destroy(&dle_cv);
 }
 
 /**
@@ -357,7 +358,7 @@ int delayed_submit(void (*func) (void *), void *arg, nsecs_elapsed_t delay)
 	now(&mul->realtime);
 	timespec_add_nsecs(delay, &mul->realtime);
 
-	PTHREAD_MUTEX_lock(&mtx);
+	PTHREAD_MUTEX_lock(&dle_mtx);
 	first = avltree_first(&tree);
 	collision = avltree_insert(&mul->node, &tree);
 	if (unlikely(collision)) {
@@ -373,9 +374,9 @@ int delayed_submit(void (*func) (void *), void *arg, nsecs_elapsed_t delay)
 	task->arg = arg;
 	LIST_INSERT_HEAD(&mul->list, task, link);
 	if (!first || comparator(&mul->node, first) < 0)
-		pthread_cond_broadcast(&cv);
+		pthread_cond_broadcast(&dle_cv);
 
-	PTHREAD_MUTEX_unlock(&mtx);
+	PTHREAD_MUTEX_unlock(&dle_mtx);
 
 	return 0;
 }

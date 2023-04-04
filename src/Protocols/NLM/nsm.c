@@ -31,7 +31,7 @@
 #include "nsm.h"
 #include "sal_data.h"
 
-pthread_mutex_t nsm_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t nsm_mutex;
 CLIENT *nsm_clnt;
 AUTH *nsm_auth;
 unsigned long nsm_count;

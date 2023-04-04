@@ -86,7 +86,7 @@ fsal_acl_t *nfs4_acl_alloc(void)
 {
 	fsal_acl_t *acl = pool_alloc(fsal_acl_pool);
 
-	PTHREAD_RWLOCK_init(&acl->lock, NULL);
+	PTHREAD_RWLOCK_init(&acl->acl_lock, NULL);
 
 	return acl;
 }
@@ -109,7 +109,7 @@ void nfs4_acl_free(fsal_acl_t *acl)
 	if (acl->aces)
 		nfs4_ace_free(acl->aces);
 
-	PTHREAD_RWLOCK_destroy(&acl->lock);
+	PTHREAD_RWLOCK_destroy(&acl->acl_lock);
 
 	pool_free(fsal_acl_pool, acl);
 }
@@ -117,10 +117,10 @@ void nfs4_acl_free(fsal_acl_t *acl)
 void nfs4_acl_entry_inc_ref(fsal_acl_t *acl)
 {
 	/* Increase ref counter */
-	PTHREAD_RWLOCK_wrlock(&acl->lock);
+	PTHREAD_RWLOCK_wrlock(&acl->acl_lock);
 	acl->ref++;
 	LogDebug(COMPONENT_NFS_V4_ACL, "(acl, ref) = (%p, %u)", acl, acl->ref);
-	PTHREAD_RWLOCK_unlock(&acl->lock);
+	PTHREAD_RWLOCK_unlock(&acl->acl_lock);
 }
 
 /* Should be called with lock held. */
@@ -204,10 +204,10 @@ void nfs4_acl_release_entry(fsal_acl_t *acl)
 	if (!acl)
 		return;
 
-	PTHREAD_RWLOCK_wrlock(&acl->lock);
+	PTHREAD_RWLOCK_wrlock(&acl->acl_lock);
 	if (acl->ref > 1) {
 		nfs4_acl_entry_dec_ref(acl);
-		PTHREAD_RWLOCK_unlock(&acl->lock);
+		PTHREAD_RWLOCK_unlock(&acl->acl_lock);
 		return;
 	} else
 		LogDebug(COMPONENT_NFS_V4_ACL, "Free ACL %p", acl);
@@ -215,7 +215,7 @@ void nfs4_acl_release_entry(fsal_acl_t *acl)
 	key.addr = acl->aces;
 	key.len = acl->naces * sizeof(fsal_ace_t);
 
-	PTHREAD_RWLOCK_unlock(&acl->lock);
+	PTHREAD_RWLOCK_unlock(&acl->acl_lock);
 
 	/* Get the hash table entry and hold latch */
 	rc = hashtable_getlatch(fsal_acl_hash, &key, &old_value, true, &latch);
@@ -226,12 +226,12 @@ void nfs4_acl_release_entry(fsal_acl_t *acl)
 		return;
 
 	case HASHTABLE_SUCCESS:
-		PTHREAD_RWLOCK_wrlock(&acl->lock);
+		PTHREAD_RWLOCK_wrlock(&acl->acl_lock);
 		nfs4_acl_entry_dec_ref(acl);
 		if (acl->ref != 0) {
 			/* Did not actually release last reference */
 			hashtable_releaselatched(fsal_acl_hash, &latch);
-			PTHREAD_RWLOCK_unlock(&acl->lock);
+			PTHREAD_RWLOCK_unlock(&acl->acl_lock);
 			return;
 		}
 
@@ -254,7 +254,7 @@ void nfs4_acl_release_entry(fsal_acl_t *acl)
 	 * and is released later in this function */
 	assert(old_value.addr == acl);
 
-	PTHREAD_RWLOCK_unlock(&acl->lock);
+	PTHREAD_RWLOCK_unlock(&acl->acl_lock);
 
 	/* Release acl */
 	nfs4_acl_free(acl);

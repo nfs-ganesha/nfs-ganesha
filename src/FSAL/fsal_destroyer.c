@@ -205,6 +205,8 @@ void destroy_fsals(void)
 
 	release_posix_file_systems();
 	destroy_ctx_refstr();
+	PTHREAD_MUTEX_destroy(&fsal_lock);
+	PTHREAD_RWLOCK_destroy(&fs_lock);
 }
 
 /**

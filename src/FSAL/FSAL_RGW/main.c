@@ -111,7 +111,7 @@ struct config_block rgw_block = {
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
-static pthread_mutex_t init_mtx = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t init_mtx;
 
 /* Module methods
  */
@@ -401,6 +401,8 @@ MODULE_INIT void init(void)
 {
 	struct fsal_module *myself = &RGWFSM.fsal;
 
+	PTHREAD_MUTEX_init(&init_mtx, NULL);
+
 	LogDebug(COMPONENT_FSAL,
 		 "RGW module registering.");
 
@@ -445,4 +447,6 @@ MODULE_FINI void finish(void)
 	if (RGWFSM.rgw) {
 		librgw_shutdown(RGWFSM.rgw);
 	}
+
+	PTHREAD_MUTEX_destroy(&init_mtx);
 }

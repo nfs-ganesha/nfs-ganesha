@@ -112,13 +112,13 @@ static struct avltree_node *gid_cache[id_cache_size];
  * @brief Lock that protects the idmapper user cache
  */
 
-pthread_rwlock_t idmapper_user_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t idmapper_user_lock;
 
 /**
  * @brief Lock that protects the idmapper group cache
  */
 
-pthread_rwlock_t idmapper_group_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t idmapper_group_lock;
 
 /**
  * @brief Tree of users, by name
@@ -286,6 +286,9 @@ static int gid_comparator(const struct avltree_node *node1,
 
 void idmapper_cache_init(void)
 {
+	PTHREAD_RWLOCK_init(&idmapper_user_lock, NULL);
+	PTHREAD_RWLOCK_init(&idmapper_group_lock, NULL);
+
 	avltree_init(&uname_tree, uname_comparator, 0);
 	avltree_init(&uid_tree, uid_comparator, 0);
 	memset(uid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
@@ -725,6 +728,9 @@ void idmapper_clear_cache(void)
 
 	PTHREAD_RWLOCK_unlock(&idmapper_group_lock);
 	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
+
+	PTHREAD_RWLOCK_destroy(&idmapper_user_lock);
+	PTHREAD_RWLOCK_destroy(&idmapper_group_lock);
 }
 
 #ifdef USE_DBUS

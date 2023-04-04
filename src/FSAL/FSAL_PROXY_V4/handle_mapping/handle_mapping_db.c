@@ -292,16 +292,9 @@ static int init_db_thread_info(db_thread_info_t *p_thr_info,
 
 	p_thr_info->work_queue.nb_waiting = 0;
 
-	if (pthread_mutex_init(&p_thr_info->work_queue.queues_mutex, NULL))
-		return HANDLEMAP_SYSTEM_ERROR;
-
-	if (pthread_cond_init
-	    (&p_thr_info->work_queue.work_avail_condition, NULL))
-		return HANDLEMAP_SYSTEM_ERROR;
-
-	if (pthread_cond_init
-	    (&p_thr_info->work_queue.work_done_condition, NULL))
-		return HANDLEMAP_SYSTEM_ERROR;
+	PTHREAD_MUTEX_init(&p_thr_info->work_queue.queues_mutex, NULL);
+	PTHREAD_COND_init(&p_thr_info->work_queue.work_avail_condition, NULL);
+	PTHREAD_COND_init(&p_thr_info->work_queue.work_done_condition, NULL);
 
 	/* init thread status */
 	p_thr_info->work_queue.status = NOT_READY;
@@ -313,8 +306,7 @@ static int init_db_thread_info(db_thread_info_t *p_thr_info,
 
 	/* init memory pool */
 
-	if (pthread_mutex_init(&p_thr_info->pool_mutex, NULL))
-		return HANDLEMAP_SYSTEM_ERROR;
+	PTHREAD_MUTEX_init(&p_thr_info->pool_mutex, NULL);
 
 	p_thr_info->dbop_pool =
 	    pool_basic_init("drop_pool", sizeof(db_op_item_t));

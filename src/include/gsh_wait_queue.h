@@ -40,10 +40,11 @@
 #include <errno.h>
 #include <pthread.h>
 #include "gsh_list.h"
+#include "common_utils.h"
 
 typedef struct wait_entry {
-	pthread_mutex_t mtx;
-	pthread_cond_t cv;
+	pthread_mutex_t wq_mtx;
+	pthread_cond_t wq_cv;
 } wait_entry_t;
 
 #define Wqe_LFlag_None        0x0000
@@ -59,30 +60,21 @@ typedef struct wait_q_entry {
 	struct glist_head waitq;
 } wait_q_entry_t;
 
-static inline int gsh_mutex_init(pthread_mutex_t *m,
-				 const pthread_mutexattr_t *a
-				 __attribute__ ((unused)))
+static inline void init_wait_entry(wait_entry_t *we)
 {
 	pthread_mutexattr_t attr;
-	int ret;
 
-	pthread_mutexattr_init(&attr);
-	pthread_mutexattr_settype(&attr,
+	PTHREAD_MUTEXATTR_init(&attr);
+	PTHREAD_MUTEXATTR_settype(&attr,
 #if defined(__linux__)
 				  PTHREAD_MUTEX_ADAPTIVE_NP
 #else
 				  PTHREAD_MUTEX_DEFAULT
 #endif
 	    );
-	ret = pthread_mutex_init(m, &attr);
-	pthread_mutexattr_destroy(&attr);
-	return ret;
-}
-
-static inline void init_wait_entry(wait_entry_t *we)
-{
-	gsh_mutex_init(&we->mtx, NULL);
-	pthread_cond_init(&we->cv, NULL);
+	PTHREAD_MUTEX_init(&we->wq_mtx, &attr);
+	PTHREAD_MUTEXATTR_destroy(&attr);
+	PTHREAD_COND_init(&we->wq_cv, NULL);
 }
 
 static inline void init_wait_q_entry(wait_q_entry_t *wqe)
@@ -92,13 +84,16 @@ static inline void init_wait_q_entry(wait_q_entry_t *wqe)
 	init_wait_entry(&wqe->rwe);
 }
 
-static inline void thread_delay_ms(time_t ms)
+static inline void destroy_wait_entry(wait_entry_t *we)
 {
-	struct timespec then = {
-		.tv_sec = ms / 1000,
-		.tv_nsec = (ms % 1000) * 1000000U
-	};
-	nanosleep(&then, NULL);
+	PTHREAD_MUTEX_destroy(&we->wq_mtx);
+	PTHREAD_COND_destroy(&we->wq_cv);
+}
+
+static inline void destroy_wait_q_entry(wait_q_entry_t *wqe)
+{
+	destroy_wait_entry(&wqe->lwe);
+	destroy_wait_entry(&wqe->rwe);
 }
 
 #endif /* GSH_WAIT_QUEUE_H */

@@ -1247,7 +1247,7 @@ static void *proxyv4_clientid_renewer(void *arg)
 	return NULL;
 }
 
-static void free_io_contexts(struct proxyv4_export *proxyv4_exp)
+void free_io_contexts(struct proxyv4_export *proxyv4_exp)
 {
 	struct glist_head *cur, *n;
 	struct proxyv4_export_rpc *rpc = &proxyv4_exp->rpc;
@@ -1257,11 +1257,13 @@ static void free_io_contexts(struct proxyv4_export *proxyv4_exp)
 			container_of(cur, struct proxyv4_rpc_io_context, calls);
 
 		glist_del(cur);
+		PTHREAD_MUTEX_destroy(&c->iolock);
+		PTHREAD_COND_destroy(&c->iowait);
 		gsh_free(c);
 	}
 }
 
-int proxyv4_close_thread(struct proxyv4_export *proxyv4_exp)
+void proxyv4_close_thread(struct proxyv4_export *proxyv4_exp)
 {
 	int rc;
 	struct proxyv4_export_rpc *rpc = &proxyv4_exp->rpc;
@@ -1280,23 +1282,26 @@ int proxyv4_close_thread(struct proxyv4_export *proxyv4_exp)
 	pthread_cond_broadcast(&rpc->sockless);
 	close(rpc->rpc_sock);
 	PTHREAD_MUTEX_unlock(&rpc->listlock);
-	rc = pthread_join(rpc->proxyv4_renewer_thread, NULL);
-	if (rc) {
-		LogWarn(COMPONENT_FSAL,
-			"Error on waiting for the proxyv4_renewer_thread: %d",
-			rc);
-		return rc;
+
+	if (rpc->proxyv4_renewer_thread) {
+		int rc = pthread_join(rpc->proxyv4_renewer_thread, NULL);
+
+		if (rc) {
+			LogWarn(COMPONENT_FSAL,
+				"Error on waiting for the proxyv4_renewer_thread: %s (%d)",
+				strerror(rc), rc);
+		}
 	}
 
-	rc = pthread_join(rpc->proxyv4_recv_thread, NULL);
-	if (rc) {
-		LogWarn(COMPONENT_FSAL,
-			"Error on waiting for the proxyv4_recv_thread: %d",
-			rc);
-		return rc;
-	}
+	if (rpc->proxyv4_recv_thread) {
+		rc = pthread_join(rpc->proxyv4_recv_thread, NULL);
 
-	return 0;
+		if (rc) {
+			LogWarn(COMPONENT_FSAL,
+				"Error on waiting for the proxyv4_recv_thread: %s (%d)",
+					strerror(rc), rc);
+		}
+	}
 }
 
 int proxyv4_init_rpc(struct proxyv4_export *proxyv4_exp)
@@ -1329,7 +1334,8 @@ int proxyv4_init_rpc(struct proxyv4_export *proxyv4_exp)
 		if (strlcpy(rpc->proxyv4_hostname, "NFS-GANESHA/Proxy",
 			    sizeof(rpc->proxyv4_hostname))
 		    >= sizeof(rpc->proxyv4_hostname)) {
-			free_io_contexts(proxyv4_exp);
+			LogCrit(COMPONENT_FSAL,
+				"Cannot set proxy hostname");
 			return -1;
 		}
 	}
@@ -1358,9 +1364,9 @@ int proxyv4_init_rpc(struct proxyv4_export *proxyv4_exp)
 			    (void *)proxyv4_exp);
 	if (rc) {
 		LogCrit(COMPONENT_FSAL,
-			"Cannot create proxy rpc receiver thread - %s",
-			strerror(rc));
-		free_io_contexts(proxyv4_exp);
+			"Cannot create proxy rpc receiver thread - %s (%d)",
+			strerror(rc), rc);
+		/* Cleanup handled by caller. */
 		return rc;
 	}
 
@@ -1368,10 +1374,11 @@ int proxyv4_init_rpc(struct proxyv4_export *proxyv4_exp)
 			    proxyv4_clientid_renewer, (void *)proxyv4_exp);
 	if (rc) {
 		LogCrit(COMPONENT_FSAL,
-			"Cannot create proxy clientid renewer thread - %s",
-			strerror(rc));
-		free_io_contexts(proxyv4_exp);
+			"Cannot create proxy clientid renewer thread - %s (%d)",
+			strerror(rc), rc);
+		/* Cleanup handled by caller. */
 	}
+
 	return rc;
 }
 

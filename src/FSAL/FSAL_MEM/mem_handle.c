@@ -765,6 +765,11 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		hdl->is_export = true;
 	}
 
+	if (hdl->obj_handle.type == REGULAR_FILE) {
+		init_fsal_fd(&hdl->mh_file.fd, FSAL_FD_GLOBAL,
+			     op_ctx->fsal_export);
+	}
+
 	return hdl;
 }
 
@@ -1619,7 +1624,8 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 	struct fsal_attrlist verifier_attr;
 
 	if (state != NULL)
-		my_fd = (struct fsal_fd *)(state + 1);
+		my_fd = &container_of(state, struct mem_state_fd,
+				      state)->fsal_fd;
 
 	myself = container_of(obj_hdl, struct mem_fsal_obj_handle, obj_handle);
 
@@ -1985,6 +1991,8 @@ exit:
 
 bye:
 
+	destroy_fsal_fd(&async_arg->temp_fd);
+
 	if (async_stall_delay > 0) {
 		/* We have been asked to stall the calling thread, whether we
 		 * issued an inline or async callback.
@@ -2150,6 +2158,8 @@ exit:
 
 bye:
 
+	destroy_fsal_fd(&async_arg->temp_fd);
+
 	if (async_stall_delay > 0) {
 		/* We have been asked to stall the calling thread, whether we
 		 * issued an inline or async callback.
@@ -2199,7 +2209,8 @@ fsal_status_t mem_commit2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mem_close2(struct fsal_obj_handle *obj_hdl,
 			 struct state_t *state)
 {
-	struct fsal_fd *my_fd = (struct fsal_fd *)(state + 1);
+	struct fsal_fd *my_fd = &container_of(state, struct mem_state_fd,
+					      state)->fsal_fd;
 	struct mem_fsal_obj_handle *myself = container_of(obj_hdl,
 				  struct mem_fsal_obj_handle, obj_handle);
 
@@ -2334,6 +2345,10 @@ static void mem_release(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl,
 			      struct mem_fsal_obj_handle,
 			      obj_handle);
+
+	if (myself->obj_handle.type == REGULAR_FILE)
+		destroy_fsal_fd(&myself->mh_file.fd);
+
 	mem_int_put_ref(myself);
 }
 
@@ -2488,7 +2503,7 @@ fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_BADHANDLE, 0);
 	}
 
-	PTHREAD_RWLOCK_rdlock(&exp_hdl->fsal->lock);
+	PTHREAD_RWLOCK_rdlock(&exp_hdl->fsal->fsm_lock);
 
 	glist_for_each(glist, &exp_hdl->fsal->handles) {
 		hdl = glist_entry(glist, struct fsal_obj_handle, handles);
@@ -2510,7 +2525,7 @@ fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
 #endif
 			*obj_hdl = hdl;
 
-			PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
+			PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->fsm_lock);
 
 			if (attrs_out != NULL) {
 				fsal_copy_attrs(attrs_out, &my_hdl->attrs,
@@ -2524,7 +2539,7 @@ fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
 	LogDebug(COMPONENT_FSAL,
 		"Could not find handle");
 
-	PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->lock);
+	PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->fsm_lock);
 
 	return fsalstat(ERR_FSAL_STALE, ESTALE);
 }

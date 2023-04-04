@@ -45,7 +45,7 @@
 #include "fsal.h"
 
 /* The grace_mutex protects current_grace, clid_list, and clid_count */
-static pthread_mutex_t grace_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t grace_mutex;
 static struct timespec current_grace; /* current grace period timeout */
 static int clid_count; /* number of active clients */
 static struct glist_head clid_list = GLIST_HEAD_INIT(clid_list);  /* clients */
@@ -557,8 +557,8 @@ void nfs_try_lift_grace(void)
 	PTHREAD_MUTEX_unlock(&grace_mutex);
 }
 
-static pthread_cond_t enforcing_cond = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t enforcing_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t enforcing_cond;
+static pthread_mutex_t enforcing_mutex;
 
 /* Poll every 5s, just in case we miss the wakeup for some reason */
 void nfs_wait_for_grace_enforcement(void)
@@ -589,8 +589,8 @@ void nfs_notify_grace_waiters(void)
 	pthread_mutex_unlock(&enforcing_mutex);
 }
 
-static pthread_cond_t norefs_cond = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t norefs_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t norefs_cond;
+static pthread_mutex_t norefs_mutex;
 
 void nfs_wait_for_grace_norefs(void)
 {
@@ -1010,7 +1010,7 @@ static void nfs_release_nlm_state(char *release_ip)
 
 	/* walk the client list and call state_nlm_notify */
 	for (i = 0; i < ht->parameter.index_size; i++) {
-		PTHREAD_RWLOCK_wrlock(&ht->partitions[i].lock);
+		PTHREAD_RWLOCK_wrlock(&ht->partitions[i].ht_lock);
 		head_rbt = &ht->partitions[i].rbt;
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
@@ -1034,7 +1034,7 @@ static void nfs_release_nlm_state(char *release_ip)
 			}
 			RBT_INCREMENT(pn);
 		}
-		PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
+		PTHREAD_RWLOCK_unlock(&ht->partitions[i].ht_lock);
 	}
 #endif /* _USE_NLM */
 }
@@ -1082,7 +1082,7 @@ static void nfs_release_v4_clients(char *ip)
 		head_rbt = &ht->partitions[i].rbt;
 
 restart:
-		PTHREAD_RWLOCK_wrlock(&ht->partitions[i].lock);
+		PTHREAD_RWLOCK_wrlock(&ht->partitions[i].ht_lock);
 
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
@@ -1099,7 +1099,8 @@ restart:
 
 				PTHREAD_MUTEX_unlock(&cp->cid_mutex);
 
-				PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
+				PTHREAD_RWLOCK_unlock(
+						&ht->partitions[i].ht_lock);
 
 				/* nfs_client_id_expire requires cr_mutex */
 				PTHREAD_MUTEX_lock(&recp->cr_mutex);
@@ -1116,13 +1117,35 @@ restart:
 			}
 			RBT_INCREMENT(pn);
 		}
-		PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
+		PTHREAD_RWLOCK_unlock(&ht->partitions[i].ht_lock);
 	}
 }
+
+/* Cleanup on shutdown */
+void recovery_cleanup(void)
+{
+	PTHREAD_MUTEX_destroy(&grace_mutex);
+	PTHREAD_COND_destroy(&enforcing_cond);
+	PTHREAD_MUTEX_destroy(&enforcing_mutex);
+	PTHREAD_COND_destroy(&norefs_cond);
+	PTHREAD_MUTEX_destroy(&norefs_mutex);
+}
+
+struct cleanup_list_element recovery_cleanup_element = {
+	.clean = recovery_cleanup,
+};
 
 int load_recovery_param_from_conf(config_file_t parse_tree,
 				  struct config_error_type *err_type)
 {
+	PTHREAD_MUTEX_init(&grace_mutex, NULL);
+	PTHREAD_COND_init(&enforcing_cond, NULL);
+	PTHREAD_MUTEX_init(&enforcing_mutex, NULL);
+	PTHREAD_COND_init(&norefs_cond, NULL);
+	PTHREAD_MUTEX_init(&norefs_mutex, NULL);
+
+	RegisterCleanup(&recovery_cleanup_element);
+
 	switch (nfs_param.nfsv4_param.recovery_backend) {
 	case RECOVERY_BACKEND_FS:
 	case RECOVERY_BACKEND_FS_NG:

@@ -55,18 +55,19 @@
 #include "mdcache.h"
 #endif
 #include "conf_url.h"
+#include "nfs_rpc_callback.h"
 
 /**
  * @brief Mutex protecting shutdown flag.
  */
 
-static pthread_mutex_t admin_control_mtx = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t admin_control_mtx;
 
 /**
  * @brief Condition variable to signal change in shutdown flag.
  */
 
-static pthread_cond_t admin_control_cv = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t admin_control_cv;
 
 /**
  * @brief Flag to indicate shutdown Ganesha.
@@ -703,6 +704,8 @@ static struct gsh_dbus_interface *admin_interfaces[] = {
 
 void nfs_Init_admin_thread(void)
 {
+	PTHREAD_MUTEX_init(&admin_control_mtx, NULL);
+	PTHREAD_COND_init(&admin_control_cv, NULL);
 #ifdef USE_DBUS
 	gsh_dbus_register_path("admin", admin_interfaces);
 #endif				/* USE_DBUS */
@@ -723,6 +726,7 @@ void admin_halt(void)
 	}
 
 	PTHREAD_MUTEX_unlock(&admin_control_mtx);
+	LogEvent(COMPONENT_MAIN, "NFS EXIT: %s done", __func__);
 }
 
 static void do_shutdown(void)
@@ -809,6 +813,7 @@ static void do_shutdown(void)
 	remove_all_exports();
 
 	nfs4_recovery_shutdown();
+	nfs_rpc_cb_pkgshutdown();
 
 	if (disorderly) {
 		LogMajor(COMPONENT_MAIN,
@@ -826,6 +831,9 @@ static void do_shutdown(void)
 	}
 
 	unlink(nfs_pidfile_path);
+	PTHREAD_MUTEX_destroy(&admin_control_mtx);
+	PTHREAD_COND_destroy(&admin_control_cv);
+	LogEvent(COMPONENT_MAIN, "NFS EXIT: %s done", __func__);
 }
 
 void *admin_thread(void *UnusedArg)

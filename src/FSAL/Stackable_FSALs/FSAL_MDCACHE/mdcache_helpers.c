@@ -130,23 +130,23 @@ static inline void add_detached_dirent(mdcache_entry_t *parent,
 		 * don't have a racing thread, it's ok that the list is
 		 * unprotected by spin lock while we make the AVL call.
 		 */
-		pthread_spin_lock(&parent->fsobj.fsdir.spin);
+		PTHREAD_SPIN_lock(&parent->fsobj.fsdir.fsd_spin);
 
 		removed = glist_last_entry(&parent->fsobj.fsdir.detached,
 					   mdcache_dir_entry_t,
 					   chunk_list);
 
-		pthread_spin_unlock(&parent->fsobj.fsdir.spin);
+		PTHREAD_SPIN_unlock(&parent->fsobj.fsdir.fsd_spin);
 
 		/* Remove from active names tree */
 		mdcache_avl_remove(parent, removed);
 	}
 
 	/* Add new entry to MRU (head) of list */
-	pthread_spin_lock(&parent->fsobj.fsdir.spin);
+	PTHREAD_SPIN_lock(&parent->fsobj.fsdir.fsd_spin);
 	glist_add(&parent->fsobj.fsdir.detached, &dirent->chunk_list);
 	parent->fsobj.fsdir.detached_count++;
-	pthread_spin_unlock(&parent->fsobj.fsdir.spin);
+	PTHREAD_SPIN_unlock(&parent->fsobj.fsdir.fsd_spin);
 }
 
 /**
@@ -200,8 +200,8 @@ static mdcache_entry_t *mdcache_alloc_handle(
 		/* init chunk list and detached dirents list */
 		glist_init(&result->fsobj.fsdir.chunks);
 		glist_init(&result->fsobj.fsdir.detached);
-		(void) pthread_spin_init(&result->fsobj.fsdir.spin,
-					 PTHREAD_PROCESS_PRIVATE);
+		PTHREAD_SPIN_init(&result->fsobj.fsdir.fsd_spin,
+				  PTHREAD_PROCESS_PRIVATE);
 	} else {
 		result->obj_handle.state_hdl = &result->fsobj.hdl;
 	}

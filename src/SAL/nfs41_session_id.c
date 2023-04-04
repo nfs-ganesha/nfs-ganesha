@@ -293,7 +293,7 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 			nfs41_session_slot_t *slot;
 
 			slot = &session->fc_slots[i];
-			PTHREAD_MUTEX_destroy(&slot->lock);
+			PTHREAD_MUTEX_destroy(&slot->slot_lock);
 			release_slot(slot);
 		}
 
@@ -305,7 +305,7 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 		if (session->flags & session_bc_up)
 			nfs_rpc_destroy_chan(&session->cb_chan);
 
-		PTHREAD_MUTEX_destroy(&session->cb_chan.mtx);
+		PTHREAD_MUTEX_destroy(&session->cb_chan.chan_mtx);
 
 		/* Free the slot tables */
 		gsh_free(session->fc_slots);

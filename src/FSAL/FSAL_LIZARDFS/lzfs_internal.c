@@ -132,6 +132,11 @@ struct lzfs_fsal_handle *lzfs_fsal_new_handle(
 	result->handle.fileid = attr->st_ino;
 	result->export = lzfs_export;
 
+	if (result->handle.type == REGULAR_FILE) {
+		init_fsal_fd(&result->fd.fsal_fd, FSAL_FD_GLOBAL,
+			     op_ctx->fsal_export);
+	}
+
 	return result;
 }
 

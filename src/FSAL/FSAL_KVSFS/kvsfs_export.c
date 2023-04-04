@@ -115,6 +115,15 @@ static attrmask_t kvsfs_supported_attrs(struct fsal_export *exp_hdl)
 	return supported_mask;
 }
 
+void kvsfs_free_state(struct state_t *state)
+{
+	struct kvsfs_fd *my_fd;
+
+	my_fd = &container_of(state, struct kvsfs_state_fd, state)->kvsfs_fd;
+
+	destroy_fsal_fd(&my_fd->fsal_fd);
+}
+
 /**
  * @brief Allocate a state_t structure
  *
@@ -136,7 +145,7 @@ static struct state_t *kvsfs_alloc_state(struct fsal_export *exp_hdl,
 	struct kvsfs_fd *my_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct kvsfs_state_fd)),
-			   NULL, state_type, related_state);
+			   kvsfs_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct kvsfs_state_fd, state)->kvsfs_fd;
 

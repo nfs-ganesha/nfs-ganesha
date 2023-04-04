@@ -96,7 +96,7 @@ static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
 		head_rbt = &(ht->partitions[i].rbt);
 
 		/* acquire mutex */
-		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].lock));
+		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].ht_lock));
 
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
@@ -108,7 +108,7 @@ static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
 						       &clientid);
 			RBT_INCREMENT(pn);
 		}
-		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
+		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].ht_lock));
 	}
 	dbus_message_iter_close_container(&iter, &sub_iter);
 	return true;
@@ -167,7 +167,7 @@ static bool nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
 		head_rbt = &(ht->partitions[i].rbt);
 
 		/* acquire mutex */
-		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].lock));
+		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].ht_lock));
 
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
@@ -182,7 +182,7 @@ static bool nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
 						       &session_id);
 			RBT_INCREMENT(pn);
 		}
-		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
+		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].ht_lock));
 	}
 	dbus_message_iter_close_container(&iter, &sub_iter);
 	return true;

@@ -37,13 +37,8 @@ static fsal_fs_locations_t *nfs4_fs_locations_alloc(const unsigned int count)
 	fs_locations = gsh_calloc(1, sizeof(fsal_fs_locations_t));
 	if (count)
 		fs_locations->server = gsh_calloc(count, sizeof(utf8string));
-	if (pthread_rwlock_init(&(fs_locations->lock), NULL) != 0) {
-		nfs4_fs_locations_free(fs_locations);
-		LogCrit(COMPONENT_NFS_V4,
-			"New fs locations RW lock init returned %d (%s)", errno,
-			strerror(errno));
-		return NULL;
-	}
+
+	PTHREAD_RWLOCK_init(&(fs_locations->fsloc_lock), NULL);
 
 	return fs_locations;
 }
@@ -61,17 +56,18 @@ void nfs4_fs_locations_free(fsal_fs_locations_t *fs_locations)
 	for (i = 0; i < fs_locations->nservers; ++i)
 		gsh_free(fs_locations->server[i].utf8string_val);
 
+	PTHREAD_RWLOCK_destroy(&(fs_locations->fsloc_lock));
 	gsh_free(fs_locations->server);
 	gsh_free(fs_locations);
 }
 
 void nfs4_fs_locations_get_ref(fsal_fs_locations_t *fs_locations)
 {
-	PTHREAD_RWLOCK_wrlock(&fs_locations->lock);
+	PTHREAD_RWLOCK_wrlock(&fs_locations->fsloc_lock);
 	fs_locations->ref++;
 	LogFullDebug(COMPONENT_NFS_V4, "(fs_locations, ref) = (%p, %u)",
 		     fs_locations, fs_locations->ref);
-	PTHREAD_RWLOCK_unlock(&fs_locations->lock);
+	PTHREAD_RWLOCK_unlock(&fs_locations->fsloc_lock);
 }
 
 /* Must be called with lock held */
@@ -87,17 +83,17 @@ void nfs4_fs_locations_release(fsal_fs_locations_t *fs_locations)
 	if (fs_locations == NULL)
 		return;
 
-	PTHREAD_RWLOCK_wrlock(&fs_locations->lock);
+	PTHREAD_RWLOCK_wrlock(&fs_locations->fsloc_lock);
 	if (fs_locations->ref > 1) {
 		nfs4_fs_locations_put_ref(fs_locations);
-		PTHREAD_RWLOCK_unlock(&fs_locations->lock);
+		PTHREAD_RWLOCK_unlock(&fs_locations->fsloc_lock);
 		return;
 	} else {
 		LogFullDebug(COMPONENT_NFS_V4, "Free fs_locations: %p",
 			     fs_locations);
 	}
 
-	PTHREAD_RWLOCK_unlock(&fs_locations->lock);
+	PTHREAD_RWLOCK_unlock(&fs_locations->fsloc_lock);
 
 	// Releasing fs_locations
 	nfs4_fs_locations_free(fs_locations);

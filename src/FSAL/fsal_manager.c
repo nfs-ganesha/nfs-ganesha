@@ -55,6 +55,7 @@
 #include "config_parsing.h"
 #include "pnfs_utils.h"
 #include "fsal_private.h"
+#include "FSAL/fsal_localfs.h"
 
 /**
  * @brief List of loaded fsal modules
@@ -63,7 +64,7 @@
  * fsal_lock is taken whenever the list is walked.
  */
 
-pthread_mutex_t fsal_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t fsal_lock;
 GLIST_HEAD(fsal_list);
 
 /**
@@ -150,6 +151,9 @@ static void load_fsal_static(const char *name, void (*init)(void))
 
 void start_fsals(void)
 {
+	PTHREAD_MUTEX_init(&fsal_lock, NULL);
+	PTHREAD_RWLOCK_init(&fs_lock, NULL);
+
 	init_ctx_refstr();
 
 	/* .init was a long time ago... */
@@ -422,14 +426,12 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	 */
 	memcpy(&fsal_hdl->m_ops, &def_fsal_ops, sizeof(struct fsal_ops));
 
-	pthread_rwlockattr_init(&attrs);
-#ifdef GLIBC
-	pthread_rwlockattr_setkind_np(
+	PTHREAD_RWLOCKATTR_init(&attrs);
+	PTHREAD_RWLOCKATTR_setkind_np(
 		&attrs,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
-	PTHREAD_RWLOCK_init(&fsal_hdl->lock, &attrs);
-	pthread_rwlockattr_destroy(&attrs);
+	PTHREAD_RWLOCK_init(&fsal_hdl->fsm_lock, &attrs);
+	PTHREAD_RWLOCKATTR_destroy(&attrs);
 	glist_init(&fsal_hdl->servers);
 	glist_init(&fsal_hdl->handles);
 	glist_init(&fsal_hdl->exports);

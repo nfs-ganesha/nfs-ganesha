@@ -374,6 +374,16 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	return status;
 }
 
+void gluster_free_state(struct state_t *state)
+{
+	struct glusterfs_fd *my_fd;
+
+	my_fd = &container_of(state, struct glusterfs_state_fd,
+			      state)->glusterfs_fd;
+
+	destroy_fsal_fd(&my_fd->fsal_fd);
+}
+
 /**
  * @brief Allocate a state_t structure
  *
@@ -394,7 +404,7 @@ struct state_t *glusterfs_alloc_state(struct fsal_export *exp_hdl,
 	struct glusterfs_fd *my_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct glusterfs_state_fd)),
-			   NULL, state_type, related_state);
+			   gluster_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct glusterfs_state_fd,
 			      state)->glusterfs_fd;
@@ -506,7 +516,7 @@ glusterfs_free_fs(struct glusterfs_fs *gl_fs)
 	int64_t refcnt;
 	int err     = 0;
 
-	PTHREAD_MUTEX_lock(&GlusterFS.lock);
+	PTHREAD_MUTEX_lock(&GlusterFS.glfs_lock);
 
 	refcnt = --(gl_fs->refcnt);
 
@@ -517,12 +527,12 @@ glusterfs_free_fs(struct glusterfs_fs *gl_fs)
 			 "There are still (%"PRIi64
 			 ")active shares for volume(%s)",
 			 gl_fs->refcnt, gl_fs->volname);
-		PTHREAD_MUTEX_unlock(&GlusterFS.lock);
+		PTHREAD_MUTEX_unlock(&GlusterFS.glfs_lock);
 		return;
 	}
 
 	glist_del(&gl_fs->fs_obj);
-	PTHREAD_MUTEX_unlock(&GlusterFS.lock);
+	PTHREAD_MUTEX_unlock(&GlusterFS.glfs_lock);
 
 	atomic_inc_int8_t(&gl_fs->destroy_mode);
 
@@ -578,7 +588,7 @@ glusterfs_get_fs(struct glexport_params params,
 	glfs_t  *fs = NULL;
 	struct glist_head *glist, *glistn;
 
-	PTHREAD_MUTEX_lock(&GlusterFS.lock);
+	PTHREAD_MUTEX_lock(&GlusterFS.glfs_lock);
 
 	glist_for_each_safe(glist, glistn, &GlusterFS.fs_obj) {
 		gl_fs = glist_entry(glist, struct glusterfs_fs,
@@ -647,13 +657,8 @@ glusterfs_get_fs(struct glexport_params params,
 		goto skip_upcall;
 
 #ifndef USE_GLUSTER_UPCALL_REGISTER
-	rc = initiate_up_thread(gl_fs);
-	if (rc != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Unable to create GLUSTERFSAL_UP_Thread. Volume: %s",
-			params.glvolname);
+	if (initiate_up_thread(gl_fs) != 0)
 		goto out;
-	}
 #else
 	/* We are mainly interested in INODE_INVALIDATE for now. Still
 	 * register for all the events
@@ -676,11 +681,11 @@ skip_upcall:
 
 found:
 	++(gl_fs->refcnt);
-	PTHREAD_MUTEX_unlock(&GlusterFS.lock);
+	PTHREAD_MUTEX_unlock(&GlusterFS.glfs_lock);
 	return gl_fs;
 
 out:
-	PTHREAD_MUTEX_unlock(&GlusterFS.lock);
+	PTHREAD_MUTEX_unlock(&GlusterFS.glfs_lock);
 	if (fs)
 		glfs_fini(fs);
 

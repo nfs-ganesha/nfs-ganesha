@@ -94,7 +94,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 	}
 
-	PTHREAD_RWLOCK_rdlock(&original_export->lock);
+	PTHREAD_RWLOCK_rdlock(&original_export->exp_lock);
 
 	if (data->current_obj == root_obj) {
 		struct gsh_export *parent_exp = NULL;
@@ -111,12 +111,12 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 			 * NFS4ERR_NOENT (RFC3530, page 166)
 			 */
 			root_obj->obj_ops->put_ref(root_obj);
-			PTHREAD_RWLOCK_unlock(&original_export->lock);
+			PTHREAD_RWLOCK_unlock(&original_export->exp_lock);
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return NFS_REQ_ERROR;
 		}
 
-		PTHREAD_RWLOCK_unlock(&original_export->lock);
+		PTHREAD_RWLOCK_unlock(&original_export->exp_lock);
 
 		/* Clear out data->current entry outside lock
 		 * so if it cascades into cleanup, we aren't holding
@@ -130,7 +130,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		 * grabbing the current export's lock to clean out the
 		 * parent information.
 		 */
-		PTHREAD_RWLOCK_rdlock(&original_export->lock);
+		PTHREAD_RWLOCK_rdlock(&original_export->exp_lock);
 
 		/* Get the junction inode into dir_obj and parent_exp
 		 * for reference.
@@ -145,7 +145,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		    !export_ready(parent_exp)) {
 			/* Export is in the process of dying */
 			root_obj->obj_ops->put_ref(root_obj);
-			PTHREAD_RWLOCK_unlock(&original_export->lock);
+			PTHREAD_RWLOCK_unlock(&original_export->exp_lock);
 			LogCrit(COMPONENT_EXPORT,
 				"Reverse junction from Export_Id %d Pseudo %s Parent=%p is stale",
 				original_export->export_id,
@@ -168,10 +168,10 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		/* Put our ref */
 		dir_obj->obj_ops->put_ref(dir_obj);
 
-		/* We are now done with original_export->lock, nothing following
-		 * depends on it being held.
+		/* We are now done with original_export->exp_lock, nothing
+		 * following depends on it being held.
 		 */
-		PTHREAD_RWLOCK_unlock(&original_export->lock);
+		PTHREAD_RWLOCK_unlock(&original_export->exp_lock);
 
 		/* Release the original_export and put the parent_exp into
 		 * the op context.
@@ -197,7 +197,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		}
 	} else {
 		/* Release the lock taken above */
-		PTHREAD_RWLOCK_unlock(&original_export->lock);
+		PTHREAD_RWLOCK_unlock(&original_export->exp_lock);
 	}
 
 	/* Return our ref from above */

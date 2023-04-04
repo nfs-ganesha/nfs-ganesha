@@ -1500,7 +1500,7 @@ void compound_data_Free(compound_data_t *data)
 
 			/* Release the slot if in use */
 			slot = &data->session->fc_slots[data->slotid];
-			PTHREAD_MUTEX_unlock(&slot->lock);
+			PTHREAD_MUTEX_unlock(&slot->slot_lock);
 		}
 
 		dec_session_ref(data->session);

@@ -113,20 +113,10 @@ struct proxyv4_export {
 	struct proxyv4_export_rpc rpc;
 };
 
-static inline void proxyv4_export_init(struct proxyv4_export *proxyv4_exp)
-{
-	proxyv4_exp->rpc.no_sessionid = true;
-	pthread_mutex_init(&proxyv4_exp->rpc.proxyv4_clientid_mutex, NULL);
-	pthread_cond_init(&proxyv4_exp->rpc.cond_sessionid, NULL);
-	proxyv4_exp->rpc.rpc_sock = -1;
-	pthread_mutex_init(&proxyv4_exp->rpc.listlock, NULL);
-	pthread_cond_init(&proxyv4_exp->rpc.sockless, NULL);
-	pthread_cond_init(&proxyv4_exp->rpc.need_context, NULL);
-	pthread_mutex_init(&proxyv4_exp->rpc.context_lock, NULL);
-}
-
 void proxyv4_handle_ops_init(struct fsal_obj_ops *ops);
 
+void free_io_contexts(struct proxyv4_export *proxyv4_exp);
+void proxyv4_close_thread(struct proxyv4_export *proxyv4_exp);
 int proxyv4_init_rpc(struct proxyv4_export *);
 
 fsal_status_t proxyv4_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
@@ -198,7 +188,5 @@ fsal_status_t proxyv4_wire_to_host(struct fsal_export *, fsal_digesttype_t,
 struct state_t *proxyv4_alloc_state(struct fsal_export *exp_hdl,
 				    enum state_type state_type,
 				    struct state_t *related_state);
-
-int proxyv4_close_thread(struct proxyv4_export *proxyv4_exp);
 
 #endif

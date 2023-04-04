@@ -67,7 +67,7 @@ static int ng_hash_key(struct ng_cache_info *info)
 
 static struct avltree_node *ng_cache[NG_CACHE_SIZE];
 
-pthread_rwlock_t ng_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t ng_lock;
 
 /* Positive and negative cache trees */
 static struct avltree pos_ng_tree;
@@ -114,16 +114,26 @@ static bool ng_expired(struct avltree_node *node)
 	return false;
 }
 
+/* Cleanup on shutdown */
+void ng_cache_cleanup(void)
+{
+	PTHREAD_RWLOCK_destroy(&ng_lock);
+}
 
+struct cleanup_list_element ng_cache_cleanup_element = {
+	.clean = ng_cache_cleanup,
+};
 
 /**
  * @brief Initialize the netgroups cache
  */
 void ng_cache_init(void)
 {
+	PTHREAD_RWLOCK_init(&ng_lock, NULL);
 	avltree_init(&pos_ng_tree, ng_comparator, 0);
 	avltree_init(&neg_ng_tree, ng_comparator, 0);
 	memset(ng_cache, 0, NG_CACHE_SIZE * sizeof(struct avltree_node *));
+	RegisterCleanup(&ng_cache_cleanup_element);
 }
 
 static void ng_free(struct ng_cache_info *info)

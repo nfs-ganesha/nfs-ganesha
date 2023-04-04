@@ -66,18 +66,19 @@ sem_t uid2grp_sem;
  */
 void uid2grp_hold_group_data(struct group_data *gdata)
 {
-	PTHREAD_MUTEX_lock(&gdata->lock);
+	PTHREAD_MUTEX_lock(&gdata->gd_lock);
 	gdata->refcount++;
-	PTHREAD_MUTEX_unlock(&gdata->lock);
+	PTHREAD_MUTEX_unlock(&gdata->gd_lock);
 }
 
 void uid2grp_release_group_data(struct group_data *gdata)
 {
 	unsigned int refcount;
 
-	PTHREAD_MUTEX_lock(&gdata->lock);
+	PTHREAD_MUTEX_lock(&gdata->gd_lock);
 	refcount = --gdata->refcount;
-	PTHREAD_MUTEX_unlock(&gdata->lock);
+	PTHREAD_MUTEX_unlock(&gdata->gd_lock);
+	PTHREAD_MUTEX_destroy(&gdata->gd_lock);
 
 	if (refcount == 0) {
 		gsh_free(gdata->groups);
@@ -220,7 +221,7 @@ static struct group_data *uid2grp_allocate_by_name(
 	if (nfs_param.core_param.max_uid_to_grp_reqs)
 		sem_post(&uid2grp_sem);
 
-	PTHREAD_MUTEX_init(&gdata->lock, NULL);
+	PTHREAD_MUTEX_init(&gdata->gd_lock, NULL);
 	gdata->epoch = time(NULL);
 	gdata->refcount = 0;
 	return gdata;
@@ -277,7 +278,7 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	if (nfs_param.core_param.max_uid_to_grp_reqs)
 		sem_post(&uid2grp_sem);
 
-	PTHREAD_MUTEX_init(&gdata->lock, NULL);
+	PTHREAD_MUTEX_init(&gdata->gd_lock, NULL);
 	gdata->epoch = time(NULL);
 	gdata->refcount = 0;
 	return gdata;

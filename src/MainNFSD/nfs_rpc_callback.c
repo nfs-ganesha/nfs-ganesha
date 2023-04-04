@@ -117,6 +117,7 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 void nfs_rpc_cb_pkginit(void)
 {
 #ifdef _HAVE_GSSAPI
+	gssd_init_cred_cache();
 	/* ccache */
 	nfs_rpc_cb_init_ccache(nfs_param.krb5_param.ccache_dir);
 
@@ -132,7 +133,9 @@ void nfs_rpc_cb_pkginit(void)
  */
 void nfs_rpc_cb_pkgshutdown(void)
 {
-	/* return */
+#ifdef _HAVE_GSSAPI
+	gssd_init_cred_cache();
+#endif
 }
 
 /**
@@ -657,7 +660,7 @@ static enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, bool locked)
 
 	/* XXX TI-RPC does the signal masking */
 	if (!locked)
-		PTHREAD_MUTEX_lock(&chan->mtx);
+		PTHREAD_MUTEX_lock(&chan->chan_mtx);
 
 	if (!chan->clnt) {
 		stat = RPC_INTR;
@@ -682,7 +685,7 @@ static enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, bool locked)
 
  unlock:
 	if (!locked)
-		PTHREAD_MUTEX_unlock(&chan->mtx);
+		PTHREAD_MUTEX_unlock(&chan->chan_mtx);
 
 	return stat;
 }
@@ -711,7 +714,7 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 	int code = 0;
 	bool authed = false;
 
-	PTHREAD_MUTEX_lock(&chan->mtx);
+	PTHREAD_MUTEX_lock(&chan->chan_mtx);
 
 	if (chan->clnt) {
 		/* Something better later. */
@@ -803,7 +806,7 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 			_nfs_rpc_destroy_chan(chan);
 	}
 
-	PTHREAD_MUTEX_unlock(&chan->mtx);
+	PTHREAD_MUTEX_unlock(&chan->chan_mtx);
 
 	return code;
 }
@@ -860,11 +863,11 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 {
 	assert(chan);
 
-	PTHREAD_MUTEX_lock(&chan->mtx);
+	PTHREAD_MUTEX_lock(&chan->chan_mtx);
 
 	_nfs_rpc_destroy_chan(chan);
 
-	PTHREAD_MUTEX_unlock(&chan->mtx);
+	PTHREAD_MUTEX_unlock(&chan->chan_mtx);
 }
 
 /**
@@ -976,7 +979,7 @@ enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 	call->states = NFS_CB_CALL_DISPATCH;
 
 	/* XXX TI-RPC does the signal masking */
-	PTHREAD_MUTEX_lock(&chan->mtx);
+	PTHREAD_MUTEX_lock(&chan->chan_mtx);
 
 	clnt_req_fill(cc, call->chan->clnt, call->chan->auth, CB_COMPOUND,
 		      (xdrproc_t) xdr_CB_COMPOUND4args, &call->cbt.v_u.v4.args,
@@ -1006,7 +1009,7 @@ enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 
  unlock:
 	LogDebug(COMPONENT_NFS_CB, "(rpc_call_t *)call = %p", call);
-	PTHREAD_MUTEX_unlock(&chan->mtx);
+	PTHREAD_MUTEX_unlock(&chan->chan_mtx);
 
 	/* any broadcast or signalling done in completion function */
 	return re_status;

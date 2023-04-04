@@ -101,9 +101,9 @@ int fsal_attach_export(struct fsal_module *fsal_hdl,
 void fsal_detach_export(struct fsal_module *fsal_hdl,
 			struct glist_head *obj_link)
 {
-	PTHREAD_RWLOCK_wrlock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_wrlock(&fsal_hdl->fsm_lock);
 	glist_del(obj_link);
-	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&fsal_hdl->fsm_lock);
 }
 
 /**
@@ -166,26 +166,24 @@ void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 
 	obj->fsal = exp->fsal;
 	obj->type = type;
-	pthread_rwlockattr_init(&attrs);
-#ifdef GLIBC
-	pthread_rwlockattr_setkind_np(
+	PTHREAD_RWLOCKATTR_init(&attrs);
+	PTHREAD_RWLOCKATTR_setkind_np(
 		&attrs,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
 	PTHREAD_RWLOCK_init(&obj->obj_lock, &attrs);
 
-	PTHREAD_RWLOCK_wrlock(&obj->fsal->lock);
+	PTHREAD_RWLOCK_wrlock(&obj->fsal->fsm_lock);
 	glist_add(&obj->fsal->handles, &obj->handles);
-	PTHREAD_RWLOCK_unlock(&obj->fsal->lock);
+	PTHREAD_RWLOCK_unlock(&obj->fsal->fsm_lock);
 
-	pthread_rwlockattr_destroy(&attrs);
+	PTHREAD_RWLOCKATTR_destroy(&attrs);
 }
 
 void fsal_obj_handle_fini(struct fsal_obj_handle *obj)
 {
-	PTHREAD_RWLOCK_wrlock(&obj->fsal->lock);
+	PTHREAD_RWLOCK_wrlock(&obj->fsal->fsm_lock);
 	glist_del(&obj->handles);
-	PTHREAD_RWLOCK_unlock(&obj->fsal->lock);
+	PTHREAD_RWLOCK_unlock(&obj->fsal->fsm_lock);
 	PTHREAD_RWLOCK_destroy(&obj->obj_lock);
 	memset(&obj->obj_ops, 0, sizeof(obj->obj_ops));	/* poison myself */
 	obj->fsal = NULL;
@@ -206,9 +204,9 @@ void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds)
 {
 	assert(pds->fsal);
 
-	PTHREAD_RWLOCK_wrlock(&pds->fsal->lock);
+	PTHREAD_RWLOCK_wrlock(&pds->fsal->fsm_lock);
 	glist_del(&pds->server);
-	PTHREAD_RWLOCK_unlock(&pds->fsal->lock);
+	PTHREAD_RWLOCK_unlock(&pds->fsal->fsm_lock);
 
 	memset(&pds->s_ops, 0, sizeof(pds->s_ops));	/* poison myself */
 
@@ -1365,8 +1363,8 @@ if decrement_and_lock fd_work
 	unlock mutex
 */
 
-pthread_mutex_t fsal_fd_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t fsal_fd_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t fsal_fd_mutex;
+pthread_cond_t fsal_fd_cond;
 struct glist_head fsal_fd_global_lru = GLIST_HEAD_INIT(fsal_fd_global_lru);
 int32_t fsal_fd_global_counter;
 uint32_t fsal_fd_state_counter;
@@ -1857,6 +1855,9 @@ fsal_status_t fd_lru_pkginit(struct fd_lru_parameter *params)
 	int code = 0;
 	struct fridgethr_params frp;
 
+	PTHREAD_MUTEX_init(&fsal_fd_mutex, NULL);
+	PTHREAD_COND_init(&fsal_fd_cond, NULL);
+
 	futility_count = params->futility_count;
 	required_progress = params->required_progress;
 	reaper_work = params->reaper_work;
@@ -1912,6 +1913,10 @@ fsal_status_t fd_lru_pkgshutdown(void)
 		LogMajor(COMPONENT_CACHE_INODE_LRU,
 			 "Failed shutting down LRU thread: %d", rc);
 	}
+
+	PTHREAD_MUTEX_destroy(&fsal_fd_mutex);
+	PTHREAD_COND_destroy(&fsal_fd_cond);
+
 	return fsalstat(posix2fsal_error(rc), rc);
 }
 

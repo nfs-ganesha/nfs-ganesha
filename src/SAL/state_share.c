@@ -64,9 +64,9 @@ void remove_nlm_share(state_t *state)
 	state_nlm_client_t *client = owner->so_owner.so_nlm_owner.so_client;
 
 	/* Remove from share list for export */
-	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->exp_lock);
 	glist_del(&state->state_export_list);
-	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 
 	/* Remove the share from the list for the file. */
 	glist_del(&state->state_list);
@@ -313,10 +313,10 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj,
 		       &state->state_list);
 
 	/* Add to share list for export */
-	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->exp_lock);
 	glist_add_tail(&op_ctx->ctx_export->exp_nlm_share_list,
 		       &state->state_export_list);
-	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 
 	LogFullDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
 			"SHARE added state_t %p, share_access %u, share_deny %u",
@@ -362,7 +362,7 @@ void state_export_unshare_all(void)
 	state_status_t status;
 
 	while (errcnt < STATE_ERR_MAX) {
-		PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
+		PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->exp_lock);
 
 		state = glist_first_entry(
 				&op_ctx->ctx_export->exp_nlm_share_list,
@@ -370,7 +370,7 @@ void state_export_unshare_all(void)
 				state_export_list);
 
 		if (state == NULL) {
-			PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+			PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 			break;
 		}
 
@@ -379,7 +379,7 @@ void state_export_unshare_all(void)
 		if (obj == NULL) {
 			LogDebugAlt(COMPONENT_STATE, COMPONENT_NLM,
 				    "Entry for state is stale");
-			PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+			PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 			break;
 		}
 
@@ -392,7 +392,7 @@ void state_export_unshare_all(void)
 		inc_state_owner_ref(owner);
 
 		/* Drop the export mutex to call unshare */
-		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 
 		/* Remove all shares held by this Owner on this export */
 		status = state_nlm_share(obj,

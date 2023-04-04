@@ -518,15 +518,9 @@ static void nfs_Start_threads(void)
 	LogDebug(COMPONENT_THREAD, "Starting threads");
 
 	/* Init for thread parameter (mostly for scheduling) */
-	if (pthread_attr_init(&attr_thr) != 0)
-		LogDebug(COMPONENT_THREAD, "can't init pthread's attributes");
-
-	if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
-		LogDebug(COMPONENT_THREAD, "can't set pthread's scope");
-
-	if (pthread_attr_setdetachstate(&attr_thr,
-					PTHREAD_CREATE_JOINABLE) != 0)
-		LogDebug(COMPONENT_THREAD, "can't set pthread's join state");
+	PTHREAD_ATTR_init(&attr_thr);
+	PTHREAD_ATTR_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
+	PTHREAD_ATTR_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
 
 	LogEvent(COMPONENT_THREAD, "Starting delayed executor.");
 	delayed_start();
@@ -565,6 +559,7 @@ static void nfs_Start_threads(void)
 #ifdef _USE_9P_RDMA
 	/* Starting the 9P/RDMA dispatcher thread */
 	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
+		/** @todo - this thread is never cancelled or cleaned up... */
 		rc = pthread_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
 				    _9p_rdma_dispatcher_thread, NULL);
 		if (rc != 0) {
@@ -615,7 +610,7 @@ static void nfs_Start_threads(void)
 	}
 	LogEvent(COMPONENT_THREAD, "General fridge was started successfully");
 
-	pthread_attr_destroy(&attr_thr);
+	PTHREAD_ATTR_destroy(&attr_thr);
 }
 
 /**
@@ -957,6 +952,8 @@ void nfs_start(nfs_start_info_t *p_start_info)
 	/* Regular exit */
 	LogEvent(COMPONENT_MAIN, "NFS EXIT: regular exit");
 
+	nfs_init_cleanup();
+
 	Cleanup();
 	/* let main return 0 to exit */
 }
@@ -966,6 +963,12 @@ void nfs_init_init(void)
 	PTHREAD_MUTEX_init(&nfs_init.init_mutex, NULL);
 	PTHREAD_COND_init(&nfs_init.init_cond, NULL);
 	nfs_init.init_complete = false;
+}
+
+void nfs_init_cleanup(void)
+{
+	PTHREAD_MUTEX_destroy(&nfs_init.init_mutex);
+	PTHREAD_COND_destroy(&nfs_init.init_cond);
 }
 
 void nfs_init_complete(void)

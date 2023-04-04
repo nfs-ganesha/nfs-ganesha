@@ -192,7 +192,7 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	slot = &session->fc_slots[slotid];
 
 	/* Serialize use of this slot. */
-	PTHREAD_MUTEX_lock(&slot->lock);
+	PTHREAD_MUTEX_lock(&slot->slot_lock);
 
 	if (slot->sequence + 1 != arg_SEQUENCE4->sa_sequenceid) {
 		/* This sequence is NOT the next sequence */
@@ -234,13 +234,13 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 						slot->cached_result,
 						refcnt);
 
-				PTHREAD_MUTEX_unlock(&slot->lock);
+				PTHREAD_MUTEX_unlock(&slot->slot_lock);
 
 				dec_session_ref(session);
 				return NFS_REQ_REPLAY;
 			} else {
 				/* Illegal replay */
-				PTHREAD_MUTEX_unlock(&slot->lock);
+				PTHREAD_MUTEX_unlock(&slot->slot_lock);
 
 				dec_session_ref(session);
 				res_SEQUENCE4->sr_status =
@@ -257,7 +257,7 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 			}
 		}
 
-		PTHREAD_MUTEX_unlock(&slot->lock);
+		PTHREAD_MUTEX_unlock(&slot->slot_lock);
 
 		dec_session_ref(session);
 		res_SEQUENCE4->sr_status = NFS4ERR_SEQ_MISORDERED;
@@ -322,7 +322,7 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 		/* Indicate the failed response size. */
 		data->op_resp_size = sizeof(nfsstat4);
 
-		PTHREAD_MUTEX_unlock(&slot->lock);
+		PTHREAD_MUTEX_unlock(&slot->slot_lock);
 
 		dec_session_ref(session);
 		data->session = NULL;

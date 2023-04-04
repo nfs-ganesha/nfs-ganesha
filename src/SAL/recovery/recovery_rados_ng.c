@@ -45,7 +45,7 @@
 #include "recovery_rados.h"
 
 static rados_write_op_t grace_op;
-static pthread_mutex_t grace_op_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t grace_op_lock;
 
 static int rados_ng_put(char *key, char *val, char *object)
 {
@@ -113,6 +113,16 @@ static int rados_ng_del(char *key, char *object)
 	return ret;
 }
 
+/* Cleanup on shutdown */
+void rados_ng_cleanup(void)
+{
+	PTHREAD_MUTEX_destroy(&grace_op_lock);
+}
+
+struct cleanup_list_element rados_ng_cleanup_element = {
+	.clean = rados_ng_cleanup,
+};
+
 static int rados_ng_init(void)
 {
 	int ret;
@@ -120,6 +130,10 @@ static int rados_ng_init(void)
 	struct gsh_refstr *recov_oid;
 	char host[NI_MAXHOST];
 	rados_write_op_t op;
+
+	PTHREAD_MUTEX_init(&grace_op_lock, NULL);
+
+	RegisterCleanup(&rados_ng_cleanup_element);
 
 	if (nfs_param.core_param.clustered) {
 		ret = snprintf(host, sizeof(host), "node%d", g_nodeid);

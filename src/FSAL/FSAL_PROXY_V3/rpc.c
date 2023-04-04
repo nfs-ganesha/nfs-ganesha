@@ -90,12 +90,7 @@ bool proxyv3_rpc_init(const uint num_sockets)
 		       strlen(kClientName) + 1 /* For NUL */);
 	}
 
-	if (pthread_mutex_init(&rpcLock, NULL) != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Failed to initialize a mutex... Errno %d (%s).",
-			errno, strerror(errno));
-		return false;
-	}
+	PTHREAD_MUTEX_init(&rpcLock, NULL);
 
 	/* Initialize the fd_entries with not in_use sockets. */
 	rpcNumSockets = num_sockets;

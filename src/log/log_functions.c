@@ -96,7 +96,7 @@
 			assert(0);					\
 	} while (0)
 
-pthread_rwlock_t log_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t log_rwlock;
 
 /* Variables to control log fields */
 
@@ -286,37 +286,13 @@ __thread char *clientip = NULL;
 				 "LOG: " format, \
 				 ## args)
 
-struct cleanup_list_element *cleanup_list;
-
-void RegisterCleanup(struct cleanup_list_element *clean)
-{
-	clean->next = cleanup_list;
-	cleanup_list = clean;
-}
-
-void Cleanup(void)
-{
-	struct cleanup_list_element *c = cleanup_list;
-
-	while (c != NULL) {
-		c->clean();
-		c = c->next;
-	}
-}
-
-void Fatal(void)
-{
-	Cleanup();
-	_exit(2);
-}
-
 #ifdef _DONT_HAVE_LOCALTIME_R
 
 /* Localtime is not reentrant...
  * So we are obliged to have a mutex for calling it.
  * pffff....
  */
-static pthread_mutex_t mutex_localtime = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutex_localtime;
 
 /* thread-safe and PORTABLE version of localtime */
 
@@ -343,6 +319,35 @@ static struct tm *Localtime_r(const time_t *p_time, struct tm *p_tm)
 #else
 #define Localtime_r localtime_r
 #endif
+
+struct cleanup_list_element *cleanup_list;
+
+void RegisterCleanup(struct cleanup_list_element *clean)
+{
+	clean->next = cleanup_list;
+	cleanup_list = clean;
+}
+
+void Cleanup(void)
+{
+	struct cleanup_list_element *c = cleanup_list;
+
+	while (c != NULL) {
+		c->clean();
+		c = c->next;
+	}
+
+	PTHREAD_RWLOCK_destroy(&log_rwlock);
+#ifdef _DONT_HAVE_LOCALTIME_R
+	PTHREAD_MUTEX_destroy(&mutex_localtime);
+#endif
+}
+
+void Fatal(void)
+{
+	Cleanup();
+	_exit(2);
+}
 
 /*
  * Convert a numeral log level in ascii to
@@ -1027,6 +1032,10 @@ void init_logging(const char *log_path, const int debug_level)
 	int rc;
 
 	/* Finish initialization of and register log facilities. */
+	PTHREAD_RWLOCK_init(&log_rwlock, NULL);
+#ifdef _DONT_HAVE_LOCALTIME_R
+	PTHREAD_MUTEX_init(&mutex_localtime, NULL);
+#endif
 	glist_init(&facility_list);
 	glist_init(&active_facility_list);
 

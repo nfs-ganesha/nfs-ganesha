@@ -154,6 +154,11 @@ void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 	constructing->handle.fileid = st->st_ino;
 	constructing->handle.obj_ops = &GlusterFS.handle_ops;
 
+	if (constructing->handle.type == REGULAR_FILE) {
+		init_fsal_fd(&constructing->globalfd.fsal_fd, FSAL_FD_GLOBAL,
+			     op_ctx->fsal_export);
+	}
+
 	*obj = constructing;
 }
 
@@ -376,46 +381,16 @@ int initiate_up_thread(struct glusterfs_fs *gl_fs)
 {
 
 	pthread_attr_t up_thr_attr;
-	int retval  = -1;
 	int err   = 0;
 	int retries = 10;
 
 	memset(&up_thr_attr, 0, sizeof(up_thr_attr));
 
 	/* Initialization of thread attributes from nfs_init.c */
-	err = pthread_attr_init(&up_thr_attr);
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't init pthread's attributes (%s)",
-			strerror(err));
-		goto out;
-	}
-
-	err = pthread_attr_setscope(&up_thr_attr,
-				      PTHREAD_SCOPE_SYSTEM);
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't set pthread's scope (%s)",
-			strerror(err));
-		goto out;
-	}
-
-	err = pthread_attr_setdetachstate(&up_thr_attr,
-					  PTHREAD_CREATE_JOINABLE);
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't set pthread's join state (%s)",
-			strerror(err));
-		goto out;
-	}
-
-	err = pthread_attr_setstacksize(&up_thr_attr, 2116488);
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't set pthread's stack size (%s)",
-			strerror(err));
-		goto out;
-	}
+	PTHREAD_ATTR_init(&up_thr_attr);
+	PTHREAD_ATTR_setscope(&up_thr_attr, PTHREAD_SCOPE_SYSTEM);
+	PTHREAD_ATTR_setdetachstate(&up_thr_attr, PTHREAD_CREATE_JOINABLE);
+	PTHREAD_ATTR_setstacksize(&up_thr_attr, 2116488);
 
 	do {
 		err = pthread_create(&gl_fs->up_thread,
@@ -425,24 +400,16 @@ int initiate_up_thread(struct glusterfs_fs *gl_fs)
 		sleep(1);
 	} while (err && (err == EAGAIN) && (retries-- > 0));
 
+	PTHREAD_ATTR_destroy(&up_thr_attr);
+
 	if (err) {
 		LogCrit(COMPONENT_THREAD,
-			"can't create upcall pthread (%s)",
-			strerror(err));
-		goto out;
+			"can't create GLUSTERFSAL_UP_Thread for volume %s error - %s (%d)",
+			gl_fs->volname, strerror(err), err);
+		return -1;
 	}
 
-	retval = 0;
-
-out:
-	err = pthread_attr_destroy(&up_thr_attr);
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't destroy pthread's attributes (%s)",
-			strerror(err));
-	}
-
-	return retval;
+	return 0;
 }
 
 #ifdef GLTIMING

@@ -78,7 +78,7 @@ static struct avltree_node *uid_grplist_cache[id_cache_size];
  * @brief Lock that protects the idmapper user cache
  */
 
-pthread_rwlock_t uid2grp_user_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t uid2grp_user_lock;
 
 /**
  * @brief Tree of users, by name
@@ -176,12 +176,23 @@ static int uid_comparator(const struct avltree_node *node1,
 		return 0;
 }
 
+/* Cleanup on shutdown */
+void uid2grp_cache_cleanup(void)
+{
+	PTHREAD_RWLOCK_destroy(&uid2grp_user_lock);
+}
+
+struct cleanup_list_element uid2grp_cache_cleanup_element = {
+	.clean = uid2grp_cache_cleanup,
+};
+
 /**
  * @brief Initialize the IDMapper cache
  */
 
 void uid2grp_cache_init(void)
 {
+	PTHREAD_RWLOCK_init(&uid2grp_user_lock, NULL);
 	if (nfs_param.core_param.max_uid_to_grp_reqs)
 		sem_init(&uid2grp_sem, 0,
 			 nfs_param.core_param.max_uid_to_grp_reqs);
@@ -189,6 +200,7 @@ void uid2grp_cache_init(void)
 	avltree_init(&uid_tree, uid_comparator, 0);
 	memset(uid_grplist_cache, 0,
 	       id_cache_size * sizeof(struct avltree_node *));
+	RegisterCleanup(&uid2grp_cache_cleanup_element);
 }
 
 /* Remove given user/cache_info from the AVL trees

@@ -36,9 +36,9 @@
 #include <stdint.h>
 #include <netdb.h>
 
+#include "abstract_atomic.h"
 #include "gsh_types.h"
 #include "log.h"
-#include "idmapper.h"
 
 /**
  * BUILD_BUG_ON - break compile if a condition is true.
@@ -99,6 +99,206 @@ extern size_t gsh_strnlen(const char *s, size_t max);
 #undef SCANDIR_CONST
 #define SCANDIR_CONST
 #endif
+
+/**
+ * @brief Logging pthread attribute initialization
+ *
+ * @param[in,out] _attr The attributes to initialize
+ */
+#define PTHREAD_ATTR_init(_attr)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_attr_init(_attr);				\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Init pthread attr %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, pthread attr init %p (%s) "	\
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging pthread attribute destruction
+ *
+ * @param[in,out] _attr The attributes to initialize
+ */
+#define PTHREAD_ATTR_destroy(_attr)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_attr_destroy(_attr);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Destroy pthread attr %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, pthread attr destroy %p (%s) " \
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging pthread attr set scope
+ *
+ * @param[in,out] _attr   The attributes to update
+ * @param[in]     _scope  The scope to set
+ */
+#define PTHREAD_ATTR_setscope(_attr, _scope)				\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_attr_setscope(_attr, _scope);		\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "pthread_attr_setscope %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, pthread_attr_setscope %p (%s) " \
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging pthread attr set detach state
+ *
+ * @param[in,out] _attr    The attributes to update
+ * @param[in]     _detach  The detach type to set
+ */
+#define PTHREAD_ATTR_setdetachstate(_attr, _detach)			\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_attr_setdetachstate(_attr, _detach);	\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "pthread_attr_setdetachstate %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, pthread_attr_setdetachstate %p (%s) " \
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging pthread attr set stack size
+ *
+ * @param[in,out] _attr    The attributes to update
+ * @param[in]     _detach  The detach type to set
+ */
+#define PTHREAD_ATTR_setstacksize(_attr, _detach)			\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_attr_setstacksize(_attr, _detach);	\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "pthread_attr_setstacksize %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, pthread_attr_setstacksize %p (%s) " \
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging pthread rwlock attribute initialization
+ *
+ * @param[in,out] _attr The attributes to initialize
+ */
+#define PTHREAD_RWLOCKATTR_init(_attr)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_rwlockattr_init(_attr);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Init rwlockattr %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, rwlockattr init %p (%s) "	\
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging pthread rwlock set kind
+ *
+ * @param[in,out] _attr The attributes to update
+ * @param[in]     _kind The kind to set
+ */
+#ifdef GLIBC
+#define PTHREAD_RWLOCKATTR_setkind_np(_attr, _kind)			\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_rwlockattr_setkind_np(_attr, _kind);	\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "pthread_rwlockattr_setkind_np %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, rwlockattr setkind_np %p (%s) " \
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+#else
+#define PTHREAD_RWLOCKATTR_setkind_np(_attr, _kind) /**/
+#endif
+
+/**
+ * @brief Logging pthread rwlock attribute destruction
+ *
+ * @param[in,out] _attr The attributes to initialize
+ */
+#define PTHREAD_RWLOCKATTR_destroy(_attr)				\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_rwlockattr_destroy(_attr);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Destroy rwlockattr %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, rwlockattr destroy %p (%s) " \
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
 
 /**
  * @brief Logging rwlock initialization
@@ -225,6 +425,79 @@ extern size_t gsh_strnlen(const char *s, size_t max);
 	} while (0)							\
 
 /**
+ * @brief Logging pthread mutex attribute initialization
+ *
+ * @param[in,out] _attr The attributes to initialize
+ */
+#define PTHREAD_MUTEXATTR_init(_attr)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_mutexattr_init(_attr);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Init mutexattr %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, mutexattr init %p (%s) "	\
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging pthread mutex set type
+ *
+ * @param[in,out] _attr The attributes to update
+ * @param[in]     _type The type to set
+ */
+#define PTHREAD_MUTEXATTR_settype(_attr, _type)				\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_mutexattr_settype(_attr, _type);		\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "pthread_mutexattr_settype %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, mutexattr settype %p (%s) "	\
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging pthread mutex attribute destruction
+ *
+ * @param[in,out] _attr The attributes to initialize
+ */
+#define PTHREAD_MUTEXATTR_destroy(_attr)				\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_mutexattr_destroy(_attr);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Destroy mutexattr %p (%s) at %s:%d", \
+				     _attr, #_attr,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, mutexattr destroy %p (%s) "	\
+				"at %s:%d", rc, _attr, #_attr,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
  * @brief Logging mutex lock
  *
  * @param[in,out] _mtx The mutex to acquire
@@ -348,6 +621,100 @@ static inline int PTHREAD_mutex_trylock(pthread_mutex_t *mtx,
 			LogCrit(COMPONENT_RW_LOCK,			\
 				"Error %d, Destroy mutex %p (%s) "	\
 				"at %s:%d", rc, _mtx, #_mtx,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging spin lock
+ *
+ * @param[in,out] _spin The spin lock to acquire
+ */
+
+#define PTHREAD_SPIN_lock(_spin)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_spin_lock(_spin);				\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Acquired spin lock %p (%s) at %s:%d", \
+				     _spin, #_spin,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, acquiring spin lock %p (%s) " \
+				"at %s:%d", rc, _spin, #_spin,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+#define PTHREAD_SPIN_unlock(_spin)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_spin_unlock(_spin);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Released spin lock %p (%s) at %s:%d", \
+				     _spin, #_spin,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, releasing spin lock %p (%s) " \
+				"at %s:%d", rc, _spin, #_spin,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging spin lock initialization
+ *
+ * @param[in,out] _spin    The spin lock to initialize
+ * @param[in,out] _pshared The sharing type for the spin lock
+ */
+#define PTHREAD_SPIN_init(_spin, _pshared)				\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_spin_init(_spin, _pshared);		\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Init spin lock %p (%s) at %s:%d",	\
+				     _spin, #_spin,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Init spin lock %p (%s) "	\
+				"at %s:%d", rc, _spin, #_spin,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging spin lock destroy
+ *
+ * @param[in,out] _spin The spin lock to destroy
+ */
+
+#define PTHREAD_SPIN_destroy(_spin)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_spin_destroy(_spin);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Destroy spin lock %p (%s) at %s:%d", \
+				     _spin, #_spin,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Destroy spin lock %p (%s) "	\
+				"at %s:%d", rc, _spin, #_spin,		\
 				__FILE__, __LINE__);			\
 			abort();					\
 		}							\
@@ -627,6 +994,9 @@ static inline void now(struct timespec *ts)
 		assert(0);	/* if this is broken, we are toast so die */
 	}
 }
+
+/* The following definitions require some of the following */
+#include "idmapper.h"
 
 /*wrapper for gethostname to capture auth stats, if required */
 static inline int gsh_gethostname(char *name, size_t len, bool stats)

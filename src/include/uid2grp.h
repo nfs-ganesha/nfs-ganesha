@@ -59,7 +59,7 @@ typedef struct group_data {
 	time_t epoch;
 	int nbgroups;
 	unsigned int refcount;
-	pthread_mutex_t lock;
+	pthread_mutex_t gd_lock;
 	gid_t *groups;
 } group_data_t;
 

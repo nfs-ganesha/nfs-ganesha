@@ -72,9 +72,9 @@ struct fridgethr_entry {
 	 */
 	struct fridgethr_context {
 		struct _9p_worker_data wd;	/*< Work queue data */
-		pthread_mutex_t mtx;	/*< Mutex for fiddling this
+		pthread_mutex_t fre_mtx;	/*< Mutex for fiddling this
 					   thread */
-		pthread_cond_t cv;	/*< Condition variable to wait for sync
+		pthread_cond_t fre_cv;	/*< Condition variable to wait for sync
 					 */
 		sigset_t sigmask;	/*< This thread's signal mask */
 		void *thread_info;	/*< Information belonging to the
@@ -203,7 +203,7 @@ typedef enum {
 struct fridgethr {
 	char *s;		/*< Name for this fridge */
 	struct fridgethr_params p;	/*< Parameters */
-	pthread_mutex_t mtx;	/*< Mutex */
+	pthread_mutex_t frt_mtx;	/*< Mutex */
 	pthread_attr_t attr;	/*< Creation attributes */
 	struct glist_head thread_list;	/*< List of threads */
 	uint32_t nthreads;	/*< Number of threads in fridge */

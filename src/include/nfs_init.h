@@ -54,6 +54,7 @@ extern struct nfs_init nfs_init;
 extern pthread_t gsh_dbus_thrid;
 
 void nfs_init_init(void);
+void nfs_init_cleanup(void);
 void nfs_init_complete(void);
 void nfs_init_wait(void);
 int nfs_init_wait_timeout(int timeout);

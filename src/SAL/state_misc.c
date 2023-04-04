@@ -53,13 +53,13 @@
 
 struct glist_head cached_open_owners = GLIST_HEAD_INIT(cached_open_owners);
 
-pthread_mutex_t cached_open_owners_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t cached_open_owners_lock;
 
 pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 
 #ifdef DEBUG_SAL
 struct glist_head state_owners_all = GLIST_HEAD_INIT(state_owners_all);
-pthread_mutex_t all_state_owners_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t all_state_owners_mutex;
 #endif
 
 /* Error conversion routines */

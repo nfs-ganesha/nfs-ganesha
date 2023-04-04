@@ -85,7 +85,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
 
-	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->exp_lock);
 
 	glist_for_each(glist_item, &export->clients) {
 		struct base_client_entry *client =
@@ -136,7 +136,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 			gsh_free(grp_name);
 	}
 
-	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 
 	/* Now that we are almost done, get a gsh_refstr to the path for ex_dir.
 	 * The op context has a reference but we don't want to play games with

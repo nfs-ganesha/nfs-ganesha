@@ -100,7 +100,7 @@ static inline struct _9p_request_data *_9p_consume_req(struct req_q_pair *qpair)
 {
 	struct _9p_request_data *reqdata = NULL;
 
-	pthread_spin_lock(&qpair->consumer.sp);
+	PTHREAD_SPIN_lock(&qpair->consumer._9p_rq_spinlock);
 	if (qpair->consumer.size > 0) {
 		reqdata =
 		    glist_first_entry(&qpair->consumer.q,
@@ -108,14 +108,14 @@ static inline struct _9p_request_data *_9p_consume_req(struct req_q_pair *qpair)
 				      req_q);
 		glist_del(&reqdata->req_q);
 		--(qpair->consumer.size);
-		pthread_spin_unlock(&qpair->consumer.sp);
+		PTHREAD_SPIN_unlock(&qpair->consumer._9p_rq_spinlock);
 		goto out;
 	} else {
 		char *s = NULL;
 		uint32_t csize = ~0U;
 		uint32_t psize = ~0U;
 
-		pthread_spin_lock(&qpair->producer.sp);
+		PTHREAD_SPIN_lock(&qpair->producer._9p_rq_spinlock);
 		if (isFullDebug(COMPONENT_DISPATCH)) {
 			s = (char *)qpair->s;
 			csize = qpair->consumer.size;
@@ -128,14 +128,14 @@ static inline struct _9p_request_data *_9p_consume_req(struct req_q_pair *qpair)
 			qpair->consumer.size = qpair->producer.size;
 			qpair->producer.size = 0;
 			/* consumer.size > 0 */
-			pthread_spin_unlock(&qpair->producer.sp);
+			PTHREAD_SPIN_unlock(&qpair->producer._9p_rq_spinlock);
 			reqdata =
 			    glist_first_entry(&qpair->consumer.q,
 					      struct _9p_request_data,
 					      req_q);
 			glist_del(&reqdata->req_q);
 			--(qpair->consumer.size);
-			pthread_spin_unlock(&qpair->consumer.sp);
+			PTHREAD_SPIN_unlock(&qpair->consumer._9p_rq_spinlock);
 			if (s)
 				LogFullDebug(COMPONENT_DISPATCH,
 					     "try splice, qpair %s consumer qsize=%u producer qsize=%u",
@@ -143,8 +143,8 @@ static inline struct _9p_request_data *_9p_consume_req(struct req_q_pair *qpair)
 			goto out;
 		}
 
-		pthread_spin_unlock(&qpair->producer.sp);
-		pthread_spin_unlock(&qpair->consumer.sp);
+		PTHREAD_SPIN_unlock(&qpair->producer._9p_rq_spinlock);
+		PTHREAD_SPIN_unlock(&qpair->consumer._9p_rq_spinlock);
 
 		if (s)
 			LogFullDebug(COMPONENT_DISPATCH,
@@ -193,23 +193,25 @@ static struct _9p_request_data *_9p_dequeue_req(struct _9p_worker_data *worker)
 		wait_q_entry_t *wqe = &worker->wqe;
 
 		assert(wqe->waiters == 0); /* wqe is not on any wait queue */
-		PTHREAD_MUTEX_lock(&wqe->lwe.mtx);
+		PTHREAD_MUTEX_lock(&wqe->lwe.wq_mtx);
 		wqe->flags = Wqe_LFlag_WaitSync;
 		wqe->waiters = 1;
 		/* XXX functionalize */
-		pthread_spin_lock(&_9p_req_st.reqs.sp);
+		PTHREAD_SPIN_lock(&_9p_req_st.reqs._9p_rq_st_spinlock);
 		glist_add_tail(&_9p_req_st.reqs.wait_list, &wqe->waitq);
 		++(_9p_req_st.reqs.waiters);
-		pthread_spin_unlock(&_9p_req_st.reqs.sp);
+		PTHREAD_SPIN_unlock(&_9p_req_st.reqs._9p_rq_st_spinlock);
 		while (!(wqe->flags & Wqe_LFlag_SyncDone)) {
 			timeout.tv_sec = time(NULL) + 5;
 			timeout.tv_nsec = 0;
-			pthread_cond_timedwait(&wqe->lwe.cv, &wqe->lwe.mtx,
+			pthread_cond_timedwait(&wqe->lwe.wq_cv,
+					       &wqe->lwe.wq_mtx,
 					       &timeout);
 			if (fridgethr_you_should_break(ctx)) {
 				/* We are returning;
 				 * so take us out of the waitq */
-				pthread_spin_lock(&_9p_req_st.reqs.sp);
+				PTHREAD_SPIN_lock(
+					&_9p_req_st.reqs._9p_rq_st_spinlock);
 				if (wqe->waitq.next != NULL
 				    || wqe->waitq.prev != NULL) {
 					/* Element is still in wqitq,
@@ -221,8 +223,9 @@ static struct _9p_request_data *_9p_dequeue_req(struct _9p_worker_data *worker)
 					    ~(Wqe_LFlag_WaitSync |
 					      Wqe_LFlag_SyncDone);
 				}
-				pthread_spin_unlock(&_9p_req_st.reqs.sp);
-				PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
+				PTHREAD_SPIN_unlock(
+					&_9p_req_st.reqs._9p_rq_st_spinlock);
+				PTHREAD_MUTEX_unlock(&wqe->lwe.wq_mtx);
 				return NULL;
 			}
 		}
@@ -230,7 +233,7 @@ static struct _9p_request_data *_9p_dequeue_req(struct _9p_worker_data *worker)
 		/* XXX wqe was removed from _9p_req_st.waitq
 		 * (by signalling thread) */
 		wqe->flags &= ~(Wqe_LFlag_WaitSync | Wqe_LFlag_SyncDone);
-		PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
+		PTHREAD_MUTEX_unlock(&wqe->lwe.wq_mtx);
 		LogFullDebug(COMPONENT_DISPATCH, "wqe wakeup %p", wqe);
 		goto retry_deq;
 	} /* !reqdata */
@@ -250,10 +253,10 @@ static void _9p_enqueue_req(struct _9p_request_data *reqdata)
 
 	/* always append to producer queue */
 	q = &qpair->producer;
-	pthread_spin_lock(&q->sp);
+	PTHREAD_SPIN_lock(&q->_9p_rq_spinlock);
 	glist_add_tail(&q->q, &reqdata->req_q);
 	++(q->size);
-	pthread_spin_unlock(&q->sp);
+	PTHREAD_SPIN_unlock(&q->_9p_rq_spinlock);
 
 	LogDebug(COMPONENT_DISPATCH,
 		 "enqueued req, q %p (%s %p:%p) size is %d (enq %"
@@ -268,7 +271,7 @@ static void _9p_enqueue_req(struct _9p_request_data *reqdata)
 		wait_q_entry_t *wqe;
 
 		/* SPIN LOCKED */
-		pthread_spin_lock(&_9p_req_st.reqs.sp);
+		PTHREAD_SPIN_lock(&_9p_req_st.reqs._9p_rq_st_spinlock);
 		if (_9p_req_st.reqs.waiters) {
 			wqe = glist_first_entry(&_9p_req_st.reqs.wait_list,
 						wait_q_entry_t, waitq);
@@ -282,16 +285,16 @@ static void _9p_enqueue_req(struct _9p_request_data *reqdata)
 			--(_9p_req_st.reqs.waiters);
 			--(wqe->waiters);
 			/* ! SPIN LOCKED */
-			pthread_spin_unlock(&_9p_req_st.reqs.sp);
-			PTHREAD_MUTEX_lock(&wqe->lwe.mtx);
+			PTHREAD_SPIN_unlock(&_9p_req_st.reqs._9p_rq_st_spinlock);
+			PTHREAD_MUTEX_lock(&wqe->lwe.wq_mtx);
 			/* XXX reliable handoff */
 			wqe->flags |= Wqe_LFlag_SyncDone;
 			if (wqe->flags & Wqe_LFlag_WaitSync)
-				pthread_cond_signal(&wqe->lwe.cv);
-			PTHREAD_MUTEX_unlock(&wqe->lwe.mtx);
+				pthread_cond_signal(&wqe->lwe.wq_cv);
+			PTHREAD_MUTEX_unlock(&wqe->lwe.wq_mtx);
 		} else
 			/* ! SPIN LOCKED */
-			pthread_spin_unlock(&_9p_req_st.reqs.sp);
+			PTHREAD_SPIN_unlock(&_9p_req_st.reqs._9p_rq_st_spinlock);
 	}
 }
 
@@ -367,6 +370,11 @@ static void worker_thread_initializer(struct fridgethr_context *ctx)
 
 static void worker_thread_finalizer(struct fridgethr_context *ctx)
 {
+	struct _9p_worker_data *wd = &ctx->wd;
+
+	/* Destroy thr waitq */
+	destroy_wait_q_entry(&wd->wqe);
+
 	ctx->thread_info = NULL;
 }
 
@@ -385,8 +393,11 @@ static void _9p_worker_run(struct fridgethr_context *ctx)
 {
 	struct _9p_worker_data *worker_data = &ctx->wd;
 	struct _9p_request_data *reqdata;
-	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-	pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+	pthread_mutex_t _9pw_mutex;
+	pthread_cond_t _9pw_cond;
+
+	PTHREAD_MUTEX_init(&_9pw_mutex, NULL);
+	PTHREAD_COND_init(&_9pw_cond, NULL);
 
 	/* Worker's loop */
 	while (!fridgethr_you_should_break(ctx)) {
@@ -395,8 +406,8 @@ static void _9p_worker_run(struct fridgethr_context *ctx)
 		if (!reqdata)
 			continue;
 
-		reqdata->mutex = &mutex;
-		reqdata->cond = &cond;
+		reqdata->_9prq_mutex = &_9pw_mutex;
+		reqdata->_9prq_mutex = &_9pw_mutex;
 
 		_9p_execute(reqdata);
 		_9p_free_reqdata(reqdata);
@@ -409,8 +420,8 @@ static void _9p_worker_run(struct fridgethr_context *ctx)
 		(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 	}
 
-	PTHREAD_MUTEX_destroy(&mutex);
-	PTHREAD_COND_destroy(&cond);
+	PTHREAD_MUTEX_destroy(&_9pw_mutex);
+	PTHREAD_COND_destroy(&_9pw_cond);
 }
 
 int _9p_worker_init(void)
@@ -421,7 +432,8 @@ int _9p_worker_init(void)
 	int rc = 0;
 
 	/* Init request queue before workers */
-	pthread_spin_init(&_9p_req_st.reqs.sp, PTHREAD_PROCESS_PRIVATE);
+	PTHREAD_SPIN_init(&_9p_req_st.reqs._9p_rq_st_spinlock,
+			  PTHREAD_PROCESS_PRIVATE);
 	_9p_req_st.reqs.size = 0;
 	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
 		qpair = &(_9p_req_st.reqs._9p_request_q.qset[ix]);
@@ -462,7 +474,7 @@ int _9p_worker_init(void)
 
 int _9p_worker_shutdown(void)
 {
-	int rc;
+	int rc, ix;
 
 	if (!_9p_worker_fridge)
 		return 0;
@@ -478,6 +490,16 @@ int _9p_worker_shutdown(void)
 		LogMajor(COMPONENT_DISPATCH,
 			 "Failed shutting down worker threads: %d", rc);
 	}
+
+	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
+		struct req_q_pair *qpair;
+
+		qpair = &(_9p_req_st.reqs._9p_request_q.qset[ix]);
+		_9p_rpc_q_destroy(&qpair->producer);
+		_9p_rpc_q_destroy(&qpair->consumer);
+	}
+
+	PTHREAD_SPIN_destroy(&_9p_req_st.reqs._9p_rq_st_spinlock);
 	return rc;
 }
 
@@ -557,7 +579,7 @@ void *_9p_socket_thread(void *Arg)
 	_9p_conn.trans_type = _9P_TCP;
 	_9p_conn.trans_data.sockfd = tcp_sock;
 	for (i = 0; i < FLUSH_BUCKETS; i++) {
-		PTHREAD_MUTEX_init(&_9p_conn.flush_buckets[i].lock, NULL);
+		PTHREAD_MUTEX_init(&_9p_conn.flush_buckets[i].flb_lock, NULL);
 		glist_init(&_9p_conn.flush_buckets[i].list);
 	}
 	atomic_store_uint32_t(&_9p_conn.refcount, 0);
@@ -735,6 +757,12 @@ end:
 		put_gsh_client(_9p_conn.client);
 
 	rcu_unregister_thread();
+
+	PTHREAD_MUTEX_destroy(&_9p_conn.sock_lock);
+
+	for (i = 0; i < FLUSH_BUCKETS; i++)
+		PTHREAD_MUTEX_destroy(&_9p_conn.flush_buckets[i].flb_lock);
+
 	pthread_exit(NULL);
 }				/* _9p_socket_thread */
 
@@ -968,17 +996,9 @@ void *_9p_dispatcher_thread(void *Arg)
 	}
 
 	/* Init for thread parameter (mostly for scheduling) */
-	if (pthread_attr_init(&attr_thr) != 0)
-		LogDebug(COMPONENT_9P_DISPATCH,
-			 "can't init pthread's attributes");
-
-	if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
-		LogDebug(COMPONENT_9P_DISPATCH, "can't set pthread's scope");
-
-	if (pthread_attr_setdetachstate(&attr_thr,
-					PTHREAD_CREATE_DETACHED) != 0)
-		LogDebug(COMPONENT_9P_DISPATCH,
-			 "can't set pthread's join state");
+	PTHREAD_ATTR_init(&attr_thr);
+	PTHREAD_ATTR_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
+	PTHREAD_ATTR_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);
 
 	LogEvent(COMPONENT_9P_DISPATCH, "9P dispatcher started");
 
@@ -1002,7 +1022,7 @@ void *_9p_dispatcher_thread(void *Arg)
 	}			/* while */
 
 	close(_9p_socket);
-	pthread_attr_destroy(&attr_thr);
+	PTHREAD_ATTR_destroy(&attr_thr);
 
 	rcu_unregister_thread();
 	return NULL;

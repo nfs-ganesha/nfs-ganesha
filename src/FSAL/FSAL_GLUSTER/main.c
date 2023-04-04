@@ -153,7 +153,7 @@ MODULE_INIT void glusterfs_init(void)
 	/* Initialize the fsal_obj_handle ops for FSAL GLUSTER */
 	handle_ops_init(&GlusterFS.handle_ops);
 
-	PTHREAD_MUTEX_init(&GlusterFS.lock, NULL);
+	PTHREAD_MUTEX_init(&GlusterFS.glfs_lock, NULL);
 	glist_init(&GlusterFS.fs_obj);
 
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster initialized");
@@ -172,6 +172,6 @@ MODULE_FINI void glusterfs_unload(void)
 		LogWarn(COMPONENT_FSAL,
 			"FSAL Gluster still contains active shares.");
 	}
-	PTHREAD_MUTEX_destroy(&GlusterFS.lock);
+	PTHREAD_MUTEX_destroy(&GlusterFS.glfs_lock);
 	LogDebug(COMPONENT_FSAL, "FSAL Gluster unloaded");
 }

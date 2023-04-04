@@ -108,6 +108,9 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 		objhandle->glhandle = NULL;
 	}
 
+	if (objhandle->handle.type == REGULAR_FILE)
+		destroy_fsal_fd(&objhandle->globalfd.fsal_fd);
+
 	gsh_free(objhandle);
 
 #ifdef GLTIMING

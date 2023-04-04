@@ -217,6 +217,15 @@ fsal_status_t vfs_close(struct fsal_obj_handle *obj_hdl)
 	return fsalstat(ERR_FSAL_NOT_OPENED, 0);
 }
 
+void vfs_free_state(struct state_t *state)
+{
+	struct vfs_fd *my_fd;
+
+	my_fd = &container_of(state, struct vfs_state_fd, state)->vfs_fd;
+
+	destroy_fsal_fd(&my_fd->fsal_fd);
+}
+
 /**
  * @brief Allocate a state_t structure
  *
@@ -238,7 +247,7 @@ struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,
 	struct vfs_fd *my_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct vfs_state_fd)),
-			   NULL, state_type, related_state);
+			   vfs_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct vfs_state_fd, state)->vfs_fd;
 

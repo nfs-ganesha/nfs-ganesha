@@ -115,7 +115,12 @@ void deconstruct_handle(struct ceph_handle *obj)
 	assert(op_ctx->fsal_export->export_id == obj->key.export_id);
 
 	ceph_ll_put(export->cmount, obj->i);
+
+	if (obj->handle.type == REGULAR_FILE)
+		destroy_fsal_fd(&obj->fd.fsal_fd);
+
 	fsal_obj_handle_fini(&obj->handle);
+
 	gsh_free(obj);
 }
 

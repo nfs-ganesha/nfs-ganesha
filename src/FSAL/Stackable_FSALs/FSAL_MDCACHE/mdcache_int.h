@@ -41,6 +41,7 @@
 #include "fsal_up.h"
 #include "fsal_convert.h"
 #include "display.h"
+#include "common_utils.h"
 
 typedef struct mdcache_fsal_obj_handle mdcache_entry_t;
 
@@ -68,7 +69,7 @@ typedef struct mdcache_dmap_entry__ {
 
 typedef struct {
 	/** Lock protecting this structure */
-	pthread_mutex_t mtx;
+	pthread_mutex_t dm_mtx;
 	/** Mapping of ck -> name for whence-is-name */
 	struct avltree map;
 	/** LRU of dirent map entries */
@@ -316,7 +317,7 @@ struct mdcache_fsal_obj_handle {
 			/** List of detached directory entries. */
 			struct glist_head detached;
 			/** Spin lock to protect the detached list. */
-			pthread_spinlock_t spin;
+			pthread_spinlock_t fsd_spin;
 			/** Count of detached directory entries. */
 			int detached_count;
 			/** @todo FSF
@@ -433,13 +434,13 @@ typedef struct mdcache_dir_entry__ {
 static inline void bump_detached_dirent(mdcache_entry_t *parent,
 					mdcache_dir_entry_t *dirent)
 {
-	pthread_spin_lock(&parent->fsobj.fsdir.spin);
+	PTHREAD_SPIN_lock(&parent->fsobj.fsdir.fsd_spin);
 	if (glist_first_entry(&parent->fsobj.fsdir.detached,
 			      mdcache_dir_entry_t, chunk_list) != dirent) {
 		glist_del(&dirent->chunk_list);
 		glist_add(&parent->fsobj.fsdir.detached, &dirent->chunk_list);
 	}
-	pthread_spin_unlock(&parent->fsobj.fsdir.spin);
+	PTHREAD_SPIN_unlock(&parent->fsobj.fsdir.fsd_spin);
 }
 
 /**
@@ -452,7 +453,7 @@ static inline void bump_detached_dirent(mdcache_entry_t *parent,
 static inline void rmv_detached_dirent(mdcache_entry_t *parent,
 				       mdcache_dir_entry_t *dirent)
 {
-	pthread_spin_lock(&parent->fsobj.fsdir.spin);
+	PTHREAD_SPIN_lock(&parent->fsobj.fsdir.fsd_spin);
 	/* Note that the dirent might not be on the detached list if it
 	 * was being reaped by another thread. All is well here...
 	 */
@@ -460,7 +461,7 @@ static inline void rmv_detached_dirent(mdcache_entry_t *parent,
 		glist_del(&dirent->chunk_list);
 		parent->fsobj.fsdir.detached_count--;
 	}
-	pthread_spin_unlock(&parent->fsobj.fsdir.spin);
+	PTHREAD_SPIN_unlock(&parent->fsobj.fsdir.fsd_spin);
 }
 
 /* Helpers */

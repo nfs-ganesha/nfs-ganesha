@@ -63,7 +63,7 @@ static int reap_hash_table(hash_table_t *ht_reap)
 
 restart:
 		/* acquire mutex */
-		PTHREAD_RWLOCK_wrlock(&ht_reap->partitions[i].lock);
+		PTHREAD_RWLOCK_wrlock(&ht_reap->partitions[i].ht_lock);
 
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
@@ -101,7 +101,7 @@ restart:
 			inc_client_id_ref(client_id);
 
 			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
-			PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
+			PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].ht_lock);
 
 			PTHREAD_MUTEX_lock(&client_rec->cr_mutex);
 
@@ -123,7 +123,7 @@ restart:
 
 			goto restart;
 		}
-		PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].lock);
+		PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].ht_lock);
 	}
 	return count;
 }

@@ -86,6 +86,11 @@ struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 	hdl->obj_handle.fsid = attributes->fsid;
 	hdl->obj_handle.fileid = attributes->fileid;
 
+	if (hdl->obj_handle.type == REGULAR_FILE) {
+		init_fsal_fd(&hdl->u.file.fd.fsal_fd, FSAL_FD_GLOBAL,
+			     op_ctx->fsal_export);
+	}
+
 	if (myself->pnfs_mds_enabled)
 		hdl->obj_handle.obj_ops = &GPFS.handle_ops_with_pnfs;
 	else
@@ -948,6 +953,9 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		/* Indicate we are done with fd work and signal any waiters. */
 		fsal_complete_fd_work(fsal_fd);
 	}
+
+	if (myself->obj_handle.type == REGULAR_FILE)
+		destroy_fsal_fd(&myself->u.file.fd.fsal_fd);
 
 	fsal_obj_handle_fini(obj_hdl);
 

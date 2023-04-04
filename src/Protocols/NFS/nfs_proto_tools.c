@@ -3514,7 +3514,7 @@ void nfs4_Fattr_Free(fattr4 *fattr)
 
 void get_mounted_on_fileid(compound_data_t *data, uint64_t *mounted_on_fileid)
 {
-	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->exp_lock);
 
 	if (data->current_obj == op_ctx->ctx_export->exp_root_obj) {
 		/* This is the root of the current export, find our
@@ -3528,7 +3528,7 @@ void get_mounted_on_fileid(compound_data_t *data, uint64_t *mounted_on_fileid)
 		*mounted_on_fileid = data->current_obj->fileid;
 	}
 
-	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 }
 
 /**

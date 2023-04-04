@@ -99,6 +99,7 @@ void free_vfs_fsal_obj_handle(struct vfs_fsal_obj_handle **hdl_ref)
 
 		handle_to_key(&myself->obj_handle, &key);
 		vfs_state_release(&key);
+		destroy_fsal_fd(&myself->u.file.fd.fsal_fd);
 	} else if (vfs_unopenable_type(type)) {
 		gsh_free(myself->u.unopenable.name);
 		gsh_free(myself->u.unopenable.dir);

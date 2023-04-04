@@ -1830,13 +1830,13 @@ static void sync_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 
 	/* Let caller know we are done. */
 
-	PTHREAD_MUTEX_lock(data->mutex);
+	PTHREAD_MUTEX_lock(data->fsa_mutex);
 
 	data->done = true;
 
-	pthread_cond_signal(data->cond);
+	pthread_cond_signal(data->fsa_cond);
 
-	PTHREAD_MUTEX_unlock(data->mutex);
+	PTHREAD_MUTEX_unlock(data->fsa_mutex);
 }
 
 void fsal_read(struct fsal_obj_handle *obj_hdl,
@@ -1848,15 +1848,15 @@ again:
 
 	obj_hdl->obj_ops->read2(obj_hdl, bypass, sync_cb, arg, data);
 
-	PTHREAD_MUTEX_lock(data->mutex);
+	PTHREAD_MUTEX_lock(data->fsa_mutex);
 
 	while (!data->done) {
-		int rc = pthread_cond_wait(data->cond, data->mutex);
+		int rc = pthread_cond_wait(data->fsa_cond, data->fsa_mutex);
 
 		assert(rc == 0);
 	}
 
-	PTHREAD_MUTEX_unlock(data->mutex);
+	PTHREAD_MUTEX_unlock(data->fsa_mutex);
 
 	if (arg->fsal_resume) {
 		data->done = false;
@@ -1873,15 +1873,15 @@ again:
 
 	obj_hdl->obj_ops->write2(obj_hdl, bypass, sync_cb, arg, data);
 
-	PTHREAD_MUTEX_lock(data->mutex);
+	PTHREAD_MUTEX_lock(data->fsa_mutex);
 
 	while (!data->done) {
-		int rc = pthread_cond_wait(data->cond, data->mutex);
+		int rc = pthread_cond_wait(data->fsa_cond, data->fsa_mutex);
 
 		assert(rc == 0);
 	}
 
-	PTHREAD_MUTEX_unlock(data->mutex);
+	PTHREAD_MUTEX_unlock(data->fsa_mutex);
 
 	if (arg->fsal_resume) {
 		data->done = false;

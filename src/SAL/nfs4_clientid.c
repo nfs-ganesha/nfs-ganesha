@@ -346,7 +346,7 @@ void free_client_id(nfs_client_id_t *clientid)
 	PTHREAD_MUTEX_destroy(&clientid->cid_mutex);
 	PTHREAD_MUTEX_destroy(&clientid->cid_owner.so_mutex);
 	if (clientid->cid_minorversion == 0)
-		PTHREAD_MUTEX_destroy(&clientid->cid_cb.v40.cb_chan.mtx);
+		PTHREAD_MUTEX_destroy(&clientid->cid_cb.v40.cb_chan.chan_mtx);
 
 	put_gsh_client(clientid->gsh_client);
 
@@ -523,7 +523,9 @@ nfs_client_id_t *create_client_id(clientid4 clientid,
 
 	/* initialize the chan mutex for v4 */
 	if (minorversion == 0) {
-		PTHREAD_MUTEX_init(&client_rec->cid_cb.v40.cb_chan.mtx, NULL);
+		struct rpc_call_channel *chan = &client_rec->cid_cb.v40.cb_chan;
+
+		PTHREAD_MUTEX_init(&chan->chan_mtx, NULL);
 		client_rec->cid_cb.v40.cb_chan_down = true;
 		client_rec->first_path_down_resp_time = 0;
 	}
@@ -1703,7 +1705,7 @@ nfs41_foreach_client_callback(bool(*cb) (nfs_client_id_t *cl, void *state),
 		head_rbt = &(ht->partitions[i].rbt);
 
 		/* acquire mutex */
-		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].lock));
+		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].ht_lock));
 
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn) {
@@ -1731,7 +1733,7 @@ nfs41_foreach_client_callback(bool(*cb) (nfs_client_id_t *cl, void *state),
 				}
 			}
 		}
-		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].lock));
+		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].ht_lock));
 	}
 }
 

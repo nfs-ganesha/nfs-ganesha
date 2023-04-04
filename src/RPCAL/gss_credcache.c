@@ -130,13 +130,23 @@ typedef void (*gssd_err_func_t)(const char *, ...);
 
 static int use_memcache;
 static struct gssd_k5_kt_princ *gssd_k5_kt_princ_list;
-static pthread_mutex_t ple_mtx = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t ple_mtx;
 
 static char *gssd_k5_err_msg(krb5_context context, krb5_error_code code);
 static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 				     struct gssd_k5_kt_princ *ple,
 				     int nocache);
 static void gssd_set_krb5_ccache_name(char *ccname);
+
+void gssd_init_cred_cache(void)
+{
+	PTHREAD_MUTEX_init(&ple_mtx, NULL);
+}
+
+void gssd_shutdown_cred_cache(void)
+{
+	PTHREAD_MUTEX_destroy(&ple_mtx);
+}
 
 /* Global list of principals/cache file names for machine credentials */
 

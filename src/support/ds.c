@@ -42,7 +42,7 @@
 #define SERVER_BY_ID_CACHE_SIZE 193
 
 struct server_by_id {
-	pthread_rwlock_t lock;
+	pthread_rwlock_t sid_lock;
 	struct avltree t;
 	struct avltree_node *cache[SERVER_BY_ID_CACHE_SIZE];
 };
@@ -127,11 +127,11 @@ bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
 	/* we will hold a ref starting out... */
 	assert(pds->ds_refcount == 1);
 
-	PTHREAD_RWLOCK_wrlock(&server_by_id.lock);
+	PTHREAD_RWLOCK_wrlock(&server_by_id.sid_lock);
 	node = avltree_insert(&pds->ds_node, &server_by_id.t);
 	if (node) {
 		/* somebody beat us to it */
-		PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+		PTHREAD_RWLOCK_unlock(&server_by_id.sid_lock);
 		return false;
 	}
 
@@ -146,7 +146,7 @@ bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
 		pds->mds_export->has_pnfs_ds = true;
 	}
 
-	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&server_by_id.sid_lock);
 	return true;
 }
 
@@ -172,7 +172,7 @@ struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers)
 		&(server_by_id.cache[id_cache_offsetof(id_servers)]);
 
 	v.id_servers = id_servers;
-	PTHREAD_RWLOCK_rdlock(&server_by_id.lock);
+	PTHREAD_RWLOCK_rdlock(&server_by_id.sid_lock);
 
 	/* check cache */
 	node = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
@@ -194,14 +194,14 @@ struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers)
 		/* update cache */
 		atomic_store_voidptr(cache_slot, node);
 	} else {
-		PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+		PTHREAD_RWLOCK_unlock(&server_by_id.sid_lock);
 		return NULL;
 	}
 
  out:
 	pnfs_ds_get_ref(pds);
 
-	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&server_by_id.sid_lock);
 	return pds;
 }
 
@@ -240,7 +240,7 @@ void pnfs_ds_remove(uint16_t id_servers)
 		&(server_by_id.cache[id_cache_offsetof(id_servers)]);
 
 	v.id_servers = id_servers;
-	PTHREAD_RWLOCK_wrlock(&server_by_id.lock);
+	PTHREAD_RWLOCK_wrlock(&server_by_id.sid_lock);
 
 	node = avltree_lookup(&v.ds_node, &server_by_id.t);
 	if (node) {
@@ -258,7 +258,7 @@ void pnfs_ds_remove(uint16_t id_servers)
 		glist_del(&pds->ds_list);
 	}
 
-	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&server_by_id.sid_lock);
 
 	/* removal has a once-only semantic */
 	if (pds != NULL) {
@@ -314,9 +314,9 @@ void remove_all_dss(void)
 
 	/* pnfs_ds_remove() take the lock, so move the entire list to a tmp head
 	 * under the lock, then process it outside the lock. */
-	PTHREAD_RWLOCK_wrlock(&server_by_id.lock);
+	PTHREAD_RWLOCK_wrlock(&server_by_id.sid_lock);
 	glist_splice_tail(&tmplist, &dslist);
-	PTHREAD_RWLOCK_unlock(&server_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&server_by_id.sid_lock);
 
 	/* Now we can safely process the list without the lock */
 	glist_for_each_safe(glist, glistn, &tmplist) {
@@ -536,6 +536,16 @@ int ReadDataServers(config_file_t in_config,
 	return rc;
 }
 
+/* Cleanup on shutdown */
+void ds_cleanup(void)
+{
+	PTHREAD_RWLOCK_destroy(&server_by_id.sid_lock);
+}
+
+struct cleanup_list_element ds_cleanup_element = {
+	.clean = ds_cleanup,
+};
+
 /**
  * @brief Initialize server tree
  */
@@ -544,15 +554,16 @@ void server_pkginit(void)
 {
 	pthread_rwlockattr_t rwlock_attr;
 
-	pthread_rwlockattr_init(&rwlock_attr);
+	PTHREAD_RWLOCKATTR_init(&rwlock_attr);
 #ifdef GLIBC
 	pthread_rwlockattr_setkind_np(
 		&rwlock_attr,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	PTHREAD_RWLOCK_init(&server_by_id.lock, &rwlock_attr);
+	PTHREAD_RWLOCK_init(&server_by_id.sid_lock, &rwlock_attr);
 	avltree_init(&server_by_id.t, server_id_cmpf, 0);
 	glist_init(&dslist);
 	memset(&server_by_id.cache, 0, sizeof(server_by_id.cache));
-	pthread_rwlockattr_destroy(&rwlock_attr);
+	PTHREAD_RWLOCKATTR_destroy(&rwlock_attr);
+	RegisterCleanup(&ds_cleanup_element);
 }

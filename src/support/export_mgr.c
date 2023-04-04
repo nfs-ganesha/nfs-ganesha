@@ -69,7 +69,7 @@
 
 /** Mutex to serialize export admin operations.
  */
-pthread_mutex_t export_admin_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t export_admin_mutex;
 uint64_t export_admin_counter;
 
 struct timespec nfs_stats_time;
@@ -86,7 +86,7 @@ struct timespec clnt_allops_stats_time;
 #define EXPORT_BY_ID_CACHE_SIZE 769
 
 struct export_by_id {
-	pthread_rwlock_t lock;
+	pthread_rwlock_t eid_lock;
 	struct avltree t;
 	struct avltree_node *cache[EXPORT_BY_ID_CACHE_SIZE];
 };
@@ -157,7 +157,7 @@ void export_revert(struct gsh_export *export)
 	     &(export_by_id.cache[eid_cache_offsetof(export->export_id)]);
 	struct req_op_context op_context;
 
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_wrlock(&export_by_id.eid_lock);
 
 	cnode = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
 	if (&export->node_k == cnode)
@@ -166,7 +166,7 @@ void export_revert(struct gsh_export *export)
 	glist_del(&export->exp_list);
 	glist_del(&export->exp_work);
 
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 
 	init_op_context_simple(&op_context, export, export->fsal_export);
 
@@ -228,7 +228,7 @@ struct gsh_export *alloc_export(void)
 	/* Take an initial refcount */
 	export->refcnt = 1;
 
-	PTHREAD_RWLOCK_init(&export->lock, NULL);
+	PTHREAD_RWLOCK_init(&export->exp_lock, NULL);
 
 	return export;
 }
@@ -251,11 +251,11 @@ bool insert_gsh_export(struct gsh_export *export)
 	void **cache_slot = (void **)
 	    &(export_by_id.cache[eid_cache_offsetof(export->export_id)]);
 
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_wrlock(&export_by_id.eid_lock);
 	node = avltree_insert(&export->node_k, &export_by_id.t);
 	if (node) {
 		/* somebody beat us to it */
-		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+		PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 		return false;
 	}
 
@@ -266,7 +266,7 @@ bool insert_gsh_export(struct gsh_export *export)
 	atomic_store_voidptr(cache_slot, &export->node_k);
 	glist_add_tail(&exportlist, &export->exp_list);
 
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 	return true;
 }
 
@@ -290,7 +290,7 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 	    &(export_by_id.cache[eid_cache_offsetof(export_id)]);
 
 	v.export_id = export_id;
-	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_rdlock(&export_by_id.eid_lock);
 
 	/* check cache */
 	node = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
@@ -312,7 +312,7 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 		/* update cache */
 		atomic_store_voidptr(cache_slot, node);
 	} else {
-		PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+		PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 
 
 		LOG_EXPORT(NIV_DEBUG, "Found", NULL, false);
@@ -323,7 +323,7 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
  out:
 	get_gsh_export_ref(exp);
 
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 
 
 	LOG_EXPORT(NIV_DEBUG, "Found", exp, false);
@@ -455,11 +455,11 @@ struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match)
 {
 	struct gsh_export *exp;
 
-	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_rdlock(&export_by_id.eid_lock);
 
 	exp = get_gsh_export_by_path_locked(path, exact_match);
 
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 
 	return exp;
 }
@@ -594,11 +594,11 @@ struct gsh_export *get_gsh_export_by_pseudo(char *path, bool exact_match)
 {
 	struct gsh_export *exp;
 
-	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_rdlock(&export_by_id.eid_lock);
 
 	exp = get_gsh_export_by_pseudo_locked(path, exact_match);
 
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 
 	return exp;
 }
@@ -618,7 +618,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 	struct gsh_export *export;
 	struct glist_head *glist;
 
-	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_rdlock(&export_by_id.eid_lock);
 
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
@@ -628,7 +628,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 			goto out;
 	}
 
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 
 
 	LOG_EXPORT(NIV_DEBUG, "Found", NULL, false);
@@ -638,7 +638,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
  out:
 	get_gsh_export_ref(export);
 
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 
 	LOG_EXPORT(NIV_DEBUG, "Found", export, false);
 
@@ -743,7 +743,7 @@ void _put_gsh_export(struct gsh_export *export, bool config,
 	free_export_resources(export, config);
 	export_st = container_of(export, struct export_stats, export);
 	server_stats_free(&export_st->st);
-	PTHREAD_RWLOCK_destroy(&export->lock);
+	PTHREAD_RWLOCK_destroy(&export->exp_lock);
 	gsh_free(export_st);
 }
 
@@ -762,7 +762,7 @@ void remove_gsh_export(uint16_t export_id)
 	    &(export_by_id.cache[eid_cache_offsetof(export_id)]);
 
 	v.export_id = export_id;
-	PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_wrlock(&export_by_id.eid_lock);
 
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if (node) {
@@ -783,7 +783,7 @@ void remove_gsh_export(uint16_t export_id)
 		export->export_status = EXPORT_STALE;
 	}
 
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 
 	/* removal has a once-only semantic */
 	if (export != NULL) {
@@ -818,16 +818,16 @@ bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 	bool rc = true;
 
 	if (wrlock)
-		PTHREAD_RWLOCK_wrlock(&export_by_id.lock);
+		PTHREAD_RWLOCK_wrlock(&export_by_id.eid_lock);
 	else
-		PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+		PTHREAD_RWLOCK_rdlock(&export_by_id.eid_lock);
 	glist_for_each_safe(glist, glistn, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
 		rc = cb(export, state);
 		if (!rc)
 			break;
 	}
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 	return rc;
 }
 
@@ -1334,9 +1334,9 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 		goto out;
 	}
 
-	PTHREAD_RWLOCK_rdlock(&export->lock);
+	PTHREAD_RWLOCK_rdlock(&export->exp_lock);
 	rc = glist_empty(&export->mounted_exports_list);
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 	if (!rc) {
 		LogDebug(COMPONENT_EXPORT,
 			"Cannot remove export with submounts");
@@ -1539,7 +1539,7 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
 					 "(siyyiuuuuu)",
 					 &client_array_iter.export_iter);
-	PTHREAD_RWLOCK_rdlock(&export->lock);
+	PTHREAD_RWLOCK_rdlock(&export->exp_lock);
 	glist_for_each(glist, &export->clients) {
 		struct base_client_entry *client;
 		struct exportlist_client_entry *expclient;
@@ -1552,7 +1552,7 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 
 		client_of_export(expclient, (void *)&client_array_iter);
 	}
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 	dbus_message_iter_close_container(&iter,
 					  &client_array_iter.export_iter);
 
@@ -1672,13 +1672,13 @@ void reset_export_stats(void)
 	struct gsh_export *export;
 	struct export_stats *exp;
 
-	PTHREAD_RWLOCK_rdlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_rdlock(&export_by_id.eid_lock);
 	glist_for_each(glist, &exportlist) {
 		export = glist_entry(glist, struct gsh_export, exp_list);
 		exp = container_of(export, struct export_stats, export);
 		reset_gsh_stats(&exp->st);
 	}
-	PTHREAD_RWLOCK_unlock(&export_by_id.lock);
+	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 }
 
 /**
@@ -3097,6 +3097,17 @@ void dbus_export_init(void)
 }
 #endif				/* USE_DBUS */
 
+/* Cleanup on shutdown */
+void export_mgr_cleanup(void)
+{
+	PTHREAD_RWLOCK_destroy(&export_by_id.eid_lock);
+	PTHREAD_MUTEX_destroy(&export_admin_mutex);
+}
+
+struct cleanup_list_element export_mgr_cleanup_element = {
+	.clean = export_mgr_cleanup,
+};
+
 /**
  * @brief Initialize export manager
  */
@@ -3105,17 +3116,17 @@ void export_pkginit(void)
 {
 	pthread_rwlockattr_t rwlock_attr;
 
-	pthread_rwlockattr_init(&rwlock_attr);
-#ifdef GLIBC
-	pthread_rwlockattr_setkind_np(
+	PTHREAD_MUTEX_init(&export_admin_mutex, NULL);
+	PTHREAD_RWLOCKATTR_init(&rwlock_attr);
+	PTHREAD_RWLOCKATTR_setkind_np(
 		&rwlock_attr,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
-	PTHREAD_RWLOCK_init(&export_by_id.lock, &rwlock_attr);
+	PTHREAD_RWLOCK_init(&export_by_id.eid_lock, &rwlock_attr);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
 	memset(&export_by_id.cache, 0, sizeof(export_by_id.cache));
 
-	pthread_rwlockattr_destroy(&rwlock_attr);
+	PTHREAD_RWLOCKATTR_destroy(&rwlock_attr);
+	RegisterCleanup(&export_mgr_cleanup_element);
 }
 
 /** @} */

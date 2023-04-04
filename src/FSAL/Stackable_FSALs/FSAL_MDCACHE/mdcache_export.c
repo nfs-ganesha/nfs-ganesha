@@ -331,6 +331,9 @@ static void mdcache_exp_release(struct fsal_export *exp_hdl)
 
 	gsh_free(exp->name);
 
+	PTHREAD_RWLOCK_destroy(&exp->mdc_exp_lock);
+	PTHREAD_MUTEX_destroy(&exp->dirent_map.dm_mtx);
+
 	gsh_free(exp);	/* elvis has left the building */
 }
 

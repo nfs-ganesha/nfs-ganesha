@@ -49,7 +49,7 @@ struct granted_cookie {
 };
 
 struct granted_cookie granted_cookie;
-pthread_mutex_t granted_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t granted_mutex;
 
 void next_granted_cookie(struct granted_cookie *cookie)
 {

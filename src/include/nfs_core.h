@@ -41,7 +41,6 @@
 
 #include "sal_data.h"
 #include "gsh_config.h"
-#include "gsh_wait_queue.h"
 
 #ifdef _USE_9P
 #include "9p.h"

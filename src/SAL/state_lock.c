@@ -80,7 +80,7 @@ static struct glist_head state_all_locks = GLIST_HEAD_INIT(state_all_locks);
 /**
  * @brief All locks mutex
  */
-pthread_mutex_t all_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t all_locks_mutex;
 #endif
 
 /**
@@ -91,7 +91,7 @@ struct glist_head state_blocked_locks = GLIST_HEAD_INIT(state_blocked_locks);
 /**
  * @brief Mutex to protect lock lists
  */
-pthread_mutex_t blocked_locks_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t blocked_locks_mutex;
 
 /**
  * @brief Owner of state with no defined owner
@@ -102,7 +102,6 @@ state_owner_t unknown_owner = {
 	.so_refcount = 1,
 	.so_owner_len = 21,
 	.so_lock_list = GLIST_HEAD_INIT(unknown_owner.so_lock_list),
-	.so_mutex = PTHREAD_MUTEX_INITIALIZER
 };
 
 static state_status_t do_lock_op(struct fsal_obj_handle *obj,
@@ -568,10 +567,10 @@ static state_lock_entry_t *create_state_lock_entry(struct fsal_obj_handle *obj,
 #endif /* _USE_NLM */
 
 	/* Add to list of locks owned by export */
-	PTHREAD_RWLOCK_wrlock(&new_entry->sle_export->lock);
+	PTHREAD_RWLOCK_wrlock(&new_entry->sle_export->exp_lock);
 	glist_add_tail(&new_entry->sle_export->exp_lock_list,
 		       &new_entry->sle_export_locks);
-	PTHREAD_RWLOCK_unlock(&new_entry->sle_export->lock);
+	PTHREAD_RWLOCK_unlock(&new_entry->sle_export->exp_lock);
 	get_gsh_export_ref(new_entry->sle_export);
 
 	/* Get ref for sle_obj */
@@ -706,9 +705,9 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 #endif /* _USE_NLM */
 
 		/* Remove from list of locks owned by export */
-		PTHREAD_RWLOCK_wrlock(&lock_entry->sle_export->lock);
+		PTHREAD_RWLOCK_wrlock(&lock_entry->sle_export->exp_lock);
 		glist_del(&lock_entry->sle_export_locks);
-		PTHREAD_RWLOCK_unlock(&lock_entry->sle_export->lock);
+		PTHREAD_RWLOCK_unlock(&lock_entry->sle_export->exp_lock);
 
 		/* Remove from list of locks owned by owner */
 		PTHREAD_MUTEX_lock(&owner->so_mutex);
@@ -3311,7 +3310,7 @@ void state_export_unlock_all(void)
 
 	/* Only accept so many errors before giving up. */
 	while (errcnt < STATE_ERR_MAX) {
-		PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->lock);
+		PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->exp_lock);
 
 		/* We just need to find any file this owner has locks on.
 		 * We pick the first lock the owner holds, and use it's file.
@@ -3323,7 +3322,7 @@ void state_export_unlock_all(void)
 
 		/* If we don't find any entries, then we are done. */
 		if (found_entry == NULL) {
-			PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+			PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 			break;
 		}
 
@@ -3355,7 +3354,7 @@ void state_export_unlock_all(void)
 
 		/* Now we are done with this specific entry, release the lock.
 		 */
-		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 
 		/* Make lock that covers the whole file.
 		 * type doesn't matter for unlock
@@ -3641,6 +3640,29 @@ out:
 	release_op_context();
 }
 
+/* Cleanup on shutdown */
+void state_cleanup(void)
+{
+	PTHREAD_MUTEX_destroy(&unknown_owner.so_mutex);
+	PTHREAD_MUTEX_destroy(&all_locks_mutex);
+	PTHREAD_MUTEX_destroy(&blocked_locks_mutex);
+	PTHREAD_MUTEX_destroy(&cached_open_owners_lock);
+#ifdef _USE_NLM
+	PTHREAD_MUTEX_destroy(&granted_mutex);
+	PTHREAD_MUTEX_destroy(&nlm_async_resp_mutex);
+	PTHREAD_COND_destroy(&nlm_async_resp_cond);
+	PTHREAD_MUTEX_destroy(&nsm_mutex);
+#endif
+#ifdef DEBUG_SAL
+	PTHREAD_MUTEX_destroy(&all_state_owners_mutex);
+	PTHREAD_MUTEX_destroy(&all_state_v4_mutex);
+#endif
+}
+
+struct cleanup_list_element state_cleanup_element = {
+	.clean = state_cleanup,
+};
+
 /**
  * @brief Initialize locking
  *
@@ -3656,6 +3678,23 @@ state_status_t state_lock_init(void)
 		status = STATE_INIT_ENTRY_FAILED;
 		return status;
 	}
+
+	PTHREAD_MUTEX_init(&unknown_owner.so_mutex, NULL);
+	PTHREAD_MUTEX_init(&all_locks_mutex, NULL);
+	PTHREAD_MUTEX_init(&blocked_locks_mutex, NULL);
+	PTHREAD_MUTEX_init(&cached_open_owners_lock, NULL);
+#ifdef _USE_NLM
+	PTHREAD_MUTEX_init(&granted_mutex, NULL);
+	PTHREAD_MUTEX_init(&nlm_async_resp_mutex, NULL);
+	PTHREAD_COND_init(&nlm_async_resp_cond, NULL);
+	PTHREAD_MUTEX_init(&nsm_mutex, NULL);
+#endif
+#ifdef DEBUG_SAL
+	PTHREAD_MUTEX_init(&all_state_owners_mutex, NULL);
+	PTHREAD_MUTEX_init(&all_state_v4_mutex, NULL);
+#endif
+
+	RegisterCleanup(&state_cleanup_element);
 
 	status = state_async_init();
 

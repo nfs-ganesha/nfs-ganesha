@@ -174,7 +174,7 @@ int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 	return fd;
 }
 
-pthread_rwlock_t fs_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t fs_lock;
 
 static struct glist_head posix_file_systems = {
 	&posix_file_systems, &posix_file_systems

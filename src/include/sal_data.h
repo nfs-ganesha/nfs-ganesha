@@ -156,7 +156,7 @@ struct nfs41_cached_req {
 
 typedef struct nfs41_session_slot__ {
 	sequenceid4 sequence;	/*< Sequence number of this operation */
-	pthread_mutex_t lock;	/*< Lock on the slot */
+	pthread_mutex_t slot_lock;	/*< Lock on the slot */
 	struct COMPOUND4res_extended *cached_result;	/*< NFv41: pointer to
 							   cached RPC result in
 							   a session's slot */
@@ -517,8 +517,22 @@ typedef enum care_t {
 	CARE_MONITOR		/*< Will actively monitor client status */
 } care_t;
 
+#ifdef _USE_NLM
 extern hash_table_t *ht_nsm_client;
 extern hash_table_t *ht_nlm_client;
+extern pthread_mutex_t granted_mutex;
+extern pthread_mutex_t nlm_async_resp_mutex;
+extern pthread_cond_t nlm_async_resp_cond;
+extern pthread_mutex_t nsm_mutex;
+#endif
+
+extern pthread_mutex_t cached_open_owners_lock;
+
+#ifdef DEBUG_SAL
+extern pthread_mutex_t all_state_owners_mutex;
+extern pthread_mutex_t all_state_v4_mutex;
+#endif
+
 
 /**
  * @brief NSM (rpc.statd) state for a given client.
@@ -1001,18 +1015,18 @@ struct state_dir {
  * It is a rwlock since most of the time junctions are being looked at not
  * modified.
  *
- * Both of these locks are often used in conjunction with the export->lock, but
- * the rules of lock order are different.
+ * Both of these locks are often used in conjunction with the export->exp_lock,
+ * but the rules of lock order are different.
  *
- * For st_lock, the export->lock MUST NOT be held, the export->lock is often
- * taken while already holding st_lock, so the order is:
+ * For st_lock, the export->exp_lock MUST NOT be held, the export->exp_lock is
+ * often taken while already holding st_lock, so the order is:
  *
- * st_lock THEN export->lock
+ * st_lock THEN export->exp_lock
  *
- * For jct_lock, there is one place where the export->lock is already held,
+ * For jct_lock, there is one place where the export->exp_lock is already held,
  * so it makes sense for the order to be:
  *
- * export->lock THEN jct_lock.
+ * export->exp_lock THEN jct_lock.
  *
  */
 struct state_hdl {

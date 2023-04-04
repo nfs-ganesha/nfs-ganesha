@@ -298,20 +298,13 @@ hashtable_init(struct hash_param *hparam)
 	/* The number of fully initialized partitions */
 	uint32_t completed = 0;
 
-	if (pthread_rwlockattr_init(&rwlockattr) != 0)
-		return NULL;
+	PTHREAD_RWLOCKATTR_init(&rwlockattr);
 
 	/* At some point factor this out into the OS directory.  it is
 	   necessary to prevent writer starvation under GLIBC. */
-#ifdef GLIBC
-	if ((pthread_rwlockattr_setkind_np
-	     (&rwlockattrs,
-	      PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP)) != 0) {
-		LogCrit(COMPONENT_HASHTABLE,
-			"Unable to set writer-preference on lock attribute.");
-		goto deconstruct;
-	}
-#endif				/* GLIBC */
+	PTHREAD_RWLOCKATTR_setkind_np(
+		&rwlockattrs,
+		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 
 	ht = gsh_calloc(1, sizeof(struct hash_table) +
 			(sizeof(struct hash_partition) *
@@ -330,11 +323,7 @@ hashtable_init(struct hash_param *hparam)
 		partition = (&ht->partitions[index]);
 		RBT_HEAD_INIT(&(partition->rbt));
 
-		if (pthread_rwlock_init(&partition->lock, &rwlockattr) != 0) {
-			LogCrit(COMPONENT_HASHTABLE,
-				"Unable to initialize lock in hash table.");
-			goto deconstruct;
-		}
+		PTHREAD_RWLOCK_init(&partition->ht_lock, &rwlockattr);
 
 		/* Allocate a cache if requested */
 		if (hparam->flags & HT_FLAG_CACHE)
@@ -346,25 +335,8 @@ hashtable_init(struct hash_param *hparam)
 	ht->node_pool = pool_basic_init(NULL, sizeof(rbt_node_t));
 	ht->data_pool = pool_basic_init(NULL, sizeof(struct hash_data));
 
-	pthread_rwlockattr_destroy(&rwlockattr);
+	PTHREAD_RWLOCKATTR_destroy(&rwlockattr);
 	return ht;
-
- deconstruct:
-
-	while (completed != 0) {
-		if (hparam->flags & HT_FLAG_CACHE)
-			gsh_free(ht->partitions[completed - 1].cache);
-
-		PTHREAD_RWLOCK_destroy(&(ht->partitions[completed - 1].lock));
-		completed--;
-	}
-	if (ht->node_pool)
-		pool_destroy(ht->node_pool);
-	if (ht->data_pool)
-		pool_destroy(ht->data_pool);
-
-	gsh_free(ht);
-	return ht = NULL;
 }
 
 /**
@@ -399,7 +371,7 @@ hashtable_destroy(struct hash_table *ht,
 			ht->partitions[index].cache = NULL;
 		}
 
-		PTHREAD_RWLOCK_destroy(&(ht->partitions[index].lock));
+		PTHREAD_RWLOCK_destroy(&(ht->partitions[index].ht_lock));
 	}
 	pool_destroy(ht->node_pool);
 	pool_destroy(ht->data_pool);
@@ -441,7 +413,7 @@ hashtable_acquire_latch(struct hash_table *ht,
 		return rc;
 
 	latch->index = index;
-	PTHREAD_RWLOCK_wrlock(&(ht->partitions[index].lock));
+	PTHREAD_RWLOCK_wrlock(&(ht->partitions[index].ht_lock));
 
 	return HASHTABLE_SUCCESS;
 }
@@ -494,9 +466,9 @@ hashtable_getlatch(struct hash_table *ht,
 
 	/* Acquire mutex */
 	if (may_write)
-		PTHREAD_RWLOCK_wrlock(&(ht->partitions[index].lock));
+		PTHREAD_RWLOCK_wrlock(&(ht->partitions[index].ht_lock));
 	else
-		PTHREAD_RWLOCK_rdlock(&(ht->partitions[index].lock));
+		PTHREAD_RWLOCK_rdlock(&(ht->partitions[index].ht_lock));
 
 	rc = key_locate(ht, key, index, rbt_hash, &locator);
 
@@ -532,7 +504,7 @@ hashtable_getlatch(struct hash_table *ht,
 		latch->rbt_hash = rbt_hash;
 		latch->locator = locator;
 	} else {
-		PTHREAD_RWLOCK_unlock(&ht->partitions[index].lock);
+		PTHREAD_RWLOCK_unlock(&ht->partitions[index].ht_lock);
 	}
 
 	if (rc != HASHTABLE_SUCCESS && isDebug(COMPONENT_HASHTABLE)
@@ -562,7 +534,7 @@ void
 hashtable_releaselatched(struct hash_table *ht, struct hash_latch *latch)
 {
 	if (latch) {
-		PTHREAD_RWLOCK_unlock(&ht->partitions[latch->index].lock);
+		PTHREAD_RWLOCK_unlock(&ht->partitions[latch->index].ht_lock);
 		memset(latch, 0, sizeof(struct hash_latch));
 	}
 }
@@ -853,7 +825,7 @@ hashtable_delall(struct hash_table *ht,
 		/* Pointer to node in tree for removal */
 		struct rbt_node *cursor = NULL;
 
-		PTHREAD_RWLOCK_wrlock(&ht->partitions[index].lock);
+		PTHREAD_RWLOCK_wrlock(&ht->partitions[index].ht_lock);
 
 		/* Continue until there are no more entries in the red-black
 		   tree */
@@ -885,11 +857,11 @@ hashtable_delall(struct hash_table *ht,
 
 			if (rc == 0) {
 				PTHREAD_RWLOCK_unlock(
-						&ht->partitions[index].lock);
+						&ht->partitions[index].ht_lock);
 				return HASHTABLE_ERROR_DELALL_FAIL;
 			}
 		}
-		PTHREAD_RWLOCK_unlock(&ht->partitions[index].lock);
+		PTHREAD_RWLOCK_unlock(&ht->partitions[index].ht_lock);
 	}
 
 	return HASHTABLE_SUCCESS;
@@ -942,7 +914,7 @@ hashtable_log(log_components_t component, struct hash_table *ht)
 		LogFullDebug(component,
 			     "The partition in position %" PRIu32
 			     "contains: %u entries", i, root->rbt_num_node);
-		PTHREAD_RWLOCK_rdlock(&ht->partitions[i].lock);
+		PTHREAD_RWLOCK_rdlock(&ht->partitions[i].ht_lock);
 		RBT_LOOP(root, it) {
 			data = it->rbt_opaq;
 
@@ -969,7 +941,7 @@ hashtable_log(log_components_t component, struct hash_table *ht)
 				     PRIu64, dispkey, dispval, index, rbt_hash);
 			RBT_INCREMENT(it);
 		}
-		PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
+		PTHREAD_RWLOCK_unlock(&ht->partitions[i].ht_lock);
 	}
 }
 
@@ -1085,12 +1057,12 @@ void hashtable_for_each(hash_table_t *ht, ht_for_each_cb_t callback, void *arg)
 	/* For each bucket of the requested hashtable */
 	for (i = 0; i < ht->parameter.index_size; i++) {
 		head_rbt = &ht->partitions[i].rbt;
-		PTHREAD_RWLOCK_rdlock(&ht->partitions[i].lock);
+		PTHREAD_RWLOCK_rdlock(&ht->partitions[i].ht_lock);
 		RBT_LOOP(head_rbt, pn) {
 			callback(pn, arg);
 			RBT_INCREMENT(pn);
 		}
-		PTHREAD_RWLOCK_unlock(&ht->partitions[i].lock);
+		PTHREAD_RWLOCK_unlock(&ht->partitions[i].ht_lock);
 	}
 }
 /** @} */

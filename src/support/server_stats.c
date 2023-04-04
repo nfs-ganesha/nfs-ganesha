@@ -1301,7 +1301,7 @@ void server_stats_transport_done(struct gsh_client *client,
 {
 	struct server_stats *server_st =
 		container_of(client, struct server_stats, client);
-	struct _9p_stats *sp = get_9p(&server_st->st, &client->lock);
+	struct _9p_stats *sp = get_9p(&server_st->st, &client->client_lock);
 
 	if (sp != NULL)
 		record_transport_stats(&sp->trans, rx_bytes, rx_pkt, rx_err,
@@ -1324,7 +1324,7 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 		struct server_stats *server_st;
 
 		server_st = container_of(client, struct server_stats, client);
-		sp = get_9p(&server_st->st, &client->lock);
+		sp = get_9p(&server_st->st, &client->client_lock);
 		if (sp->opcodes[opc] == NULL)
 			sp->opcodes[opc] =
 				gsh_calloc(1, sizeof(struct proto_op));
@@ -1336,7 +1336,7 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 
 		export = op_ctx->ctx_export;
 		exp_st = container_of(export, struct export_stats, export);
-		sp = get_9p(&exp_st->st, &export->lock);
+		sp = get_9p(&exp_st->st, &export->exp_lock);
 		if (sp->opcodes[opc] == NULL)
 			sp->opcodes[opc] =
 				gsh_calloc(1, sizeof(struct proto_op));
@@ -1404,10 +1404,11 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
 		struct server_stats *server_st;
 
 		server_st = container_of(client, struct server_stats, client);
-		record_clnt_stats(&server_st->st, &client->lock, reqdata,
+		record_clnt_stats(&server_st->st, &client->client_lock, reqdata,
 			     rc == NFS_REQ_OK, dup);
 		if (nfs_param.core_param.enable_CLNTALLSTATS)
-			record_clnt_all_stats(&server_st->c_all, &client->lock,
+			record_clnt_all_stats(&server_st->c_all,
+					&client->client_lock,
 					program_op, proto_op, NFS_V3,
 					rc == NFS_REQ_OK, dup);
 		timespec_update(&client->last_update, &current_time);
@@ -1418,8 +1419,8 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
 		exp_st =
 		    container_of(op_ctx->ctx_export, struct export_stats,
 			    export);
-		record_stats(&exp_st->st, &op_ctx->ctx_export->lock, reqdata,
-			     time_diff,
+		record_stats(&exp_st->st, &op_ctx->ctx_export->exp_lock,
+			     reqdata, time_diff,
 			     rc == NFS_REQ_OK, dup, true);
 		timespec_update(&op_ctx->ctx_export->last_update,
 				&current_time);
@@ -1457,11 +1458,12 @@ void server_stats_nfsv4_op_done(int proto_op,
 		struct server_stats *server_st;
 
 		server_st = container_of(client, struct server_stats, client);
-		record_nfsv4_op(&server_st->st, &client->lock, proto_op,
+		record_nfsv4_op(&server_st->st, &client->client_lock, proto_op,
 				op_ctx->nfs_minorvers, time_diff,
 				status, false);
 		if (nfs_param.core_param.enable_CLNTALLSTATS)
-			record_clnt_all_stats(&server_st->c_all, &client->lock,
+			record_clnt_all_stats(&server_st->c_all,
+				&client->client_lock,
 				NFS_program[P_NFS], proto_op, NFS_V4,
 				status == NFS_REQ_OK, false);
 		timespec_update(&client->last_update, &current_time);
@@ -1483,7 +1485,7 @@ void server_stats_nfsv4_op_done(int proto_op,
 		exp_st =
 		    container_of(op_ctx->ctx_export, struct export_stats,
 			    export);
-		record_nfsv4_op(&exp_st->st, &op_ctx->ctx_export->lock,
+		record_nfsv4_op(&exp_st->st, &op_ctx->ctx_export->exp_lock,
 				proto_op, op_ctx->nfs_minorvers,
 				time_diff, status, true);
 		timespec_update(&op_ctx->ctx_export->last_update,
@@ -1512,7 +1514,7 @@ void server_stats_compound_done(int num_ops, int status)
 		struct server_stats *server_st;
 
 		server_st = container_of(client, struct server_stats, client);
-		record_compound(&server_st->st, &client->lock,
+		record_compound(&server_st->st, &client->client_lock,
 				op_ctx->nfs_minorvers,
 				num_ops, time_diff,
 				status == NFS4_OK);
@@ -1524,7 +1526,7 @@ void server_stats_compound_done(int num_ops, int status)
 		exp_st =
 		    container_of(op_ctx->ctx_export, struct export_stats,
 			    export);
-		record_compound(&exp_st->st, &op_ctx->ctx_export->lock,
+		record_compound(&exp_st->st, &op_ctx->ctx_export->exp_lock,
 				op_ctx->nfs_minorvers, num_ops,
 				time_diff,
 				status == NFS4_OK);
@@ -1550,7 +1552,7 @@ void server_stats_io_done(size_t requested,
 
 		server_st = container_of(op_ctx->client, struct server_stats,
 					 client);
-		record_io_stats(&server_st->st, &op_ctx->client->lock,
+		record_io_stats(&server_st->st, &op_ctx->client->client_lock,
 				requested, transferred, success,
 				is_write);
 	}
@@ -1560,7 +1562,7 @@ void server_stats_io_done(size_t requested,
 		exp_st =
 		    container_of(op_ctx->ctx_export, struct export_stats,
 			    export);
-		record_io_stats(&exp_st->st, &op_ctx->ctx_export->lock,
+		record_io_stats(&exp_st->st, &op_ctx->ctx_export->exp_lock,
 				requested, transferred, success, is_write);
 	}
 #ifdef USE_MONITORING
@@ -1600,7 +1602,7 @@ void inc_grants(struct gsh_client *client)
 		struct server_stats *server_st;
 
 		server_st = container_of(client, struct server_stats, client);
-		check_deleg_struct(&server_st->st, &client->lock);
+		check_deleg_struct(&server_st->st, &client->client_lock);
 		server_st->st.deleg->curr_deleg_grants++;
 	}
 }
@@ -1610,7 +1612,7 @@ void dec_grants(struct gsh_client *client)
 		struct server_stats *server_st;
 
 		server_st = container_of(client, struct server_stats, client);
-		check_deleg_struct(&server_st->st, &client->lock);
+		check_deleg_struct(&server_st->st, &client->client_lock);
 		server_st->st.deleg->curr_deleg_grants++;
 	}
 }
@@ -1620,7 +1622,7 @@ void inc_revokes(struct gsh_client *client)
 		struct server_stats *server_st;
 
 		server_st = container_of(client, struct server_stats, client);
-		check_deleg_struct(&server_st->st, &client->lock);
+		check_deleg_struct(&server_st->st, &client->client_lock);
 		server_st->st.deleg->num_revokes++;
 	}
 }
@@ -1630,7 +1632,7 @@ void inc_recalls(struct gsh_client *client)
 		struct server_stats *server_st;
 
 		server_st = container_of(client, struct server_stats, client);
-		check_deleg_struct(&server_st->st, &client->lock);
+		check_deleg_struct(&server_st->st, &client->client_lock);
 		server_st->st.deleg->tot_recalls++;
 	}
 }
@@ -1640,7 +1642,7 @@ void inc_failed_recalls(struct gsh_client *client)
 		struct server_stats *server_st;
 
 		server_st = container_of(client, struct server_stats, client);
-		check_deleg_struct(&server_st->st, &client->lock);
+		check_deleg_struct(&server_st->st, &client->client_lock);
 		server_st->st.deleg->failed_recalls++;
 	}
 }

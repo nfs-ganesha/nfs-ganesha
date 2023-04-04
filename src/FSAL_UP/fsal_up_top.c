@@ -1937,6 +1937,12 @@ void up_ready_init(struct fsal_up_vector *up_ops)
 	PTHREAD_COND_init(&up_ops->up_cond, NULL);
 }
 
+void up_ready_destroy(struct fsal_up_vector *up_ops)
+{
+	PTHREAD_MUTEX_destroy(&up_ops->up_mutex);
+	PTHREAD_COND_destroy(&up_ops->up_cond);
+}
+
 /* This should be called when a module is ready to take upcalls */
 void up_ready_set(struct fsal_up_vector *up_ops)
 {

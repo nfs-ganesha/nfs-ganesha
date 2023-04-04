@@ -49,7 +49,6 @@
 #include "city.h"
 #include "abstract_mem.h"
 #include "gsh_intrinsic.h"
-#include "gsh_wait_queue.h"
 
 #define DUPREQ_NOCACHE     ((void *)0x02)
 #define DUPREQ_NOCACHE_NORES ((void *)0x03)
@@ -132,7 +131,7 @@ const char *dupreq_state_table[] = {
  * freed or in nfs_dupreq_finish() that decides to take out few dupreqs!
  */
 struct drc_st {
-	pthread_mutex_t mtx;
+	pthread_mutex_t drc_st_mtx;
 	drc_t udp_drc;		/* shared DRC */
 	struct rbtree_x tcp_drc_recycle_t;
 	 TAILQ_HEAD(drc_st_tailq, drc) tcp_drc_recycle_q;	/* fifo */
@@ -250,6 +249,8 @@ static inline int dupreq_tcp_cmpf(const struct opr_rbtree_node *lhs,
 	return 1;
 }
 
+pthread_mutexattr_t drc_pthread_mutexattr;
+
 /**
  * @brief Comparison function for recycled per-connection (TCP) DRCs
  *
@@ -287,7 +288,7 @@ static inline void init_shared_drc(void)
 	drc->npart = nfs_param.core_param.drc.udp.npart;
 	drc->hiwat = nfs_param.core_param.drc.udp.hiwat;
 
-	gsh_mutex_init(&drc->mtx, NULL);
+	PTHREAD_MUTEX_init(&drc->drc_mtx, &drc_pthread_mutexattr);
 
 	/* init dict */
 	code =
@@ -308,12 +309,32 @@ static inline void init_shared_drc(void)
 	}
 }
 
+/* Cleanup on shutdown */
+void dupreq2_cleanup(void)
+{
+	PTHREAD_MUTEXATTR_destroy(&drc_pthread_mutexattr);
+	PTHREAD_MUTEX_destroy(&drc_st->drc_st_mtx);
+}
+
+struct cleanup_list_element dupreq2_cleanup_element = {
+	.clean = dupreq2_cleanup,
+};
+
 /**
  * @brief Initialize the DRC package.
  */
 void dupreq2_pkginit(void)
 {
 	int code __attribute__ ((unused)) = 0;
+
+	PTHREAD_MUTEXATTR_init(&drc_pthread_mutexattr);
+	PTHREAD_MUTEXATTR_settype(&drc_pthread_mutexattr,
+#if defined(__linux__)
+				  PTHREAD_MUTEX_ADAPTIVE_NP
+#else
+				  PTHREAD_MUTEX_DEFAULT
+#endif
+	    );
 
 	dupreq_pool =
 	    pool_basic_init("Duplicate Request Pool", sizeof(dupreq_entry_t));
@@ -325,7 +346,7 @@ void dupreq2_pkginit(void)
 	drc_st = gsh_calloc(1, sizeof(struct drc_st));
 
 	/* init shared statics */
-	gsh_mutex_init(&drc_st->mtx, NULL);
+	PTHREAD_MUTEX_init(&drc_st->drc_st_mtx, &drc_pthread_mutexattr);
 
 	/* recycle_t */
 	code =
@@ -342,6 +363,8 @@ void dupreq2_pkginit(void)
 
 	/* UDP DRC is global, shared */
 	init_shared_drc();
+
+	RegisterCleanup(&dupreq2_cleanup_element);
 }
 
 /**
@@ -408,7 +431,7 @@ static inline drc_t *alloc_tcp_drc(enum drc_type dtype)
 	drc->npart = nfs_param.core_param.drc.tcp.npart;
 	drc->hiwat = nfs_param.core_param.drc.tcp.hiwat;
 
-	PTHREAD_MUTEX_init(&drc->mtx, NULL);
+	PTHREAD_MUTEX_init(&drc->drc_mtx, NULL);
 
 	/* init dict */
 	code =
@@ -449,7 +472,7 @@ static inline void free_tcp_drc(drc_t *drc)
 		if (drc->xt.tree[ix].cache)
 			gsh_free(drc->xt.tree[ix].cache);
 	}
-	PTHREAD_MUTEX_destroy(&drc->mtx);
+	PTHREAD_MUTEX_destroy(&drc->drc_mtx);
 	LogFullDebug(COMPONENT_DUPREQ, "free TCP drc %p", drc);
 	pool_free(tcp_drc_pool, drc);
 }
@@ -479,10 +502,10 @@ static inline uint32_t nfs_dupreq_unref_drc(drc_t *drc)
 }
 
 #define DRC_ST_LOCK()				\
-	PTHREAD_MUTEX_lock(&drc_st->mtx)
+	PTHREAD_MUTEX_lock(&drc_st->drc_st_mtx)
 
 #define DRC_ST_UNLOCK()				\
-	PTHREAD_MUTEX_unlock(&drc_st->mtx)
+	PTHREAD_MUTEX_unlock(&drc_st->drc_st_mtx)
 
 /**
  * @brief Check for expired TCP DRCs.
@@ -591,7 +614,7 @@ retry:
 			/* found, no danger of removal */
 			LogFullDebug(COMPONENT_DUPREQ, "ref DRC=%p for xprt=%p",
 				     drc, req->rq_xprt);
-			PTHREAD_MUTEX_lock(&drc->mtx);	/* LOCKED */
+			PTHREAD_MUTEX_lock(&drc->drc_mtx);	/* LOCKED */
 		} else {
 			drc_t drc_k;
 			struct rbtree_x_part *t = NULL;
@@ -638,7 +661,7 @@ retry:
 				/* reuse old DRC */
 				tdrc = opr_containerof(ndrc, drc_t,
 						       d_u.tcp.recycle_k);
-				PTHREAD_MUTEX_lock(&tdrc->mtx);	/* LOCKED */
+				PTHREAD_MUTEX_lock(&tdrc->drc_mtx);	/* LOCKED */
 
 				/* If the refcnt is zero and it is not
 				 * in the recycle queue, wait for the
@@ -647,7 +670,7 @@ retry:
 				if (tdrc->refcnt == 0) {
 					if (!(tdrc->flags & DRC_FLAG_RECYCLE)) {
 						PTHREAD_MUTEX_unlock(
-								&tdrc->mtx);
+								&tdrc->drc_mtx);
 						DRC_ST_UNLOCK();
 						goto retry;
 					}
@@ -672,7 +695,7 @@ retry:
 				       sizeof(sockaddr_t));
 				/* assign already-computed hash */
 				drc->d_u.tcp.hk = drc_k.d_u.tcp.hk;
-				PTHREAD_MUTEX_lock(&drc->mtx);	/* LOCKED */
+				PTHREAD_MUTEX_lock(&drc->drc_mtx);	/* LOCKED */
 				/* insert dict */
 				opr_rbtree_insert(&t->t,
 						  &drc->d_u.tcp.recycle_k);
@@ -702,7 +725,7 @@ retry:
 
 	/* call path ref */
 	(void)nfs_dupreq_ref_drc(drc);
-	PTHREAD_MUTEX_unlock(&drc->mtx);
+	PTHREAD_MUTEX_unlock(&drc->drc_mtx);
 
 	if (drc_check_expired)
 		drc_free_expired();
@@ -722,7 +745,7 @@ out:
  */
 void nfs_dupreq_put_drc(drc_t *drc)
 {
-	PTHREAD_MUTEX_lock(&drc->mtx);
+	PTHREAD_MUTEX_lock(&drc->drc_mtx);
 
 	/* refcnt is not used on shared UDP DRC, so nothing to do */
 	if (drc->type == DRC_UDP_V234)
@@ -743,13 +766,13 @@ void nfs_dupreq_put_drc(drc_t *drc)
 	if (drc->refcnt != 0) /* quick path */
 		goto unlock;
 
-	/* note t's lock order wrt drc->mtx is the opposite of
+	/* note t's lock order wrt drc->drc_mtx is the opposite of
 	 * drc->xt[*].lock. Drop and reacquire locks in correct
 	 * order.
 	 */
-	PTHREAD_MUTEX_unlock(&drc->mtx);
+	PTHREAD_MUTEX_unlock(&drc->drc_mtx);
 	DRC_ST_LOCK();
-	PTHREAD_MUTEX_lock(&drc->mtx);
+	PTHREAD_MUTEX_lock(&drc->drc_mtx);
 
 	/* Since we dropped and reacquired the drc lock for the
 	 * correct lock order, we need to recheck the drc fields
@@ -767,7 +790,7 @@ void nfs_dupreq_put_drc(drc_t *drc)
 	DRC_ST_UNLOCK();
 
 unlock:
-	PTHREAD_MUTEX_unlock(&drc->mtx);
+	PTHREAD_MUTEX_unlock(&drc->drc_mtx);
 }
 
 /**
@@ -865,7 +888,7 @@ static inline dupreq_entry_t *alloc_dupreq(void)
 	dupreq_entry_t *dv;
 
 	dv = pool_alloc(dupreq_pool);
-	gsh_mutex_init(&dv->mtx, NULL);
+	PTHREAD_MUTEX_init(&dv->dre_mtx, &drc_pthread_mutexattr);
 	TAILQ_INIT_ENTRY(dv, fifo_q);
 	TAILQ_INIT(&dv->dupes);
 
@@ -895,7 +918,7 @@ static inline void nfs_dupreq_free_dupreq(dupreq_entry_t *dv)
 		func->free_function(dv->res);
 		free_nfs_res(dv->res);
 	}
-	PTHREAD_MUTEX_destroy(&dv->mtx);
+	PTHREAD_MUTEX_destroy(&dv->dre_mtx);
 	pool_free(dupreq_pool, dv);
 }
 
@@ -1083,7 +1106,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs)
 			/* cached request */
 			nfs_dupreq_free_dupreq(dk);
 			dv = opr_containerof(nv, dupreq_entry_t, rbt_k);
-			PTHREAD_MUTEX_lock(&dv->mtx);
+			PTHREAD_MUTEX_lock(&dv->dre_mtx);
 
 			/* Count the number of duplicate requests received. */
 			dv->dupe_cnt++;
@@ -1111,7 +1134,7 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs)
 					 dv, dv->hin.tcp.rq_xid, dv->hk,
 					 dupreq_state_table[dv->complete],
 					 dv->dupe_cnt);
-				PTHREAD_MUTEX_unlock(&dv->mtx);
+				PTHREAD_MUTEX_unlock(&dv->dre_mtx);
 				PTHREAD_MUTEX_unlock(&t->mtx);
 				return DUPREQ_DROP;
 			} else {
@@ -1130,12 +1153,12 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs)
 				 dupreq_state_table[dv->complete],
 				 dv->dupe_cnt);
 
-			PTHREAD_MUTEX_unlock(&dv->mtx);
+			PTHREAD_MUTEX_unlock(&dv->dre_mtx);
 
-			PTHREAD_MUTEX_lock(&drc->mtx);
+			PTHREAD_MUTEX_lock(&drc->drc_mtx);
 			/* Extend window */
 			drc_inc_retwnd(drc);
-			PTHREAD_MUTEX_unlock(&drc->mtx);
+			PTHREAD_MUTEX_unlock(&drc->drc_mtx);
 		} else {
 			/* new request */
 			reqnfs->svc.rq_u1 = dk;
@@ -1152,10 +1175,10 @@ dupreq_status_t nfs_dupreq_start(nfs_request_t *reqnfs)
 			dk->refcnt = 2;
 
 			/* add to q tail */
-			PTHREAD_MUTEX_lock(&drc->mtx);
+			PTHREAD_MUTEX_lock(&drc->drc_mtx);
 			TAILQ_INSERT_TAIL(&drc->dupreq_q, dk, fifo_q);
 			++(drc->size);
-			PTHREAD_MUTEX_unlock(&drc->mtx);
+			PTHREAD_MUTEX_unlock(&drc->drc_mtx);
 
 			LogFullDebug(COMPONENT_DUPREQ,
 				     "starting dk=%p xid=%" PRIu32
@@ -1211,7 +1234,7 @@ void nfs_dupreq_finish(nfs_request_t *reqnfs, enum nfs_req_result rc)
 	if (dv == DUPREQ_NOCACHE || dv == DUPREQ_NOCACHE_NORES)
 		return;
 
-	PTHREAD_MUTEX_lock(&dv->mtx);
+	PTHREAD_MUTEX_lock(&dv->dre_mtx);
 
 	assert(dv->res == reqnfs->res_nfs);
 
@@ -1224,17 +1247,17 @@ void nfs_dupreq_finish(nfs_request_t *reqnfs, enum nfs_req_result rc)
 		 * Dequeueing the next duplicate will be done by
 		 * nfs_dupreq_rele().
 		 */
-		PTHREAD_MUTEX_unlock(&dv->mtx);
+		PTHREAD_MUTEX_unlock(&dv->dre_mtx);
 		return;
 	}
 
 	dv->complete = true;
 	dv->rc = rc;
 
-	PTHREAD_MUTEX_unlock(&dv->mtx);
+	PTHREAD_MUTEX_unlock(&dv->dre_mtx);
 
 	drc = reqnfs->svc.rq_xprt->xp_u2; /* req holds a ref on drc */
-	PTHREAD_MUTEX_lock(&drc->mtx);
+	PTHREAD_MUTEX_lock(&drc->drc_mtx);
 
 	LogFullDebug(COMPONENT_DUPREQ,
 		     "completing dv=%p xid=%" PRIu32
@@ -1259,9 +1282,9 @@ dq_again:
 			 * order is partition lock followed by drc lock.
 			 * Drop drc lock and reacquire it!
 			 */
-			PTHREAD_MUTEX_unlock(&drc->mtx);
+			PTHREAD_MUTEX_unlock(&drc->drc_mtx);
 			PTHREAD_MUTEX_lock(&t->mtx);	/* partition lock */
-			PTHREAD_MUTEX_lock(&drc->mtx);
+			PTHREAD_MUTEX_lock(&drc->drc_mtx);
 
 			/* Since we dropped drc lock and reacquired it,
 			 * the drc dupreq list may have changed. Get the
@@ -1281,7 +1304,7 @@ dq_again:
 			TAILQ_REMOVE(&drc->dupreq_q, ov, fifo_q);
 			TAILQ_INIT_ENTRY(ov, fifo_q);
 			--(drc->size);
-			PTHREAD_MUTEX_unlock(&drc->mtx);
+			PTHREAD_MUTEX_unlock(&drc->drc_mtx);
 
 			rbtree_x_cached_remove(&drc->xt, t, &ov->rbt_k, ov->hk);
 
@@ -1299,7 +1322,7 @@ dq_again:
 
 			/* conditionally retire another */
 			if (cnt++ < DUPREQ_MAX_RETRIES) {
-				PTHREAD_MUTEX_lock(&drc->mtx);
+				PTHREAD_MUTEX_lock(&drc->drc_mtx);
 				goto dq_again; /* calls drc_should_retire() */
 			}
 			return;
@@ -1307,7 +1330,7 @@ dq_again:
 	}
 
  unlock:
-	PTHREAD_MUTEX_unlock(&drc->mtx);
+	PTHREAD_MUTEX_unlock(&drc->drc_mtx);
 }
 
 /**
@@ -1339,7 +1362,7 @@ void nfs_dupreq_delete(nfs_request_t *reqnfs, enum nfs_req_result rc)
 	 * so, we will want to resubmit them and NOT delete this drc. It will
 	 * attach as primary to the next request in line.
 	 */
-	PTHREAD_MUTEX_lock(&dv->mtx);
+	PTHREAD_MUTEX_lock(&dv->dre_mtx);
 
 	if (!TAILQ_EMPTY(&dv->dupes)) {
 		/* Return without deleting, we are going to retry this request.
@@ -1352,11 +1375,11 @@ void nfs_dupreq_delete(nfs_request_t *reqnfs, enum nfs_req_result rc)
 		 */
 		dv->rc = rc;
 
-		PTHREAD_MUTEX_unlock(&dv->mtx);
+		PTHREAD_MUTEX_unlock(&dv->dre_mtx);
 		return;
 	}
 
-	PTHREAD_MUTEX_unlock(&dv->mtx);
+	PTHREAD_MUTEX_unlock(&dv->dre_mtx);
 
 	drc = reqnfs->svc.rq_xprt->xp_u2;
 
@@ -1378,15 +1401,15 @@ void nfs_dupreq_delete(nfs_request_t *reqnfs, enum nfs_req_result rc)
 	 * req holds a ref on drc, so it should be valid here.
 	 * assert(drc == (drc_t *)reqnfs->svc.rq_xprt->xp_u2);
 	 */
-	PTHREAD_MUTEX_lock(&drc->mtx);
+	PTHREAD_MUTEX_lock(&drc->drc_mtx);
 	if (!TAILQ_IS_ENQUEUED(dv, fifo_q)) {
-		PTHREAD_MUTEX_unlock(&drc->mtx);
+		PTHREAD_MUTEX_unlock(&drc->drc_mtx);
 		return; /* no more in the hash table/list, nothing todo */
 	}
 	TAILQ_REMOVE(&drc->dupreq_q, dv, fifo_q);
 	TAILQ_INIT_ENTRY(dv, fifo_q);
 	--(drc->size);
-	PTHREAD_MUTEX_unlock(&drc->mtx);
+	PTHREAD_MUTEX_unlock(&drc->drc_mtx);
 
 	t = rbtx_partition_of_scalar(&drc->xt, dv->hk);
 
@@ -1434,7 +1457,7 @@ void nfs_dupreq_rele(nfs_request_t *reqnfs)
 	/* Now check if there are any duplicate requests waiting for this
 	 * one to resolve.
 	 */
-	PTHREAD_MUTEX_lock(&dv->mtx);
+	PTHREAD_MUTEX_lock(&dv->dre_mtx);
 
 	if (!TAILQ_EMPTY(&dv->dupes)) {
 		/* Pull the next request of the queue and resume it. If this
@@ -1457,7 +1480,7 @@ void nfs_dupreq_rele(nfs_request_t *reqnfs)
 		svc_resume(&req2->svc);
 	}
 
-	PTHREAD_MUTEX_unlock(&dv->mtx);
+	PTHREAD_MUTEX_unlock(&dv->dre_mtx);
 
 	/* release req's hold on dupreq and drc */
 	dupreq_entry_put(dv);
@@ -1467,12 +1490,4 @@ void nfs_dupreq_rele(nfs_request_t *reqnfs)
 	/* dispose RPC header */
 	if (reqnfs->svc.rq_auth)
 		SVCAUTH_RELEASE(&reqnfs->svc);
-}
-
-/**
- * @brief Shutdown the dupreq2 package.
- */
-void dupreq2_pkgshutdown(void)
-{
-	/* XXX do nothing */
 }

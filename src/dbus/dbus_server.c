@@ -679,7 +679,7 @@ void gsh_dbus_pkgshutdown(void)
 	int code = 0;
 	char prefixed_dbus_name[NAME_MAX + 1];
 
-	LogDebug(COMPONENT_DBUS, "shutdown");
+	LogEvent(COMPONENT_DBUS, "Start DBUS shutdown");
 
 	/* Shutdown gsh_dbus_thread */
 	thread_state.flags |= GSH_DBUS_SHUTDOWN;
@@ -730,6 +730,9 @@ void gsh_dbus_pkgshutdown(void)
 		 */
 		dbus_connection_unref(thread_state.dbus_conn);
 	}
+
+	PTHREAD_MUTEX_destroy(&dbus_bcast_lock);
+	LogEvent(COMPONENT_DBUS, "DBUS shutdown complete");
 }
 
 void *gsh_dbus_thread(void *arg)
@@ -825,7 +828,7 @@ void *gsh_dbus_thread(void *arg)
 void gsh_dbus_wake_thread(uint32_t flags)
 {
 	if (thread_state.flags & GSH_DBUS_SLEEPING)
-		pthread_cond_signal(&thread_state.we.cv);
+		pthread_cond_signal(&thread_state.we.wq_cv);
 }
 
 /*

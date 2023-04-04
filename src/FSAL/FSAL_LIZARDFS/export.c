@@ -394,6 +394,15 @@ static uint32_t lzfs_fsal_fs_umask(struct fsal_export *exp_hdl)
 	return fsal_umask(info);
 }
 
+void lzfs_free_state(struct state_t *state)
+{
+	struct lzfs_fsal_fd *my_fd;
+
+	my_fd = &container_of(state, struct lzfs_fsal_state_fd, state)->lzfs_fd;
+
+	destroy_fsal_fd(&my_fd->fsal_fd);
+}
+
 /*! \brief Allocate a state_t structure
  *
  * \see fsal_api.h for more information
@@ -406,7 +415,7 @@ struct state_t *lzfs_fsal_alloc_state(struct fsal_export *exp_hdl,
 	struct lzfs_fsal_fd *my_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct lzfs_fsal_state_fd)),
-			   NULL, state_type, related_state);
+			   lzfs_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct lzfs_fsal_state_fd, state)->lzfs_fd;
 

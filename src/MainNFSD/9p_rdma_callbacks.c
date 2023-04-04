@@ -58,11 +58,11 @@ void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *data, void *arg)
 {
 	struct _9p_rdma_priv *priv = _9p_rdma_priv_of(trans);
 
-	PTHREAD_MUTEX_lock(&priv->outqueue->lock);
+	PTHREAD_MUTEX_lock(&priv->outqueue->oq_lock);
 	data->next = priv->outqueue->data;
 	priv->outqueue->data = data;
-	pthread_cond_signal(&priv->outqueue->cond);
-	PTHREAD_MUTEX_unlock(&priv->outqueue->lock);
+	pthread_cond_signal(&priv->outqueue->oq_cond);
+	PTHREAD_MUTEX_unlock(&priv->outqueue->oq_lock);
 
 	server_stats_transport_done(priv->pconn->client,
 				    0, 0, 0,
@@ -80,11 +80,11 @@ void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *data,
 	 */
 
 	if (priv && priv->outqueue) {
-		PTHREAD_MUTEX_lock(&priv->outqueue->lock);
+		PTHREAD_MUTEX_lock(&priv->outqueue->oq_lock);
 		data->next = priv->outqueue->data;
 		priv->outqueue->data = data;
-		pthread_cond_signal(&priv->outqueue->cond);
-		PTHREAD_MUTEX_unlock(&priv->outqueue->lock);
+		pthread_cond_signal(&priv->outqueue->oq_cond);
+		PTHREAD_MUTEX_unlock(&priv->outqueue->oq_lock);
 	}
 	if (priv && priv->pconn && priv->pconn->client)
 		server_stats_transport_done(priv->pconn->client,
@@ -124,17 +124,18 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p)
 	msk_data_t *dataout;
 
 	/* get output buffer and move forward in queue */
-	PTHREAD_MUTEX_lock(&priv->outqueue->lock);
+	PTHREAD_MUTEX_lock(&priv->outqueue->oq_lock);
 	while (priv->outqueue->data == NULL) {
 		LogDebug(COMPONENT_9P,
 			 "Waiting for outqueue buffer on trans %p\n", trans);
-		pthread_cond_wait(&priv->outqueue->cond, &priv->outqueue->lock);
+		pthread_cond_wait(&priv->outqueue->oq_cond,
+				  &priv->outqueue->oq_lock);
 	}
 
 	dataout = priv->outqueue->data;
 	priv->outqueue->data = dataout->next;
 	dataout->next = NULL;
-	PTHREAD_MUTEX_unlock(&priv->outqueue->lock);
+	PTHREAD_MUTEX_unlock(&priv->outqueue->oq_lock);
 
 	dataout->size = 0;
 	dataout->mr = priv->pernic->outmr;
@@ -181,11 +182,11 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p)
 				 req9p->pconn->trans_data.rdma_trans);
 			/* Give the buffer back right away
 			 * since no buffer is being sent */
-			PTHREAD_MUTEX_lock(&priv->outqueue->lock);
+			PTHREAD_MUTEX_lock(&priv->outqueue->oq_lock);
 			dataout->next = priv->outqueue->data;
 			priv->outqueue->data = dataout;
-			pthread_cond_signal(&priv->outqueue->cond);
-			PTHREAD_MUTEX_unlock(&priv->outqueue->lock);
+			pthread_cond_signal(&priv->outqueue->oq_cond);
+			PTHREAD_MUTEX_unlock(&priv->outqueue->oq_lock);
 		}
 	}
 	_9p_DiscardFlushHook(req9p);

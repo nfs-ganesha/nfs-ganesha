@@ -147,7 +147,7 @@ typedef struct hash_stat {
 struct hash_partition {
 	size_t count; /*< Number of entries in this partition */
 	struct rbt_head rbt; /*< The red-black tree */
-	pthread_rwlock_t lock; /*< Lock for this partition */
+	pthread_rwlock_t ht_lock; /*< Lock for this partition */
 	struct rbt_node **cache; /*< Expected entry cache */
 };
 

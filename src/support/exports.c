@@ -54,11 +54,11 @@
 /**
  * @brief Protect EXPORT_DEFAULTS structure for dynamic update.
  *
- * If an export->lock is also held by the code, this lock MUST be
- * taken AFTER the export->lock to avoid ABBA deadlock.
+ * If an export->exp_lock is also held by the code, this lock MUST be
+ * taken AFTER the export->exp_lock to avoid ABBA deadlock.
  *
  */
-pthread_rwlock_t export_opt_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t export_opt_lock;
 
 #define GLOBAL_EXPORT_PERMS_INITIALIZER				\
 	.def.anonymous_uid = ANON_UID,				\
@@ -352,7 +352,7 @@ static void LogExportClients(log_levels_t level,
 {
 	struct glist_head *glist;
 
-	PTHREAD_RWLOCK_rdlock(&export->lock);
+	PTHREAD_RWLOCK_rdlock(&export->exp_lock);
 
 	glist_for_each(glist, &export->clients) {
 		struct base_client_entry *client;
@@ -367,7 +367,7 @@ static void LogExportClients(log_levels_t level,
 						client_entry));
 	}
 
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 }
 
 #define LogMidDebug_ExportClients(export) \
@@ -836,7 +836,7 @@ static inline void copy_gsh_export(struct gsh_export *dest,
 	update_atomic_fields(dest, src);
 
 	/* Now take lock and swap out client list and export_perms... */
-	PTHREAD_RWLOCK_wrlock(&dest->lock);
+	PTHREAD_RWLOCK_wrlock(&dest->exp_lock);
 
 	/* Put references to old refstr */
 	if (dest->fullpath != NULL)
@@ -891,7 +891,7 @@ static inline void copy_gsh_export(struct gsh_export *dest,
 
 	glist_swap_lists(&dest->clients, &src->clients);
 
-	PTHREAD_RWLOCK_unlock(&dest->lock);
+	PTHREAD_RWLOCK_unlock(&dest->exp_lock);
 }
 
 uint32_t export_check_options(struct gsh_export *exp)
@@ -901,7 +901,7 @@ uint32_t export_check_options(struct gsh_export *exp)
 	memset(&perms, 0, sizeof(perms));
 
 	/* Take lock */
-	PTHREAD_RWLOCK_rdlock(&exp->lock);
+	PTHREAD_RWLOCK_rdlock(&exp->exp_lock);
 
 	/* Start with options set for the export */
 	perms.options = exp->export_perms.options & exp->export_perms.set;
@@ -961,7 +961,7 @@ uint32_t export_check_options(struct gsh_export *exp)
 	PTHREAD_RWLOCK_unlock(&export_opt_lock);
 
 	/* Release lock */
-	PTHREAD_RWLOCK_unlock(&exp->lock);
+	PTHREAD_RWLOCK_unlock(&exp->exp_lock);
 
 	return perms.options;
 }
@@ -2447,6 +2447,16 @@ static bool init_export_cb(struct gsh_export *exp, void *state)
 	return true;
 }
 
+/* Cleanup on shutdown */
+void export_cleanup(void)
+{
+	PTHREAD_RWLOCK_destroy(&export_opt_lock);
+}
+
+struct cleanup_list_element export_cleanup_element = {
+	.clean = export_cleanup,
+};
+
 /**
  * @brief Initialize exports over a live fsal layer
  */
@@ -2457,6 +2467,8 @@ void exports_pkginit(void)
 	struct glist_head *glist, *glistn;
 	struct gsh_export *export;
 
+	PTHREAD_RWLOCK_init(&export_opt_lock, NULL);
+
 	glist_init(&errlist);
 	foreach_gsh_export(init_export_cb, true, &errlist);
 
@@ -2464,6 +2476,8 @@ void exports_pkginit(void)
 		export = glist_entry(glist, struct gsh_export, exp_list);
 		export_revert(export);
 	}
+
+	RegisterCleanup(&export_cleanup_element);
 }
 
 /**
@@ -2483,14 +2497,14 @@ void exports_pkginit(void)
 fsal_status_t nfs_export_get_root_entry(struct gsh_export *export,
 					struct fsal_obj_handle **obj)
 {
-	PTHREAD_RWLOCK_rdlock(&export->lock);
+	PTHREAD_RWLOCK_rdlock(&export->exp_lock);
 
 	if (export->exp_root_obj)
 		export->exp_root_obj->obj_ops->get_ref(export->exp_root_obj);
 
 	*obj = export->exp_root_obj;
 
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 
 	if (!(*obj))
 		return fsalstat(ERR_FSAL_NOENT, 0);
@@ -2634,7 +2648,7 @@ int init_export_root(struct gsh_export *export)
 		}
 	}
 
-	PTHREAD_RWLOCK_wrlock(&export->lock);
+	PTHREAD_RWLOCK_wrlock(&export->exp_lock);
 	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->jct_lock);
 
 	/* Get a long term reference on the object */
@@ -2649,7 +2663,7 @@ int init_export_root(struct gsh_export *export)
 	(void) atomic_inc_int32_t(&obj->state_hdl->dir.exp_root_refcount);
 
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 
 	LogDebug(COMPONENT_EXPORT,
 		 "Added root obj %p FSAL %s for path %s on export_id=%d",
@@ -2695,7 +2709,7 @@ void release_export(struct gsh_export *export, bool config)
 	}
 
 	/* Make the export unreachable as a root object */
-	PTHREAD_RWLOCK_wrlock(&export->lock);
+	PTHREAD_RWLOCK_wrlock(&export->exp_lock);
 	PTHREAD_RWLOCK_wrlock(&obj->state_hdl->jct_lock);
 
 	glist_del(&export->exp_root_list);
@@ -2706,7 +2720,7 @@ void release_export(struct gsh_export *export, bool config)
 	(void) atomic_dec_int32_t(&obj->state_hdl->dir.exp_root_refcount);
 
 	PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
-	PTHREAD_RWLOCK_unlock(&export->lock);
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 
 	LogDebug(COMPONENT_EXPORT,
 		 "Released root obj %p for path %s, pseudo %s on export_id=%d",
@@ -2929,7 +2943,7 @@ gid_t get_anonymous_gid(void)
  *
  * Permissions in the op context get updated based on export and client.
  *
- * Takes the export->lock in read mode to protect the client list and
+ * Takes the export->exp_lock in read mode to protect the client list and
  * export permissions while performing this work.
  */
 
@@ -2947,7 +2961,7 @@ void export_check_access(void)
 
 	if (op_ctx->ctx_export != NULL) {
 		/* Take lock */
-		PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
+		PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->exp_lock);
 	} else {
 		/* Shortcut if no export */
 		goto no_export;
@@ -3101,6 +3115,6 @@ void export_check_access(void)
 
 	if (op_ctx->ctx_export != NULL) {
 		/* Release lock */
-		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 	}
 }

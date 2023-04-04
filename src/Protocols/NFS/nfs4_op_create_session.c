@@ -353,7 +353,7 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 	PTHREAD_MUTEX_init(&nfs41_session->cb_mutex, NULL);
 	PTHREAD_COND_init(&nfs41_session->cb_cond, NULL);
 	PTHREAD_RWLOCK_init(&nfs41_session->conn_lock, NULL);
-	PTHREAD_MUTEX_init(&nfs41_session->cb_chan.mtx, NULL);
+	PTHREAD_MUTEX_init(&nfs41_session->cb_chan.chan_mtx, NULL);
 
 	nfs41_session->nb_slots = MIN(nfs_param.nfsv4_param.nb_slots,
 			nfs41_session->fore_channel_attrs.ca_maxrequests);
@@ -362,7 +362,7 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 	nfs41_session->bc_slots = gsh_calloc(nfs41_session->nb_slots,
 					     sizeof(nfs41_cb_session_slot_t));
 	for (i = 0; i < nfs41_session->nb_slots; i++)
-		PTHREAD_MUTEX_init(&nfs41_session->fc_slots[i].lock, NULL);
+		PTHREAD_MUTEX_init(&nfs41_session->fc_slots[i].slot_lock, NULL);
 
 	/* Take reference to clientid record on behalf the session. */
 	inc_client_id_ref(found);

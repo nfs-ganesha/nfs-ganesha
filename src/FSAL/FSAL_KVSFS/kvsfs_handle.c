@@ -94,9 +94,16 @@ struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
 			     exp_hdl,
 			     attr->type);
 
+	if (hdl->obj_handle.type == REGULAR_FILE) {
+		init_fsal_fd(&hdl->u.file.fd.fsal_fd, FSAL_FD_GLOBAL,
+			     op_ctx->fsal_export);
+	}
+
 	hdl->obj_handle.obj_ops = &my_module->handle_ops;
+
 	if (myself->pnfs_mds_enabled)
 		handle_ops_pnfs(hdl->obj_handle.obj_ops);
+
 	return hdl;
 }
 
@@ -932,7 +939,9 @@ static void kvsfs_release(struct fsal_obj_handle *obj_hdl)
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)
 			gsh_free(myself->u.symlink.link_content);
-	}
+	} else if (type == REGULAR_FILE)
+		destroy_fsal_fd(&myself->u.file.fd.fsal_fd);
+
 	gsh_free(myself);
 }
 

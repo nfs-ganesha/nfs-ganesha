@@ -49,6 +49,9 @@ static void lzfs_fsal_release(struct fsal_obj_handle *obj_hdl)
 						struct lzfs_fsal_handle,
 						handle);
 
+	if (lzfs_obj->handle.type == REGULAR_FILE)
+		destroy_fsal_fd(&lzfs_obj->fd.fsal_fd);
+
 	if (lzfs_obj != lzfs_obj->export->root) {
 		lzfs_fsal_delete_handle(lzfs_obj);
 	}

@@ -55,7 +55,7 @@ typedef struct drc {
 	struct rbtree_x xt;
 	/* Define the tail queue */
 	TAILQ_HEAD(drc_tailq, dupreq_entry) dupreq_q;
-	pthread_mutex_t mtx;
+	pthread_mutex_t drc_mtx;
 	uint32_t npart;
 	uint32_t cachesz;
 	uint32_t size;
@@ -117,7 +117,7 @@ struct dupreq_entry {
 	 * to DUPREQ_MAX_DUPES.
 	 */
 	TAILQ_HEAD(dupes, nfs_request) dupes;
-	pthread_mutex_t mtx;
+	pthread_mutex_t dre_mtx;
 	struct {
 		sockaddr_t addr;
 		struct {
@@ -169,7 +169,6 @@ typedef enum dupreq_status {
 } dupreq_status_t;
 
 void dupreq2_pkginit(void);
-void dupreq2_pkgshutdown(void);
 
 drc_t *drc_get_tcp_drc(struct svc_req *);
 void drc_release_tcp_drc(drc_t *);

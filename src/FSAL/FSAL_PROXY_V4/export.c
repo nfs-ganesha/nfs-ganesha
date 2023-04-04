@@ -131,6 +131,28 @@ static struct config_block proxyv4_export_param = {
 	.blk_desc.u.blk.commit = remote_commit
 };
 
+static inline void proxyv4_export_init(struct proxyv4_export *proxyv4_exp)
+{
+	proxyv4_exp->rpc.no_sessionid = true;
+	PTHREAD_MUTEX_init(&proxyv4_exp->rpc.proxyv4_clientid_mutex, NULL);
+	PTHREAD_COND_init(&proxyv4_exp->rpc.cond_sessionid, NULL);
+	proxyv4_exp->rpc.rpc_sock = -1;
+	PTHREAD_MUTEX_init(&proxyv4_exp->rpc.listlock, NULL);
+	PTHREAD_COND_init(&proxyv4_exp->rpc.sockless, NULL);
+	PTHREAD_COND_init(&proxyv4_exp->rpc.need_context, NULL);
+	PTHREAD_MUTEX_init(&proxyv4_exp->rpc.context_lock, NULL);
+}
+
+static inline void proxyv4_export_destroy(struct proxyv4_export *proxyv4_exp)
+{
+	PTHREAD_MUTEX_destroy(&proxyv4_exp->rpc.proxyv4_clientid_mutex);
+	PTHREAD_COND_destroy(&proxyv4_exp->rpc.cond_sessionid);
+	PTHREAD_MUTEX_destroy(&proxyv4_exp->rpc.listlock);
+	PTHREAD_COND_destroy(&proxyv4_exp->rpc.sockless);
+	PTHREAD_COND_destroy(&proxyv4_exp->rpc.need_context);
+	PTHREAD_MUTEX_destroy(&proxyv4_exp->rpc.context_lock);
+}
+
 static void proxyv4_release(struct fsal_export *exp_hdl)
 {
 	struct proxyv4_export *proxyv4_exp =
@@ -140,6 +162,10 @@ static void proxyv4_release(struct fsal_export *exp_hdl)
 	free_export_ops(exp_hdl);
 
 	proxyv4_close_thread(proxyv4_exp);
+
+	free_io_contexts(proxyv4_exp);
+
+	proxyv4_export_destroy(proxyv4_exp);
 
 	gsh_free(proxyv4_exp);
 }
@@ -218,9 +244,15 @@ fsal_status_t proxyv4_create_export(struct fsal_module *fsal_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
  err_cleanup:
+
+	proxyv4_close_thread(exp);
+	free_io_contexts(exp);
 	fsal_detach_export(fsal_hdl, &exp->exp.exports);
+
  err_free:
+
 	free_export_ops(&exp->exp);
+	proxyv4_export_destroy(exp);
 	gsh_free(exp);
 	return fsal_status;
 }

@@ -109,14 +109,14 @@ static int unload_fsal(struct fsal_module *fsal_hdl)
 	}
 
 	glist_del(&fsal_hdl->fsals);
-	PTHREAD_RWLOCK_destroy(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_destroy(&fsal_hdl->fsm_lock);
 
 	retval = dlclose(fsal_hdl->dl_handle);
 	PTHREAD_MUTEX_unlock(&fsal_lock);
 	return retval;
 
  err:
-	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
+	PTHREAD_RWLOCK_unlock(&fsal_hdl->fsm_lock);
 	PTHREAD_MUTEX_unlock(&fsal_lock);
 	return retval;
 }

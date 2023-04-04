@@ -127,8 +127,8 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		read_data.ret.major = 0;
 		read_data.ret.minor = 0;
 		read_data.done = false;
-		read_data.cond = req9p->cond;
-		read_data.mutex = req9p->mutex;
+		read_data.fsa_cond = req9p->_9prq_cond;
+		read_data.fsa_mutex = req9p->_9prq_mutex;
 
 		/* Do the actual read */
 		fsal_read(pfid->pentry, true, read_arg, &read_data);

@@ -112,7 +112,7 @@ struct lru_q_lane {
 	struct lru_q L2;
 	struct lru_q cleanup;	/* deferred cleanup */
 	struct lru_q long_term;	/* long term references */
-	pthread_mutex_t mtx;
+	pthread_mutex_t ql_mtx;
 	CACHE_PAD(0);
 };
 
@@ -121,20 +121,20 @@ struct lru_q_lane {
 #ifdef USE_LTTNG
 #define QLOCK(qlane) \
 	do { \
-		PTHREAD_MUTEX_lock(&(qlane)->mtx); \
+		PTHREAD_MUTEX_lock(&(qlane)->ql_mtx); \
 		tracepoint(mdcache, qlock, __func__, __LINE__, qlane); \
 	} while (0)
 
 #define QUNLOCK(qlane) \
 	do { \
-		PTHREAD_MUTEX_unlock(&(qlane)->mtx); \
+		PTHREAD_MUTEX_unlock(&(qlane)->ql_mtx); \
 		tracepoint(mdcache, qunlock, __func__, __LINE__, qlane); \
 	} while (0)
 #else
 #define QLOCK(qlane) \
-	PTHREAD_MUTEX_lock(&(qlane)->mtx)
+	PTHREAD_MUTEX_lock(&(qlane)->ql_mtx)
 #define QUNLOCK(qlane) \
-	PTHREAD_MUTEX_unlock(&(qlane)->mtx)
+	PTHREAD_MUTEX_unlock(&(qlane)->ql_mtx)
 #endif
 
 /**
@@ -230,7 +230,7 @@ lru_init_queues(void)
 		qlane = &LRU[ix];
 
 		/* one mutex per lane */
-		PTHREAD_MUTEX_init(&qlane->mtx, NULL);
+		PTHREAD_MUTEX_init(&qlane->ql_mtx, NULL);
 
 		/* init lane queues */
 		lru_init_queue(&LRU[ix].L1, LRU_ENTRY_L1);
@@ -242,12 +242,30 @@ lru_init_queues(void)
 		qlane = &CHUNK_LRU[ix];
 
 		/* one mutex per lane */
-		PTHREAD_MUTEX_init(&qlane->mtx, NULL);
+		PTHREAD_MUTEX_init(&qlane->ql_mtx, NULL);
 
 		/* init lane queues */
 		lru_init_queue(&CHUNK_LRU[ix].L1, LRU_ENTRY_L1);
 		lru_init_queue(&CHUNK_LRU[ix].L2, LRU_ENTRY_L2);
 		lru_init_queue(&CHUNK_LRU[ix].cleanup, LRU_ENTRY_CLEANUP);
+	}
+}
+
+static inline void
+lru_destroy_queues(void)
+{
+	int ix;
+
+	for (ix = 0; ix < LRU_N_Q_LANES; ++ix) {
+		struct lru_q_lane *qlane;
+
+		/* Destroy mdcache_entry_t LRU */
+		qlane = &LRU[ix];
+		PTHREAD_MUTEX_destroy(&qlane->ql_mtx);
+
+		/* Destroy dir_chunk LRU */
+		qlane = &CHUNK_LRU[ix];
+		PTHREAD_MUTEX_destroy(&qlane->ql_mtx);
 	}
 }
 
@@ -657,7 +675,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 	state_hdl_cleanup(entry->obj_handle.state_hdl, entry->obj_handle.type);
 
 	if (entry->obj_handle.type == DIRECTORY)
-		pthread_spin_destroy(&entry->fsobj.fsdir.spin);
+		PTHREAD_SPIN_destroy(&entry->fsobj.fsdir.fsd_spin);
 }
 
 /**
@@ -1615,6 +1633,8 @@ mdcache_lru_pkgshutdown(void)
 	else
 		status = fsalstat(posix2fsal_error(rc), rc);
 
+	lru_destroy_queues();
+
 	return status;
 }
 
@@ -2021,7 +2041,7 @@ void mdc_lru_map_dirent(mdcache_dir_entry_t *dirent)
 	mdcache_dmap_entry_t key, *dmap;
 	struct avltree_node *node;
 
-	PTHREAD_MUTEX_lock(&exp->dirent_map.mtx);
+	PTHREAD_MUTEX_lock(&exp->dirent_map.dm_mtx);
 
 	key.ck = dirent->ck;
 	node = avltree_lookup(&key.node, &exp->dirent_map.map);
@@ -2033,7 +2053,7 @@ void mdc_lru_map_dirent(mdcache_dir_entry_t *dirent)
 		dmap = avltree_container_of(node, mdcache_dmap_entry_t, node);
 		now(&dmap->timestamp);
 		glist_move_tail(&exp->dirent_map.lru, &dmap->lru_entry);
-		PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
+		PTHREAD_MUTEX_unlock(&exp->dirent_map.dm_mtx);
 		return;
 	}
 
@@ -2056,7 +2076,7 @@ void mdc_lru_map_dirent(mdcache_dir_entry_t *dirent)
 
 	mdc_lru_dirmap_add(exp, dmap);
 
-	PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
+	PTHREAD_MUTEX_unlock(&exp->dirent_map.dm_mtx);
 }
 
 /**
@@ -2078,20 +2098,20 @@ fsal_cookie_t *mdc_lru_unmap_dirent(uint64_t ck)
 	mdcache_dmap_entry_t key, *dmap;
 	char *name;
 
-	PTHREAD_MUTEX_lock(&exp->dirent_map.mtx);
+	PTHREAD_MUTEX_lock(&exp->dirent_map.dm_mtx);
 
 	key.ck = ck;
 	node = avltree_lookup(&key.node, &exp->dirent_map.map);
 	if (!node) {
 		LogFullDebug(COMPONENT_NFS_READDIR, "No map for %" PRIx64, ck);
-		PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
+		PTHREAD_MUTEX_unlock(&exp->dirent_map.dm_mtx);
 		return NULL;
 	}
 
 	dmap = avltree_container_of(node, mdcache_dmap_entry_t, node);
 	mdc_lru_dirmap_del(exp, dmap);
 
-	PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
+	PTHREAD_MUTEX_unlock(&exp->dirent_map.dm_mtx);
 
 	name = dmap->name;
 
@@ -2124,7 +2144,7 @@ static void dirmap_lru_run(struct fridgethr_context *ctx)
 		first_time = false;
 	}
 
-	PTHREAD_MUTEX_lock(&exp->dirent_map.mtx);
+	PTHREAD_MUTEX_lock(&exp->dirent_map.dm_mtx);
 
 	now(&curtime);
 
@@ -2146,7 +2166,7 @@ static void dirmap_lru_run(struct fridgethr_context *ctx)
 	}
 
 out:
-	PTHREAD_MUTEX_unlock(&exp->dirent_map.mtx);
+	PTHREAD_MUTEX_unlock(&exp->dirent_map.dm_mtx);
 	fridgethr_setwait(ctx, mdcache_param.lru_run_interval);
 }
 
@@ -2165,10 +2185,8 @@ fsal_status_t dirmap_lru_init(struct mdcache_fsal_export *exp)
 
 	avltree_init(&exp->dirent_map.map, avl_dmap_ck_cmpf, 0 /* flags */);
 	glist_init(&exp->dirent_map.lru);
-	rc = pthread_mutex_init(&exp->dirent_map.mtx, NULL);
-	if (rc != 0) {
-		return posix2fsal_status(rc);
-	}
+
+	PTHREAD_MUTEX_init(&exp->dirent_map.dm_mtx, NULL);
 
 	memset(&frp, 0, sizeof(struct fridgethr_params));
 	frp.thr_max = 1;

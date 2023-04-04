@@ -346,6 +346,7 @@ int async_cbgetattr(struct fridgethr *fr, struct fsal_obj_handle *obj,
 		    nfs_client_id_t *client);
 
 void up_ready_init(struct fsal_up_vector *up_ops);
+void up_ready_destroy(struct fsal_up_vector *up_ops);
 void up_ready_set(struct fsal_up_vector *up_ops);
 void up_ready_wait(struct fsal_up_vector *up_ops);
 void up_ready_cancel(struct fsal_up_vector *up_ops);

@@ -147,6 +147,7 @@ void mdcache_export_uninit(void)
 	fsal_detach_export(op_ctx->fsal_export->fsal,
 			   &op_ctx->fsal_export->exports);
 	free_export_ops(op_ctx->fsal_export);
+	up_ready_destroy(&exp->up_ops);
 
 	gsh_free(exp);
 
@@ -195,14 +196,12 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	myself->mfe_exp.fsal = &MDCACHE.module;
 
 	glist_init(&myself->entry_list);
-	pthread_rwlockattr_init(&attrs);
-#ifdef GLIBC
-	pthread_rwlockattr_setkind_np(&attrs,
+	PTHREAD_RWLOCKATTR_init(&attrs);
+	PTHREAD_RWLOCKATTR_setkind_np(&attrs,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
 	PTHREAD_RWLOCK_init(&myself->mdc_exp_lock, &attrs);
-	PTHREAD_MUTEX_init(&myself->dirent_map.mtx, NULL);
-	pthread_rwlockattr_destroy(&attrs);
+	PTHREAD_MUTEX_init(&myself->dirent_map.dm_mtx, NULL);
+	PTHREAD_RWLOCKATTR_destroy(&attrs);
 
 	status = sub_fsal->m_ops.create_export(sub_fsal,
 						 parse_node,

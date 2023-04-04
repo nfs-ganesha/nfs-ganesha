@@ -75,12 +75,10 @@ cih_pkginit(void)
 	int ix;
 
 	/* avoid writer starvation */
-	pthread_rwlockattr_init(&rwlock_attr);
-#ifdef GLIBC
-	pthread_rwlockattr_setkind_np(
+	PTHREAD_RWLOCKATTR_init(&rwlock_attr);
+	PTHREAD_RWLOCKATTR_setkind_np(
 		&rwlock_attr,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
 	cih_fhcache.npart = mdcache_param.nparts;
 	cih_fhcache.partition =
 		gsh_calloc(cih_fhcache.npart, sizeof(cih_partition_t));
@@ -88,14 +86,14 @@ cih_pkginit(void)
 	for (ix = 0; ix < cih_fhcache.npart; ++ix) {
 		cp = &cih_fhcache.partition[ix];
 		cp->part_ix = ix;
-		PTHREAD_RWLOCK_init(&cp->lock, &rwlock_attr);
+		PTHREAD_RWLOCK_init(&cp->cih_lock, &rwlock_attr);
 		avltree_init(&cp->t, cih_fh_cmpf, 0 /* must be 0 */);
 		cp->cache =
 			gsh_calloc(cih_fhcache.cache_sz,
 				sizeof(struct avltree_node *));
 	}
 
-	pthread_rwlockattr_destroy(&rwlock_attr);
+	PTHREAD_RWLOCKATTR_destroy(&rwlock_attr);
 	initialized = true;
 }
 
@@ -113,7 +111,7 @@ cih_pkgdestroy(void)
 		if (avltree_first(&cih_fhcache.partition[ix].t) != NULL)
 			LogMajor(COMPONENT_CACHE_INODE,
 				 "MDCACHE AVL tree not empty");
-		PTHREAD_RWLOCK_destroy(&cih_fhcache.partition[ix].lock);
+		PTHREAD_RWLOCK_destroy(&cih_fhcache.partition[ix].cih_lock);
 		gsh_free(cih_fhcache.partition[ix].cache);
 	}
 	/* Destroy the partition table */

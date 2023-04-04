@@ -148,8 +148,8 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		write_data.ret.major = 0;
 		write_data.ret.minor = 0;
 		write_data.done = false;
-		write_data.cond = req9p->cond;
-		write_data.mutex = req9p->mutex;
+		write_data.fsa_cond = req9p->_9prq_cond;
+		write_data.fsa_mutex = req9p->_9prq_mutex;
 
 		/* Do the actual write */
 		fsal_write(pfid->pentry, true, write_arg, &write_data);

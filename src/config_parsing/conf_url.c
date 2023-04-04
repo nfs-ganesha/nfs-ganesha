@@ -28,7 +28,7 @@
 
 #include "conf_url.h"
 
-static pthread_rwlock_t url_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+static pthread_rwlock_t url_rwlock;
 static struct glist_head url_providers;
 static regex_t url_regex;
 
@@ -115,6 +115,7 @@ static void load_rados_config(void)
 void config_url_init(void)
 {
 	glist_init(&url_providers);
+	PTHREAD_RWLOCK_init(&url_rwlock, NULL);
 
 /* init well-known URL providers */
 #ifdef RADOS_URLS
@@ -148,6 +149,7 @@ void config_url_shutdown(void)
 		dlclose(rados_urls.dl);
 	rados_urls.dl = NULL;
 #endif
+	PTHREAD_RWLOCK_destroy(&url_rwlock);
 }
 
 int gsh_rados_url_setup_watch(void)

@@ -65,11 +65,15 @@ static struct gsh_buffdesc owner_domain;
 
 /* winbind auth stats information */
 struct auth_stats winbind_auth_stats;
-pthread_rwlock_t winbind_auth_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t winbind_auth_lock;
 
 /*group cache auth stats information */
 struct auth_stats gc_auth_stats;
-pthread_rwlock_t gc_auth_lock = PTHREAD_RWLOCK_INITIALIZER;
+pthread_rwlock_t gc_auth_lock;
+
+/*DNS auth stats information */
+struct auth_stats dns_auth_stats;
+pthread_rwlock_t dns_auth_lock;
 
 /* Cleanup on shutdown */
 struct cleanup_list_element idmapper_cleanup_element;
@@ -82,11 +86,10 @@ void idmapper_cleanup(void)
 	gsh_free(owner_domain.addr);
 
 	idmapper_clear_cache();
+	PTHREAD_RWLOCK_destroy(&winbind_auth_lock);
+	PTHREAD_RWLOCK_destroy(&gc_auth_lock);
+	PTHREAD_RWLOCK_destroy(&dns_auth_lock);
 }
-
-/*DNS auth stats information */
-struct auth_stats dns_auth_stats;
-pthread_rwlock_t dns_auth_lock = PTHREAD_RWLOCK_INITIALIZER;
 
 /**
  * @brief Initialize the ID Mapper
@@ -96,6 +99,10 @@ pthread_rwlock_t dns_auth_lock = PTHREAD_RWLOCK_INITIALIZER;
 
 bool idmapper_init(void)
 {
+	PTHREAD_RWLOCK_init(&winbind_auth_lock, NULL);
+	PTHREAD_RWLOCK_init(&gc_auth_lock, NULL);
+	PTHREAD_RWLOCK_init(&dns_auth_lock, NULL);
+
 #ifdef USE_NFSIDMAP
 	if (!nfs_param.nfsv4_param.use_getpwnam) {
 		if (nfs4_init_name_mapping(nfs_param.nfsv4_param.idmapconf)

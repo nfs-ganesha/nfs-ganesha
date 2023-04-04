@@ -240,7 +240,7 @@ enum rpc_chan_type {
 
 typedef struct rpc_call_channel {
 	enum rpc_chan_type type;
-	pthread_mutex_t mtx;
+	pthread_mutex_t chan_mtx;
 	uint32_t states;
 	union {
 		nfs_client_id_t *clientid;

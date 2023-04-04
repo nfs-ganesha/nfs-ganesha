@@ -84,6 +84,7 @@ static void mem_release_export(struct fsal_export *exp_hdl)
 
 	glist_del(&myself->export_entry);
 
+	PTHREAD_RWLOCK_destroy(&myself->mfe_exp_lock);
 	gsh_free(myself->export_path);
 	gsh_free(myself);
 }
@@ -144,6 +145,15 @@ static fsal_status_t mem_wire_to_host(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+void mem_free_state(struct state_t *state)
+{
+	struct fsal_fd *fsal_fd;
+
+	fsal_fd = &container_of(state, struct mem_state_fd, state)->fsal_fd;
+
+	destroy_fsal_fd(fsal_fd);
+}
+
 /**
  * @brief Allocate a state_t structure
  *
@@ -162,14 +172,14 @@ static struct state_t *mem_alloc_state(struct fsal_export *exp_hdl,
 				       struct state_t *related_state)
 {
 	struct state_t *state;
-	struct fsal_fd *my_fd;
+	struct fsal_fd *fsal_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct mem_state_fd)),
-			   NULL, state_type, related_state);
+			   mem_free_state, state_type, related_state);
 
-	my_fd = &container_of(state, struct mem_state_fd, state)->fsal_fd;
+	fsal_fd = &container_of(state, struct mem_state_fd, state)->fsal_fd;
 
-	init_fsal_fd(my_fd, FSAL_FD_STATE, op_ctx->fsal_export);
+	init_fsal_fd(fsal_fd, FSAL_FD_STATE, op_ctx->fsal_export);
 
 #ifdef USE_LTTNG
 	tracepoint(fsalmem, mem_alloc_state, __func__, __LINE__, state);
@@ -255,13 +265,11 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 	myself = gsh_calloc(1, sizeof(struct mem_fsal_export));
 
 	glist_init(&myself->mfe_objs);
-	pthread_rwlockattr_init(&attrs);
-#ifdef GLIBC
-	pthread_rwlockattr_setkind_np(&attrs,
+	PTHREAD_RWLOCKATTR_init(&attrs);
+	PTHREAD_RWLOCKATTR_setkind_np(&attrs,
 		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
 	PTHREAD_RWLOCK_init(&myself->mfe_exp_lock, &attrs);
-	pthread_rwlockattr_destroy(&attrs);
+	PTHREAD_RWLOCKATTR_destroy(&attrs);
 	fsal_export_init(&myself->export);
 	mem_export_ops_init(&myself->export.exp_ops);
 

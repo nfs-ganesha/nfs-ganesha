@@ -323,6 +323,15 @@ gpfs_host_to_key(struct fsal_export *exp_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+void gpfs_free_state(struct state_t *state)
+{
+	struct gpfs_fd *my_fd;
+
+	my_fd = &container_of(state, struct gpfs_state_fd, state)->gpfs_fd;
+
+	destroy_fsal_fd(&my_fd->fsal_fd);
+}
+
 /**
  * @brief Allocate a state_t structure
  *
@@ -343,7 +352,7 @@ gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
 	struct gpfs_fd *my_fd;
 
 	state = init_state(gsh_calloc(1, sizeof(struct gpfs_state_fd)),
-			   NULL, state_type, related_state);
+			   gpfs_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct gpfs_state_fd, state)->gpfs_fd;
 
@@ -460,6 +469,7 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 	int retval;
 	struct gpfs_filesystem_export_map *map;
 	pthread_attr_t attr_thr;
+	int rc;
 
 	if (strcmp(fs->type, "gpfs") != 0) {
 		LogEvent(COMPONENT_FSAL,
@@ -525,21 +535,17 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 
 	gpfs_fs->stop_thread = false;
 
-	if (pthread_attr_init(&attr_thr) != 0)
-		LogCrit(COMPONENT_THREAD, "can't init pthread's attributes");
+	PTHREAD_ATTR_init(&attr_thr);
+	PTHREAD_ATTR_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
+	PTHREAD_ATTR_setdetachstate(&attr_thr, PTHREAD_CREATE_JOINABLE);
+	PTHREAD_ATTR_setstacksize(&attr_thr, 2116488);
 
-	if (pthread_attr_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM) != 0)
-		LogCrit(COMPONENT_THREAD, "can't set pthread's scope");
+	rc = pthread_create(&gpfs_fs->up_thread, &attr_thr, GPFSFSAL_UP_Thread,
+			    gpfs_fs);
 
-	if (pthread_attr_setdetachstate(&attr_thr,
-					PTHREAD_CREATE_JOINABLE) != 0)
-		LogCrit(COMPONENT_THREAD, "can't set pthread's join state");
+	PTHREAD_ATTR_destroy(&attr_thr);
 
-	if (pthread_attr_setstacksize(&attr_thr, 2116488) != 0)
-		LogCrit(COMPONENT_THREAD, "can't set pthread's stack size");
-
-	if (pthread_create(&gpfs_fs->up_thread, &attr_thr, GPFSFSAL_UP_Thread,
-			   gpfs_fs)) {
+	if (rc != 0) {
 		retval = errno;
 		LogCrit(COMPONENT_THREAD,
 			"Could not create GPFSFSAL_UP_Thread, error = %d (%s)",
