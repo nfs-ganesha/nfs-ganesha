@@ -162,21 +162,13 @@ void fsal_default_obj_ops_init(struct fsal_obj_ops *obj_ops)
 void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
 			  object_file_type_t type)
 {
-	pthread_rwlockattr_t attrs;
-
 	obj->fsal = exp->fsal;
 	obj->type = type;
-	PTHREAD_RWLOCKATTR_init(&attrs);
-	PTHREAD_RWLOCKATTR_setkind_np(
-		&attrs,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-	PTHREAD_RWLOCK_init(&obj->obj_lock, &attrs);
+	PTHREAD_RWLOCK_init(&obj->obj_lock, NULL);
 
 	PTHREAD_RWLOCK_wrlock(&obj->fsal->fsm_lock);
 	glist_add(&obj->fsal->handles, &obj->handles);
 	PTHREAD_RWLOCK_unlock(&obj->fsal->fsm_lock);
-
-	PTHREAD_RWLOCKATTR_destroy(&attrs);
 }
 
 void fsal_obj_handle_fini(struct fsal_obj_handle *obj)

@@ -79,6 +79,9 @@
 #include "conf_url.h"
 #include "FSAL/fsal_localfs.h"
 
+pthread_mutexattr_t default_mutex_attr;
+pthread_rwlockattr_t default_rwlock_attr;
+
 /**
  * @brief init_complete used to indicate if ganesha is during
  * startup or not
@@ -286,6 +289,19 @@ static void init_crash_handlers(void)
 void nfs_prereq_init(const char *program_name, const char *host_name,
 		     int debug_level, const char *log_path, bool dump_trace)
 {
+	PTHREAD_MUTEXATTR_init(&default_mutex_attr);
+#if defined(__linux__)
+	PTHREAD_MUTEXATTR_settype(&default_mutex_attr,
+				  PTHREAD_MUTEX_ADAPTIVE_NP);
+#endif
+
+	PTHREAD_RWLOCKATTR_init(&default_rwlock_attr);
+#if defined(__linux__)
+	PTHREAD_RWLOCKATTR_setkind_np(
+				&default_rwlock_attr,
+				PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+#endif
+
 	healthstats.enqueued_reqs = nfs_health_.enqueued_reqs = 0;
 	healthstats.dequeued_reqs = nfs_health_.dequeued_reqs = 0;
 
@@ -303,6 +319,12 @@ void nfs_prereq_init(const char *program_name, const char *host_name,
 	if (!tirpc_control(TIRPC_PUT_PARAMETERS, &ntirpc_pp)) {
 		LogFatal(COMPONENT_INIT, "Setting nTI-RPC parameters failed");
 	}
+}
+
+void nfs_prereq_destroy(void)
+{
+	PTHREAD_MUTEXATTR_destroy(&default_mutex_attr);
+	PTHREAD_RWLOCKATTR_destroy(&default_rwlock_attr);
 }
 
 /**

@@ -40,6 +40,9 @@
 #include "gsh_types.h"
 #include "log.h"
 
+extern pthread_mutexattr_t default_mutex_attr;
+extern pthread_rwlockattr_t default_rwlock_attr;
+
 /**
  * BUILD_BUG_ON - break compile if a condition is true.
  * @condition: the condition which the compiler should know is false.
@@ -309,8 +312,12 @@ extern size_t gsh_strnlen(const char *s, size_t max);
 #define PTHREAD_RWLOCK_init(_lock, _attr)				\
 	do {								\
 		int rc;							\
+		pthread_rwlockattr_t *attr = _attr;			\
 									\
-		rc = pthread_rwlock_init(_lock, _attr);			\
+		if (attr == NULL)					\
+			attr = &default_rwlock_attr;			\
+									\
+		rc = pthread_rwlock_init(_lock, attr);			\
 		if (rc == 0) {						\
 			LogFullDebug(COMPONENT_RW_LOCK,			\
 				     "Init rwlock %p (%s) at %s:%d",	\
@@ -585,8 +592,13 @@ static inline int PTHREAD_mutex_trylock(pthread_mutex_t *mtx,
 #define PTHREAD_MUTEX_init(_mtx, _attr)					\
 	do {								\
 		int rc;							\
+		pthread_mutexattr_t *attr = _attr;			\
 									\
-		rc = pthread_mutex_init(_mtx, _attr);			\
+		if (attr == NULL)					\
+			attr = &default_mutex_attr;			\
+									\
+		rc = pthread_mutex_init(_mtx, attr);			\
+									\
 		if (rc == 0) {						\
 			LogFullDebug(COMPONENT_RW_LOCK,			\
 				     "Init mutex %p (%s) at %s:%d",	\

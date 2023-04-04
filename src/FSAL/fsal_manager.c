@@ -398,8 +398,6 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 		  uint32_t major_version, uint32_t minor_version,
 		  uint8_t fsal_id)
 {
-	pthread_rwlockattr_t attrs;
-
 	PTHREAD_MUTEX_lock(&fsal_lock);
 	if ((major_version != FSAL_MAJOR_VERSION)
 	    || (minor_version > FSAL_MINOR_VERSION)) {
@@ -412,12 +410,16 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 		load_state = error;
 		goto errout;
 	}
+
 	so_error = 0;
+
 	if (!(load_state == loading || load_state == init)) {
 		so_error = EACCES;
 		goto errout;
 	}
+
 	new_fsal = fsal_hdl;
+
 	if (name != NULL)
 		new_fsal->name = gsh_strdup(name);
 
@@ -426,12 +428,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	 */
 	memcpy(&fsal_hdl->m_ops, &def_fsal_ops, sizeof(struct fsal_ops));
 
-	PTHREAD_RWLOCKATTR_init(&attrs);
-	PTHREAD_RWLOCKATTR_setkind_np(
-		&attrs,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-	PTHREAD_RWLOCK_init(&fsal_hdl->fsm_lock, &attrs);
-	PTHREAD_RWLOCKATTR_destroy(&attrs);
+	PTHREAD_RWLOCK_init(&fsal_hdl->fsm_lock, NULL);
 	glist_init(&fsal_hdl->servers);
 	glist_init(&fsal_hdl->handles);
 	glist_init(&fsal_hdl->exports);

@@ -70,15 +70,10 @@ static bool initialized;
 void
 cih_pkginit(void)
 {
-	pthread_rwlockattr_t rwlock_attr;
 	cih_partition_t *cp;
 	int ix;
 
 	/* avoid writer starvation */
-	PTHREAD_RWLOCKATTR_init(&rwlock_attr);
-	PTHREAD_RWLOCKATTR_setkind_np(
-		&rwlock_attr,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 	cih_fhcache.npart = mdcache_param.nparts;
 	cih_fhcache.partition =
 		gsh_calloc(cih_fhcache.npart, sizeof(cih_partition_t));
@@ -86,14 +81,13 @@ cih_pkginit(void)
 	for (ix = 0; ix < cih_fhcache.npart; ++ix) {
 		cp = &cih_fhcache.partition[ix];
 		cp->part_ix = ix;
-		PTHREAD_RWLOCK_init(&cp->cih_lock, &rwlock_attr);
+		PTHREAD_RWLOCK_init(&cp->cih_lock, NULL);
 		avltree_init(&cp->t, cih_fh_cmpf, 0 /* must be 0 */);
 		cp->cache =
 			gsh_calloc(cih_fhcache.cache_sz,
 				sizeof(struct avltree_node *));
 	}
 
-	PTHREAD_RWLOCKATTR_destroy(&rwlock_attr);
 	initialized = true;
 }
 

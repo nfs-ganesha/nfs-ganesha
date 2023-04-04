@@ -66,6 +66,8 @@ int nfs_init_wait_timeout(int timeout);
 void nfs_prereq_init(const char *program_name, const char *host_name,
 		     int debug_level, const char *log_path, bool dump_trace);
 
+void nfs_prereq_destroy(void);
+
 /**
  * nfs_set_param_from_conf:
  * Load parameters from config file.

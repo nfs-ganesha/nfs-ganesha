@@ -249,8 +249,6 @@ static inline int dupreq_tcp_cmpf(const struct opr_rbtree_node *lhs,
 	return 1;
 }
 
-pthread_mutexattr_t drc_pthread_mutexattr;
-
 /**
  * @brief Comparison function for recycled per-connection (TCP) DRCs
  *
@@ -288,7 +286,7 @@ static inline void init_shared_drc(void)
 	drc->npart = nfs_param.core_param.drc.udp.npart;
 	drc->hiwat = nfs_param.core_param.drc.udp.hiwat;
 
-	PTHREAD_MUTEX_init(&drc->drc_mtx, &drc_pthread_mutexattr);
+	PTHREAD_MUTEX_init(&drc->drc_mtx, NULL);
 
 	/* init dict */
 	code =
@@ -312,7 +310,6 @@ static inline void init_shared_drc(void)
 /* Cleanup on shutdown */
 void dupreq2_cleanup(void)
 {
-	PTHREAD_MUTEXATTR_destroy(&drc_pthread_mutexattr);
 	PTHREAD_MUTEX_destroy(&drc_st->drc_st_mtx);
 }
 
@@ -327,15 +324,6 @@ void dupreq2_pkginit(void)
 {
 	int code __attribute__ ((unused)) = 0;
 
-	PTHREAD_MUTEXATTR_init(&drc_pthread_mutexattr);
-	PTHREAD_MUTEXATTR_settype(&drc_pthread_mutexattr,
-#if defined(__linux__)
-				  PTHREAD_MUTEX_ADAPTIVE_NP
-#else
-				  PTHREAD_MUTEX_DEFAULT
-#endif
-	    );
-
 	dupreq_pool =
 	    pool_basic_init("Duplicate Request Pool", sizeof(dupreq_entry_t));
 
@@ -346,7 +334,7 @@ void dupreq2_pkginit(void)
 	drc_st = gsh_calloc(1, sizeof(struct drc_st));
 
 	/* init shared statics */
-	PTHREAD_MUTEX_init(&drc_st->drc_st_mtx, &drc_pthread_mutexattr);
+	PTHREAD_MUTEX_init(&drc_st->drc_st_mtx, NULL);
 
 	/* recycle_t */
 	code =
@@ -888,7 +876,7 @@ static inline dupreq_entry_t *alloc_dupreq(void)
 	dupreq_entry_t *dv;
 
 	dv = pool_alloc(dupreq_pool);
-	PTHREAD_MUTEX_init(&dv->dre_mtx, &drc_pthread_mutexattr);
+	PTHREAD_MUTEX_init(&dv->dre_mtx, NULL);
 	TAILQ_INIT_ENTRY(dv, fifo_q);
 	TAILQ_INIT(&dv->dupes);
 

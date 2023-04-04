@@ -271,6 +271,8 @@ int nfs_libmain(const char *ganesha_conf,
 	/* Everything seems to be OK! We can now start service threads */
 	nfs_start(&my_nfs_start_info);
 
+	nfs_prereq_destroy();
+
 	return 0;
 
 fatal_die:

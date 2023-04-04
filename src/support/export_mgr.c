@@ -3114,18 +3114,11 @@ struct cleanup_list_element export_mgr_cleanup_element = {
 
 void export_pkginit(void)
 {
-	pthread_rwlockattr_t rwlock_attr;
-
 	PTHREAD_MUTEX_init(&export_admin_mutex, NULL);
-	PTHREAD_RWLOCKATTR_init(&rwlock_attr);
-	PTHREAD_RWLOCKATTR_setkind_np(
-		&rwlock_attr,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-	PTHREAD_RWLOCK_init(&export_by_id.eid_lock, &rwlock_attr);
+	PTHREAD_RWLOCK_init(&export_by_id.eid_lock, NULL);
 	avltree_init(&export_by_id.t, export_id_cmpf, 0);
 	memset(&export_by_id.cache, 0, sizeof(export_by_id.cache));
 
-	PTHREAD_RWLOCKATTR_destroy(&rwlock_attr);
 	RegisterCleanup(&export_mgr_cleanup_element);
 }
 

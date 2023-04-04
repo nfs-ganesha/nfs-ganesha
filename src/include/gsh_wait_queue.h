@@ -62,18 +62,7 @@ typedef struct wait_q_entry {
 
 static inline void init_wait_entry(wait_entry_t *we)
 {
-	pthread_mutexattr_t attr;
-
-	PTHREAD_MUTEXATTR_init(&attr);
-	PTHREAD_MUTEXATTR_settype(&attr,
-#if defined(__linux__)
-				  PTHREAD_MUTEX_ADAPTIVE_NP
-#else
-				  PTHREAD_MUTEX_DEFAULT
-#endif
-	    );
-	PTHREAD_MUTEX_init(&we->wq_mtx, &attr);
-	PTHREAD_MUTEXATTR_destroy(&attr);
+	PTHREAD_MUTEX_init(&we->wq_mtx, NULL);
 	PTHREAD_COND_init(&we->wq_cv, NULL);
 }
 

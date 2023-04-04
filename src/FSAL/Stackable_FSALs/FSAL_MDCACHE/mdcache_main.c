@@ -180,7 +180,6 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 {
 	fsal_status_t status = {0, 0};
 	struct mdcache_fsal_export *myself;
-	pthread_rwlockattr_t attrs;
 
 	myself = gsh_calloc(1, sizeof(struct mdcache_fsal_export));
 	myself->name = gsh_concat(sub_fsal->name, "/MDC");
@@ -196,12 +195,8 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	myself->mfe_exp.fsal = &MDCACHE.module;
 
 	glist_init(&myself->entry_list);
-	PTHREAD_RWLOCKATTR_init(&attrs);
-	PTHREAD_RWLOCKATTR_setkind_np(&attrs,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-	PTHREAD_RWLOCK_init(&myself->mdc_exp_lock, &attrs);
+	PTHREAD_RWLOCK_init(&myself->mdc_exp_lock, NULL);
 	PTHREAD_MUTEX_init(&myself->dirent_map.dm_mtx, NULL);
-	PTHREAD_RWLOCKATTR_destroy(&attrs);
 
 	status = sub_fsal->m_ops.create_export(sub_fsal,
 						 parse_node,

@@ -552,18 +552,9 @@ struct cleanup_list_element ds_cleanup_element = {
 
 void server_pkginit(void)
 {
-	pthread_rwlockattr_t rwlock_attr;
-
-	PTHREAD_RWLOCKATTR_init(&rwlock_attr);
-#ifdef GLIBC
-	pthread_rwlockattr_setkind_np(
-		&rwlock_attr,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-#endif
-	PTHREAD_RWLOCK_init(&server_by_id.sid_lock, &rwlock_attr);
+	PTHREAD_RWLOCK_init(&server_by_id.sid_lock, NULL);
 	avltree_init(&server_by_id.t, server_id_cmpf, 0);
 	glist_init(&dslist);
 	memset(&server_by_id.cache, 0, sizeof(server_by_id.cache));
-	PTHREAD_RWLOCKATTR_destroy(&rwlock_attr);
 	RegisterCleanup(&ds_cleanup_element);
 }

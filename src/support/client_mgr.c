@@ -1219,18 +1219,11 @@ struct cleanup_list_element client_mgr_cleanup_element = {
 
 void client_pkginit(void)
 {
-	pthread_rwlockattr_t rwlock_attr;
-
-	PTHREAD_RWLOCKATTR_init(&rwlock_attr);
-	PTHREAD_RWLOCKATTR_setkind_np(
-		&rwlock_attr,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-	PTHREAD_RWLOCK_init(&client_by_ip.cip_lock, &rwlock_attr);
+	PTHREAD_RWLOCK_init(&client_by_ip.cip_lock, NULL);
 	avltree_init(&client_by_ip.t, client_ip_cmpf, 0);
 	client_by_ip.cache_sz = 32767;
 	client_by_ip.cache =
 	    gsh_calloc(client_by_ip.cache_sz, sizeof(struct avltree_node *));
-	PTHREAD_RWLOCKATTR_destroy(&rwlock_attr);
 	RegisterCleanup(&client_mgr_cleanup_element);
 }
 

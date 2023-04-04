@@ -290,21 +290,10 @@ hashtable_init(struct hash_param *hparam)
 	struct hash_table *ht = NULL;
 	/* The index for initializing each partition */
 	uint32_t index = 0;
-	/* Read-Write Lock attributes, to prevent write starvation under
-	   GLIBC */
-	pthread_rwlockattr_t rwlockattr;
 	/* Hash partition */
 	struct hash_partition *partition = NULL;
 	/* The number of fully initialized partitions */
 	uint32_t completed = 0;
-
-	PTHREAD_RWLOCKATTR_init(&rwlockattr);
-
-	/* At some point factor this out into the OS directory.  it is
-	   necessary to prevent writer starvation under GLIBC. */
-	PTHREAD_RWLOCKATTR_setkind_np(
-		&rwlockattrs,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 
 	ht = gsh_calloc(1, sizeof(struct hash_table) +
 			(sizeof(struct hash_partition) *
@@ -323,7 +312,7 @@ hashtable_init(struct hash_param *hparam)
 		partition = (&ht->partitions[index]);
 		RBT_HEAD_INIT(&(partition->rbt));
 
-		PTHREAD_RWLOCK_init(&partition->ht_lock, &rwlockattr);
+		PTHREAD_RWLOCK_init(&partition->ht_lock, NULL);
 
 		/* Allocate a cache if requested */
 		if (hparam->flags & HT_FLAG_CACHE)
@@ -335,7 +324,6 @@ hashtable_init(struct hash_param *hparam)
 	ht->node_pool = pool_basic_init(NULL, sizeof(rbt_node_t));
 	ht->data_pool = pool_basic_init(NULL, sizeof(struct hash_data));
 
-	PTHREAD_RWLOCKATTR_destroy(&rwlockattr);
 	return ht;
 }
 

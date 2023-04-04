@@ -555,6 +555,8 @@ int main(int argc, char *argv[])
 	if (pidfile != -1)
 		close(pidfile);
 
+	nfs_prereq_destroy();
+
 	return 0;
 
 fatal_die:

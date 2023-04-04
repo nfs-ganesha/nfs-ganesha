@@ -259,17 +259,12 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
 {
 	struct mem_fsal_export *myself;
 	int retval = 0;
-	pthread_rwlockattr_t attrs;
 	fsal_status_t fsal_status = {0, 0};
 
 	myself = gsh_calloc(1, sizeof(struct mem_fsal_export));
 
 	glist_init(&myself->mfe_objs);
-	PTHREAD_RWLOCKATTR_init(&attrs);
-	PTHREAD_RWLOCKATTR_setkind_np(&attrs,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
-	PTHREAD_RWLOCK_init(&myself->mfe_exp_lock, &attrs);
-	PTHREAD_RWLOCKATTR_destroy(&attrs);
+	PTHREAD_RWLOCK_init(&myself->mfe_exp_lock, NULL);
 	fsal_export_init(&myself->export);
 	mem_export_ops_init(&myself->export.exp_ops);
 
