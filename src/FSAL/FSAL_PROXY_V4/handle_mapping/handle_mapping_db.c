@@ -651,9 +651,8 @@ static void *database_worker_thread(void *arg)
 
 	if (rc != HANDLEMAP_SUCCESS) {
 		/* Failed init */
-		LogCrit(COMPONENT_FSAL,
-			"ERROR: Database initialization error %d", rc);
-		exit(rc);
+		LogFatal(COMPONENT_FSAL,
+			 "ERROR: Database initialization error %d", rc);
 	}
 
 	/* main loop */
