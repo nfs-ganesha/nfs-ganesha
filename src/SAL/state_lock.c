@@ -722,6 +722,16 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 			dec_state_t_ref(lock_entry->sle_state);
 	}
 
+	if (lock_entry->sle_blocked != STATE_NON_BLOCKING &&
+	    lock_entry->sle_blocked != STATE_CANCELED) {
+		/* Removing a blocking lock, mark as canceled in case of
+		 * racing with granting. This may be because the lock was
+		 * granted and merged with surrounding locks.
+		 */
+		LogEntry("Removing lock and cancelling block", lock_entry);
+		lock_entry->sle_blocked = STATE_CANCELED;
+	}
+
 	lock_entry->sle_owner = NULL;
 	glist_del(&lock_entry->sle_list);
 	lock_entry_dec_ref(lock_entry);
@@ -1723,7 +1733,15 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 	/* Try to grant if not cancelled and has block data and we are able
 	 * to get an export reference.
 	 */
-	if (lock_entry->sle_blocked == STATE_CANCELED) {
+	if (lock_entry->sle_blocked == STATE_NON_BLOCKING) {
+		/* Nothing to do if already granted */
+		LogEntry("Lock already granted", lock_entry);
+		return;
+	} else if (lock_entry->sle_blocked == STATE_GRANTING) {
+		/* Should not happen, but just in case... Nothing to do. */
+		LogEntry("Lock grant already in progress", lock_entry);
+		return;
+	} else if (lock_entry->sle_blocked == STATE_CANCELED) {
 		reason = "Removing canceled blocked lock entry";
 	} else if (lock_entry->sle_block_data == NULL) {
 		reason = "Removing blocked lock entry with no block data";
@@ -1752,6 +1770,8 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 			lock_entry->sle_blocked = blocked;
 			lock_entry->sle_block_data->sbd_grant_type =
 							STATE_GRANT_NONE;
+			LogEntry("Granting callback left lock still blocked",
+				 lock_entry);
 			return;
 		}
 
