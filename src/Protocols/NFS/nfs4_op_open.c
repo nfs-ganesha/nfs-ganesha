@@ -1178,6 +1178,12 @@ static void open4_ex(OPEN4args *arg,
 		st_lock_held = true;
 	}
 
+	/* At this point open has succeeded and we are holding the state
+	 * lock.
+	 */
+	if (arg->share_access & OPEN4_SHARE_ACCESS_WRITE)
+		file_obj->state_hdl->file.fdeleg_stats.fds_num_write_opens++;
+
 	do_delegation(arg, res_OPEN4, data, owner, *file_state, clientid);
  out:
 

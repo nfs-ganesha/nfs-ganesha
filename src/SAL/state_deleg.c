@@ -281,6 +281,7 @@ bool init_deleg_heuristics(struct fsal_obj_handle *obj)
 	statistics->fds_avg_hold = 0;
 	statistics->fds_num_opens = 0;
 	statistics->fds_first_open = 0;
+	statistics->fds_num_write_opens = 0;
 
 	return true;
 }
@@ -377,6 +378,21 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	if (client->num_revokes > 2) { /* more than 2 revokes */
 		resok->delegation.open_delegation4_u.od_whynone.ond_why =
 								WND4_RESOURCE;
+		return false;
+	}
+
+	/* If some client is holding a write file descriptor donot
+	 * delegate. OPEN4_SHARE_ACCESS_READ and OPEN4_SHARE_ACCESS_WRITE
+	 * are handled differently because if we are currently handling
+	 * OPEN4_SHARE_ACCESS_WRITE then we would have incremented the
+	 * counter before calling this function.
+	 */
+	if ((args->share_access & OPEN4_SHARE_ACCESS_READ &&
+		file_stats->fds_num_write_opens > 0) ||
+		(args->share_access & OPEN4_SHARE_ACCESS_WRITE &&
+		file_stats->fds_num_write_opens > 1)) {
+		resok->delegation.open_delegation4_u.od_whynone.ond_why =
+							WND4_CONTENTION;
 		return false;
 	}
 

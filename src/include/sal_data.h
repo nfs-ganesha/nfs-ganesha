@@ -931,6 +931,10 @@ struct file_deleg_stats {
 	uint32_t fds_num_opens;         /* total num of opens so far. */
 	time_t fds_first_open;          /* time that we started recording
 					   num_opens */
+	uint32_t fds_num_write_opens; /* total num of opens in write mode
+					   incremented irrespective of
+					   whether or not delegation
+					   was offered for the file */
 };
 
 enum cbgetattr_state {

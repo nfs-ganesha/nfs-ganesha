@@ -160,6 +160,8 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	struct glist_head *glist = NULL;
 	/* Secondary safe iterator to continue traversal on delete */
 	struct glist_head *glistn = NULL;
+	/* NFS4 Share access state with which this obj was opened*/
+	unsigned int share_access_state = 0;
 	struct fsal_obj_handle *state_obj;
 	bool ok;
 
@@ -249,6 +251,9 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	STATELOCK_lock(state_obj);
 
+	if(state_found->state_type == STATE_TYPE_SHARE) {
+		share_access_state = state_found->state_data.share.share_access;
+	}
 	/* Check is held locks remain */
 	glist_for_each(glist, &state_found->state_data.share.share_lockstates) {
 		state_t *lock_state =
@@ -313,6 +318,11 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0)
 		op_ctx->clientid = NULL;
+
+	if(share_access_state & OPEN4_SHARE_ACCESS_WRITE &&
+		state_obj->type == REGULAR_FILE) {
+		state_obj->state_hdl->file.fdeleg_stats.fds_num_write_opens --;
+	}
 
 	STATELOCK_unlock(state_obj);
 	res_CLOSE4->status = NFS4_OK;
