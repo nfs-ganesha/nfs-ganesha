@@ -428,6 +428,12 @@ typedef struct nfs_core_param {
 	uint32_t heartbeat_freq;
 	/** Whether to use device major/minor for fsid. Defaults to false. */
 	bool fsid_device;
+	/** How many times to attempt retry of stat while resolving POSIX
+	 *  filesystems */
+	uint32_t resolve_fs_retries;
+	/** Delay (in mili-seconds) between stat calls when trying to resolve
+	 *  POSIX filesystems */
+	uint32_t resolve_fs_delay;
 	/** Whether to use Pseudo (true) or Path (false) for NFS v3 and 9P
 	    mounts. */
 	bool mount_path_pseudo;

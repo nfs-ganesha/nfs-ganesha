@@ -1014,18 +1014,54 @@ int resolve_posix_filesystem(const char *path,
 {
 	int retval = EAGAIN;
 	struct stat statbuf;
+	uint32_t retries_left = nfs_param.core_param.resolve_fs_retries;
 
-	while (retval == EAGAIN) {
+	while (retval == EAGAIN && retries_left > 0) {
+		struct timespec how_long = {
+			/* 1M micros per second */
+			.tv_sec  = nfs_param.core_param.resolve_fs_delay / 1000,
+			/* Remainder => nanoseconds */
+			.tv_nsec = (nfs_param.core_param.resolve_fs_delay %
+				    1000) * 1000000
+		};
+
 		/* Need to retry stat on path until we don't get EAGAIN in case
 		 * autofs needed to mount the file system.
 		 */
 		retval = stat(path, &statbuf);
+
 		if (retval != 0) {
 			retval = errno;
 			LogDebug(COMPONENT_FSAL,
 				 "stat returned %s (%d) while resolving export path %s %s",
 				 strerror(retval), retval, path,
 				 retval == EAGAIN ? "(may retry)" : "(failed)");
+		}
+
+		retries_left--;
+
+		if (retries_left == 0) {
+			LogCrit(COMPONENT_FSAL,
+				"Stat on filesystem %s failed, no retries remaining.",
+				path);
+			break;
+		}
+
+		if (nanosleep(&how_long, NULL) != 0) {
+			/*
+			 * Let interrupts wake us up and not care. Anything else
+			 * should be fatal.
+			 */
+
+			if (errno != EINTR) {
+				retval = errno;
+				LogCrit(COMPONENT_FSAL,
+					"nanosleep failed. Asked for %"PRIu32
+					" msec. Errno %d (%s)",
+					nfs_param.core_param.resolve_fs_delay,
+					retval, strerror(retval));
+				return retval;
+			}
 		}
 	}
 

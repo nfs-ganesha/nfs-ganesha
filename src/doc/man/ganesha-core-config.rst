@@ -150,6 +150,14 @@ Clustered(bool, default true)
 fsid_device(bool, default false)
     Whether to use device major/minor for fsid.
 
+resolve_fs_retries(uint32_t, range 1 to 1000, default 10)
+    How many times to attempt stat while resolving POSIX filesystems for
+    exports.
+
+resolve_fs_delay(uint32_t, range 1 to 1000, default 100)
+    How long to delay between stat attempts while resolving POSIX filesystems
+    for exports.
+
 mount_path_pseudo(bool, default false)
     Whether to use Pseudo (true) or Path (false) for NFS v3 and 9P mounts.
 

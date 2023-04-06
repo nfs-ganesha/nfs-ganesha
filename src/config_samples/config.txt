@@ -167,6 +167,10 @@ NFS_CORE_PARAM {}
 
 	fsid_device(bool, default false)
 
+	resolve_fs_retries(uint32_t, range 1 to 1000, default 10)
+
+	resolve_fs_delay(uint32_t, range 1 to 1000, default 100)
+
 	mount_path_pseudo(bool, default false)
 
 	Enable_UDP(enum, values [False, True, Mount], default True)
