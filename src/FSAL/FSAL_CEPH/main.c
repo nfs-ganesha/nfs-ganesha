@@ -448,6 +448,16 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
+	ceph_status = ceph_conf_set(export->cmount, "client_acl_type",
+				    "posix_acl");
+
+	if (ceph_status < 0) {
+		LogCrit(COMPONENT_FSAL,
+			"Unable to set Ceph client_acl_type for %s: %d",
+			CTX_FULLPATH(op_ctx), ceph_status);
+		goto error;
+	}
+
 	ceph_status = ceph_init(export->cmount);
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
