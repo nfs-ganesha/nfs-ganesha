@@ -1650,7 +1650,7 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 	if (!inline_xdr_u_int(xdr, &len))
 		return FATTR_XDR_FAILED;
 
-	if (len <= 0 || len > 1024) {
+	if (len == 0 || len > 1024) {
 		args->nfs_status = NFS4ERR_INVAL;
 		return FATTR_XDR_FAILED;
 	}
@@ -1699,7 +1699,7 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 	if (!inline_xdr_u_int(xdr, &len))
 		return FATTR_XDR_FAILED;
 
-	if (len <= 0 || len > 1024) {
+	if (len == 0 || len > 1024) {
 		args->nfs_status = NFS4ERR_INVAL;
 		return FATTR_XDR_FAILED;
 	}
