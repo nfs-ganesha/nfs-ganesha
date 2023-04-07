@@ -283,7 +283,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				   0, _9p_readdir_callback, &tracker);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		/* The avl lookup will try to get the next entry after 'cookie'.
-		 * If none is found CACHE_INODE_NOT_FOUND is returned
+		 * If none is found ERR_FSAL_NOENT is returned
 		 * In the 9P logic, this situation just mean
 		 * "end of directory reached" */
 		return _9p_rerror(req9p, msgtag,

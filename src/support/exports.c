@@ -2702,7 +2702,7 @@ void release_export(struct gsh_export *export, bool config)
 		/* No more root entry, bail out, this export is
 		 * probably about to be destroyed.
 		 */
-		LogInfo(COMPONENT_CACHE_INODE,
+		LogInfo(COMPONENT_MDCACHE,
 			"Export root for export id %d status %s",
 			export->export_id, msg_fsal_err(fsal_status.major));
 		return;

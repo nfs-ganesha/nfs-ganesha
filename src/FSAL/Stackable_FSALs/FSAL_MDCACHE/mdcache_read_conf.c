@@ -102,7 +102,7 @@ static void *mdcache_param_init(void *link_mem, void *self_struct)
 }
 
 struct config_block mdcache_param_blk = {
-	.dbus_interface_name = "org.ganesha.nfsd.config.cache_inode",
+	.dbus_interface_name = "org.ganesha.nfsd.config.mdcache",
 	.blk_desc.name = "MDCACHE",
 	.blk_desc.altname = "CacheInode",
 	.blk_desc.type = CONFIG_BLOCK,

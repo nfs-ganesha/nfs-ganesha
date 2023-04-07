@@ -149,8 +149,6 @@ const char *state_err_str(state_status_t err)
 		return "STATE_FILE_BIG";
 	case STATE_GRACE_PERIOD:
 		return "STATE_GRACE_PERIOD";
-	case STATE_CACHE_INODE_ERR:
-		return "STATE_CACHE_INODE_ERR";
 	case STATE_SIGNAL_ERROR:
 		return "STATE_SIGNAL_ERROR";
 	case STATE_FILE_OPEN:
@@ -480,7 +478,6 @@ nfsstat4 nfs4_Errno_state(state_status_t error)
 		break;
 
 	case STATE_INVALID_ARGUMENT:
-	case STATE_CACHE_INODE_ERR:
 	case STATE_INCONSISTENT_ENTRY:
 	case STATE_HASH_TABLE_ERROR:
 	case STATE_ASYNC_POST_ERROR:
@@ -635,7 +632,6 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 		nfserror = NFS3ERR_BADHANDLE;
 		break;
 
-	case STATE_CACHE_INODE_ERR:
 	case STATE_INCONSISTENT_ENTRY:
 	case STATE_HASH_TABLE_ERROR:
 	case STATE_ASYNC_POST_ERROR:

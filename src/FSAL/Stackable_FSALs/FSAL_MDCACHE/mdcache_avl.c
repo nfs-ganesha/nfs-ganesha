@@ -79,7 +79,7 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 	struct avltree_node *node;
 	mdcache_dir_entry_t *next;
 
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 			"Delete dir entry %p %s",
 			v, v->name);
 
@@ -167,7 +167,7 @@ void unchunk_dirent(mdcache_dir_entry_t *dirent)
 {
 	mdcache_entry_t *parent = dirent->chunk->parent;
 
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 			"Unchunking %p %s",
 			dirent, dirent->name);
 
@@ -238,7 +238,7 @@ void mdcache_avl_remove(mdcache_entry_t *parent,
 	if (dirent->ckey.kv.len)
 		mdcache_key_delete(&dirent->ckey);
 
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 			"Just freed dirent %p from chunk %p parent %p",
 			dirent, chunk, (chunk) ? chunk->parent : NULL);
 
@@ -259,7 +259,7 @@ int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 {
 	struct avltree_node *node;
 
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 			"Insert dirent %p for %s on entry=%p FSAL cookie=%"
 			PRIx64,
 			v, v->name, entry, v->ck);
@@ -271,7 +271,7 @@ int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 				     avl_dirent_ck_cmpf);
 
 	if (!node) {
-		LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+		LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 			    "inserted dirent %p for %s on entry=%p FSAL cookie=%"
 			    PRIx64,
 			    v, v->name, entry, v->ck);
@@ -279,7 +279,7 @@ int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 	}
 
 	/* already inserted */
-	LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+	LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 		"Already existent when inserting dirent %p for %s on entry=%p FSAL cookie=%"
 		PRIx64
 		", duplicated directory cookies make READDIR unreliable.",
@@ -318,7 +318,7 @@ mdcache_avl_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent)
 	struct avltree_node *node;
 	int code;
 
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 			"Insert dir entry %p %s",
 			v, v->name);
 #ifdef DEBUG_MDCACHE
@@ -356,7 +356,7 @@ again:
 			}
 		}
 
-		if (isFullDebug(COMPONENT_CACHE_INODE) ||
+		if (isFullDebug(COMPONENT_MDCACHE) ||
 		    isFullDebug(COMPONENT_NFS_READDIR)) {
 			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
@@ -364,7 +364,7 @@ again:
 			(void) display_mdcache_key(&dspbuf, &v->ckey);
 
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
+					COMPONENT_MDCACHE,
 					"Inserted dirent %s with ckey %s",
 					v->name, str);
 		}
@@ -376,7 +376,7 @@ again:
 	v2 = avltree_container_of(node, mdcache_dir_entry_t, node_name);
 
 	/* Same name, probably already inserted. */
-	LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+	LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 		    "Already existent when inserting new dirent on entry=%p name=%s",
 		    entry, v->name);
 
@@ -384,7 +384,7 @@ again:
 		/* The two names don't seem to have the same object
 		 * handle digest. Discard the old dirent and try again.
 		 */
-		if (isFullDebug(COMPONENT_CACHE_INODE) ||
+		if (isFullDebug(COMPONENT_MDCACHE) ||
 		    isFullDebug(COMPONENT_NFS_READDIR)) {
 			char str1[LOG_BUFF_LEN / 2] = "\0";
 			char str2[LOG_BUFF_LEN / 2] = "\0";
@@ -397,7 +397,7 @@ again:
 			(void) display_mdcache_key(&dspbuf2, &v2->ckey);
 
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
-					COMPONENT_CACHE_INODE,
+					COMPONENT_MDCACHE,
 					"Keys for %s don't match v=%s v2=%s",
 					v->name, str1, str2);
 		}
@@ -432,7 +432,7 @@ again:
 			v2 = NULL;
 			code = -4;
 		} else {
-			if (isFullDebug(COMPONENT_CACHE_INODE) ||
+			if (isFullDebug(COMPONENT_MDCACHE) ||
 			    isFullDebug(COMPONENT_NFS_READDIR)) {
 				char str[LOG_BUFF_LEN] = "\0";
 				struct display_buffer dspbuf = {
@@ -441,7 +441,7 @@ again:
 				(void) display_mdcache_key(&dspbuf, &v2->ckey);
 
 				LogFullDebugAlt(COMPONENT_NFS_READDIR,
-						COMPONENT_CACHE_INODE,
+						COMPONENT_MDCACHE,
 						"Updated dirent %p with ck=%"
 						PRIx64
 						" and chunk %p eod=%s ckey=%s",
@@ -462,7 +462,7 @@ again:
 		if (v->ck == v2->ck) {
 			/* completely a duplicate entry, ignore it */
 			LogDebugAlt(COMPONENT_NFS_READDIR,
-				    COMPONENT_CACHE_INODE,
+				    COMPONENT_MDCACHE,
 				    "Duplicate filename %s insert into chunk %p, existing was in chunk %p, ignoring",
 				    v->name, v->chunk, v2->chunk);
 			code = 0;
@@ -471,7 +471,7 @@ again:
 			 * error.
 			 */
 			LogDebugAlt(COMPONENT_NFS_READDIR,
-				    COMPONENT_CACHE_INODE,
+				    COMPONENT_MDCACHE,
 				    "Duplicate filename %s with different cookies ckey %"
 				    PRIx64
 				    " chunk %p don't match existing ckey %"
@@ -486,7 +486,7 @@ again:
 		 * be in a chunk, in any case, the entry already
 		 * exists so we are good.
 		 */
-		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 				"Duplicate insert of %s v->chunk=%p v2->chunk=%p",
 				v->name, v->chunk, v2->chunk);
 		code = 0;
@@ -563,7 +563,7 @@ mdcache_dir_entry_t *mdcache_avl_lookup(mdcache_entry_t *entry,
 #endif
 	size_t namelen = strlen(name);
 
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 			"Lookup %s", name);
 
 #if AVL_HASH_MURMUR3
@@ -586,7 +586,7 @@ mdcache_dir_entry_t *mdcache_avl_lookup(mdcache_entry_t *entry,
 		return v2;
 	}
 
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 			"entry not found %s", name);
 
 	return NULL;
@@ -609,7 +609,7 @@ void mdcache_avl_clean_trees(mdcache_entry_t *parent)
 	while ((dirent_node = avltree_first(&parent->fsobj.fsdir.avl.t))) {
 		dirent = avltree_container_of(dirent_node, mdcache_dir_entry_t,
 					      node_name);
-		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 				"Invalidate %p %s", dirent, dirent->name);
 
 		mdcache_avl_remove(parent, dirent);

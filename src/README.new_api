@@ -4,6 +4,9 @@ This README will be expanded as the work progresses.  It will/should
 be turned into a fsal writer's HOWTO at some point.  This is a work in
 progress and therefore still in flux at this point.
 
+Note that this document is pretty out of date, but the general scheme is
+applicable. It pre-dates the conversion from Cache Inode to MDCACHE.
+
 State
 -----
 The server builds and runs to the point of processing exports.  Only the

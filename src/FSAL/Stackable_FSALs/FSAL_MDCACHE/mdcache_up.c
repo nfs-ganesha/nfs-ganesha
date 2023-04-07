@@ -128,7 +128,7 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 				     CIH_GET_WLOCK | CIH_GET_UNLOCK_ON_MISS,
 				     __func__, __LINE__);
 	if (!entry) {
-		LogDebug(COMPONENT_CACHE_INODE, "no entry found");
+		LogDebug(COMPONENT_MDCACHE, "no entry found");
 		return fsalstat(ERR_FSAL_STALE, 0);
 	}
 
@@ -139,7 +139,7 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 	 * releasing the latch.
 	 */
 	refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
-	LogDebug(COMPONENT_CACHE_INODE, "entry %p has refcnt of %d", entry,
+	LogDebug(COMPONENT_MDCACHE, "entry %p has refcnt of %d", entry,
 		 refcnt);
 	if (refcnt == 1) {
 		mdcache_lru_ref(entry, LRU_FLAG_NONE);
@@ -220,7 +220,7 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	/* Knock things out if the link count falls to 0. */
 
 	if ((flags & fsal_up_nlink) && (attr->numlinks == 0)) {
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_MDCACHE,
 			     "Entry %p Clearing MDCACHE_TRUST_ATTRS, MDCACHE_TRUST_CONTENT, MDCACHE_DIR_POPULATED",
 			     entry);
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
@@ -382,7 +382,7 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		entry->attrs.valid_mask |= mask_set;
 		/* If directory can not trust content anymore. */
 		if (entry->obj_handle.type == DIRECTORY) {
-			LogFullDebug(COMPONENT_CACHE_INODE,
+			LogFullDebug(COMPONENT_MDCACHE,
 				     "Entry %p Clearing MDCACHE_TRUST_CONTENT, MDCACHE_DIR_POPULATED",
 				     entry);
 			atomic_clear_uint32_t_bits(&entry->mde_flags,

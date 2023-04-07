@@ -604,13 +604,13 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 				 * mdcache_lru_clean without the export still
 				 * being valid.
 				 */
-				LogFatal(COMPONENT_CACHE_INODE,
+				LogFatal(COMPONENT_MDCACHE,
 					 "An entry (%p) having an unmappable export_id (%"
 					 PRIi32") is unexpected",
 					 entry, export_id);
 			}
 
-			LogFullDebug(COMPONENT_CACHE_INODE,
+			LogFullDebug(COMPONENT_MDCACHE,
 				     "Creating a new context with export id%"
 				     PRIi32,
 				     export_id);
@@ -626,7 +626,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 			 */
 			assert(op_ctx);
 			assert(op_ctx->ctx_export);
-			LogFullDebug(COMPONENT_CACHE_INODE,
+			LogFullDebug(COMPONENT_MDCACHE,
 				     "Trusting op_ctx export id %"PRIu16,
 				     op_ctx->ctx_export->export_id);
 		}
@@ -638,7 +638,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 		status = fsal_close(&entry->obj_handle);
 
 		if (FSAL_IS_ERROR(status)) {
-			LogCrit(COMPONENT_CACHE_INODE_LRU,
+			LogCrit(COMPONENT_MDCACHE_LRU,
 				"Error closing file in cleanup: %s",
 				fsal_err_txt(status));
 		}
@@ -965,13 +965,13 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 		 * The dirents list is effectively properly initialized.
 		 */
 		chunk = container_of(lru, struct dir_chunk, chunk_lru);
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_MDCACHE,
 			     "Recycling chunk at %p.", chunk);
 	} else {
 		/* alloc chunk (if fails, aborts) */
 		chunk = gsh_calloc(1, sizeof(struct dir_chunk));
 		glist_init(&chunk->dirents);
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_MDCACHE,
 			     "New chunk %p.", chunk);
 		(void) atomic_inc_int64_t(&lru_state.chunks_used);
 	}
@@ -1130,7 +1130,7 @@ static inline int lru_run_lane(int lane)
 
 	q = &qlane->L1;
 
-	LogDebug(COMPONENT_CACHE_INODE_LRU,
+	LogDebug(COMPONENT_MDCACHE_LRU,
 		 "Reaping up to %d entries from lane %d",
 		 lru_state.per_lane_work, lane);
 
@@ -1177,7 +1177,7 @@ static inline int lru_run_lane(int lane)
 	} /* for_each_safe lru */
 
 	QUNLOCK(qlane);
-	LogDebug(COMPONENT_CACHE_INODE_LRU,
+	LogDebug(COMPONENT_MDCACHE_LRU,
 		 "Actually processed %zd entries on lane %d",
 		 workdone, lane);
 
@@ -1257,9 +1257,9 @@ lru_run(struct fridgethr_context *ctx)
 
 	SetNameFunction("cache_lru");
 
-	LogFullDebug(COMPONENT_CACHE_INODE_LRU, "LRU awakes.");
+	LogFullDebug(COMPONENT_MDCACHE_LRU, "LRU awakes.");
 
-	LogFullDebug(COMPONENT_CACHE_INODE_LRU, "lru entries: %" PRIu64,
+	LogFullDebug(COMPONENT_MDCACHE_LRU, "lru entries: %" PRIu64,
 		     atomic_fetch_uint64_t(&lru_state.entries_used));
 
 	curr_time = time(NULL);
@@ -1272,11 +1272,11 @@ lru_run(struct fridgethr_context *ctx)
 	 * done for logging.
 	 */
 	for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-		LogDebug(COMPONENT_CACHE_INODE_LRU,
+		LogDebug(COMPONENT_MDCACHE_LRU,
 			 "Demoting up to %d entries from lane %d",
 			 lru_state.per_lane_work, lane);
 
-		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+		LogFullDebug(COMPONENT_MDCACHE_LRU,
 			     "totalwork=%d", totalwork);
 
 		totalwork += lru_run_lane(lane);
@@ -1293,7 +1293,7 @@ lru_run(struct fridgethr_context *ctx)
 		    lru_state.entries_hiwat) {
 			size_t released = 0;
 
-			LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+			LogFullDebug(COMPONENT_MDCACHE_LRU,
 				"Entries used is %" PRIu64
 				" and above water mark, LRU want release %d entries",
 				atomic_fetch_uint64_t(&lru_state.entries_used),
@@ -1301,10 +1301,10 @@ lru_run(struct fridgethr_context *ctx)
 
 			released = mdcache_lru_release_entries(
 					lru_state.entries_release_size);
-			LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+			LogFullDebug(COMPONENT_MDCACHE_LRU,
 				"Actually release %zd entries", released);
 		} else {
-			LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+			LogFullDebug(COMPONENT_MDCACHE_LRU,
 				"Entries used is %" PRIu64
 				" and low water mark: not releasing",
 				atomic_fetch_uint64_t(&lru_state.entries_used));
@@ -1321,12 +1321,12 @@ lru_run(struct fridgethr_context *ctx)
 
 	fridgethr_setwait(ctx, threadwait);
 
-	LogDebug(COMPONENT_CACHE_INODE_LRU,
+	LogDebug(COMPONENT_MDCACHE_LRU,
 		 "After work, count:%" PRIu64
 		 " new_thread_wait=%" PRIu64,
 		 atomic_fetch_uint64_t(&lru_state.entries_used),
 		 ((uint64_t) threadwait));
-	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+	LogFullDebug(COMPONENT_MDCACHE_LRU,
 		     "totalwork=%d lanes=%d",
 		     totalwork, LRU_N_Q_LANES);
 }
@@ -1357,7 +1357,7 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 
 	q = &qlane->L1;
 
-	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+	LogFullDebug(COMPONENT_MDCACHE_LRU,
 		 "Reaping up to %d chunks from lane %zd",
 		 lru_state.per_lane_work, lane);
 
@@ -1390,7 +1390,7 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 	} /* for_each_safe lru */
 
 	QUNLOCK(qlane);
-	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+	LogFullDebug(COMPONENT_MDCACHE_LRU,
 		 "Actually processed %zd chunks on lane %zd",
 		 workdone, lane);
 
@@ -1431,13 +1431,13 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 
 	SetNameFunction("chunk_lru");
 
-	LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+	LogFullDebug(COMPONENT_MDCACHE_LRU,
 		     "LRU awakes, lru chunks used: %" PRIu64,
 		     lru_state.chunks_used);
 
 	/* Total chunks demoted to L2 between all lanes and all current runs. */
 	for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-		LogFullDebug(COMPONENT_CACHE_INODE_LRU,
+		LogFullDebug(COMPONENT_MDCACHE_LRU,
 			 "Reaping up to %d chunks from lane %zd totalwork=%zd",
 			 lru_state.per_lane_work, lane, totalwork);
 
@@ -1458,7 +1458,7 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 
 	fridgethr_setwait(ctx, new_thread_wait);
 
-	LogDebug(COMPONENT_CACHE_INODE_LRU,
+	LogDebug(COMPONENT_MDCACHE_LRU,
 		 "After work, threadwait=%" PRIu64 " totalwork=%zd",
 		 ((uint64_t) new_thread_wait), totalwork);
 }
@@ -1567,7 +1567,7 @@ mdcache_lru_pkginit(void)
 	/* spawn LRU background thread */
 	code = fridgethr_init(&lru_fridge, "LRU_fridge", &frp);
 	if (code != 0) {
-		LogMajor(COMPONENT_CACHE_INODE_LRU,
+		LogMajor(COMPONENT_MDCACHE_LRU,
 			 "Unable to initialize LRU fridge, error code %d.",
 			 code);
 		return fsalstat(posix2fsal_error(code), code);
@@ -1575,7 +1575,7 @@ mdcache_lru_pkginit(void)
 
 	code = fridgethr_submit(lru_fridge, lru_run, NULL);
 	if (code != 0) {
-		LogMajor(COMPONENT_CACHE_INODE_LRU,
+		LogMajor(COMPONENT_MDCACHE_LRU,
 			 "Unable to start Entry LRU thread, error code %d.",
 			 code);
 		return fsalstat(posix2fsal_error(code), code);
@@ -1583,7 +1583,7 @@ mdcache_lru_pkginit(void)
 
 	code = fridgethr_submit(lru_fridge, chunk_lru_run, NULL);
 	if (code != 0) {
-		LogMajor(COMPONENT_CACHE_INODE_LRU,
+		LogMajor(COMPONENT_MDCACHE_LRU,
 			 "Unable to start Chunk LRU thread, error code %d.",
 			 code);
 		return fsalstat(posix2fsal_error(code), code);
@@ -1620,11 +1620,11 @@ mdcache_lru_pkgshutdown(void)
 					120);
 
 	if (rc == ETIMEDOUT) {
-		LogMajor(COMPONENT_CACHE_INODE_LRU,
+		LogMajor(COMPONENT_MDCACHE_LRU,
 			 "Shutdown timed out, cancelling threads.");
 		fridgethr_cancel(lru_fridge);
 	} else if (rc != 0) {
-		LogMajor(COMPONENT_CACHE_INODE_LRU,
+		LogMajor(COMPONENT_MDCACHE_LRU,
 			 "Failed shutting down LRU thread: %d", rc);
 	}
 
@@ -1827,7 +1827,7 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		}
 
 		if (do_cleanup) {
-			LogDebug(COMPONENT_CACHE_INODE,
+			LogDebug(COMPONENT_MDCACHE,
 				 "LRU_ENTRY_CLEANUP of entry %p",
 				 entry);
 			state_wipe_file(&entry->obj_handle);
@@ -1925,7 +1925,7 @@ static void lru_clean_chunk(struct dir_chunk *chunk)
 {
 	struct lru_q *lq;
 
-	LogFullDebug(COMPONENT_CACHE_INODE, "Removing chunk %p", chunk);
+	LogFullDebug(COMPONENT_MDCACHE, "Removing chunk %p", chunk);
 
 	/* Remove chunk and mark it as dead. */
 	lq = chunk_lru_queue_of(chunk);
@@ -1970,7 +1970,7 @@ void _mdcache_lru_unref_chunk(struct dir_chunk *chunk, const char *func,
 		lru_clean_chunk(chunk);
 
 		/* And now we can free the chunk. */
-		LogFullDebug(COMPONENT_CACHE_INODE, "Freeing chunk %p", chunk);
+		LogFullDebug(COMPONENT_MDCACHE, "Freeing chunk %p", chunk);
 		gsh_free(chunk);
 	}
 	QUNLOCK(qlane);

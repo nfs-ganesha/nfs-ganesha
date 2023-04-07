@@ -123,9 +123,9 @@ class RetrieveExportStats():
         stats_op = self.exportmgrobj.get_dbus_method("GetGlobalOPS",
                                                      self.dbus_exportstats_name)
         return GlobalStats(stats_op())
-    # cache inode stats
+    # mdcache stats
     def inode_stats(self):
-        stats_op = self.exportmgrobj.get_dbus_method("ShowCacheInode",
+        stats_op = self.exportmgrobj.get_dbus_method("ShowMDCache",
                                                      self.dbus_exportstats_name)
         return InodeStats(stats_op())
     # list of all exports

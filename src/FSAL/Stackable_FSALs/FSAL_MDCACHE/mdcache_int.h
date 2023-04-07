@@ -622,7 +622,7 @@ extern struct config_block mdcache_param_blk;
 
 /* During a callback from a sub-FSAL, call using MDCACHE's export */
 #define supercall_raw(myexp, call) do { \
-	LogFullDebug(COMPONENT_CACHE_INODE, "supercall %s", myexp->name); \
+	LogFullDebug(COMPONENT_MDCACHE, "supercall %s", myexp->name); \
 	op_ctx->fsal_export = &(myexp)->mfe_exp; \
 	call; \
 	op_ctx->fsal_export = (myexp)->mfe_exp.sub_export; \
@@ -988,8 +988,8 @@ static inline void
 _mdc_unreachable(mdcache_entry_t *entry,
 		 char *file, int line, char *function)
 {
-	if (isDebug(COMPONENT_CACHE_INODE)) {
-		DisplayLogComponentLevel(COMPONENT_CACHE_INODE,
+	if (isDebug(COMPONENT_MDCACHE)) {
+		DisplayLogComponentLevel(COMPONENT_MDCACHE,
 					 file, line, function, NIV_DEBUG,
 					 "Unreachable %s entry %p %s state",
 					 object_file_type_to_str(
@@ -1163,10 +1163,10 @@ fsal_status_t mdcache_export_up_ops_init(struct fsal_up_vector *my_up_ops,
 
 /* Debug functions */
 #define MDC_LOG_KEY(key) do { \
-	LogFullDebugOpaque(COMPONENT_CACHE_INODE, \
+	LogFullDebugOpaque(COMPONENT_MDCACHE, \
 			   "FSAL key: %s", 128, (key)->kv.addr, \
 			   (key)->kv.len); \
-	LogFullDebug(COMPONENT_CACHE_INODE, "hash key: %lx", (key)->hk); \
+	LogFullDebug(COMPONENT_MDCACHE, "hash key: %lx", (key)->hk); \
 } while (0)
 
 static inline
@@ -1181,7 +1181,7 @@ fsal_status_t mdcache_refresh_attrs_no_invalidate(mdcache_entry_t *entry)
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_CACHE_INODE, "Refresh attributes failed %s",
+		LogDebug(COMPONENT_MDCACHE, "Refresh attributes failed %s",
 			 fsal_err_txt(status));
 		if (status.major == ERR_FSAL_STALE)
 			mdcache_kill_entry(entry);

@@ -1743,7 +1743,7 @@ void fsal_init_fds_limit(struct fd_lru_parameter *params)
 	/* Find out the system-imposed file descriptor limit */
 	if (get_open_file_limit(&rlim) != 0) {
 		code = errno;
-		LogCrit(COMPONENT_CACHE_INODE_LRU,
+		LogCrit(COMPONENT_MDCACHE_LRU,
 			"Call to getrlimit failed with error %d. This should not happen.  Assigning default of %d.",
 			code, fd_lru_state.fd_fallback_limit);
 		fd_lru_state.fds_system_imposed =
@@ -1754,7 +1754,7 @@ void fsal_init_fds_limit(struct fd_lru_parameter *params)
 			   if setrlimit fails. */
 			rlim_t old_soft = rlim.rlim_cur;
 
-			LogInfo(COMPONENT_CACHE_INODE_LRU,
+			LogInfo(COMPONENT_MDCACHE_LRU,
 				"Attempting to increase soft limit from %"
 				PRIu64 " to hard limit of %" PRIu64,
 				(uint64_t) rlim.rlim_cur,
@@ -1762,7 +1762,7 @@ void fsal_init_fds_limit(struct fd_lru_parameter *params)
 			rlim.rlim_cur = rlim.rlim_max;
 			if (setrlimit(RLIMIT_NOFILE, &rlim) < 0) {
 				code = errno;
-				LogWarn(COMPONENT_CACHE_INODE_LRU,
+				LogWarn(COMPONENT_MDCACHE_LRU,
 					"Attempt to raise soft FD limit to hard FD limit failed with error %d.  Sticking to soft limit.",
 					code);
 				rlim.rlim_cur = old_soft;
@@ -1775,7 +1775,7 @@ void fsal_init_fds_limit(struct fd_lru_parameter *params)
 			nr_open = fopen("/proc/sys/fs/nr_open", "r");
 			if (nr_open == NULL) {
 				code = errno;
-				LogWarn(COMPONENT_CACHE_INODE_LRU,
+				LogWarn(COMPONENT_MDCACHE_LRU,
 					"Attempt to open /proc/sys/fs/nr_open failed (%d)",
 					code);
 				goto err_open;
@@ -1787,15 +1787,15 @@ void fsal_init_fds_limit(struct fd_lru_parameter *params)
 			if (code != 1) {
 				code = errno;
 
-				LogMajor(COMPONENT_CACHE_INODE_LRU,
+				LogMajor(COMPONENT_MDCACHE_LRU,
 					 "The rlimit on open file descriptors is infinite and the attempt to find the system maximum failed with error %d.",
 					 code);
-				LogMajor(COMPONENT_CACHE_INODE_LRU,
+				LogMajor(COMPONENT_MDCACHE_LRU,
 					 "Assigning the default fallback of %d which is almost certainly too small.",
 					 fd_lru_state.fd_fallback_limit);
-				LogMajor(COMPONENT_CACHE_INODE_LRU,
+				LogMajor(COMPONENT_MDCACHE_LRU,
 					 "If you are on a Linux system, this should never happen.");
-				LogMajor(COMPONENT_CACHE_INODE_LRU,
+				LogMajor(COMPONENT_MDCACHE_LRU,
 					 "If you are running some other system, please set an rlimit on file descriptors (for example, with ulimit) for this process and consider editing "
 					 __FILE__
 					 "to add support for finding your system's maximum.");
@@ -1810,7 +1810,7 @@ err_open:
 		} else {
 			fd_lru_state.fds_system_imposed = rlim.rlim_cur;
 		}
-		LogInfo(COMPONENT_CACHE_INODE_LRU,
+		LogInfo(COMPONENT_MDCACHE_LRU,
 			"Setting the system-imposed limit on FDs to %d.",
 			fd_lru_state.fds_system_imposed);
 	}
@@ -1869,7 +1869,7 @@ fsal_status_t fd_lru_pkginit(struct fd_lru_parameter *params)
 	/* spawn LRU background thread */
 	code = fridgethr_init(&fd_lru_fridge, "FD_LRU_fridge", &frp);
 	if (code != 0) {
-		LogMajor(COMPONENT_CACHE_INODE_LRU,
+		LogMajor(COMPONENT_MDCACHE_LRU,
 			 "Unable to initialize FD LRU fridge, error code %d.",
 			 code);
 		return fsalstat(posix2fsal_error(code), code);
@@ -1877,7 +1877,7 @@ fsal_status_t fd_lru_pkginit(struct fd_lru_parameter *params)
 
 	code = fridgethr_submit(fd_lru_fridge, fd_lru_run, NULL);
 	if (code != 0) {
-		LogMajor(COMPONENT_CACHE_INODE_LRU,
+		LogMajor(COMPONENT_MDCACHE_LRU,
 			 "Unable to start Entry LRU thread, error code %d.",
 			 code);
 		return fsalstat(posix2fsal_error(code), code);
@@ -1898,11 +1898,11 @@ fsal_status_t fd_lru_pkgshutdown(void)
 	rc = fridgethr_sync_command(fd_lru_fridge, fridgethr_comm_stop, 120);
 
 	if (rc == ETIMEDOUT) {
-		LogMajor(COMPONENT_CACHE_INODE_LRU,
+		LogMajor(COMPONENT_MDCACHE_LRU,
 			 "Shutdown timed out, cancelling threads.");
 		fridgethr_cancel(fd_lru_fridge);
 	} else if (rc != 0) {
-		LogMajor(COMPONENT_CACHE_INODE_LRU,
+		LogMajor(COMPONENT_MDCACHE_LRU,
 			 "Failed shutting down LRU thread: %d", rc);
 	}
 

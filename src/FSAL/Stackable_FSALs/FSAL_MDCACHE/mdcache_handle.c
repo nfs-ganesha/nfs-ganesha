@@ -111,7 +111,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 		return status;
 	}
 
-	LogFullDebug(COMPONENT_CACHE_INODE,
+	LogFullDebug(COMPONENT_MDCACHE,
 		     "%sCreated entry %p FSAL %s for %s",
 		     tag, new_entry, new_entry->sub_handle->fsal->name,
 		     name);
@@ -131,7 +131,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 					    invalidate);
 
 		if (FSAL_IS_ERROR(status)) {
-			LogDebug(COMPONENT_CACHE_INODE,
+			LogDebug(COMPONENT_MDCACHE,
 				 "%s%s failed because add dirent failed",
 				 tag, name);
 
@@ -151,7 +151,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 	*new_obj = &new_entry->obj_handle;
 
 	if (attrs_out != NULL) {
-		LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
+		LogAttrlist(COMPONENT_MDCACHE, NIV_FULL_DEBUG,
 			    tag, attrs_out, true);
 	}
 
@@ -230,14 +230,14 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 	       );
 
 	if (unlikely(FSAL_IS_ERROR(status))) {
-		LogDebug(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_MDCACHE,
 			 "mkdir %s failed with %s",
 			 name, fsal_err_txt(status));
 		if (status.major == ERR_FSAL_STALE) {
 			/* If we got ERR_FSAL_STALE, the previous FSAL call
 			 * must have failed with a bad parent.
 			 */
-			LogEvent(COMPONENT_CACHE_INODE,
+			LogEvent(COMPONENT_MDCACHE,
 				 "FSAL returned STALE on mkdir");
 			mdcache_kill_entry(parent);
 		}
@@ -310,14 +310,14 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 	       );
 
 	if (unlikely(FSAL_IS_ERROR(status))) {
-		LogDebug(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_MDCACHE,
 			 "mknod %s failed with %s",
 			 name, fsal_err_txt(status));
 		if (status.major == ERR_FSAL_STALE) {
 			/* If we got ERR_FSAL_STALE, the previous FSAL call
 			 * must have failed with a bad parent.
 			 */
-			LogEvent(COMPONENT_CACHE_INODE,
+			LogEvent(COMPONENT_MDCACHE,
 				 "FSAL returned STALE on mknod");
 			mdcache_kill_entry(parent);
 		}
@@ -390,14 +390,14 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 	       );
 
 	if (unlikely(FSAL_IS_ERROR(status))) {
-		LogDebug(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_MDCACHE,
 			 "symlink %s failed with %s",
 			 name, fsal_err_txt(status));
 		if (status.major == ERR_FSAL_STALE) {
 			/* If we got ERR_FSAL_STALE, the previous FSAL call
 			 * must have failed with a bad parent.
 			 */
-			LogEvent(COMPONENT_CACHE_INODE,
+			LogEvent(COMPONENT_MDCACHE,
 				 "FSAL returned STALE on symlink");
 			mdcache_kill_entry(parent);
 		}
@@ -494,7 +494,7 @@ static fsal_status_t mdcache_link(struct fsal_obj_handle *obj_hdl,
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_MDCACHE,
 			     "link failed %s",
 			     fsal_err_txt(status));
 		return status;
@@ -557,7 +557,7 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
 						cb, attrmask, eod_met);
 	} else {
 		/* Dirent chunking is enabled. */
-		LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_CACHE_INODE,
+		LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 			    "Calling mdcache_readdir_chunked whence=%"PRIx64,
 			    whence ? *whence : (uint64_t) 0);
 
@@ -652,7 +652,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 		}
 
 		if (state_deleg_conflict(&mdc_lookup_dst->obj_handle, true)) {
-			LogDebug(COMPONENT_CACHE_INODE, "Found an existing delegation for %s",
+			LogDebug(COMPONENT_MDCACHE, "Found an existing delegation for %s",
 				  new_name);
 			status = fsalstat(ERR_FSAL_DELAY, 0);
 			goto out;
@@ -711,7 +711,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 				sub_export, fso_rename_changes_key)
 	       );
 	if (rename_change_key) {
-		LogDebug(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_MDCACHE,
 			 "Rename (%p,%s)->(%p,%s) : key changing", mdc_olddir,
 			 old_name, mdc_newdir, new_name);
 
@@ -737,7 +737,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 	} else if (mdcache_param.dir.avl_chunk != 0) {
 		bool invalidate = true;
 
-		LogDebug(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_MDCACHE,
 			 "Rename (%p,%s)->(%p,%s) : moving entry", mdc_olddir,
 			 old_name, mdc_newdir, new_name);
 
@@ -754,7 +754,7 @@ static fsal_status_t mdcache_rename(struct fsal_obj_handle *obj_hdl,
 		if (FSAL_IS_ERROR(status)) {
 			/* We're obviously out of date.  Throw out the cached
 			   directory */
-			LogCrit(COMPONENT_CACHE_INODE, "Add dirent returned %s",
+			LogCrit(COMPONENT_MDCACHE, "Add dirent returned %s",
 				fsal_err_txt(status));
 			/* Protected by mdcache_src_dst_lock() above */
 			mdcache_dirent_invalidate_all(mdc_newdir);
@@ -918,7 +918,7 @@ out:
 		cbgetattr->filesize = entry->attrs.filesize;
 	}
 
-	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
+	LogAttrlist(COMPONENT_MDCACHE, NIV_FULL_DEBUG,
 		    "attrs ", &entry->attrs, true);
 
 	if (invalidate && entry->obj_handle.type == DIRECTORY &&
@@ -1009,7 +1009,7 @@ unlock_no_attrs:
 	if (FSAL_IS_ERROR(status) && (status.major == ERR_FSAL_STALE))
 		mdcache_kill_entry(entry);
 
-	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
+	LogAttrlist(COMPONENT_MDCACHE, NIV_FULL_DEBUG,
 		    "attrs ", attrs_out, true);
 
 	return status;
@@ -1068,7 +1068,7 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 		if (status2.major == ERR_FSAL_STALE)
 			kill_entry = true;
 	} else if (change == entry->attrs.change) {
-		LogDebug(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_MDCACHE,
 			 "setattr2 did not change attribute before %lld after = %lld",
 			 (long long) change,
 			 (long long) entry->attrs.change);
@@ -1102,7 +1102,7 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status;
 
-	LogFullDebug(COMPONENT_CACHE_INODE,
+	LogFullDebug(COMPONENT_MDCACHE,
 		     "Unlink %p/%s (%p)",
 		     parent, name, entry);
 
@@ -1117,7 +1117,7 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_MDCACHE,
 			 "unlink %s returned %s",
 			  name, fsal_err_txt(status));
 		if (status.major == ERR_FSAL_STALE)
@@ -1151,7 +1151,7 @@ static fsal_status_t mdcache_unlink(struct fsal_obj_handle *dir_hdl,
 		mdc_unreachable(entry);
 	}
 
-	LogFullDebug(COMPONENT_CACHE_INODE,
+	LogFullDebug(COMPONENT_MDCACHE,
 		     "Unlink %s %p/%s (%p)",
 		     FSAL_IS_ERROR(status) ? "failed" : "done",
 		     parent, name, entry);
@@ -1397,7 +1397,7 @@ static void mdcache_hdl_release(struct fsal_obj_handle *obj_hdl)
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 
-	LogDebug(COMPONENT_CACHE_INODE,
+	LogDebug(COMPONENT_MDCACHE,
 		 "Releasing obj_hdl=%p, entry=%p",
 		 obj_hdl, entry);
 
@@ -1624,7 +1624,7 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 	       );
 
 	if (unlikely(FSAL_IS_ERROR(status))) {
-		LogDebug(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_MDCACHE,
 			 "lookup_path %s failed with %s",
 			 path, fsal_err_txt(status));
 		fsal_release_attrs(&attrs);
@@ -1637,7 +1637,7 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 	fsal_release_attrs(&attrs);
 
 	if (!FSAL_IS_ERROR(status)) {
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_MDCACHE,
 			     "lookup_path Created entry %p FSAL %s",
 			     new_entry, new_entry->sub_handle->fsal->name);
 		/* Make sure this entry has a parent pointer */
@@ -1647,7 +1647,7 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 	}
 
 	if (attrs_out != NULL) {
-		LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
+		LogAttrlist(COMPONENT_MDCACHE, NIV_FULL_DEBUG,
 			    "lookup_path ", attrs_out, true);
 	}
 
@@ -1686,7 +1686,7 @@ fsal_status_t mdcache_create_handle(struct fsal_export *exp_hdl,
 	mdc_get_parent(export, entry, NULL);
 
 	if (attrs_out != NULL) {
-		LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
+		LogAttrlist(COMPONENT_MDCACHE, NIV_FULL_DEBUG,
 			    "create_handle ", attrs_out, true);
 	}
 

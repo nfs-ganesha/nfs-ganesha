@@ -2274,9 +2274,9 @@ static bool get_nfsv_global_fast_ops(DBusMessageIter *args,
 	return true;
 }
 
-static bool show_cache_inode_stats(DBusMessageIter *args,
-				   DBusMessage *reply,
-				   DBusError *error)
+static bool show_mdcache_stats(DBusMessageIter *args,
+			       DBusMessage *reply,
+			       DBusError *error)
 {
 	bool success = true;
 	char *errormsg = "OK";
@@ -2978,9 +2978,9 @@ static struct gsh_dbus_method global_show_fast_ops = {
 		 END_ARG_LIST}
 };
 
-static struct gsh_dbus_method cache_inode_show = {
-	.name = "ShowCacheInode",
-	.method = show_cache_inode_stats,
+static struct gsh_dbus_method mdcache_show = {
+	.name = "ShowMDCache",
+	.method = show_mdcache_stats,
 	.args = {STATUS_REPLY,
 		 TIMESTAMP_REPLY,
 		 TOTAL_OPS_REPLY,
@@ -3059,7 +3059,7 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 #endif
 	&global_show_total_ops,
 	&global_show_fast_ops,
-	&cache_inode_show,
+	&mdcache_show,
 	&export_show_all_io,
 	&reset_statistics,
 	&fsal_statistics,

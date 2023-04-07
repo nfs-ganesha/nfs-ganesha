@@ -149,7 +149,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 		/* Does not exist, or other error, return to open2 to
 		 * proceed if not found, otherwise to return the error.
 		 */
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_MDCACHE,
 			     "Lookup failed");
 		return status;
 	}
@@ -162,7 +162,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 		/* Exclusive create with entry found, check verifier */
 		if (!mdcache_check_verifier(&entry->obj_handle, verifier)) {
 			/* Verifier check failed. */
-			LogFullDebug(COMPONENT_CACHE_INODE,
+			LogFullDebug(COMPONENT_MDCACHE,
 				     "Verifier check failed.");
 			mdcache_lru_unref(entry, LRU_FLAG_NONE);
 			return fsalstat(ERR_FSAL_EXIST, 0);
@@ -174,7 +174,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 
 	/* Check if the object type is REGULAR_FILE. If not then give error. */
 	if (entry->obj_handle.type != REGULAR_FILE) {
-		LogDebug(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_MDCACHE,
 			 "Trying to open a non-regular file");
 		if (entry->obj_handle.type == DIRECTORY) {
 			/* Trying to open2 a directory */
@@ -195,14 +195,14 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 
 	if (FSAL_IS_ERROR(status)) {
 		/* Open failed. */
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_MDCACHE,
 			     "Open failed %s",
 			     msg_fsal_err(status.major));
 		mdcache_lru_unref(entry, LRU_FLAG_NONE);
 		return status;
 	}
 
-	LogFullDebug(COMPONENT_CACHE_INODE,
+	LogFullDebug(COMPONENT_MDCACHE,
 		     "Opened entry %p, sub_handle %p",
 		     entry, entry->sub_handle);
 
@@ -237,7 +237,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 			status = entry->obj_handle.obj_ops->getattrs(
 					    &entry->obj_handle, attrs_out);
 			if (FSAL_IS_ERROR(status)) {
-				LogFullDebug(COMPONENT_CACHE_INODE,
+				LogFullDebug(COMPONENT_MDCACHE,
 					     "getattrs failed status=%s",
 					     fsal_err_txt(status));
 			}
@@ -335,7 +335,7 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 	struct mdcache_fsal_export *export = mdc_cur_export();
 	bool invalidate;
 
-	LogAttrlist(COMPONENT_CACHE_INODE, NIV_FULL_DEBUG,
+	LogAttrlist(COMPONENT_MDCACHE, NIV_FULL_DEBUG,
 		    "attrs_in ", attrs_in, false);
 
 	if (name) {
@@ -382,7 +382,7 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 	       );
 
 	if (unlikely(FSAL_IS_ERROR(status))) {
-		LogDebug(COMPONENT_CACHE_INODE,
+		LogDebug(COMPONENT_MDCACHE,
 			 "open2 %s failed with %s",
 			 dispname, fsal_err_txt(status));
 		if (status.major == ERR_FSAL_STALE) {
@@ -406,7 +406,7 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 						   MDCACHE_TRUST_ATTRS);
 		}
 
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_MDCACHE,
 			     "Open2 of object succeeded.");
 		*new_obj = obj_hdl;
 		/* We didn't actually get any attributes, but release anyway

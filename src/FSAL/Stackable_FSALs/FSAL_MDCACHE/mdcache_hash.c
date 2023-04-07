@@ -103,7 +103,7 @@ cih_pkgdestroy(void)
 	/* Destroy the partitions, warning if not empty */
 	for (ix = 0; ix < cih_fhcache.npart; ++ix) {
 		if (avltree_first(&cih_fhcache.partition[ix].t) != NULL)
-			LogMajor(COMPONENT_CACHE_INODE,
+			LogMajor(COMPONENT_MDCACHE,
 				 "MDCACHE AVL tree not empty");
 		PTHREAD_RWLOCK_destroy(&cih_fhcache.partition[ix].cih_lock);
 		gsh_free(cih_fhcache.partition[ix].cache);

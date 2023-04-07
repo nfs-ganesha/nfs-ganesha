@@ -42,8 +42,8 @@
  * implementation.
  */
 
-#ifndef CACHE_INODE_HASH_H
-#define CACHE_INODE_HASH_H
+#ifndef MDCACHE_HASH_H
+#define MDCACHE_HASH_H
 
 #include "config.h"
 #include "log.h"
@@ -397,7 +397,7 @@ cih_remove_checked(mdcache_entry_t *entry)
 	PTHREAD_RWLOCK_wrlock(&cp->cih_lock);
 	node = cih_fhcache_inline_lookup(&cp->t, &entry->fh_hk.node_k);
 	if (entry->fh_hk.inavl && node) {
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_MDCACHE,
 			     "Unhashing entry %p", entry);
 #ifdef USE_LTTNG
 		tracepoint(mdcache, mdc_lru_remove, __func__, __LINE__,
@@ -443,7 +443,7 @@ cih_remove_latched(mdcache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
 	    cih_partition_of_scalar(&cih_fhcache, entry->fh_hk.key.hk);
 
 	if (entry->fh_hk.inavl) {
-		LogFullDebug(COMPONENT_CACHE_INODE,
+		LogFullDebug(COMPONENT_MDCACHE,
 			     "Unhashing entry %p", entry);
 #ifdef USE_LTTNG
 		tracepoint(mdcache, mdc_lru_remove, __func__, __LINE__,
@@ -464,5 +464,5 @@ cih_remove_latched(mdcache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
 	return false;
 }
 
-#endif				/* CACHE_INODE_HASH_H */
+#endif				/* MDCACHE_HASH_H */
 /** @} */

@@ -66,8 +66,8 @@ Usage: %s set <block-descriptor> [--param value]
        %s set export export_id 14 --pseudo "/nfsroot/export1"
        %s set export export_id 14 client clients '*' --manage-gids true
 
-       %s get cacheinode
-       %s get cacheinode --Dir_Max
+       %s get mdcache
+       %s get mdcache --Dir_Max
 """ % (8 * (sys.argv[0],))
 
 if len(sys.argv) < 2:

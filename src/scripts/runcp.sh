@@ -271,8 +271,6 @@ NO_MACRO_W_FLOW_FILES="FSAL/FSAL_PROXY_V4/handle_mapping/handle_mapping_db.c"
 NO_MACRO_W_FLOW_FILES="$NO_MACRO_W_FLOW_FILES|include/9p.h"
 NO_MACRO_W_FLOW_FILES="$NO_MACRO_W_FLOW_FILES|multilock/ml_functions.c"
 
-NO_DEEP_INDENTATION_FILES="cache_inode/cache_inode_lru.c|include/rbt_tree.h"
-
 NO_BRACKET_SPACE_FILES="include/9p_req_queue.h"
 
 NO_DATE_TIME_FILES="MainNFSD/nfs_main.c"
