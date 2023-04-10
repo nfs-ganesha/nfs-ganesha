@@ -2108,7 +2108,24 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl,
 
 	/** TRUNCATE **/
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
+#ifdef LINUX
+		/* On Linux at least off_t is signed and offsets < 0 are not
+		 * valid for ftruncate. We want to make sure to return EFBIG
+		 * not EINVAL.
+		 */
+		if ((off_t) attrib_set->filesize < 0) {
+			errno = EFBIG;
+			retval = -1;
+			func = "truncate";
+			LogDebug(COMPONENT_FSAL,
+				 "filesize %"PRIx64" as off_t is < 0",
+				 attrib_set->filesize);
+			goto fileerr;
+		}
+#endif
+
 		retval = ftruncate(my_fd->fd, attrib_set->filesize);
+
 		if (retval != 0) {
 			/** @todo FSF: is this still necessary?
 			 *
