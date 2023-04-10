@@ -177,7 +177,7 @@ void reread_config(void)
 		LogCrit(COMPONENT_CONFIG,
 			"Error while parsing new configuration file %s",
 			nfs_config_path);
-		report_config_errors(&err_type, NULL, config_errs_to_log);
+		(void) report_config_errors(&err_type, NULL, config_errs_to_log);
 		return;
 	}
 
@@ -191,7 +191,7 @@ void reread_config(void)
 	if (status < 0)
 		LogCrit(COMPONENT_CONFIG, "Error while parsing EXPORT entries");
 
-	report_config_errors(&err_type, NULL, config_errs_to_log);
+	(void) report_config_errors(&err_type, NULL, config_errs_to_log);
 	config_Free(config_struct);
 }
 

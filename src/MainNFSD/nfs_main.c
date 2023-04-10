@@ -91,10 +91,11 @@ static nfs_start_info_t my_nfs_start_info = {
 
 config_file_t nfs_config_struct;
 char *nfs_host_name = "localhost";
+bool config_errors_fatal;
 
 /* command line syntax */
 
-static const char options[] = "v@L:N:f:p:FRTE:ChI:";
+static const char options[] = "v@L:N:f:p:FRTE:ChI:x";
 static const char usage[] =
 	"Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
 	"\t[-v]                display version information\n"
@@ -108,6 +109,7 @@ static const char usage[] =
 	"\t[-E <epoch>]        overrides ServerBootTime for ServerEpoch\n"
 	"\t[-I <nodeid>]       cluster nodeid\n"
 	"\t[-C]                dump trace when segfault\n"
+	"\t[-x]                fatal exit if there are config errors on startup\n"
 	"\t[-h]                display this help\n"
 	"----------------- Signals ----------------\n"
 	"SIGHUP     : Reload LOG and EXPORT config\n"
@@ -258,6 +260,10 @@ int main(int argc, char *argv[])
 
 		case 'I':
 			g_nodeid = atoi(optarg);
+			break;
+
+		case 'x':
+			config_errors_fatal = true;
 			break;
 
 		case 'h':
@@ -538,7 +544,11 @@ int main(int argc, char *argv[])
 	if (rc == 0 && dsc == 0)
 		LogWarn(COMPONENT_INIT,
 			"No export entries found in configuration file !!!");
-	report_config_errors(&err_type, NULL, config_errs_to_log);
+
+	rc = report_config_errors(&err_type, NULL, config_errs_to_log);
+
+	if (config_errors_fatal && rc > 0)
+		goto fatal_die;
 
 	/* freeing syntax tree : */
 
@@ -560,7 +570,7 @@ int main(int argc, char *argv[])
 	return 0;
 
 fatal_die:
-	report_config_errors(&err_type, NULL, config_errs_to_log);
+	(void) report_config_errors(&err_type, NULL, config_errs_to_log);
 
 	if (tempo_exec_name)
 		free(exec_name);

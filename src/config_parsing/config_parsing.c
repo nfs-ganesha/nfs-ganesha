@@ -242,19 +242,20 @@ void config_errs_to_log(char *err, void *dest,
 				  log_level, "%s", err);
 }
 
-void report_config_errors(struct config_error_type *err_type, void *dest,
-			  void (*logger)(char *msg, void *dest,
-					 struct config_error_type *err_type))
+int report_config_errors(struct config_error_type *err_type, void *dest,
+			 void (*logger)(char *msg, void *dest,
+					struct config_error_type *err_type))
 {
 	char *msgp, *cp;
+	int count = 0;
 
 	if (err_type->fp == NULL)
-		return;
+		return 0;
 	fclose(err_type->fp);
 	err_type->fp = NULL;
 	msgp = err_type->diag_buf;
 	if (msgp == NULL)
-		return;
+		return 0;
 	while (*msgp != '\0') {
 		cp = index(msgp, '\f');
 		if (cp != NULL) {
@@ -265,9 +266,11 @@ void report_config_errors(struct config_error_type *err_type, void *dest,
 			logger(msgp, dest, err_type);
 			break;
 		}
+		count++;
 	}
 	gsh_free(err_type->diag_buf);
 	err_type->diag_buf = NULL;
+	return count;
 }
 
 static bool convert_bool(struct config_node *node,

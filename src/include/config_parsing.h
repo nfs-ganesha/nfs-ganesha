@@ -972,9 +972,9 @@ void config_errs_to_log(char *err, void *,
 void config_proc_error(void *cnode,
 		       struct config_error_type *err_type,
 		       char *format, ...);
-void report_config_errors(struct config_error_type *err_type, void *dest,
-			  void (*logger)(char *msg, void *dest,
-					 struct config_error_type *err_type));
+int report_config_errors(struct config_error_type *err_type, void *dest,
+			 void (*logger)(char *msg, void *dest,
+					struct config_error_type *err_type));
 
 
 /**

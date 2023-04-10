@@ -1161,9 +1161,9 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
 			"Error while parsing %s", file_path);
-		report_config_errors(&err_type,
-				     &conf_errs,
-				     config_errs_to_dbus);
+		(void) report_config_errors(&err_type,
+					    &conf_errs,
+					    config_errs_to_dbus);
 		if (conf_errs.fp != NULL)
 			fclose(conf_errs.fp);
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
@@ -1181,9 +1181,9 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		LogCrit(COMPONENT_EXPORT,
 			"Error finding exports: %s because %s",
 			export_expr, strerror(rc));
-		report_config_errors(&err_type,
-				     &conf_errs,
-				     config_errs_to_dbus);
+		(void) report_config_errors(&err_type,
+					    &conf_errs,
+					    config_errs_to_dbus);
 		if (conf_errs.fp != NULL)
 			fclose(conf_errs.fp);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
@@ -1209,9 +1209,9 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		}
 		gsh_free(lp);
 	}
-	report_config_errors(&err_type,
-			     &conf_errs,
-			     config_errs_to_dbus);
+	(void) report_config_errors(&err_type,
+				    &conf_errs,
+				    config_errs_to_dbus);
 	if (conf_errs.fp != NULL)
 		fclose(conf_errs.fp);
 	if (status) {
@@ -1740,9 +1740,9 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 		err_detail = err_type_str(&err_type);
 		LogCrit(COMPONENT_EXPORT,
 			"Error while parsing %s", file_path);
-		report_config_errors(&err_type,
-				     &conf_errs,
-				     config_errs_to_dbus);
+		(void) report_config_errors(&err_type,
+					    &conf_errs,
+					    config_errs_to_dbus);
 		if (conf_errs.fp != NULL)
 			fclose(conf_errs.fp);
 		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
@@ -1760,9 +1760,9 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 		LogCrit(COMPONENT_EXPORT,
 			"Error finding exports: %s because %s",
 			export_expr, strerror(rc));
-		report_config_errors(&err_type,
-				     &conf_errs,
-				     config_errs_to_dbus);
+		(void) report_config_errors(&err_type,
+					    &conf_errs,
+					    config_errs_to_dbus);
 		if (conf_errs.fp != NULL)
 			fclose(conf_errs.fp);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
@@ -1788,9 +1788,9 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 		}
 		gsh_free(lp);
 	}
-	report_config_errors(&err_type,
-			     &conf_errs,
-			     config_errs_to_dbus);
+	(void) report_config_errors(&err_type,
+				    &conf_errs,
+				    config_errs_to_dbus);
 	if (conf_errs.fp != NULL)
 		fclose(conf_errs.fp);
 	if (status) {

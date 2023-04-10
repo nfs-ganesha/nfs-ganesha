@@ -262,7 +262,7 @@ int nfs_libmain(const char *ganesha_conf,
 	if (rc == 0 && dsc == 0)
 		LogWarn(COMPONENT_INIT,
 			"No export entries found in configuration file !!!");
-	report_config_errors(&err_type, NULL, config_errs_to_log);
+	(void) report_config_errors(&err_type, NULL, config_errs_to_log);
 
 	/* freeing syntax tree : */
 
@@ -276,7 +276,7 @@ int nfs_libmain(const char *ganesha_conf,
 	return 0;
 
 fatal_die:
-	report_config_errors(&err_type, NULL, config_errs_to_log);
+	(void) report_config_errors(&err_type, NULL, config_errs_to_log);
 	LogFatal(COMPONENT_INIT,
 		 "Fatal errors.  Server exiting...");
 	/* NOT REACHED */
