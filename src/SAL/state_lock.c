@@ -3664,7 +3664,9 @@ out:
 void state_cleanup(void)
 {
 	PTHREAD_MUTEX_destroy(&unknown_owner.so_mutex);
+#ifdef DEBUG_SAL
 	PTHREAD_MUTEX_destroy(&all_locks_mutex);
+#endif
 	PTHREAD_MUTEX_destroy(&blocked_locks_mutex);
 	PTHREAD_MUTEX_destroy(&cached_open_owners_lock);
 #ifdef _USE_NLM
@@ -3700,7 +3702,9 @@ state_status_t state_lock_init(void)
 	}
 
 	PTHREAD_MUTEX_init(&unknown_owner.so_mutex, NULL);
+#ifdef DEBUG_SAL
 	PTHREAD_MUTEX_init(&all_locks_mutex, NULL);
+#endif
 	PTHREAD_MUTEX_init(&blocked_locks_mutex, NULL);
 	PTHREAD_MUTEX_init(&cached_open_owners_lock, NULL);
 #ifdef _USE_NLM
