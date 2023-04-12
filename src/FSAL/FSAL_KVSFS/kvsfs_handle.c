@@ -1049,6 +1049,7 @@ void kvsfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->handle_to_key = kvsfs_handle_to_key;
 
 	ops->open2 = kvsfs_open2;
+	ops->status2 = kvsfs_status2;
 	ops->reopen2 = kvsfs_reopen2;
 	ops->read2 = kvsfs_read2;
 	ops->write2 = kvsfs_write2;

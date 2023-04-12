@@ -1631,7 +1631,7 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 static fsal_openflags_t ceph_fsal_status2(struct fsal_obj_handle *obj_hdl,
 					  struct state_t *state)
 {
-	struct ceph_fd *my_fd = (struct ceph_fd *)(state + 1);
+	struct ceph_fd *my_fd = &((struct ceph_state_fd *)state)->ceph_fd;
 
 	return my_fd->fsal_fd.openflags;
 }

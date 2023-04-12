@@ -995,6 +995,7 @@ void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->removexattrs = removexattrs;
 	ops->listxattrs = listxattrs;
 	ops->open2 = gpfs_open2;
+	ops->status2 = gpfs_status2;
 	ops->reopen2 = gpfs_reopen2;
 	ops->read2 = gpfs_read2;
 	ops->write2 = gpfs_write2;

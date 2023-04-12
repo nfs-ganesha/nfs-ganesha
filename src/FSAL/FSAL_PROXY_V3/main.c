@@ -1107,6 +1107,15 @@ proxyv3_open2(struct fsal_obj_handle *obj_hdl,
 					attrs_out);
 }
 
+static fsal_openflags_t proxyv3_status2(struct fsal_obj_handle *obj_hdl,
+					struct state_t *state)
+{
+	/* first version of support_ex, no state, no saved openflags */
+	fsal_openflags_t null_flags = 0; /* closed and deny_none*/
+
+	return null_flags;
+}
+
 /**
  * @brief Re-open a file that may be already opened
  */
@@ -2481,6 +2490,28 @@ proxyv3_create_handle(struct fsal_export *export_handle,
 }
 
 /**
+ * @brief Allocate a state_t structure
+ *
+ * Note that this is not expected to fail since memory allocation is
+ * expected to abort on failure.
+ *
+ * @param[in] exp_hdl               Export state_t will be associated with
+ * @param[in] state_type            Type of state to allocate
+ * @param[in] related_state         Related state if appropriate
+ *
+ * @returns a state structure.
+ */
+
+static struct state_t *proxyv3_alloc_state(struct fsal_export *exp_hdl,
+					   enum state_type state_type,
+					   struct state_t *related_state)
+{
+	/* There is no need for a "file descriptor" or anything.  */
+	return init_state(gsh_calloc(1, sizeof(struct state_t)),
+			  NULL, state_type, related_state);
+}
+
+/**
  * @brief "Convert" an fsal_obj_handle to an MDCACHE key.
  *
  * @param obj_hdl The input object handle.
@@ -2677,6 +2708,7 @@ proxyv3_create_export(struct fsal_module *fsal_handle,
 	export->export.exp_ops.get_fs_dynamic_info = proxyv3_get_dynamic_info;
 	export->export.exp_ops.wire_to_host = proxyv3_wire_to_host;
 	export->export.exp_ops.create_handle = proxyv3_create_handle;
+	export->export.exp_ops.alloc_state = proxyv3_alloc_state;
 
 	/*
 	 * Try to load the config. If it fails (say they didn't provide
@@ -2885,6 +2917,7 @@ MODULE_INIT void proxy_v3_init(void)
 
 	/* Open/close. */
 	PROXY_V3.handle_ops.open2 = proxyv3_open2;
+	PROXY_V3.handle_ops.status2 = proxyv3_status2;
 	PROXY_V3.handle_ops.reopen2 = proxyv3_reopen2;
 	PROXY_V3.handle_ops.close = proxyv3_close;
 	PROXY_V3.handle_ops.close2 = proxyv3_close2;

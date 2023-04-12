@@ -1748,6 +1748,26 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
+ * @brief Return open status of a state.
+ *
+ * This function returns open flags representing the current open
+ * status for a state. The st_lock must be held.
+ *
+ * @param[in] obj_hdl     File on which to operate
+ * @param[in] state       File state to interrogate
+ *
+ * @retval Flags representing current open status
+ */
+
+fsal_openflags_t mem_status2(struct fsal_obj_handle *obj_hdl,
+			     struct state_t *state)
+{
+	struct fsal_fd *my_fd = &((struct mem_state_fd *)state)->fsal_fd;
+
+	return my_fd->openflags;
+}
+
+/**
  * @brief Re-open a file that may be already opened
  *
  * This function supports changing the access mode of a share reservation and
@@ -2415,6 +2435,7 @@ void mem_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->unlink = mem_unlink;
 	ops->close = mem_close;
 	ops->open2 = mem_open2;
+	ops->status2 = mem_status2;
 	ops->reopen2 = mem_reopen2;
 	ops->read2 = mem_read2;
 	ops->write2 = mem_write2;

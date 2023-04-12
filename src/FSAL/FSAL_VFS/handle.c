@@ -1767,6 +1767,7 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->handle_to_wire = handle_to_wire;
 	ops->handle_to_key = handle_to_key;
 	ops->open2 = vfs_open2;
+	ops->status2 = vfs_status2;
 	ops->reopen2 = vfs_reopen2;
 	ops->read2 = vfs_read2;
 	ops->write2 = vfs_write2;

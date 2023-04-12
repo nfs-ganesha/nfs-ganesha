@@ -2102,6 +2102,27 @@ direrr:
 	return status;
 }
 
+/**
+ * @brief Return open status of a state.
+ *
+ * This function returns open flags representing the current open
+ * status for a state. The st_lock must be held.
+ *
+ * @param[in] obj_hdl     File on which to operate
+ * @param[in] state       File state to interrogate
+ *
+ * @retval Flags representing current open status
+ */
+
+static fsal_openflags_t glusterfs_status2(struct fsal_obj_handle *obj_hdl,
+					  struct state_t *state)
+{
+	struct glusterfs_fd *my_fd =
+				&((struct glusterfs_state_fd *)state)->glusterfs_fd;
+
+	return my_fd->fsal_fd.openflags;
+}
+
 /* reopen2
  */
 
@@ -3541,6 +3562,7 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 
 	/* fops with OpenTracking (multi-fd) enabled */
 	ops->open2 = glusterfs_open2;
+	ops->status2 = glusterfs_status2;
 	ops->reopen2 = glusterfs_reopen2;
 	ops->read2 = glusterfs_read2;
 	ops->write2 = glusterfs_write2;

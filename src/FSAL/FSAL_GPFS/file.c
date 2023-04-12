@@ -704,6 +704,26 @@ gpfs_read_plus_fd(int my_fd, uint64_t offset,
 }
 
 /**
+ * @brief Return open status of a state.
+ *
+ * This function returns open flags representing the current open
+ * status for a state. The st_lock must be held.
+ *
+ * @param[in] obj_hdl     File on which to operate
+ * @param[in] state       File state to interrogate
+ *
+ * @retval Flags representing current open status
+ */
+
+fsal_openflags_t gpfs_status2(struct fsal_obj_handle *obj_hdl,
+			      struct state_t *state)
+{
+	struct gpfs_fd *my_fd = &((struct gpfs_state_fd *)state)->gpfs_fd;
+
+	return my_fd->fsal_fd.openflags;
+}
+
+/**
  * @brief Re-open a file that may be already opened
  *
  * This function supports changing the access mode of a share reservation and

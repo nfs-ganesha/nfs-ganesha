@@ -685,8 +685,8 @@ static struct state_t *alloc_state(struct fsal_export *exp_hdl,
 				   enum state_type state_type,
 				   struct state_t *related_state)
 {
-	return init_state(gsh_calloc(1, sizeof(struct state_t)),
-			  NULL, state_type, related_state);
+	/* MUST be overridden. */
+	return NULL;
 }
 
 /**
@@ -1353,9 +1353,8 @@ static bool check_verifier(struct fsal_obj_handle *obj_hdl,
 static fsal_openflags_t status2(struct fsal_obj_handle *obj_hdl,
 				struct state_t *state)
 {
-	struct fsal_fd *fd = (struct fsal_fd *)(state + 1);
-
-	return fd->openflags;
+	/* default does nothing, MUST be overridden */
+	return 0;
 }
 
 /* reopen2
