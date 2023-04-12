@@ -25,7 +25,7 @@ Core parameters:
 HAProxy_Hosts (host list, empty)
     This is the list of hosts that can serve as HAProxy load balancers/proxies
     that will use the HAProxy protocol to indicate to Ganesha the actual end
-    client IP address.
+    client IP address. This parameter may be repeated to extend the list.
 
     Host list entries can take on one of the following forms:
 

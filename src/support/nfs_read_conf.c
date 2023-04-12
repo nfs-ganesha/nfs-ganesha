@@ -152,8 +152,8 @@ static int haproxy_host_adder(const char *token,
 }
 
 static struct config_item core_params[] = {
-	CONF_ITEM_PROC("HAProxy_Hosts", noop_conf_init, haproxy_host_adder,
-		       base_client_entry, cle_list),
+	CONF_ITEM_PROC_MULT("HAProxy_Hosts", noop_conf_init,
+			    haproxy_host_adder, base_client_entry, cle_list),
 	CONF_ITEM_UI16("NFS_Port", 0, UINT16_MAX, NFS_PORT,
 		       nfs_core_param, port[P_NFS]),
 #ifdef _USE_NFS3
@@ -334,6 +334,7 @@ struct config_block nfs_core = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.core",
 	.blk_desc.name = "NFS_Core_Param",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = core_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
@@ -362,6 +363,7 @@ struct config_block krb5_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.krb5",
 	.blk_desc.name = "NFS_KRB5",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = krb5_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
@@ -448,6 +450,7 @@ struct config_block version4_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.nfsv4",
 	.blk_desc.name = "NFSv4",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = version4_params,
 	.blk_desc.u.blk.commit = noop_conf_commit

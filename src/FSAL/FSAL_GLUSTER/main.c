@@ -93,6 +93,7 @@ struct config_block glfs_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.gluster",
 	.blk_desc.name = "GLUSTER",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = glfs_params,
 	.blk_desc.u.blk.commit = noop_conf_commit

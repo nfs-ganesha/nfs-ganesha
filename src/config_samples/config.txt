@@ -37,7 +37,8 @@ NFS_CORE_PARAM {}
 
 	HAProxy_Hosts (host list, empty)
 
-	* Host list entries can take on one of the following forms:
+	* Host list entries can take on one of the following forms. This
+	  parameter can be repeated to extend the list.
 
 	*		Match any host
 	@name		Netgroup name
@@ -300,6 +301,8 @@ EXPORT_DEFAULTS {}
 EXPORT {}
 ---------
 
+	* This block may be repeated to define multiple exports.
+
 	* Take all the "export permissions" options from EXPORT_DEFAULTS.
 
 	* The first 5 options are considered static from the perspective of
@@ -372,13 +375,17 @@ EXPORT {}
 EXPORT { CLIENT  {} }
 ---------------------
 
+	* This block may be repeated to define multiple client lists with
+	  different permissions.
+
 	* Take all the "export permissions" options from EXPORT_DEFAULTS.
 
 	* The client lists are dynamically updateable.
 
 	Clients(client list, empty)
 
-	* Client list entries can take on one of the following forms:
+	* Client list entries can take on one of the following forms. This
+	  parameter may be repeated to extend the list.
 
 	*		Match any client
 	@name		Netgroup name
@@ -611,6 +618,8 @@ LOG { COMPONENTS {} }
 LOG { FACILITY {} }
 -------------------
 
+	This block may be repeated to configure multiple facilities.
+
 	name(string, no default)
 
 	destination(string, no default, must be supplied)
@@ -724,7 +733,7 @@ FSAL_LIST {}
 
 	This allows listing the names of the following FSAL specific
 	config blocks to avoid config errors if there are no exports
-	of that FSAL.
+	of that FSAL. This parameter may be repeated to extend the list.
 
 CEPH {}
 -------

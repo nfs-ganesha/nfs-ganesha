@@ -72,6 +72,7 @@ struct config_block rados_kv_param_blk = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.rados_kv",
 	.blk_desc.name = "RADOS_KV",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = rados_kv_param_init,
 	.blk_desc.u.blk.params = rados_kv_params,
 	.blk_desc.u.blk.commit = noop_conf_commit

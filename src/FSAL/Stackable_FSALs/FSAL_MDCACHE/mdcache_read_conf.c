@@ -106,6 +106,7 @@ struct config_block mdcache_param_blk = {
 	.blk_desc.name = "MDCACHE",
 	.blk_desc.altname = "CacheInode",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = mdcache_param_init,
 	.blk_desc.u.blk.params = mdcache_params,
 	.blk_desc.u.blk.commit = noop_conf_commit

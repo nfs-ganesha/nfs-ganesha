@@ -71,7 +71,7 @@ Delegations(enum, default None)
 EXPORT {}
 --------------------------------------------------------------------------------
 All options below are dynamically changeable with config update unless specified
-below.
+below. This block may be repeated to define multiple exports.
 
 Export_id (required):
     An identifier for the export, must be unique and between 0 and 65535.
@@ -171,7 +171,8 @@ FSAL (required)
 EXPORT { CLIENT  {} }
 --------------------------------------------------------------------------------
 Take all the "export permissions" options from EXPORT_DEFAULTS.
-The client lists are dynamically updateable.
+The client lists are dynamically updateable. This block may be repeated as
+detailed below.
 
 These blocks form an ordered "access control list" for the export. If no
 client block matches for a particular client, then the permissions in the
@@ -190,7 +191,8 @@ adding, removing, and re-arranging clients as well as changing the access
 for any give client.
 
 Clients(client list, empty)
-    Client list entries can take on one of the following forms:
+    Client list entries can take on one of the following forms. This parameter
+    may be repeated to extend the list.
 
         \*          Match any client
         @name       Netgroup name

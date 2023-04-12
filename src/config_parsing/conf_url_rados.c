@@ -67,6 +67,7 @@ struct config_block rados_url_param_blk = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.rados_urls",
 	.blk_desc.name = "RADOS_URLS",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = rados_url_param_init,
 	.blk_desc.u.blk.params = rados_url_params,
 	.blk_desc.u.blk.commit = noop_conf_commit

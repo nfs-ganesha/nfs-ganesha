@@ -1801,8 +1801,8 @@ static int client_adder(const char *token,
 
 static struct config_item client_params[] = {
 	CONF_EXPORT_PERMS(exportlist_client_entry, client_perms),
-	CONF_ITEM_PROC("Clients", noop_conf_init, client_adder,
-		       base_client_entry, cle_list),
+	CONF_ITEM_PROC_MULT("Clients", noop_conf_init, client_adder,
+			    base_client_entry, cle_list),
 	CONFIG_EOL
 };
 
@@ -1842,7 +1842,7 @@ static struct config_item fsal_params[] = {
 		       _struct_, export_id),				\
 	CONF_MAND_PATH("Path", 1, MAXPATHLEN, NULL,			\
 		       _struct_, cfg_fullpath), /* must chomp '/' */	\
-	CONF_UNIQ_PATH("Pseudo", 1, MAXPATHLEN, NULL,			\
+	CONF_ITEM_PATH("Pseudo", 1, MAXPATHLEN, NULL,			\
 		       _struct_, cfg_pseudopath),			\
 	CONF_ITEM_UI64_SET("MaxRead", 512, FSAL_MAXIOSIZE,		\
 			FSAL_MAXIOSIZE, _struct_, MaxRead,		\
@@ -1900,9 +1900,9 @@ static struct config_item export_params[] = {
 	 * parameters have been processed before these sub-blocks
 	 * are processed.
 	 */
-	CONF_ITEM_BLOCK("Client", client_params,
-			client_init, client_commit,
-			gsh_export, clients),
+	CONF_ITEM_BLOCK_MULT("Client", client_params,
+			     client_init, client_commit,
+			     gsh_export, clients),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_cfg_commit,
 			 gsh_export, fsal_export),
@@ -1926,9 +1926,9 @@ static struct config_item export_update_params[] = {
 	 * parameters have been processed before these sub-blocks
 	 * are processed.
 	 */
-	CONF_ITEM_BLOCK("Client", client_params,
-			client_init, client_commit,
-			gsh_export, clients),
+	CONF_ITEM_BLOCK_MULT("Client", client_params,
+			     client_init, client_commit,
+			     gsh_export, clients),
 	CONF_RELAX_BLOCK("FSAL", fsal_params,
 			 fsal_init, fsal_update_cfg_commit,
 			 gsh_export, fsal_export),
@@ -1986,6 +1986,7 @@ struct config_block export_defaults_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.defaults",
 	.blk_desc.name = "EXPORT_DEFAULTS",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = export_defaults_init,
 	.blk_desc.u.blk.params = export_defaults_params,
 	.blk_desc.u.blk.commit = export_defaults_commit,

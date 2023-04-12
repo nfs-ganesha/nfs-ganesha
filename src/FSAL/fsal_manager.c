@@ -196,8 +196,8 @@ static int fsal_name_adder(const char *token,
 }
 
 static struct config_item fsal_params[] = {
-	CONF_ITEM_PROC("Name", noop_conf_init, fsal_name_adder,
-		       dummy_fsal, dummy),
+	CONF_ITEM_PROC_MULT("Name", noop_conf_init, fsal_name_adder,
+			    dummy_fsal, dummy),
 	CONFIG_EOL
 };
 

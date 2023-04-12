@@ -469,28 +469,33 @@ struct config_item {
 	  .type = CONFIG_NULL,			\
 	}
 
-#define CONF_ITEM_FSID(_name_, _def_maj_, _def_min_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_FSID,		   	    \
-	  .u.fsid.def_maj = _def_maj_,		    \
-	  .u.fsid.def_min = _def_min_,		    \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
 #define CONF_ITEM_FSID_SET(_name_, _def_maj_, _def_min_, _struct_, \
 			   _mem_, _bit_, _set_)     \
 	{ .name = _name_,			    \
 	  .type = CONFIG_FSID,		   	    \
-	  .flags = CONFIG_MARK_SET,			\
+	  .flags = CONFIG_MARK_SET|CONFIG_UNIQUE,   \
 	  .u.fsid.def_maj = _def_maj_,		    \
 	  .u.fsid.def_min = _def_min_,		    \
 	  .u.fsid.bit = _bit_,		   	    \
 	  .u.fsid.set_off = offsetof(struct _struct_, _set_),   \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
+
+#define CONF_ITEM_BLOCK_MULT(_name_, _params_, _init_, _commit_, \
+			     _struct_, _mem_) \
+	{ .name = _name_,			    \
+	  .type = CONFIG_BLOCK,			    \
+	  .u.blk.init = _init_,			    \
+	  .u.blk.params = _params_,		    \
+	  .u.blk.commit = _commit_,		    \
+	  .off = offsetof(struct _struct_, _mem_)   \
+	}
+
 #define CONF_ITEM_BLOCK(_name_, _params_, _init_, _commit_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_BLOCK,		   	    \
-	  .u.blk.init = _init_,		    \
+	  .flags = CONFIG_UNIQUE,		    \
+	  .u.blk.init = _init_,			    \
 	  .u.blk.params = _params_,		    \
 	  .u.blk.commit = _commit_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
@@ -499,14 +504,14 @@ struct config_item {
 #define CONF_RELAX_BLOCK(_name_, _params_, _init_, _commit_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_BLOCK,		   	    \
-	  .flags = CONFIG_RELAX,		    \
-	  .u.blk.init = _init_,		    \
+	  .flags = CONFIG_RELAX|CONFIG_UNIQUE,	    \
+	  .u.blk.init = _init_,			    \
 	  .u.blk.params = _params_,		    \
 	  .u.blk.commit = _commit_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
-#define CONF_ITEM_PROC(_name_, _init_, _handler_, _struct_, _mem_)	\
+#define CONF_ITEM_PROC_MULT(_name_, _init_, _handler_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_PROC,			    \
 	  .u.proc.init = _init_,		    \
@@ -517,18 +522,9 @@ struct config_item {
 #define CONF_ITEM_LIST(_name_, _def_, _tokens_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_LIST,			    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = UINT32_MAX,		    \
-	  .u.lst.set_off = UINT32_MAX,		    \
-	  .u.lst.tokens = _tokens_,		    \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-
-#define CONF_ITEM_LIST_BITS(_name_, _def_, _mask_, _tokens_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_LIST,		  	    \
-	  .u.lst.def = _def_,			    \
-	  .u.lst.mask = _mask_,			    \
 	  .u.lst.set_off = UINT32_MAX,		    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
@@ -538,7 +534,7 @@ struct config_item {
 				_mem_, _set_)	    \
 	{ .name = _name_,			    \
 	  .type = CONFIG_LIST,		  	    \
-	  .flags = CONFIG_MARK_SET,			\
+	  .flags = CONFIG_MARK_SET|CONFIG_UNIQUE,   \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
 	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
@@ -546,30 +542,13 @@ struct config_item {
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
-#define CONF_ITEM_BOOLBIT(_name_, _def_, _bit_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_BOOLBIT,		    \
-	  .u.bit.def = _def_,			    \
-	  .u.bit.bit = _bit_,			    \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-
 #define CONF_ITEM_BOOLBIT_SET(_name_, _def_, _bit_, _struct_, _mem_, _set_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_BOOLBIT,		    \
-	  .flags = CONFIG_MARK_SET,			\
+	  .flags = CONFIG_MARK_SET|CONFIG_UNIQUE,   \
 	  .u.bit.def = _def_,			    \
 	  .u.bit.bit = _bit_,			    \
 	  .u.bit.set_off = offsetof(struct _struct_, _set_),   \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-
-#define CONF_MAND_LIST(_name_, _def_, _tokens_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_LIST,		   	    \
-	  .flags = CONFIG_MANDATORY,		    \
-	  .u.lst.def = _def_,			    \
-	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
 
@@ -581,6 +560,7 @@ struct config_item {
 #define CONF_ITEM_ENUM_BITS(_name_, _def_, _mask_, _tokens_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_ENUM,			    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
 	  .u.lst.tokens = _tokens_,		    \
@@ -591,7 +571,7 @@ struct config_item {
 				_mem_, _set_)	    \
 	{ .name = _name_,			    \
 	  .type = CONFIG_ENUM,			    \
-	  .flags = CONFIG_MARK_SET,			\
+	  .flags = CONFIG_MARK_SET|CONFIG_UNIQUE,   \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.mask = _mask_,			    \
 	  .u.lst.set_off = offsetof(struct _struct_, _set_),   \
@@ -601,7 +581,8 @@ struct config_item {
 
 #define CONF_ITEM_TOKEN(_name_, _def_, _tokens_, _struct_, _mem_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_TOKEN,		    \
+	  .type = CONFIG_TOKEN,			    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = offsetof(struct _struct_, _mem_)   \
@@ -609,7 +590,8 @@ struct config_item {
 
 #define CONF_INDEX_TOKEN(_name_, _def_, _tokens_, _idx_, _sizeof_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_TOKEN,		    \
+	  .type = CONFIG_TOKEN,			    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.lst.def = _def_,			    \
 	  .u.lst.tokens = _tokens_,		    \
 	  .off = (sizeof(_sizeof_) * _idx_)  \
@@ -617,7 +599,8 @@ struct config_item {
 
 #define CONF_ITEM_BOOL(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_BOOL,		    \
+	  .type = CONFIG_BOOL,			    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.b.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
@@ -625,6 +608,7 @@ struct config_item {
 #define CONF_ITEM_STR(_name_, _minsize_, _maxsize_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_STRING,		    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.str.minsize = _minsize_,		    \
 	  .u.str.maxsize = _maxsize_,		    \
 	  .u.str.def = _def_,			    \
@@ -640,14 +624,17 @@ struct config_item {
 	  .u.str.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
+
 #define CONF_ITEM_PATH(_name_, _minsize_, _maxsize_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_PATH,		    \
+	  .type = CONFIG_PATH,			    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.str.minsize = _minsize_,		    \
 	  .u.str.maxsize = _maxsize_,		    \
 	  .u.str.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
 	}
+
 #define CONF_MAND_PATH(_name_, _minsize_, _maxsize_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_PATH,		    \
@@ -656,22 +643,16 @@ struct config_item {
 	  .u.str.maxsize = _maxsize_,		    \
 	  .u.str.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
-	}
-#define CONF_UNIQ_PATH(_name_, _minsize_, _maxsize_, _def_, _struct_, _mem_) \
-	{ .name = _name_,			    \
-	  .type = CONFIG_PATH,		    	    \
-	  .flags = CONFIG_UNIQUE,		    \
-	  .u.str.minsize = _minsize_,		    \
-	  .u.str.maxsize = _maxsize_,		    \
-	  .u.str.def = _def_,			    \
-	  .off = offsetof(struct _struct_, _mem_)   \
-	}
+}
+
 #define CONF_ITEM_IP_ADDR(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_IP_ADDR,		    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.ip.def = _def_,			    \
 	  .off = offsetof(struct _struct_, _mem_)   \
-	}
+}
+
 #define CONF_MAND_IP_ADDR(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_IP_ADDR,		    \
@@ -683,6 +664,7 @@ struct config_item {
 #define CONF_ITEM_I16(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_INT16,		    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.i16.minval = _min_,		    \
 	  .u.i16.maxval = _max_,		    \
 	  .u.i16.def = _def_,			    \
@@ -693,6 +675,7 @@ struct config_item {
 #define CONF_ITEM_UI16(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_UINT16,		    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.ui16.minval = _min_,		    \
 	  .u.ui16.maxval = _max_,		    \
 	  .u.ui16.def = _def_,			    \
@@ -714,6 +697,7 @@ struct config_item {
 #define CONF_ITEM_I32(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_INT32,		    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.i32.minval = _min_,		    \
 	  .u.i32.maxval = _max_,		    \
 	  .u.i32.def = _def_,			    \
@@ -724,8 +708,8 @@ struct config_item {
 #define CONF_ITEM_I32_SET(_name_, _min_, _max_, _def_, _struct_, _mem_, \
 			  _bit_, _set_) \
 	{ .name = _name_,			    \
-	  .type = CONFIG_INT32,		    \
-	  .flags = CONFIG_MARK_SET,   \
+	  .type = CONFIG_INT32,			    \
+	  .flags = CONFIG_MARK_SET|CONFIG_UNIQUE,   \
 	  .u.i32.minval = _min_,		    \
 	  .u.i32.maxval = _max_,		    \
 	  .u.i32.def = _def_,			    \
@@ -739,7 +723,7 @@ struct config_item {
 			  _bit_, _set_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_ANON_ID,		    \
-	  .flags = CONFIG_MARK_SET,		    \
+	  .flags = CONFIG_MARK_SET|CONFIG_UNIQUE,   \
 	  .u.i64.minval = INT32_MIN,		    \
 	  .u.i64.maxval = UINT32_MAX,		    \
 	  .u.i64.def = _def_,			    \
@@ -752,6 +736,7 @@ struct config_item {
 #define CONF_ITEM_UI32(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_UINT32,		    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.ui32.minval = _min_,		    \
 	  .u.ui32.maxval = _max_,		    \
 	  .u.ui32.def = _def_,			    \
@@ -762,6 +747,7 @@ struct config_item {
 #define CONF_ITEM_UI32_ZERO(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_UINT32,		    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.ui32.minval = _min_,		    \
 	  .u.ui32.maxval = _max_,		    \
 	  .u.ui32.def = _def_,			    \
@@ -783,7 +769,7 @@ struct config_item {
 #define CONF_ITEM_MODE(_name_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_UINT32,		    \
-	  .flags = CONFIG_MODE,			    \
+	  .flags = CONFIG_MODE|CONFIG_UNIQUE,	    \
 	  .u.ui32.minval = 0,			    \
 	  .u.ui32.maxval = 0777,		    \
 	  .u.ui32.def = _def_,			    \
@@ -794,6 +780,7 @@ struct config_item {
 #define CONF_ITEM_I64(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_INT64,			    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.i64.minval = _min_,		    \
 	  .u.i64.maxval = _max_,		    \
 	  .u.i64.def = _def_,			    \
@@ -807,6 +794,7 @@ struct config_item {
 #define CONF_ITEM_I64_ZERO(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_INT64,			    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.i64.minval = _min_,		    \
 	  .u.i64.maxval = _max_,		    \
 	  .u.i64.def = _def_,			    \
@@ -817,6 +805,7 @@ struct config_item {
 #define CONF_ITEM_UI64(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_UINT64,		    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.ui64.minval = _min_,		    \
 	  .u.ui64.maxval = _max_,		    \
 	  .u.ui64.def = _def_,			    \
@@ -827,6 +816,7 @@ struct config_item {
 #define CONF_ITEM_UI64_ZERO(_name_, _min_, _max_, _def_, _struct_, _mem_) \
 	{ .name = _name_,			    \
 	  .type = CONFIG_UINT64,		    \
+	  .flags = CONFIG_UNIQUE,		    \
 	  .u.ui64.minval = _min_,		    \
 	  .u.ui64.maxval = _max_,		    \
 	  .u.ui64.def = _def_,			    \
@@ -838,7 +828,7 @@ struct config_item {
 			  _mem_, _bit_, _set_)       \
 	{ .name = _name_,			    \
 	  .type = CONFIG_UINT64,		    \
-	  .flags = CONFIG_MARK_SET,		    \
+	  .flags = CONFIG_MARK_SET|CONFIG_UNIQUE,   \
 	  .u.ui64.minval = _min_,		    \
 	  .u.ui64.maxval = _max_,		    \
 	  .u.ui64.def = _def_,			    \

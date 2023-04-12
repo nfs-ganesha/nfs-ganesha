@@ -111,6 +111,8 @@ LOG { COMPONENTS {} }
 
 LOG { FACILITY {} }
 --------------------------------------------------------------------------------
+This block may be repeated to configure multiple log facilities.
+
 **name(string, no default)**
 
 **destination(string, no default, must be supplied)**

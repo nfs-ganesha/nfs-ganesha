@@ -413,6 +413,7 @@ struct config_block nfs_ip_name = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.ip_name",
 	.blk_desc.name = "NFS_IP_Name",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = ip_name_init,
 	.blk_desc.u.blk.params = ip_name_params,
 	.blk_desc.u.blk.commit = ip_name_commit
