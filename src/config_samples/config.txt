@@ -16,6 +16,7 @@ LOG { FACILITY {} }
 LOG { FORMAT {} }
 _9P {}
 MDCACHE {}
+FSAL_LIST {}
 CEPH {}
 GPFS {}
 MEM {}
@@ -716,6 +717,15 @@ _9P {}
 
 	_9P_RDMA_Outpool_Size(uint16, range 1 to UINT16_MAX, default 32)
 
+FSAL_LIST {}
+------------
+
+	Name(string, no default)
+
+	This allows listing the names of the following FSAL specific
+	config blocks to avoid config errors if there are no exports
+	of that FSAL.
+
 CEPH {}
 -------
 
@@ -805,7 +815,7 @@ VFS {}
 
 	auth_xdev_export(bool, default false)
 
-    only_one_user(bool, default false)
+	only_one_user(bool, default false)
 
 XFS {}
 ------

@@ -142,6 +142,75 @@ static void load_fsal_static(const char *name, void (*init)(void))
 	PTHREAD_MUTEX_unlock(&fsal_lock);
 }
 
+struct dummy_fsal {
+	void *dummy;
+} dummy;
+
+static void *fsal_dummy_init(void *link_mem, void *self_struct)
+{
+	if (link_mem == NULL) {
+		return self_struct;
+	} else if (self_struct == NULL) {
+		return gsh_calloc(1, sizeof(struct dummy_fsal));
+	} else { /* free resources case */
+		gsh_free(self_struct);
+		return NULL;
+	}
+}
+
+static struct config_item fsal_dummy_params[] = {
+	CONFIG_EOL
+};
+
+struct config_block fsal_dummy_block = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal",
+	.blk_desc.name = "FSAL_ITEM",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_RELAX,
+	.blk_desc.u.blk.init = fsal_dummy_init,
+	.blk_desc.u.blk.params = fsal_dummy_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
+static int fsal_name_adder(const char *token,
+			   enum term_type type_hint,
+			   struct config_item *item,
+			   void *param_addr,
+			   void *cnode,
+			   struct config_error_type *err_type)
+{
+	int rc;
+	config_file_t myconfig = get_parse_root(cnode);
+
+	LogMidDebug(COMPONENT_EXPORT, "Adding FSAL %s", token);
+
+	fsal_dummy_block.blk_desc.name = (char *)token;
+
+	rc = load_config_from_parse(myconfig,
+				    &fsal_dummy_block,
+				    &dummy,
+				    false,
+				    err_type);
+
+	return rc < 0 ? rc : 0;
+}
+
+static struct config_item fsal_params[] = {
+	CONF_ITEM_PROC("Name", noop_conf_init, fsal_name_adder,
+		       dummy_fsal, dummy),
+	CONFIG_EOL
+};
+
+struct config_block fsal_block = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.fsal",
+	.blk_desc.name = "FSAL_LIST",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = fsal_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
 /**
  * @brief Start_fsals
  *
@@ -149,12 +218,26 @@ static void load_fsal_static(const char *name, void (*init)(void))
  * at this point as a check on dynamic loading not starting too early.
  */
 
-void start_fsals(void)
+int start_fsals(config_file_t in_config,
+		struct config_error_type *err_type)
 {
+	int rc;
+
 	PTHREAD_MUTEX_init(&fsal_lock, NULL);
 	PTHREAD_RWLOCK_init(&fs_lock, NULL);
 
 	init_ctx_refstr();
+
+	rc = load_config_from_parse(in_config,
+				    &fsal_block,
+				    &dummy,
+				    false,
+				    err_type);
+
+	if (rc < 0) {
+		LogCrit(COMPONENT_CONFIG, "FSAL block error");
+		return -1;
+	}
 
 	/* .init was a long time ago... */
 	load_state = idle;
@@ -164,6 +247,8 @@ void start_fsals(void)
 
 	/* Load FSAL_PSEUDO */
 	load_fsal_static("PSEUDO", pseudo_fsal_init);
+
+	return 0;
 }
 
 /**

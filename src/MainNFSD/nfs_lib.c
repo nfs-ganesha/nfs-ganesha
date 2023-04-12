@@ -204,7 +204,11 @@ int nfs_libmain(const char *ganesha_conf,
 	/* We need all the fsal modules loaded so we can have
 	 * the list available at exports parsing time.
 	 */
-	start_fsals();
+	if (start_fsals(nfs_config_struct, &err_type) < 0) {
+		LogCrit(COMPONENT_INIT,
+			 "Error starting FSALs.");
+		goto fatal_die;
+	}
 
 	/* parse configuration file */
 

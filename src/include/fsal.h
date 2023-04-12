@@ -213,7 +213,8 @@ int subfsal_commit(void *node, void *link_mem, void *self_struct,
 
 void destroy_fsals(void);
 void emergency_cleanup_fsals(void);
-void start_fsals(void);
+int start_fsals(config_file_t in_config,
+		struct config_error_type *err_type);
 
 void display_fsinfo(struct fsal_module *fsal);
 

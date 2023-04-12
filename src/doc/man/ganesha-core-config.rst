@@ -451,3 +451,11 @@ userid(path, no default)
 watch_url(url, no default)
     rados:// URL to watch for notifications of config changes. When a
     notification is received, the server will issue a SIGHUP to itself.
+
+FSAL_LIST {}
+--------------------------------------------------------------------------------
+name(string, no default)
+    This allows listing of the FSALs that will be used. This assures that the
+    config blocks for those FSALs will not result in an error if no exports
+    are configured using that FSAL. This parameter takes a list of FSAL names
+    and the parameter may be listed multiple times.

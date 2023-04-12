@@ -137,13 +137,32 @@ NFSv4 {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-core-config <ganesha-core-config>`\(8) for usage
 
+_9P {}
+--------------------------------------------------------------------------------
+Refer to :doc:`ganesha-9p-config <ganesha-9p-config>`\(8) for usage
+
+LOG {}
+--------------------------------------------------------------------------------
+Refer to :doc:`ganesha-log-config <ganesha-log-config>`\(8) for usage
+
+1.**LOG { FACILITY {} }**
+2.**LOG { FORMAT {} }**
+
+RADOS_KV {}
+--------------------------------------------------------------------------------
+Refer to :doc:`ganesha-core-config <ganesha-core-config>`\(8) for usage
+
+RADOS_URLS {}
+--------------------------------------------------------------------------------
+Refer to :doc:`ganesha-core-config <ganesha-core-config>`\(8) for usage
+
+FSAL_LIST {}
+--------------------------------------------------------------------------------
+Refer to :doc:`ganesha-core-config <ganesha-core-config>`\(8) for usage
+
 CEPH {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-ceph-config <ganesha-ceph-config>`\(8) for usage
-
-9P {}
---------------------------------------------------------------------------------
-Refer to :doc:`ganesha-9p-config <ganesha-9p-config>`\(8) for usage
 
 GLUSTER {}
 --------------------------------------------------------------------------------
@@ -152,13 +171,6 @@ Refer to :doc:`ganesha-gluster-config <ganesha-gluster-config>`\(8) for usage
 GPFS {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-gpfs-config <ganesha-gpfs-config>`\(8) for usage
-
-LOG {}
---------------------------------------------------------------------------------
-Refer to :doc:`ganesha-log-config <ganesha-log-config>`\(8) for usage
-
-1.**LOG { FACILITY {} }**
-2.**LOG { FORMAT {} }**
 
 PROXY_V4 {}
 --------------------------------------------------------------------------------
