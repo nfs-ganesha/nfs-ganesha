@@ -48,6 +48,7 @@
   fd_lru_pkginit;
   fd_lru_pkgshutdown;
   fgetxattr;
+  find_unused_blocks;
   flistxattr;
   fhlink;
   fhreadlink;

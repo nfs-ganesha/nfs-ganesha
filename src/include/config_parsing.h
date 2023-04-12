@@ -961,6 +961,9 @@ int load_config_from_parse(config_file_t config,
 			   bool unique,
 			   struct config_error_type *err_type);
 
+void find_unused_blocks(config_file_t config,
+			struct config_error_type *err_type);
+
 /* translate err_type values to log/dbus error string*/
 const char *config_term_name(enum term_type type);
 const char *config_term_desc(enum term_type type);

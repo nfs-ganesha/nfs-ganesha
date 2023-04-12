@@ -53,6 +53,7 @@ struct config_node {
 	int linenumber;
 	bool found;		/* use accounting private in do_block_load */
 	enum node_type type;	/* switches union contents */
+	struct config_node *parent;
 	union {			/* sub_nodes are always struct config_node */
 		struct {		/* TYPE_TERM */
 			enum term_type type;
@@ -61,7 +62,6 @@ struct config_node {
 		} term;
 		struct {		/* TYPE_BLOCK | TYPE_STMT */
 			char *name;	/* name */
-			struct config_node *parent;
 			struct glist_head sub_nodes;
 		} nterm;
 	}u;

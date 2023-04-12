@@ -456,11 +456,11 @@ void link_node(struct config_node *node)
 	struct glist_head *ns;
 
 	assert(node->type == TYPE_BLOCK ||
-	       node->type == TYPE_ROOT);
+	       node->type == TYPE_ROOT ||
+	       node->type == TYPE_STMT);
 	glist_for_each(ns, &node->u.nterm.sub_nodes) {
 		subnode = glist_entry(ns, struct config_node, node);
-		if (subnode->type == TYPE_BLOCK)
-			subnode->u.nterm.parent = node;
+		subnode->parent = node;
 	}
 }
 
@@ -530,8 +530,10 @@ struct config_node *config_stmt(char *varname,
 	node->linenumber = yylloc_param->first_line;
 	node->type = TYPE_STMT;
 	node->u.nterm.name = varname;
-	if (exprlist != NULL)
+	if (exprlist != NULL) {
 		glist_add_tail(&exprlist->node, &node->u.nterm.sub_nodes);
+		link_node(node);
+	}
 	return node;
 }
 

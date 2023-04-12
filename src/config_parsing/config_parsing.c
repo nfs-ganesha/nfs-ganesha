@@ -1447,6 +1447,31 @@ err_out:
 	return false;
 }
 
+void find_unused_blocks(config_file_t config,
+			struct config_error_type *err_type)
+{
+	struct config_root *tree = (struct config_root *)config;
+	struct glist_head *ns;
+
+	/* We've been marking config nodes as being "seen" during the
+	 * scans.  Report the bogus and typo inflicted bits.
+	 */
+	glist_for_each(ns, &tree->root.u.nterm.sub_nodes) {
+		struct config_node *node;
+
+		node = glist_entry(ns, struct config_node, node);
+
+		if (node->found)
+			node->found = false;
+		else {
+			config_proc_error(node, err_type,
+					  "Unknown block (%s)",
+					  node->u.nterm.name);
+			err_type->bogus = true;
+		}
+	}
+}
+
 /**
  * @brief Find the root of the parse tree given a node.
  *
@@ -1461,11 +1486,11 @@ config_file_t get_parse_root(void *node)
 	struct config_root *root;
 
 	parent = (struct config_node *)node;
-	assert(parent->type == TYPE_BLOCK);
-	while (parent->u.nterm.parent != NULL) {
-		parent = parent->u.nterm.parent;
+	while (parent->parent != NULL) {
+		parent = parent->parent;
 		assert(parent->type == TYPE_ROOT ||
-		       parent->type == TYPE_BLOCK);
+		       parent->type == TYPE_BLOCK ||
+		       parent->type == TYPE_STMT);
 	}
 	assert(parent->type == TYPE_ROOT);
 	root = container_of(parent, struct config_root, root);
@@ -2008,6 +2033,7 @@ int load_config_from_parse(config_file_t config,
 						  "Only one %s block allowed",
 						  blkname);
 			} else {
+				node->found = true;
 				/* Reset cur_exp_create_err which may be used
 				 * if an EXPORT block is processed. */
 				err_type->cur_exp_create_err = false;
@@ -2050,6 +2076,8 @@ int load_config_from_parse(config_file_t config,
 	}
 	if (err_type->errors > prev_errs) {
 		char *errstr = err_type_str(err_type);
+
+		assert(!config_error_no_error(err_type));
 
 		config_proc_error(node, err_type,
 			 "%d %s errors found block %s",

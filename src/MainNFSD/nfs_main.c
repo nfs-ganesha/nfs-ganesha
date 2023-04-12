@@ -549,6 +549,8 @@ int main(int argc, char *argv[])
 		LogWarn(COMPONENT_INIT,
 			"No export entries found in configuration file !!!");
 
+	find_unused_blocks(nfs_config_struct, &err_type);
+
 	rc = report_config_errors(&err_type, NULL, config_errs_to_log);
 
 	if (config_errors_fatal && rc > 0)
