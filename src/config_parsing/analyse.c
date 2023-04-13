@@ -272,8 +272,17 @@ void free_parse_tree(struct config_root *tree)
 void config_error(FILE *fp, const char *filename, int linenum,
 			 char *fmt, va_list args)
 {
-	fprintf(fp, "Config File (%s:%d): ", filename, linenum);
-	vfprintf(fp, fmt, args);
+	char str[LOG_BUFF_LEN];
+
+	vsprintf(str, fmt, args);
+	fprintf(fp, "Config File (%s:%d): %s", filename, linenum, str);
 	fputc('\f', fp); /* form feed (remember those?) used as msg sep */
+
+	if (likely(component_log_level[COMPONENT_CONFIG] < NIV_FULL_DEBUG))
+		return;
+
+	DisplayLogComponentLevel(COMPONENT_CONFIG,
+				 filename, linenum, (char *)__func__,
+				 NIV_FULL_DEBUG, "%s", str);
 }
 

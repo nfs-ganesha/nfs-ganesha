@@ -1366,6 +1366,11 @@ static bool proc_block(struct config_node *node,
 		err_type->errors++;
 		return false;
 	}
+
+	LogFullDebug(COMPONENT_CONFIG,
+		     "------ At (%s:%d): process block %s link_mem = %p",
+		     node->filename, node->linenumber, item->name, link_mem);
+
 	param_struct = item->u.blk.init(link_mem, NULL);
 	if (param_struct == NULL) {
 		config_proc_error(node, err_type,

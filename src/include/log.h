@@ -147,6 +147,11 @@ void Fatal(void);
  */
 void SetComponentLogLevel(log_components_t component, int level_to_set);
 
+void display_log_component_level(log_components_t component, const char *file,
+				int line, const char *function,
+				log_levels_t level, const char *format,
+				va_list arguments);
+
 void DisplayLogComponentLevel(log_components_t component, const char *file,
 			int line, const char *function, log_levels_t level,
 			const char *format, ...)
