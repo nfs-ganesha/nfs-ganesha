@@ -19,10 +19,10 @@ NFS-Ganesha obtains configuration data from the configuration file:
 
 This file lists NFS-Ganesha Export block config options.
 
-EXPORT_DEFAULTS {}
+EXPORT PERMISSIONS
 --------------------------------------------------------------------------------
-These options are all "export permissions" options, and will be
-repeated in the EXPORT {} and EXPORT { CLIENT {} } blocks.
+These options are all "export permissions" options, and are available in
+EXPORT_DEFAULTS {}, EXPORT {} and CLIENT {} blocks.
 
 These options will all be dynamically updateable.
 
@@ -66,12 +66,79 @@ Delegations(enum, default None)
     Possible values:
         None, read, write, readwrite, r, w, rw
 
+
+CLIENT {}
+--------------------------------------------------------------------------------
+CLIENT blocks are used in EXPORT_DEFAULTS {} and EXPORT {} blocks.
+
+Each CLIENT block provides a list of clients and the permissions granted those
+clients. These blocks form an ordered "access control list" for the export. If
+no client block matches for a particular client, then the permissions in the
+EXPORT {} block will be used (and if any permissions are not set between the
+CLIENT and the EXPORT, then the permissions set in EXPORT_DEFAULTS will be used
+and if still not set, then the code default will be used.
+
+If an EXPORT does not have any CLIENT blocks then the list of CLIENT blocks
+in EXPORT_DEFAULTS (if any) will be used. No matter the source of the CLIENT
+blocks, if the client matches none, then the permissions in the EXPORT will be
+applied next.
+
+To override a restrictive default client list with "everyone" a non-empty
+client list would have to be specified. Clients = "*" would do the trick.
+
+Even when a CLIENT block matches a client, if a particular export permission
+is not explicit in that CLIENT block, the permission specified in the
+EXPORT block will be used, or if not specified there, from the
+EXPORT_DEFAULTS block, and if not specified there, the permission will
+default to the default code value noted in the permission option
+descriptions above.
+
+Note that when the CLIENT blocks are processed on config reload, a new
+client access list is constructed and atomically swapped in. This allows
+adding, removing, and re-arranging clients as well as changing the access
+for any give client.
+
+CLIENT blocks use all the EXPORT PERMISSIONS options plus:
+
+Clients(client list, empty)
+    Client list entries can take on one of the following forms. This parameter
+    may be repeated to extend the list.
+
+        \*          Match any client
+        @name       Netgroup name
+        x.x.x.x/y   IPv4 network address, IPv6 addresses are also allowed
+                    but the format is too complex to show here
+        wildcarded  If the string contains at least one ? or *
+                    character (and is not simply "*"), the string is
+                    used to pattern match host names. Note that [] may
+                    also be used, but the pattern MUST have at least one
+                    ? or *
+        hostname    Match a single client (match is by IP address, all
+                    addresses returned by getaddrinfo will match, the
+                    getaddrinfo call is made at config parsing time)
+        IP address  Match a single client
+
+
+EXPORT_DEFAULTS {}
+--------------------------------------------------------------------------------
+All the EXPORT PERMISSIONS options plus:
+
 **Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)**
+
+CLIENT (optional)
+    See the ``CLIENT  {}`` block description.
+    There may be any number of these.
+
+EXPORT_DEFAULTS { CLIENT {} }
+--------------------------------------------------------------------------------
+See the ``CLIENT  {}`` block description.
 
 EXPORT {}
 --------------------------------------------------------------------------------
 All options below are dynamically changeable with config update unless specified
 below. This block may be repeated to define multiple exports.
+
+All the EXPORT_PERMISSIONS plus:
 
 Export_id (required):
     An identifier for the export, must be unique and between 0 and 65535.
@@ -158,7 +225,8 @@ MaxOffsetRead (INT64_MAX)
     Range is 512 to UINT64_MAX
 
 CLIENT (optional)
-    See the ``EXPORT { CLIENT  {} }`` block.
+    See the ``CLIENT  {}`` block description.
+    There may be any number of these.
 
 FSAL (required)
     See the ``EXPORT { FSAL  {} }`` block.
@@ -170,48 +238,10 @@ FSAL (required)
 
 EXPORT { CLIENT  {} }
 --------------------------------------------------------------------------------
-Take all the "export permissions" options from EXPORT_DEFAULTS.
-The client lists are dynamically updateable. This block may be repeated as
-detailed below.
-
-These blocks form an ordered "access control list" for the export. If no
-client block matches for a particular client, then the permissions in the
-EXPORT {} block will be used.
-
-Even when a CLIENT block matches a client, if a particular export permission
-is not explicit in that CLIENT block, the permission specified in the
-EXPORT block will be used, or if not specified there, from the
-EXPORT_DEFAULTS block, and if not specified there, the permission will
-default to the default code value noted in the permission option
-descriptions above.
-
-Note that when the CLIENT blocks are processed on config reload, a new
-client access list is constructed and atomically swapped in. This allows
-adding, removing, and re-arranging clients as well as changing the access
-for any give client.
-
-Clients(client list, empty)
-    Client list entries can take on one of the following forms. This parameter
-    may be repeated to extend the list.
-
-        \*          Match any client
-        @name       Netgroup name
-        x.x.x.x/y   IPv4 network address, IPv6 addresses are also allowed
-                    but the format is too complex to show here
-        wildcarded  If the string contains at least one ? or *
-                    character (and is not simply "*"), the string is
-                    used to pattern match host names. Note that [] may
-                    also be used, but the pattern MUST have at least one
-                    ? or *
-        hostname    Match a single client (match is by IP address, all
-                    addresses returned by getaddrinfo will match, the
-                    getaddrinfo call is made at config parsing time)
-        IP address  Match a single client
-
+See the ``CLIENT  {}`` block description.
 
 EXPORT { FSAL {} }
 --------------------------------------------------------------------------------
-
 NFS-Ganesha supports the following FSALs:
 **Ceph**
 **Gluster**

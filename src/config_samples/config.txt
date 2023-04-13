@@ -5,6 +5,7 @@ NFS_IP_NAME {}
 NFS_KRB5 {}
 NFSV4 {}
 EXPORT_DEFAULTS {}
+EXPORT_DEFAULTS { CLIENT  {} }
 EXPORT {}
 EXPORT { CLIENT  {} }
 EXPORT { FSAL {} }
@@ -295,8 +296,47 @@ EXPORT_DEFAULTS {}
 	Delegations(enum, values [None, read, write, readwrite, r, w, rw],
 		    default None)
 
+	--------------------------
+	The following options are not permission options but may be set in
+	EXPORT_DEFAULTS
+
 	Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
 
+
+EXPORT_DEFAULTS { CLIENT  {} }
+------------------------------
+
+	EXPORT_DEFAULTS can also have CLIENT blocks
+
+	* To override a restrictive default client list with "everyone" a
+	  non-empty client list would have to be specified. Clients = "*"
+	  would do the trick.
+
+	* This block may be repeated to define multiple client lists with
+	  different permissions.
+
+	* Take all the "export permissions" options from EXPORT_DEFAULTS.
+
+	* The client lists are dynamically updateable.
+
+	Clients(client list, empty)
+
+	* Client list entries can take on one of the following forms. This
+	  parameter may be repeated to extend the list.
+
+	*		Match any client
+	@name		Netgroup name
+	x.x.x.x/y	IPv4 network address, IPv6 addresses are also allowed
+			but the format is too complex to show here
+	wildcarded	If the string contains at least one ? or *
+			character (and is not simply "*"), the string is
+			used to pattern match host names. Note that [] may
+			also be used, but the pattern MUST have at least one
+			? or *
+	hostname	Match a single client (match is by IP address, all
+			addresses returned by getaddrinfo will match, the
+			getaddrinfo call is made at config parsing time)
+	IP address	Match a single client
 
 EXPORT {}
 ---------
@@ -375,31 +415,7 @@ EXPORT {}
 EXPORT { CLIENT  {} }
 ---------------------
 
-	* This block may be repeated to define multiple client lists with
-	  different permissions.
-
-	* Take all the "export permissions" options from EXPORT_DEFAULTS.
-
-	* The client lists are dynamically updateable.
-
-	Clients(client list, empty)
-
-	* Client list entries can take on one of the following forms. This
-	  parameter may be repeated to extend the list.
-
-	*		Match any client
-	@name		Netgroup name
-	x.x.x.x/y	IPv4 network address, IPv6 addresses are also allowed
-			but the format is too complex to show here
-	wildcarded	If the string contains at least one ? or *
-			character (and is not simply "*"), the string is
-			used to pattern match host names. Note that [] may
-			also be used, but the pattern MUST have at least one
-			? or *
-	hostname	Match a single client (match is by IP address, all
-			addresses returned by getaddrinfo will match, the
-			getaddrinfo call is made at config parsing time)
-	IP address	Match a single client
+	See EXPORT_DEFAULTS { CLIENT  {} }
 
 EXPORT { FSAL {} }
 ------------------

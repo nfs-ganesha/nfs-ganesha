@@ -64,7 +64,11 @@
 struct global_export_perms {
 	struct export_perms def;
 	struct export_perms conf;
+	struct glist_head clients;
 };
+
+extern pthread_rwlock_t export_opt_lock;
+extern struct global_export_perms export_opt;
 
 #define GSS_DEFINE_LEN_TEMP 255
 

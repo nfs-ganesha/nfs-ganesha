@@ -57,6 +57,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	struct groupnode *group, *grp_tail = NULL;
 	char *grp_name;
 	bool free_grp_name;
+	struct glist_head *clients = &export->clients;
 
 	state->retval = 0;
 
@@ -86,8 +87,12 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
 
 	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->exp_lock);
+	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
 
-	glist_for_each(glist_item, &export->clients) {
+	if (glist_empty(clients))
+		clients = &export_opt.clients;
+
+	glist_for_each(glist_item, clients) {
 		struct base_client_entry *client =
 					glist_entry(glist_item,
 						    struct base_client_entry,
@@ -136,6 +141,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 			gsh_free(grp_name);
 	}
 
+	PTHREAD_RWLOCK_unlock(&export_opt_lock);
 	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 
 	/* Now that we are almost done, get a gsh_refstr to the path for ex_dir.

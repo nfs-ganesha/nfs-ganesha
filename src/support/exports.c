@@ -60,7 +60,7 @@
  */
 pthread_rwlock_t export_opt_lock;
 
-#define GLOBAL_EXPORT_PERMS_INITIALIZER				\
+#define GLOBAL_EXPORT_PERMS_INITIALIZER(self)			\
 	.def.anonymous_uid = ANON_UID,				\
 	.def.anonymous_gid = ANON_GID,				\
 	.def.expire_time_attr = EXPORT_DEFAULT_CACHE_EXPIRY,	\
@@ -72,17 +72,18 @@ pthread_rwlock_t export_opt_lock;
 		       EXPORT_OPTION_AUTH_DEFAULTS |		\
 		       EXPORT_OPTION_XPORT_DEFAULTS |		\
 		       EXPORT_OPTION_NO_DELEGATIONS,		\
-	.def.set = UINT32_MAX
+	.def.set = UINT32_MAX,					\
+	.clients = {&self.clients, &self.clients},
 
 struct global_export_perms export_opt = {
-	GLOBAL_EXPORT_PERMS_INITIALIZER
+	GLOBAL_EXPORT_PERMS_INITIALIZER(export_opt)
 };
 
 /* A second copy used in configuration, so we can atomically update the
  * primary set.
  */
 struct global_export_perms export_opt_cfg = {
-	GLOBAL_EXPORT_PERMS_INITIALIZER
+	GLOBAL_EXPORT_PERMS_INITIALIZER(export_opt_cfg)
 };
 
 static int StrExportOptions(struct display_buffer *dspbuf,
@@ -447,10 +448,8 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 {
 	struct exportlist_client_entry *expcli;
 	struct base_client_entry *cli;
-	struct gsh_export *export;
+	struct glist_head *clients = link_mem;
 	int errcnt = 0;
-
-	export = container_of(link_mem, struct gsh_export, clients);
 
 	expcli = self_struct;
 	cli = &expcli->client_entry;
@@ -481,7 +480,7 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 			    (cl_perm_opt & def_opt & EXPORT_OPTION_PROTOCOLS);
 		}
 
-		glist_splice_tail(&export->clients, &cli->cle_list);
+		glist_splice_tail(clients, &cli->cle_list);
 	}
 	if (errcnt == 0)
 		client_init(link_mem, self_struct);
@@ -1520,10 +1519,14 @@ static int update_export_commit(void *node, void *link_mem, void *self_struct,
 
 static void *export_defaults_init(void *link_mem, void *self_struct)
 {
-	if (self_struct == NULL)
+	if (link_mem == NULL) {
+		return self_struct;
+	} else if (self_struct == NULL) {
 		return &export_opt_cfg;
-	else
+	} else { /* free resources case */
+		FreeClientList(&export_opt_cfg.clients, FreeExportClient);
 		return NULL;
+	}
 }
 
 /**
@@ -1547,6 +1550,15 @@ static int export_defaults_commit(void *node, void *link_mem,
 	/* Update under lock. */
 	PTHREAD_RWLOCK_wrlock(&export_opt_lock);
 	export_opt.conf = export_opt_cfg.conf;
+
+	/* Swap the client list from export_opt_cfg export and export_opt. */
+	LogCrit(COMPONENT_EXPORT,
+		     "Original clients = (%p,%p) New clients = (%p,%p)",
+		     export_opt.clients.next, export_opt.clients.prev,
+		     export_opt_cfg.clients.next, export_opt_cfg.clients.prev);
+
+	glist_swap_lists(&export_opt.clients, &export_opt_cfg.clients);
+
 	PTHREAD_RWLOCK_unlock(&export_opt_lock);
 
 	return 0;
@@ -1818,6 +1830,9 @@ static struct config_item export_defaults_params[] = {
 		       EXPORT_DEFAULT_CACHE_EXPIRY,
 		       global_export_perms, conf.expire_time_attr,
 		       EXPORT_OPTION_EXPIRE_SET, conf.set),
+	CONF_ITEM_BLOCK_MULT("Client", client_params,
+			     client_init, client_commit,
+			     global_export_perms, clients),
 	CONFIG_EOL
 };
 
@@ -2230,7 +2245,7 @@ int ReadExports(config_file_t in_config,
 
 	rc = load_config_from_parse(in_config,
 				    &export_defaults_param,
-				    NULL,
+				    &export_opt_cfg,
 				    false,
 				    err_type);
 	if (rc < 0) {
@@ -2297,7 +2312,7 @@ int reread_exports(config_file_t in_config,
 
 	rc = load_config_from_parse(in_config,
 				    &export_defaults_param,
-				    NULL,
+				    &export_opt_cfg,
 				    false,
 				    err_type);
 
@@ -2963,8 +2978,12 @@ void export_check_access(void)
 	if (op_ctx->ctx_export != NULL) {
 		/* Take lock */
 		PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->exp_lock);
+
+		PTHREAD_RWLOCK_rdlock(&export_opt_lock);
 	} else {
 		/* Shortcut if no export */
+		PTHREAD_RWLOCK_rdlock(&export_opt_lock);
+
 		goto no_export;
 	}
 
@@ -2976,9 +2995,19 @@ void export_check_access(void)
 		exp_str[0] = '\0';
 	}
 
-	/* Does the client match anyone on the client list? */
-	client = client_match(COMPONENT_EXPORT, exp_str, op_ctx->caller_addr,
-			      &op_ctx->ctx_export->clients);
+	if (glist_empty(&op_ctx->ctx_export->clients)) {
+		/* No client list so use the export defaults client list to
+		 * see if there's a match.
+		 */
+		client = client_match(COMPONENT_EXPORT, exp_str,
+				      op_ctx->caller_addr,
+				      &export_opt.clients);
+	} else {
+		/* Does the client match anyone on the client list? */
+		client = client_match(COMPONENT_EXPORT, exp_str,
+				      op_ctx->caller_addr,
+				      &op_ctx->ctx_export->clients);
+	}
 
 	if (client != NULL) {
 		/* Take client options */
@@ -3027,8 +3056,6 @@ void export_check_access(void)
 	op_ctx->export_perms.set |= op_ctx->ctx_export->export_perms.set;
 
  no_export:
-
-	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
 
 	/* Any options not set by the client or export, take from the
 	 *  EXPORT_DEFAULTS block.
