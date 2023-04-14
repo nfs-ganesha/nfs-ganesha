@@ -399,7 +399,7 @@ static struct config_item_list recovery_backend_types[] = {
 static struct config_item version4_params[] = {
 	CONF_ITEM_BOOL("Graceless", false,
 		       nfs_version4_parameter, graceless),
-	CONF_ITEM_UI32("Lease_Lifetime", 0, 180, LEASE_LIFETIME_DEFAULT,
+	CONF_ITEM_UI32("Lease_Lifetime", 1, 180, LEASE_LIFETIME_DEFAULT,
 		       nfs_version4_parameter, lease_lifetime),
 	CONF_ITEM_UI32("Grace_Period", 0, 270, GRACE_PERIOD_DEFAULT,
 		       nfs_version4_parameter, grace_period),

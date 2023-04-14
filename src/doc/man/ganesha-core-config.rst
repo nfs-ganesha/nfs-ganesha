@@ -342,7 +342,7 @@ NFSv4 {}
 Graceless(bool, default false)
     Whether to disable the NFSv4 grace period.
 
-Lease_Lifetime(uint32, range 0 to 120, default 60)
+Lease_Lifetime(uint32, range 1 to 120, default 60)
     The NFSv4 lease lifetime.
 
 Grace_Period(uint32, range 0 to 180, default 90)
