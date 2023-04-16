@@ -119,15 +119,15 @@ static inline struct gsh_refstr *gsh_refstr_get(struct gsh_refstr *gr)
 	 */
 	cur = uatomic_read(&ref->refcount);
 	for (;;) {
-		long new, old = cur;
+		long new_val, old_val = cur;
 
-		old = cur;
-		if (old == 0 || old == LONG_MAX)
+		old_val = cur;
+		if (old_val == 0 || old_val == LONG_MAX)
 			abort();
 
-		new = old + 1;
-		cur = uatomic_cmpxchg(&ref->refcount, old, new);
-		if (cur == old)
+		new_val = old_val + 1;
+		cur = uatomic_cmpxchg(&ref->refcount, old_val, new_val);
+		if (cur == old_val)
 			break;
 	}
 	return gr;
