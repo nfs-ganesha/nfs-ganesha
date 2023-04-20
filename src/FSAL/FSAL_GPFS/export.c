@@ -58,7 +58,8 @@ static void release(struct fsal_export *exp_hdl)
 	struct gpfs_fsal_export *myself =
 	    container_of(exp_hdl, struct gpfs_fsal_export, export);
 
-	gpfs_unexport_filesystems(myself);
+	unclaim_all_export_maps(exp_hdl);
+
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 	close(myself->export_fd);
@@ -633,41 +634,6 @@ out:
 	LogInfo(COMPONENT_FSAL, "GPFS Unclaiming %s", fs->path);
 }
 
-/**
- *  @brief Unexport filesystem
- *  @param exp FSAL export
- */
-void gpfs_unexport_filesystems(struct gpfs_fsal_export *exp)
-{
-	struct glist_head *glist, *glistn;
-	struct gpfs_filesystem_export_map *map;
-
-	PTHREAD_RWLOCK_wrlock(&fs_lock);
-
-	glist_for_each_safe(glist, glistn, &exp->filesystems) {
-		map = glist_entry(glist, struct gpfs_filesystem_export_map,
-				  on_filesystems);
-
-		/* Remove this export from mapping */
-		PTHREAD_MUTEX_lock(&map->fs->upvector_mutex);
-		glist_del(&map->on_filesystems);
-		glist_del(&map->on_exports);
-		PTHREAD_MUTEX_unlock(&map->fs->upvector_mutex);
-
-		if (glist_empty(&map->fs->exports)) {
-			LogInfo(COMPONENT_FSAL,
-				"GPFS is no longer exporting filesystem %s",
-				map->fs->fs->path);
-			//unclaim_fs(map->fs->fs);
-		}
-
-		/* And free it */
-		gsh_free(map);
-	}
-
-	PTHREAD_RWLOCK_unlock(&fs_lock);
-}
-
 /* GPFS FSAL export config */
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
@@ -821,7 +787,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	return status;
 
 unexport:
-	gpfs_unexport_filesystems(gpfs_exp);
+	unclaim_all_export_maps(exp);
 detach:
 	fsal_detach_export(fsal_hdl, &exp->exports);
 free:
