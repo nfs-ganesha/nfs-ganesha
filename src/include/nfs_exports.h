@@ -229,14 +229,14 @@ bool log_an_export(struct gsh_export *exp, void *state);
 
 uint32_t export_check_options(struct gsh_export *exp);
 
-static inline bool export_can_be_mounted(struct gsh_export *export)
+static inline bool export_can_be_mounted(struct gsh_export *exp)
 {
-	uint32_t options = export_check_options(export);
+	uint32_t options = export_check_options(exp);
 
 	return (options & EXPORT_OPTION_NFSV4) != 0
-	       && export->cfg_pseudopath != NULL
-	       && export->export_id != 0
-	       && export->cfg_pseudopath[1] != '\0';
+	       && exp->cfg_pseudopath != NULL
+	       && exp->export_id != 0
+	       && exp->cfg_pseudopath[1] != '\0';
 }
 
 #define LOG_EXPORT(level, tag, exp, clients)				   \
