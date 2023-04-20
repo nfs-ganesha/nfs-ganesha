@@ -133,8 +133,8 @@ TEST_F(Write2EmptyLatencyTest, SIMPLE)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &io_data);
 
@@ -171,8 +171,8 @@ TEST_F(Write2EmptyLatencyTest, SIMPLE_BYPASS)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_write(sub_hdl, true, write_arg, &io_data);
 
@@ -205,8 +205,8 @@ TEST_F(Write2EmptyLatencyTest, SMALL_STABLE_WRITE)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &io_data);
 
@@ -239,8 +239,8 @@ TEST_F(Write2EmptyLatencyTest, LARGE_UNSTABLE_WRITE)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &io_data);
 
@@ -273,8 +273,8 @@ TEST_F(Write2EmptyLatencyTest, LARGE_STABLE_WRITE)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &io_data);
 
@@ -311,8 +311,8 @@ TEST_F(Write2EmptyLatencyTest, LOOP)
     io_data.ret.major = ERR_FSAL_NO_ERROR;
     io_data.ret.minor = 0;
     io_data.done = false;
-    io_data.cond = &cond;
-    io_data.mutex = &mutex;
+    io_data.fsa_cond = &cond;
+    io_data.fsa_mutex = &mutex;
 
     fsal_write(test_file, true, write_arg, &io_data);
 
@@ -359,8 +359,8 @@ TEST_F(Write2EmptyLatencyTest, LOOP_BYPASS)
     io_data.ret.major = ERR_FSAL_NO_ERROR;
     io_data.ret.minor = 0;
     io_data.done = false;
-    io_data.cond = &cond;
-    io_data.mutex = &mutex;
+    io_data.fsa_cond = &cond;
+    io_data.fsa_mutex = &mutex;
 
     fsal_write(sub_hdl, true, write_arg, &io_data);
 

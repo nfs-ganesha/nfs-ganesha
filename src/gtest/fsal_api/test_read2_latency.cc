@@ -136,8 +136,8 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &io_data);
 
@@ -157,8 +157,8 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_read(test_file, true, read_arg, &io_data);
 
@@ -201,8 +201,8 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE_BYPASS)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_write(sub_hdl, true, write_arg, &io_data);
 
@@ -223,8 +223,8 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE_BYPASS)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_read(sub_hdl, true, read_arg, &io_data);
 
@@ -261,8 +261,8 @@ TEST_F(Read2EmptyLatencyTest, LARGE_DATA_READ)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &io_data);
 
@@ -282,8 +282,8 @@ TEST_F(Read2EmptyLatencyTest, LARGE_DATA_READ)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_read(test_file, true, read_arg, &io_data);
 
@@ -323,8 +323,8 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &io_data);
 
@@ -348,8 +348,8 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
     io_data.ret.major = ERR_FSAL_NO_ERROR;
     io_data.ret.minor = 0;
     io_data.done = false;
-    io_data.cond = &cond;
-    io_data.mutex = &mutex;
+    io_data.fsa_cond = &cond;
+    io_data.fsa_mutex = &mutex;
 
     fsal_read(test_file, true, read_arg, &io_data);
 
@@ -396,8 +396,8 @@ TEST_F(Read2EmptyLatencyTest, LOOP_BYPASS)
   io_data.ret.major = ERR_FSAL_NO_ERROR;
   io_data.ret.minor = 0;
   io_data.done = false;
-  io_data.cond = &cond;
-  io_data.mutex = &mutex;
+  io_data.fsa_cond = &cond;
+  io_data.fsa_mutex = &mutex;
 
   fsal_write(sub_hdl, true, write_arg, &io_data);
 
@@ -421,8 +421,8 @@ TEST_F(Read2EmptyLatencyTest, LOOP_BYPASS)
     io_data.ret.major = ERR_FSAL_NO_ERROR;
     io_data.ret.minor = 0;
     io_data.done = false;
-    io_data.cond = &cond;
-    io_data.mutex = &mutex;
+    io_data.fsa_cond = &cond;
+    io_data.fsa_mutex = &mutex;
 
     fsal_read(sub_hdl, true, read_arg, &io_data);
 

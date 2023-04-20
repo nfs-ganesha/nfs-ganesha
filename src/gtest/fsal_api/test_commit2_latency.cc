@@ -155,8 +155,8 @@ TEST_F(Commit2EmptyLatencyTest, SMALL_UNSTABLE_WRITE)
   write_data.ret.major = ERR_FSAL_NO_ERROR;
   write_data.ret.minor = 0;
   write_data.done = false;
-  write_data.cond = &cond;
-  write_data.mutex = &mutex;
+  write_data.fsa_cond = &cond;
+  write_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &write_data);
 
@@ -192,8 +192,8 @@ TEST_F(Commit2EmptyLatencyTest, SMALL_STABLE_WRITE)
   write_data.ret.major = ERR_FSAL_NO_ERROR;
   write_data.ret.minor = 0;
   write_data.done = false;
-  write_data.cond = &cond;
-  write_data.mutex = &mutex;
+  write_data.fsa_cond = &cond;
+  write_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &write_data);
 
@@ -229,8 +229,8 @@ TEST_F(Commit2EmptyLatencyTest, LARGE_UNSTABLE_WRITE)
   write_data.ret.major = ERR_FSAL_NO_ERROR;
   write_data.ret.minor = 0;
   write_data.done = false;
-  write_data.cond = &cond;
-  write_data.mutex = &mutex;
+  write_data.fsa_cond = &cond;
+  write_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &write_data);
 
@@ -266,8 +266,8 @@ TEST_F(Commit2EmptyLatencyTest, LARGE_STABLE_WRITE)
   write_data.ret.major = ERR_FSAL_NO_ERROR;
   write_data.ret.minor = 0;
   write_data.done = false;
-  write_data.cond = &cond;
-  write_data.mutex = &mutex;
+  write_data.fsa_cond = &cond;
+  write_data.fsa_mutex = &mutex;
 
   fsal_write(test_file, true, write_arg, &write_data);
 

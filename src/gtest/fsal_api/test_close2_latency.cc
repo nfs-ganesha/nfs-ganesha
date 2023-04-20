@@ -127,7 +127,7 @@ TEST_F(Close2EmptyLatencyTest, SIMPLE)
   status = fsal_remove(test_root, TEST_FILE);
   ASSERT_EQ(status.major, 0);
   obj->obj_ops->put_ref(obj);
-  free_state(op_ctx->fsal_export, file_state);
+  free_state(file_state);
 }
 
 TEST_F(Close2EmptyLatencyTest, SIMPLE_BYPASS)
