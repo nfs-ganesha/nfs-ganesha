@@ -131,8 +131,16 @@ struct rgw_cb_arg {
 	attrmask_t attrmask;
 };
 
-static bool rgw_cb(const char *name, void *arg, uint64_t offset,
-		struct stat *st, uint32_t st_mask, uint32_t flags)
+#if ((LIBRGW_FILE_VER_MAJOR > 1) || \
+	((LIBRGW_FILE_VER_MAJOR == 1) && \
+	 ((LIBRGW_FILE_VER_MINOR > 2) || \
+	  ((LIBRGW_FILE_VER_MINOR == 2) && (LIBRGW_FILE_VER_EXTRA >= 1)))))
+static int
+#else
+static bool
+#endif
+rgw_cb(const char *name, void *arg, uint64_t offset,
+	struct stat *st, uint32_t st_mask, uint32_t flags)
 {
 	struct rgw_cb_arg *rgw_cb_arg = arg;
 	struct fsal_obj_handle *obj = NULL;
