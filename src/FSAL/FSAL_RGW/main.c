@@ -84,6 +84,9 @@ struct rgw_fsal_module RGWFSM = {
 			#endif
 			.whence_is_name = true,
 			.expire_time_parent = -1,
+#ifdef USE_FSAL_RGW_XATTRS
+			.xattr_support = true,
+#endif
 		}
 	}
 };
