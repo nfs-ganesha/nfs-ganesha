@@ -196,6 +196,8 @@ static int fs_ng_create_recov_dir(void)
 		return -error;
 	}
 
+	v4_recov_dir_len = err;
+
 	newdir = mkdtemp(v4_recov_dir);
 	if (newdir != v4_recov_dir) {
 		LogEvent(COMPONENT_CLIENTID,

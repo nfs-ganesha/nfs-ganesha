@@ -24,6 +24,7 @@
  */
 
 extern char v4_recov_dir[PATH_MAX];
+extern unsigned int v4_recov_dir_len;
 
 void fs_add_clid(nfs_client_id_t *clientid);
 void fs_rm_clid(nfs_client_id_t *clientid);
