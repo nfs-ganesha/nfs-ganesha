@@ -930,6 +930,8 @@ static inline void dupreq_entry_put(dupreq_entry_t *dv)
 
 	refcnt = atomic_dec_uint32_t(&dv->refcnt);
 
+	assert(refcnt >= 0);
+
 	/* If ref count is zero, no one should be accessing it other
 	 * than us.  so no lock is needed.
 	 */

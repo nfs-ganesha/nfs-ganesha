@@ -180,6 +180,8 @@ static void _mem_int_put_ref(struct mem_fsal_obj_handle *myself,
 		   myself->m_name, refcount);
 #endif
 
+	assert(refcount >= 0);
+
 	if (refcount == 0) {
 		mem_cleanup(myself);
 	}

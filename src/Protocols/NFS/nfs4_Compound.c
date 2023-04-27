@@ -1424,6 +1424,8 @@ void release_nfs4_res_compound(struct COMPOUND4res_extended *res_compound4_ex)
 	int32_t refcnt = atomic_dec_int32_t(&res_compound4_ex->res_refcnt);
 	struct COMPOUND4res *res_compound4 = &res_compound4_ex->res_compound4;
 
+	assert(refcnt >= 0);
+
 	if (refcnt > 0) {
 		LogFullDebugAlt(COMPONENT_NFS_V4, COMPONENT_SESSIONS,
 			     "Skipping free of NFS4 result %p refcnt %"PRIi32,

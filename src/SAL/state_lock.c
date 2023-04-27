@@ -647,6 +647,8 @@ static void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 			 : "Decrement refcount and freeing",
 			 lock_entry, refcount);
 
+	assert(refcount >= 0);
+
 	if (refcount == 0) {
 		/* Release block data if present */
 		if (lock_entry->sle_block_data != NULL) {

@@ -500,6 +500,8 @@ void dec_nfs4_state_ref(struct state_t *state)
 
 	refcount = atomic_dec_int32_t(&state->state_refcount);
 
+	assert(refcount >= 0);
+
 	if (refcount > 0) {
 		if (str_valid)
 			LogFullDebug(COMPONENT_STATE,

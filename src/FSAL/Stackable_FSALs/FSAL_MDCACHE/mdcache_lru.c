@@ -1845,6 +1845,9 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		long_refcnt = atomic_dec_int32_t(&entry->lru.long_refcnt);
 		refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
 
+		assert(long_refcnt >= 0);
+		assert(refcnt >= 0);
+
 		if (unlikely(long_refcnt == 0)) {
 			struct lru_q *q;
 
@@ -1866,6 +1869,7 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		}
 	} else {
 		refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
+		assert(refcnt >= 0);
 		long_refcnt = atomic_fetch_int32_t(&entry->lru.long_refcnt);
 	}
 
@@ -1966,6 +1970,9 @@ void _mdcache_lru_unref_chunk(struct dir_chunk *chunk, const char *func,
 	QLOCK(qlane);
 
 	refcnt = atomic_dec_int32_t(&chunk->chunk_lru.refcnt);
+
+	assert(refcnt >= 0);
+
 	if (refcnt == 0) {
 		lru_clean_chunk(chunk);
 

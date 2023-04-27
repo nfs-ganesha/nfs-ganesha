@@ -782,6 +782,8 @@ void _dec_nsm_client_ref(state_nsm_client_t *client,
 
 	refcount = atomic_dec_int32_t(&client->ssc_refcount);
 
+	assert(refcount >= 0);
+
 	if (refcount > 0) {
 		if (str_valid) {
 			DisplayLogComponentLevel(
@@ -1101,6 +1103,8 @@ void dec_nlm_client_ref(state_nlm_client_t *client)
 	}
 
 	refcount = atomic_dec_int32_t(&client->slc_refcount);
+
+	assert(refcount >= 0);
 
 	if (refcount > 0) {
 		if (str_valid)

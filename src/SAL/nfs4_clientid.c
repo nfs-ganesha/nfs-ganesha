@@ -373,6 +373,8 @@ int32_t dec_client_id_ref(nfs_client_id_t *clientid)
 		     "Decrement refcount Clientid {%s} refcount to %" PRId32,
 		     str, cid_refcount);
 
+	assert(cid_refcount >= 0);
+
 	if (cid_refcount > 0)
 		return cid_refcount;
 

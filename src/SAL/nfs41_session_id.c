@@ -277,6 +277,8 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 	tracepoint(nfs4, session_unref, func, line, session, refcnt);
 #endif
 
+	assert(refcnt >= 0);
+
 	if (refcnt == 0) {
 
 		/* Unlink the session from the client's list of
