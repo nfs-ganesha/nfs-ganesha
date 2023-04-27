@@ -978,7 +978,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 				&owner->so_owner.so_nfs4_owner.so_perclient);
 
 		/* Hold a reference to the owner while we drop the cid_mutex. */
-		held = hold_state_owner(owner);
+		held = hold_state_owner_ref(owner);
 
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
@@ -1043,7 +1043,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale)
 				&owner->so_owner.so_nfs4_owner.so_perclient);
 
 		/* Hold a reference to the owner while we drop the cid_mutex. */
-		held = hold_state_owner(owner);
+		held = hold_state_owner_ref(owner);
 
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 

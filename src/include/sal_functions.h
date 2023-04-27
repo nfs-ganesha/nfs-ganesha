@@ -65,7 +65,7 @@ const char *state_owner_type_to_str(state_owner_type_t type);
 bool different_owners(state_owner_t *owner1, state_owner_t *owner2);
 int display_owner(struct display_buffer *dspbuf, state_owner_t *owner);
 void inc_state_owner_ref(state_owner_t *owner);
-bool hold_state_owner(state_owner_t *owner);
+bool hold_state_owner_ref(state_owner_t *owner);
 void dec_state_owner_ref(state_owner_t *owner);
 void free_state_owner(state_owner_t *owner);
 

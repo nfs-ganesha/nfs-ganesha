@@ -1219,63 +1219,39 @@ not_found:
  * inc_state_owner_ref() can be called to hold a reference provided
  * someone already has a valid refcount. In other words, one can't call
  * inc_state_owner_ref on a owner whose refcount has possibly gone to
- * zero.
+ * zero so we use atomic_inc_unless_0_int32_t which will not increment
+ * the refcount if it is 0. Since that returns either 0, or the new refcount,
+ * we can easily detect the case where a reference was NOT taken.
  *
- * If we don't know for sure if the owner refcount is positive, this
- * function must be called to hold a reference.  This function places a
- * reference if the owner has a positive refcount already.
- *
- * @return True if we are able to hold a reference, False otherwise.
+ * @return true if we are able to hold a reference, false otherwise.
  */
-bool hold_state_owner(state_owner_t *owner)
+bool hold_state_owner_ref(state_owner_t *owner)
 {
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
 	bool str_valid = false;
-	hash_table_t *ht_owner;
-	struct gsh_buffdesc buffkey;
-	struct hash_latch latch;
-	hash_error_t rc;
 	int32_t refcount;
 
-	/* We need to increment and possibly decrement the refcount
-	 * atomically. This "increment" to check for the owner refcount
-	 * condition is also done in get_state_owner. Those are done
-	 * under the hash lock, so we do the same here.
-	 */
-	ht_owner = get_state_owner_hash_table(owner);
-	if (ht_owner == NULL) {
-		if (!str_valid)
-			display_owner(&dspbuf, owner);
-		LogCrit(COMPONENT_STATE,
-			"ht=%p Unexpected key {%s}", ht_owner, str);
-		return false;
+	if (isFullDebug(COMPONENT_STATE)) {
+		display_owner(&dspbuf, owner);
+		str_valid = true;
 	}
 
-	buffkey.addr = owner;
-	buffkey.len = sizeof(*owner);
+	refcount = atomic_inc_unless_0_int32_t(&owner->so_refcount);
 
-	/* We don't care if this owner is in the hashtable or not. We
-	 * just need the partition lock in exclusive mode!
-	 */
-	rc = hashtable_acquire_latch(ht_owner, &buffkey, &latch);
-	switch (rc) {
-	case HASHTABLE_SUCCESS:
-		refcount = atomic_inc_int32_t(&owner->so_refcount);
-		if (refcount == 1) {
-			/* This owner is in the process of getting freed */
-			(void)atomic_dec_int32_t(&owner->so_refcount);
-			hashtable_releaselatched(ht_owner, &latch);
-			return false;
+	if (str_valid) {
+		if (refcount == 0) {
+			LogFullDebug(COMPONENT_STATE,
+				     "Did not increment refcount from 0 {%s}",
+				     str);
+		} else {
+			LogFullDebug(COMPONENT_STATE,
+				     "Increment refcount now=%" PRId32 " {%s}",
+				     refcount, str);
 		}
-
-		hashtable_releaselatched(ht_owner, &latch);
-		return true;
-
-	default:
-		assert(0);
-		return false;
 	}
+
+	return refcount != 0;
 }
 
 /**
