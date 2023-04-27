@@ -397,12 +397,11 @@ int get_nlm_state(enum state_type state_type,
 			break;
 		}
 
-		if (atomic_inc_int32_t(&state->state_refcount) == 1) {
+		if (atomic_inc_unless_0_int32_t(&state->state_refcount) == 0) {
 			/* The state is in the process of getting
 			 * deleted. Delete from the hashtable and
 			 * pretend as though we didn't find it.
 			 */
-			(void)atomic_dec_int32_t(&state->state_refcount);
 			hashtable_deletelatched(ht_nlm_states, &buffkey,
 						&latch, NULL, NULL);
 			break;

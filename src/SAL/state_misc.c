@@ -1084,13 +1084,12 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 	switch (rc) {
 	case HASHTABLE_SUCCESS:
 		owner = buffval.addr;
-		refcount = atomic_inc_int32_t(&owner->so_refcount);
-		if (refcount == 1) {
+		refcount = atomic_inc_unless_0_int32_t(&owner->so_refcount);
+		if (refcount == 0) {
 			/* This owner is in the process of getting freed.
 			 * Delete from the hash table and pretend as
 			 * though we didn't find it!
 			 */
-			(void)atomic_dec_int32_t(&owner->so_refcount);
 			hashtable_deletelatched(ht_owner, &buffkey, &latch,
 						NULL, NULL);
 			goto not_found;
