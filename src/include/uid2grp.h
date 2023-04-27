@@ -82,6 +82,8 @@ void uid2grp_clear_cache(void);
 
 bool uid2grp(uid_t uid, struct group_data **);
 bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata);
+bool principal2grp(char *principal, struct group_data **,
+			     const uid_t, const gid_t);
 void uid2grp_unref(struct group_data *gdata);
 void uid2grp_hold_group_data(struct group_data *);
 void uid2grp_release_group_data(struct group_data *);

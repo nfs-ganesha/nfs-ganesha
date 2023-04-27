@@ -48,6 +48,9 @@
 #include "common_utils.h"
 #include "uid2grp.h"
 #include "idmapper.h"
+#ifdef USE_NFSIDMAP
+#include <nfsidmap.h>
+#endif
 
 sem_t uid2grp_sem;
 
@@ -285,6 +288,103 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 }
 
 /**
+ * @brief Allocate supplementary groups using principal
+ *
+ * @note This function uses libnfsidmap internally
+ *
+ * @param[in]  principal The principal name
+ * @param[in]  uid       The uid of user represented by the principal
+ * @param[in]  gid       The gid of user represented by the principal
+ *
+ * @return group_data with fetched groups. It can be NULL on lookup or
+ * allocation failures.
+ */
+static struct group_data *uid2grp_allocate_by_principal(char *principal,
+	uid_t uid, gid_t gid)
+{
+#ifdef USE_NFSIDMAP
+	struct group_data *grpdata = NULL;
+	const int default_ngroups = 1000;
+	int ngroups = default_ngroups;
+	gid_t *groups = NULL;
+	int ret;
+
+#ifdef _MSPAC_SUPPORT
+	/* TODO */
+	LogWarn(COMPONENT_IDMAPPER,
+		"Unsupported code path for principal %s", principal);
+	return NULL;
+#endif
+
+	/* We call nfs4_gss_princ_to_grouplist() with ngroups set to 1000 first.
+	 * This should reduce number of nfs4_gss_princ_to_grouplist() calls made
+	 * to 1, for most cases. However, nfs4_gss_princ_to_grouplist() returns
+	 * -ERANGE if the actual number of groups the user is in, is more
+	 * than 1000 (very rare) and ngroups will be set to the actual number of
+	 * groups the user is in. We can then make a second query to fetch all
+	 * the groups when ngroups is greater than 1000.
+	 */
+	groups = gsh_malloc(ngroups * sizeof(gid_t));
+	ret = nfs4_gss_princ_to_grouplist("krb5", principal, groups, &ngroups);
+
+	if (ret == -ERANGE) {
+		/* Try with the actual ngroups since user is part of more than
+		 * 1000 groups
+		 */
+		gsh_free(groups);
+		groups = gsh_malloc(ngroups * sizeof(gid_t));
+
+		ret = nfs4_gss_princ_to_grouplist("krb5", principal, groups,
+			&ngroups);
+		if (ret) {
+			LogWarn(COMPONENT_IDMAPPER,
+				"Could not re-resolve principal %s to groups using nfsidmap, err: %d",
+				principal, ret);
+			gsh_free(groups);
+			return NULL;
+		}
+	} else if (ret) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Could not resolve principal %s to groups using nfsidmap, err: %d",
+			principal, ret);
+		gsh_free(groups);
+		return NULL;
+	}
+	LogDebug(COMPONENT_IDMAPPER,
+		"Resolved principal %s to %d groups using nfsidmap",
+		principal, ngroups);
+
+	/* Resize or free the buffer as appropriate */
+	if (ngroups == 0) {
+		gsh_free(groups);
+		groups = NULL;
+	} else if (ngroups < default_ngroups) {
+		groups = gsh_realloc(groups, ngroups * sizeof(gid_t));
+	}
+
+	grpdata = gsh_malloc(sizeof(struct group_data) + strlen(principal) + 1);
+	/* We populate principal as the uname here */
+	grpdata->uname.len = strlen(principal);
+	grpdata->uname.addr = (char *)grpdata + sizeof(struct group_data);
+	memcpy(grpdata->uname.addr, principal, grpdata->uname.len);
+	/* Null-terminate the uname string */
+	((char *) grpdata->uname.addr)[grpdata->uname.len] = 0;
+	grpdata->uid = uid;
+	grpdata->gid = gid;
+	grpdata->groups = groups;
+	grpdata->nbgroups = ngroups;
+	PTHREAD_MUTEX_init(&grpdata->gd_lock, NULL);
+	grpdata->epoch = time(NULL);
+	grpdata->refcount = 0;
+
+	return grpdata;
+#else
+	LogWarn(COMPONENT_IDMAPPER, "Invalid code path");
+	return NULL;
+#endif
+}
+
+/**
  * @brief Get supplementary groups given uname
  *
  * @param[in]  name       The name of the user
@@ -382,9 +482,70 @@ bool uid2grp(uid_t uid, struct group_data **gdata)
 	return false;
 }
 
+/**
+ * @brief Get supplementary groups given principal
+ *
+ * @note This function internally uses libnfsidmap functions
+ *
+ * @param[in]  principal The principal name
+ * @param[in]  uid       The uid of user represented by the principal
+ * @param[in]  gid       The gid of user represented by the principal
+ * @param[out] gdata     Filled group_data structure containing user groups
+ *
+ * @return true if successful, false otherwise
+ */
+bool principal2grp(char *principal, struct group_data **gdata,
+	const uid_t uid, const gid_t gid)
+{
+	bool success = false;
+	uid_t unused_cached_uid = -1;
+	struct gsh_buffdesc princbuff = {
+		.addr = principal,
+		.len = strlen(principal)
+	};
+	LogDebug(COMPONENT_IDMAPPER, "Resolve principal %s to groups",
+		principal);
+
+	PTHREAD_RWLOCK_rdlock(&uid2grp_user_lock);
+	success = uid2grp_lookup_by_uname(&princbuff, &unused_cached_uid,
+		gdata);
+
+	/* Return success if we find non-expired group-data in cache */
+	if (success && !uid2grp_is_group_data_expired(*gdata)) {
+		uid2grp_hold_group_data(*gdata);
+		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+		return true;
+	}
+	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+
+	/* We could not find non-expired group-data in cache, fetch it afresh */
+	*gdata = uid2grp_allocate_by_principal(principal, uid, gid);
+	if (*gdata) {
+		PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
+		/* Add-user will also remove existing expired cache entry */
+		uid2grp_add_user(*gdata);
+		uid2grp_hold_group_data(*gdata);
+		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+		return true;
+	}
+
+	/*
+	 * At this point, we could not find non-expired group-data in cache,
+	 * and we also weren't able to fetch fresh group-data.
+	 * If the group-data in cache is expired, we still want to remove it.
+	 */
+	if (success) {
+		/* Remove expired cache entry */
+		PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
+		uid2grp_remove_expired_by_uname(&princbuff);
+		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+	}
+	return false;
+}
+
 /*
- * All callers of uid2grp() and uname2grp must call this
- * when they are done accessing supplementary groups
+ * All callers of uid2grp(), uname2grp() and principal2grp() must call
+ * this when they are done accessing supplementary groups
  */
 void uid2grp_unref(struct group_data *gdata)
 {
