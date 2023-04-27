@@ -63,6 +63,10 @@
  *
  * bool atomic_add_unless_int64_t(int64_t *var, int64_t addend, int64_t unless)
  *
+ * The following is provided for int32_t
+ *
+ * int32_t atomic_inc_unless_0_int32_t(int32_t *var)
+ *
  * The following bit mask operations are provided for
  * uint64_t, uint32_t, uint_16t, and uint8_t:
  *
@@ -2378,6 +2382,51 @@ static inline bool atomic_add_unless_int32_t(int32_t *var,
 		changed = __sync_val_compare_and_swap(var, cur, newv) != cur;
 	} while (!changed);
 	return true;
+}
+#endif
+
+/**
+ * @brief Atomically increment an int32_t unless it is 0
+ *
+ * This function atomically adds to the supplied value unless the
+ * variable is equal to the flag value.
+ *
+ * @param[in,out] var    Number to be incremented
+ *
+ * @return the new value, if 0, then it failed
+ */
+
+#ifdef GCC_ATOMIC_FUNCTIONS
+static inline int32_t atomic_inc_unless_0_int32_t(int32_t *var)
+{
+	int32_t cur, newv;
+	bool changed;
+
+	cur = atomic_fetch_int32_t(var);
+	do {
+		if (cur == 0)
+			return 0;
+		newv = cur + 1;
+		changed = __atomic_compare_exchange_n(var, &cur, newv, false,
+						      __ATOMIC_SEQ_CST,
+						      __ATOMIC_SEQ_CST);
+	} while (!changed);
+	return newv;
+}
+#elif defined(GCC_SYNC_FUNCTIONS)
+static inline int32_t atomic_inc_unless_0_int32_t(int32_t *var)
+{
+	int32_t cur, newv;
+	bool changed;
+
+	cur = atomic_fetch_int32_t(var);
+	do {
+		if (cur == 0)
+			return 0;
+		newv = cur + 1;
+		changed = __sync_val_compare_and_swap(var, cur, newv) != cur;
+	} while (!changed);
+	return newv;
 }
 #endif
 
