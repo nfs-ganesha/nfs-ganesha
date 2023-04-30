@@ -554,7 +554,7 @@ static void posix_create_fs_btrfs_subvols(struct fsal_filesystem *fs)
 	char *path;
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "Attempting to add subvols for btfs filesystem %s",
+		     "Attempting to add subvols for btrfs filesystem %s",
 		     fs->path);
 
 	/* Setup common fields for fake mntent, many are NULL or 0.
@@ -636,7 +636,7 @@ out:
 	btrfs_util_destroy_subvolume_iterator(iter);
 #else
 	LogWarn(COMPONENT_FSAL,
-		"btfs filesystem %s may have unsupported subvols",
+		"btrfs filesystem %s may have unsupported subvols",
 		fs->path);
 #endif
 }
