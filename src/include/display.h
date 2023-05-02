@@ -45,6 +45,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @page Display Safe display buffers
  *
@@ -248,5 +252,9 @@ static inline int display_cat(struct display_buffer *dspbuf, const char *str)
 int display_cat_trunc(struct display_buffer *dspbuf, char *str, size_t max);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* _DISPLAY_H */

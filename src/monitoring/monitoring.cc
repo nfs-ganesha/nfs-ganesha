@@ -33,11 +33,9 @@
 #include "prometheus/histogram.h"
 #include "prometheus/registry.h"
 
-extern "C" {
 #include "monitoring.h"
 #include "nfs_convert.h"
 #include "log.h"
-}
 
 #include "monitoring_internal.h"
 

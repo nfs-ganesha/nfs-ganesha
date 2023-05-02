@@ -35,6 +35,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* An elapsed time in nanosecs works because an unsigned
  * 64 bit can hold ~584 years of nanosecs.  If any code I have
  * ever written stays up that long, I would be amazed (and dead
@@ -58,5 +62,9 @@ struct gsh_buffdesc {
 	void *addr;		/*< First octet/byte of the buffer */
 	size_t len;		/*< Length of the buffer */
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* !GSH_TYPES_H */

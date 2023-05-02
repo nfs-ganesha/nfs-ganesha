@@ -42,7 +42,15 @@
  * RPC headers.
  */
 #include "abstract_atomic.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <rpc/xdr_inline.h>
+#ifdef __cplusplus
+}
+#endif
+
 #include <rpc/rpc.h>
 #include <rpc/svc.h>
 #include <rpc/clnt.h>
@@ -55,11 +63,16 @@
 #endif
 #include <rpc/svc_rqst.h>
 #include <rpc/rpc_msg.h>
+
 #include "common_utils.h"
 #include "abstract_mem.h"
 #include "gsh_list.h"
 #include "log.h"
 #include "fridgethr.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define NFS_LOOKAHEAD_NONE 0x0000
 #define NFS_LOOKAHEAD_MOUNT 0x0001
@@ -254,5 +267,8 @@ extern tirpc_pkg_params ntirpc_pp;
 sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);
 bool is_loopback(sockaddr_t *addr);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GSH_RPC_H */

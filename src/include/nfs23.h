@@ -15,6 +15,10 @@
 #include "mount.h"
 #include "fsal_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NFS2_MAXDATA 8192
 #define NFS2_MAXPATHLEN 1024
 #define NFS2_MAXNAMLEN 255
@@ -1164,5 +1168,9 @@ extern bool xdr_COMMIT3res(XDR *, COMMIT3res *);
 
 extern bool xdr_fhandle2(XDR *, fhandle2);
 extern bool xdr_fhstatus2(XDR *, fhstatus2 *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* !_NFS23_H_RPCGEN */

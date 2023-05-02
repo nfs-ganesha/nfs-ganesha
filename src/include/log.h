@@ -46,6 +46,10 @@
 #include "config_parsing.h"
 #include "display.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The maximum size of a log buffer */
 #define LOG_BUFF_LEN 2048
 
@@ -539,5 +543,9 @@ bool _ratelimit(struct ratelimit_state *rs, int *missed);
 		LogWarn(comp, fmt, ## args);                              \
 	}								  \
 })
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

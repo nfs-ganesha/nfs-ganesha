@@ -30,6 +30,10 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct config_root *config_file_t;
 
 typedef enum { CONFIG_ITEM_BLOCK = 1, CONFIG_ITEM_VAR } config_item_type;
@@ -978,5 +982,9 @@ int report_config_errors(struct config_error_type *err_type, void *dest,
 void *noop_conf_init(void *link_mem, void *self_struct);
 int noop_conf_commit(void *node, void *link_mem, void *self_struct,
 		     struct config_error_type *err_type);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

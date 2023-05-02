@@ -25,6 +25,10 @@
 #include <urcu/ref.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Refcounted strings
  *
@@ -141,4 +145,9 @@ static inline void gsh_refstr_put(struct gsh_refstr *gr)
 {
 	return urcu_ref_put(&gr->gr_ref, gsh_refstr_release);
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _GSH_REFSTR_H */

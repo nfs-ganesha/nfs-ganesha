@@ -31,6 +31,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct glist_head {
 	struct glist_head *next;
 	struct glist_head *prev;
@@ -324,5 +328,9 @@ static inline void glist_insert_sorted(struct glist_head *head,
 
 	__glist_add(next->prev, next, elt);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* _GANESHA_LIST_H */

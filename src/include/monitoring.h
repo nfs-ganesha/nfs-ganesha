@@ -33,6 +33,10 @@
 #include <stddef.h>
 #include "nfs23.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef uint16_t export_id_t;
 
 /* Allow FSALs to register a human readable label used for per-export metrics.
@@ -85,5 +89,9 @@ void monitoring_mdcache_cache_miss(const char *operation,
 void monitoring_rpc_received(void);
 void monitoring_rpc_completed(void);
 void monitoring_rpcs_in_flight(const uint64_t value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* GANESHA_MONITORING_H */

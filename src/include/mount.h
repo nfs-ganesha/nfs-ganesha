@@ -9,6 +9,10 @@
 
 #include "gsh_refstr.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define	MNTPATHLEN 1024
 #define	MNTNAMLEN 255
 
@@ -118,5 +122,9 @@ extern bool xdr_exports(XDR *, mnt3_exports *);
 extern bool xdr_mountlist(XDR *, mountlist *);
 extern bool xdr_mountres3_ok(XDR *, mountres3_ok *);
 extern bool xdr_mountres3(XDR *, mountres3 *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif				/* !_MOUNT_H_RPCGEN */

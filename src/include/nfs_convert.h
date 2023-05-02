@@ -41,6 +41,10 @@
 #include "mount.h"
 #include "fsal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char *nfsstat3_to_str(nfsstat3 code);
 char *nfsstat4_to_str(nfsstat4 code);
 char *nfstype3_to_str(ftype3 code);
@@ -60,6 +64,10 @@ nfsstat4 nfs4_Errno_verbose(fsal_status_t, const char *);
 #ifdef _USE_NFS3
 nfsstat3 nfs3_Errno_verbose(fsal_status_t, const char *);
 #define nfs3_Errno_status(e) nfs3_Errno_verbose(e, __func__)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif				/* _NFS_CONVERT_H */
