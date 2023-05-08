@@ -1348,6 +1348,7 @@ void free_nlm_owner(state_owner_t *owner)
  */
 static void init_nlm_owner(state_owner_t *owner)
 {
+	owner->so_refcount = 1;
 	inc_nlm_client_ref(owner->so_owner.so_nlm_owner.so_client);
 
 	glist_init(&owner->so_owner.so_nlm_owner.so_nlm_shares);

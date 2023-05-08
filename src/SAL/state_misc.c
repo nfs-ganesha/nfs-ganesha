@@ -1172,8 +1172,6 @@ not_found:
 
 	glist_init(&owner->so_lock_list);
 
-	owner->so_refcount = 1;
-
 	if (isFullDebug(COMPONENT_STATE)) {
 		display_reset_buffer(&dspbuf);
 		display_owner(&dspbuf, owner);
