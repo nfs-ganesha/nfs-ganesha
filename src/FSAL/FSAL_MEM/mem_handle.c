@@ -1797,8 +1797,8 @@ struct mem_async_arg {
 	struct fsal_io_arg *io_arg;
 	fsal_async_cb done_cb;
 	void *caller_arg;
+	struct gsh_export *exp;
 	struct fsal_export *fsal_export;
-	struct req_op_context *ctx;
 	struct fsal_fd *out_fd;
 	uint32_t share;
 	struct fsal_fd temp_fd;
@@ -1809,7 +1809,7 @@ mem_async_complete(struct fridgethr_context *ctx)
 {
 	struct mem_async_arg *async_arg = ctx->arg;
 	struct mem_fsal_export *mem_export = container_of(
-						async_arg->ctx->fsal_export,
+						async_arg->fsal_export,
 						struct mem_fsal_export,
 						export);
 	uint32_t async_delay = atomic_fetch_uint32_t(&mem_export->async_delay);
@@ -1818,6 +1818,7 @@ mem_async_complete(struct fridgethr_context *ctx)
 						async_arg->obj_hdl,
 						struct mem_fsal_obj_handle,
 						obj_handle);
+	struct req_op_context opctx;
 
 	/* Now check if we need to delay the call back */
 	if (atomic_fetch_uint32_t(&mem_export->async_type) != MEM_FIXED) {
@@ -1830,10 +1831,11 @@ mem_async_complete(struct fridgethr_context *ctx)
 		usleep(async_delay);
 	}
 
-	/* We need the op_ctx from the original call to call back into the
-	 * protocol layer callback.
+	/* Even if we might already have an op context, we are going to build
+	 * a simple one from information in the mem_async_arg.
 	 */
-	resume_op_context(async_arg->ctx);
+	get_gsh_export_ref(async_arg->exp);
+	init_op_context_simple(&opctx, async_arg->exp, async_arg->fsal_export);
 
 	status = fsal_complete_io(async_arg->obj_hdl, async_arg->out_fd);
 
@@ -1854,6 +1856,8 @@ mem_async_complete(struct fridgethr_context *ctx)
 	}
 	async_arg->done_cb(async_arg->obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0),
 			   async_arg->io_arg, async_arg->caller_arg);
+
+	release_op_context();
 
 	gsh_free(async_arg);
 }
@@ -1972,7 +1976,8 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 		async_arg->io_arg = read_arg;
 		async_arg->caller_arg = caller_arg;
 		async_arg->done_cb = done_cb;
-		async_arg->ctx = op_ctx;
+		async_arg->exp = op_ctx->ctx_export;
+		async_arg->fsal_export = op_ctx->fsal_export;
 		async_arg->out_fd = out_fd;
 		async_arg->share = FSAL_O_READ;
 
@@ -1980,9 +1985,8 @@ void mem_read2(struct fsal_obj_handle *obj_hdl,
 				     mem_async_complete,
 				     async_arg) == 0) {
 			/* Async fired off...
-			 * I/O will complete async, suspend op_ctx and return.
+			 * I/O will complete async.
 			 */
-			suspend_op_context();
 			goto bye;
 		}
 	}
@@ -2138,7 +2142,8 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 		async_arg->io_arg = write_arg;
 		async_arg->caller_arg = caller_arg;
 		async_arg->done_cb = done_cb;
-		async_arg->ctx = op_ctx;
+		async_arg->exp = op_ctx->ctx_export;
+		async_arg->fsal_export = op_ctx->fsal_export;
 		async_arg->out_fd = out_fd;
 		async_arg->share = FSAL_O_WRITE;
 
@@ -2146,9 +2151,8 @@ void mem_write2(struct fsal_obj_handle *obj_hdl,
 				     mem_async_complete,
 				     async_arg) == 0) {
 			/* Async fired off...
-			 * I/O will complete async, suspend op_ctx and return.
+			 * I/O will complete async.
 			 */
-			suspend_op_context();
 			goto bye;
 		}
 	}

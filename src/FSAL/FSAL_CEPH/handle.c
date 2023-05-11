@@ -1677,7 +1677,8 @@ static fsal_status_t ceph_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 #if USE_FSAL_CEPH_FS_NONBLOCKING_IO
 struct ceph_fsal_cb_info {
 	struct fsal_io_arg *arg;
-	struct req_op_context *ctx;
+	struct gsh_export *exp;
+	struct fsal_export *fsal_export;
 	struct ceph_ll_io_info io_info;
 	struct ceph_fd *my_fd;
 	struct fsal_obj_handle *obj_hdl;
@@ -1694,18 +1695,27 @@ void ceph_read2_cb(struct ceph_ll_io_info *cb_info)
 	struct fsal_obj_handle *obj_hdl = cbi->obj_hdl;
 	struct ceph_handle *myself =
 			container_of(cbi->obj_hdl, struct ceph_handle, handle);
+	struct req_op_context ctx;
+
+	/* Take a reference to the export for the callback. Note that while
+	 * this looks unsafe, we know that the caller's request can not complete
+	 * without this callback occurring, and since it can not complete, its
+	 * op_context is still valid and that holds a reference to this export.
+	 */
+	get_gsh_export_ref(cbi->exp);
+
+	/* Even if we might already have an op context, we are going to build
+	 * a simple one from information in the cbu. The export was already
+	 * refcounted and the release_op_context() at the end will release
+	 * that refcount.
+	 */
+	init_op_context_simple(&ctx, cbi->exp, cbi->fsal_export);
 
 	if (read_arg->fsal_resume) {
-		/* op context should already be set... */
 		assert(read_arg->fsal_resume == FSAL_CLOSEFD);
 		read_arg->fsal_resume = FSAL_NORESUME;
 		goto resume;
 	}
-
-	/* We need the op_ctx from the original call to call back into the
-	 * protocol layer callback.
-	 */
-	resume_op_context(cbi->ctx);
 
 	/* Check result of operation */
 	if (cb_info->result < 0) {
@@ -1728,6 +1738,7 @@ void ceph_read2_cb(struct ceph_ll_io_info *cb_info)
 		 */
 		read_arg->fsal_resume = FSAL_CLOSEFD;
 		cbi->done_cb(obj_hdl, status, read_arg, cbi->caller_arg);
+		release_op_context();
 		return;
 	}
 
@@ -1756,6 +1767,8 @@ resume:
 #endif
 
 	cbi->done_cb(obj_hdl, status, read_arg, cbi->caller_arg);
+
+	release_op_context();
 
 	gsh_free(cbi);
 }
@@ -1854,12 +1867,19 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	cbi->io_info.off = offset;
 	cbi->io_info.write = false;
 	cbi->arg = read_arg;
-	cbi->ctx = op_ctx;
+	cbi->exp = op_ctx->ctx_export;
+	cbi->fsal_export = op_ctx->fsal_export;
 	cbi->my_fd = my_fd;
 	cbi->obj_hdl = obj_hdl;
 	cbi->done_cb = done_cb;
 	cbi->caller_arg = caller_arg;
 	read_arg->cbi = cbi;
+
+	/* Note that while we are passing an export to the callback, the
+	 * protocol request that drove this I/O can not complete until the
+	 * callback completes, which also means that its op_context with its
+	 * export reference is still valid until the callback completes.
+	 */
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Calling ceph_ll_nonblocking_readv_writev for read");
@@ -1871,8 +1891,7 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		/* An error occurred. */
 		status = ceph2fsal_error(result);
 	} else if (result == 0) {
-		/* I/O will complete async, suspend op_ctx and return. */
-		suspend_op_context();
+		/* I/O will complete async, return. */
 		return;
 	} else {
 		/* I/O actually completed... */
@@ -1964,18 +1983,27 @@ void ceph_write2_cb(struct ceph_ll_io_info *cb_info)
 	struct fsal_obj_handle *obj_hdl = cbi->obj_hdl;
 	struct ceph_handle *myself =
 			container_of(cbi->obj_hdl, struct ceph_handle, handle);
+	struct req_op_context ctx;
+
+	/* Take a reference to the export for the callback. Note that while
+	 * this looks unsafe, we know that the caller's request can not complete
+	 * without this callback occurring, and since it can not complete, its
+	 * op_context is still valid and that holds a reference to this export.
+	 */
+	get_gsh_export_ref(cbi->exp);
+
+	/* Even if we might already have an op context, we are going to build
+	 * a simple one from information in the cbu. The export was already
+	 * refcounted and the release_op_context() at the end will release
+	 * that refcount.
+	 */
+	init_op_context_simple(&ctx, cbi->exp, cbi->fsal_export);
 
 	if (write_arg->fsal_resume) {
-		/* op context should already be set... */
 		assert(write_arg->fsal_resume == FSAL_CLOSEFD);
 		write_arg->fsal_resume = FSAL_NORESUME;
 		goto resume;
 	}
-
-	/* We need the op_ctx from the original call to call back into the
-	 * protocol layer callback.
-	 */
-	resume_op_context(cbi->ctx);
 
 	/* Check result of operation */
 	if (cb_info->result < 0) {
@@ -1999,6 +2027,7 @@ void ceph_write2_cb(struct ceph_ll_io_info *cb_info)
 		 */
 		write_arg->fsal_resume = FSAL_CLOSEFD;
 		cbi->done_cb(obj_hdl, status, write_arg, cbi->caller_arg);
+		release_op_context();
 		return;
 	}
 
@@ -2027,6 +2056,8 @@ resume:
 #endif
 
 	cbi->done_cb(obj_hdl, status, write_arg, cbi->caller_arg);
+
+	release_op_context();
 
 	gsh_free(cbi);
 }
@@ -2116,12 +2147,19 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	cbi->io_info.fsync = write_arg->fsal_stable;
 	cbi->io_info.syncdataonly = false;
 	cbi->arg = write_arg;
-	cbi->ctx = op_ctx;
+	cbi->exp = op_ctx->ctx_export;
+	cbi->fsal_export = op_ctx->fsal_export;
 	cbi->my_fd = my_fd;
 	cbi->obj_hdl = obj_hdl;
 	cbi->done_cb = done_cb;
 	cbi->caller_arg = caller_arg;
 	write_arg->cbi = cbi;
+
+	/* Note that while we are passing an export to the callback, the
+	 * protocol request that drove this I/O can not complete until the
+	 * callback completes, which also means that its op_context with its
+	 * export reference is still valid until the callback completes.
+	 */
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Calling ceph_ll_nonblocking_readv_writev for write");
@@ -2137,8 +2175,7 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		/* An error occurred. */
 		status = ceph2fsal_error(result);
 	} else if (result == 0) {
-		/* I/O will complete async, suspend op_ctx and return. */
-		suspend_op_context();
+		/* I/O will complete async, return. */
 		return;
 	} else {
 		/* I/O actually completed... */

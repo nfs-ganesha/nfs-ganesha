@@ -575,7 +575,7 @@ static void mdc_read_super_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 static void mdc_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			void *obj_data, void *caller_data)
 {
-	supercall_async(
+	supercall(
 		  mdc_read_super_cb(obj, ret, obj_data, caller_data);
 		 );
 }
@@ -610,7 +610,7 @@ void mdcache_read2(struct fsal_obj_handle *obj_hdl,
 	arg->cb = done_cb;
 	arg->cb_arg = caller_arg;
 
-	subcall_async(
+	subcall(
 		entry->sub_handle->obj_ops->read2(entry->sub_handle, bypass,
 						 mdc_read_cb, read_arg, arg)
 	       );
@@ -671,7 +671,7 @@ static void mdc_write_super_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 static void mdc_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 			void *obj_data, void *caller_data)
 {
-	supercall_async(
+	supercall(
 		  mdc_write_super_cb(obj, ret, obj_data, caller_data);
 		 );
 }
@@ -703,7 +703,7 @@ void mdcache_write2(struct fsal_obj_handle *obj_hdl,
 	arg->cb = done_cb;
 	arg->cb_arg = caller_arg;
 
-	subcall_async(
+	subcall(
 		entry->sub_handle->obj_ops->write2(entry->sub_handle, bypass,
 						  mdc_write_cb, write_arg, arg)
 	       );
