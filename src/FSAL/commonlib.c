@@ -2729,6 +2729,7 @@ fsal_status_t fsal_complete_io(struct fsal_obj_handle *obj_hdl,
 			       struct fsal_fd *fsal_fd)
 {
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	bool got_mutex;
 
 	if (fsal_fd->close_on_complete) {
 		LogFullDebug(COMPONENT_FSAL, "closing temp fd %p", fsal_fd);
@@ -2747,17 +2748,19 @@ fsal_status_t fsal_complete_io(struct fsal_obj_handle *obj_hdl,
 		     atomic_fetch_int32_t(&fsal_fd->io_work) - 1,
 		     atomic_fetch_int32_t(&fsal_fd->fd_work));
 
-	if (PTHREAD_MUTEX_dec_int32_t_and_lock(&fsal_fd->io_work,
-					       &fsal_fd->work_mutex)) {
+	got_mutex = PTHREAD_MUTEX_dec_int32_t_and_lock(&fsal_fd->io_work,
+						       &fsal_fd->work_mutex);
+
+	if (got_mutex)
 		PTHREAD_COND_signal(&fsal_fd->work_cond);
-	}
 
 	/* We choose to bump the fd at the completion of I/O so we don't have
 	 * to introduce new locking.
 	 */
 	bump_fd_lru(fsal_fd);
 
-	PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
+	if (got_mutex)
+		PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
 
 	return status;
 }
