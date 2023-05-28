@@ -493,6 +493,7 @@ struct req_op_context {
 	void *proto_private;		/*< private for protocol layer use */
 	struct fsal_module *fsal_module;	/*< current fsal module */
 	struct fsal_pnfs_ds *ctx_pnfs_ds;	/*< current pNFS DS */
+	uint32_t op_id;
 };
 
 /**

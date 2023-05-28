@@ -123,6 +123,7 @@ enum log_flag_index_t {
 	LF_FUNCTION_NAME,	/*< Function name message occurred in. */
 	LF_COMPONENT,		/*< Log component. */
 	LF_LEVEL,		/*< Log level. */
+	LF_OP_ID,		/*< Op id. */
 };
 
 /**
@@ -159,6 +160,7 @@ struct logfields {
 	bool disp_funct;
 	bool disp_comp;
 	bool disp_level;
+	bool disp_op_id;
 	enum timedate_formats_t datefmt;
 	enum timedate_formats_t timefmt;
 	char *user_date_fmt;
@@ -1387,6 +1389,16 @@ static int display_log_component(struct display_buffer *dsp_log,
 		    display_printf(dsp_log, "%s :",
 				   tabLogLevel[level].short_str);
 
+	if (b_left > 0 && logfields->disp_op_id) {
+		if (op_ctx)
+			b_left =
+				display_printf(dsp_log, "op_id=%u :",
+					op_ctx->op_id);
+		else
+			b_left =
+				display_printf(dsp_log, "op_id=none :");
+	}
+
 	/* If we overflowed the buffer with the header, just skip it. */
 	if (b_left == 0) {
 		display_reset_buffer(dsp_log);
@@ -1923,6 +1935,8 @@ static struct config_item format_options[] = {
 		       logfields, disp_comp),
 	CONF_ITEM_BOOL("LEVEL", true,
 		       logfields, disp_level),
+	CONF_ITEM_BOOL("OP_ID", false,
+		       logfields, disp_op_id),
 	CONFIG_EOL
 };
 

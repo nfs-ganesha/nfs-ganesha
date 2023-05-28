@@ -3177,6 +3177,7 @@ void discard_op_context_export(struct saved_export_context *saved)
 		gsh_refstr_put(saved->saved_pseudopath);
 }
 
+static uint32_t op_id;
 void init_op_context(struct req_op_context *ctx,
 		     struct gsh_export *exp,
 		     struct fsal_export *fsal_exp,
@@ -3204,6 +3205,7 @@ void init_op_context(struct req_op_context *ctx,
 
 	ctx->export_perms.set = root_op_export_set;
 	ctx->export_perms.options = root_op_export_options;
+	ctx->op_id = atomic_postadd_uint32_t(&op_id, 1);
 }
 
 void release_op_context(void)

@@ -83,6 +83,7 @@ LOG {
 #	  LEVEL=true;
 #	  FILE_NAME= true;
 #	  LINE_NUM= true;
+#	  OP_ID=false;
 	}
 
 	# Facilities

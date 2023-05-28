@@ -168,6 +168,8 @@ time_format(enum,default ganesha)
 
 **LEVEL(bool, default true)**
 
+**OP_ID(bool, default false)**
+
 See also
 ==============================
 :doc:`ganesha-config <ganesha-config>`\(8)
