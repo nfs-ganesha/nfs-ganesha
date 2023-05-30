@@ -1629,7 +1629,7 @@ configure_file(
 
 # Make a docker image
 set(DOCKER_TMP_INSTALL_PATH "${PROJECT_BINARY_DIR}/docker/root")
-find_package(LSB)
+find_package(LSB_release)
 if(LSB_RELEASE_EXECUTABLE)
   string(TOLOWER ${LSB_RELEASE_ID_SHORT} DOCKER_DISTRO)
   set(DOCKER_DISTRO_VERSION "${LSB_RELEASE_RELEASE_SHORT}")

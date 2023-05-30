@@ -82,4 +82,4 @@ if(LSB_RELEASE_EXECUTABLE)
 endif()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(LSB_RELEASE DEFAULT_MSG LSB_RELEASE_EXECUTABLE)
+find_package_handle_standard_args(LSB_release DEFAULT_MSG LSB_RELEASE_EXECUTABLE)
