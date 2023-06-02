@@ -1,0 +1,253 @@
+#!/bin/sh
+# SPDX-License-Identifier: LGPL-3.0-or-later
+#
+# Copyright 2023, DataDirect Networks, Inc. All rights reserved.
+# Author: Martin Schwenke <mschwenke@ddn.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# Create a podman container with Ganesha build depencies installed,
+# for the given distro (and optional version) and launch bash if stdin
+# is a tty.
+#
+# * If stdin is not a tty then a command can be piped to the shell
+#
+# * "all" can be used to construct all supported containers, stopping
+#   on first failure.  This can be useful for priming a test
+#   environment.  It can also run a command in each container - to run
+#   a shell pipeline use sh -c "<pipeline>".
+#
+# Please maintain this as a plain /bin/sh script that passes
+# ShellCheck.
+#
+# Formatted with: shfmt -w -p -i 0 -fn <file>
+#
+
+set -eu
+
+usage()
+{
+	cat <<EOF
+usage: $0 { <distro> [<version>] | all  [ <cmd>... ] }
+
+supported distros:
+
+EOF
+	list_versions
+
+	exit 1
+}
+
+#
+# Distros
+#
+
+list_versions()
+{
+	cat <<EOF
+almalinux 8
+almalinux 9
+centos 7
+centos 8
+centos 9
+debian 10
+debian 11
+fedora 37
+fedora 38
+rockylinux 8
+rockylinux 9
+ubuntu 18.04
+ubuntu 20.04
+ubuntu 22.04
+EOF
+}
+
+default_version()
+{
+	distro="$1"
+
+	case "$distro" in
+	almalinux | centos | rockylinux)
+		echo "8"
+		;;
+	debian)
+		echo "11"
+		;;
+	fedora)
+		echo "38"
+		;;
+	ubuntu)
+		echo "22.04"
+		;;
+	esac
+}
+
+validate_distro_version()
+{
+	list_versions | {
+		supported=false
+		while read -r d v; do
+			if [ "$distro" = "$d" ] && [ "$version" = "$v" ]; then
+				supported=true
+				break
+			fi
+		done
+
+		if ! $supported; then
+			usage
+		fi
+	}
+}
+
+#
+# Argument handling and validation
+#
+
+if [ $# -lt 1 ]; then
+	usage
+fi
+
+distro="$1"
+shift
+
+if [ "$distro" != "all" ]; then
+	if [ $# -eq 1 ]; then
+		version="$1"
+	elif [ $# -eq 0 ]; then
+		version=$(default_version "$distro")
+	else
+		usage
+	fi
+
+	validate_distro_version
+fi
+
+container_image()
+{
+	distro="$1"
+	version="$2"
+
+	case "$distro" in
+	almalinux | rockylinux)
+		echo "docker.io/library/${distro}:${version}"
+		;;
+	centos)
+		case "$version" in
+		7)
+			echo "docker.io/library/centos:${version}"
+			;;
+		8 | 9)
+			echo "quay.io/centos/centos:stream${version}"
+			;;
+		esac
+		;;
+	debian)
+		echo "docker.io/library/debian:${version}"
+		;;
+	fedora)
+		echo "docker.io/library/fedora:${version}"
+		;;
+	ubuntu)
+		echo "docker.io/library/ubuntu:${version}"
+		;;
+	esac
+}
+
+container_1()
+{
+	distro="$1"
+	version="$2"
+	shift 2
+
+	image=$(container_image "$distro" "$version")
+
+	tag="${distro}:${version}.ganesha"
+	container="${distro}${version}.ganesha"
+
+	cd "$(dirname "$(realpath "$0")")"
+
+	if ! podman image inspect "$tag" >/dev/null 2>&1; then
+		buildah bud \
+			-t "$tag" \
+			--build-arg IMAGE="$image"
+	fi
+	f='{{.State.Running}}'
+	if running=$(podman container inspect \
+		-f "$f" "$container" >/dev/null 2>&1); then
+
+		if [ "$running" = "true" ]; then
+			echo "Container \"${container}\" already exists"
+			exit 1
+		fi
+		# Remove leftover non-running container
+		podman container rm "$container"
+	fi
+
+	relabel=""
+	selinux_mode=$(sestatus 2>/dev/null |
+		sed -n -e 's|^Current mode:[[:space:]]*||p')
+	if [ "$selinux_mode" = "enforcing" ]; then
+		relabel=",relabel=shared"
+	fi
+
+	if [ $# -eq 0 ]; then
+		if tty -s; then
+			interactive="-ti"
+		else
+			interactive="-i"
+		fi
+
+		set -- "/bin/bash"
+	else
+		interactive=""
+	fi
+
+	mount="type=bind,source=${workdir},destination=${workdir}${relabel}"
+	podman container run \
+		--name "$container" \
+		--hostname "$container" \
+		--rm=true \
+		--userns=keep-id \
+		--mount="$mount" \
+		--workdir="$workdir" \
+		$interactive \
+		"$tag" "$@"
+}
+
+container_all()
+{
+	list_versions | {
+		rc=0
+		while read -r _distro _version; do
+			echo "========================================"
+			echo "${_distro} ${_version} ($(date))"
+
+			# Redirect stops the container eating the version list
+			container_1 "$_distro" "$_version" "$@" </dev/null ||
+				rc=$?
+		done
+		return $rc
+	}
+}
+
+workdir="$PWD"
+
+if [ "$distro" = "list" ]; then
+	list_versions
+elif [ "$distro" = "all" ]; then
+	container_all "$@"
+else
+	container_1 "$distro" "$version"
+fi

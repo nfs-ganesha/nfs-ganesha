@@ -1,0 +1,15 @@
+ARG IMAGE
+
+FROM $IMAGE
+
+USER root
+
+COPY ["install-packages.sh", "/tmp"]
+
+RUN "/tmp/install-packages.sh"
+
+RUN useradd -m -U -s /bin/bash user && \
+    mkdir -p /etc/sudoers.d && \
+    echo "user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/container
+
+USER user
