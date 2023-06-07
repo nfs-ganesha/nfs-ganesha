@@ -37,6 +37,8 @@ Secret_Access_Key(string, no default)
     Key to use for the session (if any). If not set, then it uses the normal
     search path for cephx keyring files to find a key.
 
+sec_label_xattr(char, default "security.selinux xattr of the file")
+
 CEPH {}
 --------------------------------------------------------------------------------
 

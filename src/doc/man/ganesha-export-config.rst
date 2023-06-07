@@ -58,8 +58,6 @@ Squash(enum, default root_sqaush)
 
     Each line of defaults above are synonyms
 
-Security_Label(bool, default false)
-
 **NFS_Commit(bool, default false)**
 
 Delegations(enum, default None)
@@ -69,7 +67,7 @@ Delegations(enum, default None)
 
 CLIENT {}
 --------------------------------------------------------------------------------
-CLIENT blocks are used in EXPORT_DEFAULTS {} and EXPORT {} blocks.
+CLIENT blocks are used in EXPORT_DEFAULTS {}, EXPORT {}, and PSEUDOFS {} blocks.
 
 Each CLIENT block provides a list of clients and the permissions granted those
 clients. These blocks form an ordered "access control list" for the export. If
@@ -98,7 +96,9 @@ client access list is constructed and atomically swapped in. This allows
 adding, removing, and re-arranging clients as well as changing the access
 for any give client.
 
-CLIENT blocks use all the EXPORT PERMISSIONS options plus:
+CLIENT blocks use all the EXPORT PERMISSIONS options (except PSEUDOFS CLIENT
+blocks which are limited to the same options the PSEUDOFS block is allowed)
+plus:
 
 Clients(client list, empty)
     Client list entries can take on one of the following forms. This parameter
@@ -195,6 +195,15 @@ Tag (no default)
 
     This option is not dynamically updatable.
 
+Filesystem_id(fsid, format is uint64.uint64, default unused)
+    This option allows overriding the filesystem ID provided by the
+    underlying filesystem. Use of this option is discouraged, It will
+    not work if VFS or GPFS is exporting a filesystem that has other
+    filesystems mounted on sub-directories and exported with the same
+    export.
+
+    This option is not dynamically updateable.
+
 MaxRead (64*1024*1024)
     The maximum read size on this export
 
@@ -223,6 +232,28 @@ MaxOffsetWrite (INT64_MAX)
 MaxOffsetRead (INT64_MAX)
     Maximum file offset that may be read
     Range is 512 to UINT64_MAX
+
+DisableReaddirPlus(bool, default false)
+
+Trust_Readdir_Negative_Cache(bool, default false)
+
+The following options may have limits on dynamic effect
+
+UseCookieVerifier(bool, default true)
+    Updating UseCookieVerifier while a readdir is in
+    progress may result in unexpected behavior.
+
+Disable_ACL(bool, default false)
+    Disable_ACL is processed at create_export time currently
+    which makes it effectively a static option.
+
+Security_Label(bool, default false)
+
+Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
+    Attr_Expiration_Time is evaluated when an MDCACHE entry
+    is created, so the dynamic effect of this option may
+    be constrained to new entries.
+
 
 CLIENT (optional)
     See the ``CLIENT  {}`` block description.
@@ -270,6 +301,78 @@ The FSAL blocks generally are less updatable
 
     EXPORT { FSAL { FSAL {} } }
     describes the stacked FSAL's parameters
+
+PSEUDOFS {}
+--------------------------------------------------------------------------------
+This block allows specifying some options for the pseudofs root export. It is
+very similar to an EXPORT block, except only the following options may be
+specified. CLIENT blocks may be used just like an EXPORT block, however, they
+are also limited to the same options.
+
+This is basically a shortcut rather than having to fill out options in an
+EXPORT block. Note that Path, Pseudo, and Export_Id are not included as those
+values will be fixed ("/" for the paths, and 0 for Export_Id). Other options
+that don't make sense for the pseudofs root are also not allowed.
+
+An empty PSEUDOFS {} block will produce the same default pseudofs root export
+as generated if no pseudofs root export is otherwise specified.
+
+This block is most useful to override a restrictive CLIENT list in
+EXPORT_DEFAULTS {}.
+
+These options will all be dynamically updateable.
+
+Access_Type(enum, default MDONLY_RO)
+    Possible values:
+        None, MDONLY_RO
+
+Transports(enum list, values [UDP, TCP, RDMA], default [TCP])
+
+SecType(enum list, default [none, sys, krb5, krb5i, krb5p])
+    Possible values:
+        none, sys, krb5, krb5i, krb5p
+
+PrivilegedPort(bool, default false)
+
+Export_id(uint16, range 0 to UINT16_MAX, default 0)
+    An identifier for the export, must be unique and between 0 and 65535.
+
+    Export_id is not dynamic per se, changing it essentially removes the old
+    export and introduces a new export.
+
+Filesystem_id(fsid, format is uint64.uint64, default 152.152)
+    Unlike standard exports, there is no underlying filesystem to get an
+    ID from, so this option is important, however the default value may be
+    used so it need not be specified.
+
+    This option is not dynamically updateable.
+
+DisableReaddirPlus(bool, default false)
+
+Trust_Readdir_Negative_Cache(bool, default false)
+
+The following options may have limits on dynamic effect
+
+UseCookieVerifier(bool, default true)
+    Updating UseCookieVerifier while a readdir is in
+    progress may result in unexpected behavior.
+
+PSEUDOFS { CLIENT {} }
+--------------------------------------------------------------------------------
+See the ``CLIENT  {}`` block description but note that beyond the Clients
+options that works as described, the other options available are as for the
+PSEUDOFS {} block.
+
+If it is desired to override a restrictive CLIENT list in EXPORT_DEFAULTS,
+the following PSEUDOFS could be defined that will give all clients the
+default access to the pseudofs root that otherwise would have been granted
+if EXPORT_DEFAULTS was not used.
+
+PSEUDOFS {
+    CLIENT {
+        Clients = *;
+    }
+}
 
 DISCUSSION
 ==========================================================

@@ -429,6 +429,35 @@ static void *client_init(void *link_mem, void *self_struct)
 }
 
 /**
+ * @brief Init for CLIENT sub-block of an export.
+ *
+ * Allocate one exportlist_client structure for parameter
+ * processing. The client_commit will allocate additional
+ * exportlist_client__ storage for each of its enumerated
+ * clients and free the initial block.  We only free that
+ * resource here on errors.
+ */
+
+static void *pseudofs_client_init(void *link_mem, void *self_struct)
+{
+	struct exportlist_client_entry *expcli;
+
+	assert(link_mem != NULL || self_struct != NULL);
+
+	expcli = client_init(link_mem, self_struct);
+
+	if (self_struct != NULL)
+		return expcli;
+
+	expcli->client_perms.options =	EXPORT_OPTION_ROOT |
+					EXPORT_OPTION_NFSV4;
+	expcli->client_perms.set =	EXPORT_OPTION_SQUASH_TYPES |
+					EXPORT_OPTION_PROTOCOLS;
+
+	return expcli;
+}
+
+/**
  * @brief Commit this client block
  *
  * Validate "clients" token(s) and perms.  We enter with a client entry
@@ -448,8 +477,10 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 {
 	struct exportlist_client_entry *expcli;
 	struct base_client_entry *cli;
-	struct glist_head *clients = link_mem;
+	struct gsh_export *export;
 	int errcnt = 0;
+
+	export = container_of(link_mem, struct gsh_export, clients);
 
 	expcli = self_struct;
 	cli = &expcli->client_entry;
@@ -480,7 +511,7 @@ static int client_commit(void *node, void *link_mem, void *self_struct,
 			    (cl_perm_opt & def_opt & EXPORT_OPTION_PROTOCOLS);
 		}
 
-		glist_splice_tail(clients, &cli->cle_list);
+		glist_splice_tail(&export->clients, &cli->cle_list);
 	}
 	if (errcnt == 0)
 		client_init(link_mem, self_struct);
@@ -1103,8 +1134,11 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 		}
 	}
 
-	if (errcnt)
+	if (errcnt) {
+		LogCrit(COMPONENT_CONFIG,
+			"Error count %d exiting", errcnt);
 		return errcnt;  /* have basic errors. don't even try more... */
+	}
 
 	/* Note: need to check export->fsal_export AFTER we have checked for
 	 * duplicate export_id. That is because an update export WILL NOT
@@ -1201,6 +1235,8 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 
 		if (errcnt > 0) {
 			put_gsh_export(probe_exp);
+			LogCrit(COMPONENT_CONFIG,
+				"Error count %d exiting", errcnt);
 			return errcnt;
 		}
 
@@ -1273,6 +1309,8 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 	 * the moment, so error out here if fsal_cfg_commit failed.
 	 */
 	if (export->fsal_export == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"fsal_export is NULL");
 		err_type->validate = true;
 		errcnt++;
 		return errcnt;
@@ -1365,11 +1403,15 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 				err_type->resource = true;
 			}
 
+			LogCrit(COMPONENT_CONFIG,
+				"init_export_root failed");
 			errcnt++;
 			return errcnt;
 		}
 
 		if (!mount_gsh_export(export)) {
+			LogCrit(COMPONENT_CONFIG,
+				"mount_gsh_export failed");
 			err_type->internal = true;
 			errcnt++;
 			return errcnt;
@@ -1432,12 +1474,84 @@ success:
 		put_gsh_export(export);
 	}
 
+	if (errcnt > 0) {
+		LogCrit(COMPONENT_CONFIG,
+			"Error count %d exiting", errcnt);
+	}
+
 	return errcnt;
 }
 
 static int export_commit(void *node, void *link_mem, void *self_struct,
 			 struct config_error_type *err_type)
 {
+	return export_commit_common(node, link_mem, self_struct, err_type,
+				    initial_export);
+}
+
+int pseudofs_fsal_commit(void *self_struct, struct config_error_type *err_type)
+{
+	struct gsh_export *export = self_struct;
+	struct fsal_module *fsal_hdl = NULL;
+	struct req_op_context op_context;
+	int errcnt = 0;
+
+	/* Take an export reference and initialize req_ctx with the export
+	 * reasonably constructed
+	 */
+	get_gsh_export_ref(export);
+	init_op_context_simple(&op_context, export, NULL);
+
+	/* Assign FSAL_PSEUDO */
+	fsal_hdl = lookup_fsal("PSEUDO");
+
+	if (fsal_hdl == NULL) {
+		LogCrit(COMPONENT_CONFIG,
+			"FSAL PSEUDO is not loaded!");
+		err_type->invalid = true;
+		errcnt = 1;
+		goto err_out;
+	} else {
+		fsal_status_t rc;
+
+		rc = mdcache_fsal_create_export(fsal_hdl, NULL, err_type,
+						&fsal_up_top);
+
+		if (FSAL_IS_ERROR(rc)) {
+			fsal_put(fsal_hdl);
+			LogCrit(COMPONENT_CONFIG,
+				"Could not create FSAL export for %s",
+				export->cfg_fullpath);
+			LogFullDebug(COMPONENT_FSAL,
+				     "FSAL %s refcount %"PRIu32,
+				     fsal_hdl->name,
+				     atomic_fetch_int32_t(&fsal_hdl->refcount));
+			err_type->invalid = true;
+			errcnt = 1;
+			goto err_out;
+		}
+
+	}
+
+	assert(op_ctx->fsal_export != NULL);
+	export->fsal_export = op_ctx->fsal_export;
+
+err_out:
+
+	/* Release the export reference from above. */
+	release_op_context();
+
+	return errcnt;
+}
+
+static int pseudofs_commit(void *node, void *link_mem, void *self_struct,
+			   struct config_error_type *err_type)
+{
+	int rc = pseudofs_fsal_commit(self_struct, err_type);
+
+	if (rc != 0)
+		return rc;
+
 	return export_commit_common(node, link_mem, self_struct, err_type,
 				    initial_export);
 }
@@ -1513,6 +1627,24 @@ static int update_export_commit(void *node, void *link_mem, void *self_struct,
 }
 
 /**
+ * @brief Commit an update export
+ * commit the export
+ * init export root and mount it in pseudo fs
+ */
+
+static int update_pseudofs_commit(void *node, void *link_mem, void *self_struct,
+				  struct config_error_type *err_type)
+{
+	int rc = pseudofs_fsal_commit(self_struct, err_type);
+
+	if (rc != 0)
+		return rc;
+
+	return export_commit_common(node, link_mem, self_struct, err_type,
+				    update_export);
+}
+
+/**
  * @brief Initialize an EXPORT_DEFAULTS block
  *
  */
@@ -1552,7 +1684,7 @@ static int export_defaults_commit(void *node, void *link_mem,
 	export_opt.conf = export_opt_cfg.conf;
 
 	/* Swap the client list from export_opt_cfg export and export_opt. */
-	LogCrit(COMPONENT_EXPORT,
+	LogFullDebug(COMPONENT_EXPORT,
 		     "Original clients = (%p,%p) New clients = (%p,%p)",
 		     export_opt.clients.next, export_opt.clients.prev,
 		     export_opt_cfg.clients.next, export_opt_cfg.clients.prev);
@@ -1730,6 +1862,23 @@ struct config_item_list deleg_types[] =  {
 		EXPORT_OPTION_NO_DELEGATIONS, EXPORT_OPTION_DELEGATIONS,\
 		delegations, _struct_, _perms_.options, _perms_.set)
 
+#define CONF_PSEUDOFS_PERMS(_struct_, _perms_)				\
+	/* Note: Access_Type defaults to MD READ on purpose */		\
+	/*       MD READ or NONE are the only access that makes sense. */ \
+	CONF_ITEM_ENUM_BITS_SET("Access_Type",				\
+		EXPORT_OPTION_MD_READ_ACCESS,				\
+		EXPORT_OPTION_ACCESS_MASK,				\
+		access_types, _struct_, _perms_.options, _perms_.set),	\
+	CONF_ITEM_LIST_BITS_SET("Transports",				\
+		EXPORT_OPTION_TCP, EXPORT_OPTION_TRANSPORTS,		\
+		transports, _struct_, _perms_.options, _perms_.set),	\
+	CONF_ITEM_LIST_BITS_SET("SecType",				\
+		EXPORT_OPTION_AUTH_TYPES, EXPORT_OPTION_AUTH_TYPES,	\
+		sec_types, _struct_, _perms_.options, _perms_.set),	\
+	CONF_ITEM_BOOLBIT_SET("PrivilegedPort",				\
+		false, EXPORT_OPTION_PRIVILEGED_PORT,			\
+		_struct_, _perms_.options, _perms_.set)
+
 void *export_client_allocator(void)
 {
 	struct exportlist_client_entry *expcli;
@@ -1813,6 +1962,21 @@ static int client_adder(const char *token,
 
 static struct config_item client_params[] = {
 	CONF_EXPORT_PERMS(exportlist_client_entry, client_perms),
+	CONF_ITEM_PROC_MULT("Clients", noop_conf_init, client_adder,
+			    base_client_entry, cle_list),
+	CONFIG_EOL
+};
+
+/**
+ * @brief Table of pseudofs client sub-block parameters
+ *
+ * NOTE: node discovery is ordered by this table!
+ * "Clients" is last because we must have all other params processed
+ * before we walk the list of accessing clients!
+ */
+
+static struct config_item pseudo_fs_client_params[] = {
+	CONF_PSEUDOFS_PERMS(exportlist_client_entry, client_perms),
 	CONF_ITEM_PROC_MULT("Clients", noop_conf_init, client_adder,
 			    base_client_entry, cle_list),
 	CONFIG_EOL
@@ -1951,6 +2115,136 @@ static struct config_item export_update_params[] = {
 };
 
 /**
+ * @brief Initialize an export block
+ *
+ * There is no link_mem init required because we are allocating
+ * here and doing an insert_gsh_export at the end of export_commit
+ * to attach it to the export manager.
+ *
+ * Use free_exportlist here because in this case, we have not
+ * gotten far enough to hand it over to the export manager.
+ */
+
+static void *pseudofs_init(void *link_mem, void *self_struct)
+{
+	struct gsh_export *export = export_init(link_mem, self_struct);
+
+	if (self_struct != NULL) {
+		return export;
+	}
+
+	/* The initialization case */
+	export->filesystem_id.major = 152;
+	export->filesystem_id.minor = 152;
+	export->MaxWrite = FSAL_MAXIOSIZE;
+	export->MaxRead = FSAL_MAXIOSIZE;
+	export->PrefWrite = FSAL_MAXIOSIZE;
+	export->PrefRead = FSAL_MAXIOSIZE;
+	export->PrefReaddir = 16384;
+	export->config_gen = UINT64_MAX;
+
+	/*Don't set anonymous uid and gid, they will actually be ignored */
+
+	/* Support only NFS v4 and TCP.
+	 * Root is allowed
+	 * MD Read Access
+	 * Allow use of default auth types
+	 *
+	 * Allow non-privileged client ports to access pseudo export.
+	 */
+	export->export_perms.options = EXPORT_OPTION_ROOT |
+					EXPORT_OPTION_MD_READ_ACCESS |
+					EXPORT_OPTION_NFSV4 |
+					EXPORT_OPTION_AUTH_TYPES |
+					EXPORT_OPTION_TCP;
+
+	export->export_perms.set = EXPORT_OPTION_SQUASH_TYPES |
+				    EXPORT_OPTION_ACCESS_MASK |
+				    EXPORT_OPTION_PROTOCOLS |
+				    EXPORT_OPTION_TRANSPORTS |
+				    EXPORT_OPTION_AUTH_TYPES |
+				    EXPORT_OPTION_PRIVILEGED_PORT;
+
+	export->options = EXPORT_OPTION_USE_COOKIE_VERIFIER;
+	export->options_set = EXPORT_OPTION_FSID_SET |
+			      EXPORT_OPTION_USE_COOKIE_VERIFIER |
+			      EXPORT_OPTION_MAXREAD_SET |
+			      EXPORT_OPTION_MAXWRITE_SET |
+			      EXPORT_OPTION_PREFREAD_SET |
+			      EXPORT_OPTION_PREFWRITE_SET;
+
+	/* Set the fullpath to "/" */
+	export->cfg_fullpath = gsh_strdup("/");
+
+	/* Set Pseudo Path to "/" */
+	export->cfg_pseudopath = gsh_strdup("/");
+
+	export->pseudopath = gsh_refstr_dup("/");
+	export->fullpath = gsh_refstr_dup("/");
+
+	return export;
+}
+
+/**
+ * @brief Common PSEUDOFS block parameters
+ */
+#define CONF_PSEUDOFS_PARAMS(_struct_)					\
+	CONF_ITEM_UI16("Export_id", 0, UINT16_MAX, 0,			\
+		       _struct_, export_id),				\
+	CONF_ITEM_UI64("PrefReaddir", 512, FSAL_MAXIOSIZE, 16384,	\
+		       _struct_, PrefReaddir),				\
+	CONF_ITEM_FSID_SET("Filesystem_id", 152, 152,			\
+		       _struct_, filesystem_id, /* major.minor */	\
+		       EXPORT_OPTION_FSID_SET, options_set),		\
+	CONF_ITEM_BOOLBIT_SET("UseCookieVerifier",			\
+		false, EXPORT_OPTION_USE_COOKIE_VERIFIER,		\
+		_struct_, options, options_set),			\
+	CONF_ITEM_BOOLBIT_SET("DisableReaddirPlus",			\
+		false, EXPORT_OPTION_NO_READDIR_PLUS,			\
+		_struct_, options, options_set),			\
+	CONF_ITEM_BOOLBIT_SET("Trust_Readdir_Negative_Cache",		\
+		false, EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE,	\
+		_struct_, options, options_set)
+
+/**
+ * @brief Table of PSEUDOFS block parameters
+ */
+
+static struct config_item pseudofs_params[] = {
+	CONF_PSEUDOFS_PARAMS(gsh_export),
+	CONF_PSEUDOFS_PERMS(gsh_export, export_perms),
+
+	/* NOTE: the Client sub-block must be the *last*
+	 * entry in the list.  This is so all other
+	 * parameters have been processed before this sub-block
+	 * is processed.
+	 */
+	CONF_ITEM_BLOCK_MULT("Client", pseudo_fs_client_params,
+			     pseudofs_client_init, client_commit,
+			     gsh_export, clients),
+	CONFIG_EOL
+};
+
+/**
+ * @brief Table of PSEUDOFS update block parameters
+ */
+
+static struct config_item pseudofs_update_params[] = {
+	CONF_PSEUDOFS_PARAMS(gsh_export),
+	CONF_PSEUDOFS_PERMS(gsh_export, export_perms),
+
+	/* NOTE: the Client sub-block must be the *last*
+	 * entry in the list.  This is so all other
+	 * parameters have been processed before this sub-block
+	 * is processed.
+	 */
+	CONF_ITEM_BLOCK("Client", pseudo_fs_client_params,
+			pseudofs_client_init, client_commit,
+			gsh_export, clients),
+	CONFIG_EOL
+};
+
+/**
  * @brief Top level definition for an EXPORT block
  */
 
@@ -1990,6 +2284,36 @@ struct config_block update_export_param = {
 	.blk_desc.u.blk.init = export_init,
 	.blk_desc.u.blk.params = export_update_params,
 	.blk_desc.u.blk.commit = update_export_commit,
+	.blk_desc.u.blk.display = export_display
+};
+
+/**
+ * @brief Top level definition for an PSEUDOFS block
+ */
+
+static struct config_block pseudofs_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.%d",
+	.blk_desc.name = "PSEUDOFS",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.u.blk.init = pseudofs_init,
+	.blk_desc.u.blk.params = pseudofs_params,
+	.blk_desc.u.blk.commit = pseudofs_commit,
+	.blk_desc.u.blk.display = export_display
+};
+
+/**
+ * @brief Top level definition for an UPDATE PSEUDOFS block
+ */
+
+struct config_block update_pseudofs_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.%d",
+	.blk_desc.name = "PSEUDOFS",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.u.blk.init = pseudofs_init,
+	.blk_desc.u.blk.params = pseudofs_update_params,
+	.blk_desc.u.blk.commit = update_pseudofs_commit,
 	.blk_desc.u.blk.display = export_display
 };
 
@@ -2050,55 +2374,12 @@ static int build_default_root(struct config_error_type *err_type)
 	/* allocate and initialize the exportlist part with the id */
 	LogDebug(COMPONENT_EXPORT,
 		 "Allocating Pseudo root export");
-	export = alloc_export();
 
-	export->filesystem_id.major = 152;
-	export->filesystem_id.minor = 152;
-	export->MaxWrite = FSAL_MAXIOSIZE;
-	export->MaxRead = FSAL_MAXIOSIZE;
-	export->PrefWrite = FSAL_MAXIOSIZE;
-	export->PrefRead = FSAL_MAXIOSIZE;
-	export->PrefReaddir = 16384;
-	export->config_gen = UINT64_MAX;
-
-	/*Don't set anonymous uid and gid, they will actually be ignored */
-
-	/* Support only NFS v4 and TCP.
-	 * Root is allowed
-	 * MD Read Access
-	 * Allow use of default auth types
-	 *
-	 * Allow non-privileged client ports to access pseudo export.
+	/* We can call the same function that config uses to allocate and
+	 * initialize a gsh_export structure by passing both parameters as
+	 * NULL.
 	 */
-	export->export_perms.options = EXPORT_OPTION_ROOT |
-					EXPORT_OPTION_MD_READ_ACCESS |
-					EXPORT_OPTION_NFSV4 |
-					EXPORT_OPTION_AUTH_TYPES |
-					EXPORT_OPTION_TCP;
-
-	export->export_perms.set = EXPORT_OPTION_SQUASH_TYPES |
-				    EXPORT_OPTION_ACCESS_MASK |
-				    EXPORT_OPTION_PROTOCOLS |
-				    EXPORT_OPTION_TRANSPORTS |
-				    EXPORT_OPTION_AUTH_TYPES |
-				    EXPORT_OPTION_PRIVILEGED_PORT;
-
-	export->options = EXPORT_OPTION_USE_COOKIE_VERIFIER;
-	export->options_set = EXPORT_OPTION_FSID_SET |
-			      EXPORT_OPTION_USE_COOKIE_VERIFIER |
-			      EXPORT_OPTION_MAXREAD_SET |
-			      EXPORT_OPTION_MAXWRITE_SET |
-			      EXPORT_OPTION_PREFREAD_SET |
-			      EXPORT_OPTION_PREFWRITE_SET;
-
-	/* Set the fullpath to "/" */
-	export->cfg_fullpath = gsh_strdup("/");
-
-	/* Set Pseudo Path to "/" */
-	export->cfg_pseudopath = gsh_strdup("/");
-
-	export->pseudopath = gsh_refstr_dup("/");
-	export->fullpath = gsh_refstr_dup("/");
+	export = pseudofs_init(NULL, NULL);
 
 	/* Initialize req_ctx with the export reasonably constructed using the
 	 * reference provided above by alloc_export().
@@ -2270,6 +2551,16 @@ int ReadExports(config_file_t in_config,
 		display_reset_buffer(&dspbuf);
 	}
 
+	rc = load_config_from_parse(in_config,
+				    &pseudofs_param,
+				    NULL,
+				    false,
+				    err_type);
+	if (rc < 0) {
+		LogCrit(COMPONENT_CONFIG, "Pseudofs block error");
+		return -1;
+	}
+
 	num_exp = load_config_from_parse(in_config,
 				    &export_param,
 				    NULL,
@@ -2310,6 +2601,9 @@ int reread_exports(config_file_t in_config,
 
 	LogInfo(COMPONENT_CONFIG, "Reread exports starting");
 
+	LogDebug(COMPONENT_EXPORT, "Exports before update");
+	log_all_exports(NIV_DEBUG, __LINE__, __func__);
+
 	rc = load_config_from_parse(in_config,
 				    &export_defaults_param,
 				    &export_opt_cfg,
@@ -2318,6 +2612,18 @@ int reread_exports(config_file_t in_config,
 
 	if (rc < 0) {
 		LogCrit(COMPONENT_CONFIG, "Export defaults block error");
+		num_exp = -1;
+		goto out;
+	}
+
+	rc = load_config_from_parse(in_config,
+				    &update_pseudofs_param,
+				    NULL,
+				    false,
+				    err_type);
+
+	if (rc < 0) {
+		LogCrit(COMPONENT_CONFIG, "Pseudofs block error");
 		num_exp = -1;
 		goto out;
 	}
@@ -2333,9 +2639,6 @@ int reread_exports(config_file_t in_config,
 		num_exp = -1;
 		goto out;
 	}
-
-	LogDebug(COMPONENT_EXPORT, "Exports before update");
-	log_all_exports(NIV_DEBUG, __LINE__, __func__);
 
 	generation = get_config_generation(in_config);
 

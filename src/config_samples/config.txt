@@ -11,6 +11,8 @@ EXPORT { CLIENT  {} }
 EXPORT { FSAL {} }
 EXPORT { FSAL { FSAL {} } }
 EXPORT { FSAL { PNFS {} } }
+PSEUDOFS {}
+PSEUDOFS { CLIENT  {} }
 LOG {}
 LOG { COMPONENTS {} }
 LOG { FACILITY {} }
@@ -356,7 +358,7 @@ EXPORT {}
 
 	Export_id(uint16, range 0 to UINT16_MAX, default 1)
 
-	Filesystem_id(fsid, format is uint64.uint64, default 666.666)
+	Filesystem_id(fsid, format is uint64.uint64, default unused)
 
 		* Updating Filesystem_id would have an adverse impact on
 		  existing client mounts and it's not currently a type that
@@ -399,11 +401,7 @@ EXPORT {}
 		* Disable_ACL is processed at create_export time currently
 		  which makes it effectively a static option.
 
-	sec_label_xattr(char, default "security.selinux xattr of the file")
-
-		* Enable NFSv4.2 security label attribute. Ganesha supports
-		  "Limited Server Mode" as detailed in RFC 7204. Note that
-		  not all FSALs support security labels.
+	Security_Label(bool, default false)
 
 	Attr_Expiration_Time(int32, range -1 to INT32_MAX, default 60)
 
@@ -436,6 +434,12 @@ EXPORT { FSAL {} }
 	  then it uses the normal search path for cephx keyring files to find
 	  a key.
 
+	sec_label_xattr(char, default "security.selinux xattr of the file")
+
+		* Enable NFSv4.2 security label attribute. Ganesha supports
+		  "Limited Server Mode" as detailed in RFC 7204. Note that
+		  not all FSALs support security labels.
+
 	FSAL_GLUSTER:
 	-------------
 
@@ -456,7 +460,11 @@ EXPORT { FSAL {} }
 
 	transport(enum, values [tcp, rdma], default tcp)
 
-	Security_Label(bool, default false)
+	sec_label_xattr(char, default "security.selinux xattr of the file")
+
+		* Enable NFSv4.2 security label attribute. Ganesha supports
+		  "Limited Server Mode" as detailed in RFC 7204. Note that
+		  not all FSALs support security labels.
 
 	FSAL_VFS or FSAL_LUSTRE:
 	------------------------
@@ -544,6 +552,90 @@ EXPORT { FSAL {} }
 	EXPORT { FSAL { FSAL {} } }
 
 	describes the stacked FSAL's parameters
+
+PSEUDOFS {}
+-----------
+
+	* While this block looks similar to an EXPORT block, only the following
+	  options may be specified including CLIENT sub-blocks.
+
+	* This block provides a simple way to override some parameters of
+	  the pseudofs root, especially to specify CLIENT blocks to override
+	  the CLIENT blocks in EXPORT_DEFAULTS.
+
+	* This block may only be specified once.
+
+	* This block is fully dynamically updateable.
+
+	Access_Type(enum, values [None, MDONLY_RO],
+		    default MDONLY_RO)
+
+	Transports(enum list, values [UDP, TCP, RDMA], default [TCP])
+
+	SecType(enum list, values [none, sys, krb5, krb5i, krb5p],
+	        default [none, sys, krb5, krb5i, krb5p])
+
+	PrivilegedPort(bool, default false)
+
+	Export_id(uint16, range 0 to UINT16_MAX, default 0)
+
+	Filesystem_id(fsid, format is uint64.uint64, default 152.152)
+
+		* Updating Filesystem_id would have an adverse impact on
+		  existing client mounts and it's not currently a type that
+		  can be atomically updated.
+
+	* The following options may be dynamically updated
+
+	DisableReaddirPlus(bool, default false)
+
+	Trust_Readdir_Negative_Cache(bool, default false)
+
+	* The following options may have limits on dynamic effect
+
+	UseCookieVerifier(bool, default true)
+
+		* Updating UseCookieVerifier while a readdir is in
+		  progress may result in unexpected behavior.
+
+PSEUDOFS { CLIENT  {} }
+-----------------------
+
+	PSEUDOFS can also have CLIENT blocks
+
+	* This block may be repeated to define multiple client lists with
+	  different permissions.
+
+	* The client lists are dynamically updateable.
+
+	Access_Type(enum, values [None, MDONLY_RO],
+		    default MDONLY_RO)
+
+	Transports(enum list, values [UDP, TCP, RDMA], default [TCP])
+
+	SecType(enum list, values [none, sys, krb5, krb5i, krb5p],
+	        default [none, sys, krb5, krb5i, krb5p])
+
+	PrivilegedPort(bool, default false)
+
+	Clients(client list, empty)
+
+	* Client list entries can take on one of the following forms. This
+	  parameter may be repeated to extend the list.
+
+	*		Match any client
+	@name		Netgroup name
+	x.x.x.x/y	IPv4 network address, IPv6 addresses are also allowed
+			but the format is too complex to show here
+	wildcarded	If the string contains at least one ? or *
+			character (and is not simply "*"), the string is
+			used to pattern match host names. Note that [] may
+			also be used, but the pattern MUST have at least one
+			? or *
+	hostname	Match a single client (match is by IP address, all
+			addresses returned by getaddrinfo will match, the
+			getaddrinfo call is made at config parsing time)
+	IP address	Match a single client
 
 LOG {}
 ------
