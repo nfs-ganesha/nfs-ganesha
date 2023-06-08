@@ -241,6 +241,36 @@ int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred)
 	return 1;
 }
 
+static void rpcsec_gss_fetch_managed_groups(char *principal)
+{
+	/* Fetch the group data only if required */
+	if (op_ctx->caller_gdata != NULL)
+		return;
+
+	if (nfs_param.nfsv4_param.use_getpwnam) {
+		if (!uid2grp(op_ctx->original_creds.caller_uid,
+			&op_ctx->caller_gdata)) {
+			LogInfo(COMPONENT_DISPATCH,
+				"Attempt to fetch managed groups failed");
+			op_ctx->creds.caller_glen = 0;
+		}
+	} else {
+#ifdef USE_NFSIDMAP
+		if (!principal2grp(principal, &op_ctx->caller_gdata,
+				op_ctx->original_creds.caller_uid,
+				op_ctx->original_creds.caller_gid)) {
+			LogInfo(COMPONENT_DISPATCH,
+				"Attempt to fetch managed groups failed");
+			op_ctx->creds.caller_glen = 0;
+		}
+#else
+		LogWarn(COMPONENT_DISPATCH,
+			"Unsupported code path for principal %s", principal);
+		op_ctx->creds.caller_glen = 0;
+#endif
+	}
+}
+
 /**
  * @brief Get numeric credentials from request
  *
@@ -304,13 +334,12 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
+		/* Get the gss data to process them */
+		gd = SVCAUTH_PRIVATE(req->rq_auth);
+		memcpy(principal, gd->cname.value, gd->cname.length);
+		principal[gd->cname.length] = 0;
+
 		if ((op_ctx->cred_flags & CREDS_LOADED) == 0) {
-			/* Get the gss data to process them */
-			gd = SVCAUTH_PRIVATE(req->rq_auth);
-
-			memcpy(principal, gd->cname.value, gd->cname.length);
-			principal[gd->cname.length] = 0;
-
 			LogMidDebug(COMPONENT_DISPATCH,
 				     "Mapping RPCSEC_GSS principal %s to uid/gid",
 				     principal);
@@ -347,6 +376,8 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		op_ctx->cred_flags |= MANAGED_GIDS;
 		garray_copy = &op_ctx->managed_garray_copy;
 
+		/* Fetch extended groups */
+		rpcsec_gss_fetch_managed_groups(principal);
 		break;
 #endif				/* _USE_GSSRPC */
 
