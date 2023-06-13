@@ -78,9 +78,9 @@ void uid2grp_release_group_data(struct group_data *gdata)
 	PTHREAD_MUTEX_lock(&gdata->gd_lock);
 	refcount = --gdata->refcount;
 	PTHREAD_MUTEX_unlock(&gdata->gd_lock);
-	PTHREAD_MUTEX_destroy(&gdata->gd_lock);
 
 	if (refcount == 0) {
+		PTHREAD_MUTEX_destroy(&gdata->gd_lock);
 		gsh_free(gdata->groups);
 		gsh_free(gdata);
 	} else if (refcount == (unsigned int)-1) {
