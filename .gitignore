@@ -13,6 +13,7 @@ src/.settings/
 .libs/
 CMakeFiles/
 build/
+.cache/
 
 # files
 *.kdevelop*
