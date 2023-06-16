@@ -166,22 +166,32 @@ bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update)
 
 	if (valid == 0) {
 		/* Expire the lease */
-		/* Get the client record. It will not be NULL. */
+		/* Get the client record. */
 		nfs_client_record_t *client_rec =  clientid->cid_client_record;
 
 		/* get a ref to client_id as we might drop the
-		 * last reference with expiring. This also protects the
-		 * reference to the client_record.
-		 */
+		* last reference with expiring.
+		*/
 		inc_client_id_ref(clientid);
+
+		/* if record is STALE, the linkage to client_record is
+		* removed already. Acquire a ref on client record
+		* before we drop the mutex on clientid
+		*/
+		if (client_rec != NULL)
+			inc_client_record_ref(client_rec);
 
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
-		PTHREAD_MUTEX_lock(&client_rec->cr_mutex);
+		if (client_rec != NULL)
+			PTHREAD_MUTEX_lock(&client_rec->cr_mutex);
 
 		nfs_client_id_expire(clientid, false);
 
-		PTHREAD_MUTEX_unlock(&client_rec->cr_mutex);
+		if (client_rec != NULL) {
+			PTHREAD_MUTEX_unlock(&client_rec->cr_mutex);
+			dec_client_record_ref(client_rec);
+		}
 
 		/* drop our reference to the client_id */
 		dec_client_id_ref(clientid);
