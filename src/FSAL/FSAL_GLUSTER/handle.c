@@ -1199,76 +1199,6 @@ out:
 	return glhandle;
 }
 
-fsal_status_t glusterfs_open_my_fd(struct glusterfs_handle *objhandle,
-				   fsal_openflags_t openflags,
-				   int posix_flags,
-				   struct glusterfs_fd *my_fd)
-{
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	struct glfs_fd *glfd = NULL;
-	struct glusterfs_export *glfs_export =
-	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
-	gid_t **garray_copy = NULL;
-#ifdef GLTIMING
-	struct timespec s_time, e_time;
-
-	now(&s_time);
-#endif
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "my_fd->fd = %p openflags = %x, posix_flags = %x",
-		     my_fd->glfd, openflags, posix_flags);
-
-	assert(my_fd->glfd == NULL
-	       && my_fd->fsal_fd.openflags == FSAL_O_CLOSED && openflags != 0);
-
-	LogFullDebug(COMPONENT_FSAL,
-		     "openflags = %x, posix_flags = %x",
-		     openflags, posix_flags);
-
-	SET_GLUSTER_CREDS_OP_CTX(glfs_export);
-
-	glfd = glfs_h_open(glfs_export->gl_fs->fs, objhandle->glhandle,
-			   posix_flags);
-
-	/* restore credentials */
-	RESET_GLUSTER_CREDS(glfs_export);
-
-	if (glfd == NULL) {
-		status = gluster2fsal_error(errno);
-		goto out;
-	}
-
-	my_fd->glfd = glfd;
-	my_fd->fsal_fd.openflags = FSAL_O_NFS_FLAGS(openflags);
-	my_fd->creds.caller_uid = op_ctx->creds.caller_uid;
-	my_fd->creds.caller_gid = op_ctx->creds.caller_gid;
-	my_fd->creds.caller_glen = op_ctx->creds.caller_glen;
-	garray_copy = &my_fd->creds.caller_garray;
-
-	if ((*garray_copy) != NULL) {
-		/* Replace old creds */
-		gsh_free(*garray_copy);
-		*garray_copy = NULL;
-	}
-
-	if (op_ctx->creds.caller_glen) {
-		(*garray_copy) = gsh_malloc(op_ctx->creds.caller_glen
-					    * sizeof(gid_t));
-		memcpy((*garray_copy), op_ctx->creds.caller_garray,
-			op_ctx->creds.caller_glen * sizeof(gid_t));
-	}
-
-	SET_GLUSTER_LEASE_ID(my_fd);
-
-out:
-#ifdef GLTIMING
-	now(&e_time);
-	latency_update(&s_time, &e_time, lat_file_open);
-#endif
-	return status;
-}
-
 fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd)
 {
 	int rc = 0;
@@ -1298,17 +1228,21 @@ fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd)
 				"Error : close returns with %s",
 				strerror(errno));
 		}
+
+		my_fd->glfd = NULL;
+		my_fd->fsal_fd.openflags = FSAL_O_CLOSED;
+		my_fd->creds.caller_uid = 0;
+		my_fd->creds.caller_gid = 0;
+		my_fd->creds.caller_glen = 0;
+
+		if (my_fd->creds.caller_garray) {
+			gsh_free(my_fd->creds.caller_garray);
+			my_fd->creds.caller_garray = NULL;
+		}
+	} else {
+		status = fsalstat(ERR_FSAL_NOT_OPENED, 0);
 	}
 
-	my_fd->glfd = NULL;
-	my_fd->fsal_fd.openflags = FSAL_O_CLOSED;
-	my_fd->creds.caller_uid = 0;
-	my_fd->creds.caller_gid = 0;
-	my_fd->creds.caller_glen = 0;
-	if (my_fd->creds.caller_garray) {
-		gsh_free(my_fd->creds.caller_garray);
-		my_fd->creds.caller_garray = NULL;
-	}
 #ifdef USE_GLUSTER_DELEGATION
 	memset(my_fd->lease_id, 0, GLAPI_LEASE_ID_SIZE);
 #endif
@@ -3570,6 +3504,9 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 	ops->lock_op2 = glusterfs_lock_op2;
 	ops->setattr2 = glusterfs_setattr2;
 	ops->close2 = glusterfs_close2;
+	ops->close_func = glusterfs_close_func;
+	ops->reopen_func = glusterfs_reopen_func;
+
 	ops->seek2 = seek2;
 #ifdef USE_GLUSTER_DELEGATION
 	ops->lease_op2 = glusterfs_lease_op2;
