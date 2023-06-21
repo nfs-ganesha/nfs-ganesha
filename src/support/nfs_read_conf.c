@@ -327,6 +327,8 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI16("Monitoring_Port", 0, UINT16_MAX, MONITORING_PORT,
 		       nfs_core_param, monitoring_port),
 #endif
+	CONF_ITEM_BOOL("enable_rpc_cred_fallback", false,
+		       nfs_core_param, enable_rpc_cred_fallback),
 	CONFIG_EOL
 };
 

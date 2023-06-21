@@ -477,6 +477,9 @@ typedef struct nfs_core_param {
 	/** Monitoring port number. */
 	uint16_t monitoring_port;
 #endif
+	/** if  Manage_Gids=True and group resolution fails,
+	 *  then use gid data from rpc request */
+	bool enable_rpc_cred_fallback;
 } nfs_core_parameter_t;
 
 /** @} */

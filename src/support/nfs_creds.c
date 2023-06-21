@@ -419,13 +419,28 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		    !uid2grp(op_ctx->original_creds.caller_uid,
 			     &op_ctx->caller_gdata)) {
 			/** @todo: do we really want to bail here? */
-			LogInfo(COMPONENT_DISPATCH,
-				"Attempt to fetch managed_gids failed");
-			return NFS4ERR_ACCESS;
-		}
+			if (nfs_param.core_param.enable_rpc_cred_fallback) {
+				LogInfo(COMPONENT_DISPATCH,
+					"Attempt to fetch managed_gids failed for uid=%u, using cred info from rpc request",
+					op_ctx->original_creds.caller_uid);
+				/* Use the original_creds group list */
+				op_ctx->creds.caller_glen =
+					op_ctx->original_creds.caller_glen;
+				op_ctx->creds.caller_garray =
+					op_ctx->original_creds.caller_garray;
 
-		op_ctx->creds.caller_glen = op_ctx->caller_gdata->nbgroups;
-		op_ctx->creds.caller_garray = op_ctx->caller_gdata->groups;
+			} else {
+				LogInfo(COMPONENT_DISPATCH,
+					"Attempt to fetch managed_gids failed for uid=%u",
+					op_ctx->original_creds.caller_uid);
+				return NFS4ERR_ACCESS;
+			}
+		} else {
+			op_ctx->creds.caller_glen =
+				op_ctx->caller_gdata->nbgroups;
+			op_ctx->creds.caller_garray =
+				op_ctx->caller_gdata->groups;
+		}
 	} else {
 		/* Use the original_creds group list */
 		op_ctx->creds.caller_glen = op_ctx->original_creds.caller_glen;

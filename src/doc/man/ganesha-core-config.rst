@@ -212,6 +212,10 @@ Malloc_trim_MinThreshold(uint32, range 1 to INT32_MAX, default 15*1024)
     Minimum threshold value to call malloc_trim. The malloc_trim will be called
     once memory allocation exceeds minimum value. Size in MB's.
     Note, this setting has no effect when Enable_malloc_trim is set to false.
+enable_rpc_cred_fallback(bool,  default false)
+    if  Manage_Gids=True and group resolution fails,
+    then use gid data from rpc request.
+
 
 Parameters controlling TCP DRC behavior:
 ----------------------------------------
