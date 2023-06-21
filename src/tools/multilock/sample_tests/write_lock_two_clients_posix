@@ -1,0 +1,36 @@
+# Take locks from two loaders - write lock
+#
+# Take a write lock from loader 1
+# Try to take an write lock from a loader 2 and expect to fail
+# Try to take a read lock from a loader 2 and expect to fail
+# Test from loader 2 for the list of locks expecting to see one lock
+# Release the lock that was taken from loader 1
+# Test from loader 3 for the list of locks and expect not to see any lock
+
+CLIENTS c1 c2 c3
+
+OK c1 OPEN 1 rw create POSIX testFile
+OK c2 OPEN 1 rw POSIX testFile
+OK c3 OPEN 1 rw POSIX testFile
+
+# full range
+GRANTED c1 LOCK 1 write 0 0
+DENIED c2 LOCK 1 write 0 0
+DENIED c2 LOCK 1 read 0 0
+c2 $L LIST 1 0 0
+EXPECT c2 $L LIST CONFLICT 1 * write 0 0
+EXPECT c2 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+# byte range
+GRANTED c1 LOCK 1 write 10 10
+DENIED c2 LOCK 1 write 10 10
+DENIED c2 LOCK 1 read 10 10
+c2 $L LIST 1 0 0
+EXPECT c2 $L LIST CONFLICT 1 * write 10 10
+EXPECT c2 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+QUIT

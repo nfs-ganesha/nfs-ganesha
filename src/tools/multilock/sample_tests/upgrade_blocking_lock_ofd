@@ -1,0 +1,52 @@
+# Upgrade + notification
+#
+# Take a read lock from loader 1
+# Take a read lock from loader 2
+# Try to take a non-blocking write lock from loader 1, expect to fail (Lock upgrade)
+# Try to take a blocking write lock from loader 1 (Lock upgrade attempt)
+# Release the lock from loader 2
+# Expect the lock to be granted to loader 1
+# Release the lock from loader 1
+# Test from loader 3 for the list of locks and expect not to see any lock
+
+CLIENTS c1 c2 c3
+
+OK c1 OPEN 1 rw create OFD testFile
+OK c2 OPEN 1 rw OFD testFile
+OK c3 OPEN 1 rw OFD testFile
+
+# full range
+GRANTED c1 LOCK 1 read 0 0
+GRANTED c2 LOCK 1 read 0 0
+DENIED c1 LOCK 1 write 0 0
+OK c1 ALARM 10
+c1 $G LOCKW 1 write  0 0
+c2 $R UNLOCK 1 0 0
+{
+    EXPECT c2 $R UNLOCK GRANTED 1 unlock 0 0
+    EXPECT c1 $G LOCKW  GRANTED 1 write  0 0
+}
+c1 * ALARM 0
+EXPECT c1 * ALARM CANCELED *
+EXPECT c1 * ALARM OK *
+GRANTED c1 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+# byte range
+GRANTED c1 LOCK 1 read 10 10
+GRANTED c2 LOCK 1 read 10 10
+DENIED c1 LOCK 1 write 10 10
+OK c1 ALARM 10
+c1 $G LOCKW 1 write  10 10
+c2 $R UNLOCK 1 0 0
+{
+    EXPECT c2 $R UNLOCK GRANTED 1 unlock 0 0
+    EXPECT c1 $G LOCKW  GRANTED 1 write  10 10
+}
+c1 * ALARM 0
+EXPECT c1 * ALARM CANCELED *
+EXPECT c1 * ALARM OK *
+GRANTED c1 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+QUIT

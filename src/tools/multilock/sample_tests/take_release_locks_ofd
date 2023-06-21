@@ -1,0 +1,81 @@
+# Take and release a lock from one loader (read / write, blocking / non-blocking, full / byte-range)
+#
+# Take a lock from loader 1
+# Test from a loader 2 should reflect that this lock exist
+# Release the lock that was taken from loader 1
+# Test from loader 2 should reflect that this lock doesn’t exist
+
+CLIENTS c1 c2
+
+OK c1 OPEN 1 rw create OFD testFile
+OK c2 OPEN 1 rw OFD testFile
+
+# read - blocking - full
+c1 $G LOCKW 1 read  0 0
+EXPECT c1 $G LOCKW  GRANTED 1 read  0 0
+c2 $L LIST 1 0 0
+EXPECT c2 $L LIST CONFLICT 1 * read 0 0
+EXPECT c2 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 0 0
+AVAILABLE c2 LIST 1 0 0
+
+# read - blocking - byte-range
+c1 $G LOCKW 1 read  100 10
+EXPECT c1 $G LOCKW  GRANTED 1 read  100 10
+c2 $L LIST 1 0 0
+EXPECT c2 $L LIST CONFLICT 1 * read 100 10
+EXPECT c2 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 100 10
+AVAILABLE c2 LIST 1 0 0
+
+# read - non-blocking - full
+GRANTED c1 LOCK 1 read 0 0
+c2 $L LIST 1 0 0
+EXPECT c2 $L LIST CONFLICT 1 * read 0 0
+EXPECT c2 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 0 0
+AVAILABLE c2 LIST 1 0 0
+
+# read - non-blocking - byte-range
+GRANTED c1 LOCK 1 read 100 10
+c2 $L LIST 1 0 0
+EXPECT c2 $L LIST CONFLICT 1 * read 100 10
+EXPECT c2 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 100 10
+AVAILABLE c2 LIST 1 0 0
+
+# write - blocking - full
+c1 $G LOCKW 1 write  0 0
+EXPECT c1 $G LOCKW  GRANTED 1 write 0 0
+c2 $L LIST 1 0 0
+EXPECT c2 $L LIST CONFLICT 1 * write 0 0
+EXPECT c2 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 0 0
+AVAILABLE c2 LIST 1 0 0
+
+# write - blocking - byte-range
+c1 $G LOCKW 1 write  100 10
+EXPECT c1 $G LOCKW  GRANTED 1 write  100 10
+c2 $L LIST 1 0 0
+EXPECT c2 $L LIST CONFLICT 1 * write 100 10
+EXPECT c2 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 100 10
+AVAILABLE c2 LIST 1 0 0
+
+# write - non-blocking - full
+GRANTED c1 LOCK 1 write 0 0
+c2 $L LIST 1 0 0
+EXPECT c2 $L LIST CONFLICT 1 * write 0 0
+EXPECT c2 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 0 0
+AVAILABLE c2 LIST 1 0 0
+
+# write - non-blocking - byte-range
+GRANTED c1 LOCK 1 write 100 10
+c2 $L LIST 1 0 0
+EXPECT c2 $L LIST CONFLICT 1 * write 100 10
+EXPECT c2 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 100 10
+AVAILABLE c2 LIST 1 0 0
+
+QUIT

@@ -1,0 +1,46 @@
+# Test blocking locks grant notification for read
+#
+# Take a write lock from loader 1
+# Try to take a blocking lock from loader 2
+# Release the lock from loader 1
+# Verify loader 2 received the lock
+# Release the lock from loader 2
+# Test from loader 3 for the list of locks and expect not to see any lock
+
+CLIENTS c1 c2 c3
+
+OK c1 OPEN 1 rw create POSIX testFile
+OK c2 OPEN 1 rw POSIX testFile
+OK c3 OPEN 1 rw POSIX testFile
+
+# full range
+GRANTED c1 LOCK 1 write 0 0
+OK c1 ALARM 10
+c2 $G LOCKW 1 write  0 0
+c1 $R UNLOCK 1 0 0
+{
+    EXPECT c1 $R UNLOCK GRANTED 1 unlock 0 0
+    EXPECT c2 $G LOCKW  GRANTED 1 write  0 0
+}
+c1 * ALARM 0
+EXPECT c1 * ALARM CANCELED *
+EXPECT c1 * ALARM OK *
+GRANTED c2 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+# byte range
+GRANTED c1 LOCK 1 write 10 10
+OK c1 ALARM 10
+c2 $G LOCKW 1 write  10 20
+c1 $R UNLOCK 1 0 0
+{
+    EXPECT c1 $R UNLOCK GRANTED 1 unlock 0 0
+    EXPECT c2 $G LOCKW  GRANTED 1 write  10 20
+}
+c1 * ALARM 0
+EXPECT c1 * ALARM CANCELED *
+EXPECT c1 * ALARM OK *
+GRANTED c2 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+QUIT

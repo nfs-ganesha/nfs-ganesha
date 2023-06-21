@@ -1,0 +1,52 @@
+# Lock splitting
+# Take a write lock from loader 1 with range (example 0 - 30)
+# Try to take a read lock anywhere within that range from loader 2, expect to fail
+# Release a range within the range from loader 1 (example 10-19)
+# Try to take read locks within the ranges that are still locked from loader 2, expect to fail
+# Try to take a read lock within the range that was freed from loader 2, expect to succeed
+# Test from loader 3 for the list of locks and expect to see the whole range as locked
+# Release the lock from loader 1
+# Release the lock from loader 2
+# Test from loader 3 for the list of locks and expect not to see any lock
+
+CLIENTS c1 c2 c3
+
+OK c1 OPEN 1 rw create OFD testFile
+OK c2 OPEN 1 rw OFD testFile
+OK c3 OPEN 1 rw OFD testFile
+
+# Splitting write lock
+GRANTED c1 LOCK 1 write 0 40
+DENIED c2 LOCK 1 read 0 40
+GRANTED c1 UNLOCK 1 10 20
+DENIED c2 LOCK 1 read 0 10
+GRANTED c2 LOCK 1 read 15 5
+c3 $L LIST 1 0 0
+{
+    EXPECT c3 $L LIST CONFLICT 1 * write 0 10
+    EXPECT c3 $L LIST CONFLICT 1 * write 30 10
+    EXPECT c3 $L LIST CONFLICT 1 * read 15 5
+}
+EXPECT c3 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 0 0
+GRANTED c2 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+# Splitting read lock
+GRANTED c1 LOCK 1 read 0 40
+DENIED c2 LOCK 1 write 0 40
+GRANTED c1 UNLOCK 1 10 20
+DENIED c2 LOCK 1 write 0 10
+GRANTED c2 LOCK 1 write 15 5
+c3 $L LIST 1 0 0
+{
+    EXPECT c3 $L LIST CONFLICT 1 * read 0 10
+    EXPECT c3 $L LIST CONFLICT 1 * read 30 10
+    EXPECT c3 $L LIST CONFLICT 1 * write 15 5
+}
+EXPECT c3 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 0 0
+GRANTED c2 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+QUIT

@@ -1,0 +1,35 @@
+# Upgrade a read lock
+#
+# Take a read lock from loader 1
+# Take a read lock from loader 2, expect to succeed
+# Release the lock from loader 2
+# Upgrade the lock to a write lock from loader 1, expect to succeed
+# Try to take a read lock from loader 2, expect to fail
+# Release the lock from loader 1
+# Test from loader 3 for the list of locks and expect not to see any lock
+
+CLIENTS c1 c2 c3
+
+OK c1 OPEN 1 rw create OFD testFile
+OK c2 OPEN 1 rw OFD testFile
+OK c3 OPEN 1 rw OFD testFile
+
+# full range
+GRANTED c1 LOCK 1 read 0 0
+GRANTED c2 LOCK 1 read 0 0
+GRANTED c2 UNLOCK 1 0 0
+GRANTED c1 LOCK 1 write 0 0
+DENIED c2 LOCK 1 read 0 0
+GRANTED c1 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+# byte range
+GRANTED c1 LOCK 1 read 10 10
+GRANTED c2 LOCK 1 read 10 10
+GRANTED c2 UNLOCK 1 0 0
+GRANTED c1 LOCK 1 write 10 10
+DENIED c2 LOCK 1 read 10 10
+GRANTED c1 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+QUIT

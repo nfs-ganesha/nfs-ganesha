@@ -1,0 +1,46 @@
+# Take locks from two loaders - read locks
+#
+# Take a read lock from loader 1
+# Try to take an overlapping read lock from loader 2 and expect to succeed
+# Test from loader 3 for the list of locks expecting to see the ranges of both locks
+# Release the lock that was taken from loader 1
+# Test from loader 3 for the list of locks expecting to see only the range of loader 2
+# Release the lock that was taken from loader 2
+# Test from loader 3 for the list of locks and expect not to see any locks
+
+CLIENTS c1 c2 c3
+
+OK c1 OPEN 1 rw create POSIX testFile
+OK c2 OPEN 1 rw POSIX testFile
+OK c3 OPEN 1 rw POSIX testFile
+
+# full range
+GRANTED c1 LOCK 1 read 0 0
+GRANTED c2 LOCK 1 read 0 0
+c3 $L LIST 1 0 0
+EXPECT c3 $L LIST CONFLICT 1 * read 0 0
+EXPECT c3 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 0 0
+c3 $L LIST 1 0 0
+EXPECT c3 $L LIST CONFLICT 1 * read 0 0
+EXPECT c3 $L LIST DENIED 1 0 0
+GRANTED c2 UNLOCK 1 0 0
+AVAILABLE c3 LIST 1 0 0
+
+# byte range
+GRANTED c1 LOCK 1 read 0 100
+GRANTED c2 LOCK 1 read 50 100
+c3 $L LIST 1 0 0
+{
+    EXPECT c3 $L LIST CONFLICT 1 * read 0 100
+    EXPECT c3 $L LIST CONFLICT 1 * read 50 100
+}
+EXPECT c3 $L LIST DENIED 1 0 0
+GRANTED c1 UNLOCK 1 0 100
+c3 $L LIST 1 0 0
+EXPECT c3 $L LIST CONFLICT 1 * read 50 100
+EXPECT c3 $L LIST DENIED 1 0 0
+GRANTED c2 UNLOCK 1 50 100
+AVAILABLE c3 LIST 1 0 0
+
+QUIT
