@@ -56,6 +56,7 @@ sigset_t original_signal_set;
 
 void open_socket(void)
 {
+	const int reuse = 1;
 	int rc;
 
 	rc = socket(AF_INET, SOCK_STREAM, 0);
@@ -65,6 +66,12 @@ void open_socket(void)
 		      errno, strerror(errno));
 
 	listensock = rc;
+	rc = setsockopt(listensock, SOL_SOCKET, SO_REUSEADDR, &reuse,
+			sizeof(reuse));
+	if (rc != 0) {
+		fatal("failed to set SO_REUSEADDR with ERRNO %d \"%s\"\n",
+		      errno, strerror(errno));
+	}
 
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
