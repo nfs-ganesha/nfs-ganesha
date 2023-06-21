@@ -223,8 +223,9 @@ char *get_rq_tag(char *line, struct response *req, int required,
 		 enum requires_more requires_more);
 char *get_long(char *line, long *value, enum requires_more requires_more,
 	       const char *invalid);
-char *get_longlong(char *line, long long *value,
-		   enum requires_more requires_more, const char *invalid);
+char *get_unsignedlonglong(char *line, long long *value,
+			   enum requires_more requires_more,
+			   const char *invalid);
 char *get_fpos(char *line, long *fpos, enum requires_more requires_more);
 char *get_rdata(char *line, struct response *resp, int max,
 		enum requires_more requires_more);
@@ -276,8 +277,8 @@ struct response {
 	long r_fpos;
 	long r_fno;
 	long r_secs;
-	long long r_start;
-	long long r_length;
+	unsigned long long r_start;
+	unsigned long long r_length;
 	long r_pid;
 	int r_lock_type;
 	int r_flags;

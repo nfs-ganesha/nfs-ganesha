@@ -317,7 +317,7 @@ void do_write(struct response *resp)
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = errno;
 		array_strcpy(errdetail, "Write failed");
-		array_sprintf(badtoken, "%lld", resp->r_length);
+		array_sprintf(badtoken, "%llu", resp->r_length);
 		return;
 	}
 
@@ -353,7 +353,7 @@ void do_read(struct response *resp)
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = errno;
 		array_strcpy(errdetail, "Read failed");
-		array_sprintf(badtoken, "%lld", resp->r_length);
+		array_sprintf(badtoken, "%llu", resp->r_length);
 		return;
 	}
 
@@ -380,7 +380,7 @@ void do_seek(struct response *resp)
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = errno;
 		array_strcpy(errdetail, "Seek failed");
-		array_sprintf(badtoken, "%lld", resp->r_start);
+		array_sprintf(badtoken, "%llu", resp->r_start);
 		return;
 	}
 
@@ -563,7 +563,7 @@ bool do_lock(struct response *resp, enum thread_type thread_type)
 			resp->r_status = STATUS_ERRNO;
 			resp->r_errno = errno;
 			array_strcpy(errdetail, "Lock failed");
-			array_sprintf(badtoken, "%s %lld %lld",
+			array_sprintf(badtoken, "%s %llu %llu",
 				      str_lock_type(lock.l_type), resp->r_start,
 				      resp->r_length);
 		}
@@ -646,7 +646,7 @@ void do_hop(struct response *resp)
 			resp->r_status = STATUS_ERRNO;
 			resp->r_errno = errno;
 			array_strcpy(errdetail, "Hop Unlock failed");
-			array_sprintf(badtoken, "%lld %lld", resp->r_start,
+			array_sprintf(badtoken, "%llu %llu", resp->r_start,
 				      resp->r_length);
 		}
 	}
@@ -715,7 +715,7 @@ void do_unhop(struct response *resp)
 			resp->r_status = STATUS_ERRNO;
 			resp->r_errno = errno;
 			array_strcpy(errdetail, "Unhop Unlock failed");
-			array_sprintf(badtoken, "%lld %lld", resp->r_start,
+			array_sprintf(badtoken, "%llu %llu", resp->r_start,
 				      resp->r_length);
 		}
 	}
@@ -760,7 +760,7 @@ void do_unlock(struct response *resp)
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = errno;
 		array_strcpy(errdetail, "Unlock failed");
-		array_sprintf(badtoken, "%lld %lld", resp->r_start,
+		array_sprintf(badtoken, "%llu %llu", resp->r_start,
 			      resp->r_length);
 		return;
 	}
@@ -806,7 +806,7 @@ void do_test(struct response *resp)
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = errno;
 		array_strcpy(errdetail, "Test failed");
-		array_sprintf(badtoken, "%s %lld %lld",
+		array_sprintf(badtoken, "%s %llu %llu",
 			      str_lock_type(lock.l_type),
 			      resp->r_start, resp->r_length);
 		return;
@@ -917,7 +917,7 @@ int list_locks(long long start, long long end, struct response *resp)
 		resp->r_status = STATUS_ERRNO;
 		resp->r_errno = errno;
 		array_strcpy(errdetail, "Test failed");
-		array_sprintf(badtoken, "%s %lld %lld",
+		array_sprintf(badtoken, "%s %llu %llu",
 			      str_lock_type(lock.l_type),
 			      resp->r_start, resp->r_length);
 		respond(resp);
