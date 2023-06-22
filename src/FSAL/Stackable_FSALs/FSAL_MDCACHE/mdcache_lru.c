@@ -113,6 +113,7 @@ struct lru_q_lane {
 	struct lru_q cleanup;	/* deferred cleanup */
 	struct lru_q long_term;	/* long term references */
 	pthread_mutex_t ql_mtx;
+
 	CACHE_PAD(0);
 };
 

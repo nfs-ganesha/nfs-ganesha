@@ -258,7 +258,6 @@ void nfs4_acl_release_entry(fsal_acl_t *acl)
 
 	/* Release acl */
 	nfs4_acl_free(acl);
-	return;
 }
 
 int nfs4_acls_init(void)

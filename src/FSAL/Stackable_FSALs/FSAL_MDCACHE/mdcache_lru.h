@@ -125,8 +125,8 @@ void mdcache_lru_insert(mdcache_entry_t *entry, uint32_t flags);
  *
  * @brief Get a logical reference to a cache entry
  *
- * @param[in] entry Cache entry being returned
- * @param[in] flags Flags to specify type of reference
+ * @param[in] entry   Cache entry being returned
+ * @param[in] flags   Set of flags to specify type of reference
  */
 void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags,
 		      const char *func, int line);

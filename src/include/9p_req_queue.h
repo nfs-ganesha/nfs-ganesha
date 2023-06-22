@@ -51,10 +51,15 @@ struct req_q {
 
 struct req_q_pair {
 	const char *s;
+
 	GSH_CACHE_PAD(0);
+
 	struct req_q producer;	/* from decoder */
+
 	GSH_CACHE_PAD(1);
+
 	struct req_q consumer;	/* to executor */
+
 	GSH_CACHE_PAD(2);
 };
 
@@ -76,6 +81,7 @@ struct _9p_req_st {
 		struct glist_head wait_list;
 		uint32_t waiters;
 	} reqs;
+
 	GSH_CACHE_PAD(1);
 };
 

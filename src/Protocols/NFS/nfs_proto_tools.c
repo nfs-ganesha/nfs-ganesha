@@ -362,13 +362,16 @@ static fattr_xdr_result encode_supported_attrs(XDR *xdr,
 			assert(res);
 		}
 	}
+
 	if (!inline_xdr_u_int32_t(xdr, &bits.bitmap4_len) ||
-		bits.bitmap4_len > BITMAP4_MAPLEN)
-			return FATTR_XDR_FAILED;
+	    bits.bitmap4_len > BITMAP4_MAPLEN)
+		return FATTR_XDR_FAILED;
+
 	for (offset = 0; offset < bits.bitmap4_len; offset++) {
 		if (!inline_xdr_u_int32_t(xdr, &bits.map[offset]))
 			return FATTR_XDR_FAILED;
 	}
+
 	return FATTR_XDR_SUCCESS;
 }
 
@@ -802,16 +805,20 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 	acldata.naces = 0;
 
 	if (!inline_xdr_u_int32_t(xdr, &acldata.naces) ||
-		acldata.naces > 4096)
-			return FATTR_XDR_FAILED;
+	    acldata.naces > 4096)
+		return FATTR_XDR_FAILED;
+
 	if (acldata.naces == 0)
 		return FATTR_XDR_SUCCESS;	/* no acls is not a crime */
+
 	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
+
 	if (acldata.aces == NULL) {
 		LogCrit(COMPONENT_NFS_V4, "Failed to allocate ACEs");
 		args->nfs_status = NFS4ERR_SERVERFAULT;
 		return FATTR_XDR_FAILED;
 	}
+
 	for (ace = acldata.aces; ace < acldata.aces + acldata.naces; ace++) {
 		int i;
 

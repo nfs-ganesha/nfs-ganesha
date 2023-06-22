@@ -236,9 +236,9 @@ enum _9p_qid__ {
 };
 
 /* 9P Magic Numbers */
-#define _9P_NOTAG	(u16)(~0)
-#define _9P_NOFID	(u32)(~0)
-#define _9P_NONUNAME	(u32)(~0)
+#define _9P_NOTAG	((u16)(~0))
+#define _9P_NOFID	((u32)(~0))
+#define _9P_NONUNAME	((u32)(~0))
 #define _9P_MAXWELEM	16
 
 /* Various header lengths to check message sizes: */

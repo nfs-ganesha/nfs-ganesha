@@ -976,6 +976,7 @@ enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 	struct clnt_req *cc = &call->call_req;
 	rpc_call_channel_t *chan = call->chan;
 	enum clnt_stat re_status;
+
 	call->states = NFS_CB_CALL_DISPATCH;
 
 	/* XXX TI-RPC does the signal masking */
