@@ -205,7 +205,7 @@ int receive(bool watchin, long timeout_secs)
 			timeout.tv_nsec = 0;
 			timeout.tv_sec = timeend - time(NULL);
 
-			if (timeout.tv_sec == 0)
+			if (timeout.tv_sec <= 0)
 				return -2;
 		} else if (timeout_secs == 0) {
 			timeout.tv_nsec = 0;
