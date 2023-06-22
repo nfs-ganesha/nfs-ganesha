@@ -460,22 +460,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 		}
 	}
 
-	/* Now that all entries are added to pseudofs tree, and we are pointing
-	 * to the final node, make it a proper junction.
-	 */
-	PTHREAD_RWLOCK_wrlock(&state.obj->state_hdl->jct_lock);
-	state.obj->state_hdl->dir.junction_export = export;
-
-	rcu_read_lock();
-
-	state.obj->state_hdl->dir.jct_pseudopath =
-			gsh_refstr_get(rcu_dereference(export->pseudopath));
-
-	rcu_read_unlock();
-
-	PTHREAD_RWLOCK_unlock(&state.obj->state_hdl->jct_lock);
-
-	/* And fill in the mounted on information for the export. */
+	/* Fill in the mounted on information for the export. */
 	PTHREAD_RWLOCK_wrlock(&export->exp_lock);
 
 	export->exp_mounted_on_file_id = state.obj->fileid;
@@ -502,6 +487,24 @@ bool pseudo_mount_export(struct gsh_export *export)
 	/* Set this outside the export->exp_lock, protected by EXPORT_ADMIN_LOCK
 	 */
 	export->is_mounted = true;
+
+	/* Now that all entries are added to pseudofs tree, and we are pointing
+	 * to the final node, make it a proper junction.
+	 * Note that this is the last thing that should be updated on this
+	 * handle, since setting the junction_export is what signals to the
+	 * PSEUDO FSAL that this entry is done.
+	 */
+	PTHREAD_RWLOCK_wrlock(&state.obj->state_hdl->jct_lock);
+	state.obj->state_hdl->dir.junction_export = export;
+
+	rcu_read_lock();
+
+	state.obj->state_hdl->dir.jct_pseudopath =
+			gsh_refstr_get(rcu_dereference(export->pseudopath));
+
+	rcu_read_unlock();
+
+	PTHREAD_RWLOCK_unlock(&state.obj->state_hdl->jct_lock);
 
 	LogDebug(COMPONENT_EXPORT,
 		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s junction %p",

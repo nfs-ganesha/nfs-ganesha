@@ -291,6 +291,32 @@ static struct pseudo_fsal_obj_handle
 	return NULL;
 }
 
+static fsal_errors_t
+verify_handle_is_valid(const struct pseudo_fsal_obj_handle *hdl)
+{
+	fsal_errors_t error = ERR_FSAL_NO_ERROR;
+
+	if (!is_export_update_in_progress())
+		return ERR_FSAL_NO_ERROR;
+
+	PTHREAD_RWLOCK_rdlock(&hdl->obj_handle.state_hdl->jct_lock);
+	if (hdl->obj_handle.type == DIRECTORY &&
+		hdl->obj_handle.state_hdl->dir.junction_export == NULL) {
+		/* There could be a race case where the node was created,
+		 * but the junction still wasn't updated during the
+		 * export update process. In this case we return
+		 * FSAL_DELAY util it is done.
+		 */
+		LogInfo(COMPONENT_EXPORT,
+			"PseudoFS LOOKUP/READDIR of %s found an non-finished entry. Returning FSAL_DELAY",
+			hdl->name);
+		error = ERR_FSAL_DELAY;
+	}
+
+	PTHREAD_RWLOCK_unlock(&hdl->obj_handle.state_hdl->jct_lock);
+	return error;
+}
+
 /* handle methods
  */
 
@@ -341,6 +367,11 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	if (node) {
 		hdl = avltree_container_of(node, struct pseudo_fsal_obj_handle,
 					   avl_n);
+
+		error = verify_handle_is_valid(hdl);
+		if (error != ERR_FSAL_NO_ERROR)
+			goto out;
+
 		*handle = &hdl->obj_handle;
 		error = ERR_FSAL_NO_ERROR;
 			LogFullDebug(COMPONENT_FSAL,
@@ -461,6 +492,7 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	fsal_cookie_t seekloc;
 	struct fsal_attrlist attrs;
 	enum fsal_dir_result cb_rc;
+	fsal_errors_t error = ERR_FSAL_NO_ERROR;
 
 	if (whence != NULL)
 		seekloc = *whence;
@@ -490,6 +522,11 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		hdl = avltree_container_of(node,
 					   struct pseudo_fsal_obj_handle,
 					   avl_i);
+
+		error = verify_handle_is_valid(hdl);
+		if (error != ERR_FSAL_NO_ERROR)
+			goto out;
+
 		/* skip entries before seekloc */
 		if (hdl->index < seekloc)
 			continue;
@@ -509,11 +546,12 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		}
 	}
 
+out:
 	op_ctx->fsal_private = NULL;
 
 	PTHREAD_RWLOCK_unlock(&dir_hdl->obj_lock);
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	return fsalstat(error, 0);
 }
 
 static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
