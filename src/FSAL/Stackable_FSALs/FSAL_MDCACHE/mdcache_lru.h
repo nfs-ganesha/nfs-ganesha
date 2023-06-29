@@ -82,25 +82,13 @@ extern struct lru_state lru_state;
 extern pool_t *mdcache_entry_pool;
 
 /**
- * Flags for functions in the LRU package
+ * Reference type Flags for functions in the LRU package
  */
 
-/**
- * No flag at all.
- */
-#define LRU_FLAG_NONE  0x0000
-
-/**
- * The caller is fetching an initial reference
- */
-#define LRU_REQ_INITIAL  0x0002
-
-/**
- * Long term reference
- */
-#define LRU_LONG_TERM_REFERENCE 0x0004
-
+#define LRU_ACTIVE_REF 0x0004
 #define LRU_PROMOTE 0x0008
+#define LRU_FLAG_SENTINEL 0x0001
+#define LRU_TEMP_REF 0x0002
 
 /**
  * The minimum reference count for a cache entry not being recycled.
@@ -117,8 +105,9 @@ extern pool_t *mdcache_entry_pool;
 fsal_status_t mdcache_lru_pkginit(void);
 fsal_status_t mdcache_lru_pkgshutdown(void);
 
-mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle);
-void mdcache_lru_insert(mdcache_entry_t *entry, uint32_t flags);
+mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle,
+				 uint32_t flags);
+void mdcache_lru_insert_active(mdcache_entry_t *entry);
 
 #define mdcache_lru_ref(e, f) _mdcache_lru_ref(e, f, __func__, __LINE__)
 
@@ -156,7 +145,7 @@ size_t mdcache_lru_release_entries(int32_t want_release);
  * accesses to the memory pointed to by entry.
  *
  * @param[in] entry Cache entry being returned
- * @param[in] flags Flag to indicate if the reference is a long term or not
+ * @param[in] flags Flag to indicate what kind of reference is to be released
  */
 bool _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags,
 			const char *func, int line);

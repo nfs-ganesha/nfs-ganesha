@@ -466,8 +466,8 @@ bool pseudo_mount_export(struct gsh_export *export)
 
 	export->exp_mounted_on_file_id = state.obj->fileid;
 
-	/* Get a long term reference on the object */
-	state.obj->obj_ops->get_long_term_ref(state.obj);
+	/* Get an active reference on the object */
+	state.obj->obj_ops->get_ref(state.obj);
 
 	/* Pass object ref off to export */
 	export->exp_junction_obj = state.obj;
@@ -676,8 +676,8 @@ void pseudo_unmount_export(struct gsh_export *export)
 	/* Release the LRU reference */
 	junction_inode->obj_ops->put_ref(junction_inode);
 
-	/* Release the long term reference */
-	junction_inode->obj_ops->put_long_term_ref(junction_inode);
+	/* Release the active reference */
+	junction_inode->obj_ops->put_ref(junction_inode);
 
 	release_op_context();
 

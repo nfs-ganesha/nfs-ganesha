@@ -30,10 +30,11 @@
 /**
  * @brief Trace an increase in refcount of an entry
  *
- * @param[in] function	Name of function taking ref
- * @param[in] line	Line number of call
+ * @param[in] function		Name of function taking ref
+ * @param[in] line		Line number of call
  * @param[in] obj_handle	Address of obj_handle
- * @param[in] refcnt	Refcount after increase
+ * @param[in] refcn		Refcount after increase
+ * @param[in] active_refcnt	Active Refcnt after increase
  */
 TRACEPOINT_EVENT(
 	mdcache,
@@ -43,15 +44,15 @@ TRACEPOINT_EVENT(
 		void *, obj_handle,
 		void *, sub_handle,
 		int32_t, refcnt,
-		int32_t, long_refcnt),
+		int32_t, active_refcnt),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, obj_handle, obj_handle)
 		ctf_integer_hex(void *, sub_handle, sub_handle)
-		ctf_string(long_refcnt, long_refcnt)
+		ctf_string(active_refcnt, active_refcnt)
 		ctf_integer(int32_t, refcnt, refcnt)
-		ctf_integer(int32_t, long_refcnt, long_refcnt)
+		ctf_integer(int32_t, active_refcnt, active_refcnt)
 	)
 )
 
@@ -63,10 +64,11 @@ TRACEPOINT_LOGLEVEL(
 /**
  * @brief Trace a decrease in refcount of an entry
  *
- * @param[in] function	Name of function releasing ref
- * @param[in] line	Line number of call
+ * @param[in] function		Name of function releasing ref
+ * @param[in] line		Line number of call
  * @param[in] obj_handle	Address of obj_handle
- * @param[in] refcnt	Refcount after decrease
+ * @param[in] refcnt		Refcount after decrease
+ * @param[in] active_refcnt	Active Refcnt after decrease
  */
 TRACEPOINT_EVENT(
 	mdcache,
@@ -76,14 +78,14 @@ TRACEPOINT_EVENT(
 		void *, obj_handle,
 		void *, sub_handle,
 		int32_t, refcnt,
-		int32_t, long_refcnt),
+		int32_t, active_refcnt),
 	TP_FIELDS(
 		ctf_string(function, function)
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, obj_handle, obj_handle)
 		ctf_integer_hex(void *, sub_handle, sub_handle)
 		ctf_integer(int32_t, refcnt, refcnt)
-		ctf_integer(int32_t, long_refcnt, long_refcnt)
+		ctf_integer(int32_t, active_refcnt, active_refcnt)
 	)
 )
 

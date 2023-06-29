@@ -1558,28 +1558,6 @@ struct fsal_obj_ops {
 	 void (*put_ref)(struct fsal_obj_handle *obj_hdl);
 
 /**
- * @brief Get a long term reference to a handle
- *
- * Some FSALs need to know which references are for long term references, held
- * for longer than a single operation. Examples are for NFS state (like OPEN and
- * LOCK or for special nodes for export roots and mount points).
- *
- * @param[in] obj_hdl Handle to release
- */
-	 void (*get_long_term_ref)(struct fsal_obj_handle *obj_hdl);
-
-/**
- * @brief Put a long term reference to a handle
- *
- * Some FSALs need to know which references are for long term references, held
- * for longer than a single operation. Examples are for NFS state (like OPEN and
- * LOCK or for special nodes for export roots and mount points).
- *
- * @param[in] obj_hdl Handle to release
- */
-	 void (*put_long_term_ref)(struct fsal_obj_handle *obj_hdl);
-
-/**
  * @brief Clean up a filehandle
  *
  * This function cleans up private resources associated with a

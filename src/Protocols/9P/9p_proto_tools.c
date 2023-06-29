@@ -324,15 +324,13 @@ void free_fid(struct _9p_fid *pfid)
 						pfid->pentry,
 						pfid->state);
 
-			/* Now release the long term references, we do this
+			/* Now release the active references, we do this
 			 * after the close to make sure the object lifetime is
 			 * preserved.
 			 */
 			while (pfid->opens > 0) {
-				/* Release the long term reference for each open
-				 */
-				pfid->ppentry->obj_ops->put_long_term_ref(
-								pfid->ppentry);
+				/* Release the active reference for each open */
+				pfid->ppentry->obj_ops->put_ref(pfid->ppentry);
 				pfid->opens--;
 			}
 		}
@@ -405,13 +403,12 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 		fsal_status = pfid->pentry->obj_ops->close2(pfid->pentry,
 							    pfid->state);
 
-		/* Now release the long term references, we do this after the
+		/* Now release the active references, we do this after the
 		 * close to make sure the object lifetime is preserved.
 		 */
 		while (pfid->opens > 0) {
-			/* Release the long term reference for each open */
-			pfid->ppentry->obj_ops->put_long_term_ref(
-								pfid->ppentry);
+			/* Release the active reference for each open */
+			pfid->ppentry->obj_ops->put_ref(pfid->ppentry);
 			pfid->opens--;
 		}
 

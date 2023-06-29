@@ -209,8 +209,8 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	/* Add state to list for file */
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 	glist_add_tail(&ostate->file.list_of_states, &pnew_state->state_list);
-	/* Get long term ref for this state entry */
-	obj->obj_ops->get_long_term_ref(obj);
+	/* Get active ref for this state entry */
+	obj->obj_ops->get_ref(obj);
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 
 #ifdef USE_LTTNG
@@ -499,8 +499,8 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	/* Remove from the list of states for a particular file */
 	PTHREAD_MUTEX_lock(&state->state_mutex);
 	glist_del(&state->state_list);
-	/* Put long term ref for this state entry */
-	obj->obj_ops->put_long_term_ref(obj);
+	/* Put active ref for this state entry */
+	obj->obj_ops->put_ref(obj);
 	state->state_obj = NULL;
 	PTHREAD_MUTEX_unlock(&state->state_mutex);
 

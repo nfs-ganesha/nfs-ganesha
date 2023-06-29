@@ -155,10 +155,13 @@ static inline void add_detached_dirent(mdcache_entry_t *parent,
  * This function doesn't free the sub_handle if the allocation fails. It must
  * be done in the calling function.
  *
- * @param[in] export The mdcache export used by the handle.
- * @param[in] sub_handle The handle used by the subfsal.
- * @param[in] fs The filesystem of the new handle.
- * @param[in] reason The reason the entry is being inserted
+ * @param[in] export      The mdcache export used by the handle.
+ * @param[in] sub_handle  The handle used by the subfsal.
+ * @param[in] fs          The filesystem of the new handle.
+ * @param[in] flags       The flags for the caller's initial reference, MUST
+ *                        include LRU_ACTIVE_REF
+ * @param[in] func        The caller's function name
+ * @param[in] line        The line number of the invocation
  *
  * @return The new handle, or NULL if the unexport in progress.
  */
@@ -166,17 +169,16 @@ static mdcache_entry_t *mdcache_alloc_handle(
 		struct mdcache_fsal_export *export,
 		struct fsal_obj_handle *sub_handle,
 		struct fsal_filesystem *fs,
+		uint32_t flags,
 		const char *func, int line)
 {
 	mdcache_entry_t *result;
 	fsal_status_t status;
 
-	result = mdcache_lru_get(sub_handle);
+	result = mdcache_lru_get(sub_handle, flags);
 
-	if (result == NULL) {
-		/* Should never happen, but our caller will handle... */
-		return NULL;
-	}
+	/* mdcache_lru_get never returns NULL */
+	assert(result);
 
 	/* Base data */
 	result->sub_handle = sub_handle;
@@ -229,13 +231,17 @@ static mdcache_entry_t *mdcache_alloc_handle(
 			 result, op_ctx->ctx_export->export_id);
 		/* sub_handle will be freed by the caller */
 		result->sub_handle = NULL;
-		mdcache_lru_unref(result, LRU_FLAG_NONE);
 		/* Handle is not yet in hash / LRU, so just put the sentinel
-		 * ref
+		 * ref and the additional ref returned by mdcache_lru_get.
 		 */
-		mdcache_lru_unref(result, LRU_FLAG_NONE);
+		mdcache_lru_unref(result, flags);
+		mdcache_lru_unref(result, LRU_FLAG_SENTINEL);
 		return NULL;
 	}
+
+	/* We are going live with this one, the additional ref with flags has
+	 * already been made by mdcache_lru_get.
+	 */
 
 	return result;
 }
@@ -256,9 +262,9 @@ static void mdc_unref_chunk_dirents(struct dir_chunk *chunk,
 				       mdcache_dir_entry_t,
 				       chunk_list,
 				       &dirent->chunk_list)) {
-		if (dirent->entry) {
-			mdcache_lru_unref(dirent->entry, LRU_FLAG_NONE);
-			dirent->entry = NULL;
+		if (dirent->mde_entry) {
+			mdcache_lru_unref(dirent->mde_entry, LRU_ACTIVE_REF);
+			dirent->mde_entry = NULL;
 		}
 	}
 }
@@ -642,13 +648,13 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
  * the state of the source attributes still safe to call fsal_release_attrs,
  * so all will be well.
  *
- * If flags is LRU_FLAG_NONE any new entry created will be inserted into the
- * tail (LRU) of L2, and if the entry already exists (we are racing with another
- * thread), the entry will not be promoted.
+ * If flags does not include LRU_PROMOTE any new entry created will be inserted
+ * into the tail (LRU) of L2, and if the entry already exists (we are racing
+ * with another thread), the entry will not be promoted.
  *
- * If flags is LRU_PROMOTE any new entry will be inserted into the tail (LRU) of
- * L1, and if the entry already exists (we are racing with another thread), the
- * entry will be promoted.
+ * If flags includes LRU_PROMOTE any new entry will be inserted into the tail
+ * (LRU) of L1, and if the entry already exists (we are racing with another
+ * thread), the entry will be promoted.
  *
  * @param[in]     export              Export for this cache
  * @param[in]     sub_handle          sub-FSAL's new obj handle
@@ -658,9 +664,10 @@ void mdcache_dirent_invalidate_all(mdcache_entry_t *entry)
  * @param[in]     new_directory       Indicate a new directory was created
  * @param[out]    entry               Newly instantiated cache entry
  * @param[in]     state               Optional state_t representing open file.
- * @param[in]     flags               Flags for LRU management
+ * @param[in]     flags               Flags for LRU management, expects
+ *                                    LRU_ACTIVE_REF
  *
- * @note This returns an INITIAL ref'd entry on success
+ * @note This returns an ACTIVE ref'd entry on success
  *
  * @return FSAL status
  */
@@ -680,6 +687,8 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	struct gsh_buffdesc fh_desc;
 	cih_latch_t latch;
 	mdcache_key_t key;
+
+	assert(flags & LRU_ACTIVE_REF);
 
 	*entry = NULL;
 
@@ -717,7 +726,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	 * will already be mapped.
 	 */
 	nentry = mdcache_alloc_handle(export, sub_handle, sub_handle->fs,
-				      __func__, __LINE__);
+				      flags, __func__, __LINE__);
 
 	if (nentry == NULL) {
 		/* We didn't get an entry because of unexport in progress,
@@ -831,9 +840,9 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	mdc_fixup_md(nentry, &nentry->attrs);
 
 	/* Insert and hash entry, after this would need attr_lock to
-	 * access attributes.
+	 * access attributes. The entry is inserted into the ACTIVE queue.
 	 */
-	mdcache_lru_insert(nentry, flags);
+	mdcache_lru_insert_active(nentry);
 
 	cih_set_latched(nentry, &latch, op_ctx->fsal_export->fsal, &fh_desc,
 			CIH_SET_UNLOCK | CIH_SET_HASHED);
@@ -862,8 +871,10 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	 * entry is not yet in the hash or LRU, so just put it's sentinel ref.
 	 */
 	nentry->sub_handle = NULL;
-	mdcache_lru_unref(nentry, LRU_FLAG_NONE);
-	mdcache_lru_unref(nentry, LRU_FLAG_NONE);
+	/* Remove the reference for use using flags. */
+	mdcache_lru_unref(nentry, flags);
+	/* Remove the sentinel reference. */
+	mdcache_lru_unref(nentry, LRU_FLAG_SENTINEL);
 
  out_no_new_entry_yet:
 
@@ -877,13 +888,12 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	 * NOTE: There can not be an ABBA lock ordering issue since our caller
 	 *        does not hold a lock on the "new" entry.
 	 */
-	if (prefer_attrs_in) {
+	if (prefer_attrs_in && !FSAL_IS_ERROR(status)) {
 		PTHREAD_RWLOCK_wrlock(&(*entry)->attr_lock);
 		mdc_update_attr_cache(*entry, attrs_in);
 		PTHREAD_RWLOCK_unlock(&(*entry)->attr_lock);
 
-		if (!FSAL_IS_ERROR(status) && attrs_out != NULL)
-			fsal_copy_attrs(attrs_out, attrs_in, false);
+		fsal_copy_attrs(attrs_out, attrs_in, false);
 	} else if (!FSAL_IS_ERROR(status) && attrs_out != NULL) {
 		status = get_optional_attrs(&(*entry)->obj_handle,
 					    attrs_out);
@@ -892,7 +902,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 			 * was not requested, so we are failing and thus must
 			 * drop the object reference we got.
 			 */
-			mdcache_lru_unref(*entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(*entry, flags);
 			*entry = NULL;
 		} else {
 			PTHREAD_RWLOCK_wrlock(&(*entry)->attr_lock);
@@ -920,7 +930,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 				 "Merge of object handles after race returned %s",
 				 fsal_err_txt(status));
 
-			mdcache_lru_unref(*entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(*entry, flags);
 			*entry = NULL;
 		}
 	}
@@ -1014,7 +1024,7 @@ mdcache_find_keyed_reason(mdcache_key_t *key, mdcache_entry_t **entry,
 			 * add this entry to the export, and bail out of the
 			 * operation sooner than later.
 			 */
-			mdcache_lru_unref(*entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(*entry, flags);
 			*entry = NULL;
 			return status;
 		}
@@ -1077,7 +1087,8 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 
 	cih_hash_key(&key, sub_export->fsal, &key.kv, CIH_HASH_KEY_PROTOTYPE);
 
-	status = mdcache_find_keyed_reason(&key, entry, LRU_PROMOTE);
+	status = mdcache_find_keyed_reason(&key, entry,
+					   LRU_ACTIVE_REF | LRU_PROMOTE);
 
 	if (!FSAL_IS_ERROR(status)) {
 		status = get_optional_attrs(&(*entry)->obj_handle, attrs_out);
@@ -1113,7 +1124,8 @@ mdcache_locate_host(struct gsh_buffdesc *fh_desc,
 	}
 
 	status = mdcache_new_entry(export, sub_handle, &attrs, false, attrs_out,
-				   false, entry, NULL, LRU_PROMOTE);
+				   false, entry, NULL,
+				   LRU_ACTIVE_REF | LRU_PROMOTE);
 
 	fsal_release_attrs(&attrs);
 
@@ -1177,8 +1189,9 @@ fsal_status_t mdc_try_get_cached(mdcache_entry_t *mdc_parent,
 			/* Bump the detached dirent. */
 			bump_detached_dirent(mdc_parent, dirent);
 		}
-		status = mdcache_find_keyed_reason(&dirent->ckey, entry,
-						   LRU_PROMOTE);
+		status =
+			mdcache_find_keyed_reason(&dirent->ckey, entry,
+						  LRU_ACTIVE_REF | LRU_PROMOTE);
 		if (!FSAL_IS_ERROR(status))
 			return status;
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
@@ -1312,7 +1325,7 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 			 * was not requested, so we are failing lookup and
 			 * thus must drop the object reference we got.
 			 */
-			mdcache_lru_unref(*new_entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(*new_entry, LRU_ACTIVE_REF);
 			*new_entry = NULL;
 		}
 #ifdef USE_MONITORING
@@ -1685,7 +1698,7 @@ mdc_readdir_uncached_cb(const char *name, struct fsal_obj_handle *sub_handle,
 	supercall_raw(state->export,
 		status = mdcache_new_entry(state->export, sub_handle, attrs,
 					   true, NULL, false, &new_entry, NULL,
-					   LRU_FLAG_NONE)
+					   LRU_ACTIVE_REF)
 	);
 
 	if (FSAL_IS_ERROR(status)) {
@@ -2217,7 +2230,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			name, cookie, sub_handle);
 
 	status = mdcache_new_entry(export, sub_handle, attrs_in, false, NULL,
-				   false, &new_entry, NULL, LRU_FLAG_NONE);
+				   false, &new_entry, NULL, LRU_ACTIVE_REF);
 
 	if (FSAL_IS_ERROR(status)) {
 		*state->status = status;
@@ -2267,7 +2280,7 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 		 *
 		 * In any case, we will just ignore this entry.
 		 */
-		mdcache_lru_unref(new_entry, LRU_FLAG_NONE);
+		mdcache_lru_unref(new_entry, LRU_ACTIVE_REF);
 		/* Check for return code -3 and/or -4.
 		 * -3: This indicates the file name is duplicate but FSAL
 		 * cookie is different. This may happen in case lots of new
@@ -2409,11 +2422,11 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			}
 			state->cur_chunk = new_dir_entry->chunk;
 			mdcache_lru_ref_chunk(state->cur_chunk);
-			if (new_dir_entry->entry) {
+			if (new_dir_entry->mde_entry) {
 				/* This was ref'd already; drop extra ref */
-				mdcache_lru_unref(new_dir_entry->entry,
-						  LRU_FLAG_NONE);
-				new_dir_entry->entry = NULL;
+				mdcache_lru_unref(new_dir_entry->mde_entry,
+						  LRU_ACTIVE_REF);
+				new_dir_entry->mde_entry = NULL;
 			}
 			if (state->prev_chunk &&
 			    state->prev_chunk != state->cur_chunk) {
@@ -2454,16 +2467,15 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			new_entry,
 			atomic_fetch_int32_t(&new_entry->lru.refcnt));
 
-	if ((new_dir_entry != allocated_dir_entry && new_dir_entry->entry) ||
-		(new_dir_entry->chunk != state->cur_chunk)) {
+	if ((new_dir_entry != allocated_dir_entry && new_dir_entry->mde_entry)
+	    || (new_dir_entry->chunk != state->cur_chunk)) {
 		/* This was swapped and already has a refcounted entry. Drop our
 		 * ref. */
-		mdcache_lru_unref(new_entry, LRU_FLAG_NONE);
+		mdcache_lru_unref(new_entry, LRU_ACTIVE_REF);
 	} else {
-		/* This is a new dirent, or doesn't have an entry. Pass our ref
-		 * on entry off to mdcache_readdir_chunked */
-		assert(!new_dir_entry->entry);
-		new_dir_entry->entry = new_entry;
+		/* This is a new dirent, or doesn't have an entry. */
+		assert(!new_dir_entry->mde_entry);
+		new_dir_entry->mde_entry = new_entry;
 	}
 
 	return result;
@@ -3166,15 +3178,15 @@ again:
 
 		status.major = ERR_FSAL_NO_ERROR;
 		/* We have the content_lock for at least read. */
-		if (dirent->entry) {
+		if (dirent->mde_entry) {
 			/* Take a ref for our use */
-			entry = dirent->entry;
-			mdcache_lru_ref(entry, LRU_FLAG_NONE);
+			entry = dirent->mde_entry;
+			mdcache_lru_ref(entry, LRU_ACTIVE_REF);
 		} else {
 			/* Not cached, get actual entry using the dirent ckey */
 			status = mdcache_find_keyed_reason(&dirent->ckey,
 							   &entry,
-							   LRU_FLAG_NONE);
+							   LRU_ACTIVE_REF);
 		}
 
 		if (FSAL_IS_ERROR(status)) {
@@ -3273,7 +3285,7 @@ again:
 			}
 		}
 
-		if (has_write && dirent->entry) {
+		if (has_write && dirent->mde_entry) {
 			/* If we get here, we have the write lock, have an
 			 * entry, and took a ref on it above.  The dirent also
 			 * has a ref on the entry.  Drop that ref now.  This can
@@ -3282,8 +3294,8 @@ again:
 			 * took the ref, and another readdir will drop the ref,
 			 * or it will be dropped when the dirent is cleaned up.
 			 * */
-			mdcache_lru_unref(dirent->entry, LRU_FLAG_NONE);
-			dirent->entry = NULL;
+			mdcache_lru_unref(dirent->mde_entry, LRU_ACTIVE_REF);
+			dirent->mde_entry = NULL;
 		}
 
 		if (reload_chunk && look_ck != 0 && dirent->ck !=
@@ -3294,7 +3306,7 @@ again:
 					dirent->name, &entry->obj_handle);
 			/* This chunk was reloaded, but some dirents were
 			 * already consumed.  Deref and continue */
-			mdcache_lru_unref(entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(entry, LRU_ACTIVE_REF);
 			continue;
 		}
 
@@ -3306,7 +3318,7 @@ again:
 		if (dirent->ck == whence) {
 			/* When called with whence, the caller always wants the
 			 * next entry, skip this entry. */
-			mdcache_lru_unref(entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(entry, LRU_ACTIVE_REF);
 			reload_chunk = false;
 			continue;
 		}
@@ -3328,7 +3340,7 @@ again:
 					"getattrs failed status=%s",
 					fsal_err_txt(status));
 
-			mdcache_lru_unref(entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(entry, LRU_ACTIVE_REF);
 			return status;
 		}
 

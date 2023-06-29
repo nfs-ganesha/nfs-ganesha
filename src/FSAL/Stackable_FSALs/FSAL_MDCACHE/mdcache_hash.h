@@ -416,7 +416,7 @@ cih_remove_checked(mdcache_entry_t *entry)
 		/* We can't unref with the lock held, in case this is the last
 		 * ref.  That will recurse into here, and try to take the lock
 		 * again. */
-		freed = mdcache_lru_unref(entry, LRU_FLAG_NONE);
+		freed = mdcache_lru_unref(entry, LRU_FLAG_SENTINEL);
 	}
 
 	return freed;
@@ -453,7 +453,7 @@ cih_remove_latched(mdcache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
 		cp->cache[cih_cache_offsetof(&cih_fhcache,
 					     entry->fh_hk.key.hk)] = NULL;
 		entry->fh_hk.inavl = false;
-		mdcache_lru_unref(entry, LRU_FLAG_NONE);
+		mdcache_lru_unref(entry, LRU_FLAG_SENTINEL);
 		if (flags & CIH_REMOVE_UNLOCK)
 			cih_hash_release(latch);
 		return true;

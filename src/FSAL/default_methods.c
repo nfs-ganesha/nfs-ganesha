@@ -771,29 +771,6 @@ static void handle_put_ref(struct fsal_obj_handle *obj_hdl)
  * creating an handle is not supported so getting here is bad
  */
 
-/* get_long_term_ref
- */
-
-static void handle_get_long_term_ref(struct fsal_obj_handle *obj_hdl)
-{
-	/* Default is to treat no differently than a normal reference. */
-	obj_hdl->obj_ops->get_ref(obj_hdl);
-}
-
-/* put_long_term_ref
- */
-
-static void handle_put_long_term_ref(struct fsal_obj_handle *obj_hdl)
-{
-	/* Default is to treat no differently than a normal reference. */
-	obj_hdl->obj_ops->put_ref(obj_hdl);
-}
-
-/* handle_release
- * default case is to throw a fault error.
- * creating an handle is not supported so getting here is bad
- */
-
 static void handle_release(struct fsal_obj_handle *obj_hdl)
 {
 	/* return */
@@ -1514,8 +1491,6 @@ static bool is_referral(struct fsal_obj_handle *obj_hdl,
 struct fsal_obj_ops def_handle_ops = {
 	.get_ref = handle_get_ref,
 	.put_ref = handle_put_ref,
-	.get_long_term_ref = handle_get_long_term_ref,
-	.put_long_term_ref = handle_put_long_term_ref,
 	.release = handle_release,
 	.merge = handle_merge,
 	.lookup = lookup,

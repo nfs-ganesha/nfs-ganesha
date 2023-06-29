@@ -111,7 +111,7 @@ struct lru_q_lane {
 	struct lru_q L1;
 	struct lru_q L2;
 	struct lru_q cleanup;	/* deferred cleanup */
-	struct lru_q long_term;	/* long term references */
+	struct lru_q ACTIVE;	/* active references */
 	pthread_mutex_t ql_mtx;
 
 	CACHE_PAD(0);
@@ -237,7 +237,7 @@ lru_init_queues(void)
 		lru_init_queue(&LRU[ix].L1, LRU_ENTRY_L1);
 		lru_init_queue(&LRU[ix].L2, LRU_ENTRY_L2);
 		lru_init_queue(&LRU[ix].cleanup, LRU_ENTRY_CLEANUP);
-		lru_init_queue(&LRU[ix].long_term, LRU_ENTRY_LONG_TERM);
+		lru_init_queue(&LRU[ix].ACTIVE, LRU_ENTRY_ACTIVE);
 
 		/* Initialize dir_chunk LRU */
 		qlane = &CHUNK_LRU[ix];
@@ -297,8 +297,8 @@ lru_queue_of(mdcache_entry_t *entry)
 	case LRU_ENTRY_CLEANUP:
 		q = &LRU[(entry->lru.lane)].cleanup;
 		break;
-	case LRU_ENTRY_LONG_TERM:
-		q = &LRU[(entry->lru.lane)].long_term;
+	case LRU_ENTRY_ACTIVE:
+		q = &LRU[(entry->lru.lane)].ACTIVE;
 		break;
 	default:
 		/* LRU_NO_LANE */
@@ -336,9 +336,9 @@ chunk_lru_queue_of(struct dir_chunk *chunk)
 	case LRU_ENTRY_CLEANUP:
 		q = &CHUNK_LRU[(chunk->chunk_lru.lane)].cleanup;
 		break;
-	case LRU_ENTRY_LONG_TERM:
+	case LRU_ENTRY_ACTIVE:
 		/* Should never happen... */
-		q = &CHUNK_LRU[(chunk->chunk_lru.lane)].long_term;
+		q = &CHUNK_LRU[(chunk->chunk_lru.lane)].ACTIVE;
 		break;
 	default:
 		/* LRU_NO_LANE */
@@ -393,31 +393,6 @@ lru_insert(mdcache_lru_t *lru, struct lru_q *q)
 }
 
 /**
- * @brief Insert an entry into the specified queue and lane with locking
- *
- * This function determines the queue corresponding to the supplied
- * lane and flags, inserts the entry into that queue, and updates the
- * entry to hold the flags and lane.
- *
- * @note The caller MUST NOT hold a lock on the queue lane.
- *
- * @param[in] lru    The LRU entry to insert
- * @param[in] q      The queue to insert on
- */
-static inline void
-lru_insert_entry(mdcache_entry_t *entry, struct lru_q *q)
-{
-	mdcache_lru_t *lru = &entry->lru;
-	struct lru_q_lane *qlane = &LRU[lru->lane];
-
-	QLOCK(qlane);
-
-	lru_insert(lru, q);
-
-	QUNLOCK(qlane);
-}
-
-/**
  * @brief Insert a chunk into the specified queue and lane with locking
  *
  * This function determines the queue corresponding to the supplied
@@ -443,12 +418,12 @@ lru_insert_chunk(struct dir_chunk *chunk, struct lru_q *q)
 }
 
 /*
- * @brief Adjust the order of LRU entries
+ * @brief Move an entry from LRU L1 or L2 queues to the ACTIVE queue.
  *
  * @param [in] entry  Entry to adjust.
  */
 static inline void
-adjust_lru(mdcache_entry_t *entry)
+make_active_lru(mdcache_entry_t *entry)
 {
 	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
@@ -458,20 +433,21 @@ adjust_lru(mdcache_entry_t *entry)
 	switch (lru->qid) {
 	case LRU_ENTRY_L1:
 		q = lru_queue_of(entry);
-		/* advance entry to MRU (of L1) */
+		/* move entry to MRU of ACTIVE */
 		LRU_DQ(lru, q);
+		q = &qlane->ACTIVE;
 		lru_insert(lru, q);
 		break;
 	case LRU_ENTRY_L2:
 		q = lru_queue_of(entry);
-		/* move entry to MRU of L1 */
+		/* move entry to MRU of ACTIVE */
 		LRU_DQ(lru, q);
-		q = &qlane->L1;
+		q = &qlane->ACTIVE;
 		lru_insert(lru, q);
 		break;
-	case LRU_ENTRY_LONG_TERM:
+	case LRU_ENTRY_ACTIVE:
 		q = lru_queue_of(entry);
-		/* advance entry to MRU (of long_term) */
+		/* advance entry to MRU (of ACTIVE) */
 		LRU_DQ(lru, q);
 		lru_insert(lru, q);
 		break;
@@ -483,44 +459,49 @@ adjust_lru(mdcache_entry_t *entry)
 }
 
 /*
- * @brief Move an entry from LRU L1 or L2 queues to the long term queue.
+ * @brief Move an active entry from ACTIVE queue to MRU of L1 or L2.
+ *
+ * If the entry is in the cleanup queue, do nothing.
+ *
+ * Assumes qlane lock is held.
  *
  * @param [in] entry  Entry to adjust.
  */
 static inline void
-long_term_lru(mdcache_entry_t *entry)
+make_inactive_lru(mdcache_entry_t *entry)
 {
 	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 	struct lru_q *q;
 
-	QLOCK(qlane);
 	switch (lru->qid) {
 	case LRU_ENTRY_L1:
-		q = lru_queue_of(entry);
-		/* move entry to MRU of long_term */
-		LRU_DQ(lru, q);
-		q = &qlane->long_term;
-		lru_insert(lru, q);
-		break;
 	case LRU_ENTRY_L2:
-		q = lru_queue_of(entry);
-		/* move entry to MRU of long_term */
-		LRU_DQ(lru, q);
-		q = &qlane->long_term;
-		lru_insert(lru, q);
+		assert(false);
 		break;
-	case LRU_ENTRY_LONG_TERM:
+	case LRU_ENTRY_ACTIVE:
+		/* Move entry to MRU of L1 or L2 */
 		q = lru_queue_of(entry);
-		/* advance entry to MRU (of long_term) */
-		LRU_DQ(lru, q);
-		lru_insert(lru, q);
+		LRU_DQ(&entry->lru, q);
+
+		if (atomic_fetch_uint32_t(&entry->lru.flags)
+		    & LRU_EVER_PROMOTED) {
+			/* If entry was ever promoted, insert into L1. */
+			q = &qlane->L1;
+		} else {
+			/* Entry was never promoted, only ever used in a
+			 * directory scan, return to L2.
+			 */
+			q = &qlane->L2;
+		}
+
+		lru_insert(&entry->lru, q);
 		break;
+	case LRU_ENTRY_CLEANUP:
 	default:
 		/* do nothing */
 		break;
 	}	/* switch qid */
-	QUNLOCK(qlane);
 }
 
 /**
@@ -693,7 +674,8 @@ mdcache_lru_clean(mdcache_entry_t *entry)
  * @note The caller @a MUST @a NOT hold the lane lock
  *
  * @param[in] qid  Queue to reap
- * @return Available entry if found, NULL otherwise
+ * @return Available entry if found, NULL otherwisem the reference held on
+ * the object is a LRU_TEMP_REF.
  */
 
 static uint32_t reap_lane;
@@ -721,18 +703,23 @@ lru_reap_impl(enum lru_q_id qid)
 			QUNLOCK(qlane);
 			continue;
 		}
+#if 0
+		/* effectively do... this compiled out to help cross reference
+		 */
+		mdcache_lru_ref(entry, LRU_TEMP_REF);
+#endif
 		refcnt = atomic_inc_int32_t(&lru->refcnt);
 		entry = container_of(lru, mdcache_entry_t, lru);
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_ref,
 		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
-		   refcnt, atomic_fetch_int32_t(&entry->lru.long_refcnt));
+		   refcnt, atomic_fetch_int32_t(&entry->lru.active_refcnt));
 #endif
 		QUNLOCK(qlane);
 
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
 			/* can't use it. */
-			mdcache_lru_unref(entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(entry, LRU_TEMP_REF);
 			continue;
 		}
 		/* potentially reclaimable */
@@ -774,7 +761,7 @@ lru_reap_impl(enum lru_q_id qid)
 		QUNLOCK(qlane);
 		/* return the ref we took above--unref deals
 		 * correctly with reclaim case */
-		mdcache_lru_unref(entry, LRU_FLAG_NONE);
+		mdcache_lru_unref(entry, LRU_TEMP_REF);
 	}			/* foreach lane */
 
 	/* ! reclaimable */
@@ -784,7 +771,7 @@ lru_reap_impl(enum lru_q_id qid)
 }
 
 static inline mdcache_lru_t *
-lru_try_reap_entry(void)
+lru_try_reap_entry(uint32_t flags)
 {
 	mdcache_lru_t *lru;
 
@@ -1102,6 +1089,7 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 		 * latch, so no one can look up the entry */
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		QUNLOCK(qlane);
+		/* Drop the sentinel reference */
 		cih_remove_latched(entry, &latch, CIH_REMOVE_NONE);
 	} else {
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
@@ -1161,7 +1149,7 @@ static inline int lru_run_lane(int lane)
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_ref,
 		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
-		   refcnt, atomic_fetch_int32_t(&entry->lru.long_refcnt));
+		   refcnt, atomic_fetch_int32_t(&entry->lru.active_refcnt));
 #endif
 
 		/* check refcnt in range */
@@ -1555,9 +1543,13 @@ size_t mdcache_lru_release_entries(int32_t want_release)
 	if (want_release == 0)
 		return released;
 
-	while ((lru = lru_try_reap_entry())) {
+	while ((lru = lru_try_reap_entry(LRU_TEMP_REF))) {
 		entry = container_of(lru, mdcache_entry_t, lru);
-		mdcache_lru_unref(entry, LRU_FLAG_NONE);
+		/* Release the reference taken by lru_try_reap_entry. The
+		 * entry has already been unhashed and the sentinel reference
+		 * released.
+		 */
+		mdcache_lru_unref(entry, LRU_TEMP_REF);
 		++released;
 
 		if (want_release > 0 && released >= want_release)
@@ -1731,21 +1723,31 @@ mdcache_entry_t *alloc_cache_entry(void)
  * This function repurposes a resident entry in the LRU system if the system is
  * above the high-water mark, and allocates a new one otherwise.  On success,
  * this function always returns an entry with two references (one for the
- * sentinel, one to allow the caller's use.)
+ * sentinel and an active one for the caller's use).
  *
- * The caller MUST call mdcache_lru_insert when the entry is sufficiently
- * constructed.
+ * The caller MUST call mdcache_lru_insert with the same flags when the entry is
+ * sufficiently constructed.
+ *
+ * @param[in] sub_handle  The underlying FSAL's fsal_obj_handle
+ * @param[in] flags       The flags for the caller's initial reference, MUST
+ *                        include LRU_ACTIVE_REF
  *
  * @return a usable entry or NULL if unexport is in progress.
  */
-mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle)
+mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle,
+				 uint32_t flags)
 {
 	mdcache_lru_t *lru;
 	mdcache_entry_t *nentry = NULL;
 
-	lru = lru_try_reap_entry();
+	assert(flags & LRU_ACTIVE_REF);
+
+	lru = lru_try_reap_entry(LRU_TEMP_REF);
 	if (lru) {
-		/* we uniquely hold entry */
+		/* we uniquely hold entry with a temp ref that we will
+		 * discard (with no negative consequence) below when we remake
+		 * the entry.
+		 */
 		nentry = container_of(lru, mdcache_entry_t, lru);
 		mdcache_lru_clean(nentry);
 		memset(&nentry->attrs, 0, sizeof(nentry->attrs));
@@ -1757,11 +1759,21 @@ mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle)
 
 	nentry->attr_generation = 0;
 
-	/* Since the entry isn't in a queue, nobody can bump refcnt. */
+	/* Since the entry isn't in a queue, nobody can bump refcnt. Set both
+	 * the sentinel reference and the active reference. The caller is
+	 * responsible for inserting the entry into the LRU queue.
+	 */
 	nentry->lru.refcnt = 2;
+	nentry->lru.active_refcnt = 1;
 	nentry->lru.cf = 0;
 	nentry->lru.lane = lru_lane_of(nentry);
+	nentry->lru.flags = LRU_SENTINEL_HELD;
 	nentry->sub_handle = sub_handle;
+
+	if (flags & LRU_PROMOTE) {
+		/* If entry is ever promoted, remember that. */
+		nentry->lru.flags |= LRU_EVER_PROMOTED;
+	}
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_get,
@@ -1772,25 +1784,21 @@ mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle)
 }
 
 /**
- * @brief Insert a new entry into the LRU.
- *
- * Entry is inserted to the MRU of L2 by default, into MRU of L1 if LRU_PROMOTE
- * is specified.
- *
- * LRU_PROMOTE should be used for most cases when an initial reference is
- * taken or a new object is created. One exception is when a new entry is
- * created as part of a directory scan.
+ * @brief Insert a new entry into the LRU in the ACTIVE queue.
  *
  * @param [in] entry  Entry to insert.
- * @param [in] flags  How to insert
  */
-void mdcache_lru_insert(mdcache_entry_t *entry, uint32_t flags)
+void mdcache_lru_insert_active(mdcache_entry_t *entry)
 {
+	mdcache_lru_t *lru = &entry->lru;
+	struct lru_q_lane *qlane = &LRU[lru->lane];
+
+	QLOCK(qlane);
+
 	/* Enqueue. */
-	if (flags == LRU_PROMOTE)
-		lru_insert_entry(entry, &LRU[entry->lru.lane].L1);
-	else if (flags == LRU_FLAG_NONE)
-		lru_insert_entry(entry, &LRU[entry->lru.lane].L2);
+	lru_insert(lru, &LRU[entry->lru.lane].ACTIVE);
+
+	QUNLOCK(qlane);
 }
 
 /**
@@ -1799,23 +1807,22 @@ void mdcache_lru_insert(mdcache_entry_t *entry, uint32_t flags)
  * This function acquires a reference on the given cache entry.
  *
  * @param[in] entry  The entry on which to get a reference
- * @param[in] flags  One of LRU_REQ_INITIAL, LRU_FLAG_NONE, or
- *                   LRU_LONG_TERM_REFERENCE
+ * @param[in] flags  One of LRU_PROMOTE, LRU_FLAG_NONE, or LRU_ACTIVE_REF
  *
- * A flags value of LRU_REQ_INITIAL indicates an initial
+ * A flags value of LRU_PROMOTE indicates an initial
  * reference.  A non-initial reference is an "extra" reference in some call
  * path, hence does not influence LRU, and is lockless.
  *
- * A flags value of LRU_REQ_INITIAL indicates an ordinary initial reference,
+ * A flags value of LRU_PROMOTE indicates an ordinary initial reference,
  * and strongly influences LRU.  Essentially, the first ref during a callpath
- * should take an LRU_REQ_INITIAL ref, and all subsequent callpaths should take
+ * should take an LRU_PROMOTE ref, and all subsequent callpaths should take
  * LRU_FLAG_NONE refs.
  */
 void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		      int line)
 {
 #ifdef USE_LTTNG
-	int32_t refcnt, long_refcnt;
+	int32_t refcnt, active_refcnt;
 #endif
 
 	/* Always take a normal reference so unref to 0 works right */
@@ -1824,30 +1831,33 @@ void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 #endif
 	atomic_inc_int32_t(&entry->lru.refcnt);
 
-	if (flags & LRU_LONG_TERM_REFERENCE) {
-		/* Each long term reference is in addition to a normal
+	if (flags & LRU_ACTIVE_REF) {
+		/* Each active reference is in addition to a normal
 		 * reference. This allows the possibility of the final reference
-		 * to an entry being a long term reference such that when that
-		 * long term reference is dropped, cleanup will occur.
+		 * to an entry being a active reference such that when that
+		 * active reference is dropped, cleanup will occur.
 		 */
 #ifdef USE_LTTNG
-		long_refcnt =
+		active_refcnt =
 #endif
-		atomic_inc_int32_t(&entry->lru.long_refcnt);
+		atomic_inc_int32_t(&entry->lru.active_refcnt);
 	}
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_ref,
 		   func, line, &entry->obj_handle, entry->sub_handle,
-		   refcnt, long_refcnt);
+		   refcnt, active_refcnt);
 #endif
 
-	if (flags & LRU_LONG_TERM_REFERENCE) {
-		/* Move into long_term queue or adjust to MRU */
-		long_term_lru(entry);
-	} else if (flags & LRU_REQ_INITIAL) {
-		/* adjust LRU on initial refs */
-		adjust_lru(entry);
+	if (flags & LRU_PROMOTE) {
+		/* If entry is ever promoted, remember that. */
+		atomic_set_uint32_t_bits(&entry->lru.flags, LRU_EVER_PROMOTED);
+		assert(flags & LRU_ACTIVE_REF);
+	}
+
+	if (flags & LRU_ACTIVE_REF) {
+		/* Move into ACTIVE queue or adjust to MRU */
+		make_active_lru(entry);
 	}
 }
 
@@ -1865,13 +1875,14 @@ void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
  * @param[in] flags  Currently significant are and LRU_FLAG_LOCKED
  *                   (indicating that the caller holds the LRU mutex
  *                   lock for this entry.)
+ *                   NOTE: LRU_PROMOTE is ignored so safe to be set
  * @return true if entry freed, false otherwise
  */
 bool
 _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		   int line)
 {
-	int32_t refcnt, long_refcnt;
+	int32_t refcnt, active_refcnt;
 	bool do_cleanup = false;
 	uint32_t lane = entry->lru.lane;
 	struct lru_q_lane *qlane = &LRU[lane];
@@ -1883,7 +1894,8 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		if (entry->lru.qid == LRU_ENTRY_CLEANUP) {
 			QLOCK(qlane);
 			/* Locked, check again with lock */
-			if (((entry->lru.flags & LRU_CLEANED) == 0) &&
+			if (((atomic_fetch_uint32_t(&entry->lru.flags)
+			      & LRU_CLEANED) == 0) &&
 			    (entry->lru.qid == LRU_ENTRY_CLEANUP)) {
 				do_cleanup = true;
 				atomic_set_uint32_t_bits(&entry->lru.flags,
@@ -1900,35 +1912,45 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		}
 	}
 
-	if (flags & LRU_LONG_TERM_REFERENCE) {
-		/* Each long term reference is in addition to a normal
+	if (flags & LRU_FLAG_SENTINEL) {
+		/* Caller is intending to release the sentinel reference */
+		if ((atomic_fetch_uint32_t(&entry->lru.flags)
+		     & LRU_SENTINEL_HELD) == 0) {
+			/* oops... */
+			LogFatal(COMPONENT_MDCACHE,
+				 "Sentinel reference already released");
+		}
+
+		atomic_clear_uint32_t_bits(&entry->lru.flags,
+					   LRU_SENTINEL_HELD);
+	}
+
+	if (flags & LRU_ACTIVE_REF) {
+		/* Each active reference is in addition to a normal
 		 * reference. This allows the possibility of the final reference
-		 * to an entry being a long term reference such that when that
-		 * long term reference is dropped, cleanup will occur.
+		 * to an entry being a active reference such that when that
+		 * active reference is dropped, cleanup will occur.
 		 * So release both references and check if the normal refcount
 		 * has reached 0.
 		 */
-		long_refcnt = atomic_dec_int32_t(&entry->lru.long_refcnt);
+		active_refcnt = atomic_dec_int32_t(&entry->lru.active_refcnt);
 		refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
 
-		assert(long_refcnt >= 0);
+		assert(active_refcnt >= 0);
 		assert(refcnt >= 0);
 
-		if (unlikely(long_refcnt == 0)) {
-			struct lru_q *q;
-
-			/* we MUST recheck that refcount is still 0 */
+		if (unlikely(active_refcnt == 0)) {
+			/* we MUST recheck that active refcount is still 0 */
 			QLOCK(qlane);
 
-			long_refcnt =
-				atomic_fetch_int32_t(&entry->lru.long_refcnt);
+			active_refcnt =
+				atomic_fetch_int32_t(&entry->lru.active_refcnt);
 
-			if (likely(long_refcnt == 0)) {
-				/* Move entry to MRU of L1 */
-				q = lru_queue_of(entry);
-				LRU_DQ(&entry->lru, q);
-				q = &qlane->L1;
-				lru_insert(&entry->lru, q);
+			if (likely(active_refcnt == 0)) {
+				/* Move entry to MRU of L1 or L2 or leave in
+				 * cleanup queue.
+				 */
+				make_inactive_lru(entry);
 			}
 
 			QUNLOCK(qlane);
@@ -1936,13 +1958,13 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 	} else {
 		refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
 		assert(refcnt >= 0);
-		long_refcnt = atomic_fetch_int32_t(&entry->lru.long_refcnt);
+		active_refcnt = atomic_fetch_int32_t(&entry->lru.active_refcnt);
 	}
 
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_unref,
 		   func, line, &entry->obj_handle, entry->sub_handle, refcnt,
-		   long_refcnt);
+		   active_refcnt);
 #endif
 
 	if (unlikely(refcnt == 0)) {

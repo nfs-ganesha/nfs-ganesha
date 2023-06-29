@@ -104,7 +104,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 
 	status = mdcache_new_entry(export, sub_handle, attrs_in, false,
 				   attrs_out, new_directory, &new_entry, state,
-				   LRU_PROMOTE);
+				   LRU_ACTIVE_REF | LRU_PROMOTE);
 
 	if (FSAL_IS_ERROR(status)) {
 		*new_obj = NULL;
@@ -135,7 +135,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 				 "%s%s failed because add dirent failed",
 				 tag, name);
 
-			mdcache_lru_unref(new_entry, LRU_FLAG_NONE);
+			mdcache_lru_unref(new_entry, LRU_ACTIVE_REF);
 			*new_obj = NULL;
 			return status;
 		}
@@ -799,7 +799,7 @@ out:
 	}
 
 	if (mdc_lookup_dst)
-		mdcache_lru_unref(mdc_lookup_dst, LRU_FLAG_NONE);
+		mdcache_lru_unref(mdc_lookup_dst, LRU_ACTIVE_REF);
 
 	return status;
 }
@@ -1351,7 +1351,7 @@ static void mdcache_get_ref(struct fsal_obj_handle *obj_hdl)
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 
-	mdcache_lru_ref(entry, LRU_FLAG_NONE);
+	mdcache_lru_ref(entry, LRU_ACTIVE_REF | LRU_PROMOTE);
 }
 
 /**
@@ -1364,33 +1364,7 @@ static void mdcache_put_ref(struct fsal_obj_handle *obj_hdl)
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 
-	mdcache_lru_unref(entry, LRU_FLAG_NONE);
-}
-
-/**
- * @brief Get a long term reference to the handle
- *
- * @param[in] obj_hdl	Handle to ref long term
- */
-static void mdcache_get_long_term_ref(struct fsal_obj_handle *obj_hdl)
-{
-	mdcache_entry_t *entry =
-		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-
-	mdcache_lru_ref(entry, LRU_LONG_TERM_REFERENCE);
-}
-
-/**
- * @brief Put a long term reference to the handle
- *
- * @param[in] obj_hdl	Handle to unref from long term
- */
-static void mdcache_put_long_term_ref(struct fsal_obj_handle *obj_hdl)
-{
-	mdcache_entry_t *entry =
-		container_of(obj_hdl, mdcache_entry_t, obj_handle);
-
-	mdcache_lru_unref(entry, LRU_LONG_TERM_REFERENCE);
+	mdcache_lru_unref(entry, LRU_ACTIVE_REF);
 }
 
 /**
@@ -1529,8 +1503,6 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 
 	ops->get_ref = mdcache_get_ref;
 	ops->put_ref = mdcache_put_ref;
-	ops->get_long_term_ref = mdcache_get_long_term_ref;
-	ops->put_long_term_ref = mdcache_put_long_term_ref;
 	ops->release = mdcache_hdl_release;
 	ops->merge = mdcache_merge;
 	ops->lookup = mdcache_lookup;
@@ -1641,7 +1613,8 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl,
 	}
 
 	status = mdcache_new_entry(export, sub_handle, &attrs, false, attrs_out,
-				   false, &new_entry, NULL, LRU_PROMOTE);
+				   false, &new_entry, NULL,
+				   LRU_ACTIVE_REF | LRU_PROMOTE);
 
 	fsal_release_attrs(&attrs);
 

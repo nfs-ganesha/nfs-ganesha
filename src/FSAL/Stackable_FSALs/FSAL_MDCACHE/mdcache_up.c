@@ -61,7 +61,8 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
 		     CIH_HASH_KEY_PROTOTYPE);
 
-	status = mdcache_find_keyed_reason(&key, &entry, LRU_PROMOTE);
+	status = mdcache_find_keyed_reason(&key, &entry,
+					   LRU_ACTIVE_REF | LRU_PROMOTE);
 	if (status.major == ERR_FSAL_NOENT) {
 		/* Not cached, so invalidate is a success */
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -85,7 +86,7 @@ mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		PTHREAD_RWLOCK_unlock(&entry->content_lock);
 	}
 
-	mdcache_lru_unref(entry, LRU_FLAG_NONE);
+	mdcache_lru_unref(entry, LRU_ACTIVE_REF);
 
 out:
 
@@ -142,7 +143,7 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 	LogDebug(COMPONENT_MDCACHE, "entry %p has refcnt of %d", entry,
 		 refcnt);
 	if (refcnt == 1) {
-		mdcache_lru_ref(entry, LRU_FLAG_NONE);
+		mdcache_lru_ref(entry, LRU_TEMP_REF);
 		cih_remove_latched(entry, &latch, 0);
 		ret = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	} else {
@@ -150,7 +151,7 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 	}
 	cih_hash_release(&latch);
 	if (refcnt == 1)
-		mdcache_lru_unref(entry, LRU_FLAG_NONE);
+		mdcache_lru_unref(entry, LRU_TEMP_REF);
 	return ret;
 }
 
@@ -207,7 +208,8 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
 		     CIH_HASH_KEY_PROTOTYPE);
 
-	status = mdcache_find_keyed_reason(&key, &entry, LRU_PROMOTE);
+	status = mdcache_find_keyed_reason(&key, &entry,
+					   LRU_ACTIVE_REF | LRU_PROMOTE);
 	if (status.major == ERR_FSAL_NOENT) {
 		/* Not cached, so invalidate is a success */
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -399,7 +401,7 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 put:
-	mdcache_lru_unref(entry, LRU_FLAG_NONE);
+	mdcache_lru_unref(entry, LRU_ACTIVE_REF);
 out:
 
 	release_op_context();

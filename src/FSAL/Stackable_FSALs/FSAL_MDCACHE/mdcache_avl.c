@@ -221,10 +221,10 @@ void mdcache_avl_remove(mdcache_entry_t *parent,
 		avltree_remove(&dirent->node_name, &parent->fsobj.fsdir.avl.t);
 	}
 
-	if (dirent->entry) {
+	if (dirent->mde_entry) {
 		/* We have a ref'd entry, drop our ref */
-		mdcache_lru_unref(dirent->entry, LRU_FLAG_NONE);
-		dirent->entry = NULL;
+		mdcache_lru_unref(dirent->mde_entry, LRU_ACTIVE_REF);
+		dirent->mde_entry = NULL;
 	}
 
 	if (dirent->chunk != NULL) {

@@ -326,8 +326,8 @@ void dec_nlm_state_ref(state_t *state)
 	free_state(state);
 
 	if (obj != NULL) {
-		/* Release the long term reference */
-		obj->obj_ops->put_long_term_ref(obj);
+		/* Release the active reference */
+		obj->obj_ops->put_ref(obj);
 	}
 }
 
@@ -467,8 +467,8 @@ int get_nlm_state(enum state_type state_type,
 	buffval.addr = state;
 	buffval.len = sizeof(*state);
 
-	/* Get long term ref for this state entry */
-	state_obj->obj_ops->get_long_term_ref(state_obj);
+	/* Get active ref for this state entry */
+	state_obj->obj_ops->get_ref(state_obj);
 
 	rc = hashtable_setlatched(ht_nlm_states, &buffval, &buffval, &latch,
 				  false, NULL, NULL);
@@ -486,7 +486,7 @@ int get_nlm_state(enum state_type state_type,
 		 * No need to close here, the state was never opened.
 		 */
 		free_state(state);
-		state_obj->obj_ops->put_long_term_ref(state_obj);
+		state_obj->obj_ops->put_ref(state_obj);
 
 		*pstate = NULL;
 

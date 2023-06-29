@@ -156,16 +156,16 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 
 	/* Found to exist */
 	if (createmode == FSAL_GUARDED) {
-		mdcache_lru_unref(entry, LRU_FLAG_NONE);
-		return fsalstat(ERR_FSAL_EXIST, 0);
+		status = fsalstat(ERR_FSAL_EXIST, 0);
+		goto out_unref;
 	} else if (createmode == FSAL_EXCLUSIVE) {
 		/* Exclusive create with entry found, check verifier */
 		if (!mdcache_check_verifier(&entry->obj_handle, verifier)) {
 			/* Verifier check failed. */
 			LogFullDebug(COMPONENT_MDCACHE,
 				     "Verifier check failed.");
-			mdcache_lru_unref(entry, LRU_FLAG_NONE);
-			return fsalstat(ERR_FSAL_EXIST, 0);
+			status = fsalstat(ERR_FSAL_EXIST, 0);
+			goto out_unref;
 		}
 
 		/* Verifier matches, go ahead and open the file. */
@@ -178,12 +178,12 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 			 "Trying to open a non-regular file");
 		if (entry->obj_handle.type == DIRECTORY) {
 			/* Trying to open2 a directory */
-			mdcache_lru_unref(entry, LRU_FLAG_NONE);
-			return fsalstat(ERR_FSAL_ISDIR, 0);
+			status = fsalstat(ERR_FSAL_ISDIR, 0);
+			goto out_unref;
 		} else {
 			/* Trying to open2 any other non-regular file */
-			mdcache_lru_unref(entry, LRU_FLAG_NONE);
-			return fsalstat(ERR_FSAL_SYMLINK, 0);
+			status = fsalstat(ERR_FSAL_SYMLINK, 0);
+			goto out_unref;
 		}
 	}
 	subcall(
@@ -198,8 +198,7 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 		LogFullDebug(COMPONENT_MDCACHE,
 			     "Open failed %s",
 			     msg_fsal_err(status.major));
-		mdcache_lru_unref(entry, LRU_FLAG_NONE);
-		return status;
+		goto out_unref;
 	}
 
 	LogFullDebug(COMPONENT_MDCACHE,
@@ -245,6 +244,11 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 	}
 	*new_entry = entry;
 
+	return status;
+
+out_unref:
+
+	mdcache_lru_unref(entry, LRU_ACTIVE_REF);
 	return status;
 }
 
@@ -551,14 +555,14 @@ static void mdc_read_super_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	 * cb will drop the initial ref, take an additional ref to prevent the
 	 * entry from getting freed/reaped.
 	 */
-	mdcache_lru_ref(entry, LRU_FLAG_NONE);
+	mdcache_lru_ref(entry, LRU_ACTIVE_REF);
 	arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
 
 	if (!FSAL_IS_ERROR(ret))
 		mdc_set_time_current(&entry->attrs.atime);
 	else if (ret.major == ERR_FSAL_STALE)
 		mdcache_kill_entry(entry);
-	mdcache_lru_unref(entry, LRU_FLAG_NONE);
+	mdcache_lru_unref(entry, LRU_ACTIVE_REF);
 	gsh_free(arg);
 }
 
@@ -638,7 +642,7 @@ static void mdc_write_super_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 		 * killing the entry might drop the sentinel ref. Take an
 		 * extra ref to prevent this entry for being reused.
 		 */
-		mdcache_lru_ref(entry, LRU_FLAG_NONE);
+		mdcache_lru_ref(entry, LRU_ACTIVE_REF);
 		mdcache_kill_entry(entry);
 	} else {
 		/*
@@ -654,7 +658,7 @@ static void mdc_write_super_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
 
 	if (ret.major == ERR_FSAL_STALE)
-		mdcache_lru_unref(entry, LRU_FLAG_NONE);
+		mdcache_lru_unref(entry, LRU_ACTIVE_REF);
 	gsh_free(arg);
 }
 

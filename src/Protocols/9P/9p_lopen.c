@@ -97,8 +97,8 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		atomic_inc_uint32_t(&pfid->opens);
 
-		/* Get a long term reference for every open */
-		pfid->ppentry->obj_ops->get_long_term_ref(pfid->ppentry);
+		/* Get an active reference for every open */
+		pfid->ppentry->obj_ops->get_ref(pfid->ppentry);
 	}
 
 	/* Build the reply */
