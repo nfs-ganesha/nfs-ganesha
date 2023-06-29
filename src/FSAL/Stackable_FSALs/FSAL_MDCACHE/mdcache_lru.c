@@ -1448,12 +1448,20 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 	/* Run more frequently the closer to max number of chunks we are. */
 	wait_ratio = 1.0 - (lru_state.chunks_used / lru_state.chunks_hiwat);
 
+	if (wait_ratio < 0.1) {
+		/* wait_ratio could even be negative if chunks_used is greater
+		 * than chunks_hiwat. Never have an interval shorter than 10%
+		 * of the lru_run_interval.
+		 */
+		wait_ratio = 0.1;
+	}
+
 	new_thread_wait = mdcache_param.lru_run_interval * wait_ratio;
 
-	if (new_thread_wait < mdcache_param.lru_run_interval / 10)
-		new_thread_wait = mdcache_param.lru_run_interval / 10;
-
-	/* if new_thread_wait is 0, chunk_lru_run will not be scheduled */
+	/* if new_thread_wait is 0, chunk_lru_run would not be scheduled (just
+	 * in case the lru_run_interval is really small we want to make sure to
+	 * run at least every second).
+	 */
 	if (new_thread_wait == 0)
 		new_thread_wait = 1;
 
