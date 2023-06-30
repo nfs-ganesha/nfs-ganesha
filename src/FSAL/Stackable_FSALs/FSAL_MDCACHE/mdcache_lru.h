@@ -70,6 +70,7 @@ struct lru_state {
 	uint64_t entries_used;
 	uint32_t entries_release_size;
 	uint64_t chunks_hiwat;
+	uint64_t chunks_lowat;
 	uint64_t chunks_used;
 	uint32_t per_lane_work;
 	time_t prev_time;	/* previous time the gc thread was run. */

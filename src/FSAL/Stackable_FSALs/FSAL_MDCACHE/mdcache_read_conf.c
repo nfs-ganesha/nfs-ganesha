@@ -68,8 +68,10 @@ static struct config_item mdcache_params[] = {
 		       mdcache_parameter, entries_hwmark),
 	CONF_ITEM_UI32("Entries_Release_Size", 0, UINT32_MAX, 100,
 		       mdcache_parameter, entries_release_size),
-	CONF_ITEM_UI32("Chunks_HWMark", 1, UINT32_MAX, 100000,
+	CONF_ITEM_UI32("Chunks_HWMark", 1, UINT32_MAX, 1000,
 		       mdcache_parameter, chunks_hwmark),
+	CONF_ITEM_UI32("Chunks_LWMark", 1, UINT32_MAX, 1000,
+		       mdcache_parameter, chunks_lwmark),
 	CONF_ITEM_UI32("LRU_Run_Interval", 1, 24 * 3600, 90,
 		       mdcache_parameter, lru_run_interval),
 	CONF_ITEM_UI32("FD_Limit_Percent", 0, 100, 99,
@@ -101,6 +103,27 @@ static void *mdcache_param_init(void *link_mem, void *self_struct)
 		return NULL;
 }
 
+static int mdcache_param_commit(void *node, void *link_mem, void *self_struct,
+				struct config_error_type *err_type)
+{
+	int errcnt = 0;
+	struct mdcache_parameter *param = self_struct;
+
+	if (param->chunks_lwmark > param->chunks_hwmark) {
+		/* The chunks low water mark must be less than the high water
+		 * mark.
+		 */
+		LogCrit(COMPONENT_CONFIG,
+			"Chunks_LWMark (%" PRIi32
+			") is larger than Chunks_HWMark (%" PRIi32 ")",
+			param->chunks_lwmark, param->chunks_hwmark);
+		err_type->invalid = true;
+		errcnt++;
+	}
+
+	return errcnt;
+}
+
 struct config_block mdcache_param_blk = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.mdcache",
 	.blk_desc.name = "MDCACHE",
@@ -109,7 +132,7 @@ struct config_block mdcache_param_blk = {
 	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = mdcache_param_init,
 	.blk_desc.u.blk.params = mdcache_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = mdcache_param_commit
 };
 
 int mdcache_set_param_from_conf(config_file_t parse_tree,

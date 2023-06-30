@@ -795,7 +795,9 @@ MDCACHE {}
 
 	Detached_Mult(uint32, range 1 to UINT32_MAX, default 1)
 
-	Chunks_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
+	Chunks_HWMark(uint32, range 1 to UINT32_MAX, default 1000)
+
+	Chunks_LWMark(uint32, range 1 to UINT32_MAX, default 1000)
 
 	Entries_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
 

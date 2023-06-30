@@ -46,8 +46,27 @@ Entries_Release_Size(uint32, range 0 to UINT32_MAX, default 100)
     The number of entries attempted to release each time when the handle
     cache has exceeded the entries high water mark.
 
-Chunks_HWMark(uint32, range 1 to UINT32_MAX, default 100000)
+Chunks_HWMark(uint32, range 1 to UINT32_MAX, default 1000)
     The point at which dirent cache chunks will start being reused.
+
+Chunks_LWMark(uint32, range 1 to UINT32_MAX, default 1000)
+    The target for reaping dirent cache chunks to drain the cache.
+
+    Entries_HWMark, Dir_Chunk, Chunks_HWMark, Chunks_LWMark all play together.
+    While a dirent chunk is cached, the object cache entries that are part of
+    that dirent chunk will be retained in the cache indefinitely. Note that
+    this means that possibly Chunks_LWMark * Dir_Chunk entries will be retained.
+    If this is larger than Entries_HWMark, then the object cache may end up
+    remaining above Entries_HWMark for a significant time. Consider the average
+    size of the directories and the number of directories desired to be
+    maintained in the cache and set Chunks_LWMark appropriately.
+
+    Note that the Chunks_LWMark defaults to the same value as Chunks_HWMark
+    and these are set to 1/100 of Entries_HWMark suggesting an average directory
+    size of 100. It may be desirable to set Chunks_LWMark less than Chunks_HWMark
+    if it is desirable to allow large directory chunks to not immediately be
+    re-used, but it is desirable to in the short term drain the dirent cache
+    down to a smaller number.
 
 LRU_Run_Interval(uint32, range 1 to 24 * 3600, default 90)
     Base interval in seconds between runs of the LRU cleaner thread.

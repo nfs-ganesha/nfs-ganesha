@@ -1423,6 +1423,7 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 	/* Total work done (number of chunks demoted) across all lanes. */
 	size_t totalwork = 0;
 	static bool first_time = true;
+	size_t target_release = 0, actual_release = 0;
 
 	if (first_time) {
 		/* Wait for NFS server to properly initialize */
@@ -1445,6 +1446,57 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 		totalwork += chunk_lru_run_lane(lane);
 	}
 
+	if (lru_state.chunks_used > lru_state.chunks_hiwat) {
+		/* If chunks are over high water mark, target to reap 1% of the
+		 * chunks in use.
+		 */
+		target_release += lru_state.chunks_used / 100;
+	}
+
+	if (atomic_fetch_uint64_t(&lru_state.entries_used) >
+	    lru_state.entries_hiwat) {
+		/* If the inode cache is over high water mark, target to reap an
+		 * additional 1% of the chunks in use.
+		 */
+		target_release += lru_state.chunks_used / 100;
+	}
+
+	/* We may need to reap chunks */
+	if (lru_state.chunks_used > lru_state.chunks_lowat) {
+		/* If chunks are over low water mark, target to reap an
+		 * additional 1% of the chunks in use. Minimum of 1.
+		 */
+		target_release += lru_state.chunks_used / 100;
+
+		if (target_release == 0)
+			target_release = 1;
+	}
+
+	while (actual_release < target_release) {
+		mdcache_lru_t *lru = NULL;
+		struct dir_chunk *chunk;
+
+		lru = lru_reap_chunk_impl(LRU_ENTRY_L2, NULL);
+
+		if (lru == NULL)
+			lru = lru_reap_chunk_impl(LRU_ENTRY_L1, NULL);
+
+		if (lru == NULL) {
+			/* No more progress possible. */
+			break;
+		}
+
+		actual_release++;
+
+		/* we uniquely hold chunk, it has already been cleaned up.
+		 * The dirents list is effectively properly initialized.
+		 */
+		chunk = container_of(lru, struct dir_chunk, chunk_lru);
+		LogFullDebug(COMPONENT_MDCACHE,
+			     "Releasing chunk at %p.", chunk);
+		mdcache_lru_unref_chunk(chunk);
+	}
+
 	/* Run more frequently the closer to max number of chunks we are. */
 	wait_ratio = 1.0 - (lru_state.chunks_used / lru_state.chunks_hiwat);
 
@@ -1454,6 +1506,11 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 		 * of the lru_run_interval.
 		 */
 		wait_ratio = 0.1;
+	}
+
+	if (actual_release < (target_release / 2)) {
+		/* We wanted to release chunks and did not release enough. */
+		wait_ratio = wait_ratio / 2;
 	}
 
 	new_thread_wait = mdcache_param.lru_run_interval * wait_ratio;
@@ -1468,8 +1525,10 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 	fridgethr_setwait(ctx, new_thread_wait);
 
 	LogDebug(COMPONENT_MDCACHE_LRU,
-		 "After work, threadwait=%" PRIu64 " totalwork=%zd",
-		 ((uint64_t) new_thread_wait), totalwork);
+		 "After work, threadwait=%" PRIu64
+		 " totalwork=%zd target_release = %zd actual_release = %zd",
+		 ((uint64_t) new_thread_wait), totalwork,
+		 target_release, actual_release);
 }
 
 /* @brief Release reapable entries until we are below the high-water mark
@@ -1556,19 +1615,17 @@ mdcache_lru_pkginit(void)
 		lru_state.per_lane_work = mdcache_param.reaper_work_per_lane;
 	}
 
-	/* Set high and low watermark for cache entries.  XXX This seems a
-	   bit fishy, so come back and revisit this. */
+	/* Set high watermark for cache entries. */
 	lru_state.entries_hiwat = mdcache_param.entries_hwmark;
 	lru_state.entries_used = 0;
 
 	/* set lru release entries size */
 	lru_state.entries_release_size = mdcache_param.entries_release_size;
 
-	/* Set high and low watermark for chunks.  XXX This seems a
-	   bit fishy, so come back and revisit this. */
+	/* Set high and low watermark for chunks. */
 	lru_state.chunks_hiwat = mdcache_param.chunks_hwmark;
+	lru_state.chunks_lowat = mdcache_param.chunks_lwmark;
 	lru_state.chunks_used = 0;
-
 
 	/* init queue complex */
 	lru_init_queues();
