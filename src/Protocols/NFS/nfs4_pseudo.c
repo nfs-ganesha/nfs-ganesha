@@ -112,6 +112,7 @@ void cleanup_pseudofs_node(char *pseudo_path,
 	char *pos = pseudo_path + strlen(pseudo_path) - 1;
 	char *name;
 	fsal_status_t fsal_status;
+	op_ctx->flags.pseudo_fsal_internal_lookup = true;
 
 	/* Strip trailing / from pseudo_path */
 	while (*pos == '/')
@@ -197,8 +198,8 @@ bool make_pseudofs_node(char *name, struct pseudofs_state *state)
 	char const *fsal_name;
 
 retry:
-
 	/* First, try to lookup the entry */
+	op_ctx->flags.pseudo_fsal_internal_lookup = true;
 	fsal_status = fsal_lookup(state->obj, name, &new_node, NULL);
 
 	if (!FSAL_IS_ERROR(fsal_status)) {
@@ -544,6 +545,7 @@ void create_pseudofs(void)
 	/* Initialize a root context */
 	init_op_context(&op_context, NULL, NULL, NULL,
 			NFS_V4, 0, NFS_REQUEST);
+	op_ctx->flags.pseudo_fsal_internal_lookup = true;
 
 	while (true) {
 		export = export_take_mount_work();
@@ -650,6 +652,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 	init_op_context(&op_context, mounted_on_export,
 			mounted_on_export->fsal_export, NULL,
 			NFS_V4, 0, NFS_REQUEST);
+	op_ctx->flags.pseudo_fsal_internal_lookup = true;
 
 	if (is_export_pseudo(mounted_on_export) && junction_inode != NULL) {
 		char *pseudo_path = gsh_strdup(ref_pseudopath->gr_val);

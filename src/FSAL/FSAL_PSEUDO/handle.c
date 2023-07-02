@@ -291,32 +291,6 @@ static struct pseudo_fsal_obj_handle
 	return NULL;
 }
 
-static fsal_errors_t
-verify_handle_is_valid(const struct pseudo_fsal_obj_handle *hdl)
-{
-	fsal_errors_t error = ERR_FSAL_NO_ERROR;
-
-	if (!is_export_update_in_progress())
-		return ERR_FSAL_NO_ERROR;
-
-	PTHREAD_RWLOCK_rdlock(&hdl->obj_handle.state_hdl->jct_lock);
-	if (hdl->obj_handle.type == DIRECTORY &&
-		hdl->obj_handle.state_hdl->dir.junction_export == NULL) {
-		/* There could be a race case where the node was created,
-		 * but the junction still wasn't updated during the
-		 * export update process. In this case we return
-		 * FSAL_DELAY util it is done.
-		 */
-		LogInfo(COMPONENT_EXPORT,
-			"PseudoFS LOOKUP/READDIR of %s found an non-finished entry. Returning FSAL_DELAY",
-			hdl->name);
-		error = ERR_FSAL_DELAY;
-	}
-
-	PTHREAD_RWLOCK_unlock(&hdl->obj_handle.state_hdl->jct_lock);
-	return error;
-}
-
 /* handle methods
  */
 
@@ -368,10 +342,6 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 		hdl = avltree_container_of(node, struct pseudo_fsal_obj_handle,
 					   avl_n);
 
-		error = verify_handle_is_valid(hdl);
-		if (error != ERR_FSAL_NO_ERROR)
-			goto out;
-
 		*handle = &hdl->obj_handle;
 		error = ERR_FSAL_NO_ERROR;
 			LogFullDebug(COMPONENT_FSAL,
@@ -380,13 +350,16 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	}
 
 out:
-
-	if (error == ERR_FSAL_NOENT && is_export_update_in_progress()) {
-		/* An export update may be the cause of the failure. Tell the
-		 * client to retry.
+	/* op_ctx->pseudo_fsal_internal_lookup signals that this is a lookup
+	 * request from the export update process and so we should answer it
+	 * with the current state */
+	if (is_export_update_in_progress() &&
+		!op_ctx->flags.pseudo_fsal_internal_lookup) {
+		/* An export update is in progress, we can't trust our entries.
+		 * Tell the client to retry.
 		 */
 		LogDebug(COMPONENT_EXPORT,
-			 "PseudoFS LOOKUP of %s may have failed due to export update",
+			 "PseudoFS LOOKUP of %s failed due to export update",
 			 path);
 
 		error = ERR_FSAL_DELAY;
@@ -523,9 +496,10 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 					   struct pseudo_fsal_obj_handle,
 					   avl_i);
 
-		error = verify_handle_is_valid(hdl);
-		if (error != ERR_FSAL_NO_ERROR)
+		if (is_export_update_in_progress()) {
+			error = ERR_FSAL_DELAY;
 			goto out;
+		}
 
 		/* skip entries before seekloc */
 		if (hdl->index < seekloc)

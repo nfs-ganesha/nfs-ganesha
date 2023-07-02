@@ -3206,6 +3206,7 @@ void init_op_context(struct req_op_context *ctx,
 	ctx->export_perms.set = root_op_export_set;
 	ctx->export_perms.options = root_op_export_options;
 	ctx->op_id = atomic_postadd_uint32_t(&op_id, 1);
+	ctx->flags.pseudo_fsal_internal_lookup = false;
 }
 
 void release_op_context(void)
