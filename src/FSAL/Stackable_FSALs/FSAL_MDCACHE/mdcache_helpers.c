@@ -2454,7 +2454,8 @@ mdc_readdir_chunk_object(const char *name, struct fsal_obj_handle *sub_handle,
 			new_entry,
 			atomic_fetch_int32_t(&new_entry->lru.refcnt));
 
-	if (new_dir_entry != allocated_dir_entry && new_dir_entry->entry) {
+	if ((new_dir_entry != allocated_dir_entry && new_dir_entry->entry) ||
+		(new_dir_entry->chunk != state->cur_chunk)) {
 		/* This was swapped and already has a refcounted entry. Drop our
 		 * ref. */
 		mdcache_lru_unref(new_entry, LRU_FLAG_NONE);
