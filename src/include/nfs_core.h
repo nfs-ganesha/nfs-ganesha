@@ -101,6 +101,15 @@ struct _nfs_health {
 	uint64_t dequeued_reqs;
 };
 
+enum evchan {
+	UDP_UREG_CHAN,		/*< Put UDP on a dedicated channel */
+	TCP_UREG_CHAN,		/*< Accepts new TCP connections */
+#ifdef _USE_NFS_RDMA
+	RDMA_UREG_CHAN,		/*< Accepts new RDMA connections */
+#endif
+	EVCHAN_SIZE
+};
+
 extern struct _nfs_health nfs_health_;
 bool nfs_health(void);
 
@@ -140,6 +149,7 @@ void _9p_rdma_cleanup_conn(msk_trans_t *trans);
 void Clean_RPC(void);
 void nfs_Init_svc(void);
 void nfs_rpc_dispatch_stop(void);
+uint32_t nfs_get_evchannel_id(enum evchan);
 
 /* Config parsing routines */
 extern config_file_t nfs_config_struct;

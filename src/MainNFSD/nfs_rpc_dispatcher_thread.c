@@ -91,14 +91,6 @@ struct rpc_evchan {
 	uint32_t chan_id;	/*< Channel ID */
 };
 
-enum evchan {
-	UDP_UREG_CHAN,		/*< Put UDP on a dedicated channel */
-	TCP_UREG_CHAN,		/*< Accepts new TCP connections */
-#ifdef _USE_NFS_RDMA
-	RDMA_UREG_CHAN,		/*< Accepts new RDMA connections */
-#endif
-	EVCHAN_SIZE
-};
 #define N_TCP_EVENT_CHAN  3	/*< We don't really want to have too many,
 				   relative to the number of available cores. */
 #define N_EVENT_CHAN (N_TCP_EVENT_CHAN + EVCHAN_SIZE)
@@ -306,6 +298,17 @@ static void close_rpc_fd(void)
 			SVC_DESTROY(tcp_xprt[p]);
 	}
 	/* no need for special tcp_xprt[P_NFS_VSOCK] treatment */
+}
+
+/**
+ * @brief Get evchannel id
+ *
+ * Given an evchannel, return it's channel id
+ *
+ */
+uint32_t nfs_get_evchannel_id(enum evchan channel)
+{
+	return rpc_evchan[channel].chan_id;
 }
 
 /**
