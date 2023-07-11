@@ -84,6 +84,11 @@ int nfs_set_param_from_conf(config_file_t config_struct,
 int init_server_pkgs(void);
 
 /**
+ * Initialise NFSv4 specific parameters.
+ */
+int nfsv4_init_params(void);
+
+/**
  * nfs_start:
  * start NFS service
  */

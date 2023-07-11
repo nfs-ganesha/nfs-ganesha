@@ -57,6 +57,9 @@
 
 extern char *nfs_host_name;
 
+extern char cid_server_owner[MAXNAMLEN+1]; /* max hostname length */
+extern char *cid_server_scope;
+
 /*
  * Bind protocol family, pending a richer interface model.
  */

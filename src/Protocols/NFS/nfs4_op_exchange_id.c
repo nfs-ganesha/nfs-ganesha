@@ -84,11 +84,6 @@ int get_raddr(SVCXPRT *xprt)
 				    + STATE_PROTECT4_R_BASE_SIZE + \
 				    sizeof(uint64_t) + 3 * BYTES_PER_XDR_UNIT)
 
-char cid_server_owner[MAXNAMLEN+1]; /* max hostname length */
-char *cid_server_scope_suffix = "_NFS-Ganesha";
-char *cid_server_scope;
-int owner_len, scope_len, ss_suffix_len;
-
 /**
  * @brief The NFS4_OP_EXCHANGE_ID operation
  *
@@ -122,6 +117,7 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 	EXCHANGE_ID4resok * const res_EXCHANGE_ID4_ok =
 	    &resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4;
 	uint32_t resp_size = EXCHANGE_ID_BASE_RESP_SIZE;
+	int owner_len, scope_len;
 
 	resp->resop = NFS4_OP_EXCHANGE_ID;
 
@@ -142,48 +138,14 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 	}
 
-	if (cid_server_owner[0] == '\0') {
-		/* Set up the server owner string */
-		if (nfs_param.nfsv4_param.server_owner == NULL) {
-			/* If the server owner param is NULL, set it to
-			 * hostname
-			 */
-			if (gsh_gethostname(
-				    cid_server_owner, sizeof(cid_server_owner),
-				    nfs_param.core_param.enable_AUTHSTATS) ==
-			    -1) {
-				res_EXCHANGE_ID4->eir_status =
-					NFS4ERR_SERVERFAULT;
-				return NFS_REQ_ERROR;
-			}
-		} else {
-			rc = snprintf(cid_server_owner,
-				      sizeof(cid_server_owner), "%s",
-				      nfs_param.nfsv4_param.server_owner);
-			/* Assert that server owner conf param is not too long.
-			 * this should never happen since it is validated during
-			 * conf parsing */
-			assert(rc >= 0 && rc < sizeof(cid_server_owner));
-		}
+	/* These are currently set during init and must be set in future
+	 * once Ganesha support runtime enabling of protocols,
+	 * else strictly assert off */
+	assert(cid_server_owner[0] != '\0');
+	assert(cid_server_scope != NULL);
 
-		owner_len = strlen(cid_server_owner);
-
-		/* use server_owner as server_scope if server_scope not
-		 * mentioned in main config file
-		 */
-		if (nfs_param.nfsv4_param.server_scope == NULL) {
-			ss_suffix_len = strlen(cid_server_scope_suffix);
-			scope_len = owner_len + ss_suffix_len;
-			cid_server_scope = gsh_malloc(scope_len + 1);
-			memcpy(cid_server_scope, cid_server_owner, owner_len);
-			memcpy(cid_server_scope + owner_len,
-					cid_server_scope_suffix,
-					ss_suffix_len + 1);
-		} else {
-			cid_server_scope = nfs_param.nfsv4_param.server_scope;
-			scope_len = strlen(cid_server_scope);
-		}
-	}
+	owner_len = strlen(cid_server_owner);
+	scope_len = strlen(cid_server_scope);
 
 	/* Now check that the response will fit. Use 0 for
 	 * eir_server_impl_id_len

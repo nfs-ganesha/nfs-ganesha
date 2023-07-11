@@ -137,6 +137,9 @@ char *nfs_config_path = GANESHA_CONFIG_PATH;
 
 char *nfs_pidfile_path = GANESHA_PIDFILE_PATH;
 
+char cid_server_owner[MAXNAMLEN+1]; /* max hostname length */
+char *cid_server_scope;
+
 /**
  * @brief Reread the configuration file to accomplish update of options.
  *
@@ -635,6 +638,59 @@ static void nfs_Start_threads(void)
 	PTHREAD_ATTR_destroy(&attr_thr);
 }
 
+
+/**
+ * @brief Initialise NFSv4 specific parameters.
+ *
+ * @retval 0 if successful.
+ * @retval -1 otherwise
+ *
+ */
+
+int nfsv4_init_params(void)
+{
+	int rc;
+	int owner_len, scope_len, ss_suffix_len;
+	char *cid_server_scope_suffix = "_NFS-Ganesha";
+
+	/* Set up the server owner string */
+	if (nfs_param.nfsv4_param.server_owner == NULL) {
+		/* If the server owner param is NULL, set it to hostname */
+		if (gsh_gethostname(
+			cid_server_owner, sizeof(cid_server_owner),
+			nfs_param.core_param.enable_AUTHSTATS) == -1) {
+			LogCrit(COMPONENT_NFS_V4,
+				"gsh_gethostname failed");
+			return -1;
+		}
+	} else {
+		rc = snprintf(cid_server_owner,
+				sizeof(cid_server_owner), "%s",
+				nfs_param.nfsv4_param.server_owner);
+		/* Assert that server owner conf param is not too long.
+		 * this should never happen since it is validated during
+		 * conf parsing */
+		assert(rc >= 0 && rc < sizeof(cid_server_owner));
+	}
+
+	/* use server_owner as server_scope if server_scope not
+	 * mentioned in main config file
+	 */
+	if (nfs_param.nfsv4_param.server_scope == NULL) {
+		owner_len = strlen(cid_server_owner);
+		ss_suffix_len = strlen(cid_server_scope_suffix);
+		scope_len = owner_len + ss_suffix_len;
+		cid_server_scope = gsh_malloc(scope_len + 1);
+		memcpy(cid_server_scope, cid_server_owner, owner_len);
+		memcpy(cid_server_scope + owner_len,
+				cid_server_scope_suffix,
+				ss_suffix_len + 1);
+	} else {
+		cid_server_scope = nfs_param.nfsv4_param.server_scope;
+	}
+	return 0;
+}
+
 /**
  * @brief Init the nfs daemon
  *
@@ -800,6 +856,15 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	LogInfo(COMPONENT_INIT,
 		"NFSv4 Session Id cache successfully initialized");
 
+	if (nfs_param.core_param.core_options & CORE_OPTION_NFSV4) {
+		/* Initialise NFSv4 specific parameters */
+		if (nfsv4_init_params() != 0) {
+			LogFatal(COMPONENT_INIT,
+			  "Error while initializing NFSv4 specific parameter");
+		}
+		LogInfo(COMPONENT_INIT,
+			"NFSv4 specific parameter initialized");
+	}
 #ifdef _USE_9P
 	LogDebug(COMPONENT_INIT, "Now building 9P resources");
 	if (_9p_init()) {
