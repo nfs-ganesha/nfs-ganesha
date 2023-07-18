@@ -1667,7 +1667,7 @@ static inline void bump_fd_lru(struct fsal_fd *fsal_fd)
  *
  */
 
-static void insert_fd_lru(struct fsal_fd *fsal_fd)
+void insert_fd_lru(struct fsal_fd *fsal_fd)
 {
 	switch (fsal_fd->fd_type) {
 	case FSAL_FD_OLD_STYLE:

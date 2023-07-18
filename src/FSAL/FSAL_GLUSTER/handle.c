@@ -1112,6 +1112,10 @@ void glusterfs_copy_my_fd(struct glusterfs_fd *src_fd,
 	} else {
 		dst_fd->glfd = src_fd->glfd;
 		dst_fd->creds.caller_garray = src_fd->creds.caller_garray;
+		/* Need to LRU track global fd including incrementing
+		 * fsal_fd_global_counter.
+		 */
+		insert_fd_lru(&dst_fd->fsal_fd);
 	}
 
 	dst_fd->fsal_fd.openflags = src_fd->fsal_fd.openflags;

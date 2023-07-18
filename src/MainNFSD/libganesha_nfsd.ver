@@ -128,6 +128,7 @@
   init_op_context;
   init_op_context_simple;
   init_server_pkgs;
+  insert_fd_lru;
   is_filesystem_exported;
   load_config_from_node;
   load_config_from_parse;

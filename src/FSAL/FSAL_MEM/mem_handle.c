@@ -1704,9 +1704,14 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 	 * handy since we can then call setattr2 which WILL take the lock
 	 * without a double locking deadlock.
 	 */
-	if (my_fd == NULL)
+	if (my_fd == NULL) {
+		LogFullDebug(COMPONENT_FSAL, "Using global fd");
 		my_fd = &hdl->mh_file.fd;
-
+		/* Need to LRU track global fd including incrementing
+		 * fsal_fd_global_counter.
+		 */
+		insert_fd_lru(my_fd);
+	}
 	if (openflags & FSAL_O_WRITE)
 		openflags |= FSAL_O_READ;
 	mem_open_my_fd(my_fd, openflags);

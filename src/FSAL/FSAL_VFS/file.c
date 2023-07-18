@@ -911,6 +911,10 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	if (my_fd == NULL) {
 		LogFullDebug(COMPONENT_FSAL, "Using global fd");
 		my_fd = &hdl->u.file.fd;
+		/* Need to LRU track global fd including incrementing
+		 * fsal_fd_global_counter.
+		 */
+		insert_fd_lru(&my_fd->fsal_fd);
 	}
 
 	my_fd->fd = fd;
