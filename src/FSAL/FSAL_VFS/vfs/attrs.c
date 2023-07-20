@@ -249,6 +249,9 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	int e_count = 0, i_count = 0, new_count = 0, new_i_count = 0;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 
+	if (obj_pub->type == SYMBOLIC_LINK)
+		return status;
+
 	vfs_sub_getattrs_common(vfs_hdl, fd, request_mask, attrib);
 
 	vfs_sub_getattrs_release(attrib);
