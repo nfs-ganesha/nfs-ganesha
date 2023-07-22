@@ -64,13 +64,17 @@ centos 8
 centos 9
 debian 10
 debian 11
+debian 12
 fedora 37
 fedora 38
+fedora 39
+fedora 40
 rockylinux 8
 rockylinux 9
 ubuntu 18.04
 ubuntu 20.04
 ubuntu 22.04
+ubuntu 24.04
 EOF
 }
 
@@ -80,16 +84,16 @@ default_version()
 
 	case "$distro" in
 	almalinux | centos | rockylinux)
-		echo "8"
+		echo "9"
 		;;
 	debian)
-		echo "11"
+		echo "12"
 		;;
 	fedora)
-		echo "38"
+		echo "40"
 		;;
 	ubuntu)
-		echo "22.04"
+		echo "24.04"
 		;;
 	esac
 }
