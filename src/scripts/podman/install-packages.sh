@@ -41,6 +41,7 @@ install_debian()
 	apt-get update
 
 	libnsl_pkg="libnsl-dev"
+	python3_distutils="python3-distutils"
 	case "$ID" in
 	debian)
 		case "$VERSION_ID" in
@@ -54,12 +55,15 @@ install_debian()
 		18.04 | 20.04)
 			libnsl_pkg=""
 			;;
+		24.04)
+			python3_distutils=""
+			;;
 		esac
 		;;
 	esac
 
 	# shellcheck disable=SC2086
-	# $libnsl_pkg may be empty
+	# variables may be intentionally empty
 	apt-get install -y \
 		bison \
 		build-essential \
@@ -79,6 +83,7 @@ install_debian()
 		$libnsl_pkg \
 		liburcu-dev \
 		python3 \
+		$python3_distutils \
 		pyqt5-dev-tools \
 		rsync \
 		sudo \
