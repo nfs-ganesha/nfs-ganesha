@@ -129,7 +129,9 @@
   hashtable_for_each;
   hashtable_getlatch;
   hashtable_init;
+  hashtable_destroy;
   hashtable_releaselatched;
+  hashtable_setlatched;
   hashtable_test_and_set;
   ht_confirmed_client_id;
   init_error_type;
