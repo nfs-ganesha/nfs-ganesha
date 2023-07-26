@@ -84,6 +84,15 @@ struct mdcache_parameter {
 	/** Base interval in seconds between runs of the LRU cleaner
 	    thread. Defaults to 60, settable with LRU_Run_Interval. */
 	uint32_t lru_run_interval;
+	/** If "Cache_FDs" is set to false, the reaper thread aggressively
+	 *  closes FDs , significantly reducing the number of open FDs.
+	 *  This will help to maintain a minimal number of open FDs.
+	 *
+	 *  If "Cache_FDs" is set to true (default), FDs are cached, and the
+	 *  LRU reaper thread closes FDs only when the current open FD count
+	 *  reaches or exceeds the "fds_lowat" threshold.
+	 */
+	bool Cache_FDs;
 	/** The percentage of the system-imposed maximum of file
 	    descriptors at which Ganesha will deny requests.
 	    Defaults to 99, settable with FD_Limit_Percent. */

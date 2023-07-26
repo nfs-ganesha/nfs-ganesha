@@ -1362,6 +1362,7 @@ int32_t fsal_fd_global_counter;
 uint32_t fsal_fd_state_counter;
 uint32_t fsal_fd_temp_counter;
 time_t lru_run_interval;
+bool Cache_FDs;
 static struct fridgethr *fd_lru_fridge;
 
 uint32_t lru_try_one(void)
@@ -1417,7 +1418,6 @@ struct fd_lru_state fd_lru_state;
 uint32_t futility_count;
 uint32_t required_progress;
 uint32_t reaper_work;
-time_t lru_run_interval;
 
 /**
  * @brief Function that executes in the fd_lru thread
@@ -1498,24 +1498,38 @@ void fd_lru_run(struct fridgethr_context *ctx)
 		fd_lru_state.futility = 0;
 	}
 
-	/* Reap file descriptors.  This is a preliminary example of the
-	   L2 functionality rather than something we expect to be
-	   permanent.  (It will have to adapt heavily to the new FSAL
-	   API, for example.) */
+	/* Check for fd_state transitions */
 
+	LogDebug(COMPONENT_FSAL,
+		 "FD count fsal_fd_global_counter is %"PRIi32
+		 " and low water mark is %"PRIi32
+		 " and high water mark is %"PRIi32" %s",
+		 currentopen, fd_lru_state.fds_lowat, fd_lru_state.fds_hiwat,
+		 ((currentopen >= fd_lru_state.fds_lowat)
+			|| (Cache_FDs == false))
+			? "(reaping)" : "(not reaping)");
 
 	if (currentopen < fd_lru_state.fds_lowat) {
-		LogDebug(COMPONENT_FSAL,
-			 "FD count fsal_fd_global_counter is %"PRIi32
-			 " and low water mark is %d: not reaping.",
-			 atomic_fetch_int32_t(&fsal_fd_global_counter),
-			 fd_lru_state.fds_lowat);
 		if (atomic_fetch_uint32_t(&fd_lru_state.fd_state) > FD_LOW) {
 			LogEvent(COMPONENT_FSAL,
 				 "Return to normal fd reaping.");
 			atomic_store_uint32_t(&fd_lru_state.fd_state, FD_LOW);
 		}
-	} else {
+	} else if (currentopen < fd_lru_state.fds_hiwat &&
+		   atomic_fetch_uint32_t(&fd_lru_state.fd_state) == FD_LIMIT) {
+		LogEvent(COMPONENT_FSAL,
+			 "Count of fd is below high water mark.");
+		atomic_store_uint32_t(&fd_lru_state.fd_state,
+				      FD_MIDDLE);
+	}
+
+	/* Reap file descriptors.  This is a preliminary example of the
+	 * L2 functionality rather than something we expect to be
+	 * permanent.  (It will have to adapt heavily to the new FSAL
+	 * API, for example.)
+	 */
+
+	if ((currentopen >= fd_lru_state.fds_lowat) || (Cache_FDs == false)) {
 		/* The count of open file descriptors before this run
 		   of the reaper. */
 		int32_t formeropen = currentopen;
@@ -1524,14 +1538,6 @@ void fd_lru_run(struct fridgethr_context *ctx)
 		   don't spin through more passes. */
 		uint32_t workpass = 0;
 		time_t curr_time = time(NULL);
-
-		if (currentopen < fd_lru_state.fds_hiwat &&
-		    atomic_fetch_uint32_t(&fd_lru_state.fd_state) == FD_LIMIT) {
-			LogEvent(COMPONENT_FSAL,
-				 "Count of fd is below high water mark.");
-			atomic_store_uint32_t(&fd_lru_state.fd_state,
-					      FD_MIDDLE);
-		}
 
 		if ((curr_time >= fd_lru_state.prev_time) &&
 		    (curr_time - fd_lru_state.prev_time <
@@ -1855,6 +1861,7 @@ fsal_status_t fd_lru_pkginit(struct fd_lru_parameter *params)
 	required_progress = params->required_progress;
 	reaper_work = params->reaper_work;
 	lru_run_interval = params->lru_run_interval;
+	Cache_FDs = params->Cache_FDs;
 
 	memset(&frp, 0, sizeof(struct fridgethr_params));
 	frp.thr_max = 1;
