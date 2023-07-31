@@ -756,6 +756,8 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		/* Release the subtree hash table lock */
 		cih_hash_release(&latch);
 
+		/* We found the entry in cache, let's reset the status */
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		goto out_release_new_entry;
 	}
 
