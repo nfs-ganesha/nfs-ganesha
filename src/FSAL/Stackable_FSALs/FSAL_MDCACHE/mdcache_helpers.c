@@ -895,7 +895,9 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 		mdc_update_attr_cache(*entry, attrs_in);
 		PTHREAD_RWLOCK_unlock(&(*entry)->attr_lock);
 
-		fsal_copy_attrs(attrs_out, attrs_in, false);
+		if (attrs_out != NULL) {
+			fsal_copy_attrs(attrs_out, attrs_in, false);
+		}
 	} else if (!FSAL_IS_ERROR(status) && attrs_out != NULL) {
 		status = get_optional_attrs(&(*entry)->obj_handle,
 					    attrs_out);
