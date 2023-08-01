@@ -55,6 +55,7 @@
 #include "mdcache_lru.h"
 #include "mdcache_hash.h"
 #include "abstract_atomic.h"
+#include "atomic_utils.h"
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
 #include "nfs_exports.h"
@@ -753,7 +754,7 @@ lru_reap_impl(enum lru_q_id qid)
 			 * mdcache_lru_unref(), which released the
 			 * sentinel ref, leaving just the one ref we
 			 * took earlier.  Returning this as is leaves it
-			 * with a ref of 1 (ie, just the sentinel ref)
+			 * with a ref of 1 (ie, just the temp ref)
 			 * */
 			goto out;
 		}
@@ -1883,7 +1884,6 @@ bool
 _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		   int line)
 {
-	int32_t refcnt, active_refcnt;
 	bool do_cleanup = false;
 	uint32_t lane = entry->lru.lane;
 	struct lru_q_lane *qlane = &LRU[lane];
@@ -1926,69 +1926,53 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 					   LRU_SENTINEL_HELD);
 	}
 
-	if (flags & LRU_ACTIVE_REF) {
-		/* Each active reference is in addition to a normal
-		 * reference. This allows the possibility of the final reference
-		 * to an entry being a active reference such that when that
-		 * active reference is dropped, cleanup will occur.
-		 * So release both references and check if the normal refcount
-		 * has reached 0.
-		 */
-		active_refcnt = atomic_dec_int32_t(&entry->lru.active_refcnt);
-		refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
-
-		assert(active_refcnt >= 0);
-		assert(refcnt >= 0);
-
-		if (unlikely(active_refcnt == 0)) {
-			/* we MUST recheck that active refcount is still 0 */
-			QLOCK(qlane);
-
-			active_refcnt =
-				atomic_fetch_int32_t(&entry->lru.active_refcnt);
-
-			if (likely(active_refcnt == 0)) {
-				/* Move entry to MRU of L1 or L2 or leave in
-				 * cleanup queue.
-				 */
-				make_inactive_lru(entry);
-			}
-
-			QUNLOCK(qlane);
-		}
-	} else {
-		refcnt = atomic_dec_int32_t(&entry->lru.refcnt);
-		assert(refcnt >= 0);
-		active_refcnt = atomic_fetch_int32_t(&entry->lru.active_refcnt);
-	}
-
 #ifdef USE_LTTNG
 	tracepoint(mdcache, mdc_lru_unref,
-		   func, line, &entry->obj_handle, entry->sub_handle, refcnt,
-		   active_refcnt);
+		   func, line, &entry->obj_handle, entry->sub_handle,
+		   atomic_fetch_int32_t(&entry->lru.refcnt),
+		   atomic_fetch_int32_t(&entry->lru.active_refcnt));
 #endif
 
-	if (unlikely(refcnt == 0)) {
+	/* Each active reference is in addition to a normal reference. This
+	 * allows the possibility of the final reference to an entry being an
+	 * active reference such that when that active reference is dropped,
+	 * cleanup will occur.
+	 */
 
+	/* Handle active unref first */
+	if (flags & LRU_ACTIVE_REF &&
+	    PTHREAD_MUTEX_dec_int32_t_and_lock(&entry->lru.active_refcnt,
+					       &qlane->ql_mtx)) {
+		/* active_refcnt is zero and we hold the QLOCK. */
+#if 0
+		/* For clarity... */
+		QLOCK(qlane);
+#endif
+		/* Move entry to MRU of L1 or L2 or leave in cleanup queue. */
+		make_inactive_lru(entry);
+
+		QUNLOCK(qlane);
+	}
+
+	/* Handle normal unref next for all unrefs. */
+	if (PTHREAD_MUTEX_dec_int32_t_and_lock(&entry->lru.refcnt,
+					       &qlane->ql_mtx)) {
 		struct lru_q *q;
 
-		/* we MUST recheck that refcount is still 0 */
+		/* refcnt is zero and we hold the QLOCK. */
+#if 0
+		/* For clarity... */
 		QLOCK(qlane);
-		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
-
-		if (unlikely(refcnt > 0)) {
-			QUNLOCK(qlane);
-			goto out;
-		}
-
+#endif
 		/*
 		 * The cih table holds a non-weak reference, so entry should no
 		 * longer be in it.
 		 */
 		assert(!entry->fh_hk.inavl);
 
-		/* Really zero.  Remove entry and mark it as dead. */
+		/* Remove entry and mark it as dead. */
 		q = lru_queue_of(entry);
+
 		if (q) {
 			/* as of now, entries leaving the cleanup queue
 			 * are LRU_ENTRY_NONE */
@@ -2002,8 +1986,8 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		freed = true;
 
 		(void) atomic_dec_int64_t(&lru_state.entries_used);
-	}			/* refcnt == 0 */
- out:
+	}
+
 	return freed;
 }
 
