@@ -535,13 +535,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-D_MSPAC_SUPPORT=%{use_mspac_support}		\
 	-DSANITIZE_ADDRESS=%{use_sanitize_address}	\
 %if %{with jemalloc}
-	-DALLOCATOR=jemalloc 				\
-%endif
-%if ( %{with gpfs} && %{with mspac_support} )
-	-DWBCLIENT_INCLUDE_DIR=/usr/lpp/mmfs/include/samba-4.0		\
-	-DWBCLIENT_LIBRARIES=/usr/lpp/mmfs/lib64/libwbclient.so.0	\
-	-DCMAKE_INSTALL_RPATH=/usr/lpp/mmfs/lib64/			\
-	-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+	-DALLOCATOR=jemalloc
 %endif
 %if %{with tcmalloc}
 	-DALLOCATOR=tcmalloc
