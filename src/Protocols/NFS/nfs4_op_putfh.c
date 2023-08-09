@@ -203,7 +203,7 @@ static int nfs4_mds_putfh(compound_data_t *data)
 						   &fh_desc,
 						   v4_handle->fhflags1);
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogFullDebug(COMPONENT_FILEHANDLE,
+		LogInfo(COMPONENT_FILEHANDLE,
 			     "wire_to_host failed %s",
 			     msg_fsal_err(fsal_status.major));
 		return nfs4_Errno_status(fsal_status);
@@ -212,7 +212,7 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	fsal_status = export->exp_ops.create_handle(export, &fh_desc,
 						    &new_hdl, NULL);
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogDebug(COMPONENT_FILEHANDLE,
+		LogInfo(COMPONENT_FILEHANDLE,
 			 "could not get create_handle object error %s",
 			 msg_fsal_err(fsal_status.major));
 		return nfs4_Errno_status(fsal_status);
