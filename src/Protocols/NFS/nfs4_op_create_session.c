@@ -143,7 +143,7 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 	}
 
-	LogDebug(component,
+	LogInfo(component,
 		 "CREATE_SESSION client addr=%s clientid=%s -------------------",
 		 str_client_addr, str_clientid4);
 
@@ -178,13 +178,13 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 
 	inc_client_record_ref(client_record);
 
-	if (isFullDebug(component)) {
+	if (isInfo(component)) {
 		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_record(&dspbuf, client_record);
 
-		LogFullDebug(component,
+		LogInfo(component,
 			     "Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
 			     str,
 			     client_record->cr_confirmed_rec,
