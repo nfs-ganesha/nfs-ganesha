@@ -172,7 +172,7 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 			dec_client_id_ref(unconf);
 		else
 			dec_client_id_ref(conf);
-		return res_SETCLIENTID_CONFIRM4->status;
+		return NFS_REQ_ERROR;
 	}
 
 	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
