@@ -118,6 +118,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 	component4 name;
 	bool_t res_false = false;
 	bool_t lock_dir = false;
+	struct fsal_obj_handle *saved_current_obj = NULL;
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
 		     "Entry %s pos %d mem_left %d",
@@ -397,6 +398,21 @@ not_junction:
 		goto skip;
 	}
 
+	/*
+	 * At this point, current_obj points to what is setup by PUTFH.
+	 * If readdir involves junctions, then it is possible that the
+	 * FSAL for current_obj and obj could be different. If attributes
+	 * requested includes Filesystem attributes, then a call will be
+	 * made to the FSAL that owns the object as populate_dirent would
+	 * have changed fsal_export to the new export. So, a call to
+	 * get_dynamic_info of the FSAL will be made with data->current_obj
+	 * which is actually the parent's FSAL object.
+	 * This normally happens if NFS clients tries to query FS attributes
+	 * in READDIR of a directory that contains junctions (ex:- pseudo
+	 * namespace)
+	 */
+	saved_current_obj = data->current_obj;
+	data->current_obj = obj;
 	if (!xdr_encode_entry4(&tracker->xdr, &args, tracker->req_attr,
 			       cookie, &name) ||
 	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT)
@@ -405,8 +421,10 @@ not_junction:
 		LogFullDebug(COMPONENT_NFS_READDIR,
 			     "Overflow of buffer after xdr_encode_entry4 - pos = %d",
 			     xdr_getpos(&tracker->xdr));
+		data->current_obj = saved_current_obj;
 		goto failure;
 	}
+	data->current_obj = saved_current_obj;
 
  skip:
 
