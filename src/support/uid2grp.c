@@ -385,6 +385,19 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 }
 
 /**
+ * @brief Add a user entry to the cache
+ *
+ * @param[in] group_data user entry with allocated supplementary groups
+ */
+static void add_user_groups_to_cache(struct group_data **gdata)
+{
+	PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
+	uid2grp_add_user(*gdata);
+	uid2grp_hold_group_data(*gdata);
+	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+}
+
+/**
  * @brief Get supplementary groups given uname
  *
  * @param[in]  name       The name of the user
@@ -392,7 +405,6 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
  *
  * @return true if successful, false otherwise
  */
-
 bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 {
 	bool success = false;
@@ -412,11 +424,8 @@ bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 	/* We could not find non-expired group-data in cache, fetch it afresh */
 	*gdata = uid2grp_allocate_by_name(name);
 	if (*gdata) {
-		PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
-		/* Add-user will also remove existing expired cache entry */
-		uid2grp_add_user(*gdata);
-		uid2grp_hold_group_data(*gdata);
-		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+		/* This will also remove existing expired cache entry */
+		add_user_groups_to_cache(gdata);
 		return true;
 	}
 
@@ -460,11 +469,8 @@ bool uid2grp(uid_t uid, struct group_data **gdata)
 	/* We could not find non-expired group-data in cache, fetch it afresh */
 	*gdata = uid2grp_allocate_by_uid(uid);
 	if (*gdata) {
-		PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
-		/* Add-user will also remove existing expired cache entry */
-		uid2grp_add_user(*gdata);
-		uid2grp_hold_group_data(*gdata);
-		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+		/* This will also remove existing expired cache entry */
+		add_user_groups_to_cache(gdata);
 		return true;
 	}
 
@@ -521,11 +527,8 @@ bool principal2grp(char *principal, struct group_data **gdata,
 	/* We could not find non-expired group-data in cache, fetch it afresh */
 	*gdata = uid2grp_allocate_by_principal(principal, uid, gid);
 	if (*gdata) {
-		PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
-		/* Add-user will also remove existing expired cache entry */
-		uid2grp_add_user(*gdata);
-		uid2grp_hold_group_data(*gdata);
-		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+		/* This will also remove existing expired cache entry */
+		add_user_groups_to_cache(gdata);
 		return true;
 	}
 
