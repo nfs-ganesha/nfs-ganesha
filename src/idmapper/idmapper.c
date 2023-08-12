@@ -133,6 +133,49 @@ bool idmapper_init(void)
 }
 
 /**
+ * @brief Add user to the idmapper-user cache
+ *
+ * @param[in] name      user name
+ * @param[in] uid       user ID
+ * @param[in] gid       user GID
+ * @param[in] gss_princ true if the name is a gss principal
+ */
+static void add_user_to_cache(const struct gsh_buffdesc *name, uid_t uid,
+	const gid_t *gid, bool gss_princ)
+{
+	bool success;
+
+	PTHREAD_RWLOCK_wrlock(&idmapper_user_lock);
+	success = idmapper_add_user(name, uid, gid, gss_princ);
+	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
+
+	if (unlikely(!success)) {
+		LogMajor(COMPONENT_IDMAPPER,
+			"idmapper_add_user (uid: %u) failed.", uid);
+	}
+}
+
+/**
+ * @brief Add group to the idmapper-group cache
+ *
+ * @param[in] name      group name
+ * @param[in] gid       group ID
+ */
+static void add_group_to_cache(const struct gsh_buffdesc *name, gid_t gid)
+{
+	bool success;
+
+	PTHREAD_RWLOCK_wrlock(&idmapper_group_lock);
+	success = idmapper_add_group(name, gid);
+	PTHREAD_RWLOCK_unlock(&idmapper_group_lock);
+
+	if (unlikely(!success)) {
+		LogMajor(COMPONENT_IDMAPPER,
+			"idmapper_add_group (gid: %u) failed.", gid);
+	}
+}
+
+/**
  * @brief Encode a UID or GID as a string
  *
  * @param[in,out] xdrs  XDR stream to which to encode
@@ -282,20 +325,11 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		}
 
 		/* Add to the cache and encode the result. */
-		PTHREAD_RWLOCK_wrlock(group ? &idmapper_group_lock :
-				      &idmapper_user_lock);
 		if (group)
-			success = idmapper_add_group(&new_name, id);
+			add_group_to_cache(&new_name, id);
 		else
-			success = idmapper_add_user(&new_name, id, NULL, false);
+			add_user_to_cache(&new_name, id, NULL, false);
 
-		PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
-				      &idmapper_user_lock);
-		if (unlikely(!success)) {
-			LogMajor(COMPONENT_IDMAPPER, "%s failed.",
-				 group ? "idmapper_add_group" :
-				 "idmaper_add_user");
-		}
 		not_a_size_t = new_name.len;
 		return inline_xdr_bytes(xdrs, (char **)&new_name.addr,
 					&not_a_size_t, UINT32_MAX);
@@ -634,22 +668,12 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 			*id = anon;
 		}
 
-		PTHREAD_RWLOCK_wrlock(group ? &idmapper_group_lock :
-				      &idmapper_user_lock);
 		if (group)
-			success = idmapper_add_group(name, *id);
+			add_group_to_cache(name, *id);
 		else
-			success =
-			    idmapper_add_user(name, *id, got_gid ? &gid : NULL,
-					      false);
+			add_user_to_cache(name, *id, got_gid ? &gid : NULL,
+				false);
 
-		PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
-				      &idmapper_user_lock);
-
-		if (!success)
-			LogMajor(COMPONENT_IDMAPPER, "%s(%s %u) failed",
-				 (group ? "gidmap_add" : "uidmap_add"),
-				 namebuff, *id);
 		return true;
 	}
 }
@@ -951,15 +975,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 	}
 
 principal_found:
-	PTHREAD_RWLOCK_wrlock(&idmapper_user_lock);
-	success = idmapper_add_user(&princbuff, gss_uid, &gss_gid, true);
-	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
-
-	if (!success) {
-		LogMajor(COMPONENT_IDMAPPER,
-			"idmapper_add_user(%s, %d, %d) failed",
-			principal, gss_uid, gss_gid);
-	}
+	add_user_to_cache(&princbuff, gss_uid, &gss_gid, true);
 
 out:
 	*uid = gss_uid;
