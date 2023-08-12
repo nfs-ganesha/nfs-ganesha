@@ -61,7 +61,13 @@
 #include "idmapper.h"
 #include "server_stats_private.h"
 
-static struct gsh_buffdesc owner_domain;
+struct owner_domain_holder {
+	struct gsh_buffdesc domain;
+	/* Lock to synchronise reads and writes to owner domain */
+	pthread_rwlock_t lock;
+};
+
+static struct owner_domain_holder owner_domain;
 
 /* winbind auth stats information */
 struct auth_stats winbind_auth_stats;
@@ -124,8 +130,10 @@ static bool idmapper_set_owner_domain(void)
 			"Owner domain was not found or initialised");
 		return false;
 	}
-	owner_domain.addr = gsh_strdup(domain_addr);
-	owner_domain.len = strlen(owner_domain.addr);
+	PTHREAD_RWLOCK_wrlock(&owner_domain.lock);
+	owner_domain.domain.addr = gsh_strdup(domain_addr);
+	owner_domain.domain.len = strlen(owner_domain.domain.addr);
+	PTHREAD_RWLOCK_unlock(&owner_domain.lock);
 	return true;
 }
 
@@ -134,14 +142,21 @@ static bool idmapper_set_owner_domain(void)
  */
 static void idmapper_clear_owner_domain(void)
 {
-	if (owner_domain.len == 0)
+	PTHREAD_RWLOCK_wrlock(&owner_domain.lock);
+	if (owner_domain.domain.len == 0) {
+		PTHREAD_RWLOCK_unlock(&owner_domain.lock);
 		return;
-	gsh_free(owner_domain.addr);
-	owner_domain.len = 0;
+	}
+	gsh_free(owner_domain.domain.addr);
+	owner_domain.domain.addr = NULL;
+	owner_domain.domain.len = 0;
+	PTHREAD_RWLOCK_unlock(&owner_domain.lock);
 }
 
 /**
  * @brief Cleanup idmapper on shutdown
+ *
+ * This should happen only once in the process lifetime, during shutdown.
  */
 void idmapper_cleanup(void)
 {
@@ -152,6 +167,7 @@ void idmapper_cleanup(void)
 	idmapper_clear_owner_domain();
 	idmapper_destroy_cache();
 	idmapper_negative_cache_destroy();
+	PTHREAD_RWLOCK_destroy(&owner_domain.lock);
 	PTHREAD_RWLOCK_destroy(&winbind_auth_lock);
 	PTHREAD_RWLOCK_destroy(&gc_auth_lock);
 	PTHREAD_RWLOCK_destroy(&dns_auth_lock);
@@ -211,7 +227,7 @@ static void idmapper_reaper_init(void)
 /**
  * @brief Initialize the ID Mapper
  *
- * This should happen only once during the process startup.
+ * This should happen only once in the process lifetime, during startup.
  *
  * @return true on success, false on failure
  */
@@ -222,6 +238,7 @@ bool idmapper_init(void)
 	PTHREAD_RWLOCK_init(&winbind_auth_lock, NULL);
 	PTHREAD_RWLOCK_init(&gc_auth_lock, NULL);
 	PTHREAD_RWLOCK_init(&dns_auth_lock, NULL);
+	PTHREAD_RWLOCK_init(&owner_domain.lock, NULL);
 
 	rc = idmapper_set_owner_domain();
 	if (!rc) {
@@ -363,6 +380,21 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		char *namebuff = NULL;
 		struct gsh_buffdesc new_name;
 
+		/* We copy owner_domain to a static buffer to:
+		 * 1. Avoid holding owner_domain read lock during network calls,
+		 * and avoid possible writes starvation (when using libnfsidmap)
+		 * 2. Avoid inconsistencies across the usage points of
+		 * owner_domain, if owner_domain gets updated in the meantime
+		 */
+		PTHREAD_RWLOCK_rdlock(&owner_domain.lock);
+		size_t owner_domain_len = owner_domain.domain.len;
+		char owner_domain_addr[owner_domain_len + 1];
+
+		memcpy(owner_domain_addr, owner_domain.domain.addr,
+			owner_domain_len);
+		owner_domain_addr[owner_domain_len] = '\0';
+		PTHREAD_RWLOCK_unlock(&owner_domain.lock);
+
 		if (nfs_param.nfsv4_param.use_getpwnam) {
 			if (group)
 				size = sysconf(_SC_GETGR_R_SIZE_MAX);
@@ -371,7 +403,13 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 			if (size == -1)
 				size = PWENT_BEST_GUESS_LEN;
 			new_name.len = size;
-			size += owner_domain.len + 2;
+
+			if (owner_domain_len == 0) {
+				LogInfo(COMPONENT_IDMAPPER,
+					"owner_domain.domain is NULL, cannot encode nfs4 principal");
+				return false;
+			}
+			size += owner_domain_len + 2;
 		} else {
 			size = NFS4_MAX_DOMAIN_LEN + 2;
 		}
@@ -405,9 +443,16 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				cursor = namebuff + new_name.len;
 				*(cursor++) = '@';
 				++new_name.len;
-				memcpy(cursor, owner_domain.addr,
-				       owner_domain.len);
-				new_name.len += owner_domain.len;
+
+				if (owner_domain_len == 0) {
+					LogInfo(COMPONENT_IDMAPPER,
+						"owner_domain.domain is NULL, cannot encode nfs4 principal");
+					return false;
+				}
+				memcpy(cursor, owner_domain_addr,
+					owner_domain_len);
+				new_name.len += owner_domain_len;
+
 				looked_up = true;
 			} else {
 				LogInfo(COMPONENT_IDMAPPER,
@@ -418,11 +463,11 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		} else {
 #ifdef USE_NFSIDMAP
 			if (group) {
-				rc = nfs4_gid_to_name(id, owner_domain.addr,
+				rc = nfs4_gid_to_name(id, owner_domain_addr,
 						      namebuff,
 						      NFS4_MAX_DOMAIN_LEN + 1);
 			} else {
-				rc = nfs4_uid_to_name(id, owner_domain.addr,
+				rc = nfs4_uid_to_name(id, owner_domain_addr,
 						      namebuff,
 						      NFS4_MAX_DOMAIN_LEN + 1);
 			}
@@ -642,10 +687,19 @@ static bool pwentname2id(char *name, uint32_t *id, bool group,
 {
 	int err;
 	if (at != NULL) {
-		if (strcmp(at + 1, owner_domain.addr) != 0) {
+		PTHREAD_RWLOCK_rdlock(&owner_domain.lock);
+		if (owner_domain.domain.len == 0) {
+			PTHREAD_RWLOCK_unlock(&owner_domain.lock);
+			LogWarn(COMPONENT_IDMAPPER,
+				"owner_domain.domain is NULL, cannot validate the input domain");
+			return false;
+		}
+		if (strcmp(at + 1, owner_domain.domain.addr) != 0) {
+			PTHREAD_RWLOCK_unlock(&owner_domain.lock);
 			/* We won't map what isn't even in the right domain */
 			return false;
 		}
+		PTHREAD_RWLOCK_unlock(&owner_domain.lock);
 		*at = '\0';
 	}
 	if (group) {
