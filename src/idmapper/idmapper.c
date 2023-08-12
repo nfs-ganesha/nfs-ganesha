@@ -79,11 +79,69 @@ pthread_rwlock_t dns_auth_lock;
 struct cleanup_list_element idmapper_cleanup_element;
 
 /**
+ * @brief Set the ID Mapper's owner-domain
+ *
+ * @return true on success, false on failure
+ */
+static bool idmapper_set_owner_domain(void)
+{
+	char domain_addr[NFS4_MAX_DOMAIN_LEN + 1] = {};
+#ifdef USE_NFSIDMAP
+	if (!nfs_param.nfsv4_param.use_getpwnam) {
+		/* Note: The libnfsidmap function `nfs4_init_name_mapping` has
+		 * no effect if called after it has been previously called once
+		 * during the lifetime of the process. Any subsequent call to
+		 * override libnfsidmap's global state must be preceded by
+		 * clearing the earlier state within libnfsidmap, which is
+		 * currently not possible.
+		 */
+		if (nfs4_init_name_mapping(nfs_param.nfsv4_param.idmapconf)
+			!= 0) {
+			LogCrit(COMPONENT_IDMAPPER,
+				"Failed to init idmapping via nfsidmap");
+			return false;
+		}
+		if (nfs4_get_default_domain
+			(NULL, domain_addr, NFS4_MAX_DOMAIN_LEN) != 0) {
+			LogCrit(COMPONENT_IDMAPPER,
+				"Failed to get default domain via nfsidmap");
+			return false;
+		}
+	}
+#endif				/* USE_NFSIDMAP */
+	if (nfs_param.nfsv4_param.use_getpwnam)
+		strcpy(domain_addr, nfs_param.nfsv4_param.domainname);
+
+	/* Return false if domain was not initialised through above
+	 * conditions
+	 */
+	if (domain_addr[0] == '\0') {
+		LogCrit(COMPONENT_IDMAPPER,
+			"Owner domain was not found or initialised");
+		return false;
+	}
+	owner_domain.addr = gsh_strdup(domain_addr);
+	owner_domain.len = strlen(owner_domain.addr);
+	return true;
+}
+
+/**
+ * @brief Remove and free the ID Mapper's owner-domain
+ */
+static void idmapper_clear_owner_domain(void)
+{
+	if (owner_domain.len == 0)
+		return;
+	gsh_free(owner_domain.addr);
+	owner_domain.len = 0;
+}
+
+/**
  * @brief Cleanup idmapper on shutdown
  */
 void idmapper_cleanup(void)
 {
-	gsh_free(owner_domain.addr);
+	idmapper_clear_owner_domain();
 	idmapper_destroy_cache();
 	PTHREAD_RWLOCK_destroy(&winbind_auth_lock);
 	PTHREAD_RWLOCK_destroy(&gc_auth_lock);
@@ -93,35 +151,23 @@ void idmapper_cleanup(void)
 /**
  * @brief Initialize the ID Mapper
  *
+ * This should happen only once during the process startup.
+ *
  * @return true on success, false on failure
  */
-
 bool idmapper_init(void)
 {
+	bool rc;
+
 	PTHREAD_RWLOCK_init(&winbind_auth_lock, NULL);
 	PTHREAD_RWLOCK_init(&gc_auth_lock, NULL);
 	PTHREAD_RWLOCK_init(&dns_auth_lock, NULL);
 
-#ifdef USE_NFSIDMAP
-	if (!nfs_param.nfsv4_param.use_getpwnam) {
-		if (nfs4_init_name_mapping(nfs_param.nfsv4_param.idmapconf)
-		    != 0) {
-			return false;
-		}
-		owner_domain.addr = gsh_malloc(NFS4_MAX_DOMAIN_LEN + 1);
-
-		if (nfs4_get_default_domain
-		    (NULL, owner_domain.addr, NFS4_MAX_DOMAIN_LEN) != 0) {
-			gsh_free(owner_domain.addr);
-			return false;
-		}
-		owner_domain.len = strlen(owner_domain.addr);
-	}
-#endif				/* USE_NFSIDMAP */
-	if (nfs_param.nfsv4_param.use_getpwnam) {
-		owner_domain.addr = gsh_strdup(nfs_param.nfsv4_param
-					       .domainname);
-		owner_domain.len = strlen(nfs_param.nfsv4_param.domainname);
+	rc = idmapper_set_owner_domain();
+	if (!rc) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Unable to set owner-domain required for idmapping.");
+		return false;
 	}
 
 	idmapper_cache_init();
