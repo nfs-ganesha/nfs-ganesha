@@ -72,6 +72,7 @@ bool idmapper_lookup_by_gid(const gid_t, const struct gsh_buffdesc **);
 
 bool idmapper_init(void);
 void idmapper_clear_cache(void);
+void idmapper_destroy_cache(void);
 
 bool xdr_encode_nfs4_owner(XDR *, uid_t);
 bool xdr_encode_nfs4_group(XDR *, gid_t);

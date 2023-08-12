@@ -728,7 +728,16 @@ void idmapper_clear_cache(void)
 
 	PTHREAD_RWLOCK_unlock(&idmapper_group_lock);
 	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
+}
 
+/**
+ * @brief Destroy the IDMapper cache
+ *
+ * This function clears the cache, and destroys its locks.
+ */
+void idmapper_destroy_cache(void)
+{
+	idmapper_clear_cache();
 	PTHREAD_RWLOCK_destroy(&idmapper_user_lock);
 	PTHREAD_RWLOCK_destroy(&idmapper_group_lock);
 }

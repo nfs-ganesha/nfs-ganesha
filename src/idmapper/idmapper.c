@@ -84,8 +84,7 @@ struct cleanup_list_element idmapper_cleanup_element;
 void idmapper_cleanup(void)
 {
 	gsh_free(owner_domain.addr);
-
-	idmapper_clear_cache();
+	idmapper_destroy_cache();
 	PTHREAD_RWLOCK_destroy(&winbind_auth_lock);
 	PTHREAD_RWLOCK_destroy(&gc_auth_lock);
 	PTHREAD_RWLOCK_destroy(&dns_auth_lock);
