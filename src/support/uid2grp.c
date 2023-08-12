@@ -52,6 +52,9 @@
 #include <nfsidmap.h>
 #endif
 
+/* Switch to enable or disable idmapping */
+extern bool idmapping_enabled;
+
 sem_t uid2grp_sem;
 
 /* group_data has a reference counter. If it goes to zero, it implies
@@ -429,7 +432,26 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
  */
 static void add_user_groups_to_cache(struct group_data **gdata)
 {
+	/* Do not add to cache if idmapping is disabled */
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled, add-to-cache skipped");
+		return;
+	}
+
 	PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
+
+	/* Recheck if idmapping is enabled because it is possible that after
+	 * cache cleanup completes (resulting from the disabling of idmapping),
+	 * there are waiting requests with older idmapping data that might end
+	 * up writing their data to the cache. We need to stop them.
+	*/
+	if (!idmapping_enabled) {
+		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled, add-to-cache skipped");
+		return;
+	}
 	uid2grp_add_user(*gdata);
 	uid2grp_hold_group_data(*gdata);
 	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
@@ -447,6 +469,12 @@ bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 {
 	bool success = false;
 	uid_t uid = -1;
+
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled, name-to-group skipped");
+		return false;
+	}
 
 	PTHREAD_RWLOCK_rdlock(&uid2grp_user_lock);
 	success = uid2grp_lookup_by_uname(name, &uid, gdata);
@@ -492,6 +520,12 @@ bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 bool uid2grp(uid_t uid, struct group_data **gdata)
 {
 	bool success = false;
+
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled, uid-to-group skipped");
+		return false;
+	}
 
 	PTHREAD_RWLOCK_rdlock(&uid2grp_user_lock);
 	success = uid2grp_lookup_by_uid(uid, gdata);
@@ -549,6 +583,12 @@ bool principal2grp(char *principal, struct group_data **gdata,
 	};
 	LogDebug(COMPONENT_IDMAPPER, "Resolve principal %s to groups",
 		principal);
+
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled, principal-to-group skipped");
+		return false;
+	}
 
 	PTHREAD_RWLOCK_rdlock(&uid2grp_user_lock);
 	success = uid2grp_lookup_by_uname(&princbuff, &unused_cached_uid,

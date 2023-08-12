@@ -90,6 +90,8 @@ bool idmapper_init(void);
 void idmapper_clear_cache(void);
 void idmapper_destroy_cache(void);
 
+bool set_idmapping_status(bool status_enabled);
+
 bool xdr_encode_nfs4_owner(XDR *, uid_t);
 bool xdr_encode_nfs4_group(XDR *, gid_t);
 

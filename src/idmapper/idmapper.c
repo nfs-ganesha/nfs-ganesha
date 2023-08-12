@@ -87,6 +87,12 @@ struct cleanup_list_element idmapper_cleanup_element;
 /* Struct representing threads that reap idmapper caches */
 static struct fridgethr *cache_reaper_fridge;
 
+/* Switch to enable or disable idmapping */
+bool idmapping_enabled = true;
+
+/* Mutex to protect set/reset of idmapping status */
+static mutex_t idmapping_status_lock = MUTEX_INITIALIZER;
+
 /**
  * @brief Set the ID Mapper's owner-domain
  *
@@ -151,6 +157,55 @@ static void idmapper_clear_owner_domain(void)
 	owner_domain.domain.addr = NULL;
 	owner_domain.domain.len = 0;
 	PTHREAD_RWLOCK_unlock(&owner_domain.lock);
+}
+
+/**
+ * This function sets the idmapping status within Ganesha.
+ * If the status is OFF, it performs existing data cleanup in uid2grp.c and
+ * idmapper.c
+ */
+bool set_idmapping_status(bool status_enabled)
+{
+	bool rc;
+
+	/* Acquire mutex to prevent interference by another invocation */
+	mutex_lock(&idmapping_status_lock);
+
+	if (idmapping_enabled == status_enabled) {
+		mutex_unlock(&idmapping_status_lock);
+		LogInfo(COMPONENT_IDMAPPER,
+			"Idmapping status is already set to %d",
+			status_enabled);
+		return true;
+	}
+
+	if (status_enabled) {
+		/* Set the domainname for idmapping */
+		rc = idmapper_set_owner_domain();
+		if (!rc) {
+			mutex_unlock(&idmapping_status_lock);
+			LogWarn(COMPONENT_IDMAPPER,
+				"Could not set owner-domain while enabling Idmapping");
+			return false;
+		}
+		idmapping_enabled = true;
+		mutex_unlock(&idmapping_status_lock);
+		LogInfo(COMPONENT_IDMAPPER, "Idmapping is now enabled");
+		return true;
+	}
+	idmapping_enabled = false;
+
+	/* Clear idmapper data */
+	idmapper_clear_cache();
+	idmapper_clear_owner_domain();
+
+	/* Clear uid2grp data */
+	uid2grp_clear_cache();
+
+	mutex_unlock(&idmapping_status_lock);
+
+	LogInfo(COMPONENT_IDMAPPER, "Idmapping is now disabled");
+	return true;
 }
 
 /**
@@ -270,7 +325,22 @@ static void add_user_to_cache(const struct gsh_buffdesc *name, uid_t uid,
 {
 	bool success;
 
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. Add user(uid: %u) skipped.",
+			uid);
+		return;
+	}
 	PTHREAD_RWLOCK_wrlock(&idmapper_user_lock);
+
+	/* Recheck after obtaining the lock */
+	if (!idmapping_enabled) {
+		PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. Add user(uid: %u) skipped.",
+			uid);
+		return;
+	}
 	success = idmapper_add_user(name, uid, gid, gss_princ);
 	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
 
@@ -302,7 +372,22 @@ static void add_group_to_cache(const struct gsh_buffdesc *name, gid_t gid)
 {
 	bool success;
 
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. Add group(gid: %u) skipped.",
+			gid);
+		return;
+	}
 	PTHREAD_RWLOCK_wrlock(&idmapper_group_lock);
+
+	/* Recheck after obtaining the lock */
+	if (!idmapping_enabled) {
+		PTHREAD_RWLOCK_unlock(&idmapper_group_lock);
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. Add group(gid: %u) skipped.",
+			gid);
+		return;
+	}
 	success = idmapper_add_group(name, gid);
 	PTHREAD_RWLOCK_unlock(&idmapper_group_lock);
 
@@ -353,6 +438,11 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 					&not_a_size_t, UINT32_MAX);
 	}
 
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled, encode-nfs4-principal skipped");
+		return false;
+	}
 	PTHREAD_RWLOCK_rdlock(group ? &idmapper_group_lock :
 			      &idmapper_user_lock);
 	if (group)
@@ -577,7 +667,7 @@ static bool atless2id(char *name, size_t len, uint32_t *id,
  * @param[in]  name  group name
  * @param[out] gid   address for gid to be filled in
  *
- * @return 0 on success and errno on failure.
+ * @return 0 on success and errno on failure and -1 if idmapping is disabled.
  *
  * NOTE: If a group name doesn't exist, getgrnam_r returns 0 with the
  * result pointer set to NULL. We turn that into ENOENT error! Also,
@@ -596,6 +686,13 @@ static int name_to_gid(const char *name, gid_t *gid)
 
 	if (buflen == -1)
 		buflen = PWENT_BEST_GUESS_LEN;
+
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. name-to-gid skipped.");
+		/* Return -1 as the pw-functions return >= 0 return codes */
+		return -1;
+	}
 
 	do {
 		buf = gsh_malloc(buflen);
@@ -627,7 +724,7 @@ static int name_to_gid(const char *name, gid_t *gid)
  * @param[out] uid      address for uid to be filled in
  * @param[out] gid      address for gid to be filled in
  *
- * @return 0 on success and errno on failure.
+ * @return 0 on success and errno on failure and -1 if idmapping is disabled.
  *
  * NOTE: If a user name doesn't exist, getpwnam_r returns 0 with the
  * result pointer set to NULL. We turn that into ENOENT error! Also,
@@ -643,6 +740,12 @@ static int name_to_uid(const char *name, uint32_t *uid, gid_t *gid)
 	size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
 	int err = ERANGE;
 
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. name-to-uid skipped.");
+		/* Return -1 as the pw-functions return >= 0 return codes */
+		return -1;
+	}
 	if (buflen == -1)
 		buflen = PWENT_BEST_GUESS_LEN;
 
@@ -771,6 +874,12 @@ static bool idmapname2id(char *name, size_t len, uint32_t *id,
 {
 #ifdef USE_NFSIDMAP
 	int rc;
+
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. idmap-name-to-id skipped.");
+		return false;
+	}
 
 	if (group)
 		rc = nfs4_name_to_gid(name, id);
@@ -1026,6 +1135,12 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 		.addr = principal,
 		.len = principal_len
 	};
+
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. principal-to-uid skipped.");
+		return false;
+	}
 
 	PTHREAD_RWLOCK_rdlock(&idmapper_user_lock);
 	success = idmapper_lookup_by_uname(&princbuff, &gss_uid, &gss_gidres,
