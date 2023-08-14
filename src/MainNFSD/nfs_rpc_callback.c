@@ -134,6 +134,7 @@ void nfs_rpc_cb_pkginit(void)
 void nfs_rpc_cb_pkgshutdown(void)
 {
 #ifdef _HAVE_GSSAPI
+	gssd_clear_cred_cache();
 	gssd_shutdown_cred_cache();
 #endif
 }

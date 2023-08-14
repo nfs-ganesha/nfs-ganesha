@@ -968,3 +968,116 @@ int gssd_check_mechs(void)
 out:
 	return retval;
 }
+
+/* This function destroys the krb5 creds cache for the input principal entry */
+static void destroy_krb5_creds_cache(struct gssd_k5_kt_princ *ple,
+	krb5_context *context)
+{
+	krb5_error_code code = 0;
+	char *k5err = NULL;
+	krb5_ccache ccache;
+
+	/* Skip if there is no cache to be destroyed */
+	if (!ple->ccname) {
+		return;
+	}
+	code = krb5_cc_resolve(*context, ple->ccname, &ccache);
+	if (code) {
+		k5err = gssd_k5_err_msg(*context, code);
+		LogCrit(COMPONENT_NFS_CB,
+			"Received %s while resolving krb5 cache %s",
+			k5err, ple->ccname);
+		gsh_free(k5err);
+		return;
+	}
+	code = krb5_cc_destroy(*context, ccache);
+	if (code) {
+		k5err = gssd_k5_err_msg(*context, code);
+		LogCrit(COMPONENT_NFS_CB,
+			"Received %s while destroying krb5 cache %s",
+			k5err, ple->ccname);
+		gsh_free(k5err);
+		return;
+	}
+	LogInfo(COMPONENT_NFS_CB,
+		"krb5 cache %s has been destroyed", ple->ccname);
+}
+
+/* This function frees-up a ple entry */
+static void free_ple_entry(struct gssd_k5_kt_princ *ple, krb5_context *context)
+{
+	if (ple->realm != NULL) {
+		gsh_free(ple->realm);
+	}
+	if (ple->ccname != NULL) {
+		gsh_free(ple->ccname);
+	}
+	if (context != NULL) {
+		krb5_free_principal(*context, ple->princ);
+	}
+	gsh_free(ple);
+}
+
+/**
+ * @brief Free the global krb5 principal entries and their krb5 caches
+ *
+ * If we have the krb5 context, iterate over the in-memory principal list,
+ * and destroy the krb5 ticket cache for each list entry.
+ * If we can't destroy the ticket cache for an entry due to the absence of
+ * krb5 context or due to a failure while destroying the krb5 cache, we still
+ * free the entry from our memory.
+ */
+static void clear_global_krb5_principal_list(krb5_context *context)
+{
+	struct gssd_k5_kt_princ *ple, *next_ple;
+
+	PTHREAD_MUTEX_lock(&ple_mtx);
+	ple = gssd_k5_kt_princ_list;
+
+	while (ple != NULL) {
+		/* Store for later retrieval after ple is freed */
+		next_ple = ple->next;
+		if (context != NULL) {
+			destroy_krb5_creds_cache(ple, context);
+		}
+		free_ple_entry(ple, context);
+		ple = next_ple;
+	}
+	gssd_k5_kt_princ_list = NULL;
+	PTHREAD_MUTEX_unlock(&ple_mtx);
+}
+
+/**
+ * @brief Clear gss-credentials caches
+ *
+ * This function clears global krb5 principal entries, and destroys their
+ * respective krb5 caches.
+ */
+void gssd_clear_cred_cache()
+{
+	krb5_context context;
+	krb5_error_code code = 0;
+	char *k5err = NULL;
+
+	code = krb5_init_context(&context);
+	if (code) {
+		k5err = gssd_k5_err_msg(NULL, code);
+		LogCrit(COMPONENT_NFS_CB,
+			"Received %s while initializing krb5 context before cache cleanup",
+			k5err);
+		gsh_free(k5err);
+
+		/* If we cannot init krb5-context (required for destroying krb5
+		 * caches), we still free the cached global principal list.
+		 */
+		clear_global_krb5_principal_list(NULL);
+		return;
+	}
+
+	/* Clear the cached global krb5 principal list and destroy the krb5
+	 * caches.
+	 */
+	clear_global_krb5_principal_list(&context);
+
+	krb5_free_context(context);
+}
