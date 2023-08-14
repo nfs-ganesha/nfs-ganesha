@@ -115,6 +115,11 @@ rpc_call_channel_t *nfs_rpc_get_chan(nfs_client_id_t *pclientid,
 
 void nfs_rpc_cb_pkginit(void);
 void nfs_rpc_cb_pkgshutdown(void);
+
+#ifdef _HAVE_GSSAPI
+void nfs_rpc_cb_set_gss_status(bool gss_enabled);
+#endif
+
 int nfs_rpc_create_chan_v40(nfs_client_id_t *pclientid, uint32_t flags);
 
 int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,

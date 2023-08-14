@@ -76,13 +76,26 @@ const struct __netid_nc_table netid_nc_table[9] = {
 /* retry timeout default to the moon and back */
 static const struct timespec tout = { 3, 0 };
 
+
+#ifdef _HAVE_GSSAPI
+
+struct gss_callback_status_holder {
+	/* Switch to enable or disable gss callback */
+	bool enabled;
+	/* Lock to protect reads and writes to gss callback status */
+	pthread_rwlock_t lock;
+};
+
+static struct gss_callback_status_holder gss_callback_status = {
+	.enabled = true
+};
+
 /**
  * @brief Initialize the callback credential cache
  *
  * @param[in] ccache Location of credential cache
  */
 
-#ifdef _HAVE_GSSAPI
 static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 {
 	int code;
@@ -113,11 +126,14 @@ static inline void nfs_rpc_cb_init_ccache(const char *ccache)
 
 /**
  * @brief Initialize callback subsystem
+ *
+ * @note This should be called once in the process lifetime, during startup.
  */
 void nfs_rpc_cb_pkginit(void)
 {
 #ifdef _HAVE_GSSAPI
 	gssd_init_cred_cache();
+	PTHREAD_RWLOCK_init(&gss_callback_status.lock, NULL);
 	/* ccache */
 	nfs_rpc_cb_init_ccache(nfs_param.krb5_param.ccache_dir);
 
@@ -130,14 +146,53 @@ void nfs_rpc_cb_pkginit(void)
 
 /**
  * @brief Shutdown callback subsystem
+ *
+ * @note This should be called once in the process lifetime, during shutdown.
  */
 void nfs_rpc_cb_pkgshutdown(void)
 {
 #ifdef _HAVE_GSSAPI
 	gssd_clear_cred_cache();
+	PTHREAD_RWLOCK_destroy(&gss_callback_status.lock);
 	gssd_shutdown_cred_cache();
 #endif
 }
+
+#ifdef _HAVE_GSSAPI
+/**
+ * @brief Set gss status for callback
+ *
+ * The status can be set to ON or OFF.
+ * If the status is set to OFF, existing gss-creds will be cleared.
+ * If the status is set to ON, machine gss creds will be initialised.
+ *
+ * @note This function can be used if during the process lifetime, we want to
+ * enable or disable gss for callback channel
+*/
+void nfs_rpc_cb_set_gss_status(bool gss_enabled)
+{
+	PTHREAD_RWLOCK_wrlock(&gss_callback_status.lock);
+	if (gss_callback_status.enabled == gss_enabled) {
+		PTHREAD_RWLOCK_unlock(&gss_callback_status.lock);
+		LogInfo(COMPONENT_NFS_CB,
+			"Callback channel's gss status is already set to %d",
+			gss_enabled);
+		return;
+	}
+
+	if (gss_enabled) {
+		nfs_rpc_cb_init_ccache(nfs_param.krb5_param.ccache_dir);
+		gss_callback_status.enabled = true;
+		PTHREAD_RWLOCK_unlock(&gss_callback_status.lock);
+		LogInfo(COMPONENT_NFS_CB, "Gss callbacks are now enabled");
+		return;
+	}
+	gssd_clear_cred_cache();
+	gss_callback_status.enabled = false;
+	PTHREAD_RWLOCK_unlock(&gss_callback_status.lock);
+	LogInfo(COMPONENT_NFS_CB, "Gss callbacks are now disabled");
+}
+#endif
 
 /**
  * @brief Convert a netid label
@@ -458,6 +513,7 @@ static inline char *format_host_principal(rpc_call_channel_t *chan, char *buf,
  * @param[in]     cred GSS Credential
  *
  * @return	auth->ah_error; check AUTH_FAILURE or AUTH_SUCCESS.
+ * @note	this function only works for NFS v4.0 as of now
  */
 
 #ifdef _HAVE_GSSAPI
@@ -475,10 +531,20 @@ static inline AUTH *nfs_rpc_callback_setup_gss(rpc_call_channel_t *chan,
 	chan->gss_sec.svc = cred->auth_union.auth_gss.svc;
 	chan->gss_sec.qop = cred->auth_union.auth_gss.qop;
 
+	PTHREAD_RWLOCK_rdlock(&gss_callback_status.lock);
+
+	if (!gss_callback_status.enabled) {
+		PTHREAD_RWLOCK_unlock(&gss_callback_status.lock);
+		LogWarn(COMPONENT_NFS_CB,
+			"gss callback is not enabled. Skipping gss setup for callback");
+		code = EINVAL;
+		goto out_err;
+	}
 	/* the GSSAPI k5 mech needs to find an unexpired credential
 	 * for nfs/hostname in an accessible k5ccache */
 	code = gssd_refresh_krb5_machine_credential(nfs_host_name,
 						    NULL, principal);
+	PTHREAD_RWLOCK_unlock(&gss_callback_status.lock);
 
 	if (code) {
 		LogWarn(COMPONENT_NFS_CB,
