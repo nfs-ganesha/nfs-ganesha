@@ -166,7 +166,7 @@ struct config_error_type err_type;
 /**
  * @brief Set up the server-principal and creds to be used for GSS forechannel
  */
-static void gss_principal_init(void)
+static void gss_principal_init(enum log_components log_component)
 {
 	gss_buffer_desc gss_service_buf;
 	OM_uint32 maj_stat, min_stat;
@@ -182,22 +182,22 @@ static void gss_principal_init(void)
 
 	if (maj_stat != GSS_S_COMPLETE) {
 		log_sperror_gss(gssError, maj_stat, min_stat);
-		LogFatal(COMPONENT_INIT,
+		LogFatal(log_component,
 			"Error importing gss principal %s is %s",
 			nfs_param.krb5_param.svc.principal, gssError);
 	}
 
 	if (nfs_param.krb5_param.svc.gss_name == GSS_C_NO_NAME) {
-		LogInfo(COMPONENT_INIT,
+		LogInfo(log_component,
 			"Regression:  svc.gss_name == GSS_C_NO_NAME");
 	}
 
-	LogInfo(COMPONENT_INIT, "gss principal \"%s\" successfully set",
+	LogInfo(log_component, "gss principal \"%s\" successfully set",
 		nfs_param.krb5_param.svc.principal);
 
 	/* Set the principal to GSSRPC */
 	if (!svcauth_gss_set_svc_name(nfs_param.krb5_param.svc.gss_name)) {
-		LogFatal(COMPONENT_INIT,
+		LogFatal(log_component,
 			"Impossible to set gss principal to GSSRPC");
 	}
 	/* Don't release name until shutdown, it will be used by the
@@ -206,14 +206,153 @@ static void gss_principal_init(void)
 
 	/* Trying to acquire credentials, while checking name's validity */
 	if (!svcauth_gss_acquire_cred()) {
-		LogCrit(COMPONENT_INIT,
+		LogCrit(log_component,
 			"Cannot acquire credentials for principal %s",
 			nfs_param.krb5_param.svc.principal);
 	} else {
-		LogInfo(COMPONENT_INIT,
+		LogInfo(log_component,
 			"Principal %s is suitable for acquiring credentials",
 			nfs_param.krb5_param.svc.principal);
 	}
+}
+
+/**
+ * @brief Enable nfs_krb5 functionality
+ *
+ * This functionality includes gss based authentication for forechannel
+ * and gss based callbacks.
+ */
+static void enable_nfs_krb5(nfs_krb5_parameter_t krb5_param,
+	enum log_components log_component)
+{
+	char gssError[MAXNAMLEN + 1];
+
+	/* Update global nfs_param.krb5_param */
+	nfs_param.krb5_param = krb5_param;
+
+	/* Enable gss based callbacks */
+	nfs_rpc_cb_set_gss_status(true);
+
+	/* Setup keytab */
+#ifdef HAVE_KRB5
+	OM_uint32 gss_status =
+		krb5_gss_register_acceptor_identity(krb5_param.keytab);
+	if (gss_status != GSS_S_COMPLETE) {
+		log_sperror_gss(gssError, gss_status, 0);
+		LogFatal(log_component,
+			"Error setting krb5 keytab to value %s is %s",
+			krb5_param.keytab, gssError);
+	}
+	LogInfo(log_component, "krb5 keytab path successfully set to %s",
+		krb5_param.keytab);
+#endif				/* HAVE_KRB5 */
+
+	/* Set up gss principal to use with GSSAPI */
+	gss_principal_init(log_component);
+
+	/* Set rpcsec_gss fore-channel authentication status as ON */
+	svcauth_gss_set_status(true);
+
+	LogInfo(log_component, "nfs_krb5 functionality is now enabled");
+}
+
+/**
+ * @brief Disable nfs_krb5 functionality
+ *
+ * This functionality includes gss based authentication for forechannel
+ * and gss based callbacks.
+ */
+static void disable_nfs_krb5(nfs_krb5_parameter_t krb5_param
+	enum log_components log_component)
+{
+	char gss_error[MAXNAMLEN + 1];
+	OM_uint32 maj_stat, min_stat;
+
+	nfs_param.krb5_param.active_krb5 = false;
+
+#ifdef HAVE_KRB5
+	/* Clear keytab used by gss/krb5 lib */
+	OM_uint32 gss_status = krb5_gss_register_acceptor_identity(NULL);
+
+	if (gss_status != GSS_S_COMPLETE) {
+		log_sperror_gss(gss_error, gss_status, 0);
+		LogCrit(log_component,
+			"Error clearing krb5 keytab: %s", gss_error);
+	} else {
+		LogInfo(log_component,
+			"krb5 keytab path successfully cleared");
+	}
+#endif				/* HAVE_KRB5 */
+
+	/* Clear gss_name */
+	if (nfs_param.krb5_param.svc.gss_name != GSS_C_NO_NAME) {
+		maj_stat = gss_release_name(&min_stat,
+			&nfs_param.krb5_param.svc.gss_name);
+		if (maj_stat != GSS_S_COMPLETE) {
+			LogCrit(log_component,
+				"Error freeing svc.gss_name major=%u minor=%u",
+				maj_stat, min_stat);
+		}
+		nfs_param.krb5_param.svc.gss_name = NULL;
+	}
+
+	/* Set rpcsec_gss fore-channel authentication status as OFF */
+	svcauth_gss_set_status(false);
+	LogInfo(log_component, "svcauth_gss is now disabled");
+
+	/* Disable gss based callbacks */
+	nfs_rpc_cb_set_gss_status(false);
+
+	LogInfo(log_component, "nfs_krb5 functionality is now disabled");
+}
+
+/**
+ * @brief Handle nfs_krb5 configuration update
+ *
+ * This function detects changes against the existing nfs_krb5 configuration,
+ * and makes the required Ganesha-wide changes.
+ *
+ * @note We only support dynamic toggling of the krb5 functionality from the
+ * states -- OFF to OFF, OFF to ON and ON to OFF. ON to ON with an updated
+ * configuration is not supported.
+ */
+static void handle_krb5_config_update(nfs_krb5_parameter_t new_krb5_param)
+{
+	if (!nfs_param.krb5_param.active_krb5) {
+		if (!new_krb5_param.active_krb5) {
+			LogInfo(COMPONENT_CONFIG,
+				"NFSv4-KRB5 state: OFF --> OFF. No action required");
+			return;
+		}
+		LogInfo(COMPONENT_CONFIG,
+			"NFSv4-KRB5 state: OFF --> ON. Enabling KRB5");
+		enable_nfs_krb5(new_krb5_param, COMPONENT_CONFIG);
+		return;
+	}
+
+	/* At this point, existing nfs_param.krb5_param.active_krb5 is true */
+
+	if (new_krb5_param.active_krb5) {
+		/* No action needed if new and old configs are the same */
+		if (!strcmp(nfs_param.krb5_param.keytab,
+			new_krb5_param.keytab) &&
+			!strcmp(nfs_param.krb5_param.ccache_dir,
+				new_krb5_param.ccache_dir) &&
+			!strcmp(nfs_param.krb5_param.svc.principal,
+				new_krb5_param.svc.principal)) {
+			LogInfo(COMPONENT_CONFIG,
+				"NFSv4-KRB5 state: ON --> ON (same config). No action required");
+			return;
+		}
+		LogCrit(COMPONENT_CONFIG,
+			"NFSv4-KRB5 state: ON --> ON (updated config). Reload does not support it!");
+		/* For backward compatibility, we release gss-creds on reload */
+		svcauth_gss_release_cred();
+		return;
+	}
+	LogInfo(COMPONENT_CONFIG,
+		"NFSv4-KRB5 state: ON --> OFF. Disabling KRB5");
+	disable_nfs_krb5(new_krb5_param, COMPONENT_CONFIG);
 }
 
 #endif /* _HAVE_GSSAPI */
@@ -222,6 +361,9 @@ bool reread_config(void)
 {
 	int status = 0;
 	config_file_t config_struct;
+#ifdef _HAVE_GSSAPI
+	nfs_krb5_parameter_t new_krb5_param;
+#endif
 
 	/* If no configuration file is given, then the caller must want to
 	 * reparse the configuration file from startup.
@@ -278,6 +420,22 @@ bool reread_config(void)
 	if (!status)
 		LogFatal(COMPONENT_CONFIG, "Failed to set idmapping status");
 
+#ifdef _HAVE_GSSAPI
+	/* Reread NFS kerberos5 configuration */
+	(void) load_config_from_parse(config_struct,
+				      &krb5_param,
+				      &new_krb5_param,
+				      true,
+				      &err_type);
+	if (!config_error_is_harmless(&err_type)) {
+		LogCrit(COMPONENT_CONFIG,
+			"Error while parsing NFSv4-KRB5 configuration section");
+		return false;
+	}
+
+	handle_krb5_config_update(new_krb5_param);
+#endif /* _HAVE_GSSAPI */
+
 	(void) report_config_errors(&err_type, NULL, config_errs_to_log);
 	config_Free(config_struct);
 	return true;
@@ -313,9 +471,6 @@ static void *sigmgr_thread(void *UnusedArg)
 			LogEvent(COMPONENT_MAIN,
 				 "SIGHUP_HANDLER: Received SIGHUP.... initiating export list reload");
 			reread_config();
-#ifdef _HAVE_GSSAPI
-			svcauth_gss_release_cred();
-#endif /* _HAVE_GSSAPI */
 		}
 	}
 	LogDebug(COMPONENT_THREAD, "sigmgr thread exiting");
@@ -855,10 +1010,6 @@ int nfsv4_init_params(void)
 
 static void nfs_Init(const nfs_start_info_t *p_start_info)
 {
-#ifdef _HAVE_GSSAPI
-	char GssError[MAXNAMLEN + 1];
-#endif
-
 #ifdef USE_DBUS
 	/* DBUS init */
 	gsh_dbus_pkginit();
@@ -880,32 +1031,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	nfs41_session_pool =
 	    pool_basic_init("NFSv4.1 session pool", sizeof(nfs41_session_t));
 
-	/* If rpcsec_gss is used, set the path to the keytab */
-#ifdef _HAVE_GSSAPI
-	if (nfs_param.krb5_param.active_krb5) {
-#ifdef HAVE_KRB5
-		OM_uint32 gss_status = GSS_S_COMPLETE;
-
-		if (strcmp(nfs_param.krb5_param.keytab, DEFAULT_NFS_KEYTAB))
-			gss_status = krb5_gss_register_acceptor_identity(
-						nfs_param.krb5_param.keytab);
-
-		if (gss_status != GSS_S_COMPLETE) {
-			log_sperror_gss(GssError, gss_status, 0);
-			LogFatal(COMPONENT_INIT,
-				 "Error setting krb5 keytab to value %s is %s",
-				 nfs_param.krb5_param.keytab, GssError);
-		}
-		LogInfo(COMPONENT_INIT,
-			"krb5 keytab path successfully set to %s",
-			nfs_param.krb5_param.keytab);
-#endif				/* HAVE_KRB5 */
-
-		/* Set up principal to be use for GSSAPPI within GSSRPC/KRB5 */
-		gss_principal_init();
-
-	}			/*  if( nfs_param.krb5_param.active_krb5 ) */
-#endif				/* _HAVE_GSSAPI */
 	/* Init the NFSv4 Clientid cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
 	if (nfs_Init_client_id() !=
@@ -1016,6 +1141,15 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	/* callback dispatch */
 	nfs_rpc_cb_pkginit();
+
+	/* If rpcsec_gss is used, setup nfs-krb5 */
+#ifdef _HAVE_GSSAPI
+	if (nfs_param.krb5_param.active_krb5)
+		enable_nfs_krb5(nfs_param.krb5_param, COMPONENT_INIT);
+	else
+		disable_nfs_krb5(nfs_param.krb5_param, COMPONENT_INIT);
+#endif
+
 #ifdef _USE_CB_SIMULATOR
 	nfs_rpc_cbsim_pkginit();
 #endif				/*  _USE_CB_SIMULATOR */
