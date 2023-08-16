@@ -161,6 +161,63 @@ char *cid_server_scope;
 
 struct config_error_type err_type;
 
+#ifdef _HAVE_GSSAPI
+
+/**
+ * @brief Set up the server-principal and creds to be used for GSS forechannel
+ */
+static void gss_principal_init(void)
+{
+	gss_buffer_desc gss_service_buf;
+	OM_uint32 maj_stat, min_stat;
+	char gssError[MAXNAMLEN + 1];
+
+	gss_service_buf.value = nfs_param.krb5_param.svc.principal;
+	gss_service_buf.length = strlen(nfs_param.krb5_param.svc.principal) + 1;
+	/* The '+1' is not to be forgotten, for the '\0' at the end */
+
+	maj_stat = gss_import_name(&min_stat, &gss_service_buf,
+		(gss_OID) GSS_C_NT_HOSTBASED_SERVICE,
+		&nfs_param.krb5_param.svc.gss_name);
+
+	if (maj_stat != GSS_S_COMPLETE) {
+		log_sperror_gss(gssError, maj_stat, min_stat);
+		LogFatal(COMPONENT_INIT,
+			"Error importing gss principal %s is %s",
+			nfs_param.krb5_param.svc.principal, gssError);
+	}
+
+	if (nfs_param.krb5_param.svc.gss_name == GSS_C_NO_NAME) {
+		LogInfo(COMPONENT_INIT,
+			"Regression:  svc.gss_name == GSS_C_NO_NAME");
+	}
+
+	LogInfo(COMPONENT_INIT, "gss principal \"%s\" successfully set",
+		nfs_param.krb5_param.svc.principal);
+
+	/* Set the principal to GSSRPC */
+	if (!svcauth_gss_set_svc_name(nfs_param.krb5_param.svc.gss_name)) {
+		LogFatal(COMPONENT_INIT,
+			"Impossible to set gss principal to GSSRPC");
+	}
+	/* Don't release name until shutdown, it will be used by the
+	 * backchannel.
+	 */
+
+	/* Trying to acquire credentials, while checking name's validity */
+	if (!svcauth_gss_acquire_cred()) {
+		LogCrit(COMPONENT_INIT,
+			"Cannot acquire credentials for principal %s",
+			nfs_param.krb5_param.svc.principal);
+	} else {
+		LogInfo(COMPONENT_INIT,
+			"Principal %s is suitable for acquiring credentials",
+			nfs_param.krb5_param.svc.principal);
+	}
+}
+
+#endif /* _HAVE_GSSAPI */
+
 bool reread_config(void)
 {
 	int status = 0;
@@ -799,8 +856,6 @@ int nfsv4_init_params(void)
 static void nfs_Init(const nfs_start_info_t *p_start_info)
 {
 #ifdef _HAVE_GSSAPI
-	gss_buffer_desc gss_service_buf;
-	OM_uint32 maj_stat, min_stat;
 	char GssError[MAXNAMLEN + 1];
 #endif
 
@@ -827,8 +882,8 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 
 	/* If rpcsec_gss is used, set the path to the keytab */
 #ifdef _HAVE_GSSAPI
-#ifdef HAVE_KRB5
 	if (nfs_param.krb5_param.active_krb5) {
+#ifdef HAVE_KRB5
 		OM_uint32 gss_status = GSS_S_COMPLETE;
 
 		if (strcmp(nfs_param.krb5_param.keytab, DEFAULT_NFS_KEYTAB))
@@ -847,41 +902,9 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 #endif				/* HAVE_KRB5 */
 
 		/* Set up principal to be use for GSSAPPI within GSSRPC/KRB5 */
-		gss_service_buf.value = nfs_param.krb5_param.svc.principal;
-		gss_service_buf.length =
-			strlen(nfs_param.krb5_param.svc.principal) + 1;
-		/* The '+1' is not to be forgotten, for the '\0' at the end */
+		gss_principal_init();
 
-		maj_stat = gss_import_name(&min_stat, &gss_service_buf,
-					   (gss_OID) GSS_C_NT_HOSTBASED_SERVICE,
-					   &nfs_param.krb5_param.svc.gss_name);
-		if (maj_stat != GSS_S_COMPLETE) {
-			log_sperror_gss(GssError, maj_stat, min_stat);
-			LogFatal(COMPONENT_INIT,
-				 "Error importing gss principal %s is %s",
-				 nfs_param.krb5_param.svc.principal, GssError);
-		}
-
-		if (nfs_param.krb5_param.svc.gss_name == GSS_C_NO_NAME)
-			LogInfo(COMPONENT_INIT,
-				"Regression:  svc.gss_name == GSS_C_NO_NAME");
-
-		LogInfo(COMPONENT_INIT, "gss principal \"%s\" successfully set",
-			nfs_param.krb5_param.svc.principal);
-
-		/* Set the principal to GSSRPC */
-		if (!svcauth_gss_set_svc_name
-		    (nfs_param.krb5_param.svc.gss_name)) {
-			LogFatal(COMPONENT_INIT,
-				 "Impossible to set gss principal to GSSRPC");
-		}
-
-		/* Don't release name until shutdown, it will be used by the
-		 * backchannel. */
-
-#ifdef HAVE_KRB5
 	}			/*  if( nfs_param.krb5_param.active_krb5 ) */
-#endif				/* HAVE_KRB5 */
 #endif				/* _HAVE_GSSAPI */
 	/* Init the NFSv4 Clientid cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
