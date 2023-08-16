@@ -220,6 +220,13 @@ int display_client_id_rec(struct display_buffer *dspbuf,
 	if (b_left <= 0)
 		return b_left;
 
+	b_left = display_printf(dspbuf,
+				"} cred_flavor=%u",
+				clientid->cid_credential.flavor);
+
+	if (b_left <= 0)
+		return b_left;
+
 	if (clientid->cid_minorversion == 0) {
 		b_left = display_printf(dspbuf,
 					" cb_prog=%u r_addr=%s r_netid=%s",
