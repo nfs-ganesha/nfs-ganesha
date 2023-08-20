@@ -488,9 +488,15 @@ static inline void fsal_copy_attrs(struct fsal_attrlist *dest,
 		/* Make sure acl is NULL and don't pass a ref back (so
 		 * caller when calling fsal_release_attrs will not have to
 		 * release the ACL reference).
+		 * It might be that the src did include ATTR_ACL in the valid
+		 * mask but doesn't have a pointer to ACL as an indication
+		 * that ACL was not stored in the BE. In this case we don't
+		 * want to remove the ATTR_ACL from the valid_mask so a valid
+		 * response will be encoded in the reply.
 		 */
+		if (dest->acl != NULL)
+			dest->valid_mask &= ~ATTR_ACL;
 		dest->acl = NULL;
-		dest->valid_mask &= ~ATTR_ACL;
 	}
 
 	if (pass_refs && ((save_request_mask & ATTR4_FS_LOCATIONS) != 0)) {
