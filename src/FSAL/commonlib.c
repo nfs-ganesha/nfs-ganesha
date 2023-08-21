@@ -922,13 +922,15 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 		nfs4_acl_release_entry(attrs->acl);
 	}
 
+	LogFullDebug(COMPONENT_FSAL, "naces: %d", naces);
+
 	attrs->acl = nfs4_acl_alloc();
 	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(naces);
 	attrs->acl->naces = 0;
 	dace = attrs->acl->aces;
 
 	for (sace = sacl->aces; sace < sacl->aces + sacl->naces;
-	     sace++, dace++) {
+	     sace++) {
 		if (IS_FSAL_ACE_MODE_GEN(*sace))
 			continue;
 
@@ -936,8 +938,10 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 		attrs->acl->naces++;
 
 		if (IS_FSAL_ACE_INHERIT_ONLY(*dace) ||
-		    (!IS_FSAL_ACE_PERM(*dace)))
+		    (!IS_FSAL_ACE_PERM(*dace))) {
+			dace++;
 			continue;
+		}
 
 		if (IS_FSAL_ACE_INHERIT(*dace)) {
 			/* Need to duplicate */
@@ -960,6 +964,7 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 		} else {
 			/* Do non-special stuff */
 		}
+		dace++;
 	}
 
 	if (naces - attrs->acl->naces != 6) {
