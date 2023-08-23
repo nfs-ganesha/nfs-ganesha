@@ -1542,7 +1542,7 @@ static fsal_status_t glusterfs_open2_by_handle(
 
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
-			 "vfs_reopen_func returned %s",
+			 "glusterfs_reopen_func returned %s",
 			 fsal_err_txt(status));
 		goto exit;
 	}

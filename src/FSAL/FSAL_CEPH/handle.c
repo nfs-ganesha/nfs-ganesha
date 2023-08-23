@@ -1196,7 +1196,7 @@ static fsal_status_t ceph_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 
 	if (FSAL_IS_ERROR(status)) {
 		LogDebug(COMPONENT_FSAL,
-			 "vfs_reopen_func returned %s",
+			 "ceph_reopen_func returned %s",
 			 fsal_err_txt(status));
 		goto exit;
 	}
