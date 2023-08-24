@@ -991,51 +991,67 @@ static uint32_t ace_modes[3][3] = {
 	{ /* group */
 		S_IRGRP, S_IWGRP, S_IXGRP
 	},
-	{ /* everyone */
-		S_IRUSR | S_IRGRP | S_IROTH,
-		S_IWUSR | S_IWGRP | S_IWOTH,
-		S_IXUSR | S_IXGRP | S_IXOTH,
+	{ /* other */
+		S_IROTH, S_IWOTH, S_IXOTH
 	}
 };
 
-static inline void set_mode(struct fsal_attrlist *attrs, uint32_t mode,
-			    bool allow)
-{
-	if (allow)
-		attrs->mode |= mode;
-	else
-		attrs->mode &= ~(mode);
-}
-
 fsal_status_t fsal_acl_to_mode(struct fsal_attrlist *attrs)
 {
-	fsal_ace_t *ace = NULL;
 	uint32_t *modes;
+	uint32_t who;
 
 	if (!FSAL_TEST_MASK(attrs->valid_mask, ATTR_ACL))
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	if (!attrs->acl || attrs->acl->naces == 0)
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
-	for (ace = attrs->acl->aces; ace < attrs->acl->aces + attrs->acl->naces;
-	     ace++) {
-		if (IS_FSAL_ACE_SPECIAL_OWNER(*ace))
-			modes = ace_modes[0];
-		else if (IS_FSAL_ACE_SPECIAL_GROUP(*ace))
-			modes = ace_modes[1];
-		else if (IS_FSAL_ACE_SPECIAL_EVERYONE(*ace))
-			modes = ace_modes[2];
-		else
-			continue;
+	/* Clear all mode bits except the first 3 special bits */
+	attrs->mode &= (S_ISUID | S_ISGID | S_ISVTX);
 
-		if (IS_FSAL_ACE_READ_DATA(*ace))
-			set_mode(attrs, modes[0], IS_FSAL_ACE_ALLOW(*ace));
-		if (IS_FSAL_ACE_WRITE_DATA(*ace) ||
-		    IS_FSAL_ACE_APPEND_DATA(*ace))
-			set_mode(attrs, modes[1], IS_FSAL_ACE_ALLOW(*ace));
-		if (IS_FSAL_ACE_EXECUTE(*ace))
-			set_mode(attrs, modes[2], IS_FSAL_ACE_ALLOW(*ace));
+	/* Compute the mode bits according to RFC 8881 section 6.3.2 */
+	for (who = FSAL_ACE_SPECIAL_OWNER; who <= FSAL_ACE_SPECIAL_EVERYONE;
+			who++) {
+		uint32_t allowed = 0, denied = 0;
+		uint32_t i;
 
+		for (i = 0; i < attrs->acl->naces; i++) {
+			const fsal_ace_t *ace = &attrs->acl->aces[i];
+
+			if (!IS_FSAL_ACE_PERM(*ace) ||
+					IS_FSAL_ACE_INHERIT_ONLY(*ace))
+				continue;
+			if (!IS_FSAL_ACE_SPECIAL_ID(*ace))
+				continue;
+			if (!IS_FSAL_ACE_USER(*ace, who) &&
+					!IS_FSAL_ACE_SPECIAL_EVERYONE(*ace))
+				continue;
+
+			modes = ace_modes[who - FSAL_ACE_SPECIAL_OWNER];
+			if (IS_FSAL_ACE_READ_DATA(*ace)) {
+				if (IS_FSAL_ACE_ALLOW(*ace) &&
+						(denied & modes[0]) == 0)
+					allowed |= modes[0];
+				else
+					denied |= modes[0];
+			}
+			if (IS_FSAL_ACE_WRITE_DATA(*ace) ||
+					IS_FSAL_ACE_APPEND_DATA(*ace)) {
+				if (IS_FSAL_ACE_ALLOW(*ace) &&
+						(denied & modes[1]) == 0)
+					allowed |= modes[1];
+				else
+					denied |= modes[1];
+			}
+			if (IS_FSAL_ACE_EXECUTE(*ace)) {
+				if (IS_FSAL_ACE_ALLOW(*ace) &&
+						(denied & modes[2]) == 0)
+					allowed |= modes[2];
+				else
+					denied |= modes[2];
+			}
+		}
+		FSAL_SET_MASK(attrs->mode, allowed);
 	}
 
 	FSAL_SET_MASK(attrs->valid_mask, ATTR_MODE);
