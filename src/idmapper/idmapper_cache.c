@@ -143,36 +143,6 @@ static struct avltree gname_tree;
 
 static struct avltree gid_tree;
 
-/**
- * @brief Compare two buffers
- *
- * Handle the case where one buffer is a left sub-buffer of another
- * buffer by counting the longer one as larger.
- *
- * @param[in] buff1 A buffer
- * @param[in] buffa Another buffer
- *
- * @retval -1 if buff1 is less than buffa
- * @retval 0 if buff1 and buffa are equal
- * @retval 1 if buff1 is greater than buffa
- */
-
-static inline int buffdesc_comparator(const struct gsh_buffdesc *buffa,
-				      const struct gsh_buffdesc *buff1)
-{
-	int mr = memcmp(buff1->addr, buffa->addr, MIN(buff1->len,
-						      buffa->len));
-	if (unlikely(mr == 0)) {
-		if (buff1->len < buffa->len)
-			return -1;
-		else if (buff1->len > buffa->len)
-			return 1;
-		else
-			return 0;
-	} else {
-		return mr;
-	}
-}
 
 /**
  * @brief Comparison for user names
@@ -195,7 +165,7 @@ static int uname_comparator(const struct avltree_node *node1,
 	    avltree_container_of(nodea, struct cache_user,
 				 uname_node);
 
-	return buffdesc_comparator(&user1->uname, &usera->uname);
+	return gsh_buffdesc_comparator(&user1->uname, &usera->uname);
 }
 
 /**
@@ -248,7 +218,7 @@ static inline int gname_comparator(const struct avltree_node *node1,
 	    avltree_container_of(nodea, struct cache_group,
 				 gname_node);
 
-	return buffdesc_comparator(&group1->gname, &groupa->gname);
+	return gsh_buffdesc_comparator(&group1->gname, &groupa->gname);
 }
 
 /**
