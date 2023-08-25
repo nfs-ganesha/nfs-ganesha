@@ -363,6 +363,10 @@ Idmapped_Group_Time_Validity(int64, range -1 to INT64_MAX, default -1)
     The default value is -1, which indicates fallback to older config --
     "NFS_CORE_PARAM.Manage_Gids_Expiration", for backward compatibility.
 
+Cache_Users_Max_Count(uint32, range 0 to INT32_MAX, default INT32_MAX)
+    Max number of cached idmapped users
+
+
 NFSv4 {}
 --------------------------------------------------------------------------------
 

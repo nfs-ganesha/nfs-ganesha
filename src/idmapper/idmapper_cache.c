@@ -64,6 +64,7 @@ struct cache_user {
 	struct avltree_node uid_node;	/*< Node in the UID tree */
 	bool in_uidtree;		/* true iff this is in uid_tree */
 	time_t epoch;
+	TAILQ_ENTRY(cache_user) queue_entry; /* Node in user-fifo-queue */
 };
 
 #define user_expired(user) (time(NULL) - (user)->epoch > \
@@ -89,6 +90,21 @@ struct cache_group {
  */
 
 #define id_cache_size 1009
+
+/**
+ * @brief A user fifo queue ordered by insertion timestamp
+ *
+ * This fifo queue also mimics the order of expiration time of the cache
+ * entries, since the expiration time is a linear function of the insertion
+ * time.
+ *
+ *   Expiration_time = Insertion_time + Cache_time_validity (constant)
+ *
+ * The head of the queue contains the entry with least time-validity.
+ * The tail of the queue contains the entry with most time-validity.
+ * The eviction happens from the head, and insertion happens at the tail.
+ */
+static TAILQ_HEAD(, cache_user) user_fifo_queue;
 
 /**
  * @brief UID cache, may only be accessed with idmapper_user_lock
@@ -262,6 +278,8 @@ static void remove_cache_user(struct cache_user *user)
 		uid_cache[user->uid % id_cache_size] = NULL;
 		avltree_remove(&user->uid_node, &uid_tree);
 	}
+	/* Remove from users fifo queue */
+	TAILQ_REMOVE(&user_fifo_queue, user, queue_entry);
 	gsh_free(user);
 }
 
@@ -294,6 +312,8 @@ void idmapper_cache_init(void)
 	avltree_init(&gname_tree, gname_comparator, 0);
 	avltree_init(&gid_tree, gid_comparator, 0);
 	memset(gid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
+
+	TAILQ_INIT(&user_fifo_queue);
 }
 
 /**
@@ -318,6 +338,7 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 	struct avltree_node *found_id;
 	struct cache_user *old;
 	struct cache_user *new;
+	struct cache_user *user_fifo_queue_head_node;
 
 	new = gsh_malloc(sizeof(struct cache_user) + name->len);
 	new->epoch = time(NULL);
@@ -383,7 +404,7 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 	}
 
 	if (!new->in_uidtree) /* all done */
-		return true;
+		goto add_to_queue;
 
 	found_id = avltree_insert(&new->uid_node, &uid_tree);
 	if (unlikely(found_id)) {
@@ -395,6 +416,18 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 	}
 	uid_cache[uid % id_cache_size] = &new->uid_node;
 
+ add_to_queue:
+
+	TAILQ_INSERT_TAIL(&user_fifo_queue, new, queue_entry);
+
+	/* If we breach max-cache capacity, remove the user queue's head node */
+	if (avltree_size(&uname_tree) >
+		nfs_param.directory_services_param.cache_users_max_count) {
+		LogDebug(COMPONENT_IDMAPPER,
+			"Cache size limit violated, removing user with least time validity");
+		user_fifo_queue_head_node = TAILQ_FIRST(&user_fifo_queue);
+		remove_cache_user(user_fifo_queue_head_node);
+	}
 	return true;
 }
 

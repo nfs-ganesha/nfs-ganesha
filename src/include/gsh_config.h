@@ -625,6 +625,8 @@ typedef struct directory_services_param {
 	time_t idmapped_user_time_validity;
 	/** Cache validity in seconds for idmapped group entries */
 	time_t idmapped_group_time_validity;
+	/** Max number of cached idmapped users */
+	uint32_t cache_users_max_count;
 } directory_services_param_t;
 
 /** @} */
