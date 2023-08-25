@@ -416,6 +416,10 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 			    nfs_start_info_t *p_start_info,
 			    struct config_error_type *err_type)
 {
+	const time_t unset_time_validity = -1;
+	directory_services_param_t *ds_param =
+		&nfs_param.directory_services_param;
+
 	/*
 	 * Initialize exports and clients so config parsing can use them
 	 * early.
@@ -468,7 +472,7 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	/* Directory Services specific configuration */
 	(void) load_config_from_parse(parse_tree,
 				      &directory_services_param,
-				      &nfs_param.directory_services_param,
+				      ds_param,
 				      true,
 				      err_type);
 	if (!config_error_is_harmless(err_type)) {
@@ -491,15 +495,32 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	/* Use `domainname` from `nfsv4` config section, if it is not set under
 	 * `directory_services` section. Otherwise, ignore the `nfsv4` value.
 	 */
-	if (nfs_param.directory_services_param.domainname == NULL) {
+	if (ds_param->domainname == NULL) {
 		LogWarn(COMPONENT_INIT,
 			"domainname in NFSv4 config section will soon be deprecated, define it under DIRECTORY_SERVICES section");
-		nfs_param.directory_services_param.domainname =
-			nfs_param.nfsv4_param.domainname;
+		ds_param->domainname = nfs_param.nfsv4_param.domainname;
 	} else {
 		/* TODO: Remove below log when NFSv4/domainname is removed */
 		LogWarn(COMPONENT_INIT,
 			"Using domainname from DIRECTORY_SERVICES config section, instead of NFSv4");
+	}
+
+	/* For backward compatibility, use `manage_gids_expiration` from
+	 * `nfs_core_param` config section, if `idmapped_user_time_validity` is
+	 * not set under `directory_services` section. Otherwise, ignore the
+	 * `manage_gids_expiration` value.
+	 */
+	if (ds_param->idmapped_user_time_validity == unset_time_validity) {
+		LogWarn(COMPONENT_INIT,
+			"Use idmapped_user_time_validity under DIRECTORY_SERVICES section to configure time validity of idmapped users");
+		ds_param->idmapped_user_time_validity =
+			nfs_param.core_param.manage_gids_expiration;
+	} else {
+		/* TODO: Remove below log when NFS_CORE_PARAM/
+		 * manage_gids_expiration is deprecated for user validity.
+		 */
+		LogWarn(COMPONENT_INIT,
+			"Using idmapped_user_time_validity from DIRECTORY_SERVICES config section, instead of manage_gids_expiration from NFS_CORE_PARAM");
 	}
 
 #ifdef _USE_9P

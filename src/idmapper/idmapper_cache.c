@@ -67,7 +67,7 @@ struct cache_user {
 };
 
 #define user_expired(user) (time(NULL) - (user)->epoch > \
-		nfs_param.core_param.manage_gids_expiration)
+		nfs_param.directory_services_param.idmapped_user_time_validity)
 
 /**
  * @brief Group entry in the IDMapper cache
