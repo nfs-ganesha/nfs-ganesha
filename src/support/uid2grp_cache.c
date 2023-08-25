@@ -149,6 +149,7 @@ static int uid_comparator(const struct avltree_node *node1,
 /* Cleanup on shutdown */
 void uid2grp_cache_cleanup(void)
 {
+	uid2grp_clear_cache();
 	PTHREAD_RWLOCK_destroy(&uid2grp_user_lock);
 }
 
