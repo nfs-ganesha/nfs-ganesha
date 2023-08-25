@@ -251,6 +251,34 @@ static int gid_comparator(const struct avltree_node *node1,
 }
 
 /**
+ * @brief Remove user entry from all user cache data structures
+ *
+ * @note The caller must hold idmapper_user_lock for write.
+ */
+static void remove_cache_user(struct cache_user *user)
+{
+	avltree_remove(&user->uname_node, &uname_tree);
+	if (user->in_uidtree) {
+		uid_cache[user->uid % id_cache_size] = NULL;
+		avltree_remove(&user->uid_node, &uid_tree);
+	}
+	gsh_free(user);
+}
+
+/**
+ * @brief Remove group entry from all group cache data structures
+ *
+ * @note The caller must hold idmapper_group_lock for write.
+ */
+static void remove_cache_group(struct cache_group *group)
+{
+	gid_cache[group->gid % id_cache_size] = NULL;
+	avltree_remove(&group->gid_node, &gid_tree);
+	avltree_remove(&group->gname_node, &gname_tree);
+	gsh_free(group);
+}
+
+/**
  * @brief Initialize the IDMapper cache
  */
 
@@ -349,12 +377,7 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 		}
 
 		/* Remove the old and insert the new */
-		avltree_remove(found_name, &uname_tree);
-		if (old->in_uidtree) {
-			uid_cache[old->uid % id_cache_size] = NULL;
-			avltree_remove(&old->uid_node, &uid_tree);
-		}
-		gsh_free(old);
+		remove_cache_user(old);
 		found_name = avltree_insert(&new->uname_node, &uname_tree);
 		assert(found_name == NULL);
 	}
@@ -366,10 +389,7 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 	if (unlikely(found_id)) {
 		old = avltree_container_of(found_id, struct cache_user,
 					   uid_node);
-		uid_cache[old->uid % id_cache_size] = NULL;
-		avltree_remove(found_id, &uid_tree);
-		avltree_remove(&old->uname_node, &uname_tree);
-		gsh_free(old);
+		remove_cache_user(old);
 		found_id = avltree_insert(&new->uid_node, &uid_tree);
 		assert(found_id == NULL);
 	}
@@ -422,10 +442,7 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 	if (unlikely(found_name)) {
 		tmp = avltree_container_of(found_name, struct cache_group,
 					   gname_node);
-		avltree_remove(found_name, &gname_tree);
-		avltree_remove(&tmp->gid_node, &gid_tree);
-		gid_cache[tmp->gid % id_cache_size] = NULL;
-		gsh_free(tmp);
+		remove_cache_group(tmp);
 		found_name = avltree_insert(&new->gname_node, &gname_tree);
 		assert(found_name == NULL);
 	}
@@ -434,11 +451,7 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 	if (unlikely(found_id)) {
 		tmp = avltree_container_of(found_id, struct cache_group,
 					   gid_node);
-
-		gid_cache[tmp->gid % id_cache_size] = NULL;
-		avltree_remove(found_id, &gid_tree);
-		avltree_remove(&tmp->gname_node, &gname_tree);
-		gsh_free(tmp);
+		remove_cache_group(tmp);
 		found_id = avltree_insert(&new->gid_node, &gid_tree);
 		assert(found_id == NULL);
 	}
@@ -674,10 +687,7 @@ void idmapper_clear_cache(void)
 
 		user = avltree_container_of(node,
 					    struct cache_user, uname_node);
-		avltree_remove(&user->uname_node, &uname_tree);
-		if (user->in_uidtree)
-			avltree_remove(&user->uid_node, &uid_tree);
-		gsh_free(user);
+		remove_cache_user(user);
 	}
 
 	assert(avltree_first(&uid_tree) == NULL);
@@ -689,9 +699,7 @@ void idmapper_clear_cache(void)
 
 		group = avltree_container_of(node,
 					     struct cache_group, gname_node);
-		avltree_remove(&group->gname_node, &gname_tree);
-		avltree_remove(&group->gid_node, &gid_tree);
-		gsh_free(group);
+		remove_cache_group(group);
 	}
 
 	assert(avltree_first(&gid_tree) == NULL);
