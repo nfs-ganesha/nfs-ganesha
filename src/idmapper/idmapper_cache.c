@@ -79,6 +79,7 @@ struct cache_group {
 	gid_t gid;		/*< Group ID */
 	struct avltree_node gname_node;	/*< Node in the name tree */
 	struct avltree_node gid_node;	/*< Node in the GID tree */
+	TAILQ_ENTRY(cache_group) queue_entry; /* Node in group-fifo-queue */
 	time_t epoch;
 };
 
@@ -105,6 +106,9 @@ struct cache_group {
  * The eviction happens from the head, and insertion happens at the tail.
  */
 static TAILQ_HEAD(, cache_user) user_fifo_queue;
+
+/* Similar to above, this is the fifo queue containing group entries */
+static TAILQ_HEAD(, cache_group) group_fifo_queue;
 
 /**
  * @brief UID cache, may only be accessed with idmapper_user_lock
@@ -293,6 +297,8 @@ static void remove_cache_group(struct cache_group *group)
 	gid_cache[group->gid % id_cache_size] = NULL;
 	avltree_remove(&group->gid_node, &gid_tree);
 	avltree_remove(&group->gname_node, &gname_tree);
+	/* Remove from groups fifo queue */
+	TAILQ_REMOVE(&group_fifo_queue, group, queue_entry);
 	gsh_free(group);
 }
 
@@ -314,6 +320,7 @@ void idmapper_cache_init(void)
 	memset(gid_cache, 0, id_cache_size * sizeof(struct avltree_node *));
 
 	TAILQ_INIT(&user_fifo_queue);
+	TAILQ_INIT(&group_fifo_queue);
 }
 
 /**
@@ -449,6 +456,7 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 	struct avltree_node *found_id;
 	struct cache_group *tmp;
 	struct cache_group *new;
+	struct cache_group *group_fifo_queue_head_node;
 
 	new = gsh_malloc(sizeof(struct cache_group) + name->len);
 	new->epoch = time(NULL);
@@ -490,6 +498,16 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 	}
 	gid_cache[gid % id_cache_size] = &new->gid_node;
 
+	TAILQ_INSERT_TAIL(&group_fifo_queue, new, queue_entry);
+
+	/* If we breach max-cache capacity, remove the user queue's head node */
+	if (avltree_size(&gname_tree) >
+		nfs_param.directory_services_param.cache_groups_max_count) {
+		LogDebug(COMPONENT_IDMAPPER,
+			"Cache size limit violated, removing group with least time validity");
+		group_fifo_queue_head_node = TAILQ_FIRST(&group_fifo_queue);
+		remove_cache_group(group_fifo_queue_head_node);
+	}
 	return true;
 }
 

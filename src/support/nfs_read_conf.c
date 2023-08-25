@@ -385,6 +385,8 @@ static struct config_item directory_services_params[] = {
 		       directory_services_param, idmapped_group_time_validity),
 	CONF_ITEM_UI32("Cache_Users_Max_Count", 0, INT32_MAX, INT32_MAX,
 		       directory_services_param, cache_users_max_count),
+	CONF_ITEM_UI32("Cache_Groups_Max_Count", 0, INT32_MAX, INT32_MAX,
+		       directory_services_param, cache_groups_max_count),
 	CONFIG_EOL
 };
 
