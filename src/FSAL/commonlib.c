@@ -932,10 +932,11 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 
 	LogFullDebug(COMPONENT_FSAL, "naces: %d", naces);
 
-	attrs->acl = nfs4_acl_alloc();
-	attrs->acl->aces = (fsal_ace_t *) nfs4_ace_alloc(naces);
-	attrs->acl->naces = 0;
-	dace = attrs->acl->aces;
+	fsal_acl_data_t acl_data;
+
+	acl_data.aces = nfs4_ace_alloc(naces);
+	acl_data.naces = 0;
+	dace = acl_data.aces;
 
 	for (sace = sacl->aces; sace < sacl->aces + sacl->naces;
 	     sace++) {
@@ -943,7 +944,7 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 			continue;
 
 		*dace = *sace;
-		attrs->acl->naces++;
+		acl_data.naces++;
 
 		if (IS_FSAL_ACE_INHERIT_ONLY(*dace) ||
 		    (!IS_FSAL_ACE_PERM(*dace))) {
@@ -956,7 +957,7 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 			GET_FSAL_ACE_FLAG(*dace) |= FSAL_ACE_FLAG_INHERIT_ONLY;
 			dace++;
 			*dace = *sace;
-			attrs->acl->naces++;
+			acl_data.naces++;
 			GET_FSAL_ACE_FLAG(*dace) &= ~(FSAL_ACE_FLAG_INHERIT);
 		}
 
@@ -975,15 +976,22 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 		dace++;
 	}
 
-	if (naces - attrs->acl->naces != 6) {
+	if (naces - acl_data.naces != 6) {
 		LogDebug(COMPONENT_FSAL, "Bad naces: %d not %d",
-			 attrs->acl->naces, naces - 6);
+			 acl_data.naces, naces - 6);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
 	fsal_mode_gen_set(dace, attrs->mode);
 
-	attrs->acl->naces = naces;
+	fsal_acl_status_t acl_status;
+
+	acl_data.naces = naces;
+	attrs->acl = nfs4_acl_new_entry(&acl_data, &acl_status);
+	LogFullDebug(COMPONENT_FSAL, "acl_status after nfs4_acl_new_entry: %d",
+			acl_status);
+	if (attrs->acl == NULL)
+		LogFatal(COMPONENT_FSAL, "Failed in nfs4_acl_new_entry");
 	FSAL_SET_MASK(attrs->valid_mask, ATTR_ACL);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
