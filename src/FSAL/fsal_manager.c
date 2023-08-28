@@ -48,7 +48,7 @@
 #include <ctype.h>
 #include <pthread.h>
 #include <dlfcn.h>
-#include <sys/statfs.h>
+#include <sys/stat.h>
 #include "log.h"
 #include "fsal.h"
 #include "nfs_core.h"
