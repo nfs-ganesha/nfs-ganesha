@@ -36,6 +36,7 @@ endif(USE_DBUS)
 SET(idmap_STAT_SRCS
    idmapper.c
    idmapper_cache.c
+   idmapper_negative_cache.c
 )
 
 add_library(idmap OBJECT ${idmap_STAT_SRCS})

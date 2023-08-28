@@ -71,6 +71,13 @@ bool idmapper_lookup_by_uid(const uid_t, const struct gsh_buffdesc **,
 			    const gid_t **);
 bool idmapper_lookup_by_gname(const struct gsh_buffdesc *, uid_t *);
 bool idmapper_lookup_by_gid(const gid_t, const struct gsh_buffdesc **);
+
+void idmapper_negative_cache_init(void);
+void idmapper_negative_cache_add_user_by_name(const struct gsh_buffdesc *);
+bool idmapper_negative_cache_lookup_user_by_name(const struct gsh_buffdesc *);
+void idmapper_negative_cache_clear(void);
+void idmapper_negative_cache_destroy(void);
+
 /** @} */
 
 bool idmapper_init(void);
