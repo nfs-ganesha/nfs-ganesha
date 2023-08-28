@@ -223,7 +223,7 @@ void nfs4_acl_release_entry(fsal_acl_t *acl)
 	switch (rc) {
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
 		hashtable_releaselatched(fsal_acl_hash, &latch);
-		return;
+		break;
 
 	case HASHTABLE_SUCCESS:
 		PTHREAD_RWLOCK_wrlock(&acl->acl_lock);
@@ -241,20 +241,20 @@ void nfs4_acl_release_entry(fsal_acl_t *acl)
 
 		/* Release the latch */
 		hashtable_releaselatched(fsal_acl_hash, &latch);
+
+		/* Sanity check: old_value.addr is expected to be equal to acl,
+		* and is released later in this function */
+		assert(old_value.addr == acl);
+		PTHREAD_RWLOCK_unlock(&acl->acl_lock);
+
 		break;
 
 	default:
 		LogCrit(COMPONENT_NFS_V4_ACL,
 			"ACL entry could not be deleted, status=%s",
 			hash_table_err_to_str(rc));
-		return;
+		break;
 	}
-
-	/* Sanity check: old_value.addr is expected to be equal to acl,
-	 * and is released later in this function */
-	assert(old_value.addr == acl);
-
-	PTHREAD_RWLOCK_unlock(&acl->acl_lock);
 
 	/* Release acl */
 	nfs4_acl_free(acl);
