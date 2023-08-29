@@ -31,7 +31,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 
 #include "log.h"
 #include "nfs4.h"
@@ -186,6 +188,7 @@ static int reap_expired_open_owners(void)
 	return count;
 }
 
+#ifndef __APPLE__
 /* Return resident memory of the process in MB */
 static size_t get_current_rss(void)
 {
@@ -258,6 +261,7 @@ static void reap_malloc_frag(void)
 		 "called malloc_trim, current rss: %zu MB, threshold: %zu MB",
 		 rss, trim_threshold);
 }
+#endif
 
 struct reaper_state {
 	size_t count;
@@ -302,8 +306,11 @@ static void reaper_run(struct fridgethr_context *ctx)
 	     reap_hash_table(ht_unconfirmed_client_id));
 
 	rst->count += reap_expired_open_owners();
+
+#ifndef __APPLE__
 	if (nfs_param.core_param.malloc_trim)
 		reap_malloc_frag();
+#endif
 }
 
 int reaper_init(void)

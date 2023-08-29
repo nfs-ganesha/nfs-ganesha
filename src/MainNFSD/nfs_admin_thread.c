@@ -38,7 +38,9 @@
 #ifdef LINUX
 #include <mcheck.h>		/* For mtrace/muntrace */
 #endif
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 
 #include "nfs_core.h"
 #include "log.h"
