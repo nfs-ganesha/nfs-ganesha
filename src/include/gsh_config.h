@@ -48,6 +48,7 @@
 #include <stdbool.h>
 
 #include "nfs4.h"
+#include "gsh_recovery.h"
 #include "gsh_rpc.h"
 
 /**
@@ -516,19 +517,6 @@ typedef struct nfs_core_param {
  * @brief Default value of deleg_recall_retry_delay.
  */
 #define DELEG_RECALL_RETRY_DELAY_DEFAULT 1
-
-enum recovery_backend {
-	RECOVERY_BACKEND_FS,
-	RECOVERY_BACKEND_FS_NG,
-	RECOVERY_BACKEND_RADOS_KV,
-	RECOVERY_BACKEND_RADOS_NG,
-	RECOVERY_BACKEND_RADOS_CLUSTER,
-};
-
-/**
- * @brief Default value of recovery_backend.
- */
-#define RECOVERY_BACKEND_DEFAULT RECOVERY_BACKEND_FS
 
 /**
  * @brief NFSv4 minor versions

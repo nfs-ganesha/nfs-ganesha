@@ -42,6 +42,7 @@
 #include <stdint.h>
 #include "sal_data.h"
 #include "fsal.h"
+#include "gsh_recovery.h"
 
 /**
  * @brief Divisions in state and clientid tables.
@@ -929,7 +930,6 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *, nfs_fh4 *);
 void nfs4_record_revoke(nfs_client_id_t *, nfs_fh4 *);
 
 /* Recovery backend management */
-enum recovery_backend;
 const char *recovery_backend_str(enum recovery_backend recovery_backend);
 int nfs4_recovery_init(void);
 void nfs4_recovery_shutdown(void);
