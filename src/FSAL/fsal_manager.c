@@ -224,7 +224,9 @@ int start_fsals(config_file_t in_config,
 	int rc;
 
 	PTHREAD_MUTEX_init(&fsal_lock, NULL);
+#if GSH_CAN_HOST_LOCAL_FS
 	PTHREAD_RWLOCK_init(&fs_lock, NULL);
+#endif
 
 	init_ctx_refstr();
 
