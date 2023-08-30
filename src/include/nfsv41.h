@@ -2958,6 +2958,12 @@ enum nfs_opnum4 {
 };
 typedef enum nfs_opnum4 nfs_opnum4;
 
+/* Number of operations, per NFSv4 version. */
+#define NFS_V40_NB_OPERATION (NFS4_OP_RELEASE_LOCKOWNER + 1)
+#define NFS_V41_NB_OPERATION (NFS4_OP_RECLAIM_COMPLETE + 1)
+#define NFS_V42_NB_OPERATION (NFS4_OP_CLONE + 1)
+#define NFS_V43_NB_OPERATION (NFS4_OP_REMOVEXATTR + 1)
+
 typedef component4 xattrkey4;
 /*
  * This is not universally a utf8string, but rather a variable-length

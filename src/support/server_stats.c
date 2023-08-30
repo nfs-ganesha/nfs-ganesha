@@ -67,17 +67,6 @@
 #include "monitoring.h"
 #endif
 
-#define NFS_V3_NB_COMMAND (NFSPROC3_COMMIT + 1)
-#define NFS_V4_NB_COMMAND 2
-#define MNT_V1_NB_COMMAND (MOUNTPROC3_EXPORT + 1)
-#define MNT_V3_NB_COMMAND (MOUNTPROC3_EXPORT + 1)
-#define NLM_V4_NB_OPERATION (NLMPROC4_FREE_ALL + 1)
-#define RQUOTA_NB_COMMAND (RQUOTAPROC_SETACTIVEQUOTA + 1)
-#define NFS_V40_NB_OPERATION (NFS4_OP_RELEASE_LOCKOWNER + 1)
-#define NFS_V41_NB_OPERATION (NFS4_OP_RECLAIM_COMPLETE + 1)
-#define NFS_V42_NB_OPERATION (NFS4_OP_WRITE_SAME + 1)
-#define _9P_NB_COMMAND 33
-
 #define NFS_pcp nfs_param.core_param
 #define NFS_program NFS_pcp.program
 
@@ -191,7 +180,7 @@ struct op_latency {
 /* v3 ops
  */
 struct nfsv3_ops {
-	uint64_t op[NFSPROC3_COMMIT+1];
+	uint64_t op[NFS_V3_NB_COMMAND];
 };
 #endif
 
@@ -199,7 +188,7 @@ struct nfsv3_ops {
 /* quota ops
  */
 struct qta_ops {
-	uint64_t op[RQUOTAPROC_SETACTIVEQUOTA+1];
+	uint64_t op[RQUOTA_NB_COMMAND];
 };
 #endif
 
@@ -207,7 +196,7 @@ struct qta_ops {
 /* nlm ops
  */
 struct nlm_ops {
-	uint64_t op[NLMPROC4_FREE_ALL+1];
+	uint64_t op[NLM_V4_NB_OPERATION];
 };
 #endif
 
@@ -215,7 +204,7 @@ struct nlm_ops {
 /* mount ops
  */
 struct mnt_ops {
-	uint64_t op[MOUNTPROC3_EXPORT+1];
+	uint64_t op[MNT_V3_NB_COMMAND];
 };
 #endif
 
@@ -269,7 +258,7 @@ struct nfsv3_stats {
 };
 
 struct clnt_allops_v3_stats {
-	struct op_count cmds[NFSPROC3_COMMIT + 1];	/* all NFSv3 ops */
+	struct op_count cmds[NFS_V3_NB_COMMAND];	/* all NFSv3 ops */
 };
 
 /* Mount statistics counters
@@ -289,7 +278,7 @@ struct nlmv4_stats {
 };
 
 struct clnt_allops_nlm_stats {
-	struct op_count cmds[NLMPROC4_FREE_ALL + 1];	/* all NLMv4 ops */
+	struct op_count cmds[NLM_V4_NB_OPERATION];	/* all NLMv4 ops */
 };
 #endif
 
@@ -394,11 +383,11 @@ static struct global_stats global_st;
 
 #ifdef _USE_NFS3
 /* NFSv3 Detailed stats holder */
-struct proto_op v3_full_stats[NFSPROC3_COMMIT+1];
+struct proto_op v3_full_stats[NFS_V3_NB_COMMAND];
 #endif
 
 /* NFSv4 Detailed stats holder */
-struct proto_op v4_full_stats[NFS_V42_NB_OPERATION+1];
+struct proto_op v4_full_stats[NFS4_OP_LAST_ONE];
 
 /**
  * @brief Get stats struct helpers
@@ -2022,7 +2011,7 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 	if (c_all->nfsv3) {
 		dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT,
 						 NULL, &array_iter);
-		for (i = 0; i < NFSPROC3_COMMIT + 1; i++) {
+		for (i = 0; i < NFS_V3_NB_COMMAND; i++) {
 			if (c_all->nfsv3->cmds[i].total) {
 				op_name = (char *) nfsproc3_to_str(i);
 				dbus_message_iter_append_basic(&array_iter,
@@ -2050,7 +2039,7 @@ void server_dbus_client_all_ops(DBusMessageIter *iter,
 	if (c_all->nlm4) {
 		dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT,
 						 NULL, &array_iter);
-		for (i = 0; i < NLMPROC4_FREE_ALL + 1; i++) {
+		for (i = 0; i < NLM_V4_NB_OPERATION; i++) {
 			if (c_all->nlm4->cmds[i].total) {
 				dbus_message_iter_append_basic(&array_iter,
 					DBUS_TYPE_STRING, &optnlm[i].name);
@@ -2299,7 +2288,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 	version = "NFSv3:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
-	for (i = 0; i <= NFSPROC3_COMMIT; i++) {
+	for (i = 0; i < NFS_V3_NB_COMMAND; i++) {
 		if (global_st.v3.op[i] > 0) {
 			op = (char *) nfsproc3_to_str(i);
 			dbus_message_iter_append_basic(&struct_iter,
@@ -2325,7 +2314,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 	version = "\nNLM:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
-	for (i = 0; i <= NLMPROC4_FREE_ALL; i++) {
+	for (i = 0; i < NLM_V4_NB_OPERATION; i++) {
 		if (global_st.lm.op[i] > 0) {
 			op = optnlm[i].name;
 			dbus_message_iter_append_basic(&struct_iter,
@@ -2339,7 +2328,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 	version = "\nMNT:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
-	for (i = 0; i <= MOUNTPROC3_EXPORT; i++) {
+	for (i = 0; i < MNT_V3_NB_COMMAND; i++) {
 		if (global_st.mn.op[i] > 0) {
 			op = optmnt[i].name;
 			dbus_message_iter_append_basic(&struct_iter,
@@ -2353,7 +2342,7 @@ void global_dbus_fast(DBusMessageIter *iter)
 	version = "\nQUOTA:";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
 				       &version);
-	for (i = 0; i <= RQUOTAPROC_SETACTIVEQUOTA; i++) {
+	for (i = 0; i < RQUOTA_NB_COMMAND; i++) {
 		if (global_st.qt.op[i] > 0) {
 			op = optqta[i].name;
 			dbus_message_iter_append_basic(&struct_iter,
@@ -2628,21 +2617,18 @@ void reset_gsh_allops_stats(struct gsh_clnt_allops_stats *st)
 
 #ifdef _USE_NFS3
 	if (st->nfsv3) {
-		for (i = 0; i < NFSPROC3_COMMIT + 1 ; i++) {
+		for (i = 0; i < NFS_V3_NB_COMMAND ; i++)
 			reset_op_count(&(st->nfsv3->cmds[i]));
-		}
 	}
 #endif
 	if (st->nfsv4) {
-		for (i = 0; i < NFS4_OP_LAST_ONE ; i++) {
+		for (i = 0; i < NFS4_OP_LAST_ONE ; i++)
 			reset_op_count(&(st->nfsv4->cmds[i]));
-		}
 	}
 #ifdef _USE_NLM
 	if (st->nlm4) {
-		for (i = 0; i < NLMPROC4_FREE_ALL + 1 ; i++) {
+		for (i = 0; i < NLM_V4_NB_OPERATION ; i++)
 			reset_op_count(&(st->nlm4->cmds[i]));
-		}
 	}
 #endif
 }
@@ -2652,31 +2638,26 @@ void reset_global_stats(void)
 	int i;
 #ifdef _USE_NFS3
 	/* Reset all ops counters of nfsv3 */
-	for (i = 0; i < NFSPROC3_COMMIT; i++) {
+	for (i = 0; i < NFS_V3_NB_COMMAND; i++)
 		(void)atomic_store_uint64_t(&global_st.v3.op[i], 0);
-	}
 #endif
 	/* Reset all ops counters of nfsv4 */
-	for (i = 0; i < NFS4_OP_LAST_ONE; i++) {
+	for (i = 0; i < NFS4_OP_LAST_ONE; i++)
 		(void)atomic_store_uint64_t(&global_st.v4.op[i], 0);
-	}
 #ifdef _USE_NLM
 	/* Reset all ops counters of lock manager */
-	for (i = 0; i < NLM4_FAILED; i++) {
+	for (i = 0; i < NLM_V4_NB_OPERATION; i++)
 		(void)atomic_store_uint64_t(&global_st.lm.op[i], 0);
-	}
 #endif
 #ifdef _USE_NFS3
 	/* Reset all ops counters of mountd */
-	for (i = 0; i < MOUNTPROC3_EXPORT; i++) {
+	for (i = 0; i < MNT_V3_NB_COMMAND; i++)
 		(void)atomic_store_uint64_t(&global_st.mn.op[i], 0);
-	}
 #endif
 #ifdef _USE_RQUOTA
 	/* Reset all ops counters of rquotad */
-	for (i = 0; i < RQUOTAPROC_SETACTIVEQUOTA; i++) {
+	for (i = 0; i < RQUOTA_NB_COMMAND; i++)
 		(void)atomic_store_uint64_t(&global_st.qt.op[i], 0);
-	}
 #endif
 #ifdef _USE_NFS3
 	reset_nfsv3_stats(&global_st.nfsv3);
@@ -2845,7 +2826,7 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter)
 	gsh_dbus_append_timestamp(iter, &v3_full_stats_time);
 	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
 					 "(stttddd)", &array_iter);
-	for (op = 1; op < NFSPROC3_COMMIT+1; op++) {
+	for (op = 1; op < NFS_V3_NB_COMMAND; op++) {
 		if (v3_full_stats[op].total) {
 			op_name = (char *) nfsproc3_to_str(op);
 			dbus_message_iter_open_container(&array_iter,
@@ -2920,7 +2901,7 @@ void server_dbus_v4_full_stats(DBusMessageIter *iter)
 	gsh_dbus_append_timestamp(iter, &v4_full_stats_time);
 	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
 					 "(sttddd)", &array_iter);
-	for (op = 1; op < NFS_V42_NB_OPERATION+1; op++) {
+	for (op = 1; op < NFS_V42_NB_OPERATION; op++) {
 		if (v4_full_stats[op].total) {
 			op_name = (char *) nfsop4_to_str(op);
 			dbus_message_iter_open_container(&array_iter,
@@ -3087,9 +3068,9 @@ static void record_v3_full_stats(struct svc_req *req,
 #endif
 
 	if (prog == NFS_program[P_NFS] && vers == NFS_V3) {
-		if (proc > NFSPROC3_COMMIT) {
+		if (proc >= NFS_V3_NB_COMMAND) {
 			LogCrit(COMPONENT_DBUS,
-				"req->rq_proc is more than COMMIT: %d\n",
+				"req->rq_proc is more than NFS_V3_NB_COMMAND: %d\n",
 				proc);
 			return;
 		}
@@ -3102,7 +3083,7 @@ void reset_v3_full_stats(void)
 {
 	int op;
 
-	for (op = 1; op < NFSPROC3_COMMIT+1; op++) {
+	for (op = 1; op < NFS_V3_NB_COMMAND; op++) {
 		v3_full_stats[op].total = 0;
 		v3_full_stats[op].errors = 0;
 		v3_full_stats[op].dups = 0;
@@ -3128,9 +3109,9 @@ static void record_v4_full_stats(uint32_t proc,
 	monitoring_nfs4_request(proc, request_time, status, export_id,
 				client_ip);
 #endif
-	if (proc > NFS_V42_NB_OPERATION) {
+	if (proc >= NFS4_OP_LAST_ONE) {
 		LogCrit(COMPONENT_DBUS,
-			"proc is more than NFS4_OP_WRITE_SAME: %d\n",
+			"proc is more than NFS4_OP_LAST_ONE: %d\n",
 			proc);
 		return;
 	}
@@ -3141,7 +3122,7 @@ void reset_v4_full_stats(void)
 {
 	int op;
 
-	for (op = 1; op < NFS_V42_NB_OPERATION+1; op++) {
+	for (op = 1; op < NFS4_OP_LAST_ONE; op++) {
 		v4_full_stats[op].total = 0;
 		v4_full_stats[op].errors = 0;
 		v4_full_stats[op].dups = 0;

@@ -112,6 +112,9 @@ typedef struct mountres3 mountres3;
 #define	MOUNTPROC3_UMNTALL	4
 #define	MOUNTPROC3_EXPORT	5
 
+/* Number of mount v3 commands. */
+#define MNT_V3_NB_COMMAND (MOUNTPROC3_EXPORT + 1)
+
 /* the xdr functions */
 extern bool xdr_mountstat3(XDR *, mountstat3 *);
 extern bool xdr_fhandle3(XDR *, fhandle3 *);

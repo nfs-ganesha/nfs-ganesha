@@ -1026,6 +1026,9 @@ typedef struct COMMIT3res COMMIT3res;
 #define	NFSPROC3_PATHCONF	20
 #define	NFSPROC3_COMMIT	21
 
+/* Number of NFSv3 commands. */
+#define NFS_V3_NB_COMMAND (NFSPROC3_COMMIT + 1)
+
 /* the xdr functions */
 
 extern bool xdr_nfs3_uint64(XDR *, nfs3_uint64 *);

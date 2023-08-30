@@ -315,6 +315,9 @@ extern "C" {
 	extern int nlmprog_4_freeresult();
 #endif				/* K&R C */
 
+/* Number of nlm v4 operations. */
+#define NLM_V4_NB_OPERATION (NLMPROC4_FREE_ALL + 1)
+
 /* the xdr functions */
 
 #if defined(__STDC__) || defined(__cplusplus)

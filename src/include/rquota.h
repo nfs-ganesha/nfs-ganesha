@@ -139,6 +139,10 @@ extern "C" {
 	extern int rquotaprog_1_freeresult();
 	extern char *check_handle_lead_slash();
 #endif				/* K&R C */
+
+/* Number of rquota commands. */
+#define RQUOTA_NB_COMMAND (RQUOTAPROC_SETACTIVEQUOTA + 1)
+
 #define EXT_RQUOTAVERS 2
 
 /* the xdr functions */
