@@ -41,5 +41,7 @@ extern int nfs_libmain(
 	const char *log_path,
 	const int debug_level);
 
+extern bool reread_config(void);
+
 #endif				/* !NFS_LIB_H */
 /** @} */

@@ -156,7 +156,7 @@ char *cid_server_scope;
 
 struct config_error_type err_type;
 
-void reread_config(void)
+bool reread_config(void)
 {
 	int status = 0;
 	config_file_t config_struct;
@@ -167,12 +167,12 @@ void reread_config(void)
 	if (nfs_config_path[0] == '\0') {
 		LogCrit(COMPONENT_CONFIG,
 			"No configuration file was specified for reloading log config.");
-		return;
+		return false;
 	}
 
 	/* Create a memstream for parser+processing error messages */
 	if (!init_error_type(&err_type))
-		return;
+		return false;
 	/* Attempt to parse the new configuration file */
 	config_struct = config_ParseFile(nfs_config_path, &err_type);
 	if (!config_error_no_error(&err_type)) {
@@ -181,21 +181,26 @@ void reread_config(void)
 			"Error while parsing new configuration file %s",
 			nfs_config_path);
 		(void) report_config_errors(&err_type, NULL, config_errs_to_log);
-		return;
+		return false;
 	}
 
 	/* Update the logging configuration */
 	status = read_log_config(config_struct, &err_type);
-	if (status < 0)
+	if (status < 0) {
 		LogCrit(COMPONENT_CONFIG, "Error while parsing LOG entries");
+		return false;
+	}
 
 	/* Update the export configuration */
 	status = reread_exports(config_struct, &err_type);
-	if (status < 0)
+	if (status < 0) {
 		LogCrit(COMPONENT_CONFIG, "Error while parsing EXPORT entries");
+		return false;
+	}
 
 	(void) report_config_errors(&err_type, NULL, config_errs_to_log);
 	config_Free(config_struct);
+	return true;
 }
 
 /**
