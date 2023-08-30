@@ -1924,10 +1924,11 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 			   struct fsal_attrlist *attrs)
 {
 	struct vfs_fsal_obj_handle *myself;
-	fsal_status_t status, status2;
+	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+	fsal_status_t status2;
 	struct vfs_fd *my_fd;
 	struct vfs_fd temp_fd = { FSAL_FD_INIT, -1 };
-	struct fsal_fd *out_fd;
+	struct fsal_fd *out_fd = NULL;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
