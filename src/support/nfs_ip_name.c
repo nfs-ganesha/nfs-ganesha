@@ -275,6 +275,25 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
 			  &buffkey,
 			  &buffval) == HASHTABLE_SUCCESS) {
 		nfs_ip_name = buffval.addr;
+
+		if ((time(NULL) - nfs_ip_name->timestamp) > expiration_time) {
+			LogFullDebug(COMPONENT_DISPATCH,
+				     "Found an expired host %s entry, removing",
+				     nfs_ip_name->hostname);
+			if (HashTable_Del(ht_ip_name, &buffkey,
+					  NULL, &buffval) ==
+					  HASHTABLE_SUCCESS) {
+				nfs_ip_name = (nfs_ip_name_t *) buffval.addr;
+
+				LogFullDebug(COMPONENT_DISPATCH,
+					"Removing cache entry %s->%s",
+					ipstring, nfs_ip_name->hostname);
+
+				gsh_free(nfs_ip_name);
+			}
+			return IP_NAME_NOT_FOUND;
+		}
+
 		if (strlcpy(hostname, nfs_ip_name->hostname, size) >= size) {
 			LogWarn(COMPONENT_DISPATCH,
 				"Could not return host %s to caller, too big",
