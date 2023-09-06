@@ -249,8 +249,19 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	int e_count = 0, i_count = 0, new_count = 0, new_i_count = 0;
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 
-	if (obj_pub->type == SYMBOLIC_LINK)
+	/*
+	 * open(2) for these is done with O_PATH, so acl_get_fd(3)
+	 * will fail when it calls fgetxattr(2)
+	 */
+	switch (obj_pub->type) {
+	case SYMBOLIC_LINK:
+	case SOCKET_FILE:
+	case CHARACTER_FILE:
+	case BLOCK_FILE:
 		return status;
+	default:
+		break;
+	}
 
 	vfs_sub_getattrs_common(vfs_hdl, fd, request_mask, attrib);
 
