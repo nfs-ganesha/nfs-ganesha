@@ -1287,6 +1287,11 @@ static int nfs_rpc_v41_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
 	int ret = ENOTCONN;
 	bool wait = false;
 
+	if (!completion) {
+		LogFatal(COMPONENT_NFS_CB,
+				"completion function must be set or else nfs41_release_single can't be called from cb which will cause a leak");
+	}
+
 restart:
 	pthread_mutex_lock(&clientid->cid_mutex);
 	glist_for_each(glist, &clientid->cid_cb.v41.cb_session_list) {
