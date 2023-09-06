@@ -126,7 +126,7 @@ fi
 distro="$1"
 shift
 
-if [ "$distro" != "all" ]; then
+if [ "$distro" != "all" ] && [ "$distro" != "delete-all" ]; then
 	if [ $# -eq 1 ]; then
 		version="$1"
 	elif [ $# -eq 0 ]; then
@@ -230,17 +230,31 @@ container_1()
 		"$tag" "$@"
 }
 
-container_all()
+container_foreach()
 {
+	action="$1"
+	shift
+
 	list_versions | {
 		rc=0
 		while read -r _distro _version; do
 			echo "========================================"
 			echo "${_distro} ${_version} ($(date))"
 
-			# Redirect stops the container eating the version list
-			container_1 "$_distro" "$_version" "$@" </dev/null ||
-				rc=$?
+			case "$action" in
+			all)
+				# Redirect stops the container eating
+				# the version list
+				container_1 "$_distro" "$_version" \
+					"$@" </dev/null || rc=$?
+				;;
+			delete-all)
+				tag="${_distro}:${_version}.ganesha"
+				if podman image exists "$tag"; then
+					podman image rm "$tag" || rc=$?
+				fi
+				;;
+			esac
 		done
 		return $rc
 	}
@@ -248,10 +262,17 @@ container_all()
 
 workdir="$PWD"
 
-if [ "$distro" = "list" ]; then
+case "$distro" in
+list)
 	list_versions
-elif [ "$distro" = "all" ]; then
-	container_all "$@"
-else
+	;;
+all)
+	container_foreach all "$@"
+	;;
+delete-all)
+	container_foreach delete-all
+	;;
+*)
 	container_1 "$distro" "$version"
-fi
+	;;
+esac
