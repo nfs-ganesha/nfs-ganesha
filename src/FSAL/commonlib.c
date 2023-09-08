@@ -1921,8 +1921,7 @@ fsal_status_t fd_lru_pkgshutdown(void)
 }
 
 /**
- * @brief Function to close a fsal_fd while protecting it, usually called on
- *        a global fd.
+ * @brief Function to close a fsal_fd while protecting it.
  *
  * @param[in]  obj_hdl        File on which to operate
  * @param[in]  fsal_fd        File handle to close
@@ -1936,6 +1935,10 @@ fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
 			    bool is_reclaiming)
 {
 	fsal_status_t status;
+	bool is_globalfd = fsal_fd->fd_type == FSAL_FD_GLOBAL;
+
+	/* Assure that is_reclaiming is only set when it's a global fd */
+	assert(is_reclaiming ? is_globalfd : true);
 
 	/* Indicate we want to do fd work */
 	status = fsal_start_fd_work(fsal_fd, is_reclaiming);
@@ -1953,10 +1956,12 @@ fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
 	status = obj_hdl->obj_ops->close_func(obj_hdl, fsal_fd);
 
 	if (status.major != ERR_FSAL_NOT_OPENED) {
-		/* Need to decrement the appropriate counter and remove from
-		 * LRU.
-		 */
-		remove_fd_lru(fsal_fd);
+		if (is_globalfd) {
+			/* Need to decrement the appropriate counter and remove
+			 * from LRU for globalfd.
+			 */
+			remove_fd_lru(fsal_fd);
+		}
 	} else {
 		/* Wasn't open.  Not an error, but shouldn't remove from LRU. */
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1971,7 +1976,7 @@ fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
 		PTHREAD_MUTEX_lock(&fsal_fd_mutex);
 		PTHREAD_COND_signal(&fsal_fd_cond);
 		PTHREAD_MUTEX_unlock(&fsal_fd_mutex);
-	} else {
+	} else if (is_globalfd) {
 		while (atomic_fetch_int32_t(&fsal_fd->lru_reclaim)) {
 			/* Just in case FD LRU is trying to work on this fd,
 			 * wait until its done. Note it really won't have
