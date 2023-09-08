@@ -2170,15 +2170,16 @@ retry:
 
 	/* The following two checks make sure that if multiple threads are
 	 * contending to do fd_work, whoever actually opens or re-opens the
-	 * file will open it in a mode that satisfies everyone.
+	 * file will open it in a mode that satisfies everyone. Note that we
+	 * only want to do this once, thus the check for retried == false.
 	 */
 
-	if (openflags & FSAL_O_READ) {
+	if (openflags & FSAL_O_READ && retried == false) {
 		/* Indicate we want to read */
 		atomic_inc_int32_t(&fsal_fd->want_read);
 	}
 
-	if (openflags & FSAL_O_WRITE) {
+	if (openflags & FSAL_O_WRITE && retried == false) {
 		/* Indicate we want to read */
 		atomic_inc_int32_t(&fsal_fd->want_write);
 	}
