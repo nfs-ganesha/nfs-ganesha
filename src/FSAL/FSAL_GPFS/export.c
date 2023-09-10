@@ -363,6 +363,29 @@ gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
 	return state;
 }
 
+
+/**
+ * @brief Function to get the fasl_obj_handle that has fsal_fd as its global fd.
+ *
+ * @param[in]     exp_hdl   The export in which the handle exists
+ * @param[in]     fd        File descriptor in question
+ * @param[out]    handle    FSAL object handle
+ *
+ * @return the fsal_obj_handle.
+ */
+void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
+				  struct fsal_fd *fd,
+				  struct fsal_obj_handle **handle)
+{
+	struct gpfs_fd *my_fd = NULL;
+	struct gpfs_fsal_obj_handle *myself = NULL;
+
+	my_fd = container_of(fd, struct gpfs_fd, fsal_fd);
+	myself = container_of(my_fd, struct gpfs_fsal_obj_handle, u.file.fd);
+
+	*handle = &myself->obj_handle;
+}
+
 /**
  *  @brief overwrite vector entries with the methods that we support
  *  @param ops type of struct export_ops
@@ -379,6 +402,7 @@ void gpfs_export_ops_init(struct export_ops *ops)
 	ops->get_quota = get_quota;
 	ops->set_quota = set_quota;
 	ops->alloc_state = gpfs_alloc_state;
+	ops->get_fsal_obj_hdl = get_fsal_obj_hdl;
 }
 
 static void free_gpfs_filesystem(struct gpfs_filesystem *gpfs_fs)

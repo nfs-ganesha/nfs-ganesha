@@ -433,6 +433,30 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 	return supported_mask;
 }
 
+
+/**
+ * @brief Function to get the fasl_obj_handle that has fsal_fd as its global fd.
+ *
+ * @param[in]     exp_hdl   The export in which the handle exists
+ * @param[in]     fd        File descriptor in question
+ * @param[out]    handle    FSAL object handle
+ *
+ * @return the fsal_obj_handle.
+ */
+void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
+				  struct fsal_fd *fd,
+				  struct fsal_obj_handle **handle)
+{
+	struct glusterfs_fd *my_fd = NULL;
+	struct glusterfs_handle *myself = NULL;
+
+	my_fd = container_of(fd, struct glusterfs_fd, fsal_fd);
+	myself = container_of(my_fd, struct glusterfs_handle, globalfd);
+
+	*handle = &myself->handle;
+}
+
+
 /**
  * @brief Registers GLUSTER FSAL exportoperation vector
  *
@@ -451,6 +475,7 @@ void export_ops_init(struct export_ops *ops)
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supported_attrs = fs_supported_attrs;
 	ops->alloc_state = glusterfs_alloc_state;
+	ops->get_fsal_obj_hdl = get_fsal_obj_hdl;
 }
 
 enum transport {

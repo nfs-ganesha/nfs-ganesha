@@ -154,6 +154,30 @@ static struct state_t *kvsfs_alloc_state(struct fsal_export *exp_hdl,
 	return state;
 }
 
+
+/**
+ * @brief Function to get the fasl_obj_handle that has fsal_fd as its global fd.
+ *
+ * @param[in]     exp_hdl   The export in which the handle exists
+ * @param[in]     fd        File descriptor in question
+ * @param[out]    handle    FSAL object handle
+ *
+ * @return the fsal_obj_handle.
+ */
+void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
+				  struct fsal_fd *fd,
+				  struct fsal_obj_handle **handle)
+{
+	struct kvsfs_fd *my_fd = NULL;
+	struct kvsfs_fsal_obj_handle *myself = NULL;
+
+	my_fd = container_of(fd, struct kvsfs_fd, fsal_fd);
+	myself = container_of(my_fd, struct kvsfs_fsal_obj_handle, u.file.fd);
+
+	*handle = &myself->obj_handle;
+}
+
+
 /* kvsfs_export_ops_init
  * overwrite vector entries with the methods that we support
  */
@@ -167,6 +191,7 @@ void kvsfs_export_ops_init(struct export_ops *ops)
 	ops->get_fs_dynamic_info = get_dynamic_info;
 	ops->fs_supported_attrs = kvsfs_supported_attrs;
 	ops->alloc_state = kvsfs_alloc_state;
+	ops->get_fsal_obj_hdl = get_fsal_obj_hdl;
 
 }
 

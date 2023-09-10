@@ -414,6 +414,30 @@ void ceph_prepare_unexport(struct fsal_export *export_pub)
 #endif
 }
 
+
+/**
+ * @brief Function to get the fasl_obj_handle that has fsal_fd as its global fd.
+ *
+ * @param[in]     exp_hdl   The export in which the handle exists
+ * @param[in]     fd        File descriptor in question
+ * @param[out]    handle    FSAL object handle
+ *
+ * @return the fsal_obj_handle.
+ */
+void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
+				  struct fsal_fd *fd,
+				  struct fsal_obj_handle **handle)
+{
+	struct ceph_fd *my_fd = NULL;
+	struct ceph_handle *myself = NULL;
+
+	my_fd = container_of(fd, struct ceph_fd, fsal_fd);
+	myself = container_of(my_fd, struct ceph_handle, fd);
+
+	*handle = &myself->handle;
+}
+
+
 /**
  * @brief Set operations for exports
  *
@@ -433,6 +457,7 @@ void export_ops_init(struct export_ops *ops)
 	ops->create_handle = create_handle;
 	ops->get_fs_dynamic_info = get_fs_dynamic_info;
 	ops->alloc_state = ceph_alloc_state;
+	ops->get_fsal_obj_hdl = get_fsal_obj_hdl;
 #ifdef CEPHFS_POSIX_ACL
 	ops->fs_acl_support = fs_acl_support;
 #endif				/* CEPHFS_POSIX_ACL */

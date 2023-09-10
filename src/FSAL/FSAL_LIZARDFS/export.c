@@ -424,6 +424,29 @@ struct state_t *lzfs_fsal_alloc_state(struct fsal_export *exp_hdl,
 	return state;
 }
 
+
+/**
+ * @brief Function to get the fasl_obj_handle that has fsal_fd as its global fd.
+ *
+ * @param[in]     exp_hdl   The export in which the handle exists
+ * @param[in]     fd        File descriptor in question
+ * @param[out]    handle    FSAL object handle
+ *
+ * @return the fsal_obj_handle.
+ */
+void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
+				  struct fsal_fd *fd,
+				  struct fsal_obj_handle **handle)
+{
+	struct lzfs_fsal_fd *my_fd = NULL;
+	struct lzfs_fsal_handle *myself = NULL;
+
+	my_fd = container_of(fd, struct lzfs_fsal_fd, fsal_fd);
+	myself = container_of(my_fd, struct lzfs_fsal_handle, fd);
+
+	*handle = &myself->handle;
+}
+
 void lzfs_fsal_export_ops_init(struct export_ops *ops)
 {
 	ops->release = lzfs_fsal_release;
@@ -442,5 +465,6 @@ void lzfs_fsal_export_ops_init(struct export_ops *ops)
 	ops->fs_supported_attrs = lzfs_fsal_fs_supported_attrs;
 	ops->fs_umask = lzfs_fsal_fs_umask;
 	ops->alloc_state = lzfs_fsal_alloc_state;
+	ops->get_fsal_obj_hdl = get_fsal_obj_hdl;
 	lzfs_fsal_export_ops_pnfs(ops);
 }
