@@ -1385,6 +1385,7 @@ uint32_t lru_try_one(void)
 		/* Drop the fsal_fd_mutex so we can take the work_mutex. */
 		PTHREAD_MUTEX_unlock(&fsal_fd_mutex);
 
+		get_gsh_export_ref(fsal_fd->fsal_export->owning_export);
 		/* Now we can safely work on the object, we want to close it. */
 		init_op_context_simple(&op_context,
 				       fsal_fd->fsal_export->owning_export,
@@ -1970,9 +1971,6 @@ fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
 	fsal_complete_fd_work(fsal_fd);
 
 	if (is_reclaiming) {
-		/* Drop the reclaim now and wake up any waiting threads. */
-		atomic_dec_int32_t(&fsal_fd->lru_reclaim);
-
 		PTHREAD_MUTEX_lock(&fsal_fd_mutex);
 		PTHREAD_COND_signal(&fsal_fd_cond);
 		PTHREAD_MUTEX_unlock(&fsal_fd_mutex);
