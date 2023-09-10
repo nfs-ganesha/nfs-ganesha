@@ -108,7 +108,7 @@ struct mdcache_parameter {
 	uint32_t fd_lwmark_percent;
 	/** Roughly, the amount of work to do on each pass through the
 	    thread under normal conditions.  (Ideally, a multiple of
-	    the number of lanes.)  Defaults to 1000, settable with
+	    the number of lanes.)  Defaults to 0, settable with
 	    Reaper_Work. */
 	uint32_t reaper_work;
 	/** The amount of work for the reaper thread to do per-lane
