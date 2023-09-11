@@ -461,8 +461,18 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	if (state->state_type == STATE_TYPE_LOCK)
 		glist_del(&state->state_data.lock.state_sharelist);
 
-	if (state->state_type == STATE_TYPE_SHARE)
+	if (state->state_type == STATE_TYPE_SHARE) {
 		assert(glist_empty(&state->state_data.share.share_lockstates));
+		/* Write open fd count should be decremented,
+		 * if the client doesn't close the file.
+		 * Else this could result in a file never being delegated
+		 */
+		if ((state->state_data.share.share_access &
+			OPEN4_SHARE_ACCESS_WRITE) &&
+			obj->type == REGULAR_FILE) {
+			obj->state_hdl->file.fdeleg_stats.fds_num_write_opens--;
+		}
+	}
 
 	/* Reset write delegated and release client ref if this is a
 	 * write delegation */
