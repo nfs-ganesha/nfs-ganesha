@@ -203,6 +203,24 @@ bool reread_config(void)
 		return false;
 	}
 
+	/* Reread directory_services configuration */
+	(void) load_config_from_parse(config_struct,
+				      &directory_services_param,
+				      &nfs_param.directory_services_param,
+				      true,
+				      &err_type);
+	if (!config_error_is_harmless(&err_type)) {
+		LogCrit(COMPONENT_CONFIG,
+			"Error while parsing DIRECTORY_SERVICES configuration");
+	}
+
+	/* Set idmapping status based on directory_services configuration */
+	status = set_idmapping_status(
+		nfs_param.directory_services_param.idmapping_active);
+	if (!status) {
+		LogFatal(COMPONENT_CONFIG, "Failed to set idmapping status");
+	}
+
 	(void) report_config_errors(&err_type, NULL, config_errs_to_log);
 	config_Free(config_struct);
 	return true;
@@ -604,6 +622,12 @@ int init_server_pkgs(void)
 	LogEvent(COMPONENT_INIT, "Initializing ID Mapper.");
 	if (!idmapper_init()) {
 		LogCrit(COMPONENT_INIT, "Failed initializing ID Mapper.");
+		return -1;
+	}
+	/* Set idmapping status based on directory_services configuration */
+	if (!set_idmapping_status(
+		nfs_param.directory_services_param.idmapping_active)) {
+		LogCrit(COMPONENT_INIT, "Failed to set idmapping status");
 		return -1;
 	}
 	LogEvent(COMPONENT_INIT, "ID Mapper successfully initialized.");

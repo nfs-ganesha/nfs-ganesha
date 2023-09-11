@@ -275,6 +275,8 @@ DIRECTORY_SERVICES {}
 
 	DomainName(string, default "localdomain")
 
+	Idmapping_Active(bool, default true)
+
 EXPORT_DEFAULTS {}
 ------------------
 

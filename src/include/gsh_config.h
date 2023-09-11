@@ -621,6 +621,8 @@ typedef struct directory_services_param {
 	/** Domain to use if we aren't using the nfsidmap. Defaults
 	    to NULL and is set with DomainName. */
 	char *domainname;
+	/** Whether to enable idmapping. Defaults to true. */
+	bool idmapping_active;
 	/** Cache validity in seconds for idmapped user entries */
 	time_t idmapped_user_time_validity;
 	/** Cache validity in seconds for idmapped group entries */

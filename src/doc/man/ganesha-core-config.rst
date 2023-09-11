@@ -353,6 +353,9 @@ DIRECTORY_SERVICES {}
 DomainName(string, default "localdomain")
     Domain to use if we aren't using the nfsidmap.
 
+Idmapping_Active(bool, default true)
+    Whether to enable idmapping
+
 Idmapped_User_Time_Validity(int64, range -1 to INT64_MAX, default -1)
     Cache validity in seconds for idmapped-user entries.
     The default value is -1, which indicates fallback to older config --
