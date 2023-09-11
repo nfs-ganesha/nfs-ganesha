@@ -347,6 +347,13 @@ Active_krb5(bool, default false)
     compiled in)
 
 
+DIRECTORY_SERVICES {}
+--------------------------------------------------------------------------------
+
+DomainName(string, default "localdomain")
+    Domain to use if we aren't using the nfsidmap.
+
+
 NFSv4 {}
 --------------------------------------------------------------------------------
 
@@ -360,8 +367,9 @@ Lease_Lifetime(uint32, range 1 to 120, default 60)
 Grace_Period(uint32, range 0 to 180, default 90)
     The NFS grace period.
 
-DomainName(string, default "localdomain")
-    Domain to use if we aren't using the nfsidmap.
+DomainName(string, default NULL)
+    This config param is deprecated. Use `DomainName` in `DIRECTORY_SERVICES`
+    config section.
 
 IdmapConf(path, default "/etc/idmapd.conf")
     Path to the idmap configuration file.

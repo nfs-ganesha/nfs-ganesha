@@ -465,6 +465,18 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	}
 #endif
 
+	/* Directory Services specific configuration */
+	(void) load_config_from_parse(parse_tree,
+				      &directory_services_param,
+				      &nfs_param.directory_services_param,
+				      true,
+				      err_type);
+	if (!config_error_is_harmless(err_type)) {
+		LogCrit(COMPONENT_INIT,
+			"Error while parsing DIRECTORY_SERVICES configuration");
+		return -1;
+	}
+
 	/* NFSv4 specific configuration */
 	(void) load_config_from_parse(parse_tree,
 				      &version4_param,
@@ -475,6 +487,19 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing NFSv4 specific configuration");
 		return -1;
+	}
+	/* Use `domainname` from `nfsv4` config section, if it is not set under
+	 * `directory_services` section. Otherwise, ignore the `nfsv4` value.
+	 */
+	if (nfs_param.directory_services_param.domainname == NULL) {
+		LogWarn(COMPONENT_INIT,
+			"domainname in NFSv4 config section will soon be deprecated, define it under DIRECTORY_SERVICES section");
+		nfs_param.directory_services_param.domainname =
+			nfs_param.nfsv4_param.domainname;
+	} else {
+		/* TODO: Remove below log when NFSv4/domainname is removed */
+		LogWarn(COMPONENT_INIT,
+			"Using domainname from DIRECTORY_SERVICES config section, instead of NFSv4");
 	}
 
 #ifdef _USE_9P

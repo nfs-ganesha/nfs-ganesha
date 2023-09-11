@@ -376,6 +376,22 @@ struct config_block krb5_param = {
 };
 #endif
 
+static struct config_item directory_services_params[] = {
+	CONF_ITEM_STR("DomainName", 1, MAXPATHLEN, NULL,
+		       directory_services_param, domainname),
+	CONFIG_EOL
+};
+
+struct config_block directory_services_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.directory_services",
+	.blk_desc.name = "DIRECTORY_SERVICES",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = directory_services_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+
 #ifdef USE_NFSIDMAP
 #define GETPWNAMDEF false
 #else
@@ -414,7 +430,7 @@ static struct config_item version4_params[] = {
 	CONF_ITEM_STR("Server_Owner", 1, MAXNAMLEN, NULL,
 		      nfs_version4_parameter, server_owner),
 	CONF_ITEM_STR("DomainName", 1, MAXPATHLEN, DOMAINNAME_DEFAULT,
-		      nfs_version4_parameter, domainname),
+		       nfs_version4_parameter, domainname),
 	CONF_ITEM_PATH("IdmapConf", 1, MAXPATHLEN, IDMAPCONF_DEFAULT,
 		       nfs_version4_parameter, idmapconf),
 	CONF_ITEM_BOOL("UseGetpwnam", GETPWNAMDEF,

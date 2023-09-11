@@ -553,8 +553,8 @@ typedef struct nfs_version4_parameter {
 	/** The eir_server_owner. Defaults to NULL and is settable
 	    with server_owner. */
 	char *server_owner;
-	/** Domain to use if we aren't using the nfsidmap.  Defaults
-	    to DOMAINNAME_DEFAULT and is set with DomainName. */
+	/** This config param is deprecated. Use `domainname` defined
+	    in `directory_services_param` struct. */
 	char *domainname;
 	/** Path to the idmap configuration file.  Defaults to
 	    IDMAPCONF_DEFAULT, settable with IdMapConf */
@@ -617,6 +617,12 @@ typedef struct nfs_version4_parameter {
 	uint64_t max_alive_time_for_expired_client;
 } nfs_version4_parameter_t;
 
+typedef struct directory_services_param {
+	/** Domain to use if we aren't using the nfsidmap. Defaults
+	    to NULL and is set with DomainName. */
+	char *domainname;
+} directory_services_param_t;
+
 /** @} */
 
 typedef struct nfs_param {
@@ -629,6 +635,9 @@ typedef struct nfs_param {
 	/** kerberos configuration.  Settable in the NFS_KRB5 stanza. */
 	nfs_krb5_parameter_t krb5_param;
 #endif				/* _HAVE_GSSAPI */
+	/** Directory_services configuration, settable in the
+	    DIRECTORY_SERVICES stanza. */
+	directory_services_param_t directory_services_param;
 } nfs_parameter_t;
 
 extern nfs_parameter_t nfs_param;

@@ -229,8 +229,6 @@ NFSV4 {}
 
 	Grace_Period(uint32, range 0 to 180, default 90)
 
-	DomainName(string, default "localdomain")
-
 	IdmapConf(path, default "/etc/idmapd.conf")
 
 	UseGetpwnam(bool, default false if using idmap, true otherwise)
@@ -271,6 +269,11 @@ NFSV4 {}
 
 	Max_Alive_Time_For_Expired_Client(uint64, range 0 to UINT64_MAX,
 					  default 86400)
+
+DIRECTORY_SERVICES {}
+---------------------
+
+	DomainName(string, default "localdomain")
 
 EXPORT_DEFAULTS {}
 ------------------
