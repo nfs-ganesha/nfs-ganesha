@@ -71,6 +71,7 @@ fedora 39
 fedora 40
 rockylinux 8
 rockylinux 9
+sle 15.5
 ubuntu 18.04
 ubuntu 20.04
 ubuntu 22.04
@@ -91,6 +92,9 @@ default_version()
 		;;
 	fedora)
 		echo "40"
+		;;
+	sle)
+		echo "15.5"
 		;;
 	ubuntu)
 		echo "24.04"
@@ -156,6 +160,9 @@ container_image()
 			echo "quay.io/centos/centos:stream${version}"
 			;;
 		esac
+		;;
+	sle)
+		echo "registry.suse.com/suse/sle${version%%.*}"
 		;;
 	esac
 }

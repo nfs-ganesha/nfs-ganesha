@@ -188,6 +188,36 @@ install_rh()
 		which
 }
 
+install_suse()
+{
+	zypper --non-interactive install --type pattern devel_basis
+
+	zypper --non-interactive install \
+	       bison \
+	       cmake \
+	       dbus-1-devel \
+	       doxygen \
+	       flex \
+	       gcc-c++ \
+	       git \
+	       graphviz \
+	       jemalloc-devel \
+	       krb5-devel \
+	       less \
+	       libacl-devel \
+	       libasan4 \
+	       libblkid-devel \
+	       libcap-devel \
+	       libnsl-devel \
+	       liburcu-devel \
+	       libuuid-devel \
+	       nfsidmap-devel \
+	       python3 \
+	       rsync \
+	       sudo \
+	       which
+}
+
 #
 # Get release family
 #
@@ -200,6 +230,9 @@ almalinux | centos | rhel | rocky | fedora)
 	;;
 debian | ubuntu)
 	family="debian"
+	;;
+sles | suse)
+	family="suse"
 	;;
 *)
 	echo "Unsupported distro: ${ID}"
