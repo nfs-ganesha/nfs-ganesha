@@ -59,6 +59,10 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	getquota_rslt *qres = &res->res_rquota_getquota;
 	char path[MAXPATHLEN];
 	int quota_id;
+	uint64_t bhardlimitscaled = 0;
+	uint64_t bsoftlimitscaled = 0;
+	uint64_t curblocksscaled = 0;
+	uint64_t bsizescaled = 0;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
 		     "REQUEST PROCESSING: Calling RQUOTA_GETQUOTA");
@@ -127,14 +131,37 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			qres->status = Q_NOQUOTA;
 		return NFS_REQ_OK;
 	}
-
 	/* success */
-
+	bhardlimitscaled = fsal_quota.bhardlimit;
+	bsoftlimitscaled = fsal_quota.bsoftlimit;
+	curblocksscaled = fsal_quota.curblocks;
+	bsizescaled = fsal_quota.bsize;
+	while ((bhardlimitscaled > UINT32_MAX) ||
+			(bsoftlimitscaled > UINT32_MAX) ||
+			(curblocksscaled > UINT32_MAX)) {
+		/* check if we hit the limit of scaling, then limit to max */
+		if ((bsizescaled << 1) > UINT32_MAX) {
+			if (bhardlimitscaled > UINT32_MAX)
+				bhardlimitscaled = UINT32_MAX;
+			if (bsoftlimitscaled > UINT32_MAX)
+				bsoftlimitscaled = UINT32_MAX;
+			if (curblocksscaled > UINT32_MAX)
+				curblocksscaled = UINT32_MAX;
+		} else {
+			/* we can still scale */
+			bhardlimitscaled = bhardlimitscaled >> 1;
+			bsoftlimitscaled = bsoftlimitscaled >> 1;
+			curblocksscaled = curblocksscaled >> 1;
+			bsizescaled = bsizescaled << 1;
+		}
+	}
 	qres->getquota_rslt_u.gqr_rquota.rq_active = TRUE;
-	qres->getquota_rslt_u.gqr_rquota.rq_bsize = fsal_quota.bsize;
-	qres->getquota_rslt_u.gqr_rquota.rq_bhardlimit = fsal_quota.bhardlimit;
-	qres->getquota_rslt_u.gqr_rquota.rq_bsoftlimit = fsal_quota.bsoftlimit;
-	qres->getquota_rslt_u.gqr_rquota.rq_curblocks = fsal_quota.curblocks;
+	/* items that have changed due to scaling */
+	qres->getquota_rslt_u.gqr_rquota.rq_bsize = bsizescaled;
+	qres->getquota_rslt_u.gqr_rquota.rq_bhardlimit = bhardlimitscaled;
+	qres->getquota_rslt_u.gqr_rquota.rq_bsoftlimit = bsoftlimitscaled;
+	qres->getquota_rslt_u.gqr_rquota.rq_curblocks = curblocksscaled;
+	/* items carried over unchanged */
 	qres->getquota_rslt_u.gqr_rquota.rq_curfiles = fsal_quota.curfiles;
 	qres->getquota_rslt_u.gqr_rquota.rq_fhardlimit = fsal_quota.fhardlimit;
 	qres->getquota_rslt_u.gqr_rquota.rq_fsoftlimit = fsal_quota.fsoftlimit;
