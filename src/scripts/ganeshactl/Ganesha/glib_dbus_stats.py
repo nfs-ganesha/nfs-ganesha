@@ -1088,22 +1088,23 @@ def export_io_stats_report(header, stats):
 
     for exportid, export_stats in stats.items():
         report, success = header(export_stats)
-        reports.append(report)
         report['id'] = exportid
 
         if not success:
+            reports.append(report)
             continue
 
-        ops_stats = export_stats[3]
+        op_stat_start = 3
         for i, op in enumerate(ops):
+            ops_stats = export_stats[op_stat_start + i]
             result = {}
 
 
-            for i, counter in enumerate(counters):
-                result[counter] = dbus_to_std(ops_stats[i])
+            for j, counter in enumerate(counters):
+                result[counter] = dbus_to_std(ops_stats[j])
 
             report[op] = result
-
+            reports.append(report)
     return reports
 
 class TotalStats(Report):
