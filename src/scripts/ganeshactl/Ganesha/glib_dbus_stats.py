@@ -31,7 +31,8 @@ def dbus_to_std(v):
 
     if (isinstance(v, dbus.UInt16)
         or isinstance(v, dbus.UInt32)
-        or isinstance(v, dbus.UInt64)):
+        or isinstance(v, dbus.UInt64)
+        or isinstance(v, int)):
         ctor = int
     elif isinstance(v, dbus.Boolean):
         ctor = bool
