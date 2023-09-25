@@ -144,7 +144,7 @@ container_image()
 	version="$2"
 
 	case "$distro" in
-	almalinux | rockylinux)
+	almalinux | debian | fedora | rockylinux | ubuntu)
 		echo "docker.io/library/${distro}:${version}"
 		;;
 	centos)
@@ -156,15 +156,6 @@ container_image()
 			echo "quay.io/centos/centos:stream${version}"
 			;;
 		esac
-		;;
-	debian)
-		echo "docker.io/library/debian:${version}"
-		;;
-	fedora)
-		echo "docker.io/library/fedora:${version}"
-		;;
-	ubuntu)
-		echo "docker.io/library/ubuntu:${version}"
 		;;
 	esac
 }
