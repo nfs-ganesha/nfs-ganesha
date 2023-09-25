@@ -451,6 +451,14 @@ static struct config_item version4_params[] = {
 		       nfs_version4_parameter, max_client_ids),
 	CONF_ITEM_UI32("Open_State_Per_Client", 0, UINT32_MAX, 0,
 		       nfs_version4_parameter, open_state_per_client),
+	CONF_ITEM_UI32("Expired_Client_Threshold", 0, 256, 16,
+		       nfs_version4_parameter, expired_client_threshold),
+	CONF_ITEM_UI32("Max_Open_Files_For_Expired_Client", 0, UINT32_MAX,
+		       4000, nfs_version4_parameter,
+		       max_open_files_for_expired_client),
+	CONF_ITEM_UI64("Max_Alive_Time_For_Expired_Client", 0, UINT64_MAX,
+		       86400, nfs_version4_parameter,
+		       max_alive_time_for_expired_client),
 	CONFIG_EOL
 };
 

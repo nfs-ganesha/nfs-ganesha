@@ -61,8 +61,11 @@ static int reap_hash_table(hash_table_t *ht_reap)
 
 	/* For each bucket of the requested hashtable */
 	for (i = 0; i < ht_reap->parameter.index_size; i++) {
+		/* Before starting with traversal of RBT in the bucket,
+		 * if the expired client list gets filled, need reap it first
+		 */
+		count += reap_expired_client_list(NULL);
 		head_rbt = &ht_reap->partitions[i].rbt;
-
 restart:
 		/* acquire mutex */
 		PTHREAD_RWLOCK_wrlock(&ht_reap->partitions[i].ht_lock);
@@ -80,7 +83,8 @@ restart:
 
 			PTHREAD_MUTEX_lock(&client_id->cid_mutex);
 
-			if (valid_lease(client_id)) {
+			if (client_id->marked_for_delayed_cleanup ||
+			    valid_lease(client_id, false)) {
 				PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
 				RBT_INCREMENT(pn);
 				continue;
@@ -89,7 +93,7 @@ restart:
 			if (isDebug(COMPONENT_CLIENTID)) {
 				display_client_id_rec(&dspbuf, client_id);
 				LogFullDebug(COMPONENT_CLIENTID,
-					     "Expire index %d %s", i, str);
+					     "Expired index %d %s", i, str);
 				str_valid = true;
 			}
 
@@ -97,17 +101,22 @@ restart:
 			client_rec = client_id->cid_client_record;
 
 			/* get a ref to client_id as we might drop the
-			 * last reference with expiring. This also protects the
-			 * reference to the client_record.
+			 * last reference while expiring. This also protects
+			 * the reference to the client_record.
 			 */
 			inc_client_id_ref(client_id);
 
 			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
 			PTHREAD_RWLOCK_unlock(&ht_reap->partitions[i].ht_lock);
 
+			/* Before expiring the current client in RBT node,
+			 * if the expired client list gets filled, need reap it
+			 */
+			count += reap_expired_client_list(NULL);
+
 			PTHREAD_MUTEX_lock(&client_rec->cr_mutex);
 
-			nfs_client_id_expire(client_id, false);
+			nfs_client_id_expire(client_id, false, false);
 
 			PTHREAD_MUTEX_unlock(&client_rec->cr_mutex);
 
@@ -115,9 +124,15 @@ restart:
 				if (!str_valid)
 					display_printf(&dspbuf, "clientid %p",
 						       client_id);
-
-				LogFullDebug(COMPONENT_CLIENTID,
-					     "Reaper done, expired {%s}", str);
+				if (client_id->marked_for_delayed_cleanup) {
+					LogFullDebug(COMPONENT_CLIENTID,
+						"Reaper, Parked for later cleanup {%s}",
+						str);
+				} else {
+					LogFullDebug(COMPONENT_CLIENTID,
+						"Reaper done, expired {%s}",
+						str);
+				}
 			}
 
 			/* drop our reference to the client_id */
@@ -301,7 +316,8 @@ static void reaper_run(struct fridgethr_context *ctx)
 #endif
 	}
 
-	rst->count =
+	rst->count = reap_expired_client_list(NULL);
+	rst->count +=
 	    (reap_hash_table(ht_confirmed_client_id) +
 	     reap_hash_table(ht_unconfirmed_client_id));
 

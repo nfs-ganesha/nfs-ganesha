@@ -131,7 +131,7 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 			 lock_result_str(res->res_nlm4share.stat));
 		goto out;
 	}
-
+retry_nlm_share:
 	state_status = state_nlm_share(obj,
 				       arg->share.access,
 				       arg->share.mode,
@@ -143,6 +143,14 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	if (state_status != STATE_SUCCESS) {
 		res->res_nlm4share.stat =
 		    nlm_convert_state_error(state_status);
+		/* We have an got an share denied with an existing
+		* client. Let's recheck if it was expired.
+		*/
+		if (res->res_nlm4share.stat == NLM4_DENIED &&
+			check_and_remove_conflicting_client(
+				obj->state_hdl)) {
+			goto retry_nlm_share;
+		}
 	} else {
 		res->res_nlm4share.stat = NLM4_GRANTED;
 	}

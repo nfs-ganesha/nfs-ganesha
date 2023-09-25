@@ -367,7 +367,7 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		}
 
 		/* Expire clientid and release our reference. */
-		nfs_client_id_expire(conf, false);
+		nfs_client_id_expire(conf, false, true);
 
 		dec_client_id_ref(conf);
 
@@ -403,6 +403,12 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 		/* Bump the lease timer*/
 		conf->cid_last_renew = time(NULL);
+		/* Once the lease timer is updated then the client is active and
+		* if the unresponsive client was marked as expired earlier,
+		* then moving it out of the expired client list
+		*/
+		if (conf->marked_for_delayed_cleanup)
+			remove_client_from_expired_client_list(conf);
 
 		memcpy(conf->cid_verifier, unconf->cid_verifier,
 		       NFS4_VERIFIER_SIZE);

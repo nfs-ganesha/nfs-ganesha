@@ -1105,7 +1105,7 @@ restart:
 				/* nfs_client_id_expire requires cr_mutex */
 				PTHREAD_MUTEX_lock(&recp->cr_mutex);
 
-				nfs_client_id_expire(cp, true);
+				nfs_client_id_expire(cp, true, true);
 
 				PTHREAD_MUTEX_unlock(&recp->cr_mutex);
 

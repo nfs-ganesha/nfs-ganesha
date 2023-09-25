@@ -242,7 +242,8 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 		if (!nfs_compare_clientcred(&conf->cid_credential,
 					    &data->credential)) {
 			PTHREAD_MUTEX_lock(&conf->cid_mutex);
-			if (!valid_lease(conf) || !client_id_has_state(conf)) {
+			if (!valid_lease(conf, false) ||
+			    !client_id_has_state(conf)) {
 				PTHREAD_MUTEX_unlock(&conf->cid_mutex);
 
 				/* CASE 3, client collisions, old
@@ -250,7 +251,7 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 				 *
 				 * Expire clientid and release our reference.
 				 */
-				nfs_client_id_expire(conf, false);
+				nfs_client_id_expire(conf, false, true);
 				dec_client_id_ref(conf);
 				conf = NULL;
 			} else {

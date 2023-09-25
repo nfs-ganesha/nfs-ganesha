@@ -783,6 +783,10 @@ struct nfs_client_id_t {
 	uint32_t num_revokes;       /* Num revokes for the client */
 	struct gsh_client *gsh_client; /* for client specific statistics. */
 	uint32_t cid_open_state_counter; /* Num of files opened by client */
+	struct glist_head expired_client; /* List entry for expired clients */
+	bool marked_for_delayed_cleanup; /* Flag marked to state that entry is
+					    intended to be cleaned up from the
+					    delayed cleanup list */
 };
 
 /**

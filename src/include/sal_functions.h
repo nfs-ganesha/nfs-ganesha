@@ -290,7 +290,12 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 
 bool clientid_has_state(nfs_client_id_t *clientid);
 
-bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale);
+bool nfs_client_id_expire(nfs_client_id_t *clientid,
+			  bool make_stale, bool force_expire);
+
+extern uint32_t num_of_curr_expired_clients;
+int reap_expired_client_list(nfs_client_id_t *clientid);
+void remove_client_from_expired_client_list(nfs_client_id_t *active_clientid);
 
 #define DISPLAY_CLIENTID_SIZE 36
 int display_clientid(struct display_buffer *dspbuf, clientid4 clientid);
@@ -452,8 +457,7 @@ struct state_t *nfs4_State_Get_Obj(struct fsal_obj_handle *obj,
 int reserve_lease(nfs_client_id_t *clientid);
 bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update);
 void update_lease(nfs_client_id_t *clientid);
-bool valid_lease(nfs_client_id_t *clientid);
-
+bool valid_lease(nfs_client_id_t *clientid, bool is_from_reaper);
 /******************************************************************************
  *
  * NFSv4 Owner functions
@@ -785,6 +789,7 @@ void revoke_owner_delegs(state_owner_t *client_owner);
 #ifdef DEBUG_SAL
 void dump_all_states(void);
 #endif
+bool check_and_remove_conflicting_client(struct state_hdl *file_state_hdl);
 
 /******************************************************************************
  *

@@ -45,10 +45,12 @@
  * @brief Return the lifetime of a valid lease
  *
  * @param[in] clientid The client record to check
+ * @param[in] is_from_reaper Whether expired client list reaper
+ *			     have invoked the validation.
  *
  * @return The lease lifetime or 0 if expired.
  */
-static unsigned int _valid_lease(nfs_client_id_t *clientid)
+static unsigned int _valid_lease(nfs_client_id_t *clientid, bool is_from_reaper)
 {
 	time_t t;
 
@@ -60,9 +62,15 @@ static unsigned int _valid_lease(nfs_client_id_t *clientid)
 
 	t = time(NULL);
 
-	if (clientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime > t)
+	if (clientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime >
+		t) {
 		return (clientid->cid_last_renew +
 			nfs_param.nfsv4_param.lease_lifetime) - t;
+	} else if (!is_from_reaper && clientid->marked_for_delayed_cleanup) {
+		LogFullDebug(COMPONENT_CLIENTID,
+			"Returning as valid as client is added to list");
+		return 1;
+	}
 
 	return 0;
 }
@@ -73,15 +81,17 @@ static unsigned int _valid_lease(nfs_client_id_t *clientid)
  * The caller must hold cid_mutex.
  *
  * @param[in] clientid Record to check lease for.
+ * @param[in] is_from_reaper Whether expired client list reaper
+ *			     have invoked the validation.
  *
  * @return 1 if lease is valid, 0 if not.
  *
  */
-bool valid_lease(nfs_client_id_t *clientid)
+bool valid_lease(nfs_client_id_t *clientid, bool is_from_reaper)
 {
 	unsigned int valid;
 
-	valid = _valid_lease(clientid);
+	valid = _valid_lease(clientid, is_from_reaper);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
@@ -111,7 +121,7 @@ int reserve_lease(nfs_client_id_t *clientid)
 {
 	unsigned int valid;
 
-	valid = _valid_lease(clientid);
+	valid = _valid_lease(clientid, false);
 
 	if (valid != 0)
 		clientid->cid_lease_reservations++;
@@ -149,7 +159,7 @@ bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update)
 
 	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
-	valid = _valid_lease(clientid);
+	valid = _valid_lease(clientid, false);
 
 	if (valid != 0)
 		clientid->cid_lease_reservations++;
@@ -186,7 +196,7 @@ bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update)
 		if (client_rec != NULL)
 			PTHREAD_MUTEX_lock(&client_rec->cr_mutex);
 
-		nfs_client_id_expire(clientid, false);
+		nfs_client_id_expire(clientid, false, true);
 
 		if (client_rec != NULL) {
 			PTHREAD_MUTEX_unlock(&client_rec->cr_mutex);
@@ -224,8 +234,15 @@ void update_lease(nfs_client_id_t *clientid)
 	clientid->cid_lease_reservations--;
 
 	/* Renew lease when last reservation is released */
-	if (clientid->cid_lease_reservations == 0)
+	if (clientid->cid_lease_reservations == 0) {
 		clientid->cid_last_renew = time(NULL);
+		/* Once the lease timer is updated then the client is active and
+		 * if the unresponsive client was marked as expired earlier,
+		 * then moving it out of the expired client list
+		 */
+		if (clientid->marked_for_delayed_cleanup)
+			remove_client_from_expired_client_list(clientid);
+	}
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";

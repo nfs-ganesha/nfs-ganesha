@@ -987,7 +987,7 @@ static void open4_ex(OPEN4args *arg,
 		 */
 		LogFullDebug(COMPONENT_STATE,
 			     "Calling open2 for %s", filename);
-
+retry_open_file:
 		status = fsal_open2(in_obj,
 				    *file_state,
 				    openflags,
@@ -1000,6 +1000,26 @@ static void open4_ex(OPEN4args *arg,
 
 		if (FSAL_IS_ERROR(status)) {
 			res_OPEN4->status = nfs4_Errno_status(status);
+		LogFullDebug(COMPONENT_STATE,
+			     "fsal_open2 for %s, returned %d-%s",
+			     filename, res_OPEN4->status,
+			     nfsstat4_to_str(res_OPEN4->status));
+
+			/* We have an got an share denied with an existing
+			* client. Let's recheck if it was expired.
+			*/
+			if (res_OPEN4->status == NFS4ERR_SHARE_DENIED) {
+				if (st_lock_held)
+					STATELOCK_unlock(in_obj);
+				if (check_and_remove_conflicting_client(
+					in_obj->state_hdl)) {
+					if (st_lock_held)
+						STATELOCK_lock(in_obj);
+					goto retry_open_file;
+				}
+				if (st_lock_held)
+					STATELOCK_lock(in_obj);
+			}
 			goto out;
 		}
 	} else if (createmode >= FSAL_EXCLUSIVE) {

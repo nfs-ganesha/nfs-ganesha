@@ -264,6 +264,14 @@ NFSV4 {}
 
 	Open_State_Per_Client(uint32, range 0 to UINT32_MAX, default 0)
 
+	Expired_Client_Threshold(uint32, range 0 to 256, default 16)
+
+	Max_Open_Files_For_Expired_Client(uint32, range 0 to UINT32_MAX,
+					  default 4000)
+
+	Max_Alive_Time_For_Expired_Client(uint64, range 0 to UINT64_MAX,
+					  default 86400)
+
 EXPORT_DEFAULTS {}
 ------------------
 

@@ -755,10 +755,12 @@ static state_lock_entry_t *get_overlapping_entry(struct state_hdl *ostate,
 						 fsal_lock_param_t *lock)
 {
 	struct glist_head *glist;
+	struct glist_head *glist_n;
 	state_lock_entry_t *found_entry = NULL;
 	uint64_t found_entry_end, range_end = lock_end(lock);
 
-	glist_for_each(glist, &ostate->file.lock_list) {
+recheck_for_conflicting_entries:
+	glist_for_each_safe(glist, glist_n, &ostate->file.lock_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
 		LogEntry("Checking", found_entry);
@@ -781,6 +783,28 @@ static state_lock_entry_t *get_overlapping_entry(struct state_hdl *ostate,
 			     || lock->lock_type == FSAL_LOCK_W)
 			    && different_owners(found_entry->sle_owner, owner)
 			    ) {
+				/* Recheck for expiry */
+				state_owner_t *cf_own = found_entry->sle_owner;
+				nfs_client_id_t *client_id =
+				    cf_own->so_owner.so_nfs4_owner.so_clientrec;
+
+				if ((atomic_fetch_uint32_t(
+					&num_of_curr_expired_clients))
+				    && (cf_own->so_type
+					>= STATE_OPEN_OWNER_NFSV4)
+				    && client_id->marked_for_delayed_cleanup) {
+					/* Release the state lock, to clean */
+					ostate->no_cleanup = false;
+					PTHREAD_MUTEX_unlock(&ostate->st_lock);
+
+					reap_expired_client_list(client_id);
+					/* Acquire back the state lock */
+					PTHREAD_MUTEX_lock(&ostate->st_lock);
+					ostate->no_cleanup = true;
+
+					/* Continue to recheck for conflicts */
+					goto recheck_for_conflicting_entries;
+				}
 				/* found a conflicting lock, return it */
 				return found_entry;
 			}
@@ -2411,6 +2435,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 {
 	bool allow = true, overlap = false;
 	struct glist_head *glist;
+	struct glist_head *glist_n;
 	state_lock_entry_t *found_entry;
 	uint64_t found_entry_end;
 	uint64_t range_end = lock_end(lock);
@@ -2475,7 +2500,8 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		}
 	}
 
-	glist_for_each(glist, &obj->state_hdl->file.lock_list) {
+recheck_for_conflicting_entries:
+	glist_for_each_safe(glist, glist_n, &obj->state_hdl->file.lock_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 		/* Need to reject lock request if this lock owner already has
 		 * a lock on this file via a different export.
@@ -2522,6 +2548,25 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 				LogEntry("Conflicts with", found_entry);
 				LogList("Locks", obj,
 					&obj->state_hdl->file.lock_list);
+				state_owner_t *cf_own = found_entry->sle_owner;
+				nfs_client_id_t *client_id =
+				    cf_own->so_owner.so_nfs4_owner.so_clientrec;
+
+				if ((atomic_fetch_uint32_t(
+					&num_of_curr_expired_clients))
+				    && (cf_own->so_type
+					>= STATE_OPEN_OWNER_NFSV4)
+				    && client_id->marked_for_delayed_cleanup) {
+					/* Release the state lock, to clean */
+					STATELOCK_unlock(obj);
+					reap_expired_client_list(client_id);
+					/* Acquire back the state lock */
+					STATELOCK_lock(obj);
+
+					/* Continue to recheck for conflicts */
+					goto recheck_for_conflicting_entries;
+				}
+
 				if (blocking != STATE_NLM_BLOCKING) {
 					copy_conflict(found_entry, holder,
 						      conflict);

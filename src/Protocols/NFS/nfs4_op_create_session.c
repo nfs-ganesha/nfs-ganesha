@@ -442,7 +442,7 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 		 * NOTE: found MUST NOT BE conf (otherwise clientid would have
 		 *       matched).
 		 */
-		nfs_client_id_expire(conf, false);
+		nfs_client_id_expire(conf, false, true);
 		dec_client_id_ref(conf);
 		conf = NULL;
 	}
@@ -521,6 +521,12 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 
 	/* Bump the lease timer */
 	conf->cid_last_renew = time(NULL);
+	/* Once the lease timer is updated then the client is active and
+	 * if the unresponsive client was marked as expired earlier,
+	 * then moving it out of the expired client list
+	 */
+	if (conf->marked_for_delayed_cleanup)
+		remove_client_from_expired_client_list(conf);
 
 	if (isFullDebug(component)) {
 		char str[LOG_BUFF_LEN] = "\0";

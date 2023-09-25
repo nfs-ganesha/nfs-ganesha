@@ -437,6 +437,25 @@ Open_State_Per_Client(uint32, range 0 to UINT32_MAX, default 0)
     open FD limit allowed by ganesha's cgroup. Beyond this limit, client gets
     denied if it tries to open too many files. To disable set to ZERO.
 
+Expired_Client_Threshold(uint32, range 0 to 256, default 16)
+    Specify the threshold of number of expired clients to be kept in memory
+    post lease period, unless the number of unresponsive clients go over this
+    limit. Ganesha keeps track of all expired clients in LRU fashion and picks
+    the oldest expired client when the number of clients exceeds the max limit.
+    This allows Ganesha to retain the open & lock state and there by helping
+    certain client workloads like MLPerf to run smoothly,
+    even after a network partition.
+
+Max_Open_Files_For_Expired_Client(uint32, range 0 to UINT32_MAX, default 4000)
+    Specify the maximum number of open files that an unresponsive client could
+    have, beyond which Ganesha won't keep client intact in memory and expire it.
+    Comes to play if the config Expired_Client_Threshold is not set to ZERO.
+
+Max_Alive_Time_For_Expired_Client(uint64, range 0 to UINT64_MAX, default 86400)
+    Specify the max amount of time till which to keep the unresponsive client
+    in memory, beyond which Ganesha would start reaping and expire it off.
+    Comes to play if the config Expired_Client_Threshold is not set to ZERO.
+
 RADOS_KV {}
 --------------------------------------------------------------------------------
 
