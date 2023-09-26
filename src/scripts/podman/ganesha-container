@@ -204,7 +204,7 @@ container_1()
 			interactive="-i"
 		fi
 
-		set -- "/bin/bash"
+		set -- "/bin/bash" "-l"
 	else
 		interactive=""
 	fi
