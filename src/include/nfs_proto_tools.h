@@ -90,7 +90,7 @@ struct xdr_attrs_args {
 	int nfs_status;
 	compound_data_t *data;
 	bool statfscalled;
-	fsal_dynamicfsinfo_t *dynamicinfo;
+	fsal_dynamicfsinfo_t dynamicinfo;
 };
 
 typedef struct fattr4_dent {

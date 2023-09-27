@@ -1146,21 +1146,21 @@ static fattr_xdr_result encode_fetch_fsinfo(struct xdr_attrs_args *args)
 
 	if (args->data != NULL && args->data->current_obj != NULL) {
 		fsal_status = fsal_statfs(args->data->current_obj,
-					  args->dynamicinfo);
+					  &args->dynamicinfo);
 	} else {
 		/* We don't expect this to actually get used, but fill in
 		 * sensible values just as a precaution.
 		 */
-		args->dynamicinfo->total_bytes = 1024000;
-		args->dynamicinfo->avail_bytes = 512000;
-		args->dynamicinfo->free_bytes = 512000;
-		args->dynamicinfo->total_files = 512;
-		args->dynamicinfo->free_files = 512;
-		args->dynamicinfo->avail_files = 512;
-		args->dynamicinfo->maxread = 65536;
-		args->dynamicinfo->maxwrite = 65536;
-		args->dynamicinfo->time_delta.tv_sec = 0;
-		args->dynamicinfo->time_delta.tv_nsec =
+		args->dynamicinfo.total_bytes = 1024000;
+		args->dynamicinfo.avail_bytes = 512000;
+		args->dynamicinfo.free_bytes = 512000;
+		args->dynamicinfo.total_files = 512;
+		args->dynamicinfo.free_files = 512;
+		args->dynamicinfo.avail_files = 512;
+		args->dynamicinfo.maxread = 65536;
+		args->dynamicinfo.maxwrite = 65536;
+		args->dynamicinfo.time_delta.tv_sec = 0;
+		args->dynamicinfo.time_delta.tv_nsec =
 						 FSAL_DEFAULT_TIME_DELTA_NSEC;
 	}
 	if (FSAL_IS_ERROR(fsal_status))
@@ -1180,7 +1180,7 @@ static fattr_xdr_result encode_files_avail(XDR *xdr,
 	if (!args->statfscalled)
 		if (!encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo->avail_files))
+	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo.avail_files))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1189,7 +1189,7 @@ static fattr_xdr_result decode_files_avail(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	return inline_xdr_u_int64_t(xdr,
-				    &args->dynamicinfo->avail_files)
+				    &args->dynamicinfo.avail_files)
 					? FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1203,7 +1203,7 @@ static fattr_xdr_result encode_files_free(XDR *xdr,
 	if (!args->statfscalled)
 		if (!encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo->free_files))
+	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo.free_files))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1212,7 +1212,7 @@ static fattr_xdr_result decode_files_free(XDR *xdr,
 					  struct xdr_attrs_args *args)
 {
 	return inline_xdr_u_int64_t(xdr,
-				    &args->dynamicinfo->free_files)
+				    &args->dynamicinfo.free_files)
 					? FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1226,7 +1226,7 @@ static fattr_xdr_result encode_files_total(XDR *xdr,
 	if (!args->statfscalled)
 		if (!encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo->total_files))
+	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo.total_files))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1235,7 +1235,7 @@ static fattr_xdr_result decode_files_total(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	return xdr_u_int64_t(xdr,
-			     &args->dynamicinfo->total_files)
+			     &args->dynamicinfo.total_files)
 				? FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1530,7 +1530,7 @@ static fattr_xdr_result encode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 static fattr_xdr_result decode_maxread(XDR *xdr, struct xdr_attrs_args *args)
 {
 	return xdr_u_int64_t(xdr,
-			     &args->dynamicinfo->maxread)
+			     &args->dynamicinfo.maxread)
 				? FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1551,7 +1551,7 @@ static fattr_xdr_result encode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 static fattr_xdr_result decode_maxwrite(XDR *xdr, struct xdr_attrs_args *args)
 {
 	return xdr_u_int64_t(xdr,
-			     &args->dynamicinfo->maxwrite)
+			     &args->dynamicinfo.maxwrite)
 				? FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1839,7 +1839,7 @@ static fattr_xdr_result encode_space_avail(XDR *xdr,
 	if (!args->statfscalled)
 		if (!encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo->avail_bytes))
+	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo.avail_bytes))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1848,7 +1848,7 @@ static fattr_xdr_result decode_space_avail(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	return inline_xdr_u_int64_t(xdr,
-				    &args->dynamicinfo->avail_bytes)
+				    &args->dynamicinfo.avail_bytes)
 					? FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1862,7 +1862,7 @@ static fattr_xdr_result encode_space_free(XDR *xdr,
 	if (!args->statfscalled)
 		if (!encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo->free_bytes))
+	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo.free_bytes))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1871,7 +1871,7 @@ static fattr_xdr_result decode_space_free(XDR *xdr,
 					  struct xdr_attrs_args *args)
 {
 	return inline_xdr_u_int64_t(xdr,
-				    &args->dynamicinfo->free_bytes)
+				    &args->dynamicinfo.free_bytes)
 					? FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -1885,7 +1885,7 @@ static fattr_xdr_result encode_space_total(XDR *xdr,
 	if (!args->statfscalled)
 		if (!encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
-	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo->total_bytes))
+	if (!inline_xdr_u_int64_t(xdr, &args->dynamicinfo.total_bytes))
 		return FATTR_XDR_FAILED;
 	return FATTR_XDR_SUCCESS;
 }
@@ -1894,7 +1894,7 @@ static fattr_xdr_result decode_space_total(XDR *xdr,
 					   struct xdr_attrs_args *args)
 {
 	return inline_xdr_u_int64_t(xdr,
-				    &args->dynamicinfo->total_bytes)
+				    &args->dynamicinfo.total_bytes)
 					? FATTR_XDR_SUCCESS : FATTR_XDR_FAILED;
 }
 
@@ -2106,7 +2106,7 @@ static fattr_xdr_result encode_deltatime(XDR *xdr, struct xdr_attrs_args *args)
 		if (!encode_fetch_fsinfo(args))
 			return FATTR_XDR_FAILED;
 
-	return encode_time(xdr, &args->dynamicinfo->time_delta);
+	return encode_time(xdr, &args->dynamicinfo.time_delta);
 }
 
 static fattr_xdr_result decode_deltatime(XDR *xdr, struct xdr_attrs_args *args)
@@ -3693,7 +3693,6 @@ bool xdr_fattr4_encode(XDR *xdrs, struct xdr_attrs_args *args,
 {
 	int attribute_to_set;
 	int max_attr_idx = nfs4_max_attr_index(args->data);
-	fsal_dynamicfsinfo_t dynamicinfo;
 	fattr_xdr_result xdr_res;
 	struct bitmap4 bitmap_encoded;
 	struct bitmap4 *bitmap;
@@ -3757,9 +3756,6 @@ bool xdr_fattr4_encode(XDR *xdrs, struct xdr_attrs_args *args,
 		if (!inline_xdr_u_int32_t(xdrs, &attr_len))
 			return false;
 	}
-
-	if (args->dynamicinfo == NULL)
-		args->dynamicinfo = &dynamicinfo;
 
 	for (attribute_to_set = next_attr_from_bitmap(bitmap, -1);
 	     attribute_to_set != -1;
@@ -4489,7 +4485,9 @@ static int Fattr4_To_FSAL_attr(struct fsal_attrlist *attrs, fattr4 *Fattr,
 	memset(&args, 0, sizeof(args));
 	args.attrs = attrs;
 	args.hdl4 = hdl4;
-	args.dynamicinfo = dinfo;
+	if (dinfo) {
+		args.dynamicinfo = *dinfo;
+	}
 	args.nfs_status = NFS4_OK;
 	args.data = data;
 
