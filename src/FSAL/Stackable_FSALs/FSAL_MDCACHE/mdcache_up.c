@@ -111,10 +111,18 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 	cih_latch_t latch;
 	int32_t refcnt;
 	fsal_status_t ret;
+	struct req_op_context op_context;
 
 	/* flags are for future expansion. For now, we don't accept any. */
 	if (flags)
 		return fsalstat(ERR_FSAL_INVAL, 0);
+
+	/* Get a ref to the vec->up_gsh_export and initialize op_context for the
+	 * upcall
+	 */
+	get_gsh_export_ref(vec->up_gsh_export);
+	init_op_context_simple(&op_context, vec->up_gsh_export,
+			       vec->up_fsal_export);
 
 	/*
 	 * Find the entry, and keep the wrlock on the partition. This ensures
@@ -130,7 +138,8 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 				     __func__, __LINE__);
 	if (!entry) {
 		LogDebug(COMPONENT_MDCACHE, "no entry found");
-		return fsalstat(ERR_FSAL_STALE, 0);
+		ret = fsalstat(ERR_FSAL_STALE, 0);
+		goto out;
 	}
 
 	/*
@@ -140,8 +149,11 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 	 * releasing the latch.
 	 */
 	refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
-	LogDebug(COMPONENT_MDCACHE, "entry %p has refcnt of %d", entry,
-		 refcnt);
+
+	LogDebug(COMPONENT_MDCACHE,
+		 "entry %p has refcnt of %d",
+		 entry, refcnt);
+
 	if (refcnt == 1) {
 		mdcache_lru_ref(entry, LRU_TEMP_REF);
 		cih_remove_latched(entry, &latch, 0);
@@ -149,9 +161,16 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 	} else {
 		ret = fsalstat(ERR_FSAL_STILL_IN_USE, 0);
 	}
+
 	cih_hash_release(&latch);
+
 	if (refcnt == 1)
 		mdcache_lru_unref(entry, LRU_TEMP_REF);
+
+out:
+
+	release_op_context();
+
 	return ret;
 }
 
