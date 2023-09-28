@@ -147,26 +147,77 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-#ifdef USE_FSAL_CEPH_LL_LOOKUP_ROOT
-static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
-					Inode **pi)
+static fsal_status_t find_cephfs_root(struct ceph_export *export, Inode **pi,
+				      struct ceph_statx *stx, bool *stxr)
 {
-	return ceph2fsal_error(ceph_ll_lookup_root(cmount, pi));
-}
-#else /* USE_FSAL_CEPH_LL_LOOKUP_ROOT */
-static fsal_status_t find_cephfs_root(struct ceph_mount_info *cmount,
-					Inode **pi)
-{
-	struct stat st;
+	int lmp, rc;
+	struct user_cred root_creds = {};
 
-	return ceph2fsal_error(ceph_ll_walk(cmount, "/", pi, &st));
+#ifdef USE_FSAL_CEPH_LL_LOOKUP_ROOT
+	if (strcmp(export->cmount_path, CTX_FULLPATH(op_ctx)) == 0) {
+		rc = ceph_ll_lookup_root(export->cmount, pi);
+		*stxr = false;
+		goto out;
+	}
+#endif
+
+	lmp = strlen(export->cmount_path);
+
+	if (lmp == 1) {
+		/* If cmount_path is "/" we need the leading '/'. */
+		lmp = 0;
+	}
+
+	/* Now walk the path */
+	rc = fsal_ceph_ll_walk(export->cmount,
+			       CTX_FULLPATH(op_ctx) + lmp,
+			       pi,
+			       stx,
+			       false,
+			       &root_creds);
+
+	*stxr = true;
+
+out:
+
+	return ceph2fsal_error(rc);
 }
-#endif /* USE_FSAL_CEPH_LL_LOOKUP_ROOT */
+
+static int ceph_export_commit(void *node, void *link_mem, void *self_struct,
+			      struct config_error_type *err_type)
+{
+	struct ceph_export *export = self_struct;
+	int lmp, lpath;
+
+	lmp = strlen(export->cmount_path);
+	lpath = strlen(op_ctx->ctx_export->cfg_fullpath);
+
+	LogDebug(COMPONENT_FSAL,
+		 "Commit %s mount path %s",
+		 op_ctx->ctx_export->cfg_fullpath,
+		 export->cmount_path);
+
+	if (lpath < lmp) {
+		err_type->invalid = true;
+		return 1;
+	}
+
+	if (lmp > 1 &&
+	    strncmp(export->cmount_path, CTX_FULLPATH(op_ctx), lmp) != 0) {
+		/* path is not a sub-directory of mount_path - error */
+		err_type->invalid = true;
+		return 1;
+	}
+
+	return 0;
+}
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_ITEM_STR("user_id", 0, MAXUIDLEN, NULL, ceph_export, user_id),
 	CONF_ITEM_STR("filesystem", 0, NAME_MAX, NULL, ceph_export, fs_name),
+	CONF_MAND_PATH("cmount_path", 1, MAXPATHLEN, NULL, ceph_export,
+			cmount_path),
 	CONF_ITEM_STR("secret_access_key", 0, MAXSECRETLEN, NULL, ceph_export,
 			secret_key),
 	CONF_ITEM_STR("sec_label_xattr", 0, 256, "security.selinux",
@@ -180,11 +231,11 @@ static struct config_block export_param_block = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = ceph_export_commit
 };
 
 #ifdef USE_FSAL_CEPH_LL_DELEGATION
-static void enable_delegations(struct ceph_export *export)
+static void enable_delegations(struct ceph_mount *cm)
 {
 	struct export_perms *export_perms = &op_ctx->ctx_export->export_perms;
 
@@ -206,7 +257,9 @@ static void enable_delegations(struct ceph_export *export)
 		int ceph_status;
 
 		LogDebug(COMPONENT_FSAL, "Setting deleg timeout to %u", dt);
-		ceph_status = ceph_set_deleg_timeout(export->cmount, dt);
+
+		ceph_status = ceph_set_deleg_timeout(cm->cmount, dt);
+
 		if (ceph_status != 0) {
 			export_perms->options &= ~EXPORT_OPTION_DELEGATIONS;
 			LogWarn(COMPONENT_FSAL,
@@ -216,14 +269,14 @@ static void enable_delegations(struct ceph_export *export)
 	}
 }
 #else /* !USE_FSAL_CEPH_LL_DELEGATION */
-static inline void enable_delegations(struct ceph_export *export)
+static inline void enable_delegations(struct ceph_mount *cm)
 {
 }
 #endif /* USE_FSAL_CEPH_LL_DELEGATION */
 
 #ifdef USE_FSAL_CEPH_RECLAIM_RESET
 #define RECLAIM_UUID_PREFIX		"ganesha-"
-static int reclaim_reset(struct ceph_export *export)
+static int reclaim_reset(struct ceph_mount *cm)
 {
 	int		ceph_status;
 	char		*nodeid, *uuid;
@@ -233,7 +286,7 @@ static int reclaim_reset(struct ceph_export *export)
 	 * Set long timeout for the session to ensure that MDS doesn't lose
 	 * state before server can come back and do recovery.
 	 */
-	ceph_set_session_timeout(export->cmount, 300);
+	ceph_set_session_timeout(cm->cmount, 300);
 
 	/*
 	 * For the uuid here, we just use whatever ganesha- + whatever
@@ -248,50 +301,50 @@ static int reclaim_reset(struct ceph_export *export)
 	len = strlen(RECLAIM_UUID_PREFIX) + strlen(nodeid) + 1 + 4 + 1;
 	uuid = gsh_malloc(len);
 	(void) snprintf(uuid, len, RECLAIM_UUID_PREFIX "%s-%4.4hx", nodeid,
-			export->export.export_id);
+			cm->cm_export_id);
 
 	/* If this fails, log a message but soldier on */
 	LogDebug(COMPONENT_FSAL, "Issuing reclaim reset for %s", uuid);
-	ceph_status = ceph_start_reclaim(export->cmount, uuid,
+	ceph_status = ceph_start_reclaim(cm->cmount, uuid,
 						CEPH_RECLAIM_RESET);
 	if (ceph_status)
 		LogEvent(COMPONENT_FSAL, "start_reclaim failed: %d",
 				ceph_status);
-	ceph_finish_reclaim(export->cmount);
-	ceph_set_uuid(export->cmount, uuid);
+	ceph_finish_reclaim(cm->cmount);
+	ceph_set_uuid(cm->cmount, uuid);
 	gsh_free(nodeid);
 	gsh_free(uuid);
 	return 0;
 }
 #undef RECLAIM_UUID_PREFIX
 #else
-static inline int reclaim_reset(struct ceph_export *export)
+static inline int reclaim_reset(struct ceph_mount *cm)
 {
 	return 0;
 }
 #endif
 
 #ifdef USE_FSAL_CEPH_GET_FS_CID
-static int select_filesystem(struct ceph_export *export)
+static int select_filesystem(struct ceph_mount *cm)
 {
 	int ceph_status;
 
-	if (export->fs_name) {
-		ceph_status = ceph_select_filesystem(export->cmount,
-						     export->fs_name);
+	if (cm->cm_fs_name) {
+		ceph_status = ceph_select_filesystem(cm->cmount,
+						     cm->cm_fs_name);
 		if (ceph_status != 0) {
 			LogCrit(COMPONENT_FSAL,
 				"Unable to set filesystem to %s.",
-				export->fs_name);
+				cm->cm_fs_name);
 			return ceph_status;
 		}
 	}
 	return 0;
 }
 #else /* USE_FSAL_CEPH_GET_FS_CID */
-static int select_filesystem(struct ceph_export *export)
+static int select_filesystem(struct ceph_mount *cm)
 {
-	if (export->fs_name) {
+	if (cm->fs_name) {
 		LogCrit(COMPONENT_FSAL,
 			"This libcephfs version doesn't support named filesystems.");
 		return -EINVAL;
@@ -303,21 +356,26 @@ static int select_filesystem(struct ceph_export *export)
 #ifdef USE_FSAL_CEPH_REGISTER_CALLBACKS
 static void ino_release_cb(void *handle, vinodeno_t vino)
 {
-	struct ceph_export *export = handle;
+	struct ceph_mount *cm = handle;
 	struct ceph_handle_key key;
 	struct gsh_buffdesc fh_desc;
 
 	LogDebug(COMPONENT_FSAL,
 		 "libcephfs asking to release 0x%lx:0x%lx:0x%lx",
-		 export->fscid, vino.snapid.val, vino.ino.val);
+		 cm->cm_fscid, vino.snapid.val, vino.ino.val);
 	key.hhdl.chk_ino = vino.ino.val;
 	key.hhdl.chk_snap = vino.snapid.val;
-	key.hhdl.chk_fscid = export->fscid;
-	key.export_id = export->export.export_id;
+	key.hhdl.chk_fscid = cm->cm_fscid;
+	key.export_id = cm->cm_export_id;
 	fh_desc.addr = &key;
 	fh_desc.len = sizeof(key);
 
-	export->export.up_ops->try_release(export->export.up_ops, &fh_desc, 0);
+	PTHREAD_RWLOCK_rdlock(&cmount_lock);
+
+	cm->cm_export->export.up_ops->try_release(
+				cm->cm_export->export.up_ops, &fh_desc, 0);
+
+	PTHREAD_RWLOCK_unlock(&cmount_lock);
 }
 
 static mode_t umask_cb(void *handle)
@@ -329,17 +387,17 @@ static mode_t umask_cb(void *handle)
 	return umask;
 }
 
-static void register_callbacks(struct ceph_export *export)
+static void register_callbacks(struct ceph_mount *cm)
 {
 	struct ceph_client_callback_args args = {
-					.handle = export,
+					.handle = cm,
 					.ino_release_cb = ino_release_cb,
 					.umask_cb = umask_cb
 				};
-	ceph_ll_register_callbacks(export->cmount, &args);
+	ceph_ll_register_callbacks(cm->cmount, &args);
 }
 #else /* USE_FSAL_CEPH_REGISTER_CALLBACKS */
-static void register_callbacks(struct ceph_export *export)
+static void register_callbacks(struct ceph_mount *cm)
 {
 	LogWarnOnce(COMPONENT_FSAL,
 		    "This libcephfs does not support registering callbacks. Ganesha will be unable to respond to MDS cache pressure.");
@@ -383,9 +441,15 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	/* Stat for root */
 	struct ceph_statx stx;
 	/* Return code */
-	int rc;
+	int rc, len;
 	/* Return code from Ceph calls */
 	int ceph_status;
+	/* Ceph mount key */
+	struct ceph_mount cm_key;
+	/* Ceph mount */
+	struct ceph_mount *cm;
+	/* stx is filled in */
+	bool stxr = false;
 
 	fsal_export_init(&export->export);
 	export_ops_init(&export->export.exp_ops);
@@ -403,8 +467,63 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		}
 	}
 
+	len = strlen(export->cmount_path);
+
+	/* Strip trailing '/' from cmount_path other than "/" */
+	if (len > 1 && export->cmount_path[len - 1] == '/')
+		export->cmount_path[len - 1] = '\0';
+
+	memset(&cm_key, 0, sizeof(cm_key));
+	cm_key.cm_fs_name = export->fs_name;
+	cm_key.cm_mount_path = export->cmount_path;
+	cm_key.cm_user_id = export->user_id;
+	cm_key.cm_secret_key = export->secret_key;
+
+	PTHREAD_RWLOCK_wrlock(&cmount_lock);
+
+	cm = ceph_mount_lookup(&cm_key.cm_avl_mount);
+
+	if (cm != NULL) {
+		cm->cm_refcnt++;
+		LogDebug(COMPONENT_FSAL,
+			 "Re-using cmount %s for %s",
+			 cm->cm_mount_path, CTX_FULLPATH(op_ctx));
+		goto has_cmount;
+	}
+
+	cm = gsh_calloc(1, sizeof(*cm));
+
+	cm->cm_refcnt = 1;
+
+	if (export->fs_name)
+		cm->cm_fs_name = gsh_strdup(export->fs_name);
+
+	if (export->cmount_path)
+		cm->cm_mount_path = gsh_strdup(export->cmount_path);
+	else
+		cm->cm_mount_path = gsh_strdup(CTX_FULLPATH(op_ctx));
+
+	if (export->user_id)
+		cm->cm_user_id = gsh_strdup(export->user_id);
+
+	if (export->secret_key)
+		cm->cm_secret_key = gsh_strdup(export->secret_key);
+
+	LogDebug(COMPONENT_FSAL,
+		 "New cmount %s for %s",
+		 cm->cm_mount_path, CTX_FULLPATH(op_ctx));
+
+
+	cm->cm_export_id = export->export.export_id;
+	cm->cm_export = export;
+
+	glist_init(&cm->cm_exports);
+
+	ceph_mount_insert(&cm->cm_avl_mount);
+
 	/* allocates ceph_mount_info */
-	ceph_status = ceph_create(&export->cmount, export->user_id);
+	ceph_status = ceph_create(&cm->cmount, cm->cm_user_id);
+
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
@@ -413,7 +532,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
-	ceph_status = ceph_conf_read_file(export->cmount, CephFSM.conf_path);
+	ceph_status = ceph_conf_read_file(cm->cmount, CephFSM.conf_path);
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
@@ -422,9 +541,9 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
-	if (export->secret_key) {
-		ceph_status = ceph_conf_set(export->cmount, "key",
-					    export->secret_key);
+	if (cm->cm_secret_key) {
+		ceph_status = ceph_conf_set(cm->cmount, "key",
+					    cm->cm_secret_key);
 		if (ceph_status) {
 			status.major = ERR_FSAL_INVAL;
 			LogCrit(COMPONENT_FSAL,
@@ -439,44 +558,46 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	 * given in ceph_mount properly. Should be harmless for fixed
 	 * libcephfs as well (see http://tracker.ceph.com/issues/18254).
 	 */
-	ceph_status = ceph_conf_set(export->cmount, "client_mountpoint",
-				    CTX_FULLPATH(op_ctx));
+	ceph_status = ceph_conf_set(cm->cmount, "client_mountpoint", "/");
+
 	if (ceph_status) {
 		status.major = ERR_FSAL_INVAL;
 		LogCrit(COMPONENT_FSAL,
-			"Unable to set Ceph client_mountpoint for %s: %d",
-			CTX_FULLPATH(op_ctx), ceph_status);
+			"Unable to set Ceph client_mountpoint: %d",
+			ceph_status);
 		goto error;
 	}
 
-	ceph_status = ceph_conf_set(export->cmount, "client_acl_type",
-				    "posix_acl");
+	ceph_status = ceph_conf_set(cm->cmount, "client_acl_type", "posix_acl");
 
 	if (ceph_status < 0) {
+		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
-			"Unable to set Ceph client_acl_type for %s: %d",
-			CTX_FULLPATH(op_ctx), ceph_status);
+			"Unable to set Ceph client_acl_type: %d",
+			ceph_status);
 		goto error;
 	}
 
-	ceph_status = ceph_init(export->cmount);
+	ceph_status = ceph_init(cm->cmount);
+
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
-			"Unable to init Ceph handle for %s.",
-			CTX_FULLPATH(op_ctx));
+			"Unable to init Ceph handle.");
 		goto error;
 	}
 
-	register_callbacks(export);
+	register_callbacks(cm);
 
-	ceph_status = select_filesystem(export);
+	ceph_status = select_filesystem(cm);
+
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		goto error;
 	}
 
-	ceph_status = reclaim_reset(export);
+	ceph_status = reclaim_reset(cm);
+
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
@@ -485,7 +606,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
-	ceph_status = ceph_mount(export->cmount, CTX_FULLPATH(op_ctx));
+	ceph_status = ceph_mount(cm->cmount, cm->cm_mount_path);
+
 	if (ceph_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
@@ -496,33 +618,51 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 #ifdef USE_FSAL_CEPH_GET_FS_CID
 	/* Fetch fscid for use in filehandles */
-	export->fscid = ceph_get_fs_cid(export->cmount);
-	if (export->fscid < 0) {
+	cm->cm_fscid = ceph_get_fs_cid(cm->cmount);
+
+	if (cm->cm_fscid < 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
 		LogCrit(COMPONENT_FSAL,
-			"Error getting fscid for %s.", export->fs_name);
+			"Error getting fscid for %s.", cm->cm_fs_name);
 		goto error;
 	}
 #endif /* USE_FSAL_CEPH_GET_FS_CID */
 
-	enable_delegations(export);
+	enable_delegations(cm);
 
+has_cmount:
+
+	cm->cm_refcnt++;
+
+	export->cm = cm;
+	export->cmount = cm->cmount;
+	export->fscid = cm->cm_fscid;
 	export->export.fsal = module_in;
 	export->export.up_ops = up_ops;
+
+	glist_add_tail(&cm->cm_exports, &export->cm_list);
 
 	LogDebug(COMPONENT_FSAL, "Ceph module export %s.",
 		 CTX_FULLPATH(op_ctx));
 
-	status = find_cephfs_root(export->cmount, &i);
+	status = find_cephfs_root(export, &i, &stx, &stxr);
+
 	if (FSAL_IS_ERROR(status))
 		goto error;
 
-	rc = fsal_ceph_ll_getattr(export->cmount, i, &stx,
-				  CEPH_STATX_HANDLE_MASK, &op_ctx->creds);
-	if (rc < 0) {
-		status = ceph2fsal_error(rc);
-		goto error;
+	if (!stxr) {
+		rc = fsal_ceph_ll_getattr(export->cmount, i, &stx,
+					  CEPH_STATX_HANDLE_MASK,
+					  &op_ctx->creds);
+
+		if (rc < 0) {
+			status = ceph2fsal_error(rc);
+			goto error;
+		}
 	}
+
+	LogDebug(COMPONENT_FSAL, "Ceph module export %s root %"PRIx64,
+		 CTX_FULLPATH(op_ctx), stx.stx_ino);
 
 	construct_handle(&stx, i, export, &handle);
 
@@ -537,14 +677,37 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
+	PTHREAD_RWLOCK_unlock(&cmount_lock);
+
 	return status;
- error:
+
+error:
+
 	if (i)
 		ceph_ll_put(export->cmount, i);
 
-	if (export->cmount)
-		ceph_shutdown(export->cmount);
+	/* Detach this export from the ceph_mount */
+	glist_del(&export->cm_list);
+
+	if (--cm->cm_refcnt == 0) {
+		/* This was the initial reference */
+
+		if (cm->cmount)
+			ceph_shutdown(cm->cmount);
+
+		ceph_mount_remove(&cm->cm_avl_mount);
+
+		gsh_free(cm->cm_fs_name);
+		gsh_free(cm->cm_mount_path);
+		gsh_free(cm->cm_user_id);
+		gsh_free(cm->cm_secret_key);
+
+		gsh_free(cm);
+	}
+
 	gsh_free(export);
+
+	PTHREAD_RWLOCK_unlock(&cmount_lock);
 
 	return status;
 }
@@ -572,6 +735,8 @@ MODULE_INIT void init(void)
 		LogCrit(COMPONENT_FSAL,
 			"Ceph module failed to register.");
 	}
+
+	ceph_mount_init();
 
 	/* Set up module operations */
 #ifdef CEPH_PNFS

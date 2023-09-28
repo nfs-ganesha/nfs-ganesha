@@ -71,6 +71,8 @@ static void release(struct fsal_export *export_pub)
 	/* The private, expanded export */
 	struct ceph_export *export =
 			container_of(export_pub, struct ceph_export, export);
+	/* Ceph mount */
+	struct ceph_mount *cm = export->cm;
 
 	deconstruct_handle(export->root);
 	export->root = 0;
@@ -78,8 +80,36 @@ static void release(struct fsal_export *export_pub)
 	fsal_detach_export(export->export.fsal, &export->export.exports);
 	free_export_ops(&export->export);
 
-	ceph_shutdown(export->cmount);
+	PTHREAD_RWLOCK_wrlock(&cmount_lock);
+
+	/* Detach this export from the ceph_mount */
+	glist_del(&export->cm_list);
+
+	if (--cm->cm_refcnt == 0) {
+		/* This was the final reference */
+
+		ceph_shutdown(cm->cmount);
+
+		ceph_mount_remove(&cm->cm_avl_mount);
+
+		gsh_free(cm->cm_fs_name);
+		gsh_free(cm->cm_mount_path);
+		gsh_free(cm->cm_user_id);
+		gsh_free(cm->cm_secret_key);
+
+
+		gsh_free(cm);
+	} else if (cm->cm_export == export) {
+		/* Need to attach a different export for upcalls */
+		cm->cm_export = glist_first_entry(&cm->cm_exports,
+						  struct ceph_export,
+						  cm_list);
+	}
+
 	export->cmount = NULL;
+
+	PTHREAD_RWLOCK_unlock(&cmount_lock);
+
 	gsh_free(export);
 	export = NULL;
 }
@@ -117,7 +147,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	/* The buffer in which to store stat info */
 	struct ceph_statx stx;
 	/* Return code from Ceph */
-	int rc;
+	int rc, lmp;
 	/* Find the actual path in the supplied path */
 	const char *realpath;
 
@@ -147,11 +177,22 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		return status;
 	}
 
+	PTHREAD_RWLOCK_rdlock(&cmount_lock);
+
+	lmp = strlen(export->cmount_path);
+
+	if (lmp == 1) {
+		/* If cmount_path is "/" we need the leading '/'. */
+		lmp = 0;
+	}
+
 	/* Advance past the export's fullpath */
-	realpath += strlen(CTX_FULLPATH(op_ctx));
+	realpath += lmp;
+
+	PTHREAD_RWLOCK_unlock(&cmount_lock);
 
 	/* special case the root */
-	if (strcmp(realpath, "/") == 0) {
+	if (realpath[1] == '\0' || realpath[0] == '\0') {
 		assert(export->root);
 		*pub_handle = &export->root->handle;
 		return status;
@@ -159,6 +200,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	rc = fsal_ceph_ll_walk(export->cmount, realpath, &i, &stx,
 				!!attrs_out, &op_ctx->creds);
+
 	if (rc < 0)
 		return ceph2fsal_error(rc);
 

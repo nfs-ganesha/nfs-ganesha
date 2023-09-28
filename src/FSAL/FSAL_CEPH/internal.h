@@ -48,6 +48,7 @@
 #include <uuid/uuid.h>
 #include "statx_compat.h"
 #include "FSAL/fsal_commonlib.h"
+#include "avltree.h"
 
 /* Max length of a user_id string that we pass to ceph_mount */
 #define MAXUIDLEN	(64)
@@ -66,12 +67,41 @@ struct ceph_fsal_module {
 };
 extern struct ceph_fsal_module CephFSM;
 
+struct ceph_mount {
+	/** Node to put this in an avl tree.
+	 *  Indexed by cm_user_id and cm_secret_key.
+	 */
+	struct avltree_node cm_avl_mount;
+	/** List of exports that use this ceph_mount */
+	struct glist_head cm_exports;
+	/** Count of how many exports are using this ceph mount */
+	int32_t cm_refcnt;
+	/** The mount object used to access all Ceph methods */
+	struct ceph_mount_info *cmount;
+	/** cephfs filesystem */
+	char *cm_fs_name;
+	/** The cephfs mount point (may be different than export path */
+	char *cm_mount_path;
+	/** The RADOS user_id */
+	char *cm_user_id;
+	/** The RADOS secret key */
+	char *cm_secret_key;
+	/* Cluster fsid for named fs' */
+	int64_t cm_fscid;
+	/* cmpount export_id for reclaim uuid */
+	uint16_t cm_export_id;
+	/* an export for release upcalls */
+	struct ceph_export *cm_export;
+};
+
 /**
  * Ceph private export object
  */
 
 struct ceph_export {
 	struct fsal_export export;	/*< The public export object */
+	struct glist_head cm_list;	/*< On list of exports for ceph_mount */
+	struct ceph_mount *cm;		/*< The ceph_mount descriptor */
 	struct ceph_mount_info *cmount;	/*< The mount object used to
 					   access all Ceph methods on
 					   this export. */
@@ -80,6 +110,7 @@ struct ceph_export {
 	char *secret_key;
 	char *sec_label_xattr;		/* name of xattr for security label */
 	char *fs_name;			/* filesystem name */
+	char *cmount_path;		/* path to cmount at */
 	int64_t fscid;			/* Cluster fsid for named fs' */
 };
 
@@ -220,4 +251,12 @@ fsal_status_t ceph_set_acl(struct ceph_export *export,
 int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
 	bool is_dir, struct fsal_attrlist *attrs);
 #endif				/* CEPHFS_POSIX_ACL */
+
+extern pthread_rwlock_t cmount_lock;
+
+void ceph_mount_init(void);
+struct ceph_mount *ceph_mount_lookup(const struct avltree_node *key);
+void ceph_mount_insert(struct avltree_node *key);
+void ceph_mount_remove(struct avltree_node *key);
+
 #endif				/* !FSAL_CEPH_INTERNAL_INTERNAL__ */

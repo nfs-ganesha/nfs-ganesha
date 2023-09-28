@@ -38,6 +38,17 @@ Secret_Access_Key(string, no default)
     search path for cephx keyring files to find a key.
 
 sec_label_xattr(char, default "security.selinux xattr of the file")
+    Enable NFSv4.2 security label attribute. Ganesha supports
+    "Limited Server Mode" as detailed in RFC 7204. Note that
+    not all FSALs support security labels.
+
+cmount_path(string, no default)
+    If specified, the path within the ceph filesystem to mount this
+    export on. It must be a subset of the EXPORT { Path } parameter.
+    If this and the other EXPORT { FSAL {} } options are the same
+    between multiple exports, those exports will share a single
+    cephfs client. With the default, this effectively defaults to
+    the same path as EXPORT { Path }.
 
 CEPH {}
 --------------------------------------------------------------------------------

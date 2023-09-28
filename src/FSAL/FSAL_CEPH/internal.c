@@ -444,3 +444,83 @@ out:
 	return rc;
 }
 #endif				/* CEPHFS_POSIX_ACL */
+
+struct avltree avl_cmount;
+
+pthread_rwlock_t cmount_lock = RWLOCK_INITIALIZER;
+
+static inline int key_strcmp(const char *left, const char *right)
+{
+	if (left == NULL && right != NULL)
+		return -1;
+
+	if (left != NULL && right == NULL)
+		return 1;
+
+	if (left == right)
+		return 0;
+
+	return strcmp(left, right);
+}
+
+int ceph_mount_key_cmpf(const struct avltree_node *lhs,
+			const struct avltree_node *rhs)
+{
+	struct ceph_mount *lk, *rk;
+	int rc;
+
+	lk = avltree_container_of(lhs, struct ceph_mount, cm_avl_mount);
+	rk = avltree_container_of(rhs, struct ceph_mount, cm_avl_mount);
+
+	/* If cmount_path is not configured, match with nothing... */
+	if (lk->cm_mount_path == NULL && rk->cm_mount_path == NULL)
+		return -1;
+
+	rc = key_strcmp(lk->cm_fs_name, rk->cm_fs_name);
+
+	if (rc != 0)
+		return rc;
+
+	rc = key_strcmp(lk->cm_mount_path, rk->cm_mount_path);
+
+	if (rc != 0)
+		return rc;
+
+	rc = key_strcmp(lk->cm_user_id, rk->cm_user_id);
+
+	if (rc != 0)
+		return rc;
+
+	return key_strcmp(lk->cm_secret_key, rk->cm_secret_key);
+}
+
+void ceph_mount_init(void)
+{
+	avltree_init(&avl_cmount, ceph_mount_key_cmpf, 0);
+}
+
+struct ceph_mount *ceph_mount_lookup(const struct avltree_node *key)
+{
+	struct avltree_node *node = avltree_inline_lookup(key, &avl_cmount,
+							  ceph_mount_key_cmpf);
+
+	if (node != NULL)
+		return avltree_container_of(node, struct ceph_mount,
+					    cm_avl_mount);
+	else
+		return NULL;
+}
+
+void ceph_mount_insert(struct avltree_node *key)
+{
+	struct avltree_node *node;
+
+	node = avltree_inline_insert(key, &avl_cmount, ceph_mount_key_cmpf);
+
+	assert(node == NULL);
+}
+
+void ceph_mount_remove(struct avltree_node *key)
+{
+	avltree_remove(key, &avl_cmount);
+}
