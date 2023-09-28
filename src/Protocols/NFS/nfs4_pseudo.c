@@ -217,9 +217,10 @@ retry:
 		}
 
 		LogDebug(COMPONENT_EXPORT,
-			 "BUILDING PSEUDOFS: Parent %p entry %p %s FSAL %s already exists",
-			 state->obj, new_node, name,
-			 new_node->fsal->name);
+			 "BUILDING PSEUDOFS: Parent %p fileid %"PRIx64
+			 "entry %p fileid %"PRIx64" %s FSAL %s already exists",
+			 state->obj, state->obj->fileid, new_node,
+			 new_node->fileid, name, new_node->fsal->name);
 
 		state->obj->obj_ops->put_ref(state->obj);
 		/* Make new node the current node */
@@ -463,6 +464,14 @@ bool pseudo_mount_export(struct gsh_export *export)
 
 	/* Fill in the mounted on information for the export. */
 	PTHREAD_RWLOCK_wrlock(&export->exp_lock);
+
+	LogDebug(COMPONENT_EXPORT,
+		 "BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s mounted_on_fileid %"
+		 PRIx64,
+		 export->export_id,
+		 state.st_fullpath,
+		 state.st_pseudopath,
+		 state.obj->fileid);
 
 	export->exp_mounted_on_file_id = state.obj->fileid;
 
