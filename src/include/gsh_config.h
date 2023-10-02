@@ -226,12 +226,13 @@ typedef struct nfs_core_param {
 	 *  end clients are handled in EXPORT CLIENT lists.
 	 */
 	struct glist_head haproxy_hosts;
+	/** The IPv4 or IPv6 address to which to bind for our
+	    listening port.  Set by the Bind_Addr option.
+	    Must be 8-byte aligned (see sockaddr_t). */
+	sockaddr_t bind_addr;
 	/** An array of port numbers, one for each protocol.  Set by
 	    the NFS_Port, MNT_Port, NLM_Port, and Rquota_Port options. */
 	uint16_t port[P_COUNT];
-	/** The IPv4 or IPv6 address to which to bind for our
-	    listening port.  Set by the Bind_Addr option. */
-	sockaddr_t bind_addr;
 	/** An array of RPC program numbers.  The correct values, by
 	    default, they may be set to incorrect values with the
 	    NFS_Program, MNT_Program, NLM_Program, and
