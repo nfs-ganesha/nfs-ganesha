@@ -189,9 +189,10 @@ static inline int next_attr_from_bitmap(struct bitmap4 *bits, int last_attr)
 
 	for (offset = (last_attr + 1) / 32;
 	     offset >= 0 && offset < bits->bitmap4_len; offset++) {
-		if ((bits->map[offset] & (-1 << ((last_attr + 1) % 32))) != 0) {
+		if ((bits->map[offset]
+		     & ((~(uint32_t)(0)) << ((last_attr + 1) % 32))) != 0) {
 			for (bit = (last_attr + 1) % 32; bit < 32; bit++) {
-				if (bits->map[offset] & (1 << bit))
+				if (bits->map[offset] & ((uint32_t) 1 << bit))
 					return offset * 32 + bit;
 			}
 		}
@@ -217,7 +218,7 @@ static inline bool set_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 		return false;	/* over upper bound */
 	if (offset >= bits->bitmap4_len)
 		bits->bitmap4_len = offset + 1;	/* roll into the next word */
-	bits->map[offset] |= (1 << (attr % 32));
+	bits->map[offset] |= ((uint32_t) 1 << (attr % 32));
 	return true;
 }
 
@@ -227,7 +228,7 @@ static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 
 	if (offset >= bits->bitmap4_len)
 		return false;
-	bits->map[offset] &= ~(1 << (attr % 32));
+	bits->map[offset] &= ~((uint32_t) 1 << (attr % 32));
 	return true;
 }
 
