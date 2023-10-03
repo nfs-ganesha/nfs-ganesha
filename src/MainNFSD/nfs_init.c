@@ -56,6 +56,7 @@
 #include <string.h>
 #include <signal.h>
 #include <math.h>
+#include <malloc.h>
 #ifdef _USE_NLM
 #include "nlm_util.h"
 #endif /* _USE_NLM */
@@ -976,6 +977,18 @@ static void lower_my_caps(void)
 }
 #endif
 
+#if defined(M_TRIM_THRESHOLD)
+#define THIRTY_MIN 1800000000000UL
+static void do_malloc_trim(void *param)
+{
+	LogDebug(COMPONENT_MAIN, malloc_trim(0) ?
+		 "malloc_trim() released some memory" :
+		 "malloc_trim() was not able to release memory");
+	(void) delayed_submit(do_malloc_trim, 0, THIRTY_MIN);
+}
+#endif
+
+
 /**
  * @brief Start NFS service
  *
@@ -1017,6 +1030,10 @@ void nfs_start(nfs_start_info_t *p_start_info)
 	/* Initialize all layers and service threads */
 	nfs_Init(p_start_info);
 	nfs_Start_threads(); /* Spawns service threads */
+
+#if defined(M_TRIM_THRESHOLD)
+	(void) delayed_submit(do_malloc_trim, 0, THIRTY_MIN);
+#endif
 
 	nfs_init_complete();
 
