@@ -171,6 +171,7 @@ unsigned int nfs_core_select_worker_queue(unsigned int avoid_index);
 int nfs_Init_ip_name(void);
 
 void nfs_rpc_destroy_chan(rpc_call_channel_t *chan);
+void nfs_rpc_destroy_chan_no_lock(rpc_call_channel_t *chan);
 
 int reaper_init(void);
 void reaper_wake(void);

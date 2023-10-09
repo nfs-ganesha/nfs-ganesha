@@ -617,13 +617,13 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 }
 
 /**
- * @brief Dispose of a channel
+ * @brief Dispose of a channel without locking
  *
  * The caller should hold the channel mutex.
  *
  * @param[in] chan The channel to dispose of
  */
-static void _nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
+void nfs_rpc_destroy_chan_no_lock(rpc_call_channel_t *chan)
 {
 	assert(chan);
 
@@ -681,7 +681,7 @@ static enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, bool locked)
 	/* If a call fails, we have to assume path down, or equally fatal
 	 * error.  We may need back-off. */
 	if (stat != RPC_SUCCESS)
-		_nfs_rpc_destroy_chan(chan);
+		nfs_rpc_destroy_chan_no_lock(chan);
 
  unlock:
 	if (!locked)
@@ -734,7 +734,7 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 				"The channel exists with xprt FD: %d, destroy and recreate with xprt FD: %d",
 				existing_xprt->xp_fd, xprt->xp_fd);
 		}
-		_nfs_rpc_destroy_chan(chan);
+		nfs_rpc_destroy_chan_no_lock(chan);
 	}
 
 	chan->type = RPC_CHAN_V41;
@@ -818,7 +818,7 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 		LogWarn(COMPONENT_NFS_CB,
 			"can not create back channel, code %d", code);
 		if (chan->clnt)
-			_nfs_rpc_destroy_chan(chan);
+			nfs_rpc_destroy_chan_no_lock(chan);
 	}
 
 	PTHREAD_MUTEX_unlock(&chan->chan_mtx);
@@ -880,7 +880,7 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 
 	PTHREAD_MUTEX_lock(&chan->chan_mtx);
 
-	_nfs_rpc_destroy_chan(chan);
+	nfs_rpc_destroy_chan_no_lock(chan);
 
 	PTHREAD_MUTEX_unlock(&chan->chan_mtx);
 }
@@ -1019,7 +1019,7 @@ enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags)
 	 * error.  We may need back-off. */
 	if (re_status != RPC_SUCCESS) {
 		cc->cc_error.re_status = re_status;
-		_nfs_rpc_destroy_chan(call->chan);
+		nfs_rpc_destroy_chan_no_lock(call->chan);
 		call->states |= NFS_CB_CALL_ABORTED;
 	}
 
