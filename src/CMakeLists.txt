@@ -517,11 +517,6 @@ if(USE_NFS_RDMA OR USE_9P_RDMA)
   set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${RDMA_LIBRARY})
 endif(USE_NFS_RDMA OR USE_9P_RDMA)
 
-if(USE_CB_SIMULATOR AND NOT USE_DBUS)
-  message(WARNING "The callback simulator needs DBUS.  Enabling DBUS")
-  set(USE_DBUS ON)
-endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
-
 if(USE_9P_RDMA AND NOT USE_9P)
   message(WARNING "The support of 9P/RDMA needs 9P protocol support. Enabling 9P")
   set(USE_9P ON)
@@ -991,6 +986,11 @@ if(USE_DBUS)
     link_directories (${DBUS_LIBRARY_DIRS})
   endif(NOT DBUS_FOUND)
 endif(USE_DBUS)
+
+if(USE_CB_SIMULATOR AND NOT USE_DBUS)
+  message(WARNING "The callback simulator needs DBUS.  Disabling callback simulator")
+  set(USE_CB_SIMULATOR OFF)
+endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
 
 gopt_test(USE_NFSIDMAP)
 if(USE_NFSIDMAP)
