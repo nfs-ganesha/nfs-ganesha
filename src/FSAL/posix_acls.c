@@ -101,10 +101,6 @@ int ace_count(acl_t acl)
 	if (ret < 0)
 		return 0;
 
-	/* Mask is not converted to an ace entry */
-	if (find_entry(acl, ACL_MASK, 0))
-		ret--;
-
 	return ret;
 }
 
