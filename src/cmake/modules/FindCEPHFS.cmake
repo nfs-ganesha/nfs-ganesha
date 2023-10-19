@@ -179,7 +179,9 @@ else (NOT CEPH_FS)
     message("Cannot find ceph_ll_nonblocking_readv_writev. Disabling nonblocking I/O.")
     set(USE_FSAL_CEPH_FS_NONBLOCKING_IO OFF)
   else(NOT CEPH_FS_NONBLOCKING_IO)
-    set(USE_FSAL_CEPH_FS_NONBLOCKING_IO ON)
+    # TODO: this cephfs nonblocking-io needs more work, disable it for now
+    message("Disabling nonblocking I/O, it needs more work.")
+    set(USE_FSAL_CEPH_FS_NONBLOCKING_IO OFF)
   endif(NOT CEPH_FS_NONBLOCKING_IO)
 endif (NOT CEPH_FS)
 
