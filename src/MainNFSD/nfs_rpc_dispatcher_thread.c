@@ -105,6 +105,7 @@ enum evchan {
 static struct rpc_evchan rpc_evchan[EVCHAN_SIZE];
 
 static enum xprt_stat nfs_rpc_tcp_user_data(SVCXPRT *);
+static void nfs_rpc_unref_user_data(SVCXPRT *);
 static void nfs_rpc_alloc_user_data(SVCXPRT *);
 static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *);
 static struct svc_req *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs);
@@ -417,6 +418,10 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_NFS(SVCXPRT *xprt)
 	 * callback on the xprt, if non-NFS operations require user-data.
 	 */
 	nfs_rpc_alloc_user_data(xprt);
+
+	/* Add callback to un-reference xprt user data */
+	(void)SVC_CONTROL(xprt, SVCSET_XP_UNREF_USER_DATA,
+		nfs_rpc_unref_user_data);
 
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFS;
 	return nfs_rpc_tcp_user_data(xprt);
@@ -1540,6 +1545,16 @@ static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *xprt)
 	}
 	destroy_custom_data_for_destroyed_xprt(xprt);
 	return XPRT_DESTROYED;
+}
+
+/**
+ * @brief xprt user-data un-referencing function
+ *
+ * @param[in] xprt Transport to use for un-referencing user-data
+ */
+static void nfs_rpc_unref_user_data(SVCXPRT *xprt)
+{
+	dissociate_custom_data_from_xprt(xprt);
 }
 
 /**
