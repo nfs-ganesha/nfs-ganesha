@@ -972,8 +972,50 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 			     PRIu32 ") %s",
 			     no_dispatch, gc->gc_proc,
 			     str_gc_proc(gc->gc_proc));
-		if (no_dispatch)
+
+		if (no_dispatch) {
+			/* In case of `RPCSEC_GSS_DATA` procedure, if we
+			 * received an AUTH_OK response with `no_dispatch` set
+			 * to true, the authentication did not actually complete
+			 * successfully. The GSS server chose to silently
+			 * discard such a request without sending any response
+			 * to the client. If we (the NFS server) also don't send
+			 * any response, the client will keep waiting
+			 * indefinitely for the response.
+			 *
+			 * RFC 2203 (section 5.3.3.1) mentions that GSS
+			 * implementation server can silently discard the
+			 * requests in certain conditions (such as this code
+			 * block), while expecting the client to time out and
+			 * eventually retry. The ntirpc codebase, that
+			 * implements the GSS protocol, honors this contract,
+			 * and sets `no_dispatch` to true, without explicitly
+			 * failing.
+			 *
+			 * However, RFC 8881 (section 2.10.6.2) mentions that an
+			 * NFS client, when working over a reliable network,
+			 * expects the NFS server to always send a response,
+			 * unless the transport connection breaks. With Ganesha
+			 * being the NFS server, it must honor the NFS contract.
+			 * Therefore, we hereby choose to explicitly disconnect
+			 * the transport connection in this scenario.
+			 *
+			 * Additionally, we add the below added metric to
+			 * measure the frequency of occurrence this scenario.
+			 */
+			if (gc->gc_proc == RPCSEC_GSS_DATA) {
+				LogInfo(COMPONENT_DISPATCH,
+					"Received AUTH_OK for RPCSEC_GSS_DATA procedure with no-dispatch set to true. Destroying connection.");
+				SVC_DESTROY(reqdata->svc.rq_xprt);
+				return XPRT_DESTROYED;
+			}
+			/* We already sent the GSS auth response to client
+			 * through ntirpc.
+			 */
+			LogFullDebug(COMPONENT_DISPATCH,
+				"Received AUTH_OK for RPCSEC_GSS (non-DATA procedure) with no-dispatch set to true. We silently return from the function");
 			return SVC_STAT(xprt);
+		}
 	} else if (no_dispatch) {
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "RPCSEC_GSS no_dispatch=%d", no_dispatch);
