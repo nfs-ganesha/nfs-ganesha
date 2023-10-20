@@ -62,6 +62,9 @@
 #define ACL_EA_ACCESS         "system.posix_acl_access"
 #define ACL_EA_DEFAULT        "system.posix_acl_default"
 
+#define ACL_FOR_V4 true
+#define ACL_FOR_V3 false
+
 struct acl_ea_entry {
 	u_int16_t	e_tag;
 	u_int16_t	e_perm;
@@ -75,7 +78,7 @@ struct acl_ea_header {
 
 int
 posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
-			fsal_ace_t **p_falacl);
+			bool for_v4, fsal_ace_t **p_falacl);
 
 acl_t
 fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type);

@@ -193,7 +193,7 @@ acl_entry_t get_entry(acl_t acl, acl_tag_t tag, unsigned int id)
  */
 
 int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
-			 fsal_ace_t **ace)
+			 bool for_v4, fsal_ace_t **ace)
 {
 	int ret = 0, ent, d_ent, total = 0;
 	fsal_ace_t *pace_deny = NULL, *pace_allow = NULL;
@@ -263,6 +263,14 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			LogWarn(COMPONENT_FSAL, "No entry tag for ACL Entry");
 			continue;
 		}
+
+		/* For NFSv4, the mask is not converted to a fsal_acl entry,
+		 * so skip it. The mask is retrieved above and used to set
+		 * variables readmask, writemask and executemask. These are
+		 * then used below to modify other entries.
+		 */
+		if ((tag == ACL_MASK) && for_v4)
+			continue;
 
 		pace_deny->type = FSAL_ACE_TYPE_DENY;
 		pace_allow->type = FSAL_ACE_TYPE_ALLOW;

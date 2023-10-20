@@ -403,14 +403,16 @@ int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
 	pace = acldata.aces;
 
 	if (e_count > 0) {
-		new_count = posix_acl_2_fsal_acl(e_acl, is_dir, false, &pace);
+		new_count = posix_acl_2_fsal_acl(e_acl, is_dir, false,
+							ACL_FOR_V4, &pace);
 	} else {
 		LogDebug(COMPONENT_FSAL,
 			"effective acl is not set for this object");
 	}
 
 	if (i_count > 0) {
-		new_i_count = posix_acl_2_fsal_acl(i_acl, true, true, &pace);
+		new_i_count = posix_acl_2_fsal_acl(i_acl, true, true,
+							ACL_FOR_V4, &pace);
 		new_count += new_i_count;
 	} else {
 		LogDebug(COMPONENT_FSAL,

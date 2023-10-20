@@ -5016,14 +5016,16 @@ int nfs3_acl_2_fsal_acl(struct fsal_attrlist *attr, nfs3_int32 mask,
 	pace = acldata.aces;
 
 	if (e_count > 0) {
-		new_count = posix_acl_2_fsal_acl(e_acl, is_dir, false, &pace);
+		new_count = posix_acl_2_fsal_acl(e_acl, is_dir, false,
+							ACL_FOR_V3, &pace);
 	} else {
 		LogDebug(COMPONENT_NFSPROTO,
 			"No acl set for access acl");
 	}
 
 	if (i_count > 0) {
-		new_i_count = posix_acl_2_fsal_acl(i_acl, true, true, &pace);
+		new_i_count = posix_acl_2_fsal_acl(i_acl, true, true,
+							ACL_FOR_V3, &pace);
 		new_count += new_i_count;
 	} else {
 		LogDebug(COMPONENT_NFSPROTO,

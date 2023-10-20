@@ -281,13 +281,13 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 		pace = acldata.aces;
 
 		new_count = posix_acl_2_fsal_acl(buffxstat->e_acl,
-					buffxstat->is_dir, false, &pace);
+				buffxstat->is_dir, false, ACL_FOR_V4, &pace);
 		if (new_count < 0)
 			return fsalstat(ERR_FSAL_NO_ACE, -1);
 
 		if (i_count > 0) {
 			new_i_count = posix_acl_2_fsal_acl(buffxstat->i_acl,
-							true, true, &pace);
+						true, true, ACL_FOR_V4, &pace);
 			if (new_i_count > 0)
 				new_count += new_i_count;
 			else
