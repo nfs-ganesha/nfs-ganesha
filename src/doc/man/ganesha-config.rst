@@ -66,6 +66,12 @@ eg.::
 3. **List.** The option can contain a list of possible applicable values.
 Protocols = 3, 4, 9p;
 
+4. **String.** String options such as export Path need not be enclosed in
+quotes but is recommended. If special characters are included, particularly
+non-ASCII characters, use of either single or double quotes may be required.
+Another set of strings that should be quoted are any strings that are a
+keyword or if spaces are part of the string.
+
 
 Including other config files
 --------------------------------------------------------------------------------
