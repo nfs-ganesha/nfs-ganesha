@@ -163,7 +163,6 @@ static struct avltree gname_tree;
 
 static struct avltree gid_tree;
 
-
 /**
  * @brief Comparison for user names
  *
@@ -300,6 +299,67 @@ static void remove_cache_group(struct cache_group *group)
 	/* Remove from groups fifo queue */
 	TAILQ_REMOVE(&group_fifo_queue, group, queue_entry);
 	gsh_free(group);
+}
+
+/**
+ * @brief Reaps the cache user entries
+ *
+ * Since the user-fifo queue stores entries in increasing order of time
+ * validity, the reaper reaps from the queue head in the same order. It
+ * stops when it first encounters a non-expired entry.
+ */
+static void reap_users_cache(void)
+{
+	struct cache_user *user;
+
+	LogFullDebug(COMPONENT_IDMAPPER,
+		"Idmapper user-cache reaper run started");
+	PTHREAD_RWLOCK_wrlock(&idmapper_user_lock);
+
+	for (user = TAILQ_FIRST(&user_fifo_queue); user != NULL;) {
+		if (!user_expired(user))
+			break;
+		remove_cache_user(user);
+		user = TAILQ_FIRST(&user_fifo_queue);
+	}
+	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
+	LogFullDebug(COMPONENT_IDMAPPER,
+		"Idmapper user-cache reaper run ended");
+}
+
+/**
+ * @brief Reaps the cache group entries
+ *
+ * Since the group-fifo queue stores entries in increasing order of time
+ * validity, the reaper reaps from the queue head in the same order. It
+ * stops when it first encounters a non-expired entry.
+ */
+static void reap_groups_cache(void)
+{
+	struct cache_group *group;
+
+	LogFullDebug(COMPONENT_IDMAPPER,
+		"Idmapper group-cache reap run started");
+	PTHREAD_RWLOCK_wrlock(&idmapper_group_lock);
+
+	for (group = TAILQ_FIRST(&group_fifo_queue); group != NULL;) {
+		if (!group_expired(group))
+			break;
+		remove_cache_group(group);
+		group = TAILQ_FIRST(&group_fifo_queue);
+	}
+	PTHREAD_RWLOCK_unlock(&idmapper_group_lock);
+	LogFullDebug(COMPONENT_IDMAPPER,
+		"Idmapper group-cache reaper run ended");
+}
+
+/**
+ * @brief Reaps the cache user, group entries
+ */
+void idmapper_cache_reap(void)
+{
+	reap_users_cache();
+	reap_groups_cache();
 }
 
 /**

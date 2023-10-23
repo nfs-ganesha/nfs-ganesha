@@ -78,6 +78,9 @@ pthread_rwlock_t dns_auth_lock;
 /* Cleanup on shutdown */
 struct cleanup_list_element idmapper_cleanup_element;
 
+/* Struct representing threads that reap idmapper caches */
+static struct fridgethr *cache_reaper_fridge;
+
 /**
  * @brief Set the ID Mapper's owner-domain
  *
@@ -142,12 +145,65 @@ static void idmapper_clear_owner_domain(void)
  */
 void idmapper_cleanup(void)
 {
+	if (cache_reaper_fridge != NULL) {
+		fridgethr_destroy(cache_reaper_fridge);
+		cache_reaper_fridge = NULL;
+	}
 	idmapper_clear_owner_domain();
 	idmapper_destroy_cache();
 	idmapper_negative_cache_destroy();
 	PTHREAD_RWLOCK_destroy(&winbind_auth_lock);
 	PTHREAD_RWLOCK_destroy(&gc_auth_lock);
 	PTHREAD_RWLOCK_destroy(&dns_auth_lock);
+}
+
+/**
+ * @brief Reaps the positive and negative idmapper cache entries.
+ */
+static void cache_reaper_run(struct fridgethr_context *unused_ctx)
+{
+	idmapper_cache_reap();
+}
+
+/**
+ * @brief Initialise the reaper thread for reaping expired cache entries
+ */
+static void idmapper_reaper_init(void)
+{
+	struct fridgethr_params thread_params;
+	int rc;
+	int reaping_interval =
+		nfs_param.directory_services_param.cache_reaping_interval;
+
+	if (reaping_interval == 0) {
+		LogInfo(COMPONENT_IDMAPPER,
+			"Idmapper cache reaper is disabled");
+		return;
+	}
+	memset(&thread_params, 0, sizeof(struct fridgethr_params));
+	thread_params.thr_max = 1;
+	thread_params.thr_min = 1;
+	thread_params.thread_delay = reaping_interval;
+	thread_params.flavor = fridgethr_flavor_looper;
+
+	assert(cache_reaper_fridge == NULL);
+
+	rc = fridgethr_init(&cache_reaper_fridge, "idmapper_reaper",
+		&thread_params);
+	if (rc != 0) {
+		LogCrit(COMPONENT_IDMAPPER,
+			"Idmapper reaper fridge init failed. Error: %d", rc);
+		return;
+	}
+	rc = fridgethr_submit(cache_reaper_fridge, cache_reaper_run, NULL);
+	if (rc != 0) {
+		LogCrit(COMPONENT_IDMAPPER,
+			"Unable to start reaper for idmapper. Error: %d.", rc);
+		fridgethr_destroy(cache_reaper_fridge);
+		cache_reaper_fridge = NULL;
+		return;
+	}
+	LogInfo(COMPONENT_IDMAPPER, "Idmapper reaper initialized");
 }
 
 /**
@@ -174,6 +230,7 @@ bool idmapper_init(void)
 
 	idmapper_cache_init();
 	idmapper_negative_cache_init();
+	idmapper_reaper_init();
 
 	idmapper_cleanup_element.clean = idmapper_cleanup;
 	RegisterCleanup(&idmapper_cleanup_element);
