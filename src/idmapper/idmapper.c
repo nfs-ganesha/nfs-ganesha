@@ -144,6 +144,7 @@ void idmapper_cleanup(void)
 {
 	idmapper_clear_owner_domain();
 	idmapper_destroy_cache();
+	idmapper_negative_cache_destroy();
 	PTHREAD_RWLOCK_destroy(&winbind_auth_lock);
 	PTHREAD_RWLOCK_destroy(&gc_auth_lock);
 	PTHREAD_RWLOCK_destroy(&dns_auth_lock);
@@ -172,6 +173,7 @@ bool idmapper_init(void)
 	}
 
 	idmapper_cache_init();
+	idmapper_negative_cache_init();
 
 	idmapper_cleanup_element.clean = idmapper_cleanup;
 	RegisterCleanup(&idmapper_cleanup_element);
@@ -200,6 +202,18 @@ static void add_user_to_cache(const struct gsh_buffdesc *name, uid_t uid,
 		LogMajor(COMPONENT_IDMAPPER,
 			"idmapper_add_user (uid: %u) failed.", uid);
 	}
+}
+
+/**
+ * @brief Add user to the idmapper-user negative cache
+ *
+ * @param[in] name      user name
+ */
+static void add_user_to_negative_cache(const struct gsh_buffdesc *name)
+{
+	PTHREAD_RWLOCK_wrlock(&idmapper_negative_cache_user_lock);
+	idmapper_negative_cache_add_user_by_name(name);
+	PTHREAD_RWLOCK_unlock(&idmapper_negative_cache_user_lock);
 }
 
 /**
@@ -685,6 +699,18 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 	if (success)
 		return true;
 
+	/* Lookup negative cache */
+	if (!group) {
+		PTHREAD_RWLOCK_rdlock(&idmapper_negative_cache_user_lock);
+		success = idmapper_negative_cache_lookup_user_by_name(name);
+		PTHREAD_RWLOCK_unlock(&idmapper_negative_cache_user_lock);
+
+		if (success) {
+			*id = anon;
+			return true;
+		}
+	}
+
 	/* Something we can mutate and count on as terminated */
 	namebuff = alloca(name->len + 1);
 
@@ -712,6 +738,12 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 			"All lookups failed for %s, using anonymous.",
 			namebuff);
 		*id = anon;
+
+		/* Add to negative cache */
+		if (!group)
+			add_user_to_negative_cache(name);
+
+		return true;
 	}
 
 	if (group)
@@ -879,6 +911,14 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 	}
 	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
 
+	/* Lookup negative cache */
+	PTHREAD_RWLOCK_rdlock(&idmapper_negative_cache_user_lock);
+	success = idmapper_negative_cache_lookup_user_by_name(&princbuff);
+	PTHREAD_RWLOCK_unlock(&idmapper_negative_cache_user_lock);
+
+	if (success)
+		return false;
+
 	if ((princbuff.len >= 4)
 		  && (!memcmp(princbuff.addr, "nfs/", 4)
 		|| !memcmp(princbuff.addr, "root/", 5)
@@ -920,12 +960,12 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 		success = pwentname2id(uname, &gss_uid, false, &gss_gid,
 			&got_gid, NULL);
 		if (!success)
-			return false;
+			goto principal_not_found;
 
 		if (!got_gid) {
 			LogWarn(COMPONENT_IDMAPPER,
 				"Gid resolution failed for %s", principal);
-			return false;
+			goto principal_not_found;
 		}
 		goto principal_found;
 
@@ -974,7 +1014,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 					LogInfo(COMPONENT_IDMAPPER,
 						"wbcAuthenticateUserEx returned %s",
 						wbcErrorString(wbc_err));
-					return false;
+					goto principal_not_found;
 				}
 
 				if (error) {
@@ -983,7 +1023,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 						error->nt_string,
 						error->display_string);
 					wbcFreeMemory(error);
-					return false;
+					goto principal_not_found;
 				}
 
 				now(&s_time);
@@ -998,7 +1038,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 						"wbcGetpwsid returned %s",
 						wbcErrorString(wbc_err));
 					wbcFreeMemory(info);
-					return false;
+					goto principal_not_found;
 				}
 
 				gss_uid = pwd->pw_uid;
@@ -1009,7 +1049,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 			}
 #endif				/* _MSPAC_SUPPORT */
 
-			return false;
+			goto principal_not_found;
 		}
 		goto principal_found;
 
@@ -1025,6 +1065,11 @@ out:
 	*uid = gss_uid;
 	*gid = gss_gid;
 	return true;
+
+principal_not_found:
+	add_user_to_negative_cache(&princbuff);
+
+	return false;
 }
 
 #ifdef USE_DBUS

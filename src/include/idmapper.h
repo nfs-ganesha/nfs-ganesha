@@ -60,6 +60,7 @@
 
 extern pthread_rwlock_t idmapper_user_lock;
 extern pthread_rwlock_t idmapper_group_lock;
+extern pthread_rwlock_t idmapper_negative_cache_user_lock;
 
 void idmapper_cache_init(void);
 bool idmapper_add_user(const struct gsh_buffdesc *, uid_t, const gid_t *,
