@@ -667,6 +667,11 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 		    const uint32_t anon)
 {
 	bool success;
+	gid_t gid;
+	char *namebuff;
+	char *at;
+	bool got_gid = false;
+	bool looked_up = false;
 
 	PTHREAD_RWLOCK_rdlock(group ? &idmapper_group_lock :
 			      &idmapper_user_lock);
@@ -679,50 +684,42 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 
 	if (success)
 		return true;
-	else {
-		gid_t gid;
-		bool got_gid = false;
-		/* Something we can mutate and count on as terminated */
-		char *namebuff = alloca(name->len + 1);
-		char *at;
-		bool looked_up = false;
 
-		memcpy(namebuff, name->addr, name->len);
-		*(namebuff + name->len) = '\0';
-		at = memchr(namebuff, '@', name->len);
+	/* Something we can mutate and count on as terminated */
+	namebuff = alloca(name->len + 1);
 
-		if (at == NULL) {
-			if (pwentname2id(namebuff, id, group, &gid, &got_gid,
-				NULL))
-				looked_up = true;
-			else if (atless2id(namebuff, name->len, id, anon))
-				looked_up = true;
-			else
-				return false;
-		} else if (nfs_param.nfsv4_param.use_getpwnam) {
-			looked_up =
-			  pwentname2id(namebuff, id, group, &gid, &got_gid, at);
-		} else {
-			looked_up =
-			    idmapname2id(namebuff, name->len, id, anon, group,
-					 &gid, &got_gid, at);
-		}
+	memcpy(namebuff, name->addr, name->len);
+	*(namebuff + name->len) = '\0';
+	at = memchr(namebuff, '@', name->len);
 
-		if (!looked_up) {
-			LogInfo(COMPONENT_IDMAPPER,
-				"All lookups failed for %s, using anonymous.",
-				namebuff);
-			*id = anon;
-		}
-
-		if (group)
-			add_group_to_cache(name, *id);
+	if (at == NULL) {
+		if (pwentname2id(namebuff, id, group, &gid, &got_gid, NULL))
+			looked_up = true;
+		else if (atless2id(namebuff, name->len, id, anon))
+			looked_up = true;
 		else
-			add_user_to_cache(name, *id, got_gid ? &gid : NULL,
-				false);
-
-		return true;
+			return false;
+	} else if (nfs_param.nfsv4_param.use_getpwnam) {
+		looked_up =
+			pwentname2id(namebuff, id, group, &gid, &got_gid, at);
+	} else {
+		looked_up = idmapname2id(namebuff, name->len, id, anon, group,
+			&gid, &got_gid, at);
 	}
+
+	if (!looked_up) {
+		LogInfo(COMPONENT_IDMAPPER,
+			"All lookups failed for %s, using anonymous.",
+			namebuff);
+		*id = anon;
+	}
+
+	if (group)
+		add_group_to_cache(name, *id);
+	else
+		add_user_to_cache(name, *id, got_gid ? &gid : NULL, false);
+
+	return true;
 }
 
 /**
