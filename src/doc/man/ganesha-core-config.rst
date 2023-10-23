@@ -358,6 +358,10 @@ Idmapped_User_Time_Validity(int64, range -1 to INT64_MAX, default -1)
     The default value is -1, which indicates fallback to older config --
     "NFS_CORE_PARAM.Manage_Gids_Expiration", for backward compatibility.
 
+Idmapped_Group_Time_Validity(int64, range -1 to INT64_MAX, default -1)
+    Cache validity in seconds for idmapped-group entries.
+    The default value is -1, which indicates fallback to older config --
+    "NFS_CORE_PARAM.Manage_Gids_Expiration", for backward compatibility.
 
 NFSv4 {}
 --------------------------------------------------------------------------------

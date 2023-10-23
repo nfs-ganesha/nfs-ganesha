@@ -623,6 +623,8 @@ typedef struct directory_services_param {
 	char *domainname;
 	/** Cache validity in seconds for idmapped user entries */
 	time_t idmapped_user_time_validity;
+	/** Cache validity in seconds for idmapped group entries */
+	time_t idmapped_group_time_validity;
 } directory_services_param_t;
 
 /** @} */

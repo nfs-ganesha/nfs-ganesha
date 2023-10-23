@@ -82,7 +82,7 @@ struct cache_group {
 };
 
 #define group_expired(group) (time(NULL) - (group)->epoch > \
-		nfs_param.core_param.manage_gids_expiration)
+		nfs_param.directory_services_param.idmapped_group_time_validity)
 
 /**
  * @brief Number of entries in the UID cache, should be prime.

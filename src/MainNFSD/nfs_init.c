@@ -506,9 +506,9 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	}
 
 	/* For backward compatibility, use `manage_gids_expiration` from
-	 * `nfs_core_param` config section, if `idmapped_user_time_validity` is
-	 * not set under `directory_services` section. Otherwise, ignore the
-	 * `manage_gids_expiration` value.
+	 * `nfs_core_param` config section, if `idmapped_user_time_validity` or
+	 * `idmapped_group_time_validity` is not set under `directory_services`
+	 * section. Otherwise, ignore the `manage_gids_expiration` value.
 	 */
 	if (ds_param->idmapped_user_time_validity == unset_time_validity) {
 		LogWarn(COMPONENT_INIT,
@@ -521,6 +521,18 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 		 */
 		LogWarn(COMPONENT_INIT,
 			"Using idmapped_user_time_validity from DIRECTORY_SERVICES config section, instead of manage_gids_expiration from NFS_CORE_PARAM");
+	}
+	if (ds_param->idmapped_group_time_validity == unset_time_validity) {
+		LogWarn(COMPONENT_INIT,
+			"Use idmapped_group_time_validity under DIRECTORY_SERVICES section to configure time validity of idmapped groups");
+		ds_param->idmapped_group_time_validity =
+			nfs_param.core_param.manage_gids_expiration;
+	} else {
+		/* TODO: Remove below log when NFS_CORE_PARAM/
+		 * manage_gids_expiration is deprecated for group validity.
+		 */
+		LogWarn(COMPONENT_INIT,
+			"Using idmapped_group_time_validity from DIRECTORY_SERVICES config section, instead of manage_gids_expiration from NFS_CORE_PARAM");
 	}
 
 #ifdef _USE_9P
