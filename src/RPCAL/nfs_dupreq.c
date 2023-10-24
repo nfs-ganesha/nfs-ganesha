@@ -495,6 +495,11 @@ static inline uint32_t nfs_dupreq_unref_drc(drc_t *drc)
 #define DRC_ST_UNLOCK()				\
 	PTHREAD_MUTEX_unlock(&drc_st->drc_st_mtx)
 
+#define DRC_QLEN_EXCEED_HIWAT()			\
+	(drc_st->tcp_drc_recycle_qlen >		\
+	nfs_param.core_param.drc.recycle_hiwat)
+
+
 /**
  * @brief Check for expired TCP DRCs.
  */
@@ -510,15 +515,17 @@ static inline void drc_free_expired(void)
 
 	DRC_ST_LOCK();
 
-	if ((drc_st->tcp_drc_recycle_qlen < 1) ||
-	    (now - drc_st->last_expire_check) < 600) /* 10m */
+	if (((drc_st->tcp_drc_recycle_qlen < 1) ||
+	    (now - drc_st->last_expire_check) < 600) && /* 10m */
+			!DRC_QLEN_EXCEED_HIWAT())
 		goto unlock;
 
 	do {
 		drc = TAILQ_FIRST(&drc_st->tcp_drc_recycle_q);
-		if (drc && (drc->d_u.tcp.recycle_time > 0)
+		if ((drc && (drc->d_u.tcp.recycle_time > 0)
 		    && ((now - drc->d_u.tcp.recycle_time) >
-			drc_st->expire_delta)) {
+			drc_st->expire_delta)) ||
+				DRC_QLEN_EXCEED_HIWAT()) {
 
 			assert(drc->refcnt == 0);
 

@@ -228,6 +228,9 @@ Parameters controlling TCP DRC behavior:
 DRC_Disabled(bool, default false)
     Whether to disable the DRC entirely.
 
+DRC_Recycle_Hiwat(uint32, range 1 to 1000000, default 1024)
+    High water mark for number of DRCs in recycle queue.
+
 TCP_Npart(uint32, range 1 to 20, default 1)
     Number of partitions in the tree for the TCP DRC.
 

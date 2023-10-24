@@ -199,6 +199,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, drop_delay_errors),
 	CONF_ITEM_BOOL("DRC_Disabled", false,
 		       nfs_core_param, drc.disabled),
+	CONF_ITEM_UI32("DRC_Recycle_Hiwat", 1, 1000000, DRC_RECYCLE_HIWAT,
+			nfs_core_param, drc.recycle_hiwat),
 	CONF_ITEM_UI32("DRC_TCP_Npart", 1, 20, DRC_TCP_NPART,
 		       nfs_core_param, drc.tcp.npart),
 	CONF_ITEM_UI32("DRC_TCP_Size", 1, 32767, DRC_TCP_SIZE,

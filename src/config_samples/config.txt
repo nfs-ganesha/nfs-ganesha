@@ -85,6 +85,8 @@ NFS_CORE_PARAM {}
 
 	DRC_Disabled(boo, default false)
 
+	DRC_Recycle_Hiwat(uint32, range 1 to 1000000, default 1024)
+
 	DRC_TCP_Npart(uint32, range 1 to 20, default 1)
 
 	DRC_TCP_Size(uint32, range 1 to 32767, default 1024)

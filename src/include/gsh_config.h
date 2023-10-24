@@ -100,6 +100,11 @@ typedef enum protos {
 #define NB_WORKER_THREAD_DEFAULT 256
 
 /**
+ * @brief Default value for core_param.drc.recycle_hiwat
+ */
+#define DRC_RECYCLE_HIWAT 1024
+
+/**
  * @brief Default value for core_param.drc.tcp.npart
  */
 #define DRC_TCP_NPART 1
@@ -261,6 +266,8 @@ typedef struct nfs_core_param {
 		/** Whether to disable the DRC entirely.  Defaults to
 		    false, settable by DRC_Disabled. */
 		bool disabled;
+		/** High water mark for len of recycle queue for DRCs */
+		uint32_t recycle_hiwat;
 		/* Parameters controlling TCP specific DRC behavior. */
 		struct {
 			/** Number of partitions in the tree for the
