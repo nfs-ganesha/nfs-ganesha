@@ -1031,13 +1031,14 @@ int resolve_posix_filesystem(const char *path,
 		 */
 		retval = stat(path, &statbuf);
 
-		if (retval != 0) {
-			retval = errno;
-			LogDebug(COMPONENT_FSAL,
-				 "stat returned %s (%d) while resolving export path %s %s",
-				 strerror(retval), retval, path,
-				 retval == EAGAIN ? "(may retry)" : "(failed)");
-		}
+		if (retval == 0)
+			break;
+
+		retval = errno;
+		LogDebug(COMPONENT_FSAL,
+			 "stat returned %s (%d) while resolving export path %s %s",
+			 strerror(retval), retval, path,
+			 retval == EAGAIN ? "(may retry)" : "(failed)");
 
 		retries_left--;
 
