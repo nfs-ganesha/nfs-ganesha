@@ -633,6 +633,8 @@ typedef struct directory_services_param {
 	time_t negative_cache_time_validity;
 	/** Max number of negative cache users (that failed idmapping) */
 	uint32_t negative_cache_users_max_count;
+	/** Max number of negative cache groups (that failed idmapping) */
+	uint32_t negative_cache_groups_max_count;
 } directory_services_param_t;
 
 /** @} */

@@ -392,6 +392,9 @@ static struct config_item directory_services_params[] = {
 	CONF_ITEM_UI32("Negative_Cache_Users_Max_Count", 0, INT32_MAX, 50000,
 		       directory_services_param,
 		       negative_cache_users_max_count),
+	CONF_ITEM_UI32("Negative_Cache_Groups_Max_Count", 0, INT32_MAX, 50000,
+		       directory_services_param,
+		       negative_cache_groups_max_count),
 	CONFIG_EOL
 };
 

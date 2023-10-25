@@ -375,6 +375,9 @@ Negative_Cache_Time_Validity(int64, range 0 to INT64_MAX, default 300)
 Negative_Cache_Users_Max_Count(uint32, range 0 to INT32_MAX, default 50000)
     Max number of negative cache users (the ones that failed idmapping)
 
+Negative_Cache_Groups_Max_Count(uint32, range 0 to INT32_MAX, default 50000)
+    Max number of negative cache groups (the ones that failed idmapping)
+
 
 NFSv4 {}
 --------------------------------------------------------------------------------
