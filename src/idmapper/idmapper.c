@@ -237,6 +237,18 @@ static void add_group_to_cache(const struct gsh_buffdesc *name, gid_t gid)
 }
 
 /**
+ * @brief Add group to the idmapper-group negative cache
+ *
+ * @param[in] name      group name
+ */
+static void add_group_to_negative_cache(const struct gsh_buffdesc *name)
+{
+	PTHREAD_RWLOCK_wrlock(&idmapper_negative_cache_group_lock);
+	idmapper_negative_cache_add_group_by_name(name);
+	PTHREAD_RWLOCK_unlock(&idmapper_negative_cache_group_lock);
+}
+
+/**
  * @brief Encode a UID or GID as a string
  *
  * @param[in,out] xdrs  XDR stream to which to encode
@@ -700,15 +712,18 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 		return true;
 
 	/* Lookup negative cache */
-	if (!group) {
-		PTHREAD_RWLOCK_rdlock(&idmapper_negative_cache_user_lock);
+	PTHREAD_RWLOCK_rdlock(group ? &idmapper_negative_cache_group_lock :
+		&idmapper_negative_cache_user_lock);
+	if (group)
+		success = idmapper_negative_cache_lookup_group_by_name(name);
+	else
 		success = idmapper_negative_cache_lookup_user_by_name(name);
-		PTHREAD_RWLOCK_unlock(&idmapper_negative_cache_user_lock);
+	PTHREAD_RWLOCK_unlock(group ? &idmapper_negative_cache_group_lock :
+		&idmapper_negative_cache_user_lock);
 
-		if (success) {
-			*id = anon;
-			return true;
-		}
+	if (success) {
+		*id = anon;
+		return true;
 	}
 
 	/* Something we can mutate and count on as terminated */
@@ -740,7 +755,9 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 		*id = anon;
 
 		/* Add to negative cache */
-		if (!group)
+		if (group)
+			add_group_to_negative_cache(name);
+		else
 			add_user_to_negative_cache(name);
 
 		return true;
