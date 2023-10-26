@@ -54,6 +54,7 @@ typedef struct negative_cache_entity {
 	time_t epoch; /*< Entity creation timestamp */
 
 	TAILQ_ENTRY(negative_cache_entity) queue_entry; /*< Entity queue node */
+	char name_buffer[];	/*< Entity name buffer */
 } negative_cache_entity_t;
 
 /* Lock that protects the idmapper negative user cache */
@@ -229,8 +230,7 @@ static void idmapper_negative_cache_add_entity_by_name(
 	char *entity_type_string;
 
 	new_entity = gsh_malloc(sizeof(negative_cache_entity_t) + name->len);
-	new_entity->name.addr = (char *)new_entity +
-		sizeof(negative_cache_entity_t);
+	new_entity->name.addr = new_entity->name_buffer;
 	new_entity->name.len = name->len;
 	memcpy(new_entity->name.addr, name->addr, name->len);
 	new_entity->epoch = time(NULL);
