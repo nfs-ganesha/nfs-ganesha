@@ -82,6 +82,7 @@ bool idmapper_negative_cache_lookup_user_by_name(const struct gsh_buffdesc *);
 bool idmapper_negative_cache_lookup_group_by_name(const struct gsh_buffdesc *);
 void idmapper_negative_cache_clear(void);
 void idmapper_negative_cache_destroy(void);
+void idmapper_negative_cache_reap(void);
 
 /** @} */
 

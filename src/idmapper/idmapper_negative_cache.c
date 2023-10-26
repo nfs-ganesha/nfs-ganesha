@@ -127,6 +127,58 @@ static void remove_negative_cache_entity(negative_cache_entity_t *entity,
 }
 
 /**
+ * @brief Reaps the negative cache entities
+ *
+ * Since the entity fifo queue stores entries in increasing order of time
+ * validity, the reaper reaps from the queue head in the same order. It stops
+ * when it first encounters a non-expired entry.
+ */
+static void reap_negative_cache_entities(
+	negative_cache_entity_type_t entity_type)
+{
+	struct negative_cache_entity *entity;
+	struct idmapping_negative_cache_queue *cache_queue;
+	pthread_rwlock_t *entity_lock;
+
+	switch (entity_type) {
+	case USER:
+		cache_queue = &negative_user_fifo_queue;
+		entity_lock = &idmapper_negative_cache_user_lock;
+		break;
+	case GROUP:
+		cache_queue = &negative_group_fifo_queue;
+		entity_lock = &idmapper_negative_cache_group_lock;
+		break;
+	default:
+		LogFatal(COMPONENT_IDMAPPER,
+			"Unknown negative cache entity type: %d", entity_type);
+	}
+
+	PTHREAD_RWLOCK_wrlock(entity_lock);
+
+	for (entity = TAILQ_FIRST(cache_queue); entity != NULL;) {
+		if (!is_negative_cache_entity_expired(entity))
+			break;
+		remove_negative_cache_entity(entity, entity_type);
+		entity = TAILQ_FIRST(cache_queue);
+	}
+	PTHREAD_RWLOCK_unlock(entity_lock);
+}
+
+/**
+ * @brief Reaps the negative cache user and group entries
+ */
+void idmapper_negative_cache_reap(void)
+{
+	LogFullDebug(COMPONENT_IDMAPPER,
+		"Idmapper negative-cache reaper run started");
+	reap_negative_cache_entities(USER);
+	reap_negative_cache_entities(GROUP);
+	LogFullDebug(COMPONENT_IDMAPPER,
+		"Idmapper negative-cache reaper run ended");
+}
+
+/*
  * @brief Comparison function for negative-cache-entity nodes
  *
  * @return -1 if @arg node1 is less than @arg node2
