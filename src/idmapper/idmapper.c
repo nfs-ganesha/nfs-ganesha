@@ -164,6 +164,7 @@ static void cache_reaper_run(struct fridgethr_context *unused_ctx)
 {
 	idmapper_cache_reap();
 	idmapper_negative_cache_reap();
+	uid2grp_cache_reap();
 }
 
 /**

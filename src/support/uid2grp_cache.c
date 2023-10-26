@@ -192,6 +192,30 @@ static void uid2grp_remove_user(struct cache_info *info)
 }
 
 /**
+ * @brief Reaps the uid2grp cache entries
+ *
+ * Since the fifo queue stores entries in increasing order of time validity,
+ * the reaper reaps from the queue head in the same order. It stops when it
+ * first encounters a non-expired entry.
+ */
+void uid2grp_cache_reap(void)
+{
+	struct cache_info *groups;
+
+	LogFullDebug(COMPONENT_IDMAPPER, "uid2grp cache reaper run started");
+	PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
+
+	for (groups = TAILQ_FIRST(&groups_fifo_queue); groups != NULL;) {
+		if (!uid2grp_is_group_data_expired(groups->gdata))
+			break;
+		uid2grp_remove_user(groups);
+		groups = TAILQ_FIRST(&groups_fifo_queue);
+	}
+	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+	LogFullDebug(COMPONENT_IDMAPPER, "uid2grp cache reaper run ended");
+}
+
+/**
  * @brief Initialize the user-groups cache
  */
 void uid2grp_cache_init(void)

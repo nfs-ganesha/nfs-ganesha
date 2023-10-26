@@ -79,6 +79,7 @@ void uid2grp_remove_by_uid(const uid_t);
 void uid2grp_remove_expired_by_uid(const uid_t);
 
 void uid2grp_clear_cache(void);
+void uid2grp_cache_reap(void);
 
 bool uid2grp(uid_t uid, struct group_data **);
 bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata);
