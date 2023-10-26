@@ -46,9 +46,10 @@
 #include "uid2grp.h"
 #include "abstract_atomic.h"
 #include "nfs_core.h"
+#include <misc/queue.h>
 
 /**
- * @brief User entry in the IDMapper cache
+ * @brief User entry in the uid2grp cache
  */
 
 struct cache_info {
@@ -57,6 +58,7 @@ struct cache_info {
 	struct group_data *gdata;
 	struct avltree_node uname_node;	/*< Node in the name tree */
 	struct avltree_node uid_node;	/*< Node in the UID tree */
+	TAILQ_ENTRY(cache_info) queue_entry; /* Node in groups-fifo-queue */
 };
 
 /**
@@ -64,6 +66,21 @@ struct cache_info {
  */
 
 #define id_cache_size 1009
+
+/**
+ * @brief A user-groups fifo queue ordered by insertion timestamp
+ *
+ * This fifo queue also mimics the order of expiration time of the cache
+ * entries, since the expiration time is a linear function of the insertion
+ * time.
+ *
+ *   Expiration_time = Insertion_time + Cache_time_validity (constant)
+ *
+ * The head of the queue contains the entry with least time-validity.
+ * The tail of the queue contains the entry with most time-validity.
+ * The eviction happens from the head, and insertion happens at the tail.
+ */
+static TAILQ_HEAD(, cache_info) groups_fifo_queue;
 
 /**
  * @brief UID cache, may only be accessed with uid2grp_user_lock
@@ -157,23 +174,6 @@ struct cleanup_list_element uid2grp_cache_cleanup_element = {
 	.clean = uid2grp_cache_cleanup,
 };
 
-/**
- * @brief Initialize the IDMapper cache
- */
-
-void uid2grp_cache_init(void)
-{
-	PTHREAD_RWLOCK_init(&uid2grp_user_lock, NULL);
-	if (nfs_param.core_param.max_uid_to_grp_reqs)
-		sem_init(&uid2grp_sem, 0,
-			 nfs_param.core_param.max_uid_to_grp_reqs);
-	avltree_init(&uname_tree, uname_comparator, 0);
-	avltree_init(&uid_tree, uid_comparator, 0);
-	memset(uid_grplist_cache, 0,
-	       id_cache_size * sizeof(struct avltree_node *));
-	RegisterCleanup(&uid2grp_cache_cleanup_element);
-}
-
 /* Remove given user/cache_info from the AVL trees
  *
  * @note The caller must hold uid2grp_user_lock for write.
@@ -183,11 +183,29 @@ static void uid2grp_remove_user(struct cache_info *info)
 	uid_grplist_cache[info->uid % id_cache_size] = NULL;
 	avltree_remove(&info->uid_node, &uid_tree);
 	avltree_remove(&info->uname_node, &uname_tree);
+	TAILQ_REMOVE(&groups_fifo_queue, info, queue_entry);
 	/* We decrement hold on group data when it is
 	 * removed from cache trees.
 	 */
 	uid2grp_release_group_data(info->gdata);
 	gsh_free(info);
+}
+
+/**
+ * @brief Initialize the user-groups cache
+ */
+void uid2grp_cache_init(void)
+{
+	PTHREAD_RWLOCK_init(&uid2grp_user_lock, NULL);
+	if (nfs_param.core_param.max_uid_to_grp_reqs)
+		sem_init(&uid2grp_sem, 0,
+				nfs_param.core_param.max_uid_to_grp_reqs);
+	avltree_init(&uname_tree, uname_comparator, 0);
+	avltree_init(&uid_tree, uid_comparator, 0);
+	memset(uid_grplist_cache, 0,
+		id_cache_size * sizeof(struct avltree_node *));
+	TAILQ_INIT(&groups_fifo_queue);
+	RegisterCleanup(&uid2grp_cache_cleanup_element);
 }
 
 /**
@@ -205,6 +223,9 @@ void uid2grp_add_user(struct group_data *gdata)
 	struct avltree_node *id_node2 = NULL;
 	struct cache_info *info;
 	struct cache_info *tmp;
+	struct cache_info *groups_fifo_queue_head_node;
+	directory_services_param_t *ds_param =
+		&nfs_param.directory_services_param;
 
 	info = gsh_malloc(sizeof(struct cache_info));
 
@@ -245,6 +266,15 @@ void uid2grp_add_user(struct group_data *gdata)
 		assert(id_node2 == NULL);
 	}
 	uid_grplist_cache[info->uid % id_cache_size] = &info->uid_node;
+	TAILQ_INSERT_TAIL(&groups_fifo_queue, info, queue_entry);
+
+	/* If we breach max-cache capacity, remove the queue's head node */
+	if (avltree_size(&uname_tree) > ds_param->cache_user_groups_max_count) {
+		LogInfo(COMPONENT_IDMAPPER,
+			"Cache size limit violated, removing entry with least time validity");
+		groups_fifo_queue_head_node = TAILQ_FIRST(&groups_fifo_queue);
+		uid2grp_remove_user(groups_fifo_queue_head_node);
+	}
 
 	if (name_node && id_node)
 		LogWarn(COMPONENT_IDMAPPER, "shouldn't happen, internal error");
