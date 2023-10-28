@@ -132,6 +132,17 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+/* update_config
+ * default case is we are not need update config so return happy
+ */
+
+static fsal_status_t update_config(struct fsal_module *fsal_hdl,
+				 config_file_t config_struct,
+				 struct config_error_type *err_type)
+{
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
 /* dump_config
  * default is to do nothing
  */
@@ -280,6 +291,7 @@ static void fsal_reset_stats(struct fsal_module *const fsal_hdl)
 struct fsal_ops def_fsal_ops = {
 	.unload = unload_fsal,
 	.init_config = init_config,
+	.update_config = update_config,
 	.dump_config = dump_config,
 	.create_export = create_export,
 	.update_export = update_export,

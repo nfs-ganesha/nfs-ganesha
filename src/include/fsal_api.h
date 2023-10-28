@@ -566,6 +566,23 @@ struct fsal_ops {
 	 fsal_status_t (*init_config)(struct fsal_module *fsal_hdl,
 				      config_file_t config_struct,
 				      struct config_error_type *err_type);
+
+/**
+ * @brief Update the configuration
+ *
+ * Given the root of the Ganesha configuration structure, Update
+ * the FSAL parameters.
+ *
+ * @param[in] fsal_hdl      The FSAL module
+ * @param[in] config_struct Parsed ganesha configuration file
+ * @param[out]err_type      config error processing state
+ *
+ * @return FSAL status.
+ */
+	 fsal_status_t (*update_config)(struct fsal_module *fsal_hdl,
+				      config_file_t config_struct,
+				      struct config_error_type *err_type);
+
 /**
  * @brief Dump configuration
  *

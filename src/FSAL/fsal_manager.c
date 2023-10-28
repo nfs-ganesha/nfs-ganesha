@@ -660,6 +660,18 @@ int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
 						&(*fsal_hdl)->refcount));
 			return 1;
 		}
+	} else {
+		config_file_t myconfig;
+
+		myconfig = get_parse_root(node);
+		status = (*fsal_hdl)->m_ops.update_config(*fsal_hdl,
+							myconfig, err_type);
+		if (FSAL_IS_ERROR(status)) {
+			config_proc_error(node, err_type,
+					  "Failed to update FSAL (%s)",
+					  name);
+			return 0;
+		}
 	}
 
 	return 0;
