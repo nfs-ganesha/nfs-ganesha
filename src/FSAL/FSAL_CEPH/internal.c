@@ -472,9 +472,9 @@ int ceph_mount_key_cmpf(const struct avltree_node *lhs,
 	lk = avltree_container_of(lhs, struct ceph_mount, cm_avl_mount);
 	rk = avltree_container_of(rhs, struct ceph_mount, cm_avl_mount);
 
-	/* If cmount_path is not configured, match with nothing... */
-	if (lk->cm_mount_path == NULL && rk->cm_mount_path == NULL)
-		return -1;
+	/* cm_mount_path will be non-NULL even if cmount_path was not configured
+	 */
+	assert(lk->cm_mount_path != NULL && rk->cm_mount_path != NULL);
 
 	rc = key_strcmp(lk->cm_fs_name, rk->cm_fs_name);
 

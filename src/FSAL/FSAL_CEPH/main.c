@@ -152,25 +152,50 @@ static fsal_status_t find_cephfs_root(struct ceph_export *export, Inode **pi,
 {
 	int lmp, rc;
 	struct user_cred root_creds = {};
+	char *walk_path;
 
 #ifdef USE_FSAL_CEPH_LL_LOOKUP_ROOT
-	if (strcmp(export->cmount_path, CTX_FULLPATH(op_ctx)) == 0) {
+	/* If no cmount_path or cmount_path is the same as CTX_FULLPATH(op_ctx)
+	 * then we just want to lookup the root of the cmount.
+	 */
+	if (export->cmount_path == NULL ||
+	    strcmp(export->cmount_path, CTX_FULLPATH(op_ctx)) == 0) {
 		rc = ceph_ll_lookup_root(export->cmount, pi);
 		*stxr = false;
 		goto out;
 	}
 #endif
 
-	lmp = strlen(export->cmount_path);
+	if (export->cmount_path != NULL) {
+		/* Find the portion of CTX_FULLPATH(op_ctx) that is deeper than
+		 * cmount_path. For example, if:
+		 *    cmount_path = "/export"
+		 * and
+		 *    CTX_FULLPATH(op_ctx) = "/export/exp1"
+		 * then we want to walk from the root of the cmount (at /export)
+		 * to /exp1.
+		 *
+		 * If cmount_path is just "/", we will want the whole
+		 * CTX_FULLPATH(op_ctx)
+		 */
+		lmp = strlen(export->cmount_path);
 
-	if (lmp == 1) {
-		/* If cmount_path is "/" we need the leading '/'. */
-		lmp = 0;
+		if (lmp == 1) {
+			/* If cmount_path is "/" we need the leading '/'. */
+			lmp = 0;
+		}
+
+		walk_path = CTX_FULLPATH(op_ctx) + lmp;
+	} else {
+		/* No cmount_path, so we did a cmount at CTX_FULLPATH(op_ctx)
+		 * and now we just need to walk to the root of the cmount.
+		 */
+		walk_path = "/";
 	}
 
 	/* Now walk the path */
 	rc = fsal_ceph_ll_walk(export->cmount,
-			       CTX_FULLPATH(op_ctx) + lmp,
+			       walk_path,
 			       pi,
 			       stx,
 			       false,
@@ -189,7 +214,28 @@ static int ceph_export_commit(void *node, void *link_mem, void *self_struct,
 	struct ceph_export *export = self_struct;
 	int lmp, lpath;
 
+	/* If cmount_path is not configured, no further checks */
+	if (export->cmount_path == NULL)
+		return 0;
+
+	if (export->cmount_path[0] != '/') {
+		err_type->invalid = true;
+		return 1;
+	}
+
+	/* Get length of cmount_path and remove trailing slash, adjusting
+	 * length.
+	 */
 	lmp = strlen(export->cmount_path);
+
+	while ((export->cmount_path[lmp - 1] == '/') && (lmp > 1)) {
+		/* Trim a trailing '/' */
+		lmp--;
+	}
+
+	export->cmount_path[lmp] = '\0';
+
+	/* Get the length of the full path from the export */
 	lpath = strlen(op_ctx->ctx_export->cfg_fullpath);
 
 	LogDebug(COMPONENT_FSAL,
@@ -216,7 +262,7 @@ static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_ITEM_STR("user_id", 0, MAXUIDLEN, NULL, ceph_export, user_id),
 	CONF_ITEM_STR("filesystem", 0, NAME_MAX, NULL, ceph_export, fs_name),
-	CONF_MAND_PATH("cmount_path", 1, MAXPATHLEN, NULL, ceph_export,
+	CONF_ITEM_PATH("cmount_path", 1, MAXPATHLEN, NULL, ceph_export,
 			cmount_path),
 	CONF_ITEM_STR("secret_access_key", 0, MAXSECRETLEN, NULL, ceph_export,
 			secret_key),
@@ -441,7 +487,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	/* Stat for root */
 	struct ceph_statx stx;
 	/* Return code */
-	int rc, len;
+	int rc;
 	/* Return code from Ceph calls */
 	int ceph_status;
 	/* Ceph mount key */
@@ -467,17 +513,23 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		}
 	}
 
-	len = strlen(export->cmount_path);
-
-	/* Strip trailing '/' from cmount_path other than "/" */
-	if (len > 1 && export->cmount_path[len - 1] == '/')
-		export->cmount_path[len - 1] = '\0';
-
 	memset(&cm_key, 0, sizeof(cm_key));
 	cm_key.cm_fs_name = export->fs_name;
-	cm_key.cm_mount_path = export->cmount_path;
 	cm_key.cm_user_id = export->user_id;
 	cm_key.cm_secret_key = export->secret_key;
+
+	/* If cmount_path is configured, use that, otherwise use
+	 * CTX_FULLPATH(op_ctx). This allows an export where cmoount_path
+	 * was going to be the same as CTX_FULLPATH(op_ctx) to share the
+	 * cmount with other exports that use the same cmount_path (but then
+	 * MUST be exporting a sub-directory) and cmount_path need not be
+	 * specified for the export where CTX_FULLPATH(op_ctx) is the same as
+	 * that later cmount_path.
+	 */
+	if (export->cmount_path != NULL)
+		cm_key.cm_mount_path = export->cmount_path;
+	else
+		cm_key.cm_mount_path = CTX_FULLPATH(op_ctx);
 
 	PTHREAD_RWLOCK_wrlock(&cmount_lock);
 

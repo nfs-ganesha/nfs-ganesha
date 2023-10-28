@@ -179,7 +179,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	PTHREAD_RWLOCK_rdlock(&cmount_lock);
 
-	lmp = strlen(export->cmount_path);
+	lmp = strlen(export->cm->cm_mount_path);
 
 	if (lmp == 1) {
 		/* If cmount_path is "/" we need the leading '/'. */
