@@ -81,7 +81,7 @@ if command == 'json':
     else:
         command = DEFAULT_COMMAND
 
-json_not_available = ('fsal', 'reset', 'enable')
+json_not_available = ('fsal', 'reset', 'enable', 'disable')
 if output_json and command in json_not_available:
     sys.exit("{0} command is not available in json.".format(command))
 
