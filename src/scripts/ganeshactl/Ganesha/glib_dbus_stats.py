@@ -1120,6 +1120,7 @@ class TotalStats(Report):
         for exportid in self.result:
             export = self.result[exportid]
             report, success = super()._header(export)
+            report['id'] = exportid
             reports.append(report)
 
             if not success:
