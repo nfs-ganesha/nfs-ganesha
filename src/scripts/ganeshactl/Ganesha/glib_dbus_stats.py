@@ -1104,7 +1104,7 @@ def export_io_stats_report(header, stats):
                 result[counter] = dbus_to_std(ops_stats[j])
 
             report[op] = result
-            reports.append(report)
+        reports.append(report)
     return reports
 
 class TotalStats(Report):
