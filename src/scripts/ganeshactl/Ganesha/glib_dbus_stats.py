@@ -853,7 +853,8 @@ class InodeStats(Report):
         self.stats = stats
 
     def fill_report(self, report):
-        report_key_value(self.result[3], report)
+        values = self.result[3] + self.result[4]
+        report_key_value(values, report)
 
     def __str__(self):
         output = ""
