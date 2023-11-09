@@ -621,10 +621,10 @@ static void convert_inet_addr(struct config_node *node,
 
 	/* Try IPv6 (with mapping) first.  If this fails, fall back on IPv4, if
 	 * a v4 address was given. */
+	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_INET6;
 	hints.ai_flags = AI_ADDRCONFIG | AI_V4MAPPED;
-	hints.ai_socktype = 0;
-	hints.ai_protocol = 0;
+
 	rc = getaddrinfo(node->u.term.varvalue, NULL,
 			 &hints, &res);
 
