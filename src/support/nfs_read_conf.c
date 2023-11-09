@@ -449,6 +449,8 @@ static struct config_item version4_params[] = {
 		       nfs_version4_parameter, enforce_utf8_vld),
 	CONF_ITEM_UI32("Max_Client_Ids", 0, UINT32_MAX, 0,
 		       nfs_version4_parameter, max_client_ids),
+	CONF_ITEM_UI32("Open_State_Per_Client", 0, UINT32_MAX, 0,
+		       nfs_version4_parameter, open_state_per_client),
 	CONFIG_EOL
 };
 

@@ -599,6 +599,9 @@ typedef struct nfs_version4_parameter {
 	bool enforce_utf8_vld;
 	/** Max number of Client IDs allowed on the system */
 	uint32_t max_client_ids;
+	/** Max number of files that could be opened by a client. Beyond this
+	 * limit, client gets denied if it tries to open too many files.*/
+	uint32_t open_state_per_client;
 } nfs_version4_parameter_t;
 
 /** @} */

@@ -262,6 +262,8 @@ NFSV4 {}
 
 	Server_Owner(string, default "")
 
+	Open_State_Per_Client(uint32, range 0 to UINT32_MAX, default 0)
+
 EXPORT_DEFAULTS {}
 ------------------
 

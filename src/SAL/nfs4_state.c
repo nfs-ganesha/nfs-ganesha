@@ -99,6 +99,8 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	state_status_t status = 0;
 	bool mutex_init = false;
 	struct state_t *openstate = NULL;
+	nfs_client_id_t *clientid =
+		owner_input->so_owner.so_nfs4_owner.so_clientrec;
 
 	if (isFullDebug(COMPONENT_STATE) && pnew_state != NULL) {
 		display_stateid(&dspbuf, pnew_state);
@@ -135,14 +137,28 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 			dec_state_t_ref(openstate);
 	}
 
+	/* If open_state_per_client is enable and too many files are open
+	 * from same client then stop going ahead and return EIO
+	 */
+	if (nfs_param.nfsv4_param.open_state_per_client
+	    && (atomic_fetch_uint32_t(&clientid->cid_open_state_counter)
+		>= nfs_param.nfsv4_param.open_state_per_client)) {
+		display_clientid(&dspbuf, clientid->cid_clientid);
+		LogCrit(COMPONENT_STATE,
+		    "Too many files(cur:%u>=limit:%u) opened by {CLIENTID %s}",
+		    atomic_fetch_uint32_t(&clientid->cid_open_state_counter),
+		    nfs_param.nfsv4_param.open_state_per_client, str);
+		display_reset_buffer(&dspbuf);
+		status = STATE_IO_ERROR;
+		goto errout;
+	}
+
 	PTHREAD_MUTEX_init(&pnew_state->state_mutex, NULL);
 
 	mutex_init = true;
 
 	/* Add the stateid.other, this will increment cid_stateid_counter */
-	nfs4_BuildStateId_Other(
-			owner_input->so_owner.so_nfs4_owner.so_clientrec,
-			pnew_state->stateid_other);
+	nfs4_BuildStateId_Other(clientid, pnew_state->stateid_other);
 
 	/* Set the type and data for this state */
 	memcpy(&(pnew_state->state_data), state_data, sizeof(*state_data));
@@ -223,6 +239,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 
 	inc_state_owner_ref(owner_input);
 
+	atomic_inc_uint32_t(&clientid->cid_open_state_counter);
 	glist_add_tail(&owner_input->so_owner.so_nfs4_owner.so_state_list,
 		       &pnew_state->state_owner_list);
 
@@ -240,14 +257,12 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 
 	if (pnew_state->state_type == STATE_TYPE_DELEG &&
 	    pnew_state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE) {
-		nfs_client_id_t *client =
-			 owner_input->so_owner.so_nfs4_owner.so_clientrec;
-		ostate->file.write_delegated = true;
+				ostate->file.write_delegated = true;
 		/* take a ref and save client ptr holding delegation for
 		 * conflict resolution
 		 */
-		inc_client_id_ref(client);
-		ostate->file.write_deleg_client = client;
+		inc_client_id_ref(clientid);
+		ostate->file.write_deleg_client = clientid;
 	}
 
 	/* Copy the result */
@@ -344,6 +359,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	struct fsal_obj_handle *obj;
 	struct gsh_export *export;
 	state_owner_t *owner;
+	nfs_client_id_t *clientid = NULL;
 
 	if (isDebug(COMPONENT_STATE)) {
 		display_stateid(&dspbuf, state);
@@ -395,6 +411,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 		struct state_nfs4_owner_t *nfs4_owner;
 
 		nfs4_owner = &owner->so_owner.so_nfs4_owner;
+		clientid = nfs4_owner->so_clientrec;
 
 		/* Remove from list of states owned by owner and
 		 * release the state owner reference.
@@ -520,6 +537,8 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	 * handle.
 	 */
 	(void) obj->obj_ops->close2(obj, state);
+	if (clientid)
+		atomic_dec_uint32_t(&clientid->cid_open_state_counter);
 
 	/* Remove the sentinel reference */
 	dec_state_t_ref(state);

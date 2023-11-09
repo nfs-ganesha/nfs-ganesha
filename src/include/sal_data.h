@@ -782,6 +782,7 @@ struct nfs_client_id_t {
 				       this client */
 	uint32_t num_revokes;       /* Num revokes for the client */
 	struct gsh_client *gsh_client; /* for client specific statistics. */
+	uint32_t cid_open_state_counter; /* Num of files opened by client */
 };
 
 /**
