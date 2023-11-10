@@ -122,6 +122,8 @@ void kvsfs_free_state(struct state_t *state)
 	my_fd = &container_of(state, struct kvsfs_state_fd, state)->kvsfs_fd;
 
 	destroy_fsal_fd(&my_fd->fsal_fd);
+
+	gsh_free(state);
 }
 
 /**

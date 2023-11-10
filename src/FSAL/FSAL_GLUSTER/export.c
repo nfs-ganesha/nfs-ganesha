@@ -382,6 +382,8 @@ void gluster_free_state(struct state_t *state)
 			      state)->glusterfs_fd;
 
 	destroy_fsal_fd(&my_fd->fsal_fd);
+
+	gsh_free(state);
 }
 
 /**

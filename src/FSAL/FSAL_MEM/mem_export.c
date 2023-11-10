@@ -152,6 +152,8 @@ void mem_free_state(struct state_t *state)
 	fsal_fd = &container_of(state, struct mem_state_fd, state)->fsal_fd;
 
 	destroy_fsal_fd(fsal_fd);
+
+	gsh_free(state);
 }
 
 /**

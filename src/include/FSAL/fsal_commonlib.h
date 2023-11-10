@@ -277,11 +277,13 @@ void insert_fd_lru(struct fsal_fd *fsal_fd);
  * @brief Initialize a state_t structure
  *
  * @param[in] state                 The state to initialize
- * @param[in] exp_hdl               Export state_t will be associated with
+ * @param[in] state_free            An optional function to manage freeing state
  * @param[in] state_type            Type of state to allocate
  * @param[in] related_state         Related state if appropriate
  *
  * @returns the state structure for streamlined coding.
+ *
+ * NOTE: state_free MUST free the state.
  */
 
 static inline struct state_t *init_state(struct state_t *state,

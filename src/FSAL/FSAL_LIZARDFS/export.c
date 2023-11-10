@@ -401,6 +401,8 @@ void lzfs_free_state(struct state_t *state)
 	my_fd = &container_of(state, struct lzfs_fsal_state_fd, state)->lzfs_fd;
 
 	destroy_fsal_fd(&my_fd->fsal_fd);
+
+	gsh_free(state);
 }
 
 /*! \brief Allocate a state_t structure
