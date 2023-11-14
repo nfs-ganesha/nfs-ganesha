@@ -309,6 +309,27 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 
 		PTHREAD_MUTEX_destroy(&session->cb_chan.chan_mtx);
 
+		/* Free the session's callback security params */
+		for (i = 0; i < session->cb_sec_parms.sec_parms_len; ++i) {
+			callback_sec_parms4 * const sp =
+				&session->cb_sec_parms.sec_parms_val[i];
+			if (sp->cb_secflavor == AUTH_NONE) {
+				/* Do nothing */
+			} else if (sp->cb_secflavor == AUTH_SYS) {
+				struct authunix_parms *cb_auth_sys_params =
+					&sp->callback_sec_parms4_u
+						.cbsp_sys_cred;
+				gsh_free(cb_auth_sys_params->aup_machname);
+				gsh_free(cb_auth_sys_params->aup_gids);
+#ifdef _HAVE_GSSAPI
+			} else if (sp->cb_secflavor == RPCSEC_GSS) {
+				LogWarn(COMPONENT_SESSIONS,
+					"GSS callbacks unsupported, skip");
+#endif
+			}
+		}
+		gsh_free(session->cb_sec_parms.sec_parms_val);
+
 		/* Free the slot tables */
 		gsh_free(session->fc_slots);
 		gsh_free(session->bc_slots);

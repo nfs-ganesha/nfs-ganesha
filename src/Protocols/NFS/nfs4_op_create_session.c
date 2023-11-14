@@ -63,6 +63,72 @@
 		     (chan_attrs)->ca_maxrequests)
 
 /**
+ * @brief Populate nfs41_session with callback params
+ */
+static void populate_callback_params_in_session(
+	uint32_t sec_parms_len, const callback_sec_parms4 *sec_parms_val,
+	uint32_t cb_program, nfs41_session_t *nfs41_session,
+	log_components_t component)
+{
+	int sp_itr;
+	callback_sec_parms4 * const extracted_sec_params = gsh_malloc(
+		sec_parms_len * sizeof(callback_sec_parms4));
+
+	for (sp_itr = 0; sp_itr < sec_parms_len; ++sp_itr) {
+		const callback_sec_parms4 input_sp = sec_parms_val[sp_itr];
+		callback_sec_parms4 * const curr_sp =
+			&extracted_sec_params[sp_itr];
+
+		curr_sp->cb_secflavor = input_sp.cb_secflavor;
+		if (curr_sp->cb_secflavor == AUTH_NONE) {
+			/* Do nothing */
+		} else if (curr_sp->cb_secflavor == AUTH_SYS) {
+			int gids_itr;
+			size_t machname_len;
+			struct authunix_parms curr_cb_sys_creds;
+			struct authunix_parms input_cb_sys_creds =
+				input_sp.callback_sec_parms4_u.cbsp_sys_cred;
+
+			curr_cb_sys_creds.aup_uid = input_cb_sys_creds.aup_uid;
+			curr_cb_sys_creds.aup_gid = input_cb_sys_creds.aup_gid;
+			curr_cb_sys_creds.aup_time =
+				input_cb_sys_creds.aup_time;
+
+			/* Populate aup_machname */
+			machname_len = strnlen(input_cb_sys_creds.aup_machname,
+				MAX_MACHINE_NAME);
+			curr_cb_sys_creds.aup_machname =
+				gsh_malloc(machname_len + 1);
+			memcpy(curr_cb_sys_creds.aup_machname,
+				input_cb_sys_creds.aup_machname, machname_len);
+			curr_cb_sys_creds.aup_machname[machname_len] = '\0';
+
+			curr_cb_sys_creds.aup_len = input_cb_sys_creds.aup_len;
+			curr_cb_sys_creds.aup_gids = gsh_malloc(
+				curr_cb_sys_creds.aup_len * sizeof(gid_t));
+
+			for (gids_itr = 0;
+				gids_itr < input_cb_sys_creds.aup_len;
+				++gids_itr) {
+				curr_cb_sys_creds.aup_gids[gids_itr] =
+					input_cb_sys_creds.aup_gids[gids_itr];
+			}
+			curr_sp->callback_sec_parms4_u.cbsp_sys_cred =
+				curr_cb_sys_creds;
+
+#ifdef _HAVE_GSSAPI
+		} else if (curr_sp->cb_secflavor == RPCSEC_GSS) {
+			LogWarn(component,
+				"We do not support GSS callbacks, skip GSS callback setup");
+#endif
+		}
+	}
+	nfs41_session->cb_sec_parms.sec_parms_val = extracted_sec_params;
+	nfs41_session->cb_sec_parms.sec_parms_len = sec_parms_len;
+	nfs41_session->cb_program = cb_program;
+}
+
+/**
  *
  * @brief The NFS4_OP_CREATE_SESSION operation
  *
@@ -540,18 +606,24 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 			     client_record->cr_unconfirmed_rec);
 	}
 
+	populate_callback_params_in_session(
+		arg_CREATE_SESSION4->csa_sec_parms.csa_sec_parms_len,
+		arg_CREATE_SESSION4->csa_sec_parms.csa_sec_parms_val,
+		arg_CREATE_SESSION4->csa_cb_program, nfs41_session, component);
+
 	/* Handle the creation of the back channel, if the client
 	   requested one. */
 	if (arg_CREATE_SESSION4->csa_flags &
 	    CREATE_SESSION4_FLAG_CONN_BACK_CHAN) {
-		nfs41_session->cb_program = arg_CREATE_SESSION4->csa_cb_program;
+
 		if (nfs_rpc_create_chan_v41(
 			data->req->rq_xprt, nfs41_session,
-			arg_CREATE_SESSION4->csa_sec_parms.csa_sec_parms_len,
-			arg_CREATE_SESSION4->csa_sec_parms.csa_sec_parms_val)
-		    == 0) {
+			nfs41_session->cb_sec_parms.sec_parms_len,
+			nfs41_session->cb_sec_parms.sec_parms_val) == 0) {
+
 			res_CREATE_SESSION4ok->csr_flags |=
 			    CREATE_SESSION4_FLAG_CONN_BACK_CHAN;
+			LogDebug(component, "Session backchannel created");
 		}
 	}
 

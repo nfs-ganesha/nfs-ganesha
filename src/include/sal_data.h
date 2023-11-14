@@ -217,6 +217,10 @@ struct nfs41_session {
 						   corresponding to ID */
 	clientid4 clientid;	/*< Clientid owning this session */
 	uint32_t cb_program;	/*< Callback program ID */
+	struct {
+		u_int sec_parms_len;
+		callback_sec_parms4 *sec_parms_val;
+	} cb_sec_parms; /*< Callback security params */
 	uint32_t flags;		/*< Flags pertaining to this session */
 	int32_t refcount;
 	uint32_t nb_slots;	/**< Number of slots in this session */
