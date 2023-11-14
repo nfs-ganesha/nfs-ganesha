@@ -367,6 +367,11 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 	       arg_EXCHANGE_ID4->eia_clientowner.co_verifier,
 	       NFS4_VERIFIER_SIZE);
 
+	/* Ganesha currently ignores client requested state-protection and
+	 * always uses SP4_NONE
+	 */
+	unconf->cid_state_protect_how = SP4_NONE;
+
 	rc = nfs_client_id_insert(unconf);
 
 	if (rc != CLIENT_ID_SUCCESS) {
@@ -387,7 +392,8 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 	res_EXCHANGE_ID4_ok->eir_flags |= client_record->cr_pnfs_flags;
 	res_EXCHANGE_ID4_ok->eir_flags |= EXCHGID4_FLAG_SUPP_MOVED_REFER;
 
-	res_EXCHANGE_ID4_ok->eir_state_protect.spr_how = SP4_NONE;
+	res_EXCHANGE_ID4_ok->eir_state_protect.spr_how =
+	    unconf->cid_state_protect_how;
 
 	temp = gsh_malloc(owner_len + 1);
 	memcpy(temp, cid_server_owner, owner_len + 1);

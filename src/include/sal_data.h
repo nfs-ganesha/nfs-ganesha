@@ -766,6 +766,10 @@ struct nfs_client_id_t {
 	} cid_cb;		/*< Version specific callback information */
 	time_t first_path_down_resp_time;  /* Time when the server first sent
 					       NFS4ERR_CB_PATH_DOWN */
+	/* Since Ganesha only supports SP4_NONE, we do not store state
+	 * protection data required for other state protection mechanisms
+	 */
+	state_protect_how4 cid_state_protect_how; /* State protection type */
 	unsigned int cid_nb_session;	/*< Number of sessions stored */
 	uint32_t cid_create_session_sequence;	/*< Sequence number for session
 						   creation. */
