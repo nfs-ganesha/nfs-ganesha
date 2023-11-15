@@ -59,7 +59,7 @@ typedef struct xprt_custom_data {
 
 void init_custom_data_for_xprt(SVCXPRT *);
 void destroy_custom_data_for_destroyed_xprt(SVCXPRT *);
-
+void dissociate_custom_data_from_xprt(SVCXPRT *);
 bool add_nfs41_session_to_xprt(SVCXPRT *, nfs41_session_t *);
 void remove_nfs41_session_from_xprt(SVCXPRT *, nfs41_session_t *);
 

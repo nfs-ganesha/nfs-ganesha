@@ -132,6 +132,106 @@ void remove_nfs41_session_from_xprt(SVCXPRT *xprt,
 }
 
 /**
+ * @brief Removes xprt references, both of the xprt from the custom-data
+ * components, and of the custom-data components from the xprt.
+ *
+ * This function should be called when destroying a xprt, in order to release
+ * the above mentioned references.
+ */
+void dissociate_custom_data_from_xprt(SVCXPRT *xprt)
+{
+	struct glist_head *curr_node, *next_node;
+	struct glist_head duplicate_sessions;
+	char xprt_addr_str[SOCK_NAME_MAX] = "\0";
+	struct display_buffer db = {
+		sizeof(xprt_addr_str), xprt_addr_str, xprt_addr_str};
+	xprt_custom_data_t *xprt_data;
+	nfs41_sessions_holder_t *sessions_holder;
+
+	display_xprt_sockaddr(&db, xprt);
+
+	if (xprt->xp_u1 == NULL) {
+		LogInfo(COMPONENT_XPRT,
+			"The xprt FD: %d, socket-addr: %s is not associated with any custom-data, done un-referencing.",
+			xprt->xp_fd, xprt_addr_str);
+		return;
+	}
+	LogDebug(COMPONENT_XPRT,
+		"About to un-reference custom-data from xprt with FD: %d, socket-addr: %s",
+		xprt->xp_fd, xprt_addr_str);
+
+	xprt_data = (xprt_custom_data_t *) xprt->xp_u1;
+	assert(xprt_data->status == ASSOCIATED_TO_XPRT);
+
+	sessions_holder = &xprt_data->nfs41_sessions_holder;
+
+	/* Copy the xprt sessions to a new list to avoid deadlock that can
+	 * happen if we take xprt's session-list lock followed by session's
+	 * connections lock (this lock order is reverse of the order used
+	 * during xprt connection association and dis-association with a
+	 * session)
+	 *
+	 * With the below change, we do not acquire the nested session's
+	 * connections lock, while holding the xprt's session-list lock. We
+	 * first release the xprt's session-list lock after copying the xprt's
+	 * sessions to a duplicate session-list. We then acquire the session's
+	 * connection lock to process each session in the duplicate list. That
+	 * is, both the mentioned operations are not done atomically.
+	 *
+	 * This can result in possible situations where the xprt's session-list
+	 * has been cleared after the first operation, but those cleared
+	 * sessions still have the xprt's reference, until the second operation.
+	 * During this interval between the two operation, it is possible that
+	 * another thread (in a different operation) sees a missing session on
+	 * this xprt's session-list and tries to add it to that xprt, even
+	 * though that session already had a reference to this xprt. If this
+	 * situation happens, such a session added to this xprt's session-list
+	 * will be at risk of never getting un-referenced. Also, such a xprt's
+	 * reference would get re-added to the session, and then the xprt would
+	 * be at risk of never getting destroyed. However, since this other
+	 * thread additionally MUST also check if the xprt under consideration
+	 * is being destroyed (that is, xprt's custom-data is dissociated from
+	 * xprt) before adding the session to it, we are able to avoid this
+	 * situation.
+	 *
+	 * The same situation can also happen after the xprt is un-referenced
+	 * through this function, but another in-flight request is still
+	 * operating on this same xprt (under destruction). The above mentioned
+	 * check will also prevent this from happening.
+	 */
+
+	glist_init(&duplicate_sessions);
+	PTHREAD_RWLOCK_wrlock(&sessions_holder->sessions_lock);
+	/* Move all xprt-data sessions to the duplicate-sessions list */
+	glist_splice_tail(&duplicate_sessions, &sessions_holder->sessions);
+	xprt_data->status = DISSOCIATED_FROM_XPRT;
+	PTHREAD_RWLOCK_unlock(&sessions_holder->sessions_lock);
+
+	/* Now process the duplicate list: for each session referenced by the
+	 * xprt, destroy the backchannel and release the connection_xprt held
+	 * by the session.
+	 */
+	glist_for_each_safe(curr_node, next_node, &duplicate_sessions) {
+		nfs41_session_list_entry_t *curr_entry = glist_entry(curr_node,
+			nfs41_session_list_entry_t, node);
+
+		nfs41_Session_Destroy_Backchannel_For_Xprt(curr_entry->session,
+			xprt);
+		nfs41_Session_Remove_Connection(curr_entry->session, xprt);
+
+		/* Release session reference */
+		dec_session_ref(curr_entry->session);
+
+		/* Free the session-node allocated for the xprt */
+		glist_del(curr_node);
+		gsh_free(curr_entry);
+	}
+	LogDebug(COMPONENT_XPRT,
+		"Done un-referencing of xprt with FD: %d, socket-addr: %s",
+		xprt->xp_fd, xprt_addr_str);
+}
+
+/**
  * @brief handles cleanup of the custom data associated with the xprt
  * (if any), after the xprt is destroyed
  *
