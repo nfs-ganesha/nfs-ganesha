@@ -717,9 +717,24 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 	PTHREAD_MUTEX_lock(&chan->chan_mtx);
 
 	if (chan->clnt) {
-		/* Something better later. */
-		code = EEXIST;
-		goto out;
+		SVCXPRT * const existing_xprt =
+			clnt_vc_get_client_xprt(chan->clnt);
+		if (existing_xprt == xprt) {
+			LogInfo(COMPONENT_NFS_CB,
+				"Xprt FD: %d is already associated with the channel. Skip creation",
+				xprt->xp_fd);
+			goto out;
+		}
+		if (existing_xprt == NULL) {
+			LogInfo(COMPONENT_NFS_CB,
+				"The channel exists with NULL xprt, destroy and recreate with xprt FD: %d",
+				xprt->xp_fd);
+		} else {
+			LogInfo(COMPONENT_NFS_CB,
+				"The channel exists with xprt FD: %d, destroy and recreate with xprt FD: %d",
+				existing_xprt->xp_fd, xprt->xp_fd);
+		}
+		_nfs_rpc_destroy_chan(chan);
 	}
 
 	chan->type = RPC_CHAN_V41;

@@ -189,6 +189,11 @@ enum {
 #define NFS41_MAX_CONNECTIONS 16
 
 /**
+ * @brief buffer size for displaying session-id
+ */
+#define NFS4_SESSIONID_BUFFER_SIZE 128
+
+/**
  * @brief Structure representing an NFSv4.1 session
  */
 
