@@ -365,6 +365,8 @@ bool check_session_conn(nfs41_session_t *session,
 			bool can_associate);
 void nfs41_Session_Add_Connection(nfs41_session_t *, SVCXPRT *);
 
+void nfs41_Session_Remove_Connection(nfs41_session_t *, SVCXPRT *);
+
 /******************************************************************************
  *
  * NFSv4 Stateid functions

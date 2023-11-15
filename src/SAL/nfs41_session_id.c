@@ -608,4 +608,70 @@ void nfs41_Session_Add_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 	SVC_REF(xprt, SVC_REF_FLAG_NONE);
 }
 
+/**
+ * @brief Remove matching connection (SVCXPRT) from the session
+ */
+void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
+{
+	int i;
+	bool found_xprt = false;
+	char xprt_addr[SOCK_NAME_MAX] = "\0";
+	struct display_buffer xprt_db = {
+		sizeof(xprt_addr), xprt_addr, xprt_addr};
+
+	display_xprt_sockaddr(&xprt_db, xprt);
+	PTHREAD_RWLOCK_wrlock(&session->conn_lock);
+
+	for (i = 0; i < session->num_conn; i++) {
+		if (isFullDebug(COMPONENT_SESSIONS)) {
+			char curr_xprt_addr[SOCK_NAME_MAX] = "\0";
+			struct display_buffer db = {
+				sizeof(curr_xprt_addr), curr_xprt_addr,
+				curr_xprt_addr};
+
+			display_xprt_sockaddr(&db,
+				session->connection_xprts[i]);
+			LogFullDebug(COMPONENT_SESSIONS,
+				"Comparing input xprt addr %s to session bound xprt addr %s",
+				xprt_addr, curr_xprt_addr);
+		}
+
+		/* During removal, the xprt address must match, and not just the
+		 * socket-address. We do not want to remove a different xprt
+		 * with same socket-address.
+		 */
+		if (session->connection_xprts[i] == xprt) {
+			found_xprt = true;
+			break;
+		}
+	}
+
+	/* Return if the connection is not bound to the session.
+	 * This can happen in rare situations when the session is destroyed
+	 * and all its connections were removed, just before we obtained
+	 * the above conn_lock.
+	 */
+	if (!found_xprt) {
+		PTHREAD_RWLOCK_unlock(&session->conn_lock);
+		assert(session->num_conn == 0);
+		return;
+	}
+
+	/* Now, remove the matching connection from session */
+
+	/* Release the connection-xprt's ref held on the session */
+	SVC_RELEASE(session->connection_xprts[i], SVC_RELEASE_FLAG_NONE);
+
+	/* Move the last xprt to the found-xprt's index */
+	session->connection_xprts[i] =
+		session->connection_xprts[session->num_conn-1];
+	session->connection_xprts[session->num_conn-1] = NULL;
+	session->num_conn--;
+
+	PTHREAD_RWLOCK_unlock(&session->conn_lock);
+	LogDebug(COMPONENT_SESSIONS,
+		"Successfuly removed the connection for xprt addr %s",
+		xprt_addr);
+}
+
 /** @} */
