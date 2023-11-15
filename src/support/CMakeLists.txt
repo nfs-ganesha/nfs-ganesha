@@ -84,6 +84,7 @@ SET(support_STAT_SRCS
    server_stats.c
    export_mgr.c
    nfs4_fs_locations.c
+   xprt_handler.c
 )
 
 if(ERROR_INJECTION)

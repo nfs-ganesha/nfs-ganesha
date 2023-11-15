@@ -40,6 +40,7 @@
 #include "nfs_core.h"
 #include "nfs_proto_functions.h"
 #include "sal_functions.h"
+#include "xprt_handler.h"
 #ifdef USE_LTTNG
 #include "gsh_lttng/nfs4.h"
 #endif
@@ -437,6 +438,31 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 }
 
 /**
+ * @brief Release all connections (SVCXPRT) referenced by the session
+ */
+static void release_all_session_connections(nfs41_session_t *session)
+{
+	int i;
+
+	/* Take connections write-lock */
+	PTHREAD_RWLOCK_wrlock(&session->conn_lock);
+
+	for (i = 0; i < session->num_conn; i++) {
+		SVCXPRT * const xprt = session->connection_xprts[i];
+
+		remove_nfs41_session_from_xprt(xprt, session);
+
+		/* Release the connection-xprt's ref held by the session being
+		 * destroyed.
+		 */
+		SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
+		session->connection_xprts[i] = NULL;
+	}
+	session->num_conn = 0;
+	PTHREAD_RWLOCK_unlock(&session->conn_lock);
+}
+
+/**
  * @brief Remove a session from the session hashtable.
  *
  * This also shuts down any back channel and frees the session data.
@@ -450,6 +476,9 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 int nfs41_Session_Del(nfs41_session_t *session)
 {
 	struct gsh_buffdesc key, old_key, old_value;
+
+	/* Release all session connections */
+	release_all_session_connections(session);
 
 	key.addr = session->session_id;
 	key.len = NFS4_SESSIONID_SIZE;
@@ -481,11 +510,8 @@ bool check_session_conn(nfs41_session_t *session,
 			bool can_associate)
 {
 	int i, num;
-	sockaddr_t addr;
+	bool added_session_to_xprt;
 	bool associate = false;
-
-	/* Copy the address coming over the wire. */
-	copy_xprt_addr(&addr, data->req->rq_xprt);
 
 	PTHREAD_RWLOCK_rdlock(&session->conn_lock);
 
@@ -496,19 +522,20 @@ retry:
 
 	for (i = 0; i < session->num_conn; i++) {
 		if (isFullDebug(COMPONENT_SESSIONS)) {
-			char str1[LOG_BUFF_LEN / 2] = "\0";
-			char str2[LOG_BUFF_LEN / 2] = "\0";
+			char str1[SOCK_NAME_MAX] = "\0";
+			char str2[SOCK_NAME_MAX] = "\0";
 			struct display_buffer db1 = {sizeof(str1), str1, str1};
 			struct display_buffer db2 = {sizeof(str2), str2, str2};
 
-			display_sockaddr(&db1, &addr);
-			display_sockaddr(&db2, &session->connections[i]);
+			display_xprt_sockaddr(&db1, data->req->rq_xprt);
+			display_xprt_sockaddr(&db2,
+				session->connection_xprts[i]);
 			LogFullDebug(COMPONENT_SESSIONS,
 				     "Comparing addr %s for %s to Session bound addr %s",
 				     str1, data->opname, str2);
 		}
 
-		if (cmp_sockaddr(&addr, &session->connections[i], false)) {
+		if (data->req->rq_xprt == session->connection_xprts[i]) {
 			/* We found a match */
 			PTHREAD_RWLOCK_unlock(&session->conn_lock);
 			return true;
@@ -522,15 +549,21 @@ retry:
 		PTHREAD_RWLOCK_unlock(&session->conn_lock);
 
 		if (isDebug(COMPONENT_SESSIONS)) {
-			char str1[LOG_BUFF_LEN / 2] = "\0";
+			char str1[SOCK_NAME_MAX] = "\0";
 			struct display_buffer db1 = {sizeof(str1), str1, str1};
 
-			display_sockaddr(&db1, &addr);
+			display_xprt_sockaddr(&db1, data->req->rq_xprt);
 			LogDebug(COMPONENT_SESSIONS,
 				     "Found no match for addr %s for %s",
 				     str1, data->opname);
 		}
 
+		/* TODO: This code requires refactoring */
+		if (num == NFS41_MAX_CONNECTIONS) {
+			LogWarn(COMPONENT_SESSIONS,
+				     "We hit the session's max-connections limit, can not add xprt with FD: %d",
+				     data->req->rq_xprt->xp_fd);
+		}
 		return false;
 	}
 
@@ -544,12 +577,35 @@ retry:
 		goto retry;
 	}
 
-	/* Add the new connection. */
-	memcpy(&session->connections[session->num_conn++], &addr, sizeof(addr));
+	/* Add session to the xprt */
+	added_session_to_xprt = add_nfs41_session_to_xprt(data->req->rq_xprt,
+		session);
+
+	if (!added_session_to_xprt) {
+		PTHREAD_RWLOCK_unlock(&session->conn_lock);
+		LogWarn(COMPONENT_SESSIONS,
+			"Could not associate xprt FD: %d with session",
+			data->req->rq_xprt->xp_fd);
+		return false;
+	}
+
+	/* Add xprt to the session */
+	nfs41_Session_Add_Connection(session, data->req->rq_xprt);
 
 	PTHREAD_RWLOCK_unlock(&session->conn_lock);
-
 	return true;
+}
+
+/**
+ * @brief Adds the xprt reference to the nfs41_session
+ *
+ * @note The caller must hold the `session->conn_lock` lock for writes.
+ */
+void nfs41_Session_Add_Connection(nfs41_session_t *session, SVCXPRT *xprt)
+{
+	assert(session->num_conn < NFS41_MAX_CONNECTIONS);
+	session->connection_xprts[session->num_conn++] = xprt;
+	SVC_REF(xprt, SVC_REF_FLAG_NONE);
 }
 
 /** @} */

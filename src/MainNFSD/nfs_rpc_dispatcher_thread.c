@@ -62,6 +62,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
+#include "xprt_handler.h"
 
 #ifdef USE_LTTNG
 #include "gsh_lttng/nfs_rpc.h"
@@ -104,6 +105,7 @@ enum evchan {
 static struct rpc_evchan rpc_evchan[EVCHAN_SIZE];
 
 static enum xprt_stat nfs_rpc_tcp_user_data(SVCXPRT *);
+static void nfs_rpc_alloc_user_data(SVCXPRT *);
 static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *);
 static struct svc_req *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs);
 static void free_nfs_request(struct svc_req *req, enum xprt_stat stat);
@@ -405,8 +407,17 @@ const svc_xprt_fun_t udp_dispatch[] = {
 static enum xprt_stat nfs_rpc_dispatch_tcp_NFS(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
-		     "NFS TCP request on SVCXPRT %p fd %d",
+		     "NFS TCP dispatch setup for SVCXPRT %p fd %d",
 		     xprt, xprt->xp_fd);
+
+	/* Allocate user-data for the xprt.
+	 *
+	 * Note: Currently, we only associate user-data related to NFS
+	 * operations. This allocation can be later generalized as an alloc
+	 * callback on the xprt, if non-NFS operations require user-data.
+	 */
+	nfs_rpc_alloc_user_data(xprt);
+
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFS;
 	return nfs_rpc_tcp_user_data(xprt);
 }
@@ -1507,6 +1518,16 @@ static enum xprt_stat nfs_rpc_tcp_user_data(SVCXPRT *newxprt)
 }
 
 /**
+ * @brief xprt user-data allocator function
+ *
+ * @param[in] xprt Transport to use for allocation
+ */
+static void nfs_rpc_alloc_user_data(SVCXPRT *xprt)
+{
+	init_custom_data_for_xprt(xprt);
+}
+
+/**
  * @brief xprt destructor callout
  *
  * @param[in] xprt Transport to destroy
@@ -1517,6 +1538,7 @@ static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *xprt)
 		nfs_dupreq_put_drc(xprt->xp_u2);
 		xprt->xp_u2 = NULL;
 	}
+	destroy_custom_data_for_destroyed_xprt(xprt);
 	return XPRT_DESTROYED;
 }
 

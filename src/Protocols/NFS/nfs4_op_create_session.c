@@ -185,6 +185,7 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 	/* Abbreviated alias for successful response */
 	CREATE_SESSION4resok * const res_CREATE_SESSION4ok =
 	    &res_CREATE_SESSION4->CREATE_SESSION4res_u.csr_resok4;
+	bool added_conn_to_session;
 
 	/* Make sure str_client is always printable even
 	 * if log level changes midstream.
@@ -404,8 +405,6 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 		goto out;
 	}
 
-	copy_xprt_addr(&nfs41_session->connections[0], data->req->rq_xprt);
-	nfs41_session->num_conn = 1;
 	nfs41_session->clientid = clientid;
 	nfs41_session->clientid_record = found;
 	nfs41_session->refcount = 2;	/* sentinel ref + call path ref */
@@ -473,6 +472,25 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 
 		/* Maybe a more precise status would be better */
 		res_CREATE_SESSION4->csr_status = NFS4ERR_SERVERFAULT;
+		goto out;
+	}
+
+	nfs41_session->num_conn = 0;
+
+	/* Add the connection to the session */
+	added_conn_to_session = check_session_conn(nfs41_session, data, true);
+
+	if (!added_conn_to_session) {
+		LogCrit(component,
+			"Unable to add connection FD: %d to the session",
+			data->req->rq_xprt->xp_fd);
+
+		/* Need to destroy the session */
+		if (!nfs41_Session_Del(nfs41_session))
+			LogDebug(component,
+				"nfs41_Session_Del failed during cleanup");
+
+		res_CREATE_SESSION4->csr_status = NFS4ERR_INVAL;
 		goto out;
 	}
 

@@ -216,7 +216,7 @@ struct nfs41_session {
 
 	pthread_rwlock_t conn_lock;
 	int num_conn;
-	sockaddr_t connections[NFS41_MAX_CONNECTIONS];
+	SVCXPRT *connection_xprts[NFS41_MAX_CONNECTIONS];
 
 	nfs_client_id_t *clientid_record;	/*< Client record
 						   corresponding to ID */
