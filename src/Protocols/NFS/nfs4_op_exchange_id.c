@@ -284,6 +284,7 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 		} else {
 			/* CASE 5, client restart */
 			/** @todo FSF: expire old clientid? */
+			dec_client_id_ref(conf);
 		}
 	} else if (conf != NULL) {
 		/* EXCHGID4_FLAG_UPD_CONFIRMED_REC_A set */
