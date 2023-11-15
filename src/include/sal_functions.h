@@ -367,6 +367,8 @@ void nfs41_Session_Add_Connection(nfs41_session_t *, SVCXPRT *);
 
 void nfs41_Session_Remove_Connection(nfs41_session_t *, SVCXPRT *);
 
+void nfs41_Session_Destroy_Backchannel_For_Xprt(nfs41_session_t *, SVCXPRT *);
+
 /******************************************************************************
  *
  * NFSv4 Stateid functions

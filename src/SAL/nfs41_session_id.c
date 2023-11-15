@@ -674,4 +674,51 @@ void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 		xprt_addr);
 }
 
+/**
+ * This function destroys the input session's backchannel if it is up, and if
+ * it uses the input xprt.
+ */
+void nfs41_Session_Destroy_Backchannel_For_Xprt(nfs41_session_t *session,
+	SVCXPRT *xprt)
+{
+	char session_str[NFS4_SESSIONID_BUFFER_SIZE] = "\0";
+	struct display_buffer db2 = {
+		sizeof(session_str), session_str, session_str};
+
+	display_session_id(&db2, session->session_id);
+	PTHREAD_MUTEX_lock(&session->cb_chan.chan_mtx);
+
+	/* After acquiring the lock, we check backchannel availability */
+	if (session->cb_chan.clnt == NULL) {
+		PTHREAD_MUTEX_unlock(&session->cb_chan.chan_mtx);
+		goto no_backchannel;
+	}
+	/* Given that the backchannel is up, we first check if the session's
+	 * backchannel actually uses the xprt being destroyed.
+	 * The channel lock ensures that channel's client check (below) and the
+	 * channel destroy operation are performed atomically.
+	 */
+	if (clnt_vc_get_client_xprt(session->cb_chan.clnt) != xprt) {
+		PTHREAD_MUTEX_unlock(&session->cb_chan.chan_mtx);
+		LogDebug(COMPONENT_SESSIONS,
+			"Backchannel xprt for session %s does not match the xprt to be destroyed. Skip destroying backchannel",
+			session_str);
+		return;
+	}
+	/* Now destroy the backchannel */
+	nfs_rpc_destroy_chan_no_lock(&session->cb_chan);
+	atomic_clear_uint32_t_bits(&session->flags, session_bc_up);
+	PTHREAD_MUTEX_unlock(&session->cb_chan.chan_mtx);
+
+	LogDebug(COMPONENT_SESSIONS,
+		"Backchannel destroyed for current session %s",
+		session_str);
+	return;
+
+ no_backchannel:
+	LogDebug(COMPONENT_SESSIONS,
+		"Backchannel is not up for session %s, skip destroying it",
+		session_str);
+}
+
 /** @} */
