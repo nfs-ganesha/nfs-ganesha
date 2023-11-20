@@ -56,18 +56,36 @@ if(USE_ADMIN_TOOLS)
 
     configure_file(${SETUP_PY_IN} ${SETUP_PY})
 
-    add_custom_command(
-    OUTPUT ${OUTPUT}
-    COMMAND ${Python3_EXECUTABLE} "${SETUP_PY}"  build
-    COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
-    DEPENDS ${GANESHA_TOP_SRCS} ${SCRIPTS}
-    )
+    if(USE_LEGACY_PYTHON_INSTALL)
+      add_custom_command(
+        OUTPUT ${OUTPUT}
+        COMMAND ${Python3_EXECUTABLE} "${SETUP_PY}"  build
+        COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
+        DEPENDS ${GANESHA_TOP_SRCS} ${SCRIPTS}
+        )
+    else()
+      add_custom_command(
+        OUTPUT ${OUTPUT}
+        COMMAND ${Python3_EXECUTABLE}  -m build --wheel --no-isolation .
+        COMMAND ${CMAKE_COMMAND} -E touch ${OUTPUT}
+        DEPENDS ${GANESHA_TOP_SRCS} ${SCRIPTS}
+        )
+    endif()
 
     add_custom_target(python_ganesha_top ALL DEPENDS ${OUTPUT})
 
-    install(
-      CODE
-      "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMAND ${Python3_EXECUTABLE} ${SETUP_PY} install --skip-build --no-compile --prefix=\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX})"
-      )
+    if(USE_LEGACY_PYTHON_INSTALL)
+      install(
+        CODE
+        "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${SETUP_PY} install --skip-build --no-compile --prefix=\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX})"
+        )
+    else()
+      install(
+        CODE
+        "execute_process(WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND ${Python3_EXECUTABLE} -m installer --destdir \$ENV{DESTDIR} dist/ganesha-top-${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}-py3-none-any.whl)"
+        )
+    endif()
   endif(Python3_FOUND)
 endif(USE_ADMIN_TOOLS)

@@ -92,6 +92,9 @@ Requires: openSUSE-release
 @BCOND_SANITIZE_ADDRESS@ sanitize_address
 %global use_sanitize_address %{on_off_switch sanitize_address}
 
+@BCOND_LEGACY_PYTHON_INSTALL@ legacy_python_install
+%global use_legacy_python_install %{on_off_switch legacy_python_install}
+
 %global dev_version %{lua: s = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); s2 = string.gsub(s, '%-', '.'); print((s2 ~= nil and s2 ~= '') and s2 or "0.1") }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -259,6 +262,11 @@ BuildRequires:  python3-devel
 Requires:	dbus-1-python
 %else
 Requires:	python3-dbus
+%endif
+%if ( ! 0%{?with_legacy_python_install} )
+BuildRequires:  python3-wheel
+BuildRequires:  python3-build
+BuildRequires:  python3-installer
 %endif
 %endif
 
@@ -534,6 +542,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DRPCBIND=%{use_rpcbind}			\
 	-D_MSPAC_SUPPORT=%{use_mspac_support}		\
 	-DSANITIZE_ADDRESS=%{use_sanitize_address}	\
+	-DUSE_LEGACY_PYTHON_INSTALL=%{use_legacy_python_install}	\
 %if %{with jemalloc}
 	-DALLOCATOR=jemalloc
 %endif
@@ -625,12 +634,23 @@ install -p -m 644 selinux/ganesha.if %{buildroot}%{_selinux_store_path}/devel/in
 install -m 0644 selinux/ganesha.pp.bz2 %{buildroot}%{_selinux_store_path}/packages
 %endif
 
+%if ( ! 0%{?with_legacy_python_install} )
+%if ( 0%{?with_gpfs} )
+mv %{buildroot}/usr/bin/gpfs-epoch %{buildroot}/usr/libexec/ganesha/
+%endif
+%endif
+
 %if ( 0%{?rhel} && 0%{?rhel} < 8 )
-rm -f %{buildroot}/%{python_sitelib}/gpfs*
+rm -rf %{buildroot}/%{python_sitelib}/gpfs*
 rm -f %{buildroot}/%{python_sitelib}/__init__.*
 %else
-rm -f %{buildroot}/%{python3_sitelib}/gpfs*
+rm -rf %{buildroot}/%{python3_sitelib}/gpfs*
+rm -rf %{buildroot}/%{python3_sitelib}/ganeshactl*
 rm -f %{buildroot}/%{python3_sitelib}/__init__.*
+rm -rf %{buildroot}/%{python3_sitelib}/__pycache__
+rm -f %{buildroot}/%{python3_sitelib}/Ganesha/__init__.*
+rm -f %{buildroot}/%{python3_sitelib}/Ganesha/QtUI/__init__.*
+rm -rf %{buildroot}/%{python3_sitelib}/Ganesha/QtUI/__pycache__
 %endif
 
 %post
@@ -859,8 +879,10 @@ exit 0
 %{python_sitelib}/ganeshactl-*-info
 %else
 %{python3_sitelib}/Ganesha/*
+%if ( ! 0%{?with_legacy_python_install} )
 %{python3_sitelib}/ganeshactl-*-info
 %{python3_sitelib}/ganesha_top-*-info
+%endif
 %endif
 %if %{with gui_utils}
 %{_bindir}/ganesha-admin

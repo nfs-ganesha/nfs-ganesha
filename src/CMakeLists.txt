@@ -1125,6 +1125,9 @@ if(USE_CAPS)
   endif (CAPS_FOUND)
 endif(USE_CAPS)
 
+# default to ON so that it does the right thing in the CentOS CI
+goption(USE_LEGACY_PYTHON_INSTALL "Use 'python setup.py install'" ON)
+
 # Check if we have libblkid and libuuid, will just be reported under one
 # flag USE_BLKID
 
@@ -1615,6 +1618,12 @@ if(SANITIZE_ADDRESS)
 else(SANITIZE_ADDRESS)
     set(BCOND_SANITIZE_ADDRESS "%bcond_with")
 endif(SANITIZE_ADDRESS)
+
+if(USE_LEGACY_PYTHON_INSTALL)
+    set(BCOND_LEGACY_PYTHON_INSTALL "%bcond_without")
+else(USE_LEGACY_PYTHON_INSTALL)
+    set(BCOND_LEGACY_PYTHON_INSTALL "%bcond_with")
+endif(USE_LEGACY_PYTHON_INSTALL)
 
 # Now create a usable specfile
 configure_file(
