@@ -1046,9 +1046,6 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 				false)) {
 			LogDebug(COMPONENT_STATE, "Returning NFS4ERR_EXPIRED");
 
-			PTHREAD_MUTEX_unlock(&owner2->so_owner.so_nfs4_owner
-					     .so_clientrec->cid_mutex);
-
 			status = NFS4ERR_EXPIRED;
 			goto failure;
 		}
