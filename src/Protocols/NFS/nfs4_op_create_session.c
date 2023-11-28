@@ -476,6 +476,7 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 	}
 
 	nfs41_session->num_conn = 0;
+	glist_init(&nfs41_session->connection_xprts);
 
 	/* Add the connection to the session */
 	added_conn_to_session = check_session_conn(nfs41_session, data, true);

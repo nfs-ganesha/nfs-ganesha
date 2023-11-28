@@ -442,13 +442,15 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
  */
 static void release_all_session_connections(nfs41_session_t *session)
 {
-	int i;
+	struct glist_head *curr_node, *next_node;
 
 	/* Take connections write-lock */
 	PTHREAD_RWLOCK_wrlock(&session->conn_lock);
 
-	for (i = 0; i < session->num_conn; i++) {
-		SVCXPRT * const xprt = session->connection_xprts[i];
+	glist_for_each_safe(curr_node, next_node, &session->connection_xprts) {
+		connection_xprt_t * const curr_entry = glist_entry(
+			curr_node, connection_xprt_t, node);
+		SVCXPRT * const xprt = curr_entry->xprt;
 
 		remove_nfs41_session_from_xprt(xprt, session);
 
@@ -456,7 +458,9 @@ static void release_all_session_connections(nfs41_session_t *session)
 		 * destroyed.
 		 */
 		SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
-		session->connection_xprts[i] = NULL;
+
+		glist_del(curr_node);
+		gsh_free(curr_entry);
 	}
 	session->num_conn = 0;
 	PTHREAD_RWLOCK_unlock(&session->conn_lock);
@@ -509,7 +513,7 @@ bool check_session_conn(nfs41_session_t *session,
 			compound_data_t *data,
 			bool can_associate)
 {
-	int i, num;
+	struct glist_head *curr_node;
 	bool added_session_to_xprt;
 	bool associate = false;
 
@@ -517,10 +521,10 @@ bool check_session_conn(nfs41_session_t *session,
 
 retry:
 
-	/* Save number of connections for use outside the lock */
-	num = session->num_conn;
+	glist_for_each(curr_node, &session->connection_xprts) {
+		connection_xprt_t * const curr_entry = glist_entry(curr_node,
+			connection_xprt_t, node);
 
-	for (i = 0; i < session->num_conn; i++) {
 		if (isFullDebug(COMPONENT_SESSIONS)) {
 			char str1[SOCK_NAME_MAX] = "\0";
 			char str2[SOCK_NAME_MAX] = "\0";
@@ -528,24 +532,21 @@ retry:
 			struct display_buffer db2 = {sizeof(str2), str2, str2};
 
 			display_xprt_sockaddr(&db1, data->req->rq_xprt);
-			display_xprt_sockaddr(&db2,
-				session->connection_xprts[i]);
+			display_xprt_sockaddr(&db2, curr_entry->xprt);
 			LogFullDebug(COMPONENT_SESSIONS,
 				     "Comparing addr %s for %s to Session bound addr %s",
 				     str1, data->opname, str2);
 		}
 
-		if (data->req->rq_xprt == session->connection_xprts[i]) {
+		if (data->req->rq_xprt == curr_entry->xprt) {
 			/* We found a match */
 			PTHREAD_RWLOCK_unlock(&session->conn_lock);
 			return true;
 		}
 	}
 
-	if (!can_associate || num == NFS41_MAX_CONNECTIONS) {
-		/* We either aren't allowed to associate a new address or there
-		 * is no room.
-		 */
+	if (!can_associate) {
+		/* We either aren't allowed to associate a new address */
 		PTHREAD_RWLOCK_unlock(&session->conn_lock);
 
 		if (isDebug(COMPONENT_SESSIONS)) {
@@ -556,13 +557,6 @@ retry:
 			LogDebug(COMPONENT_SESSIONS,
 				     "Found no match for addr %s for %s",
 				     str1, data->opname);
-		}
-
-		/* TODO: This code requires refactoring */
-		if (num == NFS41_MAX_CONNECTIONS) {
-			LogWarn(COMPONENT_SESSIONS,
-				     "We hit the session's max-connections limit, can not add xprt with FD: %d",
-				     data->req->rq_xprt->xp_fd);
 		}
 		return false;
 	}
@@ -575,6 +569,12 @@ retry:
 		PTHREAD_RWLOCK_unlock(&session->conn_lock);
 		PTHREAD_RWLOCK_wrlock(&session->conn_lock);
 		goto retry;
+	}
+
+	if (session->num_conn == NFS41_MAX_CONNECTIONS) {
+		LogInfo(COMPONENT_SESSIONS,
+			"We hit the session's max-connections limit before adding xprt FD: %d",
+			data->req->rq_xprt->xp_fd);
 	}
 
 	/* Add session to the xprt */
@@ -603,9 +603,12 @@ retry:
  */
 void nfs41_Session_Add_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 {
-	assert(session->num_conn < NFS41_MAX_CONNECTIONS);
-	session->connection_xprts[session->num_conn++] = xprt;
+	connection_xprt_t * const new_entry =
+		gsh_malloc(sizeof(connection_xprt_t));
+	new_entry->xprt = xprt;
+	glist_add_tail(&session->connection_xprts, &new_entry->node);
 	SVC_REF(xprt, SVC_REF_FLAG_NONE);
+	session->num_conn++;
 }
 
 /**
@@ -613,8 +616,8 @@ void nfs41_Session_Add_Connection(nfs41_session_t *session, SVCXPRT *xprt)
  */
 void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 {
-	int i;
-	bool found_xprt = false;
+	struct glist_head *curr_node;
+	connection_xprt_t *found_xprt = NULL;
 	char xprt_addr[SOCK_NAME_MAX] = "\0";
 	struct display_buffer xprt_db = {
 		sizeof(xprt_addr), xprt_addr, xprt_addr};
@@ -622,15 +625,17 @@ void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 	display_xprt_sockaddr(&xprt_db, xprt);
 	PTHREAD_RWLOCK_wrlock(&session->conn_lock);
 
-	for (i = 0; i < session->num_conn; i++) {
+	glist_for_each(curr_node, &session->connection_xprts) {
+		connection_xprt_t * const curr_entry = glist_entry(curr_node,
+			connection_xprt_t, node);
+
 		if (isFullDebug(COMPONENT_SESSIONS)) {
 			char curr_xprt_addr[SOCK_NAME_MAX] = "\0";
 			struct display_buffer db = {
 				sizeof(curr_xprt_addr), curr_xprt_addr,
 				curr_xprt_addr};
 
-			display_xprt_sockaddr(&db,
-				session->connection_xprts[i]);
+			display_xprt_sockaddr(&db, curr_entry->xprt);
 			LogFullDebug(COMPONENT_SESSIONS,
 				"Comparing input xprt addr %s to session bound xprt addr %s",
 				xprt_addr, curr_xprt_addr);
@@ -640,8 +645,8 @@ void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 		 * socket-address. We do not want to remove a different xprt
 		 * with same socket-address.
 		 */
-		if (session->connection_xprts[i] == xprt) {
-			found_xprt = true;
+		if (curr_entry->xprt == xprt) {
+			found_xprt = curr_entry;
 			break;
 		}
 	}
@@ -651,7 +656,7 @@ void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 	 * and all its connections were removed, just before we obtained
 	 * the above conn_lock.
 	 */
-	if (!found_xprt) {
+	if (found_xprt == NULL) {
 		PTHREAD_RWLOCK_unlock(&session->conn_lock);
 		assert(session->num_conn == 0);
 		return;
@@ -660,12 +665,11 @@ void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 	/* Now, remove the matching connection from session */
 
 	/* Release the connection-xprt's ref held on the session */
-	SVC_RELEASE(session->connection_xprts[i], SVC_RELEASE_FLAG_NONE);
+	SVC_RELEASE(found_xprt->xprt, SVC_RELEASE_FLAG_NONE);
 
-	/* Move the last xprt to the found-xprt's index */
-	session->connection_xprts[i] =
-		session->connection_xprts[session->num_conn-1];
-	session->connection_xprts[session->num_conn-1] = NULL;
+	/* Remove the xprt from session's connection-xprts */
+	glist_del(&found_xprt->node);
+	gsh_free(found_xprt);
 	session->num_conn--;
 
 	PTHREAD_RWLOCK_unlock(&session->conn_lock);

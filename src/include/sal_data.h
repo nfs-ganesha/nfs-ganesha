@@ -193,6 +193,17 @@ enum {
  */
 #define NFS4_SESSIONID_BUFFER_SIZE 128
 
+
+/**
+ * @brief Structure representing a connection-xprt entry in nfs41_session's
+ * connection_xprts
+ */
+
+typedef struct connection_xprt {
+	SVCXPRT *xprt;
+	struct glist_head node;
+} connection_xprt_t;
+
 /**
  * @brief Structure representing an NFSv4.1 session
  */
@@ -216,7 +227,7 @@ struct nfs41_session {
 
 	pthread_rwlock_t conn_lock;
 	int num_conn;
-	SVCXPRT *connection_xprts[NFS41_MAX_CONNECTIONS];
+	struct glist_head connection_xprts;
 
 	nfs_client_id_t *clientid_record;	/*< Client record
 						   corresponding to ID */
