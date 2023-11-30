@@ -39,7 +39,7 @@ DEFAULT_CONTENT_POS_Y = 7  # default y position
 
 def enbale_all_stats():
     try:
-        subprocess.run(["ganesha_stats.py", "enable", "all"],
+        subprocess.run(["ganesha_stats", "enable", "all"],
                        stdout=subprocess.PIPE)
     except subprocess.CalledProcessError as e:
         sys.exit("Enable ALL stats Error {}".format(e))
@@ -168,7 +168,7 @@ class ExportInterface(SingleTon):
         return dbus_op
 
     def show_cache_inode(self):
-        dbus_op = self.mgr.get_dbus_method("ShowCacheInode",
+        dbus_op = self.mgr.get_dbus_method("ShowMDCache",
                                            self.dbus_exportstats_name)
         return dbus_op
 
