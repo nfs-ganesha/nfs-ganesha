@@ -65,9 +65,10 @@ To enable/disable stat counters use:
     print(message.format(progname=sys.argv[0]))
     sys.exit(return_code)
 
+DEFAULT_COMMAND = 'global'
 output_json = False
 if (len(sys.argv) < 2):
-    command = 'global'
+    command = DEFAULT_COMMAND
 else:
     command = sys.argv[1]
     opts = sys.argv[2:]
