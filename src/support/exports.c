@@ -2766,16 +2766,6 @@ static bool init_export_cb(struct gsh_export *exp, void *state)
 	return true;
 }
 
-/* Cleanup on shutdown */
-void export_cleanup(void)
-{
-	PTHREAD_RWLOCK_destroy(&export_opt_lock);
-}
-
-struct cleanup_list_element export_cleanup_element = {
-	.clean = export_cleanup,
-};
-
 /**
  * @brief Initialize exports over a live fsal layer
  */
@@ -2786,8 +2776,6 @@ void exports_pkginit(void)
 	struct glist_head *glist, *glistn;
 	struct gsh_export *export;
 
-	PTHREAD_RWLOCK_init(&export_opt_lock, NULL);
-
 	glist_init(&errlist);
 	foreach_gsh_export(init_export_cb, true, &errlist);
 
@@ -2795,8 +2783,6 @@ void exports_pkginit(void)
 		export = glist_entry(glist, struct gsh_export, exp_list);
 		export_revert(export);
 	}
-
-	RegisterCleanup(&export_cleanup_element);
 }
 
 /**

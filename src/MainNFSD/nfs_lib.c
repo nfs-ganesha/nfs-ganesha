@@ -86,6 +86,16 @@ nfs_start_info_t my_nfs_start_info = {
 config_file_t nfs_config_struct;
 char *nfs_host_name = "localhost";
 
+/* Cleanup on shutdown */
+void export_cleanup(void)
+{
+	PTHREAD_RWLOCK_destroy(&export_opt_lock);
+}
+
+struct cleanup_list_element export_cleanup_element = {
+	.clean = export_cleanup,
+};
+
 /**
  * nfs_libmain: library initializer
  *
@@ -253,6 +263,9 @@ int nfs_libmain(const char *ganesha_conf,
 
 	/* Wait for enforcement to begin */
 	nfs_wait_for_grace_enforcement();
+
+	PTHREAD_RWLOCK_init(&export_opt_lock, NULL);
+	RegisterCleanup(&export_cleanup_element);
 
 	/* Load export entries from parsed file
 	 * returns the number of export entries.
