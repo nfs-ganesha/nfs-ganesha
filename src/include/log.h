@@ -45,6 +45,7 @@
 #include "gsh_intrinsic.h"
 #include "config_parsing.h"
 #include "display.h"
+#include "log_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,69 +53,6 @@ extern "C" {
 
 /* The maximum size of a log buffer */
 #define LOG_BUFF_LEN 2048
-
-/*
- * Log message severity constants
- */
-typedef enum log_levels {
-	NIV_NULL,
-	NIV_FATAL,
-	NIV_MAJ,
-	NIV_CRIT,
-	NIV_WARN,
-	NIV_EVENT,
-	NIV_INFO,
-	NIV_DEBUG,
-	NIV_MID_DEBUG,
-	NIV_FULL_DEBUG,
-	NB_LOG_LEVEL
-} log_levels_t;
-
-/*
- * Log components used throughout the code.
- */
-typedef enum log_components {
-	COMPONENT_ALL = 0,	/* Used for changing logging for all
-				 * components */
-	COMPONENT_LOG,		/* Keep this first, some code depends on it
-				 * being the first component */
-	COMPONENT_MEM_ALLOC,
-	COMPONENT_MEMLEAKS,
-	COMPONENT_FSAL,
-	COMPONENT_NFSPROTO,
-	COMPONENT_NFS_V4,
-	COMPONENT_EXPORT,
-	COMPONENT_FILEHANDLE,
-	COMPONENT_DISPATCH,
-	COMPONENT_MDCACHE,
-	COMPONENT_MDCACHE_LRU,
-	COMPONENT_HASHTABLE,
-	COMPONENT_HASHTABLE_CACHE,
-	COMPONENT_DUPREQ,
-	COMPONENT_INIT,
-	COMPONENT_MAIN,
-	COMPONENT_IDMAPPER,
-	COMPONENT_NFS_READDIR,
-	COMPONENT_NFS_V4_LOCK,
-	COMPONENT_CONFIG,
-	COMPONENT_CLIENTID,
-	COMPONENT_SESSIONS,
-	COMPONENT_PNFS,
-	COMPONENT_RW_LOCK,
-	COMPONENT_NLM,
-	COMPONENT_RPC,
-	COMPONENT_TIRPC,
-	COMPONENT_NFS_CB,
-	COMPONENT_THREAD,
-	COMPONENT_NFS_V4_ACL,
-	COMPONENT_STATE,
-	COMPONENT_9P,
-	COMPONENT_9P_DISPATCH,
-	COMPONENT_FSAL_UP,
-	COMPONENT_DBUS,
-	COMPONENT_NFS_MSK,
-	COMPONENT_COUNT
-} log_components_t;
 
 /* previously at log_macros.h */
 typedef void (*cleanup_function) (void);
