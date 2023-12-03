@@ -56,7 +56,9 @@
 #include <string.h>
 #include <signal.h>
 #include <math.h>
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 #ifdef _USE_NLM
 #include "nlm_util.h"
 #endif /* _USE_NLM */
