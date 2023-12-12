@@ -110,7 +110,7 @@ int main(int argc, char * const *argv)
 	char			*oid = DEFAULT_RADOS_GRACE_OID;
 	char			*ns = NULL;
 	int			c;
-	const char * const	*nodeids;
+	const char * const	*nodeids = NULL;
 	bool			do_add;
 
 	while ((c = getopt_long(argc, argv, "c:n:o:p:u:", long_options,

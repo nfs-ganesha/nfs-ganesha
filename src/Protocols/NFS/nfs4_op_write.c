@@ -258,7 +258,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetWrite);
 	bool force_sync = op_ctx->export_perms.options & EXPORT_OPTION_COMMIT;
 	struct nfs4_write_data *write_data = NULL;
-	struct fsal_io_arg *write_arg;
+	struct fsal_io_arg *write_arg = NULL;
 	/* In case we don't call write2, we indicate the I/O as already done
 	 * since in that case we should go ahead and exit as expected.
 	 */
