@@ -3697,7 +3697,7 @@ bool xdr_fattr4_encode(XDR *xdrs, struct xdr_attrs_args *args,
 	struct bitmap4 bitmap_encoded;
 	struct bitmap4 *bitmap;
 	/* Remember where we put the length of the attr data */
-	u_int pos_len, pos_end;
+	u_int pos_len = 0, pos_end = 0;
 	uint32_t attr_len = 0;
 
 	bitmap = attr_bitmap != NULL ? attr_bitmap : &bitmap_encoded;

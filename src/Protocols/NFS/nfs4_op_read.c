@@ -484,7 +484,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	state_owner_t *owner = NULL;
 	bool bypass = false;
 	struct nfs4_read_data *read_data = NULL;
-	struct fsal_io_arg *read_arg;
+	struct fsal_io_arg *read_arg = NULL;
 	uint32_t resp_size;
 	/* In case we don't call read2, we indicate the I/O as already done
 	 * since in that case we should go ahead and exit as expected.
