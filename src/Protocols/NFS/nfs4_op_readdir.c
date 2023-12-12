@@ -582,6 +582,24 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 		goto out;
 	}
 
+	/* Make sure requested attributes are valid and initialize attrmask */
+	res_READDIR4->status =
+	    bitmap4_to_attrmask_t(&arg_READDIR4->attr_request, &attrmask);
+	if (res_READDIR4->status != NFS4_OK) {
+		LogDebug(COMPONENT_NFS_READDIR, "Requested invalid attributes");
+		goto out;
+	}
+
+	/* Make sure the FSAL supports all the requested attributes */
+	attrmask_t supported_attrs =
+	    op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+		op_ctx->fsal_export);
+	if ((attrmask & ~supported_attrs) != 0) {
+		res_READDIR4->status = NFS4ERR_INVAL;
+		LogDebug(COMPONENT_NFS_READDIR, "Requested invalid attributes");
+		goto out;
+	}
+
 	/* Get only attributes that are allowed to be read */
 	if (!nfs4_Fattr_Check_Access_Bitmap
 	    (&arg_READDIR4->attr_request, FATTR4_ATTR_READ)) {
@@ -665,16 +683,16 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	/* Assume we need at least the NFS v3 attr.
 	 * Any attr is sufficient for permission checking.
 	 */
-	attrmask = ATTRS_NFS3;
+	if (attrmask == 0)
+		attrmask = ATTRS_NFS3;
 
-	/* If ACL is requested, we need to add that for permission checking. */
-	if (attribute_is_set(tracker.req_attr, FATTR4_ACL))
-		attrmask |= ATTR_ACL;
-
-	/* If seclabel requested, then fetch it too */
+	/* If seclabel is requested but we do not have
+	 * EXPORT_OPTION_SECLABEL_SET, turn off that bit.
+	 */
 	if (attribute_is_set(tracker.req_attr, FATTR4_SEC_LABEL) &&
-	    op_ctx_export_has_option(EXPORT_OPTION_SECLABEL_SET))
-		attrmask |= ATTR4_SEC_LABEL;
+	    !op_ctx_export_has_option(EXPORT_OPTION_SECLABEL_SET)) {
+		attrmask &= ~ATTR4_SEC_LABEL;
+	}
 
 	/* Perform the readdir operation */
 	fsal_status = fsal_readdir(dir_obj,
