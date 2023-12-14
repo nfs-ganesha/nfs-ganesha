@@ -447,11 +447,11 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
  * @retval 0 otherwise.
  */
 
-int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
+int nfs41_Session_Del(nfs41_session_t *session)
 {
 	struct gsh_buffdesc key, old_key, old_value;
 
-	key.addr = sessionid;
+	key.addr = session->session_id;
 	key.len = NFS4_SESSIONID_SIZE;
 
 	if (HashTable_Del(ht_session_id, &key, &old_key, &old_value) ==

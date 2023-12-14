@@ -88,7 +88,7 @@ enum nfs_req_result nfs4_op_destroy_session(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 	}
 
-	if (!nfs41_Session_Del(arg_DESTROY_SESSION4->dsa_sessionid))
+	if (!nfs41_Session_Del(session))
 		res_DESTROY_SESSION4->dsr_status = NFS4ERR_BADSESSION;
 	else
 		res_DESTROY_SESSION4->dsr_status = NFS4_OK;

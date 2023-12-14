@@ -564,7 +564,7 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 			    clientid_error_to_nfsstat_no_expire(rc);
 
 			/* Need to destroy the session */
-			if (!nfs41_Session_Del(nfs41_session->session_id))
+			if (!nfs41_Session_Del(nfs41_session))
 				LogDebug(component,
 					 "Oops nfs41_Session_Del failed");
 

@@ -356,7 +356,7 @@ int nfs41_Session_Set(nfs41_session_t *session_data);
 int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 			      nfs41_session_t **session_data);
 
-int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE]);
+int nfs41_Session_Del(nfs41_session_t *session);
 void nfs41_Build_sessionid(clientid4 *clientid, char *sessionid);
 void nfs41_Session_PrintAll(void);
 
