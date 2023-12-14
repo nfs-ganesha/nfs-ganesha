@@ -112,6 +112,7 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 	channel_dir_from_client4 client_channel_dir;
 	channel_dir_from_server4 server_channel_dir;
 	nfsstat4 bind_to_backchannel;
+	bool added_conn_to_session;
 
 	resp->resop = NFS4_OP_BIND_CONN_TO_SESSION;
 	res_BIND_CONN_TO_SESSION4->bctsr_status = NFS4_OK;
@@ -158,6 +159,15 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 	 */
 	data->session = session;
 	data->slotid = UINT32_MAX;
+
+	/* Check and bind the connection to session */
+	added_conn_to_session = check_session_conn(session, data, true);
+	if (!added_conn_to_session) {
+		LogWarn(COMPONENT_SESSIONS,
+			"Unable to add connection to the session");
+		res_BIND_CONN_TO_SESSION4->bctsr_status = NFS4ERR_INVAL;
+		return NFS_REQ_ERROR;
+	}
 
 	memcpy(resok_BIND_CONN_TO_SESSION4->bctsr_sessid,
 	       arg_BIND_CONN_TO_SESSION4->bctsa_sessid,
@@ -215,9 +225,6 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 	 * context.
 	 */
 	op_ctx->clientid = &data->session->clientid;
-
-	/* Add the session connection */
-	(void) check_session_conn(session, data, true);
 
 	res_BIND_CONN_TO_SESSION4->bctsr_status = NFS4_OK;
 	return NFS_REQ_OK;
