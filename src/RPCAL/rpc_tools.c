@@ -176,8 +176,8 @@ uint64_t hash_sockaddr(sockaddr_t *addr, bool ignore_port)
 	return addr_hash;
 }
 
-int display_sockaddr_port(struct display_buffer *dspbuf, sockaddr_t *addr,
-			  bool ignore_port)
+int display_sockaddr_port(struct display_buffer *dspbuf,
+			  const sockaddr_t *addr, bool ignore_port)
 {
 	const char *name = NULL;
 	char ipname[SOCK_NAME_MAX];

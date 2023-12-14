@@ -185,19 +185,36 @@ const char *str_gc_proc(rpc_gss_proc_t);
 
 void copy_xprt_addr(sockaddr_t *, SVCXPRT *);
 
-int display_sockaddr_port(struct display_buffer *dspbuf, sockaddr_t *addr,
-			  bool ignore_port);
+int display_sockaddr_port(struct display_buffer *dspbuf,
+			  const sockaddr_t *addr, bool ignore_port);
 
 static inline
-int display_sockaddr(struct display_buffer *dspbuf, sockaddr_t *addr)
+int display_sockaddr(struct display_buffer *dspbuf, const sockaddr_t *addr)
 {
 	return display_sockaddr_port(dspbuf, addr, false);
 }
 
 static inline
-int display_sockip(struct display_buffer *dspbuf, sockaddr_t *addr)
+int display_sockip(struct display_buffer *dspbuf, const sockaddr_t *addr)
 {
 	return display_sockaddr_port(dspbuf, addr, true);
+}
+
+/* Displays xprt's remote address if non-empty. Otherwise displays
+ * local address.
+ */
+static inline
+int display_xprt_sockaddr(struct display_buffer *db, const SVCXPRT *xprt)
+{
+	const sockaddr_t *addr;
+	const struct netbuf *hostaddr = svc_getcaller_netbuf(xprt);
+
+	if (hostaddr->len == 0)
+		hostaddr = svc_getlocal_netbuf(xprt);
+	assert(hostaddr->len <= sizeof(sockaddr_t) && hostaddr->buf != NULL);
+	addr = (const sockaddr_t *) hostaddr->buf;
+
+	return display_sockaddr(db, addr);
 }
 
 static inline
