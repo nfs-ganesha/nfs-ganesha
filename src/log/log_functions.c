@@ -2088,7 +2088,7 @@ static struct config_item component_levels[] = {
 			 COMPONENT_MDCACHE_LRU, int),
 	CONF_INDEX_TOKEN("INODE_LRU", NB_LOG_LEVEL, log_levels,
 			 COMPONENT_MDCACHE_LRU, int),
-	CONF_INDEX_TOKEN("MDCACHE", NB_LOG_LEVEL, log_levels,
+	CONF_INDEX_TOKEN("MDCACHE_LRU", NB_LOG_LEVEL, log_levels,
 			 COMPONENT_MDCACHE_LRU, int),
 	CONF_INDEX_TOKEN("HASHTABLE", NB_LOG_LEVEL, log_levels,
 			 COMPONENT_HASHTABLE, int),
