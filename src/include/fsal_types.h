@@ -941,7 +941,6 @@ struct fd_lru_state {
 	    made  in a given time period.  When it reaches the futility
 	    count, we turn off caching of file descriptors. */
 	uint32_t futility;
-	uint32_t per_lane_work;
 	uint32_t biggest_window; /* defaults to 40% of fd_limit */
 	uint64_t prev_fd_count;	/* previous # of open fds */
 	time_t prev_time;	/* previous time the gc thread was run. */

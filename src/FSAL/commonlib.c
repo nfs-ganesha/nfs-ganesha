@@ -1569,7 +1569,7 @@ void fd_lru_run(struct fridgethr_context *ctx)
 
 			LogDebug(COMPONENT_FSAL,
 				 "Reaping up to %" PRIu32 " fds",
-				 fd_lru_state.per_lane_work);
+				 reaper_work);
 
 			LogFullDebug(COMPONENT_FSAL,
 				     "formeropen=%" PRIu32
@@ -1580,7 +1580,7 @@ void fd_lru_run(struct fridgethr_context *ctx)
 				workpass += lru_try_one();
 
 			totalwork += workpass;
-		} while (extremis && (workpass >= fd_lru_state.per_lane_work)
+		} while (extremis && (workpass >= reaper_work)
 			 && (totalwork < fd_lru_state.biggest_window));
 
 		currentopen = atomic_fetch_int32_t(&fsal_fd_global_counter);
@@ -1836,10 +1836,10 @@ err_open:
 
 	if (params->reaper_work) {
 		/* Backwards compatibility */
-		fd_lru_state.per_lane_work = (params->reaper_work + 16) / 17;
+		reaper_work = (params->reaper_work + 16) / 17;
 	} else {
 		/* New parameter */
-		fd_lru_state.per_lane_work = params->reaper_work_per_lane;
+		reaper_work = params->reaper_work_per_lane;
 	}
 
 	fd_lru_state.biggest_window =
@@ -1860,7 +1860,6 @@ fsal_status_t fd_lru_pkginit(struct fd_lru_parameter *params)
 
 	futility_count = params->futility_count;
 	required_progress = params->required_progress;
-	reaper_work = params->reaper_work;
 	lru_run_interval = params->lru_run_interval;
 	Cache_FDs = params->Cache_FDs;
 
