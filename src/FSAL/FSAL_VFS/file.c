@@ -1002,7 +1002,7 @@ retry_attr:
 		 */
 
 		/* Take the share reservation now by updating the counters. */
-		update_share_counters_locked(obj_hdl, &hdl->u.file.share,
+		update_share_counters_locked(*new_obj, &hdl->u.file.share,
 					     FSAL_O_CLOSED,
 					     openflags);
 	}

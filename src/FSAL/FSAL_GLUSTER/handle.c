@@ -1988,7 +1988,7 @@ open:
 		 */
 
 		/* Take the share reservation now by updating the counters. */
-		update_share_counters_locked(obj_hdl, &myself->share,
+		update_share_counters_locked(*new_obj, &myself->share,
 					     FSAL_O_CLOSED,
 					     openflags);
 	}
