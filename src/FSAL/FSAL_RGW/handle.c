@@ -1158,7 +1158,7 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 		 */
 
 		/* Take the share reservation now by updating the counters. */
-		update_share_counters_locked(obj_hdl, &obj->share,
+		update_share_counters_locked(*new_obj, &obj->share,
 					     FSAL_O_CLOSED, openflags);
 	}
 

@@ -1746,7 +1746,7 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 		 */
 
 		/* Take the share reservation now by updating the counters. */
-		update_share_counters_locked(obj_hdl, &hdl->mh_file.share,
+		update_share_counters_locked(*new_obj, &hdl->mh_file.share,
 					     FSAL_O_CLOSED,
 					     openflags);
 	}
