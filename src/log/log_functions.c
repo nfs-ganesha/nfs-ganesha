@@ -270,12 +270,23 @@ static char program_name[1024];
 static char hostname[256];
 static int syslog_opened;
 
+/* Number of bytes actually usable in the log buffer */
+#define LOG_BUF_USE (LOG_BUFF_LEN + 1)
+
+/* Extra bytes to reserve in log buffer, currently 1 for the '\n' that
+ * log_to_file and log_to_stream adds.
+ */
+#define LOG_BUF_EXTRA 1
+
+/* Final total size of log buffer */
+#define LOG_BUF_ALLOC (LOG_BUF_USE + LOG_BUF_EXTRA)
+
 /*
  * Variables specifiques aux threads.
  */
 
 __thread char thread_name[32];
-__thread char log_buffer[LOG_BUFF_LEN + 1];
+__thread char log_buffer[LOG_BUF_ALLOC];
 __thread char *clientip = NULL;
 
 /* threads keys */
@@ -1142,7 +1153,7 @@ static int log_to_file(log_header_t headers, void *private,
 
 	len = display_buffer_len(buffer);
 
-	/* Add newline to end of buffer */
+	/* Add newline to end of buffer, this is why LOG_BUF_EXTRA is 1 */
 	buffer->b_start[len] = '\n';
 	buffer->b_start[len + 1] = '\0';
 
@@ -1196,7 +1207,7 @@ static int log_to_stream(log_header_t headers, void *private,
 
 	len = display_buffer_len(buffer);
 
-	/* Add newline to end of buffer */
+	/* Add newline to end of buffer, this is why LOG_BUF_EXTRA is 1 */
 	buffer->b_start[len] = '\n';
 	buffer->b_start[len + 1] = '\0';
 
@@ -1418,7 +1429,7 @@ void display_log_component_level(log_components_t component, const char *file,
 	int b_left;
 	struct glist_head *glist;
 	struct log_facility *facility;
-	struct display_buffer dsp_log = {sizeof(log_buffer),
+	struct display_buffer dsp_log = {LOG_BUF_USE,
 					 log_buffer, log_buffer};
 
 	/* Build up the message and capture the various positions in it. */
