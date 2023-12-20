@@ -95,6 +95,8 @@ static struct config_item mdcache_params[] = {
 		       dirmap_hwmark),
 	CONF_ITEM_I32("Files_Delegatable_Percent", 10, INT32_MAX, 90,
 		      mdcache_parameter, files_delegatable_percent),
+	CONF_ITEM_BOOL("Use_Cached_Owner_On_Owner_Override", true,
+		       mdcache_parameter, use_cached_owner_on_owner_override),
 	CONFIG_EOL
 };
 

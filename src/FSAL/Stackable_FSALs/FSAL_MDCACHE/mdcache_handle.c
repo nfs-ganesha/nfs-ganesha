@@ -586,10 +586,11 @@ static fsal_status_t mdcache_readdir(struct fsal_obj_handle *dir_hdl,
  * FSALs call the default method.  This should be revisited if a FSAL wants to
  * override test_access().
  *
- * @note If @a owner_skip is provided, we test against the cached owner.  This
- * is because doing a getattrs() potentially on each read and write (writes
- * invalidate cached attributes) is a huge performance hit.  Eventually, finer
- * grained attribute validity would be a better solution
+ * @note If @a owner_skip is provided, and
+ * mdcache_param.use_cached_owner_on_owner_override is true, we test against the
+ * cached owner.  This is because doing a getattrs() potentially on each read
+ * and write (writes invalidate cached attributes) is a huge performance hit.
+ * Eventually, finer grained attribute validity would be a better solution
  *
  * @param[in] obj_hdl     Handle to check
  * @param[in] access_type Access requested
@@ -608,7 +609,8 @@ static fsal_status_t mdcache_test_access(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 
-	if (owner_skip && entry->attrs.owner == op_ctx->creds.caller_uid)
+	if (owner_skip && entry->attrs.owner == op_ctx->creds.caller_uid &&
+	    mdcache_param.use_cached_owner_on_owner_override)
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
 	return fsal_test_access(obj_hdl, access_type, allowed, denied,

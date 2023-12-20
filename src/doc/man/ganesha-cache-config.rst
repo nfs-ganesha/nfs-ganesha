@@ -122,6 +122,13 @@ Files_Delegatable_Percent(int32, range 10 to 90, default 90)
     Total number of files ganesha can delegate to clients as a percent of
     Entries_HWMark
 
+Use_Cached_Owner_On_Owner_Override(bool, true)
+    This option allows mdcache_test_access to use the cached owner value
+    for an object in case of owner override, even if the cache entry is
+    not up to date. This could potentially lead to the wrong result, but
+    can significantly improve performance saving the need to update
+    attributes on many read/write operations.
+
 See also
 ==============================
 :doc:`ganesha-config <ganesha-config>`\(8)

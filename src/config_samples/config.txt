@@ -876,6 +876,12 @@ MDCACHE {}
 
 	Futility_Count(uint32, range 1 to 50, default 8)
 
+	Dirmap_HWMark(uint32, range 1 to UINT32_MAX, default 10000)
+
+	Files_Delegatable_Percent(int32, range 10 to 90, default 90)
+
+	Use_Cached_Owner_On_Owner_Override(bool, true)
+
 _9P {}
 ------
 

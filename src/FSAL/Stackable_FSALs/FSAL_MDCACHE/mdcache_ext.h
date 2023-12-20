@@ -132,6 +132,12 @@ struct mdcache_parameter {
 	/** Total number of files ganesha can delegate to clients
 	    as a percent of Entries_HWMark */
 	int32_t files_delegatable_percent;
+	/** This option allows mdcache_test_access to use the cached owner value
+	    for an object in case of owner override, even if the cache entry is
+	    not up to date. This could potentially lead to the wrong result, but
+	    can significantly improve performance saving the need to update
+	    attributes on many read/write operations. */
+	bool use_cached_owner_on_owner_override;
 };
 
 extern struct mdcache_parameter mdcache_param;
