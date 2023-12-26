@@ -272,6 +272,9 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 		LogFullDebug(COMPONENT_STATE, "Add State: %p: %s",
 			     pnew_state, str);
 
+	if (clientid->gsh_client)
+		inc_gsh_client_state_stats(clientid->gsh_client, state_type);
+
 	/* Regular exit */
 	status = STATE_SUCCESS;
 	return status;
@@ -539,8 +542,12 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	 * handle.
 	 */
 	(void) obj->obj_ops->close2(obj, state);
-	if (clientid)
+	if (clientid) {
 		atomic_dec_uint32_t(&clientid->cid_open_state_counter);
+		if (clientid->gsh_client)
+			dec_gsh_client_state_stats(clientid->gsh_client,
+						   state->state_type);
+	}
 
 	/* Remove the sentinel reference */
 	dec_state_t_ref(state);

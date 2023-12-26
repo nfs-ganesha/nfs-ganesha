@@ -47,6 +47,7 @@
 #include "gsh_types.h"
 #include "gsh_rpc.h"
 #include "cidr.h"
+#include "sal_shared.h"
 
 struct gsh_client {
 	struct avltree_node node_k;
@@ -55,11 +56,24 @@ struct gsh_client {
 	struct timespec last_update;
 	char hostaddr_str[SOCK_NAME_MAX];
 	sockaddr_t cl_addrbuf;
+	uint64_t state_stats[STATE_TYPE_MAX]; /* state stats for this client */
 };
 
 static inline int64_t inc_gsh_client_refcount(struct gsh_client *client)
 {
 	return atomic_inc_int64_t(&client->refcnt);
+}
+
+static inline int64_t inc_gsh_client_state_stats(struct gsh_client *client,
+						 enum state_type state_type)
+{
+	return atomic_inc_uint64_t(&client->state_stats[state_type]);
+}
+
+static inline int64_t dec_gsh_client_state_stats(struct gsh_client *client,
+						 enum state_type state_type)
+{
+	return atomic_dec_uint64_t(&client->state_stats[state_type]);
 }
 
 void client_pkginit(void);

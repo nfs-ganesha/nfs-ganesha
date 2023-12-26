@@ -95,7 +95,9 @@ class ClientMgr():
             return format of ShowClients
             [<client_ip>, [["NFSv3", <data>], ["MNT", <data>], ["NMLv4", <data>],
             ["RQUOTA", <data>], ["NFSv40", <data>], ["NFSv41", <data>],
-            ["NFSv42", <data>], ["9P", <data>]], [<lastime>, <nsecs>]]
+            ["NFSv42", <data>], ["9P", <data>]],
+            ["Open", <data>, "Lock", <data>, "Delegation", <data>],
+            [<lastime>, <nsecs>]]
             convert index:1 to dict and use it
             '''
             try:
@@ -105,7 +107,7 @@ class ClientMgr():
                 return False, e, []
 
             cl_ = dict(data[1])
-            lasttime = client[2]
+            lasttime = client[3]
             clt = Client(ClientIP=str(client[0]),
                          HasNFSv3=cl_.get('NFSv3', 0),
                          HasMNT=cl_.get('MNT', 0),

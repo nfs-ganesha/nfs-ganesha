@@ -164,6 +164,8 @@ const char *str_state_type(state_t *state)
 		return "NLM_SHARE";
 	case STATE_TYPE_9P_FID:
 		return "9P_FID";
+	default:
+		return "UNKNOWN";
 	}
 
 	return "UNKNOWN";

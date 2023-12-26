@@ -204,19 +204,22 @@ struct auth_stats {
 #define STAT_TYPE_9P ""
 #endif
 
-#define PROTOCOLS_CONTAINER \
-	"(" STAT_TYPE_NFSV3 STAT_TYPE_MNT \
-	STAT_TYPE_NLM STAT_TYPE_RQUOTA \
-	STAT_TYPE_NFSV40 STAT_TYPE_NFSV41 \
+#define PROTOCOLS_CONTAINER			\
+	"(" STAT_TYPE_NFSV3 STAT_TYPE_MNT	\
+	STAT_TYPE_NLM STAT_TYPE_RQUOTA		\
+	STAT_TYPE_NFSV40 STAT_TYPE_NFSV41	\
 	STAT_TYPE_NFSV42 STAT_TYPE_9P ")"
 
-#define EXPORT_CONTAINER \
-	"(" TYPE_ID TYPE_STRING \
+#define EXPORT_CONTAINER			\
+	"(" TYPE_ID TYPE_STRING			\
 	PROTOCOLS_CONTAINER "(tt))"
 
-#define CLIENT_CONTAINER \
-	"(" TYPE_STRING \
-	PROTOCOLS_CONTAINER "(tt))"
+#define STATE_STATS_REPLY "(ststst)"
+
+#define CLIENT_CONTAINER			\
+	"(" TYPE_STRING				\
+	PROTOCOLS_CONTAINER			\
+	STATE_STATS_REPLY "(tt))"
 
 #define EXPORTS_REPLY			\
 {					\
@@ -231,7 +234,6 @@ struct auth_stats {
 	.type = "a"CLIENT_CONTAINER,	\
 	.direction = "out"		\
 }
-
 
 /* Bits for introspect arg structures
  */

@@ -87,7 +87,7 @@ class ClientMgr(QtDBus.QDBusAbstractInterface):
             clients = []
             for client in reply.argumentAt(1).toPyObject():
                 cl_ = client.toPyObject()
-                lasttime = cl_[9].toPyObject()
+                lasttime = cl_[10].toPyObject()
                 clt = Client(ClientIP=str(cl_[0].toString()),
                              HasNFSv3=cl_[1].toBool(),
                              HasMNT=cl_[2].toBool(),

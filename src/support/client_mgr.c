@@ -429,6 +429,35 @@ struct showclients_state {
 	DBusMessageIter client_iter;
 };
 
+void client_state_stats(DBusMessageIter *iter, struct gsh_client *cl_node)
+{
+	DBusMessageIter ss_iter;
+	char *state_type;
+
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &ss_iter);
+
+	state_type = "Open";
+	dbus_message_iter_append_basic(&ss_iter, DBUS_TYPE_STRING,
+				       &state_type);
+	dbus_message_iter_append_basic(&ss_iter, DBUS_TYPE_UINT64,
+				       &cl_node->state_stats[STATE_TYPE_SHARE]);
+
+	state_type = "Lock";
+	dbus_message_iter_append_basic(&ss_iter, DBUS_TYPE_STRING,
+				       &state_type);
+	dbus_message_iter_append_basic(&ss_iter, DBUS_TYPE_UINT64,
+				       &cl_node->state_stats[STATE_TYPE_LOCK]);
+
+	state_type = "Delegation";
+	dbus_message_iter_append_basic(&ss_iter, DBUS_TYPE_STRING,
+				       &state_type);
+	dbus_message_iter_append_basic(&ss_iter, DBUS_TYPE_UINT64,
+				       &cl_node->state_stats[STATE_TYPE_DELEG]);
+
+	dbus_message_iter_close_container(iter, &ss_iter);
+}
+
 static bool client_to_dbus(struct gsh_client *cl_node, void *state)
 {
 	struct showclients_state *iter_state =
@@ -446,6 +475,7 @@ static bool client_to_dbus(struct gsh_client *cl_node, void *state)
 					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &ipaddr);
 	server_stats_summary(&struct_iter, &cl->st);
+	client_state_stats(&struct_iter, cl_node);
 	gsh_dbus_append_timestamp(&struct_iter, &cl_node->last_update);
 	dbus_message_iter_close_container(&iter_state->client_iter,
 					  &struct_iter);
