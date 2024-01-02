@@ -653,6 +653,9 @@ typedef struct directory_services_param {
 	uint32_t negative_cache_groups_max_count;
 	/** Cache reaping interval in seconds for idmapped users and groups */
 	time_t cache_reaping_interval;
+	/** Whether to use fully qualified names for idmapping with pw-utils.
+	    Defaults to false. */
+	bool pwutils_use_fully_qualified_names;
 } directory_services_param_t;
 
 /** @} */

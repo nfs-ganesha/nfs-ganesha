@@ -518,14 +518,23 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				size = sysconf(_SC_GETPW_R_SIZE_MAX);
 			if (size == -1)
 				size = PWENT_BEST_GUESS_LEN;
-			new_name.len = size;
 
-			if (owner_domain_len == 0) {
-				LogInfo(COMPONENT_IDMAPPER,
-					"owner_domain.domain is NULL, cannot encode nfs4 principal");
-				return false;
+			if (nfs_param.directory_services_param
+				.pwutils_use_fully_qualified_names) {
+				size += NFS4_MAX_DOMAIN_LEN + 1;
+				/* new_name should include domain length */
+				new_name.len = size;
+			} else {
+				/* new_name should not include domain length */
+				new_name.len = size;
+
+				if (owner_domain_len == 0) {
+					LogInfo(COMPONENT_IDMAPPER,
+						"owner_domain.domain is NULL, cannot encode nfs4 principal");
+					return false;
+				}
+				size += owner_domain_len + 2;
 			}
-			size += owner_domain_len + 2;
 		} else {
 			size = NFS4_MAX_DOMAIN_LEN + 2;
 		}
@@ -535,7 +544,6 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		new_name.addr = namebuff;
 
 		if (nfs_param.nfsv4_param.use_getpwnam) {
-			char *cursor;
 			bool nulled;
 
 			if (group) {
@@ -556,19 +564,23 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 
 			if ((rc == 0) && !nulled) {
 				new_name.len = strlen(namebuff);
-				cursor = namebuff + new_name.len;
-				*(cursor++) = '@';
-				++new_name.len;
 
-				if (owner_domain_len == 0) {
-					LogInfo(COMPONENT_IDMAPPER,
-						"owner_domain.domain is NULL, cannot encode nfs4 principal");
-					return false;
+				if (!nfs_param.directory_services_param
+					.pwutils_use_fully_qualified_names) {
+					char *cursor = namebuff + new_name.len;
+					*(cursor++) = '@';
+					++new_name.len;
+
+					if (owner_domain_len == 0) {
+						LogInfo(COMPONENT_IDMAPPER,
+							"owner_domain.domain is NULL, cannot encode nfs4 principal");
+						return false;
+					}
+					memcpy(cursor, owner_domain_addr,
+						owner_domain_len);
+					new_name.len += owner_domain_len;
+					*(cursor + owner_domain_len) = '\0';
 				}
-				memcpy(cursor, owner_domain_addr,
-					owner_domain_len);
-				new_name.len += owner_domain_len;
-
 				looked_up = true;
 			} else {
 				LogInfo(COMPONENT_IDMAPPER,
@@ -815,22 +827,35 @@ static bool pwentname2id(char *name, uint32_t *id, bool group,
 			 gid_t *gid, bool *got_gid, char *at)
 {
 	int err;
-	if (at != NULL) {
-		PTHREAD_RWLOCK_rdlock(&owner_domain.lock);
-		if (owner_domain.domain.len == 0) {
-			PTHREAD_RWLOCK_unlock(&owner_domain.lock);
+
+	if (nfs_param.directory_services_param
+		.pwutils_use_fully_qualified_names) {
+		if (at == NULL) {
 			LogWarn(COMPONENT_IDMAPPER,
-				"owner_domain.domain is NULL, cannot validate the input domain");
+				"The input name: %s must contain a domain",
+				name);
 			return false;
 		}
-		if (strcmp(at + 1, owner_domain.domain.addr) != 0) {
+	} else {
+		/* Validate and strip off the domain from the name */
+		if (at != NULL) {
+			PTHREAD_RWLOCK_rdlock(&owner_domain.lock);
+			if (owner_domain.domain.len == 0) {
+				PTHREAD_RWLOCK_unlock(&owner_domain.lock);
+				LogWarn(COMPONENT_IDMAPPER,
+					"owner_domain.domain is NULL, cannot validate the input domain");
+				return false;
+			}
+			if (strcmp(at + 1, owner_domain.domain.addr) != 0) {
+				PTHREAD_RWLOCK_unlock(&owner_domain.lock);
+				/* We won't map what isn't in right domain */
+				return false;
+			}
 			PTHREAD_RWLOCK_unlock(&owner_domain.lock);
-			/* We won't map what isn't even in the right domain */
-			return false;
+			*at = '\0';
 		}
-		PTHREAD_RWLOCK_unlock(&owner_domain.lock);
-		*at = '\0';
 	}
+
 	if (group) {
 		err = name_to_gid(name, id);
 		if (err == 0)
@@ -846,7 +871,7 @@ static bool pwentname2id(char *name, uint32_t *id, bool group,
 
 		gid = strtol(name, &end, 10);
 		if (end && *end != '\0')
-			return 0;
+			return false;
 
 		*id = gid;
 		return true;
@@ -868,7 +893,7 @@ static bool pwentname2id(char *name, uint32_t *id, bool group,
 
 		uid = strtol(name, &end, 10);
 		if (end && *end != '\0')
-			return 0;
+			return false;
 
 		*id = uid;
 		*got_gid = false;
@@ -1210,26 +1235,30 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 
 	if (nfs_param.nfsv4_param.use_getpwnam) {
 		bool got_gid = false;
-		char *at;
-		char *uname;
-		int uname_len = principal_len;
-
+		char *at = strchr(principal, '@');
 		LogDebug(COMPONENT_IDMAPPER,
 			"Get uid for %s using pw func", principal);
 
-		/* Strip off the realm from principal for pwnam lookup.
-		 * TODO: Later support pwnam lookup using full-name.
-		 */
-		at = memchr(principal, '@', principal_len);
-		if (at != NULL)
-			uname_len = at - principal;
+		if (nfs_param.directory_services_param
+			.pwutils_use_fully_qualified_names) {
+			success = pwentname2id(principal, &gss_uid, false,
+				&gss_gid, &got_gid, at);
+		} else {
+			char *uname;
+			int uname_len = principal_len;
 
-		uname = alloca(uname_len + 1);
-		memcpy(uname, principal, uname_len);
-		uname[uname_len] = '\0';
+			/* Strip off realm from principal for pwnam lookup */
+			if (at != NULL)
+				uname_len = at - principal;
 
-		success = pwentname2id(uname, &gss_uid, false, &gss_gid,
-			&got_gid, NULL);
+			uname = alloca(uname_len + 1);
+			memcpy(uname, principal, uname_len);
+			uname[uname_len] = '\0';
+
+			success = pwentname2id(uname, &gss_uid, false,
+				&gss_gid, &got_gid, NULL);
+		}
+
 		if (!success)
 			goto principal_not_found;
 
