@@ -47,6 +47,9 @@
 
 /* Arbitrary string buffer lengths */
 #define PWENT_BEST_GUESS_LEN 1024
+/* Maintain 64MB as the max buffer length for passwd and group entries */
+#define PWENT_MAX_SIZE (64 * 1024 * 1024)
+#define GROUP_MAX_SIZE PWENT_MAX_SIZE
 
 /**
  * @brief Shared between idmapper.c and idmapper_cache.c.  If you

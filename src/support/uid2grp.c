@@ -175,7 +175,7 @@ static struct group_data *uid2grp_allocate_by_name(
 	char *namebuff = alloca(name->len + 1);
 	struct group_data *gdata = NULL;
 	char *buff;
-	long buff_size;
+	size_t buff_size;
 	int retval;
 
 	memcpy(namebuff, name->addr, name->len);
@@ -184,22 +184,37 @@ static struct group_data *uid2grp_allocate_by_name(
 	buff_size = sysconf(_SC_GETPW_R_SIZE_MAX);
 	if (buff_size == -1) {
 		LogMajor(COMPONENT_IDMAPPER, "sysconf failure: %d", errno);
+		buff_size = PWENT_BEST_GUESS_LEN;
+	}
+
+	while (buff_size <= PWENT_MAX_SIZE) {
+		buff = gsh_malloc(buff_size);
+		retval = getpwnam_r(namebuff, &p, buff, buff_size, &pp);
+
+		if (retval != ERANGE)
+			break;
+		gsh_free(buff);
+		buff_size *= 16;
+	}
+
+	if (retval == ERANGE) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Received ERANGE when fetching pw-entry from name: %s",
+			namebuff);
 		return NULL;
 	}
 
-	buff = alloca(buff_size);
-	retval = getpwnam_r(namebuff, &p, buff, buff_size, &pp);
 	if (retval != 0) {
 		LogEvent(COMPONENT_IDMAPPER,
 			 "getpwnam_r for %s failed, error %d",
 			 namebuff, retval);
-		return gdata;
+		goto out;
 	}
 	if (pp == NULL) {
 		LogEvent(COMPONENT_IDMAPPER,
 			 "No matching password record found for name %s",
 			 namebuff);
-		return gdata;
+		goto out;
 	}
 
 	gdata = gsh_malloc(sizeof(struct group_data) + strlen(p.pw_name));
@@ -216,9 +231,10 @@ static struct group_data *uid2grp_allocate_by_name(
 
 	if (!my_getgrouplist_alloc(p.pw_name, p.pw_gid, gdata)) {
 		gsh_free(gdata);
+		gdata = NULL;
 		if (nfs_param.core_param.max_uid_to_grp_reqs)
 			sem_post(&uid2grp_sem);
-		return NULL;
+		goto out;
 	}
 
 	if (nfs_param.core_param.max_uid_to_grp_reqs)
@@ -227,6 +243,9 @@ static struct group_data *uid2grp_allocate_by_name(
 	PTHREAD_MUTEX_init(&gdata->gd_lock, NULL);
 	gdata->epoch = time(NULL);
 	gdata->refcount = 0;
+
+out:
+	gsh_free(buff);
 	return gdata;
 }
 
@@ -237,26 +256,41 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	struct passwd *pp;
 	struct group_data *gdata = NULL;
 	char *buff;
-	long buff_size;
+	size_t buff_size;
 	int retval;
 
 	buff_size = sysconf(_SC_GETPW_R_SIZE_MAX);
 	if (buff_size == -1) {
 		LogMajor(COMPONENT_IDMAPPER, "sysconf failure: %d", errno);
+		buff_size = PWENT_BEST_GUESS_LEN;
+	}
+
+	while (buff_size <= PWENT_MAX_SIZE) {
+		buff = gsh_malloc(buff_size);
+		retval = getpwuid_r(uid, &p, buff, buff_size, &pp);
+
+		if (retval != ERANGE)
+			break;
+		gsh_free(buff);
+		buff_size *= 16;
+	}
+
+	if (retval == ERANGE) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Received ERANGE when fetching pw-entry from uid: %u",
+			uid);
 		return NULL;
 	}
 
-	buff = alloca(buff_size);
-	retval = getpwuid_r(uid, &p, buff, buff_size, &pp);
 	if (retval != 0) {
 		LogEvent(COMPONENT_IDMAPPER,
 			 "getpwuid_r for uid %u failed, error %d", uid, retval);
-		return gdata;
+		goto out;
 	}
 	if (pp == NULL) {
 		LogInfo(COMPONENT_IDMAPPER,
 			"No matching password record found for uid %u", uid);
-		return gdata;
+		goto out;
 	}
 
 	gdata = gsh_malloc(sizeof(struct group_data) + strlen(p.pw_name));
@@ -273,9 +307,10 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 
 	if (!my_getgrouplist_alloc(p.pw_name, p.pw_gid, gdata)) {
 		gsh_free(gdata);
+		gdata = NULL;
 		if (nfs_param.core_param.max_uid_to_grp_reqs)
 			sem_post(&uid2grp_sem);
-		return NULL;
+		goto out;
 	}
 
 	if (nfs_param.core_param.max_uid_to_grp_reqs)
@@ -284,6 +319,9 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	PTHREAD_MUTEX_init(&gdata->gd_lock, NULL);
 	gdata->epoch = time(NULL);
 	gdata->refcount = 0;
+
+out:
+	gsh_free(buff);
 	return gdata;
 }
 

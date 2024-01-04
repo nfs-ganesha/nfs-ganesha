@@ -381,12 +381,6 @@ static int name_to_gid(const char *name, gid_t *gid)
 	struct group *gres = NULL;
 	char *buf;
 	size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
-
-	/* Upper bound on the buffer length. Just to bailout if there is
-	 * a bug in getgrname_r returning ERANGE incorrectly. 64MB
-	 * should be good enough for now.
-	 */
-	size_t maxlen = 64 * 1024 * 1024;
 	int err;
 
 	if (buflen == -1)
@@ -400,7 +394,7 @@ static int name_to_gid(const char *name, gid_t *gid)
 			buflen *= 16;
 			gsh_free(buf);
 		}
-	} while (buflen <= maxlen && err == ERANGE);
+	} while (buflen <= GROUP_MAX_SIZE && err == ERANGE);
 
 	if (err == 0) {
 		if (gres == NULL)
@@ -436,18 +430,12 @@ static int name_to_uid(const char *name, uint32_t *uid, gid_t *gid)
 	struct passwd *pres = NULL;
 	char *buf;
 	size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
-
-	/* Upper bound on the buffer length. Just to bailout if there is
-	 * a bug in getpwnam_r returning ERANGE incorrectly. 64MB
-	 * should be good enough for now.
-	 */
-	size_t maxlen = 64 * 1024 * 1024;
 	int err = ERANGE;
 
 	if (buflen == -1)
 		buflen = PWENT_BEST_GUESS_LEN;
 
-	while (buflen <= maxlen) {
+	while (buflen <= PWENT_MAX_SIZE) {
 		buf = gsh_malloc(buflen);
 
 		err = getpwnam_r(name, &p, buf, buflen, &pres);
