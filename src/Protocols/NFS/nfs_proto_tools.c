@@ -34,6 +34,7 @@
 #include "log.h"
 #include "fsal.h"
 #include "fsal_convert.h"
+#include "FSAL/fsal_commonlib.h"
 #include "nfs_core.h"
 #include "nfs_convert.h"
 #include "nfs_exports.h"
@@ -650,7 +651,7 @@ static fattr_xdr_result decode_namedattrsupport(XDR *xdr,
  * FATTR4_FSID
  */
 
-static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
+static fattr_xdr_result xdr_encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 {
 	fsid4 fsid = {0, 0};
 
@@ -673,7 +674,7 @@ static fattr_xdr_result encode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 	return FATTR_XDR_SUCCESS;
 }
 
-static fattr_xdr_result decode_fsid(XDR *xdr, struct xdr_attrs_args *args)
+static fattr_xdr_result xdr_decode_fsid(XDR *xdr, struct xdr_attrs_args *args)
 {
 	if (!xdr_u_int64_t(xdr, &args->fsid.major))
 		return FATTR_XDR_FAILED;
@@ -757,59 +758,69 @@ static fattr_xdr_result decode_rdattr_error(XDR *xdr,
 
 static fattr_xdr_result encode_acl(XDR *xdr, struct xdr_attrs_args *args)
 {
-	if (args->attrs->acl) {
-		fsal_ace_t *ace;
-		int i;
-		char *name = NULL;
+	if (!args->attrs->acl) {
+		/* In order to follow RFC8881 and knfsd behavior, create ACL
+		 * from the mode bits.
+		 * Allocated objects will be freed by the normal flow which call
+		 * fsal_release_attrs. */
+		fsal_status_t status = fsal_mode_to_acl(args->attrs, NULL);
 
-		LogFullDebug(COMPONENT_NFS_V4, "Number of ACEs = %u",
-			     args->attrs->acl->naces);
-
-		if (!inline_xdr_u_int32_t(xdr, &(args->attrs->acl->naces)))
+		if (FSAL_IS_ERROR(status)) {
+			LogWarn(COMPONENT_NFS_V4,
+				"Failed in creating ACL from mode bits. Status: %u",
+				status.major);
 			return FATTR_XDR_FAILED;
-		for (ace = args->attrs->acl->aces;
-		     ace < args->attrs->acl->aces + args->attrs->acl->naces;
-		     ace++) {
-			LogFullDebug(COMPONENT_NFS_V4,
-				     "type=0X%x, flag=0X%x, perm=0X%x",
-				     ace->type, ace->flag, ace->perm);
-			if (!inline_xdr_u_int32_t(xdr, &ace->type))
-				return FATTR_XDR_FAILED;
-			if (!inline_xdr_u_int32_t(xdr, &ace->flag))
-				return FATTR_XDR_FAILED;
-			if (!inline_xdr_u_int32_t(xdr, &ace->perm))
-				return FATTR_XDR_FAILED;
-			if (IS_FSAL_ACE_SPECIAL_ID(*ace)) {
-				for (i = 0;
-				     i < FSAL_ACE_SPECIAL_EVERYONE;
-				     i++) {
-					if (whostr_2_type_map[i].type ==
-					    ace->who.uid) {
-						name = whostr_2_type_map[i]
-							.string;
-						break;
-					}
-				}
-				if (name == NULL ||
-				    !xdr_string(xdr, &name, MAXNAMLEN))
-					return FATTR_XDR_FAILED;
-			} else if (IS_FSAL_ACE_GROUP_ID(*ace)) {
-				/* Encode group name. */
-				if (!xdr_encode_nfs4_group(xdr, ace->who.gid))
-					return FATTR_XDR_FAILED;
-			} else {
-				if (!xdr_encode_nfs4_owner
-				    (xdr, ace->who.uid)) {
-					return FATTR_XDR_FAILED;
+		}
+	}
+
+	assert(args->attrs->acl);
+	fsal_ace_t *ace;
+	int i;
+	char *name = NULL;
+
+	LogFullDebug(COMPONENT_NFS_V4, "Number of ACEs = %u",
+		     args->attrs->acl->naces);
+
+	if (!inline_xdr_u_int32_t(xdr, &(args->attrs->acl->naces)))
+		return FATTR_XDR_FAILED;
+	for (ace = args->attrs->acl->aces;
+	     ace < args->attrs->acl->aces + args->attrs->acl->naces;
+	     ace++) {
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "type=0X%x, flag=0X%x, perm=0X%x",
+			     ace->type, ace->flag, ace->perm);
+		if (!inline_xdr_u_int32_t(xdr, &ace->type))
+			return FATTR_XDR_FAILED;
+		if (!inline_xdr_u_int32_t(xdr, &ace->flag))
+			return FATTR_XDR_FAILED;
+		if (!inline_xdr_u_int32_t(xdr, &ace->perm))
+			return FATTR_XDR_FAILED;
+		if (IS_FSAL_ACE_SPECIAL_ID(*ace)) {
+			for (i = 0;
+			     i < FSAL_ACE_SPECIAL_EVERYONE;
+			     i++) {
+				if (whostr_2_type_map[i].type ==
+				    ace->who.uid) {
+					name = whostr_2_type_map[i]
+						.string;
+					break;
 				}
 			}
-		}		/* for ace... */
-	} else {
-		uint32_t noacls = 0;
+			if (name == NULL ||
+			    !xdr_string(xdr, &name, MAXNAMLEN))
+				return FATTR_XDR_FAILED;
+		} else if (IS_FSAL_ACE_GROUP_ID(*ace)) {
+			/* Encode group name. */
+			if (!xdr_encode_nfs4_group(xdr, ace->who.gid))
+				return FATTR_XDR_FAILED;
+		} else {
+			if (!xdr_encode_nfs4_owner
+			    (xdr, ace->who.uid)) {
+				return FATTR_XDR_FAILED;
+			}
+		}
+	}		/* for ace... */
 
-		if (!inline_xdr_u_int32_t(xdr, &noacls))
-			return FATTR_XDR_FAILED;
-	}
 	return FATTR_XDR_SUCCESS;
 }
 
@@ -2723,8 +2734,8 @@ const struct fattr4_dent fattr4tab[FATTR4_MAX_ATTR_INDEX + 1] = {
 		.supported = 1,
 		.encoded = 1,
 		.size_fattr4 = sizeof(fattr4_fsid),
-		.encode = encode_fsid,
-		.decode = decode_fsid,
+		.encode = xdr_encode_fsid,
+		.decode = xdr_decode_fsid,
 		.attrmask = ATTR_FSID,
 		.access = FATTR4_ATTR_READ}
 	,
