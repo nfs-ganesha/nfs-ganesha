@@ -1303,7 +1303,7 @@ fsal_status_t merge_share(struct fsal_obj_handle *orig_hdl,
 /**
 this refinement gets rid of the rw lock in the I/O path and provides a bit
 more fairness to open/upgrade/downgrade/close and uses dec_and_lock to
-better prevent spurious wakeup due to a race that is not habdled above
+better prevent spurious wakeup due to a race that is not handled above
 
 increment io_work
 if fd_work != 0
@@ -1401,7 +1401,7 @@ uint32_t lru_try_one(void)
 
 		release_op_context();
 
-		/* Now re-aquire the fsal_fd_mutex */
+		/* Now reacquire the fsal_fd_mutex */
 		PTHREAD_MUTEX_lock(&fsal_fd_mutex);
 		/* And drop the flag */
 		atomic_dec_int32_t(&fsal_fd->lru_reclaim);
