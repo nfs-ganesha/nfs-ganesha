@@ -981,7 +981,7 @@ struct fsal_fd {
 	pthread_cond_t work_cond;
 	/** Indicate if should be closed on complete. */
 	bool close_on_complete;
-	/** Inidcate if LRU reclaim wants to operate on this fd */
+	/** Indicate if LRU reclaim wants to operate on this fd */
 	uint32_t lru_reclaim;
 	/** Type of fd */
 	enum fsal_fd_type fd_type;
