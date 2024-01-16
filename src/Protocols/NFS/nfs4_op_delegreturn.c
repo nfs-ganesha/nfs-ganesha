@@ -110,13 +110,14 @@ enum nfs_req_result nfs4_op_delegreturn(struct nfs_argop4 *op,
 		goto out_unlock;
 	}
 
+	STATELOCK_lock(data->current_obj);
+
 	deleg_heuristics_recall(data->current_obj, owner, state_found);
 	reset_cbgetattr_stats(data->current_obj);
 
 	/* Release reference taken above. */
 	dec_state_owner_ref(owner);
 
-	STATELOCK_lock(data->current_obj);
 	/* Now we have a lock owner and a stateid.
 	 * Go ahead and push unlock into SAL (and FSAL) to return
 	 * the delegation.

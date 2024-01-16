@@ -506,6 +506,19 @@ void _state_del_locked(state_t *state, const char *func, int line)
 		obj->state_hdl->file.write_deleg_client = NULL;
 	}
 
+	/* Clean up delegation related flags if file have no active states */
+	if (state->state_type == STATE_TYPE_DELEG &&
+	    state->state_data.deleg.sd_type == OPEN_DELEGATE_READ &&
+	    glist_empty(&obj->state_hdl->file.list_of_states)) {
+		LogEvent(COMPONENT_STATE,
+			"Resetting Deleg Stats(%d/%d) as file have no active states",
+			obj->state_hdl->file.fdeleg_stats.fds_curr_delegations,
+			obj->state_hdl->file.fdeleg_stats.fds_deleg_type);
+		obj->state_hdl->file.fdeleg_stats.fds_curr_delegations = 0;
+		obj->state_hdl->file.fdeleg_stats.fds_deleg_type =
+			OPEN_DELEGATE_NONE;
+	}
+
 	/* Remove from list of states for a particular export.
 	 * In this case, it is safe to look at state_export without yet
 	 * holding the state_mutex because this is the only place where it
