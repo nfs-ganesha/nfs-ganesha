@@ -872,53 +872,6 @@ bool clientid_has_state(nfs_client_id_t *clientid)
 	return live_state;
 }
 
-/**
- * @brief Get count of all open state of a clientid.
- *
- * Note - This expect clientid->cid_mutex lock to be taken getting invoked
- *
- * @param[in] clientid The client id of interest
- *
- * @retval count of states associated with the clientid.
- */
-int get_total_open_state(nfs_client_id_t *clientid)
-{
-	struct glist_head *glist_open_owner;
-	int open_states_count = 0;
-
-	/* For each open owners get their active open state counts. */
-	glist_for_each(glist_open_owner, &clientid->cid_openowners) {
-		state_owner_t *owner = glist_entry(
-				glist_open_owner,
-				state_owner_t,
-				so_owner.so_nfs4_owner.so_perclient);
-		if (owner == NULL)
-			continue;
-
-		struct state_nfs4_owner_t *nfs4_owner =
-			&owner->so_owner.so_nfs4_owner;
-
-		/* If the owner is on the cached owners list,
-		 * there can't be active state.
-		 */
-		if (atomic_fetch_time_t(&nfs4_owner->so_cache_expire) != 0)
-			continue;
-		struct glist_head *glist, *glistn;
-
-		PTHREAD_MUTEX_lock(&owner->so_mutex);
-
-		glist_for_each_safe(glist, glistn,
-				&nfs4_owner->so_state_list) {
-			open_states_count++;
-		}
-
-		PTHREAD_MUTEX_unlock(&owner->so_mutex);
-	}
-LogFullDebug(COMPONENT_CLIENTID,
-		     "Total open state is %d", open_states_count);
-	return open_states_count;
-}
-
 /*
  * @brief compare routine used to sort expired client items
  *
@@ -1063,7 +1016,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 		/* Judging the amount of states the client owns.
 		 * If it has large number of opened files, we may not want
 		 * to hold the memory for a client that has gone away. */
-		if (get_total_open_state(clientid) <
+		if (atomic_fetch_uint32_t(&clientid->cid_open_state_counter) <
 		    nfs_param.nfsv4_param.max_open_files_for_expired_client) {
 
 			/* We have an expired client to be added to list */
