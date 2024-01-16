@@ -88,6 +88,15 @@ int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (obj->type == DIRECTORY)
 		is_dir = TRUE;
 
+	if (arg->arg_setacl.acl_access == NULL
+		&& (!is_dir || arg->arg_setacl.acl_default == NULL)) {
+		res->res_setacl.status = NFS3ERR_INVAL;
+		rc = NFS_REQ_OK;
+		LogFullDebug(COMPONENT_FSAL,
+					"nfs3 setacl failed for invalid parameter");
+		goto out;
+	}
+
 	/* Conversion to FSAL ACL */
 	ret = nfs3_acl_2_fsal_acl(&setacl,
 				arg->arg_setacl.mask,
