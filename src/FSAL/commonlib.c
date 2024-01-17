@@ -1663,6 +1663,9 @@ static inline void bump_fd_lru(struct fsal_fd *fsal_fd)
 		glist_add(&fsal_fd_global_lru, &fsal_fd->fd_lru);
 
 		PTHREAD_MUTEX_unlock(&fsal_fd_mutex);
+		LogFullDebug(COMPONENT_FSAL,
+			"Inserted fsal_fd(%p) to fd_global_lru with count(%d)",
+			fsal_fd, atomic_fetch_int32_t(&fsal_fd_global_counter));
 	}
 }
 
@@ -1676,6 +1679,13 @@ static inline void bump_fd_lru(struct fsal_fd *fsal_fd)
 
 void insert_fd_lru(struct fsal_fd *fsal_fd)
 {
+	LogFullDebug(COMPONENT_FSAL,
+		"Inserting fsal_fd(%p) to fd_lru for type(%d) count(%d/%d/%d)",
+		fsal_fd, fsal_fd->fd_type,
+		atomic_fetch_int32_t(&fsal_fd_global_counter),
+		atomic_fetch_int32_t(&fsal_fd_state_counter),
+		atomic_fetch_int32_t(&fsal_fd_temp_counter));
+
 	switch (fsal_fd->fd_type) {
 	case FSAL_FD_OLD_STYLE:
 		/* OOPS - we shouldn't get here... */
@@ -1705,6 +1715,13 @@ void insert_fd_lru(struct fsal_fd *fsal_fd)
 static void remove_fd_lru(struct fsal_fd *fsal_fd)
 {
 	int32_t count;
+
+	LogFullDebug(COMPONENT_FSAL,
+		"Removing fsal_fd(%p) from fd_lru for type(%d) count(%d/%d/%d)",
+		fsal_fd, fsal_fd->fd_type,
+		atomic_fetch_int32_t(&fsal_fd_global_counter),
+		atomic_fetch_int32_t(&fsal_fd_state_counter),
+		atomic_fetch_int32_t(&fsal_fd_temp_counter));
 
 	switch (fsal_fd->fd_type) {
 	case FSAL_FD_OLD_STYLE:
