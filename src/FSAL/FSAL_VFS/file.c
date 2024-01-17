@@ -92,7 +92,10 @@ fsal_status_t vfs_close_my_fd(struct vfs_fd *my_fd)
 	int retval = 0;
 
 	if (my_fd->fd >= 0 && my_fd->fsal_fd.openflags != FSAL_O_CLOSED) {
-		LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", my_fd->fd);
+		LogFullDebug(COMPONENT_FSAL,
+			"Closing Opened fd %d for fsal_fd(%p) with type(%d)",
+			my_fd->fd, &my_fd->fsal_fd,
+			my_fd->fsal_fd.fd_type);
 		retval = close(my_fd->fd);
 		if (retval < 0) {
 			retval = errno;
@@ -223,6 +226,10 @@ void vfs_free_state(struct state_t *state)
 
 	my_fd = &container_of(state, struct vfs_state_fd, state)->vfs_fd;
 
+	LogFullDebug(COMPONENT_FSAL,
+		"Destroying fd %d for fsal_fd(%p) with type(%d)",
+		my_fd->fd, &my_fd->fsal_fd,
+		my_fd->fsal_fd.fd_type);
 	destroy_fsal_fd(&my_fd->fsal_fd);
 
 	gsh_free(state);
@@ -911,8 +918,11 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 	 * without a double locking deadlock.
 	 */
 	if (my_fd == NULL) {
-		LogFullDebug(COMPONENT_FSAL, "Using global fd");
 		my_fd = &hdl->u.file.fd;
+		LogFullDebug(COMPONENT_FSAL,
+			"Using global fd with fsal_fd(%p) for fd(%d/%d) type(%d)",
+			&my_fd->fsal_fd, my_fd->fd, fd,
+			my_fd->fsal_fd.fd_type);
 		/* Need to LRU track global fd including incrementing
 		 * fsal_fd_global_counter.
 		 */
@@ -992,7 +1002,7 @@ retry_attr:
 		attrs_out->fsid = myself->obj_handle.fs->fsid;
 	}
 
-	LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", dir_fd);
+	LogFullDebug(COMPONENT_FSAL, "Closing Opened dir fd %d", dir_fd);
 	close(dir_fd);
 
 	if (state != NULL) {
@@ -1029,7 +1039,7 @@ retry_attr:
 
  direrr:
 
-	LogFullDebug(COMPONENT_FSAL, "Closing Opened fd %d", dir_fd);
+	LogFullDebug(COMPONENT_FSAL, "Closing Opened dir fd %d", dir_fd);
 	close(dir_fd);
 	return status;
 }
