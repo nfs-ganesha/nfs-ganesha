@@ -1136,7 +1136,6 @@ glusterfs_create_my_fd(struct glusterfs_handle *parenthandle, const char *name,
 	struct glusterfs_export *glfs_export =
 	    container_of(op_ctx->fsal_export, struct glusterfs_export, export);
 	gid_t **garray_copy = NULL;
-	int p_flags = 0;
 	struct glfs_object *glhandle = NULL;
 #ifdef GLTIMING
 	struct timespec s_time, e_time;
@@ -1164,7 +1163,7 @@ glusterfs_create_my_fd(struct glusterfs_handle *parenthandle, const char *name,
 
 	glhandle = glfs_h_creat_open(glfs_export->gl_fs->fs,
 				 parenthandle->glhandle,
-				 name, p_flags, unix_mode, sb,
+				 name, posix_flags, unix_mode, sb,
 				 &my_fd->glfd);
 
 	/* restore credentials */
