@@ -411,6 +411,7 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 				if (ret == 0 || ret == -1) {
 					LogDebug(COMPONENT_FSAL,
 					"No more ACL entries remaining");
+					acl_free(dup_acl);
 					break;
 				}
 			} else
