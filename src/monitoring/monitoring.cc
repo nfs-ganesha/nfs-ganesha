@@ -26,6 +26,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <algorithm>
 
 #include "prometheus/counter.h"
 #include "prometheus/exposer.h"
@@ -260,7 +261,7 @@ std::unique_ptr<prometheus::Exposer> exposer;
 std::shared_ptr<prometheus::Registry> registry;
 
 static void toLowerCase(std::string &s) {
-  transform(s.begin(), s.end(), s.begin(), ::tolower);
+  std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 }
 
 static void observeNfsRequest(const char *operation,
