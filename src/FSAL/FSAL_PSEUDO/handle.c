@@ -278,6 +278,12 @@ static struct pseudo_fsal_obj_handle
 		hdl->index = (parent->next_i)++;
 		avltree_insert(&hdl->avl_i, &parent->avl_index);
 		hdl->inavl = true;
+
+		now(&parent->attributes.mtime);
+		parent->attributes.ctime = parent->attributes.mtime;
+		parent->attributes.change = timespec_to_nsecs(
+					&parent->attributes.mtime);
+
 		PTHREAD_RWLOCK_unlock(&parent->obj_handle.obj_lock);
 	}
 	return hdl;
