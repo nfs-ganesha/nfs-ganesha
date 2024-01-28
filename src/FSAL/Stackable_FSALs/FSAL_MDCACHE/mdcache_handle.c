@@ -977,6 +977,21 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 	const uint16_t export_id = (export == NULL ? 0 : export->export_id);
 #endif /* USE_MONITORING */
 
+	if (op_ctx->export_perms.expire_time_attr == 0) {
+		/* Attribute caching is disabled. No reason to lock the entry
+		 * and serialize getattr access. Use subcall directly */
+#ifdef USE_MONITORING
+		monitoring__dynamic_mdcache_cache_miss(OPERATION, export_id);
+#endif /* USE_MONITORING */
+
+		subcall(status = entry->sub_handle->obj_ops->getattrs(
+				entry->sub_handle, attrs_out););
+
+		LogAttrlist(COMPONENT_MDCACHE, NIV_FULL_DEBUG, "attrs ",
+			    attrs_out, true);
+		return status;
+	}
+
 	PTHREAD_RWLOCK_rdlock(&entry->attr_lock);
 
 	if (mdcache_is_attrs_valid(entry, attrs_out->request_mask)) {
@@ -1068,6 +1083,12 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	if (FSAL_IS_ERROR(status)) {
 		if (status.major == ERR_FSAL_STALE)
 			kill_entry = true;
+		goto out;
+	}
+
+	if (op_ctx->export_perms.expire_time_attr == 0) {
+		/* Attribute caching is disabled. No need to refresh the
+		 * attributes */
 		goto out;
 	}
 

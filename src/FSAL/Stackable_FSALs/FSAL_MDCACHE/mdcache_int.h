@@ -1127,6 +1127,12 @@ mdcache_refresh_attrs_no_invalidate(mdcache_entry_t *entry)
 {
 	fsal_status_t status;
 
+	if (op_ctx->export_perms.expire_time_attr == 0) {
+		/* Attribute cache is disabled, no need to refresh the
+		 * attributes */
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
 
 	status = mdcache_refresh_attrs(entry, false, false, false, NULL);
