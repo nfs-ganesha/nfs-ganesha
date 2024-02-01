@@ -99,6 +99,8 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	state_status_t status = 0;
 	bool mutex_init = false;
 	struct state_t *openstate = NULL;
+	nfs_client_id_t *clientid =
+		owner_input->so_owner.so_nfs4_owner.so_clientrec;
 
 	if (isFullDebug(COMPONENT_STATE) && pnew_state != NULL) {
 		display_stateid(&dspbuf, pnew_state);
@@ -240,14 +242,12 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 
 	if (pnew_state->state_type == STATE_TYPE_DELEG &&
 	    pnew_state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE) {
-		nfs_client_id_t *client =
-			 owner_input->so_owner.so_nfs4_owner.so_clientrec;
 		ostate->file.write_delegated = true;
 		/* take a ref and save client ptr holding delegation for
 		 * conflict resolution
 		 */
-		inc_client_id_ref(client);
-		ostate->file.write_deleg_client = client;
+		inc_client_id_ref(clientid);
+		ostate->file.write_deleg_client = clientid;
 	}
 
 	/* Copy the result */
@@ -305,7 +305,8 @@ state_status_t _state_add(struct fsal_obj_handle *obj,
 	state_status_t status = 0;
 
 	/* Ensure that states are associated only with the appropriate
-	   owners */
+	 * owners
+	 */
 
 	if (((state_type == STATE_TYPE_SHARE)
 	     && (owner_input->so_type != STATE_OPEN_OWNER_NFSV4))
@@ -475,7 +476,8 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	}
 
 	/* Reset write delegated and release client ref if this is a
-	 * write delegation */
+	 * write delegation
+	 */
 	if (state->state_type == STATE_TYPE_DELEG &&
 	    state->state_data.deleg.sd_type == OPEN_DELEGATE_WRITE &&
 	    obj->state_hdl->file.write_deleg_client) {
@@ -683,6 +685,7 @@ void state_nfs4_state_wipe(struct state_hdl *ostate)
 enum nfsstat4 release_lock_owner(state_owner_t *owner)
 {
 	struct saved_export_context saved;
+	bool ok;
 
 	PTHREAD_MUTEX_lock(&owner->so_mutex);
 
@@ -709,6 +712,8 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 
 	while (true) {
 		state_t *state;
+		struct fsal_obj_handle *obj = NULL;
+		struct gsh_export *exp = NULL;
 
 		state = glist_first_entry(&owner->so_owner.so_nfs4_owner
 								.so_state_list,
@@ -722,26 +727,47 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 			return NFS4_OK;
 		}
 
+		/* Get references to the file and export */
+		ok = get_state_obj_export_owner_refs(state, &obj, &exp, NULL);
+
+		if (!ok) {
+			/* The file, export, or state must be about to
+			 * die, skip for now.
+			 */
+
+			PTHREAD_MUTEX_unlock(&owner->so_mutex);
+			continue;
+		}
+
 		/* Make sure the state doesn't go away on us... */
 		inc_state_t_ref(state);
 
 		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
-		/* Set the op_context properly, since this can be called from
-		 * ops that don't do a putfh
-		 */
-		get_gsh_export_ref(state->state_export);
-		set_op_context_export(state->state_export);
+		STATELOCK_lock(obj);
 
-		state_del(state);
+		/* op_ctx may be used by state_del_locked and others set export
+		 * from the state and release any old ctx_export reference.
+		 * Reference was taken above and will be release by
+		 * clear_op_context_export below.
+		 */
+		set_op_context_export(exp);
+
+		/* If FSAL supports extended operations, file will be closed by
+		 * state_del_locked.
+		 */
+
+		state_del_locked(state);
+
 		dec_state_t_ref(state);
+
+		STATELOCK_unlock(obj);
 
 		PTHREAD_MUTEX_lock(&owner->so_mutex);
 
-		/* Note the op context set above will either be cleaned up by
-		 * the set_op_context_export_fsal for the next state or by
-		 * restore_op_context_export just before exiting the loop.
-		 */
+		/* Release refs we held during state_del */
+		obj->obj_ops->put_ref(obj);
+		clear_op_context_export();
 	}
 }
 
