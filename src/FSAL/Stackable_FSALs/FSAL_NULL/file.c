@@ -107,7 +107,9 @@ fsal_status_t nullfs_open2(struct fsal_obj_handle *obj_hdl,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
 			   struct fsal_attrlist *attrs_out,
-			   bool *caller_perm_check)
+			   bool *caller_perm_check,
+			   struct fsal_attrlist *parent_pre_attrs_out,
+			   struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct nullfs_fsal_obj_handle *handle =
 		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
@@ -124,7 +126,9 @@ fsal_status_t nullfs_open2(struct fsal_obj_handle *obj_hdl,
 						  openflags, createmode, name,
 						  attrs_in, verifier,
 						  &sub_handle, attrs_out,
-						  caller_perm_check);
+						  caller_perm_check,
+						  parent_pre_attrs_out,
+						  parent_post_attrs_out);
 	op_ctx->fsal_export = &export->export;
 
 	if (sub_handle) {

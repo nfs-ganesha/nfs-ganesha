@@ -71,7 +71,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	pre_op_attr pre_parent = {
 		.attributes_follow = false
 	};
-	struct fsal_attrlist sattr, attrs;
+	struct fsal_attrlist sattr, attrs, parent_pre_attrs, parent_post_attrs;
 	fsal_status_t fsal_status = {0, 0};
 	int rc = NFS_REQ_OK;
 	fsal_verifier_t verifier;
@@ -84,6 +84,10 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
+
+	fsal_prepare_attrs(&parent_pre_attrs,
+		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+	fsal_prepare_attrs(&parent_post_attrs, ATTRS_NFS3);
 
 	memset(&sattr, 0, sizeof(struct fsal_attrlist));
 
@@ -173,7 +177,9 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				 &sattr,
 				 verifier,
 				 &file_obj,
-				 &attrs);
+				 &attrs,
+				 &parent_pre_attrs,
+				 &parent_post_attrs);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
@@ -195,11 +201,13 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_create3.CREATE3res_u.resok.obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
+	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
+
 	nfs_SetPostOpAttr(file_obj,
 			  &res->res_create3.CREATE3res_u.resok.obj_attributes,
 			  &attrs);
 
-	nfs_SetWccData(&pre_parent, parent_obj,
+	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
 		       &res->res_create3.CREATE3res_u.resok.dir_wcc);
 
 	res->res_create3.status = NFS3_OK;
@@ -207,6 +215,9 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	rc = NFS_REQ_OK;
 
  out:
+	fsal_release_attrs(&parent_pre_attrs);
+	fsal_release_attrs(&parent_post_attrs);
+
 	/* return references */
 	if (file_obj)
 		file_obj->obj_ops->put_ref(file_obj);
@@ -226,9 +237,11 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	} else {
 		res->res_create3.status = nfs3_Errno_status(fsal_status);
 
-		nfs_SetWccData(&pre_parent, parent_obj,
+		nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
+		nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
 			       &res->res_create3.CREATE3res_u.resfail.dir_wcc);
 	}
+
 	goto out;
 }				/* nfs3_create */
 

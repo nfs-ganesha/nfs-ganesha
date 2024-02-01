@@ -72,13 +72,17 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	const char *file_name = arg->arg_mknod3.where.name;
 	int rc = NFS_REQ_OK;
 	fsal_status_t fsal_status;
-	struct fsal_attrlist sattr, attrs;
+	struct fsal_attrlist sattr, attrs, parent_pre_attrs, parent_post_attrs;
 	MKNOD3resfail *resfail = &res->res_mknod3.MKNOD3res_u.resfail;
 	MKNOD3resok * const rok = &res->res_mknod3.MKNOD3res_u.resok;
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
+
+	fsal_prepare_attrs(&parent_pre_attrs,
+		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+	fsal_prepare_attrs(&parent_post_attrs, ATTRS_NFS3);
 
 	memset(&sattr, 0, sizeof(sattr));
 
@@ -195,7 +199,8 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Try to create it */
 	fsal_status = fsal_create(parent_obj, file_name, nodetype, &sattr,
-				  NULL, &node_obj, &attrs);
+				  NULL, &node_obj, &attrs, &parent_pre_attrs,
+				  &parent_post_attrs);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
@@ -217,10 +222,13 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	rok->obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
+	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
+
 	nfs_SetPostOpAttr(node_obj, &rok->obj_attributes, &attrs);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_obj, &rok->dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
+		&rok->dir_wcc);
 
 	res->res_mknod3.status = NFS3_OK;
 
@@ -229,7 +237,9 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out_fail:
 	res->res_mknod3.status = nfs3_Errno_status(fsal_status);
-	nfs_SetWccData(&pre_parent, parent_obj, &resfail->dir_wcc);
+	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
+	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
+		&resfail->dir_wcc);
 
 	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
@@ -238,6 +248,8 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Release the attributes. */
 	fsal_release_attrs(&attrs);
+	fsal_release_attrs(&parent_pre_attrs);
+	fsal_release_attrs(&parent_post_attrs);
 
 	/* return references */
 	if (parent_obj)

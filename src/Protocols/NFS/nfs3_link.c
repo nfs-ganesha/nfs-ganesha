@@ -156,14 +156,14 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 				  &l3_res->LINK3res_u.resfail.file_attributes,
 				  NULL);
 
-		nfs_SetWccData(&pre_parent, parent_obj,
+		nfs_SetWccData(&pre_parent, parent_obj, NULL,
 			       &l3_res->LINK3res_u.resfail.linkdir_wcc);
 	} else {
 		nfs_SetPostOpAttr(target_obj,
 				  &l3_res->LINK3res_u.resok.file_attributes,
 				  NULL);
 
-		nfs_SetWccData(&pre_parent, parent_obj,
+		nfs_SetWccData(&pre_parent, parent_obj, NULL,
 			       &l3_res->LINK3res_u.resok.linkdir_wcc);
 		l3_res->status = NFS3_OK;
 	}

@@ -1006,7 +1006,9 @@ proxyv3_open2(struct fsal_obj_handle *obj_hdl,
 	      fsal_verifier_t verifier,
 	      struct fsal_obj_handle **out_obj,
 	      struct fsal_attrlist *attrs_out,
-	      bool *caller_perm_check)
+	      bool *caller_perm_check,
+	      struct fsal_attrlist *parent_pre_attrs_out,
+	      struct fsal_attrlist *parent_post_attrs_out)
 {
 	/* If name is NULL => open by handle. */
 	if (name == NULL) {
@@ -1143,7 +1145,9 @@ proxyv3_symlink(struct fsal_obj_handle *dir_hdl,
 		const char *link_path,
 		struct fsal_attrlist *attrs_in,
 		struct fsal_obj_handle **new_obj,
-		struct fsal_attrlist *attrs_out)
+		struct fsal_attrlist *attrs_out,
+		struct fsal_attrlist *parent_pre_attrs_out,
+		struct fsal_attrlist *parent_post_attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "symlink of parent %p, name %s to => %s",
@@ -1379,7 +1383,9 @@ static fsal_status_t
 proxyv3_mkdir(struct fsal_obj_handle *dir_hdl,
 	      const char *name, struct fsal_attrlist *attrs_in,
 	      struct fsal_obj_handle **new_obj,
-	      struct fsal_attrlist *attrs_out)
+	      struct fsal_attrlist *attrs_out,
+	      struct fsal_attrlist *parent_pre_attrs_out,
+	      struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct proxyv3_obj_handle *parent_obj =
 		container_of(dir_hdl, struct proxyv3_obj_handle, obj);
@@ -1431,7 +1437,9 @@ proxyv3_mknode(struct fsal_obj_handle *dir_hdl,
 	       object_file_type_t nodetype,
 	       struct fsal_attrlist *attrs_in,
 	       struct fsal_obj_handle **new_obj,
-	       struct fsal_attrlist *attrs_out)
+	       struct fsal_attrlist *attrs_out,
+	       struct fsal_attrlist *parent_pre_attrs_out,
+	       struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct proxyv3_obj_handle *parent_obj =
 		container_of(dir_hdl, struct proxyv3_obj_handle, obj);

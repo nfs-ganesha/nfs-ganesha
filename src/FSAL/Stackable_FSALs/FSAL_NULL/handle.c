@@ -158,7 +158,9 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name, struct fsal_attrlist *attrs_in,
 			     struct fsal_obj_handle **new_obj,
-			     struct fsal_attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out,
+			     struct fsal_attrlist *parent_pre_attrs_out,
+			     struct fsal_attrlist *parent_post_attrs_out)
 {
 	*new_obj = NULL;
 	/** Parent directory nullfs handle. */
@@ -176,7 +178,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 	/* Creating the directory with a subfsal handle. */
 	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = parent_hdl->sub_handle->obj_ops->mkdir(
-		parent_hdl->sub_handle, name, attrs_in, &sub_handle, attrs_out);
+		parent_hdl->sub_handle, name, attrs_in, &sub_handle, attrs_out,
+		parent_pre_attrs_out, parent_post_attrs_out);
 	op_ctx->fsal_export = &export->export;
 
 	/* wrapping the subfsal handle in a nullfs handle. */
@@ -189,7 +192,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      object_file_type_t nodetype,
 			      struct fsal_attrlist *attrs_in,
 			      struct fsal_obj_handle **new_obj,
-			      struct fsal_attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out,
+			      struct fsal_attrlist *parent_pre_attrs_out,
+			      struct fsal_attrlist *parent_post_attrs_out)
 {
 	/** Parent directory nullfs handle. */
 	struct nullfs_fsal_obj_handle *nullfs_dir =
@@ -209,7 +214,8 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = nullfs_dir->sub_handle->obj_ops->mknode(
 		nullfs_dir->sub_handle, name, nodetype, attrs_in,
-		&sub_handle, attrs_out);
+		&sub_handle, attrs_out, parent_pre_attrs_out,
+		parent_post_attrs_out);
 	op_ctx->fsal_export = &export->export;
 
 	/* wrapping the subfsal handle in a nullfs handle. */
@@ -228,7 +234,9 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *link_path,
 				 struct fsal_attrlist *attrs_in,
 				 struct fsal_obj_handle **new_obj,
-				 struct fsal_attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out,
+				 struct fsal_attrlist *parent_pre_attrs_out,
+				 struct fsal_attrlist *parent_post_attrs_out)
 {
 	/** Parent directory nullfs handle. */
 	struct nullfs_fsal_obj_handle *nullfs_dir =
@@ -248,7 +256,7 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = nullfs_dir->sub_handle->obj_ops->symlink(
 		nullfs_dir->sub_handle, name, link_path, attrs_in, &sub_handle,
-		attrs_out);
+		attrs_out, parent_pre_attrs_out, parent_post_attrs_out);
 	op_ctx->fsal_export = &export->export;
 
 	/* wrapping the subfsal handle in a nullfs handle. */

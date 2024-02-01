@@ -107,7 +107,7 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* Create the directory */
 	/* BUGAZOMEU: @todo : the gid parameter is not used yet */
 	fsal_status = fsal_create(pfid->pentry, dir_name, DIRECTORY, &sattr,
-				  NULL, &pentry_newdir, NULL);
+				  NULL, &pentry_newdir, NULL, NULL, NULL);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);

@@ -619,16 +619,22 @@ exit:
  *
  * @note If the file was created, @a new_obj has been ref'd
  *
- * @param[in] obj_hdl               File to open or parent directory
- * @param[in,out] state             state_t to use for this operation
- * @param[in] openflags             Mode for open
- * @param[in] createmode            Mode for create
- * @param[in] name                  Name for file if being created or opened
- * @param[in] attrs_in              Attributes to set on created file
- * @param[in] verifier              Verifier to use for exclusive create
- * @param[in,out] new_obj           Newly created object
- * @param[in,out] attrs_out         Optional attributes for newly created object
- * @param[in,out] caller_perm_check The caller must do a permission check
+ * @param[in]     obj_hdl               File to open or parent directory
+ * @param[in,out] state                 state_t to use for this operation
+ * @param[in]     openflags             Mode for open
+ * @param[in]     createmode            Mode for create
+ * @param[in]     name                  Name for file if being created or
+ *                                      opened
+ * @param[in]     attrs_in              Attributes to set on created file
+ * @param[in]     verifier              Verifier to use for exclusive create
+ * @param[in,out] new_obj               Newly created object
+ * @param[in,out] attrs_out             Optional attributes for newly created
+ *                                      object
+ * @param[in,out] caller_perm_check     The caller must do a permission check
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @return FSAL status.
  */
@@ -642,7 +648,9 @@ fsal_status_t vfs_open2(struct fsal_obj_handle *obj_hdl,
 			fsal_verifier_t verifier,
 			struct fsal_obj_handle **new_obj,
 			struct fsal_attrlist *attrs_out,
-			bool *caller_perm_check)
+			bool *caller_perm_check,
+			struct fsal_attrlist *parent_pre_attrs_out,
+			struct fsal_attrlist *parent_post_attrs_out)
 {
 	int posix_flags = 0;
 	int fd, dir_fd;

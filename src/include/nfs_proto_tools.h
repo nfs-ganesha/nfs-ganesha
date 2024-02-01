@@ -235,6 +235,7 @@ static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
 #ifdef _USE_NFS3
 void nfs_SetWccData(const struct pre_op_attr *before_attr,
 		    struct fsal_obj_handle *entry,
+		    struct fsal_attrlist *post_attrs,
 		    wcc_data * pwcc_data);
 
 void nfs_SetPostOpAttr(struct fsal_obj_handle *entry,
@@ -243,6 +244,9 @@ void nfs_SetPostOpAttr(struct fsal_obj_handle *entry,
 
 void nfs_SetPreOpAttr(struct fsal_obj_handle *entry,
 		      pre_op_attr *attr);
+
+void nfs_PreOpAttrFromFsalAttr(struct fsal_attrlist *fsal_attrs,
+			       pre_op_attr *out_pre_attr);
 #endif
 
 bool nfs_RetryableError(fsal_errors_t fsal_errors);

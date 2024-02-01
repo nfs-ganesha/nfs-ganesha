@@ -130,7 +130,7 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
 
-	nfs_SetWccData(&pre_parent, parent_obj,
+	nfs_SetWccData(&pre_parent, parent_obj, NULL,
 		       &res->res_rmdir3.RMDIR3res_u.resok.dir_wcc);
 
 	res->res_rmdir3.status = NFS3_OK;
@@ -141,7 +141,7 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out_fail:
 	res->res_rmdir3.status = nfs3_Errno_status(fsal_status);
-	nfs_SetWccData(&pre_parent, parent_obj,
+	nfs_SetWccData(&pre_parent, parent_obj, NULL,
 		       &res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc);
 
 	/* If we are here, there was an error */

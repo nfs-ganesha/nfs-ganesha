@@ -140,6 +140,8 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				 &sattr,
 				 verifier,
 				 &pentry_newfile,
+				 NULL,
+				 NULL,
 				 NULL);
 
 	/* Release the attributes (may release an inherited ACL) */

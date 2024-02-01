@@ -131,7 +131,7 @@ int nfs3_remove(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out_fail;
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_obj,
+	nfs_SetWccData(&pre_parent, parent_obj, NULL,
 		       &res->res_remove3.REMOVE3res_u.resok.dir_wcc);
 
 	res->res_remove3.status = NFS3_OK;
@@ -141,7 +141,7 @@ int nfs3_remove(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out_fail:
 	res->res_remove3.status = nfs3_Errno_status(fsal_status);
-	nfs_SetWccData(&pre_parent, parent_obj,
+	nfs_SetWccData(&pre_parent, parent_obj, NULL,
 		       &res->res_remove3.REMOVE3res_u.resfail.dir_wcc);
 
 	if (nfs_RetryableError(fsal_status.major))

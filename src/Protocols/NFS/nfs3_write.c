@@ -71,7 +71,7 @@ static int nfs3_complete_write(struct nfs3_write_data *data)
 
 	if (data->rc == NFS_REQ_OK) {
 		/* Build Weak Cache Coherency data */
-		nfs_SetWccData(NULL, data->obj, &resok->file_wcc);
+		nfs_SetWccData(NULL, data->obj, NULL, &resok->file_wcc);
 
 		/* Set the written size */
 		resok->count = write_arg->io_amount;
@@ -86,7 +86,7 @@ static int nfs3_complete_write(struct nfs3_write_data *data)
 		memcpy(resok->verf, NFS3_write_verifier, sizeof(writeverf3));
 	} else if (data->rc == NFS_REQ_ERROR) {
 		/* If we are here, there was an error */
-		nfs_SetWccData(NULL, data->obj, &resfail->file_wcc);
+		nfs_SetWccData(NULL, data->obj, NULL, &resfail->file_wcc);
 
 		/* Now we convert NFS_REQ_ERROR into NFS_REQ_OK */
 		data->rc = NFS_REQ_OK;
@@ -320,7 +320,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 			res->res_write3.status = NFS3ERR_FBIG;
 
-			nfs_SetWccData(NULL, obj, &resfail->file_wcc);
+			nfs_SetWccData(NULL, obj, NULL, &resfail->file_wcc);
 
 			goto return_ok;
 		}
@@ -335,7 +335,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (size == 0) {
 		fsal_status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		res->res_write3.status = NFS3_OK;
-		nfs_SetWccData(NULL, obj, &resfail->file_wcc);
+		nfs_SetWccData(NULL, obj, NULL, &resfail->file_wcc);
 		if ((arg->arg_write3.stable == DATA_SYNC) ||
 		    (arg->arg_write3.stable == FILE_SYNC))
 			resok->committed = FILE_SYNC;

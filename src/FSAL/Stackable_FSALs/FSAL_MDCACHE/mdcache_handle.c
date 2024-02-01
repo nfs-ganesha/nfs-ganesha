@@ -204,7 +204,9 @@ static fsal_status_t mdcache_lookup(struct fsal_obj_handle *parent,
 static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 			     const char *name, struct fsal_attrlist *attrib,
 			     struct fsal_obj_handle **handle,
-			     struct fsal_attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out,
+			     struct fsal_attrlist *parent_pre_attrs_out,
+			     struct fsal_attrlist *parent_post_attrs_out)
 {
 	mdcache_entry_t *parent =
 		container_of(dir_hdl, mdcache_entry_t,
@@ -226,7 +228,8 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops->mkdir(
-			parent->sub_handle, name, attrib, &sub_handle, &attrs)
+			parent->sub_handle, name, attrib, &sub_handle, &attrs,
+			parent_pre_attrs_out, parent_post_attrs_out)
 	       );
 
 	if (unlikely(FSAL_IS_ERROR(status))) {
@@ -270,11 +273,17 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 /**
  * @brief Make a device node
  *
- * @param[in] dir_hdl	Parent directory handle
- * @param[in] name	Name of new node
- * @param[in] nodetype	Type of new node
- * @param[in] attrib	Attributes for new node
- * @param[out] handle	New object handle on success
+ * @param[in]     dir_hdl               Parent directory handle
+ * @param[in]     name                  Name of new node
+ * @param[in]     nodetype              Type of new node
+ * @param[in]     attrib                Attributes for new node
+ * @param[out]    handle                New object handle on success
+ * @param[in,out] attrs_out             Optional attributes for newly created
+ *                                      object
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @note This returns an INITIAL ref'd entry on success
  * @return FSAL status
@@ -283,7 +292,9 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
 			      struct fsal_attrlist *attrib,
 			      struct fsal_obj_handle **handle,
-			      struct fsal_attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out,
+			      struct fsal_attrlist *parent_pre_attrs_out,
+			      struct fsal_attrlist *parent_post_attrs_out)
 {
 	mdcache_entry_t *parent =
 		container_of(dir_hdl, mdcache_entry_t,
@@ -306,7 +317,8 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops->mknode(
 			parent->sub_handle, name, nodetype, attrib,
-			&sub_handle, &attrs)
+			&sub_handle, &attrs, parent_pre_attrs_out,
+			parent_post_attrs_out)
 	       );
 
 	if (unlikely(FSAL_IS_ERROR(status))) {
@@ -350,11 +362,17 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 /**
  * @brief Make a symlink
  *
- * @param[in] dir_hdl	Parent directory handle
- * @param[in] name	Name of new node
- * @param[in] link_path	Contents of symlink
- * @param[in] attrib	Attributes for new simlink
- * @param[out] handle	New object handle on success
+ * @param[in]     dir_hdl               Parent directory handle
+ * @param[in]     name                  Name of new node
+ * @param[in]     link_path             Contents of symlink
+ * @param[in]     attrib                Attributes for new simlink
+ * @param[out]    handle                New object handle on success
+ * @param[in,out] attrs_out             Optional attributes for newly created
+ *                                      object
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @note This returns an INITIAL ref'd entry on success
  * @return FSAL status
@@ -363,7 +381,9 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
 				 struct fsal_attrlist *attrib,
 				 struct fsal_obj_handle **handle,
-				 struct fsal_attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out,
+				 struct fsal_attrlist *parent_pre_attrs_out,
+				 struct fsal_attrlist *parent_post_attrs_out)
 {
 	mdcache_entry_t *parent =
 		container_of(dir_hdl, mdcache_entry_t,
@@ -386,7 +406,8 @@ static fsal_status_t mdcache_symlink(struct fsal_obj_handle *dir_hdl,
 	subcall_raw(export,
 		status = parent->sub_handle->obj_ops->symlink(
 			parent->sub_handle, name, link_path, attrib,
-			&sub_handle, &attrs)
+			&sub_handle, &attrs, parent_pre_attrs_out,
+			parent_post_attrs_out)
 	       );
 
 	if (unlikely(FSAL_IS_ERROR(status))) {

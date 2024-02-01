@@ -724,7 +724,9 @@ static void open4_ex(OPEN4args *arg,
 		     state_owner_t *owner,
 		     state_t **file_state,
 		     bool *new_state,
-		     struct bitmap4 *attrset)
+		     struct bitmap4 *attrset,
+		     struct fsal_attrlist *parent_pre_attrs,
+		     struct fsal_attrlist *parent_post_attrs)
 {
 	/* Parent directory in which to open the file. */
 	struct fsal_obj_handle *parent = NULL;
@@ -996,7 +998,9 @@ retry_open_file:
 				    &sattr,
 				    verifier,
 				    &out_obj,
-				    NULL);
+				    NULL,
+				    parent_pre_attrs,
+				    parent_post_attrs);
 
 		if (FSAL_IS_ERROR(status)) {
 			res_OPEN4->status = nfs4_Errno_status(status);
@@ -1274,6 +1278,8 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	/* True if a grace reference was taken */
 	bool grace_ref = false;
 	int retval;
+	struct fsal_attrlist parent_pre_attrs, parent_post_attrs;
+	bool is_parent_pre_attrs_valid, is_parent_post_attrs_valid;
 
 	LogDebug(COMPONENT_STATE,
 		 "Entering NFS v4 OPEN handler -----------------------------");
@@ -1289,6 +1295,9 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	resp->resop = NFS4_OP_OPEN;
 	res_OPEN4->status = NFS4_OK;
 	res_OPEN4->OPEN4res_u.resok4.rflags = 0;
+
+	fsal_prepare_attrs(&parent_pre_attrs, ATTR_CHANGE);
+	fsal_prepare_attrs(&parent_post_attrs, ATTR_CHANGE);
 
 	/* Check export permissions if OPEN4_CREATE */
 	if ((arg_OPEN4->openhow.opentype == OPEN4_CREATE) &&
@@ -1422,7 +1431,8 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	 * handled in open4_ex, so pass in attrset to be handled there.
 	 */
 	open4_ex(arg_OPEN4, data, res_OPEN4, clientid, owner, &file_state,
-		 &new_state, &res_OPEN4->OPEN4res_u.resok4.attrset);
+		 &new_state, &res_OPEN4->OPEN4res_u.resok4.attrset,
+		 &parent_pre_attrs, &parent_post_attrs);
 
 	if (res_OPEN4->status != NFS4_OK)
 		goto out;
@@ -1440,9 +1450,26 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	res_OPEN4->status = NFS4_OK;
 
 	/* Update change_info4 */
-	res_OPEN4->OPEN4res_u.resok4.cinfo.after =
+	is_parent_pre_attrs_valid =
+		FSAL_TEST_MASK(parent_pre_attrs.valid_mask, ATTR_CHANGE);
+	if (is_parent_pre_attrs_valid) {
+		res_OPEN4->OPEN4res_u.resok4.cinfo.before =
+			(changeid4) parent_pre_attrs.change;
+	}
+
+	is_parent_post_attrs_valid =
+		FSAL_TEST_MASK(parent_post_attrs.valid_mask, ATTR_CHANGE);
+	if (is_parent_post_attrs_valid) {
+		res_OPEN4->OPEN4res_u.resok4.cinfo.after =
+			(changeid4) parent_post_attrs.change;
+	} else {
+		res_OPEN4->OPEN4res_u.resok4.cinfo.after =
 		fsal_get_changeid4(obj_change);
-	res_OPEN4->OPEN4res_u.resok4.cinfo.atomic = FALSE;
+	}
+
+	res_OPEN4->OPEN4res_u.resok4.cinfo.atomic =
+		is_parent_pre_attrs_valid && is_parent_post_attrs_valid ?
+		TRUE : FALSE;
 
 	/* Handle open stateid/seqid for success */
 	update_stateid(file_state,
@@ -1451,6 +1478,8 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		       open_tag);
 
  out:
+	fsal_release_attrs(&parent_pre_attrs);
+	fsal_release_attrs(&parent_post_attrs);
 
 	if (res_OPEN4->status != NFS4_OK) {
 		LogDebug(COMPONENT_STATE, "failed with status %s",

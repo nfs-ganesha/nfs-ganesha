@@ -1555,7 +1555,9 @@ static fsal_status_t proxyv4_mkdir(struct fsal_obj_handle *dir_hdl,
 				   const char *name,
 				   struct fsal_attrlist *attrib,
 				   struct fsal_obj_handle **handle,
-				   struct fsal_attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out,
+				   struct fsal_attrlist *parent_pre_attrs_out,
+				   struct fsal_attrlist *parent_post_attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -1619,7 +1621,9 @@ static fsal_status_t proxyv4_mknod(struct fsal_obj_handle *dir_hdl,
 				   object_file_type_t nodetype,
 				   struct fsal_attrlist *attrib,
 				   struct fsal_obj_handle **handle,
-				   struct fsal_attrlist *attrs_out)
+				   struct fsal_attrlist *attrs_out,
+				   struct fsal_attrlist *parent_pre_attrs_out,
+				   struct fsal_attrlist *parent_post_attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -1701,11 +1705,14 @@ static fsal_status_t proxyv4_mknod(struct fsal_obj_handle *dir_hdl,
 	return (*handle)->obj_ops->getattrs(*handle, attrib);
 }
 
-static fsal_status_t proxyv4_symlink(struct fsal_obj_handle *dir_hdl,
-				     const char *name, const char *link_path,
-				     struct fsal_attrlist *attrib,
-				     struct fsal_obj_handle **handle,
-				     struct fsal_attrlist *attrs_out)
+static fsal_status_t proxyv4_symlink(
+		struct fsal_obj_handle *dir_hdl,
+		const char *name, const char *link_path,
+		struct fsal_attrlist *attrib,
+		struct fsal_obj_handle **handle,
+		struct fsal_attrlist *attrs_out,
+		struct fsal_attrlist *parent_pre_attrs_out,
+		struct fsal_attrlist *parent_post_attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -2330,7 +2337,9 @@ static fsal_status_t proxyv4_open2(struct fsal_obj_handle *obj_hdl,
 				   fsal_verifier_t verifier,
 				   struct fsal_obj_handle **new_obj,
 				   struct fsal_attrlist *attrs_out,
-				   bool *caller_perm_check)
+				   bool *caller_perm_check,
+				   struct fsal_attrlist *parent_pre_attrs_out,
+				   struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct proxyv4_obj_handle *ph;
 	int rc; /* return code of nfs call */

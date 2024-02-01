@@ -404,16 +404,20 @@ open_by_name(struct fsal_obj_handle *obj_hdl, struct state_t *state,
  * open. This is because the permission attributes were not available
  * beforehand.
  *
- * @param[in] obj_hdl               File to open or parent directory
- * @param[in,out] state             state_t to use for this operation
- * @param[in] openflags             Mode for open
- * @param[in] createmode            Mode for create
- * @param[in] name                  Name for file if being created or opened
- * @param[in] attr_set              Attributes to set on created file
- * @param[in] verifier              Verifier to use for exclusive create
- * @param[in,out] new_obj           Newly created object
- * @param[in,out] attrs_out         Newly created object attributes
- * @param[in,out] caller_perm_check The caller must do a permission check
+ * @param[in]     obj_hdl               File to open or parent directory
+ * @param[in,out] state                 state_t to use for this operation
+ * @param[in]     openflags             Mode for open
+ * @param[in]     createmode            Mode for create
+ * @param[in]     name                  Name for file if being created or opened
+ * @param[in]     attr_set              Attributes to set on created file
+ * @param[in]     verifier              Verifier to use for exclusive create
+ * @param[in,out] new_obj               Newly created object
+ * @param[in,out] attrs_out             Newly created object attributes
+ * @param[in,out] caller_perm_check     The caller must do a permission check
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @return FSAL status.
  */
@@ -422,7 +426,9 @@ gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	   fsal_openflags_t openflags, enum fsal_create_mode createmode,
 	   const char *name, struct fsal_attrlist *attr_set,
 	   fsal_verifier_t verifier, struct fsal_obj_handle **new_obj,
-	   struct fsal_attrlist *attrs_out, bool *caller_perm_check)
+	   struct fsal_attrlist *attrs_out, bool *caller_perm_check,
+	   struct fsal_attrlist *parent_pre_attrs_out,
+	   struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct gpfs_fsal_obj_handle *hdl = NULL;
 	struct fsal_export *export = op_ctx->fsal_export;

@@ -120,7 +120,7 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	 * flags is not yet used */
 	fsal_status = fsal_create(pfid->pentry, symlink_name, SYMBOLIC_LINK,
 				  &object_attributes, link_content,
-				  &pentry_symlink, NULL);
+				  &pentry_symlink, NULL, NULL, NULL);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&object_attributes);

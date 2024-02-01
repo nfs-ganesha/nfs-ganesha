@@ -394,11 +394,18 @@ out:
  * attributes set on creation will be ignored. The owner and group will be
  * set from the active credentials.
  *
- * @param[in]     dir_hdl   Directory in which to create the directory
- * @param[in]     name      Name of directory to create
- * @param[in]     attrs_in  Attributes to set on newly created object
- * @param[out]    handle    Newly created object
- * @param[in,out] attrs_out Optional attributes for newly created object
+ * @param[in]     dir_hdl               Directory in which to create the
+ *                                      directory
+ * @param[in]     name                  Name of directory to create
+ * @param[in]     attrs_in              Attributes to set on newly created
+ *                                      object
+ * @param[out]    handle                Newly created object
+ * @param[in,out] attrs_out             Optional attributes for newly created
+ *                                      object
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @note On success, @a new_obj has been ref'd
  *
@@ -408,7 +415,9 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name,
 			     struct fsal_attrlist *attrs_in,
 			     struct fsal_obj_handle **handle,
-			     struct fsal_attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out,
+			     struct fsal_attrlist *parent_pre_attrs_out,
+			     struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
 	uint32_t numlinks;

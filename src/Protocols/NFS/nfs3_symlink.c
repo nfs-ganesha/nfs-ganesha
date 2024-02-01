@@ -72,13 +72,17 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	pre_op_attr pre_parent;
 	fsal_status_t fsal_status;
 	int rc = NFS_REQ_OK;
-	struct fsal_attrlist sattr, attrs;
+	struct fsal_attrlist sattr, attrs, parent_pre_attrs, parent_post_attrs;
 	SYMLINK3resfail *resfail = &res->res_symlink3.SYMLINK3res_u.resfail;
 	SYMLINK3resok *resok = &res->res_symlink3.SYMLINK3res_u.resok;
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
+
+	fsal_prepare_attrs(&parent_pre_attrs,
+		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+	fsal_prepare_attrs(&parent_post_attrs, ATTRS_NFS3);
 
 	memset(&sattr, 0, sizeof(sattr));
 
@@ -148,7 +152,8 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Make the symlink */
 	fsal_status = fsal_create(parent_obj, symlink_name, SYMBOLIC_LINK,
-				  &sattr, target_path, &symlink_obj, &attrs);
+				  &sattr, target_path, &symlink_obj, &attrs,
+				  &parent_pre_attrs, &parent_post_attrs);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
@@ -167,10 +172,13 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	resok->obj.handle_follows = TRUE;
 
 	/* Build entry attributes */
+	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
+
 	nfs_SetPostOpAttr(symlink_obj, &resok->obj_attributes, &attrs);
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_obj, &resok->dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
+		&resok->dir_wcc);
 
 	res->res_symlink3.status = NFS3_OK;
 	rc = NFS_REQ_OK;
@@ -179,8 +187,9 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out_fail:
 	res->res_symlink3.status = nfs3_Errno_status(fsal_status);
-
-	nfs_SetWccData(&pre_parent, parent_obj, &resfail->dir_wcc);
+	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
+	nfs_SetWccData(&pre_parent, parent_obj,
+		&parent_post_attrs, &resfail->dir_wcc);
 
 	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
@@ -189,6 +198,8 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Release the attributes. */
 	fsal_release_attrs(&attrs);
+	fsal_release_attrs(&parent_pre_attrs);
+	fsal_release_attrs(&parent_post_attrs);
 
 	/* return references */
 	if (parent_obj)

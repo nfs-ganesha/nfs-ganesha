@@ -122,16 +122,19 @@ fsal_status_t mdcache_close(struct fsal_obj_handle *obj_hdl)
 	return status;
 }
 
-static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
-				       struct state_t *state,
-				       fsal_openflags_t openflags,
-				       enum fsal_create_mode createmode,
-				       const char *name,
-				       struct fsal_attrlist *attrib_set,
-				       struct fsal_attrlist *attrs_out,
-				       fsal_verifier_t verifier,
-				       mdcache_entry_t **new_entry,
-				       bool *caller_perm_check)
+static fsal_status_t mdc_open2_by_name(
+		mdcache_entry_t *mdc_parent,
+		struct state_t *state,
+		fsal_openflags_t openflags,
+		enum fsal_create_mode createmode,
+		const char *name,
+		struct fsal_attrlist *attrib_set,
+		struct fsal_attrlist *attrs_out,
+		fsal_verifier_t verifier,
+		mdcache_entry_t **new_entry,
+		bool *caller_perm_check,
+		struct fsal_attrlist *parent_pre_attrs_out,
+		struct fsal_attrlist *parent_post_attrs_out)
 {
 	fsal_status_t status;
 	bool uncached = createmode >= FSAL_GUARDED;
@@ -190,7 +193,8 @@ static fsal_status_t mdc_open2_by_name(mdcache_entry_t *mdc_parent,
 		status = entry->sub_handle->obj_ops->open2(
 			entry->sub_handle, state, openflags, createmode,
 			NULL, attrib_set, verifier, &sub_handle,
-			attrs_out, caller_perm_check)
+			attrs_out, caller_perm_check, parent_pre_attrs_out,
+			parent_post_attrs_out)
 	       );
 
 	if (FSAL_IS_ERROR(status)) {
@@ -304,16 +308,21 @@ out_unref:
  *
  * @note If the file was created, @a new_obj has been ref'd
  *
- * @param[in] obj_hdl               File to open or parent directory
- * @param[in,out] state             state_t to use for this operation
- * @param[in] openflags             Mode for open
- * @param[in] createmode            Mode for create
- * @param[in] name                  Name for file if being created or opened
- * @param[in] attrs_in              Attributes to set on created file
- * @param[in] verifier              Verifier to use for exclusive create
- * @param[in,out] new_obj           Newly created object
- * @param[in,out] attrs_out         Optional attributes for newly created object
- * @param[in,out] caller_perm_check The caller must do a permission check
+ * @param[in]     obj_hdl               File to open or parent directory
+ * @param[in,out] state                 state_t to use for this operation
+ * @param[in]     openflags             Mode for open
+ * @param[in]     createmode            Mode for create
+ * @param[in]     name                  Name for file if being created or opened
+ * @param[in]     attrs_in              Attributes to set on created file
+ * @param[in]     verifier              Verifier to use for exclusive create
+ * @param[in,out] new_obj               Newly created object
+ * @param[in,out] attrs_out             Optional attributes for newly created
+ *                                      object
+ * @param[in,out] caller_perm_check     The caller must do a permission check
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @return FSAL status.
  */
@@ -327,7 +336,9 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
 			   struct fsal_attrlist *attrs_out,
-			   bool *caller_perm_check)
+			   bool *caller_perm_check,
+			   struct fsal_attrlist *parent_pre_attrs_out,
+			   struct fsal_attrlist *parent_post_attrs_out)
 {
 	mdcache_entry_t *mdc_parent =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
@@ -349,7 +360,9 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 		status = mdc_open2_by_name(mdc_parent, state, openflags,
 					   createmode, name, attrs_in,
 					   attrs_out, verifier, &new_entry,
-					   caller_perm_check);
+					   caller_perm_check,
+					   parent_pre_attrs_out,
+					   parent_post_attrs_out);
 
 		if (status.major == ERR_FSAL_NO_ERROR) {
 			/* Return the newly opened file. */
@@ -382,7 +395,8 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 		status = mdc_parent->sub_handle->obj_ops->open2(
 			mdc_parent->sub_handle, state, openflags, createmode,
 			name, attrs_in, verifier, &sub_handle, &attrs,
-			caller_perm_check)
+			caller_perm_check, parent_pre_attrs_out,
+			parent_post_attrs_out)
 	       );
 
 	if (unlikely(FSAL_IS_ERROR(status))) {

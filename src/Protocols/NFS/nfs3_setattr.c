@@ -170,7 +170,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_setattr3.status = NFS3_OK;
 
 	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_attr, obj, &resok->obj_wcc);
+	nfs_SetWccData(&pre_attr, obj, NULL, &resok->obj_wcc);
 
 	rc = NFS_REQ_OK;
 
@@ -192,7 +192,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out_fail:
 
-	nfs_SetWccData(&pre_attr, obj, &resfail->obj_wcc);
+	nfs_SetWccData(&pre_attr, obj, NULL, &resfail->obj_wcc);
 
 	if (nfs_RetryableError(fsal_status.major)) {
 		/* Drop retryable request. */

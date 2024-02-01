@@ -189,11 +189,14 @@ static fsal_status_t lzfs_fsal_readdir(struct fsal_obj_handle *dir_hdl,
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
-				     const char *name,
-				     struct fsal_attrlist *attrib,
-				     struct fsal_obj_handle **new_obj,
-				     struct fsal_attrlist *attrs_out)
+static fsal_status_t lzfs_fsal_mkdir(
+		struct fsal_obj_handle *dir_hdl,
+		const char *name,
+		struct fsal_attrlist *attrib,
+		struct fsal_obj_handle **new_obj,
+		struct fsal_attrlist *attrs_out,
+		struct fsal_attrlist *parent_pre_attrs_out,
+		struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_dir, *lzfs_obj;
@@ -251,12 +254,15 @@ static fsal_status_t lzfs_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_mknode(struct fsal_obj_handle *dir_hdl,
-				      const char *name,
-				      object_file_type_t nodetype,
-				      struct fsal_attrlist *attrib,
-				      struct fsal_obj_handle **new_obj,
-				      struct fsal_attrlist *attrs_out)
+static fsal_status_t lzfs_fsal_mknode(
+		struct fsal_obj_handle *dir_hdl,
+		const char *name,
+		object_file_type_t nodetype,
+		struct fsal_attrlist *attrib,
+		struct fsal_obj_handle **new_obj,
+		struct fsal_attrlist *attrs_out,
+		struct fsal_attrlist *parent_pre_attrs_out,
+		struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_dir, *lzfs_obj;
@@ -339,12 +345,15 @@ static fsal_status_t lzfs_fsal_mknode(struct fsal_obj_handle *dir_hdl,
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_symlink(struct fsal_obj_handle *dir_hdl,
-				       const char *name,
-				       const char *link_path,
-				       struct fsal_attrlist *attrib,
-				       struct fsal_obj_handle **new_obj,
-				       struct fsal_attrlist *attrs_out)
+static fsal_status_t lzfs_fsal_symlink(
+		struct fsal_obj_handle *dir_hdl,
+		const char *name,
+		const char *link_path,
+		struct fsal_attrlist *attrib,
+		struct fsal_obj_handle **new_obj,
+		struct fsal_attrlist *attrs_out,
+		struct fsal_attrlist *parent_pre_attrs_out,
+		struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_dir, *lzfs_obj;
@@ -885,16 +894,19 @@ static fsal_status_t lzfs_int_open_by_name(struct fsal_obj_handle *obj_hdl,
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_open2(struct fsal_obj_handle *obj_hdl,
-				     struct state_t *state,
-				     fsal_openflags_t openflags,
-				     enum fsal_create_mode createmode,
-				     const char *name,
-				     struct fsal_attrlist *attr_set,
-				     fsal_verifier_t verifier,
-				     struct fsal_obj_handle **new_obj,
-				     struct fsal_attrlist *attrs_out,
-				     bool *caller_perm_check)
+static fsal_status_t lzfs_fsal_open2(
+		struct fsal_obj_handle *obj_hdl,
+		struct state_t *state,
+		fsal_openflags_t openflags,
+		enum fsal_create_mode createmode,
+		const char *name,
+		struct fsal_attrlist *attr_set,
+		fsal_verifier_t verifier,
+		struct fsal_obj_handle **new_obj,
+		struct fsal_attrlist *attrs_out,
+		bool *caller_perm_check,
+		struct fsal_attrlist *parent_pre_attrs_out,
+		struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_obj;

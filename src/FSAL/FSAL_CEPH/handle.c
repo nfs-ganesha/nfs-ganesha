@@ -316,10 +316,16 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
  * MUST include the mode attribute and SHOULD NOT include the owner or
  * group attributes if they are the same as the op_ctx->cred.
  *
- * @param[in]     dir_hdl Directory in which to create the directory
- * @param[in]     name    Name of directory to create
- * @param[in]     attrib  Attributes to set on newly created object
- * @param[out]    new_obj Newly created object
+ * @param[in]     dir_hdl               Directory in which to create the
+ *                                      directory
+ * @param[in]     name                  Name of directory to create
+ * @param[in]     attrib                Attributes to set on newly created
+ *                                      object
+ * @param[out]    new_obj               Newly created object
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @note On success, @a new_obj has been ref'd
  *
@@ -329,7 +335,9 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 				const char *name, struct fsal_attrlist *attrib,
 				struct fsal_obj_handle **new_obj,
-				struct fsal_attrlist *attrs_out)
+				struct fsal_attrlist *attrs_out,
+				struct fsal_attrlist *parent_pre_attrs_out,
+				struct fsal_attrlist *parent_post_attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -439,12 +447,15 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
  *
  * @return FSAL status.
  */
-static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
-				      const char *name,
-				      object_file_type_t nodetype,
-				      struct fsal_attrlist *attrib,
-				      struct fsal_obj_handle **new_obj,
-				      struct fsal_attrlist *attrs_out)
+static fsal_status_t ceph_fsal_mknode(
+		struct fsal_obj_handle *dir_hdl,
+		const char *name,
+		object_file_type_t nodetype,
+		struct fsal_attrlist *attrib,
+		struct fsal_obj_handle **new_obj,
+		struct fsal_attrlist *attrs_out,
+		struct fsal_attrlist *parent_pre_attrs_out,
+		struct fsal_attrlist *parent_post_attrs_out)
 {
 #ifdef USE_FSAL_CEPH_MKNOD
 	/* Generic status return */
@@ -551,11 +562,16 @@ static fsal_status_t ceph_fsal_mknode(struct fsal_obj_handle *dir_hdl,
  * MUST include the mode attribute and SHOULD NOT include the owner or
  * group attributes if they are the same as the op_ctx->cred.
  *
- * @param[in]     dir_hdl   Directory in which to create the object
- * @param[in]     name      Name of object to create
- * @param[in]     link_path Content of symbolic link
- * @param[in]     attrib    Attributes to set on newly created object
- * @param[out]    new_obj   Newly created object
+ * @param[in]     dir_hdl               Directory in which to create the object
+ * @param[in]     name                  Name of object to create
+ * @param[in]     link_path             Content of symbolic link
+ * @param[in]     attrib                Attributes to set on newly created
+ *                                      object
+ * @param[out]    new_obj               Newly created object
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @note On success, @a new_obj has been ref'd
  *
@@ -566,7 +582,9 @@ static fsal_status_t ceph_fsal_symlink(struct fsal_obj_handle *dir_hdl,
 				  const char *name, const char *link_path,
 				  struct fsal_attrlist *attrib,
 				  struct fsal_obj_handle **new_obj,
-				  struct fsal_attrlist *attrs_out)
+				  struct fsal_attrlist *attrs_out,
+				  struct fsal_attrlist *parent_pre_attrs_out,
+				  struct fsal_attrlist *parent_post_attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -1301,15 +1319,19 @@ exit:
  * open. This is because the permission attributes were not available
  * beforehand.
  *
- * @param[in] obj_hdl               File to open or parent directory
- * @param[in,out] state             state_t to use for this operation
- * @param[in] openflags             Mode for open
- * @param[in] createmode            Mode for create
- * @param[in] name                  Name for file if being created or opened
- * @param[in] attrib_set            Attributes to set on created file
- * @param[in] verifier              Verifier to use for exclusive create
- * @param[in,out] new_obj           Newly created object
- * @param[in,out] caller_perm_check The caller must do a permission check
+ * @param[in]     obj_hdl               File to open or parent directory
+ * @param[in,out] state                 state_t to use for this operation
+ * @param[in]     openflags             Mode for open
+ * @param[in]     createmode            Mode for create
+ * @param[in]     name                  Name for file if being created or opened
+ * @param[in]     attrib_set            Attributes to set on created file
+ * @param[in]     verifier              Verifier to use for exclusive create
+ * @param[in,out] new_obj               Newly created object
+ * @param[in,out] caller_perm_check     The caller must do a permission check
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @return FSAL status.
  */
@@ -1323,7 +1345,9 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 				 fsal_verifier_t verifier,
 				 struct fsal_obj_handle **new_obj,
 				 struct fsal_attrlist *attrs_out,
-				 bool *caller_perm_check)
+				 bool *caller_perm_check,
+				 struct fsal_attrlist *parent_pre_attrs_out,
+				 struct fsal_attrlist *parent_post_attrs_out)
 {
 	int posix_flags = 0;
 	int retval = 0;
@@ -1409,7 +1433,9 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 						FSAL_NO_CREATE, NULL, NULL,
 						verifier, new_obj,
 						attrs_out,
-						caller_perm_check);
+						caller_perm_check,
+						parent_pre_attrs_out,
+						parent_post_attrs_out);
 
 		if (FSAL_IS_ERROR(status)) {
 			/* Release the object we found by lookup. */

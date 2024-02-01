@@ -1748,11 +1748,18 @@ struct fsal_obj_ops {
  * as a whole can be expected to fail if the attributes were not able to be
  * fetched.
  *
- * @param[in]     dir_hdl   Directory in which to create the directory
- * @param[in]     name      Name of directory to create
- * @param[in]     attrs_in  Attributes to set on newly created object
- * @param[out]    new_obj   Newly created object
- * @param[in,out] attrs_out Optional attributes for newly created object
+ * @param[in]     dir_hdl               Directory in which to create the
+ *                                      directory
+ * @param[in]     name                  Name of directory to create
+ * @param[in]     attrs_in              Attributes to set on newly created
+ *                                      object
+ * @param[out]    new_obj               Newly created object
+ * @param[in,out] attrs_out             Optional attributes for newly created
+ *                                      object
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @note On success, @a new_obj has been ref'd
  *
@@ -1762,7 +1769,9 @@ struct fsal_obj_ops {
 				const char *name,
 				struct fsal_attrlist *attrs_in,
 				struct fsal_obj_handle **new_obj,
-				struct fsal_attrlist *attrs_out);
+				struct fsal_attrlist *attrs_out,
+				struct fsal_attrlist *parent_pre_attrs_out,
+				struct fsal_attrlist *parent_post_attrs_out);
 
 /**
  * @brief Create a special file
@@ -1791,12 +1800,18 @@ struct fsal_obj_ops {
  * as a whole can be expected to fail if the attributes were not able to be
  * fetched.
  *
- * @param[in]     dir_hdl   Directory in which to create the object
- * @param[in]     name      Name of object to create
- * @param[in]     nodetype  Type of special file to create
- * @param[in]     attrs_in  Attributes to set on newly created object
- * @param[out]    new_obj   Newly created object
- * @param[in,out] attrs_out Optional attributes for newly created object
+ * @param[in]     dir_hdl               Directory in which to create the object
+ * @param[in]     name                  Name of object to create
+ * @param[in]     nodetype              Type of special file to create
+ * @param[in]     attrs_in              Attributes to set on newly created
+ *                                      object
+ * @param[out]    new_obj               Newly created object
+ * @param[in,out] attrs_out             Optional attributes for newly created
+ *                                      object
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @note On success, @a new_obj has been ref'd
  *
@@ -1807,7 +1822,9 @@ struct fsal_obj_ops {
 				 object_file_type_t nodetype,
 				 struct fsal_attrlist *attrs_in,
 				 struct fsal_obj_handle **new_obj,
-				 struct fsal_attrlist *attrs_out);
+				 struct fsal_attrlist *attrs_out,
+				 struct fsal_attrlist *parent_pre_attrs_out,
+				 struct fsal_attrlist *parent_post_attrs_out);
 
 /**
  * @brief Create a symbolic link
@@ -1833,12 +1850,18 @@ struct fsal_obj_ops {
  * as a whole can be expected to fail if the attributes were not able to be
  * fetched.
  *
- * @param[in]     dir_hdl   Directory in which to create the object
- * @param[in]     name      Name of object to create
- * @param[in]     link_path Content of symbolic link
- * @param[in]     attrs_in  Attributes to set on newly created object
- * @param[out]    new_obj   Newly created object
- * @param[in,out] attrs_out Optional attributes for newly created object
+ * @param[in]     dir_hdl               Directory in which to create the object
+ * @param[in]     name                  Name of object to create
+ * @param[in]     link_path             Content of symbolic link
+ * @param[in]     attrs_in              Attributes to set on newly created
+ *                                      object
+ * @param[out]    new_obj               Newly created object
+ * @param[in,out] attrs_out             Optional attributes for newly created
+ *                                      object
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @note On success, @a new_obj has been ref'd
  *
@@ -1849,7 +1872,9 @@ struct fsal_obj_ops {
 				  const char *link_path,
 				  struct fsal_attrlist *attrs_in,
 				  struct fsal_obj_handle **new_obj,
-				  struct fsal_attrlist *attrs_out);
+				  struct fsal_attrlist *attrs_out,
+				  struct fsal_attrlist *parent_pre_attrs_out,
+				  struct fsal_attrlist *parent_post_attrs_out);
 /**@}*/
 
 /**@{*/
@@ -2457,16 +2482,21 @@ struct fsal_obj_ops {
  *
  * @note If the file was created, @a new_obj has been ref'd
  *
- * @param[in] obj_hdl               File to open or parent directory
- * @param[in,out] state             state_t to use for this operation
- * @param[in] openflags             Mode for open
- * @param[in] createmode            Mode for create
- * @param[in] name                  Name for file if being created or opened
- * @param[in] attrs_in              Attributes to set on created file
- * @param[in] verifier              Verifier to use for exclusive create
- * @param[in,out] new_obj           Newly created object
- * @param[in,out] attrs_out         Optional attributes for newly created object
- * @param[in,out] caller_perm_check The caller must do a permission check
+ * @param[in] obj_hdl                   File to open or parent directory
+ * @param[in,out] state                 state_t to use for this operation
+ * @param[in]     openflags             Mode for open
+ * @param[in]     createmode            Mode for create
+ * @param[in]     name                  Name for file if being created or opened
+ * @param[in]     attrs_in              Attributes to set on created file
+ * @param[in]     verifier              Verifier to use for exclusive create
+ * @param[in,out] new_obj               Newly created object
+ * @param[in,out] attrs_out             Optional attributes for newly created
+ *                                      object
+ * @param[in,out] caller_perm_check     The caller must do a permission check
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @return FSAL status.
  */
@@ -2479,7 +2509,9 @@ struct fsal_obj_ops {
 				fsal_verifier_t verifier,
 				struct fsal_obj_handle **new_obj,
 				struct fsal_attrlist *attrs_out,
-				bool *caller_perm_check);
+				bool *caller_perm_check,
+				struct fsal_attrlist *parent_pre_attrs_out,
+				struct fsal_attrlist *parent_post_attrs_out);
 
 /**
  * @brief Check the exclusive create verifier for a file.

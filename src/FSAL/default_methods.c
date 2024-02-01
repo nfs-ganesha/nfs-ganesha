@@ -869,7 +869,9 @@ int dirent_cmp(struct fsal_obj_handle *parent,
 static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 			     const char *name, struct fsal_attrlist *attrib,
 			     struct fsal_obj_handle **handle,
-			     struct fsal_attrlist *attrs_out)
+			     struct fsal_attrlist *attrs_out,
+			     struct fsal_attrlist *parent_pre_attrs_out,
+			     struct fsal_attrlist *parent_post_attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -884,7 +886,9 @@ static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
 			      const char *name, object_file_type_t nodetype,
 			      struct fsal_attrlist *attrib,
 			      struct fsal_obj_handle **handle,
-			      struct fsal_attrlist *attrs_out)
+			      struct fsal_attrlist *attrs_out,
+			      struct fsal_attrlist *parent_pre_attrs_out,
+			      struct fsal_attrlist *parent_post_attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -899,7 +903,9 @@ static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
 				 const char *name, const char *link_path,
 				 struct fsal_attrlist *attrib,
 				 struct fsal_obj_handle **handle,
-				 struct fsal_attrlist *attrs_out)
+				 struct fsal_attrlist *attrs_out,
+				 struct fsal_attrlist *parent_pre_attrs_out,
+				 struct fsal_attrlist *parent_post_attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");
@@ -1292,7 +1298,9 @@ static fsal_status_t open2(struct fsal_obj_handle *obj_hdl,
 			   fsal_verifier_t verifier,
 			   struct fsal_obj_handle **new_obj,
 			   struct fsal_attrlist *attrs_out,
-			   bool *caller_perm_check)
+			   bool *caller_perm_check,
+			   struct fsal_attrlist *parent_pre_attrs_out,
+			   struct fsal_attrlist *parent_post_attrs_out)
 {
 	LogCrit(COMPONENT_FSAL,
 		"Invoking unsupported FSAL operation");

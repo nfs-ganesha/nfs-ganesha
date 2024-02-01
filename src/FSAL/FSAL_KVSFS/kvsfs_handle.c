@@ -316,7 +316,9 @@ static fsal_status_t kvsfs_mkdir(struct fsal_obj_handle *dir_hdl,
 				const char *name,
 				struct fsal_attrlist *attrib,
 				struct fsal_obj_handle **handle,
-				struct fsal_attrlist *attrs_out)
+				struct fsal_attrlist *attrs_out,
+				struct fsal_attrlist *parent_pre_attrs_out,
+				struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct kvsfs_fsal_obj_handle *myself, *hdl;
 	int retval = 0;
@@ -369,7 +371,9 @@ static fsal_status_t kvsfs_makenode(struct fsal_obj_handle *dir_hdl,
 				   object_file_type_t nodetype,	/* IN */
 				   struct fsal_attrlist *attrib,
 				   struct fsal_obj_handle **handle,
-				   struct fsal_attrlist *attrsout)
+				   struct fsal_attrlist *attrsout,
+				   struct fsal_attrlist *parent_pre_attrs_out,
+				   struct fsal_attrlist *parent_post_attrs_out)
 {
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
 }
@@ -409,11 +413,14 @@ static fsal_status_t kvsfs_merge(struct fsal_obj_handle *orig_hdl,
  */
 
 
-static fsal_status_t kvsfs_makesymlink(struct fsal_obj_handle *dir_hdl,
-				      const char *name, const char *link_path,
-				      struct fsal_attrlist *attrib,
-				      struct fsal_obj_handle **handle,
-				      struct fsal_attrlist *attrsout)
+static fsal_status_t kvsfs_makesymlink(
+		struct fsal_obj_handle *dir_hdl,
+		const char *name, const char *link_path,
+		struct fsal_attrlist *attrib,
+		struct fsal_obj_handle **handle,
+		struct fsal_attrlist *attrsout,
+		struct fsal_attrlist *parent_pre_attrs_out,
+		struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct kvsfs_fsal_obj_handle *myself, *hdl;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
@@ -517,7 +524,9 @@ static fsal_status_t kvsfs_readsymlink(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t kvsfs_linkfile(struct fsal_obj_handle *obj_hdl,
 				   struct fsal_obj_handle *destdir_hdl,
-				   const char *name)
+				   const char *name,
+				   struct fsal_attrlist *destdir_pre_attrs_out,
+				   struct fsal_attrlist *destdir_post_attrs_out)
 {
 	struct kvsfs_fsal_obj_handle *myself, *destdir;
 	int retval = 0;

@@ -138,7 +138,9 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 			  fsal_verifier_t verifier,
 			  struct fsal_obj_handle **new_obj,
 			  struct fsal_attrlist *attrs_out,
-			  bool *caller_perm_check);
+			  bool *caller_perm_check,
+			  struct fsal_attrlist *parent_pre_attrs_out,
+			  struct fsal_attrlist *parent_post_attrs_out);
 fsal_openflags_t kvsfs_status2(struct fsal_obj_handle *obj_hdl,
 			       struct state_t *state);
 fsal_status_t kvsfs_reopen2(struct fsal_obj_handle *obj_hdl,

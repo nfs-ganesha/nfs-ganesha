@@ -70,14 +70,17 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 
 	struct fsal_obj_handle *obj_parent = NULL;
 	struct fsal_obj_handle *obj_new = NULL;
-	struct fsal_attrlist sattr;
+	struct fsal_attrlist sattr, parent_pre_attrs, parent_post_attrs;
 	int convrc = 0;
 	char *link_content = NULL;
 	struct fsal_export *exp_hdl;
 	fsal_status_t fsal_status;
 	object_file_type_t type;
+	bool is_parent_pre_attrs_valid, is_parent_post_attrs_valid;
 
 	memset(&sattr, 0, sizeof(sattr));
+	fsal_prepare_attrs(&parent_pre_attrs, ATTR_CHANGE);
+	fsal_prepare_attrs(&parent_post_attrs, ATTR_CHANGE);
 
 	resp->resop = NFS4_OP_CREATE;
 	res_CREATE4->status = NFS4_OK;
@@ -238,7 +241,9 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 				  &sattr,
 				  link_content,
 				  &obj_new,
-				  NULL);
+				  NULL,
+				  &parent_pre_attrs,
+				  &parent_post_attrs);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
@@ -274,11 +279,26 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	       0,
 	       sizeof(changeid4));
 
-	res_CREATE4->CREATE4res_u.resok4.cinfo.after =
-		fsal_get_changeid4(obj_parent);
+	is_parent_pre_attrs_valid =
+		FSAL_TEST_MASK(parent_pre_attrs.valid_mask, ATTR_CHANGE);
+	if (is_parent_pre_attrs_valid) {
+		res_CREATE4->CREATE4res_u.resok4.cinfo.before =
+			(changeid4) parent_pre_attrs.change;
+	}
 
-	/* Operation is supposed to be atomic .... */
-	res_CREATE4->CREATE4res_u.resok4.cinfo.atomic = FALSE;
+	is_parent_post_attrs_valid =
+		FSAL_TEST_MASK(parent_post_attrs.valid_mask, ATTR_CHANGE);
+	if (is_parent_post_attrs_valid) {
+		res_CREATE4->CREATE4res_u.resok4.cinfo.after =
+			(changeid4) parent_post_attrs.change;
+	} else {
+		res_CREATE4->CREATE4res_u.resok4.cinfo.after =
+		fsal_get_changeid4(obj_parent);
+	}
+
+	res_CREATE4->CREATE4res_u.resok4.cinfo.atomic =
+		is_parent_pre_attrs_valid && is_parent_post_attrs_valid ?
+		TRUE : FALSE;
 
 	LogFullDebug(COMPONENT_NFS_V4,
 		     "CREATE CINFO before = %" PRIu64 "  after = %" PRIu64
@@ -296,6 +316,8 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	res_CREATE4->status = NFS4_OK;
 
  out:
+	fsal_release_attrs(&parent_pre_attrs);
+	fsal_release_attrs(&parent_post_attrs);
 
 	if (obj_new) {
 		/* Put our ref */

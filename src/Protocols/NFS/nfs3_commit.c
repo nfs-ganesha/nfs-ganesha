@@ -93,14 +93,14 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_commit3.status = nfs3_Errno_status(fsal_status);
 
-		nfs_SetWccData(NULL, obj,
+		nfs_SetWccData(NULL, obj, NULL,
 			       &res->res_commit3.COMMIT3res_u.resfail.file_wcc);
 
 		rc = NFS_REQ_OK;
 		goto out;
 	}
 
-	nfs_SetWccData(NULL, obj,
+	nfs_SetWccData(NULL, obj, NULL,
 		       &(res->res_commit3.COMMIT3res_u.resok.file_wcc));
 
 	/* Set the write verifier */

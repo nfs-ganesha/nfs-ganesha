@@ -265,7 +265,7 @@ retry:
 	sattr.mode = 0755;
 
 	fsal_status = fsal_create(state->obj, name, DIRECTORY, &sattr, NULL,
-				  &new_node, NULL);
+				  &new_node, NULL, NULL, NULL);
 
 	/* Release the attributes (may release an inherited ACL - which
 	 * FSAL_PSEUDO doesn't have...) */

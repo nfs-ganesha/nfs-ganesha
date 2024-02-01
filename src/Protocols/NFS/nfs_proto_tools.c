@@ -81,7 +81,7 @@ void nfs_SetPostOpAttr(struct fsal_obj_handle *obj,
 {
 	struct fsal_attrlist attr_buf, *pattrs = attrs;
 
-	if (attrs == NULL) {
+	if (attrs == NULL || ((attrs->valid_mask & ATTRS_NFS3) != ATTRS_NFS3)) {
 		pattrs = &attr_buf;
 		fsal_prepare_attrs(pattrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
@@ -106,6 +106,35 @@ void nfs_SetPostOpAttr(struct fsal_obj_handle *obj,
  * This function Converts FSAL Attributes to NFSv3 PreOp Attributes
  * structure.
  *
+ * @param[in]  fsal_attrs   FSAL attributes
+ * @param[out] out_pre_attr  NFSv3 PreOp structure attributes.
+ */
+
+void nfs_PreOpAttrFromFsalAttr(struct fsal_attrlist *fsal_attrs,
+			       pre_op_attr *out_pre_attr)
+{
+	if (FSAL_TEST_MASK(fsal_attrs->valid_mask,
+		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME)) {
+			out_pre_attr->pre_op_attr_u.attributes.size =
+		fsal_attrs->filesize;
+		out_pre_attr->pre_op_attr_u.attributes.mtime.tv_sec =
+			fsal_attrs->mtime.tv_sec;
+		out_pre_attr->pre_op_attr_u.attributes.mtime.tv_nsec =
+			fsal_attrs->mtime.tv_nsec;
+		out_pre_attr->pre_op_attr_u.attributes.ctime.tv_sec =
+			fsal_attrs->ctime.tv_sec;
+		out_pre_attr->pre_op_attr_u.attributes.ctime.tv_nsec =
+			fsal_attrs->ctime.tv_nsec;
+		out_pre_attr->attributes_follow = TRUE;
+	}
+}
+
+/**
+ * @brief Get NFSv3 PreOp Attributes structure.
+ *
+ * This function gets FSAL Attributes for object and converts it to NFSv3
+ * PreOp Attributes structure.
+ *
  * @param[in]  obj   FSAL object
  * @param[out] attr  NFSv3 PreOp structure attributes.
  */
@@ -122,17 +151,7 @@ void nfs_SetPreOpAttr(struct fsal_obj_handle *obj, pre_op_attr *attr)
 	if (FSAL_IS_ERROR(status))
 		attr->attributes_follow = false;
 	else {
-		attr->pre_op_attr_u.attributes.size =
-		    attrs.filesize;
-		attr->pre_op_attr_u.attributes.mtime.tv_sec =
-		    attrs.mtime.tv_sec;
-		attr->pre_op_attr_u.attributes.mtime.tv_nsec =
-		    attrs.mtime.tv_nsec;
-		attr->pre_op_attr_u.attributes.ctime.tv_sec =
-		    attrs.ctime.tv_sec;
-		attr->pre_op_attr_u.attributes.ctime.tv_nsec =
-		    attrs.ctime.tv_nsec;
-		attr->attributes_follow = TRUE;
+		nfs_PreOpAttrFromFsalAttr(&attrs, attr);
 	}
 
 	fsal_release_attrs(&attrs);
@@ -145,11 +164,13 @@ void nfs_SetPreOpAttr(struct fsal_obj_handle *obj, pre_op_attr *attr)
  *
  * @param[in]  before_attr Pre-op attrs for before state
  * @param[in]  obj         The FSAL object after operation
+ * @param[in]  post_attrs  Optional post attrs
  * @param[out] wcc_data    the Weak Cache Coherency structure
  *
  */
 void nfs_SetWccData(const struct pre_op_attr *before_attr,
 		    struct fsal_obj_handle *obj,
+		    struct fsal_attrlist *post_attrs,
 		    wcc_data *wcc_data)
 {
 	if (before_attr == NULL)
@@ -158,7 +179,7 @@ void nfs_SetWccData(const struct pre_op_attr *before_attr,
 		wcc_data->before = *before_attr;
 
 	/* Build directory post operation attributes */
-	nfs_SetPostOpAttr(obj, &wcc_data->after, NULL);
+	nfs_SetPostOpAttr(obj, &wcc_data->after, post_attrs);
 }				/* nfs_SetWccData */
 #endif /* _USE_NFS3 */
 

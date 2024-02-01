@@ -320,7 +320,9 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 			  struct fsal_attrlist *attrs,
 			  const char *link_content,
 			  struct fsal_obj_handle **obj,
-			  struct fsal_attrlist *attrs_out);
+			  struct fsal_attrlist *attrs_out,
+			  struct fsal_attrlist *parent_pre_attrs_out,
+			  struct fsal_attrlist *parent_post_attrs_out);
 void fsal_create_set_verifier(struct fsal_attrlist *sattr, uint32_t verf_hi,
 			      uint32_t verf_lo);
 bool fsal_create_verify(struct fsal_obj_handle *obj, uint32_t verf_hi,
@@ -343,7 +345,9 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 			 struct fsal_attrlist *attr,
 			 fsal_verifier_t verifier,
 			 struct fsal_obj_handle **obj,
-			 struct fsal_attrlist *attrs_out);
+			 struct fsal_attrlist *attrs_out,
+			 struct fsal_attrlist *parent_pre_attrs_out,
+			 struct fsal_attrlist *parent_post_attrs_out);
 fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
 			   struct state_t *state,
 			   fsal_openflags_t openflags,
