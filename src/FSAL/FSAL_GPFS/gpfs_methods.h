@@ -66,27 +66,8 @@ struct gpfs_fsal_export {
 struct gpfs_filesystem {
 	struct fsal_filesystem *fs;
 	int root_fd;
-	struct glist_head exports;
 	bool stop_thread;
 	pthread_t up_thread; /* upcall thread */
-
-	/* we have an upcall thread for each file system. We use upvector_mutex
-	 * to get an export from the list of exports in a file system. The
-	 * following up_vector points to up_ops in such an export.
-	 */
-	pthread_mutex_t upvector_mutex;
-	struct fsal_up_vector *up_vector;
-};
-
-/*
- * Link GPFS file systems and exports
- * Supports a many-to-many relationship
- */
-struct gpfs_filesystem_export_map {
-	struct gpfs_fsal_export *exp;
-	struct gpfs_filesystem *fs;
-	struct glist_head on_exports;
-	struct glist_head on_filesystems;
 };
 
 void gpfs_extract_fsid(struct gpfs_file_handle *fh, struct fsal_fsid__ *fsid);
