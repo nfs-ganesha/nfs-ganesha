@@ -81,6 +81,21 @@ struct fsal_filesystem {
 					    bits when storing verifier. */
 };
 
+/*
+ * Link fsal_filesystems and fsal_exports
+ * Supports a many-to-many relationship
+ */
+struct fsal_filesystem_export_map {
+	struct fsal_filesystem_export_map *parent_map;
+	struct fsal_export *exp;
+	struct fsal_filesystem *fs;
+	struct glist_head child_maps;
+	struct glist_head on_parent;
+	struct glist_head on_exports;
+	struct glist_head on_filesystems;
+	enum claim_type claim_type;
+};
+
 int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat);
 
 static inline int fsal_fs_compare_fsid(enum fsid_type left_fsid_type,
@@ -185,6 +200,10 @@ bool is_filesystem_exported(struct fsal_filesystem *fs,
 			    struct fsal_export *exp);
 
 void unclaim_all_export_maps(struct fsal_export *exp);
+
+void get_fs_first_export_ref(struct fsal_filesystem *this,
+			     struct gsh_export **gsh_export,
+			     struct fsal_export **fsal_export);
 
 #ifdef USE_DBUS
 void dbus_cache_init(void);

@@ -106,6 +106,7 @@
   FSAL_encode_v4_multipath;
   fsetxattr;
   getfhat;
+  get_fs_first_export_ref;
   get_gsh_export;
   get_optional_attrs;
   general_fridge;

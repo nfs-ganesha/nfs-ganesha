@@ -3103,21 +3103,6 @@ struct fsal_export {
 				by  fsal_export_init */
 };
 
-/*
- * Link fsal_filesystems and fsal_exports
- * Supports a many-to-many relationship
- */
-struct fsal_filesystem_export_map {
-	struct fsal_filesystem_export_map *parent_map;
-	struct fsal_export *exp;
-	struct fsal_filesystem *fs;
-	struct glist_head child_maps;
-	struct glist_head on_parent;
-	struct glist_head on_exports;
-	struct glist_head on_filesystems;
-	enum claim_type claim_type;
-};
-
 /**
  * @brief Public structure for filesystem objects
  *
