@@ -1311,6 +1311,30 @@ void unclaim_all_filesystem_maps(struct fsal_filesystem *this)
 	}
 }
 
+void get_fs_first_export_ref(struct fsal_filesystem *this,
+			     struct gsh_export **gsh_export,
+			     struct fsal_export **fsal_export)
+{
+	struct fsal_filesystem_export_map *map;
+
+	PTHREAD_RWLOCK_wrlock(&fs_lock);
+
+	map = glist_first_entry(&this->exports,
+				struct fsal_filesystem_export_map,
+				on_exports);
+
+	if (map != NULL) {
+		*fsal_export = map->exp;
+		*gsh_export = (*fsal_export)->owning_export;
+		get_gsh_export_ref(*gsh_export);
+	} else {
+		*gsh_export = NULL;
+		*fsal_export = NULL;
+	}
+
+	PTHREAD_RWLOCK_unlock(&fs_lock);
+}
+
 void unclaim_all_export_maps(struct fsal_export *exp)
 {
 	PTHREAD_RWLOCK_wrlock(&fs_lock);
