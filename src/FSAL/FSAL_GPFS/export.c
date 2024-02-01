@@ -409,7 +409,7 @@ static void free_gpfs_filesystem(struct gpfs_filesystem *gpfs_fs)
 {
 	if (gpfs_fs->root_fd >= 0)
 		close(gpfs_fs->root_fd);
-	PTHREAD_MUTEX_destroy(&gpfs_fs->upvector_mutex);
+
 	gsh_free(gpfs_fs);
 }
 
@@ -490,11 +490,13 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 			  struct fsal_export *exp,
 			  void **private_data)
 {
-	struct gpfs_filesystem *gpfs_fs;
+	struct gpfs_filesystem *gpfs_fs = NULL;
 	int retval;
-	struct gpfs_filesystem_export_map *map;
 	pthread_attr_t attr_thr;
 	int rc;
+	struct gpfs_fsal_export *myself;
+
+	LogFilesystem("GPFS CLAIM FS", "", fs);
 
 	if (strcmp(fs->type, "gpfs") != 0) {
 		LogEvent(COMPONENT_FSAL,
@@ -502,32 +504,11 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 		return ENXIO;
 	}
 
-	gpfs_fs = *private_data;
+	myself = container_of(exp, struct gpfs_fsal_export, export);
 
-	if (gpfs_fs == NULL) { /* first export by GPFS */
-		gpfs_fs = gsh_calloc(1, sizeof(*gpfs_fs));
-		glist_init(&gpfs_fs->exports);
-		gpfs_fs->root_fd = -1;
-		gpfs_fs->fs = fs;
-		PTHREAD_MUTEX_init(&gpfs_fs->upvector_mutex, NULL);
-	}
+	myself->export_fd = open(CTX_FULLPATH(op_ctx), O_RDONLY | O_DIRECTORY);
 
-	/* Now map the file system and export */
-	map = gsh_calloc(1, sizeof(*map));
-	map->fs = gpfs_fs;
-	map->exp = container_of(exp, struct gpfs_fsal_export, export);
-
-	PTHREAD_MUTEX_lock(&gpfs_fs->upvector_mutex);
-
-	glist_add_tail(&gpfs_fs->exports, &map->on_exports);
-	glist_add_tail(&map->exp->filesystems, &map->on_filesystems);
-
-	PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
-
-	map->exp->export_fd = open(CTX_FULLPATH(op_ctx),
-				   O_RDONLY | O_DIRECTORY);
-
-	if (map->exp->export_fd < 0) {
+	if (myself->export_fd < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
 			"Could not open GPFS export point %s: rc = %s (%d)",
@@ -535,19 +516,28 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 		goto errout;
 	}
 
-	LogFullDebug(COMPONENT_FSAL, "export_fd %d path %s",
-			map->exp->export_fd, CTX_FULLPATH(op_ctx));
-
-	/* We have set up the export. If the file system is already claimed,
-	 * we are done.
-	 */
 	if (*private_data != NULL) {
-		/* file system was already claimed, nothing more to do. */
+		/* Already claimed, and private_data is already set, nothing to
+		 * do here.
+		 */
+		LogDebug(COMPONENT_FSAL,
+			 "file system %s is already claimed with fd %d private_data %p",
+			 fs->path, (int) (long) *private_data, *private_data);
 		return 0;
 	}
 
+	/* first export by GPFS */
+	gpfs_fs = gsh_calloc(1, sizeof(*gpfs_fs));
+	gpfs_fs->root_fd = -1;
+	gpfs_fs->fs = fs;
+
+	LogFullDebug(COMPONENT_FSAL,
+		     "export_fd %d path %s",
+		     myself->export_fd, CTX_FULLPATH(op_ctx));
+
 	/* Get an fd for the root and create an upcall thread */
 	retval = open_root_fd(gpfs_fs);
+
 	if (retval != 0) {
 		if (retval == ENOTTY) {
 			LogInfo(COMPONENT_FSAL,
@@ -584,16 +574,12 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 
 errout:
 
-	if (map->exp->export_fd >= 0) {
-		close(map->exp->export_fd);
-		map->exp->export_fd = -1;
+	if (myself->export_fd >= 0) {
+		close(myself->export_fd);
+		myself->export_fd = -1;
 	}
-	PTHREAD_MUTEX_lock(&gpfs_fs->upvector_mutex);
-	glist_del(&map->on_filesystems);
-	glist_del(&map->on_exports);
-	PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
-	gsh_free(map);
-	if (!fs->private_data)
+
+	if (gpfs_fs != NULL)
 		free_gpfs_filesystem(gpfs_fs);
 
 	return retval;
@@ -606,32 +592,11 @@ errout:
 void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 {
 	struct gpfs_filesystem *gpfs_fs = fs->private_data;
-	struct glist_head *glist, *glistn;
-	struct gpfs_filesystem_export_map *map;
 	struct callback_arg callback = {0};
 	int reason = THREAD_STOP;
 
 	if (gpfs_fs == NULL)
 		goto out;
-
-	glist_for_each_safe(glist, glistn, &gpfs_fs->exports) {
-		map = glist_entry(glist, struct gpfs_filesystem_export_map,
-				  on_exports);
-
-		/* Remove this file system from mapping */
-		PTHREAD_MUTEX_lock(&map->fs->upvector_mutex);
-		glist_del(&map->on_filesystems);
-		glist_del(&map->on_exports);
-		PTHREAD_MUTEX_unlock(&map->fs->upvector_mutex);
-
-		if (map->exp->root_fs == fs)
-			LogInfo(COMPONENT_FSAL,
-				"Removing root_fs %s from GPFS export",
-				fs->path);
-
-		/* And free it */
-		gsh_free(map);
-	}
 
 	/* Terminate GPFS upcall thread */
 	callback.mountdirfd = gpfs_fs->root_fd;

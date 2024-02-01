@@ -35,24 +35,6 @@
 #include <urcu-bp.h>
 #include "FSAL/fsal_localfs.h"
 
-/* Setup up_vector. File system's upvector_mutex must be held */
-static bool setup_up_vector(struct gpfs_filesystem *gpfs_fs)
-{
-	struct gpfs_filesystem_export_map *map;
-
-	map = glist_first_entry(&gpfs_fs->exports,
-				struct gpfs_filesystem_export_map, on_exports);
-	if (!map)
-		return false;
-
-	gpfs_fs->up_vector = (struct fsal_up_vector *)map->exp->export.up_ops;
-
-	/* wait for upcall readiness */
-	up_ready_wait(gpfs_fs->up_vector);
-
-	return true;
-}
-
 /**
  * @brief Up Thread
  *
@@ -62,7 +44,7 @@ static bool setup_up_vector(struct gpfs_filesystem *gpfs_fs)
 void *GPFSFSAL_UP_Thread(void *Arg)
 {
 	struct gpfs_filesystem *gpfs_fs = Arg;
-	struct fsal_up_vector *event_func;
+	const struct fsal_up_vector *event_func;
 	char thr_name[16];
 	int rc = 0;
 	struct pnfs_deviceid devid;
@@ -80,6 +62,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	int errsv = 0;
 	fsal_status_t fsal_status = {0,};
 	struct req_op_context op_context;
+	struct gsh_export *gsh_export;
+	struct fsal_export *fsal_export;
 
 	rcu_register_thread();
 
@@ -215,25 +199,25 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		LogDebug(COMPONENT_FSAL_UP, "Received event to process for %d",
 			 gpfs_fs->root_fd);
 
-		/* We need valid up_vector while processing some of the
-		 * events below. Setup up vector and hold the mutex while
-		 * processing the event for the entire duration.
-		 */
-		PTHREAD_MUTEX_lock(&gpfs_fs->upvector_mutex);
-		if (!setup_up_vector(gpfs_fs)) {
-			PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
-			goto out;
-		}
-
-		/* Get a ref to the gpfs_fs->up_vector->up_gsh_export and
+		/* Get a ref to the first export from the fsal_fs and
 		 * initialize op_context for the thread.
 		 */
-		get_gsh_export_ref(gpfs_fs->up_vector->up_gsh_export);
-		init_op_context_simple(&op_context,
-				       gpfs_fs->up_vector->up_gsh_export,
-				       gpfs_fs->up_vector->up_fsal_export);
+		get_fs_first_export_ref(gpfs_fs->fs, &gsh_export, &fsal_export);
 
-		event_func = gpfs_fs->up_vector;
+		if (gsh_export == NULL || fsal_export == NULL) {
+			/* @todo: not quite sure what to do here...
+			 * Oops, something went wrong.
+			 */
+			LogCrit(COMPONENT_FSAL_UP,
+				"No export for filesystem %s",
+				gpfs_fs->fs->path);
+			continue;
+		}
+
+		init_op_context_simple(&op_context, gsh_export, fsal_export);
+
+		/* Fetch the up vector */
+		event_func = fsal_export->up_ops;
 
 		switch (reason) {
 		case INODE_LOCK_GRANTED:	/* Lock Event */
@@ -455,7 +439,6 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				"Terminating the GPFS up call thread for %d",
 				gpfs_fs->root_fd);
 			release_op_context();
-			PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 			goto out;
 
 		case INODE_INVALIDATE:
@@ -477,18 +460,15 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			 * thread.
 			 */
 			release_op_context();
-			PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 			continue; /* get next event */
 
 		default:
 			release_op_context();
-			PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 			LogWarn(COMPONENT_FSAL_UP, "Unknown event: %d", reason);
 			continue;
 		}
 
 		release_op_context();
-		PTHREAD_MUTEX_unlock(&gpfs_fs->upvector_mutex);
 
 		if (FSAL_IS_ERROR(fsal_status) &&
 		    fsal_status.major != ERR_FSAL_NOENT) {
