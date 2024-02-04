@@ -363,7 +363,6 @@ void Cleanup(void)
 
 void Fatal(void)
 {
-	Cleanup();
 	_exit(2);
 }
 
