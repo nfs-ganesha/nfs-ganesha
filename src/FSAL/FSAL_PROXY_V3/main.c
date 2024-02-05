@@ -1205,7 +1205,9 @@ proxyv3_symlink(struct fsal_obj_handle *dir_hdl,
 static fsal_status_t
 proxyv3_hardlink(struct fsal_obj_handle *obj_hdl,
 		 struct fsal_obj_handle *dir_hdl,
-		 const char *name)
+		 const char *name,
+		 struct fsal_attrlist *destdir_pre_attrs_out,
+		 struct fsal_attrlist *destdir_post_attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "(hard)link of object %p to %p/%s",
@@ -2125,7 +2127,9 @@ proxyv3_commit2(struct fsal_obj_handle *obj_hdl,
 static fsal_status_t
 proxyv3_unlink(struct fsal_obj_handle *dir_hdl,
 	       struct fsal_obj_handle *obj_hdl,
-	       const char *name)
+	       const char *name,
+	       struct fsal_attrlist *parent_pre_attrs_out,
+	       struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct proxyv3_obj_handle *dir =
 		container_of(dir_hdl, struct proxyv3_obj_handle, obj);
@@ -2217,7 +2221,11 @@ proxyv3_rename(struct fsal_obj_handle *obj_hdl,
 	       struct fsal_obj_handle *olddir_hdl,
 	       const char *old_name,
 	       struct fsal_obj_handle *newdir_hdl,
-	       const char *new_name)
+	       const char *new_name,
+	       struct fsal_attrlist *olddir_pre_attrs_out,
+	       struct fsal_attrlist *olddir_post_attrs_out,
+	       struct fsal_attrlist *newdir_pre_attrs_out,
+	       struct fsal_attrlist *newdir_post_attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "Rename of obj %p which is at %p/%s => %p/%s",

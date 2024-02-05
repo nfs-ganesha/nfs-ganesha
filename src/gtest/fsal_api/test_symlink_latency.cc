@@ -146,7 +146,7 @@ TEST_F(SymlinkEmptyLatencyTest, SIMPLE)
   lookup->obj_ops->put_ref(lookup);
 
   /* Remove symlink created while running test */
-  status = fsal_remove(root_entry, TEST_ROOT_LINK);
+  status = fsal_remove(root_entry, TEST_ROOT_LINK, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -183,7 +183,7 @@ TEST_F(SymlinkEmptyLatencyTest, SIMPLE_BYPASS)
   lookup->obj_ops->put_ref(lookup);
 
   /* Remove symlink created while running test */
-  status = fsal_remove(root_entry, TEST_ROOT_LINK);
+  status = fsal_remove(root_entry, TEST_ROOT_LINK, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -214,7 +214,7 @@ TEST_F(SymlinkEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "s-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(root_entry, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -246,7 +246,7 @@ TEST_F(SymlinkEmptyLatencyTest, FSALCREATE)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "s-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(root_entry, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -278,7 +278,7 @@ TEST_F(SymlinkFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "s-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(root_entry, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -317,7 +317,7 @@ TEST_F(SymlinkFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "s-%08x", i);
 
-    status = fsal_remove(root_entry, fname);
+    status = fsal_remove(root_entry, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }

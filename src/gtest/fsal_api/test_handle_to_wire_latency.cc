@@ -86,7 +86,7 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = fsal_remove(test_root, TEST_FILE);
+      status = fsal_remove(test_root, TEST_FILE, NULL, NULL);
       EXPECT_EQ(status.major, 0);
       test_file->obj_ops->put_ref(test_file);
       test_file = NULL;

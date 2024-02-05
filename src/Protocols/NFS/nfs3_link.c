@@ -100,11 +100,16 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_obj_handle *parent_obj = NULL;
 	pre_op_attr pre_parent = {0};
 	fsal_status_t fsal_status = {0, 0};
+	struct fsal_attrlist destdir_pre_attrs, destdir_post_attrs;
 	int rc = NFS_REQ_OK;
 
 	LogNFS3_Operation2(COMPONENT_NFSPROTO, req,
 			   &l3_arg->file, NULL,
 			   &l3_arg->link.dir, link_name);
+
+	fsal_prepare_attrs(&destdir_pre_attrs,
+		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+	fsal_prepare_attrs(&destdir_post_attrs, ATTRS_NFS3);
 
 	/* to avoid setting it on each error case */
 	l3_res->LINK3res_u.resfail.file_attributes.attributes_follow = FALSE;
@@ -138,7 +143,8 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	fsal_status = fsal_link(target_obj, parent_obj, link_name);
+	fsal_status = fsal_link(target_obj, parent_obj, link_name,
+		&destdir_pre_attrs, &destdir_post_attrs);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		/* If we are here, there was an error */
@@ -152,23 +158,30 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 
 		l3_res->status = nfs3_Errno_status(fsal_status);
+		nfs_PreOpAttrFromFsalAttr(&destdir_pre_attrs, &pre_parent);
+
 		nfs_SetPostOpAttr(target_obj,
 				  &l3_res->LINK3res_u.resfail.file_attributes,
 				  NULL);
 
-		nfs_SetWccData(&pre_parent, parent_obj, NULL,
+		nfs_SetWccData(&pre_parent, parent_obj, &destdir_post_attrs,
 			       &l3_res->LINK3res_u.resfail.linkdir_wcc);
 	} else {
 		nfs_SetPostOpAttr(target_obj,
 				  &l3_res->LINK3res_u.resok.file_attributes,
 				  NULL);
 
-		nfs_SetWccData(&pre_parent, parent_obj, NULL,
+		nfs_PreOpAttrFromFsalAttr(&destdir_pre_attrs, &pre_parent);
+
+		nfs_SetWccData(&pre_parent, parent_obj, &destdir_post_attrs,
 			       &l3_res->LINK3res_u.resok.linkdir_wcc);
 		l3_res->status = NFS3_OK;
 	}
 
  out:
+	fsal_release_attrs(&destdir_pre_attrs);
+	fsal_release_attrs(&destdir_post_attrs);
+
 	/* return references */
 	target_obj->obj_ops->put_ref(target_obj);
 	parent_obj->obj_ops->put_ref(parent_obj);

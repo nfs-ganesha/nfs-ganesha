@@ -1273,15 +1273,21 @@ fsal_status_t mem_setattr2(struct fsal_obj_handle *obj_hdl,
 /**
  * @brief Hard link an obj
  *
- * @param[in] obj_hdl	File to link
- * @param[in] dir_hdl	Directory to link into
- * @param[in] name	Name to use for link
+ * @param[in]     obj_hdl                File to link
+ * @param[in]     dir_hdl                Directory to link into
+ * @param[in]     name                   Name to use for link
+ * @param[in,out] destdir_pre_attrs_out  Optional attributes for destdir dir
+ *                                       before the operation. Should be atomic.
+ * @param[in,out] destdir_post_attrs_out Optional attributes for destdir dir
+ *                                       after the operation. Should be atomic.
  *
  * @return FSAL status.
  */
 fsal_status_t mem_link(struct fsal_obj_handle *obj_hdl,
 		       struct fsal_obj_handle *dir_hdl,
-		       const char *name)
+		       const char *name,
+		       struct fsal_attrlist *destdir_pre_attrs_out,
+		       struct fsal_attrlist *destdir_post_attrs_out)
 {
 	struct mem_fsal_obj_handle *myself =
 		container_of(obj_hdl, struct mem_fsal_obj_handle, obj_handle);
@@ -1314,14 +1320,21 @@ fsal_status_t mem_link(struct fsal_obj_handle *obj_hdl,
 /**
  * @brief Unlink a file
  *
- * @param[in] dir_hdl	Parent directory handle
- * @param[in] obj_hdl	Object being removed
- * @param[in] name	Name of object to remove
+ * @param[in]     dir_hdl               Parent directory handle
+ * @param[in]     obj_hdl               Object being removed
+ * @param[in]     name                  Name of object to remove
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
+ *
  * @return FSAL status
  */
 static fsal_status_t mem_unlink(struct fsal_obj_handle *dir_hdl,
 				struct fsal_obj_handle *obj_hdl,
-				const char *name)
+				const char *name,
+				struct fsal_attrlist *parent_pre_attrs_out,
+				struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct mem_fsal_obj_handle *parent, *myself;
 	fsal_status_t status = {0, 0};
@@ -1414,18 +1427,31 @@ fsal_status_t mem_close(struct fsal_obj_handle *obj_hdl)
  * Rename the given object from @a old_name in @a olddir_hdl to @a new_name in
  * @a newdir_hdl.  The old and new directories may be the same.
  *
- * @param[in] obj_hdl	Object to rename
- * @param[in] olddir_hdl	Directory containing @a obj_hdl
- * @param[in] old_name	Current name of @a obj_hdl
- * @param[in] newdir_hdl	Directory to move @a obj_hdl to
- * @param[in] new_name	Name to rename @a obj_hdl to
+ * @param[in]     obj_hdl               Object to rename
+ * @param[in]     olddir_hdl            Directory containing @a obj_hdl
+ * @param[in]     old_name              Current name of @a obj_hdl
+ * @param[in]     newdir_hdl            Directory to move @a obj_hdl to
+ * @param[in]     new_name              Name to rename @a obj_hdl to
+ * @param[in,out] olddir_pre_attrs_out  Optional attributes for olddir dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] olddir_post_attrs_out Optional attributes for olddir dir
+ *                                      after the operation. Should be atomic.
+ * @param[in,out] newdir_pre_attrs_out  Optional attributes for newdir dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] newdir_post_attrs_out Optional attributes for newdir dir
+ *                                      after the operation. Should be atomic.
+ *
  * @return FSAL status
  */
 static fsal_status_t mem_rename(struct fsal_obj_handle *obj_hdl,
 				struct fsal_obj_handle *olddir_hdl,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
-				const char *new_name)
+				const char *new_name,
+				struct fsal_attrlist *olddir_pre_attrs_out,
+				struct fsal_attrlist *olddir_post_attrs_out,
+				struct fsal_attrlist *newdir_pre_attrs_out,
+				struct fsal_attrlist *newdir_post_attrs_out)
 {
 	struct mem_fsal_obj_handle *mem_olddir =
 		container_of(olddir_hdl, struct mem_fsal_obj_handle,
@@ -1465,7 +1491,7 @@ static fsal_status_t mem_rename(struct fsal_obj_handle *obj_hdl,
 
 		/* Unlink destination */
 		status = mem_unlink(newdir_hdl, &mem_lookup_dst->obj_handle,
-				    new_name);
+				    new_name, NULL, NULL);
 		if (FSAL_IS_ERROR(status)) {
 			return status;
 		}

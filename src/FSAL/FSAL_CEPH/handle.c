@@ -768,7 +768,9 @@ out_err:
 
 static fsal_status_t ceph_fsal_link(struct fsal_obj_handle *handle_pub,
 			       struct fsal_obj_handle *destdir_pub,
-			       const char *name)
+			       const char *name,
+			       struct fsal_attrlist *destdir_pre_attrs_out,
+			       struct fsal_attrlist *destdir_post_attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -796,10 +798,18 @@ static fsal_status_t ceph_fsal_link(struct fsal_obj_handle *handle_pub,
  * This function renames a file, possibly moving it into another
  * directory.  We assume most checks are done by the caller.
  *
- * @param[in] olddir_pub Source directory
- * @param[in] old_name   Original name
- * @param[in] newdir_pub Destination directory
- * @param[in] new_name   New name
+ * @param[in]     olddir_pub            Source directory
+ * @param[in]     old_name              Original name
+ * @param[in]     newdir_pub            Destination directory
+ * @param[in]     new_name              New name
+ * @param[in,out] olddir_pre_attrs_out  Optional attributes for olddir dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] olddir_post_attrs_out Optional attributes for olddir dir
+ *                                      after the operation. Should be atomic.
+ * @param[in,out] newdir_pre_attrs_out  Optional attributes for newdir dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] newdir_post_attrs_out Optional attributes for newdir dir
+ *                                      after the operation. Should be atomic.
  *
  * @return FSAL status.
  */
@@ -808,7 +818,11 @@ static fsal_status_t ceph_fsal_rename(struct fsal_obj_handle *obj_hdl,
 				 struct fsal_obj_handle *olddir_pub,
 				 const char *old_name,
 				 struct fsal_obj_handle *newdir_pub,
-				 const char *new_name)
+				 const char *new_name,
+				 struct fsal_attrlist *olddir_pre_attrs_out,
+				 struct fsal_attrlist *olddir_post_attrs_out,
+				 struct fsal_attrlist *newdir_pre_attrs_out,
+				 struct fsal_attrlist *newdir_post_attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;
@@ -844,15 +858,22 @@ static fsal_status_t ceph_fsal_rename(struct fsal_obj_handle *obj_hdl,
  * deletes the associated file.  Directories must be empty to be
  * removed.
  *
- * @param[in] dir_pub Parent directory
- * @param[in] name    Name to remove
+ * @param[in]     dir_pub               Parent directory
+ * @param[in]     name                  Name to remove
+ * @param[in]     obj_hdl               The object being removed
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @return FSAL status.
  */
 
 static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
-				      struct fsal_obj_handle *obj_pub,
-				      const char *name)
+	struct fsal_obj_handle *obj_pub,
+	const char *name,
+	struct fsal_attrlist *parent_pre_attrs_out,
+	struct fsal_attrlist *parent_post_attrs_out)
 {
 	/* Generic status return */
 	int rc = 0;

@@ -107,7 +107,7 @@ TEST_F(CloseEmptyLatencyTest, SIMPLE)
   EXPECT_EQ(status.major, 0);
 
   // delete the file created for test
-  status = fsal_remove(test_root, TEST_FILE);
+  status = fsal_remove(test_root, TEST_FILE, NULL, NULL);
   ASSERT_EQ(status.major, 0);
   obj->obj_ops->put_ref(obj);
 }
@@ -144,7 +144,7 @@ TEST_F(CloseEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "f-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
 
     obj[i]->obj_ops->put_ref(obj[i]);

@@ -115,7 +115,8 @@ int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	_9p_get_fname(link_name, *name_len, name_str);
 
-	fsal_status = fsal_link(ptargetfid->pentry, pdfid->pentry, link_name);
+	fsal_status = fsal_link(ptargetfid->pentry, pdfid->pentry, link_name,
+		NULL, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),

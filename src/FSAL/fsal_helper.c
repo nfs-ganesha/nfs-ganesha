@@ -643,17 +643,24 @@ fsal_status_t fsal_readlink(struct fsal_obj_handle *obj,
  *
  * This function hard links a new name to an existing file.
  *
- * @param[in]  obj      The file to which to add the new name.  Must
- *                      not be a directory.
- * @param[in]  dest_dir The directory in which to create the new name
- * @param[in]  name     The new name to add to the file
+ * @param[in]     obj                    The file to which to add the new name.
+ *                                       Must not be a directory.
+ * @param[in]     dest_dir               The directory in which to create the
+ *                                       new name
+ * @param[in]     name                   The new name to add to the file
+ * @param[in,out] destdir_pre_attrs_out  Optional attributes for destdir dir
+ *                                       before the operation. Should be atomic.
+ * @param[in,out] destdir_post_attrs_out Optional attributes for destdir dir
+ *                                       after the operation. Should be atomic.
  *
  * @return FSAL status
  *                                  in destination.
  */
 fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 			struct fsal_obj_handle *dest_dir,
-			const char *name)
+			const char *name,
+			struct fsal_attrlist *destdir_pre_attrs_out,
+			struct fsal_attrlist *destdir_post_attrs_out)
 {
 	fsal_status_t status = { 0, 0 };
 
@@ -690,7 +697,8 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 
 	/* Rather than performing a lookup first, just try to make the
 	   link and return the FSAL's error if it fails. */
-	status = obj->obj_ops->link(obj, dest_dir, name);
+	status = obj->obj_ops->link(obj, dest_dir, name, destdir_pre_attrs_out,
+		destdir_post_attrs_out);
 	return status;
 }
 
@@ -1421,14 +1429,21 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
  *
  * @brief Remove a name from a directory.
  *
- * @param[in] parent  Handle for the parent directory to be managed
- * @param[in] name    Name to be removed
+ * @param[in]     parent                Handle for the parent directory to be
+ *                                      managed
+ * @param[in]     name                  Name to be removed
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @retval fsal_status_t
  */
 
 fsal_status_t
-fsal_remove(struct fsal_obj_handle *parent, const char *name)
+fsal_remove(struct fsal_obj_handle *parent, const char *name,
+	    struct fsal_attrlist *parent_pre_attrs_out,
+	    struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct fsal_obj_handle *to_remove_obj = NULL;
 	fsal_status_t status = { 0, 0 };
@@ -1481,7 +1496,8 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name)
 		goto out;
 #endif /* ENABLE_RFC_ACL */
 
-	status = parent->obj_ops->unlink(parent, to_remove_obj, name);
+	status = parent->obj_ops->unlink(parent, to_remove_obj, name,
+		parent_pre_attrs_out, parent_post_attrs_out);
 
 	if (FSAL_IS_ERROR(status)) {
 		LogFullDebug(COMPONENT_FSAL, "unlink %s failure %s",
@@ -1504,17 +1520,29 @@ out_no_obj:
 /**
  * @brief Renames a file
  *
- * @param[in] dir_src  The source directory
- * @param[in] oldname  The current name of the file
- * @param[in] dir_dest The destination directory
- * @param[in] newname  The name to be assigned to the object
+ * @param[in]     dir_src               The source directory
+ * @param[in]     oldname               The current name of the file
+ * @param[in]     dir_dest              The destination directory
+ * @param[in]     newname               The name to be assigned to the object
+ * @param[in,out] olddir_pre_attrs_out  Optional attributes for olddir dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] olddir_post_attrs_out Optional attributes for olddir dir
+ *                                      after the operation. Should be atomic.
+ * @param[in,out] newdir_pre_attrs_out  Optional attributes for newdir dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] newdir_post_attrs_out Optional attributes for newdir dir
+ *                                      after the operation. Should be atomic.
  *
  * @return FSAL status
  */
 fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 			  const char *oldname,
 			  struct fsal_obj_handle *dir_dest,
-			  const char *newname)
+			  const char *newname,
+			  struct fsal_attrlist *olddir_pre_attrs_out,
+			  struct fsal_attrlist *olddir_post_attrs_out,
+			  struct fsal_attrlist *newdir_pre_attrs_out,
+			  struct fsal_attrlist *newdir_post_attrs_out)
 {
 	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_obj_handle *lookup_src = NULL;
@@ -1564,7 +1592,11 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 	LogFullDebug(COMPONENT_FSAL, "about to call FSAL rename");
 
 	fsal_status = dir_src->obj_ops->rename(lookup_src, dir_src, oldname,
-					      dir_dest, newname);
+					      dir_dest, newname,
+					      olddir_pre_attrs_out,
+					      olddir_post_attrs_out,
+					      newdir_pre_attrs_out,
+					      newdir_post_attrs_out);
 
 	LogFullDebug(COMPONENT_FSAL, "returned from FSAL rename");
 

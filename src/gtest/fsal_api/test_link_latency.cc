@@ -86,7 +86,7 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = fsal_remove(test_root, TEST_FILE);
+      status = fsal_remove(test_root, TEST_FILE, NULL, NULL);
       EXPECT_EQ(status.major, 0);
       test_file->obj_ops->put_ref(test_file);
       test_file = NULL;
@@ -130,7 +130,7 @@ namespace {
       for (int i = 0; i < DIR_COUNT; ++i) {
         sprintf(fname, "file-%08x", i);
 
-        status = fsal_remove(test_root, fname);
+        status = fsal_remove(test_root, fname, NULL, NULL);
         EXPECT_EQ(status.major, 0);
       }
 
@@ -159,7 +159,7 @@ TEST_F(LinkEmptyLatencyTest, SIMPLE)
   lookup->obj_ops->put_ref(lookup);
 
   /* Remove link created while running test */
-  status = fsal_remove(test_root, TEST_FILE_LINK);
+  status = fsal_remove(test_root, TEST_FILE_LINK, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 
   disableEvents(event_list);
@@ -188,7 +188,7 @@ TEST_F(LinkEmptyLatencyTest, SIMPLE_BYPASS)
   lookup->obj_ops->put_ref(lookup);
 
   /* Remove link created while running test */
-  status = fsal_remove(sub_root, TEST_FILE_LINK);
+  status = fsal_remove(sub_root, TEST_FILE_LINK, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -216,7 +216,7 @@ TEST_F(LinkEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -232,7 +232,7 @@ TEST_F(LinkEmptyLatencyTest, FSALLINK)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = fsal_link(test_file, test_root, fname);
+    status = fsal_link(test_file, test_root, fname, NULL, NULL);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -245,7 +245,7 @@ TEST_F(LinkEmptyLatencyTest, FSALLINK)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -274,7 +274,7 @@ TEST_F(LinkFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -310,7 +310,7 @@ TEST_F(LinkFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = fsal_remove(sub_root, fname);
+    status = fsal_remove(sub_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }

@@ -97,7 +97,7 @@ namespace {
       free_state(test_file_state);
       EXPECT_EQ(0, status.major);
 
-      status = fsal_remove(test_root, TEST_FILE);
+      status = fsal_remove(test_root, TEST_FILE, NULL, NULL);
       EXPECT_EQ(status.major, 0);
       test_file->obj_ops->put_ref(test_file);
       test_file = NULL;

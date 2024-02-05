@@ -131,7 +131,7 @@ TEST_F(Open2EmptyLatencyTest, SIMPLE)
   status = obj->obj_ops->close2(obj, file_state);
   EXPECT_EQ(status.major, 0);
 
-  status = fsal_remove(test_root, TEST_FILE);
+  status = fsal_remove(test_root, TEST_FILE, NULL, NULL);
   ASSERT_EQ(status.major, 0);
   obj->obj_ops->put_ref(obj);
   free_state(file_state);
@@ -166,7 +166,7 @@ TEST_F(Open2EmptyLatencyTest, SIMPLE_BYPASS)
   status = obj->obj_ops->close2(obj, file_state);
   EXPECT_EQ(status.major, 0);
 
-  status = fsal_remove(sub_hdl, TEST_FILE);
+  status = fsal_remove(sub_hdl, TEST_FILE, NULL, NULL);
   ASSERT_EQ(status.major, 0);
   obj->obj_ops->put_ref(obj);
   free_state(file_state);
@@ -201,7 +201,7 @@ TEST_F(Open2LoopLatencyTest, FSAL_OPEN2)
     status = fsal_close(obj[i]);
     EXPECT_EQ(status.major, 0);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
     obj[i]->obj_ops->put_ref(obj[i]);
   }
@@ -238,7 +238,7 @@ TEST_F(Open2LoopLatencyTest, LOOP)
     status = obj[i]->obj_ops->close2(obj[i], file_state[i]);
     EXPECT_EQ(status.major, 0);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
     obj[i]->obj_ops->put_ref(obj[i]);
   }
@@ -282,7 +282,7 @@ TEST_F(Open2LoopLatencyTest, LOOP_BYPASS)
     status = obj[i]->obj_ops->close2(obj[i], file_state[i]);
     EXPECT_EQ(status.major, 0);
 
-    status = fsal_remove(sub_hdl, fname);
+    status = fsal_remove(sub_hdl, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
     obj[i]->obj_ops->put_ref(obj[i]);
   }
@@ -330,7 +330,7 @@ TEST_F(Open2LoopLatencyTest, OPEN_ONLY)
     status = obj[i]->obj_ops->close2(obj[i], file_state[i]);
     EXPECT_EQ(status.major, 0);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
     obj[i]->obj_ops->put_ref(obj[i]);
   }

@@ -302,7 +302,9 @@ fsal_status_t fsal_access(struct fsal_obj_handle *obj,
 
 fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 			struct fsal_obj_handle *dest_dir,
-			const char *name);
+			const char *name,
+			struct fsal_attrlist *destdir_pre_attrs_out,
+			struct fsal_attrlist *destdir_post_attrs_out);
 fsal_status_t fsal_readlink(struct fsal_obj_handle *obj,
 			    struct gsh_buffdesc *link_content);
 fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
@@ -332,11 +334,17 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory, uint64_t cookie,
 			   unsigned int *nbfound, bool *eod_met,
 			   attrmask_t attrmask, helper_readdir_cb cb,
 			   void *opaque);
-fsal_status_t fsal_remove(struct fsal_obj_handle *parent, const char *name);
+fsal_status_t fsal_remove(struct fsal_obj_handle *parent, const char *name,
+			  struct fsal_attrlist *parent_pre_attrs_out,
+			  struct fsal_attrlist *parent_post_attrs_out);
 fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 			  const char *oldname,
 			  struct fsal_obj_handle *dir_dest,
-			  const char *newname);
+			  const char *newname,
+			  struct fsal_attrlist *olddir_pre_attrs_out,
+			  struct fsal_attrlist *olddir_post_attrs_out,
+			  struct fsal_attrlist *newdir_pre_attrs_out,
+			  struct fsal_attrlist *newdir_post_attrs_out);
 fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 			 struct state_t *state,
 			 fsal_openflags_t openflags,

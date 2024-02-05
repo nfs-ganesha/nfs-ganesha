@@ -64,8 +64,13 @@ enum nfs_req_result nfs4_op_remove(struct nfs_argop4 *op,
 	REMOVE4res * const res_REMOVE4 = &resp->nfs_resop4_u.opremove;
 	struct fsal_obj_handle *parent_obj = NULL;
 	fsal_status_t fsal_status = {0, 0};
+	struct fsal_attrlist parent_pre_attrs, parent_post_attrs;
+	bool is_parent_pre_attrs_valid, is_parent_post_attrs_valid;
 
 	resp->resop = NFS4_OP_REMOVE;
+
+	fsal_prepare_attrs(&parent_pre_attrs, ATTR_CHANGE);
+	fsal_prepare_attrs(&parent_post_attrs, ATTR_CHANGE);
 
 	/* Do basic checks on a filehandle
 	 * Delete arg_REMOVE4.target in directory pointed by currentFH
@@ -101,19 +106,40 @@ enum nfs_req_result nfs4_op_remove(struct nfs_argop4 *op,
 	    fsal_get_changeid4(parent_obj);
 
 	fsal_status = fsal_remove(parent_obj,
-				  arg_REMOVE4->target.utf8string_val);
+				  arg_REMOVE4->target.utf8string_val,
+				  &parent_pre_attrs,
+				  &parent_post_attrs);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_REMOVE4->status = nfs4_Errno_status(fsal_status);
 		goto out_put_grace;
 	}
 
-	res_REMOVE4->REMOVE4res_u.resok4.cinfo.after =
-	    fsal_get_changeid4(parent_obj);
+	is_parent_pre_attrs_valid =
+		FSAL_TEST_MASK(parent_pre_attrs.valid_mask, ATTR_CHANGE);
+	if (is_parent_pre_attrs_valid) {
+		res_REMOVE4->REMOVE4res_u.resok4.cinfo.before =
+			(changeid4) parent_pre_attrs.change;
+	}
 
-	/* Operation was not atomic .... */
-	res_REMOVE4->REMOVE4res_u.resok4.cinfo.atomic = FALSE;
+	is_parent_post_attrs_valid =
+		FSAL_TEST_MASK(parent_post_attrs.valid_mask, ATTR_CHANGE);
+	if (is_parent_post_attrs_valid) {
+		res_REMOVE4->REMOVE4res_u.resok4.cinfo.after =
+			(changeid4) parent_post_attrs.change;
+	} else {
+		res_REMOVE4->REMOVE4res_u.resok4.cinfo.after =
+		fsal_get_changeid4(parent_obj);
+	}
+
+	res_REMOVE4->REMOVE4res_u.resok4.cinfo.atomic =
+		is_parent_pre_attrs_valid && is_parent_post_attrs_valid ?
+		TRUE : FALSE;
+
 out_put_grace:
+	fsal_release_attrs(&parent_pre_attrs);
+	fsal_release_attrs(&parent_post_attrs);
+
 	nfs_put_grace_status();
 out:
 

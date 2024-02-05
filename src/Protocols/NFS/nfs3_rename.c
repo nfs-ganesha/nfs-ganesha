@@ -68,6 +68,8 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_obj_handle *parent_obj = NULL;
 	struct fsal_obj_handle *new_parent_obj = NULL;
 	fsal_status_t fsal_status;
+	struct fsal_attrlist olddir_pre_attrs_out, olddir_post_attrs_out,
+		newdir_pre_attrs_out, newdir_post_attrs_out;
 	int to_exportid = 0;
 	int from_exportid = 0;
 	int rc = NFS_REQ_OK;
@@ -80,6 +82,13 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	pre_op_attr pre_new_parent = {
 		.attributes_follow = false
 	};
+
+	fsal_prepare_attrs(&olddir_pre_attrs_out,
+		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+	fsal_prepare_attrs(&olddir_post_attrs_out, ATTRS_NFS3);
+	fsal_prepare_attrs(&newdir_pre_attrs_out,
+		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+	fsal_prepare_attrs(&newdir_post_attrs_out, ATTRS_NFS3);
 
 	LogNFS3_Operation2(COMPONENT_NFSPROTO, req,
 			   &arg->arg_rename3.from.dir, entry_name,
@@ -146,16 +155,22 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	fsal_status = fsal_rename(parent_obj, entry_name, new_parent_obj,
-				  new_entry_name);
+				  new_entry_name, &olddir_pre_attrs_out,
+				  &olddir_post_attrs_out,
+				  &newdir_pre_attrs_out,
+				  &newdir_post_attrs_out);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
 
 	res->res_rename3.status = NFS3_OK;
 
-	nfs_SetWccData(&pre_parent, parent_obj, NULL, &resok->fromdir_wcc);
+	nfs_PreOpAttrFromFsalAttr(&olddir_pre_attrs_out, &pre_parent);
+	nfs_SetWccData(&pre_parent, parent_obj, &olddir_post_attrs_out,
+		&resok->fromdir_wcc);
 
-	nfs_SetWccData(&pre_new_parent, new_parent_obj, NULL,
+	nfs_PreOpAttrFromFsalAttr(&newdir_pre_attrs_out, &pre_parent);
+	nfs_SetWccData(&pre_new_parent, new_parent_obj, &newdir_post_attrs_out,
 		&resok->todir_wcc);
 
 	rc = NFS_REQ_OK;
@@ -165,9 +180,12 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  out_fail:
 	res->res_rename3.status = nfs3_Errno_status(fsal_status);
 
-	nfs_SetWccData(&pre_parent, parent_obj, NULL, &resfail->fromdir_wcc);
+	nfs_PreOpAttrFromFsalAttr(&olddir_pre_attrs_out, &pre_parent);
+	nfs_SetWccData(&pre_parent, parent_obj, &olddir_post_attrs_out,
+		&resfail->fromdir_wcc);
 
-	nfs_SetWccData(&pre_new_parent, new_parent_obj, NULL,
+	nfs_PreOpAttrFromFsalAttr(&newdir_pre_attrs_out, &pre_parent);
+	nfs_SetWccData(&pre_new_parent, new_parent_obj, &newdir_post_attrs_out,
 		&resfail->todir_wcc);
 
 	/* If we are here, there was an error */
@@ -175,6 +193,11 @@ int nfs3_rename(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		rc = NFS_REQ_DROP;
 
  out:
+	fsal_release_attrs(&olddir_pre_attrs_out);
+	fsal_release_attrs(&olddir_post_attrs_out);
+	fsal_release_attrs(&newdir_pre_attrs_out);
+	fsal_release_attrs(&newdir_post_attrs_out);
+
 	if (parent_obj)
 		parent_obj->obj_ops->put_ref(parent_obj);
 

@@ -71,6 +71,7 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		.attributes_follow = false
 	};
 	fsal_status_t fsal_status;
+	struct fsal_attrlist parent_pre_attrs, parent_post_attrs;
 	const char *name = arg->arg_rmdir3.object.name;
 	int rc = NFS_REQ_OK;
 
@@ -83,6 +84,10 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	    FALSE;
 	res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc.after.attributes_follow =
 	    FALSE;
+
+	fsal_prepare_attrs(&parent_pre_attrs,
+		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+	fsal_prepare_attrs(&parent_post_attrs, ATTRS_NFS3);
 
 	parent_obj = nfs3_FhandleToCache(&arg->arg_rmdir3.object.dir,
 					   &res->res_rmdir3.status,
@@ -125,12 +130,14 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 	}
 
-	fsal_status = fsal_remove(parent_obj, name);
+	fsal_status = fsal_remove(parent_obj, name, &parent_pre_attrs,
+		&parent_post_attrs);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
 
-	nfs_SetWccData(&pre_parent, parent_obj, NULL,
+	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
+	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
 		       &res->res_rmdir3.RMDIR3res_u.resok.dir_wcc);
 
 	res->res_rmdir3.status = NFS3_OK;
@@ -141,7 +148,8 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
  out_fail:
 	res->res_rmdir3.status = nfs3_Errno_status(fsal_status);
-	nfs_SetWccData(&pre_parent, parent_obj, NULL,
+	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
+	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
 		       &res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc);
 
 	/* If we are here, there was an error */
@@ -149,6 +157,9 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		rc = NFS_REQ_DROP;
 
  out:
+	fsal_release_attrs(&parent_pre_attrs);
+	fsal_release_attrs(&parent_post_attrs);
+
 	/* return references */
 	if (child_obj)
 		child_obj->obj_ops->put_ref(child_obj);

@@ -108,7 +108,7 @@ namespace {
       for (int i = 0; i < FILE_COUNT; ++i) {
         sprintf(fname, "f-%08x", i);
 
-        status = fsal_remove(test_root, fname);
+        status = fsal_remove(test_root, fname, NULL, NULL);
         EXPECT_EQ(status.major, 0);
       }
 
@@ -135,7 +135,7 @@ TEST_F(MknodeEmptyLatencyTest, SIMPLE)
   lookup->obj_ops->put_ref(lookup);
 
   /* Remove node created while running test */
-  status = fsal_remove(test_root, TEST_NODE);
+  status = fsal_remove(test_root, TEST_NODE, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -163,7 +163,7 @@ TEST_F(MknodeEmptyLatencyTest, SIMPLE_BYPASS)
   lookup->obj_ops->put_ref(lookup);
 
   /* Remove node created while running test */
-  status = fsal_remove(sub_hdl, TEST_NODE);
+  status = fsal_remove(sub_hdl, TEST_NODE, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -194,7 +194,7 @@ TEST_F(MknodeEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -226,7 +226,7 @@ TEST_F(MknodeEmptyLatencyTest, FSALCREATE)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
    }
 }
@@ -258,7 +258,7 @@ TEST_F(MknodeFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -297,7 +297,7 @@ TEST_F(MknodeFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(sub_hdl, fname);
+    status = fsal_remove(sub_hdl, fname, NULL, NULL, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }

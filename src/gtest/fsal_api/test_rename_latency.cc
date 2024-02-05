@@ -117,7 +117,7 @@ TEST_F(RenameEmptyLatencyTest, SIMPLE)
   obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
-  status = fsal_remove(test_root, TEST_FILE_NEW);
+  status = fsal_remove(test_root, TEST_FILE_NEW, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -141,8 +141,8 @@ TEST_F(RenameEmptyLatencyTest, SIMPLE_BYPASS)
   sub_hdl_obj = mdcdb_get_sub_handle(obj);
   ASSERT_NE(sub_hdl_obj, nullptr);
 
-  status = sub_hdl_obj->obj_ops->rename(sub_hdl_obj, sub_hdl, TEST_FILE, sub_hdl,
-				       TEST_FILE_NEW);
+  status = sub_hdl_obj->obj_ops->rename(sub_hdl_obj, sub_hdl, TEST_FILE,
+    sub_hdl, TEST_FILE_NEW, NULL, NULL, NULL, NULL);
   EXPECT_EQ(status.major, 0);
   sub_hdl->obj_ops->lookup(sub_hdl, TEST_FILE_NEW, &lookup, NULL);
   EXPECT_EQ(lookup, sub_hdl_obj);
@@ -151,7 +151,7 @@ TEST_F(RenameEmptyLatencyTest, SIMPLE_BYPASS)
   obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
-  status = fsal_remove(test_root, TEST_FILE_NEW);
+  status = fsal_remove(test_root, TEST_FILE_NEW, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -211,7 +211,8 @@ TEST_F(RenameEmptyLatencyTest, FSALRENAME)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname_new, "nf-%08x", i);
 
-    status = fsal_rename(test_root, fname, test_root, fname_new);
+    status = fsal_rename(test_root, fname, test_root, fname_new, NULL, NULL,
+      NULL, NULL);
     EXPECT_EQ(status.major, 0);
     strncpy(fname, fname_new, NAMELEN);
   }
@@ -292,7 +293,8 @@ TEST_F(RenameFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname_new, "nf-%08x", i);
 
-    status = sub_hdl->obj_ops->rename(sub_hdl_obj, sub_hdl, fname, sub_hdl, fname_new);
+    status = sub_hdl->obj_ops->rename(sub_hdl_obj, sub_hdl, fname, sub_hdl,
+      fname_new, NULL, NULL, NULL, NULL);
     ASSERT_EQ(status.major, 0) << " failed to rename " << fname;
     strncpy(fname, fname_new, NAMELEN);
   }
@@ -305,7 +307,7 @@ TEST_F(RenameFullLatencyTest, BIG_BYPASS)
   obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
-  status = fsal_remove(test_root, fname);
+  status = fsal_remove(test_root, fname, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 }
 

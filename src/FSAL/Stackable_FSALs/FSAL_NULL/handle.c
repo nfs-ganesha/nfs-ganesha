@@ -286,7 +286,9 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 			      struct fsal_obj_handle *destdir_hdl,
-			      const char *name)
+			      const char *name,
+			      struct fsal_attrlist *destdir_pre_attrs_out,
+			      struct fsal_attrlist *destdir_post_attrs_out)
 {
 	struct nullfs_fsal_obj_handle *handle =
 		(struct nullfs_fsal_obj_handle *) obj_hdl;
@@ -299,7 +301,8 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = handle->sub_handle->obj_ops->link(
-		handle->sub_handle, nullfs_dir->sub_handle, name);
+		handle->sub_handle, nullfs_dir->sub_handle, name,
+		destdir_pre_attrs_out, destdir_post_attrs_out);
 	op_ctx->fsal_export = &export->export;
 
 	return status;
@@ -470,7 +473,11 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 				struct fsal_obj_handle *olddir_hdl,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
-				const char *new_name)
+				const char *new_name,
+				struct fsal_attrlist *olddir_pre_attrs_out,
+				struct fsal_attrlist *olddir_post_attrs_out,
+				struct fsal_attrlist *newdir_pre_attrs_out,
+				struct fsal_attrlist *newdir_post_attrs_out)
 {
 	struct nullfs_fsal_obj_handle *nullfs_olddir =
 		container_of(olddir_hdl, struct nullfs_fsal_obj_handle,
@@ -490,7 +497,9 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = nullfs_olddir->sub_handle->obj_ops->rename(
 		nullfs_obj->sub_handle, nullfs_olddir->sub_handle,
-		old_name, nullfs_newdir->sub_handle, new_name);
+		old_name, nullfs_newdir->sub_handle, new_name,
+		olddir_pre_attrs_out, olddir_post_attrs_out,
+		newdir_pre_attrs_out, newdir_post_attrs_out);
 	op_ctx->fsal_export = &export->export;
 
 	return status;
@@ -545,7 +554,9 @@ static fsal_status_t nullfs_setattr2(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 				 struct fsal_obj_handle *obj_hdl,
-				 const char *name)
+				 const char *name,
+				 struct fsal_attrlist *parent_pre_attrs_out,
+				 struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct nullfs_fsal_obj_handle *nullfs_dir =
 		container_of(dir_hdl, struct nullfs_fsal_obj_handle,
@@ -560,7 +571,8 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
 	fsal_status_t status = nullfs_dir->sub_handle->obj_ops->unlink(
-		nullfs_dir->sub_handle, nullfs_obj->sub_handle, name);
+		nullfs_dir->sub_handle, nullfs_obj->sub_handle, name,
+		parent_pre_attrs_out, parent_post_attrs_out);
 	op_ctx->fsal_export = &export->export;
 
 	return status;

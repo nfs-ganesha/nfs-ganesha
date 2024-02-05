@@ -1962,15 +1962,21 @@ struct fsal_obj_ops {
  *
  * This function creates a new name for an existing object.
  *
- * @param[in] obj_hdl     Object to be linked to
- * @param[in] destdir_hdl Directory in which to create the link
- * @param[in] name        Name for link
+ * @param[in]     obj_hdl                Object to be linked to
+ * @param[in]     destdir_hdl            Directory in which to create the link
+ * @param[in]     name                   Name for link
+ * @param[in,out] destdir_pre_attrs_out  Optional attributes for destdir dir
+ *                                       before the operation. Should be atomic.
+ * @param[in,out] destdir_post_attrs_out Optional attributes for destdir dir
+ *                                       after the operation. Should be atomic.
  *
  * @return FSAL status
  */
 	 fsal_status_t (*link)(struct fsal_obj_handle *obj_hdl,
 			       struct fsal_obj_handle *destdir_hdl,
-			       const char *name);
+			       const char *name,
+			       struct fsal_attrlist *destdir_pre_attrs_out,
+			       struct fsal_attrlist *destdir_post_attrs_out);
 
 /**
  * @brief Rename a file
@@ -1978,10 +1984,18 @@ struct fsal_obj_ops {
  * This function renames a file (technically it changes the name of
  * one link, which may be the only link to the file.)
  *
- * @param[in] olddir_hdl Old parent directory
- * @param[in] old_name   Old name
- * @param[in] newdir_hdl New parent directory
- * @param[in] new_name   New name
+ * @param[in]     olddir_hdl Old parent directory
+ * @param[in]     old_name   Old name
+ * @param[in]     newdir_hdl New parent directory
+ * @param[in]     new_name   New name
+ * @param[in,out] olddir_pre_attrs_out  Optional attributes for olddir dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] olddir_post_attrs_out Optional attributes for olddir dir
+ *                                      after the operation. Should be atomic.
+ * @param[in,out] newdir_pre_attrs_out  Optional attributes for newdir dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] newdir_post_attrs_out Optional attributes for newdir dir
+ *                                      after the operation. Should be atomic.
  *
  * @return FSAL status
  */
@@ -1989,22 +2003,33 @@ struct fsal_obj_ops {
 				 struct fsal_obj_handle *olddir_hdl,
 				 const char *old_name,
 				 struct fsal_obj_handle *newdir_hdl,
-				 const char *new_name);
+				 const char *new_name,
+				 struct fsal_attrlist *olddir_pre_attrs_out,
+				 struct fsal_attrlist *olddir_post_attrs_out,
+				 struct fsal_attrlist *newdir_pre_attrs_out,
+				 struct fsal_attrlist *newdir_post_attrs_out);
 /**
  * @brief Remove a name from a directory
  *
  * This function removes a name from a directory and possibly deletes
  * the file so named.
  *
- * @param[in] dir_hdl The directory from which to remove the name
- * @param[in] obj_hdl The object being removed
- * @param[in] name    The name to remove
+ * @param[in]     dir_hdl               The directory from which to remove the
+ *                                      name
+ * @param[in]     obj_hdl               The object being removed
+ * @param[in]     name                  The name to remove
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  *
  * @return FSAL status.
  */
 	 fsal_status_t (*unlink)(struct fsal_obj_handle *dir_hdl,
 				 struct fsal_obj_handle *obj_hdl,
-				 const char *name);
+				 const char *name,
+				 struct fsal_attrlist *parent_pre_attrs_out,
+				 struct fsal_attrlist *parent_post_attrs_out);
 
 /**@}*/
 

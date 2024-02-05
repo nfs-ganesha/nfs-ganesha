@@ -614,7 +614,11 @@ static fsal_status_t rgw_fsal_rename(struct fsal_obj_handle *obj_hdl,
 				struct fsal_obj_handle *olddir_hdl,
 				const char *old_name,
 				struct fsal_obj_handle *newdir_hdl,
-				const char *new_name)
+				const char *new_name,
+				struct fsal_attrlist *olddir_pre_attrs_out,
+				struct fsal_attrlist *olddir_post_attrs_out,
+				struct fsal_attrlist *newdir_pre_attrs_out,
+				struct fsal_attrlist *newdir_post_attrs_out)
 {
 	int rc;
 
@@ -655,7 +659,9 @@ static fsal_status_t rgw_fsal_rename(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t rgw_fsal_unlink(struct fsal_obj_handle *dir_hdl,
 				struct fsal_obj_handle *obj_hdl,
-				const char *name)
+				const char *name,
+				struct fsal_attrlist *parent_pre_attrs_out,
+				struct fsal_attrlist *parent_post_attrs_out)
 {
 	int rc;
 

@@ -310,7 +310,7 @@ namespace gtest {
 
 	if (objs != NULL)
           objs[i]->obj_ops->put_ref(objs[i]);
-        status = fsal_remove(directory, fname);
+        status = fsal_remove(directory, fname, NULL, NULL);
         EXPECT_EQ(status.major, 0);
       }
     }

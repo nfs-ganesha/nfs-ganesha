@@ -107,7 +107,7 @@ namespace {
       for (int i = 0; i < FILE_COUNT; ++i) {
         sprintf(fname, "f-%08x", i);
 
-        status = fsal_remove(test_root, fname);
+        status = fsal_remove(test_root, fname, NULL, NULL);
         EXPECT_EQ(status.major, 0);
       }
 
@@ -133,7 +133,7 @@ TEST_F(MkdirEmptyLatencyTest, SIMPLE)
   lookup->obj_ops->put_ref(lookup);
 
   /* Remove directory created while running test */
-  status = fsal_remove(test_root, TEST_ROOT);
+  status = fsal_remove(test_root, TEST_ROOT, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -190,7 +190,7 @@ TEST_F(MkdirEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }
@@ -221,7 +221,7 @@ TEST_F(MkdirEmptyLatencyTest, FSALCREATE)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
    }
 }
@@ -252,7 +252,7 @@ TEST_F(MkdirFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }

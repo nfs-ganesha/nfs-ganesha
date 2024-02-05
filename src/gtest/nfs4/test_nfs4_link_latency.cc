@@ -106,7 +106,7 @@ TEST_F(LinkFullLatencyTest, BIG_SINGLE)
           timespec_diff(&s_time, &e_time));
 
   /* Remove the created link */
-  status = fsal_remove(test_root, fname);
+  status = fsal_remove(test_root, fname, NULL, NULL);
   EXPECT_EQ(status.major, 0);
 }
 
@@ -153,7 +153,7 @@ TEST_F(LinkFullLatencyTest, BIG)
     int r = i / DIR_COUNT;
 
     sprintf(fname, "d-%08x-%08x", n, r + 1);
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     EXPECT_EQ(status.major, 0);
   }
 }

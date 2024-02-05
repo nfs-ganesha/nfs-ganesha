@@ -579,7 +579,9 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 
 static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 				 struct fsal_obj_handle *obj_hdl,
-				 const char *name)
+				 const char *name,
+				 struct fsal_attrlist *parent_pre_attrs_out,
+				 struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
 	fsal_errors_t error = ERR_FSAL_NOENT;

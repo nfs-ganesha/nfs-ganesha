@@ -174,7 +174,7 @@ TEST_F(UnlinkEmptyLatencyTest, FSALREMOVE)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = fsal_remove(test_root, fname);
+    status = fsal_remove(test_root, fname, NULL, NULL);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -184,7 +184,7 @@ TEST_F(UnlinkEmptyLatencyTest, FSALREMOVE)
           timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 
   /* Remove file created for running the test */
-  status = fsal_remove(test_root, TEST_FILE);
+  status = fsal_remove(test_root, TEST_FILE, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 
   obj->obj_ops->put_ref(obj);
@@ -226,7 +226,7 @@ TEST_F(UnlinkFullLatencyTest, BIG)
 
 
   /* Remove file created for running the test */
-  status = fsal_remove(test_root, TEST_FILE);
+  status = fsal_remove(test_root, TEST_FILE, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 
   obj->obj_ops->put_ref(obj);
@@ -275,7 +275,7 @@ TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
           timespec_diff(&s_time, &e_time) / LOOP_COUNT);
 
   /* Remove file created for running the test */
-  status = fsal_remove(test_root, TEST_FILE);
+  status = fsal_remove(test_root, TEST_FILE, NULL, NULL);
   ASSERT_EQ(status.major, 0);
 
   obj->obj_ops->put_ref(obj);

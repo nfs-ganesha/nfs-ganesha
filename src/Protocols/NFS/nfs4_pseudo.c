@@ -146,7 +146,7 @@ void cleanup_pseudofs_node(char *pseudo_path,
 		return;
 	}
 
-	fsal_status = fsal_remove(parent_obj, name);
+	fsal_status = fsal_remove(parent_obj, name, NULL, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		/* Bailout if we get directory not empty error */

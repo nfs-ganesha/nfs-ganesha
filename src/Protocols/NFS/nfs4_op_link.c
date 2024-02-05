@@ -70,9 +70,14 @@ enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	struct fsal_obj_handle *dir_obj = NULL;
 	struct fsal_obj_handle *file_obj = NULL;
 	fsal_status_t status = {0, 0};
+	struct fsal_attrlist destdir_pre_attrs, destdir_post_attrs;
+	bool is_destdir_pre_attrs_valid, is_destdir_post_attrs_valid;
 
 	resp->resop = NFS4_OP_LINK;
 	res_LINK4->status = NFS4_OK;
+
+	fsal_prepare_attrs(&destdir_pre_attrs, ATTR_CHANGE);
+	fsal_prepare_attrs(&destdir_post_attrs, ATTR_CHANGE);
 
 	/* Do basic checks on a filehandle */
 	res_LINK4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
@@ -114,19 +119,40 @@ enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* make the link */
 	status = fsal_link(file_obj, dir_obj,
-			   arg_LINK4->newname.utf8string_val);
+			   arg_LINK4->newname.utf8string_val,
+			   &destdir_pre_attrs, &destdir_post_attrs);
 
 	if (FSAL_IS_ERROR(status)) {
 		res_LINK4->status = nfs4_Errno_status(status);
 		goto out;
 	}
 
-	res_LINK4->LINK4res_u.resok4.cinfo.after = fsal_get_changeid4(dir_obj);
-	res_LINK4->LINK4res_u.resok4.cinfo.atomic = FALSE;
+	is_destdir_pre_attrs_valid =
+		FSAL_TEST_MASK(destdir_pre_attrs.valid_mask, ATTR_CHANGE);
+	if (is_destdir_pre_attrs_valid) {
+		res_LINK4->LINK4res_u.resok4.cinfo.before =
+			(changeid4) destdir_pre_attrs.change;
+	}
+
+	is_destdir_post_attrs_valid =
+		FSAL_TEST_MASK(destdir_post_attrs.valid_mask, ATTR_CHANGE);
+	if (is_destdir_post_attrs_valid) {
+		res_LINK4->LINK4res_u.resok4.cinfo.after =
+			(changeid4) destdir_post_attrs.change;
+	} else {
+		res_LINK4->LINK4res_u.resok4.cinfo.after =
+		fsal_get_changeid4(dir_obj);
+	}
+
+	res_LINK4->LINK4res_u.resok4.cinfo.atomic =
+		is_destdir_pre_attrs_valid && is_destdir_post_attrs_valid ?
+		TRUE : FALSE;
 
 	res_LINK4->status = NFS4_OK;
 
  out:
+	fsal_release_attrs(&destdir_pre_attrs);
+	fsal_release_attrs(&destdir_post_attrs);
 
 	return nfsstat4_to_nfs_req_result(res_LINK4->status);
 }				/* nfs4_op_link */
