@@ -301,7 +301,7 @@ bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 	PTHREAD_RWLOCK_rdlock(&uid2grp_user_lock);
 	success = uid2grp_lookup_by_uname(name, &uid, gdata);
 
-	/* Handle common case first */
+	/* Return success if we find non-expired group-data in cache */
 	if (success && !uid2grp_is_group_data_expired(*gdata)) {
 		uid2grp_hold_group_data(*gdata);
 		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
@@ -309,23 +309,29 @@ bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 	}
 	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
 
-	if (success) {
-		/* Cache entry is expired */
+	/* We could not find non-expired group-data in cache, fetch it afresh */
+	*gdata = uid2grp_allocate_by_name(name);
+	if (*gdata) {
 		PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
-		uid2grp_remove_by_uname(name);
+		/* Add-user will also remove existing expired cache entry */
+		uid2grp_add_user(*gdata);
+		uid2grp_hold_group_data(*gdata);
 		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+		return true;
 	}
 
-	*gdata = uid2grp_allocate_by_name(name);
-	PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
-	if (*gdata)
-		uid2grp_add_user(*gdata);
-	success = uid2grp_lookup_by_uname(name, &uid, gdata);
-	if (success)
-		uid2grp_hold_group_data(*gdata);
-	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
-
-	return success;
+	/*
+	 * At this point, we could not find non-expired group-data in cache,
+	 * and we also weren't able to fetch fresh group-data.
+	 * If the group-data in cache is expired, we stll want to remove it.
+	 */
+	if (success) {
+		/* Remove expired cache entry */
+		PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
+		uid2grp_remove_expired_by_uname(name);
+		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+	}
+	return false;
 }
 
 /**
@@ -343,7 +349,7 @@ bool uid2grp(uid_t uid, struct group_data **gdata)
 	PTHREAD_RWLOCK_rdlock(&uid2grp_user_lock);
 	success = uid2grp_lookup_by_uid(uid, gdata);
 
-	/* Handle common case first */
+	/* Return success if we find non-expired group-data in cache */
 	if (success && !uid2grp_is_group_data_expired(*gdata)) {
 		uid2grp_hold_group_data(*gdata);
 		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
@@ -351,23 +357,29 @@ bool uid2grp(uid_t uid, struct group_data **gdata)
 	}
 	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
 
-	if (success) {
-		/* Cache entry is expired */
+	/* We could not find non-expired group-data in cache, fetch it afresh */
+	*gdata = uid2grp_allocate_by_uid(uid);
+	if (*gdata) {
 		PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
-		uid2grp_remove_by_uid(uid);
+		/* Add-user will also remove existing expired cache entry */
+		uid2grp_add_user(*gdata);
+		uid2grp_hold_group_data(*gdata);
 		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+		return true;
 	}
 
-	*gdata = uid2grp_allocate_by_uid(uid);
-	PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
-	if (*gdata)
-		uid2grp_add_user(*gdata);
-	success = uid2grp_lookup_by_uid(uid, gdata);
-	if (success)
-		uid2grp_hold_group_data(*gdata);
-	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
-
-	return success;
+	/*
+	 * At this point, we could not find non-expired group-data in cache,
+	 * and we also weren't able to fetch fresh group-data.
+	 * If the group-data in cache is expired, we still want to remove it.
+	 */
+	if (success) {
+		/* Remove expired cache entry */
+		PTHREAD_RWLOCK_wrlock(&uid2grp_user_lock);
+		uid2grp_remove_expired_by_uid(uid);
+		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+	}
+	return false;
 }
 
 /*
