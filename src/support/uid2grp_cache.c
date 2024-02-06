@@ -407,6 +407,13 @@ bool uid2grp_lookup_by_uid(const uid_t uid, struct group_data **gdata)
 	return success;
 }
 
+bool uid2grp_is_group_data_expired(struct group_data *gdata)
+{
+	time_t gdata_age = time(NULL) - gdata->epoch;
+
+	return gdata_age > nfs_param.core_param.manage_gids_expiration;
+}
+
 void uid2grp_remove_by_uid(const uid_t uid)
 {
 	struct cache_info *info;
@@ -417,6 +424,24 @@ void uid2grp_remove_by_uid(const uid_t uid)
 		uid2grp_remove_user(info);
 }
 
+/**
+ * @brief Remove an expired user by ID
+ *
+ * @note The caller must hold uid2grp_user_lock for write.
+ *
+ * @param[in]  uid  The user ID to remove.
+ */
+
+void uid2grp_remove_expired_by_uid(const uid_t uid)
+{
+	struct cache_info *info;
+	bool success;
+
+	success = lookup_by_uid(uid, &info);
+	if (success && uid2grp_is_group_data_expired(info->gdata))
+		uid2grp_remove_user(info);
+}
+
 void uid2grp_remove_by_uname(const struct gsh_buffdesc *name)
 {
 	struct cache_info *info;
@@ -424,6 +449,24 @@ void uid2grp_remove_by_uname(const struct gsh_buffdesc *name)
 
 	success = lookup_by_uname(name, &info);
 	if (success)
+		uid2grp_remove_user(info);
+}
+
+/**
+ * @brief Remove an expired user by name
+ *
+ * @note The caller must hold uid2grp_user_lock for write.
+ *
+ * @param[in]  name  The user name to remove.
+ */
+
+void uid2grp_remove_expired_by_uname(const struct gsh_buffdesc *name)
+{
+	struct cache_info *info;
+	bool success;
+
+	success = lookup_by_uname(name, &info);
+	if (success && uid2grp_is_group_data_expired(info->gdata))
 		uid2grp_remove_user(info);
 }
 

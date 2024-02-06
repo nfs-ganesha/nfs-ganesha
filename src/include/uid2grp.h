@@ -74,7 +74,9 @@ bool uid2grp_lookup_by_uname(const struct gsh_buffdesc *, uid_t *,
 bool uid2grp_lookup_by_uid(const uid_t, struct group_data **);
 
 void uid2grp_remove_by_uname(const struct gsh_buffdesc *);
+void uid2grp_remove_expired_by_uname(const struct gsh_buffdesc *);
 void uid2grp_remove_by_uid(const uid_t);
+void uid2grp_remove_expired_by_uid(const uid_t);
 
 void uid2grp_clear_cache(void);
 
@@ -83,6 +85,7 @@ bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata);
 void uid2grp_unref(struct group_data *gdata);
 void uid2grp_hold_group_data(struct group_data *);
 void uid2grp_release_group_data(struct group_data *);
+bool uid2grp_is_group_data_expired(struct group_data *);
 
 #endif				/* UID2GRP_H */
 /** @} */
