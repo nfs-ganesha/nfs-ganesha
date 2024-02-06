@@ -1470,11 +1470,13 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 	state_owner_t *owner;
 	struct delegrecall_context *drc_ctx;
 	struct req_op_context op_context;
+	nfs_client_id_t *client_id = NULL;
 
 	LogDebug(COMPONENT_FSAL_UP,
 		 "FSAL_UP_DELEG: obj %p type %u",
 		 obj, obj->type);
 
+restart_recalls:
 	STATELOCK_lock(obj);
 	glist_for_each_safe(glist, glist_n,
 			    &obj->state_hdl->file.list_of_states) {
@@ -1512,8 +1514,40 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 			LogDebug(COMPONENT_FSAL_UP,
 				 "Something is going stale, no need to recall delegation");
 			gsh_free(drc_ctx);
+			*deleg_state = DELEG_GRANTED;
 			continue;
 		}
+
+		client_id = owner->so_owner.so_nfs4_owner.so_clientrec;
+		inc_client_id_ref(client_id);
+		dec_state_owner_ref(owner);
+
+		/* Prevent client's lease expiring until we complete
+		 * this recall/revoke operation. If the client's lease
+		 * has already expired, let's go ahead and clean the
+		 * expired clients to revoke this delegation and we
+		 * restart to check for other conflicting delegation holders
+		 */
+		PTHREAD_MUTEX_lock(&client_id->cid_mutex);
+		if (!reserve_lease(client_id)) {
+			/* Let's release the locks and wipe off the client */
+			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
+			LogDebug(COMPONENT_FSAL_UP,
+				"Client's lease has already expired, no need to recall delegation but let's wipe off the client");
+			*deleg_state = DELEG_GRANTED;
+			STATELOCK_unlock(obj);
+			if (!reserve_lease_or_expire(client_id, false)) {
+				LogDebug(COMPONENT_FSAL_UP,
+					"Expired client got cleaned off");
+				dec_client_id_ref(client_id);
+			}
+
+			/* Safely restart the loop as state locks were removed,
+			 * pointers would have gone dangling
+			 */
+			goto restart_recalls;
+		}
+		PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
 
 		/* Get a ref to the drc_ctx->drc_exp and initialize op_context
 		 * in case state_del_locks and others need it.
@@ -1522,28 +1556,10 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 		init_op_context_simple(&op_context, drc_ctx->drc_exp,
 				       drc_ctx->drc_exp->fsal_export);
 
-		drc_ctx->drc_clid = owner->so_owner.so_nfs4_owner.so_clientrec;
+		drc_ctx->drc_clid = client_id;
 		COPY_STATEID(&drc_ctx->drc_stateid, state);
-		inc_client_id_ref(drc_ctx->drc_clid);
-		dec_state_owner_ref(owner);
 
 		obj->state_hdl->file.fdeleg_stats.fds_last_recall = time(NULL);
-
-		/* Prevent client's lease expiring until we complete
-		 * this recall/revoke operation. If the client's lease
-		 * has already expired, let the reaper thread handling
-		 * expired clients revoke this delegation, and we just
-		 * skip it here.
-		 */
-		PTHREAD_MUTEX_lock(&drc_ctx->drc_clid->cid_mutex);
-		if (!reserve_lease(drc_ctx->drc_clid)) {
-			PTHREAD_MUTEX_unlock(&drc_ctx->drc_clid->cid_mutex);
-			dec_client_id_ref(drc_ctx->drc_clid);
-			gsh_free(drc_ctx);
-			release_op_context();
-			continue;
-		}
-		PTHREAD_MUTEX_unlock(&drc_ctx->drc_clid->cid_mutex);
 
 		delegrecall_one(obj, state, drc_ctx);
 		release_op_context();
