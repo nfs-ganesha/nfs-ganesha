@@ -239,12 +239,14 @@ static inline bool export_can_be_mounted(struct gsh_export *exp)
 	       && exp->cfg_pseudopath[1] != '\0';
 }
 
-#define LOG_EXPORT(level, tag, exp, clients)				   \
-	do {								   \
-		struct log_exports_parms lep = {level, __FILE__, __LINE__, \
-						__func__, tag, clients};   \
-									   \
-		(void) log_an_export(exp, &lep);			   \
+#define LOG_EXPORT(level, tag, exp, clients)				     \
+	do {								     \
+		if (isLevel(COMPONENT_EXPORT, level)) {			     \
+			struct log_exports_parms lep =			     \
+						{level, __FILE__, __LINE__,  \
+						__func__, tag, clients};     \
+			(void) log_an_export(exp, &lep);		     \
+		}							     \
 	} while (0)
 
 #endif				/* !NFS_EXPORTS_H */
