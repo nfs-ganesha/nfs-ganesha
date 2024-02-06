@@ -368,8 +368,8 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 	if (unlikely(found_name)) {
 		old = avltree_container_of(found_name, struct cache_user,
 					   uname_node);
-		/* Combine old into new if uid's match */
-		if (old->uid == new->uid) {
+		/* Combine non-expired old into new if uid's match */
+		if ((old->uid == new->uid) && !user_expired(old)) {
 			if (!new->gid_set && old->gid_set) {
 				new->gid = old->gid;
 				new->gid_set = true;
