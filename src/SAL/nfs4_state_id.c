@@ -633,7 +633,18 @@ struct state_t *nfs4_State_Get_Pointer(char *other)
 	buffkey.addr = other;
 	buffkey.len = OTHERSIZE;
 
-	rc = hashtable_getlatch(ht_state_id, &buffkey, &buffval, true, &latch);
+	/* Acquire hashtable latch with may_write == false, as we are not
+	 * updating hashtable data structures but rather we are atomically
+	 * incrementing state_t refcount below. This allows concurrent reads
+	 * from this data structure without contending on hashtable writer
+	 * lock and since the state_t refcount itself is atomic, we are
+	 * thread safe. Furthermore, all writes to the ht_state_id hashtable
+	 * are private to this implementation file and are done under may_write
+	 * lock, so that calls to decrement the state reference count would
+	 * be done under exclusive writer lock.
+	 */
+	rc = hashtable_getlatch(ht_state_id, &buffkey, &buffval,
+				false /* may_write */, &latch);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
@@ -644,10 +655,13 @@ struct state_t *nfs4_State_Get_Pointer(char *other)
 
 	state = buffval.addr;
 
-	/* Take a reference under latch */
+	/* Take an atomic reference under latch. Hashtable is currently read
+	 * locked, so this state can't be invalidated while this atomic
+	 * increment is occurring.
+	 */
 	inc_state_t_ref(state);
 
-	/* Release latch */
+	/* Release latch, which releases hashtable read lock */
 	hashtable_releaselatched(ht_state_id, &latch);
 
 	return state;

@@ -445,9 +445,6 @@ hashtable_getlatch(struct hash_table *ht,
 	/* Stored error return */
 	hash_error_t rc = HASHTABLE_SUCCESS;
 
-	/* This combination of options makes no sense ever */
-	assert(!(may_write && !latch));
-
 	rc = compute(ht, key, &index, &rbt_hash);
 	if (rc != HASHTABLE_SUCCESS)
 		return rc;
