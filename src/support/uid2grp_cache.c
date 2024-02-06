@@ -225,9 +225,6 @@ static void uid2grp_remove_user(struct cache_info *info)
  * @note The caller must hold uid2grp_user_lock for write.
  *
  * @param[in] group_data that has supplementary groups allocated
- *
- * @retval true on success.
- * @retval false if our reach exceeds our grasp.
  */
 void uid2grp_add_user(struct group_data *gdata)
 {
@@ -260,6 +257,7 @@ void uid2grp_add_user(struct group_data *gdata)
 					   uname_node);
 		uid2grp_remove_user(tmp);
 		name_node2 = avltree_insert(&info->uname_node, &uname_tree);
+		assert(name_node2 == NULL);
 	}
 
 	id_node = avltree_insert(&info->uid_node, &uid_tree);
@@ -273,6 +271,7 @@ void uid2grp_add_user(struct group_data *gdata)
 					   uid_node);
 		uid2grp_remove_user(tmp);
 		id_node2 = avltree_insert(&info->uid_node, &uid_tree);
+		assert(id_node2 == NULL);
 	}
 	uid_grplist_cache[info->uid % id_cache_size] = &info->uid_node;
 
@@ -353,7 +352,7 @@ static bool lookup_by_uid(const uid_t uid, struct cache_info **info)
 }
 
 /**
- * @brief Look up a user by name
+ * @brief Look up a user by name (can return expired cache entry)
  *
  * @note The caller must hold uid2grp_user_lock for read.
  *
@@ -361,7 +360,7 @@ static bool lookup_by_uid(const uid_t uid, struct cache_info **info)
  * @param[out] uid  The user ID found.  May be NULL if the caller
  *                  isn't interested in the UID.  (This seems
  *                  unlikely.)
- * @gdata[out] group_data containing supplementary groups.
+ * @param[out] gdata group_data containing supplementary groups.
  *
  * @retval true on success.
  * @retval false if we need to try, try again.
@@ -384,7 +383,7 @@ bool uid2grp_lookup_by_uname(const struct gsh_buffdesc *name, uid_t *uid,
 }
 
 /**
- * @brief Look up a user by ID
+ * @brief Look up a user by ID (can return expired cache entry)
  *
  * @note The caller must hold uid2grp_user_lock for read.
  *
@@ -414,6 +413,14 @@ bool uid2grp_is_group_data_expired(struct group_data *gdata)
 	return gdata_age > nfs_param.core_param.manage_gids_expiration;
 }
 
+/**
+ * @brief Remove a user by ID
+ *
+ * @note The caller must hold uid2grp_user_lock for write.
+ *
+ * @param[in]  uid  The user ID to remove.
+ */
+
 void uid2grp_remove_by_uid(const uid_t uid)
 {
 	struct cache_info *info;
@@ -441,6 +448,14 @@ void uid2grp_remove_expired_by_uid(const uid_t uid)
 	if (success && uid2grp_is_group_data_expired(info->gdata))
 		uid2grp_remove_user(info);
 }
+
+/**
+ * @brief Remove a user by name
+ *
+ * @note The caller must hold uid2grp_user_lock for write.
+ *
+ * @param[in]  name  The user name to remove.
+ */
 
 void uid2grp_remove_by_uname(const struct gsh_buffdesc *name)
 {

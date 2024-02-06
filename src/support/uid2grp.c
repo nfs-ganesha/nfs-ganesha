@@ -287,13 +287,12 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 /**
  * @brief Get supplementary groups given uname
  *
- * @param[in]  name  The name of the user
- * @param[out]  group_data
+ * @param[in]  name       The name of the user
+ * @param[out] group_data The group data of the user
  *
  * @return true if successful, false otherwise
  */
-#define uid2grp_expired(gdata) (time(NULL) - (gdata)->epoch > \
-		nfs_param.core_param.manage_gids_expiration)
+
 bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 {
 	bool success = false;
@@ -303,7 +302,7 @@ bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 	success = uid2grp_lookup_by_uname(name, &uid, gdata);
 
 	/* Handle common case first */
-	if (success && !uid2grp_expired(*gdata)) {
+	if (success && !uid2grp_is_group_data_expired(*gdata)) {
 		uid2grp_hold_group_data(*gdata);
 		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
 		return success;
@@ -332,8 +331,8 @@ bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata)
 /**
  * @brief Get supplementary groups given uid
  *
- * @param[in]  uid  The uid of the user
- * @param[out]  group_data
+ * @param[in]   uid        The uid of the user
+ * @param[out]  group_data The group data of the user
  *
  * @return true if successful, false otherwise
  */
@@ -345,7 +344,7 @@ bool uid2grp(uid_t uid, struct group_data **gdata)
 	success = uid2grp_lookup_by_uid(uid, gdata);
 
 	/* Handle common case first */
-	if (success && !uid2grp_expired(*gdata)) {
+	if (success && !uid2grp_is_group_data_expired(*gdata)) {
 		uid2grp_hold_group_data(*gdata);
 		PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
 		return success;
