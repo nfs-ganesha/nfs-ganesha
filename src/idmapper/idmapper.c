@@ -416,12 +416,65 @@ static int name_to_gid(const char *name, gid_t *gid)
 }
 
 /**
+ * @brief Populate uid and gid given a user name
+ *
+ * @param[in]  name     user name
+ * @param[out] uid      address for uid to be filled in
+ * @param[out] gid      address for gid to be filled in
+ *
+ * @return 0 on success and errno on failure.
+ *
+ * NOTE: If a user name doesn't exist, getpwnam_r returns 0 with the
+ * result pointer set to NULL. We turn that into ENOENT error! Also,
+ * getpwnam_r fails with ERANGE if it can't fill all user passwd fields
+ * into the supplied buffer. ERANGE is handled here,
+ * so this function never ends up returning ERANGE back to the caller.
+ */
+static int name_to_uid(const char *name, uint32_t *uid, gid_t *gid)
+{
+	struct passwd p;
+	struct passwd *pres = NULL;
+	char *buf;
+	size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
+
+	/* Upper bound on the buffer length. Just to bailout if there is
+	 * a bug in getpwnam_r returning ERANGE incorrectly. 64MB
+	 * should be good enough for now.
+	 */
+	size_t maxlen = 64 * 1024 * 1024;
+	int err = ERANGE;
+
+	if (buflen == -1)
+		buflen = PWENT_BEST_GUESS_LEN;
+
+	while (buflen <= maxlen) {
+		buf = gsh_malloc(buflen);
+
+		err = getpwnam_r(name, &p, buf, buflen, &pres);
+		/* We don't use any strings from the buffer, so free it */
+		gsh_free(buf);
+		if (err != ERANGE)
+			break;
+		buflen *= 16;
+	}
+
+	if (err == 0) {
+		if (pres == NULL)
+			err = ENOENT;
+		else {
+			*uid = pres->pw_uid;
+			*gid = pres->pw_gid;
+		}
+	}
+
+	return err;
+}
+
+/**
  * @brief Lookup a name using PAM
  *
  * @param[in]  name       C string of name
- * @param[in]  len        Length of name
  * @param[out] id         ID found
- * @param[in]  anon       ID to use in case of nobody
  * @param[in]  group      Whether this a group lookup
  * @param[out] gss_gid    Found GID
  * @param[out] gss_uid    Found UID
@@ -430,10 +483,10 @@ static int name_to_gid(const char *name, gid_t *gid)
  *
  * @return true on success, false not making the grade
  */
-static bool pwentname2id(char *name, size_t len, uint32_t *id,
-			 const uint32_t anon, bool group, gid_t *gid,
-			 bool *got_gid, char *at)
+static bool pwentname2id(char *name, uint32_t *id, bool group,
+			 gid_t *gid, bool *got_gid, char *at)
 {
+	int err;
 	if (at != NULL) {
 		if (strcmp(at + 1, owner_domain.addr) != 0) {
 			/* We won't map what isn't even in the right domain */
@@ -442,63 +495,47 @@ static bool pwentname2id(char *name, size_t len, uint32_t *id,
 		*at = '\0';
 	}
 	if (group) {
-		int err;
-
 		err = name_to_gid(name, id);
 		if (err == 0)
 			return true;
-		else if (err != ENOENT) {
+		if (err != ENOENT) {
 			LogWarn(COMPONENT_IDMAPPER,
 				"getgrnam_r %s failed, error: %d", name, err);
 			return false;
 		}
 #ifndef USE_NFSIDMAP
-		else {
-			char *end = NULL;
-			gid_t gid;
+		char *end = NULL;
+		gid_t gid;
 
-			gid = strtol(name, &end, 10);
-			if (end && *end != '\0')
-				return 0;
+		gid = strtol(name, &end, 10);
+		if (end && *end != '\0')
+			return 0;
 
-			*id = gid;
-			return true;
-		}
+		*id = gid;
+		return true;
 #endif
 	} else {
-		struct passwd p;
-		struct passwd *pres;
-		int size = sysconf(_SC_GETPW_R_SIZE_MAX);
-		char *buf;
-
-		if (size == -1)
-			size = PWENT_BEST_GUESS_LEN;
-
-		buf = alloca(size);
-
-		if (getpwnam_r(name, &p, buf, size, &pres) != 0) {
-			LogInfo(COMPONENT_IDMAPPER, "getpwnam_r %s failed",
-				name);
-			return false;
-		} else if (pres != NULL) {
-			*id = pres->pw_uid;
-			*gid = pres->pw_gid;
+		err = name_to_uid(name, id, gid);
+		if (err == 0) {
 			*got_gid = true;
 			return true;
 		}
-#ifndef USE_NFSIDMAP
-		else {
-			char *end = NULL;
-			uid_t uid;
-
-			uid = strtol(name, &end, 10);
-			if (end && *end != '\0')
-				return 0;
-
-			*id = uid;
-			*got_gid = false;
-			return true;
+		if (err != ENOENT) {
+			LogWarn(COMPONENT_IDMAPPER,
+				"getpwnam_r %s failed, error: %d", name, err);
+			return false;
 		}
+#ifndef USE_NFSIDMAP
+		char *end = NULL;
+		uid_t uid;
+
+		uid = strtol(name, &end, 10);
+		if (end && *end != '\0')
+			return 0;
+
+		*id = uid;
+		*got_gid = false;
+		return true;
 #endif
 	}
 	return false;
@@ -586,9 +623,8 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 		at = memchr(namebuff, '@', name->len);
 
 		if (at == NULL) {
-			if (pwentname2id
-			    (namebuff, name->len, id, anon, group, &gid,
-			     &got_gid, NULL))
+			if (pwentname2id(namebuff, id, group, &gid, &got_gid,
+				NULL))
 				looked_up = true;
 			else if (atless2id(namebuff, name->len, id, anon))
 				looked_up = true;
@@ -596,8 +632,7 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 				return false;
 		} else if (nfs_param.nfsv4_param.use_getpwnam) {
 			looked_up =
-			    pwentname2id(namebuff, name->len, id, anon, group,
-					 &gid, &got_gid, at);
+			  pwentname2id(namebuff, id, group, &gid, &got_gid, at);
 		} else {
 			looked_up =
 			    idmapname2id(namebuff, name->len, id, anon, group,
