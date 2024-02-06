@@ -799,69 +799,100 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid,
 bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 #endif
 {
-#ifdef USE_NFSIDMAP
-#ifdef _MSPAC_SUPPORT
-	struct timespec s_time, e_time;
-	bool stats = false;
-	struct passwd *pwd;
-#endif
 	uid_t gss_uid = -1;
 	gid_t gss_gid = -1;
 	const gid_t *gss_gidres = NULL;
-	int rc;
 	bool success;
+	uint principal_len = strlen(principal);
 	struct gsh_buffdesc princbuff = {
 		.addr = principal,
-		.len = strlen(principal)
+		.len = principal_len
 	};
-#endif
-
-	if (nfs_param.nfsv4_param.use_getpwnam)
-		return false;
-#ifdef USE_NFSIDMAP
-#ifdef _MSPAC_SUPPORT
-	if (nfs_param.core_param.enable_AUTHSTATS)
-		stats = true;
-#endif
 
 	PTHREAD_RWLOCK_rdlock(&idmapper_user_lock);
-	success =
-	    idmapper_lookup_by_uname(&princbuff, &gss_uid, &gss_gidres, true);
+	success = idmapper_lookup_by_uname(&princbuff, &gss_uid, &gss_gidres,
+		true);
 
 	/* We do need uid and gid. If gid is not in the cache, treat it as a
 	 * failure.
 	 */
-	if (success && gss_gidres != NULL)
+	if (success && (gss_gidres != NULL)) {
 		gss_gid = *gss_gidres;
-	else
-		success = false;
+		PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
+		goto out;
+	}
 	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
-	if (unlikely(!success)) {
-		if ((princbuff.len >= 4)
-		    && (!memcmp(princbuff.addr, "nfs/", 4)
-			|| !memcmp(princbuff.addr, "root/", 5)
-			|| !memcmp(princbuff.addr, "host/", 5))) {
-			/* NFSv4 specific features: RPCSEC_GSS will
-			 * provide user like
-			 *
-			 * nfs/<host>
-			 * root/<host>
-			 * host/<host>
-			 * choice is made to map them to root */
-			/* This is a "root" request made from the
-			   hostbased nfs principal, use root */
-			*uid = 0;
-			*gid = 0;
-			return true;
+
+	if ((princbuff.len >= 4)
+		  && (!memcmp(princbuff.addr, "nfs/", 4)
+		|| !memcmp(princbuff.addr, "root/", 5)
+		|| !memcmp(princbuff.addr, "host/", 5))) {
+		/* NFSv4 specific features: RPCSEC_GSS will
+		 * provide user like
+		 *
+		 * nfs/<host>
+		 * root/<host>
+		 * host/<host>
+		 * choice is made to map them to root */
+		/* This is a "root" request made from the
+			 hostbased nfs principal, use root */
+		*uid = 0;
+		*gid = 0;
+		return true;
+	}
+
+	if (nfs_param.nfsv4_param.use_getpwnam) {
+		bool got_gid = false;
+		char *at;
+		char *uname;
+		int uname_len = principal_len;
+
+		LogDebug(COMPONENT_IDMAPPER,
+			"Get uid for %s using pw func", principal);
+
+		/* Strip off the realm from principal for pwnam lookup.
+		 * TODO: Later support pwnam lookup using full-name.
+		 */
+		at = memchr(principal, '@', principal_len);
+		if (at != NULL)
+			uname_len = at - principal;
+
+		uname = alloca(uname_len + 1);
+		memcpy(uname, principal, uname_len);
+		uname[uname_len] = '\0';
+
+		success = pwentname2id(uname, &gss_uid, false, &gss_gid,
+			&got_gid, NULL);
+		if (!success)
+			return false;
+
+		if (!got_gid) {
+			LogWarn(COMPONENT_IDMAPPER,
+				"Gid resolution failed for %s", principal);
+			return false;
 		}
+		goto principal_found;
+
+	} else {
+#ifdef USE_NFSIDMAP
+		int err;
+
+		LogDebug(COMPONENT_IDMAPPER,
+			"Get uid for %s using nfsidmap", principal);
+
 		/* nfs4_gss_princ_to_ids required to extract uid/gid
 		   from gss creds */
-		rc = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid,
-					   &gss_gid);
-		if (rc) {
+		err = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid,
+			&gss_gid);
+		if (err) {
+			LogWarn(COMPONENT_IDMAPPER,
+				"Could not resolve %s to uid using nfsidmap, err: %d",
+				principal, err);
+
 #ifdef _MSPAC_SUPPORT
-			bool found_uid = false;
-			bool found_gid = false;
+			struct timespec s_time, e_time;
+			bool stats = nfs_param.core_param.enable_AUTHSTATS;
+			struct passwd *pwd;
 
 			if (gd->flags & SVC_RPC_GSS_FLAG_MSPAC) {
 				struct wbcAuthUserParams params;
@@ -918,41 +949,34 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 				gss_gid = pwd->pw_gid;
 
 				wbcFreeMemory(info);
-				found_uid = true;
-				found_gid = true;
+				goto principal_found;
 			}
 #endif				/* _MSPAC_SUPPORT */
-#ifdef _MSPAC_SUPPORT
-			if ((found_uid == true) && (found_gid == true))
-				goto principal_found;
-#endif
 
 			return false;
 		}
-#ifdef _MSPAC_SUPPORT
- principal_found:
+		goto principal_found;
+
+#else				/* !USE_NFSIDMAP */
+		assert(!"prohibited by idmapping configuration");
 #endif
-
-		PTHREAD_RWLOCK_wrlock(&idmapper_user_lock);
-		success =
-		    idmapper_add_user(&princbuff, gss_uid, &gss_gid, true);
-		PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
-
-		if (!success) {
-			LogMajor(COMPONENT_IDMAPPER,
-				 "idmapper_add_user(%s, %d, %d) failed",
-				 principal, gss_uid, gss_gid);
-		}
 	}
 
+principal_found:
+	PTHREAD_RWLOCK_wrlock(&idmapper_user_lock);
+	success = idmapper_add_user(&princbuff, gss_uid, &gss_gid, true);
+	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
+
+	if (!success) {
+		LogMajor(COMPONENT_IDMAPPER,
+			"idmapper_add_user(%s, %d, %d) failed",
+			principal, gss_uid, gss_gid);
+	}
+
+out:
 	*uid = gss_uid;
 	*gid = gss_gid;
-
 	return true;
-#else				/* !USE_NFSIDMAP */
-	assert(!"prohibited by configuration");
-	return false;
-#endif
 }
 
 #ifdef USE_DBUS
