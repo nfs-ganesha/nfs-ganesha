@@ -242,15 +242,78 @@ static void package_mem_handle(struct mem_fsal_obj_handle *myself)
 }
 
 /**
+ * @brief Update the change attribute of the FSAL object
+ *
+ * @note Caller must hold the obj_lock on the obj
+ *
+ * @param[in] obj	FSAL obj which was modified
+ */
+static void mem_update_change_locked(struct mem_fsal_obj_handle *obj)
+{
+	now(&obj->attrs.mtime);
+	obj->attrs.ctime = obj->attrs.mtime;
+	obj->attrs.change = timespec_to_nsecs(&obj->attrs.mtime);
+}
+
+/**
+ * @brief Get attributes for a file
+ *
+ * @param[in] obj_hdl	File to get
+ * @param[out] outattrs	Attributes for file
+ * @return FSAL status
+ */
+static fsal_status_t mem_getattrs(struct fsal_obj_handle *obj_hdl,
+				  struct fsal_attrlist *outattrs)
+{
+	struct mem_fsal_obj_handle *myself =
+		container_of(obj_hdl, struct mem_fsal_obj_handle, obj_handle);
+
+	if (!myself->is_export && glist_empty(&myself->dirents)) {
+		/* Removed entry - stale */
+		LogDebug(COMPONENT_FSAL,
+			 "Requesting attributes for removed entry %p, name=%s",
+			 myself, myself->m_name);
+		return fsalstat(ERR_FSAL_STALE, ESTALE);
+	}
+
+	if (obj_hdl->type == DIRECTORY) {
+		/* We need to update the numlinks */
+		myself->attrs.numlinks =
+			atomic_fetch_uint32_t(&myself->mh_dir.numkids);
+	}
+
+#ifdef USE_LTTNG
+	tracepoint(fsalmem, mem_getattrs, __func__, __LINE__, obj_hdl,
+		   myself->m_name, myself->attrs.filesize,
+		   myself->attrs.numlinks, myself->attrs.change);
+#endif
+	LogFullDebug(COMPONENT_FSAL,
+		     "hdl=%p, name=%s numlinks %"PRIu32,
+		     myself,
+		     myself->m_name,
+		     myself->attrs.numlinks);
+
+	fsal_copy_attrs(outattrs, &myself->attrs, false);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
  * @brief Insert an obj into it's parent's tree
  *
- * @param[in] parent	Parent directory
- * @param[in] child	Child to insert.
- * @param[in] name	Name to use for insertion
+ * @param[in]     parent                Parent directory
+ * @param[in]     child                 Child to insert.
+ * @param[in]     name                  Name to use for insertion
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  */
 static void mem_insert_obj(struct mem_fsal_obj_handle *parent,
 			   struct mem_fsal_obj_handle *child,
-			   const char *name)
+			   const char *name,
+			   struct fsal_attrlist *parent_pre_attrs_out,
+			   struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct mem_dirent *dirent;
 	uint32_t numkids;
@@ -270,6 +333,10 @@ static void mem_insert_obj(struct mem_fsal_obj_handle *parent,
 
 	/* Link into parent */
 	PTHREAD_RWLOCK_wrlock(&parent->obj_handle.obj_lock);
+
+	if (parent_pre_attrs_out != NULL)
+		mem_getattrs(&parent->obj_handle, parent_pre_attrs_out);
+
 	/* Name tree */
 	avltree_insert(&dirent->avl_n, &parent->mh_dir.avl_name);
 	/* Index tree */
@@ -278,6 +345,11 @@ static void mem_insert_obj(struct mem_fsal_obj_handle *parent,
 	numkids = atomic_inc_uint32_t(&parent->mh_dir.numkids);
 	LogFullDebug(COMPONENT_FSAL, "%s numkids %"PRIu32, parent->m_name,
 		     numkids);
+
+	mem_update_change_locked(parent);
+
+	if (parent_post_attrs_out != NULL)
+		mem_getattrs(&parent->obj_handle, parent_post_attrs_out);
 
 	PTHREAD_RWLOCK_unlock(&parent->obj_handle.obj_lock);
 }
@@ -377,20 +449,6 @@ mem_readdir_seekloc(struct mem_fsal_obj_handle *dir, fsal_cookie_t seekloc)
 }
 
 /**
- * @brief Update the change attribute of the FSAL object
- *
- * @note Caller must hold the obj_lock on the obj
- *
- * @param[in] obj	FSAL obj which was modified
- */
-static void mem_update_change_locked(struct mem_fsal_obj_handle *obj)
-{
-	now(&obj->attrs.mtime);
-	obj->attrs.ctime = obj->attrs.mtime;
-	obj->attrs.change = timespec_to_nsecs(&obj->attrs.mtime);
-}
-
-/**
  * @brief Remove an obj from it's parent's tree
  *
  * @note Caller must hold the obj_lock on the parent
@@ -431,19 +489,31 @@ static void mem_remove_dirent_locked(struct mem_fsal_obj_handle *parent,
 /**
  * @brief Remove a dirent from it's parent's tree
  *
- * @param[in] parent	Parent directory
- * @param[in] name	Name to remove
+ * @param[in]     parent                Parent directory
+ * @param[in]     name                  Name to remove
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
  */
 static void mem_remove_dirent(struct mem_fsal_obj_handle *parent,
-			      const char *name)
+			      const char *name,
+			      struct fsal_attrlist *parent_pre_attrs_out,
+			      struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct mem_dirent *dirent;
 
 	PTHREAD_RWLOCK_wrlock(&parent->obj_handle.obj_lock);
 
+	if (parent_pre_attrs_out != NULL)
+		mem_getattrs(&parent->obj_handle, parent_pre_attrs_out);
+
 	dirent = mem_dirent_lookup(parent, name);
 	if (dirent)
 		mem_remove_dirent_locked(parent, dirent);
+
+	if (parent_post_attrs_out != NULL)
+		mem_getattrs(&parent->obj_handle, parent_post_attrs_out);
 
 	PTHREAD_RWLOCK_unlock(&parent->obj_handle.obj_lock);
 }
@@ -619,16 +689,21 @@ static fsal_status_t mem_close_func(struct fsal_obj_handle *obj_hdl,
 	return mem_close_my_fd(fd);
 }
 
-#define mem_alloc_handle(p, n, t, e, a) \
-	_mem_alloc_handle(p, n, t, e, a, __func__, __LINE__)
+#define mem_alloc_handle(p, n, t, e, a, ppra, ppoa) \
+	_mem_alloc_handle(p, n, t, e, a, ppra, ppoa, __func__, __LINE__)
 /**
  * @brief Allocate a MEM handle
  *
- * @param[in] parent	Parent directory handle
- * @param[in] name	Name of handle to allocate
- * @param[in] type	Type of handle to allocate
- * @param[in] mfe	MEM Export owning new handle
- * @param[in] attrs	Attributes of new handle
+ * @param[in]     parent                Parent directory handle
+ * @param[in]     name                  Name of handle to allocate
+ * @param[in]     type                  Type of handle to allocate
+ * @param[in]     mfe                   MEM Export owning new handle
+ * @param[in]     attrs                 Attributes of new handle
+ * @param[in,out] parent_pre_attrs_out  Optional attributes for parent dir
+ *                                      before the operation. Should be atomic.
+ * @param[in,out] parent_post_attrs_out Optional attributes for parent dir
+ *                                      after the operation. Should be atomic.
+ *
  * @return Handle on success, NULL on failure
  */
 static struct mem_fsal_obj_handle *
@@ -637,6 +712,8 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		  object_file_type_t type,
 		  struct mem_fsal_export *mfe,
 		  struct fsal_attrlist *attrs,
+		  struct fsal_attrlist *parent_pre_attrs_out,
+		  struct fsal_attrlist *parent_post_attrs_out,
 		  const char *func, int line)
 {
 	struct mem_fsal_obj_handle *hdl;
@@ -761,7 +838,8 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 
 	if (parent != NULL) {
 		/* Attach myself to my parent */
-		mem_insert_obj(parent, hdl, name);
+		mem_insert_obj(parent, hdl, name, parent_pre_attrs_out,
+			parent_post_attrs_out);
 	} else {
 		/* This is an export */
 		hdl->is_export = true;
@@ -823,7 +901,9 @@ static fsal_status_t mem_create_obj(struct mem_fsal_obj_handle *parent,
 				    const char *name,
 				    struct fsal_attrlist *attrs_in,
 				    struct fsal_obj_handle **new_obj,
-				    struct fsal_attrlist *attrs_out)
+				    struct fsal_attrlist *attrs_out,
+				    struct fsal_attrlist *parent_pre_attrs_out,
+				    struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct mem_fsal_export *mfe = container_of(op_ctx->fsal_export,
 						   struct mem_fsal_export,
@@ -854,7 +934,9 @@ static fsal_status_t mem_create_obj(struct mem_fsal_obj_handle *parent,
 			       name,
 			       type,
 			       mfe,
-			       attrs_in);
+			       attrs_in,
+			       parent_pre_attrs_out,
+			       parent_post_attrs_out);
 	if (!hdl)
 		return fsalstat(ERR_FSAL_NOMEM, 0);
 
@@ -1061,7 +1143,8 @@ static fsal_status_t mem_mkdir(struct fsal_obj_handle *dir_hdl,
 #endif
 
 	return mem_create_obj(parent, DIRECTORY, name, attrs_in, new_obj,
-			      attrs_out);
+			      attrs_out, parent_pre_attrs_out,
+			      parent_post_attrs_out);
 }
 
 /**
@@ -1097,7 +1180,8 @@ static fsal_status_t mem_mknode(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "mknode %s", name);
 
 	status = mem_create_obj(parent, nodetype, name, attrs_in, new_obj,
-				attrs_out);
+				attrs_out, parent_pre_attrs_out,
+				parent_post_attrs_out);
 	if (unlikely(FSAL_IS_ERROR(status)))
 		return status;
 
@@ -1142,7 +1226,8 @@ static fsal_status_t mem_symlink(struct fsal_obj_handle *dir_hdl,
 	LogDebug(COMPONENT_FSAL, "symlink %s", name);
 
 	status = mem_create_obj(parent, SYMBOLIC_LINK, name, attrs_in, new_obj,
-				attrs_out);
+				attrs_out, parent_pre_attrs_out,
+				parent_post_attrs_out);
 	if (unlikely(FSAL_IS_ERROR(status)))
 		return status;
 
@@ -1177,49 +1262,6 @@ static fsal_status_t mem_readlink(struct fsal_obj_handle *obj_hdl,
 
 	link_content->len = strlen(myself->mh_symlink.link_contents) + 1;
 	link_content->addr = gsh_strdup(myself->mh_symlink.link_contents);
-
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-}
-
-/**
- * @brief Get attributes for a file
- *
- * @param[in] obj_hdl	File to get
- * @param[out] outattrs	Attributes for file
- * @return FSAL status
- */
-static fsal_status_t mem_getattrs(struct fsal_obj_handle *obj_hdl,
-				  struct fsal_attrlist *outattrs)
-{
-	struct mem_fsal_obj_handle *myself =
-		container_of(obj_hdl, struct mem_fsal_obj_handle, obj_handle);
-
-	if (!myself->is_export && glist_empty(&myself->dirents)) {
-		/* Removed entry - stale */
-		LogDebug(COMPONENT_FSAL,
-			 "Requesting attributes for removed entry %p, name=%s",
-			 myself, myself->m_name);
-		return fsalstat(ERR_FSAL_STALE, ESTALE);
-	}
-
-	if (obj_hdl->type == DIRECTORY) {
-		/* We need to update the numlinks */
-		myself->attrs.numlinks =
-			atomic_fetch_uint32_t(&myself->mh_dir.numkids);
-	}
-
-#ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_getattrs, __func__, __LINE__, obj_hdl,
-		   myself->m_name, myself->attrs.filesize,
-		   myself->attrs.numlinks, myself->attrs.change);
-#endif
-	LogFullDebug(COMPONENT_FSAL,
-		     "hdl=%p, name=%s numlinks %"PRIu32,
-		     myself,
-		     myself->m_name,
-		     myself->attrs.numlinks);
-
-	fsal_copy_attrs(outattrs, &myself->attrs, false);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1305,7 +1347,8 @@ fsal_status_t mem_link(struct fsal_obj_handle *obj_hdl,
 		return status;
 	}
 
-	mem_insert_obj(dir, myself, name);
+	mem_insert_obj(dir, myself, name, destdir_pre_attrs_out,
+		destdir_post_attrs_out);
 
 	myself->attrs.numlinks++;
 
@@ -1356,6 +1399,9 @@ static fsal_status_t mem_unlink(struct fsal_obj_handle *dir_hdl,
 
 	PTHREAD_RWLOCK_wrlock(&dir_hdl->obj_lock);
 
+	if (parent_pre_attrs_out != NULL)
+		mem_getattrs(dir_hdl, parent_pre_attrs_out);
+
 	switch (obj_hdl->type) {
 	case DIRECTORY:
 		/* Check if directory is empty */
@@ -1395,6 +1441,9 @@ static fsal_status_t mem_unlink(struct fsal_obj_handle *dir_hdl,
 	}
 
 unlock:
+	if (parent_post_attrs_out != NULL)
+		mem_getattrs(dir_hdl, parent_post_attrs_out);
+
 	PTHREAD_RWLOCK_unlock(&dir_hdl->obj_lock);
 
 	return status;
@@ -1440,6 +1489,10 @@ fsal_status_t mem_close(struct fsal_obj_handle *obj_hdl)
  *                                      before the operation. Should be atomic.
  * @param[in,out] newdir_post_attrs_out Optional attributes for newdir dir
  *                                      after the operation. Should be atomic.
+ *
+ * Note: This function is not atomic, and so, the pre/post attributes are also
+ * not atomic.
+ *
  *
  * @return FSAL status
  */
@@ -1503,7 +1556,8 @@ static fsal_status_t mem_rename(struct fsal_obj_handle *obj_hdl,
 #endif
 
 	/* Remove from old dir */
-	mem_remove_dirent(mem_olddir, old_name);
+	mem_remove_dirent(mem_olddir, old_name, olddir_pre_attrs_out,
+		olddir_post_attrs_out);
 
 	if (!strcmp(old_name, mem_obj->m_name)) {
 		/* Change base name */
@@ -1512,7 +1566,8 @@ static fsal_status_t mem_rename(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* Insert into new directory */
-	mem_insert_obj(mem_newdir, mem_obj, new_name);
+	mem_insert_obj(mem_newdir, mem_obj, new_name, newdir_pre_attrs_out,
+		newdir_post_attrs_out);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1741,7 +1796,9 @@ fsal_status_t mem_open2(struct fsal_obj_handle *obj_hdl,
 		}
 		/* Doesn't exist, create it */
 		status = mem_create_obj(myself, REGULAR_FILE, name, attrs_set,
-					&create, attrs_out);
+					&create, attrs_out,
+					parent_pre_attrs_out,
+					parent_post_attrs_out);
 		if (FSAL_IS_ERROR(status)) {
 			return status;
 		}
@@ -2550,7 +2607,9 @@ fsal_status_t mem_lookup_path(struct fsal_export *exp_hdl,
 						    mfe->export_path,
 						    DIRECTORY,
 						    mfe,
-						    &attrs);
+						    &attrs,
+						    NULL,
+						    NULL);
 	}
 
 	*obj_hdl = &mfe->root_handle->obj_handle;
