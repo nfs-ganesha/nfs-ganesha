@@ -54,6 +54,7 @@
 #cmakedefine _MSPAC_SUPPORT 1
 #cmakedefine USE_NFSIDMAP 1
 #cmakedefine USE_DBUS 1
+#cmakedefine USE_UNWIND 1
 #cmakedefine _USE_CB_SIMULATOR 1
 #cmakedefine USE_CAPS 1
 #cmakedefine USE_BLKID 1
