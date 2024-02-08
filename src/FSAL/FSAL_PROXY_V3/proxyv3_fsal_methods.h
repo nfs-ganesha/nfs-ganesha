@@ -153,5 +153,9 @@ bool fattr3_to_fsalattr(const fattr3 *attrs,
 bool fsalattr_to_sattr3(const struct fsal_attrlist *fsal_attrs,
 			const bool allow_rawdev,
 			sattr3 *attrs_out);
+void pre_attrs_to_fsalattr(const pre_op_attr *pre_attrs,
+			   struct fsal_attrlist *out_attrs);
+void post_attrs_to_fsalattr(const post_op_attr *post_attrs,
+			    struct fsal_attrlist *out_attrs);
 
 #endif

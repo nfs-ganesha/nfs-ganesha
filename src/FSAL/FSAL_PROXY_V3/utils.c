@@ -235,6 +235,17 @@ static bool attrmask_valid(const attrmask_t mask, const bool allow_rawdev)
 	return true;
 }
 
+static void update_attrs_change(struct fsal_attrlist *attrs_in_out)
+{
+	/* Same logic like in posix2fsal_attributes */
+	attrs_in_out->change =
+		gsh_time_cmp(&attrs_in_out->mtime, &attrs_in_out->ctime) > 0
+			? timespec_to_nsecs(&attrs_in_out->mtime)
+			: timespec_to_nsecs(&attrs_in_out->ctime);
+
+	attrs_in_out->valid_mask |= ATTR_CHANGE;
+}
+
 /**
  * @brief Convert an fattr3 to fsal_attrlist.
  * @param attrs Input attributes as fattr3.
@@ -257,17 +268,67 @@ bool fattr3_to_fsalattr(const fattr3 *attrs,
 	 * simple copy.
 	 */
 	*fsal_attrs_out = *attrs;
-	/* Same logic like in posix2fsal_attributes */
-	fsal_attrs_out->change =
-			gsh_time_cmp(&fsal_attrs_out->mtime, &fsal_attrs_out->ctime) > 0
-				? timespec_to_nsecs(&fsal_attrs_out->mtime)
-				: timespec_to_nsecs(&fsal_attrs_out->ctime);
+	update_attrs_change(fsal_attrs_out);
 
 	/* Claim that only the POSIX attributes are valid. */
 	FSAL_SET_MASK(fsal_attrs_out->valid_mask, ATTRS_POSIX);
 	/* @todo Do we have to even do this? The CEPH FSAL does... */
 	FSAL_SET_MASK(fsal_attrs_out->supported, ATTRS_POSIX);
 	return true;
+}
+
+static void nfs_time_to_timespec(const nfstime3 *in, struct timespec *out)
+{
+	out->tv_nsec = in->tv_nsec;
+	out->tv_sec = in->tv_sec;
+}
+
+/**
+ * @brief Convert an nfs pre attributes to fsal_attrlist.
+ * @param pre_attrs Input pre attributes.
+ * @param out_attrs Output attributes in FSAL form.
+ *
+ */
+
+void pre_attrs_to_fsalattr(const pre_op_attr *pre_attrs,
+			   struct fsal_attrlist *out_attrs)
+{
+	if (out_attrs == NULL)
+		return;
+
+	out_attrs->valid_mask = 0;
+	if (!pre_attrs->attributes_follow)
+		return;
+
+	nfs_time_to_timespec(&pre_attrs->pre_op_attr_u.attributes.mtime,
+		&out_attrs->mtime);
+	nfs_time_to_timespec(&pre_attrs->pre_op_attr_u.attributes.ctime,
+		&out_attrs->ctime);
+	out_attrs->filesize = pre_attrs->pre_op_attr_u.attributes.size;
+	out_attrs->valid_mask = ATTR_CTIME | ATTR_MTIME | ATTR_SIZE;
+
+	update_attrs_change(out_attrs);
+}
+
+/**
+ * @brief Convert an nfs post attributes to fsal_attrlist.
+ * @param post_attrs Input post attributes.
+ * @param out_attrs Output attributes in FSAL form.
+ *
+ */
+
+void post_attrs_to_fsalattr(const post_op_attr *post_attrs,
+			    struct fsal_attrlist *out_attrs)
+{
+	if (out_attrs == NULL)
+		return;
+
+	out_attrs->valid_mask = 0;
+	if (!post_attrs->attributes_follow)
+		return;
+
+	(void) fattr3_to_fsalattr(&post_attrs->post_op_attr_u.attributes,
+		out_attrs);
 }
 
 /**

@@ -880,6 +880,9 @@ proxyv3_lookup_handle(struct fsal_obj_handle *parent,
  * @param op_attr The result post_op_attr (inside of decArgs).
  * @param new_obj The output argument for the new object.
  * @param attrs_out The output argument for the output attributes.
+ * @param parent_wcc_data The result parent wcc data
+ * @param parent_pre_attrs_out - The output fsal pre attributes
+ * @param parent_post_attrs_out - The output fsal post attributes
  *
  * @returns - ERR_FSAL_NO_ERROR on success, an error code otherwise.
  */
@@ -893,7 +896,10 @@ proxyv3_issue_createlike(struct proxyv3_obj_handle *parent_obj,
 			 struct post_op_fh3 *op_fh3,
 			 struct post_op_attr *op_attr,
 			 struct fsal_obj_handle **new_obj,
-			 struct fsal_attrlist *attrs_out)
+			 struct fsal_attrlist *attrs_out,
+			 struct wcc_data *parent_wcc_data,
+			 struct fsal_attrlist *parent_pre_attrs_out,
+			 struct fsal_attrlist *parent_post_attrs_out)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "Issuing a %s", procName);
@@ -940,6 +946,9 @@ proxyv3_issue_createlike(struct proxyv3_obj_handle *parent_obj,
 				     obj_attrs,
 				     parent_obj,
 				     attrs_out);
+
+	pre_attrs_to_fsalattr(&parent_wcc_data->before, parent_pre_attrs_out);
+	post_attrs_to_fsalattr(&parent_wcc_data->after, parent_post_attrs_out);
 
 	/* At this point, we've copied out the result. Clean up. */
 	xdr_free(decFunc, decArgs);
@@ -1106,7 +1115,10 @@ proxyv3_open2(struct fsal_obj_handle *obj_hdl,
 					&resok->obj,
 					&resok->obj_attributes,
 					out_obj,
-					attrs_out);
+					attrs_out,
+					&resok->dir_wcc,
+					parent_pre_attrs_out,
+					parent_post_attrs_out);
 }
 
 static fsal_openflags_t proxyv3_status2(struct fsal_obj_handle *obj_hdl,
@@ -1195,7 +1207,10 @@ proxyv3_symlink(struct fsal_obj_handle *dir_hdl,
 					&resok->obj,
 					&resok->obj_attributes,
 					new_obj,
-					attrs_out);
+					attrs_out,
+					&resok->dir_wcc,
+					parent_pre_attrs_out,
+					parent_post_attrs_out);
 }
 
 /**
@@ -1249,6 +1264,13 @@ proxyv3_hardlink(struct fsal_obj_handle *obj_hdl,
 		LogDebug(COMPONENT_FSAL,
 			 "NFSPROC3_LINK failed. %u", result.status);
 	}
+
+	pre_attrs_to_fsalattr(
+		&result.LINK3res_u.resok.linkdir_wcc.before,
+		destdir_pre_attrs_out);
+	post_attrs_to_fsalattr(
+		&result.LINK3res_u.resok.linkdir_wcc.after,
+		destdir_post_attrs_out);
 
 	return nfsstat3_to_fsalstat(result.status);
 }
@@ -1426,7 +1448,10 @@ proxyv3_mkdir(struct fsal_obj_handle *dir_hdl,
 					&resok->obj,
 					&resok->obj_attributes,
 					new_obj,
-					attrs_out);
+					attrs_out,
+					&resok->dir_wcc,
+					parent_pre_attrs_out,
+					parent_post_attrs_out);
 }
 
 /**
@@ -1505,7 +1530,10 @@ proxyv3_mknode(struct fsal_obj_handle *dir_hdl,
 					&resok->obj,
 					&resok->obj_attributes,
 					new_obj,
-					attrs_out);
+					attrs_out,
+					&resok->dir_wcc,
+					parent_pre_attrs_out,
+					parent_post_attrs_out);
 }
 
 /**
@@ -2207,6 +2235,22 @@ proxyv3_unlink(struct fsal_obj_handle *dir_hdl,
 		return nfsstat3_to_fsalstat(*status);
 	}
 
+	if (is_rmdir) {
+		pre_attrs_to_fsalattr(
+			&dir_result.RMDIR3res_u.resok.dir_wcc.before,
+			parent_pre_attrs_out);
+		post_attrs_to_fsalattr(
+			&dir_result.RMDIR3res_u.resok.dir_wcc.after,
+			parent_post_attrs_out);
+	} else {
+		pre_attrs_to_fsalattr(
+			&regular_result.REMOVE3res_u.resok.dir_wcc.before,
+			parent_pre_attrs_out);
+		post_attrs_to_fsalattr(
+			&regular_result.REMOVE3res_u.resok.dir_wcc.after,
+			parent_post_attrs_out);
+	}
+
 	/* Remove happened, no problems to report. */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -2266,6 +2310,20 @@ proxyv3_rename(struct fsal_obj_handle *obj_hdl,
 		LogDebug(COMPONENT_FSAL,
 			 "Rename failed! Got %d", result.status);
 	}
+
+	pre_attrs_to_fsalattr(
+		&result.RENAME3res_u.resok.fromdir_wcc.before,
+		olddir_pre_attrs_out);
+	post_attrs_to_fsalattr(
+		&result.RENAME3res_u.resok.fromdir_wcc.after,
+		olddir_post_attrs_out);
+
+	pre_attrs_to_fsalattr(
+		&result.RENAME3res_u.resok.todir_wcc.before,
+		newdir_pre_attrs_out);
+	post_attrs_to_fsalattr(
+		&result.RENAME3res_u.resok.todir_wcc.after,
+		newdir_post_attrs_out);
 
 	return nfsstat3_to_fsalstat(result.status);
 }
