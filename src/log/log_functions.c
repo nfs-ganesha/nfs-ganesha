@@ -45,6 +45,11 @@
 #include <execinfo.h>
 #include <assert.h>
 
+#ifdef USE_UNWIND
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+#endif
+
 #include "log.h"
 #include "gsh_list.h"
 #include "gsh_rpc.h"
@@ -2631,6 +2636,94 @@ int read_log_config(config_file_t in_config,
 	else
 		return -1;
 }				/* read_log_config */
+
+#ifdef USE_UNWIND
+void gsh_libunwind(void)
+{
+	unw_cursor_t cursor;
+	unw_context_t uc;
+	unsigned int i = 0;
+	char procname[256];
+	unw_word_t ip, sp, off;
+
+	struct log_facility *facility;
+	struct glist_head *glist;
+	int fd = -1;
+	char buffer[256];
+	int n;
+
+	procname[sizeof(procname) - 1] = '\0';
+
+	if (unw_getcontext(&uc) != 0)
+		goto libunwind_failed;
+
+	if (unw_init_local(&cursor, &uc) != 0)
+		goto libunwind_failed;
+
+	/* Find an active log facility */
+	PTHREAD_RWLOCK_rdlock(&log_rwlock);
+	glist_for_each(glist, &active_facility_list) {
+		facility = glist_entry(glist, struct log_facility, lf_active);
+		if (facility->lf_func == log_to_file) {
+			fd = open((char *)facility->lf_private,
+				O_WRONLY | O_APPEND | O_CREAT, log_mask);
+			break;
+		}
+	}
+
+	LogMajor(COMPONENT_INIT, "BACKTRACE:");
+
+	do {
+		ip = sp = 0;
+		unw_get_reg(&cursor, UNW_REG_IP, &ip);
+		unw_get_reg(&cursor, UNW_REG_SP, &sp);
+		switch (unw_get_proc_name(&cursor,
+			procname, sizeof(procname) - 1, &off)) {
+			case 0:
+				/* Name found. */
+			case -UNW_ENOMEM:
+				/* Name truncated. */
+				if (fd != -1) {
+					n = snprintf(buffer, sizeof(buffer),
+						" #%u %s + %#llx [ip=%#llx] [sp=%#llx]\n",
+						i, procname, (long long)off,
+						(long long)ip, (long long) sp);
+						write(fd, buffer, n);
+				} else {
+					LogMajor(COMPONENT_INIT,
+					" #%u %s + %#llx [ip=%#llx] [sp=%#llx]",
+					i, procname, (long long)off,
+					(long long)ip, (long long) sp);
+				}
+				break;
+			default:
+			/* case -UNW_ENOINFO: */
+			/* case -UNW_EUNSPEC: */
+				if (fd != -1) {
+					snprintf(buffer, sizeof(buffer),
+						" #%u %s [ip=%#llx] [sp=%#llx]\n",
+						i, "<unknown symbol>",
+						(long long)ip, (long long) sp);
+						write(fd, buffer, n);
+				} else {
+					LogMajor(COMPONENT_INIT,
+						" #%u %s [ip=%#llx] [sp=%#llx]",
+						i, "<unknown symbol>",
+						(long long)ip, (long long) sp);
+				}
+		}
+		++i;
+	} while (unw_step(&cursor) > 0);
+
+PTHREAD_RWLOCK_unlock(&log_rwlock);
+return;
+
+libunwind_failed:
+	LogCrit(COMPONENT_INIT,
+		"unable to produce a stack trace with libunwind");
+}
+
+#endif
 
 void gsh_backtrace(void)
 {

@@ -1193,6 +1193,21 @@ add_custom_command(TARGET srpm
 
 # Roll up required libraries
 
+# enable libunwind if available
+goption(USE_UNWIND "Enable libunwind" ON)
+gopt_test(USE_UNWIND)
+if (USE_UNWIND)
+  find_package(Unwind)
+  if (UNWIND_FOUND)
+    set(SYSTEM_LIBRARIES ${UNWIND_LIBRARIES} ${SYSTEM_LIBRARIES})
+    include_directories(${UNWIND_INCLUDE_DIR})
+    message(STATUS "libunwind found: ${UNWIND_LIBRARIES}")
+  else (UNWIND_FOUND)
+    message(WARNING "libunwind not found. Disabling USE_UNWIND")
+    set(USE_UNWIND OFF)
+  endif (UNWIND_FOUND)
+endif(USE_UNWIND)
+
 if(USE_9P_RDMA)
   find_package(PkgConfig)
   pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.6)
@@ -1381,6 +1396,7 @@ message(STATUS "USE_MAN_PAGE = ${USE_MAN_PAGE}")
 message(STATUS "USE_RADOS_RECOV = ${USE_RADOS_RECOV}")
 message(STATUS "RADOS_URLS = ${RADOS_URLS}")
 message(STATUS "USE_CUNIT = ${USE_CUNIT}")
+message(STATUS "USE_UNWIND = ${USE_UNWIND}")
 message(STATUS "SANITIZE_ADDRESS = ${SANITIZE_ADDRESS}")
 
 set(USE_CB_SIMULATOR ${USE_CB_SIMULATOR}
@@ -1607,6 +1623,12 @@ if(RPCBIND)
 else(RPCBIND)
     set(BCOND_RPCBIND "%bcond_with")
 endif(RPCBIND)
+
+if(USE_UNWIND)
+    set(BCOND_UNWIND "%bcond_without")
+else(USE_UNWIND)
+    set(BCOND_UNWIND "%bcond_with")
+endif(USE_UNWIND)
 
 if(_MSPAC_SUPPORT)
     set(BCOND_MSPAC_SUPPORT "%bcond_without")

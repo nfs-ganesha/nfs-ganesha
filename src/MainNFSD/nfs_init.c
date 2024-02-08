@@ -253,7 +253,11 @@ static void *sigmgr_thread(void *UnusedArg)
 
 static void crash_handler(int signo, siginfo_t *info, void *ctx)
 {
+#ifdef USE_UNWIND
+	gsh_libunwind();
+#else
 	gsh_backtrace();
+#endif
 	/* re-raise the signal for the default signal handler to dump core */
 	raise(signo);
 }
