@@ -2492,8 +2492,20 @@ static void mem_release(struct fsal_obj_handle *obj_hdl)
 			      struct mem_fsal_obj_handle,
 			      obj_handle);
 
-	if (myself->obj_handle.type == REGULAR_FILE)
+	if (myself->obj_handle.type == REGULAR_FILE) {
+		fsal_status_t st;
+
+		st = close_fsal_fd(obj_hdl, &myself->mh_file.fd, false);
+
+		if (FSAL_IS_ERROR(st)) {
+			LogCrit(COMPONENT_FSAL,
+				"Could not close hdl 0x%p, status %s error %s(%d)",
+				obj_hdl, fsal_err_txt(st),
+				strerror(st.minor), st.minor);
+		}
+
 		destroy_fsal_fd(&myself->mh_file.fd);
+	}
 
 	mem_int_put_ref(myself);
 }

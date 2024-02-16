@@ -56,7 +56,6 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 	struct glusterfs_handle *objhandle =
 	    container_of(obj_hdl, struct glusterfs_handle, handle);
 	struct glusterfs_fd *my_fd = &objhandle->globalfd;
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 #ifdef GLTIMING
 	struct timespec s_time, e_time;
 
@@ -65,32 +64,18 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 
 	fsal_obj_handle_fini(&objhandle->handle, true);
 
-	if (my_fd->glfd) {
+	if (obj_hdl->type == REGULAR_FILE) {
+		fsal_status_t st;
 
-		/* During shutdown, the op_ctx is NULL */
-		if (op_ctx && op_ctx->fsal_export) {
-			/* Since handle gets released as part of internal
-			 * operation, we may not need to set credentials */
-#ifdef USE_LTTNG
-			tracepoint(fsalgl, close_fd, __func__, __LINE__,
-				   my_fd->glfd);
-#endif
-			status = glusterfs_close_my_fd(my_fd);
-			if (FSAL_IS_ERROR(status)) {
-				LogCrit(COMPONENT_FSAL,
-					"glusterfs_close_my_fd returned %s",
-					fsal_err_txt(status));
-				/* cleanup as much as possible */
-			}
-		} else if (my_fd->fsal_fd.openflags != FSAL_O_CLOSED) {
-			rc = glfs_close(my_fd->glfd);
-			if (rc) {
-				LogCrit(COMPONENT_FSAL,
-					"glfs_close returned %s(%d)",
-					strerror(errno), errno);
-			}
+		st = close_fsal_fd(obj_hdl, &my_fd->fsal_fd,
+				   false);
+
+		if (FSAL_IS_ERROR(st)) {
+			LogCrit(COMPONENT_FSAL,
+				"Could not close hdl 0x%p, status %s error %s(%d)",
+				obj_hdl, fsal_err_txt(st),
+				strerror(st.minor), st.minor);
 		}
-		my_fd->glfd = NULL;
 	}
 
 	if (my_fd->creds.caller_garray) {
@@ -109,7 +94,7 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 	}
 
 	if (objhandle->handle.type == REGULAR_FILE)
-		destroy_fsal_fd(&objhandle->globalfd.fsal_fd);
+		destroy_fsal_fd(&my_fd->fsal_fd);
 
 	gsh_free(objhandle);
 
@@ -1231,19 +1216,33 @@ fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd)
 
 	if (my_fd->glfd && my_fd->fsal_fd.openflags != FSAL_O_CLOSED) {
 
-		/* Use the same credentials which opened up the fd */
-		SET_GLUSTER_CREDS_MY_FD(glfs_export, my_fd);
+		/* During shutdown, the op_ctx is NULL,
+		 * Since handle gets released as part of internal
+		 * operation, we may not need to set credentials
+		 */
+		if (op_ctx && op_ctx->fsal_export) {
+			/* Use the same credentials which opened up the fd */
+			SET_GLUSTER_CREDS_MY_FD(glfs_export, my_fd);
+		}
+
+#ifdef USE_LTTNG
+		tracepoint(fsalgl, close_fd, __func__, __LINE__,
+			   my_fd->glfd);
+#endif
 
 		rc = glfs_close(my_fd->glfd);
 
-		/* restore credentials */
-		RESET_GLUSTER_CREDS(glfs_export);
+		/* During shutdown, the op_ctx is NULL */
+		if (op_ctx && op_ctx->fsal_export) {
+			/* restore credentials */
+			RESET_GLUSTER_CREDS(glfs_export);
+		}
 
 		if (rc != 0) {
 			status = gluster2fsal_error(errno);
 			LogCrit(COMPONENT_FSAL,
-				"Error : close returns with %s",
-				strerror(errno));
+				"glfs_close returned %s (%d)",
+				strerror(errno), errno);
 		}
 
 		my_fd->glfd = NULL;

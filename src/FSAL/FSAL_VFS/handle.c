@@ -1731,20 +1731,8 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 	if (type == REGULAR_FILE) {
 		fsal_status_t st;
-		struct fsal_fd *fsal_fd = &myself->u.file.fd.fsal_fd;
 
-		/* Indicate we want to do fd work (can't fail since not
-		 * reclaiming)
-		 */
-		(void) fsal_start_fd_work(fsal_fd, false);
-
-		if (fsal_fd->openflags != FSAL_O_CLOSED)
-			st = vfs_close_my_fd(&myself->u.file.fd);
-		else
-			st = fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-		/* Indicate we are done with fd work and signal any waiters. */
-		fsal_complete_fd_work(fsal_fd);
+		st = close_fsal_fd(obj_hdl, &myself->u.file.fd.fsal_fd, false);
 
 		if (FSAL_IS_ERROR(st)) {
 			LogCrit(COMPONENT_FSAL,

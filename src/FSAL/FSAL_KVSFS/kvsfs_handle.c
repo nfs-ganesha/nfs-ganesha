@@ -949,13 +949,25 @@ static void kvsfs_release(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle,
 			      obj_handle);
 
-	fsal_obj_handle_fini(obj_hdl, true);
-
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)
 			gsh_free(myself->u.symlink.link_content);
-	} else if (type == REGULAR_FILE)
+	} else if (type == REGULAR_FILE) {
+		fsal_status_t st;
+
+		st = close_fsal_fd(obj_hdl, &myself->u.file.fd.fsal_fd, false);
+
+		if (FSAL_IS_ERROR(st)) {
+			LogCrit(COMPONENT_FSAL,
+				"Could not close hdl 0x%p, status %s error %s(%d)",
+				obj_hdl, fsal_err_txt(st),
+				strerror(st.minor), st.minor);
+		}
+
 		destroy_fsal_fd(&myself->u.file.fd.fsal_fd);
+	}
+
+	fsal_obj_handle_fini(obj_hdl, true);
 
 	gsh_free(myself);
 }

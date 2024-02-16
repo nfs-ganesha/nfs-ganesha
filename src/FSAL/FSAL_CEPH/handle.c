@@ -66,18 +66,35 @@
  *
  * This function destroys the object referred to by the given handle
  *
- * @param[in] obj_pub The object to release
+ * @param[in] obj_hdl The object to release
  *
  * @return FSAL status codes.
  */
 
-static void ceph_fsal_release(struct fsal_obj_handle *obj_pub)
+static void ceph_fsal_release(struct fsal_obj_handle *obj_hdl)
 {
 	/* The private 'full' handle */
 	struct ceph_handle *obj =
-			container_of(obj_pub, struct ceph_handle, handle);
+			container_of(obj_hdl, struct ceph_handle, handle);
 	struct ceph_export *export =
 		container_of(op_ctx->fsal_export, struct ceph_export, export);
+
+	if (obj_hdl->type == REGULAR_FILE) {
+		fsal_status_t st;
+
+		st = close_fsal_fd(obj_hdl, &obj->fd.fsal_fd, false);
+
+		if (FSAL_IS_ERROR(st)) {
+			LogCrit(COMPONENT_FSAL,
+				"Could not close hdl 0x%p, status %s error %s(%d)",
+				obj_hdl, fsal_err_txt(st),
+				strerror(st.minor), st.minor);
+		}
+#ifdef USE_LTTNG
+		tracepoint(fsalceph, ceph_close, __func__, __LINE__,
+			   obj_hdl->fileid);
+#endif
+	}
 
 	if (obj != export->root)
 		deconstruct_handle(obj);

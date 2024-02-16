@@ -49,8 +49,20 @@ static void lzfs_fsal_release(struct fsal_obj_handle *obj_hdl)
 						struct lzfs_fsal_handle,
 						handle);
 
-	if (lzfs_obj->handle.type == REGULAR_FILE)
+	if (lzfs_obj->handle.type == REGULAR_FILE) {
+		fsal_status_t st;
+
+		st = close_fsal_fd(obj_hdl, &lzfs_obj->fd.fsal_fd, false);
+
+		if (FSAL_IS_ERROR(st)) {
+			LogCrit(COMPONENT_FSAL,
+				"Could not close hdl 0x%p, status %s error %s(%d)",
+				obj_hdl, fsal_err_txt(st),
+				strerror(st.minor), st.minor);
+		}
+
 		destroy_fsal_fd(&lzfs_obj->fd.fsal_fd);
+	}
 
 	if (lzfs_obj != lzfs_obj->export->root) {
 		lzfs_fsal_delete_handle(lzfs_obj);
