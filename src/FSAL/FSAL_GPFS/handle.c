@@ -952,19 +952,16 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 	LogFullDebug(COMPONENT_FSAL, "type %d", type);
 	if (type == REGULAR_FILE) {
-		struct fsal_fd *fsal_fd = &myself->u.file.fd.fsal_fd;
+		fsal_status_t st;
 
-		/* Indicate we want to do fd work (can't fail since not
-		 * reclaiming)
-		 */
-		(void) fsal_start_fd_work(fsal_fd, false);
+		st = close_fsal_fd(obj_hdl, &myself->u.file.fd.fsal_fd, false);
 
-		if (fsal_fd->openflags != FSAL_O_CLOSED)
-			(void) fsal_internal_close(
-						myself->u.file.fd.fd, NULL, 0);
-
-		/* Indicate we are done with fd work and signal any waiters. */
-		fsal_complete_fd_work(fsal_fd);
+		if (FSAL_IS_ERROR(st)) {
+			LogCrit(COMPONENT_FSAL,
+				"Could not close hdl 0x%p, status %s error %s(%d)",
+				obj_hdl, fsal_err_txt(st),
+				strerror(st.minor), st.minor);
+		}
 	}
 
 	if (myself->obj_handle.type == REGULAR_FILE)
