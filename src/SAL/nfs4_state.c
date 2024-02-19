@@ -140,7 +140,8 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	/* If open_state_per_client is enable and too many files are open
 	 * from same client then stop going ahead and return EIO
 	 */
-	if (nfs_param.nfsv4_param.open_state_per_client
+	if (state_type == STATE_TYPE_SHARE
+	    && nfs_param.nfsv4_param.open_state_per_client
 	    && (atomic_fetch_uint32_t(&clientid->cid_open_state_counter)
 		>= nfs_param.nfsv4_param.open_state_per_client)) {
 		display_clientid(&dspbuf, clientid->cid_clientid);
@@ -239,7 +240,8 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 
 	inc_state_owner_ref(owner_input);
 
-	atomic_inc_uint32_t(&clientid->cid_open_state_counter);
+	if (pnew_state->state_type == STATE_TYPE_SHARE)
+		atomic_inc_uint32_t(&clientid->cid_open_state_counter);
 	glist_add_tail(&owner_input->so_owner.so_nfs4_owner.so_state_list,
 		       &pnew_state->state_owner_list);
 
@@ -556,7 +558,8 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	 */
 	(void) obj->obj_ops->close2(obj, state);
 	if (clientid) {
-		atomic_dec_uint32_t(&clientid->cid_open_state_counter);
+		if (state->state_type == STATE_TYPE_SHARE)
+			atomic_dec_uint32_t(&clientid->cid_open_state_counter);
 		if (clientid->gsh_client)
 			dec_gsh_client_state_stats(clientid->gsh_client,
 						   state->state_type);
