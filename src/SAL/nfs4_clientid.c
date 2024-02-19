@@ -2085,5 +2085,46 @@ int nfs_Init_client_id(void)
 	return CLIENT_ID_SUCCESS;
 }
 
+/**
+ * @brief Get the total count of files open by the clients in the hashtables.
+ *
+ * Loop over all RBT nodes in HashTable buckets to get the count of open files
+ *
+ * @return Total NFSv4 Open Files Count
+ */
+uint64_t get_total_count_of_open_states(void)
+{
+	hash_table_t *ht = ht_confirmed_client_id;
+	struct rbt_head *head_rbt;
+	struct hash_data *addr = NULL;
+	uint32_t i;
+	struct rbt_node *pn;
+	nfs_client_id_t *client_id;
+	uint64_t count = 0;
+	char str[LOG_BUFF_LEN] = "\0";
+	struct display_buffer dspbuf = {sizeof(str), str, str};
+
+	/* For each bucket of the hashtable - ht_confirmed_client_id */
+	for (i = 0; i < ht->parameter.index_size; i++) {
+		/* acquire read lock */
+		PTHREAD_RWLOCK_rdlock(&(ht->partitions[i].ht_lock));
+
+		head_rbt = &(ht->partitions[i].rbt);
+
+		/* go through all entries in the red-black-tree */
+		RBT_LOOP(head_rbt, pn) {
+			addr = RBT_OPAQ(pn);
+			client_id = addr->val.addr;
+			display_client_id_rec(&dspbuf, client_id);
+			LogEvent(COMPONENT_CLIENTID,
+				 "Dump Client Entry %s", str);
+			count += client_id->cid_open_state_counter;
+			display_reset_buffer(&dspbuf);
+			RBT_INCREMENT(pn);
+		}
+		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].ht_lock));
+	}
+	return count;
+}
 
 /** @} */

@@ -2294,6 +2294,25 @@ static bool show_mdcache_stats(DBusMessageIter *args,
 	return true;
 }
 
+static bool show_fd_usage_summary(DBusMessageIter *args,
+				  DBusMessage *reply,
+				  DBusError *error)
+{
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+	struct timespec timestamp;
+
+	now(&timestamp);
+	dbus_message_iter_init_append(reply, &iter);
+	gsh_dbus_status_reply(&iter, success, errormsg);
+	gsh_dbus_append_timestamp(&iter, &timestamp);
+
+	fd_usage_summarize_dbus(&iter);
+
+	return true;
+}
+
 static struct gsh_dbus_method export_show_v41_layouts = {
 	.name = "GetNFSv41Layouts",
 	.method = get_nfsv41_export_layouts,
@@ -2988,6 +3007,15 @@ static struct gsh_dbus_method mdcache_show = {
 		 END_ARG_LIST}
 };
 
+static struct gsh_dbus_method fd_usage_summary = {
+	.name = "ShowFDUsage",
+	.method = show_fd_usage_summary,
+	.args = {STATUS_REPLY,
+		 TIMESTAMP_REPLY,
+		 FD_USAGE_SUMM_REPLY,
+		 END_ARG_LIST}
+};
+
 /**
  * @brief Report all IO stats of all exports in one call
  *
@@ -3074,6 +3102,7 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&auth_statistics,
 #endif /* _HAVE_GSSAPI */
 	&export_details,
+	&fd_usage_summary,
 	NULL
 };
 

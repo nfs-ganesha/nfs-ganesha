@@ -573,6 +573,12 @@ CELOSTATS_REPLY
 	.direction = "out"  \
 }
 
+#define FD_USAGE_SUMM_REPLY            \
+{                                      \
+	.name = "fd_usage_summary",    \
+	.type = "sususususssusust",    \
+	.direction = "out"             \
+}
 
 extern struct timespec auth_stats_time;
 #ifdef _USE_NFS3
@@ -622,6 +628,7 @@ void reset_v3_full_stats(void);
 void reset_v4_full_stats(void);
 void reset_auth_stats(void);
 void reset_clnt_allops_stats(void);
+void fd_usage_summarize_dbus(DBusMessageIter *iter);
 
 #ifdef _USE_9P
 void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter);

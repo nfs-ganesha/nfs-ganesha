@@ -268,6 +268,7 @@ nfsstat4 clientid_error_to_nfsstat_no_expire(clientid_status_t err)
 const char *clientid_error_to_str(clientid_status_t err);
 
 int nfs_Init_client_id(void);
+uint64_t get_total_count_of_open_states(void);
 
 clientid_status_t nfs_client_id_get_unconfirmed(clientid4 clientid,
 						nfs_client_id_t **pclient_rec);

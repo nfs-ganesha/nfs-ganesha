@@ -71,6 +71,9 @@
 #include "pnfs_utils.h"
 #include "atomic_utils.h"
 #include "sys_resource.h"
+#ifdef USE_DBUS
+#include "gsh_dbus.h"
+#endif
 
 /* fsal_attach_export
  * called from the FSAL's create_export method with a reference on the fsal.
@@ -3274,6 +3277,88 @@ void resume_op_context(struct req_op_context *ctx)
 		/* Set the Client IP for this thread */
 		SetClientIP(op_ctx->client->hostaddr_str);
 	}
+}
+
+void fd_usage_summarize_dbus(DBusMessageIter *iter)
+{
+	DBusMessageIter struct_iter;
+	char *type;
+	uint32_t global_fds, state_fds;
+	uint32_t fd_limit, fd_state;
+	uint32_t fds_lowat, fds_hiwat, fds_hard_limit;
+	uint64_t v4_open_states_count;
+
+	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
+					 &struct_iter);
+	/* Gather the data */
+	fd_limit = atomic_fetch_uint32_t(&fd_lru_state.fds_system_imposed);
+	fds_lowat = atomic_fetch_uint32_t(&fd_lru_state.fds_lowat);
+	fds_hiwat = atomic_fetch_uint32_t(&fd_lru_state.fds_hiwat);
+	fds_hard_limit = atomic_fetch_uint32_t(&fd_lru_state.fds_hard_limit);
+	fd_state = atomic_fetch_uint32_t(&fd_lru_state.fd_state);
+
+	global_fds = atomic_fetch_int32_t(&fsal_fd_global_counter);
+	state_fds = atomic_fetch_uint32_t(&fsal_fd_state_counter);
+
+	/* Gets open v4 FD counts by traversing all the HT
+	 * to get all clientIDs and count their open states
+	 */
+	v4_open_states_count = get_total_count_of_open_states();
+
+	type = "System limit on FDs";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &fd_limit);
+
+	type = "FD Low WaterMark";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &fds_lowat);
+
+	type = "FD High WaterMark";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &fds_hiwat);
+
+	type = "FD Hard Limt";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &fds_hard_limit);
+
+	type = "FD usage";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	switch (fd_state) {
+	case FD_LOW:
+		type = "        Below Low Water Mark ";
+		break;
+	case FD_MIDDLE:
+		type = "        Below High Water Mark ";
+		break;
+	case FD_HIGH:
+		type = "        Above High Water Mark ";
+		break;
+	case FD_LIMIT:
+		type = "        Hard Limit reached ";
+		break;
+	}
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+
+	type = "FSAL opened Global FD count";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &global_fds);
+
+	type = "FSAL opened State FD count";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT32,
+				       &state_fds);
+
+	type = "NFSv4 open state count";
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &v4_open_states_count);
+
+	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
 /** @} */

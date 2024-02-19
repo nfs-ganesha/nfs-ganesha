@@ -725,6 +725,7 @@ struct fd_lru_parameter {
 };
 
 extern int32_t fsal_fd_global_counter;
+extern uint32_t fsal_fd_state_counter;
 
 void fsal_init_fds_limit(struct fd_lru_parameter *params);
 fsal_status_t fd_lru_pkginit(struct fd_lru_parameter *params);
