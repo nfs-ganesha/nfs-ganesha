@@ -815,6 +815,11 @@ static fsal_status_t
 fsal_mode_gen_set(fsal_ace_t *ace, uint32_t mode)
 {
 	fsal_ace_t *allow, *deny;
+	/* All should have the READ_ATTR & READ_ACL allowed by default.
+	 * Owner in addition Should have the write attr, acl & owner
+	 * (actually owner may just change the gid to group it belongs to) */
+	const fsal_aceperm_t default_attr_acl_read_perm =
+			FSAL_ACE_PERM_READ_ATTR | FSAL_ACE_PERM_READ_ACL;
 
 	/* @OWNER */
 	deny = ace;
@@ -825,6 +830,9 @@ fsal_mode_gen_set(fsal_ace_t *ace, uint32_t mode)
 	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_OWNER;
 	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
 				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_PERM(*allow) |= default_attr_acl_read_perm;
+	GET_FSAL_ACE_PERM(*allow) |= FSAL_ACE_PERM_WRITE_ATTR |
+			FSAL_ACE_PERM_WRITE_ACL | FSAL_ACE_PERM_WRITE_OWNER;
 	fsal_mode_set_ace(deny, allow, mode & S_IRWXU);
 	/* @GROUP */
 	deny += 2;
@@ -837,6 +845,7 @@ fsal_mode_gen_set(fsal_ace_t *ace, uint32_t mode)
 	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
 				      FSAL_ACE_IFLAG_SPECIAL_ID);
 	GET_FSAL_ACE_FLAG(*deny) = FSAL_ACE_FLAG_GROUP_ID;
+	GET_FSAL_ACE_PERM(*allow) |= default_attr_acl_read_perm;
 	fsal_mode_set_ace(deny, allow, (mode & S_IRWXG) << 3);
 	/* @EVERYONE */
 	deny += 2;
@@ -847,6 +856,7 @@ fsal_mode_gen_set(fsal_ace_t *ace, uint32_t mode)
 	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_EVERYONE;
 	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
 				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_PERM(*allow) |= default_attr_acl_read_perm;
 	fsal_mode_set_ace(deny, allow, (mode & S_IRWXO) << 6);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
