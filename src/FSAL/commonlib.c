@@ -840,11 +840,9 @@ fsal_mode_gen_set(fsal_ace_t *ace, uint32_t mode)
 	GET_FSAL_ACE_USER(*allow) = FSAL_ACE_SPECIAL_GROUP;
 	GET_FSAL_ACE_IFLAG(*allow) |= (FSAL_ACE_IFLAG_MODE_GEN |
 				       FSAL_ACE_IFLAG_SPECIAL_ID);
-	GET_FSAL_ACE_FLAG(*allow) = FSAL_ACE_FLAG_GROUP_ID;
 	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_GROUP;
 	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
 				      FSAL_ACE_IFLAG_SPECIAL_ID);
-	GET_FSAL_ACE_FLAG(*deny) = FSAL_ACE_FLAG_GROUP_ID;
 	GET_FSAL_ACE_PERM(*allow) |= default_attr_acl_read_perm;
 	fsal_mode_set_ace(deny, allow, (mode & S_IRWXG) << 3);
 	/* @EVERYONE */
