@@ -602,7 +602,7 @@ typedef struct nfs_version4_parameter {
 	/** Max number of files that could be opened by a client. Beyond this
 	 * limit, client gets denied if it tries to open too many files.
 	 */
-	uint32_t open_state_per_client;
+	uint32_t max_open_states_per_client;
 	/** Threshold for number of expired clients to reach,
 	 *  in order to start with the actual expiration
 	 */

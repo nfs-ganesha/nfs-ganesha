@@ -137,18 +137,18 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 			dec_state_t_ref(openstate);
 	}
 
-	/* If open_state_per_client is enable and too many files are open
+	/* If Max_Open_States_Per_Client is enabled and too many files are open
 	 * from same client then stop going ahead and return EIO
 	 */
 	if (state_type == STATE_TYPE_SHARE
-	    && nfs_param.nfsv4_param.open_state_per_client
+	    && nfs_param.nfsv4_param.max_open_states_per_client
 	    && (atomic_fetch_uint32_t(&clientid->cid_open_state_counter)
-		>= nfs_param.nfsv4_param.open_state_per_client)) {
+		>= nfs_param.nfsv4_param.max_open_states_per_client)) {
 		display_clientid(&dspbuf, clientid->cid_clientid);
 		LogCrit(COMPONENT_STATE,
 		    "Too many files(cur:%u>=limit:%u) opened by {CLIENTID %s}",
 		    atomic_fetch_uint32_t(&clientid->cid_open_state_counter),
-		    nfs_param.nfsv4_param.open_state_per_client, str);
+		    nfs_param.nfsv4_param.max_open_states_per_client, str);
 		display_reset_buffer(&dspbuf);
 		status = STATE_IO_ERROR;
 		goto errout;
