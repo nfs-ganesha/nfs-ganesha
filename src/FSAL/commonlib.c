@@ -977,7 +977,7 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 			GET_FSAL_ACE_FLAG(*dace) &= ~(FSAL_ACE_FLAG_INHERIT);
 		}
 
-		if (IS_FSAL_ACE_SPECIAL(*dace)) {
+		if (IS_FSAL_ACE_SPECIAL_ID(*dace)) {
 			GET_FSAL_ACE_PERM(*dace) &=
 				~(FSAL_ACE_PERM_READ_DATA |
 				  FSAL_ACE_PERM_LIST_DIR |
