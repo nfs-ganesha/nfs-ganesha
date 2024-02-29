@@ -922,10 +922,6 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 			continue;
 		if (!IS_FSAL_ACE_PERM(*sace))
 			continue;
-		if (IS_FSAL_ACE_INHERIT(*sace)) {
-			/* Dup this ACE */
-			naces++;
-		}
 		/* XXX dang dup for non-special case */
 	}
 
@@ -966,15 +962,6 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 		    (!IS_FSAL_ACE_PERM(*dace))) {
 			dace++;
 			continue;
-		}
-
-		if (IS_FSAL_ACE_INHERIT(*dace)) {
-			/* Need to duplicate */
-			GET_FSAL_ACE_FLAG(*dace) |= FSAL_ACE_FLAG_INHERIT_ONLY;
-			dace++;
-			*dace = *sace;
-			acl_data.naces++;
-			GET_FSAL_ACE_FLAG(*dace) &= ~(FSAL_ACE_FLAG_INHERIT);
 		}
 
 		if (IS_FSAL_ACE_SPECIAL_ID(*dace)) {
