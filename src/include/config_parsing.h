@@ -92,6 +92,8 @@ enum config_type {
 #define CONFIG_RELAX		0x008  /*< this block has extra params
 					*  so don't complain about them */
 #define CONFIG_MARK_SET		0x010  /*< Mark this param as set */
+#define CONFIG_NO_DEFAULT	0x020  /*< This config block doesn't need a
+					*  default init if not present. */
 
 /**
  * @brief Config file processing error type
