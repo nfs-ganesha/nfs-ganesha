@@ -2063,7 +2063,8 @@ int load_config_from_parse(config_file_t config,
 			}
 		}
 	}
-	if (found == 0) {
+
+	if (found == 0 && (conf_blk->blk_desc.flags & CONFIG_NO_DEFAULT) == 0) {
 		/* Found nothing but we have to do the allocate and init
 		 * at least. Use a fake, not NULL link_mem */
 		blk_mem = param != NULL ?
@@ -2079,6 +2080,7 @@ int load_config_from_parse(config_file_t config,
 			err_type->init = true;
 		}
 	}
+
 	if (err_type->errors > prev_errs) {
 		char *errstr = err_type_str(err_type);
 
