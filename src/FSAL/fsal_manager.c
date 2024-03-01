@@ -144,16 +144,17 @@ static void load_fsal_static(const char *name, void (*init)(void))
 
 struct dummy_fsal {
 	void *dummy;
-} dummy;
+};
+
+struct dummy_fsal dummy, dummy2;
 
 static void *fsal_dummy_init(void *link_mem, void *self_struct)
 {
 	if (link_mem == NULL) {
 		return self_struct;
 	} else if (self_struct == NULL) {
-		return gsh_calloc(1, sizeof(struct dummy_fsal));
+		return &dummy2;
 	} else { /* free resources case */
-		gsh_free(self_struct);
 		return NULL;
 	}
 }
