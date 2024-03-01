@@ -108,7 +108,7 @@ static void mem_cleanup(struct mem_fsal_obj_handle *myself)
 		return;
 	}
 
-	fsal_obj_handle_fini(&myself->obj_handle);
+	fsal_obj_handle_fini(&myself->obj_handle, true);
 
 	LogDebug(COMPONENT_FSAL,
 		 "Releasing obj_hdl=%p, myself=%p, name=%s",
@@ -833,7 +833,7 @@ _mem_alloc_handle(struct mem_fsal_obj_handle *parent,
 		   hdl->refcount);
 #endif
 
-	fsal_obj_handle_init(&hdl->obj_handle, &mfe->export, type);
+	fsal_obj_handle_init(&hdl->obj_handle, &mfe->export, type, true);
 	hdl->obj_handle.obj_ops = &MEM.handle_ops;
 
 	if (parent != NULL) {

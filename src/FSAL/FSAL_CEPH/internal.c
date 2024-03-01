@@ -88,7 +88,7 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 	constructing->up_ops = export->export.up_ops;
 
 	fsal_obj_handle_init(&constructing->handle, &export->export,
-			     posix2fsal_type(stx->stx_mode));
+			     posix2fsal_type(stx->stx_mode), true);
 	constructing->handle.obj_ops = &CephFSM.handle_ops;
 	constructing->handle.fsid = posix2fsal_fsid(stx->stx_dev);
 	constructing->handle.fileid = stx->stx_ino;
@@ -119,7 +119,7 @@ void deconstruct_handle(struct ceph_handle *obj)
 	if (obj->handle.type == REGULAR_FILE)
 		destroy_fsal_fd(&obj->fd.fsal_fd);
 
-	fsal_obj_handle_fini(&obj->handle);
+	fsal_obj_handle_fini(&obj->handle, true);
 
 	gsh_free(obj);
 }

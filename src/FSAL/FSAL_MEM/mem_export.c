@@ -66,7 +66,7 @@ static void mem_release_export(struct fsal_export *exp_hdl)
 	if (myself->root_handle != NULL) {
 		mem_clean_export(myself->root_handle);
 
-		fsal_obj_handle_fini(&myself->root_handle->obj_handle);
+		fsal_obj_handle_fini(&myself->root_handle->obj_handle, true);
 
 		LogDebug(COMPONENT_FSAL,
 			 "Releasing hdl=%p, name=%s",

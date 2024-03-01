@@ -65,7 +65,7 @@ static void release(struct fsal_export *exp_hdl)
 	myself = container_of(exp_hdl, struct pseudofs_fsal_export, export);
 
 	if (myself->root_handle != NULL) {
-		fsal_obj_handle_fini(&myself->root_handle->obj_handle);
+		fsal_obj_handle_fini(&myself->root_handle->obj_handle, true);
 
 		LogDebug(COMPONENT_FSAL,
 			 "Releasing hdl=%p, name=%s",

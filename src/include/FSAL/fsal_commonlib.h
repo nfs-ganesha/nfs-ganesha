@@ -68,10 +68,18 @@ void free_export_ops(struct fsal_export *exp_hdl);
  */
 
 void fsal_default_obj_ops_init(struct fsal_obj_ops *obj_ops);
-void fsal_obj_handle_init(struct fsal_obj_handle *, struct fsal_export *,
-			  object_file_type_t);
 
-void fsal_obj_handle_fini(struct fsal_obj_handle *obj);
+/*
+ * @param[in]  add_to_fsal_list   Whether FSAL would like the handle to be in
+ * the global list. FSAL which have no usecase of storing the obj handles
+ * within fsal handlers, can pass this flag as false.
+ */
+
+void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
+			  object_file_type_t type, bool add_to_fsal_handle);
+
+void fsal_obj_handle_fini(struct fsal_obj_handle *obj,
+			  bool added_to_fsal_handle);
 
 /**
  * @brief Test handle type
@@ -82,7 +90,7 @@ void fsal_obj_handle_fini(struct fsal_obj_handle *obj);
  * @retval false if it isn't.
  */
 static inline bool fsal_obj_handle_is(struct fsal_obj_handle *obj_hdl,
-					object_file_type_t type)
+				      object_file_type_t type)
 {
 	return obj_hdl->type == type;
 }

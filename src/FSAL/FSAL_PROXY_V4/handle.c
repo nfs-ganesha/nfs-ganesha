@@ -2183,7 +2183,7 @@ static void proxyv4_hdl_release(struct fsal_obj_handle *obj_hdl)
 	struct proxyv4_obj_handle *ph =
 		container_of(obj_hdl, struct proxyv4_obj_handle, obj);
 
-	fsal_obj_handle_fini(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl, true);
 
 	gsh_free(ph);
 }
@@ -3011,7 +3011,7 @@ proxyv4_alloc_handle(struct fsal_export *exp,
 	}
 #endif
 
-	fsal_obj_handle_init(&n->obj, exp, attributes.type);
+	fsal_obj_handle_init(&n->obj, exp, attributes.type, true);
 	n->obj.fs = NULL;
 	n->obj.state_hdl = NULL;
 	n->obj.fsid = attributes.fsid;

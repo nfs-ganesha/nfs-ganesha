@@ -189,7 +189,7 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd,
 		hdl->u.unopenable.name = gsh_strdup(path);
 	}
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
-			     posix2fsal_type(stat->st_mode));
+			     posix2fsal_type(stat->st_mode), true);
 	hdl->obj_handle.fsid = fs->fsid;
 	hdl->obj_handle.fileid = stat->st_ino;
 #ifdef VFS_NO_MDCACHE
@@ -1754,7 +1754,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		}
 	}
 
-	fsal_obj_handle_fini(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl, true);
 	free_vfs_fsal_obj_handle(&myself);
 }
 

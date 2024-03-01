@@ -92,7 +92,7 @@ struct kvsfs_fsal_obj_handle *kvsfs_alloc_handle(struct kvsfs_file_handle *fh,
 	}
 	fsal_obj_handle_init(&hdl->obj_handle,
 			     exp_hdl,
-			     attr->type);
+			     attr->type, true);
 
 	if (hdl->obj_handle.type == REGULAR_FILE) {
 		init_fsal_fd(&hdl->u.file.fd.fsal_fd, FSAL_FD_GLOBAL,
@@ -949,7 +949,7 @@ static void kvsfs_release(struct fsal_obj_handle *obj_hdl)
 	myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle,
 			      obj_handle);
 
-	fsal_obj_handle_fini(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl, true);
 
 	if (type == SYMBOLIC_LINK) {
 		if (myself->u.symlink.link_content != NULL)

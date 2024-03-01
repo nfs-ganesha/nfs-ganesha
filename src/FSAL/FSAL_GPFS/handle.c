@@ -95,7 +95,8 @@ struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 		hdl->u.symlink.link_size = len;
 	}
 
-	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, attributes->type);
+	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
+			     attributes->type, true);
 	hdl->obj_handle.fsid = attributes->fsid;
 	hdl->obj_handle.fileid = attributes->fileid;
 
@@ -984,7 +985,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	if (myself->obj_handle.type == REGULAR_FILE)
 		destroy_fsal_fd(&myself->u.file.fd.fsal_fd);
 
-	fsal_obj_handle_fini(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl, true);
 
 	if (type == SYMBOLIC_LINK) {
 		gsh_free(myself->u.symlink.link_content);

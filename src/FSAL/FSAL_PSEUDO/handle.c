@@ -265,7 +265,7 @@ static struct pseudo_fsal_obj_handle
 	hdl->attributes.valid_mask = PSEUDO_SUPPORTED_ATTRS;
 	hdl->attributes.supported = PSEUDO_SUPPORTED_ATTRS;
 
-	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY);
+	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl, DIRECTORY, true);
 	hdl->obj_handle.obj_ops = &PSEUDOFS.handle_ops;
 
 	avltree_init(&hdl->avl_name, pseudofs_n_cmpf, 0 /* flags */);
@@ -711,7 +711,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 		return;
 	}
 
-	fsal_obj_handle_fini(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl, true);
 
 	LogDebug(COMPONENT_FSAL,
 		 "Releasing obj_hdl=%p, myself=%p, name=%s",

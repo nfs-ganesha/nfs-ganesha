@@ -160,22 +160,27 @@ void fsal_default_obj_ops_init(struct fsal_obj_ops *obj_ops)
 }
 
 void fsal_obj_handle_init(struct fsal_obj_handle *obj, struct fsal_export *exp,
-			  object_file_type_t type)
+			  object_file_type_t type, bool add_to_fsal_handle)
 {
 	obj->fsal = exp->fsal;
 	obj->type = type;
 	PTHREAD_RWLOCK_init(&obj->obj_lock, NULL);
 
-	PTHREAD_RWLOCK_wrlock(&obj->fsal->fsm_lock);
-	glist_add(&obj->fsal->handles, &obj->handles);
-	PTHREAD_RWLOCK_unlock(&obj->fsal->fsm_lock);
+	if (add_to_fsal_handle) {
+		PTHREAD_RWLOCK_wrlock(&obj->fsal->fsm_lock);
+		glist_add(&obj->fsal->handles, &obj->handles);
+		PTHREAD_RWLOCK_unlock(&obj->fsal->fsm_lock);
+	}
 }
 
-void fsal_obj_handle_fini(struct fsal_obj_handle *obj)
+void fsal_obj_handle_fini(struct fsal_obj_handle *obj,
+			  bool added_to_fsal_handle)
 {
-	PTHREAD_RWLOCK_wrlock(&obj->fsal->fsm_lock);
-	glist_del(&obj->handles);
-	PTHREAD_RWLOCK_unlock(&obj->fsal->fsm_lock);
+	if (added_to_fsal_handle) {
+		PTHREAD_RWLOCK_wrlock(&obj->fsal->fsm_lock);
+		glist_del(&obj->handles);
+		PTHREAD_RWLOCK_unlock(&obj->fsal->fsm_lock);
+	}
 	PTHREAD_RWLOCK_destroy(&obj->obj_lock);
 	memset(&obj->obj_ops, 0, sizeof(obj->obj_ops));	/* poison myself */
 	obj->fsal = NULL;

@@ -646,7 +646,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 	mdc_clean_entry(entry);
 
 	/* Clean our handle */
-	fsal_obj_handle_fini(&entry->obj_handle);
+	fsal_obj_handle_fini(&entry->obj_handle, true);
 
 	/* Finalize last bits of the cache entry, delete the key if any and
 	 * destroy the rw locks.

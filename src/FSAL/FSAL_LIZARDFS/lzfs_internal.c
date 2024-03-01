@@ -126,7 +126,7 @@ struct lzfs_fsal_handle *lzfs_fsal_new_handle(
 
 	fsal_obj_handle_init(&result->handle,
 			     &lzfs_export->export,
-			     posix2fsal_type(attr->st_mode));
+			     posix2fsal_type(attr->st_mode), true);
 	lzfs_fsal_handle_ops_init(lzfs_export, result->handle.obj_ops);
 	result->handle.fsid = posix2fsal_fsid(attr->st_dev);
 	result->handle.fileid = attr->st_ino;
@@ -142,6 +142,6 @@ struct lzfs_fsal_handle *lzfs_fsal_new_handle(
 
 void lzfs_fsal_delete_handle(struct lzfs_fsal_handle *obj)
 {
-	fsal_obj_handle_fini(&obj->handle);
+	fsal_obj_handle_fini(&obj->handle, true);
 	gsh_free(obj);
 }

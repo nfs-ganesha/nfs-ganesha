@@ -73,7 +73,7 @@ static struct nullfs_fsal_obj_handle *nullfs_alloc_handle(
 
 	/* default handlers */
 	fsal_obj_handle_init(&result->obj_handle, &export->export,
-			     sub_handle->type);
+			     sub_handle->type, true);
 	/* nullfs handlers */
 	result->obj_handle.obj_ops = &NULLFS.handle_ops;
 	result->sub_handle = sub_handle;
@@ -652,7 +652,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 	op_ctx->fsal_export = &export->export;
 
 	/* cleaning data allocated by nullfs */
-	fsal_obj_handle_fini(&hdl->obj_handle);
+	fsal_obj_handle_fini(&hdl->obj_handle, true);
 	gsh_free(hdl);
 }
 

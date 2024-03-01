@@ -190,7 +190,7 @@ static mdcache_entry_t *mdcache_alloc_handle(
 
 	/* default handlers */
 	fsal_obj_handle_init(&result->obj_handle, &export->mfe_exp,
-			     sub_handle->type);
+			     sub_handle->type, true);
 	/* mdcache handlers */
 	result->obj_handle.obj_ops = &MDCACHE.handle_ops;
 	/* state */

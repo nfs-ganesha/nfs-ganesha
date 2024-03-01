@@ -361,7 +361,8 @@ proxyv3_alloc_handle(struct fsal_export *export_handle,
 	/* Copy the NFSv3 attrs. */
 	memcpy(&result->attrs, attrs, sizeof(fattr3));
 
-	fsal_obj_handle_init(&result->obj, export_handle, attrs_out->type);
+	fsal_obj_handle_init(&result->obj, export_handle,
+			     attrs_out->type, true);
 
 	result->obj.fsid = attrs_out->fsid;
 	result->obj.fileid = attrs_out->fileid;
@@ -390,7 +391,7 @@ static void proxyv3_handle_release(struct fsal_obj_handle *obj_hdl)
 	gsh_free(handle->fh3.data.data_val);
 
 	/* Finish the outer object. */
-	fsal_obj_handle_fini(obj_hdl);
+	fsal_obj_handle_fini(obj_hdl, true);
 
 	/* Free our allocated handle. */
 	gsh_free(handle);

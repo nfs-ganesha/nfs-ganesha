@@ -201,7 +201,7 @@ int construct_handle(struct rgw_export *export,
 	constructing->up_ops = export->export.up_ops; /* XXXX going away */
 
 	fsal_obj_handle_init(&constructing->handle, &export->export,
-			     posix2fsal_type(st->st_mode));
+			     posix2fsal_type(st->st_mode), true);
 	constructing->handle.obj_ops = &RGWFSM.handle_ops;
 	constructing->handle.fsid = posix2fsal_fsid(st->st_dev);
 	constructing->handle.fileid = st->st_ino;
@@ -215,6 +215,6 @@ int construct_handle(struct rgw_export *export,
 
 void deconstruct_handle(struct rgw_handle *obj)
 {
-	fsal_obj_handle_fini(&obj->handle);
+	fsal_obj_handle_fini(&obj->handle, true);
 	gsh_free(obj);
 }
