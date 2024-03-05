@@ -256,7 +256,7 @@ extern size_t gsh_strnlen(const char *s, size_t max);
  * @param[in,out] _attr The attributes to update
  * @param[in]     _kind The kind to set
  */
-#ifdef GLIBC
+#if __GLIBC__
 #define PTHREAD_RWLOCKATTR_setkind_np(_attr, _kind)			\
 	do {								\
 		int rc;							\
