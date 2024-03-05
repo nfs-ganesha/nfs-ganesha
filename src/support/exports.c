@@ -1485,6 +1485,8 @@ success:
 static int export_commit(void *node, void *link_mem, void *self_struct,
 			 struct config_error_type *err_type)
 {
+	LogDebug(COMPONENT_EXPORT, "EXPORT commit");
+
 	return export_commit_common(node, link_mem, self_struct, err_type,
 				    initial_export);
 }
@@ -1552,6 +1554,8 @@ static int pseudofs_commit(void *node, void *link_mem, void *self_struct,
 	if (rc != 0)
 		return rc;
 
+	LogDebug(COMPONENT_EXPORT, "PSEUDOFS commit");
+
 	return export_commit_common(node, link_mem, self_struct, err_type,
 				    initial_export);
 }
@@ -1587,6 +1591,8 @@ static void export_display(const char *step, void *node,
 static int add_export_commit(void *node, void *link_mem, void *self_struct,
 			     struct config_error_type *err_type)
 {
+	LogDebug(COMPONENT_EXPORT, "ADD EXPORT commit");
+
 	return export_commit_common(node, link_mem, self_struct, err_type,
 				    add_export);
 }
@@ -1622,6 +1628,8 @@ static bool check_export_duplicate(void *self_struct,
 static int update_export_commit(void *node, void *link_mem, void *self_struct,
 				struct config_error_type *err_type)
 {
+	LogDebug(COMPONENT_EXPORT, "UPDATE EXPORT commit");
+
 	return export_commit_common(node, link_mem, self_struct, err_type,
 				    update_export);
 }
@@ -1635,7 +1643,11 @@ static int update_export_commit(void *node, void *link_mem, void *self_struct,
 static int update_pseudofs_commit(void *node, void *link_mem, void *self_struct,
 				  struct config_error_type *err_type)
 {
-	int rc = pseudofs_fsal_commit(self_struct, err_type);
+	int rc;
+
+	LogDebug(COMPONENT_EXPORT, "UPDATE PSEUDOFS commit");
+
+	rc = pseudofs_fsal_commit(self_struct, err_type);
 
 	if (rc != 0)
 		return rc;
@@ -2182,6 +2194,8 @@ static void *pseudofs_init(void *link_mem, void *self_struct)
 	export->pseudopath = gsh_refstr_dup("/");
 	export->fullpath = gsh_refstr_dup("/");
 
+	LOG_EXPORT(NIV_FULL_DEBUG, "pseudofs_init", export, true);
+
 	return export;
 }
 
@@ -2238,9 +2252,9 @@ static struct config_item pseudofs_update_params[] = {
 	 * parameters have been processed before this sub-block
 	 * is processed.
 	 */
-	CONF_ITEM_BLOCK("Client", pseudo_fs_client_params,
-			pseudofs_client_init, client_commit,
-			gsh_export, clients),
+	CONF_ITEM_BLOCK_MULT("Client", pseudo_fs_client_params,
+			     pseudofs_client_init, client_commit,
+			     gsh_export, clients),
 	CONFIG_EOL
 };
 
@@ -2295,7 +2309,8 @@ static struct config_block pseudofs_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.%d",
 	.blk_desc.name = "PSEUDOFS",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	/* too risky to have more, and don't allocate if block not present */
+	.blk_desc.flags = CONFIG_UNIQUE | CONFIG_NO_DEFAULT,
 	.blk_desc.u.blk.init = pseudofs_init,
 	.blk_desc.u.blk.params = pseudofs_params,
 	.blk_desc.u.blk.commit = pseudofs_commit,
@@ -2310,7 +2325,8 @@ struct config_block update_pseudofs_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.%d",
 	.blk_desc.name = "PSEUDOFS",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	/* too risky to have more, and don't allocate if block not present */
+	.blk_desc.flags = CONFIG_UNIQUE | CONFIG_NO_DEFAULT,
 	.blk_desc.u.blk.init = pseudofs_init,
 	.blk_desc.u.blk.params = pseudofs_update_params,
 	.blk_desc.u.blk.commit = update_pseudofs_commit,
@@ -2474,9 +2490,10 @@ bool log_an_export(struct gsh_export *exp, void *state)
 		DisplayLogComponentLevel(COMPONENT_EXPORT,
 					 (char *) lep->file, lep->line,
 					 lep->func, lep->level,
-					 "%s%sExport %5d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
+					 "%s%sExport %p %5d pseudo (%s) with path (%s) and tag (%s) perms (%s)",
 					 lep->tag ? lep->tag : "",
 					 lep->tag ? " " : "",
+					 exp,
 					 exp->export_id, exp->cfg_pseudopath,
 					 exp->cfg_fullpath, exp->FS_tag, perms);
 	}
@@ -2615,6 +2632,8 @@ int reread_exports(config_file_t in_config,
 		num_exp = -1;
 		goto out;
 	}
+
+	LogDebug(COMPONENT_EXPORT, "About to update pseudofs block");
 
 	rc = load_config_from_parse(in_config,
 				    &update_pseudofs_param,
