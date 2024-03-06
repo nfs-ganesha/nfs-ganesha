@@ -233,6 +233,9 @@ static int ceph_export_commit(void *node, void *link_mem, void *self_struct,
 		return 0;
 
 	if (export->cmount_path[0] != '/') {
+		LogWarn(COMPONENT_FSAL,
+				"cmount path not starting with / : %s",
+				export->cmount_path);
 		err_type->invalid = true;
 		return 1;
 	}
@@ -258,6 +261,8 @@ static int ceph_export_commit(void *node, void *link_mem, void *self_struct,
 		 export->cmount_path);
 
 	if (lpath < lmp) {
+		LogWarn(COMPONENT_FSAL,
+				"cmount path is bigger than export path");
 		err_type->invalid = true;
 		return 1;
 	}
@@ -265,6 +270,9 @@ static int ceph_export_commit(void *node, void *link_mem, void *self_struct,
 	if (lmp > 1 &&
 	    strncmp(export->cmount_path, CTX_FULLPATH(op_ctx), lmp) != 0) {
 		/* path is not a sub-directory of mount_path - error */
+		LogWarn(COMPONENT_FSAL,
+			"Export path is not sub-directory of cmount path, cmount_path : %s, export : %s",
+			export->cmount_path, op_ctx->ctx_export->cfg_fullpath);
 		err_type->invalid = true;
 		return 1;
 	}
@@ -524,6 +532,9 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 					   err_type);
 		if (rc != 0) {
 			gsh_free(export);
+			LogWarn(COMPONENT_FSAL,
+				"Unable to load config for export : %s",
+				CTX_FULLPATH(op_ctx));
 			return fsalstat(ERR_FSAL_INVAL, 0);
 		}
 	}
