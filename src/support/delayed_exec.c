@@ -289,7 +289,7 @@ void delayed_start(void)
 		    gsh_malloc(sizeof(struct delayed_thread));
 		int rc = 0;
 
-		rc = pthread_create(&thread->id, &attr, delayed_thread, thread);
+		rc = PTHREAD_create(&thread->id, &attr, delayed_thread, thread);
 		if (rc != 0) {
 			LogFatal(COMPONENT_THREAD,
 				 "Unable to start delayed executor: %d", rc);

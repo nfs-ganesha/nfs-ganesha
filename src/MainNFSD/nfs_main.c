@@ -95,7 +95,7 @@ bool config_errors_fatal;
 
 /* command line syntax */
 
-static const char options[] = "v@L:N:f:p:FRTE:ChI:x";
+static const char options[] = "v@L:N:S:f:p:FRTE:ChI:x";
 static const char usage[] =
 	"Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
 	"\t[-v]                display version information\n"
@@ -105,6 +105,7 @@ static const char usage[] =
 	"\t[-p <pid_file>]     set the pid file\n"
 	"\t[-F]                the program stays in foreground\n"
 	"\t[-R]                daemon will manage RPCSEC_GSS (default is no RPCSEC_GSS)\n"
+	"\t[-S <size>]         set the default thread stack size (in K) to be used\n"
 	"\t[-T]                dump the default configuration on stdout\n"
 	"\t[-E <epoch>]        overrides ServerBootTime for ServerEpoch\n"
 	"\t[-I <nodeid>]       cluster nodeid\n"
@@ -131,6 +132,17 @@ static inline char *main_strdup(const char *var, const char *str)
 	return s;
 }
 
+static int valid_stack_size(unsigned long stack_size)
+{
+	static unsigned long valid_sizes[] = {
+		16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
+	for (unsigned int i = 0;
+	     i < sizeof(valid_sizes) / sizeof(valid_sizes[0]); i++)
+		if (valid_sizes[i] == stack_size)
+			return 1;
+	return 0;
+}
+
 /**
  * main: simply the main function.
  *
@@ -151,6 +163,7 @@ int main(int argc, char *argv[])
 	int dsc;
 	int rc;
 	int pidfile = -1;               /* fd for file to store pid */
+	unsigned long stack_size = 8388608; /* 8M, glibc's default */
 	char *log_path = NULL;
 	char *exec_name = "nfs-ganesha";
 	int debug_level = -1;
@@ -213,6 +226,17 @@ int main(int argc, char *argv[])
 					"Invalid value for option 'N': NIV_NULL, NIV_MAJ, NIV_CRIT, NIV_EVENT, NIV_DEBUG, NIV_MID_DEBUG or NIV_FULL_DEBUG expected.\n");
 				exit(1);
 			}
+			break;
+
+		case 'S':
+			/* default thread stack size */
+			stack_size = strtoul(optarg, NULL, 10);
+			if (!valid_stack_size(stack_size)) {
+				fprintf(stderr,
+					"Invalid value for option 'S': valid choices are 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192\n");
+				exit(1);
+			}
+			stack_size *= 1024;
 			break;
 
 		case 'f':
@@ -278,7 +302,7 @@ int main(int argc, char *argv[])
 
 	/* initialize memory and logging */
 	nfs_prereq_init(exec_name, nfs_host_name, debug_level, log_path,
-			dump_trace);
+			dump_trace, stack_size);
 #if GANESHA_BUILD_RELEASE
 	LogEvent(COMPONENT_MAIN, "%s Starting: Ganesha Version %s",
 		 exec_name, GANESHA_VERSION);

@@ -28,6 +28,8 @@
 #ifndef COMMON_UTILS_H
 #define COMMON_UTILS_H
 
+#include <sys/mman.h>
+#include <stdlib.h>
 #include <time.h>
 #include <assert.h>
 #include <pthread.h>
@@ -102,6 +104,27 @@ extern size_t gsh_strnlen(const char *s, size_t max);
 #undef SCANDIR_CONST
 #define SCANDIR_CONST
 #endif
+
+extern unsigned long PTHREAD_stack_size;
+
+static inline int PTHREAD_create(pthread_t *thread,
+				 pthread_attr_t *attr,
+				 void *(*start_routine)(void *),
+				 void *arg)
+{
+	pthread_attr_t scratch;
+	pthread_attr_t *pattr = (attr == NULL ? &scratch : attr);
+
+	if (attr == NULL)
+		pthread_attr_init(&scratch);
+
+	/*
+	 * glibc's current default stacksize is 8M
+	 */
+	(void) pthread_attr_setstacksize(pattr, PTHREAD_stack_size);
+	return pthread_create(thread, pattr, start_routine, arg);
+}
+
 
 /**
  * @brief Logging pthread attribute initialization

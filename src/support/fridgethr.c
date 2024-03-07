@@ -49,6 +49,7 @@
 #endif
 #include <urcu-bp.h>
 #include "abstract_mem.h"
+#include "common_utils.h"
 #include "fridgethr.h"
 #include "nfs_core.h"
 
@@ -537,7 +538,7 @@ static int fridgethr_spawn(struct fridgethr *fr,
 	fe->ctx.arg = arg;
 	fe->frozen = false;
 
-	rc = pthread_create(&fe->ctx.id, &fr->attr, fridgethr_start_routine,
+	rc = PTHREAD_create(&fe->ctx.id, &fr->attr, fridgethr_start_routine,
 			    fe);
 	if (rc != 0) {
 		LogMajor(COMPONENT_THREAD,
@@ -1244,7 +1245,7 @@ int fridgethr_populate(struct fridgethr *fr,
 		fe->ctx.arg = arg;
 		fe->frozen = false;
 
-		rc = pthread_create(&fe->ctx.id, &fr->attr,
+		rc = PTHREAD_create(&fe->ctx.id, &fr->attr,
 				    fridgethr_start_routine, fe);
 		if (rc != 0) {
 			LogMajor(COMPONENT_THREAD,
