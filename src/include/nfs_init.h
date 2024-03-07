@@ -64,7 +64,8 @@ int nfs_init_wait_timeout(int timeout);
  * Initialize NFSd prerequisites: memory management, logging, ...
  */
 void nfs_prereq_init(const char *program_name, const char *host_name,
-		     int debug_level, const char *log_path, bool dump_trace);
+		     int debug_level, const char *log_path, bool dump_trace,
+		     unsigned long stack_size);
 
 void nfs_prereq_destroy(void);
 

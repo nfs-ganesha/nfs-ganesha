@@ -85,6 +85,8 @@
 pthread_mutexattr_t default_mutex_attr;
 pthread_rwlockattr_t default_rwlock_attr;
 
+unsigned long PTHREAD_stack_size;
+
 /**
  * @brief init_complete used to indicate if ganesha is during
  * startup or not
@@ -302,7 +304,8 @@ static void init_crash_handlers(void)
  * @param[in] dump_trace   Dump trace when segfault
  */
 void nfs_prereq_init(const char *program_name, const char *host_name,
-		     int debug_level, const char *log_path, bool dump_trace)
+		     int debug_level, const char *log_path, bool dump_trace,
+		     unsigned long stack_size)
 {
 	PTHREAD_MUTEXATTR_init(&default_mutex_attr);
 #if defined(__linux__)
@@ -316,6 +319,8 @@ void nfs_prereq_init(const char *program_name, const char *host_name,
 				&default_rwlock_attr,
 				PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
+
+	PTHREAD_stack_size = stack_size;
 
 	healthstats.enqueued_reqs = nfs_health_.enqueued_reqs = 0;
 	healthstats.dequeued_reqs = nfs_health_.dequeued_reqs = 0;
@@ -563,7 +568,7 @@ static void nfs_Start_threads(void)
 	delayed_start();
 
 	/* Starting the thread dedicated to signal handling */
-	rc = pthread_create(&sigmgr_thrid, &attr_thr, sigmgr_thread, NULL);
+	rc = PTHREAD_create(&sigmgr_thrid, &attr_thr, sigmgr_thread, NULL);
 	if (rc != 0) {
 		LogFatal(COMPONENT_THREAD,
 			 "Could not create sigmgr_thread, error = %d (%s)",
@@ -581,7 +586,7 @@ static void nfs_Start_threads(void)
 		}
 
 		/* Starting the 9P/TCP dispatcher thread */
-		rc = pthread_create(&_9p_dispatcher_thrid, &attr_thr,
+		rc = PTHREAD_create(&_9p_dispatcher_thrid, &attr_thr,
 				    _9p_dispatcher_thread, NULL);
 		if (rc != 0) {
 			LogFatal(COMPONENT_THREAD,
@@ -597,7 +602,7 @@ static void nfs_Start_threads(void)
 	/* Starting the 9P/RDMA dispatcher thread */
 	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
 		/** @todo - this thread is never cancelled or cleaned up... */
-		rc = pthread_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
+		rc = PTHREAD_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
 				    _9p_rdma_dispatcher_thread, NULL);
 		if (rc != 0) {
 			LogFatal(COMPONENT_THREAD,
@@ -611,7 +616,7 @@ static void nfs_Start_threads(void)
 
 #ifdef USE_DBUS
 	/* DBUS event thread */
-	rc = pthread_create(&gsh_dbus_thrid, &attr_thr, gsh_dbus_thread, NULL);
+	rc = PTHREAD_create(&gsh_dbus_thrid, &attr_thr, gsh_dbus_thread, NULL);
 	if (rc != 0) {
 		LogFatal(COMPONENT_THREAD,
 			 "Could not create gsh_dbus_thread, error = %d (%s)",
@@ -621,7 +626,7 @@ static void nfs_Start_threads(void)
 #endif
 
 	/* Starting the admin thread */
-	rc = pthread_create(&admin_thrid, &attr_thr, admin_thread, NULL);
+	rc = PTHREAD_create(&admin_thrid, &attr_thr, admin_thread, NULL);
 	if (rc != 0) {
 		LogFatal(COMPONENT_THREAD,
 			 "Could not create admin_thread, error = %d (%s)",
