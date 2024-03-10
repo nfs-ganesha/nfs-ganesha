@@ -956,7 +956,7 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 			continue;
 		}
 
-		if (IS_FSAL_ACE_SPECIAL_ID(*dace)) {
+		if (IS_FSAL_ACE_SPECIAL_ID(*dace))
 			GET_FSAL_ACE_PERM(*dace) &=
 				~(FSAL_ACE_PERM_READ_DATA |
 				  FSAL_ACE_PERM_LIST_DIR |
@@ -965,8 +965,21 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 				  FSAL_ACE_PERM_APPEND_DATA |
 				  FSAL_ACE_PERM_ADD_SUBDIRECTORY |
 				  FSAL_ACE_PERM_EXECUTE);
-		} else {
+		else if (IS_FSAL_ACE_ALLOW(*dace)) {
 			/* Do non-special stuff */
+			if ((attrs->mode & S_IRGRP) == 0)
+				GET_FSAL_ACE_PERM(*dace) &=
+						~(FSAL_ACE_PERM_READ_DATA |
+						  FSAL_ACE_PERM_LIST_DIR);
+			if ((attrs->mode & S_IWGRP) == 0)
+				GET_FSAL_ACE_PERM(*dace) &=
+					~(FSAL_ACE_PERM_WRITE_DATA |
+					  FSAL_ACE_PERM_ADD_FILE |
+					  FSAL_ACE_PERM_APPEND_DATA |
+					  FSAL_ACE_PERM_ADD_SUBDIRECTORY);
+			if ((attrs->mode & S_IXGRP) == 0)
+				GET_FSAL_ACE_PERM(*dace) &=
+						~FSAL_ACE_PERM_EXECUTE;
 		}
 		dace++;
 	}
