@@ -826,11 +826,9 @@ fsal_mode_gen_set(fsal_ace_t *ace_owner_group, fsal_ace_t *ace_everyone,
 	deny = ace_owner_group;
 	allow = deny + 1;
 	GET_FSAL_ACE_USER(*allow) = FSAL_ACE_SPECIAL_OWNER;
-	GET_FSAL_ACE_IFLAG(*allow) |= (FSAL_ACE_IFLAG_MODE_GEN |
-				       FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_IFLAG(*allow) |= FSAL_ACE_IFLAG_SPECIAL_ID;
 	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_OWNER;
-	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
-				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_IFLAG(*deny) |= FSAL_ACE_IFLAG_SPECIAL_ID;
 	GET_FSAL_ACE_PERM(*allow) |= default_attr_acl_read_perm;
 	GET_FSAL_ACE_PERM(*allow) |= FSAL_ACE_PERM_WRITE_ATTR |
 			FSAL_ACE_PERM_WRITE_ACL | FSAL_ACE_PERM_WRITE_OWNER;
@@ -839,22 +837,18 @@ fsal_mode_gen_set(fsal_ace_t *ace_owner_group, fsal_ace_t *ace_everyone,
 	deny += 2;
 	allow = deny + 1;
 	GET_FSAL_ACE_USER(*allow) = FSAL_ACE_SPECIAL_GROUP;
-	GET_FSAL_ACE_IFLAG(*allow) |= (FSAL_ACE_IFLAG_MODE_GEN |
-				       FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_IFLAG(*allow) |= FSAL_ACE_IFLAG_SPECIAL_ID;
 	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_GROUP;
-	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
-				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_IFLAG(*deny) |= FSAL_ACE_IFLAG_SPECIAL_ID;
 	GET_FSAL_ACE_PERM(*allow) |= default_attr_acl_read_perm;
 	fsal_mode_set_ace(deny, allow, (mode & S_IRWXG) << 3);
 	/* @EVERYONE */
 	deny = ace_everyone;
 	allow = deny + 1;
 	GET_FSAL_ACE_USER(*allow) = FSAL_ACE_SPECIAL_EVERYONE;
-	GET_FSAL_ACE_IFLAG(*allow) |= (FSAL_ACE_IFLAG_MODE_GEN |
-				       FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_IFLAG(*allow) |= FSAL_ACE_IFLAG_SPECIAL_ID;
 	GET_FSAL_ACE_USER(*deny) = FSAL_ACE_SPECIAL_EVERYONE;
-	GET_FSAL_ACE_IFLAG(*deny) |= (FSAL_ACE_IFLAG_MODE_GEN |
-				      FSAL_ACE_IFLAG_SPECIAL_ID);
+	GET_FSAL_ACE_IFLAG(*deny) |= FSAL_ACE_IFLAG_SPECIAL_ID;
 	GET_FSAL_ACE_PERM(*allow) |= default_attr_acl_read_perm;
 	fsal_mode_set_ace(deny, allow, (mode & S_IRWXO) << 6);
 
@@ -892,10 +886,57 @@ fsal_mode_gen_acl(struct fsal_attrlist *attrs)
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
+static bool
+fsal_check_ace_couple(const fsal_ace_t *aces, uid_t who)
+{
+	for (uint32_t i = 0; i < 2; i++) {
+		if (!IS_FSAL_ACE_SPECIAL_ID(aces[i]) ||
+				!IS_FSAL_ACE_USER(aces[i], who))
+			return false;
+		if (IS_FSAL_ACE_INHERIT(aces[i]))
+			return false;
+		if (i == 0) {
+			if (!IS_FSAL_ACE_DENY(aces[i]))
+				return false;
+		} else {
+			if (!IS_FSAL_ACE_ALLOW(aces[i]))
+				return false;
+		}
+	}
+	return true;
+}
+
+bool fsal_can_reuse_mode_to_acl(const fsal_acl_t *sacl)
+{
+	/*
+	 * Identify whether existing aces can be reused for representing mode.
+	 * Can't rely on the FSAL_ACE_IFLAG_MODE_GEN because if the client
+	 * calls another SETATTR with ACL, the internal flag info will be lost.
+	*/
+	const fsal_ace_t *ace;
+
+	if (!sacl || sacl->naces < 6)
+		return false;
+
+	/* OWNER@ */
+	ace = &sacl->aces[0];
+	if (!fsal_check_ace_couple(ace, FSAL_ACE_SPECIAL_OWNER))
+		return false;
+	ace = &sacl->aces[2];
+	if (!fsal_check_ace_couple(ace, FSAL_ACE_SPECIAL_GROUP))
+		return false;
+	ace = &sacl->aces[sacl->naces - 2];
+	if (!fsal_check_ace_couple(ace, FSAL_ACE_SPECIAL_EVERYONE))
+		return false;
+
+	return true;
+}
+
 fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 {
 	int naces;
 	fsal_ace_t *sace, *dace;
+	bool can_reuse;
 
 	if (!FSAL_TEST_MASK(attrs->valid_mask, ATTR_MODE))
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -903,13 +944,11 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 	if (!sacl || sacl->naces == 0)
 		return fsal_mode_gen_acl(attrs);
 
+	can_reuse = fsal_can_reuse_mode_to_acl(sacl);
+	LogFullDebug(COMPONENT_FSAL, "Can reuse aces for mode: %d", can_reuse);
+
 	naces = 0;
 	for (sace = sacl->aces; sace < sacl->aces + sacl->naces; sace++) {
-		if (IS_FSAL_ACE_MODE_GEN(*sace)) {
-			/* Don't copy mode generated ACEs; will be re-created */
-			continue;
-		}
-
 		naces++;
 		if (IS_FSAL_ACE_INHERIT_ONLY(*sace))
 			continue;
@@ -925,7 +964,9 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 
 	/* Space for generated ACEs - OWNER, GROUP at start and EVERYONE
 	 * at the end */
-	naces += 6;
+	if (!can_reuse) {
+		naces += 6;
+	}
 
 	if (attrs->acl != NULL) {
 		/* We should never be passed attributes that have an
@@ -942,13 +983,10 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 
 	acl_data.aces = nfs4_ace_alloc(naces);
 	acl_data.naces = 0;
-	dace = acl_data.aces + 4;
+	dace = can_reuse ? acl_data.aces : acl_data.aces + 4;
 
 	for (sace = sacl->aces; sace < sacl->aces + sacl->naces;
 	     sace++) {
-		if (IS_FSAL_ACE_MODE_GEN(*sace))
-			continue;
-
 		*dace = *sace;
 		acl_data.naces++;
 
@@ -986,13 +1024,17 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 		dace++;
 	}
 
-	if (naces - acl_data.naces != 6) {
+	if ((!can_reuse && naces - acl_data.naces != 6) ||
+			(can_reuse && naces != acl_data.naces)) {
 		LogDebug(COMPONENT_FSAL, "Bad naces: %d not %d",
 			 acl_data.naces, naces - 6);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-	fsal_mode_gen_set(acl_data.aces, dace, attrs->mode);
+	/* 4 aces for OWNER & GROUP shall be set in the beginning, and 2 aces
+	 * for EVERYONE shall be placed at the end. */
+	fsal_mode_gen_set(acl_data.aces, acl_data.aces + naces - 2,
+			attrs->mode);
 
 	fsal_acl_status_t acl_status;
 
