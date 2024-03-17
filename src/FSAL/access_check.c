@@ -242,8 +242,6 @@ static const char *fsal_ace_flag(char *buf, fsal_aceflag_t flag)
 		*c++ = 'X';
 	if (flag & FSAL_ACE_IFLAG_SPECIAL_ID)
 		*c++ = 'S';
-	if (flag & FSAL_ACE_IFLAG_MODE_GEN)
-		*c++ = 'G';
 	*c = '\0';
 
 	return buf;
