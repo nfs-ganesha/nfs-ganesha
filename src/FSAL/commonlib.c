@@ -2047,6 +2047,7 @@ fsal_status_t reopen_fsal_fd(struct fsal_obj_handle *obj_hdl,
 				  &fsal_fd->work_mutex);
 	}
 
+	fsal_openflags_t old_openflags = fsal_fd->openflags;
 	/* Now that we are actually about to open or re-open, let's
 	 * make sure we get the file opened however desired.
 	 *
@@ -2064,19 +2065,25 @@ fsal_status_t reopen_fsal_fd(struct fsal_obj_handle *obj_hdl,
 
 	/* And THEN check the combined mode against the current mode. */
 	if (!open_correct(fsal_fd->openflags, openflags)) {
-		if (fsal_fd->openflags == FSAL_O_CLOSED) {
-			/* This is actually an open, need to increment
-			 * appropriate counter and insert into LRU.
-			 */
-			insert_fd_lru(fsal_fd);
-		} else {
-			/* We are touching the file so bump it in the LRU
-			 * to help keep the LRU tail free of unreapable fds.
-			 */
-			bump_fd_lru(fsal_fd);
-		}
-
 		status = fsal_reopen_fd(obj_hdl, openflags, fsal_fd);
+		LogDebug(COMPONENT_FSAL,
+			 "fsal_reopen_fd returned %s",
+			 fsal_err_txt(status));
+
+		if (FSAL_IS_SUCCESS(status)) {
+			if (old_openflags == FSAL_O_CLOSED) {
+				/* This is actually an open, need to increment
+				* appropriate counter and insert into LRU.
+				*/
+				insert_fd_lru(fsal_fd);
+			} else {
+				/* We are touching the file so bump it in the
+				* LRU to help keep the LRU tail free of
+				* unreapable fds.
+				*/
+				bump_fd_lru(fsal_fd);
+			}
+		}
 	}
 
 	/* Indicate we are done with fd work and signal any waiters. */
