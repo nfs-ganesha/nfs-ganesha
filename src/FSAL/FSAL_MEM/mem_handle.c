@@ -1651,6 +1651,17 @@ static fsal_status_t mem_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 	/* No share conflict, re-open the share fd (can't fail) */
 	(void) mem_reopen_func(obj_hdl, openflags, my_fd);
 
+	/* Inserts to fd_lru only if open succeeds */
+	if (old_openflags == FSAL_O_CLOSED) {
+		/* This is actually an open, need to increment
+		 * appropriate counter and insert into LRU.
+		 */
+		insert_fd_lru(my_fd);
+	} else {
+		/* Bump up the FD in fd_lru as it was already in fd lru. */
+		bump_fd_lru(my_fd);
+	}
+
 	if (truncated)
 		myself->attrs.filesize = myself->attrs.spaceused = 0;
 
@@ -1672,7 +1683,14 @@ static fsal_status_t mem_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 	}
 
 	if (FSAL_IS_ERROR(status)) {
-		/*close fd*/
+		if (old_openflags == FSAL_O_CLOSED) {
+			/* Now that we have decided to close this FD,
+			 * let's clean it off from fd_lru and
+			 * ensure counters are decremented.
+			 */
+			remove_fd_lru(my_fd);
+		}
+		/* Close fd */
 		(void) mem_close_my_fd(my_fd);
 	}
 

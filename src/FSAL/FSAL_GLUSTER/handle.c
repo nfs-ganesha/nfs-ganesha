@@ -1559,6 +1559,17 @@ static fsal_status_t glusterfs_open2_by_handle(
 		goto exit;
 	}
 
+	/* Inserts to fd_lru only if open succeeds */
+	if (old_openflags == FSAL_O_CLOSED) {
+		/* This is actually an open, need to increment
+		 * appropriate counter and insert into LRU.
+		 */
+		insert_fd_lru(fsal_fd);
+	} else {
+		/* Bump up the FD in fd_lru as it was already in fd lru. */
+		bump_fd_lru(fsal_fd);
+	}
+
 	if (createmode >= FSAL_EXCLUSIVE || (truncated && attrs_out)) {
 		/* NOTE: won't come in here when called from vfs_reopen2...
 		 *       truncated might be set, but attrs_out will be NULL.
@@ -1603,7 +1614,14 @@ static fsal_status_t glusterfs_open2_by_handle(
 	}
 
 	if (FSAL_IS_ERROR(status)) {
-		/*close fd*/
+		if (old_openflags == FSAL_O_CLOSED) {
+			/* Now that we have decided to close this FD,
+			 * let's clean it off from fd_lru and
+			 * ensure counters are decremented.
+			 */
+			remove_fd_lru(fsal_fd);
+		}
+		/* Close fd */
 		(void) glusterfs_close_my_fd(my_fd);
 	}
 
