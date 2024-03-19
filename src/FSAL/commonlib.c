@@ -1662,7 +1662,7 @@ void fd_lru_run(struct fridgethr_context *ctx)
  *
  */
 
-static inline void bump_fd_lru(struct fsal_fd *fsal_fd)
+void bump_fd_lru(struct fsal_fd *fsal_fd)
 {
 	if (fsal_fd->fd_type == FSAL_FD_GLOBAL) {
 		PTHREAD_MUTEX_lock(&fsal_fd_mutex);
