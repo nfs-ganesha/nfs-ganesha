@@ -407,6 +407,7 @@ static fsal_status_t vfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
 	fsal_openflags_t old_openflags;
 	bool truncated = openflags & FSAL_O_TRUNC;
+	bool is_fresh_open = false;
 
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
@@ -480,6 +481,10 @@ static fsal_status_t vfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 		goto exit;
 	}
 
+	/* Tracking if we were going to reopen a fd that was
+	 * closed by another thread before we got here. */
+	is_fresh_open = ((old_openflags == FSAL_O_CLOSED) && (my_fd->fd < 0));
+
 	/* No share conflict, re-open the share fd */
 	status = vfs_reopen_func(obj_hdl, openflags, fsal_fd);
 
@@ -488,6 +493,17 @@ static fsal_status_t vfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 			 "vfs_reopen_func returned %s",
 			 fsal_err_txt(status));
 		goto exit;
+	}
+
+	/* Inserts to fd_lru only if open succeeds */
+	if (is_fresh_open) {
+		/* This is actually an open, need to increment
+		 * appropriate counter and insert into LRU.
+		 */
+		insert_fd_lru(fsal_fd);
+	} else {
+		/* Bump up the FD in fd_lru as it was already in fd lru. */
+		bump_fd_lru(fsal_fd);
 	}
 
 	/* Check HSM status */
@@ -548,7 +564,14 @@ static fsal_status_t vfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 out:
 
 	if (FSAL_IS_ERROR(status)) {
-		/*close fd*/
+		if (is_fresh_open) {
+			/* Now that we have decided to close this FD,
+			 * let's clean it off from fd_lru and
+			 * ensure counters are decremented.
+			 */
+			remove_fd_lru(fsal_fd);
+		}
+		/* Close fd */
 		(void) vfs_close_my_fd(my_fd);
 	}
 
