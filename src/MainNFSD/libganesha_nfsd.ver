@@ -67,6 +67,8 @@
   fsal_common_is_referral;
   fsal_complete_fd_work;
   fsal_complete_io;
+  insert_fd_lru;
+  bump_fd_lru;
   fsal_create;
   fsal_default_obj_ops_init;
   fsal_detach_export;

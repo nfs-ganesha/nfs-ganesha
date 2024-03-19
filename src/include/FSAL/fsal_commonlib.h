@@ -272,7 +272,7 @@ fsal_status_t fsal_complete_io(struct fsal_obj_handle *obj_hdl,
 fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd, bool is_reclaiming);
 void fsal_complete_fd_work(struct fsal_fd *fsal_fd);
 void insert_fd_lru(struct fsal_fd *fsal_fd);
-
+void bump_fd_lru(struct fsal_fd *fsal_fd);
 /**
  * @brief Initialize a state_t structure
  *
