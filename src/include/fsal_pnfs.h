@@ -120,6 +120,7 @@ enum fsal_id {
 	FSAL_ID_RGW = 8,
 	FSAL_ID_LIZARDFS = 9,
 	FSAL_ID_KVSFS = 10,
+	FSAL_ID_SAUNAFS = 11,
 	FSAL_ID_COUNT
 };
 

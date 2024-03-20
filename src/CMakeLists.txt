@@ -289,6 +289,7 @@ goption(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 goption(USE_FSAL_NULL "build NULL FSAL shared library" ON)
 goption(USE_FSAL_RGW "build RGW FSAL shared library" ON)
 goption(USE_FSAL_MEM "build Memory FSAL shared library" ON)
+goption(USE_FSAL_SAUNAFS "build SAUNAFS FSAL shared library" ON)
 
 # Internal capability required by some FSALs
 option(GSH_CAN_HOST_LOCAL_FS "Ganesha supports hosting local filesystems" ON)
@@ -916,6 +917,8 @@ if(USE_FSAL_RGW)
   endif(NOT RGW_FOUND)
 endif(USE_FSAL_RGW)
 
+gopt_test(USE_FSAL_SAUNAFS)
+
 gopt_test(USE_FSAL_MEM)
 # MEM has no dependencies
 
@@ -1331,6 +1334,7 @@ message(STATUS "USE_FSAL_CEPH_GET_FS_CID = ${USE_FSAL_CEPH_GET_FS_CID}")
 message(STATUS "USE_FSAL_CEPH_STATX = ${USE_FSAL_CEPH_STATX}")
 message(STATUS "USE_FSAL_CEPH_FS_NONBLOCKING_IO = ${USE_FSAL_CEPH_FS_NONBLOCKING_IO}")
 message(STATUS "USE_FSAL_RGW = ${USE_FSAL_RGW}")
+message(STATUS "USE_FSAL_SAUNAFS = ${USE_FSAL_SAUNAFS}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
 message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
 message(STATUS "USE_FSAL_GLUSTER = ${USE_FSAL_GLUSTER}")
@@ -1533,6 +1537,12 @@ if(USE_FSAL_RGW)
 else(USE_FSAL_RGW)
     set(BCOND_RGW "%bcond_with")
 endif(USE_FSAL_RGW)
+
+if(USE_FSAL_SAUNAFS)
+    set(BCOND_SAUNAFS "%bcond_without")
+else(USE_FSAL_SAUNAFS)
+    set(BCOND_SAUNAFS "%bcond_with")
+endif(USE_FSAL_SAUNAFS)
 
 if(USE_FSAL_GLUSTER)
     set(BCOND_GLUSTER "%bcond_without")
