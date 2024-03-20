@@ -1712,7 +1712,7 @@ void insert_fd_lru(struct fsal_fd *fsal_fd)
  *
  */
 
-static void remove_fd_lru(struct fsal_fd *fsal_fd)
+void remove_fd_lru(struct fsal_fd *fsal_fd)
 {
 	int32_t count;
 
