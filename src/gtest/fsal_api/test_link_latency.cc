@@ -76,7 +76,7 @@ namespace {
       fsal_prepare_attrs(&attrs_out, 0);
 
       status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL,
-			   &test_file, &attrs_out);
+			   &test_file, &attrs_out, nullptr, nullptr);
       ASSERT_EQ(status.major, 0);
       ASSERT_NE(test_file, nullptr);
 
@@ -114,7 +114,7 @@ namespace {
         sprintf(fname, "file-%08x", i);
 
         status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL, &obj,
-                             &attrs_out);
+                             &attrs_out, nullptr, nullptr);
         ASSERT_EQ(status.major, 0);
         ASSERT_NE(obj, nullptr);
 
@@ -149,7 +149,7 @@ TEST_F(LinkEmptyLatencyTest, SIMPLE)
 
   enableEvents(event_list);
 
-  status = test_file->obj_ops->link(test_file, test_root, TEST_FILE_LINK);
+  status = test_file->obj_ops->link(test_file, test_root, TEST_FILE_LINK, nullptr, nullptr);
   EXPECT_EQ(status.major, 0);
   test_root->obj_ops->lookup(test_root, TEST_FILE_LINK, &link, NULL);
   test_root->obj_ops->lookup(test_root, TEST_FILE, &lookup, NULL);
@@ -178,7 +178,7 @@ TEST_F(LinkEmptyLatencyTest, SIMPLE_BYPASS)
   sub_file = mdcdb_get_sub_handle(test_file);
   ASSERT_NE(sub_file, nullptr);
 
-  status = sub_root->obj_ops->link(sub_file, sub_root, TEST_FILE_LINK);
+  status = sub_root->obj_ops->link(sub_file, sub_root, TEST_FILE_LINK, nullptr, nullptr);
   EXPECT_EQ(status.major, 0);
   sub_root->obj_ops->lookup(sub_root, TEST_FILE_LINK, &link, NULL);
   sub_root->obj_ops->lookup(sub_root, TEST_FILE, &lookup, NULL);
@@ -203,7 +203,7 @@ TEST_F(LinkEmptyLatencyTest, LOOP)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = test_root->obj_ops->link(test_file, test_root, fname);
+    status = test_root->obj_ops->link(test_file, test_root, fname, nullptr, nullptr);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -261,7 +261,7 @@ TEST_F(LinkFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = test_root->obj_ops->link(test_file, test_root, fname);
+    status = test_root->obj_ops->link(test_file, test_root, fname, nullptr, nullptr);
     ASSERT_EQ(status.major, 0) << " failed to link " << fname;
   }
 
@@ -297,7 +297,7 @@ TEST_F(LinkFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "link-%08x", i);
 
-    status = sub_root->obj_ops->link(sub_file, sub_root, fname);
+    status = sub_root->obj_ops->link(sub_file, sub_root, fname, nullptr, nullptr);
     ASSERT_EQ(status.major, 0) << " failed to link " << fname;
   }
 

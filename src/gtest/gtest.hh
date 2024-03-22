@@ -234,7 +234,7 @@ namespace gtest {
       fsal_prepare_attrs(&attrs_out, 0);
 
       status = fsal_create(root_entry, env->get_test_root_name(), DIRECTORY,
-                           &attrs, NULL, &test_root, &attrs_out);
+                           &attrs, NULL, &test_root, &attrs_out, nullptr, nullptr);
       ASSERT_EQ(status.major, 0);
       ASSERT_NE(test_root, nullptr);
 
@@ -245,7 +245,7 @@ namespace gtest {
       fsal_status_t status;
 
       status = test_root->obj_ops->unlink(root_entry, test_root,
-                                         env->get_test_root_name());
+                                         env->get_test_root_name(), nullptr, nullptr);
       EXPECT_EQ(0, status.major);
       test_root->obj_ops->put_ref(test_root);
       test_root = NULL;
@@ -280,7 +280,7 @@ namespace gtest {
         sprintf(fname, "f-%08x", i);
 
         status = fsal_create(directory, fname, REGULAR_FILE, &attrs, NULL,
-                             &obj, &attrs_out);
+                             &obj, &attrs_out, nullptr, nullptr);
         ASSERT_EQ(status.major, 0);
         ASSERT_NE(obj, nullptr);
 

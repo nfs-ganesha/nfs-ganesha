@@ -102,11 +102,11 @@ TEST_F(UnlinkEmptyLatencyTest, SIMPLE)
 
   /* Create file to unlink for the test */
   status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL,
-                  &obj, NULL);
+                  &obj, NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
-  status = test_root->obj_ops->unlink(test_root, obj, TEST_FILE);
+  status = test_root->obj_ops->unlink(test_root, obj, TEST_FILE, nullptr, nullptr);
   EXPECT_EQ(status.major, 0);
 
   status = test_root->obj_ops->lookup(test_root, TEST_FILE, &lookup, NULL);
@@ -131,7 +131,7 @@ TEST_F(UnlinkEmptyLatencyTest, SIMPLE_BYPASS)
 	       status = sub_hdl->obj_ops->open2(sub_hdl, NULL, FSAL_O_RDWR,
 					       FSAL_UNCHECKED, TEST_FILE, NULL,
 					       NULL, &sub_hdl_obj, NULL,
-					       &caller_perm_check)
+					       &caller_perm_check, nullptr, nullptr)
 	      );
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(sub_hdl_obj, nullptr);
@@ -139,7 +139,7 @@ TEST_F(UnlinkEmptyLatencyTest, SIMPLE_BYPASS)
   status = sub_hdl_obj->obj_ops->close(sub_hdl_obj);
   EXPECT_EQ(status.major, 0);
 
-  status = sub_hdl->obj_ops->unlink(sub_hdl, sub_hdl_obj, TEST_FILE);
+  status = sub_hdl->obj_ops->unlink(sub_hdl, sub_hdl_obj, TEST_FILE, nullptr, nullptr);
   EXPECT_EQ(status.major, 0);
 
   status = sub_hdl->obj_ops->lookup(sub_hdl, TEST_FILE, &lookup, NULL);
@@ -158,14 +158,14 @@ TEST_F(UnlinkEmptyLatencyTest, FSALREMOVE)
 
   /* Create files to unlink for the test */
   status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL,
-                  &obj, NULL);
+                  &obj, NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = test_root->obj_ops->link(obj, test_root, fname);
+    status = test_root->obj_ops->link(obj, test_root, fname, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -199,14 +199,14 @@ TEST_F(UnlinkFullLatencyTest, BIG)
 
   /* Create files to unlink for the test */
   status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL,
-                  &obj, NULL);
+                  &obj, NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = test_root->obj_ops->link(obj, test_root, fname);
+    status = test_root->obj_ops->link(obj, test_root, fname, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -215,7 +215,7 @@ TEST_F(UnlinkFullLatencyTest, BIG)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = test_root->obj_ops->unlink(test_root, obj, fname);
+    status = test_root->obj_ops->unlink(test_root, obj, fname, nullptr, nullptr);
     EXPECT_EQ(status.major, 0);
   }
 
@@ -243,7 +243,7 @@ TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
 
   /* Create files to unlink for the test */
   status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL,
-                  &obj, NULL);
+                  &obj, NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
@@ -256,7 +256,7 @@ TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = sub_root->obj_ops->link(sub_obj, sub_root, fname);
+    status = sub_root->obj_ops->link(sub_obj, sub_root, fname, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -265,7 +265,7 @@ TEST_F(UnlinkFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "fl-%08x", i);
 
-    status = sub_root->obj_ops->unlink(sub_root, sub_obj, fname);
+    status = sub_root->obj_ops->unlink(sub_root, sub_obj, fname, nullptr, nullptr);
     EXPECT_EQ(status.major, 0);
   }
 

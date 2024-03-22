@@ -79,7 +79,7 @@ namespace {
       gtest::GaneshaFSALBaseTest::SetUp();
 
       status = fsal_create(test_root, TEST_DIR, DIRECTORY, &attrs, NULL,
-		      &test_dir, &attrs_out);
+		      &test_dir, &attrs_out, nullptr, nullptr);
       ASSERT_EQ(status.major, 0);
       ASSERT_NE(test_dir, nullptr);
 
@@ -89,7 +89,7 @@ namespace {
     virtual void TearDown() {
       fsal_status_t status;
 
-      status = test_root->obj_ops->unlink(test_root, test_dir, TEST_DIR);
+      status = test_root->obj_ops->unlink(test_root, test_dir, TEST_DIR, nullptr, nullptr);
       EXPECT_EQ(0, status.major);
       test_dir->obj_ops->put_ref(test_dir);
       test_dir = NULL;

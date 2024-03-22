@@ -103,12 +103,12 @@ TEST_F(RenameEmptyLatencyTest, SIMPLE)
 
   /* Create file for the the test */
   status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL, &obj,
-                  NULL);
+                  NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
   status = test_root->obj_ops->rename(obj, test_root, TEST_FILE, test_root,
-                  TEST_FILE_NEW);
+                  TEST_FILE_NEW, nullptr, nullptr, nullptr, nullptr);
   EXPECT_EQ(status.major, 0);
   test_root->obj_ops->lookup(test_root, TEST_FILE_NEW, &lookup, NULL);
   EXPECT_EQ(lookup, obj);
@@ -131,7 +131,7 @@ TEST_F(RenameEmptyLatencyTest, SIMPLE_BYPASS)
 
   /* Create file for the the test */
   status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL, &obj,
-                  NULL);
+                  NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
@@ -165,7 +165,7 @@ TEST_F(RenameEmptyLatencyTest, LOOP)
 
   /* Create file for the the test */
   status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL, &obj,
-                  NULL);
+                  NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
@@ -175,7 +175,7 @@ TEST_F(RenameEmptyLatencyTest, LOOP)
     sprintf(fname_new, "nf-%08x", i);
 
     status = test_root->obj_ops->rename(obj, test_root, fname, test_root,
-                    fname_new);
+                    fname_new, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(status.major, 0);
     strncpy(fname, fname_new, NAMELEN);
   }
@@ -188,7 +188,7 @@ TEST_F(RenameEmptyLatencyTest, LOOP)
   obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
-  status = fsal_remove(test_root, fname);
+  status = fsal_remove(test_root, fname, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -202,7 +202,7 @@ TEST_F(RenameEmptyLatencyTest, FSALRENAME)
 
   /* Create file for the the test */
   status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL, &obj,
-                  NULL);
+                  NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
@@ -224,7 +224,7 @@ TEST_F(RenameEmptyLatencyTest, FSALRENAME)
   obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
-  status = fsal_remove(test_root, fname);
+  status = fsal_remove(test_root, fname, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -238,7 +238,7 @@ TEST_F(RenameFullLatencyTest, BIG)
 
   /* Create file for the the test */
   status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL, &obj,
-                  NULL);
+                  NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 
@@ -248,7 +248,7 @@ TEST_F(RenameFullLatencyTest, BIG)
     sprintf(fname_new, "nf-%08x", i);
 
     status = test_root->obj_ops->rename(obj, test_root, fname, test_root,
-                    fname_new);
+                    fname_new, nullptr, nullptr, nullptr, nullptr);
     ASSERT_EQ(status.major, 0) << " failed to rename " << fname;
     strncpy(fname, fname_new, NAMELEN);
   }
@@ -261,7 +261,7 @@ TEST_F(RenameFullLatencyTest, BIG)
   obj->obj_ops->put_ref(obj);
 
   /* Delete file created for the test */
-  status = fsal_remove(test_root, fname);
+  status = fsal_remove(test_root, fname, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
 }
 
@@ -277,7 +277,7 @@ TEST_F(RenameFullLatencyTest, BIG_BYPASS)
 
   /* Create file for the the test */
   status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL, &obj,
-                  NULL);
+                  NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
   ASSERT_NE(obj, nullptr);
 

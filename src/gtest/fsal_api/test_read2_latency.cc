@@ -83,7 +83,7 @@ namespace {
 
       status = test_root->obj_ops->open2(test_root, test_file_state,
                       FSAL_O_RDWR, FSAL_UNCHECKED, TEST_FILE, &attrs, NULL,
-                      &test_file, NULL, &caller_perm_check);
+                      &test_file, NULL, &caller_perm_check, nullptr, nullptr);
       ASSERT_EQ(status.major, 0);
     }
 

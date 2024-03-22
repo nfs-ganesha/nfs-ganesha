@@ -74,7 +74,7 @@ namespace {
       gtest::GaneshaFSALBaseTest::SetUp();
 
       status = fsal_create(root_entry, TEST_ROOT_LINK, SYMBOLIC_LINK, &attrs, TEST_ROOT,
-		      &symlink_test_root, &attrs_out);
+		      &symlink_test_root, &attrs_out, nullptr, nullptr);
       ASSERT_EQ(status.major, 0);
       ASSERT_NE(symlink_test_root, nullptr);
 
@@ -89,7 +89,7 @@ namespace {
 
       gsh_free(bfr_content.addr);
 
-      status = symlink_test_root->obj_ops->unlink(root_entry, symlink_test_root, TEST_ROOT_LINK);
+      status = symlink_test_root->obj_ops->unlink(root_entry, symlink_test_root, TEST_ROOT_LINK, nullptr, nullptr);
       EXPECT_EQ(0, status.major);
       symlink_test_root->obj_ops->put_ref(symlink_test_root);
       symlink_test_root = NULL;

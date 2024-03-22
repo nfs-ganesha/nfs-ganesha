@@ -73,7 +73,7 @@ namespace {
       gtest::GaneshaFSALBaseTest::SetUp();
 
       status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL, &test_file,
-                             &attrs_out);
+                             &attrs_out, nullptr, nullptr);
       ASSERT_EQ(status.major, 0);
 
       fsal_release_attrs(&attrs_out);
