@@ -100,7 +100,7 @@ TEST_F(CloseEmptyLatencyTest, SIMPLE)
 
   // create and open a file for test
   status = fsal_open2(test_root, NULL, FSAL_O_RDWR, FSAL_UNCHECKED,
-               TEST_FILE, NULL, NULL, &obj, NULL);
+               TEST_FILE, NULL, NULL, &obj, NULL, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
 
   status = fsal_close(obj);
@@ -124,7 +124,7 @@ TEST_F(CloseEmptyLatencyTest, LOOP)
     sprintf(fname, "f-%08x", i);
 
     status = fsal_open2(test_root, NULL, FSAL_O_RDWR, FSAL_UNCHECKED, fname,
-			NULL, NULL, &obj[i], NULL);
+			NULL, NULL, &obj[i], NULL, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
   }
 

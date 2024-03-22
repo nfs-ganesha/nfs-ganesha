@@ -75,7 +75,7 @@ namespace {
       fsal_prepare_attrs(&attrs_out, 0);
 
       status = fsal_create(test_root, TEST_FILE, REGULAR_FILE, &attrs, NULL,
-			   &test_file, &attrs_out);
+			   &test_file, &attrs_out, nullptr, nullptr);
       ASSERT_EQ(status.major, 0);
       ASSERT_NE(test_file, nullptr);
 

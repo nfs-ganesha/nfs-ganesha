@@ -92,7 +92,7 @@ namespace {
         sprintf(fname, "f-%08x", i);
 
         status = fsal_create(test_root, fname, REGULAR_FILE, &attrs, NULL,
-                   &obj, &attrs_out);
+                   &obj, &attrs_out, nullptr, nullptr);
         ASSERT_EQ(status.major, 0);
         ASSERT_NE(obj, nullptr);
 
@@ -126,7 +126,7 @@ TEST_F(MknodeEmptyLatencyTest, SIMPLE)
   struct fsal_obj_handle *lookup;
 
   status = test_root->obj_ops->mknode(test_root, TEST_NODE, SOCKET_FILE,
-             &attrs, &mknode, NULL);
+             &attrs, &mknode, NULL, nullptr, nullptr);
   EXPECT_EQ(status.major, 0);
   test_root->obj_ops->lookup(test_root, TEST_NODE, &lookup, NULL);
   EXPECT_EQ(lookup, mknode);
@@ -153,7 +153,7 @@ TEST_F(MknodeEmptyLatencyTest, SIMPLE_BYPASS)
   ASSERT_EQ(status.major, 0);
 
   status = sub_hdl->obj_ops->mknode(sub_hdl, TEST_NODE, SOCKET_FILE, &attrs,
-             &mknode, NULL);
+             &mknode, NULL, nullptr, nullptr);
   EXPECT_EQ(status.major, 0);
 
   sub_hdl->obj_ops->lookup(sub_hdl, TEST_NODE, &lookup, NULL);
@@ -180,7 +180,7 @@ TEST_F(MknodeEmptyLatencyTest, LOOP)
     sprintf(fname, "d-%08x", i);
 
     status = test_root->obj_ops->mknode(test_root, fname, SOCKET_FILE, &attrs,
-               &obj, NULL);
+               &obj, NULL, nullptr, nullptr);
     EXPECT_EQ(status.major, 0);
     obj->obj_ops->put_ref(obj);
   }
@@ -212,7 +212,7 @@ TEST_F(MknodeEmptyLatencyTest, FSALCREATE)
     sprintf(fname, "d-%08x", i);
 
     status = fsal_create(test_root, fname, SOCKET_FILE, &attrs, NULL, &obj,
-               NULL);
+               NULL, nullptr, nullptr);
     EXPECT_EQ(status.major, 0);
     obj->obj_ops->put_ref(obj);
   }
@@ -244,7 +244,7 @@ TEST_F(MknodeFullLatencyTest, BIG)
     sprintf(fname, "d-%08x", i);
 
     status = test_root->obj_ops->mknode(test_root, fname, SOCKET_FILE, &attrs,
-               &obj, NULL);
+               &obj, NULL, nullptr, nullptr);
     ASSERT_EQ(status.major, 0) << " failed to mknnode " << fname;
     obj->obj_ops->put_ref(obj);
   }
@@ -283,7 +283,7 @@ TEST_F(MknodeFullLatencyTest, BIG_BYPASS)
     sprintf(fname, "d-%08x", i);
 
     status = sub_hdl->obj_ops->mknode(sub_hdl, fname, SOCKET_FILE, &attrs, &obj,
-               NULL);
+               NULL, nullptr, nullptr);
     ASSERT_EQ(status.major, 0) << " failed to mknode " << fname;
     obj->obj_ops->put_ref(obj);
   }
@@ -297,7 +297,7 @@ TEST_F(MknodeFullLatencyTest, BIG_BYPASS)
   for (int i = 0; i < LOOP_COUNT; ++i) {
     sprintf(fname, "d-%08x", i);
 
-    status = fsal_remove(sub_hdl, fname, NULL, NULL, NULL, NULL);
+    status = fsal_remove(sub_hdl, fname, NULL, NULL);
     ASSERT_EQ(status.major, 0);
   }
 }

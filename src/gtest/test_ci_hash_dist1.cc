@@ -109,7 +109,7 @@ TEST(CI_HASH_DIST1, CREATE_ROOT)
 
   status = root_entry->obj_ops->mkdir(root_entry, "ci_hash_dist1",
 				    &object_attributes, &test_root,
-				    attrs_out);
+				    attrs_out, nullptr, nullptr);
   ASSERT_NE(test_root, nullptr);
 }
 

@@ -124,7 +124,7 @@ TEST_F(Open2EmptyLatencyTest, SIMPLE)
   // create and open a file for test
   status = test_root->obj_ops->open2(test_root, file_state, FSAL_O_RDWR,
              FSAL_UNCHECKED, TEST_FILE, &attrs_in, NULL, &obj, NULL,
-	     &caller_perm_check);
+	     &caller_perm_check, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
 
   // close and  delete the file created for test
@@ -159,7 +159,7 @@ TEST_F(Open2EmptyLatencyTest, SIMPLE_BYPASS)
   // create and open a file for test
   status = sub_hdl->obj_ops->open2(sub_hdl, file_state, FSAL_O_RDWR,
              FSAL_UNCHECKED, TEST_FILE, &attrs_in, NULL, &obj, NULL,
-	     &caller_perm_check);
+	     &caller_perm_check, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
 
   // close and delete the file created for test
@@ -185,7 +185,7 @@ TEST_F(Open2LoopLatencyTest, FSAL_OPEN2)
     sprintf(fname, "f-%08x", i);
 
     status = fsal_open2(test_root, file_state[i], FSAL_O_RDWR, FSAL_UNCHECKED,
-               fname, &attrs_in, NULL, &obj[i], NULL);
+               fname, &attrs_in, NULL, &obj[i], NULL, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -222,7 +222,7 @@ TEST_F(Open2LoopLatencyTest, LOOP)
 
     status = test_root->obj_ops->open2(test_root, file_state[i], FSAL_O_RDWR,
                FSAL_UNCHECKED, fname, &attrs_in, NULL, &obj[i], NULL,
-               &caller_perm_check);
+               &caller_perm_check, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -266,7 +266,7 @@ TEST_F(Open2LoopLatencyTest, LOOP_BYPASS)
 
     status = sub_hdl->obj_ops->open2(sub_hdl, file_state[i], FSAL_O_RDWR,
                FSAL_UNCHECKED, fname, &attrs_in, NULL, &obj[i], NULL,
-               &caller_perm_check);
+               &caller_perm_check, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -300,7 +300,7 @@ TEST_F(Open2LoopLatencyTest, OPEN_ONLY)
     sprintf(fname, "f-%08x", i);
 
     status = fsal_create(root_entry, fname, REGULAR_FILE, &attrs, NULL, &obj[i],
-               NULL);
+               NULL, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
     ASSERT_NE(obj[i], nullptr);
     obj[i]->obj_ops->put_ref(obj[i]);
@@ -314,7 +314,7 @@ TEST_F(Open2LoopLatencyTest, OPEN_ONLY)
 
     status = test_root->obj_ops->open2(test_root, file_state[i], FSAL_O_RDWR,
                FSAL_UNCHECKED, fname, &attrs_in, NULL, &obj[i], NULL,
-               &caller_perm_check);
+               &caller_perm_check, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
   }
 

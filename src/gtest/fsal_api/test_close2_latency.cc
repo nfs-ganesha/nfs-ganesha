@@ -117,7 +117,7 @@ TEST_F(Close2EmptyLatencyTest, SIMPLE)
 
   // create and open a file for test
   status = test_root->obj_ops->open2(test_root, file_state, FSAL_O_RDWR, FSAL_UNCHECKED,
-               TEST_FILE, NULL, NULL, &obj, NULL, &caller_perm_check);
+               TEST_FILE, NULL, NULL, &obj, NULL, &caller_perm_check, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
 
   status = obj->obj_ops->close2(obj, file_state);
@@ -145,7 +145,7 @@ TEST_F(Close2EmptyLatencyTest, SIMPLE_BYPASS)
 
   // create and open a file for test
   status = test_root->obj_ops->open2(test_root, file_state, FSAL_O_RDWR, FSAL_UNCHECKED,
-               TEST_FILE, NULL, NULL, &obj, NULL, &caller_perm_check);
+               TEST_FILE, NULL, NULL, &obj, NULL, &caller_perm_check, nullptr, nullptr);
   ASSERT_EQ(status.major, 0);
 
   sub_hdl = mdcdb_get_sub_handle(obj);
@@ -174,7 +174,7 @@ TEST_F(Close2LoopLatencyTest, LOOP)
 
     status = test_root->obj_ops->open2(test_root, file_state[i], FSAL_O_RDWR,
                FSAL_UNCHECKED, fname, NULL, NULL, &obj[i], NULL,
-               &caller_perm_check);
+               &caller_perm_check, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
   }
 
@@ -215,7 +215,7 @@ TEST_F(Close2LoopLatencyTest, LOOP_BYPASS)
     sprintf(fname, "f-%08x", i);
     status = test_root->obj_ops->open2(test_root, file_state[i], FSAL_O_RDWR,
                FSAL_UNCHECKED, fname, NULL, NULL, &obj[i], NULL,
-               &caller_perm_check);
+               &caller_perm_check, nullptr, nullptr);
     ASSERT_EQ(status.major, 0);
 
     sub_hdl[i] = mdcdb_get_sub_handle(obj[i]);

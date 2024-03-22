@@ -74,7 +74,7 @@ namespace {
       gtest::GaneshaFSALBaseTest::SetUp();
 
       status = fsal_create(root_entry, TEST_SYMLINK, SYMBOLIC_LINK, &attrs,
-		      TEST_ROOT, &test_symlink, &attrs_out);
+		      TEST_ROOT, &test_symlink, &attrs_out, nullptr, nullptr);
       ASSERT_EQ(status.major, 0);
       ASSERT_NE(test_symlink, nullptr);
 
@@ -89,7 +89,7 @@ namespace {
 
       gsh_free(bfr_content.addr);
 
-      status = root_entry->obj_ops->unlink(root_entry, test_symlink, TEST_SYMLINK);
+      status = root_entry->obj_ops->unlink(root_entry, test_symlink, TEST_SYMLINK, nullptr, nullptr);
       EXPECT_EQ(0, status.major);
       test_symlink->obj_ops->put_ref(test_symlink);
       test_symlink = NULL;
@@ -129,7 +129,7 @@ TEST_F(SymlinkEmptyLatencyTest, SIMPLE)
   int ret = -1;
 
   status = root_entry->obj_ops->symlink(root_entry, TEST_ROOT_LINK, TEST_ROOT,
-		  &attrs, &symlink, NULL);
+		  &attrs, &symlink, NULL, nullptr, nullptr);
   EXPECT_EQ(status.major, 0);
   root_entry->obj_ops->lookup(root_entry, TEST_ROOT_LINK, &lookup, NULL);
   EXPECT_EQ(lookup, symlink);
@@ -166,7 +166,7 @@ TEST_F(SymlinkEmptyLatencyTest, SIMPLE_BYPASS)
   ASSERT_EQ(status.major, 0);
 
   status = sub_hdl->obj_ops->symlink(sub_hdl, TEST_ROOT_LINK, TEST_ROOT, &attrs,
-		  &symlink, NULL);
+		  &symlink, NULL, nullptr, nullptr);
   EXPECT_EQ(status.major, 0);
   root_entry->obj_ops->lookup(root_entry, TEST_ROOT_LINK, &lookup, NULL);
   EXPECT_EQ(lookup, symlink);
@@ -200,7 +200,7 @@ TEST_F(SymlinkEmptyLatencyTest, LOOP)
     sprintf(fname, "s-%08x", i);
 
     status = root_entry->obj_ops->symlink(root_entry, fname, TEST_ROOT, &attrs,
-		    &obj, NULL);
+		    &obj, NULL, nullptr, nullptr);
     EXPECT_EQ(status.major, 0);
     obj->obj_ops->put_ref(obj);
   }
@@ -232,7 +232,7 @@ TEST_F(SymlinkEmptyLatencyTest, FSALCREATE)
     sprintf(fname, "s-%08x", i);
 
     status = fsal_create(root_entry, fname, SYMBOLIC_LINK, &attrs, TEST_ROOT,
-		    &obj, NULL);
+		    &obj, NULL, nullptr, nullptr);
     EXPECT_EQ(status.major, 0);
     obj->obj_ops->put_ref(obj);
   }
@@ -264,7 +264,7 @@ TEST_F(SymlinkFullLatencyTest, BIG)
     sprintf(fname, "s-%08x", i);
 
     status = root_entry->obj_ops->symlink(root_entry, fname, TEST_ROOT, &attrs,
-		    &obj, NULL);
+		    &obj, NULL, nullptr, nullptr);
     ASSERT_EQ(status.major, 0) << " failed to symlink " << fname;
     obj->obj_ops->put_ref(obj);
   }
@@ -303,7 +303,7 @@ TEST_F(SymlinkFullLatencyTest, BIG_BYPASS)
     sprintf(fname, "s-%08x", i);
 
     status = sub_hdl->obj_ops->symlink(sub_hdl, fname, TEST_ROOT, &attrs,
-		    &obj, NULL);
+		    &obj, NULL, nullptr, nullptr);
     ASSERT_EQ(status.major, 0) << " failed to symlink " << fname;
     obj->obj_ops->put_ref(obj);
   }
