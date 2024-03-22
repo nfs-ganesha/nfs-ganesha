@@ -1534,7 +1534,6 @@ restart_recalls:
 			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
 			LogDebug(COMPONENT_FSAL_UP,
 				"Client's lease has already expired, no need to recall delegation but let's wipe off the client");
-			*deleg_state = DELEG_GRANTED;
 			STATELOCK_unlock(obj);
 			if (!reserve_lease_or_expire(client_id, false)) {
 				LogDebug(COMPONENT_FSAL_UP,
