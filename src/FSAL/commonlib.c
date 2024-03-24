@@ -932,6 +932,31 @@ bool fsal_can_reuse_mode_to_acl(const fsal_acl_t *sacl)
 	return true;
 }
 
+static bool
+fsal_can_skip_ace(const fsal_ace_t *ace, uint32_t indx, uint32_t naces,
+		  bool can_reuse)
+{
+	/* We can skip the copy of special ID aces which don't hold permission
+	 * flags such as DELETE or DELETE-CHILD which are not covered by mode
+	 * bits. Those special ID aces are going to be generated (or reused)
+	 * by the mode to acl mechanism. */
+
+	/* The first 4 aces and last 2 aces are going to be reused. */
+	if (can_reuse && (indx < 4 || indx >= naces - 2))
+		return false;
+
+	if (!IS_FSAL_ACE_SPECIAL_ID(*ace))
+		return false;
+
+	if (IS_FSAL_ACE_INHERIT_ONLY(*ace))
+		return false;
+
+	if (IS_FSAL_ACE_DELETE(*ace) || IS_FSAL_ACE_DELETE_CHILD(*ace))
+		return false;
+
+	return true;
+}
+
 fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 {
 	int naces;
@@ -949,6 +974,9 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 
 	naces = 0;
 	for (sace = sacl->aces; sace < sacl->aces + sacl->naces; sace++) {
+		if (fsal_can_skip_ace(sace, sace - sacl->aces, sacl->naces,
+				can_reuse))
+			continue;
 		naces++;
 		if (IS_FSAL_ACE_INHERIT_ONLY(*sace))
 			continue;
@@ -987,6 +1015,9 @@ fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl)
 
 	for (sace = sacl->aces; sace < sacl->aces + sacl->naces;
 	     sace++) {
+		if (fsal_can_skip_ace(sace, sace - sacl->aces, sacl->naces,
+				can_reuse))
+			continue;
 		*dace = *sace;
 		acl_data.naces++;
 
