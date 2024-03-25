@@ -331,6 +331,8 @@ void gpfs_free_state(struct state_t *state)
 	my_fd = &container_of(state, struct gpfs_state_fd, state)->gpfs_fd;
 
 	destroy_fsal_fd(&my_fd->fsal_fd);
+
+	gsh_free(state);
 }
 
 /**
